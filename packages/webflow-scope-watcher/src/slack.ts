@@ -1,3 +1,4 @@
+import { buildAuthorizeUrl } from './probe';
 import type { CategoryEntry, CommitInfo, ScopeChange } from './types';
 
 const EMOJI: Record<ScopeChange['type'], string> = {
@@ -74,12 +75,48 @@ function describeCommit(commit: CommitInfo, repo: string): string {
 	return `• ${pr}${commit.title}${suffix} — ${commit.author}`;
 }
 
+/**
+ * Scopes a developer can request right now: added with no feature flag, or
+ * just un-gated. Gated scopes cannot be added to any app yet, so there is
+ * nothing to capture for them until the GA moment.
+ */
+export function gaScopeKeys(changes: ScopeChange[]): string[] {
+	return changes
+		.filter(
+			(c) =>
+				c.type === 'scope_ungated' || (c.type === 'scope_added' && c.scope && !c.scope.featureFlag)
+		)
+		.map((c) => c.key);
+}
+
+/**
+ * Manual consent-capture step for GA scopes. The automated capture
+ * (`/api/probe-capture`) is blocked by webflow.com's bot challenge on Browser
+ * Rendering egress (2026-10-26), and the scope has to be added to the probe
+ * app by hand anyway, so the alert hands the human the ready-made authorize
+ * link for that same minute.
+ */
+function describeConsentStep(keys: string[], probeClientId: string): string[] {
+	const list = keys.map((k) => `\`${k}\``).join(', ');
+	return [
+		'',
+		`*Consent screen (manual, ~30s):* add ${list} to the Scope Probe app in the dashboard, open the authorize link as the probe account, screenshot, and reply in this thread.`,
+		...keys.map((k) => `• \`${k}\` → <${buildAuthorizeUrl(probeClientId, [k])}|authorize link>`),
+	];
+}
+
+export interface FormatOptions {
+	/** client_id of the standing Scope Probe app; when set, GA scopes get a manual consent-capture step */
+	probeClientId?: string;
+}
+
 export function formatMessage(
 	changes: ScopeChange[],
 	commits: CommitInfo[],
 	categories: Record<string, CategoryEntry>,
 	repo: string,
-	scopesPath: string
+	scopesPath: string,
+	opts: FormatOptions = {}
 ): string {
 	const plural = changes.length === 1 ? '' : 's';
 	const lines = [
@@ -88,6 +125,10 @@ export function formatMessage(
 		'',
 		...changes.map((c) => describeChange(c, categories, repo)),
 	];
+	const gaKeys = gaScopeKeys(changes);
+	if (opts.probeClientId && gaKeys.length > 0) {
+		lines.push(...describeConsentStep(gaKeys, opts.probeClientId));
+	}
 	if (commits.length > 0) {
 		lines.push('', '*Source commits touching the registry since last check:*');
 		lines.push(...commits.map((c) => describeCommit(c, repo)));
