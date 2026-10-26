@@ -60,10 +60,13 @@ async function nativePage(role, viewport, restoredQueue = false) {
     window.__nativeQueueFullNextReplace = false;
     window.__nativeRefreshDelay = false;
     window.__nativeRefreshInFlight = false;
+    window.__nativeLastCompanionRefresh = null;
     window.__nativeReplacementInFlight = false;
     window.__nativeViewportDelay = false;
     window.__TAURI_INTERNALS__ = {
       invoke: async (command, args = {}) => {
+        // Tauri serializes IPC arguments; the synthetic bridge must not retain Svelte proxies.
+        args = args === undefined ? undefined : JSON.parse(JSON.stringify(args));
         window.__nativeCalls.push({ command, args });
         if (command === 'draw_runtime_role') return role;
         if (command === 'draw_host_status') return { history: historyStatus(), sessionId: 'session-native', revision, document, pairedClients: [{ clientId: 'iphone-d5794285-1d79-4609-9d08-6a5adab8bd56', revokedAt: null }], transport: { endpoint: 'https://192.0.2.1:4242', certificateFingerprint: 'a'.repeat(64) } };
@@ -85,7 +88,9 @@ async function nativePage(role, viewport, restoredQueue = false) {
             window.__nativeRefreshInFlight = false;
             return { status: 'paired', sessionId: 'session-native', revision: revision + 1, document: staleDocument, queueDepth: 0, online, certificateFingerprint: 'abcdef0123456789'.repeat(4) };
           }
-          return { status: 'paired', sessionId: 'session-native', revision, document, queueDepth: 0, online, certificateFingerprint: 'abcdef0123456789'.repeat(4) };
+          const snapshot = { status: 'paired', sessionId: 'session-native', revision, document, queueDepth: 0, online, certificateFingerprint: 'abcdef0123456789'.repeat(4) };
+          window.__nativeLastCompanionRefresh = JSON.parse(JSON.stringify(snapshot));
+          return snapshot;
         }
         if (command === 'draw_companion_forget') return { status: 'unpaired' };
         if (command === 'draw_host_apply_batch') {
@@ -336,7 +341,13 @@ try {
   const editor = page.getByLabel('Edit note');
   await editor.fill('MCP tools use spaces');
   if (await editor.inputValue() !== 'MCP tools use spaces') throw new Error('Native note lost spaces');
-  await page.waitForTimeout(250);
+  await page.waitForFunction(() => window.__nativeCalls.some(({ command, args }) => command === 'draw_companion_submit' && args.operation.type === 'put_object' && args.operation.object.text === 'MCP tools use spaces'));
+  // A changed authoritative mirror safely disarms reset. Finish this note's mirror
+  // reconciliation before testing queue-full behavior, rather than racing editor blur.
+  await editor.evaluate(input => input.blur());
+  await page.waitForFunction(() => window.__nativeLastCompanionRefresh?.document.objects.some(object => object.kind === 'note' && object.text === 'MCP tools use spaces'));
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => resolve())));
+  if (await editor.inputValue() !== 'MCP tools use spaces') throw new Error('Authoritative mirror lost the edited native note');
   const callsBeforeQueueFullReset = await page.evaluate(() => {
     window.__nativeQueueFullNextReplace = true;
     return window.__nativeCalls.filter(({ command }) => command === 'draw_companion_submit').length;
