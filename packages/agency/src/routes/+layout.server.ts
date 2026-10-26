@@ -1,14 +1,11 @@
 /**
  * Layout Server Loader - Agency
  *
- * Uses shared loader from @create-something/canon/auth
+ * Uses the identity verified by the server hook.
  */
 
-import { createLayoutServerLoader } from '@create-something/canon/auth';
 import { building } from '$app/environment';
 import type { LayoutServerLoad } from './$types';
-
-const loadAgencySession = createLayoutServerLoader({ property: 'agency' });
 
 export const load: LayoutServerLoad = async (event) => {
   // Public prerendered routes cannot read Cloudflare runtime bindings.
@@ -16,9 +13,6 @@ export const load: LayoutServerLoad = async (event) => {
     return { pathname: event.url.pathname, user: undefined };
   }
 
-  return loadAgencySession({
-    url: event.url,
-    cookies: event.cookies,
-    platform: event.platform ? { env: { ENVIRONMENT: event.platform.env.ENVIRONMENT } } : undefined
-  });
+  // The hook already verified this identity with the application's exact runtime policy.
+  return { pathname: event.url.pathname, user: event.locals.user };
 };

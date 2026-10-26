@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { createSessionManager, getDomainConfig } from '@create-something/canon/auth';
+import { createSessionManager, getDomainConfig, identitySessionVerification } from '@create-something/canon/auth';
 import {
 	buildAgencyEntitlementSnapshot,
 	evaluateAgencyMcpEntitlement,
@@ -27,6 +27,7 @@ export async function requireAgencySessionUser(input: {
 }): Promise<AgencySessionUser> {
 	const domainConfig = getDomainConfig(input.platform?.env?.ENVIRONMENT);
 	const sessionManager = createSessionManager(input.cookies, {
+		identityVerification: identitySessionVerification(input.platform?.env, 'client-workspace'),
 		isProduction: input.platform?.env?.ENVIRONMENT === 'production',
 		domain: domainConfig.domain,
 		authProvider: { type: 'identity-worker' },

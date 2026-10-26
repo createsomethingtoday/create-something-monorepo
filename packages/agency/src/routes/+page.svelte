@@ -66,7 +66,7 @@
 
 <SEO
   title="AI-native Technical Support | CREATE SOMETHING .agency"
-  description="AI-native Technical support from $900/month. Set up, connect and improve agents in your team’s tools, with agreed permissions, inspectable outputs and ongoing support. Focused includes one workstream, one milestone, two check-ins and two remote work sessions. Team is $2,500/month for up to two workstreams, two milestones, two check-ins and four remote work sessions. Project costs are separate."
+  description="AI-native Technical support from $900/month. Progress in an agreed workstream, between check-ins. Remote sessions available when useful."
   keywords="AI-native technical support, workflow support, software engineering, client-owned AI agent, agent foundation"
   ogImage="/og-image.png"
   propertyName="agency"

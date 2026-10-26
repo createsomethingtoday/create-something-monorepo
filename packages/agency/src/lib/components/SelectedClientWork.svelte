@@ -22,7 +22,7 @@
 <p class="scope">Our role: the prototype and early development. The current Outerfields site may include later work by its in-house developer.</p>
 </article>
 <div class="engineering"><div><p class="eyebrow">Engineering contributions</p><h3>We improve the tools we work with.</h3><p>Independent contributions to CTX and OpenAI Codex Security, with accepted changes and release evidence. Our Webflow review-system report documents the work and its limits.</p></div><div class="links"><a href="/field-reports/upstream-contributions">Read the CTX and OpenAI contribution record →</a><a href="/field-reports/template-review">Explore the Webflow review system →</a></div></div>
-<p class="scope">Selected projects demonstrate our capabilities. Membership delivery is agreed separately, one workstream at a time.</p>
+<p class="scope">Selected projects demonstrate our capabilities. Membership delivery is agreed separately: one workstream with Focused, or up to two with Team.</p>
 </section>
 <style>
 .outerfields-story{margin-top:50px;padding-top:35px;border-top:1px solid var(--color-performance-line)}.project-journey{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;list-style:none;padding:0;margin:32px 0}.project-journey li{border-top:1px solid var(--color-performance-line);padding-top:16px}.project-journey span{display:block;font:11px var(--font-performance-mono);text-transform:uppercase;margin-bottom:14px}.project-journey strong{display:block;font-size:17px;font-weight:500}.project-journey p{font-size:14px;line-height:1.65}@media(max-width:900px){.project-journey{grid-template-columns:repeat(2,1fr)}}@media(max-width:500px){.project-journey{grid-template-columns:1fr}}
