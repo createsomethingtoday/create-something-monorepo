@@ -45,6 +45,13 @@ async function pageFor(role='host',width=1440,height=920,nativeBusy=false,initia
  return{context,page,errors};
 }
 try{
+ for(const code of ['credential_store_unavailable','credential_store_invalid','connection_busy']){
+  const x=await pageFor('host',1440,920,false,{available:true,busy:false,accounts:[],activeClientId:null,pendingClientIds:[],error:code});
+  await x.page.getByRole('button',{name:'ChatGPT',exact:true}).click();const p=x.page.getByRole('dialog',{name:'ChatGPT connection'});
+  await expect(p.getByRole('alert')).toContainText('ChatGPT could not complete this action. Your drawing and typed request are retained.');
+  expect(await x.page.evaluate(()=>window.__chatGPTTest.calls.filter(c=>c.command.startsWith('draw_chatgpt_')).map(c=>c.command))).toEqual(['draw_chatgpt_status']);
+  expect(await x.page.evaluate(()=>window.__chatGPTTest.providerCalls)).toEqual([]);expect(x.errors).toEqual([]);await x.context.close();
+ }checks.push('Initial native status embedded credential/lock errors are visible through the sanitized status path without sign-in or provider calls');
  const{page,context,errors}=await pageFor();
  const before=await page.evaluate(()=>structuredClone(window.__chatGPTTest.document));
  await page.getByRole('button',{name:'ChatGPT',exact:true}).click();

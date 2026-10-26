@@ -11,7 +11,7 @@
   const account = $derived(activeChatGPTAccount(status));
   const planReady = $derived(canUseChatGPTPlan(status));
   const busy = $derived(working || status.busy);
-  onMount(() => { let live = true; void chatGPT.status().then(value => { if (live) status = value; }).catch(() => { if (live) error = chatGPTError('UNAVAILABLE'); }); const timer = setInterval(() => { if (open && status.busy && !working && !connecting) { const id = generation; void chatGPT.status().then(value => { if (live && id === generation) apply(value); }).catch(() => {}); } }, 500); return () => { live = false; componentAlive = false; cancelledConnects.clear(); generation++; clearInterval(timer); }; });
+  onMount(() => { let live = true; void chatGPT.status().then(value => { if (live) apply(value); }).catch(() => { if (live) error = chatGPTError('UNAVAILABLE'); }); const timer = setInterval(() => { if (open && status.busy && !working && !connecting) { const id = generation; void chatGPT.status().then(value => { if (live && id === generation) apply(value); }).catch(() => {}); } }, 500); return () => { live = false; componentAlive = false; cancelledConnects.clear(); generation++; clearInterval(timer); }; });
   function apply(value: ChatGPTStatus) { const before = activeChatGPTAccount(status), after = activeChatGPTAccount(value); if (value.activeClientId !== status.activeClientId || before?.connected !== after?.connected || before?.planEnabled !== after?.planEnabled) { models = []; model = ''; answer = ''; } status = value; if (value.error) error = chatGPTError(value.error); }
   async function toggle() { if (open) return close(); open = true; await tick(); heading?.focus(); }
   async function close() { open = false; await tick(); trigger?.focus(); }
