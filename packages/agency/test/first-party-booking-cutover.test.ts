@@ -43,11 +43,12 @@ test('owned /book route embeds the first-party scheduler and remains the Map des
 	assert.equal(bookRoute.toLowerCase().includes('savvycal'), false);
 });
 
-test('booking keeps a direct time-selection action and conditionally renders populated context', () => {
+test('booking gives time selection the full workspace without a read-only context sidebar', () => {
 	assert.ok(bookRoute.includes('href="#first-party-scheduler"'));
-	assert.match(bookRoute, /\{#if handoffSheet.state === 'ready'\}\s*<section\s*class="booking-handoff"/);
-	assert.ok(bookRoute.includes("class:booking-content--with-handoff={handoffSheet.state === 'ready'}"));
-	assert.match(bookRoute, /@media \(min-width: 1000px\) \{ \.booking-content--with-handoff/);
+	assert.equal(bookRoute.includes('class="booking-handoff"'), false);
+	assert.equal(bookRoute.includes('booking-content--with-handoff'), false);
+	assert.ok(bookRoute.includes('src={schedulerHref}'));
+	assert.ok(bookRoute.includes("type: 'create-something:scheduler-context', context: handoffContext"));
 });
 
 test('shared scheduling CTA is provider-neutral and preserves the owned route', () => {
@@ -152,7 +153,7 @@ test('request-derived booking state is ready before hydration for every named of
 	assert.match(mapping.handoffSheet.summary, /mapping session/);
 });
 
-test('the parent turns only the bounded scheduler context into a readable incoming handoff', () => {
+test('bounded scheduler metadata is preserved without a read-only context sidebar', () => {
 	const context = schedulerHandoffContext(
 		'?source=atlas-canvas&intent=workflow-map&lane=fit-review&readiness=ready&score=84&agent_messages=7',
 		'Map the approval handoff.'
@@ -178,12 +179,9 @@ test('the parent turns only the bounded scheduler context into a readable incomi
 		fields: []
 	});
 	assert.ok(bookRoute.includes('createBookingHandoffState'));
-	assert.ok(bookRoute.includes('Booking context'));
-	assert.ok(bookRoute.includes('Review your booking context'));
-	assert.ok(bookRoute.includes('booking_handoff_viewed'));
-	assert.ok(
-		bookRoute.indexOf('booking-handoff') < bookRoute.lastIndexOf('id="first-party-scheduler"')
-	);
+	assert.equal(bookRoute.includes('Review your booking context'), false);
+	assert.ok(bookRoute.includes('booking_handoff_received'));
+	assert.equal(bookRoute.includes('booking_handoff_viewed'), false);
 });
 
 test('emailed management access crosses the owned page only through a stripped fragment', () => {
