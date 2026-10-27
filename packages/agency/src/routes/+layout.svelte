@@ -37,6 +37,8 @@
   let mobileNavigationOpen = $state(false);
 
   function scrollToTop() {
+    // A booking action may run before the delayed page-entry reset settles.
+    if (window.location.pathname === '/book' && window.location.hash === '#first-party-scheduler') return;
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
@@ -346,7 +348,7 @@
     currentPath={$page.url.pathname}
     fixed={true}
     ctaLabel={usesPublicNavigation ? agencyCoreMessaging.bookMappingSessionLabel : agencyCoreMessaging.membershipLabel}
-    ctaHref={usesPublicNavigation ? agencyCoreMessaging.workflowMappingSessionHref : primaryCtaHref}
+    ctaHref={usesPublicNavigation ? ($page.url.pathname === '/book' ? '#first-party-scheduler' : agencyCoreMessaging.workflowMappingSessionHref) : primaryCtaHref}
     user={data.user}
     onLogout={handleLogout}
     accountHref="/account"
