@@ -932,6 +932,9 @@ impl Controller {
         } else {
             RemoteRevocation::NoRefreshToken
         };
+        // The returned snapshot represents completion. Keep both operation locks
+        // held, but clear the transient busy flag before serializing that result.
+        drop(_busy);
         Ok(self.disconnect_snapshot(remote).await)
     }
     async fn disconnect_snapshot(&self, remote: RemoteRevocation) -> ConnectionStatus {
@@ -1400,6 +1403,28 @@ mod controller_tests {
         assert!(result.status.success(), "synthetic child lock probe failed");
         drop(held);
         std::fs::remove_file(path).unwrap();
+    }
+    #[tokio::test]
+    async fn completed_disconnect_returns_idle_status_without_losing_receipt() {
+        let mut c = Controller::new("Test", "never-use-os-keychain", true).unwrap();
+        deny_network(&mut c);
+        let mut stored = Vault::default();
+        stored.active = Some("synthetic".into());
+        stored
+            .accounts
+            .insert("synthetic".into(), account("synthetic", "subject"));
+        *c.test_store.lock().unwrap() = Some(serde_json::to_vec(&stored).unwrap());
+        let result = c.disconnect("synthetic").await.unwrap();
+        assert!(!result.busy, "completed disconnect must not leave UI busy");
+        assert!(result.active_client_id.is_none());
+        let receipt = result.disconnect_outcome.unwrap();
+        assert!(receipt.local_tokens_removed);
+        assert_eq!(receipt.remote_revocation, RemoteRevocation::NoRefreshToken);
+        assert!(!c.busy.load(Ordering::SeqCst));
+        let persisted: Vault =
+            serde_json::from_slice(c.test_store.lock().unwrap().as_ref().unwrap()).unwrap();
+        assert!(persisted.accounts["synthetic"].access_token.is_none());
+        assert!(persisted.accounts["synthetic"].refresh_token.is_none());
     }
     #[tokio::test]
     async fn disconnect_receipts_distinguish_all_remote_outcomes_without_secrets() {
