@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { replaceState } from '$app/navigation';
 	import { onMount, tick } from 'svelte';
 	import { Button, SEO } from '@create-something/canon';
 	import { getAnalytics } from '@create-something/canon/analytics';
@@ -95,6 +96,7 @@
 
 	let schedulerHref = data.schedulerHref;
 	let schedulerFrame: HTMLIFrameElement;
+	let schedulerSection: HTMLElement;
 	let handoffContext = data.handoffContext;
 	let handoffSheet: SchedulerHandoffSheet = data.handoffSheet;
 	let schedulerAccess: SchedulerAccess | null = null;
@@ -118,6 +120,18 @@
 		schedulerHref = bookingState.schedulerHref;
 		handoffContext = bookingState.handoffContext;
 		handoffSheet = bookingState.handoffSheet;
+	}
+
+	function chooseMeetingTime(event: MouseEvent) {
+		if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+		if (!schedulerSection) return;
+		event.preventDefault();
+		replaceState('#first-party-scheduler', $page.state);
+		schedulerSection.focus({ preventScroll: true });
+		schedulerSection.scrollIntoView({
+			block: 'start',
+			behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'
+		});
 	}
 
 	function sendSchedulerContext() {
@@ -163,6 +177,11 @@
 	}
 
 	onMount(() => {
+		const handleSchedulerLink = (event: MouseEvent) => {
+			const link = event.target instanceof Element ? event.target.closest('a') : null;
+			if (link?.getAttribute('href') === '#first-party-scheduler') chooseMeetingTime(event);
+		};
+		document.addEventListener('click', handleSchedulerLink, true);
 		window.addEventListener('message', receiveSchedulerMessage);
 		schedulerAccess = normalizeSchedulerAccessUrl(window.location.href);
 		if (schedulerAccess) {
@@ -187,7 +206,10 @@
 				}
 			});
 		});
-		return () => window.removeEventListener('message', receiveSchedulerMessage);
+		return () => {
+			document.removeEventListener('click', handleSchedulerLink, true);
+			window.removeEventListener('message', receiveSchedulerMessage);
+		};
 	});
 </script>
 
@@ -212,7 +234,7 @@
 					<span>What you leave with</span>
 					<p>A fit decision and, if it fits, a proposed scope and the basis for a quote.</p>
 				</div>
-				<Button href="#first-party-scheduler">Choose a time</Button>
+				<Button href="#first-party-scheduler" onclick={chooseMeetingTime}>Choose a time</Button>
 			</div>
 
 			{#if handoffSheet.warmupNotes}
@@ -225,6 +247,8 @@
 
 			<section
 				id="first-party-scheduler"
+					bind:this={schedulerSection}
+					tabindex="-1"
 				class="scheduler-shell"
 				aria-label="Choose a verified opening"
 			>
@@ -247,7 +271,17 @@
 			</section>
 		</section>
 	{:else}
-<section class="booking-entry"><p>{bookingOffer.eyebrow}</p><h1>{bookingOffer.title}</h1><p>{bookingOffer.description}</p><p>Choose a 30- or 60-minute opening. Review the details before confirming your booking.</p><Button href="#first-party-scheduler">Choose a time</Button></section>
+<section class="booking-entry" aria-labelledby="booking-entry-title">
+	<div class="booking-entry__copy">
+		<p class="booking-entry__eyebrow">{bookingOffer.eyebrow}</p>
+		<h1 id="booking-entry-title">{bookingOffer.title}</h1>
+		<p class="booking-entry__description">{bookingOffer.description}</p>
+		<div class="booking-entry__action">
+			<Button href="#first-party-scheduler" onclick={chooseMeetingTime}>Choose a time</Button>
+			<p>Choose a 30- or 60-minute opening.<br />Review the details before confirming your booking.</p>
+		</div>
+	</div>
+</section>
 <div class="booking-content" class:booking-content--with-handoff={handoffSheet.state === 'ready'}>
 
 				{#if handoffSheet.state === 'ready'}
@@ -286,6 +320,8 @@
 
 				<section
 					id="first-party-scheduler"
+					bind:this={schedulerSection}
+					tabindex="-1"
 					class="scheduler-shell"
 					aria-label="Choose a verified opening"
 				>
@@ -312,11 +348,91 @@
 </div>
 
 <style>
-  .booking-entry { padding: var(--space-performance-lg) 7vw var(--space-performance-md); color: var(--color-performance-ink); }
-  .booking-entry h1 { font: var(--font-performance-medium) clamp(1.8rem, 3vw, 2.75rem)/1.15 var(--font-performance-interface); max-width: 28ch; letter-spacing: var(--tracking-performance-tight); }
-  .booking-entry p { max-width: 70ch; line-height: 1.55; }
-  .booking-content { display: grid; align-items: start; gap: var(--space-performance-md); padding: 0 7vw var(--space-performance-xl); }
-  @media (min-width: 1000px) { .booking-content--with-handoff { grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr); } }
+	.booking-entry {
+		display: grid;
+		grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+		align-items: center;
+		gap: clamp(2rem, 5vw, 5rem);
+		max-width: 85rem;
+		margin-inline: auto;
+		padding: clamp(3rem, 6vw, 5.5rem) clamp(1.25rem, 5vw, 5rem) clamp(2.5rem, 5vw, 4rem);
+		color: var(--color-performance-ink);
+	}
+
+	.booking-entry__copy { min-width: 0; }
+	.booking-entry__eyebrow {
+		margin: 0 0 1.25rem;
+		font-family: var(--font-performance-mono, monospace);
+		font-size: 0.75rem;
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--color-performance-muted);
+	}
+	.booking-entry h1 {
+		max-width: 18ch;
+		margin: 0;
+		font-family: var(--font-performance-interface);
+		font-size: clamp(2.25rem, 4vw, 3.75rem);
+		font-weight: var(--font-performance-medium, 500);
+		line-height: 1.06;
+		letter-spacing: -0.045em;
+		text-wrap: balance;
+	}
+	.booking-entry__description {
+		max-width: 49ch;
+		margin: 1.5rem 0 0;
+		font-size: clamp(1rem, 1.3vw, 1.125rem);
+		line-height: 1.65;
+		color: var(--color-performance-muted);
+	}
+	.booking-entry__action {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 1rem 1.5rem;
+		margin-top: 2rem;
+	}
+	.booking-entry__action p {
+		margin: 0;
+		font-size: 0.8125rem;
+		line-height: 1.55;
+		color: var(--color-performance-muted);
+	}
+	/* Keep the shared illustration subordinate to this live booking workspace. */
+	:global(body.design-preview[data-preview-route='/book'] .booking-entry > .agency-preview-media) {
+		grid-column: 2;
+		grid-row: 1;
+		margin: 0;
+		align-self: center;
+	}
+	:global(body.design-preview[data-preview-route='/book'] .booking-entry > .agency-preview-media img) {
+		height: auto !important;
+		max-height: 24rem;
+		object-fit: contain !important;
+	}
+	.booking-content {
+		display: grid;
+		align-items: start;
+		gap: var(--space-performance-md);
+		width: min(100%, 85rem);
+		margin-inline: auto;
+		padding: 0 clamp(1.25rem, 5vw, 5rem) var(--space-performance-xl);
+	}
+	@media (min-width: 1000px) { .booking-content--with-handoff { grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr); } }
+	@media (max-width: 800px) {
+		.booking-entry { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
+		.booking-entry h1 { max-width: 20ch; }
+		:global(body.design-preview[data-preview-route='/book'] .booking-entry > .agency-preview-media) {
+			grid-column: 1;
+			grid-row: auto;
+			max-width: 28rem;
+			justify-self: center;
+		}
+		:global(body.design-preview[data-preview-route='/book'] .booking-entry > .agency-preview-media img) {
+			max-height: 13rem;
+		}
+	}
 
 
 	.booking-page {
@@ -393,7 +509,13 @@
 		margin: 0;
 		min-width: 0;
 		width: 100%;
-		scroll-margin-top: 5rem;
+		scroll-margin-top: 7rem;
+		border-radius: var(--radius-performance-sm);
+	}
+
+	.scheduler-shell:focus {
+		outline: 2px solid var(--color-performance-focus, #a7b8ff);
+		outline-offset: 6px;
 	}
 
 	.booking-handoff {

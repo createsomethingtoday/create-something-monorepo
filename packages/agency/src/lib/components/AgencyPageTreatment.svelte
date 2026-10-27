@@ -47,7 +47,7 @@
       }
       const candidates=Array.from(document.querySelectorAll<HTMLElement>('.performance-conversion-handoff,.route-handoff,.closing,.handoff,.next-step,.closing-section,.email-section,.letter-signoff,.membership .next-steps,.scopefield-page .download,.booking-content,.map-preview' )).filter(e=>(!e.closest('footer')||e.classList.contains('letter-signoff'))&&e.querySelector('a,button'));
       const finalCTA=candidates.at(-1);
-      if(finalCTA){closing=document.createElement('section');closing.className='agency-closing-trace';closing.setAttribute('aria-label','Illustrative workflow trace');closing.innerHTML='<pre aria-hidden="true">. : + / = #     . : + / = #     . : + / = #</pre><canvas aria-hidden="true"></canvas><button type="button" hidden>Pause motion</button>';finalCTA.insertAdjacentElement('beforebegin',closing);stopTrace=mountPreviewTrace(closing);}
+      if(finalCTA && route !== '/book'){closing=document.createElement('section');closing.className='agency-closing-trace';closing.setAttribute('aria-label','Illustrative workflow trace');closing.innerHTML='<pre aria-hidden="true">. : + / = #     . : + / = #     . : + / = #</pre><canvas aria-hidden="true"></canvas><button type="button" hidden>Pause motion</button>';finalCTA.insertAdjacentElement('beforebegin',closing);stopTrace=mountPreviewTrace(closing);}
       if(!item?.image)return;
       const target=document.querySelector(item.heroSelector);if(!target)return;
       // Keep literal arrows together and prefer compound-name breaks at slashes.
