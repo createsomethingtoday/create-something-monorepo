@@ -301,4 +301,18 @@
 			padding: var(--space-performance-xl) var(--space-performance-xl);
 		}
 	}
+	/* Match UnifiedSearch's floating button visibility, including touch desktops. */
+	@media (max-width: 768px), (pointer: coarse) {
+		.doc-content {
+			/* 56px search target + bottom offset + clear space for pagination/focus. */
+			--canon-search-clearance: calc(
+				56px + var(--space-performance-lg) + var(--space-performance-md)
+			);
+			padding-bottom: var(--canon-search-clearance);
+		}
+
+		.page-navigation a {
+			scroll-margin-bottom: var(--canon-search-clearance);
+		}
+	}
 </style>
