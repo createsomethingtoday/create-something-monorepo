@@ -195,7 +195,7 @@
 		}
 		void tick().then(() => {
 			sendSchedulerContext();
-			getAnalytics()?.track('interaction', 'booking_handoff_viewed', {
+			getAnalytics()?.track('interaction', 'booking_handoff_received', {
 				metadata: {
 					surface: 'agency-booking',
 					state: handoffSheet.state,

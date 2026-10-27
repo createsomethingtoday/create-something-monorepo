@@ -180,7 +180,8 @@ test('bounded scheduler metadata is preserved without a read-only context sideba
 	});
 	assert.ok(bookRoute.includes('createBookingHandoffState'));
 	assert.equal(bookRoute.includes('Review your booking context'), false);
-	assert.ok(bookRoute.includes('booking_handoff_viewed'));
+	assert.ok(bookRoute.includes('booking_handoff_received'));
+	assert.equal(bookRoute.includes('booking_handoff_viewed'), false);
 });
 
 test('emailed management access crosses the owned page only through a stripped fragment', () => {
