@@ -36,7 +36,7 @@ Scopes in the Install URL must be **equal to or a subset of** the scopes configu
 
 Request only what your App actually calls. Each Data API endpoint documents its required scope — take the union of the endpoints you use and stop there.
 
-Table regenerated from the public scopes reference (<https://developers.webflow.com/data/reference/scopes>) on 2026-08-03 — re-check that page before relying on it, since scopes can be added.
+Table checked against the public scopes reference (<https://developers.webflow.com/data/reference/scopes>) and Webflow's scope registry on 2026-10-27 — re-check that page before relying on it, since scopes can be added.
 
 | Resource           | Scopes                                  |
 | ------------------ | --------------------------------------- |
@@ -49,12 +49,16 @@ Table regenerated from the public scopes reference (<https://developers.webflow.
 | Ecommerce          | `ecommerce:read`, `ecommerce:write`     |
 | Forms              | `forms:read`, `forms:write`             |
 | Pages              | `pages:read`, `pages:write`             |
+| Branches           | `branches:read`, `branches:create`, `branches:update`, `branches:delete`, `branches:merge`, `branches:publish` |
 | Sites              | `sites:read`, `sites:write`             |
+| Site Access        | `site_access:read`, `site_access:write` |
 | Site Activity      | `site_activity:read`                    |
+| Site Plans         | `site_plans:read`, `site_plans:write`   |
 | Site Configuration | `site_config:read`, `site_config:write` |
 | Users              | `users:read`, `users:write`             |
 | Workspace          | `workspace:read`, `workspace:write`     |
 | Workspace Activity | `workspace_activity:read`               |
+| Workspace Members  | `workspace_members:read`, `workspace_members:write` |
 | Webhooks           | Varies by trigger type                  |
 
 `authorized_user:read` is required for the **Get Authorized User** endpoint — the natural first call after a token exchange to resolve who authorized your App — so most Data Clients need it. (Authorization info requires no scope.)
@@ -64,6 +68,8 @@ Table regenerated from the public scopes reference (<https://developers.webflow.
 A `:write` scope you only read with, or an `ecommerce` scope on a non-commerce App, is exactly what a reviewer asks about. Drop it — **with one exception below.**
 
 **Keep the scopes you need to remove code while installed.** Uninstall removes the Custom Code your App applied through the API, and your App can't call the API after uninstall. If your App removes scripts while it stays installed (for example, a feature toggle), keep `custom_code:write`, plus `sites:write` or `pages:write` for scripts applied at the site or page level.
+
+**Membership scopes get a closer look.** `site_access:*` and `workspace_members:*` became generally available on 2026-10-27; their endpoints are under `/beta/`. They apply to the whole Workspace, not one site. With `:write`, an App can invite or remove Workspace members and grant or revoke site access. Request them only for a visible member-management feature, and name that feature and each endpoint it calls in the scope justification. With `:read`, the App receives member names and emails; expect the reviewer to check that your privacy policy covers that data.
 
 ## Token lifecycle — the part apps get wrong
 
