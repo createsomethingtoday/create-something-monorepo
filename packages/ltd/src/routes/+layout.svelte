@@ -5,6 +5,7 @@
 	import { onNavigate, goto, invalidateAll } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import '../app.css';
+	import { siteNavigation } from '$lib/site-navigation';
 	import '$lib/public-surface.css';
 	import '$lib/operator-public.css';
 
@@ -46,13 +47,7 @@
 		}
 	});
 
-	const navLinks = [
-		{ label: 'Playbooks', href: '/playbooks' },
-		{ label: 'Readiness', href: '/readiness' },
-		{ label: 'Canon', href: '/canon' },
-		{ label: 'Principles', href: '/principles' },
-		{ label: 'Standards', href: '/standards' }
-	];
+	const navLinks = siteNavigation;
 
 	const quickLinks = [
 		{ label: 'Playbooks', href: '/playbooks' },
