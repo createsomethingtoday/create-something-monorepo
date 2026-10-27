@@ -203,6 +203,8 @@
 	/* Desktop: always visible */
 	@media (min-width: 1024px) {
 		.sidebar {
+			top: 64px;
+			height: calc(100dvh - 64px);
 			visibility: visible;
 			transform: translateX(0);
 		}

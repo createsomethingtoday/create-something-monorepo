@@ -54,7 +54,7 @@ ${section ? `**Section**: ${section}\n` : ''}
 <section class="pt-24 pb-16 px-6 border-b border-canon">
 	<div class="max-w-3xl mx-auto">
 		<a href={category === 'Pattern' ? '/patterns' : '/canon'} class="typ-body-sm fg-muted hover:fg-tertiary transition-opacity mb-8 inline-block">
-			← All {category === 'Pattern' ? 'Patterns' : category === 'Canon' && section ? section : 'Canon'}
+			← All {category === 'Pattern' ? 'Patterns' : 'Canon'}
 		</a>
 		{#if category || section}
 			<p class="typ-body-sm tracking-widest uppercase fg-tertiary mb-4">{category || section}</p>

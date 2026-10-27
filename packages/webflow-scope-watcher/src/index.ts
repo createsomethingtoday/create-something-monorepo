@@ -134,7 +134,9 @@ async function runCheck(env: Env, opts: { dryRun: boolean; trigger: string }): P
 		change.endpoints = await lookupScopeEndpoints(env, change.scope!.constant);
 	}
 
-	const text = formatMessage(changes, commits, next.categories, env.GITHUB_REPO, env.SCOPES_PATH);
+	const text = formatMessage(changes, commits, next.categories, env.GITHUB_REPO, env.SCOPES_PATH, {
+		probeClientId: env.PROBE_CLIENT_ID,
+	});
 
 	let posted = false;
 	if (!opts.dryRun) {
@@ -246,6 +248,13 @@ export default {
 						posted: false,
 						error:
 							'login page detected — PROBE_SESSION_COOKIE is missing or expired; refresh it and retry',
+					};
+				} else if (capture.challengeDetected) {
+					// Never post a bot-challenge interstitial as if it were a consent screen.
+					posted = {
+						posted: false,
+						error:
+							'bot challenge detected — webflow.com served the "Confirm you’re not a bot" page to Browser Rendering instead of the authorize screen; the capture is not a consent screen',
 					};
 				} else {
 					const label = scopes.length > 0 ? scopes.join(', ') : 'the app’s configured scopes';

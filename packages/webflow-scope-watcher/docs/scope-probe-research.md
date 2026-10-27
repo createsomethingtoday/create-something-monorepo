@@ -99,6 +99,15 @@ plus ongoing maintenance as endpoints evolve; some scopes need product fixtures
    A cookie-based `PUT .../applications/:id` from the worker is a possible v2
    once cookie-refresh cadence is observed.
 
+4. **Consent capture — manual-from-alert since 2026-10-26.** Browser Rendering's
+   datacenter egress is served webflow.com's press-and-hold bot challenge on the
+   authorize URL, so the automated capture holds no consent screen (the worker
+   now reports `challengeDetected`). Because the scope must be added to the
+   probe app by hand anyway, the alert prints a ready-made authorize link per GA
+   scope and the human screenshots it in that same minute. Captures have been
+   needed zero times since August; rebuilding the browser leg (allowlisted
+   egress, or a non-datacenter runner) waits until that frequency changes.
+
 ## Still open
 
 - **ai:write cost/entitlement**: the LLM proxy routes may require workspace AI
