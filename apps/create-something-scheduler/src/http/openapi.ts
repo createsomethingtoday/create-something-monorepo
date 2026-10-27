@@ -94,6 +94,15 @@ export const schedulerOpenApi = {
         [{ operatorBearer: [] }]
       )
     },
+    '/api/v1/operator/conflict-projections/webflow-google-calendar/refresh': {
+      post: writeOperation(
+        'refreshWebflowBusyProjection',
+        'Refresh Webflow busy times directly from Google',
+        'ExplicitIntentInput',
+        'BusyProjectionResult',
+        [{ operatorBearer: [] }]
+      )
+    },
     '/api/v1/operator/availability-overrides': {
       get: {
         ...operation('listAvailabilityOverrides', 'List date-specific availability overrides', 'Operator-scoped bounded exceptions layered onto recurring availability.', 'AvailabilityOverrideList'),

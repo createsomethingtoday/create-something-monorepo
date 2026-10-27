@@ -51,17 +51,21 @@ Google OAuth scopes are limited to:
 
 ## Webflow conflict-projection activation
 
-The scheduler OAuth identity remains `micah@createsomething.io`. The Webflow-managed account cannot depend on cross-organization sharing, so the local EventKit producer publishes busy-only state from the exact macOS Calendar source `WEBFLOW` and calendar `micah@webflow.com`:
+The scheduler OAuth identity remains `micah@createsomething.io`. On October 27, 2026, Google Calendar allowed `micah@webflow.com` to share **See only free/busy (hide details)** with that identity. A direct free/busy read verified access. No Webflow event details or additional OAuth credentials are required.
 
-1. Run `pnpm --filter @create-something/create-something-scheduler sync:webflow-busy -- --dry-run` to verify EventKit access and the exact calendar match without making a network request. The producer projects event data immediately to opaque `{ start, end }` intervals; it never reads titles, attendees, descriptions, locations, or private Calendar URLs into the output or Worker payload.
-2. Send the complete replacement projection to `PUT /api/v1/operator/conflict-projections/webflow-google-calendar` with operator authorization and `explicitIntent: true`. The payload must include `source`, `rangeStart`, `rangeEnd`, `observedAt`, `expiresAt`, and `intervals`.
-3. Keep `expiresAt` no more than 90 minutes after `observedAt`. Production cadence is 15 minutes, so a missed run has bounded grace while repeated failures quickly fail closed.
-4. Cover at least the next 28 days. Operator status must report `webflowProjectionFresh: true` and `webflowProjectionHorizonCovered: true` before `/ready` can pass.
-5. Confirm a real Webflow busy interval is absent from Browser, API, and MCP availability while a neighboring open interval remains. Record only timestamps and receipt IDs in CRE-1376.
+The production Worker runs `*/15 * * * *` in UTC. Its scheduled handler calls the host Durable Object, which uses the existing encrypted OAuth credential and `GoogleCalendarPort` to query only `micah@webflow.com`. Successful refreshes publish a 42-day, busy-only projection with a 45-minute TTL through the existing projection validator. Provider errors do not overwrite or extend the previous projection; failed scheduled events surface in Cloudflare observability.
 
-The production sync command is `infisical run --env=prod --path=/ --include-imports=true -- pnpm --filter @create-something/create-something-scheduler sync:webflow-busy`. The script reads the scoped `SCHEDULER_OPERATOR_API_TOKEN` injected at runtime; never place it in the repository, automation prompt, arguments, or logs. The committed defaults intentionally bind to one source/calendar pair and abort if the match is missing or ambiguous.
+Verification:
 
-The recurring job is an ingestion producer, not a runtime dependency. If it stops, the projection expires, `/ready` returns unavailable, and public availability exposes no bookable slots. Restore the job and publish a fresh full replacement; do not extend expiry or disable the projection requirement to make readiness green.
+1. Keep the local producer running during migration.
+2. Read operator status: `webflowCloudRefresh` records the last cloud attempt, trigger (`cron` or `operator`), outcome, receipt, coverage, and expiry without intervals or event metadata.
+3. An operator can invoke `POST /api/v1/operator/conflict-projections/webflow-google-calendar/refresh` with bearer authorization and JSON `{"explicitIntent":true}` to test cloud access. An operator-triggered success is not proof of the cron trigger.
+4. Require a successful `trigger: cron` receipt, advancing `observedAt`, and `ready`, `webflowProjectionFresh`, and `webflowProjectionHorizonCovered` all true. Check public availability excludes a known busy interval and includes a neighboring open interval before retiring the local trigger.
+5. Only after that proof, unload the local LaunchAgent `com.createsomething.scheduler.webflow-busy-sync`. Preserve its wrapper and plist for rollback.
+
+Local fallback remains `apps/create-something-scheduler/scripts/sync-webflow-busy-projection.swift`, bound to EventKit source `WEBFLOW` / calendar `micah@webflow.com`. Runtime credentials come from Infisical. The local producer and cloud producer both publish opaque intervals through the same validator. Do not extend the TTL or disable the projection requirement to hide a refresh failure.
+
+Rollback: bootstrap the preserved local LaunchAgent and require an accepted projection and green readiness before rolling back the cloud deployment or removing its cron. Removing the free/busy share revokes cloud access; failures then retain the last projection only until its original expiry.
 
 ## Approval gates
 

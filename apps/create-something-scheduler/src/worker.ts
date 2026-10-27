@@ -328,6 +328,33 @@ export class SchedulerDurableObject extends DurableObject<Env> {
     };
   }
 
+  async refreshWebflowBusyProjection(trigger: 'cron' | 'operator' = 'cron') {
+    const observedAt = Temporal.Instant.from(clock.now());
+    const rangeStart = observedAt.subtract({ hours: 24 }).toString();
+    const rangeEnd = observedAt.add({ hours: 42 * 24 }).toString();
+    const port = new GoogleCalendarPort({
+      selectedCalendarIds: ['micah@webflow.com'],
+      eventCalendarId: this.calendarConfiguration().eventCalendarId,
+      accessTokens: this.oauthClient(),
+      fetch: (input, init) => fetch(input, { ...init, signal: AbortSignal.timeout(20_000) })
+    });
+    const result = await port.listBusyIntervals({ from: rangeStart, to: rangeEnd });
+    const receipt = result.status === 'unavailable'
+      ? { status: 'retryable' as const, reason: result.reason }
+      : await this.upsertWebflowBusyProjection({
+          source: 'webflow-google-calendar',
+          rangeStart,
+          rangeEnd,
+          observedAt: observedAt.toString(),
+          expiresAt: observedAt.add({ minutes: 45 }).toString(),
+          intervals: result.intervals,
+          explicitIntent: true
+        });
+    const run = { ...receipt, trigger, attemptedAt: observedAt.toString() };
+    this.ctx.storage.kv.put('projection:webflow-cloud-refresh', run);
+    return run;
+  }
+
   async createGoogleAuthorizationRequest() {
     return this.oauthClient().createAuthorizationRequest();
   }
@@ -510,6 +537,7 @@ export class SchedulerDurableObject extends DurableObject<Env> {
       configuration,
       oauthConnected,
       calendarDiscovered,
+      webflowCloudRefresh: this.ctx.storage.kv.get('projection:webflow-cloud-refresh') ?? null,
       webflowProjectionFresh: projectionFresh,
       webflowProjectionHorizonCovered: projectionHorizonCovered,
       webflowProjectionObservedAt: projection?.observedAt ?? null,
@@ -550,6 +578,11 @@ export class SchedulerDurableObject extends DurableObject<Env> {
 }
 
 export default {
+  async scheduled(_controller: ScheduledController, env: Env): Promise<void> {
+    const result = await env.SCHEDULER.getByName(HOST_OBJECT_NAME).refreshWebflowBusyProjection('cron');
+    console.log(JSON.stringify({ event: 'webflow_cloud_refresh', ...result }));
+    if (result.status !== 'accepted') throw new Error('webflow_cloud_refresh_failed');
+  },
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     if (
@@ -641,6 +674,16 @@ export default {
     if (request.method === 'GET' && url.pathname === '/api/v1/operator/status') {
       if (!isOperator(request, env)) return unauthorized('operator_scope_required');
       return json(await stub.getRuntimeStatus(), 200);
+    }
+    if (request.method === 'POST' && url.pathname === '/api/v1/operator/conflict-projections/webflow-google-calendar/refresh') {
+      if (!isOperator(request, env)) return unauthorized('operator_scope_required');
+      let input: unknown;
+      try { input = await request.json(); } catch { return json({ status: 'rejected', reason: 'invalid_json' }, 400); }
+      if (!z.object({ explicitIntent: z.literal(true) }).strict().safeParse(input).success) {
+        return json({ status: 'operator_required', reason: 'explicit_intent_required' }, 428);
+      }
+      const result = await stub.refreshWebflowBusyProjection('operator');
+      return json(result, result.status === 'accepted' ? 200 : 503);
     }
     if (request.method === 'POST' && url.pathname === '/api/v1/operator/calendars/discover') {
       if (!isOperator(request, env)) return unauthorized('operator_scope_required');
