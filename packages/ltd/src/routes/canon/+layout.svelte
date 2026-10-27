@@ -4,8 +4,9 @@
 	import DocSidebar from '$lib/canon/DocSidebar.svelte';
 	import { onMount, tick } from 'svelte';
 	import { page } from '$app/stores';
+	import { goto, invalidateAll } from '$app/navigation';
 
-	let { children } = $props();
+	let { children, data } = $props();
 
 	let mobileMenuOpen = $state(false);
 	let siteMenu = $state<HTMLDetailsElement>();
@@ -21,6 +22,12 @@
 	);
 	const previous = $derived(index > 0 ? ordered[index - 1] : null);
 	const next = $derived(index >= 0 ? ordered[index + 1] : null);
+
+	async function handleLogout() {
+		await fetch('/api/auth/logout', { method: 'POST' });
+		await invalidateAll();
+		goto('/');
+	}
 
 	function closeSiteMenu(event: KeyboardEvent) {
 		if (event.key === 'Escape' && siteMenu?.open) {
@@ -87,7 +94,12 @@
 						>{link.label}</a
 					>
 				{/each}
-				<a href="/login">Sign in</a>
+				{#if data.user}
+					<a href="/account">Account</a>
+					<button type="button" onclick={handleLogout}>Sign out</button>
+				{:else}
+					<a href="/login">Sign in</a>
+				{/if}
 			</nav>
 		</details>
 	</header>
@@ -172,8 +184,17 @@
 		border: 1px solid var(--color-performance-line);
 		background: var(--color-performance-panel);
 	}
-	.site-menu a {
+	.site-menu a,
+	.site-menu button {
 		padding: var(--space-performance-xs);
+	}
+	.site-menu button {
+		background: transparent;
+		border: 0;
+		color: inherit;
+		font: inherit;
+		text-align: left;
+		cursor: pointer;
 	}
 	.site-menu a[aria-current] {
 		text-decoration: underline;
