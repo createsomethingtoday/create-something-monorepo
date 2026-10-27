@@ -35,7 +35,7 @@ describe('cloud Webflow refresh', () => {
     await worker.scheduled({} as ScheduledController, env);
     await runInDurableObject(stub, async (_instance, state) => {
       const projection = state.storage.kv.get<any>('projection:webflow-google-calendar');
-      expect(projection.intervals).toEqual([{ start, end }]);
+      expect(projection.intervals.map((interval: { start: string; end: string }) => ({ start: Date.parse(interval.start), end: Date.parse(interval.end) }))).toEqual([{ start: Date.parse(start), end: Date.parse(end) }]);
       expect(JSON.stringify(projection)).not.toContain('discarded');
       expect(Date.parse(projection.expiresAt) - Date.parse(projection.observedAt)).toBe(45 * 60_000);
       expect(Date.parse(projection.rangeEnd) - Date.parse(projection.observedAt)).toBe(42 * 86400_000);
