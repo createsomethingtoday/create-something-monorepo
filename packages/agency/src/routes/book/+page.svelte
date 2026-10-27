@@ -282,41 +282,7 @@
 		</div>
 	</div>
 </section>
-<div class="booking-content" class:booking-content--with-handoff={handoffSheet.state === 'ready'}>
-
-				{#if handoffSheet.state === 'ready'}
-				<section
-					class="booking-handoff"
-					data-booking-handoff-state={handoffSheet.state}
-					aria-labelledby="booking-handoff-title"
-				>
-					<div class="booking-handoff__heading">
-						<span>Booking context</span>
-						<h2 id="booking-handoff-title">Review your booking context</h2>
-						<p>{handoffSheet.summary}</p>
-					</div>
-
-					<dl class="booking-handoff__fields">
-						{#each handoffSheet.fields as field}
-							<div>
-								<dt>{field.label}</dt>
-								<dd>{field.value}</dd>
-							</div>
-						{/each}
-						{#if handoffSheet.warmupNotes}
-							<div class="booking-handoff__notes">
-								<dt>Private draft notes</dt>
-								<dd>{handoffSheet.warmupNotes}</dd>
-							</div>
-						{/if}
-					</dl>
-
-					<p class="booking-handoff__privacy">
-						This context is sent to the scheduler below. Choose a time to continue. Do not add credentials, client
-						secrets, or private records.
-					</p>
-				</section>
-				{/if}
+<div class="booking-content">
 
 				<section
 					id="first-party-scheduler"
@@ -419,7 +385,6 @@
 		margin-inline: auto;
 		padding: 0 clamp(1.25rem, 5vw, 5rem) var(--space-performance-xl);
 	}
-	@media (min-width: 1000px) { .booking-content--with-handoff { grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr); } }
 	@media (max-width: 800px) {
 		.booking-entry { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
 		.booking-entry h1 { max-width: 20ch; }
@@ -518,96 +483,6 @@
 		outline-offset: 6px;
 	}
 
-	.booking-handoff {
-		position: relative;
-		display: grid;
-		gap: 1rem;
-		margin-bottom: 1rem;
-		padding: 1.15rem;
-		border: 1px solid var(--color-performance-line-strong, #9c9c96);
-		background:
-			linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 3rem 3rem,
-			var(--color-performance-paper, #f3f3f0);
-		color: var(--color-performance-ink, #090909);
-	}
-
-	.booking-handoff::before {
-		position: absolute;
-		top: -1px;
-		right: 1.15rem;
-		width: 4.6rem;
-		height: 0.28rem;
-		background: var(--color-performance-signal, #0057b8);
-		content: '';
-	}
-
-	.booking-handoff__heading {
-		display: grid;
-		gap: 0.35rem;
-	}
-
-	.booking-handoff__heading > span,
-	.booking-handoff dt {
-		font-family: var(--font-performance-mono, monospace);
-		font-size: 0.72rem;
-		font-weight: 700;
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
-	}
-
-	.booking-handoff__heading > span {
-		color: var(--color-performance-signal, #0057b8);
-	}
-
-	.booking-handoff h2,
-	.booking-handoff p,
-	.booking-handoff dd {
-		margin: 0;
-	}
-
-	.booking-handoff h2 {
-		font-size: clamp(1.3rem, 2vw, 1.7rem);
-		font-weight: var(--font-performance-medium, 500);
-		line-height: 1.08;
-	}
-
-	.booking-handoff__heading p,
-	.booking-handoff__privacy {
-		color: var(--color-performance-muted, #5e6268);
-		font-size: 0.9rem;
-		line-height: 1.5;
-	}
-
-	.booking-handoff__fields {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 0.65rem;
-		margin: 0;
-	}
-
-	.booking-handoff__fields > div {
-		min-width: 0;
-		padding: 0.75rem;
-		border: 1px solid var(--color-performance-line, #d7d7d2);
-		background: var(--color-performance-panel, #ffffff);
-	}
-
-	.booking-handoff dd {
-		margin-top: 0.28rem;
-		font-size: 0.95rem;
-		line-height: 1.4;
-		overflow-wrap: anywhere;
-	}
-
-	.booking-handoff__notes {
-		grid-column: 1 / -1;
-	}
-
-	.booking-handoff__privacy {
-		padding-top: 0.8rem;
-		border-top: 1px solid var(--color-performance-line, #d7d7d2);
-	}
-
 	iframe {
 		display: block;
 		width: 100%;
@@ -640,9 +515,6 @@
 		.agent-booking > .scheduler-shell {
 			grid-column: 1;
 			grid-row: auto;
-		}
-		.booking-handoff__fields {
-			grid-template-columns: 1fr;
 		}
 
 		iframe {

@@ -271,7 +271,7 @@ test('booking carries the Field Report handoff into the owned mapping scheduler'
   assert.match(book, /Choose a 30- or 60-minute opening/);
   assert.match(book, /first-party scheduler/);
   assert.match(book, /createBookingHandoffState/);
-  assert.match(book, /Review your booking context/);
+  assert.doesNotMatch(book, /Review your booking context/);
 });
 
 test('homepage links to evidence while Services retains the qualified readback', () => {
