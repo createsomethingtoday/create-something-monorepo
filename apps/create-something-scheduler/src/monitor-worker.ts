@@ -60,9 +60,10 @@ export class SyncMonitor extends DurableObject<SyncMonitorEnv> {
   async check(trigger: 'cron' | 'operator' = 'cron') {
     return this.serialized(async () => {
       let incident = this.ctx.storage.kv.get<Incident>(incidentKey);
+      let pendingDelivered = true;
       if (incident) {
         const pending = incident.recovery ?? incident.alert;
-        if (!await this.deliver(pending, () => this.ctx.storage.kv.put(incidentKey, incident))) return this.deliveryFailure(trigger);
+        pendingDelivered = await this.deliver(pending, () => this.ctx.storage.kv.put(incidentKey, incident));
         if (incident.recovery?.messageId) {
           this.ctx.storage.kv.put('sync-monitor:last-incident', incident);
           this.ctx.storage.kv.delete(incidentKey);
@@ -83,6 +84,7 @@ export class SyncMonitor extends DurableObject<SyncMonitorEnv> {
       const checkedAt = new Date().toISOString();
       const check = { ...health, checkedAt, trigger } satisfies Check;
       this.ctx.storage.kv.put(lastCheckKey, check);
+      if (!pendingDelivered) return { ...check, alertOpen: true, notificationDelivered: false };
       if (!health.healthy && !incident) {
         const id = crypto.randomUUID();
         incident = {
@@ -131,12 +133,43 @@ export class SyncMonitor extends DurableObject<SyncMonitorEnv> {
     });
   }
 
+  async reconcile(input: {
+    idempotencyKey: string; outcome: 'delivered' | 'not_delivered'; reason: string; messageId?: string;
+  }) {
+    return this.serialized(async () => {
+      if (input.outcome === 'delivered' && !input.messageId) return { status: 'rejected' as const, reason: 'provider_message_id_required' };
+      const previous = this.ctx.storage.kv.get<{ idempotencyKey: string; outcome: string }>('sync-monitor:last-reconciliation');
+      const incident = this.ctx.storage.kv.get<Incident>(incidentKey);
+      const pending = incident?.recovery ?? incident?.alert;
+      if (!incident || !pending || pending.idempotencyKey !== input.idempotencyKey || pending.messageId) {
+        if (previous?.idempotencyKey === input.idempotencyKey && previous.outcome === input.outcome) {
+          return { status: 'accepted' as const, ...previous };
+        }
+        return { status: 'rejected' as const, reason: 'pending_delivery_changed' };
+      }
+      const receipt = { ...input, reconciledAt: new Date().toISOString() };
+      this.ctx.storage.transactionSync(() => {
+        if (input.outcome === 'delivered' && input.messageId) {
+          pending.messageId = input.messageId;
+          this.ctx.storage.kv.put(incidentKey, incident);
+        } else {
+          this.ctx.storage.kv.put('sync-monitor:last-incident', { ...incident, reconciliation: receipt });
+          this.ctx.storage.kv.delete(incidentKey);
+        }
+        this.ctx.storage.kv.put('sync-monitor:last-reconciliation', receipt);
+        this.ctx.storage.kv.put('sync-monitor:last-delivery', { status: 'reconciled', ...receipt });
+      });
+      return { status: 'accepted' as const, ...receipt };
+    });
+  }
+
   status() {
     return {
       lastCheck: this.ctx.storage.kv.get<Check>(lastCheckKey) ?? null,
       incidentOpen: Boolean(this.ctx.storage.kv.get(incidentKey)),
       lastTest: this.ctx.storage.kv.get('sync-monitor:last-test') ?? null,
-      lastDelivery: this.ctx.storage.kv.get('sync-monitor:last-delivery') ?? null
+      lastDelivery: this.ctx.storage.kv.get('sync-monitor:last-delivery') ?? null,
+      lastReconciliation: this.ctx.storage.kv.get('sync-monitor:last-reconciliation') ?? null
     };
   }
 }
@@ -154,6 +187,20 @@ export default {
     const path = new URL(request.url).pathname;
     const monitor = env.MONITOR.getByName('scheduler-sync');
     if (request.method === 'GET' && path === '/status') return Response.json(await monitor.status());
+    if (request.method === 'POST' && path === '/reconcile') {
+      let body: unknown;
+      try { body = await request.json(); } catch { return Response.json({ error: 'invalid_json' }, { status: 400 }); }
+      const parsed = z.object({
+        explicitIntent: z.literal(true), idempotencyKey: z.string().min(1).max(256),
+        outcome: z.enum(['delivered', 'not_delivered']), reason: z.string().min(1).max(500),
+        messageId: z.string().min(1).max(200).optional()
+      }).strict().safeParse(body);
+      if (!parsed.success || (parsed.data.outcome === 'delivered' && !parsed.data.messageId)) {
+        return Response.json({ error: 'reconciliation_evidence_required' }, { status: 400 });
+      }
+      const result = await monitor.reconcile(parsed.data);
+      return Response.json(result, { status: result.status === 'accepted' ? 200 : 409 });
+    }
     if (request.method === 'POST' && (path === '/check' || path === '/test')) {
       let body: unknown;
       try { body = await request.json(); } catch { return Response.json({ error: 'invalid_json' }, { status: 400 }); }

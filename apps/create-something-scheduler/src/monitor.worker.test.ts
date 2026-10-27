@@ -73,10 +73,55 @@ describe('independent cloud sync monitor', () => {
         idempotencyKey: 'old-warning', to: 'controlled@example.com', subject: 'old', text: 'old', createdAt: '2020-01-01T00:00:00Z'
       } });
     });
-    const send = vi.spyOn(globalThis, 'fetch');
-    expect(await stub.check()).toMatchObject({ notificationDelivered: false });
+    const send = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => Response.json(healthy()));
+    expect(await stub.check()).toMatchObject({ notificationDelivered: false, healthy: true });
     expect((await stub.status()).lastDelivery).toMatchObject({ status: 'reconciliation_required' });
-    expect(send).not.toHaveBeenCalled();
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(String(send.mock.calls[0]?.[0])).toContain('/operator/status');
+  });
+
+  it('requires matching evidence to reconcile a pending send and resumes warning delivery', async () => {
+    let first = true;
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      if (String(input).includes('/operator/status')) return Response.json(failed());
+      if (first) { first = false; throw new Error('unknown send outcome'); }
+      return Response.json({ id: 'new-alert' });
+    });
+    const stub = env.MONITOR.getByName('scheduler-sync');
+    await stub.check();
+    const pending = (await stub.status()).lastDelivery as { idempotencyKey: string };
+    const request = (body: unknown) => SELF.fetch('https://monitor.local/reconcile', { method: 'POST', headers, body: JSON.stringify(body) });
+    expect((await request({ explicitIntent: true, idempotencyKey: 'stale-key', outcome: 'not_delivered', reason: 'verified in provider' })).status).toBe(409);
+    expect((await request({ explicitIntent: true, idempotencyKey: pending.idempotencyKey, outcome: 'delivered', reason: 'missing receipt' })).status).toBe(400);
+    const evidence = { explicitIntent: true, idempotencyKey: pending.idempotencyKey, outcome: 'not_delivered', reason: 'provider confirms request was not accepted' };
+    expect((await request(evidence)).status).toBe(200);
+    expect((await request(evidence)).status).toBe(200);
+    expect((await stub.status()).incidentOpen).toBe(false);
+    expect(await stub.check()).toMatchObject({ notificationDelivered: true, healthy: false });
+  });
+
+  it('records confirmed delivery without repeating the warning, then sends recovery', async () => {
+    let current: unknown = failed();
+    const subjects: string[] = [];
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+      if (String(input).includes('/operator/status')) return Response.json(current);
+      subjects.push(JSON.parse(String(init?.body)).subject);
+      if (subjects.length === 1) throw new Error('response lost after provider accepted');
+      return Response.json({ id: 'recovery-after-reconciliation' });
+    });
+    const stub = env.MONITOR.getByName('scheduler-sync');
+    await stub.check();
+    const pending = (await stub.status()).lastDelivery as { idempotencyKey: string };
+    const response = await SELF.fetch('https://monitor.local/reconcile', { method: 'POST', headers, body: JSON.stringify({
+      explicitIntent: true, idempotencyKey: pending.idempotencyKey, outcome: 'delivered',
+      reason: 'provider delivery receipt checked', messageId: 'provider-confirmed-warning'
+    }) });
+    expect(response.status).toBe(200);
+    current = healthy();
+    await stub.check();
+    expect(subjects).toHaveLength(2);
+    expect(subjects[1]).toContain('Recovered');
+    expect((await stub.status()).incidentOpen).toBe(false);
   });
 
   it('authenticates test delivery, requires intent, and sends an explicitly labelled test only once', async () => {

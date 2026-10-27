@@ -10,8 +10,32 @@
     "RESEND_FROM": "CREATE SOMETHING <noreply@createsomething.io>",
     "SCHEDULER_STATUS_URL": "https://create-something-scheduler.createsomething.workers.dev/api/v1/operator/status"
   },
-  "durable_objects": { "bindings": [{ "name": "MONITOR", "class_name": "SyncMonitor" }] },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["SyncMonitor"] }],
-  "triggers": { "crons": ["*/5 * * * *"] },
-  "observability": { "enabled": true, "head_sampling_rate": 1 }
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "MONITOR",
+        "class_name": "SyncMonitor"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "SyncMonitor"
+      ]
+    }
+  ],
+  "triggers": {
+    "crons": [
+      "*/5 * * * *"
+    ]
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "compatibility_flags": [
+    "global_fetch_strictly_public"
+  ]
 }
