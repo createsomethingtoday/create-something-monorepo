@@ -97,4 +97,5 @@ test('maps a URL hash to a section or to the section holding a rule', () => {
   assert.equal(sectionForHash(DOC, '#required-pages-03'), 'required-pages');
   assert.equal(sectionForHash(DOC, '#missing'), null);
   assert.equal(sectionForHash(DOC, ''), null);
+  assert.equal(sectionForHash(DOC, '#100%'), null);
 });

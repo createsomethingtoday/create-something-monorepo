@@ -107,9 +107,18 @@ export function blockInnerHtml(block: GuidelineBlock): string {
     .replace(/<\/(p|blockquote)>$/i, '');
 }
 
+/** The URL fragment as an id; a malformed escape (e.g. "#100%") reads as no id. */
+export function hashId(hash: string): string {
+  try {
+    return decodeURIComponent(hash.replace(/^#/, ''));
+  } catch {
+    return '';
+  }
+}
+
 /** Section to open for a URL hash: a section id, or the section holding a block id. */
 export function sectionForHash(doc: GuidelinesDocument, hash: string): string | null {
-  const id = decodeURIComponent(hash.replace(/^#/, ''));
+  const id = hashId(hash);
   if (!id) return null;
   const direct = doc.sections.find((s) => s.id === id);
   if (direct) return direct.id;

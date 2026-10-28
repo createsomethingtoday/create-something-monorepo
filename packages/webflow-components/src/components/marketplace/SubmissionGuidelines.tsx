@@ -4,6 +4,7 @@ import {
   blockInnerHtml,
   fetchGuidelines,
   groupGuidelineBlocks,
+  hashId,
   listItemInnerHtml,
   sanitizeGuidelineHtml,
   sectionForHash,
@@ -158,7 +159,7 @@ export function SubmissionGuidelines({
   // A link to a single rule (#required-pages-08) opens its section, then scrolls to it.
   useEffect(() => {
     if (!doc || !syncUrlHash || typeof window === 'undefined') return;
-    const target = decodeURIComponent(window.location.hash.replace(/^#/, ''));
+    const target = hashId(window.location.hash);
     if (!target || doc.sections.some((s) => s.id === target)) return;
     window.requestAnimationFrame(() => document.getElementById(target)?.scrollIntoView({ block: 'start' }));
   }, [doc, syncUrlHash]);
