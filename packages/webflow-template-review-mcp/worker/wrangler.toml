@@ -20,6 +20,8 @@ CS_IDENTITY_ISSUER = "https://id.createsomething.space"
 OAUTH_ALLOWED_EMAIL_DOMAIN = "webflow.com"
 OAUTH_ALLOWED_EMAILS = "natalia.ledford@webflow.com,eric.unger@webflow.com,vicki.chen@webflow.com,mariana.segura@webflow.com,micah@webflow.com,micah@createsomething.io"
 REVIEWER_AUTH_EMAIL_ALIASES_JSON = '{"acct_wf_micah":["micah@createsomething.io"]}'
+# Featured-batch finalization grant (template_review_set_featured_flag), merged over the directory.
+FEATURED_COORDINATOR_ACCOUNT_IDS = "acct_wf_micah"
 CF_ACCESS_TEAM_DOMAIN = "https://webflow.cloudflareaccess.com"
 CF_ACCESS_AUD = "3b4a38c7c99ec7127bcbb99d9c8aae7b0011a51370bff31b7085385e1a2807ba"
 WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL = "https://validation-worker.createsomething.workers.dev/validate"
@@ -72,6 +74,8 @@ CS_IDENTITY_ISSUER = "https://id.createsomething.space"
 OAUTH_ALLOWED_EMAIL_DOMAIN = "webflow.com"
 OAUTH_ALLOWED_EMAILS = "micah@webflow.com,micah@createsomething.io"
 REVIEWER_AUTH_EMAIL_ALIASES_JSON = '{"acct_wf_micah":["micah@createsomething.io"]}'
+# Featured-batch finalization grant (template_review_set_featured_flag), merged over the directory.
+FEATURED_COORDINATOR_ACCOUNT_IDS = "acct_wf_micah"
 CF_ACCESS_TEAM_DOMAIN = ""
 CF_ACCESS_AUD = ""
 WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL = "https://validation-worker.createsomething.workers.dev/validate"

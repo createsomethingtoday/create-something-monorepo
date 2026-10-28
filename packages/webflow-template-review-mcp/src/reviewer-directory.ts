@@ -95,6 +95,25 @@ export function applyReviewerAuthEmailAliases(directory: ReviewerDirectory, raw?
   return withAliases;
 }
 
+/**
+ * Grants featuredCoordinator from a non-secret, comma-separated list of
+ * reviewer account ids, so the grant can change without re-uploading the
+ * whole REVIEWER_DIRECTORY_JSON secret. Only existing directory entries can
+ * be granted; unknown ids are ignored.
+ */
+export function applyFeaturedCoordinators(directory: ReviewerDirectory, raw?: string | null): ReviewerDirectory {
+  const accountIds = (raw ?? '').split(',').map((entry) => entry.trim()).filter(Boolean);
+  if (accountIds.length === 0) return directory;
+
+  const withCoordinators = new Map(directory);
+  for (const accountId of accountIds) {
+    const profile = directory.get(accountId);
+    if (!profile) continue;
+    withCoordinators.set(accountId, { ...profile, featuredCoordinator: true });
+  }
+  return withCoordinators;
+}
+
 export function getReviewerProfileForAccount(directory: ReviewerDirectory, accountId?: string | null): ReviewerProfile | null {
   if (!accountId) return null;
   return directory.get(accountId) ?? null;
