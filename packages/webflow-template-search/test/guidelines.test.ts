@@ -127,6 +127,26 @@ describe('GET /api/templates/guidelines', () => {
     }
   });
 
+  it('reads the CMS with CMS_READ_ONLY when credentials are split', async () => {
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'assets-only';
+    env.CMS_READ_ONLY = 'cms-read';
+    const auth: string[] = [];
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      auth.push(new Headers(init?.headers).get('Authorization') ?? '');
+      const url = String(input);
+      if (url.endsWith(`/collections/${GUIDELINES_COLLECTION_ID}`)) return Response.json(SCHEMA);
+      return Response.json({ items: ITEMS, pagination: { limit: 100, offset: 0, total: ITEMS.length } });
+    }));
+    try {
+      const response = await callWorker(new Request('https://worker.test/api/templates/guidelines'), env);
+      expect(response.status).toBe(200);
+      expect(new Set(auth)).toEqual(new Set(['Bearer cms-read']));
+    } finally {
+      close();
+    }
+  });
+
   it('filters to one section', async () => {
     const { env, close } = createTestEnv();
     env.WEBFLOW_API_TOKEN = 'wf-token';

@@ -188,6 +188,11 @@ async function fetchJson<T>(url: string, token: string): Promise<T> {
   return (await response.json()) as T;
 }
 
+// The CMS read-only token when the deployment splits credentials (WEBFLOW_API_TOKEN may be assets-only).
+function cmsToken(env: Env): string | undefined {
+  return env.CMS_READ_ONLY?.trim() || env.WEBFLOW_API_TOKEN?.trim() || undefined;
+}
+
 function collectionBase(env: Env): string {
   return `https://api.webflow.com/v2/collections/${env.WEBFLOW_GUIDELINES_COLLECTION_ID || GUIDELINES_COLLECTION_ID}`;
 }
@@ -196,7 +201,7 @@ function collectionBase(env: Env): string {
 async function fetchLiveMarker(env: Env): Promise<string> {
   const page = await fetchJson<{ items: CmsItem[]; pagination: { total: number } }>(
     `${collectionBase(env)}/items/live?limit=1&sortBy=lastPublished&sortOrder=desc`,
-    env.WEBFLOW_API_TOKEN as string,
+    cmsToken(env) as string,
   );
   return `${page.pagination.total}:${page.items[0]?.lastPublished ?? ''}`;
 }
@@ -205,16 +210,17 @@ export async function fetchGuidelinesDocument(
   env: Env,
   source: GuidelinesSource,
 ): Promise<{ doc: GuidelinesDocument; marker: string }> {
-  if (!env.WEBFLOW_API_TOKEN) throw new Error('WEBFLOW_API_TOKEN is not configured');
+  const token = cmsToken(env);
+  if (!token) throw new Error('CMS_READ_ONLY or WEBFLOW_API_TOKEN is not configured');
   const base = collectionBase(env);
-  const schema = await fetchJson<CollectionSchema>(base, env.WEBFLOW_API_TOKEN);
+  const schema = await fetchJson<CollectionSchema>(base, token);
 
   const items: CmsItem[] = [];
   let total = 0;
   for (let offset = 0; ; offset += 100) {
     const page = await fetchJson<{ items: CmsItem[]; pagination: { total: number } }>(
       `${base}/items${source === 'live' ? '/live' : ''}?limit=100&offset=${offset}`,
-      env.WEBFLOW_API_TOKEN,
+      token,
     );
     items.push(...page.items);
     total = page.pagination.total;
