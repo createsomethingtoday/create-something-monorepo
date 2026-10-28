@@ -953,13 +953,12 @@ function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
 		const pageName = getPageNameFromUrl(page.url);
 		const seo = page.seo;
 
-		// The submission guidelines list noindex on Licenses and Changelog as
-		// optional, but reviewers request it, so this stays a warning.
+		// The submission guidelines require noindex on the Licenses and Changelog pages.
 		if (isNoindexUtilityPage(page.url) && !hasNoindexDirective(seo.robots)) {
 			seoIssues.push({
 				id: `utility-page-indexable-${generatePageId(page.url)}`,
 				category: 'Content & Accessibility',
-				severity: 'warning',
+				severity: 'error',
 				message: `"${pageName}" can be indexed by search engines`,
 				description: 'Licenses and Changelog pages should not show in search results for the template.',
 				howToFix: 'Add <meta name="robots" content="noindex"> to the page\'s custom code (Page settings → Custom code → Inside <head> tag)',

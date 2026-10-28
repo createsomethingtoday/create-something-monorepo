@@ -1194,7 +1194,7 @@ describe('Content Validator', () => {
 		expect(shortIssues[0].details?.recommendedLength).toBe('150-160 characters');
 	});
 
-	it('warns when the Licenses or Changelog page has no robots noindex', () => {
+	it('requires robots noindex on the Licenses and Changelog pages', () => {
 		const pageWithRobots = (path: string, robots: string | null) => ({
 			url: `https://example.com${path}`,
 			title: path,
@@ -1239,7 +1239,7 @@ describe('Content Validator', () => {
 			'https://example.com/utility/changelog',
 			'https://example.com/archive/license'
 		]);
-		expect(indexable.every(i => i.severity === 'warning')).toBe(true);
+		expect(indexable.every(i => i.severity === 'error')).toBe(true);
 		expect(indexable[1].details?.currentRobots).toBe('index, follow');
 	});
 
@@ -1272,6 +1272,42 @@ describe('Content Validator', () => {
 
 		expect(result.pages[0].seo.robots).toBe('noindex');
 		expect(result.issues.some(i => i.id.startsWith('utility-page-indexable'))).toBe(false);
+	});
+
+	it.each([
+		['unquoted attributes', '<meta name=robots content=noindex>', 'noindex'],
+		['spaces around =', '<meta name = "robots" content = "noindex, follow">', 'noindex, follow']
+	])('accepts a robots noindex tag with %s', async (_label, tag, robots) => {
+		const { parseHTML: realParseHTML } = await vi.importActual<typeof import('../src/utils/fetch-utils')>('../src/utils/fetch-utils');
+		vi.mocked(parseHTML).mockReturnValue(realParseHTML(`<!doctype html><html><head><title>Licenses</title>
+			${tag}
+		</head><body><main><h1>Licenses</h1></main></body></html>`));
+
+		const result = await validateContent('https://example.com', undefined, {
+			pageScope: 'current',
+			currentPageSlug: '/licenses'
+		} as any);
+
+		expect(result.pages[0].seo.robots).toBe(robots);
+		expect(result.issues.some(i => i.id.startsWith('utility-page-indexable'))).toBe(false);
+	});
+
+	it('ignores robots tags that crawlers do not apply', async () => {
+		const { parseHTML: realParseHTML } = await vi.importActual<typeof import('../src/utils/fetch-utils')>('../src/utils/fetch-utils');
+		vi.mocked(parseHTML).mockReturnValue(realParseHTML(`<!doctype html><html><head><title>Changelog</title>
+			<!-- <meta name="robots" content="noindex"> -->
+			<meta data-name="robots" content="noindex">
+			<script>document.head.insertAdjacentHTML('beforeend', '<meta name="robots" content="noindex">');</script>
+			<template><meta name="robots" content="noindex"></template>
+		</head><body><main><h1>Changelog</h1></main></body></html>`));
+
+		const result = await validateContent('https://example.com', undefined, {
+			pageScope: 'current',
+			currentPageSlug: '/changelog'
+		} as any);
+
+		expect(result.pages[0].seo.robots).toBeNull();
+		expect(result.issues.find(i => i.id.startsWith('utility-page-indexable'))?.severity).toBe('error');
 	});
 
 	it('can run only the lorem/placeholder check', () => {
