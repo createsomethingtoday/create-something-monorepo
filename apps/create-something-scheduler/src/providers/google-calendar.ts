@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Temporal } from '@js-temporal/polyfill';
 import type {
   AvailableSlot,
   BookingContext,
@@ -75,6 +76,11 @@ export class GoogleCalendarPort implements CalendarPort {
 
   async listBusyIntervals(input: { from: string; to: string }): Promise<CalendarAvailability> {
     try {
+      const rangeStart = Temporal.Instant.from(input.from);
+      const rangeEnd = Temporal.Instant.from(input.to);
+      if (Temporal.Instant.compare(rangeStart, rangeEnd) >= 0) {
+        return { status: 'unavailable', reason: 'provider_invalid_window' };
+      }
       const accessToken = await this.config.accessTokens.getAccessToken();
       const response = await this.fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
         method: 'POST',
@@ -103,7 +109,20 @@ export class GoogleCalendarPort implements CalendarPort {
         if (!calendar || (calendar.errors?.length ?? 0) > 0) {
           return { status: 'unavailable', reason: 'provider_calendar_error' };
         }
-        intervals.push(...calendar.busy);
+        for (const busy of calendar.busy) {
+          const start = Temporal.Instant.from(busy.start);
+          const end = Temporal.Instant.from(busy.end);
+          if (Temporal.Instant.compare(start, end) >= 0) {
+            return { status: 'unavailable', reason: 'provider_invalid_response' };
+          }
+          // Free/busy periods may cross the requested coverage boundary. Keep
+          // their complete overlap, just as the EventKit projection does.
+          const clippedStart = Temporal.Instant.compare(start, rangeStart) < 0 ? rangeStart : start;
+          const clippedEnd = Temporal.Instant.compare(end, rangeEnd) > 0 ? rangeEnd : end;
+          if (Temporal.Instant.compare(clippedStart, clippedEnd) < 0) {
+            intervals.push({ start: clippedStart.toString(), end: clippedEnd.toString() });
+          }
+        }
       }
       intervals.sort((left, right) => left.start.localeCompare(right.start));
       return { status: 'available', intervals };
