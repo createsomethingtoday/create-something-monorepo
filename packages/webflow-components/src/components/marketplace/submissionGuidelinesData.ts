@@ -124,3 +124,16 @@ export function sectionForHash(doc: GuidelinesDocument, hash: string): string | 
   if (direct) return direct.id;
   return doc.sections.find((s) => s.blocks.some((b) => b.id === id))?.id ?? null;
 }
+
+/** Room left for webflow.com's sticky nav when returning to the top of the guidelines. */
+export const SECTION_SCROLL_OFFSET = 96;
+
+/**
+ * Where to scroll after a section change: back to the top of the guidelines when
+ * that top has scrolled above the nav, so a newly opened section starts at its
+ * beginning. Null when the top is already in view.
+ */
+export function sectionScrollTarget(guidelinesTop: number, scrollY: number, offset = SECTION_SCROLL_OFFSET): number | null {
+  if (guidelinesTop >= offset) return null;
+  return Math.max(0, Math.round(scrollY + guidelinesTop - offset));
+}

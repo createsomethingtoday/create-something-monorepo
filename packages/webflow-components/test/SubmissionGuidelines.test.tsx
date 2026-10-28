@@ -9,6 +9,7 @@ import {
   resolveGuidelinesApiBase,
   sanitizeGuidelineHtml,
   sectionForHash,
+  sectionScrollTarget,
   type GuidelineBlock,
   type GuidelinesDocument,
 } from '../src/components/marketplace/submissionGuidelinesData';
@@ -96,6 +97,16 @@ test('rewrites the Worker origin to the proxy and fetches the guidelines route',
   assert.equal(calls[0], 'https://templates.webflow.com/templates-api/api/templates/guidelines');
   assert.equal(doc.sections.length, 2);
   await assert.rejects(fetchGuidelines('', (async () => new Response('{}', { status: 503 })) as typeof fetch));
+});
+
+test('returns to the top of the guidelines only when it has scrolled above the nav', () => {
+  // Top still in view below the nav: stay put.
+  assert.equal(sectionScrollTarget(200, 0), null);
+  assert.equal(sectionScrollTarget(96, 500), null);
+  // Scrolled 1,800 px past the top: land 96 px below the page top of the component.
+  assert.equal(sectionScrollTarget(-1800, 2400), 504);
+  // Never a negative scroll position.
+  assert.equal(sectionScrollTarget(-10, 20), 0);
 });
 
 test('maps a URL hash to a section or to the section holding a rule', () => {
