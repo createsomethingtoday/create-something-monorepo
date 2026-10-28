@@ -36,9 +36,11 @@ eligibility formula        ─────►  featured_candidates (read)
 | Any mapped reviewer | `featured_candidates`, `set_featured_pick`, `cast_featured_vote` | `template-review:write` scope |
 | Featured coordinator | `set_featured_flag` | reviewer-directory entry must grant `featuredCoordinator: true` (403 otherwise) |
 
-The coordinator grant lives in the worker's `REVIEWER_DIRECTORY_JSON` secret —
-add `"featuredCoordinator": true` to the coordinator's entry and redeploy.
-Deny-by-default: with no grants, nobody can finalize through the MCP.
+The coordinator grant is the non-secret `FEATURED_COORDINATOR_ACCOUNT_IDS` var in
+`worker/wrangler.toml` (comma-separated reviewer account ids, merged over the
+`REVIEWER_DIRECTORY_JSON` secret) — edit it and redeploy. `"featuredCoordinator": true`
+on a directory entry still works. Only ids already in the directory can be
+granted. Deny-by-default: with no grants, nobody can finalize through the MCP.
 
 ## Candidate definition (what `featured_candidates` returns)
 
@@ -231,7 +233,7 @@ way when building on these tools.
 
 | Symptom | Meaning | Fix |
 | --- | --- | --- |
-| `FEATURED_COORDINATOR_REQUIRED` | Reviewer lacks the directory grant | Coordinator finalizes, or grant `featuredCoordinator` in `REVIEWER_DIRECTORY_JSON` and redeploy |
+| `FEATURED_COORDINATOR_REQUIRED` | Reviewer lacks the directory grant | Coordinator finalizes, or add the reviewer's account id to `FEATURED_COORDINATOR_ACCOUNT_IDS` and redeploy |
 | `MISSING_PICK_REASON` | Winner has no live reason | Promote a reason via `set_featured_pick` first |
 | `CREATOR_SAFE_CONFIRMATION_REQUIRED` | Live-reason write without the confirmation | Human reads the exact text, resend with `confirm_creator_safe: true` |
 | `SELECTION_CHECKS_UNMET` | Star, eligibility, or qualified votes missing on a finalization target | Fix the selection state, or override deliberately (`override_selection_checks: true`) after coordinator confirmation |

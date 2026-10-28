@@ -19,6 +19,7 @@ import { registerPrompts, SERVER_INSTRUCTIONS } from '../src/prompts.js';
 import { registerResources } from '../src/resources.js';
 import { parseBooleanFlag, resolveRuntimePolicy } from '../src/runtime-policy.js';
 import {
+  applyFeaturedCoordinators,
   applyReviewerAuthEmailAliases,
   parseReviewerDirectory,
   getReviewerProfileForAccount,
@@ -53,6 +54,7 @@ interface Env {
   AIRTABLE_BASE_ID?: string;
   REVIEWER_DIRECTORY_JSON?: string;
   REVIEWER_AUTH_EMAIL_ALIASES_JSON?: string;
+  FEATURED_COORDINATOR_ACCOUNT_IDS?: string;
   CS_IDENTITY_ISSUER?: string;
   CF_ACCESS_TEAM_DOMAIN?: string;
   CF_ACCESS_AUD?: string;
@@ -210,10 +212,15 @@ function allowedDomain(env: Env): string {
   return (env.OAUTH_ALLOWED_EMAIL_DOMAIN ?? 'webflow.com').trim().toLowerCase();
 }
 
-function resolveReviewerDirectory(env: Pick<Env, 'REVIEWER_DIRECTORY_JSON' | 'REVIEWER_AUTH_EMAIL_ALIASES_JSON'>) {
-  return applyReviewerAuthEmailAliases(
-    parseReviewerDirectory(env.REVIEWER_DIRECTORY_JSON),
-    env.REVIEWER_AUTH_EMAIL_ALIASES_JSON,
+function resolveReviewerDirectory(
+  env: Pick<Env, 'REVIEWER_DIRECTORY_JSON' | 'REVIEWER_AUTH_EMAIL_ALIASES_JSON' | 'FEATURED_COORDINATOR_ACCOUNT_IDS'>,
+) {
+  return applyFeaturedCoordinators(
+    applyReviewerAuthEmailAliases(
+      parseReviewerDirectory(env.REVIEWER_DIRECTORY_JSON),
+      env.REVIEWER_AUTH_EMAIL_ALIASES_JSON,
+    ),
+    env.FEATURED_COORDINATOR_ACCOUNT_IDS,
   );
 }
 
