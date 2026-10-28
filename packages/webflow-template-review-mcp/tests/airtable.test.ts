@@ -1619,6 +1619,8 @@ test('listFeaturedCandidates filters to the remaining-eligible pool and summariz
               [FEATURED_ASSET_FIELDS.reviewerPick]: true,
               [FEATURED_ASSET_FIELDS.reviewerPickReason]: 'Strong layout system for agency sites.',
               [FEATURED_ASSET_FIELDS.votingStateLink]: ['rec_state_ald'],
+              [CONFIRMED_ASSET_FIELDS.marketplaceStatus]: '3️⃣Published🚀',
+              [FEATURED_ASSET_FIELDS.creatorWfUserId]: ['5afb33b1a028bed3150386aa'],
             },
           },
           {
@@ -1632,6 +1634,7 @@ test('listFeaturedCandidates filters to the remaining-eligible pool and summariz
               [FEATURED_ASSET_FIELDS.creatorLink]: ['rec_creator_grabui'],
               [FEATURED_ASSET_FIELDS.creatorName]: 'Grabui Library',
               [FEATURED_ASSET_FIELDS.creatorTimesFeatured]: [4],
+              [CONFIRMED_ASSET_FIELDS.marketplaceStatus]: '3️⃣Published🚀',
             },
           },
         ],
@@ -1645,8 +1648,10 @@ test('listFeaturedCandidates filters to the remaining-eligible pool and summariz
   assert.ok(formula.includes(`{${FEATURED_ASSET_FIELDS.isEligibleForUpcomingFeatured}} = 1`));
   assert.ok(formula.includes(`DATETIME_DIFF(TODAY(), {${CONFIRMED_ASSET_FIELDS.submittedDate}}, 'months') <= 1`));
   assert.ok(formula.includes(`NOT({${FEATURED_ASSET_FIELDS.isFeatured}})`));
+  assert.ok(formula.includes(`{${CONFIRMED_ASSET_FIELDS.marketplaceStatus}} = '3️⃣Published🚀'`));
 
   assert.equal(result.monthsBackApplied, 1);
+  assert.equal(result.publishedOnlyApplied, true);
   assert.equal(result.includeAlreadyFeaturedApplied, false);
   assert.equal(result.summary.templatesAvailable, 2);
   assert.equal(result.summary.creatorsAvailable, 2);
@@ -1655,6 +1660,7 @@ test('listFeaturedCandidates filters to the remaining-eligible pool and summariz
   assert.equal(result.summary.reviewerPicksMade, 1);
   assert.equal(result.summary.pickReasonsWritten, 1);
   assert.deepEqual(result.summary.categoryCounts, { Business: 2, Agency: 1 });
+  assert.equal(result.summary.missingCreatorWfUserIdCount, 1);
 
   // Current-month submissions sort ahead of past-month fallback candidates.
   assert.equal(result.candidates[0]?.templateName, 'Brokerwise');
@@ -1671,6 +1677,15 @@ test('listFeaturedCandidates filters to the remaining-eligible pool and summariz
   assert.equal(result.candidates[1]?.votingStateId, 'rec_state_ald');
   assert.deepEqual(result.candidates[1]?.voteTallies, { up: 3, down: 1, net: 2, inQualifiedPool: true });
   assert.equal(result.candidates[0]?.voteTallies, undefined);
+
+  // The notifier skips creators without a WF User ID — flag it before the pick.
+  assert.equal(result.candidates[1]?.hasCreatorWfUserId, true);
+  assert.deepEqual(result.candidates[1]?.readinessWarnings, []);
+  assert.equal(result.candidates[0]?.hasCreatorWfUserId, false);
+  assert.deepEqual(
+    result.candidates[0]?.readinessWarnings.map((warning) => warning.split(':')[0]),
+    ['missing_creator_wf_user_id'],
+  );
 });
 
 test('listFeaturedCandidates keeps already-featured templates only when asked', async () => {
@@ -1689,6 +1704,41 @@ test('listFeaturedCandidates keeps already-featured templates only when asked', 
   const formula = capturedFormulas[0] ?? '';
   assert.ok(!formula.includes(`NOT({${FEATURED_ASSET_FIELDS.isFeatured}})`));
   assert.ok(formula.includes(`DATETIME_DIFF(TODAY(), {${CONFIRMED_ASSET_FIELDS.submittedDate}}, 'months') <= 0`));
+});
+
+test('listFeaturedCandidates can include unpublished assets and flags them', async () => {
+  const capturedFormulas: string[] = [];
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+      capturedFormulas.push(url.searchParams.get('filterByFormula') ?? '');
+      return jsonResponse({
+        records: [
+          {
+            id: 'rec_candidate_archived',
+            createdTime: new Date().toISOString(),
+            fields: {
+              [CONFIRMED_ASSET_FIELDS.name]: 'Terrot Archived 20261015',
+              [CONFIRMED_ASSET_FIELDS.submittedDate]: new Date().toISOString(),
+              [CONFIRMED_ASSET_FIELDS.marketplaceStatus]: '4️⃣Delisted☠️',
+              [FEATURED_ASSET_FIELDS.creatorWfUserId]: ['5afb33b1a028bed3150386aa'],
+            },
+          },
+        ],
+      });
+    },
+  });
+
+  const result = await client.listFeaturedCandidates({ publishedOnly: false });
+
+  assert.ok(!(capturedFormulas[0] ?? '').includes(CONFIRMED_ASSET_FIELDS.marketplaceStatus));
+  assert.equal(result.publishedOnlyApplied, false);
+  assert.equal(result.candidates[0]?.marketplaceStatus, '4️⃣Delisted☠️');
+  assert.deepEqual(
+    result.candidates[0]?.readinessWarnings.map((warning) => warning.split(':')[0]),
+    ['not_published'],
+  );
 });
 
 test('setFeaturedPick stages drafts by field ID and surfaces style warnings', async () => {

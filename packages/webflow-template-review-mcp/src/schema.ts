@@ -92,6 +92,8 @@ export const FEATURED_ASSET_FIELDS = {
   creatorTimesFeatured: 'How many times the creator has been featured',
   creatorTemplatesInUpcomingBatch: 'Templates featured in upcoming batch (from 🎨Creator)',
   votingStateLink: '🏗️Voting State',
+  /** Lookup from 🎨Creator — the notifier's Knock recipient id; empty means the creator is skipped. */
+  creatorWfUserId: '🎨🔑Creator WF User ID',
 } as const;
 
 /** Field IDs matching FEATURED_ASSET_FIELDS, kept so display-name drift is detectable. Writes use these IDs. */
@@ -108,6 +110,7 @@ export const FEATURED_ASSET_FIELD_IDS = {
   creatorTimesFeatured: 'fld2XFywmXYpSY1Le',
   creatorTemplatesInUpcomingBatch: 'fld4ZEgSBDzuLMvZf',
   votingStateLink: 'flderXfksiA19t4l4',
+  creatorWfUserId: 'fld2jvWS6WF5rvVXr',
 } as const;
 
 /** 🏗️Asset Voting State — per-asset vote tallies for featured curation. */
