@@ -2,9 +2,10 @@
   import CanonCompanion from './CanonCompanion.svelte';
   import { builtWork } from '$lib/data/builtWork';
   export let showCanonContinuation = false;
+  export let sectionId = 'built-work';
 </script>
 
-<section id="built-work" class="built-work" aria-labelledby="built-work-title">
+<section id={sectionId} class="built-work" aria-labelledby="built-work-title">
   <header>
     <p class="eyebrow">What we’ve built</p>
     <h2 id="built-work-title">From the agent’s tools to the customer’s screen.</h2>
@@ -56,6 +57,7 @@
   @media (max-width: 640px) { footer.with-guide { display: block; } .canon-guide { display: none; } .mobile-guide { display: block; float: left; margin: 0 var(--space-performance-sm) var(--space-performance-sm) 0; } .handoff-copy strong { min-height: 78px; display: flex; align-items: center; } .handoff-copy p { clear: both; } }
 
   .built-work {
+    overflow-wrap: anywhere;
     scroll-margin-top: 6rem;
     padding: clamp(2.5rem, 6vw, 6rem) max(1.25rem, calc((100% - 80rem) / 2));
     background: var(--color-performance-paper);

@@ -1,0 +1,30 @@
+{
+  "name": "__APP_SLUG__",
+  "version": "0.1.0",
+  "private": true,
+  "description": "__APP_NAME__ - a Webflow Designer Extension",
+  "scripts": {
+    "dev": "concurrently \"webflow extension serve\" \"webpack --config webpack.config.mjs --mode development --watch\"",
+    "build": "npm run typecheck && webpack --config webpack.config.mjs --mode production && webflow extension bundle",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.21.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@webflow/designer-extension-typings": "^2.2.2",
+    "concurrently": "^8.2.2",
+    "eslint": "^9.21.0",
+    "eslint-plugin-promise": "^7.2.1",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.24.0",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
+  }
+}

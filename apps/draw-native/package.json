@@ -1,6 +1,6 @@
 {
   "name": "@create-something/draw-native",
-  "version": "0.1.0",
+  "version": "0.1.4",
   "private": true,
   "type": "module",
   "description": "Rust/Tauri host and iPhone companion for CREATE SOMETHING Draw",
@@ -15,7 +15,9 @@
     "receipt:production": "node scripts/production-release-receipt.mjs",
     "ios:init": "tauri ios init",
     "ios:dev": "tauri ios dev",
-    "ios:build": "tauri ios build"
+    "ios:build": "tauri ios build",
+    "receipt:macos": "node scripts/mac-release-receipt.mjs",
+    "test:release": "node --test scripts/mac-release.test.mjs"
   },
   "devDependencies": {
     "@tauri-apps/cli": "2.11.2"

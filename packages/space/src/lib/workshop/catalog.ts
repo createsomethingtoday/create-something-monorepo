@@ -1,3 +1,4 @@
+import { projectScene, sceneImage } from './scenes';
 export const projectKinds = [
   'System',
   'Workflow',
@@ -35,7 +36,7 @@ export const projects: WorkshopProject[] = [
     limit:
       'Analysis is advisory. Review findings before changing code. Check the package documentation for supported platforms.',
     related: ['policy-os', 'triad-review'],
-    image: '/images/workshop/ground-instrument.webp',
+    image: sceneImage(projectScene('ground')),
     featured: true,
     distribution: 'Package',
     install: 'https://www.npmjs.com/package/@createsomething/ground-mcp'
@@ -51,7 +52,7 @@ export const projects: WorkshopProject[] = [
       'Define a recurring task, compile its boundaries and run deterministic checks before connecting execution. Includes a paired Codex skill.',
     limit: 'The compiler does not call providers or grant access to the systems in your workflow.',
     related: ['workflow-runtime', 'policy-os'],
-    image: '/images/workshop/workflow-instrument.webp',
+    image: sceneImage(projectScene('workflow-compiler')),
     featured: true,
     distribution: 'Package',
     install: 'https://www.npmjs.com/package/@createsomething/workflow-compiler'
@@ -67,7 +68,7 @@ export const projects: WorkshopProject[] = [
       'Install the Pi package to classify a system through Database, Automation, and Judgment. Includes deep-module-design.',
     limit: 'A design method and agent guidance; it does not operate your systems.',
     related: ['deep-module-design', 'policy-os'],
-    image: '/images/workshop/open-workshop.webp',
+    image: sceneImage(projectScene('three-tier-framework')),
     featured: true,
     distribution: 'Package',
     install: 'https://www.npmjs.com/package/@createsomething/pi-three-tier-framework'
@@ -84,7 +85,7 @@ export const projects: WorkshopProject[] = [
     limit:
       'The starter supplies guidance and quality gates. Hosting and managed operation are separate.',
     related: ['intent-mapping', 'debug-feedback-loop', 'tdd-vertical-slice'],
-    image: '/images/workshop/workflow-instrument.webp',
+    image: sceneImage(projectScene('policy-os')),
     featured: true,
     distribution: 'Package',
     install: 'https://www.npmjs.com/package/@createsomething/pi-policy-os'
@@ -99,7 +100,7 @@ export const projects: WorkshopProject[] = [
       'Use the creator checklist, Claude skill, and structural HTML checks to prepare a template submission.',
     limit: 'Preflight helps preparation; it does not guarantee Marketplace acceptance.',
     related: [],
-    image: '/images/workshop/ground-instrument.webp',
+    image: sceneImage(projectScene('template-preflight')),
     featured: false,
     distribution: 'Source'
   },
@@ -114,7 +115,7 @@ export const projects: WorkshopProject[] = [
     limit:
       'Requires the app and its configuration. Final review and acceptance remain with Webflow.',
     related: ['template-preflight'],
-    image: '/images/workshop/ground-instrument.webp',
+    image: sceneImage(projectScene('app-preflight')),
     featured: false,
     distribution: 'Source'
   },
@@ -128,7 +129,7 @@ export const projects: WorkshopProject[] = [
     limit:
       'Claude Code plugin. Follow the repository installation instructions; review the guidance for your project.',
     related: [],
-    image: '/images/workshop/open-workshop.webp',
+    image: sceneImage(projectScene('canon-plugin')),
     featured: false,
     distribution: 'Plugin'
   },
@@ -143,7 +144,7 @@ export const projects: WorkshopProject[] = [
     limit:
       'Claude Code plugin. Follow the repository installation instructions; review the guidance for your project.',
     related: [],
-    image: '/images/workshop/open-workshop.webp',
+    image: sceneImage(projectScene('triad-review')),
     featured: false,
     distribution: 'Plugin'
   },
@@ -157,7 +158,7 @@ export const projects: WorkshopProject[] = [
     limit:
       'Claude Code plugin. Follow the repository installation instructions; review the guidance for your project.',
     related: [],
-    image: '/images/workshop/open-workshop.webp',
+    image: sceneImage(projectScene('voice-validator')),
     featured: false,
     distribution: 'Plugin'
   },
@@ -171,7 +172,7 @@ export const projects: WorkshopProject[] = [
     limit:
       'Claude Code plugin. Follow the repository installation instructions; review the guidance for your project.',
     related: [],
-    image: '/images/workshop/open-workshop.webp',
+    image: sceneImage(projectScene('understanding-graphs')),
     featured: false,
     distribution: 'Plugin'
   },
@@ -186,7 +187,7 @@ export const projects: WorkshopProject[] = [
     limit:
       'Included in a Pi package. Review its repository-specific instructions before adapting it to another environment.',
     related: ['policy-os'],
-    image: '/images/workshop/open-workshop.webp',
+    image: sceneImage(projectScene('intent-mapping')),
     featured: false,
     distribution: 'Source'
   },
@@ -201,7 +202,7 @@ export const projects: WorkshopProject[] = [
     limit:
       'Included in a Pi package. Review its repository-specific instructions before adapting it to another environment.',
     related: ['policy-os'],
-    image: '/images/workshop/open-workshop.webp',
+    image: sceneImage(projectScene('debug-feedback-loop')),
     featured: false,
     distribution: 'Source'
   },
@@ -216,7 +217,7 @@ export const projects: WorkshopProject[] = [
     limit:
       'Included in a Pi package. Review its repository-specific instructions before adapting it to another environment.',
     related: ['policy-os'],
-    image: '/images/workshop/open-workshop.webp',
+    image: sceneImage(projectScene('tdd-vertical-slice')),
     featured: false,
     distribution: 'Source'
   },
@@ -231,7 +232,7 @@ export const projects: WorkshopProject[] = [
     limit:
       'Included in a Pi package. Review its repository-specific instructions before adapting it to another environment.',
     related: ['three-tier-framework'],
-    image: '/images/workshop/open-workshop.webp',
+    image: sceneImage(projectScene('deep-module-design')),
     featured: false,
     distribution: 'Source'
   },
@@ -245,7 +246,7 @@ export const projects: WorkshopProject[] = [
     usage: 'Explore six-dimensional character matching and contrast enhancement.',
     limit: 'Source library. Review attribution, dependencies, and examples before integrating.',
     related: [],
-    image: '/images/workshop/open-workshop.webp',
+    image: sceneImage(projectScene('ascii-renderer')),
     featured: false,
     distribution: 'Source'
   },
@@ -259,7 +260,7 @@ export const projects: WorkshopProject[] = [
     usage: 'Use the Rust/WASM simulation engine to generate consistent demo states.',
     limit: 'Synthetic demo behavior is not production evidence.',
     related: [],
-    image: '/images/workshop/open-workshop.webp',
+    image: sceneImage(projectScene('simulation')),
     featured: false,
     distribution: 'Source'
   },
@@ -274,7 +275,7 @@ export const projects: WorkshopProject[] = [
     limit:
       'Choose this presentation for your audience; it does not establish reading or accessibility benefits.',
     related: [],
-    image: '/images/workshop/open-workshop.webp',
+    image: sceneImage(projectScene('spritz')),
     featured: false,
     distribution: 'Source'
   },
@@ -289,7 +290,7 @@ export const projects: WorkshopProject[] = [
     limit:
       'Source reference. Check contrast in the rendered context and verify packaging before installation.',
     related: [],
-    image: '/images/workshop/open-workshop.webp',
+    image: sceneImage(projectScene('canon-tokens')),
     featured: false,
     distribution: 'Source'
   },
@@ -303,7 +304,7 @@ export const projects: WorkshopProject[] = [
     usage: 'Explore data-visualization components and their examples.',
     limit: 'Source library; review its workspace dependencies before reuse.',
     related: [],
-    image: '/images/workshop/open-workshop.webp',
+    image: sceneImage(projectScene('tufte')),
     featured: false,
     distribution: 'Source'
   },
@@ -317,7 +318,7 @@ export const projects: WorkshopProject[] = [
     usage: 'Inspect render recipes, asset hashes, GLB analysis, and output receipts.',
     limit: 'Local rendering needs the documented tools and assets you have permission to use.',
     related: [],
-    image: '/images/workshop/open-workshop.webp',
+    image: sceneImage(projectScene('render-pipeline')),
     featured: false,
     distribution: 'Source'
   },
@@ -332,7 +333,7 @@ export const projects: WorkshopProject[] = [
     limit:
       'Source module; external systems require their own adapters and access. Reference fixtures are not live results.',
     related: [],
-    image: '/images/workshop/workflow-instrument.webp',
+    image: sceneImage(projectScene('workflow-runtime')),
     featured: false,
     distribution: 'Source'
   },
@@ -348,7 +349,7 @@ export const projects: WorkshopProject[] = [
     limit:
       'Source module. Integration requires an explicit access policy and configured credentials; none are supplied.',
     related: [],
-    image: '/images/workshop/open-workshop.webp',
+    image: sceneImage(projectScene('mcp-core')),
     featured: false,
     distribution: 'Source'
   }

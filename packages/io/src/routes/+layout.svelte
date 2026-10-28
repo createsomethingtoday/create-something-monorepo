@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { SkipToContent } from '@create-something/canon/components';
   import '../app.css';
   import '@create-something/canon/styles/operator.css';
   import '$lib/styles/research.css';
@@ -45,10 +46,12 @@
       sessionStorage.removeItem('cs-transition-time');
 
       // Play entry animation
-      document.body.classList.add('transitioning-in');
-      setTimeout(() => {
-        document.body.classList.remove('transitioning-in');
-      }, 500);
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.body.classList.add('transitioning-in');
+        setTimeout(() => {
+          document.body.classList.remove('transitioning-in');
+        }, 500);
+      }
     }
   });
 
@@ -148,13 +151,13 @@
       const element = document.querySelector(hash);
       if (element) {
         // Account for fixed navigation height (approximately 72px)
-        const navHeight = 72;
+        const navHeight = document.querySelector('nav')?.getBoundingClientRect().height ?? 72;
         const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
         const offsetPosition = elementPosition - navHeight;
 
         window.scrollTo({
           top: offsetPosition,
-          behavior: 'smooth'
+          behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
         });
       } else if (attempts < maxAttempts) {
         setTimeout(() => attemptScroll(attempts + 1, maxAttempts), 100 * (attempts + 1));
@@ -206,9 +209,7 @@
       deferMobileButtonUntilCampaignExit={false}
     />
 
-    {#if isResearchSurface}
-      <a class="research-skip-link" href="#main-content">Skip to content</a>
-    {/if}
+    <SkipToContent />
     <Navigation
       logo="CREATE SOMETHING"
       logoSuffix=".io"

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LibraryScene from '$lib/components/LibraryScene.svelte';
 	import { Button, SEO } from '@create-something/canon';
 
 	let { data } = $props();
@@ -27,6 +28,7 @@
 			<Button href="/readiness">Assess this workflow</Button>
 			<Button href="/canon" variant="secondary">Read the Canon</Button>
 		</div>
+		<LibraryScene scene="proof-preserve-the-sequence" caption="A runbook keeps the steps, exceptions, and receipt in one sequence." />
 	</header>
 
 	<section class="playbook-detail__instruction" aria-labelledby="when-to-use-title">

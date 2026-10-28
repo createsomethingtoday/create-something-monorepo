@@ -43,7 +43,7 @@ describe('agency contact email contract', () => {
     const plain = { ...input, service: undefined, company: undefined, campaign: undefined };
     const response = renderContactResponse(plain);
     const notification = renderContactNotification(plain);
-    expect(response).toContain("I've received your inquiry and will get back");
+    expect(response).toContain("I've received your inquiry. I will get back");
     expect(response).not.toContain('Service:');
     expect(notification).toContain('New Contact Form Submission');
     expect(notification).not.toMatch(/Company:|Campaign:|Service:/);

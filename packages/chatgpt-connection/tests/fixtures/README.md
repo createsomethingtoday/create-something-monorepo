@@ -1,0 +1,1 @@
+Synthetic JWT test fixtures only. This RSA key was generated for adversarial unit tests, is publicly committed test data, and must never secure a real identity, token, deployment, or account. No production credentials are included.

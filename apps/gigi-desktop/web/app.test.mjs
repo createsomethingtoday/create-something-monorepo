@@ -133,7 +133,7 @@ test('connector sign-in explains provider outages and timeouts without exposing 
     if (operation === 'workspace.get') return { id: 'w1', name: 'Test' };
     if (operation === 'records.list') return { items: input.entity === 'profile' ? [{ id: 'p1' }] : [], count: 0 };
     if (operation === 'records.get') return { id: 'p1', title: 'Owner', fields: { Currency: 'USD' } };
-    if (operation === 'connections.status') return { provider: input.provider, state: 'disconnected' };
+    if ((operation === 'connections.status' || operation === 'sources.status')) return { provider: input.provider, state: 'disconnected' };
     if (operation === 'agent.status') return {};
     if (operation === 'auth.login') throw new Error(failure);
     return {};
@@ -145,7 +145,7 @@ test('connector sign-in explains provider outages and timeouts without exposing 
     await settle();
     click({ page: 'settings' }); await settle();
     click({ signIn: '1' }); await settle();
-    assert.match(root.innerHTML, /temporarily unavailable.*try again/i);
+    assert.match(root.innerHTML, /temporarily unavailable.*check status later/i);
     assert.doesNotMatch(root.innerHTML, /provider_unavailable/);
 
     failure = 'timeout';
@@ -168,7 +168,7 @@ test('source card explains an in-progress session refresh and keeps manual statu
     if (operation === 'workspace.get') return { id: 'w1', name: 'Test' };
     if (operation === 'records.list') return { items: input.entity === 'profile' ? [{ id: 'p1' }] : [], count: 0 };
     if (operation === 'records.get') return { id: 'p1', title: 'Owner', fields: { Currency: 'USD' } };
-    if (operation === 'connections.status') return input.provider === 'gmail'
+    if ((operation === 'connections.status' || operation === 'sources.status')) return input.provider === 'gmail'
       ? { provider: 'gmail', state: 'unavailable', detail: gmailDetail }
       : { provider: 'googlecalendar', state: 'connected', connectedAccountId: 'ca_calendar' };
     if (operation === 'agent.status') return {};
@@ -217,7 +217,7 @@ test('Overview shows actionable workspace data, opens its records, and keeps lib
     assert.match(root.innerHTML, /Open tasks/); assert.match(root.innerHTML, /Follow up/);
     assert.match(root.innerHTML, /Expense · \$90\.00/);
     assert.match(root.innerHTML, /Showing 1 of 6 matching records · 2 without a usable date/);
-    assert.match(root.innerHTML, /<details class="nav-library" data-library-nav="1" >/);
+    assert.match(root.innerHTML, /<details class="reference-more" data-view-key="reference-more">/);
     assert.equal(calls.filter(({operation}) => operation === 'workspace.overview').length, 1);
     const beforeNavigation = scrolls.length;
     click({ open: 'f1', entity: 'finances' }); await settle();
@@ -227,9 +227,54 @@ test('Overview shows actionable workspace data, opens its records, and keeps lib
     assert.match(root.innerHTML, /More details \(1\)/); assert.match(root.innerHTML, /Retained/);
     listeners.get('toggle')({target:{dataset:{libraryNav:'1'},open:true}});
     click({ page: 'services' }); await settle();
-    assert.match(root.innerHTML, /data-library-nav="1" open/);
+    assert.match(root.innerHTML, /data-page="services" aria-current="page"/);
     assert.match(root.innerHTML, /Add your first service/);
     click({ new: 'services' });
     assert.match(root.innerHTML, /id="record-form"/);
   } finally { globalThis.document = previous.document; globalThis.__TAURI__ = previous.tauri; globalThis.scrollTo = previous.scrollTo; }
+});
+
+
+test('saving with the native submit button focused writes once and clears the busy state', async () => {
+  const listeners = new Map(), calls = [];
+  let loading = false;
+  const form = { id: 'record-form', dataset: {}, values: { title: 'Saved native task', Status: 'Open', 'Due Date': '2026-10-09', Priority: 'High' } };
+  const root = {
+    innerHTML: '', classList: { toggle(_name, value) { loading = value; } },
+    addEventListener(name, handler) { listeners.set(name, handler); },
+    querySelector(selector) {
+      if (selector === '#') throw new SyntaxError('Invalid selector');
+      if (selector === '#record-form' && this.innerHTML.includes('id="record-form"')) {
+        form.dataset.editorVersion = this.innerHTML.match(/data-editor-version="(\d+)"/)[1];
+        return form;
+      }
+      return null;
+    }
+  };
+  const previous = { document: globalThis.document, tauri: globalThis.__TAURI__, formData: globalThis.FormData };
+  let saved = { id: 't1', title: 'Original task', fields: { Status: 'Open', Priority: 'High' }, source: { kind: 'manual' }, relations: [] };
+  globalThis.document = { querySelector: () => root, activeElement: null };
+  globalThis.FormData = class { constructor(value) { this.entries = Object.entries(value.values); } [Symbol.iterator]() { return this.entries[Symbol.iterator](); } };
+  globalThis.__TAURI__ = { core: { invoke: async (_command, { operation, input }) => {
+    calls.push({ operation, input });
+    if (operation === 'workspace.get') return { id: 'w1', name: 'Synthetic' };
+    if (operation === 'records.list') return { items: input.entity === 'profile' ? [{ id: 'p1' }] : [saved], count: 1 };
+    if (operation === 'records.get') return input.entity === 'profile' ? { id: 'p1', fields: { Currency: 'USD' } } : saved;
+    if (operation === 'records.save') { saved = { ...saved, title: input.title, fields: input.fields }; return saved; }
+    return {};
+  } } };
+  const settle = () => new Promise(resolve => setImmediate(resolve));
+  const click = async dataset => { listeners.get('click')({ target: { closest: () => ({ dataset }) } }); await settle(); };
+  try {
+    await import(`./app.mjs?native-submit=${Math.random()}`); await settle();
+    await click({ page: 'tasks' }); await click({ open: 't1', entity: 'tasks' }); await click({ edit: '1' });
+    globalThis.document.activeElement = { id: '', form };
+    listeners.get('submit')({ preventDefault() {}, target: form }); await settle();
+    assert.equal(calls.filter(call => call.operation === 'records.save').length, 1);
+    assert.equal(saved.title, 'Saved native task');
+    assert.equal(saved.fields['Due Date'], '2026-10-09');
+    assert.equal(loading, false);
+    assert.doesNotMatch(root.innerHTML, /id="record-form"/);
+    assert.match(root.innerHTML, /task saved/);
+  } finally { globalThis.document = previous.document; globalThis.__TAURI__ = previous.tauri; globalThis.FormData = previous.formData; }
 });

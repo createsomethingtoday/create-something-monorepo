@@ -25,10 +25,10 @@ pub fn prepare(resources: &Path, data: &Path) -> Result<Value,String> {
  let output=data.join("agent/gigi");
  let skill_output=output.join("skills/gigi");
  std::fs::create_dir_all(&skill_output).map_err(|e|e.to_string())?;
- std::fs::copy(skill,skill_output.join("SKILL.md")).map_err(|e|e.to_string())?;
+ copy_skills(&resources.join("agent/gigi/skills"),&output.join("skills"))?;
  for kind in [".codex-plugin",".claude-plugin"] {
   let folder=output.join(kind);std::fs::create_dir_all(&folder).map_err(|e|e.to_string())?;
-  let mut manifest=serde_json::json!({"name":"gigi","version":"0.1.0","description":"Private music-work records through local GiGi MCP"});
+  let mut manifest=serde_json::json!({"name":"gigi","version":env!("CARGO_PKG_VERSION"),"description":"Private music-work records through local GiGi MCP"});
   if kind==".codex-plugin" {manifest["skills"]=serde_json::json!("./skills/");manifest["mcpServers"]=serde_json::json!("./.mcp.json");}
   std::fs::write(folder.join("plugin.json"),serde_json::to_vec_pretty(&manifest).unwrap()).map_err(|e|e.to_string())?;
  }
@@ -37,9 +37,19 @@ pub fn prepare(resources: &Path, data: &Path) -> Result<Value,String> {
  let codex_command=format!("codex mcp add gigi --env {} -- {}",shell_quote(&format!("GIGI_DATA_DIR={}",data.display())),shell_quote(&binary.to_string_lossy()));
  let claude_command=format!("claude --plugin-dir {}",shell_quote(&output.to_string_lossy()));
  Ok(serde_json::json!({"packagePath":output,"mcpConfig":config,"installed":false,"state":"prepared",
-  "codexCommand":codex_command,"claudeCommand":claude_command,"skillPath":skill_output.join("SKILL.md"),
-  "starterPrompt":format!("Read the GiGi skill at \"{}\". Actually call gigi_workspace_get and return my workspace name and ID. Use bounded lists. Do not change any records.",skill_output.join("SKILL.md").display()),
+  "codexCommand":codex_command,"claudeCommand":claude_command,"skillPath":skill_output.join("SKILL.md"),"artworkSkillPath":output.join("skills/gigi-artwork/SKILL.md"),
+  "starterPrompt":format!("Read the GiGi skill at \"{}\". Actually call gigi_connection_check and gigi_workspace_get in this session. Return the connector executable, server version, media tool names and my workspace name and ID. Stop on a path/version mismatch or missing media tools. Use bounded lists. Do not change any records.",skill_output.join("SKILL.md").display()),
   "nextStep":"Follow the selected Codex or Claude Code setup steps, then verify a real GiGi tool call."}))
+}
+
+fn copy_skills(source:&Path,target:&Path)->Result<(),String>{
+ if std::fs::symlink_metadata(source).map_err(|e|e.to_string())?.file_type().is_symlink(){return Err("Bundled skills cannot contain symbolic links".into())}
+ std::fs::create_dir_all(target).map_err(|e|e.to_string())?;
+ for entry in std::fs::read_dir(source).map_err(|e|e.to_string())?{
+  let entry=entry.map_err(|e|e.to_string())?;let kind=entry.file_type().map_err(|e|e.to_string())?;
+  if kind.is_symlink(){return Err("Bundled skills cannot contain symbolic links".into())}
+  if kind.is_dir(){copy_skills(&entry.path(),&target.join(entry.file_name()))?;}else if kind.is_file(){std::fs::copy(entry.path(),target.join(entry.file_name())).map_err(|e|e.to_string())?;}
+ }Ok(())
 }
 
 #[cfg(test)]

@@ -32,8 +32,11 @@ test('requires an explicit existing profile and packages its exact data root', a
   assert.deepEqual(config.mcpServers.gigi.args,[]);
   assert.equal(config.mcpServers.gigi.env.GIGI_DATA_DIR,dataRoot);
   assert.ok((await readFile(join(output,'skills','gigi','SKILL.md'),'utf8')).includes('SQLite'));
+  assert.ok((await readFile(join(output,'skills','gigi-artwork','SKILL.md'),'utf8')).includes('gigi_media_import'));
   const manifest=JSON.parse(await readFile(join(output,'.codex-plugin','plugin.json'),'utf8'));
   assert.equal(manifest.mcpServers,'./.mcp.json');
+  const app=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8'));
+  assert.equal(manifest.version,app.version,'Packaged connector must identify the same GiGi release as its app');
  } finally {await rm(root,{recursive:true,force:true});}
 });
 

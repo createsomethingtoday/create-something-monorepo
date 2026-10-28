@@ -1,5 +1,8 @@
 <script lang="ts">
+  import CatoProjectTour from '$lib/components/CatoProjectTour.svelte';
+  import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
   import {
+    IsometricIllustration,
     Button,
     PerformanceCampaignOpening,
     PerformanceConversionHandoff,
@@ -19,7 +22,6 @@
   import { filmStories } from '$lib/data/filmStories';
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
   import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
-  import AgencyIsometricGlyph from '$lib/components/AgencyIsometricGlyph.svelte';
   import AgencyPathChoices from '$lib/components/AgencyPathChoices.svelte';
 
   type ProductSurfaceKind = 'signal' | 'decision' | 'proof';
@@ -160,16 +162,18 @@
   {/snippet}
   {#snippet artifact()}<AgencyProductJunction />{/snippet}
 </PerformanceCampaignOpening>
+<WorkflowSignalBand motionOnly quiet tall showMotionControl />
 <div class="products-paths"><AgencyPathChoices label="Choose a product path" /></div>
 </div>
 
 <section id="capabilities" class="capabilities" aria-labelledby="capabilities-title">
   <p>Apps, workflows & agents</p><h2 id="capabilities-title">Inspect what your team will keep.</h2>
   <p>Review the linked implementations and clearly labeled scenarios below. For your Build, agree on the source, instructions, tests and handoff your team will own, plus what agents may do and what needs human approval. Production launch is agreed separately.</p>
-  <p>Focused membership is {PUBLIC_PRICING.membership.focused.label} for one workstream, one milestone, two check-ins and two remote work sessions each billing month. Team is {PUBLIC_PRICING.membership.team.label} for up to two workstreams, two milestones, two check-ins and four remote sessions. Larger Builds, managed Control and project costs are separate.</p>
+  <p>Membership supports agreed improvements between check-ins. Focused is {PUBLIC_PRICING.membership.focused.label} for one workstream and one milestone each billing month. Team is {PUBLIC_PRICING.membership.team.label} for up to two workstreams and two milestones. Both include two 30-minute check-ins. Focused has two 60-minute remote sessions available; Team has four. Use remote sessions when helpful for onboarding, pairing or troubleshooting. Larger Builds, managed Control and project costs are separate.</p>
+  <CatoProjectTour />
   {#each filmStories as story}
     <article><div><h3>{story.name}</h3><p>{story.desc}</p><p class="deliverable">What you keep: {story.deliver}</p><p class="evidence-status">{story.status}</p><p class="evidence-proof">{story.proof}</p></div>
-      <div class="capability-links"><a href={`/?film=${story.id}#work`}>Watch the story →</a><a href={story.source}>{story.sourceLabel} ↗</a><a href={agencyCoreMessaging.membershipInquiryHref}>Discuss this work →</a></div>
+      <div class="capability-links"><a href={story.id === 'webflow' ? '#cato-tour' : `/?film=${story.id}#work`}>{story.id === 'webflow' ? 'Explore the annotated tour →' : 'Watch the story →'}</a><a href={story.source}>{story.sourceLabel} ↗</a><a href={agencyCoreMessaging.membershipInquiryHref}>Discuss this work →</a></div>
     </article>
   {/each}
   <AgencyWayfindingSign kind="map" label="Compare ways to work together" href="#choose-product" direction="down" />
@@ -197,6 +201,13 @@
         <strong>{product.name}</strong>
         <p>{product.customerJob}</p>
         <small>{product.accessLabel}</small>
+        {#if product.id === 'map'}
+          <p><strong>Availability:</strong> Explore the browser-local starter now. The separate account workspace has pricing at launch; this is not a paid workspace checkout.</p>
+        {:else if product.id === 'build'}
+          <p><strong>Requirements:</strong> Build is a service scoped and quoted separately. Agree on the workflow, deliverables and acceptance checks before work begins. Production launch is agreed separately.</p>
+        {:else}
+          <p><strong>Requirements:</strong> Managed Control starts after launch for an agreed live environment. Scope, access, response times and activation require a separate agreement.</p>
+        {/if}
       </div>
       <ul>
         {#each familyPoints(index) as point}<li>{point}</li>{/each}
@@ -210,7 +221,7 @@
             <span>{item.label}</span>
             {#if item.kind}
               <div class="control-surface-icon" data-icon={item.kind}>
-                <AgencyIsometricGlyph kind={item.kind === 'decision' ? 'approval' : item.kind} />
+                <IsometricIllustration kind={item.kind === 'decision' ? 'approve' : item.kind === 'proof' ? 'verify' : 'operate'} size="100%" />
               </div>
             {/if}
             <strong>{item.title}</strong>
@@ -248,6 +259,12 @@
     </a>
   </div>
   <div class="proof-chooser" aria-label="Public product proof">
+    <a href="/scopefield">
+      <span>Mac public beta</span>
+      <strong>Scopefield</strong>
+      <p>A browser with a collapsible Page workspace and explicit human control.</p>
+      <small>Apple Silicon · macOS 13+ · Review beta limits</small>
+    </a>
     {#each featured.map(productCard) as item}
       <a href={item.href}>
         <span>{item.label}</span>
@@ -551,35 +568,18 @@
       border-left: 0;
     }
 
+    /* Keep native keyboard focus visible: mandatory horizontal snapping can
+       return a partially scrolled focused card to the preceding snap point. */
     .control-surfaces,
-    .proof-chooser {
-      grid-template-columns: none;
-      grid-auto-flow: column;
-      grid-auto-columns: minmax(15rem, 82vw);
-      max-width: 100%;
-      overflow-x: auto;
-      overscroll-behavior-inline: contain;
-      scroll-snap-type: inline mandatory;
-    }
-
-    .control-surfaces a,
-    .proof-chooser a {
-      scroll-snap-align: start;
-    }
-
-    .control-surfaces a + a,
-    .proof-chooser a + a {
-      border-left: 1px solid var(--color-performance-line, #d7d7d2);
-    }
-
     .proof-chooser {
       grid-template-columns: 1fr;
       grid-auto-flow: row;
       grid-auto-columns: auto;
+      max-width: 100%;
       overflow-x: visible;
-      scroll-snap-type: none;
     }
 
+    .control-surfaces a + a,
     .proof-chooser a + a {
       border-top: 1px solid var(--color-performance-line, #d7d7d2);
       border-left: 0;

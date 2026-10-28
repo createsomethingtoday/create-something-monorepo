@@ -38,8 +38,10 @@ export function getAuth0Config(env?: Auth0EnvLike | null): Auth0ProviderConfig |
 	if (!env?.AUTH0_DOMAIN || !env.AUTH0_CLIENT_ID) return null;
 
 	const domain = normalizeDomain(env.AUTH0_DOMAIN);
-	const issuer = (env.AUTH0_ISSUER_BASE_URL ?? `https://${domain}`).replace(/\/+$/, '');
-	const jwksUrl = env.AUTH0_JWKS_URL ?? `${issuer}/.well-known/jwks.json`;
+	// OIDC issuer comparison is exact. Preserve an explicitly configured trailing
+	// slash; removing it would reject otherwise valid, signed legacy sessions.
+	const issuer = env.AUTH0_ISSUER_BASE_URL ?? `https://${domain}`;
+	const jwksUrl = env.AUTH0_JWKS_URL ?? `${issuer.replace(/\/+$/, '')}/.well-known/jwks.json`;
 
 	return {
 		type: 'auth0',

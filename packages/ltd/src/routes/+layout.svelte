@@ -1,9 +1,11 @@
 <script lang="ts">
+  import { SkipToContent } from '@create-something/canon/components';
 	import { Navigation, Footer, Analytics, ModeIndicator, LayoutSEO } from '@create-something/canon';
 	import { UnifiedSearch } from '@create-something/canon/navigation';
 	import { onNavigate, goto, invalidateAll } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import '../app.css';
+	import { siteNavigation } from '$lib/site-navigation';
 	import '$lib/public-surface.css';
 	import '$lib/operator-public.css';
 
@@ -38,18 +40,14 @@
 			sessionStorage.removeItem('cs-transition-from');
 			sessionStorage.removeItem('cs-transition-to');
 			sessionStorage.removeItem('cs-transition-time');
-			document.body.classList.add('transitioning-in');
-			setTimeout(() => document.body.classList.remove('transitioning-in'), 500);
+			if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+				document.body.classList.add('transitioning-in');
+				setTimeout(() => document.body.classList.remove('transitioning-in'), 500);
+			}
 		}
 	});
 
-	const navLinks = [
-		{ label: 'Playbooks', href: '/playbooks' },
-		{ label: 'Readiness', href: '/readiness' },
-		{ label: 'Canon', href: '/canon' },
-		{ label: 'Principles', href: '/principles' },
-		{ label: 'Standards', href: '/standards' }
-	];
+	const navLinks = siteNavigation;
 
 	const quickLinks = [
 		{ label: 'Playbooks', href: '/playbooks' },
@@ -90,14 +88,18 @@
 <Analytics property="ltd" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
+<div class:ltd-header-search={isPublicLibraryRoute && !isCanonRoute} data-canon-palette={isPublicLibraryRoute && !isCanonRoute ? 'operator' : undefined}>
 <UnifiedSearch
 	currentProperty="ltd"
 	localItems={quickAccessItems}
 	showMobileButton={!mobileNavigationOpen}
-	deferMobileButtonUntilCampaignExit={data?.pathname === '/'}
+	deferMobileButtonUntilCampaignExit={isPublicLibraryRoute && !isCanonRoute ? false : data?.pathname === '/'}
 />
 
+</div>
+
 <div class="min-h-screen flex flex-col ltd-clear-shell property-performance" class:ltd-public-library={isPublicLibraryRoute} class:ltd-operator-public={isPublicLibraryRoute} data-canon-palette={isPublicLibraryRoute ? 'operator' : undefined}>
+	<SkipToContent />
 	{#if !isCanonRoute}
 		<Navigation
 			logo="CREATE SOMETHING"
@@ -119,7 +121,7 @@
 		/>
 	{/if}
 
-	<main id="main-content" class="flex-1">
+	<main id="main-content" class="flex-1" tabindex="-1">
 		{@render children()}
 	</main>
 

@@ -21,6 +21,7 @@
 		"build": "vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
+		"test:agentic-admission": "tsx --test src/lib/server/agentic-admission.test.ts",
 		"test:search": "vitest run src/lib/search/sitemap.test.ts",
 		"test:workway": "tsx --test src/lib/workway/threshold-dwelling-spatial-package.test.ts src/lib/workway/threshold-dwelling-massing.test.ts src/lib/workway/threshold-dwelling-material-study.test.ts",
 		"generate:threshold-spatial-fixture": "tsx scripts/generate-threshold-dwelling-spatial-fixture.ts",

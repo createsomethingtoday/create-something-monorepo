@@ -1,0 +1,24 @@
+{
+  "synthetic": true,
+  "providerStarted": false,
+  "providerReadVerified": false,
+  "persistentRegistration": false,
+  "editsAllowed": false,
+  "phase": "authenticated_synthetic_preflight",
+  "scopeConfirmedByOwner": "read-only; 0 proposal layers",
+  "blocker": "RuntimeError: Token invalid/expired or synthetic scope mismatch; provider not started.",
+  "providerTerminated": true,
+  "nativeProcessExited": true,
+  "postRevocationDenied": false,
+  "stateBytesUnchanged": false,
+  "diagnosis": {
+    "historyChanges": [
+      "viewport",
+      "updatedAt"
+    ],
+    "artworkUnchanged": true,
+    "originalHistorySnapshotMatchesApprovedHash": true,
+    "tokenValidity": "unknown; no token retained",
+    "correctedExactSyntheticContentPreflight": "passed with revision 3 through disposable mock socket"
+  }
+}

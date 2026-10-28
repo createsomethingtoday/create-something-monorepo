@@ -1,10 +1,11 @@
 import type { PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
-import { createSessionManager } from '@create-something/canon/auth';
+import { createSessionManager, identitySessionVerification } from '@create-something/canon/auth';
 
 export const load: PageServerLoad = async ({ url, cookies, platform }) => {
 	// Check if already authenticated
 	const session = createSessionManager(cookies, {
+		identityVerification: identitySessionVerification(platform?.env, 'io'),
 		isProduction: platform?.env?.ENVIRONMENT === 'production',
 		domain: '.createsomething.io'
 	});

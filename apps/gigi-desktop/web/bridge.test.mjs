@@ -39,3 +39,21 @@ test('source import is workspace owned and context search stays within five snip
   assert.deepEqual(calls[0], { operation: 'connections.import', input: { workspaceId: 'w1', provider: 'gmail', connectedAccountId: 'account-1', cursor: 'page-2' } });
   assert.deepEqual(calls[1], { operation: 'context.search', input: { query: 'Friday show', limit: 5 } });
 });
+
+
+test('consent navigation carries the selected provider for diagnostics', async () => {
+  const calls = [];
+  const bridge = createBridge(async (_command, request) => { calls.push(request); return { opened: true, verified: false }; });
+  await bridge.openConsent('https://connect.composio.dev/synthetic', 'googlecalendar');
+  assert.deepEqual(calls, [{ operation: 'connections.openConsent', input: { url: 'https://connect.composio.dev/synthetic', provider: 'googlecalendar' } }]);
+});
+
+test('People search sends trimmed local query and cursor without changing other collections', async () => {
+  const calls=[]; const bridge=createBridge(async (_command,args)=>{calls.push(args);return {};});
+  await bridge.listRecords('w1','contacts','20','  NORTH  ');
+  assert.deepEqual(calls[0].input,{workspaceId:'w1',entity:'contacts',cursor:'20',query:'NORTH'});
+  await bridge.listRecords('w1','contacts',null,' ');
+  assert.equal(calls[1].input.query,undefined);
+  await bridge.listRecords('w1','gigs',null,'secret');
+  assert.equal(calls[2].input.query,undefined);
+});

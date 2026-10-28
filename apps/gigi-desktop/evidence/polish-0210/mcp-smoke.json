@@ -1,0 +1,1 @@
+{"passed":true,"toolCount":40,"calls":6,"checks":["fresh empty workspace","typed writes","idempotent retry","bounded list","record readback"]}

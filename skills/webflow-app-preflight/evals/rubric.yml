@@ -9,13 +9,13 @@ criteria:
     description: 'Each finding names the specific corrective action, not a restatement of the problem'
     weight: 13
   - id: 'governance_accuracy'
-    description: 'Custom Code lifecycle rules are stated correctly — immutable script versions, SRI-pinned loaders, App-update review path, site-and-page-level uninstall cleanup, retained cleanup scopes'
+    description: 'Custom Code lifecycle rules are stated correctly — immutable script versions, SRI-pinned loaders, App-update review path, what uninstall removes (API-applied Custom Code) versus what stays the App job, and a required in-App Disconnect that ends the App account link without revoking Webflow access'
     weight: 18
   - id: 'backend_authorization'
     description: 'Backend findings are correct: endpoints authenticate, identity is resolved server-side from the Webflow ID token rather than trusted from a client-supplied identifier, object-level authorization is required and tested, reusable credentials are never returned to the client, outbound destinations resolve from a server-side allowlist, and CORS is treated as defense-in-depth rather than authorization'
     weight: 12
   - id: 'no_inverted_advice'
-    description: 'Does not recommend retrying past a 401 instead of treating it as revocation, dropping the scopes needed for uninstall cleanup, accepting a claim that Webflow auto-removes injected scripts, or treating CORS or an unguessable client-supplied identifier as an access control'
+    description: 'Does not recommend retrying past a 401 instead of treating it as revocation, planning cleanup API calls after uninstall or a 401 (the token is revoked), a Disconnect that calls revoke_authorization, or treating CORS or an unguessable client-supplied identifier as an access control'
     weight: 13
   - id: 'verdict_explicit'
     description: 'Ends with an unambiguous SUBMIT or DO NOT SUBMIT verdict'

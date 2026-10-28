@@ -76,7 +76,7 @@
 <style>
   .dfw-support { color: var(--color-performance-ink); background: var(--color-performance-paper); }
   .chapter { max-width: 1440px; margin: 0 auto; padding: clamp(3rem, 7vw, 7rem) clamp(1.25rem, 5vw, 6rem); border-bottom: 1px solid var(--color-performance-line); display: grid; grid-template-columns: 1.2fr 1fr; gap: clamp(2rem, 5vw, 5rem); }
-  .eyebrow { font-family: var(--font-mono); font-size: .75rem; letter-spacing: .08em; }
+  .eyebrow { font-family: var(--font-performance-mono); font-size: .75rem; letter-spacing: .08em; }
   .eyebrow { text-transform: uppercase; margin: 0 0 1.5rem; }
   h1 { font-size: clamp(2.5rem, 4.8vw, 4.5rem); line-height: 1.02; letter-spacing: -.045em; max-width: 16ch; margin: 0 0 1.75rem; }
   h2 { font-size: clamp(2rem, 3.5vw, 3.75rem); line-height: 1.08; letter-spacing: -.035em; margin: 0 0 1.5rem; max-width: 17ch; }

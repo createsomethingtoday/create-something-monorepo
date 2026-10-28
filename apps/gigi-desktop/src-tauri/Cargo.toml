@@ -1,6 +1,6 @@
 [package]
 name = "gigi_desktop"
-version = "0.1.0"
+version = "0.2.13"
 edition = "2021"
 default-run = "gigi"
 
@@ -20,9 +20,17 @@ path = "src/bin/gigi-mcp.rs"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
+create-something-chatgpt-connection = { path = "../../../packages/chatgpt-connection" }
 libc = "0.2"
 rusqlite = { version = "0.37", features = ["bundled", "backup"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tauri = { version = "2", features = [] }
+rfd = "0.15"
+sha2 = "0.10"
 uuid = { version = "1", features = ["v4"] }
+unicode-normalization = "0.1.24"
+chrono = "0.4.45"
+chrono-tz = "0.10.4"
+image = { version = "=0.25.10", default-features = false, features = ["png", "jpeg"] }
+toml = "=0.8.2"

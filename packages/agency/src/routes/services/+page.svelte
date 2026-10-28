@@ -1,4 +1,5 @@
 <script lang="ts">
+  import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
   import AgencyWayfindingHero from '$lib/components/AgencyWayfindingHero.svelte';
   import AgencyWayfindingOpening from '$lib/components/AgencyWayfindingOpening.svelte';
   import BuiltWork from '$lib/components/BuiltWork.svelte';
@@ -53,7 +54,7 @@
     {
       question: 'What is your primary service?',
       answer:
-        'We provide AI-native technical support: diagnosis, engineering improvements and help using what we deliver. Focused is $900/month for one workstream and one milestone, with two check-ins and two remote work sessions. Team is $2,500/month for up to two workstreams and two milestones, with two check-ins and four remote sessions. Larger Builds, managed Control and project costs are separate.'
+        'We provide AI-native technical support: diagnosis, engineering improvements and help using what we deliver. We work between check-ins, show what changed and agree the next step. Focused is $900/month for one workstream and one milestone, with two check-ins and two remote work sessions available when useful. Team is $2,500/month for up to two workstreams and two milestones, with two check-ins and four remote sessions available. Remote sessions are an option for onboarding, pairing or troubleshooting. Larger Builds, managed Control and project costs are separate.'
     },
     {
       question: 'Are agents part of the workforce?',
@@ -95,7 +96,7 @@
     eyebrow="AI-native technical support"
     expression="editorial"
     title="Bring a workflow, software problem or existing product."
-    lede="We diagnose problems, implement improvements and help your team use what we deliver. Focused is $900/month for one agreed workstream and one milestone. Team is $2,500/month for up to two workstreams and two milestones. Both include two check-ins; Focused has two remote work sessions and Team has four. Delivered code follows your agreement; reusable provider tools are licensed for continued use. Your team keeps approval authority. Managed Control starts at $900/month for agreed live operations under a separate agreement. Larger Builds and project costs are separate."
+    lede="Bring us a workflow, software problem, or existing product. We’ll diagnose the issue, agree on the next step, and help your team use what we build."
     density="compact"
     artifactMobilePlacement="flow"
     proof={[
@@ -116,6 +117,36 @@
   </PerformanceCampaignOpening>
   </AgencyWayfindingOpening>
   </div>
+
+  <PerformancePageSection
+    id="support-scope"
+    eyebrow="Membership and scope"
+    title="Agree on the work before it begins."
+    variant="white"
+    layout="split"
+    density="compact"
+    ariaLabel="Technical support pricing, scope and ownership"
+  >
+    <p>
+      Focused is $900/month for one agreed workstream and one milestone.
+      Team is $2,500/month for up to two workstreams and two milestones.
+      We work between check-ins, show what changed and agree the next step.
+      Both include two check-ins; Focused has two remote work sessions available and Team has four.
+      Use them when helpful for onboarding, pairing or troubleshooting.
+    </p>
+    <p>
+      Delivered code follows your agreement; reusable provider tools are licensed for continued use.
+      Your team keeps approval authority.
+    </p>
+    {#snippet aside()}
+      <p>
+        Managed Control starts at $900/month for agreed live operations under a separate agreement.
+        Larger Builds and project costs are separate.
+      </p>
+    {/snippet}
+  </PerformancePageSection>
+
+  <WorkflowSignalBand motionOnly quiet tall showMotionControl />
 
   <BuiltWork />
 
@@ -169,6 +200,39 @@
 <style>
   .services-opening :global(.performance-campaign-opening[data-density='compact']) { min-height: 0; }
   .services-opening :global(.performance-campaign-opening[data-expression='editorial'][data-density='compact'] .performance-campaign-opening__content) { padding-bottom: var(--space-performance-xl); }
+
+  @media (min-width: 64rem) {
+    .services-opening :global(.performance-campaign-opening[data-expression='editorial'][data-density='compact']) {
+      grid-template-columns: minmax(0, 49fr) minmax(0, 44fr);
+      grid-template-rows: auto auto;
+      column-gap: 7%;
+      padding: 8.5rem 5% var(--space-performance-xl);
+    }
+    .services-opening :global(.performance-campaign-opening[data-expression='editorial'][data-density='compact'] .performance-campaign-opening__content) {
+      display: contents;
+    }
+    .services-opening :global(.performance-campaign-opening[data-expression='editorial'][data-density='compact'] .performance-campaign-opening__content header) {
+      grid-column: 1;
+      grid-row: 1;
+      width: 100%;
+      align-self: center;
+    }
+    .services-opening :global(.performance-campaign-opening[data-expression='editorial'][data-density='compact'] .performance-campaign-opening__artifact) {
+      position: relative;
+      inset: auto;
+      grid-column: 2;
+      grid-row: 1;
+      width: 100%;
+      height: auto;
+      min-height: 0;
+      align-self: center;
+    }
+    .services-opening :global(.performance-campaign-opening[data-expression='editorial'][data-density='compact'] .performance-campaign-opening__proof) {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      margin-top: var(--space-performance-xl);
+    }
+  }
 
   .services-performance {
     background: var(--color-performance-paper, #f3f3f0);

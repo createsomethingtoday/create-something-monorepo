@@ -20,6 +20,7 @@ describe('scheduler OpenAPI contract', () => {
       '/api/v1/operator/status',
       '/api/v1/operator/calendars/discover',
       '/api/v1/operator/conflict-projections/webflow-google-calendar',
+      '/api/v1/operator/conflict-projections/webflow-google-calendar/refresh',
       '/api/v1/operator/availability-overrides',
       '/api/v1/operator/availability-overrides/{overrideId}'
     ]);

@@ -1,8 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { checkLocalLinks, sourceTimestamp } from './agent-wiki-support.mjs';
 
-const packageRoot = path.resolve(new URL('..', import.meta.url).pathname);
+const packageRoot = fileURLToPath(new URL('..', import.meta.url));
 const outputDir = path.join(packageRoot, 'docs', 'agent-wiki');
 const check = process.argv.includes('--check');
 const ageIndex = process.argv.indexOf('--max-age-days');
@@ -648,6 +649,13 @@ const ageDays = (Date.now() - Date.parse(snapshotDates[0])) / 86400000;
 if (maxAgeDays !== null && ageDays > maxAgeDays) {
   console.error(`Agent wiki source snapshot is ${ageDays.toFixed(1)} days old; maximum is ${maxAgeDays}. Run the database-layer refresh pipeline.`);
   process.exit(1);
+}
+
+// Render-only local projection for automatic context refresh. Validate the same
+// canonical links and source dates, then return before any filesystem mutation.
+if (process.argv.includes('--json')) {
+  console.log(JSON.stringify({ files: Object.fromEntries(files), snapshotDates }));
+  process.exit(0);
 }
 
 function existingMarkdownFiles() {

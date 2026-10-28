@@ -1,0 +1,22 @@
+{
+  "package": "basic-ftp",
+  "version": "6.2.1",
+  "integrity": "sha512-bK67isD+lKq46AU8vNtjvMaT2ZqAOAmNCbxUHlFBRD4k15NWxyEjmaKtZPlgce58So4BNTjITGQOVTjL9y0ECA==",
+  "files": {
+    "dist/Client.js": "44d5a4ac81455bbe6f99dc853bbc0da12386d70c7c10b3be7005ef8186407bc1",
+    "dist/FileInfo.js": "b8e05da56246c3d33f1ad4ebba1e17ef69c5895413bc2e49c5309472c42b6992",
+    "dist/FtpContext.js": "7b6b6e215cd8404440d13458a896bd56b76dfea02cb56688485e3ffb1a861bfe",
+    "dist/ProgressTracker.js": "c24792e9957fb9b5c6b985e5dcde22e4d25b314c2276e85ad195740676bba97c",
+    "dist/StringEncoding.js": "d43aa81f5bc89faa359e0f97c814ba25155591ff078fbb9bfd40f8c7c9683230",
+    "dist/StringWriter.js": "acb077b15a2f5da70ec42c03c6ffef165c947074acdad2b613baefa9051c2807",
+    "dist/TransferWatchdog.js": "39cbd3e2d5c99332feccbe253860607736c5c527592d54890767eb4c58e9acdf",
+    "dist/index.js": "57faf343eb71894b9b002449ca5f69d5055bdb3bbe1af5e8ba763d34a2798e30",
+    "dist/netUtils.js": "fd6068abebfb63d15e110117ab1edacdccbf15e77fd900161e305585d4b6caf5",
+    "dist/parseControlResponse.js": "6431afebaa69a48e89404466fc1b81057a206c41dcdc6edae6e602074ba1fd4c",
+    "dist/parseList.js": "36a4a3d0c17498c8716b90400c2242efa84848cfc9bb8549777a95589df04766",
+    "dist/parseListDOS.js": "a902206c12ab1f8bf7360e5c143d02772e11747a4545a18d177507c5ac5a2cdf",
+    "dist/parseListMLSD.js": "dc7009148687957f66a977795049ef87d744f7ce7a35fa0648d00eed32701cb0",
+    "dist/parseListUnix.js": "6596240aaaf766b5c9aa6b14f05cbefb734d8bc4b7dc5e3ac4688f9cabf32e33",
+    "dist/transfer.js": "1c6a4b8905c4f00997d60de7bd34164d44ef03da351209e680d9d0e77d8bb067"
+  }
+}

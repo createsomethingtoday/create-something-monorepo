@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
@@ -21,7 +22,19 @@ assert(
   ].join(' ')
 );
 
-function run(binary, args, options = {}) {
+function nativeHash(binary) {
+  const path = resolve(binary);
+  const nativePath = path.endsWith('.js')
+    ? join(dirname(path), 'native', basename(path, '.js') + (process.platform === 'win32' ? '.exe' : ''))
+    : path;
+  return createHash('sha256').update(readFileSync(nativePath)).digest('hex');
+}
+const binaries = {
+  ground: { sha256: nativeHash(groundBinary) },
+  'ground-mcp': { sha256: nativeHash(mcpBinary) }
+};
+
+function run(binary, args, { expectedOutcome, ...options } = {}) {
   const resolvedBinary = resolve(binary);
   const isJavaScriptWrapper = resolvedBinary.endsWith('.js');
   const result = spawnSync(
@@ -32,9 +45,20 @@ function run(binary, args, options = {}) {
       ...options
     }
   );
+  let expectedExit = 0;
+  if (expectedOutcome) {
+    const report = JSON.parse(result.stdout);
+    // Historical releases used transport exit zero. New releases must match
+    // both the expected semantic outcome and its documented process status.
+    if (report.outcome !== undefined) {
+      assert.equal(report.outcome, expectedOutcome);
+      expectedExit = { CLEAN: 0, FINDINGS: 1, INCOMPLETE: 2, NOT_APPLICABLE: 3 }[report.outcome];
+      assert.notEqual(expectedExit, undefined);
+    }
+  }
   assert.equal(
     result.status,
-    0,
+    expectedExit,
     `${binary} ${args.join(' ')} failed (${result.status}): ${result.stderr}`
   );
   return result;
@@ -60,7 +84,7 @@ function writeDuplicateFixture(directory, extension, functionName, contents) {
 }
 
 function analyzeDuplicate(binary, database, directory, expectedFunction) {
-  const result = run(binary, ['--db', database, 'analyze', directory, '--checks', 'duplicates']);
+  const result = run(binary, ['--db', database, 'analyze', directory, '--checks', 'duplicates'], { expectedOutcome: 'FINDINGS' });
   const analysis = JSON.parse(result.stdout);
   assert.equal(analysis.coverage?.duplicates?.status, 'FAIL', JSON.stringify(analysis));
   assert.equal(analysis.findings?.duplicates?.length, 1, JSON.stringify(analysis));
@@ -193,8 +217,11 @@ try {
     );
   }
 
+  assert.equal(nativeHash(groundBinary), binaries.ground.sha256, 'CLI bytes changed during smoke');
+  assert.equal(nativeHash(mcpBinary), binaries['ground-mcp'].sha256, 'MCP bytes changed during smoke');
   const receipt = {
     schema_version: 'ground-native-release-smoke.v1',
+    binaries,
     platform: platformId,
     version: packageManifest.version,
     source_sha: buildInfo.source_sha,

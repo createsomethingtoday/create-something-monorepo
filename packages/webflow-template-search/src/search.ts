@@ -1,4 +1,6 @@
 import { extractDescriptionList } from './html.js';
+import { parseDemoSignals } from './demo-signals.js';
+import { applyPopularShuffle, popularShuffleFor, popularShuffleWindow } from './popular-shuffle.js';
 import { lookupPublicSlugMap, resolveAlias } from './db.js';
 import { publicPurchaseBucket, publicViewerBucket } from './public-signals.js';
 import type {
@@ -728,6 +730,8 @@ export async function searchTemplates(env: Env, rawParams: SearchParams, cacheVe
       }
     }
 
+    const shuffle = sqlParts.queryMode ? null : popularShuffleFor(env, params);
+    const shuffleWindow = shuffle ? popularShuffleWindow(shuffle, offset, params.pageSize) : null;
     rows = await env.DB
       .prepare(`
         SELECT
@@ -738,8 +742,12 @@ export async function searchTemplates(env: Env, rawParams: SearchParams, cacheVe
         ORDER BY ${orderClause}
         LIMIT ? OFFSET ?
       `)
-      .bind(...sqlParts.binds, params.pageSize, offset)
+      .bind(...sqlParts.binds, shuffleWindow?.limit ?? params.pageSize, shuffleWindow?.offset ?? offset)
       .all<DocumentRow>();
+    if (shuffle && shuffleWindow) {
+      const pageStart = offset - shuffleWindow.offset;
+      rows = { ...rows, results: applyPopularShuffle(shuffle, rows.results ?? [], shuffleWindow.offset).slice(pageStart, pageStart + params.pageSize) };
+    }
   }
 
   if (includeFacets) {
@@ -813,6 +821,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams, cacheVe
       item.included_pages = extractDescriptionList(row.description_long_html, 'pages');
       item.features = extractDescriptionList(row.description_long_html, 'features');
       item.source_updated_at = row.source_last_modified_time;
+      item.demo_signals = parseDemoSignals(row.demo_signals_json);
     }
 
     return item;

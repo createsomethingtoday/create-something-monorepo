@@ -30,7 +30,7 @@ if (!process.env.CANVAS_URL) {
   }
 }
 if (!baseUrl) throw new Error('Native verifier URL is unavailable');
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) });
 
 const blankDocument = {
   version: 'create-something.mapping-canvas.v1',
@@ -45,24 +45,31 @@ const blankDocument = {
 
 async function nativePage(role, viewport, restoredQueue = false) {
   const context = await browser.newContext({ viewport });
+  context.setDefaultTimeout(15000);
   await context.addInitScript(({ role, blankDocument, restoredQueue }) => {
     let revision = 0;
     let online = true;
     let document = structuredClone(blankDocument);
     let titleSubmission = 0;
+    const past = [], future = [];
+    const historyStatus = () => ({ canUndo: past.length > 0, canRedo: future.length > 0, depth: past.length });
+    window.__nativeHistoryInFlight = false;
     window.__nativeCalls = [];
     window.__nativeConflictNextReplace = false;
     window.__nativeConflictInFlight = false;
     window.__nativeQueueFullNextReplace = false;
     window.__nativeRefreshDelay = false;
     window.__nativeRefreshInFlight = false;
+    window.__nativeLastCompanionRefresh = null;
     window.__nativeReplacementInFlight = false;
     window.__nativeViewportDelay = false;
     window.__TAURI_INTERNALS__ = {
       invoke: async (command, args = {}) => {
+        // Tauri serializes IPC arguments; the synthetic bridge must not retain Svelte proxies.
+        args = args === undefined ? undefined : JSON.parse(JSON.stringify(args));
         window.__nativeCalls.push({ command, args });
         if (command === 'draw_runtime_role') return role;
-        if (command === 'draw_host_status') return { sessionId: 'session-native', revision, document, pairedClients: [{ clientId: 'iphone-d5794285-1d79-4609-9d08-6a5adab8bd56', revokedAt: null }], transport: { endpoint: 'https://192.0.2.1:4242', certificateFingerprint: 'a'.repeat(64) } };
+        if (command === 'draw_host_status') return { history: historyStatus(), sessionId: 'session-native', revision, document, pairedClients: [{ clientId: 'iphone-d5794285-1d79-4609-9d08-6a5adab8bd56', revokedAt: null }], transport: { endpoint: 'https://192.0.2.1:4242', certificateFingerprint: 'a'.repeat(64) } };
         if (command === 'draw_companion_status') return restoredQueue ? { status: 'paired', sessionId: 'session-native', revision, document, certificateFingerprint: 'abcdef0123456789'.repeat(4), queueDepth: 1, online: true } : { status: 'unpaired' };
         if (command === 'draw_pair_begin') return { code: '271828', expiresAt: '2099-01-01T00:00:00Z' };
         if (command === 'draw_discover_hosts') return [{ endpoint: 'https://draw-mac.local:4242', sessionId: 'session-native', protocolVersion: 'create-something.draw-pairing.v2', certificateFingerprint: 'abcdef0123456789'.repeat(4), certificateDer: 'fixture-certificate' }];
@@ -81,9 +88,38 @@ async function nativePage(role, viewport, restoredQueue = false) {
             window.__nativeRefreshInFlight = false;
             return { status: 'paired', sessionId: 'session-native', revision: revision + 1, document: staleDocument, queueDepth: 0, online, certificateFingerprint: 'abcdef0123456789'.repeat(4) };
           }
-          return { status: 'paired', sessionId: 'session-native', revision, document, queueDepth: 0, online, certificateFingerprint: 'abcdef0123456789'.repeat(4) };
+          const snapshot = { status: 'paired', sessionId: 'session-native', revision, document, queueDepth: 0, online, certificateFingerprint: 'abcdef0123456789'.repeat(4) };
+          window.__nativeLastCompanionRefresh = JSON.parse(JSON.stringify(snapshot));
+          return snapshot;
         }
         if (command === 'draw_companion_forget') return { status: 'unpaired' };
+        if (command === 'draw_host_apply_batch') {
+          const request = args.request;
+          if (request.sessionId !== 'session-native' || request.documentId !== document.id || request.expectedRevision !== revision || !request.operationId || !request.operations.length) throw new Error('Invalid host batch authority');
+          const previousDocument = structuredClone(document);
+          let next = structuredClone(document);
+          for (const operation of request.operations) {
+            if (operation.type === 'put_object') next = { ...next, objects: [...next.objects.filter(item => item.id !== operation.object.id), structuredClone(operation.object)] };
+            else if (operation.type === 'set_viewport') next = { ...next, viewport: structuredClone(operation.viewport) };
+            else if (operation.type === 'set_title') next = { ...next, title: operation.title };
+            else if (operation.type === 'set_background') next = { ...next, background: operation.background };
+            else if (operation.type === 'remove_objects') next = { ...next, objects: next.objects.filter(item => !operation.ids.includes(item.id)) };
+            else if (operation.type === 'replace_objects') next = { ...next, objects: structuredClone(operation.objects) };
+            else throw new Error(`Unsupported host fixture operation: ${operation.type}`);
+          }
+          past.push(previousDocument); future.length = 0; document = next; revision++;
+          return { status: 'applied', revision, document: structuredClone(document), previousDocument, history: historyStatus() };
+        }
+        if (command === 'draw_host_history') {
+          if (args.expectedRevision !== revision || !args.operationId || !['undo', 'redo'].includes(args.direction)) throw new Error('Invalid host history authority');
+          const from = args.direction === 'undo' ? past : future, to = args.direction === 'undo' ? future : past;
+          if (!from.length) throw new Error('Host history unavailable');
+          window.__nativeHistoryInFlight = true;
+          await new Promise(resolve => setTimeout(resolve, 200));
+          to.push(structuredClone(document)); document = from.pop(); revision++;
+          window.__nativeHistoryInFlight = false;
+          return { status: 'applied', revision, document: structuredClone(document), history: historyStatus() };
+        }
         if (command === 'draw_host_replace_document') {
           window.__nativeReplacementInFlight = true;
           await new Promise((resolve) => setTimeout(resolve, 200));
@@ -92,7 +128,7 @@ async function nativePage(role, viewport, restoredQueue = false) {
           window.__nativeReplacementInFlight = false;
           return { status: 'applied', revision, document, queueDepth: 0, online };
         }
-        if (command === 'draw_host_apply_local' || command === 'draw_companion_submit') {
+        if (command === 'draw_companion_submit') {
           const operation = args.operation;
           if (operation.type === 'set_viewport' && window.__nativeViewportDelay) {
             window.__nativeViewportDelay = false;
@@ -159,15 +195,17 @@ try {
   if (!hostBox) throw new Error('Mac canvas surface unavailable');
   await host.page.getByRole('button', { name: /Note tool/ }).click();
   await host.page.mouse.click(hostBox.x + 220, hostBox.y + 220);
-  await host.page.waitForFunction(() => window.__nativeCalls.some(({ command, args }) => command === 'draw_host_apply_local' && args?.operation?.type === 'put_object'));
-  const hostViewportSubmits = await host.page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_host_apply_local' && args?.operation?.type === 'set_viewport').length);
+  await host.page.waitForFunction(() => window.__nativeCalls.some(({ command, args }) => command === 'draw_host_apply_batch' && args?.request?.operations?.some(operation => operation.type === 'put_object')));
+  const hostViewportSubmits = await host.page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_host_apply_batch' && args?.request?.operations?.some(operation => operation.type === 'set_viewport')).length);
   await host.page.mouse.move(hostBox.x + 320, hostBox.y + 280);
   await host.page.mouse.wheel(18, -12);
   await host.page.getByRole('button', { name: 'Undo' }).click();
-  await host.page.waitForFunction(() => window.__nativeReplacementInFlight);
+  await host.page.waitForFunction(() => window.__nativeHistoryInFlight);
   await host.page.waitForTimeout(400);
-  const hostViewportSubmitsAfterUndo = await host.page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_host_apply_local' && args?.operation?.type === 'set_viewport').length);
+  const hostViewportSubmitsAfterUndo = await host.page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_host_apply_batch' && args?.request?.operations?.some(operation => operation.type === 'set_viewport')).length);
   if (hostViewportSubmitsAfterUndo !== hostViewportSubmits) throw new Error('Mac Undo allowed a debounced wheel viewport to submit after the history replacement');
+  if (await host.page.evaluate(() => window.__nativeCalls.some(({ command }) => command === 'draw_host_apply_local'))) throw new Error('Mac UI used legacy single-operation host route');
+  if (await host.page.getByLabel('Edit note').count()) throw new Error('Native Undo did not restore the pre-note document');
   if (host.errors.length) throw new Error(`Mac native-shell errors: ${host.errors.join(' | ')}`);
   await host.context.close();
 
@@ -303,7 +341,13 @@ try {
   const editor = page.getByLabel('Edit note');
   await editor.fill('MCP tools use spaces');
   if (await editor.inputValue() !== 'MCP tools use spaces') throw new Error('Native note lost spaces');
-  await page.waitForTimeout(250);
+  await page.waitForFunction(() => window.__nativeCalls.some(({ command, args }) => command === 'draw_companion_submit' && args.operation.type === 'put_object' && args.operation.object.text === 'MCP tools use spaces'));
+  // A changed authoritative mirror safely disarms reset. Finish this note's mirror
+  // reconciliation before testing queue-full behavior, rather than racing editor blur.
+  await editor.evaluate(input => input.blur());
+  await page.waitForFunction(() => window.__nativeLastCompanionRefresh?.document.objects.some(object => object.kind === 'note' && object.text === 'MCP tools use spaces'));
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => resolve())));
+  if (await editor.inputValue() !== 'MCP tools use spaces') throw new Error('Authoritative mirror lost the edited native note');
   const callsBeforeQueueFullReset = await page.evaluate(() => {
     window.__nativeQueueFullNextReplace = true;
     return window.__nativeCalls.filter(({ command }) => command === 'draw_companion_submit').length;
@@ -337,8 +381,14 @@ try {
   await page.evaluate(() => { window.__nativeViewportDelay = true; });
   await page.mouse.move(box.x + 180, box.y + 240);
   await page.mouse.wheel(6, -4);
-  // Drag the lower note border, clear of the responsive formatting toolbar.
-  const dragStart = { x: before.x + 5, y: before.y + before.height - 5 };
+  // The selected-note formatting toolbar overlays the lower edge on iPhone.
+  // Use the visible upper-left note border and verify the actual pointer target.
+  const dragStart = { x: before.x + 5, y: before.y + 12 };
+  const dragTargetIsNote = await note.evaluate((element, { x, y }) => {
+    const target = document.elementFromPoint(x, y);
+    return target && element.contains(target) && !target.closest('button, textarea, input, foreignObject');
+  }, dragStart);
+  if (!dragTargetIsNote) throw new Error('Companion drag fixture did not target the visible note border');
   await page.mouse.move(dragStart.x, dragStart.y);
   await page.mouse.down();
   await page.mouse.move(dragStart.x + 50, dragStart.y + 50, { steps: 4 });
@@ -353,11 +403,11 @@ try {
   await page.getByRole('button', { name: 'Redo' }).click();
 
   await page.getByRole('button', { name: /Group tool/ }).click();
-  await surface.dispatchEvent('pointerdown', { pointerId: 40, pointerType: 'touch', button: 0, clientX: box.x + 45, clientY: box.y + 430 });
-  await surface.dispatchEvent('pointerup', { pointerId: 40, pointerType: 'touch', button: 0, clientX: box.x + 45, clientY: box.y + 430 });
+  await surface.dispatchEvent('pointerdown', { pointerId: 40, pointerType: 'touch', button: 0, clientX: box.x + 45, clientY: box.y + 180 });
+  await surface.dispatchEvent('pointerup', { pointerId: 40, pointerType: 'touch', button: 0, clientX: box.x + 45, clientY: box.y + 180 });
   await page.getByRole('button', { name: /Select tool/ }).click();
   const group = page.getByRole('button', { name: /^Group:/ });
-  await group.click();
+  await group.click({ position: { x: 8, y: 8 } });
   const resize = page.getByRole('button', { name: 'Resize group' });
   const groupGeometry = (locator) => locator.locator('rect').first().evaluate((rect) => ({ width: rect.getAttribute('width'), height: rect.getAttribute('height') }));
   const groupBeforeCancel = await groupGeometry(group);

@@ -38,7 +38,10 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 
 		// Calculate summary statistics
 		const topCategories = categories.slice(0, 5);
-		const totalSales = categoryResult.marketplaceSummary?.totalSales ?? categories.reduce((sum, c) => sum + c.totalSales30d, 0);
+		// A multi-tag template is counted in every category it carries, so the
+		// category rows overlap and must never be summed into a marketplace total.
+		// Only the unique snapshot summary can supply these; otherwise they are null.
+		const totalSales = categoryResult.marketplaceSummary?.totalSales ?? null;
 		const avgRevenue =
 			categories.length > 0
 				? categories.reduce((sum, c) => sum + c.avgRevenuePerTemplate, 0) / categories.length
@@ -81,15 +84,8 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 			actualSource: categoryResult.freshness.source
 		});
 
-		// Calculate total marketplace revenue across all categories
-		const totalRevenue = categoryResult.marketplaceSummary?.totalRevenue ?? categories.reduce((sum, c) => {
-			// avgRevenuePerTemplate * templatesInSubcategory approximates total revenue
-			// but we also have totalSales30d. Use available aggregate data.
-			return sum + (c.totalRevenue30d || 0);
-		}, 0);
-
-		// Total templates across all categories
-		const totalTemplates = categoryResult.marketplaceSummary?.sellingTemplates ?? categories.reduce((sum, c) => sum + c.templatesInSubcategory, 0);
+		const totalRevenue = categoryResult.marketplaceSummary?.totalRevenue ?? null;
+		const totalTemplates = categoryResult.marketplaceSummary?.sellingTemplates ?? null;
 
 			return json(
 				{

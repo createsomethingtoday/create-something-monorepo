@@ -79,6 +79,12 @@ const SKIP_DIRS = new Set([
 
 export const CANON_CODIFICATION_EXEMPTIONS: CanonCodificationExemption[] = [
 	{
+		path: 'packages/dotfiles/claude-code/mods/outbound-guard/hooks/register.tsx',
+		reason: 'operator-tooling',
+		justification:
+			'Outbound guard renders an approval pane through the Claude Code terminal mod UI; it is operator tooling rather than a Canon-consuming web product surface.'
+	},
+	{
 		path: 'packages/webflow-components',
 		reason: 'webflow-code-component-library',
 		justification:
@@ -113,6 +119,24 @@ export const CANON_CODIFICATION_EXEMPTIONS: CanonCodificationExemption[] = [
 		reason: 'operator-tooling',
 		justification:
 			'Bundle scanner UI is operator tooling, not a rendered Canon-consuming product surface.'
+	},
+	{
+		path: 'packages/webflow-app-forge/template',
+		reason: 'webflow-review-tooling',
+		justification:
+			'App Forge scaffold output for third-party Webflow Designer Extensions; it renders inside the Webflow Designer iframe for Marketplace review, never on a Canon-consuming property surface.'
+	},
+	{
+		path: 'packages/webflow-app-review-mcp/mods',
+		reason: 'webflow-review-tooling',
+		justification:
+			'Claude Code mods for Marketplace App review render panes and bands inside the Claude Code terminal UI through the plugin engine, not on a Canon-consuming property surface.'
+	},
+	{
+		path: 'packages/webflow-template-review-mcp/mods',
+		reason: 'webflow-review-tooling',
+		justification:
+			'Claude Code template-review mods render approval panes, review bands and scorecards through the terminal plugin engine, outside Canon-consuming web property surfaces.'
 	},
 	{
 		path: 'packages/webflow-review',

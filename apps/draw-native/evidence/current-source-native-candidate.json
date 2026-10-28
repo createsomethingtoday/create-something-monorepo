@@ -1,0 +1,50 @@
+{
+  "recordedAtUtc": "2026-10-09T02:51:34.994531+00:00",
+  "sourceCommit": "277b1dc2e8cf92e3bf60e5957a5ed0d27b44faf1",
+  "sourceTrackedChangesAtBuild": false,
+  "rustc": "1.99.0 (b940084d7 2026-09-28)",
+  "cargo": "1.99.0 (5f94df478 2026-08-27)",
+  "targetDirectory": "/Users/createsomething/Documents/Codex/2026-10-08/task-3/draw-candidate-277b1dc2-target",
+  "cacheReuse": "APFS clone of owned previous target into separate target; no hard links or shared Ground target writes",
+  "commands": [
+    "cargo build --manifest-path apps/draw-native/src-tauri/Cargo.toml --locked --offline --bin create_something_draw_native",
+    "tauri bundle --debug --bundles app --no-sign --ci",
+    "cargo test --manifest-path apps/draw-native/src-tauri/Cargo.toml --locked --offline --lib -- --skip discovery_and_certificate_pinned_pairing_reach_the_authoritative_host"
+  ],
+  "bundlePath": "/Users/createsomething/Documents/Codex/2026-10-08/task-3/draw-candidate-277b1dc2-target/debug/bundle/macos/CREATE SOMETHING Draw.app",
+  "executableSha256": "d7f5caaca58e3a3071ed0333e779a2eb4b1d954df30d3a8f77359bd9c182d681",
+  "bundleFilesSha256": {
+    "Contents/Info.plist": "bd54f28ef1614f790ce05e0ccccca677c07332b17d83cef395a412f0f2407650",
+    "Contents/MacOS/create_something_draw_native": "d7f5caaca58e3a3071ed0333e779a2eb4b1d954df30d3a8f77359bd9c182d681",
+    "Contents/Resources/icon.icns": "c374fb5ae19ddc842564378025cb137b0f6a97ce2ea15433d5fadebb49f74f97"
+  },
+  "bundleManifestSha256": "b308ed4a1d71bf605774f73abfaadd2e46b1401f1123d514e2a7c750a6a21597",
+  "bundleManifestAlgorithm": "SHA256 of compact sorted JSON mapping relative POSIX regular-file paths to SHA256 bytes",
+  "bundleMetadata": {
+    "CFBundleIdentifier": "agency.createsomething.draw",
+    "CFBundleName": "CREATE SOMETHING Draw",
+    "CFBundleVersion": "0.1.0",
+    "CFBundleExecutable": "create_something_draw_native",
+    "CFBundleIconFile": "icon.icns",
+    "LSMinimumSystemVersion": "13.0"
+  },
+  "signature": "bundling used --no-sign; executable only has ad-hoc linker signature, no TeamIdentifier, no bound Info.plist or sealed resources",
+  "notarized": false,
+  "approvedIconMatches": true,
+  "preservedOldExecutableSha256": "fc46f59c55071a26e3ef25b288720bfac7fbd605922dcf0efc7a19b1fc296fdd",
+  "oldExecutableUnchanged": true,
+  "nativeTests": {
+    "passed": 52,
+    "failed": 0,
+    "filtered": 1,
+    "excluded": "discovery_and_certificate_pinned_pairing_reach_the_authoritative_host"
+  },
+  "candidateLaunched": false,
+  "nativeUiAccepted": false,
+  "providerStarted": false,
+  "providerReadVerified": false,
+  "newGrantCreated": false,
+  "installedAppReplaced": false,
+  "publicDistribution": false,
+  "releaseQualified": false
+}

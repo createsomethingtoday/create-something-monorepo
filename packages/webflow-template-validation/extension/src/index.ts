@@ -32,6 +32,13 @@ import {
 } from './style-metadata';
 import { componentContainsComponentInstance, readComponentMetadata } from './component-metadata';
 import { readVariableModeBreakpoint } from './variable-mode-metadata';
+import {
+  describeRequestFailure,
+  getFixListStorageKey as getSiteFixListStorageKey,
+  getLastRunStorageKey,
+  parseStoredValidationRun,
+  pruneLegacyRunStorage,
+} from './run-storage';
 
 // API Configuration
 const WORKER_API_BASE = 'https://validation-worker.createsomething.workers.dev';
@@ -51,6 +58,7 @@ let bridgeStatus: SnippetStatusResponse | null = null;
 
 // Last completed run, kept for the copy-report action and restored-run display
 let lastValidationReport: {
+  siteId: string | null;
   data: ValidationResponse;
   correlationId: string | null;
   generatedAt: string;
@@ -61,7 +69,6 @@ let lastValidationReport: {
 // buttons can call webflow.setSelectedElement with the original object
 const canvasElementRegistry = new Map<string, AnyElement>();
 
-const LAST_RUN_STORAGE_KEY = 'webflow_validator_last_run';
 
 // Types for validation data
 interface ValidationIssue {
@@ -356,9 +363,12 @@ function initializeExtension(): void {
   recheckBtn?.addEventListener('click', () => refreshBridgeStatus());
   copyBtn?.addEventListener('click', () => void copyBridgeSnippetFromCurrentStatus());
 
+  // Pre-1.3.8 builds kept one global last-run key, so a report from another
+  // site could be restored here. Drop it; per-site restore happens once the
+  // bridge panel has resolved the current site ID.
+  pruneLegacyRunStorage(localStorage);
   void bootstrapBridgePanel();
   void fetchWorkerVersion();
-  restoreLastValidationReport();
 }
 
 if (document.readyState === 'loading') {
@@ -1309,6 +1319,7 @@ async function runDesignerValidation(
 ): Promise<ValidationResponse> {
   const body = JSON.stringify({ designerData: projectData, siteUrl });
   const endpoints = [`${APP_VALIDATOR_BASE}/api/validate`];
+  let lastError: unknown;
 
   for (const endpoint of endpoints) {
     try {
@@ -1329,10 +1340,11 @@ async function runDesignerValidation(
       return result;
     } catch (error) {
       console.warn(`Designer validation failed via ${endpoint}:`, error);
+      lastError = error;
     }
   }
 
-  throw new Error('Designer validation failed on all configured backends.');
+  throw new Error(`Designer validation failed on all configured backends (${describeRequestFailure(lastError)}).`);
 }
 
 async function runLegacyEnhancedValidation(
@@ -1413,6 +1425,7 @@ async function bootstrapBridgePanel(): Promise<void> {
 
     bridgeContext = { siteId, siteName, siteUrl: siteUrl || undefined };
     setBridgeActionsDisabled(false);
+    restoreLastValidationReport(siteId);
     await refreshBridgeStatus();
   } catch (error) {
     console.warn('Bridge bootstrap failed:', error);
@@ -1509,7 +1522,7 @@ async function installBridge(): Promise<void> {
     console.warn('Bridge install failed:', error);
     setBridgeBadge('failed');
     setBridgeMessage(
-      'Could not prepare the Validator script. Try again, then publish and re-check.'
+      `Could not prepare the Validator script (${describeRequestFailure(error)}). Try again, then publish and re-check.`
     );
     setBridgeSetupStep('install');
     setToolbarStatus('Validator script setup failed', 'failed');
@@ -3520,19 +3533,25 @@ function updateMetaDisplay(projectLabel: string, projectData: ProjectData): void
 // Register the completed run for copy-report and persist it so reopening the
 // panel restores the last report instead of forcing a 30-60s re-run.
 function registerValidationReport(data: ValidationResponse, correlationId: string | null): void {
+  const siteId = bridgeContext?.siteId || null;
   lastValidationReport = {
+    siteId,
     data,
     correlationId,
     generatedAt: new Date().toISOString(),
     restored: false,
   };
 
+  // Without a site ID there is no safe key: keep the run in memory only.
+  if (!siteId) return;
+  const storageKey = getLastRunStorageKey(siteId);
+
   try {
-    localStorage.setItem(LAST_RUN_STORAGE_KEY, JSON.stringify(lastValidationReport));
+    localStorage.setItem(storageKey, JSON.stringify(lastValidationReport));
   } catch {
     // Quota exceeded on large sites — retry without the bulky collected data
     try {
-      localStorage.setItem(LAST_RUN_STORAGE_KEY, JSON.stringify({
+      localStorage.setItem(storageKey, JSON.stringify({
         ...lastValidationReport,
         data: { ...data, collectedData: undefined },
       }));
@@ -3542,15 +3561,19 @@ function registerValidationReport(data: ValidationResponse, correlationId: strin
   }
 }
 
-function restoreLastValidationReport(): boolean {
+// Restores the last run for this site only. A run stored for a different
+// site (or a legacy run with no site ID) is never shown.
+function restoreLastValidationReport(siteId: string): boolean {
+  if (isValidating || lastValidationReport) return false;
   try {
-    const saved = localStorage.getItem(LAST_RUN_STORAGE_KEY);
+    const saved = parseStoredValidationRun<ValidationResponse>(
+      localStorage.getItem(getLastRunStorageKey(siteId)),
+      siteId
+    );
     if (!saved) return false;
-    const parsed = JSON.parse(saved);
-    if (!parsed?.data?.categories) return false;
 
-    lastValidationReport = { ...parsed, restored: true };
-    showResults(parsed.data);
+    lastValidationReport = { ...saved, restored: true };
+    showResults(saved.data);
     return true;
   } catch (error) {
     console.warn('Could not restore last validation results:', error);
@@ -4668,21 +4691,29 @@ interface SubmissionFixListItem {
   completed: boolean;
 }
 
-function getFixListStorageKey(): string {
-  return 'webflow_validator_submission_fix_list';
+function getFixListStorageKey(): string | null {
+  const siteId = bridgeContext?.siteId;
+  return siteId ? getSiteFixListStorageKey(siteId) : null;
 }
 
 function saveFixList(fixItems: SubmissionFixListItem[]): void {
+  const storageKey = getFixListStorageKey();
+  if (!storageKey) return;
   const data = {
     fixItems,
     timestamp: Date.now()
   };
-  localStorage.setItem(getFixListStorageKey(), JSON.stringify(data));
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(data));
+  } catch (error) {
+    console.warn('Could not persist fix list:', error);
+  }
 }
 
 function loadFixList(): SubmissionFixListItem[] {
   try {
-    const saved = localStorage.getItem(getFixListStorageKey());
+    const storageKey = getFixListStorageKey();
+    const saved = storageKey ? localStorage.getItem(storageKey) : null;
     if (saved) {
       const data = JSON.parse(saved);
       return data.fixItems || data.errors || [];

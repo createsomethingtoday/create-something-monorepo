@@ -21,13 +21,20 @@ const fixtureDirectory = resolve(
 test('native CLI creates its default registry parent in a fresh consumer directory', async () => {
   const consumerDirectory = await mkdtemp(join(tmpdir(), 'ground-cli-consumer-'));
   try {
-    const { stdout } = await execFileAsync(
+    let stdout = '';
+    await assert.rejects(execFileAsync(
       binaryPath,
       ['--db', '.ground/registry.db', 'analyze', fixtureDirectory, '--checks', 'duplicates'],
       { cwd: consumerDirectory }
-    );
+    ), (error: unknown) => {
+      const result = error as { code: number; stdout: string };
+      assert.equal(result.code, 1);
+      stdout = result.stdout;
+      return true;
+    });
 
     const analysis = JSON.parse(stdout);
+    assert.equal(analysis.outcome, 'FINDINGS');
     assert.equal(analysis.summary.total_issues, 1);
     assert.equal(existsSync(join(consumerDirectory, '.ground/registry.db')), true);
   } finally {

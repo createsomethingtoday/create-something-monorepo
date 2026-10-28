@@ -152,7 +152,7 @@
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
-    <Button href="mailto:legal@createsomething.io" variant="secondary">Security Contact</Button>
+    <Button href="mailto:support@createsomething.io" variant="secondary">Security Contact</Button>
   {/snippet}
 </PerformanceConversionHandoff>
 

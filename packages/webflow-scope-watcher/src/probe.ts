@@ -24,6 +24,8 @@ export interface ConsentCapture {
 	ok: boolean;
 	/** true when the render showed the login page — session cookie missing/expired */
 	loginDetected?: boolean;
+	/** true when the render showed a bot challenge ("Confirm you're not a bot" / press-and-hold) instead of the app */
+	challengeDetected?: boolean;
 	/** KV id of the stored PNG; served at GET /consent/<id>.png */
 	imageId?: string;
 	authorizeUrl?: string;
@@ -61,6 +63,20 @@ export function buildAuthorizeUrl(clientId: string, scopes: string[]): string {
 /** Markers observed on webflow.com's logged-out flows (verified 2026-08-18). */
 export function detectLoginPage(html: string): boolean {
 	return html.includes('Log in to your account') || html.includes('Please sign back in');
+}
+
+/**
+ * Markers of webflow.com's bot challenge interstitial ("Confirm you’re not a
+ * bot" with a press-and-hold button and a Reference ID). Observed 2026-10-26:
+ * Browser Rendering's datacenter egress is served this page on the authorize
+ * URL instead of the app, so a capture can "succeed" with no consent screen in
+ * it. Text markers accept both apostrophe forms.
+ */
+export function detectBotChallenge(html: string): boolean {
+	return (
+		/Confirm you(?:’|'|&#39;|&rsquo;)re not a bot/.test(html) ||
+		(html.includes('Press and hold') && html.includes('Reference ID'))
+	);
 }
 
 export async function captureConsent(
@@ -113,7 +129,9 @@ export async function captureConsent(
 		return { ok: false, error: 'browser rendering returned no snapshot', authorizeUrl };
 	}
 
-	const loginDetected = detectLoginPage(json.result.content ?? '');
+	const content = json.result.content ?? '';
+	const loginDetected = detectLoginPage(content);
+	const challengeDetected = detectBotChallenge(content);
 	const idBytes = new Uint8Array(16);
 	crypto.getRandomValues(idBytes);
 	const imageId = [...idBytes].map((b) => b.toString(16).padStart(2, '0')).join('');
@@ -124,8 +142,9 @@ export async function captureConsent(
 			scopes: opts.scopes.join(' '),
 			at: new Date().toISOString(),
 			loginDetected,
+			challengeDetected,
 		},
 	});
 
-	return { ok: true, loginDetected, imageId, authorizeUrl };
+	return { ok: true, loginDetected, challengeDetected, imageId, authorizeUrl };
 }

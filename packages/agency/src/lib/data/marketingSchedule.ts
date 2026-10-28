@@ -6,11 +6,6 @@ export const marketingCadence = [
     purpose: 'The artifact, receipt, or boundary behind the lesson.'
   },
   {
-    day: 'Alternate Thursdays',
-    channel: 'YouTube',
-    purpose: 'A complete 5–8 minute workflow walkthrough.'
-  },
-  {
     day: 'Friday',
     channel: 'X / Instagram',
     purpose: 'A technical adaptation or an existing demonstration clip.'

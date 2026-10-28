@@ -3,12 +3,15 @@ import { readFileSync } from 'node:fs';
 import { extname, resolve } from 'node:path';
 import process from 'node:process';
 
+import { validateLocalRemediation, verifyLocalRemediation } from './security-local-remediation.mjs';
+
 const ROOT = resolve(import.meta.dirname, '..');
 const POLICY_PATH = resolve(ROOT, 'config/security-advisory-exceptions.v1.json');
 const SOURCE_EXTENSIONS = new Set(['.cjs', '.js', '.jsx', '.mjs', '.svelte', '.ts', '.tsx']);
 const SELF_PATHS = new Set([
   'scripts/security-advisory-exceptions.mjs',
-  'scripts/test/security-advisory-exceptions.test.mjs'
+  'scripts/test/security-advisory-exceptions.test.mjs',
+  'scripts/test/security-local-remediation.test.mjs'
 ]);
 const MAX_EXCEPTION_DAYS = 45;
 
@@ -31,10 +34,17 @@ export function validateSecurityAdvisoryPolicy(policy, now = new Date()) {
   if (typeof policy.policy !== 'string' || policy.policy.trim() === '') {
     findings.push('policy must explain the exception contract');
   }
-  if (!Array.isArray(policy.exceptions) || policy.exceptions.length === 0) {
-    findings.push('exceptions must contain at least one owned advisory');
+  if (!Array.isArray(policy.exceptions)) {
+    findings.push('exceptions must be an array');
     return findings;
   }
+
+  if (policy.exceptions.length === 0 && !policy.remediations?.length) findings.push('Empty policy has no verified remediation');
+  if (policy.remediations !== undefined && !Array.isArray(policy.remediations)) findings.push('remediations must be an array');
+  for (const entry of Array.isArray(policy.remediations) ? policy.remediations : []) {
+    try { validateLocalRemediation(entry); } catch (err) { findings.push(err.message); }
+  }
+  if ((policy.remediations?.length ?? 0) > 1) findings.push('Only the scoped extract-zip remediation is supported');
 
   const seen = new Set();
   for (const [index, entry] of policy.exceptions.entries()) {
@@ -57,6 +67,7 @@ export function validateSecurityAdvisoryPolicy(policy, now = new Date()) {
 
     if (seen.has(entry.advisoryId)) findings.push(`${label} has duplicate advisory ${entry.advisoryId}`);
     seen.add(entry.advisoryId);
+    if ((Array.isArray(policy.remediations) ? policy.remediations : []).some(record => record.advisories?.includes(entry.advisoryId))) findings.push(`${label} duplicates a locally remediated advisory`);
     if (!/^GHSA-[a-z0-9-]+$/.test(entry.advisoryId ?? '')) {
       findings.push(`${label}.advisoryId must be a GHSA identifier`);
     }
@@ -136,11 +147,12 @@ function trackedSourceFiles() {
   return files;
 }
 
-function main() {
+async function main() {
   const policy = JSON.parse(readFileSync(POLICY_PATH, 'utf8'));
   const findings = validateSecurityAdvisoryPolicy(policy);
   const sourceFiles = trackedSourceFiles();
-  for (const exception of policy.exceptions ?? []) {
+  // Exposure remains checked even after an exception is retired.
+  for (const exception of [...(policy.exceptions ?? []), ...(Array.isArray(policy.remediations) ? policy.remediations : [])]) {
     const imports = findDirectPackageImports(sourceFiles, exception.package);
     if (imports.length > 0) {
       findings.push(
@@ -154,7 +166,8 @@ function main() {
     process.exitCode = 1;
     return;
   }
-  console.log(`Validated ${policy.exceptions.length} visible, owned security advisory exception.`);
+  for (const record of policy.remediations ?? []) await verifyLocalRemediation(ROOT, record);
+  console.log(`Validated ${policy.exceptions.length} active exceptions and ${policy.remediations?.length ?? 0} byte-verified local remediations; scanner findings remain unchanged.`);
 }
 
-if (process.argv[1] === new URL(import.meta.url).pathname) main();
+if (process.argv[1] === new URL(import.meta.url).pathname) main().catch(err => { console.error(err.message); process.exitCode = 1; });

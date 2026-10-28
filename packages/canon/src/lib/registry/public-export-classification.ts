@@ -223,6 +223,13 @@ const ROOT_COMPONENT_EXPORT_POLICIES: CanonPublicExportClassificationRule[] = [
 const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
   {
     exportPath: '.',
+    exportName: 'InspectableJourney',
+    classification: 'experiment',
+    registryPolicy: 'classified-out',
+    rationale: 'Root-barrel alias of the bounded Agency journey pilot (CRE-2259); same experimental boundary as ./patterns. See patterns/InspectableJourney.md.'
+  },
+  {
+    exportPath: '.',
     classification: 'supporting-api',
     registryPolicy: 'candidate-review',
     rationale:
@@ -1102,6 +1109,13 @@ const SUBPATH_EXPORT_POLICIES: CanonPublicExportClassificationRule[] = [
   },
   {
     exportPath: './patterns',
+    exportName: 'InspectableJourney',
+    classification: 'experiment',
+    registryPolicy: 'classified-out',
+    rationale: 'Bounded Agency interaction pilot (CRE-2259); provisional controlled composition. Promotion requires accepted journey evidence and a second consumer. See patterns/InspectableJourney.md.'
+  },
+  {
+    exportPath: './patterns',
     classification: 'composition-pattern',
     registryPolicy: 'candidate-review',
     rationale: 'Pattern components should graduate through template/pattern registry contracts.'
@@ -1161,6 +1175,7 @@ const SUBPATH_EXPORT_POLICIES: CanonPublicExportClassificationRule[] = [
 ];
 
 export const CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES: CanonPublicExportClassificationRule[] = [
+  { exportPath: './isometric', classification: 'brand-surface', registryPolicy: 'classified-out', rationale: 'Original conceptual illustration support, not a promoted foundation UI primitive; see isometric/README.md.' },
   ...ROOT_COMPONENT_EXPORT_POLICIES,
   ...PACKAGE_EXPORT_PATH_POLICIES,
   ...SUBPATH_EXPORT_POLICIES

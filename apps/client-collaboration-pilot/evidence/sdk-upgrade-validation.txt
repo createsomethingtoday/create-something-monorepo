@@ -1,0 +1,15 @@
+SDK security upgrade validation — 2026-10-09
+
+Pilot resolves @modelcontextprotocol/sdk 1.31.0 with explicit @cfworker/json-schema 4.1.1. Parent-scoped override leaves other workspace consumers unchanged.
+Node 24 replaces Node 20 in Svelte strict CI to satisfy the pilot SQLite runtime engine; check commands unchanged.
+
+Validation:
+- 33 non-hosted pilot tests passed, including actual SDK stdio lifecycle.
+- 23 hosted tests passed with no skips, including SDK HTTP/workerd, D1 isolation/CAS/replay/recovery and both headless browser flows.
+- 13 existing workspace identity/routing tests passed.
+- Both hosted and existing Worker TypeScript checks passed.
+- Retired identity provider guard passed.
+- Wrangler deploy --dry-run --containers-rollout none passed, with no live mutations.
+- Independent review found no actionable defects in manifest, scoped override, final lockfile, SDK exports, or Node workflow change.
+
+Initial isolated test failed because optional cfworker peer was missing; fixed by explicit dependency. Browser dependency link was restored locally before final 23/23 run.

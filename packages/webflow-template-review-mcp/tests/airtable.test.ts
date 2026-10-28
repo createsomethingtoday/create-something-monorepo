@@ -1417,6 +1417,141 @@ test('updateVersionReview rejects raw HTML tags in creator-facing feedback befor
   assert.equal(called, false);
 });
 
+test('findCrossProjectAssetClaim detects "another project" asset claims but not ordinary feedback', async () => {
+  const { findCrossProjectAssetClaim } = await import('../src/airtable.js');
+
+  // The Upodes / Aentoria wording: a CMS database ID prefix read as another project.
+  assert.equal(
+    findCrossProjectAssetClaim('The service and case study images (19 files) are served from a different Webflow project. Re-upload them into this project.'),
+    'different Webflow project',
+  );
+  assert.equal(findCrossProjectAssetClaim('21 images still load from another project'), 'another project');
+  assert.equal(findCrossProjectAssetClaim('Images hosted in a separate project will break if it is unpublished'), 'separate project');
+
+  assert.equal(findCrossProjectAssetClaim('Re-upload the OG image at 1200x630.'), null);
+  assert.equal(findCrossProjectAssetClaim('The "Buy Template" buttons link to "#".'), null);
+  assert.equal(findCrossProjectAssetClaim('Add a project showcase section with at least 3 CMS items.'), null);
+
+  // The phrase without asset + hosting context is legitimate link/navigation/content feedback.
+  assert.equal(findCrossProjectAssetClaim('The Services nav link points to another project. Link it to /services.'), null);
+  assert.equal(findCrossProjectAssetClaim('Buy Template should open the marketplace listing, not a different Webflow project.'), null);
+  assert.equal(findCrossProjectAssetClaim('The case-study image depicts another project and does not match this client.'), null);
+  assert.equal(findCrossProjectAssetClaim('The case-study image depicting another project loads slowly on mobile.'), null);
+  // A claim that cites the prefix is evidenced (genuine cross-site paste dependency); let it through.
+  assert.equal(
+    findCrossProjectAssetClaim('Hero images are served from a different Webflow project (prefix 5f1a2b3c4d5e6f7a8b9c0d1e is neither the site ID nor the CMS database ID). Re-upload them.'),
+    null,
+  );
+  assert.equal(findCrossProjectAssetClaim("These are another project's images; re-upload them."), 'another project\'s');
+  // Negation and evidence bind to the sentence holding the claim, not the whole item.
+  assert.equal(
+    findCrossProjectAssetClaim('The images are not hosted on this project; they come from another project.'),
+    'another project',
+  );
+  assert.equal(
+    findCrossProjectAssetClaim('Site ID: 5f1a2b3c4d5e6f7a8b9c0d1e. Images are hosted in another project; re-upload them.'),
+    'another project',
+  );
+  // A full CDN prefix cited in the same sentence is evidence; its dots are not sentence breaks.
+  assert.equal(
+    findCrossProjectAssetClaim('Images are hosted in another project, prefix cdn.prod.website-files.com/5f1a2b3c4d5e6f7a8b9c0d1e/. Re-upload them.'),
+    null,
+  );
+  // CDN/URL terminology is asset context too.
+  assert.equal(findCrossProjectAssetClaim('### CDN URLs\n- These are served from another Webflow project.'), 'another Webflow project');
+  // A Markdown heading starts a new item even without a blank line before it.
+  assert.equal(
+    findCrossProjectAssetClaim('### Layout\n- Fix spacing.\n### Images\n- These are served from another project.'),
+    'another project',
+  );
+  assert.equal(findCrossProjectAssetClaim('### Images\n- Compress the hero.\n### Links\n- The footer link opens another project.'), null);
+  // Originality/similarity remarks are not hosting claims.
+  assert.equal(
+    findCrossProjectAssetClaim('The hero image is also used in another Webflow project, so replace this duplicated portfolio work.'),
+    null,
+  );
+  // A list item carries its introducing heading, so a claim split across them is still caught.
+  assert.equal(findCrossProjectAssetClaim('### Images\n- These are served from another Webflow project.'), 'another Webflow project');
+  assert.equal(findCrossProjectAssetClaim('Images:\n- served from another project\n- fix the footer'), 'another project');
+  // An intro paragraph is not a heading: its asset words (or withdrawals) do not leak into the list.
+  assert.equal(
+    findCrossProjectAssetClaim(
+      '**Thanks for the quick turnaround. Most items are resolved, and the remaining images and copy are in good shape overall. Please address the two remaining items below.**\n1. These are served from another project.',
+    ),
+    null,
+  );
+  assert.equal(
+    findCrossProjectAssetClaim('Ignore the earlier note; here is the new list.\n1. The blog images are served from a different Webflow project.'),
+    'different Webflow project',
+  );
+  // Asset context in a different item does not rescue the match.
+  assert.equal(findCrossProjectAssetClaim('1. Optimize the hero images.\n2. The footer link opens another project.'), null);
+  // Asset + hosting context in the same item does.
+  assert.equal(findCrossProjectAssetClaim('1. Fix the footer.\n2. Team photos are hosted in another project.'), 'another project');
+  // Plural form and heading-plus-continuation items are still claims.
+  assert.equal(findCrossProjectAssetClaim('Images are hosted in other Webflow projects.'), 'other Webflow projects');
+  assert.equal(findCrossProjectAssetClaim('Images:\nThese come from another Webflow project.'), 'another Webflow project');
+  assert.equal(findCrossProjectAssetClaim('- Hero images\n  are served from a different project\n- Fix the footer'), 'different project');
+
+  // Withdrawing or negating the claim is the correction the policy asks for; let it through.
+  assert.equal(
+    findCrossProjectAssetClaim("You can ignore the earlier item about images from a different Webflow project. Those images come from this site's own CMS, so no change is needed."),
+    null,
+  );
+  assert.equal(
+    findCrossProjectAssetClaim('I withdraw the earlier claim that these images are from another project; the second prefix is the CMS database ID.'),
+    null,
+  );
+  assert.equal(findCrossProjectAssetClaim('The case study images are not from another project after all.'), null);
+  // A withdrawal on one line does not excuse a fresh assertion on another.
+  assert.equal(
+    findCrossProjectAssetClaim('1. Ignore the earlier note about the logo.\n2. The blog images are served from a different Webflow project. Re-upload them.'),
+    'different Webflow project',
+  );
+});
+
+test('updateVersionReview rejects cross-project asset claims in creator-facing feedback before calling Airtable', async () => {
+  let called = false;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async () => {
+      called = true;
+      throw new Error('should not run');
+    },
+  });
+
+  await assert.rejects(
+    client.updateVersionReview('rec_version_cross_project', {
+      review_feedback: '6. The service images are served from a different Webflow project. Re-upload them into this project so they do not break if that project is unpublished.',
+    }),
+    (error: unknown) => {
+      assert.equal((error as { code?: string }).code, 'CROSS_PROJECT_ASSET_CLAIM');
+      assert.deepEqual((error as { details?: unknown }).details, {
+        field: 'review_feedback',
+        phrase: 'different Webflow project',
+      });
+      assert.match((error as Error).message, /CMS database ID/);
+      return true;
+    },
+  );
+
+  await assert.rejects(
+    client.updateVersionReview('rec_version_cross_project_rejection', {
+      rejection_feedback: 'Most assets load from another project.',
+    }),
+    (error: unknown) => {
+      assert.equal((error as { code?: string }).code, 'CROSS_PROJECT_ASSET_CLAIM');
+      assert.deepEqual((error as { details?: unknown }).details, {
+        field: 'rejection_feedback',
+        phrase: 'another project',
+      });
+      return true;
+    },
+  );
+
+  assert.equal(called, false);
+});
+
 test('updateVersionReview allows autolinks and internal agent feedback with raw tags', async () => {
   const client = new AirtableClient({
     apiKey: 'test',

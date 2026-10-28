@@ -1,5 +1,5 @@
 import { redirect, type Handle } from '@sveltejs/kit';
-import { createSessionManager, type User } from '@create-something/canon/auth';
+import { createSessionManager, identitySessionVerification, type User } from '@create-something/canon/auth';
 
 function getSafeAdminNextPath(url: URL) {
 	const next = url.searchParams.get('next');
@@ -34,6 +34,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// Set locals.user for user API routes (analytics, preferences, etc.)
 	if (isUserApiRoute) {
 		const sessionManager = createSessionManager(event.cookies, {
+			identityVerification: identitySessionVerification(event.platform?.env, 'io'),
 			isProduction: isProduction ?? true,
 			domain
 		});
@@ -53,6 +54,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	if ((isAdminRoute && !isLoginPage && !isAuthApi) || isAdminApiRoute) {
 		// Create session manager for JWT validation
 		const sessionManager = createSessionManager(event.cookies, {
+			identityVerification: identitySessionVerification(event.platform?.env, 'io'),
 			isProduction: isProduction ?? true,
 			domain
 		});
@@ -111,6 +113,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// If already logged in and trying to access login page, redirect to admin
 	if (isLoginPage) {
 		const sessionManager = createSessionManager(event.cookies, {
+			identityVerification: identitySessionVerification(event.platform?.env, 'io'),
 			isProduction: isProduction ?? true,
 			domain
 		});

@@ -1,0 +1,235 @@
+/* Opt-in editorial reading family. Existing artifacts, controls and route marks
+   remain authoritative; no generated image is treated as measured evidence. */
+body.design-preview[data-preview-family='editorial'] {
+  background: var(--color-performance-bg-surface);
+  color: var(--color-performance-fg-primary);
+  font-family: var(--font-performance-sans);
+}
+
+/* Campaign openings and the three Dify Clear openings share the same type
+   hierarchy, without changing their distinct content and proof slots. */
+body.design-preview[data-preview-family='editorial'] :is(
+  .performance-campaign-opening, .clear-page-section--hero,
+  .guide-opening, .arc-catalog__hero, .registry-arc__hero, .arc-hero
+) {
+  background: var(--color-performance-bg-surface);
+  color: var(--color-performance-fg-primary);
+  border-color: var(--color-performance-border-emphasis);
+  padding-block: var(--space-performance-2xl) var(--space-performance-xl);
+}
+body.design-preview[data-preview-family='editorial'] :is(
+  .performance-campaign-opening, .clear-page-section--hero,
+  .guide-opening, .arc-catalog__hero, .registry-arc__hero, .arc-hero
+) h1 {
+  font-family: var(--font-performance-display);
+  font-size: var(--text-performance-display);
+  font-weight: var(--font-performance-regular);
+  line-height: 1.06;
+  letter-spacing: -.045em;
+  max-width: 21ch;
+  text-wrap: balance;
+}
+body.design-preview[data-preview-family='editorial'] :is(
+  .performance-campaign-opening__lede, .clear-page-section--hero .clear-page-section__description,
+  .guide-answer, .arc-catalog__lede, .registry-arc__lede, .arc-hero > div > span
+) {
+  max-width: 57ch;
+  color: var(--color-performance-fg-secondary);
+  font-size: var(--text-performance-body-lg);
+  line-height: 1.65;
+}
+body.design-preview[data-preview-family='editorial'] :is(
+  .performance-campaign-opening__eyebrow, .clear-page-section--hero .clear-kicker,
+  .guide-eyebrow, .arc-catalog__hero > div > p:first-of-type,
+  .registry-arc__hero > div > p:first-of-type, .arc-hero > div > p
+) {
+  color: var(--color-performance-fg-tertiary);
+  font-family: var(--font-performance-mono);
+  font-size: var(--text-performance-caption);
+}
+
+/* The single library image is an editorial pause, outside the guide index.
+   It cannot cover source links, controls or an article's first result. */
+body.design-preview[data-preview-family='editorial'] .agency-preview-media {
+  margin: 0;
+  background: var(--color-performance-bg-elevated);
+  border-block: 1px solid var(--color-performance-border-emphasis);
+}
+body.design-preview[data-preview-family='editorial'] .agency-preview-media img {
+  display: block;
+  width: 100%;
+  max-height: 34rem;
+  aspect-ratio: 2.6;
+  object-fit: cover;
+  object-position: center;
+}
+body.design-preview[data-preview-family='editorial'] .agency-preview-media figcaption {
+  padding: var(--space-performance-sm) var(--space-performance-page-gutter);
+  color: var(--color-performance-fg-tertiary);
+  font-family: var(--font-performance-mono);
+  font-size: var(--text-performance-caption);
+  line-height: 1.6;
+}
+
+/* Guides have a quiet answer-and-steps layout, rather than a campaign banner
+   repeated at every chapter. Original ring/cross route marks stay intact. */
+body.design-preview[data-preview-family='editorial'] .guide-shell {
+  background: var(--color-performance-bg-surface);
+  color: var(--color-performance-fg-primary);
+}
+body.design-preview[data-preview-family='editorial'] .guide-section {
+  padding-block: var(--space-performance-xl);
+  border-color: var(--color-performance-border-emphasis);
+  gap: var(--space-performance-lg);
+}
+body.design-preview[data-preview-family='editorial'] .guide-section h2 {
+  font-family: var(--font-performance-heading);
+  font-size: var(--text-performance-display-sm);
+  font-weight: var(--font-performance-regular);
+  line-height: 1.15;
+  max-width: 26ch;
+}
+body.design-preview[data-preview-family='editorial'] .guide-section :is(p, li) {
+  max-width: 66ch;
+  color: var(--color-performance-fg-secondary);
+  font-size: var(--text-performance-body-md);
+  line-height: 1.75;
+}
+body.design-preview[data-preview-family='editorial'] :is(
+  .guide-route, .guide-section .artifact-grid article, .guide-section .proof-list > *,
+  .guide-section .faq-list > *, .guide-section .section-label
+) {
+  border-color: var(--color-performance-border-emphasis);
+}
+body.design-preview[data-preview-family='editorial'] :is(
+  .guide-back, .guide-section a:not(.btn), .guide-section h3, .guide-route strong
+) { color: var(--color-performance-fg-primary); }
+
+/* Reports keep result, limitation and provenance together. Existing semantic
+   status colors are left in the evidence components where they carry meaning. */
+body.design-preview[data-preview-family='editorial'] :is(
+  .field-result, .field-context, .stage-evidence-block, .failed-boundary
+) {
+  padding-block: var(--space-performance-xl);
+  border-color: var(--color-performance-border-emphasis);
+}
+body.design-preview[data-preview-family='editorial'] :is(
+  .field-result > header p, .field-context > header p,
+  .stage-evidence-block > p, .failed-boundary > div > p
+) { max-width: 66ch; line-height: 1.75; }
+body.design-preview[data-preview-family='editorial'] .performance-evidence-index__identity {
+  max-width: 66ch;
+}
+body.design-preview[data-preview-family='editorial'] .performance-evidence-index__identity > span {
+  line-height: 1.7;
+}
+body.design-preview[data-preview-family='editorial'] .performance-evidence-index__item {
+  padding-block: var(--space-performance-lg);
+}
+
+/* Read-only presentation catalogs keep their real navigation and scene
+   geometry. A restrained rule separates source, contract and presentation. */
+body.design-preview[data-preview-family='editorial'] :is(
+  .arc-catalog, .registry-arc, .arc-prototype
+) {
+  background: var(--color-performance-bg-surface);
+  color: var(--color-performance-fg-primary);
+}
+body.design-preview[data-preview-family='editorial'] :is(
+  .arc-catalog__hero dl, .registry-arc__hero dl, .arc-hero dl,
+  .arc-catalog__rule, .arc-group, .registry-arc__contract, .arc-contract
+) { border-color: var(--color-performance-border-emphasis); }
+body.design-preview[data-preview-family='editorial'] :is(
+  .arc-group, .registry-arc__contract, .arc-contract
+) { padding-block: var(--space-performance-xl); }
+body.design-preview[data-preview-family='editorial'] :is(
+  .arc-group h2, .registry-arc__contract h2, .arc-contract h2
+) {
+  font-family: var(--font-performance-heading);
+  font-size: var(--text-performance-display-sm);
+  font-weight: var(--font-performance-regular);
+}
+
+/* Published experiments retain ASCII, demos, source links and metadata.
+   Prose measure does not constrain wide code, tables or embedded artifacts. */
+body.design-preview[data-preview-family='editorial'] .experiment-reading {
+  background: var(--color-performance-bg-surface);
+}
+body.design-preview[data-preview-family='editorial'] .article-header {
+  padding-block: var(--space-performance-xl);
+}
+body.design-preview[data-preview-family='editorial'] .article-title {
+  font-family: var(--font-performance-display);
+  font-size: var(--text-performance-display);
+  font-weight: var(--font-performance-regular);
+  max-width: 24ch;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+body.design-preview[data-preview-family='editorial'] :is(
+  .article-excerpt, .article-prose > p, .article-prose > ul, .article-prose > ol
+) { max-width: 68ch; line-height: 1.8; }
+body.design-preview[data-preview-family='editorial'] .article-prose :is(h2, h3) {
+  margin-top: var(--space-performance-xl);
+  margin-bottom: var(--space-performance-md);
+  max-width: 32ch;
+  font-family: var(--font-performance-heading);
+  font-weight: var(--font-performance-medium);
+  line-height: 1.2;
+}
+body.design-preview[data-preview-family='editorial'] .article-prose :is(pre, table) {
+  max-width: 100%;
+  overflow-x: auto;
+}
+body.design-preview[data-preview-family='editorial'] .experiment-sort {
+  padding-block: var(--space-performance-md);
+  gap: var(--space-performance-xs);
+}
+
+/* Dispatch is a status publication, not a simulated newsletter signup. */
+body.design-preview[data-preview-family='editorial'] .dispatch .section {
+  padding-block: var(--space-performance-xl);
+  border-color: var(--color-performance-border-emphasis);
+}
+body.design-preview[data-preview-family='editorial'] .dispatch .section > :is(p, h2) {
+  max-width: 60ch;
+}
+body.design-preview[data-preview-family='editorial'] .dispatch .section > h2 {
+  max-width: 27ch;
+  font-family: var(--font-performance-heading);
+  font-size: var(--text-performance-display-sm);
+  font-weight: var(--font-performance-regular);
+  line-height: 1.2;
+}
+body.design-preview[data-preview-family='editorial'] .dispatch .section > p {
+  line-height: 1.75;
+}
+body.design-preview[data-preview-family='editorial'] :is(
+  .guide-back, .guide-section a, .arc-catalog__hero a, .arc-group a,
+  .experiment-sort button, .experiment-handoff__nav a
+) { min-height: 44px; }
+body.design-preview[data-preview-family='editorial'] :is(a, button, summary):focus-visible {
+  outline: 2px solid var(--color-performance-fg-primary);
+  outline-offset: var(--space-performance-xs);
+}
+@media (max-width: 48rem) {
+  body.design-preview[data-preview-family='editorial'] :is(
+    .performance-campaign-opening, .clear-page-section--hero,
+    .guide-opening, .arc-catalog__hero, .registry-arc__hero, .arc-hero
+  ) { padding-block: var(--space-performance-xl) var(--space-performance-lg); }
+  body.design-preview[data-preview-family='editorial'] .agency-preview-media img {
+    aspect-ratio: 1.4;
+  }
+  body.design-preview[data-preview-family='editorial'] .guide-section {
+    gap: var(--space-performance-md);
+  }
+  body.design-preview[data-preview-family='editorial'] :is(
+    .article-title, .guide-opening h1, .arc-catalog__hero h1,
+    .registry-arc__hero h1, .arc-hero h1
+  ) { font-size: var(--text-performance-display-sm); }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.design-preview[data-preview-family='editorial'] :is(
+    .article-header, .article-title, .article-excerpt, .metadata-row
+  ) { animation: none; transition: none; }
+}

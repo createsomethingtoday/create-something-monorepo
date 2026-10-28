@@ -3,7 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 const base = process.env.CANVAS_URL || 'http://127.0.0.1:5214';
 const out = new URL(`../output/${process.env.CANVAS_RUN_LABEL || 'agent-activity'}/`, import.meta.url);
 await mkdir(out, { recursive: true });
-const browser = await chromium.launch();
+const browser = await chromium.launch({ ...(process.env.CANVAS_BROWSER_CHANNEL ? { channel: process.env.CANVAS_BROWSER_CHANNEL } : {}) });
 try {
   for (const width of [1440, 390]) {
     const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'no-preference' });
@@ -23,6 +23,8 @@ try {
     const before = await call('draw_get_state');
     const inspected = await call('draw_inspect', { ids: [object.id] });
     const panel = page.getByRole('region', { name: 'Agent activity' });
+    await expect(panel).toHaveAttribute('data-expanded', 'false');
+    await page.getByRole('button', { name: 'Show completed agent activity', exact: true }).click();
     await expect(panel).toContainText('Inspecting objects');
     await expect(page.locator(`[data-agent-target="${object.id}"]`)).toBeVisible();
     await expect(page.getByRole('button', { name: 'Follow agent', exact: true })).toHaveAttribute('aria-pressed', 'false');

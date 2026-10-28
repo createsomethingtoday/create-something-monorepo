@@ -6,9 +6,9 @@ import {
   marketingEditorialStatus
 } from '../src/lib/data/marketingSchedule.ts';
 
-test('publishing cadence keeps LinkedIn primary and YouTube bounded', () => {
+test('publishing cadence keeps LinkedIn primary without promising YouTube publication', () => {
   assert.equal(marketingCadence[0].channel, 'LinkedIn');
-  assert.equal(marketingCadence.filter((item) => item.channel === 'YouTube').length, 1);
+  assert.equal(marketingCadence.filter((item) => String(item.channel) === 'YouTube').length, 0);
   assert.match(
     marketingCadence.find((item) => item.channel === 'Email')?.day ?? '',
     /twice monthly/i

@@ -2,10 +2,11 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import os from 'node:os';
 import test from 'node:test';
 
-const packageRoot = path.resolve(new URL('..', import.meta.url).pathname);
+const packageRoot = fileURLToPath(new URL('..', import.meta.url));
 const wikiDir = path.join(packageRoot, 'docs', 'agent-wiki');
 
 test('agent wiki is generated from current Atlas/Substrate artifacts', () => {
@@ -73,5 +74,28 @@ test('wiki prints source age and a caller can enforce an age limit', () => {
   assert.match(checked.stderr, /source snapshot is .* days old/);
   for (const name of fs.readdirSync(wikiDir).filter((name) => name.endsWith('.md'))) {
     assert.match(fs.readFileSync(path.join(wikiDir, name), 'utf8'), /Source snapshot range \(UTC\): \d{4}-\d{2}-\d{2}T/);
+  }
+});
+
+test('wiki JSON generation supports checkout paths with spaces and URL characters', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'atlas space #%-'));
+  const fixturePackage = path.join(fixture, 'packages/database-layer');
+  try {
+    fs.mkdirSync(path.join(fixturePackage, 'scripts'), { recursive: true });
+    for (const name of ['generate-agent-wiki.mjs', 'agent-wiki-support.mjs']) {
+      fs.copyFileSync(path.join(packageRoot, 'scripts', name), path.join(fixturePackage, 'scripts', name));
+    }
+    fs.symlinkSync(path.join(packageRoot, 'data'), path.join(fixturePackage, 'data'));
+    fs.symlinkSync(path.resolve(packageRoot, '../../docs'), path.join(fixture, 'docs'));
+    const result = spawnSync(process.execPath, ['scripts/generate-agent-wiki.mjs', '--json'], {
+      cwd: fixturePackage, encoding: 'utf8', maxBuffer: 10 * 1024 * 1024
+    });
+    assert.equal(result.status, 0, result.stderr);
+    const expected = execFileSync(process.execPath, ['scripts/generate-agent-wiki.mjs', '--json'], {
+      cwd: packageRoot, encoding: 'utf8', maxBuffer: 10 * 1024 * 1024
+    });
+    assert.deepEqual(JSON.parse(result.stdout), JSON.parse(expected));
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
   }
 });

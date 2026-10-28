@@ -85,6 +85,18 @@ const skills = [
 
 const codexOnlySkills = [
   {
+    name: 'anatomy-xray',
+    codex: 'packages/dotfiles/codex/skills/anatomy-xray/SKILL.md',
+    expectations: [
+      /ghosted/,
+      /zoom, pan, fit, and reset/,
+      /Markdown|prose\.md/,
+      /not automatic proof/,
+      /no-JS/,
+      /provenance/
+    ]
+  },
+  {
     name: 'jev-coding-assist',
     codex: 'packages/dotfiles/codex/skills/jev-coding-assist/SKILL.md',
     expectations: [

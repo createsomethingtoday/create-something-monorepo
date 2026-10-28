@@ -1,0 +1,38 @@
+import { extractMotion, closeBrowser } from '../dist/extractor.js';
+import assert from 'node:assert/strict';
+const url =
+  'data:text/html,' +
+  encodeURIComponent(
+    '<style>@keyframes pulse{from{opacity:0.2}to{opacity:1}}#target{animation:pulse 2s infinite;transition:transform .3s}#target:hover{transform:scale(1.1)}</style><button id="target">Synthetic</button>',
+  );
+try {
+  for (const type of ['load', 'hover', 'click', 'focus', 'scroll']) {
+    const r = await extractMotion(url, {
+      type,
+      selector: '#target',
+      delay: 10,
+    });
+    console.log(
+      JSON.stringify({
+        type,
+        animations: r.animations.length,
+        transitions: r.transitions.length,
+        png: Buffer.from(r.screenshot, 'base64')
+          .subarray(0, 8)
+          .equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])),
+      }),
+    );
+    assert.ok(r.animations.length);
+    for (const animation of r.animations)
+      for (const frame of animation.keyframes)
+        for (const value of Object.values(frame.properties))
+          assert.equal(typeof value, 'string');
+    assert.ok(
+      Buffer.from(r.screenshot, 'base64')
+        .subarray(0, 8)
+        .equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])),
+    );
+  }
+} finally {
+  await closeBrowser();
+}

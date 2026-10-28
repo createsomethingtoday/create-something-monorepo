@@ -1,9 +1,11 @@
-FROM docker.io/cloudflare/sandbox:0.7.0
+FROM docker.io/cloudflare/sandbox:0.12.14
+
+USER root
 
 # Install Node.js 22 (required by clawdbot) and rsync (for R2 backup sync)
-# The base image has Node 20, we need to replace it with Node 22
-# Using direct binary download for reliability
-ENV NODE_VERSION=22.13.1
+# The base image ships Node 24; clawdbot is qualified on Node 22, so pin 22.23.4
+# (CVE-2026-111497 fix) with a direct binary download for reliability
+ENV NODE_VERSION=22.23.4
 RUN apt-get update && apt-get install -y xz-utils ca-certificates rsync \
     && curl -fsSLk https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz -o /tmp/node.tar.xz \
     && tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 \
@@ -27,8 +29,9 @@ RUN mkdir -p /root/.clawdbot \
     && mkdir -p /root/clawd/skills
 
 # Copy startup script
-# Build cache bust: 2026-01-28-v26-browser-skill
+# Build cache bust: 2026-10-22-sandbox-0.12.14
 COPY start-moltbot.sh /usr/local/bin/start-moltbot.sh
+COPY scripts/backup-loop.mjs scripts/container-backup.mjs scripts/run-gateway.mjs /usr/local/lib/relay/
 RUN chmod +x /usr/local/bin/start-moltbot.sh
 
 # Copy default configuration template

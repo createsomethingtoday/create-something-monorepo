@@ -13,7 +13,7 @@ test('fresh workspace leads to optional setup without automatically signing in, 
     if (operation === 'workspace.get') return null;
     if (operation === 'workspace.create') return { id: 'w-new', name: input.name };
     if (operation === 'records.save') return { id: 'profile-new', ...input };
-    if (operation === 'connections.status') return { provider: input.provider, state: 'disconnected' };
+    if ((operation === 'connections.status' || operation === 'sources.status')) return { provider: input.provider, state: 'disconnected' };
     if (operation === 'agent.status') return { prepared: false, phoneVerified: false };
     return { items: [], count: 0 };
   } } };
@@ -47,7 +47,7 @@ test('provider choice shows and copies only that exact prepared command; prepari
     if (operation === 'workspace.get') return { id: 'w1', name: 'Alex workspace' };
     if (operation === 'records.list') return { items: input.entity === 'profile' ? [{ id: 'p1' }] : [], count: 0 };
     if (operation === 'records.get') return { id: 'p1', fields: { Currency: 'USD' } };
-    if (operation === 'connections.status') return { provider: input.provider, state: 'disconnected' };
+    if ((operation === 'connections.status' || operation === 'sources.status')) return { provider: input.provider, state: 'disconnected' };
     if (operation === 'agent.prepare') return agent;
     if (operation === 'agent.status') return { prepared: calls.includes('agent.prepare'), phoneVerified: false };
     return {};
@@ -95,7 +95,7 @@ test('profile save failure keeps typed defaults and resumes the existing workspa
     if (operation === 'workspace.get') return null;
     if (operation === 'workspace.create') { creates++; return { id: 'w1', name: input.name }; }
     if (operation === 'records.save') { saves++; if (saves === 1) throw new Error('Temporary profile save failure'); return { id: 'p1', ...input }; }
-    if (operation === 'connections.status') return { provider: input.provider, state: 'disconnected' };
+    if ((operation === 'connections.status' || operation === 'sources.status')) return { provider: input.provider, state: 'disconnected' };
     if (operation === 'agent.status') return {};
     return { items: [], count: 0 };
   } } };
@@ -112,4 +112,42 @@ test('profile save failure keeps typed defaults and resumes the existing workspa
     assert.match(root.innerHTML, /data-page="settings" aria-current="page"/);
     assert.equal(creates, 1); assert.equal(saves, 2);
   } finally { globalThis.document = previous.document; globalThis.__TAURI__ = previous.tauri; globalThis.FormData = previous.FormData; }
+});
+
+
+test('source consent keeps provider context and shows actionable browser and sign-in failures', async () => {
+  const listeners = new Map();
+  const root = { innerHTML: '', classList: { toggle() {} }, addEventListener(name, handler) { listeners.set(name, handler); }, querySelector() { return null; } };
+  const prior = { document: globalThis.document, tauri: globalThis.__TAURI__ };
+  const calls = [];
+  let signInError = 'loopback_unavailable';
+  globalThis.document = { querySelector: selector => selector === '#app' ? root : null };
+  globalThis.__TAURI__ = { core: { invoke: async (_command, request) => {
+    calls.push(request); const { operation, input } = request;
+    if (operation === 'workspace.get') return { id: 'synthetic-w', name: 'Synthetic' };
+    if (operation === 'records.list') return { items: input.entity === 'profile' ? [{ id: 'p1' }] : [], count: 0 };
+    if (operation === 'records.get') return { id: 'p1', fields: { Currency: 'USD' } };
+    if ((operation === 'connections.status' || operation === 'sources.status')) return { provider: input.provider, state: 'pending', connectedAccountId: 'synthetic-account', url: 'https://connect.composio.dev/synthetic', expiresAt: '2030-01-01T00:00:00Z' };
+    if (operation === 'connections.openConsent') throw new Error('browser_unavailable');
+    if (operation === 'auth.login') throw new Error(signInError);
+    return {};
+  } } };
+  const settle = () => new Promise(resolve => setImmediate(resolve));
+  const click = dataset => listeners.get('click')({ target: { closest: () => ({ dataset }) } });
+  try {
+    await import(`./app.mjs?source-recovery=${Date.now()}`); await settle();
+    click({ page: 'settings' }); await settle();
+    for (const provider of ['gmail', 'googlecalendar']) {
+      click({ openConsent: provider }); await settle();
+      assert.deepEqual(calls.filter(call => call.operation === 'connections.openConsent').at(-1).input, { provider, url: 'https://connect.composio.dev/synthetic' });
+      assert.match(root.innerHTML, /could not open your browser/);
+      assert.match(root.innerHTML, /Do not start a second consent attempt/);
+    }
+    for (const code of ['loopback_unavailable', 'identity_contract_mismatch', 'redirect_registration_mismatch', 'invalid_readback']) {
+      signInError = code; click({ signIn: '1' }); await settle();
+      assert.doesNotMatch(root.innerHTML, new RegExp(code));
+      assert.match(root.innerHTML, /GiGi operator/);
+    }
+    assert.equal(calls.filter(call => call.operation === 'connections.begin').length, 0);
+  } finally { globalThis.document = prior.document; globalThis.__TAURI__ = prior.tauri; }
 });

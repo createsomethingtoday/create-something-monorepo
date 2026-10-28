@@ -215,7 +215,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     funnelStage: 'discover',
     intent:
       'Explain recurring AI-native technical support, its engineering capability, ownership and agreed capacity.',
-    primaryAction: 'Inspect the work',
+    primaryAction: 'Talk through your workflow',
     requiredTerms: ['technical support', 'diagnose', 'improvements', 'workstream', 'code'],
     requiredLinks: ['/agent-foundation', '/services', '/stack'],
     schema: 'page',
@@ -730,6 +730,21 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
       lastmod: '2026-06-28'
     },
     selfHealing: ['copy:heal', 'search-route:sync']
+  },
+  {
+    path: '/scopefield',
+    cluster: 'products',
+    role: 'support',
+    decision: 'index',
+    audience: 'Apple Silicon Mac users exploring the Scopefield public beta.',
+    funnelStage: 'evaluate',
+    intent: 'Explain the browser, collapsible Page workspace, human control and beta limitations.',
+    primaryAction: 'Download for Apple Silicon',
+    requiredTerms: ['Scopefield', 'Apple Silicon', 'macOS 13', 'beta', 'workspace'],
+    requiredLinks: ['/products'],
+    schema: 'page',
+    search: { changefreq: 'monthly', priority: '0.65', lastmod: '2026-10-13' },
+    selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
   },
   {
     path: '/products/ground',

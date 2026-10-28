@@ -163,8 +163,8 @@ body:has(.agency-surface[data-canon-palette='operator']) {
 }
 .agency-surface[data-canon-palette='operator'] .performance-campaign-opening__grid { display: none; }
 .agency-surface[data-canon-palette='operator'] .performance-campaign-opening__content {
-  gap: var(--space-xl);
-  padding-block: clamp(7rem, 12vw, 9rem) var(--space-xl);
+  gap: var(--space-performance-xl);
+  padding-block: clamp(7rem, 12vw, 9rem) var(--space-performance-xl);
 }
 .agency-surface[data-canon-palette='operator'] .performance-campaign-opening h1 {
   font-family: var(--font-performance-sans);

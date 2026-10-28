@@ -75,6 +75,21 @@ Choose interaction according to the communication problem, not novelty.
 
 No autoplaying carousel, scroll-jacking, parallax, hover-only meaning, mandatory horizontal swipe, or motion-only sequencing is part of the sharpness system. Progressive disclosure must preserve orientation, keyboard and touch access, no-JavaScript meaning where relevant, and reduced-motion equivalence.
 
+### Explain Real Work
+
+For service and project proof, let visitors inspect actual work: a recorded interface, a delivered artifact, or a publishable source file. Keep provenance beside the explanation: recording date and frame, source revision, and permission or public-distribution boundary. Distinguish what is visible from inferred design intent or measured results. Label a public repository example as such; it is not evidence of a client's handoff, exclusive ownership, or a passing test run.
+
+Interaction should reveal a useful relationship—collection to filter to article, or instructions to tests to recovery—not quiz a prospective buyer or substitute a fabricated scenario for evidence. Use the smallest composition that explains the relationship. Motion may direct attention to a connection; it must not delay the explanation. Keep a complete static reading, visitor-controlled selection, and an obvious next action.
+
+For changes to these experiences, record concise regression evidence:
+
+- Inspect the final rendered page on desktop and narrow mobile, including annotations, wrapping, inherited styles and horizontal overflow. Offer full-size evidence when a frame becomes too small to inspect.
+- Exercise keyboard focus and repeated selection, interrupted playback, and return to an earlier chapter. Hidden media should stop; reduced motion and no-JavaScript paths must retain the explanation. Record any enhancement-only behavior explicitly.
+- Verify source links and labels against the actual artifact. A code excerpt proves what the test checks, not that it passed; a license does not replace a client agreement.
+- Preserve the exact value proposition, published prices, primary CTA destination and attribution. Open the conversion path without submitting a real inquiry. Treat conversion improvement as a hypothesis until measured.
+
+The Agency [project-tour and handoff browser checks](../packages/agency/scripts/review-project-handoff.mjs) provide a concrete example. Extend the relevant checks when behavior changes; avoid duplicating this guidance in per-model instructions.
+
 ## Whole-Page Review
 
 Review the page in order, not as isolated components:
