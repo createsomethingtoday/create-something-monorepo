@@ -8,6 +8,7 @@ import type { AirtableClient } from '../src/airtable.js';
 import { RUBRIC_DIMENSIONS } from '../src/comprehensive-review-contract.js';
 import { resolveOAuthAccess, SCOPE_WRITE } from '../src/oauth-access.js';
 import {
+  applyFeaturedCoordinators,
   applyReviewerAuthEmailAliases,
   parseReviewerDirectory,
   type ReviewerProfile,
@@ -623,6 +624,21 @@ test('my_queue defaults to compact active assigned work', async () => {
   assert.equal(items.length, 1);
   assert.equal(items[0]?.templateName, 'Finoraa');
   assert.equal(items[0]?.latestReviewFeedback, undefined);
+});
+
+test('applyFeaturedCoordinators grants only listed directory entries', () => {
+  const directory = applyFeaturedCoordinators(
+    parseReviewerDirectory(JSON.stringify({
+      acct_wf_micah: { airtableCollaboratorId: 'usr_micah', email: 'micah@webflow.com' },
+      acct_wf_pablo: { airtableCollaboratorId: 'usr_pablo', email: 'pablo.miranda@webflow.com' },
+    })),
+    ' acct_wf_micah, acct_unknown ',
+  );
+
+  assert.equal(directory.get('acct_wf_micah')?.featuredCoordinator, true);
+  assert.equal(directory.get('acct_wf_pablo')?.featuredCoordinator, undefined);
+  assert.equal(directory.has('acct_unknown'), false);
+  assert.equal(applyFeaturedCoordinators(directory, '').size, 2);
 });
 
 test('OAuth auth alias drives my_queue with the canonical Airtable collaborator', async () => {
