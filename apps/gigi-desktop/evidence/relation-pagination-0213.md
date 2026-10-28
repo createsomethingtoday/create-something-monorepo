@@ -1,0 +1,11 @@
+# GiGi 0.2.13 agent relation continuation
+
+Completes the 0.2.12 desktop relation pagination fix for external MCP and embedded Ask GiGi. The additive read-only gigi_records_relations tool uses the existing workspace/entity/record-scoped keyset read. Each page is at most100 links; count is the total and nextCursor=null marks exhaustion. Record previews remain bounded and explicitly direct agents to continuation. Embedded chat pins reads to its session workspace and does not create a write approval. The tool is optional when connecting an older companion; missing continuation must be reported as partial coverage.
+
+No schema migration, record rewrite, new access grant, provider request, credential change or background collection. Existing full relation identities and stable ordering are preserved. Concurrent additions before the cursor require refresh. Tool-use diagnostic metadata may update as for other existing MCP reads; record/history/relations must remain unchanged.
+
+Red evidence: external205-link tool-catalog regression failed because the tool was missing; embedded fake-protocol regression failed because the dynamic tool was absent. Green: all205 links returned in ordered41-row pages without duplication or history/relation mutations; oversized limits, malformed cursor and foreign workspace reject. Embedded continuation forwards the cursor, pins the workspace, rejects foreign scope and creates no approval.
+
+Validation on 2026-10-28: full native157 tests pass (133library +8MCP +16integration). Integration suite292pass/1optional CTXskip; embedded Codex153pass; TypeScript pass. Desktop web/scripts277pass/2optional installed-companion skips. Sandbox loopback/socket failures were superseded by successful host synthetic runs and retained in local evidence. No live model or client data used. Independent review and exact signed-artifact qualification are separate gates.
+
+Uploaded0.2.12 bytes remain immutable. This complete candidate is0.2.13;0.2.12 signature/native evidence does not qualify the new artifact. Production download page remains held, and the prior ordinary public download403 is not bypassed. Physical phone acceptance remains unverified/deferred under the owner's established beta scope.

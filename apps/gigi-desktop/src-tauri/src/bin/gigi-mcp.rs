@@ -4,7 +4,7 @@ use std::fs;
 use std::io::{self, BufRead, Read, Write};
 use std::path::PathBuf;
 
-const TOOLS: [(&str, &str, bool); 13] = [
+const TOOLS: [(&str, &str, bool); 14] = [
     ("gigi_connection_check", "connection.check", true),
     ("gigi_agenda_list", "agenda.list", true),
     ("gigi_workspace_get", "workspace.get", true),
@@ -12,6 +12,7 @@ const TOOLS: [(&str, &str, bool); 13] = [
     ("gigi_workspace_create", "workspace.create", false),
     ("gigi_records_list", "records.list", true),
     ("gigi_records_get", "records.get", true),
+    ("gigi_records_relations", "records.relations", true),
     ("gigi_records_save", "records.save", false),
     ("gigi_relations_link", "relations.link", false),
     ("gigi_gigs_summary", "gigs.summary", true),
@@ -38,7 +39,7 @@ fn required_keys(operation: &str) -> &'static [&'static str] {
         "context.search" => &["workspaceId", "query"],
         "workspace.create" => &["name"],
         "records.list" => &["workspaceId", "entity"],
-        "records.get" => &["workspaceId", "entity", "id"],
+        "records.get" | "records.relations" => &["workspaceId", "entity", "id"],
         "records.save" => &["workspaceId", "entity", "title"],
         "relations.link" => &["workspaceId", "fromEntity", "fromId", "toEntity", "toId"],
         "gigs.summary" => &["workspaceId", "gigId"],
@@ -56,7 +57,7 @@ fn schema(operation: &str) -> Value {
     let optional: &[(&str, &str)] = match operation {
         "connection.check" | "workspace.get" => &[("workspaceId", "string")],
         "agenda.list" => &[("recordKind","string"),("offset","integer"),("limit","integer")],
-        "records.list" => &[("limit", "integer"), ("cursor", "string")],
+        "records.list" | "records.relations" => &[("limit", "integer"), ("cursor", "string")],
         "records.save" => &[
             ("id", "string"),
             ("fields", "object"),
@@ -81,6 +82,10 @@ fn schema(operation: &str) -> Value {
         properties.insert("query".into(), json!({"type":"string","minLength":1,"maxLength":200,"description":"Nonblank local history search, at most 200 characters. Does not import sources or create tasks."}));
         properties.insert("limit".into(), json!({"type":"integer","minimum":1,"maximum":5,"default":5}));
     }
+    if operation == "records.relations" {
+        properties.insert("limit".into(), json!({"type":"integer","minimum":1,"maximum":100,"default":100}));
+        properties.insert("cursor".into(), json!({"type":"string","maxLength":8192,"description":"Omit on the first page. Pass the previous nextCursor unchanged for the same workspace, entity and record."}));
+    }
     if operation == "records.get" {
         properties.insert("detail".into(), json!({"type":"string","enum":["summary","full"]}));
         properties.insert("saveReceipt".into(), json!({"type":"object","additionalProperties":false,"properties":{"idempotencyKey":{"type":"string"},"expectedInput":{"type":"object"}},"required":["idempotencyKey","expectedInput"],"description":"Read-only recovery of a records.save result after a lost response. Supply the exact original save input; its workspaceId, entity, intended id and idempotencyKey must match this lookup. Returns receiptFound and record, or receiptFound:false. Never retries a write."}));
@@ -99,6 +104,10 @@ fn tool_catalog() -> Value {
             "Check this actual MCP connection: executable, server version, workspace identity and media tool names. Run in the external host session you intend to use; a fresh standalone process cannot prove another session’s cached connection.".to_string()
         } else if *operation == "agenda.list" {
             "Read the same combined ongoing/upcoming agenda as Today. All gigs and schedule entries are ordered before classification filtering/pagination. Performance and crew require explicit Work kind; unclassified is never assumed to be performance. Use recordKind=performance for the next classified performance. Read the exact record before attaching artwork. Offset pages are separate snapshots; refresh if records change.".to_string()
+        } else if *operation == "records.relations" {
+            "Read a bounded, stable ordered page of record links. count is the total relation count. For all links, continue with nextCursor unchanged until null. Cursors are bound to the same workspace, entity and record. Report partial results if traversal stops. Refresh for concurrent additions before the cursor. Read-only; does not authorize edits.".to_string()
+        } else if *operation == "records.get" {
+            "Read a record. Relations may be truncated even with detail=full. When relationsTruncated is true, use gigi_records_relations to continue reading links; never claim a bounded preview is complete.".to_string()
         } else if *operation == "records.save" {
             "GiGi records.save. For an existing id, omitted fields are preserved by default; supplied field keys merge into the record. Set fieldsMode to replace with a fields object to remove omitted field keys. Pass expectedRecord from a full records.get to reject a stale save. Omitted source and links are preserved. Local private workspace only; results are bounded.".to_string()
         } else {
@@ -262,6 +271,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn external_agents_can_page_all_contact_links_with_a_read_only_scoped_tool() {
+        let root=std::env::temp_dir().join(format!("gigi-relations-mcp-{}",uuid::Uuid::new_v4()));
+        let listed=reply(&root,&json!({"jsonrpc":"2.0","id":1,"method":"tools/list"})).unwrap();
+        let tool=listed["result"]["tools"].as_array().unwrap().iter().find(|t|t["name"]=="gigi_records_relations").expect("Agents need a continuation for truncated relations");
+        assert_eq!(tool["annotations"]["readOnlyHint"],true);assert_eq!(tool["inputSchema"]["properties"]["limit"]["maximum"],100);
+        let wid=domain::dispatch(&root,"workspace.create",json!({"name":"Synthetic MCP relation test"})).unwrap()["id"].as_str().unwrap().to_owned();
+        let contact=domain::dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"Synthetic contact"})).unwrap()["id"].as_str().unwrap().to_owned();
+        let db=rusqlite::Connection::open(root.join("gigi.sqlite")).unwrap();for i in 0..205{let id=format!("meeting-{i:04}");db.execute("INSERT INTO record_index VALUES(?1,'interactions',?2)",rusqlite::params![wid,id]).unwrap();db.execute("INSERT INTO interactions(id,workspace_id,title,fields_json,source_json) VALUES(?1,?2,?3,'{}','{}')",rusqlite::params![id,wid,format!("Synthetic meeting {i}")]).unwrap();db.execute("INSERT INTO relations VALUES(?1,'interactions',?2,'Contacts','contacts',?3)",rusqlite::params![wid,id,contact]).unwrap();}
+        let history:i64=db.query_row("SELECT count(*) FROM history",[],|r|r.get(0)).unwrap();drop(db);let mut cursor=Value::Null;let mut ids=Vec::new();
+        loop{let mut args=json!({"workspaceId":wid,"entity":"contacts","id":contact,"limit":41});if !cursor.is_null(){args["cursor"]=cursor.clone()};let response=reply(&root,&json!({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"gigi_records_relations","arguments":args}})).unwrap();assert_eq!(response["result"]["isError"],false);let page=&response["result"]["structuredContent"];assert_eq!(page["count"],205);for row in page["items"].as_array().unwrap(){ids.push(row["fromId"].as_str().unwrap().to_owned())}cursor=page["nextCursor"].clone();if cursor.is_null(){break;}}
+        for invalid in [json!({"workspaceId":wid,"entity":"contacts","id":contact,"limit":101}),json!({"workspaceId":wid,"entity":"contacts","id":contact,"cursor":"not-a-cursor"}),json!({"workspaceId":"foreign-workspace","entity":"contacts","id":contact})] {
+            let response=reply(&root,&json!({"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"gigi_records_relations","arguments":invalid}})).unwrap();assert_eq!(response["result"]["isError"],true);
+        }
+        assert_eq!(ids,(0..205).map(|i|format!("meeting-{i:04}")).collect::<Vec<_>>());let db=rusqlite::Connection::open(root.join("gigi.sqlite")).unwrap();assert_eq!(db.query_row("SELECT count(*) FROM history",[],|r|r.get::<_,i64>(0)).unwrap(),history);assert_eq!(db.query_row("SELECT count(*) FROM relations",[],|r|r.get::<_,i64>(0)).unwrap(),205);drop(db);fs::remove_dir_all(root).unwrap();
+    }
+
     #[test]
     fn oversized_frame_is_discarded_without_losing_next_request() {
         let mut bytes=vec![b'x';1_000_100];bytes.extend_from_slice(b"\n{}\n");
