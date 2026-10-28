@@ -142,6 +142,9 @@ export function SubmissionGuidelines({
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const baseId = useId();
+  // The window the component is rendered in. In the Designer the script runs in the
+  // outer window while the component renders inside the canvas iframe.
+  const ownView = () => rootRef.current?.ownerDocument.defaultView ?? window;
 
   useEffect(() => {
     if (initialDocument) return;
@@ -150,7 +153,7 @@ export function SubmissionGuidelines({
       .then((loaded) => {
         if (cancelled) return;
         setDoc(loaded);
-        const fromHash = syncUrlHash && typeof window !== 'undefined' ? sectionForHash(loaded, window.location.hash) : null;
+        const fromHash = syncUrlHash && typeof window !== 'undefined' ? sectionForHash(loaded, ownView().location.hash) : null;
         const preferred = loaded.sections.find((s) => s.id === defaultSection)?.id;
         setActiveId(fromHash ?? preferred ?? loaded.sections[0]?.id ?? '');
       })
@@ -165,18 +168,19 @@ export function SubmissionGuidelines({
   // A link to a single rule (#required-pages-08) opens its section, then scrolls to it.
   useEffect(() => {
     if (!doc || !syncUrlHash || typeof window === 'undefined') return;
-    const target = hashId(window.location.hash);
+    const view = ownView();
+    const target = hashId(view.location.hash);
     if (!target || doc.sections.some((s) => s.id === target)) return;
-    window.requestAnimationFrame(() => document.getElementById(target)?.scrollIntoView({ block: 'start' }));
+    // Rules render inside the component's shadow root, which document.getElementById cannot see.
+    const scope = (rootRef.current?.getRootNode() ?? view.document) as Document | ShadowRoot;
+    view.requestAnimationFrame(() => scope.getElementById(target)?.scrollIntoView({ block: 'start' }));
   }, [doc, syncUrlHash]);
 
   const select = useCallback(
     (id: string) => {
       setActiveId(id);
       if (typeof window === 'undefined') return;
-      // The window the component is rendered in. In the Designer the script runs in the
-      // outer window while the component renders inside the canvas iframe.
-      const view = rootRef.current?.ownerDocument.defaultView ?? window;
+      const view = ownView();
       if (syncUrlHash) view.history.replaceState(null, '', `#${id}`);
       // Like the original tabs: a section picked from lower on the page opens at its top.
       const top = rootRef.current?.getBoundingClientRect().top;
@@ -206,7 +210,7 @@ export function SubmissionGuidelines({
 
   if (failed) {
     return (
-      <div className="sguide-status" role="alert">
+      <div className="sguide-status" role="alert" ref={rootRef}>
         <style dangerouslySetInnerHTML={{ __html: STYLES }} />
         The submission guidelines could not load. Refresh the page to try again.
       </div>
@@ -214,7 +218,7 @@ export function SubmissionGuidelines({
   }
   if (!doc) {
     return (
-      <div className="sguide-status" aria-busy="true">
+      <div className="sguide-status" aria-busy="true" ref={rootRef}>
         <style dangerouslySetInnerHTML={{ __html: STYLES }} />
         Loading the submission guidelines…
       </div>
