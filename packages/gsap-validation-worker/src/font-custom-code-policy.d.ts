@@ -19,6 +19,13 @@ export type HtmlEmbedFinding = {
   message: string;
 };
 
+export type HtmlEmbedScriptFinding = {
+  kind: 'html-embed-script';
+  source: string;
+  policy: 'custom-code-html-embed-script-unverified';
+  message: string;
+};
+
 export type MarketplaceCustomCodeFinding =
   | FontCustomCodeFinding
   | SchemaMarkupFinding
@@ -34,7 +41,10 @@ export declare function isKnownFontStylesheetUrl(value: string | undefined): boo
 export declare function findProhibitedFontCustomCode(html: string): FontCustomCodeFinding[];
 export declare function findProhibitedSchemaMarkup(html: string): SchemaMarkupFinding[];
 export declare function disallowedEmbedTags(embedHtml: string): string[];
+export declare const HTML_EMBED_SCRIPT_POLICY: 'custom-code-html-embed-script-unverified';
+export declare const HTML_EMBED_SCRIPT_MESSAGE: string;
 export declare function findProhibitedHtmlEmbeds(html: string): HtmlEmbedFinding[];
+export declare function findHtmlEmbedScripts(html: string): HtmlEmbedScriptFinding[];
 export declare function findProhibitedMarketplaceCustomCode(
   html: string
 ): MarketplaceCustomCodeFinding[];

