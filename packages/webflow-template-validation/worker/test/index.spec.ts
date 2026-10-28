@@ -699,6 +699,24 @@ describe('Designer Validator', () => {
 			expect(seoCategory.passed).toBe(false);
 		});
 
+		it('finds the home page by its root path when the homepage flag is missing', async () => {
+			const result = await validateDesignerData({
+				variables: { collections: [] },
+				components: [],
+				styles: [],
+				pages: [
+					{
+						id: 'p1', name: 'Start', slug: '', type: 'Page', publishPath: '/',
+						seo: { title: 'Acme | Agency', description: 'D'.repeat(155), openGraphImage: 'https://example.com/og.jpg' }
+					}
+				],
+				assets: []
+			} as any);
+
+			const seoCategory = result.categories.find(c => c.category === 'SEO Metadata')!;
+			expect(seoCategory.issues.find(i => i.id === 'seo.home-title-format')?.severity).toBe('error');
+		});
+
 		it('leaves an empty home title to seo.missing-title', async () => {
 			const seoCategory = await validateHomeTitle('');
 			expect(seoCategory.issues.find(i => i.id === 'seo.missing-title')).toBeDefined();
