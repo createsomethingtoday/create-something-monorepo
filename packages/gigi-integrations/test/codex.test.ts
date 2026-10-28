@@ -1405,3 +1405,23 @@ test('built-in import clears a definite native rejection only when its original 
   assert.equal(f.calls.filter(call => call.name === 'gigi_imports_commit').length, 1);
   assert.equal(f.replies.at(-1).result.success, false);
 });
+
+test('relation continuation is offered as a workspace-pinned read with no write approval', async()=>{
+ const {adapter,server,mcp,dataDir}=await setup();const requests:any[]=[];const original=mcp.request.bind(mcp);
+ mcp.request=async(method,params)=>{
+  if(method==='tools/list')return{tools:[...toolCatalog(),{name:'gigi_records_relations',description:'Read a bounded relation page',inputSchema:{type:'object'}}]};
+  if(method==='tools/call'&&params.name==='gigi_records_relations'){requests.push(params);return{content:[{type:'text',text:JSON.stringify({items:[],count:205,nextCursor:'next-scoped-page'})}]};}
+  return original(method,params);
+ };
+ try{
+  const {sessionId}=await adapter.start({workspaceId:'w',message:'Read the requested contact links'});
+  const profile=server.calls.find(x=>x.method==='thread/start')!.params;
+  assert.ok(profile.dynamicTools[0].tools.some((x:any)=>x.name==='gigi_records_relations'),'Embedded Ask GiGi needs the same read-only continuation');
+  const replies:any[]=[];server.reply=(id,result)=>{replies.push({id,result});};
+  const notify=async(arguments_:any,id:number)=>Promise.all(server.events.map(fn=>fn({id,method:'item/tool/call',params:{threadId:'thread-1',tool:'gigi_records_relations',arguments:arguments_}})));
+  await notify({entity:'contacts',id:'synthetic-contact',cursor:'scoped-page',limit:25},901);
+  assert.equal(requests.length,1);assert.equal(requests[0].arguments.workspaceId,'w');assert.equal(requests[0].arguments.cursor,'scoped-page');assert.equal(replies[0].result.success,true);
+  assert.equal((await adapter.read({workspaceId:'w',sessionId})).approvals.length,0);
+  await notify({workspaceId:'foreign',entity:'contacts',id:'synthetic-contact'},902);assert.equal(requests.length,1);assert.equal(replies.at(-1).result.success,false);
+ }finally{await rm(dataDir,{recursive:true,force:true});}
+});
