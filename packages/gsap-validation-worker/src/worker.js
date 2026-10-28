@@ -1123,16 +1123,54 @@ function scanCallbackEnd(source, start) {
   return -1;
 }
 __name(scanCallbackEnd, "scanCallbackEnd");
-function isAccessibleKeyboardCallback(body, param) {
-  if (KEYBOARD_EXFILTRATION_PATTERN.test(body)) return false;
+function sanitizeKeyboardCallback(body) {
+  // Drops comments and blanks string contents (except bare named keys) so
+  // checks only see executable tokens. Template literals and any "/" outside
+  // a comment (regex literal or division) make the body unanalysable.
+  const namedKeyLiteral = new RegExp(`^(?:${KEYBOARD_NAMED_KEYS})$`);
+  let output = "";
+  for (let i = 0; i < body.length; i++) {
+    const ch = body[i];
+    if (ch === "/" && body[i + 1] === "/") {
+      const end = body.indexOf("\n", i);
+      if (end === -1) return null;
+      i = end - 1;
+      continue;
+    }
+    if (ch === "/" && body[i + 1] === "*") {
+      const end = body.indexOf("*/", i + 2);
+      if (end === -1) return null;
+      output += " ";
+      i = end + 1;
+      continue;
+    }
+    if (ch === "/" || ch === "`") return null;
+    if (ch === "'" || ch === '"') {
+      let end = i + 1;
+      while (end < body.length && body[end] !== ch) end += body[end] === "\\" ? 2 : 1;
+      if (end >= body.length) return null;
+      const content = body.slice(i + 1, end);
+      output += namedKeyLiteral.test(content) ? ch + content + ch : ch + ch;
+      i = end;
+      continue;
+    }
+    output += ch;
+  }
+  return output;
+}
+__name(sanitizeKeyboardCallback, "sanitizeKeyboardCallback");
+function isAccessibleKeyboardCallback(rawBody, param) {
+  if (KEYBOARD_EXFILTRATION_PATTERN.test(rawBody)) return false;
+  const body = sanitizeKeyboardCallback(rawBody);
+  if (body === null) return false;
   const name = param.replace(/\$/g, "\\$");
-  const namedKeyCheck = new RegExp(`(?<![\\w$.])${name}\\s*\\.\\s*(?:key|code)\\s*(?:===?|!==?)\\s*(['"])(?:${KEYBOARD_NAMED_KEYS})\\1|(?<![\\w$.])${name}\\s*\\.\\s*(?:keyCode|which)\\s*(?:===?|!==?)\\s*(?:${KEYBOARD_NAMED_KEY_CODES})\\b`);
+  const namedKeyCheck = new RegExp(`(?<![\\w$.])${name}\\s*\\.\\s*(?:key|code)\\s*(?:===?|!==?)\\s*(['"])(?:${KEYBOARD_NAMED_KEYS})\\1|(['"])(?:${KEYBOARD_NAMED_KEYS})\\2\\s*(?:===?|!==?)\\s*${name}\\s*\\.\\s*(?:key|code)\\b|(?<![\\w$.])${name}\\s*\\.\\s*(?:keyCode|which)\\s*(?:===?|!==?)\\s*(?:${KEYBOARD_NAMED_KEY_CODES})\\b`, "g");
   if (!namedKeyCheck.test(body)) return false;
-  // The event may only be used for literal key comparisons and plain event
-  // members; passing it on, aliasing it, or reading keys any other way
-  // could capture keystrokes.
-  const remaining = body.replace(KEYBOARD_LITERAL_COMPARISON_PATTERN, " ");
-  if (/\.\s*(?:key|code|keyCode|which)\b|\[\s*['"`](?:key|code|keyCode|which)['"`]\s*\]/.test(remaining)) return false;
+  // Only named navigation-key comparisons are removed. Anything else that
+  // touches the key (other comparisons, aliasing, passing the event on)
+  // could identify arbitrary keystrokes.
+  const remaining = body.replace(namedKeyCheck, " ");
+  if (/\.\s*(?:key|code|keyCode|which)\b|\[\s*['"](?:key|code|keyCode|which)['"]\s*\]/.test(remaining)) return false;
   const uses = [...remaining.matchAll(new RegExp(`(?<![\\w$.])${name}\\b(\\s*\\.\\s*([A-Za-z_$][\\w$]*))?`, "g"))];
   return uses.every((use) => use[2] && KEYBOARD_EVENT_MEMBERS.has(use[2]));
 }

@@ -108,6 +108,17 @@ for (const evasion of [
   assert.equal(run(gsapPrelude + evasion).passed, false, `keyboard evasion stays flagged: ${evasion}`);
 }
 
+// Non-navigation comparisons and comparisons in comments or strings do not count (Codex P1).
+for (const evasion of [
+  `document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); report(e.key === 'a', e.key === 'b'); });`,
+  `document.addEventListener('keydown', e => { count++; transmitCount(count); /* e.key === 'Escape' */ });`,
+  `document.addEventListener('keydown', e => { count++; transmitCount(count); const note = "e.key === 'Escape'"; });`,
+  `document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); send(\`\${e.key}\`); });`,
+  `document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); const r = /'/; buf += e.key; const q = /'/; });`
+]) {
+  assert.equal(run(gsapPrelude + evasion).passed, false, `keyboard evasion stays flagged: ${evasion}`);
+}
+
 // Unrelated .code reads elsewhere do not cancel the exemption (Codex P2).
 const unrelatedCode = gsapPrelude + `fetchStatus().then(response => { status = response.code; });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });`;
