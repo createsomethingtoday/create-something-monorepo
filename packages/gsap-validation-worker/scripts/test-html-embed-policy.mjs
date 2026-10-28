@@ -46,7 +46,7 @@ assert.deepEqual(sources('<div class="w-embed-youtubevideo"><iframe src="https:/
 
 // Disallowed embed content.
 assert.deepEqual(sources(embed('map w-embed w-iframe', '<iframe src="https://www.google.com/maps/embed?pb=1"></iframe>')), ['.map: <iframe>']);
-assert.deepEqual(sources(embed('nest w-embed', '<div class="inner"><div><p>Deep</p></div></div><img src="x.png">')), ['.nest: <p>, text, <img>, <div>']);
+assert.deepEqual(sources(embed('nest w-embed', '<div class="inner"><div><p>Deep</p></div></div><img src="x.png">')), ['.nest: <p>, <div>, <img>']);
 assert.deepEqual(sources(embed('w-embed', '<audio src="x.mp3" controls></audio>')), ['div.w-embed: <audio>']);
 // Wrapper markup around an inline SVG icon (archinic.webflow.io, .interior_embed) is not foreign content.
 assert.deepEqual(sources(embed('interior_embed w-embed', '<div class="pxl-item--icon"> <span class="icon-default"> <svg viewBox="0 0 10 10"><path d="M0"/></svg> </span> </div>')), []);
@@ -63,12 +63,26 @@ assert.deepEqual(sources(`<div class="gs w-embed"><script>const open = '<div>';<
 assert.deepEqual(sources('<div class="q w-embed"><span title="a > b"><svg></svg></span></div>'), [], 'quoted ">" in an attribute does not end the tag');
 
 // div/span wrappers are only inert around permitted content (Codex P1).
-assert.deepEqual(sources(embed('layout w-embed', '<div style="position:fixed"><span>Custom content</span></div>')), ['.layout: text, <div>, <span>']);
+assert.deepEqual(sources(embed('layout w-embed', '<div style="position:fixed"><span>Custom content</span></div>')), ['.layout: text, <span>, <div>']);
 assert.deepEqual(sources(embed('words w-embed', 'Just some text')), ['.words: text']);
 assert.deepEqual(sources(embed('icon w-embed', '&nbsp;<span><svg></svg></span>')), [], 'whitespace entities are not content');
 
 // HTML inside SVG foreignObject is not inert SVG (Codex P2).
 assert.deepEqual(sources(embed('fo w-embed', '<svg><foreignObject><video src="x.mp4"></video></foreignObject></svg>')), ['.fo: <foreignObject>']);
+
+// Embed starts come from the parsed tree, not tag-shaped text (Codex P1).
+assert.deepEqual(sources(`<div class="gs w-embed"><script>const tpl = '<div class="w-embed"><video></video></div>';</script></div>`), []);
+assert.deepEqual(sources('<div title="a > b" class="late w-embed"><video></video></div>'), ['.late: <video>']);
+
+// HTML breakout tags leave SVG the way the browser does (Codex P2).
+assert.deepEqual(sources(embed('broken w-embed', '<svg><div><video src="x"></video></div></svg>')), ['.broken: <video>, <div>']);
+
+// Wrappers are inert only around permitted content, not beside it (Codex P2).
+assert.deepEqual(sources(embed('overlay w-embed', '<svg></svg><div style="position:fixed;inset:0"></div>')), ['.overlay: <div>']);
+
+// Attribute names are exact (Codex P2).
+assert.deepEqual(sources('<div data-class="w-embed"><video></video></div>'), []);
+assert.deepEqual(sources(embed('vid w-embed', '<iframe data-src="https://www.youtube.com/embed/x" src="https://evil.example/frame"></iframe>')), ['.vid: <iframe>']);
 
 // Embed scripts are reported separately for consumers without the GSAP script checks (Codex P2).
 const scriptFindings = findHtmlEmbedScripts(

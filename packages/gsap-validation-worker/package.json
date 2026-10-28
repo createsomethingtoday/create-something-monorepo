@@ -18,5 +18,8 @@
     "test:live": "node scripts/repro-live-worker.mjs",
     "test:keyboard": "node scripts/test-keyboard-accessibility.mjs",
     "test:html-embed": "node scripts/test-html-embed-policy.mjs"
+  },
+  "dependencies": {
+    "parse5": "7.3.0"
   }
 }

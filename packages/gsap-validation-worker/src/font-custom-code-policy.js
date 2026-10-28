@@ -1,3 +1,5 @@
+import { parse, parseFragment } from 'parse5';
+
 export const FONT_CUSTOM_CODE_POLICY = 'custom-code-font-loading';
 export const SCHEMA_MARKUP_POLICY = 'custom-code-schema-markup-not-allowed';
 export const HTML_EMBED_POLICY = 'custom-code-html-embed-not-allowed';
@@ -124,74 +126,24 @@ export const HTML_EMBED_SCRIPT_POLICY = 'custom-code-html-embed-script-unverifie
 export const HTML_EMBED_SCRIPT_MESSAGE =
   'This HTML Embed contains a script. Only approved scripts are allowed in HTML Embeds, and this check cannot verify script contents. A reviewer will check it against the custom-code policy; remove it if it is not an approved GSAP script.';
 
-function classList(tag) {
-  return (readHtmlAttribute(tag, 'class') || '').split(/\s+/).filter(Boolean);
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+
+// Embed checks walk the tree an HTML5 parser builds, so comments, raw-text elements, quoted
+// attributes, and SVG breakout tags are handled the way the browser handles them.
+function attribute(node, name) {
+  return node.attrs?.find((attr) => attr.name === name)?.value;
 }
 
-// Elements whose content the HTML parser treats as raw text: tag-like text inside them is not markup.
-const RAW_TEXT_TAGS = new Set(['script', 'style', 'textarea', 'title', 'xmp', 'iframe', 'noembed', 'noframes', 'noscript']);
-const TAG_PATTERN = /<(\/?)([a-z][a-z0-9:-]*)((?:\s+[^\s"'>/=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'>]+))?)*)\s*(\/?)>/iy;
-
-// Yields comment, text, and tag tokens from `start`, skipping raw-text element content the way
-// the browser does. Each raw-text tag token carries its `content`.
-function* htmlTokens(html, start = 0) {
-  let index = start;
-  while (index < html.length) {
-    const lt = html.indexOf('<', index);
-    if (lt === -1) {
-      yield { type: 'text', text: html.slice(index), start: index, end: html.length };
-      return;
-    }
-    if (lt > index) yield { type: 'text', text: html.slice(index, lt), start: index, end: lt };
-    if (html.startsWith('<!--', lt)) {
-      const close = html.indexOf('-->', lt + 4);
-      const end = close === -1 ? html.length : close + 3;
-      yield { type: 'comment', start: lt, end };
-      index = end;
-      continue;
-    }
-    TAG_PATTERN.lastIndex = lt;
-    const match = TAG_PATTERN.exec(html);
-    if (!match) {
-      yield { type: 'text', text: '<', start: lt, end: lt + 1 };
-      index = lt + 1;
-      continue;
-    }
-    const name = match[2].toLowerCase();
-    const token = {
-      type: match[1] ? 'close' : 'open',
-      name,
-      raw: match[0],
-      selfClosing: match[4] === '/',
-      start: lt,
-      end: lt + match[0].length
-    };
-    if (token.type === 'open' && RAW_TEXT_TAGS.has(name)) {
-      const closePattern = new RegExp(`</${name}\\b[^>]*>`, 'ig');
-      closePattern.lastIndex = token.end;
-      const close = closePattern.exec(html);
-      token.content = html.slice(token.end, close ? close.index : html.length);
-      token.end = close ? close.index + close[0].length : html.length;
-    }
-    yield token;
-    index = token.end;
-  }
+function classList(node) {
+  return (attribute(node, 'class') || '').split(/\s+/).filter(Boolean);
 }
 
-// Returns the inner HTML of the div whose opening tag ends at `openEnd`.
-function innerDivHtml(html, openEnd) {
-  let depth = 1;
-  for (const token of htmlTokens(html, openEnd)) {
-    // <div/> still opens a div in HTML, so the self-closing slash is ignored.
-    if (token.name !== 'div') continue;
-    depth += token.type === 'close' ? -1 : 1;
-    if (depth === 0) return html.slice(openEnd, token.start);
-  }
-  return html.slice(openEnd);
+function children(node) {
+  return node.content?.childNodes || node.childNodes || [];
 }
 
-function isVideoProviderIframe(tag) {
-  const src = readHtmlAttribute(tag, 'src');
+function isVideoProviderIframe(node) {
+  const src = attribute(node, 'src');
   if (!src) return false;
   try {
     return VIDEO_PROVIDER_IFRAME_HOSTS.has(new URL(src, 'https://published-site.invalid').hostname.toLowerCase());
@@ -200,67 +152,76 @@ function isVideoProviderIframe(tag) {
   }
 }
 
-// Structural wrappers creators leave around inline SVG icons. They are only inert when the
-// embed actually holds permitted content.
+// Structural wrappers creators leave around inline SVG icons. A wrapper is inert only when it
+// holds permitted content and nothing else.
 const INERT_WRAPPER_TAGS = new Set(['div', 'span']);
 
-function analyseEmbed(embedHtml) {
-  const tags = [];
-  const scripts = [];
-  let permitted = 0;
-  const wrappers = [];
-  let svgDepth = 0;
-  const add = (name) => {
-    if (!tags.includes(name)) tags.push(name);
-  };
-  for (const token of htmlTokens(embedHtml)) {
-    if (token.type === 'comment') continue;
-    if (token.type === 'text') {
-      if (svgDepth === 0 && token.text.replace(/&nbsp;|&#160;/gi, '').trim()) add('#text');
+function analyseNodes(nodes, result) {
+  let permitted = false;
+  for (const node of nodes) {
+    if (node.nodeName === '#comment') continue;
+    if (node.nodeName === '#text') {
+      if (node.value.replace(/ /g, '').trim()) result.add('#text');
       continue;
     }
-    if (token.name === 'svg' && !token.selfClosing) {
-      if (token.type === 'open') {
-        svgDepth += 1;
-        permitted += 1;
-      } else if (svgDepth > 0) svgDepth -= 1;
+    if (!node.tagName) continue;
+    if (node.namespaceURI === SVG_NAMESPACE) {
+      permitted = true;
+      collectForeignObjects(node, result);
       continue;
     }
-    if (token.type === 'close') continue;
-    if (svgDepth > 0) {
-      // foreignObject re-enters HTML parsing inside SVG, so its content is not inert SVG.
-      if (token.name === 'foreignobject') add('foreignObject');
-      continue;
-    }
-    if (token.name === 'style') permitted += 1;
-    else if (token.name === 'script') {
-      permitted += 1;
-      if (readHtmlAttribute(token.raw, 'type')?.toLowerCase() !== 'application/ld+json') {
-        scripts.push(readHtmlAttribute(token.raw, 'src') || 'inline script');
+    const name = node.tagName.toLowerCase();
+    if (name === 'style') permitted = true;
+    else if (name === 'script') {
+      permitted = true;
+      if (attribute(node, 'type')?.toLowerCase() !== 'application/ld+json') {
+        result.scripts.push(attribute(node, 'src') || 'inline script');
       }
-    } else if (token.name === 'iframe' && isVideoProviderIframe(token.raw)) permitted += 1;
-    else if (INERT_WRAPPER_TAGS.has(token.name)) {
-      if (!wrappers.includes(token.name)) wrappers.push(token.name);
-    }
-    else add(token.name);
+    } else if (name === 'iframe' && isVideoProviderIframe(node)) permitted = true;
+    else if (INERT_WRAPPER_TAGS.has(name)) {
+      if (analyseNodes(children(node), result)) permitted = true;
+      else result.add(name);
+    } else result.add(name);
   }
-  if (permitted === 0) wrappers.forEach(add);
-  return { tags, scripts };
+  return permitted;
+}
+
+// foreignObject re-enters HTML parsing inside SVG, so its content is not inert SVG.
+function collectForeignObjects(node, result) {
+  for (const child of children(node)) {
+    if (child.tagName === 'foreignObject') result.add('foreignObject');
+    else if (child.tagName) collectForeignObjects(child, result);
+  }
+}
+
+function analyseEmbed(nodes) {
+  const tags = [];
+  const result = {
+    scripts: [],
+    add(name) {
+      if (!tags.includes(name)) tags.push(name);
+    }
+  };
+  analyseNodes(nodes, result);
+  return { tags, scripts: result.scripts };
 }
 
 export function disallowedEmbedTags(embedHtml) {
-  return analyseEmbed(embedHtml).tags;
+  return analyseEmbed(parseFragment(embedHtml).childNodes).tags;
 }
 
 function* creatorEmbeds(html) {
-  const divPattern = /<div\b[^>]*>/gi;
-  let match;
-  while ((match = divPattern.exec(html)) !== null) {
-    const classes = classList(match[0]);
+  const stack = [parse(html)];
+  while (stack.length > 0) {
+    const node = stack.pop();
+    const kids = children(node);
+    for (let index = kids.length - 1; index >= 0; index -= 1) stack.push(kids[index]);
+    if (node.tagName !== 'div' || node.namespaceURI === SVG_NAMESPACE) continue;
+    const classes = classList(node);
     if (!classes.includes('w-embed')) continue;
     if (classes.some((name) => NATIVE_EMBED_CLASSES.has(name))) continue;
     const label = classes.filter((name) => !name.startsWith('w-')).join('.');
-    yield { label: label ? `.${label}` : 'div.w-embed', inner: innerDivHtml(html, match.index + match[0].length) };
+    yield { label: label ? `.${label}` : 'div.w-embed', ...analyseEmbed(kids) };
   }
 }
 
@@ -269,11 +230,10 @@ export function findProhibitedHtmlEmbeds(html) {
 
   const findings = [];
   for (const embed of creatorEmbeds(html)) {
-    const { tags } = analyseEmbed(embed.inner);
-    if (tags.length === 0) continue;
+    if (embed.tags.length === 0) continue;
     findings.push({
       kind: 'html-embed-markup',
-      source: `${embed.label}: ${tags.map((name) => (name === '#text' ? 'text' : `<${name}>`)).join(', ')}`,
+      source: `${embed.label}: ${embed.tags.map((name) => (name === '#text' ? 'text' : `<${name}>`)).join(', ')}`,
       policy: HTML_EMBED_POLICY,
       message: HTML_EMBED_MESSAGE
     });
@@ -289,7 +249,7 @@ export function findHtmlEmbedScripts(html) {
 
   const findings = [];
   for (const embed of creatorEmbeds(html)) {
-    for (const script of analyseEmbed(embed.inner).scripts) {
+    for (const script of embed.scripts) {
       findings.push({
         kind: 'html-embed-script',
         source: `${embed.label}: ${script}`,
