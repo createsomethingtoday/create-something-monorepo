@@ -174,13 +174,16 @@ export function SubmissionGuidelines({
     (id: string) => {
       setActiveId(id);
       if (typeof window === 'undefined') return;
-      if (syncUrlHash) window.history.replaceState(null, '', `#${id}`);
+      // The window the component is rendered in. In the Designer the script runs in the
+      // outer window while the component renders inside the canvas iframe.
+      const view = rootRef.current?.ownerDocument.defaultView ?? window;
+      if (syncUrlHash) view.history.replaceState(null, '', `#${id}`);
       // Like the original tabs: a section picked from lower on the page opens at its top.
       const top = rootRef.current?.getBoundingClientRect().top;
-      const target = top === undefined ? null : sectionScrollTarget(top, window.scrollY);
+      const target = top === undefined ? null : sectionScrollTarget(top, view.scrollY);
       if (target !== null) {
-        const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-        window.scrollTo({ top: target, behavior: reduceMotion ? 'auto' : 'smooth' });
+        const reduceMotion = view.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        view.scrollTo({ top: target, behavior: reduceMotion ? 'auto' : 'smooth' });
       }
     },
     [syncUrlHash],
