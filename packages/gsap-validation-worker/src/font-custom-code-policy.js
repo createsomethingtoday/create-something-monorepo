@@ -144,9 +144,29 @@ function children(node) {
 
 function isVideoProviderIframe(node) {
   const src = attribute(node, 'src');
-  if (!src) return false;
+  // srcdoc wins over src in the browser, so the provider URL would not be what renders.
+  if (!src || attribute(node, 'srcdoc') !== undefined) return false;
   try {
     return VIDEO_PROVIDER_IFRAME_HOSTS.has(new URL(src, 'https://published-site.invalid').hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+}
+
+// GSAP custom code is the only script exception in the submission guidelines, so an external
+// script in an embed must load GSAP (core or plugins) from Webflow's GSAP host or a public npm CDN.
+const GSAP_SCRIPT_SOURCES = [
+  { hosts: ['cdn.prod.website-files.com', 'unpkg.com'], path: /^\/gsap(?:@[^/]+)?\//i },
+  { hosts: ['cdn.jsdelivr.net'], path: /^\/(?:npm\/gsap(?:@[^/]+)?|gh\/greensock\/gsap(?:@[^/]+)?)\//i },
+  { hosts: ['cdnjs.cloudflare.com'], path: /^\/ajax\/libs\/gsap\//i }
+];
+
+function isGsapScriptSource(src) {
+  try {
+    const url = new URL(src, 'https://published-site.invalid');
+    return GSAP_SCRIPT_SOURCES.some(
+      (source) => source.hosts.includes(url.hostname.toLowerCase()) && source.path.test(url.pathname)
+    );
   } catch {
     return false;
   }
@@ -173,9 +193,14 @@ function analyseNodes(nodes, result) {
     const name = node.tagName.toLowerCase();
     if (name === 'style') permitted = true;
     else if (name === 'script') {
+      const src = attribute(node, 'src');
+      if (src !== undefined && !isGsapScriptSource(src)) {
+        result.add(`script src="${src}"`);
+        continue;
+      }
       permitted = true;
       if (attribute(node, 'type')?.toLowerCase() !== 'application/ld+json') {
-        result.scripts.push(attribute(node, 'src') || 'inline script');
+        result.scripts.push(src || 'inline script');
       }
     } else if (name === 'iframe' && isVideoProviderIframe(node)) permitted = true;
     else if (INERT_WRAPPER_TAGS.has(name)) {
@@ -191,7 +216,11 @@ function analyseNodes(nodes, result) {
 function inspectSvg(node, result) {
   for (const child of children(node)) {
     if (child.tagName === 'foreignObject') result.add('foreignObject');
-    else if (child.tagName === 'script') result.scripts.push(attribute(child, 'href') || attribute(child, 'xlink:href') || 'inline SVG script');
+    else if (child.tagName === 'script') {
+      const href = attribute(child, 'href');
+      if (href !== undefined && !isGsapScriptSource(href)) result.add(`script src="${href}"`);
+      else result.scripts.push(href || 'inline SVG script');
+    }
     if (child.tagName && child.tagName !== 'foreignObject') inspectSvg(child, result);
   }
 }

