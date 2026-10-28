@@ -321,6 +321,29 @@ export function findHtmlEmbedScripts(html) {
   return findings;
 }
 
+// <style> elements the parser places inside inline SVG, plus every class name used on an HTML
+// element. An SVG <style> still applies document-wide, so the GSAP worker only exempts SVG
+// presentation CSS whose class selectors cannot reach HTML content.
+export function analyseSvgStyles(html) {
+  const svgStyleContents = new Set();
+  const htmlClassNames = new Set();
+  if (typeof html !== 'string' || html === '') return { svgStyleContents, htmlClassNames };
+  const stack = [parse(html)];
+  while (stack.length > 0) {
+    const node = stack.pop();
+    stack.push(...children(node));
+    if (!node.tagName) continue;
+    if (node.namespaceURI === SVG_NAMESPACE) {
+      if (node.tagName === 'style') {
+        svgStyleContents.add(children(node).map((child) => child.value || '').join('').trim());
+      }
+    } else {
+      classList(node).forEach((name) => htmlClassNames.add(name));
+    }
+  }
+  return { svgStyleContents, htmlClassNames };
+}
+
 export function findProhibitedMarketplaceCustomCode(html) {
   return [
     ...findProhibitedFontCustomCode(html),
