@@ -153,18 +153,23 @@ function isVideoProviderIframe(node) {
   }
 }
 
-// GSAP custom code is the only script exception in the submission guidelines, so an external
-// script in an embed must load GSAP (core or plugins) from Webflow's GSAP host or a public npm CDN.
-const GSAP_SCRIPT_SOURCES = [
-  { hosts: ['cdn.prod.website-files.com', 'unpkg.com'], path: /^\/gsap(?:@[^/]+)?\//i },
-  { hosts: ['cdn.jsdelivr.net'], path: /^\/(?:npm\/gsap(?:@[^/]+)?|gh\/greensock\/gsap(?:@[^/]+)?)\//i },
+// An external script in an embed must load GSAP (core or plugins) or Lenis, the smooth-scroll
+// exception for GSAP ScrollSmoother not working in the Designer (GSAP Validation Guide for
+// Webflow Template Creators), from Webflow's GSAP host or a public npm CDN.
+const APPROVED_SCRIPT_SOURCES = [
+  { hosts: ['cdn.prod.website-files.com'], path: /^\/gsap(?:@[^/]+)?\//i },
+  { hosts: ['unpkg.com'], path: /^\/(?:gsap|lenis|@studio-freight\/lenis)(?:@[^/]+)?\//i },
+  {
+    hosts: ['cdn.jsdelivr.net'],
+    path: /^\/(?:npm\/(?:gsap|lenis|@studio-freight\/lenis)(?:@[^/]+)?|gh\/(?:greensock\/gsap|darkroomengineering\/lenis|studio-freight\/lenis)(?:@[^/]+)?)\//i
+  },
   { hosts: ['cdnjs.cloudflare.com'], path: /^\/ajax\/libs\/gsap\//i }
 ];
 
-function isGsapScriptSource(src) {
+function isApprovedScriptSource(src) {
   try {
     const url = new URL(src, 'https://published-site.invalid');
-    return GSAP_SCRIPT_SOURCES.some(
+    return APPROVED_SCRIPT_SOURCES.some(
       (source) => source.hosts.includes(url.hostname.toLowerCase()) && source.path.test(url.pathname)
     );
   } catch {
@@ -213,7 +218,7 @@ function analyseNodes(nodes, result) {
     if (name === 'style') permitted = true;
     else if (name === 'script') {
       const src = attribute(node, 'src');
-      if (src !== undefined && !isGsapScriptSource(src)) {
+      if (src !== undefined && !isApprovedScriptSource(src)) {
         result.add(`script src="${src}"`);
         continue;
       }
@@ -237,7 +242,7 @@ function inspectSvg(node, result) {
     if (child.tagName === 'foreignObject') result.add('foreignObject');
     else if (child.tagName === 'script') {
       const href = attribute(child, 'href');
-      if (href !== undefined && !isGsapScriptSource(href)) result.add(`script src="${href}"`);
+      if (href !== undefined && !isApprovedScriptSource(href)) result.add(`script src="${href}"`);
       else result.scripts.push(href || 'inline SVG script');
     }
     if (child.tagName && child.tagName !== 'foreignObject') inspectSvg(child, result);

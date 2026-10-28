@@ -85,7 +85,7 @@ assert.deepEqual(sources(embed('vid w-embed', `<iframe src="https://www.youtube.
 
 // External scripts in embeds must load GSAP; anything else is custom code (Codex P2).
 assert.deepEqual(sources(embed('payload w-embed', '<script src="https://evil.example/payload.js"></script>')), ['.payload: <script src="https://evil.example/payload.js">']);
-assert.deepEqual(sources(embed('smooth w-embed', '<script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>')), ['.smooth: <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js">'], 'Lenis is not a custom-code exception');
+assert.deepEqual(sources(embed('lookalike-lenis w-embed', '<script src="https://evil.example/lenis@1.3.17/dist/lenis.min.js"></script>')), ['.lookalike-lenis: <script src="https://evil.example/lenis@1.3.17/dist/lenis.min.js">']);
 assert.deepEqual(sources(embed('lookalike w-embed', '<script src="https://evil.example/npm/gsap/dist/gsap.min.js"></script>')), ['.lookalike: <script src="https://evil.example/npm/gsap/dist/gsap.min.js">']);
 assert.deepEqual(sources(embed('svgload w-embed', '<svg><script href="https://evil.example/x.js"></script></svg>')), ['.svgload: <script src="https://evil.example/x.js">']);
 for (const src of [
@@ -93,9 +93,13 @@ for (const src of [
   'https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js',
   'https://unpkg.com/gsap@3/dist/gsap.min.js',
-  'https://cdn.prod.website-files.com/gsap/3.14.2/gsap.min.js'
+  'https://cdn.prod.website-files.com/gsap/3.14.2/gsap.min.js',
+  // Lenis: the documented smooth-scroll exception (GSAP Validation Guide for Webflow Template Creators).
+  'https://unpkg.com/lenis@1.3.17/dist/lenis.min.js',
+  'https://cdn.jsdelivr.net/npm/lenis@1.3.17/dist/lenis.min.js',
+  'https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js'
 ]) {
-  assert.deepEqual(sources(embed('gsap w-embed', `<script src="${src}"></script>`)), [], `GSAP source allowed: ${src}`);
+  assert.deepEqual(sources(embed('lib w-embed', `<script src="${src}"></script>`)), [], `approved source allowed: ${src}`);
 }
 
 // Inline event handlers and javascript: URLs are custom code, even on permitted SVG (Codex P2).
