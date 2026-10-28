@@ -45,6 +45,10 @@ export declare const HTML_EMBED_SCRIPT_POLICY: 'custom-code-html-embed-script-un
 export declare const HTML_EMBED_SCRIPT_MESSAGE: string;
 export declare function findProhibitedHtmlEmbeds(html: string): HtmlEmbedFinding[];
 export declare function findHtmlEmbedScripts(html: string): HtmlEmbedScriptFinding[];
+export declare function analyseSvgStyles(html: string): {
+  svgStyleContents: Set<string>;
+  htmlClassNames: Set<string>;
+};
 export declare function findProhibitedMarketplaceCustomCode(
   html: string
 ): MarketplaceCustomCodeFinding[];

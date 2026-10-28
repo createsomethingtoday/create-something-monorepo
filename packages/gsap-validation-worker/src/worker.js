@@ -7,7 +7,7 @@ var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require
   throw Error('Dynamic require of "' + x + '" is not supported');
 });
 
-import { findProhibitedMarketplaceCustomCode } from "./font-custom-code-policy.js";
+import { analyseSvgStyles, findProhibitedMarketplaceCustomCode } from "./font-custom-code-policy.js";
 
 // cloudflare-worker/lib/shared-validator.js
 var IX2_REJECTION_MESSAGE = "Legacy Webflow IX2 interactions detected. As of May 1, 2026, Marketplace templates submitted with IX2 interactions are rejected. Rebuild interactions with Webflow Interactions powered by GSAP (IX3), publish again, and rerun validation.";
@@ -634,6 +634,7 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
   }
   const scriptContents = extractScriptContents(html);
   const styleContents = extractStyleContents(html);
+  const svgStyles = analyseSvgStyles(html);
   scriptContents.forEach((script, index) => {
     if (!script.trim()) return;
     if (script.startsWith("/* Webflow Lightbox JSON */")) {
@@ -791,9 +792,9 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
       });
     }
   });
-  styleContents.forEach(({ content: style, insideSvg }, index) => {
+  styleContents.forEach((style, index) => {
     if (!style.trim()) return;
-    if (insideSvg && isSvgPresentationCSS(style)) {
+    if (svgStyles.svgStyleContents.has(style) && isSvgPresentationCSS(style, svgStyles.htmlClassNames)) {
       results.allowedCustomCode.push({
         scriptIndex: `style-${index}`,
         message: "SVG presentation styles inside inline SVG (allowed)"
@@ -899,35 +900,19 @@ function extractScriptContents(html) {
 __name(extractScriptContents, "extractScriptContents");
 function extractStyleContents(html) {
   const styleRegex = /<style([^>]*)>([\s\S]*?)<\/style>/g;
-  const svgRanges = findSvgRanges(html);
   const styles = [];
   let match = styleRegex.exec(html);
   while (match !== null) {
     const styleContent = match[2].trim();
     if (styleContent) {
-      const position = match.index;
-      styles.push({
-        content: styleContent,
-        insideSvg: svgRanges.some(([start, end]) => position > start && position < end)
-      });
+      styles.push(styleContent);
     }
     match = styleRegex.exec(html);
   }
   return styles;
 }
 __name(extractStyleContents, "extractStyleContents");
-function findSvgRanges(html) {
-  const ranges = [];
-  const svgRegex = /<svg\b[\s\S]*?<\/svg>/gi;
-  let match = svgRegex.exec(html);
-  while (match !== null) {
-    ranges.push([match.index, match.index + match[0].length]);
-    match = svgRegex.exec(html);
-  }
-  return ranges;
-}
-__name(findSvgRanges, "findSvgRanges");
-function isSvgPresentationCSS(css) {
+function isSvgPresentationCSS(css, htmlClassNames) {
   // Design-tool SVG exports (e.g. Illustrator `.st0{opacity:0.1;}`) only.
   // No at-rules, url(), or non-SVG properties; anything else stays flagged.
   const allowedProperties = /* @__PURE__ */ new Set([
@@ -956,6 +941,10 @@ function isSvgPresentationCSS(css) {
   while (match !== null) {
     const selectors = match[1].split(",").map((selector) => selector.trim());
     if (!selectors.every((selector) => /^(?:path|circle|rect|ellipse|line|polyline|polygon|g|text|tspan|stop|use)?(?:\.[a-z_][\w-]*)+$/i.test(selector))) {
+      return false;
+    }
+    // An SVG <style> applies document-wide; a class also used on HTML would style the page.
+    if (selectors.some((selector) => selector.split(".").slice(1).some((name) => htmlClassNames.has(name)))) {
       return false;
     }
     const declarations = match[2].split(";").map((declaration) => declaration.trim()).filter(Boolean);

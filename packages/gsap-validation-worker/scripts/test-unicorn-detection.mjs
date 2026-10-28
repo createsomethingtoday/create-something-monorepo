@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { findProhibitedMarketplaceCustomCode } from '../src/font-custom-code-policy.js';
+import { analyseSvgStyles, findProhibitedMarketplaceCustomCode } from '../src/font-custom-code-policy.js';
 
 const source = fs.readFileSync(new URL('../src/worker.js', import.meta.url), 'utf8');
 const start = source.indexOf('var IX2_REJECTION_MESSAGE');
@@ -15,6 +15,7 @@ const sandbox = {
   console,
   Set,
   URL,
+  analyseSvgStyles,
   findProhibitedMarketplaceCustomCode,
   __name: (target) => target
 };
@@ -407,6 +408,22 @@ const pageLevelSvgCssResult = sandbox.validateGsapUsage(
 
 assert.equal(svgAllowance(pageLevelSvgCssResult).length, 0, 'expected SVG allowance only inside <svg>');
 assert.equal(customCssFlags(pageLevelSvgCssResult).length, 1, 'expected page-level custom CSS to stay flagged');
+
+// An SVG <style> applies document-wide: a class shared with HTML is page styling (Codex P1).
+const sharedClassResult = sandbox.validateGsapUsage(
+  svgPage('<svg viewBox="0 0 1 1"><style>.page-overlay{opacity:0}</style><path class="page-overlay" d="M0"/></svg>') +
+    '<main class="page-overlay">Content</main>',
+  'https://shared-class.webflow.io/'
+);
+assert.equal(svgAllowance(sharedClassResult).length, 0, 'class used on HTML is not SVG-scoped');
+
+// SVG nesting comes from the parsed tree, not <svg> text in comments (Codex P2).
+const commentedSvgResult = sandbox.validateGsapUsage(
+  '<!doctype html><html><body><!-- <svg> --><style>.cls-9{fill:none}</style><!-- </svg> --></body></html>',
+  'https://commented-svg.webflow.io/'
+);
+assert.equal(svgAllowance(commentedSvgResult).length, 0, 'commented <svg> markers do not create SVG scope');
+assert.equal(customCssFlags(commentedSvgResult).length, 1);
 
 for (const css of [
   '@import url("https://example.com/x.css");',

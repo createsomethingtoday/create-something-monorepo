@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {
   HTML_EMBED_POLICY,
+  analyseSvgStyles,
   HTML_EMBED_SCRIPT_POLICY,
   disallowedEmbedTags,
   findHtmlEmbedScripts,
@@ -147,7 +148,7 @@ const endMarker = '__name(containsPotentiallyHarmfulCode, "containsPotentiallyHa
 const end = source.indexOf(endMarker) + endMarker.length;
 assert.notEqual(start, -1, 'validator slice start not found');
 assert.notEqual(end, endMarker.length - 1, 'validator slice end not found');
-const sandbox = { console, Set, URL, findProhibitedMarketplaceCustomCode, __name: (target) => target };
+const sandbox = { console, Set, URL, analyseSvgStyles, findProhibitedMarketplaceCustomCode, __name: (target) => target };
 vm.createContext(sandbox);
 vm.runInContext(source.slice(start, end), sandbox);
 
