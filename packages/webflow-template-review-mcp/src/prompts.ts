@@ -255,8 +255,10 @@ Featured batch from Exceptional templates. Full loop, all from the MCP:
 | \`template_review_cast_featured_vote\` | Up/down/comment vote per reviewer (upserts — no double counting); \`note\` is internal-only |
 | \`template_review_set_featured_flag\` | Batch finalization: checks ℹ️Is Featured? — arms the creator email for next month (\`confirm_creator_notification: true\` required) |
 
-Sequence for a reviewer: \`featured_candidates\` → open each \`websiteUrl\` to judge
-the live design → \`set_featured_pick\` with \`reviewer_pick: true\` and a drafted
+Sequence for a reviewer: \`featured_candidates\` (show each candidate's \`websiteUrl\`
+and \`listingUrl\` as links) → open each \`websiteUrl\` to judge the live design, or
+run \`template_review_capture_published_site_screenshots\` for a desktop/tablet/mobile
+gallery → \`set_featured_pick\` with \`reviewer_pick: true\` and a drafted
 reason in \`pick_reason_draft\` → the reviewer reads the exact draft text → resend
 with \`pick_reason\` + \`confirm_creator_safe: true\` → \`cast_featured_vote\` on other
 reviewers' picks. Batch finalization (\`set_featured_flag\`) is the coordinator's
