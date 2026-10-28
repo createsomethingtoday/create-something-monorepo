@@ -109,7 +109,7 @@ export function formatGuidelinesMarkdown(doc: GuidelinesDocument): string {
           lines.push(`#### ${first}`, '');
           break;
         case 'quote':
-          lines.push(...block.text.split('\n').map((line) => `> ${line}`), '');
+          lines.push(...`${block.text}${ruleTags(block)}`.split('\n').map((line) => `> ${line}`), '');
           break;
         case 'bullet':
         case 'numbered':

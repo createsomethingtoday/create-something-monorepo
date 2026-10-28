@@ -10,8 +10,10 @@ export const GUIDELINES_COLLECTION_ID = '6ae2688e4e22e3dab0eb1213';
 
 // Guidelines change about once a month. The cached copy is checked against the
 // CMS every CHECK_MS with one cheap request (newest lastPublished + live count)
-// and refetched only when that changes, so a published edit shows within
-// ~10 minutes. FRESH_MS is a safety net; ?refresh=1 (admin token) forces it.
+// and refetched only when that changes, so direct callers (the Template Review
+// MCP) see a published edit within ~10 minutes. The public page is cached longer
+// on purpose (browser 1 h, edge 24 h; owner decision 2026-10-28, edits are about
+// monthly). FRESH_MS is a safety net; ?refresh=1 (admin token) forces a refetch.
 const CHECK_MS = 10 * 60 * 1000;
 const FRESH_MS = 24 * 60 * 60 * 1000;
 const CACHE_KEY = 'https://webflow-template-search.internal/api/templates/guidelines/v1';

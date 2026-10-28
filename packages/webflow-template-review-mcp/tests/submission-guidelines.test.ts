@@ -68,7 +68,7 @@ test('formats guidelines as Markdown with stable rule ids, levels, and validator
   assert.match(md, /^# Template submission guidelines \(version v1\)/);
   assert.match(md, /## Required Pages\n\n- Page Naming \[required-pages-02\]\n  - Use Title Case for page names\.\n/);
   assert.match(md, /- Add noindex to the Licenses and Changelog pages\. \[required-pages-08; Required; Validator: utility-page-indexable\]/);
-  assert.match(md, /> Check main pages on PageSpeed\./);
+  assert.match(md, /> Check main pages on PageSpeed\. \[seo-03\]/);
   // A section's own Heading 2 is folded into the section header.
   assert.doesNotMatch(md, /### Required Pages/);
 });
