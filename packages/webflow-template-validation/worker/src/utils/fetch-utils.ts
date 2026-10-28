@@ -234,7 +234,9 @@ export function parseHTMLWorker(html: string): ParsedHTML {
 	const textareas = extractElements(html, /<textarea[^>]*>[\s\S]*?<\/textarea>/gi);
 	const selects = extractElements(html, /<select[^>]*>[\s\S]*?<\/select>/gi);
 	const tabIndexed = extractElements(html, /<[^>]+\btabindex=["'][^"']+["'][^>]*>/gi);
-	const robotsMetas = extractElements(html, /<meta[^>]+name=["']robots["'][^>]*>/gi);
+	// Commented-out, scripted, and <template> markup is inert; crawlers apply none of it.
+	const robotsMetas = extractElements(stripInertMarkup(html), /<meta\b[^>]*>/gi)
+		.filter(tag => extractAttributes(tag).name?.trim().toLowerCase() === 'robots');
 
 	// Create mock document object
 	const mockDocument = {
@@ -479,15 +481,26 @@ function createMockElement(htmlString: string): any {
 
 function extractAttributes(htmlString: string): Record<string, string> {
 	const attributes: Record<string, string> = {};
-	const attrRegex = /([A-Za-z_:][-A-Za-z0-9_:.]*)=["']([^"']*)["']/g;
+	// <meta> tags get full HTML attribute syntax (unquoted values, spaces around "=").
+	// Other tags keep quoted-only parsing: escaped markup inside embed JSON
+	// (class=\"embedly-embed\") would otherwise yield junk attribute values.
+	const attrRegex = /^<meta\b/i.test(htmlString)
+		? /([A-Za-z_:][-A-Za-z0-9_:.]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/g
+		: /([A-Za-z_:][-A-Za-z0-9_:.]*)=["']([^"']*)["']/g;
 	let match;
 
 	while ((match = attrRegex.exec(htmlString)) !== null) {
 		// HTML attribute names are case-insensitive; the DOM exposes them lowercased.
-		attributes[match[1].toLowerCase()] = match[2];
+		attributes[match[1].toLowerCase()] = match[2] ?? match[3] ?? match[4] ?? '';
 	}
 
 	return attributes;
+}
+
+function stripInertMarkup(html: string): string {
+	return html
+		.replace(/<!--[\s\S]*?-->/g, '')
+		.replace(/<(script|template)\b[\s\S]*?<\/\1\s*>/gi, '');
 }
 
 function escapeRegExp(value: string): string {
