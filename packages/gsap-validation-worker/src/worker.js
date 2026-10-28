@@ -1066,13 +1066,23 @@ function isKeyboardListenerRiskPattern(pattern) {
   return /key\(\?:down\|up\|press\)|keydown|keyup|keypress/.test(pattern.source);
 }
 __name(isKeyboardListenerRiskPattern, "isKeyboardListenerRiskPattern");
+var KEYBOARD_KEY_COMPARISON_PATTERN = /[\w$.]*\.(?:key|code)\s*(?:===?|!==?)\s*(['"])[^'"]*\1|(['"])[^'"]*\2\s*(?:===?|!==?)\s*[\w$.]*\.(?:key|code)\b|[\w$.]*\.(?:keyCode|which)\s*(?:===?|!==?)\s*\d+\b|\b\d+\s*(?:===?|!==?)\s*[\w$.]*\.(?:keyCode|which)\b/g;
+var KEYBOARD_KEY_READ_PATTERN = /\.\s*(?:key|code|keyCode|which)\b|\[\s*['"`](?:key|code|keyCode|which)['"`]\s*\]|\{[^{}]*\b(?:key|code|keyCode|which)\b[^{}]*\}\s*=(?!=)/;
+function readsKeyOutsideComparison(script) {
+  // Any key read that is not a literal comparison (assignment, concat, call
+  // argument, destructuring) could capture keystrokes.
+  return KEYBOARD_KEY_READ_PATTERN.test(script.replace(KEYBOARD_KEY_COMPARISON_PATTERN, " "));
+}
+__name(readsKeyOutsideComparison, "readsKeyOutsideComparison");
 function isKeyboardAccessibilityScript(script) {
   const listeners = [...script.matchAll(KEYBOARD_LISTENER_PATTERN)];
-  if (listeners.length === 0) {
+  if (listeners.length === 0 || readsKeyOutsideComparison(script)) {
     return false;
   }
-  return listeners.every((listener) => {
-    const handlerWindow = script.slice(listener.index, listener.index + KEYBOARD_HANDLER_WINDOW_CHARS);
+  return listeners.every((listener, index) => {
+    const nextListener = listeners[index + 1];
+    const windowEnd = Math.min(listener.index + KEYBOARD_HANDLER_WINDOW_CHARS, nextListener ? nextListener.index : script.length);
+    const handlerWindow = script.slice(listener.index, windowEnd);
     return KEYBOARD_NAMED_KEY_CHECK_PATTERN.test(handlerWindow) && !KEYBOARD_KEY_CAPTURE_PATTERN.test(handlerWindow);
   });
 }

