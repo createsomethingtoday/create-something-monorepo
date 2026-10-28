@@ -189,7 +189,12 @@ function inlineCodeAttributes(node) {
     .filter(
       (attr) =>
         /^on/i.test(attr.name) ||
-        (URL_ATTRIBUTES.has(attr.name.toLowerCase()) && /^\s*javascript:/i.test(attr.value.replace(/[\u0000-\u001f]/g, '')))
+        (URL_ATTRIBUTES.has(attr.name.toLowerCase()) &&
+          // SMIL `values` is a semicolon list; any entry can become the animated URL.
+          attr.value
+            .replace(/[\u0000-\u001f]/g, '')
+            .split(attr.name.toLowerCase() === 'values' ? ';' : /(?!)/)
+            .some((value) => /^\s*javascript:/i.test(value)))
     )
     .map((attr) => `${node.tagName}[${attr.prefix ? `${attr.prefix}:` : ''}${attr.name}]`);
 }

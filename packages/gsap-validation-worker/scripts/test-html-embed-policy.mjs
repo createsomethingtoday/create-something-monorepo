@@ -108,6 +108,7 @@ assert.deepEqual(sources(embed('deep w-embed', '<span><svg><path onclick="steal(
 assert.deepEqual(sources(embed('jsurl w-embed', '<svg><a href=" javascript:steal()"><text>x</text></a></svg>')), ['.jsurl: <a[href]>']);
 assert.deepEqual(sources(embed('xlink w-embed', '<svg><a xlink:href="JaVaScRiPt:steal()"><text>x</text></a></svg>')), ['.xlink: <a[xlink:href]>']);
 assert.deepEqual(sources(embed('animate w-embed', '<svg><a><animate attributeName="href" to="javascript:steal()"/><text>x</text></a></svg>')), ['.animate: <animate[to]>']);
+assert.deepEqual(sources(embed('values w-embed', '<svg><a><animate attributeName="href" values="https://example.com; javascript:steal()" dur="1s" fill="freeze"/><text>x</text></a></svg>')), ['.values: <animate[values]>']);
 assert.deepEqual(sources(embed('plain w-embed', '<svg><a href="https://example.com"><path d="M0"/></a></svg>')), [], 'ordinary SVG links stay allowed');
 
 // Attribute names are exact (Codex P2).
