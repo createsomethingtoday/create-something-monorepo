@@ -84,7 +84,7 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function fetchWebflowPageWithRetry(url: string, apiToken: string): Promise<Response> {
+export async function fetchWebflowPageWithRetry(url: string, apiToken: string): Promise<Response> {
   let lastResponse: Response | null = null;
   let lastError: unknown = null;
 
