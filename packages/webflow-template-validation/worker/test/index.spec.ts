@@ -662,6 +662,49 @@ describe('Designer Validator', () => {
 		expect(seoCategory!.passed).toBe(true);
 		expect(seoCategory!.issues.filter(i => i.severity === 'error')).toEqual([]);
 	});
+
+	describe('home SEO title format', () => {
+		const validateHomeTitle = (title: string) => validateDesignerData({
+			variables: { collections: [] },
+			components: [],
+			styles: [],
+			pages: [
+				{
+					id: 'p1', name: 'Home', slug: '', type: 'Page', isHomePage: true, publishPath: '/',
+					seo: { title, description: 'D'.repeat(155), openGraphImage: 'https://example.com/og.jpg' }
+				}
+			],
+			assets: []
+		} as any).then(result => result.categories.find(c => c.category === 'SEO Metadata')!);
+
+		it.each([
+			'Acme - Webflow HTML website template',
+			'Acme Studio - Webflow Ecommerce website template',
+			'Acme – webflow html website template '
+		])('accepts %j', async title => {
+			const seoCategory = await validateHomeTitle(title);
+			expect(seoCategory.issues.find(i => i.id === 'seo.home-title-format')).toBeUndefined();
+		});
+
+		it.each([
+			'Acme | Creative Agency Template',
+			'Acme - Webflow Website Template',
+			'Webflow HTML website template',
+			'- Webflow HTML website template'
+		])('blocks %j', async title => {
+			const seoCategory = await validateHomeTitle(title);
+			const issue = seoCategory.issues.find(i => i.id === 'seo.home-title-format');
+			expect(issue?.severity).toBe('error');
+			expect(issue?.details?.currentTitle).toBe(title);
+			expect(seoCategory.passed).toBe(false);
+		});
+
+		it('leaves an empty home title to seo.missing-title', async () => {
+			const seoCategory = await validateHomeTitle('');
+			expect(seoCategory.issues.find(i => i.id === 'seo.missing-title')).toBeDefined();
+			expect(seoCategory.issues.find(i => i.id === 'seo.home-title-format')).toBeUndefined();
+		});
+	});
 });
 
 describe('Content Validator', () => {
@@ -1109,6 +1152,53 @@ describe('Content Validator', () => {
 		expect(shortIssues).toHaveLength(1);
 		expect(shortIssues[0].location).toBe('https://example.com/page-130');
 		expect(shortIssues[0].details?.recommendedLength).toBe('150-160 characters');
+	});
+
+	it('warns when the Licenses or Changelog page has no robots noindex', () => {
+		const pageWithRobots = (path: string, robots: string | null) => ({
+			url: `https://example.com${path}`,
+			title: path,
+			hasLoremIpsum: false,
+			headingHierarchy: { h1Count: 1, hasSkippedLevels: false, structure: [] },
+			imageCount: 0,
+			imagesWithoutAlt: 0,
+			seo: {
+				title: 'A descriptive page title for testing',
+				titleLength: 36,
+				metaDescription: 'x'.repeat(155),
+				metaDescriptionLength: 155,
+				hasValidTitle: true,
+				hasValidDescription: true,
+				openGraph: { title: 'og', description: 'og', image: 'og.jpg', url: null },
+				twitterCard: { title: null, description: null, image: null },
+				canonical: null,
+				robots
+			}
+		});
+
+		const issues = generateContentIssues([
+			pageWithRobots('/', null),
+			pageWithRobots('/about', null),
+			pageWithRobots('/licenses', null),
+			pageWithRobots('/utility/changelog', 'index, follow'),
+			pageWithRobots('/license', 'NOINDEX, nofollow'),
+			pageWithRobots('/changelog', 'none')
+		] as any, {
+			lorem: false,
+			headings: false,
+			altText: false,
+			seo: true,
+			links: false,
+			contentQuality: false
+		});
+
+		const indexable = issues.filter(i => i.id.startsWith('utility-page-indexable'));
+		expect(indexable.map(i => i.location)).toEqual([
+			'https://example.com/licenses',
+			'https://example.com/utility/changelog'
+		]);
+		expect(indexable.every(i => i.severity === 'warning')).toBe(true);
+		expect(indexable[1].details?.currentRobots).toBe('index, follow');
 	});
 
 	it('can run only the lorem/placeholder check', () => {

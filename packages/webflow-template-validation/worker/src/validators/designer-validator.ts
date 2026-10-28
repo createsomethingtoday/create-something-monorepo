@@ -746,6 +746,10 @@ function validateRequiredPages(pages: DesignerData['pages']): CategoryResult {
 }
 
 // --- Page SEO Validation (Designer API data — covers CMS template pages) ---
+// "{Template Name} - Webflow HTML website template" or the Ecommerce variant.
+// Case and the dash character are not judged; the template name must be present.
+const HOME_TITLE_FORMAT = /^\S.*\s[-–—]\s+webflow (html|ecommerce) website template$/i;
+
 function validatePageSEO(pages: DesignerData['pages']): CategoryResult {
   const issues: ValidationIssue[] = [];
   const eligiblePages = pages.filter(
@@ -896,6 +900,20 @@ function validatePageSEO(pages: DesignerData['pages']): CategoryResult {
       severity: 'error',
       message: 'The home page is missing an Open Graph image.',
       howToFix: 'Set an Open Graph image in the home page settings so shared links render a preview card.'
+    });
+  }
+
+  // The submission guidelines fix the home SEO title to the template name plus a
+  // set suffix. An empty title is already reported as seo.missing-title.
+  const homeTitle = homePage?.seo?.title?.trim();
+  if (homeTitle && !HOME_TITLE_FORMAT.test(homeTitle)) {
+    issues.push({
+      id: 'seo.home-title-format',
+      category: 'SEO Metadata',
+      severity: 'error',
+      message: 'The home page SEO title does not follow the required template title format.',
+      details: { currentTitle: homeTitle },
+      howToFix: 'Set the home page SEO title to "{Template Name} - Webflow HTML website template". Ecommerce templates use "{Template Name} - Webflow Ecommerce website template".'
     });
   }
 

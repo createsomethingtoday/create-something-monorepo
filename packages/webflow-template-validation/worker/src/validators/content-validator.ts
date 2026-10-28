@@ -949,6 +949,25 @@ function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
 		const pageName = getPageNameFromUrl(page.url);
 		const seo = page.seo;
 
+		// The submission guidelines list noindex on Licenses and Changelog as
+		// optional, but reviewers request it, so this stays a warning.
+		if (isNoindexUtilityPage(page.url) && !/\b(noindex|none)\b/i.test(seo.robots || '')) {
+			seoIssues.push({
+				id: `utility-page-indexable-${generatePageId(page.url)}`,
+				category: 'Content & Accessibility',
+				severity: 'warning',
+				message: `"${pageName}" can be indexed by search engines`,
+				description: 'Licenses and Changelog pages should not show in search results for the template.',
+				howToFix: 'Add <meta name="robots" content="noindex"> to the page\'s custom code (Page settings → Custom code → Inside <head> tag)',
+				location: page.url,
+				details: {
+					page: pageName,
+					url: page.url,
+					currentRobots: seo.robots
+				}
+			});
+		}
+
 		// Missing title issues
 		if (!seo.title) {
 			seoIssues.push({
@@ -1075,6 +1094,15 @@ function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
 	});
 
 	return seoIssues;
+}
+
+function isNoindexUtilityPage(url: string): boolean {
+	try {
+		const lastSegment = new URL(url).pathname.split('/').filter(Boolean).pop()?.toLowerCase();
+		return lastSegment === 'licenses' || lastSegment === 'license' || lastSegment === 'changelog';
+	} catch {
+		return false;
+	}
 }
 
 function getPageNameFromUrl(url: string): string {
