@@ -8,10 +8,12 @@ import { fetchWebflowPageWithRetry } from './webflow.js';
 // SubmissionGuidelines code component and the Template Review MCP.
 export const GUIDELINES_COLLECTION_ID = '6ae2688e4e22e3dab0eb1213';
 
-const FRESH_MS = 5 * 60 * 1000;
+// Guidelines change about once a month. After publishing an edit, call
+// ?refresh=1 (admin token) to replace this copy at once; edge caches follow within a day.
+const FRESH_MS = 24 * 60 * 60 * 1000;
 const CACHE_KEY = 'https://webflow-template-search.internal/api/templates/guidelines/v1';
 const PUBLIC_CACHE_HEADERS = {
-  'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400',
+  'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
 };
 
 const KINDS: Record<string, GuidelineKind> = {
@@ -216,8 +218,8 @@ async function writeCached(cache: Cache | null, doc: GuidelinesDocument): Promis
     new Response(JSON.stringify(doc), {
       headers: {
         'Content-Type': 'application/json',
-        // Kept for a day so a Webflow outage serves the last good copy; freshness is FRESH_MS.
-        'Cache-Control': 'public, max-age=86400',
+        // Kept 30 days so a Webflow outage serves the last good copy; freshness is FRESH_MS.
+        'Cache-Control': 'public, max-age=2592000',
         'x-guidelines-fetched-at': String(Date.now()),
       },
     }),

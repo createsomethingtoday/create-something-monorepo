@@ -81,7 +81,7 @@ test('filters by section id or name and by validator check', () => {
   assert.equal(filterGuidelines(DOC, { validatorCheck: 'nope' }).sections.length, 0);
 });
 
-test('caches for five minutes, refetches on refresh, and serves stale on failure', async () => {
+test('caches for a day, refetches on refresh, and serves stale on failure', async () => {
   resetGuidelinesCache();
   let now = 1_000_000;
   const ok = respond(DOC);
@@ -94,7 +94,7 @@ test('caches for five minutes, refetches on refresh, and serves stale on failure
   assert.equal((await getSubmissionGuidelines({ fetchImpl: ok.fetchImpl, now: () => now, refresh: true })).cache, 'miss');
   assert.equal(ok.calls.length, 2);
 
-  now += 10 * 60_000;
+  now += 25 * 60 * 60_000;
   const down = respond({ error: 'guidelines_unavailable' }, 503);
   const stale = await getSubmissionGuidelines({ fetchImpl: down.fetchImpl, now: () => now });
   assert.equal(stale.cache, 'stale');

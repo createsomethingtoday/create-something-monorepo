@@ -1611,7 +1611,7 @@ export function registerTools(
 
   server.tool(
     'template_review_get_submission_guidelines',
-    'Read-only: the current Template submission guidelines from the Marketplace CMS, for agent context. Returns Markdown (default) or structured JSON; every rule carries a stable id (cite it in feedback), its requirement level when set, and the Webflow Way Validator check ids that enforce it. Filter by section (id such as "required-pages" or the tab name) or by validator_check. Served from a 5-minute cache; pass refresh=true after a guidelines edit.',
+    'Read-only: the current Template submission guidelines from the Marketplace CMS, for agent context. Returns Markdown (default) or structured JSON; every rule carries a stable id (cite it in feedback), its requirement level when set, and the Webflow Way Validator check ids that enforce it. Filter by section (id such as "required-pages" or the tab name) or by validator_check. Served from a 24-hour cache (guidelines change about monthly); pass refresh=true after a guidelines edit.',
     {
       section: z.string().min(1).optional(),
       validator_check: z.string().min(1).optional(),
