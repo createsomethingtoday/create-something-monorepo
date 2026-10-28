@@ -955,7 +955,7 @@ function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
 
 		// The submission guidelines list noindex on Licenses and Changelog as
 		// optional, but reviewers request it, so this stays a warning.
-		if (isNoindexUtilityPage(page.url) && !/\b(noindex|none)\b/i.test(seo.robots || '')) {
+		if (isNoindexUtilityPage(page.url) && !hasNoindexDirective(seo.robots)) {
 			seoIssues.push({
 				id: `utility-page-indexable-${generatePageId(page.url)}`,
 				category: 'Content & Accessibility',
@@ -1107,6 +1107,14 @@ function isNoindexUtilityPage(url: string): boolean {
 	} catch {
 		return false;
 	}
+}
+
+// `none` counts only as a whole directive; `max-image-preview:none` leaves the page indexable.
+function hasNoindexDirective(robots: string | null): boolean {
+	return (robots || '').split(',').some(directive => {
+		const value = directive.trim().toLowerCase();
+		return value === 'noindex' || value === 'none';
+	});
 }
 
 function getPageNameFromUrl(url: string): string {

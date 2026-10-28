@@ -1182,7 +1182,8 @@ describe('Content Validator', () => {
 			pageWithRobots('/licenses', null),
 			pageWithRobots('/utility/changelog', 'index, follow'),
 			pageWithRobots('/license', 'NOINDEX, nofollow'),
-			pageWithRobots('/changelog', 'none')
+			pageWithRobots('/changelog', 'none'),
+			pageWithRobots('/archive/license', 'max-image-preview:none')
 		] as any, {
 			lorem: false,
 			headings: false,
@@ -1195,7 +1196,8 @@ describe('Content Validator', () => {
 		const indexable = issues.filter(i => i.id.startsWith('utility-page-indexable'));
 		expect(indexable.map(i => i.location)).toEqual([
 			'https://example.com/licenses',
-			'https://example.com/utility/changelog'
+			'https://example.com/utility/changelog',
+			'https://example.com/archive/license'
 		]);
 		expect(indexable.every(i => i.severity === 'warning')).toBe(true);
 		expect(indexable[1].details?.currentRobots).toBe('index, follow');
