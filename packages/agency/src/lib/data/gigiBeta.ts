@@ -1,10 +1,10 @@
 // Immutable release identity; never replace bytes at this versioned path.
 export const gigiBeta = {
-  version: '0.2.11',
-  filename: 'GiGi-0.2.11-arm64-private-beta.dmg',
-  bytes: 122440582,
-  sha256: 'e62e8f41b1279b3ce11c6815c3d020dee802ecea2edd1962d3a2c5c420ca88e7',
-  url: 'https://media.createsomething.io/releases/gigi/0.2.11/GiGi-0.2.11-arm64-private-beta.dmg'
+  version: '0.2.13',
+  filename: 'GiGi-0.2.13-arm64-private-beta.dmg',
+  bytes: 122408608,
+  sha256: '31028b2e9663d94db393b5911fa67bdd8da8049eff870642aa97d65b9d8cb08e',
+  url: 'https://media.createsomething.io/releases/gigi/0.2.13/GiGi-0.2.13-arm64-private-beta.dmg'
 } as const;
 
 export const gigiWalkthroughs = [
