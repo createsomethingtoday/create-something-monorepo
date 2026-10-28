@@ -1621,6 +1621,7 @@ test('listFeaturedCandidates filters to the remaining-eligible pool and summariz
               [FEATURED_ASSET_FIELDS.votingStateLink]: ['rec_state_ald'],
               [CONFIRMED_ASSET_FIELDS.marketplaceStatus]: '3️⃣Published🚀',
               [FEATURED_ASSET_FIELDS.creatorWfUserId]: ['5afb33b1a028bed3150386aa'],
+              [FEATURED_ASSET_FIELDS.listingUrlUtm]: 'https://webflow.com/templates/html/alderas-website-template?utm_source=youtube&utm_medium=video-description',
             },
           },
           {
@@ -1677,6 +1678,11 @@ test('listFeaturedCandidates filters to the remaining-eligible pool and summariz
   assert.equal(result.candidates[1]?.votingStateId, 'rec_state_ald');
   assert.deepEqual(result.candidates[1]?.voteTallies, { up: 3, down: 1, net: 2, inQualifiedPool: true });
   assert.equal(result.candidates[0]?.voteTallies, undefined);
+
+  // Reviewers get a clean listing link (campaign UTM stripped) next to the live site.
+  assert.equal(result.candidates[1]?.listingUrl, 'https://webflow.com/templates/html/alderas-website-template');
+  assert.equal(result.candidates[1]?.websiteUrl, 'https://alderas.webflow.io');
+  assert.equal(result.candidates[0]?.listingUrl, undefined);
 
   // The notifier skips creators without a WF User ID — flag it before the pick.
   assert.equal(result.candidates[1]?.hasCreatorWfUserId, true);
