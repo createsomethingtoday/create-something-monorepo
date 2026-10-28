@@ -94,6 +94,8 @@ export const FEATURED_ASSET_FIELDS = {
   votingStateLink: '🏗️Voting State',
   /** Lookup from 🎨Creator — the notifier's Knock recipient id; empty means the creator is skipped. */
   creatorWfUserId: '🎨🔑Creator WF User ID',
+  /** Formula: Marketplace listing URL with a campaign UTM appended — strip the query before showing reviewers. */
+  listingUrlUtm: '🔗Listing URL + UTM',
 } as const;
 
 /** Field IDs matching FEATURED_ASSET_FIELDS, kept so display-name drift is detectable. Writes use these IDs. */
@@ -111,6 +113,7 @@ export const FEATURED_ASSET_FIELD_IDS = {
   creatorTemplatesInUpcomingBatch: 'fld4ZEgSBDzuLMvZf',
   votingStateLink: 'flderXfksiA19t4l4',
   creatorWfUserId: 'fld2jvWS6WF5rvVXr',
+  listingUrlUtm: 'fldfodjuCUF7xlfke',
 } as const;
 
 /** 🏗️Asset Voting State — per-asset vote tallies for featured curation. */

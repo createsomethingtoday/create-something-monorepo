@@ -247,6 +247,8 @@ export interface TemplateReviewFeaturedCandidate {
   assetId: string;
   templateName: string;
   websiteUrl?: string;
+  /** Public Marketplace listing page, campaign UTM removed so reviewer visits are not attributed to it. */
+  listingUrl?: string;
   submittedDate?: string;
   monthsSinceSubmission: number | null;
   qualityScore?: string;
@@ -793,6 +795,18 @@ function monthsSinceSubmission(submittedIso: string | undefined, now: Date): num
   return Math.max(0, months);
 }
 
+function withoutQuery(value?: string): string | undefined {
+  if (!value) return undefined;
+  try {
+    const url = new URL(value);
+    url.search = '';
+    url.hash = '';
+    return url.toString();
+  } catch {
+    return undefined;
+  }
+}
+
 function mapFeaturedCandidate(record: AirtableRecord, now: Date): TemplateReviewFeaturedCandidate {
   const fields = record.fields;
   const submittedDate = firstString(fields[CONFIRMED_ASSET_FIELDS.submittedDate]);
@@ -809,6 +823,7 @@ function mapFeaturedCandidate(record: AirtableRecord, now: Date): TemplateReview
     assetId: record.id,
     templateName: firstString(fields[CONFIRMED_ASSET_FIELDS.name]) ?? '',
     websiteUrl: firstString(fields[CONFIRMED_ASSET_FIELDS.websiteUrl]),
+    listingUrl: withoutQuery(firstString(fields[FEATURED_ASSET_FIELDS.listingUrlUtm])),
     submittedDate,
     monthsSinceSubmission: monthsSinceSubmission(submittedDate, now),
     qualityScore: firstString(fields[CONFIRMED_ASSET_FIELDS.qualityScore]),
