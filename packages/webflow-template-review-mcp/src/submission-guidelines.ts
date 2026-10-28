@@ -4,7 +4,8 @@
 // module adds a short in-isolate cache so repeated review turns do not refetch.
 
 export const DEFAULT_GUIDELINES_URL = 'https://webflow-template-search.webflow-inc.workers.dev/api/templates/guidelines';
-// Guidelines change about once a month; refresh=true bypasses this copy after an edit.
+// Guidelines change about once a month; refresh=true skips this copy. The Worker
+// itself checks the CMS every ~10 minutes, so a refresh sees edits published since.
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const FETCH_TIMEOUT_MS = 15_000;
 

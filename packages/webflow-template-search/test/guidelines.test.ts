@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { GUIDELINES_COLLECTION_ID, buildGuidelinesDocument } from '../src/guidelines.js';
+import { GUIDELINES_COLLECTION_ID, buildGuidelinesDocument, handleGuidelines } from '../src/guidelines.js';
 import { callWorker, createTestEnv } from './support/worker.js';
 
 const SCHEMA = {
@@ -38,19 +38,34 @@ const ITEMS = [
   item({ slug: 'draft-rule', section: 'sec-start', 'section-order': 1, order: 30, kind: 'k-p', content: '<p>Draft</p>' }, { isDraft: true }),
 ];
 
-function mockWebflow(items = ITEMS, status = 200) {
+function mockWebflow(items = ITEMS, status = 200, lastPublished = '2026-10-28T21:53:30.440Z') {
   const calls: string[] = [];
+  const state = { status, lastPublished };
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input);
     calls.push(url);
-    if (status !== 200) return new Response('{"message":"nope"}', { status });
+    if (state.status !== 200) return new Response('{"message":"nope"}', { status: state.status });
     if (url.endsWith(`/collections/${GUIDELINES_COLLECTION_ID}`)) return Response.json(SCHEMA);
     if (url.includes(`/collections/${GUIDELINES_COLLECTION_ID}/items`)) {
-      return Response.json({ items, pagination: { limit: 100, offset: 0, total: items.length } });
+      const live = url.includes('/items/live') ? items.filter((i) => !i.isDraft) : items;
+      const withDates = live.map((i) => ({ ...i, lastPublished: state.lastPublished }));
+      const page = url.includes('limit=1&') ? withDates.slice(0, 1) : withDates;
+      return Response.json({ items: page, pagination: { limit: 100, offset: 0, total: live.length } });
     }
     return new Response('unexpected', { status: 500 });
   }));
-  return calls;
+  return { calls, state };
+}
+
+class MemoryCache {
+  entries = new Map<string, { body: string; headers: [string, string][] }>();
+  async match(key: RequestInfo | URL) {
+    const hit = this.entries.get(String(key));
+    return hit ? new Response(hit.body, { headers: hit.headers }) : undefined;
+  }
+  async put(key: RequestInfo | URL, response: Response) {
+    this.entries.set(String(key), { body: await response.text(), headers: [...response.headers.entries()] });
+  }
 }
 
 afterEach(() => {
@@ -97,7 +112,7 @@ describe('GET /api/templates/guidelines', () => {
   it('serves live guidelines publicly with cache headers and skips drafts', async () => {
     const { env, close } = createTestEnv();
     env.WEBFLOW_API_TOKEN = 'wf-token';
-    const calls = mockWebflow();
+    const { calls } = mockWebflow();
     try {
       const response = await callWorker(new Request('https://worker.test/api/templates/guidelines'), env);
       expect(response.status).toBe(200);
@@ -128,7 +143,7 @@ describe('GET /api/templates/guidelines', () => {
   it('requires the admin token for the staged preview and never caches it', async () => {
     const { env, close } = createTestEnv();
     env.WEBFLOW_API_TOKEN = 'wf-token';
-    const calls = mockWebflow();
+    const { calls } = mockWebflow();
     try {
       const denied = await callWorker(new Request('https://worker.test/api/templates/guidelines?source=staged'), env);
       expect(denied.status).toBe(401);
@@ -139,7 +154,10 @@ describe('GET /api/templates/guidelines', () => {
       );
       expect(allowed.status).toBe(200);
       expect(allowed.headers.get('Cache-Control')).toBe('no-store');
-      expect(((await allowed.json()) as any).source).toBe('staged');
+      const staged = (await allowed.json()) as any;
+      expect(staged.source).toBe('staged');
+      const draft = staged.sections[0].blocks.find((b: any) => b.id === 'draft-rule');
+      expect(draft?.draft).toBe(true);
       expect(calls.some((u) => /\/items\?/.test(u))).toBe(true);
     } finally {
       close();
@@ -154,6 +172,46 @@ describe('GET /api/templates/guidelines', () => {
       const response = await callWorker(new Request('https://worker.test/api/templates/guidelines'), env);
       expect(response.status).toBe(503);
       expect(((await response.json()) as any).error).toBe('guidelines_unavailable');
+    } finally {
+      close();
+    }
+  });
+});
+
+describe('guidelines cache', () => {
+  it('serves a hit, revalidates with one cheap call, refetches after a publish, and serves stale on errors', async () => {
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'wf-token';
+    const { calls, state } = mockWebflow();
+    const cache = new MemoryCache() as unknown as Cache;
+    const pending: Promise<unknown>[] = [];
+    const ctx = { waitUntil: (p: Promise<unknown>) => pending.push(p), passThroughOnException() {}, props: {} } as unknown as ExecutionContext;
+    let now = 1_000_000_000;
+    const get = async () => {
+      const response = await handleGuidelines(new Request('https://worker.test/api/templates/guidelines'), env, ctx, () => null, cache, () => now);
+      await Promise.all(pending.splice(0));
+      return response.headers.get('x-guidelines-cache');
+    };
+    try {
+      expect(await get()).toBe('MISS');
+      const afterMiss = calls.length;
+
+      now += 5 * 60_000;
+      expect(await get()).toBe('HIT');
+      expect(calls.length).toBe(afterMiss);
+
+      now += 6 * 60_000;
+      expect(await get()).toBe('REVALIDATED');
+      expect(calls.length).toBe(afterMiss + 1);
+      expect(calls[calls.length - 1]).toContain('sortBy=lastPublished');
+
+      state.lastPublished = '2026-11-28T10:00:00.000Z';
+      now += 11 * 60_000;
+      expect(await get()).toBe('MISS');
+
+      state.status = 404;
+      now += 11 * 60_000;
+      expect(await get()).toBe('STALE');
     } finally {
       close();
     }

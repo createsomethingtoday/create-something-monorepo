@@ -8,8 +8,11 @@ import { fetchWebflowPageWithRetry } from './webflow.js';
 // SubmissionGuidelines code component and the Template Review MCP.
 export const GUIDELINES_COLLECTION_ID = '6ae2688e4e22e3dab0eb1213';
 
-// Guidelines change about once a month. After publishing an edit, call
-// ?refresh=1 (admin token) to replace this copy at once; edge caches follow within a day.
+// Guidelines change about once a month. The cached copy is checked against the
+// CMS every CHECK_MS with one cheap request (newest lastPublished + live count)
+// and refetched only when that changes, so a published edit shows within
+// ~10 minutes. FRESH_MS is a safety net; ?refresh=1 (admin token) forces it.
+const CHECK_MS = 10 * 60 * 1000;
 const FRESH_MS = 24 * 60 * 60 * 1000;
 const CACHE_KEY = 'https://webflow-template-search.internal/api/templates/guidelines/v1';
 const PUBLIC_CACHE_HEADERS = {
@@ -36,6 +39,8 @@ export interface GuidelineBlock {
   text: string;
   requirementLevel: string | null;
   validatorChecks: string[];
+  /** Staged preview only: the item is a draft and will not publish. */
+  draft?: true;
 }
 
 export interface GuidelineSection {
@@ -62,6 +67,7 @@ interface CmsItem {
   id: string;
   isArchived?: boolean;
   isDraft?: boolean;
+  lastPublished?: string | null;
   fieldData: Record<string, unknown>;
 }
 
@@ -127,7 +133,8 @@ export function buildGuidelinesDocument(schema: CollectionSchema, items: CmsItem
   const ordered: Array<{ section: GuidelineSection; order: number; block: GuidelineBlock }> = [];
 
   for (const item of items) {
-    if (item.isArchived || item.isDraft) continue;
+    // The staged preview shows drafts (flagged) because those are the edits under review.
+    if (item.isArchived || (source === 'live' && item.isDraft)) continue;
     const f = item.fieldData;
     const name = sectionNames.get(String(f.section ?? ''));
     const kind = KINDS[kindNames.get(String(f.kind ?? '')) ?? ''];
@@ -153,6 +160,7 @@ export function buildGuidelinesDocument(schema: CollectionSchema, items: CmsItem
           .split(',')
           .map((check) => check.trim())
           .filter(Boolean),
+        ...(source === 'staged' && item.isDraft ? { draft: true as const } : {}),
       },
     });
   }
@@ -178,22 +186,40 @@ async function fetchJson<T>(url: string, token: string): Promise<T> {
   return (await response.json()) as T;
 }
 
-export async function fetchGuidelinesDocument(env: Env, source: GuidelinesSource): Promise<GuidelinesDocument> {
+function collectionBase(env: Env): string {
+  return `https://api.webflow.com/v2/collections/${env.WEBFLOW_GUIDELINES_COLLECTION_ID || GUIDELINES_COLLECTION_ID}`;
+}
+
+/** Changes whenever an item is published, unpublished, or deleted: live count + newest lastPublished. */
+async function fetchLiveMarker(env: Env): Promise<string> {
+  const page = await fetchJson<{ items: CmsItem[]; pagination: { total: number } }>(
+    `${collectionBase(env)}/items/live?limit=1&sortBy=lastPublished&sortOrder=desc`,
+    env.WEBFLOW_API_TOKEN as string,
+  );
+  return `${page.pagination.total}:${page.items[0]?.lastPublished ?? ''}`;
+}
+
+export async function fetchGuidelinesDocument(
+  env: Env,
+  source: GuidelinesSource,
+): Promise<{ doc: GuidelinesDocument; marker: string }> {
   if (!env.WEBFLOW_API_TOKEN) throw new Error('WEBFLOW_API_TOKEN is not configured');
-  const collectionId = env.WEBFLOW_GUIDELINES_COLLECTION_ID || GUIDELINES_COLLECTION_ID;
-  const base = `https://api.webflow.com/v2/collections/${collectionId}`;
+  const base = collectionBase(env);
   const schema = await fetchJson<CollectionSchema>(base, env.WEBFLOW_API_TOKEN);
 
   const items: CmsItem[] = [];
+  let total = 0;
   for (let offset = 0; ; offset += 100) {
     const page = await fetchJson<{ items: CmsItem[]; pagination: { total: number } }>(
       `${base}/items${source === 'live' ? '/live' : ''}?limit=100&offset=${offset}`,
       env.WEBFLOW_API_TOKEN,
     );
     items.push(...page.items);
-    if (offset + 100 >= page.pagination.total) break;
+    total = page.pagination.total;
+    if (offset + 100 >= total) break;
   }
-  return buildGuidelinesDocument(schema, items, source);
+  const newest = items.reduce((max, item) => ((item.lastPublished ?? '') > max ? (item.lastPublished as string) : max), '');
+  return { doc: buildGuidelinesDocument(schema, items, source), marker: `${total}:${newest}` };
 }
 
 function filterSection(doc: GuidelinesDocument, sectionId: string | null): GuidelinesDocument {
@@ -206,21 +232,35 @@ function defaultCache(): Cache | null {
   return typeof caches === 'undefined' ? null : caches.default;
 }
 
-async function readCached(cache: Cache | null): Promise<{ doc: GuidelinesDocument; fetchedAt: number } | null> {
-  const hit = await cache?.match(CACHE_KEY);
-  if (!hit) return null;
-  return { doc: (await hit.json()) as GuidelinesDocument, fetchedAt: Number(hit.headers.get('x-guidelines-fetched-at') ?? 0) };
+interface CachedGuidelines {
+  doc: GuidelinesDocument;
+  marker: string;
+  fetchedAt: number;
+  checkedAt: number;
 }
 
-async function writeCached(cache: Cache | null, doc: GuidelinesDocument): Promise<void> {
+async function readCached(cache: Cache | null): Promise<CachedGuidelines | null> {
+  const hit = await cache?.match(CACHE_KEY);
+  if (!hit) return null;
+  return {
+    doc: (await hit.json()) as GuidelinesDocument,
+    marker: hit.headers.get('x-guidelines-marker') ?? '',
+    fetchedAt: Number(hit.headers.get('x-guidelines-fetched-at') ?? 0),
+    checkedAt: Number(hit.headers.get('x-guidelines-checked-at') ?? 0),
+  };
+}
+
+async function writeCached(cache: Cache | null, entry: CachedGuidelines): Promise<void> {
   await cache?.put(
     CACHE_KEY,
-    new Response(JSON.stringify(doc), {
+    new Response(JSON.stringify(entry.doc), {
       headers: {
         'Content-Type': 'application/json',
-        // Kept 30 days so a Webflow outage serves the last good copy; freshness is FRESH_MS.
+        // Kept 30 days so a Webflow outage serves the last good copy; freshness is CHECK_MS/FRESH_MS.
         'Cache-Control': 'public, max-age=2592000',
-        'x-guidelines-fetched-at': String(Date.now()),
+        'x-guidelines-marker': entry.marker,
+        'x-guidelines-fetched-at': String(entry.fetchedAt),
+        'x-guidelines-checked-at': String(entry.checkedAt),
       },
     }),
   );
@@ -231,6 +271,8 @@ export async function handleGuidelines(
   env: Env,
   ctx: ExecutionContext,
   isAdmin: () => Response | null,
+  cache: Cache | null = defaultCache(),
+  now: () => number = Date.now,
 ): Promise<Response> {
   const url = new URL(request.url);
   const source: GuidelinesSource = url.searchParams.get('source') === 'staged' ? 'staged' : 'live';
@@ -244,7 +286,7 @@ export async function handleGuidelines(
 
   if (source === 'staged') {
     try {
-      const doc = await fetchGuidelinesDocument(env, 'staged');
+      const { doc } = await fetchGuidelinesDocument(env, 'staged');
       return jsonResponse(request, env, filterSection(doc, sectionId), 200, { 'Cache-Control': 'no-store' });
     } catch (error) {
       console.error(JSON.stringify({ event: 'guidelines_fetch_failed', source, error: String(error) }));
@@ -252,21 +294,25 @@ export async function handleGuidelines(
     }
   }
 
-  const cache = defaultCache();
-  const cached = refresh ? null : await readCached(cache);
-  if (cached && Date.now() - cached.fetchedAt < FRESH_MS) {
-    return jsonResponse(request, env, filterSection(cached.doc, sectionId), 200, { ...PUBLIC_CACHE_HEADERS, 'x-guidelines-cache': 'HIT' });
-  }
+  const respond = (doc: GuidelinesDocument, status: string) =>
+    jsonResponse(request, env, filterSection(doc, sectionId), 200, { ...PUBLIC_CACHE_HEADERS, 'x-guidelines-cache': status });
 
+  const cached = refresh ? null : await readCached(cache);
+  const at = now();
   try {
-    const doc = await fetchGuidelinesDocument(env, 'live');
-    ctx.waitUntil(writeCached(cache, doc));
-    return jsonResponse(request, env, filterSection(doc, sectionId), 200, { ...PUBLIC_CACHE_HEADERS, 'x-guidelines-cache': 'MISS' });
+    if (cached && at - cached.fetchedAt < FRESH_MS) {
+      if (at - cached.checkedAt < CHECK_MS) return respond(cached.doc, 'HIT');
+      if ((await fetchLiveMarker(env)) === cached.marker) {
+        ctx.waitUntil(writeCached(cache, { ...cached, checkedAt: at }));
+        return respond(cached.doc, 'REVALIDATED');
+      }
+    }
+    const { doc, marker } = await fetchGuidelinesDocument(env, 'live');
+    ctx.waitUntil(writeCached(cache, { doc, marker, fetchedAt: at, checkedAt: at }));
+    return respond(doc, 'MISS');
   } catch (error) {
     console.error(JSON.stringify({ event: 'guidelines_fetch_failed', source, error: String(error) }));
-    if (cached) {
-      return jsonResponse(request, env, filterSection(cached.doc, sectionId), 200, { ...PUBLIC_CACHE_HEADERS, 'x-guidelines-cache': 'STALE' });
-    }
+    if (cached) return respond(cached.doc, 'STALE');
     return jsonResponse(request, env, { error: 'guidelines_unavailable' }, 503, { 'Cache-Control': 'no-store' });
   }
 }
