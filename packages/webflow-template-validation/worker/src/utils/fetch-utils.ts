@@ -234,6 +234,7 @@ export function parseHTMLWorker(html: string): ParsedHTML {
 	const textareas = extractElements(html, /<textarea[^>]*>[\s\S]*?<\/textarea>/gi);
 	const selects = extractElements(html, /<select[^>]*>[\s\S]*?<\/select>/gi);
 	const tabIndexed = extractElements(html, /<[^>]+\btabindex=["'][^"']+["'][^>]*>/gi);
+	const robotsMetas = extractElements(html, /<meta[^>]+name=["']robots["'][^>]*>/gi);
 
 	// Create mock document object
 	const mockDocument = {
@@ -250,6 +251,7 @@ export function parseHTMLWorker(html: string): ParsedHTML {
 					case 'textarea': return textareas.map(createMockElement);
 					case 'select': return selects.map(createMockElement);
 					case '[tabindex]': return tabIndexed.map(createMockElement);
+					case 'meta[name="robots"]': return robotsMetas.map(createMockElement);
 					default: return [];
 				}
 			},
@@ -481,7 +483,8 @@ function extractAttributes(htmlString: string): Record<string, string> {
 	let match;
 
 	while ((match = attrRegex.exec(htmlString)) !== null) {
-		attributes[match[1]] = match[2];
+		// HTML attribute names are case-insensitive; the DOM exposes them lowercased.
+		attributes[match[1].toLowerCase()] = match[2];
 	}
 
 	return attributes;
