@@ -1059,31 +1059,103 @@ __name(isCommonStylingCSS, "isCommonStylingCSS");
 // the handler window has to compare against a named key and must not capture or
 // send key values. Anything else stays flagged.
 var KEYBOARD_LISTENER_PATTERN = /addEventListener\s*\(\s*['"]key(?:down|up|press)['"]/gi;
-var KEYBOARD_HANDLER_WINDOW_CHARS = 320;
-var KEYBOARD_NAMED_KEY_CHECK_PATTERN = /(?:\.key|\.code)\s*(?:===?|!==?)\s*['"](?:Escape|Esc|Enter|Tab|Space|Spacebar| |Arrow(?:Up|Down|Left|Right)|Home|End|Page(?:Up|Down))['"]|(?:keyCode|which)\s*(?:===?|!==?)\s*(?:9|13|27|32|3[3-9]|40)\b/;
-var KEYBOARD_KEY_CAPTURE_PATTERN = /\+=\s*[\w$.]*\.(?:key|code|keyCode|which)\b|\.push\s*\(\s*[\w$.]*\.(?:key|code|keyCode|which)\b|fromCharCode|fetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|new\s+Image|document\.cookie|localStorage|sessionStorage|\.src\s*=/i;
+var KEYBOARD_NAMED_KEYS = "Escape|Esc|Enter|Tab|Space|Spacebar| |Arrow(?:Up|Down|Left|Right)|Home|End|Page(?:Up|Down)";
+var KEYBOARD_NAMED_KEY_CODES = "9|13|27|32|3[3-9]|40";
+var KEYBOARD_EXFILTRATION_PATTERN = /fromCharCode|fetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|new\s+Image|document\.cookie|localStorage|sessionStorage|\.src\s*=|eval\s*\(|Function\s*\(|\.\s*(?:value|innerText|textContent|innerHTML)\b/i;
+var KEYBOARD_GLOBAL_EVENT_PATTERN = /\b(?:window|self|globalThis)\s*\.\s*event\b/;
+var KEYBOARD_SCRIPT_KEY_READ_PATTERN = /\.\s*(?:key|keyCode|which)\b|\[\s*['"`](?:key|code|keyCode|which)['"`]\s*\]|\{[^{}]*\b(?:key|code|keyCode|which)\b[^{}]*\}\s*=(?!=)/;
+var KEYBOARD_LITERAL_COMPARISON_PATTERN = /[\w$.]*\.(?:key|code)\s*(?:===?|!==?)\s*(['"])[^'"]*\1|(['"])[^'"]*\2\s*(?:===?|!==?)\s*[\w$.]*\.(?:key|code)\b|[\w$.]*\.(?:keyCode|which)\s*(?:===?|!==?)\s*\d+\b|\b\d+\s*(?:===?|!==?)\s*[\w$.]*\.(?:keyCode|which)\b/g;
+var KEYBOARD_EVENT_MEMBERS = /* @__PURE__ */ new Set([
+  "key",
+  "code",
+  "keyCode",
+  "which",
+  "preventDefault",
+  "stopPropagation",
+  "stopImmediatePropagation",
+  "shiftKey",
+  "ctrlKey",
+  "altKey",
+  "metaKey",
+  "repeat",
+  "isComposing",
+  "target",
+  "currentTarget",
+  "defaultPrevented"
+]);
+var KEYBOARD_INLINE_CALLBACK_HEAD = /^\s*,\s*(?:function\s*[\w$]*\s*\(\s*([A-Za-z_$][\w$]*)\s*\)\s*(?=\{)|(?:\(\s*([A-Za-z_$][\w$]*)\s*\)|([A-Za-z_$][\w$]*))\s*=>\s*)/;
+var KEYBOARD_LISTENER_CALL_END = /^\s*(?:,\s*(?:true|false|\{[^{}()]*\}))?\s*\)/;
 function isKeyboardListenerRiskPattern(pattern) {
   return /key\(\?:down\|up\|press\)|keydown|keyup|keypress/.test(pattern.source);
 }
 __name(isKeyboardListenerRiskPattern, "isKeyboardListenerRiskPattern");
-var KEYBOARD_KEY_COMPARISON_PATTERN = /[\w$.]*\.(?:key|code)\s*(?:===?|!==?)\s*(['"])[^'"]*\1|(['"])[^'"]*\2\s*(?:===?|!==?)\s*[\w$.]*\.(?:key|code)\b|[\w$.]*\.(?:keyCode|which)\s*(?:===?|!==?)\s*\d+\b|\b\d+\s*(?:===?|!==?)\s*[\w$.]*\.(?:keyCode|which)\b/g;
-var KEYBOARD_KEY_READ_PATTERN = /\.\s*(?:key|code|keyCode|which)\b|\[\s*['"`](?:key|code|keyCode|which)['"`]\s*\]|\{[^{}]*\b(?:key|code|keyCode|which)\b[^{}]*\}\s*=(?!=)/;
-function readsKeyOutsideComparison(script) {
-  // Any key read that is not a literal comparison (assignment, concat, call
-  // argument, destructuring) could capture keystrokes.
-  return KEYBOARD_KEY_READ_PATTERN.test(script.replace(KEYBOARD_KEY_COMPARISON_PATTERN, " "));
+function scanCallbackEnd(source, start) {
+  // Returns the index just past the callback: the matching "}" of a block
+  // body, or the first top-level "," or ")" of an expression body.
+  const isBlock = source[start] === "{";
+  let depth = 0;
+  for (let i = start; i < source.length; i++) {
+    const ch = source[i];
+    if (ch === "'" || ch === '"' || ch === "`") {
+      for (i++; i < source.length && source[i] !== ch; i++) {
+        if (source[i] === "\\") i++;
+      }
+      continue;
+    }
+    if (ch === "/" && source[i + 1] === "/") {
+      i = source.indexOf("\n", i);
+      if (i === -1) return -1;
+      continue;
+    }
+    if (ch === "/" && source[i + 1] === "*") {
+      i = source.indexOf("*/", i + 2);
+      if (i === -1) return -1;
+      i++;
+      continue;
+    }
+    if (ch === "{" || ch === "(" || ch === "[") depth++;
+    else if (ch === "}" || ch === ")" || ch === "]") {
+      depth--;
+      if (isBlock && depth === 0) return i + 1;
+      if (!isBlock && depth < 0) return i;
+    } else if (!isBlock && ch === "," && depth === 0) return i;
+  }
+  return -1;
 }
-__name(readsKeyOutsideComparison, "readsKeyOutsideComparison");
+__name(scanCallbackEnd, "scanCallbackEnd");
+function isAccessibleKeyboardCallback(body, param) {
+  if (KEYBOARD_EXFILTRATION_PATTERN.test(body)) return false;
+  const name = param.replace(/\$/g, "\\$");
+  const namedKeyCheck = new RegExp(`(?<![\\w$.])${name}\\s*\\.\\s*(?:key|code)\\s*(?:===?|!==?)\\s*(['"])(?:${KEYBOARD_NAMED_KEYS})\\1|(?<![\\w$.])${name}\\s*\\.\\s*(?:keyCode|which)\\s*(?:===?|!==?)\\s*(?:${KEYBOARD_NAMED_KEY_CODES})\\b`);
+  if (!namedKeyCheck.test(body)) return false;
+  // The event may only be used for literal key comparisons and plain event
+  // members; passing it on, aliasing it, or reading keys any other way
+  // could capture keystrokes.
+  const remaining = body.replace(KEYBOARD_LITERAL_COMPARISON_PATTERN, " ");
+  if (/\.\s*(?:key|code|keyCode|which)\b|\[\s*['"`](?:key|code|keyCode|which)['"`]\s*\]/.test(remaining)) return false;
+  const uses = [...remaining.matchAll(new RegExp(`(?<![\\w$.])${name}\\b(\\s*\\.\\s*([A-Za-z_$][\\w$]*))?`, "g"))];
+  return uses.every((use) => use[2] && KEYBOARD_EVENT_MEMBERS.has(use[2]));
+}
+__name(isAccessibleKeyboardCallback, "isAccessibleKeyboardCallback");
 function isKeyboardAccessibilityScript(script) {
+  // Only inline callbacks are exempt: a named handler (addEventListener("keydown", save))
+  // is not inspected, so it keeps the keyboard-listener risk.
   const listeners = [...script.matchAll(KEYBOARD_LISTENER_PATTERN)];
-  if (listeners.length === 0 || readsKeyOutsideComparison(script)) {
+  if (listeners.length === 0 || KEYBOARD_GLOBAL_EVENT_PATTERN.test(script)) {
     return false;
   }
-  return listeners.every((listener, index) => {
-    const nextListener = listeners[index + 1];
-    const windowEnd = Math.min(listener.index + KEYBOARD_HANDLER_WINDOW_CHARS, nextListener ? nextListener.index : script.length);
-    const handlerWindow = script.slice(listener.index, windowEnd);
-    return KEYBOARD_NAMED_KEY_CHECK_PATTERN.test(handlerWindow) && !KEYBOARD_KEY_CAPTURE_PATTERN.test(handlerWindow);
+  if (KEYBOARD_SCRIPT_KEY_READ_PATTERN.test(script.replace(KEYBOARD_LITERAL_COMPARISON_PATTERN, " "))) {
+    return false;
+  }
+  return listeners.every((listener) => {
+    const afterListener = listener.index + listener[0].length;
+    const head = script.slice(afterListener).match(KEYBOARD_INLINE_CALLBACK_HEAD);
+    if (!head) return false;
+    const param = head[1] || head[2] || head[3];
+    const bodyStart = afterListener + head[0].length;
+    const bodyEnd = scanCallbackEnd(script, bodyStart);
+    if (bodyEnd === -1 || !KEYBOARD_LISTENER_CALL_END.test(script.slice(bodyEnd))) return false;
+    return isAccessibleKeyboardCallback(script.slice(bodyStart, bodyEnd), param);
   });
 }
 __name(isKeyboardAccessibilityScript, "isKeyboardAccessibilityScript");

