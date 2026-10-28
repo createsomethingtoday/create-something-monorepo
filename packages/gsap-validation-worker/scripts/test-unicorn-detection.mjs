@@ -366,4 +366,58 @@ assert.ok(
   'expected Google Fonts @import custom code to be blocked'
 );
 
+const svgIcon = (css) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+  <style type="text/css">${css}</style>
+  <path class="st0" d="M10,19c-4.96,0-9-4.04-9-9s4.04-9,9-9s9,4.04,9,9S14.96,19,10,19z"/>
+</svg>`;
+const svgPage = (body) => `<!doctype html><html><body><div class="w-embed">${body}</div></body></html>`;
+const customCssFlags = (result) =>
+  result.details.flaggedCode.filter((issue) =>
+    /Custom CSS detected without corresponding GSAP implementation/.test(issue.message)
+  );
+
+const svgExportResult = sandbox.validateGsapUsage(
+  svgPage(svgIcon('\n\t.st0{opacity:0.1;}\n') + svgIcon('.cls-1,.cls-2{fill:none;stroke:#000;stroke-width:1.5px;}')),
+  'https://berrario-ui-library-lite.webflow.io/ui-style-guide/elements/animation/loading'
+);
+
+assert.equal(customCssFlags(svgExportResult).length, 0, 'expected SVG export styles to be allowed');
+assert.equal(svgExportResult.passed, true);
+
+const repeatedStylesResult = sandbox.validateGsapUsage(
+  `<!doctype html><html><head>${'<style>.st0{opacity:0.1;}</style>'.repeat(4)}</head><body></body></html>`,
+  'https://repeated-styles.webflow.io/'
+);
+
+assert.equal(
+  customCssFlags(repeatedStylesResult).length,
+  0,
+  'expected identical style blocks to get identical verdicts (no stale RegExp lastIndex)'
+);
+
+const svgAllowance = (result) =>
+  result.details.allowedCustomCode.filter((item) => /inside inline SVG/.test(item.message));
+
+assert.equal(svgAllowance(svgExportResult).length, 2);
+
+const pageLevelSvgCssResult = sandbox.validateGsapUsage(
+  '<!doctype html><html><head><style>.cls-1{fill:none;stroke:#000;}</style></head><body></body></html>',
+  'https://page-level-css.webflow.io/'
+);
+
+assert.equal(svgAllowance(pageLevelSvgCssResult).length, 0, 'expected SVG allowance only inside <svg>');
+assert.equal(customCssFlags(pageLevelSvgCssResult).length, 1, 'expected page-level custom CSS to stay flagged');
+
+for (const css of [
+  '@import url("https://example.com/x.css");',
+  '.st0{fill:url(https://example.com/track.svg);}',
+  '.st0{fill:none;} body{fill:none;}',
+  '.st0{position:fixed;}',
+  '.st0{display:none;}',
+  '.nav a{fill:red;}'
+]) {
+  const result = sandbox.validateGsapUsage(svgPage(svgIcon(css)), 'https://svg-css-escape.webflow.io/');
+  assert.equal(svgAllowance(result).length, 0, `expected SVG allowance to reject: ${css}`);
+}
+
 console.log('GSAP validation regression passed.');
