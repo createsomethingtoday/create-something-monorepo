@@ -83,6 +83,7 @@ Every review follows these phases:
 | \`template_review_list_versions\` | All versions for an asset | Check re-submission history |
 | \`template_review_get_review_context\` | Reviewer-facing summary with capability flags + \`checklistProgress\` | Before any decisions |
 | \`template_review_get_checklists\` | Structured 📝Review and 🚀Publishing checklist items with 1-based indexes | Before checking anything off |
+| \`template_review_get_submission_guidelines\` | Current submission guidelines from the Marketplace CMS, with rule ids and Validator check ids (cached 5 min) | Before citing a requirement; use instead of fetching the guidelines page |
 
 **Always check \`get_review_context\` before writing.** It tells you exactly what you can do: \`canAssign\`, \`canReview\`, \`canPublish\`.
 

@@ -248,6 +248,8 @@ export { TemplateSearchPage } from './components/marketplace/TemplateSearchPage'
 export type { TemplateSearchPageProps } from './components/marketplace/TemplateSearchPage';
 
 export { TemplateSearchBox } from './components/marketplace/TemplateSearchBox';
+export { SubmissionGuidelines } from './components/marketplace/SubmissionGuidelines';
+export type { SubmissionGuidelinesProps } from './components/marketplace/SubmissionGuidelines';
 export type {
   TemplateSearchBoxMode,
   TemplateSearchBoxProps,

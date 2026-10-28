@@ -16,6 +16,7 @@ import {
   updateTemplateImagesFromWebflow,
 } from './db.js';
 import { corsPreflight, jsonResponse, textResponse, withCorsHeaders } from './http.js';
+import { handleGuidelines } from './guidelines.js';
 import { popularShuffleFor } from './popular-shuffle.js';
 import { parseSearchParams } from './query.js';
 import { searchTemplates } from './search.js';
@@ -618,6 +619,11 @@ export default {
 
       if (url.pathname === '/api/templates/search' && request.method === 'GET') {
         return await handleSearch(request, env, ctx);
+      }
+
+      if (url.pathname === '/api/templates/guidelines' && request.method === 'GET') {
+        // Template submission guidelines from the Marketplace CMS (see guidelines.ts).
+        return await handleGuidelines(request, env, ctx, () => validateAdminToken(request, env));
       }
 
       if (url.pathname === '/api/templates/telemetry' && request.method === 'POST') {

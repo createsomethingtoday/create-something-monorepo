@@ -13,6 +13,7 @@ import {
 } from './admin-mrp.js';
 import { executeDelist, executeRelist, findDelistDrift, previewDelist, type MarketplaceCmsConfig } from './marketplace-delist.js';
 import { DELIST_REASON_VALUES } from './schema.js';
+import { filterGuidelines, formatGuidelinesMarkdown, getSubmissionGuidelines } from './submission-guidelines.js';
 import {
   buildAdminExecuteBundle,
   buildAdminTemplateCreateExecuteScript,
@@ -294,6 +295,8 @@ export interface ToolRuntimeConfig extends ValidationToolConfig {
   getZendeskClient?: () => ZendeskClient | null;
   /** Marketplace Templates CMS access for delist/relist; fails closed without a site token. */
   marketplaceCms?: MarketplaceCmsConfig;
+  /** Submission guidelines endpoint (template-search Worker); defaults to production. */
+  guidelinesUrl?: string;
 }
 
 /**
@@ -1600,6 +1603,32 @@ export function registerTools(
     async ({ version_id }) => {
       try {
         return asSuccess(await getClient().getVersionChecklists(version_id));
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_get_submission_guidelines',
+    'Read-only: the current Template submission guidelines from the Marketplace CMS, for agent context. Returns Markdown (default) or structured JSON; every rule carries a stable id (cite it in feedback), its requirement level when set, and the Webflow Way Validator check ids that enforce it. Filter by section (id such as "required-pages" or the tab name) or by validator_check. Served from a 5-minute cache; pass refresh=true after a guidelines edit.',
+    {
+      section: z.string().min(1).optional(),
+      validator_check: z.string().min(1).optional(),
+      format: z.enum(['markdown', 'json']).optional(),
+      refresh: z.boolean().optional(),
+    },
+    async ({ section, validator_check, format, refresh }) => {
+      try {
+        const { doc, cache, fetchedAt } = await getSubmissionGuidelines({ url: runtimeConfig.guidelinesUrl, refresh });
+        const filtered = filterGuidelines(doc, { section, validatorCheck: validator_check });
+        const blockCount = filtered.sections.reduce((n, s) => n + s.blocks.length, 0);
+        const base = { version: doc.version, cache, fetchedAt, sectionCount: filtered.sections.length, blockCount };
+        return asSuccess(
+          format === 'json'
+            ? { ...base, sections: filtered.sections }
+            : { ...base, markdown: formatGuidelinesMarkdown(filtered) },
+        );
       } catch (error) {
         return asError(error);
       }
