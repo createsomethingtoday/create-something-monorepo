@@ -2113,7 +2113,11 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-  packages/gsap-validation-worker: {}
+  packages/gsap-validation-worker:
+    dependencies:
+      parse5:
+        specifier: 7.3.0
+        version: 7.3.0
 
   packages/half-dozen-youtube-sync:
     dependencies:
