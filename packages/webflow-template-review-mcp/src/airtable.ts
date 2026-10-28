@@ -261,6 +261,11 @@ export interface TemplateReviewFeaturedCandidate {
   isFeatured: boolean;
   featuredPeriod?: string;
   votingStateId?: string;
+  marketplaceStatus?: string;
+  /** False means the notifier will skip this creator until 🎨🔑Creator WF User ID is backfilled. */
+  hasCreatorWfUserId: boolean;
+  /** Pre-pick checks a reviewer must clear by hand; empty when the candidate is ready. */
+  readinessWarnings: string[];
   voteTallies?: {
     up: number;
     down: number;
@@ -272,12 +277,15 @@ export interface TemplateReviewFeaturedCandidate {
 export interface TemplateReviewFeaturedCandidatesQuery {
   monthsBack?: number;
   includeAlreadyFeatured?: boolean;
+  /** Default true: only 🚀Marketplace Status = Published (drops archived, delisted and unpublished assets). */
+  publishedOnly?: boolean;
   limit?: number;
 }
 
 export interface TemplateReviewFeaturedCandidatesResult {
   monthsBackApplied: number;
   includeAlreadyFeaturedApplied: boolean;
+  publishedOnlyApplied: boolean;
   summary: {
     templatesAvailable: number;
     creatorsAvailable: number;
@@ -287,6 +295,8 @@ export interface TemplateReviewFeaturedCandidatesResult {
     pickReasonsWritten: number;
     /** Candidate count per template category, for balancing the batch across category trends. */
     categoryCounts: Record<string, number>;
+    /** Candidates whose creator has no 🎨🔑Creator WF User ID — the featured email would be skipped. */
+    missingCreatorWfUserIdCount: number;
   };
   candidates: TemplateReviewFeaturedCandidate[];
 }
@@ -786,6 +796,15 @@ function monthsSinceSubmission(submittedIso: string | undefined, now: Date): num
 function mapFeaturedCandidate(record: AirtableRecord, now: Date): TemplateReviewFeaturedCandidate {
   const fields = record.fields;
   const submittedDate = firstString(fields[CONFIRMED_ASSET_FIELDS.submittedDate]);
+  const marketplaceStatus = firstString(fields[CONFIRMED_ASSET_FIELDS.marketplaceStatus]);
+  const hasCreatorWfUserId = stringArray(fields[FEATURED_ASSET_FIELDS.creatorWfUserId]).some((id) => id.trim() !== '');
+  const readinessWarnings: string[] = [];
+  if (marketplaceStatus !== MARKETPLACE_STATUS_PUBLISHED) {
+    readinessWarnings.push(`not_published: 🚀Marketplace Status is ${marketplaceStatus ?? 'empty'} — a featured template must be live on the Marketplace.`);
+  }
+  if (!hasCreatorWfUserId) {
+    readinessWarnings.push('missing_creator_wf_user_id: the creator has no 🎨🔑Creator WF User ID, so the featured notifier will skip them until it is backfilled.');
+  }
   return {
     assetId: record.id,
     templateName: firstString(fields[CONFIRMED_ASSET_FIELDS.name]) ?? '',
@@ -804,6 +823,9 @@ function mapFeaturedCandidate(record: AirtableRecord, now: Date): TemplateReview
     isFeatured: fields[FEATURED_ASSET_FIELDS.isFeatured] === true,
     featuredPeriod: firstString(fields[FEATURED_ASSET_FIELDS.isFeaturedPeriod]),
     votingStateId: stringArray(fields[FEATURED_ASSET_FIELDS.votingStateLink])[0],
+    marketplaceStatus,
+    hasCreatorWfUserId,
+    readinessWarnings,
   };
 }
 
@@ -1515,11 +1537,14 @@ export class AirtableClient {
    * formula, which also caps how often an asset can be re-featured), not
    * already featured, and submitted within the current month or up to
    * `monthsBack` months earlier. Verified against the live interface
-   * 2026-08-26 (monthsBack=1 → 39 templates / 33 creators).
+   * 2026-08-26 (monthsBack=1 → 39 templates / 33 creators). Unlike the
+   * interface stat, it also drops assets that are not Published by default
+   * (archived assets keep a passing eligibility formula).
    */
   async listFeaturedCandidates(query: TemplateReviewFeaturedCandidatesQuery = {}): Promise<TemplateReviewFeaturedCandidatesResult> {
     const monthsBack = query.monthsBack ?? 1;
     const includeAlreadyFeatured = query.includeAlreadyFeatured ?? false;
+    const publishedOnly = query.publishedOnly ?? true;
     const records = await this.listRecords({
       tableId: TABLE_IDS.assets,
       fieldNames: [
@@ -1528,6 +1553,7 @@ export class AirtableClient {
         CONFIRMED_ASSET_FIELDS.submittedDate,
         CONFIRMED_ASSET_FIELDS.qualityScore,
         CONFIRMED_ASSET_FIELDS.categoryNames,
+        CONFIRMED_ASSET_FIELDS.marketplaceStatus,
         ...Object.values(FEATURED_ASSET_FIELDS),
       ],
       filterByFormula: andFormula([
@@ -1535,6 +1561,7 @@ export class AirtableClient {
         `{${FEATURED_ASSET_FIELDS.isEligibleForUpcomingFeatured}} = 1`,
         `DATETIME_DIFF(TODAY(), {${CONFIRMED_ASSET_FIELDS.submittedDate}}, 'months') <= ${monthsBack}`,
         includeAlreadyFeatured ? null : `NOT({${FEATURED_ASSET_FIELDS.isFeatured}})`,
+        publishedOnly ? `{${CONFIRMED_ASSET_FIELDS.marketplaceStatus}} = '${MARKETPLACE_STATUS_PUBLISHED}'` : null,
       ]),
       sortField: CONFIRMED_ASSET_FIELDS.submittedDate,
       sortDirection: 'desc',
@@ -1591,6 +1618,7 @@ export class AirtableClient {
     return {
       monthsBackApplied: monthsBack,
       includeAlreadyFeaturedApplied: includeAlreadyFeatured,
+      publishedOnlyApplied: publishedOnly,
       summary: {
         templatesAvailable: candidates.length,
         creatorsAvailable: creatorIds.size,
@@ -1599,6 +1627,7 @@ export class AirtableClient {
         reviewerPicksMade: candidates.filter((candidate) => candidate.reviewerPick).length,
         pickReasonsWritten: candidates.filter((candidate) => Boolean(candidate.reviewerPickReason)).length,
         categoryCounts,
+        missingCreatorWfUserIdCount: candidates.filter((candidate) => !candidate.hasCreatorWfUserId).length,
       },
       candidates,
     };
