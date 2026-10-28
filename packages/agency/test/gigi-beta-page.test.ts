@@ -14,12 +14,12 @@ test('standalone page retains the owning Agency Canon operator palette', () => {
 });
 
 test('download contract pins exact qualified installer, platform and checksum', () => {
-  assert.equal(gigiBeta.version, '0.2.12');
-  assert.equal(gigiBeta.filename, 'GiGi-0.2.12-arm64-private-beta.dmg');
-  assert.equal(gigiBeta.bytes, 122414690);
-  assert.equal(gigiBeta.sha256, '3ed8ccde08e5bb474d5371722f6712e148303a7770ecf1737bdc778ca0bb76a5');
-  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.12/GiGi-0.2.12-arm64-private-beta.dmg`);
-  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '122,414,690', '122.4 MB']) assert.ok(gigiBetaHtml.includes(text), text);
+  assert.equal(gigiBeta.version, '0.2.13');
+  assert.equal(gigiBeta.filename, 'GiGi-0.2.13-arm64-private-beta.dmg');
+  assert.equal(gigiBeta.bytes, 122408608);
+  assert.equal(gigiBeta.sha256, '31028b2e9663d94db393b5911fa67bdd8da8049eff870642aa97d65b9d8cb08e');
+  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.13/GiGi-0.2.13-arm64-private-beta.dmg`);
+  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '122,408,608', '122.4 MB']) assert.ok(gigiBetaHtml.includes(text), text);
 });
 
 test('beta stays unlisted and has no active content or tracking shell', () => {
@@ -134,8 +134,10 @@ test('setup and classification release keeps session and acceptance boundaries e
   for (const text of ['final compiled app code and data in isolated QA wrappers', 'One real Codex-generated illustration', 'using the installed 0.2.8 MCP', 'Follow-up 0.2.9 checks', 'already-running agent session remain unverified', 'GiGi 0.2.8: Earlier checks', 'Previous installer:', '0.2.11/GiGi-0.2.11-arm64-private-beta.dmg']) assert.ok(gigiBetaHtml.includes(text), text);
 });
 
-test("0.2.12 clearly defers phone qualification and preserves rollback", () => {
- assert.ok(gigiBetaHtml.includes("Phone workflow unverified for 0.2.12"));
+test("0.2.13 clearly defers phone qualification and preserves rollback", () => {
+ assert.ok(gigiBetaHtml.includes("Phone workflow unverified for 0.2.13"));
  assert.ok(gigiBetaHtml.includes("physical-phone qualification is deferred"));
  assert.ok(gigiBetaHtml.includes("GiGi 0.2.11 for Apple Silicon"));
 });
+
+test("relation continuation covers desktop and agent readers without claiming a live model test",()=>{for(const text of ["External MCP agents and embedded Ask GiGi","read-only relation-page tool","older cached connections","205 unique links across five pages","synthetic host, not a live model request"])assert.ok(gigiBetaHtml.includes(text),text);});
