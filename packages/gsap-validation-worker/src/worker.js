@@ -7,7 +7,7 @@ var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require
   throw Error('Dynamic require of "' + x + '" is not supported');
 });
 
-import { findProhibitedMarketplaceCustomCode } from "./font-custom-code-policy.js";
+import { analyseSvgStyles, findProhibitedMarketplaceCustomCode } from "./font-custom-code-policy.js";
 
 // cloudflare-worker/lib/shared-validator.js
 var IX2_REJECTION_MESSAGE = "Legacy Webflow IX2 interactions detected. As of May 1, 2026, Marketplace templates submitted with IX2 interactions are rejected. Rebuild interactions with Webflow Interactions powered by GSAP (IX3), publish again, and rerun validation.";
@@ -634,6 +634,7 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
   }
   const scriptContents = extractScriptContents(html);
   const styleContents = extractStyleContents(html);
+  const svgStyles = analyseSvgStyles(html);
   scriptContents.forEach((script, index) => {
     if (!script.trim()) return;
     if (script.startsWith("/* Webflow Lightbox JSON */")) {
@@ -672,10 +673,10 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
       });
       return;
     }
-    const hasCustomAnimation = customAnimationPatterns.some((pattern) => pattern.test(script));
+    const hasCustomAnimation = customAnimationPatterns.some((pattern) => testPattern(pattern, script));
     const hasAnyGsap = /gsap|ScrollTrigger|SplitText|timeline|TweenMax|TweenLite/i.test(script);
     if (hasCustomAnimation && !hasAnyGsap) {
-      const matchedPatterns = customAnimationPatterns.filter((pattern) => pattern.test(script)).map((pattern) => pattern.source.substring(0, 50) + "...");
+      const matchedPatterns = customAnimationPatterns.filter((pattern) => testPattern(pattern, script)).map((pattern) => pattern.source.substring(0, 50) + "...");
       results.flaggedCode.push({
         scriptIndex: index,
         message: "Custom animation detected - should use GSAP for animations",
@@ -683,7 +684,7 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
       });
       return;
     }
-    const isDefaultScript = defaultAllowedScripts.some((pattern) => pattern.test(script));
+    const isDefaultScript = defaultAllowedScripts.some((pattern) => testPattern(pattern, script));
     if (isDefaultScript) {
       results.allowedCustomCode.push({
         scriptIndex: index,
@@ -691,9 +692,9 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
       });
       return;
     }
-    const hasFlaggedGsapUsage = flaggedGsapUsagePatterns.some((pattern) => pattern.test(script));
+    const hasFlaggedGsapUsage = flaggedGsapUsagePatterns.some((pattern) => testPattern(pattern, script));
     if (hasFlaggedGsapUsage) {
-      const flaggedPatterns = flaggedGsapUsagePatterns.filter((pattern) => pattern.test(script)).map((pattern) => pattern.source);
+      const flaggedPatterns = flaggedGsapUsagePatterns.filter((pattern) => testPattern(pattern, script)).map((pattern) => pattern.source);
       results.flaggedCode.push({
         scriptIndex: index,
         message: "Script contains problematic GSAP usage (ScrollSmoother breaks position: sticky and Webflow interactions)",
@@ -704,9 +705,9 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
     // Keyboard listeners that only react to specific navigation keys are
     // accessibility handlers, not keyloggers; see isKeyboardAccessibilityScript.
     const applicableSecurityPatterns = isKeyboardAccessibilityScript(script) ? securityRiskPatterns.filter((pattern) => !isKeyboardListenerRiskPattern(pattern)) : securityRiskPatterns;
-    const hasSecurityRisks2 = applicableSecurityPatterns.some((pattern) => pattern.test(script));
+    const hasSecurityRisks2 = applicableSecurityPatterns.some((pattern) => testPattern(pattern, script));
     if (hasSecurityRisks2) {
-      const riskPatterns = applicableSecurityPatterns.filter((pattern) => pattern.test(script)).map((pattern) => pattern.source);
+      const riskPatterns = applicableSecurityPatterns.filter((pattern) => testPattern(pattern, script)).map((pattern) => pattern.source);
       results.securityRisks.push({
         scriptIndex: index,
         message: "Script contains security risk patterns",
@@ -714,7 +715,7 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
       });
       return;
     }
-    const hasGsapUsage = acceptedPatterns.some((pattern) => pattern.test(script));
+    const hasGsapUsage = acceptedPatterns.some((pattern) => testPattern(pattern, script));
     const coreGsapPatterns = [
       /gsap\./g,
       /GSAP\./g,
@@ -726,7 +727,7 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
       /SplitText/g,
       /Draggable/g
     ];
-    const hasCoreGsapUsage = coreGsapPatterns.some((pattern) => pattern.test(script));
+    const hasCoreGsapUsage = coreGsapPatterns.some((pattern) => testPattern(pattern, script));
     const maxLength = 150;
     if (script.trim().length < maxLength && !containsPotentiallyHarmfulCode(script)) {
       results.allowedCustomCode.push({
@@ -760,7 +761,7 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
           /transformStyle\s*:/g,
           /preserve-3d/g
         ];
-        const onlyHasPluginPatterns = pluginSpecificPatterns.some((pattern) => pattern.test(script));
+        const onlyHasPluginPatterns = pluginSpecificPatterns.some((pattern) => testPattern(pattern, script));
         if (onlyHasPluginPatterns) {
           results.flaggedCode.push({
             scriptIndex: index,
@@ -793,6 +794,13 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
   });
   styleContents.forEach((style, index) => {
     if (!style.trim()) return;
+    if (svgStyles.svgStyleContents.has(style) && isSvgPresentationCSS(style, svgStyles.htmlClassNames)) {
+      results.allowedCustomCode.push({
+        scriptIndex: `style-${index}`,
+        message: "SVG presentation styles inside inline SVG (allowed)"
+      });
+      return;
+    }
     const isHarmlessCSS = isCommonStylingCSS(style);
     if (isHarmlessCSS) {
       results.allowedCustomCode.push({
@@ -801,7 +809,7 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
       });
       return;
     }
-    const hasGsapUsage = acceptedPatterns.some((pattern) => pattern.test(style));
+    const hasGsapUsage = acceptedPatterns.some((pattern) => testPattern(pattern, style));
     if (!hasGsapUsage) {
       results.flaggedCode.push({
         scriptIndex: `style-${index}`,
@@ -904,6 +912,58 @@ function extractStyleContents(html) {
   return styles;
 }
 __name(extractStyleContents, "extractStyleContents");
+function isSvgPresentationCSS(css, htmlClassNames) {
+  // Design-tool SVG exports (e.g. Illustrator `.st0{opacity:0.1;}`) only.
+  // No at-rules, url(), or non-SVG properties; anything else stays flagged.
+  const allowedProperties = /* @__PURE__ */ new Set([
+    "fill",
+    "fill-opacity",
+    "fill-rule",
+    "stroke",
+    "stroke-width",
+    "stroke-opacity",
+    "stroke-linecap",
+    "stroke-linejoin",
+    "stroke-miterlimit",
+    "stroke-dasharray",
+    "stroke-dashoffset",
+    "opacity",
+    "clip-rule",
+    "stop-color",
+    "stop-opacity",
+    "enable-background"
+  ]);
+  const cleanCSS = css.replace(/\/\*[\s\S]*?\*\//g, "").replace(/<!\[CDATA\[|\]\]>/g, "").trim();
+  if (!cleanCSS || /[@\\]|url\s*\(|expression\s*\(/i.test(cleanCSS)) return false;
+  const ruleRegex = /([^{}]+)\{([^{}]*)\}/g;
+  let consumed = "";
+  let match = ruleRegex.exec(cleanCSS);
+  while (match !== null) {
+    const selectors = match[1].split(",").map((selector) => selector.trim());
+    if (!selectors.every((selector) => /^(?:path|circle|rect|ellipse|line|polyline|polygon|g|text|tspan|stop|use)?(?:\.[a-z_][\w-]*)+$/i.test(selector))) {
+      return false;
+    }
+    // An SVG <style> applies document-wide; a class also used on HTML would style the page.
+    if (selectors.some((selector) => selector.split(".").slice(1).some((name) => htmlClassNames.has(name)))) {
+      return false;
+    }
+    const declarations = match[2].split(";").map((declaration) => declaration.trim()).filter(Boolean);
+    for (const declaration of declarations) {
+      const [property, ...value] = declaration.split(":");
+      if (!allowedProperties.has(property.trim().toLowerCase()) || !value.join(":").trim()) return false;
+    }
+    consumed += match[0];
+    match = ruleRegex.exec(cleanCSS);
+  }
+  return consumed.replace(/\s+/g, "") === cleanCSS.replace(/\s+/g, "");
+}
+__name(isSvgPresentationCSS, "isSvgPresentationCSS");
+function testPattern(pattern, text) {
+  // Accepted patterns carry /g for match(); reset so repeated test() calls are not stateful.
+  pattern.lastIndex = 0;
+  return pattern.test(text);
+}
+__name(testPattern, "testPattern");
 function appendExternalScript(externalScripts, seenScriptSources, src, source = "script-src", type = "text/javascript") {
   if (!src || seenScriptSources.has(src)) {
     return;
@@ -983,7 +1043,7 @@ function findUnacceptedCode(script, acceptedPatterns) {
   const unacceptedBlocks = codeBlocks.filter((block) => {
     if (block.trim().length < 10) return false;
     if (block.trim().startsWith("//") || block.trim().startsWith("/*")) return false;
-    return !acceptedPatterns.some((pattern) => pattern.test(block));
+    return !acceptedPatterns.some((pattern) => testPattern(pattern, block));
   });
   const blockAcceptedRatio = (codeBlocks.length - unacceptedBlocks.length) / codeBlocks.length;
   if (blockAcceptedRatio >= 0.3) {
@@ -1251,7 +1311,7 @@ function containsPotentiallyHarmfulCode(script) {
   ];
   const patternsToCheck = [...harmfulPatterns, ...conditionalPatterns];
   return patternsToCheck.some((pattern) => {
-    if (pattern.test(script)) {
+    if (testPattern(pattern, script)) {
       const match = script.match(pattern);
       if (match) {
         const matchIndex = match.index;
