@@ -140,7 +140,7 @@ function packageTier(manifest, relativePath) {
   if (manifest.createSomething?.tier === 'automation') return 'Automation';
   if (manifest.createSomething?.tier === 'judgment') return 'Judgment';
   if (/policy|prompt|canon|taste|judgment/.test(text)) return 'Judgment';
-  if (/db|database|data|search|substrate|d1|r2|registry|ledger/.test(text)) return 'Database';
+  if (/\bdb\b|database|data|search|substrate|d1|r2|registry|ledger/.test(text)) return 'Database';
   if (/mcp|worker|agent|automation|sync|scheduler|validator|review|hub|api/.test(text)) {
     return 'Automation';
   }
@@ -435,6 +435,7 @@ function scoreKnowledgeTarget(knowledgeTokens, target, targetTokens) {
   if (knowledgeTokens.has('substrate') && target.packageName === '@create-something/substrate-mcp') score += 4;
   if (knowledgeTokens.has('database') && target.packageName === '@create-something/database-layer') score += 4;
   if (knowledgeTokens.has('canon') && target.packageName === '@create-something/canon') score += 4;
+  if (knowledgeTokens.has('identity') && knowledgeTokens.has('recovery') && target.path === 'packages/identity-worker') score += 4;
   if (knowledgeTokens.has('auth') && target.packageName === '@create-something/mcp-authz') score += 3;
   return score;
 }
@@ -479,6 +480,11 @@ function operationalKnowledgeEdges(docNodes, targetCandidates, fallbackTargets) 
     // edge already preserves orientation when no substantive link exists.
     if (target.packageName === '@create-something/substrate-mcp' &&
         !/\bsubstrate\b/i.test(fs.readFileSync(path.join(repoRoot, doc.path), 'utf8'))) {
+      return [];
+    }
+    // A generic Slack mention does not identify the internal CREATE SOMETHING intake.
+    if (target.path === 'config/dify-mcp-intake/slack-create-something.json' &&
+        !/\bslack-create-something\b/i.test(docText)) {
       return [];
     }
     const evidence = explicitTarget
@@ -551,7 +557,7 @@ function buildTopology() {
       );
     }
 
-    for (const candidate of ['wrangler.toml', 'wrangler.json', 'worker/wrangler.toml', 'worker/wrangler.json', 'dashboard/wrangler.toml']) {
+    for (const candidate of ['wrangler.toml', 'wrangler.json', 'wrangler.jsonc', 'worker/wrangler.toml', 'worker/wrangler.json', 'dashboard/wrangler.toml']) {
       const worker = nodeByPath.get(`${node.path}/${candidate}`);
       if (worker) edges.push(makeEdge(node.id, worker.id, 'runs', `${candidate} configures runtime for ${node.path}.`));
     }

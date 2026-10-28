@@ -1,0 +1,7 @@
+{
+  "name": "template-review-viz",
+  "version": "0.1.0",
+  "description": "Review visualization for template reviewers: compact transcript rows for Template Review MCP results, a screenshot strip pane (/trs) that draws desktop, tablet and mobile captures in the terminal, and a rubric scorecard pane (/trc) that follows the draft review.",
+  "author": { "name": "Micah Johnson" },
+  "types": "./types/index.d.ts"
+}

@@ -36,7 +36,11 @@ async function main() {
     apiKey,
     workflowKey,
     recipient: { id: recipientId, email: recipientEmail },
-    data: { verificationToken: token, expiresAtIso }
+    data: {
+      verificationToken: token,
+      expiresAtIso,
+      verifyUrl: process.env.KNOCK_TEST_VERIFY_URL ?? 'https://webflowassets.createsomething.io/verify'
+    }
   });
 
   console.log('Success:', result);

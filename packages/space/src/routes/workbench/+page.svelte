@@ -1,22 +1,16 @@
 <script lang="ts">
+  import WorkshopTrace from '$lib/workshop/WorkshopTrace.svelte';
+  import WorkshopScene from '$lib/workshop/WorkshopScene.svelte';
+  import '$lib/workshop/workshop.css';
   import {
     Button,
-    PerformanceCampaignOpening,
     PerformanceCardGrid,
-    PerformanceConversionHandoff,
     PerformanceDecisionPanel,
     PerformancePageSection,
     SEO,
     type PerformanceCardItem,
     type PerformanceDecisionItem
   } from '@create-something/canon';
-
-  const proofMetrics = [
-    { value: '5', label: 'live tools and surfaces' },
-    { value: '3', label: 'runtime loops previewed in the shell' },
-    { value: '100%', label: 'Cloudflare Workers-first execution' },
-    { value: 'Direct', label: 'inspectable routes, outputs, and state' }
-  ];
 
   const tools: PerformanceCardItem[] = [
     {
@@ -128,41 +122,24 @@
 />
 
 <div class="space-workbench">
-  <PerformanceCampaignOpening
-    mobileSearchBoundary
-    eyebrow="CREATE SOMETHING .space"
-    propertyRole="Public systems workbench"
-    expression="editorial"
-    title="A public workbench for testing runtime ideas."
-    lede="CREATE SOMETHING .space is where tools, routes, and interaction patterns get tested against real execution surfaces before they become research, policy, or production workflows."
-    media={{
-      src: '/images/workshop/open-workshop.webp',
-      alt: 'Ivory reusable modules in a machined workshop rail.',
-      width: 1536,
-      height: 1024,
-      colorMode: 'natural'
-    }}
-    proof={proofMetrics.map((item) => ({
-      label: item.label,
-      value: item.value
-    }))}
-    mode="ink"
-  >
-    {#snippet actions()}
-      <Button href="/playground">Open The Playground</Button>
-      <Button href="/praxis" variant="secondary">Start Praxis</Button>
-    {/snippet}
-  </PerformanceCampaignOpening>
-
-  <PerformanceDecisionPanel
-    density="compact"
-    id="runtime-decision"
-    eyebrow="Runtime decision path"
-    title="Use interaction to show what can run, what needs inspection, and what should move."
-    description="The workbench should communicate through visible state changes: execute, inspect, then promote only what survives runtime contact."
-    items={decisionStates}
-    ariaLabel="Runtime decision path"
-  />
+  <header data-mobile-search-boundary class="workshop section">
+    <div class="wrap story-opening">
+      <div>
+        <p class="eyebrow">CREATE SOMETHING .space / The Workbench</p>
+        <h1>Try it.<br />Inspect what happens.</h1>
+        <p class="lead">
+          Code, motion, data, and guided practice. Pick a tool and work with its actual output.
+        </p>
+        <div class="actions">
+          <Button href="/playground">Open The Playground</Button><Button
+            href="/praxis"
+            variant="secondary">Start Praxis</Button
+          >
+        </div>
+      </div>
+      <WorkshopScene scene="practice" eager />
+    </div>
+  </header>
 
   <PerformancePageSection
     variant="white"
@@ -175,25 +152,73 @@
     {/snippet}
   </PerformancePageSection>
 
-  <PerformanceConversionHandoff
-    eyebrow="Pick a surface"
-    title="Start with the runtime you want to inspect."
-    description="Open the playground if you want to execute code, motion if you want to inspect interaction systems, or data if you want to work against a live refresh loop."
-    handoff={{
-      owner: 'Workbench operator',
-      authority: 'Runtime evidence',
-      proof: 'Output + state + handoff',
-      state: 'ready'
-    }}
-  >
-    {#snippet actions()}
-      <Button href="/motion">Inspect Motion</Button>
-      <Button href="/data/nba" variant="secondary">Open Data Studio</Button>
-    {/snippet}
-  </PerformanceConversionHandoff>
+  <section class="workshop section">
+    <div class="wrap">
+      <WorkshopTrace />
+      <details class="runtime-explanation">
+        <summary>How the workbench organizes a runtime decision</summary>
+        <PerformanceDecisionPanel
+          density="compact"
+          id="runtime-decision"
+          eyebrow="Runtime decision path"
+          title="Use interaction to show what can run, what needs inspection, and what should move."
+          description="The workbench should communicate through visible state changes: execute, inspect, then promote only what survives runtime contact."
+          items={decisionStates}
+          ariaLabel="Runtime decision path"
+        />
+      </details>
+      <div class="runtime-next">
+        <p class="eyebrow">Pick a surface</p>
+        <h2>Start with what<br />you want to inspect.</h2>
+        <p class="lead">
+          Open the playground to execute code, motion to inspect interaction systems, or data to
+          work against a live refresh loop.
+        </p>
+        <div class="actions">
+          <Button href="/motion">Inspect Motion</Button><Button href="/data/nba" variant="secondary"
+            >Open Data Studio</Button
+          >
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
 
 <style>
+  .space-workbench > header {
+    padding-block: clamp(3rem, 6vw, 6rem);
+  }
+  .runtime-explanation {
+    margin-top: 2rem;
+    border: 1px solid var(--color-performance-line);
+  }
+  .runtime-explanation summary {
+    padding: 1.25rem;
+    cursor: pointer;
+    font: 0.85rem var(--font-performance-mono);
+    min-height: 44px;
+  }
+  .runtime-explanation summary:focus-visible {
+    outline: 3px solid var(--color-performance-signal);
+    outline-offset: 4px;
+  }
+  .runtime-explanation :global(.clear-decision-panel) {
+    --color-performance-ink: #090909;
+    --color-performance-fg-primary: #090909;
+    --color-performance-fg-secondary: #4b4e53;
+    --color-performance-muted: #5e6268;
+    --color-performance-panel: #ffffff;
+    --color-performance-paper: #f3f3f0;
+    --color-performance-court: #e6e6e0;
+    color: #090909;
+  }
+  .runtime-next {
+    padding-block: 3rem 0;
+  }
+  .runtime-next h2 {
+    margin: 1.5rem 0;
+  }
+
   /* Scope shared-component refinements to the .space Workbench. */
   .space-workbench :global(.clear-decision-panel__console),
   .space-workbench :global(.clear-card-grid__card) {

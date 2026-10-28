@@ -1,3 +1,4 @@
+import { handleInstagramRequest, instagramStagedMedia } from './instagram.ts';
 export const GIGI_RESOURCE = 'https://gigi-connector.createsomething.workers.dev';
 const IDENTITY_USERINFO = 'https://id.createsomething.space/oauth/userinfo';
 const SELECTED_GMAIL_AUTH_CONFIG_ID = 'ac_qXoEQURadG-h';
@@ -14,6 +15,15 @@ const SELECTED_GMAIL_SCOPES = [
   'https://www.googleapis.com/auth/profile.emails.read',
   'https://mail.google.com/',
 ] as const;
+// Existing managed config read back on 2026-10-20. Binding this snapshot does
+// not grant access; each user must explicitly consent. Its provider grant is
+// broader than this application's fixed profile/publish endpoints.
+const SELECTED_INSTAGRAM_AUTH_CONFIG_ID = 'ac_9TS_DrtjidYX';
+const SELECTED_INSTAGRAM_SCOPES = [
+  'instagram_business_basic', 'instagram_business_manage_messages',
+  'instagram_business_manage_comments', 'instagram_business_content_publish',
+  'instagram_business_manage_insights',
+] as const;
 const SELECTED_CALENDAR_AUTH_CONFIG_ID = 'ac_F0JVbnFvV3DQ';
 const SELECTED_CALENDAR_SCOPES = [
   'https://www.googleapis.com/auth/calendar',
@@ -23,6 +33,14 @@ const SELECTED_CALENDAR_SCOPES = [
 export interface ConnectorEnv {
   COMPOSIO_API_KEY?: string;
   GIGI_ALLOWED_SUBJECTS?: string;
+  INSTAGRAM_MEDIA?: {
+    put(key:string,value:Uint8Array,options:{customMetadata:Record<string,string>}):Promise<unknown>;
+    get(key:string):Promise<{body:ReadableStream<Uint8Array>;customMetadata?:Record<string,string>}|null>;
+    delete(key:string):Promise<void>;
+  };
+  GIGI_INSTAGRAM_MEDIA_HOSTS?: string;
+  GIGI_INSTAGRAM_AUTH_CONFIG_ID?: string;
+  GIGI_INSTAGRAM_APPROVED_SCOPES?: string;
   GIGI_GMAIL_AUTH_CONFIG_ID?: string;
   GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID?: string;
   GIGI_GMAIL_APPROVED_SCOPES?: string;
@@ -53,6 +71,8 @@ export async function handleConnectorRequest(
 ): Promise<Response> {
   const url = new URL(request.url);
   if (url.origin !== GIGI_RESOURCE) return json({ error: 'invalid_host' }, 400);
+  const staged = await instagramStagedMedia(request,env);
+  if(staged)return staged;
   if (url.pathname === '/health' && request.method === 'GET') {
     const configured = Boolean(env.DB && env.COMPOSIO_API_KEY && env.GIGI_ALLOWED_SUBJECTS?.trim() &&
       env.GIGI_GMAIL_AUTH_CONFIG_ID && env.GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID &&
@@ -66,14 +86,17 @@ export async function handleConnectorRequest(
     });
   }
   if (!url.pathname.startsWith('/v1/gigi/')) return json({ error: 'not_found' }, 404);
-  const subject = await authenticate(request, env, providerFetch);
-  if (!subject) return json({ error: 'unauthorized' }, 401);
+  const admission = await authenticate(request, env, providerFetch);
+  if ('error' in admission) return json({ error: admission.error }, admission.status);
+  const subject = admission.subject;
   if (!env.DB || !env.COMPOSIO_API_KEY) return json({ error: 'unconfigured' }, 503);
-  const status = /^\/v1\/gigi\/connections\/(gmail|googlecalendar)$/u.exec(url.pathname);
+  if (url.pathname.startsWith('/v1/gigi/instagram/')) return handleInstagramRequest(request, env, providerFetch, subject, { verifyAccount: verifyComposioAccount, read: proxyRead });
+  const status = /^\/v1\/gigi\/connections\/(gmail|googlecalendar|instagram)$/u.exec(url.pathname);
   if (status && request.method === 'GET') {
-    const provider = status[1] as 'gmail' | 'googlecalendar';
+    const provider = status[1] as 'gmail' | 'googlecalendar' | 'instagram';
+    if(provider === 'instagram' && !approvedScopes(provider, env.GIGI_INSTAGRAM_AUTH_CONFIG_ID, env.GIGI_INSTAGRAM_APPROVED_SCOPES)) return json({error:'unconfigured'},503);
     const row = await env.DB.prepare(
-      'SELECT connected_account_id, status, request_id, reconnectable, created_at, redirect_url, expires_at FROM gigi_connection_attempts WHERE subject = ? AND provider = ? ORDER BY created_at DESC LIMIT 1',
+      `SELECT connected_account_id, status, request_id, reconnectable, created_at, redirect_url, expires_at FROM ${connectionTable(provider)} WHERE subject = ? AND provider = ? ORDER BY created_at DESC LIMIT 1`,
     ).bind(subject, provider).first() as { connected_account_id: string | null; status: string; request_id: string; reconnectable?: number; created_at?: string; redirect_url?: string | null; expires_at?: string | null } | null;
     if (!row) return json({ provider, state: 'disconnected' });
     if (row.status === 'dispatched' && !row.connected_account_id) {
@@ -86,13 +109,13 @@ export async function handleConnectorRequest(
     if ((row.status === 'active' || row.status === 'linked' || row.status === 'dispatched') && row.connected_account_id) {
       const state = await readAccountState(env, providerFetch, subject, provider, row.connected_account_id);
       if (state === 'terminal') {
-        const release = await env.DB.prepare("UPDATE gigi_connection_attempts SET status = 'attention', reconnectable = 1 WHERE subject = ? AND provider = ? AND request_id = ? AND status IN ('active', 'linked', 'dispatched')")
+        const release = await env.DB.prepare(`UPDATE ${connectionTable(provider)} SET status = 'attention', reconnectable = 1 WHERE subject = ? AND provider = ? AND request_id = ? AND status IN ('active', 'linked', 'dispatched')`)
           .bind(subject, provider, row.request_id).run() as { meta?: { changes?: number } };
         return json({ provider, state: 'attention', connectedAccountId: row.connected_account_id,
           ...(release.meta?.changes === 1 ? { reconnectable: true } : {}) });
       }
       if (row.status === 'active') return state === 'active'
-        ? json({ provider, state: 'connected', connectedAccountId: row.connected_account_id })
+        ? json({ provider, state: 'connected', connectedAccountId: row.connected_account_id, ...await accountLabel(env, providerFetch, provider, row.connected_account_id) })
         : json({ provider, state: 'attention', connectedAccountId: row.connected_account_id });
       if (row.status === 'linked' && state === 'pending') {
         if (validConsentLink(row.redirect_url, row.expires_at)) {
@@ -110,16 +133,16 @@ export async function handleConnectorRequest(
       ...(row.connected_account_id ? { connectedAccountId: row.connected_account_id } : {}),
       ...(row.status === 'attention' && row.reconnectable === 1 ? { reconnectable: true } : {}) });
   }
-  const link = /^\/v1\/gigi\/connections\/(gmail|googlecalendar)\/link$/u.exec(url.pathname);
+  const link = /^\/v1\/gigi\/connections\/(gmail|googlecalendar|instagram)\/link$/u.exec(url.pathname);
   if (link && request.method === 'POST') {
-    return beginLink(request, env, providerFetch, subject, link[1] as 'gmail' | 'googlecalendar');
+    return beginLink(request, env, providerFetch, subject, link[1] as 'gmail' | 'googlecalendar' | 'instagram');
   }
-  const reconcile = /^\/v1\/gigi\/connections\/(gmail|googlecalendar)\/([A-Za-z0-9._:-]+)$/u.exec(url.pathname);
+  const reconcile = /^\/v1\/gigi\/connections\/(gmail|googlecalendar|instagram)\/([A-Za-z0-9._:-]+)$/u.exec(url.pathname);
   if (reconcile && request.method === 'GET') {
-    const provider = reconcile[1] as 'gmail' | 'googlecalendar';
+    const provider = reconcile[1] as 'gmail' | 'googlecalendar' | 'instagram';
     const accountId = reconcile[2]!;
     const row = await env.DB.prepare(
-      'SELECT status, connected_account_id FROM gigi_connection_attempts WHERE subject = ? AND provider = ? AND connected_account_id = ? ORDER BY created_at DESC LIMIT 1',
+      `SELECT status, connected_account_id FROM ${connectionTable(provider)} WHERE subject = ? AND provider = ? AND connected_account_id = ? ORDER BY created_at DESC LIMIT 1`,
     ).bind(subject, provider, accountId).first();
     if (!row || row.connected_account_id !== accountId || !['linked', 'active'].includes(String(row.status))) {
       return json({ error: 'not_found' }, 404);
@@ -127,17 +150,17 @@ export async function handleConnectorRequest(
     const valid = await verifyComposioAccount(env, providerFetch, subject, provider, accountId);
     if (!valid) return json({ error: 'provider_readback_invalid' }, 502);
     const activation = await env.DB.prepare(
-      "UPDATE gigi_connection_attempts SET status = 'active' WHERE subject = ? AND provider = ? AND connected_account_id = ? AND status IN ('linked', 'active')",
+      `UPDATE ${connectionTable(provider)} SET status = 'active' WHERE subject = ? AND provider = ? AND connected_account_id = ? AND status IN ('linked', 'active')`,
     ).bind(subject, provider, accountId).run() as { meta?: { changes?: number } };
     if (activation.meta?.changes !== 1) return json({ error: 'connection_changed' }, 409);
-    return json({ provider, state: 'connected', connectedAccountId: accountId });
+    return json({ provider, state: 'connected', connectedAccountId: accountId, ...await accountLabel(env, providerFetch, provider, accountId) });
   }
   const source = /^\/v1\/gigi\/sources\/(gmail|googlecalendar)\/([A-Za-z0-9._:-]+)\/page$/u.exec(url.pathname);
   if (source && request.method === 'GET') {
     const provider = source[1] as 'gmail' | 'googlecalendar';
     const accountId = source[2]!;
     const row = await env.DB.prepare(
-      'SELECT status, connected_account_id FROM gigi_connection_attempts WHERE subject = ? AND provider = ? AND connected_account_id = ? ORDER BY created_at DESC LIMIT 1',
+      `SELECT status, connected_account_id FROM ${connectionTable(provider)} WHERE subject = ? AND provider = ? AND connected_account_id = ? ORDER BY created_at DESC LIMIT 1`,
     ).bind(subject, provider, accountId).first();
     if (!row || row.connected_account_id !== accountId || row.status !== 'active') return json({ error: 'not_found' }, 404);
     if (!await verifyComposioAccount(env, providerFetch, subject, provider, accountId)) return json({ error: 'provider_readback_invalid' }, 502);
@@ -168,10 +191,12 @@ export async function readSourcePage(
     const records = [];
     for (const message of messages) {
       if (!isRecord(message) || typeof message.id !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/u.test(message.id)) throw new Error('gmail_message_id_invalid');
-      const detail = await proxyRead(env, providerFetch, accountId, `https://gmail.googleapis.com/gmail/v1/users/me/messages/${message.id}`,
-        [{ name: 'format', value: 'metadata', type: 'query' },
-          { name: 'metadataHeaders', value: 'Subject', type: 'query' }, { name: 'metadataHeaders', value: 'From', type: 'query' },
-          { name: 'metadataHeaders', value: 'Date', type: 'query' }]);
+      // Keep Gmail's repeated header filters in the URL: proxy parameter maps can
+      // collapse repeated names to the final value, silently dropping Subject/From.
+      const detailUrl = new URL(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${message.id}`);
+      detailUrl.searchParams.set('format', 'metadata');
+      for (const name of ['Subject', 'From', 'Date']) detailUrl.searchParams.append('metadataHeaders', name);
+      const detail = await proxyRead(env, providerFetch, accountId, detailUrl.toString(), []);
       if (detail.id !== message.id) throw new Error('gmail_detail_mismatch');
       const headers = isRecord(detail.payload) && Array.isArray(detail.payload.headers) ? detail.payload.headers : [];
       const header = (name: string) => {
@@ -204,7 +229,8 @@ export async function readSourcePage(
     if (!isRecord(item) || typeof item.id !== 'string' || !item.id || item.id.length > 256) throw new Error('calendar_event_id_invalid');
     return { externalId: item.id, kind: 'event' as const, observedAt, data: {
       calendarId, summary: typeof item.summary === 'string' ? item.summary.slice(0, 500) : '',
-      start: isRecord(item.start) ? item.start : {}, end: isRecord(item.end) ? item.end : {},
+      start: calendarTimeProjection(item.start), end: calendarTimeProjection(item.end),
+      ...(typeof item.htmlLink === 'string' && item.htmlLink.length <= 512 ? { htmlLink: item.htmlLink } : {}),
       location: typeof item.location === 'string' ? item.location.slice(0, 500) : '',
       description: typeof item.description === 'string' ? item.description.slice(0, 1000) : '',
     } };
@@ -213,17 +239,31 @@ export async function readSourcePage(
     nextCursor: typeof page.nextPageToken === 'string' ? page.nextPageToken : null };
 }
 
+// Project only bounded provider time metadata, never arbitrary nested event properties.
+function calendarTimeProjection(value: unknown): Record<string, string> {
+  if (!isRecord(value)) return {};
+  const result: Record<string, string> = {};
+  for (const key of ['date', 'dateTime', 'timeZone']) {
+    if (value[key] !== undefined) {
+      if (typeof value[key] !== 'string' || value[key].length > (key === 'timeZone' ? 128 : 64)) throw new Error('calendar_time_invalid');
+      result[key] = value[key];
+    }
+  }
+  return result;
+}
+
 async function proxyRead(
   env: ConnectorEnv,
   providerFetch: typeof fetch,
   accountId: string,
   endpoint: string,
   parameters: Array<{ name: string; value: string; type: 'query' }>,
+  timeoutMs = 8_000,
 ): Promise<Record<string, unknown>> {
   const response = await providerFetch(new Request('https://backend.composio.dev/api/v3.1/tools/execute/proxy', {
     method: 'POST', headers: { 'x-api-key': env.COMPOSIO_API_KEY!, 'content-type': 'application/json', accept: 'application/json' },
     body: JSON.stringify({ connected_account_id: accountId, endpoint, method: 'GET', parameters }),
-    redirect: 'manual', signal: AbortSignal.timeout(8_000),
+    redirect: 'manual', signal: AbortSignal.timeout(timeoutMs),
   }));
   if (!response.ok) throw new Error('composio_proxy_unavailable');
   const outer = await boundedJson(response);
@@ -231,16 +271,34 @@ async function proxyRead(
   return outer.data;
 }
 
+// Call only after ownership, toolkit, scopes and ACTIVE state were verified.
+// These fixed Google GET endpoints use the selected connection, never Identity email.
+async function accountLabel(env: ConnectorEnv, providerFetch: typeof fetch,
+  provider: 'gmail' | 'googlecalendar' | 'instagram', accountId: string): Promise<Record<string, unknown>> {
+  try {
+    if (provider === 'instagram') {
+      const identity = await proxyRead(env, providerFetch, accountId, 'https://graph.instagram.com/v25.0/me', [{name:'fields',value:'id,username,account_type',type:'query'}]);
+      return typeof identity.username === 'string' && /^[A-Za-z0-9._]{1,30}$/u.test(identity.username) ? {accountLabel:{kind:'instagram_username',value:identity.username}} : {};
+    }
+    const data = await proxyRead(env, providerFetch, accountId, provider === 'gmail'
+      ? 'https://gmail.googleapis.com/gmail/v1/users/me/profile'
+      : 'https://www.googleapis.com/calendar/v3/calendars/primary', [], 750);
+    const value = provider === 'gmail' ? data.emailAddress : data.id;
+    if (typeof value !== 'string' || !value.trim() || value.length > 320 || /[\u0000-\u001f\u007f<>]/u.test(value)) return {};
+    return { accountLabel: { kind: provider === 'gmail' ? 'gmail_address' : 'primary_calendar', value } };
+  } catch { return {}; } // A missing display label must not become an invented identity.
+}
+
 async function readAccountState(
   env: ConnectorEnv,
   providerFetch: typeof fetch,
   subject: string,
-  provider: 'gmail' | 'googlecalendar',
+  provider: 'gmail' | 'googlecalendar' | 'instagram',
   accountId: string,
 ): Promise<'active' | 'pending' | 'terminal' | 'invalid' | 'unavailable'> {
   if (!/^ca_[A-Za-z0-9_-]{1,128}$/u.test(accountId)) return 'invalid';
-  const authConfigId = provider === 'gmail' ? env.GIGI_GMAIL_AUTH_CONFIG_ID : env.GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID;
-  const scopesRaw = provider === 'gmail' ? env.GIGI_GMAIL_APPROVED_SCOPES : env.GIGI_GOOGLECALENDAR_APPROVED_SCOPES;
+  const authConfigId = provider === 'instagram' ? env.GIGI_INSTAGRAM_AUTH_CONFIG_ID : provider === 'gmail' ? env.GIGI_GMAIL_AUTH_CONFIG_ID : env.GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID;
+  const scopesRaw = provider === 'instagram' ? env.GIGI_INSTAGRAM_APPROVED_SCOPES : provider === 'gmail' ? env.GIGI_GMAIL_APPROVED_SCOPES : env.GIGI_GOOGLECALENDAR_APPROVED_SCOPES;
   if (!authConfigId || !approvedScopes(provider, authConfigId, scopesRaw)) return 'invalid';
   let data: unknown;
   try {
@@ -265,8 +323,8 @@ async function readAccountState(
 }
 
 async function recoverDispatchedAccount(env: ConnectorEnv, providerFetch: typeof fetch, subject: string,
-  provider: 'gmail' | 'googlecalendar', row: { request_id: string; created_at?: string }): Promise<Record<string, unknown> | null> {
-  const authConfigId = provider === 'gmail' ? env.GIGI_GMAIL_AUTH_CONFIG_ID : env.GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID;
+  provider: 'gmail' | 'googlecalendar' | 'instagram', row: { request_id: string; created_at?: string }): Promise<Record<string, unknown> | null> {
+  const authConfigId = provider === 'instagram' ? env.GIGI_INSTAGRAM_AUTH_CONFIG_ID : provider === 'gmail' ? env.GIGI_GMAIL_AUTH_CONFIG_ID : env.GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID;
   if (!authConfigId || !row.created_at || !Number.isFinite(Date.parse(row.created_at))) return null;
   const owner = await composioUserId(subject);
   const url = new URL('https://backend.composio.dev/api/v3.1/connected_accounts');
@@ -295,16 +353,17 @@ async function recoverDispatchedAccount(env: ConnectorEnv, providerFetch: typeof
   if (state === 'invalid' || state === 'unavailable') return null;
   const nextStatus = state === 'active' ? 'active' : state === 'terminal' ? 'attention' : 'linked';
   const update = await env.DB!.prepare(
-    `UPDATE gigi_connection_attempts SET connected_account_id = ?, status = '${nextStatus}', reconnectable = ? WHERE subject = ? AND provider = ? AND request_id = ? AND status = 'dispatched' AND connected_account_id IS NULL`,
+    `UPDATE ${connectionTable(provider)} SET connected_account_id = ?, status = '${nextStatus}', reconnectable = ? WHERE subject = ? AND provider = ? AND request_id = ? AND status = 'dispatched' AND connected_account_id IS NULL`,
   ).bind(accountId, state === 'terminal' ? 1 : 0, subject, provider, row.request_id).run() as { meta?: { changes?: number } };
   if (update.meta?.changes !== 1) return null;
   return { provider, state: state === 'active' ? 'connected' : 'attention',
     connectedAccountId: accountId,
+    ...(state === 'active' ? await accountLabel(env, providerFetch, provider, accountId) : {}),
     ...(state === 'terminal' ? { reconnectable: true } : state === 'pending' ? { recovery: 'operator_review' } : {}) };
 }
 
 async function verifyComposioAccount(env: ConnectorEnv, providerFetch: typeof fetch, subject: string,
-  provider: 'gmail' | 'googlecalendar', accountId: string): Promise<boolean> {
+  provider: 'gmail' | 'googlecalendar' | 'instagram', accountId: string): Promise<boolean> {
   return await readAccountState(env, providerFetch, subject, provider, accountId) === 'active';
 }
 
@@ -318,10 +377,10 @@ async function beginLink(
   env: ConnectorEnv,
   providerFetch: typeof fetch,
   subject: string,
-  provider: 'gmail' | 'googlecalendar',
+  provider: 'gmail' | 'googlecalendar' | 'instagram',
 ): Promise<Response> {
-  const authConfigId = provider === 'gmail' ? env.GIGI_GMAIL_AUTH_CONFIG_ID : env.GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID;
-  const scopes = provider === 'gmail' ? env.GIGI_GMAIL_APPROVED_SCOPES : env.GIGI_GOOGLECALENDAR_APPROVED_SCOPES;
+  const authConfigId = provider === 'instagram' ? env.GIGI_INSTAGRAM_AUTH_CONFIG_ID : provider === 'gmail' ? env.GIGI_GMAIL_AUTH_CONFIG_ID : env.GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID;
+  const scopes = provider === 'instagram' ? env.GIGI_INSTAGRAM_APPROVED_SCOPES : provider === 'gmail' ? env.GIGI_GMAIL_APPROVED_SCOPES : env.GIGI_GOOGLECALENDAR_APPROVED_SCOPES;
   if (!authConfigId || !/^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$/u.test(authConfigId) || !approvedScopes(provider, authConfigId, scopes)) {
     return json({ error: 'unconfigured' }, 503);
   }
@@ -332,14 +391,14 @@ async function beginLink(
   }
   const requestId = input.requestId;
   const insertion = await env.DB!.prepare(
-    "INSERT OR IGNORE INTO gigi_connection_attempts (subject, provider, request_id, status, created_at, auth_config_id) VALUES (?, ?, ?, 'dispatched', ?, ?)",
+    `INSERT OR IGNORE INTO ${connectionTable(provider)} (subject, provider, request_id, status, created_at, auth_config_id) VALUES (?, ?, ?, 'dispatched', ?, ?)`,
   ).bind(subject, provider, requestId, new Date().toISOString(), authConfigId).run() as { meta?: { changes?: number } };
   let prior = await env.DB!.prepare(
-    'SELECT status, connected_account_id, redirect_url, expires_at FROM gigi_connection_attempts WHERE subject = ? AND provider = ? AND request_id = ?',
+    `SELECT status, connected_account_id, redirect_url, expires_at FROM ${connectionTable(provider)} WHERE subject = ? AND provider = ? AND request_id = ?`,
   ).bind(subject, provider, requestId).first() as { status: string; connected_account_id: string | null; redirect_url?: string; expires_at?: string; request_id?: string } | null;
   if (!prior && insertion.meta?.changes !== 1) {
     prior = await env.DB!.prepare(
-      "SELECT status, connected_account_id, redirect_url, expires_at, request_id FROM gigi_connection_attempts WHERE subject = ? AND provider = ? AND status IN ('dispatched', 'linked', 'active') ORDER BY created_at DESC LIMIT 1",
+      `SELECT status, connected_account_id, redirect_url, expires_at, request_id FROM ${connectionTable(provider)} WHERE subject = ? AND provider = ? AND status IN ('dispatched', 'linked', 'active') ORDER BY created_at DESC LIMIT 1`,
     ).bind(subject, provider).first() as typeof prior;
   }
   if (!prior) return json({ error: 'journal_unavailable' }, 503);
@@ -374,7 +433,7 @@ async function beginLink(
     return json({ error: 'provider_readback_invalid' }, 502);
   }
   const linked = await env.DB!.prepare(
-    "UPDATE gigi_connection_attempts SET connected_account_id = ?, redirect_url = ?, expires_at = ?, status = 'linked' WHERE subject = ? AND provider = ? AND request_id = ? AND status = 'dispatched' AND connected_account_id IS NULL",
+    `UPDATE ${connectionTable(provider)} SET connected_account_id = ?, redirect_url = ?, expires_at = ?, status = 'linked' WHERE subject = ? AND provider = ? AND request_id = ? AND status = 'dispatched' AND connected_account_id IS NULL`,
   ).bind(data.connected_account_id, data.redirect_url, data.expires_at, subject, provider, requestId).run() as { meta?: { changes?: number } };
   if (linked.meta?.changes !== 1) return json({ provider, status: 'readback_required', attemptId: requestId });
   return json({ provider, status: 'awaiting_consent', attemptId: requestId, connectedAccountId: data.connected_account_id,
@@ -391,10 +450,14 @@ function validConsentLink(url: unknown, expiresAt: unknown): url is string {
   } catch { return false; }
 }
 
-function approvedScopes(provider: 'gmail' | 'googlecalendar', authConfigId: string | undefined, raw: string | undefined): boolean {
+function approvedScopes(provider: 'gmail' | 'googlecalendar' | 'instagram', authConfigId: string | undefined, raw: string | undefined): boolean {
   if (!raw) return false;
   const scopes = raw.split(',').map((scope) => scope.trim()).filter(Boolean);
   if (scopes.length === 0 || scopes.length > 16 || new Set(scopes).size !== scopes.length) return false;
+  if (provider === 'instagram') {
+    if(authConfigId === SELECTED_INSTAGRAM_AUTH_CONFIG_ID) return scopes.length === SELECTED_INSTAGRAM_SCOPES.length && SELECTED_INSTAGRAM_SCOPES.every(scope => scopes.includes(scope));
+    return !!authConfigId && scopes.length === 2 && ['instagram_business_basic','instagram_business_content_publish'].every(scope => scopes.includes(scope));
+  }
   if (provider === 'gmail' && authConfigId === SELECTED_GMAIL_AUTH_CONFIG_ID) {
     return scopes.length === SELECTED_GMAIL_SCOPES.length && SELECTED_GMAIL_SCOPES.every((scope) => scopes.includes(scope));
   }
@@ -404,11 +467,13 @@ function approvedScopes(provider: 'gmail' | 'googlecalendar', authConfigId: stri
   return false;
 }
 
-async function authenticate(request: Request, env: ConnectorEnv, providerFetch: typeof fetch): Promise<string | null> {
+type Admission = { subject: string } | { error: 'session_expired' | 'access_denied' | 'provider_unavailable' | 'unconfigured'; status: number };
+
+async function authenticate(request: Request, env: ConnectorEnv, providerFetch: typeof fetch): Promise<Admission> {
   const token = request.headers.get('authorization')?.match(/^Bearer ([^\s]+)$/iu)?.[1];
-  if (!token || token.length > 4096) return null;
+  if (!token || token.length > 4096) return { error: 'session_expired', status: 401 };
   const allowlist = new Set((env.GIGI_ALLOWED_SUBJECTS ?? '').split(',').map((item) => item.trim()).filter(Boolean));
-  if (allowlist.size === 0) return null;
+  if (allowlist.size === 0) return { error: 'unconfigured', status: 503 };
   try {
     const response = await providerFetch(new Request(IDENTITY_USERINFO, {
       method: 'GET',
@@ -416,12 +481,19 @@ async function authenticate(request: Request, env: ConnectorEnv, providerFetch: 
       redirect: 'manual',
       signal: AbortSignal.timeout(8_000),
     }));
-    if (!response.ok) return null;
+    if (response.status === 401) return { error: 'session_expired', status: 401 };
+    if (response.status === 403) return { error: 'access_denied', status: 403 };
+    if (!response.ok) return { error: 'provider_unavailable', status: 503 };
     const data = await boundedJson(response);
-    if (!isRecord(data) || data.resource !== GIGI_RESOURCE || data.email_verified !== true ||
-      typeof data.sub !== 'string' || !allowlist.has(data.sub)) return null;
-    return data.sub;
-  } catch { return null; }
+    if (!isRecord(data) || typeof data.sub !== 'string' || !data.sub || typeof data.resource !== 'string') {
+      return { error: 'provider_unavailable', status: 503 };
+    }
+    // Valid Identity is not admission. Do not expose which policy dimension failed.
+    if (data.resource !== GIGI_RESOURCE || data.email_verified !== true || !allowlist.has(data.sub)) {
+      return { error: 'access_denied', status: 403 };
+    }
+    return { subject: data.sub };
+  } catch { return { error: 'provider_unavailable', status: 503 }; }
 }
 
 function json(value: unknown, status = 200): Response {
@@ -454,3 +526,5 @@ async function boundedJson(response: Request | Response): Promise<unknown> {
   for (const part of parts) { bytes.set(part, offset); offset += part.byteLength; }
   return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
 }
+
+function connectionTable(provider: 'gmail' | 'googlecalendar' | 'instagram') { return provider === 'instagram' ? 'gigi_instagram_connections' : 'gigi_connection_attempts'; }

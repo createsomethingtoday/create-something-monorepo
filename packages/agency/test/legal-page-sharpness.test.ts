@@ -36,7 +36,7 @@ test('preserves the Canon policy sources and Agency-specific legal boundary', ()
   assert.match(terms, /TermsOfServiceContent/);
   assert.match(terms, /property="agency"/);
   assert.match(terms, /domain="createsomething\.agency"/);
-  assert.match(terms, /contactEmail="legal@createsomething\.io"/);
+  assert.match(terms, /contactEmail="support@createsomething\.io"/);
   assert.match(terms, /Terms for using CREATE SOMETHING \.agency\./);
 });
 

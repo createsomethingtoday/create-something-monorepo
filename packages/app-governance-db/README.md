@@ -279,3 +279,23 @@ starting, blocking, reopening, and recording proof all write `workflow_actions`,
 `source_record_transfer_reviews` row `resolved`. None of those dashboard actions
 mutate Notion or create `source_record_atlas_bindings`; raw gap counts stay
 visible until the underlying source/map state is actually repaired.
+
+### Presence lifecycle and cost guard
+
+`PresenceHub` accepts sockets through Durable Object hibernation APIs and enumerates
+runtime-owned connections for each publish. It has no background timers. The
+receive-only live feed keeps the existing `hello` (with `recent`) and `event`
+message formats, authentication boundary, and named `hub` object. The last 50
+events are now persisted transactionally before fan-out so reconnect history
+survives hibernation/restart. This introduces bounded storage reads/writes per
+publish; D1 remains the authoritative audit record. Subscriber counts include
+open sockets that successfully accepted that publish.
+
+Validation: `node --test test/*.test.mjs` and `pnpm typecheck`. The presence tests
+use runtime/storage doubles to exercise reconstruction, concurrent publication,
+close/error handling, and failure-before-broadcast. They do not establish actual
+Cloudflare hibernation or measured bill reduction. After a separately approved
+deployment, verify an authenticated live feed still receives events, reconnects
+with history, and shows idle duration dropping in namespace metrics. No migration
+or binding change is required. Rollback is a redeploy of the prior Worker version;
+its unused `recent` storage value is harmless and need not be deleted.

@@ -2,33 +2,33 @@
   "id": "substrate:create-something:topology-diagnostics:internal",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-10-03T14:04:27.347Z",
+  "generatedAt": "2026-10-22T14:00:48.677Z",
   "summary": {
     "valueState": "connected_map_with_review_signals",
-    "nodes": 543,
-    "edges": 1122,
-    "mapped": 543,
+    "nodes": 555,
+    "edges": 1164,
+    "mapped": 555,
     "hardGapCount": 0,
     "reviewSignalCount": 6,
     "exactDuplicatePathCount": 0,
     "isolatedNodeCount": 0,
     "surfaceCounts": {
       "repo": 1,
-      "package": 68,
-      "app": 13,
-      "agent": 35,
+      "package": 70,
+      "app": 14,
+      "agent": 36,
       "mcp": 77,
       "client": 8,
-      "worker": 169,
+      "worker": 173,
       "doc": 6,
       "policy": 64,
-      "guide": 78,
+      "guide": 82,
       "config": 24
     },
     "tierCounts": {
-      "Mixed": 129,
-      "Judgment": 108,
-      "Automation": 278,
+      "Mixed": 136,
+      "Judgment": 109,
+      "Automation": 282,
       "Database": 28
     }
   },
@@ -60,11 +60,11 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Automation and Database balance",
-      "summary": "Automation has 278 record(s); Database has 28 record(s). This is a business-shape review signal, not a hard gap.",
+      "summary": "Automation has 282 record(s); Database has 28 record(s). This is a business-shape review signal, not a hard gap.",
       "evidence": [
-        "Automation=278",
+        "Automation=282",
         "Database=28",
-        "Total nodes=543"
+        "Total nodes=555"
       ],
       "nodeIds": [],
       "paths": [],
@@ -75,7 +75,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Worker surface concentration",
-      "summary": "169 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.",
+      "summary": "173 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.",
       "evidence": [
         "worker: packages/agency",
         "worker: packages/agency/workers/social-poster",
@@ -145,7 +145,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "worker surface review",
-      "summary": "169 record(s) are classified as worker.",
+      "summary": "173 record(s) are classified as worker.",
       "evidence": [
         "@create-something/agency: packages/agency",
         "social-poster-worker: packages/agency/workers/social-poster",
@@ -188,7 +188,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "guide surface review",
-      "summary": "78 record(s) are classified as guide.",
+      "summary": "82 record(s) are classified as guide.",
       "evidence": [
         "AGENCY_ARTICLE_IMAGE_WORKFLOW.md: docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md: docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
@@ -207,8 +207,8 @@
         "substrate:create-something:guide:docs-guides-antigravity-mcp-enablement-md",
         "substrate:create-something:guide:docs-guides-arena-taste-integration-md",
         "substrate:create-something:guide:docs-guides-atlas-linear-integration-md",
-        "substrate:create-something:guide:docs-guides-bounded-research-interrupt-runbook-md",
-        "substrate:create-something:guide:docs-guides-browser-proof-and-closeout-runbook-md"
+        "substrate:create-something:guide:docs-guides-atlas-substrate-agent-context-md",
+        "substrate:create-something:guide:docs-guides-bounded-research-interrupt-runbook-md"
       ],
       "paths": [
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
@@ -221,8 +221,8 @@
         "docs/guides/ANTIGRAVITY_MCP_ENABLEMENT.md",
         "docs/guides/ARENA_TASTE_INTEGRATION.md",
         "docs/guides/ATLAS_LINEAR_INTEGRATION.md",
-        "docs/guides/BOUNDED_RESEARCH_INTERRUPT_RUNBOOK.md",
-        "docs/guides/BROWSER_PROOF_AND_CLOSEOUT_RUNBOOK.md"
+        "docs/guides/ATLAS_SUBSTRATE_AGENT_CONTEXT.md",
+        "docs/guides/BOUNDED_RESEARCH_INTERRUPT_RUNBOOK.md"
       ],
       "nextAction": "Use group explanation before drawing product or business conclusions from this surface."
     },
@@ -274,7 +274,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "package surface review",
-      "summary": "68 record(s) are classified as package.",
+      "summary": "70 record(s) are classified as package.",
       "evidence": [
         "@create-something/components: .archive/components-deprecated",
         "@create-something/monorepo: ",

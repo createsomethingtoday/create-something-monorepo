@@ -87,7 +87,7 @@ This is YOUR capstone. Personalize it:
 
 ## Support
 
-Questions? Email micah@createsomething.io
+Questions? Email support@createsomething.io
 
 ---
 

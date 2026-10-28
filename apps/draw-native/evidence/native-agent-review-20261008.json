@@ -1,0 +1,87 @@
+{
+  "date": "2026-10-08",
+  "scope": "local synthetic development acceptance",
+  "baseCommit": "58a3e4ba6ba2539295048000bc1e3bb40c226435",
+  "nativeTests": {
+    "passed": 52,
+    "failed": 0,
+    "excluded": [
+      "LAN discovery integration"
+    ]
+  },
+  "canvasDomainTests": 54,
+  "fileAgentAndQueueTests": 14,
+  "svelte": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "nativeStaticBuild": "passed",
+  "nativeBinaryBuild": "passed",
+  "nativeProcessSmoke": {
+    "synthetic": true,
+    "binarySha256": "fc46f59c55071a26e3ef25b288720bfac7fbd605922dcf0efc7a19b1fc296fdd",
+    "firstProcessPreserved": true,
+    "secondProcessRejectedBeforeStateMutation": true,
+    "lockReleasedOnExit": true,
+    "reopenPreservesDocumentAndJournal": true,
+    "networkSockets": 0,
+    "stateMode": "0o600",
+    "homeMode": "0o700",
+    "nativeUIAccepted": false,
+    "realGrantActivated": false,
+    "providerRegistered": false,
+    "installedAppReplaced": false
+  },
+  "ui": {
+    "passed": true,
+    "transport": "mocked Tauri IPC, actual bundled Canvas UI and TypeScript operations",
+    "checks": [
+      "queued CAS revisions",
+      "native batch route",
+      "undo/redo",
+      "conflict drops dependent edits",
+      "durable history remains available after conflict",
+      "LAN-disabled status",
+      "read-only default",
+      "selected scope",
+      "owner approval",
+      "rejection",
+      "stale approval disabled",
+      "approved agent edit in shared undo/redo",
+      "revocation",
+      "wheel debounce blocks approval"
+    ]
+  },
+  "independentReview": "Main slice and final ownership/drop/process-smoke source delta cleared; no remaining local acceptance blocker",
+  "ground": {
+    "version": "0.5.0",
+    "source": "58d5ed035d936725d292e37ef38abf1ba3236b7c",
+    "sha256": "d218138f26ce176a0b2e70b6bc6b7785a74e79dc00a270759978eaafa3337776",
+    "check": "duplicates",
+    "root": "packages/mapping-canvas",
+    "analyzableChangedFiles": 11,
+    "coverage": "complete",
+    "outcome": "CLEAN",
+    "limitations": [
+      "Rust and Python outside scoped check",
+      "Full Canvas baseline contains unchanged openLegacy duplicate",
+      "Earlier mixed check was INCOMPLETE and is not counted as passed"
+    ]
+  },
+  "validators": {
+    "actualPrecommitHook": "passed before finalization; invoked again by final commit",
+    "stagedMcpCoverage": "passed",
+    "stagedLockfileSync": "no applicable changes",
+    "registryPolicy": "passed with existing naming warning"
+  },
+  "limits": [
+    "No actual native GUI acceptance",
+    "No real Claude Code, Codex or ChatGPT provider connection or registration",
+    "Only synthetic ephemeral grants tested",
+    "Network absence is a sampled process socket check, not a full network audit",
+    "Canvas only; Motion/assets and full project portability pending",
+    "No release, signing, deployment, public download edits or installed app replacement",
+    "Linear unavailable; no issue created or claimed"
+  ],
+  "worktreeDisposition": "preserved on codex/draw-offline-local-slice for native GUI/provider acceptance"
+}

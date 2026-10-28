@@ -60,6 +60,15 @@ function run(command, args, cwd, options = {}) {
     maxBuffer: 1024 * 1024 * 50,
     timeout: options.timeoutMs ?? 180_000
   });
+  if (options.groundOutcome && result.status !== 0 && !result.error && result.signal === null) {
+    // This wrapper is advisory. Retain structured findings/incompleteness from
+    // strict native exits, while still rejecting process/argument failures.
+    try {
+      const report = JSON.parse(result.stdout);
+      const expected = { FINDINGS: 1, INCOMPLETE: 2, NOT_APPLICABLE: 3 }[report.outcome];
+      if (expected !== undefined && result.status === expected) return result.stdout;
+    } catch { /* Fall through to the original command failure. */ }
+  }
   if (result.status !== 0) {
     const detail = `${result.stdout ?? ''}${result.stderr ?? ''}`.trim();
     throw new Error(`${command} ${args.join(' ')} failed${detail ? `:\n${detail}` : '.'}`);
@@ -287,29 +296,48 @@ function groundIgnorePatterns(root) {
   return [...new Set(patterns)];
 }
 
+// Rust glob::Pattern::matches grammar, including character classes and its
+// default separator behavior. Shared fixtures run in both Rust and this wrapper.
 export function matchesPathGlob(path, pattern) {
+  const chars = Array.from(pattern);
+  const literal = (c) => `\\u{${c.codePointAt(0).toString(16)}}`;
+  const invalid = () => { throw new Error(`Invalid Ground path glob ${JSON.stringify(pattern)}; escape a literal opening bracket as [[]`); };
   let source = '^';
-  for (let index = 0; index < pattern.length; index += 1) {
-    const character = pattern[index];
-    if (character === '*') {
-      if (pattern[index + 1] === '*') {
+  for (let index = 0; index < chars.length; index += 1) {
+    const c = chars[index];
+    if (c === '*') {
+      if (chars[index + 1] !== '*') { source += '.*'; continue; }
+      if (chars[index + 2] === '*' || (index > 0 && chars[index - 1] !== '/') ||
+          (index + 2 < chars.length && chars[index + 2] !== '/')) invalid();
+      index += 1;
+      if (chars[index + 1] === '/') {
         index += 1;
-        if (pattern[index + 1] === '/') {
-          index += 1;
-          source += '(?:.*/)?';
-        } else {
-          source += '.*';
-        }
-      } else {
-        source += '[^/]*';
+        // Rust's terminal recursive token also consumes a final filename.
+        source += index === chars.length - 1 ? '.*' : '(?:.*/)?';
       }
-    } else if (character === '?') {
-      source += '[^/]';
-    } else {
-      source += character.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
-    }
+      else source += '.*';
+    } else if (c === '?') {
+      source += '.';
+    } else if (c === '[') {
+      const negative = chars[index + 1] === '!';
+      const start = index + (negative ? 2 : 1);
+      // A closing bracket can be the first member, e.g. []] and [!]].
+      const end = chars.indexOf(']', start + 1);
+      if (end < 0) invalid();
+      let members = '';
+      for (let member = start; member < end; member += 1) {
+        if (member + 2 < end && chars[member + 1] === '-') {
+          if (chars[member].codePointAt(0) <= chars[member + 2].codePointAt(0)) {
+            members += `${literal(chars[member])}-${literal(chars[member + 2])}`;
+          }
+          member += 2;
+        } else members += literal(chars[member]);
+      }
+      source += members ? `[${negative ? '^' : ''}${members}]` : (negative ? '.' : '(?!)');
+      index = end;
+    } else source += literal(c);
   }
-  return new RegExp(`${source}$`).test(normalizePath(path));
+  return new RegExp(`${source}(?![\\s\\S])`, 'su').test(normalizePath(path));
 }
 
 function groundPolicyIgnored(root, target, file, patterns) {
@@ -442,6 +470,25 @@ function parseGroundJson(output) {
   return JSON.parse(output.slice(start, end + 1));
 }
 
+// Native verification status describes findings; completion is separate evidence.
+// In particular FAIL may be a fully completed scan with findings. Never infer
+// completion from an unrecognized/missing status or an advisory process exit.
+export function normalizeCheckCompletion(coverage) {
+  if (!coverage || typeof coverage !== 'object') return 'partial';
+  const { status, scan_complete: complete } = coverage;
+  if (status === 'partial' || status === 'failed') return status;
+  if (coverage.error_count > 0 || coverage.reason === 'batch_requires_explicit_module'
+      || coverage.reason === 'no_entry_points_provided') return 'failed';
+  if (coverage.excluded_changed_files?.some((file) => ['duplicate_analysis_incomplete',
+      'duplicate_analysis_failed', 'orphan_analysis_failed', 'file_unavailable'].includes(file.reason))) return 'failed';
+  if (coverage.unsupported_changed_files?.length > 0) return 'partial';
+  if (complete === false) return status === 'FAIL' || status === 'failed' ? 'failed' : 'partial';
+  if (status === 'TIMEOUT' || status === 'UNSUPPORTED') return 'partial';
+  if (['completed', 'partial', 'failed'].includes(status)) return status;
+  if (['PASS', 'FAIL', 'NOT_APPLICABLE'].includes(status) && complete === true) return 'completed';
+  return 'partial';
+}
+
 export function buildReceipt({
   root,
   base,
@@ -476,18 +523,29 @@ export function buildReceipt({
   const targets = packageRoots.map((path) => {
     const requiresCompletionEvidence = exceedsGroundScanLimit(resolve(root, path));
     const result = parseGroundJson(
-      run(groundBinary, ['diff', path, '--base', baseSha, '--checks', CHECKS.join(',')], root)
+      run(groundBinary, ['diff', path, '--base', baseSha, '--checks', CHECKS.join(',')], root, { groundOutcome: true })
     );
     const duplicateCompletion = result.check_coverage?.duplicates;
-    const duplicateStatus = ['completed', 'partial', 'failed'].includes(duplicateCompletion?.status)
-      ? duplicateCompletion.status
-      : requiresCompletionEvidence
-        ? 'partial'
-        : 'completed';
+    let duplicateStatus = normalizeCheckCompletion(duplicateCompletion);
     const orphanCompletion = result.check_coverage?.orphans;
-    const orphanStatus = ['completed', 'partial', 'failed'].includes(orphanCompletion?.status)
-      ? orphanCompletion.status
-      : 'completed';
+    let orphanStatus = normalizeCheckCompletion(orphanCompletion);
+    const completionDiagnostics = [];
+    const knownOutcomes = ['CLEAN', 'FINDINGS', 'INCOMPLETE', 'NOT_APPLICABLE'];
+    const knownVerification = ['PASS', 'FAIL', 'NOT_APPLICABLE', 'TIMEOUT', 'UNSUPPORTED'];
+    const unknownOutcome = result.outcome !== undefined && !knownOutcomes.includes(result.outcome);
+    const unknownVerification = result.verification_status !== undefined && !knownVerification.includes(result.verification_status);
+    const incomplete = result.outcome === 'INCOMPLETE' || ['TIMEOUT', 'UNSUPPORTED'].includes(result.verification_status);
+    if (unknownOutcome || unknownVerification) completionDiagnostics.push('unknown_native_completion_contract');
+    if (incomplete && duplicateStatus === 'completed' && orphanStatus === 'completed') {
+      completionDiagnostics.push('native_incomplete_contradicts_check_completion');
+    }
+    if (result.outcome === 'CLEAN' && result.verification_status !== undefined && result.verification_status !== 'PASS') {
+      completionDiagnostics.push('native_clean_contradicts_verification_status');
+    }
+    if (completionDiagnostics.length > 0) {
+      if (duplicateStatus === 'completed') duplicateStatus = 'partial';
+      if (orphanStatus === 'completed') orphanStatus = 'partial';
+    }
     const duplicateReportedFiles = Array.isArray(duplicateCompletion?.analyzed_changed_files)
       ? duplicateCompletion.analyzed_changed_files
       : requiresCompletionEvidence
@@ -560,7 +618,10 @@ export function buildReceipt({
     return {
       path,
       package_name: packageName(root, path),
+      native_outcome: result.outcome ?? null,
+      native_verification_status: result.verification_status ?? null,
       coverage: {
+        completion_diagnostics: completionDiagnostics,
         discovered_changed_files: files.filter((file) => file.startsWith(`${path}/`)).length,
         analyzable_changed_files: analyzedChangedFiles.length,
         analyzed_changed_files: analyzedChangedFiles,

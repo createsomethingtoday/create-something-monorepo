@@ -1,4 +1,4 @@
-import type { AliasType, CreatorLookupValue, DocumentCountRow, SlugAliasInput, TemplateDocumentInput, TemplateImageSourceStats } from './types.js';
+import type { AliasType, CreatorLookupValue, DocumentCountRow, SlugAliasInput, TemplateDocumentInput, TemplateDemoSignalStats, TemplateImageSourceStats } from './types.js';
 import type { WebflowDesignerAvatarRecord, WebflowTemplateImageRecord } from './webflow.js';
 import { chunk, nowIso } from './utils.js';
 
@@ -139,12 +139,13 @@ const UPSERT_TEMPLATE_SQL = `
     marketplace_status,
     source_last_modified_time,
     synced_at,
+    listing_confirmed,
     category_groups_text,
     child_categories_text,
     styles_text,
     tags_text
   ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
   )
   ON CONFLICT(id) DO UPDATE SET
     template_slug = excluded.template_slug,
@@ -152,6 +153,11 @@ const UPSERT_TEMPLATE_SQL = `
     listing_url = excluded.listing_url,
     preview_url = excluded.preview_url,
     website_url = excluded.website_url,
+    -- Demo signals describe one specific demo site: drop them when the URL changes so the
+    -- next refresh re-fetches instead of serving a signature of the former demo for 30 days.
+    demo_signals_json = CASE WHEN excluded.website_url IS template_documents.website_url THEN template_documents.demo_signals_json ELSE NULL END,
+    demo_signals_synced_at = CASE WHEN excluded.website_url IS template_documents.website_url THEN template_documents.demo_signals_synced_at ELSE NULL END,
+    demo_signals_attempted_at = CASE WHEN excluded.website_url IS template_documents.website_url THEN template_documents.demo_signals_attempted_at ELSE NULL END,
     mrp_id = excluded.mrp_id,
     creator_name = excluded.creator_name,
     creator_record_id = excluded.creator_record_id,
@@ -229,6 +235,7 @@ const UPSERT_TEMPLATE_SQL = `
     marketplace_status = excluded.marketplace_status,
     source_last_modified_time = excluded.source_last_modified_time,
     synced_at = excluded.synced_at,
+    listing_confirmed = COALESCE(excluded.listing_confirmed, template_documents.listing_confirmed),
     category_groups_text = excluded.category_groups_text,
     child_categories_text = excluded.child_categories_text,
     styles_text = excluded.styles_text,
@@ -631,6 +638,7 @@ export async function upsertTemplateDocuments(db: D1Database, documents: Templat
         document.marketplaceStatus,
         document.sourceLastModifiedTime,
         document.syncedAt,
+        document.listingConfirmed === null ? null : document.listingConfirmed ? 1 : 0,
         document.categoryGroups.join(' '),
         document.childCategories.join(' '),
         document.styles.join(' '),
@@ -1729,6 +1737,24 @@ export async function filterMissingOrStaleTemplateLookupTargets(
   });
 }
 
+// Rows indexed without a confirmed live listing: the gate failed open (lookup
+// error, or the guard kept the batch), or the row predates listing_confirmed.
+// Newest template first, because a fresh submission is the common case and the
+// one creators notice; least-recently synced first within a day, so the pool
+// rotates instead of re-checking the same rows every run.
+export async function listUnconfirmedListingTemplateIds(db: D1Database, limit: number): Promise<string[]> {
+  const result = await db
+    .prepare(
+      `SELECT id FROM template_documents
+       WHERE listing_confirmed IS NULL OR listing_confirmed = 0
+       ORDER BY COALESCE(published_date, '') DESC, synced_at ASC
+       LIMIT ?`,
+    )
+    .bind(limit)
+    .all<{ id: string }>();
+  return (result.results ?? []).map((row) => row.id);
+}
+
 export async function recordSyncSummary(db: D1Database, summary: unknown, key: string): Promise<void> {
   await db
     .prepare(
@@ -1825,5 +1851,107 @@ export async function healthCounts(db: D1Database): Promise<{ documents: number;
     documents: Number(documents?.total ?? 0),
     fts_rows: Number(ftsRows?.total ?? 0),
     aliases: Number(aliases?.total ?? 0),
+  };
+}
+
+export interface TemplateDemoSignalRow {
+  id: string;
+  template_slug: string;
+  website_url: string;
+}
+
+export interface TemplateDemoSignalUpdateInput {
+  id: string;
+  /** Stored only on success; a failed attempt keeps the previous signals. */
+  signalsJson: string | null;
+  syncedAt: string | null;
+  attemptedAt: string;
+}
+
+const DEMO_SIGNAL_ROW_SELECT = `SELECT id, template_slug, website_url
+  FROM template_documents`;
+const DEMO_SIGNAL_ELIGIBLE_WHERE = `website_url LIKE 'http%'`;
+const DEMO_SIGNAL_SLUG_LOOKUP_BATCH_SIZE = 90;
+
+export async function listTemplateDemoSignalRows(
+  db: D1Database,
+  limit: number,
+  templateSlugs: string[] = [],
+  options: { retryBefore: string; refreshBefore: string },
+): Promise<TemplateDemoSignalRow[]> {
+  const uniqueTemplateSlugs = Array.from(new Set(templateSlugs.map((slug) => slug.trim()).filter(Boolean)));
+  if (uniqueTemplateSlugs.length > 0) {
+    // D1 allows at most 100 bound parameters per statement; chunk the IN list
+    // so a long explicit slug list cannot turn into a 500 before any fetch.
+    const rows: TemplateDemoSignalRow[] = [];
+    for (const slugBatch of chunk(uniqueTemplateSlugs, DEMO_SIGNAL_SLUG_LOOKUP_BATCH_SIZE)) {
+      const remaining = limit - rows.length;
+      if (remaining <= 0) break;
+      const result = await db
+        .prepare(
+          `${DEMO_SIGNAL_ROW_SELECT}
+           WHERE ${DEMO_SIGNAL_ELIGIBLE_WHERE}
+             AND template_slug IN (${placeholderList(slugBatch.length)})
+           LIMIT ?`,
+        )
+        .bind(...slugBatch, remaining)
+        .all<TemplateDemoSignalRow>();
+      rows.push(...(result.results ?? []));
+    }
+    return rows;
+  }
+
+  const result = await db
+    .prepare(
+      `${DEMO_SIGNAL_ROW_SELECT}
+       WHERE ${DEMO_SIGNAL_ELIGIBLE_WHERE}
+         AND (demo_signals_attempted_at IS NULL OR demo_signals_attempted_at < ?)
+         AND (demo_signals_synced_at IS NULL OR demo_signals_synced_at < ?)
+       ORDER BY
+         CASE WHEN demo_signals_attempted_at IS NULL THEN 0 ELSE 1 END,
+         is_featured DESC,
+         COALESCE(popularity_score, 0) DESC,
+         id
+       LIMIT ?`,
+    )
+    .bind(options.retryBefore, options.refreshBefore, limit)
+    .all<TemplateDemoSignalRow>();
+  return result.results ?? [];
+}
+
+/** Returns the number of rows that received new signals. */
+export async function updateTemplateDemoSignals(db: D1Database, updates: TemplateDemoSignalUpdateInput[]): Promise<number> {
+  let updated = 0;
+  for (const batch of chunk(updates, 40)) {
+    await db.batch(
+      batch.map((update) =>
+        update.signalsJson === null
+          ? db.prepare('UPDATE template_documents SET demo_signals_attempted_at = ? WHERE id = ?').bind(update.attemptedAt, update.id)
+          : db
+              .prepare(
+                'UPDATE template_documents SET demo_signals_json = ?, demo_signals_synced_at = ?, demo_signals_attempted_at = ? WHERE id = ?',
+              )
+              .bind(update.signalsJson, update.syncedAt, update.attemptedAt, update.id),
+      ),
+    );
+    updated += batch.filter((update) => update.signalsJson !== null).length;
+  }
+  return updated;
+}
+
+export async function templateDemoSignalStats(db: D1Database): Promise<TemplateDemoSignalStats> {
+  const row = await db
+    .prepare(
+      `SELECT
+         SUM(CASE WHEN ${DEMO_SIGNAL_ELIGIBLE_WHERE} THEN 1 ELSE 0 END) AS eligible_records,
+         SUM(CASE WHEN demo_signals_json IS NOT NULL THEN 1 ELSE 0 END) AS records_with_signals,
+         SUM(CASE WHEN demo_signals_attempted_at IS NOT NULL THEN 1 ELSE 0 END) AS attempted_records
+       FROM template_documents`,
+    )
+    .first<TemplateDemoSignalStats>();
+  return {
+    eligible_records: Number(row?.eligible_records ?? 0),
+    records_with_signals: Number(row?.records_with_signals ?? 0),
+    attempted_records: Number(row?.attempted_records ?? 0),
   };
 }

@@ -1,5 +1,7 @@
 export const sections = [
   { id: 'overview', label: 'Overview' },
+  { id: 'music', label: 'Music library' },
+  { id: 'social', label: 'Instagram drafts' },
   { id: 'gigs', label: 'Gigs & shifts' },
   { id: 'schedule', label: 'Schedule' },
   { id: 'contacts', label: 'People' },
@@ -18,7 +20,7 @@ export const sections = [
 ];
 
 export const fields = {
-  gigs: ['Status', 'Type', 'Date', 'Call Time', 'Set Time', 'Fee', 'Rate Type', 'Hours', 'Lead Source', 'Requirements'],
+  gigs: ['Status', 'Work kind', 'Type', 'Date', 'Call Time', 'Set Time', 'Fee', 'Rate Type', 'Hours', 'Lead Source', 'Requirements'],
   schedule: ['Date', 'Type', 'Availability', 'All Day', 'Confirmed'],
   contacts: ['Type', 'Role', 'Email', 'Phone', 'Instagram', 'Preferred Channel', 'Status', 'Rate Notes'],
   companies: ['Type', 'Status', 'Website', 'Instagram', 'Email', 'Phone'],
@@ -36,7 +38,7 @@ export const moneyFields = new Set(['Fee', 'Amount', 'Default Day Rate', 'Defaul
 export const numericFields = new Set(['Hours', 'Estimated Time', 'Tax Set-Aside Percentage', 'Capacity', 'Default Hours']);
 export const booleanFields = new Set(['notes.Pinned', 'gigs.Promotable', 'finances.Deductible', 'finances.Recurring', 'documents.Requires Signature', 'documents.Confidential', 'schedule.All Day', 'schedule.Confirmed', 'tags.Active', 'services.Active']);
 export const supportedCurrencies = new Set(['USD', 'CAD', 'EUR', 'GBP']);
-const options = { 'finances.Direction': ['Income', 'Expense'], 'finances.Status': ['Expected', 'Invoiced', 'Paid', 'Overdue'] };
+const options = { 'gigs.Work kind': ['Performance', 'Crew / work', 'Other'], 'finances.Direction': ['Income', 'Expense'], 'finances.Status': ['Expected', 'Invoiced', 'Paid', 'Overdue'] };
 export const fieldOptions = (entity, field) => options[`${entity}.${field}`] || null;
 
 export function listFrom(result) {
@@ -114,11 +116,15 @@ export function linkInput(values, fromEntity, fromId) {
 export function sourcePreview(source) {
   const data = source?.preview || {};
   const names = source?.provider === 'gmail' ? [['Sender', data.from], ['Excerpt', data.snippet]] : source?.provider === 'googlecalendar' ? [['Location', data.location], ['Description', data.description]] : [];
+  if (source?.htmlLink) names.push(['Provider reference', source.htmlLink]);
+  if (source?.calendarTiming?.start?.timeZone) names.push(['Original time zone', source.calendarTiming.start.timeZone]);
   return names.filter(([, value]) => typeof value === 'string' && value.trim()).map(([label, value]) => ({ label, value: value.trim() }));
 }
 
+export const sourceSessionBlocked = source => ['session_busy', 'session_lock_unverified'].includes(source?.detail);
+
 export function sourceCanBegin(source) {
-  return source?.state === 'disconnected' || source?.state === 'attention' && source.reconnectable === true && !sourceNeedsOperatorReview(source);
+  return !sourceSessionBlocked(source) && (source?.state === 'disconnected' || source?.state === 'attention' && source.reconnectable === true && !sourceNeedsOperatorReview(source));
 }
 
 export function sourceNeedsOperatorReview(source) {

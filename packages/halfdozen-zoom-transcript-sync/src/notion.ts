@@ -1,9 +1,12 @@
+import { atOrAfter, rolloutCutoff } from './rollout';
+import { writeInlineTranscript } from './inline-transcript';
+import { type TranscriptPlan, type WriteJournal } from './indexed-transcript';
+import { Gate, GATE_FIELDS, gateCreationProperties, gateToken, propertyText } from './readiness-gate';
 import type { Env, NotionPageSummary, NotionWriteResult, ParsedTranscript, TranscriptCandidate } from './types';
 
 const NOTION_API_BASE = 'https://api.notion.com/v1';
 const NOTION_VERSION = '2022-06-28';
 const MAX_RICH_TEXT_CONTENT = 1900;
-const MAX_BLOCKS_PER_REQUEST = 100;
 const DEFAULT_STATUS = 'Active';
 const DEFAULT_SOURCE = 'Internal';
 const DEFAULT_TYPE = 'Meeting';
@@ -35,12 +38,15 @@ interface HubToolResult {
   structuredContent?: Record<string, unknown>;
 }
 
-interface NotionTransport {
+export interface NotionTransport {
   queryDatabase(filter: unknown, pageSize: number): Promise<QueryResult>;
   getPage(pageId: string): Promise<PageObject>;
   createPage(properties: Record<string, unknown>): Promise<PageObject>;
   updatePage(pageId: string, properties: Record<string, unknown>): Promise<PageObject>;
-  appendBlocks(blockId: string, children: BlockObject[]): Promise<void>;
+  appendBlocks(blockId: string, children: BlockObject[], after?: string): Promise<void>;
+  getBlock(blockId: string): Promise<PageObject>;
+  updateBlock(blockId: string, block: BlockObject): Promise<void>;
+  archiveBlock(blockId: string): Promise<void>;
   listBlockChildren(blockId: string, startCursor?: string): Promise<BlockListResult>;
 }
 
@@ -48,52 +54,113 @@ export async function syncTranscriptToNotion(
   env: Env,
   candidate: TranscriptCandidate,
   parsedTranscript: ParsedTranscript,
-  transcriptHash: string,
+  plan: TranscriptPlan,
+  journal: WriteJournal,
   existingPageHint?: { pageId: string; pageUrl: string | null } | null,
+  allowReplacement = false,
 ): Promise<NotionWriteResult> {
+  const cutoff = rolloutCutoff(env);
+  if (resolveWriteMode(env) === 'hub') throw new Error('Inline projection requires direct Notion transport');
   const notion = createNotionTransport(env);
+  if (existingPageHint && !allowReplacement) {
+    const prior = await notion.getPage(existingPageHint.pageId);
+    if (prior.archived || prior.in_trash) throw new Error('Archived page replacement requires explicit replay');
+  }
   const existing = await resolveExistingMeetingPage(notion, candidate, existingPageHint);
-  const properties = buildPageProperties(env, candidate, parsedTranscript);
-  const transcriptBlocks = buildTranscriptBlocks(parsedTranscript);
-
-  if (!existing) {
+  if (existing && !atOrAfter(existing.createdTime, cutoff)) {
+    throw new Error('Existing Notion page is outside the forward-only rollout boundary');
+  }
+  if (existing && !allowReplacement) {
+    const owned = await env.DB.prepare('SELECT page_id FROM transcript_inline_projection WHERE page_id = ?')
+      .bind(existing.id).first();
+    if (!owned) throw new Error('Existing untracked page requires explicit replay');
+  }
+  const gated = env.NOTION_TRANSCRIPT_GATE_ENABLED === 'true';
+  const properties = { ...buildPageProperties(env, candidate, parsedTranscript), ...(gated ? gateCreationProperties(plan.version) : {}) };
+  await journal.assertOwner();
+  let pageId: string;
+  let pageUrl: string;
+  let managed = gated && !existing;
+  if (existing) {
+    pageId = existing.id;
+    pageUrl = existing.url;
+    managed = !!propertyText((await notion.getPage(pageId)).properties[GATE_FIELDS.current])
+      || !!await env.DB.prepare('SELECT page_id FROM transcript_gate_intent WHERE page_id = ?').bind(pageId).first();
+    // Existing lifecycle properties belong to operators and downstream workflows.
+    // Source corrections update only projection-owned text and preserve originals.
+  } else {
+    // Reserve once before create. A timeout must resolve through the existing-page query.
+    let creationKey = `meeting-page:${candidate.canonicalMeetingKey}:${candidate.meetingDate}`;
+    if (existingPageHint) {
+      const prior = await notion.getPage(existingPageHint.pageId);
+      if (prior.archived || prior.in_trash) {
+        if (!allowReplacement) throw new Error('Archived page replacement requires explicit replay');
+        creationKey += `:replacement:${existingPageHint.pageId}`;
+      }
+    }
+    if (!await journal.reserve(creationKey)) {
+      throw new Error('Uncertain Notion page creation requires reconciliation');
+    }
+    await journal.assertOwner();
     const page = await notion.createPage(properties);
-    if (!page || typeof page.id !== 'string') {
-      throw new Error(`Unexpected create_page response: ${safeJson(page)}`);
-    }
-    if (transcriptBlocks.length > 0) {
-      await appendBatchedBlocks(notion, page.id, transcriptBlocks);
-    }
-    return {
-      pageId: page.id,
-      pageUrl: page.url ?? notionUrl(page.id),
-      action: 'created',
-    };
+    if (!page || typeof page.id !== 'string') throw new Error('Invalid page creation receipt');
+    pageId = page.id;
+    pageUrl = page.url ?? notionUrl(page.id);
   }
+  const gate = managed ? new Gate(env.DB, notion, journal, pageId) : null;
+  // Resolve any uncertain property write before a newer projection can advance.
+  await gate?.reconcile();
+  const indexBlockId = await writeInlineTranscript(env.DB, {
+    list: (id) => listAllBlocks(notion, id),
+    append: (id, blocks, after) => notion.appendBlocks(id, blocks, after),
+    get: id => notion.getBlock(id),
+    update: (id, block) => notion.updateBlock(id, block),
+    archive: id => notion.archiveBlock(id),
+  }, journal, pageId, parsedTranscript, plan, undefined, gate
+    ? (version, generation, writing) => gate.prepare(gateToken(version, generation), writing) : undefined);
+  const projection = gate ? await env.DB.prepare('SELECT generation FROM transcript_inline_projection WHERE page_id = ? AND version = ? AND phase = ?')
+    .bind(pageId, plan.version, 'complete').first<{ generation: number }>() : null;
+  if (gate && !projection) throw Error('Missing complete readiness projection');
+  return { pageId, pageUrl, action: existing ? 'updated' : 'created', indexBlockId,
+    ...(projection ? { gateVersion: gateToken(plan.version, projection.generation) } : {}) };
+}
 
-  await notion.updatePage(existing.id, properties);
-  const existingBodyText = await getAllBlockText(notion, existing.id);
-  const existingNormalized = normalizeComparableText(existingBodyText);
-  const transcriptNormalized = normalizeComparableText(parsedTranscript.plainText);
+export async function invalidateNotionReadiness(env: Env, pageId: string, journal: WriteJournal): Promise<void> {
+  if (env.NOTION_TRANSCRIPT_GATE_ENABLED !== 'true'
+    && !await env.DB.prepare('SELECT page_id FROM transcript_gate_intent WHERE page_id = ?').bind(pageId).first()) return;
+  await new Gate(env.DB, createNotionTransport(env), journal, pageId).invalidate();
+}
 
-  if (transcriptNormalized.length > 120 && existingNormalized.includes(transcriptNormalized.slice(0, Math.min(400, transcriptNormalized.length)))) {
-    return {
-      pageId: existing.id,
-      pageUrl: existing.url,
-      action: 'skipped',
-      reason: `Transcript hash ${transcriptHash} already present in page body`,
-    };
-  }
-
-  if (transcriptBlocks.length > 0) {
-    await appendBatchedBlocks(notion, existing.id, transcriptBlocks);
-  }
-
-  return {
-    pageId: existing.id,
-    pageUrl: existing.url,
-    action: 'updated',
+export async function publishNotionReadiness(env: Env, write: NotionWriteResult, journal: WriteJournal): Promise<void> {
+  if (!write.gateVersion || !write.indexBlockId) return;
+  const fence = journal.projectionFence?.();
+  if (!fence) throw Error('Readiness publication requires an ingestion fence');
+  const assertReady = async () => {
+    await journal.assertOwner();
+    const row = await env.DB.prepare(`SELECT p.version, p.generation FROM transcript_inline_projection p
+      JOIN transcript_ingestion i ON i.page_id = p.page_id
+      WHERE p.page_id = ? AND p.phase = 'complete' AND i.meeting_key = ? AND i.selected_key = ?
+      AND i.owner = ? AND i.version = p.version AND i.ready_version = p.version AND i.index_block_id = ?`)
+      .bind(write.pageId, fence.key, fence.selected, fence.owner, write.indexBlockId).first<{ version: string; generation: number }>();
+    if (!row || gateToken(row.version, row.generation) !== write.gateVersion) throw Error('Readiness publication fence changed');
   };
+  await new Gate(env.DB, createNotionTransport(env), journal, write.pageId).publish(write.gateVersion, write.indexBlockId, assertReady);
+}
+
+async function listAllBlocks(notion: NotionTransport, parent: string): Promise<BlockObject[]> {
+  const blocks: BlockObject[] = [];
+  let cursor: string | undefined;
+  const seen = new Set<string>();
+  do {
+    const response = await notion.listBlockChildren(parent, cursor);
+    blocks.push(...response.results);
+    if (response.has_more && (!response.next_cursor || seen.has(response.next_cursor))) {
+      throw new Error('Incomplete Notion pagination');
+    }
+    cursor = response.has_more ? response.next_cursor! : undefined;
+    if (cursor) seen.add(cursor);
+  } while (cursor);
+  return blocks;
 }
 
 async function resolveExistingMeetingPage(
@@ -102,8 +169,9 @@ async function resolveExistingMeetingPage(
   existingPageHint?: { pageId: string; pageUrl: string | null } | null,
 ): Promise<NotionPageSummary | null> {
   if (existingPageHint) {
-    const hintedPage = toPageSummary(await notion.getPage(existingPageHint.pageId));
-    if (isMatchingMeetingPageHint(hintedPage, candidate)) {
+    const hintedObject = await notion.getPage(existingPageHint.pageId);
+    const hintedPage = toPageSummary(hintedObject);
+    if (!hintedObject.archived && !hintedObject.in_trash && isMatchingMeetingPageHint(hintedPage, candidate)) {
       return {
         ...hintedPage,
         url: existingPageHint.pageUrl ?? hintedPage.url,
@@ -140,6 +208,7 @@ async function findExistingMeetingPage(
       5,
     );
 
+    if (directUrlMatch.has_more) throw new Error('Ambiguous paginated Notion page match');
     const matched = pickSourceUrlMatch(directUrlMatch.results, candidate);
     if (matched) return matched;
   }
@@ -160,20 +229,17 @@ async function findExistingMeetingPage(
     10,
   );
 
+  if (titleDateMatch.has_more) throw new Error('Ambiguous paginated Notion page match');
   return pickTitleDateMatch(titleDateMatch.results, candidate);
 }
 
 function pickSourceUrlMatch(pages: PageObject[], candidate: TranscriptCandidate): NotionPageSummary | null {
   if (!candidate.sourceUrl) return null;
 
-  for (const page of pages) {
-    const summary = toPageSummary(page);
-    if (summary.sourceUrl === candidate.sourceUrl && summary.date === candidate.meetingDate) {
-      return summary;
-    }
-  }
-
-  return null;
+  const matches = pages.map(toPageSummary).filter(summary =>
+    summary.sourceUrl === candidate.sourceUrl && summary.date === candidate.meetingDate);
+  if (matches.length > 1) throw new Error('Ambiguous Notion source URL match');
+  return matches[0] ?? null;
 }
 
 function pickTitleDateMatch(pages: PageObject[], candidate: TranscriptCandidate): NotionPageSummary | null {
@@ -185,14 +251,16 @@ function pickTitleDateMatch(pages: PageObject[], candidate: TranscriptCandidate)
     return null;
   }
 
-  const exactSourceUrl = candidate.sourceUrl
-    ? matchingPages.find((summary) => summary.sourceUrl === candidate.sourceUrl) ?? null
-    : null;
+  const exactMatches = matchingPages.filter(summary => summary.sourceUrl === candidate.sourceUrl);
+  if (exactMatches.length > 1) throw new Error('Ambiguous Notion title/date match');
+  const exactSourceUrl = candidate.sourceUrl ? exactMatches[0] ?? null : null;
   if (exactSourceUrl) {
     return exactSourceUrl;
   }
 
-  const emptySourceUrl = matchingPages.find((summary) => !summary.sourceUrl);
+  const emptyMatches = matchingPages.filter(summary => !summary.sourceUrl);
+  if (emptyMatches.length > 1) throw new Error('Ambiguous legacy Notion page match');
+  const emptySourceUrl = emptyMatches[0];
   if (emptySourceUrl) {
     return emptySourceUrl;
   }
@@ -205,7 +273,8 @@ function pickTitleDateMatch(pages: PageObject[], candidate: TranscriptCandidate)
 }
 
 function isMatchingMeetingPageHint(summary: NotionPageSummary, candidate: TranscriptCandidate): boolean {
-  return summary.title === candidate.meetingTitle && summary.date === candidate.meetingDate;
+  return summary.title === candidate.meetingTitle && summary.date === candidate.meetingDate
+    && (!hasOccurrenceFragment(summary.sourceUrl) || summary.sourceUrl === candidate.sourceUrl);
 }
 
 function hasOccurrenceFragment(sourceUrl: string | null): boolean {
@@ -271,116 +340,6 @@ function buildPageProperties(
   return properties;
 }
 
-function buildTranscriptBlocks(parsedTranscript: ParsedTranscript): BlockObject[] {
-  if (!parsedTranscript.plainText.trim()) {
-    return [];
-  }
-
-  const blocks: BlockObject[] = [
-    {
-      object: 'block',
-      type: 'heading_3',
-      heading_3: {
-        rich_text: [
-          {
-            type: 'text',
-            text: { content: '📝 FULL TRANSCRIPT' },
-          },
-        ],
-      },
-    },
-  ];
-
-  if (parsedTranscript.segments.length > 0) {
-    for (const segment of parsedTranscript.segments) {
-      blocks.push({
-        object: 'block',
-        type: 'heading_3',
-        heading_3: {
-          rich_text: [
-            {
-              type: 'text',
-              text: { content: segment.timestamp },
-            },
-          ],
-        },
-      });
-
-      for (const chunk of chunkText(segment.text)) {
-        blocks.push({
-          object: 'block',
-          type: 'paragraph',
-          paragraph: {
-            rich_text: [
-              {
-                type: 'text',
-                text: { content: chunk },
-              },
-            ],
-          },
-        });
-      }
-    }
-
-    return blocks;
-  }
-
-  for (const chunk of chunkText(parsedTranscript.plainText)) {
-    blocks.push({
-      object: 'block',
-      type: 'paragraph',
-      paragraph: {
-        rich_text: [
-          {
-            type: 'text',
-            text: { content: chunk },
-          },
-        ],
-      },
-    });
-  }
-
-  return blocks;
-}
-
-async function appendBatchedBlocks(notion: NotionTransport, pageId: string, blocks: BlockObject[]): Promise<void> {
-  for (let cursor = 0; cursor < blocks.length; cursor += MAX_BLOCKS_PER_REQUEST) {
-    const batch = blocks.slice(cursor, cursor + MAX_BLOCKS_PER_REQUEST);
-    await notion.appendBlocks(pageId, batch);
-  }
-}
-
-async function getAllBlockText(notion: NotionTransport, blockId: string): Promise<string> {
-  const parts: string[] = [];
-  let cursor: string | undefined;
-
-  do {
-    const response = await notion.listBlockChildren(blockId, cursor);
-    for (const block of response.results) {
-      const text = extractBlockText(block);
-      if (text) parts.push(text);
-
-      if (block.has_children === true && typeof block.id === 'string') {
-        const childText = await getAllBlockText(notion, block.id);
-        if (childText) parts.push(childText);
-      }
-    }
-    cursor = response.has_more ? response.next_cursor ?? undefined : undefined;
-  } while (cursor);
-
-  return parts.join('\n');
-}
-
-function extractBlockText(block: BlockObject): string {
-  const type = typeof block.type === 'string' ? block.type : '';
-  const typed = block[type] as { rich_text?: Array<{ plain_text?: string; text?: { content?: string } }> } | undefined;
-  const richText = Array.isArray(typed?.rich_text) ? typed.rich_text : [];
-  return richText
-    .map((entry) => entry.plain_text ?? entry.text?.content ?? '')
-    .join('')
-    .trim();
-}
-
 function toPageSummary(page: PageObject): NotionPageSummary {
   const title = page.properties?.Item?.title?.[0]?.plain_text
     ?? page.properties?.title?.title?.[0]?.plain_text
@@ -388,6 +347,7 @@ function toPageSummary(page: PageObject): NotionPageSummary {
 
   return {
     id: page.id,
+    createdTime: typeof page.created_time === 'string' ? page.created_time : null,
     url: page.url ?? notionUrl(page.id),
     title,
     sourceUrl: page.properties?.['Source URL']?.url ?? null,
@@ -415,39 +375,8 @@ function resolveWriteMode(env: Env): 'api' | 'hub' {
   return 'api';
 }
 
-function chunkText(text: string): string[] {
-  const normalized = text.replace(/\s+/g, ' ').trim();
-  if (!normalized) return [];
-
-  const chunks: string[] = [];
-  let remaining = normalized;
-
-  while (remaining.length > MAX_RICH_TEXT_CONTENT) {
-    let splitAt = remaining.lastIndexOf('. ', MAX_RICH_TEXT_CONTENT);
-    if (splitAt < MAX_RICH_TEXT_CONTENT * 0.5) {
-      splitAt = remaining.lastIndexOf(' ', MAX_RICH_TEXT_CONTENT);
-    }
-    if (splitAt < MAX_RICH_TEXT_CONTENT * 0.25) {
-      splitAt = MAX_RICH_TEXT_CONTENT;
-    }
-
-    chunks.push(remaining.slice(0, splitAt).trim());
-    remaining = remaining.slice(splitAt).trim();
-  }
-
-  if (remaining) {
-    chunks.push(remaining);
-  }
-
-  return chunks;
-}
-
 function truncate(value: string, maxLength: number): string {
   return value.length > maxLength ? value.slice(0, maxLength) : value;
-}
-
-function normalizeComparableText(text: string): string {
-  return text.toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
 function notionUrl(pageId: string): string {
@@ -561,8 +490,14 @@ class DirectNotionTransport implements NotionTransport {
     );
   }
 
-  async appendBlocks(blockId: string, children: BlockObject[]): Promise<void> {
-    await this.request(`/blocks/${blockId}/children`, 'PATCH', { children });
+  async getBlock(blockId: string): Promise<PageObject> { return this.request(`/blocks/${blockId}`); }
+  async updateBlock(blockId: string, block: BlockObject): Promise<void> {
+    await this.request(`/blocks/${blockId}`, 'PATCH', { [block.type as string]: block[block.type as string] });
+  }
+  async archiveBlock(blockId: string): Promise<void> { await this.request(`/blocks/${blockId}`, 'PATCH', { archived: true }); }
+
+  async appendBlocks(blockId: string, children: BlockObject[], after?: string): Promise<void> {
+    await this.request(`/blocks/${blockId}/children`, 'PATCH', { children, ...(after ? { after } : {}) });
   }
 
   async listBlockChildren(blockId: string, startCursor?: string): Promise<BlockListResult> {
@@ -677,7 +612,12 @@ class HubNotionTransport implements NotionTransport {
     });
   }
 
-  async appendBlocks(blockId: string, children: BlockObject[]): Promise<void> {
+  async getBlock(_id: string): Promise<PageObject> { throw new Error('Inline projection requires direct Notion transport'); }
+  async updateBlock(_id: string, _block: BlockObject): Promise<void> { throw new Error('Inline projection requires direct Notion transport'); }
+  async archiveBlock(_id: string): Promise<void> { throw new Error('Inline projection requires direct Notion transport'); }
+
+  async appendBlocks(blockId: string, children: BlockObject[], after?: string): Promise<void> {
+    if (after) throw new Error('Inline positioning requires direct Notion transport');
     await this.call('append_blocks', {
       block_id: blockId,
       children,

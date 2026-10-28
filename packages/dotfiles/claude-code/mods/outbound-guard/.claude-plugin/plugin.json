@@ -1,0 +1,7 @@
+{
+  "name": "outbound-guard",
+  "version": "0.1.0",
+  "description": "One Send / Do not send dialog for everything that leaves the company or changes a live system: Slack, Gmail, Zendesk via App Review, PartnerStack, Statsig, Zapier writes, Drive shares, Calendar invites. Adds the Slack checks that have bitten before.",
+  "author": { "name": "Micah Johnson" },
+  "types": "./types/index.d.ts"
+}

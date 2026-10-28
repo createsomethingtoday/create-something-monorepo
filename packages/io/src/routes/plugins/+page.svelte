@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ResearchScene from '$lib/components/ResearchScene.svelte';
 	import { PluginCard } from '@create-something/canon/domains/io';
 	import type { PageData } from './$types';
 
@@ -195,6 +196,8 @@
 			</div>
 		</div>
 	</div>
+
+<div class="research-scene-index"><ResearchScene scene="editorial-mcp-modular-port" caption="An agent checks the connection between a tool and its modular port." /></div>
 </section>
 
 <!-- Category Filter -->

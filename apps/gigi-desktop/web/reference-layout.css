@@ -1,0 +1,82 @@
+/* Exact reference: grantbot 3f39f6468, DesktopStudioStyle/WorkspaceStrip/DecisionCard.
+   Layout preview only. Current local data, approvals and providers are retained. */
+:root{--bg:#151613;--panel:#1e201b;--raised:#292d25;--text:#eeeee5;--muted:#b1b4a7;--line:#363a30;--signal:#9dd278;--control-border:#7b8270}
+.shell{display:block}.main{min-width:0}.content{max-width:1220px;padding:16px 32px 40px;margin:auto}.content-primary{container-type:inline-size}
+.reference-header{height:48px;padding:0 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0;z-index:10;font-size:13px}
+.reference-header button,.reference-header summary{border:0;background:transparent;color:var(--text);border-radius:6px;min-height:32px;padding:6px 8px;white-space:nowrap;font-size:13px;cursor:pointer}
+.reference-header button:disabled{opacity:.4;cursor:default}.reference-header button:hover:not(:disabled),.reference-header summary:hover{background:var(--raised)}
+.reference-header button[aria-current=page],.reference-header .selected{color:var(--signal);background:var(--panel)}
+.reference-history{display:flex;gap:0}.reference-history button{font-size:23px;width:24px;padding:0}.reference-header .reference-brand{font-size:24px;font-weight:600;letter-spacing:-2px;padding-right:12px}
+.reference-header .reference-find{display:flex;align-items:center;gap:8px;text-align:left;min-width:140px;flex:1;max-width:420px;background:var(--panel);border:1px solid var(--control-border);color:var(--muted);height:32px}
+.reference-find kbd{margin-left:auto;font:inherit;font-size:11px}.reference-nav{display:flex;align-items:center;gap:6px;margin-left:auto}.reference-more{position:relative}.reference-more summary{list-style:none;display:flex;align-items:center;gap:5px}.reference-more summary::-webkit-details-marker{display:none}
+.reference-menu{position:absolute;right:0;top:40px;width:280px;max-height:calc(100vh - 72px);overflow:auto;padding:16px;background:var(--panel);border:1px solid var(--control-border);border-radius:10px;box-shadow:0 16px 40px #0007;display:grid;gap:4px}.reference-menu p{font-size:12px;color:var(--muted);margin:0 0 10px;overflow-wrap:anywhere}.reference-menu button{text-align:left;white-space:normal}.reference-menu small{color:var(--muted);padding-top:12px;margin-top:8px;border-top:1px solid var(--line)}
+.reference-header .reference-settings{font-size:21px;width:36px}.reference-header .reference-ask{font-size:13px}.page-head{margin:12px 0 22px}.page-head h1 .ui-icon{display:none}.page-head h1{font-size:32px;font-weight:500;letter-spacing:-1.2px}.page-head .eyebrow{margin-bottom:7px}.subhead{font-size:14px}
+.btn{font-size:14px;font-weight:500;min-height:44px;padding:10px 16px;border-color:var(--control-border);background:var(--panel)}.btn.primary{color:var(--signal);background:#9dd27826;border-color:transparent}.btn.danger{border-color:#a57065}
+.today-sections{display:grid;gap:22px}.today-sections>.panel,.content-primary>.panel:has(.today-grid){background:none;border:0;padding:0;margin-top:22px}.today-sections .panel-head h2,.panel:has(.today-grid) .panel-head h2{font-size:20px;font-weight:600;letter-spacing:-.02em}.today-sections .panel-head .ui-icon,.panel:has(.today-grid) .panel-head h2 .ui-icon{display:none}.today-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;margin:14px 0}
+.today-card{display:flex;flex-direction:column;align-items:stretch;text-align:left;min-width:0;border:1px solid var(--line);border-radius:12px;padding:18px;color:var(--text);background:var(--panel);gap:10px;cursor:pointer}.today-card:hover{border-color:var(--control-border)}.today-card-kind{font-size:12px;font-weight:500;color:var(--muted)}.today-card strong{font-size:23px;font-weight:500;letter-spacing:-.8px;line-height:1.25;overflow-wrap:anywhere}.today-card-status{font-size:14px;line-height:1.5;color:var(--muted);margin-bottom:6px}.today-card-footer{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:14px;margin-top:auto;font-size:12px;color:var(--muted)}
+.overview-counts{margin:0 0 16px;color:var(--muted);font-size:12px}.overview-counts summary{cursor:pointer;padding:8px 0}.overview-counts .overview-metrics{margin-top:12px}.overview-guide{margin-top:28px}.chat-panel{top:48px}.mobile-chat-entry{display:none}
+@container(max-width:899px){.today-grid{grid-template-columns:1fr}}
+@media(max-width:1000px){.reference-header{gap:4px;padding:0 10px}.reference-nav{gap:2px}.reference-header .reference-find{min-width:140px}.reference-find kbd{display:none}.reference-header button{padding-inline:6px}}
+@media(max-width:700px){.reference-header{height:auto;min-height:48px;flex-wrap:wrap;padding:8px}.reference-nav{order:2;width:100%;justify-content:center}.content{padding:16px}.reference-menu{right:-70px}.chat-panel{top:96px}.today-grid{grid-template-columns:1fr}}
+
+/* One 22px rhythm between Today sections, rather than inherited panel margins
+   added to the reference grid gap. Keep controls and empty states aligned. */
+.today-sections{margin-top:16px}
+.today-sections>.panel{margin-top:0}
+.today-sections .panel-head{margin-bottom:8px}
+.today-sections .panel>p.muted{font-size:14px;line-height:1.5;margin:0}
+.today-sections .panel>small{display:block;font-size:12px}
+.today-grid{margin:14px 0 10px}
+.music-empty{display:grid;justify-items:center;align-content:center;gap:12px;padding:32px 24px;border-radius:12px;text-align:center}
+.music-empty>h2,.music-empty>p{width:100%;max-width:520px;margin:0}
+.music-empty>.btn{justify-self:center}
+.music-header h1,.social-workspace h1{font-size:32px;font-weight:500;letter-spacing:-1.2px}
+.reference-header summary:focus-visible,.reference-header button:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.reference-menu button{min-height:36px}
+@media(prefers-reduced-motion:reduce){.reference-header *,.today-card{animation:none;transition:none;scroll-behavior:auto}}
+
+/* Anchor headings must clear the sticky workspace strip. */
+.agenda-day,#source-connections,#agent-setup,#phone-access,#source-diagnostics,.social-composer{scroll-margin-top:64px}
+@media(max-width:700px){.agenda-day,#source-connections,#agent-setup,#phone-access,#source-diagnostics,.social-composer{scroll-margin-top:112px}}
+
+/* Focused daily-work polish. Palette and data ordering stay unchanged. */
+.content-primary:has(.today-summary) .page-head{margin:4px 0 10px}
+.content-primary:has(.today-summary) .page-head .eyebrow{display:none}
+.content-primary:has(.today-summary) .subhead{margin-top:4px}
+.today-summary{display:flex;flex-wrap:wrap;gap:4px 16px;margin-bottom:4px}
+.today-summary .btn{padding:6px 0;min-height:36px;font-size:13px}
+.today-summary strong{color:var(--signal);margin-right:5px;font-variant-numeric:tabular-nums}
+.overview-counts{margin-bottom:8px}.overview-counts summary{padding:4px 0}
+.today-scope{font-size:12px;color:var(--muted);margin:0}
+.today-scope summary{cursor:pointer;min-height:24px}
+.today-scope p{margin:4px 0 8px}
+.today-card{gap:6px}.today-card-status{margin-bottom:0}.today-card-footer{padding-top:10px}
+.today-grid:has(>.today-card:only-child){grid-template-columns:1fr}
+@container(min-width:900px){.today-sections{grid-template-columns:repeat(2,minmax(0,1fr))}.today-sections .today-grid{grid-template-columns:1fr}.today-sections .panel-head{flex-wrap:wrap;gap:4px}}
+.reference-header .reference-find{flex:0 1 auto;min-width:0;max-width:none;border:0;background:transparent;color:var(--muted);gap:6px}
+.reference-find kbd{font-size:10px}.reference-shortcuts p{line-height:1.8;margin:8px 0}
+.contact-search{gap:12px}.contact-search+#contact-search-help{font-size:12px;margin:6px 0 16px}
+.content-primary:has(#contact-search) .page-head{margin:4px 0 16px}
+.content-primary:has(#contact-search) .page-head .eyebrow{display:none}
+#built-in-chat{scroll-margin-top:64px}#built-in-chat p{max-width:72ch}#built-in-chat .inline-actions{margin-top:14px}
+#agent-setup>details>summary{cursor:pointer;padding:8px 0}
+@media(max-width:700px){#built-in-chat{scroll-margin-top:112px}}
+
+.today-sections .panel>.today-scope,.content-primary>.panel>.today-scope{margin:0}
+.today-sections .panel-head .btn{min-height:36px;padding-block:6px}
+.today-scope summary{padding:0}
+/* Keep proposed changes readable even with the composer and recovery controls. */
+.chat-intro{max-height:34%;flex-shrink:0}
+.chat-composer{padding:10px 18px 12px}
+.chat-composer textarea{min-height:52px;max-height:100px}
+.chat-composer .chat-actions{margin-top:8px}
+
+/* Gigs keeps the reference controls and rows, with a wrapping collection toolbar. */
+.artwork-frame{display:flex;position:relative;align-items:center;justify-content:center;width:100%;height:180px;overflow:hidden;background:#10120f;border-radius:7px}.artwork-frame img{width:100%;height:100%;object-fit:contain}.artwork-frame img[hidden]{display:none}.artwork-origin{color:var(--muted);font-size:11px}.artwork-fallback{color:var(--muted);padding:12px}.artwork-compact{width:64px;height:64px;flex:0 0 64px}.artwork-open{display:block;max-width:420px;width:100%;padding:0;border:0;background:none;color:var(--text);text-align:left;margin-bottom:12px}.artwork-open .artwork-frame{height:260px}.artwork-dialog{background:var(--panel,#1d211a);color:var(--text,#e4e7df);border:1px solid var(--line,#41463b);border-radius:14px;padding:24px;max-width:min(680px,90vw);width:100%;max-height:85vh;overflow:auto}.artwork-dialog::backdrop{background:#000b}.artwork-dialog label{display:grid;gap:6px;margin:12px 0}.artwork-dialog .inline-actions{flex-wrap:wrap}.artwork-dialog button:focus-visible{outline:2px solid var(--signal);outline-offset:3px}.artwork-dialog .artwork-full{max-width:100%;max-height:55vh;object-fit:contain}.artwork-choice{display:inline-flex;flex-direction:column;gap:6px;width:calc(50% - 12px);padding:10px;margin:6px;background:transparent;border:1px solid var(--line);border-radius:8px;color:inherit;text-align:left}.artwork-choice .artwork-frame{height:140px}.artwork-panel h2{margin-bottom:12px}
+.gigs-panel{margin-top:0}.gigs-toolbar{display:flex;align-items:end;gap:12px;flex-wrap:wrap}.gigs-toolbar .field{margin:0}.gigs-search{flex:1 1 300px}.gigs-sort{flex:0 1 180px}.gigs-views{display:flex;flex-wrap:wrap;gap:6px}.gigs-views [aria-pressed=true],.gigs-result-actions [aria-pressed=true]{color:var(--signal);border-color:var(--signal);background:#9dd27818}.gigs-filters{flex:0 0 auto;margin:0!important}.gigs-filters summary.btn{font-size:14px;line-height:22px;padding:10px 16px;color:var(--text);min-height:44px;list-style:none}.gigs-filters summary::-webkit-details-marker{display:none}.gigs-filters[open]{flex:1 1 100%}.gigs-filter-fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding-top:12px}.gigs-help{font-size:12px!important;line-height:1.5!important;margin:10px 0 16px}.gigs-active{font-size:13px!important;margin:0 0 12px;overflow-wrap:anywhere}.gigs-panel .panel-head{margin-bottom:8px}.gigs-panel .panel-head span{font-size:13px;color:var(--muted)}.gigs-result-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}.gigs-result-actions .btn{min-height:36px;padding-block:6px}.gigs-error{border:1px solid var(--danger);border-radius:8px;padding:12px;margin-bottom:12px}.gigs-error p{margin:0 0 8px}.gigs-row{min-height:76px}.gigs-row small{line-height:1.5}.gigs-row .arrow{font-size:20px}.gigs-toolbar select,.gigs-toolbar input{min-height:44px}.gigs-filters summary:focus-visible{outline:2px solid var(--signal);outline-offset:3px}
+@container(max-width:1000px){.gigs-search{flex-basis:100%}.gigs-sort{margin-left:auto!important}.gigs-filter-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.gigs-toolbar{gap:10px}.gigs-views{width:100%}.gigs-sort{flex:1 1 170px}.gigs-filter-fields{grid-template-columns:1fr}.gigs-panel{padding:16px}.gigs-row{padding-block:14px}}
+
+.artwork-music-open{padding:0;border:0;background:transparent;border-radius:7px;flex:0 0 64px}.artwork-music-open:focus-visible{outline:2px solid var(--signal);outline-offset:3px}
+
+.artwork-dialog [hidden]{display:none!important}

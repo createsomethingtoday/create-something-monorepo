@@ -1,15 +1,16 @@
 import { existsSync } from 'node:fs';
 import { dirname, isAbsolute, join } from 'node:path';
 
-import { createBrokerClient, IntegrationError, type SourceProvider } from './broker.ts';
+import { createBrokerClient, IntegrationError, type ConnectionProvider, type InstagramPublishInput } from './broker.ts';
 import { createCtxClient, CtxError } from './ctx.ts';
-import { getSessionAccessToken, login, LoginError } from './auth.ts';
+import { getSessionAccessToken, login, logout, LoginError } from './auth.ts';
 import { mapSourcePage } from './import-adapter.ts';
+import { requireSourceSelection, selectSourceRecords, SourceSelectionError } from './source-selection.ts';
 
 const BROKER_RESOURCE = 'https://gigi-connector.createsomething.workers.dev';
 
 export type RunnerRequest = { operation: string; input: Record<string, unknown> };
-export type RunnerResult = { ok: true; value: unknown } | { ok: false; error: { operation: string; reason: string } };
+export type RunnerResult = { ok: true; value: unknown } | { ok: false; error: { operation: string; reason: string; detail?: CtxError['detail'] } };
 export interface RunnerOptions {
   dataDir?: string;
   fetch?: typeof fetch;
@@ -23,22 +24,32 @@ export async function runOperation(request: RunnerRequest, options: RunnerOption
   try {
     const dataDir = options.dataDir ?? process.env.GIGI_DATA_DIR;
     if (!dataDir || !isAbsolute(dataDir)) return failure(operation, 'unconfigured');
+    if (operation === 'auth.logout') return success(await logout({ dataDir }));
     if (operation === 'auth.login') return success(await login({ dataDir, signal: options.signal, fetch: options.fetch }));
-    if (operation.startsWith('connections.')) {
+    if (operation.startsWith('connections.') || operation.startsWith('instagram.')) {
       const broker = createBrokerClient({
         baseUrl: BROKER_RESOURCE,
         getAccessToken: () => getSessionAccessToken({ dataDir, signal: options.signal, fetch: options.fetch }),
         fetch: options.fetch,
       });
+      if(operation==='instagram.preview')return success(await broker.instagramPreview(requireString(input.imageUrl,2048),options.signal));
+      if(operation==='instagram.account')return success(await broker.instagramAccount(requireString(input.connectedAccountId),options.signal));
+      if(operation==='instagram.publish')return success(await broker.publishInstagram(input as unknown as InstagramPublishInput,options.signal));
+      if(operation==='instagram.receipt')return success(await broker.instagramReceipt(requireString(input.requestId),options.signal,input.continueConfirmed===true));
       const provider = requireProvider(input.provider);
       switch (operation) {
         case 'connections.status': return success(await broker.connectionStatus(provider, options.signal));
         case 'connections.begin': return success(await broker.beginConnection(provider, requireString(input.requestId), options.signal));
         case 'connections.reconcile': return success(await broker.reconcileConnection(provider, requireString(input.connectedAccountId), options.signal));
         case 'connections.import': {
+          if(provider==='instagram')return failure(operation,'unsupported_operation');
+          const workspaceId = requireString(input.workspaceId);
+          const selection = requireSourceSelection(input.selection, provider);
           const page = await broker.readSourcePage(provider, requireString(input.connectedAccountId), optionalString(input.cursor), options.signal);
+          const selected = selectSourceRecords(mapSourcePage(workspaceId, page), selection);
           return success({ provider: page.provider, connectedAccountId: page.connectedAccountId,
-            records: mapSourcePage(requireString(input.workspaceId), page), nextCursor: page.nextCursor });
+            records: selected.records, nextCursor: page.nextCursor,
+            coverage: { ...selected.coverage, complete: page.nextCursor === null } });
         }
         default: return failure(operation, 'unknown_operation');
       }
@@ -58,9 +69,10 @@ export async function runOperation(request: RunnerRequest, options: RunnerOption
     }
     return failure(operation, 'unknown_operation');
   } catch (error) {
-    if (error instanceof RunnerInputError) return failure(operation, 'invalid_request');
+    if (error instanceof RunnerInputError || error instanceof SourceSelectionError) return failure(operation, 'invalid_request');
     if (error instanceof LoginError) return failure(operation, error.reason);
-    if (error instanceof IntegrationError || error instanceof CtxError) return failure(operation, error.reason);
+    if (error instanceof CtxError) return { ok: false, error: { operation, reason: error.reason, ...(error.detail ? { detail: error.detail } : {}) } };
+    if (error instanceof IntegrationError) return failure(operation, error.reason);
     return failure(operation, 'unavailable');
   }
 }
@@ -75,8 +87,8 @@ function failure(operation: string, reason: string): RunnerResult { return { ok:
 
 class RunnerInputError extends Error {}
 
-function requireString(value: unknown): string {
-  if (typeof value !== 'string' || !value || value.length > 512) throw new RunnerInputError();
+function requireString(value: unknown, maximum=512): string {
+  if (typeof value !== 'string' || !value || value.length > maximum) throw new RunnerInputError();
   return value;
 }
 function optionalString(value: unknown): string | undefined {
@@ -87,7 +99,7 @@ function optionalNumber(value: unknown): number | undefined {
   if (typeof value !== 'number' || !Number.isInteger(value)) throw new RunnerInputError();
   return value;
 }
-function requireProvider(value: unknown): SourceProvider {
-  if (value === 'gmail' || value === 'googlecalendar') return value;
+function requireProvider(value: unknown): ConnectionProvider {
+  if (value === 'gmail' || value === 'googlecalendar' || value === 'instagram') return value;
   throw new RunnerInputError();
 }

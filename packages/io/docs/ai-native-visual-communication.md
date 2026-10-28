@@ -177,3 +177,14 @@ Before publishing an artifact with visuals:
 
 The current catalog applies that pattern to every file-based `.io` paper and
 experiment.
+
+## Static research diagrams and draft boundaries
+
+The selective-context paper embeds an exported SVG in its Markdown. Its textual
+summary explains the same distinction between source observation and index refresh.
+The diagram uses synthetic dates and needs no model call or shared component change.
+
+File-backed paper drafts may set `publication_status: 'draft'`: published collections
+exclude them and their detail route returns 404 outside development. Frontmatter
+`published: false` alone is not a route guard. Remove the metadata flag only through
+the authorized publication workflow.

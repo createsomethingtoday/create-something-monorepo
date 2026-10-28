@@ -812,6 +812,60 @@ describe('AirtableClient app review context and queue helpers', () => {
     expect(context.reviewer?.id).toBe('usr_pablo');
   });
 
+  it('surfaces version preflight in review context, falling back to the asset', async () => {
+    const { client } = createClient();
+
+    const empty = await client.getReviewContext('rec-version-self');
+    expect(empty.preflight).toBeNull();
+
+    const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      if (url.pathname.endsWith(`/${TABLE_IDS.assetVersions}/rec-version-pf`)) {
+        const base = versionRecord('rec-version-pf', null);
+        return jsonResponse({
+          ...base,
+          fields: {
+            ...base.fields,
+            [FIELD_IDS.versions.preflightReceipt]: 'wfpre_abc123',
+            [FIELD_IDS.versions.preflightReadiness]: 'changes_required',
+            [FIELD_IDS.versions.preflightRuntimeStatus]: 'blocked',
+            [FIELD_IDS.versions.preflightInstallUrlStatus]: 'block',
+            [FIELD_IDS.versions.preflightInstallUrlProbe]: 'no_oauth_handoff',
+            [FIELD_IDS.versions.preflightInstallUrlCheckedBy]: 'developer',
+          },
+        });
+      }
+      if (url.pathname.endsWith(`/${TABLE_IDS.assetVersions}/rec-version-asset-only`)) {
+        return jsonResponse(versionRecord('rec-version-asset-only', null));
+      }
+      if (url.pathname.endsWith(`/${TABLE_IDS.assets}/recAsset`)) {
+        return jsonResponse(assetRecord('recAsset', {
+          [FIELD_IDS.assets.preflightReceipt]: 'wfpre_asset',
+          [FIELD_IDS.assets.preflightInstallUrlStatus]: 'pass',
+        }));
+      }
+      return new Response('not found', { status: 404 });
+    });
+    const pfClient = new AirtableClient({ apiKey: 'token', fetchFn });
+
+    const fromVersion = await pfClient.getReviewContext('rec-version-pf');
+    expect(fromVersion.preflight).toMatchObject({
+      source: 'version',
+      receipt: 'wfpre_abc123',
+      readiness: 'changes_required',
+      runtimeStatus: 'blocked',
+      installUrlStatus: 'block',
+      installUrlProbe: 'no_oauth_handoff',
+      installUrlCheckedBy: 'developer',
+    });
+    expect(fromVersion.version.preflight?.receipt).toBe('wfpre_abc123');
+    expect(fromVersion.asset?.preflight?.receipt).toBe('wfpre_asset');
+
+    const fromAsset = await pfClient.getReviewContext('rec-version-asset-only');
+    expect(fromAsset.version.preflight).toBeNull();
+    expect(fromAsset.preflight).toMatchObject({ source: 'asset', receipt: 'wfpre_asset', installUrlStatus: 'pass' });
+  });
+
   it('finds app_id matches across paginated asset results', async () => {
     const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
       const url = new URL(String(input));

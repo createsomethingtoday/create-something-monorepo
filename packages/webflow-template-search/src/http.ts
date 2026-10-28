@@ -1,31 +1,35 @@
 import type { Env } from './types.js';
 
-function getAllowedOrigin(request: Request, env: Env): string {
-  const origin = request.headers.get('Origin');
-  if (!origin) return '*';
-
+/** True when `origin` matches ALLOWED_ORIGINS (exact or `*.domain`). An empty list allows every origin. */
+export function isOriginAllowed(origin: string, env: Env): boolean {
   const allowedOrigins = (env.ALLOWED_ORIGINS ?? '')
     .split(',')
     .map((entry) => entry.trim())
     .filter(Boolean);
 
-  if (allowedOrigins.length === 0) return origin;
+  if (allowedOrigins.length === 0) return true;
 
   for (const pattern of allowedOrigins) {
-    if (pattern === origin) return origin;
+    if (pattern === origin) return true;
     // Wildcard subdomain: *.webflow.com matches template-marketplace.design.webflow.com etc.
     if (pattern.startsWith('*.')) {
       const suffix = pattern.slice(1); // e.g. ".webflow.com"
       try {
         const url = new URL(origin);
-        if (url.hostname === suffix.slice(1) || url.hostname.endsWith(suffix)) return origin;
+        if (url.hostname === suffix.slice(1) || url.hostname.endsWith(suffix)) return true;
       } catch {
         // not a valid URL, skip
       }
     }
   }
 
-  return '*';
+  return false;
+}
+
+function getAllowedOrigin(request: Request, env: Env): string {
+  const origin = request.headers.get('Origin');
+  if (!origin) return '*';
+  return isOriginAllowed(origin, env) ? origin : '*';
 }
 
 export function withCorsHeaders(request: Request, env: Env, headers: HeadersInit = {}): Headers {

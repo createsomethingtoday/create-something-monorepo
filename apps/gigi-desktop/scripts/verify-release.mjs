@@ -8,7 +8,8 @@ import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 
 const execFileAsync=promisify(execFile);
-const firstParty=['Contents/MacOS/gigi','Contents/Resources/gigi-mcp','Contents/Resources/gigi-integrations'];
+const firstPartyTeam='PRP5VQQPPB';
+const firstParty=['Contents/MacOS/gigi','Contents/Resources/gigi-mcp','Contents/Resources/gigi-integrations','Contents/Resources/gigi-codex'];
 const upstream='Contents/Resources/ctx';
 
 class ReleaseError extends Error {constructor(reason){super(reason);this.reason=reason;}}
@@ -65,7 +66,7 @@ function identity(details,reason,expectedTeam,expectedIdentifier,requireRuntime)
 }
 function accepted(output,reason,authority,notarizedSource){
  if(!/: accepted\b/.test(output))fail(reason);
- if(notarizedSource){if(!/source=Notarized Developer ID\b/.test(output)||!output.includes(`origin=${authority}`))fail(reason);}
+ if(notarizedSource){if(!/source=Notarized Developer ID\b/.test(output)||(/^origin=/m.test(output)&&!output.split('\n').includes(`origin=${authority}`)))fail(reason);}
  else if(!/source=(?:Notarized )?Developer ID\b/.test(output))fail(reason);
 }
 async function signature(run,path,reason,team,identifier,requireRuntime=true){
@@ -89,7 +90,7 @@ export async function verifyRelease({appPath,dmgPath,sourceSha,run=realCommand})
   if(bundleId!=='agency.createsomething.gigi')fail('app_identifier');
   receipt.appExecutableSha256=await sha256(main);
   receipt.dmgSha256=await sha256(dmg);
-  const appIdentity=await signature(run,app,'app_identity',undefined,'agency.createsomething.gigi');
+  const appIdentity=await signature(run,app,'app_identity',firstPartyTeam,'agency.createsomething.gigi');
   receipt.teamIdentifier=appIdentity.team;
   receipt.appCodeDirectoryHash=appIdentity.cdhash;
   for(const entry of firstParty)await signature(run,join(app,entry),'companion_identity',appIdentity.team);

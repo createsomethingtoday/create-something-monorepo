@@ -18,7 +18,7 @@
   async function show(story:FilmStory) {
     if(!open)restoreFocus=document.activeElement as HTMLElement;
     playing=false;video?.pause();active=story;time=0;open=true;filmOverlayOpen.set(true);
-    const url=new URL(location.href);url.searchParams.set('film',story.id);replaceState(url,{});
+    const url=new URL(location.href);if(url.searchParams.get('film')!==story.id){url.searchParams.set('film',story.id);replaceState(url,{});}
     await tick(); if(!dialog.open)dialog.showModal();document.body.style.overflow='hidden';scale();seek(player,0);
   }
   function closed() {playing=false;video?.pause();open=false;filmOverlayOpen.set(false);document.body.style.overflow='';const url=new URL(location.href);url.searchParams.delete('film');replaceState(url,{});restoreFocus?.focus({preventScroll:true});}

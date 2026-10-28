@@ -11,7 +11,8 @@
     "types": "node ../../scripts/run-wrangler.mjs types",
     "check": "tsc --noEmit",
     "test": "node --import tsx --test test/*.test.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:runtime": "node --import tsx --test test/runtime.test.mjs test/readiness-runtime.test.mjs"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260621.1",

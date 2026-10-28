@@ -19,6 +19,23 @@ const args = process.argv.slice(2);
 const EXECUTE = args.includes('--execute');
 const AIRTABLE_KEY = process.env.AIRTABLE_API_KEY;
 const snapshotTable = process.env.MARKETPLACE_INSIGHTS_SNAPSHOT_TABLE_ID;
+// Seller rows come from Snowflake directly (needs a live Okta session) or from
+// the Fivetran activation "Marketplace Insights sellers (30d)", which writes the
+// same query's output to an Airtable table (no Snowflake credential needed here).
+const SOURCES = ['snowflake', 'airtable'];
+let source = process.env.MARKETPLACE_INSIGHTS_SOURCE || 'snowflake';
+const SELLERS_TABLE = 'tblkyKZ5nGOcEqb5r';
+const SELLER_FIELDS = {
+  TEMPLATE_ID: 'fldgZHXYZqlX2HSag',
+  MRP_ID: 'fldA9ZA24286DtNyZ',
+  TEMPLATE_NAME: 'fldgO5x1KhpKkL0QP',
+  SALES_30D: 'fldXU6c3ERnqBbvSp',
+  REVENUE_30D: 'fldxVd61LWea9SlEF',
+  SNAPSHOT_AT: 'fldLJlqsFaukWP4Jq',
+  WINDOW_SELLERS: 'fldkJiQBUdfWUMP7Q',
+  WINDOW_SALES: 'fld31oTda0kji5IDi',
+  WINDOW_REVENUE: 'fldzB6kawJH32fDmA'
+};
 const log = (...parts) => console.log(new Date().toISOString(), ...parts);
 const fail = (message) => {
   throw new Error(message);
@@ -141,6 +158,47 @@ async function listAll(table, fields) {
   } while (offset);
   return records;
 }
+// The activation upserts on TEMPLATE_ID, so the table holds the latest window
+// plus stale rows for templates that stopped selling. Use only the requested
+// window, and prove the set is complete: every row carries the window totals
+// computed in the same query. An older window fails here; use --source snowflake.
+async function readSellersFromAirtable(windowEnd) {
+  const want = windowEnd.toISOString();
+  const F = SELLER_FIELDS;
+  const records = await listAll(SELLERS_TABLE, Object.values(F));
+  const stamps = [...new Set(records.map((r) => r.fields[F.SNAPSHOT_AT]).filter(Boolean))].sort();
+  const rows = records.filter((r) => r.fields[F.SNAPSHOT_AT] === want);
+  if (!rows.length)
+    fail(`Fivetran sellers activation has no rows for window ${want} (newest: ${stamps.at(-1) ?? 'none'})`);
+  const totals = new Set(
+    rows.map((r) => `${r.fields[F.WINDOW_SELLERS]}/${r.fields[F.WINDOW_SALES]}/${r.fields[F.WINDOW_REVENUE]}`)
+  );
+  if (totals.size !== 1) fail(`Fivetran sellers rows disagree on window totals for ${want}`);
+  const sellers = rows.map((r) => ({
+    templateId: r.fields[F.TEMPLATE_ID],
+    mrpId: r.fields[F.MRP_ID],
+    name: r.fields[F.TEMPLATE_NAME],
+    sales: parseMetric(r.fields[F.SALES_30D]),
+    revenue: parseMetric(r.fields[F.REVENUE_30D])
+  }));
+  const expectedSellers = parseMetric(rows[0].fields[F.WINDOW_SELLERS]);
+  const expectedSales = parseMetric(rows[0].fields[F.WINDOW_SALES]);
+  const expectedRevenue = parseMetric(rows[0].fields[F.WINDOW_REVENUE]);
+  const sales = sellers.reduce((sum, row) => sum + row.sales, 0);
+  // Revenue is compared in cents so a rerun that changed only revenue cannot
+  // pass with a mix of old and new rows.
+  const cents = Math.round(sellers.reduce((sum, row) => sum + row.revenue, 0) * 100);
+  if (
+    sellers.length !== expectedSellers ||
+    sales !== expectedSales ||
+    cents !== Math.round(expectedRevenue * 100)
+  )
+    fail(
+      `Fivetran sellers rows are incomplete for ${want}: ${sellers.length}/${expectedSellers} sellers, ${sales}/${expectedSales} sales, ${cents / 100}/${expectedRevenue} revenue`
+    );
+  log(`Read ${sellers.length} sellers from Airtable (window ending ${want}).`);
+  return sellers;
+}
 const values = (raw) =>
   (Array.isArray(raw) ? raw : [raw])
     .filter((x) => typeof x === 'string' && x.trim())
@@ -150,14 +208,22 @@ async function main() {
   let asOf = latestMondayBoundary();
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--execute') continue;
+    if (args[i] === '--source' && args[i + 1] && !args[i + 1].startsWith('--')) {
+      source = args[++i];
+      continue;
+    }
     if (args[i] === '--as-of' && args[i + 1] && !args[i + 1].startsWith('--'))
       asOf = new Date(args[++i]);
     else fail(`Unknown or incomplete argument: ${args[i]}`);
   }
   if (!Number.isFinite(asOf.getTime())) fail('Invalid --as-of timestamp');
+  if (!SOURCES.includes(source)) fail(`Unknown source "${source}" (known: ${SOURCES.join(', ')})`);
   if (EXECUTE && !/^tbl[a-zA-Z0-9]{14}$/.test(snapshotTable ?? ''))
     fail('Set the approved MARKETPLACE_INSIGHTS_SNAPSHOT_TABLE_ID before executing');
-  const sellers = querySnowflake(new Date(asOf.getTime() - 30 * 86400000), asOf);
+  const sellers =
+    source === 'airtable'
+      ? await readSellersFromAirtable(asOf)
+      : querySnowflake(new Date(asOf.getTime() - 30 * 86400000), asOf);
   const categoryRecords = await listAll('tblSygBX7adZ4VNjK', [
     'fldWQDQuXlqwWxORG',
     'fldDSMRYPV8KBIeX7'
@@ -166,23 +232,82 @@ async function main() {
     'fldFeWROxzwzCo84b',
     'fldHhxmfSNMp117SP',
     'fldBv3YTf6Bd5HDXN',
-    'fldmfcD7pebc82EuN'
+    'fldmfcD7pebc82EuN',
+    'fldGDWo2VfnTbSUiL'
   ]);
+  const publishedAssets = assetRecords.filter((r) =>
+    values(r.fields.fldmfcD7pebc82EuN).includes('recA2YsPEHSuAHOLD')
+  );
+
+  // Taxonomy tolerance. The category table is edited by hand; three shapes
+  // appear in practice and none should stop the weekly snapshot:
+  //  - a subcategory linked to two parent groups → first linked group;
+  //  - the same subcategory name on two rows → first row;
+  //  - a subcategory on a published asset with no parent group at all → the
+  //    group its sibling subcategories (on the same assets) use most, else Other.
+  // Every substitution is listed in the receipt as taxonomyNotes.
+  const taxonomyNotes = [];
+  const taxonomy = new Map();
+  for (const r of categoryRecords) {
+    const name = (r.fields.fldWQDQuXlqwWxORG ?? '').trim();
+    const groups = [...new Set(values(r.fields.fldDSMRYPV8KBIeX7))];
+    if (!name || !groups.length) continue;
+    if (groups.length > 1) taxonomyNotes.push({ kind: 'dual-parent', id: r.id, name, groups, used: groups[0] });
+    if (taxonomy.has(name)) {
+      // Every later same-name row is a source-data task, even when its group agrees.
+      taxonomyNotes.push({ kind: 'duplicate-name', id: r.id, name, kept: taxonomy.get(name), dropped: groups[0] });
+      continue;
+    }
+    taxonomy.set(name, groups[0]);
+  }
+  const cooccur = new Map();
+  // No usable taxonomy at all is an empty source, not something to paper over.
+  for (const r of taxonomy.size ? publishedAssets : []) {
+    const cats = values(r.fields.fldBv3YTf6Bd5HDXN);
+    const siblingGroups = cats.filter((c) => taxonomy.has(c)).map((c) => taxonomy.get(c));
+    for (const c of cats)
+      if (!taxonomy.has(c)) {
+        const counts = cooccur.get(c) ?? new Map();
+        for (const g of siblingGroups) counts.set(g, (counts.get(g) ?? 0) + 1);
+        cooccur.set(c, counts);
+      }
+  }
+  for (const [name, counts] of cooccur) {
+    const best = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
+    const group = best ? best[0] : 'Other';
+    taxonomy.set(name, group);
+    taxonomyNotes.push({ kind: 'unmapped', name, used: group });
+  }
+
+  // 🎨📧 Creator Email rolls up only Emails tagged Primary; a creator with linked
+  // Emails but no Primary tag leaves it empty. Fall back to the creator record's
+  // own ❗👛Creator Email rollup and list the substitution in the receipt.
+  const creatorEmailNotes = [];
+  let creatorEmails;
+  async function creatorEmailFor(r) {
+    const direct = values(r.fields.fldHhxmfSNMp117SP)[0];
+    if (direct) return direct;
+    const creatorId = values(r.fields.fldGDWo2VfnTbSUiL)[0];
+    if (!creatorId) return undefined;
+    creatorEmails ??= new Map(
+      (await listAll('tbljt0plqxdMARZXb', ['fld5AtQoz6Af7jdos'])).map((c) => [c.id, values(c.fields.fld5AtQoz6Af7jdos)[0]])
+    );
+    const email = creatorEmails.get(creatorId);
+    if (email) creatorEmailNotes.push({ asset: r.id, creator: creatorId });
+    return email;
+  }
+  const assetEmails = new Map();
+  for (const r of publishedAssets) assetEmails.set(r.id, await creatorEmailFor(r));
+
   const snapshot = buildMarketplaceSnapshot({
     snapshotAt: asOf.toISOString(),
     sellers,
-    categories: categoryRecords
-      .filter((r) => r.fields.fldWQDQuXlqwWxORG && values(r.fields.fldDSMRYPV8KBIeX7).length)
-      .map((r) => {
-        const groups = [...new Set(values(r.fields.fldDSMRYPV8KBIeX7))];
-        if (groups.length !== 1) fail(`Ambiguous taxonomy parent group for ${r.id}`);
-        return { name: r.fields.fldWQDQuXlqwWxORG, group: groups[0] };
-      }),
-    assets: assetRecords.filter(r => values(r.fields.fldmfcD7pebc82EuN).includes('recA2YsPEHSuAHOLD')).flatMap((r) =>
+    categories: [...taxonomy].map(([name, group]) => ({ name, group })),
+    assets: publishedAssets.flatMap((r) =>
       values(r.fields.fldFeWROxzwzCo84b).flatMap((value) =>
         value.split(',').map((templateId) => ({
           templateId: templateId.trim(),
-          creatorEmail: values(r.fields.fldHhxmfSNMp117SP)[0],
+          creatorEmail: assetEmails.get(r.id),
           categories: values(r.fields.fldBv3YTf6Bd5HDXN)
         }))
       )
@@ -211,12 +336,15 @@ async function main() {
   }
   const receipt = {
     mode: EXECUTE ? 'execute' : 'dry-run',
+    source,
     snapshotAt: snapshot.snapshotAt,
     summary: snapshot.summary,
     leaderboardRows: snapshot.leaderboard.length,
     categoryRows: snapshot.categories.length,
     recordId,
     legacyTablesModified: false,
+    taxonomyNotes,
+    creatorEmailNotes,
     ranAt: new Date().toISOString()
   };
   writeFileSync(

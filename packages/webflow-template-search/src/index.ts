@@ -16,8 +16,10 @@ import {
   updateTemplateImagesFromWebflow,
 } from './db.js';
 import { corsPreflight, jsonResponse, textResponse, withCorsHeaders } from './http.js';
+import { popularShuffleFor } from './popular-shuffle.js';
 import { parseSearchParams } from './query.js';
 import { searchTemplates } from './search.js';
+import { handleSupportRequest, refreshSupportRequestDeliveries } from './supportRequest.js';
 import { handleTelemetry } from './telemetry.js';
 import {
   SyncAlreadyRunningError,
@@ -27,6 +29,7 @@ import {
   pruneMissingTemplateImages,
   refreshCreatorProfiles,
   refreshImages,
+  refreshTemplateDemoSignals,
   syncTemplateRecordsByIds,
   syncTemplates,
 } from './sync.js';
@@ -43,6 +46,7 @@ const SYNC_STATUS_STATE_KEYS = [
   'last_creator_backfill',
   'last_image_backfill',
   'last_image_prune',
+  'last_demo_signal_refresh',
   'public_search_cache_version',
   'last_sync_error',
   'last_sync_skipped',
@@ -52,8 +56,13 @@ const SYNC_STATUS_STATE_KEYS = [
 const INCREMENTAL_SYNC_CRON = '*/5 * * * *';
 const IMAGE_BACKFILL_MAINTENANCE_CRON = '17 * * * *';
 const IMAGE_PRUNE_MAINTENANCE_CRON = '47 3 * * *';
+const CREATOR_REFRESH_MAINTENANCE_CRON = '37 * * * *';
+const DEMO_SIGNAL_REFRESH_MAINTENANCE_CRON = '7 * * * *';
 const SCHEDULED_IMAGE_BACKFILL_LIMIT = 48;
 const SCHEDULED_IMAGE_PRUNE_LIMIT = 24;
+// 120 demo homepages an hour covers the ~11.5k catalog in about four days and
+// then sustains the 30-day refresh cycle with headroom.
+const SCHEDULED_DEMO_SIGNAL_REFRESH_LIMIT = 120;
 
 const PUBLIC_SEARCH_CACHE_HEADERS = {
   'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400',
@@ -125,7 +134,7 @@ function includeCacheValue(params: SearchParams): string {
     .join(',');
 }
 
-function buildPublicSearchCacheRequest(requestUrl: URL, params: SearchParams, cacheVersion: string): Request | null {
+function buildPublicSearchCacheRequest(requestUrl: URL, params: SearchParams, cacheVersion: string, shuffleSeed?: string): Request | null {
   if (params.templateSlug || params.strict || params.page < 1 || params.page > 10) return null;
   const cacheQuery = params.q ?? '';
   if (cacheQuery.length > 64) return null;
@@ -133,6 +142,9 @@ function buildPublicSearchCacheRequest(requestUrl: URL, params: SearchParams, ca
   const cacheUrl = new URL(requestUrl.pathname, requestUrl.origin);
   cacheUrl.searchParams.set('cache_version', `${cacheVersion}:cms-v1:signals-v1`);
   if (cacheQuery) cacheUrl.searchParams.set('q', cacheQuery);
+  // The popular order changes at the UTC day boundary; key on it so a cached
+  // page never mixes yesterday's band order with today's.
+  if (shuffleSeed) cacheUrl.searchParams.set('shuffle', shuffleSeed);
   for (const key of PUBLIC_SEARCH_CACHE_PARAM_ORDER) {
     switch (key) {
       case 'view':
@@ -200,7 +212,7 @@ async function handleSearch(request: Request, env: Env, ctx: ExecutionContext): 
     if (!unknown || Number(unknown.count) > 0) return jsonResponse(request, env, { error: 'CMS capability backfill is incomplete' }, 503);
   }
   const cacheVersion = await getPublicSearchCacheVersion(env.DB, DEFAULT_PUBLIC_SEARCH_CACHE_VERSION);
-  const cacheRequest = buildPublicSearchCacheRequest(url, params, cacheVersion);
+  const cacheRequest = buildPublicSearchCacheRequest(url, params, cacheVersion, popularShuffleFor(env, params)?.seed);
   const cache = cacheRequest ? getDefaultCache() : null;
 
   if (cache && cacheRequest) {
@@ -478,6 +490,33 @@ async function handleImageBackfill(request: Request, env: Env, ctx?: ExecutionCo
   return jsonResponse(request, env, await backfillTemplateImages(env, options));
 }
 
+async function handleDemoSignalRefresh(request: Request, env: Env, ctx?: ExecutionContext): Promise<Response> {
+  const authError = validateAdminToken(request, env);
+  if (authError) return authError;
+
+  const url = new URL(request.url);
+  const limitParam = url.searchParams.get('limit');
+  const limit = limitParam === null ? undefined : Number(limitParam);
+  const templateSlugs = [
+    ...url.searchParams.getAll('slug'),
+    ...(url.searchParams.get('slugs') ?? '')
+      .split(',')
+      .map((slug) => slug.trim())
+      .filter(Boolean),
+  ];
+  const options = { limit: limit === undefined || Number.isFinite(limit) ? limit : undefined, templateSlugs };
+  if (url.searchParams.get('async') === 'true' && ctx) {
+    ctx.waitUntil(
+      refreshTemplateDemoSignals(env, options).catch((error) => {
+        console.error('Background demo signal refresh failed.', error);
+      }),
+    );
+    return jsonResponse(request, env, { status: 'demo_signal_refresh_started', message: 'Demo signal refresh started in background.' });
+  }
+
+  return jsonResponse(request, env, await refreshTemplateDemoSignals(env, options));
+}
+
 async function handleImagePrune(request: Request, env: Env): Promise<Response> {
   const authError = validateAdminToken(request, env);
   if (authError) return authError;
@@ -523,6 +562,8 @@ async function handleSyncStatus(request: Request, env: Env): Promise<Response> {
 function scheduledMode(cron: string): string {
   if (cron === IMAGE_BACKFILL_MAINTENANCE_CRON) return 'image_backfill';
   if (cron === IMAGE_PRUNE_MAINTENANCE_CRON) return 'image_prune';
+  if (cron === CREATOR_REFRESH_MAINTENANCE_CRON) return 'creator_refresh';
+  if (cron === DEMO_SIGNAL_REFRESH_MAINTENANCE_CRON) return 'demo_signals';
   return 'incremental';
 }
 
@@ -534,6 +575,26 @@ async function runScheduledJob(cron: string, env: Env): Promise<void> {
 
   if (cron === IMAGE_PRUNE_MAINTENANCE_CRON) {
     await pruneMissingTemplateImages(env, { limit: SCHEDULED_IMAGE_PRUNE_LIMIT });
+    return;
+  }
+
+  if (cron === CREATOR_REFRESH_MAINTENANCE_CRON) {
+    // A Designer CMS slug change (creator rename) does not touch the creator's
+    // template rows in Airtable, so the incremental sync only re-indexes the
+    // templates whose own 📅LMT happened to move. Refresh every creator from the
+    // Designers collection by sync-record-id so a rename reaches all of their
+    // templates within the hour even if the Designers webhook never arrived.
+    // Support-request delivery status rides the same hourly slot; a Knock
+    // outage must not block the creator refresh.
+    await refreshSupportRequestDeliveries(env).catch((error) => {
+      console.error(JSON.stringify({ event: 'support_request_delivery_refresh_failed', error: String(error) }));
+    });
+    await refreshCreatorProfiles(env);
+    return;
+  }
+
+  if (cron === DEMO_SIGNAL_REFRESH_MAINTENANCE_CRON) {
+    await refreshTemplateDemoSignals(env, { limit: SCHEDULED_DEMO_SIGNAL_REFRESH_LIMIT });
     return;
   }
 
@@ -563,6 +624,11 @@ export default {
         // First-party fallback for the marketplace code components when
         // webflow.com's page-level analytics SDKs are down (see telemetry.ts).
         return await handleTelemetry(request, env, ctx);
+      }
+
+      if (url.pathname === '/api/templates/support-request' && request.method === 'POST') {
+        // Buyer → creator support form on template detail pages (see supportRequest.ts).
+        return await handleSupportRequest(request, env);
       }
 
       if ((url.pathname === '/api/templates/client.js' || url.pathname === '/client.js') && request.method === 'GET') {
@@ -628,6 +694,10 @@ export default {
         return await handleImagePrune(request, env);
       }
 
+      if (url.pathname === '/api/templates/admin/refresh-demo-signals' && request.method === 'POST') {
+        return await handleDemoSignalRefresh(request, env, ctx);
+      }
+
       return jsonResponse(request, env, { error: 'Not found' }, 404);
     } catch (error) {
       if (error instanceof SyncAlreadyRunningError) {
@@ -647,6 +717,9 @@ export default {
     // */5 cron: incremental sync — picks up Airtable records modified since last cursor.
     // 17 * cron: bounded stale thumbnail backfill using stable Webflow image sources.
     // 47 3 cron: conservative stale-row prune for missing-image rows whose Webflow listing is 404.
+    // 37 * cron: creator profile refresh from the Designers collection (slug/avatar renames),
+    //          plus support-request delivery status from Knock.
+    // 7 * cron: bounded demo-homepage signal refresh (frameworks, class MinHash) for view=full.
     const mode = scheduledMode(controller.cron);
     try {
       await runScheduledJob(controller.cron, env);

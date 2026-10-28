@@ -1,0 +1,12 @@
+{
+  "revision": "c96e5fef12363367bf5e1077b8451ff30b28bd8b",
+  "files": {
+    "packages/canon/src/lib/components/Button.svelte": "9e9e78c134a21a5795dd0d3a13d3b915c0e3b768dab77db69ded42941b480481",
+    "packages/canon/src/lib/components/form/TextField.svelte": "d896ad5be8155eaa198ba92db3049042d5d8c006c5ee29f7762c381658225b71",
+    "packages/canon/src/lib/components/form/TextArea.svelte": "15bd2271c78fa5e6e06f142f8e6380b6d3bd1b791e3b289c6a2e2427a446442b",
+    "packages/canon/src/lib/components/feedback/Alert.svelte": "bd01901efff6c91f07275cc1db193250b1175db37d11be05a8f0e806a8881e2f",
+    "packages/canon/src/lib/styles/tokens.css": "69952ce2fa1972100ac61b06358ccfef6fa705c3885a7c17eb2f908eae57cad8",
+    "packages/agency/canon-overlay/theme.css": "9139f6932d390c417e0cbf67f290f96c32dcdb1953d6e1a829c4715173ad68b0",
+    "packages/mapping-canvas/static/brand/draw-dark.svg": "bd879c4d6510b184dfdb28f947de15adfd243bc4bc50ce8fbce8b87698dee25d"
+  }
+}

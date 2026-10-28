@@ -73,15 +73,17 @@
       <h2 id="reader-title">Choose your next step.</h2>
       <div class="reader-grid">
         <article>
-          <h3>Field notes by email</h3>
+          <h3>Substack publication and .io archive</h3>
           <p>
-            The published field-note archive and email signup live on CREATE SOMETHING .io.
-            Read an edition now or request the next one when it is ready.
+            Read CREATE SOMETHING on Substack, including “Two Notion Custom Blocks, Two Data Contracts.”
+            The .io field-note archive remains available with its existing email signup.
+            These are separate destinations; subscribing on one does not subscribe you on the other.
           </p>
           <div class="reader-actions">
-            <Button href="https://createsomething.io/newsletters">Read published field notes</Button>
+            <Button href="https://createsomethingltd.substack.com/p/two-notion-custom-blocks-two-data">Read the Substack edition</Button>
+            <Button href="https://createsomething.io/newsletters" variant="secondary">Browse the .io archive</Button>
             <Button href="https://createsomething.io/newsletters#subscribe" variant="secondary"
-              >Get field notes by email</Button
+              >Get .io field notes by email</Button
             >
           </div>
         </article>
@@ -171,7 +173,7 @@
   }
   .cadence-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 1px;
     margin-top: 3rem;
     background: var(--color-performance-line, rgba(17, 17, 17, 0.16));

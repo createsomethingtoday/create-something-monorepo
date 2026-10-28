@@ -4,7 +4,7 @@
     "context": "..",
     "dockerfile": "Dockerfile",
     "args": {
-      "NODE_VERSION": "22.21.1",
+      "NODE_VERSION": "22.23.4",
       "PNPM_VERSION": "9.15.0",
       "WRANGLER_VERSION": "4.64.0"
     }

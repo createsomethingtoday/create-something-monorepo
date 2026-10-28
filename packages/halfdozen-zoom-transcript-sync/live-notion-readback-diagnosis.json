@@ -1,0 +1,80 @@
+{
+  "pageId": "40201918-7ac5-818b-a035-fcb4d41bbc0d",
+  "topLevelArtifacts": 1,
+  "expectedChildren": 4,
+  "actualChildren": 4,
+  "requestIds": [
+    "962b117f-fe50-4a8b-82bd-8cdae85fc5bb",
+    "83755b94-15c9-4d79-8167-1dbd66ee445b"
+  ],
+  "results": [
+    {
+      "chunk": 0,
+      "expectedLength": 1800,
+      "plainTextLength": 1779,
+      "textContentLength": 1779,
+      "expectedCR": 20,
+      "actualCR": 0,
+      "expectedLF": 20,
+      "actualLF": 20,
+      "firstDifference": 0,
+      "expectedCodePoint": 65279,
+      "actualCodePoint": 87,
+      "plainEqualsContent": true,
+      "equalsExpectedRemovingCR": false,
+      "expectedSha": "5eea8b7270a2d4f5ba7d5b0d28c62de8090a54984c6452f831942e22d203cb7f",
+      "actualSha": "9e3f9fb3c46775bd2c6a7bb1393a1be187bca9ce878357ab7be02e2f8e1d7816"
+    },
+    {
+      "chunk": 1,
+      "expectedLength": 1800,
+      "plainTextLength": 1780,
+      "textContentLength": 1780,
+      "expectedCR": 20,
+      "actualCR": 0,
+      "expectedLF": 20,
+      "actualLF": 20,
+      "firstDifference": 77,
+      "expectedCodePoint": 13,
+      "actualCodePoint": 10,
+      "plainEqualsContent": true,
+      "equalsExpectedRemovingCR": true,
+      "expectedSha": "eb92840c80c2e5a30bb37859016c075afd3c4e1a9868787574ee38114780fd5e",
+      "actualSha": "567145376808e3269a67e61ed1e7fdc20fb44088fa40ce6f8664dc684e534e44"
+    },
+    {
+      "chunk": 2,
+      "expectedLength": 1800,
+      "plainTextLength": 1780,
+      "textContentLength": 1780,
+      "expectedCR": 20,
+      "actualCR": 0,
+      "expectedLF": 20,
+      "actualLF": 20,
+      "firstDifference": 148,
+      "expectedCodePoint": 13,
+      "actualCodePoint": 10,
+      "plainEqualsContent": true,
+      "equalsExpectedRemovingCR": true,
+      "expectedSha": "8229fe15b4976a41de9e6c879e9799d9c30017b3f893da6dc55d90d3a701abd2",
+      "actualSha": "9a50dc63d0258d67f6114fd19fa1c1ba2b5c4aeff8ee5c0585bce872e7dbe206"
+    },
+    {
+      "chunk": 3,
+      "expectedLength": 600,
+      "plainTextLength": 596,
+      "textContentLength": 596,
+      "expectedCR": 4,
+      "actualCR": 0,
+      "expectedLF": 4,
+      "actualLF": 4,
+      "firstDifference": 228,
+      "expectedCodePoint": 13,
+      "actualCodePoint": 10,
+      "plainEqualsContent": true,
+      "equalsExpectedRemovingCR": true,
+      "expectedSha": "1c57a0b0d5ac6d1c983cd1a5329d5c36ba67981fa4c670b3819dba7c079644b6",
+      "actualSha": "1dee78dbe5e14f8a58aa983cf445182842d33dd08da4d52edc880af96bd9109e"
+    }
+  ]
+}

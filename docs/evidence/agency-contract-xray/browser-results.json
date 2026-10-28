@@ -1,0 +1,34 @@
+{
+  "target": "http://127.0.0.1:4182/#contract-lesson-title",
+  "browser": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/155.0.8059.85",
+    "revision": "@0e66b94549a8bd85f03fbdf189b752d6e7b63c32",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+    "jsVersion": "15.5.35.25"
+  },
+  "initial": {
+    "assemblies": 4,
+    "selected": "host",
+    "glass": 5,
+    "lesson": "The contract declares the requirements.\n\nAn OpenProse *.prose.md file can describe the goal, scope, inputs and evidence needed to assess the result. It is a technical work specification, not a legal agreement.\n\nOrchestration makes the handoffs explicit.\n\nCompose responsibilities and one-time functions. Use ProseScript when steps or their order matter: prepare, review, then hand off. A compatible agent harness supplies the tools and execution.\n\nThe host controls what can actually run.\n\nPermissions, approval gates and checks must exist in the host and connected tools. Markdown alone cannot grant access or enforce a security boundary. We verify host support before relying on it.\n\nThe receipt records what was observed.\n\nKeep results, check evidence, blockers and the next action. An agent’s own claim is not an independent check; a receipt is not automatically signed or proof that every requirement passed.\n\nInspect an illustrative launch brief\n+"
+  },
+  "zoom": "translate(250 260) scale(1.5625) translate(-220 -260)",
+  "wheel": false,
+  "mobile": {
+    "overflow": false,
+    "minTarget": 44,
+    "touch": "pan-y pinch-zoom"
+  },
+  "pinch": "183%",
+  "narrow": {
+    "overflow": false,
+    "label": 12.611931818181818
+  },
+  "nojs": {
+    "assemblies": 4,
+    "controls": 0,
+    "parts": 4
+  },
+  "errors": []
+}

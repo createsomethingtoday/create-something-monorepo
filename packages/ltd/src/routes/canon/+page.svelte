@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LibraryScene from '$lib/components/LibraryScene.svelte';
 	import { SEO } from '@create-something/canon';
 </script>
 
@@ -20,6 +21,8 @@
 		Everything you need to build interfaces that feel right. Colors, typography, 
 		components, and the thinking behind each decision.
 	</p>
+
+	<LibraryScene scene="tool-fit-without-forcing" caption="A shared standard makes the parts fit together." />
 </header>
 
 <!-- Philosophy Quote -->

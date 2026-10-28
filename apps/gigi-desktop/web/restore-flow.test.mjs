@@ -6,7 +6,7 @@ async function until(predicate){for(let i=0;i<60;i++){if(predicate())return;awai
 
 test('restore requires visible in-app confirmation before native mutation',async()=>{
   const handlers={};const calls=[];
-  const root={innerHTML:'',classList:{toggle(){}},addEventListener(name,handler){handlers[name]=handler;}};
+  const root={innerHTML:'',classList:{toggle(name,value){if(name==='loading')root.loading=value;}},addEventListener(name,handler){handlers[name]=handler;}};
   const original={document:globalThis.document,FormData:globalThis.FormData,confirm:globalThis.confirm,__TAURI__:globalThis.__TAURI__};
   globalThis.document={querySelector(selector){return selector==='#app'?root:null;}};
   globalThis.FormData=class{constructor(form){this.form=form;}get(name){return this.form[name];}};
@@ -17,16 +17,16 @@ test('restore requires visible in-app confirmation before native mutation',async
     if(operation==='workspace.get')return {id:'w1',name:'Acceptance'};
     if(operation==='records.list')return input.entity==='profile'?{items:[{id:'p1'}],count:1}:{items:[],count:0};
     if(operation==='records.get')return {id:'p1',fields:{Currency:'USD'}};
-    if(operation==='connections.status')return {state:'disconnected'};
+    if((operation==='connections.status'||operation==='sources.status'))return {state:'disconnected'};
     if(operation==='agent.status')return {};
     if(operation==='backup.restore')return {restored:true,safetyBackupId:'safety-1'};
     throw new Error(`unexpected ${operation}`);
   }}};
   try{
     await import('./app.mjs?restore-flow-test');
-    await until(()=>root.innerHTML.includes('Your work at a glance'));
+    await until(()=>root.innerHTML.includes('Workspace totals'));
     handlers.click({target:{closest:()=>({dataset:{page:'settings'}})}});
-    await until(()=>root.innerHTML.includes('Backup & restore'));
+    await until(()=>root.innerHTML.includes('Backup & restore')&&!root.loading);
     handlers.submit({preventDefault(){},target:{id:'restore-form',backupId:'64cad020-db32-49e9-8e85-581ed3172dbb'}});
     await until(()=>root.innerHTML.includes('Confirm restore'));
     assert.equal(calls.filter(call=>call.operation==='backup.restore').length,0);

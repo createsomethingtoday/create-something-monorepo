@@ -33,13 +33,13 @@ jobs:
           cache: 'pnpm'
 
       - name: Install verifier dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts --side-effects-cache=false
 
       - name: Verify public-distribution and security contracts
         run: |
           node --test scripts/test/public-distribution.test.mjs
           node --test scripts/test/public-ga-policy.test.mjs
-          node --test scripts/test/security-advisory-exceptions.test.mjs
+          node --test scripts/test/security-advisory-exceptions.test.mjs scripts/test/security-local-remediation.test.mjs scripts/test/security-standalone-removal.test.mjs
           node scripts/security-advisory-exceptions.mjs
           node scripts/check-github-actions-pins.mjs
 
@@ -48,9 +48,12 @@ jobs:
           node --test scripts/test/ground-adjudication.test.mjs
           node --test scripts/test/ground-ga-policy.test.mjs
           node --test scripts/test/ground-public-surface.test.mjs
+          node --test scripts/ground-release-evidence.test.mjs scripts/agency-ground-release-parity.test.mjs
+          node --test scripts/test/ground-review.test.mjs
           node --test scripts/test/ground-adoption-contract.test.mjs
           cargo test --manifest-path packages/ground/Cargo.toml
           cargo build --manifest-path packages/ground/Cargo.toml --bins
+          node --test scripts/test/ground-review-native.test.mjs
           node scripts/ground-seeded-trial.mjs --native-dir packages/ground/target/debug --output /tmp/ground-seeded-trial.json
           node scripts/ground-execution-verify.mjs --native-dir packages/ground/target/debug --output /tmp/ground-execution.json
           node scripts/ground-incremental-verify.mjs --native-dir packages/ground/target/debug --output /tmp/ground-incremental.json

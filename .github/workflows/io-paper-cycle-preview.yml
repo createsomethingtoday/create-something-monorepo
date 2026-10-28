@@ -105,7 +105,7 @@ jobs:
         run: pnpm policy:artifacts:check
 
       - name: Deploy IO preview
-        if: steps.context.outputs.publishable == 'true' && env.CLOUDFLARE_API_TOKEN != ''
+        if: github.event.pull_request.draft == false && steps.context.outputs.publishable == 'true' && env.CLOUDFLARE_API_TOKEN != ''
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: |
@@ -115,7 +115,7 @@ jobs:
             --commit-dirty=true
 
       - name: Upsert preview comment
-        if: steps.context.outputs.publishable == 'true' && env.CLOUDFLARE_API_TOKEN != ''
+        if: github.event.pull_request.draft == false && steps.context.outputs.publishable == 'true' && env.CLOUDFLARE_API_TOKEN != ''
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         env:
           PREVIEW_URL: https://${{ env.PR_BRANCH_ALIAS }}.create-something-io.pages.dev

@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
 import { verifyRelease } from './verify-release.mjs';
 
-const team='ABCDE12345';
+const team='PRP5VQQPPB';
 const developerId=`Developer ID Application: CREATE SOMETHING (${team})`;
 const signed=`Identifier=agency.createsomething.gigi\nAuthority=${developerId}\nAuthority=Developer ID Certification Authority\nAuthority=Apple Root CA\nTeamIdentifier=${team}\nTimestamp=Sep 30, 2026 at 1:00:00 PM\nCodeDirectory flags=0x10000(runtime)\nCDHash=${'a'.repeat(40)}\n`;
 const upstream=signed.replaceAll(team,'6JJ2TTFB9A').replace('CREATE SOMETHING','ctx engineering inc');
@@ -18,7 +18,7 @@ async function fixture(t) {
  await mkdir(join(appPath,'Contents','Resources'),{recursive:true});
  await writeFile(join(appPath,'Contents','Info.plist'),'test fixture');
  await writeFile(join(appPath,'Contents','MacOS','gigi'),'main',{mode:0o755});
- for(const name of ['gigi-mcp','gigi-integrations','ctx'])await writeFile(join(appPath,'Contents','Resources',name),name,{mode:0o755});
+ for(const name of ['gigi-mcp','gigi-integrations','gigi-codex','ctx'])await writeFile(join(appPath,'Contents','Resources',name),name,{mode:0o755});
  await writeFile(dmgPath,'disk image fixture');
  return {root,appPath,dmgPath};
 }
@@ -79,6 +79,16 @@ test('ad-hoc app signature fails closed before Gatekeeper or mount',async(t)=>{
  assert.ok(!calls.some(call=>call[0]==='hdiutil'&&call[1]==='attach'));
 });
 
+test('a valid Developer ID from another team cannot qualify a GiGi release',async(t)=>{
+ const {appPath,dmgPath}=await fixture(t);
+ const {run,calls}=commands({appPath,override:(command,args)=>command==='codesign'&&args.includes('-dv')&&args.at(-1)===appPath
+  ?{exitCode:0,stdout:'',stderr:signed.replaceAll(team,'ABCDE12345')}:null});
+ const result=await verifyRelease({appPath,dmgPath,run});
+ assert.equal(result.qualified,false);
+ assert.equal(result.reason,'app_identity');
+ assert.ok(!calls.some(call=>call[0]==='spctl'||call[0]==='hdiutil'));
+});
+
 test('different app bytes inside the DMG fail and the owned mount is detached',async(t)=>{
  const {appPath,dmgPath}=await fixture(t);
  const {run,calls}=commands({appPath,alterMount:true});
@@ -120,4 +130,21 @@ test('failed image attach does not detach another mount and removes only an empt
  assert.equal(result.reason,'dmg_mount');
  assert.ok(fixtureCommands.calls.some(call=>call[0]==='hdiutil'&&call[1]==='info'));
  assert.ok(!fixtureCommands.calls.some(call=>call[0]==='hdiutil'&&call[1]==='detach'));
+});
+
+
+test('accepts Gatekeeper notarized output without optional origin and still verifies signatures', async t => {
+ const f=await fixture(t);
+ const run=commands({...f,override:(command,args)=>command==='spctl'&&args.includes('execute')?{exitCode:0,stdout:'',stderr:`${f.appPath}: accepted\nsource=Notarized Developer ID\n`}:undefined});
+ const result=await verifyRelease({...f,run:run.run});
+ assert.equal(result.qualified,true);
+});
+
+
+test('wrong Gatekeeper origin and an unsigned chat companion remain unqualified', async t => {
+ const f=await fixture(t);
+ const wrong=commands({...f,override:(command,args)=>command==='spctl'&&args.includes('execute')?{exitCode:0,stdout:'',stderr:`${f.appPath}: accepted\nsource=Notarized Developer ID\norigin=Developer ID Application: Other Team (OTHER12345)\n`}:undefined});
+ assert.equal((await verifyRelease({...f,run:wrong.run})).reason,'app_gatekeeper');
+ const unsigned=commands({...f,override:(command,args)=>command==='codesign'&&args.includes('-dv')&&args.at(-1).endsWith('/gigi-codex')?{exitCode:0,stdout:'',stderr:'Signature=adhoc\nTeamIdentifier=not set\n'}:undefined});
+ assert.equal((await verifyRelease({...f,run:unsigned.run})).reason,'companion_identity');
 });

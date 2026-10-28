@@ -50,6 +50,12 @@
     </div>
   </section>
   <section class="builder-workspace">
+    <p class="eyebrow">COURSE IN PROGRESS</p>
+    <h2>From Template to System.</h2>
+    <p>See the approved outline for an agentic Webflow course with Codex. Recording is next; original preparation worksheets are available now.</p>
+    <p><a href="/courses/from-template-to-system">Explore the course preparation</a></p>
+  </section>
+  <section class="builder-workspace">
     <p class="eyebrow">TEACH / PACKAGE / PROVE</p>
     <h2>Make the reasoning<br /><SerifPhrase text="as useful as the code." /></h2>
     <ol class="practice-steps">

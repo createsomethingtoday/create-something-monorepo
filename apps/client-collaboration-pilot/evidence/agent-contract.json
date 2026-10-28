@@ -1,0 +1,85 @@
+{
+  "result": [
+    {
+      "name": "feedback.add",
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "page",
+          "component",
+          "baseVersion",
+          "baseHash",
+          "text"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string"
+          },
+          "page": {
+            "const": "/"
+          },
+          "component": {
+            "const": "hero.headline"
+          },
+          "baseVersion": {
+            "type": "integer"
+          },
+          "baseHash": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "proposal.create",
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "page",
+          "component",
+          "baseVersion",
+          "baseHash",
+          "feedbackId",
+          "replacement",
+          "reason"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string"
+          },
+          "page": {
+            "const": "/"
+          },
+          "component": {
+            "const": "hero.headline"
+          },
+          "baseVersion": {
+            "type": "integer"
+          },
+          "baseHash": {
+            "type": "string"
+          },
+          "feedbackId": {
+            "type": "string"
+          },
+          "replacement": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  ]
+}

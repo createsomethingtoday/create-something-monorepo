@@ -185,3 +185,6 @@ export * from './filtering/index.js';
 
 // MagicUI (premium UI effects - use sparingly)
 export * from './magicui/index.js';
+
+// Original conceptual illustrations; static by default, no implied live telemetry.
+export * from './isometric/index.js';

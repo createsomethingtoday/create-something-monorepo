@@ -1,3 +1,6 @@
+import { INLINE_SCHEMA } from './inline-transcript';
+import { GATE_SCHEMA } from './readiness-gate';
+import { INGESTION_SCHEMA } from './ingestion-state';
 import type { LedgerRow, SyncRunRow, TranscriptCandidate } from './types';
 
 const SCHEMA_STATEMENTS = [
@@ -54,7 +57,7 @@ const SCHEMA_STATEMENTS = [
 const STALE_QUEUE_WINDOW_MS = 2 * 60 * 60 * 1000;
 
 export async function initSchema(db: D1Database): Promise<void> {
-  for (const statement of SCHEMA_STATEMENTS) {
+  for (const statement of [...SCHEMA_STATEMENTS, ...INGESTION_SCHEMA, INLINE_SCHEMA, GATE_SCHEMA]) {
     await db.prepare(statement).run();
   }
 }
@@ -259,7 +262,6 @@ export async function discoverTranscript(
     existing.transcript_file_type !== candidate.transcriptFileType ||
     existing.transcript_file_extension !== candidate.transcriptFileExtension;
 
-  const isTerminalStatus = existing.status === 'synced' || existing.status === 'skipped';
   const hasFreshQueueDelivery =
     existing.status === 'queued' &&
     existing.enqueued_at !== null &&
@@ -267,7 +269,7 @@ export async function discoverTranscript(
 
   const shouldEnqueue =
     transcriptIdentityChanged ||
-    (!isTerminalStatus && !hasFreshQueueDelivery);
+    !hasFreshQueueDelivery;
 
   await db
     .prepare(`

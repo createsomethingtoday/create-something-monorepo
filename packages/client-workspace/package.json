@@ -39,7 +39,7 @@
     "svelte": "5.48.5"
   },
   "devDependencies": {
-    "@cloudflare/sandbox": "0.12.3",
+    "@cloudflare/sandbox": "0.12.14",
     "@cloudflare/workers-types": "^4.20260621.1",
     "@create-something/canon": "workspace:*",
     "@sveltejs/adapter-auto": "7.0.0",

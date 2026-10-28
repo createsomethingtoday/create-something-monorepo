@@ -6,7 +6,7 @@ import { marketingPagePortfolio } from './marketingPages';
  */
 const privateOrUtilityRoute = /^\/(account|admin|dashboard|login|logout|auth|mcp-access|delivery|api|dify|prospects)(?:\/|$)/;
 const publicSupportingRoutes = new Set([
-  '/privacy', '/terms',
+  '/privacy', '/terms', '/support-brief',
   // Current public search landing pages outside the editorial portfolio.
   '/ai-workflow-control', '/ai-workflow-recovery', '/marketplace-review-automation'
 ]);

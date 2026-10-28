@@ -1,19 +1,20 @@
 <script lang="ts">
   import './page.css';
+  import DrawExplainer from './DrawExplainer.svelte';
   import { onMount } from 'svelte';
 
   const canonicalUrl = 'https://draw.createsomething.agency/download';
   const title = 'Draw for Mac | CREATE SOMETHING';
-  const description = 'Request the CREATE SOMETHING Draw Mac preview, or open the free local-first drawing canvas in your browser.';
+  const description = 'Request the Draw Mac preview, or open the free local-first drawing canvas in your browser.';
   const sourceSha = '7c74dc1485377e316efa7173796dda883cb21eee';
   const dmgSha256 = '0c82b266fa7df6d7078bdc93d7ff2f02186da4168e7b3567f97a376f5843f0bd';
   const workflowUrl = 'https://github.com/createsomethingtoday/create-something-monorepo/actions/runs/33711866576';
-  const requestUrl = 'mailto:micah@createsomething.io?subject=CREATE%20SOMETHING%20Draw%20Mac%20preview&body=I%27d%20like%20the%20individual%20Draw%20for%20Mac%20preview.%20I%20understand%20the%20current%20build%20is%20unsigned%20and%20not%20a%20general-public%20release.';
+  const requestUrl = 'mailto:support@createsomething.io?subject=CREATE%20SOMETHING%20Draw%20Mac%20preview&body=I%27d%20like%20the%20individual%20Draw%20for%20Mac%20preview.%20I%20understand%20the%20current%20build%20is%20unsigned%20and%20not%20a%20general-public%20release.';
   const applicationSchema = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
     '@id': `${canonicalUrl}#mac`,
-    name: 'CREATE SOMETHING Draw for Mac',
+    name: 'Draw for Mac',
     url: canonicalUrl,
     applicationCategory: 'DesignApplication',
     operatingSystem: 'macOS',
@@ -51,7 +52,7 @@
   <link rel="canonical" href={canonicalUrl} />
   <meta property="og:type" content="website" />
   <meta property="og:url" content={canonicalUrl} />
-  <meta property="og:site_name" content="CREATE SOMETHING Draw" />
+  <meta property="og:site_name" content="Draw" />
   <meta property="og:title" content={title} />
   <meta property="og:description" content={description} />
   <meta property="og:image" content="https://draw.createsomething.agency/og-image.png" />
@@ -64,8 +65,8 @@
 
 <main class="download-page">
   <nav class="page-nav" aria-label="Draw navigation">
-    <a class="brand" href="/" aria-label="Open CREATE SOMETHING Draw">
-      <img src="/brand/create-something-agency-white.svg" alt="CREATE SOMETHING .agency" />
+    <a class="brand" href="/" aria-label="Open Draw">
+      <img src="/brand/draw-reverse.svg" alt="" />
       <span>Draw</span>
     </a>
     <div>
@@ -77,18 +78,16 @@
   <section class="opening" aria-labelledby="download-title">
     <div class="opening-copy">
       <div class="eyebrow"><span>MAC PREVIEW · 0.1.0</span><span>INDIVIDUAL DELIVERY</span></div>
-      <h1 id="download-title">Draw together.<br />Keep the Mac authoritative.</h1>
-      <p class="lede">The browser canvas is free and ready now. The optional Mac preview hosts a local session so an iPhone can draw, navigate, and mirror changes during a meeting.</p>
+      <h1 id="download-title">Make the idea<br />visible.</h1>
+      <p class="lede">Draw is a free, local-first canvas for meetings, spatial notes and visual explanation. Sketch a thought, connect the pieces, and keep a drawing you can use.</p>
       <div class="actions">
         <a class="primary" href="/">Open Draw</a>
         <a class="secondary" href={requestUrl}>Request Mac preview</a>
       </div>
+      <p class="requirements">Browser canvas · No account required<br />Mac preview 0.1.0 · macOS 13 or later</p>
       <p class="boundary">Current Mac builds are delivered directly to informed testers. They are unsigned, not notarized, and not a general-public release.</p>
     </div>
-    <figure class="hero-visual">
-      <img src="/images/draw/draw-together-mapping-instrument.webp" width="1536" height="1024" alt="A tactile desktop mapping plane linked to a smaller handheld companion plane" fetchpriority="high" />
-      <figcaption><span>DRAW TOGETHER</span><p>The phone moves with the conversation. The larger canvas keeps the shared map visible and authoritative.</p></figcaption>
-    </figure>
+    <DrawExplainer />
   </section>
 
   <section class="proof" aria-labelledby="proof-title">
@@ -105,7 +104,7 @@
     <div class="section-label"><span>02</span><h2 id="conditions-title">Know the release boundary.</h2></div>
     <div class="condition-grid">
       <article><small>READY</small><strong>Web canvas</strong><p>Production at draw.createsomething.agency. Local-first storage, WebMCP controls, and JSON, SVG, or PNG export.</p></article>
-      <article><small>PREVIEW</small><strong>Mac + iPhone pairing</strong><p>Verified native candidate for selected testers. Both devices use the same local network; the Mac remains in control.</p></article>
+      <article><small>PREVIEW</small><strong>Mac + iPhone pairing</strong><p>Optional preview for selected testers. Pairing needs compatible Mac and iPhone builds on the same trusted local network; the Mac remains in control. Current development builds require LAN pairing to be explicitly enabled.</p></article>
       <article class="review"><small>REVIEW</small><strong>Unsigned distribution</strong><p>macOS may block or warn on installation. Only install a build delivered directly by CREATE SOMETHING after verifying its checksum.</p></article>
     </div>
     <dl class="release-record">
@@ -126,5 +125,5 @@
     </div>
   </section>
 
-  <footer><span>CREATE SOMETHING Draw</span><span>FREE · OPEN SOURCE · LOCAL-FIRST</span></footer>
+  <footer><a href="https://createsomething.agency">Draw by CREATE SOMETHING</a><a href="https://opensource.org/license/mit">MIT licensed</a><a href="mailto:support@createsomething.io">support@createsomething.io</a></footer>
 </main>

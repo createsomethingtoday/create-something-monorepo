@@ -1,0 +1,539 @@
+{
+  "version": "2026.10.05",
+  "scope": "designer-extension-only",
+  "description": "Marketplace review requirements that apply to a Designer Extension-only App (no Data Client, no Webflow OAuth scopes, no Install URL, no code injected into customer sites). Every rule carries a provenance tag and names the layer that enforces it. A rule enforced only by 'human' is a gate the generator checklists but cannot verify.",
+  "provenance": {
+    "published": "Stated as a requirement on developers.webflow.com (Marketplace Guidelines, Submitting your App, Listing your App, Designer Extension docs) as of the date in `version`.",
+    "control": "A security or engineering control that prepares review evidence and generalizes recurring review risk. Not verbatim published policy. Same label the preflight skill and toolkit use.",
+    "reviewer-practice": "Enforced in actual reviews (Jul-Sep 2026 rejection corpus, 532 versions) but not written in the published docs. Encoded here because this tool is internal. The 8/17 changelog promise is 'if it isn't published we don't hold your submission to it', so a public tool must not present these as requirements."
+  },
+  "severity": {
+    "blocker": "Reviewers reject on sight, or the upload fails before review starts.",
+    "required": "Reviewers return the submission for changes.",
+    "suggested": "Reviewers may flag it; fixing it removes a conversation."
+  },
+  "enforcedBy": {
+    "template": "The compliant scaffold makes the violation hard to write.",
+    "doctor": "`wf-forge doctor` checks the built bundle.zip and review-artifacts.",
+    "listing-kit": "`wf-forge listing` checks listing copy, assets, and URLs.",
+    "preflight": "App Review Preflight (the Designer Extension that issues wfpre_ receipts).",
+    "form": "The submission form at developers.webflow.com/submit validates it.",
+    "human": "A person must do or confirm it. The packet lists these as gates."
+  },
+  "sources": {
+    "MG": "https://developers.webflow.com/apps/docs/marketplace-guidelines",
+    "SUB": "https://developers.webflow.com/apps/docs/marketplace/submitting-your-app",
+    "LIST": "https://developers.webflow.com/apps/docs/marketplace/listing-your-app",
+    "DESIGN": "https://developers.webflow.com/designer/docs/design-guidelines",
+    "GAP": "create-something-monorepo/output/app-review-gap-analysis-2026-09-30.md",
+    "FORM": "webflow/wf-app-form-cloud lib/ (vendored under src/vendor/form-rules, see VENDOR.json)",
+    "SKILL": "create-something-monorepo/skills/webflow-app-preflight"
+  },
+  "requirements": [
+    {
+      "id": "MANIFEST-FIELDS",
+      "title": "webflow.json declares name, apiVersion \"2\", and publicDir",
+      "provenance": "published",
+      "source": ["SUB", "SKILL"],
+      "severity": "blocker",
+      "enforcedBy": ["template", "doctor"],
+      "check": "doctor:manifest-fields"
+    },
+    {
+      "id": "MANIFEST-REAL-NAME",
+      "title": "The manifest name and page title are the real product name, not a scaffold default",
+      "provenance": "control",
+      "source": ["SKILL"],
+      "severity": "required",
+      "enforcedBy": ["template", "doctor"],
+      "check": "doctor:real-name"
+    },
+    {
+      "id": "MANIFEST-SINGLE",
+      "title": "bundle.zip contains exactly one webflow.json",
+      "provenance": "control",
+      "source": ["SKILL"],
+      "severity": "required",
+      "enforcedBy": ["doctor"],
+      "check": "doctor:single-manifest"
+    },
+    {
+      "id": "MANIFEST-NO-TELEMETRY",
+      "title": "The bundled webflow.json carries no CLI telemetry block",
+      "provenance": "control",
+      "source": ["SKILL"],
+      "severity": "suggested",
+      "enforcedBy": ["doctor"],
+      "check": "doctor:no-telemetry",
+      "note": "Packaging hygiene written by Webflow CLI 2.3.0 and earlier. Not a security finding and not evidence of a development build."
+    },
+    {
+      "id": "BUNDLE-SIZE",
+      "title": "bundle.zip is 5 MB or smaller",
+      "provenance": "published",
+      "source": ["SKILL"],
+      "severity": "blocker",
+      "enforcedBy": ["doctor"],
+      "check": "doctor:bundle-size",
+      "note": "An oversized bundle fails at upload, before review starts."
+    },
+    {
+      "id": "BUNDLE-NO-SOURCE-MAPS",
+      "title": "No .map files or inline data: source maps inside bundle.zip",
+      "provenance": "published",
+      "source": ["SUB", "SKILL"],
+      "severity": "required",
+      "enforcedBy": ["template", "doctor"],
+      "check": "doctor:no-maps-in-bundle",
+      "note": "Source maps go in the form's private upload, never in the artifact that ships to customers."
+    },
+    {
+      "id": "SOURCEMAP-ARTIFACT",
+      "title": "A version-3 source map for each minified bundle file exists in review-artifacts/ and is attached to the form's private upload",
+      "provenance": "published",
+      "source": ["SUB"],
+      "severity": "required",
+      "enforcedBy": ["template", "doctor", "form", "human"],
+      "check": "doctor:sourcemap-artifact",
+      "note": "Required when the submission ships a new or changed minified bundle. The gap analysis notes the docs say 'required' on the submission page and 'may request' on the guidelines page; this tool uses the stricter reading."
+    },
+    {
+      "id": "PROD-BUILD",
+      "title": "Production build: no eval-based module wrappers, no framework error-decoder URLs, no dev-server or hot-update residue",
+      "provenance": "published",
+      "source": ["MG", "GAP"],
+      "severity": "blocker",
+      "enforcedBy": ["template", "doctor", "preflight"],
+      "check": "doctor:prod-build"
+    },
+    {
+      "id": "NO-DYNAMIC-CODE",
+      "title": "No eval(), new Function(), or string-argument timers",
+      "provenance": "published",
+      "source": ["MG"],
+      "severity": "blocker",
+      "enforcedBy": ["template", "doctor", "preflight"],
+      "check": "doctor:no-dynamic-code"
+    },
+    {
+      "id": "NO-SECRETS",
+      "title": "No credentials, private keys, or client secrets in the bundle",
+      "provenance": "published",
+      "source": ["MG"],
+      "severity": "blocker",
+      "enforcedBy": ["doctor", "preflight"],
+      "check": "doctor:no-secrets"
+    },
+    {
+      "id": "CSP-NO-INLINE-HANDLERS",
+      "title": "No inline event handlers or javascript: URLs in the extension HTML",
+      "provenance": "published",
+      "source": ["MG", "GAP"],
+      "severity": "required",
+      "enforcedBy": ["template", "doctor", "preflight"],
+      "check": "doctor:csp-inline-handlers"
+    },
+    {
+      "id": "CSP-NO-INLINE-SCRIPT",
+      "title": "No inline <script> blocks; all script is in bundled files",
+      "provenance": "control",
+      "source": ["MG"],
+      "severity": "required",
+      "enforcedBy": ["template", "doctor"],
+      "check": "doctor:csp-inline-script"
+    },
+    {
+      "id": "CSP-NO-INLINE-STYLE",
+      "title": "No inline <style> blocks or runtime style injection; styles live in a stylesheet file",
+      "provenance": "reviewer-practice",
+      "source": ["GAP"],
+      "severity": "suggested",
+      "enforcedBy": ["template", "doctor"],
+      "check": "doctor:csp-inline-style",
+      "note": "74 feedback texts in the Jul-Sep corpus cite inline styles; DOC-53 lists only inline handlers, javascript: URLs, and unsafe-eval. The template avoids style-loader so this never comes up."
+    },
+    {
+      "id": "NO-REMOTE-SCRIPTS",
+      "title": "The extension loads no script from a host outside the bundle",
+      "provenance": "control",
+      "source": ["MG"],
+      "severity": "required",
+      "enforcedBy": ["template", "doctor"],
+      "check": "doctor:no-remote-scripts",
+      "note": "Remotely loaded code can change after approval. A stylesheet or font from a named host is acceptable if declared in review notes."
+    },
+    {
+      "id": "NO-NONPROD-HOSTS",
+      "title": "No localhost, staging, or tunnel host used as a request destination",
+      "provenance": "published",
+      "source": ["MG", "SKILL"],
+      "severity": "required",
+      "enforcedBy": ["doctor", "preflight"],
+      "check": "doctor:no-nonprod-hosts",
+      "note": "A bare 'localhost' literal in a library's URL fallback is not residue. Only a localhost URL with a port or path, or a tunnel host, is reported."
+    },
+    {
+      "id": "NO-EXTERNAL-IFRAME-UI",
+      "title": "No externally hosted iframe as the primary App UI",
+      "provenance": "published",
+      "source": ["MG"],
+      "severity": "required",
+      "enforcedBy": ["doctor", "preflight"],
+      "check": "doctor:no-external-iframe",
+      "note": "Iframes are fine for third-party authentication flows."
+    },
+    {
+      "id": "NO-HOST-DOM",
+      "title": "No direct DOM manipulation of the Designer; Designer APIs only",
+      "provenance": "published",
+      "source": ["MG"],
+      "severity": "required",
+      "enforcedBy": ["template", "doctor", "preflight"],
+      "check": "doctor:no-host-dom"
+    },
+    {
+      "id": "SECTION-BY-TAG",
+      "title": "Sections are identified with getTag() === 'section', not element.type === 'Section'",
+      "provenance": "control",
+      "source": ["SKILL"],
+      "severity": "suggested",
+      "enforcedBy": ["template", "doctor", "preflight"],
+      "check": "doctor:section-by-tag",
+      "note": "Preset-created sections report type 'Block'. The published set-tag example still teaches the broken pattern."
+    },
+    {
+      "id": "NO-TOKENS-IN-STORAGE",
+      "title": "No tokens or secrets written to localStorage or sessionStorage, and none placed in URLs",
+      "provenance": "published",
+      "source": ["MG"],
+      "severity": "required",
+      "enforcedBy": ["doctor", "preflight"],
+      "check": "doctor:no-tokens-in-storage",
+      "note": "Ordinary UI preferences in localStorage are fine."
+    },
+    {
+      "id": "NO-POPUPS",
+      "title": "No alert(), confirm(), or prompt(); use webflow.notify",
+      "provenance": "published",
+      "source": ["DESIGN", "MG"],
+      "severity": "suggested",
+      "enforcedBy": ["template", "doctor", "preflight"],
+      "check": "doctor:no-popups"
+    },
+    {
+      "id": "NO-MUTATION-ON-LOAD",
+      "title": "The App changes nothing in the site until the user acts",
+      "provenance": "published",
+      "source": ["MG"],
+      "severity": "required",
+      "enforcedBy": ["template", "human"],
+      "check": "human:no-mutation-on-load",
+      "note": "54 versions cited 'state change without user interaction'. The template's only mutating path is a click handler. Confirm in the demo video."
+    },
+    {
+      "id": "NO-KEYBOARD-SHORTCUT",
+      "title": "No keyboard shortcut invokes the App",
+      "provenance": "published",
+      "source": ["MG"],
+      "severity": "suggested",
+      "enforcedBy": ["doctor"],
+      "check": "doctor:no-keyboard-shortcut"
+    },
+    {
+      "id": "ANALYTICS-CONSENT",
+      "title": "Any analytics inside the extension runs only after the user consents",
+      "provenance": "reviewer-practice",
+      "source": ["GAP"],
+      "severity": "suggested",
+      "enforcedBy": ["template", "doctor"],
+      "check": "doctor:analytics-consent",
+      "note": "81 versions cited analytics or tracking without consent. The template ships a consent gate with no SDK wired in."
+    },
+    {
+      "id": "DEPENDENCIES-NAMEABLE",
+      "title": "Every third-party dependency in the bundle can be named; lockfile and production manifest available on request",
+      "provenance": "control",
+      "source": ["SKILL", "MG"],
+      "severity": "suggested",
+      "enforcedBy": ["template", "human"],
+      "check": "human:dependencies"
+    },
+    {
+      "id": "DESIGN-TOKENS",
+      "title": "Visual style uses Webflow's published App colors and typography; 4px spacing rhythm",
+      "provenance": "published",
+      "source": ["DESIGN"],
+      "severity": "suggested",
+      "enforcedBy": ["template", "human"],
+      "check": "human:design"
+    },
+    {
+      "id": "ACCESSIBLE",
+      "title": "Accessible: alt text, keyboard navigation, sufficient contrast, visible focus",
+      "provenance": "published",
+      "source": ["MG", "DESIGN"],
+      "severity": "suggested",
+      "enforcedBy": ["template", "human"],
+      "check": "human:accessibility"
+    },
+    {
+      "id": "FUNCTIONAL",
+      "title": "App runs end to end with no crashes and no placeholder content or test data",
+      "provenance": "published",
+      "source": ["MG", "SUB"],
+      "severity": "blocker",
+      "enforcedBy": ["human"],
+      "check": "human:functional"
+    },
+    {
+      "id": "LISTING-NAME",
+      "title": "App name is 30 characters or fewer and does not use Webflow marks",
+      "provenance": "published",
+      "source": ["LIST", "MG", "FORM"],
+      "severity": "required",
+      "enforcedBy": ["listing-kit", "form"],
+      "check": "listing:name"
+    },
+    {
+      "id": "LISTING-SHORT",
+      "title": "Short description is 100 characters or fewer and states the value proposition",
+      "provenance": "published",
+      "source": ["LIST"],
+      "severity": "required",
+      "enforcedBy": ["listing-kit", "form"],
+      "check": "listing:short"
+    },
+    {
+      "id": "LISTING-LONG",
+      "title": "Long description is 10,000 characters or fewer, Markdown without links, specific about what the App does",
+      "provenance": "published",
+      "source": ["LIST", "FORM"],
+      "severity": "required",
+      "enforcedBy": ["listing-kit", "form"],
+      "check": "listing:long"
+    },
+    {
+      "id": "LISTING-FEATURES",
+      "title": "At most 5 listed features",
+      "provenance": "published",
+      "source": ["LIST"],
+      "severity": "required",
+      "enforcedBy": ["listing-kit"],
+      "check": "listing:features"
+    },
+    {
+      "id": "LISTING-CATEGORIES",
+      "title": "One or two categories from the published list",
+      "provenance": "published",
+      "source": ["FORM", "LIST"],
+      "severity": "required",
+      "enforcedBy": ["listing-kit", "form"],
+      "check": "listing:categories",
+      "note": "The listing doc says up to 5; the form accepts at most 2. The form is the gate."
+    },
+    {
+      "id": "LISTING-COPY-HONEST",
+      "title": "Copy describes the App's own behavior: no unverifiable claims, beta language, agency pitch, third-party brand confusion, staging markers, or script tags",
+      "provenance": "published",
+      "source": ["MG", "FORM"],
+      "severity": "required",
+      "enforcedBy": ["listing-kit", "form"],
+      "check": "listing:copy"
+    },
+    {
+      "id": "LISTING-ENGLISH",
+      "title": "Listing copy is in English",
+      "provenance": "published",
+      "source": ["FORM"],
+      "severity": "suggested",
+      "enforcedBy": ["listing-kit", "form"],
+      "check": "listing:copy"
+    },
+    {
+      "id": "LISTING-MATCHES-BEHAVIOR",
+      "title": "Description, screenshots, and demo video match actual behavior",
+      "provenance": "published",
+      "source": ["MG"],
+      "severity": "required",
+      "enforcedBy": ["human"],
+      "check": "human:listing-matches"
+    },
+    {
+      "id": "ICON",
+      "title": "App icon is a 900x900 PNG, 50 KB or smaller, a logomark rather than a text logotype, with alt text",
+      "provenance": "published",
+      "source": ["LIST", "FORM"],
+      "severity": "required",
+      "enforcedBy": ["listing-kit", "form"],
+      "check": "listing:icon",
+      "note": "The guidelines page separately says 512x512. Produce 900x900 so it downsizes cleanly; the form enforces 900."
+    },
+    {
+      "id": "SCREENSHOTS",
+      "title": "3 to 5 screenshots at 1280x846 showing real features, each with descriptive alt text",
+      "provenance": "published",
+      "source": ["LIST", "MG", "FORM"],
+      "severity": "required",
+      "enforcedBy": ["listing-kit", "form"],
+      "check": "listing:screenshots",
+      "note": "The listing doc recommends at least 4."
+    },
+    {
+      "id": "DEMO-VIDEO",
+      "title": "A 2 to 5 minute review demo video from install to usage, in English or with English subtitles, on a private link",
+      "provenance": "published",
+      "source": ["SUB", "FORM"],
+      "severity": "required",
+      "enforcedBy": ["listing-kit", "form", "human"],
+      "check": "listing:demo-video",
+      "note": "Length and content cannot be checked from a URL. Separate from the optional 1-2 minute promo video."
+    },
+    {
+      "id": "LEGAL-URLS",
+      "title": "Privacy policy and terms of service URLs are reachable HTTPS pages on a production host",
+      "provenance": "published",
+      "source": ["LIST", "MG", "FORM"],
+      "severity": "required",
+      "enforcedBy": ["listing-kit", "form"],
+      "check": "listing:legal-urls"
+    },
+    {
+      "id": "LEGAL-DISTINCT",
+      "title": "Privacy policy and terms of service are distinct pages",
+      "provenance": "control",
+      "source": ["SKILL"],
+      "severity": "suggested",
+      "enforcedBy": ["listing-kit"],
+      "check": "listing:legal-urls",
+      "note": "The form calibration found 26 approved apps sharing one legal page, so this stays a suggestion."
+    },
+    {
+      "id": "PRIVACY-COVERS-COLLECTION",
+      "title": "The privacy policy actually covers what the App collects, where it is stored, and how it is used",
+      "provenance": "published",
+      "source": ["MG"],
+      "severity": "required",
+      "enforcedBy": ["human"],
+      "check": "human:privacy-coverage",
+      "note": "This tool never authors legal text. It emits a disclosure outline for Legal or the developer to use."
+    },
+    {
+      "id": "WEBSITE-URL",
+      "title": "Homepage URL is valid HTTPS on a production host",
+      "provenance": "published",
+      "source": ["LIST", "FORM"],
+      "severity": "required",
+      "enforcedBy": ["listing-kit", "form"],
+      "check": "listing:website"
+    },
+    {
+      "id": "DOCS-URL",
+      "title": "Documentation URL is provided and on a production host",
+      "provenance": "published",
+      "source": ["SUB", "FORM"],
+      "severity": "required",
+      "enforcedBy": ["listing-kit", "form"],
+      "check": "listing:docs"
+    },
+    {
+      "id": "SUPPORT-EMAIL",
+      "title": "Support email is valid and does not use Webflow marks",
+      "provenance": "published",
+      "source": ["LIST", "FORM"],
+      "severity": "required",
+      "enforcedBy": ["listing-kit", "form"],
+      "check": "listing:support"
+    },
+    {
+      "id": "PRICING-DISCLOSED",
+      "title": "Every fee, subscription, or in-app purchase is disclosed; a Paid app explains its tiers in review notes",
+      "provenance": "published",
+      "source": ["MG", "SUB", "FORM"],
+      "severity": "required",
+      "enforcedBy": ["listing-kit", "form", "human"],
+      "check": "listing:pricing"
+    },
+    {
+      "id": "NO-ADS",
+      "title": "No advertisements in the App",
+      "provenance": "published",
+      "source": ["MG"],
+      "severity": "required",
+      "enforcedBy": ["human"],
+      "check": "human:no-ads"
+    },
+    {
+      "id": "CREATOR-REAL",
+      "title": "Creator name is a real publisher, not a placeholder; no impersonation",
+      "provenance": "published",
+      "source": ["MG", "FORM"],
+      "severity": "required",
+      "enforcedBy": ["listing-kit", "form"],
+      "check": "listing:creator"
+    },
+    {
+      "id": "ONE-DEVELOPER-ACCOUNT",
+      "title": "Only one developer account is used",
+      "provenance": "published",
+      "source": ["MG"],
+      "severity": "blocker",
+      "enforcedBy": ["human"],
+      "check": "human:one-account"
+    },
+    {
+      "id": "TESTING-SITE",
+      "title": "A published .webflow.io testing site with the App installed is entered in the form",
+      "provenance": "published",
+      "source": ["SUB", "FORM"],
+      "severity": "required",
+      "enforcedBy": ["listing-kit", "form", "human"],
+      "check": "listing:testing-site"
+    },
+    {
+      "id": "DEMO-ACCESS",
+      "title": "Demo access is provided: demo account, full demo mode, or credentials to required resources",
+      "provenance": "published",
+      "source": ["SUB"],
+      "severity": "required",
+      "enforcedBy": ["human"],
+      "check": "human:demo-access"
+    },
+    {
+      "id": "TWO-FACTOR",
+      "title": "Two-factor authentication is enabled on an admin account of the submitting Workspace",
+      "provenance": "published",
+      "source": ["SUB"],
+      "severity": "blocker",
+      "enforcedBy": ["human"],
+      "check": "human:2fa"
+    },
+    {
+      "id": "PREFLIGHT-RECEIPT",
+      "title": "App Review Preflight was run on the exact bundle and source-map artifact attached to the form, and its wfpre_ receipt is pasted in",
+      "provenance": "published",
+      "source": ["SUB", "FORM"],
+      "severity": "required",
+      "enforcedBy": ["preflight", "form", "human"],
+      "check": "human:preflight-receipt"
+    },
+    {
+      "id": "COMPLETE-NOT-BETA",
+      "title": "The App is complete and production-ready; beta or pre-release Apps are not published",
+      "provenance": "published",
+      "source": ["MG", "SUB"],
+      "severity": "required",
+      "enforcedBy": ["listing-kit", "human"],
+      "check": "human:complete"
+    },
+    {
+      "id": "SMALLEST-SURFACE",
+      "title": "The App registers only the Designer Extension capability; it does not register as a Data Client to 'have OAuth'",
+      "provenance": "control",
+      "source": ["SKILL"],
+      "severity": "required",
+      "enforcedBy": ["listing-kit", "human"],
+      "check": "listing:capability",
+      "note": "Registering a Data Client brings OAuth scopes, an Install URL, backend auth, and uninstall cleanup into review. Those are the largest rejection families and this tool's scope excludes them."
+    }
+  ]
+}

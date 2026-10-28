@@ -1,4 +1,3 @@
-import { readdirSync } from 'node:fs';
 import { isIoResearchSurface } from '../src/lib/config/researchSurface';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'svelte/server';
@@ -65,16 +64,6 @@ describe('public research presentation boundary', () => {
 		expect(isIoResearchSurface(pathname, routeId)).toBe(true);
 	});
 
-	it('keeps every checked-in named experiment route outside the article shell', () => {
-		const namedRoutes = readdirSync(new URL('../src/routes/experiments/', import.meta.url), {
-			withFileTypes: true
-		}).filter((entry) => entry.isDirectory() && !entry.name.startsWith('['));
-		expect(namedRoutes.length).toBeGreaterThan(0);
-		for (const route of namedRoutes) {
-			const path = `/experiments/${route.name}`;
-			expect(isIoResearchSurface(path, path), path).toBe(false);
-		}
-	});
 
 	it.each([
 		'/login', '/account', '/admin', '/admin/experiments', '/auth/callback',

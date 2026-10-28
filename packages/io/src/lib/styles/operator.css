@@ -66,9 +66,9 @@
   --text-performance-body: 1rem;
   --text-performance-body-lg: 1rem;
   --height-performance-header: 64px;
-  --radius-performance-sm: 6px;
-  --radius-performance-md: 8px;
-  --radius-performance-lg: 10px;
+  --radius-performance-sm: var(--radius-operator-control);
+  --radius-performance-md: var(--radius-operator-panel);
+  --radius-performance-lg: var(--radius-operator-panel);
   background: var(--color-operator-background);
   color: var(--color-operator-foreground);
   font-family: var(--font-performance-sans);
@@ -122,7 +122,7 @@
 }
 .layout-root.io-research-shell[data-canon-palette='operator']
   :is(.nav-cta, .nav-menu-button, .nav-link) {
-  border-radius: 6px;
+  border-radius: var(--radius-operator-control);
 }
 .layout-root.io-research-shell[data-canon-palette='operator'] .nav-cta {
   background: var(--color-operator-secondary);
@@ -182,7 +182,7 @@
   font-size: 0.875rem;
 }
 .layout-root.io-research-shell[data-canon-palette='operator'] .footer-editorial .footer-links-grid {
-  border-radius: 8px;
+  border-radius: var(--radius-operator-panel);
 }
 /* Ordinary reading pages use the same compact type and rhythm. */
 .layout-root.io-research-shell[data-canon-palette='operator']
@@ -252,7 +252,7 @@
   min-height: 44px;
   padding: 8px 16px;
   border: 1px solid var(--color-operator-input-border);
-  border-radius: 6px;
+  border-radius: var(--radius-operator-control);
 }
 .io-research-home .research-action-primary {
   background: var(--color-operator-foreground);
@@ -315,7 +315,7 @@
   gap: 10px;
   padding: 20px;
   border: 1px solid var(--color-operator-border);
-  border-radius: 8px;
+  border-radius: var(--radius-operator-panel);
   background: var(--color-operator-panel);
 }
 .io-research-home .research-artifact:hover {
@@ -342,7 +342,7 @@
 .io-research-home .research-decisions article {
   padding: 20px;
   border: 1px solid var(--color-operator-border);
-  border-radius: 8px;
+  border-radius: var(--radius-operator-panel);
 }
 .io-research-home .research-decisions :is(p:not(.research-eyebrow), li) {
   font-size: 0.875rem;
@@ -399,7 +399,7 @@
 .layout-root.io-research-shell[data-canon-palette='operator'] .tool-card {
   padding: 24px;
   border: 1px solid var(--color-operator-border);
-  border-radius: 8px;
+  border-radius: var(--radius-operator-panel);
 }
 .layout-root.io-research-shell[data-canon-palette='operator'] .footer-editorial .footer-links-grid {
   padding: 24px;
@@ -432,7 +432,7 @@
   min-height: 120px;
   padding: 16px;
   border: 1px solid var(--color-operator-border);
-  border-radius: 8px;
+  border-radius: var(--radius-operator-panel);
   background: var(--color-operator-panel);
 }
 .layout-root.io-research-shell[data-canon-palette='operator'] .ascii-art {
@@ -505,3 +505,64 @@
 :is(html, body):has(.io-research-shell[data-canon-palette='operator'])::-webkit-scrollbar-thumb {
   background-color: GrayText;
 }
+
+/* Keep the shared handoff legible when this property opts into the dark palette. */
+.layout-root.io-research-shell[data-canon-palette='operator'] .property-funnel__button--primary {
+  color: var(--color-operator-background);
+  background: var(--color-operator-foreground);
+  border-color: var(--color-operator-foreground);
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .property-funnel__button--primary:hover {
+  color: var(--color-operator-foreground);
+  background: var(--color-operator-secondary);
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .research-opening h1 {
+  max-width: 17ch;
+  font-size: clamp(2.5rem, 5.5vw, 4.75rem);
+  line-height: 1.06;
+  letter-spacing: -.045em;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .property-funnel__step--active .property-funnel__step {
+  background: var(--color-operator-raised);
+  border-color: var(--color-operator-foreground);
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .property-funnel__button--secondary:hover {
+  color: var(--color-operator-background);
+}
+
+/* Image and orientation share the opening; archives keep controls within reach. */
+@media (min-width: 960px) {
+  .layout-root.io-research-shell[data-canon-palette='operator'] .research-opening {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    grid-template-rows: auto auto;
+    column-gap: clamp(2rem, 4vw, 4rem);
+    padding-top: 48px;
+  }
+  .io-research-home .research-opening-copy { grid-column: 1; align-self: center; }
+  .io-research-home .research-opening > .research-scene { grid-column: 2; grid-row: 1; margin-top: 0; align-self: start; }
+  .io-research-home .research-opening > .research-metrics { grid-column: 1 / -1; }
+  .layout-root.io-research-shell[data-canon-palette='operator'] .research-opening h1 { font-size: clamp(2.5rem, 4vw, 4rem); }
+  .io-research-shell .research-index-inner { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); align-items: center; gap: 24px 48px; }
+  .io-research-shell .research-index-inner > .research-scene { grid-column: 2; grid-row: 1; margin-top: 0; }
+  .io-research-shell .research-index-inner > .controls-container { grid-column: 1 / -1; }
+}
+.io-research-shell .research-index-inner > .research-scene { margin-bottom: 24px; }
+.io-research-shell .research-artifact:focus-visible { outline-offset: 4px; }
+
+/* Reference interiors share the same material orientation without interrupting reading. */
+.io-research-shell .io-reference-opening { padding-block: 32px; border-bottom: 1px solid var(--color-performance-line); }
+.io-research-shell .io-reference-opening > .research-scene { margin-top: 24px; }
+.io-research-shell .io-reference-opening .io-reference-copy { min-width: 0; }
+.io-research-shell .io-method-opening { padding-top: 48px; }
+.io-research-shell .archive-hero .research-scene { max-width: 720px; margin-block: 24px; }
+@media (min-width: 960px) {
+ .io-research-shell .io-reference-opening { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; align-items: center; text-align: left; }
+ .io-research-shell .io-reference-opening > .research-scene { margin: 0; }
+}
+@media (max-width: 768px) {
+ .layout-root.io-research-shell[data-canon-palette='operator'] .mobile-search-button { top: 10px; bottom: auto; right: 80px; width: 44px; height: 44px; z-index: 51; border-radius: var(--radius-operator-panel); box-shadow: none; }
+}
+
+.layout-root.io-research-shell[data-canon-palette='operator'] .palette-overlay { z-index: 60; }
+.layout-root.io-research-shell[data-canon-palette='operator'] .palette { z-index: 61; }

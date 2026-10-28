@@ -1,19 +1,4 @@
 /* Public research surfaces only. Canon remains the token and component owner. */
-.layout-root.io-research-shell .research-skip-link {
-  position: fixed;
-  top: var(--space-performance-xs);
-  left: var(--space-performance-xs);
-  z-index: 10000;
-  padding: var(--space-performance-xs) var(--space-performance-sm);
-  border: 2px solid var(--color-performance-signal);
-  border-radius: var(--radius-performance-md);
-  background: var(--color-performance-panel);
-  color: var(--color-performance-ink);
-  transform: translateY(-200%);
-}
-.layout-root.io-research-shell .research-skip-link:focus {
-  transform: translateY(0);
-}
 .layout-root.io-research-shell :is(a, button, input, select):focus-visible {
   outline: 3px solid var(--color-performance-signal);
   outline-offset: 4px;
@@ -138,3 +123,14 @@
     padding-inline: 0;
   }
 }
+
+/* PR2045 material-story continuity. Images remain native server-rendered content. */
+.io-research-shell .research-scene-index { max-width: 1120px; margin-inline: auto; padding-inline: 24px; }
+.io-research-shell .research-opening { max-width: 1120px; }
+.io-research-shell .research-opening h1 { max-width: 15ch; font-size: clamp(2.75rem, 6.5vw, 5.5rem); letter-spacing: -.055em; line-height: 1.03; }
+.io-research-shell .research-opening .research-lede { max-width: 54ch; }
+.io-research-shell .research-index-inner { max-width: 1120px; }
+.io-research-shell .research-method details { border-top: 1px solid var(--color-performance-line); padding-block: 1rem; }
+.io-research-shell .research-method summary { cursor: pointer; font: .75rem var(--font-performance-mono); }
+.io-research-shell .research-method summary:focus-visible { outline: 3px solid var(--color-performance-focus); outline-offset: 5px; }
+@media (max-width: 640px) { .io-research-shell .research-scene-index { padding-inline: 16px; } }

@@ -1,5 +1,13 @@
 # Webflow Way Validator - Release Notes
 
+## Version 1.3.8 - Per-site last run
+
+- Restores the last report only for the site that produced it. The panel iframe shares one browser origin across every site a creator opens, so earlier builds could show the previous site's report (and its URL) when the Validator opened on a different site.
+- Keeps the Fix List per site for the same reason, and clears the pre-1.3.8 global entries on first load.
+- Says why a Worker request failed ("server responded 500", "request timed out", "network request blocked or offline") in the Validator script setup and Designer validation messages instead of a generic retry hint.
+
+---
+
 ## Version 1.3.7 - Mixed variable-mode evidence
 
 - Stats panel renders `responsiveModeSource: 'mixed'` results with both the breakpoint-bound and name-matched mode lists, instead of falling back to a name-based "Responsive names" boolean.

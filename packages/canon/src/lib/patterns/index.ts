@@ -53,3 +53,7 @@ export const PATTERN_CATEGORIES = {
 } as const;
 
 export type PatternCategory = keyof typeof PATTERN_CATEGORIES;
+
+// Provisional composition: owner controls routing and domain state.
+export { default as InspectableJourney } from './InspectableJourney.svelte';
+export { journeyFragment, readJourneyLocation, type JourneyLocation } from './journey-location.js';

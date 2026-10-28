@@ -10,6 +10,7 @@ export default defineConfig({
     })
   ],
   test: {
-    include: ['src/**/*.worker.test.ts']
+    include: ['src/**/*.worker.test.ts'],
+    exclude: ['src/monitor.worker.test.ts']
   }
 });

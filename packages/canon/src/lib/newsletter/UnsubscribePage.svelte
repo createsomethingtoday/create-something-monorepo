@@ -67,8 +67,8 @@
         </p>
         <p class="caption-text">
           If you continue to receive emails, contact <a
-            href="mailto:micah@createsomething.io"
-            class="link">micah@createsomething.io</a
+            href="mailto:support@createsomething.io"
+            class="link">support@createsomething.io</a
           >
         </p>
       </div>

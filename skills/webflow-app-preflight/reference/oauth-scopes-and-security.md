@@ -36,7 +36,7 @@ Scopes in the Install URL must be **equal to or a subset of** the scopes configu
 
 Request only what your App actually calls. Each Data API endpoint documents its required scope — take the union of the endpoints you use and stop there.
 
-Table regenerated from the public scopes reference (<https://developers.webflow.com/data/reference/scopes>) on 2026-08-03 — re-check that page before relying on it, since scopes can be added.
+Table checked against the public scopes reference (<https://developers.webflow.com/data/reference/scopes>) and Webflow's scope registry on 2026-10-27 — re-check that page before relying on it, since scopes can be added.
 
 | Resource           | Scopes                                  |
 | ------------------ | --------------------------------------- |
@@ -49,12 +49,16 @@ Table regenerated from the public scopes reference (<https://developers.webflow.
 | Ecommerce          | `ecommerce:read`, `ecommerce:write`     |
 | Forms              | `forms:read`, `forms:write`             |
 | Pages              | `pages:read`, `pages:write`             |
+| Branches           | `branches:read`, `branches:create`, `branches:update`, `branches:delete`, `branches:merge`, `branches:publish` |
 | Sites              | `sites:read`, `sites:write`             |
+| Site Access        | `site_access:read`, `site_access:write` |
 | Site Activity      | `site_activity:read`                    |
+| Site Plans         | `site_plans:read`, `site_plans:write`   |
 | Site Configuration | `site_config:read`, `site_config:write` |
 | Users              | `users:read`, `users:write`             |
 | Workspace          | `workspace:read`, `workspace:write`     |
 | Workspace Activity | `workspace_activity:read`               |
+| Workspace Members  | `workspace_members:read`, `workspace_members:write` |
 | Webhooks           | Varies by trigger type                  |
 
 `authorized_user:read` is required for the **Get Authorized User** endpoint — the natural first call after a token exchange to resolve who authorized your App — so most Data Clients need it. (Authorization info requires no scope.)
@@ -63,7 +67,9 @@ Table regenerated from the public scopes reference (<https://developers.webflow.
 
 A `:write` scope you only read with, or an `ecommerce` scope on a non-commerce App, is exactly what a reviewer asks about. Drop it — **with one exception below.**
 
-**Keep the scopes you need to clean up.** If your App applies custom code, it must retain the scopes required to remove that code on uninstall: `custom_code:write`, plus `sites:write` or `pages:write` for scripts applied at the site or page level. Dropping them would strand code on the user's site.
+**Keep the scopes you need to remove code while installed.** Uninstall removes the Custom Code your App applied through the API, and your App can't call the API after uninstall. If your App removes scripts while it stays installed (for example, a feature toggle), keep `custom_code:write`, plus `sites:write` or `pages:write` for scripts applied at the site or page level.
+
+**Membership scopes get a closer look.** `site_access:*` and `workspace_members:*` became generally available on 2026-10-27; their endpoints are under `/beta/`. They apply to the whole Workspace, not one site. With `:write`, an App can invite or remove Workspace members and grant or revoke site access. Request them only for a visible member-management feature, and name that feature and each endpoint it calls in the scope justification. With `:read`, the App receives member names and emails; expect the reviewer to check that your privacy policy covers that data.
 
 ## Token lifecycle — the part apps get wrong
 
@@ -82,7 +88,7 @@ The rules that get apps removed if broken:
 - **Loaders are not allowed** unless every remotely loaded resource is declared at submission **and** pinned. Hosted scripts require a `hostedLocation` plus an `integrityHash` (SRI, e.g. sha256) computed over the exact contents. A remote endpoint referenced by an approved script may not start serving different functional code after approval.
 - **No self-certified live updates.** Routing new functional code to sites through any path that bypasses review — swapping a hosted script's contents, a loader endpoint, or a dynamically imported module — results in Marketplace removal and may result in a ban.
 - **Changes take effect on publish.** Applying/updating/removing a script only goes live when the site is published, and publish pushes _all_ staged changes. Prompt the user to publish when ready; don't auto-publish on their behalf.
-- **Remove on uninstall.** Remove applied scripts at **both site and page level** when the App is uninstalled, where technically feasible. If automated removal isn't possible, give the user clear removal instructions.
+- **Know what uninstall removes.** Webflow removes API-applied scripts on uninstall (live after the next publish). If your App removes scripts while it stays installed, remove them at **both site and page level**. Give clear removal instructions for anything the platform doesn't remove, such as manually pasted code.
 
 Two different surfaces, two different limits (verified 2026-08-03):
 

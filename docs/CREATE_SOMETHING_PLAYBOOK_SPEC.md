@@ -203,6 +203,43 @@ A Playbook conforms when:
 A Playbook MUST fail conformance if a model, agent, or tool can infer new
 authority from silence.
 
+## Executable projection
+
+A Playbook MAY carry an executable projection of its Plays and Runbooks
+written as OpenProse contracts (`*.prose.md`; pinned release recorded in
+`docs/openprose/VENDOR.md`). The Markdown Playbook remains the operating
+contract. The projection is derived from it, and drift is corrected toward the
+Playbook.
+
+| Playbook term | OpenProse form | Boundary |
+| --- | --- | --- |
+| Signal | `kind: gateway` (`### Schedule`, `### Receives`, `### Maintains`) | Declares the trigger. It does not create or replace the automation that fires it. |
+| Play state (Database) | `kind: responsibility`, `### Maintains` with named facets | Each facet is one subscription symbol. A downstream wakes only when the facet it requires moves. |
+| Runbook (Automation) | `kind: responsibility` with `### Execution`, delegating protected steps to `kind: function` | Trigger, preconditions, steps, wait, and stop live in the contract. A protected action is one function with one write. |
+| Decision gate (Judgment) | `### Invariants`, `Shape.prohibited`, and a staging function that prepares but does not act | The runtime at the pinned release does not enforce these sections; the host agent does. They are legible policy. |
+| Recovery | `### Strategies`, plus `retry:` and `backoff:` pinned in `### Execution` | Strategies are declarative. Only the pinned retries execute. |
+| Receipt | the reconciler receipt (`status`, `input_fingerprints`, `fingerprints`, postcondition record) | Adds a commit object to the run directory. It does not replace the run directory. |
+
+Requirements:
+
+- The projection MUST NOT change ownership, authority, or recovery. A section
+  the projection cannot express stays in the Playbook and binds anyway.
+- Fingerprinted truths MUST hold only structured, canonicalizable fields.
+  Secrets, personal data, transcripts, and private paths MUST stay in the
+  render's private workspace or in governed bindings, never in a published
+  world-model.
+- A render-attested postcondition is not Proof. Where a postcondition is
+  semantic, the Playbook MUST name an evaluator independent of the render, a
+  reviewer responsibility or a human, before a receipt from the projection
+  counts toward the Play's Proof.
+- The Signal's live schedule stays with the automation the Playbook names.
+  `prose serve` MAY take it over only through Build, with Control owning the
+  change and the rollback.
+
+Evidence: the daily work log pilot, `.agents/prose/src/daily-work-log/`, first
+run 2026-10-19. The pilot README records the three judging answers that shaped
+this section.
+
 ## External format boundary
 
 The separate, external `PLAYBOOK.md` draft is a markdown format for sequential,

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { createOAuthClient, findOAuthClientById } from '../src/db/queries';
-import { isOAuthClientRedirectAllowed } from '../src/index.ts';
+import identityWorker, { isOAuthClientRedirectAllowed } from '../src/index.ts';
 
 function createClientDb() {
 	const clients = new Map<string, Record<string, unknown>>();
@@ -44,4 +44,34 @@ test('dynamic OAuth registration is persisted and redirect matching is exact', a
 	assert.equal(isOAuthClientRedirectAllowed(client, 'https://chatgpt.com/connector/callback/'), false);
 	assert.equal(isOAuthClientRedirectAllowed(client, 'https://attacker.example/callback'), false);
 	assert.equal(await findOAuthClientById(db, 'missing'), null);
+});
+
+test('OAuth access review preserves escaped parameters and shows access before credentials', async () => {
+	const db = createClientDb();
+	await createOAuthClient(db, {
+		client_id: 'oauth_review', client_name: 'Review client',
+		redirect_uris: ['https://chatgpt.com/connector/callback'],
+		token_endpoint_auth_method: 'none', grant_types: ['authorization_code'],
+		response_types: ['code'], scope: 'openid mcp',
+	});
+	const params = new URLSearchParams({
+		response_type: 'code', client_id: 'oauth_review',
+		redirect_uri: 'https://chatgpt.com/connector/callback',
+		code_challenge: 'test-pkce-challenge', code_challenge_method: 'S256',
+		state: '\"><script>alert(1)</script>',
+	});
+	const response = await identityWorker.fetch(
+		new Request('https://id.createsomething.space/oauth/authorize?' + params),
+		{ DB: db } as any,
+	);
+	assert.equal(response.status, 200);
+	assert.equal(response.headers.get('Cache-Control'), 'no-store');
+	const html = await response.text();
+	assert.match(html, /<form method="post" action="\/oauth\/authorize">/);
+	assert.match(html, /name="state" value="&quot;&gt;&lt;script&gt;alert\(1\)&lt;\/script&gt;"/);
+	assert.match(html, /name="code_challenge" value="test-pkce-challenge"/);
+	assert.match(html, /autocomplete="current-password" required/);
+	assert.match(html, /Requested access<\/h2>/);
+	assert.ok(html.indexOf('Requested access</h2>') < html.indexOf('<form'));
+	assert.doesNotMatch(html, /fontshare|@import|<script|linear-gradient/);
 });

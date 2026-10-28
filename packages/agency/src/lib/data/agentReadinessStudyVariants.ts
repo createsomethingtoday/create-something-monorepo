@@ -222,3 +222,9 @@ export function resolveAgentReadinessStudyVariant(value: string | null | undefin
   }
   return agentReadinessStudyVariants[productionAgentReadinessVariantId];
 }
+
+// Only this page owns study variants; unrelated or stale queries keep public copy.
+export function usesAgentReadinessStudyCopy(pathname: string, value: string | null | undefined) {
+  return pathname === '/agent-readiness' &&
+    (value === 'proof-first' || value === 'outcome-first');
+}

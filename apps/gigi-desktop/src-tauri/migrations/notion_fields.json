@@ -175,7 +175,8 @@
       "Documents": "Relation",
       "Created": "Created time",
       "Last Updated": "Last edited time",
-      "Unique ID": "ID"
+      "Unique ID": "ID",
+      "Work kind": "Select"
     },
     "relations": [
       "companies",

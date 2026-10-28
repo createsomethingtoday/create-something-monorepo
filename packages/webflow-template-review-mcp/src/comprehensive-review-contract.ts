@@ -108,6 +108,8 @@ export const COMPREHENSIVE_REVIEW_CONTRACT = {
     'Required utility pages do not need root-only slugs. Treat a failed guessed path, such as /utility-pages/licenses, as a failed candidate path unless the site linked to it. Verify discoverable linked utility pages and required license text before calling a license page missing.',
   sitemapPolicy:
     'A /sitemap.xml file is not a template requirement. Webflow only serves the auto-generated sitemap for sites on a paid Site plan, and unhosted *.webflow.io template demos have no plan, so the Auto-generate sitemap setting cannot take effect there. Use a sitemap only for page discovery when one exists; if it is missing or returns 404, fall back to crawling links and never ask the creator to enable, fix, or republish a sitemap. If an earlier review round asked for one, withdraw that request explicitly in the next feedback.',
+  assetHostingPolicy:
+    'A published site may serve assets under more than one cdn.prod.website-files.com/<id>/ prefix: the site ID (Designer and Assets-panel uploads) and the CMS database ID (CMS image-field uploads). Identify the CMS database ID by CMS binding (the image changes per collection item or collection page and sits in a CMS image-field slot; confirm in the Designer or Data API when unsure), never by counting prefixes or by placement inside a collection list alone. Neither ID is another Webflow project and re-uploading keeps them. A genuine cross-site dependency is a prefix that matches neither ID (elements pasted between sites keep the original site asset URLs, which break if that site is deleted); flag it only after confirming the prefix against both IDs, and cite the prefix in the same sentence as the claim. Never ask a creator to re-upload assets only because a prefix differs from the site ID; if an earlier round did, withdraw that request explicitly.',
   decisionBoundary:
     'Do not emit approve, reject, quality rating, request changes, or creator-facing feedback unless the reviewer explicitly asks and the reviewer-owned write preconditions pass. Agent Review Feedback remains internal supplemental evidence and is not an official review decision.',
   findingRules: [
@@ -115,6 +117,7 @@ export const COMPREHENSIVE_REVIEW_CONTRACT = {
     'Every comprehensive report must state which URLs E2B fetched.',
     'Every comprehensive report must include manual checks remaining even when automated results are clean.',
     'Do not cite a missing, empty, or 404 /sitemap.xml as a finding, blocker, or recommended fix; it is not a template requirement.',
+    'Do not cite a cdn.prod.website-files.com/<id>/ prefix as assets from another project because it differs from the site ID; the prefix on CMS-bound images (changing per collection item or page) is the CMS database ID. A cross-site finding needs a prefix that matches neither ID, confirmed by CMS binding and cited in the same sentence as the claim.',
     'Do not call visual quality, originality, similarity, category fit, or final quality band confirmed from published-site automation alone.',
   ],
 };
@@ -147,5 +150,6 @@ Manual checks remaining must include Designer/Admin review areas that published-
 For utility pages, do not overstate guessed path failures. Required utility pages may be nested. If a sampled candidate path such as \`/utility-pages/licenses\` returns 404, say the candidate path failed and ask the reviewer to verify the actual linked license page unless the site itself linked to that broken URL.
 
 For sitemaps, apply the contract's sitemap policy: a missing, empty, or 404 \`/sitemap.xml\` is discovery context only, never a confirmed finding, blocker, or creator ask, and any earlier request for one must be withdrawn.
+For asset hosting, apply the contract's asset hosting policy: a \`cdn.prod.website-files.com/<id>/\` prefix on CMS-bound images (changing per collection item or page) is the CMS database ID, never "another project"; a cross-site finding needs a prefix that matches neither the site ID nor the CMS database ID, confirmed by CMS binding and cited in the same sentence as the claim, and any earlier re-upload request made without that must be withdrawn.
 
 Agent Review Feedback should be reviewer-skimable. Use the same section shape above, keep evidence concrete, and close with a decision boundary that says the note is internal supplemental evidence and not an official review decision.`;

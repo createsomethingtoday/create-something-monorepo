@@ -269,7 +269,7 @@ impl SymbolGraph {
                 return Err("Source or resolution inputs changed during graph construction; retry analysis".into());
             }
             if graph.parse_errors == 0 && graph.imports.len() == graph.files.len() {
-                super::derived_cache::put(key, &graph);
+                super::derived_cache::put_graph(key, &graph);
             }
         }
         Ok(graph)

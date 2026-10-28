@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ResearchScene from '$lib/components/ResearchScene.svelte';
 	const quickLinks = [
 		{ label: 'Home', href: '/' },
 		{ label: 'All Experiments', href: '/experiments' },
@@ -28,6 +29,7 @@
 				<h1>
 					Hi, I'm Micah Johnson
 				</h1>
+<ResearchScene scene="about-careful-working-notes" caption="An agent opens the working notebook and keeps the record available." />
 
 				<div class="space-y-8">
 					<!-- Lead with outcomes -->

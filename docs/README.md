@@ -23,6 +23,10 @@ Read in this order when you need broad repo context:
 
 ## Navigation by task
 
+### Daily work log
+
+- [Daily Slack work log playbook and runbook](./guides/DAILY_WORK_LOG_RUNBOOK.md) — discovery certification, task-thread deduplication, verified delivery, durable state, and recovery
+
 ### Strategy and positioning
 
 - [CREATE_SOMETHING_SYSTEMS_THESIS.md](./CREATE_SOMETHING_SYSTEMS_THESIS.md)
