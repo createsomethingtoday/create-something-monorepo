@@ -1201,6 +1201,22 @@ describe('Content Validator', () => {
 		expect(indexable[1].details?.currentRobots).toBe('index, follow');
 	});
 
+	it('reads every robots meta tag on a published page, not only the first', async () => {
+		const { parseHTML: realParseHTML } = await vi.importActual<typeof import('../src/utils/fetch-utils')>('../src/utils/fetch-utils');
+		vi.mocked(parseHTML).mockReturnValue(realParseHTML(`<!doctype html><html><head><title>Licenses</title>
+			<meta name="robots" content="index, follow">
+			<meta content="noindex" name="robots">
+		</head><body><main><h1>Licenses</h1></main></body></html>`));
+
+		const result = await validateContent('https://example.com', undefined, {
+			pageScope: 'current',
+			currentPageSlug: '/licenses'
+		} as any);
+
+		expect(result.pages[0].seo.robots).toBe('index, follow, noindex');
+		expect(result.issues.some(i => i.id.startsWith('utility-page-indexable'))).toBe(false);
+	});
+
 	it('can run only the lorem/placeholder check', () => {
 		const pages: any[] = [{
 			url: 'https://example.com/',

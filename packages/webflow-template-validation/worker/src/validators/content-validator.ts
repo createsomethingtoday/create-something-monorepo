@@ -593,7 +593,11 @@ function extractSEOData(parsedHTML: ParsedHTML): PageSEOData {
 
 	// Other SEO elements
 	const canonical = document.querySelector('link[rel="canonical"]')?.getAttribute('href')?.trim() || null;
-	const robots = document.querySelector('meta[name="robots"]')?.getAttribute('content')?.trim() || null;
+	// Crawlers combine directives from every robots tag, so read them all.
+	const robotsDirectives = Array.from(document.querySelectorAll('meta[name="robots"]') as ArrayLike<Element>)
+		.map(meta => meta.getAttribute('content')?.trim())
+		.filter((content): content is string => !!content);
+	const robots = robotsDirectives.length > 0 ? robotsDirectives.join(', ') : null;
 
 	return {
 		title,
