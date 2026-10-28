@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { findProhibitedMarketplaceCustomCode } from '../src/font-custom-code-policy.js';
+import { analyseSvgStyles, findProhibitedMarketplaceCustomCode } from '../src/font-custom-code-policy.js';
 
 // Keyboard listeners sit under "Keylogging" in securityRiskPatterns. A handler that
 // only reacts to a named navigation key (Escape, Enter, Space, arrows) is
@@ -17,7 +17,7 @@ const end = source.indexOf(endMarker) + endMarker.length;
 assert.notEqual(start, -1, 'validator slice start not found');
 assert.notEqual(end, endMarker.length - 1, 'validator slice end not found');
 
-const sandbox = { console, Set, URL, findProhibitedMarketplaceCustomCode, __name: (target) => target };
+const sandbox = { console, Set, URL, analyseSvgStyles, findProhibitedMarketplaceCustomCode, __name: (target) => target };
 vm.createContext(sandbox);
 vm.runInContext(source.slice(start, end), sandbox);
 
