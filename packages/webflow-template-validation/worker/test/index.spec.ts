@@ -717,6 +717,28 @@ describe('Designer Validator', () => {
 			expect(seoCategory.issues.find(i => i.id === 'seo.home-title-format')?.severity).toBe('error');
 		});
 
+		it('judges the root page, not a non-root page flagged as home by name', async () => {
+			const result = await validateDesignerData({
+				variables: { collections: [] },
+				components: [],
+				styles: [],
+				pages: [
+					{
+						id: 'p2', name: 'Home', slug: 'home', type: 'Page', isHomePage: true, publishPath: '/home',
+						seo: { title: 'Home Variant | Acme', description: 'E'.repeat(155), openGraphImage: 'https://example.com/og.jpg' }
+					},
+					{
+						id: 'p1', name: 'Landing', slug: '', type: 'Page', isHomePage: true, publishPath: '/',
+						seo: { title: 'Acme - Webflow HTML website template', description: 'D'.repeat(155), openGraphImage: 'https://example.com/og.jpg' }
+					}
+				],
+				assets: []
+			} as any);
+
+			const seoCategory = result.categories.find(c => c.category === 'SEO Metadata')!;
+			expect(seoCategory.issues.find(i => i.id === 'seo.home-title-format')).toBeUndefined();
+		});
+
 		it('leaves an empty home title to seo.missing-title', async () => {
 			const seoCategory = await validateHomeTitle('');
 			expect(seoCategory.issues.find(i => i.id === 'seo.missing-title')).toBeDefined();

@@ -892,8 +892,9 @@ function validatePageSEO(pages: DesignerData['pages']): CategoryResult {
   }
 
   // Open Graph: the home page must define an OG image; other pages are advisory.
-  // isHomePage is optional in older payloads; the root path identifies the home page too.
-  const homePage = staticPages.find(p => p.isHomePage) ?? staticPages.find(p => normalizePagePath(p) === '/');
+  // The root path is authoritative: the extension also flags pages named "Home" as
+  // isHomePage, and older payloads may omit the flag entirely.
+  const homePage = staticPages.find(p => normalizePagePath(p) === '/') ?? staticPages.find(p => p.isHomePage);
   if (homePage && !homePage.seo?.openGraphImage?.trim()) {
     issues.push({
       id: 'seo.missing-og-image-home',
