@@ -5,6 +5,7 @@ import {
   fetchGuidelines,
   groupGuidelineBlocks,
   hashId,
+  sectionScrollTarget,
   listItemInnerHtml,
   sanitizeGuidelineHtml,
   sectionForHash,
@@ -139,6 +140,7 @@ export function SubmissionGuidelines({
     return sections.find((s) => s.id === defaultSection)?.id ?? sections[0]?.id ?? '';
   });
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const baseId = useId();
 
   useEffect(() => {
@@ -171,7 +173,15 @@ export function SubmissionGuidelines({
   const select = useCallback(
     (id: string) => {
       setActiveId(id);
-      if (syncUrlHash && typeof window !== 'undefined') window.history.replaceState(null, '', `#${id}`);
+      if (typeof window === 'undefined') return;
+      if (syncUrlHash) window.history.replaceState(null, '', `#${id}`);
+      // Like the original tabs: a section picked from lower on the page opens at its top.
+      const top = rootRef.current?.getBoundingClientRect().top;
+      const target = top === undefined ? null : sectionScrollTarget(top, window.scrollY);
+      if (target !== null) {
+        const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        window.scrollTo({ top: target, behavior: reduceMotion ? 'auto' : 'smooth' });
+      }
     },
     [syncUrlHash],
   );
@@ -210,7 +220,7 @@ export function SubmissionGuidelines({
 
   const active = doc.sections.find((s) => s.id === activeId) ?? doc.sections[0];
   return (
-    <div className="sguide" data-guidelines-version={doc.version}>
+    <div className="sguide" ref={rootRef} data-guidelines-version={doc.version}>
       <style dangerouslySetInnerHTML={{ __html: STYLES }} />
       <div className="sguide-menu" role="tablist" aria-orientation="vertical" aria-label="Guideline sections">
         {doc.sections.map((section, index) => (
