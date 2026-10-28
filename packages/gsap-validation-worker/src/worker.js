@@ -148,7 +148,10 @@ function isValidatorReviewBridgeScript(script) {
   if (!/window\.__WF_REVIEW_BRIDGE\s*=/.test(script)) {
     return false;
   }
-  if (!script.includes(REVIEW_BRIDGE_MARKER) || !/bridgeToken\s*:\s*["']wfbt_[a-f0-9]+["']/i.test(script)) {
+  // Accept both the installed token (wfbt_<hex>) and the pre-install placeholder:
+  // snippet/status hands creators a "__REPLACE_WITH_TOKEN__" copy for manual
+  // Site Settings installs, so published templates legitimately carry it.
+  if (!script.includes(REVIEW_BRIDGE_MARKER) || !/bridgeToken\s*:\s*["'](?:wfbt_[a-f0-9]+|__REPLACE_WITH_TOKEN__)["']/i.test(script)) {
     return false;
   }
   const withoutBridgeConfig = script.replace(/window\.__WF_REVIEW_BRIDGE\s*=\s*\{[\s\S]*?\}\s*;?/, "");
@@ -698,9 +701,12 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
       });
       return;
     }
-    const hasSecurityRisks2 = securityRiskPatterns.some((pattern) => pattern.test(script));
+    // Keyboard listeners that only react to specific navigation keys are
+    // accessibility handlers, not keyloggers; see isKeyboardAccessibilityScript.
+    const applicableSecurityPatterns = isKeyboardAccessibilityScript(script) ? securityRiskPatterns.filter((pattern) => !isKeyboardListenerRiskPattern(pattern)) : securityRiskPatterns;
+    const hasSecurityRisks2 = applicableSecurityPatterns.some((pattern) => pattern.test(script));
     if (hasSecurityRisks2) {
-      const riskPatterns = securityRiskPatterns.filter((pattern) => pattern.test(script)).map((pattern) => pattern.source);
+      const riskPatterns = applicableSecurityPatterns.filter((pattern) => pattern.test(script)).map((pattern) => pattern.source);
       results.securityRisks.push({
         scriptIndex: index,
         message: "Script contains security risk patterns",
@@ -1045,6 +1051,152 @@ function isCommonStylingCSS(css) {
   return false;
 }
 __name(isCommonStylingCSS, "isCommonStylingCSS");
+// Keyboard listeners are listed under "Keylogging" in securityRiskPatterns, but a
+// keylogger reads whatever key was pressed and stores or transmits it. Handlers
+// that only dispatch on specific navigation keys (Escape closes a menu, Enter or
+// Space activates a custom control, arrows move a slider) are accessibility code
+// the Marketplace asks for. Every keyboard listener in the script must qualify:
+// the handler window has to compare against a named key and must not capture or
+// send key values. Anything else stays flagged.
+var KEYBOARD_LISTENER_PATTERN = /addEventListener\s*\(\s*['"]key(?:down|up|press)['"]/gi;
+var KEYBOARD_NAMED_KEYS = "Escape|Esc|Enter|Tab|Space|Spacebar| |Arrow(?:Up|Down|Left|Right)|Home|End|Page(?:Up|Down)";
+var KEYBOARD_NAMED_KEY_CODES = "9|13|27|32|3[3-9]|40";
+var KEYBOARD_EXFILTRATION_PATTERN = /fromCharCode|fetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|new\s+Image|document\.cookie|localStorage|sessionStorage|\.src\s*=|eval\s*\(|Function\s*\(|\.\s*(?:value|innerText|textContent|innerHTML)\b/i;
+var KEYBOARD_GLOBAL_EVENT_PATTERN = /\b(?:window|self|globalThis)\s*\.\s*event\b/;
+var KEYBOARD_SCRIPT_KEY_READ_PATTERN = /\.\s*(?:key|keyCode|which)\b|\[\s*['"`](?:key|code|keyCode|which)['"`]\s*\]|\{[^{}]*\b(?:key|code|keyCode|which)\b[^{}]*\}\s*=(?!=)/;
+var KEYBOARD_LITERAL_COMPARISON_PATTERN = /[\w$.]*\.(?:key|code)\s*(?:===?|!==?)\s*(['"])[^'"]*\1|(['"])[^'"]*\2\s*(?:===?|!==?)\s*[\w$.]*\.(?:key|code)\b|[\w$.]*\.(?:keyCode|which)\s*(?:===?|!==?)\s*\d+\b|\b\d+\s*(?:===?|!==?)\s*[\w$.]*\.(?:keyCode|which)\b/g;
+var KEYBOARD_EVENT_MEMBERS = /* @__PURE__ */ new Set([
+  "key",
+  "code",
+  "keyCode",
+  "which",
+  "preventDefault",
+  "stopPropagation",
+  "stopImmediatePropagation",
+  "shiftKey",
+  "ctrlKey",
+  "altKey",
+  "metaKey",
+  "repeat",
+  "isComposing",
+  "target",
+  "currentTarget",
+  "defaultPrevented"
+]);
+var KEYBOARD_INLINE_CALLBACK_HEAD = /^\s*,\s*(?:function\s*[\w$]*\s*\(\s*([A-Za-z_$][\w$]*)\s*\)\s*(?=\{)|(?:\(\s*([A-Za-z_$][\w$]*)\s*\)|([A-Za-z_$][\w$]*))\s*=>\s*)/;
+var KEYBOARD_LISTENER_CALL_END = /^\s*(?:,\s*(?:true|false|\{[^{}()]*\}))?\s*\)/;
+function isKeyboardListenerRiskPattern(pattern) {
+  return /key\(\?:down\|up\|press\)|keydown|keyup|keypress/.test(pattern.source);
+}
+__name(isKeyboardListenerRiskPattern, "isKeyboardListenerRiskPattern");
+function scanCallbackEnd(source, start) {
+  // Returns the index just past the callback: the matching "}" of a block
+  // body, or the first top-level "," or ")" of an expression body.
+  const isBlock = source[start] === "{";
+  let depth = 0;
+  for (let i = start; i < source.length; i++) {
+    const ch = source[i];
+    if (ch === "'" || ch === '"' || ch === "`") {
+      for (i++; i < source.length && source[i] !== ch; i++) {
+        if (source[i] === "\\") i++;
+      }
+      continue;
+    }
+    if (ch === "/" && source[i + 1] === "/") {
+      i = source.indexOf("\n", i);
+      if (i === -1) return -1;
+      continue;
+    }
+    if (ch === "/" && source[i + 1] === "*") {
+      i = source.indexOf("*/", i + 2);
+      if (i === -1) return -1;
+      i++;
+      continue;
+    }
+    if (ch === "{" || ch === "(" || ch === "[") depth++;
+    else if (ch === "}" || ch === ")" || ch === "]") {
+      depth--;
+      if (isBlock && depth === 0) return i + 1;
+      if (!isBlock && depth < 0) return i;
+    } else if (!isBlock && ch === "," && depth === 0) return i;
+  }
+  return -1;
+}
+__name(scanCallbackEnd, "scanCallbackEnd");
+function sanitizeKeyboardCallback(body) {
+  // Drops comments and blanks string contents (except bare named keys) so
+  // checks only see executable tokens. Template literals and any "/" outside
+  // a comment (regex literal or division) make the body unanalysable.
+  const namedKeyLiteral = new RegExp(`^(?:${KEYBOARD_NAMED_KEYS})$`);
+  let output = "";
+  for (let i = 0; i < body.length; i++) {
+    const ch = body[i];
+    if (ch === "/" && body[i + 1] === "/") {
+      const end = body.indexOf("\n", i);
+      if (end === -1) return null;
+      i = end - 1;
+      continue;
+    }
+    if (ch === "/" && body[i + 1] === "*") {
+      const end = body.indexOf("*/", i + 2);
+      if (end === -1) return null;
+      output += " ";
+      i = end + 1;
+      continue;
+    }
+    if (ch === "/" || ch === "`") return null;
+    if (ch === "'" || ch === '"') {
+      let end = i + 1;
+      while (end < body.length && body[end] !== ch) end += body[end] === "\\" ? 2 : 1;
+      if (end >= body.length) return null;
+      const content = body.slice(i + 1, end);
+      output += namedKeyLiteral.test(content) ? ch + content + ch : ch + ch;
+      i = end;
+      continue;
+    }
+    output += ch;
+  }
+  return output;
+}
+__name(sanitizeKeyboardCallback, "sanitizeKeyboardCallback");
+function isAccessibleKeyboardCallback(rawBody, param) {
+  if (KEYBOARD_EXFILTRATION_PATTERN.test(rawBody)) return false;
+  const body = sanitizeKeyboardCallback(rawBody);
+  if (body === null) return false;
+  const name = param.replace(/\$/g, "\\$");
+  const namedKeyCheck = new RegExp(`(?<![\\w$.])${name}\\s*\\.\\s*(?:key|code)\\s*(?:===?|!==?)\\s*(['"])(?:${KEYBOARD_NAMED_KEYS})\\1|(['"])(?:${KEYBOARD_NAMED_KEYS})\\2\\s*(?:===?|!==?)\\s*${name}\\s*\\.\\s*(?:key|code)\\b|(?<![\\w$.])${name}\\s*\\.\\s*(?:keyCode|which)\\s*(?:===?|!==?)\\s*(?:${KEYBOARD_NAMED_KEY_CODES})\\b`, "g");
+  if (!namedKeyCheck.test(body)) return false;
+  // Only named navigation-key comparisons are removed. Anything else that
+  // touches the key (other comparisons, aliasing, passing the event on)
+  // could identify arbitrary keystrokes.
+  const remaining = body.replace(namedKeyCheck, " ");
+  if (/\.\s*(?:key|code|keyCode|which)\b|\[\s*['"](?:key|code|keyCode|which)['"]\s*\]/.test(remaining)) return false;
+  const uses = [...remaining.matchAll(new RegExp(`(?<![\\w$.])${name}\\b(\\s*\\.\\s*([A-Za-z_$][\\w$]*))?`, "g"))];
+  return uses.every((use) => use[2] && KEYBOARD_EVENT_MEMBERS.has(use[2]));
+}
+__name(isAccessibleKeyboardCallback, "isAccessibleKeyboardCallback");
+function isKeyboardAccessibilityScript(script) {
+  // Only inline callbacks are exempt: a named handler (addEventListener("keydown", save))
+  // is not inspected, so it keeps the keyboard-listener risk.
+  const listeners = [...script.matchAll(KEYBOARD_LISTENER_PATTERN)];
+  if (listeners.length === 0 || KEYBOARD_GLOBAL_EVENT_PATTERN.test(script)) {
+    return false;
+  }
+  if (KEYBOARD_SCRIPT_KEY_READ_PATTERN.test(script.replace(KEYBOARD_LITERAL_COMPARISON_PATTERN, " "))) {
+    return false;
+  }
+  return listeners.every((listener) => {
+    const afterListener = listener.index + listener[0].length;
+    const head = script.slice(afterListener).match(KEYBOARD_INLINE_CALLBACK_HEAD);
+    if (!head) return false;
+    const param = head[1] || head[2] || head[3];
+    const bodyStart = afterListener + head[0].length;
+    const bodyEnd = scanCallbackEnd(script, bodyStart);
+    if (bodyEnd === -1 || !KEYBOARD_LISTENER_CALL_END.test(script.slice(bodyEnd))) return false;
+    return isAccessibleKeyboardCallback(script.slice(bodyStart, bodyEnd), param);
+  });
+}
+__name(isKeyboardAccessibilityScript, "isKeyboardAccessibilityScript");
 function containsPotentiallyHarmfulCode(script) {
   const harmfulPatterns = [
     /eval\s*\(/,
