@@ -75,6 +75,10 @@ const STYLES = `
   .sguide-menu {
     flex-direction: row;
     flex: 0 0 auto;
+    /* The desktop flex-start would size the row to all 13 labels and push the page sideways. */
+    align-self: stretch;
+    min-width: 0;
+    max-width: 100%;
     margin: 0 0 24px;
     position: static;
     overflow-x: auto;

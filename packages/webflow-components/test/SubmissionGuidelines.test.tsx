@@ -64,6 +64,12 @@ test('renders the default section with nested lists, rule anchors, and safe link
   assert.match(html, /data-guidelines-version="abc123"/);
 });
 
+test('keeps the stacked section menu inside the viewport on small screens', () => {
+  const html = renderToStaticMarkup(<SubmissionGuidelines initialDocument={DOC} syncUrlHash={false} />);
+  const mobile = html.slice(html.indexOf('@media (max-width: 991px)'));
+  assert.match(mobile, /\.sguide-menu \{[^}]*align-self: stretch;[^}]*max-width: 100%;[^}]*overflow-x: auto;/);
+});
+
 test('opens the first section when the default is unknown', () => {
   const html = renderToStaticMarkup(<SubmissionGuidelines initialDocument={DOC} defaultSection="nope" syncUrlHash={false} />);
   assert.match(html, /<p id="start-here-02">Welcome to <strong>review<\/strong>.<\/p>/);
