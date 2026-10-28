@@ -167,7 +167,7 @@ function analyseNodes(nodes, result) {
     if (!node.tagName) continue;
     if (node.namespaceURI === SVG_NAMESPACE) {
       permitted = true;
-      collectForeignObjects(node, result);
+      inspectSvg(node, result);
       continue;
     }
     const name = node.tagName.toLowerCase();
@@ -186,11 +186,13 @@ function analyseNodes(nodes, result) {
   return permitted;
 }
 
-// foreignObject re-enters HTML parsing inside SVG, so its content is not inert SVG.
-function collectForeignObjects(node, result) {
+// foreignObject re-enters HTML parsing inside SVG, so its content is not inert SVG. SVG
+// <script> elements run like HTML ones and are reported with them.
+function inspectSvg(node, result) {
   for (const child of children(node)) {
     if (child.tagName === 'foreignObject') result.add('foreignObject');
-    else if (child.tagName) collectForeignObjects(child, result);
+    else if (child.tagName === 'script') result.scripts.push(attribute(child, 'href') || attribute(child, 'xlink:href') || 'inline SVG script');
+    if (child.tagName && child.tagName !== 'foreignObject') inspectSvg(child, result);
   }
 }
 
