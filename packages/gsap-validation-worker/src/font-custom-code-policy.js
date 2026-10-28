@@ -176,9 +176,28 @@ function isGsapScriptSource(src) {
 // holds permitted content and nothing else.
 const INERT_WRAPPER_TAGS = new Set(['div', 'span']);
 
+// Inline event handlers and javascript: URLs run code without a <script> element.
+const URL_ATTRIBUTES = new Set(['href', 'src', 'action', 'formaction', 'data', 'to', 'from', 'values']);
+
+function inlineCodeAttributes(node) {
+  return (node.attrs || [])
+    .filter(
+      (attr) =>
+        /^on/i.test(attr.name) ||
+        (URL_ATTRIBUTES.has(attr.name.toLowerCase()) && /^\s*javascript:/i.test(attr.value.replace(/[\u0000-\u001f]/g, '')))
+    )
+    .map((attr) => `${node.tagName}[${attr.prefix ? `${attr.prefix}:` : ''}${attr.name}]`);
+}
+
+function collectInlineCode(node, result) {
+  for (const label of inlineCodeAttributes(node)) result.add(label);
+  for (const child of children(node)) collectInlineCode(child, result);
+}
+
 function analyseNodes(nodes, result) {
   let permitted = false;
   for (const node of nodes) {
+    if (node.tagName) collectInlineCode(node, result);
     if (node.nodeName === '#comment') continue;
     if (node.nodeName === '#text') {
       if (node.value.replace(/ /g, '').trim()) result.add('#text');
