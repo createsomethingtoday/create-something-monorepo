@@ -21,6 +21,40 @@ async function seed() {
 }
 
 describe('cloud Webflow refresh', () => {
+  it('accepts busy periods crossing the query boundaries without losing their overlap', async () => {
+    const stub = await seed();
+    let from = '';
+    let to = '';
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (_input, init) => {
+      const query = JSON.parse(String(init?.body));
+      from = query.timeMin;
+      to = query.timeMax;
+      return Response.json({ calendars: { 'micah@webflow.com': { busy: [
+        { start: new Date(Date.parse(from) - 3600_000).toISOString(), end: new Date(Date.parse(from) + 3600_000).toISOString() },
+        { start: new Date(Date.parse(to) - 3600_000).toISOString(), end: new Date(Date.parse(to) + 3600_000).toISOString() }
+      ] } } });
+    });
+    await worker.scheduled({} as ScheduledController, env);
+    await runInDurableObject(stub, async (_instance, state) => {
+      const projection = state.storage.kv.get<any>('projection:webflow-google-calendar');
+      expect(projection.intervals.map((i: { start: string; end: string }) => [Date.parse(i.start), Date.parse(i.end)]))
+        .toEqual([[Date.parse(from), Date.parse(from) + 3600_000], [Date.parse(to) - 3600_000, Date.parse(to)]]);
+      expect(state.storage.kv.get('projection:webflow-cloud-refresh')).toMatchObject({ status: 'accepted', trigger: 'cron' });
+      expect(Date.parse(projection.expiresAt) - Date.parse(projection.observedAt)).toBe(45 * 60_000);
+    });
+  });
+
+  it.each(['reversed', 'empty'])('preserves prior projection when a provider interval is %s', async (kind) => {
+    const stub = await seed();
+    const start = new Date(Date.now() + 3600_000).toISOString();
+    const end = new Date(Date.parse(start) - (kind === 'reversed' ? 3600_000 : 0)).toISOString();
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({ calendars: { 'micah@webflow.com': { busy: [{ start, end }] } } }));
+    await expect(worker.scheduled({} as ScheduledController, env)).rejects.toThrow('webflow_cloud_refresh_failed');
+    await runInDurableObject(stub, async (_instance, state) => {
+      expect(state.storage.kv.get('projection:webflow-google-calendar')).toEqual({ sentinel: 'unchanged' });
+    });
+  });
+
   it('publishes busy-only coverage via the scheduled handler and records cron provenance', async () => {
     const stub = await seed();
     const start = new Date(Date.now() + 3600_000).toISOString();

@@ -2,6 +2,34 @@ import { describe, expect, it, vi } from 'vitest';
 import { GoogleCalendarPort } from './google-calendar.js';
 
 describe('GoogleCalendarPort', () => {
+  it('clips spanning periods and excludes only busy time outside the requested coverage', async () => {
+    const port = new GoogleCalendarPort({
+      selectedCalendarIds: ['calendar'], eventCalendarId: 'calendar',
+      accessTokens: { getAccessToken: async () => 'controlled-access-token' },
+      fetch: async () => Response.json({ calendars: { calendar: { busy: [
+        { start: '2026-07-13T00:00:00Z', end: '2026-07-16T00:00:00Z' },
+        { start: '2026-07-12T00:00:00Z', end: '2026-07-14T00:00:00Z' },
+        { start: '2026-07-15T00:00:00Z', end: '2026-07-16T00:00:00Z' }
+      ] } } })
+    });
+    expect(await port.listBusyIntervals({ from: '2026-07-14T00:00:00Z', to: '2026-07-15T00:00:00Z' })).toEqual({
+      status: 'available', intervals: [{ start: '2026-07-14T00:00:00Z', end: '2026-07-15T00:00:00Z' }]
+    });
+  });
+
+  it.each([
+    ['2026-07-14T01:00:00Z', '2026-07-14T00:00:00Z'],
+    ['2026-07-14T01:00:00Z', '2026-07-14T01:00:00Z']
+  ])('rejects malformed busy periods before clipping (%s to %s)', async (start, end) => {
+    const port = new GoogleCalendarPort({
+      selectedCalendarIds: ['calendar'], eventCalendarId: 'calendar',
+      accessTokens: { getAccessToken: async () => 'controlled-access-token' },
+      fetch: async () => Response.json({ calendars: { calendar: { busy: [{ start, end }] } } })
+    });
+    expect(await port.listBusyIntervals({ from: '2026-07-14T00:00:00Z', to: '2026-07-15T00:00:00Z' }))
+      .toEqual({ status: 'unavailable', reason: 'provider_invalid_response' });
+  });
+
   it('queries every selected calendar and normalizes their busy intervals', async () => {
     const fetch = vi.fn(async (_input: string | URL | Request, init?: RequestInit) => {
       expect(JSON.parse(String(init?.body))).toEqual({
