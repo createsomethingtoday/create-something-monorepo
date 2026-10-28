@@ -321,6 +321,31 @@ fn get(db: &Connection, wid: &str, entity: &str, id: &str) -> Result<Value, Stri
         json!({"id":id,"workspaceId":wid,"entity":entity,"title":row.0,"fields":serde_json::from_str::<Value>(&row.1).map_err(|e|e.to_string())?,"source":serde_json::from_str::<Value>(&row.2).map_err(|e|e.to_string())?,"createdAt":row.3,"updatedAt":row.4,"relations":links,"relationCount":link_count,"relationsTruncated":link_count>100,"identity":crate::event_identity::project(entity,&serde_json::from_str::<Value>(&row.1).map_err(|e|e.to_string())?,&serde_json::from_str::<Value>(&row.2).map_err(|e|e.to_string())?),"cover":crate::artwork::resolved_cover(db,wid,entity,id)?,"coverRevision":crate::artwork::revision(db,wid,entity,id)?}),
     )
 }
+fn relation_page(db:&Connection,input:&Value)->Result<Value,String>{
+    let wid=need(input,"workspaceId")?;let entity=table(input,"entity")?;let id=need(input,"id")?;
+    workspace(db,wid)?;
+    if db.query_row("SELECT 1 FROM record_index WHERE workspace_id=?1 AND entity=?2 AND id=?3",params![wid,entity,id],|r|r.get::<_,i64>(0)).optional().map_err(|e|e.to_string())?.is_none(){return Err("record not found".into())}
+    let limit=match input.get("limit"){None=>100,Some(v)=>v.as_u64().filter(|v|*v>0&&*v<=100).ok_or("relation limit must be 1..100")? as i64};
+    let mut after=vec![String::new();5];let mut has_cursor=false;
+    if let Some(cursor)=input.get("cursor").filter(|v|!v.is_null()){
+        let text=cursor.as_str().filter(|s|s.len()<=8192).ok_or("invalid relation cursor")?;
+        let parts:Vec<String>=serde_json::from_str(text).map_err(|_|"invalid relation cursor")?;
+        if parts.len()!=8 || parts[0]!=wid || parts[1]!=entity || parts[2]!=id{return Err("relation cursor scope mismatch".into())}
+        after=parts[3..].to_vec();has_cursor=true;
+    }
+    let mut stmt=db.prepare("SELECT from_entity,from_id,role,to_entity,to_id FROM relations WHERE workspace_id=?1 AND ((from_entity=?2 AND from_id=?3) OR (to_entity=?2 AND to_id=?3)) AND (?4=0 OR (from_entity,from_id,role,to_entity,to_id)>(?5,?6,?7,?8,?9)) ORDER BY from_entity,from_id,role,to_entity,to_id LIMIT ?10").map_err(|e|e.to_string())?;
+    let mut keys=stmt.query_map(params![wid,entity,id,has_cursor,after[0],after[1],after[2],after[3],after[4],limit+1],|r|Ok(vec![r.get::<_,String>(0)?,r.get(1)?,r.get(2)?,r.get(3)?,r.get(4)?])).map_err(|e|e.to_string())?.collect::<Result<Vec<_>,_>>().map_err(|e|e.to_string())?;
+    let more=keys.len()>limit as usize;keys.truncate(limit as usize);
+    let next=if more {let mut scoped=vec![wid.to_owned(),entity.to_owned(),id.to_owned()];scoped.extend(keys.last().unwrap().clone());Some(serde_json::to_string(&scoped).map_err(|e|e.to_string())?)}else{None};
+    let mut items=Vec::new();
+    for k in keys {let mut link=json!({"fromEntity":k[0],"fromId":k[1],"role":k[2],"toEntity":k[3],"toId":k[4]});
+        for (side,e,i) in [("from",&k[0],&k[1]),("to",&k[3],&k[4])]{if !ENTITIES.contains(&e.as_str()){return Err("invalid relation entity".into())}let title:String=db.query_row(&format!("SELECT title FROM {e} WHERE workspace_id=?1 AND id=?2"),params![wid,i],|r|r.get(0)).map_err(|_|"relation endpoint missing")?;link[format!("{side}Title")]=json!(title.chars().take(120).collect::<String>());link[format!("{side}TitleTruncated")]=json!(title.chars().count()>120);}
+        items.push(link);
+    }
+    let count:i64=db.query_row("SELECT count(*) FROM relations WHERE workspace_id=?1 AND ((from_entity=?2 AND from_id=?3) OR (to_entity=?2 AND to_id=?3))",params![wid,entity,id],|r|r.get(0)).map_err(|e|e.to_string())?;
+    Ok(json!({"items":items,"count":count,"limit":limit,"nextCursor":next}))
+}
+
 fn bounded(mut record: Value, full: bool) -> Value {
     if full {
         return record;
@@ -681,6 +706,7 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
             tx.commit().map_err(|e| e.to_string())?;
             Ok(result)
         }
+        "records.relations" => relation_page(&db,&input),
         "records.get" => {
             let wid = need(&input, "workspaceId")?;
             let entity = table(&input, "entity")?;
@@ -967,6 +993,22 @@ mod tests {
         let provider = if from == "interactions" { "gmail" } else { "googlecalendar" };
         let record = dispatch(root,"records.save",json!({"workspaceId":wid,"entity":from,"title":"Synthetic source","fields":{"Date":"2026-11-01T06:30:00Z/2026-11-01T07:30:00Z"},"source":{"kind":"import","provider":provider,"connectedAccountId":"ca_one","collectionId":"collection","externalId":"external","url":"https://example.com/source","timeZone":"America/Chicago"}})).unwrap();
         json!({"workspaceId":wid,"entity":target,"id":Uuid::new_v4().to_string(),"title":"Review source","fields":{"Status":"Open"},"idempotencyKey":"proposal-one","sourceRecord":{"entity":from,"id":record["id"],"connectedAccountId":"ca_one","expectedRecord":{"title":record["title"],"fields":record["fields"],"source":record["source"]}}})
+    }
+
+    #[test]
+    fn contact_relations_can_be_read_to_the_end_without_duplicates_or_writes() {
+        let root=temp();let wid=dispatch(&root,"workspace.create",json!({"name":"Synthetic many meetings"})).unwrap()["id"].as_str().unwrap().to_owned();
+        let contact=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"Synthetic contact","fields":{}})).unwrap()["id"].as_str().unwrap().to_owned();
+        let db=open(&root).unwrap();
+        for i in 0..205 {let id=format!("synthetic-meeting-{i:04}");db.execute("INSERT INTO record_index VALUES(?1,'interactions',?2)",params![wid,id]).unwrap();db.execute("INSERT INTO interactions(id,workspace_id,title,fields_json,source_json) VALUES(?1,?2,?3,'{}','{}')",params![id,wid,format!("Synthetic meeting {i}")]).unwrap();db.execute("INSERT INTO relations VALUES(?1,'interactions',?2,'People','contacts',?3)",params![wid,id,contact]).unwrap();}
+        let before:i64=db.query_row("SELECT count(*) FROM history",[],|r|r.get(0)).unwrap();drop(db);
+        let mut cursor=Value::Null;let mut ids=Vec::new();let mut first=Value::Null;
+        loop {let page=dispatch(&root,"records.relations",json!({"workspaceId":wid,"entity":"contacts","id":contact,"cursor":cursor,"limit":37})).unwrap();assert_eq!(page["count"],205);if first.is_null(){first=page["nextCursor"].clone();}for link in page["items"].as_array().unwrap(){ids.push(link["fromId"].as_str().unwrap().to_owned());}cursor=page["nextCursor"].clone();if cursor.is_null(){break;}}
+        assert_eq!(ids,(0..205).map(|i|format!("synthetic-meeting-{i:04}")).collect::<Vec<_>>());
+        assert!(dispatch(&root,"records.relations",json!({"workspaceId":wid,"entity":"interactions","id":"synthetic-meeting-0000","cursor":first})).is_err());
+        assert!(dispatch(&root,"records.relations",json!({"workspaceId":wid,"entity":"contacts","id":contact,"limit":101})).is_err());
+        assert_eq!(open(&root).unwrap().query_row("SELECT count(*) FROM history",[],|r|r.get::<_,i64>(0)).unwrap(),before);
+        fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
