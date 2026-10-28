@@ -1217,6 +1217,21 @@ describe('Content Validator', () => {
 		expect(result.issues.some(i => i.id.startsWith('utility-page-indexable'))).toBe(false);
 	});
 
+	it('reads robots meta tags whose attribute names are uppercase', async () => {
+		const { parseHTML: realParseHTML } = await vi.importActual<typeof import('../src/utils/fetch-utils')>('../src/utils/fetch-utils');
+		vi.mocked(parseHTML).mockReturnValue(realParseHTML(`<!doctype html><html><head><title>Changelog</title>
+			<META NAME="ROBOTS" CONTENT="noindex">
+		</head><body><main><h1>Changelog</h1></main></body></html>`));
+
+		const result = await validateContent('https://example.com', undefined, {
+			pageScope: 'current',
+			currentPageSlug: '/changelog'
+		} as any);
+
+		expect(result.pages[0].seo.robots).toBe('noindex');
+		expect(result.issues.some(i => i.id.startsWith('utility-page-indexable'))).toBe(false);
+	});
+
 	it('can run only the lorem/placeholder check', () => {
 		const pages: any[] = [{
 			url: 'https://example.com/',

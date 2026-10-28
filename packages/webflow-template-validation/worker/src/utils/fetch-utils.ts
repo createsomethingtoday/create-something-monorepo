@@ -483,7 +483,8 @@ function extractAttributes(htmlString: string): Record<string, string> {
 	let match;
 
 	while ((match = attrRegex.exec(htmlString)) !== null) {
-		attributes[match[1]] = match[2];
+		// HTML attribute names are case-insensitive; the DOM exposes them lowercased.
+		attributes[match[1].toLowerCase()] = match[2];
 	}
 
 	return attributes;
