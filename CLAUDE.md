@@ -66,6 +66,7 @@ These load only when relevant. Read them before work in their area.
 | CSS, Glass Design System, WORKWAY alignment | `.claude/rules/css-architecture.md` |
 | UI preview workflow | `ui-preview` skill |
 | Cloudflare Pages project names (deploys) | `.claude/rules/PROJECT_NAME_REFERENCE.md` |
+| Cloudflare D1, KV, Workers, deploys, MCP domains | `.claude/rules/cloudflare-patterns.md` |
 
 **Public copy**: internal names (Atlas, Workflow Pilot, Policy OS) and architecture names (Database · Automation · Judgment) never reach `.agency` public copy. Enforced by `packages/agency/scripts/check-public-copy.mjs`.
 

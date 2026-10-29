@@ -2,6 +2,8 @@
 paths:
   - "packages/**/*.ts"
   - "packages/**/*.svelte"
+  - "apps/**/*.ts"
+  - "apps/**/*.svelte"
 ---
 
 # Error Handling Patterns

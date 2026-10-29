@@ -1,9 +1,9 @@
 ---
 paths:
   - "**/*.md"
-  - "packages/*/src/routes/**/*.svelte"
-  - "packages/*/src/lib/data/**"
-  - "packages/*/src/content/**"
+  - "**/src/routes/**/*.svelte"
+  - "**/src/lib/data/**"
+  - "**/src/content/**"
 ---
 
 # Voice Canon

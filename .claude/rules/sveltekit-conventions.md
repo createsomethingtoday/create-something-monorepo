@@ -1,8 +1,8 @@
 ---
 paths:
-  - "packages/*/src/routes/**"
-  - "packages/*/src/lib/**/*.svelte"
-  - "packages/*/svelte.config.js"
+  - "**/src/routes/**"
+  - "**/src/lib/**/*.svelte"
+  - "**/svelte.config.js"
 ---
 
 # SvelteKit Conventions

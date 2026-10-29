@@ -3,6 +3,8 @@ paths:
   - "**/package.json"
   - "packages/**/*.ts"
   - "packages/**/*.py"
+  - "apps/**/*.ts"
+  - "apps/**/*.py"
 ---
 
 # Context7 Patterns

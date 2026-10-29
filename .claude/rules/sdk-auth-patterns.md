@@ -1,11 +1,11 @@
 ---
 paths:
-  - "packages/*-mcp/**"
-  - "packages/auth-platform/**"
-  - "packages/mcp-authz/**"
-  - "packages/**/auth/**"
-  - "packages/**/*oauth*"
-  - "packages/**/*auth*.ts"
+  - "**/*-mcp/**"
+  - "**/auth-platform/**"
+  - "**/mcp-authz/**"
+  - "**/auth/**"
+  - "**/*oauth*"
+  - "**/*auth*.ts"
 ---
 
 # SDK Auth Patterns
