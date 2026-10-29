@@ -18,11 +18,14 @@ for (const file of await readdir(root)) {
   assert.equal(hash(bytes), hash(await readFile(join(root, file))), `${file} deployed bytes`);
   results.push({ file, bytes: bytes.length, sha256: hash(bytes) });
 }
-for (const file of ['screen.mp4', 'screen-mobile.mp4']) {
+for (const file of ['screen.mp4', 'screen-mobile.mp4', 'walkthrough.mp4', 'walkthrough-mobile.mp4']) {
   const response = await fetch(new URL(file, base), { headers: { Range: 'bytes=0-31' } });
   assert.equal(response.status, 206, `${file} byte ranges`);
   assert.match(response.headers.get('content-range') || '', /^bytes 0-31\/\d+$/);
-  assert.equal((await response.arrayBuffer()).byteLength, 32);
+  assert.deepEqual(Buffer.from(await response.arrayBuffer()), (await readFile(join(root, file))).subarray(0, 32), `${file} requested bytes`);
+  const invalid = await fetch(new URL(file, base), { headers: { Range: 'bytes=999999999-' } });
+  assert.equal(invalid.status, 416, `${file} invalid range`);
+  await invalid.arrayBuffer();
 }
 for (const file of ['reference.mp4','synthetic-source.mp4','render.py','render-receipt.json','.env','package.json','_headers']) {
   const response = await fetch(new URL(file, base));

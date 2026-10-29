@@ -81,7 +81,7 @@ This package lives alongside `motion-studio` and `exception-flow-video`. Those s
 
 The static bundle must include only player files, manifest, screen media, poster and the rendered MP4. Keep raw source media, tooling, credentials, and internal receipts out of the deployed bundle. Host with HTTPS and video byte-range support. The manifest and visible recording must be reviewed for audience suitability before release.
 
-To update, render a new version, inspect it, and retain the previous published bundle for rollback. The assets-only Cloudflare Worker `create-something-walkthroughs` uses the Create Something account. Its configuration deploys only `dist/`; it does not route traffic through an AI gateway. Render and build the approved recording, review the desktop/mobile output, then use the repo-pinned Wrangler:
+To update, render a new version, inspect it, and retain the previous published bundle for rollback. The Cloudflare Worker `create-something-walkthroughs` uses the Create Something account. Its configuration deploys only `dist/`; only the four MP4 paths invoke the video range handler. Other assets retain direct static serving. Video requests use the existing Workers request allowance; no new plan or service is provisioned. It does not route traffic through an AI gateway. Render and build the approved recording, review the desktop/mobile output, then use the repo-pinned Wrangler:
 
 ```sh
 .venv/bin/python render.py
@@ -96,3 +96,5 @@ The verification command compares deployed bytes with every local artifact, chec
 Rendering and packaging share `.walkthrough-operation.lock`, stage outputs in unique directories, and restore previous outputs after caught promotion failures. If interrupted by a hard process termination, inspect the lock and retained checkpoint directories before removing anything; multi-file promotion is not crash-atomic. For a previous deployed release, retain its version ID and use `wrangler rollback VERSION_ID --config wrangler.jsonc`. The first release has no prior version; disabling its workers.dev route is the withdrawal option.
 
 The synthetic fixture demonstrates player behavior only. It is not evidence of real app activity, a customer result, or a Sleev cost comparison.
+
+Live qualification found that direct static video responses ignored Range and prevented Chromium chapter seeking. The video handler now returns bounded streaming ranges with correct Content-Range, suffix and invalid-range handling, preserving origin security headers. The release verifier checks all four MP4s against exact expected bytes.
