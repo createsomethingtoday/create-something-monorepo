@@ -146,8 +146,9 @@ export function SubmissionGuidelines({
   // The window the component is rendered in. In the Designer the script runs in the
   // outer window while the component renders inside the canvas iframe.
   const ownView = () => rootRef.current?.ownerDocument.defaultView ?? window;
-  // Set by a user section change; the scroll runs once the new section has rendered.
-  const scrollAfterRender = useRef(false);
+  // Bumped on every user section selection (including the open one), so the
+  // scroll runs once the selected section has rendered.
+  const [scrollRequest, setScrollRequest] = useState(0);
 
   useEffect(() => {
     if (initialDocument) return;
@@ -171,15 +172,14 @@ export function SubmissionGuidelines({
   // Like the original tabs: a section picked from lower on the page opens at its top.
   // Measured after render so the target reflects the new section's layout.
   useEffect(() => {
-    if (!scrollAfterRender.current) return;
-    scrollAfterRender.current = false;
+    if (scrollRequest === 0) return;
     const view = ownView();
     const top = rootRef.current?.getBoundingClientRect().top;
     const target = top === undefined ? null : sectionScrollTarget(top, view.scrollY);
     if (target === null) return;
     const reduceMotion = view.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     view.scrollTo({ top: target, behavior: reduceMotion ? 'auto' : 'smooth' });
-  }, [activeId]);
+  }, [scrollRequest]);
 
   // A link to a single rule (#required-pages-08) opens its section, then scrolls to it.
   useEffect(() => {
@@ -197,7 +197,7 @@ export function SubmissionGuidelines({
       setActiveId(id);
       if (typeof window === 'undefined') return;
       if (syncUrlHash) ownView().history.replaceState(null, '', `#${id}`);
-      scrollAfterRender.current = true;
+      setScrollRequest((n) => n + 1);
     },
     [syncUrlHash],
   );
