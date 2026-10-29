@@ -42,8 +42,16 @@ function sliceStream(body, start, end) {
 }
 export default {
   async fetch(request, env, ctx) {
-    const response = await env.ASSETS.fetch(request);
     const range = request.headers.get('range');
+    let upstream = request;
+    if (request.method === 'GET' && range && VIDEOS.has(new URL(request.url).pathname)) {
+      // Assets can omit metadata when it sees an unsupported/invalid Range.
+      // Fetch the full representation; apply Range and If-Range here exactly once.
+      const headers = new Headers(request.headers);
+      headers.delete('range'); headers.delete('if-range');
+      upstream = new Request(request, {headers});
+    }
+    const response = await env.ASSETS.fetch(upstream);
     if (!VIDEOS.has(new URL(request.url).pathname) || response.status !== 200) return response;
     if (!range || request.method === 'HEAD') {
       const headers = new Headers(response.headers); headers.set('accept-ranges', 'bytes');

@@ -21,3 +21,11 @@ test('native 206 and nonvideo pass through',async()=>{for(const [status,path] of
 test('client cancellation cancels source',async()=>{const {env,state}=origin();const r=await worker.fetch(request('bytes=0-99'),env);await r.body.cancel();assert.equal(state.cancelled,true);});
 
 test('asset binding without Content-Length uses generated size header',async()=>{const {env}=origin(200,true);const r=await worker.fetch(request('bytes=0-31'),env);assert.equal(r.status,206);assert.equal(r.headers.get('content-range'),'bytes 0-31/100');assert.equal((await r.arrayBuffer()).byteLength,32);});
+
+test('video ranges fetch full upstream metadata even when Assets drops headers for invalid ranges',async()=>{
+ let upstream;
+ const env={ASSETS:{async fetch(req){upstream=req;return new Response(new Uint8Array(100),{headers:req.headers.has('range')?{}:{'x-walkthrough-bytes':'100','etag':'"v1"','x-content-type-options':'nosniff'}});}}};
+ const r=await worker.fetch(request('bytes=999999999-','/screen-mobile.mp4',{'if-range':'"v1"'}),env);
+ assert.equal(r.status,416);assert.equal(r.headers.get('content-range'),'bytes */100');assert.equal(r.headers.get('x-content-type-options'),'nosniff');assert.equal(upstream.headers.has('range'),false);assert.equal(upstream.headers.has('if-range'),false);
+});
+test('nonvideo range requests retain upstream semantics',async()=>{const {env,state}=origin();await worker.fetch(request('bytes=0-31','/other.mp4',{'if-range':'"v1"'}),env);assert.equal(state.request.headers.get('range'),'bytes=0-31');assert.equal(state.request.headers.get('if-range'),'"v1"');});
