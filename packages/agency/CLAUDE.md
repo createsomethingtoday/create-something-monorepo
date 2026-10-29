@@ -1,6 +1,6 @@
 # .agency Service Offerings: Map → Build → Control
 
-Category label: **AI workflow systems** (`agencyCoreMessaging.categoryLabel`). The offer is making one business workflow safe to delegate—named objects, scoped actions, approval paths, evidence (receipts), and recovery.
+Public category label: **AI-native technical support** (`agencyCoreMessaging.categoryLabel` in `src/lib/data/marketingCopy.ts`). **AI workflow systems** is the technical capability, not the public category (see `README.md`). The offer is making one business workflow safe to delegate—named objects, scoped actions, approval paths, evidence (receipts), and recovery.
 
 **The source of truth for the product spine is `packages/agency/src/lib/data/productFamily.ts`**, not this file. Canonical marketing copy lives in `packages/agency/src/lib/data/marketingCopy.ts` (`agencyCoreMessaging`).
 

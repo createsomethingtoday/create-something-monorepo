@@ -5,6 +5,8 @@ paths:
   - "**/wrangler.jsonc"
   - "**/worker-configuration.d.ts"
   - "**/workers/**"
+  - "**/*-worker/**"
+  - "**/*-workers/**"
   - "**/migrations/**"
   - "**/*-mcp/**"
   - "**/+server.ts"
