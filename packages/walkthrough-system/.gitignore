@@ -1,0 +1,15 @@
+*.mp4
+*.jpg
+dist/
+.dist-build-*/
+render-receipt.json
+__pycache__/
+.venv/
+venv/
+.release-demo/
+.walkthrough-operation.lock/
+.render-backup-*/
+.walkthrough-render-*/
+.wrangler/
+.release-demo-build-*/
+.production-demo.lock/
