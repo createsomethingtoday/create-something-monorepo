@@ -18,7 +18,7 @@ Use `$create-something-demo-director` with a recording and viewer outcome. The r
 
 ## Quick start
 
-From this package directory, using Python 3.9+ and Node 20+:
+From this package directory, using Python 3.11+ and Node 20+:
 
 ```sh
 python3 -m venv .venv

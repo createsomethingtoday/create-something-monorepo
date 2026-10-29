@@ -1,6 +1,6 @@
 # Production commands and scene contract
 
-Resolve `SKILL_DIR` to the directory containing this skill. Use absolute paths. Helpers require Python3.9+, Pillow and imageio-ffmpeg; player/build need Node20+. Install dependencies into a task-local virtual environment, never the global interpreter. Use a user-facing output directory for the finished project, with a unique name.
+Resolve `SKILL_DIR` to the directory containing this skill. Use absolute paths. Helpers require Python3.11+, Pillow and imageio-ffmpeg; player/build need Node20+. Install dependencies into a task-local virtual environment, never the global interpreter. Use a user-facing output directory for the finished project, with a unique name.
 
 ```sh
 python3 -m venv /absolute/work/demo-venv
