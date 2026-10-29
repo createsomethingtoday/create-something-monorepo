@@ -1,3 +1,20 @@
+---
+paths:
+  - "**/wrangler.toml"
+  - "**/wrangler.*.toml"
+  - "**/wrangler.jsonc"
+  - "**/worker-configuration.d.ts"
+  - "**/workers/**"
+  - "**/*-worker/**"
+  - "**/*-workers/**"
+  - "**/migrations/**"
+  - "**/*-mcp/**"
+  - "**/+server.ts"
+  - "**/+page.server.ts"
+  - "**/+layout.server.ts"
+  - "**/hooks.server.ts"
+---
+
 # Cloudflare Patterns
 
 ## Architecture

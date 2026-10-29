@@ -1,3 +1,11 @@
+---
+paths:
+  - "packages/harness/**"
+  - "packages/harness-mcp/**"
+  - "specs/**"
+  - "**/harness.config.yaml"
+---
+
 # Harness Patterns
 
 > **NOTE**: Harness work is tracked in **Linear**. The old Loom control-plane commands are retired for this repository.
