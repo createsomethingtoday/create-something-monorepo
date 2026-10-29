@@ -85,7 +85,13 @@ async function buildLocked(root, renameDirectory) {
     if (manifest.mobile) publicManifest.mobile = {file: manifest.mobile.file, poster: manifest.mobile.poster, width: manifest.mobile.width, height: manifest.mobile.height, shots: manifest.mobile.shots.map(({start, end, crop, label}) => ({start, end, crop, label}))};
     if (manifest.mobile?.presentation) publicManifest.mobile.presentation = manifest.mobile.presentation;
     await writeFile(join(staging, 'manifest.json'), `${JSON.stringify(publicManifest, null, 2)}\n`);
-    await writeFile(join(staging, '_headers'), HOSTING_HEADERS);
+    // Static Assets omits Content-Length from binding responses; publish exact
+    // video sizes with the same verified bundle so streaming ranges stay aligned.
+    let headers = HOSTING_HEADERS;
+    for (const name of staticFiles.filter(name => name.endsWith('.mp4'))) {
+      headers += `\n/${name}\n  X-Walkthrough-Bytes: ${(await lstat(join(staging, name))).size}\n`;
+    }
+    await writeFile(join(staging, '_headers'), headers);
     let hadPrevious = false;
     try {
       const info = await lstat(destination);

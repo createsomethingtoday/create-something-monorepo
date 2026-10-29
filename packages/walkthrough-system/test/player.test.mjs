@@ -117,6 +117,7 @@ test('static build includes only public assets and leaves prior dist intact on i
   await writeReceipt(root);
   const result = await build(root);
   assert.equal(result.published, false);
+  assert.match(await readFile(join(root, 'dist/_headers'), 'utf8'), /\/screen\.mp4\n  X-Walkthrough-Bytes: 12\n/);
   assert.deepEqual((await readdir(join(root, 'dist'))).sort(), [...STATIC_FILES, '_headers'].sort());
   const publishedManifest = JSON.parse(await readFile(join(root, 'dist/manifest.json'), 'utf8'));
   assert.equal(publishedManifest.source.original, undefined);
