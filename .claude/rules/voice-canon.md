@@ -1,3 +1,11 @@
+---
+paths:
+  - "**/*.md"
+  - "packages/*/src/routes/**/*.svelte"
+  - "packages/*/src/lib/data/**"
+  - "packages/*/src/content/**"
+---
+
 # Voice Canon
 
 Write clearly. That's it.

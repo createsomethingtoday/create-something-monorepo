@@ -1,3 +1,9 @@
+---
+paths:
+  - "packages/**/*.ts"
+  - "packages/**/*.svelte"
+---
+
 # Error Handling Patterns
 
 Consistent error handling across the monorepo. The tool recedes; errors become actionable.
@@ -70,29 +76,6 @@ const reqLog = log.child({ correlationId, path: '/api/users' });
 reqLog.info('Request started');
 reqLog.error('Request failed', { error: err });
 ```
-
-## Error Categories
-
-### Client Errors (4xx)
-
-| Status | When | Action |
-|--------|------|--------|
-| 400 | Invalid input | Return validation errors |
-| 401 | Not authenticated | Redirect to login or return error |
-| 403 | Not authorized | Return permission error |
-| 404 | Resource not found | Return not found error |
-| 409 | Conflict (duplicate) | Return conflict details |
-| 422 | Unprocessable | Return semantic errors |
-| 429 | Rate limited | Return retry-after header |
-
-### Server Errors (5xx)
-
-| Status | When | Action |
-|--------|------|--------|
-| 500 | Unexpected error | Log with correlation ID, generic response |
-| 502 | Upstream failure | Log, retry if transient |
-| 503 | Service unavailable | Return maintenance message |
-| 504 | Timeout | Log, consider async processing |
 
 ## Validation Pattern
 

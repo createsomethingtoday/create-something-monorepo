@@ -1,3 +1,10 @@
+---
+paths:
+  - "**/package.json"
+  - "packages/**/*.ts"
+  - "packages/**/*.py"
+---
+
 # Context7 Patterns
 
 When you need **external library/API documentation** (Next.js, Cloudflare Workers, Stripe, Supabase, etc.), use **Context7 MCP** to pull **up-to-date, version-specific docs and examples** into the model context.
