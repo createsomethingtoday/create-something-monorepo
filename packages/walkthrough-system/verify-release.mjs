@@ -3,8 +3,8 @@ import { readFile, readdir } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { createHash } from 'node:crypto';
 
-const [base, directory = '.release-demo/dist'] = process.argv.slice(2);
-if (!base || !/^https:\/\//.test(base)) throw new Error('Usage: node verify-release.mjs https://host .release-demo/dist');
+const [base, directory = 'dist'] = process.argv.slice(2);
+if (!base || !/^https:\/\//.test(base)) throw new Error('Usage: node verify-release.mjs https://host dist');
 const root = resolve(directory);
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const results = [];

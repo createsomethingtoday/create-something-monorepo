@@ -6,7 +6,7 @@ The viewer takes the operator's perspective: an outcome to pursue, a bounded act
 
 ## Scope
 
-This is a local walkthrough production kit. Source audio is preserved by default; the public synthetic fixture is silent. The public example uses an explicitly labeled synthetic fixture. It does not record actions, query live data, or invoke Descript. Supplied recordings stay private unless separately approved for publication. Generated media is ignored by Git.
+This is a local walkthrough production kit. Source audio is preserved by default; the approved reference recording is silent. The public walkthrough uses the user-approved supplied recording; a separate synthetic fixture is available for reproducible tests. It does not record actions, query live data, or invoke Descript. Other supplied recordings stay private unless separately approved for publication. Generated media is ignored by Git.
 
 - **Database:** preserved source, source hash, scene manifest, generated media and render receipt.
 - **Automation:** manifest validation, precise crop/trim, branded rendering, web playback, static packaging.
@@ -33,7 +33,7 @@ node --test test/*.test.mjs
 # then node build.mjs and node serve.mjs --port 8766.
 ```
 
-The local server binds to loopback and supports byte ranges for video seeking. Supplied-recording output is in `dist/`. The public fixture generates `.release-demo/dist/`, the configured deployment artifact. Package scripts expose these operations for an already-bootstrapped pnpm workspace; the direct commands avoid changing workspace dependencies.
+The local server binds to loopback and supports byte ranges for video seeking. Supplied-recording output is in `dist/`. The synthetic fixture generates `.release-demo/dist/`, separate from the approved production artifact in `dist/`. Package scripts expose these operations for an already-bootstrapped pnpm workspace; the direct commands avoid changing workspace dependencies.
 
 Python installs Pillow and a packaged ffmpeg binary. An installed `ffmpeg` or the `FFMPEG` environment variable takes precedence. Fonts use Canon's Arial fallback on macOS or DejaVu Sans on Linux. Set `WALKTHROUGH_FONT` and `WALKTHROUGH_FONT_BOLD` to local TTF paths to use approved production fonts.
 
@@ -81,12 +81,14 @@ This package lives alongside `motion-studio` and `exception-flow-video`. Those s
 
 The static bundle must include only player files, manifest, screen media, poster and the rendered MP4. Keep raw source media, tooling, credentials, and internal receipts out of the deployed bundle. Host with HTTPS and video byte-range support. The manifest and visible recording must be reviewed for audience suitability before release.
 
-To update, render a new version, inspect it, and retain the previous published bundle for rollback. The assets-only Cloudflare Worker `create-something-walkthroughs` uses the Create Something account. Its configuration deploys only `.release-demo/dist/`; it does not route traffic through an AI gateway. Generate the fixture, review the desktop/mobile output, then use the repo-pinned Wrangler:
+To update, render a new version, inspect it, and retain the previous published bundle for rollback. The assets-only Cloudflare Worker `create-something-walkthroughs` uses the Create Something account. Its configuration deploys only `dist/`; it does not route traffic through an AI gateway. Render and build the approved recording, review the desktop/mobile output, then use the repo-pinned Wrangler:
 
 ```sh
+.venv/bin/python render.py
+node build.mjs
 wrangler deploy --dry-run --config wrangler.jsonc
 wrangler deploy --config wrangler.jsonc
-node verify-release.mjs https://DEPLOYED-HOST .release-demo/dist
+node verify-release.mjs https://DEPLOYED-HOST dist
 ```
 
 The verification command compares deployed bytes with every local artifact, checks media byte ranges, security headers, and private-path 404s. `_headers` applies a same-origin content policy and revalidation; it is not served as an asset. See [Cloudflare static asset headers](https://developers.cloudflare.com/workers/static-assets/headers/).
