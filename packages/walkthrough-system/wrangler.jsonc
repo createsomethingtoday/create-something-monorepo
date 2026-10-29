@@ -1,0 +1,7 @@
+{
+  "name": "create-something-walkthroughs",
+  "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
+  "compatibility_date": "2026-10-29",
+  "workers_dev": true,
+  "assets": { "directory": "./dist" }
+}
