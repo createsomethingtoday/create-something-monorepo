@@ -8,6 +8,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./airtable": "./src/airtable.ts",
+    "./creator-email": "./src/creator-email.ts",
     "./hash": "./src/hash.ts",
     "./knock": "./src/knock.ts",
     "./kv": "./src/kv.ts",

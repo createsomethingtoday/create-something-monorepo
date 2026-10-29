@@ -2,7 +2,7 @@
 
 Date: 2026-10-29. Tracking: [CRE-2282](https://linear.app/createsomething/issue/CRE-2282/creator-storefront-airtable-schema-foundation-service-contract). Contract: [CONTRACT.md](./CONTRACT.md).
 
-This change added two tables and two reciprocal link fields to the Marketplace Airtable base, and set the two new tables' descriptions. It wrote no records and deleted, renamed or retyped nothing. No service or editor reads these tables yet.
+This change added two tables and two reciprocal link fields to the Marketplace Airtable base, and set the two new tables' descriptions. It wrote no records and deleted, renamed or retyped nothing. The storefront service (`packages/creator-storefront`) is implemented against these IDs but is not deployed, so nothing reads or writes these tables in production yet.
 
 ## Base and existing tables (verified live through Airtable MCP before the write)
 

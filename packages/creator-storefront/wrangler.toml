@@ -1,0 +1,49 @@
+# Creator storefront authoring service + public read API.
+# NOT DEPLOYED. See README.md "Provisioning" before any deploy; deployment and
+# live profile publishing need explicit operator approval (CRE-2282).
+#
+# Provisioning (operator, Webflow Hosting Cloudflare account, same as
+# webflow-template-views):
+#   1. wrangler d1 create creator-storefront  → add the [[d1_databases]] block
+#      below with the returned database_id (binding READ_MODEL).
+#   2. wrangler d1 migrations apply creator-storefront --remote
+#   3. wrangler secret put AIRTABLE_API_KEY / OWNER_API_KEY / STAFF_API_KEY
+#   4. Set ALLOWED_COVER_ORIGINS to the dashboard's production origin.
+#   5. GET /health/ready must return {"ready": true} before any client is pointed here.
+#
+# Until then the Worker fails closed: public reads and authoring return 503
+# naming each missing binding or secret; /health/ready reports the same.
+# READ_MODEL is deliberately unprovisioned: no D1 database exists yet.
+
+name = "creator-storefront"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+account_id = "ac24bc906aca8307bdba8c2a85ff08c9"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[observability]
+enabled = true
+
+[[durable_objects.bindings]]
+name = "CREATOR_WRITER"
+class_name = "CreatorStorefrontWriter"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["CreatorStorefrontWriter"]
+
+# [[d1_databases]]
+# binding = "READ_MODEL"
+# database_name = "creator-storefront"
+# database_id = "<from wrangler d1 create — do not commit a guessed ID>"
+# migrations_dir = "migrations"
+
+[vars]
+TEMPLATE_SEARCH_URL = "https://webflow-template-search.webflow-inc.workers.dev"
+# ALLOWED_COVER_ORIGINS = "https://<dashboard production origin>"
+
+# Secrets (wrangler secret put):
+# - AIRTABLE_API_KEY  read/write on the Marketplace base storefront tables, read on Creators/Assets
+# - OWNER_API_KEY     shared only with the Asset Dashboard (CREATOR_STOREFRONT_OWNER_KEY there)
+# - STAFF_API_KEY     shared only with Marketplace staff tooling; must differ from OWNER_API_KEY

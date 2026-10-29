@@ -99,6 +99,7 @@ export const handle: Handle = async ({ event, resolve }) => {
     '/assets',
     '/profile',
     '/api/profile',
+    '/api/storefront',
     '/api/keys',
     '/api/assets',
     '/api/analytics',
