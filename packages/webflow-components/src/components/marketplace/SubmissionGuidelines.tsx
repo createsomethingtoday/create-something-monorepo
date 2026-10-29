@@ -69,7 +69,8 @@ const STYLES = `
 .sguide-content li ul, .sguide-content li ol { margin: 4px 0 0; }
 .sguide-content blockquote { margin: 1rem 0; padding: 1rem 0 1rem 20px; border-left: 5px solid #e2e2e2; font-size: 1rem; }
 .sguide-content a { color: inherit; text-decoration: underline; }
-.sguide-content :target { scroll-margin-top: 96px; }
+/* :target does not match inside a shadow root, so every rule anchor carries the nav offset. */
+.sguide-content [id] { scroll-margin-top: 96px; }
 .sguide-status { padding: 24px 0; color: #5a5a5a; }
 @media (max-width: 991px) {
   .sguide { flex-direction: column; }
@@ -145,6 +146,8 @@ export function SubmissionGuidelines({
   // The window the component is rendered in. In the Designer the script runs in the
   // outer window while the component renders inside the canvas iframe.
   const ownView = () => rootRef.current?.ownerDocument.defaultView ?? window;
+  // Set by a user section change; the scroll runs once the new section has rendered.
+  const scrollAfterRender = useRef(false);
 
   useEffect(() => {
     if (initialDocument) return;
@@ -165,6 +168,19 @@ export function SubmissionGuidelines({
     };
   }, [apiBase, defaultSection, initialDocument, syncUrlHash]);
 
+  // Like the original tabs: a section picked from lower on the page opens at its top.
+  // Measured after render so the target reflects the new section's layout.
+  useEffect(() => {
+    if (!scrollAfterRender.current) return;
+    scrollAfterRender.current = false;
+    const view = ownView();
+    const top = rootRef.current?.getBoundingClientRect().top;
+    const target = top === undefined ? null : sectionScrollTarget(top, view.scrollY);
+    if (target === null) return;
+    const reduceMotion = view.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    view.scrollTo({ top: target, behavior: reduceMotion ? 'auto' : 'smooth' });
+  }, [activeId]);
+
   // A link to a single rule (#required-pages-08) opens its section, then scrolls to it.
   useEffect(() => {
     if (!doc || !syncUrlHash || typeof window === 'undefined') return;
@@ -180,15 +196,8 @@ export function SubmissionGuidelines({
     (id: string) => {
       setActiveId(id);
       if (typeof window === 'undefined') return;
-      const view = ownView();
-      if (syncUrlHash) view.history.replaceState(null, '', `#${id}`);
-      // Like the original tabs: a section picked from lower on the page opens at its top.
-      const top = rootRef.current?.getBoundingClientRect().top;
-      const target = top === undefined ? null : sectionScrollTarget(top, view.scrollY);
-      if (target !== null) {
-        const reduceMotion = view.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-        view.scrollTo({ top: target, behavior: reduceMotion ? 'auto' : 'smooth' });
-      }
+      if (syncUrlHash) ownView().history.replaceState(null, '', `#${id}`);
+      scrollAfterRender.current = true;
     },
     [syncUrlHash],
   );
