@@ -113,9 +113,13 @@ def run(args):
     if result.returncode: raise RuntimeError(result.stderr[-6000:])
 
 def inspect_source(ff, path):
-    result=subprocess.run([ff,'-hide_banner','-i',str(path)],capture_output=True,text=True)
+    # Decode one frame so bounds match ffmpeg's autorotated display frame,
+    # including rotation stored in a display matrix rather than a rotate tag.
+    result=subprocess.run([ff,'-hide_banner','-i',str(path),'-map','0:v:0','-frames:v','1','-f','null','-'],capture_output=True,text=True)
+    if result.returncode: raise ValueError('Could not decode source for inspection')
     text=result.stderr
-    video=next((line for line in text.splitlines() if 'Video:' in line), '')
+    videos=[line for line in text.splitlines() if 'Video:' in line]
+    video=videos[-1] if videos else ''
     size=re.search(r'[, ](\d+)x(\d+)(?:[ ,\[])',video)
     duration=re.search(r'Duration: (\d+):(\d+):(\d+(?:\.\d+)?)',text)
     if not size or not duration: raise ValueError('Could not inspect source dimensions and duration')
@@ -237,6 +241,8 @@ def _build_locked(manifest):
     with tempfile.TemporaryDirectory(prefix='.walkthrough-render-', dir=root) as temp:
         temp=Path(temp); screen=temp/'screen.mp4'; master=temp/'walkthrough.mp4'
         w,h,x,y=s['crop']
+        # Keep the original audio offset relative to the cut. PTS-STARTPTS
+        # would incorrectly advance intentionally delayed audio to video time zero.
         audio_args=['-map','0:a?','-af',f"atrim=start={s['in']}:end={s['out']},asetpts=PTS-{s['in']}/TB",'-c:a','aac','-b:a','192k'] if keep_audio else ['-an']
         run([ff,'-y','-i',str(original),'-map','0:v:0','-vf',f"trim=start={s['in']}:end={s['out']},setpts=PTS-STARTPTS,crop={w}:{h}:{x}:{y}",*audio_args,'-c:v','libx264','-crf','18','-pix_fmt','yuv420p','-r','30','-movflags','+faststart',str(screen)])
         cmd=[ff,'-y','-i',str(screen)]

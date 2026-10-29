@@ -11,9 +11,15 @@ def probe(source):
     reader=imageio_ffmpeg.read_frames(str(source))
     try: meta=next(reader)
     finally: reader.close()
-    result=subprocess.run([ffmpeg(),'-hide_banner','-i',str(source)],capture_output=True,text=True)
-    return {'duration':meta['duration'],'width':meta['source_size'][0],'height':meta['source_size'][1],
-            'fps':meta['fps'],'has_audio':bool(re.search(r'Stream[^\n]*Audio:',result.stderr)), 'rotation':meta.get('rotate',0)}
+    result=subprocess.run([ffmpeg(),'-hide_banner','-i',str(source),'-map','0:v:0','-frames:v','1','-f','null','-'],capture_output=True,text=True)
+    if result.returncode: raise ValueError('Could not decode source for inspection')
+    # Use the selected ffmpeg output dimensions. imageio may disable autorotation.
+    videos=[line for line in result.stderr.splitlines() if 'Video:' in line]
+    size=re.search(r'[, ](\d+)x(\d+)(?:[ ,\[])',videos[-1] if videos else '')
+    if not size: raise ValueError('Could not inspect display dimensions')
+    rotation=re.search(r'rotation of ([+-]?[\d.]+) degrees',result.stderr)
+    return {'duration':meta['duration'],'width':int(size[1]),'height':int(size[2]),
+            'fps':meta['fps'],'has_audio':bool(re.search(r'Stream[^\n]*Audio:',result.stderr)), 'rotation':float(rotation[1]) if rotation else meta.get('rotate',0)}
 
 def inspect(source,out,times=None):
     source=Path(source).resolve();out=Path(out).resolve()
