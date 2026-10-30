@@ -446,3 +446,13 @@ body .wfdt-sticky{background:#fff}
  .rd-detail .source-preview-fallback{margin-top:12px}.rd-detail .wfdt-hero{padding-bottom:0}
  .rd-detail .source-preview-toolbar{gap:10px;margin-bottom:12px}
 }
+
+/* Each detail column flows independently; sidebar height never delays Overview. */
+.rd-detail-content-section.section{padding-top:32px}
+.rd-detail-columns{align-items:start}
+.rd-detail-columns .mp-template-text-wrap{min-width:0}
+.rd-detail-summary.rd-detail-inventory,.rd-detail-summary.rd-detail-creator{display:block;padding:0 0 24px;margin:0 0 24px;border-bottom:1px solid #e0e0e0}
+.rd-detail-inventory>.rd-detail-caption:first-child{margin-top:0}
+.rd-detail-creator .rd-detail-requirements{margin:20px 0}
+@media(max-width:767px){.rd-detail-content-section.section{padding-top:24px}}
+.template-hero.rd-detail-hero{padding-bottom:0}

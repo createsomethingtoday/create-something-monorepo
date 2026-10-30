@@ -11,7 +11,7 @@ import {homeMarkup,pickCreators,TILE_CATEGORIES} from './home';
 const exports = import.meta.glob('../../original-export/**/*.html',{eager:true,query:'?raw',import:'default'}) as Record<string,string>;
 const raw=(name:string)=>exports[`../../original-export/${name}.html`];
 const escape=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
-export interface Island {kind:'discovery'|'creator'|'cards'|'catalog'|'detail'|'widget'|'comments'|'chat'|'library';inventory?:IncludedPage[];profile?:CreatorSource;published?:CreatorCustomization;total?:number;widget?:string;props?:Record<string,unknown>;items?:Template[];columns?:number;item?:Template;title?:string;description?:string;creatorSlug?:string;heroProps?:Record<string,unknown>}
+export interface Island {kind:'discovery'|'creator'|'cards'|'catalog'|'detail'|'widget'|'comments'|'chat'|'library';detailSection?:'hero'|'inventory'|'creator';inventory?:IncludedPage[];profile?:CreatorSource;published?:CreatorCustomization;total?:number;widget?:string;props?:Record<string,unknown>;items?:Template[];columns?:number;item?:Template;title?:string;description?:string;creatorSlug?:string;heroProps?:Record<string,unknown>}
 export interface Page {title:string;description:string;head:string;body:string;parts:string[];islands:Island[];status:number;pageId?:string;canonical:string}
 function clean(name:string){
  const $=load(raw(name)||raw('404'));
@@ -171,7 +171,7 @@ export async function pageFor(url:URL):Promise<Page>{
   if(!rich.length)throw new Error('CMS detail content contract changed');
   rich.find('p').filter((_,e)=>!cms(e).text().trim()&&!cms(e).find('img,video,iframe').length).remove();
   $('.mp-template-text').replaceWith(rich.toString());
-  $('.template-hero').html('<div class="container"><source-island></source-island></div>');
+  $('.template-hero').addClass('rd-detail-hero').html('<div class="container"><source-island></source-island></div>');
   $('.branded-display-subtitle').remove();
   $('.mp-sidebar-features').addClass('rd-detail-sidebar');
   $('.mp-sidebar-wrap').filter((_,e)=>$(e).find('h5').text().trim()==='Share').remove();
@@ -196,10 +196,13 @@ export async function pageFor(url:URL):Promise<Page>{
   if(cmsProps(cms,'TemplateSupportRequest'))$('.w-tab-pane[data-w-tab="Support"] a[href="#"]').remove();
   // Islands follow document order: hero, support, comments, related cards.
   $('source-island').first().attr('data-hero','true');
+  $('.mp-template-text-wrap').first().prepend('<source-island data-detail-section="inventory"></source-island>');
+  $('.mp-sidebar-features').first().prepend('<source-island data-detail-section="creator"></source-island>');
+  $('.mp-template-text').first().addClass('rd-detail-columns').closest('.section').addClass('rd-detail-content-section');
   const ordered:Island[]=[];
   $('source-island,code-island').each((_,element)=>{
    const el=$(element);
-   if(el.is('source-island')){ordered.push(el.attr('data-hero')?islands[0]:{kind:'comments',item});return;}
+   if(el.is('source-island')){ordered.push(el.attr('data-detail-section')?{...islands[0],detailSection:el.attr('data-detail-section') as 'inventory'|'creator'}:el.attr('data-hero')?islands[0]:{kind:'comments',item});return;}
    const holder=load(el.toString());const widgets:Island[]=[];hydrateCms(holder,widgets);if(widgets.length){ordered.push(...widgets);el.replaceWith('<source-island></source-island>');}
   });
   return finish($,url,ordered);
