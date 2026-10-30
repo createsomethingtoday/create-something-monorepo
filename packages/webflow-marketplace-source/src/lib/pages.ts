@@ -175,7 +175,7 @@ export async function pageFor(url:URL):Promise<Page>{
   $('#longDescriptionOverlay,.cc_show_more_long_description').remove();
   $('.long-description').attr('style','height:auto;max-height:none');
   $('#subcategory h5').text((item.child_categories||[]).length>1?'Subcategories':'Subcategory');
-  $('#subcategory .w-dyn-list').html((item.child_categories||[]).map(t=>`<a class="tag-list_link" href="${escape(localLink(t.url))}">${escape(t.name)}</a>`).join(''));
+  $('#subcategory .w-dyn-list').addClass('tag-list').html((item.child_categories||[]).map(t=>`<a class="tag-list_link" href="${escape(localLink(t.url))}">${escape(t.name)}</a>`).join(''));
   // CMS-only collection placeholders must never masquerade as real content.
   $('.mp-sidebar-features .w-dyn-list').each((_,e)=>{if($(e).find('.w-dyn-bind-empty').length)$(e).remove()});
   const related=cms('#marketing');
