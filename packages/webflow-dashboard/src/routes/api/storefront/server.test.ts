@@ -113,6 +113,91 @@ describe('/api/storefront proxy', () => {
 		expect(await response.json()).toMatchObject({ error: 'ambiguous_creator' });
 	});
 
+	describe('creator selection', () => {
+		const CREATOR = 'recCREATORAAAAAA1';
+		const OTHER = 'recCREATORBBBBBB2';
+		const headersOf = (fetchMock: ReturnType<typeof serviceReturning>) =>
+			new Headers((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].headers);
+
+		it('passes through only {id, slug} choices of an ambiguity, dropping everything else', async () => {
+			serviceReturning(409, {
+				error: 'ambiguous_creator',
+				message: 'select one',
+				details: {
+					choices: [
+						{ id: CREATOR, slug: 'studio', email: 'owner@example.com', stripeAccount: 'acct_1' },
+						{ id: OTHER, slug: null },
+						{ id: 'not-a-record-id', slug: 'bad' }
+					],
+					secret: 'x'
+				}
+			});
+			const response = await get();
+			const text = await response.text();
+			expect(response.status).toBe(409);
+			expect(JSON.parse(text)).toEqual({
+				error: 'ambiguous_creator',
+				message: 'select one',
+				details: { choices: [{ id: CREATOR, slug: 'studio' }, { id: OTHER, slug: null }] }
+			});
+			for (const leaked of ['owner@example.com', 'acct_1', 'not-a-record-id', 'secret']) expect(text).not.toContain(leaked);
+		});
+
+		it('drops choices from any error other than a 409 ambiguity', async () => {
+			serviceReturning(403, { error: 'forbidden', message: 'no', details: { choices: [{ id: CREATOR, slug: 's' }] } });
+			expect(await (await get()).json()).toEqual({ error: 'forbidden', message: 'no' });
+		});
+
+		it('forwards only a validated selection, in a freshly built header, on GET', async () => {
+			const fetchMock = serviceReturning(200, { draft: {}, candidates: [] });
+			expect((await get(`?creator=${CREATOR}`)).status).toBe(200);
+			const headers = headersOf(fetchMock);
+			expect(headers.get('X-Storefront-Creator-Id')).toBe(CREATOR);
+			expect(headers.get('X-Storefront-Actor-Email')).toBe('owner@example.com');
+		});
+
+		it('rejects a malformed selection on GET and POST before calling the service', async () => {
+			const fetchMock = serviceReturning(200, {});
+			for (const bad of ['x', 'rec123', `${CREATOR}%0d%0aX-Evil:1`, 'recCREATORAAAAAA1,recCREATORBBBBBB2']) {
+				expect((await get(`?creator=${bad}`)).status).toBe(400);
+			}
+			for (const bad of ['x', 7, {}, ['recCREATORAAAAAA1'], 'recCREATORAAAAAA1 ']) {
+				expect((await post({ action: 'publish', expectedDraftVersion: 1, creatorId: bad })).status).toBe(400);
+			}
+			expect(fetchMock).not.toHaveBeenCalled();
+		});
+
+		it('sends the chosen creator on every POST action and nothing when none is chosen', async () => {
+			const fetchMock = serviceReturning(200, { draft: {}, candidates: [] });
+			const actions = [
+				{ action: 'save', expectedDraftVersion: 1, fields: {} },
+				{ action: 'selections', expectedDraftVersion: 1, selections: [] },
+				{ action: 'publish', expectedDraftVersion: 1 },
+				{ action: 'unpublish' }
+			];
+			for (const body of actions) await post({ ...body, creatorId: OTHER });
+			for (const call of fetchMock.mock.calls as unknown as Array<[string, RequestInit]>) {
+				expect(new Headers(call[1].headers).get('X-Storefront-Creator-Id')).toBe(OTHER);
+				expect(call[1].body ?? '').not.toContain(OTHER);
+			}
+			fetchMock.mockClear();
+			await post({ action: 'publish', expectedDraftVersion: 1 });
+			expect(headersOf(fetchMock).has('X-Storefront-Creator-Id')).toBe(false);
+		});
+
+		it('never forwards a browser-supplied selection or actor header', async () => {
+			const fetchMock = serviceReturning(200, {});
+			await post(
+				{ action: 'publish', expectedDraftVersion: 1 },
+				{ 'X-Storefront-Creator-Id': OTHER, 'X-Storefront-Actor-Email': 'victim@example.com', Authorization: 'Bearer attacker' }
+			);
+			const headers = headersOf(fetchMock);
+			expect(headers.has('X-Storefront-Creator-Id')).toBe(false);
+			expect(headers.get('X-Storefront-Actor-Email')).toBe('owner@example.com');
+			expect(headers.get('Authorization')).toBe(`Bearer ${OWNER_KEY}`);
+		});
+	});
+
 	it('strips fields the browser must not see from service responses', async () => {
 		serviceReturning(200, {
 			draft: {

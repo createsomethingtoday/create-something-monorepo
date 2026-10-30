@@ -33,6 +33,7 @@
 					<code>{r.method} {r.path}</code>
 					{#if r.action}<code>action={r.action}</code>{/if}
 					{#if r.idempotencyKey}<code>key={r.idempotencyKey.slice(0, 8)}…</code>{/if}
+					{#if r.creatorId}<code>creator=…{r.creatorId.slice(-4)}</code>{/if}
 					<code>→ {r.status}</code>
 				</li>
 			{/each}

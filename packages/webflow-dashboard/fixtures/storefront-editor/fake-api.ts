@@ -13,7 +13,8 @@
  *   suspended    staff suspension: publish/unpublish refused
  *   ineligible   publish fails: a featured template was delisted
  *   flaky        the first save fails with 503; Try again reuses the key
- *   ambiguous    login matches two creator records
+ *   ambiguous    login matches two creator records: 409 with choices until one is selected; a
+ *                selection outside the two is 403 (the real proxy/service re-check it)
  *   disabled     feature flag off: no Storefront tab
  */
 
@@ -22,6 +23,8 @@ export interface LoggedRequest {
 	path: string;
 	action?: string;
 	idempotencyKey?: string | null;
+	/** Creator the request named (query `creator` on GET, `creatorId` on POST). */
+	creatorId?: string | null;
 	status: number;
 }
 
@@ -33,6 +36,10 @@ const CANDIDATES = [
 	{ assetId: 'recFIXTUREASSET02', name: 'Harbor Agency', templateSlug: 'harbor-agency' },
 	{ assetId: 'recFIXTUREASSET03', name: 'Meridian Portfolio', templateSlug: 'meridian-portfolio' },
 	{ assetId: 'recFIXTUREASSET04', name: 'Northwind SaaS', templateSlug: 'northwind-saas' }
+];
+const AMBIGUOUS_CHOICES = [
+	{ id: 'recFIXTURECREAT01', slug: 'fixture-studio' },
+	{ id: 'recFIXTURECREAT02', slug: null }
 ];
 const LIMITS = { positioning: 120, coverAlt: 160, supportText: 400, note: 240 };
 
@@ -242,15 +249,30 @@ export function installFakeApi(scenario: string, log: (entry: LoggedRequest) => 
 			if (scenario === 'disabled') return finish(method === 'GET' ? 200 : 404, method === 'GET' ? { enabled: false } : { error: 'storefront_disabled' });
 			if (method === 'GET') {
 				if (url.searchParams.has('probe')) return finish(200, { enabled: true });
+				const creator = url.searchParams.get('creator');
 				if (scenario === 'ambiguous') {
-					return finish(409, { error: 'ambiguous_creator', message: 'More than one Creator matches this account' });
+					if (!creator) {
+						return finish(409, { error: 'ambiguous_creator', message: 'select one', details: { choices: AMBIGUOUS_CHOICES } }, { creatorId: creator });
+					}
+					if (!AMBIGUOUS_CHOICES.some((c) => c.id === creator)) {
+						return finish(403, { error: 'forbidden', message: 'This account cannot act for the selected Creator' }, { creatorId: creator });
+					}
 				}
-				return finish(200, url.searchParams.has('preview') ? preview() : view());
+				return finish(200, url.searchParams.has('preview') ? preview() : view(), { creatorId: creator });
 			}
 			const body = JSON.parse(String(init?.body ?? '{}')) as Json;
 			const key = new Headers(init?.headers).get('Idempotency-Key');
+			const creatorId = typeof body.creatorId === 'string' ? body.creatorId : null;
+			if (scenario === 'ambiguous') {
+				if (!creatorId) {
+					return finish(409, { error: 'ambiguous_creator', message: 'select one', details: { choices: AMBIGUOUS_CHOICES } }, { action: String(body.action), idempotencyKey: key, creatorId });
+				}
+				if (!AMBIGUOUS_CHOICES.some((c) => c.id === creatorId)) {
+					return finish(403, { error: 'forbidden', message: 'This account cannot act for the selected Creator' }, { action: String(body.action), idempotencyKey: key, creatorId });
+				}
+			}
 			const [status, result] = handleStorefrontPost(body, key);
-			return finish(status, result, { action: String(body.action), idempotencyKey: key });
+			return finish(status, result, { action: String(body.action), idempotencyKey: key, creatorId });
 		}
 		return finish(404, { error: 'not_found' });
 	};
