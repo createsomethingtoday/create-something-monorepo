@@ -94,3 +94,8 @@ It does not prove:
 - `src/mcp/client.ts`: minimal MCP Streamable HTTP client. `spike/mcp-client/client.ts` re-exports it for the headless collector.
 - `src/mcp/call.ts`, `src/mcp/discover.ts`: diagnostic scripts from the spike. Not part of the bundle.
 - Designer data comes from `spike/headless-collector/collect.ts`, and the extension's client-side enhancements (Style System, Page Structure, Variable Modes, summary totals) from `spike/headless-collector/enhance.ts`. Both are imported by relative path until they move into this package.
+
+
+## Custom workers and the access token
+
+Recording a result sends the stored Webflow access token to the validation worker as `oauth_site_access` evidence. The CLI only does this for the default production worker. With `--worker <base-url>` it validates but skips recording unless you also pass `--trust-worker`.

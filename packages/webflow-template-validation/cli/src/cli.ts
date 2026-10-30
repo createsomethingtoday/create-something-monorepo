@@ -60,6 +60,8 @@ Validate options:
   --no-record                  Collect Designer data and run the checks, but do not record the result.
   --checks <list>              Published-site checks to run: ${PUBLISHED_SITE_CHECKS.join(',')} (default: all).
   --worker <base-url>          Validation worker (default ${DEFAULT_WORKER_BASE}).
+  --trust-worker               Allow recording (which sends your Webflow access token as evidence) to a
+                               non-default --worker. Without it, custom workers validate but never record.
   --timeout <seconds>          Worker job timeout (default 480).
   --json                       Print machine-readable JSON.
 
@@ -97,6 +99,7 @@ const OPTIONS = {
 	json: { type: 'boolean', default: false },
 	checks: { type: 'string' },
 	worker: { type: 'string', default: DEFAULT_WORKER_BASE },
+	'trust-worker': { type: 'boolean', default: false },
 	timeout: { type: 'string', default: '480' },
 	'designer-source': { type: 'string' },
 	site: { type: 'string' },
@@ -325,6 +328,10 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 	if (collected && !values['no-record']) {
 		if (outcome.mode !== 'async') {
 			record = { skipped: 'the /validate fallback does not run the Designer checks, so this result was not recorded' };
+		} else if (workerBase !== DEFAULT_WORKER_BASE && !values['trust-worker']) {
+			// Recording posts the Webflow access token as evidence. Never send it
+			// to a worker the creator did not explicitly trust.
+			record = { skipped: `recording sends your Webflow access token to the worker; pass --trust-worker to allow it for ${workerBase}` };
 		} else {
 			log('Recording the result with the worker (oauth_site_access evidence)');
 			try {
