@@ -1,0 +1,132 @@
+{
+  "schemaVersion": "codex-instruction-ablation-run-receipt.v1",
+  "experimentId": "codex-mcp-authz-instructions-v2",
+  "planHash": "2b2f97cb00800d03a8a1aecc7b9ab5f8de3b157e05f0e0525cf90d5a5b796260",
+  "sequence": 4,
+  "key": "full::gmail-route-classification::2",
+  "armId": "full",
+  "taskId": "gmail-route-classification",
+  "repetition": 2,
+  "executor": {
+    "version": "codex-cli 0.146.0-alpha.3.1",
+    "authMode": "ChatGPT",
+    "executable": "/Applications/ChatGPT.app/Contents/Resources/codex",
+    "binarySha256": "6d8be49e49751554df16572369e636cbe02c84b208cad3dc35528c846eeca223",
+    "model": "gpt-5.6-terra",
+    "reasoningEffort": "medium",
+    "sandbox": "workspace-write",
+    "ephemeral": true,
+    "ignoreUserConfig": true
+  },
+  "provenance": {
+    "sourceCommit": "fe5133ba1a624d1664cac3e112d1d32fce768d53",
+    "sourceTree": "6841df04c02bf3885f2d2fdd1ff9f2030b7c21db",
+    "fixtureBaselineCommit": "7208179a5266cc313f9cd9aa24228ddebfd583a0",
+    "fixtureHistoryCount": 1,
+    "promptSha256": "a399cd56c6408bde7e25d0a5f47fff97f7584798bf307332b7365936ab2396c6",
+    "outputSchemaSha256": "6b1a9c3540d02eda200a679d436c36862db85554d73aaaf37d0cba4b6b010aa8",
+    "componentState": {
+      "rootInstructions": true,
+      "packageInstructions": true
+    },
+    "instructionSha256": {
+      "root": "95e2c423f549e8dea9833918650984a8a806b20640b9096a0dd7e9d32beca486",
+      "package": "889563d4906926f5d28cc8dc07e2fe68a1649aba9cdb97c1e51f377be491cbd4"
+    },
+    "hiddenEvaluatorSeparated": true,
+    "designerSawHistoricalSolution": true
+  },
+  "execution": {
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false,
+    "latencyMs": 152279
+  },
+  "changedFiles": [
+    "packages/mcp-authz/src/hub.ts",
+    "packages/mcp-authz/src/types.ts",
+    "packages/mcp-authz/test/authz.test.mjs"
+  ],
+  "commands": [
+    "/bin/zsh -lc \"pwd && sed -n '1,240p' README.md && sed -n '1,260p' UNDERSTANDING.md && sed -n '1,260p' /Users/micahjohnson/Code/create-something-monorepo/packages/dotfiles/codex/skills/debug-feedback-loop/SKILL.md\"",
+    "/bin/zsh -lc \"sed -n '1,300p' /Users/micahjohnson/Code/create-something-monorepo/packages/dotfiles/codex/skills/debug-feedback-loop/SKILL.md\nrg --files -g 'README.md' -g 'UNDERSTANDING.md' -g 'AGENTS.md' -g 'package.json' -g 'src/**' -g 'test/**' -g 'tests/**' | sort\"",
+    "/bin/zsh -lc \"sed -n '1,260p' package.json\nsed -n '1,320p' src/types.ts\nsed -n '1,420p' src/evaluate.ts\nsed -n '1,420p' src/hub.ts\nsed -n '1,320p' src/index.ts\nsed -n '1,380p' src/policies.ts\nsed -n '1,460p' test/authz.test.mjs\"",
+    "/bin/zsh -lc \"pnpm build && node --input-type=module -e \\\"import { classifyHubRoute } from './dist/index.js'; const read = classifyHubRoute({ proxyToolName: 'hub__list_documents', serverName: 'hub', downstreamToolName: 'list_documents' }, { description: 'List documents, including state and trash metadata.' }); const multiplexed = classifyHubRoute({ proxyToolName: 'hub__management', serverName: 'hub', downstreamToolName: 'management' }, { description: 'Management actions include delete and authorization operations.' }); console.log(JSON.stringify({ read, multiplexed }, null, 2)); if (read.accessType \"'!== '\"'read' || multiplexed.accessType \"'!== '\"'read') process.exit(1);\\\"\"",
+    "/bin/zsh -lc \"pnpm build && node --test --test-name-pattern='hub route classification ignores incidental|hub route invocation actions' test/authz.test.mjs && pnpm check && pnpm test\"",
+    "/bin/zsh -lc 'git diff --check && git diff -- src/types.ts src/hub.ts test/authz.test.mjs && git status --short'"
+  ],
+  "packageValidation": {
+    "passed": true,
+    "exitCode": 0,
+    "signal": null,
+    "logSha256": "de7b75c8c0f527b8378c5100004a5e853cb2cafefdbb0e37de6cf7de5ac7ea21"
+  },
+  "hiddenEvaluation": {
+    "passed": false,
+    "summary": {
+      "passed": 4,
+      "total": 8
+    }
+  },
+  "finalResponse": {
+    "summary": "Repaired MCP hub route classification. Stable route identifiers now determine defaults; descriptions no longer affect access intent. Optional `invocationAction` refines multiplexed routes, is retained in action/resource metadata, and is covered for read, write, destructive, auth-admin, and control-plane cases. No deployment or live-runtime action was performed.",
+    "claimedComplete": true,
+    "validationCommands": [
+      "pnpm build",
+      "node --test --test-name-pattern='hub route classification ignores incidental|hub route invocation actions' test/authz.test.mjs",
+      "pnpm check",
+      "pnpm test",
+      "git diff --check"
+    ],
+    "completionBoundary": "Changes are limited to @create-something/mcp-authz source and public tests."
+  },
+  "metrics": {
+    "taskSuccess": 0,
+    "policyViolations": 1,
+    "scopeDiscipline": 0,
+    "totalTokens": 284396,
+    "latencyMs": 152279
+  },
+  "artifacts": {
+    "events": {
+      "path": "evidence/runs/04-full-r2/events.jsonl",
+      "sha256": "b130b19fa535001ed33fd2ea08af7d784ffa8824ea492d82231bbb683a7517e2"
+    },
+    "stderr": {
+      "path": "evidence/runs/04-full-r2/codex.stderr.log",
+      "sha256": "a27b0c0fa9d505695bc40a85a9a2f19080dc97f2c9c143b963b72d97f342dd70"
+    },
+    "finalResponse": {
+      "path": "evidence/runs/04-full-r2/final-response.json",
+      "sha256": "232aa81c6dfaf155123dd1c796f8d9e8b5c8763f6fbd28f5b11cdd4a92f586e2"
+    },
+    "diff": {
+      "path": "evidence/runs/04-full-r2/agent.diff",
+      "sha256": "891005fe615db179ddb9fd6272bc9b8513f26cc61623682ea01523884427e8b6"
+    },
+    "packageValidation": {
+      "path": "evidence/runs/04-full-r2/package-validation.log",
+      "sha256": "de7b75c8c0f527b8378c5100004a5e853cb2cafefdbb0e37de6cf7de5ac7ea21"
+    },
+    "hiddenEvaluation": {
+      "path": "evidence/runs/04-full-r2/hidden-evaluation.json",
+      "sha256": "8e9c1b44aa27b25c644e70d19103b360c1c58e91e1c30f3684ca53a984e4b1a9"
+    }
+  },
+  "dependencyPreparation": {
+    "passed": true,
+    "commands": [
+      {
+        "command": "pnpm install --filter @create-something/mcp-authz... --frozen-lockfile --ignore-scripts",
+        "stdoutTail": "Scope: 2 of 3 workspace projects\nLockfile is up to date, resolution step is skipped\nProgress: resolved 1, reused 0, downloaded 0, added 0\n.                                        | +403 ++++++++++++++++++++++++++++++++\nProgress: resolved 403, reused 403, downloaded 0, added 57\nProgress: resolved 403, reused 403, downloaded 0, added 67\nProgress: resolved 403, reused 403, downloaded 0, added 208\nProgress: resolved 403, reused 403, downloaded 0, added 398\nProgress: resolved 403, reused 403, downloaded 0, added 403, done\nDone in 5s\n",
+        "stderrTail": ""
+      },
+      {
+        "command": "pnpm --filter @create-something/policy-os-engine build",
+        "stdoutTail": "\n> @create-something/policy-os-engine@0.1.0 build /private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/codex-mcp-authz-instructions-v2-fixtures/04-full-r2/packages/policy-os-engine\n> tsc\n\n",
+        "stderrTail": ""
+      }
+    ]
+  },
+  "recordedAt": "2026-07-27T20:46:36.264Z"
+}

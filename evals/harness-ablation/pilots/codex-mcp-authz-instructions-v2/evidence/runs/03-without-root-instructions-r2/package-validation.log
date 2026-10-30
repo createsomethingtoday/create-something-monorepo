@@ -1,0 +1,148 @@
+
+> @create-something/mcp-authz@0.1.0 test /private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/codex-mcp-authz-instructions-v2-fixtures/03-without-root-instructions-r2/packages/mcp-authz
+> pnpm --filter @create-something/policy-os-engine build && pnpm build && node --test test/*.test.mjs
+
+
+> @create-something/policy-os-engine@0.1.0 build /private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/codex-mcp-authz-instructions-v2-fixtures/03-without-root-instructions-r2/packages/policy-os-engine
+> tsc
+
+
+> @create-something/mcp-authz@0.1.0 build /private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/codex-mcp-authz-instructions-v2-fixtures/03-without-root-instructions-r2/packages/mcp-authz
+> tsc
+
+TAP version 13
+# Subtest: policy registry exposes repo-first manifests
+ok 1 - policy registry exposes repo-first manifests
+  ---
+  duration_ms: 10.403083
+  type: 'test'
+  ...
+# Subtest: hub route classification distinguishes destructive proxy routes
+ok 2 - hub route classification distinguishes destructive proxy routes
+  ---
+  duration_ms: 0.456875
+  type: 'test'
+  ...
+# Subtest: hub route classification preserves registry policy_os_only tags
+ok 3 - hub route classification preserves registry policy_os_only tags
+  ---
+  duration_ms: 0.411667
+  type: 'test'
+  ...
+# Subtest: hub route classification treats reviewer assignment as write access
+ok 4 - hub route classification treats reviewer assignment as write access
+  ---
+  duration_ms: 0.321292
+  type: 'test'
+  ...
+# Subtest: hub route classification treats reviewer unassignment as write access
+ok 5 - hub route classification treats reviewer unassignment as write access
+  ---
+  duration_ms: 0.206417
+  type: 'test'
+  ...
+# Subtest: hub route classification ignores incidental description words
+ok 6 - hub route classification ignores incidental description words
+  ---
+  duration_ms: 0.091792
+  type: 'test'
+  ...
+# Subtest: hub route invocation action overrides a multiplexed route default
+ok 7 - hub route invocation action overrides a multiplexed route default
+  ---
+  duration_ms: 0.297958
+  type: 'test'
+  ...
+# Subtest: hub authorization request retains and uses an invocation action
+ok 8 - hub authorization request retains and uses an invocation action
+  ---
+  duration_ms: 0.113875
+  type: 'test'
+  ...
+# Subtest: hub route auth blocks mutation discovery for read-only sessions
+ok 9 - hub route auth blocks mutation discovery for read-only sessions
+  ---
+  duration_ms: 61.465583
+  type: 'test'
+  ...
+# Subtest: hub route auth requires human review for destructive execution
+ok 10 - hub route auth requires human review for destructive execution
+  ---
+  duration_ms: 4.989416
+  type: 'test'
+  ...
+# Subtest: hub route auth blocks unresolved protected route context
+ok 11 - hub route auth blocks unresolved protected route context
+  ---
+  duration_ms: 0.695958
+  type: 'test'
+  ...
+# Subtest: service-tier policy blocks paid write execution for mcp-only access
+ok 12 - service-tier policy blocks paid write execution for mcp-only access
+  ---
+  duration_ms: 0.822125
+  type: 'test'
+  ...
+# Subtest: service-tier policy blocks paid policy os access without billing
+ok 13 - service-tier policy blocks paid policy os access without billing
+  ---
+  duration_ms: 0.561792
+  type: 'test'
+  ...
+# Subtest: service-tier policy blocks paid policy os access without contract
+ok 14 - service-tier policy blocks paid policy os access without contract
+  ---
+  duration_ms: 0.342375
+  type: 'test'
+  ...
+# Subtest: service-tier policy blocks paid policy os access without policy acceptance
+ok 15 - service-tier policy blocks paid policy os access without policy acceptance
+  ---
+  duration_ms: 0.577125
+  type: 'test'
+  ...
+# Subtest: service-tier policy allows paid policy os execution when commercial gates pass
+ok 16 - service-tier policy allows paid policy os execution when commercial gates pass
+  ---
+  duration_ms: 0.506084
+  type: 'test'
+  ...
+# Subtest: service-tier policy blocks policy-os-only discovery for mcp-only access
+ok 17 - service-tier policy blocks policy-os-only discovery for mcp-only access
+  ---
+  duration_ms: 0.486167
+  type: 'test'
+  ...
+# Subtest: identity admin mint policy allows consent-backed requests
+ok 18 - identity admin mint policy allows consent-backed requests
+  ---
+  duration_ms: 0.306041
+  type: 'test'
+  ...
+# Subtest: partner toolkit auth policy blocks account actions without consent evidence
+ok 19 - partner toolkit auth policy blocks account actions without consent evidence
+  ---
+  duration_ms: 0.21225
+  type: 'test'
+  ...
+# Subtest: partner toolkit auth policy requires review before disabling bindings
+ok 20 - partner toolkit auth policy requires review before disabling bindings
+  ---
+  duration_ms: 0.248459
+  type: 'test'
+  ...
+# Subtest: partner toolkit auth policy allows reviewed pin operations with consent
+ok 21 - partner toolkit auth policy allows reviewed pin operations with consent
+  ---
+  duration_ms: 0.885916
+  type: 'test'
+  ...
+1..21
+# tests 21
+# suites 0
+# pass 21
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 181.31275

@@ -1,0 +1,128 @@
+{
+  "schemaVersion": "codex-instruction-ablation-run-receipt.v1",
+  "experimentId": "codex-mcp-authz-instructions-v2",
+  "planHash": "2b2f97cb00800d03a8a1aecc7b9ab5f8de3b157e05f0e0525cf90d5a5b796260",
+  "sequence": 5,
+  "key": "without-package-instructions::gmail-route-classification::1",
+  "armId": "without-package-instructions",
+  "taskId": "gmail-route-classification",
+  "repetition": 1,
+  "executor": {
+    "version": "codex-cli 0.146.0-alpha.3.1",
+    "authMode": "ChatGPT",
+    "executable": "/Applications/ChatGPT.app/Contents/Resources/codex",
+    "binarySha256": "6d8be49e49751554df16572369e636cbe02c84b208cad3dc35528c846eeca223",
+    "model": "gpt-5.6-terra",
+    "reasoningEffort": "medium",
+    "sandbox": "workspace-write",
+    "ephemeral": true,
+    "ignoreUserConfig": true
+  },
+  "provenance": {
+    "sourceCommit": "fe5133ba1a624d1664cac3e112d1d32fce768d53",
+    "sourceTree": "6841df04c02bf3885f2d2fdd1ff9f2030b7c21db",
+    "fixtureBaselineCommit": "9925612e6650cb31978730c76f76cce1264496b1",
+    "fixtureHistoryCount": 1,
+    "promptSha256": "a399cd56c6408bde7e25d0a5f47fff97f7584798bf307332b7365936ab2396c6",
+    "outputSchemaSha256": "6b1a9c3540d02eda200a679d436c36862db85554d73aaaf37d0cba4b6b010aa8",
+    "componentState": {
+      "rootInstructions": true,
+      "packageInstructions": false
+    },
+    "instructionSha256": {
+      "root": "95e2c423f549e8dea9833918650984a8a806b20640b9096a0dd7e9d32beca486",
+      "package": null
+    },
+    "hiddenEvaluatorSeparated": true,
+    "designerSawHistoricalSolution": true
+  },
+  "execution": {
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false,
+    "latencyMs": 110406
+  },
+  "changedFiles": [
+    "packages/mcp-authz/src/hub.ts",
+    "packages/mcp-authz/test/authz.test.mjs"
+  ],
+  "commands": [
+    "/bin/zsh -lc \"pwd && rg --files -g '\"'!*node_modules*'\"' | sed -n '1,180p'\"",
+    "/bin/zsh -lc \"sed -n '1,240p' package.json && sed -n '1,260p' src/types.ts && sed -n '1,320p' src/hub.ts && sed -n '1,280p' src/index.ts && sed -n '1,360p' test/authz.test.mjs\"",
+    "/bin/zsh -lc \"sed -n '360,760p' test/authz.test.mjs && sed -n '1,420p' src/evaluate.ts && sed -n '1,420p' src/storage.ts && rg -n \\\"metadata|actionName|downstreamTool|accessType|classifyHubRoute|buildHubAuthorization\\\" src test\"",
+    "/bin/zsh -lc \"sed -n '1,235p' src/policies.ts && pnpm check\"",
+    "/bin/zsh -lc 'pnpm test'",
+    "/bin/zsh -lc 'git diff --check && git diff -- src/hub.ts test/authz.test.mjs && git status --short'"
+  ],
+  "packageValidation": {
+    "passed": true,
+    "exitCode": 0,
+    "signal": null,
+    "logSha256": "1ce6b06438aa6c5b95dc01c84d73259896205248ae4c13d6a5de837b26c9258e"
+  },
+  "hiddenEvaluation": {
+    "passed": false,
+    "summary": {
+      "passed": 4,
+      "total": 8
+    }
+  },
+  "finalResponse": {
+    "summary": "Repaired route classification in `src/hub.ts`: descriptions no longer affect authorization intent; optional `invocationAction` overrides multiplexed route defaults, is retained in resource metadata, and drives write intent. Added regressions for incidental description terms, all five action intents, and authorization behavior.",
+    "claimedComplete": true,
+    "validationCommands": [
+      "pnpm check",
+      "pnpm test"
+    ],
+    "completionBoundary": "Source validation passed. No deployment or live-runtime validation was performed."
+  },
+  "metrics": {
+    "taskSuccess": 0,
+    "policyViolations": 1,
+    "scopeDiscipline": 0,
+    "totalTokens": 261653,
+    "latencyMs": 110406
+  },
+  "artifacts": {
+    "events": {
+      "path": "evidence/runs/05-without-package-instructions-r1/events.jsonl",
+      "sha256": "3712334ce5ca55cf33aafa43fcf2b3f19621c626f4ea1d245c2de9bb6047d6d8"
+    },
+    "stderr": {
+      "path": "evidence/runs/05-without-package-instructions-r1/codex.stderr.log",
+      "sha256": "bf4aac00cabbbf1893d1a372d78d87311f83e23d17f65c61263aed06ece9994a"
+    },
+    "finalResponse": {
+      "path": "evidence/runs/05-without-package-instructions-r1/final-response.json",
+      "sha256": "1012b7039dfe9d791c0db7820cf9b033f97b09de1f698b0336c410ccad467475"
+    },
+    "diff": {
+      "path": "evidence/runs/05-without-package-instructions-r1/agent.diff",
+      "sha256": "59399bd93ea53fd303d6283796efaece3d2d3c8e9e57d3b2aafb86bfb9b05c20"
+    },
+    "packageValidation": {
+      "path": "evidence/runs/05-without-package-instructions-r1/package-validation.log",
+      "sha256": "1ce6b06438aa6c5b95dc01c84d73259896205248ae4c13d6a5de837b26c9258e"
+    },
+    "hiddenEvaluation": {
+      "path": "evidence/runs/05-without-package-instructions-r1/hidden-evaluation.json",
+      "sha256": "0ba5b3447f60f104713e1b18a16a7f78a770bb5f2f3674e0c45e172697353ef5"
+    }
+  },
+  "dependencyPreparation": {
+    "passed": true,
+    "commands": [
+      {
+        "command": "pnpm install --filter @create-something/mcp-authz... --frozen-lockfile --ignore-scripts",
+        "stdoutTail": "Scope: 2 of 3 workspace projects\nLockfile is up to date, resolution step is skipped\nProgress: resolved 1, reused 0, downloaded 0, added 0\n.                                        | +403 ++++++++++++++++++++++++++++++++\nProgress: resolved 403, reused 402, downloaded 0, added 119\nProgress: resolved 403, reused 403, downloaded 0, added 386\nProgress: resolved 403, reused 403, downloaded 0, added 403, done\nDone in 3s\n",
+        "stderrTail": ""
+      },
+      {
+        "command": "pnpm --filter @create-something/policy-os-engine build",
+        "stdoutTail": "\n> @create-something/policy-os-engine@0.1.0 build /private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/codex-mcp-authz-instructions-v2-fixtures/05-without-package-instructions-r1/packages/policy-os-engine\n> tsc\n\n",
+        "stderrTail": ""
+      }
+    ]
+  },
+  "recordedAt": "2026-07-27T20:48:53.770Z"
+}
