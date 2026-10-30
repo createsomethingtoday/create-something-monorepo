@@ -1,0 +1,54 @@
+{
+  "label_provenance": "policy-derived examples; not independently reviewed outcomes",
+  "policy_version": "hd-followup-routing-2026-09-27",
+  "cases": [
+    {
+      "id": "client-field",
+      "sourcePageUrl": "https://app.notion.com/p/337019187ac5807e8840c3bbb3573c16",
+      "candidateText": "A client asks Half Dozen to add a guarantee tracking field to the client's events view.",
+      "requesterKind": "external",
+      "outputLocation": "client_workspace",
+      "expected": "ticket"
+    },
+    {
+      "id": "internal-prep",
+      "sourcePageUrl": "https://app.notion.com/p/a4670514c7c94bfdb4a39a0f0852e67d",
+      "candidateText": "Half Dozen should confirm the guarantee field requirements with the client before the build.",
+      "requesterKind": "internal",
+      "outputLocation": "half_dozen",
+      "expected": "task"
+    },
+    {
+      "id": "internal-followup",
+      "sourcePageUrl": "https://app.notion.com/p/a4670514c7c94bfdb4a39a0f0852e67d",
+      "candidateText": "Send an internal recap to the Half Dozen team for review.",
+      "requesterKind": "internal",
+      "outputLocation": "half_dozen",
+      "expected": "task"
+    },
+    {
+      "id": "agent-concept",
+      "sourcePageUrl": "https://app.notion.com/p/66051309f65b435b886908f19e4a4126",
+      "candidateText": "Idea: create an AI agent that routes future meeting recaps to the appropriate downstream agents.",
+      "requesterKind": "internal",
+      "outputLocation": "other",
+      "expected": "agent_idea"
+    },
+    {
+      "id": "background",
+      "sourcePageUrl": "https://app.notion.com/p/337019187ac5807e8840c3bbb3573c16",
+      "candidateText": "The team discussed how the existing events view is used. No one requested a change or follow-up.",
+      "requesterKind": "unknown",
+      "outputLocation": "unknown",
+      "expected": "no_action"
+    },
+    {
+      "id": "unclear-destination",
+      "sourcePageUrl": "https://app.notion.com/p/337019187ac5807e8840c3bbb3573c16",
+      "candidateText": "We should improve the dashboard, but the group did not identify which dashboard or who requested it.",
+      "requesterKind": "unknown",
+      "outputLocation": "unknown",
+      "expected": "needs_review"
+    }
+  ]
+}
