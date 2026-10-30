@@ -80,11 +80,12 @@ export class ProviderSimulator {
     }
     if (url.pathname === '/v1/pages' && method === 'POST') {
       this.mutations++; const id = this.id();
-      const page = { id, url: `https://www.notion.so/${id}`, created_time: new Date().toISOString(), properties: body.properties };
+      const page = { object: 'page', parent: body.parent, id, url: `https://www.notion.so/${id}`, created_time: new Date().toISOString(), properties: body.properties };
       for (const property of Object.values(page.properties)) {
         if (property.title) property.title = property.title.map(item => ({ ...item, plain_text: item.text.content }));
       }
-      this.pages.set(id, page); this.blocks.set(id, []);
+      this.pages.set(id, page); this.blocks.set(id, this.richBlocks(body.children ?? []));
+      if (body.parent?.page_id) this.blocks.get(body.parent.page_id).push({ id, type: 'child_page', child_page: { title: body.properties.title.title[0].text.content } });
       await this.onPageCreate?.(page);
       return Respond.json(page);
     }
@@ -185,6 +186,29 @@ export async function retrieveVerified(runtime, key, { betweenReads } = {}) {
   };
   const indexBlocks = await listPersisted(before.index_block_id);
   assert.ok(indexBlocks, 'Exact index required');
+  if (indexBlocks.some(block => block.type === 'child_page')) {
+    const partPages=indexBlocks.filter(block=>block.type==='child_page');
+    const metadata=indexBlocks.filter(block=>block.type==='paragraph').map(blockText).join('');
+    assert.ok(metadata.startsWith(`Version: ${before.version}\n`));
+    const format=metadata.match(/Format: ([^\n]+)/)?.[1];assert.ok(['indexed-transcript-pages-v1','indexed-transcript-pages-v2'].includes(format));
+    const canonical=[];let lastBlock=0;
+    for(const [i,page]of partPages.entries()){
+      assert.equal(partPages.filter(other=>other.id===page.id).length,1);
+      if(format==='indexed-transcript-pages-v2')assert.ok(!metadata.includes(page.id.replaceAll('-','')),'No duplicate explicit part URL');
+      const marker=page.child_page.title;assert.ok(marker.startsWith(`Zoom indexed v2 | ${before.version} | part:${i+1} |`));
+      const range=marker.match(/blocks (\d+)-(\d+)/);assert.equal(Number(range[1]),lastBlock+1);lastBlock=Number(range[2]);
+      const rows=await listPersisted(page.id);assert.ok(rows.every(b=>b.type==='paragraph'&&!b.has_children));const text=rows.map(blockText).join('');assert.ok(text.length<=6000);canonical.push(text);
+    }
+    const expectedBlocks=Number(metadata.match(/Canonical timestamp blocks: (\d+)/)[1]);assert.equal(lastBlock,expectedBlocks);
+    const visible=(await listPersisted(before.page_id)).filter(block=>block.type!=='child_page');assert.equal(blockText(visible[0]),'📝 FULL TRANSCRIPT');assert.equal(blockText(visible.at(-1)),'Source archive');
+    const archive=await listPersisted(visible.at(-1).id);const originals=[],archivedParts=[];
+    for(const block of archive.filter(b=>blockText(b).startsWith(`Zoom indexed v2 | ${before.version} | `))){const marker=blockText(block);const text=(await listPersisted(block.id)).map(blockText).join('');if(marker.includes('| original:'))originals.push(text);else if(marker.includes('| part:'))archivedParts.push(text);}
+    assert.ok(originals.length&&archivedParts.length);const original=Buffer.from(originals.join(''),'base64').toString('utf8'),canonicalText=canonical.join('\n');assert.equal(archivedParts.join('\n'),canonicalText,'Reconstructed content must match version');
+    const inline=visible.slice(1,-1),visibleText=[];assert.equal(inline.length%2,0);for(let i=0;i<inline.length;i+=2){assert.equal(inline[i].type,'heading_3');assert.equal(inline[i+1].type,'paragraph');visibleText.push(`${blockText(inline[i])}\n${blockText(inline[i+1])}`);}assert.equal(visibleText.join('\n'),canonicalText,'Visible transcript must reconstruct canonical text');
+    const version=createHash('sha256').update(JSON.stringify([format,original,canonicalText])).digest('hex');assert.equal(version,before.version,'Reconstructed content must match version');
+    if(betweenReads)await betweenReads();const after=await runtime.state(key);for(const field of ['version','ready_version','selected_key','page_id','index_block_id'])assert.equal(after?.[field],before[field],`Snapshot changed: ${field}`);assert.ok(after?.ready_version,'Readiness cleared during retrieval');
+    return {original,canonical:canonicalText,version,parts:partPages.length,blocks:expectedBlocks};
+  }
   const index = indexBlocks.map(blockText).join('');
   assert.ok(index.startsWith(`Version: ${before.version}\n`), 'Index version must match D1');
   const ids = [...index.matchAll(/https:\/\/www\.notion\.so\/[a-f0-9]+#([a-f0-9]{32})/g)].map(match => match[1]);

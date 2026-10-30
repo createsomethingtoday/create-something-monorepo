@@ -40,6 +40,8 @@ export interface DisplayPayload {
 // grid (via the marketplace components' URL-param + templateFiltersChanged
 // contract). Highlight slugs are already validated server-side.
 export interface PageActionPayload {
+  max_price?: number | null;
+  has_cms?: boolean | null;
   child_category_slug?: string | null;
   scope?: string | null;
   page?: number | null;

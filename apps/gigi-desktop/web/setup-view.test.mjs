@@ -73,10 +73,10 @@ test('admission, session expiry and service failures have distinct next steps', 
 
 test('source journey advances only from receipts and preserves pending consent', () => {
   assert.equal(sourceJourney({}).current, 1);
-  assert.equal(sourceJourney({ gmail: { state: 'disconnected' } }).current, 2);
-  assert.equal(sourceJourney({ gmail: { state: 'pending', provider: 'gmail', connectedAccountId: 'ca_one', url: 'https://connect.composio.dev/session', expiresAt: '2030-01-01T00:00:00Z' } }).current, 3);
-  assert.equal(sourceJourney({ gmail: { state: 'pending' } }).current, 4);
-  assert.equal(sourceJourney({ gmail: { state: 'connected', connectedAccountId: 'ca_one' } }).current, 5);
+  assert.equal(sourceJourney({ gmail: { state: 'disconnected' } }).current, 3);
+  assert.equal(sourceJourney({ gmail: { state: 'pending', provider: 'gmail', connectedAccountId: 'ca_one', url: 'https://connect.composio.dev/session', expiresAt: '2030-01-01T00:00:00Z' } }).current, 4);
+  assert.equal(sourceJourney({ gmail: { state: 'pending' } }).current, 5);
+  assert.equal(sourceJourney({ gmail: { state: 'connected', connectedAccountId: 'ca_one' } }).current, 6);
   assert.match(sourceJourney({ gmail: { state: 'unavailable', detail: 'access_denied' } }).next, /operator/);
 });
 
@@ -84,7 +84,7 @@ test('source journey advances only from receipts and preserves pending consent',
 test('journey directs each guarded recovery to its available action', () => {
   assert.match(sourceJourney({ gmail: { state: 'attention', recovery: 'operator_review' } }).next, /operator to review/);
   assert.match(sourceJourney({ gmail: { state: 'attention', reconnectable: true } }).next, /Choose Reconnect/);
-  assert.equal(sourceJourney({ gmail: { state: 'attention', reconnectable: true } }).current, 2);
+  assert.equal(sourceJourney({ gmail: { state: 'attention', reconnectable: true } }).current, 3);
   assert.match(sourceJourney({ gmail: { state: 'pending' } }).next, /Check status and verify/);
   assert.doesNotMatch(sourceJourney({ gmail: { state: 'pending' } }).next, /Resume/);
 });
@@ -136,7 +136,7 @@ test('an unverified source session requires operator review and never suggests a
     const source = { state, reconnectable: true, detail: 'session_lock_unverified' };
     assert.equal(sourceView(source).description, copy);
     assert.equal(sourceJourney({ gmail: source }).next, copy);
-    assert.notEqual(sourceJourney({ gmail: source }).current, 5);
+    assert.notEqual(sourceJourney({ gmail: source }).current, 6);
     assert.equal(setupSummary({ workspace: { name: 'Synthetic' }, sources: { gmail: source } }).nextStep, copy);
   }
 });

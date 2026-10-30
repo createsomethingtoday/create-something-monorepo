@@ -1,3 +1,4 @@
+import { PAGE_FORMAT, LEGACY_PAGE_FORMAT, isPageFormat, writePageTranscript, type PageTransport } from './page-transcript';
 import { blockText, decodeOriginal, exactChunks, hashText, planTranscript, textBlock, writeIndexedTranscript, type Block, type TranscriptPlan, type WriteJournal } from './indexed-transcript';
 import { parseTranscript } from './zoom';
 import type { ParsedTranscript } from './types';
@@ -10,11 +11,13 @@ export const INLINE_SCHEMA = `CREATE TABLE IF NOT EXISTS transcript_inline_proje
 )`;
 interface Slot { id: string; hash: string }
 interface Manifest {
-  heading: string; archive: string; slots: Slot[]; finishing?: boolean;
+  heading: string; archive: string; readerIndexes?: string[]; slots: Slot[]; finishing?: boolean;
   pending?: { key: string; after: string; known: string[]; hashes: string[] };
 }
 interface State { version: string; generation: number; phase: string; manifest: Manifest | null }
 export interface InlineTransport {
+  createChildPage?: PageTransport['createChildPage'];
+  getPage?: PageTransport['getPage'];
   list(parent: string): Promise<Block[]>;
   append(parent: string, blocks: Block[], after?: string): Promise<void>;
   get(id: string): Promise<Block>;
@@ -71,7 +74,11 @@ export async function writeInlineTranscript(
     for (const block of archiveRows) encoded.push((await transport.list(block.id)).map(blockText).join(''));
     const original = decodeOriginal(encoded.join(''));
     const priorParsed = parseTranscript(original, original.includes('-->') ? 'vtt' : 'txt');
-    const priorPlan = await planTranscript(priorParsed);
+    let priorPlan = await planTranscript(priorParsed);
+    for (const format of [LEGACY_PAGE_FORMAT, PAGE_FORMAT]) {
+      if (priorPlan.version === state.version) break;
+      priorPlan = await planTranscript(priorParsed, format);
+    }
     if (priorPlan.version !== state.version) throw new Error('Prior inline write is unresolved; source archive incomplete');
     // Reconcile the persisted prior intent without downloading or publishing it
     // as current. An absent uncertain mutation still blocks the new version.
@@ -117,10 +124,19 @@ export async function writeInlineTranscript(
   }
   // Immutable originals, canonical parts and verification index are secondary
   // children of the one archive toggle, never the visible reading path.
-  const index = await writeIndexedTranscript(transport, journal, manifest.archive, plan, page);
+  const archiveIndex = await writeIndexedTranscript(transport, journal, manifest.archive, plan, page);
+  let index = archiveIndex;
+  if (isPageFormat(plan.format)) {
+    if (!transport.createChildPage || !transport.getPage) throw Error('Child page transport required');
+    const reader = await writePageTranscript({ list: transport.list, append: transport.append,
+      createChildPage: transport.createChildPage, getPage: transport.getPage }, journal, page, plan);
+    manifest.readerIndexes ??= [];
+    if (!manifest.readerIndexes.includes(reader.id)) { manifest.readerIndexes.push(reader.id); await save(); }
+    index = reader.id;
+  }
   if (state.phase === 'writing' && !manifest.finishing) await heading('📝 FULL TRANSCRIPT (updating)', 'updating');
   const assertRoot = async (allowPending = false) => {
-    const rows = await transport.list(page);
+    const rows = (await transport.list(page)).filter(row => !(manifest.readerIndexes ?? []).includes(row.id));
     const ids = [manifest.heading, ...manifest.slots.map(slot => slot.id), manifest.archive];
     const remaining = rows.filter(row => !ids.includes(row.id));
     if (!allowPending && (remaining.length || JSON.stringify(rows.map(row => row.id)) !== JSON.stringify(ids))) throw new Error('Inline root order or ownership mismatch');
@@ -134,7 +150,7 @@ export async function writeInlineTranscript(
   // never be mistaken for a new receipt merely because it matches the payload.
   if (manifest.pending) {
     const pending = manifest.pending;
-    const rows = await transport.list(page);
+    const rows = (await transport.list(page)).filter(row => !(manifest.readerIndexes ?? []).includes(row.id));
     const newRows = rows.filter(row => !pending.known.includes(row.id));
     if (!newRows.length) {
       checkpoint();

@@ -67,3 +67,22 @@ test('readiness proof is checked immediately before sending, and cannot set Curr
   assert.equal(f.sends, 0); assert.equal(text(f.properties['Transcript Version']), gateToken(hash, 1));
   assert.equal(text(f.properties['Transcript Ready Version']), ''); f.sql.close();
 });
+
+test('page index readiness publishes the returned page URL and rejects a parent fragment',async()=>{
+ const f=fixture(),token=gateToken(hash,1),id='b'.repeat(32),url=`https://www.notion.so/Returned-title-${id}`;Object.assign(f.properties,gateCreationProperties(hash));
+ await f.gate.publish(token,id,async()=>{},url);assert.equal(f.properties['Transcript Retrieval Index'].url,url);
+ const sends=f.sends;await assert.rejects(f.gate.publish(token,id,async()=>{},`https://www.notion.so/page#${id}`),/Invalid direct/);assert.equal(f.sends,sends);f.sql.close();
+});
+
+test('markup-only generation transition preserves Categorized, consumed token, review/output flags and human metadata',async()=>{
+ const f=fixture(),oldToken=gateToken(hash,2),nextToken=gateToken('b'.repeat(64),3);Object.assign(f.properties,gateCreationProperties(hash));
+ await f.gate.prepare(oldToken,true);await f.gate.publish(oldToken,'old-index',async()=>{});
+ const retained={Categorized:{checkbox:true},'Categorized Transcript Version':{rich_text:[{text:{content:oldToken}}]},Reviewed:{checkbox:false},'Agent Tag':{multi_select:[]},'Trigger Agents':{checkbox:false},'Tasks Created':{checkbox:false}};
+ Object.assign(f.properties,structuredClone(retained));
+ await f.gate.prepare(nextToken,true);assert.equal(text(f.properties['Transcript Ready Version']),'');assert.equal(f.properties['Transcript Retrieval Index'].url,null);
+ for(const [k,v]of Object.entries(retained))assert.deepEqual(f.properties[k],v);
+ const id='c'.repeat(32);await f.gate.publish(nextToken,id,async()=>{},`https://www.notion.so/${id}`);
+ assert.equal(text(f.properties['Transcript Version']),nextToken);assert.equal(text(f.properties['Transcript Ready Version']),nextToken);
+ for(const [k,v]of Object.entries(retained))assert.deepEqual(f.properties[k],v);
+ assert.notEqual(text(f.properties['Categorized Transcript Version']),nextToken);f.sql.close();
+});

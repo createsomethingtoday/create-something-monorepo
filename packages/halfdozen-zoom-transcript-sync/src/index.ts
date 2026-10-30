@@ -1,6 +1,7 @@
+import { PAGE_FORMAT } from './page-transcript';
+import { publicationPlan } from './publication-plan';
 import { InlineContinuation } from './inline-transcript';
 import { atOrAfter, ledgerAdmitted, rolloutCutoff } from './rollout';
-import { planTranscript } from './indexed-transcript';
 import { INGESTION_LEASE_TTL_SECONDS, claimIngestion, meetingKey, selectRendition } from './ingestion-state';
 import {
   acquireLock,
@@ -39,6 +40,8 @@ export default {
         sync_api_key_configured: Boolean(env.SYNC_API_KEY?.trim()),
         zoom_auth_mode: resolveZoomAuthMode(env),
         indexed_ingestion_not_before: env.INDEXED_INGESTION_NOT_BEFORE ?? null,
+        transcript_publication_format: PAGE_FORMAT,
+        unchanged_projections: 'preserve existing format unless explicitly replayed',
       });
     }
 
@@ -318,7 +321,9 @@ async function processTranscriptMessage(env: Env, payload: TranscriptQueueMessag
     // Claim clears readiness before download, parse, or writes can fail.
     const rawTranscript = await downloadTranscript(env, current);
     const parsedTranscript = parseTranscript(rawTranscript, current.transcriptFileExtension);
-    const plan = await planTranscript(parsedTranscript);
+    const priorProjection = priorPage ? await env.DB.prepare('SELECT version, phase FROM transcript_inline_projection WHERE page_id = ?')
+      .bind(priorPage).first<{ version: string; phase: string }>() : null;
+    const plan = await publicationPlan(parsedTranscript, priorProjection, payload.replay === true);
     await lease.begin(plan.version);
     const canonicalPage = await getCanonicalMeetingPage(env.DB, current.canonicalMeetingKey, current.meetingDate);
     const notionWrite = await syncTranscriptToNotion(env, current, parsedTranscript, plan, lease, canonicalPage, payload.replay === true);

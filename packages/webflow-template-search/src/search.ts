@@ -44,6 +44,8 @@ function orderTieBreaker(includeTextRank: boolean): string {
 function sortClause(sort: TemplateSort, options: { textRankTieBreaker?: boolean } = {}): string {
   const tieBreaker = orderTieBreaker(options.textRankTieBreaker === true);
   switch (sort) {
+    case 'recommended':
+      return `CASE WHEN d.is_featured = 1 AND LENGTH(TRIM(COALESCE(d.reviewer_pick_reason, ''))) > 0 THEN 0 ELSE 1 END ASC, COALESCE(d.popularity_score, 0) DESC, COALESCE(d.published_date, '') DESC, ${tieBreaker}`;
     case 'best_selling':
       return `COALESCE(d.cumulative_purchases, 0) DESC, COALESCE(d.unique_viewers, 0) DESC, COALESCE(d.popularity_score, 0) DESC, COALESCE(d.published_date, '') DESC, ${tieBreaker}`;
     case 'newest':
@@ -200,6 +202,7 @@ function creatorSearchCandidates(query: string, mode: 'strict' | 'relaxed'): { f
 async function resolveAliases(env: Env, params: SearchParams): Promise<SearchParams> {
   return {
     ...params,
+    intent: params.intent ? {...params.intent, category_slugs: await Promise.all(params.intent.category_slugs.map(async slug => (await resolveAlias(env.DB, 'child_category', slug)) || slug))} : undefined,
     childCategorySlug: await resolveAlias(env.DB, 'child_category', params.childCategorySlug),
   };
 }
@@ -215,6 +218,11 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
     fromClause = candidates.fromClause;
     binds.push(...candidates.binds);
     queryMode = true;
+  }
+
+  if (params.intent) {
+    clauses.push(`EXISTS (SELECT 1 FROM template_child_categories portfolio_category WHERE portfolio_category.template_document_id = d.id AND portfolio_category.child_category_slug IN (${placeholderList(params.intent.category_slugs.length)}))`);
+    binds.push(...params.intent.category_slugs);
   }
 
   if (params.templateSlug) { clauses.push('d.template_slug = ?'); binds.push(params.templateSlug); }
@@ -334,6 +342,12 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
     binds.push(...params.types);
   }
 
+  if (params.maxPrice != null) {
+    // Unknown price is not proof of affordability. A confirmed free flag is.
+    clauses.push('(CASE WHEN d.price IS NOT NULL THEN d.price WHEN d.is_free = 1 THEN 0 ELSE NULL END) <= ?');
+    binds.push(params.maxPrice);
+  }
+
   if (params.hasCms != null) {
     clauses.push('d.has_cms = ?');
     binds.push(params.hasCms ? 1 : 0);
@@ -350,6 +364,7 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
 function queryOrderClause(params: SearchParams, queryMode: boolean): string {
   if (!queryMode) return sortClause(params.sort);
   const creatorMatchFirst = 'search_candidates.creator_match DESC, ';
+  if (params.sort === 'recommended' && !params.intent) return `${creatorMatchFirst}text_rank ASC, ${sortClause(params.sort)}`;
   if (params.sort === 'popular') return `${creatorMatchFirst}text_rank ASC, ${sortClause(params.sort)}`;
   return `${creatorMatchFirst}${sortClause(params.sort, { textRankTieBreaker: true })}`;
 }
@@ -840,6 +855,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams, cacheVe
       has_previous_page: params.page > 1,
     },
     sort: params.sort,
+    ...(params.intent ? {interpretation: params.intent} : {}),
     applied_filters: {
       q: params.q,
       scope: params.scope,
@@ -854,6 +870,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams, cacheVe
       types: params.types,
       free_only: params.freeOnly,
       has_cms: params.hasCms,
+      max_price: params.maxPrice ?? null,
       relaxed: relaxedQuery,
     },
     available_facets: {

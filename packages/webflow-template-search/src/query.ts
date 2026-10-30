@@ -1,3 +1,4 @@
+import { portfolioIntent } from './discovery-intent.js';
 import type { SearchParams, TemplateScope } from './types.js';
 import { clamp, ensureStringArray, normalizeSort } from './utils.js';
 
@@ -73,12 +74,20 @@ function parseIncludes(params: URLSearchParams): SearchParams['include'] {
   };
 }
 
+/** USD template price ceiling; blank means no constraint. Reject malformed input at the HTTP boundary. */
+export function validMaxPrice(value: string | null): boolean {
+  return value === null || value === '' || (/^\d+(?:\.\d{1,2})?$/.test(value) && Number(value) <= 100000);
+}
+
 export function parseSearchParams(url: URL, defaultPageSize = 24): SearchParams {
   const params = url.searchParams;
   const q = params.get('q') ?? params.get('query') ?? params.get('search');
 
+  const discovery = toBoolean(params.get('discovery'));
+  const intent = discovery && !firstParam(params, ['template_slug','creator_slug','creator_record_id','designer_slug','designer_record_id','creator','designer']) ? portfolioIntent(q?.trim() || null, params.get('portfolio_kind')) : undefined;
   return {
-    q: q?.trim() ? q.trim() : null,
+    discovery, intent,
+    q: intent ? intent.keywords : q?.trim() ? q.trim() : null,
     templateSlug: normalizeSlug(params.get("template_slug")),
     strict: toBoolean(params.get("strict")),
     scope: parseScope(params),
@@ -92,6 +101,7 @@ export function parseSearchParams(url: URL, defaultPageSize = 24): SearchParams 
     tags: parseList(params, 'tags'),
     types: parseList(params, 'types').filter((value) => VALID_TYPES.has(value)),
     freeOnly: toBoolean(params.get('free_only')) || toBoolean(params.get('free')) || (params.get('pricing') ?? '') === 'free',
+    maxPrice: validMaxPrice(params.get('max_price')) && params.get('max_price') ? Number(params.get('max_price')) : null,
     hasCms: toTriStateBoolean(firstParam(params, ['has_cms', 'cms'])),
     sort: normalizeSort(params.get('sort')),
     view: VALID_VIEWS.has(params.get('view') ?? '') ? (params.get('view') as SearchParams['view']) : 'full',

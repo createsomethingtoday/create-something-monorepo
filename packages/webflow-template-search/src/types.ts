@@ -1,7 +1,7 @@
 import type { DemoSignals } from './demo-signals.js';
 
 export type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
-export type TemplateSort = 'popular' | 'best_selling' | 'newest' | 'price_asc' | 'price_desc';
+export type TemplateSort = 'recommended' | 'popular' | 'best_selling' | 'newest' | 'price_asc' | 'price_desc';
 export type TemplateSearchView = 'full' | 'grid';
 export type AliasType = 'child_category';
 
@@ -208,6 +208,8 @@ export interface TemplateDocumentInput {
 }
 
 export interface SearchParams {
+  discovery?: boolean;
+  intent?: import('./discovery-intent.js').PortfolioIntent;
   templateSlug?: string | null;
   strict?: boolean;
   q: string | null;
@@ -223,6 +225,7 @@ export interface SearchParams {
   types: string[];
   freeOnly: boolean;
   hasCms: boolean | null;
+  maxPrice?: number | null;
   sort: TemplateSort;
   view: TemplateSearchView;
   page: number;
@@ -273,6 +276,7 @@ export interface SearchItem {
 }
 
 export interface SearchResponsePayload {
+  interpretation?: import('./discovery-intent.js').PortfolioIntent;
   items: SearchItem[];
   pagination: {
     page: number;
@@ -297,6 +301,7 @@ export interface SearchResponsePayload {
     types: string[];
     free_only: boolean;
     has_cms: boolean | null;
+    max_price?: number | null;
     /** True when the strict all-tokens query matched nothing and results come from an OR-relaxed retry. */
     relaxed: boolean;
   };
