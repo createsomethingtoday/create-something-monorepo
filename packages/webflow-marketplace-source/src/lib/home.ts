@@ -48,8 +48,8 @@ export function homeMarkup(d:HomeData){
   <h1 id="rd-hero-h" class="rd-h1">Start with a site<br>that already works</h1>
   <p class="rd-lead">Templates from the Webflow creator community, reviewed by Webflow and ready to make your own in the Designer.</p>
   <form class="rd-search" action="/templates/search" method="get" role="search">
-   <label class="rd-sr" for="rd-q">Search templates</label>
-   <input id="rd-q" name="q" type="search" placeholder="Search by name, category, or creator" autocomplete="off">
+   <label class="rd-sr" for="rd-q">What are you building?</label>
+   <input id="rd-q" name="q" type="search" placeholder="What are you building? Try “architecture” or “portfolio”" autocomplete="off">
    <button type="submit" class="rd-btn rd-btn-primary">Search</button>
   </form>
   <nav class="rd-chips" aria-label="Popular categories">${CHIPS.map(([text,slug])=>`<a class="rd-chip" href="${categoryUrl(slug)}">${esc(text)}</a>`).join('')}</nav>

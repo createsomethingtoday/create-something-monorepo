@@ -1,5 +1,6 @@
 ---
 import {pageFor} from '../lib/pages';
+import Discovery from '../components/Discovery';
 import Catalog from '../components/Catalog';
 import CreatorStorefront from '../components/CreatorStorefront';
 import Cards from '../components/Cards';
@@ -41,6 +42,7 @@ Astro.response.headers.set('X-Robots-Tag','noindex, nofollow');
   {page.islands[i]?.kind==='comments' && <Comments slug={page.islands[i].item!.template_slug} client:load/>}
   {page.islands[i]?.kind==='chat' && <Chat client:only="react"/>}
   {page.islands[i]?.kind==='cards' && <Cards items={page.islands[i].items!} columns={page.islands[i].columns} client:load/>}
+  {page.islands[i]?.kind==='discovery' && <Discovery client:only="react"><div slot="fallback"><h1>Find your template</h1><p>Loading search…</p><a href="/templates/all">Browse all templates</a></div></Discovery>}
   {page.islands[i]?.kind==='catalog' && <Catalog title={page.islands[i].title!} path={Astro.url.pathname} creatorSlug={page.islands[i].creatorSlug} client:only="react"><div slot="fallback"><h1>{page.islands[i].title}</h1><Cards items={page.islands[i].items!}/></div></Catalog>}
   {page.islands[i]?.kind==='widget' && <CmsWidget widget={page.islands[i].widget!} props={page.islands[i].props!} client:load/>}
   {page.islands[i]?.kind==='detail' && <Detail item={page.islands[i].item!} heroProps={page.islands[i].heroProps} allowEmbed={allowEmbed} devPreview={import.meta.env.DEV&&!allowEmbed} client:load/>}

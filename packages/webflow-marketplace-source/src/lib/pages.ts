@@ -10,7 +10,7 @@ import {homeMarkup,pickCreators,TILE_CATEGORIES} from './home';
 const exports = import.meta.glob('../../original-export/**/*.html',{eager:true,query:'?raw',import:'default'}) as Record<string,string>;
 const raw=(name:string)=>exports[`../../original-export/${name}.html`];
 const escape=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
-export interface Island {kind:'creator'|'cards'|'catalog'|'detail'|'widget'|'comments'|'chat'|'library';profile?:CreatorSource;published?:CreatorCustomization;total?:number;widget?:string;props?:Record<string,unknown>;items?:Template[];columns?:number;item?:Template;title?:string;description?:string;creatorSlug?:string;heroProps?:Record<string,unknown>}
+export interface Island {kind:'discovery'|'creator'|'cards'|'catalog'|'detail'|'widget'|'comments'|'chat'|'library';profile?:CreatorSource;published?:CreatorCustomization;total?:number;widget?:string;props?:Record<string,unknown>;items?:Template[];columns?:number;item?:Template;title?:string;description?:string;creatorSlug?:string;heroProps?:Record<string,unknown>}
 export interface Page {title:string;description:string;head:string;body:string;parts:string[];islands:Island[];status:number;pageId?:string;canonical:string}
 function clean(name:string){
  const $=load(raw(name)||raw('404'));
@@ -243,6 +243,10 @@ export async function pageFor(url:URL):Promise<Page>{
   const $=shell(content,cms('title').text(),cms('meta[name="description"]').attr('content')||'');
   if(route.page==='designers'&&route.slug){$('h1').first().closest('.section').addClass('rd-creator-profile');}
   const islands:Island[]=[];hydrateCms($,islands,url);return finish($,url,islands);
+ }
+ if(route.kind==='catalog'&&['search','search-results','search-v2'].includes(route.page!)){
+  const $=shell('<main id="main" class="section rd-discovery-page"><div class="container"><source-island></source-island></div></main>','Find your template | Webflow','Compare templates against your project brief.',false);
+  return finish($,url,[{kind:'discovery'}]);
  }
  if(route.kind==='catalog'){
   const p=searchFilters(route,url);p.set('page_size','24');
