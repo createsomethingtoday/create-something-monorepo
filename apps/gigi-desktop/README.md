@@ -200,3 +200,30 @@ GiGi is a free, open-source local desktop app. The optional app-owned connection
 Settings offers system-browser sign-in, cancel, account selection/reconnect/disconnect, a model catalog and a separate text-only message box. Only explicitly typed text is sent; it has no record context or tools. Eligible plan use is limited, with no automatic API billing fallback. Native Rust owns the persistent controller and credential store. Credentials never enter the renderer; cancel invalidates in-flight output and app exit cancels work. Non-macOS builds remain disabled. Account identity and permission for eligible plan inference are distinct.
 
 A separately configured DEV variant built from `e115e337` completed owner-performed browser consent, model discovery, one synthetic typed-text request and persisted local sign-out on 2026-10-24. That test used an incognito WebView, an isolated synthetic database and a disabled installed-Codex probe. It establishes only that earlier condition and selected account; it does not qualify a later installer or the existing Codex workflow. Historical remote revocation remains unverified. Mock tests and prior-build results do not replace exact-artifact native/provider acceptance, signing/notarization and published-download verification.
+
+
+## Appearance and views
+
+Choose **Customize** in the workspace strip, or **Settings → Customize appearance
+& views**. Appearance has its own page; connection setup and first-run guidance
+remain in Setup & safety. Studio follows the landing illustration's neutral
+operator palette. Paper and Midnight offer light and deeper-dark alternatives.
+
+Choose comfortable or compact spacing, a starting page (including Music or
+Instagram drafts), list/card record collections, and the remembered Schedule
+view. Gigs retains its search, filters and pagination in either record layout.
+Today, Music, Instagram and Schedule retain their purpose-built layouts.
+
+Preferences save automatically to this desktop webview's local storage under the
+workspace ID. They survive restarts on this device, but are not included in the
+SQLite backup or synced to another account/device. Saving failures remain visible;
+Schedule can still switch views for the current session if storage is blocked.
+
+Expand **Share or edit a configuration** to show/copy configuration JSON or import
+an edited document. Version 1 accepts only `version`, `theme`, `density`,
+`startPage`, `collectionView`, and `scheduleView`, with a 16 KiB UTF-8 limit. The
+whole document is validated before application; omitted fields use defaults.
+Credentials, records, scripts, arbitrary CSS, and unknown keys are rejected.
+**Reset appearance & views** restores Studio and the default views without
+changing business records or connections. Executable plugins and custom palette
+authoring are outside this release's presentation-configuration scope.

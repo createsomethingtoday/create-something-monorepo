@@ -1,3 +1,5 @@
+import { defaults, readPreferences, writePreferences, importPreferences, exportPreferences, applyPreferences } from './preferences.mjs';
+import { preferencesView } from './preferences-view.mjs';
 import {loadRelationPage} from './relation-pagination.mjs';
 import {agentPreflightView} from './agent-preflight.mjs';
 import {eventLabel} from './event-identity.mjs';
@@ -48,10 +50,39 @@ let contactSearchVersion = 0;
 const state = { workspace: null, setupProfile: false, setupDraft: null, currency: null, currencyKnown: false, page: 'overview', contactQuery: '', contactSearching: false, contactSearchError: false, scheduleView: 'upcoming', libraryOpen: false, records: [], recordCount: 0, nextCursor: null, selected: null, editing: false, editorDraft: null, editorOrigin: null, sourceExpanded: false, busy: false, signingIn: false, signingOut: false, sourceSignedOut: false, justCreated: false, agentProvider: 'codex', toast: null, summary: null, summaryUnavailable: false, history: [], backupId: null, pendingRestoreId: null, agent: null, agentReceipt: null, relationSchema: null, linkChoices: null, sources: {}, sourceAttempts: {}, connectionRequests: {}, imports: {}, sourceDrafts: {}, sourceBusy: {}, contextHits: [], contextQueried: false, diagnostics: { status: null, review: null, exported: null } };
 const gigs=createGigs({read:(workspace,criteria,cursor)=>bridge.listGigs(workspace,criteria,cursor),changed(){if(state.page==='gigs'&&!state.selected&&!state.editing)render();}});
 const safe = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
-const label = (name) => sections.find((item) => item.id === name)?.label || name;
+const label = (name) => name === 'appearance' ? 'Appearance & views' : sections.find((item) => item.id === name)?.label || name;
 const entityName = (name) => ({ schedule: 'schedule', finances: 'financial record', contacts: 'contact', companies: 'company', gigs: 'gig or shift', locations: 'place' })[name] || name.replace(/s$/, '');
 const status = (record) => statusLabel(record?.fields?.Status || record?.status || '');
 const workspaceId = () => state.workspace?.workspaceId || state.workspace?.id;
+let preferences = { ...defaults };
+let preferencesDraft = '';
+let preferencesExported = null;
+let preferencesFeedback = null;
+function preferenceStorage() { try { return globalThis.localStorage; } catch { return null; } }
+function restorePreferences() {
+  preferences = readPreferences(preferenceStorage(), workspaceId());
+  applyPreferences(preferences);
+  state.scheduleView = preferences.scheduleView;
+}
+function savePreferences(next, message = 'Preferences saved on this Mac.') {
+  try {
+    preferences = writePreferences(preferenceStorage(), workspaceId(), next);
+    applyPreferences(preferences);
+    state.scheduleView = preferences.scheduleView;
+    preferencesExported = preferencesExported ? exportPreferences(preferences) : null;
+    preferencesFeedback = { message, error: false };
+    render();
+    return true;
+  } catch (error) {
+    preferencesFeedback = { message: explain(error), error: true };
+    if (state.page === 'appearance') render(); else notice(explain(error), true);
+    return false;
+  }
+}
+function appearance() {
+  return heading('Workspace', 'Appearance & views', 'Choose a workspace that feels right for your day.', '<button type="button" class="btn" data-page="settings">Setup & safety</button>') + preferencesView(preferences, { draft: preferencesDraft, exported: preferencesExported, feedback: preferencesFeedback });
+}
+
 installArtworkUI(root,{call:bridge.call,workspaceId,canEdit:async()=>!state.editing&&(!creatorMount?.canLeave||await creatorMount.canLeave()),onChanged:async()=>{if(state.selected)await selectRecord(state.selected.id,state.page);else if(state.page==='music')globalThis.dispatchEvent(new Event('focus'));else await openPage(state.page);}});
 const explain = (error) => {
   const raw = error instanceof Error ? error.message : String(error);
@@ -113,6 +144,8 @@ async function load() {
   chat = null;
   state.workspace = result?.workspace || result?.workspaceId && result || result?.id && result || null;
   if (state.workspace) {
+    restorePreferences();
+    state.page = preferences.startPage;
     initializeChat();
     currencyVersion++; state.currencyKnown = false;
     const profiles = listFrom(await bridge.listRecords(workspaceId(), 'profile'));
@@ -191,6 +224,7 @@ async function openPage(page, resetScroll = false, historyIndex = null) {
     state.nextCursor = result?.nextCursor || null;
   }
   render();
+  if(page==='appearance') root.querySelector?.(`[data-preferences-theme="${preferences.theme}"]`)?.focus?.({ preventScroll: true });
   if(page==='gigs')globalThis.scrollTo?.(0,gigs.state?.scroll||0);
   else if (resetScroll) globalThis.scrollTo?.(0, 0);
   return true;
@@ -271,7 +305,7 @@ function newRecord(entity) {
 
 
 function shell(body) {
-  return `<div class="shell">${referenceHeader({page:state.page,sections,workspace:state.workspace?.name,history:workspaceHistory})}<main class="main" aria-label="GiGi / ${safe(label(state.page))}"><div class="content"><div class="content-primary"><button type="button" class="btn mobile-chat-entry" data-chat-open="1">Ask GiGi</button>${body}</div></div></main>${chatView(chat || { visible: false })}</div>${pendingLeave ? '<div class="record-leave-backdrop"><section class="record-leave-dialog panel" role="alertdialog" aria-modal="true" aria-labelledby="leave-title" aria-describedby="leave-description"><h2 id="leave-title">Keep your changes?</h2><p id="leave-description">This record has unsaved changes. Keep editing to save them, or discard them to leave.</p><div class="inline-actions"><button class="btn primary" data-keep-editing="1">Keep editing</button><button class="btn" data-discard-changes="1">Discard changes</button></div></section></div>' : ''}${state.toast ? `<div class="toast ${state.toast.error ? 'error' : ''}" role="status">${safe(state.toast.message)}</div>` : ''}`;
+  return `<div class="shell" data-collection-view="${preferences.collectionView}">${referenceHeader({page:state.page,sections,workspace:state.workspace?.name,history:workspaceHistory})}<main class="main" aria-label="GiGi / ${safe(label(state.page))}"><div class="content"><div class="content-primary"><button type="button" class="btn mobile-chat-entry" data-chat-open="1">Ask GiGi</button>${body}</div></div></main>${chatView(chat || { visible: false })}</div>${pendingLeave ? '<div class="record-leave-backdrop"><section class="record-leave-dialog panel" role="alertdialog" aria-modal="true" aria-labelledby="leave-title" aria-describedby="leave-description"><h2 id="leave-title">Keep your changes?</h2><p id="leave-description">This record has unsaved changes. Keep editing to save them, or discard them to leave.</p><div class="inline-actions"><button class="btn primary" data-keep-editing="1">Keep editing</button><button class="btn" data-discard-changes="1">Discard changes</button></div></section></div>' : ''}${state.toast ? `<div class="toast ${state.toast.error ? 'error' : ''}" role="status">${safe(state.toast.message)}</div>` : ''}`;
 }
 
 function heading(eyebrow, title, description, action = '') {
@@ -440,7 +474,7 @@ function agentSetup() {
 function settings() {
   const journey = sourceJourney(state.sources, state.sourceAttempts);
   const signInNeeded = sourceSignInNeeded(state.sources, state.sourceSignedOut);
-  return heading('Workspace', 'Setup & safety', 'Review what is ready, what still needs your consent, and how to protect your local data.') +
+  return heading('Workspace', 'Setup & safety', 'Review what is ready, what still needs your consent, and how to protect your local data.', '<button type="button" class="btn" data-page="appearance">Customize appearance & views</button>') +
     `${state.justCreated ? `<div class="callout setup-welcome"><strong>Your private workspace is ready.</strong><p>Connect sources and an agent below, or start with a record. You can return to Settings at any time.</p><button class="btn" data-new="gigs">${icon('plus')}Start with a gig</button></div>` : ''}` +
     builtInChatSetup(state.setupChatStatus, state.setupChatFailed) + aiConnectionView(ai) + `<section class="setup-checklist"><div class="panel-head"><h2>Choose your next step</h2><small>Connections are optional</small></div><button class="btn section-gap" data-page="overview">Continue with local records ${icon('arrow-up-right')}</button><p class="muted">${safe(setupSummary(state).nextStep)}</p><div class="steps">${setupSummary(state).steps.map((step, index) => `<div class="step"><span class="number">${index + 1}</span><div><h3>${safe(step.title)}</h3><p>${safe(step.description)}</p>${step.href ? `<a class="setup-link" href="${step.href}">Open ${step.id === 'agent' ? 'agent setup' : step.id === 'phone' ? 'phone guide' : 'source setup'} ↓</a>` : ''}</div><span class="tag ${step.id === 'workspace' ? '' : 'off'}">${safe(step.label)}</span></div>`).join('')}</div></section>
     <section class="panel" id="source-connections"><div class="panel-head"><h2>${icon('unplug')}<span>Source connections</span></h2><small>Separate consent required</small></div><p class="muted">Your local workspace needs no login. Sign in to GiGi, then check whether source access is enabled for this app. Google consent connects the Google account you choose; it may be different from your GiGi sign-in.</p><details data-view-key="source-stages"><summary>How source setup works</summary><ol class="welcome-plan" aria-label="Source setup stages">${journey.stages.map((title, index) => `<li ${index === journey.current ? 'aria-current="step"' : ''}><strong>${safe(title)}</strong>${index === journey.current ? '<span>Current step</span>' : ''}</li>`).join('')}</ol></details><p role="status">${safe(journey.next)}</p>${signInNeeded ? `<button class="btn" data-sign-in="1" ${state.signingIn ? 'disabled' : ''}>${state.signingIn ? 'Waiting for browser sign-in…' : 'Sign in to GiGi sources'}</button>` : ''}${state.sourceSignedOut ? '<p class="muted" role="status">Signed out of GiGi sources on this Mac. Google consent and imported records are unchanged.</p>' : `<div class="source-session section-gap"><button class="btn text" data-source-sign-out="1" ${state.signingIn || state.signingOut || Object.keys(state.sourceBusy).length || Object.values(state.imports).some(sourceImportRunning) ? 'disabled' : ''}>${state.signingOut ? 'Signing out…' : 'Sign out of GiGi sources'}</button><p class="muted">Clears source sign-in on this Mac. Keeps Google consent and imported records.</p></div>`}<details data-view-key="source-permissions"><summary>What connecting and importing allow</summary><p>Review the Google consent screen before continuing. The configured Google grants are broader than read-only. GiGi’s source workflow uses them only to read source identity and the bounded pages described below; it does not send email, modify calendars or invite anyone.</p><p>Return here after consent, choose Check status, then Verify connection if shown. Once Account verified appears, review the Google identity and preview a source page. Preview reads a bounded selection without adding local records. Import reviewed records saves that selection. Your agent can use the same scoped read and import tools when you ask. You can skip sources and keep working with local records.</p></details><div class="steps section-gap">${sourceCard('gmail', 'Gmail')}${sourceCard('googlecalendar', 'Google Calendar')}</div><p class="muted">If a connection needs operator help, <a href="#source-diagnostics">record local diagnostics below</a>, then review the report before sharing it.</p></section>
@@ -483,6 +517,7 @@ function render() {
   else if (state.page === 'overview') body = overview();
   else if (state.page === 'history') body = history();
   else if (state.page === 'settings') body = settings();
+  else if (state.page === 'appearance') body = appearance();
   else body = collection();
   const composer = globalThis.document?.activeElement?.id === 'chat-message' ? globalThis.document.activeElement : null;
   const selection = composer ? { start: composer.selectionStart, end: composer.selectionEnd, scrollTop: composer.scrollTop } : null;
@@ -646,6 +681,10 @@ async function findPeople() {
 
 root.addEventListener('click', (event) => {
   const button = event.target.closest('button'); if (!button) return;
+  if (button.dataset.preferencesTheme) { savePreferences({ ...preferences, theme: button.dataset.preferencesTheme }); root.querySelector?.(`[data-preferences-theme="${preferences.theme}"]`)?.focus?.({ preventScroll: true }); return; }
+  if (button.dataset.preferencesReset) { savePreferences(defaults, 'Appearance and views reset to Studio defaults.'); return; }
+  if (button.dataset.preferencesExport) { preferencesExported = exportPreferences(preferences); render(); const detail = root.querySelector?.('.portable-preferences'); if (detail) detail.open = true; root.querySelector?.('#preferences-export')?.focus?.(); return; }
+  if (button.dataset.preferencesCopy) { void (async () => { try { if (!globalThis.navigator?.clipboard?.writeText) throw new Error('Clipboard unavailable'); await globalThis.navigator.clipboard.writeText(exportPreferences(preferences)); preferencesFeedback = { message: 'Configuration copied.', error: false }; } catch { preferencesFeedback = { message: 'Could not copy. Select the configuration JSON and copy it manually.', error: true }; } render(); })(); return; }
   if (button.dataset.aiAction) { const action=button.dataset.aiAction, client=button.dataset.aiClient; void ai.action(action,client).then(()=>{ if(state.page==='settings') root.querySelector('[data-ai-action="refresh"]')?.focus?.({preventScroll:true}); }); return; }
   if(button.dataset.agentPreflight){
     if(state.busy)return;
@@ -733,8 +772,8 @@ root.addEventListener('click', (event) => {
       notice(result.sourceProposal.outcome === 'existing' ? 'Opened the existing record from this source. Your edits were preserved.' : 'Local record created and linked to its source.');
     });
   }
-  else if (button.dataset.scheduleView) { state.scheduleView = button.dataset.scheduleView; render(); }
-  else if (button.dataset.scheduleToday) { state.scheduleView = 'upcoming'; render(); root.querySelector('#schedule-today')?.scrollIntoView?.({ block: 'start' }); }
+  else if (button.dataset.scheduleView) { if (!savePreferences({ ...preferences, scheduleView: button.dataset.scheduleView })) { state.scheduleView = button.dataset.scheduleView; render(); } }
+  else if (button.dataset.scheduleToday) { if (!savePreferences({ ...preferences, scheduleView: 'upcoming' })) { state.scheduleView = 'upcoming'; render(); } root.querySelector('#schedule-today')?.scrollIntoView?.({ block: 'start' }); }
   else if (button.dataset.chatOpen) void chat?.open(state.selected && !state.editing ? { entity: state.page, id: state.selected.id, title: state.selected.title } : null);
   else if (button.dataset.chatRefresh) {
     button.focus?.();
@@ -845,8 +884,9 @@ root.addEventListener('change',event=>{if(event.target.id==='ai-model'){ai.model
 
 root.addEventListener('toggle', (event) => { if (event.target.dataset?.libraryNav) state.libraryOpen = event.target.open; }, true);
 
-root.addEventListener('change', (event) => { if (event.target.id === 'link-entity') void run(() => loadLinkChoices(event.target.value)); });
+root.addEventListener('change', (event) => { if (event.target.dataset?.preference) { const key = event.target.dataset.preference; if (Object.hasOwn(defaults, key) && key !== 'version') savePreferences({ ...preferences, [key]: event.target.value }); } else if (event.target.id === 'link-entity') void run(() => loadLinkChoices(event.target.value)); });
 root.addEventListener('input', (event) => {
+  if (event.target.id === 'preferences-import') { preferencesDraft = event.target.value; return; }
   if (event.target.dataset?.sourceDate) {
     const provider = event.target.dataset.sourceDate, bound = event.target.dataset.bound;
     if (['gmail','googlecalendar'].includes(provider) && ['from','to'].includes(bound) && !state.sourceBusy[provider]) {
@@ -869,14 +909,15 @@ root.addEventListener('submit', (event) => {
   event.preventDefault();
   const form = event.target;
   if (state.busy) return;
-  if (form.id === 'source-proposal-form') {
+  if (form.id === 'preferences-import-form') { try { savePreferences(importPreferences(preferencesDraft), 'Configuration imported. Your starting page applies next time GiGi opens.'); } catch (error) { preferencesFeedback = { message: explain(error), error: true }; render(); root.querySelector?.('#preferences-import')?.focus?.(); } }
+  else if (form.id === 'source-proposal-form') {
     if (!sourceProposal || sourceProposal.phase !== 'draft') return;
     const values = Object.fromEntries(new FormData(form));
     sourceProposal.title = String(values.title || ''); sourceProposal.date = String(values.date || '');
     try { sourceProposal = reviewSourceDraft(sourceProposal, values); render(); } catch (error) { notice(explain(error), true); }
   }
   else if (form.id === 'chat-form') { const value = String(new FormData(form).get('message') || ''); if (chat) { chat.draft = value; void chat.send(value); } }
-  else if (form.id === 'workspace-form') { const data = Object.fromEntries(new FormData(form)); state.setupDraft = { ...data }; void run(async () => { if (!state.workspace) state.workspace = await bridge.createWorkspace(data.name); state.setupProfile = true; await bridge.saveRecord(workspaceId(), 'profile', { title: String(data.ownerName).trim(), fields: { Currency: String(data.currency) } }); state.currency = String(data.currency); state.currencyKnown = true; currencyVersion++; state.setupProfile = false; state.setupDraft = null; state.justCreated = true; initializeChat(); await openPage('settings'); notice('Your private workspace is ready. Connections are optional.'); }); }
+  else if (form.id === 'workspace-form') { const data = Object.fromEntries(new FormData(form)); state.setupDraft = { ...data }; void run(async () => { if (!state.workspace) state.workspace = await bridge.createWorkspace(data.name); state.setupProfile = true; await bridge.saveRecord(workspaceId(), 'profile', { title: String(data.ownerName).trim(), fields: { Currency: String(data.currency) } }); state.currency = String(data.currency); state.currencyKnown = true; currencyVersion++; state.setupProfile = false; state.setupDraft = null; restorePreferences(); state.justCreated = true; initializeChat(); await openPage('settings'); notice('Your private workspace is ready. Connections are optional.'); }); }
   else if (form.id === 'record-form') { const data = Object.fromEntries(new FormData(form)); state.editorDraft = { ...data }; const route = readRoute(), selected = state.selected; submittedEditor = { version: route.version, values: { ...data } }; void run(async () => { const title = String(data.title).trim(); delete data.title; const saved = await bridge.saveRecord(route.workspace, route.page, { ...(selected?.id ? { id: selected.id, fieldsMode: 'replace', expectedRecord: { title: selected.title, fields: selected.fields, source: selected.source } } : {}), title, fields: selected?.id ? editedFields(selected.fields, data, route.page) : recordFields(data, route.page) }); if(route.page==='gigs'&&route.workspace===workspaceId())gigs.invalidate(); if (route.page === 'profile' && route.workspace === workspaceId()) { state.currency = saved.fields?.Currency || null; state.currencyKnown = true; currencyVersion++; } if (!currentRoute(route)) return; state.editing = false; state.editorDraft = null; if (!await openPage(route.page)) return; if (!await selectRecord(saved.id || saved.record?.id, route.page)) return; notice(`${entityName(route.page)} saved.`); }).finally(() => { if (submittedEditor?.version === route.version) submittedEditor = null; }); }
   else if (form.id === 'link-form') submitLink(Object.fromEntries(new FormData(form)));
   else if (form.id === 'restore-form') { const backupId = String(new FormData(form).get('backupId')).trim(); if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(backupId)) { notice('Enter a valid backup ID.', true); return; } state.pendingRestoreId = backupId; render(); }
