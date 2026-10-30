@@ -2641,6 +2641,28 @@ importers:
         specifier: ^3.2.6
         version: 3.2.7(@types/debug@4.1.13)(@types/node@24.10.9)(jiti@2.7.0)(jsdom@27.4.0(@noble/hashes@1.8.0)(bufferutil@4.1.0)(utf-8-validate@6.0.6))(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
 
+  packages/goldin-coordinator:
+    dependencies:
+      '@create-something/canon':
+        specifier: workspace:*
+        version: link:../canon
+      '@create-something/auth-platform':
+        specifier: workspace:*
+        version: link:../auth-platform
+    devDependencies:
+      eslint:
+        specifier: 9.39.2
+        version: 9.39.2(jiti@2.7.0)
+      esbuild:
+        specifier: 0.25.12
+        version: 0.25.12
+      miniflare:
+        specifier: 4.20260708.1
+        version: 4.20260708.1(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      workerd:
+        specifier: 1.20261022.1
+        version: 1.20261022.1
+
   packages/harness-mcp:
     dependencies:
       '@create-something/observability':
@@ -3700,6 +3722,9 @@ importers:
 
   packages/ona-agents:
     dependencies:
+      '@create-something/goldin-coordinator':
+        specifier: workspace:*
+        version: link:../goldin-coordinator
       '@create-something/canon':
         specifier: workspace:*
         version: link:../canon
@@ -6793,6 +6818,12 @@ packages:
     cpu: [x64]
     os: [darwin]
 
+  '@cloudflare/workerd-darwin-64@1.20261022.1':
+    resolution: {integrity: sha512-sAjupFA9B88lH/eYZYAYMYOwjyKb9whxf/wpoA9Mb+7wHTZoz/v41SRKyId/wrHCouqli2Qk4kg2F8Azhv+HyQ==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [darwin]
+
   '@cloudflare/workerd-darwin-arm64@1.20260128.0':
     resolution: {integrity: sha512-vKnRcmnm402GQ5DOdfT5H34qeR2m07nhnTtky8mTkNWP+7xmkz32AMdclwMmfO/iX9ncyKwSqmml2wPG32eq/w==}
     engines: {node: '>=16'}
@@ -6813,6 +6844,12 @@ packages:
 
   '@cloudflare/workerd-darwin-arm64@1.20260903.1':
     resolution: {integrity: sha512-o241VefnjG8eG+kGap5CjgV4zOT5UaAmS3OR1VZCpNj7vkXGxvp9KftKvtQgcCsIqJKaKx+7Xd7xq0L1DjkfPQ==}
+    engines: {node: '>=16'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@cloudflare/workerd-darwin-arm64@1.20261022.1':
+    resolution: {integrity: sha512-eTOlcy9qb6XuR/G167nyXoS4IhVMMiLK7046ydjtCLceFPvc9Z2vrgNtVAd+upNwnbakVlI2NYwzdcKN2HjbZg==}
     engines: {node: '>=16'}
     cpu: [arm64]
     os: [darwin]
@@ -6841,6 +6878,12 @@ packages:
     cpu: [x64]
     os: [linux]
 
+  '@cloudflare/workerd-linux-64@1.20261022.1':
+    resolution: {integrity: sha512-+TIF0w8g2c8qTLwJ4kfhQmTwHcYN8772Cw7WLsqjQt3Npku8bUd6yOzZpYVqDOEzc0yomiPRfGmi3yi4MMZjgQ==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [linux]
+
   '@cloudflare/workerd-linux-arm64@1.20260128.0':
     resolution: {integrity: sha512-U39U9vcXLXYDbrJ112Q7D0LDUUnM54oXfAxPgrL2goBwio7Z6RnsM25TRvm+Q06F4+FeDOC4D51JXlFHb9t1OA==}
     engines: {node: '>=16'}
@@ -6865,6 +6908,12 @@ packages:
     cpu: [arm64]
     os: [linux]
 
+  '@cloudflare/workerd-linux-arm64@1.20261022.1':
+    resolution: {integrity: sha512-Z4COP2dHFDC+cDIgAD5G8IGvNFU2zQFzs/RDw7du/qLIKiKuArbINcoZbHDIZW/OTXDK951y9O+wJPNCcJkv6Q==}
+    engines: {node: '>=16'}
+    cpu: [arm64]
+    os: [linux]
+
   '@cloudflare/workerd-windows-64@1.20260128.0':
     resolution: {integrity: sha512-fdJwSqRkJsAJFJ7+jy0th2uMO6fwaDA8Ny6+iFCssfzlNkc4dP/twXo+3F66FMLMe/6NIqjzVts0cpiv7ERYbQ==}
     engines: {node: '>=16'}
@@ -6885,6 +6934,12 @@ packages:
 
   '@cloudflare/workerd-windows-64@1.20260903.1':
     resolution: {integrity: sha512-soPMF9/aMHlHKK7M0vq5HrRRicPbnZO1F6ZZ7JWN8EltxWJU5L7CEq7CxjO878DzyPx7gYvqBFy3SVgdZKZjMQ==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [win32]
+
+  '@cloudflare/workerd-windows-64@1.20261022.1':
+    resolution: {integrity: sha512-IVEuhpFEiOILsmyvSab/maza4dBc+lJSF5ZKCUyj1UYGKui0U0NsCWBJ85/6jGaDyc5M2BSwLP9vcxgRHTuchg==}
     engines: {node: '>=16'}
     cpu: [x64]
     os: [win32]
@@ -17993,6 +18048,11 @@ packages:
     engines: {node: '>=16'}
     hasBin: true
 
+  workerd@1.20261022.1:
+    resolution: {integrity: sha512-1R7ZbUatEePTPiwdqbzrVbns+hK2gb9oIwakPJT6ZLBUY6UJLgHnyHcj8DQCsWU9KDebcM7dUWy9e7aHjofQPw==}
+    engines: {node: '>=16'}
+    hasBin: true
+
   workers-ai-provider@3.3.1:
     resolution: {integrity: sha512-vArwnmiAxQQF1clsXJd9ADn1xK9YUZVxE4umaMhrdsxM2kucxP430LfaoH4rn0AfoqtnuH3bfRhW1ak0r1x/8A==}
     peerDependencies:
@@ -20782,6 +20842,9 @@ snapshots:
   '@cloudflare/workerd-darwin-64@1.20260903.1':
     optional: true
 
+  '@cloudflare/workerd-darwin-64@1.20261022.1':
+    optional: true
+
   '@cloudflare/workerd-darwin-arm64@1.20260128.0':
     optional: true
 
@@ -20792,6 +20855,9 @@ snapshots:
     optional: true
 
   '@cloudflare/workerd-darwin-arm64@1.20260903.1':
+    optional: true
+
+  '@cloudflare/workerd-darwin-arm64@1.20261022.1':
     optional: true
 
   '@cloudflare/workerd-linux-64@1.20260128.0':
@@ -20806,6 +20872,9 @@ snapshots:
   '@cloudflare/workerd-linux-64@1.20260903.1':
     optional: true
 
+  '@cloudflare/workerd-linux-64@1.20261022.1':
+    optional: true
+
   '@cloudflare/workerd-linux-arm64@1.20260128.0':
     optional: true
 
@@ -20818,6 +20887,9 @@ snapshots:
   '@cloudflare/workerd-linux-arm64@1.20260903.1':
     optional: true
 
+  '@cloudflare/workerd-linux-arm64@1.20261022.1':
+    optional: true
+
   '@cloudflare/workerd-windows-64@1.20260128.0':
     optional: true
 
@@ -20828,6 +20900,9 @@ snapshots:
     optional: true
 
   '@cloudflare/workerd-windows-64@1.20260903.1':
+    optional: true
+
+  '@cloudflare/workerd-windows-64@1.20261022.1':
     optional: true
 
   '@cloudflare/workers-types@4.20260621.1': {}
@@ -34214,6 +34289,14 @@ snapshots:
       '@cloudflare/workerd-linux-64': 1.20260903.1
       '@cloudflare/workerd-linux-arm64': 1.20260903.1
       '@cloudflare/workerd-windows-64': 1.20260903.1
+
+  workerd@1.20261022.1:
+    optionalDependencies:
+      '@cloudflare/workerd-darwin-64': 1.20261022.1
+      '@cloudflare/workerd-darwin-arm64': 1.20261022.1
+      '@cloudflare/workerd-linux-64': 1.20261022.1
+      '@cloudflare/workerd-linux-arm64': 1.20261022.1
+      '@cloudflare/workerd-windows-64': 1.20261022.1
 
   workers-ai-provider@3.3.1(@ai-sdk/provider@3.0.14)(ai@6.0.235(zod@4.3.6)):
     dependencies:
