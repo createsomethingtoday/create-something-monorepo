@@ -9,7 +9,7 @@ import type {IncludedPage} from '../lib/detail-content.mjs';
 import {localLink} from '../lib/routes.mjs';
 import {readBrief,briefParams,evidenceFor,cmsLabel,priceLabel} from '../lib/discovery.mjs';
 import PreviewFallback from './PreviewFallback';
-export default function Detail({item:t,heroProps={},allowEmbed=false,inventory=[],published,search='',section='hero'}:{section?:'hero'|'inventory'|'creator';item:Template;heroProps?:Record<string,unknown>;allowEmbed?:boolean;devPreview?:boolean;inventory?:IncludedPage[];published?:CreatorCustomization;search?:string}){
+export default function Detail({item:t,heroProps={},allowEmbed=false,devPreview=false,inventory=[],published,search='',section='hero'}:{section?:'hero'|'inventory'|'creator';item:Template;heroProps?:Record<string,unknown>;allowEmbed?:boolean;devPreview?:boolean;inventory?:IncludedPage[];published?:CreatorCustomization;search?:string}){
  const [shareStatus,setShareStatus]=useState('');
  async function share(){try{await navigator.clipboard.writeText(location.origin+location.pathname);setShareStatus('Link copied')}catch{setShareStatus('Copy this page’s address to share it.')}}
  const enableAnalytics=useAnalyticsConsent();
@@ -24,8 +24,9 @@ export default function Detail({item:t,heroProps={},allowEmbed=false,inventory=[
  return <div className="rd-detail">
   <TemplateDetailConversionTracker templateSlug={t.template_slug} price={common.price} enableAnalytics={enableAnalytics}/>
   {fromSearch&&<a className="rd-back-results" href={'/templates/search?'+briefParams(brief)}>← Back to your search</a>}
-  <TemplateDetailHero {...heroProps} {...common} compactLayout categoryNames={t.category_groups?.map(x=>x.name).join(',')} categoryLinks={t.category_groups?.map(x=>localLink(x.url)).join(',')} creatorLink={{href:localLink(t.creator_profile_url)}} creatorAvatar={t.creator_avatar_url?{src:t.creator_avatar_url,alt:t.creator_name}:undefined} summary={t.description_short} previewIframeUrl={{href:t.website_url,target:'_blank'}} showPreviewIframe={allowEmbed} showPreviewDeviceControls/>
-  {!allowEmbed&&<PreviewFallback name={t.name} url={t.website_url} designerUrl={t.preview_url} thumbnail={t.thumbnail_image_url} slug={t.template_slug}/>}
+  {devPreview&&<p className="source-dev-preview-note">Preview environment: Desktop/Mobile demonstrates createsomething.agency. Open the live demo to inspect this template. Production uses the template’s own site.</p>}
+  <TemplateDetailHero {...heroProps} {...common} compactLayout categoryNames={t.category_groups?.map(x=>x.name).join(',')} categoryLinks={t.category_groups?.map(x=>localLink(x.url)).join(',')} creatorLink={{href:localLink(t.creator_profile_url)}} creatorAvatar={t.creator_avatar_url?{src:t.creator_avatar_url,alt:t.creator_name}:undefined} summary={t.description_short} previewIframeUrl={{href:devPreview?'https://createsomething.agency/':t.website_url,target:'_blank'}} showPreviewIframe={allowEmbed||devPreview} showPreviewDeviceControls/>
+  {!allowEmbed&&!devPreview&&<PreviewFallback name={t.name} url={t.website_url} designerUrl={t.preview_url} thumbnail={t.thumbnail_image_url} slug={t.template_slug}/>}
   <TemplateDetailStickyBar {...heroProps} {...common} thumbnail={{src:t.thumbnail_image_url,alt:t.name}}/>
  </div>;
 }
