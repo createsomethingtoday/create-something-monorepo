@@ -12,6 +12,8 @@ describe('opt-in portfolio discovery',()=>{
   expect(portfolioIntent('photographer portfolio')?.category_slugs).toEqual(['photography-and-video-portfolio']);
   expect(portfolioIntent('studio portfolio')?.category_slugs).toEqual(['creative-agency']);
   expect(portfolioIntent('portfolio without CMS')).toBeUndefined();
+  expect(portfolioIntent('video game portfolio')).toBeUndefined();
+  expect(parseSearchParams(new URL('https://test/?discovery=true&q=video+game+portfolio')).q).toBe('video game portfolio');
   expect(portfolioIntent('designer photographer portfolio')).toBeUndefined();
   expect(portfolioIntent('portfolio','constructor')?.audience).toBe('all');
  });

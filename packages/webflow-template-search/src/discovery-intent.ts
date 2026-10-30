@@ -15,8 +15,10 @@ const AUDIENCES = {
   studio: { words: ['studio', 'studios', 'agency', 'agencies'], label: 'Creative studios & agencies', categories: ['creative-agency'] },
 } as const;
 export function portfolioIntent(query: string | null, audience?: string | null): PortfolioIntent | undefined {
-  const words = query?.toLowerCase().match(/[a-z0-9]+/g) ?? [];
+  const words: string[] = query?.toLowerCase().match(/[a-z0-9]+/g) ?? [];
   if (!words.some(word => word === 'portfolio' || word === 'portfolios')) return undefined;
+  // Video games are not photography/video portfolios; keep compound ambiguity literal.
+  if (words.includes('video') && words.some(word => ['game', 'games', 'gaming'].includes(word))) return undefined;
   // Never silently discard a negation or interpret unsupported mixed requests.
   if (words.some(word => ['not', 'without', 'except', 'exclude'].includes(word))) return undefined;
   const detected = Object.entries(AUDIENCES).filter(([, entry]) => words.some(word => (entry.words as readonly string[]).includes(word)));
