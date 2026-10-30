@@ -63,7 +63,7 @@
     "test:public-contact": "node --import tsx --test ../../scripts/test/public-contact-address.test.mjs",
     "test:contact": "node --import ./test/register-sveltekit-test-loader.mjs --import tsx --test test/contact-intake.test.ts test/contact-d1.test.ts test/contact-workerd.test.ts",
     "test:support-brief": "node --import tsx --test test/support-brief.test.ts",
-    "test:gigi-beta": "node --import tsx --test test/gigi-beta-page.test.ts",
+    "test:gigi-beta": "node scripts/build-gigi-landing-styles.mjs --check && node --import tsx --test test/gigi-beta-page.test.ts test/gigi-landing-page.test.ts",
     "preview:site-search": "node ./scripts/run-pinned-bin.mjs vite vite dev --host 127.0.0.1 --port 4178 --strictPort",
     "test:site-search": "node --import tsx --test test/site-search.test.ts test/page-annotations.test.ts",
     "test:interaction-pilot": "node --import tsx --test test/interaction-pilot.test.ts"
