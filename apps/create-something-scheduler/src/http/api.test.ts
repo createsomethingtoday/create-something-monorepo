@@ -9,6 +9,27 @@ import { HmacRoomCapabilitySigner } from '../auth/action-tokens.js';
 import { handleApiRequest } from './api.js';
 
 describe('scheduler HTTP API v1', () => {
+  it('returns the service-owned retryable lifecycle with no slots on Calendar uncertainty', async () => {
+    const createEvent = vi.fn(() => { throw new Error('Read must not create an event.'); });
+    const service = new BookingService({
+      calendar: {
+        async listBusyIntervals() { return { status: 'unavailable', reason: 'calendar_unavailable' }; },
+        createEvent
+      },
+      clock: { now: () => '2026-07-13T15:00:00Z' }
+    });
+    const response = await handleApiRequest(new Request(
+      'https://scheduler.local/api/v1/availability?from=2026-07-14T00%3A00%3A00Z&to=2026-07-15T00%3A00%3A00Z&timezone=America%2FChicago&durationMinutes=60'
+    ), service);
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({
+      status: 'retryable', durationMinutes: 60, slots: [],
+      receiptId: expect.any(String), policyVersion: 'createsomething-together.v2',
+      occurredAt: '2026-07-13T15:00:00Z', nextActions: expect.any(Array)
+    });
+    expect(createEvent).not.toHaveBeenCalled();
+  });
+
   it('returns service-owned availability as structured JSON', async () => {
     const calendar: CalendarPort = {
       async listBusyIntervals() {

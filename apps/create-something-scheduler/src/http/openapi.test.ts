@@ -2,6 +2,19 @@ import { describe, expect, it } from 'vitest';
 import { schedulerOpenApi } from './openapi.js';
 
 describe('scheduler OpenAPI contract', () => {
+  it('describes the same availability lifecycle body for success and retryable 503', () => {
+    const responses = schedulerOpenApi.paths['/api/v1/availability'].get.responses;
+    for (const status of ['200', '503'] as const) {
+      expect(responses[status].content['application/json'].schema)
+        .toEqual({ $ref: '#/components/schemas/Availability' });
+    }
+    expect(schedulerOpenApi.components.schemas.Availability.properties).toMatchObject({
+      status: { enum: ['available', 'retryable'] },
+      durationMinutes: { enum: [30, 60] },
+      slots: { type: 'array', items: { $ref: '#/components/schemas/Slot' } }
+    });
+  });
+
   it('documents every v1 lifecycle route and scoped writes', () => {
     expect(schedulerOpenApi.openapi).toBe('3.1.0');
     expect(Object.keys(schedulerOpenApi.paths)).toEqual([
