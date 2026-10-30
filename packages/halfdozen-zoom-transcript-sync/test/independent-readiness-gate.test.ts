@@ -3,6 +3,7 @@ import test from 'node:test';
 import { DatabaseSync } from 'node:sqlite';
 import { Gate, GATE_FIELDS, GATE_SCHEMA, gateCreationProperties, gateToken, propertyText } from '../src/readiness-gate.ts';
 import { INGESTION_SCHEMA, claimIngestion, selectRendition } from '../src/ingestion-state.ts';
+import { PAGE_FORMAT } from '../src/page-transcript.ts';
 import { planTranscript } from '../src/indexed-transcript.ts';
 import { parseTranscript } from '../src/zoom.ts';
 import { initSchema } from '../src/db.ts';
@@ -141,7 +142,7 @@ test('independent readiness: actual local Worker holds body behind uncertain Cur
 
     await t.test('reserved absent Current blocks every body mutation across retries', async () => {
       const changedSource = syntheticVtt(4, 'changed');
-      const nextPlan = await planTranscript(parseTranscript(changedSource, 'vtt'));
+      const nextPlan = await planTranscript(parseTranscript(changedSource, 'vtt'), PAGE_FORMAT);
       const pending = JSON.stringify({ key: 'independent-absent-current', properties: {
         [GATE_FIELDS.current]: rich(gateToken(nextPlan.version, 2)), [GATE_FIELDS.ready]: { rich_text: [] }, [GATE_FIELDS.index]: { url: null },
       } });

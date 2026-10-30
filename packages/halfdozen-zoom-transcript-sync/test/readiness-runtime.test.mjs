@@ -14,6 +14,7 @@ test('actual local Worker/D1 readiness gate with intercepted providers only', { 
     await t.test('creation is excluded from page-added categorization; ready is published only after verification', async () => {
       let creations = 0, publications = 0, bodyWrites = 0;
       sim.onPageCreate = page => {
+        if (page.parent?.page_id) return; // Child reading pages are not new database meetings.
         creations++;
         assert.match(value(page.properties['Transcript Version']), /^[a-f0-9]{64}:1$/);
         assert.equal(value(page.properties['Transcript Ready Version']), '');
@@ -37,10 +38,11 @@ test('actual local Worker/D1 readiness gate with intercepted providers only', { 
       const state = await runtime.state(key); const page = sim.pages.get(state.page_id); assert.ok(page);
       assert.equal(value(page.properties['Transcript Version']), `${state.version}:1`);
       assert.equal(value(page.properties['Transcript Ready Version']), `${state.version}:1`);
-      assert.ok(page.properties['Transcript Retrieval Index'].url.endsWith(state.index_block_id.replaceAll('-', '')));
+      assert.ok(page.properties['Transcript Retrieval Index'].url.replaceAll('-', '').endsWith(state.index_block_id.replaceAll('-', '')));
       await retrieveVerified(runtime, key);
       const creates = sim.requests.filter(([method, url]) => method === 'POST' && new URL(url).pathname === '/v1/pages');
-      assert.equal(creates.length, 1);
+      assert.equal([...sim.pages.values()].filter(p=>p.parent?.database_id).length, 1);
+      assert.ok(creates.length > 1, 'Actual child reading pages were created');
     });
     const page = sim.pages.get((await runtime.state(key)).page_id);
     page.properties.Reviewed = { checkbox: true }; page.properties.Categorized = { checkbox: true };

@@ -1,6 +1,6 @@
 # Verify the transcript before downstream work
 
-Review this contract before adding live Notion properties or changing downstream triggers. This PR adds internal D1 evidence. It does not connect that evidence to task extraction.
+Use the format recorded by the selected index when verifying a transcript. The writer supports the archive index and two child-page index formats. Readiness verification and downstream task extraction remain separate acceptance gates.
 
 ## What ready means
 
@@ -10,12 +10,26 @@ The worker clears readiness before downloading the selected file. It reads each 
 
 Each scan also clears readiness for admitted meetings in its date window. The forward-only rollout leaves excluded legacy rows untouched. This covers selected files that disappear or become ineligible. Meetings outside the lookback retain historical verification, which is not evidence that Zoom has remained unchanged. A failed recording-list request does not establish freshness.
 
-## Proposed downstream check
+## Verification contract
 
 1. Read the authoritative D1 meeting record. Require the ready contract above. Capture `version`, `selected_key`, `page_id`, and `index_block_id`.
-2. Read that exact index. Require its version to match the captured version. Follow every numbered part in index order. Check the expected block ranges and reconstruct the canonical text. Concatenate the indexed original chunks, decode their standard base64 as UTF-8 while preserving the BOM, and reconstruct the original exactly. Recompute SHA-256 over the JSON array `["indexed-transcript-v2", original, canonical]` and require it to equal the captured version. This detects changed text under an unchanged version label. Do not search page excerpts or consume prior-version artifacts.
+2. Read that exact index with complete pagination. Require its Version to match the captured version. Select the supported format from its Format metadata using the layout below; do not infer it from the shared `Zoom indexed v2` artifact marker. Follow every numbered canonical part in index order, check contiguous part numbers and timestamp-block ranges, and reconstruct the canonical text. Retrieve the matching original chunks from the indicated archive location, decode standard base64 as UTF-8 while preserving a BOM, and reconstruct the original exactly. Recompute SHA-256 over the JSON array `[format, original, canonical]`, using the exact format identifier from the table, and require it to equal the captured version. A matching version label alone is not a computed checksum. Missing, duplicate, changed, or inaccessible content rejects verification; do not substitute excerpts or prior-version artifacts.
 3. Read D1 again after retrieval. Require the same ready version and selected file. If they changed or readiness cleared, discard the retrieved input and retry later.
 4. Store `input_transcript_version` on any downstream extraction receipt. Check it again before committing results. A correction must invalidate or supersede extraction results from an older version.
+
+### Select the index layout and hash domain
+
+| Format identifier / hash domain | Canonical retrieval | Original retrieval |
+| --- | --- | --- |
+| `indexed-transcript-v2` | Follow the archive index's ordered part links into toggles. | Follow its ordered original-chunk links in the same Source archive. |
+| `indexed-transcript-pages-v1` | Follow the index's ordered child pages; its metadata also includes their direct URLs. Each part counts once. | Find the same-version original artifacts in the meeting's Source archive. The direct page index does not list originals. |
+| `indexed-transcript-pages-v2` | Follow the index's ordered native child-page entries. Its compact paragraph metadata lists part titles, part total, and block total without repeating their URLs. | Find the same-version original artifacts in the meeting's Source archive. The direct page index does not list originals. |
+
+The legacy archive Format line also contains `; original encoding: UTF-8 base64`; that suffix is metadata, not part of the hash domain. Reject any unknown format rather than guessing or trying a different hash until one matches. Identical original and canonical text intentionally produces different version hashes under different format identifiers.
+
+For a page index, use the captured canonical meeting page to locate Source archive. Select only original artifacts whose marker contains the captured version. Require exactly one of every `original:n`, in numeric order through its declared `n/N` total, and retrieve every paragraph through terminal pagination. Preserve and verify exact original bytes and ordered canonical text; encoded originals are verification evidence, not text for analysis. Missing original fragments prevent a checksum claim even when every readable part is present. The writer separately verifies the archive and reading projection before publishing Ready.
+
+A native agent that cannot access D1 or compute this checksum must follow its own published token/retrieval contract, open the exact index and every canonical part, and report what it actually verified. It must not claim this stronger D1/byte-hash verification. Updating these repository documents neither publishes native instructions nor qualifies native extraction.
 
 If the workflow requires current Zoom content, request a fresh ingestion verification first. A timestamp alone cannot prove that the source has not changed. Notion can also be edited after a verified snapshot. Downstream retrieval must detect changed, missing, or duplicated parts, rather than trusting a cached readiness value.
 
