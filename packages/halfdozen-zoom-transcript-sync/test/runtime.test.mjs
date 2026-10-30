@@ -61,13 +61,13 @@ test('local workerd + D1 validation, deterministic provider simulator, no real p
       const next = await retrieveVerified(runtime, key); assert.notEqual(next.version, old.version);
       assert.equal(next.original, sim.recordings.get('long-primary').raw);
       const parent = sim.blocks.get((await runtime.state(key)).page_id);
-      const markers = sim.blocks.get(parent.at(-1).id).map(blockText); assert.equal(new Set(markers).size, markers.length);
-      assert.ok(markers.some(marker => marker.includes(old.version))); assert.equal(sim.pages.size, 1);
+      const markers = sim.blocks.get(parent.find(b=>blockText(b)==='Source archive').id).map(blockText); assert.equal(new Set(markers).size, markers.length);
+      assert.ok(markers.some(marker => marker.includes(old.version))); assert.equal([...sim.pages.values()].filter(p=>p.parent?.database_id).length, 1);
       assert.equal(propertyPatchCount(), beforePropertyPatches, 'Source corrections must not PATCH existing page properties');
       assert.deepEqual(sim.pages.get((await runtime.state(key)).page_id).properties, preservedProperties);
     });
     await t.test('same-version Notion tampering and downstream pre/post version races reject consumption', async () => {
-      const before = await runtime.state(key); const part = sim.blocks.get(sim.blocks.get(before.page_id).at(-1).id).find(block => blockText(block).includes(`| ${before.version} | part:1 |`));
+      const before = await runtime.state(key); const part = sim.blocks.get(sim.blocks.get(before.page_id).find(b=>blockText(b)==='Source archive').id).find(block => blockText(block).includes(`| ${before.version} | part:1 |`));
       const child = sim.blocks.get(part.id)[0]; const saved = structuredClone(child);
       child.paragraph.rich_text[0].plain_text += ' tamper';
       await assert.rejects(retrieveVerified(runtime, key), /Reconstructed content must match version|Visible transcript/);
@@ -110,7 +110,7 @@ test('local workerd + D1 validation, deterministic provider simulator, no real p
     });
     await t.test('missing or duplicate persisted child blocks reject both downstream retrieval and repeated ingestion', async () => {
       await runtime.delivery(message); const ready = await runtime.state(key);
-      const part = sim.blocks.get(sim.blocks.get(ready.page_id).at(-1).id).find(block => blockText(block).includes(`| ${ready.version} | part:1 |`));
+      const part = sim.blocks.get(sim.blocks.get(ready.page_id).find(b=>blockText(b)==='Source archive').id).find(block => blockText(block).includes(`| ${ready.version} | part:1 |`));
       const children = sim.blocks.get(part.id); const saved = structuredClone(children);
       children.pop();
       await assert.rejects(retrieveVerified(runtime, key), /Reconstructed content|Artifact children|Visible transcript/);
