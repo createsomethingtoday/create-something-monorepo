@@ -39,9 +39,13 @@ Five controlled, non-PII utterances were generated with voice `MiyNFjJv2KkZlFTQN
 
 This baseline proves that the current clone can synthesize the required vocabulary and creates fixed material for a blinded listening comparison. It does **not** prove naturalness, likeness, conversational latency, or interruption quality. Those dimensions require a human listener and a live agent call. Batch generation time must not be reported as conversational response latency.
 
+The client supplied a second 290.97-second conversational-range recording on 2026-08-07. It measured -24.0 LUFS integrated with a -4.6 dBFS true peak. The raw take contained several natural self-corrections, so a clean 57.05-second range sample was selected and added to the existing 120.03-second reference. Provider readback confirms two samples and a combined 177.08 seconds, below ElevenLabs' three-minute IVC ceiling. The original client files and derived audio remain outside the repository.
+
+This source update is verified, but improved naturalness is not yet confirmed. Regenerate the five fixed samples and complete the blinded human and controlled live-call review before closing the client's robotic-sounding feedback.
+
 | Variant | Naturalness | Likeness | Pacing | Policy wording | Status |
 | --- | ---: | ---: | ---: | ---: | --- |
-| Current Instant Voice Clone + Eleven v3 | Not scored | Not scored | Not scored | 5/5 scripted boundaries represented | Awaiting blinded human review |
+| Updated Instant Voice Clone + Eleven v3 | Not scored | Not scored | Not scored | 5/5 scripted boundaries represented | Source updated; awaiting blinded human review |
 | Professional Voice Clone comparison | Not available | Not available | Not available | Not run | Awaiting owner-created and verified PVC |
 
 ## Human listening procedure

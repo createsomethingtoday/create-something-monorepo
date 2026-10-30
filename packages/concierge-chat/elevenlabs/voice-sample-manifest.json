@@ -4,6 +4,20 @@
   "voiceId": "MiyNFjJv2KkZlFTQND0g",
   "modelId": "eleven_v3",
   "outputFormat": "mp3_44100_128",
+  "voiceSources": {
+    "sampleCount": 2,
+    "combinedDurationSeconds": 177.084082,
+    "existingSample": {
+      "sampleId": "RcIjxYP35cu6waW3SuIG",
+      "durationSeconds": 120.032653,
+      "sha256": "65749a7595a66836e9656d85434a3f6799dc4bdf6d642f0673178476821e93b9"
+    },
+    "conversationalRangeSample": {
+      "sampleId": "bL1HbyXv1fuL7qlh3oe7",
+      "durationSeconds": 57.051429,
+      "sha256": "e8aa30effad0c970b7ddb95ca3cdb36afd5b59afa6a1d7b1641a23f6e8154ce2"
+    }
+  },
   "samples": [
     {
       "id": "01-examiner-interest",
