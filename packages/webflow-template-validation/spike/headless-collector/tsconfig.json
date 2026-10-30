@@ -1,0 +1,5 @@
+{
+	"extends": "../../worker/tsconfig.json",
+	"compilerOptions": { "types": [], "allowImportingTsExtensions": true },
+	"include": ["*.ts"]
+}

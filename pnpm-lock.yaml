@@ -5368,6 +5368,18 @@ importers:
         specifier: ^5
         version: 5.9.3
 
+  packages/webflow-template-validation/cli:
+    devDependencies:
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      esbuild:
+        specifier: ^0.28.1
+        version: 0.28.1
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/webflow-template-validation/extension:
     devDependencies:
       '@types/node':
