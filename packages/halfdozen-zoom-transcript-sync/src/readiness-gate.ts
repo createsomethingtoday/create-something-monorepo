@@ -97,11 +97,15 @@ export class Gate {
     if (!propertyText(p[GATE_FIELDS.current])) return; // Unmanaged/manual pages keep their existing workflow.
     await this.patch({ [GATE_FIELDS.ready]: rich(''), [GATE_FIELDS.index]: { url: null } });
   }
-  async publish(token: string, index: string, assertReady: () => Promise<void>): Promise<void> {
+  async publish(token: string, index: string, assertReady: () => Promise<void>, indexPageUrl?: string): Promise<void> {
     await this.reconcile(); await assertReady(); await this.journal.assertOwner();
     if (propertyText((await this.transport.getPage(this.page)).properties[GATE_FIELDS.current]) !== token) throw Error('Readiness current version changed');
     // Never rewrite Current here. A delayed old Ready cannot validate a newer generation.
-    await this.patch({ [GATE_FIELDS.ready]: rich(token), [GATE_FIELDS.index]: { url: `https://www.notion.so/${this.page.replace(/-/g, '')}#${index.replace(/-/g, '')}` } }, assertReady);
+    if (indexPageUrl) {
+      const url = new URL(indexPageUrl);
+      if (url.protocol !== 'https:' || !['www.notion.so', 'notion.so', 'app.notion.com'].includes(url.hostname) || url.hash || !url.pathname.replace(/-/g, '').endsWith(index.replace(/-/g, ''))) throw Error('Invalid direct index page URL');
+    }
+    await this.patch({ [GATE_FIELDS.ready]: rich(token), [GATE_FIELDS.index]: { url: indexPageUrl ?? `https://www.notion.so/${this.page.replace(/-/g, '')}#${index.replace(/-/g, '')}` } }, assertReady);
     await assertReady();
   }
 }

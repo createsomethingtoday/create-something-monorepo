@@ -1,3 +1,4 @@
+import { isPageFormat } from './page-transcript';
 import { atOrAfter, rolloutCutoff } from './rollout';
 import { writeInlineTranscript } from './inline-transcript';
 import { type TranscriptPlan, type WriteJournal } from './indexed-transcript';
@@ -39,6 +40,7 @@ interface HubToolResult {
 }
 
 export interface NotionTransport {
+  createChildPage?(parent: string, title: string, children: BlockObject[]): Promise<PageObject>;
   queryDatabase(filter: unknown, pageSize: number): Promise<QueryResult>;
   getPage(pageId: string): Promise<PageObject>;
   createPage(properties: Record<string, unknown>): Promise<PageObject>;
@@ -111,6 +113,8 @@ export async function syncTranscriptToNotion(
   // Resolve any uncertain property write before a newer projection can advance.
   await gate?.reconcile();
   const indexBlockId = await writeInlineTranscript(env.DB, {
+    createChildPage: notion.createChildPage?.bind(notion),
+    getPage: id => notion.getPage(id),
     list: (id) => listAllBlocks(notion, id),
     append: (id, blocks, after) => notion.appendBlocks(id, blocks, after),
     get: id => notion.getBlock(id),
@@ -121,7 +125,8 @@ export async function syncTranscriptToNotion(
   const projection = gate ? await env.DB.prepare('SELECT generation FROM transcript_inline_projection WHERE page_id = ? AND version = ? AND phase = ?')
     .bind(pageId, plan.version, 'complete').first<{ generation: number }>() : null;
   if (gate && !projection) throw Error('Missing complete readiness projection');
-  return { pageId, pageUrl, action: existing ? 'updated' : 'created', indexBlockId,
+  const indexPageUrl = isPageFormat(plan.format) ? (await notion.getPage(indexBlockId)).url : undefined;
+  return { pageId, pageUrl, action: existing ? 'updated' : 'created', indexBlockId, indexPageUrl,
     ...(projection ? { gateVersion: gateToken(plan.version, projection.generation) } : {}) };
 }
 
@@ -144,7 +149,7 @@ export async function publishNotionReadiness(env: Env, write: NotionWriteResult,
       .bind(write.pageId, fence.key, fence.selected, fence.owner, write.indexBlockId).first<{ version: string; generation: number }>();
     if (!row || gateToken(row.version, row.generation) !== write.gateVersion) throw Error('Readiness publication fence changed');
   };
-  await new Gate(env.DB, createNotionTransport(env), journal, write.pageId).publish(write.gateVersion, write.indexBlockId, assertReady);
+  await new Gate(env.DB, createNotionTransport(env), journal, write.pageId).publish(write.gateVersion, write.indexBlockId, assertReady, write.indexPageUrl);
 }
 
 async function listAllBlocks(notion: NotionTransport, parent: string): Promise<BlockObject[]> {
@@ -467,6 +472,10 @@ class DirectNotionTransport implements NotionTransport {
 
   getPage(pageId: string): Promise<PageObject> {
     return this.request<PageObject>(`/pages/${pageId}`);
+  }
+
+  async createChildPage(parent: string, title: string, children: BlockObject[]): Promise<PageObject> {
+    return this.request('/pages', 'POST', { parent: { page_id: parent }, properties: { title: { title: [{ type: 'text', text: { content: title } }] } }, children });
   }
 
   async createPage(properties: Record<string, unknown>): Promise<PageObject> {

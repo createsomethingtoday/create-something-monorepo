@@ -126,3 +126,27 @@ test('resuming an unsent pending append consumes the shared batch budget',async(
  assert.equal(blockText(p.children.get('page')![0]!), '📝 FULL TRANSCRIPT (updating)');
  await write(s,p,j,text);check(p,text);
 });
+
+test('page representation advances generation, preserves v2 archive and inline body, and supports rollback without token reuse', async()=>{
+ const {PAGE_FORMAT}=await import('../src/page-transcript.ts');
+ class Pages extends Provider {
+  pages=new Map<string,Block>();
+  createChildPage=async(parent:string,title:string,children:Block[])=>{
+   const id=String(++this.sequence).padStart(32,'0'),page={object:'page',id,url:`https://www.notion.so/Returned-${id}`,parent:{page_id:parent},properties:{title:{title:[{text:{content:title}}]}}};
+   await this.mutate('create-page',()=>{this.pages.set(id,page);this.children.set(id,children.map(this.materialize));this.children.get(parent)!.push({id,type:'child_page',child_page:{title}});});return page;
+  };
+  getPage=async(id:string)=>structuredClone(this.pages.get(id)!);
+ }
+ const store=db(),p=new Pages(),j=journal(),text=raw(627),parsed=parseTranscript(text,'vtt');
+ const old=await planTranscript(parsed),next=await planTranscript(parsed,PAGE_FORMAT);
+ await write(store,p,j,text); const oldArchive=structuredClone(p.children.get(p.children.get('page')!.at(-1)!.id));
+ const generation=async()=>await store.prepare('SELECT generation, version FROM transcript_inline_projection WHERE page_id = ?').bind('page').first<any>();
+ assert.equal((await generation()).generation,1);
+ let index='';for(let i=0;i<20;i++){try{index=await writeInlineTranscript(store,p,j,'page',parsed,next);break;}catch(e){if(!(e instanceof InlineContinuation))throw e;}}
+ assert.ok(p.pages.has(index)); assert.equal((await generation()).generation,2);assert.equal((await generation()).version,next.version);
+ const rows=p.children.get('page')!,archive=rows.find(b=>blockText(b)==='Source archive')!;
+ assert.deepEqual(p.children.get(archive.id)!.slice(0,oldArchive!.length),oldArchive);
+ assert.deepEqual(rows.filter(b=>b.type!=='child_page').slice(1,-1).map(b=>[b.type,blockText(b)]),inlineBlocks(parsed).map(b=>[b.type,blockText(b)]));
+ const sends=p.sends; await writeInlineTranscript(store,p,j,'page',parsed,next);assert.equal(p.sends,sends);
+ await writeInlineTranscript(store,p,j,'page',parsed,old);assert.equal((await generation()).generation,3);assert.equal((await generation()).version,old.version);assert.ok(p.pages.has(index));
+});
