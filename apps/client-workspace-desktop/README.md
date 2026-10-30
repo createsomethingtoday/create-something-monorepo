@@ -105,3 +105,11 @@ HTML and CSS complete while preventing delivered JavaScript from reaching the
 parent control plane. A future interactive preview must use a separately
 authenticated origin; it must not add both script and same-origin sandbox grants
 to the current loopback iframe.
+
+## Managed outbound connector candidate
+
+The separate [Rust connector slice](native-connector/README.md) supervises the
+existing workspace runtime and a per-client outbound tunnel with local approval,
+private audit and persistent local revocation. It does not change the Tauri
+launcher or install a service. Its README defines configuration, tests, rollback
+and the external production gates owned by the release orchestrator.

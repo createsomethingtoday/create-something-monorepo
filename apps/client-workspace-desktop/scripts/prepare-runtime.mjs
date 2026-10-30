@@ -6,6 +6,7 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  realpathSync,
   readdirSync,
   rmSync,
   writeFileSync
@@ -23,10 +24,18 @@ const generatedPublicKeyPath = join(trustRoot, 'local-signing-public.pem');
 const revokedPrivateKeyPath = join(trustRoot, 'local-revoked-private.pem');
 const revokedPublicKeyPath = join(trustRoot, 'local-revoked-public.pem');
 const releaseMode = process.env.CLIENT_WORKSPACE_RELEASE_MODE === 'production';
+const connectorRelease = process.env.CLIENT_WORKSPACE_CONNECTOR_RELEASE === '1';
 const managedKeyringPath = process.env.CLIENT_WORKSPACE_TRUST_KEYRING_FILE;
+const cloudflaredPath = process.env.CLIENT_WORKSPACE_CLOUDFLARED_PATH;
 
 if (releaseMode && !managedKeyringPath) {
   throw new Error('Production runtime preparation requires CLIENT_WORKSPACE_TRUST_KEYRING_FILE.');
+}
+if (connectorRelease && (!releaseMode || !cloudflaredPath)) {
+  throw new Error('Connector release preparation requires production mode and CLIENT_WORKSPACE_CLOUDFLARED_PATH.');
+}
+if (cloudflaredPath && !existsSync(cloudflaredPath)) {
+  throw new Error('Configured cloudflared executable does not exist.');
 }
 
 execFileSync('pnpm', ['--filter', '@create-something/client-workspace', 'build'], {
@@ -40,6 +49,21 @@ mkdirSync(join(resourcesRoot, 'trust'), { recursive: true });
 cpSync(join(repoRoot, 'packages', 'client-workspace', 'build'), join(resourcesRoot, 'server'), {
   recursive: true
 });
+// Adapter-node externalizes these runtime imports. Copy the lockfile-installed
+// packages into the release so the server boots outside the monorepo as well.
+for (const dependency of ['jose', 'svelte']) {
+  const installed = join(repoRoot, 'packages', 'client-workspace', 'node_modules', dependency);
+  if (!existsSync(installed)) throw new Error(`Missing client workspace runtime dependency: ${dependency}`);
+  cpSync(realpathSync(installed), join(resourcesRoot, 'server', 'node_modules', dependency), {
+    recursive: true,
+    dereference: true
+  });
+}
+mkdirSync(join(resourcesRoot, 'server', 'scripts'), { recursive: true });
+cpSync(
+  join(repoRoot, 'packages', 'client-workspace', 'scripts', 'dual-origin-server.mjs'),
+  join(resourcesRoot, 'server', 'scripts', 'dual-origin-server.mjs')
+);
 const removeSourceMaps = (directory) => {
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
     const path = join(directory, entry.name);
@@ -56,8 +80,14 @@ if (!bunPath || !existsSync(bunPath)) {
   throw new Error('Bundled runtime preparation requires Bun. Set CLIENT_WORKSPACE_BUN_PATH.');
 }
 const bundledBun = join(resourcesRoot, 'runtime', 'bun');
-cpSync(bunPath, bundledBun);
+cpSync(realpathSync(bunPath), bundledBun);
 chmodSync(bundledBun, 0o755);
+let bundledCloudflared;
+if (cloudflaredPath) {
+  bundledCloudflared = join(resourcesRoot, 'runtime', 'cloudflared');
+  cpSync(realpathSync(cloudflaredPath), bundledCloudflared);
+  chmodSync(bundledCloudflared, 0o755);
+}
 
 mkdirSync(trustRoot, { recursive: true });
 if (!releaseMode && !existsSync(privateKeyPath)) {
@@ -93,7 +123,7 @@ if (managedKeyringPath) {
   if (!existsSync(managedKeyringPath)) {
     throw new Error('Configured workspace trust keyring does not exist.');
   }
-  cpSync(managedKeyringPath, bundledKeyring);
+  cpSync(realpathSync(managedKeyringPath), bundledKeyring);
 } else {
   const publicKeyPem = readFileSync(generatedPublicKeyPath, 'utf8');
   const revokedPublicKeyPem = readFileSync(revokedPublicKeyPath, 'utf8');
@@ -125,6 +155,11 @@ writeFileSync(
     {
       schema: 'create-something/client-workspace-runtime@1',
       bunSha256: digest(bundledBun),
+      bunVersion: execFileSync(bundledBun, ['--version'], { encoding: 'utf8' }).trim(),
+      cloudflaredSha256: bundledCloudflared ? digest(bundledCloudflared) : null,
+      cloudflaredVersion: bundledCloudflared
+        ? execFileSync(bundledCloudflared, ['--version'], { encoding: 'utf8' }).trim()
+        : null,
       trustKeyringSha256: digest(bundledKeyring),
       releaseMode
     },
@@ -134,4 +169,4 @@ writeFileSync(
 );
 
 console.log(`Prepared desktop runtime at ${resourcesRoot}`);
-console.log(`Local fixture private key: ${privateKeyPath}`);
+if (!releaseMode) console.log(`Local fixture private key: ${privateKeyPath}`);
