@@ -117,6 +117,7 @@ export const AGENT_TOOLS: Anthropic.Messages.ToolUnion[] = [
         },
         has_ecommerce: { type: ['boolean', 'null'], description: 'Require a full online-store setup.' },
         has_membership: { type: ['boolean', 'null'], description: 'Require member login / gated content support.' },
+        max_price: { type: ['number', 'null'], minimum: 0, maximum: 100000, description: 'Maximum template price in USD. Enforced across the catalog; unknown prices excluded.' },
         has_cms: { type: ['boolean', 'null'], description: 'Require CMS collections (blog, listings, dynamic content).' },
         free_only: { type: ['boolean', 'null'], description: 'Only free templates.' },
         sort: {
@@ -134,6 +135,7 @@ export const AGENT_TOOLS: Anthropic.Messages.ToolUnion[] = [
         'types',
         'has_ecommerce',
         'has_membership',
+        'max_price',
         'has_cms',
         'free_only',
         'sort',
@@ -205,6 +207,8 @@ export const AGENT_TOOLS: Anthropic.Messages.ToolUnion[] = [
           items: { type: 'string', enum: [...TEMPLATE_TYPES] },
           description: 'Replace the page Type filters ("Multi Layout", "Multi Page", "One Page").',
         },
+        max_price: { type: ['number', 'null'], minimum: 0, maximum: 100000, description: 'Maximum template price in USD; null clears it.' },
+        has_cms: { type: ['boolean', 'null'], description: 'Required CMS capability; null clears it.' },
         free_only: { type: 'boolean', description: 'Toggle the page free-only filter.' },
         sort: { type: 'string', enum: [...SORT_VALUES], description: 'Set the page sort.' },
         clear_filters: { type: 'boolean', description: 'Reset all page filters before applying the rest.' },
@@ -222,10 +226,12 @@ export const AGENT_TOOLS: Anthropic.Messages.ToolUnion[] = [
 // ── Tool executors ────────────────────────────────────────────────────────────
 
 export interface PageActionInput {
+  has_cms?: boolean | null;
   q?: string | null;
   category_group_slug?: string | null;
   styles?: string[] | null;
   types?: string[] | null;
+  max_price?: number | null;
   free_only?: boolean | null;
   sort?: string | null;
   clear_filters?: boolean | null;
@@ -241,6 +247,7 @@ export interface SearchToolInput {
   has_ecommerce?: boolean | null;
   has_membership?: boolean | null;
   has_cms?: boolean | null;
+  max_price?: number | null;
   free_only?: boolean | null;
   sort?: string | null;
   page_size?: number | null;
@@ -258,7 +265,11 @@ export function buildSearchUrl(base: string, input: SearchToolInput): string {
   for (const type of input.types ?? []) url.searchParams.append('types', type);
   if (input.has_ecommerce) url.searchParams.set('has_ecommerce', 'true');
   if (input.has_membership) url.searchParams.set('has_membership', 'true');
-  if (input.has_cms) url.searchParams.set('has_cms', 'true');
+  if (input.has_cms != null) url.searchParams.set('has_cms', String(input.has_cms));
+  if (input.max_price != null) {
+    if (!Number.isFinite(input.max_price) || input.max_price < 0 || input.max_price > 100000 || Math.abs(input.max_price * 100 - Math.round(input.max_price * 100)) > 1e-6) throw new Error('Invalid max_price');
+    url.searchParams.set('max_price', String(input.max_price));
+  }
   if (input.free_only) url.searchParams.set('free_only', 'true');
   if (input.sort) url.searchParams.set('sort', input.sort);
   return url.toString();
@@ -409,6 +420,8 @@ export class TemplateToolExecutor {
     if (input.types != null) {
       payload.types = input.types.filter((value) => (TEMPLATE_TYPES as readonly string[]).includes(value)).slice(0, 3);
     }
+    if ('max_price' in input && (input.max_price === null || (typeof input.max_price === 'number' && Number.isFinite(input.max_price) && input.max_price >= 0 && input.max_price <= 100000))) payload.max_price = input.max_price == null ? null : Math.round(input.max_price * 100) / 100;
+    if ('has_cms' in input && (input.has_cms === null || typeof input.has_cms === 'boolean')) payload.has_cms = input.has_cms;
     if (input.free_only != null) payload.free_only = input.free_only;
     if (input.sort != null && (SORT_VALUES as readonly string[]).includes(input.sort)) payload.sort = input.sort;
     if (input.clear_filters) payload.clear_filters = true;
@@ -482,4 +495,14 @@ export class TemplateToolExecutor {
       dropped,
     };
   }
+}
+
+/** Older embedded grids do not understand brief-only filters. Keep their tool contract unchanged. */
+export function toolsForBrief(enabled: boolean): Anthropic.Messages.ToolUnion[] {
+  if (enabled) return AGENT_TOOLS;
+  return AGENT_TOOLS.map(tool => {
+    if (!('name' in tool) || tool.name !== 'update_page' || !('input_schema' in tool)) return tool;
+    const { max_price: _price, has_cms: _cms, ...properties } = (tool.input_schema.properties ?? {}) as Record<string, unknown>;
+    return { ...tool, input_schema: { ...tool.input_schema, properties } };
+  });
 }

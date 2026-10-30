@@ -334,6 +334,12 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
     binds.push(...params.types);
   }
 
+  if (params.maxPrice != null) {
+    // Unknown price is not proof of affordability. A confirmed free flag is.
+    clauses.push('(CASE WHEN d.price IS NOT NULL THEN d.price WHEN d.is_free = 1 THEN 0 ELSE NULL END) <= ?');
+    binds.push(params.maxPrice);
+  }
+
   if (params.hasCms != null) {
     clauses.push('d.has_cms = ?');
     binds.push(params.hasCms ? 1 : 0);
@@ -854,6 +860,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams, cacheVe
       types: params.types,
       free_only: params.freeOnly,
       has_cms: params.hasCms,
+      max_price: params.maxPrice ?? null,
       relaxed: relaxedQuery,
     },
     available_facets: {

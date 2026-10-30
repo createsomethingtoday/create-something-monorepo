@@ -223,6 +223,7 @@ export interface SearchParams {
   types: string[];
   freeOnly: boolean;
   hasCms: boolean | null;
+  maxPrice?: number | null;
   sort: TemplateSort;
   view: TemplateSearchView;
   page: number;
@@ -297,6 +298,7 @@ export interface SearchResponsePayload {
     types: string[];
     free_only: boolean;
     has_cms: boolean | null;
+    max_price?: number | null;
     /** True when the strict all-tokens query matched nothing and results come from an OR-relaxed retry. */
     relaxed: boolean;
   };
