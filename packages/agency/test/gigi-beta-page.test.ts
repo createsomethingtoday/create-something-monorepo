@@ -142,5 +142,15 @@ test("0.2.14 clearly defers phone qualification and preserves rollback", () => {
 
 
 test('connection guidance separates admission from Google consent and limits acceptance claims', () => {
- for (const text of ['GiGi sign-in, beta access and Google consent', 'Existing connections and pending consent are preserved', 'reconnecting Google does not repair admission', '734 automated tests with no skips', 'no Google provider calls', 'Grant’s specific denial remain unverified', '0.2.12 improvements', '0.2.13 agent continuation']) assert.ok(gigiBetaHtml.includes(text), text);
+ for (const text of ['GiGi sign-in, app access and Google consent', 'Existing connections and pending consent are preserved', 'reconnecting Google does not repair admission', '734 automated tests with no skips', 'no Google provider calls', 'Grant’s specific denial remain unverified', '0.2.12 improvements', '0.2.13 agent continuation']) assert.ok(gigiBetaHtml.includes(text), text);
+});
+
+test('download page offers public signup without claiming Google onboarding qualification', () => {
+ assert.match(gigiBetaHtml, /href="https:\/\/id\.createsomething\.space\/signup\?app=gigi"/);
+ assert.ok(gigiBetaHtml.includes('No invitation is needed'));
+ assert.ok(gigiBetaHtml.includes('No new installer is required'));
+ assert.ok(gigiBetaHtml.includes('verify your email'));
+ assert.ok(gigiBetaHtml.includes('Sign in to GiGi sources'));
+ assert.ok(gigiBetaHtml.includes('Public Google consent and first-import qualification remain unverified'));
+ assert.doesNotMatch(gigiBetaHtml, /use the invited GiGi account|ask the beta operator to review access/);
 });
