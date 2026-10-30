@@ -26,7 +26,7 @@ The storefront reuses the Creator bio. It has no bio field. The bio override in 
 
 ## 3. Authoring authentication
 
-1. Resolve the session to exactly one Creator. Today this is the exact email match in Asset Dashboard. Zero matches → 404. More than one match → 409. Never select the first match.
+1. Resolve the session to exactly one Creator. Today this is the exact email match in Asset Dashboard. Zero matches → 404. More than one match → 409 with `details.choices` (`{id, slug}` of each matched Creator, nothing else). Never select the first match. A caller may then name one with the optional `X-Storefront-Creator-Id` header (record ID); it is accepted only if it is exactly one of the Creators the email matched (otherwise 403, malformed 400), including when only one matched. The header never replaces the email lookup.
 2. Creator Hub (webflow/webflow) calls this service over HTTP only. webflow/webflow has no Airtable adapter. A Creator Hub caller needs a verified workspace mapping before it can edit.
 
 ## 4. Serialized writes (REQUIRED)
@@ -231,6 +231,6 @@ What was built, and where it settles this contract. Package README: `packages/cr
 | Selection rows | Every row must link exactly one storefront (this one) and one asset. Duplicate assets or positions fail closed before any mutation or publish. During intent replay, extra rows for a target asset are removed, since only the writer's own uncertain create can produce them. |
 | Idempotency | Required on every mutation (`Idempotency-Key`, 8–128 URL-safe chars), kept 24 h. Same key with a different payload → 422 `idempotency_conflict`. Failures that committed nothing release the key. |
 | Suspension | The writer's latest intent status wins over Airtable, so a suspension whose Airtable step failed still blocks the owner. |
-| Auth | Owner routes: `OWNER_API_KEY` + `X-Storefront-Actor-Email`. The service resolves the Creator with the dashboard's shared email formula (`@create-something/webflow-dashboard-core/creator-email`); zero matches → 404, more than one → 409. Staff routes: `STAFF_API_KEY` only. Each key gets 403 on the other's routes, and identical keys are a configuration error. |
+| Auth | Owner routes: `OWNER_API_KEY` + `X-Storefront-Actor-Email`. The service resolves the Creator with the dashboard's shared email formula (`@create-something/webflow-dashboard-core/creator-email`); zero matches → 404, more than one → 409 with `{id, slug}` choices; optional `X-Storefront-Creator-Id` selects one of those matches (403 if not a match, 400 if malformed). The Dashboard proxy forwards it from `?creator=` / the POST body `creatorId` after a format check, in a freshly built header. Staff routes: `STAFF_API_KEY` only. Each key gets 403 on the other's routes, and identical keys are a configuration error. |
 | Dashboard | `/api/storefront` proxy plus a Storefront tab in Settings, shown only when `CREATOR_STOREFRONT_ENABLED=true`, the URL and key are valid, and the user is on the optional allowlist. The proxy checks Origin itself, builds outgoing headers from the session only, and allow-lists every response field. |
 | Not built | Edge cache; hourly eligibility sweep; Webflow identity verification step (the 🔑 fields stay null); ownership transfer for slugs; Marketplace page consumption; Creator Hub client; staff UI (staff routes are API only). |

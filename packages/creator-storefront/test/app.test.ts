@@ -156,13 +156,105 @@ describe('authorization', () => {
 		expect((await ctx.call('/v1/owner/storefront', { key: OWNER_KEY, email: 'owner@example.com' })).status).toBe(200);
 	});
 
-	it('an owner caller cannot name a creator: the email resolves it, and ambiguity is refused', async () => {
+	it('the email resolves the creator: none is 404, several is 409 and never picks one implicitly', async () => {
 		const ctx = setup();
 		expect((await ctx.call('/v1/owner/storefront', { key: OWNER_KEY, email: 'nobody@example.com' })).status).toBe(404);
 		ctx.store.addCreator('owner@example.com', 'duplicate');
 		const response = await ctx.call('/v1/owner/storefront', { key: OWNER_KEY, email: 'owner@example.com' });
 		expect(response.status).toBe(409);
 		expect(await response.json()).toMatchObject({ error: 'ambiguous_creator' });
+	});
+
+	describe('creator selection (X-Storefront-Creator-Id)', () => {
+		const SELECT = 'X-Storefront-Creator-Id';
+		const withSelection = (ctx: ReturnType<typeof setup>, id: string | null, extra: RequestInit = {}) =>
+			ctx.call('/v1/owner/storefront', {
+				key: OWNER_KEY,
+				email: 'owner@example.com',
+				...extra,
+				headers: { ...(id === null ? {} : { [SELECT]: id }), ...((extra.headers as Record<string, string>) ?? {}) }
+			});
+
+		it('ambiguity returns sanitized choices from the matched records only', async () => {
+			const ctx = setup();
+			const second = ctx.store.addCreator('owner@example.com', 'second-studio');
+			const unrelated = ctx.store.addCreator('someone-else@example.com', 'not-yours');
+			const response = await withSelection(ctx, null);
+			expect(response.status).toBe(409);
+			const text = await response.text();
+			const body = JSON.parse(text);
+			expect(body.error).toBe('ambiguous_creator');
+			expect(body.details).toEqual({
+				choices: [
+					{ id: ctx.creator.id, slug: 'studio' },
+					{ id: second.id, slug: 'second-studio' }
+				]
+			});
+			expect(text).not.toContain(unrelated.id);
+			expect(text).not.toContain('@');
+		});
+
+		it('a selected matched creator resolves only that creator', async () => {
+			const ctx = setup();
+			const second = ctx.store.addCreator('owner@example.com', 'second-studio');
+			const view = await withSelection(ctx, second.id);
+			expect(view.status).toBe(200);
+			const save = await ctx.call('/v1/owner/storefront', {
+				method: 'PUT',
+				key: OWNER_KEY,
+				email: 'owner@example.com',
+				headers: { [SELECT]: second.id, 'Idempotency-Key': 'select-key-0001', 'Content-Type': 'application/json' },
+				body: JSON.stringify({ expectedDraftVersion: 0, fields: { positioning: 'Second studio' } })
+			});
+			expect(save.status).toBe(200);
+			const linked = [...ctx.store.storefronts.values()];
+			expect(linked).toHaveLength(1);
+			expect(linked[0].creatorIds).toEqual([second.id]);
+		});
+
+		it('selecting the only match is accepted, and omitting it still works unchanged', async () => {
+			const ctx = setup();
+			expect((await withSelection(ctx, ctx.creator.id)).status).toBe(200);
+			expect((await withSelection(ctx, null)).status).toBe(200);
+		});
+
+		it('a creator the email did not match is 403, with one match or several', async () => {
+			const ctx = setup();
+			const foreign = ctx.store.addCreator('someone-else@example.com', 'not-yours');
+			expect((await withSelection(ctx, foreign.id)).status).toBe(403);
+			ctx.store.addCreator('owner@example.com', 'second-studio');
+			expect((await withSelection(ctx, foreign.id)).status).toBe(403);
+			expect(ctx.store.storefronts.size).toBe(0);
+		});
+
+		it('a malformed selection is 400 and does not fall back to a creator', async () => {
+			const ctx = setup();
+			for (const bad of ['', '   ', 'not-a-record', 'rec123', `${ctx.creator.id}x`, 'recAAAAAAAAAAAAAA, recBBBBBBBBBBBBBB']) {
+				expect((await withSelection(ctx, bad)).status).toBe(400);
+			}
+		});
+
+		it('the actor cannot be spoofed: a selection is only honored with the owner credential and its own email matches', async () => {
+			const ctx = setup();
+			const foreign = ctx.store.addCreator('victim@example.com', 'victim-studio');
+			expect((await ctx.call('/v1/owner/storefront', { email: 'victim@example.com', headers: { [SELECT]: foreign.id } })).status).toBe(401);
+			expect((await ctx.call('/v1/owner/storefront', { key: STAFF_KEY, email: 'victim@example.com', headers: { [SELECT]: foreign.id } })).status).toBe(403);
+			// With the owner credential the actor is still the email: owner@ cannot reach victim@'s creator.
+			expect((await withSelection(ctx, foreign.id)).status).toBe(403);
+		});
+
+		it('staff routes ignore the selection header', async () => {
+			const ctx = setup();
+			await publishFixture(ctx);
+			const other = ctx.store.addCreator('other@example.com', 'other-studio');
+			const response = await ctx.call(`/v1/staff/creators/${ctx.creator.id}/suspend`, {
+				method: 'POST',
+				key: STAFF_KEY,
+				headers: { 'Idempotency-Key': 'staff-key-0002', [SELECT]: other.id }
+			});
+			expect(response.status).toBe(200);
+			expect(await ctx.owner('/v1/owner/storefront/unpublish', 'POST').then((r) => r.status)).toBe(423);
+		});
 	});
 
 	it('staff routes need the staff key; the owner key is forbidden there', async () => {

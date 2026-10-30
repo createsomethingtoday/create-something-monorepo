@@ -4,6 +4,7 @@ import { isAllowedUploadUrl } from '@create-something/webflow-dashboard-core/upl
 import { isTrustedRequestOrigin } from '$lib/server/security';
 import {
 	callStorefrontService,
+	isValidCreatorId,
 	isValidIdempotencyKey,
 	sanitizeError,
 	sanitizeOwnerView,
@@ -28,6 +29,8 @@ const ACTIONS: Record<Action, { method: 'PUT' | 'POST'; path: string }> = {
  * GET /api/storefront            owner view (draft, receipt, candidates)
  * GET /api/storefront?probe=1    { enabled } only; no service call
  * GET /api/storefront?preview=1  preview DTO built from the committed draft
+ * Add &creator=<record ID> (or ?creator=) to act for one of several Creators the
+ * session email matches; without it an ambiguous email gets 409 with choices.
  *
  * Disabled (flag off, misconfigured, not on the beta allowlist) is a normal
  * 200 { enabled: false } so the UI simply hides the tab.
@@ -42,11 +45,17 @@ export const GET: RequestHandler = async ({ url, locals, platform }) => {
 	}
 	if (url.searchParams.has('probe')) return json({ enabled: true }, { headers: noStore });
 
+	const creatorParam = url.searchParams.get('creator');
+	if (creatorParam !== null && !isValidCreatorId(creatorParam)) {
+		return json({ error: 'invalid_request', message: 'Invalid creator selection' }, { status: 400, headers: noStore });
+	}
+
 	const preview = url.searchParams.has('preview');
 	const result = await callStorefrontService(config, {
 		method: 'GET',
 		path: preview ? '/v1/owner/storefront/preview' : '/v1/owner/storefront',
-		actorEmail: email
+		actorEmail: email,
+		creatorId: creatorParam ?? undefined
 	});
 	if (result.status !== 200) {
 		return json(sanitizeError(result.body, result.status), { status: result.status, headers: noStore });
@@ -56,7 +65,7 @@ export const GET: RequestHandler = async ({ url, locals, platform }) => {
 };
 
 /**
- * POST /api/storefront { action, expectedDraftVersion, fields | selections }
+ * POST /api/storefront { action, creatorId?, expectedDraftVersion, fields | selections }
  * Header: Idempotency-Key (generated per user action by the browser).
  *
  * The origin check runs here even if the request carries an Authorization
@@ -90,6 +99,12 @@ export const POST: RequestHandler = async ({ request, url, locals, platform }) =
 		return json({ error: 'invalid_request', message: 'Body must be a JSON object' }, { status: 400, headers: noStore });
 	}
 
+	// Optional creator selection: format-checked here, authorized by the service against the session email.
+	if (body.creatorId !== undefined && body.creatorId !== null && !isValidCreatorId(body.creatorId)) {
+		return json({ error: 'invalid_request', message: 'Invalid creator selection' }, { status: 400, headers: noStore });
+	}
+	const creatorId = typeof body.creatorId === 'string' ? body.creatorId : undefined;
+
 	const action = body.action as Action;
 	// Own keys only: 'constructor' or '__proto__' must not resolve to a target.
 	const target = typeof action === 'string' && Object.hasOwn(ACTIONS, action) ? ACTIONS[action] : undefined;
@@ -117,6 +132,7 @@ export const POST: RequestHandler = async ({ request, url, locals, platform }) =
 		method: target.method,
 		path: target.path,
 		actorEmail: email,
+		creatorId,
 		body: payload,
 		idempotencyKey
 	});

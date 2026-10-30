@@ -6,7 +6,10 @@
  * from scratch: the browser's Authorization or X-Storefront-* headers are
  * never forwarded. The actor email always comes from the session
  * (locals.user), and the service resolves the Creator itself, rejecting
- * ambiguous matches.
+ * ambiguous matches. When one email matches several Creators, the browser may
+ * name one by record ID; the ID is format-checked here and forwarded in a
+ * freshly built header, and the service accepts it only if it is one of the
+ * Creators the session email matched.
  */
 
 export interface StorefrontEnv {
@@ -24,6 +27,7 @@ export type StorefrontConfig =
 
 const MIN_KEY_LENGTH = 32;
 const IDEMPOTENCY_KEY = /^[A-Za-z0-9_-]{8,128}$/;
+const CREATOR_ID = /^rec[A-Za-z0-9]{14}$/;
 const TIMEOUT_MS = 10_000;
 
 function serviceOrigin(value: string, environment: string | undefined): string | null {
@@ -62,10 +66,16 @@ export function isValidIdempotencyKey(value: string | null): value is string {
 	return Boolean(value && IDEMPOTENCY_KEY.test(value));
 }
 
+export function isValidCreatorId(value: unknown): value is string {
+	return typeof value === 'string' && CREATOR_ID.test(value);
+}
+
 export interface ServiceCall {
 	method: 'GET' | 'PUT' | 'POST';
 	path: string;
 	actorEmail: string;
+	/** Which of the email's matched Creators to act for. Checked by the service, not trusted here. */
+	creatorId?: string;
 	body?: unknown;
 	idempotencyKey?: string;
 }
@@ -81,6 +91,7 @@ export async function callStorefrontService(
 		'X-Storefront-Actor-Email': call.actorEmail.trim().toLowerCase(),
 		Accept: 'application/json'
 	});
+	if (call.creatorId && isValidCreatorId(call.creatorId)) headers.set('X-Storefront-Creator-Id', call.creatorId);
 	if (call.body !== undefined) headers.set('Content-Type', 'application/json');
 	if (call.idempotencyKey) headers.set('Idempotency-Key', call.idempotencyKey);
 
@@ -156,16 +167,26 @@ export function sanitizePreview(value: unknown): Json {
 	};
 }
 
+/** Only a genuine ambiguity carries choices, and only record ID and slug of each. */
+function sanitizeChoices(error: string, status: number, details: Json): Array<{ id: string; slug: string | null }> {
+	if (error !== 'ambiguous_creator' || status !== 409) return [];
+	return arr(details.choices)
+		.map((c) => obj(c))
+		.filter((c) => isValidCreatorId(c.id))
+		.map((c) => ({ id: c.id as string, slug: typeof c.slug === 'string' ? c.slug : null }));
+}
+
 export function sanitizeError(value: unknown, status: number): Json {
 	const body = obj(value);
 	const error = typeof body.error === 'string' ? body.error : status >= 500 ? 'service_unavailable' : 'request_failed';
 	const message = typeof body.message === 'string' ? body.message : 'Storefront request failed';
 	const details = obj(body.details);
 	const issues = arr(details.issues).map((i) => pick(i, ['field', 'issue', 'assetId', 'reason'] as const));
-	return {
-		error,
-		message,
-		...(issues.length ? { details: { issues } } : {}),
-		...(typeof details.currentDraftVersion === 'number' ? { details: { currentDraftVersion: details.currentDraftVersion } } : {})
+	const choices = sanitizeChoices(error, status, details);
+	const safeDetails = {
+		...(issues.length ? { issues } : {}),
+		...(typeof details.currentDraftVersion === 'number' ? { currentDraftVersion: details.currentDraftVersion } : {}),
+		...(choices.length ? { choices } : {})
 	};
+	return { error, message, ...(Object.keys(safeDetails).length ? { details: safeDetails } : {}) };
 }

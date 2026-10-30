@@ -15,8 +15,10 @@
  *   POST /v1/staff/creators/:creatorId/move-slug
  *
  * Owner calls carry OWNER_API_KEY plus the dashboard-authenticated email in
- * X-Storefront-Actor-Email. The service resolves the Creator itself (exactly
- * one match, else 404/409); an owner caller can never name a creator ID.
+ * X-Storefront-Actor-Email. The service resolves the Creator itself from that
+ * email: one match is used as is, none is 404, several are 409 with {id, slug}
+ * choices. An owner caller may add X-Storefront-Creator-Id to choose among the
+ * matches; an ID that is not one of them is 403 (never trusted on its own).
  * Staff calls carry STAFF_API_KEY. Neither key works on the other's routes.
  */
 import { readiness, requireAuthoringConfig, requirePublicConfig } from './config';
@@ -61,6 +63,8 @@ const SLUG = /^[a-z0-9][a-z0-9-]{0,127}$/;
 const RECORD_ID = /^rec[A-Za-z0-9]{14}$/;
 const EMAIL = /^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/;
 const MAX_BODY_BYTES = 16 * 1024;
+/** Optional: which of the email's matched Creators the owner is acting for. */
+const CREATOR_HEADER = 'X-Storefront-Creator-Id';
 
 function json(body: unknown, status = 200, headers: Record<string, string> = PRIVATE_HEADERS): Response {
 	return new Response(JSON.stringify(body), { status, headers });
@@ -118,9 +122,22 @@ async function resolveOwner(request: Request, env: Env, services: AppServices): 
 	if (!EMAIL.test(email)) throw new StorefrontError('unauthorized', 'Missing authenticated actor');
 
 	const matches = await services.store(env).findCreatorsByEmail(email);
+
+	// Optional selection. Never implicit: it must be a well-formed record ID that is
+	// exactly one of the Creators this email matched, even when only one matched.
+	const selected = request.headers.get(CREATOR_HEADER)?.trim();
+	if (selected !== undefined) {
+		if (!RECORD_ID.test(selected)) throw new StorefrontError('invalid_request', 'Invalid creator selection');
+		const match = matches.find((m) => m.id === selected);
+		if (!match) throw new StorefrontError('forbidden', 'This account cannot act for the selected Creator');
+		return match;
+	}
 	if (matches.length === 0) throw new StorefrontError('creator_not_found', 'No Creator matches this account');
 	if (matches.length > 1) {
-		throw new StorefrontError('ambiguous_creator', 'More than one Creator matches this account; contact Marketplace support');
+		// Choices come from the matched records only: record ID and public slug, nothing private.
+		throw new StorefrontError('ambiguous_creator', 'More than one Creator matches this account; select one to continue', {
+			details: { choices: matches.map((m) => ({ id: m.id, slug: m.slug })) }
+		});
 	}
 	return matches[0];
 }

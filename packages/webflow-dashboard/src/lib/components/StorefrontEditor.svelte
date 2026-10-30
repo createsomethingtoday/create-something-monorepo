@@ -4,8 +4,16 @@
    * GET /api/storefront?probe=1 reports enabled). Name, avatar, bio and
    * website stay in the Profile tab; this edits only storefront fields.
    */
+  import { onMount } from 'svelte';
   import { Button, Input, Label, Textarea } from './ui';
   import ImageUploader from './ImageUploader.svelte';
+  import {
+    IdempotencyKeys,
+    readCreatorChoices,
+    storefrontPostBody,
+    storefrontQuery,
+    type CreatorChoice
+  } from '$lib/storefront-session';
 
   interface Props {
     /** Lets the Settings modal block close/Escape while edits are unsaved or a write is running. */
@@ -61,6 +69,11 @@
   let message = $state<{ tone: 'error' | 'success' | 'info'; text: string } | null>(null);
   let conflict = $state(false);
 
+  /** Set only when the login matches several Creators. Every call then names `selected`; the service re-checks it. */
+  let choices = $state<CreatorChoice[] | null>(null);
+  let selected = $state<CreatorChoice | null>(null);
+  let chooserPick = $state('');
+
   let exists = $state(false);
   let draftVersion = $state(0);
   let status = $state('Never published');
@@ -76,8 +89,8 @@
   let addAssetId = $state('');
   let preview = $state<Preview | null>(null);
 
-  /** Keys survive a failed attempt, so "Try again" replays the same request. */
-  let retryKeys = new Map<string, string>();
+  /** Idempotency keys survive a failed attempt, scoped to the selected creator; a creator switch resets them and marks older in-flight results stale. */
+  const keys = new IdempotencyKeys();
 
   const fieldsDirty = $derived(JSON.stringify(fields) !== JSON.stringify(savedFields));
   const selectionsDirty = $derived(JSON.stringify(selections) !== JSON.stringify(savedSelections));
@@ -94,9 +107,46 @@
 
   const nameOf = (assetId: string) => candidates.find((c) => c.assetId === assetId)?.name ?? 'Unavailable template';
 
-  $effect(() => {
+  onMount(() => {
     load();
   });
+
+  const refOf = (c: CreatorChoice) => c.id.slice(-4);
+  const labelOf = (c: CreatorChoice) => (c.slug ? c.slug : 'Creator without a public slug');
+
+  /** Drops everything tied to the previous creator, including idempotency keys and in-flight results. */
+  function resetForCreatorChange() {
+    keys.reset();
+    isBusy = false;
+    isLoading = false;
+    loadError = null;
+    message = null;
+    preview = null;
+    conflict = false;
+    addAssetId = '';
+    applyView({});
+  }
+
+  function chooseCreator() {
+    const pick = choices?.find((c) => c.id === chooserPick);
+    if (!pick) return;
+    resetForCreatorChange();
+    selected = pick;
+    load();
+  }
+
+  function changeCreator() {
+    if (isBusy) return;
+    if (
+      dirty &&
+      typeof window !== 'undefined' &&
+      !window.confirm('Discard your unsaved storefront changes and switch to a different creator?')
+    )
+      return;
+    resetForCreatorChange();
+    selected = null;
+    chooserPick = '';
+  }
 
   function toFields(raw: Record<string, string | null | undefined> = {}): Fields {
     return {
@@ -128,18 +178,27 @@
   }
 
   async function load() {
+    const mine = keys.generation;
     isLoading = true;
     loadError = null;
     conflict = false;
     try {
-      const response = await fetch('/api/storefront');
+      const response = await fetch(`/api/storefront${storefrontQuery(selected)}`);
       const body = await response.json().catch(() => ({}));
+      if (keys.isStale(mine)) return;
+      if (!selected) {
+        const found = readCreatorChoices(body);
+        if (found.length) {
+          choices = found;
+          return;
+        }
+      }
       if (!response.ok) throw new Error(describe(body, response.status));
       applyView(body);
     } catch (err) {
-      loadError = err instanceof Error ? err.message : 'Could not load your storefront';
+      if (!keys.isStale(mine)) loadError = err instanceof Error ? err.message : 'Could not load your storefront';
     } finally {
-      isLoading = false;
+      if (!keys.isStale(mine)) isLoading = false;
     }
   }
 
@@ -148,6 +207,8 @@
     switch (body?.error) {
       case 'ambiguous_creator':
         return 'More than one creator account matches your login. Contact Marketplace support to fix this before editing.';
+      case 'forbidden':
+        return 'Your login cannot edit the selected creator. Choose a different creator.';
       case 'creator_not_found':
         return 'No creator account matches your login.';
       case 'validation_failed': {
@@ -176,26 +237,28 @@
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async function post(action: string, payload: Record<string, unknown>, retryScope: string): Promise<any> {
-    const key = retryKeys.get(retryScope) ?? crypto.randomUUID();
-    retryKeys.set(retryScope, key);
+    const mine = keys.generation;
+    const scope = keys.scope(selected, retryScope);
+    const key = keys.acquire(scope);
     const response = await fetch('/api/storefront', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key },
-      body: JSON.stringify({ action, ...payload })
+      body: JSON.stringify(storefrontPostBody(selected, action, payload))
     });
+    if (keys.isStale(mine)) throw new Error('The creator changed while this request was running. Nothing was applied here.');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const body: any = await response.json().catch(() => ({}));
     if (body?.error === 'version_conflict') {
       conflict = true;
-      retryKeys.delete(retryScope);
+      keys.release(scope);
       throw new Error('This storefront changed somewhere else (another tab or device). Reload to see the latest draft.');
     }
     if (!response.ok) {
       // Validation-style failures committed nothing: the next attempt gets a new key.
-      if (response.status < 500 && response.status !== 409) retryKeys.delete(retryScope);
+      if (response.status < 500 && response.status !== 409) keys.release(scope);
       throw new Error(describe(body, response.status));
     }
-    retryKeys.delete(retryScope);
+    keys.release(scope);
     return body;
   }
 
@@ -239,11 +302,13 @@
   }
 
   async function loadPreview() {
+    const mine = keys.generation;
     isBusy = true;
     message = null;
     try {
-      const response = await fetch('/api/storefront?preview=1');
+      const response = await fetch(`/api/storefront${storefrontQuery(selected, { preview: '1' })}`);
       const body = await response.json().catch(() => ({}));
+      if (keys.isStale(mine)) return;
       if (!response.ok) throw new Error(describe(body, response.status));
       preview = body as Preview;
     } catch (err) {
@@ -333,10 +398,43 @@
 <div class="storefront" data-testid="storefront-editor">
   {#if isLoading}
     <p class="muted">Loading storefront…</p>
+  {:else if choices && !selected}
+    <form
+      class="chooser"
+      data-testid="storefront-chooser"
+      onsubmit={(event) => {
+        event.preventDefault();
+        chooseCreator();
+      }}
+    >
+      <fieldset>
+        <legend>Which creator is this storefront for?</legend>
+        <p class="muted">
+          Your login matches more than one creator record. Choose the one to edit. You can change this later; nothing is
+          edited until you save.
+        </p>
+        {#each choices as choice (choice.id)}
+          <label class="choice">
+            <input type="radio" name="sf-creator" value={choice.id} bind:group={chooserPick} />
+            <span>{labelOf(choice)} <span class="muted">(record …{refOf(choice)})</span></span>
+          </label>
+        {/each}
+      </fieldset>
+      <Button type="submit" variant="default" disabled={!chooserPick}>Continue</Button>
+    </form>
   {:else if loadError}
     <div class="notice error" role="alert">{loadError}</div>
     <Button variant="secondary" onclick={load}>Try again</Button>
+    {#if choices}
+      <Button variant="secondary" onclick={changeCreator}>Choose a different creator</Button>
+    {/if}
   {:else}
+    {#if selected}
+      <div class="creator-bar" data-testid="storefront-selected-creator">
+        <span>Editing the storefront for <strong>{labelOf(selected)}</strong> <span class="muted">(record …{refOf(selected)})</span></span>
+        <Button variant="secondary" size="sm" onclick={changeCreator} disabled={isBusy}>Change creator</Button>
+      </div>
+    {/if}
     <div class="status" data-testid="storefront-status">
       <span class="badge" data-status={status}>{status}</span>
       {#if draftAhead && status === 'Published'}
@@ -359,9 +457,16 @@
       <Button variant="secondary" onclick={load}>Reload latest draft</Button>
     {/if}
 
-    <p class="muted">
-      Your name, profile image, bio and website come from the Profile tab. Changes here are a draft until you publish.
-    </p>
+    {#if choices}
+      <p class="muted">
+        Name, profile image, bio and website are not edited here, and the Profile tab may belong to a different creator
+        record than the one selected above. Changes here are a draft until you publish.
+      </p>
+    {:else}
+      <p class="muted">
+        Your name, profile image, bio and website come from the Profile tab. Changes here are a draft until you publish.
+      </p>
+    {/if}
 
     <fieldset disabled={isBusy || pending || status === 'Suspended'}>
       <div class="form-field">
@@ -493,6 +598,27 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-xs);
+  }
+  .creator-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+  }
+  .chooser {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    align-items: flex-start;
+  }
+  .choice {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
   }
   .count,
   .muted {
