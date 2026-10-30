@@ -3006,3 +3006,239 @@ describe('Issue Feedback Endpoint', () => {
 		expect(response.status).toBe(400);
 	});
 });
+
+describe('OAuth site-access evidence', () => {
+	const MCP_URL = 'https://mcp.test.invalid/mcp';
+	const WORKER_BASE = 'https://validation-worker.createsomething.workers.dev';
+
+	function mockMcpServer(site: Record<string, unknown>, options: { sse?: boolean } = {}) {
+		const calls: Array<{ headers: Headers; body: any }> = [];
+		const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+			const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+			if (url !== MCP_URL) return new Response('unexpected', { status: 500 });
+			const body = JSON.parse(String(init?.body));
+			calls.push({ headers: new Headers(init?.headers), body });
+			if (!('id' in body)) return new Response(null, { status: 202 });
+			const result =
+				body.method === 'initialize'
+					? { protocolVersion: '2025-06-18', capabilities: {}, serverInfo: { name: 'mock', version: '0' } }
+					: {
+							content: [
+								{
+									type: 'text',
+									text: JSON.stringify({ label: 'site', action: 'get_site', result: site })
+								}
+							]
+						};
+			const message = JSON.stringify({ jsonrpc: '2.0', id: body.id, result });
+			return options.sse
+				? new Response(`event: message\ndata: ${message}\n\n`, {
+						status: 200,
+						headers: { 'Content-Type': 'text/event-stream', 'Mcp-Session-Id': 'mock-session' }
+					})
+				: new Response(message, {
+						status: 200,
+						headers: { 'Content-Type': 'application/json', 'Mcp-Session-Id': 'mock-session' }
+					});
+		});
+		vi.stubGlobal('fetch', fetchMock);
+		return calls;
+	}
+
+	function submitRequest(siteId: string, accessToken: string) {
+		return new Request(`${WORKER_BASE}/app-validator/submit`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				siteId,
+				siteName: 'Evidence Site',
+				siteUrl: 'https://evidence-site.webflow.io',
+				evidence: { type: 'oauth_site_access', accessToken },
+				validationResults: {
+					url: 'https://evidence-site.webflow.io',
+					summary: { totalErrors: 0, totalWarnings: 0, passedCategories: 2, failedCategories: 0 },
+					categories: [
+						{ category: 'Designer Structure', passed: true, issues: [] },
+						{ category: 'Assets & Images', passed: true, issues: [] }
+					],
+					scope: {
+						selectedChecks: ['designer', 'assets', 'content', 'accessibility'],
+						pageScope: 'all',
+						publishedChecks: 'full',
+						pageSlugsCount: 4
+					}
+				}
+			})
+		});
+	}
+
+	it('verifies oauth_site_access evidence through the MCP server and records it', async () => {
+		const accessToken = 'mcp-test-token-valid-0001';
+		const calls = mockMcpServer(
+			{
+				id: 'site_oauth_evidence',
+				workspaceId: 'ws_evidence',
+				shortName: 'Evidence-Site',
+				customDomains: [{ url: 'www.Evidence.example' }, { url: 'https://evidence.example/' }]
+			},
+			{ sse: true }
+		);
+		const putMock = vi.fn(async () => undefined);
+
+		const response = await worker.fetch(
+			submitRequest('site_oauth_evidence', accessToken),
+			{ VALIDATOR_MCP_SERVER_URL: MCP_URL, VALIDATOR_RESULT_ARTIFACTS: { put: putMock } } as any,
+			createExecutionContext()
+		);
+
+		expect(response.status).toBe(200);
+		const responseText = await response.text();
+		expect(responseText).not.toContain(accessToken);
+		const payload = JSON.parse(responseText);
+		expect(payload.accepted).toBe(true);
+		expect(payload.evidence).toEqual({
+			type: 'oauth_site_access',
+			verified: true,
+			verifiedAt: expect.any(String),
+			workspaceId: 'ws_evidence',
+			accessTokenSha256: await sha256ForTest(accessToken),
+			rawAccessTokenStored: false,
+			publishedHosts: ['evidence-site.webflow.io', 'www.evidence.example', 'evidence.example']
+		});
+
+		expect(calls.map((call) => call.body.method)).toEqual([
+			'initialize',
+			'notifications/initialized',
+			'tools/call'
+		]);
+		expect(calls[0].headers.get('Authorization')).toBe(`Bearer ${accessToken}`);
+		expect(calls[0].headers.get('MCP-Protocol-Version')).toBe('2025-06-18');
+		expect(calls[0].headers.get('Accept')).toBe('application/json, text/event-stream');
+		expect(calls[2].headers.get('Mcp-Session-Id')).toBe('mock-session');
+		const toolArgs = calls[2].body.params.arguments;
+		expect(calls[2].body.params.name).toBe('data_sites_tool');
+		expect(toolArgs.actions).toEqual([{ label: 'site', get_site: { site_id: 'site_oauth_evidence' } }]);
+		expect(toolArgs.session_id).toBe('start');
+		expect(toolArgs.agent_id).toMatch(/^validation-worker\|evidence\|[a-f0-9]+$/);
+		const contextWords = String(toolArgs.context).split(/\s+/).length;
+		expect(contextWords).toBeGreaterThanOrEqual(15);
+		expect(contextWords).toBeLessThanOrEqual(25);
+
+		expect(putMock).toHaveBeenCalledTimes(1);
+		const [, body] = putMock.mock.calls[0] as unknown as [string, string];
+		expect(body).not.toContain(accessToken);
+		const artifact = JSON.parse(body);
+		expect(artifact.schema_version).toBe('validator_app_results_submission.v0.2');
+		expect(artifact.evidence.verified).toBe(true);
+		expect(artifact.evidence.rawAccessTokenStored).toBe(false);
+	});
+
+	it('rejects evidence when the token reads a different site and stores nothing', async () => {
+		const accessToken = 'mcp-test-token-other-site-0002';
+		mockMcpServer({ id: 'site_someone_else', workspaceId: 'ws_other', shortName: 'other-site', customDomains: [] });
+
+		const response = await worker.fetch(
+			submitRequest('site_oauth_mismatch', accessToken),
+			{ VALIDATOR_MCP_SERVER_URL: MCP_URL } as any,
+			createExecutionContext()
+		);
+
+		expect(response.status).toBe(403);
+		const responseText = await response.text();
+		expect(responseText).not.toContain(accessToken);
+		const payload = JSON.parse(responseText);
+		expect(payload.error).toBe('oauth_site_access evidence could not be verified');
+		expect(payload.correlationId).toEqual(expect.any(String));
+
+		const latest = await worker.fetch(
+			new Request(`${WORKER_BASE}/app-validator/submission/latest?siteId=site_oauth_mismatch`, { method: 'GET' }),
+			{} as any,
+			createExecutionContext()
+		);
+		expect(latest.status).toBe(404);
+		expect(((await latest.json()) as any).status).toBe('missing');
+	});
+
+	it('returns the latest result with evidence when looked up by published URL', async () => {
+		const accessToken = 'mcp-test-token-lookup-0003';
+		mockMcpServer({
+			id: 'site_oauth_lookup',
+			workspaceId: 'ws_lookup',
+			shortName: 'oauth-lookup',
+			customDomains: [{ url: 'lookup.example' }]
+		});
+		const submit = await worker.fetch(
+			submitRequest('site_oauth_lookup', accessToken),
+			{ VALIDATOR_MCP_SERVER_URL: MCP_URL } as any,
+			createExecutionContext()
+		);
+		expect(submit.status).toBe(200);
+
+		for (const publishedUrl of ['https://OAuth-Lookup.webflow.io/about?x=1', 'https://lookup.example/']) {
+			const response = await worker.fetch(
+				new Request(
+					`${WORKER_BASE}/app-validator/submission/latest?publishedUrl=${encodeURIComponent(publishedUrl)}`,
+					{ method: 'GET', headers: { Origin: 'https://webflow.com' } }
+				),
+				{} as any,
+				createExecutionContext()
+			);
+			expect(response.status).toBe(200);
+			const responseText = await response.text();
+			expect(responseText).not.toContain(accessToken);
+			const payload = JSON.parse(responseText);
+			expect(payload.status).toBe('available');
+			expect(payload.siteId).toBe('site_oauth_lookup');
+			expect(payload.passed).toBe(true);
+			expect(payload.scope).toEqual({
+				selectedChecks: ['designer', 'assets', 'content', 'accessibility'],
+				pageScope: 'all',
+				publishedChecks: 'full',
+				pageSlugsCount: 4
+			});
+			expect(payload.evidence).toEqual(
+				expect.objectContaining({
+					type: 'oauth_site_access',
+					verified: true,
+					workspaceId: 'ws_lookup',
+					rawAccessTokenStored: false,
+					publishedHosts: ['oauth-lookup.webflow.io', 'lookup.example']
+				})
+			);
+		}
+	});
+
+	it('returns missing for an unknown published URL', async () => {
+		const response = await worker.fetch(
+			new Request(
+				`${WORKER_BASE}/app-validator/submission/latest?publishedUrl=${encodeURIComponent('https://never-verified.webflow.io')}`,
+				{ method: 'GET' }
+			),
+			{} as any,
+			createExecutionContext()
+		);
+
+		expect(response.status).toBe(404);
+		const payload = (await response.json()) as any;
+		expect(payload.status).toBe('missing');
+		expect(payload.accepted).toBe(false);
+		expect(payload.passed).toBe(false);
+	});
+
+	it('rejects malformed evidence with 400', async () => {
+		const response = await worker.fetch(
+			new Request(`${WORKER_BASE}/app-validator/submit`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					siteId: 'site_bad_evidence',
+					evidence: { type: 'something_else', accessToken: 'x' },
+					validationResults: { summary: {}, categories: [] }
+				})
+			}),
+			{} as any,
+			createExecutionContext()
+		);
+		expect(response.status).toBe(400);
+	});
+});

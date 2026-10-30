@@ -123,6 +123,11 @@ export interface ValidationSubmitRequest {
 	siteId: string;
 	siteName?: string;
 	siteUrl?: string;
+	/** Optional site-access proof for clients without the Designer bridge snippet. */
+	evidence?: {
+		type?: string;
+		accessToken?: string;
+	};
 	validationResults: {
 		url?: string;
 		summary?: Record<string, unknown>;
@@ -174,6 +179,19 @@ export interface ValidationSubmitResponse {
 		byteSize?: number;
 		reason?: 'r2_not_configured' | 'r2_write_failed';
 	};
+	/** Verified site-access evidence, or null when the submission carried none. */
+	evidence?: OauthSiteAccessEvidence | null;
+}
+
+/** Stored proof that the submitter could read the site through Webflow's MCP server. */
+export interface OauthSiteAccessEvidence {
+	type: 'oauth_site_access';
+	verified: true;
+	verifiedAt: string;
+	workspaceId: string | null;
+	accessTokenSha256: string;
+	rawAccessTokenStored: false;
+	publishedHosts: string[];
 }
 
 export interface ValidationOptions {
