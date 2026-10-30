@@ -1326,7 +1326,7 @@ export function registerTools(
     'Server-side Webflow write: create the marketplace template (MRP + Admin record) for a version via the key-authenticated POST /admin/api/mrp/airtable route — no browser session, no console script. Uses the same Airtable-derived fields as prepare_admin_template_fill, records the new Template ID in 👀ℹ️MRP ID (Override), and returns the Admin URL with the items still to finish on that page. Requires the marketplace admin key and an explicit reviewer request; refuses when required fields are missing or the asset already has a Template ID.',
     {
       version_id: z.string().min(1),
-      support_email: z.string().email().optional().describe('Support contact; defaults to the creator email on the asset.'),
+      support_email: z.string().email().optional().describe('Support contact; defaults to the first valid creator email on the asset.'),
       support_url: z.string().url().optional(),
       record_mrp_id: z.boolean().optional().describe('Write the new Template ID to 👀ℹ️MRP ID (Override). Defaults to true.'),
     },
@@ -1356,16 +1356,22 @@ export function registerTools(
           );
         }
 
-        const supportEmail = support_email ?? context.asset?.creatorEmail;
+        // Admin's create route rejects a TEMPLATE without support.email or support.url (validateMRPByType),
+        // and rejects a malformed email. Multi-creator assets hold comma-joined addresses, so send the first valid one.
+        const creatorEmails = (context.asset?.creatorEmail ?? '').split(/[,;\s]+/).filter((value) => z.string().email().safeParse(value).success);
+        const supportEmail = support_email ?? creatorEmails[0];
         if (!supportEmail && !support_url) {
           throw new AirtableClientError(
             'SUPPORT_CONTACT_MISSING',
-            'The route requires a support email or URL for templates and the asset has no creator email. Pass support_email or support_url.',
+            'The route requires a support email or URL for templates and the asset has no valid creator email. Pass support_email or support_url.',
             422,
           );
         }
 
         const warnings: string[] = [...(fillBundle.form_data.admin_form_warnings ?? [])];
+        if (!support_email && creatorEmails.length > 1) {
+          warnings.push(`The asset lists ${creatorEmails.length} creator emails; sent ${supportEmail} as the support email. Pass support_email to choose another.`);
+        }
         if (!fillBundle.readiness.can_publish) {
           warnings.push('This version is not currently publish-ready according to MCP capability flags. Confirm approval state before relying on the created template.');
         }
