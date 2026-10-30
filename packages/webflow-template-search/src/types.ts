@@ -1,7 +1,7 @@
 import type { DemoSignals } from './demo-signals.js';
 
 export type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
-export type TemplateSort = 'popular' | 'best_selling' | 'newest' | 'price_asc' | 'price_desc';
+export type TemplateSort = 'recommended' | 'popular' | 'best_selling' | 'newest' | 'price_asc' | 'price_desc';
 export type TemplateSearchView = 'full' | 'grid';
 export type AliasType = 'child_category';
 
@@ -208,6 +208,8 @@ export interface TemplateDocumentInput {
 }
 
 export interface SearchParams {
+  discovery?: boolean;
+  intent?: import('./discovery-intent.js').PortfolioIntent;
   templateSlug?: string | null;
   strict?: boolean;
   q: string | null;
@@ -274,6 +276,7 @@ export interface SearchItem {
 }
 
 export interface SearchResponsePayload {
+  interpretation?: import('./discovery-intent.js').PortfolioIntent;
   items: SearchItem[];
   pagination: {
     page: number;

@@ -1,6 +1,7 @@
 import type { TemplateSort } from './types.js';
 
 export const TEMPLATE_SORT_ALIASES: Readonly<Record<string, TemplateSort>> = {
+  recommended: 'recommended',
   popular: 'popular',
   best_selling: 'best_selling',
   'best-selling': 'best_selling',
