@@ -56,6 +56,9 @@ function fixture(t: any) {
   db.exec(
     readFileSync(new URL('../migrations/0017_enrollment_invitations.sql', import.meta.url), 'utf8')
   );
+  db.exec(
+    readFileSync(new URL('../migrations/0018_gigi_enrollment.sql', import.meta.url), 'utf8')
+  );
   function statement(sql: string, values: any[] = []): any {
     return {
       bind: (...args: any[]) => statement(sql, args),
@@ -96,6 +99,60 @@ function fixture(t: any) {
   const token = () => decodeURIComponent(mails.at(-1).text.match(/#token=([^\s]+)/)[1]);
   return { db, env, mails, request, token };
 }
+
+test('GiGi public signup proves any mailbox without opening generic signup or granting a session', async (t) => {
+  const f = fixture(t);
+  f.env.PUBLIC_ENROLLMENT_ENABLED = 'false';
+  f.env.GIGI_ENROLLMENT_ENABLED = 'true';
+  assert.equal((await startEnrollment(f.request({ email: 'new-gigi@example.com', purpose: 'signup', app: 'gigi', experience: 'identity', return_url: 'https://evil.example' }), f.env)).status, 200);
+  assert.equal(f.mails.length, 1);
+  assert.match(f.mails[0].text, /https:\/\/id\.createsomething\.space\/verify\?mode=signup&app=gigi#token=/);
+  assert.doesNotMatch(f.mails[0].text, /evil\.example/);
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM users').get()?.count, 0);
+  assert.equal((await startEnrollment(f.request({ email: 'generic@example.com', purpose: 'signup' }), f.env)).status, 200);
+  assert.equal(f.mails.length, 1);
+  const response = await completeEnrollment(f.request({ token: f.token(), password: 'GiGi verified fixture password' }), f.env);
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.has('Set-Cookie'), false);
+  assert.deepEqual(await response.json(), { success: true, email: 'new-gigi@example.com' });
+  assert.equal(f.db.prepare('SELECT email_verified FROM users').get()?.email_verified, 1);
+});
+
+test('GiGi signup admission is rechecked from stored proof and cannot relabel another enrollment', async (t) => {
+  const f = fixture(t);
+  f.env.PUBLIC_ENROLLMENT_ENABLED = 'false';
+  f.env.GIGI_ENROLLMENT_ENABLED = 'true';
+  await startEnrollment(f.request({ email: 'gigi-gate@example.com', purpose: 'signup', app: 'gigi' }), f.env);
+  const proof = f.token();
+  f.env.GIGI_ENROLLMENT_ENABLED = 'false';
+  // A different admission rule must not rescue a disabled GiGi proof.
+  f.env.PUBLIC_ENROLLMENT_ENABLED = 'true';
+  assert.equal((await completeEnrollment(f.request({ token: proof, password: 'GiGi blocked fixture password', app: 'other' }), f.env)).status, 503);
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM users').get()?.count, 0);
+  f.env.PUBLIC_ENROLLMENT_ENABLED = 'false';
+  f.env.GIGI_ENROLLMENT_ENABLED = 'true';
+  assert.equal((await completeEnrollment(f.request({ token: proof, password: 'GiGi enabled fixture password', app: 'other' }), f.env)).status, 200);
+
+  f.env.ENROLLMENT_ALLOWED_EMAILS = 'legacy-proof@example.com';
+  await startEnrollment(f.request({ email: 'legacy-proof@example.com', purpose: 'signup' }), f.env);
+  const legacy = f.token();
+  f.env.ENROLLMENT_ALLOWED_EMAILS = '';
+  assert.equal((await completeEnrollment(f.request({ token: legacy, password: 'GiGi relabel fixture password', app: 'gigi' }), f.env)).status, 503);
+  assert.equal(f.db.prepare("SELECT id FROM users WHERE email='legacy-proof@example.com'").get(), undefined);
+});
+
+test('GiGi enrollment flag cannot enable generic signup, another application or unverified recovery', async (t) => {
+  const f = fixture(t);
+  f.env.PUBLIC_ENROLLMENT_ENABLED = 'false';
+  f.env.GIGI_ENROLLMENT_ENABLED = 'true';
+  for (const input of [
+    { email: 'generic@example.com', purpose: 'signup' },
+    { email: 'other-app@example.com', purpose: 'signup', app: 'private' },
+    { email: 'recover-new@example.com', purpose: 'recovery', app: 'gigi' }
+  ]) assert.equal((await startEnrollment(f.request(input), f.env)).status, 200);
+  assert.equal(f.mails.length, 0);
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM enrollment_challenges').get()?.count, 0);
+});
 
 test('standalone recovery uses fixed Identity links while legacy PCN links remain unchanged', async (t) => {
   const f = fixture(t);

@@ -8,6 +8,7 @@ const invalid = () =>
   reply({ error: 'This verification link is invalid or expired. Request a new link.' }, 400);
 export const enrollmentOpen = (env: Env) =>
   env.PUBLIC_ENROLLMENT_ENABLED === 'true' ||
+  env.GIGI_ENROLLMENT_ENABLED === 'true' ||
   env.ENROLLMENT_INVITATIONS_ENABLED === 'true' ||
   !!env.ENROLLMENT_ALLOWED_EMAILS?.trim() ||
   ((env.PCN_ENROLLMENT_ENABLED === 'true' || !!env.PCN_ENROLLMENT_CANARY_EMAILS?.trim()) &&
@@ -52,8 +53,15 @@ async function eligibility(
   email: string,
   now: number,
   purpose: string,
-  boundInvitation?: string | null
+  boundInvitation?: string | null,
+  application?: 'gigi' | null
 ): Promise<{ allowed: boolean; invitationId: string | null }> {
+  // Stored challenge provenance controls admission at completion; caller fields cannot relabel it.
+  if (application === 'gigi')
+    return {
+      allowed: purpose === 'signup' && env.GIGI_ENROLLMENT_ENABLED === 'true',
+      invitationId: null
+    };
   if (purpose === 'recovery' && env.VERIFIED_RECOVERY_ENABLED === 'true')
     return {
       allowed: !!(await env.DB.prepare(
@@ -149,6 +157,7 @@ export async function startEnrollment(request: Request, env: Env): Promise<Respo
   }
   const email = typeof input.email === 'string' ? input.email.trim().toLowerCase() : '';
   const purpose = input.purpose;
+  const application = purpose === 'signup' && input.app === 'gigi' ? 'gigi' : null;
   if (
     email.length > 254 ||
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
@@ -163,7 +172,7 @@ export async function startEnrollment(request: Request, env: Env): Promise<Respo
   if (purpose === 'signup' && !enrollmentOpen(env)) return unavailable();
   let admission: { allowed: boolean; invitationId: string | null };
   try {
-    admission = await eligibility(env, email, now, String(purpose));
+    admission = await eligibility(env, email, now, String(purpose), undefined, application);
     if (!admission.allowed) return accepted();
   } catch {
     return unavailable();
@@ -181,9 +190,9 @@ export async function startEnrollment(request: Request, env: Env): Promise<Respo
   const token = generateSecureToken(32);
   const digest = await hashToken(token);
   await env.DB.prepare(
-    'INSERT INTO enrollment_challenges(token_hash,email,purpose,expires_at,created_at,invitation_id) VALUES(?,?,?,?,?,?)'
+    'INSERT INTO enrollment_challenges(token_hash,email,purpose,expires_at,created_at,invitation_id,application) VALUES(?,?,?,?,?,?,?)'
   )
-    .bind(digest, email, purpose, now + 900, now, admission.invitationId)
+    .bind(digest, email, purpose, now + 900, now, admission.invitationId, application)
     .run();
   const next =
     typeof input.next_path === 'string' &&
@@ -192,10 +201,12 @@ export async function startEnrollment(request: Request, env: Env): Promise<Respo
     )
       ? input.next_path
       : '/start';
-  // Explicit UI choice changes only the proof presentation, never admission or grants.
-  const identityExperience = input.experience === 'identity' && purpose === 'recovery';
+  // GiGi signup stays on Identity; legacy recovery retains its explicit UI choice.
+  // Fixed presentation links never grant application access or accept return URLs.
+  const identityExperience =
+    application === 'gigi' || (input.experience === 'identity' && purpose === 'recovery');
   const link = identityExperience
-    ? `https://id.createsomething.space/verify?mode=recovery${input.app === 'gigi' ? '&app=gigi' : ''}#token=${encodeURIComponent(token)}`
+    ? `https://id.createsomething.space/verify?mode=${purpose}${input.app === 'gigi' ? '&app=gigi' : ''}#token=${encodeURIComponent(token)}`
     : `${origin}/verify?mode=${purpose}&next=${encodeURIComponent(next)}#token=${encodeURIComponent(token)}`;
   const action = purpose === 'recovery' ? 'reset your password' : 'create your account';
   try {
@@ -247,14 +258,21 @@ export async function completeEnrollment(request: Request, env: Env): Promise<Re
     return reply({ error: 'Use a password between 12 and 256 characters.' }, 400);
   const digest = await hashToken(input.token);
   const proof = await env.DB.prepare(
-    'SELECT email,purpose,invitation_id FROM enrollment_challenges WHERE token_hash=? AND claimed_at IS NULL AND expires_at>?'
+    'SELECT email,purpose,invitation_id,application FROM enrollment_challenges WHERE token_hash=? AND claimed_at IS NULL AND expires_at>?'
   )
     .bind(digest, now)
-    .first<{ email: string; purpose: 'signup' | 'recovery'; invitation_id: string | null }>();
+    .first<{
+      email: string;
+      purpose: 'signup' | 'recovery';
+      invitation_id: string | null;
+      application: 'gigi' | null;
+    }>();
   if (!proof) return invalid();
   try {
-    if (!(await eligibility(env, proof.email, now, proof.purpose, proof.invitation_id)).allowed)
-      return unavailable();
+    const admission = await eligibility(
+      env, proof.email, now, proof.purpose, proof.invitation_id, proof.application
+    );
+    if (!admission.allowed) return unavailable();
   } catch {
     return unavailable();
   }
