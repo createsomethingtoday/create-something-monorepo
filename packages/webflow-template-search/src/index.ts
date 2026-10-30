@@ -18,7 +18,7 @@ import {
 import { corsPreflight, jsonResponse, textResponse, withCorsHeaders } from './http.js';
 import { handleGuidelines } from './guidelines.js';
 import { popularShuffleFor } from './popular-shuffle.js';
-import { parseSearchParams } from './query.js';
+import { validMaxPrice, parseSearchParams } from './query.js';
 import { searchTemplates } from './search.js';
 import { handleSupportRequest, refreshSupportRequestDeliveries } from './supportRequest.js';
 import { handleTelemetry } from './telemetry.js';
@@ -193,6 +193,7 @@ function buildPublicSearchCacheRequest(requestUrl: URL, params: SearchParams, ca
   appendSearchCacheList(cacheUrl, 'styles', params.styles);
   appendSearchCacheList(cacheUrl, 'tags', params.tags);
   appendSearchCacheList(cacheUrl, 'types', params.types);
+  if (params.maxPrice != null) cacheUrl.searchParams.set('max_price', String(params.maxPrice));
   if (params.hasCms !== null) cacheUrl.searchParams.set('has_cms', String(params.hasCms));
   return new Request(cacheUrl.toString(), { method: 'GET' });
 }
@@ -204,6 +205,7 @@ function getDefaultCache(): Cache | null {
 async function handleSearch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   const defaultPageSize = Number(env.DEFAULT_PAGE_SIZE ?? '24') || 24;
   const url = new URL(request.url);
+  if (!validMaxPrice(url.searchParams.get('max_price'))) return jsonResponse(request, env, { error: 'max_price must be a nonnegative USD amount up to 100000, with at most two decimal places' }, 400);
   const params = parseSearchParams(url, defaultPageSize);
   // Existing callers already send this parameter; preserve legacy unconstrained
   // behavior until activation rather than introducing a rollout outage.

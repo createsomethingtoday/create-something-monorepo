@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SYSTEM_PROMPT } from '../src/prompt.js';
-import { AGENT_TOOLS, buildSearchUrl, TemplateToolExecutor, TEMPLATE_FEATURES } from '../src/tools.js';
+import { AGENT_TOOLS, toolsForBrief, buildSearchUrl, TemplateToolExecutor, TEMPLATE_FEATURES } from '../src/tools.js';
 import type { Env, TemplateSearchItem } from '../src/types.js';
 
 const ENV: Env = {
@@ -369,4 +369,25 @@ describe('page actions', () => {
     expect(payload).toBeNull();
     expect(unknownSlugs).toEqual(['ghost']);
   });
+});
+
+it('passes a zero price ceiling and explicit false CMS to the catalog',()=>{
+ const p=new URL(buildSearchUrl('https://search.test',{max_price:0,has_cms:false})).searchParams;
+ expect(p.get('max_price')).toBe('0');expect(p.get('has_cms')).toBe('false');
+ expect(()=>buildSearchUrl('https://search.test',{max_price:NaN})).toThrow();
+ expect(()=>buildSearchUrl('https://search.test',{max_price:-1})).toThrow();
+});
+it('preserves explicit budget and CMS page-action resets',()=>{
+ const e=new TemplateToolExecutor(ENV);
+ expect(e.buildPageAction({max_price:99,has_cms:true}).payload).toMatchObject({max_price:99,has_cms:true});
+ expect(e.buildPageAction({max_price:null,has_cms:null}).payload).toMatchObject({max_price:null,has_cms:null});
+ expect(e.buildPageAction({max_price:Infinity}).payload).toBeNull();
+});
+
+it('does not advertise brief-only page filters to legacy grids',()=>{
+ const legacy=toolsForBrief(false).find(t=>'name' in t && t.name==='update_page') as any;
+ const current=toolsForBrief(true).find(t=>'name' in t && t.name==='update_page') as any;
+ expect(legacy.input_schema.properties).not.toHaveProperty('max_price');
+ expect(legacy.input_schema.properties).not.toHaveProperty('has_cms');
+ expect(current.input_schema.properties).toHaveProperty('max_price');
 });

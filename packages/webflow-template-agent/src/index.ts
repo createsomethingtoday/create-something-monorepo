@@ -209,6 +209,8 @@ function parseContext(raw: unknown): { context?: ChatContext; contextToken?: str
   const rawSurface = (raw as { surface?: unknown }).surface;
   const surface: ChatContext['surface'] =
     rawSurface === 'compact' || rawSurface === 'immersive' ? rawSurface : undefined;
+  const rawBrief = (raw as { project_brief?: unknown }).project_brief;
+  const projectBrief = typeof rawBrief === 'string' ? rawBrief.slice(0, 2000) : undefined;
   const rawGrid = (raw as { has_page_grid?: unknown }).has_page_grid;
   const hasPageGrid = typeof rawGrid === 'boolean' ? rawGrid : undefined;
   const rawMisses = (raw as { highlight_misses?: unknown }).highlight_misses;
@@ -217,8 +219,8 @@ function parseContext(raw: unknown): { context?: ChatContext; contextToken?: str
     .slice(0, 12);
 
   const context =
-    surface || hasPageGrid !== undefined || highlightMisses.length > 0
-      ? { surface, has_page_grid: hasPageGrid, highlight_misses: highlightMisses }
+    surface || projectBrief || hasPageGrid !== undefined || highlightMisses.length > 0
+      ? { project_brief: projectBrief, surface, has_page_grid: hasPageGrid, highlight_misses: highlightMisses }
       : undefined;
   return { context, contextToken };
 }
