@@ -2,7 +2,7 @@
 
 Authoring service and public read API for creator storefront customization on the Webflow template marketplace. Contract: [`packages/webflow-dashboard/docs/creator-storefront/CONTRACT.md`](../webflow-dashboard/docs/creator-storefront/CONTRACT.md). Schema evidence: [`SCHEMA_EVIDENCE.md`](../webflow-dashboard/docs/creator-storefront/SCHEMA_EVIDENCE.md). Tracking: CRE-2282.
 
-**Status:** implemented and tested locally. **Not deployed.** No D1 database, secrets or Worker exist. No storefront records exist in Airtable. The public Marketplace page does not call this API yet.
+**Status:** deployed 2026-10-30 to `https://creator-storefront.webflow-inc.workers.dev` (Webflow Hosting account `ac24bc906aca8307bdba8c2a85ff08c9`, D1 `creator-storefront` `96d4e76f-b1c0-437c-a2c1-8b0a3404c5ac`). No storefront records exist in Airtable. No client calls it yet: the Dashboard flag is off and the public Marketplace page does not call this API.
 
 ## What it does
 

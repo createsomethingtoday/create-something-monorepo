@@ -1,6 +1,6 @@
 # Creator storefront: service contract (v1)
 
-Status: the schema exists in Airtable (see `SCHEMA_EVIDENCE.md`). The service (`packages/creator-storefront`) and a feature-gated Asset Dashboard editor are implemented and tested locally. Nothing is deployed or provisioned, no records exist, and the public Marketplace page does not consume the API yet. §10 lists where the implementation settles or narrows this contract.
+Status: the schema exists in Airtable (see `SCHEMA_EVIDENCE.md`). The service (`packages/creator-storefront`) and a feature-gated Asset Dashboard editor are implemented and tested locally. The service is deployed (2026-10-30) with its D1 read model, but no records exist, no client calls it yet, and the public Marketplace page does not consume the API. §10 lists where the implementation settles or narrows this contract.
 Tracking: see the Linear issue in `SCHEMA_EVIDENCE.md`.
 
 ## 1. Ownership split

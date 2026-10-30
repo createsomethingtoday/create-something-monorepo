@@ -255,11 +255,11 @@
 
   function receiptMessage(r: Receipt): { tone: 'success' | 'info' | 'error'; text: string } {
     switch (r.state) {
-      // The Marketplace page does not read storefronts yet (CRE-2282), so say what changed, not where it shows.
+      // The Marketplace is previewing storefronts, not launching them (CRE-2282): say what changed, and promise no placement or date.
       case 'live':
         return {
           tone: 'success',
-          text: `Storefront customization published (version ${r.publicationRevision}). It is not shown on the Marketplace yet; it will appear when storefronts launch.`
+          text: `Storefront customization published (version ${r.publicationRevision}). These changes are available in the Marketplace preview. They are not displayed on the live Marketplace yet.`
         };
       case 'removed':
         return {
@@ -343,7 +343,7 @@
         <span class="muted">Your draft has changes that are not published yet.</span>
       {/if}
       {#if receipt && receipt.state === 'propagating'}
-        <span class="muted">Last {receipt.op.replace('_', ' ')} is still updating the public page.</span>
+        <span class="muted">Last {receipt.op.replace('_', ' ')} is still updating the published storefront data.</span>
       {/if}
     </div>
 
