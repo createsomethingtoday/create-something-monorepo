@@ -18,7 +18,7 @@ export function priceLabel(item){return item.is_free||item.price===0?'Free':type
 export function cmsLabel(item){return item.has_cms===true?'CMS included':item.has_cms===false?'No CMS':'CMS not confirmed'}
 export function evidenceFor(item,brief,currentMatch=false){
  const facts=[{label:'Template price',value:priceLabel(item)},{label:'CMS capability',value:cmsLabel(item)}];
- const categories=(item.child_categories?.length?item.child_categories:item.category_groups||[]).map(x=>x.name).join(',');
+ const categories=(item.child_categories?.length?item.child_categories:item.category_groups||[]).map(x=>x.name).join(', ');
  if(categories)facts.push({label:'Catalog category',value:categories});
  if(item.styles?.length)facts.push({label:'Catalog styles',value:item.styles.map(x=>x.name).join(', ')});
  const reasons=[];
