@@ -136,7 +136,7 @@ function includeCacheValue(params: SearchParams): string {
 }
 
 function buildPublicSearchCacheRequest(requestUrl: URL, params: SearchParams, cacheVersion: string, shuffleSeed?: string): Request | null {
-  if (params.templateSlug || params.strict || params.page < 1 || params.page > 10) return null;
+  if (params.discovery || params.templateSlug || params.strict || params.page < 1 || params.page > 10) return null;
   const cacheQuery = params.q ?? '';
   if (cacheQuery.length > 64) return null;
 

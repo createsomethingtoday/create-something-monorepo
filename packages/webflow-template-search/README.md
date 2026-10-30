@@ -376,3 +376,11 @@ creator name for older rows missing a linked creator record.
 ### Project brief price ceiling
 
 `GET /api/templates/search?max_price=99&has_cms=true` applies an inclusive USD template-price ceiling before pagination, counts and facets. `max_price=0` includes confirmed free templates. Unknown prices are excluded under a ceiling unless the free flag confirms a zero price. Omit or leave empty for the existing unconstrained behavior. Invalid/negative/non-finite amounts, values above100000, and more than two decimal places return400. Cache entries include the normalized ceiling. This covers the template price, not a Webflow plan or implementation services.
+
+## Opt-in discovery intent
+
+`discovery=true&q=A+portfolio+site&sort=recommended&strict=true` interprets bounded portfolio requests as Design Portfolio or Photography & Video category membership. `portfolio_kind=designer|photographer|developer|studio|all` makes the audience explicit. Developer retains a keyword constraint because no dedicated developer category exists. Residual terms and all explicit budget, CMS, style, category and price filters still apply before pagination. Negated or ambiguous audience requests stay on the legacy keyword path. Exact template and creator searches are never reinterpreted.
+
+The optional `interpretation` response contains original_query, keywords, audience, label and the resolved category_slugs. Clients must show this interpretation so buyers can correct it. No model call, new database field or source mutation is involved.
+
+`sort=recommended` prioritizes matching featured templates with a nonempty Marketplace pick note, then catalog popularity. For unrecognized keyword intent, text relevance still comes first. This is an attributed editorial signal, not a design-quality score or guarantee of suitability. Existing sort defaults and requests without discovery remain unchanged. Discovery bypasses the public HTTP response cache; query memoization includes the intent and all filters.
