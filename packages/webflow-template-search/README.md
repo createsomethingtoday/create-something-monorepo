@@ -372,3 +372,7 @@ Set `WEBFLOW_WEBHOOK_SECRET` to the comma-separated signing secrets for the acti
 webhook subscriptions. Template collection events update image fields by `sync-record-id`;
 designer collection events update creator avatars by `sync-record-id` first, then exact
 creator name for older rows missing a linked creator record.
+
+### Project brief price ceiling
+
+`GET /api/templates/search?max_price=99&has_cms=true` applies an inclusive USD template-price ceiling before pagination, counts and facets. `max_price=0` includes confirmed free templates. Unknown prices are excluded under a ceiling unless the free flag confirms a zero price. Omit or leave empty for the existing unconstrained behavior. Invalid/negative/non-finite amounts, values above100000, and more than two decimal places return400. Cache entries include the normalized ceiling. This covers the template price, not a Webflow plan or implementation services.

@@ -8,6 +8,7 @@ export type Block = Record<string, any>;
 export interface Artifact { key: string; title: string; chunks: string[] }
 export interface TranscriptPlan {
   version: string;
+  format?: string;
   canonical: string;
   original: string;
   blockCount: number;
@@ -49,7 +50,7 @@ export function exactChunks(text: string, size = 1800): string[] {
   return chunks;
 }
 
-export async function planTranscript(parsed: ParsedTranscript): Promise<TranscriptPlan> {
+export async function planTranscript(parsed: ParsedTranscript, format = TRANSCRIPT_FORMAT): Promise<TranscriptPlan> {
   if (!parsed.rawText || !parsed.segments.length) throw new Error('Empty or unsupported transcript');
   const timestamped = parsed.rawText.includes('-->');
   if (timestamped) {
@@ -82,7 +83,7 @@ export async function planTranscript(parsed: ParsedTranscript): Promise<Transcri
     } else parts.push({ text: blocks[i]!, first: i, last: i });
   }
   if (parts.map(part => part.text).join('\n') !== canonical) throw new Error('Part reconstruction mismatch');
-  const version = await hashText(JSON.stringify([TRANSCRIPT_FORMAT, parsed.rawText, canonical]));
+  const version = await hashText(JSON.stringify([format, parsed.rawText, canonical]));
   const artifacts: Artifact[] = [];
   const encodedOriginal = encodeOriginal(parsed.rawText);
   if (decodeOriginal(encodedOriginal) !== parsed.rawText) throw new Error('Original is not valid UTF-8 text');
@@ -96,7 +97,7 @@ export async function planTranscript(parsed: ParsedTranscript): Promise<Transcri
     chunks: exactChunks(part.text),
   }));
   if (artifacts.length > MAX_ARTIFACTS) throw new Error('Transcript exceeds artifact budget');
-  return { version, canonical, original: parsed.rawText, blockCount: blocks.length, artifacts };
+  return { version, format, canonical, original: parsed.rawText, blockCount: blocks.length, artifacts };
 }
 
 export function artifactMarker(version: string, artifact: Artifact): string {
@@ -182,7 +183,7 @@ export async function writeIndexedTranscript(
   }
   const indexText = [
     `Version: ${plan.version}`,
-    `Format: ${TRANSCRIPT_FORMAT}; original encoding: UTF-8 base64`,
+    `Format: ${plan.format ?? TRANSCRIPT_FORMAT}; original encoding: UTF-8 base64`,
     `Canonical timestamp blocks: ${plan.blockCount}`,
     ...receipts.map(({ artifact, id }) => `${artifact.title}\nhttps://www.notion.so/${linkPage.replace(/-/g, '')}#${id.replace(/-/g, '')}`),
   ].join('\n');
