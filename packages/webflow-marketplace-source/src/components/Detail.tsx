@@ -1,15 +1,33 @@
+import {useState} from 'react';
 import {TemplateDetailConversionTracker} from '@marketplace/marketplace/TemplateDetailConversionTracker';
 import {useAnalyticsConsent} from './Consent';
 import {TemplateDetailHero} from '@marketplace/marketplace/TemplateDetailHero';
 import {TemplateDetailStickyBar} from '@marketplace/marketplace/TemplateDetailStickyBar';
 import type {Template} from '../lib/api';
+import type {CreatorCustomization} from '../lib/creator-storefront.mjs';
+import type {IncludedPage} from '../lib/detail-content.mjs';
 import {localLink} from '../lib/routes.mjs';
+import {readBrief,briefParams,evidenceFor,cmsLabel,priceLabel} from '../lib/discovery.mjs';
 import PreviewFallback from './PreviewFallback';
-export default function Detail({item:t,heroProps={},allowEmbed=false,devPreview=false}:{item:Template;heroProps?:Record<string,unknown>;allowEmbed?:boolean;devPreview?:boolean}){
+export default function Detail({item:t,heroProps={},allowEmbed=false,inventory=[],published,search=''}:{item:Template;heroProps?:Record<string,unknown>;allowEmbed?:boolean;devPreview?:boolean;inventory?:IncludedPage[];published?:CreatorCustomization;search?:string}){
+ const [shareStatus,setShareStatus]=useState('');
+ async function share(){try{await navigator.clipboard.writeText(location.origin+location.pathname);setShareStatus('Link copied')}catch{setShareStatus('Copy this page’s address to share it.')}}
  const enableAnalytics=useAnalyticsConsent();
- const previewUrl=devPreview?'https://createsomething.agency/':t.website_url;
  const serviceUrl='/templates/services/service-type?'+new URLSearchParams({templateName:t.name,templateLink:t.url});
- const showEmbeddedPreview=allowEmbed||devPreview;
- const common={templateName:t.name,templateSlug:t.template_slug,creatorName:t.creator_name,price:t.is_free?'Free':`${t.price} USD`,isFree:t.is_free,browserPreviewUrl:{href:t.website_url,target:'_blank'},designerPreviewUrl:{href:t.preview_url,target:'_blank'},checkoutUrl:{href:t.purchase_url,target:'_blank'},enableAnalytics};
- return <><TemplateDetailConversionTracker templateSlug={t.template_slug} price={common.price} enableAnalytics={enableAnalytics}/>{devPreview&&<p className="source-dev-preview-note">Development preview: CREATE SOMETHING sample site. Production uses this template’s live demo.</p>}<TemplateDetailHero {...heroProps} {...common} categoryNames={t.category_groups?.map(x=>x.name).join(',')} categoryLinks={t.category_groups?.map(x=>localLink(x.url)).join(',')} creatorLink={{href:localLink(t.creator_profile_url)}} creatorAvatar={t.creator_avatar_url?{src:t.creator_avatar_url,alt:t.creator_name}:undefined} summary={typeof heroProps.summary==='string'?heroProps.summary:undefined} previewIframeUrl={{href:previewUrl,target:'_blank'}} showPreviewIframe={showEmbeddedPreview} showPreviewDeviceControls={true}/>{!showEmbeddedPreview&&<PreviewFallback name={t.name} url={t.website_url} thumbnail={t.thumbnail_image_url} slug={t.template_slug}/>}<div className="rd-detail-facts" aria-label="Template at a glance"><span><strong>Price</strong> {common.price}</span>{t.styles?.length? <span><strong>Style</strong> {t.styles.map(x=>x.name).join(', ')}</span>:null}{t.included_pages?.length?<span><strong>Includes</strong> {t.included_pages.length} pages</span>:null}<a href={serviceUrl}>Get customization help →</a></div><TemplateDetailStickyBar {...common} thumbnail={{src:t.thumbnail_image_url,alt:t.name}}/></>;
+ const common={templateName:t.name,templateSlug:t.template_slug,creatorName:t.creator_name,price:priceLabel(t),isFree:t.is_free,browserPreviewUrl:{href:t.website_url,target:'_blank'},designerPreviewUrl:{href:t.preview_url,target:'_blank'},checkoutUrl:{href:t.purchase_url,target:'_blank'},enableAnalytics};
+ const pages=inventory.length?inventory:(t.included_pages||[]).map(name=>({name,href:undefined}));
+ const brief=readBrief(search),fromSearch=new URLSearchParams(search).get('from')==='search',evidence=evidenceFor(t,brief);
+ return <div className="rd-detail">
+  <TemplateDetailConversionTracker templateSlug={t.template_slug} price={common.price} enableAnalytics={enableAnalytics}/>
+  {fromSearch&&<a className="rd-back-results" href={'/templates/search?'+briefParams(brief)}>← Back to your search</a>}
+  <TemplateDetailHero {...heroProps} {...common} compactLayout categoryNames={t.category_groups?.map(x=>x.name).join(',')} categoryLinks={t.category_groups?.map(x=>localLink(x.url)).join(',')} creatorLink={{href:localLink(t.creator_profile_url)}} creatorAvatar={t.creator_avatar_url?{src:t.creator_avatar_url,alt:t.creator_name}:undefined} summary={t.description_short} previewIframeUrl={{href:t.website_url,target:'_blank'}} showPreviewIframe={allowEmbed} showPreviewDeviceControls/>
+  {!allowEmbed&&<PreviewFallback name={t.name} url={t.website_url} designerUrl={t.preview_url} thumbnail={t.thumbnail_image_url} slug={t.template_slug}/>}
+  <section className="rd-detail-summary" aria-label="Template information">
+   <div><h2>What’s included</h2><p className="rd-detail-caption">{cmsLabel(t)}</p>{pages.length?<><ul className="rd-included-pages">{pages.map((page,i)=><li key={i}>{page.href?<a href={page.href} target="_blank" rel="noopener noreferrer">{page.name} ↗</a>:page.name}</li>)}</ul><p className="rd-detail-caption">Page inventory supplied by the creator. Linked pages open the live demo.</p></>:<p>A page inventory hasn’t been supplied. Explore the live demo or ask the creator before choosing.</p>}
+    {fromSearch&&<details className="rd-detail-fit"><summary>Fit for your brief</summary><ul>{evidence.reasons.map(reason=><li key={reason}>{reason}</li>)}</ul><p>{evidence.limit}</p>{brief.cms==='false'&&<p>{t.has_cms===false?'Matches your preference for a template without CMS.':t.has_cms===true?'Includes CMS, which differs from your selected preference.':'CMS capability is not confirmed.'}</p>}{brief.free&&!t.is_free&&<p>This template is paid and does not meet your free-only preference.</p>}<p>Category, style, and written project requirements need your review; these notes are not a quality rating.</p></details>}
+   </div>
+   <aside><h2>Created by {t.creator_name}</h2><a href={localLink(t.creator_profile_url)}>View creator profile →</a>{published?.support&&published.contactUrl?<><p>{published.support}</p><a href={published.contactUrl} target="_blank" rel="noopener noreferrer">Contact creator for support ↗</a><p className="rd-detail-caption">Support information provided by the creator.</p></>:<p>See the Support tab below for available help.</p>}<div className="rd-detail-requirements"><h3>Before you buy</h3><p>Review the license and support terms below. Confirm hosting needs, customization requirements, and support response times before purchase.</p><a href="/templates/template-licenses">Read template license terms →</a></div><a href={serviceUrl}>Get customization help →</a><div className="rd-detail-share"><button type="button" onClick={share}>Copy template link</button><span role="status">{shareStatus}</span></div></aside>
+  </section>
+  <TemplateDetailStickyBar {...heroProps} {...common} thumbnail={{src:t.thumbnail_image_url,alt:t.name}}/>
+ </div>;
 }

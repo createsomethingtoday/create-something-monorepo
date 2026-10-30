@@ -1,8 +1,9 @@
-import {useState} from 'react';
-import {safePreviewUrl} from '@marketplace/marketplace/templateUrlSafety';
+import {useState,useEffect} from 'react';
+import {safePreviewUrl,safeMarketplaceUrl} from '@marketplace/marketplace/templateUrlSafety';
 
-export default function PreviewFallback({name,url,thumbnail,slug}:{name:string;url:string;thumbnail:string;slug:string}) {
+export default function PreviewFallback({name,url,thumbnail,slug,designerUrl}:{name:string;url:string;thumbnail:string;slug:string;designerUrl?:string}) {
  const [device,setDevice]=useState<'desktop'|'mobile'>('desktop');
+ useEffect(()=>{let saved;try{saved=sessionStorage.getItem('wfdt-template-detail-preview-device')}catch{};setDevice(saved==='desktop'||saved==='mobile'?saved:window.matchMedia('(max-width:767px)').matches?'mobile':'desktop')},[]);
  const previewUrl=safePreviewUrl(url);
  if(!previewUrl)return null;
  function openPreview(){
@@ -15,11 +16,11 @@ export default function PreviewFallback({name,url,thumbnail,slug}:{name:string;u
  return <section className="source-preview-fallback" aria-label={`${name} preview`}>
   <div className="source-preview-toolbar">
    <div role="group" aria-label="Preview viewport">
-    {(['desktop','mobile'] as const).map(value=><button key={value} type="button" aria-pressed={device===value} onClick={()=>setDevice(value)}>{value==='desktop'?'Desktop':'Mobile'}</button>)}
+    {(['desktop','mobile'] as const).map(value=><button key={value} type="button" aria-pressed={device===value} onClick={()=>{setDevice(value);try{sessionStorage.setItem('wfdt-template-detail-preview-device',value)}catch{}}}>{value==='desktop'?'Desktop':'Mobile'}</button>)}
    </div>
-   <button type="button" onClick={openPreview}>Open {device} preview ↗</button>
+   <div className="rd-preview-links"><button type="button" onClick={openPreview}>Open live demo ↗</button>{safeMarketplaceUrl(designerUrl||'')&&<a href={safeMarketplaceUrl(designerUrl||'')!} target="_blank" rel="noopener noreferrer" title="Inspect the template in Webflow before buying">Inspect in Webflow ↗</a>}</div>
   </div>
   <a href={previewUrl} target="_blank" rel="noopener noreferrer" aria-label={`Open live ${name} preview`}><img src={thumbnail} alt={`${name} template preview`}/></a>
-  <p>This host cannot embed the live demo. Open it in a separate window to test the selected viewport. Your browser may open a tab or limit the window size. For an embedded Desktop/Mobile viewer, <a href={`https://webflow.com/templates/html/${encodeURIComponent(slug)}`} target="_blank" rel="noopener noreferrer">use the Webflow detail page</a>.</p>
+  <p>Explore the live demo in a new window. The selected viewport requests a window size; your browser may open a tab instead. For an embedded preview, <a href={`https://webflow.com/templates/html/${encodeURIComponent(slug)}`} target="_blank" rel="noopener noreferrer">use the Webflow detail page</a>.</p>
  </section>;
 }

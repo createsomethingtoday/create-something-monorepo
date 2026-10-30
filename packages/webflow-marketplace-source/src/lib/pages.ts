@@ -1,4 +1,5 @@
 import {load} from 'cheerio';
+import {includedPageInventory,type IncludedPage} from './detail-content.mjs';
 import {getSecret} from 'astro:env/server';
 import {readPublishedStorefront} from './creator-storefront-api.mjs';
 import type {CreatorCustomization,CreatorSource} from './creator-storefront.mjs';
@@ -10,7 +11,7 @@ import {homeMarkup,pickCreators,TILE_CATEGORIES} from './home';
 const exports = import.meta.glob('../../original-export/**/*.html',{eager:true,query:'?raw',import:'default'}) as Record<string,string>;
 const raw=(name:string)=>exports[`../../original-export/${name}.html`];
 const escape=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
-export interface Island {kind:'discovery'|'creator'|'cards'|'catalog'|'detail'|'widget'|'comments'|'chat'|'library';profile?:CreatorSource;published?:CreatorCustomization;total?:number;widget?:string;props?:Record<string,unknown>;items?:Template[];columns?:number;item?:Template;title?:string;description?:string;creatorSlug?:string;heroProps?:Record<string,unknown>}
+export interface Island {kind:'discovery'|'creator'|'cards'|'catalog'|'detail'|'widget'|'comments'|'chat'|'library';inventory?:IncludedPage[];profile?:CreatorSource;published?:CreatorCustomization;total?:number;widget?:string;props?:Record<string,unknown>;items?:Template[];columns?:number;item?:Template;title?:string;description?:string;creatorSlug?:string;heroProps?:Record<string,unknown>}
 export interface Page {title:string;description:string;head:string;body:string;parts:string[];islands:Island[];status:number;pageId?:string;canonical:string}
 function clean(name:string){
  const $=load(raw(name)||raw('404'));
@@ -165,12 +166,15 @@ export async function pageFor(url:URL):Promise<Page>{
   const r=await search({template_slug:route.slug!,strict:'true',page_size:'1'});
   const item=r.items.find(t=>t.template_slug===route.slug);if(!item)return errorPage(url,404);
   const $=clean('detail_html');$('title').text(`${item.name} - Website Template | Webflow`);$('meta[name="description"]').attr('content',item.description_short||'');
-  const cms=await publishedCms('/html/'+route.slug);
+  const [cms,published]=await Promise.all([publishedCms('/html/'+route.slug),readPublishedStorefront(item.creator_slug,{origin:getSecret('CREATOR_STOREFRONT_SERVICE_URL'),timeoutMs:1200})]);
   const rich=cms('.mp-template-text').first();
   if(!rich.length)throw new Error('CMS detail content contract changed');
+  rich.find('p').filter((_,e)=>!cms(e).text().trim()&&!cms(e).find('img,video,iframe').length).remove();
   $('.mp-template-text').replaceWith(rich.toString());
   $('.template-hero').html('<div class="container"><source-island></source-island></div>');
-  $('.branded-display-subtitle').text(item.description_short||'');
+  $('.branded-display-subtitle').remove();
+  $('.mp-sidebar-features').addClass('rd-detail-sidebar');
+  $('.mp-sidebar-wrap').filter((_,e)=>$(e).find('h5').text().trim()==='Share').remove();
   $('#longDescription').removeClass('w-dyn-bind-empty');
   $('#longDescriptionOverlay,.cc_show_more_long_description').remove();
   $('.long-description').attr('style','height:auto;max-height:none');
@@ -188,7 +192,7 @@ export async function pageFor(url:URL):Promise<Page>{
   const comments=$('.w-tab-pane[data-w-tab="Comments"]');
   comments.find('#disqus_thread_2').replaceWith('<source-island></source-island>');
   $('.w-dyn-bind-empty').filter((_,e)=>!$(e).text().trim()&&!$(e).attr('src')).remove();
-  const islands:Island[]=[{kind:'detail',item,heroProps:cmsProps(cms,'TemplateDetailHero')}];
+  const islands:Island[]=[{kind:'detail',item,published:published||undefined,inventory:includedPageInventory(rich.html()||'',item.website_url),heroProps:cmsProps(cms,'TemplateDetailHero')}];
   if(cmsProps(cms,'TemplateSupportRequest'))$('.w-tab-pane[data-w-tab="Support"] a[href="#"]').remove();
   // Islands follow document order: hero, support, comments, related cards.
   $('source-island').first().attr('data-hero','true');

@@ -243,3 +243,11 @@ test('keeps the generic title when no category is available', () => {
 
   assert.match(html, /<h1 class="wfdt-title">Fleet - Website Template<\/h1>/);
 });
+
+test('compact detail keeps categories in navigation and makes the template name the title', () => {
+  const html = renderToStaticMarkup(<TemplateDetailHero compactLayout templateName="Linotte" categoryNames="Professional Services" price="$59 USD" showPreviewIframe={false} browserPreviewUrl={{href:'https://linotte-template.webflow.io/'}} enableAnalytics={false}/>);
+  assert.match(html, /<h1 class="wfdt-title">Linotte<\/h1>/);
+  assert.match(html, /Professional Services/);
+  assert.match(html, /Buy \$59 USD/);
+  assert.doesNotMatch(html, />Preview in browser</);
+});
