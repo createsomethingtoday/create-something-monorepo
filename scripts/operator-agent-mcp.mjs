@@ -60,6 +60,13 @@ const tools = [
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
   },
   {
+    name: 'operator_agent_capabilities',
+    description:
+      'Inspect the declared local no-write operator-agent profile, including its repository skills, read-only MCP tools, disabled plugins, and denied authority classes.',
+    inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  },
+  {
     name: 'operator_agent_pattern_review',
     description:
       'Run all-scope pattern review for CREATE SOMETHING. Defaults to deterministic/no-model because repo-wide pattern review should stay stable even when local models vary.',
@@ -330,6 +337,9 @@ function buildToolRun(name, input) {
     if (args.strictModel === true) commandArgs.push('--strict-model');
     commandArgs.push('--json');
     return runScript(DOCTOR_SCRIPT, commandArgs, 240_000);
+  }
+  if (name === 'operator_agent_capabilities') {
+    return runScript(SYSTEM_SCRIPT, ['capabilities', '--json']);
   }
   if (name === 'operator_agent_pattern_review') {
     const commandArgs = ['pattern-review', '--pattern-scope', args.patternScope || 'all'];
