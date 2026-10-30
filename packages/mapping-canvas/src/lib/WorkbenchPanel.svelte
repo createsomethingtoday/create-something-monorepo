@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from 'svelte';
   import type { CanvasDocument, CanvasObject } from './document';
   import { editBounds, transformRoots, isLayerLocked, type EditCommand } from './editing';
   let {
@@ -6,6 +7,7 @@
     selectedIds,
     select,
     edit,
+    revision,
     disabled = false
   } = $props<{
     document: CanvasDocument;
@@ -13,6 +15,7 @@
     select: (ids: string[]) => void;
     edit: (commands: EditCommand[]) => void;
     disabled?: boolean;
+    revision?: Snippet;
   }>();
   let search = $state('');
   const selected = $derived(
@@ -159,6 +162,7 @@
         </div>{/if}
     {:else}<p>Select artwork to edit its position, appearance, and layer.</p>{/if}
   </section>
+  {@render revision?.()}
   <section class="layers">
     <header>
       <h2>Layers</h2>
