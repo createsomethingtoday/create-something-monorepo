@@ -1,6 +1,7 @@
 ---
 import {pageFor} from '../lib/pages';
 import Catalog from '../components/Catalog';
+import CreatorStorefront from '../components/CreatorStorefront';
 import Cards from '../components/Cards';
 import Detail from '../components/Detail';
 import {LibraryIntake} from '../vendor/library/components/library-intake';
@@ -15,6 +16,7 @@ const page=await pageFor(Astro.url);
 const requestHostname=new URL(`http://${Astro.request.headers.get('host')||Astro.url.host}`).hostname;
 const allowEmbed=requestHostname==='webflow.com'||requestHostname.endsWith('.webflow.com');
 Astro.response.status=page.status;
+if(page.islands.some(island=>island.kind==='creator'))Astro.response.headers.set('Cache-Control','no-store');
 Astro.response.headers.set('X-Robots-Tag','noindex, nofollow');
 ---
 <!doctype html>
@@ -35,6 +37,7 @@ Astro.response.headers.set('X-Robots-Tag','noindex, nofollow');
  {page.parts.map((part,i)=><>
   <Fragment set:html={part}/>
   {page.islands[i]?.kind==='library' && (import.meta.env.DEV ? <><p class="container" role="status">Development preview: Library validation, uploads and deliveries are disabled.</p><LibraryIntake client:only="react"/></> : <iframe data-source-submission="true" title="Library submission" src="https://webflow-library-submission-form.webflow.io/libraries/submit" style="width:100%;height:1800px;border:0"/>)}
+  {page.islands[i]?.kind==='creator' && <CreatorStorefront profile={page.islands[i].profile!} items={page.islands[i].items!} total={page.islands[i].total!} published={page.islands[i].published} devPreview={import.meta.env.DEV} client:load/>}
   {page.islands[i]?.kind==='comments' && <Comments slug={page.islands[i].item!.template_slug} client:load/>}
   {page.islands[i]?.kind==='chat' && <Chat client:only="react"/>}
   {page.islands[i]?.kind==='cards' && <Cards items={page.islands[i].items!} columns={page.islands[i].columns} client:load/>}

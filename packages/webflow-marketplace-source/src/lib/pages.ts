@@ -1,13 +1,16 @@
 import {load} from 'cheerio';
+import {getSecret} from 'astro:env/server';
+import {readPublishedStorefront} from './creator-storefront-api.mjs';
+import type {CreatorCustomization,CreatorSource} from './creator-storefront.mjs';
 import assetPathMap from '../../export-path-map.json';
 import {publishedCms,cmsProps,CmsNotFound} from './cms';
-import {search, type Template} from './api';
+import {SEARCH_ORIGIN,search, type Template} from './api';
 import {routeFor,localLink,searchFilters} from './routes.mjs';
 import {homeMarkup,pickCreators,TILE_CATEGORIES} from './home';
 const exports = import.meta.glob('../../original-export/**/*.html',{eager:true,query:'?raw',import:'default'}) as Record<string,string>;
 const raw=(name:string)=>exports[`../../original-export/${name}.html`];
 const escape=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
-export interface Island {kind:'cards'|'catalog'|'detail'|'widget'|'comments'|'chat'|'library';widget?:string;props?:Record<string,unknown>;items?:Template[];columns?:number;item?:Template;title?:string;description?:string;creatorSlug?:string;heroProps?:Record<string,unknown>}
+export interface Island {kind:'creator'|'cards'|'catalog'|'detail'|'widget'|'comments'|'chat'|'library';profile?:CreatorSource;published?:CreatorCustomization;total?:number;widget?:string;props?:Record<string,unknown>;items?:Template[];columns?:number;item?:Template;title?:string;description?:string;creatorSlug?:string;heroProps?:Record<string,unknown>}
 export interface Page {title:string;description:string;head:string;body:string;parts:string[];islands:Island[];status:number;pageId?:string;canonical:string}
 function clean(name:string){
  const $=load(raw(name)||raw('404'));
@@ -53,22 +56,32 @@ function finish($:ReturnType<typeof load>,url:URL,islands:Island[]=[],status=200
  const body=$('body').html()||'';
  return {title:$('title').text(),description:$('meta[name="description"]').attr('content')||'',head:$('head').html()||'',body,parts:body.split(/<source-island[^>]*><\/source-island>/),islands,status,pageId:$('html').attr('data-wf-page'),canonical};
 }
-function shell(main:string,title:string,description=''){
+function shell(main:string,title:string,description='',includeCta=true){
  const $=clean('index');$('title').text(title);$('meta[name="description"]').attr('content',description);
- const header=$('.sb-nav-wrapper').first().toString(),footer=$('footer').toString(),cta=$('.cta-sell-your-templates').toString();
+ const header=$('.sb-nav-wrapper').first().toString(),footer=$('footer').toString(),cta=includeCta?$('.cta-sell-your-templates').toString():'';
  $('body').html(header+main+cta+footer);return $;
+}
+/** Published CMS category or subcategory page. Search API subcategory slugs omit the CMS "-websites" suffix. */
+async function categoryCms(page:string,slug:string){
+ try{return await publishedCms(`/${page}/${slug}`)}
+ catch(error){
+  if(error instanceof CmsNotFound&&!slug.endsWith('-websites'))return publishedCms(`/${page}/${slug}-websites`);
+  throw error;
+ }
 }
 function errorPage(url:URL,status:number){
  const title=status===404?'Page not found':'The template catalog is temporarily unavailable';
- const $=shell(`<main id="main" class="section"><div class="container"><h1>${title}</h1><p>${status===404?'This Marketplace page could not be found.':'Please try again in a moment.'}</p><a href="/templates/all">Browse all templates</a></div></main>`,title+' | Webflow');
+ const $=shell(`<main id="main" class="section"><div class="container"><h1>${title}</h1><p>${status===404?'This Marketplace page could not be found.':'Please try again in a moment.'}</p><div class="rd-error-actions">${status===503?`<a class="rd-control-trigger" href="${escape(url.pathname+url.search)}">Try again</a>`:''}<a href="/templates/all" data-source-back>Back to templates</a></div></div></main>`,title+' | Webflow');
  return finish($,url,[],status);
 }
 const names:Record<string,string>={'all':'All Website Templates','featured':'Featured Website Templates','free-website-templates':'Free Website Templates','popular-website-templates':'Popular Website Templates','new-website-templates':'New Website Templates','landing-page':'Landing Page Templates','search':'Search Website Templates','search-results':'Search Website Templates','search-v2':'Search Website Templates','basic-website-templates':'Basic Website Templates','cms-website-templates':'CMS Website Templates','ecommerce-website-templates':'Ecommerce Website Templates','premium-website-templates':'Premium Website Templates','user-accounts-website-templates':'User Accounts Website Templates'};
-function hydrateCms($:ReturnType<typeof load>,islands:Island[]){
+function hydrateCms($:ReturnType<typeof load>,islands:Island[],url?:URL){
  $('code-island').each((_,e)=>{
   const el=$(e);let widget:string,props:Record<string,unknown>;
   try{widget=JSON.parse(el.attr('data-loader')||'{}').val?.submoduleId;props=JSON.parse(el.attr('data-props')||'{}')}catch{return}
-  if(['TemplateCard','TemplateGrid','TemplateFilterBar','TemplateSupportRequest'].includes(widget)){
+  // The published heading reads window at runtime. Give the server render the request route so the first paint carries the real title.
+  if(widget==='TemplateMarketplaceHeading'&&url&&!props.staticRoutePath)props.staticRoutePath=url.pathname+url.search;
+  if(['TemplateCard','TemplateGrid','TemplateFilterBar','TemplateSupportRequest','TemplateSearchSidebar','TemplateMarketplaceHeading','TemplateChat','MarketplaceAgentTools'].includes(widget)){
    islands.push({kind:'widget',widget,props});el.replaceWith('<source-island></source-island>');
   }
  });
@@ -145,8 +158,8 @@ export async function pageFor(url:URL):Promise<Page>{
   const index=clean('index');
   const faq=index('body > section.section').filter((_,element)=>/Frequently Asked Questions/i.test(index(element).text())).first().toString();
   const main=homeMarkup({total:newest.pagination.total_items,hero:featured.items.slice(4,7),creators:pickCreators(featured.items),categories:pills.category_pills||[],stacks});
-  const $=shell(main+faq,index('title').text(),index('meta[name="description"]').attr('content')||'');
-  return finish($,url,[{kind:'cards',items:featured.items.slice(0,4)},{kind:'cards',items:newest.items},{kind:'cards',items:free.items,columns:3}]);
+  const $=shell(main+faq,'Free & Premium Website Templates | Webflow',index('meta[name="description"]').attr('content')||'');
+  return finish($,url,[{kind:'cards',items:featured.items.slice(0,4)},{kind:'cards',items:free.items,columns:3},{kind:'cards',items:newest.items}]);
  }
  if(route.kind==='detail'){
   const r=await search({template_slug:route.slug!,strict:'true',page_size:'1'});
@@ -187,12 +200,49 @@ export async function pageFor(url:URL):Promise<Page>{
   });
   return finish($,url,ordered);
  }
+ if(route.kind==='catalog' && (route.page==='category'||route.page==='subcategory')){
+  // Production serves these from the CMS category pages: the same code components
+  // plus SEO copy, "More template categories", the category FAQ and the floating template finder.
+  const cms=await categoryCms(route.page,route.slug!);
+  const content=cms('body').children('.section,.cta-sell-your-templates,code-island').toArray().map(e=>cms(e).toString()).join('');
+  if(!cms('body > .section code-island').length)throw new Error('CMS category content contract changed');
+  const $=shell(content,cms('title').text(),cms('meta[name="description"]').attr('content')||'',false);
+  $('.w-dyn-empty').remove();$('.mp-main').addClass('rd-catalog-main');$('body > .section').first().addClass('rd-category-page');
+  const islands:Island[]=[];hydrateCms($,islands,url);return finish($,url,islands);
+ }
+ if(route.kind==='catalog' && route.page==='designers' && route.slug){
+  const [cms,catalog,published]=await Promise.all([
+   publishedCms('/designers/'+route.slug),
+   search({creator_slug:route.slug,sort:'popular',page_size:'100'}),
+   readPublishedStorefront(route.slug,{origin:getSecret('CREATOR_STOREFRONT_SERVICE_URL')})
+  ]);
+  const header=cms('h1').first().closest('.section');
+  const name=header.find('h1').text().replace(/^Templates by\s+/i,'').trim();
+  if(!name)throw new Error('CMS creator profile contract changed');
+  // Featured picks can be outside the first catalog page. Resolve only missing pins,
+  // and recheck ownership before rendering any result from the public service.
+  const existing=new Set(catalog.items.map(item=>item.template_slug));
+  const missing=(published?.picks||[]).filter(pin=>!existing.has(pin.slug));
+  const additional=await Promise.all(missing.map(async pin=>{
+   try{
+    const response=await fetch(`${SEARCH_ORIGIN}/api/templates/search?${new URLSearchParams({template_slug:pin.slug,creator_slug:route.slug!,page_size:'5'})}`,{signal:AbortSignal.timeout(2000),cache:'no-store',redirect:'manual'});
+    if(!response.ok)return [];
+    const data=await response.json();
+    return Array.isArray(data.items)?data.items.filter((item:Template)=>item.template_slug===pin.slug&&item.creator_slug===route.slug):[];
+   }catch{return [];}
+  }));
+  const creatorItems=[...catalog.items,...additional.flat()];
+  const profile:CreatorSource={slug:route.slug,name,bio:header.find('.designer-description').text().trim(),avatar:header.find('.designer-avatar').attr('src')||'',links:header.find('a[href]').filter((_,e)=>!cms(e).parents('.mp-breadcrumbs').length).toArray().map(e=>cms(e).attr('href')||'')};
+  const $=shell('<source-island></source-island>',`Website Templates by ${name} | Webflow`,profile.bio);
+  return finish($,url,[{kind:'creator',profile,published:published||undefined,items:creatorItems,total:catalog.pagination.total_items}]);
+ }
  if(route.kind==='catalog' && (route.page==='designers'||['basic-website-templates','cms-website-templates','ecommerce-website-templates','premium-website-templates','user-accounts-website-templates','feature','languages'].includes(route.page!))){
   const cms=await publishedCms('/'+route.page+(route.slug?'/'+route.slug:''));
   const content=cms('body > .section').toArray().map(e=>cms(e).toString()).join('');
   if(!content)throw new Error('CMS collection content contract changed');
   const $=shell(content,cms('title').text(),cms('meta[name="description"]').attr('content')||'');
-  const islands:Island[]=[];hydrateCms($,islands);return finish($,url,islands);
+  if(route.page==='designers'&&route.slug){$('h1').first().closest('.section').addClass('rd-creator-profile');}
+  const islands:Island[]=[];hydrateCms($,islands,url);return finish($,url,islands);
  }
  if(route.kind==='catalog'){
   const p=searchFilters(route,url);p.set('page_size','24');

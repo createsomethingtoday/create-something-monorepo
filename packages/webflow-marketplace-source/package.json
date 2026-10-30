@@ -4,12 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "astro dev",
+    "dev": "NODE_OPTIONS=--network-family-autoselection-attempt-timeout=3000 astro dev",
+    "dev:alias": "node scripts/dev-alias.mjs",
     "build": "astro build",
     "start": "node ./dist/server/entry.mjs",
     "check": "astro check",
     "test": "node --test test/*.test.mjs",
-    "sync:components": "node scripts/sync-components.mjs"
+    "sync:components": "node scripts/sync-components.mjs",
+    "views:data": "node scripts/source-views-data.mjs"
   },
   "dependencies": {
     "@astrojs/node": "11.1.6",

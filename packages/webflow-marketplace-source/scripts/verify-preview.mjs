@@ -3,9 +3,10 @@ import {load} from 'cheerio';
 const origin=process.env.PREVIEW_URL||'http://localhost:4321';
 const receipts=[];
 for(const [path,status,content] of [
- ['/templates',200,'Launch a high-performing site'],
+ ['/templates',200,'that already works'],
  ['/templates/all',200,'All Website Templates'],
- ['/templates/category/technology-websites',200,'Technology'],
+ ['/templates/category/technology-websites',200,'Technology Website Templates'],
+ ['/templates/subcategory/creative-agency',200,'Creative Agency Website Templates'],
  ['/templates/designers/caseflow',200,'Templates by CaseFlow'],
  ['/templates/categories',200,'All template categories'],
  ['/templates/html/fycare-website-template',200,'Fycare'],
