@@ -90,6 +90,7 @@
     "open-weight:eval:endpoint": "node scripts/open-weight-agent-local-eval.mjs --mode endpoint",
     "open-weight:gpt-oss:preflight": "node scripts/open-weight-agent-local-eval.mjs --mode gpt-oss-preflight",
     "open-weight:eval:local": "node scripts/open-weight-agent-local-eval.mjs --mode transformers",
+    "agent:runtime-compare": "node scripts/codex-deepagents-comparison.mjs",
     "ink:bridge:smoke": "pnpm --dir packages/calm-operator-ink-bridge smoke:production",
     "ink:priority": "pnpm --dir packages/calm-operator-ink-bridge post:priority",
     "operator:bridge:smoke": "pnpm --dir packages/calm-operator-ink-bridge smoke:production",
