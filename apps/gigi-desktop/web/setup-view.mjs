@@ -20,6 +20,8 @@ export function sourceErrorMessage(code) {
 
 import { sourceSessionBlocked, sourceNeedsOperatorReview, pendingConsentForProvider } from './model.mjs';
 
+const admissionGuidance = 'GiGi source access is not enabled for this sign-in. Check that you used your invited GiGi account and completed email verification, then ask the GiGi operator to review beta access. This message does not identify which access check failed. Repeating Google consent will not resolve it. Never share passwords, sign-in codes or API keys.';
+
 /** Plain-language feedback for a connector status receipt. UI callers escape the strings. */
 export function sourceView(source) {
   if (sourceErrorMessage(source?.detail)) return { label: 'Check connection', description: sourceErrorMessage(source.detail) };
@@ -53,7 +55,7 @@ export function sourceView(source) {
   };
   if (source?.detail === 'access_denied') return {
     label: 'Access not enabled',
-    description: 'This GiGi sign-in is not permitted to use sources. Ask the GiGi operator to check access for this app; repeating Google consent will not resolve it.',
+    description: admissionGuidance,
   };
   if (source?.detail === 'provider_unavailable') return {
     label: 'Service unavailable',
@@ -130,6 +132,16 @@ export function setupSummary({ workspace, sources = {}, agentReceipt, agent } = 
   return { steps, nextStep };
 }
 
+/** Admission comes from source status, not completion of Identity sign-in. */
+export function sourceSignInNeeded(sources = {}, signedOut = false) {
+  const values = ['gmail', 'googlecalendar'].map(provider => sources[provider]);
+  const blocked = values.some(sourceSessionBlocked) || values.some(source =>
+    ['access_denied', 'provider_unavailable', 'unconfigured', 'refresh_in_progress', 'refresh_outcome_unknown'].includes(source?.detail) || source?.state === 'unconfigured');
+  if (blocked) return false;
+  if (signedOut || values.some(source => ['session_expired', 'reauthentication_required', 'unauthorized'].includes(source?.detail))) return true;
+  return !values.some(source => ['disconnected', 'pending', 'connected', 'attention'].includes(source?.state));
+}
+
 /** Steps derive from authoritative status receipts, never from sign-in button clicks. */
 export function sourceJourney(sources = {}, attempts = {}) {
   const values = ['gmail', 'googlecalendar'].map(provider => sources[provider]);
@@ -143,8 +155,8 @@ export function sourceJourney(sources = {}, attempts = {}) {
   const reconnect = values.some(source => source?.state === 'attention' && source.reconnectable === true);
   const admitted = !denied && !signIn && !service && values.some(source => ['disconnected', 'pending', 'connected', 'attention'].includes(source?.state));
   const consent = ['gmail', 'googlecalendar'].some(provider => pendingConsentForProvider(sources[provider], attempts, provider));
-  const current = !admitted ? 1 : review ? 4 : consent ? 3 : reconnect ? 2 : pending ? 4 : connected ? 5 : 2;
-  const next = recoveryMessage || (denied ? 'Ask the GiGi operator to check source access for this app.'
+  const current = !admitted ? (denied || service ? 2 : 1) : review ? 5 : consent ? 4 : reconnect ? 3 : pending ? 5 : connected ? 6 : 3;
+  const next = recoveryMessage || (denied ? admissionGuidance
     : signIn ? 'Sign in to GiGi sources, then check status. Google consent is a separate step.'
     : service ? 'Check status again before starting or resuming consent.'
     : review ? 'Ask the GiGi operator to review the uncertain connection before connecting again.'
@@ -154,5 +166,5 @@ export function sourceJourney(sources = {}, attempts = {}) {
     : connected ? 'Check the verified Google identity below, then preview a bounded source page when ready.'
     : admitted ? 'Choose Gmail or Google Calendar below. You can connect either source independently.'
     : 'Check source status or sign in to GiGi sources. Your local workspace is ready.');
-  return { current, next, stages: ['Local workspace', 'GiGi source sign-in', 'Choose a source', 'Google consent', 'Verify connection', 'Preview and import'] };
+  return { current, next, stages: ['Local workspace', 'GiGi source sign-in', 'GiGi source access', 'Choose a source', 'Google consent', 'Verify connection', 'Preview and import'] };
 }

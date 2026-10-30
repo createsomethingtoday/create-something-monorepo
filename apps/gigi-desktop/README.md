@@ -122,7 +122,7 @@ Agent setup generates exact Codex MCP registration and Claude plugin launch comm
 
 ## Guided onboarding
 
-Source setup now shows six stages: local workspace, GiGi source sign-in, source choice, Google consent, verification, and explicit bounded import. An expired GiGi session asks for sign-in; admission/resource denial asks the operator to check app access; an unavailable identity/connector service asks for a later status check. None of those errors grants access or releases a pending consent attempt.
+Source setup now shows seven stages: local workspace, GiGi source sign-in, GiGi source access, source choice, Google consent, verification, and explicit bounded import. An expired GiGi session asks for sign-in; admission/resource denial asks the operator to check app access; an unavailable identity/connector service asks for a later status check. None of those errors grants access or releases a pending consent attempt.
 
 After ownership and active-connection verification, the connector reads a display label through that same Google connection: Gmail's profile address or Calendar's primary-calendar identifier. The GiGi sign-in email is never used as the Google label. Missing, malformed or slow optional labels stay unavailable without inventing an account identity. Existing approved Google grants are broader than read-only; GiGi's fixed source proxy uses only GET operations. Each explicit import reads at most two Gmail metadata/snippet records or ten primary-calendar events. Open an imported record to review a linked local task or gig.
 
