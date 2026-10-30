@@ -23,6 +23,11 @@ declare global {
 				KNOCK_API_KEY?: string;
 				KNOCK_LOGIN_WORKFLOW_KEY?: string;
 				KNOCK_LOGIN_ENABLED?: string;
+				/** Creator storefront (packages/creator-storefront). All four fail closed when absent. */
+				CREATOR_STOREFRONT_ENABLED?: string;
+				CREATOR_STOREFRONT_SERVICE_URL?: string;
+				CREATOR_STOREFRONT_OWNER_KEY?: string;
+				CREATOR_STOREFRONT_ALLOWED_EMAILS?: string;
 			};
 			context: {
 				waitUntil(promise: Promise<unknown>): void;
