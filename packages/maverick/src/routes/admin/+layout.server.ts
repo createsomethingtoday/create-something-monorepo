@@ -8,6 +8,10 @@ import type { LayoutServerLoad } from './$types';
 import { validateSession } from '$lib/server/auth';
 
 export const load: LayoutServerLoad = async ({ cookies, platform, url }) => {
+	// The login page must be reachable before a session exists. All other admin routes
+	// continue through the existing session gate.
+	if (url.pathname.replace(/\/$/, '') === '/admin/login') return {};
+
 	// Allow embedded mode without auth (Webflow iframe)
 	if (url.searchParams.get('embed') === 'true') {
 		return {};
