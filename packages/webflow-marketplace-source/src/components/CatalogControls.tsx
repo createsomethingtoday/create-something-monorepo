@@ -9,8 +9,7 @@ function ResponsivePanel({label,children}:{label:string;children:ReactNode}){
  const dialog=useRef<HTMLDialogElement>(null);
  const id=useId();
  useEffect(()=>{const query=matchMedia('(max-width: 991px)');const update=()=>setMobile(query.matches);update();query.addEventListener('change',update);return()=>query.removeEventListener('change',update)},[]);
- if(!mobile)return <>{children}</>;
- return <div className="rd-control"><button type="button" className="rd-control-trigger" aria-haspopup="dialog" onClick={()=>dialog.current?.showModal()}>{label}</button><dialog ref={dialog} className="rd-control-dialog" aria-labelledby={id} onClick={event=>{if(event.target===dialog.current)dialog.current?.close()}}><header><h2 id={id}>{label}</h2><button type="button" onClick={()=>dialog.current?.close()}>Done</button></header>{children}</dialog></div>;
+ return <><div className="rd-control-desktop">{!mobile&&children}</div><div className="rd-control"><button type="button" className="rd-control-trigger" aria-haspopup="dialog" onClick={()=>dialog.current?.showModal()}>{label}</button><dialog ref={dialog} className="rd-control-dialog" aria-labelledby={id} onClick={event=>{if(event.target===dialog.current)dialog.current?.close()}}><header><h2 id={id}>{label}</h2><button type="button" onClick={()=>dialog.current?.close()}>Done</button></header>{mobile&&children}</dialog></div></>;
 }
 export function CatalogSidebar(props:ComponentProps<typeof TemplateSearchSidebar>){
  return <ResponsivePanel label="Categories"><TemplateSearchSidebar {...props} collapseOnMobile={false}/></ResponsivePanel>;
