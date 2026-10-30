@@ -1960,6 +1960,33 @@ test('create_admin_template refuses to duplicate an asset that already has a Tem
   assert.equal(fetched, false);
 });
 
+test('create_admin_template sends the first valid address when the asset lists several creator emails', async () => {
+  const { server, handlers } = createServerHarness();
+  const calls: Array<{ init: RequestInit }> = [];
+  const fetchStub = (async (_url: string | URL | Request, init?: RequestInit) => {
+    calls.push({ init: init ?? {} });
+    return new Response(JSON.stringify({ _id: '6ac54eddbb8a7def85e05871', slug: 'komanica', status: 'DRAFT' }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  }) as typeof fetch;
+  const client = {
+    requireAssignedVersion: async () => ({}),
+    getReviewContext: async () => adminCreateContext({ creatorEmail: 'hello@komanica.co, studio@komanica.co' }),
+    updateAssetPublishing: async () => ({}),
+  } as unknown as AirtableClient;
+  registerTools(server, () => client, () => reviewer, { marketplaceAdmin: { apiKey: 'k'.repeat(128), fetchFn: fetchStub } });
+
+  const result = await handlers.get('template_review_create_admin_template')?.({ version_id: 'rec_version_komanica' });
+  assert.ok(result);
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true, JSON.stringify(payload.error));
+  const body = JSON.parse(String(calls[0]?.init.body)) as Record<string, any>;
+  assert.deepEqual(body.support, { email: 'hello@komanica.co' });
+  const warnings = (payload.data as { warnings: string[] }).warnings;
+  assert.ok(warnings.some((warning) => warning.includes('2 creator emails')));
+});
+
 test('create_admin_template refuses without a support contact', async () => {
   const { server, handlers } = createServerHarness();
   let fetched = false;
