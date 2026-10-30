@@ -55,3 +55,17 @@ test('unchanged scheduled legacy check makes no Notion writes; valid explicit re
   const count=f.provider.mutations;await f.deliver(false);await f.deliver(true);assert.equal(f.provider.mutations,count);
  }finally{f.close();}
 });
+
+test('new-meeting planning rejects an oversized compact index before original, inline or child-page mutations', async () => {
+  const f = await scenario();
+  try {
+    f.provider.recordings.get('new').raw = 'WEBVTT\n\n' + Array.from({ length: 140 }, (_, i) =>
+      `${i + 1}\n00:${String(Math.floor(i / 60)).padStart(2, '0')}:${String(i % 60).padStart(2, '0')}.000 --> 01:00:00.000\nSpeaker: ${'x'.repeat(5700)}\n\n`).join('');
+    await assert.rejects(f.deliver(), /Page index exceeds compact retrieval budget/);
+    assert.equal(f.provider.mutations, 0);
+    assert.equal(f.childCreates, 0);
+    assert.equal(f.sql.prepare('SELECT COUNT(*) AS n FROM transcript_write_journal').get()!.n, 0);
+    await assert.rejects(f.deliver(), /Page index exceeds compact retrieval budget/);
+    assert.equal(f.provider.mutations, 0);
+  } finally { f.close(); }
+});

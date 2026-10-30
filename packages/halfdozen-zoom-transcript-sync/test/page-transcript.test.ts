@@ -63,3 +63,21 @@ test('legacy v1 index stays immutable while a distinct v2 index omits duplicate 
  const oldBody=(await f.transport.list(old.id)).filter(b=>b.type==='paragraph').map(blockText).join('');assert.match(oldBody,/https:\/\//);
  const nextBody=(await f.transport.list(nextRoot.id)).filter(b=>b.type==='paragraph').map(blockText).join('');assert.ok(!nextBody.includes('https://'));assert.match(nextBody,/Canonical parts:/);
 });
+
+for (const format of [PAGE_FORMAT, LEGACY_PAGE_FORMAT]) {
+  test(`${format} rejects an oversized title index before page creation or journal reservation`, async () => {
+    const source = 'WEBVTT\n\n' + Array.from({ length: 140 }, (_, i) =>
+      `${i + 1}\n00:${String(Math.floor(i / 60)).padStart(2, '0')}:${String(i % 60).padStart(2, '0')}.000 --> 01:00:00.000\nSpeaker: ${'x'.repeat(5700)}\n\n`).join('');
+    const plan = await planTranscript(parseTranscript(source, 'vtt'), format);
+    assert.equal(plan.artifacts.filter(a => a.key.startsWith('part:')).length, 140);
+    const f = fixture(); let reservations = 0;
+    const journal = { ...f.journal, async reserve(key: string) { reservations++; return f.journal.reserve(key); } };
+    await assert.rejects(writePageTranscript(f.transport, journal, 'meeting', plan), /Page index exceeds compact retrieval budget/);
+    assert.equal(f.sends, 0, 'reject before any provider mutation');
+    assert.equal(reservations, 0, 'reject before claiming any permanent write operation');
+    assert.equal(f.pages.size, 0);
+    assert.deepEqual(f.rows.get('meeting'), []);
+    await assert.rejects(writePageTranscript(f.transport, journal, 'meeting', plan), /Page index exceeds compact retrieval budget/);
+    assert.equal(f.sends, 0); assert.equal(reservations, 0);
+  });
+}

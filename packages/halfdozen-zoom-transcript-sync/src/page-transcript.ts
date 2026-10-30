@@ -46,25 +46,34 @@ async function verify(t: PageTransport, id: string, chunks: string[]) {
   const rows = await t.list(id);
   if (rows.length !== chunks.length || rows.some((b, i) => b.type !== 'paragraph' || b.has_children || blockText(b) !== chunks[i])) throw Error('Transcript page reconstruction mismatch');
 }
+// Pages-v2 metadata is fully determined before any provider I/O. Legacy v1
+// additionally embeds returned URLs: preflight its known metadata here and
+// recheck the exact URL-bearing text once those immutable receipts are known.
+export function pageIndexText(plan: TranscriptPlan, urls?: string[]): string {
+  const parts = plan.artifacts.filter(a => a.key.startsWith('part:'));
+  if (!parts.length || parts.map(a => a.chunks.join('')).join('\n') !== plan.canonical) throw Error('Incomplete canonical page plan');
+  const text = [
+    `Version: ${plan.version}`, `Format: ${plan.format}`, `Canonical timestamp blocks: ${plan.blockCount}`,
+    ...(plan.format === LEGACY_PAGE_FORMAT
+      ? parts.map((artifact, i) => `${artifact.title}\n${urls?.[i] ?? ''}`)
+      : [`Canonical parts: ${parts.length}`, ...parts.map(artifact => artifact.title)]),
+  ].join('\n');
+  if (text.length > 6000) throw Error('Page index exceeds compact retrieval budget');
+  return text;
+}
 // Additive reading projection. Original byte archive and canonical toggle artifacts
 // are verified separately by the existing writer and never deleted here.
 export async function writePageTranscript(t: PageTransport, j: WriteJournal, meeting: string, plan: TranscriptPlan): Promise<PageReceipt> {
   if (!isPageFormat(plan.format)) throw Error('Page projection requires a distinct representation version');
+  const preparedIndex = pageIndexText(plan);
   const root = await child(t, j, meeting, `Transcript Retrieval Index | ${plan.format} | ${plan.version}`, [], true);
   const parts: Array<{ artifact: Artifact; page: PageReceipt }> = [];
   for (const artifact of plan.artifacts.filter(a => a.key.startsWith('part:'))) {
     parts.push({ artifact, page: await child(t, j, root.id, artifactMarker(plan.version, artifact), artifact.chunks) });
   }
-  if (!parts.length || parts.map(p => p.artifact.chunks.join('')).join('\n') !== plan.canonical) throw Error('Incomplete canonical page plan');
-  const chunks = exactChunks([
-    `Version: ${plan.version}`, `Format: ${plan.format}`, `Canonical timestamp blocks: ${plan.blockCount}`,
-    ...(plan.format === LEGACY_PAGE_FORMAT
-      ? parts.map(({ artifact, page }) => `${artifact.title}\n${page.url}`)
-      // Native child-page navigation already renders each page ID once. Keep
-      // ordered metadata here without repeating those IDs as explicit URLs.
-      : [`Canonical parts: ${parts.length}`, ...parts.map(({ artifact }) => artifact.title)]),
-  ].join('\n'));
-  if (chunks.join('').length > 6000) throw Error('Page index exceeds compact retrieval budget');
+  const chunks = exactChunks(plan.format === LEGACY_PAGE_FORMAT
+    ? pageIndexText(plan, parts.map(({ page }) => page.url))
+    : preparedIndex);
   const validate = async () => {
     const rows = await t.list(root.id), pages = rows.filter(b => b.type === 'child_page'), body = rows.filter(b => b.type !== 'child_page');
     if (JSON.stringify(pages.map(b => b.id)) !== JSON.stringify(parts.map(p => p.page.id))) throw Error('Transcript page index ownership mismatch');
