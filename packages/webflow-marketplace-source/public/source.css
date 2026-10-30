@@ -218,3 +218,6 @@ body .wfdt-sticky{background:#fff}
  .rd-control{display:block}.rd-control-desktop{display:none}
  .source-catalog .tmheading-title,.rd-catalog-main .tmheading-title{font-size:24px;line-height:1.2}
 }
+
+/* Discovery uses the same visual weight for every match and preserves portrait assets. */
+.rd-discovery .rd-fit-image,.rd-discovery .has-conversation .rd-fit-image{aspect-ratio:560/720;height:auto;min-height:0;max-height:none}.rd-discovery .rd-fit-image img{object-fit:contain}.rd-secondary-preview img{display:block;width:100%;height:auto;margin-top:12px}.rd-intent{margin:0 0 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:12px 16px;background:#f7f7f7;border:1px solid #d9d9d9;border-radius:4px}.rd-intent p{margin:0}.rd-intent select{min-height:44px;padding:8px;border:1px solid #bdbdbd;background:white;color:#080808}.rd-pick-note summary{color:#146ef5}

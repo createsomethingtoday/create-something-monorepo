@@ -1,5 +1,5 @@
 import type {Template} from './api';
-export interface Brief {q:string;notes:string;maxPrice:string;cms:string;free:boolean;category:string;style:string;types:string}
+export interface Brief {portfolioKind:string;q:string;notes:string;maxPrice:string;cms:string;free:boolean;category:string;style:string;types:string}
 export function readBrief(search?:string):Brief;
 export function briefParams(brief:Brief,current?:string):URLSearchParams;
 export function discoveryQuery(search:string):URLSearchParams;
