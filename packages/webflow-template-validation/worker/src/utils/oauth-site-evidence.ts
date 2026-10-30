@@ -67,13 +67,15 @@ export async function verifyOauthSiteAccess(
 	const controller = new AbortController();
 	const timer = setTimeout(() => controller.abort(), MCP_TIMEOUT_MS);
 	let sessionId: string | undefined;
+	// The initialize response fixes the version for the rest of the connection.
+	let protocolVersion = MCP_PROTOCOL_VERSION;
 
 	const post = async (body: Record<string, unknown>): Promise<Response> => {
 		const headers: Record<string, string> = {
 			Authorization: `Bearer ${accessToken}`,
 			'Content-Type': 'application/json',
 			Accept: 'application/json, text/event-stream',
-			'MCP-Protocol-Version': MCP_PROTOCOL_VERSION
+			'MCP-Protocol-Version': protocolVersion
 		};
 		if (sessionId) headers['Mcp-Session-Id'] = sessionId;
 		const response = await fetch(url, {
@@ -99,11 +101,14 @@ export async function verifyOauthSiteAccess(
 	};
 
 	try {
-		await request(1, 'initialize', {
+		const initialized = await request(1, 'initialize', {
 			protocolVersion: MCP_PROTOCOL_VERSION,
 			capabilities: {},
 			clientInfo: { name: 'webflow-template-validation-worker', version: '1.0.0' }
 		});
+		if (typeof initialized.protocolVersion === 'string' && initialized.protocolVersion.trim() !== '') {
+			protocolVersion = initialized.protocolVersion.trim();
+		}
 		const notified = await post({ jsonrpc: '2.0', method: 'notifications/initialized' });
 		await notified.body?.cancel().catch(() => undefined);
 

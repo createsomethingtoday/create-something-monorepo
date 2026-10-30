@@ -3011,7 +3011,7 @@ describe('OAuth site-access evidence', () => {
 	const MCP_URL = 'https://mcp.test.invalid/mcp';
 	const WORKER_BASE = 'https://validation-worker.createsomething.workers.dev';
 
-	function mockMcpServer(site: Record<string, unknown>, options: { sse?: boolean } = {}) {
+	function mockMcpServer(site: Record<string, unknown>, options: { sse?: boolean; protocolVersion?: string } = {}) {
 		const calls: Array<{ headers: Headers; body: any }> = [];
 		const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
 			const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
@@ -3021,7 +3021,7 @@ describe('OAuth site-access evidence', () => {
 			if (!('id' in body)) return new Response(null, { status: 202 });
 			const result =
 				body.method === 'initialize'
-					? { protocolVersion: '2025-06-18', capabilities: {}, serverInfo: { name: 'mock', version: '0' } }
+					? { protocolVersion: options.protocolVersion ?? '2025-06-18', capabilities: {}, serverInfo: { name: 'mock', version: '0' } }
 					: {
 							content: [
 								{
@@ -3205,6 +3205,74 @@ describe('OAuth site-access evidence', () => {
 					publishedHosts: ['oauth-lookup.webflow.io', 'lookup.example']
 				})
 			);
+		}
+	});
+
+	it('retires published-host mappings that the latest verification no longer returns', async () => {
+		const accessToken = 'mcp-test-token-retire-0004';
+		mockMcpServer({
+			id: 'site_oauth_retire',
+			workspaceId: 'ws_retire',
+			shortName: 'oauth-retire',
+			customDomains: [{ url: 'old-domain.example' }]
+		});
+		const first = await worker.fetch(
+			submitRequest('site_oauth_retire', accessToken),
+			{ VALIDATOR_MCP_SERVER_URL: MCP_URL } as any,
+			createExecutionContext()
+		);
+		expect(first.status).toBe(200);
+
+		// The site drops its custom domain; the next verification returns only the webflow.io host.
+		mockMcpServer({ id: 'site_oauth_retire', workspaceId: 'ws_retire', shortName: 'oauth-retire', customDomains: [] });
+		const second = await worker.fetch(
+			submitRequest('site_oauth_retire', accessToken),
+			{ VALIDATOR_MCP_SERVER_URL: MCP_URL } as any,
+			createExecutionContext()
+		);
+		expect(second.status).toBe(200);
+
+		const retired = await worker.fetch(
+			new Request(
+				`${WORKER_BASE}/app-validator/submission/latest?publishedUrl=${encodeURIComponent('https://old-domain.example/')}`,
+				{ method: 'GET' }
+			),
+			{} as any,
+			createExecutionContext()
+		);
+		expect(retired.status).toBe(404);
+		expect(((await retired.json()) as any).status).toBe('missing');
+
+		const kept = await worker.fetch(
+			new Request(
+				`${WORKER_BASE}/app-validator/submission/latest?publishedUrl=${encodeURIComponent('https://oauth-retire.webflow.io/')}`,
+				{ method: 'GET' }
+			),
+			{} as any,
+			createExecutionContext()
+		);
+		expect(kept.status).toBe(200);
+		expect(((await kept.json()) as any).siteId).toBe('site_oauth_retire');
+	});
+
+	it('uses the protocol version the MCP server returns from initialize', async () => {
+		const accessToken = 'mcp-test-token-protocol-0005';
+		const calls = mockMcpServer(
+			{ id: 'site_oauth_protocol', workspaceId: 'ws_protocol', shortName: 'oauth-protocol', customDomains: [] },
+			{ protocolVersion: '2025-03-26' }
+		);
+		const response = await worker.fetch(
+			submitRequest('site_oauth_protocol', accessToken),
+			{ VALIDATOR_MCP_SERVER_URL: MCP_URL } as any,
+			createExecutionContext()
+		);
+		expect(response.status).toBe(200);
+
+		const [initialize, ...afterInitialize] = calls;
+		expect(initialize.body.method).toBe('initialize');
+		expect(afterInitialize.length).toBeGreaterThanOrEqual(2);
+		for (const call of afterInitialize) {
+			expect(call.headers.get('MCP-Protocol-Version')).toBe('2025-03-26');
 		}
 	});
 

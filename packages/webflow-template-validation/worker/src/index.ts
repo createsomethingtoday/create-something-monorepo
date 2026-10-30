@@ -1144,9 +1144,10 @@ async function handleValidationSubmit(
 		evidence,
 		artifact: artifactResult
 	};
+	const previousResult = await getValidationResultState(env, siteId);
 	await persistValidationResultState(env, latestResult);
 	if (evidence) {
-		await persistPublishedHostLookups(env, siteId, evidence.publishedHosts, submittedAt);
+		await persistPublishedHostLookups(env, siteId, evidence.publishedHosts, submittedAt, previousResult?.evidence?.publishedHosts ?? []);
 	}
 	const knownSnippetState = await getSnippetTokenState(env, siteId);
 	await recordBridgeUsage(env, {
@@ -2114,17 +2115,32 @@ async function getPublishedHostLookupState(
 	return record;
 }
 
+/**
+ * Write the host → site mappings for the latest verified host set and retire
+ * mappings from the previous verification that are no longer in it, so a
+ * renamed or removed domain cannot keep resolving to this site's record.
+ */
 async function persistPublishedHostLookups(
 	env: unknown,
 	siteId: string,
 	publishedHosts: string[],
-	updatedAt: string
+	updatedAt: string,
+	previousHosts: string[] = []
 ): Promise<void> {
 	for (const publishedHost of publishedHosts) {
 		const publishedHostSha256 = await sha256Hex(publishedHost);
 		const lookup: PublishedHostLookupRecord = { publishedHostSha256, siteId, updatedAt };
 		publishedHostLookups.set(publishedHostSha256, lookup);
 		await writeDurableState(env, `published-host:${publishedHostSha256}`, lookup);
+	}
+	const current = new Set(publishedHosts);
+	for (const staleHost of previousHosts.filter((host) => !current.has(host))) {
+		const publishedHostSha256 = await sha256Hex(staleHost);
+		const existing = await getPublishedHostLookupState(env, staleHost);
+		// Only retire a mapping this site still owns; another site may have claimed the host since.
+		if (existing && existing.siteId !== siteId) continue;
+		publishedHostLookups.delete(publishedHostSha256);
+		await deleteDurableState(env, `published-host:${publishedHostSha256}`);
 	}
 }
 
@@ -2541,6 +2557,17 @@ async function readDurableState(env: unknown, name: string): Promise<unknown | n
 		return await response.json();
 	} catch {
 		return null;
+	}
+}
+
+async function deleteDurableState(env: unknown, name: string): Promise<void> {
+	const ns = getDurableNamespace(env);
+	if (!ns) return;
+	try {
+		const stub = ns.get(ns.idFromName(name));
+		await stub.fetch('https://internal/state', { method: 'DELETE' });
+	} catch {
+		// A failed retire leaves a stale mapping; the next verification retries it.
 	}
 }
 
