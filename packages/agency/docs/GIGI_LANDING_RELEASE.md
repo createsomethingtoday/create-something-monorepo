@@ -35,3 +35,7 @@ Promotion follows PR review, required repository checks, merge, then the existin
 The previous production deployment recorded before promotion is `232f6ba4-0b26-48db-a41b-a28621115521` at source `afd38d48bbeb48c682a6367aa7d321a299d743ef`. A scoped rollback is the landing PR revert followed by the normal build/deploy workflow. Cloudflare Pages also retains the previous production deployment as a rollback target; preview deployments are not rollback targets. This change includes no data migration, credential or binding change.
 
 Post-merge deployment ID, live HTTP/browser checks and final worktree disposition are recorded in CRE-2292. Do not treat these pre-promotion checks as live deployment evidence.
+
+## Public account setup update (CRE-2295)
+
+The download reference and landing account FAQ now link to Identity signup/recovery and explain email verification, password setup and the return to GiGi source sign-in. No invitation is needed for GiGi accounts. The immutable 0.2.14 installer metadata and primary download action are preserved; this account feature was deployed server-side in CRE-2293. Public Google consent/import qualification remains tracked in CRE-2294. Validation and the production deployment/rollback receipt for this page update are recorded in CRE-2295.
