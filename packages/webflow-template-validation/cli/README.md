@@ -56,7 +56,7 @@ Lists the sites the stored token can read, with id and name. Use the id as `--si
 | `--timeout <seconds>` | Worker job timeout. Default 480. |
 | `--json` | Machine-readable output. |
 
-Exit codes: `0` no blockers, `1` one or more blockers, `2` network, worker, login, or argument failure. A blocker is any `error` issue or any issue with `details.policy` (for example `ix2-rejected`), the same rule as the extension.
+Exit codes: `0` no blockers, `1` one or more blockers, `2` network, worker, login, or argument failure. A blocker is any `error` issue or any issue with `details.policy` (for example `ix2-rejected`), the same rule as the extension. Exit 2 also covers an incomplete run: the GSAP crawl came back unavailable or the recording step failed, so a clean worker result is not reported as a pass.
 
 What runs:
 

@@ -63,7 +63,8 @@ Validate options:
   --timeout <seconds>          Worker job timeout (default 480).
   --json                       Print machine-readable JSON.
 
-Exit codes: 0 no blockers, 1 blockers found, 2 network, worker, login, or argument failure.`;
+Exit codes: 0 no blockers, 1 blockers found, 2 incomplete run (network, worker, login, or argument failure,
+            GSAP crawl unavailable, or the recording step failed).`;
 
 type Bucket = 'blocker' | 'warning' | 'info';
 type Row = { category: string; issue: ValidationIssue; bucket: Bucket };
@@ -319,7 +320,6 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 					}
 				: gsap,
 	};
-	const exitCode = summary.blockers > 0 ? 1 : 0;
 
 	let record: RecordOutcome | { skipped: string } | null = null;
 	if (collected && !values['no-record']) {
@@ -343,7 +343,21 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 		}
 	}
 	const recorded = Boolean(record && 'ok' in record && record.ok);
-	const fullSummary = { ...summary, record, note: recorded ? RECORDED_NOTE : collected && values['no-record'] ? NO_RECORD_NOTE : GATE_NOTE };
+	const recordFailed = Boolean(record && 'ok' in record && !record.ok);
+	// Exit 2 means the validation is incomplete: a declared step (the GSAP
+	// crawl or the recording) did not finish, so a clean result must not read
+	// as a pass. Exit 1 means every step ran and blockers were found.
+	const exitCode = gsap.status !== 'complete' || recordFailed ? 2 : summary.blockers > 0 ? 1 : 0;
+	const fullSummary = {
+		...summary,
+		record,
+		exitCode,
+		incomplete: [
+			...(gsap.status !== 'complete' ? [`GSAP crawl ${gsap.status}${'reason' in gsap && gsap.reason ? `: ${gsap.reason}` : ''}`] : []),
+			...(recordFailed ? ['recording failed'] : [])
+		],
+		note: recorded ? RECORDED_NOTE : collected && values['no-record'] ? NO_RECORD_NOTE : GATE_NOTE
+	};
 
 	if (values.json) {
 		console.log(JSON.stringify({ result: outcome.raw, gsapCrawl: gsap.status === 'complete' ? gsap.raw : null, summary: fullSummary }, null, 2));
@@ -352,6 +366,7 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 
 	printHuman({ siteUrl, outcome, discovery, checks, categories, gsap, rows, score, collected, note: fullSummary.note });
 	if (record) console.log(formatRecordLine(record));
+	if (fullSummary.incomplete.length > 0) console.log(`Incomplete (exit 2): ${fullSummary.incomplete.join('; ')}`);
 	return exitCode;
 }
 
