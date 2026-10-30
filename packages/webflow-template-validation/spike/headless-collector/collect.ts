@@ -32,6 +32,8 @@ export interface CollectResult {
 	counts: { styles: number; pages: number; collections: number; variables: number; components: number };
 	/** What the server did that a reader should know (truncation, caps, unverified shapes). */
 	notes: string[];
+	/** Reasons the collection is incomplete (for example a truncated style list). Non-empty means the result must not be treated as a full run. */
+	incomplete: string[];
 }
 
 /** Every Webflow tool response is { label, action, result }. */
@@ -91,7 +93,8 @@ export async function collectDesignerData(params: {
 				'A template validation command line client reads all class styles with responsive width overrides to check the template design system.'
 		}
 	);
-	notes.push(...truncationNotes('get_styles', stylesRaw));
+	const styleTruncation = truncationNotes('get_styles', stylesRaw);
+	notes.push(...styleTruncation);
 	const styles = resultOf<McpStyle[]>(payload(stylesRaw), 'data_style_tool');
 	const withOverrides = styles.filter((s) => breakpoints.some((bp) => s.properties?.breakpoints?.[bp])).length;
 	notes.push(
@@ -156,7 +159,8 @@ export async function collectDesignerData(params: {
 			variables: Object.values(variablesByCollection).reduce((n, v) => n + v.length, 0),
 			components: components.length
 		},
-		notes
+		notes,
+		incomplete: styleTruncation.map((marker) => `style collection truncated by the MCP server (${marker})`)
 	};
 }
 

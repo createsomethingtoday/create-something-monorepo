@@ -328,6 +328,8 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 	if (collected && !values['no-record']) {
 		if (outcome.mode !== 'async') {
 			record = { skipped: 'the /validate fallback does not run the Designer checks, so this result was not recorded' };
+		} else if (collected.incomplete.length > 0) {
+			record = { skipped: `the Designer data collection was incomplete, so this result was not recorded (${collected.incomplete.join('; ')})` };
 		} else if (workerBase !== DEFAULT_WORKER_BASE && !values['trust-worker']) {
 			// Recording posts the Webflow access token as evidence. Never send it
 			// to a worker the creator did not explicitly trust.
@@ -354,15 +356,18 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 	// Exit 2 means the validation is incomplete: a declared step (the GSAP
 	// crawl or the recording) did not finish, so a clean result must not read
 	// as a pass. Exit 1 means every step ran and blockers were found.
-	const exitCode = gsap.status !== 'complete' || recordFailed ? 2 : summary.blockers > 0 ? 1 : 0;
+	const incomplete = [
+		...(gsap.status !== 'complete' ? [`GSAP crawl ${gsap.status}${'reason' in gsap && gsap.reason ? `: ${gsap.reason}` : ''}`] : []),
+		...(collected && outcome.mode !== 'async' ? ['Designer checks did not run: the worker fell back to /validate'] : []),
+		...(collected?.incomplete ?? []),
+		...(recordFailed ? ['recording failed'] : [])
+	];
+	const exitCode = incomplete.length > 0 ? 2 : summary.blockers > 0 ? 1 : 0;
 	const fullSummary = {
 		...summary,
 		record,
 		exitCode,
-		incomplete: [
-			...(gsap.status !== 'complete' ? [`GSAP crawl ${gsap.status}${'reason' in gsap && gsap.reason ? `: ${gsap.reason}` : ''}`] : []),
-			...(recordFailed ? ['recording failed'] : [])
-		],
+		incomplete,
 		note: recorded ? RECORDED_NOTE : collected && values['no-record'] ? NO_RECORD_NOTE : GATE_NOTE
 	};
 
