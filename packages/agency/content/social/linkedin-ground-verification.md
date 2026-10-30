@@ -1,4 +1,4 @@
-# LinkedIn Post: Ground — Check Before You Claim
+# LinkedIn Post: Ground — Turn Systems Thinking Into Practice
 
 **Campaign:** Ground 0.3.6 public release
 **Target:** LinkedIn (Personal — Micah)
@@ -11,40 +11,42 @@
 
 ## Post
 
-The dangerous part of AI code analysis is not that the agent lacks an answer.
+The people we build for at CREATE SOMETHING usually do not need to be convinced to think in systems.
 
-It is that an incomplete check can look exactly like a clean result.
+They already ask the questions that matter:
 
-“No duplicates found” might mean there were no duplicates.
+- What is the source of truth?
+- What is automated?
+- Where does human judgment belong?
+- What evidence would make this claim trustworthy?
 
-It might also mean:
+What they need are better ways to turn those instincts into daily practice.
 
-- no changed files needed the check
-- the language was unsupported
-- the scan timed out
-- a file could not be read or parsed
+That is the job of the CREATE SOMETHING framework.
 
-Those are not the same result.
+The practices help operators see the system clearly. The tools make those practices repeatable. The services help teams install and operate them inside real workflows.
 
-We built Ground to keep them separate.
+Ground is one of those tools.
 
-Ground checks the source that is actually on disk, then returns explicit verification states: `PASS`, `FAIL`, `NOT_APPLICABLE`, `UNSUPPORTED`, or `TIMEOUT`.
-
-Only `PASS` means the check completed for the relevant supported files and found no issue.
-
-Ground can compare files, find duplicate functions, and trace orphaned modules and dead exports. It can also check environment boundaries or analyze only the files changed from a Git baseline. It now has a declared analysis lane for TypeScript, JavaScript, and Svelte.
-
-The operating rule is simple:
+It gives a systems-minded operator a concrete way to enforce a simple rule:
 
 You cannot claim something until you have checked it.
 
-That means an agent should not call code dead before tracing its uses. It should not call two modules duplicates before comparing them. And it should never turn missing coverage into “clean.”
+An AI agent should not call code dead before tracing its uses. It should not call two modules duplicates before comparing them. It should not turn missing coverage into “clean.”
+
+Ground checks the source that is actually on disk, then returns explicit verification states: `PASS`, `FAIL`, `NOT_APPLICABLE`, `UNSUPPORTED`, or `TIMEOUT`.
+
+That distinction matters. “No duplicates found” could mean the check passed. It could also mean no changed files needed the check, the language was unsupported, the scan timed out, or a file could not be parsed.
+
+Only `PASS` means the relevant supported files were checked and no issue was found.
+
+Ground can compare files, find duplicate functions, and trace orphaned modules and dead exports. It can also check environment boundaries or analyze only the files changed from a Git baseline. Version 0.3.6 has a declared analysis lane for TypeScript, JavaScript, and Svelte.
 
 Ground is open source, available as a CLI and an MCP server, and built to work inside the agent loop.
 
-The goal is not another confident opinion about your code.
+It will not replace an operator's judgment. It gives that judgment better evidence.
 
-It is a receipt for what was actually checked.
+That is the larger idea behind CREATE SOMETHING. Meet people who already think in systems. Give them practices, tools, and services that make that thinking operational.
 
 ---
 
