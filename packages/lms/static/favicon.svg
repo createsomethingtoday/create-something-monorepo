@@ -1,11 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <!-- CREATE SOMETHING Isometric Cube Mark -->
-  <!-- Canon face opacity: top=1.0, left=0.6, right=0.3 -->
-  <rect width="32" height="32" fill="#000000"/>
-  <!-- Top face (brightest) -->
-  <path d="M 16 4 L 26.39 10 L 16 16 L 5.61 10 Z" fill="#FFFFFF" fill-opacity="1"/>
-  <!-- Left face (medium) -->
-  <path d="M 5.61 10 L 16 16 L 16 28 L 5.61 22 Z" fill="#FFFFFF" fill-opacity="0.6"/>
-  <!-- Right face (darkest) -->
-  <path d="M 16 16 L 26.39 10 L 26.39 22 L 16 28 Z" fill="#FFFFFF" fill-opacity="0.3"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 128 128" width="128" height="128" role="img" aria-labelledby="title desc" style="color:#ffffff">
+  <title id="title">CREATE SOMETHING favicon</title>
+  <desc id="desc">White micro mark on a near-black rounded-square favicon field.</desc>
+  <rect width="128" height="128" rx="24" fill="#050505"/>
+  <g id="cs-micro-mark-v3" fill="none" stroke="currentColor" stroke-linejoin="round">
+    <path d="M30.0797 42.0797 A31 31 0 1 1 30.0797 85.9203" stroke-width="9" stroke-linecap="butt"/>
+    <circle cx="64" cy="64" r="39" stroke-width="11"/>
+  </g>
+
 </svg>
