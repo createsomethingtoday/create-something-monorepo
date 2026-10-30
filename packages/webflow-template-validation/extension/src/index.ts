@@ -39,6 +39,15 @@ import {
   parseStoredValidationRun,
   pruneLegacyRunStorage,
 } from './run-storage';
+import {
+  deriveCollectionMetadata,
+  deriveEnhancedValidation,
+  enhanceValidationResults,
+  type CanvasAccessibilityResult,
+  type CategoryResult,
+  type EnhancedValidation,
+  type ValidationIssue,
+} from '../../shared/designer-enhancements';
 
 // API Configuration
 const WORKER_API_BASE = 'https://validation-worker.createsomething.workers.dev';
@@ -71,33 +80,6 @@ const canvasElementRegistry = new Map<string, AnyElement>();
 
 
 // Types for validation data
-interface ValidationIssue {
-  id: string;
-  category: string;
-  severity: 'error' | 'warning' | 'info';
-  message: string;
-  howToFix?: string;
-  location?: string;
-  details?: {
-    howToFix?: string;
-    location?: string;
-    sample?: string[] | string;
-    violations?: Array<string | Record<string, any>>;
-    locations?: string[];
-    issues?: string[];
-    images?: string[];
-    samples?: string[];
-    [key: string]: any;
-  };
-}
-
-interface CategoryResult {
-  category: string;
-  passed: boolean;
-  issues: ValidationIssue[];
-  stats?: Record<string, any>;
-}
-
 interface ValidationResponse {
   url: string;
   success: boolean;
@@ -259,42 +241,7 @@ interface ProjectData {
   designerContext?: DesignerContext;
   validationScope?: ValidationScope;
   collectionMetadata?: Record<string, any>;
-  enhancedValidation?: {
-    variableOrganization: {
-      hasColorVariables: boolean;
-      hasTypographyVariables: boolean;
-      hasSpacingVariables: boolean;
-      hasOrderedCollections: boolean;
-    };
-    componentArchitecture: {
-      hasNavbarComponent: boolean;
-      hasFooterComponent: boolean;
-      hasCTAComponents: boolean;
-      hasNestedComponents: boolean;
-    };
-    styleSystem: {
-      hasHtmlTagStyles: boolean;
-      hasConsistentNaming: boolean;
-      usesVariablesInStyles: boolean;
-      hasPercentageLineHeights: boolean;
-    };
-    pageStructure: {
-      hasStyleGuidePage: boolean;
-      hasInstructionsPage: boolean;
-      hasLicensePage: boolean;
-      hasTitleCaseNaming: boolean;
-      hasMatchingSlugs: boolean;
-      pagesNotTitleCase: string[];
-      pagesWithMismatchedSlugs: string[];
-    };
-    seoCompliance: {
-      currentPageHasValidTitle: boolean;
-      currentPageHasValidDescription: boolean;
-      hasOpenGraphData: boolean;
-      titleWithinLimits: boolean;
-      descriptionWithinLimits: boolean;
-    };
-  };
+  enhancedValidation?: EnhancedValidation;
   collectionWarnings?: Array<{
     source: string;
     message: string;
@@ -477,7 +424,7 @@ async function validateProject(): Promise<void> {
 
       const designerResults = await runDesignerValidation(projectData, siteUrl, correlationId);
       designerResults.collectedData = [projectData];
-      enhanceValidationResults(designerResults, projectData);
+      enhanceValidationResults(designerResults, projectData, projectData.canvasChecks);
 
       if (!designerResults.categories) designerResults.categories = [];
       designerResults.categories.push({
@@ -539,7 +486,7 @@ async function validateProject(): Promise<void> {
     validationResults.collectedData = [projectData];
 
     // Enhance results with client-side validation
-    enhanceValidationResults(validationResults, projectData);
+    enhanceValidationResults(validationResults, projectData, projectData.canvasChecks);
 
     registerValidationReport(validationResults, correlationId);
     showResults(validationResults);
@@ -1886,18 +1833,6 @@ function getSurfacedAccessibilityIssues(
   return issues.filter((issue) => !duplicateIssueIds.has(issue.id));
 }
 
-// Collect comprehensive project data from Webflow Designer APIs
-interface CanvasAccessibilityResult {
-  available: boolean;
-  reason?: string;
-  pageName?: string;
-  headingsChecked: number;
-  headingIssues: Array<{ issue: string; position: number; level: number; elementKey?: string }>;
-  imagesChecked: number;
-  imagesMissingAlt: number;
-  missingAltElementKeys: string[];
-}
-
 // Canvas-accurate checks for the current page via the Designer element API.
 // Unlike the published-site checks, these reflect unpublished edits — closing
 // the gap where a creator fixes an issue but the published HTML still shows it.
@@ -2021,52 +1956,6 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
     styles: [],
     pages: [],
     siteInfo: undefined,
-    collectionMetadata: {
-      variableCollections: 0,
-      totalVariables: 0,
-      totalComponents: 0,
-      totalStyles: 0,
-      totalPages: 0,
-      totalAssets: 0,
-      totalFonts: 0,
-      totalCollections: 0
-    },
-    enhancedValidation: {
-      variableOrganization: {
-        hasColorVariables: false,
-        hasTypographyVariables: false,
-        hasSpacingVariables: false,
-        hasOrderedCollections: false
-      },
-      componentArchitecture: {
-        hasNavbarComponent: false,
-        hasFooterComponent: false,
-        hasCTAComponents: false,
-        hasNestedComponents: false
-      },
-      styleSystem: {
-        hasHtmlTagStyles: false,
-        hasConsistentNaming: false,
-        usesVariablesInStyles: false,
-        hasPercentageLineHeights: false
-      },
-      pageStructure: {
-        hasStyleGuidePage: false,
-        hasInstructionsPage: false,
-        hasLicensePage: false,
-        hasTitleCaseNaming: false,
-        hasMatchingSlugs: false,
-        pagesNotTitleCase: [],
-        pagesWithMismatchedSlugs: []
-      },
-      seoCompliance: {
-        currentPageHasValidTitle: false,
-        currentPageHasValidDescription: false,
-        hasOpenGraphData: false,
-        titleWithinLimits: false,
-        descriptionWithinLimits: false
-      }
-    },
     collectionWarnings: []
   };
 
@@ -2092,21 +1981,7 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
             try {
               const variableName = (await variable.getName()) || null;
               const variableType = variable.type || null;
-              
-              // Enhanced variable analysis
-              if (variableName) {
-                const lowerName = variableName.toLowerCase();
-                if (lowerName.includes('color') || lowerName.includes('bg') || lowerName.includes('text') || lowerName.includes('primary') || lowerName.includes('secondary')) {
-                  data.enhancedValidation!.variableOrganization.hasColorVariables = true;
-                }
-                if (lowerName.includes('font') || lowerName.includes('text') || lowerName.includes('heading') || lowerName.includes('body') || lowerName.includes('size')) {
-                  data.enhancedValidation!.variableOrganization.hasTypographyVariables = true;
-                }
-                if (lowerName.includes('space') || lowerName.includes('margin') || lowerName.includes('padding') || lowerName.includes('gap')) {
-                  data.enhancedValidation!.variableOrganization.hasSpacingVariables = true;
-                }
-              }
-              
+
               // Variables expose values via get(), not a .value property
               let variableValue: unknown = null;
               try {
@@ -2195,9 +2070,6 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
 
       if (variableData.length > 0) {
         data.variables = { collections: variableData };
-        data.collectionMetadata!.variableCollections = variableData.length;
-        data.collectionMetadata!.totalVariables = totalVariables;
-        data.collectionMetadata!.totalVariableModes = totalVariableModes;
         console.log(`Variable collections collected: ${variableData.length}, Total variables: ${totalVariables}, Total modes: ${totalVariableModes}`);
       }
     }
@@ -2222,22 +2094,9 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
           const id = component.id;
 
           if (name) {
-            // Enhanced component analysis
-            const lowerName = name.toLowerCase();
             let instances = 0;
             let isNested = false;
             const metadata = readComponentMetadata(component);
-
-            // Detect component types for Webflow Way requirements
-            if (lowerName.includes('nav') || lowerName.includes('header') || lowerName.includes('menu')) {
-              data.enhancedValidation!.componentArchitecture.hasNavbarComponent = true;
-            }
-            if (lowerName.includes('footer')) {
-              data.enhancedValidation!.componentArchitecture.hasFooterComponent = true;
-            }
-            if (lowerName.includes('cta') || lowerName.includes('button') || lowerName.includes('call')) {
-              data.enhancedValidation!.componentArchitecture.hasCTAComponents = true;
-            }
 
             try {
               // getInstanceCount may be absent on older Designer runtimes
@@ -2248,9 +2107,6 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
               // A component is "nested" when its tree contains another component instance.
               // Read-only (library) components are skipped: their root element is unavailable.
               isNested = await componentContainsComponentInstance(component);
-              if (isNested) {
-                data.enhancedValidation!.componentArchitecture.hasNestedComponents = true;
-              }
             } catch (nestedError) {
               console.warn('Error analyzing component nesting:', nestedError);
             }
@@ -2272,7 +2128,6 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
       }
 
       data.components = componentData;
-      data.collectionMetadata!.totalComponents = componentData.length;
       console.log(`Components collected: ${componentData.length}`);
     }
   } catch (error) {
@@ -2327,7 +2182,6 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
             // ("a", "p") would match nearly every class.
             if (isTagStyle(meta, name ?? '')) {
               isHtmlTag = true;
-              data.enhancedValidation!.styleSystem.hasHtmlTagStyles = true;
             }
 
             // Base properties and breakpoint overrides are independent reads;
@@ -2340,17 +2194,8 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
             Object.values(properties).forEach((value: any) => {
               if (typeof value === 'object' && value !== null && (value.type === 'variable' || value.id)) {
                 hasVariables = true;
-                data.enhancedValidation!.styleSystem.usesVariablesInStyles = true;
               }
             });
-
-            // Check for percentage-based line heights (Webflow Way requirement)
-            if (properties['line-height']) {
-              const lineHeight = String(properties['line-height']);
-              if (lineHeight.includes('%') || (!lineHeight.includes('px') && !lineHeight.includes('rem') && !isNaN(parseFloat(lineHeight)))) {
-                data.enhancedValidation!.styleSystem.hasPercentageLineHeights = true;
-              }
-            }
 
             if (breakpoints) {
               breakpointProperties = breakpoints.properties;
@@ -2384,7 +2229,6 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
       }
 
       data.styles = styleData;
-      data.collectionMetadata!.totalStyles = styleData.length;
       console.log(`Styles collected: ${styleData.length}`);
     }
   } catch (error) {
@@ -2458,23 +2302,12 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
               ))
             );
 
-            // Enhanced page analysis for Webflow Way requirements
+            // Per-page flags. Site-wide page-structure flags are derived after
+            // collection by deriveEnhancedValidation.
             let isHomePage = false;
             let hasValidNaming = false;
-
-            // Check for required pages
             const lowerName = name.toLowerCase();
             const lowerSlug = slug.toLowerCase();
-
-            if (lowerName.includes('style guide') || lowerSlug.includes('style-guide') || lowerSlug.includes('styleguide')) {
-              data.enhancedValidation!.pageStructure.hasStyleGuidePage = true;
-            }
-            if (lowerName.includes('instructions') || lowerSlug.includes('instructions')) {
-              data.enhancedValidation!.pageStructure.hasInstructionsPage = true;
-            }
-            if (lowerName.includes('license') || lowerSlug.includes('license') || slug === '/licenses') {
-              data.enhancedValidation!.pageStructure.hasLicensePage = true;
-            }
 
             // Prefer the API's homepage flag; fall back to name/slug heuristics
             try {
@@ -2493,16 +2326,6 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
                                name.split(' ').every((word: string) => word.charAt(0) === word.charAt(0).toUpperCase());
             if (isTitleCase) {
               hasValidNaming = true;
-            } else {
-              data.enhancedValidation!.pageStructure.pagesNotTitleCase.push(name);
-            }
-
-            // Check if page name matches slug (Webflow Way requirement) per page.
-            // CMS template pages have fixed collection slugs; skip them.
-            const expectedSlug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-            const actualSlug = slug.replace(/^\//, '').toLowerCase();
-            if (!isCmsTemplate && expectedSlug !== actualSlug && !(isHomePage && actualSlug === '')) {
-              data.enhancedValidation!.pageStructure.pagesWithMismatchedSlugs.push(`${name} (/${actualSlug})`);
             }
 
             // Collect SEO data for each page. collectPageSeoData reads the SEO
@@ -2546,15 +2369,7 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
         }
       }
 
-      // "All collected pages pass" semantics: one well-named page must not
-      // mask badly-named ones.
-      data.enhancedValidation!.pageStructure.hasTitleCaseNaming =
-        pageData.length > 0 && data.enhancedValidation!.pageStructure.pagesNotTitleCase.length === 0;
-      data.enhancedValidation!.pageStructure.hasMatchingSlugs =
-        pageData.length > 0 && data.enhancedValidation!.pageStructure.pagesWithMismatchedSlugs.length === 0;
-
       data.pages = pageData;
-      data.collectionMetadata!.totalPages = pageData.length;
       console.log(`Pages collected: ${pageData.length}`);
     }
   } catch (error) {
@@ -2572,29 +2387,7 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
     const currentPageData = await collectCurrentPageSEOData(webflow);
     if (currentPageData) {
       data.currentPage = currentPageData;
-      
-      // Update SEO compliance flags
-      // Basic SEO compliance
-      data.enhancedValidation!.seoCompliance.currentPageHasValidTitle = currentPageData.seo.hasValidTitle || false;
-      data.enhancedValidation!.seoCompliance.currentPageHasValidDescription = currentPageData.seo.hasValidDescription || false;
-      data.enhancedValidation!.seoCompliance.titleWithinLimits = (currentPageData.seo.titleLength || 0) <= 60;
-      data.enhancedValidation!.seoCompliance.descriptionWithinLimits = 
-        (currentPageData.seo.descriptionLength || 0) >= 150 && (currentPageData.seo.descriptionLength || 0) <= 160;
-      
-      // Enhanced Open Graph compliance
-      const hasOpenGraphData = !!(currentPageData.seo.openGraphTitle || currentPageData.seo.openGraphDescription || currentPageData.seo.openGraphImage);
-      data.enhancedValidation!.seoCompliance.hasOpenGraphData = hasOpenGraphData;
-      
-      console.log('SEO compliance analysis:', {
-        hasValidTitle: data.enhancedValidation!.seoCompliance.currentPageHasValidTitle,
-        hasValidDescription: data.enhancedValidation!.seoCompliance.currentPageHasValidDescription,
-        titleWithinLimits: data.enhancedValidation!.seoCompliance.titleWithinLimits,
-        descriptionWithinLimits: data.enhancedValidation!.seoCompliance.descriptionWithinLimits,
-        hasOpenGraphData: hasOpenGraphData,
-        usesCustomOGTitle: currentPageData.seo.hasCustomOpenGraphTitle,
-        usesCustomOGDescription: currentPageData.seo.hasCustomOpenGraphDescription
-      });
-      
+
       console.log(`Current page SEO collected: ${currentPageData.name}`);
     }
   } catch (error) {
@@ -2619,617 +2412,14 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
     });
   }
 
-  // Final analysis for consistent naming conventions
-  analyzeNamingConsistency(data);
-  
+  // Flags and totals derived from the collected data (shared with the
+  // headless collector)
+  data.collectionMetadata = deriveCollectionMetadata(data);
+  data.enhancedValidation = deriveEnhancedValidation(data);
+
   console.log('Project data collection complete:', data.collectionMetadata);
   console.log('Enhanced validation results:', data.enhancedValidation);
   return data;
-}
-
-// Full Coverage Validation: Variables Title Case and Categories
-function addVariableValidation(results: ValidationResponse, projectData: ProjectData): void {
-  const issues: ValidationIssue[] = [];
-
-  if (projectData.variables?.collections && Array.isArray(projectData.variables.collections)) {
-    // Flatten all variables from all collections
-    const allVariables: any[] = [];
-    projectData.variables.collections.forEach(collection => {
-      if (collection.variables && Array.isArray(collection.variables)) {
-        allVariables.push(...collection.variables);
-      }
-    });
-
-    if (allVariables.length > 0) {
-      // Check Title Case naming for variables
-      const nonTitleCaseVars = allVariables.filter(v => {
-        if (!v.name) return false;
-        // Title Case with spaces. Allow numbers and acronyms; disallow underscores/dashes.
-        // Valid: "Primary Color", "H1", "CTA Primary", "Spacing 200"
-        if (/[_-]/.test(v.name)) return true; // Has invalid chars, filter in
-        const parts = v.name.trim().split(/\s+/);
-        if (parts.length === 0) return true;
-        const isTitleCase = parts.every((p: string) => /^[A-Z][A-Za-z0-9]*$/.test(p));
-        return !isTitleCase;
-      });
-
-      if (nonTitleCaseVars.length > 0) {
-        issues.push({
-          id: 'variables-title-case',
-          category: 'Design System',
-          severity: 'error',
-          message: `${nonTitleCaseVars.length} variables don't use Title Case naming convention`,
-          details: {
-            howToFix: 'Rename variables to use Title Case (e.g., "Primary Color", "Body Font Size")',
-            samples: nonTitleCaseVars.slice(0, 5).map(v => v.name)
-          }
-        });
-      }
-
-      // Check for proper variable categories
-      const hasColorVars = allVariables.some(v =>
-        /color|bg|background|primary|secondary|accent|neutral/i.test(v.name || '')
-      );
-      const hasTypographyVars = allVariables.some(v =>
-        /font|text|heading|body|size|weight|line/i.test(v.name || '')
-      );
-      const hasSpacingVars = allVariables.some(v =>
-        /space|spacing|margin|padding|gap|gutter/i.test(v.name || '')
-      );
-
-      if (!hasColorVars) {
-        issues.push({
-          id: 'missing-color-variables',
-          category: 'Design System',
-          severity: 'error',
-          message: 'No color variables defined',
-          details: {
-            howToFix: 'Create color variables for primary, secondary, background, and text colors'
-          }
-        });
-      }
-
-      if (!hasTypographyVars) {
-        issues.push({
-          id: 'missing-typography-variables',
-          category: 'Design System',
-          severity: 'error',
-          message: 'No typography variables defined',
-          details: {
-            howToFix: 'Create typography variables for font sizes, weights, and line heights'
-          }
-        });
-      }
-
-      if (!hasSpacingVars) {
-        issues.push({
-          id: 'missing-spacing-variables',
-          category: 'Design System',
-          severity: 'error',
-          message: 'No spacing variables defined',
-          details: {
-            howToFix: 'Create spacing variables for consistent margins, padding, and gaps'
-          }
-        });
-      }
-    }
-  }
-
-  // Calculate stats for Design System category
-  const allVariables: any[] = [];
-  if (projectData.variables?.collections) {
-    projectData.variables.collections.forEach(collection => {
-      if (collection.variables && Array.isArray(collection.variables)) {
-        allVariables.push(...collection.variables);
-      }
-    });
-  }
-
-  const totalVariables = allVariables.length;
-  const withTitleCase = allVariables.filter(v => {
-    const name = v.name || '';
-    if (!name || /[_-]/.test(name)) return false;
-    const parts = name.trim().split(/\s+/);
-    if (parts.length === 0) return false;
-    return parts.every((p: string) => /^[A-Z][A-Za-z0-9]*$/.test(p));
-  }).length;
-  const hasColorVars = allVariables.some(v =>
-    /color|bg|background|primary|secondary|accent|neutral/i.test(v.name || '')
-  );
-  const hasTypographyVars = allVariables.some(v =>
-    /font|text|heading|body|size|weight|line/i.test(v.name || '')
-  );
-  const hasSpacingVars = allVariables.some(v =>
-    /space|spacing|margin|padding|gap|gutter/i.test(v.name || '')
-  );
-
-  // Update or create Design System category
-  let designSystemCategory = results.categories.find(cat => cat.category === 'Design System');
-  if (!designSystemCategory) {
-    designSystemCategory = {
-      category: 'Design System',
-      passed: issues.filter(i => i.severity === 'error').length === 0,
-      issues: issues,
-      stats: {
-        totalVariables,
-        withTitleCase,
-        hasColorVars,
-        hasTypographyVars,
-        hasSpacingVars
-      }
-    };
-    results.categories.push(designSystemCategory);
-  } else {
-    designSystemCategory.issues.push(...issues);
-    designSystemCategory.passed = designSystemCategory.issues.filter(i => i.severity === 'error').length === 0;
-    designSystemCategory.stats = {
-      totalVariables,
-      withTitleCase,
-      hasColorVars,
-      hasTypographyVars,
-      hasSpacingVars
-    };
-  }
-}
-
-// Full Coverage Validation: Nav, Footer, CTA Components
-function addComponentValidation(results: ValidationResponse, projectData: ProjectData): void {
-  const issues: ValidationIssue[] = [];
-
-  // Define required components structure
-  const requiredComponents = [
-    { name: 'nav', display: 'Navigation', patterns: ['nav', 'navbar', 'navigation', 'header'] },
-    { name: 'footer', display: 'Footer', patterns: ['footer'] },
-    { name: 'cta', display: 'CTA', patterns: ['cta', 'call to action', 'button'] }
-  ];
-
-  if (projectData.components && Array.isArray(projectData.components)) {
-
-    requiredComponents.forEach(req => {
-      const found = projectData.components!.find(c =>
-        req.patterns.some(pattern => c.name?.toLowerCase().includes(pattern))
-      );
-
-      if (!found) {
-        issues.push({
-          id: `missing-${req.name}-component`,
-          category: 'Component Architecture',
-          severity: 'error',
-          message: `Missing required ${req.display} component`,
-          details: {
-            howToFix: `Create a ${req.display} component with Title Case naming`
-          }
-        });
-      } else if (found.name) {
-        // Check Title Case naming (allow numbers and acronyms)
-        const name = found.name;
-        const hasInvalidChars = /[_-]/.test(name);
-        const parts = name.trim().split(/\s+/);
-        const isTitleCase = !hasInvalidChars && parts.length > 0 && parts.every(p => /^[A-Z][A-Za-z0-9]*$/.test(p));
-        if (!isTitleCase) {
-          issues.push({
-            id: `${req.name}-component-naming`,
-            category: 'Component Architecture',
-            severity: 'error',
-            message: `${req.display} component "${found.name}" doesn't use Title Case naming`,
-            details: {
-              howToFix: `Rename to use Title Case (e.g., "Main Navigation", "Site Footer", "Primary CTA")`
-            }
-          });
-        }
-
-        // Note: Component instance tracking removed as Designer API
-        // doesn't reliably provide instance counts across all pages
-        // This validation would need to be done via the Worker with full site analysis
-      }
-    });
-  }
-
-  // Calculate stats
-  const totalComponents = projectData.components?.length || 0;
-  const requiredComponentsFound = requiredComponents.reduce((acc: number, req: any) => {
-    const found = projectData.components?.find((comp: any) =>
-      req.patterns.some((pattern: string) => comp.name?.toLowerCase().includes(pattern))
-    );
-    return found ? acc + 1 : acc;
-  }, 0);
-  const componentsWithTitleCase = projectData.components?.filter((comp: any) => {
-    const name = comp.name || '';
-    if (!name || /[_-]/.test(name)) return false;
-    const parts = name.trim().split(/\s+/);
-    if (parts.length === 0) return false;
-    return parts.every((p: string) => /^[A-Z][A-Za-z0-9]*$/.test(p));
-  }).length || 0;
-
-  // Update or create Component Architecture category
-  let componentCategory = results.categories.find(cat => cat.category === 'Component Architecture');
-  if (!componentCategory) {
-    componentCategory = {
-      category: 'Component Architecture',
-      passed: issues.filter(i => i.severity === 'error').length === 0,
-      issues: issues,
-      stats: {
-        totalComponents,
-        requiredComponents: {
-          found: requiredComponentsFound,
-          total: requiredComponents.length
-        },
-        componentsWithTitleCase
-      }
-    };
-    results.categories.push(componentCategory);
-  } else {
-    componentCategory.issues.push(...issues);
-    componentCategory.passed = componentCategory.issues.filter(i => i.severity === 'error').length === 0;
-    componentCategory.stats = {
-      totalComponents,
-      requiredComponents: {
-        found: requiredComponentsFound,
-        total: requiredComponents.length
-      },
-      componentsWithTitleCase
-    };
-  }
-}
-
-// Full Coverage Validation: HTML Tag Styles and Variable Usage
-function addStyleSystemValidation(results: ValidationResponse, projectData: ProjectData): void {
-  const issues: ValidationIssue[] = [];
-
-  if (projectData.styles && Array.isArray(projectData.styles)) {
-    // Check for all required HTML tag styles
-    const requiredTags = ['body', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'a'];
-    const existingTagStyles: string[] = [];
-    const tagStylesWithVariables: string[] = [];
-
-    projectData.styles.forEach(style => {
-      const styleName = style.name?.toLowerCase() || '';
-
-      // Check if this is an HTML tag style
-      requiredTags.forEach(tag => {
-        if (styleName === tag || styleName === `all ${tag}`) {
-          existingTagStyles.push(tag);
-
-          // Check if it uses variables
-          if (style.hasVariables) {
-            tagStylesWithVariables.push(tag);
-          }
-        }
-      });
-    });
-
-    // Find missing HTML tag styles
-    const missingTags = requiredTags.filter(tag => !existingTagStyles.includes(tag));
-    if (missingTags.length > 0) {
-      issues.push({
-        id: 'missing-html-tag-styles',
-        category: 'Style System',
-        severity: 'error',
-        message: `Missing base styles for HTML tags: ${missingTags.join(', ')}`,
-        details: {
-          howToFix: 'Create base styles for all HTML tags (body, h1-h6, p, a)',
-          samples: missingTags
-        }
-      });
-    }
-
-    // Check for variable usage in HTML tag styles
-    const tagsWithoutVariables = existingTagStyles.filter(tag => !tagStylesWithVariables.includes(tag));
-    if (tagsWithoutVariables.length > 0) {
-      issues.push({
-        id: 'html-tags-without-variables',
-        category: 'Style System',
-        severity: 'error',
-        message: `HTML tag styles not using variables: ${tagsWithoutVariables.join(', ')}`,
-        details: {
-          howToFix: 'Update HTML tag styles to use variables for colors, typography, and spacing',
-          samples: tagsWithoutVariables
-        }
-      });
-    }
-
-    // Check overall variable usage in styles
-    const totalStyles = projectData.styles.length;
-    const stylesWithVariables = projectData.styles.filter(s => s.hasVariables).length;
-    const variableUsagePercent = totalStyles > 0 ? Math.round((stylesWithVariables / totalStyles) * 100) : 0;
-
-    if (variableUsagePercent < 50) {
-      issues.push({
-        id: 'low-variable-usage',
-        category: 'Style System',
-        severity: 'warning',
-        message: `Only ${variableUsagePercent}% of styles use variables (${stylesWithVariables}/${totalStyles})`,
-        details: {
-          howToFix: 'Increase variable usage in styles for better maintainability (aim for 80%+)'
-        }
-      });
-    }
-  }
-
-  // Calculate stats
-  const totalStyles = projectData.styles?.length || 0;
-  const stylesWithVariables = projectData.styles?.filter(s => s.hasVariables).length || 0;
-  const variableUsagePercent = totalStyles > 0 ? Math.round((stylesWithVariables / totalStyles) * 100) : 0;
-  const requiredTags = ['body', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'a'];
-  const htmlTagStylesFound = projectData.styles?.filter(s => s.isHtmlTag).length || 0;
-
-  // Update or create Style System category
-  let styleSystemCategory = results.categories.find(cat => cat.category === 'Style System');
-  if (!styleSystemCategory) {
-    styleSystemCategory = {
-      category: 'Style System',
-      passed: issues.filter(i => i.severity === 'error').length === 0,
-      issues: issues,
-      stats: {
-        totalStyles,
-        htmlTagStyles: {
-          found: htmlTagStylesFound,
-          required: requiredTags.length
-        },
-        stylesWithVariables,
-        variableUsagePercent
-      }
-    };
-    results.categories.push(styleSystemCategory);
-  } else {
-    styleSystemCategory.issues.push(...issues);
-    styleSystemCategory.passed = styleSystemCategory.issues.filter(i => i.severity === 'error').length === 0;
-    styleSystemCategory.stats = {
-      totalStyles,
-      htmlTagStyles: {
-        found: htmlTagStylesFound,
-        required: requiredTags.length
-      },
-      stylesWithVariables,
-      variableUsagePercent
-    };
-  }
-}
-
-function normalizeVariableModesCategory(results: ValidationResponse): void {
-  const variableModesCategory = results.categories.find(cat => cat.category === 'Variable Modes');
-  if (!variableModesCategory?.stats) return;
-
-  const totalModes = typeof variableModesCategory.stats.totalModes === 'number'
-    ? variableModesCategory.stats.totalModes
-    : 0;
-  if (totalModes <= 0) return;
-
-  let convertedWarning = false;
-  variableModesCategory.issues = (variableModesCategory.issues || []).map((issue) => {
-    const isNameOnlyModeWarning =
-      issue.id === 'modes.no-responsive' ||
-      /modes found, but none appear to be for responsive breakpoints/i.test(issue.message || '');
-
-    if (!isNameOnlyModeWarning) return issue;
-    convertedWarning = true;
-
-    return {
-      ...issue,
-      id: 'modes.good',
-      severity: 'info',
-      message: `${totalModes} modes configured across ${variableModesCategory.stats?.collectionsWithModes || 1} collections.`,
-      howToFix: undefined
-    };
-  });
-
-  if (convertedWarning) {
-    variableModesCategory.passed = true;
-    variableModesCategory.stats.modeDataAvailable = true;
-  }
-}
-
-// Enhance validation results with client-side analysis
-// Canvas checks reflect the current Designer state (including unpublished
-// edits), complementing the published-site checks which lag behind edits.
-function addCanvasChecksCategory(results: ValidationResponse, projectData: ProjectData): void {
-  const canvas = projectData.canvasChecks;
-  if (!canvas || !canvas.available) return;
-
-  const issues: ValidationIssue[] = [];
-
-  for (const headingIssue of canvas.headingIssues) {
-    issues.push({
-      id: `canvas-heading-${headingIssue.position}`,
-      category: 'Canvas Checks (Current Page)',
-      severity: 'warning',
-      message: headingIssue.issue,
-      details: {
-        howToFix: 'Adjust the heading level in the element settings so levels increase one step at a time.',
-        location: `${canvas.pageName} — heading ${headingIssue.position} of ${canvas.headingsChecked}`,
-        canvasElementKeys: headingIssue.elementKey ? [headingIssue.elementKey] : undefined
-      }
-    });
-  }
-
-  if (canvas.imagesMissingAlt > 0) {
-    issues.push({
-      id: 'canvas-images-missing-alt',
-      category: 'Canvas Checks (Current Page)',
-      severity: 'info',
-      message: `${canvas.imagesMissingAlt} of ${canvas.imagesChecked} image(s) on this page have no alt text in the Designer.`,
-      details: {
-        howToFix: 'Add descriptive alt text in each image\'s settings, or mark purely decorative images as decorative.',
-        canvasElementKeys: canvas.missingAltElementKeys.length > 0 ? canvas.missingAltElementKeys : undefined
-      }
-    });
-  }
-
-  results.categories.push({
-    category: 'Canvas Checks (Current Page)',
-    passed: issues.filter(issue => issue.severity === 'error' || issue.severity === 'warning').length === 0,
-    issues,
-    stats: {
-      page: canvas.pageName,
-      headingsChecked: canvas.headingsChecked,
-      imagesChecked: canvas.imagesChecked,
-      note: 'Reflects current Designer state, including unpublished changes'
-    }
-  });
-}
-
-// Published-site checks lag behind Designer edits. When the canvas passes a
-// dimension the published site fails, the creator has almost certainly fixed
-// it without republishing — say so on the published issue instead of letting
-// them re-fix or reinstall the app.
-function addRepublishHints(results: ValidationResponse, projectData: ProjectData): void {
-  const canvas = projectData.canvasChecks;
-  if (!canvas || !canvas.available) return;
-
-  const hint = (dimension: string) =>
-    `The current page's canvas passes the ${dimension} check — if you've already fixed this in the Designer, republish the site and re-run validation to update this result.`;
-
-  const headingIssueIds = new Set(['heading-hierarchy-errors', 'heading-structure-errors']);
-  const altIssueIds = new Set(['missing-alt-text-critical', 'missing-alt-text', 'images-missing-alt']);
-
-  for (const category of results.categories) {
-    for (const issue of category.issues || []) {
-      if (issue.id.startsWith('canvas-')) continue;
-      if (canvas.headingsChecked > 0 && canvas.headingIssues.length === 0 && headingIssueIds.has(issue.id)) {
-        issue.details = { ...issue.details, republishHint: hint('heading hierarchy') };
-      }
-      if (canvas.imagesChecked > 0 && canvas.imagesMissingAlt === 0 && altIssueIds.has(issue.id)) {
-        issue.details = { ...issue.details, republishHint: hint('image alt text') };
-      }
-    }
-  }
-}
-
-function enhanceValidationResults(results: ValidationResponse, projectData: ProjectData): void {
-  console.log('Enhancing validation results with client-side analysis...');
-
-  // REMOVED: These client-side validations duplicate the server-side "Variables" and "Components" categories
-  // addVariableValidation(results, projectData); // Creates duplicate "Design System" category
-  // addComponentValidation(results, projectData); // Creates duplicate "Component Architecture" category
-  addStyleSystemValidation(results, projectData);
-  normalizeVariableModesCategory(results);
-  addCanvasChecksCategory(results, projectData);
-  addRepublishHints(results, projectData);
-  
-  // Find Page Structure category
-  const pageStructureCategory = results.categories.find(cat => cat.category === 'Page Structure');
-  
-  if (pageStructureCategory && projectData.pages && projectData.pages.length > 0) {
-    console.log(`Found ${projectData.pages.length} pages, updating Page Structure validation...`);
-    
-    // Clear existing issues if we have pages
-    pageStructureCategory.issues = [];
-    pageStructureCategory.passed = true;
-    
-    // Update category stats
-    if (pageStructureCategory.stats) {
-      pageStructureCategory.stats.totalPages = projectData.pages.length;
-      pageStructureCategory.stats.totalFolders = 0; // We don't track folders yet
-      pageStructureCategory.stats.hasHomePage = projectData.pages.some(p => p.slug === '/' || p.isHomePage);
-    } else {
-      pageStructureCategory.stats = {
-        totalPages: projectData.pages.length,
-        totalFolders: 0,
-        hasHomePage: projectData.pages.some(p => p.slug === '/' || p.isHomePage)
-      };
-    }
-    
-    // Check for required pages based on enhanced validation
-    const issues: ValidationIssue[] = [];
-
-    if (projectData.enhancedValidation) {
-      const pageStructure = projectData.enhancedValidation.pageStructure;
-
-      // Note: Style Guide, Instructions, and License page checks are handled by the
-      // server in the "Required Pages" category to avoid duplication
-
-      // Check for Title Case naming — report the specific offending pages
-      const pagesNotTitleCase = pageStructure.pagesNotTitleCase || [];
-      if (pagesNotTitleCase.length > 0) {
-        issues.push({
-          id: 'page-naming',
-          category: 'Page Structure',
-          severity: 'warning',
-          message: `${pagesNotTitleCase.length} page(s) don't use Title Case naming convention.`,
-          details: {
-            howToFix: 'Use Title Case for page names (e.g., "Style Guide", "Contact Us")',
-            samples: pagesNotTitleCase.slice(0, 10)
-          }
-        });
-      }
-
-      // Check page-name/slug agreement — report the specific offending pages
-      const pagesWithMismatchedSlugs = pageStructure.pagesWithMismatchedSlugs || [];
-      if (pagesWithMismatchedSlugs.length > 0) {
-        issues.push({
-          id: 'page-slug-mismatch',
-          category: 'Page Structure',
-          severity: 'warning',
-          message: `${pagesWithMismatchedSlugs.length} page(s) have slugs that don't match their names.`,
-          details: {
-            howToFix: 'Keep page slugs aligned with page names (e.g., "Style Guide" → /style-guide)',
-            samples: pagesWithMismatchedSlugs.slice(0, 10)
-          }
-        });
-      }
-    }
-    
-    pageStructureCategory.issues = issues;
-    pageStructureCategory.passed = issues.filter(i => i.severity === 'error').length === 0;
-    
-    // Update summary counts
-    const errorCount = issues.filter(i => i.severity === 'error').length;
-    const warningCount = issues.filter(i => i.severity === 'warning').length;
-    
-    // Adjust summary counts
-    if (pageStructureCategory.passed) {
-      results.summary.passedCategories = Math.max(results.summary.passedCategories, 
-        results.categories.filter(c => c.passed).length);
-      results.summary.failedCategories = Math.max(0, 
-        results.categories.filter(c => !c.passed).length);
-    }
-    
-    console.log(`Page Structure validation updated: ${pageStructureCategory.passed ? 'PASSED' : 'FAILED'}, ${errorCount} errors, ${warningCount} warnings`);
-  }
-  
-  // SEO validation is now handled by the Cloudflare Worker
-  // This provides accurate validation by checking actual published HTML content
-  // rather than relying on Designer API limitations for non-current pages
-  console.log('SEO validation now handled by Cloudflare Worker - accurate validation via published content analysis');
-  
-  // Sort categories: failed ones with errors first, then warnings, then passed ones
-  results.categories.sort((a, b) => {
-    const aErrors = a.issues?.filter(i => i.severity === 'error').length || 0;
-    const bErrors = b.issues?.filter(i => i.severity === 'error').length || 0;
-    const aWarnings = a.issues?.filter(i => i.severity === 'warning').length || 0;
-    const bWarnings = b.issues?.filter(i => i.severity === 'warning').length || 0;
-    
-    // Primary sort: Categories with errors first
-    if (aErrors > 0 && bErrors === 0) return -1;
-    if (aErrors === 0 && bErrors > 0) return 1;
-    
-    // Secondary sort: Categories with warnings next
-    if (aErrors === 0 && bErrors === 0) {
-      if (aWarnings > 0 && bWarnings === 0) return -1;
-      if (aWarnings === 0 && bWarnings > 0) return 1;
-    }
-    
-    // Tertiary sort: Failed categories before passed ones
-    if (!a.passed && b.passed) return -1;
-    if (a.passed && !b.passed) return 1;
-    
-    return 0; // Keep original order if same priority
-  });
-  
-  // Recalculate accurate summary counts from all issues
-  const allIssues = results.categories.flatMap(cat => cat.issues || []);
-  const totalErrors = allIssues.filter(issue => issue.severity === 'error').length;
-  const totalWarnings = allIssues.filter(issue => issue.severity === 'warning').length;
-  const totalInfo = allIssues.filter(issue => issue.severity === 'info').length;
-  
-  // Update summary with accurate counts
-  results.summary.totalErrors = totalErrors;
-  results.summary.totalWarnings = totalWarnings;
-  results.summary.totalInfo = totalInfo;
-  results.summary.passedCategories = results.categories.filter(c => c.passed).length;
-  results.summary.failedCategories = results.categories.filter(c => !c.passed).length;
-  
-  console.log(`Enhanced validation complete: ${totalErrors} errors, ${totalWarnings} warnings, ${totalInfo} info across ${results.categories.length} categories`);
 }
 
 // Collect current page SEO data using getCurrentPage API
@@ -3358,81 +2548,6 @@ async function collectCurrentPageSEOData(webflow: WebflowApi): Promise<any> {
     console.warn('Error collecting current page SEO data:', error);
     return null;
   }
-}
-
-// Analyze naming consistency across components, styles, and variables
-function analyzeNamingConsistency(data: ProjectData): void {
-  const allNames: string[] = [];
-  
-  // Collect all component names
-  if (data.components) {
-    allNames.push(...data.components.map(c => c.name));
-  }
-  
-  // Collect all style/class names (excluding HTML tags)
-  if (data.styles) {
-    allNames.push(...data.styles.filter(s => !s.isHtmlTag).map(s => s.name));
-  }
-  
-  // Collect all variable names
-  if (data.variables?.collections) {
-    data.variables.collections.forEach(collection => {
-      allNames.push(...collection.variables.map(v => v.name));
-    });
-  }
-  
-  if (allNames.length === 0) return;
-  
-  // Analyze naming patterns
-  const namingPatterns = {
-    titleCase: 0,
-    camelCase: 0,
-    pascalCase: 0,
-    snakeCase: 0,
-    kebabCase: 0,
-    bem: 0
-  };
-  
-  allNames.forEach(name => {
-    if (!name) return;
-    
-    // Title Case: "Hero Container Element"
-    if (/^[A-Z][a-z]*(?:\s[A-Z][a-z]*)*$/.test(name)) {
-      namingPatterns.titleCase++;
-    }
-    // camelCase: "heroContainerElement"
-    else if (/^[a-z][a-zA-Z0-9]*$/.test(name)) {
-      namingPatterns.camelCase++;
-    }
-    // PascalCase: "HeroContainerElement"
-    else if (/^[A-Z][a-zA-Z0-9]*$/.test(name)) {
-      namingPatterns.pascalCase++;
-    }
-    // snake_case: "hero_container_element"
-    else if (/^[a-z][a-z0-9_]*$/.test(name)) {
-      namingPatterns.snakeCase++;
-    }
-    // kebab-case: "hero-container-element"
-    else if (/^[a-z][a-z0-9-]*$/.test(name)) {
-      namingPatterns.kebabCase++;
-    }
-    // BEM: "block__element--modifier"
-    else if (/^[a-z][a-z0-9-]*(__[a-z][a-z0-9-]*)?(--[a-z][a-z0-9-]*)?$/.test(name)) {
-      namingPatterns.bem++;
-    }
-  });
-  
-  // Determine if there's consistent naming (80% or more use the same pattern)
-  const totalNames = allNames.length;
-  const dominantPattern = Object.entries(namingPatterns).find(
-    ([, count]) => count / totalNames >= 0.8
-  );
-  
-  if (dominantPattern) {
-    data.enhancedValidation!.styleSystem.hasConsistentNaming = true;
-  }
-  
-  console.log('Naming pattern analysis:', namingPatterns, `Total names: ${totalNames}`);
 }
 
 // UI Helper Functions

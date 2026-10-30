@@ -460,6 +460,444 @@
     return "unknown error";
   }
 
+  // ../shared/designer-enhancements.ts
+  function deriveCollectionMetadata(data) {
+    const metadata = {
+      variableCollections: 0,
+      totalVariables: 0,
+      totalComponents: data.components?.length ?? 0,
+      totalStyles: data.styles?.length ?? 0,
+      totalPages: data.pages?.length ?? 0,
+      totalAssets: 0,
+      totalFonts: 0,
+      totalCollections: 0
+    };
+    const collections = data.variables?.collections ?? [];
+    if (collections.length > 0) {
+      metadata.variableCollections = collections.length;
+      metadata.totalVariables = collections.reduce((n, c) => n + c.variables.length, 0);
+      metadata.totalVariableModes = collections.reduce((n, c) => n + (Array.isArray(c.modes) ? c.modes.length : 0), 0);
+    }
+    return metadata;
+  }
+  function deriveEnhancedValidation(data) {
+    const result = {
+      variableOrganization: {
+        hasColorVariables: false,
+        hasTypographyVariables: false,
+        hasSpacingVariables: false,
+        hasOrderedCollections: false
+      },
+      componentArchitecture: {
+        hasNavbarComponent: false,
+        hasFooterComponent: false,
+        hasCTAComponents: false,
+        hasNestedComponents: false
+      },
+      styleSystem: {
+        hasHtmlTagStyles: false,
+        hasConsistentNaming: false,
+        usesVariablesInStyles: false,
+        hasPercentageLineHeights: false
+      },
+      pageStructure: {
+        hasStyleGuidePage: false,
+        hasInstructionsPage: false,
+        hasLicensePage: false,
+        hasTitleCaseNaming: false,
+        hasMatchingSlugs: false,
+        pagesNotTitleCase: [],
+        pagesWithMismatchedSlugs: []
+      },
+      seoCompliance: {
+        currentPageHasValidTitle: false,
+        currentPageHasValidDescription: false,
+        hasOpenGraphData: false,
+        titleWithinLimits: false,
+        descriptionWithinLimits: false
+      }
+    };
+    const variableOrganization = result.variableOrganization;
+    for (const collection of data.variables?.collections ?? []) {
+      for (const variable of collection.variables) {
+        if (!variable.name) continue;
+        const lowerName = variable.name.toLowerCase();
+        if (lowerName.includes("color") || lowerName.includes("bg") || lowerName.includes("text") || lowerName.includes("primary") || lowerName.includes("secondary")) {
+          variableOrganization.hasColorVariables = true;
+        }
+        if (lowerName.includes("font") || lowerName.includes("text") || lowerName.includes("heading") || lowerName.includes("body") || lowerName.includes("size")) {
+          variableOrganization.hasTypographyVariables = true;
+        }
+        if (lowerName.includes("space") || lowerName.includes("margin") || lowerName.includes("padding") || lowerName.includes("gap")) {
+          variableOrganization.hasSpacingVariables = true;
+        }
+      }
+    }
+    const componentArchitecture = result.componentArchitecture;
+    for (const component of data.components ?? []) {
+      if (!component.name) continue;
+      const lowerName = component.name.toLowerCase();
+      if (lowerName.includes("nav") || lowerName.includes("header") || lowerName.includes("menu")) {
+        componentArchitecture.hasNavbarComponent = true;
+      }
+      if (lowerName.includes("footer")) {
+        componentArchitecture.hasFooterComponent = true;
+      }
+      if (lowerName.includes("cta") || lowerName.includes("button") || lowerName.includes("call")) {
+        componentArchitecture.hasCTAComponents = true;
+      }
+      if (component.isNested) {
+        componentArchitecture.hasNestedComponents = true;
+      }
+    }
+    const styleSystem = result.styleSystem;
+    for (const style of data.styles ?? []) {
+      if (style.isHtmlTag) styleSystem.hasHtmlTagStyles = true;
+      if (style.hasVariables) styleSystem.usesVariablesInStyles = true;
+      const lineHeightValue = style.properties?.["line-height"];
+      if (lineHeightValue) {
+        const lineHeight = String(lineHeightValue);
+        if (lineHeight.includes("%") || !lineHeight.includes("px") && !lineHeight.includes("rem") && !isNaN(parseFloat(lineHeight))) {
+          styleSystem.hasPercentageLineHeights = true;
+        }
+      }
+    }
+    styleSystem.hasConsistentNaming = hasConsistentNaming(data);
+    const pageStructure = result.pageStructure;
+    const pages = data.pages ?? [];
+    for (const page of pages) {
+      const { name, slug } = page;
+      const lowerName = name.toLowerCase();
+      const lowerSlug = slug.toLowerCase();
+      if (lowerName.includes("style guide") || lowerSlug.includes("style-guide") || lowerSlug.includes("styleguide")) {
+        pageStructure.hasStyleGuidePage = true;
+      }
+      if (lowerName.includes("instructions") || lowerSlug.includes("instructions")) {
+        pageStructure.hasInstructionsPage = true;
+      }
+      if (lowerName.includes("license") || lowerSlug.includes("license") || slug === "/licenses") {
+        pageStructure.hasLicensePage = true;
+      }
+      const isTitleCase = /^[A-Z][a-z]*(?:\s[A-Z][a-z]*)*$/.test(name) || name.split(" ").every((word) => word.charAt(0) === word.charAt(0).toUpperCase());
+      if (!isTitleCase) {
+        pageStructure.pagesNotTitleCase.push(name);
+      }
+      const expectedSlug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+      const actualSlug = slug.replace(/^\//, "").toLowerCase();
+      if (!page.isCmsTemplate && expectedSlug !== actualSlug && !(page.isHomePage && actualSlug === "")) {
+        pageStructure.pagesWithMismatchedSlugs.push(`${name} (/${actualSlug})`);
+      }
+    }
+    pageStructure.hasTitleCaseNaming = pages.length > 0 && pageStructure.pagesNotTitleCase.length === 0;
+    pageStructure.hasMatchingSlugs = pages.length > 0 && pageStructure.pagesWithMismatchedSlugs.length === 0;
+    const seo = data.currentPage?.seo;
+    if (seo) {
+      const seoCompliance = result.seoCompliance;
+      seoCompliance.currentPageHasValidTitle = seo.hasValidTitle || false;
+      seoCompliance.currentPageHasValidDescription = seo.hasValidDescription || false;
+      seoCompliance.titleWithinLimits = (seo.titleLength || 0) <= 60;
+      seoCompliance.descriptionWithinLimits = (seo.descriptionLength || 0) >= 150 && (seo.descriptionLength || 0) <= 160;
+      seoCompliance.hasOpenGraphData = !!(seo.openGraphTitle || seo.openGraphDescription || seo.openGraphImage);
+    }
+    return result;
+  }
+  function hasConsistentNaming(data) {
+    const allNames = [];
+    if (data.components) {
+      allNames.push(...data.components.map((c) => c.name));
+    }
+    if (data.styles) {
+      allNames.push(...data.styles.filter((s) => !s.isHtmlTag).map((s) => s.name));
+    }
+    for (const collection of data.variables?.collections ?? []) {
+      allNames.push(...collection.variables.map((v) => v.name));
+    }
+    if (allNames.length === 0) return false;
+    const namingPatterns = {
+      titleCase: 0,
+      camelCase: 0,
+      pascalCase: 0,
+      snakeCase: 0,
+      kebabCase: 0,
+      bem: 0
+    };
+    for (const name of allNames) {
+      if (!name) continue;
+      if (/^[A-Z][a-z]*(?:\s[A-Z][a-z]*)*$/.test(name)) {
+        namingPatterns.titleCase++;
+      } else if (/^[a-z][a-zA-Z0-9]*$/.test(name)) {
+        namingPatterns.camelCase++;
+      } else if (/^[A-Z][a-zA-Z0-9]*$/.test(name)) {
+        namingPatterns.pascalCase++;
+      } else if (/^[a-z][a-z0-9_]*$/.test(name)) {
+        namingPatterns.snakeCase++;
+      } else if (/^[a-z][a-z0-9-]*$/.test(name)) {
+        namingPatterns.kebabCase++;
+      } else if (/^[a-z][a-z0-9-]*(__[a-z][a-z0-9-]*)?(--[a-z][a-z0-9-]*)?$/.test(name)) {
+        namingPatterns.bem++;
+      }
+    }
+    const totalNames = allNames.length;
+    return Object.values(namingPatterns).some((count) => count / totalNames >= 0.8);
+  }
+  function hasNoErrors(issues) {
+    return issues.filter((i) => i.severity === "error").length === 0;
+  }
+  function upsertCategory(results, category, issues, stats) {
+    const existing = results.categories.find((cat) => cat.category === category);
+    if (!existing) {
+      results.categories.push({ category, passed: hasNoErrors(issues), issues, stats });
+      return;
+    }
+    existing.issues.push(...issues);
+    existing.passed = hasNoErrors(existing.issues);
+    existing.stats = stats;
+  }
+  var REQUIRED_TAGS = ["body", "h1", "h2", "h3", "h4", "h5", "h6", "p", "a"];
+  function addStyleSystemValidation(results, data) {
+    const issues = [];
+    const styles = data.styles;
+    if (Array.isArray(styles)) {
+      const existingTagStyles = [];
+      const tagStylesWithVariables = [];
+      for (const style of styles) {
+        const styleName = style.name?.toLowerCase() || "";
+        for (const tag of REQUIRED_TAGS) {
+          if (styleName === tag || styleName === `all ${tag}`) {
+            existingTagStyles.push(tag);
+            if (style.hasVariables) tagStylesWithVariables.push(tag);
+          }
+        }
+      }
+      const missingTags = REQUIRED_TAGS.filter((tag) => !existingTagStyles.includes(tag));
+      if (missingTags.length > 0) {
+        issues.push({
+          id: "missing-html-tag-styles",
+          category: "Style System",
+          severity: "error",
+          message: `Missing base styles for HTML tags: ${missingTags.join(", ")}`,
+          details: {
+            howToFix: "Create base styles for all HTML tags (body, h1-h6, p, a)",
+            samples: missingTags
+          }
+        });
+      }
+      const tagsWithoutVariables = existingTagStyles.filter((tag) => !tagStylesWithVariables.includes(tag));
+      if (tagsWithoutVariables.length > 0) {
+        issues.push({
+          id: "html-tags-without-variables",
+          category: "Style System",
+          severity: "error",
+          message: `HTML tag styles not using variables: ${tagsWithoutVariables.join(", ")}`,
+          details: {
+            howToFix: "Update HTML tag styles to use variables for colors, typography, and spacing",
+            samples: tagsWithoutVariables
+          }
+        });
+      }
+      const totalStyles2 = styles.length;
+      const stylesWithVariables2 = styles.filter((s) => s.hasVariables).length;
+      const variableUsagePercent = totalStyles2 > 0 ? Math.round(stylesWithVariables2 / totalStyles2 * 100) : 0;
+      if (variableUsagePercent < 50) {
+        issues.push({
+          id: "low-variable-usage",
+          category: "Style System",
+          severity: "warning",
+          message: `Only ${variableUsagePercent}% of styles use variables (${stylesWithVariables2}/${totalStyles2})`,
+          details: {
+            howToFix: "Increase variable usage in styles for better maintainability (aim for 80%+)"
+          }
+        });
+      }
+    }
+    const totalStyles = styles?.length || 0;
+    const stylesWithVariables = styles?.filter((s) => s.hasVariables).length || 0;
+    upsertCategory(results, "Style System", issues, {
+      totalStyles,
+      htmlTagStyles: {
+        found: styles?.filter((s) => s.isHtmlTag).length || 0,
+        required: REQUIRED_TAGS.length
+      },
+      stylesWithVariables,
+      variableUsagePercent: totalStyles > 0 ? Math.round(stylesWithVariables / totalStyles * 100) : 0
+    });
+  }
+  function normalizeVariableModesCategory(results) {
+    const variableModesCategory = results.categories.find((cat) => cat.category === "Variable Modes");
+    if (!variableModesCategory?.stats) return;
+    const totalModes = typeof variableModesCategory.stats.totalModes === "number" ? variableModesCategory.stats.totalModes : 0;
+    if (totalModes <= 0) return;
+    let convertedWarning = false;
+    variableModesCategory.issues = (variableModesCategory.issues || []).map((issue) => {
+      const isNameOnlyModeWarning = issue.id === "modes.no-responsive" || /modes found, but none appear to be for responsive breakpoints/i.test(issue.message || "");
+      if (!isNameOnlyModeWarning) return issue;
+      convertedWarning = true;
+      return {
+        ...issue,
+        id: "modes.good",
+        severity: "info",
+        message: `${totalModes} modes configured across ${variableModesCategory.stats?.collectionsWithModes || 1} collections.`,
+        howToFix: void 0
+      };
+    });
+    if (convertedWarning) {
+      variableModesCategory.passed = true;
+      variableModesCategory.stats.modeDataAvailable = true;
+    }
+  }
+  var CANVAS_CHECKS_CATEGORY = "Canvas Checks (Current Page)";
+  var CANVAS_NOT_COLLECTED_REASON = "Canvas checks need the Webflow Designer. This run read site data without a Designer canvas, so heading order and image alt text on the current page were not checked.";
+  function addCanvasChecksCategory(results, canvas) {
+    if (!canvas) {
+      results.categories.push({
+        category: CANVAS_CHECKS_CATEGORY,
+        passed: true,
+        issues: [{
+          id: "canvas-checks-unavailable",
+          category: CANVAS_CHECKS_CATEGORY,
+          severity: "info",
+          message: CANVAS_NOT_COLLECTED_REASON,
+          details: {
+            howToFix: "Run the Validator app in the Designer to check the current page canvas."
+          }
+        }],
+        stats: { available: false, reason: CANVAS_NOT_COLLECTED_REASON }
+      });
+      return;
+    }
+    if (!canvas.available) return;
+    const issues = [];
+    for (const headingIssue of canvas.headingIssues) {
+      issues.push({
+        id: `canvas-heading-${headingIssue.position}`,
+        category: CANVAS_CHECKS_CATEGORY,
+        severity: "warning",
+        message: headingIssue.issue,
+        details: {
+          howToFix: "Adjust the heading level in the element settings so levels increase one step at a time.",
+          location: `${canvas.pageName} \u2014 heading ${headingIssue.position} of ${canvas.headingsChecked}`,
+          canvasElementKeys: headingIssue.elementKey ? [headingIssue.elementKey] : void 0
+        }
+      });
+    }
+    if (canvas.imagesMissingAlt > 0) {
+      issues.push({
+        id: "canvas-images-missing-alt",
+        category: CANVAS_CHECKS_CATEGORY,
+        severity: "info",
+        message: `${canvas.imagesMissingAlt} of ${canvas.imagesChecked} image(s) on this page have no alt text in the Designer.`,
+        details: {
+          howToFix: "Add descriptive alt text in each image's settings, or mark purely decorative images as decorative.",
+          canvasElementKeys: canvas.missingAltElementKeys.length > 0 ? canvas.missingAltElementKeys : void 0
+        }
+      });
+    }
+    results.categories.push({
+      category: CANVAS_CHECKS_CATEGORY,
+      passed: issues.filter((issue) => issue.severity === "error" || issue.severity === "warning").length === 0,
+      issues,
+      stats: {
+        page: canvas.pageName,
+        headingsChecked: canvas.headingsChecked,
+        imagesChecked: canvas.imagesChecked,
+        note: "Reflects current Designer state, including unpublished changes"
+      }
+    });
+  }
+  function addRepublishHints(results, canvas) {
+    if (!canvas || !canvas.available) return;
+    const hint = (dimension) => `The current page's canvas passes the ${dimension} check \u2014 if you've already fixed this in the Designer, republish the site and re-run validation to update this result.`;
+    const headingIssueIds = /* @__PURE__ */ new Set(["heading-hierarchy-errors", "heading-structure-errors"]);
+    const altIssueIds = /* @__PURE__ */ new Set(["missing-alt-text-critical", "missing-alt-text", "images-missing-alt"]);
+    for (const category of results.categories) {
+      for (const issue of category.issues || []) {
+        if (issue.id.startsWith("canvas-")) continue;
+        if (canvas.headingsChecked > 0 && canvas.headingIssues.length === 0 && headingIssueIds.has(issue.id)) {
+          issue.details = { ...issue.details, republishHint: hint("heading hierarchy") };
+        }
+        if (canvas.imagesChecked > 0 && canvas.imagesMissingAlt === 0 && altIssueIds.has(issue.id)) {
+          issue.details = { ...issue.details, republishHint: hint("image alt text") };
+        }
+      }
+    }
+  }
+  function rewritePageStructureCategory(results, data) {
+    const pageStructureCategory = results.categories.find((cat) => cat.category === "Page Structure");
+    const pages = data.pages;
+    if (!pageStructureCategory || !pages || pages.length === 0) return;
+    const hasHomePage = pages.some((p) => p.slug === "/" || p.isHomePage);
+    if (pageStructureCategory.stats) {
+      pageStructureCategory.stats.totalPages = pages.length;
+      pageStructureCategory.stats.totalFolders = 0;
+      pageStructureCategory.stats.hasHomePage = hasHomePage;
+    } else {
+      pageStructureCategory.stats = { totalPages: pages.length, totalFolders: 0, hasHomePage };
+    }
+    const issues = [];
+    const pageStructure = data.enhancedValidation?.pageStructure;
+    if (pageStructure) {
+      const pagesNotTitleCase = pageStructure.pagesNotTitleCase || [];
+      if (pagesNotTitleCase.length > 0) {
+        issues.push({
+          id: "page-naming",
+          category: "Page Structure",
+          severity: "warning",
+          message: `${pagesNotTitleCase.length} page(s) don't use Title Case naming convention.`,
+          details: {
+            howToFix: 'Use Title Case for page names (e.g., "Style Guide", "Contact Us")',
+            samples: pagesNotTitleCase.slice(0, 10)
+          }
+        });
+      }
+      const pagesWithMismatchedSlugs = pageStructure.pagesWithMismatchedSlugs || [];
+      if (pagesWithMismatchedSlugs.length > 0) {
+        issues.push({
+          id: "page-slug-mismatch",
+          category: "Page Structure",
+          severity: "warning",
+          message: `${pagesWithMismatchedSlugs.length} page(s) have slugs that don't match their names.`,
+          details: {
+            howToFix: 'Keep page slugs aligned with page names (e.g., "Style Guide" \u2192 /style-guide)',
+            samples: pagesWithMismatchedSlugs.slice(0, 10)
+          }
+        });
+      }
+    }
+    pageStructureCategory.issues = issues;
+    pageStructureCategory.passed = hasNoErrors(issues);
+  }
+  function sortCategories(results) {
+    results.categories.sort((a, b) => {
+      const aErrors = a.issues?.filter((i) => i.severity === "error").length || 0;
+      const bErrors = b.issues?.filter((i) => i.severity === "error").length || 0;
+      const aWarnings = a.issues?.filter((i) => i.severity === "warning").length || 0;
+      const bWarnings = b.issues?.filter((i) => i.severity === "warning").length || 0;
+      if (aErrors > 0 && bErrors === 0) return -1;
+      if (aErrors === 0 && bErrors > 0) return 1;
+      if (aErrors === 0 && bErrors === 0) {
+        if (aWarnings > 0 && bWarnings === 0) return -1;
+        if (aWarnings === 0 && bWarnings > 0) return 1;
+      }
+      if (!a.passed && b.passed) return -1;
+      if (a.passed && !b.passed) return 1;
+      return 0;
+    });
+  }
+  function enhanceValidationResults(results, data, canvasAccessibility) {
+    addStyleSystemValidation(results, data);
+    normalizeVariableModesCategory(results);
+    addCanvasChecksCategory(results, canvasAccessibility);
+    addRepublishHints(results, canvasAccessibility);
+    rewritePageStructureCategory(results, data);
+    sortCategories(results);
+    const allIssues = results.categories.flatMap((cat) => cat.issues || []);
+    results.summary.totalErrors = allIssues.filter((issue) => issue.severity === "error").length;
+    results.summary.totalWarnings = allIssues.filter((issue) => issue.severity === "warning").length;
+    results.summary.totalInfo = allIssues.filter((issue) => issue.severity === "info").length;
+    results.summary.passedCategories = results.categories.filter((c) => c.passed).length;
+    results.summary.failedCategories = results.categories.filter((c) => !c.passed).length;
+  }
+
   // src/index.ts
   var WORKER_API_BASE = "https://validation-worker.createsomething.workers.dev";
   var APP_VALIDATOR_BASE = "https://validation-worker.createsomething.workers.dev";
@@ -597,7 +1035,7 @@
         setToolbarStatus("Validator script required for submission checks", "warning");
         const designerResults = await runDesignerValidation(projectData, siteUrl, correlationId);
         designerResults.collectedData = [projectData];
-        enhanceValidationResults(designerResults, projectData);
+        enhanceValidationResults(designerResults, projectData, projectData.canvasChecks);
         if (!designerResults.categories) designerResults.categories = [];
         designerResults.categories.push({
           category: "Published Site Checks (Requires Validator Script)",
@@ -651,7 +1089,7 @@
         correlationId
       });
       validationResults.collectedData = [projectData];
-      enhanceValidationResults(validationResults, projectData);
+      enhanceValidationResults(validationResults, projectData, projectData.canvasChecks);
       registerValidationReport(validationResults, correlationId);
       showResults(validationResults);
       void notifyValidationOutcome(webflow, validationResults);
@@ -1820,52 +2258,6 @@
       styles: [],
       pages: [],
       siteInfo: void 0,
-      collectionMetadata: {
-        variableCollections: 0,
-        totalVariables: 0,
-        totalComponents: 0,
-        totalStyles: 0,
-        totalPages: 0,
-        totalAssets: 0,
-        totalFonts: 0,
-        totalCollections: 0
-      },
-      enhancedValidation: {
-        variableOrganization: {
-          hasColorVariables: false,
-          hasTypographyVariables: false,
-          hasSpacingVariables: false,
-          hasOrderedCollections: false
-        },
-        componentArchitecture: {
-          hasNavbarComponent: false,
-          hasFooterComponent: false,
-          hasCTAComponents: false,
-          hasNestedComponents: false
-        },
-        styleSystem: {
-          hasHtmlTagStyles: false,
-          hasConsistentNaming: false,
-          usesVariablesInStyles: false,
-          hasPercentageLineHeights: false
-        },
-        pageStructure: {
-          hasStyleGuidePage: false,
-          hasInstructionsPage: false,
-          hasLicensePage: false,
-          hasTitleCaseNaming: false,
-          hasMatchingSlugs: false,
-          pagesNotTitleCase: [],
-          pagesWithMismatchedSlugs: []
-        },
-        seoCompliance: {
-          currentPageHasValidTitle: false,
-          currentPageHasValidDescription: false,
-          hasOpenGraphData: false,
-          titleWithinLimits: false,
-          descriptionWithinLimits: false
-        }
-      },
       collectionWarnings: []
     };
     console.log("Starting project data collection...");
@@ -1886,18 +2278,6 @@
               try {
                 const variableName = await variable.getName() || null;
                 const variableType = variable.type || null;
-                if (variableName) {
-                  const lowerName = variableName.toLowerCase();
-                  if (lowerName.includes("color") || lowerName.includes("bg") || lowerName.includes("text") || lowerName.includes("primary") || lowerName.includes("secondary")) {
-                    data.enhancedValidation.variableOrganization.hasColorVariables = true;
-                  }
-                  if (lowerName.includes("font") || lowerName.includes("text") || lowerName.includes("heading") || lowerName.includes("body") || lowerName.includes("size")) {
-                    data.enhancedValidation.variableOrganization.hasTypographyVariables = true;
-                  }
-                  if (lowerName.includes("space") || lowerName.includes("margin") || lowerName.includes("padding") || lowerName.includes("gap")) {
-                    data.enhancedValidation.variableOrganization.hasSpacingVariables = true;
-                  }
-                }
                 let variableValue = null;
                 try {
                   variableValue = await variable.get();
@@ -1970,9 +2350,6 @@
         }
         if (variableData.length > 0) {
           data.variables = { collections: variableData };
-          data.collectionMetadata.variableCollections = variableData.length;
-          data.collectionMetadata.totalVariables = totalVariables;
-          data.collectionMetadata.totalVariableModes = totalVariableModes;
           console.log(`Variable collections collected: ${variableData.length}, Total variables: ${totalVariables}, Total modes: ${totalVariableModes}`);
         }
       }
@@ -1993,27 +2370,14 @@
             const name = await component.getName() || null;
             const id = component.id;
             if (name) {
-              const lowerName = name.toLowerCase();
               let instances = 0;
               let isNested = false;
               const metadata = readComponentMetadata(component);
-              if (lowerName.includes("nav") || lowerName.includes("header") || lowerName.includes("menu")) {
-                data.enhancedValidation.componentArchitecture.hasNavbarComponent = true;
-              }
-              if (lowerName.includes("footer")) {
-                data.enhancedValidation.componentArchitecture.hasFooterComponent = true;
-              }
-              if (lowerName.includes("cta") || lowerName.includes("button") || lowerName.includes("call")) {
-                data.enhancedValidation.componentArchitecture.hasCTAComponents = true;
-              }
               try {
                 if (typeof component.getInstanceCount === "function") {
                   instances = await component.getInstanceCount();
                 }
                 isNested = await componentContainsComponentInstance(component);
-                if (isNested) {
-                  data.enhancedValidation.componentArchitecture.hasNestedComponents = true;
-                }
               } catch (nestedError) {
                 console.warn("Error analyzing component nesting:", nestedError);
               }
@@ -2033,7 +2397,6 @@
           }
         }
         data.components = componentData;
-        data.collectionMetadata.totalComponents = componentData.length;
         console.log(`Components collected: ${componentData.length}`);
       }
     } catch (error) {
@@ -2074,21 +2437,13 @@
               let breakpointProperties;
               if (isTagStyle(meta, name ?? "")) {
                 isHtmlTag = true;
-                data.enhancedValidation.styleSystem.hasHtmlTagStyles = true;
               }
               const { properties, breakpoints } = await readStyleProperties(style, meta, mediaQueries);
               Object.values(properties).forEach((value) => {
                 if (typeof value === "object" && value !== null && (value.type === "variable" || value.id)) {
                   hasVariables = true;
-                  data.enhancedValidation.styleSystem.usesVariablesInStyles = true;
                 }
               });
-              if (properties["line-height"]) {
-                const lineHeight = String(properties["line-height"]);
-                if (lineHeight.includes("%") || !lineHeight.includes("px") && !lineHeight.includes("rem") && !isNaN(parseFloat(lineHeight))) {
-                  data.enhancedValidation.styleSystem.hasPercentageLineHeights = true;
-                }
-              }
               if (breakpoints) {
                 breakpointProperties = breakpoints.properties;
                 if (breakpoints.errors.length > 0) {
@@ -2118,7 +2473,6 @@
           data.collectionWarnings.push(breakpointWarning);
         }
         data.styles = styleData;
-        data.collectionMetadata.totalStyles = styleData.length;
         console.log(`Styles collected: ${styleData.length}`);
       }
     } catch (error) {
@@ -2175,15 +2529,6 @@
               let hasValidNaming = false;
               const lowerName = name.toLowerCase();
               const lowerSlug = slug.toLowerCase();
-              if (lowerName.includes("style guide") || lowerSlug.includes("style-guide") || lowerSlug.includes("styleguide")) {
-                data.enhancedValidation.pageStructure.hasStyleGuidePage = true;
-              }
-              if (lowerName.includes("instructions") || lowerSlug.includes("instructions")) {
-                data.enhancedValidation.pageStructure.hasInstructionsPage = true;
-              }
-              if (lowerName.includes("license") || lowerSlug.includes("license") || slug === "/licenses") {
-                data.enhancedValidation.pageStructure.hasLicensePage = true;
-              }
               try {
                 if (typeof item.isHomepage === "function") {
                   isHomePage = await item.isHomepage();
@@ -2197,13 +2542,6 @@
               const isTitleCase = /^[A-Z][a-z]*(?:\s[A-Z][a-z]*)*$/.test(name) || name.split(" ").every((word) => word.charAt(0) === word.charAt(0).toUpperCase());
               if (isTitleCase) {
                 hasValidNaming = true;
-              } else {
-                data.enhancedValidation.pageStructure.pagesNotTitleCase.push(name);
-              }
-              const expectedSlug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-              const actualSlug = slug.replace(/^\//, "").toLowerCase();
-              if (!isCmsTemplate && expectedSlug !== actualSlug && !(isHomePage && actualSlug === "")) {
-                data.enhancedValidation.pageStructure.pagesWithMismatchedSlugs.push(`${name} (/${actualSlug})`);
               }
               let seoData = null;
               try {
@@ -2240,10 +2578,7 @@
             console.warn("Error processing page:", pageError);
           }
         }
-        data.enhancedValidation.pageStructure.hasTitleCaseNaming = pageData.length > 0 && data.enhancedValidation.pageStructure.pagesNotTitleCase.length === 0;
-        data.enhancedValidation.pageStructure.hasMatchingSlugs = pageData.length > 0 && data.enhancedValidation.pageStructure.pagesWithMismatchedSlugs.length === 0;
         data.pages = pageData;
-        data.collectionMetadata.totalPages = pageData.length;
         console.log(`Pages collected: ${pageData.length}`);
       }
     } catch (error) {
@@ -2259,21 +2594,6 @@
       const currentPageData = await collectCurrentPageSEOData(webflow);
       if (currentPageData) {
         data.currentPage = currentPageData;
-        data.enhancedValidation.seoCompliance.currentPageHasValidTitle = currentPageData.seo.hasValidTitle || false;
-        data.enhancedValidation.seoCompliance.currentPageHasValidDescription = currentPageData.seo.hasValidDescription || false;
-        data.enhancedValidation.seoCompliance.titleWithinLimits = (currentPageData.seo.titleLength || 0) <= 60;
-        data.enhancedValidation.seoCompliance.descriptionWithinLimits = (currentPageData.seo.descriptionLength || 0) >= 150 && (currentPageData.seo.descriptionLength || 0) <= 160;
-        const hasOpenGraphData = !!(currentPageData.seo.openGraphTitle || currentPageData.seo.openGraphDescription || currentPageData.seo.openGraphImage);
-        data.enhancedValidation.seoCompliance.hasOpenGraphData = hasOpenGraphData;
-        console.log("SEO compliance analysis:", {
-          hasValidTitle: data.enhancedValidation.seoCompliance.currentPageHasValidTitle,
-          hasValidDescription: data.enhancedValidation.seoCompliance.currentPageHasValidDescription,
-          titleWithinLimits: data.enhancedValidation.seoCompliance.titleWithinLimits,
-          descriptionWithinLimits: data.enhancedValidation.seoCompliance.descriptionWithinLimits,
-          hasOpenGraphData,
-          usesCustomOGTitle: currentPageData.seo.hasCustomOpenGraphTitle,
-          usesCustomOGDescription: currentPageData.seo.hasCustomOpenGraphDescription
-        });
         console.log(`Current page SEO collected: ${currentPageData.name}`);
       }
     } catch (error) {
@@ -2295,281 +2615,11 @@
         error: error instanceof Error ? error.message : String(error)
       });
     }
-    analyzeNamingConsistency(data);
+    data.collectionMetadata = deriveCollectionMetadata(data);
+    data.enhancedValidation = deriveEnhancedValidation(data);
     console.log("Project data collection complete:", data.collectionMetadata);
     console.log("Enhanced validation results:", data.enhancedValidation);
     return data;
-  }
-  function addStyleSystemValidation(results, projectData) {
-    const issues = [];
-    if (projectData.styles && Array.isArray(projectData.styles)) {
-      const requiredTags2 = ["body", "h1", "h2", "h3", "h4", "h5", "h6", "p", "a"];
-      const existingTagStyles = [];
-      const tagStylesWithVariables = [];
-      projectData.styles.forEach((style) => {
-        const styleName = style.name?.toLowerCase() || "";
-        requiredTags2.forEach((tag) => {
-          if (styleName === tag || styleName === `all ${tag}`) {
-            existingTagStyles.push(tag);
-            if (style.hasVariables) {
-              tagStylesWithVariables.push(tag);
-            }
-          }
-        });
-      });
-      const missingTags = requiredTags2.filter((tag) => !existingTagStyles.includes(tag));
-      if (missingTags.length > 0) {
-        issues.push({
-          id: "missing-html-tag-styles",
-          category: "Style System",
-          severity: "error",
-          message: `Missing base styles for HTML tags: ${missingTags.join(", ")}`,
-          details: {
-            howToFix: "Create base styles for all HTML tags (body, h1-h6, p, a)",
-            samples: missingTags
-          }
-        });
-      }
-      const tagsWithoutVariables = existingTagStyles.filter((tag) => !tagStylesWithVariables.includes(tag));
-      if (tagsWithoutVariables.length > 0) {
-        issues.push({
-          id: "html-tags-without-variables",
-          category: "Style System",
-          severity: "error",
-          message: `HTML tag styles not using variables: ${tagsWithoutVariables.join(", ")}`,
-          details: {
-            howToFix: "Update HTML tag styles to use variables for colors, typography, and spacing",
-            samples: tagsWithoutVariables
-          }
-        });
-      }
-      const totalStyles2 = projectData.styles.length;
-      const stylesWithVariables2 = projectData.styles.filter((s) => s.hasVariables).length;
-      const variableUsagePercent2 = totalStyles2 > 0 ? Math.round(stylesWithVariables2 / totalStyles2 * 100) : 0;
-      if (variableUsagePercent2 < 50) {
-        issues.push({
-          id: "low-variable-usage",
-          category: "Style System",
-          severity: "warning",
-          message: `Only ${variableUsagePercent2}% of styles use variables (${stylesWithVariables2}/${totalStyles2})`,
-          details: {
-            howToFix: "Increase variable usage in styles for better maintainability (aim for 80%+)"
-          }
-        });
-      }
-    }
-    const totalStyles = projectData.styles?.length || 0;
-    const stylesWithVariables = projectData.styles?.filter((s) => s.hasVariables).length || 0;
-    const variableUsagePercent = totalStyles > 0 ? Math.round(stylesWithVariables / totalStyles * 100) : 0;
-    const requiredTags = ["body", "h1", "h2", "h3", "h4", "h5", "h6", "p", "a"];
-    const htmlTagStylesFound = projectData.styles?.filter((s) => s.isHtmlTag).length || 0;
-    let styleSystemCategory = results.categories.find((cat) => cat.category === "Style System");
-    if (!styleSystemCategory) {
-      styleSystemCategory = {
-        category: "Style System",
-        passed: issues.filter((i) => i.severity === "error").length === 0,
-        issues,
-        stats: {
-          totalStyles,
-          htmlTagStyles: {
-            found: htmlTagStylesFound,
-            required: requiredTags.length
-          },
-          stylesWithVariables,
-          variableUsagePercent
-        }
-      };
-      results.categories.push(styleSystemCategory);
-    } else {
-      styleSystemCategory.issues.push(...issues);
-      styleSystemCategory.passed = styleSystemCategory.issues.filter((i) => i.severity === "error").length === 0;
-      styleSystemCategory.stats = {
-        totalStyles,
-        htmlTagStyles: {
-          found: htmlTagStylesFound,
-          required: requiredTags.length
-        },
-        stylesWithVariables,
-        variableUsagePercent
-      };
-    }
-  }
-  function normalizeVariableModesCategory(results) {
-    const variableModesCategory = results.categories.find((cat) => cat.category === "Variable Modes");
-    if (!variableModesCategory?.stats) return;
-    const totalModes = typeof variableModesCategory.stats.totalModes === "number" ? variableModesCategory.stats.totalModes : 0;
-    if (totalModes <= 0) return;
-    let convertedWarning = false;
-    variableModesCategory.issues = (variableModesCategory.issues || []).map((issue) => {
-      const isNameOnlyModeWarning = issue.id === "modes.no-responsive" || /modes found, but none appear to be for responsive breakpoints/i.test(issue.message || "");
-      if (!isNameOnlyModeWarning) return issue;
-      convertedWarning = true;
-      return {
-        ...issue,
-        id: "modes.good",
-        severity: "info",
-        message: `${totalModes} modes configured across ${variableModesCategory.stats?.collectionsWithModes || 1} collections.`,
-        howToFix: void 0
-      };
-    });
-    if (convertedWarning) {
-      variableModesCategory.passed = true;
-      variableModesCategory.stats.modeDataAvailable = true;
-    }
-  }
-  function addCanvasChecksCategory(results, projectData) {
-    const canvas = projectData.canvasChecks;
-    if (!canvas || !canvas.available) return;
-    const issues = [];
-    for (const headingIssue of canvas.headingIssues) {
-      issues.push({
-        id: `canvas-heading-${headingIssue.position}`,
-        category: "Canvas Checks (Current Page)",
-        severity: "warning",
-        message: headingIssue.issue,
-        details: {
-          howToFix: "Adjust the heading level in the element settings so levels increase one step at a time.",
-          location: `${canvas.pageName} \u2014 heading ${headingIssue.position} of ${canvas.headingsChecked}`,
-          canvasElementKeys: headingIssue.elementKey ? [headingIssue.elementKey] : void 0
-        }
-      });
-    }
-    if (canvas.imagesMissingAlt > 0) {
-      issues.push({
-        id: "canvas-images-missing-alt",
-        category: "Canvas Checks (Current Page)",
-        severity: "info",
-        message: `${canvas.imagesMissingAlt} of ${canvas.imagesChecked} image(s) on this page have no alt text in the Designer.`,
-        details: {
-          howToFix: "Add descriptive alt text in each image's settings, or mark purely decorative images as decorative.",
-          canvasElementKeys: canvas.missingAltElementKeys.length > 0 ? canvas.missingAltElementKeys : void 0
-        }
-      });
-    }
-    results.categories.push({
-      category: "Canvas Checks (Current Page)",
-      passed: issues.filter((issue) => issue.severity === "error" || issue.severity === "warning").length === 0,
-      issues,
-      stats: {
-        page: canvas.pageName,
-        headingsChecked: canvas.headingsChecked,
-        imagesChecked: canvas.imagesChecked,
-        note: "Reflects current Designer state, including unpublished changes"
-      }
-    });
-  }
-  function addRepublishHints(results, projectData) {
-    const canvas = projectData.canvasChecks;
-    if (!canvas || !canvas.available) return;
-    const hint = (dimension) => `The current page's canvas passes the ${dimension} check \u2014 if you've already fixed this in the Designer, republish the site and re-run validation to update this result.`;
-    const headingIssueIds = /* @__PURE__ */ new Set(["heading-hierarchy-errors", "heading-structure-errors"]);
-    const altIssueIds = /* @__PURE__ */ new Set(["missing-alt-text-critical", "missing-alt-text", "images-missing-alt"]);
-    for (const category of results.categories) {
-      for (const issue of category.issues || []) {
-        if (issue.id.startsWith("canvas-")) continue;
-        if (canvas.headingsChecked > 0 && canvas.headingIssues.length === 0 && headingIssueIds.has(issue.id)) {
-          issue.details = { ...issue.details, republishHint: hint("heading hierarchy") };
-        }
-        if (canvas.imagesChecked > 0 && canvas.imagesMissingAlt === 0 && altIssueIds.has(issue.id)) {
-          issue.details = { ...issue.details, republishHint: hint("image alt text") };
-        }
-      }
-    }
-  }
-  function enhanceValidationResults(results, projectData) {
-    console.log("Enhancing validation results with client-side analysis...");
-    addStyleSystemValidation(results, projectData);
-    normalizeVariableModesCategory(results);
-    addCanvasChecksCategory(results, projectData);
-    addRepublishHints(results, projectData);
-    const pageStructureCategory = results.categories.find((cat) => cat.category === "Page Structure");
-    if (pageStructureCategory && projectData.pages && projectData.pages.length > 0) {
-      console.log(`Found ${projectData.pages.length} pages, updating Page Structure validation...`);
-      pageStructureCategory.issues = [];
-      pageStructureCategory.passed = true;
-      if (pageStructureCategory.stats) {
-        pageStructureCategory.stats.totalPages = projectData.pages.length;
-        pageStructureCategory.stats.totalFolders = 0;
-        pageStructureCategory.stats.hasHomePage = projectData.pages.some((p) => p.slug === "/" || p.isHomePage);
-      } else {
-        pageStructureCategory.stats = {
-          totalPages: projectData.pages.length,
-          totalFolders: 0,
-          hasHomePage: projectData.pages.some((p) => p.slug === "/" || p.isHomePage)
-        };
-      }
-      const issues = [];
-      if (projectData.enhancedValidation) {
-        const pageStructure = projectData.enhancedValidation.pageStructure;
-        const pagesNotTitleCase = pageStructure.pagesNotTitleCase || [];
-        if (pagesNotTitleCase.length > 0) {
-          issues.push({
-            id: "page-naming",
-            category: "Page Structure",
-            severity: "warning",
-            message: `${pagesNotTitleCase.length} page(s) don't use Title Case naming convention.`,
-            details: {
-              howToFix: 'Use Title Case for page names (e.g., "Style Guide", "Contact Us")',
-              samples: pagesNotTitleCase.slice(0, 10)
-            }
-          });
-        }
-        const pagesWithMismatchedSlugs = pageStructure.pagesWithMismatchedSlugs || [];
-        if (pagesWithMismatchedSlugs.length > 0) {
-          issues.push({
-            id: "page-slug-mismatch",
-            category: "Page Structure",
-            severity: "warning",
-            message: `${pagesWithMismatchedSlugs.length} page(s) have slugs that don't match their names.`,
-            details: {
-              howToFix: 'Keep page slugs aligned with page names (e.g., "Style Guide" \u2192 /style-guide)',
-              samples: pagesWithMismatchedSlugs.slice(0, 10)
-            }
-          });
-        }
-      }
-      pageStructureCategory.issues = issues;
-      pageStructureCategory.passed = issues.filter((i) => i.severity === "error").length === 0;
-      const errorCount = issues.filter((i) => i.severity === "error").length;
-      const warningCount = issues.filter((i) => i.severity === "warning").length;
-      if (pageStructureCategory.passed) {
-        results.summary.passedCategories = Math.max(
-          results.summary.passedCategories,
-          results.categories.filter((c) => c.passed).length
-        );
-        results.summary.failedCategories = Math.max(
-          0,
-          results.categories.filter((c) => !c.passed).length
-        );
-      }
-      console.log(`Page Structure validation updated: ${pageStructureCategory.passed ? "PASSED" : "FAILED"}, ${errorCount} errors, ${warningCount} warnings`);
-    }
-    console.log("SEO validation now handled by Cloudflare Worker - accurate validation via published content analysis");
-    results.categories.sort((a, b) => {
-      const aErrors = a.issues?.filter((i) => i.severity === "error").length || 0;
-      const bErrors = b.issues?.filter((i) => i.severity === "error").length || 0;
-      const aWarnings = a.issues?.filter((i) => i.severity === "warning").length || 0;
-      const bWarnings = b.issues?.filter((i) => i.severity === "warning").length || 0;
-      if (aErrors > 0 && bErrors === 0) return -1;
-      if (aErrors === 0 && bErrors > 0) return 1;
-      if (aErrors === 0 && bErrors === 0) {
-        if (aWarnings > 0 && bWarnings === 0) return -1;
-        if (aWarnings === 0 && bWarnings > 0) return 1;
-      }
-      if (!a.passed && b.passed) return -1;
-      if (a.passed && !b.passed) return 1;
-      return 0;
-    });
-    const allIssues = results.categories.flatMap((cat) => cat.issues || []);
-    const totalErrors = allIssues.filter((issue) => issue.severity === "error").length;
-    const totalWarnings = allIssues.filter((issue) => issue.severity === "warning").length;
-    const totalInfo = allIssues.filter((issue) => issue.severity === "info").length;
-    results.summary.totalErrors = totalErrors;
-    results.summary.totalWarnings = totalWarnings;
-    results.summary.totalInfo = totalInfo;
-    results.summary.passedCategories = results.categories.filter((c) => c.passed).length;
-    results.summary.failedCategories = results.categories.filter((c) => !c.passed).length;
-    console.log(`Enhanced validation complete: ${totalErrors} errors, ${totalWarnings} warnings, ${totalInfo} info across ${results.categories.length} categories`);
   }
   async function collectCurrentPageSEOData(webflow) {
     try {
@@ -2672,53 +2722,6 @@
       console.warn("Error collecting current page SEO data:", error);
       return null;
     }
-  }
-  function analyzeNamingConsistency(data) {
-    const allNames = [];
-    if (data.components) {
-      allNames.push(...data.components.map((c) => c.name));
-    }
-    if (data.styles) {
-      allNames.push(...data.styles.filter((s) => !s.isHtmlTag).map((s) => s.name));
-    }
-    if (data.variables?.collections) {
-      data.variables.collections.forEach((collection) => {
-        allNames.push(...collection.variables.map((v) => v.name));
-      });
-    }
-    if (allNames.length === 0) return;
-    const namingPatterns = {
-      titleCase: 0,
-      camelCase: 0,
-      pascalCase: 0,
-      snakeCase: 0,
-      kebabCase: 0,
-      bem: 0
-    };
-    allNames.forEach((name) => {
-      if (!name) return;
-      if (/^[A-Z][a-z]*(?:\s[A-Z][a-z]*)*$/.test(name)) {
-        namingPatterns.titleCase++;
-      } else if (/^[a-z][a-zA-Z0-9]*$/.test(name)) {
-        namingPatterns.camelCase++;
-      } else if (/^[A-Z][a-zA-Z0-9]*$/.test(name)) {
-        namingPatterns.pascalCase++;
-      } else if (/^[a-z][a-z0-9_]*$/.test(name)) {
-        namingPatterns.snakeCase++;
-      } else if (/^[a-z][a-z0-9-]*$/.test(name)) {
-        namingPatterns.kebabCase++;
-      } else if (/^[a-z][a-z0-9-]*(__[a-z][a-z0-9-]*)?(--[a-z][a-z0-9-]*)?$/.test(name)) {
-        namingPatterns.bem++;
-      }
-    });
-    const totalNames = allNames.length;
-    const dominantPattern = Object.entries(namingPatterns).find(
-      ([, count]) => count / totalNames >= 0.8
-    );
-    if (dominantPattern) {
-      data.enhancedValidation.styleSystem.hasConsistentNaming = true;
-    }
-    console.log("Naming pattern analysis:", namingPatterns, `Total names: ${totalNames}`);
   }
   function showLoading() {
     const loadingDisplay = document.getElementById("loading-display");
