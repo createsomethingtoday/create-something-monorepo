@@ -1,0 +1,240 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		2A4B00010000000000000001 /* WorkWayVisionOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A4B00020000000000000001 /* WorkWayVisionOSApp.swift */; };
+		2A4B00030000000000000001 /* threshold-dwelling-r08-massing-guide.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 2A4B00040000000000000001 /* threshold-dwelling-r08-massing-guide.usdz */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		2A4B00020000000000000001 /* WorkWayVisionOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkWayVisionOSApp.swift; sourceTree = "<group>"; };
+		2A4B00040000000000000001 /* threshold-dwelling-r08-massing-guide.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; name = "threshold-dwelling-r08-massing-guide.usdz"; path = "../../../packages/space/static/experiments/threshold-dwelling/renders/threshold-dwelling-r08-massing-guide.usdz"; sourceTree = SOURCE_ROOT; };
+		2A4B00050000000000000001 /* WorkWayVisionOSApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WorkWayVisionOSApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		2A4B00060000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		2A4B00070000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				2A4B00080000000000000001 /* WorkWayVisionOSApp */,
+				2A4B00090000000000000001 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		2A4B00080000000000000001 /* WorkWayVisionOSApp */ = {
+			isa = PBXGroup;
+			children = (
+				2A4B00020000000000000001 /* WorkWayVisionOSApp.swift */,
+				2A4B00040000000000000001 /* threshold-dwelling-r08-massing-guide.usdz */,
+			);
+			sourceTree = "<group>";
+		};
+		2A4B00090000000000000001 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				2A4B00050000000000000001 /* WorkWayVisionOSApp.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		2A4B00100000000000000001 /* WorkWayVisionOSApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2A4B00110000000000000001 /* Build configuration list for PBXNativeTarget "WorkWayVisionOSApp" */;
+			buildPhases = (
+				2A4B00120000000000000001 /* Sources */,
+				2A4B00060000000000000001 /* Frameworks */,
+				2A4B00130000000000000001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = WorkWayVisionOSApp;
+			packageProductDependencies = (
+				2A4B00140000000000000001 /* WorkWaySpatialContract */,
+			);
+			productName = WorkWayVisionOSApp;
+			productReference = 2A4B00050000000000000001 /* WorkWayVisionOSApp.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		2A4B00150000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					2A4B00100000000000000001 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+				};
+			};
+			buildConfigurationList = 2A4B00160000000000000001 /* Build configuration list for PBXProject "WorkWayVisionOSApp" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 2A4B00070000000000000001;
+			packageReferences = (
+				2A4B00170000000000000001 /* XCLocalSwiftPackageReference "../" */,
+			);
+			productRefGroup = 2A4B00090000000000000001 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2A4B00100000000000000001 /* WorkWayVisionOSApp */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		2A4B00130000000000000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2A4B00030000000000000001 /* threshold-dwelling-r08-massing-guide.usdz in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		2A4B00120000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2A4B00010000000000000001 /* WorkWayVisionOSApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		2A4B00180000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGNING_ALLOWED = NO;
+				SDKROOT = xros;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		2A4B00190000000000000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGNING_ALLOWED = NO;
+				SDKROOT = xros;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		2A4B001A0000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "WorkWay Spatial";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.createsomething.workway.spatial;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = xros;
+				SUPPORTED_PLATFORMS = "xros xrsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 7;
+				XROS_DEPLOYMENT_TARGET = 1.0;
+			};
+			name = Debug;
+		};
+		2A4B001B0000000000000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "WorkWay Spatial";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.createsomething.workway.spatial;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = xros;
+				SUPPORTED_PLATFORMS = "xros xrsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 7;
+				XROS_DEPLOYMENT_TARGET = 1.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2A4B00160000000000000001 /* Build configuration list for PBXProject "WorkWayVisionOSApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2A4B00180000000000000001 /* Debug */,
+				2A4B00190000000000000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2A4B00110000000000000001 /* Build configuration list for PBXNativeTarget "WorkWayVisionOSApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2A4B001A0000000000000001 /* Debug */,
+				2A4B001B0000000000000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		2A4B00170000000000000001 /* XCLocalSwiftPackageReference "../" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ..;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		2A4B00140000000000000001 /* WorkWaySpatialContract */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2A4B00170000000000000001 /* XCLocalSwiftPackageReference "../" */;
+			productName = WorkWaySpatialContract;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 2A4B00150000000000000001 /* Project object */;
+}
