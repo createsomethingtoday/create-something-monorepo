@@ -126,7 +126,7 @@ async function resolveOwner(request: Request, env: Env, services: AppServices): 
 	// Optional selection. Never implicit: it must be a well-formed record ID that is
 	// exactly one of the Creators this email matched, even when only one matched.
 	const selected = request.headers.get(CREATOR_HEADER)?.trim();
-	if (selected) {
+	if (selected !== undefined) {
 		if (!RECORD_ID.test(selected)) throw new StorefrontError('invalid_request', 'Invalid creator selection');
 		const match = matches.find((m) => m.id === selected);
 		if (!match) throw new StorefrontError('forbidden', 'This account cannot act for the selected Creator');

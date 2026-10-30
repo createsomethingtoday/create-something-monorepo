@@ -229,7 +229,7 @@ describe('authorization', () => {
 
 		it('a malformed selection is 400 and does not fall back to a creator', async () => {
 			const ctx = setup();
-			for (const bad of ['not-a-record', 'rec123', `${ctx.creator.id}x`, 'recAAAAAAAAAAAAAA, recBBBBBBBBBBBBBB']) {
+			for (const bad of ['', '   ', 'not-a-record', 'rec123', `${ctx.creator.id}x`, 'recAAAAAAAAAAAAAA, recBBBBBBBBBBBBBB']) {
 				expect((await withSelection(ctx, bad)).status).toBe(400);
 			}
 		});
