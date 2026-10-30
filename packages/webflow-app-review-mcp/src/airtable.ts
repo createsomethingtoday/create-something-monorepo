@@ -1,4 +1,7 @@
 import {
+  BACKEND_DECLARATION_FIELD_KEYS,
+  BACKEND_HOSTING_MODEL_OPTIONS,
+  BACKEND_RUNTIME_OPTIONS,
   CAPABILITIES_OPTIONS,
   DEFAULT_AIRTABLE_BASE_ID,
   DEFAULT_GOVERNANCE_FINDINGS_TABLE_ID,
@@ -70,6 +73,14 @@ const PREFLIGHT_FIELD_IDS = {
   versions: Object.values(PREFLIGHT_FIELD_KEYS).map((key) => FIELD_IDS.versions[key]),
 };
 
+const BACKEND_DECLARATION_FIELD_IDS = {
+  assets: [
+    ...Object.values(BACKEND_DECLARATION_FIELD_KEYS).map((key) => FIELD_IDS.assets[key]),
+    FIELD_IDS.assets.backendDeclaredAt,
+  ],
+  versions: Object.values(BACKEND_DECLARATION_FIELD_KEYS).map((key) => FIELD_IDS.versions[key]),
+};
+
 const ASSET_DETAIL_FIELD_IDS = [
   ...ASSET_QUEUE_FIELD_IDS,
   FIELD_IDS.assets.relationshipOwner,
@@ -98,6 +109,7 @@ const ASSET_DETAIL_FIELD_IDS = [
   FIELD_IDS.assets.previewSiteUrl,
   FIELD_IDS.assets.promoVideoUrl,
   ...PREFLIGHT_FIELD_IDS.assets,
+  ...BACKEND_DECLARATION_FIELD_IDS.assets,
 ] as const;
 
 const VERSION_FIELD_IDS = [
@@ -133,6 +145,7 @@ const VERSION_FIELD_IDS = [
   FIELD_IDS.versions.zendeskTicketId,
   FIELD_IDS.versions.zendeskSubject,
   ...PREFLIGHT_FIELD_IDS.versions,
+  ...BACKEND_DECLARATION_FIELD_IDS.versions,
 ] as const;
 
 // Airtable-side twin of isAppLikeAsset: the Assets table is ~90% template records, so
@@ -266,6 +279,21 @@ export interface AppReviewAsset extends AppReviewQueueItem {
   previewSiteUrl?: string;
   promoVideoUrl?: string;
   preflight?: AppReviewPreflight | null;
+  backend?: AppReviewBackendDeclaration | null;
+}
+
+/**
+ * Developer-declared backend hosting and runtime, written by the Marketplace submission
+ * form (New and every Update) after the PHP2Shell / Node2Shell CVEs. Self-attested: Webflow
+ * does not verify developer infrastructure; reviewers check plausibility only. Assets carry
+ * the live declaration (plus `declaredAt`); versions carry the snapshot taken at submission.
+ */
+export interface AppReviewBackendDeclaration {
+  hostingModel?: string;
+  runtime?: string;
+  runtimeVersion?: string;
+  hostingProvider?: string;
+  declaredAt?: string;
 }
 
 /**
@@ -319,6 +347,7 @@ export interface AppReviewVersion {
   zendeskTicketId?: string;
   zendeskSubject?: string;
   preflight?: AppReviewPreflight | null;
+  backend?: AppReviewBackendDeclaration | null;
   createdTime?: string;
 }
 
@@ -709,6 +738,21 @@ function mapPreflight(fields: Record<string, unknown>, table: 'assets' | 'versio
   return Object.values(preflight).some((value) => value !== undefined) ? preflight : null;
 }
 
+function mapBackendDeclaration(
+  fields: Record<string, unknown>,
+  table: 'assets' | 'versions',
+): AppReviewBackendDeclaration | null {
+  const ids = FIELD_IDS[table];
+  const backend: AppReviewBackendDeclaration = {
+    hostingModel: firstString(fields[ids.backendHostingModel]),
+    runtime: firstString(fields[ids.backendRuntime]),
+    runtimeVersion: firstString(fields[ids.backendRuntimeVersion]),
+    hostingProvider: firstString(fields[ids.backendHostingProvider]),
+    declaredAt: table === 'assets' ? firstString(fields[FIELD_IDS.assets.backendDeclaredAt]) : undefined,
+  };
+  return Object.values(backend).some((value) => value !== undefined) ? backend : null;
+}
+
 function mapQueueRecord(record: AirtableRecord): AppReviewQueueItem {
   const fields = record.fields;
   return {
@@ -757,6 +801,7 @@ function mapAssetRecord(record: AirtableRecord): AppReviewAsset {
     previewSiteUrl: firstString(fields[FIELD_IDS.assets.previewSiteUrl]),
     promoVideoUrl: firstString(fields[FIELD_IDS.assets.promoVideoUrl]),
     preflight: mapPreflight(fields, 'assets'),
+    backend: mapBackendDeclaration(fields, 'assets'),
   };
 }
 
@@ -799,6 +844,7 @@ function mapVersionRecord(record: AirtableRecord): AppReviewVersion {
     zendeskTicketId: firstString(fields[FIELD_IDS.versions.zendeskTicketId]),
     zendeskSubject: firstString(fields[FIELD_IDS.versions.zendeskSubject]),
     preflight: mapPreflight(fields, 'versions'),
+    backend: mapBackendDeclaration(fields, 'versions'),
     createdTime: record.createdTime,
   };
 }
@@ -2276,7 +2322,28 @@ export class AirtableClient {
         case 'support_email_or_url':
         case 'preview_site_url':
         case 'promo_video_url':
+        case 'backend_runtime_version':
+        case 'backend_hosting_provider':
+        case 'backend_declared_at':
           fields[FIELD_IDS.assets[mapWritableKeyToAssetFieldName(key)]] = value ?? null;
+          break;
+        case 'backend_hosting_model':
+          if (value !== null && value !== undefined && !(BACKEND_HOSTING_MODEL_OPTIONS as readonly string[]).includes(String(value))) {
+            throw new AirtableClientError('INVALID_BACKEND_HOSTING_MODEL', 'Unsupported backend hosting model.', 400, {
+              value,
+              allowed: BACKEND_HOSTING_MODEL_OPTIONS,
+            });
+          }
+          fields[FIELD_IDS.assets.backendHostingModel] = value ?? null;
+          break;
+        case 'backend_runtime':
+          if (value !== null && value !== undefined && !(BACKEND_RUNTIME_OPTIONS as readonly string[]).includes(String(value))) {
+            throw new AirtableClientError('INVALID_BACKEND_RUNTIME', 'Unsupported backend runtime.', 400, {
+              value,
+              allowed: BACKEND_RUNTIME_OPTIONS,
+            });
+          }
+          fields[FIELD_IDS.assets.backendRuntime] = value ?? null;
           break;
         case 'app_capabilities':
           if (value !== null && value !== undefined && !(CAPABILITIES_OPTIONS as readonly string[]).includes(String(value))) {
@@ -2390,7 +2457,10 @@ function mapWritableKeyToAssetFieldName(
     | 'website_url'
     | 'support_email_or_url'
     | 'preview_site_url'
-    | 'promo_video_url',
+    | 'promo_video_url'
+    | 'backend_runtime_version'
+    | 'backend_hosting_provider'
+    | 'backend_declared_at',
 ):
   | 'name'
   | 'clientId'
@@ -2408,7 +2478,10 @@ function mapWritableKeyToAssetFieldName(
   | 'websiteUrl'
   | 'supportEmailOrUrl'
   | 'previewSiteUrl'
-  | 'promoVideoUrl' {
+  | 'promoVideoUrl'
+  | 'backendRuntimeVersion'
+  | 'backendHostingProvider'
+  | 'backendDeclaredAt' {
   switch (key) {
     case 'app_name':
       return 'name';
@@ -2444,6 +2517,12 @@ function mapWritableKeyToAssetFieldName(
       return 'previewSiteUrl';
     case 'promo_video_url':
       return 'promoVideoUrl';
+    case 'backend_runtime_version':
+      return 'backendRuntimeVersion';
+    case 'backend_hosting_provider':
+      return 'backendHostingProvider';
+    case 'backend_declared_at':
+      return 'backendDeclaredAt';
   }
 }
 
