@@ -1515,3 +1515,26 @@ for (const decision of ['approve', 'reject'] as const) test(`${decision} cannot 
     assert.equal((await adapter.poll(input)).state, 'idle', 'terminal reconciliation remains available after transient history recovers');
   } finally { await rm(dataDir, { recursive: true, force: true }); }
 });
+
+for (const [error, unresolved] of [
+  ['Provider usage limit reached', false], ['provider_turn_rejected', false],
+  ['turn_outcome_unknown', true], ['write_outcome_unknown', true],
+  ['approval_delivery_unknown', true], ['reconciliation_required', true],
+] as const) test(`historical session error ${error} ${unresolved ? 'retains' : 'does not poison'} the workspace cache fence`, async () => {
+  const { adapter, server, dataDir } = await setup();
+  try {
+    const old = await adapter.start({ workspaceId: 'w', message: 'Earlier request' });
+    server.thread.turns = [{ id: 'turn-1', status: 'failed', error: { message: error }, items: [] }];
+    const failed = await adapter.read({ workspaceId: 'w', sessionId: old.sessionId });
+    assert.equal(failed.error, error); assert.equal(failed.state, 'failed');
+    server.thread = { id: 'thread-2', status: { type: 'idle' }, turns: [] };
+    const active = await adapter.start({ workspaceId: 'w', message: 'New read-only conversation' });
+    const input = { workspaceId: 'w', sessionId: active.sessionId };
+    server.thread.turns = [{ id: 'turn-1', status: 'inProgress', items: [] }];
+    await adapter.read(input);
+    const reads = server.calls.filter(x => x.method === 'thread/read').length;
+    for (let i = 0; i < 3; i++) assert.equal((await adapter.poll(input)).state, 'running');
+    assert.equal(server.calls.filter(x => x.method === 'thread/read').length, reads + (unresolved ? 3 : 0),
+      unresolved ? 'unresolved workspace outcomes must still force reconciliation' : 'an ordinary historical failure must not disable healthy active snapshots');
+  } finally { await rm(dataDir, { recursive: true, force: true }); }
+});

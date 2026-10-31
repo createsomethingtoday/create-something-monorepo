@@ -680,7 +680,7 @@ function render() {
 
 }
 
-function renderChat() {
+function renderChat({ replaceDraft = false } = {}) {
   const panel = root.querySelector?.('.chat-panel');
   if (!chat?.visible) {
     if (panel?.remove) { panel.remove(); return; }
@@ -698,7 +698,7 @@ function renderChat() {
     render(); root.querySelector?.('[data-chat-close]')?.focus?.(); return;
   }
   if (panel.ownerDocument?.createElement) {
-    updateChatPanel(panel, chatView(chat, true), { draft: chat.draft, sessionId: chat?.current?.sessionId ?? null });
+    updateChatPanel(panel, chatView(chat, true), { draft: chat.draft, sessionId: chat?.current?.sessionId ?? null, replaceDraft });
     renderedChatSession = chat?.current?.sessionId ?? null;
     return;
   }
@@ -799,7 +799,7 @@ root.addEventListener('click', (event) => {
   if (button.dataset.attentionUpdate) { void attention?.update(button.dataset.attentionUpdate,button.dataset.attentionAction); return; }
   if (button.dataset.notificationSettings) { void bridge.call('notifications.openSettings',{}).catch(error=>notice(explain(error),true)); return; }
   if (button.dataset.chatLatest) { const transcript=root.querySelector?.('.chat-transcript'); if(transcript)transcript.scrollTop=transcript.scrollHeight; button.hidden=true; root.querySelector?.('#chat-message')?.focus?.({preventScroll:true}); return; }
-  if (button.dataset.chatPrompt) { const prompt=button.dataset.chatPrompt;void (async()=>{if(!chat)return;if(!chat.current)await chat.start();chat.draft=prompt;renderChat();root.querySelector?.('#chat-message')?.focus?.();})();return; }
+  if (button.dataset.chatPrompt) { const prompt=button.dataset.chatPrompt;void (async()=>{if(!chat)return;if(!chat.current)await chat.start();chat.draft=prompt;renderChat({replaceDraft:true});root.querySelector?.('#chat-message')?.focus?.();})();return; }
   if (button.dataset.preferencesTheme) { savePreferences({ ...preferences, theme: button.dataset.preferencesTheme }); root.querySelector?.(`[data-preferences-theme="${preferences.theme}"]`)?.focus?.({ preventScroll: true }); return; }
   if (button.dataset.preferencesReset) { savePreferences(defaults, 'Appearance and views reset to Studio defaults.'); return; }
   if (button.dataset.preferencesExport) { preferencesExported = exportPreferences(preferences); render(); const detail = root.querySelector?.('.portable-preferences'); if (detail) detail.open = true; root.querySelector?.('#preferences-export')?.focus?.(); return; }

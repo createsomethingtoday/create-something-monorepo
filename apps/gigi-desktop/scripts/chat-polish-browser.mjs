@@ -78,6 +78,23 @@ try{
  assert.equal(await page.locator('#chat-message').inputValue(),'Keep this draft','terminal selection reconciliation preserves draft');
  assert.equal(await page.locator('#chat-message').evaluate(e=>e===document.activeElement),true,'terminal selection reconciliation preserves focus');
  await page.locator('#chat-message').focus();await page.evaluate(()=>chatClearDraft());assert.equal(await page.locator('#chat-message').inputValue(),'');
+ // macOS WebKit can retain textarea focus when a starting point is clicked.
+ await page.evaluate(()=>{chatSetState('idle');chatClearDraft();});
+ const suggestion=page.locator('[data-chat-prompt]').first();const prompt=await suggestion.getAttribute('data-chat-prompt');
+ await page.locator('#chat-message').focus();await suggestion.evaluate(button=>button.click());
+ assert.equal(await page.locator('#chat-message').inputValue(),prompt,'selected starting point must reach the already-mounted focused composer');
+ assert.equal(await page.locator('#chat-message').evaluate(e=>e===document.activeElement),true);
+ // Streaming may arrive between composition input events; preserve the DOM edit.
+ await page.locator('#chat-message').evaluate(e=>{e.dispatchEvent(new CompositionEvent('compositionstart',{bubbles:true}));e.value='Synthetic uncommitted composition';});
+ await page.evaluate(()=>chatAppend(' Observed text during composition.'));
+ assert.equal(await page.locator('#chat-message').inputValue(),'Synthetic uncommitted composition','ordinary snapshots must not replace in-progress composition');
+ await page.locator('#chat-message').evaluate(e=>{e.dispatchEvent(new CompositionEvent('compositionend',{bubbles:true}));e.dispatchEvent(new InputEvent('input',{bubbles:true}));});
+ await page.evaluate(()=>{chatAppend(' Composition committed.');chatClearDraft();});
+ await page.locator('#chat-message').evaluate(e=>{e.dispatchEvent(new CompositionEvent('compositionstart',{bubbles:true}));e.value='Composition from an empty draft';});
+ await page.evaluate(()=>chatAppend(' Another observed delta.'));
+ assert.equal(await page.locator('#chat-message').inputValue(),'Composition from an empty draft','unchanged empty model must not erase unreported composition input');
+ await page.locator('#chat-message').evaluate(e=>{e.dispatchEvent(new CompositionEvent('compositionend',{bubbles:true}));e.dispatchEvent(new InputEvent('input',{bubbles:true}));});
+
  // Observe temporal changes with normal motion; no token replay/entrance restarts.
  await page.emulateMedia({reducedMotion:'no-preference'});await page.evaluate(()=>chatFixture('midnight'));await page.locator('.chat-transcript').evaluate(e=>e.scrollTop=e.scrollHeight);
  for(let i=0;i<5;i++){await page.evaluate(i=>chatAppend(' Observed delta '+i+'.'),i);await page.waitForTimeout(280);assert.equal(await page.locator('.chat-panel').evaluate(e=>e.getAnimations().length),0);}

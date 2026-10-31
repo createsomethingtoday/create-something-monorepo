@@ -1,5 +1,6 @@
 // Reconcile only the mounted drawer. Stable nodes preserve focus, IME/drafts,
 // disclosures, text selection and scroll while provider snapshots arrive.
+const renderedDrafts = new WeakMap();
 const key = node => node.nodeType === 1 ? node.id || node.getAttribute('data-chat-message-id') || node.getAttribute('data-view-key') || (node.hasAttribute('data-chat-latest') ? 'latest' : '') : '';
 function patch(before, after, document) {
   if (before.isEqualNode(after)) return before;
@@ -27,10 +28,12 @@ function patch(before, after, document) {
   while (cursor) { const next = cursor.nextSibling; cursor.remove(); cursor = next; }
   return before;
 }
-export function updateChatPanel(panel, html, { draft, sessionId } = {}) {
+export function updateChatPanel(panel, html, { draft, sessionId, replaceDraft = false } = {}) {
   const document = panel.ownerDocument;
   panel.classList?.remove?.('chat-entering');
   if (!document?.createElement) { panel.innerHTML = html; return; } // minimal offline harness
+  const previousDraft = renderedDrafts.get(panel) ?? panel.querySelector('#chat-message')?.defaultValue ?? '';
+  const nextDraft = draft ?? '';
   const template = document.createElement('template'); template.innerHTML = html;
   const transcript = panel.querySelector('.chat-transcript');
   const sameSession = transcript?.dataset.chatSessionId === sessionId;
@@ -47,5 +50,9 @@ export function updateChatPanel(panel, html, { draft, sessionId } = {}) {
   const latest = panel.querySelector('[data-chat-latest]');
   if (latest) latest.hidden = following || (!hadNewContent && signature === next?.textContent);
   const composer = panel.querySelector('#chat-message');
-  if (composer && composer.value !== draft && (!sameSession || draft === '')) composer.value = draft || '';
+  // Explicit starting points replace the draft by user intent. A model change
+  // (including confirmed send clearing) updates a clean composer. Otherwise,
+  // native input ahead of its next input event must survive response snapshots.
+  if (composer && composer.value !== nextDraft && (!sameSession || replaceDraft || (nextDraft !== previousDraft && composer.value === previousDraft))) composer.value = nextDraft;
+  renderedDrafts.set(panel, nextDraft);
 }

@@ -87,6 +87,7 @@ function validRecord(value: unknown): RecordRef | undefined {
 function asObject(value: unknown): Json { return value && typeof value === 'object' && !Array.isArray(value) ? value as Json : {}; }
 function textContent(items: unknown): string { return Array.isArray(items) ? items.filter(x => x?.type === 'text').map(x => x.text).join('\n') : ''; }
 
+const UNRESOLVED_OUTCOME_ERRORS = new Set(['turn_outcome_unknown', 'write_outcome_unknown', 'approval_delivery_unknown', 'reconciliation_required']);
 const RECORD_ENTITIES = new Set(['tasks','interactions','notes','gigs','finances','contacts','companies','documents','locations','schedule','tags','profile','services']);
 const MAX_RECORD_LINKS = 20;
 function sourceRecordRef(value: unknown, workspaceId: string, expectedEntity?: string, expectedId?: string): RecordRef | undefined {
@@ -207,7 +208,7 @@ export function createCodexAdapter(options: CodexOptions) {
     const settled = (session: Session) =>
       !['running', 'approval'].includes(session.state) && !session.pendingMessageId &&
       !session.cancelPending && !session.recoveryPending && !session.uncertainWrite &&
-      !['turn_outcome_unknown', 'write_outcome_unknown', 'approval_delivery_unknown', 'reconciliation_required'].includes(session.error ?? '') &&
+      !UNRESOLVED_OUTCOME_ERRORS.has(session.error ?? '') &&
       session.decisionReceipt?.outcome !== 'unknown' &&
       ![...approvals.values()].some(approval => approval.sessionId === session.sessionId);
     const retiring = sessions.size >= MAX_SESSIONS
@@ -432,7 +433,12 @@ export function createCodexAdapter(options: CodexOptions) {
     // contract and periodically reconcile durable history. Never cache through a
     // terminal notification, cancellation, approval or any uncertain write fence.
     const live = liveMessages.get(session.sessionId);
-    const uncertain = [...sessions.values()].some(x => x.workspaceId === session.workspaceId && (x.uncertainWrite || x.error || x.cancelPending || x.recoveryPending));
+    // The current conversation's errors still force a fresh read. A historical
+    // provider failure elsewhere is not an unresolved workspace operation.
+    const uncertain = Boolean(session.error) || [...sessions.values()].some(x => x.workspaceId === session.workspaceId && (
+      x.uncertainWrite || x.pendingMessageId || x.cancelPending || x.recoveryPending || x.decisionReceipt?.outcome === 'unknown'
+      || UNRESOLVED_OUTCOME_ERRORS.has(x.error ?? '')
+    ));
     const cachedRunning = cached?.value.state === 'running' && cached.value.approvals.length === 0
       && !cached.value.error && !cached.value.cancelPending && !cached.value.recoveryPending
       && cached.value.decisionReceipt?.outcome !== 'unknown';
