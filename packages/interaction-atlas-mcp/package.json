@@ -29,7 +29,7 @@
     "@create-something/playbook-mcp": "workspace:*",
     "@create-something/policy-os-engine": "workspace:*",
     "@createsomething/workflow-compiler": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.26.0",
+    "@modelcontextprotocol/sdk": "^1.32.0",
     "@quietloudlab/ai-interaction-atlas": "^1.0.7",
     "lucide-react": "^0.563.0",
     "react": "^19.2.4",
