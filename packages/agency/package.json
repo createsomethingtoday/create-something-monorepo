@@ -68,6 +68,7 @@
     "test:site-search": "node --import tsx --test test/site-search.test.ts test/page-annotations.test.ts",
     "test:interaction-pilot": "node --import tsx --test test/interaction-pilot.test.ts",
     "smoke:image-led-home": "node ./scripts/verify-image-led-home.mjs",
+    "smoke:walkthrough-theater": "node ./scripts/verify-walkthrough-theater.mjs",
     "smoke:public-page-system": "node ./scripts/verify-public-page-system.mjs",
     "smoke:utility-polish": "node ./test/agency-utility-polish.browser.mjs"
   },
