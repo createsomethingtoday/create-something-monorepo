@@ -54,6 +54,8 @@ export interface TemplateDetailHeroProps {
   previewDefaultDevice?: TemplateDetailPreviewDevice;
   showOfferBadge?: boolean;
   enableAnalytics?: boolean;
+  /** Register the page's WebMCP tools here. Set false when the host page registers them. */
+  registerAgentTools?: boolean;
 }
 
 type TemplateDetailPreviewDevice = 'desktop' | 'mobile';
@@ -363,6 +365,7 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
   previewDefaultDevice = 'desktop',
   showOfferBadge = true,
   enableAnalytics = true,
+  registerAgentTools = true,
 }) => {
   useMarketplaceComponentErrorTracking('TemplateDetailHero', enableAnalytics);
   const [previewIframeRequested, setPreviewIframeRequested] = useState(false);
@@ -681,7 +684,7 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
 
   return (
     <div className="wfdt" data-template-detail-hero="" ref={heroRootRef}>
-      <MarketplaceAgentTools />
+      {registerAgentTools && <MarketplaceAgentTools />}
       <style dangerouslySetInnerHTML={{ __html: TEMPLATE_DETAIL_STYLES }} />
       <section className="wfdt-hero" {...templateAnnotationContainerProps()}>
         <div className="wfdt-hero-copy">
