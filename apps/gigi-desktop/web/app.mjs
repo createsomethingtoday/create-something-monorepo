@@ -35,6 +35,7 @@ let attention;
 let attentionSettingsDirty = false;
 let notificationUnlisten;
 let attentionChatSignature;
+let notificationOpening=false;
 let routeVersion = 0;
 const workspaceHistory=createWorkspaceHistory();
 let operationVersion = 0;
@@ -164,6 +165,19 @@ async function openAttention(item, mode = 'review') {
   }
 }
 
+async function processNotificationOpen() {
+  if(notificationOpening || !attention || !workspaceId())return;
+  notificationOpening=true;
+  try {
+    const {item:payload}=await bridge.call('notifications.takeOpen',{workspaceId:workspaceId()});
+    if(payload?.workspaceId!==workspaceId() || typeof payload.id!=='string')return;
+    await attention.refresh();
+    if(!attention.lastRefreshSuccessful || !attention.items.some(item=>item.id===payload.id && item.revision===payload.revision)){notice('This notification is no longer current. Check Needs your attention for the latest work.');return;}
+    await attention.open(payload.id);
+  }catch{ /* Local attention stays available when no native route can be read. */ }
+  finally{notificationOpening=false;}
+}
+
 function initializeAttention() {
   attention?.stop(); notificationUnlisten?.(); notificationUnlisten = null;
   attention = new AttentionController(bridge,workspaceId(),{
@@ -173,13 +187,8 @@ function initializeAttention() {
   void attention.start();
   void bridge.call('notifications.status',{}).then(value=>{if(attention){attention.permission=value.permission || 'unknown';attention.alertsEnabled=value.alertsEnabled;renderAttention();}}).catch(()=>{});
   const listen = globalThis.__TAURI__?.event?.listen;
-  if (listen) void listen('gigi-attention-open',async event=>{
-    const payload=event.payload;
-    if(payload?.workspaceId!==workspaceId() || typeof payload.id!=='string') return;
-    await attention?.refresh();
-    if(!attention?.lastRefreshSuccessful || !attention.items.some(item=>item.id===payload.id && item.revision===payload.revision)){notice('This notification is no longer current. Check Needs your attention for the latest work.');return;}
-    await attention.open(payload.id);
-  }).then(unlisten=>notificationUnlisten=unlisten).catch(()=>{});
+  if (listen) void listen('gigi-attention-open',()=>void processNotificationOpen()).then(unlisten=>{notificationUnlisten=unlisten;void processNotificationOpen();}).catch(()=>{void processNotificationOpen();});
+  else void processNotificationOpen();
 }
 
 function initializeChat() {
@@ -1025,5 +1034,5 @@ root.addEventListener('submit', (event) => {
 load().catch((error) => { root.innerHTML = `<div class="setup"><span class="brand-mark">g.</span><h1>Couldn’t open GiGi.</h1><p class="subhead">${safe(explain(error))}</p><button class="btn section-gap" id="retry">Retry</button></div>`; document.querySelector('#retry')?.addEventListener('click', () => location.reload()); });
 
 root.addEventListener('change',event=>{if(event.target?.closest?.('#attention-settings'))attentionSettingsDirty=true;});
-globalThis.addEventListener?.('focus',()=>{void attention?.refresh();void bridge.call('notifications.status',{}).then(value=>{if(attention){attention.permission=value.permission || 'unknown';attention.alertsEnabled=value.alertsEnabled;renderAttention();}}).catch(()=>{});});
+globalThis.addEventListener?.('focus',()=>{void processNotificationOpen();void attention?.refresh();void bridge.call('notifications.status',{}).then(value=>{if(attention){attention.permission=value.permission || 'unknown';attention.alertsEnabled=value.alertsEnabled;renderAttention();}}).catch(()=>{});});
 globalThis.addEventListener?.('beforeunload',()=>{attention?.stop();notificationUnlisten?.();});

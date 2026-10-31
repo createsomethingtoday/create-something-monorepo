@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::ffi::{c_char, CStr, CString};
 use std::path::Path;
-use std::sync::OnceLock;
+use std::sync::{Mutex, OnceLock};
 use tauri::{Emitter, Manager};
 
 type Initialize = unsafe extern "C" fn(extern "C" fn(*const c_char)) -> i32;
@@ -15,6 +15,7 @@ type Remove = unsafe extern "C" fn(*const c_char) -> i32;
 struct Native { _library: Library, status: Status, request: Status, active: Status, send: Send, remove: Remove }
 static NATIVE: OnceLock<Result<Native,String>> = OnceLock::new();
 static APP: OnceLock<tauri::AppHandle> = OnceLock::new();
+static OPEN_ROUTE: Mutex<Option<Route>> = Mutex::new(None);
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all="camelCase",deny_unknown_fields)]
@@ -55,6 +56,7 @@ extern "C" fn clicked(pointer:*const c_char) {
     if raw.len()>1024 {return;}
     let Ok(value)=serde_json::from_slice(raw) else {return;};
     let Ok(route)=route(value) else {return;};
+    *OPEN_ROUTE.lock().unwrap_or_else(|e|e.into_inner())=Some(route.clone());
     if let Some(app)=APP.get() {
         // Navigation only. The frontend re-reads the item/revision before opening it.
         if let Some(window)=app.get_webview_window("main") {let _=window.show();let _=window.unminimize();let _=window.set_focus();}
@@ -95,6 +97,13 @@ fn prune(native:&Native,root:&Path,wid:&str)->Result<(),String> {
 }
 pub fn dispatch(_app:&tauri::AppHandle,root:&Path,resources:&Path,op:&str,input:Value)->Result<Value,String> {
     match op {
+        "notifications.takeOpen"=>{
+            let wid=input["workspaceId"].as_str().ok_or("Select a workspace first")?;
+            crate::attention::dispatch(root,"attention.settings",json!({"workspaceId":wid}))?;
+            let mut pending=OPEN_ROUTE.lock().unwrap_or_else(|e|e.into_inner());
+            let item=if pending.as_ref().is_some_and(|r|r.workspace_id==wid){pending.take()}else{None};
+            Ok(json!({"item":item}))
+        },
         "notifications.status"=>Ok(permission(unsafe{(native(resources)?.status)()})),
         // Invoked only by an explicit settings action. Starting GiGi never asks for permission.
         "notifications.request"=>Ok(permission(unsafe{(native(resources)?.request)()})),
@@ -145,4 +154,16 @@ mod tests {
     #[test]fn permission_denial_is_preserved(){assert_eq!(permission(1)["permission"],"denied");assert_eq!(permission(1)["alertsEnabled"],false);assert_eq!(permission(4)["alertsEnabled"],false);assert_eq!(permission(-1)["permission"],"unavailable");}
     #[test]fn preview_limits_preserve_unicode_boundaries(){assert_eq!(text("🎵".repeat(100).as_str(),80).len(),80);assert_eq!(text("a\nb",80),"ab");}
     #[test]fn model_actions_cannot_become_notifications(){assert!(payload(&json!({"id":"a","revision":"b","kind":"execute_tool"}),&json!({}),WID).is_err());}
+    #[test]fn notification_click_waits_for_ready_webview_and_never_approves(){
+        let root=std::env::temp_dir().join(format!("gigi-route-test-{}",uuid::Uuid::new_v4()));
+        let wid=crate::domain::dispatch(&root,"workspace.create",json!({"name":"Synthetic route"})).unwrap()["id"].as_str().unwrap().to_owned();
+        let raw=CString::new(json!({"workspaceId":wid,"id":"source-1","revision":"revision-1"}).to_string()).unwrap();
+        clicked(raw.as_ptr());
+        let mut pending=OPEN_ROUTE.lock().unwrap_or_else(|e|e.into_inner());
+        assert_eq!(pending.as_ref().unwrap().workspace_id,wid);
+        assert_eq!(pending.take().unwrap().id,"source-1");assert!(pending.is_none());drop(pending);
+        assert_eq!(crate::domain::dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"tasks"})).unwrap()["count"],0);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
 }
