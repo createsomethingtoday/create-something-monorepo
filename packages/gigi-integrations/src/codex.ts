@@ -598,6 +598,10 @@ export function createCodexAdapter(options: CodexOptions) {
     if (!approval || approval.sessionId !== session.sessionId) throw new Error('approval_not_found');
     const decision = input.decision;
     if (decision !== 'approve' && decision !== 'reject') throw new Error('invalid_request');
+    // Keep the transcript for fallback, but a decision makes all prior snapshot
+    // metadata stale until an authoritative read succeeds.
+    const previousSnapshot = snapshots.get(session.sessionId);
+    if (previousSnapshot) previousSnapshot.at = Number.NEGATIVE_INFINITY;
     if (decision === 'approve') activity.set(session.sessionId, 'checking');
     if (approval.kind === 'tool') {
       if (decision === 'reject') {

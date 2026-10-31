@@ -1484,7 +1484,7 @@ test('running snapshots bound history reads before the first delta and after his
   } finally { await rm(dataDir, { recursive: true, force: true }); }
 });
 
-for (const decision of ['approve', 'reject'] as const) test(`${decision} cannot resurrect a cached approval after transient history failure`, async () => {
+for (const decision of ['approve', 'reject'] as const) for (const failureTiming of ['before-approval-snapshot', 'after-approval-snapshot'] as const) test(`${decision} cannot resurrect a cached approval after transient history failure (${failureTiming})`, async () => {
   const { adapter, server, mcp, dataDir } = await setup();
   let record = { id: 'r', title: 'Before', fields: { Status: 'Open' }, source: { kind: 'manual' }, relations: [] };
   let writes = 0; const originalMcp = mcp.request.bind(mcp);
@@ -1499,10 +1499,13 @@ for (const decision of ['approve', 'reject'] as const) test(`${decision} cannot 
     server.thread.turns = [{ id: 'turn-1', status: 'inProgress', items: [] }];
     const emit = async (message: any) => Promise.all(server.events.map(fn => fn(message)));
     await emit({ method: 'item/agentMessage/delta', params: { threadId: 'thread-1', turnId: 'turn-1', itemId: 'a', delta: 'Preparing the reviewed task edit.' } });
+    await adapter.read(input); // Retain a running snapshot before an approval arrives.
     await emit({ id: 2701, method: 'item/tool/call', params: { threadId: 'thread-1', tool: 'gigi_records_save', arguments: { workspaceId: 'w', entity: 'tasks', id: 'r', title: 'Reviewed title' } } });
-    const pending = await adapter.read(input); assert.equal(pending.state, 'approval');
     const original = server.request.bind(server);
-    server.request = async (method, params) => { if (method === 'thread/read') throw Error('synthetic transient history failure'); return original(method, params); };
+    const unavailable = async (method: string, params: any) => { if (method === 'thread/read') throw Error('synthetic transient history failure'); return original(method, params); };
+    if (failureTiming === 'before-approval-snapshot') server.request = unavailable;
+    const pending = await adapter.read(input); assert.equal(pending.state, 'approval');
+    server.request = unavailable;
     const decided = await adapter.approve({ ...input, approvalId: pending.approvals[0].id, decision });
     assert.equal(decided.state, 'running'); assert.equal(decided.approvals.length, 0);
     const next = await adapter.poll(input);
