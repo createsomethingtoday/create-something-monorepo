@@ -1,1 +1,52 @@
-Candidate native review and final artifact evidence pending. This file is updated after review.
+Functional correctness: PASSED, bounded local/synthetic scope.
+- 28 focused attention/reliability tests passed, zero skipped.
+- 326 desktop tests passed, zero skipped, with bundled candidate MCP enabled.
+- 173 Rust tests passed, zero failures/ignored.
+- 298 integration tests passed; one optional CTX skip.
+- Actual app/CSS offline Chromium: 3 themes x 2 widths x 2 densities,
+  keyboard New task / draft protection / More / dismiss focus,
+  persistent error after six seconds, focused success retention,
+  empty/error and Appearance at minimum width; reduced motion throughout.
+- Native exact candidate c1af91337, sourceDirtyAtBuild=false:
+  New task focused Title, navigation opened unsaved-change dialog,
+  Escape retained title. Synthetic save completed and separate candidate
+  MCP readback confirmed exact saved title and workspace; MCP version 0.2.17.
+  An attempted unusable date was retained by the existing free-text contract;
+  this was a successful synthetic save, not a native validation-error test.
+- An early optional-artifact test run used a non-bundle MCP path and failed
+  packaging lookup. Corrected GIGI_INSTALLED_MCP to candidate bundle's
+  Contents/Resources/gigi-mcp; complete rerun passed 326/326.
+
+Perceptual/product quality: PASSED, bounded local/synthetic scope.
+- Directly viewed native Studio, Paper and Midnight screenshots.
+- Directly viewed baseline and final offline app/CSS across minimum/wide
+  layouts, compact density, error/empty, and Appearance.
+- Palette/fonts/navigation preserved; less repeated chrome; wrapped titles.
+- Native 880px resize UNTESTED: two controller drags did not resize window.
+  880x620 minimum acceptance uses real app/CSS fixture, not native resizing.
+- Native error persistence, OS reduced-motion setting and screen-reader
+  speech output UNTESTED; deterministic fixture/local semantics only.
+- Synthetic native HOME had no agent auth: expected conversation-unavailable
+  status stayed visible beside available local reminders. No paid turns,
+  source imports, grants, notifications or publication were requested.
+
+Release readiness: UNTESTED for production; local candidate preparation PASSED.
+- Clean source c1af91337 built 0.2.17 ad-hoc debug app + DMG successfully.
+- Exact paths/hashes and disposable native profile are in candidate.json.
+- Developer ID signing, notarization/stapling, independent Sol final retest,
+  merge, R2 publication, Agency deployment and live download verification
+  remain parent responsibilities. No production mutation performed here.
+- Preserve immutable public 0.2.16 rollback. Installed 0.2.15 untouched.
+
+Commands (from repository root, with supplied pinned toolchain PATH):
+pnpm bootstrap:worktree
+node --test apps/gigi-desktop/web/attention.test.mjs apps/gigi-desktop/web/reliability.test.mjs
+node apps/gigi-desktop/scripts/daily-polish-browser.mjs
+GIGI_INSTALLED_MCP="$PWD/apps/gigi-desktop/src-tauri/target/debug/bundle/macos/GiGi.app/Contents/Resources/gigi-mcp" pnpm --filter @create-something/gigi-desktop test
+cargo test --manifest-path apps/gigi-desktop/src-tauri/Cargo.toml
+pnpm --filter @create-something/gigi-integrations test
+pnpm --filter @create-something/gigi-desktop build:local
+
+Worktree disposition: preserved at
+/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-50058674
+branch t3/gigi-daily-polish, retained until parent independent review/release.
