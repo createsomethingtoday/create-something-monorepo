@@ -35,7 +35,7 @@ function creator(t:Template){
  return `<a class="rd-creator" href="${esc(localLink(t.creator_profile_url))}"><img class="rd-creator-shot" src="${esc(t.thumbnail_image_url)}" alt="" loading="lazy"><span class="rd-avatar" aria-hidden="true">${avatar}</span><span class="rd-h6">${esc(t.creator_name)}</span><span class="rd-muted rd-sm">Featured work: ${esc(t.name)}</span><span class="rd-sm rd-blue">View profile →</span></a>`;
 }
 function heading(eyebrow:string,title:string,id:string,link?:[string,string],level='rd-h3'){
- return `<div class="rd-head"><div><p class="rd-eyebrow">${esc(eyebrow)}</p><h2 id="${id}" class="${level}">${esc(title)}</h2></div>${link?`<a class="rd-text-link" href="${link[1]}">${esc(link[0])}</a>`:''}</div>`;
+ return `<div class="rd-head"><div><p class="rd-eyebrow">${esc(eyebrow)}</p><h2 id="${id}" class="${level}">${esc(title)}</h2></div>${link?`<a class="rd-text-link" href="${link[1]}">${esc(link[0]).replace(/ →$/,' <span aria-hidden="true">→</span>')}</a>`:''}</div>`;
 }
 
 export function homeMarkup(d:HomeData){
@@ -54,7 +54,7 @@ export function homeMarkup(d:HomeData){
   </form>
   <nav class="rd-chips" aria-label="Popular categories">${CHIPS.map(([text,slug])=>`<a class="rd-chip" href="${categoryUrl(slug)}">${esc(text)}</a>`).join('')}</nav>
   <a class="rd-text-link" href="/templates/all">Browse all templates <span aria-hidden="true">→</span></a>
-  <p class="rd-muted rd-sm">${count(d.total)} templates · Free and paid · <a href="/templates/submission-guidelines">Explore our review guidelines</a></p>
+  <p class="rd-muted rd-sm"><span data-rd-count="${d.total}">${count(d.total)}</span> templates · Free and paid · <a href="/templates/submission-guidelines">Explore our review guidelines</a></p>
   <div class="rd-hero-shots">${d.hero.map(heroCard).join('')}</div>
  </section>
 
@@ -72,9 +72,9 @@ export function homeMarkup(d:HomeData){
 
  <section class="rd-wrap" aria-labelledby="rd-cat-h">
   ${heading('Browse by category','What are you building?','rd-cat-h')}
-  <div class="rd-cat-grid">${tiles.map(c=>tile(c,d.stacks[c.slug]||[])).join('')}<a class="rd-cat-all" href="/templates/all"><span class="rd-h6">All templates</span><span class="rd-muted rd-sm">Browse every category, explore styles, and sort by newest →</span></a></div>
+  <div class="rd-cat-grid">${tiles.map(c=>tile(c,d.stacks[c.slug]||[])).join('')}<a class="rd-cat-all" href="/templates/all"><span class="rd-h6">All templates</span><span class="rd-muted rd-sm">Browse every category, explore styles, and sort by newest <span aria-hidden="true">→</span></span></a></div>
   <nav class="rd-more" aria-labelledby="rd-more-h">
-   <div class="rd-head"><h3 id="rd-more-h" class="rd-h6">More categories</h3><a class="rd-text-link" href="/templates/categories">All categories →</a></div>
+   <div class="rd-head"><h3 id="rd-more-h" class="rd-h6">More categories</h3><a class="rd-text-link" href="/templates/categories">All categories <span aria-hidden="true">→</span></a></div>
    <div class="rd-mcat-list">${rest.map(c=>`<a class="rd-mcat" href="${categoryUrl(c.slug)}"><span>${esc(label(c.name))}</span><span class="rd-muted">${count(c.count||0)}</span></a>`).join('')}</div>
   </nav>
  </section>
@@ -112,7 +112,7 @@ export function categoriesMarkup(d:CategoriesData){
  return `<main id="main" class="rd-home rd-categories">
  <section class="rd-wrap rd-categories-head" aria-labelledby="rd-cats-h">
   <div class="rd-head"><div><p class="rd-eyebrow">Browse by category</p><h1 id="rd-cats-h" class="rd-h2">All template categories</h1><p class="rd-lead">${count(sorted.length)} categories · ${count(d.total)} templates from the Webflow creator community</p></div><a class="rd-text-link" href="/templates/all">Browse all templates →</a></div>
-  <div class="rd-cat-grid">${sorted.map(c=>tile(c,d.stacks[c.slug]||[],d.descriptions[c.slug])).join('')}<a class="rd-cat-all" href="/templates/all"><span class="rd-h6">All templates</span><span class="rd-muted rd-sm">Browse every category, explore styles, and sort by newest →</span></a></div>
+  <div class="rd-cat-grid">${sorted.map(c=>tile(c,d.stacks[c.slug]||[],d.descriptions[c.slug])).join('')}<a class="rd-cat-all" href="/templates/all"><span class="rd-h6">All templates</span><span class="rd-muted rd-sm">Browse every category, explore styles, and sort by newest <span aria-hidden="true">→</span></span></a></div>
  </section>
 </main>`;
 }
