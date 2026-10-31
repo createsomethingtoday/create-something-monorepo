@@ -29,6 +29,7 @@ function patch(before, after, document) {
 }
 export function updateChatPanel(panel, html, { draft, sessionId } = {}) {
   const document = panel.ownerDocument;
+  panel.classList?.remove?.('chat-entering');
   if (!document?.createElement) { panel.innerHTML = html; return; } // minimal offline harness
   const template = document.createElement('template'); template.innerHTML = html;
   const transcript = panel.querySelector('.chat-transcript');

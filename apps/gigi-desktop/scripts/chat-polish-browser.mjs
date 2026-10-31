@@ -23,12 +23,14 @@ try{
    globalThis.chatFixture=(theme='studio',prefs={})=>{
     state.workspace={id:'synthetic-chat-0219',name:'Rehearsal workspace'};state.currency='USD';state.currencyKnown=true;state.page='overview';state.overview={counts:{},events:{items:[],count:0},tasks:{items:[],count:0},finances:{items:[],count:0}};
     preferences={...defaults,theme,...prefs};applyPreferences(preferences);
+    root.querySelector('.chat-panel')?.remove();
     chat=new ChatController({},'synthetic-chat-0219',renderChat,()=>{},()=>0,()=>{});Object.defineProperty(chat,'preferences',{get:()=>preferences});
     chat.visible=true;chat.status={available:true,authenticated:true};chat.sessions=Array.from({length:15},(_,i)=>({sessionId:'s'+i,title:'Synthetic rehearsal '+i,state:'idle'}));chat.draft='Keep this draft';
     chat.current={sessionId:'s0',state:'running',messages:[{id:'u',role:'user',text:'Review the rehearsal sources'},{id:'a',role:'assistant',text:'# Rehearsal plan\\n\\n**Recorded sources:** the *local* schedule.\\n\\n- Review the venue\\n- Confirm the crew\\n\\n> Current records only; details still need review.\\n\\n| Work | Status |\\n| --- | --- |\\n| Stage plan | Ready |\\n| Call time | Needs review |\\n\\n'+Array.from({length:16},(_,i)=>'Paragraph '+i+': Synthetic rehearsal details for a readable response.').join('\\n\\n')}],recordLinks:[{entity:'tasks',id:'synthetic-task',title:'Synthetic rehearsal checklist'}],approvals:[]};render();
    };
    globalThis.chatAppend=text=>{chat.current.messages[1].text+=text;renderChat();};
    globalThis.chatSetState=state=>{chat.current.state=state;renderChat();};
+   globalThis.chatFullRender=render;
    globalThis.chatClearDraft=()=>{chat.draft='';renderChat();};
    `);
   }
@@ -47,12 +49,12 @@ try{
   const rects=await page.evaluate(()=>{
    const rect=s=>{const r=document.querySelector(s).getBoundingClientRect();return{x:r.x,y:r.y,w:r.width,h:r.height,b:r.bottom};};return{intro:rect('.chat-intro'),transcript:rect('.chat-transcript'),composer:rect('.chat-composer'),overflow:document.documentElement.scrollWidth>innerWidth};
   });
-  assert.ok(rects.transcript.h>=150,`${theme}/${width}: transcript needs usable space`);assert.ok(rects.intro.b<=rects.transcript.y+1);assert.ok(rects.transcript.b<=rects.composer.y+1);assert.equal(rects.overflow,false);
+  assert.ok(rects.transcript.h>=150,`${theme}/${width}: transcript needs usable space ${JSON.stringify(rects)}`);assert.ok(rects.intro.b<=rects.transcript.y+1);assert.ok(rects.transcript.b<=rects.composer.y+1);assert.equal(rects.overflow,false);
   metrics.push({width,theme,chatWidth,...rects});
   await page.screenshot({path:resolve(out,`${theme}-${width}-${chatWidth}.png`)});
  }
  await page.setViewportSize({width:880,height:620});await page.evaluate(()=>chatFixture('paper'));
- await page.locator('.chat-history>summary').click();await page.locator('.chat-sessions').evaluate(e=>e.scrollTop=90);await page.evaluate(()=>chatAppend('\nMore observed text.'));
+ await page.locator('.chat-history>summary').focus();await page.keyboard.press('Enter');assert.equal(await page.locator('.chat-history').evaluate(e=>e.open),true);await page.locator('.chat-sessions').evaluate(e=>e.scrollTop=90);await page.evaluate(()=>chatAppend('\nMore observed text.'));
  assert.equal(await page.locator('.chat-history').evaluate(e=>e.open),true);assert.equal(await page.locator('.chat-sessions').evaluate(e=>e.scrollTop),90);
  await page.locator('.chat-history>summary').click();await page.locator('.chat-view-options>summary').click();
  await page.locator('#chat-chatWidth').selectOption('wide');assert.equal(await page.evaluate(()=>document.documentElement.dataset.chatWidth),'wide');
@@ -62,9 +64,11 @@ try{
  await page.locator('.chat-transcript').evaluate(e=>e.scrollTop=0);const top=await page.locator('.chat-transcript').evaluate(e=>e.scrollTop);
  await page.evaluate(()=>chatAppend('\n\nNew provider output while reading earlier messages.'));
  assert.equal(await page.locator('.chat-transcript').evaluate(e=>e.scrollTop),top);assert.equal(await page.locator('[data-chat-latest]').isVisible(),true);
+ await page.evaluate(()=>chatFullRender());assert.equal(await page.locator('[data-chat-latest]').isVisible(),true,'completion workspace refresh retains latest affordance');
  await page.evaluate(()=>chatAppend(''));assert.equal(await page.locator('[data-chat-latest]').isVisible(),true,'latest affordance survives unchanged polls');
  await page.locator('[data-chat-latest]').click();assert.equal(await page.locator('[data-chat-latest]').isVisible(),false);
  assert.equal(await page.locator('#chat-message').evaluate(e=>e===document.activeElement),true);
+ await page.keyboard.press('Tab');assert.equal(await page.locator('[data-chat-stop]').evaluate(e=>e===document.activeElement),true,'composer reaches stop with Tab');
  await page.locator('.chat-transcript').evaluate(e=>e.scrollTop=0);
  await page.evaluate(()=>{const text=document.querySelector('.chat-answer strong').firstChild;const range=document.createRange();range.selectNodeContents(text);const selection=getSelection();selection.removeAllRanges();selection.addRange(range);});
  const selected=await page.evaluate(()=>getSelection().toString());await page.evaluate(()=>chatAppend('\nSelection must remain available.'));assert.equal(await page.evaluate(()=>getSelection().toString()),selected);await page.evaluate(()=>getSelection().removeAllRanges());

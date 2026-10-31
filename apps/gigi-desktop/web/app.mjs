@@ -618,7 +618,18 @@ function render() {
   const selection = composer ? { start: composer.selectionStart, end: composer.selectionEnd, scrollTop: composer.scrollTop } : null;
   const transcript = root.querySelector?.('.chat-transcript');
   const transcriptPosition = transcript ? { top: transcript.scrollTop, stick: transcript.scrollHeight - transcript.scrollTop - transcript.clientHeight < 48 } : null;
+  const retainedChat = chat?.visible ? root.querySelector?.('.chat-panel') : null;
+  const nativeSelection = globalThis.document?.getSelection?.();
+  const retainedSelection = retainedChat?.contains?.(nativeSelection?.anchorNode) && !nativeSelection.isCollapsed
+    ? { anchor: nativeSelection.anchorNode, start: nativeSelection.anchorOffset, focus: nativeSelection.focusNode, end: nativeSelection.focusOffset } : null;
+  retainedChat?.classList?.remove?.('chat-entering');
   root.innerHTML = shell(body);
+  const replacementChat = root.querySelector?.('.chat-panel');
+  if (retainedChat?.ownerDocument && replacementChat?.replaceWith) {
+    replacementChat.replaceWith(retainedChat);
+    if (retainedSelection?.anchor?.isConnected && retainedSelection.focus?.isConnected) nativeSelection.setBaseAndExtent?.(retainedSelection.anchor, retainedSelection.start, retainedSelection.focus, retainedSelection.end);
+    updateChatPanel(retainedChat, chatView(chat, true), { draft: chat.draft, sessionId: chat.current?.sessionId ?? null });
+  }
   if (['music','social'].includes(state.page)) {
     const placeholder=root.querySelector?.('#creator-workspace');
     const key=workspaceId()+':'+state.page;
