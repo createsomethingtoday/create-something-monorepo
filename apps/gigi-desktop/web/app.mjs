@@ -1,3 +1,5 @@
+import { AttentionController } from './attention.mjs';
+import { attentionView, attentionSettingsView } from './attention-view.mjs';
 import { defaults, readPreferences, writePreferences, importPreferences, exportPreferences, applyPreferences } from './preferences.mjs';
 import { preferencesView } from './preferences-view.mjs';
 import {loadRelationPage} from './relation-pagination.mjs';
@@ -26,9 +28,12 @@ import { sections, fields, moneyFields, booleanFields, fieldOptions, listFrom, r
 
 const root = document.querySelector('#app');
 installReferenceMenu(root);
-const bridge = tauriBridge(workspace=>gigs.invalidate(workspace));
+const bridge = tauriBridge(workspace=>{ gigs.invalidate(workspace); if(attention?.workspaceId===workspace) void attention.refresh(); });
 const ai = new AiConnection(bridge, () => { if (state.page === 'settings') render(); });
 let chat;
+let attention;
+let attentionSettingsDirty = false;
+let notificationUnlisten;
 let routeVersion = 0;
 const workspaceHistory=createWorkspaceHistory();
 let operationVersion = 0;
@@ -124,6 +129,57 @@ async function refreshCurrency() {
   render();
 }
 
+function renderAttention(resetSettings = false) {
+  if (!attention || !state.workspace || state.setupProfile) return;
+  const slot = root.querySelector?.('[data-attention-slot]');
+  if (slot) {
+    const hadFocus=slot.contains?.(globalThis.document?.activeElement);
+    const previous = captureViewState(slot);
+    slot.innerHTML = attentionView(attention);
+    restoreViewState(slot, previous);
+    if(hadFocus && !slot.contains?.(globalThis.document?.activeElement))slot.querySelector?.('#attention-title')?.focus?.({preventScroll:true});
+  }
+  const badge = root.querySelector?.('[data-attention-count]');
+  if (badge) badge.textContent = String(attention.unreadCount);
+  const settingsSlot = root.querySelector?.('[data-attention-settings-slot]');
+  if (settingsSlot && !attentionSettingsDirty) {
+    const previous = resetSettings ? null : captureViewState(settingsSlot);
+    settingsSlot.innerHTML = attentionSettingsView(attention);
+    restoreViewState(settingsSlot, previous);
+  }
+}
+
+async function openAttention(item, mode = 'review') {
+  if (item.sessionId) {
+    await chat.open();
+    if (chat.visible) await chat.read(item.sessionId);
+    root.querySelector?.('[data-chat-close]')?.focus?.();
+  } else if (item.entity && item.recordId) {
+    if (mode === 'ask') {
+      await chat.open({ entity:item.entity, id:item.recordId, title:item.title });
+      root.querySelector?.('[data-chat-close]')?.focus?.();
+    } else await run(() => navigateRecord(item.entity,item.recordId));
+  }
+}
+
+function initializeAttention() {
+  attention?.stop(); notificationUnlisten?.(); notificationUnlisten = null;
+  attention = new AttentionController(bridge,workspaceId(),{
+    changed:renderAttention,getChat:()=>chat,isForeground:()=>globalThis.document?.hasFocus?.() ?? true,
+    onOpen:openAttention,onDelivery:()=>bridge.call('notifications.send',{workspaceId:workspaceId()})
+  });
+  void attention.start();
+  void bridge.call('notifications.status',{}).then(value=>{if(attention){attention.permission=value.permission || 'unknown';attention.alertsEnabled=value.alertsEnabled;renderAttention();}}).catch(()=>{});
+  const listen = globalThis.__TAURI__?.event?.listen;
+  if (listen) void listen('gigi-attention-open',async event=>{
+    const payload=event.payload;
+    if(payload?.workspaceId!==workspaceId() || typeof payload.id!=='string') return;
+    await attention?.refresh();
+    if(!attention?.lastRefreshSuccessful || !attention.items.some(item=>item.id===payload.id && item.revision===payload.revision)){notice('This notification is no longer current. Check Needs your attention for the latest work.');return;}
+    await attention.open(payload.id);
+  }).then(unlisten=>notificationUnlisten=unlisten).catch(()=>{});
+}
+
 function initializeChat() {
   chat?.close();
   chat = new ChatController(bridge, workspaceId(), renderChat, async () => {
@@ -137,10 +193,12 @@ function initializeChat() {
   });
   chat.currency = () => state.currency;
   chat.currencyKnown = () => state.currencyKnown;
+  initializeAttention();
 }
 
 async function load() {
   const result = await bridge.getWorkspace();
+  attention?.stop();
   chat?.close();
   chat = null;
   state.workspace = result?.workspace || result?.workspaceId && result || result?.id && result || null;
@@ -185,6 +243,7 @@ async function openPage(page, resetScroll = false, historyIndex = null) {
   const route = nextRoute();
   if (page !== 'settings') state.pendingRestoreId = null;
   if (page === 'overview') {
+    void attention?.refresh();
     const value = await bridge.overview(route.workspace, localToday());
     if (!currentRoute(route)) return false;
     state.overview = value;
@@ -193,6 +252,7 @@ async function openPage(page, resetScroll = false, historyIndex = null) {
     if (!currentRoute(route)) return false;
     state.history = listFrom(value);
   } else if (page === 'settings') {
+    attentionSettingsDirty = false;
     await ai.refresh();
     const providers = ['gmail', 'googlecalendar'];
     state.setupChatStatus = null; state.setupChatFailed = false;
@@ -306,7 +366,7 @@ function newRecord(entity) {
 
 
 function shell(body) {
-  return `<div class="shell" data-collection-view="${preferences.collectionView}">${referenceHeader({page:state.page,sections,workspace:state.workspace?.name,history:workspaceHistory})}<main class="main" aria-label="GiGi / ${safe(label(state.page))}"><div class="content"><div class="content-primary"><button type="button" class="btn mobile-chat-entry" data-chat-open="1">Ask GiGi</button>${body}</div></div></main>${chatView(chat || { visible: false })}</div>${pendingLeave ? '<div class="record-leave-backdrop"><section class="record-leave-dialog panel" role="alertdialog" aria-modal="true" aria-labelledby="leave-title" aria-describedby="leave-description"><h2 id="leave-title">Keep your changes?</h2><p id="leave-description">This record has unsaved changes. Keep editing to save them, or discard them to leave.</p><div class="inline-actions"><button class="btn primary" data-keep-editing="1">Keep editing</button><button class="btn" data-discard-changes="1">Discard changes</button></div></section></div>' : ''}${state.toast ? `<div class="toast ${state.toast.error ? 'error' : ''}" role="status">${safe(state.toast.message)}</div>` : ''}`;
+  return `<div class="shell" data-collection-view="${preferences.collectionView}">${referenceHeader({page:state.page,sections,workspace:state.workspace?.name,history:workspaceHistory,attentionCount:attention?.unreadCount || 0})}<main class="main" aria-label="GiGi / ${safe(label(state.page))}"><div class="content"><div class="content-primary"><button type="button" class="btn mobile-chat-entry" data-chat-open="1">Ask GiGi</button>${body}</div></div></main>${chatView(chat || { visible: false })}</div>${pendingLeave ? '<div class="record-leave-backdrop"><section class="record-leave-dialog panel" role="alertdialog" aria-modal="true" aria-labelledby="leave-title" aria-describedby="leave-description"><h2 id="leave-title">Keep your changes?</h2><p id="leave-description">This record has unsaved changes. Keep editing to save them, or discard them to leave.</p><div class="inline-actions"><button class="btn primary" data-keep-editing="1">Keep editing</button><button class="btn" data-discard-changes="1">Discard changes</button></div></section></div>' : ''}${state.toast ? `<div class="toast ${state.toast.error ? 'error' : ''}" role="status">${safe(state.toast.message)}</div>` : ''}`;
 }
 
 function heading(eyebrow, title, description, action = '') {
@@ -322,7 +382,7 @@ function overview() {
   const data = state.overview || {};
   const counts = data.counts || {};
   const group = (entity, title, description) => { const value = data[entity] || { items: [], count: 0 }; return `<section class="panel"><div class="panel-head"><h2>${icon(entityIcon(entity))}<span>${title}</span></h2><button class="btn text" data-page="${entity==='events'?'schedule':entity}">View all ${safe(label(entity==='events'?'schedule':entity).toLowerCase())} ${icon('arrow-up-right')}</button></div><details class="today-scope" data-view-key="today-scope-${entity}"><summary>What’s included</summary><p class="muted">${description}</p></details>${value.items.length ? referenceCards(entity, value.items, {status,date:value=>displayField('Date',value),money:value=>formatMoney(value,state.currency)}) : `<p class="muted overview-empty">${entity === 'events' ? 'No ongoing or upcoming events. Add a gig or import Calendar entries.' : entity === 'gigs' ? 'No upcoming dated gigs or shifts. Add a date to a gig to include it here.' : entity === 'tasks' ? 'No open tasks. Add a task when there is something to follow up.' : 'No expected, invoiced or overdue payments. Record income or an expense when you need to track it.'}</p>`}<small class="muted">Showing ${value.items.length} of ${value.count} matching records${entity === 'events' && value.undatedCount ? ` · ${value.undatedCount} need a usable date` : entity === 'gigs' && data.undatedGigsCount ? ` · ${data.undatedGigsCount} without a usable date` : ''}</small></section>`; };
-  return heading('Local workspace', 'Today', 'Your upcoming work and open commitments.', `<button class="btn primary" data-new="gigs">${icon('plus')}New gig</button>`) + todaySummary(data) + `${counts.gigs || counts.tasks || counts.finances || data.events?.count ? '' : `<div class="callout section-gap"><strong>Start with the work you know.</strong><p>Add a gig or shift, then link its people, place and tasks. Sources and an agent are optional.</p><button class="btn" data-new="gigs">${icon('plus')}Add your first gig or shift</button><button class="btn" data-page="music">Add music</button><button class="btn" data-page="social">Draft a post</button></div>`}<div class="today-sections section-gap">${group(data.events?'events':'gigs', data.events?'Coming up':'Upcoming work', 'Gigs and Calendar entries, ordered across the whole workspace before showing the first five. Ongoing events are included; completed and cancelled work is excluded.')}${group('tasks', 'Open tasks', 'Unfinished tasks, with the earliest due dates first.')}</div>${group('finances', 'Unpaid income & expenses', 'Expected, invoiced and overdue records. Income and expenses are shown separately on each record; this is not a net balance.')}<details class="overview-counts"><summary>Workspace totals</summary><div class="cards overview-metrics"><div class="card"><div class="label">${icon('music')} Gigs & shifts</div><div class="value">${counts.gigs || 0}</div></div><div class="card"><div class="label">${icon('list-checks')} Tasks</div><div class="value">${counts.tasks || 0}</div></div><div class="card"><div class="label">${icon('users')} People</div><div class="value">${counts.contacts || 0}</div></div></div></details><details data-view-key="overview-guide" class="panel overview-guide"><summary>Connections and getting started</summary><p class="muted">You can work directly in GiGi. Connect Gmail, Calendar or your subscribed agent when useful.</p><button class="btn" data-page="settings">Open setup guide ${icon('arrow-up-right')}</button></details>`;
+  return heading('Local workspace', 'Today', 'Your upcoming work and open commitments.', `<button class="btn primary" data-new="gigs">${icon('plus')}New gig</button>`) + todaySummary(data) + `<div data-attention-slot>${attention ? attentionView(attention) : ''}</div>` + `${counts.gigs || counts.tasks || counts.finances || data.events?.count ? '' : `<div class="callout section-gap"><strong>Start with the work you know.</strong><p>Add a gig or shift, then link its people, place and tasks. Sources and an agent are optional.</p><button class="btn" data-new="gigs">${icon('plus')}Add your first gig or shift</button><button class="btn" data-page="music">Add music</button><button class="btn" data-page="social">Draft a post</button></div>`}<div class="today-sections section-gap">${group(data.events?'events':'gigs', data.events?'Coming up':'Upcoming work', 'Gigs and Calendar entries, ordered across the whole workspace before showing the first five. Ongoing events are included; completed and cancelled work is excluded.')}${group('tasks', 'Open tasks', 'Unfinished tasks, with the earliest due dates first.')}</div>${group('finances', 'Unpaid income & expenses', 'Expected, invoiced and overdue records. Income and expenses are shown separately on each record; this is not a net balance.')}<details class="overview-counts"><summary>Workspace totals</summary><div class="cards overview-metrics"><div class="card"><div class="label">${icon('music')} Gigs & shifts</div><div class="value">${counts.gigs || 0}</div></div><div class="card"><div class="label">${icon('list-checks')} Tasks</div><div class="value">${counts.tasks || 0}</div></div><div class="card"><div class="label">${icon('users')} People</div><div class="value">${counts.contacts || 0}</div></div></div></details><details data-view-key="overview-guide" class="panel overview-guide"><summary>Connections and getting started</summary><p class="muted">You can work directly in GiGi. Connect Gmail, Calendar or your subscribed agent when useful.</p><button class="btn" data-page="settings">Open setup guide ${icon('arrow-up-right')}</button></details>`;
 }
 
 function scheduleView() {
@@ -477,7 +537,7 @@ function settings() {
   const signInNeeded = sourceSignInNeeded(state.sources, state.sourceSignedOut);
   return heading('Workspace', 'Setup & safety', 'Review what is ready, what still needs your consent, and how to protect your local data.', '<button type="button" class="btn" data-page="appearance">Customize appearance & views</button>') +
     `${state.justCreated ? `<div class="callout setup-welcome"><strong>Your private workspace is ready.</strong><p>Connect sources and an agent below, or start with a record. You can return to Settings at any time.</p><button class="btn" data-new="gigs">${icon('plus')}Start with a gig</button></div>` : ''}` +
-    builtInChatSetup(state.setupChatStatus, state.setupChatFailed) + aiConnectionView(ai) + `<section class="setup-checklist"><div class="panel-head"><h2>Choose your next step</h2><small>Connections are optional</small></div><button class="btn section-gap" data-page="overview">Continue with local records ${icon('arrow-up-right')}</button><p class="muted">${safe(setupSummary(state).nextStep)}</p><div class="steps">${setupSummary(state).steps.map((step, index) => `<div class="step"><span class="number">${index + 1}</span><div><h3>${safe(step.title)}</h3><p>${safe(step.description)}</p>${step.href ? `<a class="setup-link" href="${step.href}">Open ${step.id === 'agent' ? 'agent setup' : step.id === 'phone' ? 'phone guide' : 'source setup'} ↓</a>` : ''}</div><span class="tag ${step.id === 'workspace' ? '' : 'off'}">${safe(step.label)}</span></div>`).join('')}</div></section>
+    `${attention ? `<div data-attention-settings-slot>${attentionSettingsView(attention)}</div>` : ''}` + builtInChatSetup(state.setupChatStatus, state.setupChatFailed) + aiConnectionView(ai) + `<section class="setup-checklist"><div class="panel-head"><h2>Choose your next step</h2><small>Connections are optional</small></div><button class="btn section-gap" data-page="overview">Continue with local records ${icon('arrow-up-right')}</button><p class="muted">${safe(setupSummary(state).nextStep)}</p><div class="steps">${setupSummary(state).steps.map((step, index) => `<div class="step"><span class="number">${index + 1}</span><div><h3>${safe(step.title)}</h3><p>${safe(step.description)}</p>${step.href ? `<a class="setup-link" href="${step.href}">Open ${step.id === 'agent' ? 'agent setup' : step.id === 'phone' ? 'phone guide' : 'source setup'} ↓</a>` : ''}</div><span class="tag ${step.id === 'workspace' ? '' : 'off'}">${safe(step.label)}</span></div>`).join('')}</div></section>
     <section class="panel" id="source-connections"><div class="panel-head"><h2>${icon('unplug')}<span>Source connections</span></h2><small>Separate consent required</small></div><p class="muted">Your local workspace needs no login. Sign in to GiGi, then check whether source access is enabled for this app. Google consent connects the Google account you choose; it may be different from your GiGi sign-in.</p><details data-view-key="source-stages"><summary>How source setup works</summary><ol class="welcome-plan" aria-label="Source setup stages">${journey.stages.map((title, index) => `<li ${index === journey.current ? 'aria-current="step"' : ''}><strong>${safe(title)}</strong>${index === journey.current ? '<span>Current step</span>' : ''}</li>`).join('')}</ol></details><p role="status">${safe(journey.next)}</p>${signInNeeded ? `<button class="btn" data-sign-in="1" ${state.signingIn ? 'disabled' : ''}>${state.signingIn ? 'Waiting for browser sign-in…' : 'Sign in to GiGi sources'}</button>` : ''}${state.sourceSignedOut ? '<p class="muted" role="status">Signed out of GiGi sources on this Mac. Google consent and imported records are unchanged.</p>' : `<div class="source-session section-gap"><button class="btn text" data-source-sign-out="1" ${state.signingIn || state.signingOut || Object.keys(state.sourceBusy).length || Object.values(state.imports).some(sourceImportRunning) ? 'disabled' : ''}>${state.signingOut ? 'Signing out…' : 'Sign out of GiGi sources'}</button><p class="muted">Clears source sign-in on this Mac. Keeps Google consent and imported records.</p></div>`}<details data-view-key="source-permissions"><summary>What connecting and importing allow</summary><p>Review the Google consent screen before continuing. The configured Google grants are broader than read-only. GiGi’s source workflow uses them only to read source identity and the bounded pages described below; it does not send email, modify calendars or invite anyone.</p><p>Return here after consent, choose Check status, then Verify connection if shown. Once Account verified appears, review the Google identity and preview a source page. Preview reads a bounded selection without adding local records. Import reviewed records saves that selection. Your agent can use the same scoped read and import tools when you ask. You can skip sources and keep working with local records.</p></details><div class="steps section-gap">${sourceCard('gmail', 'Gmail')}${sourceCard('googlecalendar', 'Google Calendar')}</div><p class="muted">If a connection needs operator help, <a href="#source-diagnostics">record local diagnostics below</a>, then review the report before sharing it.</p></section>
     ${diagnosticsView(state.diagnostics, state.busy)}
     ${agentSetup()}
@@ -682,6 +742,12 @@ async function findPeople() {
 
 root.addEventListener('click', (event) => {
   const button = event.target.closest('button'); if (!button) return;
+  if (button.dataset.attentionHome) { void run(async()=>{if(await openPage('overview',true)){root.querySelector?.('#attention-title')?.setAttribute?.('tabindex','-1');root.querySelector?.('#attention-title')?.focus?.();}}); return; }
+  if (button.dataset.attentionRefresh) { void attention?.refresh(); return; }
+  if (button.dataset.attentionOpen || button.dataset.attentionAsk) { void attention?.open(button.dataset.attentionOpen || button.dataset.attentionAsk,button.dataset.attentionAsk?'ask':'review'); return; }
+  if (button.dataset.attentionUpdate) { void attention?.update(button.dataset.attentionUpdate,button.dataset.attentionAction); return; }
+  if (button.dataset.notificationSettings) { void bridge.call('notifications.openSettings',{}).catch(error=>notice(explain(error),true)); return; }
+  if (button.dataset.chatPrompt) { const prompt=button.dataset.chatPrompt;void (async()=>{if(!chat)return;if(!chat.current)await chat.start();chat.draft=prompt;renderChat();root.querySelector?.('#chat-message')?.focus?.();})();return; }
   if (button.dataset.preferencesTheme) { savePreferences({ ...preferences, theme: button.dataset.preferencesTheme }); root.querySelector?.(`[data-preferences-theme="${preferences.theme}"]`)?.focus?.({ preventScroll: true }); return; }
   if (button.dataset.preferencesReset) { savePreferences(defaults, 'Appearance and views reset to Studio defaults.'); return; }
   if (button.dataset.preferencesExport) { preferencesExported = exportPreferences(preferences); render(); const detail = root.querySelector?.('.portable-preferences'); if (detail) detail.open = true; root.querySelector?.('#preferences-export')?.focus?.(); return; }
@@ -909,6 +975,23 @@ root.addEventListener('input', (event) => {
 root.addEventListener('submit', (event) => {
   event.preventDefault();
   const form = event.target;
+  if(form.id === 'attention-settings') {
+    const data = new FormData(form);
+    const patch={enabled:data.get('enabled')==='on',reminders:data.get('reminders')==='on',detailedPreviews:data.get('detailedPreviews')==='on',quietStart:Number(data.get('quietStart')),quietEnd:Number(data.get('quietEnd'))};
+    attentionSettingsDirty=false;
+    void (async()=>{
+      if(patch.enabled){
+        try {const value=await bridge.call('notifications.request',{});attention.permission=value.permission || 'unknown';attention.alertsEnabled=value.alertsEnabled;if(attention.permission!=='granted' || !value.alertsEnabled)patch.enabled=false;}
+        catch {attention.permission='unknown';patch.enabled=false;}
+      }
+      await attention.saveSettings(patch);
+      await bridge.call('notifications.send',{workspaceId:workspaceId()}).catch(()=>{});
+      if(!patch.enabled && data.get('enabled')==='on') notice('Desktop notifications are unavailable. Your attention feed remains available. Check macOS notification settings.',true);
+      renderAttention(true);
+    })();
+    return;
+  }
+
   if (state.busy) return;
   if (form.id === 'preferences-import-form') { try { savePreferences(importPreferences(preferencesDraft), 'Configuration imported. Your starting page applies next time GiGi opens.'); } catch (error) { preferencesFeedback = { message: explain(error), error: true }; render(); root.querySelector?.('#preferences-import')?.focus?.(); } }
   else if (form.id === 'source-proposal-form') {
@@ -929,3 +1012,7 @@ root.addEventListener('submit', (event) => {
 
 
 load().catch((error) => { root.innerHTML = `<div class="setup"><span class="brand-mark">g.</span><h1>Couldn’t open GiGi.</h1><p class="subhead">${safe(explain(error))}</p><button class="btn section-gap" id="retry">Retry</button></div>`; document.querySelector('#retry')?.addEventListener('click', () => location.reload()); });
+
+root.addEventListener('change',event=>{if(event.target?.closest?.('#attention-settings'))attentionSettingsDirty=true;});
+globalThis.addEventListener?.('focus',()=>{void attention?.refresh();void bridge.call('notifications.status',{}).then(value=>{if(attention){attention.permission=value.permission || 'unknown';attention.alertsEnabled=value.alertsEnabled;renderAttention();}}).catch(()=>{});});
+globalThis.addEventListener?.('beforeunload',()=>{attention?.stop();notificationUnlisten?.();});

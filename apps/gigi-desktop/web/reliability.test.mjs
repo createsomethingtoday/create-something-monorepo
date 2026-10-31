@@ -24,7 +24,7 @@ async function appFixture(exercise, custom = () => undefined) {
   let record = { id:'g1',title:'Saved title',fields:{Requirements:'Saved notes',Date:'2026-10-03'},source:{kind:'manual'},relations:[] };
   globalThis.document = document; globalThis.scrollX=0; globalThis.scrollY=0;
   globalThis.scrollTo=(x,y)=>{globalThis.scrollX=x;globalThis.scrollY=y;};
-  globalThis.setTimeout=(callback,delay)=>{if(delay===10000)return previous.setTimeout(callback,delay);assert.equal(delay,5000);timers.push(callback);return timers.length;};
+  globalThis.setTimeout=(callback,delay)=>{if(delay===10000)return previous.setTimeout(callback,delay);if(delay===15000)return {unref(){}};assert.equal(delay,5000);timers.push(callback);return timers.length;};
   globalThis.FormData=class{constructor(target){this.entries=Object.entries(target.values);}[Symbol.iterator](){return this.entries[Symbol.iterator]();}};
   globalThis.__TAURI__={core:{invoke:async(_,{operation,input})=>{
     calls.push({operation,input}); const result=custom(operation,input); if(result!==undefined)return result;
