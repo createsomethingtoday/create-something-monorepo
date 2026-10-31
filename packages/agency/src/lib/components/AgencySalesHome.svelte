@@ -33,21 +33,24 @@
       }, { signal: abort.signal });
     }
     const dialog = root.querySelector<HTMLDialogElement>('#work-dialog');
-    const originalOverflow = document.body.style.overflow;
+    let originalOverflow = '';
     let opener: HTMLElement | null = null;
     root.querySelector<HTMLButtonElement>('[data-home-open="work-dialog"]')?.addEventListener('click', event => {
       if (!dialog) return;
       opener = event.currentTarget as HTMLElement;
+      originalOverflow = document.body.style.overflow;
       dialog.showModal();
       filmOverlayOpen.set(true);
       document.body.style.overflow = 'hidden';
+      // Start from the explicit Watch gesture; native Play remains available if denied.
+      void dialog.querySelector('video')?.play().catch(() => {});
     }, { signal: abort.signal });
     dialog?.querySelector<HTMLButtonElement>('[data-home-close]')?.addEventListener('click', () => dialog.close(), { signal: abort.signal });
     dialog?.addEventListener('close', () => {
       dialog.querySelector('video')?.pause();
       filmOverlayOpen.set(false);
       document.body.style.overflow = originalOverflow;
-      opener?.focus();
+      opener?.focus({ preventScroll: true });
     }, { signal: abort.signal });
     return () => {
       abort.abort();
@@ -60,7 +63,7 @@
   });
 </script>
 
-<svelte:head><link rel="stylesheet" href="/styles/agency/home.css?v=20261030-image-led" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /></svelte:head>
+<svelte:head><link rel="stylesheet" href="/styles/agency/home.css?v=20261031-walkthrough-theater" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /></svelte:head>
 <div class="agency-home" bind:this={root}>
   {@html content}
   <details id="work-library" class="work-library" bind:open={libraryOpen}>
