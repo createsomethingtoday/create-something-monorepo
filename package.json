@@ -469,7 +469,7 @@
       "undici": ">=7.29.0 <8",
       "@types/node": "24.10.9",
       "@modelcontextprotocol/sdk": "1.26.0",
-      "@create-something/client-collaboration-pilot>@modelcontextprotocol/sdk": "1.31.0",
+      "@create-something/client-collaboration-pilot>@modelcontextprotocol/sdk": "1.32.0",
       "protobufjs": ">=7.5.5 <8",
       "tar@>=7.0.0": ">=7.5.19 <8",
       "fast-uri": ">=3.1.5 <4",
