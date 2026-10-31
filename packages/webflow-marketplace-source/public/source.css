@@ -483,3 +483,6 @@ body .wfdt-sticky{background:#fff}
 .rd-detail-creator .rd-detail-requirements{margin:20px 0}
 @media(max-width:767px){.rd-detail-content-section.section{padding-top:24px}}
 .template-hero.rd-detail-hero{padding-bottom:0}
+.rd-categories{padding-bottom:160px}.rd-categories .rd-categories-head{padding-top:128px}.rd-categories .rd-cat-tile>.rd-muted:last-child{margin-top:-4px}
+@media(max-width:991px){.rd-categories{padding-bottom:112px}.rd-categories .rd-categories-head{padding-top:96px}}
+@media(max-width:767px){.rd-categories{padding-bottom:80px}.rd-categories .rd-categories-head{padding-top:48px}}

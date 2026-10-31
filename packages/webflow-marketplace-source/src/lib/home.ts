@@ -26,9 +26,9 @@ export interface HomeData {
 function heroCard(t:Template){
  return `<a class="rd-hero-card" href="${esc(localLink(t.url))}" aria-label="${esc(`View ${t.name} by ${t.creator_name}, ${t.is_free?'Free':`${t.price} USD`}`)}"><img src="${esc(t.thumbnail_image_url)}" alt="" loading="eager"><span class="rd-hero-caption"><span>${esc(t.name)} <span aria-hidden="true">→</span></span><span>${t.is_free?'Free':`${esc(t.price)} USD`}</span></span></a>`;
 }
-function tile(c:Term,stack:Template[]){
+function tile(c:Term,stack:Template[],description=''){
  const imgs=stack.slice(0,3).map((t,i)=>`<img src="${esc(t.thumbnail_image_url)}" alt="" loading="lazy" style="--i:${i-1}">`).join('');
- return `<a class="rd-cat-tile" href="${categoryUrl(c.slug)}"><span class="rd-cstack" aria-hidden="true">${imgs}</span><span class="rd-cat-name"><span>${esc(label(c.name))}</span><span aria-hidden="true">→</span></span><span class="rd-muted rd-sm">${count(c.count||0)} templates</span></a>`;
+ return `<a class="rd-cat-tile" href="${categoryUrl(c.slug)}"><span class="rd-cstack" aria-hidden="true">${imgs}</span><span class="rd-cat-name"><span>${esc(label(c.name))}</span><span aria-hidden="true">→</span></span>${description?`<span class="rd-muted rd-sm">${esc(description)}</span>`:''}<span class="rd-muted rd-sm">${count(c.count||0)} templates</span></a>`;
 }
 function creator(t:Template){
  const avatar=t.creator_avatar_url?`<img src="${esc(t.creator_avatar_url)}" alt="">`:esc(t.creator_name.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase());
@@ -95,6 +95,24 @@ export function homeMarkup(d:HomeData){
  <section class="rd-wrap rd-creators" aria-labelledby="rd-cr-h">
   ${heading('Creators','Made by the creator community','rd-cr-h',['Browse all creators →','/templates/designers'])}
   <div class="rd-creator-row">${d.creators.map(creator).join('')}</div>
+ </section>
+</main>`;
+}
+
+export interface CategoriesData {
+ total:number;
+ categories:Term[];
+ stacks:Record<string,Template[]>;
+ descriptions:Record<string,string>;
+}
+
+// /templates/categories: every category as a home-style tile, largest first.
+export function categoriesMarkup(d:CategoriesData){
+ const sorted=[...d.categories].sort((a,b)=>(b.count||0)-(a.count||0)||a.name.localeCompare(b.name));
+ return `<main id="main" class="rd-home rd-categories">
+ <section class="rd-wrap rd-categories-head" aria-labelledby="rd-cats-h">
+  <div class="rd-head"><div><p class="rd-eyebrow">Browse by category</p><h1 id="rd-cats-h" class="rd-h2">All template categories</h1><p class="rd-lead">${count(sorted.length)} categories · ${count(d.total)} templates from the Webflow creator community</p></div><a class="rd-text-link" href="/templates/all">Browse all templates →</a></div>
+  <div class="rd-cat-grid">${sorted.map(c=>tile(c,d.stacks[c.slug]||[],d.descriptions[c.slug])).join('')}<a class="rd-cat-all" href="/templates/all"><span class="rd-h6">All templates</span><span class="rd-muted rd-sm">Browse every category, explore styles, and sort by newest →</span></a></div>
  </section>
 </main>`;
 }
