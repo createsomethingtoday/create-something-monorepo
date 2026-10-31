@@ -733,5 +733,25 @@ export async function fetchReferenceById(
 	const item = example ?? resource;
 	if (!item) return null;
 	const sources = await referenceSources(db, [id]);
-	return contextualize(item, example ? 'example' : 'resource', sources.get(id) ?? []);
+	// Preserve the single-reference API's existing same-master suggestions.
+	// Similarity does not establish channel membership or visual inspection.
+	const related = example
+		? await db
+				.prepare(
+					`SELECT id FROM examples WHERE master_id = ? AND id != ?
+					 ORDER BY ABS(year - ?) ASC, created_at DESC LIMIT 5`
+				)
+				.bind(example.master_id, id, example.year ?? 2024)
+				.all<{ id: string }>()
+		: await db
+				.prepare(
+					`SELECT id FROM resources WHERE master_id = ? AND id != ?
+					 ORDER BY created_at DESC LIMIT 5`
+				)
+				.bind(item.master_id ?? MASTER_ID, id)
+				.all<{ id: string }>();
+	return {
+		...contextualize(item, example ? 'example' : 'resource', sources.get(id) ?? []),
+		relatedIds: (related.results ?? []).map((reference) => reference.id)
+	};
 }

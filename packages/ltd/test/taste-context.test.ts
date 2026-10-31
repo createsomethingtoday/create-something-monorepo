@@ -75,3 +75,23 @@ test('invalid internal limits remain bounded instead of reaching SQLite as NaN',
   assert.equal((await fetchReferencesWithContext(db, { limit: -1 })).length, 1);
  } finally { sqlite.close(); }
 });
+
+test('single-reference responses preserve same-master related examples and resources', async () => {
+ const { db, sqlite } = fixture();
+ try {
+  sqlite.exec(`
+   INSERT INTO masters(id,slug,name) VALUES('other','other','Other');
+   INSERT INTO examples(id,master_id,title,created_at) VALUES('foreign','other','Foreign',999);
+   INSERT INTO resources(id,master_id,title,created_at) VALUES
+    ('resource-first','arena-taste','First',100),
+    ('resource-related','arena-taste','Related',200),
+    ('resource-foreign','other','Foreign',999);
+  `);
+  const example = await fetchReferenceById(db, 'arena-motion');
+  assert.deepEqual(example?.relatedIds, ['arena-legacy', 'arena-layout']);
+  assert.equal(example?.channel, 'motion-language');
+  const resource = await fetchReferenceById(db, 'resource-first');
+  assert.deepEqual(resource?.relatedIds, ['resource-related']);
+  assert.equal(resource?.channel, null);
+ } finally { sqlite.close(); }
+});
