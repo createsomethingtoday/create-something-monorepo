@@ -49,7 +49,8 @@ fn ensure(db: &Connection) -> Result<(), String> {
  active INTEGER NOT NULL DEFAULT 1,unread INTEGER NOT NULL DEFAULT 1,dismissed INTEGER NOT NULL DEFAULT 0,snoozed_until INTEGER,
  delivery_token TEXT,delivery_state TEXT,PRIMARY KEY(workspace_id,id));
  CREATE INDEX IF NOT EXISTS idx_attention_active ON attention_items(workspace_id,active,dismissed,created_at);
- CREATE TABLE IF NOT EXISTS attention_settings(workspace_id TEXT PRIMARY KEY REFERENCES workspaces(id),settings_json TEXT NOT NULL,enabled_since INTEGER NOT NULL DEFAULT 0,last_claim INTEGER NOT NULL DEFAULT 0);") .map_err(fail)
+ CREATE TABLE IF NOT EXISTS attention_settings(workspace_id TEXT PRIMARY KEY REFERENCES workspaces(id),settings_json TEXT NOT NULL,enabled_since INTEGER NOT NULL DEFAULT 0,last_claim INTEGER NOT NULL DEFAULT 0);
+ CREATE TABLE IF NOT EXISTS attention_observations(workspace_id TEXT NOT NULL REFERENCES workspaces(id),session_id TEXT NOT NULL,state TEXT NOT NULL,response_id TEXT,receipt_id TEXT,PRIMARY KEY(workspace_id,session_id));") .map_err(fail)
 }
 fn settings(db: &Connection, wid: &str) -> Result<Value, String> {
     let raw: Option<String> = db
@@ -147,10 +148,9 @@ fn refresh_records(db: &Connection, wid: &str, today: &str, now: i64) -> Result<
                 continue;
             }
             let label = if entity == "tasks" {
-                if date < today {
-                    "Task date has passed"
-                } else {
-                    "Task planned for today"
+                match (date_field(&fields,"Due Date").is_some(),date<today) {
+                    (true,true)=>"Task is overdue",(true,false)=>"Task is due today",
+                    (false,true)=>"Planned task date has passed",(false,false)=>"Task planned for today",
                 }
             } else if date == today {
                 "Gig is today"
@@ -191,6 +191,9 @@ fn session_updates(db: &Connection, wid: &str, input: &Value, now: i64) -> Resul
         if !["idle", "running", "approval", "interrupted", "failed"].contains(&state) {
             return Err("Invalid attention session state".into());
         }
+        let prior:Option<(String,Option<String>,Option<String>)>=db.query_row("SELECT state,response_id,receipt_id FROM attention_observations WHERE workspace_id=?1 AND session_id=?2",params![wid,sid],|r|Ok((r.get(0)?,r.get(1)?,r.get(2)?))).optional().map_err(fail)?;
+        let response_id=if session.get("responseId").is_some(){Some(text(session,"responseId")?)}else{None};
+        let receipt_id=session.get("decisionReceipt").and_then(|r|r["approvalId"].as_str());
         // Only exact read-backed identifiers and outcome words become notices; model prose is never a notification payload.
         if state != "approval" {
             db.execute("UPDATE attention_items SET active=0 WHERE workspace_id=?1 AND session_id=?2 AND kind='approval'",params![wid,sid]).map_err(fail)?;
@@ -258,6 +261,11 @@ fn session_updates(db: &Connection, wid: &str, input: &Value, now: i64) -> Resul
                 now,
             )?;
         }
+        let fresh_verified=session["decisionReceipt"]["outcome"]=="verified" && receipt_id!=prior.as_ref().and_then(|p|p.2.as_deref());
+        if state=="idle" && !fresh_verified && response_id.is_some() && prior.as_ref().is_some_and(|p|p.1.as_deref()!=response_id) {
+            put(db,wid,Signal{id:format!("session:{sid}:response"),kind:"completion",title:"Your answer is ready".into(),body:"GiGi finished responding. Open the conversation to review the answer and its sources.".into(),entity:entity.clone(),record_id:record_id.clone(),session_id:Some(sid.into()),source:json!({"responseId":response_id})},now)?;
+        }
+        db.execute("INSERT INTO attention_observations(workspace_id,session_id,state,response_id,receipt_id) VALUES(?1,?2,?3,?4,?5) ON CONFLICT(workspace_id,session_id) DO UPDATE SET state=excluded.state,response_id=coalesce(excluded.response_id,attention_observations.response_id),receipt_id=coalesce(excluded.receipt_id,attention_observations.receipt_id)",params![wid,sid,state,response_id,receipt_id]).map_err(fail)?;
         if let Some(receipt) = session.get("decisionReceipt") {
             let outcome = text(receipt, "outcome")?;
             if ![
@@ -781,4 +789,17 @@ mod tests {
         .is_err());
         std::fs::remove_dir_all(root).unwrap();
     }
+    #[test]
+    fn read_only_reply_survives_hidden_drawer_and_restart_without_replaying_history() {
+        let (root,wid)=profile();let base=clock(&wid);
+        let update=|state:&str,response:Option<&str>| {let mut session=json!({"sessionId":"synthetic-conversation","state":state});if let Some(id)=response{session["responseId"]=json!(id);}request(&base,json!({"sessions":[session]}))};
+        assert_eq!(dispatch(&root,"attention.refresh",update("idle",Some("old-answer"))).unwrap()["items"].as_array().unwrap().len(),0);
+        dispatch(&root,"attention.refresh",update("running",None)).unwrap();
+        let ready=dispatch(&root,"attention.refresh",update("idle",Some("new-answer"))).unwrap();
+        assert_eq!(ready["items"][0]["title"],"Your answer is ready");
+        assert_eq!(ready["items"][0]["sessionId"],"synthetic-conversation");
+        assert_eq!(dispatch(&root,"attention.refresh",update("idle",Some("new-answer"))).unwrap()["items"].as_array().unwrap().len(),1);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
 }

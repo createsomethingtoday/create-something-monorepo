@@ -34,6 +34,7 @@ let chat;
 let attention;
 let attentionSettingsDirty = false;
 let notificationUnlisten;
+let attentionChatSignature;
 let routeVersion = 0;
 const workspaceHistory=createWorkspaceHistory();
 let operationVersion = 0;
@@ -182,7 +183,13 @@ function initializeAttention() {
 
 function initializeChat() {
   chat?.close();
-  chat = new ChatController(bridge, workspaceId(), renderChat, async () => {
+  chat = new ChatController(bridge, workspaceId(), () => {
+    renderChat();
+    if(chat?.current && !chat.pending && !chat.reading){
+      const signature=JSON.stringify([workspaceId(),chat.current.sessionId,chat.current.state,chat.current.messages?.at(-1)?.id,chat.current.decisionReceipt]);
+      if(signature!==attentionChatSignature){attentionChatSignature=signature;void attention?.refresh();}
+    }
+  }, async () => {
     const route = readRoute();
     gigs.invalidate();
     await refreshCurrency();
@@ -976,14 +983,17 @@ root.addEventListener('submit', (event) => {
   event.preventDefault();
   const form = event.target;
   if(form.id === 'attention-settings') {
+    if(attention?.pending || attention?.requestingPermission)return;
     const data = new FormData(form);
     const patch={enabled:data.get('enabled')==='on',reminders:data.get('reminders')==='on',detailedPreviews:data.get('detailedPreviews')==='on',quietStart:Number(data.get('quietStart')),quietEnd:Number(data.get('quietEnd'))};
     attentionSettingsDirty=false;
+    attention.requestingPermission=true;renderAttention();
     void (async()=>{
       if(patch.enabled){
         try {const value=await bridge.call('notifications.request',{});attention.permission=value.permission || 'unknown';attention.alertsEnabled=value.alertsEnabled;if(attention.permission!=='granted' || !value.alertsEnabled)patch.enabled=false;}
         catch {attention.permission='unknown';patch.enabled=false;}
       }
+      attention.requestingPermission=false;
       await attention.saveSettings(patch);
       await bridge.call('notifications.send',{workspaceId:workspaceId()}).catch(()=>{});
       if(!patch.enabled && data.get('enabled')==='on') notice('Desktop notifications are unavailable. Your attention feed remains available. Check macOS notification settings.',true);

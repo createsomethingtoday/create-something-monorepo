@@ -15,3 +15,9 @@ test('observed state never mistakes model reply for verified work',()=>{
  assert.equal(chatState({...chat,current:{...chat.current,state:'idle',decisionReceipt:{outcome:'verified'}}}).label,'Result checked');
  assert.equal(chatState({...chat,current:{...chat.current,state:'idle',decisionReceipt:{outcome:'unknown'}}}).label,'Outcome needs checking');
 });
+
+test('answer hierarchy supports bounded headings and numbered steps without exposing HTML',()=>{
+ const html=renderAnswer('### A useful plan\n\n1. Review **the rehearsal**\n2. Confirm `<script>`\n\n## <img src=x>');
+ assert.match(html,/<h3>A useful plan<\/h3>/);assert.match(html,/<ol><li>Review <strong>the rehearsal<\/strong><\/li><li>Confirm <code>&lt;script&gt;<\/code><\/li><\/ol>/);assert.match(html,/<h3>&lt;img src=x&gt;<\/h3>/);assert.doesNotMatch(html,/<img|<script/);
+ assert.match(renderAnswer('#### Leave unsupported syntax plain'),/^<p>####/);
+});

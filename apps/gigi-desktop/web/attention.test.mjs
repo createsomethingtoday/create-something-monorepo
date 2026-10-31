@@ -88,3 +88,8 @@ test('workspace observer resumes a visible conversation after drawer polling pau
  const {controller,bridge}=fixture({getChat:()=>active});bridge.chatList=async()=>({sessions:[{sessionId:'long',state:'running'}]});bridge.chatPoll=async()=>({sessionId:'long',state:'approval',approvals:[{id:'a1'}]});
  await controller.refresh();assert.equal(accepted?.state,'approval');
 });
+
+test('observer supplies only a real final assistant message identity for reply readiness',async()=>{
+ const {controller,bridge,calls}=fixture();bridge.chatList=async()=>({sessions:[{sessionId:'answer',state:'idle'}]});bridge.chatRead=async()=>({sessionId:'answer',state:'idle',messages:[{id:'user1',role:'user',text:'Read only'},{id:'assistant1',role:'assistant',text:'Answer'}]});
+ await controller.refresh();assert.equal(calls.find(([op])=>op==='attention.refresh')[1].sessions[0].responseId,'assistant1');
+});

@@ -34,11 +34,16 @@ function needsReconciliation(chat) { return chat.current?.decisionReceipt?.outco
 export function renderAnswer(value) {
   const source=String(value ?? '').slice(0,100000);
   const inline=text=>escape(text).replace(/`([^`\n]{1,300})`/g,'<code>$1</code>').replace(/\*\*([^*\n]{1,500})\*\*/g,'<strong>$1</strong>');
-  return source.split(/\n\s*\n/).map(block=>{
-    const lines=block.split('\n');
-    if(lines.length && lines.every(line=>/^\s*[-*]\s+/.test(line))) return `<ul>${lines.map(line=>`<li>${inline(line.replace(/^\s*[-*]\s+/,''))}</li>`).join('')}</ul>`;
-    return `<p>${lines.map(inline).join('<br>')}</p>`;
-  }).join('');
+  const output=[];let group=[];let kind='';
+  const flush=()=>{if(!group.length)return;output.push(kind==='ul' || kind==='ol' ? `<${kind}>${group.map(line=>`<li>${inline(line)}</li>`).join('')}</${kind}>` : `<p>${group.map(inline).join('<br>')}</p>`);group=[];kind='';};
+  for(const line of source.split('\n')) {
+    if(!line.trim()){flush();continue;}
+    const heading=line.match(/^\s{0,3}#{1,3}\s+(.{1,300})$/);
+    if(heading){flush();output.push(`<h3>${inline(heading[1])}</h3>`);continue;}
+    const unordered=line.match(/^\s*[-*]\s+(.+)$/);const ordered=line.match(/^\s*\d{1,3}[.)]\s+(.+)$/);
+    const next=unordered?'ul':ordered?'ol':'p';if(kind!==next)flush();kind=next;group.push((unordered || ordered)?.[1] || line);
+  }
+  flush();return output.join('');
 }
 export function chatState(chat) {
   if(needsReconciliation(chat))return {label:'Outcome needs checking',detail:'Check the saved request before another change.'};

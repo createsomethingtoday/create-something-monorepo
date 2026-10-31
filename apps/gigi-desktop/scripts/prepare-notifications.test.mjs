@@ -11,7 +11,7 @@ test('packages a macOS 13 arm64 bridge with the complete notification ABI', {ski
   try {
     const artifact=await prepareNotifications(dir);
     const exports=execFileSync('nm',['-gU',artifact],{encoding:'utf8'});
-    for(const symbol of ['initialize','status','request','send','remove']) assert.match(exports,new RegExp(`_gigi_notifications_${symbol}\\b`));
+    for(const symbol of ['initialize','status','request','send','remove','is_active']) assert.match(exports,new RegExp(`_gigi_notifications_${symbol}\\b`));
     assert.match(execFileSync('file',[artifact],{encoding:'utf8'}),/arm64/);
     assert.match(execFileSync('otool',['-l',artifact],{encoding:'utf8'}),/minos 13\.0/);
   } finally {await rm(dir,{recursive:true,force:true});}

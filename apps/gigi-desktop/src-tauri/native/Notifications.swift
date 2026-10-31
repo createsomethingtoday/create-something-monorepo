@@ -8,6 +8,12 @@ private let callbackLock = NSLock()
 private var routeCallback: GiGiNotificationCallback?
 private let notificationDelegate = GiGiNotificationDelegate()
 
+@_cdecl("gigi_notifications_is_active")
+public func isActive() -> Int32 {
+    if Thread.isMainThread { return NSApp.isActive ? 1 : 0 }
+    return DispatchQueue.main.sync { NSApp.isActive ? 1 : 0 }
+}
+
 private func validRoute(_ text: String) -> [String: String]? {
     guard text.utf8.count <= 1024, let bytes = text.data(using: .utf8),
           let object = try? JSONSerialization.jsonObject(with: bytes) as? [String: String],
@@ -23,7 +29,7 @@ private func validRoute(_ text: String) -> [String: String]? {
 private final class GiGiNotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         // Foreground work has an in-app feed. Never duplicate it with a banner.
-        completionHandler(NSApp.isActive ? [] : [.banner, .list])
+        completionHandler(isActive() == 1 ? [] : [.banner, .list])
     }
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
         defer { completionHandler() }

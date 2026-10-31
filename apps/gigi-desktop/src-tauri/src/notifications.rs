@@ -12,7 +12,7 @@ type Initialize = unsafe extern "C" fn(extern "C" fn(*const c_char)) -> i32;
 type Status = unsafe extern "C" fn() -> i32;
 type Send = unsafe extern "C" fn(*const c_char, *const c_char, *const c_char, *const c_char) -> i32;
 type Remove = unsafe extern "C" fn(*const c_char) -> i32;
-struct Native { _library: Library, status: Status, request: Status, send: Send, remove: Remove }
+struct Native { _library: Library, status: Status, request: Status, active: Status, send: Send, remove: Remove }
 static NATIVE: OnceLock<Result<Native,String>> = OnceLock::new();
 static APP: OnceLock<tauri::AppHandle> = OnceLock::new();
 
@@ -76,9 +76,10 @@ fn native(resources:&Path)->Result<&'static Native,String> {
             let status=*library.get::<Status>(b"gigi_notifications_status\0").map_err(|_|"Invalid notification companion")?;
             let request=*library.get::<Status>(b"gigi_notifications_request\0").map_err(|_|"Invalid notification companion")?;
             let send=*library.get::<Send>(b"gigi_notifications_send\0").map_err(|_|"Invalid notification companion")?;
+            let active=*library.get::<Status>(b"gigi_notifications_is_active\0").map_err(|_|"Invalid notification companion")?;
             let remove=*library.get::<Remove>(b"gigi_notifications_remove\0").map_err(|_|"Invalid notification companion")?;
             if initialize(clicked)!=1 {return Err("Could not initialize native notifications".into());}
-            Ok(Native{_library:library,status,request,send,remove})
+            Ok(Native{_library:library,status,request,active,send,remove})
         }
     }).as_ref().map_err(Clone::clone)
 }
@@ -92,7 +93,7 @@ fn prune(native:&Native,root:&Path,wid:&str)->Result<(),String> {
     if unsafe{(native.remove)(encoded.as_ptr())}!=1 {return Err("Could not reconcile native notifications".into());}
     Ok(())
 }
-pub fn dispatch(app:&tauri::AppHandle,root:&Path,resources:&Path,op:&str,input:Value)->Result<Value,String> {
+pub fn dispatch(_app:&tauri::AppHandle,root:&Path,resources:&Path,op:&str,input:Value)->Result<Value,String> {
     match op {
         "notifications.status"=>Ok(permission(unsafe{(native(resources)?.status)()})),
         // Invoked only by an explicit settings action. Starting GiGi never asks for permission.
@@ -109,7 +110,7 @@ pub fn dispatch(app:&tauri::AppHandle,root:&Path,resources:&Path,op:&str,input:V
             prune(native,root,wid)?;
             let state=permission(unsafe{(native.status)()});
             if state["alertsEnabled"]!=true {return Ok(json!({"submitted":false,"reason":"permission","permission":state["permission"],"alertsEnabled":false}));}
-            if app.get_webview_window("main").is_some_and(|window|window.is_focused().unwrap_or(true)) {return Ok(json!({"submitted":false,"reason":"foreground"}));}
+            if unsafe{(native.active)()}==1 {return Ok(json!({"submitted":false,"reason":"foreground"}));}
             let input=clock(wid);
             let claim=crate::attention::dispatch(root,"attention.claimDelivery",input)?;
             let item=&claim["item"];

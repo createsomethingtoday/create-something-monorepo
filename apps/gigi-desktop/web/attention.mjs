@@ -66,7 +66,8 @@ export class AttentionController {
         current=entry.state==='running' && this.bridge.chatPoll ? await this.bridge.chatPoll(this.workspaceId,entry.sessionId) : await this.bridge.chatRead(this.workspaceId,entry.sessionId);
       } else continue;
       if(!current || current.sessionId!==entry.sessionId || !states.has(current.state)) continue;
-      const value={sessionId:current.sessionId,state:current.state,title:entry.title || 'Conversation',...(Array.isArray(current.approvals)?{approvals:current.approvals}:{}),...(current.decisionReceipt?{decisionReceipt:current.decisionReceipt}:{}),...(Array.isArray(current.recordLinks)?{recordLinks:current.recordLinks}:{})};
+      const responseId=current.state==='idle' && Array.isArray(current.messages) ? [...current.messages].reverse().find(message=>message.role==='assistant' && typeof message.id==='string' && message.text?.trim())?.id : undefined;
+      const value={...(responseId?{responseId}:{}),sessionId:current.sessionId,state:current.state,title:entry.title || 'Conversation',...(Array.isArray(current.approvals)?{approvals:current.approvals}:{}),...(current.decisionReceipt?{decisionReceipt:current.decisionReceipt}:{}),...(Array.isArray(current.recordLinks)?{recordLinks:current.recordLinks}:{})};
       this.sessions.set(entry.sessionId,value);observed.push(value);
     }
     return observed;
