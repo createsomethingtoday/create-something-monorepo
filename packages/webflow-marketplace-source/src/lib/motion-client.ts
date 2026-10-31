@@ -208,11 +208,13 @@ function pillRow(scroll:HTMLElement,motion:boolean){
  let frame=0;
  const onScroll=()=>{if(!frame)frame=requestAnimationFrame(()=>{frame=0;sync()})};
  track.addEventListener('scroll',onScroll,{passive:true});
+ // Pills also change width when the web font loads, so each slide is observed too.
  const resize=new ResizeObserver(sync);
- resize.observe(track);
+ const measure=()=>{resize.observe(track);[...track.children].forEach(el=>resize.observe(el))};
+ measure();
  // Pills load after the row mounts, and a pill click can move aria-current without a page load.
  const changes=new MutationObserver(records=>{
-  sync();
+  measure();sync();
   if(records.some(r=>r.type==='attributes'))reveal(true);
  });
  changes.observe(track,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-current']});
