@@ -489,3 +489,4 @@ body .wfdt-sticky{background:#fff}
 
 /* GSAP motion (src/lib/motion-client.ts). The home hero stays hidden until its load sequence starts. */
 .rd-motion .rd-hero>*{visibility:hidden}
+@media(prefers-reduced-motion:no-preference){.rd-cstack[data-rd-stack] img{animation:rd-stack-in .5s ease both}}@keyframes rd-stack-in{from{opacity:0}}

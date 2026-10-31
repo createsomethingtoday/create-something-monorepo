@@ -276,14 +276,13 @@ export async function pageFor(url:URL):Promise<Page>{
  if(route.kind==='static'){
   if(route.page==='template-licenses')return finish(clean('template-licenses'),url);
   if(route.page==='categories'){
-   // Redesigned directory: search API counts and thumbnails; the CMS supplies titles, meta and card descriptions.
+   // Redesigned directory: search API counts; the CMS supplies titles, meta and card descriptions.
    // The pills read reports zero totals, so the count comes from the same newest read as home.
    const [remote,pills,newest]=await Promise.all([publishedCms('/categories'),search({page_size:'1',include:'facets,pills'}),search({sort:'newest',page_size:'4'})]);
    const categories=pills.category_pills||[];
-   const stacks=Object.fromEntries(await Promise.all(categories.map(async c=>[c.slug,(await search({category_group_slug:c.slug,sort:'popular',page_size:'3'}).catch(()=>({items:[]}))).items] as const)));
    const descriptions:Record<string,string>={};
    remote('a.categoryc-card_link').each((_,e)=>{const slug=(remote(e).attr('href')||'').split('/').pop()!;descriptions[slug]=remote(e).find('.u-text-gray600').first().text().trim();});
-   const $=shell(categoriesMarkup({total:newest.pagination.total_items,categories,stacks,descriptions}),remote('title').text()||'All template categories | Webflow',remote('meta[name="description"]').attr('content')||'');
+   const $=shell(categoriesMarkup({total:newest.pagination.total_items,categories,descriptions}),remote('title').text()||'All template categories | Webflow',remote('meta[name="description"]').attr('content')||'');
    return finish($,url);
   }
   if(['tags','designers'].includes(route.page!)){
