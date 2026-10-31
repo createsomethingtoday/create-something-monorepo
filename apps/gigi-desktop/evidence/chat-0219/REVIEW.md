@@ -1,6 +1,6 @@
 # GiGi chat candidate — CRE-2308
 
-Candidate only; parent owns independent Sol 6.1 retest, signing/notarization, merge, publication and production readback. No user screenshot/contact data, third-party reference media, real profile or credentials are included.
+Implementation candidate record. Final independent re-test and exact signed-artifact qualification subsequently passed; see RELEASE.md. Merge, publication readback and production page promotion are recorded in Linear CRE-2308. No user screenshot/contact data, third-party reference media, real profile or credentials are included.
 
 Functional correctness: passed local/synthetic scope. 329 desktop tests against candidate bundled MCP, zero skips; 301/302 integration tests passed with one pre-existing optional CTX skip; TypeScript typecheck passed; 173 Rust tests passed (149 unit + 24 integration). Actual app DOM/CSS harness checks 12 theme/width/window combinations, stable composer node/focus/draft/selection, independent history scroll, strict workspace-local preferences, no forced scroll while reading, persistent latest-response affordance, clear draft after confirmed send, repeated updates, settled reduced-motion states and no transcript live announcements. This does not establish OS screen-reader speech, IME behavior or human acceptance.
 
