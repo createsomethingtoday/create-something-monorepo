@@ -14,7 +14,7 @@ export function discoveryQuery(search){
  if(p.has('category')){p.set('category_group_slug',p.get('category'));p.delete('category')}
  p.set('page_size','24');p.set('view','full');p.set('include','items');p.set('strict','true');p.set('discovery','true');if(!p.has('sort'))p.set('sort','recommended');return p;
 }
-export function priceLabel(item){return item.is_free||item.price===0?'Free':typeof item.price==='number'&&Number.isFinite(item.price)?`$${item.price} USD`:'Price not confirmed'}
+export function priceLabel(item){return item.is_free||item.price===0?'Free':typeof item.price==='number'&&Number.isFinite(item.price)?`$${item.price}`:'Price not confirmed'}
 export function cmsLabel(item){return item.has_cms===true?'CMS included':item.has_cms===false?'No CMS':'CMS not confirmed'}
 export function evidenceFor(item,brief,currentMatch=false){
  const facts=[{label:'Template price',value:priceLabel(item)},{label:'CMS capability',value:cmsLabel(item)}];
