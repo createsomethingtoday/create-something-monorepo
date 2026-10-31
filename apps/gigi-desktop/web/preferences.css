@@ -1,0 +1,76 @@
+/* Workspace appearance: Studio follows the script-free landing illustration's
+   Canon operator palette. Themes supply semantic roles across every surface. */
+:root, :root[data-theme="studio"] {
+  color-scheme:dark;
+  --bg:oklch(20.5% 0 0);--panel:oklch(26.9% 0 0);--raised:oklch(32% 0 0);
+  --sidebar:oklch(20.5% 0 0);--line:oklch(100% 0 0 / .13);
+  --text:oklch(98.5% 0 0);--muted:oklch(76% 0 0);--signal:oklch(98.5% 0 0);
+  --signal-ink:oklch(20.5% 0 0);--input:oklch(20.5% 0 0);
+  --control-line:oklch(58% 0 0);--danger:#ffb4a9;
+  --control-border:var(--control-line);--studio-action:var(--signal);--studio-action-ink:var(--signal-ink);--artwork-ground:var(--bg);
+  font-family:var(--studio-sans);
+}
+:root[data-theme="paper"] {
+  color-scheme:light;
+  --bg:#f4f3ef;--sidebar:#eeede8;--panel:#fdfcfa;--raised:#e8e7e1;
+  --line:#d2d0c8;--text:#232420;--muted:#5c5e56;--signal:#30372c;
+  --signal-ink:#fff;--input:#fff;--control-line:#898b80;--danger:#a32924;
+}
+:root[data-theme="midnight"] {
+  color-scheme:dark;
+  --bg:#0d0f12;--sidebar:#101216;--panel:#16191e;--raised:#23272e;
+  --line:#353b45;--text:#f4f5f7;--muted:#b0b8c5;--signal:#d4e2f6;
+  --signal-ink:#13171e;--input:#101216;--control-line:#657080;--danger:#ffb4a9;
+}
+.preferences-panel{margin:0 0 32px}.preferences-panel > p{max-width:65ch}
+.theme-choices{border:0;padding:0;margin:26px 0}.theme-choices legend{font-size:12px;font-weight:600;margin-bottom:12px}
+.theme-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.theme-choice{border:1px solid var(--control-line);border-radius:8px;padding:10px;text-align:left;background:transparent;color:var(--text);min-width:0}
+.theme-choice[aria-pressed="true"]{outline:2px solid var(--signal);outline-offset:2px}
+.theme-choice:focus-visible{outline:3px solid var(--signal);outline-offset:4px}
+.theme-preview{display:grid;grid-template-columns:25% 1fr;gap:8px;min-height:80px;border-radius:4px;background:var(--preview-bg);padding:9px;border:1px solid var(--preview-line)}
+.theme-preview-studio{--preview-bg:#171717;--preview-panel:#262626;--preview-line:#555;--preview-ink:#ddd}
+.theme-preview-paper{--preview-bg:#f4f3ef;--preview-panel:#e0dfd7;--preview-line:#aaa;--preview-ink:#555}
+.theme-preview-midnight{--preview-bg:#0d0f12;--preview-panel:#23272e;--preview-line:#444d59;--preview-ink:#d4e2f6}
+.theme-preview-nav{background:var(--preview-panel);border-radius:2px}
+.theme-preview-body{display:grid;gap:6px;align-content:center}.theme-preview-body i{display:block;height:10px;border-bottom:1px solid var(--preview-line)}.theme-preview-body i:first-child{width:50%;background:var(--preview-ink);height:4px;border:0;margin-bottom:6px}
+.theme-choice-title{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600;margin:12px 2px 6px}
+.theme-choice-description{display:block;font-size:11px;line-height:1.6;color:var(--muted);margin:0 2px}
+.preference-fields{gap:10px 22px;margin-top:28px}.preference-fields .field{min-width:0}
+.portable-preferences{border-top:1px solid var(--line);padding-top:15px}.portable-preferences>p{font-size:13px;line-height:1.65;max-width:65ch}
+.portable-preferences textarea{font-family:ui-monospace,SFMono-Regular,monospace;font-size:12px;line-height:1.6;min-height:140px;white-space:pre}
+.preferences-reset{display:flex;align-items:center;justify-content:space-between;gap:20px;border-top:1px solid var(--line);margin-top:24px;padding-top:16px}.preferences-reset p{font-size:12px;line-height:1.6;margin:0}
+[data-collection-view="cards"] .content-primary .rows{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+[data-collection-view="cards"] .content-primary .rows .row,[data-collection-view="cards"] .content-primary .rows .row:first-child{padding:20px;border:1px solid var(--line);border-radius:6px;background:var(--bg);min-height:96px;align-items:start}
+[data-collection-view="cards"] .content-primary .rows .row:hover{border-color:var(--control-line)}
+:root[data-density="compact"] .nav button{padding-block:7px}
+:root[data-density="compact"] .panel{padding:16px}
+:root[data-density="compact"] .row{padding-block:10px}
+:root[data-density="compact"] [data-collection-view="cards"] .content-primary .rows .row{padding:14px;min-height:76px}
+:root[data-density="compact"] .today-card{padding:16px;gap:8px}
+:root[data-density="compact"] .content{padding-top:24px}
+@media(max-width:700px){.theme-grid{grid-template-columns:1fr}.theme-choice{display:grid;grid-template-columns:100px 1fr;column-gap:14px;align-items:start}.theme-preview{grid-row:1/3;min-height:74px}.theme-choice-title{margin-top:4px}[data-collection-view="cards"] .content-primary .rows{grid-template-columns:1fr}.preferences-reset{align-items:start;flex-direction:column;gap:10px}.preferences-reset .btn{padding-left:0}.preferences-panel{padding:18px}}
+@media(max-width:700px){.page-head > div{flex:0 1 auto;width:100%}}
+
+/* Existing release surfaces consume the same roles, including native WebKit
+   selects and the independent Music/Instagram workspaces. */
+:root { color:var(--text);background:var(--bg); }
+.field input,.field select,.field textarea,.compact-input,.chat-composer textarea { background-color:var(--input);color:var(--text);border-color:var(--control-border); }
+.field label,.nav-label,.nav button { color:var(--muted); }
+.callout,.chat-message.from-user,.chat-context,.chat-approval { background:var(--raised);color:var(--text);border-color:var(--control-border); }
+.tag{background:var(--raised);color:var(--text);border-color:var(--control-border)}
+.tag.off{background:var(--panel);color:var(--muted);border-color:var(--line)}
+.config{background:var(--bg);color:var(--signal)}
+.toast{background:var(--raised);color:var(--text);border-color:var(--control-border)}
+.toast.error,.chat-error,.btn.danger{background:var(--panel);color:var(--danger);border-color:var(--danger)}
+.gigs-views [aria-pressed=true],.gigs-result-actions [aria-pressed=true]{background:var(--raised)}
+.preferences-feedback{font-size:13px!important;line-height:1.6;margin:12px 0 0;color:var(--muted);min-height:1.6em}
+.preferences-feedback.is-error{color:var(--danger)}
+.preferences-panel{margin-top:0;max-width:920px}
+.preferences-panel .eyebrow{display:none}
+.preferences-panel .theme-choice{min-height:44px}
+.portable-preferences [readonly]{cursor:text}
+.reference-header .reference-customize{font-size:12px}
+#workspace-preferences{scroll-margin-top:80px}
+@media(max-width:700px){.reference-header .reference-customize{margin-left:auto}#workspace-preferences{scroll-margin-top:128px}}
+.empty{border-color:var(--control-border)}
