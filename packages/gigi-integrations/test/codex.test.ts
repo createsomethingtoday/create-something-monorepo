@@ -1461,3 +1461,57 @@ test('transient history failure retains previous transcript alongside observed p
  const original=server.request.bind(server);server.request=async(method,params)=>{if(method==='thread/read')throw Error('synthetic unavailable');return original(method,params);};
  const pending=await adapter.read(input);assert.equal(pending.messages[0].text,'Read only');assert.equal(pending.messages.at(-1)?.text,'Retained partial');assert.equal(pending.state,'running');
 });
+
+test('running snapshots bound history reads before the first delta and after history catches up', async (t) => {
+  const { adapter, server, dataDir } = await setup();
+  let elapsed = 0; const started = Date.now(); t.mock.method(Date, 'now', () => started + elapsed);
+  try {
+    const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'Read only' });
+    const input = { workspaceId: 'w', sessionId };
+    server.thread.turns = [{ id: 'turn-1', status: 'inProgress', items: [] }];
+    await adapter.read(input);
+    const countReads = () => server.calls.filter(x => x.method === 'thread/read').length;
+    const initial = countReads();
+    for (let i = 0; i < 8; i++) { elapsed += 250; assert.equal((await adapter.poll(input)).state, 'running'); }
+    assert.equal(countReads(), initial, 'no first delta must not trigger history hydration on every UI poll');
+    elapsed += 1001; await adapter.poll(input);
+    assert.equal(countReads(), initial + 1, 'authoritative history still refreshes after three seconds');
+    await Promise.all(server.events.map(fn => fn({ method: 'item/agentMessage/delta', params: { threadId: 'thread-1', turnId: 'turn-1', itemId: 'a', delta: 'Observed text' } })));
+    server.thread.turns[0].items = [{ id: 'a', type: 'agentMessage', text: 'Observed text' }];
+    await adapter.read(input); const caughtUp = countReads();
+    elapsed += 250; assert.equal((await adapter.poll(input)).messages.at(-1)?.text, 'Observed text');
+    assert.equal(countReads(), caughtUp, 'authoritative text replacing live deltas must retain the snapshot cadence');
+  } finally { await rm(dataDir, { recursive: true, force: true }); }
+});
+
+for (const decision of ['approve', 'reject'] as const) test(`${decision} cannot resurrect a cached approval after transient history failure`, async () => {
+  const { adapter, server, mcp, dataDir } = await setup();
+  let record = { id: 'r', title: 'Before', fields: { Status: 'Open' }, source: { kind: 'manual' }, relations: [] };
+  let writes = 0; const originalMcp = mcp.request.bind(mcp);
+  mcp.request = async (method, params) => {
+    if (method === 'tools/call' && params.name === 'gigi_records_get') return { structuredContent: structuredClone(record) };
+    if (method === 'tools/call' && params.name === 'gigi_records_save') { writes++; record = { ...record, title: params.arguments.title }; return { structuredContent: structuredClone(record) }; }
+    return originalMcp(method, params);
+  };
+  try {
+    const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'Propose one task edit' });
+    const input = { workspaceId: 'w', sessionId };
+    server.thread.turns = [{ id: 'turn-1', status: 'inProgress', items: [] }];
+    const emit = async (message: any) => Promise.all(server.events.map(fn => fn(message)));
+    await emit({ method: 'item/agentMessage/delta', params: { threadId: 'thread-1', turnId: 'turn-1', itemId: 'a', delta: 'Preparing the reviewed task edit.' } });
+    await emit({ id: 2701, method: 'item/tool/call', params: { threadId: 'thread-1', tool: 'gigi_records_save', arguments: { workspaceId: 'w', entity: 'tasks', id: 'r', title: 'Reviewed title' } } });
+    const pending = await adapter.read(input); assert.equal(pending.state, 'approval');
+    const original = server.request.bind(server);
+    server.request = async (method, params) => { if (method === 'thread/read') throw Error('synthetic transient history failure'); return original(method, params); };
+    const decided = await adapter.approve({ ...input, approvalId: pending.approvals[0].id, decision });
+    assert.equal(decided.state, 'running'); assert.equal(decided.approvals.length, 0);
+    const next = await adapter.poll(input);
+    assert.equal(next.state, 'running', 'resolved approval must never return from an older cached snapshot');
+    assert.equal(next.approvals.length, 0);
+    assert.equal(next.decisionReceipt?.outcome, decision === 'approve' ? 'verified' : 'rejected');
+    assert.equal(writes, decision === 'approve' ? 1 : 0, 'polling cannot repeat a reviewed operation');
+    server.request = original;
+    server.thread.turns = [{ id: 'turn-1', status: 'completed', items: [{ id: 'a', type: 'agentMessage', text: 'Checked result.' }] }];
+    assert.equal((await adapter.poll(input)).state, 'idle', 'terminal reconciliation remains available after transient history recovers');
+  } finally { await rm(dataDir, { recursive: true, force: true }); }
+});

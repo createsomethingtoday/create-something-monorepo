@@ -433,9 +433,12 @@ export function createCodexAdapter(options: CodexOptions) {
     // terminal notification, cancellation, approval or any uncertain write fence.
     const live = liveMessages.get(session.sessionId);
     const uncertain = [...sessions.values()].some(x => x.workspaceId === session.workspaceId && (x.uncertainWrite || x.error || x.cancelPending || x.recoveryPending));
-    if (cached && session.state === 'running' && !uncertain && !terminalReads.has(session.sessionId) && Date.now() - cached.at < 3000 && live?.size) {
+    const cachedRunning = cached?.value.state === 'running' && cached.value.approvals.length === 0
+      && !cached.value.error && !cached.value.cancelPending && !cached.value.recoveryPending
+      && cached.value.decisionReceipt?.outcome !== 'unknown';
+    if (cached && cachedRunning && session.state === 'running' && !uncertain && !terminalReads.has(session.sessionId) && Date.now() - cached.at < 3000) {
       const output = structuredClone(cached.value);
-      for (const [id, entry] of live) {
+      for (const [id, entry] of live ?? []) {
         if (entry.turnId !== session.turnId) continue;
         const existing = output.messages.find(x => x.id === id);
         if (existing) { if (entry.text.length > existing.text.length) existing.text = entry.text; }
