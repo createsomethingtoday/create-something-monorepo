@@ -10,7 +10,12 @@ import {
 
 test('a release cache key cannot reuse previously cached public HTML', async () => {
   const request = new Request('https://createsomething.agency/');
-  const legacyCache = new Map([[request.url, '<link href="/styles/agency/home.css">']]);
+  const previousRelease = new URL(request.url);
+  previousRelease.searchParams.set('__agency_html_revision', 'partner-evidence-20261031');
+  const legacyCache = new Map([
+    [request.url, '<link href="/styles/agency/home.css">'],
+    [previousRelease.href, '<p>Previous release copy</p>']
+  ]);
   const key = createPublicHtmlCacheKey(request);
   assert.equal(legacyCache.get(key.url), undefined, 'A prior deployment response must miss the new HTML namespace');
   assert.equal(new URL(key.url).origin, new URL(request.url).origin);

@@ -26,7 +26,7 @@
 		eyebrow: 'Workflow mapping session',
 		title: 'Choose a time to talk through the task.',
 		description:
-			'Bring one problem or improvement and the person responsible. We discuss diagnosis, engineering work, and learning needs. Review any Map summary before choosing a time.',
+			'Bring one problem or improvement and the person responsible. We discuss diagnosis, engineering work, and learning needs. If you already have a workflow map, review it before choosing a time.',
 		secondaryHref: '/map',
 		secondaryLabel: 'Map your workflow',
 		iframeTitle: 'Schedule a CREATE SOMETHING mapping session',

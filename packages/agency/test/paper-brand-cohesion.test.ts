@@ -106,7 +106,7 @@ test('the homepage retains a readable listing independent of scene motion', () =
   assert.match(salesHome, /import content from '\$lib\/content\/agency-home\.html\?raw'/);
   assert.match(salesHome, /\{@html content\}/);
   assert.match(content, /<h1 id="hero-title">Put AI to work\./);
-  assert.match(content, /Products, education and hands-on support\./);
+  assert.match(content, /We diagnose problems in your tools and workflows, build agreed improvements, and help your team use what we deliver\./);
   assert.match(content, /id="cc-focused-title">Focused<\/h3>[\s\S]*?\$900<span>\/month/);
   assert.match(content, /id="cc-team-plan-title">Team<\/h3>[\s\S]*?\$2,500<span>\/month/);
   assert.match(content, /id="journey-image"[^>]*src="\/images\/agency-sales\/team\.webp"/);

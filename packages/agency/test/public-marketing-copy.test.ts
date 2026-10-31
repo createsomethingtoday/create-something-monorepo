@@ -227,7 +227,9 @@ test('commercial decision routes explain the task, delivery, ownership, and proo
   assert.match(homeContent, /Your team keeps approval authority/);
   assert.match(read('services/+page.svelte'), /Bring a workflow, software problem or existing product/);
   assert.match(read('services/+page.svelte'), /Your team keeps approval authority/);
-  assert.match(read('services/+page.svelte'), /one agreed workstream/);
+  // Plan detail is consolidated in the component rendered by Services.
+  assert.match(read('services/+page.svelte'), /<MembershipOffer \/>/);
+  assert.match(readFileSync(new URL('../src/lib/components/MembershipOffer.svelte', import.meta.url), 'utf8'), /Choose Focused for one agreed workstream or Team for up to two/);
   assert.match(read('services/+page.svelte'), /Managed Control starts at \$900\/month/);
   assert.match(read('products/+page.svelte'), /Map and Control are subscriptions/);
   assert.match(read('products/+page.svelte'), /Control includes Map/);
