@@ -43,3 +43,16 @@
   .agency-home .dialog h2 { font-size:16px; }
   .agency-home .dialog #work-caption { font-size:12px; padding:8px 12px; }
 }
+
+/* Team handoff: balance the artwork and message within the campaign grid. */
+.agency-home .home-team{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(32px,6vw,96px)}
+.agency-home .home-team>div{min-width:0}
+.agency-home .home-team figure img{aspect-ratio:1;object-position:center 40%}
+.agency-home .home-team h2{font-size:clamp(32px,4vw,62px);text-wrap:balance}
+.agency-home .home-team p.copy{font-size:clamp(14px,1.1vw,16px);max-width:36ch}
+@media(max-width:1024px){
+  .agency-home .home-team{display:flex;flex-direction:column-reverse;gap:32px}
+  .agency-home .home-team>div,.agency-home .home-team figure{width:100%}
+  .agency-home .home-team h2{font-size:clamp(32px,6vw,44px)}
+  .agency-home .home-team figure img{aspect-ratio:4/5;object-position:center}
+}
