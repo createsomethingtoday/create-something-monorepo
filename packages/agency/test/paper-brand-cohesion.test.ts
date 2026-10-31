@@ -136,7 +136,7 @@ test('the Agency opening exposes proof, approval and ownership alongside the app
   assert.match(content, /href="\/products#cato-tour"/);
   assert.match(content, /href="\/films\/cato-tour\/overview\.jpg"/);
   // The official Select Partner badge is authorized; retain its qualification link and accessible identity.
-  assert.match(content, /href="\/stack#openai-qualifications"><img src="\/images\/agency-sales\/OpenAI_Select_Partner_Badge\.png"[^>]*alt="OpenAI Select Partner"/);
+  assert.match(content, /href="\/stack#openai-qualifications"[^>]*><img src="\/images\/agency-sales\/OpenAI_Select_Partner_Badge\.png"[^>]*alt="OpenAI Select Partner"/);
   assert.match(content, /href="https:\/\/github\.com\/openai\/codex-security\/commit\/[a-f0-9]{40}"/);
   assert.match(content, /Original conceptual illustration \/ people approve the work/);
   assert.match(content, /not delivered hardware/);
