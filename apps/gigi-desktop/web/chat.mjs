@@ -34,14 +34,14 @@ function needsReconciliation(chat) { return chat.current?.decisionReceipt?.outco
 export function renderAnswer(value) {
   const source=String(value ?? '').slice(0,100000);
   const inline=text=>escape(text).replace(/`([^`\n]{1,300})`/g,'<code>$1</code>').replace(/\*\*([^*\n]{1,500})\*\*/g,'<strong>$1</strong>');
-  const output=[];let group=[];let kind='';
-  const flush=()=>{if(!group.length)return;output.push(kind==='ul' || kind==='ol' ? `<${kind}>${group.map(line=>`<li>${inline(line)}</li>`).join('')}</${kind}>` : `<p>${group.map(inline).join('<br>')}</p>`);group=[];kind='';};
+  const output=[];let group=[];let kind='';let orderStart=1;
+  const flush=()=>{if(!group.length)return;output.push(kind==='ul' || kind==='ol' ? `<${kind}${kind==='ol' && orderStart!==1 ? ` start="${orderStart}"` : ''}>${group.map(line=>`<li>${inline(line)}</li>`).join('')}</${kind}>` : `<p>${group.map(inline).join('<br>')}</p>`);group=[];kind='';orderStart=1;};
   for(const line of source.split('\n')) {
     if(!line.trim()){flush();continue;}
     const heading=line.match(/^\s{0,3}#{1,3}\s+(.{1,300})$/);
     if(heading){flush();output.push(`<h3>${inline(heading[1])}</h3>`);continue;}
-    const unordered=line.match(/^\s*[-*]\s+(.+)$/);const ordered=line.match(/^\s*\d{1,3}[.)]\s+(.+)$/);
-    const next=unordered?'ul':ordered?'ol':'p';if(kind!==next)flush();kind=next;group.push((unordered || ordered)?.[1] || line);
+    const unordered=line.match(/^\s*[-*]\s+(.+)$/);const ordered=line.match(/^\s*(\d{1,3})[.)]\s+(.+)$/);
+    const next=unordered?'ul':ordered?'ol':'p';if(kind!==next)flush();kind=next;if(ordered && !group.length)orderStart=Number(ordered[1]);group.push(unordered?.[1] || ordered?.[2] || line);
   }
   flush();return output.join('');
 }

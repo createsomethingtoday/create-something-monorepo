@@ -27,3 +27,7 @@ test('conversation list reflects the latest observed terminal state',async()=>{
  controller.current={sessionId:'s1',state:'approval',messages:[]};controller.sessions=[{sessionId:'s1',state:'approval'}];
  controller.accept({sessionId:'s1',state:'idle',messages:[],approvals:[],recordLinks:[]});assert.equal(controller.sessions[0].state,'idle');
 });
+
+test('separated numbered steps preserve their original starting number',()=>{
+ assert.match(renderAnswer('2. Review the second source'),/<ol start="2">/);
+});
