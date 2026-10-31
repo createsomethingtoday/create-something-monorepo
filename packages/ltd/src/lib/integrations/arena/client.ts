@@ -267,7 +267,8 @@ export class ArenaClient {
 
 		await Promise.all([
 			this.cache.delete(`arena:channel:${slug}`),
-			this.cache.delete(`arena:all-blocks:${slug}`)
+			this.cache.delete(`arena:all-blocks:${slug}`),
+			this.cache.delete(`arena:all-blocks:v2:${slug}`)
 		]);
 
 		// Also clear paginated content (first 10 pages)

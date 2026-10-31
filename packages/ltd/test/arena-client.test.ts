@@ -42,3 +42,37 @@ test('rejects a channel changed while its snapshot was being fetched', async (t)
   });
   await assert.rejects(new ArenaClient().getAllChannelBlocks('changing'), /changed/i);
 });
+
+for (const action of ['create', 'connect', 'update'] as const) {
+  test(`${action} invalidates full-channel snapshots before the next read`, async (t) => {
+    const values = new Map<string, string>();
+    const cache = {
+      get: async (key: string) => {
+        const value = values.get(key);
+        return value ? JSON.parse(value) : null;
+      },
+      put: async (key: string, value: string) => { values.set(key, value); },
+      delete: async (key: string) => { values.delete(key); }
+    } as KVNamespace;
+    let blocks = [{ id: 1, class: 'Image' }];
+    let generation = 1;
+    t.mock.method(globalThis, 'fetch', async (input: string, options: RequestInit = {}) => {
+      const url = new URL(input);
+      if (options.method === 'POST' || options.method === 'PUT') {
+        blocks = [...blocks, { id: 2, class: 'Image' }];
+        generation++;
+        return Response.json({ id: 2 });
+      }
+      return Response.json(url.pathname.endsWith('/contents')
+        ? { contents: blocks }
+        : { length: blocks.length, updated_at: String(generation) });
+    });
+    const client = new ArenaClient({ cache, accessToken: 'synthetic-test-token' });
+    assert.equal((await client.getAllChannelBlocks('curated')).length, 1);
+    assert.ok(values.has('arena:all-blocks:v2:curated'));
+    if (action === 'create') await client.createBlock('curated', { source: 'https://example.test/image.jpg' });
+    if (action === 'connect') await client.connectBlock('curated', 2);
+    if (action === 'update') await client.updateChannel('curated', { title: 'Updated' });
+    assert.equal((await client.getAllChannelBlocks('curated')).length, 2);
+  });
+}
