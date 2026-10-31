@@ -1,5 +1,9 @@
 # GiGi desktop beta
 
+## Daily-use polish (0.2.17 candidate)
+
+Today puts **New task** beside **New gig** and uses the minimum window more efficiently. Attention keeps its decisions and safety boundary with less repeated framing; record cards retain readable titles in two columns where space permits. Errors remain until dismissed, successful feedback respects keyboard focus, and failed attention checks never claim you are caught up. Studio, Paper, Midnight and protected record/approval flows remain established. See [candidate evidence](evidence/daily-polish-0217/REVIEW.md) for synthetic/native checks and remaining release gates.
+
 ## Tauri polish (0.2.10 local candidate)
 
 Restores the slate studio theme after reference layout styles, clarifies active secondary-page navigation, and standardizes system typography, metadata, dates and artwork/media surfaces. Music keeps in-progress controls and focus during reads, distinguishes loading/read failure from an empty library, offers explicit retry/filter reset, and restores focus after a cancelled picker. Artwork saves return focus to the matching action after the detail refresh. Database, integration and MCP contracts are unchanged.

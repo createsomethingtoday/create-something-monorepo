@@ -14,12 +14,12 @@ test('standalone page retains the owning Agency Canon operator palette', () => {
 });
 
 test('download contract pins exact qualified installer, platform and checksum', () => {
-  assert.equal(gigiBeta.version, '0.2.16');
-  assert.equal(gigiBeta.filename, 'GiGi-0.2.16-arm64-private-beta.dmg');
-  assert.equal(gigiBeta.bytes, 84805293);
-  assert.equal(gigiBeta.sha256, '86581b69b015dce917d80309b9d5581486104b37749ec34298a4f21c92496fa3');
-  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.16/GiGi-0.2.16-arm64-private-beta.dmg`);
-  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '84,805,293', '84.8 MB']) assert.ok(gigiBetaHtml.includes(text), text);
+  assert.equal(gigiBeta.version, '0.2.18');
+  assert.equal(gigiBeta.filename, 'GiGi-0.2.18-arm64-private-beta.dmg');
+  assert.equal(gigiBeta.bytes, 84806372);
+  assert.equal(gigiBeta.sha256, '50727f67ff0e75b3defda8dfe6b2a60d4dbc59737781bd2a731470bcb7fc58f6');
+  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.18/GiGi-0.2.18-arm64-private-beta.dmg`);
+  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '84,806,372', '84.8 MB']) assert.ok(gigiBetaHtml.includes(text), text);
 });
 
 test('beta stays unlisted and has no active content or tracking shell', () => {
@@ -131,13 +131,13 @@ test('artwork release preserves local previews and external generation boundarie
 test('setup and classification release keeps session and acceptance boundaries explicit', () => {
   const changes = gigiBetaHtml.match(/<section aria-labelledby="changes">([\s\S]*?)<\/section>/)?.[1] ?? '';
   for (const text of ['Included from 0.2.8', 'Work kind', 'leaves existing records unchanged', 'not automatically a performance', 'Configuration stays unchanged', 'already-open agent session', 'before pagination', 'Original Type values']) assert.ok(changes.includes(text), text);
-  for (const text of ['final compiled app code and data in isolated QA wrappers', 'One real Codex-generated illustration', 'using the installed 0.2.8 MCP', 'Follow-up 0.2.9 checks', 'already-running agent session remain unverified', 'GiGi 0.2.8: Earlier checks', 'Previous installer:', '0.2.15/GiGi-0.2.15-arm64-private-beta.dmg']) assert.ok(gigiBetaHtml.includes(text), text);
+  for (const text of ['final compiled app code and data in isolated QA wrappers', 'One real Codex-generated illustration', 'using the installed 0.2.8 MCP', 'Follow-up 0.2.9 checks', 'already-running agent session remain unverified', 'GiGi 0.2.8: Earlier checks', 'Previous installer:', '0.2.16/GiGi-0.2.16-arm64-private-beta.dmg']) assert.ok(gigiBetaHtml.includes(text), text);
 });
 
 test("current release clearly defers phone qualification and preserves rollback", () => {
- assert.ok(gigiBetaHtml.includes("Phone workflow unverified for 0.2.16"));
+ assert.ok(gigiBetaHtml.includes("Phone workflow unverified for 0.2.18"));
  assert.ok(gigiBetaHtml.includes("Physical-phone qualification is deferred"));
- assert.ok(gigiBetaHtml.includes("GiGi 0.2.15 for Apple Silicon"));
+ assert.ok(gigiBetaHtml.includes("GiGi 0.2.16 for Apple Silicon"));
 });
 
 
@@ -165,7 +165,7 @@ test('customization describes visible controls and portable device-local prefere
 });
 
 test('current release qualification distinguishes native synthetic checks from fresh setup', () => {
-  for (const text of ['GiGi 0.2.16 passed desktop', 'isolated native workspace', 'verified readback', 'notification permission recovery', 'matched the qualified build', 'notification-click routing remains a manual acceptance check']) assert.ok(gigiBetaHtml.includes(text), text);
+  for (const text of ['GiGi 0.2.18 passed 326 desktop', 'Native minimum-window resizing and native error persistence remain unverified', 'isolated native workspace', 'verified readback', 'notification permission recovery', 'matched the qualified build', 'notification-click routing remains a manual acceptance check']) assert.ok(gigiBetaHtml.includes(text), text);
   assert.ok(!gigiBetaHtml.includes('Release qualification for this customization update is in progress'));
 });
 
