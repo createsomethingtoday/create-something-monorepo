@@ -76,7 +76,7 @@ test('configuration import validates before saving and export contains presentat
     assert.match(root.innerHTML, /id="preferences-export"/);
     const config = JSON.parse([...storage.values()][0]);
     assert.equal(config.scheduleView, 'all');
-    assert.deepEqual(Object.keys(config).sort(), ['collectionView','density','scheduleView','startPage','theme','version']);
+    assert.deepEqual(Object.keys(config).sort(), ['chatDensity','chatTextSize','chatWidth','collectionView','density','scheduleView','startPage','theme','version']);
     assert.equal(calls.some(call => /save|import|restore|link/.test(call.operation)), false);
   });
 });

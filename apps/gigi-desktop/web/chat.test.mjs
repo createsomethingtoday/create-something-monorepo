@@ -177,7 +177,7 @@ test('default timers keep the Window receiver when scheduling and clearing a pol
   let scheduled = false, cleared = false;
   globalThis.setTimeout = function (_callback, delay) {
     assert.equal(this, globalThis, 'WebKit requires Window as the timer receiver');
-    assert.equal(delay, 1000);
+    assert.equal(delay, 250);
     scheduled = true;
     return 37;
   };

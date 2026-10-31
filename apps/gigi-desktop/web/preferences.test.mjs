@@ -9,7 +9,7 @@ function memoryStorage() {
 
 test('a complete visual configuration survives export, import and workspace restart', () => {
   const storage = memoryStorage();
-  const value = { version: 1, theme: 'paper', density: 'compact', startPage: 'tasks', collectionView: 'cards', scheduleView: 'all' };
+  const value = { ...defaults, version: 1, theme: 'paper', density: 'compact', startPage: 'tasks', collectionView: 'cards', scheduleView: 'all' };
   assert.deepEqual(writePreferences(storage, 'band', importPreferences(exportPreferences(value))), value);
   assert.deepEqual(readPreferences(storage, 'band'), value);
   assert.deepEqual(readPreferences(storage, 'solo'), defaults);
@@ -58,8 +58,8 @@ test('write failures and missing workspace IDs fail explicitly', () => {
 test('applying preferences uses only validated theme and density attributes', () => {
   const document = { documentElement: { dataset: {} } };
   applyPreferences({ theme: 'paper', density: 'compact', css: 'bad' }, document);
-  assert.deepEqual(document.documentElement.dataset, { theme: 'paper', density: 'compact', collectionView: 'list' });
+  assert.deepEqual(document.documentElement.dataset, { theme: 'paper', density: 'compact', collectionView: 'list', chatWidth: 'standard', chatTextSize: 'standard', chatDensity: 'comfortable' });
   applyPreferences({ theme: '<script>', density: 'tiny' }, document);
-  assert.deepEqual(document.documentElement.dataset, { theme: 'studio', density: 'comfortable', collectionView: 'list' });
+  assert.deepEqual(document.documentElement.dataset, { theme: 'studio', density: 'comfortable', collectionView: 'list', chatWidth: 'standard', chatTextSize: 'standard', chatDensity: 'comfortable' });
   assert.doesNotThrow(() => applyPreferences(defaults, {}));
 });

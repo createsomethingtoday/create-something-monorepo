@@ -7,9 +7,15 @@ export const defaults = Object.freeze({
   startPage: 'overview',
   collectionView: 'list',
   scheduleView: 'upcoming',
+  chatWidth: 'standard',
+  chatTextSize: 'standard',
+  chatDensity: 'comfortable',
 });
 
 const choices = {
+  chatWidth: ['standard', 'wide'],
+  chatTextSize: ['standard', 'larger'],
+  chatDensity: ['comfortable', 'compact'],
   theme: ['studio', 'paper', 'midnight'],
   density: ['comfortable', 'compact'],
   startPage: ['overview', 'music', 'social', 'gigs', 'schedule', 'tasks', 'finances', 'contacts'],
@@ -75,6 +81,9 @@ export function applyPreferences(value, document = globalThis.document) {
     dataset.theme = normalized.theme;
     dataset.density = normalized.density;
     dataset.collectionView = normalized.collectionView;
+    dataset.chatWidth = normalized.chatWidth;
+    dataset.chatTextSize = normalized.chatTextSize;
+    dataset.chatDensity = normalized.chatDensity;
   }
   return normalized;
 }

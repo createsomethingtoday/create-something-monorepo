@@ -1425,3 +1425,39 @@ test('relation continuation is offered as a workspace-pinned read with no write 
   await notify({workspaceId:'foreign',entity:'contacts',id:'synthetic-contact'},902);assert.equal(requests.length,1);assert.equal(replies.at(-1).result.success,false);
  }finally{await rm(dataDir,{recursive:true,force:true});}
 });
+
+test('active polling uses observed deltas without repeatedly hydrating history; terminal notification forces readback', async () => {
+  const {adapter,server}=await setup(); const {sessionId}=await adapter.start({workspaceId:'w',message:'Read only'});
+  const input={workspaceId:'w',sessionId};
+  server.thread.turns=[{id:'turn-1',status:'inProgress',items:[{id:'u1',type:'userMessage',content:[{type:'text',text:'Read only'}]}]}];
+  await adapter.read(input);const reads=server.calls.filter(x=>x.method==='thread/read').length;
+  const emit=async(message:any)=>Promise.all(server.events.map(fn=>fn(message)));
+  await emit({method:'item/agentMessage/delta',params:{threadId:'thread-1',turnId:'turn-1',itemId:'a1',delta:'**Partial** '}});
+  const partial=await adapter.poll(input); assert.equal(partial.state,'running');assert.equal(partial.messages.at(-1)?.text,'**Partial** ');assert.equal(partial.messages[0].text,'Read only');
+  await emit({method:'item/agentMessage/delta',params:{threadId:'thread-1',turnId:'other-turn',itemId:'foreign',delta:'Ignore this stale turn'}});
+  const second=await adapter.poll(input);assert.equal(second.messages.some(x=>x.id==='foreign'),false);
+  assert.equal(server.calls.filter(x=>x.method==='thread/read').length,reads,'rapid deltas must not hydrate all history');
+  await emit({method:'turn/completed',params:{threadId:'thread-1',turn:{id:'turn-1',status:'completed'}}});
+  assert.equal((await adapter.poll(input)).state,'running','notification is not terminal transcript proof');
+  server.thread.turns=[{id:'turn-1',status:'completed',items:[{id:'a1',type:'agentMessage',text:'**Partial** complete.'}]}];
+  await emit({method:'turn/completed',params:{threadId:'thread-1',turn:{id:'turn-1',status:'completed'}}});
+  assert.equal((await adapter.poll(input)).state,'idle');
+});
+
+test('activity is allowlisted observed local work and never includes tool arguments or reasoning', async () => {
+ const {adapter,server}=await setup(); const {sessionId}=await adapter.start({workspaceId:'w',message:'Read only'});
+ server.thread.turns=[{id:'turn-1',status:'inProgress',items:[]}];
+ await Promise.all(server.events.map(fn=>fn({id:2401,method:'item/tool/call',params:{threadId:'thread-1',tool:'gigi_records_get',arguments:{workspaceId:'w',entity:'tasks',id:'r',privateNote:'synthetic-secret-not-for-UI'}}})));
+ const observed=await adapter.read({workspaceId:'w',sessionId});assert.equal(observed.activity,'reading');assert.doesNotMatch(JSON.stringify(observed),/privateNote|synthetic-secret|arguments|reasoning/);
+ await Promise.all(server.events.map(fn=>fn({method:'item/reasoning/summaryTextDelta',params:{threadId:'thread-1',turnId:'turn-1',delta:'Never expose synthetic reasoning'}})));
+ assert.doesNotMatch(JSON.stringify(await adapter.poll({workspaceId:'w',sessionId})),/Never expose/);
+ server.thread.turns=[{id:'turn-1',status:'completed',items:[]}];assert.equal((await adapter.read({workspaceId:'w',sessionId})).activity,undefined);
+});
+
+test('transient history failure retains previous transcript alongside observed partial output', async () => {
+ const {adapter,server}=await setup(); const {sessionId}=await adapter.start({workspaceId:'w',message:'Read only'});const input={workspaceId:'w',sessionId};
+ server.thread.turns=[{id:'turn-1',status:'inProgress',items:[{id:'u',type:'userMessage',content:[{type:'text',text:'Read only'}]}]}];await adapter.read(input);
+ await Promise.all(server.events.map(fn=>fn({method:'item/agentMessage/delta',params:{threadId:'thread-1',turnId:'turn-1',itemId:'a',delta:'Retained partial'}})));
+ const original=server.request.bind(server);server.request=async(method,params)=>{if(method==='thread/read')throw Error('synthetic unavailable');return original(method,params);};
+ const pending=await adapter.read(input);assert.equal(pending.messages[0].text,'Read only');assert.equal(pending.messages.at(-1)?.text,'Retained partial');assert.equal(pending.state,'running');
+});

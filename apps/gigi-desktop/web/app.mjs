@@ -23,6 +23,7 @@ import { canUseSource, sourceDraft, reviewSourceDraft, sourceProposalView } from
 import { icon, entityIcon } from './icons.mjs';
 import { tauriBridge } from './bridge.mjs';
 import { ChatController, chatView } from './chat.mjs';
+import { updateChatPanel } from './chat-dom.mjs';
 import { AiConnection, aiConnectionView, updateAiDraft } from './ai-connection.mjs';
 import { sections, fields, moneyFields, booleanFields, fieldOptions, listFrom, recordFields, editedFields, formatMoney, gigBalance, relatedEndpoint, sourcePreview, sourceSessionBlocked, sourceCanBegin, sourceNeedsOperatorReview, importRunForAccount, pendingConsentForProvider, pendingAccountForProvider, linkInput } from './model.mjs';
 
@@ -74,12 +75,14 @@ function restorePreferences() {
 }
 function savePreferences(next, message = 'Preferences saved on this Mac.') {
   try {
+    const previous = preferences;
     preferences = writePreferences(preferenceStorage(), workspaceId(), next);
+    const chatOnly = Object.keys(defaults).every(key => key.startsWith('chat') || preferences[key] === previous[key]);
     applyPreferences(preferences);
     state.scheduleView = preferences.scheduleView;
     preferencesExported = preferencesExported ? exportPreferences(preferences) : null;
     preferencesFeedback = { message, error: false };
-    render();
+    if (chatOnly && state.page !== 'appearance') renderChat(); else render();
     return true;
   } catch (error) {
     preferencesFeedback = { message: explain(error), error: true };
@@ -221,6 +224,7 @@ function initializeChat() {
     else if (state.page === 'overview') await openPage('overview');
     else if (fields[state.page] && !state.editing) await openPage(state.page);
   });
+  Object.defineProperty(chat, 'preferences', { get: () => preferences });
   chat.currency = () => state.currency;
   chat.currencyKnown = () => state.currencyKnown;
   initializeAttention();
@@ -682,6 +686,11 @@ function renderChat() {
     }
     render(); root.querySelector?.('[data-chat-close]')?.focus?.(); return;
   }
+  if (panel.ownerDocument?.createElement) {
+    updateChatPanel(panel, chatView(chat, true), { draft: chat.draft, sessionId: chat?.current?.sessionId ?? null });
+    renderedChatSession = chat?.current?.sessionId ?? null;
+    return;
+  }
   const composer = globalThis.document?.activeElement?.id === 'chat-message' ? globalThis.document.activeElement : null;
   const selection = composer ? { start: composer.selectionStart, end: composer.selectionEnd, scrollTop: composer.scrollTop } : null;
   const transcript = panel.querySelector?.('.chat-transcript');
@@ -689,7 +698,7 @@ function renderChat() {
   const activeAction = ['chatClose','chatRefresh','chatSetup','chatNew','chatStop'].find(key => globalThis.document?.activeElement?.dataset?.[key] !== undefined);
   const session = chat?.current?.sessionId ?? null;
   const viewState = session === renderedChatSession ? captureViewState(panel) : null;
-  panel.innerHTML = chatView(chat, true);
+  updateChatPanel(panel, chatView(chat, true), { draft: chat.draft, sessionId: session });
   renderedChatSession = session;
   restoreViewState(panel, viewState);
   if (activeAction) { const attr = activeAction.replace(/[A-Z]/g, letter => '-'+letter.toLowerCase()); root.querySelector?.(`[data-${attr}]`)?.focus?.(); }
@@ -778,6 +787,7 @@ root.addEventListener('click', (event) => {
   if (button.dataset.attentionOpen || button.dataset.attentionAsk) { void attention?.open(button.dataset.attentionOpen || button.dataset.attentionAsk,button.dataset.attentionAsk?'ask':'review'); return; }
   if (button.dataset.attentionUpdate) { void attention?.update(button.dataset.attentionUpdate,button.dataset.attentionAction); return; }
   if (button.dataset.notificationSettings) { void bridge.call('notifications.openSettings',{}).catch(error=>notice(explain(error),true)); return; }
+  if (button.dataset.chatLatest) { const transcript=root.querySelector?.('.chat-transcript'); if(transcript)transcript.scrollTop=transcript.scrollHeight; button.hidden=true; root.querySelector?.('#chat-message')?.focus?.({preventScroll:true}); return; }
   if (button.dataset.chatPrompt) { const prompt=button.dataset.chatPrompt;void (async()=>{if(!chat)return;if(!chat.current)await chat.start();chat.draft=prompt;renderChat();root.querySelector?.('#chat-message')?.focus?.();})();return; }
   if (button.dataset.preferencesTheme) { savePreferences({ ...preferences, theme: button.dataset.preferencesTheme }); root.querySelector?.(`[data-preferences-theme="${preferences.theme}"]`)?.focus?.({ preventScroll: true }); return; }
   if (button.dataset.preferencesReset) { savePreferences(defaults, 'Appearance and views reset to Studio defaults.'); return; }
@@ -1050,3 +1060,5 @@ load().catch((error) => { root.innerHTML = `<div class="setup"><span class="bran
 root.addEventListener('change',event=>{if(event.target?.closest?.('#attention-settings'))attentionSettingsDirty=true;});
 globalThis.addEventListener?.('focus',()=>{void processNotificationOpen();void attention?.refresh();void bridge.call('notifications.status',{}).then(value=>{if(attention){attention.permission=value.permission || 'unknown';attention.alertsEnabled=value.alertsEnabled;renderAttention();}}).catch(()=>{});});
 globalThis.addEventListener?.('beforeunload',()=>{attention?.stop();notificationUnlisten?.();});
+
+root.addEventListener('scroll', event => { if(event.target?.classList?.contains('chat-transcript') && event.target.scrollHeight-event.target.scrollTop-event.target.clientHeight<48) { const latest=root.querySelector?.('[data-chat-latest]');if(latest)latest.hidden=true; } }, true);
