@@ -3,7 +3,6 @@
   let contactRequest: ReturnType<typeof createContactRequest> | undefined;
   import {
     Button,
-    PerformancePageSection,
     SEO
   } from '@create-something/canon';
   import { page } from '$app/stores';
@@ -437,11 +436,7 @@
   </div>
 </section>
 
-<PerformancePageSection variant="white" eyebrow="Funnel routing" title="Choose a useful next step.">
-  {#snippet after()}
-    <FunnelLadder />
-  {/snippet}
-</PerformancePageSection>
+<details class="contact-alternatives"><summary>Other ways to begin</summary><FunnelLadder /></details>
 
 <section class="email-section">
   <div class="section-container">
@@ -455,6 +450,9 @@
 
 <style>
   .inquiry-intro { width: min(var(--content-width-performance), 86%); margin: 0 auto; padding-block: var(--space-performance-lg) var(--space-performance-sm); }
+  .contact-alternatives { width: min(var(--content-width-performance), 86%); margin: var(--space-performance-md) auto; }
+  .contact-alternatives > summary { display: flex; align-items: center; min-height: 48px; cursor: pointer; }
+  .contact-alternatives > summary:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 4px; }
   .inquiry-intro h1 { max-width: 24ch; margin: var(--space-performance-sm) 0; font: var(--font-performance-medium) clamp(1.8rem, 3vw, 2.75rem)/1.15 var(--font-performance-interface); letter-spacing: var(--tracking-performance-tight); }
   .inquiry-intro p { max-width: 70ch; line-height: 1.55; }
   .inquiry-eyebrow { font: var(--text-performance-operator-label) var(--font-performance-mono); }

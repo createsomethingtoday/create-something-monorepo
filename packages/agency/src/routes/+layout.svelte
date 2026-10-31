@@ -429,6 +429,12 @@
   .film-home :global(main#main-content) { padding-top: 0; }
   .film-home :global(.nav-editorial .nav-link-list) { font-size: 12px; }
   @media(max-width:700px) { .film-home :global(.nav-editorial.nav-fixed) { top: 0; left: 0; right: 0; } .film-home :global(.nav-editorial .nav-inner) { padding-inline: 6vw; } }
+  @media(max-width:700px) {
+    .film-shell :global(.footer-link-groups) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 20px; }
+    .film-shell :global(.footer-link-groups nav) { min-width: 0; }
+    .film-shell :global(.footer-link-groups .footer-link) { min-height: 44px; display: flex; align-items: center; }
+    .film-shell :global(.footer-editorial-identity) { padding-block: 28px; }
+  }
   @media(min-width:1024px) and (max-width:1200px) {
     .film-home :global(.footer-editorial .footer-links-grid) { grid-template-columns: minmax(0,.82fr) minmax(0,1.12fr) minmax(0,.9fr); }
     .film-home :global(.footer-link-groups) { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 32px 24px; }

@@ -202,8 +202,8 @@ test('the builder-facing homepage retains commercial terms, film evidence and di
   assert.match(content, /href="https:\/\/www\.maverickx\.com\/"/);
   assert.match(content, /href="\/films\/websites\/reference\.png"/);
   assert.match(content, /href="\/products#cato-tour"/);
-  assert.match(content, /not evidence of client adoption of OpenAI tools/);
-  assert.match(content, /Illustrative example<br>Not a client delivery/);
+  assert.match(content, /Original conceptual illustration/);
+  assert.match(content, /not a measured business outcome/);
   assert.match(services, /Control starts at \$900\/month/);
   assert.match(registry, /Your next step, already prepared/);
   assert.match(registry, /tools and workflows that help agents do useful work/);
@@ -222,7 +222,8 @@ test('commercial decision routes explain the task, delivery, ownership, and proo
   assert.match(layout, /label: 'Technical Support', href: '\/services'/);
   assert.match(layout, /label: 'What You Keep', href: '\/stack'/);
   const homeContent = readFileSync(new URL('../src/lib/content/agency-home.html', import.meta.url), 'utf8');
-  assert.match(homeContent, /Agree the scope, then build and test a useful workflow together/);
+  assert.match(homeContent, /Connect it to the work/);
+  assert.match(homeContent, /Review. Keep improving/);
   assert.match(homeContent, /Your team keeps approval authority/);
   assert.match(read('services/+page.svelte'), /Bring a workflow, software problem or existing product/);
   assert.match(read('services/+page.svelte'), /Your team keeps approval authority/);
