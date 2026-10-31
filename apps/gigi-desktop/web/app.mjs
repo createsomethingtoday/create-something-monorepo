@@ -158,6 +158,7 @@ async function openAttention(item, mode = 'review') {
   } else if (item.entity && item.recordId) {
     if (mode === 'ask') {
       await chat.open({ entity:item.entity, id:item.recordId, title:item.title });
+      if(!chat.current || chat.record?.entity!==item.entity || chat.record?.id!==item.recordId)await chat.start();
       root.querySelector?.('[data-chat-close]')?.focus?.();
     } else await run(() => navigateRecord(item.entity,item.recordId));
   }
