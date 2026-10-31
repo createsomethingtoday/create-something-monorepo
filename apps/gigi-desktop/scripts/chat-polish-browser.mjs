@@ -71,7 +71,12 @@ try{
  await page.keyboard.press('Tab');assert.equal(await page.locator('[data-chat-stop]').evaluate(e=>e===document.activeElement),true,'composer reaches stop with Tab');
  await page.locator('.chat-transcript').evaluate(e=>e.scrollTop=0);
  await page.evaluate(()=>{const text=document.querySelector('.chat-answer strong').firstChild;const range=document.createRange();range.selectNodeContents(text);const selection=getSelection();selection.removeAllRanges();selection.addRange(range);});
- const selected=await page.evaluate(()=>getSelection().toString());await page.evaluate(()=>chatAppend('\nSelection must remain available.'));assert.equal(await page.evaluate(()=>getSelection().toString()),selected);await page.evaluate(()=>getSelection().removeAllRanges());
+ const selected=await page.evaluate(()=>getSelection().toString());await page.evaluate(()=>chatAppend('\nSelection must remain available.'));assert.equal(await page.evaluate(()=>getSelection().toString()),selected);
+ await page.evaluate(()=>chatSetState('idle'));
+ await page.evaluate(()=>getSelection().removeAllRanges());await page.locator('#chat-message').focus();
+ await page.waitForFunction(()=>document.querySelector('.from-agent .chat-answer')?.textContent.includes('Selection must remain available.'));
+ assert.equal(await page.locator('#chat-message').inputValue(),'Keep this draft','terminal selection reconciliation preserves draft');
+ assert.equal(await page.locator('#chat-message').evaluate(e=>e===document.activeElement),true,'terminal selection reconciliation preserves focus');
  await page.locator('#chat-message').focus();await page.evaluate(()=>chatClearDraft());assert.equal(await page.locator('#chat-message').inputValue(),'');
  // Observe temporal changes with normal motion; no token replay/entrance restarts.
  await page.emulateMedia({reducedMotion:'no-preference'});await page.evaluate(()=>chatFixture('midnight'));await page.locator('.chat-transcript').evaluate(e=>e.scrollTop=e.scrollHeight);

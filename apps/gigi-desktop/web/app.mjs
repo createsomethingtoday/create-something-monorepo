@@ -1066,6 +1066,16 @@ root.addEventListener('submit', (event) => {
 
 
 
+// A terminal response can arrive while its text is selected. Reconcile the
+// withheld answer once selection clears, even after response polling stops.
+globalThis.document?.addEventListener?.('selectionchange', () => {
+  if (!chat?.visible || !root.querySelector?.('.chat-answer[data-chat-selection-deferred]')) return;
+  const selection = globalThis.document.getSelection?.();
+  const panel = root.querySelector?.('.chat-panel');
+  if (selection && !selection.isCollapsed && (panel?.contains(selection.anchorNode) || panel?.contains(selection.focusNode))) return;
+  renderChat();
+});
+
 load().catch((error) => { root.innerHTML = `<div class="setup"><span class="brand-mark">g.</span><h1>Couldn’t open GiGi.</h1><p class="subhead">${safe(explain(error))}</p><button class="btn section-gap" id="retry">Retry</button></div>`; document.querySelector('#retry')?.addEventListener('click', () => location.reload()); });
 
 root.addEventListener('change',event=>{if(event.target?.closest?.('#attention-settings'))attentionSettingsDirty=true;});

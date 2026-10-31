@@ -7,7 +7,7 @@ function patch(before, after, document) {
   if (before.nodeType === 3) { before.nodeValue = after.nodeValue; return; }
   if (before.nodeType !== 1) return;
   const selection = document.getSelection?.();
-  if (before.classList.contains('chat-answer') && selection && !selection.isCollapsed && (before.contains(selection.anchorNode) || before.contains(selection.focusNode))) return;
+  if (before.classList.contains('chat-answer') && selection && !selection.isCollapsed && (before.contains(selection.anchorNode) || before.contains(selection.focusNode))) { before.dataset.chatSelectionDeferred = 'true'; return; }
   const preserveOpen = before.tagName === 'DETAILS';
   for (const attr of [...before.attributes]) if (!after.hasAttribute(attr.name) && !(preserveOpen && attr.name === 'open')) before.removeAttribute(attr.name);
   for (const attr of [...after.attributes]) if (attr.name !== 'open' && before.getAttribute(attr.name) !== attr.value) before.setAttribute(attr.name, attr.value);
