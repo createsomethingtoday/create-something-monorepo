@@ -16,10 +16,10 @@ test('standalone page retains the owning Agency Canon operator palette', () => {
 test('download contract pins exact qualified installer, platform and checksum', () => {
   assert.equal(gigiBeta.version, '0.2.20');
   assert.equal(gigiBeta.filename, 'GiGi-0.2.20-arm64-private-beta.dmg');
-  assert.equal(gigiBeta.bytes, 84804275);
-  assert.equal(gigiBeta.sha256, '53cf7e6e3b47520dd4ed7331ec6980255e53988aa3c3de096f6ed8b0ae4e0afc');
+  assert.equal(gigiBeta.bytes, 84804675);
+  assert.equal(gigiBeta.sha256, 'eb8c39dbc6a8a3e3bae5ea6ceb5617950b8a8f43fe0dc9758cc7c20a3e11605f');
   assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.20/GiGi-0.2.20-arm64-private-beta.dmg`);
-  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '84,804,275', '84.8 MB']) assert.ok(gigiBetaHtml.includes(text), text);
+  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '84,804,675', '84.8 MB']) assert.ok(gigiBetaHtml.includes(text), text);
 });
 
 test('beta stays unlisted and has no active content or tracking shell', () => {

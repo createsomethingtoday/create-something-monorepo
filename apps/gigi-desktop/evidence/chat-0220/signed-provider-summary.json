@@ -10,9 +10,9 @@
     "conversation retained after companion restart"
   ],
   "turns": 3,
-  "observations": 171,
-  "runningWithText": 134,
-  "distinctRunningLengths": 67,
+  "observations": 156,
+  "runningWithText": 122,
+  "distinctRunningLengths": 53,
   "approvalObservations": 2,
   "finalState": "idle"
 }
