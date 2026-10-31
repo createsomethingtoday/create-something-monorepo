@@ -1,7 +1,7 @@
 <script lang="ts">
-  import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
   import AgencyWayfindingHero from '$lib/components/AgencyWayfindingHero.svelte';
   import AgencyWayfindingOpening from '$lib/components/AgencyWayfindingOpening.svelte';
+  import AgencyRecordedWork from '$lib/components/AgencyRecordedWork.svelte';
   import BuiltWork from '$lib/components/BuiltWork.svelte';
   import MembershipOffer from '$lib/components/MembershipOffer.svelte';
   import ProjectReviewEntry from '$lib/components/ProjectReviewEntry.svelte';
@@ -113,10 +113,12 @@
         {agencyCoreMessaging.bookMappingSessionLabel}
       </Button>
     {/snippet}
-    {#snippet artifact()}<AgencyWayfindingHero route="services" />{/snippet}
+
   </PerformanceCampaignOpening>
   </AgencyWayfindingOpening>
   </div>
+
+  <AgencyRecordedWork id="service-recorded-work" title="See what the work looks like." />
 
   <PerformancePageSection
     id="support-scope"
@@ -146,15 +148,16 @@
     {/snippet}
   </PerformancePageSection>
 
-  <WorkflowSignalBand motionOnly quiet tall showMotionControl />
-
-  <BuiltWork />
+  <details class="service-work-library">
+    <summary>Explore more work and delivery stages <span aria-hidden="true">+</span></summary>
+    <BuiltWork />
+  </details>
 
   <MembershipOffer />
 
   <ProjectReviewEntry />
 
-  <ServicesProductPath />
+  <details class="service-path-library"><summary>Compare Map, Build and Control <span aria-hidden="true">+</span></summary><AgencyWayfindingHero route="services" /><ServicesProductPath /></details>
   <PerformancePageSection
     id="remote-support"
     eyebrow="Remote support"
@@ -198,6 +201,10 @@
 </div>
 
 <style>
+  .service-work-library, .service-path-library { border-block: 1px solid var(--color-performance-shell-border-default); }
+  .service-work-library > summary, .service-path-library > summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-performance-md); min-height: 64px; padding: var(--space-performance-md) 6vw; cursor: pointer; font: var(--text-performance-body-sm)/1.5 var(--font-performance-interface); }
+  .service-work-library > summary:focus-visible, .service-path-library > summary:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
+
   .services-opening :global(.performance-campaign-opening[data-density='compact']) { min-height: 0; }
   .services-opening :global(.performance-campaign-opening[data-expression='editorial'][data-density='compact'] .performance-campaign-opening__content) { padding-bottom: var(--space-performance-xl); }
 

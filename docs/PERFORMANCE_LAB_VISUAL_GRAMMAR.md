@@ -48,7 +48,7 @@ Use on homepage, services, editorial, case-study, and social surfaces.
 
 Must include:
 
-1. One original Playbook field or content-specific performance study.
+1. One original Playbook field or content-specific performance study; Agency may use the approved graphite workshop story described below.
 2. One technical annotation or integrated measurement layer.
 3. Decisive scale contrast and a non-uniform composition.
 4. A named translation into workflow pressure, testing, or proof.
@@ -59,7 +59,7 @@ sequence, caption, trace, or receipt.
 
 ### Operating identity: Playbook field
 
-CREATE SOMETHING uses court-like Playbook notation as its primary Agency campaign field. The field
+CREATE SOMETHING uses court-like Playbook notation for operating maps and workflow explanations. The field
 gives operators and approved AI the same picture: actors, routes, authority, constraints, evidence,
 and the next decision. Offense shows how approved work creates advantage. Defense shows how the
 operation protects authority, quality, evidence, and recovery.
@@ -79,6 +79,29 @@ The visual must describe an actual Play. X marks name ambiguity, AI out of reach
 automation—not a person, customer, or competitor. Generic X/O decoration, hardwood texture, team branding,
 jerseys, whistles, scoreboards, motivational slogans, or basketball clip art do not pass. A reader
 must understand the operating meaning without sports knowledge.
+
+### Agency campaign story: graphite workshop
+
+The approved Agency commercial direction pairs **“Put AI to work. Bring your team with it.”**
+with original graphite workshop scenes. These are conceptual illustrations of learning,
+connection, inspection, and handoff. They are not product screenshots, delivered hardware,
+live agent runs, or evidence of client outcomes.
+
+- Let the subject determine the composition: a wide shared task, a close connection,
+  a completed tool in use, and a portrait handoff with a working guide.
+- Preserve the relationship between actors and the task on phones. Record the full frame,
+  focal point, mobile crop, and copy-safe area with each asset.
+- Use live DOM for the proposition, action, state, and caption. Put actual recordings,
+  source artifacts, or receipts next to claims about delivered work.
+- Keep the original near-black/ivory/graphite material family. Do not add decorative state
+  colors or fake instruments to make a conceptual scene resemble verified evidence.
+- Booking, forms, legal pages, and canvases give their primary space to the task or text.
+  Product examples must be real permitted states or explicitly synthetic and read-only.
+
+The first approved narrative sequence and provenance are recorded under
+`packages/agency/content/assets/brand/agency-image-led-20261030/`. Playbook notation remains
+available where it makes authority, routes, and proof clearer; the commercial hero need not
+repeat a court diagram.
 
 #### Scale rule: shared picture, not tactics theater
 

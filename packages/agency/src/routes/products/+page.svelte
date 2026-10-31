@@ -1,6 +1,6 @@
 <script lang="ts">
   import CatoProjectTour from '$lib/components/CatoProjectTour.svelte';
-  import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
+  import AgencyRecordedWork from '$lib/components/AgencyRecordedWork.svelte';
   import {
     IsometricIllustration,
     Button,
@@ -162,14 +162,16 @@
   {/snippet}
   {#snippet artifact()}<AgencyProductJunction />{/snippet}
 </PerformanceCampaignOpening>
-<WorkflowSignalBand motionOnly quiet tall showMotionControl />
-<div class="products-paths"><AgencyPathChoices label="Choose a product path" /></div>
+
 </div>
 
+<AgencyRecordedWork id="product-recorded-work" title="Start with the actual work." />
+
+<div class="products-paths"><AgencyPathChoices label="Choose a product path" /></div>
 <section id="capabilities" class="capabilities" aria-labelledby="capabilities-title">
   <p>Apps, workflows & agents</p><h2 id="capabilities-title">Inspect what your team will keep.</h2>
   <p>Review the linked implementations and clearly labeled scenarios below. For your Build, agree on the source, instructions, tests and handoff your team will own, plus what agents may do and what needs human approval. Production launch is agreed separately.</p>
-  <p>Membership supports agreed improvements between check-ins. Focused is {PUBLIC_PRICING.membership.focused.label} for one workstream and one milestone each billing month. Team is {PUBLIC_PRICING.membership.team.label} for up to two workstreams and two milestones. Both include two 30-minute check-ins. Focused has two 60-minute remote sessions available; Team has four. Use remote sessions when helpful for onboarding, pairing or troubleshooting. Larger Builds, managed Control and project costs are separate.</p>
+  <details class="capacity-note"><summary>Membership capacity and separate costs</summary><p>Membership supports agreed improvements between check-ins. Focused is {PUBLIC_PRICING.membership.focused.label} for one workstream and one milestone each billing month. Team is {PUBLIC_PRICING.membership.team.label} for up to two workstreams and two milestones. Both include two 30-minute check-ins. Focused has two 60-minute remote sessions available; Team has four. Use remote sessions when helpful for onboarding, pairing or troubleshooting. Larger Builds, managed Control and project costs are separate.</p></details>
   <CatoProjectTour />
   {#each filmStories as story}
     <article><div><h3>{story.name}</h3><p>{story.desc}</p><p class="deliverable">What you keep: {story.deliver}</p><p class="evidence-status">{story.status}</p><p class="evidence-proof">{story.proof}</p></div>
@@ -297,6 +299,11 @@
 </PerformanceConversionHandoff>
 
 <style>
+  .capacity-note { margin-block: var(--space-performance-md); border-block: 1px solid var(--color-performance-shell-border-default); }
+  .capacity-note summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-size: var(--text-performance-body-sm); }
+  .capacity-note summary:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+  .capacity-note p { line-height: 1.65; font-size: var(--text-performance-body-sm); margin-block: var(--space-performance-md); }
+
   #capabilities { scroll-margin-top: 6rem; }
   .products-opening { background: var(--color-performance-mode-campaign-surface); color: var(--color-performance-mode-campaign-ink); }
   .products-paths { padding: 0 max(1.25rem, 5vw) var(--space-performance-sm); }

@@ -18,6 +18,7 @@
   } from '@create-something/canon';
   import DelegationPracticeWorkbench from '$lib/components/DelegationPracticeWorkbench.svelte';
   import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
+  import AgencyPracticeSample from '$lib/components/AgencyPracticeSample.svelte';
 
   const systemConditions: PerformanceCondition[] = [
     {
@@ -150,12 +151,14 @@
     ]}
   >
     {#snippet actions()}
-      <Button href="#practice-workbench">Map one workflow</Button>
+      <Button href="#short-practice">Try a short example</Button>
       <Button href="#evidence" variant="secondary">Examine the evidence</Button>
     {/snippet}
     {#snippet artifact()}<AgencyWayfindingHero route="practice" />{/snippet}
   </PerformanceCampaignOpening>
   </AgencyWayfindingOpening>
+
+  <AgencyPracticeSample />
 
   <WorkflowSignalBand motionOnly quiet tall showMotionControl />
 

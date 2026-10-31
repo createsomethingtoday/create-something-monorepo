@@ -216,8 +216,8 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     intent:
       'Explain recurring AI-native technical support, its engineering capability, ownership and agreed capacity.',
     primaryAction: 'Talk through your workflow',
-    requiredTerms: ['technical support', 'diagnose', 'improvements', 'workstream', 'code'],
-    requiredLinks: ['/agent-foundation', '/services', '/stack'],
+    requiredTerms: ['technical support', 'workflow', 'team', 'workstream', 'code'],
+    requiredLinks: ['/products', '/services', '/stack'],
     schema: 'page',
     search: {
       changefreq: 'weekly',
@@ -959,8 +959,8 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     audience: 'Readers who want to understand the operator behind CREATE SOMETHING .agency.',
     funnelStage: 'evaluate',
     intent: 'Explain Micah Johnson and the diagnosis, engineering, and learning behind technical support.',
-    primaryAction: 'Book',
-    requiredTerms: ['workflow', 'operator', 'judgment', 'evidence', 'trust'],
+    primaryAction: 'Talk through your workflow',
+    requiredTerms: ['workflow', 'people', 'approval', 'instructions', 'trust'],
     requiredLinks: ['/services'],
     schema: 'page',
     search: {
