@@ -60,6 +60,14 @@ export const FIELD_IDS = {
     preflightInstallUrlProbe: 'fld9pVFSuvMfbMhGX',
     preflightInstallUrlCheckedAt: 'fldPCPIZgVLDIRsAj',
     preflightInstallUrlCheckedBy: 'fldrs3ObJM8uEYgPq',
+    // Backend declaration (2026-10-30): self-attested by the developer on the submission
+    // form (New and every Update) after the PHP2Shell / Node2Shell CVEs. Writable here so a
+    // reviewer can correct a plausibility error; Webflow does not verify the infrastructure.
+    backendHostingModel: 'fldMlSmm8AlzWGZhw',
+    backendRuntime: 'fld2q6KbYhc6HMKdz',
+    backendRuntimeVersion: 'fldbAGf4BIDGtgrsu',
+    backendHostingProvider: 'fldSFlf75x5CJYzgm',
+    backendDeclaredAt: 'fldyrLslbwNMTPjJF',
   },
   versions: {
     name: 'fldKA9eJja5uajlok',
@@ -112,6 +120,11 @@ export const FIELD_IDS = {
     preflightInstallUrlProbe: 'fldT6vMEb7xNmxpGM',
     preflightInstallUrlCheckedAt: 'flduoayx2NPnwVkYu',
     preflightInstallUrlCheckedBy: 'fldrHBRM5Zszp0gEm',
+    // Backend declaration snapshot taken at submission time. Read-only here.
+    backendHostingModel: 'fld4adFIWmqPpxT7I',
+    backendRuntime: 'fld2FauecT0r0zwKJ',
+    backendRuntimeVersion: 'fld6qkHQbkK12EUvG',
+    backendHostingProvider: 'fld5eqefnCFivlpfF',
   },
   exceptions: {
     item: 'fldmJcVJCytD1VY1r',
@@ -243,6 +256,46 @@ export const PREFLIGHT_READINESS_OPTIONS = ['ready', 'changes_required', 'needs_
 
 export const PREFLIGHT_INSTALL_URL_STATUS_OPTIONS = ['pass', 'warn', 'block', 'not_checked'] as const;
 
+export const BACKEND_HOSTING_MODEL_OPTIONS = [
+  'None (browser-only Designer Extension)',
+  'Webflow Cloud',
+  'Serverless / PaaS',
+  'Own server / VPS',
+  'Undeclared',
+] as const;
+
+export const BACKEND_RUNTIME_OPTIONS = [
+  'None',
+  'Node.js',
+  'PHP',
+  'Python',
+  'Ruby',
+  'Go',
+  '.NET',
+  'Java / JVM',
+  'Other',
+  'Undeclared',
+] as const;
+
+/**
+ * Backend declaration keys (snake_case, as exposed by the field map) -> FIELD_IDS key.
+ * Writable on Assets; the first four are snapshotted read-only onto Asset Versions.
+ */
+export const BACKEND_DECLARATION_FIELD_KEYS = {
+  backend_hosting_model: 'backendHostingModel',
+  backend_runtime: 'backendRuntime',
+  backend_runtime_version: 'backendRuntimeVersion',
+  backend_hosting_provider: 'backendHostingProvider',
+} as const;
+
+export type BackendDeclarationSnapshotKey = keyof typeof BACKEND_DECLARATION_FIELD_KEYS;
+
+function backendDeclarationReadOnlyFields(table: 'versions'): Record<BackendDeclarationSnapshotKey, string> {
+  return Object.fromEntries(
+    Object.entries(BACKEND_DECLARATION_FIELD_KEYS).map(([key, fieldKey]) => [key, FIELD_IDS[table][fieldKey]]),
+  ) as Record<BackendDeclarationSnapshotKey, string>;
+}
+
 /**
  * Preflight read-only keys (snake_case, as exposed by the field map) -> FIELD_IDS key.
  * The same eleven fields exist on both Assets and Asset Versions.
@@ -343,6 +396,8 @@ export type RejectionReason = (typeof REJECTION_REASON_OPTIONS)[number];
 export type ExceptionStatus = (typeof EXCEPTION_STATUS_OPTIONS)[number];
 export type ExceptionType = (typeof EXCEPTION_TYPE_OPTIONS)[number];
 export type HoldReason = (typeof HOLD_REASON_OPTIONS)[number];
+export type BackendHostingModel = (typeof BACKEND_HOSTING_MODEL_OPTIONS)[number];
+export type BackendRuntime = (typeof BACKEND_RUNTIME_OPTIONS)[number];
 export type GovernanceFindingCategory = (typeof GOVERNANCE_FINDING_CATEGORY_OPTIONS)[number];
 export type GovernanceFindingStatus = (typeof GOVERNANCE_FINDING_STATUS_OPTIONS)[number];
 export type GovernanceFindingPriority = (typeof GOVERNANCE_FINDING_PRIORITY_OPTIONS)[number];
@@ -372,6 +427,11 @@ export type AssetWritableKey =
   | 'support_email_or_url'
   | 'preview_site_url'
   | 'promo_video_url'
+  | 'backend_hosting_model'
+  | 'backend_runtime'
+  | 'backend_runtime_version'
+  | 'backend_hosting_provider'
+  | 'backend_declared_at'
   | 'marketplace_status';
 
 export const WRITABLE_ASSET_FIELDS: Record<AssetWritableKey, string> = {
@@ -399,6 +459,11 @@ export const WRITABLE_ASSET_FIELDS: Record<AssetWritableKey, string> = {
   support_email_or_url: FIELD_IDS.assets.supportEmailOrUrl,
   preview_site_url: FIELD_IDS.assets.previewSiteUrl,
   promo_video_url: FIELD_IDS.assets.promoVideoUrl,
+  backend_hosting_model: FIELD_IDS.assets.backendHostingModel,
+  backend_runtime: FIELD_IDS.assets.backendRuntime,
+  backend_runtime_version: FIELD_IDS.assets.backendRuntimeVersion,
+  backend_hosting_provider: FIELD_IDS.assets.backendHostingProvider,
+  backend_declared_at: FIELD_IDS.assets.backendDeclaredAt,
   marketplace_status: FIELD_IDS.assets.marketplaceStatus,
 };
 
@@ -477,6 +542,14 @@ export function isExceptionType(value: string): value is ExceptionType {
 
 export function isHoldReason(value: string): value is HoldReason {
   return (HOLD_REASON_OPTIONS as readonly string[]).includes(value);
+}
+
+export function isBackendHostingModel(value: string): value is BackendHostingModel {
+  return (BACKEND_HOSTING_MODEL_OPTIONS as readonly string[]).includes(value);
+}
+
+export function isBackendRuntime(value: string): value is BackendRuntime {
+  return (BACKEND_RUNTIME_OPTIONS as readonly string[]).includes(value);
 }
 
 export function isGovernanceFindingCategory(value: string): value is GovernanceFindingCategory {
@@ -602,6 +675,7 @@ export const APP_REVIEW_FIELD_MAP = {
       resolved_exception_items: FIELD_IDS.versions.resolvedExceptionItems,
       is_partnership_app: FIELD_IDS.versions.partnershipApp,
       ...preflightReadOnlyFields('versions'),
+      ...backendDeclarationReadOnlyFields('versions'),
     },
   },
   exceptions: {
@@ -643,6 +717,8 @@ export const APP_REVIEW_FIELD_MAP = {
     holdReason: HOLD_REASON_OPTIONS,
     preflightReadiness: PREFLIGHT_READINESS_OPTIONS,
     preflightInstallUrlStatus: PREFLIGHT_INSTALL_URL_STATUS_OPTIONS,
+    backendHostingModel: BACKEND_HOSTING_MODEL_OPTIONS,
+    backendRuntime: BACKEND_RUNTIME_OPTIONS,
     governanceFindingCategory: GOVERNANCE_FINDING_CATEGORY_OPTIONS,
     governanceFindingStatus: GOVERNANCE_FINDING_STATUS_OPTIONS,
     governanceFindingPriority: GOVERNANCE_FINDING_PRIORITY_OPTIONS,
