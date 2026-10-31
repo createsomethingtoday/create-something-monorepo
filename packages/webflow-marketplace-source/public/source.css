@@ -259,8 +259,9 @@ body .wfdt-sticky{background:#fff}
 .has-conversation .rd-search-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 .rd-search-card{min-width:0;position:relative}
 .rd-search-card .tmcard-link{border:1px solid var(--rd-line);box-sizing:border-box}
-.rd-search-badge{position:absolute;left:12px;top:12px;z-index:11;display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 8px;border-radius:4px;background:var(--rd-fg);color:#fff;font-size:.75rem;font-weight:500;line-height:1;box-shadow:0 2px 8px rgba(8,8,8,.12);pointer-events:none}
+.rd-search-badge{position:absolute;left:12px;top:12px;z-index:11;display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 8px;border-radius:4px;background:var(--rd-fg);color:#fff;font-size:.75rem;font-weight:500;line-height:1;box-shadow:0 2px 8px rgba(8,8,8,.12);pointer-events:none;animation:tmcard-enter 500ms ease-out var(--tmcard-stagger,0ms) both}
 .rd-search-badge span{font-size:.625rem}
+@media(prefers-reduced-motion:reduce){.rd-search-badge{animation:none}}
 .rd-search-card .tmcard-primary-img{object-fit:contain!important;background:var(--rd-surface)}
 .rd-search-card-actions{display:flex;align-items:start;justify-content:space-between;position:relative;gap:8px;margin-top:8px;border-top:1px solid var(--rd-line);padding-top:4px}
 .rd-search-evidence{flex:1;min-width:0;font-size:12px;color:var(--rd-muted)}

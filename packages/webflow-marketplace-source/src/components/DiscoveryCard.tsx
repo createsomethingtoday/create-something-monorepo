@@ -8,7 +8,7 @@ export default function DiscoveryCard({item,brief,index,picked,atLimit,onToggle}
  const evidence=evidenceFor(item,brief,true);
  const pickNote=item.is_featured&&typeof item.reviewer_pick_reason==='string'?item.reviewer_pick_reason.trim():'';
  return <article className="rd-search-card" data-template-slug={item.template_slug}>
-  {item.is_featured&&<span className="rd-search-badge"><span aria-hidden="true">★</span> Featured</span>}
+  {item.is_featured&&<span className="rd-search-badge" style={{['--tmcard-stagger' as string]:`${Math.min(index,8)*60}ms`}}><span aria-hidden="true">★</span> Featured</span>}
   <TemplateCard templateName={item.name} templateLink={{href:detailUrl}}
    creatorName={item.creator_name} creatorLink={{href:localLink(item.creator_profile_url)}}
    creatorIcon={item.creator_avatar_url?{src:item.creator_avatar_url,alt:item.creator_name}:undefined}
