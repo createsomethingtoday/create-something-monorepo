@@ -284,7 +284,8 @@ body .wfdt-sticky{background:#fff}
 .rd-search-compare input{appearance:auto;width:14px;height:14px;accent-color:var(--rd-blue);margin:0}
 .rd-search-card.is-picked .tmcard-link{border-color:var(--rd-blue);box-shadow:0 0 0 1px var(--rd-blue)}
 @media(hover:none){.rd-search-compare{opacity:1;height:32px}}
-.rd-search-why{margin:10px 0 0;padding:8px 10px;border-radius:4px;background:#F7F9FF;font-size:13px;line-height:1.45;color:#363636;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rd-search-why{margin:10px 0 0;padding:8px 10px;border-radius:4px;background:#F7F9FF;font-size:13px;line-height:1.45;color:#363636}
+.rd-search-why>span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .rd-search-why b{font-weight:600;color:var(--rd-blue)}
 .rd-skeleton-card div{aspect-ratio:150/199;border-radius:8px;background:var(--rd-surface)}
 .rd-skeleton-card span{display:block;height:12px;width:70%;margin-top:14px;border-radius:3px;background:var(--rd-surface)}

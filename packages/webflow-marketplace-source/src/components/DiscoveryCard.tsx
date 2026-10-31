@@ -20,7 +20,7 @@ export default function DiscoveryCard({item,brief,index,picked=false,atLimit=fal
    price={priceLabel(item)} priceNumeric={typeof item.price==='number'?String(item.price):undefined} isFree={item.is_free}
    categoryName={(item.category_groups?.find(group=>group.slug===brief.category)||item.category_groups?.[0])?.name}
    showCategoryMeta={true} showTemplateType={false} showPreviewLink={false} priorityIndex={index} stylesProvided={true}/>
-  {onToggle&&pickNote&&<p className="rd-search-why"><b>Marketplace pick:</b> {firstSentence(pickNote)}</p>}
+  {onToggle&&pickNote&&<p className="rd-search-why"><span><b>Marketplace pick:</b> {firstSentence(pickNote)}</span></p>}
   {onToggle&&<details className="rd-search-evidence"><summary>Why this template</summary>
    <div className="rd-search-evidence-body">
     {pickNote&&<><h3>Marketplace pick note</h3><p>{pickNote}</p></>}
