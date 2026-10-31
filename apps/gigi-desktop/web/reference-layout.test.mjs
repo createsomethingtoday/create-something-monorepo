@@ -59,6 +59,7 @@ test('navigation dismissal and keyboard movement work independently of data acti
  key('ArrowDown');assert.equal(doc.activeElement,buttons[1]);key('End');assert.equal(doc.activeElement,buttons[2]);
  key('Home');assert.equal(doc.activeElement,buttons[0]);key('Escape');assert.equal(menu.open,false);assert.equal(doc.activeElement,summary);
  menu.open=true;listeners.get('pointerdown')({target:{}});assert.equal(menu.open,false);
+ menu.open=true;listeners.get('click')({target:{}});assert.equal(menu.open,false,'assistive click outside closes navigation');
  menu.open=true;listeners.get('focusin')({target:{}});assert.equal(menu.open,false);
  menu.open=true;rootListeners.get('click')({target:{closest(){return buttons[1];}}});assert.equal(menu.open,false);
 });

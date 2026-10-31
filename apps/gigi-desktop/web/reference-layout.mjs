@@ -29,7 +29,9 @@ export function referenceHeader({page,sections,workspace,history}) {
 export function installReferenceMenu(root,document=globalThis.document) {
   const current=()=>root.querySelector?.('.reference-more[open]');
   const dismiss=(restoreFocus=false)=>{const menu=current();if(!menu)return;menu.open=false;if(restoreFocus)menu.querySelector?.('summary')?.focus?.({preventScroll:true});};
-  document?.addEventListener?.('pointerdown',event=>{const menu=current();if(menu&&!menu.contains(event.target))dismiss();});
+  const dismissOutside=event=>{const menu=current();if(menu&&!menu.contains(event.target))dismiss();};
+  document?.addEventListener?.('pointerdown',dismissOutside);
+  document?.addEventListener?.('click',dismissOutside);
   document?.addEventListener?.('focusin',event=>{const menu=current();if(menu&&!menu.contains(event.target))dismiss();});
   root.addEventListener('click',event=>{const button=event.target.closest?.('button[data-page]');const menu=current();if(button&&menu?.contains(button))dismiss();},true);
   document?.addEventListener?.('keydown',event=>{
