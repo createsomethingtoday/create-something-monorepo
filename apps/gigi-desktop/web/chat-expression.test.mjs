@@ -21,3 +21,9 @@ test('answer hierarchy supports bounded headings and numbered steps without expo
  assert.match(html,/<h3>A useful plan<\/h3>/);assert.match(html,/<ol><li>Review <strong>the rehearsal<\/strong><\/li><li>Confirm <code>&lt;script&gt;<\/code><\/li><\/ol>/);assert.match(html,/<h3>&lt;img src=x&gt;<\/h3>/);assert.doesNotMatch(html,/<img|<script/);
  assert.match(renderAnswer('#### Leave unsupported syntax plain'),/^<p>####/);
 });
+
+test('conversation list reflects the latest observed terminal state',async()=>{
+ const {ChatController}=await import('./chat.mjs');const controller=new ChatController({},'w1',()=>{},()=>{});
+ controller.current={sessionId:'s1',state:'approval',messages:[]};controller.sessions=[{sessionId:'s1',state:'approval'}];
+ controller.accept({sessionId:'s1',state:'idle',messages:[],approvals:[],recordLinks:[]});assert.equal(controller.sessions[0].state,'idle');
+});

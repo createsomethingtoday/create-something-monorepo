@@ -144,6 +144,7 @@ export class ChatController {
     const verifiedEdit = result.decisionReceipt?.outcome === 'verified' && (previousReceipt?.outcome !== 'verified' || previousReceipt.approvalId !== result.decisionReceipt.approvalId);
     const messages = Array.isArray(result.messages) && result.messages.length ? result.messages : this.current.messages;
     if(result.state !== 'running' && !result.recoveryPending)this.observationPaused=false;
+    this.sessions=this.sessions.map(session=>session.sessionId===result.sessionId?{...session,state:result.state}:session);
     this.current = { ...result, messages }; this.error = result.error || null;
     const unconfirmed = this.unconfirmedSends.get(result.sessionId);
     if (unconfirmed?.sessionId === result.sessionId) {

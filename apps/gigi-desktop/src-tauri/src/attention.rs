@@ -298,6 +298,11 @@ fn session_updates(db: &Connection, wid: &str, input: &Value, now: i64) -> Resul
                     now,
                 )?;
             }
+            if outcome=="verified" && state=="idle" && prior.is_none() {
+                // Historical results remain reviewable without turning rotating
+                // startup discovery into a sequence of stale desktop alerts.
+                db.execute("UPDATE attention_items SET delivery_state='suppressed' WHERE workspace_id=?1 AND id=?2 AND delivery_state IS NULL",params![wid,format!("session:{sid}:receipt:{aid}")]).map_err(fail)?;
+            }
             let recovery_id = format!("session:{sid}:recovery");
             if outcome == "unknown" {
                 put(db,wid,Signal{id:recovery_id,kind:"recovery",title:"A change needs checking".into(),body:"GiGi cannot confirm this action. Check the conversation before requesting another change.".into(),entity:entity.clone(),record_id:record_id.clone(),session_id:Some(sid.into()),source:json!({"approvalId":aid,"outcome":"unknown"})},now)?;
@@ -799,6 +804,19 @@ mod tests {
         assert_eq!(ready["items"][0]["title"],"Your answer is ready");
         assert_eq!(ready["items"][0]["sessionId"],"synthetic-conversation");
         assert_eq!(dispatch(&root,"attention.refresh",update("idle",Some("new-answer"))).unwrap()["items"].as_array().unwrap().len(),1);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn historical_receipts_discovered_in_batches_stay_in_feed_without_alerts() {
+        let (root,wid)=profile();let base=clock(&wid);
+        dispatch(&root,"attention.settings",request(&base,json!({"patch":{"enabled":true,"quietStart":0,"quietEnd":0}}))).unwrap();
+        for batch in 0..3 {
+            let sessions:Vec<Value>=(0..8).map(|i|json!({"sessionId":format!("old-{batch}-{i}"),"state":"idle","decisionReceipt":{"outcome":"verified","approvalId":format!("receipt-{batch}-{i}")}})).collect();
+            let snapshot=dispatch(&root,"attention.refresh",request(&base,json!({"sessions":sessions,"now":base["now"].as_i64().unwrap()+batch*60000}))).unwrap();
+            assert_eq!(snapshot["items"].as_array().unwrap().len(),((batch+1)*8) as usize);
+            assert!(dispatch(&root,"attention.claimDelivery",request(&base,json!({"now":base["now"].as_i64().unwrap()+batch*60000}))).unwrap()["item"].is_null());
+        }
         std::fs::remove_dir_all(root).unwrap();
     }
 
