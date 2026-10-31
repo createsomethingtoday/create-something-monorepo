@@ -1,10 +1,10 @@
 # Mobbin Research Protocol
 
-Use Mobbin as a comparative product-research library. Canon and the owning product remain the implementation authorities.
+Use Mobbin as an optional comparative product-research library after the TASTE-first review in [taste-research.md](./taste-research.md), or when the user specifically requests Mobbin. Canon and the owning product remain the implementation authorities.
 
 ## Trigger
 
-Research Mobbin when at least one condition is true:
+Consider Mobbin when TASTE leaves a material question unresolved and at least one condition is true:
 
 - the experience or journey is greenfield;
 - the interaction is unfamiliar to the team;

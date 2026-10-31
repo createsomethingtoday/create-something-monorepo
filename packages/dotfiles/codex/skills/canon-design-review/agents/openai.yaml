@@ -1,15 +1,7 @@
 interface:
   display_name: 'Canon Design Review'
   short_description: 'Research and review UX through Canon'
-  default_prompt: 'Use $canon-design-review to research relevant product patterns, then review this UI through Canon and Performance Lab.'
-
-dependencies:
-  tools:
-    - type: 'mcp'
-      value: 'mobbin'
-      description: 'Mobbin product design research'
-      transport: 'streamable_http'
-      url: 'https://api.mobbin.com/mcp'
+  default_prompt: 'Use $canon-design-review to inspect relevant TASTE references, then review this UI through Canon and Performance Lab.'
 
 policy:
   allow_implicit_invocation: true

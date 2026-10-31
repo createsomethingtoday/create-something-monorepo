@@ -20,8 +20,8 @@
   <PerformanceCampaignOpening
     eyebrow="Dispatch / Field notes"
     expression="editorial"
-    title="Practical lessons from building AI workflows."
-    lede="See what worked, what failed, and what your team can use. Each field note connects a real task with the result and its limits."
+    title="The work, with evidence."
+    lede="What happened, what we learned, and where each result has limits."
     density="compact"
     proof={[
       { label: 'Work', value: 'Real workflows' },
@@ -59,14 +59,12 @@
         <article>
           <h3>Field notes by email</h3>
           <p>
-            Read published field notes on CREATE SOMETHING .io, or sign up there for future editions.
+            Sign up on CREATE SOMETHING .io for future field notes, or read a published edition.
             Email is limited to two validated sends per month.
           </p>
           <div class="reader-actions">
-            <Button href="https://createsomething.io/newsletters">Read published field notes</Button>
-            <Button href="https://createsomething.io/newsletters#subscribe" variant="secondary"
-              >Get field notes by email</Button
-            >
+            <Button href="https://createsomething.io/newsletters#subscribe">Get field notes by email</Button>
+            <a class="archive-link" href="https://createsomething.io/newsletters">Read published field notes</a>
           </div>
         </article>
         <article>
@@ -77,9 +75,6 @@
           </p>
           <div class="reader-actions">
             <Button href="/field-reports">Explore current field reports</Button>
-            <Button href={agencyCoreMessaging.selfMapHref} variant="secondary"
-              >{agencyCoreMessaging.selfMapLabel}</Button
-            >
           </div>
         </article>
       </div>
@@ -170,15 +165,39 @@
     margin-top: 3rem;
   }
   .reader-grid article {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
     border-top: 2px solid var(--color-performance-ink, #111);
     padding-top: 1rem;
   }
+  .reader-grid h3 {
+    line-height: 1.3;
+  }
   .reader-grid p {
+    margin: 1rem 0 0;
+    max-width: 52ch;
     line-height: 1.55;
+  }
+  .reader-grid .reader-actions {
+    margin-top: auto;
+    padding-top: 1.5rem;
+  }
+  .archive-link {
+    color: var(--color-performance-muted);
+    text-underline-offset: 0.2em;
+  }
+  .archive-link:hover {
+    color: var(--color-performance-ink);
+  }
+  .archive-link:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 4px;
   }
   .reader-actions {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: 0.75rem;
     margin-top: 1.5rem;
   }
