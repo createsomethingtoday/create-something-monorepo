@@ -113,14 +113,12 @@ const codexOnlySkills = [
     name: 'canon-design-review',
     codex: 'packages/dotfiles/codex/skills/canon-design-review/SKILL.md',
     expectations: [
-      /Mobbin interaction evidence/i,
+      /curated TASTE library/i,
       /Performance Lab is the house identity/i,
-      /mobbin-research\.md/,
-      /search_flows/,
-      /search_screens/,
-      /search_sections/,
-      /Compare three distinct products/i,
-      /Pattern.*Why.*Adopt.*Avoid.*Source/,
+      /taste-research\.md/,
+      /3[–-]7/,
+      /actual images/i,
+      /Mobbin as an optional supplement/i,
       /Never copy a Mobbin layout/i,
       /desktop, mobile, keyboard, reduced-motion/i
     ]
@@ -133,7 +131,7 @@ const codexOnlySkills = [
       /PERFORMANCE_LAB_VISUAL_GRAMMAR\.md/,
       /PERFORMANCE_PAGE_SHARPNESS\.md/,
       /registered archetype and chapter budget/i,
-      /Mobbin research protocol/i,
+      /TASTE-first research protocol/i,
       /campaign mode/,
       /product mode/,
       /reproducing a section or page found in Mobbin/i
@@ -342,7 +340,7 @@ test('Codex-only skills retain their local runtime handoff contracts', () => {
   }
 });
 
-test('Canon design skills keep governed Mobbin discovery and retention boundaries', () => {
+test('Canon design skills keep TASTE-first research and optional Mobbin boundaries', () => {
   const designAgent = read('packages/dotfiles/codex/skills/canon-design-review/agents/openai.yaml');
   const publicAgent = read(
     'packages/dotfiles/codex/skills/canon-public-surface/agents/openai.yaml'
@@ -351,8 +349,11 @@ test('Canon design skills keep governed Mobbin discovery and retention boundarie
     'packages/dotfiles/codex/skills/canon-design-review/references/mobbin-research.md'
   );
 
-  assert.match(designAgent, /value: ['"]mobbin['"]/);
-  assert.match(designAgent, /url: ['"]https:\/\/api\.mobbin\.com\/mcp['"]/);
+  assert.doesNotMatch(designAgent, /value: ['"]mobbin['"]/);
+  const taste = read('packages/dotfiles/codex/skills/canon-design-review/references/taste-research.md');
+  assert.match(taste, /include=references/);
+  assert.match(taste, /Open and inspect the actual images/);
+  assert.match(taste, /unknown provenance explicitly/);
   assert.match(designAgent, /allow_implicit_invocation: true/);
   assert.match(publicAgent, /allow_implicit_invocation: true/);
 

@@ -100,13 +100,13 @@ export interface ArenaChannel {
 }
 
 export interface ArenaChannelContentsResponse {
-	base_class: 'Channel';
-	class: 'Channel';
 	contents: ArenaBlock[];
-	length: number;
-	total_pages: number;
-	current_page: number;
-	per: number;
+	base_class?: 'Channel';
+	class?: 'Channel';
+	length?: number;
+	total_pages?: number;
+	current_page?: number;
+	per?: number;
 }
 
 export interface ArenaSearchResponse {

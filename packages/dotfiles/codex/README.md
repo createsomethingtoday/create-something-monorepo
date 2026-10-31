@@ -15,7 +15,7 @@ This symlinks repo-owned skills into `~/.codex/skills` without deleting unrelate
 - `anatomy-xray` - original translucent systems explainers with accessible zoom/pan, evidence mapping and static SVG fallback
 
 - `bootstrap-gitpod-ona` - prepare Gitpod/Ona or other fresh workspaces so repo-owned Codex skills are installed and verified
-- `canon-design-review` - Mobbin-backed UX research translated through Canon and Performance Lab
+- `canon-design-review` - TASTE-first visual research with optional Mobbin interaction evidence, translated through Canon and Performance Lab
 - `canon-public-surface` - Performance public-page research and sharpness without generic SaaS drift
 - `claude-agent-cli-handoff` - route bounded work to the local Claude CLI when Claude owns the needed tools or connectors
 - `debug-feedback-loop` - repro-first debugging for bugs, failing checks, flaky behavior, and performance regressions
@@ -50,7 +50,7 @@ Use $target-reader-review to judge whether a junior practitioner can understand 
 Use $writing-for-humans to draft or edit this prose with the smallest framework stack that fits its job.
 ```
 
-The two Canon design skills also allow implicit invocation. When Codex recognizes relevant UI, UX, or public-surface work, it should load the matching skill without requiring the user to name it. Mobbin research remains conditional: use it for greenfield, unfamiliar, consequential, or genuinely unresolved design decisions, not literal edits or routine token cleanup.
+The two Canon design skills also allow implicit invocation. When Codex recognizes relevant UI, UX, or public-surface work, it should load the matching skill without requiring the user to name it. Substantial UI work starts with a bounded, image-inspected TASTE packet. Mobbin remains optional for material interaction questions that the packet leaves unresolved. Literal edits and routine token cleanup can use the existing contract.
 
 ## Testing
 
