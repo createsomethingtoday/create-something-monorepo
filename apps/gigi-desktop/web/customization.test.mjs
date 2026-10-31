@@ -7,7 +7,7 @@ async function fixture(run, { storage = new Map(), workspace = 'custom-test', bl
   const listeners = new Map(), calls = [];
   let html = '';
   const controls = new Map();
-  const root = { get innerHTML() { return html; }, set innerHTML(value) { html = value; controls.clear(); if (globalThis.document) globalThis.document.activeElement = null; for (const [, id] of value.matchAll(/id="([^"]+)"/g)) controls.set(`#${id}`, { id, tagName: id === 'preferences-import' ? 'TEXTAREA' : 'SELECT', dataset: {}, focus() { globalThis.document.activeElement = this; }, setSelectionRange(start, end, direction) { this.selectionStart = start; this.selectionEnd = end; this.selectionDirection = direction; } }); }, classList: { toggle() {} }, addEventListener(name, handler) { const before = listeners.get(name); listeners.set(name, before ? event => { before(event); handler(event); } : handler); }, querySelector(selector) { return controls.get(selector) || null; }, contains(node) { return [...controls.values()].includes(node); }, querySelectorAll(selector) { if (selector === 'input, select, textarea, button, a, summary') return [...controls.values()]; return []; } };
+  const root = { get innerHTML() { return html; }, set innerHTML(value) { html = value; controls.clear(); if (globalThis.document) globalThis.document.activeElement = null; for (const [, id] of value.matchAll(/id="([^"]+)"/g)) controls.set(`#${id}`, { id, tagName: id === 'preferences-import' ? 'TEXTAREA' : 'SELECT', dataset: {}, focus() { globalThis.document.activeElement = this; }, setSelectionRange(start, end, direction) { this.selectionStart = start; this.selectionEnd = end; this.selectionDirection = direction; } }); if (value.includes('id="preferences-import-form"')) { const id = value.includes('id="preferences-import-submit"') ? 'preferences-import-submit' : ''; const button = controls.get(`#${id}`) || { id, dataset: {}, focus() { globalThis.document.activeElement = this; } }; button.tagName = 'BUTTON'; controls.set('#preferences-import-form button[type="submit"]', button); } }, classList: { toggle() {} }, addEventListener(name, handler) { const before = listeners.get(name); listeners.set(name, before ? event => { before(event); handler(event); } : handler); }, querySelector(selector) { return controls.get(selector) || null; }, contains(node) { return [...controls.values()].includes(node); }, querySelectorAll(selector) { if (selector === 'input, select, textarea, button, a, summary') return [...controls.values()]; return []; } };
   const element = { dataset: {} };
   globalThis.document = { documentElement: element, querySelector: () => root, addEventListener() {} };
   Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: { getItem: key => storage.get(key) ?? null, setItem(key, value) { if (blocked) throw new Error('Unavailable'); storage.set(key, value); } } });
@@ -148,4 +148,16 @@ test('Schedule selection is saved without changing source connections', async ()
     assert.equal(JSON.parse([...storage.values()][0]).scheduleView, 'all');
     assert.equal(calls.some(({ operation }) => /connections|sources|records.save/.test(operation)), false);
   }, { storage });
+});
+
+
+test('successful configuration import retains keyboard focus on its submit control', async () => {
+  await fixture(async ({ root, click, listeners }) => {
+    await click({ page: 'appearance' });
+    listeners.get('input')({ target: { id: 'preferences-import', value: '{"version":1,"theme":"paper"}' } });
+    root.querySelector('#preferences-import-form button[type="submit"]').focus();
+    listeners.get('submit')({ preventDefault() {}, target: { id: 'preferences-import-form' } });
+    await settle();
+    assert.equal(globalThis.document.activeElement?.id, 'preferences-import-submit');
+  });
 });

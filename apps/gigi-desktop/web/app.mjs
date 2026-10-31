@@ -7,7 +7,7 @@ import {artworkPanel,installArtworkUI} from './artwork.mjs';
 import {createGigs, gigsView, gigsFilterValue} from './gigs.mjs';
 import {sourceSelection, sourceImportView, sourceImportRunning} from './source-center.mjs';
 import {statusLabel, peopleShortcut, todaySummary, builtInChatSetup} from './desktop-polish.mjs';
-import {referenceHeader, referenceCards, createWorkspaceHistory} from './reference-layout.mjs';
+import {referenceHeader, referenceCards, createWorkspaceHistory, installReferenceMenu} from './reference-layout.mjs';
 import {createContactRead} from './contact-read.mjs';
 import { historyPresentation, copyableRecordField } from './record-polish.mjs';
 import { mountMusic } from './music.mjs';
@@ -25,6 +25,7 @@ import { AiConnection, aiConnectionView, updateAiDraft } from './ai-connection.m
 import { sections, fields, moneyFields, booleanFields, fieldOptions, listFrom, recordFields, editedFields, formatMoney, gigBalance, relatedEndpoint, sourcePreview, sourceSessionBlocked, sourceCanBegin, sourceNeedsOperatorReview, importRunForAccount, pendingConsentForProvider, pendingAccountForProvider, linkInput } from './model.mjs';
 
 const root = document.querySelector('#app');
+installReferenceMenu(root);
 const bridge = tauriBridge(workspace=>gigs.invalidate(workspace));
 const ai = new AiConnection(bridge, () => { if (state.page === 'settings') render(); });
 let chat;
