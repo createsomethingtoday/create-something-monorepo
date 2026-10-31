@@ -1,6 +1,6 @@
 # GiGi 0.2.17 daily-use polish — CRE-2306
 
-Release candidate; parent must independently re-test, qualify, merge and deploy.
+Implementation candidate review. Independent Sol re-test and signed app/DMG qualification subsequently passed; see RELEASE.md and release-qualification.json.
 No production installation, real profile, source grant or provider write is part of this implementation pass.
 
 ## Acceptance criteria

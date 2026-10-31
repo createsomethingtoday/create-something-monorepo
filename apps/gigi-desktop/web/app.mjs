@@ -103,10 +103,14 @@ function notice(message, error = false) {
   render();
   // Recovery instructions stay available. An earlier success cannot expire a
   // later notice with the same wording or remove a focused dismiss control.
-  if (!error) setTimeout(() => {
-    if (state.toast !== toast || root.querySelector?.('.toast')?.contains?.(globalThis.document?.activeElement)) return;
-    state.toast = null; render();
-  }, 5000);
+  if (!error) {
+    const expire = () => {
+      if (state.toast !== toast) return;
+      if (root.querySelector?.('.toast')?.contains?.(globalThis.document?.activeElement)) { setTimeout(expire, 5000); return; }
+      state.toast = null; render();
+    };
+    setTimeout(expire, 5000);
+  }
 }
 
 function noticeView() {

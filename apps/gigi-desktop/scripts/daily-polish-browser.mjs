@@ -83,7 +83,9 @@ try {
   await page.evaluate(()=>polishNotice('Synthetic preferences saved.'));
   await page.getByRole('button',{name:'Dismiss message'}).focus();await page.clock.fastForward(6000);
   assert.equal(await page.locator('.toast').count(),1,'timer never removes a focused message');
-  await page.keyboard.press('Enter');
+  await page.locator('#title').focus();
+  await page.clock.fastForward(5000);
+  assert.equal(await page.locator('.toast').count(),0,'success expiry resumes after keyboard focus leaves');
   await page.evaluate(()=>polishFixture('appearance','paper'));
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Appearance header fits minimum window');
   await page.screenshot({path:resolve(out,'appearance-paper-880.png'),fullPage:true});
