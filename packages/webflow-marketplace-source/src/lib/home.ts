@@ -31,9 +31,9 @@ function tile(c:Term,stack:Template[],description=''){
  // An empty stack is filled in the browser by category-stacks-client.
  return `<a class="rd-cat-tile" href="${categoryUrl(c.slug)}"><span class="rd-cstack" aria-hidden="true"${imgs?'':` data-rd-stack="${esc(c.slug)}"`}>${imgs}</span><span class="rd-cat-name"><span>${esc(label(c.name))}</span><span aria-hidden="true">→</span></span>${description?`<span class="rd-muted rd-sm">${esc(description)}</span>`:''}<span class="rd-muted rd-sm">${count(c.count||0)} templates</span></a>`;
 }
-function creator(t:Template){
- const avatar=t.creator_avatar_url?`<img src="${esc(t.creator_avatar_url)}" alt="">`:esc(t.creator_name.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase());
- return `<a class="rd-creator" href="${esc(localLink(t.creator_profile_url))}"><img class="rd-creator-shot" src="${esc(t.thumbnail_image_url)}" alt="" loading="lazy"><span class="rd-avatar" aria-hidden="true">${avatar}</span><span class="rd-h6">${esc(t.creator_name)}</span><span class="rd-muted rd-sm">Featured work: ${esc(t.name)}</span><span class="rd-sm rd-blue">View profile →</span></a>`;
+const avatar=(src:string,name:string)=>src?`<img src="${esc(src)}" alt="" loading="lazy">`:esc(name.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase());
+function creator(t:Template,note='Featured work'){
+ return `<a class="rd-creator" href="${esc(localLink(t.creator_profile_url))}"><img class="rd-creator-shot" src="${esc(t.thumbnail_image_url)}" alt="" loading="lazy"><span class="rd-avatar" aria-hidden="true">${avatar(t.creator_avatar_url,t.creator_name)}</span><span class="rd-h6">${esc(t.creator_name)}</span><span class="rd-muted rd-sm">${esc(note)}: ${esc(t.name)}</span><span class="rd-sm rd-blue">View profile →</span></a>`;
 }
 function heading(eyebrow:string,title:string,id:string,link?:[string,string],level='rd-h3'){
  return `<div class="rd-head"><div><p class="rd-eyebrow">${esc(eyebrow)}</p><h2 id="${id}" class="${level}">${esc(title)}</h2></div>${link?`<a class="rd-text-link" href="${link[1]}">${esc(link[0]).replace(/ →$/,' <span aria-hidden="true">→</span>')}</a>`:''}</div>`;
@@ -95,7 +95,7 @@ export function homeMarkup(d:HomeData){
 
  <section class="rd-wrap rd-creators" aria-labelledby="rd-cr-h">
   ${heading('Creators','Made by the creator community','rd-cr-h',['Browse all creators →','/templates/designers'])}
-  <div class="rd-creator-row">${d.creators.map(creator).join('')}</div>
+  <div class="rd-creator-row">${d.creators.map(t=>creator(t)).join('')}</div>
  </section>
 </main>`;
 }
@@ -118,8 +118,43 @@ export function categoriesMarkup(d:CategoriesData){
 </main>`;
 }
 
+// id is the CMS item id; its first 8 hex digits are the record's creation time.
+export interface Designer {id:string;name:string;slug:string;avatar:string}
+export interface DesignersData {designers:Designer[];popular:Template[];newest:Template[]}
+
+// Directory letter: accents folded, digits and symbols under "#".
+const letter=(name:string)=>{const c=name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').charAt(0).toUpperCase();return /[A-Z]/.test(c)?c:'#'};
+const LETTERS=['#',...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
+const letterId=(l:string)=>`rd-dir-${l==='#'?'0':l}`;
+
+// /templates/designers: popular and new creators as home cards, then every CMS creator A–Z.
+// designers-client adds the name filter.
+export function designersMarkup(d:DesignersData){
+ const groups=new Map<string,Designer[]>(LETTERS.map(l=>[l,[]]));
+ for(const c of [...d.designers].sort((a,b)=>a.name.localeCompare(b.name,'en',{sensitivity:'base',numeric:true})))groups.get(letter(c.name))!.push(c);
+ const filled=LETTERS.filter(l=>groups.get(l)!.length);
+ return `<main id="main" class="rd-home rd-designers">
+ <section class="rd-wrap rd-designers-head" aria-labelledby="rd-designers-h">
+  <div class="rd-head"><div><p class="rd-eyebrow">Creators</p><h1 id="rd-designers-h" class="rd-h2">Template creators</h1><p class="rd-lead">${count(d.designers.length)} studios and independent designers build templates for the Webflow Marketplace. Webflow reviews every template before it is listed.</p></div><a class="rd-text-link" href="/templates/all">Browse all templates <span aria-hidden="true">→</span></a></div>
+  ${d.popular.length?`<h2 class="rd-h6 rd-designers-sub">Popular creators</h2><div class="rd-creator-row">${d.popular.map(t=>creator(t)).join('')}</div>`:''}
+  ${d.newest.length?`<h2 class="rd-h6 rd-designers-sub">New creators</h2><div class="rd-creator-row">${d.newest.map(t=>creator(t,'Latest template')).join('')}</div>`:''}
+ </section>
+ <section class="rd-wrap rd-dir" aria-labelledby="rd-dir-h">
+  <div class="rd-dir-bar">
+   <h2 id="rd-dir-h" class="rd-h5">All creators A–Z</h2>
+   <div class="rd-dir-find" hidden><label class="rd-sr" for="rd-dir-q">Find a creator</label><input id="rd-dir-q" type="search" placeholder="Find a creator" autocomplete="off"></div>
+   <nav class="rd-az" aria-label="Jump to letter">${LETTERS.map(l=>groups.get(l)!.length?`<a href="#${letterId(l)}">${l}</a>`:`<span aria-hidden="true">${l}</span>`).join('')}</nav>
+   <p class="rd-sr" role="status" data-rd-dir-status></p>
+  </div>
+  ${filled.map(l=>`<section class="rd-dir-group" id="${letterId(l)}" aria-labelledby="${letterId(l)}-h"><h3 id="${letterId(l)}-h" class="rd-dir-letter">${l}</h3><ul class="rd-dir-list">${groups.get(l)!.map(c=>`<li><a href="/templates/designers/${encodeURIComponent(c.slug)}"><span class="rd-avatar" aria-hidden="true">${avatar(c.avatar,c.name)}</span><span>${esc(c.name)}</span></a></li>`).join('')}</ul></section>`).join('')}
+  <p class="rd-muted rd-dir-empty" data-rd-dir-empty hidden>No creators match that name.</p>
+ </section>
+</main>`;
+}
+
+// Creator cards lead with a screenshot, so templates still waiting on a thumbnail are skipped.
 export function pickCreators(items:Template[],n=4){
  const seen=new Set<string>();const out:Template[]=[];
- for(const t of items){if(!t.creator_slug||seen.has(t.creator_slug))continue;seen.add(t.creator_slug);out.push(t);if(out.length===n)break;}
+ for(const t of items){if(!t.creator_slug||!t.thumbnail_image_url||seen.has(t.creator_slug))continue;seen.add(t.creator_slug);out.push(t);if(out.length===n)break;}
  return out;
 }

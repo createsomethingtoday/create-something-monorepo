@@ -7,7 +7,7 @@ import assetPathMap from '../../export-path-map.json';
 import {publishedCms,cmsProps,CmsNotFound} from './cms';
 import {SEARCH_ORIGIN,search, type Template} from './api';
 import {routeFor,localLink,searchFilters} from './routes.mjs';
-import {homeMarkup,categoriesMarkup,pickCreators,TILE_CATEGORIES} from './home';
+import {homeMarkup,categoriesMarkup,designersMarkup,pickCreators,TILE_CATEGORIES,type Designer} from './home';
 const exports = import.meta.glob('../../original-export/**/*.html',{eager:true,query:'?raw',import:'default'}) as Record<string,string>;
 const raw=(name:string)=>exports[`../../original-export/${name}.html`];
 const escape=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
@@ -285,7 +285,28 @@ export async function pageFor(url:URL):Promise<Page>{
    const $=shell(categoriesMarkup({total:newest.pagination.total_items,categories,descriptions}),remote('title').text()||'All template categories | Webflow',remote('meta[name="description"]').attr('content')||'');
    return finish($,url);
   }
-  if(['tags','designers'].includes(route.page!)){
+  if(route.page==='designers'){
+   // Redesigned directory. The CMS list shows 100 creators per page behind an infinite-load
+   // script that the bridge strips, so every page is read. The search API supplies popular creators,
+   // and new creators: those with recent templates, newest CMS record first.
+   const empty={items:[] as Template[]};
+   const [first,popular,newest]=await Promise.all([publishedCms('/designers'),search({sort:'popular',page_size:'48'}).catch(()=>empty),search({sort:'newest',page_size:'100'}).catch(()=>empty)]);
+   const pageKey=(first('.w-pagination-next').attr('href')||'').match(/[a-z0-9]+_page/)?.[0];
+   const pages=Number(first('.w-page-count').first().text().split('/')[1])||1;
+   const rest=pageKey?await Promise.all(Array.from({length:pages-1},(_,i)=>publishedCms(`/designers?${pageKey}=${i+2}`))):[];
+   const designers=new Map<string,Designer>();
+   for(const remote of [first,...rest])remote('a.designer-card_content-wrap').each((_,e)=>{
+    const slug=(remote(e).attr('href')||'').split('/').pop()!,name=remote(e).text().trim();
+    const id=decodeURIComponent(remote(e).attr('data-wf-cms-context')||'').match(/"itemId":"([0-9a-f]{24})"/)?.[1]||'';
+    if(slug&&name)designers.set(slug,{id,slug,name,avatar:remote(e).find('img').attr('src')||''});
+   });
+   if(!designers.size)throw new Error('CMS directory content contract changed');
+   const top=pickCreators(popular.items,4),shown=new Set(top.map(t=>t.creator_slug));
+   const joined=pickCreators(newest.items,100).filter(t=>!shown.has(t.creator_slug)&&designers.get(t.creator_slug)?.id).sort((a,b)=>designers.get(b.creator_slug)!.id.localeCompare(designers.get(a.creator_slug)!.id)).slice(0,4);
+   const $=shell(designersMarkup({designers:[...designers.values()],popular:top,newest:joined}),first('title').text()||'Template creators | Webflow',first('meta[name="description"]').attr('content')||'');
+   return finish($,url);
+  }
+  if(route.page==='tags'){
    const remote=await publishedCms('/'+route.page);
    const content=remote('body > .section').toArray().map(e=>remote(e).toString()).join('');
    if(!content)throw new Error('CMS directory content contract changed');

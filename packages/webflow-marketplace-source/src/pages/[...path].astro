@@ -65,6 +65,8 @@ Astro.response.headers.set('X-Robots-Tag','noindex, nofollow');
   initNavigation();
   import {initCategoryStacks} from '../lib/category-stacks-client';
   initCategoryStacks();
+  import {initDesignerDirectory} from '../lib/designers-client';
+  initDesignerDirectory();
   import {initMotion} from '../lib/motion-client';
   initMotion();
   document.querySelectorAll<HTMLFormElement>('form[data-source-example]').forEach(form=>form.addEventListener('submit',event=>{event.preventDefault();event.stopImmediatePropagation();let note=form.querySelector('[role=status]');if(!note){note=document.createElement('p');note.setAttribute('role','status');form.append(note)}note.textContent='This is a reference example. No form was sent.'},true));

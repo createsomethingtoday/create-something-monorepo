@@ -19,7 +19,7 @@ async function fetchCms(path:string){
 /** Read-only bridge to the retained Webflow CMS publishing origin. Never fetch
  * the production /templates mount: that would loop after routing promotion. */
 export async function publishedCms(path:string){
- if(!/^\/(?:[a-z0-9-]+\/?)*$/.test(path))throw new Error('Invalid CMS path');
+ if(!/^\/(?:[a-z0-9-]+\/?)*(?:\?[a-z0-9]+_page=\d+)?$/.test(path))throw new Error('Invalid CMS path');
  const hit=cache.get(path),age=hit?Date.now()-hit.at:Infinity;
  let html=hit&&age<CMS_STALE_MS?hit.html:undefined;
  if(hit&&age>=CMS_TTL_MS&&html&&!hit.refreshing){
