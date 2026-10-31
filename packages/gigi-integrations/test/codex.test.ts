@@ -1541,3 +1541,29 @@ for (const [error, unresolved] of [
       unresolved ? 'unresolved workspace outcomes must still force reconciliation' : 'an ordinary historical failure must not disable healthy active snapshots');
   } finally { await rm(dataDir, { recursive: true, force: true }); }
 });
+
+for (const historyAhead of [false, true]) test(`streamed prefixes survive active history reconciliation (history ahead: ${historyAhead})`, async () => {
+  const { adapter, server, dataDir } = await setup();
+  try {
+    const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'Read only' });
+    const input = { workspaceId: 'w', sessionId };
+    const emit = async (delta: string) => Promise.all(server.events.map(fn => fn({ method: 'item/agentMessage/delta', params: { threadId: 'thread-1', turnId: 'turn-1', itemId: 'a', delta } })));
+    await emit('Prefix');
+    let expected = historyAhead ? 'Prefix caught up' : 'Prefix';
+    server.thread.turns = [{ id: 'turn-1', status: 'inProgress', items: [{ id: 'a', type: 'agentMessage', text: expected }] }];
+    assert.equal((await adapter.read(input)).messages.at(-1)?.text, expected);
+    const reads = server.calls.filter(x => x.method === 'thread/read').length;
+    for (const suffix of ['!', ' a suffix longer than the original prefix']) {
+      await emit(suffix); expected += suffix;
+      assert.equal((await adapter.poll(input)).messages.at(-1)?.text, expected);
+    }
+    assert.equal(server.calls.filter(x => x.method === 'thread/read').length, reads);
+    server.thread.turns[0].items[0].text = expected;
+    await adapter.read(input); await emit(' after another refresh'); expected += ' after another refresh';
+    const original = server.request.bind(server);
+    server.request = async (method, params) => { if (method === 'thread/read') throw Error('synthetic unavailable'); return original(method, params); };
+    assert.equal((await adapter.read(input)).messages.at(-1)?.text, expected);
+    server.request = original; server.thread.turns[0].status = 'completed'; server.thread.turns[0].items[0].text = expected;
+    assert.equal((await adapter.read(input)).state, 'idle');
+  } finally { await rm(dataDir, { recursive: true, force: true }); }
+});

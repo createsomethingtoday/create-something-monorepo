@@ -412,7 +412,11 @@ export function createCodexAdapter(options: CodexOptions) {
       const existing = messages.find(x => x.id === id);
       if (existing) {
         if (entry.text.length > existing.text.length) existing.text = entry.text.slice(0, MAX_TEXT);
-        else stream?.delete(id); // Authoritative text now contains the whole streamed item.
+        else if (entry.turnId === session.turnId && session.state === 'running') {
+          // Future deltas for this item are suffixes, including after history
+          // catches up. Retain the authoritative prefix as their base.
+          entry.text = existing.text;
+        } else stream?.delete(id);
       } else if (entry.turnId === session.turnId) messages.push({ id, role: 'assistant', text: entry.text.slice(0, MAX_TEXT) });
       else stream?.delete(id); // Older items outside the authoritative window cannot reappear.
     }

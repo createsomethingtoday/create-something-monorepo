@@ -119,8 +119,11 @@ pub fn check(resources: &Path, data: &Path) -> Value {
         let root=std::env::temp_dir().join(format!("preflight-probe-{}",uuid::Uuid::new_v4()));std::fs::create_dir_all(&root).unwrap();
         let binary=root.join("connector fixture");
         for (script,expected) in [("#!/bin/sh\nprintf 'not-json\\n'\n","invalid or oversized"),("#!/bin/sh\nexec /bin/sleep 10\n","timed out"),("#!/bin/sh\nhead -c 262146 /dev/zero\n","invalid or oversized")] {
+            // Consume both requests so early exit cannot race stdin delivery.
+            let script=script.replacen("#!/bin/sh\n", "#!/bin/sh\nIFS= read -r first\nIFS= read -r second\n", 1);
             std::fs::write(&binary,script).unwrap();std::fs::set_permissions(&binary,std::fs::Permissions::from_mode(0o700)).unwrap();
-            assert!(probe(&binary,&root).unwrap_err().contains(expected));
+            let error=probe(&binary,&root).unwrap_err();
+            assert!(error.contains(expected), "expected {expected:?}, got {error:?}");
         }
         assert!(probe(&root.join("missing"),&root).unwrap_err().contains("could not start"));
         std::fs::remove_dir_all(root).unwrap();
