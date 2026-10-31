@@ -60,7 +60,7 @@
           <h3>Field notes by email</h3>
           <p>
             Sign up on CREATE SOMETHING .io for future field notes, or read a published edition.
-            Email is limited to two validated sends per month.
+            We send field notes at most twice a month.
           </p>
           <div class="reader-actions">
             <Button href="https://createsomething.io/newsletters#subscribe">Get field notes by email</Button>
