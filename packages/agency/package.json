@@ -69,6 +69,7 @@
     "test:interaction-pilot": "node --import tsx --test test/interaction-pilot.test.ts",
     "smoke:image-led-home": "node ./scripts/verify-image-led-home.mjs",
     "smoke:walkthrough-theater": "node ./scripts/verify-walkthrough-theater.mjs",
+    "smoke:membership-story": "node ./scripts/verify-membership-story.mjs",
     "smoke:public-page-system": "node ./scripts/verify-public-page-system.mjs",
     "smoke:utility-polish": "node ./test/agency-utility-polish.browser.mjs"
   },

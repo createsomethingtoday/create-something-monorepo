@@ -1,94 +1,108 @@
 <script lang="ts">
-  import WorkflowBench from './WorkflowBench.svelte';
   import { onMount } from 'svelte';
-  import { PUBLIC_PRICING } from '$lib/data/publicPricing';
+  import MembershipWorkpiece from './MembershipWorkpiece.svelte';
 
-  const { focused, team } = PUBLIC_PRICING.membership;
   let root: HTMLElement;
-  let active = $state<number | null>(null);
+  let active = $state(0);
+  let ready = $state(false);
+  const chapters = [
+    { id: 'membership-agree', label: 'Agree', title: 'Agree one useful change.', copy: 'We map one intake handoff and agree the result, access and human approval boundary before work starts.', result: 'A clear task and a person responsible.' },
+    { id: 'membership-work', label: 'Work', title: 'Build within the boundary.', copy: 'In this example, a request becomes a draft for review. We build within the agreed scope and show what changed. Sending waits for a person’s approval.', result: 'One handoff that the team can inspect.' },
+    { id: 'membership-handoff', label: 'Handoff', title: 'Keep using the result.', copy: 'We check the result against the agreement and explain how to use it. You keep the work, the check results, open questions and a guide to continue.', result: 'A checked improvement and a clear next step.' }
+  ];
+
+  function readChapter(index: number) {
+    const target = root.querySelector<HTMLElement>(`[data-chapter="${index}"]`);
+    if (!target) return;
+    target.focus({ preventScroll: true });
+    target.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+  }
 
   onMount(() => {
-    const motion = matchMedia('(prefers-reduced-motion: reduce)');
-    let observer: IntersectionObserver | undefined;
-    const sync = () => {
-      observer?.disconnect();
-      active = null;
-      if (motion.matches || !('IntersectionObserver' in window)) return;
-      observer = new IntersectionObserver((entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) active = Number((entry.target as HTMLElement).dataset.chapter);
-        }
-      }, { rootMargin: '-30% 0px -69% 0px', threshold: 0 });
-      root.querySelectorAll('[data-chapter]').forEach((chapter) => observer?.observe(chapter));
+    ready = true;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const readingLine = innerHeight * .4;
+      const elements = [...root.querySelectorAll<HTMLElement>('[data-chapter]')];
+      active = Math.max(0, elements.findLastIndex(chapter => chapter.getBoundingClientRect().top <= readingLine));
     };
-    sync();
-    motion.addEventListener('change', sync);
-    return () => { observer?.disconnect(); motion.removeEventListener('change', sync); };
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    update();
+    return () => {
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+      cancelAnimationFrame(frame);
+    };
   });
 </script>
 
-<section class="plan-journey" aria-labelledby="plan-journey-title" bind:this={root}>
+<section class="plan-journey" class:story-ready={ready} aria-labelledby="plan-journey-title" bind:this={root}>
   <header class="journey-heading">
     <p class="eyebrow">From agreement to handoff</p>
-    <h3 id="plan-journey-title">An agreed improvement.<br />A result you can keep using.</h3>
-    <p>Both plans follow the same process. The difference is the agreed capacity each billing month.</p>
+    <h3 id="plan-journey-title">One task.<br />From agreement to handoff.</h3>
+    <p>Follow one illustrated intake handoff. Both membership plans use the same process.</p>
   </header>
   <div class="journey-layout">
-    <div class="plan-diagram" aria-hidden="true">
-      <div class="diagram-label">Membership / working agreement</div>
-      <WorkflowBench {active} />
-      <div class:highlight={active === 0} class="diagram-stage"><span class="stage-index">01—03</span><div><strong>Intent → access → approval</strong><span>Your goal, selected connections, a human decision.</span></div></div>
-      <div class:highlight={active === 1} class="diagram-stage"><span class="stage-index">04</span><div><strong>Work within the agreement</strong><span>Focused: 1 workstream / Team: up to 2.</span></div></div>
-      <div class:highlight={active === 2} class="diagram-stage"><span class="stage-index">05—06</span><div><strong>Verification → receipt</strong><span>Actual results, blockers and the handoff.</span></div></div>
-      <p class="diagram-note">An illustrative workbench. Scroll to inspect the parts; no task is running.</p>
+    <div class="plan-diagram desktop-story-visual">
+      <MembershipWorkpiece stage={active} />
+      <nav class="story-navigation" aria-label="Follow the membership story">
+        {#each chapters as chapter, index}
+          <button type="button" aria-controls={chapter.id} aria-current={active === index ? 'step' : undefined} onclick={() => readChapter(index)}><span>0{index + 1}</span>{chapter.label}</button>
+        {/each}
+      </nav>
+      <p class="diagram-note">Scroll to follow the example. No tools are connected.</p>
     </div>
     <div class="journey-chapters">
-      <section class="chapter" data-chapter="0" aria-labelledby="plan-scope-title">
-        <p class="eyebrow">01 / Before work begins</p>
-        <h4 id="plan-scope-title">Make the milestone specific.</h4>
-        <p>A milestone is one agreed workflow map or one scoped improvement to an existing workflow. We agree on the result, selected tool access, the human approval boundary, acceptance check, session times and response times before payment.</p>
-        <p class="example">For example: map a handoff between two tools, or agree on one improvement to that handoff. These illustrate the scope of a milestone; a whole new build is quoted separately.</p>
-      </section>
-      <section class="chapter" data-chapter="1" aria-labelledby="plan-capacity-title">
-        <p class="eyebrow">02 / Each billing month</p>
-        <h4 id="plan-capacity-title">Choose the capacity your work needs.</h4>
-        <p><strong>Focused · {focused.label}.</strong> {focused.workstreams} workstream, {focused.milestonesPerMonth} agreed milestone and {focused.remoteSessionsPerMonth} attended {focused.remoteSessionMinutes}-minute remote work sessions available when useful.</p>
-        <p><strong>Team · {team.label}.</strong> Up to {team.workstreams} workstreams, {team.milestonesPerMonth} agreed milestones and {team.remoteSessionsPerMonth} attended {team.remoteSessionMinutes}-minute remote work sessions available when useful.</p>
-        <p class="example">An illustrative Focused month could map the approval handoff for your website. With Team, you might agree on that map plus one scoped improvement to an existing intake workflow. We confirm feasibility and acceptance checks before committing to either milestone.</p>
-        <p>Both include {focused.checkInsPerMonth} × {focused.checkInMinutes}-minute check-ins and {focused.revisionRoundsPerMilestone} feedback and revision round per milestone. We work between check-ins and show what changed. Remote sessions can help with onboarding, pairing or troubleshooting. Capacity and scope are agreed; neither plan is unlimited development.</p>
-      </section>
-      <section class="chapter" data-chapter="2" aria-labelledby="plan-handoff-title">
-        <p class="eyebrow">03 / Check, then carry it forward</p>
-        <h4 id="plan-handoff-title">Keep the work understandable.</h4>
-        <p>Each milestone includes verification and a handoff you keep under your agreement. The handoff records what changed, the actual check results, any blockers and the next step. We explain how to use the result. Skills, learning resources and Slack support are included; access is confirmed during onboarding.</p>
-        <p>Project context carries into the next agreed improvement. Larger Builds, managed Control and production incident response need separate agreements. AI usage, hosting and third-party services are budgeted separately.</p>
-      </section>
+      {#each chapters as chapter, index}
+        <section id={chapter.id} class="chapter" data-chapter={index} aria-labelledby={`${chapter.id}-title`} tabindex="-1">
+          <div class="inline-story-visual"><MembershipWorkpiece stage={index} /></div>
+          <p class="eyebrow">0{index + 1} / {chapter.label}</p>
+          <h4 id={`${chapter.id}-title`}>{chapter.title}</h4>
+          <p>{chapter.copy}</p>
+          <p class="chapter-result">{chapter.result}</p>
+        </section>
+      {/each}
     </div>
   </div>
 </section>
 
 <style>
   .plan-journey { padding: 0 var(--membership-gutter, max(1.25rem, calc((100% - 80rem) / 2))) var(--space-performance-xl); color: var(--color-performance-ink); }
-  .journey-heading { border-top: 1px solid var(--color-performance-line-strong); padding-top: 2rem; max-width: none; }
-  .eyebrow, .diagram-label, .stage-index { font: .7rem/1.6 var(--font-performance-mono); text-transform: uppercase; letter-spacing: .04em; }
+  .journey-heading { border-top: 1px solid var(--color-performance-line-strong); padding-top: 2rem; }
+  .eyebrow { font: .7rem/1.6 var(--font-performance-mono); text-transform: uppercase; letter-spacing: .04em; }
   .journey-heading h3 { font: 400 clamp(1.7rem, 3vw, 2.5rem)/1.15 var(--font-performance-editorial); margin: .75rem 0 1rem; }
-  p { font-size: .9375rem; line-height: 1.7; max-width: 62ch; }
-  .journey-layout { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: clamp(2rem, 5vw, 5rem); margin-top: 2rem; align-items: start; }
-  .plan-diagram { padding: clamp(1rem, 3vw, 2rem); border: 1px solid var(--color-performance-line-strong); background: var(--color-performance-panel); color: var(--color-performance-ink); }
-  .diagram-label { margin-bottom: 1.5rem; }
-  .diagram-stage { margin-top: .5rem; display: flex; align-items: center; gap: 1rem; padding: .65rem; border: 1px solid var(--color-performance-line-strong); transition: border-color 180ms ease, background-color 180ms ease; }
-  .diagram-stage.highlight { border-color: currentColor; background: var(--color-performance-paper); box-shadow: inset 3px 0 currentColor; }
-  .diagram-stage strong { display: block; font-size: .9375rem; font-weight: 500; line-height: 1.5; }
-  .diagram-stage div > span { display: block; font-size: .75rem; line-height: 1.6; }
-  .stage-index { white-space: nowrap; min-width: 3.1rem; }
-  .diagram-note { font-size: .6875rem; margin: 1.5rem 0 0; color: var(--color-performance-ink-soft); }
-  .chapter { padding: 0 0 2rem; margin-bottom: 2rem; border-bottom: 1px solid var(--color-performance-line); }
-  .chapter:last-child { padding-bottom: 0; margin-bottom: 0; border: 0; }
-  .chapter .eyebrow { margin-top: 0; }
-  h4 { font-size: 1.25rem; line-height: 1.3; margin: .75rem 0; font-weight: 500; }
-  .example { border-left: 1px solid var(--color-performance-line-strong); padding-left: 1rem; color: var(--color-performance-ink-soft); font-size: .8125rem; }
-  @media (min-width: 1000px) and (min-height: 800px) and (prefers-reduced-motion: no-preference) { .plan-diagram { position: sticky; top: 8rem; } }
-  @media (max-width: 999px) { .journey-layout { grid-template-columns: 1fr; gap: 2rem; } .plan-diagram { max-width: 36rem; width: 100%; box-sizing: border-box; } }
-  @media (prefers-reduced-motion: reduce) { .diagram-stage { transition: none; } }
-  @media print { .journey-layout { display: block; } .plan-diagram { display: none; } .chapter { break-inside: avoid; } }
+  p { font-size: .9375rem; line-height: 1.7; max-width: 48ch; }
+  .journey-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; margin-top: 2rem; align-items: start; }
+  .desktop-story-visual { display: none; }
+  .plan-diagram, .inline-story-visual { background: var(--color-performance-bg-pure); color: var(--color-performance-fg-primary); border: 1px solid var(--color-performance-shell-border-strong); padding: clamp(1rem, 2vw, 1.5rem); }
+  .inline-story-visual { margin-bottom: 2rem; max-width: 36rem; }
+  .story-navigation { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; margin-top: 1.25rem; }
+  .story-navigation button { min-height: 44px; display: flex; align-items: center; gap: .45rem; padding: 0; background: none; color: var(--color-performance-fg-secondary); border: 0; border-bottom: 1px solid var(--color-performance-shell-border-strong); font: inherit; font-size: .8125rem; text-align: left; cursor: pointer; }
+  .story-navigation button[aria-current='step'] { color: var(--color-performance-fg-primary); border-bottom: 2px solid currentColor; }
+  .story-navigation button:focus-visible, .chapter:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+  .story-navigation span { font: .65rem/1 var(--font-performance-mono); }
+  .diagram-note { margin: .85rem 0 0; color: var(--color-performance-fg-secondary); font-size: .65rem; }
+  .chapter { padding-bottom: 2rem; margin-bottom: 2rem; border-bottom: 1px solid var(--color-performance-line); scroll-margin-top: 9rem; }
+  .chapter:last-child { margin-bottom: 0; border: 0; }
+  .chapter .eyebrow { margin: 0; }
+  .chapter h4 { font-size: clamp(1.4rem, 2.4vw, 2rem); line-height: 1.15; margin: .75rem 0 1rem; font-weight: 400; letter-spacing: -.03em; }
+  .chapter-result { margin-top: 1.5rem; border-left: 1px solid var(--color-performance-line-strong); padding-left: 1rem; font-size: .8125rem; color: var(--color-performance-ink-soft); }
+  @media (min-width: 1000px) and (min-height: 600px) {
+    .story-ready .journey-layout { grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); gap: clamp(2rem, 5vw, 5rem); }
+    .story-ready .desktop-story-visual { display: block; position: sticky; top: 8rem; }
+    .story-ready .desktop-story-visual :global(.workflow-bench) { max-height: max(10rem, calc(100svh - 24rem)); }
+    .story-ready .inline-story-visual { display: none; }
+    .story-ready .chapter { min-height: min(58vh, 28rem); box-sizing: border-box; padding: 2rem 0; margin: 0; }
+    .story-ready .chapter:last-child { min-height: max(58vh, 38rem); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .story-ready .journey-layout { grid-template-columns: minmax(0, 1fr); }
+    .story-ready .desktop-story-visual { display: none; }
+    .story-ready .inline-story-visual { display: block; }
+    .story-ready .chapter, .story-ready .chapter:last-child { min-height: 0; padding: 0 0 2rem; margin-bottom: 2rem; }
+  }
+  @media print { .desktop-story-visual { display: none!important; } .inline-story-visual { display: block!important; } .journey-layout { display: block!important; } .chapter { min-height: 0!important; break-inside: avoid; } }
 </style>
