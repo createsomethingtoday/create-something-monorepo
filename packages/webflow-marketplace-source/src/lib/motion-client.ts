@@ -1,6 +1,7 @@
 import {gsap} from 'gsap';
 import {ScrollTrigger} from 'gsap/ScrollTrigger';
 import {SplitText} from 'gsap/SplitText';
+import {ScrollToPlugin} from 'gsap/ScrollToPlugin';
 
 // GSAP motion layer. The home page gets a load sequence and scroll reveals; every
 // page gets small, quick microinteractions on the shopping surfaces. Vendor cards
@@ -8,15 +9,18 @@ import {SplitText} from 'gsap/SplitText';
 // card reveals here move transforms only and never fight those keyframes.
 // Reduced motion: nothing below runs, and the pre-paint class is removed.
 
-gsap.registerPlugin(ScrollTrigger,SplitText);
+gsap.registerPlugin(ScrollTrigger,SplitText,ScrollToPlugin);
 
-const PRESS='.rd-btn,.rd-chip,.rd-mcat,.rd-search-submit,.rd-search-clear,.rd-share-search,.rd-search-filter-toggle,.rd-search-compare,.rd-brief-chips button,.rd-active-filters a,.rd-clear-all,.tmfilter-pill,.tmfilter-trigger,.rd-control-trigger,.rd-mobile-tabs button';
+const PRESS='.rd-btn,.rd-chip,.rd-mcat,.rd-search-submit,.rd-search-clear,.rd-share-search,.rd-search-filter-toggle,.rd-search-compare,.rd-brief-chips button,.rd-active-filters a,.rd-clear-all,.tmfilter-pill,.tmfilter-trigger,.rd-control-trigger,.rd-mobile-tabs button,.rd-pill-arrow';
 const CARD='.tmcard-wrapper';
 const ENTER='.rd-brief-chips button,.rd-active-filters a,.rd-comparison-tray,.rd-suggest';
 const below=(el:Element)=>el.getBoundingClientRect().top>innerHeight*.92;
 // Search cards carry overlay badges outside the vendor card, so they move as one article.
 const lift=(card:HTMLElement)=>card.closest<HTMLElement>('.rd-search-card')||card;
 const ARROW_TEXT='→';
+const PILLS='.tmfilter-subcategory-scroll';
+const PEEK='rd-pills-peeked';
+const CHEVRON='<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 function heroLoad(){
  const hero=document.querySelector<HTMLElement>('.rd-hero');
@@ -150,6 +154,121 @@ function microinteractions(){
  };
 }
 
+// Category pill rows scroll sideways. Edge fades and arrow buttons show which side has more;
+// an arrow pages the row so the clipped pill lands first, the active pill is brought into view,
+// and the first overflowing row of a session peeks once to show that it moves.
+// Fades and arrows also run under reduced motion, only without the tweens.
+function pillRow(scroll:HTMLElement,motion:boolean){
+ const track=scroll.querySelector<HTMLElement>('.tmfilter-subcategory-track');
+ if(!track)return;
+ scroll.dataset.rdPills='';
+ const pad=()=>parseFloat(getComputedStyle(track).scrollPaddingLeft)||0;
+ const max=()=>track.scrollWidth-track.clientWidth;
+ const sync=()=>{
+  scroll.toggleAttribute('data-more-start',track.scrollLeft>2);
+  scroll.toggleAttribute('data-more-end',track.scrollLeft<max()-2);
+ };
+ // Slide offsets inside the track's scroll area; these are the scroll-snap points.
+ const slides=()=>{
+  const left=track.getBoundingClientRect().left-track.scrollLeft;
+  return [...track.children].map(el=>{const r=el.getBoundingClientRect();return {x:r.left-left,end:r.right-left,el}});
+ };
+ // Scroll snap fights scripted scrolling, so it is off while a tween runs.
+ const settle=()=>{track.style.scrollSnapType=''};
+ const glide=(x:number,duration=.6)=>{
+  x=gsap.utils.clamp(0,max(),x);
+  if(!motion){track.scrollTo({left:x});return}
+  track.style.scrollSnapType='none';
+  gsap.to(track,{scrollTo:{x,autoKill:true},duration,ease:'power3.inOut',overwrite:true,onComplete:settle,onInterrupt:settle});
+ };
+ const page=(dir:number)=>{
+  const left=track.scrollLeft,right=left+track.clientWidth-pad();
+  const points=slides();
+  const next=dir>0
+   ?points.find(s=>s.end>right+1)?.x
+   :points.find(s=>s.x>=left-track.clientWidth*.8&&s.x<left-1)?.x;
+  glide((next??left+dir*track.clientWidth*.75)-pad());
+ };
+ const reveal=(animate:boolean)=>{
+  const active=track.querySelector('[aria-current="page"]')?.closest<HTMLElement>('.tmfilter-subcategory-slide');
+  const slide=active&&slides().find(s=>s.el===active);
+  if(!slide||(slide.x>=track.scrollLeft+pad()&&slide.end<=track.scrollLeft+track.clientWidth-pad()))return;
+  if(animate)glide(slide.x-pad());else track.scrollLeft=slide.x-pad();
+ };
+ const arrows=[-1,1].map(dir=>{
+  const button=document.createElement('button');
+  button.type='button';button.className='rd-pill-arrow';button.dataset.dir=dir<0?'start':'end';
+  // Pills stay in the tab order and scroll into view on focus; the arrows are a pointer shortcut.
+  button.tabIndex=-1;button.setAttribute('aria-hidden','true');
+  button.innerHTML=CHEVRON;
+  button.addEventListener('click',()=>page(dir));
+  scroll.append(button);
+  return button;
+ });
+ let frame=0;
+ const onScroll=()=>{if(!frame)frame=requestAnimationFrame(()=>{frame=0;sync()})};
+ track.addEventListener('scroll',onScroll,{passive:true});
+ const resize=new ResizeObserver(sync);
+ resize.observe(track);
+ // Pills load after the row mounts, and a pill click can move aria-current without a page load.
+ const changes=new MutationObserver(records=>{
+  sync();
+  if(records.some(r=>r.type==='attributes'))reveal(true);
+ });
+ changes.observe(track,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-current']});
+ reveal(false);
+ sync();
+
+ let peek:gsap.core.Timeline|undefined,seen:IntersectionObserver|undefined;
+ const peeked=()=>{try{return !!sessionStorage.getItem(PEEK)}catch{return true}};
+ if(motion&&!peeked()&&track.scrollLeft===0&&max()>2){
+  seen=new IntersectionObserver(([entry])=>{
+   if(!entry.isIntersecting)return;
+   seen?.disconnect();
+   try{sessionStorage.setItem(PEEK,'1')}catch{}
+   track.style.scrollSnapType='none';
+   peek=gsap.timeline({delay:.5,onComplete:settle,onInterrupt:settle})
+    .to(track,{scrollTo:{x:Math.min(72,max()),autoKill:true},duration:.55,ease:'power2.inOut'})
+    .to(arrows[1],{x:4,duration:.18,ease:'power1.out',yoyo:true,repeat:3},'<.15')
+    .to(track,{scrollTo:{x:0,autoKill:true},duration:.7,ease:'power3.out'},'>-.1');
+  },{threshold:1});
+  seen.observe(track);
+ }
+ // A user scroll or press ends the peek at once.
+ const stop=()=>{if(peek?.isActive()){peek.kill();settle()}};
+ track.addEventListener('pointerdown',stop);
+ track.addEventListener('wheel',stop,{passive:true});
+
+ return()=>{
+  peek?.kill();seen?.disconnect();resize.disconnect();changes.disconnect();cancelAnimationFrame(frame);
+  gsap.killTweensOf(track);settle();
+  track.removeEventListener('scroll',onScroll);
+  track.removeEventListener('pointerdown',stop);
+  track.removeEventListener('wheel',stop);
+  arrows.forEach(button=>button.remove());
+  scroll.removeAttribute('data-rd-pills');scroll.removeAttribute('data-more-start');scroll.removeAttribute('data-more-end');
+ };
+}
+
+// Islands render pill rows after load. A row in server HTML waits until its island hydrates,
+// so the added arrows never break React's hydration match.
+function pillRows(motion:boolean){
+ const rows=new Map<HTMLElement,()=>void>();
+ const scan=()=>{
+  rows.forEach((off,scroll)=>{if(!scroll.isConnected){off();rows.delete(scroll)}});
+  document.querySelectorAll<HTMLElement>(PILLS).forEach(scroll=>{
+   if(rows.has(scroll)||scroll.closest('astro-island[ssr]'))return;
+   const off=pillRow(scroll,motion);
+   if(off)rows.set(scroll,off);
+  });
+ };
+ let frame=0;
+ const observer=new MutationObserver(()=>{if(!frame)frame=requestAnimationFrame(()=>{frame=0;scan()})});
+ observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['ssr']});
+ scan();
+ return()=>{observer.disconnect();cancelAnimationFrame(frame);rows.forEach(off=>off());rows.clear()};
+}
+
 export function initMotion(){
  document.documentElement.dataset.motion='on';
  const mm=gsap.matchMedia();
@@ -161,7 +280,8 @@ export function initMotion(){
   };
   // Split lines only after the web font has loaded, so line breaks are final.
   if(document.querySelector('.rd-hero h1'))Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,1200))]).then(start);else start();
-  return microinteractions();
+  const off=[microinteractions(),pillRows(true)];
+  return()=>off.forEach(fn=>fn());
  });
- mm.add('(prefers-reduced-motion: reduce)',()=>{document.documentElement.classList.remove('rd-motion')});
+ mm.add('(prefers-reduced-motion: reduce)',()=>{document.documentElement.classList.remove('rd-motion');return pillRows(false)});
 }
