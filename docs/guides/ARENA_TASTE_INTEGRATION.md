@@ -29,6 +29,48 @@ The paused write surfaces are:
 - `GET /api/arena/authorize`
 - `GET /api/arena/callback`
 
+## TASTE-First Frontend Research
+
+For substantial Canon UI work, use the existing corpus before seeking additional
+precedent. Follow the packet procedure in
+[`taste-research.md`](../../packages/dotfiles/codex/skills/canon-design-review/references/taste-research.md):
+
+- Start with the task, surface mode, meaningful states, and an initial approach.
+- Retrieve 3–7 relevant approved references when available and inspect their
+  actual images. Do not pad with unrelated material.
+- Record why each reference helps, what to adopt or adapt, what to avoid, and its
+  actual source/channel attribution. Mark unknown provenance and unviewed media.
+- Translate the observations through Canon and Performance Lab, then assess the
+  rendered result, including responsive and consequential states.
+- Use Mobbin or other outside evidence for unresolved interaction questions.
+  Missing corpus coverage must never remove a required product capability.
+
+Plain `/llm.txt` supplies predefined vocabulary and tokens. It does not query and
+visually inspect the full corpus on every request. Request JSON reference data
+explicitly with `/api/taste/context?intent=layout&include=references&limit=7`.
+Its returned metadata is a retrieval aid; inspect `imageUrl` media before making
+visual claims, and inspect motion before claiming a motion pattern.
+
+## Access Diagnosis Before Renewal
+
+A paid subscription is not assumed to be required to use the existing synced
+corpus. Check `/taste`, `/llm.txt`, and `/api/taste/context` with references first;
+then make bounded read-only requests to the relevant public Are.na channels.
+Record the exact status/error and which operation is unavailable. Check current
+account/plan permissions only when the failing operation requires them.
+Distinguish provider access failure, unsupported API behavior, missing local
+provenance, and a sync failure from subscription expiry.
+
+`/api/arena/sync` writes D1, including when invoked by GET. Do not use it as a
+read-only health probe. A reference's creation date is not proof of the last
+successful sync; rely on a recorded successful-sync checkpoint when available,
+otherwise report freshness as unknown.
+
+Renewal, cancellation, plan changes, and payment require the applicable explicit
+user authorization. Diagnose access and present the concrete renewal need before
+requesting a purchase decision; do not change account access or resume paused
+write/OAuth surfaces merely to recover reference reads.
+
 ## 30-Day Subscription Gate
 
 Keep the paid Are.na subscription for one cycle only if it creates one of these
@@ -38,9 +80,10 @@ business outcomes:
 - A sales/demo artifact that improves a CREATE SOMETHING offer.
 - A reusable taste pack that measurably improves agent output.
 
-If none of those happen in the review window, export/freeze the current corpus
-into repo/D1, cancel the paid plan, and keep Are.na as optional manual research
-instead of a recurring operating dependency.
+If none of those happen in the review window, recommend exporting/freezing the
+current corpus into repo/D1 and ending the paid plan. Obtain the applicable
+authorization before export, cancellation, or other account changes. Existing
+TASTE content can remain an input while Are.na becomes optional manual research.
 
 ## Offer Paths
 
@@ -149,8 +192,49 @@ Before production promotion:
 
 1. Confirm `/taste` renders without a public contribution control.
 2. Confirm paused write routes return HTTP 410.
-3. Confirm `/llm.txt` still returns taste context.
-4. Confirm `/api/arena/sync?channel=canon-minimalism` still syncs without
-   Are.na write access.
+3. Confirm `/llm.txt` still returns taste context and JSON references preserve
+   actual channel attribution without relabeling unrelated items by intent.
+4. In an authorized test environment, confirm `/api/arena/sync?channel=canon-minimalism`
+   imports into D1 without Are.na write access and records successful-sync freshness.
+   This is a D1 write test, not a read-only availability check.
 5. Confirm `/api/taste/ona-candidates` returns `mode: "proposal-only"` and a
    no-write policy, even when Are.na search degrades.
+
+## Provenance Repair Deployment (CRE-2297)
+
+The TASTE context API version 1.1 preserves observed channel memberships in
+`taste_reference_channels` and completed channel imports in `taste_sync_state`.
+Legacy rows keep unknown provenance until a complete source-channel sync
+observes them. `channel` can therefore be null; `channels` and `sources` retain
+all observed memberships. Visual descriptions are explicitly metadata and
+require image inspection.
+
+1. Apply `packages/ltd/migrations/0009_taste_provenance.sql` to the owning
+   `create-something-db` before deploying the new Pages artifact. The migration
+   adds tables; it does not alter or delete existing references.
+2. Deploy reviewed code to the `createsomething-ltd` Pages project.
+3. Import the already configured channels through the sync route. This writes
+   D1, even for GET. A failed channel must report failure and retain its prior
+   records, memberships, and completion checkpoint.
+4. Read back both motion and layout packets with `include=references`.
+   Check actual source membership, block links, image URLs, and the latest
+   successful channel checkpoint. A matching intent is a discovery aid; inspect
+   the reference before claiming relevance.
+5. Verify `/taste` and `/llm.txt`, plus paused public write/OAuth routes.
+
+Pagination uses uncached source metadata before and after fetching every page.
+Incomplete, duplicate, changing, or oversized snapshots fail before import.
+A checkpoint records the most recent successfully completed channel import,
+not complete freshness of every configured channel. Unknown checkpoints display
+as **Not recorded**. Source block creation dates are not sync dates.
+
+Rollback: restore the previous-good Pages deployment and retain the additive
+tables and reference records. Do not reverse an import by deleting the corpus.
+The pre-repair production deployment recorded for this change is
+`178df795-44e1-4506-b63d-b35501d194f7` (source `aa45651`); recheck the current
+deployment before promotion in case another release has superseded it.
+
+Read-only diagnosis on 2026-10-30 confirmed HTTP 200 for all ten configured
+source channels without subscription authentication. Global block search
+returned an HTML 403. This does not establish a subscription failure; renewal
+is not a prerequisite proven by these checks.
