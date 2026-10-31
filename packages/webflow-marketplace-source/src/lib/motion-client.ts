@@ -1,6 +1,5 @@
 import {gsap} from 'gsap';
 import {ScrollTrigger} from 'gsap/ScrollTrigger';
-import {SplitText} from 'gsap/SplitText';
 import {ScrollToPlugin} from 'gsap/ScrollToPlugin';
 
 // GSAP motion layer. The home page gets a load sequence and scroll reveals; every
@@ -9,7 +8,7 @@ import {ScrollToPlugin} from 'gsap/ScrollToPlugin';
 // card reveals here move transforms only and never fight those keyframes.
 // Reduced motion: nothing below runs, and the pre-paint class is removed.
 
-gsap.registerPlugin(ScrollTrigger,SplitText,ScrollToPlugin);
+gsap.registerPlugin(ScrollTrigger,ScrollToPlugin);
 
 const PRESS='.rd-btn,.rd-chip,.rd-mcat,.rd-search-submit,.rd-search-clear,.rd-share-search,.rd-search-filter-toggle,.rd-search-compare,.rd-brief-chips button,.rd-active-filters a,.rd-clear-all,.tmfilter-pill,.tmfilter-trigger,.rd-control-trigger,.rd-mobile-tabs button,.rd-pill-arrow';
 const CARD='.tmcard-wrapper';
@@ -25,18 +24,12 @@ const CHEVRON='<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true
 function heroLoad(){
  const hero=document.querySelector<HTMLElement>('.rd-hero');
  if(!hero){document.documentElement.classList.remove('rd-motion');return}
- const h1=hero.querySelector<HTMLElement>('h1');
+ // The headline, search and copy paint with the server HTML; only the shots wait for the
+ // script, so the hero's largest paint is never held back by the load sequence.
  const shots=gsap.utils.toArray<HTMLElement>('.rd-hero-card',hero);
- const rest=gsap.utils.toArray<HTMLElement>(':scope>:not(h1):not(.rd-hero-shots)',hero);
- const split=h1?SplitText.create(h1,{type:'lines,words',mask:'lines'}):null;
- const tl=gsap.timeline({defaults:{ease:'power4.out'},onComplete(){split?.revert();document.documentElement.classList.remove('rd-motion')}});
- tl.set(hero.children,{autoAlpha:1})
-  .from(rest[0],{y:12,autoAlpha:0,duration:.6})
-  .from(split?split.words:[],{yPercent:110,duration:1,stagger:.045},'<.05')
-  .from(rest.slice(1),{y:18,autoAlpha:0,duration:.8,stagger:.07},'-=.7')
-  .from(shots,{yPercent:28,autoAlpha:0,rotate:i=>[-5,0,5][i]??0,transformOrigin:'50% 100%',duration:1.3,stagger:{each:.09,from:'center'},ease:'expo.out',clearProps:'transform,opacity,visibility'},'-=.75');
- const count=hero.querySelector<HTMLElement>('[data-rd-count]');
- if(count){const total=Number(count.dataset.rdCount)||0,n={v:0};tl.to(n,{v:total,duration:1.4,ease:'power2.out',onUpdate(){count.textContent=Math.round(n.v).toLocaleString('en-US')}},'<.2')}
+ gsap.set('.rd-hero-shots',{autoAlpha:1});
+ document.documentElement.classList.remove('rd-motion');
+ gsap.from(shots,{yPercent:20,autoAlpha:0,rotate:i=>[-4,0,4][i]??0,transformOrigin:'50% 100%',duration:.8,stagger:{each:.06,from:'center'},ease:'expo.out',clearProps:'transform,opacity,visibility'});
  // The shots drift up as the hero scrolls away.
  gsap.to('.rd-hero-shots',{y:-72,ease:'none',scrollTrigger:{trigger:hero,start:'top top',end:'bottom top',scrub:.6}});
 }
@@ -280,8 +273,7 @@ export function initMotion(){
    homeReveals();
    revealCards(gsap.utils.toArray<HTMLElement>(CARD).filter(below));
   };
-  // Split lines only after the web font has loaded, so line breaks are final.
-  if(document.querySelector('.rd-hero h1'))Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,1200))]).then(start);else start();
+  start();
   const off=[microinteractions(),pillRows(true)];
   return()=>off.forEach(fn=>fn());
  });

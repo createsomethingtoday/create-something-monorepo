@@ -487,8 +487,8 @@ body .wfdt-sticky{background:#fff}
 @media(max-width:991px){.rd-categories{padding-bottom:112px}.rd-categories .rd-categories-head{padding-top:96px}}
 @media(max-width:767px){.rd-categories{padding-bottom:80px}.rd-categories .rd-categories-head{padding-top:48px}}
 
-/* GSAP motion (src/lib/motion-client.ts). The home hero stays hidden until its load sequence starts. */
-.rd-motion .rd-hero>*{visibility:hidden}
+/* GSAP motion (src/lib/motion-client.ts). Only the home hero shots wait for their entrance; the hero copy paints at once. */
+.rd-motion .rd-hero-shots{visibility:hidden}
 @media(prefers-reduced-motion:no-preference){.rd-cstack[data-rd-stack] img{animation:rd-stack-in .5s ease both}}@keyframes rd-stack-in{from{opacity:0}}
 /* Category pill rows: edge fades and arrows show which side has more (motion-client pillRow).
    The row runs the full content width, and the arrows are pill tiles so they read as part of the row. */

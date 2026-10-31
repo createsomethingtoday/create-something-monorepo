@@ -18,7 +18,7 @@ function clean(name:string){
  // Archived marketing headers depend on retired custom scripts. Use the
  // current exported Marketplace navigation across all retained app pages.
  if(name!=='index'){const header=load(raw('index'))('.sb-nav-wrapper').first().toString();$('.g-nav_wrapper,.g-nav-wrapper').filter((_,element)=>$(element).parents('.g-nav_wrapper,.g-nav-wrapper').length===0).replaceWith(header);}
- $('base,script,link[rel="prefetch"],link[rel="preconnect"],link[rel="stylesheet"],meta[http-equiv],.g-nav-modal_wrap,.g-nav-js,.w-dyn-empty,.notification_bar').remove();
+ $('base,script,link[rel="preload"][as="script"],link[rel="prefetch"],link[rel="preconnect"],link[rel="stylesheet"],meta[http-equiv],.g-nav-modal_wrap,.g-nav-js,.w-dyn-empty,.notification_bar').remove();
  $('head style').remove();
  $('[onload],[onclick],[onerror]').removeAttr('onload onclick onerror');
  $('[src],[href],[srcset]').each((_,e)=>{
