@@ -14,12 +14,12 @@ test('standalone page retains the owning Agency Canon operator palette', () => {
 });
 
 test('download contract pins exact qualified installer, platform and checksum', () => {
-  assert.equal(gigiBeta.version, '0.2.19');
-  assert.equal(gigiBeta.filename, 'GiGi-0.2.19-arm64-private-beta.dmg');
-  assert.equal(gigiBeta.bytes, 84812194);
-  assert.equal(gigiBeta.sha256, 'b896d08ff1dfdb7b5474058fe73f0044e24289c7c6c61d6cbb357636acf1bfb0');
-  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.19/GiGi-0.2.19-arm64-private-beta.dmg`);
-  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '84,812,194', '84.8 MB']) assert.ok(gigiBetaHtml.includes(text), text);
+  assert.equal(gigiBeta.version, '0.2.20');
+  assert.equal(gigiBeta.filename, 'GiGi-0.2.20-arm64-private-beta.dmg');
+  assert.equal(gigiBeta.bytes, 84804275);
+  assert.equal(gigiBeta.sha256, '53cf7e6e3b47520dd4ed7331ec6980255e53988aa3c3de096f6ed8b0ae4e0afc');
+  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.20/GiGi-0.2.20-arm64-private-beta.dmg`);
+  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '84,804,275', '84.8 MB']) assert.ok(gigiBetaHtml.includes(text), text);
 });
 
 test('beta stays unlisted and has no active content or tracking shell', () => {
@@ -135,7 +135,7 @@ test('setup and classification release keeps session and acceptance boundaries e
 });
 
 test("current release clearly defers phone qualification and preserves rollback", () => {
- assert.ok(gigiBetaHtml.includes("Phone workflow unverified for 0.2.19"));
+ assert.ok(gigiBetaHtml.includes("Phone workflow unverified for 0.2.20"));
  assert.ok(gigiBetaHtml.includes("Physical-phone qualification is deferred"));
  assert.ok(gigiBetaHtml.includes("GiGi 0.2.18 for Apple Silicon"));
 });
@@ -165,7 +165,7 @@ test('customization describes visible controls and portable device-local prefere
 });
 
 test('current release qualification distinguishes native synthetic checks from fresh setup', () => {
-  for (const text of ['GiGi 0.2.19 passed 329 desktop', 'Native minimum-window resizing and native error persistence remain unverified', 'isolated native workspace', 'verified readback', 'notification permission recovery', 'matched the qualified build', 'notification-click routing remains a manual acceptance check']) assert.ok(gigiBetaHtml.includes(text), text);
+  for (const text of ['GiGi 0.2.20 passed 329 desktop', 'Native minimum-window resizing and native error persistence remain unverified', 'isolated native workspace', 'verified readback', 'notification permission recovery', 'matched the qualified build', 'notification-click routing remains a manual acceptance check']) assert.ok(gigiBetaHtml.includes(text), text);
   assert.ok(!gigiBetaHtml.includes('Release qualification for this customization update is in progress'));
 });
 

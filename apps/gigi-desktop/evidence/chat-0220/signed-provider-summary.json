@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "checks": [
+    "observed partial assistant output before terminal transcript",
+    "installed ChatGPT authentication",
+    "read selected gig fee/contact/task",
+    "approval before exact task rename",
+    "retained fields and relations",
+    "rejected rename unchanged",
+    "conversation retained after companion restart"
+  ],
+  "turns": 3,
+  "observations": 171,
+  "runningWithText": 134,
+  "distinctRunningLengths": 67,
+  "approvalObservations": 2,
+  "finalState": "idle"
+}
