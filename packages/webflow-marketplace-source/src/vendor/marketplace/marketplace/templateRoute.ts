@@ -296,13 +296,6 @@ export function parseTemplateRoute(options: ParseTemplateRouteOptions = {}): Tem
     ? params.get('child_category_slug') || params.get('subcategory')
     : null;
 
-  // A category param only overrides the route when it names a different category. Category pages
-  // link to themselves with ?category=<same slug>, and those stay route-owned (breadcrumbs, copy).
-  const routeCategorySlug = categorySlugOverride || (categoryMatch ? categoryMatch[1] : null);
-  const categoryParamOverridesRoute = Boolean(
-    categoryFromParam && normalizeTemplateSlug(categoryFromParam) !== normalizeTemplateSlug(routeCategorySlug ?? ''),
-  );
-
   const styleFromPath = stylePathMatch ? toTemplateStyleSlug(stylePathMatch[1]) : null;
   const styleFromOverride = styleSlugOverride ? toTemplateStyleSlug(styleSlugOverride) : null;
   const stylesFromParams = includeFilterParams
@@ -336,9 +329,7 @@ export function parseTemplateRoute(options: ParseTemplateRouteOptions = {}): Tem
     categoryGroupSlug: categoryFromParam || categorySlugOverride || (categoryMatch ? categoryMatch[1] : null),
     childCategorySlug:
       childCategoryFromParam ||
-      (categoryParamOverridesRoute
-        ? null
-        : childCategorySlugOverride || (childCategoryMatch ? childCategoryMatch[1] : null)),
+      (categoryFromParam ? null : childCategorySlugOverride || (childCategoryMatch ? childCategoryMatch[1] : null)),
     styleSlug,
     tagSlug,
     styles,
@@ -347,11 +338,9 @@ export function parseTemplateRoute(options: ParseTemplateRouteOptions = {}): Tem
     sort: normalizeTemplateSort(params.get('sort'), defaultSort),
     pathKind,
     isSearchRoute: inferredPathKind === 'search' || pathKind === 'search',
-    categoryIsRoute: Boolean(
-      !categoryParamOverridesRoute && (categorySlugOverride ? pathKind === 'category' : categoryMatch),
-    ),
+    categoryIsRoute: Boolean(!categoryFromParam && (categorySlugOverride ? pathKind === 'category' : categoryMatch)),
     childCategoryIsRoute: Boolean(
-      !categoryParamOverridesRoute &&
+      !categoryFromParam &&
       !childCategoryFromParam &&
       (childCategorySlugOverride ? pathKind === 'subcategory' : childCategoryMatch),
     ),

@@ -5,7 +5,7 @@ import { MarketplaceAgentTools } from './MarketplaceAgentTools';
 export default declareComponent(MarketplaceAgentTools, {
   name: 'Marketplace Agent Tools',
   description:
-    'Headless WebMCP registrar: exposes template search, taxonomy, template detail, page state, and page-filter tools to in-browser AI agents (ChatGPT built-in browser, Edge/Chrome modelContext). Place once per marketplace page. Renders nothing.',
+    'Headless WebMCP registrar: exposes template search, taxonomy, template detail, page state, and page-filter tools to in-browser AI agents (ChatGPT built-in browser, Edge/Chrome modelContext) and reports whether the ChatGPT Browser Annotation API is present. Place once per marketplace page. Renders nothing.',
   group: 'Marketplace',
   props: {
     apiBase: props.Text({

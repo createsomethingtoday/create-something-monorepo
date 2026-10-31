@@ -38,7 +38,7 @@ import {
   type TemplateRouteState,
 } from './templateRoute';
 
-export const MARKETPLACE_AGENT_TOOLS_VERSION = '2026-09-10.1';
+export const MARKETPLACE_AGENT_TOOLS_VERSION = '2026-10-10.1';
 
 // Same default + rewrite guard as the sibling marketplace components:
 // webflow.com's CSP is `connect-src https://*.webflow.com`, so direct worker
@@ -218,11 +218,27 @@ export function summarizeSearchItem(item: SearchApiItem): Record<string, unknown
 
 // ── Tool + registration types ────────────────────────────────────────────────
 
+/**
+ * WebMCP ToolAnnotations (W3C draft, October 2026). ChatGPT's Site tools reads
+ * readOnlyHint to count read vs write tools; the other hints describe trust
+ * and blast radius so clients can decide when to confirm before calling.
+ */
+export interface WebMcpToolAnnotations {
+  /** The tool only reads; it never changes page or remote state. */
+  readOnlyHint: boolean;
+  /** The result carries third-party content (creator-authored listings). */
+  untrustedContentHint?: boolean;
+  /** Execution has significant or irreversible real-world effects. */
+  consequentialHint?: boolean;
+  /** Developer tooling rather than end-user interaction. */
+  debugging?: boolean;
+}
+
 export interface MarketplaceAgentTool {
   name: string;
   description: string;
   inputSchema: Record<string, unknown>;
-  annotations: { readOnlyHint: boolean };
+  annotations: WebMcpToolAnnotations;
   execute: (input: Record<string, unknown>) => Promise<unknown>;
 }
 
@@ -239,6 +255,14 @@ export interface MarketplaceAgentToolsOptions {
   /** Telemetry hook invoked after every tool execution. */
   onToolCall?: (info: { tool: string; ok: boolean; durationMs: number }) => void;
   fetchTimeoutMs?: number;
+  /** Origin for marketplace links in tool results. Default `https://webflow.com`. */
+  marketplaceOrigin?: string;
+  /**
+   * Host-owned tools for the current surface (detail, storefront, brief).
+   * Registered after the catalog tools with the same error and telemetry
+   * contract. A name that repeats a catalog tool is skipped.
+   */
+  additionalTools?: MarketplaceAgentTool[];
 }
 
 const CACHE_TTL_MS = 5 * 60_000;
@@ -555,6 +579,7 @@ export function createMarketplaceAgentTools(
   const apiBase = resolveAgentToolsApiBase(options.apiBase);
   const enablePageActions = options.enablePageActions !== false;
   const fetchTimeoutMs = options.fetchTimeoutMs ?? DEFAULT_FETCH_TIMEOUT_MS;
+  const allTemplatesUrl = `${(options.marketplaceOrigin || 'https://webflow.com').replace(/\/+$/, '')}/templates/all`;
 
   // The production proxy strips the worker's public cache headers, so keep the
   // same in-memory response cache the grid uses: full URL key, 5 min TTL.
@@ -625,7 +650,8 @@ export function createMarketplaceAgentTools(
     description:
       'Search the Webflow Template Marketplace catalog. Returns matching templates with name, creator, price, categories, styles, demand tier, and links. Use list_categories_and_styles first to discover valid category and style slugs.',
     inputSchema: SEARCH_INPUT_SCHEMA,
-    annotations: { readOnlyHint: true },
+    // Results carry creator-authored listing text.
+    annotations: { readOnlyHint: true, untrustedContentHint: true },
     async execute(input) {
       const invalid = await validateTaxonomy(input);
       if (invalid) return invalid;
@@ -690,7 +716,8 @@ export function createMarketplaceAgentTools(
         template_slug: { type: 'string', description: 'Slug from search_templates results.' },
       },
     },
-    annotations: { readOnlyHint: true },
+    // The description and feature list are creator-authored.
+    annotations: { readOnlyHint: true, untrustedContentHint: true },
     async execute(input) {
       const slug = String(input.template_slug ?? '').trim().toLowerCase();
       if (!slug) return { ok: false, message: 'template_slug is required.' };
@@ -733,7 +760,8 @@ export function createMarketplaceAgentTools(
     description:
       'Apply search, subcategory, scope, styles, type, sorting or page to the visible grid. Returns ready only after matching results render; Back undoes the action. If this page has no grid, open the returned next_url and fetch tools again.',
     inputSchema: UPDATE_PAGE_INPUT_SCHEMA,
-    annotations: { readOnlyHint: false },
+    // Changes the visible grid and URL only; Back undoes it, nothing is bought or sent.
+    annotations: { readOnlyHint: false, consequentialHint: false },
     async execute(input) {
       if (typeof window === 'undefined' || typeof document === 'undefined') {
         return { ok: false, message: 'Page context unavailable.' };
@@ -765,7 +793,7 @@ export function createMarketplaceAgentTools(
           ok: false,
           message:
             'This page has no filter-aware grid. Open next_url to show the requested results.',
-          next_url: buildPageActionUrl('https://webflow.com/templates/all', payload),
+          next_url: buildPageActionUrl(allTemplatesUrl, payload),
           status: 'navigation_required',
         };
       }
@@ -817,7 +845,7 @@ export function createMarketplaceAgentTools(
           if (window.location.href !== targetHref) return { ok: false, status: 'superseded', href: window.location.href };
           if (state?.href === targetHref && state.status === 'error') return { ok: false, status: 'error', error: state.error, href: targetHref };
           if (state?.href === targetHref && state.result_href === targetHref && state.status === 'ready') {
-            return { ok: true, status: 'ready', applied: payload, href: targetHref, result_revision: state.result_revision, page: state.page, total_items: state.total_items, preserved_route_filters: routeOwned, note: routeOwned.length ? 'These filters come from the page path or component and remain active. Navigate to https://webflow.com/templates/all for an unfiltered view.' : 'Matching results are rendered.' };
+            return { ok: true, status: 'ready', applied: payload, href: targetHref, result_revision: state.result_revision, page: state.page, total_items: state.total_items, preserved_route_filters: routeOwned, note: routeOwned.length ? `These filters come from the page path or component and remain active. Navigate to ${allTemplatesUrl} for an unfiltered view.` : 'Matching results are rendered.' };
           }
           await new Promise(resolve => setTimeout(resolve, 100));
         }
@@ -830,7 +858,7 @@ export function createMarketplaceAgentTools(
         ...(routeOwned.length > 0
           ? {
               preserved_route_filters: routeOwned,
-              note: 'Query filters were cleared, but these filters come from the page path itself and remain active. Navigate to https://webflow.com/templates/all for a fully unfiltered view.',
+              note: `Query filters were cleared, but these filters come from the page path itself and remain active. Navigate to ${allTemplatesUrl} for a fully unfiltered view.`,
             }
           : {
               note: 'Filters applied to the visible page; the grid refetches and highlights render asynchronously.',
@@ -844,7 +872,8 @@ export function createMarketplaceAgentTools(
     description:
       'Read loading/ready/error state, result revision, pagination and active filters. Visible template slugs are returned only for ready results; never describe loading results as matches.',
     inputSchema: { type: 'object', additionalProperties: false, properties: {} },
-    annotations: { readOnlyHint: true },
+    // Visible slugs are creator-chosen strings.
+    annotations: { readOnlyHint: true, untrustedContentHint: true },
     async execute() {
       if (typeof window === 'undefined' || typeof document === 'undefined') {
         return { ok: false, message: 'Page context unavailable.' };
@@ -924,6 +953,9 @@ export function createMarketplaceAgentTools(
 
   const tools = [searchTemplates, listCategoriesAndStyles, getTemplate, getPageState];
   if (enablePageActions) tools.splice(3, 0, updatePageFilters);
+  for (const tool of options.additionalTools ?? []) {
+    if (!tools.some((existing) => existing.name === tool.name)) tools.push({ ...tool });
+  }
 
   // Always instrument: the error-to-result contract (thrown errors become
   // { ok: false, error }) must not depend on whether telemetry is enabled.
@@ -972,12 +1004,38 @@ interface ModelContextLike {
   provideContext?: (context: { tools: unknown[] }) => unknown;
 }
 
+/**
+ * The W3C draft and ChatGPT's Site tools expose `document.modelContext`; early
+ * Chromium builds used `navigator.modelContext`. Prefer the spec surface.
+ */
 function findModelContext(): ModelContextLike | null {
+  // A polyfill can expose a truthy but inert document.modelContext beside a
+  // working navigator one, so only a context that can register tools wins.
+  if (typeof document !== 'undefined') {
+    const doc = document as Document & { modelContext?: ModelContextLike };
+    if (canRegister(doc?.modelContext)) return doc.modelContext ?? null;
+  }
   if (typeof window === 'undefined') return null;
   const nav = window.navigator as Navigator & { modelContext?: ModelContextLike };
-  if (nav?.modelContext) return nav.modelContext;
-  const doc = document as Document & { modelContext?: ModelContextLike };
-  return doc?.modelContext ?? null;
+  return canRegister(nav?.modelContext) ? (nav.modelContext ?? null) : null;
+}
+
+function canRegister(context: ModelContextLike | undefined): boolean {
+  return Boolean(
+    context && (typeof context.registerTool === 'function' || typeof context.provideContext === 'function'),
+  );
+}
+
+/** Fill every spec-defined hint so a client never reads an absent member as unknown. */
+export function normalizeToolAnnotations(
+  annotations: WebMcpToolAnnotations,
+): Required<WebMcpToolAnnotations> {
+  return {
+    readOnlyHint: annotations.readOnlyHint === true,
+    untrustedContentHint: annotations.untrustedContentHint === true,
+    consequentialHint: annotations.consequentialHint === true,
+    debugging: annotations.debugging === true,
+  };
 }
 
 /** Adapt a tool so its result matches the WebMCP content-array shape. */
@@ -986,7 +1044,7 @@ export function toWebMcpTool(tool: MarketplaceAgentTool): Record<string, unknown
     name: tool.name,
     description: tool.description,
     inputSchema: tool.inputSchema,
-    annotations: tool.annotations,
+    annotations: normalizeToolAnnotations(tool.annotations),
     execute: async (input: Record<string, unknown>): Promise<WebMcpToolResult> => {
       const raw = await tool.execute(input ?? {});
       if (
@@ -1045,7 +1103,12 @@ export function registerMarketplaceAgentTools(
 
 export interface AgentToolsWindowHandle {
   version: string;
-  listTools: () => Array<{ name: string; description: string; readOnly: boolean }>;
+  listTools: () => Array<{
+    name: string;
+    description: string;
+    readOnly: boolean;
+    annotations: Required<WebMcpToolAnnotations>;
+  }>;
   callTool: (name: string, input?: Record<string, unknown>) => Promise<unknown>;
 }
 
@@ -1059,6 +1122,7 @@ export function createAgentToolsWindowHandle(
         name: tool.name,
         description: tool.description,
         readOnly: tool.annotations.readOnlyHint,
+        annotations: normalizeToolAnnotations(tool.annotations),
       })),
     callTool: async (name, input = {}) => {
       const tool = tools.find((entry) => entry.name === name);

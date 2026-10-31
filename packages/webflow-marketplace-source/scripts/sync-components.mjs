@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import ts from 'typescript';
 const source=resolve(process.env.MARKETPLACE_COMPONENT_SOURCE || '../webflow-components/src/components');
 const destination=resolve('src/vendor/marketplace');
-const roots=['marketplace/TemplateDetailConversionTracker.tsx','chat/TemplateChat.tsx','cards/TemplateCard.tsx','grid/TemplateGrid.tsx','filter/TemplateFilterBar.tsx','marketplace/TemplateSearchSidebar.tsx','marketplace/TemplateMarketplaceHeading.tsx','marketplace/TemplateDetailHero.tsx','marketplace/TemplateDetailStickyBar.tsx'];
+const roots=['marketplace/TemplateDetailConversionTracker.tsx','chat/TemplateChat.tsx','cards/TemplateCard.tsx','grid/TemplateGrid.tsx','filter/TemplateFilterBar.tsx','marketplace/TemplateSearchSidebar.tsx','marketplace/TemplateMarketplaceHeading.tsx','marketplace/TemplateDetailHero.tsx','marketplace/TemplateDetailStickyBar.tsx','marketplace/MarketplaceAgentTools.tsx'];
 const only=process.argv.includes('--only') ? process.argv.slice(process.argv.indexOf('--only')+1) : null;
 const manifest=only?JSON.parse(await readFile('component-snapshot.json','utf8')):{sourcePackage:'packages/webflow-components/src/components',files:{}};
 const visited=new Set();

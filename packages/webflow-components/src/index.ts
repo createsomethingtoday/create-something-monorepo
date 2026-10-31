@@ -248,6 +248,8 @@ export { TemplateSearchPage } from './components/marketplace/TemplateSearchPage'
 export type { TemplateSearchPageProps } from './components/marketplace/TemplateSearchPage';
 
 export { TemplateSearchBox } from './components/marketplace/TemplateSearchBox';
+export { SubmissionGuidelines } from './components/marketplace/SubmissionGuidelines';
+export type { SubmissionGuidelinesProps } from './components/marketplace/SubmissionGuidelines';
 export type {
   TemplateSearchBoxMode,
   TemplateSearchBoxProps,
@@ -330,7 +332,21 @@ export {
 export type {
   MarketplaceAgentTool,
   MarketplaceAgentToolsOptions,
+  WebMcpToolAnnotations,
 } from './components/marketplace/agentTools';
+export {
+  annotationApiStatus,
+  findAnnotationApi,
+  templateAnnotationContainerProps,
+  templateAnnotationProps,
+  templateAnnotationTextContainerProps,
+  toAnnotationMetadata,
+} from './components/marketplace/templateAnnotations';
+export type {
+  AnnotationApiStatus,
+  TemplateAnnotationProps,
+  TemplateAnnotationSource,
+} from './components/marketplace/templateAnnotations';
 
 export type {
   MarketplaceAnalyticsData,

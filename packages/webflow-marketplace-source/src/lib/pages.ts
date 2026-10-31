@@ -80,9 +80,11 @@ function hydrateCms($:ReturnType<typeof load>,islands:Island[],url?:URL){
  $('code-island').each((_,e)=>{
   const el=$(e);let widget:string,props:Record<string,unknown>;
   try{widget=JSON.parse(el.attr('data-loader')||'{}').val?.submoduleId;props=JSON.parse(el.attr('data-props')||'{}')}catch{return}
+  // The page shell registers the WebMCP tools once for every route.
+  if(widget==='MarketplaceAgentTools'){el.remove();return;}
   // The published heading reads window at runtime. Give the server render the request route so the first paint carries the real title.
   if(widget==='TemplateMarketplaceHeading'&&url&&!props.staticRoutePath)props.staticRoutePath=url.pathname+url.search;
-  if(['TemplateCard','TemplateGrid','TemplateFilterBar','TemplateSupportRequest','TemplateSearchSidebar','TemplateMarketplaceHeading','TemplateChat','MarketplaceAgentTools'].includes(widget)){
+  if(['TemplateCard','TemplateGrid','TemplateFilterBar','TemplateSupportRequest','TemplateSearchSidebar','TemplateMarketplaceHeading','TemplateChat'].includes(widget)){
    islands.push({kind:'widget',widget,props});el.replaceWith('<source-island></source-island>');
   }
  });

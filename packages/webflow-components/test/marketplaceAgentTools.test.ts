@@ -25,6 +25,10 @@ function installWindow(overrides: Record<string, unknown>): void {
   (globalThis as GlobalWithDom).window = overrides as unknown as Window;
 }
 
+function installDocument(overrides: Record<string, unknown>): void {
+  (globalThis as GlobalWithDom).document = overrides as unknown as Document;
+}
+
 beforeEach(() => {
   removeDom();
 });
@@ -294,6 +298,58 @@ test('registerMarketplaceAgentTools prefers registerTool', () => {
     'update_page_filters',
     'get_page_state',
   ]);
+});
+
+test('registerMarketplaceAgentTools prefers document.modelContext (spec, ChatGPT Site tools) over navigator', () => {
+  const viaDocument: unknown[] = [];
+  const viaNavigator: unknown[] = [];
+  installWindow({
+    navigator: { modelContext: { registerTool: (tool: unknown) => viaNavigator.push(tool) } },
+  });
+  installDocument({ modelContext: { registerTool: (tool: unknown) => viaDocument.push(tool) } });
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  assert.deepEqual(registerMarketplaceAgentTools(tools), { api: 'registerTool', registered: 5 });
+  assert.equal(viaDocument.length, 5);
+  assert.equal(viaNavigator.length, 0);
+});
+
+test('registerMarketplaceAgentTools falls back to navigator when document.modelContext cannot register', () => {
+  const viaNavigator: unknown[] = [];
+  installWindow({
+    navigator: { modelContext: { registerTool: (tool: unknown) => viaNavigator.push(tool) } },
+  });
+  // A polyfill stub: truthy, but with no registration method.
+  installDocument({ modelContext: {} });
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  assert.deepEqual(registerMarketplaceAgentTools(tools), { api: 'registerTool', registered: 5 });
+  assert.equal(viaNavigator.length, 5);
+});
+
+test('registered tools carry the full WebMCP annotation set', () => {
+  const registered: Array<{ name: string; annotations: Record<string, boolean> }> = [];
+  installDocument({ modelContext: { registerTool: (tool: unknown) => registered.push(tool as never) } });
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  registerMarketplaceAgentTools(tools);
+  const byName = Object.fromEntries(registered.map((tool) => [tool.name, tool.annotations]));
+  for (const annotations of Object.values(byName)) {
+    assert.deepEqual(Object.keys(annotations).sort(), [
+      'consequentialHint',
+      'debugging',
+      'readOnlyHint',
+      'untrustedContentHint',
+    ]);
+    assert.equal(annotations.debugging, false);
+    assert.equal(annotations.consequentialHint, false);
+  }
+  // Creator-authored listing text flows through these; taxonomy is Webflow-owned.
+  assert.equal(byName.search_templates.readOnlyHint, true);
+  assert.equal(byName.search_templates.untrustedContentHint, true);
+  assert.equal(byName.get_template.untrustedContentHint, true);
+  assert.equal(byName.get_page_state.untrustedContentHint, true);
+  assert.equal(byName.list_categories_and_styles.untrustedContentHint, false);
+  // The only write tool is reversible navigation, not a consequential action.
+  assert.equal(byName.update_page_filters.readOnlyHint, false);
+  assert.equal(byName.update_page_filters.consequentialHint, false);
 });
 
 test('registerMarketplaceAgentTools falls back to provideContext, then none', () => {
@@ -935,4 +991,44 @@ test('homepage handoff retains the buyer request in a working results URL', asyn
   assert.equal(url.pathname,'/templates/all');
   assert.equal(url.searchParams.get('q'),'studio');
   assert.equal(url.searchParams.get('free_only'),'true');
+});
+
+test('additionalTools register after catalog tools with the same error contract', async () => {
+  const calls: string[] = [];
+  const extra: MarketplaceAgentTool = {
+    name: 'get_surface',
+    description: 'Host tool',
+    inputSchema: { type: 'object', properties: {} },
+    annotations: { readOnlyHint: true },
+    async execute() {
+      throw new Error('surface unavailable');
+    },
+  };
+  const duplicate: MarketplaceAgentTool = { ...extra, name: 'search_templates' };
+  const tools = createMarketplaceAgentTools({
+    fetchImpl: stubFetch({}),
+    additionalTools: [extra, duplicate],
+    onToolCall: (info) => calls.push(`${info.tool}:${info.ok}`),
+  });
+  assert.deepEqual(
+    tools.map((tool) => tool.name),
+    ['search_templates', 'list_categories_and_styles', 'get_template', 'update_page_filters', 'get_page_state', 'get_surface'],
+  );
+  const result = (await runTool(tools, 'get_surface', {})) as { ok: boolean; error: string };
+  assert.deepEqual(result, { ok: false, error: 'surface unavailable' });
+  assert.deepEqual(calls, ['get_surface:false']);
+  // The caller's tool object is not mutated by instrumentation.
+  await assert.rejects(extra.execute({}), /surface unavailable/);
+});
+
+test('update_page_filters links to the configured marketplace origin when no grid exists', async () => {
+  installWindow({ location: { href: 'https://preview.example/templates', origin: 'https://preview.example' } });
+  installDocument({ querySelector: () => null, querySelectorAll: () => [] });
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}), marketplaceOrigin: 'https://preview.example/' });
+  const result = (await runTool(tools, 'update_page_filters', { q: 'portfolio' })) as {
+    status: string;
+    next_url: string;
+  };
+  assert.equal(result.status, 'navigation_required');
+  assert.match(result.next_url, /^https:\/\/preview\.example\/templates\/all\?/);
 });

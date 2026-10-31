@@ -10,8 +10,11 @@ import Consent from '../components/Consent';
 import Comments from '../components/Comments';
 import Chat from '../components/Chat';
 import CmsWidget from '../components/CmsWidget';
+import AgentTools from '../components/AgentTools';
+import {surfaceFor} from '../lib/agent-surface.mjs';
 if(Astro.url.pathname.replace(/\/+$/,'')==='/templates/tags')return Astro.redirect('/templates/categories',301);
 const page=await pageFor(Astro.url);
+const agentSurface=surfaceFor(page.islands);
 // The standalone adapter may use its internal origin behind a reverse proxy.
 // The public Host identifies whether the demo permits this embedding parent.
 const requestHostname=new URL(`http://${Astro.request.headers.get('host')||Astro.url.host}`).hostname;
@@ -36,7 +39,7 @@ Astro.response.headers.set('X-Robots-Tag','noindex, nofollow');
  <link rel="stylesheet" href="/source.css"/>
  {page.islands.some(island=>island.kind==='library') && <link rel="stylesheet" href="/library-intake.css"/>}
 </head>
-<body>
+<body data-agent-surface={agentSurface.kind}>
  <a class="source-skip" href="#main">Skip to main content</a>
  {page.parts.map((part,i)=><>
   <Fragment set:html={part}/>
@@ -50,6 +53,7 @@ Astro.response.headers.set('X-Robots-Tag','noindex, nofollow');
   {page.islands[i]?.kind==='widget' && <CmsWidget widget={page.islands[i].widget!} props={page.islands[i].props!} client:load/>}
   {page.islands[i]?.kind==='detail' && <Detail section={page.islands[i].detailSection} inventory={page.islands[i].inventory} published={page.islands[i].published} search={Astro.url.search} item={page.islands[i].item!} heroProps={page.islands[i].heroProps} allowEmbed={allowEmbed} devPreview={placeholderPreview} client:load/>}
  </>)}
+ <AgentTools surface={agentSurface} client:only="react"/>
  <Consent client:load/>
  <script is:inline defer src="https://d3e54v103j8qbb.cloudfront.net/js/jquery-3.5.1.min.dc5e7f18c8.js"></script>
  <script is:inline defer src="/export/js/webflow.js"></script>
