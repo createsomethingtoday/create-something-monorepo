@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { enhanceEvidenceDisclosure } from '$lib/motion/evidenceDisclosure';
   import { page } from '$app/stores';
   import content from '$lib/content/agency-home.html?raw';
   import { filmOverlayOpen } from '$lib/motion/filmPlayback';
@@ -11,6 +12,7 @@
   $effect(() => { if ($page.url.searchParams.has('film') || $page.url.hash === '#work') libraryOpen = true; });
   onMount(() => {
     const abort = new AbortController();
+    const disposeEvidence = Array.from(root.querySelectorAll<HTMLDetailsElement>('[data-evidence-reveal]'), enhanceEvidenceDisclosure);
     const image = root.querySelector<HTMLImageElement>('#journey-image');
     const caption = root.querySelector<HTMLElement>('#journey-caption');
     const status = root.querySelector<HTMLElement>('#journey-status');
@@ -54,6 +56,7 @@
     }, { signal: abort.signal });
     return () => {
       abort.abort();
+      disposeEvidence.forEach(dispose => dispose());
       dialog?.querySelector('video')?.pause();
       if (dialog?.open) {
         filmOverlayOpen.set(false);
@@ -63,7 +66,7 @@
   });
 </script>
 
-<svelte:head><link rel="stylesheet" href="/styles/agency/home.css?v=20261031-team-balance" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /></svelte:head>
+<svelte:head><link rel="stylesheet" href="/styles/agency/home.css?v=20261031-partner-evidence" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /></svelte:head>
 <div class="agency-home" bind:this={root}>
   {@html content}
   <details id="work-library" class="work-library" bind:open={libraryOpen}>
