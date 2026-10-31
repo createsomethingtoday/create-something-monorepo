@@ -1,4 +1,9 @@
 <script lang="ts">
+  import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
+  import AgencyWayfindingGroup from '$lib/components/AgencyWayfindingGroup.svelte';
+  import AgencyWayfindingHero from '$lib/components/AgencyWayfindingHero.svelte';
+  import AgencyWayfindingOpening from '$lib/components/AgencyWayfindingOpening.svelte';
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import {
     Button,
     PerformanceCampaignOpening,
@@ -13,7 +18,7 @@
   } from '@create-something/canon';
   import DelegationPracticeWorkbench from '$lib/components/DelegationPracticeWorkbench.svelte';
   import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
-  import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
+  import AgencyPracticeSample from '$lib/components/AgencyPracticeSample.svelte';
 
   const systemConditions: PerformanceCondition[] = [
     {
@@ -131,14 +136,14 @@
 />
 
 <main class="delegation-practice-page">
+  <AgencyWayfindingOpening>
   <PerformanceCampaignOpening
     eyebrow="The Delegation Practice"
     title="Try an AI workflow before connecting your tools."
     lede="Use a practice workflow to decide what AI can do, when it needs approval, and how to check its work."
-    media={playbookHeroMedia.practice}
-    mediaMobilePlacement="background"
     density="compact"
     expression="editorial"
+    artifactMobilePlacement="flow"
     proof={[
       { label: 'Owner', value: 'Accountable operator' },
       { label: 'Authority', value: 'Observe one workflow' },
@@ -146,10 +151,16 @@
     ]}
   >
     {#snippet actions()}
-      <Button href="#practice-workbench">Map one workflow</Button>
+      <Button href="#short-practice">Try a short example</Button>
       <Button href="#evidence" variant="secondary">Examine the evidence</Button>
     {/snippet}
+    {#snippet artifact()}<AgencyWayfindingHero route="practice" />{/snippet}
   </PerformanceCampaignOpening>
+  </AgencyWayfindingOpening>
+
+  <AgencyPracticeSample />
+
+  <WorkflowSignalBand motionOnly quiet tall showMotionControl />
 
   <PerformanceNarrativeStage
     id="delegation-practice-argument"
@@ -175,34 +186,45 @@
           storyId="delegation-practice-marketplace-story"
         />
       {:else if scene.id === 'rehearse'}
-        <DelegationPracticeWorkbench />
+        <AgencyWayfindingSign kind="map" label="Map one workflow" detail="Practice scenario · no live access or client result." href="#practice-workbench" direction="down" />
       {:else}
-        <div id="evidence" class="practice-evidence">
-          <PerformanceEvidenceIndex
-            eyebrow="Source evidence"
-            title="Verified, review, and draft are different states."
-            description="Read the source record and its limits before relying on a result."
-            items={evidenceRecords}
-            ariaLabel="Delegation Practice source evidence"
-          />
-          <article class="flagship-defense">
-            <span>Flagship defense · unresolved boundary</span>
-            <h3>Governed Agent Delivery: from Linear signal to production proof.</h3>
-            <p>
-              This case follows work from a Linear issue to production. At every step, it must keep
-              the owner, allowed actions, required checks, approval points, and rollback evidence
-              visible.
-            </p>
-            <strong>A proposed case is not a passed defense.</strong>
-            <p>
-              Passing still requires artifact inspection, counterexample review, a rollback check,
-              and an independent verdict with real consequences.
-            </p>
-          </article>
-        </div>
+        <AgencyWayfindingSign kind="proof" label="Examine the evidence" detail="Source records · verified, review, and draft remain distinct." href="#evidence" direction="down" />
       {/if}
     {/snippet}
   </PerformanceNarrativeStage>
+
+  <DelegationPracticeWorkbench />
+
+  <section id="evidence" class="practice-evidence" aria-label="Practice source evidence" tabindex="-1">
+    <PerformanceEvidenceIndex
+      eyebrow="Source evidence"
+      title="Verified, review, and draft are different states."
+      description="Read the source record and its limits before relying on a result."
+      items={evidenceRecords}
+      ariaLabel="Delegation Practice source evidence"
+    />
+    <article class="flagship-defense">
+      <span>Flagship defense · unresolved boundary</span>
+      <h3>Governed Agent Delivery: from Linear signal to production proof.</h3>
+      <p>
+        This case follows work from a Linear issue to production. At every step, it must keep
+        the owner, allowed actions, required checks, approval points, and rollback evidence
+        visible.
+      </p>
+      <strong>A proposed case is not a passed defense.</strong>
+      <p>
+        Passing still requires artifact inspection, counterexample review, a rollback check,
+        and an independent verdict with real consequences.
+      </p>
+    </article>
+  </section>
+
+  <section class="practice-wayfinding" aria-label="Continue from practice">
+    <p>Continue from the practice</p>
+    <AgencyWayfindingGroup label="Inspect the practice prototype">
+      <AgencyWayfindingSign kind="proof" label="Read the prototype results" detail="Representative fixtures; no production writes." href="/proof/marketplace-workflow" />
+    </AgencyWayfindingGroup>
+  </section>
 
   <PerformanceConversionHandoff
     expression="editorial"
@@ -223,9 +245,6 @@
           variant="secondary"
           fullWidth>Request a mapping session</Button
         >
-        <a class="practice-handoff-proof" href="/proof/marketplace-workflow">
-          Read the test results <span aria-hidden="true">→</span>
-        </a>
         <a class="practice-handoff-audience" href="/for-service-providers">
           <span>For service providers</span>
           <strong>Use the Practice with clients <span aria-hidden="true">→</span></strong>
@@ -241,10 +260,32 @@
     color: var(--color-performance-ink, #090909);
   }
 
+  .delegation-practice-page :global(#practice-workbench),
+  .practice-evidence {
+    scroll-margin-top: var(--distance-performance-stage-sticky-offset);
+  }
+
   .practice-evidence {
     display: grid;
     gap: 1rem;
   }
+
+  .practice-wayfinding {
+    display: grid;
+    gap: var(--space-performance-md);
+    padding: clamp(2rem, 5vw, 4rem) max(1.25rem, calc((100% - var(--content-width-performance, 85rem)) / 2));
+    background: var(--color-performance-ink, #090909);
+    color: var(--color-performance-panel, #fff);
+  }
+
+  .practice-wayfinding > p {
+    margin: 0;
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-label, 0.72rem);
+    text-transform: uppercase;
+  }
+
+  .practice-wayfinding :global(.agency-wayfinding-group) { max-width: 42rem; }
 
   .flagship-defense {
     display: grid;
@@ -284,22 +325,10 @@
     gap: var(--space-performance-sm, 0.75rem);
   }
 
-  .practice-handoff-proof,
   .practice-handoff-audience {
     min-height: var(--height-performance-control-min, 2.75rem);
     color: var(--color-performance-panel, #fff);
     text-decoration: none;
-  }
-
-  .practice-handoff-proof {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-performance-sm, 0.75rem);
-    padding: var(--space-performance-sm, 0.75rem) var(--space-performance-md, 1.25rem);
-    border: 1px solid color-mix(in srgb, var(--color-performance-panel, #fff) 44%, transparent);
-    border-radius: var(--radius-performance-sm, 0);
-    font-weight: var(--font-performance-semibold, 600);
   }
 
   .practice-handoff-audience {
@@ -322,13 +351,11 @@
     font-size: var(--text-performance-body, 1rem);
   }
 
-  .practice-handoff-proof:hover,
   .practice-handoff-audience:hover strong {
     text-decoration: underline;
     text-underline-offset: 0.2em;
   }
 
-  .practice-handoff-proof:focus-visible,
   .practice-handoff-audience:focus-visible {
     outline: 2px solid var(--color-performance-signal, #1769ff);
     outline-offset: 2px;

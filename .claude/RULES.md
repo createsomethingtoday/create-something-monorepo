@@ -2,6 +2,10 @@
 
 This index catalogs all domain-specific rules that agents should apply during development. Rules differ from skills: **skills are invocable procedures**, while **rules are always-active constraints**.
 
+## Loading
+
+Rules without frontmatter load every session and count toward Claude Code's 150k-char instruction budget. Rules marked **path-scoped** carry a `paths:` frontmatter list and load only when Claude reads a matching file. Keep the always-on set small; scope anything domain-specific.
+
 ## Quick Reference by Impact Tier
 
 ### P0 — Critical (Always Apply)
@@ -19,32 +23,24 @@ This index catalogs all domain-specific rules that agents should apply during de
 |------|----------|--------|
 | [cloudflare-patterns](#cloudflare-patterns) | D1, KV, Workers code | Infrastructure |
 | [context7-patterns](#context7-patterns) | External library/API docs | Grounding |
-| [beads-patterns](#beads-patterns) | Issue tracking, `bd` commands | Workflow |
-| [orchestration-patterns](#orchestration-patterns) | Multi-session work | Workflow |
 | [harness-patterns](#harness-patterns) | Single-session work | Workflow |
-| [hipaa-compliance](#hipaa-compliance) | Medical/dental packages | Compliance |
+| [hipaa-compliance](#hipaa-compliance) | Medical/dental packages (path-scoped) | Compliance |
 
 ### P2 — Contextual (Apply When Relevant)
 
 | Rule | Triggers | Domain |
 |------|----------|--------|
-| [gastown-patterns](#gastown-patterns) | Multi-agent coordination | Legacy |
-| [ralph-patterns](#ralph-patterns) | Autonomous loop work | Workflow |
-| [model-routing-optimization](#model-routing-optimization) | Agent model selection | Performance |
-| [dual-agent-routing](#dual-agent-routing) | Agent coordination | Architecture |
-| [dental-api-integration](#dental-api-integration) | Dental package | Domain |
-| [dental-scheduling](#dental-scheduling) | Dental scheduling | Domain |
-| [social-patterns](#social-patterns) | Social media posting | Content |
-| [paper-content-requirements](#paper-content-requirements) | Paper writing | Content |
-| [taste-reference](#taste-reference) | Design decisions | Design |
+| [dental-api-integration](#dental-api-integration) | Dental package (path-scoped) | Domain |
+| [dental-scheduling](#dental-scheduling) | Dental scheduling (path-scoped) | Domain |
+| [social-patterns](#social-patterns) | Social media posting (path-scoped) | Content |
+| [paper-content-requirements](#paper-content-requirements) | Paper writing (path-scoped) | Content |
 
 ### P3 — Specialized (Apply for Specific Domains)
 
 | Rule | Triggers | Domain |
 |------|----------|--------|
-| [lsp-mcp-patterns](#lsp-mcp-patterns) | LSP/MCP integration | Integration |
-| [dotfiles-conventions](#dotfiles-conventions) | `packages/dotfiles` | Configuration |
-| [neomutt-patterns](#neomutt-patterns) | Neomutt config | Configuration |
+| [dotfiles-conventions](#dotfiles-conventions) | `packages/dotfiles` (path-scoped) | Configuration |
+| [neomutt-patterns](#neomutt-patterns) | Neomutt config (path-scoped) | Configuration |
 | [PROJECT_NAME_REFERENCE](#project_name_reference) | Project naming | Reference |
 
 ---
@@ -63,12 +59,6 @@ This index catalogs all domain-specific rules that agents should apply during de
   - Use `var(--radius-*)` not `rounded-lg`
   - Use `var(--duration-*)` for animations
   - Respect `prefers-reduced-motion` and `prefers-contrast: more`
-
-#### taste-reference
-- **File**: `rules/taste-reference.md`
-- **Priority**: P2
-- **Triggers**: Design decisions, visual work
-- **Summary**: Reference for aesthetic decisions and design philosophy
 
 ---
 
@@ -136,18 +126,6 @@ This index catalogs all domain-specific rules that agents should apply during de
 
 ### Workflow & Orchestration
 
-#### beads-patterns
-- **File**: `rules/beads-patterns.md`
-- **Priority**: P1
-- **Triggers**: Issue tracking, `bd` commands, workflow management
-- **Summary**: Beads (bd) issue tracking patterns and conventions
-
-#### orchestration-patterns
-- **File**: `rules/orchestration-patterns.md`
-- **Priority**: P1
-- **Triggers**: Multi-session work, budget tracking, long-running features
-- **Summary**: Nondeterministic idempotence via Git-committed checkpoints
-- **Key Rules**:
   - Use for work >2 hours
   - Checkpoints every 15 minutes
   - Budget warnings at 80%, hard stop at 100%
@@ -155,32 +133,8 @@ This index catalogs all domain-specific rules that agents should apply during de
 #### harness-patterns
 - **File**: `rules/harness-patterns.md`
 - **Priority**: P1
-- **Triggers**: Single-session work, `bd work` commands
+- **Triggers**: Single-session work, Linear-tracked issues
 - **Summary**: Single-session orchestration with quality gates
-
-#### gastown-patterns
-- **File**: `rules/gastown-patterns.md`
-- **Priority**: P2 (Legacy — being replaced by orchestration)
-- **Triggers**: Multi-agent coordination
-- **Summary**: tmux-based multi-agent coordination (deprecated)
-
-#### ralph-patterns
-- **File**: `rules/ralph-patterns.md`
-- **Priority**: P2
-- **Triggers**: Autonomous development loop, PRD-driven work
-- **Summary**: Iterative refinement via `ralph.sh`
-
-#### dual-agent-routing
-- **File**: `rules/dual-agent-routing.md`
-- **Priority**: P2
-- **Triggers**: Agent coordination decisions
-- **Summary**: Patterns for routing work between agents
-
-#### model-routing-optimization
-- **File**: `rules/model-routing-optimization.md`
-- **Priority**: P2
-- **Triggers**: Model selection, cost optimization
-- **Summary**: When to use Haiku vs Sonnet vs Opus
 
 ---
 
@@ -212,12 +166,6 @@ This index catalogs all domain-specific rules that agents should apply during de
 
 ### Integration & Configuration
 
-#### lsp-mcp-patterns
-- **File**: `rules/lsp-mcp-patterns.md`
-- **Priority**: P3
-- **Triggers**: LSP server, MCP server development
-- **Summary**: Language Server Protocol and Model Context Protocol patterns
-
 #### dotfiles-conventions
 - **File**: `rules/dotfiles-conventions.md`
 - **Priority**: P3
@@ -238,6 +186,23 @@ This index catalogs all domain-specific rules that agents should apply during de
 
 ---
 
+## Archived Rules
+
+Retired patterns live in `docs/archive/claude-rules/` and are not loaded. Read them only for historical context.
+
+| File | Why archived |
+|------|--------------|
+| `gastown-patterns.md` | tmux multi-agent orchestration; `gt` is not installed, superseded by Agent tool subagents |
+| `ralph-patterns.md` | PRD loop; superseded by Linear-tracked harness work |
+| `beads-patterns.md` | `bd` issue tracking; Linear is the source of truth |
+| `orchestration-patterns.md` | `orch` CLI (Phase 1 only, never shipped further) |
+| `dual-agent-routing.md` | Gemini/Codex routing experiment, marked not viable 2026-01 |
+| `model-routing-optimization.md` | Model routing for Gastown/harness swarms |
+| `lsp-mcp-patterns.md` | lsmcp removed from MCP config 2026-09-09 |
+| `taste-reference.md` | Are.na curation reference; consult via `css-canon` skill when needed |
+
+---
+
 ## Trigger Patterns
 
 Rules activate based on file patterns and contexts:
@@ -252,19 +217,19 @@ Rules activate based on file patterns and contexts:
 | `+page.server.ts` | sveltekit-conventions, error-handling-patterns |
 | `+server.ts` | sveltekit-conventions, cloudflare-patterns, error-handling-patterns |
 | `packages/io/src/routes/papers/**` | paper-content-requirements, voice-canon |
-| `packages/tend/src/lib/verticals/dental/**` | hipaa-compliance, dental-api-integration |
-| `packages/dotfiles/**` | dotfiles-conventions |
+| `packages/tend/src/lib/verticals/dental/**`, `packages/agent-sdk/**` | hipaa-compliance, dental-api-integration, dental-scheduling |
+| `packages/dotfiles/**` | dotfiles-conventions (+ neomutt-patterns under `neomutt/`) |
+| `packages/agency/**/social/**`, `packages/social-*/**` | social-patterns |
 
 ### Context-Based Triggers
 
 | Context | Rules Applied |
 |---------|---------------|
-| Creating issue | beads-patterns |
-| Long-running work (>2h) | orchestration-patterns |
+| Creating issue | Linear (`pnpm linear:*`) |
 | Single-session work | harness-patterns |
 | Deployment | cloudflare-patterns |
 | Social posting | social-patterns, voice-canon |
-| Design decisions | css-canon, taste-reference |
+| Design decisions | css-canon |
 
 ---
 
@@ -298,7 +263,7 @@ P3 rules apply only when specifically relevant
    - P1: Important for context
    - P2: Apply when relevant
    - P3: Domain-specific
-3. Define trigger patterns
+3. Define trigger patterns; if domain-specific, add `paths:` frontmatter so it only loads on matching files
 4. Add to this registry
 5. Update `settings.json` if rule should be auto-loaded
 

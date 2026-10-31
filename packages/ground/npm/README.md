@@ -20,6 +20,26 @@ The verified setup contract covers Claude Code, Codex, Cursor, and Windsurf.
 
 **The difference**: Ground requires computation before its claim tools accept a claim.
 
+## 0.5.0: analysis exit compatibility
+
+Version 0.5.0 makes `ground analyze` / `ground diff` return exit 0
+only for completed clean analysis; JSON `outcome` distinguishes `CLEAN` (0),
+`FINDINGS` (1), `INCOMPLETE` (2), and `NOT_APPLICABLE` (3). Missing inputs,
+unsupported required paths and execution errors never count as clean. Invalid
+commands remain nonzero. MCP callers inspect `outcome` independently from tool
+transport success. `--advisory` restores exit zero for semantic receipts only;
+it is an explicit advisory opt-in, not a required-gate bypass.
+
+Omitted checks run `duplicates,orphans` for analyze and `duplicates` for diff;
+unknown or empty check lists are rejected. Installed 0.4.3 release artifacts are
+unchanged. See the repository README for coverage limits and migration details.
+
+## 0.5.1 parser correction
+
+Generic calls such as `original<typeof import('./module')>()` now parse through
+bounded type-context recovery, with original source evidence preserved. Invalid
+syntax still produces incomplete analysis. The 0.5.0 CLI exit contract is unchanged.
+
 ## Recommended agent path
 
 Use CTX and Ground for different evidence:
@@ -43,9 +63,22 @@ ground diff ./src --base origin/main --checks duplicates
 ground doctor . --json
 ```
 
-`ground doctor` fails on invalid policy and reports the native build, effective
-policy SHA-256, workspace package count, and internal dependency count. Run it
-before treating a repository result as authoritative.
+`ground doctor` requires an existing directory, rejects invalid policy, and
+reports the native build, effective policy digest and discovered workspace.
+Use `ground doctor . --json --expected-source-sha <40-character-sha>` to require
+a particular reported build commit. Without that option provenance is reported,
+not compared; neither mode verifies a publisher attestation.
+
+Policy version must be `"1"`, and `thresholds.duplicate_similarity` must be a
+percentage from 0 through 100. CLI/MCP threshold overrides use 0.0 through 1.0.
+Invalid versions, ranges and glob patterns fail with a field-specific diagnostic.
+
+`ignore.paths` uses Rust glob syntax against paths relative to the analysis
+directory in batch orphan scans and changed-file selection. `[id]` is a character
+class; use `routes/[[]id]/**` to match a literal `routes/[id]` directory. `*` and
+`?` retain Rust glob's default behavior of matching separators; `**/` also matches
+zero directory components. Full duplicate scans deliberately apply function and
+pair ignores rather than `ignore.paths`.
 
 Both commands print JSON evidence. `ground diff` only returns files inside the
 requested directory and resolves Git paths from the repository root, so it is
@@ -458,3 +491,17 @@ Looking for task coordination? Use Linear with the CREATE SOMETHING `pnpm linear
 ## Keywords
 
 MCP server, Model Context Protocol, AI code analysis, static analysis, duplicate detection, dead code detection, orphan detection, code quality, hallucination prevention, LLM tools, Claude Code, Cursor IDE, Windsurf, VS Code Copilot, Anthropic Claude, AI coding assistant, Rust, TypeScript, JavaScript, monorepo analysis, design tokens, CSS analysis, code verification.
+
+### Deployment evidence binding
+
+Native and fresh-install consumer smoke receipts record SHA-256 hashes for both
+executables tested. Agency's production release gate verifies the downloaded
+archives and receipts against their checksum manifests, then compares archive
+member bytes with both sets of smoke hashes and the expected source SHA, version,
+and npm integrity. It reads archive members without extracting files to disk.
+This establishes release consistency, not an independent publisher attestation.
+
+Older receipts without executable hashes do not satisfy this gate. Before
+production promotion, produce and review a new versioned release with complete
+native, consumer, and calibration evidence; do not relabel historical receipts or
+replace an already published version to bypass the gate.

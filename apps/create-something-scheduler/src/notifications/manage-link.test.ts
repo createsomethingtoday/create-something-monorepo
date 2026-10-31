@@ -53,6 +53,13 @@ describe('booking management link contract', () => {
     expect(url.hash).toBe('#access=controlled.token');
   });
 
+  it('retains system support in management links while keeping action credentials in the fragment', () => {
+    const url = new URL(buildBookingManageUrl({ publicOrigin: 'https://createsomething.agency', bookingId: 'booking_support', actionToken: 'controlled.token', intent: 'system-support' }));
+    expect(url.searchParams.get('intent')).toBe('system-support');
+    expect(url.search).not.toContain('controlled.token');
+    expect(url.hash).toBe('#access=controlled.token');
+  });
+
   it('expires access one day after the current meeting ends', () => {
     expect(bookingActionExpiresAt({ end: '2026-07-14T16:30:00Z' })).toBe('2026-07-15T16:30:00Z');
   });

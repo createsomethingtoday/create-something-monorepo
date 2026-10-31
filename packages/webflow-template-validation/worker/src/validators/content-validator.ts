@@ -21,6 +21,7 @@ import {
 } from '../types';
 import { fetchHTML, isPlatformManagedHeading, parseHTML } from '../utils/fetch-utils';
 import { analyzeHeadingSequence, extractDocumentOutline, visibleOutlineHeadings } from '../utils/document-outline';
+import { isWebflowGeneratedVideoPosterSource } from '../utils/asset-utils';
 
 const LOREM_IPSUM_PATTERNS = [
 	/lorem\s+ipsum/i,
@@ -456,10 +457,6 @@ function isLikelyPlatformVideoFallbackImage(img: HTMLImageElement | any): boolea
 	);
 }
 
-function isWebflowGeneratedVideoPosterSource(src: string): boolean {
-	return /(?:^|[/_-])[^/?#]*(?:[_-]poster|poster)\.\d+\.(?:jpe?g|png|webp|avif)(?:$|[?#])/.test(src);
-}
-
 function getImageSource(img: HTMLImageElement | any): string {
 	return img.getAttribute?.('src') || img.getAttribute?.('data-src') || img.src || 'unknown';
 }
@@ -581,7 +578,7 @@ function extractSEOData(parsedHTML: ParsedHTML): PageSEOData {
 	const metaDescElement = document.querySelector('meta[name="description"]');
 	const metaDescription = metaDescElement?.getAttribute('content')?.trim() || null;
 	const metaDescriptionLength = metaDescription?.length || 0;
-	const hasValidDescription = metaDescription !== null && metaDescriptionLength >= 120 && metaDescriptionLength <= 160;
+	const hasValidDescription = metaDescription !== null && metaDescriptionLength >= 150 && metaDescriptionLength <= 160;
 
 	// Open Graph data extraction
 	const ogTitle = document.querySelector('meta[property="og:title"]')?.getAttribute('content')?.trim() || null;
@@ -596,7 +593,11 @@ function extractSEOData(parsedHTML: ParsedHTML): PageSEOData {
 
 	// Other SEO elements
 	const canonical = document.querySelector('link[rel="canonical"]')?.getAttribute('href')?.trim() || null;
-	const robots = document.querySelector('meta[name="robots"]')?.getAttribute('content')?.trim() || null;
+	// Crawlers combine directives from every robots tag, so read them all.
+	const robotsDirectives = Array.from(document.querySelectorAll('meta[name="robots"]') as ArrayLike<Element>)
+		.map(meta => meta.getAttribute('content')?.trim())
+		.filter((content): content is string => !!content);
+	const robots = robotsDirectives.length > 0 ? robotsDirectives.join(', ') : null;
 
 	return {
 		title,
@@ -952,6 +953,24 @@ function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
 		const pageName = getPageNameFromUrl(page.url);
 		const seo = page.seo;
 
+		// The submission guidelines require noindex on the Licenses and Changelog pages.
+		if (isNoindexUtilityPage(page.url) && !hasNoindexDirective(seo.robots)) {
+			seoIssues.push({
+				id: `utility-page-indexable-${generatePageId(page.url)}`,
+				category: 'Content & Accessibility',
+				severity: 'error',
+				message: `"${pageName}" can be indexed by search engines`,
+				description: 'Licenses and Changelog pages should not show in search results for the template.',
+				howToFix: 'Add <meta name="robots" content="noindex"> to the page\'s custom code (Page settings → Custom code → Inside <head> tag)',
+				location: page.url,
+				details: {
+					page: pageName,
+					url: page.url,
+					currentRobots: seo.robots
+				}
+			});
+		}
+
 		// Missing title issues
 		if (!seo.title) {
 			seoIssues.push({
@@ -1013,22 +1032,22 @@ function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
 				severity: 'error',
 				message: `"${pageName}" is missing a meta description`,
 				description: 'Meta descriptions are essential for SEO and appear in search results.',
-				howToFix: 'Add a compelling meta description (120-160 characters) that summarizes the page content',
+				howToFix: 'Add a compelling meta description (150-160 characters) that summarizes the page content',
 				location: page.url,
 				details: {
 					page: pageName,
 					url: page.url,
 					currentDescription: seo.metaDescription,
-					recommendedLength: '120-160 characters'
+					recommendedLength: '150-160 characters'
 				}
 			});
-		} else if (seo.metaDescriptionLength < 120) {
+		} else if (seo.metaDescriptionLength < 150) {
 			seoIssues.push({
 				id: `description-too-short-${generatePageId(page.url)}`,
 				category: 'Content & Accessibility',
 				severity: 'warning',
 				message: `"${pageName}" meta description is too short (${seo.metaDescriptionLength} characters)`,
-				description: 'Meta descriptions should be 120-160 characters for optimal search result display.',
+				description: 'Meta descriptions should be 150-160 characters for optimal search result display.',
 				howToFix: 'Expand the meta description to include more compelling details about the page',
 				location: page.url,
 				details: {
@@ -1036,7 +1055,7 @@ function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
 					url: page.url,
 					currentLength: seo.metaDescriptionLength,
 					currentDescription: seo.metaDescription,
-					recommendedLength: '120-160 characters'
+					recommendedLength: '150-160 characters'
 				}
 			});
 		} else if (seo.metaDescriptionLength > 160) {
@@ -1053,7 +1072,7 @@ function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
 					url: page.url,
 					currentLength: seo.metaDescriptionLength,
 					currentDescription: seo.metaDescription,
-					recommendedLength: '120-160 characters'
+					recommendedLength: '150-160 characters'
 				}
 			});
 		}
@@ -1078,6 +1097,23 @@ function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
 	});
 
 	return seoIssues;
+}
+
+function isNoindexUtilityPage(url: string): boolean {
+	try {
+		const lastSegment = new URL(url).pathname.split('/').filter(Boolean).pop()?.toLowerCase();
+		return lastSegment === 'licenses' || lastSegment === 'license' || lastSegment === 'changelog';
+	} catch {
+		return false;
+	}
+}
+
+// `none` counts only as a whole directive; `max-image-preview:none` leaves the page indexable.
+function hasNoindexDirective(robots: string | null): boolean {
+	return (robots || '').split(',').some(directive => {
+		const value = directive.trim().toLowerCase();
+		return value === 'noindex' || value === 'none';
+	});
 }
 
 function getPageNameFromUrl(url: string): string {

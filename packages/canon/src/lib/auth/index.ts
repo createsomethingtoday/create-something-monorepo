@@ -49,7 +49,7 @@ export {
 	type SetCookieParams,
 } from './cookies.js';
 
-// Session management (client-side utilities, no cryptographic validation)
+// Session utilities; getUser verifies signatures before server authentication.
 export {
 	decodeJWT,
 	isTokenExpired,
@@ -59,6 +59,7 @@ export {
 	refreshTokens,
 	revokeSession,
 	createSessionManager,
+	identitySessionVerification,
 	autoRefreshMiddleware,
 	requireAuth,
 	// SvelteKit hooks

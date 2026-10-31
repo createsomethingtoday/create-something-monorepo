@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SerifPhrase from '$lib/components/SerifPhrase.svelte';
   import { api } from '$lib/client';
   import Icon from '$lib/components/Icon.svelte';
   let { data } = $props();
@@ -30,7 +31,7 @@
 >
 <main id="main" class="builder-workspace">
   <p class="eyebrow">PRIVATE / COMPANY SUPPORT</p>
-  <h1>Your project.<br /><em>A shared working context.</em></h1>
+  <h1>Your project.<br /><SerifPhrase text="A shared working context." /></h1>
   <p class="lede">
     Work through one agentic engineering workflow with an approved CREATE SOMETHING partner. Keep
     the context, decisions and follow-through in a private company workspace.

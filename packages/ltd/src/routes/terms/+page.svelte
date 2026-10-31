@@ -24,7 +24,7 @@
       property="ltd"
       domain="createsomething.ltd"
       lastUpdated="January 29, 2026"
-      contactEmail="legal@createsomething.io"
+      contactEmail="support@createsomething.io"
     />
   </div>
 </section>

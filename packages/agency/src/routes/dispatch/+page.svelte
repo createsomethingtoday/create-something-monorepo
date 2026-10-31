@@ -6,102 +6,96 @@
     SEO
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-  import {
-    marketingCadence,
-    marketingEvidenceRules,
-    marketingSchedule
-  } from '$lib/data/marketingSchedule';
+  import { marketingEditorialStatus } from '$lib/data/marketingSchedule';
 </script>
 
 <SEO
   title="CREATE SOMETHING Dispatch | Work, Evidence, and Field Notes"
-  description="Upcoming CREATE SOMETHING articles and demonstrations, based on work we can show and explain."
+  description="Practical lessons from building AI workflows. Read what worked, what failed, and what your team can use."
   keywords="AI workflow field notes, agent engineering demonstrations, governed automation evidence, CREATE SOMETHING dispatch"
   propertyName="agency"
 />
 
 <div class="dispatch property-performance">
   <PerformanceCampaignOpening
-    eyebrow="Dispatch / Publishing schedule"
+    eyebrow="Dispatch / Field notes"
     expression="editorial"
-    title="We publish the work after the evidence."
-    lede="Each week, we choose a change worth explaining. We show what happened, what we learned, and where the result has limits."
+    title="The work, with evidence."
+    lede="What happened, what we learned, and where each result has limits."
     density="compact"
     proof={[
-      { label: 'Source', value: 'Repository' },
-      { label: 'Lesson', value: 'One per week' },
-      { label: 'Claim', value: 'Evidence-gated' }
+      { label: 'Work', value: 'Real workflows' },
+      { label: 'Email', value: 'Up to twice monthly' },
+      { label: 'Results', value: 'Evidence and limits' }
     ]}
   >
     {#snippet actions()}
-      <Button href="#schedule">See the current schedule</Button>
-      <Button href="/field-reports" variant="secondary">Inspect field reports</Button>
+      <Button href="#featured-report">Read the featured report</Button>
+      <Button href="https://createsomething.io/newsletters" variant="secondary">Read field notes</Button>
     {/snippet}
   </PerformanceCampaignOpening>
 
   <main>
-    <section class="section" aria-labelledby="cadence-title">
-      <p class="eyebrow">Working rhythm</p>
-      <h2 id="cadence-title">One lesson, carried across the right formats.</h2>
+    <section class="section" id="featured-report" aria-labelledby="report-title">
+      <p class="eyebrow">Review operations / May–June 2026</p>
+      <h2 id="report-title">Automation prepared the evidence. Human judgment still decided.</h2>
       <p class="lede">
-        We share updates on LinkedIn, demonstrate a full workflow on YouTube twice a month, and send selected lessons by email.
+        Evidence collection completed for 49 of 50 selected cases in a template-review test.
+        Automated judgment did not earn promotion, and reviewer time savings remain unmeasured.
       </p>
-      <div class="cadence-grid">
-        {#each marketingCadence as item}
-          <article>
-            <p>{item.day}</p>
-            <h3>{item.channel}</h3>
-            <span>{item.purpose}</span>
-          </article>
-        {/each}
+      <p class="lede">
+        The lesson: test evidence preparation separately from the decision to approve or reject.
+      </p>
+      <div class="reader-actions">
+        <Button href="/field-reports/template-review">Read the result and its limits</Button>
+        <Button href="/field-reports" variant="secondary">Browse field reports</Button>
       </div>
     </section>
 
-    <section class="section schedule" id="schedule" aria-labelledby="schedule-title">
-      <p class="eyebrow">Current editorial queue</p>
-      <h2 id="schedule-title">Four questions from work already in the repository.</h2>
-      <p class="lede">
-        These dates are plans. We publish only after reviewing the supporting evidence and checking what can be shared.
-      </p>
-      <div class="schedule-list">
-        {#each marketingSchedule as item, index}
-          <article>
-            <div class="index">{String(index + 1).padStart(2, '0')}</div>
-            <div>
-              <p class="week">Week of {item.weekOf}</p>
-              <h3>{item.readerQuestion}</h3>
-              <p>{item.theme}. Source: {item.source}.</p>
-              <dl>
-                <div>
-                  <dt>Evidence</dt>
-                  <dd>{item.evidence}</dd>
-                </div>
-                <div>
-                  <dt>Channels</dt>
-                  <dd>{item.channels.join(' · ')}</dd>
-                </div>
-                <div>
-                  <dt>State</dt>
-                  <dd>{item.state}</dd>
-                </div>
-              </dl>
-            </div>
-          </article>
-        {/each}
+    <section class="section" aria-labelledby="reader-title">
+      <p class="eyebrow">Read or put it to work</p>
+      <h2 id="reader-title">Choose your next step.</h2>
+      <div class="reader-grid">
+        <article>
+          <h3>Field notes by email</h3>
+          <p>
+            Sign up on CREATE SOMETHING .io for future field notes, or read a published edition.
+            We send field notes at most twice a month.
+          </p>
+          <div class="reader-actions">
+            <Button href="https://createsomething.io/newsletters#subscribe">Get field notes by email</Button>
+            <a class="archive-link" href="https://createsomething.io/newsletters">Read published field notes</a>
+          </div>
+        </article>
+        <article>
+          <h3>Put a lesson to work</h3>
+          <p>
+            If a report connects to your team’s work, bring the task and tools you use.
+            We’ll map the handoff and identify which decisions need a person.
+          </p>
+          <div class="reader-actions">
+            <Button href="/field-reports">Explore current field reports</Button>
+          </div>
+        </article>
       </div>
     </section>
 
     <section class="section method" aria-labelledby="method-title">
-      <p class="eyebrow">Publication boundary</p>
-      <h2 id="method-title">A commit is the start of the story.</h2>
-      <div class="method-grid">
-        {#each marketingEvidenceRules as rule, index}
-          <article>
-            <span>{String(index + 1).padStart(2, '0')}</span>
-            <p>{rule}</p>
-          </article>
-        {/each}
-      </div>
+      <p class="eyebrow">How we report the work</p>
+      <h2 id="method-title">The result, with enough context to judge it.</h2>
+      <p class="lede">
+        Each report names what was tested, what the evidence supports, and what remains unknown.
+        A test result does not establish production performance. Client-private records stay private.
+      </p>
+      <details id="schedule">
+        <summary>Editorial status and email frequency</summary>
+        <p>{marketingEditorialStatus.title}</p>
+        <p>
+          We publish after reviewing the evidence and approving the content.
+          Email is capped at two validated sends per month. A planned review date does not confirm
+          publication or email delivery.
+        </p>
+      </details>
     </section>
   </main>
 
@@ -129,7 +123,7 @@
 <style>
   .dispatch {
     background: var(--color-performance-paper, #f3f3f0);
-    color: #111;
+    color: var(--color-performance-ink, #111);
   }
   main {
     max-width: 1180px;
@@ -138,11 +132,9 @@
   }
   .section {
     padding: clamp(4rem, 8vw, 7rem) 0;
-    border-top: 1px solid rgba(17, 17, 17, 0.16);
+    border-top: 1px solid var(--color-performance-line, rgba(17, 17, 17, 0.16));
   }
-  .eyebrow,
-  .week,
-  dt {
+  .eyebrow {
     margin: 0 0 1rem;
     font: 600 0.72rem/1.4 var(--font-performance-mono, monospace);
     letter-spacing: 0.08em;
@@ -161,112 +153,70 @@
     font-size: clamp(1rem, 1.6vw, 1.28rem);
     line-height: 1.55;
   }
-  .cadence-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 1px;
-    margin-top: 3rem;
-    background: rgba(17, 17, 17, 0.16);
-    border: 1px solid rgba(17, 17, 17, 0.16);
-  }
-  .cadence-grid article {
-    min-height: 190px;
-    padding: 1.25rem;
-    background: #f3f3f0;
-  }
-  .cadence-grid article > p {
-    margin: 0 0 2rem;
-    color: #67675f;
-    font: 0.68rem var(--font-performance-mono, monospace);
-    text-transform: uppercase;
-  }
   h3 {
     margin: 0;
     font-size: 1.25rem;
     line-height: 1.15;
   }
-  .cadence-grid span {
-    display: block;
-    margin-top: 0.75rem;
-    color: #55554f;
-    line-height: 1.45;
-  }
-  .schedule-list {
-    margin-top: 3rem;
-    border-top: 1px solid #111;
-  }
-  .schedule-list > article {
+  .reader-grid {
     display: grid;
-    grid-template-columns: 90px 1fr;
-    gap: 1.5rem;
-    padding: 2rem 0;
-    border-bottom: 1px solid rgba(17, 17, 17, 0.25);
-  }
-  .index {
-    font: 1.4rem var(--font-performance-mono, monospace);
-  }
-  .week {
-    margin-bottom: 0.5rem;
-    color: #67675f;
-  }
-  .schedule-list h3 {
-    max-width: 760px;
-    font-size: clamp(1.5rem, 3vw, 2.6rem);
-  }
-  .schedule-list article > div > p:not(.week) {
-    max-width: 720px;
-    line-height: 1.5;
-  }
-  dl {
-    display: grid;
-    grid-template-columns: 2fr 1fr 0.7fr;
-    gap: 1rem;
-    margin: 1.5rem 0 0;
-  }
-  dt {
-    margin: 0 0 0.35rem;
-    color: #67675f;
-  }
-  dd {
-    margin: 0;
-    line-height: 1.4;
-  }
-  .method-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2rem;
     margin-top: 3rem;
   }
-  .method-grid article {
-    border-top: 2px solid #111;
+  .reader-grid article {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border-top: 2px solid var(--color-performance-ink, #111);
     padding-top: 1rem;
   }
-  .method-grid span {
-    font: 0.7rem var(--font-performance-mono, monospace);
+  .reader-grid h3 {
+    line-height: 1.3;
   }
-  .method-grid p {
-    line-height: 1.5;
+  .reader-grid p {
+    margin: 1rem 0 0;
+    max-width: 52ch;
+    line-height: 1.55;
   }
-  @media (max-width: 900px) {
-    .cadence-grid,
-    .method-grid {
-      grid-template-columns: 1fr 1fr;
-    }
-    dl {
-      grid-template-columns: 1fr;
-    }
+  .reader-grid .reader-actions {
+    margin-top: auto;
+    padding-top: 1.5rem;
+  }
+  .archive-link {
+    color: var(--color-performance-muted);
+    text-underline-offset: 0.2em;
+  }
+  .archive-link:hover {
+    color: var(--color-performance-ink);
+  }
+  .archive-link:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 4px;
+  }
+  .reader-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+  details {
+    margin-top: 2rem;
+    max-width: 700px;
+    line-height: 1.55;
+  }
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+    padding: 1rem 0;
+  }
+  summary:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 4px;
   }
   @media (max-width: 560px) {
-    main {
-      padding: 0 1rem;
-    }
-    .cadence-grid,
-    .method-grid {
-      grid-template-columns: 1fr;
-    }
-    .schedule-list > article {
-      grid-template-columns: 44px 1fr;
-      gap: 0.75rem;
-    }
+    main { padding: 0 1rem; }
+    .reader-grid { grid-template-columns: 1fr; }
   }
 </style>

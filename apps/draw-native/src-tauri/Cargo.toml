@@ -1,6 +1,6 @@
 [package]
 name = "create_something_draw_native"
-version = "0.1.0"
+version = "0.1.4"
 edition = "2021"
 
 [lib]
@@ -11,6 +11,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
+create-something-chatgpt-connection = { path = "../../../packages/chatgpt-connection" }
 axum = "0.8"
 axum-server = { version = "0.7", features = ["tls-rustls"] }
 base64 = "0.23"

@@ -61,13 +61,17 @@ export async function learningGet(db: D1Database, locals: App.Locals, route: str
           .map((c) => 'v.' + c)
           .join(
             ','
-          )},p.position,p.watched_at,p.practice_started_at,p.updated_at FROM lesson_progress p JOIN videos v ON v.id=p.video_id AND v.network_id=p.network_id WHERE p.network_id=? AND p.subject=? ORDER BY p.updated_at DESC,v.id LIMIT 100`
+          )},p.position,p.path_id,p.watched_at,p.practice_started_at,p.updated_at FROM lesson_progress p JOIN videos v ON v.id=p.video_id AND v.network_id=p.network_id WHERE p.network_id=? AND p.subject=? ORDER BY p.updated_at DESC,v.id LIMIT 100`
       )
       .bind(network(locals), locals.identity!.subject)
       .all<CatalogVideo & LessonProgress>();
-    return json({
-      lessons: rows.results.filter((v) => canRead(v, locals.identity!.role)).slice(0, 4)
-    });
+    const lessons = rows.results.filter((v) => canRead(v, locals.identity!.role)).slice(0, 4);
+    // Saved context is not authorization: recheck the entire sequence on every read.
+    for (const lesson of lessons) {
+      if (lesson.path_id && !(await validPathContext(db, locals, lesson.path_id, lesson.id)))
+        lesson.path_id = null;
+    }
+    return json({ lessons });
   }
   if (route === 'learning/paths') {
     if (!admitted(locals)) return json({ paths: [] });
@@ -213,6 +217,7 @@ export async function learningPost(
 }
 
 export interface LessonProgress {
+  path_id: string | null;
   position: number;
   watched_at: string | null;
   practice_started_at: string | null;
@@ -220,14 +225,29 @@ export interface LessonProgress {
 }
 export async function progressFor(db: D1Database, locals: App.Locals, videoId: string) {
   if (!admitted(locals)) return null;
-  return (
+  const progress =
     (await db
       .prepare(
-        'SELECT position,watched_at,practice_started_at,updated_at FROM lesson_progress WHERE network_id=? AND subject=? AND video_id=?'
+        'SELECT position,path_id,watched_at,practice_started_at,updated_at FROM lesson_progress WHERE network_id=? AND subject=? AND video_id=?'
       )
       .bind(network(locals), locals.identity!.subject, videoId)
-      .first<LessonProgress>()) || null
-  );
+      .first<LessonProgress>()) || null;
+  if (progress?.path_id && !(await validPathContext(db, locals, progress.path_id, videoId)))
+    progress.path_id = null;
+  return progress;
+}
+async function validPathContext(
+  db: D1Database,
+  locals: App.Locals,
+  pathId: string,
+  lessonId: string
+) {
+  const row = await db
+    .prepare('SELECT * FROM learning_paths WHERE id=? AND network_id=?')
+    .bind(pathId, network(locals))
+    .first<LearningPath>();
+  const view = row ? await pathView(db, locals, row) : null;
+  return !!view?.lessons.some((lesson) => lesson.id === lessonId);
 }
 async function progressWrite(db: D1Database, locals: App.Locals, body: Record<string, unknown>) {
   if (!admitted(locals) || locals.impersonation)
@@ -242,6 +262,16 @@ async function progressWrite(db: D1Database, locals: App.Locals, body: Record<st
   const key = [network(locals), locals.identity!.subject, body.id];
   if (body.action === 'position') {
     if (
+      body.path_id !== undefined &&
+      (typeof body.path_id !== 'string' || body.path_id.length > 100)
+    )
+      return fail('Choose a valid path context.');
+    const context =
+      typeof body.path_id === 'string' &&
+      (await validPathContext(db, locals, body.path_id, body.id))
+        ? body.path_id
+        : null;
+    if (
       typeof body.position !== 'number' ||
       !Number.isFinite(body.position) ||
       body.position < 0 ||
@@ -251,10 +281,10 @@ async function progressWrite(db: D1Database, locals: App.Locals, body: Record<st
       return fail('Playback position is outside this lesson.');
     await db
       .prepare(
-        `INSERT INTO lesson_progress(network_id,subject,video_id,position) VALUES(?,?,?,?)
-      ON CONFLICT(network_id,subject,video_id) DO UPDATE SET position=excluded.position,updated_at=CURRENT_TIMESTAMP`
+        `INSERT INTO lesson_progress(network_id,subject,video_id,position,path_id) VALUES(?,?,?,?,?)
+      ON CONFLICT(network_id,subject,video_id) DO UPDATE SET position=excluded.position,path_id=COALESCE(excluded.path_id,lesson_progress.path_id),updated_at=CURRENT_TIMESTAMP`
       )
-      .bind(...key, body.position)
+      .bind(...key, body.position, context)
       .run();
   } else if (body.action === 'watched' && typeof body.watched === 'boolean') {
     await db
@@ -279,4 +309,23 @@ async function progressWrite(db: D1Database, locals: App.Locals, body: Record<st
       .run();
   } else return fail('Choose a progress action.');
   return json({ progress: await progressFor(db, locals, body.id) });
+}
+
+// Published foundation receipt: CRE-2042. Reuse the existing path; never create
+// content or grant membership as a side effect of choosing a starting point.
+const foundationPathId = '101f0d7f-25c0-433b-b41f-04ecc7e89b88';
+export async function foundationEntry(db: D1Database, locals: App.Locals) {
+  if (network(locals) !== 'default' || !admitted(locals)) return null;
+  const path = await db
+    .prepare('SELECT * FROM learning_paths WHERE id=? AND network_id=?')
+    .bind(foundationPathId, 'default')
+    .first<LearningPath>();
+  if (!path || path.visibility !== 'published') return null;
+  // Starting-point visibility follows member policy even for administrators.
+  const view = await pathView(
+    db,
+    { ...locals, identity: { ...locals.identity!, role: 'member' } },
+    path
+  );
+  return view?.lessons.length ? { id: view.id, title: view.title } : null;
 }

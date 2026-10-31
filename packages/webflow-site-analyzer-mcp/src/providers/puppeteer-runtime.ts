@@ -20,7 +20,9 @@ export function configurePuppeteerRuntime(runtime: 'node' | 'worker'): void {
 
 async function loadRuntime(): Promise<PuppeteerLike> {
   if (shouldUseBrowserRuntime()) {
-    const browserModule = await import('puppeteer-core/lib/esm/puppeteer/puppeteer-core-browser.js');
+    // Upstream function serialization uses new Function(), forbidden in Workers.
+    // Cloudflare's fork serializes for the remote browser without local code generation.
+    const browserModule = await import('@cloudflare/puppeteer/lib/esm/puppeteer/puppeteer-core-browser.js');
     const runtime = browserModule.default ?? browserModule;
     if (typeof runtime.connect !== 'function') {
       throw new Error('Worker Puppeteer runtime does not expose connect().');

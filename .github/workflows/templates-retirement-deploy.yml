@@ -1,0 +1,84 @@
+name: Templates Retirement Deploy
+
+# Root dispatches only after CRE-138 exact-source/rendered approval and merge.
+on:
+  workflow_dispatch:
+    inputs:
+      reviewed_sha:
+        description: Full reviewed main commit SHA
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: templates-platform-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require the exact reviewed main commit
+        env:
+          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = workflow_dispatch
+          test "$GITHUB_REF" = refs/heads/main
+          test "$GITHUB_SHA" = "$REVIEWED_SHA"
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Build and verify dependency-free retirement surface
+        run: |
+          node packages/templates-retirement/build.mjs
+          node packages/templates-retirement/verify.mjs
+          git diff --exit-code
+          git diff --cached --exit-code
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+      - name: Capture existing provider settings and rollback
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: node packages/templates-retirement/provider-snapshot.mjs "$RUNNER_TEMP/templates-before.json"
+      - name: Prepare isolated deploy tooling
+        run: |
+          mkdir -p "$RUNNER_TEMP/templates-release"
+          cp -R packages/templates-retirement/dist "$RUNNER_TEMP/templates-release/dist"
+          cd "$RUNNER_TEMP/templates-release"
+          npm install --no-audit --no-fund --ignore-scripts --save-exact wrangler@4.110.0
+          find dist -type f -print0 | sort -z | xargs -0 sha256sum > "$RUNNER_TEMP/templates-artifact.sha256"
+      - name: Deploy only Templates to existing Pages project
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/templates-release"
+          # No wrangler config: retain dashboard bindings/settings. No migrations.
+          ./node_modules/.bin/wrangler pages deploy dist --project-name=templates-platform \
+            --branch=main --commit-hash="$GITHUB_SHA" --commit-dirty=false \
+            2>&1 | tee "$RUNNER_TEMP/templates-deploy.log"
+      - name: Verify source mapping and unchanged provider settings
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: node packages/templates-retirement/provider-snapshot.mjs "$RUNNER_TEMP/templates-after.json" "$RUNNER_TEMP/templates-before.json"
+      - name: Retain release evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: templates-retirement-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/templates-before.json
+            ${{ runner.temp }}/templates-after.json
+            ${{ runner.temp }}/templates-deploy.log
+            ${{ runner.temp }}/templates-artifact.sha256
+            packages/templates-retirement/dist

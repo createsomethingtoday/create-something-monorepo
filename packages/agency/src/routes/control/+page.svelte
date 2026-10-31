@@ -1,4 +1,7 @@
 <script lang="ts">
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
+  import AgencyWayfindingHero from '$lib/components/AgencyWayfindingHero.svelte';
+  import AgencyWayfindingOpening from '$lib/components/AgencyWayfindingOpening.svelte';
   import {
     Button,
     PerformanceCampaignOpening,
@@ -11,7 +14,6 @@
     type PerformanceCondition,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
-  import PlaybookField from '$lib/components/PlaybookField.svelte';
   import SystemContextArtifact from '$lib/components/SystemContextArtifact.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { getPublicProduct } from '$lib/data/productFamily';
@@ -74,11 +76,11 @@
   const cadenceCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Monthly',
-      title: `Managed AI Operations. ${PUBLIC_PRICING.managedControl.longLabel}`,
+      title: `Managed live operations. ${PUBLIC_PRICING.managedControl.longLabel}`,
       detail:
         'For one standard-risk managed production environment. No per-agent fees. Control includes Map.',
       href: agencyCoreMessaging.workflowMappingSessionHref,
-      points: ['Runtime oversight', 'Incident response', 'Monthly operating review']
+      points: ['Agreed runtime oversight', 'Agreed incident response', 'Monthly operating review']
     },
     {
       eyebrow: 'Yearly',
@@ -134,20 +136,20 @@
 </script>
 
 <SEO
-  title="CREATE SOMETHING Control | Managed AI Operations"
-  description={`Managed AI Operations. ${PUBLIC_PRICING.managedControl.longLabel}, with no per-agent fees, transparent AI usage, approvals, evidence, and recovery. Supported public source stays ${PUBLIC_PRICING.publicSource.label}; Control includes Map.`}
+  title="CREATE SOMETHING Control | Managed Live Operations"
+  description={`Managed live operations. ${PUBLIC_PRICING.managedControl.longLabel}, with no per-agent fees, transparent AI usage, approvals, evidence, and recovery. Supported public source stays ${PUBLIC_PRICING.publicSource.label}; Control includes Map.`}
   keywords="AI workflow control, governed execution, human approval workflow, agent audit trail, workflow recovery"
   propertyName="agency"
 />
 
 <main class="control-page">
+  <AgencyWayfindingOpening>
   <PerformanceCampaignOpening
     eyebrow="CREATE SOMETHING Control"
     expression="editorial"
     title="Keep your AI systems working after launch."
-    lede={`Control operates one standard-risk environment. ${PUBLIC_PRICING.managedControl.longLabel}. Supported public source stays ${PUBLIC_PRICING.publicSource.label}. We monitor the system, respond to incidents, and review its performance with you. Work that needs approval waits for a person.`}
+    lede={`Control provides ongoing technical support for one agreed live environment. We monitor it, respond to incidents, and keep approvals and recovery records. ${PUBLIC_PRICING.managedControl.longLabel}. Control includes Map. It is separate from Focused technical support at $900/month; new Builds and AI usage are separate.`}
     density="compact"
-    artifactOwnsMedia
     artifactMobilePlacement="flow"
     proof={[
       { label: 'Signal', value: 'Watch' },
@@ -156,17 +158,21 @@
     ]}
   >
     {#snippet actions()}
-      <Button href={mapProduct.route}>See Map</Button>
-      <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
+      <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
         {agencyCoreMessaging.bookMappingSessionLabel}
       </Button>
+      <Button href={mapProduct.route} variant="secondary">See included Map</Button>
     {/snippet}
     {#snippet artifact()}
-      <PlaybookField variant="control" />
+      <AgencyWayfindingHero route="control" />
     {/snippet}
   </PerformanceCampaignOpening>
+  </AgencyWayfindingOpening>
   <aside class="review-boundary">
-    <p><strong>Need help before launch?</strong> A <a href="/technical-review">technical review</a> checks an existing project and identifies what to fix before a pilot. Reviews and implementation are quoted separately. The $900/month starting price for Control covers agreed post-launch operations, not open-ended product development.</p>
+    <div class="review-boundary__inner">
+      <p><strong>Need help before launch?</strong> A <a href="/technical-review">technical review</a> checks an existing project and identifies what to fix before a pilot. Reviews and implementation are quoted separately. The $900/month starting price for Control covers agreed post-launch operations, not open-ended product development. <a href="/services#membership">Focused and Team support</a> are separate technical support memberships for diagnosis, engineering improvements, and learning.</p>
+      <AgencyWayfindingSign kind="control" label="See how Control operates" detail="Watch, hold, record and recover." href="#control-operating-story" direction="down" />
+    </div>
   </aside>
 
   <PerformanceThesisConditions
@@ -181,7 +187,7 @@
     id="control-operating-story"
     eyebrow="One governed product"
     title="See what needs attention and what happened."
-    description="Review incoming work, approve actions, and check results in one system. Agree on a regular review schedule as the workload changes."
+    description="Support keeps the operating context between reviews. Review incoming work, approve actions, and check results within the agreed response and scope boundaries."
     scenes={controlScenes}
     ariaLabel="Control operating story"
   >
@@ -220,6 +226,18 @@
     {/snippet}
   </PerformanceNarrativeStage>
 
+  <aside class="route-handoff" aria-label="Control next steps">
+    <div class="route-handoff__inner">
+      <p class="route-handoff__current">Current path · Control · post-launch operations</p>
+      <p class="route-handoff__context">Next, bring the running workflow to a mapping session. Control includes Map; new workflows and integrations need a separate Build scope.</p>
+      <a class="route-handoff__return" href="/products#choose-product"><span aria-hidden="true">←</span> Compare paths</a>
+      <div class="route-handoff__links">
+        <AgencyWayfindingSign kind="map" label="See the included Map" href="/map" detail="Keep the plan connected to the work." />
+        <AgencyWayfindingSign kind="build" label="Explore Agent Foundation" href="/agent-foundation" detail="Explore a separately scoped Build." />
+      </div>
+    </div>
+  </aside>
+
   <PerformanceConversionHandoff
     expression="editorial"
     eyebrow="Choose the next boundary"
@@ -233,16 +251,31 @@
     }}
   >
     {#snippet actions()}
-      <Button href="/products">Compare Map and Control</Button>
-      <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
+      <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
         {agencyCoreMessaging.bookMappingSessionLabel}
       </Button>
+      <Button href="/products" variant="secondary">Compare Map and Control</Button>
     {/snippet}
   </PerformanceConversionHandoff>
 </main>
 
 <style>
-  .review-boundary { padding: 2rem max(1.25rem, calc((100% - 80rem) / 2)); color: var(--color-performance-ink); background: var(--color-performance-paper); }
+  .route-handoff {
+    padding: var(--space-performance-lg) 0;
+    color: var(--color-performance-ink);
+    background: var(--color-performance-paper);
+    border-block: 1px solid var(--color-performance-line);
+  }
+  .route-handoff__inner { width: 90%; margin-inline: auto; }
+  .route-handoff__current { margin: 0 0 var(--space-performance-sm); font-size: var(--text-performance-caption); font-family: var(--font-performance-mono); }
+  .route-handoff__context { max-width: 70ch; margin: 0 0 var(--space-performance-md); line-height: 1.6; }
+  .route-handoff__return { display: inline-flex; align-items: center; gap: var(--space-performance-sm); min-height: 44px; margin-bottom: var(--space-performance-sm); color: inherit; text-underline-offset: .25em; }
+  .route-handoff__return:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+  .route-handoff__links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-performance-sm); }
+  @media (max-width: 760px) { .route-handoff__links { grid-template-columns: 1fr; } }
+
+  .review-boundary { padding-block: 2rem; color: var(--color-performance-ink); background: var(--color-performance-paper); }
+  .review-boundary__inner { width: 90%; margin-inline: auto; }
   .review-boundary p { max-width: 70ch; line-height: 1.65; }
   .review-boundary a { color: inherit; text-decoration: underline; }
   .control-loop {

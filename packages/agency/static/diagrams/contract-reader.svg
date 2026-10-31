@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="558" viewBox="0 0 360 558" style="max-width:100%;height:auto" role="img" aria-labelledby="svg-title svg-desc">
+  <title id="svg-title">A contract reader: four responsibilities</title>
+  <desc id="svg-desc">Illustrative model: readable contract, orchestration, actual host controls, and an observed receipt. This is not a running system.</desc>
+  <defs>
+    <marker id="arrow-in" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#bdbdb8"/>
+    </marker>
+    <marker id="arrow-out" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#bdbdb8"/>
+    </marker>
+  </defs>
+  <rect width="360" height="558" fill="#171717"/>
+  <rect id="reader" x="24" y="130" width="312" height="288" rx="0" fill="#262626" stroke="#8a8a86"/>
+  <rect id="contract" x="66" y="12" width="228" height="100" rx="0" fill="#333333" stroke="#8a8a86"/>
+  <text id="contract-label" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#f7f7f2">
+    <tspan x="82" y="41">01  CONTRACT</tspan>
+  </text>
+  <text id="contract-note" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#f7f7f2">
+    <tspan x="82" y="72">Goal, scope, evidence</tspan>
+  </text>
+  <rect id="window-route" x="48" y="158" width="264" height="92" rx="0" fill="#171717" stroke="#8a8a86"/>
+  <text id="route-label" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#f7f7f2">
+    <tspan x="64" y="186">02  ORCHESTRATION</tspan>
+  </text>
+  <text id="route-note" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#f7f7f2">
+    <tspan x="64" y="219">Roles, order, handoffs</tspan>
+  </text>
+  <rect id="divider" x="48" y="264" width="264" height="2" rx="0" fill="#8a8a86" stroke="#8a8a86"/>
+  <rect id="window-gate" x="48" y="280" width="264" height="106" rx="0" fill="#171717" stroke="#8a8a86"/>
+  <text id="gate-label" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#f7f7f2">
+    <tspan x="64" y="309">03  HOST CONTROLS</tspan>
+  </text>
+  <text id="gate-note" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#f7f7f2">
+    <tspan x="64" y="342">Access, approval, checks</tspan>
+  </text>
+  <rect id="mount-a" x="30" y="136" width="6" height="6" rx="0" fill="#8a8a86" stroke="#8a8a86"/>
+  <rect id="mount-b" x="324" y="136" width="6" height="6" rx="0" fill="#8a8a86" stroke="#8a8a86"/>
+  <rect id="mount-c" x="30" y="404" width="6" height="6" rx="0" fill="#8a8a86" stroke="#8a8a86"/>
+  <rect id="mount-d" x="324" y="404" width="6" height="6" rx="0" fill="#8a8a86" stroke="#8a8a86"/>
+  <rect id="receipt" x="66" y="440" width="228" height="102" rx="0" fill="#333333" stroke="#8a8a86"/>
+  <text id="receipt-label" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#f7f7f2">
+    <tspan x="82" y="469">04  RECEIPT</tspan>
+  </text>
+  <text id="receipt-note" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#f7f7f2">
+    <tspan x="82" y="500">Observed result + limits</tspan>
+  </text>
+  <line id="in" x1="180" y1="112" x2="180" y2="130" stroke="#bdbdb8" stroke-width="1" marker-end="url(#arrow-in)"/>
+  <line id="out" x1="180" y1="418" x2="180" y2="440" stroke="#bdbdb8" stroke-width="1" marker-end="url(#arrow-out)"/>
+</svg>

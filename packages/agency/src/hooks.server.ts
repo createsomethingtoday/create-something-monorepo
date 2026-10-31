@@ -34,6 +34,7 @@ const redirectHandle: Handle = async ({ event, resolve }) => {
 };
 
 const authHandle = createAuthHooks({
+  identityAudience: 'client-workspace',
   protectedPaths: [...AGENCY_PROTECTED_PATHS],
   loginPath: '/login',
   includeRedirect: true,

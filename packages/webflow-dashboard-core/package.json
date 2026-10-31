@@ -8,6 +8,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./airtable": "./src/airtable.ts",
+    "./creator-email": "./src/creator-email.ts",
     "./hash": "./src/hash.ts",
     "./knock": "./src/knock.ts",
     "./kv": "./src/kv.ts",
@@ -21,7 +22,8 @@
     "./sync-schedule": "./src/sync-schedule.ts",
     "./upload-validation": "./src/upload-validation.ts",
     "./uploads-url": "./src/uploads-url.ts",
-    "./marketplace-snapshot": "./src/marketplace-snapshot.mjs"
+    "./marketplace-snapshot": "./src/marketplace-snapshot.mjs",
+    "./latest-snapshot": "./src/latest-snapshot.ts"
   },
   "scripts": {
     "check": "tsc --noEmit",

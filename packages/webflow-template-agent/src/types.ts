@@ -57,6 +57,7 @@ export interface AgentUsage {
 }
 
 export interface ChatContext {
+  project_brief?: string;
   known_templates?: TemplateSearchItem[];
   // Client viewport hint: 'compact' = narrow docked panel, 'immersive' = wide
   // fullscreen/inline canvas. Steers layout and item-count choices.
@@ -76,6 +77,8 @@ export type ChatSurface = 'compact' | 'immersive';
 // templateFiltersChanged contract. Slugs are validated against the
 // conversation's verified-template registry before emission.
 export interface PageActionPayload {
+  max_price?: number | null;
+  has_cms?: boolean | null;
   q?: string | null;
   category_group_slug?: string | null;
   styles?: string[] | null;

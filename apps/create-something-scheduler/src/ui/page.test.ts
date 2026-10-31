@@ -2,6 +2,7 @@ import {
   PERFORMANCE_DOCUMENT_STYLE_VERSION,
   performanceDocumentCss
 } from '@create-something/canon/performance/scheduler-document';
+import { operatorDocumentCss } from '@create-something/canon/styles/operator-document';
 import { describe, expect, it } from 'vitest';
 import { renderBookingManagementActions, schedulerPage } from './page.js';
 
@@ -25,19 +26,19 @@ describe('scheduler public page', () => {
     expect(html).toContain('data-performance-surface="booking"');
     expect(html).toContain(`data-performance-contract="${PERFORMANCE_DOCUMENT_STYLE_VERSION}"`);
     expect(html).toContain(performanceDocumentCss);
+    expect(html).toContain(operatorDocumentCss);
     expect(html).toContain('--color-performance-grid:rgb(9 9 9 / .055)');
     expect(html).toContain('--font-performance-display-weight:500');
-    expect(html).toContain('class="system-bar"');
-    expect(html).toContain('class="hero-spec"');
-    expect(html).toContain('class="proof-footer"');
+    expect(html).toContain('CREATE SOMETHING / Schedule');
+    expect(html).not.toContain('Scheduler control state');
+    expect(html).not.toContain('PERFORMANCE LAB · SCHEDULER');
+    expect(html).not.toContain('Scheduler proof contract');
     expect(html).toContain('<title>Workflow Mapping Session | CREATE SOMETHING</title>');
     expect(html).toContain('<h1>Map One Workflow</h1>');
     expect(html).toContain('30- or 60-minute workflow mapping session with Micah Johnson');
     expect(html).toContain(
       'Bring one real handoff, its decision owner, and the proof your team needs next.'
     );
-    expect(html).toContain('<span>Policy</span><strong>Workflow Mapping / V2</strong>');
-    expect(html).toContain('<span>Calendar</span><strong>Google Calendar</strong>');
     expect(html).not.toContain('focused, 30- or 60-minute conversation');
     expect(html).not.toContain('Createsomething Together / V2');
     expect(html).toContain('class="steps"');
@@ -93,7 +94,6 @@ describe('scheduler public page', () => {
     );
     expect(integration).toContain('<h1>Fit One Integration</h1>');
     expect(integration).toContain('one repository, one consequential workflow');
-    expect(integration).toContain('<span>Policy</span><strong>Compiler Integration / V1</strong>');
     expect(integration).toContain('const offerIntent="compiler-integration";');
     expect(integration).toContain(
       "history.replaceState({},'',canonicalBookingUrl(state.booking.bookingId));"
@@ -113,7 +113,6 @@ describe('scheduler public page', () => {
     expect(foundation).toContain('<title>Agent Foundation Fit Call | CREATE SOMETHING</title>');
     expect(foundation).toContain('<h1>Fit One Agent Foundation</h1>');
     expect(foundation).toContain('one agent project, one role, one job');
-    expect(foundation).toContain('<span>Policy</span><strong>Agent Foundation / V1</strong>');
     expect(foundation).toContain('const offerIntent="agent-foundation";');
     expect(foundation).not.toContain('<h1>Map One Workflow</h1>');
   });
@@ -124,6 +123,14 @@ describe('scheduler public page', () => {
     expect(html).toContain('before paid work starts');
     expect(html).toContain('const offerIntent="technical-review";');
     expect(html).not.toContain('<h1>Map One Workflow</h1>');
+  });
+
+  it('renders the support offer and preserves its allowlisted intent for booking', () => {
+    const html = schedulerPage({ nonce: 'test-nonce', intent: 'system-support' });
+    expect(html).toContain('Remote Software Support Discussion | CREATE SOMETHING');
+    expect(html).toContain('Discuss One Support Problem');
+    expect(html).toContain('const offerIntent="system-support";');
+    expect(html).toContain('This is not emergency coverage.');
   });
 
   it('does not offer booking management actions after cancellation', () => {

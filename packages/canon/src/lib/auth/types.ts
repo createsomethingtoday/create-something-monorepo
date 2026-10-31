@@ -126,6 +126,10 @@ export interface JWK {
 
 /** Configuration for createAuthHooks */
 export interface AuthHooksConfig {
+	/** Default audience for this application; runtime configuration may override it. */
+	identityAudience?: string;
+	/** Required application-specific verification for owned Identity sessions. */
+	identityVerification?: import('./server.js').IdentityVerificationConfig;
 	/** Routes that require authentication (default: []) */
 	protectedPaths?: string[];
 	/** Login redirect path (default: '/login') */
@@ -143,6 +147,8 @@ export interface AuthHooksConfig {
 }
 
 export interface SessionManagerOptions {
+	/** No owned Identity session is accepted without an exact application audience. */
+	identityVerification?: import('./server.js').IdentityVerificationConfig;
 	/** Whether running in production (affects Secure flag) */
 	isProduction?: boolean;
 	/** Domain for cross-subdomain cookies */

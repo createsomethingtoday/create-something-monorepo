@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import {
     Button,
     PerformanceCampaignOpening,
@@ -8,34 +9,8 @@
     type PerformanceNarrativeScene
   } from '@create-something/canon';
 
-  const installs = [
-    {
-      id: 'claude',
-      label: 'Claude Code',
-      command:
-        'claude mcp add --scope user --transport stdio ground -- npx --yes -p @createsomething/ground-mcp@0.4.3 ground-mcp',
-      note: 'Register Ground for the current user'
-    },
-    {
-      id: 'windsurf',
-      label: 'Cursor or Windsurf',
-      command:
-        '{"mcpServers":{"ground":{"command":"npx","args":["--yes","-p","@createsomething/ground-mcp@0.4.3","ground-mcp"]}}}',
-      note: 'Paste into the client MCP configuration'
-    },
-    {
-      id: 'codex',
-      label: 'Codex CLI',
-      command: 'codex mcp add ground -- npx --yes -p @createsomething/ground-mcp@0.4.3 ground-mcp',
-      note: 'Register Ground as a local MCP server'
-    },
-    {
-      id: 'npm',
-      label: 'npm',
-      command: 'npm install -g @createsomething/ground-mcp@0.4.3',
-      note: 'Works with any MCP client'
-    }
-  ];
+  // Installation guidance follows the package release; historical benchmarks retain their versions.
+  import { groundVersion, groundInstalls as installs } from '$lib/data/ground-release.mjs';
 
   const toolGroups = [
     {
@@ -80,10 +55,10 @@
       label: 'Install Ground',
       summary: 'Connect',
       title: 'Put the check beside the agent.',
-      detail: 'Choose one client. These commands install the verified 0.4.3 release.',
+      detail: `Choose one client. These commands install Ground ${groundVersion}.`,
       tone: 'allow',
       evidence: ['Four client-ready configurations', 'Commands remain visible without JavaScript'],
-      receipts: ['Free', 'Open source', 'Version 0.4.3']
+      receipts: ['Free', 'Open source', `Version ${groundVersion}`]
     },
     {
       id: 'guardrail',
@@ -133,7 +108,7 @@
 />
 
 <PerformanceCampaignOpening
-  eyebrow="Ground 0.4.3 · Free and open source"
+  eyebrow={`Ground ${groundVersion} · Free and open source`}
   expression="editorial"
   title="Give the agent evidence before it changes your codebase."
   lede="Ground computes evidence for TypeScript and JavaScript code claims. It also understands SvelteKit routes, aliases, component scripts, actions, stores, and entry points."
@@ -319,6 +294,9 @@ ground compare utils.ts helpers.ts</code
       href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ground"
       variant="secondary">Inspect the source</Button
     >
+  {/snippet}
+  {#snippet aside()}
+    <AgencyWayfindingSign kind="build" label="Explore Agent Foundation" detail="Build path · put verification tools into a scoped implementation." href="/agent-foundation" />
   {/snippet}
 </PerformanceConversionHandoff>
 

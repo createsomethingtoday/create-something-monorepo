@@ -133,9 +133,9 @@ export function generateConfirmationEmailHtml(confirmUrl: string): string {
     title: 'Confirm the note.',
     media: PLAYBOOK_EMAIL_MEDIA,
     contentHtml: `
-      <p style="margin:0 0 ${emailTokens.layout.spaceMd};font-size:17px;line-height:1.6;color:${emailTokens.color.inkSoft};">You asked for occasional notes from CREATE SOMETHING.</p>
+      <p style="margin:0 0 ${emailTokens.layout.spaceMd};font-size:16px;line-height:1.6;color:${emailTokens.color.inkSoft};">You asked for occasional notes from CREATE SOMETHING.</p>
       <p style="margin:0 0 ${emailTokens.layout.spaceLg};font-size:16px;line-height:1.65;color:${emailTokens.color.muted};">Confirm once. We will send only when there is a useful playbook, field report, or operating pattern to share.</p>
-      <a href="${escapePerformanceEmailAttribute(confirmUrl)}" style="display:inline-block;padding:14px 20px;border:1px solid ${emailTokens.color.ink};border-radius:${emailTokens.layout.radius};background-color:${emailTokens.color.ink};color:${emailTokens.color.panel};font-family:${emailTokens.font.mono};font-size:13px;line-height:1.2;text-decoration:none;">Confirm the note</a>
+      <a href="${escapePerformanceEmailAttribute(confirmUrl)}" style="display:inline-block;padding:16px 20px;border:1px solid ${emailTokens.color.ink};background-color:${emailTokens.color.ink};color:${emailTokens.color.panel};font-family:${escapePerformanceEmailAttribute(emailTokens.font.mono)};font-size:13px;line-height:1.2;text-decoration:none;">Confirm the note</a>
       <p style="margin:${emailTokens.layout.spaceLg} 0 0;padding-top:${emailTokens.layout.spaceMd};border-top:1px solid ${emailTokens.color.line};font-size:13px;line-height:1.55;color:${emailTokens.color.muted};">If you did not ask for this, ignore the message. Nothing else will be sent.</p>`,
     footerHtml: 'CONTROLLED SUBSCRIPTION&nbsp;&nbsp;/&nbsp;&nbsp;NO FIXED CADENCE'
   });
@@ -170,9 +170,9 @@ export function generateWelcomeEmailHtml(
     title: 'You are on the list.',
     media: PLAYBOOK_EMAIL_MEDIA,
     contentHtml: `
-      <p style="margin:0 0 ${emailTokens.layout.spaceMd};font-size:17px;line-height:1.6;color:${emailTokens.color.inkSoft};">Your request from ${sourceLabel} is confirmed.</p>
+      <p style="margin:0 0 ${emailTokens.layout.spaceMd};font-size:16px;line-height:1.6;color:${emailTokens.color.inkSoft};">Your request from ${sourceLabel} is confirmed.</p>
       <p style="margin:0 0 ${emailTokens.layout.spaceLg};font-size:16px;line-height:1.65;color:${emailTokens.color.muted};">We will share useful field evidence, operating patterns, and Playbook updates. No roundup for the sake of a roundup.</p>
-      <a href="https://createsomething.agency/field-reports" style="display:inline-block;padding:14px 20px;border:1px solid ${emailTokens.color.ink};border-radius:${emailTokens.layout.radius};background-color:${emailTokens.color.ink};color:${emailTokens.color.panel};font-family:${emailTokens.font.mono};font-size:13px;line-height:1.2;text-decoration:none;">See the field reports</a>
+      <a href="https://createsomething.agency/field-reports" style="display:inline-block;padding:16px 20px;border:1px solid ${emailTokens.color.ink};background-color:${emailTokens.color.ink};color:${emailTokens.color.panel};font-family:${escapePerformanceEmailAttribute(emailTokens.font.mono)};font-size:13px;line-height:1.2;text-decoration:none;">See the field reports</a>
       <p style="margin:${emailTokens.layout.spaceLg} 0 0;padding-top:${emailTokens.layout.spaceMd};border-top:1px solid ${emailTokens.color.line};font-size:13px;line-height:1.55;color:${emailTokens.color.muted};"><a href="${escapePerformanceEmailAttribute(unsubscribeUrl)}" style="color:${emailTokens.color.muted};text-underline-offset:3px;">Unsubscribe whenever the notes stop being useful.</a></p>`,
     footerHtml:
       'SOURCE&nbsp;&nbsp;/&nbsp;&nbsp;' + escapePerformanceEmailAttribute(sourceLabel.toUpperCase())

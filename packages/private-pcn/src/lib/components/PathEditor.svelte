@@ -14,7 +14,23 @@
   let lessons = $state(untrack(() => [...(path?.lesson_ids || [''])]));
   let busy = $state(false);
   let failure = $state('');
-  let saved = $state(false);
+  let saved = $state('');
+  const action = $derived(
+    visibility === 'published'
+      ? path?.visibility === 'published'
+        ? 'Save published changes'
+        : 'Publish path'
+      : visibility === 'archived'
+        ? 'Archive path'
+        : 'Save draft'
+  );
+  const effect = $derived(
+    visibility === 'published'
+      ? 'This sequence will be visible immediately to members who can access every lesson. Lesson audiences stay unchanged.'
+      : visibility === 'archived'
+        ? 'This path will be hidden from members. Its lessons and their audiences stay unchanged.'
+        : 'This path will be saved privately as a draft and hidden from members.'
+  );
   function move(index: number, direction: number) {
     const copy = [...lessons];
     [copy[index], copy[index + direction]] = [copy[index + direction], copy[index]];
@@ -24,7 +40,7 @@
     event.preventDefault();
     busy = true;
     failure = '';
-    saved = false;
+    saved = '';
     try {
       const result = await api(
         'learning/paths/save',
@@ -41,7 +57,12 @@
         slug
       );
       await invalidateAll();
-      saved = true;
+      saved =
+        visibility === 'published'
+          ? 'Published path saved. Members with access to every lesson can open it now.'
+          : visibility === 'archived'
+            ? 'Path archived. It is hidden from members.'
+            : 'Draft saved. It is not visible to members.';
       if (!path) await goto(`${pathBase(slug)}/${result.id}`);
     } catch (e) {
       failure = (e as Error).message;
@@ -125,11 +146,14 @@
         disabled={lessons.length >= 30}
         onclick={() => (lessons = [...lessons, ''])}>Add lesson</button
       >
-      <button type="submit" class="button">{busy ? 'Saving…' : 'Save path'}</button>
+      <p id="path-save-effect">{effect}</p>
+      <button type="submit" class="button" aria-describedby="path-save-effect"
+        >{busy ? 'Saving…' : action}</button
+      >
     </fieldset>
     {#if failure}<StatusNotice tone="error" message={failure} />{:else if saved}<StatusNotice
         tone="success"
-        message="Path saved."
+        message={saved}
       />{/if}
   </form>
 </details>

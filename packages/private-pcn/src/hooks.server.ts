@@ -121,7 +121,11 @@ export const handle: Handle = async ({ event, resolve }) => {
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  if (event.url.pathname.startsWith('/api/') || event.locals.identity)
+  if (
+    event.url.pathname.startsWith('/api/') ||
+    event.url.pathname === '/join' ||
+    event.locals.identity
+  )
     response.headers.set('Cache-Control', 'private, no-store');
   return response;
 };

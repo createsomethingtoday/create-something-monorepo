@@ -89,6 +89,7 @@ try {
 
   const receipt = {
     schema_version: 'ground-published-consumer-smoke.v1',
+    binaries: nativeReceipt.binaries,
     platform: platformId,
     version: installedManifest.version,
     source_sha: nativeReceipt.source_sha,

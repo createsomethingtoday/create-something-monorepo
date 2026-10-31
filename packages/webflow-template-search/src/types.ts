@@ -1,5 +1,7 @@
+import type { DemoSignals } from './demo-signals.js';
+
 export type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
-export type TemplateSort = 'popular' | 'best_selling' | 'newest' | 'price_asc' | 'price_desc';
+export type TemplateSort = 'recommended' | 'popular' | 'best_selling' | 'newest' | 'price_asc' | 'price_desc';
 export type TemplateSearchView = 'full' | 'grid';
 export type AliasType = 'child_category';
 
@@ -14,12 +16,18 @@ export interface Env {
   AIRTABLE_TAGS_TABLE_ID?: string;
   WEBFLOW_API_TOKEN?: string;
   CMS_READ_ONLY?: string;
+  CMS_FILTER_ENABLED?: string;
   WEBFLOW_TEMPLATE_ASSET_SITE_ID?: string;
   WEBFLOW_TEMPLATE_ASSET_FOLDER_ID?: string;
   WEBFLOW_TEMPLATE_COLLECTION_ID?: string;
+  WEBFLOW_GUIDELINES_COLLECTION_ID?: string;
   WEBFLOW_TEMPLATE_ENABLE_CMS_INDEX?: string;
   ALLOWED_ORIGINS?: string;
   DEFAULT_PAGE_SIZE?: string;
+  /** Number of rank bands the popular browse order shuffles daily; unset or 0 = strict order. */
+  POPULAR_SHUFFLE_BANDS?: string;
+  /** Ranks per shuffle band (default 24, one grid page). */
+  POPULAR_SHUFFLE_BAND_SIZE?: string;
   DEFAULT_CLIENT_MODE?: string;
   ENVIRONMENT?: string;
   SYNC_ADMIN_TOKEN?: string;
@@ -32,6 +40,21 @@ export interface Env {
    * forwarding is additive on top.
    */
   TELEMETRY_AE?: AnalyticsEngineDataset;
+  /** "1" turns on POST /api/templates/support-request (see supportRequest.ts). */
+  SUPPORT_REQUESTS_ENABLED?: string;
+  /** Knock secret key used to email creators about buyer support requests (secret). */
+  KNOCK_API_KEY?: string;
+  /** Overrides the Knock workflow key; defaults to marketplace-template-support-request. */
+  KNOCK_SUPPORT_WORKFLOW_KEY?: string;
+  /** Salt for the IP and buyer-email hashes stored on support_requests (secret). */
+  SUPPORT_REQUEST_HASH_SALT?: string;
+  /** Comma-separated 👛Assets creator-email field IDs, override first (secret). */
+  AIRTABLE_CREATOR_EMAIL_FIELD_IDS?: string;
+  /**
+   * Shared with the templates.webflow.com proxy (secret). A request presenting it in
+   * X-Templates-Proxy-Token is trusted for the buyer IP in X-Templates-Client-IP.
+   */
+  SUPPORT_REQUEST_PROXY_TOKEN?: string;
 }
 
 export interface AirtableAttachment {
@@ -65,6 +88,7 @@ export interface AirtableAssetFields extends Record<string, unknown> {
   'ℹ️👘Styles'?: string[];
   'ℹ️🏷️Tags (Multi)'?: string[];
   '🥞Template Type (🏗️ only)'?: string;
+  'ℹ️Type: CMS? (🏗️ only)'?: number | boolean;
   'Is free?'?: number | boolean;
   '🥞Is Currently Featured? (🏗️ only)'?: number | boolean;
   'ℹ️Is Featured? (🖥️, 🏗️only)'?: number | boolean;
@@ -163,6 +187,7 @@ export interface TemplateDocumentInput {
   tags: string[];
   tagSlugs: string[];
   templateType: string | null;
+  hasCms: boolean | null;
   isFree: boolean;
   isFeatured: boolean;
   isLandingPage: boolean;
@@ -175,9 +200,16 @@ export interface TemplateDocumentInput {
   marketplaceStatus: string | null;
   sourceLastModifiedTime: string | null;
   syncedAt: string;
+  // true: a live Templates CMS item was confirmed for this record during the
+  // sync. false: the lookup completed and found none. null: the lookup was
+  // unavailable (error, no token, partial coverage), so the row keeps whatever
+  // it had; a 429 must not un-confirm rows that were confirmed last run.
+  listingConfirmed: boolean | null;
 }
 
 export interface SearchParams {
+  discovery?: boolean;
+  intent?: import('./discovery-intent.js').PortfolioIntent;
   templateSlug?: string | null;
   strict?: boolean;
   q: string | null;
@@ -192,6 +224,8 @@ export interface SearchParams {
   tags: string[];
   types: string[];
   freeOnly: boolean;
+  hasCms: boolean | null;
+  maxPrice?: number | null;
   sort: TemplateSort;
   view: TemplateSearchView;
   page: number;
@@ -227,7 +261,10 @@ export interface SearchItem {
   included_pages?: string[];
   features?: string[];
   source_updated_at?: string | null;
+  /** view=full only. Matching signals from the demo homepage; null until resolved. */
+  demo_signals?: DemoSignals | null;
   template_type: string | null;
+  has_cms: boolean | null;
   popularity_score: number | null;
   unique_viewers: number | null;
   cumulative_purchases: number | null;
@@ -239,6 +276,7 @@ export interface SearchItem {
 }
 
 export interface SearchResponsePayload {
+  interpretation?: import('./discovery-intent.js').PortfolioIntent;
   items: SearchItem[];
   pagination: {
     page: number;
@@ -262,6 +300,8 @@ export interface SearchResponsePayload {
     tags: string[];
     types: string[];
     free_only: boolean;
+    has_cms: boolean | null;
+    max_price?: number | null;
     /** True when the strict all-tokens query matched nothing and results come from an OR-relaxed retry. */
     relaxed: boolean;
   };
@@ -294,6 +334,7 @@ export interface SyncSummary {
   cursor: string;
   skipped_empty_windows?: number;
   recent_published_records?: number;
+  unconfirmed_recheck_records?: number;
   // Published Airtable records held out of the index because no live Webflow
   // Templates CMS item exists for them yet.
   listing_gated_records?: number;
@@ -342,6 +383,25 @@ export interface TemplateImagePruneSummary {
   image_source_stats: TemplateImageSourceStats;
 }
 
+export interface TemplateDemoSignalStats {
+  eligible_records: number;
+  records_with_signals: number;
+  attempted_records: number;
+}
+
+export interface TemplateDemoSignalRefreshSummary {
+  mode: 'demo_signals';
+  started_at: string;
+  finished_at: string;
+  requested_limit: number;
+  requested_template_slugs?: string[];
+  scanned_records: number;
+  updated_records: number;
+  failed_records: number;
+  failures: Array<{ template_slug: string; status: number | null; reason: string }>;
+  demo_signal_stats: TemplateDemoSignalStats;
+}
+
 export interface DocumentRow {
   id: string;
   template_slug: string;
@@ -370,6 +430,7 @@ export interface DocumentRow {
   tags_json: string;
   tag_slugs_json: string;
   template_type: string | null;
+  has_cms: number | null;
   is_free: number;
   is_featured: number;
   is_landing_page: number;
@@ -381,6 +442,9 @@ export interface DocumentRow {
   published_date: string | null;
   marketplace_status: string | null;
   source_last_modified_time: string | null;
+  demo_signals_json: string | null;
+  demo_signals_synced_at: string | null;
+  demo_signals_attempted_at: string | null;
 }
 
 export interface DocumentCountRow {

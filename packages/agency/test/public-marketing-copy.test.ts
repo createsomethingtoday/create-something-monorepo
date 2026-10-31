@@ -171,44 +171,69 @@ test('public agency surfaces explain ownership and provider roles', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
   const stack = readFileSync(new URL('../src/routes/stack/+page.svelte', import.meta.url), 'utf8');
   const partners = readFileSync(new URL('../src/routes/partners/+page.svelte', import.meta.url), 'utf8');
-  assert.match(home, /Built with OpenAI and Cloudflare\. Designed to remain yours\./);
-  assert.match(home, /Your team owns the system\./);
-  assert.match(home, /OpenAI Codex, an AI coding tool/);
-  assert.match(home, /A new setup still needs testing/);
-  assert.match(home, /https:\/\/createsomething\.ltd\/canon\/concepts\/conviction-without-dependence/);
+  assert.match(home, /you own commissioned deliverables under your agreement, except reusable provider tools/);
+  assert.match(home, /You keep the agreed code, tests, instructions and project history/);
   assert.match(stack, /Your project keeps its data, code, tool definitions, instructions, tests, and recovery guide/);
   assert.match(stack, /A different model must pass the relevant checks before you switch/);
   assert.match(partners, /open-weight and custom models/);
 });
 
-test('the homepage introduces a business task before developer and provider details', () => {
+test('the builder-facing homepage retains commercial terms, film evidence and direct inspection links', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
-  const opening = home.slice(home.indexOf('<PerformanceCampaignOpening'), home.indexOf('</PerformanceCampaignOpening>'));
-  assert.match(opening, /title="Keep building with agents\."/);
-  assert.match(opening, /Bring a task your team repeats, an idea, or a project you started/);
-  assert.match(opening, /\$900\/month\. Cancel anytime/);
-  assert.match(opening, /media=\{playbookHomeHeroMedia\}/);
-  assert.match(opening, /expression="editorial"/);
-  assert.match(opening, /mediaMobilePlacement="background"/);
-  assert.doesNotMatch(opening, /Codex|GitHub|governed|authority|MCP/);
-  assert.match(opening, /agencyCoreMessaging.membershipHref/);
-  assert.ok(home.indexOf('An agent is software') < home.indexOf('<aside class="home-section ownership-callout"'));
+  const salesHome = readFileSync(new URL('../src/lib/components/AgencySalesHome.svelte', import.meta.url), 'utf8');
+  const content = readFileSync(new URL('../src/lib/content/agency-home.html', import.meta.url), 'utf8');
+  const films = readFileSync(new URL('../src/lib/components/films/FilmCollection.svelte', import.meta.url), 'utf8');
+  const registry = readFileSync(new URL('../src/lib/data/filmStories.ts', import.meta.url), 'utf8');
+  const services = readFileSync(new URL('../src/routes/services/+page.svelte', import.meta.url), 'utf8');
+  assert.match(home, /<AgencySalesHome/);
+  assert.match(salesHome, /import content from '\$lib\/content\/agency-home\.html\?raw'/);
+  assert.match(salesHome, /\{@html content\}/);
+  assert.match(content, /AI-native Technical support/);
+  assert.match(content, /Put AI to work\./);
+  assert.match(content, /under your agreement/);
+  assert.match(content, /One agreed workstream/);
+  assert.match(content, /production incident response need separate agreements/);
+  assert.match(content, /\$900<span>\/month/);
+  assert.match(content, /\$2,500<span>\/month/);
+  assert.match(content, /href="#plans"/);
+  assert.match(content, /href="\/book\?source=agency&intent=workflow-mapping&lane=workflow_infrastructure"/);
+  assert.match(content, /You approve the budget first/);
+  assert.match(content, /href="\/services"/);
+  assert.match(content, /href="https:\/\/www\.maverickx\.com\/"/);
+  assert.match(content, /href="\/films\/websites\/reference\.png"/);
+  assert.match(content, /href="\/products#cato-tour"/);
+  assert.match(content, /Original conceptual illustration/);
+  assert.match(content, /not a measured business outcome/);
+  assert.match(services, /Control starts at \$900\/month/);
+  assert.match(registry, /Your next step, already prepared/);
+  assert.match(registry, /tools and workflows that help agents do useful work/);
+  assert.match(salesHome, /searchParams.has\('film'\)/);
+  assert.match(films, /searchParams.get\('film'\)/);
+  assert.match(films, /href=\{active.source\}/);
+  assert.ok(salesHome.indexOf('<BuiltWork') < salesHome.indexOf('<FilmCollection'));
+  assert.match(salesHome, /<details id="work-library"/);
+  assert.match(salesHome, /<noscript>[\s\S]*?href="\/products"[\s\S]*?href="\/field-reports"/);
 });
 
 test('commercial decision routes explain the task, delivery, ownership, and proof', () => {
   const read = (route: string) => readFileSync(new URL(`../src/routes/${route}`, import.meta.url), 'utf8');
   const home = read('+page.svelte');
   const layout = read('+layout.svelte');
-  assert.match(layout, /label: 'How It Works', href: '\/services'/);
+  assert.match(layout, /label: 'Technical Support', href: '\/services'/);
   assert.match(layout, /label: 'What You Keep', href: '\/stack'/);
-  assert.match(home, /Turn meeting notes into a draft action list\./);
-  assert.match(home, /Illustrative example, not a measured client result/);
-  assert.match(home, /Approve before saving to another tool/);
-  assert.match(home, /Code, tests, and instructions/);
-  assert.match(read('services/+page.svelte'), /Bring a task to automate or a product you have already built/);
+  const homeContent = readFileSync(new URL('../src/lib/content/agency-home.html', import.meta.url), 'utf8');
+  assert.match(homeContent, /Connect it to the work/);
+  assert.match(homeContent, /Review. Keep improving/);
+  assert.match(homeContent, /Your team keeps approval authority/);
+  assert.match(read('services/+page.svelte'), /Bring a workflow, software problem or existing product/);
+  assert.match(read('services/+page.svelte'), /Your team keeps approval authority/);
+  // Plan detail is consolidated in the component rendered by Services.
+  assert.match(read('services/+page.svelte'), /<MembershipOffer \/>/);
+  assert.match(readFileSync(new URL('../src/lib/components/MembershipOffer.svelte', import.meta.url), 'utf8'), /Choose Focused for one agreed workstream or Team for up to two/);
+  assert.match(read('services/+page.svelte'), /Managed Control starts at \$900\/month/);
   assert.match(read('products/+page.svelte'), /Map and Control are subscriptions/);
   assert.match(read('products/+page.svelte'), /Control includes Map/);
-  assert.match(read('stack/+page.svelte'), /You keep the accounts, data, approval rights, and operating history/);
+  assert.match(read('stack/+page.svelte'), /Your accounts, data, and decisions stay with your team/);
   assert.match(read('proof/marketplace-workflow/+page.svelte'), /prototype measurements, not customer ROI claims/);
 });
 
@@ -217,7 +242,6 @@ test('public Agency commercial propositions declare the shared editorial express
     'services',
     'practice',
     'stack',
-    'map',
     'control',
     'products',
     'products/ground',
@@ -230,9 +254,8 @@ test('public Agency commercial propositions declare the shared editorial express
     'experiments'
   ];
   const sectionHeroRoutes = [
-    'about',
     'cloudflare',
-    'contact',
+    // Contact is a task-led inquiry form, not an editorial campaign hero.
     'for-service-providers',
     'partners',
     'security',
@@ -255,6 +278,9 @@ test('public Agency commercial propositions declare the shared editorial express
       `${route} must opt into editorial campaign type`
     );
   }
+
+  const map = readFileSync(new URL('../src/routes/map/+page.svelte', import.meta.url), 'utf8');
+  assert.match(map, /<AgencyMapHero \/>/);
 
   for (const route of sectionHeroRoutes) {
     const source = readFileSync(
@@ -328,7 +354,29 @@ test('commercial conversion handoffs use editorial propositions while task surfa
     const source = readFileSync(new URL(`../src/routes/${routePath}`, import.meta.url), 'utf8');
     const openings = conversionHandoffOpenings(source);
 
-    assert.ok(openings.length > 0, `${route || 'home'} must render a conversion handoff`);
+    if (!route) {
+      const content = readFileSync(new URL('../src/lib/content/agency-home.html', import.meta.url), 'utf8');
+      assert.match(source, /<AgencySalesHome/);
+      assert.match(content, /id="plans"/);
+      assert.match(content, /Discuss Focused/);
+      assert.match(content, /Discuss Team/);
+      assert.match(content, /href="\/contact\?source=membership&amp;intent=membership/);
+      assert.match(content, /id="next"/);
+      assert.equal(openings.length, 0, 'homepage owns its native plan and conversational conversion sections');
+      continue;
+    }
+    if (route === 'about') {
+      assert.match(source, /class="letter-signoff"/);
+      assert.match(source, /href="\/book"/);
+      continue;
+    }
+    if (route === 'book') {
+      assert.match(source, /class="booking-entry"/);
+      assert.match(source, /id="first-party-scheduler"/);
+      assert.match(source, /onload=\{sendSchedulerContext\}/);
+      continue;
+    }
+    assert.ok(openings.length > 0, `${route} must render a conversion handoff`);
     for (const opening of openings) {
       assert.match(
         opening,
@@ -362,6 +410,17 @@ test('commercial conversion handoffs use editorial propositions while task surfa
     );
     const openings = conversionHandoffOpenings(source);
 
+    if (route === 'about') {
+      assert.match(source, /class="letter-signoff"/);
+      assert.match(source, /href="\/book"/);
+      continue;
+    }
+    if (route === 'book') {
+      assert.match(source, /class="booking-entry"/);
+      assert.match(source, /id="first-party-scheduler"/);
+      assert.match(source, /onload=\{sendSchedulerContext\}/);
+      continue;
+    }
     assert.ok(openings.length > 0, `${route} must render a conversion handoff`);
     for (const opening of openings) {
       assert.doesNotMatch(
@@ -392,31 +451,46 @@ test('the Practice argument is editorial while its operating artifacts stay fiel
   );
 });
 
-test('the homepage service steps preserve approvals, testing, and separate launch', () => {
+test('the compact homepage preserves buying boundaries and detailed destinations', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
-  const steps = home.slice(home.indexOf('const steps ='), home.indexOf('</script>'));
-  assert.match(steps, /what AI may do and what needs approval/);
-  assert.match(steps, /test environment/);
-  assert.match(steps, /Launch is a separate project, quoted before you commit/);
-  assert.match(steps, /monitoring, incident response, and regular reviews/);
-  for (const route of ['/map', '/agent-foundation', '/control']) assert.ok(steps.includes(route));
+  const offer = readFileSync(new URL('../src/lib/components/MembershipOffer.svelte', import.meta.url), 'utf8');
+  const content = readFileSync(new URL('../src/lib/content/agency-home.html', import.meta.url), 'utf8');
+  assert.match(content, /which records can be read, which actions can run, and which need approval/);
+  assert.match(home, /production incident response need separate agreements/);
+  assert.match(home, /AI development, testing and production usage, hosting and third-party services are budgeted separately/);
+  assert.match(home, /You approve the budget first/);
+  assert.match(content, /If usage cannot be confirmed, pause for review/);
+  assert.match(home, /Cancel before your next renewal/);
+  assert.match(offer, /href="\/services"/);
+  assert.match(offer, /href="\/stack"/);
+  assert.match(offer, /workflowMappingSessionHref/);
+  assert.match(offer, /if !compact/);
 });
 
-test('the homepage defines unfamiliar terms beside the example', () => {
+test('the homepage has one FAQ and avoids redundant standalone explanations', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
-  const exampleStart = home.indexOf('<section class="home-section foundation-example"');
-  const example = home.slice(exampleStart, home.indexOf('</section>', exampleStart));
-  assert.match(example, /An agent is software that uses AI and connected tools/);
-  assert.match(example, /Needs confirmation/);
-  assert.match(home, /OpenAI Codex, an AI coding tool/);
-  assert.doesNotMatch(home, /Offense|Defense|PerformanceWorkflowMiniArtifact|HeroTrustArtifact/);
-});
-
-test('the mobile homepage stacks the example and service steps for reading', () => {
-  const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
-  assert.match(home, /@media \(max-width: 640px\)[\s\S]*?\.home-steps\s*\{\s*grid-template-columns: 1fr/);
-  assert.match(home, /@media \(max-width: 640px\)[\s\S]*?\.example-comparison\s*\{\s*grid-template-columns: 1fr/);
-  assert.doesNotMatch(home, /PublicSubstrateCanvas|MeridianEvidenceCarousel/);
+  const content = readFileSync(new URL('../src/lib/content/agency-home.html', import.meta.url), 'utf8');
+  assert.match(home, /<AgencySalesHome/);
+  assert.equal((content.match(/class="cc-faq"/g) ?? []).length, 1);
+  assert.match(content, /<details class="cc-disclosure"><summary>Before we begin/);
+  const faq = content.match(/<div class="cc-faq">([\s\S]*?)<\/div><\/details>/)?.[1] ?? '';
+  assert.equal((faq.match(/<details>/g) ?? []).length, 5);
+  for (const question of ['What needs a separate agreement?', 'What costs extra?', 'Who delivers the service?', 'What does our team keep?', 'Can we cancel?']) {
+    assert.ok(faq.includes(`<summary>${question}</summary>`), `native FAQ must retain ${question}`);
+  }
+  assert.match(faq, /you own commissioned deliverables under your agreement/);
+  assert.match(faq, /You approve the budget first/);
+  const visibleFaq = [...faq.matchAll(/<details><summary>(.*?)<\/summary>([\s\S]*?)<\/details>/g)].map(([, question, answer]) => ({
+    question,
+    answer: [...answer.matchAll(/<p>([\s\S]*?)<\/p>/g)]
+      .map(([, paragraph]) => paragraph.replace(/<[^>]*>/g, ''))
+      .join(' ')
+  }));
+  const schemaSource = home.match(/const faqItems = (\[[\s\S]*?\]);/)?.[1];
+  assert.ok(schemaSource, 'homepage must supply the visible FAQ to SEO');
+  assert.match(home, /\{faqItems\}/);
+  assert.deepEqual(JSON.parse(schemaSource), visibleFaq, 'FAQ schema must match all five visible questions and complete answers');
+  assert.doesNotMatch(home, /<MeridianAccordion|<MembershipFAQ|<GroundFilm|<ProjectReviewEntry|<AgencyPerformanceReadback|<PerformanceConversionHandoff|foundation-example|ownership-callout/);
 });
 
 test('commercial decision routes use one primary and one conversational action', () => {
@@ -463,7 +537,11 @@ test('public stack positioning names the owned Cloudflare and OpenAI boundary', 
   const dify = readFileSync(new URL('../src/routes/dify/+page.svelte', import.meta.url), 'utf8');
 
   assert.match(stack, /Our database system stores the records, tasks, approvals, and work history/i);
-  assert.match(partners, /CREATE SOMETHING owns the system/i);
+  assert.match(partners, /CREATE SOMETHING maintains the system layer for agreed support/i);
+  assert.doesNotMatch(partners, /CREATE SOMETHING owns the system/i);
+  assert.match(partners, /Your materials and agreed deliverables remain distinct from our reusable tools/i);
+  assert.match(stack, /After full payment, you own specifically commissioned deliverables, except our reusable tools/i);
+  assert.match(stack, /Incorporated provider tools are licensed for continued use/i);
   assert.match(partners, /Cloudflare provides infrastructure/i);
   assert.match(partners, /OpenAI provides intelligence/i);
   assert.doesNotMatch(stack, /Dify .{0,80}(?:active|current|runtime)/i);
@@ -512,7 +590,7 @@ test('agency README documents the public copy contract', () => {
   assert.match(source, /plain customer ownership\s+language/);
   assert.match(source, /### Current System Stack Contract/);
   assert.match(source, /Substrate is the owned database and operator layer/);
-  assert.match(source, /CREATE SOMETHING owns the system/);
+  assert.match(source, /CREATE SOMETHING maintains the system layer for agreed support/);
   assert.match(source, /Cloudflare provides infrastructure/);
   assert.match(source, /OpenAI[\s>]+provides intelligence/);
   assert.match(source, /### Compatibility Proof Contract/);
@@ -546,8 +624,8 @@ test('integration proof keeps compatibility distinct from partnership and delive
   assert.match(catalog, /Available to connect\. Account access still needs approval/);
   assert.match(catalog, /does not mean an account is connected/);
   assert.match(catalog, /integration_name=/);
-  assert.match(map, /initialIntegration=/);
-  assert.match(map, /initialIntegrationName=/);
+  assert.match(map, /Mapping context:/);
+  assert.match(map, /initialIntegrationName/);
   assert.match(mapCanvas, /seedIntegrationContext\(\)/);
   assert.match(mapCanvas, /Connector context added/);
   assert.doesNotMatch(`${rail}\n${catalog}`, /certified integration|official partner|1,041/gi);

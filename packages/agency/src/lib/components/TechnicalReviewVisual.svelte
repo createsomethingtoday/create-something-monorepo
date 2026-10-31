@@ -40,7 +40,7 @@
   .review-visual { margin: 0; min-width: 0; }
   picture, img { display: block; width: 100%; }
   img { height: auto; aspect-ratio: 3 / 2; object-fit: contain; background: var(--color-performance-ink); }
-  figcaption { padding-top: .85rem; color: var(--color-performance-ink); font-size: var(--text-body-sm); line-height: 1.5; }
-  figcaption span { display: block; margin-bottom: .25rem; font-family: var(--font-mono); font-size: var(--text-body-sm); }
+  figcaption { padding-top: .85rem; color: var(--color-performance-ink); font-size: var(--text-performance-body-sm); line-height: 1.5; }
+  figcaption span { display: block; margin-bottom: .25rem; font-family: var(--font-performance-mono); font-size: var(--text-performance-body-sm); }
   @media (max-width: 47.99rem) { .portrait img { aspect-ratio: 2 / 3; } }
 </style>

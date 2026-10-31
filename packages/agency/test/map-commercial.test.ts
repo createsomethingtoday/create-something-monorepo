@@ -28,12 +28,10 @@ test('Map identity scope does not inherit unrelated MCP service authorization', 
 	);
 });
 
-test('Map workspace preserves readable ink on paper and panel text on dark cards', () => {
+test('Map workspace explicitly opts into the shared operator contract', () => {
 	const source = readFileSync(new URL('../src/routes/map/workspace/+page.svelte', import.meta.url), 'utf8');
-	assert.match(source, /\.workspace-shell[^}]*color: var\(--color-performance-ink, #090909\)/s);
-	assert.match(source, /\.create-card[^}]*color: var\(--color-performance-panel, #ffffff\)/s);
-	assert.match(source, /\.map-card[^}]*color: var\(--color-performance-panel, #ffffff\)/s);
-	assert.doesNotMatch(source, /\.workspace-shell[^}]*color: var\(--color-performance-fg-primary/s);
+	assert.match(source, /import '@create-something\/canon\/styles\/workspace.css'/);
+	assert.match(source, /class="workspace-shell cs-workspace"/);
 });
 
 test('Map checkout stays fail-closed until configuration and explicit approval are both present', () => {

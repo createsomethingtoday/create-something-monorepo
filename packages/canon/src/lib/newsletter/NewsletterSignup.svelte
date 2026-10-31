@@ -198,8 +198,8 @@
     padding-block: clamp(4rem, 8vw, 6.5rem);
     background:
       linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px) 0 0 / 4rem 4rem,
-      var(--color-performance-ink, #090909);
-    border-block: 1px solid var(--color-performance-ink, #090909);
+      var(--color-operator-secondary, #262626);
+    border-block: 1px solid var(--color-operator-border, rgba(255, 255, 255, 0.12));
     color: #ffffff;
   }
 
@@ -322,7 +322,7 @@
     border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: var(--radius-performance-sm, 4px);
     background: rgba(255, 255, 255, 0.96);
-    color: var(--color-performance-ink, #090909);
+    color: var(--color-operator-background, #171717);
     font-family: inherit;
     font-size: 1rem;
     transition:
@@ -368,7 +368,7 @@
     border: 1px solid #ffffff;
     border-radius: var(--radius-performance-sm, 4px);
     background: #ffffff;
-    color: var(--color-performance-ink, #090909);
+    color: var(--color-operator-background, #171717);
     font-family: inherit;
     font-size: 1rem;
     font-weight: var(--font-performance-semibold);
@@ -396,7 +396,7 @@
   .loading-spinner {
     width: 16px;
     height: 16px;
-    border: 2px solid var(--color-performance-ink, #090909);
+    border: 2px solid var(--color-operator-background, #171717);
     border-top-color: transparent;
     border-radius: 50%;
     animation: spin var(--duration-performance-slow) linear infinite;

@@ -2,6 +2,7 @@ export type BrowserWorkspaceEventType =
   | 'session.ready'
   | 'session.resumed'
   | 'session.closed'
+  | 'user.message'
   | 'turn.started'
   | 'agent.message'
   | 'command.started'
@@ -19,6 +20,7 @@ export type BrowserWorkspaceEvent = {
   at: string;
   type: BrowserWorkspaceEventType;
   message: string;
+  hasAttachment?: boolean;
   status?: 'running' | 'completed' | 'failed' | 'pending' | 'declined' | 'accepted';
   approvalId?: string;
   approvalKind?: 'command' | 'file';
@@ -110,6 +112,23 @@ export function mergeWorkspaceEvents(
   const bySequence = new Map(current.map((event) => [event.sequence, event]));
   for (const event of incoming) bySequence.set(event.sequence, event);
   return [...bySequence.values()].sort((left, right) => left.sequence - right.sequence);
+}
+
+export function conversationMessages(events: BrowserWorkspaceEvent[], localPrompts: Record<number, string> = {}): Array<{
+  sequence: number;
+  author: 'user' | 'agent';
+  text: string;
+  hasAttachment?: boolean;
+}> {
+  return events
+    .filter((event) => event.type === 'user.message' || event.type === 'agent.message')
+    .sort((left, right) => left.sequence - right.sequence)
+    .map((event) => ({
+      sequence: event.sequence,
+      author: event.type === 'user.message' ? 'user' as const : 'agent' as const,
+      text: event.type === 'user.message' ? (localPrompts[event.sequence] ?? event.message) : event.message,
+      ...(event.hasAttachment ? { hasAttachment: true } : {})
+    }));
 }
 
 export function pendingWorkspaceApprovals(

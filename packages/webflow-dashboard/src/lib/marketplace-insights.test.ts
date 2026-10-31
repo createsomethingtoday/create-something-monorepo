@@ -58,14 +58,27 @@ const categoriesData: CategoriesResponse = {
 };
 
 describe('marketplace insights composition', () => {
-	it('prefers category sales totals and freshness when category data is available', () => {
+	it('never sums overlapping category rows into the marketplace total', () => {
+		// A multi-tag template is counted in every category it carries, so the
+		// category sum (20 here) is not a marketplace figure. Keep the category
+		// freshness, fall back to the bounded top-50 leaderboard sum.
 		const summary = buildMarketplaceSummary(leaderboardData, categoriesData);
 
-		expect(summary.totalMarketplaceSales).toBe(20);
-		expect(summary.salesSource).toBe('category-performance');
+		expect(summary.totalMarketplaceSales).toBe(12);
+		expect(summary.salesSource).toBe('leaderboard-top-50');
 		expect(summary.lastUpdated).toBe(categoriesData.summary.lastUpdated);
 		expect(summary.nextUpdateDate).toBe(categoriesData.summary.nextUpdate);
-		expect(summary.dataWarning).toBeNull();
+		expect(summary.dataWarning).toContain('top 50');
+	});
+
+	it('shows no total at all when neither a snapshot nor a leaderboard sum exists', () => {
+		const summary = buildMarketplaceSummary(
+			{ ...leaderboardData, leaderboard: [], summary: { ...leaderboardData.summary, totalMarketplaceSales: 0 } },
+			{ ...categoriesData, summary: { ...categoriesData.summary, totalSales: null } }
+		);
+
+		expect(summary.totalMarketplaceSales).toBeNull();
+		expect(summary.salesSource).toBe('unavailable');
 	});
 
 	it('falls back to leaderboard totals when category totals are empty', () => {
@@ -77,7 +90,7 @@ describe('marketplace insights composition', () => {
 
 		expect(summary.totalMarketplaceSales).toBe(12);
 		expect(summary.salesSource).toBe('leaderboard-top-50');
-		expect(summary.dataWarning).toContain('top-50 leaderboard total');
+		expect(summary.dataWarning).toContain('top 50');
 	});
 
 	it('returns the composed payload used by the page and retry path', () => {
@@ -88,7 +101,7 @@ describe('marketplace insights composition', () => {
 		expect(marketplaceData.userCategories).toEqual(['SaaS']);
 		expect(marketplaceData.categories).toBe(categoriesData.categories);
 		expect(marketplaceData.insights).toBe(categoriesData.insights);
-		expect(marketplaceData.summary.salesSource).toBe('category-performance');
+		expect(marketplaceData.summary.salesSource).toBe('leaderboard-top-50');
 	});
 });
 

@@ -27,6 +27,10 @@ Blocked imports unless the user explicitly wants a new direction:
 - decorative delight, confetti, startup-gradient language, or playful SaaS tropes
 - copying third-party layouts, assets, copy, trade dress, or interaction sequences
 
+## Start With Curated TASTE
+
+TASTE carries CREATE SOMETHING's existing human curation from Are.na. For substantial UI work, inspect the relevant images using [taste-research.md](./taste-research.md) before seeking additional precedent. Select for the task rather than importing a channel's style wholesale. A reference may inform hierarchy, proportion, rhythm, or state treatment; Canon and Performance Lab still govern the result.
+
 ## Borrow From Mobbin Carefully
 
 Mobbin supplies comparative evidence about how real products structure a task. It does not supply CREATE SOMETHING's identity or an implementation to reproduce.

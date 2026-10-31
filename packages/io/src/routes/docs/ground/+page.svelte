@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ResearchScene from '$lib/components/ResearchScene.svelte';
 	const coreTools = [
 		{ name: 'ground_compare', description: 'Compare two files for similarity (0.0-1.0 score)' },
 		{ name: 'ground_count_uses', description: 'Count symbol uses; distinguishes runtime vs type-only usages' },
@@ -44,12 +45,13 @@
 	<meta name="keywords" content="Ground, MCP server, TypeScript, JavaScript, SvelteKit, code analysis, duplicate detection, dead code, orphan detection, Claude Code, Cursor, Windsurf, Codex" />
 </svelte:head>
 
-<main class="docs-page">
+<div class="docs-page">
 	<nav class="breadcrumb">
 		<a href="/docs">Documentation</a> / <span>Ground</span>
 	</nav>
 
-	<header class="hero">
+	<header class="hero io-reference-opening">
+<div class="io-reference-copy">
 		<h1>Ground</h1>
 		<p class="tagline">Grounded claims for code</p>
 		<p class="description">
@@ -57,7 +59,9 @@
 			Ground focuses its public support contract on TypeScript, JavaScript, and SvelteKit.
 		</p>
 		<code class="npm-package">npm install @createsomething/ground-mcp</code>
-	</header>
+	</div>
+<ResearchScene sizes="(min-width: 960px) 50vw, 94vw" scene="ground-compare-before-claim" caption="Two agents compare a part against its reference before accepting the claim." />
+</header>
 
 	<section class="section">
 		<h2>The Problem</h2>
@@ -213,7 +217,7 @@
 			<li><a href="https://github.com/createsomethingtoday/create-something-monorepo/blob/main/AGENTS.md">Coordination policy: Linear-first tracked work</a></li>
 		</ul>
 	</section>
-</main>
+</div>
 
 <style>
 	.docs-page {

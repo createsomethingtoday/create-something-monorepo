@@ -2,3 +2,4 @@ public/assets/
 dist/
 node_modules/
 .wrangler/
+dist-monitor/

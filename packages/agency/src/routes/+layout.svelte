@@ -1,6 +1,16 @@
 <script lang="ts">
   import '../app.css';
+  import { IO_EXPERIMENTS_URL, IO_PAPERS_URL } from '$lib/data/ioResearchLinks';
+  import AgencyPageTreatment from '$lib/components/AgencyPageTreatment.svelte';
+  import CanonBrandSignature from '$lib/components/CanonBrandSignature.svelte';
+  import '$lib/styles/operator-palette.css';
+  import { initializeFilmMotion, filmNavigationOpen } from '$lib/motion/filmPlayback';
+  import { filmStories } from '$lib/data/filmStories';
   import { Navigation, Footer, LayoutSEO, ModeIndicator } from '@create-something/canon';
+  import PageAnnotations from '$lib/annotations/PageAnnotations.svelte';
+  import AgencySearch from '$lib/site-search/AgencySearch.svelte';
+  import { isPublicSearchPage } from '$lib/site-search/catalog';
+  import { quickAccessItems } from '$lib/data/quickAccessItems';
   import { UnifiedSearch } from '@create-something/canon/navigation';
   import PrivacyAnalytics from '$lib/components/PrivacyAnalytics.svelte';
   import AgencyPerformanceHandoff from '$lib/components/AgencyPerformanceHandoff.svelte';
@@ -18,10 +28,17 @@
   } from '$lib/atlas/surface-policy';
   import { marketingPagePortfolio } from '$lib/data/marketingPages';
 
+  import { usesAgencyOperatorPalette } from '$lib/data/publicSurfacePolicy';
+
   let { children, data } = $props();
+  const usesOperatorPalette = $derived(
+    usesAgencyOperatorPalette($page.url.pathname)
+  );
   let mobileNavigationOpen = $state(false);
 
   function scrollToTop() {
+    // A booking action may run before the delayed page-entry reset settles.
+    if (window.location.pathname === '/book' && window.location.hash === '#first-party-scheduler') return;
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
@@ -29,12 +46,20 @@
 
   // View Transitions API - Hermeneutic Navigation
   // .agency: Efficient (200ms)
+  let activeRouteTransition: ViewTransition | undefined;
   onNavigate((navigation) => {
+    activeRouteTransition?.skipTransition();
     // Keep back/forward restoration, but force top-scroll on normal page links
     if (navigation.type !== 'popstate' && !navigation.to?.url.hash) {
       disableScrollHandling();
     }
 
+    // Commit pilot route changes without waiting for a visual snapshot.
+    // SvelteKit updates history before awaiting onNavigate; delaying here lets
+    // early Back race an older, still-uncommitted destination.
+    if (navigation.from?.url.pathname === '/' || navigation.to?.url.pathname === '/') return;
+    // Local fragment selection already has bounded component feedback.
+    if (navigation.from?.url.pathname === navigation.to?.url.pathname && navigation.from?.url.search === navigation.to?.url.search) return;
     if (!document.startViewTransition) return;
     if (
       typeof window !== 'undefined' &&
@@ -43,9 +68,16 @@
       return;
 
     return new Promise((resolve) => {
-      document.startViewTransition(async () => {
+      const transition = document.startViewTransition(async () => {
         resolve();
-        await navigation.complete;
+        // Rapid Back/Forward can abort the older navigation. The newest route
+        // still owns state; skipping its predecessor is an expected outcome.
+        try { await navigation.complete; } catch { /* Superseded navigation. */ }
+      });
+      activeRouteTransition = transition;
+      void transition.ready.catch(() => {});
+      void transition.finished.catch(() => {}).finally(() => {
+        if (activeRouteTransition === transition) activeRouteTransition = undefined;
       });
     });
   });
@@ -53,7 +85,7 @@
   // Primary nav tells a first-time visitor what each destination contains.
   // Owned product names remain available in the footer and on the system page.
   const navLinks = [
-    { label: 'How It Works', href: '/services' },
+    { label: 'Technical Support', href: '/services' },
     {
       label: 'Try a Workflow',
       href: '/practice',
@@ -71,7 +103,7 @@
         {
           label: 'How it works',
           href: '/services',
-          description: 'See how we plan, build, and support your project.'
+          description: 'See how we diagnose problems, engineer improvements, and help your team use them.'
         },
         {
           label: 'Marketplace field report',
@@ -89,6 +121,20 @@
     const product = getPublicProduct(id);
     return { label: product.shortName, href: product.route };
   });
+  // Public pages share one navigation; workspace and identity routes retain their existing shell.
+  const usesPublicNavigation = $derived(!/^\/(account|admin|dashboard|login|logout|auth|mcp-access|delivery)(?:\/|$)/.test($page.url.pathname) && !/^\/map\/(workspace|subscribe|share)(?:\/|$)/.test($page.url.pathname));
+  const filmNavLinks = [
+    { label: 'The work', href: '/#built-work' },
+    { label: 'Technical support', href: '/services' },
+    { label: 'From $900/mo', href: agencyCoreMessaging.membershipHref },
+    { label: 'Explore', href: '/products', children: [
+      { label: 'Services & tools', href: '/products', description: 'Explore the full catalog.' },
+      { label: 'Proof', href: '/field-reports', description: 'Inspect results and their limits.' },
+      { label: 'Try a workflow', href: '/practice', description: 'Try the method yourself.' },
+      { label: 'What you keep', href: '/stack', description: 'Code, instructions and ownership.' },
+      { label: 'Research on .io', href: IO_EXPERIMENTS_URL, description: 'Experiments, evidence and limits.' }
+    ] }
+  ];
   const primaryCtaHref = agencyCoreMessaging.membershipHref;
   const agencyFooterMacroMedia = {
     src: '/images/performance-lab/playbook-footer-decision-gate-macro.webp',
@@ -110,7 +156,7 @@
       title: 'Services',
       ariaLabel: 'Commercial paths',
       links: [
-        { label: 'How It Works', href: '/services' },
+        { label: 'Technical Support', href: '/services' },
         { label: 'Agent Foundation', href: agencyCoreMessaging.agentFoundationHref },
         { label: 'Technical Review', href: '/technical-review' },
         { label: 'AI Buyer Readiness Audit', href: '/agent-readiness' },
@@ -140,6 +186,8 @@
       ariaLabel: 'Guides and articles',
       links: [
         { label: 'Workflow Guides', href: '/workflows' },
+        { label: 'Experiments on .io', href: IO_EXPERIMENTS_URL },
+        { label: 'Research papers on .io', href: IO_PAPERS_URL },
         {
           label: agencyCoreMessaging.governanceChecklistLabel,
           href: agencyCoreMessaging.governanceChecklistHref
@@ -156,6 +204,24 @@
     }
   ];
 
+  const filmFooterGroups = [
+    { title: 'Work', ariaLabel: 'Explore capabilities', links: filmStories.map(story => ({label:story.name,href:`/?film=${story.id}#work`})) },
+    { title: 'Working together', ariaLabel: 'Working together', links: [
+      {label:'Support membership',href:agencyCoreMessaging.membershipHref},
+      {label:agencyCoreMessaging.bookMappingSessionLabel,href:agencyCoreMessaging.workflowMappingSessionHref},
+      {label:'Contact',href:'/contact'},
+      ...footerQuickLinkGroups[0].links.filter(link => !['Products','Field Reports','Dispatch','About'].includes(link.label))
+    ] },
+    { title: 'Resources', ariaLabel: 'Resources', links: [
+      ...footerQuickLinkGroups[0].links.filter(link => ['Products','Field Reports','Dispatch','About'].includes(link.label)),
+      ...spineLinks, ...footerQuickLinkGroups[2].links, ...footerQuickLinkGroups[3].links
+    ] },
+    { title: 'Trust & access', ariaLabel: 'Trust and access', links: [
+      ...footerQuickLinkGroups[4].links,
+      {label:'Privacy',href:'/privacy'}, {label:'Terms',href:'/terms'}, {label:'Sign in',href:'/login'}
+    ] }
+  ];
+  onMount(initializeFilmMotion);
   function getAgencyGlobalAnalyticsMetadata(pathname: string): Record<string, unknown> | undefined {
     const experimentMetadata = getAgencyMarketingExperimentMetadata(pathname);
     const contentMetadata = getAgencyContentAssetAnalyticsMetadata(pathname);
@@ -171,199 +237,22 @@
   }
 
   // Quick access items for unified search
-  const quickAccessItems = [
-    {
-      id: 'nav-services',
-      label: 'How It Works',
-      description: 'Planning, building, and supporting AI tasks',
-      href: '/services',
-      icon: '🔨',
-      keywords: [
-        'workflow system',
-        'calm',
-        'transparent',
-        'reliable',
-        'controlled delegation',
-        'automation',
-        'pricing',
-        'services'
-      ]
-    },
-    {
-      id: 'nav-stack',
-      label: 'What You Keep',
-      description: 'Your accounts, data, approval rights, and operating record',
-      href: '/stack',
-      icon: '🧭',
-      keywords: [
-        'stack',
-        'vendors',
-        'boundaries',
-        'composio',
-        'cloudflare',
-        'webflow',
-        'openai',
-        'control layer'
-      ]
-    },
-    {
-      id: 'nav-partners',
-      label: 'Connected tools',
-      description:
-        'Map one workflow across the app surface, runtime, workspace, reasoning layer, approvals, and evidence',
-      href: '/partners',
-      icon: 'P',
-      keywords: [
-        'workflow tool stack',
-        'tool stack',
-        'substrate',
-        'cloudflare',
-        'openai',
-        'workflow systems',
-        'tool boundary',
-        'approval path'
-      ]
-    },
-    {
-      id: 'nav-cloudflare',
-      label: 'Cloudflare',
-      description:
-        'Cloudflare runtime substrate, Workers, Pages, D1, and controlled workflow routes',
-      href: '/cloudflare',
-      icon: 'CF',
-      keywords: [
-        'cloudflare',
-        'runtime',
-        'workers',
-        'pages',
-        'd1',
-        'durable objects',
-        'remote mcp',
-        'workflow routes'
-      ]
-    },
-    {
-      id: 'nav-products',
-      label: 'Products',
-      description: 'Map and Control products for defining and operating delegated workflows',
-      href: '/products',
-      icon: '📦',
-      keywords: ['portfolio', 'map', 'control', 'workflow products', 'proof surfaces']
-    },
-    {
-      id: 'nav-workflow-guides',
-      label: 'Workflow Guides',
-      description: 'Practical answers for mapping, building, securing, and operating AI workflows',
-      href: '/workflows',
-      icon: 'WG',
-      keywords: ['workflow guides', 'MCP', 'AI automation', 'governance', 'evaluation']
-    },
-    {
-      id: 'nav-field-reports',
-      label: 'Field Reports',
-      description:
-        'Measured workflow results, failed gates, evidence, and human decision boundaries',
-      href: '/field-reports',
-      icon: 'FR',
-      keywords: ['field reports', 'case studies', 'evidence', 'results', 'proof']
-    },
-    {
-      id: 'nav-service-providers',
-      label: 'Use With Clients',
-      description: 'Map, build, and hand over one governed client workflow',
-      href: '/for-service-providers',
-      icon: 'SP',
-      keywords: ['service provider', 'consultant', 'clients', 'delivery', 'workflow handoff']
-    },
-    {
-      id: 'nav-agent-foundation',
-      label: agencyCoreMessaging.agentFoundationLabel,
-      description:
-        'One useful agent capability in a client-owned repository, ready to continue with Codex',
-      href: agencyCoreMessaging.agentFoundationHref,
-      icon: 'AF',
-      keywords: [
-        'agent foundation',
-        'codex',
-        'agent project',
-        'repository',
-        'client owned',
-        'build'
-      ]
-    },
-    {
-      id: 'nav-self-map',
-      label: agencyCoreMessaging.startWithWorkflowLabel,
-      description: 'Start a lightweight workflow map before booking',
-      href: agencyCoreMessaging.startWithWorkflowHref,
-      icon: 'WF',
-      keywords: ['contact', 'hire', 'start', 'workflow', 'self map', 'workflow map', 'mapping']
-    },
-    {
-      id: 'nav-mcp-access',
-      label: 'MCP Access',
-      description: 'Reveal, copy, rotate, and revoke your personal bearer token',
-      href: '/mcp-access',
-      icon: '🗝️',
-      keywords: [
-        'mcp access',
-        'bearer token',
-        'copy token',
-        'host setup',
-        'codex',
-        'claude',
-        'cursor'
-      ]
-    },
-    {
-      id: 'nav-security',
-      label: 'Security',
-      description: 'Identity boundaries, bearer-token governance, and operational controls',
-      href: '/security',
-      icon: '🛡️',
-      keywords: ['security', 'trust', 'risk', 'controls', 'auth']
-    },
-    {
-      id: 'nav-bearer-token-policy',
-      label: 'Bearer Token Policy',
-      description: 'One long-lived token per user with live entitlement checks and revocation',
-      href: '/bearer-token-policy',
-      icon: '🔑',
-      keywords: ['bearer token', 'token policy', 'mcp access', 'agent access', 'auth']
-    },
-    {
-      id: 'nav-space',
-      label: 'Go to .space',
-      description: 'MCP experiments',
-      href: 'https://createsomething.space',
-      icon: '🧪',
-      keywords: ['explore', 'try', 'interactive']
-    },
-    {
-      id: 'nav-io',
-      label: 'Go to .io',
-      description: 'MCP patterns for builders',
-      href: 'https://createsomething.io',
-      icon: '📖',
-      keywords: ['papers', 'research', 'learn']
-    },
-    {
-      id: 'nav-ltd',
-      label: 'Go to .ltd',
-      description: 'Philosophy of automation',
-      href: 'https://createsomething.ltd',
-      icon: '📜',
-      keywords: ['canon', 'principles', 'foundation']
-    }
-  ];
 
   // Handle hash scrolling
   function scrollToHash(hash: string) {
     if (!hash) return;
 
-    const element = document.querySelector(hash);
+    let id: string;
+    try { id = decodeURIComponent(hash.slice(1)); } catch { return; }
+    // Retired interactive-journey bookmarks still lead to the current explanation.
+    if (id === 'sample-handoff' || /^handoff-example-(problem|approval|check|handoff)(-(detail|record|control|inspect))?$/.test(id)) {
+      id = 'service-journey-title';
+    }
+    const element = document.getElementById(id);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const nav = document.querySelector('.nav-fixed');
+      const clearance = (nav?.getBoundingClientRect().bottom ?? 72) + 24;
+      window.scrollTo({ top: Math.max(0, window.scrollY + element.getBoundingClientRect().top - clearance), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
     }
   }
 
@@ -422,8 +311,12 @@
   }
 </script>
 
-<LayoutSEO property="agency" />
+{#snippet canonFooterBrand()}<CanonBrandSignature />{/snippet}
 
+<LayoutSEO property="agency" />
+<PageAnnotations pathname={$page.url.pathname} />
+
+<div class="agency-surface" data-canon-palette={usesOperatorPalette ? "operator" : undefined}>
 <PrivacyAnalytics
   property="agency"
   userId={data.user?.id}
@@ -431,13 +324,17 @@
   globalMetadata={globalAnalyticsMetadata}
   compactPrompt={useCompactPrivacyPrompt}
   obscured={mobileNavigationOpen}
-  mobilePlacement="header-edge"
+  mobilePlacement={["/", "/services", "/contact", "/book"].includes($page.url.pathname) ? "safe-corner" : "header-edge"}
 />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
-<UnifiedSearch currentProperty="agency" localItems={quickAccessItems} showMobileButton={false} />
+{#if isPublicSearchPage($page.url.pathname)}
+  <AgencySearch showMobileButton={$page.url.pathname !== '/'} />
+{:else}
+  <UnifiedSearch currentProperty="agency" localItems={quickAccessItems} showMobileButton={false} />
+{/if}
 
-<div class="layout-root min-h-screen property-performance">
+<div class="layout-root min-h-screen property-performance" class:film-shell={usesPublicNavigation} class:film-home={isPublicMarketingRoute && $page.url.pathname === "/"}>
   <Navigation
     logo="CREATE SOMETHING"
     logoSuffix=".agency"
@@ -447,19 +344,22 @@
       label: 'CREATE SOMETHING .agency'
     }}
     enableRouteLogoMotion={true}
-    links={navLinks}
+    links={usesPublicNavigation ? filmNavLinks : navLinks}
     currentPath={$page.url.pathname}
     fixed={true}
-    ctaLabel={agencyCoreMessaging.membershipLabel}
-    ctaHref={primaryCtaHref}
+    ctaLabel={usesPublicNavigation ? agencyCoreMessaging.bookMappingSessionLabel : agencyCoreMessaging.membershipLabel}
+    ctaHref={usesPublicNavigation ? ($page.url.pathname === '/book' ? '#first-party-scheduler' : agencyCoreMessaging.workflowMappingSessionHref) : primaryCtaHref}
     user={data.user}
     onLogout={handleLogout}
     accountHref="/account"
     visualStyle="editorial"
-    onMobileMenuChange={(open) => (mobileNavigationOpen = open)}
+    onMobileMenuChange={(open) => { mobileNavigationOpen = open; filmNavigationOpen.set(open); }}
   />
 
   <main id="main-content" class="pt-[72px]">
+    {#if usesPublicNavigation && $page.url.pathname !== '/'}
+      <AgencyPageTreatment />
+    {/if}
     {@render children()}
   </main>
 
@@ -469,9 +369,10 @@
 
   <Footer
     mode="agency"
+    brandContent={usesPublicNavigation ? canonFooterBrand : undefined}
     showNewsletter={false}
-    aboutText="We build AI agents for useful business tasks. You keep the code, instructions, and work history."
-    quickLinkGroups={footerQuickLinkGroups}
+    aboutText="AI-native technical support for your tools and workflows. We diagnose problems, engineer improvements, and help your team use what we deliver."
+    quickLinkGroups={usesPublicNavigation ? filmFooterGroups : footerQuickLinkGroups}
     footerCta={routeOwnsPerformanceEnding
       ? undefined
       : {
@@ -495,7 +396,22 @@
   {/if}
 </div>
 
+</div>
+
 <style>
+  .film-shell :global(main#main-content) { padding-top: 112px; }
+  .film-home :global(main#main-content),
+  .film-shell :global(main#main-content:has(.performance-campaign-opening)),
+  .film-shell :global(main#main-content:has(.hero-track)) { padding-top: 0; }
+  .film-shell :global(.performance-campaign-opening__content) { padding-top: max(128px, 10svh); padding-inline: 7vw; }
+  .film-shell :global(main [id]) { scroll-margin-top: 112px; }
+  .film-shell :global(.nav-editorial.nav-fixed) { top: 18px; left: 3vw; right: 3vw; width: auto; border: 1px solid var(--color-performance-line); border-radius: 10px; background: var(--color-performance-paper); }
+  .film-shell :global(.nav-editorial .nav-inner) { width: 100%; padding-inline: 20px; }
+  .film-shell :global(.nav-editorial .nav-link-list) { border: 0; background: transparent; }
+  .film-shell :global(.footer-link-groups) { gap: 40px; }
+  .film-shell :global(.footer-editorial-identity) { padding-block: 50px; }
+  @media(max-width:700px) { .film-shell :global(.nav-editorial.nav-fixed) { top: 10px; left: 4vw; right: 4vw; } .film-shell :global(.nav-editorial .nav-inner) { padding-inline: 12px; } }
+
   .layout-root {
     background: var(--color-performance-paper, #f3f3f0);
   }
@@ -505,5 +421,23 @@
       top: calc(72px + var(--space-performance-md, 1rem));
       bottom: auto;
     }
+  }
+
+  /* Homepage campaign preview: preserve the shared navigation behavior and logo. */
+  .film-home :global(.nav-editorial.nav-fixed) { top: 0; left: 0; right: 0; border: 0; border-radius: 0; background: rgba(8,8,8,.88); backdrop-filter: blur(16px); }
+  .film-home :global(.nav-editorial .nav-inner) { padding-inline: 3vw; }
+  .film-home :global(main#main-content) { padding-top: 0; }
+  .film-home :global(.nav-editorial .nav-link-list) { font-size: 12px; }
+  @media(max-width:700px) { .film-home :global(.nav-editorial.nav-fixed) { top: 0; left: 0; right: 0; } .film-home :global(.nav-editorial .nav-inner) { padding-inline: 6vw; } }
+  @media(max-width:700px) {
+    .film-shell :global(.footer-link-groups) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 20px; }
+    .film-shell :global(.footer-link-groups nav) { min-width: 0; }
+    .film-shell :global(.footer-link-groups .footer-link) { min-height: 44px; display: flex; align-items: center; }
+    .film-shell :global(.footer-editorial-identity) { padding-block: 28px; }
+  }
+  @media(min-width:1024px) and (max-width:1200px) {
+    .film-home :global(.footer-editorial .footer-links-grid) { grid-template-columns: minmax(0,.82fr) minmax(0,1.12fr) minmax(0,.9fr); }
+    .film-home :global(.footer-link-groups) { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 32px 24px; }
+    .film-home :global(.footer-link-groups nav) { min-width: 0; }
   }
 </style>

@@ -16,8 +16,8 @@
 
 <LegalPage
   title="Privacy Policy"
-  effectiveDate="September 21, 2026"
-  version="1.3"
+  effectiveDate="September 23, 2026"
+  version="1.4"
   description="How CREATE SOMETHING Private handles accounts, creator applications, private networks, assets, and support activity."
   {sections}
 >
@@ -38,6 +38,22 @@
     <p>
       Private is intended for adults aged 18 or older. Contact us if you believe a child has
       provided personal information through the service.
+    </p>
+  </section>
+  <section id="invitation-requests">
+    <h2>Invitation requests</h2>
+    <p>
+      When you introduce yourself before joining, we store your name, email, chosen learner or
+      creator path, practice description, optional work link and referral, and permission to review
+      and reply. Only authorized CREATE SOMETHING reviewers can see these introductions. We use them
+      to assess fit and follow up about your request, not to subscribe you to marketing. Submission
+      does not verify your email, create an account, or grant membership or publishing access.
+    </p>
+    <p>
+      Introductions and internal review notes are removed from the active database 90 days after
+      submission by scheduled retention. Backup expiry follows the retention limits below. Request
+      earlier deletion at <a href="mailto:privacy@createsomething.io">privacy@createsomething.io</a
+      >.
     </p>
   </section>
   <section id="information">

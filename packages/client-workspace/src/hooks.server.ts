@@ -7,7 +7,8 @@ import {
   decideLoopbackRequest,
   loopbackBootstrapDocument,
   loopbackCapabilityCookie
-} from '$lib/server/loopback-capability.js';
+} from './lib/server/loopback-capability.js';
+import { verifyRemoteAccess } from './lib/server/remote-access.js';
 
 function logRejectedMutation(method: string, origin: string | null, stage: 'capability' | 'csrf') {
   if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) return;
@@ -16,7 +17,34 @@ function logRejectedMutation(method: string, origin: string | null, stage: 'capa
   console.warn(`[client-workspace] ${stage} rejected ${method} from ${safeOrigin}`);
 }
 
+export function remoteMutationAllowed(method: string, origin: string | null, expectedOrigin: string): boolean {
+  if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase())) return true;
+  return Boolean(expectedOrigin) && origin === expectedOrigin;
+}
+
 export const handle: Handle = async ({ event, resolve }) => {
+  if (process.env.CLIENT_WORKSPACE_REMOTE === '1') {
+    const allowedOrigin = remoteMutationAllowed(
+      event.request.method,
+      event.request.headers.get('origin'),
+      process.env.CLIENT_WORKSPACE_REMOTE_ORIGIN ?? ''
+    );
+    const authorized = allowedOrigin && process.env.CLIENT_WORKSPACE_DESKTOP !== '1' && await verifyRemoteAccess(
+      event.request,
+      {
+        teamDomain: process.env.CLIENT_WORKSPACE_ACCESS_TEAM_DOMAIN ?? '',
+        audience: process.env.CLIENT_WORKSPACE_ACCESS_AUD ?? '',
+        allowedEmail: process.env.CLIENT_WORKSPACE_ACCESS_EMAIL ?? ''
+      }
+    );
+    if (!authorized) {
+      return new Response('Access required.', {
+        status: 403,
+        headers: { 'cache-control': 'no-store' }
+      });
+    }
+    return await resolve(event);
+  }
   if (process.env.CLIENT_WORKSPACE_DESKTOP !== '1') return await resolve(event);
   const configuredToken = process.env.CLIENT_WORKSPACE_CAPABILITY_TOKEN ?? '';
   const expectedOrigin = process.env.CLIENT_WORKSPACE_LOOPBACK_ORIGIN ?? '';

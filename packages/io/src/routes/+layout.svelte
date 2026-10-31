@@ -1,10 +1,15 @@
 <script lang="ts">
+  import { SkipToContent } from '@create-something/canon/components';
   import '../app.css';
+  import '@create-something/canon/styles/operator.css';
+  import '$lib/styles/research.css';
+  import '$lib/styles/operator.css';
   import { onMount } from 'svelte';
   import { afterNavigate, onNavigate, goto, invalidateAll } from '$app/navigation';
   import { Navigation, Footer, Analytics, ModeIndicator, LayoutSEO } from '@create-something/canon';
   import { UnifiedSearch } from '@create-something/canon/navigation';
   import { getIoFooterHandoff } from '$lib/config/footerHandoff';
+  import { isIoResearchSurface } from '$lib/config/researchSurface';
   import { page } from '$app/stores';
   import { newsletterMetadata } from '$lib/newsletter/measurement';
 
@@ -41,15 +46,18 @@
       sessionStorage.removeItem('cs-transition-time');
 
       // Play entry animation
-      document.body.classList.add('transitioning-in');
-      setTimeout(() => {
-        document.body.classList.remove('transitioning-in');
-      }, 500);
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.body.classList.add('transitioning-in');
+        setTimeout(() => {
+          document.body.classList.remove('transitioning-in');
+        }, 500);
+      }
     }
   });
 
   let { children, data } = $props();
   let mobileNavigationOpen = $state(false);
+  const isResearchSurface = $derived(isIoResearchSurface($page.url.pathname, $page.route.id));
   const footerHandoff = $derived(getIoFooterHandoff($page.url.pathname));
 
   // Handle logout
@@ -143,13 +151,13 @@
       const element = document.querySelector(hash);
       if (element) {
         // Account for fixed navigation height (approximately 72px)
-        const navHeight = 72;
+        const navHeight = document.querySelector('nav')?.getBoundingClientRect().height ?? 72;
         const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
         const offsetPosition = elementPosition - navHeight;
 
         window.scrollTo({
           top: offsetPosition,
-          behavior: 'smooth'
+          behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
         });
       } else if (attempts < maxAttempts) {
         setTimeout(() => attemptScroll(attempts + 1, maxAttempts), 100 * (attempts + 1));
@@ -186,17 +194,22 @@
 {#if $page.url.pathname.startsWith('/admin')}
   {@render children()}
 {:else}
-  <!-- Unified Search - Cmd/Ctrl+K to open -->
-  <UnifiedSearch
-    currentProperty="io"
-    localItems={quickAccessItems}
-    showMobileButton={!$page.url.pathname.startsWith('/papers') &&
-      !$page.url.pathname.startsWith('/experiments') &&
-      !mobileNavigationOpen}
-    deferMobileButtonUntilCampaignExit={$page.url.pathname === '/'}
-  />
+  <div
+    class="layout-root property-performance"
+    class:io-research-shell={isResearchSurface}
+    data-canon-palette={isResearchSurface ? 'operator' : undefined}
+  >
+    <!-- Unified Search - Cmd/Ctrl+K to open -->
+    <UnifiedSearch
+      currentProperty="io"
+      localItems={quickAccessItems}
+      showMobileButton={!$page.url.pathname.startsWith('/papers') &&
+        !$page.url.pathname.startsWith('/experiments') &&
+        !mobileNavigationOpen}
+      deferMobileButtonUntilCampaignExit={false}
+    />
 
-  <div class="layout-root property-performance">
+    <SkipToContent />
     <Navigation
       logo="CREATE SOMETHING"
       logoSuffix=".io"
@@ -220,7 +233,7 @@
     />
 
     <!-- Add top padding to account for fixed navigation -->
-    <main id="main-content" class="main-content">
+    <main id="main-content" class="main-content" tabindex="-1">
       {@render children()}
     </main>
 

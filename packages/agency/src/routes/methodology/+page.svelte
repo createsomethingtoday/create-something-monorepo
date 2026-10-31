@@ -8,6 +8,8 @@
   } from '@create-something/canon';
   import { BlurFade } from '@create-something/canon/magicui';
   import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
+  import AgencyWayfindingGroup from '$lib/components/AgencyWayfindingGroup.svelte';
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const disciplines = [
@@ -220,6 +222,14 @@
     {/snippet}
   </PerformanceNarrativeStage>
 
+  <div class="methodology-wayfinding">
+    <p>Continue from the method</p>
+    <AgencyWayfindingGroup label="Apply or inspect the method">
+      <AgencyWayfindingSign kind="map" label="Map one real task" detail="Name its owner, approvals, and checks." href="/map" />
+      <AgencyWayfindingSign kind="proof" label="Read the Template Review report" detail="See the measured result and its limits." href="/field-reports/template-review" />
+    </AgencyWayfindingGroup>
+  </div>
+
   <PerformanceConversionHandoff
     expression="editorial"
     eyebrow="Apply the method"
@@ -240,6 +250,17 @@
 </main>
 
 <style>
+  .methodology-wayfinding {
+    box-sizing: border-box;
+    width: min(var(--content-width-performance, 85rem), 100%);
+    margin-inline: auto;
+    padding: var(--space-performance-lg) var(--space-performance-md);
+  }
+  .methodology-wayfinding > p {
+    margin: 0 0 var(--space-performance-sm);
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-caption);
+  }
   /* ─── Layout ─── */
   .methodology-page {
     background: var(--color-performance-panel, #ffffff);

@@ -1,7 +1,7 @@
 "use strict";
 (() => {
   // src/utils.ts
-  var EXTENSION_VERSION = "1.3.5";
+  var EXTENSION_VERSION = "1.3.8";
   function filterRetiredAccessibilityIssues(issues) {
     return issues.filter((issue) => issue.id !== "color-contrast-violations");
   }
@@ -215,6 +215,689 @@
     };
   }
 
+  // src/style-metadata.ts
+  var STYLE_TYPES = /* @__PURE__ */ new Set(["global", "combo", "tag", "element", "descendant"]);
+  var BREAKPOINT_PROPERTY_WHITELIST = ["width", "min-width", "max-width"];
+  function safeRead(read) {
+    try {
+      return read();
+    } catch {
+      return void 0;
+    }
+  }
+  function errorMessage(error) {
+    return error instanceof Error ? error.message : String(error);
+  }
+  function readStyleMetadata(style) {
+    if (!style || typeof style !== "object") return { type: null, source: null };
+    const target = style;
+    let type = safeRead(() => target.type);
+    if (typeof type !== "string" && typeof target.getType === "function") {
+      type = safeRead(() => target.getType());
+    }
+    let source = safeRead(() => target.source);
+    if (typeof source !== "string" && typeof target.isFromLibrary === "function") {
+      const fromLibrary = safeRead(() => target.isFromLibrary());
+      if (typeof fromLibrary === "boolean") source = fromLibrary ? "library" : "site";
+    }
+    return {
+      type: typeof type === "string" && STYLE_TYPES.has(type) ? type : null,
+      source: source === "site" || source === "library" ? source : null
+    };
+  }
+  async function readStyleName(style) {
+    if (!style || typeof style !== "object") return null;
+    const target = style;
+    const syncName = safeRead(() => target.name);
+    if (typeof syncName === "string") return syncName || null;
+    if (typeof target.getName !== "function") return null;
+    try {
+      const name = await target.getName();
+      return typeof name === "string" && name ? name : null;
+    } catch {
+      return null;
+    }
+  }
+  function shouldIncludeStyle(meta, name) {
+    if (meta.type === "element") return true;
+    return !!name && !name.startsWith("_");
+  }
+  function isTagStyle(meta, name) {
+    if (meta.type !== null) return meta.type === "tag";
+    return isHtmlTagStyleName(name);
+  }
+  function toPayloadStyleType(meta) {
+    return meta.type ?? "class";
+  }
+  function shouldReadBreakpoints(meta) {
+    return meta.type === null || meta.type === "global" || meta.type === "combo";
+  }
+  async function readMediaQueries(webflow) {
+    const api = webflow;
+    if (!api || typeof api.getAllMediaQueries !== "function") return { mediaQueries: [] };
+    try {
+      const result = await api.getAllMediaQueries();
+      if (!Array.isArray(result)) return { mediaQueries: [] };
+      const mediaQueries = result.filter((mq) => !!mq && typeof mq === "object" && typeof mq.id === "string").map((mq) => ({
+        id: mq.id,
+        name: typeof mq.name === "string" ? mq.name : String(mq.id),
+        minWidth: typeof mq.minWidth === "number" ? mq.minWidth : null,
+        maxWidth: typeof mq.maxWidth === "number" ? mq.maxWidth : null,
+        isBase: mq.isBase === true
+      }));
+      return { mediaQueries };
+    } catch (error) {
+      return { mediaQueries: [], error: errorMessage(error) };
+    }
+  }
+  async function readBreakpointProperties(style, mediaQueries) {
+    const target = style;
+    if (!target || typeof target.getProperties !== "function") return void 0;
+    const bounded = mediaQueries.filter((mq) => !mq.isBase && mq.maxWidth !== null);
+    if (bounded.length === 0) return void 0;
+    const errors = [];
+    const entries = await Promise.all(
+      bounded.map(async (mq) => {
+        try {
+          const props = await target.getProperties({ breakpoint: mq.id });
+          if (!props || typeof props !== "object") return null;
+          const kept = {};
+          for (const key of BREAKPOINT_PROPERTY_WHITELIST) {
+            const value = props[key];
+            if (typeof value === "string" || typeof value === "number") kept[key] = String(value);
+          }
+          return Object.keys(kept).length > 0 ? [mq.id, kept] : null;
+        } catch (error) {
+          errors.push(errorMessage(error));
+          return null;
+        }
+      })
+    );
+    const result = {};
+    for (const entry of entries) {
+      if (entry) result[entry[0]] = entry[1];
+    }
+    return { properties: Object.keys(result).length > 0 ? result : void 0, errors };
+  }
+  function summarizeBreakpointReadFailures(failures) {
+    if (failures.length === 0) return null;
+    const count = failures.length;
+    return {
+      source: "Style Breakpoints",
+      message: `Failed to read breakpoint properties for ${count} ${count === 1 ? "style" : "styles"}`,
+      error: failures[0]
+    };
+  }
+  async function readStyleProperties(style, meta, mediaQueries) {
+    const target = style;
+    const canReadBase = !!target && typeof target.getProperties === "function" && meta.type !== "element";
+    const basePromise = (async () => {
+      if (!canReadBase) return {};
+      try {
+        const props = await target.getProperties();
+        return props && typeof props === "object" ? props : {};
+      } catch (propertyError) {
+        console.warn("Error getting style properties:", propertyError);
+        return {};
+      }
+    })();
+    const breakpointPromise = mediaQueries.length > 0 && shouldReadBreakpoints(meta) ? readBreakpointProperties(style, mediaQueries) : Promise.resolve(void 0);
+    const [properties, breakpoints] = await Promise.all([basePromise, breakpointPromise]);
+    return { properties, breakpoints };
+  }
+
+  // src/component-metadata.ts
+  function readField(source, key) {
+    if (!source || typeof source !== "object") return void 0;
+    try {
+      return source[key];
+    } catch {
+      return void 0;
+    }
+  }
+  function asBoolean(value) {
+    return typeof value === "boolean" ? value : null;
+  }
+  function asString(value) {
+    return typeof value === "string" ? value : null;
+  }
+  function readComponentMetadata(component) {
+    const library = readField(component, "library");
+    let libraryMetadata = null;
+    if (library && typeof library === "object") {
+      libraryMetadata = {
+        id: asString(readField(library, "id")),
+        name: asString(readField(library, "name"))
+      };
+    }
+    return {
+      readOnly: asBoolean(readField(component, "readOnly")),
+      codeComponent: asBoolean(readField(component, "codeComponent")),
+      library: libraryMetadata
+    };
+  }
+  async function componentContainsComponentInstance(component, maxDepth = 4) {
+    if (readComponentMetadata(component).readOnly === true) return false;
+    const root = await component.getRootElement();
+    if (!root) return false;
+    let frontier = [root];
+    for (let depth = 0; depth < maxDepth && frontier.length > 0; depth++) {
+      const next = [];
+      for (const element of frontier) {
+        if (element.type === "ComponentInstance") return true;
+        if ("children" in element && element.children && typeof element.getChildren === "function") {
+          next.push(...await element.getChildren());
+        }
+      }
+      frontier = next;
+    }
+    return false;
+  }
+
+  // src/variable-mode-metadata.ts
+  var UNAVAILABLE = { available: false, breakpointId: null };
+  async function readVariableModeBreakpoint(mode) {
+    if (!mode || typeof mode !== "object") return UNAVAILABLE;
+    try {
+      const getBreakpoint = mode.getBreakpoint;
+      if (typeof getBreakpoint !== "function") return UNAVAILABLE;
+      const breakpoint = await getBreakpoint.call(mode);
+      if (breakpoint === null) return { available: true, breakpointId: null };
+      if (typeof breakpoint === "string" && breakpoint !== "") return { available: true, breakpointId: breakpoint };
+      return UNAVAILABLE;
+    } catch {
+      return UNAVAILABLE;
+    }
+  }
+
+  // src/run-storage.ts
+  var LAST_RUN_KEY_PREFIX = "webflow_validator_last_run";
+  var FIX_LIST_KEY_PREFIX = "webflow_validator_submission_fix_list";
+  var LEGACY_STORAGE_KEYS = [LAST_RUN_KEY_PREFIX, FIX_LIST_KEY_PREFIX];
+  function getLastRunStorageKey(siteId) {
+    return `${LAST_RUN_KEY_PREFIX}:${siteId}`;
+  }
+  function getFixListStorageKey(siteId) {
+    return `${FIX_LIST_KEY_PREFIX}:${siteId}`;
+  }
+  function parseStoredValidationRun(raw, siteId) {
+    if (!raw) return null;
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return null;
+    }
+    if (!parsed || typeof parsed !== "object") return null;
+    const candidate = parsed;
+    if (candidate.siteId !== siteId) return null;
+    if (!candidate.data || typeof candidate.data !== "object") return null;
+    if (!Array.isArray(candidate.data.categories)) return null;
+    if (typeof candidate.generatedAt !== "string") return null;
+    return {
+      siteId,
+      data: candidate.data,
+      correlationId: typeof candidate.correlationId === "string" ? candidate.correlationId : null,
+      generatedAt: candidate.generatedAt
+    };
+  }
+  function pruneLegacyRunStorage(storage) {
+    for (const key of LEGACY_STORAGE_KEYS) {
+      try {
+        storage.removeItem(key);
+      } catch {
+      }
+    }
+  }
+  function describeRequestFailure(error) {
+    if (error instanceof DOMException && error.name === "AbortError") return "request timed out";
+    if (typeof error === "object" && error !== null) {
+      const status = error.status;
+      if (typeof status === "number") return `server responded ${status}`;
+    }
+    if (error instanceof TypeError) return "network request blocked or offline";
+    if (error instanceof Error && error.message) return error.message.slice(0, 120);
+    return "unknown error";
+  }
+
+  // ../shared/designer-enhancements.ts
+  function deriveCollectionMetadata(data) {
+    const metadata = {
+      variableCollections: 0,
+      totalVariables: 0,
+      totalComponents: data.components?.length ?? 0,
+      totalStyles: data.styles?.length ?? 0,
+      totalPages: data.pages?.length ?? 0,
+      totalAssets: 0,
+      totalFonts: 0,
+      totalCollections: 0
+    };
+    const collections = data.variables?.collections ?? [];
+    if (collections.length > 0) {
+      metadata.variableCollections = collections.length;
+      metadata.totalVariables = collections.reduce((n, c) => n + c.variables.length, 0);
+      metadata.totalVariableModes = collections.reduce((n, c) => n + (Array.isArray(c.modes) ? c.modes.length : 0), 0);
+    }
+    return metadata;
+  }
+  function deriveEnhancedValidation(data) {
+    const result = {
+      variableOrganization: {
+        hasColorVariables: false,
+        hasTypographyVariables: false,
+        hasSpacingVariables: false,
+        hasOrderedCollections: false
+      },
+      componentArchitecture: {
+        hasNavbarComponent: false,
+        hasFooterComponent: false,
+        hasCTAComponents: false,
+        hasNestedComponents: false
+      },
+      styleSystem: {
+        hasHtmlTagStyles: false,
+        hasConsistentNaming: false,
+        usesVariablesInStyles: false,
+        hasPercentageLineHeights: false
+      },
+      pageStructure: {
+        hasStyleGuidePage: false,
+        hasInstructionsPage: false,
+        hasLicensePage: false,
+        hasTitleCaseNaming: false,
+        hasMatchingSlugs: false,
+        pagesNotTitleCase: [],
+        pagesWithMismatchedSlugs: []
+      },
+      seoCompliance: {
+        currentPageHasValidTitle: false,
+        currentPageHasValidDescription: false,
+        hasOpenGraphData: false,
+        titleWithinLimits: false,
+        descriptionWithinLimits: false
+      }
+    };
+    const variableOrganization = result.variableOrganization;
+    for (const collection of data.variables?.collections ?? []) {
+      for (const variable of collection.variables) {
+        if (!variable.name) continue;
+        const lowerName = variable.name.toLowerCase();
+        if (lowerName.includes("color") || lowerName.includes("bg") || lowerName.includes("text") || lowerName.includes("primary") || lowerName.includes("secondary")) {
+          variableOrganization.hasColorVariables = true;
+        }
+        if (lowerName.includes("font") || lowerName.includes("text") || lowerName.includes("heading") || lowerName.includes("body") || lowerName.includes("size")) {
+          variableOrganization.hasTypographyVariables = true;
+        }
+        if (lowerName.includes("space") || lowerName.includes("margin") || lowerName.includes("padding") || lowerName.includes("gap")) {
+          variableOrganization.hasSpacingVariables = true;
+        }
+      }
+    }
+    const componentArchitecture = result.componentArchitecture;
+    for (const component of data.components ?? []) {
+      if (!component.name) continue;
+      const lowerName = component.name.toLowerCase();
+      if (lowerName.includes("nav") || lowerName.includes("header") || lowerName.includes("menu")) {
+        componentArchitecture.hasNavbarComponent = true;
+      }
+      if (lowerName.includes("footer")) {
+        componentArchitecture.hasFooterComponent = true;
+      }
+      if (lowerName.includes("cta") || lowerName.includes("button") || lowerName.includes("call")) {
+        componentArchitecture.hasCTAComponents = true;
+      }
+      if (component.isNested) {
+        componentArchitecture.hasNestedComponents = true;
+      }
+    }
+    const styleSystem = result.styleSystem;
+    for (const style of data.styles ?? []) {
+      if (style.isHtmlTag) styleSystem.hasHtmlTagStyles = true;
+      if (style.hasVariables) styleSystem.usesVariablesInStyles = true;
+      const lineHeightValue = style.properties?.["line-height"];
+      if (lineHeightValue) {
+        const lineHeight = String(lineHeightValue);
+        if (lineHeight.includes("%") || !lineHeight.includes("px") && !lineHeight.includes("rem") && !isNaN(parseFloat(lineHeight))) {
+          styleSystem.hasPercentageLineHeights = true;
+        }
+      }
+    }
+    styleSystem.hasConsistentNaming = hasConsistentNaming(data);
+    const pageStructure = result.pageStructure;
+    const pages = data.pages ?? [];
+    for (const page of pages) {
+      const { name, slug } = page;
+      const lowerName = name.toLowerCase();
+      const lowerSlug = slug.toLowerCase();
+      if (lowerName.includes("style guide") || lowerSlug.includes("style-guide") || lowerSlug.includes("styleguide")) {
+        pageStructure.hasStyleGuidePage = true;
+      }
+      if (lowerName.includes("instructions") || lowerSlug.includes("instructions")) {
+        pageStructure.hasInstructionsPage = true;
+      }
+      if (lowerName.includes("license") || lowerSlug.includes("license") || slug === "/licenses") {
+        pageStructure.hasLicensePage = true;
+      }
+      const isTitleCase = /^[A-Z][a-z]*(?:\s[A-Z][a-z]*)*$/.test(name) || name.split(" ").every((word) => word.charAt(0) === word.charAt(0).toUpperCase());
+      if (!isTitleCase) {
+        pageStructure.pagesNotTitleCase.push(name);
+      }
+      const expectedSlug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+      const actualSlug = slug.replace(/^\//, "").toLowerCase();
+      if (!page.isCmsTemplate && expectedSlug !== actualSlug && !(page.isHomePage && actualSlug === "")) {
+        pageStructure.pagesWithMismatchedSlugs.push(`${name} (/${actualSlug})`);
+      }
+    }
+    pageStructure.hasTitleCaseNaming = pages.length > 0 && pageStructure.pagesNotTitleCase.length === 0;
+    pageStructure.hasMatchingSlugs = pages.length > 0 && pageStructure.pagesWithMismatchedSlugs.length === 0;
+    const seo = data.currentPage?.seo;
+    if (seo) {
+      const seoCompliance = result.seoCompliance;
+      seoCompliance.currentPageHasValidTitle = seo.hasValidTitle || false;
+      seoCompliance.currentPageHasValidDescription = seo.hasValidDescription || false;
+      seoCompliance.titleWithinLimits = (seo.titleLength || 0) <= 60;
+      seoCompliance.descriptionWithinLimits = (seo.descriptionLength || 0) >= 150 && (seo.descriptionLength || 0) <= 160;
+      seoCompliance.hasOpenGraphData = !!(seo.openGraphTitle || seo.openGraphDescription || seo.openGraphImage);
+    }
+    return result;
+  }
+  function hasConsistentNaming(data) {
+    const allNames = [];
+    if (data.components) {
+      allNames.push(...data.components.map((c) => c.name));
+    }
+    if (data.styles) {
+      allNames.push(...data.styles.filter((s) => !s.isHtmlTag).map((s) => s.name));
+    }
+    for (const collection of data.variables?.collections ?? []) {
+      allNames.push(...collection.variables.map((v) => v.name));
+    }
+    if (allNames.length === 0) return false;
+    const namingPatterns = {
+      titleCase: 0,
+      camelCase: 0,
+      pascalCase: 0,
+      snakeCase: 0,
+      kebabCase: 0,
+      bem: 0
+    };
+    for (const name of allNames) {
+      if (!name) continue;
+      if (/^[A-Z][a-z]*(?:\s[A-Z][a-z]*)*$/.test(name)) {
+        namingPatterns.titleCase++;
+      } else if (/^[a-z][a-zA-Z0-9]*$/.test(name)) {
+        namingPatterns.camelCase++;
+      } else if (/^[A-Z][a-zA-Z0-9]*$/.test(name)) {
+        namingPatterns.pascalCase++;
+      } else if (/^[a-z][a-z0-9_]*$/.test(name)) {
+        namingPatterns.snakeCase++;
+      } else if (/^[a-z][a-z0-9-]*$/.test(name)) {
+        namingPatterns.kebabCase++;
+      } else if (/^[a-z][a-z0-9-]*(__[a-z][a-z0-9-]*)?(--[a-z][a-z0-9-]*)?$/.test(name)) {
+        namingPatterns.bem++;
+      }
+    }
+    const totalNames = allNames.length;
+    return Object.values(namingPatterns).some((count) => count / totalNames >= 0.8);
+  }
+  function hasNoErrors(issues) {
+    return issues.filter((i) => i.severity === "error").length === 0;
+  }
+  function upsertCategory(results, category, issues, stats) {
+    const existing = results.categories.find((cat) => cat.category === category);
+    if (!existing) {
+      results.categories.push({ category, passed: hasNoErrors(issues), issues, stats });
+      return;
+    }
+    existing.issues.push(...issues);
+    existing.passed = hasNoErrors(existing.issues);
+    existing.stats = stats;
+  }
+  var REQUIRED_TAGS = ["body", "h1", "h2", "h3", "h4", "h5", "h6", "p", "a"];
+  function addStyleSystemValidation(results, data) {
+    const issues = [];
+    const styles = data.styles;
+    if (Array.isArray(styles)) {
+      const existingTagStyles = [];
+      const tagStylesWithVariables = [];
+      for (const style of styles) {
+        const styleName = style.name?.toLowerCase() || "";
+        for (const tag of REQUIRED_TAGS) {
+          if (styleName === tag || styleName === `all ${tag}`) {
+            existingTagStyles.push(tag);
+            if (style.hasVariables) tagStylesWithVariables.push(tag);
+          }
+        }
+      }
+      const missingTags = REQUIRED_TAGS.filter((tag) => !existingTagStyles.includes(tag));
+      if (missingTags.length > 0) {
+        issues.push({
+          id: "missing-html-tag-styles",
+          category: "Style System",
+          severity: "error",
+          message: `Missing base styles for HTML tags: ${missingTags.join(", ")}`,
+          details: {
+            howToFix: "Create base styles for all HTML tags (body, h1-h6, p, a)",
+            samples: missingTags
+          }
+        });
+      }
+      const tagsWithoutVariables = existingTagStyles.filter((tag) => !tagStylesWithVariables.includes(tag));
+      if (tagsWithoutVariables.length > 0) {
+        issues.push({
+          id: "html-tags-without-variables",
+          category: "Style System",
+          severity: "error",
+          message: `HTML tag styles not using variables: ${tagsWithoutVariables.join(", ")}`,
+          details: {
+            howToFix: "Update HTML tag styles to use variables for colors, typography, and spacing",
+            samples: tagsWithoutVariables
+          }
+        });
+      }
+      const totalStyles2 = styles.length;
+      const stylesWithVariables2 = styles.filter((s) => s.hasVariables).length;
+      const variableUsagePercent = totalStyles2 > 0 ? Math.round(stylesWithVariables2 / totalStyles2 * 100) : 0;
+      if (variableUsagePercent < 50) {
+        issues.push({
+          id: "low-variable-usage",
+          category: "Style System",
+          severity: "warning",
+          message: `Only ${variableUsagePercent}% of styles use variables (${stylesWithVariables2}/${totalStyles2})`,
+          details: {
+            howToFix: "Increase variable usage in styles for better maintainability (aim for 80%+)"
+          }
+        });
+      }
+    }
+    const totalStyles = styles?.length || 0;
+    const stylesWithVariables = styles?.filter((s) => s.hasVariables).length || 0;
+    upsertCategory(results, "Style System", issues, {
+      totalStyles,
+      htmlTagStyles: {
+        found: styles?.filter((s) => s.isHtmlTag).length || 0,
+        required: REQUIRED_TAGS.length
+      },
+      stylesWithVariables,
+      variableUsagePercent: totalStyles > 0 ? Math.round(stylesWithVariables / totalStyles * 100) : 0
+    });
+  }
+  function normalizeVariableModesCategory(results) {
+    const variableModesCategory = results.categories.find((cat) => cat.category === "Variable Modes");
+    if (!variableModesCategory?.stats) return;
+    const totalModes = typeof variableModesCategory.stats.totalModes === "number" ? variableModesCategory.stats.totalModes : 0;
+    if (totalModes <= 0) return;
+    let convertedWarning = false;
+    variableModesCategory.issues = (variableModesCategory.issues || []).map((issue) => {
+      const isNameOnlyModeWarning = issue.id === "modes.no-responsive" || /modes found, but none appear to be for responsive breakpoints/i.test(issue.message || "");
+      if (!isNameOnlyModeWarning) return issue;
+      convertedWarning = true;
+      return {
+        ...issue,
+        id: "modes.good",
+        severity: "info",
+        message: `${totalModes} modes configured across ${variableModesCategory.stats?.collectionsWithModes || 1} collections.`,
+        howToFix: void 0
+      };
+    });
+    if (convertedWarning) {
+      variableModesCategory.passed = true;
+      variableModesCategory.stats.modeDataAvailable = true;
+    }
+  }
+  var CANVAS_CHECKS_CATEGORY = "Canvas Checks (Current Page)";
+  var CANVAS_NOT_COLLECTED_REASON = "Canvas checks need the Webflow Designer. This run read site data without a Designer canvas, so heading order and image alt text on the current page were not checked.";
+  function addCanvasChecksCategory(results, canvas) {
+    if (!canvas) {
+      results.categories.push({
+        category: CANVAS_CHECKS_CATEGORY,
+        passed: true,
+        issues: [{
+          id: "canvas-checks-unavailable",
+          category: CANVAS_CHECKS_CATEGORY,
+          severity: "info",
+          message: CANVAS_NOT_COLLECTED_REASON,
+          details: {
+            howToFix: "Run the Validator app in the Designer to check the current page canvas."
+          }
+        }],
+        stats: { available: false, reason: CANVAS_NOT_COLLECTED_REASON }
+      });
+      return;
+    }
+    if (!canvas.available) return;
+    const issues = [];
+    for (const headingIssue of canvas.headingIssues) {
+      issues.push({
+        id: `canvas-heading-${headingIssue.position}`,
+        category: CANVAS_CHECKS_CATEGORY,
+        severity: "warning",
+        message: headingIssue.issue,
+        details: {
+          howToFix: "Adjust the heading level in the element settings so levels increase one step at a time.",
+          location: `${canvas.pageName} \u2014 heading ${headingIssue.position} of ${canvas.headingsChecked}`,
+          canvasElementKeys: headingIssue.elementKey ? [headingIssue.elementKey] : void 0
+        }
+      });
+    }
+    if (canvas.imagesMissingAlt > 0) {
+      issues.push({
+        id: "canvas-images-missing-alt",
+        category: CANVAS_CHECKS_CATEGORY,
+        severity: "info",
+        message: `${canvas.imagesMissingAlt} of ${canvas.imagesChecked} image(s) on this page have no alt text in the Designer.`,
+        details: {
+          howToFix: "Add descriptive alt text in each image's settings, or mark purely decorative images as decorative.",
+          canvasElementKeys: canvas.missingAltElementKeys.length > 0 ? canvas.missingAltElementKeys : void 0
+        }
+      });
+    }
+    results.categories.push({
+      category: CANVAS_CHECKS_CATEGORY,
+      passed: issues.filter((issue) => issue.severity === "error" || issue.severity === "warning").length === 0,
+      issues,
+      stats: {
+        page: canvas.pageName,
+        headingsChecked: canvas.headingsChecked,
+        imagesChecked: canvas.imagesChecked,
+        note: "Reflects current Designer state, including unpublished changes"
+      }
+    });
+  }
+  function addRepublishHints(results, canvas) {
+    if (!canvas || !canvas.available) return;
+    const hint = (dimension) => `The current page's canvas passes the ${dimension} check \u2014 if you've already fixed this in the Designer, republish the site and re-run validation to update this result.`;
+    const headingIssueIds = /* @__PURE__ */ new Set(["heading-hierarchy-errors", "heading-structure-errors"]);
+    const altIssueIds = /* @__PURE__ */ new Set(["missing-alt-text-critical", "missing-alt-text", "images-missing-alt"]);
+    for (const category of results.categories) {
+      for (const issue of category.issues || []) {
+        if (issue.id.startsWith("canvas-")) continue;
+        if (canvas.headingsChecked > 0 && canvas.headingIssues.length === 0 && headingIssueIds.has(issue.id)) {
+          issue.details = { ...issue.details, republishHint: hint("heading hierarchy") };
+        }
+        if (canvas.imagesChecked > 0 && canvas.imagesMissingAlt === 0 && altIssueIds.has(issue.id)) {
+          issue.details = { ...issue.details, republishHint: hint("image alt text") };
+        }
+      }
+    }
+  }
+  function rewritePageStructureCategory(results, data) {
+    const pageStructureCategory = results.categories.find((cat) => cat.category === "Page Structure");
+    const pages = data.pages;
+    if (!pageStructureCategory || !pages || pages.length === 0) return;
+    const hasHomePage = pages.some((p) => p.slug === "/" || p.isHomePage);
+    if (pageStructureCategory.stats) {
+      pageStructureCategory.stats.totalPages = pages.length;
+      pageStructureCategory.stats.totalFolders = 0;
+      pageStructureCategory.stats.hasHomePage = hasHomePage;
+    } else {
+      pageStructureCategory.stats = { totalPages: pages.length, totalFolders: 0, hasHomePage };
+    }
+    const issues = [];
+    const pageStructure = data.enhancedValidation?.pageStructure;
+    if (pageStructure) {
+      const pagesNotTitleCase = pageStructure.pagesNotTitleCase || [];
+      if (pagesNotTitleCase.length > 0) {
+        issues.push({
+          id: "page-naming",
+          category: "Page Structure",
+          severity: "warning",
+          message: `${pagesNotTitleCase.length} page(s) don't use Title Case naming convention.`,
+          details: {
+            howToFix: 'Use Title Case for page names (e.g., "Style Guide", "Contact Us")',
+            samples: pagesNotTitleCase.slice(0, 10)
+          }
+        });
+      }
+      const pagesWithMismatchedSlugs = pageStructure.pagesWithMismatchedSlugs || [];
+      if (pagesWithMismatchedSlugs.length > 0) {
+        issues.push({
+          id: "page-slug-mismatch",
+          category: "Page Structure",
+          severity: "warning",
+          message: `${pagesWithMismatchedSlugs.length} page(s) have slugs that don't match their names.`,
+          details: {
+            howToFix: 'Keep page slugs aligned with page names (e.g., "Style Guide" \u2192 /style-guide)',
+            samples: pagesWithMismatchedSlugs.slice(0, 10)
+          }
+        });
+      }
+    }
+    pageStructureCategory.issues = issues;
+    pageStructureCategory.passed = hasNoErrors(issues);
+  }
+  function sortCategories(results) {
+    results.categories.sort((a, b) => {
+      const aErrors = a.issues?.filter((i) => i.severity === "error").length || 0;
+      const bErrors = b.issues?.filter((i) => i.severity === "error").length || 0;
+      const aWarnings = a.issues?.filter((i) => i.severity === "warning").length || 0;
+      const bWarnings = b.issues?.filter((i) => i.severity === "warning").length || 0;
+      if (aErrors > 0 && bErrors === 0) return -1;
+      if (aErrors === 0 && bErrors > 0) return 1;
+      if (aErrors === 0 && bErrors === 0) {
+        if (aWarnings > 0 && bWarnings === 0) return -1;
+        if (aWarnings === 0 && bWarnings > 0) return 1;
+      }
+      if (!a.passed && b.passed) return -1;
+      if (a.passed && !b.passed) return 1;
+      return 0;
+    });
+  }
+  function enhanceValidationResults(results, data, canvasAccessibility) {
+    addStyleSystemValidation(results, data);
+    normalizeVariableModesCategory(results);
+    addCanvasChecksCategory(results, canvasAccessibility);
+    addRepublishHints(results, canvasAccessibility);
+    rewritePageStructureCategory(results, data);
+    sortCategories(results);
+    const allIssues = results.categories.flatMap((cat) => cat.issues || []);
+    results.summary.totalErrors = allIssues.filter((issue) => issue.severity === "error").length;
+    results.summary.totalWarnings = allIssues.filter((issue) => issue.severity === "warning").length;
+    results.summary.totalInfo = allIssues.filter((issue) => issue.severity === "info").length;
+    results.summary.passedCategories = results.categories.filter((c) => c.passed).length;
+    results.summary.failedCategories = results.categories.filter((c) => !c.passed).length;
+  }
+
   // src/index.ts
   var WORKER_API_BASE = "https://validation-worker.createsomething.workers.dev";
   var APP_VALIDATOR_BASE = "https://validation-worker.createsomething.workers.dev";
@@ -230,7 +913,6 @@
   var bridgeStatus = null;
   var lastValidationReport = null;
   var canvasElementRegistry = /* @__PURE__ */ new Map();
-  var LAST_RUN_STORAGE_KEY = "webflow_validator_last_run";
   function initializeExtension() {
     if (extensionInitialized) return;
     extensionInitialized = true;
@@ -263,9 +945,9 @@
     rotateBtn?.addEventListener("click", () => rotateBridgeToken());
     recheckBtn?.addEventListener("click", () => refreshBridgeStatus());
     copyBtn?.addEventListener("click", () => void copyBridgeSnippetFromCurrentStatus());
+    pruneLegacyRunStorage(localStorage);
     void bootstrapBridgePanel();
     void fetchWorkerVersion();
-    restoreLastValidationReport();
   }
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initializeExtension, { once: true });
@@ -353,7 +1035,7 @@
         setToolbarStatus("Validator script required for submission checks", "warning");
         const designerResults = await runDesignerValidation(projectData, siteUrl, correlationId);
         designerResults.collectedData = [projectData];
-        enhanceValidationResults(designerResults, projectData);
+        enhanceValidationResults(designerResults, projectData, projectData.canvasChecks);
         if (!designerResults.categories) designerResults.categories = [];
         designerResults.categories.push({
           category: "Published Site Checks (Requires Validator Script)",
@@ -407,7 +1089,7 @@
         correlationId
       });
       validationResults.collectedData = [projectData];
-      enhanceValidationResults(validationResults, projectData);
+      enhanceValidationResults(validationResults, projectData, projectData.canvasChecks);
       registerValidationReport(validationResults, correlationId);
       showResults(validationResults);
       void notifyValidationOutcome(webflow, validationResults);
@@ -988,6 +1670,7 @@
   async function runDesignerValidation(projectData, siteUrl, correlationId) {
     const body = JSON.stringify({ designerData: projectData, siteUrl });
     const endpoints = [`${APP_VALIDATOR_BASE}/api/validate`];
+    let lastError;
     for (const endpoint of endpoints) {
       try {
         const result = await fetchJsonWithRetry(
@@ -1007,9 +1690,10 @@
         return result;
       } catch (error) {
         console.warn(`Designer validation failed via ${endpoint}:`, error);
+        lastError = error;
       }
     }
-    throw new Error("Designer validation failed on all configured backends.");
+    throw new Error(`Designer validation failed on all configured backends (${describeRequestFailure(lastError)}).`);
   }
   async function runLegacyEnhancedValidation(siteUrl, projectData, pageSlugs, correlationId, workerOptions) {
     try {
@@ -1073,6 +1757,7 @@
       }
       bridgeContext = { siteId, siteName, siteUrl: siteUrl || void 0 };
       setBridgeActionsDisabled(false);
+      restoreLastValidationReport(siteId);
       await refreshBridgeStatus();
     } catch (error) {
       console.warn("Bridge bootstrap failed:", error);
@@ -1165,7 +1850,7 @@
       console.warn("Bridge install failed:", error);
       setBridgeBadge("failed");
       setBridgeMessage(
-        "Could not prepare the Validator script. Try again, then publish and re-check."
+        `Could not prepare the Validator script (${describeRequestFailure(error)}). Try again, then publish and re-check.`
       );
       setBridgeSetupStep("install");
       setToolbarStatus("Validator script setup failed", "failed");
@@ -1566,22 +2251,6 @@
       return unavailable(error instanceof Error ? error.message : "Canvas analysis failed");
     }
   }
-  async function componentContainsComponentInstance(component, maxDepth = 4) {
-    const root = await component.getRootElement();
-    if (!root) return false;
-    let frontier = [root];
-    for (let depth = 0; depth < maxDepth && frontier.length > 0; depth++) {
-      const next = [];
-      for (const element of frontier) {
-        if (element.type === "ComponentInstance") return true;
-        if ("children" in element && element.children) {
-          next.push(...await element.getChildren());
-        }
-      }
-      frontier = next;
-    }
-    return false;
-  }
   async function collectProjectData(webflow) {
     const data = {
       variables: void 0,
@@ -1589,52 +2258,6 @@
       styles: [],
       pages: [],
       siteInfo: void 0,
-      collectionMetadata: {
-        variableCollections: 0,
-        totalVariables: 0,
-        totalComponents: 0,
-        totalStyles: 0,
-        totalPages: 0,
-        totalAssets: 0,
-        totalFonts: 0,
-        totalCollections: 0
-      },
-      enhancedValidation: {
-        variableOrganization: {
-          hasColorVariables: false,
-          hasTypographyVariables: false,
-          hasSpacingVariables: false,
-          hasOrderedCollections: false
-        },
-        componentArchitecture: {
-          hasNavbarComponent: false,
-          hasFooterComponent: false,
-          hasCTAComponents: false,
-          hasNestedComponents: false
-        },
-        styleSystem: {
-          hasHtmlTagStyles: false,
-          hasConsistentNaming: false,
-          usesVariablesInStyles: false,
-          hasPercentageLineHeights: false
-        },
-        pageStructure: {
-          hasStyleGuidePage: false,
-          hasInstructionsPage: false,
-          hasLicensePage: false,
-          hasTitleCaseNaming: false,
-          hasMatchingSlugs: false,
-          pagesNotTitleCase: [],
-          pagesWithMismatchedSlugs: []
-        },
-        seoCompliance: {
-          currentPageHasValidTitle: false,
-          currentPageHasValidDescription: false,
-          hasOpenGraphData: false,
-          titleWithinLimits: false,
-          descriptionWithinLimits: false
-        }
-      },
       collectionWarnings: []
     };
     console.log("Starting project data collection...");
@@ -1655,18 +2278,6 @@
               try {
                 const variableName = await variable.getName() || null;
                 const variableType = variable.type || null;
-                if (variableName) {
-                  const lowerName = variableName.toLowerCase();
-                  if (lowerName.includes("color") || lowerName.includes("bg") || lowerName.includes("text") || lowerName.includes("primary") || lowerName.includes("secondary")) {
-                    data.enhancedValidation.variableOrganization.hasColorVariables = true;
-                  }
-                  if (lowerName.includes("font") || lowerName.includes("text") || lowerName.includes("heading") || lowerName.includes("body") || lowerName.includes("size")) {
-                    data.enhancedValidation.variableOrganization.hasTypographyVariables = true;
-                  }
-                  if (lowerName.includes("space") || lowerName.includes("margin") || lowerName.includes("padding") || lowerName.includes("gap")) {
-                    data.enhancedValidation.variableOrganization.hasSpacingVariables = true;
-                  }
-                }
                 let variableValue = null;
                 try {
                   variableValue = await variable.get();
@@ -1698,10 +2309,15 @@
                 for (const mode of modes) {
                   try {
                     const modeName = await mode.getName() || mode.id || "Unnamed Mode";
-                    modeList.push({
+                    const modeEntry = {
                       id: String(mode.id),
                       name: String(modeName)
-                    });
+                    };
+                    const breakpoint = await readVariableModeBreakpoint(mode);
+                    if (breakpoint.available) {
+                      modeEntry.breakpointId = breakpoint.breakpointId;
+                    }
+                    modeList.push(modeEntry);
                   } catch (modeError) {
                     console.warn("Error processing variable mode:", modeError);
                   }
@@ -1734,9 +2350,6 @@
         }
         if (variableData.length > 0) {
           data.variables = { collections: variableData };
-          data.collectionMetadata.variableCollections = variableData.length;
-          data.collectionMetadata.totalVariables = totalVariables;
-          data.collectionMetadata.totalVariableModes = totalVariableModes;
           console.log(`Variable collections collected: ${variableData.length}, Total variables: ${totalVariables}, Total modes: ${totalVariableModes}`);
         }
       }
@@ -1757,26 +2370,14 @@
             const name = await component.getName() || null;
             const id = component.id;
             if (name) {
-              const lowerName = name.toLowerCase();
               let instances = 0;
               let isNested = false;
-              if (lowerName.includes("nav") || lowerName.includes("header") || lowerName.includes("menu")) {
-                data.enhancedValidation.componentArchitecture.hasNavbarComponent = true;
-              }
-              if (lowerName.includes("footer")) {
-                data.enhancedValidation.componentArchitecture.hasFooterComponent = true;
-              }
-              if (lowerName.includes("cta") || lowerName.includes("button") || lowerName.includes("call")) {
-                data.enhancedValidation.componentArchitecture.hasCTAComponents = true;
-              }
+              const metadata = readComponentMetadata(component);
               try {
                 if (typeof component.getInstanceCount === "function") {
                   instances = await component.getInstanceCount();
                 }
                 isNested = await componentContainsComponentInstance(component);
-                if (isNested) {
-                  data.enhancedValidation.componentArchitecture.hasNestedComponents = true;
-                }
               } catch (nestedError) {
                 console.warn("Error analyzing component nesting:", nestedError);
               }
@@ -1785,7 +2386,10 @@
                 name,
                 type: "component",
                 instances,
-                isNested
+                isNested,
+                readOnly: metadata.readOnly,
+                codeComponent: metadata.codeComponent,
+                library: metadata.library
               });
             }
           } catch (compError) {
@@ -1793,7 +2397,6 @@
           }
         }
         data.components = componentData;
-        data.collectionMetadata.totalComponents = componentData.length;
         console.log(`Components collected: ${componentData.length}`);
       }
     } catch (error) {
@@ -1808,53 +2411,68 @@
       if (webflow.getAllStyles) {
         const styles = await webflow.getAllStyles() || [];
         const styleData = [];
+        const mediaQueryResult = await readMediaQueries(webflow);
+        const mediaQueries = mediaQueryResult.mediaQueries;
+        if (mediaQueries.length > 0) {
+          data.mediaQueries = mediaQueries;
+        }
+        if (mediaQueryResult.error !== void 0) {
+          console.warn("Could not fetch media queries:", mediaQueryResult.error);
+          data.collectionWarnings.push({
+            source: "Media Queries",
+            message: "Failed to collect site breakpoints",
+            error: mediaQueryResult.error
+          });
+        }
+        const breakpointReadFailures = [];
         for (const style of styles) {
           try {
-            const name = await style.getName() || null;
             const id = style.id;
-            const styleType = "class";
-            if (name && !name.startsWith("_")) {
-              let properties = {};
+            const meta = readStyleMetadata(style);
+            const name = await readStyleName(style);
+            const styleType = toPayloadStyleType(meta);
+            if (shouldIncludeStyle(meta, name)) {
               let isHtmlTag = false;
               let hasVariables = false;
-              if (isHtmlTagStyleName(name)) {
+              let breakpointProperties;
+              if (isTagStyle(meta, name ?? "")) {
                 isHtmlTag = true;
-                data.enhancedValidation.styleSystem.hasHtmlTagStyles = true;
               }
-              try {
-                if (style.getProperties) {
-                  properties = await style.getProperties() || {};
-                  Object.values(properties).forEach((value) => {
-                    if (typeof value === "object" && value !== null && (value.type === "variable" || value.id)) {
-                      hasVariables = true;
-                      data.enhancedValidation.styleSystem.usesVariablesInStyles = true;
-                    }
-                  });
-                  if (properties["line-height"]) {
-                    const lineHeight = String(properties["line-height"]);
-                    if (lineHeight.includes("%") || !lineHeight.includes("px") && !lineHeight.includes("rem") && !isNaN(parseFloat(lineHeight))) {
-                      data.enhancedValidation.styleSystem.hasPercentageLineHeights = true;
-                    }
-                  }
+              const { properties, breakpoints } = await readStyleProperties(style, meta, mediaQueries);
+              Object.values(properties).forEach((value) => {
+                if (typeof value === "object" && value !== null && (value.type === "variable" || value.id)) {
+                  hasVariables = true;
                 }
-              } catch (propertyError) {
-                console.warn("Error getting style properties:", propertyError);
+              });
+              if (breakpoints) {
+                breakpointProperties = breakpoints.properties;
+                if (breakpoints.errors.length > 0) {
+                  breakpointReadFailures.push(breakpoints.errors[0]);
+                }
               }
               styleData.push({
                 id,
-                name,
+                // Element-scoped styles may have no usable name; the worker
+                // falls back to `style.name || style.id`.
+                name: name ?? "",
                 type: styleType,
                 properties,
                 isHtmlTag,
-                hasVariables
+                hasVariables,
+                ...meta.source ? { source: meta.source } : {},
+                ...breakpointProperties ? { breakpointProperties } : {}
               });
             }
           } catch (styleError) {
             console.warn("Error processing style:", styleError);
           }
         }
+        const breakpointWarning = summarizeBreakpointReadFailures(breakpointReadFailures);
+        if (breakpointWarning) {
+          console.warn("Breakpoint property reads failed:", breakpointWarning.message);
+          data.collectionWarnings.push(breakpointWarning);
+        }
         data.styles = styleData;
-        data.collectionMetadata.totalStyles = styleData.length;
         console.log(`Styles collected: ${styleData.length}`);
       }
     } catch (error) {
@@ -1911,15 +2529,6 @@
               let hasValidNaming = false;
               const lowerName = name.toLowerCase();
               const lowerSlug = slug.toLowerCase();
-              if (lowerName.includes("style guide") || lowerSlug.includes("style-guide") || lowerSlug.includes("styleguide")) {
-                data.enhancedValidation.pageStructure.hasStyleGuidePage = true;
-              }
-              if (lowerName.includes("instructions") || lowerSlug.includes("instructions")) {
-                data.enhancedValidation.pageStructure.hasInstructionsPage = true;
-              }
-              if (lowerName.includes("license") || lowerSlug.includes("license") || slug === "/licenses") {
-                data.enhancedValidation.pageStructure.hasLicensePage = true;
-              }
               try {
                 if (typeof item.isHomepage === "function") {
                   isHomePage = await item.isHomepage();
@@ -1933,13 +2542,6 @@
               const isTitleCase = /^[A-Z][a-z]*(?:\s[A-Z][a-z]*)*$/.test(name) || name.split(" ").every((word) => word.charAt(0) === word.charAt(0).toUpperCase());
               if (isTitleCase) {
                 hasValidNaming = true;
-              } else {
-                data.enhancedValidation.pageStructure.pagesNotTitleCase.push(name);
-              }
-              const expectedSlug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-              const actualSlug = slug.replace(/^\//, "").toLowerCase();
-              if (!isCmsTemplate && expectedSlug !== actualSlug && !(isHomePage && actualSlug === "")) {
-                data.enhancedValidation.pageStructure.pagesWithMismatchedSlugs.push(`${name} (/${actualSlug})`);
               }
               let seoData = null;
               try {
@@ -1976,10 +2578,7 @@
             console.warn("Error processing page:", pageError);
           }
         }
-        data.enhancedValidation.pageStructure.hasTitleCaseNaming = pageData.length > 0 && data.enhancedValidation.pageStructure.pagesNotTitleCase.length === 0;
-        data.enhancedValidation.pageStructure.hasMatchingSlugs = pageData.length > 0 && data.enhancedValidation.pageStructure.pagesWithMismatchedSlugs.length === 0;
         data.pages = pageData;
-        data.collectionMetadata.totalPages = pageData.length;
         console.log(`Pages collected: ${pageData.length}`);
       }
     } catch (error) {
@@ -1995,21 +2594,6 @@
       const currentPageData = await collectCurrentPageSEOData(webflow);
       if (currentPageData) {
         data.currentPage = currentPageData;
-        data.enhancedValidation.seoCompliance.currentPageHasValidTitle = currentPageData.seo.hasValidTitle || false;
-        data.enhancedValidation.seoCompliance.currentPageHasValidDescription = currentPageData.seo.hasValidDescription || false;
-        data.enhancedValidation.seoCompliance.titleWithinLimits = (currentPageData.seo.titleLength || 0) <= 60;
-        data.enhancedValidation.seoCompliance.descriptionWithinLimits = (currentPageData.seo.descriptionLength || 0) >= 150 && (currentPageData.seo.descriptionLength || 0) <= 160;
-        const hasOpenGraphData = !!(currentPageData.seo.openGraphTitle || currentPageData.seo.openGraphDescription || currentPageData.seo.openGraphImage);
-        data.enhancedValidation.seoCompliance.hasOpenGraphData = hasOpenGraphData;
-        console.log("SEO compliance analysis:", {
-          hasValidTitle: data.enhancedValidation.seoCompliance.currentPageHasValidTitle,
-          hasValidDescription: data.enhancedValidation.seoCompliance.currentPageHasValidDescription,
-          titleWithinLimits: data.enhancedValidation.seoCompliance.titleWithinLimits,
-          descriptionWithinLimits: data.enhancedValidation.seoCompliance.descriptionWithinLimits,
-          hasOpenGraphData,
-          usesCustomOGTitle: currentPageData.seo.hasCustomOpenGraphTitle,
-          usesCustomOGDescription: currentPageData.seo.hasCustomOpenGraphDescription
-        });
         console.log(`Current page SEO collected: ${currentPageData.name}`);
       }
     } catch (error) {
@@ -2031,281 +2615,11 @@
         error: error instanceof Error ? error.message : String(error)
       });
     }
-    analyzeNamingConsistency(data);
+    data.collectionMetadata = deriveCollectionMetadata(data);
+    data.enhancedValidation = deriveEnhancedValidation(data);
     console.log("Project data collection complete:", data.collectionMetadata);
     console.log("Enhanced validation results:", data.enhancedValidation);
     return data;
-  }
-  function addStyleSystemValidation(results, projectData) {
-    const issues = [];
-    if (projectData.styles && Array.isArray(projectData.styles)) {
-      const requiredTags2 = ["body", "h1", "h2", "h3", "h4", "h5", "h6", "p", "a"];
-      const existingTagStyles = [];
-      const tagStylesWithVariables = [];
-      projectData.styles.forEach((style) => {
-        const styleName = style.name?.toLowerCase() || "";
-        requiredTags2.forEach((tag) => {
-          if (styleName === tag || styleName === `all ${tag}`) {
-            existingTagStyles.push(tag);
-            if (style.hasVariables) {
-              tagStylesWithVariables.push(tag);
-            }
-          }
-        });
-      });
-      const missingTags = requiredTags2.filter((tag) => !existingTagStyles.includes(tag));
-      if (missingTags.length > 0) {
-        issues.push({
-          id: "missing-html-tag-styles",
-          category: "Style System",
-          severity: "error",
-          message: `Missing base styles for HTML tags: ${missingTags.join(", ")}`,
-          details: {
-            howToFix: "Create base styles for all HTML tags (body, h1-h6, p, a)",
-            samples: missingTags
-          }
-        });
-      }
-      const tagsWithoutVariables = existingTagStyles.filter((tag) => !tagStylesWithVariables.includes(tag));
-      if (tagsWithoutVariables.length > 0) {
-        issues.push({
-          id: "html-tags-without-variables",
-          category: "Style System",
-          severity: "error",
-          message: `HTML tag styles not using variables: ${tagsWithoutVariables.join(", ")}`,
-          details: {
-            howToFix: "Update HTML tag styles to use variables for colors, typography, and spacing",
-            samples: tagsWithoutVariables
-          }
-        });
-      }
-      const totalStyles2 = projectData.styles.length;
-      const stylesWithVariables2 = projectData.styles.filter((s) => s.hasVariables).length;
-      const variableUsagePercent2 = totalStyles2 > 0 ? Math.round(stylesWithVariables2 / totalStyles2 * 100) : 0;
-      if (variableUsagePercent2 < 50) {
-        issues.push({
-          id: "low-variable-usage",
-          category: "Style System",
-          severity: "warning",
-          message: `Only ${variableUsagePercent2}% of styles use variables (${stylesWithVariables2}/${totalStyles2})`,
-          details: {
-            howToFix: "Increase variable usage in styles for better maintainability (aim for 80%+)"
-          }
-        });
-      }
-    }
-    const totalStyles = projectData.styles?.length || 0;
-    const stylesWithVariables = projectData.styles?.filter((s) => s.hasVariables).length || 0;
-    const variableUsagePercent = totalStyles > 0 ? Math.round(stylesWithVariables / totalStyles * 100) : 0;
-    const requiredTags = ["body", "h1", "h2", "h3", "h4", "h5", "h6", "p", "a"];
-    const htmlTagStylesFound = projectData.styles?.filter((s) => s.isHtmlTag).length || 0;
-    let styleSystemCategory = results.categories.find((cat) => cat.category === "Style System");
-    if (!styleSystemCategory) {
-      styleSystemCategory = {
-        category: "Style System",
-        passed: issues.filter((i) => i.severity === "error").length === 0,
-        issues,
-        stats: {
-          totalStyles,
-          htmlTagStyles: {
-            found: htmlTagStylesFound,
-            required: requiredTags.length
-          },
-          stylesWithVariables,
-          variableUsagePercent
-        }
-      };
-      results.categories.push(styleSystemCategory);
-    } else {
-      styleSystemCategory.issues.push(...issues);
-      styleSystemCategory.passed = styleSystemCategory.issues.filter((i) => i.severity === "error").length === 0;
-      styleSystemCategory.stats = {
-        totalStyles,
-        htmlTagStyles: {
-          found: htmlTagStylesFound,
-          required: requiredTags.length
-        },
-        stylesWithVariables,
-        variableUsagePercent
-      };
-    }
-  }
-  function normalizeVariableModesCategory(results) {
-    const variableModesCategory = results.categories.find((cat) => cat.category === "Variable Modes");
-    if (!variableModesCategory?.stats) return;
-    const totalModes = typeof variableModesCategory.stats.totalModes === "number" ? variableModesCategory.stats.totalModes : 0;
-    if (totalModes <= 0) return;
-    let convertedWarning = false;
-    variableModesCategory.issues = (variableModesCategory.issues || []).map((issue) => {
-      const isNameOnlyModeWarning = issue.id === "modes.no-responsive" || /modes found, but none appear to be for responsive breakpoints/i.test(issue.message || "");
-      if (!isNameOnlyModeWarning) return issue;
-      convertedWarning = true;
-      return {
-        ...issue,
-        id: "modes.good",
-        severity: "info",
-        message: `${totalModes} modes configured across ${variableModesCategory.stats?.collectionsWithModes || 1} collections.`,
-        howToFix: void 0
-      };
-    });
-    if (convertedWarning) {
-      variableModesCategory.passed = true;
-      variableModesCategory.stats.modeDataAvailable = true;
-    }
-  }
-  function addCanvasChecksCategory(results, projectData) {
-    const canvas = projectData.canvasChecks;
-    if (!canvas || !canvas.available) return;
-    const issues = [];
-    for (const headingIssue of canvas.headingIssues) {
-      issues.push({
-        id: `canvas-heading-${headingIssue.position}`,
-        category: "Canvas Checks (Current Page)",
-        severity: "warning",
-        message: headingIssue.issue,
-        details: {
-          howToFix: "Adjust the heading level in the element settings so levels increase one step at a time.",
-          location: `${canvas.pageName} \u2014 heading ${headingIssue.position} of ${canvas.headingsChecked}`,
-          canvasElementKeys: headingIssue.elementKey ? [headingIssue.elementKey] : void 0
-        }
-      });
-    }
-    if (canvas.imagesMissingAlt > 0) {
-      issues.push({
-        id: "canvas-images-missing-alt",
-        category: "Canvas Checks (Current Page)",
-        severity: "info",
-        message: `${canvas.imagesMissingAlt} of ${canvas.imagesChecked} image(s) on this page have no alt text in the Designer.`,
-        details: {
-          howToFix: "Add descriptive alt text in each image's settings, or mark purely decorative images as decorative.",
-          canvasElementKeys: canvas.missingAltElementKeys.length > 0 ? canvas.missingAltElementKeys : void 0
-        }
-      });
-    }
-    results.categories.push({
-      category: "Canvas Checks (Current Page)",
-      passed: issues.filter((issue) => issue.severity === "error" || issue.severity === "warning").length === 0,
-      issues,
-      stats: {
-        page: canvas.pageName,
-        headingsChecked: canvas.headingsChecked,
-        imagesChecked: canvas.imagesChecked,
-        note: "Reflects current Designer state, including unpublished changes"
-      }
-    });
-  }
-  function addRepublishHints(results, projectData) {
-    const canvas = projectData.canvasChecks;
-    if (!canvas || !canvas.available) return;
-    const hint = (dimension) => `The current page's canvas passes the ${dimension} check \u2014 if you've already fixed this in the Designer, republish the site and re-run validation to update this result.`;
-    const headingIssueIds = /* @__PURE__ */ new Set(["heading-hierarchy-errors", "heading-structure-errors"]);
-    const altIssueIds = /* @__PURE__ */ new Set(["missing-alt-text-critical", "missing-alt-text", "images-missing-alt"]);
-    for (const category of results.categories) {
-      for (const issue of category.issues || []) {
-        if (issue.id.startsWith("canvas-")) continue;
-        if (canvas.headingsChecked > 0 && canvas.headingIssues.length === 0 && headingIssueIds.has(issue.id)) {
-          issue.details = { ...issue.details, republishHint: hint("heading hierarchy") };
-        }
-        if (canvas.imagesChecked > 0 && canvas.imagesMissingAlt === 0 && altIssueIds.has(issue.id)) {
-          issue.details = { ...issue.details, republishHint: hint("image alt text") };
-        }
-      }
-    }
-  }
-  function enhanceValidationResults(results, projectData) {
-    console.log("Enhancing validation results with client-side analysis...");
-    addStyleSystemValidation(results, projectData);
-    normalizeVariableModesCategory(results);
-    addCanvasChecksCategory(results, projectData);
-    addRepublishHints(results, projectData);
-    const pageStructureCategory = results.categories.find((cat) => cat.category === "Page Structure");
-    if (pageStructureCategory && projectData.pages && projectData.pages.length > 0) {
-      console.log(`Found ${projectData.pages.length} pages, updating Page Structure validation...`);
-      pageStructureCategory.issues = [];
-      pageStructureCategory.passed = true;
-      if (pageStructureCategory.stats) {
-        pageStructureCategory.stats.totalPages = projectData.pages.length;
-        pageStructureCategory.stats.totalFolders = 0;
-        pageStructureCategory.stats.hasHomePage = projectData.pages.some((p) => p.slug === "/" || p.isHomePage);
-      } else {
-        pageStructureCategory.stats = {
-          totalPages: projectData.pages.length,
-          totalFolders: 0,
-          hasHomePage: projectData.pages.some((p) => p.slug === "/" || p.isHomePage)
-        };
-      }
-      const issues = [];
-      if (projectData.enhancedValidation) {
-        const pageStructure = projectData.enhancedValidation.pageStructure;
-        const pagesNotTitleCase = pageStructure.pagesNotTitleCase || [];
-        if (pagesNotTitleCase.length > 0) {
-          issues.push({
-            id: "page-naming",
-            category: "Page Structure",
-            severity: "warning",
-            message: `${pagesNotTitleCase.length} page(s) don't use Title Case naming convention.`,
-            details: {
-              howToFix: 'Use Title Case for page names (e.g., "Style Guide", "Contact Us")',
-              samples: pagesNotTitleCase.slice(0, 10)
-            }
-          });
-        }
-        const pagesWithMismatchedSlugs = pageStructure.pagesWithMismatchedSlugs || [];
-        if (pagesWithMismatchedSlugs.length > 0) {
-          issues.push({
-            id: "page-slug-mismatch",
-            category: "Page Structure",
-            severity: "warning",
-            message: `${pagesWithMismatchedSlugs.length} page(s) have slugs that don't match their names.`,
-            details: {
-              howToFix: 'Keep page slugs aligned with page names (e.g., "Style Guide" \u2192 /style-guide)',
-              samples: pagesWithMismatchedSlugs.slice(0, 10)
-            }
-          });
-        }
-      }
-      pageStructureCategory.issues = issues;
-      pageStructureCategory.passed = issues.filter((i) => i.severity === "error").length === 0;
-      const errorCount = issues.filter((i) => i.severity === "error").length;
-      const warningCount = issues.filter((i) => i.severity === "warning").length;
-      if (pageStructureCategory.passed) {
-        results.summary.passedCategories = Math.max(
-          results.summary.passedCategories,
-          results.categories.filter((c) => c.passed).length
-        );
-        results.summary.failedCategories = Math.max(
-          0,
-          results.categories.filter((c) => !c.passed).length
-        );
-      }
-      console.log(`Page Structure validation updated: ${pageStructureCategory.passed ? "PASSED" : "FAILED"}, ${errorCount} errors, ${warningCount} warnings`);
-    }
-    console.log("SEO validation now handled by Cloudflare Worker - accurate validation via published content analysis");
-    results.categories.sort((a, b) => {
-      const aErrors = a.issues?.filter((i) => i.severity === "error").length || 0;
-      const bErrors = b.issues?.filter((i) => i.severity === "error").length || 0;
-      const aWarnings = a.issues?.filter((i) => i.severity === "warning").length || 0;
-      const bWarnings = b.issues?.filter((i) => i.severity === "warning").length || 0;
-      if (aErrors > 0 && bErrors === 0) return -1;
-      if (aErrors === 0 && bErrors > 0) return 1;
-      if (aErrors === 0 && bErrors === 0) {
-        if (aWarnings > 0 && bWarnings === 0) return -1;
-        if (aWarnings === 0 && bWarnings > 0) return 1;
-      }
-      if (!a.passed && b.passed) return -1;
-      if (a.passed && !b.passed) return 1;
-      return 0;
-    });
-    const allIssues = results.categories.flatMap((cat) => cat.issues || []);
-    const totalErrors = allIssues.filter((issue) => issue.severity === "error").length;
-    const totalWarnings = allIssues.filter((issue) => issue.severity === "warning").length;
-    const totalInfo = allIssues.filter((issue) => issue.severity === "info").length;
-    results.summary.totalErrors = totalErrors;
-    results.summary.totalWarnings = totalWarnings;
-    results.summary.totalInfo = totalInfo;
-    results.summary.passedCategories = results.categories.filter((c) => c.passed).length;
-    results.summary.failedCategories = results.categories.filter((c) => !c.passed).length;
-    console.log(`Enhanced validation complete: ${totalErrors} errors, ${totalWarnings} warnings, ${totalInfo} info across ${results.categories.length} categories`);
   }
   async function collectCurrentPageSEOData(webflow) {
     try {
@@ -2409,53 +2723,6 @@
       return null;
     }
   }
-  function analyzeNamingConsistency(data) {
-    const allNames = [];
-    if (data.components) {
-      allNames.push(...data.components.map((c) => c.name));
-    }
-    if (data.styles) {
-      allNames.push(...data.styles.filter((s) => !s.isHtmlTag).map((s) => s.name));
-    }
-    if (data.variables?.collections) {
-      data.variables.collections.forEach((collection) => {
-        allNames.push(...collection.variables.map((v) => v.name));
-      });
-    }
-    if (allNames.length === 0) return;
-    const namingPatterns = {
-      titleCase: 0,
-      camelCase: 0,
-      pascalCase: 0,
-      snakeCase: 0,
-      kebabCase: 0,
-      bem: 0
-    };
-    allNames.forEach((name) => {
-      if (!name) return;
-      if (/^[A-Z][a-z]*(?:\s[A-Z][a-z]*)*$/.test(name)) {
-        namingPatterns.titleCase++;
-      } else if (/^[a-z][a-zA-Z0-9]*$/.test(name)) {
-        namingPatterns.camelCase++;
-      } else if (/^[A-Z][a-zA-Z0-9]*$/.test(name)) {
-        namingPatterns.pascalCase++;
-      } else if (/^[a-z][a-z0-9_]*$/.test(name)) {
-        namingPatterns.snakeCase++;
-      } else if (/^[a-z][a-z0-9-]*$/.test(name)) {
-        namingPatterns.kebabCase++;
-      } else if (/^[a-z][a-z0-9-]*(__[a-z][a-z0-9-]*)?(--[a-z][a-z0-9-]*)?$/.test(name)) {
-        namingPatterns.bem++;
-      }
-    });
-    const totalNames = allNames.length;
-    const dominantPattern = Object.entries(namingPatterns).find(
-      ([, count]) => count / totalNames >= 0.8
-    );
-    if (dominantPattern) {
-      data.enhancedValidation.styleSystem.hasConsistentNaming = true;
-    }
-    console.log("Naming pattern analysis:", namingPatterns, `Total names: ${totalNames}`);
-  }
   function showLoading() {
     const loadingDisplay = document.getElementById("loading-display");
     if (loadingDisplay) {
@@ -2472,8 +2739,8 @@
   }
   function showError(message) {
     const errorDisplay = document.getElementById("error-display");
-    const errorMessage = document.getElementById("error-message");
-    if (errorMessage) errorMessage.textContent = message;
+    const errorMessage2 = document.getElementById("error-message");
+    if (errorMessage2) errorMessage2.textContent = message;
     if (errorDisplay) {
       errorDisplay.style.display = "block";
       errorDisplay.classList.add("show");
@@ -2535,17 +2802,21 @@
     metaDisplay.style.display = "block";
   }
   function registerValidationReport(data, correlationId) {
+    const siteId = bridgeContext?.siteId || null;
     lastValidationReport = {
+      siteId,
       data,
       correlationId,
       generatedAt: (/* @__PURE__ */ new Date()).toISOString(),
       restored: false
     };
+    if (!siteId) return;
+    const storageKey = getLastRunStorageKey(siteId);
     try {
-      localStorage.setItem(LAST_RUN_STORAGE_KEY, JSON.stringify(lastValidationReport));
+      localStorage.setItem(storageKey, JSON.stringify(lastValidationReport));
     } catch {
       try {
-        localStorage.setItem(LAST_RUN_STORAGE_KEY, JSON.stringify({
+        localStorage.setItem(storageKey, JSON.stringify({
           ...lastValidationReport,
           data: { ...data, collectedData: void 0 }
         }));
@@ -2554,14 +2825,16 @@
       }
     }
   }
-  function restoreLastValidationReport() {
+  function restoreLastValidationReport(siteId) {
+    if (isValidating || lastValidationReport) return false;
     try {
-      const saved = localStorage.getItem(LAST_RUN_STORAGE_KEY);
+      const saved = parseStoredValidationRun(
+        localStorage.getItem(getLastRunStorageKey(siteId)),
+        siteId
+      );
       if (!saved) return false;
-      const parsed = JSON.parse(saved);
-      if (!parsed?.data?.categories) return false;
-      lastValidationReport = { ...parsed, restored: true };
-      showResults(parsed.data);
+      lastValidationReport = { ...saved, restored: true };
+      showResults(saved.data);
       return true;
     } catch (error) {
       console.warn("Could not restore last validation results:", error);
@@ -3500,19 +3773,27 @@
       window.setTimeout(() => categorySection.classList.remove("is-targeted"), 1400);
     }
   }
-  function getFixListStorageKey() {
-    return "webflow_validator_submission_fix_list";
+  function getFixListStorageKey2() {
+    const siteId = bridgeContext?.siteId;
+    return siteId ? getFixListStorageKey(siteId) : null;
   }
   function saveFixList(fixItems) {
+    const storageKey = getFixListStorageKey2();
+    if (!storageKey) return;
     const data = {
       fixItems,
       timestamp: Date.now()
     };
-    localStorage.setItem(getFixListStorageKey(), JSON.stringify(data));
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(data));
+    } catch (error) {
+      console.warn("Could not persist fix list:", error);
+    }
   }
   function loadFixList() {
     try {
-      const saved = localStorage.getItem(getFixListStorageKey());
+      const storageKey = getFixListStorageKey2();
+      const saved = storageKey ? localStorage.getItem(storageKey) : null;
       if (saved) {
         const data = JSON.parse(saved);
         return data.fixItems || data.errors || [];
@@ -3744,7 +4025,16 @@
       case "Variable Modes":
         addMetadataStat(details, "Modes", stats.totalModes);
         addMetadataStat(details, "Collections with modes", stats.collectionsWithModes);
-        if (stats.responsiveModeNamesDetected !== void 0) {
+        if (stats.responsiveModeSource === "breakpoint" || stats.responsiveModeSource === "mixed") {
+          const label = stats.responsiveModeSource === "mixed" ? "Responsive modes" : "Breakpoint modes";
+          addMetadataStat(details, label, formatBooleanStat(stats.hasResponsiveModes), { tone: booleanTone(stats.hasResponsiveModes) });
+          if (Array.isArray(stats.breakpointBoundModeNames) && stats.breakpointBoundModeNames.length > 0) {
+            addMetadataStat(details, "Breakpoint-bound", stats.breakpointBoundModeNames.slice(0, 5).join(", "));
+          }
+          if (Array.isArray(stats.nameMatchedModeNames) && stats.nameMatchedModeNames.length > 0) {
+            addMetadataStat(details, "Name-matched", stats.nameMatchedModeNames.slice(0, 5).join(", "));
+          }
+        } else if (stats.responsiveModeNamesDetected !== void 0) {
           addMetadataStat(details, "Responsive names", formatBooleanStat(stats.responsiveModeNamesDetected), { tone: booleanTone(stats.responsiveModeNamesDetected) });
         } else if (stats.hasResponsiveModes !== void 0) {
           addMetadataStat(details, "Responsive names", formatBooleanStat(stats.hasResponsiveModes), { tone: booleanTone(stats.hasResponsiveModes) });
@@ -3760,6 +4050,8 @@
         addMetadataStat(details, "Navigation", stats.navComponents);
         addMetadataStat(details, "Footer", stats.footerComponents);
         addMetadataStat(details, "CTA", stats.ctaComponents);
+        addMetadataStat(details, "Code components", stats.codeComponents);
+        addMetadataStat(details, "Library components", stats.libraryComponents);
         break;
       case "Styles":
         addMetadataStat(details, "Classes", stats.totalClasses);

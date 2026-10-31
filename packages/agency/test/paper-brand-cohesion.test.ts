@@ -97,27 +97,62 @@ test('the Agency footer uses one linked lockup instead of repeating the brand in
   assert.match(footer, /\.footer-editorial-identity--link:focus-visible/);
 });
 
-test('the homepage service steps are readable without scene motion', () => {
+test('the homepage retains a readable listing independent of scene motion', () => {
   const home = read('src/routes/+page.svelte');
-  assert.match(home, /id="agency-operating-story"/);
-  assert.match(home, /class="home-steps"/);
-  assert.doesNotMatch(home, /PerformanceNarrativeStage|motionIntent|ScrollTrigger|Lenis|SmoothScroll/);
+  const salesHome = read('src/lib/components/AgencySalesHome.svelte');
+  const content = read('src/lib/content/agency-home.html');
+
+  assert.match(home, /<AgencySalesHome \/>/);
+  assert.match(salesHome, /import content from '\$lib\/content\/agency-home\.html\?raw'/);
+  assert.match(salesHome, /\{@html content\}/);
+  assert.match(content, /<h1 id="hero-title">Put AI to work\./);
+  assert.match(content, /We diagnose problems in your tools and workflows, build agreed improvements, and help your team use what we deliver\./);
+  assert.match(content, /id="cc-focused-title">Focused<\/h3>[\s\S]*?\$900<span>\/month/);
+  assert.match(content, /id="cc-team-plan-title">Team<\/h3>[\s\S]*?\$2,500<span>\/month/);
+  assert.match(content, /id="journey-image"[^>]*src="\/images\/agency-sales\/team\.webp"/);
+  assert.match(content, /Conceptual scenes \/ select a step/);
+  assert.doesNotMatch(content, /<canvas|autoplay/);
+  assert.match(salesHome, /<details id="work-library" class="work-library" bind:open=\{libraryOpen\}>/);
+  assert.match(salesHome, /<summary>Explore the work library/);
+  assert.match(salesHome, /\{#if libraryOpen\}<BuiltWork sectionId="engineering-work" \/><FilmCollection \/><SelectedClientWork \/>/);
+  assert.match(salesHome, /<noscript><a href="\/products">[\s\S]*?<a href="\/field-reports">/);
+  assert.ok(salesHome.indexOf('<BuiltWork') < salesHome.indexOf('<FilmCollection'));
+  assert.doesNotMatch(home + salesHome, /PerformanceNarrativeStage|motionIntent|ScrollTrigger|Lenis|SmoothScroll/);
 });
 
-test('the Agency hero makes the Playbook operating grammar visible without a provider logo lockup', () => {
+test('the Agency opening exposes proof, approval and ownership alongside the approved partner badge', () => {
   const home = read('src/routes/+page.svelte');
+  const content = read('src/lib/content/agency-home.html');
   const campaignOpening = read(
     '../canon/src/lib/components/performance/PerformanceCampaignOpening.svelte'
   );
   const field = read('src/lib/components/PlaybookField.svelte');
 
-  assert.match(home, /title="Keep building with agents\."/);
-  assert.match(home, /media=\{playbookHomeHeroMedia\}/);
-  assert.match(home, /mediaMobilePlacement="background"/);
-  assert.match(home, /You keep the code/);
-  assert.match(home, /what AI may do/);
-  assert.match(home, /what needs approval/);
-  assert.doesNotMatch(home, /OpenAI[^\n]{0,80}<img|Cloudflare[^\n]{0,80}<img/);
+  assert.match(home, /<AgencySalesHome \/>/);
+  assert.match(content, /href="\/book\?source=agency&intent=workflow-mapping&lane=workflow_infrastructure"/);
+  assert.match(content, /href="#plans"/);
+  assert.match(content, /href="https:\/\/www\.maverickx\.com\/"/);
+  assert.match(content, /href="\/films\/websites\/reference\.png"/);
+  assert.match(content, /href="\/products#cato-tour"/);
+  assert.match(content, /href="\/films\/cato-tour\/overview\.jpg"/);
+  // The official Select Partner badge is authorized; retain its qualification link and accessible identity.
+  assert.match(content, /href="\/stack#openai-qualifications"[^>]*><img src="\/images\/agency-sales\/OpenAI_Select_Partner_Badge\.png"[^>]*alt="OpenAI Select Partner"/);
+  assert.match(content, /href="https:\/\/github\.com\/openai\/codex-security\/commit\/[a-f0-9]{40}"/);
+  assert.match(content, /Original conceptual illustration \/ people approve the work/);
+  assert.match(content, /not delivered hardware/);
+  assert.match(content, /These projects show delivered work; they are not evidence of client adoption of OpenAI tools\./);
+  assert.match(content, /Your team keeps approval authority\./);
+  assert.match(content, /Approval applies to the stated action and scope\./);
+  assert.match(content, /A refusal stops that action; it does not grant a workaround\./);
+  assert.match(content, /Correctness still needs evidence from the output and its checks\./);
+  assert.match(content, /id="plans"/);
+  assert.match(content, /Scope, costs &amp; ownership/);
+  assert.match(content, /You approve the budget first\./);
+  assert.match(content, /before payment/);
+  assert.match(content, /you own commissioned deliverables under your agreement, except reusable provider tools, which are licensed for continued use/);
+  assert.match(content, /href="\/services"/);
+  assert.match(content, /which records can be read, which actions can run, and which need approval/);
+  assert.match(content, /Your team keeps approval authority/);
   assert.match(campaignOpening, /media\?: PerformanceCampaignMedia/);
   assert.match(field, /O = owner/);
   assert.match(field, /X = opposition/);
@@ -176,16 +211,17 @@ test('the Agency footer handoff uses its own macro-real decision-gate image with
   assert.match(metadata, /text, logos, people/i);
 });
 
-test('Field Reports carries an attached-proof Playbook macro study with its authored mobile companion', () => {
+test('Field Reports uses the original isometric evidence route in place of campaign media', () => {
   const reports = read('src/routes/field-reports/+page.svelte');
 
-  assert.match(reports, /media=\{playbookHeroMedia\.fieldReports\}/);
-  assert.match(reports, /mediaMobilePlacement="background"/);
+  assert.match(reports, /<AgencyWayfindingHero route="fieldReports"/);
+  assert.match(reports, /artifactMobilePlacement="flow"/);
+  assert.doesNotMatch(reports, /media=\{playbookHeroMedia\.fieldReports\}/);
   assert.match(reports, /Read the results, including the limits\./);
   assert.doesNotMatch(reports, /<PlaybookField variant="proof"/);
 });
 
-test('Map and Template Review each carry a route-specific Playbook court hero with a mobile companion', () => {
+test('Map leads with its Draw workbench while Template Review retains its campaign media', () => {
   const map = read('src/routes/map/+page.svelte');
   const templateReview = read('src/routes/field-reports/template-review/+page.svelte');
   const heroMedia = read('src/lib/data/playbookHeroMedia.ts');
@@ -206,13 +242,9 @@ test('Map and Template Review each carry a route-specific Playbook court hero wi
     'static/images/performance-lab/playbook-template-review-human-gate-mobile.webp'
   );
 
-  assert.match(map, /media=\{playbookHeroMedia\.map\}/);
-  assert.match(map, /mediaMobilePlacement="background"/);
-  assert.doesNotMatch(map, /artifactOwnsMedia|artifactMobilePlacement/);
-  assert.match(map, /src=\{playbookMapSectionMedia\.src\}/);
-  assert.match(map, /srcset=\{playbookMapSectionMedia\.mobileSrc\}/);
-  assert.match(map, /data-campaign-media="map-overhead-study"/);
-  assert.doesNotMatch(map, /<PlaybookField variant="map"/);
+  assert.match(map, /\{#if embeddedCanvasOpen\}[\s\S]*?<iframe[^>]*src="https:\/\/draw\.createsomething\.agency\/\?embed=agency"/);
+  assert.match(map, /Open full canvas/);
+  assert.doesNotMatch(map, /playbookMapSectionMedia|playbookHeroMedia/);
   assert.match(templateReview, /media=\{playbookHeroMedia\.templateReview\}/);
   assert.match(templateReview, /mediaMobilePlacement="background"/);
   assert.doesNotMatch(templateReview, /paperAttachedReceiptMedia/);
@@ -246,7 +278,7 @@ test('Workflow library opens with a route-specific macro Playbook hero and autho
   }
 });
 
-test('the shared social preview is a current, served Paper operating-system artifact', () => {
+test('the shared social preview states the current technical support positioning', () => {
   const svgPath = resolve(agencyRoot, 'static/og-image.svg');
   const pngPath = resolve(agencyRoot, 'static/og-image.png');
   const svg = read('static/og-image.svg');
@@ -258,15 +290,15 @@ test('the shared social preview is a current, served Paper operating-system arti
     'served raster social card should not be a placeholder'
   );
   for (const label of [
-    'OPERATING SYSTEMS',
-    'FOR AI WORK',
-    'MAP',
-    'BUILD',
-    'CONTROL',
-    'SOURCE SHEET',
-    'DECISION BOUNDARY',
-    'ATTACHED RECEIPT',
-    'SIGNAL → DECISION → PROOF'
+    'AI-NATIVE',
+    'TECHNICAL SUPPORT',
+    'For your team’s tools and workflows.',
+    'DIAGNOSE',
+    'ENGINEER',
+    'LEARN',
+    'AGREED SCOPE',
+    'PROJECT CONTEXT',
+    'createsomething.agency'
   ]) {
     assert.ok(svg.includes(label), `social preview must include ${label}`);
   }

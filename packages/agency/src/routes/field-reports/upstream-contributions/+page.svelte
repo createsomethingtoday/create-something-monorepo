@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import {
     Button,
     PerformanceCampaignOpening,
@@ -123,6 +124,9 @@
     {#snippet actions()}
       <Button href={agencyCoreMessaging.selfMapHref}>{agencyCoreMessaging.selfMapLabel}</Button>
       <Button href="/field-reports" variant="secondary">All Field Reports</Button>
+    {/snippet}
+    {#snippet aside()}
+      <AgencyWayfindingSign kind="build" label="Explore Agent Foundation" detail="Build path · scoped implementation for one task your team owns." href="/agent-foundation" />
     {/snippet}
   </PerformanceConversionHandoff>
 </main>

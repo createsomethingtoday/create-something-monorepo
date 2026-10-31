@@ -13,7 +13,10 @@
     type PerformanceProofItem
   } from '@create-something/canon';
   import type { GovernanceProduct } from '@create-something/canon/governance';
+  import SyntheticWorkflowExample from '$lib/components/SyntheticWorkflowExample.svelte';
   import WorkflowSignalIcon from '$lib/components/WorkflowSignalIcon.svelte';
+  import AgencyWayfindingGroup from '$lib/components/AgencyWayfindingGroup.svelte';
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
 
   type ProofStateIconName = 'objects' | 'actions' | 'states' | 'receipts';
   type ProductProofItem = PerformanceProofItem & { icon: ProofStateIconName };
@@ -122,12 +125,10 @@
   {/snippet}
 
   {#snippet aside()}
-    <PerformanceCardGrid
-      items={heroCards}
-      columns={1}
-      density="compact"
-      ariaLabel={`${product.name} operating cards`}
-    />
+    {@const exampleKind = miniArtifactKind(product.id)}
+    {#if exampleKind}<SyntheticWorkflowExample kind={exampleKind} />{:else}
+      <PerformanceCardGrid items={heroCards} columns={1} density="compact" ariaLabel={`${product.name} operating cards`} />
+    {/if}
   {/snippet}
 </PerformancePageSection>
 
@@ -174,6 +175,19 @@
   {/snippet}
 </PerformanceNarrativeStage>
 
+<div class="control-wayfinding">
+  <div class="control-wayfinding__inner">
+    <AgencyWayfindingGroup label={`${product.name} service context`}>
+      <AgencyWayfindingSign
+        kind="control"
+        label="Explore Control"
+        detail="See how Signal, Decision, and Proof fit together."
+        href="/control"
+      />
+    </AgencyWayfindingGroup>
+  </div>
+</div>
+
 <PerformanceConversionHandoff
   expression="editorial"
   eyebrow={`${product.name} implementation`}
@@ -194,6 +208,17 @@
 </PerformanceConversionHandoff>
 
 <style>
+  .control-wayfinding {
+    box-sizing: border-box;
+    padding: var(--space-performance-lg) var(--space-performance-md);
+    background: var(--color-performance-panel, #ffffff);
+    color: var(--color-performance-ink, #090909);
+  }
+  .control-wayfinding__inner {
+    width: min(var(--content-width-performance, 85rem), 100%);
+    margin-inline: auto;
+  }
+  .control-wayfinding__inner :global(.agency-wayfinding-group) { max-width: 42rem; }
   .governance-product-artifact {
     display: grid;
     justify-items: center;

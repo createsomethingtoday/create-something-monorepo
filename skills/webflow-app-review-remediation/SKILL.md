@@ -103,10 +103,11 @@ For code changes:
 - Add the failing test or reproduction first when it is safe and deterministic.
 - Make the narrowest change that satisfies the acceptance criterion.
 - Keep development fallbacks out of the production artifact, including source maps and generated archives when those are submitted.
-- Prove a development-build claim with a marker that differs between the dependency's development and production output. Not proof on its own: a `dist/development` source-map path (react-router 7.x routes every consumer there; its production folder differs by one warnings flag), a `localhost` literal in a URL-parsing fallback or hostname blocklist (present in production builds too), or the `telemetry.global` block the Webflow CLI writes into `webflow.json` (packaging hygiene: strip it or upgrade the CLI). When an issued finding rests only on those, record it as `needs reviewer clarification` with the artifact evidence instead of performing a rebuild that changes nothing.
+- Prove a development-build claim with a marker that differs between the dependency's development and production output. Not proof on its own: a `dist/development` source-map path (react-router 7.x routes every consumer there; its production folder differs by one warnings flag), a bare `localhost` literal in a URL-parsing fallback or hostname blocklist (present in production builds too; App Review Preflight reports the bare literal as a Suggested update and only a localhost URL with a port, a path, or a tunnel host as a Required update), or the `telemetry.global` block the Webflow CLI writes into `webflow.json` (packaging hygiene: strip it or upgrade the CLI). When an issued finding rests only on those, record it as `needs reviewer clarification` with the artifact evidence instead of performing a rebuild that changes nothing.
 - Validate the final `bundle.zip`, manifest, source maps, dependency manifest, installation URL, and requested scopes—not only source files.
 - For backend changes, test authentication, object ownership, response minimization, and failure behavior independently.
 - For Custom Code changes, test registration, application, update, removal at site and page level, and the user-facing publish prompt.
+- For a Data Client/Hybrid Webflow OAuth `state` finding (Designer Extension-only: `N/A`, no partner-owned Install URL or callback): make the listing's Install URL an endpoint the partner owns that mints a fresh, single-use `state` per request, stores it server-side bound to the browser session with an expiry, and only then redirects to `webflow.com/oauth/authorize`. A fixed authorize URL cannot satisfy this. The callback verifies and consumes `state` in one operation before the code exchange and rejects any value that is missing, mismatched, expired, already used, or not bound to the session that started the request. Negative tests cover each of those, including a `state` minted by one client and completed in a different browser. The Install button under Apps & Integrations in the partner's own Workspace opens authorize with no `state`; it is a developer-only shortcut outside the customer install path and outside what review tests, so a broken developer-Workspace button is not a reason to loosen the callback. Test the customer flow from the listing's Install URL.
 
 Do not deploy, rotate credentials, change App visibility, or submit a new version unless the authorized owner explicitly places that action in scope.
 
@@ -125,6 +126,8 @@ Never infer a later state from an earlier one.
 
 The **App Review Preflight** system — a reviewer web app backed by a Webflow-controlled runtime pipeline — may provide artifact and runtime observations when the required bundle and authorized sandbox installation exist. A partner-supplied runtime test package is test input only, not evidence: the security result comes solely from the Webflow-controlled run. Treat those observations as evidence produced by that run, never as approval. It does not replace authenticated cross-tenant tests, POST/write authorization tests, source-level destination-policy review, or human policy judgment.
 
+Read its output in its own vocabulary. Bundle findings arrive labeled **Blocker**, **Required update**, **Manual review**, or **Suggested update**, and the run's readiness is `ready`, `changes_required`, or `needs_review`. A Manual review item (an unscanned executable such as `.wasm`, or a Data Client hosted runtime that Preflight records but does not scan) is evidence still to supply, not a finding to close, and a `needs_review` run is not a pass. A rule's severity is taken from its most severe live match, so commenting out a matched line does not resolve a finding — remove or replace the code. A `.map` file or inline `data:` source map inside the public bundle is a Required update on its own; move the maps to the submission form's private upload. A failed production-runtime check (hash or SRI pin, runtime-created or unreviewed scripts, proxy canary, reachable source map) is reported by Preflight as a blocker even though the Marketplace Guidelines list SRI and immutable URLs as recommended practices; for Partner Program apps the review team records it as an exceptions-queue item rather than a rejection.
+
 ## Step 6 — Prepare the resubmission packet
 
 For every finding include:
@@ -136,7 +139,7 @@ For every finding include:
 - Authorized runtime evidence, if applicable
 - Remaining limitation or open decision
 
-For the resubmission itself, run **App Review Preflight** ([install into your Workspace](https://webflow.com/oauth/authorize?response_type=code&client_id=0b5411e62233387925e082350666ef374377f81a9abba0dcc2542d6b5b1e4388&scope=authorized_user%3Aread)) on the corrected bundle and the same source-map artifact you will attach to the submission form, and include the issued `wfpre_…` submission receipt in the form. The receipt reconciles the resubmitted artifacts with the preflight run; it does not certify that any finding is accepted. The form also requires a published `.webflow.io` testing site with the corrected revision installed.
+For the resubmission itself, run **App Review Preflight** ([install into your Workspace](https://webflow.com/oauth/authorize?response_type=code&client_id=0b5411e62233387925e082350666ef374377f81a9abba0dcc2542d6b5b1e4388&scope=authorized_user%3Aread)) on the corrected bundle and the same review ZIP (maps, `package.json`, lockfile; or unchanged source plus README) you will attach to the submission form, and include the issued `wfpre_…` submission receipt in the form (a Data Client App with no Custom code scope is not asked for one; the form marks the field **Not needed for this app**). The receipt reconciles the resubmitted artifacts with the preflight run; it does not certify that any finding is accepted. The form also requires a published `.webflow.io` testing site with the corrected revision installed.
 
 End with one of:
 
@@ -162,6 +165,7 @@ Do not say that every security control is explicitly published Marketplace polic
 - Do not disclose how another App failed review.
 - Do not include internal reviewer names, relationship history, dashboard IDs, or enforcement deliberations in a partner packet.
 - Do not recommend bypassing, weakening, or gaming the review process.
+- Do not accept code-only callbacks or otherwise remove `state` validation so the developer-Workspace Install button keeps working; record that button as outside the customer path instead.
 - Do not retest a live exposure after sufficient non-secret evidence exists.
 - Do not call an uncommitted source fix deployed, an uploaded bundle installed, or a runtime observation accepted.
 

@@ -27,7 +27,7 @@ test('catalog and dynamic Arc pages declare the noindex presentation boundary', 
     readFile(path.join(packageRoot, 'src/routes/arc/[slug]/+page.svelte'), 'utf8')
   ]);
 
-  assert.match(indexPage, /55 presentation routes/);
+  assert.match(indexPage, /These 55 presentations/);
   assert.match(indexPage, /href=\{arc\.href\}/);
   assert.match(indexPage, /name="robots" content="noindex, nofollow"/);
   assert.match(arcPage, /PerformanceNarrativeStage/);

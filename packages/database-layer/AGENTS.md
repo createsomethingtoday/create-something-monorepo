@@ -11,6 +11,12 @@
   reading raw topology JSON. Verify all status, readiness, and approval claims
   against `data/*.json`; the wiki is a generated projection, not authority.
 
+- Check source snapshot dates separately from generated-file synchronization.
+  Use `agent-wiki:check --max-age-days 7` when the task requires a recent snapshot.
+- For ambiguous wiki retrieval, use `agent-wiki:route` and the Jev passage routing
+  workflow in `docs/agent-wiki/agent-routes.md`. Jev only suggests what to inspect;
+  current source and deterministic policy remain authoritative.
+
 ## Validation
 
 - Boot: `pnpm build`

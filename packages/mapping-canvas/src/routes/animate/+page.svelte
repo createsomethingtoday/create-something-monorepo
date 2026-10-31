@@ -1,6 +1,11 @@
 <script lang="ts">
+  import AgentConnection from '$lib/AgentConnection.svelte';
+  import type { DrawWebMcpTool } from '$lib/webmcp';
+  import ProjectModes from '$lib/ProjectModes.svelte';
   import { onMount } from 'svelte';
   import MotionControls from '$lib/animation/MotionControls.svelte';
+  import MotionGenerator from '$lib/animation/MotionGenerator.svelte';
+  import { dev } from '$app/environment';
   import {
     evaluateCamera,
     screenToScene,
@@ -39,6 +44,7 @@
     projects = $state.raw<ProjectSummary[]>([]),
     past = $state.raw<Project[]>([]),
     future = $state.raw<Project[]>([]);
+  let previewMode = $state(false);
   let ready = $state(false),
     busy = $state(false),
     status = $state('Loading animation projects…'),
@@ -70,7 +76,9 @@
       ? { ...project, drawings: project.drawings.map((d) => (d.id === preview!.id ? preview! : d)) }
       : project
   );
+  let connectionTools = $state.raw<DrawWebMcpTool[]>([]);
   onMount(() => {
+    previewMode = new URL(location.href).searchParams.get('mode') === 'preview';
     const loading = (async () => {
       try {
         projects = await loadProjects();
@@ -89,8 +97,7 @@
       }
     })();
     queue = loading.catch(() => {});
-    registerDrawWebMcpTools(
-      animationTools({
+    connectionTools = animationTools({
         get: () => {
           if (!ready) throw new Error('Animation is loading; retry when ready.');
           return project;
@@ -103,8 +110,8 @@
           if (id) selected = id;
         },
         history
-      })
-    );
+      });
+    registerDrawWebMcpTools(connectionTools);
     return () => {
       cancelAnimationFrame(raf);
       exportAbort?.abort();
@@ -130,9 +137,9 @@
     if (canvas && assetsReady) {
       const start = performance.now();
       renderer.paint(canvas.getContext('2d')!, shown, time, {
-        ghosts: playing ? 0 : ghosts,
-        selected: playing ? '' : selected,
-        points: tool === 'points' && !playing
+        ghosts: playing || previewMode ? 0 : ghosts,
+        selected: playing || previewMode ? '' : selected,
+        points: tool === 'points' && !playing && !previewMode
       });
       drawMilliseconds = performance.now() - start;
     }
@@ -146,15 +153,19 @@
     importQueue = work.catch(() => {});
     return work;
   }
-  function commit(ops: Operation[], revision: number): Promise<void> {
+  function commit(ops: Operation[], revision: number, projectId = project.id): Promise<void> {
+    if (previewMode) return Promise.reject(new Error('Preview is read-only. Open Motion to edit.'));
     const work = queue.then(async () => {
+      if (previewMode) throw new Error('Preview is read-only. Open Motion to edit.');
       if (!ready || busy || exporting) throw new Error('Editor is busy; retry after it is ready.');
+      if (project.id !== projectId) throw new Error('The project changed. Generate a new preview.');
       stop();
       busy = true;
       try {
         const next = applyOperations(project, ops, revision);
         const prepared = renderer.fork();
         await prepared.prepare(next.assets);
+        if (previewMode) throw new Error('Preview is read-only. Open Motion to edit.');
         await saveProject(next, project.revision);
         renderer = prepared;
         past = [...past.slice(-39), project];
@@ -174,7 +185,9 @@
     return work;
   }
   function history(direction: 'undo' | 'redo'): Promise<void> {
+    if (previewMode) return Promise.reject(new Error('Preview is read-only. Open Motion to edit.'));
     const work = queue.then(async () => {
+      if (previewMode) throw new Error('Preview is read-only. Open Motion to edit.');
       if (busy || exporting) throw new Error('Editor is busy.');
       const stack = direction === 'undo' ? past : future;
       const target = stack.at(-1);
@@ -185,6 +198,7 @@
         const next = { ...target, revision: project.revision + 1 };
         const prepared = renderer.fork();
         await prepared.prepare(next.assets);
+        if (previewMode) throw new Error('Preview is read-only. Open Motion to edit.');
         await saveProject(next, project.revision);
         renderer = prepared;
         if (direction === 'undo') {
@@ -223,6 +237,7 @@
   }
   function loadSelectedProject(id: string): Promise<void> {
     const work = queue.then(async () => {
+      if (previewMode) throw new Error('Preview is read-only. Open Motion to edit.');
       stop();
       busy = true;
       try {
@@ -284,6 +299,7 @@
   }
   function fresh(p = newProject()): Promise<void> {
     const work = queue.then(async () => {
+      if (previewMode) throw new Error('Preview is read-only. Open Motion to edit.');
       if (busy || exporting) throw new Error('Editor is busy.');
       stop();
       busy = true;
@@ -400,7 +416,7 @@
     return space === 'screen' ? pt : screenToScene(pt, project, time);
   }
   function pointerDown(e: PointerEvent) {
-    if (busy || exporting || !ready || e.button !== 0) return;
+    if (previewMode || busy || exporting || !ready || e.button !== 0) return;
     stop();
     const p = point(e, tool === 'points' ? current?.space : 'world');
     canvas.setPointerCapture(e.pointerId);
@@ -408,7 +424,7 @@
       penPoints = [p];
       return;
     }
-    if (tool === 'points' && current?.kind === 'stroke' && pose) {
+    if (tool === 'points' && current?.kind === 'stroke' && !current.hidden && pose) {
       const i = pose.points.findIndex((pt) => {
         const w = toWorld(pt, pose);
         return Math.hypot(w.x - p.x, w.y - p.y) < 16;
@@ -422,6 +438,7 @@
     ]
       .reverse()
       .find((d) => {
+        if(d.hidden) return false;
         const k = evaluate(d, time),
           local = toLocal(point(e, d.space), k);
         if (k.opacity === 0) return false;
@@ -527,28 +544,29 @@
     content="Draw, pose and animate illustrations with your agent. Editable drawings, onion skins and local video export."
   /></svelte:head
 >
-<main>
+<main class:preview-mode={previewMode}>
   <header>
     <a href={`/?project=${encodeURIComponent(project.id)}`} onclick={openCanvas} class="brand"
-      >DRAW <span>MOTION</span></a
+      ><img src="/brand/draw-dark.svg" alt="" width="32" height="32" />Draw <span>MOTION</span></a
     ><input
       aria-label="Animation title"
       value={project.title}
       onchange={(e) => changeSetting('title', e.currentTarget.value)}
-      disabled={!ready || busy || exporting}
+      disabled={previewMode || !ready || busy || exporting}
     /><button onclick={() => (showHelp = !showHelp)}>Codex assets</button><button
       onclick={() => run(() => fresh())}
       disabled={!ready || busy || exporting}>New</button
     ><button onclick={() => fileInput.click()} disabled={!ready || busy || exporting}
-      >Open project</button
+      >Import project JSON</button
     ><button
       onclick={() =>
         download(
           new Blob([JSON.stringify(project)], { type: 'application/json' }),
           'animation.draw.json'
         )}
-      disabled={!ready}>Save project</button
-    ><a href={`/?project=${encodeURIComponent(project.id)}`} onclick={openCanvas}>Canvas</a>
+      disabled={!ready || busy || exporting}>Export project JSON</button
+    ><ProjectModes id={project.id} mode={previewMode?'preview':'motion'} navigate={(event,mode)=>{if(mode==='canvas')void openCanvas(event);else{event.preventDefault();previewMode=mode==='preview';window.history.replaceState(null,'',`/animate?project=${encodeURIComponent(project.id)}${previewMode?'&mode=preview':''}`);}}} />
+    <AgentConnection projectId={project.id} {ready} tools={connectionTools} mode="motion" />
   </header>
   {#if showHelp}<aside class="help">
       <strong>Create artwork in your Codex conversation.</strong> Ask Codex to generate an
@@ -617,7 +635,7 @@
         <span>{project.width} × {project.height}</span><span
           >{playing
             ? 'Playing'
-            : tool === 'points'
+            : previewMode ? 'Preview' : tool === 'points'
               ? 'Drag a point to change this pose'
               : tool === 'pen'
                 ? 'Draw a stroke'
@@ -648,6 +666,10 @@
       </div>
     </section>
     <aside class="inspector">
+      {#if dev && !previewMode}
+        <MotionGenerator {project} selectedId={selected} disabled={!ready || busy || exporting}
+          apply={(proposal) => commit(proposal.operations, proposal.baseRevision, proposal.projectId)} />
+      {/if}
       <div class="section-label">{current ? 'SELECTED DRAWING' : 'SCENE'}</div>
       {#if current && pose}<input
           aria-label="Drawing name"
@@ -795,7 +817,7 @@
             r.paint(c.getContext('2d')!, project, time);
             download(await png(c), 'animation-frame.png');
           })}
-        disabled={!assetsReady || exporting}>Export clean frame</button
+        disabled={!assetsReady || exporting}>Export PNG frame</button
       ><button
         class="primary"
         onclick={() => run(video)}
@@ -810,10 +832,10 @@
     <div class="transport">
       <button
         onclick={() => run(() => history('undo'))}
-        disabled={!past.length || busy || exporting}>Undo</button
+        disabled={previewMode || !past.length || busy || exporting}>Undo</button
       ><button
         onclick={() => run(() => history('redo'))}
-        disabled={!future.length || busy || exporting}>Redo</button
+        disabled={previewMode || !future.length || busy || exporting}>Redo</button
       ><button class="primary" onclick={play} disabled={!ready || !assetsReady || exporting}
         >{playing ? 'Pause' : 'Play'}</button
       ><input

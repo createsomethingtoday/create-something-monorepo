@@ -39,10 +39,13 @@ export type Flipbook = {
   registration: 'cell' | 'alpha';
 };
 export type Drawing = {
+  arrowheadScale?: number;
+  fill?: string;
+  hidden?: boolean;
   source?: {
     space: 'canvas';
     objectId: string;
-    origin?: { x: number; y: number; scaleX: number; scaleY: number };
+    origin?: { x: number; y: number; scaleX: number; scaleY: number; rotation?: number };
   };
   space?: 'world' | 'screen';
   boil?: Boil;
@@ -261,7 +264,7 @@ export function validateProject(value: unknown): asserts value is Project {
         'space',
         'boil',
         'flipbook',
-        'source'
+        'source', 'fill', 'hidden', 'arrowheadScale'
       ]) ||
       !isMotionDrawingId(d.id) ||
       drawingIds.has(d.id) ||
@@ -269,6 +272,9 @@ export function validateProject(value: unknown): asserts value is Project {
       !['stroke', 'image', 'text'].includes(d.kind) ||
       !points(d.points) ||
       !color(d.color) ||
+      (d.fill !== undefined && !color(d.fill)) ||
+      (d.hidden !== undefined && typeof d.hidden !== 'boolean') ||
+      (d.arrowheadScale !== undefined && (!finite(d.arrowheadScale, Number.MIN_VALUE, 1000) || d.kind !== 'stroke' || d.points.length !== 2)) ||
       !finite(d.weight, 0.1, 100) ||
       !string(d.text, 2000) ||
       !finite(d.width, 1, 4096) ||
@@ -289,7 +295,8 @@ export function validateProject(value: unknown): asserts value is Project {
         d.source.objectId !== d.id ||
         (d.source.origin !== undefined &&
           (!d.source.origin ||
-            !keys(d.source.origin, ['x', 'y', 'scaleX', 'scaleY']) ||
+            !keys(d.source.origin, ['x', 'y', 'scaleX', 'scaleY', 'rotation']) ||
+            (d.source.origin.rotation !== undefined && !finite(d.source.origin.rotation, -36000, 36000)) ||
             !finite(d.source.origin.x, -10000, 10000) ||
             !finite(d.source.origin.y, -10000, 10000) ||
             !finite(d.source.origin.scaleX, Number.MIN_VALUE, 1) ||
@@ -444,7 +451,7 @@ function sameCanvasSource(a: Drawing['source'], b: Drawing['source']): boolean {
   if (!a || !b) return a === b;
   if (a.space !== b.space || a.objectId !== b.objectId) return false;
   if (!a.origin || !b.origin) return a.origin === b.origin;
-  return a.origin.x === b.origin.x && a.origin.y === b.origin.y && a.origin.scaleX === b.origin.scaleX && a.origin.scaleY === b.origin.scaleY;
+  return a.origin.x === b.origin.x && a.origin.y === b.origin.y && a.origin.scaleX === b.origin.scaleX && a.origin.scaleY === b.origin.scaleY && (a.origin.rotation || 0) === (b.origin.rotation || 0);
 }
 export function applyOperations(
   p: Project,

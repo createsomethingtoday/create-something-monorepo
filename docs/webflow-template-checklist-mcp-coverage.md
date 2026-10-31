@@ -9,6 +9,7 @@ Legend:
 - `Manual`: Not realistically automatable with current MCP data access.
 
 Automation sources used for this historical matrix:
+- Sitemap policy: `/sitemap.xml` is not a template requirement. Webflow only serves the auto-generated sitemap on a paid Site plan, so unhosted `*.webflow.io` demos return 404. `get_sitemap_urls` is a discovery aid only; when it fails, fall back to link crawling and never raise it as a finding.
 - Published-site checks: `window.__wfReview` tools (`audit_webflow_way`, `audit_meta`, `audit_headings`, `audit_links`, `audit_images`, `audit_forms`, `audit_media`, `audit_404`, `audit_ix2`, `audit_ix3`, `get_sitemap_urls`).
 - Designer checks: retired analyzer extraction is no longer an active reviewer route. Treat Designer-only assertions as manual unless a current sandbox/manual inspection artifact supplies direct evidence.
 

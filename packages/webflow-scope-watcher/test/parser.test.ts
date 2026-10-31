@@ -136,4 +136,46 @@ describe('formatMessage', () => {
 		expect(text).toContain('https://github.com/webflow/webflow/pull/117046');
 		expect(text).toContain('https://linear.app/webflow/issue/PION-768');
 	});
+
+	it('adds a manual consent-capture step with an authorize link for GA scopes when the probe app is configured', () => {
+		const { scopes, categories } = parseScopesFile(fixture);
+		const text = formatMessage(
+			[
+				{ type: 'scope_added', key: 'ai:write', detail: '', scope: scopes['ai:write'] },
+				{ type: 'scope_ungated', key: 'branches:read', detail: 'now GA', scope: scopes['branches:read'] },
+			],
+			[],
+			categories,
+			'webflow/webflow',
+			'x',
+			{ probeClientId: 'probe123' }
+		);
+		expect(text).toContain('*Consent screen (manual, ~30s):*');
+		expect(text).toContain(
+			'• `ai:write` → <https://webflow.com/oauth/authorize?response_type=code&client_id=probe123&scope=ai%3Awrite|authorize link>'
+		);
+		expect(text).toContain('client_id=probe123&scope=branches%3Aread|authorize link>');
+	});
+
+	it('omits the consent step for gated scopes and when no probe app is configured', () => {
+		const { scopes, categories } = parseScopesFile(fixture);
+		const gated = { ...scopes['ai:write'], featureFlag: 'SOME_FLAG' };
+		const gatedOnly = formatMessage(
+			[{ type: 'scope_added', key: 'ai:write', detail: '', scope: gated }],
+			[],
+			categories,
+			'webflow/webflow',
+			'x',
+			{ probeClientId: 'probe123' }
+		);
+		expect(gatedOnly).not.toContain('Consent screen');
+		const noProbe = formatMessage(
+			[{ type: 'scope_added', key: 'ai:write', detail: '', scope: scopes['ai:write'] }],
+			[],
+			categories,
+			'webflow/webflow',
+			'x'
+		);
+		expect(noProbe).not.toContain('Consent screen');
+	});
 });

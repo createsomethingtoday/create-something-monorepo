@@ -1,0 +1,156 @@
+[
+  {
+    "path": "/",
+    "status": 200,
+    "location": null,
+    "title": "Private networks for agentic engineering builders | CREATE SOMETHING",
+    "checked_at": "2026-09-25T16:28:20.933827+00:00"
+  },
+  {
+    "path": "/admin",
+    "status": 403,
+    "location": null,
+    "title": "Access required. | PRIVATE",
+    "checked_at": "2026-09-25T16:28:20.907061+00:00"
+  },
+  {
+    "path": "/apply",
+    "status": 303,
+    "location": "/login?next=%2Fapply",
+    "title": null,
+    "checked_at": "2026-09-25T16:28:20.901591+00:00"
+  },
+  {
+    "path": "/collection",
+    "status": 303,
+    "location": "/login?next=/collection",
+    "title": null,
+    "checked_at": "2026-09-25T16:28:20.901834+00:00"
+  },
+  {
+    "path": "/dashboard",
+    "status": 303,
+    "location": "/login?next=/dashboard",
+    "title": null,
+    "checked_at": "2026-09-25T16:28:21.236323+00:00"
+  },
+  {
+    "path": "/field-engineering",
+    "status": 200,
+    "location": null,
+    "title": "Show your field engineering practice | CREATE SOMETHING Private",
+    "checked_at": "2026-09-25T16:28:21.206046+00:00"
+  },
+  {
+    "path": "/impact",
+    "status": 303,
+    "location": "/login?next=/impact",
+    "title": null,
+    "checked_at": "2026-09-25T16:28:21.245490+00:00"
+  },
+  {
+    "path": "/join",
+    "status": 200,
+    "location": null,
+    "title": "Say hello | CREATE SOMETHING Private",
+    "checked_at": "2026-09-25T16:28:21.424374+00:00"
+  },
+  {
+    "path": "/library",
+    "status": 200,
+    "location": null,
+    "title": "The library | CREATE SOMETHING Private",
+    "checked_at": "2026-09-25T16:28:21.549850+00:00"
+  },
+  {
+    "path": "/login",
+    "status": 200,
+    "location": null,
+    "title": "Sign in | CREATE SOMETHING Private",
+    "checked_at": "2026-09-25T16:28:21.590814+00:00"
+  },
+  {
+    "path": "/paths",
+    "status": 200,
+    "location": null,
+    "title": "Learning paths | PRIVATE",
+    "checked_at": "2026-09-25T16:28:21.629390+00:00"
+  },
+  {
+    "path": "/privacy",
+    "status": 200,
+    "location": null,
+    "title": "Privacy Policy | CREATE SOMETHING Private",
+    "checked_at": "2026-09-25T16:28:21.785610+00:00"
+  },
+  {
+    "path": "/remote-sessions",
+    "status": 303,
+    "location": "/login?next=%2Fremote-sessions",
+    "title": null,
+    "checked_at": "2026-09-25T16:28:21.816667+00:00"
+  },
+  {
+    "path": "/review",
+    "status": 303,
+    "location": "/login?next=/review",
+    "title": null,
+    "checked_at": "2026-09-25T16:28:21.948116+00:00"
+  },
+  {
+    "path": "/review/intake",
+    "status": 303,
+    "location": "/login?next=/review",
+    "title": null,
+    "checked_at": "2026-09-25T16:28:21.948587+00:00"
+  },
+  {
+    "path": "/signup",
+    "status": 200,
+    "location": null,
+    "title": "Create your account | CREATE SOMETHING Private",
+    "checked_at": "2026-09-25T16:28:22.172584+00:00"
+  },
+  {
+    "path": "/start",
+    "status": 200,
+    "location": null,
+    "title": "What brings you here? | CREATE SOMETHING Private",
+    "checked_at": "2026-09-25T16:28:22.151910+00:00"
+  },
+  {
+    "path": "/support",
+    "status": 200,
+    "location": null,
+    "title": "Private company support | CREATE SOMETHING",
+    "checked_at": "2026-09-25T16:28:22.285613+00:00"
+  },
+  {
+    "path": "/support-session",
+    "status": 303,
+    "location": "/login?next=/support-session",
+    "title": null,
+    "checked_at": "2026-09-25T16:28:22.472752+00:00"
+  },
+  {
+    "path": "/support/partner",
+    "status": 303,
+    "location": "/login?next=/support/partner",
+    "title": null,
+    "checked_at": "2026-09-25T16:28:22.489965+00:00"
+  },
+  {
+    "path": "/terms",
+    "status": 200,
+    "location": null,
+    "title": "Terms of Service | CREATE SOMETHING Private",
+    "checked_at": "2026-09-25T16:28:22.494726+00:00"
+  },
+  {
+    "path": "/verify",
+    "status": 200,
+    "location": null,
+    "title": "Verify your account | CREATE SOMETHING Private",
+    "checked_at": "2026-09-25T16:28:22.591728+00:00"
+  }
+]

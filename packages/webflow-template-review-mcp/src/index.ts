@@ -8,6 +8,7 @@ import { DEFAULT_AIRTABLE_BASE_ID } from './schema.js';
 import { registerPrompts } from './prompts.js';
 import { registerResources } from './resources.js';
 import { registerTools } from './tools.js';
+import { parseZendeskGroupId, ZendeskClient } from './zendesk.js';
 
 function requireEnv(name: string): string {
   const value = process.env[name];
@@ -25,6 +26,16 @@ async function main() {
     apiKey,
     baseId,
   });
+
+  const zendesk =
+    process.env.ZENDESK_API_TOKEN && process.env.ZENDESK_API_EMAIL
+      ? new ZendeskClient({
+          subdomain: process.env.ZENDESK_SUBDOMAIN ?? 'webflow2579',
+          email: process.env.ZENDESK_API_EMAIL,
+          apiToken: process.env.ZENDESK_API_TOKEN,
+          marketplaceGroupId: parseZendeskGroupId(process.env.MARKETPLACE_ZENDESK_GROUP_ID),
+        })
+      : null;
 
   const server = new McpServer({
     name: 'webflow-template-review-mcp',
@@ -44,6 +55,7 @@ async function main() {
         apiKey: process.env.E2B_API_KEY ?? process.env.DIFY_E2B_API_KEY,
         template: process.env.E2B_BROWSER_TEMPLATE,
       },
+      getZendeskClient: () => zendesk,
     },
   );
   registerPrompts(server);

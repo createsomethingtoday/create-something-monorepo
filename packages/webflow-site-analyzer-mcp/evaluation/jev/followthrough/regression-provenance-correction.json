@@ -1,0 +1,17 @@
+{
+  "reason": "Original regression receipts hashed the followthrough protocol rather than the selected legacy protocol. This amendment preserves originals and identifies the actual inputs; runner now records selected protocol, overlay and evaluated-case hashes.",
+  "records": {
+    "original-regression-results.json": {
+      "artifactSha256": "0f948c1945d036700375f9420458196614c81a92aa5658c8b62e2e8ff09452dd",
+      "actualProtocolSha256": "bb53e17312c9727cdd314647d87b0c5dc77b26227eb27b067d5a15a344970b07",
+      "expectationOverlaySha256": null,
+      "validation": "Replayed retained ordered results against actual cases and verified every reported correct count. Original artifact left unchanged."
+    },
+    "regression-results.json": {
+      "artifactSha256": "ac2b607631d5c2d06a09275ceef73c9977f28de0119429028fef3e94862ed7f8",
+      "actualProtocolSha256": "bb53e17312c9727cdd314647d87b0c5dc77b26227eb27b067d5a15a344970b07",
+      "expectationOverlaySha256": "14191f45b9678bd38e1ac99e803f3ca78560d0e4a4e22a0600061fd3aa63b598",
+      "validation": "Replayed retained ordered results against actual cases and verified every reported correct count. Original artifact left unchanged."
+    }
+  }
+}

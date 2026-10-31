@@ -132,14 +132,14 @@
 	.section-title {
 		font-size: var(--text-h2);
 		font-weight: 600;
-		text-align: center;
+		text-align: left;
 		margin: 0 0 var(--space-xs);
 		color: var(--color-fg-primary);
 	}
 
 	.section-subtitle {
 		font-size: var(--text-body-lg);
-		text-align: center;
+		text-align: left;
 		color: var(--color-fg-secondary);
 		margin: 0 0 var(--space-xl);
 	}
@@ -148,6 +148,10 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-md);
+		padding: var(--space-lg);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		background: var(--color-bg-surface);
 	}
 
 	.form-step {
@@ -176,10 +180,11 @@
 	select,
 	textarea {
 		flex: 1;
+		min-width: 0;
 		padding: 0.875rem 1rem;
 		border-radius: var(--radius-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
+		border: 1px solid var(--color-operator-focus-ring-accessible, var(--color-border-default));
 		color: var(--color-fg-primary);
 		font-size: var(--text-body);
 		transition: border-color var(--duration-micro) var(--ease-standard);
@@ -188,7 +193,8 @@
 	input:focus,
 	select:focus,
 	textarea:focus {
-		outline: none;
+		outline: 2px solid var(--color-focus);
+		outline-offset: 3px;
 		border-color: var(--color-border-strong);
 	}
 
@@ -278,5 +284,10 @@
 	.success-message p {
 		color: var(--color-fg-secondary);
 		margin: 0;
+	}
+	@media (max-width: 480px) {
+		.input-row {
+			flex-direction: column;
+		}
 	}
 </style>

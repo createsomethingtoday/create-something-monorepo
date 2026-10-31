@@ -136,7 +136,9 @@ test('workflow route implementation is prerendered, indexable, and playbook-nati
   assert.match(hubPage, /Signal → Decision → Proof/);
   assert.match(routePage, /How to use this guide/);
   assert.match(routePage, /Read the steps/);
-  assert.match(layoutServer, /if \(building\)/);
+  assert.match(layoutServer, /if \(building \|\|/);
+  assert.match(layoutServer, /event\.route\.id === '\/workflows\/\[slug\]'/);
+  assert.match(layoutServer, /event\.route\.id === '\/scopefield'/);
   assert.match(layoutServer, /user: undefined/);
   assert.doesNotMatch(`${routeServer}\n${routePage}\n${hubPage}`, waterEraTerms);
   assert.doesNotMatch(`${routePage}\n${hubPage}`, /\b(game day|winning|coach)\b/i);

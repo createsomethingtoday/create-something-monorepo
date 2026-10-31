@@ -18,3 +18,4 @@ bucket_name = "webflow-app-form-uploads"
 
 # Secrets (set via `wrangler secret put`):
 # - UPLOADS_WORKER_SECRET
+# - LIBRARY_UPLOADS_WORKER_SECRET (Library app only; avatar/library-thumbnail)

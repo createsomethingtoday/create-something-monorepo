@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { encodeBrowserMultipart } from '$lib/client/browser-upload.js';
   import {
+    conversationMessages,
     eventWorkState,
     mergeWorkspaceEvents,
     pendingWorkspaceApprovals,
@@ -53,10 +54,10 @@
   let preview = $state<PreviewStatus | null>(null);
   let previewRevision = $state(0);
   let diff = $state('');
+  let localPrompts = $state<Record<number, string>>({});
   let promptText = $state('');
   let attachment = $state<File | null>(null);
   let deliveryPackage = $state<File | null>(null);
-  let userMessages = $state<Array<{ text: string; imageName?: string }>>([]);
   let restoring = $state(true);
   let opening = $state(false);
   let resetting = $state(false);
@@ -73,9 +74,46 @@
   let updatePlan = $state<DeliveryUpdatePlan | null>(null);
   let lifecycleBusy = $state(false);
   let checkpointId = $state<string | null>(null);
+  let historyQuery = $state('');
+  let projectQuery = $state('');
+  let activeSection = $state('chat-heading');
+  let sessionMenu = $state<HTMLDetailsElement>();
+  let sessionMenuToggle = $state<HTMLElement>();
+  let visibleWorkspaces = $derived(availableWorkspaces.filter((item) => item.label.toLowerCase().includes(projectQuery.trim().toLowerCase())));
+  let approvals = $derived(sessionActive ? pendingWorkspaceApprovals(events) : []);
+
+  async function focusSection(id: string) {
+    activeSection = id;
+    await tick();
+    document.getElementById(id)?.focus();
+  }
+
+  function closeSessionMenu(event: KeyboardEvent) {
+    if (event.key !== 'Escape' || !sessionMenu?.open) return;
+    sessionMenu.open = false;
+    sessionMenuToggle?.focus();
+  }
+  let historyStatus = $state<'idle' | 'available' | 'empty' | 'unavailable'>('idle');
+  let historyResults = $state<Array<{ sessionId: string; provider: string }>>([]);
+  let searchingHistory = $state(false);
   let eventSource: EventSource | null = null;
 
   const sessionStorageKey = 'create-something.client-workspace.session';
+  const promptStorageKey = (sessionId: string) => `${sessionStorageKey}.prompts.${sessionId}`;
+
+  function loadLocalPrompts(sessionId: string): Record<number, string> {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(promptStorageKey(sessionId)) ?? '{}');
+      if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return {};
+      return Object.fromEntries(
+        Object.entries(saved).filter(([sequence, text]) =>
+          /^\d+$/.test(sequence) && typeof text === 'string' && text.length <= 12_000
+        )
+      ) as Record<number, string>;
+    } catch {
+      return {};
+    }
+  }
 
   const safeErrors: Record<string, string> = {
     invalid_upload: 'Choose a PNG, JPEG, or WebP image no larger than 5 MB.',
@@ -84,6 +122,7 @@
     approval_not_found: 'That approval is no longer pending.',
     forbidden_intent: 'Deploy, publish, invite, and credential actions are unavailable here.',
     reset_unavailable: 'The immutable workspace seed is unavailable.',
+    workspace_resetting: 'The workspace is resetting. Try again when reset finishes.',
     session_not_found: 'The prior local session has ended. Open a new workspace.',
     session_resume_failed:
       'The prior Codex conversation could not resume safely. Open a new workspace to start a new conversation.',
@@ -139,6 +178,26 @@
     notice = 'Action needs attention.';
   }
 
+  async function searchHistory() {
+    if (!workspace || !historyQuery.trim() || searchingHistory) return;
+    searchingHistory = true;
+    try {
+      const params = new URLSearchParams({ q: historyQuery.trim() });
+      const response = await fetch(`/api/workspaces/${encodeURIComponent(workspace.id)}/history?${params}`);
+      const history = await readJson<{
+        status: 'available' | 'empty' | 'unavailable';
+        results: Array<{ sessionId: string; provider: string }>;
+      }>(response);
+      historyStatus = history.status;
+      historyResults = history.results;
+    } catch {
+      historyStatus = 'unavailable';
+      historyResults = [];
+    } finally {
+      searchingHistory = false;
+    }
+  }
+
   async function openWorkspace(selected: Workspace) {
     if (codexStatus.state !== 'ready') {
       errorMessage = 'Install and sign in to Codex before opening an agent workspace.';
@@ -157,6 +216,7 @@
       applySession(result);
       localStorage.setItem(sessionStorageKey, result.receipt.sessionId);
       notice = 'Workspace ready. Describe a visible frontend change.';
+      await focusSection('chat-heading');
     } catch (error) {
       showError(error);
     } finally {
@@ -243,6 +303,7 @@
     sessionActive = result.active;
     receipt = result.receipt;
     events = mergeWorkspaceEvents([], result.receipt.events);
+    localPrompts = loadLocalPrompts(result.receipt.sessionId);
     preview = result.preview;
     if (result.active) connectEvents(result.receipt.sessionId);
     else {
@@ -299,7 +360,6 @@
   async function submitTurn() {
     if (!receipt || !sessionActive || !promptText.trim() || sending) return;
     const submittedText = promptText.trim();
-    const submittedImage = attachment?.name;
     sending = true;
     errorMessage = '';
     notice = 'Sending the bounded edit request…';
@@ -308,14 +368,26 @@
         ['text', submittedText],
         ...(attachment ? ([['image', attachment]] as const) : [])
       ]);
-      await readJson<{ turnId: string }>(
+      const turn = await readJson<{ turnId: string; userEventSequence: number }>(
         await fetch(`/api/sessions/${encodeURIComponent(receipt.sessionId)}/turns`, {
           method: 'POST',
           headers: { 'content-type': upload.contentType },
           body: upload.body
         })
       );
-      userMessages = [...userMessages, { text: submittedText, imageName: submittedImage }];
+      localPrompts = { ...localPrompts, [turn.userEventSequence]: submittedText };
+      try {
+        sessionStorage.setItem(promptStorageKey(receipt.sessionId), JSON.stringify(localPrompts));
+      } catch {
+        // The live conversation still shows the prompt when browser storage is unavailable.
+      }
+      events = mergeWorkspaceEvents(events, [{
+        sequence: turn.userEventSequence,
+        at: new Date().toISOString(),
+        type: 'user.message',
+        message: 'Client edit request submitted.',
+        ...(attachment ? { hasAttachment: true } : {})
+      }]);
       promptText = '';
       attachment = null;
       if (fileInput) fileInput.value = '';
@@ -540,13 +612,22 @@
     eventSource?.close();
     eventSource = null;
     localStorage.removeItem(sessionStorageKey);
+    if (receipt) {
+      try {
+        sessionStorage.removeItem(promptStorageKey(receipt.sessionId));
+      } catch {
+        // Browser storage can be unavailable; the in-memory conversation is still cleared.
+      }
+    }
+    void focusSection('workspace-heading');
+    projectQuery = '';
     workspace = null;
     sessionActive = false;
     receipt = null;
     events = [];
     preview = null;
     diff = '';
-    userMessages = [];
+    localPrompts = {};
     notice = 'Choose an allowlisted workspace to begin.';
     errorMessage = '';
   }
@@ -555,6 +636,8 @@
     return type.replace('.', ' ');
   }
 </script>
+
+<svelte:window onkeydown={closeSessionMenu} />
 
 <svelte:head>
   <title>Client Workspace — CREATE SOMETHING</title>
@@ -568,58 +651,127 @@
   />
 </svelte:head>
 
-<header class="topbar">
+<div class="cs-workspace client-workspace">
+<a class="cs-skip-link" href="#workspace-main">Skip to workspace</a>
+<div class="app-layout">
+<aside class="app-navigation" aria-label="Workspace navigation">
   <a class="brand" href="/" aria-label="CREATE SOMETHING client workspace home">
     <span class="mark" aria-hidden="true"></span>
-    <span>CREATE SOMETHING</span>
+    <span>CREATE SOMETHING</span><span class="cs-product-name">Workspace</span>
   </a>
+  {#if workspace}
+    <div class="nav-project"><span class="eyebrow">Current project</span><strong>{workspace.label}</strong></div>
+    <nav class="workspace-sections" aria-label="Workspace sections">
+      <a href="#chat-heading" aria-current={activeSection === 'chat-heading' ? 'location' : undefined} onclick={() => focusSection('chat-heading')}><span aria-hidden="true">↗</span> Conversation</a>
+      <a href="#activity-heading" aria-current={activeSection === 'activity-heading' ? 'location' : undefined} onclick={() => focusSection('activity-heading')}><span aria-hidden="true">≡</span> Review <span class="approval-count" aria-live="polite">{approvals.length ? `${approvals.length} pending` : ''}</span></a>
+      <a href="#preview-heading" aria-current={activeSection === 'preview-heading' ? 'location' : undefined} onclick={() => focusSection('preview-heading')}><span aria-hidden="true">◫</span> Preview</a>
+    </nav>
+    <button class="quiet-button switch-project" type="button" disabled={closing} onclick={closeWorkspace}>{closing ? 'Closing…' : 'Close & switch project'}</button>
+  {:else}
+    <nav class="workspace-sections" aria-label="Workspace sections"><a href="#workspace-heading" aria-current="page"><span aria-hidden="true">◫</span> Projects <span class="cs-label">{availableWorkspaces.length}</span></a></nav>
+  {/if}
+  <div class="navigation-footer"><span class="eyebrow">Client workspace</span><p>Describe. Review. Refine.</p></div>
+</aside>
+<div class="app-content">
+<header class="topbar">
   <div class="workspace-context">
-    <span class="eyebrow">Client workspace</span>
-    <strong>{workspace?.label ?? 'No workspace open'}</strong>
+    <span class="eyebrow">{workspace ? 'Projects / Session' : 'Workspace / Start'}</span>
+    <strong>{workspace?.label ?? 'Projects'}</strong>
   </div>
   <div class="top-actions">
+    {#if data.remote && data.paperclipIssueUrl}
+      <a class="quiet-button" href={data.paperclipIssueUrl} target="_blank" rel="noopener noreferrer">
+        Client assignment
+      </a>
+    {/if}
     <span
-      class="session-state"
+      class="session-state cs-state"
       data-work-state={sessionWorkState(
         restoring || opening ? 'opening' : (receipt?.status ?? null),
         pendingWorkspaceApprovals(events).length > 0
       )}
     >
-      {restoring
-        ? 'restoring'
+      {pendingWorkspaceApprovals(events).length && sessionActive
+        ? 'Needs approval'
+        : restoring
+        ? 'Restoring'
+        : opening
+          ? 'Opening'
         : receipt && !sessionActive
           ? 'receipt'
           : (receipt?.status ?? codexStatus.state)}
     </span>
     {#if workspace}
-      {#if !data.desktop}
-        <button class="quiet-button" type="button" disabled={resetting} onclick={resetWorkspace}>
-          {resetting ? 'Resetting…' : 'Reset demo'}
-        </button>
-      {/if}
-      <button class="quiet-button" type="button" disabled={closing} onclick={closeWorkspace}>
-        {closing ? 'Closing…' : sessionActive ? 'Close' : 'Close receipt'}
-      </button>
+      <details class="session-menu" bind:this={sessionMenu}>
+        <summary bind:this={sessionMenuToggle}>Session</summary>
+        <div class="session-menu-items">
+          <button class="quiet-button" type="button" disabled={closing} onclick={closeWorkspace}>{closing ? 'Closing…' : sessionActive ? 'Close session' : 'Close receipt'}</button>
+          {#if !data.desktop}<button class="quiet-button" type="button" disabled={resetting} onclick={resetWorkspace}>{resetting ? 'Resetting…' : 'Reset demo'}</button>{/if}
+        </div>
+      </details>
     {/if}
   </div>
 </header>
 
 {#if restoring}
-  <main class="workspace-restoring" data-work-state="planning" aria-live="polite" aria-busy="true">
+  <main id="workspace-main" tabindex="-1" class="workspace-restoring" data-work-state="planning" aria-live="polite" aria-busy="true">
     <span class="restoring-mark" aria-hidden="true"></span>
     <p class="eyebrow">Receipt readback</p>
     <h1>Restoring your workspace.</h1>
     <p>The saved activity, focused diff, and owned preview are being reconnected.</p>
   </main>
 {:else if !workspace}
-  <main class="workspace-picker">
+  <main id="workspace-main" tabindex="-1" class="workspace-picker">
     <div class="intro">
-      <p class="eyebrow">Client-owned Codex workspace</p>
-      <h1>Your delivery.<br />Your Codex. Local control.</h1>
+      <p class="eyebrow">Your work</p>
+      <h1>Projects</h1>
       <p class="lede">
-        Import a verified CREATE SOMETHING delivery, then manage it with your authenticated Codex.
-        Every action stays visible, bounded, local, and reviewable.
+        Open a project to work with your agent. Review each change alongside the live preview.
       </p>
+    </div>
+    <section class="picker-panel" aria-labelledby="workspace-heading">
+      <div class="panel-heading">
+        <div>
+          <h2 id="workspace-heading" tabindex="-1">Available projects</h2>
+        </div>
+        <span class="cs-label">{availableWorkspaces.length} available</span>
+      </div>
+      {#if availableWorkspaces.length > 1}
+        <label class="project-search">Find a project<input type="search" bind:value={projectQuery} placeholder="Search projects" /></label>
+      {/if}
+      {#if availableWorkspaces.length === 0}
+        <p class="empty-copy">Import the signed delivery supplied by CREATE SOMETHING to begin.</p>
+      {/if}
+      {#if availableWorkspaces.length && !visibleWorkspaces.length}<p class="empty-copy" role="status">No projects match “{projectQuery}”. Clear the search to see all projects.</p>{/if}
+      {#each visibleWorkspaces as availableWorkspace}
+        <article class="workspace-card">
+          <div class="workspace-monogram" aria-hidden="true">
+            {availableWorkspace.label.slice(0, 1)}
+          </div>
+          <div class="workspace-copy">
+            <h3>{availableWorkspace.label}</h3>
+            <p>Governed edits · Network off</p>
+          </div>
+          <button
+            class="primary-button"
+            type="button"
+            disabled={opening || codexStatus.state !== 'ready'}
+            aria-label={`Open ${availableWorkspace.label}`}
+            onclick={() => openWorkspace(availableWorkspace)}
+          >
+            {opening ? 'Opening…' : 'Open workspace'}
+          </button>
+        </article>
+      {/each}
+      {#if errorMessage}<p class="error-note" role="alert">{errorMessage}</p>{/if}
+      <p class="trust-note">
+        {data.remote ? 'Work runs on the controlled device.' : 'Local authority only.'}
+        No deploy, publish, credential, or third-party mutation access.
+      </p>
+    </section>
+    <section class="workspace-setup" aria-label="Workspace setup">
+      <p class="start-feedback" role="status">{opening || importing || notice !== 'Choose an allowlisted workspace to begin.' ? notice : ''}</p>
+      <div class="setup-heading"><h2>Session readiness</h2><span class="cs-label">Before you start</span></div>
       <div
         class="runtime-card"
         data-work-state={codexStatus.state === 'ready' ? 'success' : 'warning'}
@@ -638,98 +790,61 @@
           onclick={refreshCodexStatus}>Recheck Codex</button
         >
       </div>
-      <form
-        class="delivery-import"
-        onsubmit={(event) => {
-          event.preventDefault();
-          void importDelivery();
-        }}
-      >
-        <label for="delivery-package">Verified delivery</label>
-        <input
-          bind:this={deliveryInput}
-          id="delivery-package"
-          type="file"
-          accept=".csworkspace,application/json"
-          onchange={chooseDelivery}
-        />
-        <button class="primary-button" type="submit" disabled={importing || !deliveryPackage}>
-          {importing ? 'Verifying…' : 'Import .csworkspace'}
-        </button>
-      </form>
-    </div>
-    <section class="picker-panel" aria-labelledby="workspace-heading">
-      <div class="panel-heading">
-        <div>
-          <p class="eyebrow" id="workspace-heading">Available workspaces</p>
-          <h2>Choose a project</h2>
-        </div>
-        <span>{availableWorkspaces.length} verified</span>
-      </div>
-      {#if availableWorkspaces.length === 0}
-        <p class="empty-copy">Import the signed delivery supplied by CREATE SOMETHING to begin.</p>
-      {/if}
-      {#each availableWorkspaces as availableWorkspace}
-        <article class="workspace-card">
-          <div class="workspace-monogram" aria-hidden="true">
-            {availableWorkspace.label.slice(0, 1)}
-          </div>
-          <div class="workspace-copy">
-            <h3>{availableWorkspace.label}</h3>
-            <p>Signed delivery · Workspace-write · Network off</p>
-          </div>
-          <button
-            class="primary-button"
-            type="button"
-            disabled={opening || codexStatus.state !== 'ready'}
-            onclick={() => openWorkspace(availableWorkspace)}
-          >
-            {opening ? 'Opening…' : 'Open workspace'}
+      <details class="delivery-disclosure">
+        <summary>Import a signed delivery</summary>
+        <form
+          class="delivery-import"
+          onsubmit={(event) => {
+            event.preventDefault();
+            void importDelivery();
+          }}
+        >
+          <label for="delivery-package">Delivery package</label>
+          <p id="delivery-help">Choose the .csworkspace file supplied by CREATE SOMETHING. Its signature is checked before import.</p>
+          <input
+            bind:this={deliveryInput}
+            id="delivery-package"
+            aria-describedby="delivery-help delivery-file-state"
+            type="file"
+            accept=".csworkspace,application/json"
+            onchange={chooseDelivery}
+          />
+          <p id="delivery-file-state" aria-live="polite">{deliveryPackage ? `Ready to verify: ${deliveryPackage.name}` : 'No delivery selected. Existing projects are ready above.'}</p>
+          <button class="quiet-button" type="submit" disabled={importing || !deliveryPackage}>
+            {importing ? 'Verifying…' : 'Import .csworkspace'}
           </button>
-        </article>
-      {/each}
-      {#if errorMessage}<p class="error-note" role="alert">{errorMessage}</p>{/if}
-      <p class="trust-note">
-        Local authority only. No deploy, publish, credential, or third-party mutation access.
-      </p>
+        </form>
+      </details>
     </section>
   </main>
 {:else}
-  <main class="workspace-shell">
+  <main id="workspace-main" tabindex="-1" class="workspace-shell">
     <section class="rail chat-rail" aria-labelledby="chat-heading">
       <div class="rail-heading">
         <div>
-          <p class="eyebrow">Intent</p>
-          <h1 id="chat-heading">Edit with the agent</h1>
+          <h1 id="chat-heading" tabindex="-1">Conversation</h1>
         </div>
-        <span class="rail-number">01</span>
+        <span class="cs-label">Workspace agent</span>
       </div>
 
       <div class="conversation" aria-live="polite">
-        <div class="message agent-message">
+        <div class="message agent-message welcome-message">
           <p class="message-author">Workspace agent</p>
           <p>
             I can inspect and edit this frontend, run focused checks, and explain each action. Add a
             reference image when visual context matters.
           </p>
         </div>
-        {#each userMessages as message}
-          <div class="message user-message">
-            <p class="message-author">You</p>
+        {#each conversationMessages(events, localPrompts) as message (message.sequence)}
+          <div class:agent-message={message.author === 'agent'} class:user-message={message.author === 'user'} class="message">
+            <p class="message-author">{message.author === 'user' ? 'You' : 'Workspace agent'}</p>
             <p>{message.text}</p>
-            {#if message.imageName}<span class="attachment-chip">Image · {message.imageName}</span
-              >{/if}
-          </div>
-        {/each}
-        {#each events.filter((event) => event.type === 'agent.message') as message (message.sequence)}
-          <div class="message agent-message">
-            <p class="message-author">Workspace agent</p>
-            <p>{message.message}</p>
+            {#if message.hasAttachment}<span class="attachment-chip">Reference image</span>{/if}
           </div>
         {/each}
         {#if sending}
-          <div class="thinking" data-work-state="running" aria-label="Agent is working">
-            <i></i><i></i><i></i>
+          <div class="thinking" data-work-state="running" role="status">
+            <span class="status-dot" aria-hidden="true"></span> Agent is working…
           </div>
         {/if}
       </div>
@@ -759,7 +874,7 @@
         <textarea
           id="edit-request"
           bind:value={promptText}
-          rows="5"
+          rows="3"
           maxlength="12000"
           placeholder="Describe the frontend change you want to see…"
           disabled={sending || !sessionActive}
@@ -792,10 +907,9 @@
     <section class="rail activity-rail" aria-labelledby="activity-heading">
       <div class="rail-heading">
         <div>
-          <p class="eyebrow">Evidence</p>
-          <h2 id="activity-heading">Activity + diff</h2>
+          <h2 id="activity-heading" tabindex="-1">Review changes</h2>
         </div>
-        <span class="rail-number">02</span>
+        <span class="cs-label">{approvals.length ? `${approvals.length} awaiting your decision` : 'Activity + diff'}</span>
       </div>
 
       <div
@@ -810,7 +924,10 @@
         <p>{notice}</p>
       </div>
 
-      {#each sessionActive ? pendingWorkspaceApprovals(events) : [] as approval (approval.sequence)}
+
+      <div class="review-content">
+      <div class="review-decisions">
+      {#each approvals as approval (approval.sequence)}
         <article class="approval-card" data-work-state="approval">
           <p class="eyebrow">Approval required</p>
           <h3>
@@ -839,7 +956,7 @@
               </div>
             {/if}
           </dl>
-          <div>
+          <div class="approval-actions">
             <button
               type="button"
               class="approve-button"
@@ -854,6 +971,9 @@
         </article>
       {/each}
 
+      {#if !approvals.length}<p class="review-empty">No decisions waiting. Agent actions and checks appear below.</p>{/if}
+      <details class="activity-disclosure" open={events.length > 0}>
+        <summary>Session activity <span class="cs-label">{events.length} events</span></summary>
       <div class="activity-list">
         {#if events.length === 0}
           <p class="empty-copy">
@@ -879,6 +999,31 @@
         {/each}
       </div>
 
+      </details>
+      <details class="history-disclosure">
+        <summary>Search prior activity</summary>
+      <form class="history-search" onsubmit={(event) => { event.preventDefault(); void searchHistory(); }}>
+        <label for="history-query">Prior agent history in this workspace</label>
+        <div class="history-search-controls">
+          <input id="history-query" bind:value={historyQuery} maxlength="200" placeholder="Search CTX history" />
+          <button type="submit" disabled={searchingHistory || !historyQuery.trim()}>
+            {searchingHistory ? 'Searching…' : 'Search'}
+          </button>
+        </div>
+        {#if historyStatus === 'empty'}<p>No matching history found for this workspace.</p>{/if}
+        {#if historyStatus === 'unavailable'}<p>CTX history is unavailable on this device.</p>{/if}
+        {#each historyResults as item}
+          <article class="history-result">
+            <small>{item.provider} · {item.sessionId}</small>
+            <p>Matching session available on this device. Open CTX locally for transcript details.</p>
+          </article>
+        {/each}
+      </form>
+
+      </details>
+
+      </div>
+      <div class="review-artifacts">
       <details class="diff-panel" open={Boolean(diff)}>
         <summary>
           <span>Workspace diff</span>
@@ -970,16 +1115,17 @@
           </article>
         {/if}
       </details>
+      </div>
+      </div>
     </section>
 
     <section class="rail preview-rail" aria-labelledby="preview-heading">
       <div class="rail-heading preview-heading-row">
         <div>
-          <p class="eyebrow">Result</p>
-          <h2 id="preview-heading">Live preview</h2>
+          <h2 id="preview-heading" tabindex="-1">Live preview</h2>
         </div>
         <div class="preview-actions">
-          <span class="preview-state" data-work-state={previewWorkState(preview?.state ?? null)}
+          <span class="preview-state cs-state" data-work-state={previewWorkState(preview?.state ?? null)}
             >{preview?.state ?? 'idle'}</span
           >
           <button
@@ -988,19 +1134,18 @@
             onclick={refreshArtifacts}
             aria-label="Refresh preview">↻</button
           >
-          <span class="rail-number">03</span>
+
         </div>
       </div>
       <div class="browser-frame">
-        <div class="browser-chrome" aria-hidden="true">
-          <span></span><span></span><span></span>
-          <p>{workspace.label.toLowerCase().replaceAll(' ', '-')}.preview</p>
+        <div class="browser-chrome">
+          <span class="cs-label">Preview</span><p>{workspace.label}</p>
         </div>
         {#if preview?.state === 'ready'}
           <iframe
             title={`${workspace.label} live preview`}
             src={`${preview.previewPath}?revision=${previewRevision}`}
-            sandbox={data.desktop ? 'allow-same-origin' : 'allow-scripts allow-same-origin'}
+            sandbox={data.desktop ? 'allow-same-origin' : data.remote ? 'allow-scripts' : 'allow-scripts allow-same-origin'}
           ></iframe>
         {:else}
           <div
@@ -1012,535 +1157,463 @@
             <h3>
               {preview?.state === 'blocked' || preview?.state === 'crashed'
                 ? 'Preview unavailable'
-                : 'Starting preview'}
+                : preview?.state === 'stopped' || !sessionActive ? 'Preview stopped' : 'Starting preview'}
             </h3>
             <p>
               {preview?.state === 'blocked' || preview?.state === 'crashed'
-                ? 'Review the activity rail for the safe failure state.'
-                : 'The allowlisted project is booting in its isolated process.'}
+                ? 'Review changes for details, then refresh the preview to check its status.'
+                : preview?.state === 'stopped' || !sessionActive ? 'Open a new workspace session to see the live result.' : 'Your project is starting. The preview will appear here when it is ready.'}
             </p>
           </div>
         {/if}
       </div>
       <footer class="preview-footer">
         <span>Auto-refreshes after source edits</span>
-        <span>Network off · Local only</span>
+        <span>Network off · {data.remote ? 'Controlled device' : 'Local workspace'}</span>
       </footer>
     </section>
   </main>
 {/if}
+</div>
+</div>
+</div>
 
 <style>
   :global(*) {
     box-sizing: border-box;
   }
-  :global(button),
-  :global(label) {
-    -webkit-tap-highlight-color: transparent;
+  .client-workspace {
+    min-height: 100dvh;
   }
-  :global(button:focus-visible),
-  :global(textarea:focus-visible),
-  :global(input:focus-visible),
-  :global(summary:focus-visible),
-  :global(a:focus-visible) {
-    outline: 3px solid var(--color-performance-signal);
-    outline-offset: 3px;
+  :global(.client-workspace button),
+  :global(.client-workspace input),
+  :global(.client-workspace textarea) {
+    font: inherit;
   }
-  [data-work-state] {
-    --workspace-state-text: var(--color-performance-work-idle-text);
-    --workspace-state-background: var(--color-performance-work-idle-background);
-    --workspace-state-border: var(--color-performance-work-idle-border);
+  :global(.client-workspace button),
+  :global(.client-workspace .quiet-button) {
+    min-height: var(--workspace-control-height);
+    padding: 0.4rem var(--workspace-gap-small);
+    border: 1px solid var(--workspace-line);
+    border-radius: var(--workspace-radius);
+    color: var(--workspace-fg);
+    background: var(--workspace-raised);
+    cursor: pointer;
+    font-size: var(--workspace-text);
+    text-decoration: none;
   }
-  [data-work-state='planning'] {
-    --workspace-state-text: var(--color-performance-work-planning-text);
-    --workspace-state-background: var(--color-performance-work-planning-background);
-    --workspace-state-border: var(--color-performance-work-planning-border);
+  :global(.client-workspace button:hover:not(:disabled)),
+  :global(.client-workspace a.quiet-button:hover) {
+    background: var(--workspace-hover);
+    border-color: var(--workspace-strong-line);
   }
-  [data-work-state='running'] {
-    --workspace-state-text: var(--color-performance-work-running-text);
-    --workspace-state-background: var(--color-performance-work-running-background);
-    --workspace-state-border: var(--color-performance-work-running-border);
+  :global(.client-workspace button:disabled) {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
-  [data-work-state='approval'] {
-    --workspace-state-text: var(--color-performance-work-approval-text);
-    --workspace-state-background: var(--color-performance-work-approval-background);
-    --workspace-state-border: var(--color-performance-work-approval-border);
+  :global(.client-workspace input),
+  :global(.client-workspace textarea) {
+    accent-color: var(--workspace-focus);
   }
-  [data-work-state='success'] {
-    --workspace-state-text: var(--color-performance-work-success-text);
-    --workspace-state-background: var(--color-performance-work-success-background);
-    --workspace-state-border: var(--color-performance-work-success-border);
+  :global(.client-workspace input::placeholder),
+  :global(.client-workspace textarea::placeholder) {
+    color: var(--workspace-quiet);
   }
-  [data-work-state='warning'] {
-    --workspace-state-text: var(--color-performance-work-warning-text);
-    --workspace-state-background: var(--color-performance-work-warning-background);
-    --workspace-state-border: var(--color-performance-work-warning-border);
-  }
-  [data-work-state='failure'] {
-    --workspace-state-text: var(--color-performance-work-failure-text);
-    --workspace-state-background: var(--color-performance-work-failure-background);
-    --workspace-state-border: var(--color-performance-work-failure-border);
-  }
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
+  :global(.client-workspace summary) {
+    cursor: pointer;
+    min-height: var(--workspace-control-height);
+    padding: var(--workspace-gap-small) var(--workspace-gap);
+    color: var(--workspace-muted);
   }
   .topbar {
-    min-width: 0;
-    height: 64px;
-    display: grid;
-    grid-template-columns: minmax(220px, 1fr) auto minmax(220px, 1fr);
+    min-height: 64px;
+    display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 0 1.25rem;
-    color: var(--color-performance-fg-primary);
-    background: var(--color-performance-bg-elevated);
-    border-bottom: 1px solid var(--color-performance-border-emphasis);
+    gap: var(--workspace-gap);
+    padding: var(--workspace-gap-small) var(--workspace-gap);
+    border-bottom: 1px solid var(--workspace-line);
   }
   .brand {
     display: inline-flex;
     align-items: center;
-    gap: 0.7rem;
-    color: inherit;
+    gap: var(--workspace-gap-small);
+    color: var(--workspace-fg);
     text-decoration: none;
-    font-size: 0.72rem;
-    font-weight: 750;
-    letter-spacing: 0.12em;
+    font: var(--workspace-meta) var(--font-performance-mono);
+    white-space: nowrap;
   }
   .mark {
-    width: 11px;
-    height: 11px;
-    display: block;
-    background: var(--color-performance-pressure);
-    transform: rotate(45deg);
+    width: 10px;
+    height: 10px;
+    background: var(--workspace-fg);
   }
   .workspace-context {
-    text-align: center;
-    line-height: 1.15;
+    min-width: 0;
+    padding-left: var(--workspace-gap);
+    border-left: 1px solid var(--workspace-line);
   }
   .workspace-context strong {
     display: block;
-    margin-top: 0.2rem;
-    font-size: 0.86rem;
+    max-width: 28ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--workspace-text);
+    margin-top: 0.25rem;
   }
   .eyebrow {
     margin: 0;
-    color: var(--color-performance-pressure);
-    font-family: var(--font-performance-mono);
-    font-size: 0.63rem;
-    font-weight: var(--font-performance-bold);
-    letter-spacing: var(--tracking-performance-wider);
-    line-height: 1.2;
-    text-transform: uppercase;
-  }
-  .workspace-context .eyebrow {
-    color: var(--color-performance-fg-tertiary);
-    font-size: 0.56rem;
+    color: var(--workspace-quiet);
+    font: var(--workspace-meta) var(--font-performance-mono);
   }
   .top-actions {
-    justify-self: end;
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: var(--workspace-gap-small);
+    margin-left: auto;
   }
-  .session-state,
-  .preview-state {
-    padding: 0.3rem 0.55rem;
-    color: var(--workspace-state-text);
-    background: var(--workspace-state-background);
-    border: 1px solid var(--workspace-state-border);
-    border-radius: var(--radius-performance-sm);
-    font-family: var(--font-performance-mono);
-    font-size: 0.62rem;
-    font-weight: var(--font-performance-bold);
-    letter-spacing: var(--tracking-performance-wide);
-    text-transform: uppercase;
-  }
-  .quiet-button {
-    padding: 0.35rem 0.55rem;
-    color: var(--color-performance-fg-secondary);
-    background: transparent;
-    border: 1px solid var(--color-performance-border-emphasis);
-    border-radius: var(--radius-performance-sm);
-    cursor: pointer;
-    font-size: 0.7rem;
+  .session-state {
+    text-transform: capitalize;
   }
   .workspace-restoring {
-    min-height: calc(100vh - 64px);
+    min-height: 60dvh;
     display: grid;
-    place-items: center;
     align-content: center;
-    gap: 0.7rem;
-    padding: 2rem;
-    color: var(--workspace-state-text);
-    background: var(--workspace-state-background);
+    justify-items: center;
+    gap: var(--workspace-gap);
+    padding: var(--space-performance-lg);
     text-align: center;
   }
   .workspace-restoring h1 {
-    max-width: 780px;
     margin: 0;
-    color: var(--color-performance-ink);
-    font-family: var(--font-performance-display);
-    font-size: var(--text-performance-display);
-    font-weight: var(--font-performance-medium);
-    letter-spacing: var(--tracking-performance-display);
-    line-height: var(--leading-performance-display);
+    font-size: var(--text-performance-h2);
   }
   .workspace-restoring > p:last-child {
-    max-width: 540px;
-    margin: 0;
-    color: var(--color-performance-muted);
-    line-height: var(--leading-performance-relaxed);
+    color: var(--workspace-muted);
+    max-width: 50ch;
+    line-height: 1.6;
   }
   .restoring-mark {
-    width: 14px;
-    height: 14px;
-    margin-bottom: 0.5rem;
-    background: var(--workspace-state-text);
-    box-shadow: 0 0 0 8px var(--workspace-state-background);
-    transform: rotate(45deg);
-    animation: restore-pulse 1.2s ease-in-out infinite;
-  }
-  @keyframes restore-pulse {
-    0%,
-    100% {
-      opacity: 0.55;
-      transform: rotate(45deg) scale(0.88);
-    }
-    50% {
-      opacity: 1;
-      transform: rotate(45deg) scale(1);
-    }
+    width: 12px;
+    height: 12px;
+    background: var(--workspace-focus);
   }
   .workspace-picker {
-    width: min(1180px, calc(100% - 2rem));
-    min-height: calc(100vh - 64px);
+    width: min(100%, 1040px);
+    margin-inline: auto;
+    padding: var(--space-performance-lg);
     display: grid;
-    grid-template-columns: 1.25fr 0.75fr;
-    align-items: center;
-    gap: clamp(3rem, 7vw, 8rem);
-    margin: 0 auto;
-    padding: 4rem 0 7rem;
+    gap: var(--space-performance-md);
+    align-content: start;
   }
+  .workspace-setup, .intro, .picker-panel { min-width: 0; }
   .intro h1 {
-    max-width: 800px;
-    margin: 1rem 0 1.5rem;
-    font-family: var(--font-performance-display);
-    font-size: var(--text-performance-display-xl);
-    font-weight: var(--font-performance-medium);
-    letter-spacing: var(--tracking-performance-display);
-    line-height: var(--leading-performance-display);
+    margin: var(--workspace-gap) 0;
+    font-size: var(--text-performance-h2);
+    font-weight: var(--font-performance-semibold);
+    letter-spacing: var(--tracking-performance-tight);
+    line-height: 1.15;
   }
   .lede {
-    max-width: 590px;
+    color: var(--workspace-muted);
+    line-height: 1.65;
+    max-width: 48ch;
     margin: 0;
-    color: var(--color-performance-muted);
-    font-size: var(--text-performance-body-lg);
-    line-height: var(--leading-performance-relaxed);
+    font-size: var(--text-performance-body-sm);
+  }
+  .setup-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--workspace-gap-small);
+    margin-top: 0;
+  }
+  .setup-heading h2 {
+    margin: 0;
+    font-size: var(--text-performance-body-sm);
+    font-weight: var(--font-performance-medium);
   }
   .runtime-card {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    max-width: 590px;
-    margin-top: 1.5rem;
-    padding: 1rem;
-    color: var(--workspace-state-text);
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: var(--workspace-gap-small);
+    margin-top: var(--workspace-gap);
+    padding: var(--workspace-gap);
     background: var(--workspace-state-background);
-    border: 1px solid var(--workspace-state-border);
-    border-radius: var(--radius-performance-md);
+    border-left: 2px solid var(--workspace-state-border);
   }
   .runtime-card > div {
     display: grid;
-    gap: 0.2rem;
+    gap: var(--workspace-gap-small);
   }
   .runtime-card strong {
-    color: var(--color-performance-ink);
-    font-size: 0.92rem;
+    color: var(--workspace-state-text);
+    font-size: var(--workspace-text);
+    font-weight: var(--font-performance-medium);
   }
   .runtime-card small {
-    color: var(--color-performance-muted);
+    color: var(--workspace-muted);
+    font-size: var(--workspace-meta);
+    line-height: 1.5;
   }
   .runtime-recheck {
-    margin-left: auto;
-    white-space: nowrap;
+    grid-column: 2;
+    justify-self: start;
   }
+  .delivery-disclosure {
+    margin-top: var(--workspace-gap);
+    border-top: 1px solid var(--workspace-line);
+    padding-top: var(--workspace-gap);
+  }
+  .delivery-disclosure summary {
+    cursor: pointer;
+    color: var(--workspace-muted);
+    font-size: var(--workspace-text);
+    padding-block: var(--workspace-gap-small);
+  }
+  .delivery-import p {
+    margin: 0;
+    color: var(--workspace-muted);
+    font-size: var(--workspace-meta);
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+  .delivery-import input::file-selector-button {
+    border: 1px solid var(--workspace-line);
+    border-radius: var(--workspace-radius);
+    background: var(--workspace-raised);
+    color: var(--workspace-fg);
+    padding: var(--workspace-gap-small) var(--workspace-gap);
+    margin-right: var(--workspace-gap-small);
+    font: inherit;
+    cursor: pointer;
+  }
+  .delivery-import input::file-selector-button:hover { border-color: var(--workspace-muted); }
   .delivery-import {
     display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 0.65rem;
-    align-items: end;
-    max-width: 590px;
-    margin-top: 1rem;
-    padding: 1rem;
-    background: var(--color-performance-bg-elevated);
-    border: 1px solid var(--color-performance-border-emphasis);
-    border-radius: var(--radius-performance-md);
+    gap: var(--workspace-gap-small);
+    margin-top: var(--workspace-gap);
+    padding: var(--workspace-gap) 0;
   }
-  .delivery-import label {
-    grid-column: 1 / -1;
-    color: var(--color-performance-fg-secondary);
-    font-family: var(--font-performance-mono);
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+  .delivery-import label,
+  .update-picker span {
+    font-weight: var(--font-performance-medium);
   }
-  .delivery-import input {
+  .delivery-import input,
+  .update-picker input {
+    max-width: 100%;
     min-width: 0;
-    color: var(--color-performance-fg-secondary);
-    font-size: 0.78rem;
+    color: var(--workspace-muted);
+    font-size: var(--workspace-meta);
+  }
+  .delivery-import button {
+    justify-self: start;
   }
   .picker-panel {
-    padding: 1.1rem;
-    background: var(--color-performance-panel);
-    border: 1px solid var(--color-performance-line);
-    box-shadow: var(--shadow-performance-panel);
+    min-width: 0;
+    border: 1px solid var(--workspace-line);
+    border-radius: var(--workspace-radius);
+    background: var(--workspace-panel);
   }
   .panel-heading {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
-    padding: 0.5rem 0.4rem 1.2rem;
-    border-bottom: 1px solid var(--color-performance-line);
+    gap: var(--workspace-gap);
+    padding: var(--space-performance-md);
+    border-bottom: 1px solid var(--workspace-line);
   }
   .panel-heading h2 {
-    margin: 0.35rem 0 0;
-    font-size: var(--text-performance-h2);
-    font-weight: var(--font-performance-medium);
-  }
-  .panel-heading > span {
-    color: var(--color-performance-muted);
-    font-family: var(--font-performance-mono);
-    font-size: 0.66rem;
+    margin: 0.4rem 0 0;
+    font-size: var(--text-performance-h3);
+    font-weight: var(--font-performance-semibold);
   }
   .workspace-card {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
-    gap: 0.8rem;
-    padding: 1rem 0.4rem;
-    border-bottom: 1px solid var(--color-performance-line);
+    gap: var(--workspace-gap);
+    padding: var(--space-performance-md);
+    border-bottom: 1px solid var(--workspace-line);
   }
   .workspace-monogram {
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
     display: grid;
     place-items: center;
-    color: var(--color-performance-panel);
-    background: var(--color-performance-signal);
+    background: var(--workspace-raised);
+    border: 1px solid var(--workspace-line);
     font-family: var(--font-performance-mono);
-    border-radius: var(--radius-performance-sm);
   }
   .workspace-copy h3 {
     margin: 0;
-    font-size: 0.88rem;
+    font-size: var(--text-performance-body-sm);
+    overflow-wrap: anywhere;
   }
   .workspace-copy p {
-    margin: 0.25rem 0 0;
-    color: var(--color-performance-muted);
-    font-size: 0.66rem;
+    margin: 0.4rem 0 0;
+    color: var(--workspace-quiet);
+    font-size: var(--workspace-meta);
   }
-  .primary-button,
-  .send-button,
-  .approve-button {
-    color: var(--color-performance-panel);
-    background: var(--color-performance-ink);
-    border: 1px solid var(--color-performance-ink);
-    cursor: pointer;
-  }
-  .primary-button {
-    padding: 0.65rem 0.75rem;
-    border-radius: var(--radius-performance-sm);
-    font-size: 0.69rem;
-    font-weight: var(--font-performance-bold);
-  }
-  button:disabled {
-    cursor: not-allowed;
-    opacity: 0.48;
+  .workspace-card button {
+    grid-column: 2;
+    justify-self: start;
   }
   .trust-note {
-    margin: 1rem 0.4rem 0.2rem;
-    color: var(--color-performance-muted);
-    font-size: 0.62rem;
+    padding: var(--workspace-gap) var(--space-performance-md);
+    margin: 0;
+    color: var(--workspace-quiet);
+    font-size: var(--workspace-meta);
+    line-height: 1.6;
   }
+  .client-workspace .primary-button,
+  .client-workspace .send-button {
+    background: var(--workspace-fg);
+    border-color: var(--workspace-fg);
+    color: var(--workspace-bg);
+    font-weight: var(--font-performance-semibold);
+  }
+  .client-workspace .primary-button:hover:not(:disabled),
+  .client-workspace .send-button:hover:not(:disabled) {
+    background: var(--color-performance-paper);
+    color: var(--workspace-bg);
+  }
+  .workspace-sections { display: grid; gap: var(--workspace-gap-small); }
+  .workspace-sections a {
+    display: flex; align-items: center; gap: var(--workspace-gap-small);
+    min-height: var(--workspace-control-height); padding: var(--workspace-gap-small);
+    border-radius: var(--workspace-radius); color: var(--workspace-muted); text-decoration: none;
+  }
+  .workspace-sections a[aria-current], .workspace-sections a:hover { background: var(--workspace-hover); color: var(--workspace-fg); }
+  .approval-count { margin-left: auto; color: var(--color-performance-review-soft); font: var(--workspace-meta) var(--font-performance-mono); }
   .workspace-shell {
-    width: 100%;
-    min-width: 0;
-    height: calc(100vh - 64px);
-    display: grid;
-    grid-template-columns: minmax(310px, 0.82fr) minmax(290px, 0.72fr) minmax(480px, 1.46fr);
-    overflow: hidden;
+    width: 100%; display: grid; min-width: 0;
+    grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.3fr);
+    align-items: start;
   }
+  .chat-rail { grid-column: 1; grid-row: 1; height: clamp(460px, calc(100dvh - 240px), 720px); }
+  .preview-rail { grid-column: 2; grid-row: 1; height: clamp(460px, calc(100dvh - 240px), 720px); }
+  .activity-rail { grid-column: 1 / -1; grid-row: 2; border-top: 1px solid var(--workspace-line); }
   .rail {
-    width: 100%;
     min-width: 0;
-    max-width: 100%;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    border-right: 1px solid var(--color-performance-line);
-    background: var(--color-performance-paper);
+    border-right: 1px solid var(--workspace-line);
   }
   .rail:last-child {
     border-right: 0;
   }
   .rail-heading {
-    min-height: 83px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
-    padding: 1rem 1.1rem;
-    border-bottom: 1px solid var(--color-performance-line);
+    gap: var(--workspace-gap);
+    min-height: 52px;
+    padding: var(--workspace-gap);
+    border-bottom: 1px solid var(--workspace-line);
+    flex-shrink: 0;
   }
   .rail-heading h1,
   .rail-heading h2 {
-    margin: 0.35rem 0 0;
-    font-size: var(--text-performance-h3);
-    font-weight: var(--font-performance-medium);
-  }
-  .rail-number {
-    color: var(--color-performance-muted);
-    font-family: var(--font-performance-mono);
-    font-size: 0.75rem;
+    margin: 0;
+    font-size: var(--text-performance-body-sm);
+    font-weight: var(--font-performance-semibold);
+    scroll-margin-top: 60px;
   }
   .conversation {
-    flex: 1;
     min-width: 0;
+    flex: 1;
     min-height: 0;
+    overflow-y: auto;
+    padding: var(--workspace-gap);
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    overflow-y: auto;
-    padding: 1.2rem 1.1rem;
+    gap: var(--space-performance-md);
   }
   .message {
+    max-width: 100%;
     min-width: 0;
-    max-width: 92%;
-    padding: 0.85rem 0.9rem;
-    border: 1px solid var(--color-performance-line);
   }
   .message p {
     margin: 0;
-    overflow-wrap: anywhere;
-    font-size: 0.78rem;
-    line-height: 1.55;
     white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-size: var(--workspace-text);
+    line-height: 1.65;
+  }
+  .welcome-message p {
+    white-space: normal;
   }
   .message .message-author {
-    margin-bottom: 0.45rem;
-    color: var(--color-performance-muted);
-    font-family: var(--font-performance-mono);
-    font-size: 0.57rem;
-    font-weight: var(--font-performance-bold);
-    letter-spacing: var(--tracking-performance-wider);
-    text-transform: uppercase;
-  }
-  .agent-message {
-    align-self: flex-start;
-    background: var(--color-performance-panel);
-    border-radius: var(--radius-performance-md);
+    margin-bottom: var(--workspace-gap-small);
+    color: var(--workspace-quiet);
+    font: var(--workspace-meta) var(--font-performance-mono);
   }
   .user-message {
-    align-self: flex-end;
-    color: var(--color-performance-fg-primary);
-    background: var(--color-performance-bg-elevated);
-    border-color: var(--color-performance-bg-elevated);
-    border-radius: var(--radius-performance-md);
-  }
-  .user-message .message-author {
-    color: var(--color-performance-fg-tertiary);
+    padding: var(--workspace-gap);
+    border-left: 2px solid var(--workspace-focus);
+    background: var(--workspace-raised);
   }
   .attachment-chip {
-    display: inline-block;
-    max-width: 100%;
-    margin-top: 0.6rem;
-    padding: 0.3rem 0.45rem;
-    overflow: hidden;
-    color: var(--color-performance-fg-secondary);
-    background: var(--color-performance-bg-subtle);
-    border-radius: var(--radius-performance-sm);
-    font-size: 0.6rem;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    display: block;
+    overflow-wrap: anywhere;
+    margin-top: var(--workspace-gap-small);
+    color: var(--workspace-quiet);
+    font-size: var(--workspace-meta);
   }
   .thinking {
     display: flex;
-    gap: 0.25rem;
-    padding: 0.35rem 0;
-  }
-  .thinking i {
-    width: 5px;
-    height: 5px;
-    background: var(--workspace-state-text);
-    border-radius: 50%;
-    animation: pulse 1.2s infinite ease-in-out;
-  }
-  .thinking i:nth-child(2) {
-    animation-delay: 0.15s;
-  }
-  .thinking i:nth-child(3) {
-    animation-delay: 0.3s;
-  }
-  @keyframes pulse {
-    0%,
-    70%,
-    100% {
-      opacity: 0.3;
-      transform: translateY(0);
-    }
-    35% {
-      opacity: 1;
-      transform: translateY(-3px);
-    }
+    gap: var(--workspace-gap-small);
+    align-items: center;
+    color: var(--workspace-state-text);
   }
   .composer {
-    margin: 0.8rem;
-    background: var(--color-performance-panel);
-    border: 1px solid var(--color-performance-line);
-    box-shadow: var(--shadow-performance-panel);
+    margin: var(--workspace-gap);
+    border: 1px solid var(--workspace-strong-line);
+    border-radius: var(--workspace-radius);
+    background: var(--workspace-raised);
+  }
+  .composer:focus-within {
+    border-color: var(--workspace-focus);
   }
   .composer textarea {
     width: 100%;
-    min-height: 92px;
     display: block;
+    min-height: 100px;
+    max-height: 35dvh;
     resize: vertical;
-    padding: 0.85rem;
-    color: var(--color-performance-ink);
-    background: transparent;
+    padding: var(--workspace-gap);
     border: 0;
-    font-size: 0.78rem;
-    line-height: 1.5;
-  }
-  .composer textarea:focus {
-    outline: 0;
+    color: var(--workspace-fg);
+    background: transparent;
+    line-height: 1.6;
+    font-size: var(--workspace-text);
   }
   .composer-actions {
     display: flex;
     align-items: center;
-    gap: 0.55rem;
-    padding: 0.55rem;
-    border-top: 1px solid var(--color-performance-line);
+    flex-wrap: wrap;
+    gap: var(--workspace-gap-small);
+    padding: var(--workspace-gap-small);
+    border-top: 1px solid var(--workspace-line);
   }
   .image-button {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    padding: 0.4rem 0.48rem;
-    color: var(--color-performance-ink);
-    background: var(--color-performance-paper);
-    border: 1px solid var(--color-performance-line);
-    border-radius: var(--radius-performance-sm);
+    min-height: var(--workspace-control-height);
+    gap: 0.3rem;
+    padding: 0.3rem;
     cursor: pointer;
-    font-size: 0.64rem;
-    font-weight: var(--font-performance-bold);
+    color: var(--workspace-muted);
+  }
+  .image-button:focus-within {
+    outline: 2px solid var(--workspace-focus);
+    outline-offset: 2px;
   }
   .image-button input {
     position: absolute;
@@ -1549,462 +1622,394 @@
     opacity: 0;
   }
   .policy-copy {
-    flex: 1;
-    color: var(--color-performance-muted);
-    font-size: 0.56rem;
+    color: var(--workspace-quiet);
+    font-size: var(--workspace-meta);
+    flex: 1 0 100%;
+    order: 3;
   }
   .send-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.47rem 0.62rem;
-    border-radius: var(--radius-performance-sm);
-    font-size: 0.66rem;
-    font-weight: var(--font-performance-bold);
+    margin-left: auto;
   }
   .selected-attachment {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 0.2rem 0.7rem;
-    padding: 0.55rem 0.75rem;
-    color: var(--color-performance-ink);
-    background: var(--color-performance-signal-soft);
-    border-bottom: 1px solid var(--color-performance-line);
-    font-size: 0.62rem;
-  }
-  .selected-attachment span {
-    color: var(--color-performance-muted);
+    display: flex;
+    align-items: center;
+    gap: var(--workspace-gap-small);
+    padding: var(--workspace-gap-small);
+    border-bottom: 1px solid var(--workspace-line);
+    font-size: var(--workspace-meta);
   }
   .selected-attachment strong {
-    grid-row: 2;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    flex: 1;
+  }
+  .selected-attachment > span {
+    color: var(--workspace-quiet);
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
     overflow: hidden;
-    font-weight: 650;
-    text-overflow: ellipsis;
+    clip-path: inset(50%);
     white-space: nowrap;
   }
-  .selected-attachment button {
-    grid-column: 2;
-    grid-row: 1 / 3;
-    color: var(--color-performance-muted);
-    background: transparent;
-    border: 0;
-    cursor: pointer;
-    font-size: 1rem;
-  }
   .error-note {
-    margin: 0.6rem;
-    color: var(--color-performance-risk);
-    font-size: 0.67rem;
-    line-height: 1.4;
+    margin: var(--workspace-gap);
+    padding: var(--workspace-gap-small);
+    border-left: 2px solid var(--color-performance-stop);
+    color: var(--color-performance-stop-soft);
+    background: color-mix(
+      in srgb,
+      var(--color-performance-stop) 15%,
+      var(--workspace-bg)
+    );
+    overflow-wrap: anywhere;
+    line-height: 1.6;
   }
   .activity-rail {
-    background: var(--color-performance-court);
+    overflow-y: auto;
+    background: var(--workspace-panel);
   }
   .activity-status {
     display: flex;
-    align-items: flex-start;
-    gap: 0.55rem;
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--color-performance-line);
+    gap: var(--workspace-gap-small);
+    padding: var(--workspace-gap);
+    border-bottom: 1px solid var(--workspace-line);
   }
   .activity-status p {
     margin: 0;
-    color: var(--color-performance-muted);
-    font-size: 0.67rem;
-    line-height: 1.4;
+    color: var(--workspace-muted);
+    line-height: 1.6;
   }
-  .status-dot {
-    width: 7px;
-    height: 7px;
+  .status-dot,
+  .event-marker {
+    display: block;
+    width: 6px;
+    height: 6px;
+    margin-top: 0.45rem;
     flex: 0 0 auto;
-    margin-top: 0.14rem;
     background: var(--workspace-state-text);
     border-radius: 50%;
-    box-shadow: 0 0 0 4px var(--workspace-state-background);
   }
   .approval-card {
-    margin: 0.8rem 0.8rem 0;
-    padding: 0.85rem;
-    color: var(--workspace-state-text);
-    background: var(--workspace-state-background);
+    flex-shrink: 0;
+    margin: var(--workspace-gap);
+    padding: var(--workspace-gap);
     border: 1px solid var(--workspace-state-border);
-    border-left-width: 4px;
+    border-left-width: 3px;
+    background: var(--workspace-state-background);
+    color: var(--workspace-state-text);
+  }
+  .approval-card .eyebrow {
+    color: inherit;
   }
   .approval-card h3 {
-    margin: 0.45rem 0;
-    font-size: 0.78rem;
+    font-size: var(--text-performance-body-sm);
+    margin: var(--workspace-gap-small) 0;
   }
   .approval-card > p:not(.eyebrow) {
-    margin: 0 0 0.75rem;
-    color: var(--color-performance-ink-soft);
-    font-size: 0.66rem;
-    line-height: 1.4;
+    color: var(--workspace-muted);
+    margin: var(--workspace-gap-small) 0;
+    overflow-wrap: anywhere;
+    line-height: 1.6;
   }
   .approval-context {
     display: grid;
-    gap: 0.35rem;
-    margin: 0 0 0.75rem;
-    font-size: 0.62rem;
+    gap: var(--workspace-gap-small);
+    margin: var(--workspace-gap) 0;
+    font-size: var(--workspace-meta);
   }
   .approval-context div {
     display: grid;
     grid-template-columns: 4rem minmax(0, 1fr);
-    gap: 0.45rem;
+    gap: var(--workspace-gap-small);
   }
   .approval-context dt {
-    color: var(--color-performance-ink-soft);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+    color: var(--workspace-quiet);
   }
   .approval-context dd {
     margin: 0;
     overflow-wrap: anywhere;
-  }
-  .approval-card div {
-    display: flex;
-    gap: 0.4rem;
-  }
-  .approve-button,
-  .decline-button {
-    padding: 0.4rem 0.55rem;
-    border-radius: var(--radius-performance-sm);
-    font-size: 0.62rem;
-    font-weight: var(--font-performance-bold);
-  }
-  .decline-button {
-    color: var(--color-performance-risk);
-    background: transparent;
-    border: 1px solid var(--color-performance-risk);
-    cursor: pointer;
-  }
-  .activity-list {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    padding: 0.25rem 0.8rem 0.8rem;
-  }
-  .empty-copy {
-    margin: 1rem 0.2rem;
-    color: var(--color-performance-muted);
-    font-size: 0.7rem;
+    font-family: var(--font-performance-mono);
     line-height: 1.5;
   }
+  .approval-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--workspace-gap-small);
+  }
+  .client-workspace .approve-button {
+    color: var(--color-performance-ink);
+    background: var(--color-performance-review-soft);
+    border-color: var(--color-performance-review-soft);
+  }
+  .activity-list {
+    padding: 0 var(--workspace-gap);
+  }
+  .empty-copy {
+    color: var(--workspace-quiet);
+    padding: var(--workspace-gap);
+    line-height: 1.6;
+  }
   .activity-item {
-    min-width: 0;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
-    gap: 0.6rem;
-    padding: 0.75rem 0.25rem;
-    border-bottom: 1px solid var(--color-performance-line);
-  }
-  .event-marker {
-    width: 7px;
-    height: 7px;
-    margin-top: 0.25rem;
-    background: var(--workspace-state-text);
-    border-radius: 50%;
-    box-shadow: 0 0 0 3px var(--workspace-state-background);
+    gap: var(--workspace-gap-small);
+    padding: var(--workspace-gap) 0;
+    border-bottom: 1px solid var(--workspace-line);
   }
   .event-meta {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
-    gap: 0.5rem;
-    color: var(--color-performance-muted);
-    font-family: var(--font-performance-mono);
-    font-size: 0.55rem;
-    font-weight: var(--font-performance-bold);
-    letter-spacing: var(--tracking-performance-wide);
-    text-transform: uppercase;
-  }
-  .event-meta time {
-    font-weight: 500;
-    letter-spacing: 0;
+    gap: var(--workspace-gap-small);
+    color: var(--workspace-quiet);
+    font: var(--workspace-meta) var(--font-performance-mono);
   }
   .activity-item p {
-    margin: 0.3rem 0 0;
+    margin: var(--workspace-gap-small) 0 0;
     overflow-wrap: anywhere;
-    color: var(--color-performance-ink-soft);
-    font-size: 0.66rem;
-    line-height: 1.45;
-    white-space: pre-wrap;
+    line-height: 1.6;
   }
-  .diff-panel {
-    max-height: 34%;
-    overflow: auto;
-    color: var(--color-performance-fg-secondary);
-    background: var(--color-performance-bg-elevated);
-    border-top: 1px solid var(--color-performance-border-emphasis);
+  .history-disclosure {
+    margin-top: auto;
   }
-  .diff-panel summary {
+  .history-disclosure,
+  .diff-panel,
+  .delivery-lifecycle {
+    flex-shrink: 0;
+    border-top: 1px solid var(--workspace-line);
+  }
+  .history-search {
+    padding: var(--workspace-gap);
+  }
+  .history-search label {
+    display: block;
+    margin-bottom: var(--workspace-gap-small);
+    color: var(--workspace-muted);
+  }
+  .history-search-controls {
     display: flex;
-    justify-content: space-between;
-    padding: 0.7rem 0.8rem;
-    cursor: pointer;
-    font-size: 0.62rem;
-    font-weight: 730;
-    list-style: none;
+    gap: var(--workspace-gap-small);
+  }
+  .history-search-controls input {
+    min-width: 0;
+    width: 100%;
+    padding: var(--workspace-gap-small);
+    background: var(--workspace-raised);
+    border: 1px solid var(--workspace-line);
+    color: var(--workspace-fg);
+  }
+  .history-search p,
+  .history-result {
+    overflow-wrap: anywhere;
+    color: var(--workspace-muted);
+    line-height: 1.6;
   }
   .diff-panel summary span:last-child {
-    color: var(--color-performance-fg-tertiary);
-    font-weight: 520;
+    float: right;
+    color: var(--workspace-quiet);
+    font: var(--workspace-meta) var(--font-performance-mono);
   }
   .diff-panel pre {
-    margin: 0;
-    padding: 0.2rem 0.8rem 1rem;
+    max-height: 35dvh;
     overflow: auto;
-    font-family: var(--font-performance-code);
-    font-size: 0.57rem;
-    line-height: 1.55;
-    white-space: pre;
+    margin: 0;
+    padding: var(--workspace-gap);
+    background: var(--workspace-bg);
+    color: var(--workspace-muted);
+    font: var(--workspace-meta)/1.7 var(--font-performance-mono);
   }
   .diff-panel > p {
     margin: 0;
-    padding: 0.2rem 0.8rem 1rem;
-    color: var(--color-performance-fg-tertiary);
-    font-size: 0.62rem;
-  }
-  .delivery-lifecycle {
-    padding: 0.7rem 0.8rem;
-    background: var(--color-performance-panel);
-    border-top: 1px solid var(--color-performance-line);
-    font-size: 0.64rem;
-  }
-  .delivery-lifecycle summary {
-    cursor: pointer;
-    font-weight: 730;
+    padding: var(--workspace-gap);
+    color: var(--workspace-quiet);
   }
   .lifecycle-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.4rem;
-    margin: 0.7rem 0;
+    gap: var(--workspace-gap-small);
+    padding: var(--workspace-gap);
   }
   .receipt-link {
     display: inline-flex;
     align-items: center;
-    text-decoration: none;
   }
   .update-picker {
     display: grid;
-    gap: 0.35rem;
-    margin: 0.7rem 0;
-    color: var(--color-performance-muted);
+    gap: var(--workspace-gap-small);
+    padding: var(--workspace-gap);
   }
-  .update-picker input {
-    min-width: 0;
-    font-size: 0.62rem;
+  .delivery-lifecycle > button {
+    margin: 0 var(--workspace-gap) var(--workspace-gap);
   }
   .update-plan {
-    margin-top: 0.7rem;
-    padding: 0.7rem;
-    color: var(--workspace-state-text);
+    padding: var(--workspace-gap);
     background: var(--workspace-state-background);
-    border: 1px solid var(--workspace-state-border);
+    border-top: 1px solid var(--workspace-state-border);
   }
-  .update-plan h3,
+  .update-plan h3 {
+    font-size: var(--workspace-text);
+  }
   .update-plan p {
-    margin: 0 0 0.45rem;
     overflow-wrap: anywhere;
+    line-height: 1.6;
   }
   .preview-rail {
-    padding: 0;
-    background: var(--color-performance-court);
-  }
-  .preview-heading-row {
-    background: var(--color-performance-paper);
+    background: var(--workspace-bg);
   }
   .preview-actions {
     display: flex;
     align-items: center;
-    gap: 0.55rem;
-  }
-  .preview-state {
-    color: var(--workspace-state-text);
-    background: var(--workspace-state-background);
-    border-color: var(--workspace-state-border);
+    gap: var(--workspace-gap-small);
   }
   .icon-button {
-    width: 28px;
-    height: 28px;
-    display: grid;
-    place-items: center;
-    color: var(--color-performance-ink);
-    background: var(--color-performance-panel);
-    border: 1px solid var(--color-performance-line-strong);
-    border-radius: var(--radius-performance-sm);
-    cursor: pointer;
+    width: var(--workspace-control-height);
   }
   .browser-frame {
     flex: 1;
     min-height: 0;
-    margin: 1rem 1rem 0.65rem;
+    margin: var(--workspace-gap);
+    border: 1px solid var(--workspace-line);
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
-    background: var(--color-performance-panel);
-    border: 1px solid var(--color-performance-line-strong);
-    box-shadow: var(--shadow-performance-panel);
   }
   .browser-chrome {
-    height: 36px;
     display: flex;
     align-items: center;
-    gap: 0.3rem;
-    padding: 0 0.7rem;
-    background: var(--color-performance-paper);
-    border-bottom: 1px solid var(--color-performance-line);
-  }
-  .browser-chrome > span {
-    width: 7px;
-    height: 7px;
-    background: var(--color-performance-line-strong);
-    border-radius: 50%;
-  }
-  .browser-chrome > span:first-child {
-    background: var(--color-performance-pressure);
+    gap: var(--workspace-gap);
+    min-height: 36px;
+    padding: 0 var(--workspace-gap);
+    background: var(--workspace-raised);
+    border-bottom: 1px solid var(--workspace-line);
   }
   .browser-chrome p {
-    flex: 1;
-    margin: 0 3.4rem 0 1rem;
-    padding: 0.25rem 0.6rem;
-    color: var(--color-performance-muted);
-    background: var(--color-performance-panel);
-    border: 1px solid var(--color-performance-line);
-    border-radius: var(--radius-performance-sm);
-    font-family: var(--font-performance-mono);
-    font-size: 0.55rem;
-    text-align: center;
+    margin: 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--workspace-muted);
+    font: var(--workspace-meta) var(--font-performance-mono);
   }
   iframe {
+    flex: 1;
+    min-height: 0;
     width: 100%;
-    height: calc(100% - 36px);
-    display: block;
-    background: var(--color-performance-panel);
     border: 0;
+    background: var(--color-performance-panel);
   }
   .preview-placeholder {
-    height: calc(100% - 36px);
+    flex: 1;
     display: grid;
-    place-items: center;
+    justify-items: center;
     align-content: center;
-    padding: 2rem;
+    gap: var(--workspace-gap-small);
+    text-align: center;
+    padding: var(--space-performance-md);
     color: var(--workspace-state-text);
     background: var(--workspace-state-background);
-    text-align: center;
   }
   .preview-glyph {
-    color: var(--workspace-state-text);
-    font-size: 2rem;
+    font-size: var(--text-performance-h1);
   }
   .preview-placeholder h3 {
-    margin: 0.8rem 0 0.3rem;
-    font-weight: var(--font-performance-medium);
+    margin: 0;
+    font-size: var(--text-performance-body-sm);
   }
   .preview-placeholder p {
-    max-width: 320px;
     margin: 0;
-    font-size: 0.7rem;
-    line-height: 1.5;
+    max-width: 38ch;
+    line-height: 1.6;
+    color: var(--workspace-muted);
   }
   .preview-footer {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
-    padding: 0 1rem 0.8rem;
-    color: var(--color-performance-muted);
-    font-family: var(--font-performance-mono);
-    font-size: 0.57rem;
+    gap: var(--workspace-gap-small);
+    padding: 0 var(--workspace-gap) var(--workspace-gap);
+    color: var(--workspace-quiet);
+    font: var(--workspace-meta) var(--font-performance-mono);
   }
-
+  .app-layout { display: grid; grid-template-columns: 208px minmax(0, 1fr); min-height: 100dvh; }
+  .app-navigation { position: sticky; top: 0; align-self: start; height: 100dvh; display: flex; flex-direction: column; gap: var(--space-performance-md); padding: var(--workspace-gap); border-right: 1px solid var(--workspace-line); background: var(--workspace-panel); }
+  .brand { flex-wrap: wrap; min-height: 40px; white-space: normal; }
+  .brand .cs-product-name { flex-basis: 100%; padding-left: calc(10px + var(--workspace-gap-small)); }
+  .nav-project { display: grid; gap: var(--workspace-gap-small); padding: var(--workspace-gap-small); }
+  .nav-project strong { overflow-wrap: anywhere; font-weight: var(--font-performance-medium); }
+  .navigation-footer { margin-top: auto; padding: var(--workspace-gap-small); color: var(--workspace-quiet); }
+  .navigation-footer p { margin-bottom: 0; font-size: var(--workspace-meta); }
+  .app-content { min-width: 0; }
+  .workspace-context { border: 0; padding: 0; }
+  .topbar { min-width: 0; min-height: 64px; background: var(--workspace-panel); }
+  .session-menu { position: relative; }
+  .session-menu summary { border: 1px solid var(--workspace-line); border-radius: var(--workspace-radius); }
+  .session-menu-items { position: absolute; right: 0; top: 100%; z-index: 20; width: 180px; display: grid; gap: var(--workspace-gap-small); padding: var(--workspace-gap-small); border: 1px solid var(--workspace-strong-line); background: var(--workspace-panel); }
+  .workspace-card { grid-template-columns: auto minmax(0, 1fr) auto; padding: var(--workspace-gap) var(--space-performance-md); }
+  .workspace-card button { grid-column: 3; grid-row: 1; }
+  .panel-heading { padding: var(--workspace-gap) var(--space-performance-md); }
+  .panel-heading h2 { margin: 0; font-size: var(--text-performance-body-sm); }
+  .runtime-card { grid-template-columns: auto minmax(0, 1fr) auto; background: transparent; border: 1px solid var(--workspace-line); }
+  .runtime-recheck { grid-column: 3; grid-row: 1; }
+  .project-search { display: grid; gap: var(--workspace-gap-small); padding: var(--workspace-gap); color: var(--workspace-muted); }
+  .project-search input { min-width: 0; width: 100%; padding: var(--workspace-gap-small); border: 1px solid var(--workspace-line); background: var(--workspace-bg); color: var(--workspace-fg); }
+  .start-feedback:empty { display: none; }
+  .start-feedback { color: var(--workspace-muted); }
+  .review-content { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .review-decisions, .review-artifacts { min-width: 0; }
+  .review-artifacts { border-left: 1px solid var(--workspace-line); }
+  .review-empty { margin: 0; padding: var(--workspace-gap); color: var(--workspace-muted); line-height: 1.6; }
+  .activity-list { max-height: 360px; overflow-y: auto; }
+  .activity-disclosure summary { display: flex; align-items: center; justify-content: space-between; }
+  .activity-disclosure summary::before { content: '▸'; margin-right: var(--workspace-gap-small); }
+  .activity-disclosure[open] summary::before { content: '▾'; }
+  .rail-heading h1, .rail-heading h2 { margin: 0; scroll-margin-top: var(--workspace-gap); }
   @media (max-width: 1100px) {
-    .workspace-shell {
-      grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr);
-      overflow-y: auto;
-    }
-    .preview-rail {
-      grid-column: 1 / -1;
-      min-height: 68vh;
-      border-top: 1px solid var(--color-performance-line);
-    }
-    .chat-rail,
-    .activity-rail {
-      min-height: calc(100vh - 64px);
-    }
+    .app-layout { grid-template-columns: 176px minmax(0, 1fr); }
+    .workspace-picker { padding: var(--space-performance-md); }
+    .workspace-shell { grid-template-columns: minmax(280px, 1fr) minmax(0, 1fr); }
+    .preview-actions { flex-wrap: wrap; justify-content: flex-end; }
+    .rail-heading > .cs-label { display: none; }
+  }
+  @media (max-width: 820px) {
+    .app-layout { display: block; }
+    .app-navigation { height: auto; z-index: 30; padding: var(--workspace-gap-small) var(--workspace-gap); gap: var(--workspace-gap-small); border-right: 0; border-bottom: 1px solid var(--workspace-line); }
+    .brand { min-height: 24px; font-size: var(--workspace-meta); }
+    .brand .cs-product-name { flex-basis: auto; padding-left: 0; margin-left: auto; }
+    .nav-project, .navigation-footer, .switch-project { display: none; }
+    .workspace-sections { display: flex; justify-content: space-between; gap: var(--workspace-gap-small); }
+    .workspace-sections a { min-height: 44px; padding-inline: var(--workspace-gap-small); flex-wrap: wrap; gap: 4px; }
+    .workspace-sections a > span[aria-hidden] { display: none; }
+    .approval-count { margin-left: 0; }
+    .rail-heading h1, .rail-heading h2, #workspace-heading { scroll-margin-top: 120px; }
   }
   @media (max-width: 720px) {
-    .topbar {
-      min-width: 0;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 0.45rem;
-      padding: 0 0.8rem;
-    }
-    .brand {
-      min-width: 0;
-      gap: 0.5rem;
-      font-size: 0.62rem;
-      letter-spacing: 0.08em;
-    }
-    .top-actions {
-      min-width: 0;
-      gap: 0.3rem;
-    }
-    .session-state {
-      padding: 0.25rem 0.35rem;
-      font-size: 0.52rem;
-    }
-    .quiet-button {
-      padding: 0.3rem 0.4rem;
-      font-size: 0.62rem;
-    }
-    .workspace-context {
-      display: none;
-    }
-    .workspace-picker {
-      grid-template-columns: 1fr;
-      align-content: center;
-      gap: 3rem;
-      padding: 3rem 0 5rem;
-    }
-    .intro h1 {
-      font-size: clamp(3.1rem, 15vw, 5.2rem);
-    }
-    .workspace-shell {
-      width: 100%;
-      min-width: 0;
-      max-width: 100%;
-      height: auto;
-      display: block;
-      overflow: hidden;
-    }
-    .rail {
-      min-height: auto;
-      border-right: 0;
-      border-bottom: 1px solid var(--color-performance-line);
-    }
-    .chat-rail {
-      height: calc(100vh - 64px);
-    }
-    .activity-rail {
-      min-height: 78vh;
-      height: 88vh;
-    }
-    .preview-rail {
-      min-height: 72vh;
-      height: 78vh;
-    }
-    .workspace-card {
-      grid-template-columns: auto 1fr;
-    }
-    .workspace-card .primary-button {
-      grid-column: 1 / -1;
-    }
-    .policy-copy {
-      display: none;
-    }
-    .browser-chrome p {
-      min-width: 0;
-      margin-right: 1rem;
-    }
-    .preview-footer {
-      flex-wrap: wrap;
-      gap: 0.35rem 1rem;
-    }
+    .topbar { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--workspace-gap-small); }
+    .top-actions { margin-left: auto; gap: var(--workspace-gap-small); }
+    .workspace-context { min-width: 0; }
+    .workspace-context strong { white-space: normal; overflow-wrap: anywhere; }
+    .workspace-picker { width: 100%; padding: var(--workspace-gap); gap: var(--space-performance-md); }
+    .intro h1 { font-size: var(--text-performance-h2); margin-block: var(--workspace-gap-small); }
+    .panel-heading, .workspace-card { padding: var(--workspace-gap); }
+    .workspace-card { grid-template-columns: auto minmax(0, 1fr); }
+    .workspace-card button { grid-column: 2; grid-row: 2; }
+    .runtime-card { grid-template-columns: auto minmax(0, 1fr); }
+    .runtime-recheck { grid-column: 2; grid-row: 2; }
+    .workspace-shell { display: flex; flex-direction: column; }
+    .rail { width: 100%; border-right: 0; border-bottom: 1px solid var(--workspace-line); }
+    .chat-rail { height: auto; min-height: 380px; }
+    .conversation { max-height: 45dvh; flex: auto; }
+    .composer textarea { min-height: 88px; }
+    .activity-rail { height: auto; overflow: visible; }
+    .review-content { display: block; }
+    .review-artifacts { border-left: 0; }
+    .activity-list { max-height: 45dvh; }
+    .preview-rail { height: 70dvh; min-height: 400px; }
+    .composer textarea, .history-search-controls input, .project-search input { font-size: var(--text-performance-body); }
+    .rail-heading > .cs-label { display: none; }
+    .setup-heading .cs-label { display: none; }
   }
 </style>

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SerifPhrase from '$lib/components/SerifPhrase.svelte';
   import StateBadge from '$lib/components/StateBadge.svelte';
   import StatusNotice from '$lib/components/StatusNotice.svelte';
 
@@ -64,7 +65,7 @@
 >
 <main id="main" class="builder-workspace">
   <p class="eyebrow">PRIVATE / CREATOR ADMISSION</p>
-  <h1>Show your work.<br /><em>Teach the technique.</em></h1>
+  <h1>Show your work.<br /><SerifPhrase text="Teach the technique." /></h1>
   <p class="lede">
     Private is a reviewed network for builders teaching agentic engineering. Share the experience
     behind your practice and show how you help another builder understand it.

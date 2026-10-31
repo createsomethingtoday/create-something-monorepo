@@ -17,6 +17,9 @@ declare global {
 		// interface PageState {}
 		interface Platform {
 			env: {
+				CS_IDENTITY_ISSUER?: string;
+				CS_IDENTITY_JWKS_URL?: string;
+				CS_IDENTITY_AUDIENCE?: string;
 				DB: D1Database;
 				SESSIONS: KVNamespace;
 				CACHE: KVNamespace;

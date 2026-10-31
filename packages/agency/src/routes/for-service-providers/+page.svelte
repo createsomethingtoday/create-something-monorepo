@@ -85,7 +85,7 @@
 
 <SEO
   title="Use CREATE SOMETHING With Clients | Service Providers"
-  description="Plan, build, and support AI workflows for your clients. Agree on responsibilities and keep each client’s data and access separate."
+  description="Bring AI-native technical support to your clients’ workflows. Diagnose problems, build improvements and help teams use the result. Agree on responsibilities and keep each client’s data and access separate."
   keywords="AI workflow service provider, client workflow mapping, governed client delivery, workflow implementation service"
   propertyName="agency"
   {faqItems}
@@ -99,7 +99,7 @@
     expression="editorial"
     eyebrow="For service providers"
     title="Use CREATE SOMETHING with your clients."
-    description="Bring one client task. We agree on who owns the work, what to build, and who approves it. The client keeps the plan and results."
+    description="Bring one client task for diagnosis, engineering improvements or learning support. We agree on who owns the work, what to build, and who approves it. The client keeps the plan and results."
   >
     {#snippet actions()}
       <Button href="/map?source=service-provider&intent=client-workflow">Start a client map</Button>

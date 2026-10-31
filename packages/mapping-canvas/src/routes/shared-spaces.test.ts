@@ -8,7 +8,9 @@ const projectStorage = readFileSync('src/lib/project-storage.ts', 'utf8');
 const persistence = readFileSync('src/lib/persistence.ts', 'utf8');
 
 it('navigates between Canvas and Motion using the same project identity', () => {
-  expect(canvas).toContain('href={`/animate?project=${encodeURIComponent(document.id)}`}');
+  expect(canvas).toContain('<ProjectModes id={document.id}');
+  expect(readFileSync('src/lib/ProjectModes.svelte','utf8')).toContain('encodeURIComponent(id)');
+  expect(canvas).toContain('location.href = `/animate?project=${encodeURIComponent(document.id)}');
   expect(canvas).toContain('await persistCurrentDocument(document)');
   expect(canvas).toContain("if (!ready) { status = 'Canvas is still loading'; return; }");
   expect(canvas).toContain(

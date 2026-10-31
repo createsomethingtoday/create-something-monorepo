@@ -1,0 +1,182 @@
+name: Scheduler Worker Deploy
+
+# Root dispatches only after independent exact-candidate review and merge.
+on:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact reviewed main commit to release (40-character SHA)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: scheduler-worker-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - name: Require the reviewed manual main release
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" != workflow_dispatch || "$GITHUB_REF" != refs/heads/main ]]; then
+            echo "::error::Scheduler releases must be manually dispatched from main."
+            exit 1
+          fi
+          if [[ ! "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ || "$EXPECTED_SHA" != "$GITHUB_SHA" ]]; then
+            echo "::error::The dispatch commit must match the reviewed main SHA."
+            exit 1
+          fi
+
+      - name: Checkout exact release commit
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 9.15.0
+
+      - name: Setup Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - name: Install frozen scheduler dependencies
+        run: pnpm install --frozen-lockfile --filter '@create-something/create-something-scheduler...'
+
+      - name: Build Canon package
+        run: pnpm --filter @create-something/canon package
+
+      - name: Check Scheduler
+        run: pnpm --filter @create-something/create-something-scheduler check
+
+      - name: Test Scheduler
+        run: pnpm --filter @create-something/create-something-scheduler test
+
+      - name: Build Scheduler without deploying
+        run: pnpm --filter @create-something/create-something-scheduler build
+
+      - name: Verify exact source after build
+        shell: bash
+        run: |
+          set -euo pipefail
+          git status --short --untracked-files=normal > "$RUNNER_TEMP/scheduler-source-status.log"
+          {
+            echo '## Scheduler source verification'
+            printf 'Expected checkout: `%s`\n\n' "$GITHUB_SHA"
+            echo 'Tracked source must match the checkout in both index and working tree.'
+            echo '```text'
+            if [[ -s "$RUNNER_TEMP/scheduler-source-status.log" ]]; then
+              LC_ALL=C cut -c 1-240 "$RUNNER_TEMP/scheduler-source-status.log" | sed -n '1,80p'
+            else
+              echo '(clean)'
+            fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code
+          git diff --cached --exit-code
+
+      - name: Capture existing Worker versions and rollback inventory
+        working-directory: apps/create-something-scheduler
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$CLOUDFLARE_API_TOKEN"
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const config = JSON.parse(fs.readFileSync('wrangler.jsonc', 'utf8'));
+          if (config.name !== 'create-something-scheduler' || config.account_id !== process.env.CLOUDFLARE_ACCOUNT_ID) {
+            throw new Error('Existing scheduler Worker/account must match the release configuration.');
+          }
+          JS
+          pnpm exec wrangler deployments list --json > "$RUNNER_TEMP/scheduler-deployments-before.json"
+          pnpm exec wrangler versions list --json > "$RUNNER_TEMP/scheduler-versions-before.json"
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          for (const kind of ['deployments', 'versions']) {
+            const records = JSON.parse(fs.readFileSync(`${process.env.RUNNER_TEMP}/scheduler-${kind}-before.json`, 'utf8'));
+            if (!Array.isArray(records) || !records.length) throw new Error(`Missing existing ${kind}; refusing a first deployment.`);
+          }
+          JS
+          {
+            echo '## Scheduler production before release'
+            echo 'Retain these deployment/version identities and traffic percentages for rollback.'
+            echo '```json'
+            cat "$RUNNER_TEMP/scheduler-deployments-before.json"
+            cat "$RUNNER_TEMP/scheduler-versions-before.json"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Deploy exact commit to existing Scheduler Worker
+        id: deploy
+        working-directory: apps/create-something-scheduler
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Keep the existing Wrangler name, routes, bindings, migrations and vars.
+          # Preserve any additional dashboard-managed vars; secrets are not changed.
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code
+          git diff --cached --exit-code
+          pnpm exec wrangler deploy --keep-vars --message "Reviewed scheduler release $GITHUB_SHA" \
+            2>&1 | tee "$RUNNER_TEMP/scheduler-deployment.log"
+          pnpm exec wrangler deployments list --json > "$RUNNER_TEMP/scheduler-deployments-after.json"
+
+      - name: Record deployment receipt
+        if: always() && steps.deploy.outcome != 'skipped'
+        env:
+          DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
+        shell: bash
+        run: |
+          {
+            echo '## Scheduler production deployment'
+            printf 'Source commit: `%s`\n\n' "$GITHUB_SHA"
+            printf 'Result: %s\n\n' "$DEPLOY_OUTCOME"
+            echo 'Worker: create-something-scheduler · schedule.createsomething.agency'
+            echo 'Root must perform read-only live verification; no booking or email smoke tests.'
+            echo '```text'
+            if [[ -f "$RUNNER_TEMP/scheduler-deployment.log" ]]; then
+              cat "$RUNNER_TEMP/scheduler-deployment.log"
+            else
+              echo 'Deployment did not produce output.'
+            fi
+            if [[ -f "$RUNNER_TEMP/scheduler-deployments-after.json" ]]; then
+              cat "$RUNNER_TEMP/scheduler-deployments-after.json"
+            fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Preserve source and deployment receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: scheduler-release-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/scheduler-source-status.log
+            ${{ runner.temp }}/scheduler-deployments-before.json
+            ${{ runner.temp }}/scheduler-versions-before.json
+            ${{ runner.temp }}/scheduler-deployment.log
+            ${{ runner.temp }}/scheduler-deployments-after.json
+          if-no-files-found: ignore
+          retention-days: 30

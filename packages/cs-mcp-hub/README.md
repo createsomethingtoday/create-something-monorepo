@@ -25,6 +25,11 @@ Routing defines tenant-specific tool exposure and multi-provider alias failover.
 pnpm --filter @create-something/cs-mcp-hub build
 ```
 
+Downstream startup uses Effect to tag connection and tool-catalog failures and
+close a failed client. A successful connection remains open until hub shutdown.
+The repo-wide adoption criteria and client guidance are in
+[`docs/guides/EFFECT_INTEGRATION_ENGINEERING.md`](../../docs/guides/EFFECT_INTEGRATION_ENGINEERING.md).
+
 ## Run As MCP Server
 
 ```bash

@@ -48,7 +48,7 @@ wrangler pages deploy .svelte-kit/cloudflare --project-name=createsomething-ltd
 
 Always include this reference:
 ```markdown
-# Use exact project name - see .claude/rules/cloudflare-patterns.md
+# Use exact project name - see .claude/rules/PROJECT_NAME_REFERENCE.md
 wrangler pages deploy .svelte-kit/cloudflare --project-name=[exact-project-name]
 ```
 
@@ -97,21 +97,3 @@ Incorrect project names cause:
 2. **Broken domains** - Custom domain bindings won't match
 3. **Missing bindings** - D1, KV, and other bindings won't attach
 4. **Split traffic** - Users hit old deployment while new one goes to wrong project
-
-## Historical Context
-
-The inconsistency exists because:
-- `space`, `io`, `agency` were created first with `create-something-*` pattern
-- `ltd` was created later using `createsomething-*` (no hyphen) pattern
-- `lms` followed later conventions
-
-Rather than rename (which would break production), we document the truth.
-
-## Subtractive Triad Reflection
-
-This document exists because:
-1. **DRY** (Implementation) - Single source of truth eliminates duplicated knowledge
-2. **Rams** (Artifact) - Only essential information; pattern explanations earn their existence
-3. **Heidegger** (System) - Documentation serves deployment correctness; the tool recedes when correct names are used
-
-When you know the exact name, you don't think about naming. The infrastructure disappears; only the work remains.

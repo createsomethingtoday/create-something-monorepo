@@ -1,0 +1,316 @@
+{
+  "schema": "selective-context-study/v1",
+  "measuredAt": "2026-10-15T22:54:22.342Z",
+  "environment": {
+    "node": "v22.21.1",
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "fixtureClock": "2026-10-15T12:00:00.000Z",
+  "sourceDate": "2026-10-01",
+  "method": "Same-author synthetic holdout, frozen before scoring; no post-score tuning. Module and heading scores are separate. This is not an independent relevance benchmark.",
+  "implementationSha256": {
+    "atlas-context.mjs": "c893349a06003980ac0ac0423da72fe66745057ca299d6635d4c0651c0de7e70",
+    "atlas-context-refresh.mjs": "105ade08b508c4509d0f1fb3cbf6b410c71b0961f3cfc24536cb144189ca8b14",
+    "agent-wiki-passages.mjs": "ced8747abb035f5b62833f06f9c8bc5b701b3cd4bbafa5e883677e7464f26f83"
+  },
+  "frozenInputs": {
+    "corpus/README.md": "cc5e59b9da84c4f65cb60c77c2f45c11c04c252790d7054372bb88fa443a5bca",
+    "corpus/agent-routes.md": "722ba68bb13a9f7350f9cfcedde15d4cae62d26da9d2ecf556ede4bfeeb0f38a",
+    "corpus/business-recommendations.md": "fab42745fbf7f692a3220ce6ec17e8c597f2be7783f8b5df6f01d8a9314d32a9",
+    "corpus/management-surface.md": "fde2166f76ea8a6d8c5cf56e1b3b76134ef489e99834f6686dffa3ad216ea97a",
+    "corpus/operating-loop.md": "2e7def4a55e0d35ae6f08697b133079fe5c61237d5ca34444b4fade4f2c78559",
+    "corpus/operating-slices.md": "072e8c419725f4e4dc059cf082261c4d979d79be52dc737b5e93ce3811ff5654",
+    "corpus/topology-inventory.md": "b9de73cc8fb5e82ac9e47f564b71c488b583bc8b2c3b72dda0f04bf700ed79d4",
+    "queries.json": "7c11c8b6e71eb56da9a2b4378949d7c603e5ddd4081c2dc5117ef655c10ecc0b"
+  },
+  "summary": {
+    "queries": 20,
+    "modules": 7,
+    "authoredSections": 21,
+    "topModuleCorrect": 19,
+    "topPassageCorrect": 19,
+    "expectedPassageInTopFive": 19,
+    "budgetChecks": 60,
+    "budgets": [
+      2000,
+      4000,
+      12000
+    ],
+    "budgetFailures": 0,
+    "checkedCitations": 193,
+    "citationFailures": 0,
+    "freshnessAndAuthorityFailures": 0,
+    "responseBytesMin": 1876,
+    "responseBytesMax": 4021
+  },
+  "controls": [
+    {
+      "label": "changed inputs, concurrent reads, renderer failure, timeout and unavailable cache",
+      "file": "packages/database-layer/test/atlas-context-refresh.test.mjs",
+      "pattern": "automatic refresh|one refresh|failure retains|refresh off|unavailable cache",
+      "passed": true,
+      "exitCode": 0,
+      "testsPassed": 5,
+      "testsFailed": 0
+    },
+    {
+      "label": "changed documents, corrupt parsed cache, unknown dates and hard limits",
+      "file": "packages/database-layer/test/atlas-context.test.mjs",
+      "pattern": "explicit cache detects|unknown freshness",
+      "passed": true,
+      "exitCode": 0,
+      "testsPassed": 2,
+      "testsFailed": 0
+    }
+  ],
+  "queries": [
+    {
+      "id": "Q01",
+      "query": "Does rebuilding the index tell us when services were inspected?",
+      "expectedModule": "README",
+      "expectedHeading": "Snapshot age",
+      "actualModule": "README",
+      "actualHeading": "Snapshot age",
+      "moduleCorrect": true,
+      "passageCorrect": true,
+      "expectedInTopFive": true,
+      "responseBytes": 3827
+    },
+    {
+      "id": "Q02",
+      "query": "What should an absent observation date mean?",
+      "expectedModule": "README",
+      "expectedHeading": "Unknown evidence",
+      "actualModule": "README",
+      "actualHeading": "Unknown evidence",
+      "moduleCorrect": true,
+      "passageCorrect": true,
+      "expectedInTopFive": true,
+      "responseBytes": 1876
+    },
+    {
+      "id": "Q03",
+      "query": "How large can the JSON search response be?",
+      "expectedModule": "README",
+      "expectedHeading": "Reading limits",
+      "actualModule": "README",
+      "actualHeading": "Reading limits",
+      "moduleCorrect": true,
+      "passageCorrect": true,
+      "expectedInTopFive": true,
+      "responseBytes": 3975
+    },
+    {
+      "id": "Q04",
+      "query": "Where is canonical record truth kept?",
+      "expectedModule": "operating-loop",
+      "expectedHeading": "Record truth",
+      "actualModule": "operating-loop",
+      "actualHeading": "Record truth",
+      "moduleCorrect": true,
+      "passageCorrect": true,
+      "expectedInTopFive": true,
+      "responseBytes": 3910
+    },
+    {
+      "id": "Q05",
+      "query": "Can a retrieved passage authorize deployment?",
+      "expectedModule": "operating-loop",
+      "expectedHeading": "Decision ownership",
+      "actualModule": "management-surface",
+      "actualHeading": "Production approval",
+      "moduleCorrect": false,
+      "passageCorrect": false,
+      "expectedInTopFive": false,
+      "responseBytes": 3956
+    },
+    {
+      "id": "Q06",
+      "query": "Which layer decides if evidence is sufficient?",
+      "expectedModule": "operating-loop",
+      "expectedHeading": "Three layers",
+      "actualModule": "operating-loop",
+      "actualHeading": "Three layers",
+      "moduleCorrect": true,
+      "passageCorrect": true,
+      "expectedInTopFive": true,
+      "responseBytes": 3841
+    },
+    {
+      "id": "Q07",
+      "query": "What must a delivery packet include?",
+      "expectedModule": "business-recommendations",
+      "expectedHeading": "Delivery packets",
+      "actualModule": "business-recommendations",
+      "actualHeading": "Delivery packets",
+      "moduleCorrect": true,
+      "passageCorrect": true,
+      "expectedInTopFive": true,
+      "responseBytes": 1951
+    },
+    {
+      "id": "Q08",
+      "query": "Which workflow should we prioritize first?",
+      "expectedModule": "business-recommendations",
+      "expectedHeading": "Priority review",
+      "actualModule": "business-recommendations",
+      "actualHeading": "Priority review",
+      "moduleCorrect": true,
+      "passageCorrect": true,
+      "expectedInTopFive": true,
+      "responseBytes": 2640
+    },
+    {
+      "id": "Q09",
+      "query": "May private notes appear in public screenshots?",
+      "expectedModule": "business-recommendations",
+      "expectedHeading": "Public proof",
+      "actualModule": "business-recommendations",
+      "actualHeading": "Public proof",
+      "moduleCorrect": true,
+      "passageCorrect": true,
+      "expectedInTopFive": true,
+      "responseBytes": 1999
+    },
+    {
+      "id": "Q10",
+      "query": "What consumes the intake queue?",
+      "expectedModule": "topology-inventory",
+      "expectedHeading": "Queue topology",
+      "actualModule": "topology-inventory",
+      "actualHeading": "Queue topology",
+      "moduleCorrect": true,
+      "passageCorrect": true,
+      "expectedInTopFive": true,
+      "responseBytes": 2639
+    },
+    {
+      "id": "Q11",
+      "query": "Who resolves an incident in a component?",
+      "expectedModule": "topology-inventory",
+      "expectedHeading": "Component ownership",
+      "actualModule": "topology-inventory",
+      "actualHeading": "Component ownership",
+      "moduleCorrect": true,
+      "passageCorrect": true,
+      "expectedInTopFive": true,
+      "responseBytes": 1967
+    },
+    {
+      "id": "Q12",
+      "query": "Does placing boxes nearby establish a dependency?",
+      "expectedModule": "topology-inventory",
+      "expectedHeading": "Dependency map",
+      "actualModule": "topology-inventory",
+      "actualHeading": "Dependency map",
+      "moduleCorrect": true,
+      "passageCorrect": true,
+      "expectedInTopFive": true,
+      "responseBytes": 3968
+    },
+    {
+      "id": "Q13",
+      "query": "What permission is required for production deployment?",
+      "expectedModule": "management-surface",
+      "expectedHeading": "Production approval",
+      "actualModule": "management-surface",
+      "actualHeading": "Production approval",
+      "moduleCorrect": true,
+      "passageCorrect": true,
+      "expectedInTopFive": true,
+      "responseBytes": 3364
+    },
+    {
+      "id": "Q14",
+      "query": "Does inventory_read mutate component records?",
+      "expectedModule": "management-surface",
+      "expectedHeading": "Read operations",
+      "actualModule": "management-surface",
+      "actualHeading": "Read operations",
+      "moduleCorrect": true,
+      "passageCorrect": true,
+      "expectedInTopFive": true,
+      "responseBytes": 3966
+    },
+    {
+      "id": "Q15",
+      "query": "Is ledger_append safe just because the role is called reader?",
+      "expectedModule": "management-surface",
+      "expectedHeading": "Write operations",
+      "actualModule": "management-surface",
+      "actualHeading": "Write operations",
+      "moduleCorrect": true,
+      "passageCorrect": true,
+      "expectedInTopFive": true,
+      "responseBytes": 1926
+    },
+    {
+      "id": "Q16",
+      "query": "Does a reachable preview establish production readiness?",
+      "expectedModule": "operating-slices",
+      "expectedHeading": "Preview readiness",
+      "actualModule": "operating-slices",
+      "actualHeading": "Preview readiness",
+      "moduleCorrect": true,
+      "passageCorrect": true,
+      "expectedInTopFive": true,
+      "responseBytes": 3955
+    },
+    {
+      "id": "Q17",
+      "query": "What happens after an acceptance test fails?",
+      "expectedModule": "operating-slices",
+      "expectedHeading": "Failed acceptance",
+      "actualModule": "operating-slices",
+      "actualHeading": "Failed acceptance",
+      "moduleCorrect": true,
+      "passageCorrect": true,
+      "expectedInTopFive": true,
+      "responseBytes": 3306
+    },
+    {
+      "id": "Q18",
+      "query": "How do we recover from a timed out operation without duplicates?",
+      "expectedModule": "operating-slices",
+      "expectedHeading": "Recovery checkpoint",
+      "actualModule": "operating-slices",
+      "actualHeading": "Recovery checkpoint",
+      "moduleCorrect": true,
+      "passageCorrect": true,
+      "expectedInTopFive": true,
+      "responseBytes": 4021
+    },
+    {
+      "id": "Q19",
+      "query": "Where should I begin when locating source evidence?",
+      "expectedModule": "agent-routes",
+      "expectedHeading": "Local search",
+      "actualModule": "agent-routes",
+      "actualHeading": "Local search",
+      "moduleCorrect": true,
+      "passageCorrect": true,
+      "expectedInTopFive": true,
+      "responseBytes": 3803
+    },
+    {
+      "id": "Q20",
+      "query": "Can historical context establish what is live now?",
+      "expectedModule": "agent-routes",
+      "expectedHeading": "Historical context",
+      "actualModule": "agent-routes",
+      "actualHeading": "Historical context",
+      "moduleCorrect": true,
+      "passageCorrect": true,
+      "expectedInTopFive": true,
+      "responseBytes": 2632
+    }
+  ],
+  "gates": {
+    "topModuleAtLeast90Percent": true,
+    "citationsExact": true,
+    "byteCapsRespected": true,
+    "freshnessAndAuthorityHonest": true,
+    "syntheticControlsPass": true
+  }
+}

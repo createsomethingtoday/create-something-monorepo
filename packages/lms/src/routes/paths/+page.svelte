@@ -3,20 +3,19 @@
 </script>
 
 <svelte:head>
-  <title>Operator Workflow Paths | CREATE SOMETHING Learn</title>
+  <title>Learning Paths | CREATE SOMETHING Learn</title>
   <meta
     name="description"
-    content="Operator learning paths for creating MCP workflows in the Codex app and making those workflows visible with Canon images."
+    content="Practical paths for governed agent engineering, operator MCP workflows, and Canon proof images."
   />
 </svelte:head>
 
 <div class="paths-shell">
   <header class="paths-hero">
-    <p class="paths-kicker">Operator learning</p>
-    <h1 class="page-title">Operator Workflow Paths</h1>
+    <p class="paths-kicker">CREATE SOMETHING / Learn</p>
+    <h1 class="page-title">Learning Paths</h1>
     <p class="page-subtitle">
-      Use the Codex app to create your first MCP-backed workflow, then use Canon to make the
-      workflow visible through maps, boundaries, gates, receipts, and handoff artifacts.
+      Build an agent you can explain and govern. Then deepen your operator practice with MCP tools and Canon workflow images. The <a href="/reference">reference library</a> covers 523 additional lessons across AI engineering.
     </p>
   </header>
 
@@ -33,9 +32,7 @@
 
         <div class="path-meta">
           <span>{path.lessons.length} lessons</span>
-          <span
-            >{path.id === 'codex-mcp' ? 'Codex MCP-building skill' : 'Canon learning images'}</span
-          >
+          <span>{path.id === 'governed-agent-engineering' ? 'Agent systems and governance' : path.id === 'codex-mcp' ? 'Codex MCP-building skill' : 'Canon learning images'}</span>
           <span>Practical operator workflow</span>
         </div>
       </a>
@@ -47,7 +44,7 @@
   .paths-shell {
     width: min(56rem, calc(100% - 2.5rem));
     margin-inline: auto;
-    padding: clamp(3rem, 8vw, 5rem) 0;
+    padding: clamp(1.75rem, 4vw, 2.5rem) 0;
     color: var(--color-performance-ink, #090909);
   }
 
@@ -76,7 +73,7 @@
     max-width: 12ch;
     margin: 0;
     color: var(--color-performance-ink, #090909);
-    font-size: var(--text-h1);
+    font-size: clamp(2rem, 4vw, 3.25rem);
     font-weight: var(--font-medium);
     line-height: 1.02;
     letter-spacing: 0;
@@ -86,21 +83,21 @@
     max-width: 46rem;
     margin: 0;
     color: var(--color-performance-muted, #5e6268);
-    font-size: var(--text-body-lg);
+    font-size: 1rem;
     line-height: 1.55;
   }
 
   .paths-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
+    gap: 0;
+    border-top: 1px solid var(--color-performance-line);
   }
 
   .path-row {
     display: block;
-    padding: var(--space-lg);
-    border-radius: var(--radius-performance-md, 4px);
-    border: 1px solid var(--color-performance-line, #d7d7d2);
+    padding: var(--space-lg) var(--space-md);
+    border-bottom: 1px solid var(--color-performance-line);
     background: var(--color-performance-panel, #ffffff);
     color: var(--color-performance-ink, #090909);
     transition:
@@ -152,6 +149,10 @@
   }
 
   @media (max-width: 720px) {
+    .path-row {
+      padding: var(--space-md);
+    }
+
     .path-header {
       align-items: flex-start;
       flex-direction: column;

@@ -104,7 +104,8 @@
     width: auto;
   }
   article {
-    border-bottom: 1px solid var(--border);
+    overflow-wrap: anywhere;
+    border-bottom: 1px solid var(--line);
     padding: 1rem 0;
   }
 </style>

@@ -67,11 +67,12 @@ export interface CategoriesResponse {
 	insights: Insight[];
 	summary: {
 		totalCategories: number;
-		totalTemplates: number;
-		totalSales: number;
+		/** Null unless a unique marketplace snapshot supplied it; category rows overlap and are never summed. */
+		totalTemplates: number | null;
+		totalSales: number | null;
     snapshotVersion?: string;
     salesSource?: 'marketplace-snapshot' | 'category-performance';
-		totalRevenue: number;
+		totalRevenue: number | null;
 		avgRevenue: number;
 		lastUpdated: string;
 		nextUpdate: string;
@@ -151,24 +152,16 @@ export function buildMarketplaceSummary(
     return { ...baseSummary, totalMarketplaceSales: categoryTotal, salesSource: 'marketplace-snapshot', dataWarning: null };
   }
 
-	if (categoryRows > 0 && categoryTotal > 0) {
-		return {
-			...baseSummary,
-			totalMarketplaceSales: categoryTotal,
-			salesSource: 'category-performance',
-			dataWarning: null
-		};
-	}
-
+	// Category rows overlap (a multi-tag template sits in each of its categories),
+	// so their sum is never a marketplace total. Without a unique snapshot the
+	// only honest figure is the bounded top-50 leaderboard sum, labelled as such.
 	if (leaderboardRows > 0 && leaderboardTotal > 0) {
 		return {
 			...baseSummary,
 			totalMarketplaceSales: leaderboardTotal,
 			salesSource: 'leaderboard-top-50',
 			dataWarning:
-				categoryRows > 0
-					? 'Category performance snapshot has no sales total; showing top-50 leaderboard total until the category feed is repaired.'
-					: 'Category performance snapshot is empty; showing top-50 leaderboard total until the category feed refreshes.'
+				'Marketplace-wide total is unavailable; this is the sum across the top 50 templates only.'
 		};
 	}
 

@@ -1,0 +1,167 @@
+/* GiGi studio treatment: native system type and neutral slate surfaces.
+ * Reference evidence and tradeoffs: evidence/visual-alignment/REVIEW.md.
+ * Presentation only; navigation, stores, requests and approvals are unchanged. */
+:root {
+  --studio-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --bg: #17191c;
+  --panel: #22252a;
+  --raised: #2d3238;
+  --text: #f1f3f5;
+  --muted: #b1b8c2;
+  --line: #3b414a;
+  --control-border: #7d8794;
+  --signal: #9dd278;
+  --studio-action: #c8e3aa;
+  --studio-action-ink: #172410;
+  font-family: var(--studio-sans);
+  color: var(--text);
+  background: var(--bg);
+}
+h1, h2, .card .value, .empty strong {
+  font-family: var(--studio-sans);
+  font-weight: 500;
+  letter-spacing: -.025em;
+}
+h1 { font-size: 32px; line-height: 1.2; }
+h2 { font-size: 22px; line-height: 1.3; }
+.setup h1 { font-size: 36px; }
+.eyebrow { font-size: 12px; letter-spacing: .02em; text-transform: none; color: var(--muted); }
+.subhead { font-size: 14px; }
+.sidebar { background: var(--bg); }
+.nav-label { color: var(--muted); letter-spacing: .08em; }
+.nav button { min-height: 36px; color: var(--muted); }
+.workspace-navigation .nav button { min-height: 36px; }
+.card, .panel, .step, .workspace-chip, .empty { border-radius: 8px; }
+.btn { min-height: 36px; border-color: var(--control-border); font-size: 13px; }
+.btn.primary { min-height: 44px; background: var(--studio-action); color: var(--studio-action-ink); border-color: var(--studio-action); }
+.btn:hover { border-color: var(--signal); }
+.btn.text { border: 0; }
+.btn.danger { border-color: #a57065; }
+.field input, .field select, .field textarea, .compact-input,
+.chat-composer textarea, .music-filters input, .music-filters select,
+.music-edit-fields input, .social-editor input, .social-editor select, .social-editor textarea {
+  border-color: var(--control-border); background: var(--bg); border-radius: 8px;
+}
+.field label, .field-help, .row small, .detail-grid dt, .detail-grid dd { font-size: 12px; }
+.row strong { font-size: 14px; }
+.empty strong { font-size: 18px; }
+.music-workspace { gap: 12px; padding-top: 0; }
+.music-header .eyebrow { font-size: 12px; letter-spacing: .02em; }
+.music-row { padding: 10px 4px; gap: 12px; }
+.music-info h2 { font-size: 15px; font-weight: 600; }
+.music-row-actions .btn, .music-more summary { min-height: 36px; font-size: 12px; }
+.music-more summary { display: flex; align-items: center; border-color: var(--control-border); }
+.music-privacy, .music-availability { opacity: 1; color: var(--muted); }
+.social-connection, .social-draft-card, .social-preview { border-radius: 8px; }
+.social-draft-card { border-color: var(--control-border); }
+.social-draft-card.selected { border-color: var(--signal); background: var(--panel); }
+.social-draft-card small, .social-preview small { opacity: 1; color: var(--muted); }
+.chat-head h2 { font-size: 22px; }
+.chat-message { font-size: 15px; line-height: 1.6; }
+.chat-message.from-user { background: var(--raised); border-color: var(--line); }
+.chat-message-label { font-size: 12px; letter-spacing: 0; text-transform: none; }
+.chat-composer textarea { font-size: 14px; }
+.chat-empty, .chat-hint { font-size: 14px; }
+.chat-approval { font-size: 13px; }
+.chat-proposal-fields { font-size: 12px; }
+:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
+@media (max-width: 900px) { h1 { font-size: 28px; } }
+@media (max-width: 700px) { .setup h1 { font-size: 30px; } }
+/* The overview's adjacent actions must stay separate when they wrap. */
+.callout > .btn { margin: 4px 8px 0 0; }
+
+/* Neutral chrome; green is reserved for actions, selection and focus. */
+.callout { background: var(--panel); color: var(--text); }
+.chat-context { background: var(--raised); border-color: var(--control-border); }
+.config { background: var(--bg); }
+/* WebKit's native select chrome ignored vertical padding in Music. Preserve
+ * native select semantics/popups while giving every selector a visible target. */
+.field select, .music-filters select, .social-editor select {
+  appearance: none;
+  min-height: 42px;
+  padding-right: 32px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 15px) 50%, calc(100% - 10px) 50%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+}
+
+/* Final product layer: loaded after reference geometry so slate remains the
+   owning theme. Decorative separators are quieter than interactive controls. */
+:root { --space-unit: 4px; --artwork-ground: #141619; }
+body { line-height: 1.5; }
+.content { padding-top: 24px; padding-bottom: 48px; }
+.page-head { align-items: flex-start; gap: 24px; }
+.page-head h1, .music-header h1, .social-workspace h1 { line-height: 1.2; }
+.page-head .subhead { max-width: 68ch; line-height: 1.6; }
+.reference-header { height: 56px; gap: 8px; }
+.reference-header .reference-brand { font-size: 22px; letter-spacing: -1px; padding-right: 16px; }
+.reference-nav { gap: 4px; }
+.reference-nav > button, .reference-more > summary { min-height: 36px; padding-inline: 12px; border-radius: 0; }
+.reference-nav > button[aria-current=page], .reference-more > summary.selected {
+  color: var(--signal); background: transparent; box-shadow: none; font-weight: 700;
+}
+.reference-header .reference-ask { border: 1px solid var(--control-border); padding-inline: 12px; }
+.reference-menu { padding: 12px; }
+.reference-menu button[aria-current=page] { background: var(--raised); }
+.reference-history button { min-width: 28px; }
+.chat-panel { top: 56px; }
+.panel-head { gap: 12px; }
+.today-card { border-radius: 8px; padding: 16px; gap: 8px; }
+.today-card strong { font-size: 20px; letter-spacing: -.025em; }
+.today-card-footer { line-height: 1.5; }
+.artwork-frame { background: var(--artwork-ground); border: 1px solid var(--line); }
+.artwork-open .artwork-frame { height: 240px; }
+.artwork-dialog { border-radius: 12px; line-height: 1.6; }
+.artwork-dialog h2 { margin: 0 0 12px; }
+.music-player:not(:empty) { padding: 16px; gap: 12px; border-radius: 8px; }
+.music-player strong { font-size: 16px; }
+.music-player video { max-height: 320px; background: var(--artwork-ground); }
+.music-player audio { max-width: none; }
+.music-status:empty, .music-error:empty { display: none; }
+.music-error:not(:empty) { border: 1px solid var(--danger); border-radius: 8px; padding: 12px; line-height: 1.6; }
+.music-error .btn { margin-left: 8px; }
+.music-filters { gap: 12px; align-items: end; }
+.music-filters input, .music-filters select { min-height: 42px; }
+.music-empty { border: 1px dashed var(--line); background: var(--panel); padding: 40px 24px; }
+.music-privacy, .music-limit { max-width: 90ch; line-height: 1.6; }
+@media (max-width: 1000px) {
+  .reference-nav > button, .reference-more > summary { padding-inline: 8px; }
+  .reference-header .reference-find span { display: none; }
+}
+@media (max-width: 700px) {
+  .reference-header { height: auto; min-height: 56px; }
+  .chat-panel { top: 104px; }
+  .content { padding: 20px 16px 40px; }
+}
+
+/* Typography: use the installed system face; no font download or new license.
+   Dates and amounts use tabular figures without changing stored formatting. */
+body { font-size: 14px; font-weight: 400; line-height: 1.55; }
+h1, .page-head h1, .music-header h1, .social-workspace h1 { font-weight: 600; letter-spacing: -.025em; }
+h2, .panel-head h2 { font-weight: 600; line-height: 1.35; }
+.page-head > div, .music-info, .social-draft-card { min-width: 0; }
+h1, .row strong, .music-info h2, .social-draft-card strong { overflow-wrap: anywhere; }
+.row strong, .music-info h2 { font-weight: 600; line-height: 1.45; }
+.field label, .music-filters label, .music-edit-fields label, .social-editor label {
+  font-size: 12px; font-weight: 600; color: var(--muted); line-height: 1.5;
+}
+.field input, .field select, .field textarea, .music-filters input, .music-filters select,
+.music-edit-fields input, .social-editor input, .social-editor select, .social-editor textarea {
+  font-size: 14px; font-weight: 400; line-height: 1.5;
+}
+.row small, .field-help, .artwork-origin, .music-privacy, .music-limit, .music-availability,
+.social-draft-card small, .social-preview small, .today-card-kind, .today-card-footer {
+  font-size: 12px; font-weight: 400; line-height: 1.6; color: var(--muted);
+}
+.detail-grid dt { font-size: 12px; font-weight: 500; line-height: 1.6; }
+.detail-grid dd { font-size: 13px; font-weight: 400; line-height: 1.6; }
+.agenda-time, .gigs-row small, .today-card-footer, .card .value, .today-summary strong,
+.detail-grid dd, .music-info p { font-variant-numeric: tabular-nums; }
+.agenda-time { white-space: nowrap; }
+.music-info p, .social-draft-card, .artwork-target, .reference-menu p { overflow-wrap: anywhere; }
+.btn, .reference-header button, .reference-header summary { font-weight: 500; }
+@media (max-width: 900px) {
+  .page-head h1, .music-header h1, .social-workspace h1 { font-size: 28px; }
+  .detail-grid { grid-template-columns: 112px minmax(0, 1fr); }
+}

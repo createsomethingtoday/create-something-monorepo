@@ -610,6 +610,32 @@ describe('Designer Validator', () => {
 			expect(seoCategory!.issues.find(i => i.id === 'seo.missing-description')).toBeUndefined();
 		});
 
+		it('warns, without failing SEO Metadata, when Designer meta descriptions are under 150 characters', async () => {
+		const result = await validateDesignerData({
+			variables: { collections: [] },
+			components: [],
+			styles: [],
+			pages: [
+				{
+					id: 'p1', name: 'Home', slug: '', type: 'Page', isHomePage: true, publishPath: '/',
+					seo: { title: 'Acme - Webflow HTML website template', description: 'D'.repeat(155), openGraphImage: 'https://example.com/og.jpg' }
+				},
+				{
+					id: 'p2', name: 'About', slug: 'about', type: 'Page', publishPath: '/about',
+					seo: { title: 'About Acme', description: 'E'.repeat(130) }
+				}
+			],
+			assets: []
+		} as any);
+
+		const seoCategory = result.categories.find(c => c.category === 'SEO Metadata');
+		const short = seoCategory!.issues.find(i => i.id === 'seo.description-too-short');
+		expect(short?.severity).toBe('warning');
+		expect(JSON.stringify(short?.details)).toContain('About');
+		expect(JSON.stringify(short?.details)).not.toContain('Home');
+		expect(seoCategory!.passed).toBe(true);
+	});
+
 		it('passes SEO Metadata when every page has unique metadata and the home page has an OG image', async () => {
 		const result = await validateDesignerData({
 			variables: { collections: [] },
@@ -635,6 +661,89 @@ describe('Designer Validator', () => {
 		const seoCategory = result.categories.find(c => c.category === 'SEO Metadata');
 		expect(seoCategory!.passed).toBe(true);
 		expect(seoCategory!.issues.filter(i => i.severity === 'error')).toEqual([]);
+	});
+
+	describe('home SEO title format', () => {
+		const validateHomeTitle = (title: string) => validateDesignerData({
+			variables: { collections: [] },
+			components: [],
+			styles: [],
+			pages: [
+				{
+					id: 'p1', name: 'Home', slug: '', type: 'Page', isHomePage: true, publishPath: '/',
+					seo: { title, description: 'D'.repeat(155), openGraphImage: 'https://example.com/og.jpg' }
+				}
+			],
+			assets: []
+		} as any).then(result => result.categories.find(c => c.category === 'SEO Metadata')!);
+
+		it.each([
+			'Acme - Webflow HTML website template',
+			'Acme Studio - Webflow Ecommerce website template',
+			'Acme – webflow html website template '
+		])('accepts %j', async title => {
+			const seoCategory = await validateHomeTitle(title);
+			expect(seoCategory.issues.find(i => i.id === 'seo.home-title-format')).toBeUndefined();
+		});
+
+		it.each([
+			'Acme | Creative Agency Template',
+			'Acme - Webflow Website Template',
+			'Webflow HTML website template',
+			'- Webflow HTML website template'
+		])('blocks %j', async title => {
+			const seoCategory = await validateHomeTitle(title);
+			const issue = seoCategory.issues.find(i => i.id === 'seo.home-title-format');
+			expect(issue?.severity).toBe('error');
+			expect(issue?.details?.currentTitle).toBe(title);
+			expect(seoCategory.passed).toBe(false);
+		});
+
+		it('finds the home page by its root path when the homepage flag is missing', async () => {
+			const result = await validateDesignerData({
+				variables: { collections: [] },
+				components: [],
+				styles: [],
+				pages: [
+					{
+						id: 'p1', name: 'Start', slug: '', type: 'Page', publishPath: '/',
+						seo: { title: 'Acme | Agency', description: 'D'.repeat(155), openGraphImage: 'https://example.com/og.jpg' }
+					}
+				],
+				assets: []
+			} as any);
+
+			const seoCategory = result.categories.find(c => c.category === 'SEO Metadata')!;
+			expect(seoCategory.issues.find(i => i.id === 'seo.home-title-format')?.severity).toBe('error');
+		});
+
+		it('judges the root page, not a non-root page flagged as home by name', async () => {
+			const result = await validateDesignerData({
+				variables: { collections: [] },
+				components: [],
+				styles: [],
+				pages: [
+					{
+						id: 'p2', name: 'Home', slug: 'home', type: 'Page', isHomePage: true, publishPath: '/home',
+						seo: { title: 'Home Variant | Acme', description: 'E'.repeat(155), openGraphImage: 'https://example.com/og.jpg' }
+					},
+					{
+						id: 'p1', name: 'Landing', slug: '', type: 'Page', isHomePage: true, publishPath: '/',
+						seo: { title: 'Acme - Webflow HTML website template', description: 'D'.repeat(155), openGraphImage: 'https://example.com/og.jpg' }
+					}
+				],
+				assets: []
+			} as any);
+
+			const seoCategory = result.categories.find(c => c.category === 'SEO Metadata')!;
+			expect(seoCategory.issues.find(i => i.id === 'seo.home-title-format')).toBeUndefined();
+		});
+
+		it('leaves an empty home title to seo.missing-title', async () => {
+			const seoCategory = await validateHomeTitle('');
+			expect(seoCategory.issues.find(i => i.id === 'seo.missing-title')).toBeDefined();
+			expect(seoCategory.issues.find(i => i.id === 'seo.home-title-format')).toBeUndefined();
+		});
 	});
 });
 
@@ -1048,6 +1157,159 @@ describe('Content Validator', () => {
 		expect(issues.map(i => i.id)).toEqual(['missing-alt-text']);
 	});
 
+	it('flags meta descriptions shorter than 150 characters to match the submission guidelines', () => {
+		const pageWithDescriptionLength = (length: number) => ({
+			url: `https://example.com/page-${length}`,
+			title: `Page ${length}`,
+			hasLoremIpsum: false,
+			headingHierarchy: { h1Count: 1, hasSkippedLevels: false, structure: [] },
+			imageCount: 0,
+			imagesWithoutAlt: 0,
+			seo: {
+				title: 'A descriptive page title for testing',
+				titleLength: 36,
+				metaDescription: 'x'.repeat(length),
+				metaDescriptionLength: length,
+				hasValidTitle: true,
+				hasValidDescription: length >= 150 && length <= 160,
+				openGraph: { title: 'og', description: 'og', image: 'og.jpg', url: null },
+				twitterCard: { title: null, description: null, image: null },
+				canonical: null,
+				robots: null
+			}
+		});
+
+		const issues = generateContentIssues([pageWithDescriptionLength(130), pageWithDescriptionLength(155)] as any, {
+			lorem: false,
+			headings: false,
+			altText: false,
+			seo: true,
+			links: false,
+			contentQuality: false
+		});
+
+		const shortIssues = issues.filter(i => i.id.startsWith('description-too-short'));
+		expect(shortIssues).toHaveLength(1);
+		expect(shortIssues[0].location).toBe('https://example.com/page-130');
+		expect(shortIssues[0].details?.recommendedLength).toBe('150-160 characters');
+	});
+
+	it('requires robots noindex on the Licenses and Changelog pages', () => {
+		const pageWithRobots = (path: string, robots: string | null) => ({
+			url: `https://example.com${path}`,
+			title: path,
+			hasLoremIpsum: false,
+			headingHierarchy: { h1Count: 1, hasSkippedLevels: false, structure: [] },
+			imageCount: 0,
+			imagesWithoutAlt: 0,
+			seo: {
+				title: 'A descriptive page title for testing',
+				titleLength: 36,
+				metaDescription: 'x'.repeat(155),
+				metaDescriptionLength: 155,
+				hasValidTitle: true,
+				hasValidDescription: true,
+				openGraph: { title: 'og', description: 'og', image: 'og.jpg', url: null },
+				twitterCard: { title: null, description: null, image: null },
+				canonical: null,
+				robots
+			}
+		});
+
+		const issues = generateContentIssues([
+			pageWithRobots('/', null),
+			pageWithRobots('/about', null),
+			pageWithRobots('/licenses', null),
+			pageWithRobots('/utility/changelog', 'index, follow'),
+			pageWithRobots('/license', 'NOINDEX, nofollow'),
+			pageWithRobots('/changelog', 'none'),
+			pageWithRobots('/archive/license', 'max-image-preview:none')
+		] as any, {
+			lorem: false,
+			headings: false,
+			altText: false,
+			seo: true,
+			links: false,
+			contentQuality: false
+		});
+
+		const indexable = issues.filter(i => i.id.startsWith('utility-page-indexable'));
+		expect(indexable.map(i => i.location)).toEqual([
+			'https://example.com/licenses',
+			'https://example.com/utility/changelog',
+			'https://example.com/archive/license'
+		]);
+		expect(indexable.every(i => i.severity === 'error')).toBe(true);
+		expect(indexable[1].details?.currentRobots).toBe('index, follow');
+	});
+
+	it('reads every robots meta tag on a published page, not only the first', async () => {
+		const { parseHTML: realParseHTML } = await vi.importActual<typeof import('../src/utils/fetch-utils')>('../src/utils/fetch-utils');
+		vi.mocked(parseHTML).mockReturnValue(realParseHTML(`<!doctype html><html><head><title>Licenses</title>
+			<meta name="robots" content="index, follow">
+			<meta content="noindex" name="robots">
+		</head><body><main><h1>Licenses</h1></main></body></html>`));
+
+		const result = await validateContent('https://example.com', undefined, {
+			pageScope: 'current',
+			currentPageSlug: '/licenses'
+		} as any);
+
+		expect(result.pages[0].seo.robots).toBe('index, follow, noindex');
+		expect(result.issues.some(i => i.id.startsWith('utility-page-indexable'))).toBe(false);
+	});
+
+	it('reads robots meta tags whose attribute names are uppercase', async () => {
+		const { parseHTML: realParseHTML } = await vi.importActual<typeof import('../src/utils/fetch-utils')>('../src/utils/fetch-utils');
+		vi.mocked(parseHTML).mockReturnValue(realParseHTML(`<!doctype html><html><head><title>Changelog</title>
+			<META NAME="ROBOTS" CONTENT="noindex">
+		</head><body><main><h1>Changelog</h1></main></body></html>`));
+
+		const result = await validateContent('https://example.com', undefined, {
+			pageScope: 'current',
+			currentPageSlug: '/changelog'
+		} as any);
+
+		expect(result.pages[0].seo.robots).toBe('noindex');
+		expect(result.issues.some(i => i.id.startsWith('utility-page-indexable'))).toBe(false);
+	});
+
+	it.each([
+		['unquoted attributes', '<meta name=robots content=noindex>', 'noindex'],
+		['spaces around =', '<meta name = "robots" content = "noindex, follow">', 'noindex, follow']
+	])('accepts a robots noindex tag with %s', async (_label, tag, robots) => {
+		const { parseHTML: realParseHTML } = await vi.importActual<typeof import('../src/utils/fetch-utils')>('../src/utils/fetch-utils');
+		vi.mocked(parseHTML).mockReturnValue(realParseHTML(`<!doctype html><html><head><title>Licenses</title>
+			${tag}
+		</head><body><main><h1>Licenses</h1></main></body></html>`));
+
+		const result = await validateContent('https://example.com', undefined, {
+			pageScope: 'current',
+			currentPageSlug: '/licenses'
+		} as any);
+
+		expect(result.pages[0].seo.robots).toBe(robots);
+		expect(result.issues.some(i => i.id.startsWith('utility-page-indexable'))).toBe(false);
+	});
+
+	it('ignores robots tags that crawlers do not apply', async () => {
+		const { parseHTML: realParseHTML } = await vi.importActual<typeof import('../src/utils/fetch-utils')>('../src/utils/fetch-utils');
+		vi.mocked(parseHTML).mockReturnValue(realParseHTML(`<!doctype html><html><head><title>Changelog</title>
+			<!-- <meta name="robots" content="noindex"> -->
+			<meta data-name="robots" content="noindex">
+			<script>document.head.insertAdjacentHTML('beforeend', '<meta name="robots" content="noindex">');</script>
+			<template><meta name="robots" content="noindex"></template>
+		</head><body><main><h1>Changelog</h1></main></body></html>`));
+
+		const result = await validateContent('https://example.com', undefined, {
+			pageScope: 'current',
+			currentPageSlug: '/changelog'
+		} as any);
+
+		expect(result.pages[0].seo.robots).toBeNull();
+		expect(result.issues.find(i => i.id.startsWith('utility-page-indexable'))?.severity).toBe('error');
+	});
+
 	it('can run only the lorem/placeholder check', () => {
 		const pages: any[] = [{
 			url: 'https://example.com/',
@@ -1442,6 +1704,56 @@ describe('Asset Validator', () => {
 			severity: 'error',
 			message: '1 assets exceed the 4MB maximum file size'
 		}));
+	});
+
+	it('does not ask creators to compress Webflow-generated video posters', () => {
+		// Real filename from a creator report (community.webflow.com, Sep 2026): a 177KB poster frame
+		// Webflow extracted from a background video. Creators cannot replace or compress it.
+		const posterName = '6aa109925d5dbc5060f776eb%2F6aa273caf7b2994b8b92b968_counter-bg-video_poster.0000000.jpg';
+		const issues = generateAssetIssues([
+			{
+				name: posterName,
+				url: `https://cdn.prod.website-files.com/6aa109925d5dbc5060f776eb/${posterName}`,
+				size: 177 * 1024,
+				format: 'image/jpeg',
+				isOptimized: false,
+				usageCount: 1,
+				hasLicensingIssues: false
+			},
+			{
+				name: 'hero.jpg',
+				url: 'https://cdn.prod.website-files.com/6aa109925d5dbc5060f776eb/hero.jpg',
+				size: 200 * 1024,
+				format: 'image/jpeg',
+				isOptimized: false,
+				usageCount: 1,
+				hasLicensingIssues: false
+			}
+		]);
+
+		const compressionIssue = issues.find((issue) => issue.id === 'assets-above-compression-target');
+		expect(compressionIssue?.message).toBe('1 assets are above the 150KB compression target');
+		expect(compressionIssue?.details?.oversizedAssets).toEqual([expect.objectContaining({ name: 'hero.jpg' })]);
+
+		const optimizationIssue = issues.find((issue) => issue.id === 'assets-not-optimized');
+		expect(optimizationIssue?.details?.unoptimizedAssets).toEqual([expect.objectContaining({ name: 'hero.jpg' })]);
+	});
+
+	it('still blocks Webflow-generated video posters above the 4MB maximum', () => {
+		const issues = generateAssetIssues([
+			{
+				name: 'hero-video_poster.0000000.jpg',
+				url: 'https://cdn.prod.website-files.com/site/hero-video_poster.0000000.jpg',
+				size: 5 * 1024 * 1024,
+				format: 'image/jpeg',
+				isOptimized: false,
+				usageCount: 1,
+				hasLicensingIssues: false
+			}
+		]);
+
+		expect(issues.find((issue) => issue.id === 'assets-above-compression-target')).toBeUndefined();
+		expect(issues.find((issue) => issue.id === 'assets-extremely-large')?.message).toBe('1 assets exceed the 4MB maximum file size');
 	});
 });
 
@@ -2691,6 +3003,310 @@ describe('Issue Feedback Endpoint', () => {
 			createExecutionContext()
 		);
 
+		expect(response.status).toBe(400);
+	});
+});
+
+describe('OAuth site-access evidence', () => {
+	const MCP_URL = 'https://mcp.test.invalid/mcp';
+	const WORKER_BASE = 'https://validation-worker.createsomething.workers.dev';
+
+	function mockMcpServer(site: Record<string, unknown>, options: { sse?: boolean; protocolVersion?: string } = {}) {
+		const calls: Array<{ headers: Headers; body: any }> = [];
+		const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+			const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+			if (url !== MCP_URL) return new Response('unexpected', { status: 500 });
+			const body = JSON.parse(String(init?.body));
+			calls.push({ headers: new Headers(init?.headers), body });
+			if (!('id' in body)) return new Response(null, { status: 202 });
+			const result =
+				body.method === 'initialize'
+					? { protocolVersion: options.protocolVersion ?? '2025-06-18', capabilities: {}, serverInfo: { name: 'mock', version: '0' } }
+					: {
+							content: [
+								{
+									type: 'text',
+									text: JSON.stringify({ label: 'site', action: 'get_site', result: site })
+								}
+							]
+						};
+			const message = JSON.stringify({ jsonrpc: '2.0', id: body.id, result });
+			return options.sse
+				? new Response(`event: message\ndata: ${message}\n\n`, {
+						status: 200,
+						headers: { 'Content-Type': 'text/event-stream', 'Mcp-Session-Id': 'mock-session' }
+					})
+				: new Response(message, {
+						status: 200,
+						headers: { 'Content-Type': 'application/json', 'Mcp-Session-Id': 'mock-session' }
+					});
+		});
+		vi.stubGlobal('fetch', fetchMock);
+		return calls;
+	}
+
+	function submitRequest(siteId: string, accessToken: string) {
+		return new Request(`${WORKER_BASE}/app-validator/submit`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				siteId,
+				siteName: 'Evidence Site',
+				siteUrl: 'https://evidence-site.webflow.io',
+				evidence: { type: 'oauth_site_access', accessToken },
+				validationResults: {
+					url: 'https://evidence-site.webflow.io',
+					summary: { totalErrors: 0, totalWarnings: 0, passedCategories: 2, failedCategories: 0 },
+					categories: [
+						{ category: 'Designer Structure', passed: true, issues: [] },
+						{ category: 'Assets & Images', passed: true, issues: [] }
+					],
+					scope: {
+						selectedChecks: ['designer', 'assets', 'content', 'accessibility'],
+						pageScope: 'all',
+						publishedChecks: 'full',
+						pageSlugsCount: 4
+					}
+				}
+			})
+		});
+	}
+
+	it('verifies oauth_site_access evidence through the MCP server and records it', async () => {
+		const accessToken = 'mcp-test-token-valid-0001';
+		const calls = mockMcpServer(
+			{
+				id: 'site_oauth_evidence',
+				workspaceId: 'ws_evidence',
+				shortName: 'Evidence-Site',
+				customDomains: [{ url: 'www.Evidence.example' }, { url: 'https://evidence.example/' }]
+			},
+			{ sse: true }
+		);
+		const putMock = vi.fn(async () => undefined);
+
+		const response = await worker.fetch(
+			submitRequest('site_oauth_evidence', accessToken),
+			{ VALIDATOR_MCP_SERVER_URL: MCP_URL, VALIDATOR_RESULT_ARTIFACTS: { put: putMock } } as any,
+			createExecutionContext()
+		);
+
+		expect(response.status).toBe(200);
+		const responseText = await response.text();
+		expect(responseText).not.toContain(accessToken);
+		const payload = JSON.parse(responseText);
+		expect(payload.accepted).toBe(true);
+		expect(payload.evidence).toEqual({
+			type: 'oauth_site_access',
+			verified: true,
+			verifiedAt: expect.any(String),
+			workspaceId: 'ws_evidence',
+			accessTokenSha256: await sha256ForTest(accessToken),
+			rawAccessTokenStored: false,
+			publishedHosts: ['evidence-site.webflow.io', 'www.evidence.example', 'evidence.example']
+		});
+
+		expect(calls.map((call) => call.body.method)).toEqual([
+			'initialize',
+			'notifications/initialized',
+			'tools/call'
+		]);
+		expect(calls[0].headers.get('Authorization')).toBe(`Bearer ${accessToken}`);
+		expect(calls[0].headers.get('MCP-Protocol-Version')).toBe('2025-06-18');
+		expect(calls[0].headers.get('Accept')).toBe('application/json, text/event-stream');
+		expect(calls[2].headers.get('Mcp-Session-Id')).toBe('mock-session');
+		const toolArgs = calls[2].body.params.arguments;
+		expect(calls[2].body.params.name).toBe('data_sites_tool');
+		expect(toolArgs.actions).toEqual([{ label: 'site', get_site: { site_id: 'site_oauth_evidence' } }]);
+		expect(toolArgs.session_id).toBe('start');
+		expect(toolArgs.agent_id).toMatch(/^validation-worker\|evidence\|[a-f0-9]+$/);
+		const contextWords = String(toolArgs.context).split(/\s+/).length;
+		expect(contextWords).toBeGreaterThanOrEqual(15);
+		expect(contextWords).toBeLessThanOrEqual(25);
+
+		expect(putMock).toHaveBeenCalledTimes(1);
+		const [, body] = putMock.mock.calls[0] as unknown as [string, string];
+		expect(body).not.toContain(accessToken);
+		const artifact = JSON.parse(body);
+		expect(artifact.schema_version).toBe('validator_app_results_submission.v0.2');
+		expect(artifact.evidence.verified).toBe(true);
+		expect(artifact.evidence.rawAccessTokenStored).toBe(false);
+	});
+
+	it('rejects evidence when the token reads a different site and stores nothing', async () => {
+		const accessToken = 'mcp-test-token-other-site-0002';
+		mockMcpServer({ id: 'site_someone_else', workspaceId: 'ws_other', shortName: 'other-site', customDomains: [] });
+
+		const response = await worker.fetch(
+			submitRequest('site_oauth_mismatch', accessToken),
+			{ VALIDATOR_MCP_SERVER_URL: MCP_URL } as any,
+			createExecutionContext()
+		);
+
+		expect(response.status).toBe(403);
+		const responseText = await response.text();
+		expect(responseText).not.toContain(accessToken);
+		const payload = JSON.parse(responseText);
+		expect(payload.error).toBe('oauth_site_access evidence could not be verified');
+		expect(payload.correlationId).toEqual(expect.any(String));
+
+		const latest = await worker.fetch(
+			new Request(`${WORKER_BASE}/app-validator/submission/latest?siteId=site_oauth_mismatch`, { method: 'GET' }),
+			{} as any,
+			createExecutionContext()
+		);
+		expect(latest.status).toBe(404);
+		expect(((await latest.json()) as any).status).toBe('missing');
+	});
+
+	it('returns the latest result with evidence when looked up by published URL', async () => {
+		const accessToken = 'mcp-test-token-lookup-0003';
+		mockMcpServer({
+			id: 'site_oauth_lookup',
+			workspaceId: 'ws_lookup',
+			shortName: 'oauth-lookup',
+			customDomains: [{ url: 'lookup.example' }]
+		});
+		const submit = await worker.fetch(
+			submitRequest('site_oauth_lookup', accessToken),
+			{ VALIDATOR_MCP_SERVER_URL: MCP_URL } as any,
+			createExecutionContext()
+		);
+		expect(submit.status).toBe(200);
+
+		for (const publishedUrl of ['https://OAuth-Lookup.webflow.io/about?x=1', 'https://lookup.example/']) {
+			const response = await worker.fetch(
+				new Request(
+					`${WORKER_BASE}/app-validator/submission/latest?publishedUrl=${encodeURIComponent(publishedUrl)}`,
+					{ method: 'GET', headers: { Origin: 'https://webflow.com' } }
+				),
+				{} as any,
+				createExecutionContext()
+			);
+			expect(response.status).toBe(200);
+			const responseText = await response.text();
+			expect(responseText).not.toContain(accessToken);
+			const payload = JSON.parse(responseText);
+			expect(payload.status).toBe('available');
+			expect(payload.siteId).toBe('site_oauth_lookup');
+			expect(payload.passed).toBe(true);
+			expect(payload.scope).toEqual({
+				selectedChecks: ['designer', 'assets', 'content', 'accessibility'],
+				pageScope: 'all',
+				publishedChecks: 'full',
+				pageSlugsCount: 4
+			});
+			expect(payload.evidence).toEqual(
+				expect.objectContaining({
+					type: 'oauth_site_access',
+					verified: true,
+					workspaceId: 'ws_lookup',
+					rawAccessTokenStored: false,
+					publishedHosts: ['oauth-lookup.webflow.io', 'lookup.example']
+				})
+			);
+		}
+	});
+
+	it('retires published-host mappings that the latest verification no longer returns', async () => {
+		const accessToken = 'mcp-test-token-retire-0004';
+		mockMcpServer({
+			id: 'site_oauth_retire',
+			workspaceId: 'ws_retire',
+			shortName: 'oauth-retire',
+			customDomains: [{ url: 'old-domain.example' }]
+		});
+		const first = await worker.fetch(
+			submitRequest('site_oauth_retire', accessToken),
+			{ VALIDATOR_MCP_SERVER_URL: MCP_URL } as any,
+			createExecutionContext()
+		);
+		expect(first.status).toBe(200);
+
+		// The site drops its custom domain; the next verification returns only the webflow.io host.
+		mockMcpServer({ id: 'site_oauth_retire', workspaceId: 'ws_retire', shortName: 'oauth-retire', customDomains: [] });
+		const second = await worker.fetch(
+			submitRequest('site_oauth_retire', accessToken),
+			{ VALIDATOR_MCP_SERVER_URL: MCP_URL } as any,
+			createExecutionContext()
+		);
+		expect(second.status).toBe(200);
+
+		const retired = await worker.fetch(
+			new Request(
+				`${WORKER_BASE}/app-validator/submission/latest?publishedUrl=${encodeURIComponent('https://old-domain.example/')}`,
+				{ method: 'GET' }
+			),
+			{} as any,
+			createExecutionContext()
+		);
+		expect(retired.status).toBe(404);
+		expect(((await retired.json()) as any).status).toBe('missing');
+
+		const kept = await worker.fetch(
+			new Request(
+				`${WORKER_BASE}/app-validator/submission/latest?publishedUrl=${encodeURIComponent('https://oauth-retire.webflow.io/')}`,
+				{ method: 'GET' }
+			),
+			{} as any,
+			createExecutionContext()
+		);
+		expect(kept.status).toBe(200);
+		expect(((await kept.json()) as any).siteId).toBe('site_oauth_retire');
+	});
+
+	it('uses the protocol version the MCP server returns from initialize', async () => {
+		const accessToken = 'mcp-test-token-protocol-0005';
+		const calls = mockMcpServer(
+			{ id: 'site_oauth_protocol', workspaceId: 'ws_protocol', shortName: 'oauth-protocol', customDomains: [] },
+			{ protocolVersion: '2025-03-26' }
+		);
+		const response = await worker.fetch(
+			submitRequest('site_oauth_protocol', accessToken),
+			{ VALIDATOR_MCP_SERVER_URL: MCP_URL } as any,
+			createExecutionContext()
+		);
+		expect(response.status).toBe(200);
+
+		const [initialize, ...afterInitialize] = calls;
+		expect(initialize.body.method).toBe('initialize');
+		expect(afterInitialize.length).toBeGreaterThanOrEqual(2);
+		for (const call of afterInitialize) {
+			expect(call.headers.get('MCP-Protocol-Version')).toBe('2025-03-26');
+		}
+	});
+
+	it('returns missing for an unknown published URL', async () => {
+		const response = await worker.fetch(
+			new Request(
+				`${WORKER_BASE}/app-validator/submission/latest?publishedUrl=${encodeURIComponent('https://never-verified.webflow.io')}`,
+				{ method: 'GET' }
+			),
+			{} as any,
+			createExecutionContext()
+		);
+
+		expect(response.status).toBe(404);
+		const payload = (await response.json()) as any;
+		expect(payload.status).toBe('missing');
+		expect(payload.accepted).toBe(false);
+		expect(payload.passed).toBe(false);
+	});
+
+	it('rejects malformed evidence with 400', async () => {
+		const response = await worker.fetch(
+			new Request(`${WORKER_BASE}/app-validator/submit`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					siteId: 'site_bad_evidence',
+					evidence: { type: 'something_else', accessToken: 'x' },
+					validationResults: { summary: {}, categories: [] }
+				})
+			}),
+			{} as any,
+			createExecutionContext()
+		);
 		expect(response.status).toBe(400);
 	});
 });

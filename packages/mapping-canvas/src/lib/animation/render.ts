@@ -1,3 +1,4 @@
+import { arrowHeadPoints } from '../arrow-geometry';
 import {
   drawingInk,
   evaluateCamera,
@@ -200,6 +201,7 @@ export class Renderer {
     ctx.translate(k.x, k.y);
     ctx.rotate((k.rotation * Math.PI) / 180);
     ctx.scale(k.scaleX, k.scaleY);
+    if(d.hidden) {ctx.restore();return;}
     const ink = drawingInk(d, project.background);
     ctx.strokeStyle = tint ?? ink;
     ctx.fillStyle = tint ?? ink;
@@ -207,6 +209,7 @@ export class Renderer {
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
     if (d.kind === 'stroke') {
+      if(d.arrowheadScale !== undefined) ctx.lineCap='butt';
       const points = boiledPoints(k.points, d.boil, time);
       let total = 0;
       for (let i = 1; i < points.length; i++)
@@ -222,7 +225,14 @@ export class Renderer {
         ctx.lineTo(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
         remaining -= length;
       }
+      if(d.fill && k.reveal===1) {ctx.fillStyle=tint ?? d.fill;ctx.fill();}
       ctx.stroke();
+      if(d.arrowheadScale !== undefined && k.reveal===1) {
+        const head=arrowHeadPoints(points[0],points[1],d.arrowheadScale);
+        ctx.fillStyle=tint ?? ink; ctx.beginPath(); ctx.moveTo(head[0].x,head[0].y);
+        for(const point of head.slice(1)) ctx.lineTo(point.x,point.y);
+        ctx.closePath();ctx.fill();
+      }
     } else if (d.kind === 'image') {
       const img = this.images.get(d.assetId ?? '')?.image;
       if (img) {

@@ -143,11 +143,11 @@ export function schedulerHandoffContext(
 	copy('atlas_session_id', 'atlasSessionId', 100);
 	const trafficClass = declaredTrafficClass(params.get('traffic_class'));
 	if (trafficClass) context.trafficClass = trafficClass;
-	if (params.has('score')) {
+	if (params.get('score')?.trim()) {
 		const score = Number(params.get('score'));
 		if (Number.isInteger(score) && score >= 0 && score <= 100) context.score = score;
 	}
-	if (params.has('agent_messages')) {
+	if (params.get('agent_messages')?.trim()) {
 		const agentMessages = Number(params.get('agent_messages'));
 		if (Number.isInteger(agentMessages) && agentMessages >= 0 && agentMessages <= 200) {
 			context.agentMessages = agentMessages;
@@ -155,7 +155,7 @@ export function schedulerHandoffContext(
 	}
 	const notes = warmupNotes?.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').trim();
 	// Persisted Map notes must not cross into an unrelated review, including normalized URLs.
-	if (notes && context.intent !== 'technical-review') context.warmupNotes = notes.slice(0, 2000);
+	if (notes && context.intent !== 'technical-review' && context.intent !== 'system-support') context.warmupNotes = notes.slice(0, 2000);
 	return context;
 }
 

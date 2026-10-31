@@ -1,0 +1,482 @@
+[
+  {
+    "name": "io",
+    "route": "/",
+    "width": 390,
+    "status": 200,
+    "errors": [],
+    "overflow": false,
+    "mainCount": 1,
+    "h1": [
+      "Research for automation you can defend."
+    ],
+    "images": [
+      {
+        "src": "http://127.0.0.1:4311/images/research/ground-compare-before-claim-640.webp",
+        "loaded": true,
+        "alt": "Two agents compare a material against its reference before accepting the fit.",
+        "rect": {
+          "width": 356,
+          "height": 285
+        },
+        "fit": "fill",
+        "position": "50% 50%"
+      }
+    ],
+    "lightButtons": [
+      {
+        "text": "Read The Papers ↗",
+        "color": "oklch(0.205 0 0)",
+        "bg": "oklch(0.985 0 0)"
+      },
+      {
+        "text": "Try the workbench",
+        "color": "oklch(0.205 0 0)",
+        "bg": "oklch(0.985 0 0)"
+      }
+    ]
+  },
+  {
+    "name": "io",
+    "route": "/",
+    "width": 768,
+    "status": 200,
+    "errors": [],
+    "overflow": false,
+    "mainCount": 1,
+    "h1": [
+      "Research for automation you can defend."
+    ],
+    "images": [
+      {
+        "src": "http://127.0.0.1:4311/images/research/ground-compare-before-claim-960.webp",
+        "loaded": true,
+        "alt": "Two agents compare a material against its reference before accepting the fit.",
+        "rect": {
+          "width": 718,
+          "height": 574
+        },
+        "fit": "fill",
+        "position": "50% 50%"
+      }
+    ],
+    "lightButtons": [
+      {
+        "text": "Read The Papers ↗",
+        "color": "oklch(0.205 0 0)",
+        "bg": "oklch(0.985 0 0)"
+      },
+      {
+        "text": "Try the workbench",
+        "color": "oklch(0.205 0 0)",
+        "bg": "oklch(0.985 0 0)"
+      }
+    ]
+  },
+  {
+    "name": "io",
+    "route": "/",
+    "width": 1440,
+    "status": 200,
+    "errors": [],
+    "overflow": false,
+    "mainCount": 1,
+    "h1": [
+      "Research for automation you can defend."
+    ],
+    "images": [
+      {
+        "src": "http://127.0.0.1:4311/images/research/ground-compare-before-claim-640.webp",
+        "loaded": true,
+        "alt": "Two agents compare a material against its reference before accepting the fit.",
+        "rect": {
+          "width": 582,
+          "height": 466
+        },
+        "fit": "fill",
+        "position": "50% 50%"
+      }
+    ],
+    "lightButtons": [
+      {
+        "text": "Read The Papers ↗",
+        "color": "oklch(0.205 0 0)",
+        "bg": "oklch(0.985 0 0)"
+      },
+      {
+        "text": "Try the workbench",
+        "color": "oklch(0.205 0 0)",
+        "bg": "oklch(0.985 0 0)"
+      }
+    ]
+  },
+  {
+    "name": "ltd",
+    "route": "/",
+    "width": 390,
+    "status": 200,
+    "errors": [],
+    "overflow": false,
+    "mainCount": 1,
+    "h1": [
+      "Run AI work people can trust."
+    ],
+    "images": [
+      {
+        "src": "http://127.0.0.1:5176/images/library/editorial-workflow-library-tool-drawers-continuity-v2-768.webp",
+        "loaded": true,
+        "alt": "Keep a useful operating rule close to the work.",
+        "rect": {
+          "width": 358,
+          "height": 239
+        },
+        "fit": "contain",
+        "position": "50% 50%"
+      }
+    ],
+    "lightButtons": [
+      {
+        "text": "Find your playbook",
+        "color": "oklch(0.269 0 0)",
+        "bg": "oklch(0.985 0 0)"
+      },
+      {
+        "text": "Read the research",
+        "color": "oklch(0.269 0 0)",
+        "bg": "oklch(0.985 0 0)"
+      }
+    ]
+  },
+  {
+    "name": "ltd",
+    "route": "/",
+    "width": 768,
+    "status": 200,
+    "errors": [],
+    "overflow": false,
+    "mainCount": 1,
+    "h1": [
+      "Run AI work people can trust."
+    ],
+    "images": [
+      {
+        "src": "http://127.0.0.1:5176/images/library/editorial-workflow-library-tool-drawers-continuity-v2-768.webp",
+        "loaded": true,
+        "alt": "Keep a useful operating rule close to the work.",
+        "rect": {
+          "width": 720,
+          "height": 480
+        },
+        "fit": "contain",
+        "position": "50% 50%"
+      }
+    ],
+    "lightButtons": [
+      {
+        "text": "Find your playbook",
+        "color": "oklch(0.269 0 0)",
+        "bg": "oklch(0.985 0 0)"
+      },
+      {
+        "text": "Read the research",
+        "color": "oklch(0.269 0 0)",
+        "bg": "oklch(0.985 0 0)"
+      }
+    ]
+  },
+  {
+    "name": "ltd",
+    "route": "/",
+    "width": 1440,
+    "status": 200,
+    "errors": [],
+    "overflow": false,
+    "mainCount": 1,
+    "h1": [
+      "Run AI work people can trust."
+    ],
+    "images": [
+      {
+        "src": "http://127.0.0.1:5176/images/library/editorial-workflow-library-tool-drawers-continuity-v2-768.webp",
+        "loaded": true,
+        "alt": "Keep a useful operating rule close to the work.",
+        "rect": {
+          "width": 670,
+          "height": 447
+        },
+        "fit": "contain",
+        "position": "50% 50%"
+      }
+    ],
+    "lightButtons": [
+      {
+        "text": "Find your playbook",
+        "color": "oklch(0.269 0 0)",
+        "bg": "oklch(0.985 0 0)"
+      },
+      {
+        "text": "Read the research",
+        "color": "oklch(0.269 0 0)",
+        "bg": "oklch(0.985 0 0)"
+      }
+    ]
+  },
+  {
+    "name": "space",
+    "route": "/",
+    "width": 390,
+    "status": 200,
+    "errors": [],
+    "overflow": false,
+    "mainCount": 1,
+    "h1": [
+      "Useful tools.Shared openly."
+    ],
+    "images": [
+      {
+        "src": "http://127.0.0.1:5177/images/workshop/stories/products-workbench-paths-continuity-v2-640.webp",
+        "loaded": true,
+        "alt": "Small charcoal and ivory agents work at separate metal benches in an open workshop.",
+        "rect": {
+          "width": 358,
+          "height": 239
+        },
+        "fit": "fill",
+        "position": "50% 50%"
+      },
+      {
+        "src": "http://127.0.0.1:5177/images/workshop/stories/ground-compare-before-claim-640.webp",
+        "loaded": true,
+        "alt": "Two agents inspect the fit between metal parts under a small work light.",
+        "rect": {
+          "width": 356,
+          "height": 237
+        },
+        "fit": "cover",
+        "position": "50% 50%"
+      },
+      {
+        "src": "http://127.0.0.1:5177/images/workshop/stories/compiler-from-plan-to-tested-jig-640.webp",
+        "loaded": true,
+        "alt": "Two agents turn a measured metal template into a matching part at a workbench.",
+        "rect": {
+          "width": 356,
+          "height": 237
+        },
+        "fit": "cover",
+        "position": "50% 50%"
+      },
+      {
+        "src": "http://127.0.0.1:5177/images/workshop/stories/tool-fit-without-forcing-640.webp",
+        "loaded": true,
+        "alt": "An agent compares a machined connector with its socket before joining them.",
+        "rect": {
+          "width": 356,
+          "height": 237
+        },
+        "fit": "cover",
+        "position": "50% 50%"
+      },
+      {
+        "src": "http://127.0.0.1:5177/images/workshop/stories/about-careful-working-notes-640.webp",
+        "loaded": true,
+        "alt": "A small charcoal agent opens a worn notebook beside a folded paper model.",
+        "rect": {
+          "width": 356,
+          "height": 237
+        },
+        "fit": "cover",
+        "position": "50% 50%"
+      }
+    ],
+    "lightButtons": [
+      {
+        "text": "Explore projects ↗",
+        "color": "oklch(0.205 0 0)",
+        "bg": "oklch(0.985 0 0)"
+      },
+      {
+        "text": "Open the Workbench ↗",
+        "color": "oklch(0.205 0 0)",
+        "bg": "oklch(0.985 0 0)"
+      },
+      {
+        "text": "Find us on GitHub ↗",
+        "color": "oklch(0.205 0 0)",
+        "bg": "oklch(0.985 0 0)"
+      }
+    ]
+  },
+  {
+    "name": "space",
+    "route": "/",
+    "width": 768,
+    "status": 200,
+    "errors": [],
+    "overflow": false,
+    "mainCount": 1,
+    "h1": [
+      "Useful tools.Shared openly."
+    ],
+    "images": [
+      {
+        "src": "http://127.0.0.1:5177/images/workshop/stories/products-workbench-paths-continuity-v2-640.webp",
+        "loaded": true,
+        "alt": "Small charcoal and ivory agents work at separate metal benches in an open workshop.",
+        "rect": {
+          "width": 736,
+          "height": 491
+        },
+        "fit": "fill",
+        "position": "50% 50%"
+      },
+      {
+        "src": "http://127.0.0.1:5177/images/workshop/stories/ground-compare-before-claim-640.webp",
+        "loaded": true,
+        "alt": "Two agents inspect the fit between metal parts under a small work light.",
+        "rect": {
+          "width": 332,
+          "height": 221
+        },
+        "fit": "cover",
+        "position": "50% 50%"
+      },
+      {
+        "src": "http://127.0.0.1:5177/images/workshop/stories/compiler-from-plan-to-tested-jig-640.webp",
+        "loaded": true,
+        "alt": "Two agents turn a measured metal template into a matching part at a workbench.",
+        "rect": {
+          "width": 332,
+          "height": 221
+        },
+        "fit": "cover",
+        "position": "50% 50%"
+      },
+      {
+        "src": "http://127.0.0.1:5177/images/workshop/stories/tool-fit-without-forcing-640.webp",
+        "loaded": true,
+        "alt": "An agent compares a machined connector with its socket before joining them.",
+        "rect": {
+          "width": 332,
+          "height": 221
+        },
+        "fit": "cover",
+        "position": "50% 50%"
+      },
+      {
+        "src": "http://127.0.0.1:5177/images/workshop/stories/about-careful-working-notes-640.webp",
+        "loaded": true,
+        "alt": "A small charcoal agent opens a worn notebook beside a folded paper model.",
+        "rect": {
+          "width": 332,
+          "height": 221
+        },
+        "fit": "cover",
+        "position": "50% 50%"
+      }
+    ],
+    "lightButtons": [
+      {
+        "text": "Explore projects ↗",
+        "color": "oklch(0.205 0 0)",
+        "bg": "oklch(0.985 0 0)"
+      },
+      {
+        "text": "Open the Workbench ↗",
+        "color": "oklch(0.205 0 0)",
+        "bg": "oklch(0.985 0 0)"
+      },
+      {
+        "text": "Find us on GitHub ↗",
+        "color": "oklch(0.205 0 0)",
+        "bg": "oklch(0.985 0 0)"
+      }
+    ]
+  },
+  {
+    "name": "space",
+    "route": "/",
+    "width": 1440,
+    "status": 200,
+    "errors": [],
+    "overflow": false,
+    "mainCount": 1,
+    "h1": [
+      "Useful tools.Shared openly."
+    ],
+    "images": [
+      {
+        "src": "http://127.0.0.1:5177/images/workshop/stories/products-workbench-paths-continuity-v2-960.webp",
+        "loaded": true,
+        "alt": "Small charcoal and ivory agents work at separate metal benches in an open workshop.",
+        "rect": {
+          "width": 771,
+          "height": 514
+        },
+        "fit": "fill",
+        "position": "50% 50%"
+      },
+      {
+        "src": "http://127.0.0.1:5177/images/workshop/stories/ground-compare-before-claim-640.webp",
+        "loaded": true,
+        "alt": "Two agents inspect the fit between metal parts under a small work light.",
+        "rect": {
+          "width": 630,
+          "height": 420
+        },
+        "fit": "cover",
+        "position": "50% 50%"
+      },
+      {
+        "src": "http://127.0.0.1:5177/images/workshop/stories/compiler-from-plan-to-tested-jig-640.webp",
+        "loaded": true,
+        "alt": "Two agents turn a measured metal template into a matching part at a workbench.",
+        "rect": {
+          "width": 630,
+          "height": 420
+        },
+        "fit": "cover",
+        "position": "50% 50%"
+      },
+      {
+        "src": "http://127.0.0.1:5177/images/workshop/stories/tool-fit-without-forcing-640.webp",
+        "loaded": true,
+        "alt": "An agent compares a machined connector with its socket before joining them.",
+        "rect": {
+          "width": 630,
+          "height": 420
+        },
+        "fit": "cover",
+        "position": "50% 50%"
+      },
+      {
+        "src": "http://127.0.0.1:5177/images/workshop/stories/about-careful-working-notes-640.webp",
+        "loaded": true,
+        "alt": "A small charcoal agent opens a worn notebook beside a folded paper model.",
+        "rect": {
+          "width": 630,
+          "height": 420
+        },
+        "fit": "cover",
+        "position": "50% 50%"
+      }
+    ],
+    "lightButtons": [
+      {
+        "text": "Explore projects ↗",
+        "color": "oklch(0.205 0 0)",
+        "bg": "oklch(0.985 0 0)"
+      },
+      {
+        "text": "Open the Workbench ↗",
+        "color": "oklch(0.205 0 0)",
+        "bg": "oklch(0.985 0 0)"
+      },
+      {
+        "text": "Find us on GitHub ↗",
+        "color": "oklch(0.205 0 0)",
+        "bg": "oklch(0.985 0 0)"
+      }
+    ]
+  }
+]

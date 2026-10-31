@@ -1,0 +1,17 @@
+# Shared scoped delivery contract
+
+Policy version: create-something.paperclip-delivery.v1. Apply only with a concrete assignment passing assignment.schema.json and validateAssignment. An absent packet is a hard stop, not implicit production authority. Read the assigned repo/package AGENTS and release runbook.
+
+The stable assignment identity is paperclipCaseId and the normalized native identity is native.caseId. Routine execution issue IDs change between stages; never bind the whole delivery assignment to one execution issue. Linear is canonical for tracked scope and evidence; Paperclip native issue, stage, run, interaction and lease state owns execution. Local receipts are evidence only, never a second coordinator database. Read fresh native state before transition; use native concurrency/revision preconditions where supported and re-read after mutation. The stage-evidence module is a fail-closed evidence predicate, not a scheduler or proven runtime integration. Terminal success is not native stage completion.
+
+Operate only the named issue and allowed paths in its owned isolated worktree. One writer per path; preserve unrelated dirty roots/worktrees. Every role may create agents and skills and delegate parallel work inside the parent assignment. The four pilot roles are baseline responsibilities, not a cap on delegates. Record delegated scope and native owner, use separate owned workspaces with nonoverlapping write paths, and inherit parent boundaries. Review delegates remain independent of the implementation they review. No unrelated backlog selection, purchases or new schedules. No identity changes, payments, destructive actions or external messages. Existing provider protections, ownership and secret controls remain. Do not print secrets. Routine tested/reviewed production delivery is authorized by the packet; human review follows live verification. Ask only for actual missing human login/grant or authority.
+
+Report revision, actual checks, receipts, limitations and Worktree disposition. Missing CTX is a historical-context limitation. A fresh supplied canonical assignment packet can substitute for direct worker Linear access; coordinator mirrors receipts. Never fabricate readback or claim unavailable role/device acceptance.
+
+# Release and QA
+
+Own release/build evidence, never concurrent product implementation. Verify independent approval and all required CI for exact source SHA. Merge through repository controls, verify resulting tree corresponds to reviewed changes, and build from exact merged SHA. Record current production version and rollback command/reference before mutation. Use only the packet's owning release workflow, target and established scoped credentials.
+
+Record deploy intent in native issue evidence before mutation. Upload and activate only after evidence gates pass. Read provider state after every deployment; if response is lost or times out, reconcile actual state before retry. Never infer deployment from CLI exit. Verify the exact serving version, real changed behavior and all packet criteria through permitted live surfaces. Keep missing role/device evidence explicitly unverified.
+
+A failed smoke check routes to the runbook's authorized rollback/recovery, records provider readback and prevents completion. Report exact revision, URL/version, CI, browser/provider receipts, rollback and Worktree disposition. Human review follows verified production; no routine pre-deployment permission question.

@@ -57,6 +57,14 @@
         "limit": 30,
         "period": 60
       }
+    },
+    {
+      "name": "PCN_INTAKE_RATE_LIMIT",
+      "namespace_id": "2086001",
+      "simple": {
+        "limit": 5,
+        "period": 60
+      }
     }
   ],
   "observability": {
@@ -97,6 +105,14 @@
           "namespace_id": "2030002",
           "simple": {
             "limit": 30,
+            "period": 60
+          }
+        },
+        {
+          "name": "PCN_INTAKE_RATE_LIMIT",
+          "namespace_id": "2086002",
+          "simple": {
+            "limit": 5,
             "period": 60
           }
         }

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import {
     Button,
     PerformanceCampaignOpening,
@@ -125,6 +126,7 @@
           </li>
         {/each}
       </ol>
+      <p>Need implementation help with an existing operational system? <a href="/airtable-workflow-consulting">Explore Airtable workflow consulting.</a></p>
     </section>
   </div>
 
@@ -186,6 +188,9 @@
     {#snippet actions()}
       <Button href="/map" size="lg">Map your workflow</Button>
       <Button href="#guides" variant="secondary">Return to the guides</Button>
+    {/snippet}
+    {#snippet aside()}
+      <AgencyWayfindingSign kind="proof" label="Inspect the Marketplace prototype" detail="Local fixture evidence · shadow mode, no production writes." href="/proof/marketplace-workflow" />
     {/snippet}
   </PerformanceConversionHandoff>
 </div>

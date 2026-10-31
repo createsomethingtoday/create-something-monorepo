@@ -1,0 +1,34 @@
+/* Canon opt-in dark neutral palette. See operator.md for roles and contrast.
+ * Explicit import AND owning-surface attribute required. No global aliases.
+ * Reference colors are measurements, not third-party code or brand assets.
+ */
+[data-canon-palette="operator"] {
+  --color-operator-background: oklch(20.5% 0 0);
+  --color-operator-panel: oklch(20.5% 0 0);
+  --color-operator-secondary: oklch(26.9% 0 0);
+  --color-operator-raised: oklch(32% 0 0);
+  --color-operator-hover: oklch(32% 0 0);
+  --color-operator-foreground: oklch(98.5% 0 0);
+  --color-operator-muted: oklch(70.8% 0 0);
+  --color-operator-border: oklch(100% 0 0 / .1);
+  --color-operator-input-border: oklch(100% 0 0 / .15);
+  --color-operator-focus-ring: oklch(55.6% 0 0);
+  --color-operator-focus-ring-accessible: oklch(70.8% 0 0);
+  --color-operator-status-running: #2563eb;
+  --color-operator-status-running-text: #93c5fd;
+  --color-operator-status-running-on: #ffffff;
+  --color-operator-status-review: #7c3aed;
+  --color-operator-status-review-text: #c4b5fd;
+  --color-operator-status-review-on: #ffffff;
+  --color-operator-status-done: #22c55e;
+  --color-operator-status-done-text: #86efac;
+  --color-operator-status-done-on: #171717;
+  --color-operator-status-blocked: #dc2626;
+  --color-operator-status-blocked-text: #fca5a5;
+  --color-operator-status-blocked-on: #ffffff;
+  --color-operator-status-paused: #f59e0b;
+  --color-operator-status-paused-text: #fcd34d;
+  --color-operator-status-paused-on: #171717;
+  --radius-operator-control: 6px;
+  --radius-operator-panel: 10px;
+}

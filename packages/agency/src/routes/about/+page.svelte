@@ -1,498 +1,98 @@
 <script lang="ts">
-  import {
-    Button,
-    MeridianMetrics,
-    PerformanceCardGrid,
-    PerformanceConversionHandoff,
-    PerformanceNarrativeStage,
-    PerformancePageSection,
-    SEO,
-    type PerformanceCardItem,
-    type PerformanceCtaItem,
-    type PerformanceNarrativeScene
-  } from '@create-something/canon';
-  import PlaybookField from '$lib/components/PlaybookField.svelte';
-  import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-
-  const courtReads = [
-    {
-      label: 'Read the floor',
-      value: 'Map',
-      detail: 'See the workflow, owners, handoffs, and opposition before AI acts.'
-    },
-    {
-      label: 'Call the play',
-      value: 'Build',
-      detail: 'Build the agreed steps, with clear approvals and instructions.'
-    },
-    {
-      label: 'Review the film',
-      value: 'Control',
-      detail: 'Review results and learn from failures.'
-    }
-  ];
-
-  const methodSteps = [
-    {
-      label: 'Read the floor',
-      title: 'Map the operating path',
-      detail:
-        'Find the workflow your team still completes or covers by hand and name the handoffs, owners, and failure modes.'
-    },
-    {
-      label: 'Name the decision',
-      title: 'Decide what needs a person',
-      detail:
-        'Separate safe work from approval-needed work and actions that should be blocked with an inspectable reason.'
-    },
-    {
-      label: 'Install the play',
-      title: 'Build and test the workflow',
-      detail:
-        'Connect the tools, write the instructions, and test the work so the client can keep using and changing it.'
-    },
-    {
-      label: 'Review the film',
-      title: 'Brief the operator',
-      detail:
-        'Surface only the state that needs attention so the human returns for judgment, not constant monitoring.'
-    }
-  ];
-
-  const originSignals = [
-    {
-      label: 'Team',
-      title: 'A shared picture under pressure',
-      detail:
-        'Division III basketball taught me that roles, practice, review, and the next decision matter when the pace rises.'
-    },
-    {
-      label: 'Power',
-      title: 'Control before speed',
-      detail: 'A Porsche 930 Turbo is useful only when the driver can trust the system around it.'
-    },
-    {
-      label: 'Pressure',
-      title: 'Protocols before improvisation',
-      detail: 'Emergency medicine made the cost of unclear handoffs easy to understand.'
-    },
-    {
-      label: 'Continuity',
-      title: 'Care leaves a record',
-      detail: 'Veterinary work made logging, ownership, and recovery paths feel concrete.'
-    }
-  ];
-
-  const workingContracts = [
-    {
-      label: 'Approach',
-      title: 'Start with the cleanup loop',
-      detail:
-        'Most teams need one workflow that stops creating manual recovery work before they need a larger AI initiative.'
-    },
-    {
-      label: 'Method',
-      title: 'Subtract before automating',
-      detail:
-        'Remove repeated steps, unnecessary work, and gaps between tools before automating.'
-    },
-    {
-      label: 'Client contract',
-      title: 'Bring the workflow and owner',
-      detail:
-        'Clients bring the task and the person responsible for it. I help diagnose the problem, build the software, and leave instructions and test results.'
-    }
-  ];
-
-  const aboutScenes: PerformanceNarrativeScene[] = [
-    {
-      id: 'origin',
-      label: 'Court vision',
-      summary: 'Read the whole floor',
-      title: 'Division III basketball made the shared picture visible.',
-      detail:
-        'A good possession depends on spacing, roles, timing, and a shared read. An AI workflow needs the same operating clarity before the pace rises.',
-      tone: 'neutral',
-      evidence: [
-        'Division III basketball',
-        'Porsche 930 Turbo',
-        'Emergency medicine',
-        'Continuity of care',
-        'Webflow systems work'
-      ]
-    },
-    {
-      id: 'method',
-      label: 'Practice',
-      summary: 'Rehearse the decision',
-      title: 'Map the play before AI runs it.',
-      detail:
-        'We agree on the steps, who approves them, and how to check the result before giving AI more to do.',
-      tone: 'allow',
-      receipts: ['workflow map', 'judgment states', 'control layer', 'operator brief']
-    },
-    {
-      id: 'contract',
-      label: 'Game control',
-      summary: 'Offense + defense',
-      title: 'Advance approved work. Protect operator authority.',
-      detail:
-        'We test one task before expanding. The client keeps the workflow plan, rules, results, and software.',
-      tone: 'review',
-      receipts: ['cleanup loop', 'Subtractive Triad', 'client-owned path']
-    },
-    {
-      id: 'system',
-      label: 'Program',
-      summary: 'Each property has a role',
-      title: 'Every CREATE SOMETHING property improves the next play.',
-      detail:
-        'Philosophy, research, experiments, and agency delivery remain distinct while passing useful evidence between one another.',
-      tone: 'neutral',
-      actions: [
-        { label: 'Read the philosophy', href: 'https://createsomething.ltd' },
-        { label: 'Inspect the research', href: 'https://createsomething.io' },
-        { label: 'Explore the tools', href: 'https://createsomething.space' }
-      ]
-    }
-  ];
-
-  const methodCards: PerformanceCardItem[] = methodSteps.map((step) => ({
-    eyebrow: step.label,
-    icon:
-      step.label === 'Read the floor'
-        ? 'folder'
-        : step.label === 'Name the decision'
-          ? 'search'
-          : step.label === 'Install the play'
-            ? 'settings'
-            : 'user',
-    title: step.title,
-    detail: step.detail
-  }));
-
-  const ctaItems: PerformanceCtaItem[] = [
-    {
-      label: 'Bring',
-      icon: 'folder',
-      title: 'One workflow',
-      detail: 'The manual operating path that should not need constant rescue.'
-    },
-    {
-      label: 'Map',
-      icon: 'settings',
-      title: 'Control states',
-      detail: 'What can run, what needs approval, and what should stop.'
-    },
-    {
-      label: 'Leave',
-      icon: 'check',
-      title: 'A safer first path',
-      detail: 'The operating boundary before a production build starts.'
-    }
-  ];
+  import { SEO } from '@create-something/canon';
 </script>
 
 <SEO
   title="Micah Johnson | CREATE SOMETHING .agency"
-  description="Micah Johnson helps teams build AI workflows they can understand and own, with clear responsibilities, tested results, and human review."
-  keywords="Micah Johnson, workflow control layer, production automation, systems architecture, automation reliability, controlled workflows"
+  description="A note from Micah Johnson on CREATE SOMETHING: AI-native technical support, human judgment, and work your team can understand and keep using."
+  keywords="Micah Johnson, AI-native technical support, CREATE SOMETHING, workflow engineering"
   ogImage="/og-image.png"
   propertyName="agency"
 />
 
-<PerformancePageSection
-  variant="hero"
-  layout="split"
-  titleLevel="h1"
-  expression="editorial"
-  eyebrow="About CREATE SOMETHING"
-  title="I help teams make sense of the work before automating it."
-  description="Playing Division III basketball taught me to pay attention to the whole team. Who is doing what? Where is the pressure? What happens next? I bring that habit to building AI systems."
->
-  {#snippet aside()}
-    <PlaybookField variant="about" embedded />
-  {/snippet}
-</PerformancePageSection>
-
-<MeridianMetrics
-  eyebrow="Court vision"
-  title="One shared picture changes the pace."
-  metrics={courtReads}
-  ariaLabel="Basketball court reads translated into the CREATE SOMETHING operating method"
-/>
-
-<PerformanceNarrativeStage
-  id="about-operating-story"
-  eyebrow="One operating story"
-  title="How I came to this work."
-  description="Court vision, pressure, practice, and review became a way to build AI systems that operators can understand, trust, and own."
-  scenes={aboutScenes}
-  ariaLabel="About operating story"
->
-  {#snippet artifact(scene: PerformanceNarrativeScene)}
-    {#if scene.id === 'origin'}
-      <div class="about-stage-split">
-        <div class="about-prose">
-          <p>
-            I played Division III basketball. It taught me to read the whole floor before forcing
-            the next move. A shared picture gives every person a role, a route, and the context to
-            adjust when the defense changes.
-          </p>
-          <p>
-            That is the model behind CREATE SOMETHING. The Playbook gives operators and approved AI
-            the same view of the workflow. Offense advances approved work. Defense protects
-            decisions, evidence, and recovery.
-          </p>
-          <p>
-            I grew up between two reference points: a Porsche 930 Turbo and emergency medicine. One
-            taught me that power needs control. The other taught me that when pressure rises, clear
-            protocols matter more than improvisation.
-          </p>
-          <p>
-            Later, as an equine veterinary technician, I learned what continuity of care, logging,
-            and operating discipline actually feel like in the real world. That stays with me in
-            systems work now.
-          </p>
-          <p>
-            Today that shows up as calm, transparent, reliable workflow systems: fast where the
-            rules are clear, visible where judgment is required, and recoverable when something goes
-            wrong.
-          </p>
-          <p>
-            I am a Senior Systems Architect on the Marketplace Team at Webflow. That work keeps the
-            problems concrete: brittle handoffs, unclear ownership, internal tools, onboarding
-            systems, integrations, and platform infrastructure that have to survive real operators.
-          </p>
-        </div>
-        <aside class="signal-rail" aria-label="Operating references">
-          <span class="rail-label">Reference points</span>
-          {#each originSignals as signal}
-            <article class="signal-card">
-              <span>{signal.label}</span><strong>{signal.title}</strong>
-              <p>{signal.detail}</p>
-            </article>
-          {/each}
-        </aside>
-      </div>
-    {:else if scene.id === 'method'}
-      <PerformanceCardGrid items={methodCards} columns={4} ariaLabel="Calm operator method steps" />
-    {:else if scene.id === 'contract'}
-      <div class="contract-grid">
-        {#each workingContracts as contract}
-          <article class="contract-card">
-            <span>{contract.label}</span><strong>{contract.title}</strong>
-            <p>{contract.detail}</p>
-          </article>
-        {/each}
-      </div>
-      <p class="stage-note">
-        Salesforce, HubSpot, Notion, Slack, Procore, Webflow, MCP, and internal systems are useful
-        only when ownership and recovery stay clear.
-      </p>
-    {:else}
-      <div class="about-prose">
-        <p>
-          CREATE SOMETHING operates as a connected system. Each property has a distinct job, and
-          each one sharpens the others:
-        </p>
-        <ul class="circle-list">
-          <li>
-            <a href="https://createsomething.ltd" target="_blank" rel="noopener noreferrer"
-              ><strong>.ltd</strong></a
-            > — Philosophy and principles
-          </li>
-          <li>
-            <a href="https://createsomething.io" target="_blank" rel="noopener noreferrer"
-              ><strong>.io</strong></a
-            > — Research and validated patterns
-          </li>
-          <li>
-            <a href="https://createsomething.space" target="_blank" rel="noopener noreferrer"
-              ><strong>.space</strong></a
-            > — Tools and experiments
-          </li>
-          <li>
-            <strong>.agency</strong> — Calm, transparent workflow systems, reliability controls, and
-            enterprise extension <span class="muted">(you are here)</span>
-          </li>
-        </ul>
-        <p>
-          Client work informs the research. Research sharpens the operating model. The operating
-          model raises the bar on client work.
-        </p>
-        <p>
-          I am also building <a href="https://workway.co" target="_blank" rel="noopener noreferrer"
-            >WORKWAY</a
-          >. When clients need fuller system development and onboarding than .agency is meant to
-          carry, I provide a direct referral path to trusted partners, including Half Dozen.
-        </p>
-      </div>
-    {/if}
-  {/snippet}
-</PerformanceNarrativeStage>
-
-<PerformanceConversionHandoff
-  expression="editorial"
-  eyebrow="Start with one workflow"
-  title={agencyCoreMessaging.workflowCtaHeading}
-  description={agencyCoreMessaging.workflowCtaDetail}
-  steps={ctaItems}
-  handoff={{
-    owner: 'Workflow owner',
-    authority: 'Mapped control states',
-    proof: 'Safer first path',
-    state: 'review'
-  }}
->
-  {#snippet actions()}
-    <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
-    <Button href="/services" variant="secondary">{agencyCoreMessaging.engagementModelLabel}</Button>
-  {/snippet}
-</PerformanceConversionHandoff>
+<div class="about-desk">
+  <div class="page-label"><span>CREATE SOMETHING</span><span>About the work</span></div>
+  <article class="about-letter" aria-labelledby="about-title">
+    <span class="paper-tape" aria-hidden="true"></span>
+    <header class="letter-heading">
+      <p class="letter-kicker">A note from Micah Johnson</p>
+      <h1 id="about-title">Good tools still<br />need people.</h1>
+      <p class="letter-category">AI-native Technical support</p>
+    </header>
+    <div class="letter-body">
+      <p>I help teams fix, improve, and use their tools. Sometimes that means repairing a broken handoff. Sometimes it means connecting software or helping someone make sense of an AI-built project. The starting point is the work you need to do.</p>
+      <p>I played Division III basketball. It taught me to read the whole floor before forcing the next move: who is doing what, where the pressure is, and what happens next. Later, working as an equine veterinary technician made clear records and continuity of care feel concrete. Those habits stay with me in technical work.</p>
+      <p>That is the approach behind CREATE SOMETHING. First, understand the task and the people responsible for it. Remove unnecessary steps. Then build the agreed change and check that it works.</p>
+      <p>AI can take on useful work, but the decisions still need an owner. Before connecting tools, we agree on access, what may run, what needs approval, and when to stop. A connection is useful when your team can understand and trust what it does.</p>
+      <p>The work should remain inspectable afterward: the changes, the checks, the instructions, and a way to recover. Ownership follows our agreement. Support helps your team use what we deliver and carries the context into the next improvement.</p>
+      <p>CREATE SOMETHING connects <a href="https://createsomething.ltd">philosophy</a>, <a href="https://createsomething.io">research</a>, <a href="https://createsomething.space">experiments</a>, and client work. Each gives the others something to learn from. Here at .agency, that learning has a practical purpose: help your tools work better, and help you use them.</p>
+      <p>If you have a task that needs attention, bring the tools involved and an example of the result you need. We can start there.</p>
+    </div>
+    <footer class="letter-signoff">
+      <p>Micah Johnson<span>CREATE SOMETHING</span></p>
+      <a href="/book">Talk through your workflow <span aria-hidden="true">↗</span></a>
+    </footer>
+  </article>
+  <nav class="letter-next" aria-label="Explore CREATE SOMETHING">
+    <a href="/services">Services and membership <span aria-hidden="true">↗</span></a>
+    <a href="/products#cato-tour">See the work <span aria-hidden="true">↗</span></a>
+    <a href="/stack">What you keep <span aria-hidden="true">↗</span></a>
+  </nav>
+</div>
 
 <style>
-  .about-prose {
-    display: grid;
-    gap: 1rem;
-    max-width: 45rem;
-    color: var(--color-performance-ink, #090909);
-  }
-
-  .about-stage-split {
-    display: grid;
-    grid-template-columns: minmax(0, 1.25fr) minmax(16rem, 0.75fr);
-    gap: clamp(1rem, 3vw, 2.5rem);
-    align-items: start;
-  }
-
-  .stage-note {
-    max-width: 52rem;
-    margin: 1rem 0 0;
-    color: var(--color-performance-muted, #5e6268);
-    line-height: 1.55;
-  }
-
-  .about-prose p {
-    margin: 0;
-    color: var(--color-performance-muted, #5e6268);
-    font-size: 1rem;
-    line-height: 1.62;
-  }
-
-  .circle-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    border-top: 1px solid var(--color-performance-line, #d7d7d2);
-  }
-
-  .circle-list li {
-    padding: 0.72rem 0;
-    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
-    color: var(--color-performance-muted, #5e6268);
-    font-size: 1rem;
-    line-height: 1.5;
-  }
-
-  .circle-list li strong {
-    color: var(--color-performance-ink, #090909);
-    font-weight: var(--font-performance-medium);
-  }
-
-  .muted {
-    color: var(--color-performance-muted, #5e6268);
-    font-size: 0.9rem;
-  }
-
-  .about-prose a {
-    color: var(--color-performance-ink, #090909);
-    font-weight: var(--font-performance-medium);
-  }
-
-  .signal-rail,
-  .contract-card {
-    border: 1px solid var(--color-performance-line, #d7d7d2);
-    border-radius: var(--radius-performance-sm, 4px);
-    background: var(--color-performance-panel, #ffffff);
-    color: var(--color-performance-ink, #090909);
-  }
-
-  .signal-rail {
-    display: grid;
-    gap: 0.75rem;
-    padding: 0.75rem;
-  }
-
-  .rail-label,
-  .signal-card span,
-  .contract-card span {
-    color: var(--color-performance-muted, #5e6268);
-    font-family: var(--font-performance-mono);
-    font-size: 0.72rem;
-    font-weight: var(--font-performance-semibold);
-    letter-spacing: 0;
-    line-height: 1.2;
-    text-transform: uppercase;
-  }
-
-  .signal-card {
-    display: grid;
-    gap: 0.36rem;
-    padding: 1rem;
-    border: 1px solid var(--color-performance-line, #d7d7d2);
-    border-radius: var(--radius-performance-sm, 4px);
+  .about-desk {
     background: var(--color-performance-paper, #f3f3f0);
+    color: var(--color-performance-ink, #090909);
+    padding: clamp(7rem, 12vw, 10rem) clamp(1.25rem, 5vw, 4rem) 5rem;
   }
-
-  .signal-card strong,
-  .contract-card strong {
-    font-size: 1rem;
-    font-weight: var(--font-performance-medium);
-    line-height: 1.25;
+  .page-label, .letter-next { max-width: 48rem; margin-inline: auto; }
+  .page-label { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 3rem; font: .7rem/1.5 var(--font-performance-mono, monospace); letter-spacing: .04em; }
+  .about-letter {
+    position: relative;
+    max-width: 48rem;
+    margin-inline: auto;
+    padding: clamp(2rem, 6vw, 5rem);
+    background: #fffef9;
+    color: #171717;
+    border: 1px solid #deddd5;
+    box-shadow: 0 3px 5px #09090908, 0 18px 44px #0909090d;
+    transform: rotate(-.6deg);
   }
-
-  .signal-card p,
-  .contract-card p {
-    margin: 0;
-    color: var(--color-performance-muted, #5e6268);
-    font-size: 0.94rem;
-    line-height: 1.5;
+  .paper-tape { position: absolute; width: 8rem; height: 2rem; top: -1rem; left: calc(50% - 4rem); transform: rotate(3deg); background: #dedcd1b3; border-inline: 1px solid #d0cec380; }
+  .letter-heading { margin-bottom: 2.5rem; }
+  .letter-kicker, .letter-category { font: .75rem/1.6 var(--font-performance-mono, monospace); }
+  .letter-kicker { margin: 0 0 1.5rem; }
+  .about-letter h1 { font: 500 clamp(2.5rem, 5vw, 4rem)/1.08 var(--font-performance-interface, sans-serif); letter-spacing: -.04em; margin: 0 0 1.5rem; }
+  .letter-category { margin: 0; color: #55554e; }
+  .letter-body { font: 400 1.0625rem/1.85 var(--font-performance-interface, sans-serif); }
+  .letter-body p { margin: 0 0 1.35em; }
+  .about-letter a, .letter-next a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: .23em; }
+  .about-letter a:focus-visible, .letter-next a:focus-visible { outline: 2px solid var(--color-performance-focus, #0057b8); outline-offset: 5px; }
+  .letter-signoff { margin-top: 2.5rem; padding-top: 1.75rem; border-top: 1px solid #deddd5; }
+  .letter-signoff p { margin: 0 0 1.25rem; font-size: 1rem; line-height: 1.6; font-weight: 500; }
+  .letter-signoff p span { display: block; margin-top: .35rem; font: .7rem/1.6 var(--font-performance-mono, monospace); letter-spacing: .035em; }
+  .letter-signoff a { display: inline-flex; align-items: center; gap: 1rem; min-height: 44px; font-size: .9375rem; }
+  .letter-next { display: flex; justify-content: center; flex-wrap: wrap; gap: .5rem 2rem; margin-top: 2.5rem; }
+  .letter-next a { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; font-size: .8125rem; }
+  @media (max-width: 600px) {
+    .about-desk { padding-inline: 1rem; padding-bottom: 3rem; }
+    .page-label { font-size: .625rem; margin-bottom: 2.5rem; }
+    .about-letter { transform: none; padding: 2.5rem 1.5rem 2rem; }
+    .letter-body { font-size: 1rem; line-height: 1.8; }
+    .letter-next { flex-direction: column; align-items: flex-start; margin-top: 1.5rem; padding-inline: .5rem; }
   }
-
-  .contract-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1rem;
-  }
-
-  .contract-card {
-    display: grid;
-    gap: 0.55rem;
-    min-height: 13rem;
-    padding: 1.15rem;
-  }
-
-  @media (max-width: 760px) {
-    .about-stage-split {
-      grid-template-columns: 1fr;
-    }
-    .signal-rail {
-      gap: 0.55rem;
-      padding: 0.55rem;
-    }
-
-    .signal-card,
-    .contract-card {
-      padding: 0.88rem;
-    }
-
-    .contract-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .contract-card {
-      min-height: 0;
-    }
+  @media (prefers-reduced-motion: reduce) { .about-letter, .paper-tape { transform: none; } }
+  @media print {
+    :global(html:has(.about-desk)), :global(body:has(.about-desk)) { background: white !important; color: #171717; }
+    :global(body:has(.about-desk) .layout-root > :not(main)),
+    :global(body:has(.about-desk) .agency-surface > :not(.layout-root)) { display: none !important; }
+    :global(body:has(.about-desk) main#main-content) { padding-top: 0 !important; }
+    .about-desk { background: white; padding: 0; }
+    .about-letter { max-width: none; padding: 0; background: white; box-shadow: none; border: 0; transform: none; }
+    .page-label, .paper-tape, .letter-next { display: none; }
+    .letter-body { font-size: 11pt; line-height: 1.55; }
+    .letter-heading, .letter-signoff { break-inside: avoid; }
+    .letter-body p { orphans: 3; widows: 3; }
   }
 </style>

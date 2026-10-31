@@ -1,18 +1,21 @@
 <script lang="ts">
   import { Button, MeridianAccordion } from '@create-something/canon';
+  import MembershipPlanJourney from './MembershipPlanJourney.svelte';
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
+  let { compact = false }: { compact?: boolean } = $props();
+
   const questions = [
     {
-      question: 'What does the membership cover?',
+      question: 'How can we use remote sessions?',
       answer:
-        'Reusable agent engineering skills, walkthroughs and learning resources, Slack guidance, weekly check-ins and scheduled attended remote help through RustDesk. We agree on one active workflow and the support boundaries during onboarding. It is not unlimited development or round-the-clock incident response.'
+        'Remote sessions can help with onboarding, pairing or troubleshooting within your plan’s allowance. We work between check-ins, show what changed and agree the next step. Neither plan includes unlimited development or production incident response.'
     },
     {
       question: 'Is this the same as managed Control?',
       answer:
-        'No. Membership is guidance and support while you develop your workflows. Managed Control is a separate agreement for monitoring and supporting an agreed live system after launch. Production incident response is not included in membership.'
+        'No. Focused membership is $900/month for agreed improvements, learning and operator support. Managed Control starts at $900/month for agreed live operations. Managed Control is a separate agreement for monitoring and supporting an agreed live system after launch. Production incident response is not included in membership.'
     },
     {
       question: 'Who provides the support?',
@@ -22,12 +25,22 @@
     {
       question: 'Is the member portal available now?',
       answer:
-        'The dedicated portal is in development. Resource access, Slack setup, weekly check-ins and remote-session arrangements are confirmed during onboarding. We confirm availability before accepting payment.'
+        'The dedicated portal is in development. Resource access, Slack setup and session times are confirmed during onboarding. We confirm availability before accepting payment.'
     },
     {
       question: 'What costs extra?',
       answer:
-        'Custom implementation, new integrations and production launches receive a separate scope and price before work starts. Your coding-agent accounts, AI usage, hosting and third-party subscriptions are separate. The membership does not include a token wallet or unlimited agent execution.'
+        'Work beyond the agreed delivery scope receives a separate quote. Project-specific AI development runs, evaluations and production usage, hosting and third-party services are separate costs. We agree on the budget and who pays before running billable work. Our everyday coding assistance and internal learning remain our operating expense.'
+    },
+    {
+      question: 'Do I need my own AI API account?',
+      answer:
+        'For substantial AI development, testing or production, we use a client-owned provider project with scoped access and separate development and production budgets. If direct billing is not practical, we agree on separately metered usage before work begins. A simple website or form that does not use AI does not require an API account. Never send API keys through the inquiry form.'
+    },
+    {
+      question: 'How do you control AI spending?',
+      answer:
+        'We agree on a dollar budget for the work, the models and services it can use, and limits for individual runs. We review usage before the budget is exhausted and pause new billable runs at the agreed limit until you approve more. Funding your application’s runtime does not automatically authorize spending on development agents; we agree on both explicitly.'
     },
     {
       question: 'Will a new AI model change my price?',
@@ -37,63 +50,118 @@
     {
       question: 'How does cancellation work?',
       answer:
-        'Cancel before your next renewal to stop future membership charges. Support continues through the paid period. You keep your own code and delivered project documentation. Separately scoped projects follow their agreed terms.'
+        'Cancel before your next renewal by emailing support@createsomething.io to stop future membership charges. Support continues through your paid period while we hand over your code and documentation, document open work, and plan the transition. If you need more help afterward, we’ll agree on the scope and price before extending support. Separately scoped projects follow their agreed terms.'
     }
   ];
 </script>
 
-<section id="membership" class="membership" aria-labelledby="membership-title">
+<section id="membership" class="membership" class:compact aria-labelledby="membership-title">
   <div class="offer">
-    <div>
-      <p class="eyebrow">CREATE SOMETHING membership</p>
-      <h2 id="membership-title">A practice you can build on.</h2>
+    <div class="offer-intro">
+      <p class="eyebrow">AI-native technical support membership</p>
+      <h2 id="membership-title">Choose the support your work needs.</h2>
       <p>
-        Learn the methods. Apply them to your work. Get help when you get stuck. Keep the knowledge
-        in your business as your workflows improve.
+        Choose Focused for one agreed workstream or Team for up to two. Each milestone includes an acceptance check, verification and a handoff.
       </p>
-      <ul>
-        <li>Agent skills, walkthroughs and practical learning resources</li>
-        <li>Slack support around one active workflow</li>
-        <li>Weekly check-ins and scheduled remote assistance</li>
-      </ul>
-    </div>
-    <div class="commitment">
-      <p class="eyebrow">One membership</p>
-      <p class="price">{PUBLIC_PRICING.membership.label}</p>
-      <p>{PUBLIC_PRICING.membership.terms}. Custom builds and runtime costs are separate.</p>
-      <Button href={agencyCoreMessaging.membershipInquiryHref}
-        >{agencyCoreMessaging.membershipInquiryLabel}</Button
-      >
-      <p class="availability">
-        Confirm fit, support scope and onboarding availability before payment.
+      <p>
+        A workstream is one agreed area of work, such as improving a product or connecting a workflow. It can involve several tasks or tools.
       </p>
+      <p><strong>Micah Johnson currently delivers the service.</strong> <a href="/about">Meet Micah →</a></p>
+      <p><strong>Focused and managed Control cover different work.</strong> Focused is {PUBLIC_PRICING.membership.focused.label} for agreed improvements, learning and operator support. <a href="/control">Managed Control</a> starts at $900/month for agreed live operations after launch, under a separate agreement. Production incident response is not included in membership.</p>
     </div>
+    <div class="plans">
+      <article class="plan" aria-labelledby="focused-plan-title">
+        <p class="eyebrow">One workstream</p>
+        <h3 id="focused-plan-title">Focused</h3>
+        <p class="price">{PUBLIC_PRICING.membership.focused.label}</p>
+        <p>For one agreed workstream at a time, with diagnosis, engineering, learning and operator support.</p>
+        <ul>
+          <li>{PUBLIC_PRICING.membership.focused.milestonesPerMonth} agreed milestone with {PUBLIC_PRICING.membership.focused.revisionRoundsPerMilestone} feedback and revision round</li>
+          <li>{PUBLIC_PRICING.membership.focused.checkInsPerMonth} × {PUBLIC_PRICING.membership.focused.checkInMinutes}-minute check-ins each billing month</li>
+          <li>{PUBLIC_PRICING.membership.focused.remoteSessionsPerMonth} × {PUBLIC_PRICING.membership.focused.remoteSessionMinutes}-minute attended remote work sessions, available when useful</li>
+          <li>Skills, learning resources and Slack support</li>
+        </ul>
+        <Button href={agencyCoreMessaging.membershipInquiryHref}>Discuss Focused</Button>
+      </article>
+      <article class="plan" aria-labelledby="team-plan-title">
+        <p class="eyebrow">Up to two workstreams</p>
+        <h3 id="team-plan-title">Team</h3>
+        <p class="price">{PUBLIC_PRICING.membership.team.label}</p>
+        <p>For progress across up to two agreed workstreams.</p>
+        <ul>
+          <li>{PUBLIC_PRICING.membership.team.milestonesPerMonth} agreed milestones across up to two workstreams, each with {PUBLIC_PRICING.membership.team.revisionRoundsPerMilestone} feedback and revision round</li>
+          <li>{PUBLIC_PRICING.membership.team.checkInsPerMonth} × {PUBLIC_PRICING.membership.team.checkInMinutes}-minute check-ins each billing month</li>
+          <li>{PUBLIC_PRICING.membership.team.remoteSessionsPerMonth} × {PUBLIC_PRICING.membership.team.remoteSessionMinutes}-minute attended remote work sessions, available when useful</li>
+          <li>Skills, learning resources and Slack support</li>
+        </ul>
+        <Button href={agencyCoreMessaging.teamMembershipInquiryHref}>Discuss Team</Button>
+      </article>
+    </div>
+    <p class="availability">A milestone is one agreed workflow map or one scoped improvement to an existing workflow. Remote sessions are an option for onboarding, pairing or troubleshooting within the plan allowance. We agree on scope, session times, response times and any usage budget before payment. {PUBLIC_PRICING.membership.terms}. Larger Builds, managed Control and production incident response need separate agreements.</p>
+    <p class="availability">Build days are Monday and Wednesday. Meetings are scheduled on Tuesday and Thursday, within your plan’s allowance and the times agreed before payment.</p>
+    <details class="membership-agreement-details">
+      <summary>Agreement and handoff details</summary>
+      <p>Before payment, we agree on the milestone, selected tool access, human approval boundary, acceptance check, session and response times, and any usage budget.</p>
+      <p>Your handoff records what changed, actual check results, blockers and the next step. We explain how to use the result. Resource access and Slack setup are confirmed during onboarding.</p>
+    </details>
+    {#if compact}
+      <p class="next-steps"><a href={agencyCoreMessaging.workflowMappingSessionHref}>Book a mapping session →</a></p>
+    {/if}
   </div>
+  {#if compact}
+    <p class="ownership-summary">You keep the agreed code, tests and instructions under your agreement, with reusable tools licensed for continued use. <a href="/services">See how delivery works →</a> <a href="/stack">What you keep →</a></p>
+  {/if}
+  <MembershipPlanJourney />
+  <div class="cost-boundary" aria-labelledby="cost-boundary-title">
+    <p class="eyebrow">Delivery and usage are separate</p>
+    <h3 id="cost-boundary-title">Know the cost before the work starts.</h3>
+    <dl>
+      <div><dt>Included in membership</dt><dd>Agreed delivery work, guidance and support. Our everyday coding tools are our expense.</dd></div>
+      <div><dt>Budgeted separately</dt><dd>Project-specific AI development, testing and production usage, hosting and third-party services. You approve the budget first.</dd></div>
+      <div><dt>Quoted before we expand</dt><dd>Work beyond the agreed scope. More API credit does not add unlimited delivery capacity.</dd></div>
+    </dl>
+    <p class="availability">For substantial AI work, we arrange client-owned API access or agreed metered billing before starting. No API account is needed for work that does not use AI.</p>
+  </div>
+  {#if !compact}
   <MeridianAccordion
     eyebrow="Membership boundaries"
     title="Know what is included."
-    description="A shared support process, with clear ownership and limits."
+    description="Clear deliverables, separate usage budgets and no surprise expansion of scope."
     items={questions}
     openFirst={true}
   />
+  {/if}
 </section>
 
 <style>
+  .membership-agreement-details { margin-top: 1.5rem; max-width: 62ch; border-top: 1px solid var(--color-performance-line-strong); }
+  .membership-agreement-details summary { min-height: 44px; padding: .75rem 0; cursor: pointer; font-size: .875rem; }
+  .membership-agreement-details summary:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+  .membership-agreement-details p { font-size: .875rem; line-height: 1.7; }
+  .membership.compact { --membership-gutter: 7vw; }
+  .next-steps { margin-top: var(--space-performance-md); }
+  .ownership-summary { max-width: none; padding: 0 var(--membership-gutter, max(1.25rem, calc((100% - 80rem) / 2))) var(--space-performance-lg); }
+  a { color: inherit; text-underline-offset: .2em; display: inline-flex; align-items: center; min-height: 44px; margin-right: 1rem; }
+  a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
   .membership {
     scroll-margin-top: 6rem;
+    overflow-wrap: anywhere;
     background: var(--color-performance-paper);
     color: var(--color-performance-ink);
     border-block: 1px solid var(--color-performance-line);
   }
-  .offer {
-    display: grid;
-    grid-template-columns: 1.5fr 1fr;
-    gap: var(--space-performance-xl);
-    padding: clamp(2rem, 5vw, 5rem) max(1.25rem, calc((100% - 80rem) / 2));
+  .membership :global(.meridian-accordion) {
+    padding-inline: var(--membership-gutter, max(1.25rem, calc((100% - 80rem) / 2)));
   }
-  .offer > div {
-    min-width: 0;
-  }
+  .offer { padding: clamp(2rem, 5vw, 5rem) var(--membership-gutter, max(1.25rem, calc((100% - 80rem) / 2))); }
+  .offer-intro { max-width: 65ch; }
+  .offer-intro a { text-decoration: underline; }
+  .offer-intro p:last-child { font-size: .875rem; color: var(--color-performance-ink-soft); }
+  .plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-performance-md); margin-block: var(--space-performance-lg); }
+  .plan { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--color-performance-line-strong); padding: clamp(1.25rem, 3vw, 2.5rem); }
+  .plan h3 { margin: var(--space-performance-sm) 0 0; }
+  .plan ul { flex: 1; }
+  .plan :global(a) { align-self: flex-start; }
   .membership .eyebrow {
     color: var(--color-performance-ink-soft);
     font-family: var(--font-performance-mono);
@@ -118,29 +186,26 @@
   li {
     margin-block: var(--space-performance-sm);
   }
-  .commitment {
-    border-left: 1px solid var(--color-performance-line-strong);
-    padding-left: var(--space-performance-xl);
-  }
   .price {
     font-family: var(--font-performance-editorial);
-    font-size: clamp(2.5rem, 4vw, 4rem);
-    margin-block: var(--space-performance-md);
+    font-size: clamp(2rem, 3.5vw, 3.5rem);
+    margin-block: var(--space-performance-sm);
   }
   .availability {
     font-size: 0.875rem;
     margin-top: var(--space-performance-md);
     color: var(--color-performance-ink-soft);
   }
+  .cost-boundary {
+    padding: 0 var(--membership-gutter, max(1.25rem, calc((100% - 80rem) / 2))) var(--space-performance-xl);
+  }
+  h3 { font-family: var(--font-performance-editorial); font-size: clamp(1.5rem, 3vw, 2.25rem); font-weight: 400; line-height: 1.2; }
+  dl { margin-block: var(--space-performance-lg); border-top: 1px solid var(--color-performance-line-strong); }
+  dl > div { display: grid; grid-template-columns: 1fr 2fr; gap: var(--space-performance-lg); padding-block: var(--space-performance-md); border-bottom: 1px solid var(--color-performance-line); }
+  dt { font-weight: 600; }
+  dd { margin: 0; line-height: 1.65; max-width: 65ch; }
+  @media (max-width: 760px) { .plans { grid-template-columns: 1fr; } }
   @media (max-width: 640px) {
-    .offer {
-      grid-template-columns: 1fr;
-    }
-    .commitment {
-      border-left: 0;
-      border-top: 1px solid var(--color-performance-line-strong);
-      padding-left: 0;
-      padding-top: var(--space-performance-lg);
-    }
+    dl > div { grid-template-columns: 1fr; gap: var(--space-performance-sm); }
   }
 </style>

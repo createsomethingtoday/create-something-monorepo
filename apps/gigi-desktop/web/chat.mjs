@@ -1,0 +1,240 @@
+import { approvalCopy, approvalAction, creativeReceipt } from './approval-view.mjs';
+
+const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+const sessionItems = (value) => Array.isArray(value) ? value : Array.isArray(value?.sessions) ? value.sessions : [];
+const pollLimit = 120;
+const uncertainOutcomes = new Set(['reconciliation_required', 'write_outcome_unknown', 'turn_outcome_unknown']);
+const unresolvedSave = 'GiGi cannot yet confirm whether this save completed. Do not recreate the record or submit another change. Choose Check status to check again. If this message remains, ask for help resolving the saved request.';
+const explanations = {
+  codex_unavailable: 'Codex is unavailable on this Mac. Open chat setup to check the Codex CLI installation, then choose Check status.',
+  chatgpt_auth_required: 'Sign in to your ChatGPT account in Codex on this Mac, then choose Check status.',
+  provider_preflight_unavailable: 'Your provider could not start this request. No message was sent; try again when it is available.',
+  provider_preflight_rejected: 'Your provider declined the request before a response started. Check its availability, then send again when ready.',
+  provider_turn_rejected: 'Your provider declined this request. Check its usage or availability, then send again when ready.',
+  reconciliation_required: 'The last send may have started. Choose Check status and review the latest messages before sending again.',
+  write_outcome_unknown: unresolvedSave,
+  turn_outcome_unknown: 'The last send may have started. Choose Check status and review the latest messages before sending again.',
+  usage_limit_reached: 'Your Codex usage limit is reached. Try again after it resets.',
+  usage_limit: 'Your Codex usage limit is reached. Try again after it resets.',
+  quota_exceeded: 'Your Codex usage limit is reached. Try again after it resets.',
+  rate_limit_exceeded: 'Codex is at its usage limit. Try again later.',
+  rate_limit: 'Codex is at its usage limit. Try again later.',
+  authentication_required: 'Sign in to Codex on this Mac, then choose Check status.',
+  not_authenticated: 'Sign in to Codex on this Mac, then choose Check status.',
+  gigi_tools_unavailable: 'GiGi’s local tools are unavailable. Check agent setup in Settings. If a companion is missing, reinstall the complete GiGi app.',
+};
+function explanation(raw, hasConversation = true) {
+  const code = String(raw ?? '').trim();
+  return explanations[code] || (hasConversation ? 'Could not complete this request. Choose Check status before trying another change.' : 'Could not check Codex or load conversations. Choose Check status to try this read again.');
+}
+function needsReconciliation(chat) { return chat.current?.decisionReceipt?.outcome === 'unknown' || Boolean(chat.current?.cancelPending || chat.current?.recoveryPending) || uncertainOutcomes.has(chat.error) || uncertainOutcomes.has(chat.current?.error); }
+
+// A deliberately small text renderer. Provider text can express hierarchy, but
+// cannot create links, HTML, event handlers or executable action controls.
+export function renderAnswer(value) {
+  const source=String(value ?? '').slice(0,100000);
+  const inline=text=>escape(text).replace(/`([^`\n]{1,300})`/g,'<code>$1</code>').replace(/\*\*([^*\n]{1,500})\*\*/g,'<strong>$1</strong>');
+  const output=[];let group=[];let kind='';let orderStart=1;
+  const flush=()=>{if(!group.length)return;output.push(kind==='ul' || kind==='ol' ? `<${kind}${kind==='ol' && orderStart!==1 ? ` start="${orderStart}"` : ''}>${group.map(line=>`<li>${inline(line)}</li>`).join('')}</${kind}>` : `<p>${group.map(inline).join('<br>')}</p>`);group=[];kind='';orderStart=1;};
+  for(const line of source.split('\n')) {
+    if(!line.trim()){flush();continue;}
+    const heading=line.match(/^\s{0,3}#{1,3}\s+(.{1,300})$/);
+    if(heading){flush();output.push(`<h3>${inline(heading[1])}</h3>`);continue;}
+    const unordered=line.match(/^\s*[-*]\s+(.+)$/);const ordered=line.match(/^\s*(\d{1,3})[.)]\s+(.+)$/);
+    const next=unordered?'ul':ordered?'ol':'p';if(kind!==next)flush();kind=next;if(ordered && !group.length)orderStart=Number(ordered[1]);group.push(unordered?.[1] || ordered?.[2] || line);
+  }
+  flush();return output.join('');
+}
+export function chatState(chat) {
+  if(needsReconciliation(chat))return {label:'Outcome needs checking',detail:'Check the saved request before another change.'};
+  if(chat.reading)return {label:'Reading conversation',detail:'Checking saved messages and record state.'};
+  if(chat.current?.state==='approval')return {label:'Waiting for your review',detail:'Nothing in this proposal is approved by a notification.'};
+  if(chat.current?.state==='running' || chat.pending)return {label:chat.current?.cancelPending?'Stopping response':'Responding',detail:'You can leave this drawer and return to your work.'};
+  if(chat.current?.state==='failed' || chat.error)return {label:'Needs another look',detail:'Check status for the latest result.'};
+  if(chat.current?.decisionReceipt?.outcome==='verified')return {label:'Result checked',detail:'GiGi verified the reviewed action. See its receipt below.'};
+  if(chat.current?.state==='interrupted')return {label:'Response interrupted',detail:'Review the latest messages before continuing.'};
+  return {label:'Ready to help',detail:'Ask a question or choose a starting point.'};
+}
+function suggestions(chat,ready) {
+  if(!ready || chat.pending || chat.reading || needsReconciliation(chat) || ['running','approval'].includes(chat.current?.state))return '';
+  const options=chat.record ? [
+    ['Summarize this record','Summarize this record and its linked work. Point out missing information without inventing details.'],
+    ['Find the next step','What is the next useful step for this record? Explain what it is based on and ask before making changes.']
+  ] : [
+    ['Help me plan today','Review my saved tasks and upcoming work. Suggest what needs my attention today, with links to the source records.'],
+    ['Find unfinished work','Find unfinished work in my workspace. Explain what is known, what is missing, and how you can help.']
+  ];
+  return `<section class="chat-suggestions" aria-label="Starting points"><p>Choose a starting point. Nothing is sent until you choose Send.</p><div class="inline-actions">${options.map(([label,prompt])=>`<button type="button" class="btn" data-chat-prompt="${escape(prompt)}">${escape(label)}</button>`).join('')}</div></section>`;
+}
+
+export class ChatController {
+  constructor(bridge, workspaceId, changed, completed, schedule = (callback, delay) => globalThis.setTimeout(callback, delay), clear = (timer) => globalThis.clearTimeout(timer)) {
+    this.bridge = bridge; this.workspaceId = workspaceId; this.changed = changed; this.completed = completed;
+    this.schedule = schedule; this.clear = clear; this.visible = false; this.status = null;
+    this.verifiedWorkspaceEdits = new Set(); this.sessions = []; this.current = null; this.record = null; this.startRecord = null; this.draft = ''; this.error = null;
+    this.pending = false; this.reading = false; this.refreshRequired = false; this.drafts = new Map(); this.unconfirmedSends = new Map();
+    this.timer = null; this.observationPaused = false; this.epoch = 0; this.pollCount = 0; this.opening = false;
+  }
+  emit() { this.changed(); }
+  stopPolling() { this.observationPaused = false; if (this.timer != null) this.clear(this.timer); this.timer = null; this.epoch++; }
+  close() { this.visible = false; this.refreshRequired = true; this.reading = false; this.stopPolling(); this.emit(); }
+  selectSession(sessionId) {
+    if (this.current?.sessionId === sessionId) return;
+    if (this.current) this.drafts.set(this.current.sessionId, this.draft);
+    this.draft = this.drafts.get(sessionId) || '';
+    this.current = { sessionId, messages: [], state: 'idle', approvals: [], recordLinks: [] };
+  }
+  async checkStatus() {
+    if (!this.visible || this.pending || this.reading) return;
+    // Refresh only read operations. An uncertain send or edit must never be replayed.
+    await this.open(this.startRecord);
+  }
+  async open(record = null) {
+    this.stopPolling(); this.visible = true; this.opening = true; this.reading = true; this.refreshRequired = true;
+    this.startRecord = record;
+    if (!this.current) this.record = record;
+    this.emit();
+    const epoch = this.epoch;
+    try {
+      const [status, list] = await Promise.allSettled([this.bridge.chatStatus(this.workspaceId), this.bridge.chatList(this.workspaceId)]);
+      if (epoch !== this.epoch || !this.visible) return;
+      if (status.status === 'rejected') throw status.reason;
+      this.status = status.value;
+      if (list.status === 'fulfilled') { this.sessions = sessionItems(list.value); this.error = null; }
+      else this.error = String(list.reason?.message || list.reason);
+      if (this.current && !this.pending) await this.read(this.current.sessionId, epoch, true);
+      else { this.reading = false; this.emit(); }
+    } catch (error) { if (epoch === this.epoch) { this.reading = false; this.status = { provider: 'codex', available: false, authenticated: false }; this.error = String(error?.message || error); this.emit(); } }
+  }
+  async start() {
+    if (!this.visible || this.pending || this.reading || !this.status?.available || !this.status?.authenticated) return;
+    this.stopPolling(); this.pollCount = 0; this.pending = true; this.error = null; this.emit();
+    const record = this.startRecord;
+    try {
+      const started = await this.bridge.chatStart(this.workspaceId, record ? { entity: record.entity, id: record.id } : null);
+      const sessionId = started?.sessionId;
+      if (!sessionId) throw new Error('Codex did not return a session ID.');
+      this.selectSession(sessionId); this.record = record; this.refreshRequired = true;
+      if (this.visible) await this.read(sessionId, this.epoch, true, true);
+      const list = await this.bridge.chatList(this.workspaceId);
+      this.sessions = sessionItems(list);
+    } catch (error) { this.error = String(error?.message || error); }
+    finally { this.pending = false; this.emit(); }
+  }
+  async read(sessionId, epoch = this.epoch, preserveContext = false, internal = false) {
+    if (!this.visible || (this.pending && !internal)) return;
+    this.stopPolling(); this.pollCount = 0; epoch = this.epoch;
+    const saved = this.sessions.find((item) => item.sessionId === sessionId);
+    const savedRecord = saved?.record;
+    if (saved && !preserveContext) this.record = savedRecord ? { entity: savedRecord.entity, id: savedRecord.id, ...(savedRecord.title ? { title: savedRecord.title } : this.record?.entity === savedRecord.entity && this.record?.id === savedRecord.id && this.record?.title ? { title: this.record.title } : {}) } : null;
+    this.selectSession(sessionId); this.reading = true; this.refreshRequired = true; this.emit();
+    try {
+      const result = await this.bridge.chatRead(this.workspaceId, sessionId);
+      if (epoch !== this.epoch || !this.visible) return;
+      if (!this.accept(result)) throw new Error('Conversation read returned an invalid session.');
+    } catch (error) { if (epoch === this.epoch) { if (!needsReconciliation(this)) this.error = String(error?.message || error); this.emit(); } }
+    finally { if (epoch === this.epoch) { this.reading = false; this.emit(); } }
+  }
+  accept(result) {
+    if (!result || result.sessionId !== this.current?.sessionId || !['idle', 'running', 'approval', 'interrupted', 'failed'].includes(result.state)) return false;
+    const newWorkspaceEdits = (Array.isArray(result.workspaceVerifiedEdits) ? result.workspaceVerifiedEdits : []).filter(id => typeof id === 'string' && !this.verifiedWorkspaceEdits.has(id));
+    for (const id of newWorkspaceEdits) this.verifiedWorkspaceEdits.add(id);
+    const previous = this.current.state;
+    const previousReceipt = this.current.decisionReceipt;
+    const verifiedEdit = result.decisionReceipt?.outcome === 'verified' && (previousReceipt?.outcome !== 'verified' || previousReceipt.approvalId !== result.decisionReceipt.approvalId);
+    const messages = Array.isArray(result.messages) && result.messages.length ? result.messages : this.current.messages;
+    if(result.state !== 'running' && !result.recoveryPending)this.observationPaused=false;
+    this.sessions=this.sessions.map(session=>session.sessionId===result.sessionId?{...session,state:result.state}:session);
+    this.current = { ...result, messages }; this.error = result.error || null;
+    const unconfirmed = this.unconfirmedSends.get(result.sessionId);
+    if (unconfirmed?.sessionId === result.sessionId) {
+      const confirmed = messages.some((message) => message.role === 'user' && !unconfirmed.messageIds.has(message.id) && String(message.text).trim() === unconfirmed.text);
+      if (confirmed) { if (this.draft.trim() === unconfirmed.text) this.draft = ''; this.unconfirmedSends.delete(result.sessionId); }
+      else this.error = result.error || 'turn_outcome_unknown';
+    }
+    if (this.visible) this.refreshRequired = false;
+    this.emit();
+    if (verifiedEdit || newWorkspaceEdits.length || (['running', 'approval'].includes(previous) && result.state === 'idle')) void this.completed?.(result);
+    if (result.state === 'running' || result.recoveryPending) this.queuePoll();
+    return true;
+  }
+  queuePoll() {
+    if (!this.visible || this.timer != null || this.pollCount >= pollLimit) {
+      if (this.pollCount >= pollLimit) { this.observationPaused = true; this.error = 'The response is still running. Open this session again to check it.'; this.emit(); }
+      return;
+    }
+    const epoch = this.epoch;
+    this.timer = this.schedule(async () => {
+      this.timer = null;
+      if (epoch !== this.epoch || !this.visible || (this.current?.state !== 'running' && !this.current?.recoveryPending)) return;
+      this.pollCount++;
+      try { const result = await this.bridge.chatPoll(this.workspaceId, this.current.sessionId); if (epoch === this.epoch && this.visible) this.accept(result); }
+      catch (error) { if (epoch === this.epoch) { this.error = String(error?.message || error); this.emit(); } }
+    }, 1000);
+  }
+  async mutate(task, submittedText = null) {
+    this.stopPolling(); this.pending = true; this.error = null; this.emit();
+    const sessionId = this.current.sessionId;
+    const messageIds = new Set((this.current.messages || []).map((message) => message.id));
+    try {
+      // Hiding the drawer invalidates reads, not an already submitted operation.
+      const result = await task(sessionId);
+      if (result?.sessionId && this.accept(result)) {
+        if (submittedText !== null && this.draft.trim() === submittedText) this.draft = '';
+        if (submittedText !== null && result.state === 'idle') void this.completed?.(result);
+      } else {
+        this.refreshRequired = true;
+        if (submittedText !== null) { this.unconfirmedSends.set(sessionId, { sessionId, text: submittedText, messageIds }); this.error = 'turn_outcome_unknown'; }
+      }
+    } catch (error) {
+      this.error = String(error?.message || error);
+      // These exact adapter errors prove turn/start was not delivered or was rejected.
+      // Transport failures remain uncertain and must never permit automatic replay.
+      const definitive = submittedText !== null && ['chatgpt_auth_required', 'codex_unavailable', 'provider_turn_rejected', 'provider_preflight_rejected', 'provider_preflight_unavailable', 'session_not_found', 'plugin_inventory_unavailable', 'gigi_tools_unavailable'].includes(this.error);
+      this.refreshRequired = !definitive;
+      if (submittedText !== null && !definitive) this.unconfirmedSends.set(sessionId, { sessionId, text: submittedText, messageIds });
+    }
+    finally {
+      this.pending = false; this.emit();
+      if (this.visible && this.refreshRequired && this.current?.sessionId === sessionId) await this.read(sessionId, this.epoch, true);
+    }
+  }
+  async send(message) {
+    const text = String(message ?? '').trim();
+    if (!text || !this.visible || this.pending || this.reading || this.refreshRequired || !this.current || !this.status?.available || !this.status?.authenticated || needsReconciliation(this) || this.current.state === 'running' || this.current.state === 'approval') return;
+    await this.mutate((sessionId) => this.bridge.chatSend(this.workspaceId, sessionId, text), text);
+  }
+  async cancel() {
+    if (!this.visible || !this.current || this.pending || this.reading || this.refreshRequired || this.current.state !== 'running' || needsReconciliation(this)) return;
+    await this.mutate(async (sessionId) => {
+      const result = await this.bridge.chatCancel(this.workspaceId, sessionId);
+      return result?.cancelPending && this.current?.sessionId === sessionId ? { ...result, messages: this.current.messages } : result;
+    });
+  }
+  async decide(approvalId, decision) {
+    if (!this.visible || !this.current || this.pending || this.reading || this.refreshRequired || needsReconciliation(this) || this.current.state !== 'approval' || !['approve', 'reject'].includes(decision) || !this.current.approvals?.some((item) => item.id === approvalId)) return;
+    await this.mutate((sessionId) => this.bridge.chatApprove(this.workspaceId, sessionId, approvalId, decision));
+  }
+
+}
+
+export function chatView(chat, innerOnly = false) {
+  if (!chat.visible) return '';
+  const current = chat.current;
+  const ready = chat.status?.available && chat.status?.authenticated;
+  const unavailable = chat.status ? (!chat.status.available ? explanation(chat.status.reason || 'codex_unavailable') : !chat.status.authenticated ? explanation(chat.status.reason || 'chatgpt_auth_required') : '') : 'Checking Codex…';
+  const uncertain = needsReconciliation(chat);
+  const failureNote = uncertain ? (current?.decisionReceipt?.outcome === 'unknown' || current?.error === 'write_outcome_unknown' || chat.error === 'write_outcome_unknown' ? unresolvedSave : 'Check the latest conversation before sending another message.') : 'This response failed. Choose Check status to check its state.';
+  const failedMarkup = `<p class="chat-error">${failureNote}</p>`;
+  const context = chat.record ? `<span class="chat-context">About ${escape(chat.record.title || `${chat.record.entity} · ${chat.record.id}`)}</span>` : '<span class="chat-context">Workspace</span>';
+  const messages = (current?.messages || []).map((item) => `<div class="chat-message ${item.role === 'user' ? 'from-user' : 'from-agent'}"><span class="chat-message-label">${item.role === 'user' ? 'You' : 'GiGi'}</span><div class="chat-answer">${item.role === 'user' ? `<p>${escape(item.text)}</p>` : renderAnswer(item.text)}</div></div>`).join('');
+  const approvals = current?.state === 'approval' ? (current.approvals || []).map((item) => `<div class="chat-approval">${approvalCopy(item, typeof chat.currency === 'function' ? chat.currency() : chat.currency, typeof chat.currencyKnown === 'function' ? chat.currencyKnown() : chat.currencyKnown !== false)}<div class="inline-actions"><button class="btn primary" data-chat-approval="${escape(item.id)}" data-chat-decision="approve" ${chat.pending || chat.reading || chat.refreshRequired || uncertain || !ready ? 'disabled' : ''}>${escape(approvalAction(item))}</button><button class="btn danger" data-chat-approval="${escape(item.id)}" data-chat-decision="reject" ${chat.pending || chat.reading || chat.refreshRequired || uncertain || !ready ? 'disabled' : ''}>Reject changes</button></div></div>`).join('') : '';
+  const receiptText = creativeReceipt(current?.decisionReceipt) || { verified: 'Changes saved and verified in GiGi.', rejected: 'Changes rejected. GiGi did not execute this edit.', failed: 'The requested edit was not saved.', existing: 'A linked record already exists. No new record was created; your existing changes were kept.', unknown: unresolvedSave }[current?.decisionReceipt?.outcome];
+  const receipt = receiptText ? `<p class="chat-status" role="status"><strong>Last reviewed action</strong> ${escape(receiptText)}</p>` : '';
+  const links = (current?.recordLinks || []).map((item) => `<button type="button" class="btn text chat-record-link" data-chat-link-entity="${escape(item.entity)}" data-chat-link-id="${escape(item.id)}">${escape(item.title || item.id)} ↗</button>`).join('');
+  const sessions = chat.sessions.map((item) => `<button type="button" class="chat-session" data-chat-session="${escape(item.sessionId)}" ${chat.pending ? 'disabled' : ''} ${item.sessionId === current?.sessionId ? 'aria-current="true"' : ''}><span>${escape(item.title || item.record?.title || 'Conversation')}</span><small>${escape(item.state || '')}</small></button>`).join('');
+  const observed=chatState(chat);
+  const recovery = unavailable || chat.error || chat.refreshRequired || uncertain ? `<section class="chat-recovery" aria-label="Chat status and recovery">${unavailable ? `<p class="chat-status" role="status">${escape(unavailable)}</p>` : ''}<div class="inline-actions"><button type="button" class="btn" data-chat-refresh="1" ${chat.pending || chat.reading ? 'disabled' : ''}>${chat.reading ? 'Checking status…' : 'Check status'}</button>${!ready || chat.error === 'gigi_tools_unavailable' ? '<button type="button" class="btn text" data-chat-setup="1">Open chat setup</button>' : ''}</div></section>` : '';
+  const contents = `<div class="chat-intro"><div class="chat-head"><div><p class="eyebrow">Codex · local session</p><h2>Ask GiGi</h2></div><button type="button" class="btn text" data-chat-close="1" aria-label="Close Ask GiGi">Close</button></div><div class="chat-context-row">${context}<span class="chat-presence">${ready ? 'Codex signed in' : chat.status ? 'Unavailable' : 'Checking'}</span></div><p class="chat-scope">Ask about your local work. GiGi asks you to review changes before saving.</p><details class="chat-capabilities"><summary>What Ask GiGi can do</summary><p>Ask about your local workspace and approve edits to existing records. Select an imported email or calendar event to propose a linked local task or gig; review it before saving. Find and organize Your music, choose files to import, and prepare local Instagram drafts. Publishing requires a separate review in Instagram drafts. Other records and links use GiGi’s record controls. Selected record context is included when starting a chat. Phone access is a separate setup step in Settings.</p></details>${recovery}<div class="chat-observed-state" role="status"><strong>${escape(observed.label)}</strong><span>${escape(observed.detail)}</span></div>${chat.error && (ready || uncertain) ? `<p class="chat-error" role="alert">${escape(explanation(chat.error, Boolean(current)))}</p>` : ''}<div class="chat-sessions"><div class="chat-section-head"><strong>Conversations</strong><button type="button" class="btn text" data-chat-new="1" ${!ready || chat.pending || chat.reading ? 'disabled' : ''}>New chat</button></div>${sessions || '<p class="muted">No saved conversations yet.</p>'}</div></div><div class="chat-transcript" role="log" aria-label="Conversation" aria-live="polite">${messages || `<p class="chat-empty">${ready ? 'Choose New chat, or open a saved conversation.' : 'Your local records remain available while chat is disconnected.'}</p>`}${suggestions(chat,ready)}${approvals}${receipt}${links}${current?.recoveryPending ? '<p class="chat-status" role="status">Checking the previous response…</p>' : current?.state === 'running' ? `<p class="chat-running" role="status">${current.cancelPending ? 'Stopping response…' : 'GiGi is responding…'}</p>` : ''}${current?.state === 'interrupted' && !current.recoveryPending ? `<p class="chat-status">${uncertain ? 'This response was interrupted. Resolve the pending outcome before sending another message.' : 'This response was interrupted. You can send another message.'}</p>` : ''}${current?.state === 'failed' ? failedMarkup : ''}</div>${current ? `<form id="chat-form" class="chat-composer"><label for="chat-message">Message GiGi</label><textarea id="chat-message" name="message" rows="3" maxlength="12000" placeholder="Ask about this ${chat.record ? 'record' : 'workspace'}…" ${!ready ? 'disabled' : ''}>${escape(chat.draft)}</textarea><div class="chat-actions">${current.state === 'running' ? `<button type="button" class="btn danger" data-chat-stop="1" ${chat.pending || chat.reading || chat.refreshRequired || uncertain || !ready ? 'disabled' : ''}>Stop response</button>` : `<button type="submit" class="btn primary" ${!ready || chat.pending || chat.reading || chat.refreshRequired || uncertain || current.state === 'approval' ? 'disabled' : ''}>Send message</button>`}</div></form>` : `<p class="chat-hint">${ready ? 'Choose New chat to begin.' : 'Chat needs a signed-in Codex CLI on this Mac. Local records need no connection.'}</p>`}`;
+  return innerOnly ? contents : `<aside class="chat-panel ${chat.opening ? 'chat-entering' : ''}" aria-label="Ask GiGi">${contents}</aside>`;
+}

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SerifPhrase from '$lib/components/SerifPhrase.svelte';
   let { data } = $props();
 </script>
 
@@ -8,7 +9,7 @@
 <main id="main" class="builder-workspace">
   <a href="/dashboard">Your networks</a>
   <p class="eyebrow">PRIVATE / NETWORK IMPACT</p>
-  <h1>What people accessed.<br /><em>What remains to prove.</em></h1>
+  <h1>What people accessed.<br /><SerifPhrase text="What remains to prove." /></h1>
   <p class="lede">{data.report.note}</p>
   <div class="builder-grid">
     <section class="builder-panel">

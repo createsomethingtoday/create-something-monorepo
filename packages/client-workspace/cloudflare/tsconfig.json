@@ -1,12 +1,32 @@
 {
   "compilerOptions": {
-    "lib": ["ES2023", "WebWorker"],
+    "lib": [
+      "ES2023",
+      "WebWorker"
+    ],
     "target": "ES2023",
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "strict": true,
     "skipLibCheck": true,
-    "types": ["@cloudflare/workers-types"]
+    "types": [
+      "@cloudflare/workers-types"
+    ],
+    "baseUrl": "../../..",
+    "paths": {
+      "@create-something/canon/auth/server": [
+        "packages/canon/src/lib/auth/server.ts"
+      ],
+      "@create-something/canon/auth/access": [
+        "packages/canon/src/lib/auth/access.ts"
+      ],
+      "@create-something/auth-platform": [
+        "packages/auth-platform/src/index.ts"
+      ]
+    }
   },
-  "include": ["src/**/*.ts", "../src/lib/cloudflare/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "../src/lib/cloudflare/**/*.ts"
+  ]
 }

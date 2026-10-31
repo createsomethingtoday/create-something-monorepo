@@ -38,10 +38,11 @@
 			For members: preferences remembered. For admins: insights surfaced.
 		</p>
 
-		<div class="view-toggle">
+		<div class="view-toggle" role="group" aria-label="Product preview">
 			<button
 				class="toggle-btn"
 				class:active={activeView === 'member'}
+				aria-pressed={activeView === 'member'}
 				onclick={() => setView('member')}
 			>
 				Member View
@@ -49,6 +50,7 @@
 			<button
 				class="toggle-btn"
 				class:active={activeView === 'admin'}
+				aria-pressed={activeView === 'admin'}
 				onclick={() => setView('admin')}
 			>
 				Admin View
@@ -101,7 +103,7 @@
 
 <style>
 	.showcase {
-		padding: var(--space-2xl) var(--space-md);
+		padding: var(--space-xl) var(--space-md);
 		background: var(--color-bg-pure);
 	}
 
@@ -113,26 +115,27 @@
 	.section-title {
 		font-size: var(--text-h2);
 		font-weight: 600;
-		text-align: center;
+		text-align: left;
 		margin: 0 0 var(--space-sm);
 		color: var(--color-fg-primary);
 	}
 
 	.section-subtitle {
 		font-size: var(--text-body-lg);
-		text-align: center;
+		text-align: left;
 		color: var(--color-fg-secondary);
 		margin: 0 0 var(--space-lg);
 	}
 
 	.view-toggle {
 		display: flex;
-		justify-content: center;
+		justify-content: flex-start;
 		gap: var(--space-xs);
-		margin-bottom: var(--space-lg);
+		margin-bottom: var(--space-md);
 	}
 
 	.toggle-btn {
+		min-height: 44px;
 		padding: var(--space-xs) var(--space-md);
 		font-size: var(--text-body-sm);
 		font-weight: 500;
@@ -218,7 +221,11 @@
 	.embed-container {
 		position: relative;
 		min-height: 320px;
-		margin-bottom: var(--space-lg);
+		margin-bottom: var(--space-md);
+		padding: var(--space-md);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		background: var(--color-bg-surface);
 	}
 
 	.widget-wrapper {
@@ -230,8 +237,10 @@
 	}
 
 	.personalization-prompt {
-		text-align: center;
+		text-align: left;
 		padding: var(--space-md);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
 	}
 
 	.prompt-text {
@@ -260,6 +269,37 @@
 	.reveal-btn:hover {
 		background: var(--color-hover);
 		border-color: var(--color-border-strong);
+	}
+
+	/* Keep the public demonstration usable without changing the embedded product. */
+	@media (max-width: 480px) {
+		.widget-wrapper :global(.widget) {
+			padding: var(--space-sm);
+		}
+		.widget-wrapper :global(.week-nav) {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: var(--space-xs);
+		}
+		.widget-wrapper :global(.nav-btn) {
+			width: 44px;
+			height: 44px;
+		}
+		.widget-wrapper :global(.nav-btn:last-child) {
+			grid-column: 2;
+			grid-row: 1;
+			justify-self: end;
+		}
+		.widget-wrapper :global(.week-days) {
+			grid-column: 1 / -1;
+			grid-row: 2;
+			display: grid;
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+		}
+		.widget-wrapper :global(.day-btn) {
+			min-height: 44px;
+			min-width: 0;
+		}
 	}
 
 	@media (prefers-reduced-motion: reduce) {

@@ -1,0 +1,14 @@
+{
+  "name": "@create-something/walkthrough-system",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Manifest-driven screen walkthroughs with a synchronized wayfinder and deterministic video exports.",
+  "scripts": {
+    "dev": "node serve.mjs",
+    "build": "node build.mjs",
+    "test": "node --test test/*.test.mjs",
+    "render": ".venv/bin/python render.py",
+    "test:render": ".venv/bin/python -m unittest discover -s test -p 'test_*.py'"
+  }
+}

@@ -1,5 +1,7 @@
 <script lang="ts">
   import { SEO } from '@create-something/canon';
+  import WorkshopScene from '$lib/workshop/WorkshopScene.svelte';
+  import WorkshopTrace from '$lib/workshop/WorkshopTrace.svelte';
   import ProjectCard from '$lib/workshop/ProjectCard.svelte';
   import { projects, workbenchTools } from '$lib/workshop/catalog';
   import '$lib/workshop/workshop.css';
@@ -8,7 +10,7 @@
 <SEO
   title="The Public Workshop | CREATE SOMETHING .space"
   description="Tools, workflows, skills, and building blocks from CREATE SOMETHING. Find something useful, inspect the source, and make it your own."
-  ogImage="/images/workshop/open-workshop.webp"
+  ogImage="/images/workshop/stories/products-workbench-paths-continuity-v2.webp"
   propertyName="space"
 />
 <div class="workshop">
@@ -27,16 +29,7 @@
         >
       </div>
     </div>
-    <figure>
-      <img
-        src="/images/workshop/open-workshop.webp"
-        alt="Ivory modules lift from a machined docking rail, a material study of tools made for reuse."
-        width="1536"
-        height="1024"
-        fetchpriority="high"
-      />
-      <figcaption class="eyebrow">Study 01 / Made to be taken apart</figcaption>
-    </figure>
+    <WorkshopScene scene="workshop" eager />
   </section>
   <section class="section wrap" aria-labelledby="selected-title">
     <div class="section-head">
@@ -62,7 +55,9 @@
           The playground, labs, and data tools are still here. Open a familiar tool or follow your
           curiosity somewhere new.
         </p>
-        <div class="actions"><a class="primary" href="/workbench">Open the Workbench ↗</a></div>
+        <div class="actions">
+          <a class="primary" href="/workbench">Open the Workbench ↗</a>
+        </div>
       </div>
       <div class="tool-list">
         {#each workbenchTools as tool}<a href={tool.href}
@@ -73,6 +68,7 @@
       </div>
     </div>
   </section>
+  <div class="wrap"><WorkshopTrace /></div>
   <section class="section wrap closing" aria-labelledby="closing-title">
     <p class="eyebrow">03 / In good company</p>
     <h2 id="closing-title">Use the work.<br />Help it get better.</h2>
@@ -91,56 +87,37 @@
 
 <style>
   .opening {
-    padding: 0;
+    width: min(1440px, calc(100% - 2 * var(--space-performance-lg)));
+    margin-inline: auto;
     display: grid;
-    grid-template-columns: 1fr 1.12fr;
-    background: var(--color-performance-ink, #090909);
-    color: var(--color-performance-paper, #f3f3f0);
-    min-height: 620px;
+    grid-template-columns: 0.8fr 1.2fr;
+    align-items: center;
+    gap: clamp(2rem, 5vw, 6rem);
+    padding-block: clamp(2.5rem, 6vw, 6rem);
   }
   .opening__copy {
-    padding: clamp(3rem, 6vw, 6rem) clamp(1.25rem, 4vw, 4rem);
-    align-self: center;
+    padding-block: 1rem;
   }
   .opening .eyebrow {
-    color: var(--color-performance-paper, #f3f3f0);
-    margin-bottom: 2.5rem;
-    opacity: 0.75;
+    margin-bottom: 1.5rem;
+    color: var(--color-performance-fg-secondary);
   }
   .opening .lead {
-    margin-top: 2rem;
-    color: #d4d4ce;
-    max-width: 31rem;
+    margin-top: 1.5rem;
+    color: var(--color-performance-fg-secondary);
+    max-width: 30rem;
   }
-  .opening .primary {
-    background: var(--color-performance-paper, #f3f3f0);
-    color: var(--color-performance-ink, #090909);
-  }
-  figure {
-    position: relative;
-    min-width: 0;
-    margin: 0;
-  }
-  figure img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  figcaption {
-    position: absolute;
-    bottom: 1.5rem;
-    left: 1.5rem;
-    background: rgba(9, 9, 9, 0.8);
-    padding: 0.5rem 0.75rem;
-    margin: 0 !important;
+  .opening :global(h1) {
+    font-size: clamp(3rem, 5.7vw, 5.7rem);
   }
   .workbench {
-    background: var(--color-performance-court, #e6e6e0);
+    background: var(--color-performance-panel);
+    border-block: 1px solid var(--color-performance-line);
   }
   .workbench__grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 5rem;
+    gap: var(--space-performance-xl);
   }
   .workbench h2,
   .closing h2 {
@@ -150,9 +127,15 @@
     display: flex;
     justify-content: space-between;
     gap: 1rem;
-    padding: 1.35rem 0;
-    border-bottom: 1px solid #b8b8b0;
+    padding: 1.5rem 0.25rem;
+    border-bottom: 1px solid var(--color-performance-line-strong);
     text-decoration: none;
+  }
+  .tool-list a:hover {
+    background: var(--color-performance-court);
+  }
+  .tool-list a:first-child {
+    border-top: 1px solid var(--color-performance-line-strong);
   }
   .tool-list strong {
     font-size: 1.25rem;
@@ -169,14 +152,9 @@
   }
   @media (max-width: 900px) {
     .opening {
-      padding: 0;
+      width: calc(100% - 2 * var(--space-performance-sm));
       grid-template-columns: 1fr;
-    }
-    .opening__copy {
-      padding: 3.5rem 1.5rem;
-    }
-    figure {
-      height: min(70vw, 520px);
+      gap: 2rem;
     }
     .workbench__grid {
       grid-template-columns: 1fr;

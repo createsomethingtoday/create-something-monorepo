@@ -291,3 +291,13 @@ test('OAuth userinfo revokes access when the identity is soft-deleted or unverif
 	assert.equal(isOAuthUserInfoIdentityActive({ deleted_at: null, email_verified: 0 }), false);
 	assert.equal(isOAuthUserInfoIdentityActive(null), false);
 });
+
+test('GiGi connector tokens are bound to the exact broker origin', () => {
+ const resource = 'https://gigi-connector.createsomething.workers.dev';
+ assert.deepEqual(resolveOAuthApplicationAccessPolicy(resource), {
+  applicationId: 'gigi-connector', resource, expiresIn: 3600,
+ });
+ assert.equal(resolveOAuthApplicationAccessPolicy(`${resource}/mcp`), null);
+ assert.equal(resolveOAuthApplicationAccessPolicy('https://gigi-connector.example.com'), null);
+ assert.equal(resolveOAuthTokenAccessMode(resource, undefined).type, 'application');
+});

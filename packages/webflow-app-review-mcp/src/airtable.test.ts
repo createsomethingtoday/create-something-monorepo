@@ -812,6 +812,60 @@ describe('AirtableClient app review context and queue helpers', () => {
     expect(context.reviewer?.id).toBe('usr_pablo');
   });
 
+  it('surfaces version preflight in review context, falling back to the asset', async () => {
+    const { client } = createClient();
+
+    const empty = await client.getReviewContext('rec-version-self');
+    expect(empty.preflight).toBeNull();
+
+    const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      if (url.pathname.endsWith(`/${TABLE_IDS.assetVersions}/rec-version-pf`)) {
+        const base = versionRecord('rec-version-pf', null);
+        return jsonResponse({
+          ...base,
+          fields: {
+            ...base.fields,
+            [FIELD_IDS.versions.preflightReceipt]: 'wfpre_abc123',
+            [FIELD_IDS.versions.preflightReadiness]: 'changes_required',
+            [FIELD_IDS.versions.preflightRuntimeStatus]: 'blocked',
+            [FIELD_IDS.versions.preflightInstallUrlStatus]: 'block',
+            [FIELD_IDS.versions.preflightInstallUrlProbe]: 'no_oauth_handoff',
+            [FIELD_IDS.versions.preflightInstallUrlCheckedBy]: 'developer',
+          },
+        });
+      }
+      if (url.pathname.endsWith(`/${TABLE_IDS.assetVersions}/rec-version-asset-only`)) {
+        return jsonResponse(versionRecord('rec-version-asset-only', null));
+      }
+      if (url.pathname.endsWith(`/${TABLE_IDS.assets}/recAsset`)) {
+        return jsonResponse(assetRecord('recAsset', {
+          [FIELD_IDS.assets.preflightReceipt]: 'wfpre_asset',
+          [FIELD_IDS.assets.preflightInstallUrlStatus]: 'pass',
+        }));
+      }
+      return new Response('not found', { status: 404 });
+    });
+    const pfClient = new AirtableClient({ apiKey: 'token', fetchFn });
+
+    const fromVersion = await pfClient.getReviewContext('rec-version-pf');
+    expect(fromVersion.preflight).toMatchObject({
+      source: 'version',
+      receipt: 'wfpre_abc123',
+      readiness: 'changes_required',
+      runtimeStatus: 'blocked',
+      installUrlStatus: 'block',
+      installUrlProbe: 'no_oauth_handoff',
+      installUrlCheckedBy: 'developer',
+    });
+    expect(fromVersion.version.preflight?.receipt).toBe('wfpre_abc123');
+    expect(fromVersion.asset?.preflight?.receipt).toBe('wfpre_asset');
+
+    const fromAsset = await pfClient.getReviewContext('rec-version-asset-only');
+    expect(fromAsset.version.preflight).toBeNull();
+    expect(fromAsset.preflight).toMatchObject({ source: 'asset', receipt: 'wfpre_asset', installUrlStatus: 'pass' });
+  });
+
   it('finds app_id matches across paginated asset results', async () => {
     const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
       const url = new URL(String(input));
@@ -1017,5 +1071,28 @@ describe('reviewer assignment is read-only at the writer', () => {
     const client = new AirtableClient({ apiKey: 'token', fetchFn });
     await expect(client.updateVersionReview('recVersion', { reviewer, review_status: '🏃🏾In Review' })).rejects.toMatchObject({ code: 'REVIEWER_ASSIGNMENT_READ_ONLY' });
     expect(fetchFn).not.toHaveBeenCalled();
+  });
+});
+
+describe('setVersionZendeskTicket', () => {
+  it('enforces a fresh-read precondition and patches only 🧘ZD ID', async () => {
+    const calls: Array<{ method: string; url: string; body?: unknown }> = [];
+    const versionRecord = (zd?: string) => ({ id: 'recAppVersion', createdTime: '2026-09-29T00:00:00.000Z', fields: { [FIELD_IDS.versions.assetLink]: ['recAppAsset'], ...(zd ? { [FIELD_IDS.versions.zendeskTicketId]: zd } : {}) } });
+    const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = init?.method ?? 'GET';
+      calls.push({ method, url, body: init?.body ? JSON.parse(String(init.body)) : undefined });
+      if (method === 'PATCH') return new Response(JSON.stringify({ records: [versionRecord('1200001')] }), { status: 200 });
+      return new Response(JSON.stringify(versionRecord('1188879')), { status: 200 });
+    });
+    const client = new AirtableClient({ apiKey: 'k', baseId: 'appTest', fetchFn: fetchFn as unknown as typeof fetch });
+    await expect(client.setVersionZendeskTicket('recAppVersion', '1200001', null)).rejects.toMatchObject({ code: 'VERSION_TICKET_CONFLICT' });
+    await expect(client.setVersionZendeskTicket('recAppVersion', 'abc', '1188879')).rejects.toMatchObject({ code: 'INVALID_TICKET_ID' });
+    expect(calls.filter((c) => c.method === 'PATCH')).toHaveLength(0);
+    const result = await client.setVersionZendeskTicket('recAppVersion', '1200001', '1188879');
+    const patch = calls.find((c) => c.method === 'PATCH');
+    expect(patch?.body).toEqual({ records: [{ id: 'recAppVersion', fields: { [FIELD_IDS.versions.zendeskTicketId]: '1200001' } }] });
+    expect(patch?.url).toContain('returnFieldsByFieldId=true');
+    expect(result.previousTicketId).toBe('1188879');
   });
 });

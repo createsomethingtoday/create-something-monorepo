@@ -1,4 +1,5 @@
 export interface Env {
+  INDEXED_INGESTION_NOT_BEFORE?: string;
   DB: D1Database;
   SYNC_QUEUE: Queue<TranscriptQueueMessage>;
   SYNC_API_KEY?: string;
@@ -24,6 +25,8 @@ export interface Env {
   NOTION_DEFAULT_SOURCE?: string;
   NOTION_DEFAULT_TYPE?: string;
   NOTION_ATTENDEES_PROPERTY?: string;
+  NOTION_TRANSCRIPT_GATE_ENABLED?: string;
+  NOTION_PAGE_INDEX_MEETING_ID?: string;
 }
 
 export interface TranscriptCandidate {
@@ -44,6 +47,8 @@ export interface TranscriptCandidate {
 }
 
 export interface TranscriptQueueMessage extends TranscriptCandidate {
+  inlineContinuation?: number;
+  rolloutCutoff?: string;
   runId: number | null;
   replay: boolean;
 }
@@ -69,6 +74,7 @@ export interface ZoomDiscoveryResult {
 }
 
 export interface NotionPageSummary {
+  createdTime?: string | null;
   id: string;
   url: string;
   title: string;
@@ -80,6 +86,9 @@ export interface NotionWriteResult {
   pageId: string;
   pageUrl: string;
   action: 'created' | 'updated' | 'skipped';
+  indexBlockId?: string;
+  indexPageUrl?: string;
+  gateVersion?: string;
   reason?: string;
 }
 

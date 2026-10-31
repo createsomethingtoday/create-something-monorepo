@@ -178,7 +178,7 @@ flowchart LR
 | Creator dashboard Cloud port               | `apps/webflow-dashboard-cloud`, `packages/webflow-dashboard-core`  | Next.js 15 on Webflow Cloud/OpenNext                                                     | Airtable base `appMoIgXMTTTNIc3p`, R2 `UPLOADS`, KV `SESSIONS`, optional D1 `DB` | Active migration target               | This is the current authenticated dashboard path. Keep shared domain logic in `webflow-dashboard-core`; avoid adding new creator-critical work only to the older SvelteKit dashboard. |
 | Legacy/source dashboard                    | `packages/webflow-dashboard`                                       | SvelteKit on Cloudflare                                                                  | Airtable, KV, R2, analytics APIs                                                 | Reference and possible legacy runtime | Treat as parity reference for the Cloud port. The parity matrix intentionally supersedes older conflicting readiness docs.                                                            |
 | Marketplace template submission app        | `apps/marketplace-template-submission-cloud`                       | Webflow Cloud iframe on `webflow.com/templates/submit-a-template`                        | Airtable Automation webhooks, upload worker, Turnstile, sandbox/autofill output  | Active public submission surface      | The parent Webflow page owns the hero and iframe shell; the app owns creator/template form flow, validation, uploads, and webhook envelope.                                           |
-| Marketplace Library submission app         | `apps/marketplace-template-submission-cloud`, `createsomethingtoday/webflow-library-submission-form` | Standalone Webflow Cloud app deployed by CLI or repo-backed Cloud import                 | Airtable Automation webhooks, D1 capture, upload worker, validation worker       | Active migration target               | Library apps do not need a Webflow page mount. Keep the GitHub repo as redundancy and route/link/embed `webflow.com/libraries/submit` only after deployment and Airtable dry-run evidence. |
+| Marketplace Library submission app | `createsomethingtoday/webflow-library-submission-form` | Webflow Cloud iframe on `webflow.com/libraries/submit` | Airtable Automation, D1 capture, shared upload worker, validation worker, Turnstile | Active public submission surface | Standalone repo owns the live Library form and upload proxy; verified September 22, 2026. |
 | Marketplace validation utility            | `packages/check-asset-name-worker`                                 | Cloudflare Worker replacement for `check-asset-name.vercel.app`                          | Airtable Assets and creator/library user tables                                  | Migration utility                     | Provides repo-owned template and Library validation endpoints. Do not treat this alone as a migrated Library submission app; it covers validation checks used by public Webflow forms. |
 | Webflow Code Components governance console | `packages/webflow-components`, `config/webflow/control-plane.json` | Webflow Code Components, published origin `https://governed-workflow-console.webflow.io` | Cloudflare/D1 context endpoint, repo policy, Linear evidence                     | Active governance UI path             | Webflow renders the console only. Approval endpoints must stay empty on public previews unless routed through a trusted authenticated operator proxy.                                 |
 | Bundle scanner Code Component              | `packages/bundle-scanner`, `packages/bundle-scanner-core`          | React app and Webflow Code Component                                                     | Local browser scan state, scanner-core policy rules                              | Active internal adjunct               | Useful for app bundle review. It is not a durable compliance system unless findings are mirrored into Airtable/Linear or a review MCP.                                                |
@@ -263,9 +263,10 @@ Operational implications:
 Entry points:
 
 - Public Library page: `webflow.com/libraries`
-- Legacy public Library submit page: `webflow.com/libraries/submit`
-- Standalone redundancy repo: `createsomethingtoday/webflow-library-submission-form`
-- Legacy validation APIs referenced by the archived submit flow: `/api/checkLibraryname`, `/api/checkLibraryemail`, `/api/checkLibraryuser`
+- Public Library submit page: `webflow.com/libraries/submit`
+- Production iframe: `https://webflow-library-submission-form.webflow.io/libraries/submit`
+- Production source repo: `createsomethingtoday/webflow-library-submission-form`
+- Validation APIs: `/api/checkLibraryname`, `/api/checkLibraryemail`, `/api/checkLibraryuser`
 
 Runtime dependencies:
 
@@ -274,20 +275,19 @@ Runtime dependencies:
 - Creator or Library-user table with confirmed Library submission permission fields
 - Repo-owned validation worker: `packages/check-asset-name-worker`
 - Legacy validation alias worker: `packages/io/workers/webflow-validation`
-- Library submission UI route: `apps/marketplace-template-submission-cloud` `/libraries/submit`
-- Standalone Library app route: `webflow-library-submission-form` `/libraries/submit`
-- Library submission API route: `apps/marketplace-template-submission-cloud` `/api/intake/library`
+- Library submission UI route: standalone `webflow-library-submission-form` `/libraries/submit`
+- Library submission API route: standalone `webflow-library-submission-form` `/api/intake/library`
 - Library thumbnail upload kind: `POST /api/intake/upload` with `kind=library-thumbnail`
+- Shared upload worker: `packages/template-form-uploads-worker`; the standalone proxy validates Library thumbnails at 1184x1524, maximum 300 KiB, before forwarding.
 
 Operational implications:
 
-- The public Library pages may still load, but the implementation path is archived and should not be treated as an active Webflow Cloud submission surface.
+- Production ownership verified September 22, 2026: the public page embeds the standalone Cloud app, app ID `240669d7-5d4a-44e2-822c-d37a991cbdca`, environment `e365124f-4981-454b-a755-60d2e6c75495`, in workspace `63221596dcbcf2eaadee2798` (Create Something).
 - `packages/check-asset-name-worker` now owns Library validation parity for name, email, and user checks.
-- `apps/marketplace-template-submission-cloud` now owns the Library submission form at `/libraries/submit`, plus the Library submission webhook envelope and D1 capture route at `/api/intake/library`.
-- The standalone `webflow-library-submission-form` repo mirrors this app for redundancy, GitHub-backed Webflow Cloud import, and direct CLI deployment.
+- The standalone repo owns the Library form, upload proxy, webhook envelope and D1 capture. The monorepo template app is not the active Library proxy; changing its allowlist does not repair the live Library path.
 - Library name availability must scope Airtable checks to `Library📚` assets so template names do not block Library submissions.
 - Before routing production Library submit traffic to the worker, confirm `check-asset-name` returns `canSubmitLibraries: true` for one approved creator email.
-- A complete Library migration still needs a production Webflow Cloud app URL, confirmed Airtable Automation branch mapping, one approved dry run, and reviewer handoff evidence. Public page routing is optional legacy continuity, not the deployment boundary.
+- Verify upload success and an authoritative Airtable intake receipt separately. A successful creator check, bot check or webhook HTTP response alone does not prove a review-ready Library record. CRE-2063 tracks the September 22 upload recovery and its remaining live receipt gate.
 
 ### Template Review Hub
 

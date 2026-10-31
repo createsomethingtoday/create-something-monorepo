@@ -572,7 +572,8 @@ async function appendWebflowCmsImages(
   for (const collectionId of collectionIds) {
     let offset = 0;
     while (true) {
-      const url = new URL(`https://api.webflow.com/v2/collections/${collectionId}/items`);
+      // Live items only: this pass is the listing gate's proof that a public page exists.
+      const url = new URL(`https://api.webflow.com/v2/collections/${collectionId}/items/live`);
       url.searchParams.set('limit', String(limit));
       url.searchParams.set('offset', String(offset));
 

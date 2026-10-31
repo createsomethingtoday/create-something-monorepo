@@ -31,20 +31,37 @@ export class ResendNotificationPort {
       manageUrl: input.manageUrl,
       timezone: input.booking.timezone ?? 'America/Chicago'
     });
+    return this.sendEmail({
+      from: this.from,
+      to: [input.booking.scheduler.email],
+      subject: rendered.subject,
+      text: rendered.text,
+      html: rendered.html
+    }, job.notificationId);
+  }
+
+  async sendSyncNotification(input: {
+    to: string; subject: string; text: string; idempotencyKey: string;
+  }): Promise<{ messageId: string }> {
+    return this.sendEmail({
+      from: this.from, to: [input.to], subject: input.subject, text: input.text
+    }, input.idempotencyKey, AbortSignal.timeout(10_000));
+  }
+
+  private async sendEmail(
+    message: { from: string; to: string[]; subject: string; text: string; html?: string },
+    idempotencyKey: string,
+    signal?: AbortSignal
+  ): Promise<{ messageId: string }> {
     const response = await this.fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         authorization: `Bearer ${this.options.apiKey}`,
         'content-type': 'application/json',
-        'idempotency-key': job.notificationId
+        'idempotency-key': idempotencyKey
       },
-      body: JSON.stringify({
-        from: this.from,
-        to: [input.booking.scheduler.email],
-        subject: rendered.subject,
-        text: rendered.text,
-        html: rendered.html
-      })
+      body: JSON.stringify(message),
+      ...(signal ? { signal } : {})
     });
 
     if (!response.ok) {

@@ -5,6 +5,19 @@ import type {
 } from '../../packages/canon/src/lib/components/performance/page-contract.ts';
 
 export const performancePageRegistry: PerformancePageRegistryGroup[] = [
+  group('agency-scopefield', 'agency', ['scopefield'], 'pending',
+    contract('landing', 'Decide whether to try the Scopefield Mac public beta.',
+      'A labeled conceptual isometric story explains the browser/workspace direction; explicit beta facts and linked release notes establish current capability and limits.',
+      'Download Scopefield for Apple Silicon after reviewing requirements and limitations')),
+  group('agency-dfw-tech-support', 'agency', ['dfw-tech-support'], 'pending',
+    contract('commercial', 'Decide whether one software or workflow problem fits remote support.',
+      'A labeled recovery process and published engineering report explain scope and evidence limits.',
+      'Describe the support problem')),
+  group('agency-airtable-workflow-consulting', 'agency', ['airtable-workflow-consulting'], 'pending',
+    contract('commercial', 'Decide whether an Airtable operational workflow needs a scoped implementation.',
+      'The published review evaluation demonstrates bounded evidence preparation and human decision ownership.',
+      'Discuss the Airtable workflow')),
+
   group(
     'agency-dispatch',
     'agency',
@@ -60,9 +73,9 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'migrated',
     contract(
       'landing',
-      'Decide whether the $900/month agent engineering membership fits one active workflow.',
-      'A source-backed work index demonstrates engineering breadth; membership terms distinguish guidance from custom builds, runtime costs and production responsibility.',
-      'Discuss membership fit'
+      'Decide whether AI-native technical support can help one task and the team that uses it.',
+      'A recorded client website walkthrough demonstrates inspectable work; labeled conceptual scenes explain learning, connection and reviewed operation, while explicit membership capacity preserves cost and responsibility boundaries.',
+      'Talk through the workflow'
     )
   ),
   group(
