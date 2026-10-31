@@ -12,7 +12,7 @@ export class ProviderResponseError extends Error {
 type State = 'idle' | 'running' | 'approval' | 'interrupted' | 'failed';
 type RecordRef = { entity: string; id: string; title?: string };
 type DecisionReceipt = { tool?: string; approvalId: string; outcome: 'cancelled' | 'verified' | 'existing' | 'rejected' | 'failed' | 'unknown' };
-type Session = { sessionId: string; threadId: string; workspaceId: string; title: string; record?: RecordRef; state: State; turnId?: string; pendingMessageId?: string; cancelPending?: boolean; recoveryPending?: boolean; decisionReceipt?: DecisionReceipt; error?: string; uncertainWrite?: { tool: string; arguments: Json; result?: Json; sourcePreview?: Json }; createdAt: number };
+type Session = { sessionId: string; threadId: string; workspaceId: string; title: string; record?: RecordRef; recordLinks?: RecordRef[]; state: State; turnId?: string; pendingMessageId?: string; cancelPending?: boolean; recoveryPending?: boolean; decisionReceipt?: DecisionReceipt; error?: string; uncertainWrite?: { tool: string; arguments: Json; result?: Json; sourcePreview?: Json }; createdAt: number };
 type Approval = { id: string; title: string; detail: string; requestId: string | number; sessionId: string; kind: 'server' | 'tool'; tool?: string; arguments?: Json; sourcePreview?: Json };
 export type ChatRead = { sessionId: string; messages: Array<{ id: string; role: 'user' | 'assistant'; text: string }>; state: State; approvals: Array<{ id: string; title: string; detail: string }>; recordLinks: RecordRef[]; workspaceVerifiedEdits?: string[]; decisionReceipt?: DecisionReceipt; error?: string; cancelPending?: boolean; recoveryPending?: boolean };
 export interface AppServer { request(method: string, params: Json): Promise<any>; onMessage(handler: (message: Json) => void): () => void; reply(id: string | number, result: unknown): Promise<void> | void; close?(): Promise<void> | void }
@@ -87,6 +87,23 @@ function validRecord(value: unknown): RecordRef | undefined {
 function asObject(value: unknown): Json { return value && typeof value === 'object' && !Array.isArray(value) ? value as Json : {}; }
 function textContent(items: unknown): string { return Array.isArray(items) ? items.filter(x => x?.type === 'text').map(x => x.text).join('\n') : ''; }
 
+const RECORD_ENTITIES = new Set(['tasks','interactions','notes','gigs','finances','contacts','companies','documents','locations','schedule','tags','profile','services']);
+const MAX_RECORD_LINKS = 20;
+function sourceRecordRef(value: unknown, workspaceId: string, expectedEntity?: string, expectedId?: string): RecordRef | undefined {
+  if(!value || typeof value!=='object' || Array.isArray(value))return;
+  const item=value as Json;const entity=item.entity ?? expectedEntity;
+  if(!RECORD_ENTITIES.has(entity) || (expectedEntity!==undefined && entity!==expectedEntity) ||
+    (item.workspaceId!==undefined && item.workspaceId!==workspaceId) || typeof item.id!=='string' ||
+    !item.id.trim() || item.id.length>128 || /[\u0000-\u001f]/.test(item.id) || (expectedId!==undefined && item.id!==expectedId))return;
+  return {entity,id:item.id,...(typeof item.title==='string'?{title:item.title.slice(0,160)}:{})};
+}
+function sessionRecordLinks(session: Session): RecordRef[] {
+  const values=[...(session.record ? [session.record] : []),...(session.recordLinks || [])];
+  const output:RecordRef[]=[];const seen=new Set<string>();
+  for(const ref of values){const key=`${ref.entity}:${ref.id}`;if(!seen.has(key)){seen.add(key);output.push(ref);}if(output.length===MAX_RECORD_LINKS)break;}
+  return output;
+}
+
 export function createCodexAdapter(options: CodexOptions) {
   if (!isAbsolute(options.dataDir) || !isAbsolute(options.mcpBinary) || !isAbsolute(options.skillPath)) throw new Error('unconfigured');
   const root = join(options.dataDir, 'codex-chat');
@@ -109,6 +126,7 @@ export function createCodexAdapter(options: CodexOptions) {
         if (!line) continue;
         const value = JSON.parse(line) as Session;
         if (typeof value.sessionId !== 'string' || typeof value.threadId !== 'string' || typeof value.workspaceId !== 'string' || !['idle', 'running', 'approval', 'interrupted', 'failed'].includes(value.state)) throw new Error('chat_ledger_invalid');
+        value.recordLinks=Array.isArray(value.recordLinks)?value.recordLinks.slice(0,MAX_RECORD_LINKS).map(ref=>sourceRecordRef(ref,value.workspaceId)).filter((ref):ref is RecordRef=>Boolean(ref)):[];
         sessions.set(value.sessionId, value);
       }
     } catch (e: any) { if (e.code !== 'ENOENT') throw e; }
@@ -133,6 +151,17 @@ export function createCodexAdapter(options: CodexOptions) {
     if (!session || retiringSessions.has(session.sessionId) || session.workspaceId !== required(input.workspaceId)) throw new Error('session_not_found');
     return session;
   }
+  async function captureReadLinks(session: Session, tool: string, args: Json, result: Json): Promise<void> {
+    if(result.isError || !['gigi_records_get','gigi_records_list','gigi_agenda_list'].includes(tool))return;
+    const value=payload(result);
+    const candidates=tool==='gigi_records_get' ? [sourceRecordRef(value,session.workspaceId,args.entity,args.id)] :
+      Array.isArray(value?.items) ? value.items.slice(0,MAX_RECORD_LINKS).map((item:unknown)=>sourceRecordRef(item,session.workspaceId,tool==='gigi_records_list'?args.entity:undefined)) : [];
+    const links=[...(session.recordLinks || [])];
+    for(const ref of candidates){if(!ref)continue;const index=links.findIndex(item=>item.entity===ref.entity && item.id===ref.id);if(index>=0)links.splice(index,1);links.push(ref);}
+    const next=links.slice(-MAX_RECORD_LINKS);
+    if(!isDeepStrictEqual(session.recordLinks || [],next)){session.recordLinks=next;await persist();}
+  }
+
   async function accountStatus() {
     try {
       const account = await options.server.request('account/read', { refreshToken: false });
@@ -246,7 +275,7 @@ export function createCodexAdapter(options: CodexOptions) {
       if (!submitted || rejected) throw new Error(rejectionReason);
       throw error;
     }
-    return { sessionId: session.sessionId, messages: [], state: 'running', approvals: [], recordLinks: session.record ? [session.record] : [], ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}) };
+    return { sessionId: session.sessionId, messages: [], state: 'running', approvals: [], recordLinks: sessionRecordLinks(session), ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}) };
   }
   async function reconcileSavedEdits(workspaceId: string): Promise<void> {
     for (const pending of sessions.values()) {
@@ -334,7 +363,7 @@ export function createCodexAdapter(options: CodexOptions) {
   async function read(input: Json): Promise<ChatRead> {
     const session = await owner(input);
     await reconcileSavedEdits(session.workspaceId);
-    if (!session.threadId) return { sessionId: session.sessionId, messages: [], state: session.state, approvals: [], recordLinks: session.record ? [session.record] : [], ...workspaceVerifiedEdits(session.workspaceId), ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}) };
+    if (!session.threadId) return { sessionId: session.sessionId, messages: [], state: session.state, approvals: [], recordLinks: sessionRecordLinks(session), ...workspaceVerifiedEdits(session.workspaceId), ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}) };
     if (!loadedThreads.has(session.threadId)) { await options.server.request('thread/resume', { threadId: session.threadId, excludeTurns: true, ...profile(await dynamicTools(), session) }); loadedThreads.add(session.threadId); }
     // Metadata and one-turn pages avoid hydrating an unbounded retained history.
     let response: any;
@@ -353,7 +382,7 @@ export function createCodexAdapter(options: CodexOptions) {
     }
     catch (error) {
       if (session.state !== 'running' && session.state !== 'approval') throw error;
-      const pending: ChatRead = { sessionId: session.sessionId, messages: [...(liveMessages.get(session.sessionId) ?? [])].filter(([, entry]) => entry.turnId === session.turnId).slice(-50).map(([id, entry]) => ({ id, role: 'assistant' as const, text: entry.text })), state: session.state, approvals: [...approvals.values()].filter(x => x.sessionId === session.sessionId).map(({ id, title, detail }) => ({ id, title, detail })), recordLinks: session.record ? [session.record] : [], ...workspaceVerifiedEdits(session.workspaceId), ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}), ...(session.error ? { error: session.error } : {}), ...(session.cancelPending ? { cancelPending: true } : {}), ...(session.recoveryPending ? { recoveryPending: true } : {}) };
+      const pending: ChatRead = { sessionId: session.sessionId, messages: [...(liveMessages.get(session.sessionId) ?? [])].filter(([, entry]) => entry.turnId === session.turnId).slice(-50).map(([id, entry]) => ({ id, role: 'assistant' as const, text: entry.text })), state: session.state, approvals: [...approvals.values()].filter(x => x.sessionId === session.sessionId).map(({ id, title, detail }) => ({ id, title, detail })), recordLinks: sessionRecordLinks(session), ...workspaceVerifiedEdits(session.workspaceId), ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}), ...(session.error ? { error: session.error } : {}), ...(session.cancelPending ? { cancelPending: true } : {}), ...(session.recoveryPending ? { recoveryPending: true } : {}) };
       while (pending.messages.length && Buffer.byteLength(JSON.stringify(pending)) > 500_000) pending.messages.shift();
       return pending;
     }
@@ -382,7 +411,7 @@ export function createCodexAdapter(options: CodexOptions) {
     const pending = [...approvals.values()].filter(x => x.sessionId === session.sessionId);
     if (pending.length) session.state = 'approval';
     await persist();
-    const output: ChatRead = { sessionId: session.sessionId, messages: messages.slice(-50), state: session.state, approvals: pending.map(({ id, title, detail }) => ({ id, title, detail })), recordLinks: session.record ? [session.record] : [], ...workspaceVerifiedEdits(session.workspaceId), ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}), ...(session.error ? { error: session.error } : {}), ...(session.cancelPending ? { cancelPending: true } : {}), ...(session.recoveryPending ? { recoveryPending: true } : {}) };
+    const output: ChatRead = { sessionId: session.sessionId, messages: messages.slice(-50), state: session.state, approvals: pending.map(({ id, title, detail }) => ({ id, title, detail })), recordLinks: sessionRecordLinks(session), ...workspaceVerifiedEdits(session.workspaceId), ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}), ...(session.error ? { error: session.error } : {}), ...(session.cancelPending ? { cancelPending: true } : {}), ...(session.recoveryPending ? { recoveryPending: true } : {}) };
     while (output.messages.length && Buffer.byteLength(JSON.stringify(output)) > 500_000) output.messages.shift();
     return output;
   }
@@ -402,7 +431,7 @@ export function createCodexAdapter(options: CodexOptions) {
     if (!['running', 'approval'].includes(session.state)) return read(input);
     for (const [id, approval] of approvals) if (approval.sessionId === session.sessionId) { try { await options.server.reply(approval.requestId, { contentItems: [{ type: 'inputText', text: 'Turn cancelled.' }], success: false }); } catch { session.error = 'approval_delivery_unknown'; } approvals.delete(id); }
     session.state = immediate && session.cancelPending ? 'running' : 'interrupted'; await persist();
-    if (immediate) return { sessionId: session.sessionId, state: session.state, messages: [], approvals: [], recordLinks: session.record ? [session.record] : [], ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}), ...(session.error ? { error: session.error } : {}), ...(session.cancelPending ? { cancelPending: true } : {}), ...(session.recoveryPending ? { recoveryPending: true } : {}) };
+    if (immediate) return { sessionId: session.sessionId, state: session.state, messages: [], approvals: [], recordLinks: sessionRecordLinks(session), ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}), ...(session.error ? { error: session.error } : {}), ...(session.cancelPending ? { cancelPending: true } : {}), ...(session.recoveryPending ? { recoveryPending: true } : {}) };
     return read(input);
   }
   async function sourceSnapshot(session: Session, ref: Json): Promise<Json> {
@@ -629,6 +658,7 @@ export function createCodexAdapter(options: CodexOptions) {
       if (tool !== 'gigi_schema_describe') args.workspaceId = session.workspaceId;
       if (READ_TOOLS.has(tool)) {
         try { const result = await options.mcp!.request('tools/call', { name: tool, arguments: args });
+          await captureReadLinks(session,tool,args,result);
           if (!result.isError && tool === 'gigi_records_get' && args.detail === 'full') {
             const actual = result.structuredContent ?? JSON.parse(result.content?.find((x: Json) => x.type === 'text')?.text ?? '{}');
             for (const pending of sessions.values()) if (pending.workspaceId === session.workspaceId && pending.uncertainWrite?.tool === 'gigi_records_save' && pending.uncertainWrite.arguments.id === args.id && pending.uncertainWrite.arguments.entity === args.entity) {

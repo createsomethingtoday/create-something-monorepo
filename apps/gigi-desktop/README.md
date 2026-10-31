@@ -227,3 +227,32 @@ Credentials, records, scripts, arbitrary CSS, and unknown keys are rejected.
 **Reset appearance & views** restores Studio and the default views without
 changing business records or connections. Executable plugins and custom palette
 authoring are outside this release's presentation-configuration scope.
+
+## Assistance and desktop notifications
+
+Today’s **Needs your attention** feed keeps dated unfinished tasks, upcoming gigs,
+pending conversation decisions, checked results and uncertain outcomes available
+outside Ask GiGi. Review a source, ask for help, snooze for one hour or dismiss an
+item. Chat starting points prepare a draft; sending remains explicit. Answers
+support a bounded text format, without provider-authored HTML or action controls.
+
+Attention state and notification policy live in the workspace SQLite database.
+A read-only workspace observer checks existing conversations independently of the
+drawer, with bounded rotating reads. It never starts model turns, approves edits
+or retries uncertain writes. Before opening an item, GiGi rechecks its source and
+revision. Existing approval and verified-readback rules remain in force.
+
+Settings → Assistance & notifications offers opt-in macOS alerts, optional dated
+reminders, quiet hours in this Mac’s local time, and detailed previews (off by
+default). The native UserNotifications companion checks actual macOS permission
+and alert settings. Foreground work stays in the feed. Clicking an alert opens
+current work for review; it never approves a change. Delivery receipts record OS
+submission, not whether someone saw an alert. Backlogs coalesce, and uncertain
+or failed deliveries are not automatically replayed. Snooze returns an item to
+the feed but does not repeat an already-submitted same-revision alert.
+
+Observation runs while the app is running; sleeping hosts may delay checks until
+wake. Quitting stops observation. This release does not add phone delivery,
+teammate messaging, unattended model runs or new mutation authority. Native
+notifications are packaged in a signed macOS 13/Apple Silicon Swift companion;
+release verification requires it alongside the existing companions.

@@ -18,7 +18,8 @@ async function fixture(t) {
  await mkdir(join(appPath,'Contents','Resources'),{recursive:true});
  await writeFile(join(appPath,'Contents','Info.plist'),'test fixture');
  await writeFile(join(appPath,'Contents','MacOS','gigi'),'main',{mode:0o755});
- for(const name of ['gigi-mcp','gigi-integrations','gigi-codex','ctx'])await writeFile(join(appPath,'Contents','Resources',name),name,{mode:0o755});
+ await writeFile(join(appPath,'Contents','MacOS','gigi-mcp'),'extra MCP executable',{mode:0o755});
+ for(const name of ['gigi-mcp','gigi-integrations','gigi-codex','libgigi_notifications.dylib','ctx'])await writeFile(join(appPath,'Contents','Resources',name),name,{mode:0o755});
  await writeFile(dmgPath,'disk image fixture');
  return {root,appPath,dmgPath};
 }
@@ -147,4 +148,18 @@ test('wrong Gatekeeper origin and an unsigned chat companion remain unqualified'
  assert.equal((await verifyRelease({...f,run:wrong.run})).reason,'app_gatekeeper');
  const unsigned=commands({...f,override:(command,args)=>command==='codesign'&&args.includes('-dv')&&args.at(-1).endsWith('/gigi-codex')?{exitCode:0,stdout:'',stderr:'Signature=adhoc\nTeamIdentifier=not set\n'}:undefined});
  assert.equal((await verifyRelease({...f,run:unsigned.run})).reason,'companion_identity');
+});
+
+test('a release missing the native notification companion cannot qualify',async(t)=>{
+ const {appPath,dmgPath}=await fixture(t);
+ await rm(join(appPath,'Contents','Resources','libgigi_notifications.dylib'));
+ const {run}=commands({appPath});
+ const receipt=await verifyRelease({appPath,dmgPath,run});
+ assert.equal(receipt.qualified,false);
+});
+
+test('an ad-hoc extra MCP executable in MacOS cannot qualify',async(t)=>{
+ const {appPath,dmgPath}=await fixture(t);
+ const {run}=commands({appPath,override:(name,args)=>name==='codesign'&&args.includes('-dv')&&args.at(-1).endsWith('/MacOS/gigi-mcp')?{exitCode:0,stdout:'',stderr:'Signature=adhoc\nTeamIdentifier=not set\n'}:undefined});
+ assert.equal((await verifyRelease({appPath,dmgPath,run})).qualified,false);
 });
