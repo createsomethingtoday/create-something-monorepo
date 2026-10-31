@@ -1,6 +1,6 @@
 # GiGi 0.2.17 daily-use polish — CRE-2306
 
-Implementation candidate review. Independent Sol re-test and signed app/DMG qualification subsequently passed; see RELEASE.md and release-qualification.json.
+Historical 0.2.17 candidate review; corrected release is 0.2.18 (see ../daily-polish-0218/RELEASE.md). Independent Sol re-test and signed app/DMG qualification subsequently passed; see RELEASE.md and release-qualification.json.
 No production installation, real profile, source grant or provider write is part of this implementation pass.
 
 ## Acceptance criteria

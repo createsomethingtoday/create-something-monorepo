@@ -1,0 +1,2 @@
+PASS: actual app/CSS in isolated Chromium fixture; 3 themes × 2 widths × 2 densities; empty/error; New task keyboard/draft protection; persistent alert and dismiss focus; More arrow/Escape.
+[{"theme":"studio","width":880,"attentionHeight":368.5},{"theme":"paper","width":880,"attentionHeight":368.5},{"theme":"midnight","width":880,"attentionHeight":368.5},{"theme":"studio","width":1280,"attentionHeight":368.5},{"theme":"paper","width":1280,"attentionHeight":368.5},{"theme":"midnight","width":1280,"attentionHeight":368.5}]
