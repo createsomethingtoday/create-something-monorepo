@@ -4,6 +4,7 @@ import type { CSSProperties } from 'react';
 import { trackMarketplaceEvent } from './analytics';
 import type { MarketplaceAnalyticsData } from './analytics';
 import { MarketplaceComponentErrorBoundary, useMarketplaceComponentErrorTracking } from './MarketplaceComponentErrorBoundary';
+import { templateAnnotationContainerProps, templateAnnotationProps } from './templateAnnotations';
 import {
   type TemplateDetailImage,
   type TemplateDetailLink,
@@ -682,7 +683,7 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
     <div className="wfdt" data-template-detail-hero="" ref={heroRootRef}>
       <MarketplaceAgentTools />
       <style dangerouslySetInnerHTML={{ __html: TEMPLATE_DETAIL_STYLES }} />
-      <section className="wfdt-hero">
+      <section className="wfdt-hero" {...templateAnnotationContainerProps()}>
         <div className="wfdt-hero-copy">
           <nav className="wfdt-breadcrumb" aria-label="Template breadcrumb">
             <a className="wfdt-breadcrumb-marketplace" href="/marketplace" aria-label="Marketplace">
@@ -763,7 +764,19 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
               ))}
             </span>
           </nav>
-          <div className="wfdt-hero-main">
+          <div
+            className="wfdt-hero-main"
+            {...templateAnnotationProps({
+              name: titleLabel,
+              template_slug: resolvedSlug,
+              creator_name: creatorName,
+              // The resolved offer, not the raw props, is what the page shows.
+              price: offer.offerPriceLabel || offer.priceLabel,
+              is_free: offer.mode === 'free',
+              category: titleCategory,
+              url: resolvedSlug ? `https://webflow.com/templates/html/${resolvedSlug}` : null,
+            })}
+          >
             <div className="wfdt-hero-identity">
               <h1 className="wfdt-title">{titleLabel}</h1>
               {summary ? <p className="wfdt-summary">{summary}</p> : null}

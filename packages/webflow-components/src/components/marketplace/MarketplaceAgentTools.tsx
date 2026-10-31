@@ -7,6 +7,7 @@ import {
   resolveAgentToolsApiBase,
   type AgentToolsWindowHandle,
 } from './agentTools';
+import { annotationApiStatus } from './templateAnnotations';
 import { emitTemplateComponentEvent } from './templateTelemetry';
 
 declare global {
@@ -65,6 +66,9 @@ export const MarketplaceAgentTools: React.FC<MarketplaceAgentToolsProps> = ({
 
     window.__templateMarketplaceAgentTools = createAgentToolsWindowHandle(tools);
     const result = registerMarketplaceAgentTools(tools);
+    // Browser Annotation API (document.oai.annotation) ships beside Site tools;
+    // report it so adoption of the card/hero annotation markup is measurable.
+    const annotations = annotationApiStatus();
 
     if (enableAnalytics) {
       try {
@@ -72,6 +76,8 @@ export const MarketplaceAgentTools: React.FC<MarketplaceAgentToolsProps> = ({
           api: result.api,
           tool_count: result.registered,
           tools_version: MARKETPLACE_AGENT_TOOLS_VERSION,
+          annotation_api: annotations.available,
+          annotation_methods: annotations.methods.join(','),
         });
       } catch {
         // Analytics failures must not surface as effect errors on the host page.
@@ -79,7 +85,7 @@ export const MarketplaceAgentTools: React.FC<MarketplaceAgentToolsProps> = ({
     }
     if (debug) {
       console.info(
-        `[MarketplaceAgentTools] v${MARKETPLACE_AGENT_TOOLS_VERSION} api=${result.api} tools=${result.registered}`,
+        `[MarketplaceAgentTools] v${MARKETPLACE_AGENT_TOOLS_VERSION} api=${result.api} tools=${result.registered} annotations=${annotations.available ? annotations.methods.join(',') || 'present' : 'none'}`,
       );
     }
   }, [apiBase, debug, enableAnalytics, enablePageActions]);
