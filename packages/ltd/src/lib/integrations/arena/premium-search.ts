@@ -74,8 +74,15 @@ function candidate(value: unknown): CandidateBlock | undefined {
       : undefined;
   if (!kind) return;
   const block: CandidateBlock = { id: value.id as number, class: kind };
-  for (const field of ['title', 'generated_title', 'content', 'description'] as const) {
+  for (const field of ['title', 'generated_title'] as const) {
     if (typeof value[field] === 'string') block[field] = value[field].slice(0, 20_000);
+  }
+  // v3 MarkdownContent supplies a plain rendering; never forward its HTML.
+  for (const field of ['content', 'description'] as const) {
+    const valueText = value[field];
+    const plain =
+      typeof valueText === 'string' ? valueText : object(valueText) ? valueText.plain : undefined;
+    if (typeof plain === 'string') block[field] = plain.slice(0, 20_000);
   }
   if (object(value.source)) {
     const url = safeUrl(value.source.url);

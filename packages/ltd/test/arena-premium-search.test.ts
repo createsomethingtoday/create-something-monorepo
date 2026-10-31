@@ -253,3 +253,48 @@ test('timeout covers reading the response body as well as receiving headers', as
 		(error: unknown) => error instanceof ArenaPremiumSearchError && error.code === 'timeout'
 	);
 });
+
+test('ranks and summarizes v3 MarkdownContent plain text without forwarding HTML', async () => {
+	const { rankPerformanceLabCandidates } = await import('../src/lib/taste/ona-candidates.ts');
+	const { blocks } = await searchPublicArenaBlocks({
+		query: 'workflow',
+		accessToken: 'synthetic-token',
+		fetch: async () =>
+			Response.json({
+				data: [
+					{
+						id: 91,
+						type: 'Text',
+						visibility: 'public',
+						content: {
+							plain: 'Minimal operator approval workflow',
+							markdown: '**not selected**',
+							html: '<script>never forward</script>'
+						},
+						description: { plain: 'Clear evidence dashboard', markdown: 'ignored', html: 'ignored' }
+					},
+					{
+						id: 92,
+						type: 'Link',
+						visibility: 'public',
+						description: { plain: 'x'.repeat(20_001) }
+					},
+					{
+						id: 93,
+						type: 'Text',
+						visibility: 'public',
+						content: { html: '<b>no safe plain text</b>' }
+					}
+				]
+			})
+	});
+	assert.equal(blocks[0].content, 'Minimal operator approval workflow');
+	assert.equal(blocks[0].description, 'Clear evidence dashboard');
+	assert.equal(blocks[1].description?.length, 20_000);
+	assert.equal(blocks[2].content, undefined);
+	const cards = rankPerformanceLabCandidates(blocks, 3);
+	const card = cards.find((card) => card.arenaId === 91)!;
+	assert.ok(card.reasons.includes('operator or agent workflow'));
+	assert.match(card.summary, /Clear evidence dashboard/);
+	assert.equal(JSON.stringify(blocks).includes('never forward'), false);
+});
