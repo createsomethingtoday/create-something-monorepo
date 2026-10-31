@@ -1,11 +1,23 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  createPublicHtmlCacheKey,
   cacheSearchForRequest,
   isCacheablePublicHtmlResponse,
   shouldAttemptPublicHtmlCache,
   withPublicHtmlCacheHeaders
 } from '../src/lib/server/public-html-cache.ts';
+
+test('a release cache key cannot reuse previously cached public HTML', async () => {
+  const request = new Request('https://createsomething.agency/');
+  const legacyCache = new Map([[request.url, '<link href="/styles/agency/home.css">']]);
+  const key = createPublicHtmlCacheKey(request);
+  assert.equal(legacyCache.get(key.url), undefined, 'A prior deployment response must miss the new HTML namespace');
+  assert.equal(new URL(key.url).origin, new URL(request.url).origin);
+  assert.equal(new URL(key.url).pathname, '/');
+  assert.equal(request.url, 'https://createsomething.agency/', 'The public request URL remains unchanged');
+  assert.equal(key.method, 'GET');
+});
 
 test('public HTML cache does not read query state while SvelteKit prerenders', () => {
   const guardedUrl = {
