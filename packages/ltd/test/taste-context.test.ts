@@ -95,3 +95,26 @@ test('single-reference responses preserve same-master related examples and resou
   assert.equal(resource?.channel, null);
  } finally { sqlite.close(); }
 });
+
+test('minimalism retrieval includes references exclusive to the configured Clean and Minimalism channels', async () => {
+ const { db, sqlite } = fixture();
+ try {
+  sqlite.exec(`
+   INSERT INTO examples(id,master_id,title,created_at) VALUES
+    ('arena-clean-only','arena-taste','Clean reference',400),
+    ('arena-minimalism-only','arena-taste','Minimalism reference',500);
+   INSERT INTO taste_reference_channels VALUES
+    ('arena-clean-only','clean-mymjklzsah4','https://www.are.na/block/3',600),
+    ('arena-minimalism-only','minimalism-cpx4fblmr3i','https://www.are.na/block/4',600);
+  `);
+  const references = await fetchReferencesWithContext(db, { intent: 'minimalism', limit: 10 });
+  const clean = references.find(reference => reference.id === 'arena-clean-only');
+  const minimalism = references.find(reference => reference.id === 'arena-minimalism-only');
+  assert.equal(clean?.channel, 'clean-mymjklzsah4');
+  assert.equal(minimalism?.channel, 'minimalism-cpx4fblmr3i');
+  assert.deepEqual(clean?.channels, ['clean-mymjklzsah4']);
+  assert.deepEqual(minimalism?.channels, ['minimalism-cpx4fblmr3i']);
+  const motion = await fetchReferencesWithContext(db, { intent: 'motion', limit: 10 });
+  assert.ok(motion.every(reference => !reference.id.endsWith('-only')));
+ } finally { sqlite.close(); }
+});

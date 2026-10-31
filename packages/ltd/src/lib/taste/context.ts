@@ -249,6 +249,30 @@ export const CHANNELS_WITH_CONTEXT: ChannelContext[] = [
 			'Content-first layouts',
 			'Subtle interactions'
 		]
+	},
+	{
+		slug: 'clean-mymjklzsah4',
+		name: 'Clean',
+		description: 'Clean and clear minimalist design',
+		isPrimary: false,
+		intents: ['minimalism', 'layout', 'spacing'],
+		principles: [
+			'Clear hierarchy with restrained composition',
+			'Space separates related groups',
+			'Remove decoration that competes with content'
+		]
+	},
+	{
+		slug: 'minimalism-cpx4fblmr3i',
+		name: 'Minimalism',
+		description: 'Minimalist design references',
+		isPrimary: false,
+		intents: ['minimalism', 'layout', 'spacing'],
+		principles: [
+			'Reduction makes the primary task visible',
+			'Negative space supports hierarchy',
+			'Restrained composition keeps attention on content'
+		]
 	}
 ];
 
