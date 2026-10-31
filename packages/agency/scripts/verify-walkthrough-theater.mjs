@@ -19,6 +19,8 @@ try {
     await opener.press('Enter');
     const dialog = page.locator('#work-dialog');
     await dialog.waitFor({ state: 'visible' });
+    // Remote metadata/poster delivery can trail the modal opening; measure the loaded frame.
+    await page.waitForFunction(() => { const v=document.querySelector('#work-dialog video'); return !v.paused && v.currentTime > .1 && v.videoWidth > 0; }, undefined, { timeout: 15000 });
     const geometry = await dialog.evaluate(d => {
       const v = d.querySelector('video'), r = v.getBoundingClientRect(), b = d.getBoundingClientRect();
       return { dialog: { x:b.x, y:b.y, width:b.width, height:b.height }, video: { x:r.x, y:r.y, width:r.width, height:r.height }, overflow:d.scrollHeight > d.clientHeight + 1, fit:getComputedStyle(v).objectFit, controls:v.controls, inline:v.playsInline };
@@ -28,7 +30,6 @@ try {
     assert.equal(geometry.overflow, false, 'Controls and caption must fit without dialog scrolling');
     assert.equal(geometry.fit, 'contain', 'Preserve the whole recorded frame');
     assert.ok(geometry.controls && geometry.inline, 'Native controls and inline mobile playback');
-    await page.waitForFunction(() => { const v=document.querySelector('#work-dialog video'); return !v.paused && v.currentTime > .1; }, undefined, { timeout: 15000 });
     const media = await dialog.locator('video').evaluate(v => ({ width:v.videoWidth, height:v.videoHeight, duration:v.duration }));
     const fittedWidth = Math.min(geometry.video.width, geometry.video.height * media.width / media.height);
     if (width >= 1000) assert.ok(fittedWidth > width * .7, 'Actual recorded image must be substantially larger');
