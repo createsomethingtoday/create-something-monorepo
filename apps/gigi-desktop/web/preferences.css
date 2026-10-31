@@ -74,3 +74,31 @@
 #workspace-preferences{scroll-margin-top:80px}
 @media(max-width:700px){.reference-header .reference-customize{margin-left:auto}#workspace-preferences{scroll-margin-top:128px}}
 .empty{border-color:var(--control-border)}
+
+/* Daily work: compact the repeated record chrome rather than shrinking type.
+   Two cards fit the supported 880px window; narrow containers retain one. */
+.today-create{justify-content:flex-end;gap:8px;flex-shrink:0}
+.today-create .btn{min-height:44px}
+.content-primary:has(.today-summary) .today-grid{gap:14px}
+.content-primary:has(.today-summary) .today-card{padding:16px;gap:8px;border-radius:8px}
+.content-primary:has(.today-summary) .today-card strong{font-size:18px;line-height:1.4;letter-spacing:-.015em}
+.content-primary:has(.today-summary) .today-card-status{margin-bottom:0}
+.content-primary:has(.today-summary) .today-card-footer{padding-top:10px;gap:4px 10px}
+@container(min-width:720px){.content-primary:has(.today-summary) .today-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.attention-panel{padding:20px;margin-bottom:20px}
+.attention-panel .eyebrow{display:none}
+.attention-panel .panel-head{margin-bottom:8px}
+.attention-intro{margin:0;font-size:13px}
+.attention-items{margin-top:14px}
+.attention-item{padding:14px 0;gap:16px}
+.attention-item h3{margin:4px 0;font-size:15px}
+.attention-item-copy>p:not(.attention-kind){font-size:13px}
+.attention-source{margin-top:5px;font-size:12px}
+.attention-footnote{margin-top:10px}
+:root[data-density="compact"] .attention-item{padding-block:10px}
+:root[data-density="compact"] .attention-items{margin-top:10px}
+:root[data-density="compact"] .content-primary:has(.today-summary) .today-card{padding:12px}
+.toast{display:flex;align-items:center;gap:16px;max-width:min(600px,calc(100vw - 32px));padding:12px 16px;line-height:1.6}
+.toast>span{min-width:0;max-height:35vh;overflow:auto;overflow-wrap:anywhere}
+.toast .btn{flex:0 0 auto;min-height:36px;padding:6px 8px;color:inherit}
+@media(max-width:700px){.today-create{justify-content:flex-start;flex-wrap:wrap}.attention-panel{padding:16px}}

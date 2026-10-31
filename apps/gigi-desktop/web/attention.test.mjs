@@ -93,3 +93,10 @@ test('observer supplies only a real final assistant message identity for reply r
  const {controller,bridge,calls}=fixture();bridge.chatList=async()=>({sessions:[{sessionId:'answer',state:'idle'}]});bridge.chatRead=async()=>({sessionId:'answer',state:'idle',messages:[{id:'user1',role:'user',text:'Read only'},{id:'assistant1',role:'assistant',text:'Answer'}]});
  await controller.refresh();assert.equal(calls.find(([op])=>op==='attention.refresh')[1].sessions[0].responseId,'assistant1');
 });
+
+test('an unavailable empty attention read never claims the workspace is caught up',()=>{
+ const html=attentionView({items:[],error:'Could not check your attention items.'});
+ assert.doesNotMatch(html,/You’re caught up/);
+ assert.match(html,/Check again/);
+ assert.match(html,/could not be checked/i);
+});
