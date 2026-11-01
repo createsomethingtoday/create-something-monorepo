@@ -1,13 +1,5 @@
 <script lang="ts">
-  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
-  import {
-    Button,
-    PerformanceCampaignOpening,
-    PerformanceConversionHandoff,
-    PerformanceNarrativeStage,
-    SEO,
-    type PerformanceNarrativeScene
-  } from '@create-something/canon';
+  import { SEO } from '@create-something/canon';
 
   // Installation guidance follows the package release; historical benchmarks retain their versions.
   import { groundVersion, groundInstalls as installs } from '$lib/data/ground-release.mjs';
@@ -49,49 +41,17 @@
     }
   ];
 
-  const scenes: PerformanceNarrativeScene[] = [
-    {
-      id: 'install',
-      label: 'Install Ground',
-      summary: 'Connect',
-      title: 'Put the check beside the agent.',
-      detail: `Choose one client. These commands install Ground ${groundVersion}.`,
-      tone: 'allow',
-      evidence: ['Four client-ready configurations', 'Commands remain visible without JavaScript'],
-      receipts: ['Free', 'Open source', `Version ${groundVersion}`]
-    },
-    {
-      id: 'guardrail',
-      label: 'Run the guardrail',
-      summary: 'Verify',
-      title: 'Check first. Then record. Ground blocks an unverified claim.',
-      detail: 'Ground requires a check before its claim tools can record a code finding.',
-      tone: 'review',
-      evidence: ['Check first', 'Then claim', 'Blocked otherwise'],
-      receipts: ['Compared inputs', 'Evidence-bound claim']
-    },
-    {
-      id: 'proof',
-      label: 'Inspect the proof',
-      summary: 'Trust',
-      title: 'Check the evidence before recording a finding.',
-      detail: 'Ground provides code checks for TypeScript, JavaScript, and SvelteKit projects.',
-      tone: 'neutral',
-      evidence: ['21 MCP tools', 'Five verified platform installs', 'Public calibration policy'],
-      receipts: ['Checksums + provenance', 'Adjudicated findings ledger'],
-      actions: [
-        {
-          label: 'Read the Kickstand audit',
-          href: 'https://createsomething.io/papers/kickstand-triad-audit'
-        }
-      ]
-    }
-  ];
-
   let copied = $state<string | null>(null);
+  let copyError = $state<string | null>(null);
 
   async function copyCommand(id: string, command: string) {
-    await navigator.clipboard.writeText(command);
+    copyError = null;
+    try {
+      await navigator.clipboard.writeText(command);
+    } catch {
+      copyError = `Could not copy the ${installs.find((install) => install.id === id)?.label ?? id} command. Select and copy it below.`;
+      return;
+    }
     copied = id;
     setTimeout(() => {
       if (copied === id) copied = null;
@@ -107,46 +67,62 @@
   propertyName="agency"
 />
 
-<PerformanceCampaignOpening
-  eyebrow={`Ground ${groundVersion} · Free and open source`}
-  expression="editorial"
-  title="Give the agent evidence before it changes your codebase."
-  lede="Ground computes evidence for TypeScript and JavaScript code claims. It also understands SvelteKit routes, aliases, component scripts, actions, stores, and entry points."
-  density="compact"
-  media={{
-    src: '/images/performance-lab/ground-verification-instrument.webp',
-    mobileSrc: '/images/performance-lab/ground-verification-instrument-mobile.webp',
-    alt: 'Two code artifacts feed a comparison ring while an unverified claim is stopped and a proof receipt exits',
-    objectPosition: 'center 62%',
-    colorMode: 'natural'
-  }}
-  proof={[
-    { label: 'Languages', value: 'TS + JS' },
-    { label: 'Framework', value: 'SvelteKit' },
-    { label: 'Cost', value: 'Free' }
-  ]}
->
-  {#snippet actions()}
-    <Button href="#ground-operating-path">Choose your install</Button>
-  {/snippet}
-</PerformanceCampaignOpening>
+<div class="ground-page">
+  <section class="ground-hero" aria-labelledby="ground-title" data-performance-chapter="thesis">
+    <picture>
+      <img
+        src="/images/agency-stories/ground-compare-before-claim.webp"
+        alt="Concept illustration: teammates compare two graphite code-shaped pieces on an inspection table before making a claim."
+        fetchpriority="high"
+        width="1402"
+        height="1122"
+      />
+    </picture>
+    <div class="hero-copy">
+      <p class="ground-eyebrow">Ground {groundVersion} / Free and open source</p>
+      <h1 id="ground-title">Give the agent evidence.</h1>
+      <p class="lede">
+        Check the code before recording a finding. Ground gives your agent evidence for TypeScript,
+        JavaScript, and SvelteKit code claims.
+      </p>
+      <a class="primary-action" href="#ground-operating-path"
+        >Choose your install <span aria-hidden="true">↗</span></a
+      >
+      <p class="hero-note">An MCP tool for your existing agent client.</p>
+    </div>
+    <p class="hero-caption">Concept illustration / Compare before claiming</p>
+  </section>
+  <nav class="ground-rail" aria-label="On this page">
+    <a href="#ground-operating-path">01 / Install Ground <span aria-hidden="true">↓</span></a>
+    <a href="#ground-guardrail">02 / Inspect the guardrail <span aria-hidden="true">↓</span></a>
+    <a href="#ground-proof">03 / Review the evidence <span aria-hidden="true">↓</span></a>
+  </nav>
 
-<PerformanceNarrativeStage
-  id="ground-operating-path"
-  eyebrow="Ground operating path"
-  title="Verification belongs before the answer."
-  description="For developers: installation commands, how the checks work, and release evidence."
-  {scenes}
-  ariaLabel="Ground operating path"
->
-  {#snippet artifact(_scene, index)}
-    {#if index === 0}
+  <section
+    class="ground-workbench"
+    aria-labelledby="ground-operating-title"
+    data-performance-chapter="evidence-body"
+  >
+    <header class="chapter-heading">
+      <div>
+        <p class="ground-eyebrow">01 / Connect</p>
+        <h2 id="ground-operating-title">Put the check<br />beside the agent.</h2>
+      </div>
+      <p>Choose one client. Install Ground, check the source, then inspect the finding.</p>
+    </header>
+    <div id="ground-operating-path" class="install-section">
+      <p class="release-note">Installation commands follow the current {groundVersion} release.</p>
+      <p class="copy-status" role="status">{copyError ?? (copied ? 'Command copied.' : '')}</p>
       <div class="install-grid" aria-label="Ground MCP install commands">
         {#each installs as install}
           <article class="install-card">
             <div><span>{install.label}</span><small>{install.note}</small></div>
             <code>{install.command}</code>
-            <button type="button" onclick={() => copyCommand(install.id, install.command)}>
+            <button
+              type="button"
+              aria-label={`Copy ${install.label} install command`}
+              onclick={() => copyCommand(install.id, install.command)}
+            >
               {copied === install.id ? 'Copied' : 'Copy command'}
             </button>
           </article>
@@ -158,7 +134,15 @@
         uncached by default; use <code>--cache</code> to opt in or <code>--no-cache</code> to disable
         reuse.
       </p>
-    {:else if index === 1}
+    </div>
+    <div id="ground-guardrail" class="guardrail-section">
+      <header class="chapter-heading">
+        <div>
+          <p class="ground-eyebrow">02 / Verify</p>
+          <h2>Check first.<br />Then claim.</h2>
+        </div>
+        <p>Ground requires a check before its claim tools can record a code finding.</p>
+      </header>
       <div class="guardrail-artifact">
         <ol>
           <li>
@@ -188,20 +172,35 @@ ground compare utils.ts helpers.ts</code
         unused export in the checked scope still needs review for public APIs, external consumers,
         and dynamic loading before removal.
       </p>
-    {:else}
-      <div class="proof-artifact">
-        <div class="tool-groups">
-          {#each toolGroups as group}
-            <article>
-              <h3>{group.title}</h3>
-              <ul>
-                {#each group.tools as tool}<li>
-                    <code>{tool[0]}</code><span>{tool[1]}</span>
-                  </li>{/each}
-              </ul>
-            </article>
-          {/each}
+    </div>
+    <div id="ground-proof" class="proof-section">
+      <header class="chapter-heading">
+        <div>
+          <p class="ground-eyebrow">03 / Evidence</p>
+          <h2>Inspect what<br />backs the finding.</h2>
         </div>
+        <p>Code checks, measured performance, and release calibration. Each has a defined scope.</p>
+      </header>
+      <details class="tool-disclosure">
+        <summary
+          >Explore the tool reference <span>Verification, patterns, and claims +</span></summary
+        >
+        <div class="proof-artifact">
+          <div class="tool-groups">
+            {#each toolGroups as group}
+              <article>
+                <h3>{group.title}</h3>
+                <ul>
+                  {#each group.tools as tool}<li>
+                      <code>{tool[0]}</code><span>{tool[1]}</span>
+                    </li>{/each}
+                </ul>
+              </article>
+            {/each}
+          </div>
+        </div>
+      </details>
+      <div class="proof-artifact">
         <aside class="case-proof" aria-label="Ground 0.4.3 measured performance">
           <span>Measured on our Agency codebase</span>
           <h3>Faster repeat checks. Fresh source still decides.</h3>
@@ -269,230 +268,515 @@ ground compare utils.ts helpers.ts</code
           </dl>
         </aside>
       </div>
-    {/if}
-  {/snippet}
-</PerformanceNarrativeStage>
+    </div>
+  </section>
 
-<PerformanceConversionHandoff
-  expression="editorial"
-  eyebrow="Ground handoff"
-  title="Put evidence before the next code claim."
-  description="Install Ground in one agent client, run a real verification, and preserve the checked inputs with the finding."
-  density="compact"
-  handoff={{
-    owner: 'Codebase operator',
-    authority: 'Verify-before-claiming policy',
-    proof: 'Checked inputs + finding',
-    state: 'ready'
-  }}
->
-  {#snippet actions()}
-    <Button href="https://www.npmjs.com/package/@createsomething/ground-mcp"
-      >Install Ground from npm</Button
-    >
-    <Button
-      href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ground"
-      variant="secondary">Inspect the source</Button
-    >
-  {/snippet}
-  {#snippet aside()}
-    <AgencyWayfindingSign kind="build" label="Explore Agent Foundation" detail="Build path · put verification tools into a scoped implementation." href="/agent-foundation" />
-  {/snippet}
-</PerformanceConversionHandoff>
-
-<p class="product-family-link">Ground is part of the <a href="/products">product family</a>.</p>
+  <section
+    class="ground-handoff"
+    aria-labelledby="ground-handoff-title"
+    data-performance-chapter="continuation"
+  >
+    <div>
+      <p class="ground-eyebrow">Your next code claim</p>
+      <h2 id="ground-handoff-title">Put evidence<br />before the answer.</h2>
+      <p>
+        Install Ground in one agent client, run a real verification, and preserve the checked inputs
+        with the finding.
+      </p>
+      <a class="primary-action" href="https://www.npmjs.com/package/@createsomething/ground-mcp"
+        >Install Ground from npm <span aria-hidden="true">↗</span></a
+      >
+    </div>
+    <div class="handoff-links">
+      <a
+        href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ground"
+        >Inspect the source ↗</a
+      >
+      <a href="https://createsomething.io/papers/kickstand-triad-audit"
+        >Read the Kickstand audit ↗</a
+      >
+      <a href="/agent-foundation">Explore Agent Foundation ↗</a>
+      <a href="/products">Explore the product family ↗</a>
+      <p>
+        Ground gates its own claim tools. The codebase operator reviews the finding and decides what
+        to change.
+      </p>
+    </div>
+  </section>
+</div>
 
 <style>
-  .product-family-link {
-    margin: 0;
-    padding: 1rem clamp(1.25rem, 5vw, 6rem);
-    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
-    color: var(--color-performance-muted, #5e6268);
-    font-size: 0.9rem;
+  .ground-page {
+    --ground-bg: var(--color-performance-mode-campaign-surface);
+    --ground-fg: var(--color-performance-mode-campaign-ink);
+    --ground-muted: var(--color-performance-fg-secondary);
+    --ground-line: var(--color-performance-shell-border-strong);
+    background: var(--ground-bg);
+    color: var(--ground-fg);
+    font-family: var(--font-performance-interface);
   }
-
-  .product-family-link a {
-    color: var(--color-performance-ink, #090909);
-    text-underline-offset: 0.18em;
+  .ground-page :global(*) {
+    box-sizing: border-box;
   }
-
-  .usage-note {
-    margin: 1rem 0 0;
-    color: var(--color-performance-muted);
-    font-size: 0.85rem;
-    line-height: 1.6;
-  }
-
-  .case-proof a {
+  a {
     color: inherit;
-    text-decoration: underline;
-    text-underline-offset: 0.2em;
+    text-underline-offset: 0.3em;
   }
-
-  .install-grid,
-  .tool-groups {
+  a:focus-visible,
+  button:focus-visible,
+  summary:focus-visible {
+    outline: 2px solid var(--color-performance-focus);
+    outline-offset: 5px;
+  }
+  .ground-eyebrow,
+  .hero-caption,
+  .ground-rail,
+  .install-card span,
+  .case-proof > span,
+  .guardrail-artifact li > span {
+    font: 11px/1.6 var(--font-performance-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .ground-eyebrow,
+  .hero-caption {
+    color: var(--ground-muted);
+  }
+  .ground-hero {
+    padding: 0;
+    position: relative;
+    isolation: isolate;
+    min-height: 650px;
+    display: flex;
+    align-items: center;
+  }
+  .ground-hero picture {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+  }
+  .ground-hero img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+  .ground-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(
+      90deg,
+      var(--ground-bg) 0%,
+      color-mix(in srgb, var(--ground-bg) 94%, transparent) 30%,
+      transparent 78%
+    );
+  }
+  .hero-copy {
+    width: 56%;
+    padding: 110px 0 100px 6vw;
+  }
+  h1 {
+    max-width: 10ch;
+    font-size: clamp(3rem, 6.8vw, 6rem);
+    line-height: 0.99;
+    font-weight: 400;
+    letter-spacing: -0.065em;
+    margin: 28px 0 24px;
+  }
+  .lede {
+    max-width: 36ch;
+    font-size: 0.95rem;
+    line-height: 1.65;
+  }
+  .primary-action {
+    display: inline-flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 30px;
+    min-height: 48px;
+    padding: 14px 19px;
+    margin-top: 20px;
+    border: 1px solid var(--ground-fg);
+    background: var(--ground-fg);
+    color: var(--ground-bg);
+    font-size: 0.8rem;
+    text-decoration: none;
+  }
+  .primary-action:hover {
+    background: var(--ground-bg);
+    color: var(--ground-fg);
+  }
+  .hero-note {
+    font-size: 0.75rem;
+    margin-top: 16px;
+    color: var(--ground-muted);
+  }
+  .hero-caption {
+    position: absolute;
+    bottom: 16px;
+    left: 6vw;
+    right: 6vw;
+    margin: 0;
+    font-size: 10px;
+  }
+  .ground-rail {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px 24px;
+    padding: 12px 6vw;
+    border-block: 1px solid var(--ground-line);
+  }
+  .ground-rail a {
+    display: inline-flex;
+    align-items: center;
+    gap: 20px;
+    min-height: 44px;
+    text-decoration: none;
+  }
+  .ground-rail a:hover {
+    text-decoration: underline;
+  }
+  .ground-workbench,
+  .ground-handoff {
+    padding: 80px 6vw;
+  }
+  .chapter-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 30px;
+    margin-bottom: 32px;
+  }
+  .chapter-heading .ground-eyebrow {
+    margin: 0 0 20px;
+  }
+  h2 {
+    margin: 0;
+    font-size: clamp(2rem, 4.8vw, 3.9rem);
+    font-weight: 400;
+    letter-spacing: -0.055em;
+    line-height: 1.02;
+  }
+  .chapter-heading > p {
+    max-width: 30ch;
+    margin: 0;
+    color: var(--ground-muted);
+    font-size: 0.85rem;
+    line-height: 1.65;
+  }
+  .install-section,
+  .guardrail-section,
+  .proof-section {
+    scroll-margin-top: 96px;
+  }
+  .guardrail-section,
+  .proof-section {
+    padding-top: 90px;
+  }
+  .release-note,
+  .copy-status {
+    font-size: 0.8rem;
+    color: var(--ground-muted);
+  }
+  .copy-status {
+    min-height: 1.5em;
+    margin: 0 0 10px;
+  }
+  .install-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.75rem;
+    border-top: 1px solid var(--ground-line);
   }
-
-  .install-card,
-  .tool-groups article,
-  .case-proof {
-    min-width: 0;
-    border: 1px solid var(--color-performance-line, #d7d7d2);
-    background: var(--color-performance-panel, #fff);
-  }
-
   .install-card {
     display: grid;
     grid-template-rows: auto 1fr auto;
-    gap: 0.8rem;
-    padding: 1rem;
+    gap: 20px;
+    min-width: 0;
+    padding: 24px 24px 24px 0;
+    border-bottom: 1px solid var(--ground-line);
   }
-
+  .install-card:nth-child(even) {
+    border-left: 1px solid var(--ground-line);
+    padding-left: 24px;
+  }
   .install-card > div {
     display: grid;
-    gap: 0.2rem;
-  }
-  .install-card span,
-  .case-proof > span {
-    font-family: var(--font-performance-mono);
-    font-size: 0.7rem;
-    text-transform: uppercase;
+    gap: 6px;
   }
   .install-card small {
-    color: var(--color-performance-muted, #5e6268);
+    color: var(--ground-muted);
+    font-size: 0.8rem;
+  }
+  code {
+    font-family: var(--font-performance-mono);
   }
   .install-card code {
     overflow-wrap: anywhere;
-    font-size: 0.78rem;
-    line-height: 1.5;
+    font-size: 0.8rem;
+    line-height: 1.7;
   }
-  .install-card button {
-    min-height: 2.5rem;
-    border: 1px solid var(--color-performance-ink, #090909);
-    background: var(--color-performance-ink, #090909);
-    color: #fff;
+  button {
+    justify-self: start;
+    min-height: 44px;
+    padding: 10px 16px;
+    background: transparent;
+    color: inherit;
+    border: 1px solid var(--ground-line);
     cursor: pointer;
+    font: inherit;
+    font-size: 0.75rem;
   }
-
+  button:hover {
+    border-color: var(--ground-fg);
+  }
+  .usage-note {
+    max-width: 90ch;
+    font-size: 0.8rem;
+    line-height: 1.7;
+    color: var(--ground-muted);
+    margin: 24px 0 0;
+  }
   .guardrail-artifact {
     display: grid;
-    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-    gap: 1rem;
+    grid-template-columns: 0.8fr 1.2fr;
+    gap: 32px;
   }
   .guardrail-artifact ol {
-    display: grid;
-    gap: 0;
     margin: 0;
     padding: 0;
-    border-top: 1px solid var(--color-performance-line);
     list-style: none;
+    border-top: 1px solid var(--ground-line);
   }
   .guardrail-artifact li {
     display: grid;
-    grid-template-columns: 2.5rem 1fr;
-    gap: 0.25rem 0.75rem;
-    padding: 0.85rem 0;
-    border-bottom: 1px solid var(--color-performance-line);
+    grid-template-columns: 32px 1fr;
+    gap: 6px 12px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--ground-line);
   }
-  .guardrail-artifact li span {
-    grid-row: 1 / span 2;
-    font-family: var(--font-performance-mono);
-    font-size: 0.7rem;
+  .guardrail-artifact li > span {
+    grid-row: span 2;
+    color: var(--ground-muted);
   }
   .guardrail-artifact li p {
     margin: 0;
-    color: var(--color-performance-muted);
     font-size: 0.85rem;
+    color: var(--ground-muted);
+    line-height: 1.6;
   }
   .guardrail-artifact pre {
     min-width: 0;
     margin: 0;
-    padding: 1rem;
+    padding: 24px;
+    border: 1px solid var(--ground-line);
     overflow: auto;
-    background: var(--color-performance-ink);
-    color: #fff;
-    font-size: 0.78rem;
-    line-height: 1.65;
+    font-size: 0.75rem;
+    line-height: 1.9;
   }
   .guardrail-artifact pre span {
-    color: #9ca3af;
+    color: var(--ground-muted);
   }
   .guardrail-artifact pre strong {
-    color: #ff8c5a;
+    color: var(--ground-fg);
   }
-
-  .proof-artifact {
+  .tool-disclosure {
+    border-block: 1px solid var(--ground-line);
+    margin-bottom: 32px;
+  }
+  summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    min-height: 64px;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  summary span {
+    font-size: 0.75rem;
+    color: var(--ground-muted);
+  }
+  .tool-groups {
     display: grid;
-    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 32px;
+    padding-bottom: 32px;
   }
   .tool-groups article {
-    padding: 1rem;
+    min-width: 0;
   }
-  .tool-groups h3,
-  .case-proof h3 {
-    margin: 0 0 0.75rem;
-    font-size: 1rem;
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 400;
+    letter-spacing: -0.025em;
+    margin: 16px 0;
   }
   .tool-groups ul {
-    display: grid;
-    gap: 0.65rem;
+    list-style: none;
     margin: 0;
     padding: 0;
-    list-style: none;
   }
   .tool-groups li {
     display: grid;
-    gap: 0.15rem;
+    gap: 6px;
+    padding: 12px 0;
+    border-top: 1px solid var(--ground-line);
   }
-  .tool-groups li code {
+  .tool-groups code {
     overflow-wrap: anywhere;
-    font-size: 0.74rem;
-  }
-  .tool-groups li span {
-    color: var(--color-performance-muted);
     font-size: 0.8rem;
   }
+  .tool-groups li span {
+    font-size: 0.8rem;
+    color: var(--ground-muted);
+    line-height: 1.6;
+  }
   .case-proof {
-    padding: 1rem;
-    background: var(--color-performance-paper, #f3f3f0);
+    padding: 32px 0;
+    border-bottom: 1px solid var(--ground-line);
+  }
+  .case-proof > span {
+    color: var(--ground-muted);
   }
   .case-proof p {
-    max-width: 48rem;
-    color: var(--color-performance-muted);
+    max-width: 80ch;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: var(--ground-muted);
   }
   .case-proof dl {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    margin: 1rem 0 0;
-    border-top: 1px solid var(--color-performance-line);
-  }
-  .case-proof dl > div {
-    padding: 0.8rem 0;
+    gap: 24px;
+    margin: 32px 0;
   }
   .case-proof dt {
-    color: var(--color-performance-muted);
-    font-size: 0.72rem;
-    text-transform: uppercase;
+    font: 0.7rem/1.6 var(--font-performance-mono);
+    color: var(--ground-muted);
   }
   .case-proof dd {
-    margin: 0.2rem 0 0;
-    font-size: 1.4rem;
+    margin: 8px 0 0;
+    font-size: clamp(1.5rem, 3vw, 2.5rem);
+    letter-spacing: -0.04em;
   }
-
-  @media (max-width: 48rem) {
+  .ground-handoff {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    align-items: end;
+    gap: 64px;
+    border-top: 1px solid var(--ground-line);
+  }
+  .ground-handoff p {
+    max-width: 45ch;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: var(--ground-muted);
+  }
+  .handoff-links {
+    display: grid;
+  }
+  .handoff-links a {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    border-bottom: 1px solid var(--ground-line);
+    font-size: 0.8rem;
+    text-decoration: none;
+  }
+  .handoff-links a:hover {
+    text-decoration: underline;
+  }
+  @media (max-width: 900px) {
+    .hero-copy {
+      width: 65%;
+    }
+    .ground-handoff {
+      gap: 32px;
+    }
+  }
+  @media (max-width: 640px) {
+    .ground-hero {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding-bottom: 36px;
+    }
+    .ground-hero picture {
+      position: relative;
+      display: block;
+      width: 100%;
+      height: 290px;
+      z-index: 0;
+    }
+    .ground-hero img {
+      object-position: center;
+    }
+    .ground-hero::after {
+      display: none;
+    }
+    .hero-copy {
+      order: -1;
+      width: 100%;
+      padding: 40px 6vw 28px;
+    }
+    h1 {
+      max-width: 11ch;
+      font-size: clamp(2.8rem, 12vw, 4.2rem);
+      margin-top: 20px;
+    }
+    .hero-caption {
+      bottom: 12px;
+      font-size: 9px;
+    }
+    .ground-rail {
+      gap: 0;
+    }
+    .ground-rail a {
+      width: 100%;
+      justify-content: space-between;
+    }
+    .ground-workbench,
+    .ground-handoff {
+      padding: 56px 6vw;
+    }
+    .chapter-heading {
+      display: grid;
+      gap: 20px;
+    }
+    .chapter-heading > p {
+      max-width: 40ch;
+    }
     .install-grid,
+    .guardrail-artifact,
     .tool-groups,
-    .guardrail-artifact {
+    .ground-handoff {
       grid-template-columns: 1fr;
+    }
+    .install-card,
+    .install-card:nth-child(even) {
+      padding: 24px 0;
+      border-left: 0;
+    }
+    .guardrail-section,
+    .proof-section {
+      padding-top: 64px;
     }
     .case-proof dl {
       grid-template-columns: 1fr;
+      gap: 20px;
     }
-    .case-proof dl > div {
-      border-bottom: 1px solid var(--color-performance-line);
+    summary {
+      align-items: start;
+      flex-direction: column;
+      justify-content: center;
+      gap: 8px;
+      padding-block: 16px;
+    }
+    .primary-action {
+      width: 100%;
     }
   }
 </style>

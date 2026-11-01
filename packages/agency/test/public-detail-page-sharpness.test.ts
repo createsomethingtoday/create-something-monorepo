@@ -31,13 +31,26 @@ test('reduces every product detail to opening, inspectable operating surface, an
   assert.equal(componentCount(shared, 'PerformanceNarrativeStage'), 1);
   assert.equal(componentCount(shared, 'PerformanceConversionHandoff'), 1);
 
-  for (const route of ['products/ground', 'products/loom']) {
+  for (const route of ['products/loom']) {
     const source = readRoute(route);
     assert.equal(componentCount(source, 'PerformanceCampaignOpening'), 1);
     assert.equal(componentCount(source, 'PerformanceNarrativeStage'), 1);
     assert.equal(componentCount(source, 'PerformanceConversionHandoff'), 1);
     assert.doesNotMatch(source, /^\s*<section\b/gm, `${route} reintroduced loose chapters`);
   }
+});
+
+test('Ground uses three native chapters with direct install and evidence anchors', () => {
+  const source = readRoute('products/ground');
+  assert.equal(componentCount(source, 'section'), 3);
+  for (const id of ['thesis', 'evidence-body', 'continuation'])
+    assert.match(source, new RegExp(`data-performance-chapter="${id}"`));
+  for (const id of ['ground-operating-path', 'ground-guardrail', 'ground-proof']) {
+    assert.ok(source.includes(`href="#${id}"`));
+    assert.ok(source.includes(`id="${id}"`));
+  }
+  assert.match(source, /<details class="tool-disclosure">/);
+  assert.match(source, /role="status"/);
 });
 
 test('uses an indexed stage for product decisions without hiding complete no-JavaScript content', () => {
@@ -47,7 +60,7 @@ test('uses an indexed stage for product decisions without hiding complete no-Jav
   assert.match(shared, /Production contract/);
   assert.match(shared, /Connected loop/);
 
-  for (const route of productRoutes) {
+  for (const route of productRoutes.filter((route) => route !== 'products/ground')) {
     assert.match(readRoute(route), /PerformanceNarrativeStage|GovernanceProductPage/);
   }
 });
