@@ -1,0 +1,76 @@
+TAP version 13
+# Subtest: running snapshots bound history reads before the first delta and after history catches up
+ok 1 - running snapshots bound history reads before the first delta and after history catches up
+  ---
+  duration_ms: 8.104625
+  type: 'test'
+  ...
+# Subtest: approve cannot resurrect a cached approval after transient history failure (before-approval-snapshot)
+ok 2 - approve cannot resurrect a cached approval after transient history failure (before-approval-snapshot)
+  ---
+  duration_ms: 5.519583
+  type: 'test'
+  ...
+# Subtest: approve cannot resurrect a cached approval after transient history failure (after-approval-snapshot)
+ok 3 - approve cannot resurrect a cached approval after transient history failure (after-approval-snapshot)
+  ---
+  duration_ms: 5.040208
+  type: 'test'
+  ...
+# Subtest: reject cannot resurrect a cached approval after transient history failure (before-approval-snapshot)
+ok 4 - reject cannot resurrect a cached approval after transient history failure (before-approval-snapshot)
+  ---
+  duration_ms: 4.108625
+  type: 'test'
+  ...
+# Subtest: reject cannot resurrect a cached approval after transient history failure (after-approval-snapshot)
+ok 5 - reject cannot resurrect a cached approval after transient history failure (after-approval-snapshot)
+  ---
+  duration_ms: 3.598709
+  type: 'test'
+  ...
+# Subtest: historical session error Provider usage limit reached does not poison the workspace cache fence
+ok 6 - historical session error Provider usage limit reached does not poison the workspace cache fence
+  ---
+  duration_ms: 3.673458
+  type: 'test'
+  ...
+# Subtest: historical session error provider_turn_rejected does not poison the workspace cache fence
+ok 7 - historical session error provider_turn_rejected does not poison the workspace cache fence
+  ---
+  duration_ms: 4.189375
+  type: 'test'
+  ...
+# Subtest: historical session error turn_outcome_unknown retains the workspace cache fence
+ok 8 - historical session error turn_outcome_unknown retains the workspace cache fence
+  ---
+  duration_ms: 5.96275
+  type: 'test'
+  ...
+# Subtest: historical session error write_outcome_unknown retains the workspace cache fence
+ok 9 - historical session error write_outcome_unknown retains the workspace cache fence
+  ---
+  duration_ms: 3.578209
+  type: 'test'
+  ...
+# Subtest: historical session error approval_delivery_unknown retains the workspace cache fence
+ok 10 - historical session error approval_delivery_unknown retains the workspace cache fence
+  ---
+  duration_ms: 3.771625
+  type: 'test'
+  ...
+# Subtest: historical session error reconciliation_required retains the workspace cache fence
+ok 11 - historical session error reconciliation_required retains the workspace cache fence
+  ---
+  duration_ms: 3.801916
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 412.224125

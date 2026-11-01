@@ -1,0 +1,2 @@
+PASS additional marker cleanup, outside selection, scroll/latest, session switch and close scopes
+{"passed":true,"matrices":12,"out":"/private/tmp/gigi-independent-0219-selection-scopes","scope":"offline actual app DOM/CSS with synthetic snapshots; no native/provider acceptance"}

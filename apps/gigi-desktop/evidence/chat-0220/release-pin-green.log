@@ -1,0 +1,164 @@
+
+> @create-something/agency@1.0.0 test:gigi-beta /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/packages/agency
+> node scripts/build-gigi-landing-styles.mjs --check && node --import tsx --test test/gigi-beta-page.test.ts test/gigi-landing-page.test.ts
+
+TAP version 13
+# Subtest: standalone page retains the owning Agency Canon operator palette
+ok 1 - standalone page retains the owning Agency Canon operator palette
+  ---
+  duration_ms: 0.623333
+  type: 'test'
+  ...
+# Subtest: download contract pins exact qualified installer, platform and checksum
+ok 2 - download contract pins exact qualified installer, platform and checksum
+  ---
+  duration_ms: 0.148584
+  type: 'test'
+  ...
+# Subtest: beta stays unlisted and has no active content or tracking shell
+ok 3 - beta stays unlisted and has no active content or tracking shell
+  ---
+  duration_ms: 7.719584
+  type: 'test'
+  ...
+# Subtest: onboarding and recovery limits are explicit
+ok 4 - onboarding and recovery limits are explicit
+  ---
+  duration_ms: 0.20725
+  type: 'test'
+  ...
+# Subtest: walkthroughs pin reviewed footage and use user-initiated native playback
+ok 5 - walkthroughs pin reviewed footage and use user-initiated native playback
+  ---
+  duration_ms: 0.197958
+  type: 'test'
+  ...
+# Subtest: release acceptance distinguishes this installer from historical workflow evidence
+ok 6 - release acceptance distinguishes this installer from historical workflow evidence
+  ---
+  duration_ms: 0.087292
+  type: 'test'
+  ...
+# Subtest: creative work scope preserves local media and explicit publishing boundaries
+ok 7 - creative work scope preserves local media and explicit publishing boundaries
+  ---
+  duration_ms: 0.149959
+  type: 'test'
+  ...
+# Subtest: release describes bounded agent actions and separates saved tasks from sources
+ok 8 - release describes bounded agent actions and separates saved tasks from sources
+  ---
+  duration_ms: 0.079833
+  type: 'test'
+  ...
+# Subtest: search release explains token matching, bounded waits and synthetic acceptance
+ok 9 - search release explains token matching, bounded waits and synthetic acceptance
+  ---
+  duration_ms: 0.256958
+  type: 'test'
+  ...
+# Subtest: Today layout release describes presentation changes without overstating workflow acceptance
+ok 10 - Today layout release describes presentation changes without overstating workflow acceptance
+  ---
+  duration_ms: 0.363542
+  type: 'test'
+  ...
+# Subtest: Sources release explains scoped preview, approval, sign-out and synthetic evidence
+ok 11 - Sources release explains scoped preview, approval, sign-out and synthetic evidence
+  ---
+  duration_ms: 0.187084
+  type: 'test'
+  ...
+# Subtest: Gigs release explains collection-wide ordering and bounded acceptance
+ok 12 - Gigs release explains collection-wide ordering and bounded acceptance
+  ---
+  duration_ms: 0.068458
+  type: 'test'
+  ...
+# Subtest: artwork release preserves local previews and external generation boundaries
+ok 13 - artwork release preserves local previews and external generation boundaries
+  ---
+  duration_ms: 0.110625
+  type: 'test'
+  ...
+# Subtest: setup and classification release keeps session and acceptance boundaries explicit
+ok 14 - setup and classification release keeps session and acceptance boundaries explicit
+  ---
+  duration_ms: 0.082541
+  type: 'test'
+  ...
+# Subtest: current release clearly defers phone qualification and preserves rollback
+ok 15 - current release clearly defers phone qualification and preserves rollback
+  ---
+  duration_ms: 0.029459
+  type: 'test'
+  ...
+# Subtest: connection guidance separates admission from Google consent and limits acceptance claims
+ok 16 - connection guidance separates admission from Google consent and limits acceptance claims
+  ---
+  duration_ms: 0.049458
+  type: 'test'
+  ...
+# Subtest: download page offers public signup without claiming Google onboarding qualification
+ok 17 - download page offers public signup without claiming Google onboarding qualification
+  ---
+  duration_ms: 0.0695
+  type: 'test'
+  ...
+# Subtest: customization describes visible controls and portable device-local preferences
+ok 18 - customization describes visible controls and portable device-local preferences
+  ---
+  duration_ms: 0.051792
+  type: 'test'
+  ...
+# Subtest: current release qualification distinguishes native synthetic checks from fresh setup
+ok 19 - current release qualification distinguishes native synthetic checks from fresh setup
+  ---
+  duration_ms: 0.068417
+  type: 'test'
+  ...
+# Subtest: assistance release explains attention, consent and app-running notification limits
+ok 20 - assistance release explains attention, consent and app-running notification limits
+  ---
+  duration_ms: 0.035583
+  type: 'test'
+  ...
+# Subtest: landing downloads use the same immutable release as the detailed beta page
+ok 21 - landing downloads use the same immutable release as the detailed beta page
+  ---
+  duration_ms: 0.538708
+  type: 'test'
+  ...
+# Subtest: landing preserves beta privacy and avoids active content or tracking
+ok 22 - landing preserves beta privacy and avoids active content or tracking
+  ---
+  duration_ms: 0.166167
+  type: 'test'
+  ...
+# Subtest: landing uses current Today structure and clearly labels example records
+ok 23 - landing uses current Today structure and clearly labels example records
+  ---
+  duration_ms: 0.118709
+  type: 'test'
+  ...
+# Subtest: anchors, FAQ and keyboard path remain useful without JavaScript
+ok 24 - anchors, FAQ and keyboard path remain useful without JavaScript
+  ---
+  duration_ms: 0.154458
+  type: 'test'
+  ...
+# Subtest: checked-in styles match the CSS-compatible Sass source
+ok 25 - checked-in styles match the CSS-compatible Sass source
+  ---
+  duration_ms: 0.199917
+  type: 'test'
+  ...
+1..25
+# tests 25
+# suites 0
+# pass 25
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 180.91075

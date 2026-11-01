@@ -1,0 +1,56 @@
+TAP version 13
+# Subtest: default copied configuration imports in the advertised rollback build
+not ok 1 - default copied configuration imports in the advertised rollback build
+  ---
+  duration_ms: 0.521208
+  type: 'test'
+  location: '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/apps/gigi-desktop/web/preferences.test.mjs:115:1'
+  failureType: 'testCodeFailure'
+  error: 'Configuration contains an unsupported setting: chatWidth.'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    Module.importPreferences (file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/apps/gigi-desktop/scripts/fixtures/preferences-0218.mjs:45:46)
+    TestContext.<anonymous> (file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/apps/gigi-desktop/web/preferences.test.mjs:118:29)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+    run (node:internal/test_runner/harness:307:12)
+    test (node:internal/test_runner/harness:316:12)
+    file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/apps/gigi-desktop/web/preferences.test.mjs:115:1
+  ...
+# Subtest: explicit chat-inclusive configuration uses its own version and roundtrips all choices
+not ok 2 - explicit chat-inclusive configuration uses its own version and roundtrips all choices
+  ---
+  duration_ms: 0.392833
+  type: 'test'
+  location: '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/apps/gigi-desktop/web/preferences.test.mjs:123:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1 !== 2
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 2
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/apps/gigi-desktop/web/preferences.test.mjs:126:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 57.703042
