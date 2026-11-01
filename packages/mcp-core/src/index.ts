@@ -114,7 +114,6 @@ export { FEEDBACK_TOOL_SCHEMA, createFeedbackToolHandler, registerFeedbackTool }
 
 export {
   enableTelemetry,
-  recordMcpToolInvocation,
   recordInvocation,
   getUsage,
   getHealth,
