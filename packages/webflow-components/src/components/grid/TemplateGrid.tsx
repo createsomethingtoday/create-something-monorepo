@@ -1,6 +1,6 @@
 import { marketplaceSignals, signalDensityForPosition, type MarketplaceSignalDensity } from '../marketplace/marketplaceSignals';
 import React, {
-  CSSProperties,
+  type CSSProperties,
   memo,
   useCallback,
   useEffect,

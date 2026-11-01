@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { trackMarketplaceEvent } from './analytics';
 import { MarketplaceComponentErrorBoundary, useMarketplaceComponentErrorTracking } from './MarketplaceComponentErrorBoundary';
 import {
-  TemplateDetailImage,
-  TemplateDetailLink,
-  TemplateDetailOfferMode,
+  type TemplateDetailImage,
+  type TemplateDetailLink,
+  type TemplateDetailOfferMode,
   inferTemplateSlug,
   isExternalUrl,
   normalizeTemplateDetailImage,
@@ -257,7 +257,7 @@ const TemplateDetailStickyBarInner: React.FC<TemplateDetailStickyBarProps> = ({
       aria-hidden={!isRevealed}
       ref={stickyBarRef}
     >
-      <style>{TEMPLATE_DETAIL_STYLES}</style>
+      <style dangerouslySetInnerHTML={{ __html: TEMPLATE_DETAIL_STYLES }} />
       <div className="wfdt-sticky-meta">
         {image.src ? <img className="wfdt-sticky-thumb" src={image.src} alt={image.alt || `${templateName} thumbnail`} /> : null}
         <div style={{ minWidth: 0 }}>

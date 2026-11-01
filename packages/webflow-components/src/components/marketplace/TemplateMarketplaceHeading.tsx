@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { parseTemplateRoute, TemplatePathKind, TemplateScope } from './templateRoute';
+import { parseTemplateRoute, type TemplatePathKind, type TemplateScope } from './templateRoute';
 import { TEMPLATE_MARKETPLACE_COMPONENT_VERSION } from './templateTelemetry';
 
 type HeadingPageKind = TemplatePathKind;
