@@ -66,6 +66,7 @@ const workspaceId = () => state.workspace?.workspaceId || state.workspace?.id;
 let preferences = { ...defaults };
 let preferencesDraft = '';
 let preferencesExported = null;
+let preferencesExportChat = false;
 let preferencesFeedback = null;
 function preferenceStorage() { try { return globalThis.localStorage; } catch { return null; } }
 function restorePreferences() {
@@ -80,7 +81,7 @@ function savePreferences(next, message = 'Preferences saved on this Mac.') {
     const chatOnly = Object.keys(defaults).every(key => key.startsWith('chat') || preferences[key] === previous[key]);
     applyPreferences(preferences);
     state.scheduleView = preferences.scheduleView;
-    preferencesExported = preferencesExported ? exportPreferences(preferences) : null;
+    preferencesExported = preferencesExported ? exportPreferences(preferences, { includeChat: preferencesExportChat }) : null;
     preferencesFeedback = { message, error: false };
     if (chatOnly && state.page !== 'appearance') renderChat(); else render();
     return true;
@@ -91,7 +92,7 @@ function savePreferences(next, message = 'Preferences saved on this Mac.') {
   }
 }
 function appearance() {
-  return heading('Workspace', 'Appearance & views', 'Choose a workspace that feels right for your day.', '<button type="button" class="btn" data-page="settings">Setup & safety</button>') + preferencesView(preferences, { draft: preferencesDraft, exported: preferencesExported, feedback: preferencesFeedback });
+  return heading('Workspace', 'Appearance & views', 'Choose a workspace that feels right for your day.', '<button type="button" class="btn" data-page="settings">Setup & safety</button>') + preferencesView(preferences, { draft: preferencesDraft, exported: preferencesExported, includeChat: preferencesExportChat, feedback: preferencesFeedback });
 }
 
 installArtworkUI(root,{call:bridge.call,workspaceId,canEdit:async()=>!state.editing&&(!creatorMount?.canLeave||await creatorMount.canLeave()),onChanged:async()=>{if(state.selected)await selectRecord(state.selected.id,state.page);else if(state.page==='music')globalThis.dispatchEvent(new Event('focus'));else await openPage(state.page);}});
@@ -802,8 +803,8 @@ root.addEventListener('click', (event) => {
   if (button.dataset.chatPrompt) { const prompt=button.dataset.chatPrompt;void (async()=>{if(!chat)return;if(!chat.current)await chat.start();chat.draft=prompt;renderChat({replaceDraft:true});root.querySelector?.('#chat-message')?.focus?.();})();return; }
   if (button.dataset.preferencesTheme) { savePreferences({ ...preferences, theme: button.dataset.preferencesTheme }); root.querySelector?.(`[data-preferences-theme="${preferences.theme}"]`)?.focus?.({ preventScroll: true }); return; }
   if (button.dataset.preferencesReset) { savePreferences(defaults, 'Appearance and views reset to Studio defaults.'); return; }
-  if (button.dataset.preferencesExport) { preferencesExported = exportPreferences(preferences); render(); const detail = root.querySelector?.('.portable-preferences'); if (detail) detail.open = true; root.querySelector?.('#preferences-export')?.focus?.(); return; }
-  if (button.dataset.preferencesCopy) { void (async () => { try { if (!globalThis.navigator?.clipboard?.writeText) throw new Error('Clipboard unavailable'); await globalThis.navigator.clipboard.writeText(exportPreferences(preferences)); preferencesFeedback = { message: 'Configuration copied.', error: false }; } catch { preferencesFeedback = { message: 'Could not copy. Select the configuration JSON and copy it manually.', error: true }; } render(); })(); return; }
+  if (button.dataset.preferencesExport) { preferencesExported = exportPreferences(preferences, { includeChat: preferencesExportChat }); render(); const detail = root.querySelector?.('.portable-preferences'); if (detail) detail.open = true; root.querySelector?.('#preferences-export')?.focus?.(); return; }
+  if (button.dataset.preferencesCopy) { void (async () => { try { if (!globalThis.navigator?.clipboard?.writeText) throw new Error('Clipboard unavailable'); await globalThis.navigator.clipboard.writeText(exportPreferences(preferences, { includeChat: preferencesExportChat })); preferencesFeedback = { message: 'Configuration copied.', error: false }; } catch { preferencesFeedback = { message: 'Could not copy. Select the configuration JSON and copy it manually.', error: true }; } render(); })(); return; }
   if (button.dataset.aiAction) { const action=button.dataset.aiAction, client=button.dataset.aiClient; void ai.action(action,client).then(()=>{ if(state.page==='settings') root.querySelector('[data-ai-action="refresh"]')?.focus?.({preventScroll:true}); }); return; }
   if(button.dataset.agentPreflight){
     if(state.busy)return;
@@ -1003,7 +1004,7 @@ root.addEventListener('change',event=>{if(event.target.id==='ai-model'){ai.model
 
 root.addEventListener('toggle', (event) => { if (event.target.dataset?.libraryNav) state.libraryOpen = event.target.open; }, true);
 
-root.addEventListener('change', (event) => { if (event.target.dataset?.preference) { const key = event.target.dataset.preference; if (Object.hasOwn(defaults, key) && key !== 'version') savePreferences({ ...preferences, [key]: event.target.value }); } else if (event.target.id === 'link-entity') void run(() => loadLinkChoices(event.target.value)); });
+root.addEventListener('change', (event) => { if (event.target.id === 'preferences-export-format') { preferencesExportChat = event.target.value === 'chat'; if (preferencesExported) preferencesExported = exportPreferences(preferences, { includeChat: preferencesExportChat }); render(); root.querySelector('#preferences-export-format')?.focus?.({ preventScroll: true }); return; } if (event.target.dataset?.preference) { const key = event.target.dataset.preference; if (Object.hasOwn(defaults, key) && key !== 'version') savePreferences({ ...preferences, [key]: event.target.value }); } else if (event.target.id === 'link-entity') void run(() => loadLinkChoices(event.target.value)); });
 root.addEventListener('input', (event) => {
   if (event.target.id === 'preferences-import') { preferencesDraft = event.target.value; return; }
   if (event.target.dataset?.sourceDate) {

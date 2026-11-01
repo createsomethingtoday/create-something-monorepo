@@ -173,3 +173,33 @@ test('successful configuration import retains keyboard focus on its submit contr
     assert.equal(globalThis.document.activeElement?.id, 'preferences-import-submit');
   });
 });
+
+test('copy configuration defaults to rollback compatibility and explicitly includes chat in the newer format', async () => {
+  const previous = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  const copied = [];
+  Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { clipboard: { writeText: async text => copied.push(text) } } });
+  try {
+    const rollback = await import('../scripts/fixtures/preferences-0218.mjs');
+    await fixture(async ({ root, calls, click, change, listeners }) => {
+      await click({ page: 'appearance' });
+      await change('theme', 'paper'); await change('chatWidth', 'wide'); await change('chatTextSize', 'larger');
+      await click({ preferencesExport: '1' }); await click({ preferencesCopy: '1' });
+      assert.equal(rollback.importPreferences(copied.at(-1)).theme, 'paper');
+      assert.equal(JSON.parse(copied.at(-1)).version, 1);
+      assert.equal(Object.hasOwn(JSON.parse(copied.at(-1)), 'chatWidth'), false);
+      assert.match(root.innerHTML, /GiGi 0.2.18 or later/);
+      const format = async value => { listeners.get('change')({ target: { id: 'preferences-export-format', value, dataset: {} } }); await settle(); };
+      await format('chat');
+      assert.equal(globalThis.document.activeElement.id, 'preferences-export-format');
+      await click({ preferencesCopy: '1' });
+      let full = JSON.parse(copied.at(-1)); assert.equal(full.version, 2); assert.equal(full.chatWidth, 'wide'); assert.equal(full.chatTextSize, 'larger');
+      await change('theme', 'midnight'); await click({ preferencesCopy: '1' });
+      full = JSON.parse(copied.at(-1)); assert.equal(full.version, 2); assert.equal(full.theme, 'midnight');
+      await format('compatible'); await click({ preferencesCopy: '1' });
+      assert.equal(rollback.importPreferences(copied.at(-1)).theme, 'midnight');
+      assert.equal(calls.some(call => /save|import|restore|link/.test(call.operation)), false);
+    });
+  } finally {
+    if (previous) Object.defineProperty(globalThis, 'navigator', previous); else delete globalThis.navigator;
+  }
+});

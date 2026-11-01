@@ -8,6 +8,7 @@ const {chromium}=createRequire(new URL('../../../packages/agency/package.json',i
 const web=resolve(new URL('../web/',import.meta.url).pathname);
 const out=resolve(process.env.GIGI_CHAT_EVIDENCE || '/private/tmp/cre-2308-ui');mkdirSync(out,{recursive:true});
 const baseline=process.env.BASELINE==='1';
+const rollbackPreferences=await import('./fixtures/preferences-0218.mjs');
 const browser=await chromium.launch({headless:true,channel:'chrome'});
 const metrics=[];
 try{
@@ -31,6 +32,7 @@ try{
    globalThis.chatAppend=text=>{chat.current.messages[1].text+=text;renderChat();};
    globalThis.chatSetState=state=>{chat.current.state=state;renderChat();};
    globalThis.chatFullRender=render;
+   globalThis.appearanceFixture=()=>{state.page='appearance';chat.visible=false;preferences={...defaults,theme:'paper',chatWidth:'wide',chatTextSize:'larger',chatDensity:'compact'};applyPreferences(preferences);render();};
    globalThis.chatAcceptSnapshot=snapshot=>chat.accept(snapshot);
    globalThis.chatClearDraft=()=>{chat.draft='';renderChat();};
    `);
@@ -59,6 +61,30 @@ try{
  assert.ok(transcript.indexOf('First answer')<transcript.indexOf('Second question'));
  assert.ok(transcript.indexOf('Second question')<transcript.indexOf('Second partial response complete'));
  assert.equal(await page.locator('#chat-message').inputValue(),'Keep this draft');
+ // Copy/import compatibility is a real appearance-page interaction, with a
+ // test clipboard only; no system clipboard or real workspace is accessed.
+ await page.evaluate(()=>{Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{globalThis.copiedConfiguration=text;}}});appearanceFixture();});
+ await page.locator('.portable-preferences>summary').click();
+ await page.locator('[data-preferences-export]').click();
+ let exported=await page.locator('#preferences-export').inputValue();
+ assert.equal(rollbackPreferences.importPreferences(exported).theme,'paper');
+ await page.locator('[data-preferences-copy]').click();
+ assert.equal(await page.evaluate(()=>copiedConfiguration),exported);
+ await page.locator('#preferences-export-format').selectOption('chat');
+ assert.equal(await page.locator('#preferences-export-format').evaluate(e=>e===document.activeElement),true);
+ const fullExport=await page.locator('#preferences-export').inputValue();
+ assert.equal(JSON.parse(fullExport).version,2);assert.equal(JSON.parse(fullExport).chatWidth,'wide');
+ await page.locator('[data-preferences-copy]').click();assert.equal(await page.evaluate(()=>copiedConfiguration),fullExport);
+ await page.locator('#preferences-import').fill(fullExport);await page.locator('#preferences-import-submit').click();
+ assert.equal(await page.evaluate(()=>document.documentElement.dataset.chatWidth),'wide');
+ for(const width of [880,1280]){
+  await page.setViewportSize({width,height:840});await page.locator('#preferences-export-format').scrollIntoViewIfNeeded();
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  await page.screenshot({path:resolve(out,`configuration-export-${width}.png`)});
+ }
+ await page.locator('#preferences-export-format').selectOption('compatible');
+ exported=await page.locator('#preferences-export').inputValue();assert.equal(rollbackPreferences.importPreferences(exported).theme,'paper');
+ assert.equal(Object.hasOwn(JSON.parse(exported),'chatWidth'),false);
  for(const width of [880,1280])for(const theme of ['studio','paper','midnight'])for(const chatWidth of ['standard','wide']){
   await page.setViewportSize({width,height:width===880?620:840});await page.evaluate(({theme,chatWidth})=>chatFixture(theme,{chatWidth,chatTextSize:'larger'}),{theme,chatWidth});
   const rects=await page.evaluate(()=>{
