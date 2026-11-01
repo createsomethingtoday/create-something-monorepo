@@ -3,7 +3,9 @@ import { approvalCopy, approvalAction, creativeReceipt } from './approval-view.m
 
 const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const sessionItems = (value) => Array.isArray(value) ? value : Array.isArray(value?.sessions) ? value.sessions : [];
-const pollLimit = 480;
+// Preserve eight minutes of scheduled observation as streaming cadence changes.
+const pollInterval = 250;
+const pollLimit = (8 * 60 * 1000) / pollInterval;
 const uncertainOutcomes = new Set(['reconciliation_required', 'write_outcome_unknown', 'turn_outcome_unknown']);
 const unresolvedSave = 'GiGi cannot yet confirm whether this save completed. Do not recreate the record or submit another change. Choose Check status to check again. If this message remains, ask for help resolving the saved request.';
 const explanations = {
@@ -161,7 +163,7 @@ export class ChatController {
       this.pollCount++;
       try { const result = await this.bridge.chatPoll(this.workspaceId, this.current.sessionId); if (epoch === this.epoch && this.visible) this.accept(result); }
       catch (error) { if (epoch === this.epoch) { this.error = String(error?.message || error); this.emit(); } }
-    }, 250);
+    }, pollInterval);
   }
   async mutate(task, submittedText = null) {
     this.stopPolling(); this.pending = true; this.error = null; this.emit();

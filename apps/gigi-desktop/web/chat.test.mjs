@@ -322,3 +322,24 @@ test('Check status reconciles an uncertain conversation without replay and keeps
   assert.match(chatView(chat), /data-chat-refresh="1"/);
   assert.match(chatView(chat), /type="submit" class="btn primary" disabled/);
 });
+
+test('streaming observes a running turn for the original eight-minute window and can resume afterward', async () => {
+  const timers = []; let polls = 0;
+  const bridge = {
+    chatStatus: async () => ({ available: true, authenticated: true }), chatList: async () => [],
+    chatRead: async () => session('running'),
+    chatPoll: async () => { polls++; return session('running'); },
+  };
+  const chat = new ChatController(bridge, 'w1', () => {}, () => {}, (fn, delay) => { timers.push({ fn, delay }); return polls + 1; }, () => {});
+  await chat.open(); await chat.read('s1');
+  let elapsed = 0;
+  while (elapsed < 8 * 60 * 1000) {
+    assert.equal(chat.observationPaused, false, `observation stopped early at ${elapsed}ms`);
+    const tick = timers.shift(); assert.ok(tick, `no next poll at ${elapsed}ms`);
+    assert.equal(tick.delay, 250, 'retain responsive streaming cadence');
+    elapsed += tick.delay; await tick.fn();
+  }
+  assert.equal(chat.observationPaused, true, 'still bound automatic observation');
+  assert.equal(timers.length, 0); assert.match(chat.error, /Open this session again/);
+  await chat.open(); assert.equal(chat.observationPaused, false); assert.equal(timers.length, 1);
+});

@@ -59,7 +59,8 @@ try{
  await page.locator('.chat-history>summary').click();await page.locator('.chat-view-options>summary').click();
  await page.locator('#chat-chatWidth').selectOption('wide');assert.equal(await page.evaluate(()=>document.documentElement.dataset.chatWidth),'wide');
  await page.locator('#chat-chatTextSize').selectOption('larger');await page.locator('#chat-chatDensity').selectOption('compact');
- assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('gigi:preferences:v1:synthetic-chat-0219')).chatDensity),'compact');
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('gigi:chat-preferences:v1:synthetic-chat-0219')).chatDensity),'compact');
+ assert.equal(await page.evaluate(()=>Object.keys(JSON.parse(localStorage.getItem('gigi:preferences:v1:synthetic-chat-0219'))).some(key=>key.startsWith('chat'))),false,'rollback v1 payload excludes chat extensions');
  await page.locator('.chat-view-options>summary').click();
  await page.locator('.chat-transcript').evaluate(e=>e.scrollTop=0);const top=await page.locator('.chat-transcript').evaluate(e=>e.scrollTop);
  await page.evaluate(()=>chatAppend('\n\nNew provider output while reading earlier messages.'));
