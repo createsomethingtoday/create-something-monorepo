@@ -1484,7 +1484,8 @@ test('running snapshots bound history reads before the first delta and after his
   } finally { await rm(dataDir, { recursive: true, force: true }); }
 });
 
-for (const decision of ['approve', 'reject'] as const) for (const failureTiming of ['before-approval-snapshot', 'after-approval-snapshot'] as const) test(`${decision} cannot resurrect a cached approval after transient history failure (${failureTiming})`, async () => {
+for (const decision of ['approve', 'reject'] as const) for (const failureTiming of ['before-approval-snapshot', 'after-approval-snapshot'] as const) test(`${decision} cannot resurrect a cached approval after transient history failure (${failureTiming})`, async (t) => {
+  let elapsed = 0; const started = Date.now(); t.mock.method(Date, 'now', () => started + elapsed);
   const { adapter, server, mcp, dataDir } = await setup();
   let record = { id: 'r', title: 'Before', fields: { Status: 'Open' }, source: { kind: 'manual' }, relations: [] };
   let writes = 0; const originalMcp = mcp.request.bind(mcp);
@@ -1515,6 +1516,7 @@ for (const decision of ['approve', 'reject'] as const) for (const failureTiming 
     assert.equal(writes, decision === 'approve' ? 1 : 0, 'polling cannot repeat a reviewed operation');
     server.request = original;
     server.thread.turns = [{ id: 'turn-1', status: 'completed', items: [{ id: 'a', type: 'agentMessage', text: 'Checked result.' }] }];
+    elapsed += 3001; // A safe outage fallback now retains the ordinary reconciliation cadence.
     assert.equal((await adapter.poll(input)).state, 'idle', 'terminal reconciliation remains available after transient history recovers');
   } finally { await rm(dataDir, { recursive: true, force: true }); }
 });
@@ -1523,7 +1525,7 @@ for (const [error, unresolved] of [
   ['Provider usage limit reached', false], ['provider_turn_rejected', false],
   ['turn_outcome_unknown', true], ['write_outcome_unknown', true],
   ['approval_delivery_unknown', true], ['reconciliation_required', true],
-] as const) test(`historical session error ${error} ${unresolved ? 'retains' : 'does not poison'} the workspace cache fence`, async () => {
+] as const) for (const historyUnavailable of [false, true]) test(`historical session error ${error} ${unresolved ? 'retains' : 'does not poison'} the workspace cache fence (history unavailable: ${historyUnavailable})`, async () => {
   const { adapter, server, dataDir } = await setup();
   try {
     const old = await adapter.start({ workspaceId: 'w', message: 'Earlier request' });
@@ -1534,6 +1536,10 @@ for (const [error, unresolved] of [
     const active = await adapter.start({ workspaceId: 'w', message: 'New read-only conversation' });
     const input = { workspaceId: 'w', sessionId: active.sessionId };
     server.thread.turns = [{ id: 'turn-1', status: 'inProgress', items: [] }];
+    if (historyUnavailable) {
+      const original = server.request.bind(server);
+      server.request = async (method, params) => { if (method === 'thread/read') { server.calls.push({ method, params }); throw Error('synthetic history outage'); } return original(method, params); };
+    }
     await adapter.read(input);
     const reads = server.calls.filter(x => x.method === 'thread/read').length;
     for (let i = 0; i < 3; i++) assert.equal((await adapter.poll(input)).state, 'running');
@@ -1565,5 +1571,37 @@ for (const historyAhead of [false, true]) test(`streamed prefixes survive active
     assert.equal((await adapter.read(input)).messages.at(-1)?.text, expected);
     server.request = original; server.thread.turns[0].status = 'completed'; server.thread.turns[0].items[0].text = expected;
     assert.equal((await adapter.read(input)).state, 'idle');
+  } finally { await rm(dataDir, { recursive: true, force: true }); }
+});
+
+for (const failure of ['thread/read', 'last-history-page']) test(`initial history outage keeps safe running polls bounded (${failure})`, async (t) => {
+  const { adapter, server, dataDir } = await setup();
+  let elapsed = 0; const started = Date.now(); t.mock.method(Date, 'now', () => started + elapsed);
+  try {
+    const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'Read only' });
+    const input = { workspaceId: 'w', sessionId };
+    server.thread.turns = Array.from({ length: 20 }, (_, i) => ({ id: `turn-${i + 1}`, status: 'inProgress', items: [] }));
+    const original = server.request.bind(server);
+    server.request = async (method, params) => {
+      if ((failure === 'thread/read' && method === 'thread/read') || (failure === 'last-history-page' && method === 'thread/turns/list' && params.cursor === '19')) {
+        server.calls.push({ method, params }); throw Error('synthetic history outage');
+      }
+      return original(method, params);
+    };
+    await adapter.read(input);
+    const count = () => server.calls.filter(x => x.method === 'thread/read' || x.method === 'thread/turns/list').length;
+    const initial = count();
+    await Promise.all(server.events.map(fn => fn({ method: 'item/agentMessage/delta', params: { threadId: 'thread-1', turnId: 'turn-1', itemId: 'a', delta: 'Observed during outage' } })));
+    for (let i = 0; i < 8; i++) {
+      elapsed += 250; const output = await adapter.poll(input);
+      assert.equal(output.state, 'running'); assert.equal(output.messages.at(-1)?.text, 'Observed during outage');
+    }
+    assert.equal(count(), initial, 'failed initial history must not retry on every UI poll');
+    elapsed += 1001; await adapter.poll(input); assert.equal(count(), initial * 2, 'retry after three seconds even when still unavailable');
+    await Promise.all(server.events.map(fn => fn({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed' } } })));
+    assert.equal((await adapter.poll(input)).state, 'running'); assert.equal(count(), initial * 3, 'terminal notification bypasses a safe fallback');
+    assert.equal((await adapter.poll(input)).state, 'running'); assert.equal(count(), initial * 4, 'unmaterialized terminal remains fenced');
+    server.request = original; server.thread.turns = [{ id: 'turn-1', status: 'completed', items: [{ id: 'a', type: 'agentMessage', text: 'Observed during outage; final answer' }] }];
+    const final = await adapter.poll(input); assert.equal(final.state, 'idle'); assert.equal(final.messages.at(-1)?.text, 'Observed during outage; final answer');
   } finally { await rm(dataDir, { recursive: true, force: true }); }
 });

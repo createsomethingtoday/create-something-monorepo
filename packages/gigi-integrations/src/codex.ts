@@ -365,6 +365,16 @@ export function createCodexAdapter(options: CodexOptions) {
     const ids = [...sessions.values()].filter(session => session.workspaceId === workspaceId && session.decisionReceipt?.outcome === 'verified').map(session => session.decisionReceipt!.approvalId);
     return ids.length ? { workspaceVerifiedEdits: ids } : {};
   }
+  function canCacheRunning(session: Session, value: ChatRead): boolean {
+    // A historical provider failure is not itself an unresolved workspace action.
+    const uncertain = Boolean(session.error) || [...sessions.values()].some(x => x.workspaceId === session.workspaceId && (
+      x.uncertainWrite || x.pendingMessageId || x.cancelPending || x.recoveryPending || x.decisionReceipt?.outcome === 'unknown'
+      || UNRESOLVED_OUTCOME_ERRORS.has(x.error ?? '')
+    ));
+    return session.state === 'running' && value.state === 'running' && value.approvals.length === 0
+      && !value.error && !value.cancelPending && !value.recoveryPending
+      && value.decisionReceipt?.outcome !== 'unknown' && !uncertain && !terminalReads.has(session.sessionId);
+  }
   async function read(input: Json): Promise<ChatRead> {
     const session = await owner(input);
     await reconcileSavedEdits(session.workspaceId);
@@ -392,6 +402,9 @@ export function createCodexAdapter(options: CodexOptions) {
       for (const message of pending.messages) { const index = retained.findIndex(x => x.id === message.id); if (index >= 0) retained[index] = message; else retained.push(message); }
       pending.messages = retained.slice(-50);
       while (pending.messages.length && Buffer.byteLength(JSON.stringify(pending)) > 500_000) pending.messages.shift();
+      // An unavailable history page is not a reason to retry the entire history
+      // on every UI tick. Cache only through the same safety gates as poll().
+      if (canCacheRunning(session, pending)) snapshots.set(session.sessionId, { value: structuredClone(pending), at: Date.now() });
       return pending;
     }
     const messages: ChatRead['messages'] = [];
@@ -439,14 +452,7 @@ export function createCodexAdapter(options: CodexOptions) {
     const live = liveMessages.get(session.sessionId);
     // The current conversation's errors still force a fresh read. A historical
     // provider failure elsewhere is not an unresolved workspace operation.
-    const uncertain = Boolean(session.error) || [...sessions.values()].some(x => x.workspaceId === session.workspaceId && (
-      x.uncertainWrite || x.pendingMessageId || x.cancelPending || x.recoveryPending || x.decisionReceipt?.outcome === 'unknown'
-      || UNRESOLVED_OUTCOME_ERRORS.has(x.error ?? '')
-    ));
-    const cachedRunning = cached?.value.state === 'running' && cached.value.approvals.length === 0
-      && !cached.value.error && !cached.value.cancelPending && !cached.value.recoveryPending
-      && cached.value.decisionReceipt?.outcome !== 'unknown';
-    if (cached && cachedRunning && session.state === 'running' && !uncertain && !terminalReads.has(session.sessionId) && Date.now() - cached.at < 3000) {
+    if (cached && canCacheRunning(session, cached.value) && Date.now() - cached.at < 3000) {
       const output = structuredClone(cached.value);
       for (const [id, entry] of live ?? []) {
         if (entry.turnId !== session.turnId) continue;
