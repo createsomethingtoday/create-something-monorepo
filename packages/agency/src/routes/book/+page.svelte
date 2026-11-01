@@ -26,7 +26,7 @@
 		eyebrow: 'Workflow mapping session',
 		title: 'Choose a time to talk through the task.',
 		description:
-			'Bring one problem or improvement and the person responsible. We discuss diagnosis, engineering work, and learning needs. Review any Map summary before choosing a time.',
+			'Bring one problem or improvement and the person responsible. We discuss diagnosis, engineering work, and learning needs. If you already have a workflow map, review it before choosing a time.',
 		secondaryHref: '/map',
 		secondaryLabel: 'Map your workflow',
 		iframeTitle: 'Schedule a CREATE SOMETHING mapping session',
@@ -316,16 +316,16 @@
 <style>
 	.booking-entry {
 		display: grid;
-		grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+		grid-template-columns: minmax(0, 1fr);
 		align-items: center;
-		gap: clamp(2rem, 5vw, 5rem);
+		gap: var(--space-performance-md);
 		max-width: 85rem;
 		margin-inline: auto;
-		padding: clamp(3rem, 6vw, 5.5rem) clamp(1.25rem, 5vw, 5rem) clamp(2.5rem, 5vw, 4rem);
+		padding: clamp(1.5rem, 3vw, 3rem) clamp(1.25rem, 5vw, 5rem) var(--space-performance-lg);
 		color: var(--color-performance-ink);
 	}
 
-	.booking-entry__copy { min-width: 0; }
+	.booking-entry__copy { min-width: 0; max-width: 72ch; }
 	.booking-entry__eyebrow {
 		margin: 0 0 1.25rem;
 		font-family: var(--font-performance-mono, monospace);
@@ -336,10 +336,10 @@
 		color: var(--color-performance-muted);
 	}
 	.booking-entry h1 {
-		max-width: 18ch;
+		max-width: 26ch;
 		margin: 0;
 		font-family: var(--font-performance-interface);
-		font-size: clamp(2.25rem, 4vw, 3.75rem);
+		font-size: clamp(2rem, 3.5vw, 3.25rem);
 		font-weight: var(--font-performance-medium, 500);
 		line-height: 1.06;
 		letter-spacing: -0.045em;
@@ -357,7 +357,7 @@
 		align-items: center;
 		flex-wrap: wrap;
 		gap: 1rem 1.5rem;
-		margin-top: 2rem;
+		margin-top: var(--space-performance-md);
 	}
 	.booking-entry__action p {
 		margin: 0;

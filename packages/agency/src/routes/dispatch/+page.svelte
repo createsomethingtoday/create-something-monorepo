@@ -6,66 +6,50 @@
     SEO
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-  import {
-    marketingCadence,
-    marketingEvidenceRules,
-    marketingEditorialStatus
-  } from '$lib/data/marketingSchedule';
+  import { marketingEditorialStatus } from '$lib/data/marketingSchedule';
 </script>
 
 <SEO
   title="CREATE SOMETHING Dispatch | Work, Evidence, and Field Notes"
-  description="CREATE SOMETHING editorial status, published field notes, and current field reports, with evidence before publication."
+  description="Practical lessons from building AI workflows. Read what worked, what failed, and what your team can use."
   keywords="AI workflow field notes, agent engineering demonstrations, governed automation evidence, CREATE SOMETHING dispatch"
   propertyName="agency"
 />
 
 <div class="dispatch property-performance">
   <PerformanceCampaignOpening
-    eyebrow="Dispatch / Editorial status"
+    eyebrow="Dispatch / Field notes"
     expression="editorial"
-    title="We publish the work after the evidence."
-    lede="We choose changes worth explaining. We show what happened, what we learned, and where the result has limits."
+    title="The work, with evidence."
+    lede="What happened, what we learned, and where each result has limits."
     density="compact"
     proof={[
-      { label: 'Source', value: 'Repository' },
+      { label: 'Work', value: 'Real workflows' },
       { label: 'Email', value: 'Up to twice monthly' },
-      { label: 'Claim', value: 'Evidence-gated' }
+      { label: 'Results', value: 'Evidence and limits' }
     ]}
   >
     {#snippet actions()}
-      <Button href="#schedule">See editorial status</Button>
-      <Button href="/field-reports" variant="secondary">Inspect field reports</Button>
+      <Button href="#featured-report">Read the featured report</Button>
+      <Button href="https://createsomething.io/newsletters" variant="secondary">Read field notes</Button>
     {/snippet}
   </PerformanceCampaignOpening>
 
   <main>
-    <section class="section" aria-labelledby="cadence-title">
-      <p class="eyebrow">Working rhythm</p>
-      <h2 id="cadence-title">One lesson, carried across the right formats.</h2>
+    <section class="section" id="featured-report" aria-labelledby="report-title">
+      <p class="eyebrow">Review operations / May–June 2026</p>
+      <h2 id="report-title">Automation prepared the evidence. Human judgment still decided.</h2>
       <p class="lede">
-        Our planned rhythm depends on evidence review and approval of the exact content and destination.
-        Email is capped at two validated sends per month; these review slots do not promise publication.
+        Evidence collection completed for 49 of 50 selected cases in a template-review test.
+        Automated judgment did not earn promotion, and reviewer time savings remain unmeasured.
       </p>
-      <div class="cadence-grid">
-        {#each marketingCadence as item}
-          <article>
-            <p>{item.day}</p>
-            <h3>{item.channel}</h3>
-            <span>{item.purpose}</span>
-          </article>
-        {/each}
+      <p class="lede">
+        The lesson: test evidence preparation separately from the decision to approve or reject.
+      </p>
+      <div class="reader-actions">
+        <Button href="/field-reports/template-review">Read the result and its limits</Button>
+        <Button href="/field-reports" variant="secondary">Browse field reports</Button>
       </div>
-    </section>
-
-    <section class="section schedule" id="schedule" aria-labelledby="schedule-title">
-      <p class="eyebrow">Current editorial status</p>
-      <h2 id="schedule-title">{marketingEditorialStatus.title}</h2>
-      <p class="lede">{marketingEditorialStatus.detail}</p>
-      <p class="lede">
-        Every new selection passes evidence review before drafting and approval. Publication and email
-        delivery are confirmed separately, after they happen.
-      </p>
     </section>
 
     <section class="section" aria-labelledby="reader-title">
@@ -73,47 +57,45 @@
       <h2 id="reader-title">Choose your next step.</h2>
       <div class="reader-grid">
         <article>
-          <h3>Substack publication and .io archive</h3>
+          <h3>Field notes by email</h3>
           <p>
-            Read CREATE SOMETHING on Substack, including “Two Notion Custom Blocks, Two Data Contracts.”
-            The .io field-note archive remains available with its existing email signup.
-            These are separate destinations; subscribing on one does not subscribe you on the other.
+            Sign up on CREATE SOMETHING .io for future field notes, or read a published edition.
+            We send field notes at most twice a month.
           </p>
           <div class="reader-actions">
-            <Button href="https://createsomethingltd.substack.com/p/two-notion-custom-blocks-two-data">Read the Substack edition</Button>
-            <Button href="https://createsomething.io/newsletters" variant="secondary">Browse the .io archive</Button>
-            <Button href="https://createsomething.io/newsletters#subscribe" variant="secondary"
-              >Get .io field notes by email</Button
-            >
+            <Button href="https://createsomething.io/newsletters#subscribe">Get field notes by email</Button>
+            <a class="archive-link" href="https://createsomething.io/newsletters">Read published field notes</a>
           </div>
         </article>
         <article>
-          <h3>Evidence for your workflow</h3>
+          <h3>Put a lesson to work</h3>
           <p>
-            Explore current field reports on CREATE SOMETHING .agency. If a lesson connects to your
-            team’s work, map the handoff, tools, and decisions with us.
+            If a report connects to your team’s work, bring the task and tools you use.
+            We’ll map the handoff and identify which decisions need a person.
           </p>
           <div class="reader-actions">
             <Button href="/field-reports">Explore current field reports</Button>
-            <Button href={agencyCoreMessaging.selfMapHref} variant="secondary"
-              >{agencyCoreMessaging.selfMapLabel}</Button
-            >
           </div>
         </article>
       </div>
     </section>
 
     <section class="section method" aria-labelledby="method-title">
-      <p class="eyebrow">Publication boundary</p>
-      <h2 id="method-title">A commit is the start of the story.</h2>
-      <div class="method-grid">
-        {#each marketingEvidenceRules as rule, index}
-          <article>
-            <span>{String(index + 1).padStart(2, '0')}</span>
-            <p>{rule}</p>
-          </article>
-        {/each}
-      </div>
+      <p class="eyebrow">How we report the work</p>
+      <h2 id="method-title">The result, with enough context to judge it.</h2>
+      <p class="lede">
+        Each report names what was tested, what the evidence supports, and what remains unknown.
+        A test result does not establish production performance. Client-private records stay private.
+      </p>
+      <details id="schedule">
+        <summary>Editorial status and email frequency</summary>
+        <p>{marketingEditorialStatus.title}</p>
+        <p>
+          We publish after reviewing the evidence and approving the content.
+          Email is capped at two validated sends per month. A planned review date does not confirm
+          publication or email delivery.
+        </p>
+      </details>
     </section>
   </main>
 
@@ -171,35 +153,10 @@
     font-size: clamp(1rem, 1.6vw, 1.28rem);
     line-height: 1.55;
   }
-  .cadence-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 1px;
-    margin-top: 3rem;
-    background: var(--color-performance-line, rgba(17, 17, 17, 0.16));
-    border: 1px solid var(--color-performance-line, rgba(17, 17, 17, 0.16));
-  }
-  .cadence-grid article {
-    min-height: 190px;
-    padding: 1.25rem;
-    background: var(--color-performance-panel, #f3f3f0);
-  }
-  .cadence-grid article > p {
-    margin: 0 0 2rem;
-    color: var(--color-performance-muted, #67675f);
-    font: 0.68rem var(--font-performance-mono, monospace);
-    text-transform: uppercase;
-  }
   h3 {
     margin: 0;
     font-size: 1.25rem;
     line-height: 1.15;
-  }
-  .cadence-grid span {
-    display: block;
-    margin-top: 0.75rem;
-    color: var(--color-performance-muted, #55554f);
-    line-height: 1.45;
   }
   .reader-grid {
     display: grid;
@@ -208,50 +165,58 @@
     margin-top: 3rem;
   }
   .reader-grid article {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
     border-top: 2px solid var(--color-performance-ink, #111);
     padding-top: 1rem;
   }
+  .reader-grid h3 {
+    line-height: 1.3;
+  }
   .reader-grid p {
+    margin: 1rem 0 0;
+    max-width: 52ch;
     line-height: 1.55;
+  }
+  .reader-grid .reader-actions {
+    margin-top: auto;
+    padding-top: 1.5rem;
+  }
+  .archive-link {
+    color: var(--color-performance-muted);
+    text-underline-offset: 0.2em;
+  }
+  .archive-link:hover {
+    color: var(--color-performance-ink);
+  }
+  .archive-link:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 4px;
   }
   .reader-actions {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: 0.75rem;
     margin-top: 1.5rem;
   }
-  .method-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 1rem;
-    margin-top: 3rem;
+  details {
+    margin-top: 2rem;
+    max-width: 700px;
+    line-height: 1.55;
   }
-  .method-grid article {
-    border-top: 2px solid var(--color-performance-ink, #111);
-    padding-top: 1rem;
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+    padding: 1rem 0;
   }
-  .method-grid span {
-    font: 0.7rem var(--font-performance-mono, monospace);
-  }
-  .method-grid p {
-    line-height: 1.5;
-  }
-  @media (max-width: 900px) {
-    .cadence-grid,
-    .method-grid {
-      grid-template-columns: 1fr 1fr;
-    }
+  summary:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 4px;
   }
   @media (max-width: 560px) {
-    main {
-      padding: 0 1rem;
-    }
-    .cadence-grid,
-    .method-grid {
-      grid-template-columns: 1fr;
-    }
-    .reader-grid {
-      grid-template-columns: 1fr;
-    }
+    main { padding: 0 1rem; }
+    .reader-grid { grid-template-columns: 1fr; }
   }
 </style>

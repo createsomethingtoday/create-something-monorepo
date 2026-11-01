@@ -1,4 +1,5 @@
 <script lang="ts">
+  import WorkflowWorkedExample from '$lib/components/WorkflowWorkedExample.svelte';
   import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import { Button, SEO } from '@create-something/canon';
   import type { PageData } from './$types';
@@ -75,6 +76,7 @@
     <div class="section-label">02 / Read the steps</div>
     <div>
       <h2 id="path-heading">Follow these steps</h2>
+      <WorkflowWorkedExample slug={guide.slug} />
       <ol class="step-list">
         {#each guide.steps as step, index}
           <li>

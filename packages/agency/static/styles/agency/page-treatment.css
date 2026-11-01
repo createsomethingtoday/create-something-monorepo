@@ -76,11 +76,11 @@ body.design-preview .about-letter .letter-category{color:var(--color-performance
  body.design-preview .performance-campaign-opening.agency-preview-hero .performance-campaign-opening__proof{grid-column:1!important;grid-row:4!important}
 }
 body.design-preview .clear-page-section--hero.agency-preview-hero{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:var(--space-performance-lg);align-items:center;padding-inline:6vw}
-body.design-preview .clear-page-section--hero :is(.clear-page-section__inner,.clear-page-section__layout){display:contents}
-body.design-preview .clear-page-section--hero .clear-page-section__copy{grid-column:1;grid-row:1;min-width:0}
+body.design-preview .clear-page-section--hero.agency-preview-hero :is(.clear-page-section__inner,.clear-page-section__layout){display:contents}
+body.design-preview .clear-page-section--hero.agency-preview-hero .clear-page-section__copy{grid-column:1;grid-row:1;min-width:0}
 body.design-preview .clear-page-section--hero>.agency-preview-media{grid-column:2;grid-row:1;margin:0}
-body.design-preview .clear-page-section--hero .clear-page-section__aside{grid-column:1/-1;grid-row:2;min-width:0}
-@media(max-width:1000px){body.design-preview .clear-page-section--hero.agency-preview-hero{grid-template-columns:minmax(0,1fr)}body.design-preview .clear-page-section--hero>.agency-preview-media{grid-column:1;grid-row:2}body.design-preview .clear-page-section--hero .clear-page-section__aside{grid-row:3}}
+body.design-preview .clear-page-section--hero.agency-preview-hero .clear-page-section__aside{grid-column:1/-1;grid-row:2;min-width:0}
+@media(max-width:1000px){body.design-preview .clear-page-section--hero.agency-preview-hero{grid-template-columns:minmax(0,1fr)}body.design-preview .clear-page-section--hero>.agency-preview-media{grid-column:1;grid-row:2}body.design-preview .clear-page-section--hero.agency-preview-hero .clear-page-section__aside{grid-row:3}}
 /* Replace prior decorative opening photography without suppressing real artifacts or proof. */
 body.design-preview .performance-campaign-opening:has(>.agency-preview-media[data-asset^='original-stories/'])>.performance-campaign-opening__media{display:none!important}
 body.design-preview .methodology-page>.hero.agency-preview-hero{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:var(--space-performance-lg);align-items:center;padding:var(--space-performance-xl) 6vw;min-height:0;height:auto}
@@ -140,3 +140,33 @@ body.design-preview .registry-arc__hero.agency-preview-hero h1{overflow-wrap:any
 /* Technical catalog titles share the stage with imagery, rather than using full-width campaign scale. */
 body.design-preview .registry-arc__hero.agency-preview-hero h1{font-size:clamp(2.5rem,4.3vw,4.5rem)!important}
 @media(max-width:1000px){body.design-preview .registry-arc__hero.agency-preview-hero h1{font-size:clamp(2.5rem,7vw,4.5rem)!important}}
+
+/* Page-family composition: the subject sets the space; working tasks keep priority. */
+body.design-preview .agency-preview-media figcaption{font-size:11px!important;line-height:1.6!important;overflow-wrap:anywhere}
+body.design-preview .agency-preview-hero[data-agency-composition='wide']{grid-template-columns:minmax(0,1fr)!important}
+body.design-preview .performance-campaign-opening[data-agency-composition='wide']>.performance-campaign-opening__content{grid-column:1!important;grid-row:1!important;max-width:70rem!important;justify-self:start}
+body.design-preview .performance-campaign-opening[data-agency-composition='wide']>.agency-preview-media{grid-column:1!important;grid-row:2!important;width:100%;margin-top:var(--space-performance-md)!important}
+body.design-preview .performance-campaign-opening[data-agency-composition='wide']>.performance-campaign-opening__artifact{grid-row:3!important}
+body.design-preview .performance-campaign-opening[data-agency-composition='wide']>.agency-preview-media img{max-height:42rem!important}
+@media(min-width:1001px){
+ body.design-preview .performance-campaign-opening[data-agency-composition='inspection']{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)!important}
+ body.design-preview .performance-campaign-opening[data-agency-composition='inspection']>.performance-campaign-opening__content{grid-column:2!important;grid-row:1!important}
+ body.design-preview .performance-campaign-opening[data-agency-composition='inspection']>.agency-preview-media{grid-column:1!important;grid-row:1!important}
+ body.design-preview .clear-page-section--hero[data-agency-composition='inspection']{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)!important}
+ body.design-preview .clear-page-section--hero[data-agency-composition='inspection'] .clear-page-section__copy{grid-column:2!important;grid-row:1!important}
+ body.design-preview .clear-page-section--hero[data-agency-composition='inspection']>.agency-preview-media{grid-column:1!important;grid-row:1!important}
+ body.design-preview .agency-preview-hero[data-agency-composition='proof']>.agency-preview-media{max-width:32rem;justify-self:end;align-self:center}
+ body.design-preview .guide-opening[data-agency-composition='study']>.agency-preview-media{max-width:40rem;justify-self:end}
+}
+@media(max-width:1000px){
+ body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__content,
+ body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__content>header{display:contents!important}
+ body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__content>header>.performance-campaign-opening__identity{grid-column:1;grid-row:1}
+ body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__content>header>h1{grid-column:1;grid-row:2}
+ body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__content>header>.performance-campaign-opening__lede{grid-column:1;grid-row:3}
+ body.design-preview .performance-campaign-opening.agency-preview-hero>.agency-preview-media{grid-column:1!important;grid-row:4!important;margin-top:0!important}
+ body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__content>header>.performance-campaign-opening__actions{grid-column:1;grid-row:5;margin-top:0!important}
+ body.design-preview .performance-campaign-opening.agency-preview-hero .performance-campaign-opening__proof{grid-column:1!important;grid-row:6!important;margin-top:0!important}
+ body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__artifact{grid-column:1!important;grid-row:7!important;margin-top:0!important}
+ body.design-preview .agency-preview-hero .agency-preview-media[data-frame='whole'] img{max-height:none!important}
+}

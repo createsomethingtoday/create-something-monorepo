@@ -106,11 +106,12 @@ test('the homepage retains a readable listing independent of scene motion', () =
   assert.match(salesHome, /import content from '\$lib\/content\/agency-home\.html\?raw'/);
   assert.match(salesHome, /\{@html content\}/);
   assert.match(content, /<h1 id="hero-title">Put AI to work\./);
-  assert.match(content, /Products, education and hands-on support\./);
+  assert.match(content, /We diagnose problems in your tools and workflows, build agreed improvements, and help your team use what we deliver\./);
   assert.match(content, /id="cc-focused-title">Focused<\/h3>[\s\S]*?\$900<span>\/month/);
   assert.match(content, /id="cc-team-plan-title">Team<\/h3>[\s\S]*?\$2,500<span>\/month/);
-  assert.match(content, /class="trace-static"/);
-  assert.match(content, /An illustrative workflow trace, not live activity/);
+  assert.match(content, /id="journey-image"[^>]*src="\/images\/agency-sales\/team\.webp"/);
+  assert.match(content, /Conceptual scenes \/ select a step/);
+  assert.doesNotMatch(content, /<canvas|autoplay/);
   assert.match(salesHome, /<details id="work-library" class="work-library" bind:open=\{libraryOpen\}>/);
   assert.match(salesHome, /<summary>Explore the work library/);
   assert.match(salesHome, /\{#if libraryOpen\}<BuiltWork sectionId="engineering-work" \/><FilmCollection \/><SelectedClientWork \/>/);
@@ -135,7 +136,7 @@ test('the Agency opening exposes proof, approval and ownership alongside the app
   assert.match(content, /href="\/products#cato-tour"/);
   assert.match(content, /href="\/films\/cato-tour\/overview\.jpg"/);
   // The official Select Partner badge is authorized; retain its qualification link and accessible identity.
-  assert.match(content, /href="\/stack#openai-qualifications"><img src="\/images\/agency-sales\/OpenAI_Select_Partner_Badge\.png"[^>]*alt="OpenAI Select Partner"/);
+  assert.match(content, /href="\/stack#openai-qualifications"[^>]*><img src="\/images\/agency-sales\/OpenAI_Select_Partner_Badge\.png"[^>]*alt="OpenAI Select Partner"/);
   assert.match(content, /href="https:\/\/github\.com\/openai\/codex-security\/commit\/[a-f0-9]{40}"/);
   assert.match(content, /Original conceptual illustration \/ people approve the work/);
   assert.match(content, /not delivered hardware/);
@@ -241,7 +242,8 @@ test('Map leads with its Draw workbench while Template Review retains its campai
     'static/images/performance-lab/playbook-template-review-human-gate-mobile.webp'
   );
 
-  assert.match(map, /<iframe src="https:\/\/draw\.createsomething\.agency\/\?embed=agency"/);
+  assert.match(map, /\{#if embeddedCanvasOpen\}[\s\S]*?<iframe[^>]*src="https:\/\/draw\.createsomething\.agency\/\?embed=agency"/);
+  assert.match(map, /Open full canvas/);
   assert.doesNotMatch(map, /playbookMapSectionMedia|playbookHeroMedia/);
   assert.match(templateReview, /media=\{playbookHeroMedia\.templateReview\}/);
   assert.match(templateReview, /mediaMobilePlacement="background"/);

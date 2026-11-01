@@ -8,9 +8,9 @@
 
   const questions = [
     {
-      question: 'What does the membership cover?',
+      question: 'How can we use remote sessions?',
       answer:
-        'A workstream is one agreed area of work within membership, such as improving a product or connecting a workflow. Individual tasks and tools can belong to the same workstream. We work between check-ins, show what changed and agree the next step. Focused covers one workstream at a time and one agreed milestone each billing month, with two 30-minute check-ins and two 60-minute remote work sessions available when useful. Team covers up to two workstreams and two milestones, with two check-ins and four remote sessions available. Remote sessions can help with onboarding, pairing or troubleshooting. Both plans include one feedback and revision round per milestone, learning resources and Slack support. We agree on the work, response times and acceptance checks before payment. Neither plan includes unlimited development or production incident response.'
+        'Remote sessions can help with onboarding, pairing or troubleshooting within your plan’s allowance. We work between check-ins, show what changed and agree the next step. Neither plan includes unlimited development or production incident response.'
     },
     {
       question: 'Is this the same as managed Control?',
@@ -61,8 +61,10 @@
       <p class="eyebrow">AI-native technical support membership</p>
       <h2 id="membership-title">Choose the support your work needs.</h2>
       <p>
-        Two plans for agreed improvements, with project context carried from one task to the next.
-        A workstream is one agreed area of work, such as improving a product or connecting a workflow. It can involve several tasks or tools. We work between check-ins, show what changed and agree the next step. Choose by the number of workstreams and milestones your team needs.
+        Choose Focused for one agreed workstream or Team for up to two. Each milestone includes an acceptance check, verification and a handoff.
+      </p>
+      <p>
+        A workstream is one agreed area of work, such as improving a product or connecting a workflow. It can involve several tasks or tools.
       </p>
       <p><strong>Micah Johnson currently delivers the service.</strong> <a href="/about">Meet Micah →</a></p>
       <p><strong>Focused and managed Control cover different work.</strong> Focused is {PUBLIC_PRICING.membership.focused.label} for agreed improvements, learning and operator support. <a href="/control">Managed Control</a> starts at $900/month for agreed live operations after launch, under a separate agreement. Production incident response is not included in membership.</p>
@@ -95,8 +97,13 @@
         <Button href={agencyCoreMessaging.teamMembershipInquiryHref}>Discuss Team</Button>
       </article>
     </div>
-    <p class="availability">A milestone is one agreed workflow map or one scoped improvement to an existing workflow. It includes an acceptance check, verification and a handoff you keep. Remote sessions are an option for onboarding, pairing or troubleshooting within the plan allowance. We agree on scope, session times, response times and any usage budget before payment. {PUBLIC_PRICING.membership.terms}. Larger Builds, managed Control and production incident response need separate agreements.</p>
+    <p class="availability">A milestone is one agreed workflow map or one scoped improvement to an existing workflow. Remote sessions are an option for onboarding, pairing or troubleshooting within the plan allowance. We agree on scope, session times, response times and any usage budget before payment. {PUBLIC_PRICING.membership.terms}. Larger Builds, managed Control and production incident response need separate agreements.</p>
     <p class="availability">Build days are Monday and Wednesday. Meetings are scheduled on Tuesday and Thursday, within your plan’s allowance and the times agreed before payment.</p>
+    <details class="membership-agreement-details">
+      <summary>Agreement and handoff details</summary>
+      <p>Before payment, we agree on the milestone, selected tool access, human approval boundary, acceptance check, session and response times, and any usage budget.</p>
+      <p>Your handoff records what changed, actual check results, blockers and the next step. We explain how to use the result. Resource access and Slack setup are confirmed during onboarding.</p>
+    </details>
     {#if compact}
       <p class="next-steps"><a href={agencyCoreMessaging.workflowMappingSessionHref}>Book a mapping session →</a></p>
     {/if}
@@ -127,6 +134,10 @@
 </section>
 
 <style>
+  .membership-agreement-details { margin-top: 1.5rem; max-width: 62ch; border-top: 1px solid var(--color-performance-line-strong); }
+  .membership-agreement-details summary { min-height: 44px; padding: .75rem 0; cursor: pointer; font-size: .875rem; }
+  .membership-agreement-details summary:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+  .membership-agreement-details p { font-size: .875rem; line-height: 1.7; }
   .membership.compact { --membership-gutter: 7vw; }
   .next-steps { margin-top: var(--space-performance-md); }
   .ownership-summary { max-width: none; padding: 0 var(--membership-gutter, max(1.25rem, calc((100% - 80rem) / 2))) var(--space-performance-lg); }

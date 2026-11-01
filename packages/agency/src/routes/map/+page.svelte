@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ArrowUpRight, PencilLine } from 'lucide-svelte';
+  import { PencilLine } from 'lucide-svelte';
   import { IsometricIllustration, Button, PerformanceConversionHandoff, PerformancePageSection, SEO } from '@create-something/canon';
   import AgencyMapHero from '$lib/components/AgencyMapHero.svelte';
   import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
@@ -9,6 +9,7 @@
 
   const initialIntegrationName = $derived($page.url.searchParams.get('source') === 'integration-catalog' ? $page.url.searchParams.get('integration_name') : null);
   const drawHref = 'https://draw.createsomething.agency/';
+  let embeddedCanvasOpen = $state(false);
   const mappingSteps = [
     { kind: 'map' as const, label: '01 / Sketch', title: 'Start with the work.', detail: 'Name the task, the people involved, and the result you need.' },
     { kind: 'handoff' as const, label: '02 / Connect', title: 'Make the handoffs visible.', detail: 'Connect the steps and tools. Mark where information moves or work gets stuck.' },
@@ -38,7 +39,23 @@
       {#if initialIntegrationName}
         <p class="mapping-boundary">Mapping context: {initialIntegrationName}. Add its role and handoffs to your drawing. Account access is agreed separately.</p>
       {/if}
-      <p class="mapping-boundary">{PUBLIC_PRICING.map.publicStarterLabel} · Use Draw below to explore the workflow. The separate account workspace has pricing at launch; opening it does not purchase a subscription.</p>
+      <p class="mapping-boundary">{PUBLIC_PRICING.map.publicStarterLabel} · Open Draw with room to work, or choose the embedded canvas below. The separate account workspace has pricing at launch; opening it does not purchase a subscription.</p>
+
+      <div class="draw-workbench">
+        <div class="draw-toolbar">
+          <span class="draw-label"><PencilLine size={18} aria-hidden="true" /> CREATE SOMETHING / DRAW</span>
+          <span class="draw-label">Browser-local draft</span>
+        </div>
+        <div class="draw-entry">
+          <div><h3>Give the map room to work.</h3><p>Use the full canvas on a phone. Keep the task, tools and approval boundary together.</p></div>
+          <div class="draw-entry-actions"><a class="draw-open" href={drawHref} target="_blank" rel="noreferrer">Open full canvas ↗</a><button type="button" aria-expanded={embeddedCanvasOpen} aria-controls="embedded-draw" onclick={() => { embeddedCanvasOpen = !embeddedCanvasOpen; }}>{embeddedCanvasOpen ? 'Close the embedded canvas' : 'Use the embedded canvas'}</button></div>
+        </div>
+        {#if embeddedCanvasOpen}
+          <iframe id="embedded-draw" src="https://draw.createsomething.agency/?embed=agency" title="Draw — CREATE SOMETHING workflow mapping canvas" allow="clipboard-write"></iframe>
+        {/if}
+        <p class="draw-note">Draw saves drafts in this browser. Export a copy to keep it; publishing a view-only link is a separate action in Draw. If the embedded canvas cannot load or save, use <a href={drawHref} target="_blank" rel="noreferrer">Draw in its own tab</a>.</p>
+      </div>
+      <details class="mapping-guide"><summary>Three steps to map a workflow</summary>
       <ol class="mapping-steps" aria-label="How we map a workflow">
         {#each mappingSteps as step}
           <li>
@@ -48,14 +65,7 @@
           </li>
         {/each}
       </ol>
-      <div class="draw-workbench">
-        <div class="draw-toolbar">
-          <span class="draw-label"><PencilLine size={18} aria-hidden="true" /> CREATE SOMETHING / DRAW</span>
-          <a href={drawHref} target="_blank" rel="noreferrer">Open full canvas <ArrowUpRight size={18} aria-hidden="true" /></a>
-        </div>
-        <iframe src="https://draw.createsomething.agency/?embed=agency" title="Draw — CREATE SOMETHING workflow mapping canvas" loading="lazy" allow="clipboard-write"></iframe>
-        <p class="draw-note">Draw saves drafts in this browser. Export a copy to keep it; publishing a view-only link is a separate action in Draw. If the embedded canvas cannot load or save, use <a href={drawHref} target="_blank" rel="noreferrer">Draw in its own tab</a>.</p>
-      </div>
+      </details>
       <p class="mapping-boundary">Start with workflow context: name the systems, workflow owner, and approvals. Bring the drawing as booking context when you <a href="/book">book a mapping session</a>. We use it to diagnose the problem and agree on the next improvement. Keep credentials and private customer records out of a public mapping exercise.</p>
     {/snippet}
   </PerformancePageSection>
@@ -105,6 +115,9 @@
 
   @media (max-width: 720px) { .map-page :global(.performance-conversion-handoff) { grid-template-columns: 1fr; gap: var(--space-performance-lg); } }
 
+  .mapping-guide { margin-block: var(--space-performance-md); }
+  .mapping-guide summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
+  .mapping-guide summary:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 4px; }
   .mapping-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); list-style: none; padding: 0; margin: 0 0 var(--space-performance-lg); border-block: 1px solid var(--color-performance-line); }
   .mapping-steps li { padding: var(--space-performance-md); }
   .mapping-steps li + li { border-left: 1px solid var(--color-performance-line); }
@@ -112,15 +125,22 @@
   .mapping-steps h3 { margin: var(--space-performance-md) 0 var(--space-performance-sm); font-size: var(--text-performance-body); }
   .mapping-steps p { margin: 0; line-height: 1.6; }
   .draw-workbench { border: 1px solid var(--color-performance-line); background: var(--color-performance-paper); }
+  .draw-entry { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-performance-lg); align-items: center; padding: var(--space-performance-lg); color: var(--color-performance-ink); }
+  .draw-entry h3 { margin: 0 0 var(--space-performance-sm); font-size: var(--text-performance-body); }
+  .draw-entry p { max-width: 42ch; margin: 0; line-height: 1.6; }
+  .draw-entry-actions { display: grid; gap: var(--space-performance-sm); }
+  .draw-open { display: flex; align-items: center; justify-content: center; min-height: 44px; padding: var(--space-performance-sm); background: var(--color-performance-ink); color: var(--color-performance-paper); border: 1px solid var(--color-performance-ink); text-decoration: none; }
+  .draw-entry-actions button { min-height: 44px; padding: var(--space-performance-sm); background: transparent; color: inherit; border: 1px solid var(--color-performance-line); font: inherit; cursor: pointer; }
+  .draw-entry-actions button:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
   .draw-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-performance-sm); padding: var(--space-performance-sm) var(--space-performance-md); color: var(--color-performance-ink); border-bottom: 1px solid var(--color-performance-line); }
   .draw-label { display: inline-flex; align-items: center; gap: var(--space-performance-sm); font: var(--text-performance-caption) var(--font-performance-mono); }
-  .draw-toolbar a { display: inline-flex; align-items: center; gap: var(--space-performance-sm); min-height: 44px; }
   .draw-workbench iframe { display: block; width: 100%; height: clamp(600px, 78vh, 900px); border: 0; background: var(--color-performance-ink); }
   .draw-note { margin: 0; padding: var(--space-performance-md); font-size: var(--text-performance-caption); line-height: 1.6; color: var(--color-performance-ink); border-top: 1px solid var(--color-performance-line); }
   .mapping-boundary { max-width: 70ch; margin: var(--space-performance-md) 0; font-size: var(--text-performance-caption); line-height: 1.6; }
   a { color: inherit; text-underline-offset: .25em; }
   a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
   @media (max-width: 760px) {
+    .draw-entry { grid-template-columns: 1fr; padding: var(--space-performance-md); }
     .mapping-steps { grid-template-columns: 1fr; }
     .mapping-steps li + li { border-left: 0; border-top: 1px solid var(--color-performance-line); }
     .draw-workbench iframe { height: 680px; }

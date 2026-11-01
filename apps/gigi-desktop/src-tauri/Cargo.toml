@@ -1,6 +1,6 @@
 [package]
 name = "gigi_desktop"
-version = "0.2.14"
+version = "0.2.18"
 edition = "2021"
 default-run = "gigi"
 
@@ -34,3 +34,5 @@ chrono = "0.4.45"
 chrono-tz = "0.10.4"
 image = { version = "=0.25.10", default-features = false, features = ["png", "jpeg"] }
 toml = "=0.8.2"
+
+libloading = "0.8"

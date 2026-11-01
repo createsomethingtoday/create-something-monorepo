@@ -73,9 +73,9 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'migrated',
     contract(
       'landing',
-      'Decide whether the $900/month agent engineering membership fits one active workflow.',
-      'A source-backed work index demonstrates engineering breadth; membership terms distinguish guidance from custom builds, runtime costs and production responsibility.',
-      'Discuss membership fit'
+      'Decide whether AI-native technical support can help one task and the team that uses it.',
+      'A recorded client website walkthrough demonstrates inspectable work; labeled conceptual scenes explain learning, connection and reviewed operation, while explicit membership capacity preserves cost and responsibility boundaries.',
+      'Talk through the workflow'
     )
   ),
   group(
