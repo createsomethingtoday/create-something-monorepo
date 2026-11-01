@@ -13,7 +13,7 @@ const DSL = path.join(REPO_ROOT, 'config', 'dify-agents', 'template-review-hub.d
 
 function registeredTools() {
   const source = readFileSync(TOOLS_SRC, 'utf8');
-  return new Set([...source.matchAll(/server\.tool\(\s*'(template_review_[a-z_]+)'/g)].map((match) => match[1]));
+  return new Set([...source.matchAll(/server\.(?:tool|registerTool)\(\s*'(template_review_[a-z_]+)'/g)].map((match) => match[1]));
 }
 
 function unregisteredToolNames(prompt, registered) {
