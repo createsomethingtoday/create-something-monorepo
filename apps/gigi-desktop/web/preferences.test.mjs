@@ -4,7 +4,7 @@ import { defaults, normalizePreferences, readPreferences, writePreferences, impo
 
 function memoryStorage() {
   const values = new Map();
-  return { values, getItem: (key) => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) };
+  return { values, getItem: (key) => values.get(key) ?? null, setItem: (key, value) => values.set(key, value), removeItem: (key) => values.delete(key) };
 }
 
 test('a complete visual configuration survives export, import and workspace restart', () => {
@@ -62,4 +62,52 @@ test('applying preferences uses only validated theme and density attributes', ()
   applyPreferences({ theme: '<script>', density: 'tiny' }, document);
   assert.deepEqual(document.documentElement.dataset, { theme: 'studio', density: 'comfortable', collectionView: 'list', chatWidth: 'standard', chatTextSize: 'standard', chatDensity: 'comfortable' });
   assert.doesNotThrow(() => applyPreferences(defaults, {}));
+});
+
+// Frozen reader from the 0.2.18 rollback source, rather than a permissive mock.
+const rollback = await import('../scripts/fixtures/preferences-0218.mjs');
+test('saving chat extensions keeps the rollback reader compatible, including re-upgrade', () => {
+  const storage = memoryStorage();
+  const legacy = { ...rollback.defaults, theme: 'midnight', density: 'compact', startPage: 'tasks', collectionView: 'cards', scheduleView: 'all' };
+  rollback.writePreferences(storage, 'band', legacy);
+  assert.deepEqual(readPreferences(storage, 'band'), { ...defaults, ...legacy });
+  const extended = { ...legacy, chatWidth: 'wide', chatTextSize: 'larger', chatDensity: 'compact' };
+  writePreferences(storage, 'band', extended);
+  assert.deepEqual(rollback.readPreferences(storage, 'band'), legacy);
+  assert.deepEqual(readPreferences(storage, 'band'), extended);
+  rollback.writePreferences(storage, 'band', { ...legacy, theme: 'paper' });
+  assert.deepEqual(readPreferences(storage, 'band'), { ...extended, theme: 'paper' });
+  assert.deepEqual(readPreferences(storage, 'solo'), defaults);
+});
+
+test('chat extension corruption cannot erase core preferences or inject core fields', () => {
+  const storage = memoryStorage();
+  const value = { ...defaults, theme: 'paper', startPage: 'tasks' };
+  writePreferences(storage, 'band', value);
+  for (const text of ['broken', 'null', '{"version":2}', '{"chatWidth":"huge"}', '{"theme":"midnight"}', '{"token":"secret"}']) {
+    storage.setItem('gigi:chat-preferences:v1:band', text);
+    assert.deepEqual(readPreferences(storage, 'band'), value);
+  }
+});
+test('combined candidate storage migrates only when explicitly saved and reset keeps rollback compatibility', () => {
+  const storage = memoryStorage();
+  const value = { ...defaults, theme: 'midnight', chatWidth: 'wide' };
+  storage.setItem('gigi:preferences:v1:band', exportPreferences(value));
+  assert.deepEqual(readPreferences(storage, 'band'), value);
+  assert.equal(storage.values.size, 1, 'read must not rewrite local storage');
+  writePreferences(storage, 'band', readPreferences(storage, 'band'));
+  assert.equal(rollback.readPreferences(storage, 'band').theme, 'midnight');
+  writePreferences(storage, 'band', defaults);
+  assert.deepEqual(readPreferences(storage, 'band'), defaults);
+  assert.deepEqual(rollback.readPreferences(storage, 'band'), rollback.defaults);
+});
+test('failed extension writes restore the previous core and chat entries', () => {
+  const storage = memoryStorage();
+  const value = { ...defaults, theme: 'paper', chatWidth: 'wide' };
+  writePreferences(storage, 'band', value);
+  const before = [...storage.values]; const set = storage.setItem;
+  storage.setItem = (key, text) => { if (key.includes('chat-preferences') && text.includes('larger')) throw Error('quota'); set(key, text); };
+  assert.throws(() => writePreferences(storage, 'band', { ...value, theme: 'midnight', chatTextSize: 'larger' }), /save/i);
+  assert.deepEqual([...storage.values], before);
+  assert.deepEqual(readPreferences(storage, 'band'), value);
 });

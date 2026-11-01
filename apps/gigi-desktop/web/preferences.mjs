@@ -28,6 +28,8 @@ const plain = (value) => value !== null && typeof value === 'object'
 const valid = (key, value) => key === 'version' ? value === 1
   : choices[key]?.includes(value) === true;
 const storageKey = (workspaceId) => `gigi:preferences:v1:${workspaceId}`;
+const chatStorageKey = (workspaceId) => `gigi:chat-preferences:v1:${workspaceId}`;
+const chatKeys = ['chatWidth', 'chatTextSize', 'chatDensity'];
 const hasWorkspace = (workspaceId) => typeof workspaceId === 'string' && workspaceId.trim().length > 0;
 
 export function normalizePreferences(value) {
@@ -62,15 +64,40 @@ export function readPreferences(storage, workspaceId) {
   if (!hasWorkspace(workspaceId)) return { ...defaults };
   try {
     const text = storage?.getItem(storageKey(workspaceId));
-    return text == null ? { ...defaults } : importPreferences(text);
+    const base = text == null ? { ...defaults } : importPreferences(text);
+    // Core v1 remains readable by the advertised rollback. Read old combined
+    // candidate payloads too; the next explicit save separates their extension.
+    try {
+      const extension = storage?.getItem(chatStorageKey(workspaceId));
+      if (extension != null) {
+        const chat = importPreferences(extension);
+        const value = JSON.parse(extension);
+        if (Object.keys(value).some(key => key !== 'version' && !chatKeys.includes(key))) return base;
+        for (const key of chatKeys) base[key] = chat[key];
+      }
+    } catch { /* A damaged chat extension cannot discard core choices. */ }
+    return base;
   } catch { return { ...defaults }; }
 }
 
 export function writePreferences(storage, workspaceId, value) {
   if (!hasWorkspace(workspaceId)) throw new Error('A workspace is required to save preferences.');
   const normalized = normalizePreferences(value);
-  try { storage.setItem(storageKey(workspaceId), exportPreferences(normalized)); }
-  catch { throw new Error('Could not save preferences on this device. Check local storage and try again.'); }
+  const core = Object.fromEntries(Object.entries(normalized).filter(([key]) => !chatKeys.includes(key)));
+  const chat = { version: 1, ...Object.fromEntries(chatKeys.map(key => [key, normalized[key]])) };
+  const entries = [[storageKey(workspaceId), JSON.stringify(core)], [chatStorageKey(workspaceId), JSON.stringify(chat)]];
+  const previous = [];
+  try {
+    for (const [key] of entries) previous.push([key, storage.getItem(key)]);
+    for (const [key, text] of entries) storage.setItem(key, text);
+  } catch {
+    // Restore both prior entries if either write fails; do not report a partial
+    // save as successful. Storage can itself be unavailable during recovery.
+    for (const [key, text] of previous) {
+      try { if (text == null) storage.removeItem(key); else storage.setItem(key, text); } catch { /* best effort */ }
+    }
+    throw new Error('Could not save preferences on this device. Check local storage and try again.');
+  }
   return normalized;
 }
 

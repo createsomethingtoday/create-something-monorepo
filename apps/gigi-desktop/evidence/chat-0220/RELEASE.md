@@ -1,5 +1,7 @@
 # GiGi 0.2.20 qualification — CRE-2308
 
+Current status: private R4 qualification below is superseded by the rollback-preference correction. See rollback-review.md; a new exact artifact is required before promotion.
+
 Functional correctness: PASSED within local/synthetic/native-provider scope. Final integrations: 314 passed, one optional CTX skip; typecheck passed. Exact signed package: 329 desktop tests, zero skips. All five GitHub findings were reproduced and corrected. Coverage includes pre-delta/caught-up history cadence, stale approval/receipt recovery before and after approval snapshots, historical ordinary errors versus unresolved outcomes, and selected starting-point draft replacement. Actual app/DOM checks cover input ahead of input events (including empty composition), confirmed draft clearing and the existing 12-combination theme/window matrix. Native OS IME acceptance is not claimed.
 
 Final signed-package real subscribed-provider acceptance passed partial text before terminal, exact approved rename/readback preserving fields/relations, rejected rename unchanged and companion restart/resume: 170 observations, 137 running with text, 63 distinct partial-length states, two approval boundaries, final idle. Earlier independent Sol reviews of formatting/layout/selection/scroll/Latest remain recorded in chat-0219. Review corrections were implemented and regression-tested by parent.
