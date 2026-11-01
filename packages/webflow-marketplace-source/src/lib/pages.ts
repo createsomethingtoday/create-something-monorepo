@@ -178,8 +178,11 @@ export async function pageFor(url:URL):Promise<Page>{
   $('.mp-sidebar-features').addClass('rd-detail-sidebar');
   $('.mp-sidebar-wrap').filter((_,e)=>$(e).find('h5').text().trim()==='Share').remove();
   $('#longDescription').removeClass('w-dyn-bind-empty');
+  // Production collapses long descriptions behind Show more; description-client owns the toggle.
+  // Hidden until the client measures overflow, so the full text stays readable without JS.
   $('#longDescriptionOverlay,.cc_show_more_long_description').remove();
-  $('.long-description').attr('style','height:auto;max-height:none');
+  $('.long-description').removeAttr('style').append('<div id="longDescriptionOverlay" class="cc-long-description-overlay" aria-hidden="true" style="display:none"></div>')
+   .after(`<div class="cc_show_more_long_description" style="display:none"><button type="button" id="showMoreDescription" class="button-sp cc-white" aria-controls="longDescription" aria-expanded="false" data-template-name="${escape(item.name)}">Show more</button></div>`);
   $('#subcategory h5').text((item.child_categories||[]).length>1?'Subcategories':'Subcategory');
   $('#subcategory .w-dyn-list').addClass('tag-list').html((item.child_categories||[]).map(t=>`<a class="tag-list_link" href="${escape(localLink(t.url))}">${escape(t.name)}</a>`).join(''));
   // CMS-only collection placeholders must never masquerade as real content.

@@ -1,9 +1,10 @@
 import {useEffect,useRef,useState} from 'react';
 const storageKey='source-marketplace-consent-v1';const changed='source-marketplace-consent-changed';
 function preference(){try{return localStorage.getItem(storageKey)}catch{return null}}
+export function analyticsAllowed(){return !import.meta.env.DEV&&(location.hostname==='webflow.com'||location.hostname.endsWith('.webflow.com'))&&preference()==='analytics'}
 export function useAnalyticsConsent(){
  const [enabled,setEnabled]=useState(false);
- useEffect(()=>{const sync=()=>setEnabled(!import.meta.env.DEV&&(location.hostname==='webflow.com'||location.hostname.endsWith('.webflow.com'))&&preference()==='analytics');sync();window.addEventListener(changed,sync);window.addEventListener('storage',sync);return()=>{window.removeEventListener(changed,sync);window.removeEventListener('storage',sync)}},[]);return enabled;
+ useEffect(()=>{const sync=()=>setEnabled(analyticsAllowed());sync();window.addEventListener(changed,sync);window.addEventListener('storage',sync);return()=>{window.removeEventListener(changed,sync);window.removeEventListener('storage',sync)}},[]);return enabled;
 }
 export default function Consent(){
  const [visible,setVisible]=useState(false);const dialog=useRef<HTMLDialogElement>(null);
