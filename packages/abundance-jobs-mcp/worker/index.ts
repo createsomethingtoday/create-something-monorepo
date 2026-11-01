@@ -4,20 +4,24 @@ import { enableTelemetry } from '@create-something/mcp-core';
 import {
   DEFAULT_RAPIDAPI_HOST,
   DEFAULT_TIMEOUT_MS,
+  getPublicJobDocument,
   getRapidApiProviderStatus,
   ingestRapidApiJobs,
   listAbundanceJobToolNames,
+  normalizeNursingJobsIngestInput,
   probeRapidApiExpired,
   registerAbundanceJobsTools,
   SERVER_NAME,
   SERVER_VERSION,
   type AbundanceJobsProviderConfig,
+  type NursingJobsIngestInput,
   type RapidApiActiveJobsEndpoint,
   type RapidApiIngestInput,
 } from '../src/index.js';
 
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
+  CHATGPT_MCP_OBJECT?: DurableObjectNamespace;
   JOBS_DB?: D1Database;
   TELEMETRY_DB?: D1Database;
   LANGFUSE_PUBLIC_KEY?: string;
@@ -37,10 +41,11 @@ interface Env {
 
 const DEFAULT_LANGFUSE_PROJECT_NAME = 'CREATE SOMETHING';
 const DEFAULT_ACCOUNT_ID = 'abundance-jobs-agent';
+const CHATGPT_PUBLIC_ACCOUNT_ID = 'abundance-jobs-chatgpt-public';
 const RAPIDAPI_ACTIVE_JOB_ENDPOINTS: RapidApiActiveJobsEndpoint[] = ['/active-ats-7d', '/modified-ats-24h'];
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-API-Key, X-MCP-Account-ID, X-Account-ID',
+  'Access-Control-Allow-Headers': 'Accept, Authorization, Content-Type, MCP-Protocol-Version, Mcp-Session-Id, X-API-Key, X-MCP-Account-ID, X-Account-ID',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
 
@@ -173,6 +178,27 @@ function normalizeIngestBody(body: Record<string, unknown>): RapidApiIngestInput
     limit: typeof body.limit === 'number' || typeof body.limit === 'string' ? Number(body.limit) : undefined,
     offset: typeof body.offset === 'number' || typeof body.offset === 'string' ? Number(body.offset) : undefined,
     endpoints,
+    include_backfill: typeof body.include_backfill === 'boolean' ? body.include_backfill : undefined,
+    force_refresh: typeof body.force_refresh === 'boolean' ? body.force_refresh : undefined,
+    freshness_window_minutes:
+      typeof body.freshness_window_minutes === 'number' || typeof body.freshness_window_minutes === 'string'
+        ? Number(body.freshness_window_minutes)
+        : undefined,
+    dry_run: typeof body.dry_run === 'boolean' ? body.dry_run : undefined,
+  };
+}
+
+function normalizeNursingJobsIngestBody(body: Record<string, unknown>): NursingJobsIngestInput {
+  return {
+    location_filter: typeof body.location_filter === 'string' ? body.location_filter : undefined,
+    limit: typeof body.limit === 'number' || typeof body.limit === 'string' ? Number(body.limit) : undefined,
+    offset: typeof body.offset === 'number' || typeof body.offset === 'string' ? Number(body.offset) : undefined,
+    include_backfill: typeof body.include_backfill === 'boolean' ? body.include_backfill : undefined,
+    force_refresh: typeof body.force_refresh === 'boolean' ? body.force_refresh : undefined,
+    freshness_window_minutes:
+      typeof body.freshness_window_minutes === 'number' || typeof body.freshness_window_minutes === 'string'
+        ? Number(body.freshness_window_minutes)
+        : undefined,
     dry_run: typeof body.dry_run === 'boolean' ? body.dry_run : undefined,
   };
 }
@@ -207,6 +233,39 @@ export class AbundanceJobsMCP extends McpAgent<Env> {
   }
 }
 
+export class AbundanceJobsChatGPTMCP extends McpAgent<Env> {
+  server = new McpServer({
+    name: `${SERVER_NAME}-chatgpt-public`,
+    version: SERVER_VERSION,
+  });
+
+  private currentAccountId = CHATGPT_PUBLIC_ACCOUNT_ID;
+
+  override async fetch(request: Request): Promise<Response> {
+    // Unauthenticated route: callers cannot choose the account their telemetry is filed under.
+    this.currentAccountId = CHATGPT_PUBLIC_ACCOUNT_ID;
+    return super.fetch(request);
+  }
+
+  async init() {
+    enableTelemetry(this.server, this.env.TELEMETRY_DB, `${SERVER_NAME}:chatgpt-public`, () => this.currentAccountId, {
+      publicKey: this.env.LANGFUSE_PUBLIC_KEY,
+      secretKey: this.env.LANGFUSE_SECRET_KEY,
+      projectName: resolveLangfuseProjectName(this.env),
+    });
+
+    registerAbundanceJobsTools(
+      this.server,
+      {
+        getDb: () => this.env.JOBS_DB,
+      },
+      {
+        includeFunnelTool: false,
+      },
+    );
+  }
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -227,6 +286,10 @@ export default {
       return AbundanceJobsMCP.serve('/sse').fetch(request, env, ctx);
     }
 
+    if (url.pathname === '/chatgpt/mcp' || url.pathname.startsWith('/chatgpt/mcp/')) {
+      return AbundanceJobsChatGPTMCP.serve('/chatgpt/mcp', { binding: 'CHATGPT_MCP_OBJECT' }).fetch(request, env, ctx);
+    }
+
     if (url.pathname === '/admin/ingest/rapidapi') {
       const authError = await validateApiKey(request, env);
       if (authError) return authError;
@@ -238,6 +301,30 @@ export default {
           db: env.JOBS_DB,
           config: resolveProviderConfig(env),
           request: normalizeIngestBody(body),
+        });
+        return jsonResponse(result);
+      } catch (error) {
+        return jsonResponse(
+          {
+            ok: false,
+            error: error instanceof Error ? error.message : String(error),
+          },
+          500,
+        );
+      }
+    }
+
+    if (url.pathname === '/admin/ingest/rapidapi/nursing-jobs' || url.pathname === '/admin/ingest/nursing-jobs') {
+      const authError = await validateApiKey(request, env);
+      if (authError) return authError;
+      if (request.method !== 'POST') return jsonResponse({ error: 'MethodNotAllowed' }, 405);
+      if (!env.JOBS_DB) return jsonResponse({ error: 'ServerMisconfigured', message: 'JOBS_DB is not configured.' }, 500);
+      try {
+        const body = await readJsonBody(request);
+        const result = await ingestRapidApiJobs({
+          db: env.JOBS_DB,
+          config: resolveProviderConfig(env),
+          request: normalizeNursingJobsIngestInput(normalizeNursingJobsIngestBody(body)),
         });
         return jsonResponse(result);
       } catch (error) {
@@ -273,6 +360,16 @@ export default {
       }
     }
 
+    // Canonical URL for jobs without an application or source link (search and fetch tools).
+    const publicJob = url.pathname.match(/^\/public\/jobs\/([^/]+)$/);
+    if (publicJob && request.method === 'GET') {
+      if (!env.JOBS_DB) return Response.json({ ok: false, error: 'Job database is not configured' }, { status: 503 });
+      const document = await getPublicJobDocument(env.JOBS_DB, decodeURIComponent(publicJob[1]));
+      return document
+        ? Response.json(document)
+        : Response.json({ ok: false, error: 'Job not found' }, { status: 404 });
+    }
+
     if (url.pathname === '/' || url.pathname === '/health') {
       const provider = resolveProviderConfig(env);
       return jsonResponse({
@@ -282,12 +379,15 @@ export default {
         endpoints: {
           mcp: '/mcp',
           sse: '/sse',
+          chatgpt_mcp: '/chatgpt/mcp',
           ingest_rapidapi: '/admin/ingest/rapidapi',
+          ingest_nursing_jobs: '/admin/ingest/rapidapi/nursing-jobs',
           probe_expired: '/admin/probe/rapidapi-expired',
         },
         auth: {
           configured: Boolean(resolveMcpApiKey(env)),
           transport: 'Authorization: Bearer <ABUNDANCE_MCP_BEARER_TOKEN> or X-API-Key',
+          chatgpt_public: 'No Auth on /chatgpt/mcp with read-only tools only',
         },
         jobs_db_configured: Boolean(env.JOBS_DB),
         provider: getRapidApiProviderStatus(provider),
@@ -298,6 +398,7 @@ export default {
           langfuse_keys_configured: Boolean(env.LANGFUSE_PUBLIC_KEY && env.LANGFUSE_SECRET_KEY),
         },
         tools: listAbundanceJobToolNames(),
+        chatgpt_public_tools: listAbundanceJobToolNames({ includeFunnelTool: false }),
       });
     }
 
