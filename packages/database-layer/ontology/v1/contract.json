@@ -1,0 +1,22 @@
+{
+  "version": "substrate-ontology/v1",
+  "namespace": "https://createsomething.agency/ontology/substrate/v1#",
+  "tiers": ["Database", "Automation", "Judgment", "Mixed"],
+  "surfaces": ["repo", "client", "app", "package", "worker", "mcp", "agent", "config", "policy", "guide", "doc"],
+  "statuses": ["mapped", "needs_atlas", "needs_substrate"],
+  "relations": {
+    "contains": "target",
+    "depends_on": "source",
+    "runs": "target",
+    "client_overlay": "both",
+    "governs": "target",
+    "documents": "source",
+    "renders": "source",
+    "configures": "target"
+  },
+  "upstream": {
+    "repository": "https://github.com/fabio-rovai/open-ontologies",
+    "inspectedCommit": "cefe5997d04553ac495873e8aa1046c1d6b85f7d",
+    "runtimeVerified": false
+  }
+}

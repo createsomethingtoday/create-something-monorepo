@@ -19,3 +19,7 @@ jobs:
           package-manager-cache: false
       - run: node --test packages/database-layer/test/agent-wiki*.test.mjs
       - run: node packages/database-layer/scripts/generate-agent-wiki.mjs --check
+      - name: Validate composable ontology contracts
+        run: |
+          node --test packages/database-layer/test/ontology.test.mjs
+          node packages/database-layer/scripts/ontology.mjs check
