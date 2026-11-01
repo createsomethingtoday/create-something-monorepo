@@ -1,0 +1,1984 @@
+{
+  "widths": [
+    390,
+    768,
+    1440
+  ],
+  "checks": [
+    {
+      "width": 390,
+      "route": "/",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/products-workbench-paths-continuity-v2-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 239
+        },
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/ground-compare-before-claim-640.webp",
+          "loaded": true,
+          "fit": "cover",
+          "width": 356,
+          "height": 237
+        },
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/compiler-from-plan-to-tested-jig-640.webp",
+          "loaded": true,
+          "fit": "cover",
+          "width": 356,
+          "height": 237
+        },
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/tool-fit-without-forcing-640.webp",
+          "loaded": true,
+          "fit": "cover",
+          "width": 356,
+          "height": 237
+        },
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/about-careful-working-notes-640.webp",
+          "loaded": true,
+          "fit": "cover",
+          "width": 356,
+          "height": 237
+        }
+      ],
+      "errors": []
+    },
+    {
+      "width": 390,
+      "route": "/projects",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/tool-fit-without-forcing-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 239
+        }
+      ],
+      "errors": []
+    },
+    {
+      "width": 390,
+      "route": "/about",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/about-careful-working-notes-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 239
+        }
+      ],
+      "errors": []
+    },
+    {
+      "width": 390,
+      "route": "/workbench",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/editorial-experiments-isolated-sandbox-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 239
+        }
+      ],
+      "errors": []
+    },
+    {
+      "width": 390,
+      "route": "/projects/ground",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/ground-compare-before-claim-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 286
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Installation & releases ↗",
+          "href": "https://www.npmjs.com/package/@createsomething/ground-mcp"
+        },
+        {
+          "label": "View source ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ground"
+        }
+      ],
+      "limits": "Before you begin\n\nAnalysis is advisory. Review findings before changing code. Check the package documentation for supported platforms.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 390,
+      "route": "/projects/workflow-compiler",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/compiler-from-plan-to-tested-jig-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 239
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Installation & releases ↗",
+          "href": "https://www.npmjs.com/package/@createsomething/workflow-compiler"
+        },
+        {
+          "label": "View source ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/workflow-compiler"
+        }
+      ],
+      "limits": "Before you begin\n\nThe compiler does not call providers or grant access to the systems in your workflow.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 390,
+      "route": "/projects/three-tier-framework",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/tool-fit-without-forcing-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 239
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Installation & releases ↗",
+          "href": "https://www.npmjs.com/package/@createsomething/pi-three-tier-framework"
+        },
+        {
+          "label": "View source ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/pi-three-tier-framework"
+        }
+      ],
+      "limits": "Before you begin\n\nA design method and agent guidance; it does not operate your systems.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 390,
+      "route": "/projects/policy-os",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/about-careful-working-notes-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 239
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Installation & releases ↗",
+          "href": "https://www.npmjs.com/package/@createsomething/pi-policy-os"
+        },
+        {
+          "label": "View source ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/pi-policy-os"
+        }
+      ],
+      "limits": "Before you begin\n\nThe starter supplies guidance and quality gates. Hosting and managed operation are separate.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 390,
+      "route": "/projects/template-preflight",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/ground-compare-before-claim-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 286
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/webflow-template-preflight"
+        }
+      ],
+      "limits": "Before you begin\n\nPreflight helps preparation; it does not guarantee Marketplace acceptance.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 390,
+      "route": "/projects/app-preflight",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/ground-compare-before-claim-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 286
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/webflow-app-preflight"
+        }
+      ],
+      "limits": "Before you begin\n\nRequires the app and its configuration. Final review and acceptance remain with Webflow.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 390,
+      "route": "/projects/canon-plugin",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/tool-fit-without-forcing-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 239
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/claude-plugins"
+        }
+      ],
+      "limits": "Before you begin\n\nClaude Code plugin. Follow the repository installation instructions; review the guidance for your project.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 390,
+      "route": "/projects/triad-review",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/subtract-the-extra-route-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 239
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/claude-plugins"
+        }
+      ],
+      "limits": "Before you begin\n\nClaude Code plugin. Follow the repository installation instructions; review the guidance for your project.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 390,
+      "route": "/projects/voice-validator",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/about-careful-working-notes-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 239
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/claude-plugins"
+        }
+      ],
+      "limits": "Before you begin\n\nClaude Code plugin. Follow the repository installation instructions; review the guidance for your project.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 390,
+      "route": "/projects/understanding-graphs",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/about-careful-working-notes-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 239
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/claude-plugins"
+        }
+      ],
+      "limits": "Before you begin\n\nClaude Code plugin. Follow the repository installation instructions; review the guidance for your project.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 390,
+      "route": "/projects/intent-mapping",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/about-careful-working-notes-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 239
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/pi-policy-os/skills/intent-mapping"
+        }
+      ],
+      "limits": "Before you begin\n\nIncluded in a Pi package. Review its repository-specific instructions before adapting it to another environment.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 390,
+      "route": "/projects/debug-feedback-loop",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/editorial-upstream-shared-tool-repair-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 239
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/pi-policy-os/skills/debug-feedback-loop"
+        }
+      ],
+      "limits": "Before you begin\n\nIncluded in a Pi package. Review its repository-specific instructions before adapting it to another environment.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 390,
+      "route": "/projects/tdd-vertical-slice",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/editorial-experiments-isolated-sandbox-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 239
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/pi-policy-os/skills/tdd-vertical-slice"
+        }
+      ],
+      "limits": "Before you begin\n\nIncluded in a Pi package. Review its repository-specific instructions before adapting it to another environment.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 390,
+      "route": "/projects/deep-module-design",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/subtract-the-extra-route-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 239
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/pi-three-tier-framework/skills/deep-module-design"
+        }
+      ],
+      "limits": "Before you begin\n\nIncluded in a Pi package. Review its repository-specific instructions before adapting it to another environment.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 390,
+      "route": "/projects/ascii-renderer",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/tool-fit-without-forcing-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 239
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ascii-renderer"
+        }
+      ],
+      "limits": "Before you begin\n\nSource library. Review attribution, dependencies, and examples before integrating.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 390,
+      "route": "/projects/simulation",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/editorial-experiments-isolated-sandbox-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 239
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/simulation"
+        }
+      ],
+      "limits": "Before you begin\n\nSynthetic demo behavior is not production evidence.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 390,
+      "route": "/projects/spritz",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/tool-fit-without-forcing-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 239
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/spritz"
+        }
+      ],
+      "limits": "Before you begin\n\nChoose this presentation for your audience; it does not establish reading or accessibility benefits.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 390,
+      "route": "/projects/canon-tokens",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/tool-fit-without-forcing-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 239
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/canon-tokens"
+        }
+      ],
+      "limits": "Before you begin\n\nSource reference. Check contrast in the rendered context and verify packaging before installation.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 390,
+      "route": "/projects/tufte",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/ground-compare-before-claim-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 286
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/tufte"
+        }
+      ],
+      "limits": "Before you begin\n\nSource library; review its workspace dependencies before reuse.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 390,
+      "route": "/projects/render-pipeline",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/compiler-from-plan-to-tested-jig-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 239
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/render-pipeline"
+        }
+      ],
+      "limits": "Before you begin\n\nLocal rendering needs the documented tools and assets you have permission to use.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 390,
+      "route": "/projects/workflow-runtime",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/compiler-from-plan-to-tested-jig-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 239
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/workflow-runtime"
+        }
+      ],
+      "limits": "Before you begin\n\nSource module; external systems require their own adapters and access. Reference fixtures are not live results.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 390,
+      "route": "/projects/mcp-core",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/tool-fit-without-forcing-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 358,
+          "height": 239
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/mcp-core"
+        }
+      ],
+      "limits": "Before you begin\n\nSource module. Integration requires an explicit access policy and configured credentials; none are supplied.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 768,
+      "route": "/",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/products-workbench-paths-continuity-v2-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 736,
+          "height": 491
+        },
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/ground-compare-before-claim-640.webp",
+          "loaded": true,
+          "fit": "cover",
+          "width": 332,
+          "height": 221
+        },
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/compiler-from-plan-to-tested-jig-640.webp",
+          "loaded": true,
+          "fit": "cover",
+          "width": 332,
+          "height": 221
+        },
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/tool-fit-without-forcing-640.webp",
+          "loaded": true,
+          "fit": "cover",
+          "width": 332,
+          "height": 221
+        },
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/about-careful-working-notes-640.webp",
+          "loaded": true,
+          "fit": "cover",
+          "width": 332,
+          "height": 221
+        }
+      ],
+      "errors": []
+    },
+    {
+      "width": 768,
+      "route": "/projects",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/tool-fit-without-forcing-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 457
+        }
+      ],
+      "errors": []
+    },
+    {
+      "width": 768,
+      "route": "/about",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/about-careful-working-notes-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 457
+        }
+      ],
+      "errors": []
+    },
+    {
+      "width": 768,
+      "route": "/workbench",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/editorial-experiments-isolated-sandbox-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 457
+        }
+      ],
+      "errors": []
+    },
+    {
+      "width": 768,
+      "route": "/projects/ground",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/ground-compare-before-claim-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 547
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Installation & releases ↗",
+          "href": "https://www.npmjs.com/package/@createsomething/ground-mcp"
+        },
+        {
+          "label": "View source ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ground"
+        }
+      ],
+      "limits": "Before you begin\n\nAnalysis is advisory. Review findings before changing code. Check the package documentation for supported platforms.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 768,
+      "route": "/projects/workflow-compiler",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/compiler-from-plan-to-tested-jig-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 457
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Installation & releases ↗",
+          "href": "https://www.npmjs.com/package/@createsomething/workflow-compiler"
+        },
+        {
+          "label": "View source ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/workflow-compiler"
+        }
+      ],
+      "limits": "Before you begin\n\nThe compiler does not call providers or grant access to the systems in your workflow.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 768,
+      "route": "/projects/three-tier-framework",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/tool-fit-without-forcing-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 457
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Installation & releases ↗",
+          "href": "https://www.npmjs.com/package/@createsomething/pi-three-tier-framework"
+        },
+        {
+          "label": "View source ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/pi-three-tier-framework"
+        }
+      ],
+      "limits": "Before you begin\n\nA design method and agent guidance; it does not operate your systems.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 768,
+      "route": "/projects/policy-os",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/about-careful-working-notes-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 457
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Installation & releases ↗",
+          "href": "https://www.npmjs.com/package/@createsomething/pi-policy-os"
+        },
+        {
+          "label": "View source ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/pi-policy-os"
+        }
+      ],
+      "limits": "Before you begin\n\nThe starter supplies guidance and quality gates. Hosting and managed operation are separate.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 768,
+      "route": "/projects/template-preflight",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/ground-compare-before-claim-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 547
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/webflow-template-preflight"
+        }
+      ],
+      "limits": "Before you begin\n\nPreflight helps preparation; it does not guarantee Marketplace acceptance.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 768,
+      "route": "/projects/app-preflight",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/ground-compare-before-claim-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 547
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/webflow-app-preflight"
+        }
+      ],
+      "limits": "Before you begin\n\nRequires the app and its configuration. Final review and acceptance remain with Webflow.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 768,
+      "route": "/projects/canon-plugin",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/tool-fit-without-forcing-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 457
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/claude-plugins"
+        }
+      ],
+      "limits": "Before you begin\n\nClaude Code plugin. Follow the repository installation instructions; review the guidance for your project.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 768,
+      "route": "/projects/triad-review",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/subtract-the-extra-route-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 457
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/claude-plugins"
+        }
+      ],
+      "limits": "Before you begin\n\nClaude Code plugin. Follow the repository installation instructions; review the guidance for your project.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 768,
+      "route": "/projects/voice-validator",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/about-careful-working-notes-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 457
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/claude-plugins"
+        }
+      ],
+      "limits": "Before you begin\n\nClaude Code plugin. Follow the repository installation instructions; review the guidance for your project.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 768,
+      "route": "/projects/understanding-graphs",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/about-careful-working-notes-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 457
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/claude-plugins"
+        }
+      ],
+      "limits": "Before you begin\n\nClaude Code plugin. Follow the repository installation instructions; review the guidance for your project.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 768,
+      "route": "/projects/intent-mapping",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/about-careful-working-notes-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 457
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/pi-policy-os/skills/intent-mapping"
+        }
+      ],
+      "limits": "Before you begin\n\nIncluded in a Pi package. Review its repository-specific instructions before adapting it to another environment.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 768,
+      "route": "/projects/debug-feedback-loop",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/editorial-upstream-shared-tool-repair-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 457
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/pi-policy-os/skills/debug-feedback-loop"
+        }
+      ],
+      "limits": "Before you begin\n\nIncluded in a Pi package. Review its repository-specific instructions before adapting it to another environment.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 768,
+      "route": "/projects/tdd-vertical-slice",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/editorial-experiments-isolated-sandbox-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 457
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/pi-policy-os/skills/tdd-vertical-slice"
+        }
+      ],
+      "limits": "Before you begin\n\nIncluded in a Pi package. Review its repository-specific instructions before adapting it to another environment.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 768,
+      "route": "/projects/deep-module-design",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/subtract-the-extra-route-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 457
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/pi-three-tier-framework/skills/deep-module-design"
+        }
+      ],
+      "limits": "Before you begin\n\nIncluded in a Pi package. Review its repository-specific instructions before adapting it to another environment.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 768,
+      "route": "/projects/ascii-renderer",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/tool-fit-without-forcing-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 457
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ascii-renderer"
+        }
+      ],
+      "limits": "Before you begin\n\nSource library. Review attribution, dependencies, and examples before integrating.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 768,
+      "route": "/projects/simulation",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/editorial-experiments-isolated-sandbox-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 457
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/simulation"
+        }
+      ],
+      "limits": "Before you begin\n\nSynthetic demo behavior is not production evidence.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 768,
+      "route": "/projects/spritz",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/tool-fit-without-forcing-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 457
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/spritz"
+        }
+      ],
+      "limits": "Before you begin\n\nChoose this presentation for your audience; it does not establish reading or accessibility benefits.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 768,
+      "route": "/projects/canon-tokens",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/tool-fit-without-forcing-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 457
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/canon-tokens"
+        }
+      ],
+      "limits": "Before you begin\n\nSource reference. Check contrast in the rendered context and verify packaging before installation.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 768,
+      "route": "/projects/tufte",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/ground-compare-before-claim-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 547
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/tufte"
+        }
+      ],
+      "limits": "Before you begin\n\nSource library; review its workspace dependencies before reuse.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 768,
+      "route": "/projects/render-pipeline",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/compiler-from-plan-to-tested-jig-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 457
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/render-pipeline"
+        }
+      ],
+      "limits": "Before you begin\n\nLocal rendering needs the documented tools and assets you have permission to use.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 768,
+      "route": "/projects/workflow-runtime",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/compiler-from-plan-to-tested-jig-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 457
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/workflow-runtime"
+        }
+      ],
+      "limits": "Before you begin\n\nSource module; external systems require their own adapters and access. Reference fixtures are not live results.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 768,
+      "route": "/projects/mcp-core",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/tool-fit-without-forcing-640.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 684,
+          "height": 457
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/mcp-core"
+        }
+      ],
+      "limits": "Before you begin\n\nSource module. Integration requires an explicit access policy and configured credentials; none are supplied.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 1440,
+      "route": "/",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/products-workbench-paths-continuity-v2-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 771,
+          "height": 514
+        },
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/ground-compare-before-claim-640.webp",
+          "loaded": true,
+          "fit": "cover",
+          "width": 630,
+          "height": 420
+        },
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/compiler-from-plan-to-tested-jig-640.webp",
+          "loaded": true,
+          "fit": "cover",
+          "width": 630,
+          "height": 420
+        },
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/tool-fit-without-forcing-640.webp",
+          "loaded": true,
+          "fit": "cover",
+          "width": 630,
+          "height": 420
+        },
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/about-careful-working-notes-640.webp",
+          "loaded": true,
+          "fit": "cover",
+          "width": 630,
+          "height": 420
+        }
+      ],
+      "errors": []
+    },
+    {
+      "width": 1440,
+      "route": "/projects",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/tool-fit-without-forcing-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 463
+        }
+      ],
+      "errors": []
+    },
+    {
+      "width": 1440,
+      "route": "/about",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/about-careful-working-notes-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 463
+        }
+      ],
+      "errors": []
+    },
+    {
+      "width": 1440,
+      "route": "/workbench",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/editorial-experiments-isolated-sandbox-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 463
+        }
+      ],
+      "errors": []
+    },
+    {
+      "width": 1440,
+      "route": "/projects/ground",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/ground-compare-before-claim-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 556
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Installation & releases ↗",
+          "href": "https://www.npmjs.com/package/@createsomething/ground-mcp"
+        },
+        {
+          "label": "View source ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ground"
+        }
+      ],
+      "limits": "Before you begin\n\nAnalysis is advisory. Review findings before changing code. Check the package documentation for supported platforms.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 1440,
+      "route": "/projects/workflow-compiler",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/compiler-from-plan-to-tested-jig-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 463
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Installation & releases ↗",
+          "href": "https://www.npmjs.com/package/@createsomething/workflow-compiler"
+        },
+        {
+          "label": "View source ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/workflow-compiler"
+        }
+      ],
+      "limits": "Before you begin\n\nThe compiler does not call providers or grant access to the systems in your workflow.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 1440,
+      "route": "/projects/three-tier-framework",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/tool-fit-without-forcing-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 463
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Installation & releases ↗",
+          "href": "https://www.npmjs.com/package/@createsomething/pi-three-tier-framework"
+        },
+        {
+          "label": "View source ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/pi-three-tier-framework"
+        }
+      ],
+      "limits": "Before you begin\n\nA design method and agent guidance; it does not operate your systems.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 1440,
+      "route": "/projects/policy-os",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/about-careful-working-notes-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 463
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Installation & releases ↗",
+          "href": "https://www.npmjs.com/package/@createsomething/pi-policy-os"
+        },
+        {
+          "label": "View source ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/pi-policy-os"
+        }
+      ],
+      "limits": "Before you begin\n\nThe starter supplies guidance and quality gates. Hosting and managed operation are separate.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 1440,
+      "route": "/projects/template-preflight",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/ground-compare-before-claim-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 556
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/webflow-template-preflight"
+        }
+      ],
+      "limits": "Before you begin\n\nPreflight helps preparation; it does not guarantee Marketplace acceptance.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 1440,
+      "route": "/projects/app-preflight",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/ground-compare-before-claim-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 556
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/webflow-app-preflight"
+        }
+      ],
+      "limits": "Before you begin\n\nRequires the app and its configuration. Final review and acceptance remain with Webflow.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 1440,
+      "route": "/projects/canon-plugin",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/tool-fit-without-forcing-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 463
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/claude-plugins"
+        }
+      ],
+      "limits": "Before you begin\n\nClaude Code plugin. Follow the repository installation instructions; review the guidance for your project.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 1440,
+      "route": "/projects/triad-review",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/subtract-the-extra-route-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 463
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/claude-plugins"
+        }
+      ],
+      "limits": "Before you begin\n\nClaude Code plugin. Follow the repository installation instructions; review the guidance for your project.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 1440,
+      "route": "/projects/voice-validator",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/about-careful-working-notes-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 463
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/claude-plugins"
+        }
+      ],
+      "limits": "Before you begin\n\nClaude Code plugin. Follow the repository installation instructions; review the guidance for your project.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 1440,
+      "route": "/projects/understanding-graphs",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/about-careful-working-notes-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 463
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/claude-plugins"
+        }
+      ],
+      "limits": "Before you begin\n\nClaude Code plugin. Follow the repository installation instructions; review the guidance for your project.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 1440,
+      "route": "/projects/intent-mapping",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/about-careful-working-notes-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 463
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/pi-policy-os/skills/intent-mapping"
+        }
+      ],
+      "limits": "Before you begin\n\nIncluded in a Pi package. Review its repository-specific instructions before adapting it to another environment.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 1440,
+      "route": "/projects/debug-feedback-loop",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/editorial-upstream-shared-tool-repair-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 463
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/pi-policy-os/skills/debug-feedback-loop"
+        }
+      ],
+      "limits": "Before you begin\n\nIncluded in a Pi package. Review its repository-specific instructions before adapting it to another environment.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 1440,
+      "route": "/projects/tdd-vertical-slice",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/editorial-experiments-isolated-sandbox-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 463
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/pi-policy-os/skills/tdd-vertical-slice"
+        }
+      ],
+      "limits": "Before you begin\n\nIncluded in a Pi package. Review its repository-specific instructions before adapting it to another environment.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 1440,
+      "route": "/projects/deep-module-design",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/subtract-the-extra-route-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 463
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/pi-three-tier-framework/skills/deep-module-design"
+        }
+      ],
+      "limits": "Before you begin\n\nIncluded in a Pi package. Review its repository-specific instructions before adapting it to another environment.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 1440,
+      "route": "/projects/ascii-renderer",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/tool-fit-without-forcing-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 463
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ascii-renderer"
+        }
+      ],
+      "limits": "Before you begin\n\nSource library. Review attribution, dependencies, and examples before integrating.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 1440,
+      "route": "/projects/simulation",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/editorial-experiments-isolated-sandbox-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 463
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/simulation"
+        }
+      ],
+      "limits": "Before you begin\n\nSynthetic demo behavior is not production evidence.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 1440,
+      "route": "/projects/spritz",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/tool-fit-without-forcing-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 463
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/spritz"
+        }
+      ],
+      "limits": "Before you begin\n\nChoose this presentation for your audience; it does not establish reading or accessibility benefits.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 1440,
+      "route": "/projects/canon-tokens",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/tool-fit-without-forcing-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 463
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/canon-tokens"
+        }
+      ],
+      "limits": "Before you begin\n\nSource reference. Check contrast in the rendered context and verify packaging before installation.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 1440,
+      "route": "/projects/tufte",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/ground-compare-before-claim-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 556
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/tufte"
+        }
+      ],
+      "limits": "Before you begin\n\nSource library; review its workspace dependencies before reuse.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 1440,
+      "route": "/projects/render-pipeline",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/compiler-from-plan-to-tested-jig-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 463
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/render-pipeline"
+        }
+      ],
+      "limits": "Before you begin\n\nLocal rendering needs the documented tools and assets you have permission to use.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 1440,
+      "route": "/projects/workflow-runtime",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/compiler-from-plan-to-tested-jig-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 463
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/workflow-runtime"
+        }
+      ],
+      "limits": "Before you begin\n\nSource module; external systems require their own adapters and access. Reference fixtures are not live results.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    },
+    {
+      "width": 1440,
+      "route": "/projects/mcp-core",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "images": [
+        {
+          "src": "http://127.0.0.1:4176/images/workshop/stories/tool-fit-without-forcing-960.webp",
+          "loaded": true,
+          "fit": "fill",
+          "width": 695,
+          "height": 463
+        }
+      ],
+      "errors": [],
+      "sourceLinks": [
+        {
+          "label": "Source & instructions ↗",
+          "href": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/mcp-core"
+        }
+      ],
+      "limits": "Before you begin\n\nSource module. Integration requires an explicit access policy and configured credentials; none are supplied.\n\nSource access does not include hosted operation or managed support. Refer to the repository for its license and current requirements."
+    }
+  ],
+  "interactions": [
+    {
+      "width": 390,
+      "filterReload": [
+        "Workflow Runtime"
+      ]
+    },
+    {
+      "width": 390,
+      "empty": true
+    },
+    {
+      "width": 768,
+      "filterReload": [
+        "Workflow Runtime"
+      ]
+    },
+    {
+      "width": 768,
+      "empty": true
+    },
+    {
+      "width": 1440,
+      "filterReload": [
+        "Workflow Runtime"
+      ]
+    },
+    {
+      "width": 1440,
+      "empty": true
+    },
+    {
+      "firstFocus": "Skip to main content"
+    },
+    {
+      "mobileOpen": "true"
+    },
+    {
+      "mobileEscape": "false"
+    },
+    {
+      "paused": "true",
+      "motionState": "paused"
+    },
+    {
+      "keyboardDisclosure": true
+    },
+    {
+      "reducedAnimation": "none"
+    },
+    {
+      "noJSHeroImages": 1,
+      "noJSSourceLinks": 2
+    }
+  ]
+}

@@ -2,6 +2,7 @@ import type { PageServerLoad } from './$types';
 
 const contactIntents = new Set([
   'membership',
+  'system-support',
   'governance-checklist',
   'workflow-teardown',
   'workflow-mapping'
@@ -14,6 +15,7 @@ const serviceLanes = new Set([
   'system_development_referral',
   'not_sure'
 ]);
+const membershipPlans = new Set(['focused', 'team']);
 
 function normalizeQueryToken(value: string | null, fallback: string) {
   const normalized = (value ?? fallback)
@@ -28,11 +30,13 @@ function normalizeQueryToken(value: string | null, fallback: string) {
 export const load: PageServerLoad = ({ url }) => {
   const intent = normalizeQueryToken(url.searchParams.get('intent'), 'workflow-teardown');
   const lane = normalizeQueryToken(url.searchParams.get('lane'), 'not_sure');
+  const plan = normalizeQueryToken(url.searchParams.get('plan'), 'focused');
 
   return {
     contactSource: normalizeQueryToken(url.searchParams.get('source'), 'contact'),
     contactCampaign: normalizeQueryToken(url.searchParams.get('campaign'), ''),
     contactIntent: contactIntents.has(intent) ? intent : 'workflow-teardown',
-    contactLane: serviceLanes.has(lane) ? lane : 'not_sure'
+    contactLane: serviceLanes.has(lane) ? lane : 'not_sure',
+    contactPlan: membershipPlans.has(plan) ? plan : 'focused'
   };
 };

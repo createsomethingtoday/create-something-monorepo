@@ -1,0 +1,386 @@
+use gigi_desktop_lib::{domain,music_mcp,social_mcp,source_jobs,artwork_mcp};
+use serde_json::{json, Value};
+use std::fs;
+use std::io::{self, BufRead, Read, Write};
+use std::path::PathBuf;
+
+const TOOLS: [(&str, &str, bool); 14] = [
+    ("gigi_connection_check", "connection.check", true),
+    ("gigi_agenda_list", "agenda.list", true),
+    ("gigi_workspace_get", "workspace.get", true),
+    ("gigi_schema_describe", "schema.describe", true),
+    ("gigi_workspace_create", "workspace.create", false),
+    ("gigi_records_list", "records.list", true),
+    ("gigi_records_get", "records.get", true),
+    ("gigi_records_relations", "records.relations", true),
+    ("gigi_records_save", "records.save", false),
+    ("gigi_relations_link", "relations.link", false),
+    ("gigi_gigs_summary", "gigs.summary", true),
+    ("gigi_history_list", "history.list", true),
+    ("gigi_backup_create", "backup.create", false),
+    ("gigi_context_search", "context.search", true),
+];
+
+fn data_dir() -> Result<PathBuf, String> {
+    if let Some(path) = std::env::var_os("GIGI_DATA_DIR") {
+        if path.is_empty() {
+            return Err("GIGI_DATA_DIR is empty".into());
+        }
+        return Ok(PathBuf::from(path));
+    }
+    let home = std::env::var_os("HOME").ok_or("HOME is unavailable")?;
+    Ok(PathBuf::from(home).join("Library/Application Support/agency.createsomething.gigi"))
+}
+
+fn required_keys(operation: &str) -> &'static [&'static str] {
+    match operation {
+        "agenda.list" => &["workspaceId","today","timeZone"],
+        "schema.describe" => &["entity"],
+        "context.search" => &["workspaceId", "query"],
+        "workspace.create" => &["name"],
+        "records.list" => &["workspaceId", "entity"],
+        "records.get" | "records.relations" => &["workspaceId", "entity", "id"],
+        "records.save" => &["workspaceId", "entity", "title"],
+        "relations.link" => &["workspaceId", "fromEntity", "fromId", "toEntity", "toId"],
+        "gigs.summary" => &["workspaceId", "gigId"],
+        "history.list" | "backup.create" => &["workspaceId"],
+        _ => &[],
+    }
+}
+
+fn schema(operation: &str) -> Value {
+    let mut properties = serde_json::Map::new();
+    for key in required_keys(operation) {
+        properties.insert((*key).to_string(), json!({"type":"string"}));
+    }
+    let required = required_keys(operation);
+    let optional: &[(&str, &str)] = match operation {
+        "connection.check" | "workspace.get" => &[("workspaceId", "string")],
+        "agenda.list" => &[("recordKind","string"),("offset","integer"),("limit","integer")],
+        "records.list" | "records.relations" => &[("limit", "integer"), ("cursor", "string")],
+        "records.save" => &[
+            ("id", "string"),
+            ("fields", "object"),
+            ("source", "object"),
+            ("expectedRecord", "object"),
+            ("idempotencyKey", "string"),
+        ],
+        "relations.link" => &[("role", "string"), ("idempotencyKey", "string")],
+        "history.list" => &[("limit", "integer")],
+        "context.search" => &[("limit", "integer")],
+        _ => &[],
+    };
+    for (key, kind) in optional {
+        properties.insert((*key).to_string(), json!({"type":kind}));
+    }
+    if operation == "agenda.list" {
+        properties.insert("recordKind".into(),json!({"type":"string","enum":["calendar_event","performance","crew_work","other","unclassified"]}));
+        properties.insert("limit".into(),json!({"type":"integer","minimum":1,"maximum":50,"default":5}));
+        properties.insert("offset".into(),json!({"type":"integer","minimum":0,"maximum":10000,"default":0}));
+    }
+    if operation == "context.search" {
+        properties.insert("query".into(), json!({"type":"string","minLength":1,"maxLength":200,"description":"Nonblank local history search, at most 200 characters. Does not import sources or create tasks."}));
+        properties.insert("limit".into(), json!({"type":"integer","minimum":1,"maximum":5,"default":5}));
+    }
+    if operation == "records.relations" {
+        properties.insert("limit".into(), json!({"type":"integer","minimum":1,"maximum":100,"default":100}));
+        properties.insert("cursor".into(), json!({"type":"string","maxLength":8192,"description":"Omit on the first page. Pass the previous nextCursor unchanged for the same workspace, entity and record."}));
+    }
+    if operation == "records.get" {
+        properties.insert("detail".into(), json!({"type":"string","enum":["summary","full"]}));
+        properties.insert("saveReceipt".into(), json!({"type":"object","additionalProperties":false,"properties":{"idempotencyKey":{"type":"string"},"expectedInput":{"type":"object"}},"required":["idempotencyKey","expectedInput"],"description":"Read-only recovery of a records.save result after a lost response. Supply the exact original save input; its workspaceId, entity, intended id and idempotencyKey must match this lookup. Returns receiptFound and record, or receiptFound:false. Never retries a write."}));
+    }
+    if operation == "records.save" {
+        properties.insert("fieldsMode".into(), json!({"type":"string","enum":["merge","replace"],"description":"Defaults to merge. Replace requires fields and removes omitted field keys."}));
+        properties.insert("sourceRecord".into(), json!({"type":"object","additionalProperties":false,"properties":{"entity":{"type":"string","enum":["interactions","schedule"]},"id":{"type":"string"},"connectedAccountId":{"type":"string"},"expectedRecord":{"type":"object","properties":{"title":{"type":"string"},"fields":{"type":"object"},"source":{"type":"object"}},"required":["title","fields","source"]}},"required":["entity","id","connectedAccountId","expectedRecord"],"description":"Create a local task or gig from an imported Gmail interaction or Calendar schedule record. Requires idempotencyKey and full source snapshot. Attribution and source relation are server-derived. No source, expectedRecord or fieldsMode overrides. Duplicates return the existing target unchanged. Does not write to Google."}));
+        properties.insert("expectedRecord".into(), json!({"type":"object","properties":{"title":{"type":"string"},"fields":{"type":"object"},"source":{"type":"object"}},"required":["title","fields","source"],"description":"Optional full snapshot from records.get detail=full. If title, fields, or source changed before this save, the save fails without overwriting the newer record."}));
+    }
+    json!({"type":"object","properties":properties,"required":required,"additionalProperties":false})
+}
+
+fn tool_catalog() -> Value {
+    let mut tools: Vec<_> = TOOLS.iter().map(|(name, operation, read_only)| {
+        let description = if *operation == "connection.check" {
+            "Check this actual MCP connection: executable, server version, workspace identity and media tool names. Run in the external host session you intend to use; a fresh standalone process cannot prove another session’s cached connection.".to_string()
+        } else if *operation == "agenda.list" {
+            "Read the same combined ongoing/upcoming agenda as Today. All gigs and schedule entries are ordered before classification filtering/pagination. Performance and crew require explicit Work kind; unclassified is never assumed to be performance. Use recordKind=performance for the next classified performance. Read the exact record before attaching artwork. Offset pages are separate snapshots; refresh if records change.".to_string()
+        } else if *operation == "records.relations" {
+            "Read a bounded, stable ordered page of record links. count is the total relation count. For all links, continue with nextCursor unchanged until null. Cursors are bound to the same workspace, entity and record. Report partial results if traversal stops. Refresh for concurrent additions before the cursor. Read-only; does not authorize edits.".to_string()
+        } else if *operation == "records.get" {
+            "Read a record. Relations may be truncated even with detail=full. When relationsTruncated is true, use gigi_records_relations to continue reading links; never claim a bounded preview is complete.".to_string()
+        } else if *operation == "records.save" {
+            "GiGi records.save. For an existing id, omitted fields are preserved by default; supplied field keys merge into the record. Set fieldsMode to replace with a fields object to remove omitted field keys. Pass expectedRecord from a full records.get to reject a stale save. Omitted source and links are preserved. Local private workspace only; results are bounded.".to_string()
+        } else {
+            format!("GiGi {}. Local private workspace only; results are bounded.", operation)
+        };
+        json!({
+            "name":name,
+            "description":description,
+            "inputSchema":schema(operation),
+            "annotations":{"readOnlyHint":read_only,"destructiveHint":operation == &"backup.restore"}
+        })
+    }).collect();
+    tools.extend(music_mcp::catalog());
+    tools.extend(artwork_mcp::catalog());
+    tools.extend(social_mcp::catalog());
+    tools.extend(source_jobs::catalog());
+    json!({"tools":tools})
+}
+
+fn record_tool_use(root: &std::path::Path, name: &str) -> Result<(), String> {
+    fs::create_dir_all(root).map_err(|e| e.to_string())?;
+    let seconds = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_err(|e| e.to_string())?
+        .as_secs();
+    let target = root.join("agent-last-call.json");
+    let temporary = root.join(format!(".agent-last-call-{}.tmp", std::process::id()));
+    fs::write(
+        &temporary,
+        format!("{}\n", json!({"lastToolAt":seconds,"tool":name,"serverVersion":env!("CARGO_PKG_VERSION"),"executable":std::env::current_exe().ok()})),
+    )
+    .map_err(|e| e.to_string())?;
+    fs::rename(&temporary, &target).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+fn reply(root: &std::path::Path, request: &Value) -> Option<Value> {
+    let id = request.get("id")?.clone();
+    let method = request.get("method").and_then(Value::as_str).unwrap_or("");
+    let result = match method {
+        "initialize" => {
+            json!({"protocolVersion":"2025-06-18","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"gigi-local","version":env!("CARGO_PKG_VERSION")}})
+        }
+        "ping" => json!({}),
+        "tools/list" => tool_catalog(),
+        "tools/call" => {
+            let params = request.get("params").unwrap_or(&Value::Null);
+            let name = params.get("name").and_then(Value::as_str).unwrap_or("");
+            let operation = if let Some(op)=source_jobs::tool_operation(name){op}else if music_mcp::handles(name)||social_mcp::handles(name)||artwork_mcp::handles(name){name}else if let Some((_,operation,_))=TOOLS.iter().find(|(candidate,_,_)|*candidate==name){*operation}else{
+                return Some(json!({"jsonrpc":"2.0","id":id,"error":{"code":-32602,"message":"unknown GiGi tool"}}));
+            };
+            let arguments = params
+                .get("arguments")
+                .cloned()
+                .unwrap_or_else(|| json!({}));
+            if !arguments.is_object() {
+                return Some(
+                    json!({"jsonrpc":"2.0","id":id,"error":{"code":-32602,"message":"arguments must be an object"}}),
+                );
+            }
+            let outcome = if operation=="connection.check" {
+                domain::dispatch(root,"workspace.get",arguments).map(|workspace|json!({"serverInfo":{"name":"gigi-local","version":env!("CARGO_PKG_VERSION")},"executable":std::env::current_exe().ok(),"workspace":workspace,"mediaTools":artwork_mcp::catalog().iter().map(|t|t["name"].clone()).collect::<Vec<_>>(),"scope":"this_mcp_connection","nativeGeneration":"external_host_capability_required"}))
+            }else if artwork_mcp::handles(name){artwork_mcp::dispatch(root,name,arguments)}else if music_mcp::handles(name){music_mcp::dispatch(root,name,arguments)}else if social_mcp::handles(name){
+                match std::env::current_exe().ok().and_then(|p|p.parent().map(std::path::Path::to_path_buf)){
+                    Some(resources)=>social_mcp::dispatch(&resources,root,name,arguments),
+                    None=>Err("MCP resource directory unavailable".into()),
+                }
+            }else if source_jobs::handles(operation){
+                match std::env::current_exe().ok().and_then(|p|p.parent().map(std::path::Path::to_path_buf)){
+                    Some(resources)=>source_jobs::dispatch(&resources,root,operation,arguments),
+                    None=>Err("MCP resource directory unavailable".into()),
+                }
+            }else if operation == "context.search" {
+                let resource_dir = std::env::current_exe()
+                    .ok()
+                    .and_then(|p| p.parent().map(std::path::Path::to_path_buf));
+                let requested_workspace = arguments.get("workspaceId").and_then(Value::as_str);
+                let local_workspace = domain::dispatch(root,"workspace.get",json!({}));
+                let valid_workspace = local_workspace.as_ref().ok()
+                    .and_then(|workspace|workspace.get("id")).and_then(Value::as_str)
+                    .zip(requested_workspace).is_some_and(|(local,requested)|local==requested);
+                match resource_dir {
+                    _ if !valid_workspace => Err("Unknown local workspace".into()),
+                    Some(path) => {
+                        gigi_desktop_lib::integrations::dispatch(&path, root, operation, arguments)
+                    }
+                    None => Err("MCP resource directory unavailable".into()),
+                }
+            } else {
+                domain::dispatch(root, operation, arguments)
+            };
+            match outcome {
+                Ok(value) => {
+                    if let Err(error) = record_tool_use(root, name) {
+                        eprintln!("GiGi tool receipt unavailable: {error}");
+                    }
+                    let mut result = json!({"content":[{"type":"text","text":value.to_string()}],"isError":false});
+                    // MCP structuredContent must be an object; empty workspaces return null.
+                    if value.is_object() { result["structuredContent"] = value; }
+                    result
+                }
+                Err(message) => json!({"content":[{"type":"text","text":message}],"isError":true}),
+            }
+        }
+        _ => {
+            return Some(
+                json!({"jsonrpc":"2.0","id":id,"error":{"code":-32601,"message":"method not found"}}),
+            )
+        }
+    };
+    Some(json!({"jsonrpc":"2.0","id":id,"result":result}))
+}
+
+fn read_frame(reader: &mut impl BufRead) -> io::Result<Option<Result<Vec<u8>, ()>>> {
+    const MAX: usize = 1_000_000;
+    let mut bytes=Vec::new();
+    let count=(&mut *reader).take((MAX+1) as u64).read_until(b'\n',&mut bytes)?;
+    if count==0 {return Ok(None);}
+    if bytes.len()>MAX {
+        if bytes.last()!=Some(&b'\n') {reader.skip_until(b'\n')?;}
+        return Ok(Some(Err(())));
+    }
+    Ok(Some(Ok(bytes)))
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let root = data_dir()?;
+    let stdin = io::stdin();
+    let mut stdout = io::stdout().lock();
+    let mut reader=stdin.lock();
+    while let Some(frame) = read_frame(&mut reader)? {
+        let Ok(line) = frame else {
+            writeln!(
+                stdout,
+                "{}",
+                json!({"jsonrpc":"2.0","id":null,"error":{"code":-32600,"message":"request too large"}})
+            )?;
+            stdout.flush()?;
+            continue;
+        };
+        let request: Value = match serde_json::from_slice(&line) {
+            Ok(value) => value,
+            Err(_) => {
+                writeln!(
+                    stdout,
+                    "{}",
+                    json!({"jsonrpc":"2.0","id":null,"error":{"code":-32700,"message":"invalid JSON"}})
+                )?;
+                stdout.flush()?;
+                continue;
+            }
+        };
+        if let Some(response) = reply(&root, &request) {
+            writeln!(stdout, "{response}")?;
+            stdout.flush()?;
+        }
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn external_agents_can_page_all_contact_links_with_a_read_only_scoped_tool() {
+        let root=std::env::temp_dir().join(format!("gigi-relations-mcp-{}",uuid::Uuid::new_v4()));
+        let listed=reply(&root,&json!({"jsonrpc":"2.0","id":1,"method":"tools/list"})).unwrap();
+        let tool=listed["result"]["tools"].as_array().unwrap().iter().find(|t|t["name"]=="gigi_records_relations").expect("Agents need a continuation for truncated relations");
+        assert_eq!(tool["annotations"]["readOnlyHint"],true);assert_eq!(tool["inputSchema"]["properties"]["limit"]["maximum"],100);
+        let wid=domain::dispatch(&root,"workspace.create",json!({"name":"Synthetic MCP relation test"})).unwrap()["id"].as_str().unwrap().to_owned();
+        let contact=domain::dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"Synthetic contact"})).unwrap()["id"].as_str().unwrap().to_owned();
+        let db=rusqlite::Connection::open(root.join("gigi.sqlite")).unwrap();for i in 0..205{let id=format!("meeting-{i:04}");db.execute("INSERT INTO record_index VALUES(?1,'interactions',?2)",rusqlite::params![wid,id]).unwrap();db.execute("INSERT INTO interactions(id,workspace_id,title,fields_json,source_json) VALUES(?1,?2,?3,'{}','{}')",rusqlite::params![id,wid,format!("Synthetic meeting {i}")]).unwrap();db.execute("INSERT INTO relations VALUES(?1,'interactions',?2,'Contacts','contacts',?3)",rusqlite::params![wid,id,contact]).unwrap();}
+        let history:i64=db.query_row("SELECT count(*) FROM history",[],|r|r.get(0)).unwrap();drop(db);let mut cursor=Value::Null;let mut ids=Vec::new();
+        loop{let mut args=json!({"workspaceId":wid,"entity":"contacts","id":contact,"limit":41});if !cursor.is_null(){args["cursor"]=cursor.clone()};let response=reply(&root,&json!({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"gigi_records_relations","arguments":args}})).unwrap();assert_eq!(response["result"]["isError"],false);let page=&response["result"]["structuredContent"];assert_eq!(page["count"],205);for row in page["items"].as_array().unwrap(){ids.push(row["fromId"].as_str().unwrap().to_owned())}cursor=page["nextCursor"].clone();if cursor.is_null(){break;}}
+        for invalid in [json!({"workspaceId":wid,"entity":"contacts","id":contact,"limit":101}),json!({"workspaceId":wid,"entity":"contacts","id":contact,"cursor":"not-a-cursor"}),json!({"workspaceId":"foreign-workspace","entity":"contacts","id":contact})] {
+            let response=reply(&root,&json!({"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"gigi_records_relations","arguments":invalid}})).unwrap();assert_eq!(response["result"]["isError"],true);
+        }
+        assert_eq!(ids,(0..205).map(|i|format!("meeting-{i:04}")).collect::<Vec<_>>());let db=rusqlite::Connection::open(root.join("gigi.sqlite")).unwrap();assert_eq!(db.query_row("SELECT count(*) FROM history",[],|r|r.get::<_,i64>(0)).unwrap(),history);assert_eq!(db.query_row("SELECT count(*) FROM relations",[],|r|r.get::<_,i64>(0)).unwrap(),205);drop(db);fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn oversized_frame_is_discarded_without_losing_next_request() {
+        let mut bytes=vec![b'x';1_000_100];bytes.extend_from_slice(b"\n{}\n");
+        let mut reader=std::io::Cursor::new(bytes);
+        assert!(read_frame(&mut reader).unwrap().unwrap().is_err());
+        assert_eq!(read_frame(&mut reader).unwrap().unwrap().unwrap(),b"{}\n");
+        assert!(read_frame(&mut reader).unwrap().is_none());
+    }
+    #[test]
+    fn exposes_bounded_tools_and_rejects_arbitrary_names() {
+        let listed = reply(
+            std::path::Path::new("/unused"),
+            &json!({"jsonrpc":"2.0","id":1,"method":"tools/list"}),
+        )
+        .unwrap();
+        assert_eq!(listed["result"]["tools"].as_array().unwrap().len(), TOOLS.len()+music_mcp::catalog().len()+social_mcp::catalog().len()+source_jobs::catalog().len()+artwork_mcp::catalog().len());
+        assert_eq!(
+            listed["result"]["tools"].as_array().unwrap().iter().find(|tool|tool["name"]=="gigi_records_list").unwrap()["inputSchema"]["properties"]["limit"]["type"],
+            "integer"
+        );
+        let denied = reply(std::path::Path::new("/unused"), &json!({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"run_sql","arguments":{"sql":"DROP TABLE gigs"}}})).unwrap();
+        assert_eq!(denied["error"]["code"], -32602);
+    }
+    #[test]
+    fn source_conversion_schema_requires_attribution_and_snapshot() {
+        let descriptor = schema("records.save");
+        let source = &descriptor["properties"]["sourceRecord"];
+        assert_eq!(source["additionalProperties"], false);
+        assert_eq!(source["required"], json!(["entity", "id", "connectedAccountId", "expectedRecord"]));
+        assert_eq!(source["properties"]["entity"]["enum"], json!(["interactions", "schedule"]));
+        assert_eq!(source["properties"]["expectedRecord"]["required"], json!(["title", "fields", "source"]));
+    }
+    #[test]
+    fn detail_is_discoverable_and_context_rejects_foreign_workspace() {
+        assert_eq!(schema("context.search")["properties"]["query"]["maxLength"], 200);
+        assert_eq!(schema("context.search")["properties"]["limit"]["minimum"], 1);
+        assert_eq!(schema("context.search")["properties"]["limit"]["maximum"], 5);
+        assert_eq!(schema("records.get")["properties"]["detail"]["enum"], json!(["summary", "full"]));
+        assert_eq!(schema("records.get")["properties"]["saveReceipt"]["required"], json!(["idempotencyKey", "expectedInput"]));
+        let root = std::env::temp_dir().join(format!("gigi-mcp-scope-{}", uuid::Uuid::new_v4()));
+        domain::dispatch(&root,"workspace.create",json!({"name":"Owner"})).unwrap();
+        let response=reply(&root,&json!({"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"gigi_context_search","arguments":{"workspaceId":"foreign","query":"music"}}})).unwrap();
+        assert_eq!(response["result"]["isError"],true);
+        assert!(response["result"]["content"][0]["text"].as_str().unwrap().contains("workspace"));
+        fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn records_save_tool_preserves_details_on_title_only_update() {
+        let root = std::env::temp_dir().join(format!("gigi-mcp-partial-{}", uuid::Uuid::new_v4()));
+        let workspace = domain::dispatch(&root, "workspace.create", json!({"name":"Owner"})).unwrap();
+        let wid = &workspace["id"];
+        let create = reply(&root, &json!({"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"gigi_records_save","arguments":{"workspaceId":wid,"entity":"tasks","title":"Confirm Friday shift","fields":{"Status":"In Progress","Priority":"High"}}}})).unwrap();
+        assert_eq!(create["result"]["isError"], false);
+        let saved = &create["result"]["structuredContent"];
+        let update = reply(&root, &json!({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"gigi_records_save","arguments":{"workspaceId":wid,"entity":"tasks","id":saved["id"],"title":"Confirm Saturday shift"}}})).unwrap();
+        assert_eq!(update["result"]["isError"], false);
+        let revised = &update["result"]["structuredContent"];
+        assert_eq!(revised["title"], "Confirm Saturday shift");
+        assert_eq!(revised["fields"], saved["fields"]);
+        fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn records_save_schema_exposes_replace_and_rejects_missing_fields() {
+        assert_eq!(schema("records.save")["properties"]["fieldsMode"]["enum"], json!(["merge", "replace"]));
+        assert_eq!(schema("records.save")["properties"]["expectedRecord"]["required"], json!(["title", "fields", "source"]));
+        let root = std::env::temp_dir().join(format!("gigi-mcp-replace-{}", uuid::Uuid::new_v4()));
+        let workspace = domain::dispatch(&root, "workspace.create", json!({"name":"Owner"})).unwrap();
+        let wid = &workspace["id"];
+        let create = reply(&root, &json!({"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"gigi_records_save","arguments":{"workspaceId":wid,"entity":"tasks","title":"Task","fields":{"Status":"In Progress","Priority":"High"}}}})).unwrap();
+        let id = &create["result"]["structuredContent"]["id"];
+        let missing = reply(&root, &json!({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"gigi_records_save","arguments":{"workspaceId":wid,"entity":"tasks","id":id,"title":"Task","fieldsMode":"replace"}}})).unwrap();
+        assert_eq!(missing["result"]["isError"], true);
+        let replaced = reply(&root, &json!({"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"gigi_records_save","arguments":{"workspaceId":wid,"entity":"tasks","id":id,"title":"Task","fieldsMode":"replace","fields":{"Priority":"Low"}}}})).unwrap();
+        assert_eq!(replaced["result"]["isError"], false);
+        assert_eq!(replaced["result"]["structuredContent"]["fields"], json!({"Priority":"Low"}));
+        fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn records_tool_use_only_after_successful_call() {
+        let root = std::env::temp_dir().join(format!("gigi-mcp-test-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        reply(
+            &root,
+            &json!({"jsonrpc":"2.0","id":1,"method":"initialize"}),
+        );
+        assert!(!root.join("agent-last-call.json").exists());
+        let denied=reply(&root,&json!({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"gigi_backup_restore","arguments":{"backupId":"x"}}})).unwrap();
+        assert_eq!(denied["error"]["code"], -32602);
+        let created=reply(&root,&json!({"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"gigi_workspace_create","arguments":{"name":"Solo"}}})).unwrap();
+        assert_eq!(created["result"]["isError"], false);
+        let receipt: Value =
+            serde_json::from_slice(&fs::read(root.join("agent-last-call.json")).unwrap()).unwrap();
+        assert_eq!(receipt["tool"], "gigi_workspace_create");
+        let _ = fs::remove_dir_all(root);
+    }
+}

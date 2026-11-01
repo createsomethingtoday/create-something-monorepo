@@ -2,11 +2,11 @@
   "id": "substrate:create-something:topology:completion-report:internal",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-08-25T18:50:37.046Z",
+  "generatedAt": "2026-10-22T14:00:48.677Z",
   "totals": {
-    "nodes": 506,
-    "edges": 1055,
-    "mapped": 506,
+    "nodes": 555,
+    "edges": 1164,
+    "mapped": 555,
     "gaps": 0,
     "gapCounts": {
       "needs_atlas": 0,
@@ -17,12 +17,12 @@
     {
       "status": "mapped",
       "surface": "agent",
-      "count": 31
+      "count": 36
     },
     {
       "status": "mapped",
       "surface": "app",
-      "count": 11
+      "count": 14
     },
     {
       "status": "mapped",
@@ -42,17 +42,17 @@
     {
       "status": "mapped",
       "surface": "guide",
-      "count": 64
+      "count": 82
     },
     {
       "status": "mapped",
       "surface": "mcp",
-      "count": 74
+      "count": 77
     },
     {
       "status": "mapped",
       "surface": "package",
-      "count": 60
+      "count": 70
     },
     {
       "status": "mapped",
@@ -67,29 +67,29 @@
     {
       "status": "mapped",
       "surface": "worker",
-      "count": 163
+      "count": 173
     }
   ],
   "statusByTier": [
     {
       "tier": "Automation",
       "status": "mapped",
-      "count": 268
+      "count": 282
     },
     {
       "tier": "Database",
       "status": "mapped",
-      "count": 27
+      "count": 28
     },
     {
       "tier": "Judgment",
       "status": "mapped",
-      "count": 106
+      "count": 109
     },
     {
       "tier": "Mixed",
       "status": "mapped",
-      "count": 105
+      "count": 136
     }
   ],
   "clientOverlays": [
@@ -136,7 +136,7 @@
       "status": "mapped",
       "tier": "Mixed",
       "runtime": "cloudflare, node",
-      "relationCount": 3
+      "relationCount": 4
     },
     {
       "clientSlug": "outerfields",
@@ -163,7 +163,7 @@
       "status": "mapped",
       "tier": "Mixed",
       "runtime": "cloudflare, node",
-      "relationCount": 2
+      "relationCount": 3
     }
   ],
   "completionLanes": [

@@ -16,12 +16,15 @@ import {
   CONFIRMED_WRITE_FIELD_IDS,
   CONFIRMED_VERSION_FIELDS,
   DEFAULT_AIRTABLE_BASE_ID,
+  DELIST_ASSET_FIELD_IDS,
   FEATURED_ASSET_FIELDS,
   FEATURED_ASSET_FIELD_IDS,
   FEATURED_VOTE_FIELDS,
   FEATURED_VOTE_OPTIONS,
   FEATURED_VOTING_STATE_FIELDS,
   IMPROVEMENT_AREA_OPTIONS,
+  MARKETPLACE_STATUS_DELISTED,
+  MARKETPLACE_STATUS_PUBLISHED,
   METRICS_ASSET_FIELD_IDS,
   QUALITY_RATING_OPTIONS,
   REVIEW_STATUS_OPTIONS,
@@ -78,6 +81,141 @@ function assertNoRawHtmlInCreatorFeedback(field: 'review_feedback' | 'rejection_
   }
 }
 
+// A published Webflow site legitimately serves assets under two cdn.prod.website-files.com
+// prefixes: the site ID (Designer/Assets-panel uploads) and the CMS database ID (uploads
+// made through CMS image fields). Reviewer sessions that crawl the HTML and group image
+// URLs by prefix read the second one as "another project" and ask the creator to
+// re-upload — a fix the creator cannot make, because CMS uploads always land under the
+// CMS database ID (observed: Aentoria ZD 1193704 2026-10-01, Upodes ZD 1203560 2026-10-13).
+// A genuine cross-site dependency does exist: elements pasted between sites keep the
+// original site's asset URLs, which die if that site is deleted (Webflow Help Center,
+// "Copy and paste between sites"). That shows up as a THIRD prefix, neither the site ID
+// nor the CMS database ID, and the feedback must cite it. So this guard rejects only an
+// UNEVIDENCED claim: the item asserts a source relationship ("served from a different
+// project", "hosted in other projects", "another project's images") about an asset and
+// cites no 24-hex ID. An item that withdraws or negates the claim ("ignore the earlier
+// item about images from a different project", "not from another project") is the
+// correction the policy asks for and must go through. An item that both asserts and
+// mentions an earlier round slips past this backstop; the prompt and contract policy
+// are the primary defence.
+// A feedback item is a numbered/bulleted line plus any continuation lines up to the next
+// marker or blank line, so "Images:\nThese come from another project" is one item.
+const CROSS_PROJECT_PHRASE = '(?:different|another|other|separate|external)\\s+(?:webflow\\s+)?projects?';
+const ASSET_NOUN = '(?:images?|assets?|files?|photos?|videos?|media|thumbnails?|cdn|urls?|prefix(?:es)?)';
+// A hosting/transfer construction, not any preposition: "used in another project" is an
+// originality remark, "served from another project" is a hosting claim.
+const HOSTING_RELATION =
+  `(?:(?:served|hosted|load(?:s|ed|ing)?|stored|uploaded|come(?:s)?|coming|pulled|referenced|linked|sourced|fetched|delivered)\\s+(?:from|in|on|by|within|under)` +
+  `|(?:are|is|were|was)\\s+(?:also\\s+|still\\s+)?(?:from|in|on)` +
+  `|${ASSET_NOUN}\\s+(?:from|in|on))`;
+const CROSS_PROJECT_CLAIM_PATTERN = new RegExp(
+  `\\b${HOSTING_RELATION}\\s+(?:a\\s+|an\\s+|the\\s+|this\\s+|that\\s+|some\\s+)?(${CROSS_PROJECT_PHRASE})\\b` +
+    `|\\b(${CROSS_PROJECT_PHRASE.replace('projects?', "project(?:s'|'s)")})\\s+(?:images?|assets?|files?|photos?|videos?|media|cdn|urls?)\\b`,
+  'gi',
+);
+const ASSET_NOUN_PATTERN = new RegExp(`\\b${ASSET_NOUN}\\b`, 'i');
+const ASSET_ID_EVIDENCE_PATTERN = /\b[0-9a-f]{24}\b/i;
+const WITHDRAWAL_CONTEXT_PATTERN =
+  /\b(?:ignore|disregard|withdraw(?:n|s|ing|al)?|retract(?:ed|s|ing|ion)?|false positive|no change (?:is )?needed|not\s+(?:from|served|hosted|loaded|in)\b|(?:earlier|previous|prior)\s+(?:item|request|claim|feedback|round|note)|in error|was (?:wrong|incorrect|mistaken|withdrawn))\b/i;
+// A list marker or a Markdown heading starts a new feedback item; only the list marker
+// makes it a list item (a heading is carried into the list items that follow it).
+const FEEDBACK_LIST_MARKER_PATTERN = /^\s*(?:\d+[.)]|[-*•])\s/;
+const FEEDBACK_ITEM_START_PATTERN = /^\s*(?:\d+[.)]|[-*•]|#{1,6})\s/;
+
+const FEEDBACK_HEADING_MAX_LENGTH = 120;
+
+// Returns the feedback item containing `index`. A list item also carries the short
+// heading/label line that introduces its list ("### Images" / "Images:"), so a claim split
+// across a heading and a bullet is evaluated with both.
+function feedbackItemAt(text: string, index: number): string {
+  const items: Array<{ start: number; end: number; listItem: boolean }> = [];
+  let itemStart = 0;
+  let offset = 0;
+  let previousBlank = false;
+  let currentIsListItem = false;
+  for (const [i, line] of text.split('\n').entries()) {
+    if (i > 0 && (FEEDBACK_ITEM_START_PATTERN.test(line) || previousBlank)) {
+      items.push({ start: itemStart, end: offset - 1, listItem: currentIsListItem });
+      itemStart = offset;
+      currentIsListItem = false;
+    }
+    if (offset === itemStart) currentIsListItem = FEEDBACK_LIST_MARKER_PATTERN.test(line);
+    previousBlank = line.trim() === '';
+    offset += line.length + 1;
+  }
+  items.push({ start: itemStart, end: text.length, listItem: currentIsListItem });
+
+  const position = items.findIndex((range) => index >= range.start && index <= range.end);
+  const item = items[position === -1 ? items.length - 1 : position];
+  const body = text.slice(item.start, item.end);
+  if (!item.listItem) return body;
+  const heading = items
+    .slice(0, position === -1 ? items.length - 1 : position)
+    .reverse()
+    .find((range) => !range.listItem);
+  const headingText = heading ? text.slice(heading.start, heading.end).trim() : '';
+  // A heading is one short line with no sentence punctuation ("### Images", "Images:");
+  // an intro sentence or paragraph is not carried, so its withdrawals and asset words
+  // stay out of the list items.
+  const isHeading =
+    headingText.length > 0 &&
+    headingText.length <= FEEDBACK_HEADING_MAX_LENGTH &&
+    !headingText.includes('\n') &&
+    !/[.;!?](?:\s|$)/.test(headingText);
+  return isHeading ? `${headingText}\n${body}` : body;
+}
+
+// The sentence containing `index`: withdrawal and evidence must sit in the same sentence as
+// the claim, so "not hosted on this project; they come from another project" is still a
+// claim and "Site ID: <id>. Images are hosted in another project" is still unevidenced.
+// A dot ends a sentence only before whitespace or end of text, so a cited
+// cdn.prod.website-files.com/<id>/ prefix stays in the sentence.
+const SENTENCE_BOUNDARY_PATTERN = /[.;!?](?=\s|$)|\n/g;
+
+function sentenceAt(text: string, index: number): string {
+  let start = 0;
+  let end = text.length;
+  for (const boundary of text.matchAll(SENTENCE_BOUNDARY_PATTERN)) {
+    const at = boundary.index ?? 0;
+    if (at < index) {
+      start = at + boundary[0].length;
+    } else {
+      end = at;
+      break;
+    }
+  }
+  return text.slice(start, end);
+}
+
+export function findCrossProjectAssetClaim(text: string): string | null {
+  for (const match of text.matchAll(CROSS_PROJECT_CLAIM_PATTERN)) {
+    const index = match.index ?? 0;
+    const item = feedbackItemAt(text, index);
+    const sentence = sentenceAt(text, index);
+    if (
+      ASSET_NOUN_PATTERN.test(item) &&
+      !ASSET_ID_EVIDENCE_PATTERN.test(sentence) &&
+      !WITHDRAWAL_CONTEXT_PATTERN.test(sentence)
+    ) {
+      return match[1] ?? match[2] ?? match[0];
+    }
+  }
+  return null;
+}
+
+function assertNoCrossProjectAssetClaim(field: 'review_feedback' | 'rejection_feedback', value: string | undefined): void {
+  if (value === undefined) return;
+  const phrase = findCrossProjectAssetClaim(value);
+  if (phrase !== null) {
+    throw new AirtableClientError(
+      'CROSS_PROJECT_ASSET_CLAIM',
+      `${field} claims assets come from a "${phrase}" without citing the asset ID prefix. A cdn.prod.website-files.com/<id>/ prefix other than the site ID is usually the site's CMS database ID (the prefix on CMS-bound images, which change per collection item or page), not another project, and re-uploading keeps that prefix. Flag a cross-site dependency only when the prefix matches neither the site ID (data-wf-site) nor the CMS database ID, and cite that 24-hex prefix in the same sentence as the claim. Otherwise drop this item, or if an earlier round sent it, withdraw it explicitly.`,
+      400,
+      { field, phrase },
+    );
+  }
+}
+
 export interface TemplateReviewQueueItem {
   assetId: string;
   templateName: string;
@@ -109,6 +247,8 @@ export interface TemplateReviewFeaturedCandidate {
   assetId: string;
   templateName: string;
   websiteUrl?: string;
+  /** Public Marketplace listing page, campaign UTM removed so reviewer visits are not attributed to it. */
+  listingUrl?: string;
   submittedDate?: string;
   monthsSinceSubmission: number | null;
   qualityScore?: string;
@@ -123,6 +263,11 @@ export interface TemplateReviewFeaturedCandidate {
   isFeatured: boolean;
   featuredPeriod?: string;
   votingStateId?: string;
+  marketplaceStatus?: string;
+  /** False means the notifier will skip this creator until 🎨🔑Creator WF User ID is backfilled. */
+  hasCreatorWfUserId: boolean;
+  /** Pre-pick checks a reviewer must clear by hand; empty when the candidate is ready. */
+  readinessWarnings: string[];
   voteTallies?: {
     up: number;
     down: number;
@@ -134,12 +279,15 @@ export interface TemplateReviewFeaturedCandidate {
 export interface TemplateReviewFeaturedCandidatesQuery {
   monthsBack?: number;
   includeAlreadyFeatured?: boolean;
+  /** Default true: only 🚀Marketplace Status = Published (drops archived, delisted and unpublished assets). */
+  publishedOnly?: boolean;
   limit?: number;
 }
 
 export interface TemplateReviewFeaturedCandidatesResult {
   monthsBackApplied: number;
   includeAlreadyFeaturedApplied: boolean;
+  publishedOnlyApplied: boolean;
   summary: {
     templatesAvailable: number;
     creatorsAvailable: number;
@@ -149,6 +297,8 @@ export interface TemplateReviewFeaturedCandidatesResult {
     pickReasonsWritten: number;
     /** Candidate count per template category, for balancing the batch across category trends. */
     categoryCounts: Record<string, number>;
+    /** Candidates whose creator has no 🎨🔑Creator WF User ID — the featured email would be skipped. */
+    missingCreatorWfUserIdCount: number;
   };
   candidates: TemplateReviewFeaturedCandidate[];
 }
@@ -203,6 +353,9 @@ export interface TemplateFeaturedFlagResult {
 }
 
 export interface TemplateReviewAsset extends TemplateReviewQueueItem {
+  /** Creator contact for outbound Zendesk tickets: 👀 Override when set, else the 🎨Creator rollup. */
+  creatorEmail?: string;
+  creatorName?: string;
   uid?: string;
   description?: string;
   descriptionShort?: string;
@@ -265,6 +418,9 @@ export interface TemplateReviewVersion {
   versionNumber?: number;
   createdAt?: string;
   createdBy?: string;
+  /** Linked Zendesk ticket (creator-facing review thread), when the intake automation set one. */
+  zendeskTicketId?: string;
+  zendeskSubject?: string;
   rawFields: Record<string, unknown>;
 }
 
@@ -456,7 +612,7 @@ export interface AgentFeedbackQueueQuery {
   viewId?: string;
 }
 
-interface AirtableRecord {
+export interface AirtableRecord {
   id: string;
   createdTime?: string;
   fields: Record<string, unknown>;
@@ -639,13 +795,35 @@ function monthsSinceSubmission(submittedIso: string | undefined, now: Date): num
   return Math.max(0, months);
 }
 
+function withoutQuery(value?: string): string | undefined {
+  if (!value) return undefined;
+  try {
+    const url = new URL(value);
+    url.search = '';
+    url.hash = '';
+    return url.toString();
+  } catch {
+    return undefined;
+  }
+}
+
 function mapFeaturedCandidate(record: AirtableRecord, now: Date): TemplateReviewFeaturedCandidate {
   const fields = record.fields;
   const submittedDate = firstString(fields[CONFIRMED_ASSET_FIELDS.submittedDate]);
+  const marketplaceStatus = firstString(fields[CONFIRMED_ASSET_FIELDS.marketplaceStatus]);
+  const hasCreatorWfUserId = stringArray(fields[FEATURED_ASSET_FIELDS.creatorWfUserId]).some((id) => id.trim() !== '');
+  const readinessWarnings: string[] = [];
+  if (marketplaceStatus !== MARKETPLACE_STATUS_PUBLISHED) {
+    readinessWarnings.push(`not_published: 🚀Marketplace Status is ${marketplaceStatus ?? 'empty'} — a featured template must be live on the Marketplace.`);
+  }
+  if (!hasCreatorWfUserId) {
+    readinessWarnings.push('missing_creator_wf_user_id: the creator has no 🎨🔑Creator WF User ID, so the featured notifier will skip them until it is backfilled.');
+  }
   return {
     assetId: record.id,
     templateName: firstString(fields[CONFIRMED_ASSET_FIELDS.name]) ?? '',
     websiteUrl: firstString(fields[CONFIRMED_ASSET_FIELDS.websiteUrl]),
+    listingUrl: withoutQuery(firstString(fields[FEATURED_ASSET_FIELDS.listingUrlUtm])),
     submittedDate,
     monthsSinceSubmission: monthsSinceSubmission(submittedDate, now),
     qualityScore: firstString(fields[CONFIRMED_ASSET_FIELDS.qualityScore]),
@@ -660,6 +838,9 @@ function mapFeaturedCandidate(record: AirtableRecord, now: Date): TemplateReview
     isFeatured: fields[FEATURED_ASSET_FIELDS.isFeatured] === true,
     featuredPeriod: firstString(fields[FEATURED_ASSET_FIELDS.isFeaturedPeriod]),
     votingStateId: stringArray(fields[FEATURED_ASSET_FIELDS.votingStateLink])[0],
+    marketplaceStatus,
+    hasCreatorWfUserId,
+    readinessWarnings,
   };
 }
 
@@ -808,6 +989,8 @@ function mapAsset(record: AirtableRecord): TemplateReviewAsset {
     decisionDate: firstString(fields[CONFIRMED_ASSET_FIELDS.decisionDate]),
     templatePriceFilter: numberValue(fields[CONFIRMED_ASSET_FIELDS.templatePriceFilter]),
     priceString: firstString(fields[CONFIRMED_ASSET_FIELDS.priceString]),
+    creatorEmail: firstString(fields[CONFIRMED_ASSET_FIELDS.creatorEmailOverride]) ?? firstString(fields[CONFIRMED_ASSET_FIELDS.creatorEmail]),
+    creatorName: firstString(fields[CONFIRMED_ASSET_FIELDS.creatorName]),
   };
 }
 
@@ -1054,6 +1237,8 @@ function mapVersion(record: AirtableRecord): TemplateReviewVersion {
     versionNumber: numberValue(record.fields[CONFIRMED_VERSION_FIELDS.versionNumber]),
     createdAt: firstString(record.fields[CONFIRMED_VERSION_FIELDS.submissionDatetime]) ?? record.createdTime,
     createdBy: collaboratorLabel(record.fields[CONFIRMED_VERSION_FIELDS.createdBy]),
+    zendeskTicketId: firstString(record.fields[CONFIRMED_VERSION_FIELDS.zendeskTicketId]),
+    zendeskSubject: firstString(record.fields[CONFIRMED_VERSION_FIELDS.zendeskSubject]),
     rawFields: record.fields,
   };
 }
@@ -1231,6 +1416,39 @@ export class AirtableClient {
     return (await response.json()) as AirtableRecord;
   }
 
+  /**
+   * Point a template version at a different Zendesk ticket (🧘ZD ID). The Airtable
+   * email composer sends decision emails to this ticket, so the write is guarded by a
+   * fresh-read precondition: `expectedCurrentTicketId` must match what is stored now
+   * (null/undefined for "currently empty"), otherwise nothing is written.
+   */
+  async setVersionZendeskTicket(
+    versionId: string,
+    ticketId: string,
+    expectedCurrentTicketId: string | null | undefined,
+  ): Promise<{ version: TemplateReviewVersion; previousTicketId: string | null }> {
+    if (!/^\d+$/.test(ticketId)) {
+      throw new AirtableClientError('INVALID_TICKET_ID', 'Zendesk ticket ID must be numeric.', 400, { ticket_id: ticketId });
+    }
+    const { version } = await this.getScopedVersion(versionId);
+    const current = version.zendeskTicketId ?? null;
+    if ((expectedCurrentTicketId ?? null) !== current) {
+      throw new AirtableClientError(
+        'VERSION_TICKET_CONFLICT',
+        `Version ${versionId} is linked to ticket ${current ?? '(none)'}, not ${expectedCurrentTicketId ?? '(none)'}. Re-read and confirm again.`,
+        409,
+        { version_id: versionId, current_ticket_id: current, expected_current_ticket_id: expectedCurrentTicketId ?? null },
+      );
+    }
+    if (current === ticketId) {
+      return { version, previousTicketId: current };
+    }
+    const record = await this.updateRecord(TABLE_IDS.assetVersions, versionId, {
+      [CONFIRMED_WRITE_FIELD_IDS.versions.zendeskTicketId]: ticketId,
+    });
+    return { version: mapVersion(record), previousTicketId: current };
+  }
+
   async healthCheck() {
     const records = await this.listRecords({
       tableId: TABLE_IDS.assets,
@@ -1334,11 +1552,14 @@ export class AirtableClient {
    * formula, which also caps how often an asset can be re-featured), not
    * already featured, and submitted within the current month or up to
    * `monthsBack` months earlier. Verified against the live interface
-   * 2026-08-26 (monthsBack=1 → 39 templates / 33 creators).
+   * 2026-08-26 (monthsBack=1 → 39 templates / 33 creators). Unlike the
+   * interface stat, it also drops assets that are not Published by default
+   * (archived assets keep a passing eligibility formula).
    */
   async listFeaturedCandidates(query: TemplateReviewFeaturedCandidatesQuery = {}): Promise<TemplateReviewFeaturedCandidatesResult> {
     const monthsBack = query.monthsBack ?? 1;
     const includeAlreadyFeatured = query.includeAlreadyFeatured ?? false;
+    const publishedOnly = query.publishedOnly ?? true;
     const records = await this.listRecords({
       tableId: TABLE_IDS.assets,
       fieldNames: [
@@ -1347,6 +1568,7 @@ export class AirtableClient {
         CONFIRMED_ASSET_FIELDS.submittedDate,
         CONFIRMED_ASSET_FIELDS.qualityScore,
         CONFIRMED_ASSET_FIELDS.categoryNames,
+        CONFIRMED_ASSET_FIELDS.marketplaceStatus,
         ...Object.values(FEATURED_ASSET_FIELDS),
       ],
       filterByFormula: andFormula([
@@ -1354,6 +1576,7 @@ export class AirtableClient {
         `{${FEATURED_ASSET_FIELDS.isEligibleForUpcomingFeatured}} = 1`,
         `DATETIME_DIFF(TODAY(), {${CONFIRMED_ASSET_FIELDS.submittedDate}}, 'months') <= ${monthsBack}`,
         includeAlreadyFeatured ? null : `NOT({${FEATURED_ASSET_FIELDS.isFeatured}})`,
+        publishedOnly ? `{${CONFIRMED_ASSET_FIELDS.marketplaceStatus}} = '${MARKETPLACE_STATUS_PUBLISHED}'` : null,
       ]),
       sortField: CONFIRMED_ASSET_FIELDS.submittedDate,
       sortDirection: 'desc',
@@ -1410,6 +1633,7 @@ export class AirtableClient {
     return {
       monthsBackApplied: monthsBack,
       includeAlreadyFeaturedApplied: includeAlreadyFeatured,
+      publishedOnlyApplied: publishedOnly,
       summary: {
         templatesAvailable: candidates.length,
         creatorsAvailable: creatorIds.size,
@@ -1418,6 +1642,7 @@ export class AirtableClient {
         reviewerPicksMade: candidates.filter((candidate) => candidate.reviewerPick).length,
         pickReasonsWritten: candidates.filter((candidate) => Boolean(candidate.reviewerPickReason)).length,
         categoryCounts,
+        missingCreatorWfUserIdCount: candidates.filter((candidate) => !candidate.hasCreatorWfUserId).length,
       },
       candidates,
     };
@@ -2003,7 +2228,8 @@ export class AirtableClient {
     return record ? mapVersion(record) : null;
   }
 
-  private async getScopedVersion(versionId: string): Promise<{ version: TemplateReviewVersion; asset: TemplateReviewAsset }> {
+  /** Version + its asset, refusing versions whose asset is not a template (shared Asset Versions table also holds apps). */
+  async getScopedVersion(versionId: string): Promise<{ version: TemplateReviewVersion; asset: TemplateReviewAsset }> {
     const version = await this.getVersionById(versionId);
     if (!version) {
       throw new AirtableClientError('VERSION_NOT_FOUND', 'Template version not found.', 404, {
@@ -2077,6 +2303,8 @@ export class AirtableClient {
     // Creator-facing feedback only; agent_review_feedback is internal and never emailed.
     assertNoRawHtmlInCreatorFeedback('review_feedback', input.review_feedback);
     assertNoRawHtmlInCreatorFeedback('rejection_feedback', input.rejection_feedback);
+    assertNoCrossProjectAssetClaim('review_feedback', input.review_feedback);
+    assertNoCrossProjectAssetClaim('rejection_feedback', input.rejection_feedback);
 
     if (input.release_date !== undefined) {
       throw new AirtableClientError('UNSUPPORTED_WRITE_FIELD', 'release_date is a read-only rollup on template versions. Use release_record_id to link a 🚀Release record instead.', 501, {
@@ -2408,6 +2636,91 @@ export class AirtableClient {
       throw new AirtableClientError('OUT_OF_SCOPE_ASSET', 'Updated asset is outside template-review scope.', 403);
     }
     return mapAsset(updated);
+  }
+
+  /** Id-keyed read of one asset for the delist/relist tools. Template scope is enforced. */
+  async getDelistAssetFields(assetId: string): Promise<AirtableRecord> {
+    const response = await this.request(`/${TABLE_IDS.assets}/${assetId}?returnFieldsByFieldId=true`);
+    if (response.status === 404) {
+      throw new AirtableClientError('ASSET_NOT_FOUND_OR_OUT_OF_SCOPE', 'Template asset not found in template-review scope.', 404, { asset_id: assetId });
+    }
+    if (!response.ok) {
+      throw new AirtableClientError('AIRTABLE_GET_FAILED', 'Failed to fetch Airtable record.', response.status, { asset_id: assetId });
+    }
+    const record = (await response.json()) as AirtableRecord;
+    const type = record.fields[DELIST_ASSET_FIELD_IDS.type];
+    if (typeof type !== 'string' || !type.includes('Template')) {
+      throw new AirtableClientError('ASSET_NOT_FOUND_OR_OUT_OF_SCOPE', 'Template asset not found in template-review scope.', 404, { asset_id: assetId });
+    }
+    return record;
+  }
+
+  /** Id-keyed field write for the delist/relist tools (null clears a field). */
+  async updateDelistAssetFields(assetId: string, fields: Record<string, unknown>): Promise<AirtableRecord> {
+    return this.updateRecord(TABLE_IDS.assets, assetId, fields);
+  }
+
+  async addAssetComment(assetId: string, text: string): Promise<{ id: string }> {
+    const response = await this.request(`/${TABLE_IDS.assets}/${assetId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ text }),
+    });
+    if (!response.ok) {
+      const airtable = await this.readErrorDetails(response);
+      throw new AirtableClientError('AIRTABLE_COMMENT_FAILED', 'Failed to write the Airtable record comment.', response.status, {
+        asset_id: assetId,
+        ...(airtable === undefined ? {} : { airtable }),
+      });
+    }
+    return (await response.json()) as { id: string };
+  }
+
+  /** All comments on an asset, newest first (Airtable's order). */
+  async listAssetComments(assetId: string): Promise<Array<{ id: string; text: string; createdTime: string }>> {
+    const comments: Array<{ id: string; text: string; createdTime: string }> = [];
+    let offset: string | undefined;
+    do {
+      const params = new URLSearchParams({ pageSize: '100' });
+      if (offset) params.set('offset', offset);
+      const response = await this.request(`/${TABLE_IDS.assets}/${assetId}/comments?${params.toString()}`);
+      if (!response.ok) {
+        throw new AirtableClientError('AIRTABLE_COMMENT_LIST_FAILED', 'Failed to list Airtable record comments.', response.status, { asset_id: assetId });
+      }
+      const json = (await response.json()) as { comments?: Array<{ id: string; text: string; createdTime: string }>; offset?: string | null };
+      comments.push(...(json.comments ?? []));
+      offset = json.offset ?? undefined;
+    } while (offset);
+    return comments;
+  }
+
+  /** Assets marked Delisted that still link a CMS item. The page check, not Whalesync's read-back, decides drift. */
+  async listDelistedAssetsWithCmsItems(): Promise<AirtableRecord[]> {
+    const f = DELIST_ASSET_FIELD_IDS;
+    return this.listRecords({
+      tableId: TABLE_IDS.assets,
+      filterByFormula: `AND({${f.marketplaceStatus}}='${MARKETPLACE_STATUS_DELISTED}', ARRAYJOIN({${f.cmsItemIds}})!='')`,
+      fieldIds: [f.type, f.name, f.detailPagePath, f.cmsItemIds, f.cmsStatusActual],
+      returnFieldsByFieldId: true,
+    });
+  }
+
+  /** Published assets that link any of the given CMS items (an update twin can share its page with a newer listing). */
+  async listPublishedAssetsLinkingCmsItems(cmsItemIds: string[]): Promise<AirtableRecord[]> {
+    const ids = [...new Set(cmsItemIds.filter((id) => /^[0-9a-f]{24}$/.test(id)))];
+    const f = DELIST_ASSET_FIELD_IDS;
+    const records = new Map<string, AirtableRecord>();
+    // Chunked so the GET formula stays well under Airtable's 16,000-character URL limit.
+    for (let index = 0; index < ids.length; index += 50) {
+      const matches = ids.slice(index, index + 50).map((id) => `FIND('${id}', ARRAYJOIN({${f.cmsItemIds}}))`).join(', ');
+      const chunk = await this.listRecords({
+        tableId: TABLE_IDS.assets,
+        filterByFormula: `AND({${f.marketplaceStatus}}='${MARKETPLACE_STATUS_PUBLISHED}', OR(${matches}))`,
+        fieldIds: [f.name, f.marketplaceStatus, f.cmsItemIds],
+        returnFieldsByFieldId: true,
+      });
+      for (const record of chunk) records.set(record.id, record);
+    }
+    return [...records.values()];
   }
 
   async completePublishing(

@@ -20,9 +20,9 @@
 
 <style>
   .review-entry { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: clamp(2rem, 4vw, 4rem); align-items: center; padding: clamp(2rem, 5vw, 5rem) max(1.25rem, calc((100% - 80rem) / 2)); color: var(--color-performance-ink); background: var(--color-performance-paper); border-bottom: 1px solid var(--color-performance-line); }
-  .eyebrow { color: var(--color-performance-ink, var(--color-fg-primary)); font-family: var(--font-mono); font-size: var(--text-body-sm); }
+  .eyebrow { color: var(--color-performance-ink, var(--color-performance-fg-primary)); font-family: var(--font-performance-mono); font-size: var(--text-performance-body-sm); }
   h2 { font-size: clamp(2rem, 4vw, 3.5rem); line-height: 1.1; max-width: 22ch; margin: 1rem 0; }
-  p, li { max-width: 65ch; font-size: var(--text-body); line-height: 1.65; }
+  p, li { max-width: 65ch; font-size: var(--text-performance-body); line-height: 1.65; }
   ul { padding-left: 1.25rem; margin: 1.5rem 0; }
   li { margin: .65rem 0; }
   a { color: inherit; text-decoration: underline; text-underline-offset: .2em; }

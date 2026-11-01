@@ -1,3 +1,13 @@
+---
+paths:
+  - "**/*-mcp/**"
+  - "**/auth-platform/**"
+  - "**/mcp-authz/**"
+  - "**/auth/**"
+  - "**/*oauth*"
+  - "**/*auth*.ts"
+---
+
 # SDK Auth Patterns
 
 ## The Deciding Constraint: Runtime

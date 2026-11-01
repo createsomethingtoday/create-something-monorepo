@@ -1,0 +1,15 @@
+{
+  "name": "app-review-context",
+  "version": "0.1.0",
+  "description": "/review <version, asset, or app name> opens one pane with everything a reviewer wants before opening the bundle: capability, status, age, listing URLs, prior rejections, open exception items, and Zendesk tickets. Also fills itself whenever get_review_context runs.",
+  "author": { "name": "Webflow Marketplace team (internal)" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "server": {
+      "type": "string",
+      "title": "App Review MCP server name",
+      "description": "The server's name as /mcp lists it",
+      "default": "claude.ai App Review MCP"
+    }
+  }
+}

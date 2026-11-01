@@ -1,6 +1,21 @@
 import { fetchMarketplaceSnapshot, type MarketplaceSnapshot } from './marketplace-snapshot.mjs';
+import { selectLatestSnapshotRecords } from './latest-snapshot';
 import Airtable from 'airtable';
 import { createHash, randomBytes } from 'node:crypto';
+import {
+  airtableFormulaValue,
+  buildCreatorEmailMatchFormula,
+  buildCreatorRecordEmailMatchFormula,
+  fieldContainsEmail
+} from './creator-email';
+
+// Email matching lives in ./creator-email (no SDK imports) so Workers can share it.
+export {
+  airtableFormulaValue,
+  buildCreatorEmailMatchFormula,
+  buildCreatorRecordEmailMatchFormula,
+  fieldContainsEmail
+};
 
 const TABLES = {
   USERS: 'tbldQNGszIyOjt9a1',
@@ -55,18 +70,6 @@ const CREATOR_EMAIL_FIELDS_PRIORITY = [
   '📧Emails (from 🎨Creator)',
   'CREATOR_EMAIL'
 ] as const;
-
-// Airtable rejects the entire formula when it references a field that is not
-// present in the current base. Keep legacy aliases available for JS-side record
-// parsing, but only use confirmed fields in server-side formulas.
-const CREATOR_EMAIL_FORMULA_FIELDS = [
-  '🎨📧 Creator Email',
-  '🎨📧 Creator WF Account Email',
-  '📧Emails (from 🎨Creator)'
-] as const;
-
-// Email fields on the Creators table (the Assets fields above are lookups of these).
-const CREATOR_RECORD_EMAIL_FIELDS = ['📧Email', '📧WF Account Email', '📧Emails'] as const;
 
 const CATEGORY_FIELDS_PRIORITY = [
   '🏷️Category',
@@ -319,99 +322,6 @@ function extractMarketplaceFreshness(
     timestamp: null,
     source: 'none'
   };
-}
-
-/**
- * Renders a value as a quoted Airtable formula literal.
- *
- * Airtable has no parameter binding, so every embedded value has to be quoted
- * here rather than at the call site. We pick the quote character the value does
- * not contain instead of relying on escape sequences, and reject values holding
- * both quote characters or control characters — a rejected value makes the query
- * fail closed instead of altering the formula.
- */
-export function airtableFormulaValue(input: string): string {
-  if (typeof input !== 'string') {
-    throw new Error('Input must be a string');
-  }
-
-  // eslint-disable-next-line no-control-regex
-  if (/[\u0000-\u001f\u007f]/.test(input)) {
-    throw new Error('Value contains control characters');
-  }
-
-  const hasSingleQuote = input.includes("'");
-  const hasDoubleQuote = input.includes('"');
-
-  if (hasSingleQuote && hasDoubleQuote) {
-    throw new Error('Value cannot contain both single and double quotes');
-  }
-
-  return hasSingleQuote ? `"${input}"` : `'${input}'`;
-}
-
-/**
- * Splits an Airtable email field value into individual addresses.
- * Lookup and rollup fields arrive as comma/semicolon/newline-joined strings.
- */
-function splitEmailList(value: string): string[] {
-  return value
-    .toLowerCase()
-    .split(/[,;\s<>]+/)
-    .map((entry) => entry.trim())
-    .filter(Boolean);
-}
-
-/**
- * Exact-match one email against an Airtable field value.
- *
- * Substring matching here would grant one creator access to another whose
- * address merely contains theirs (`webflow@x.com` inside `team+webflow@x.com`).
- */
-export function fieldContainsEmail(fieldValue: unknown, normalizedEmail: string): boolean {
-  if (!normalizedEmail) return false;
-
-  if (Array.isArray(fieldValue)) {
-    return fieldValue.some((entry) => splitEmailList(String(entry)).includes(normalizedEmail));
-  }
-
-  if (typeof fieldValue === 'string') {
-    return splitEmailList(fieldValue).includes(normalizedEmail);
-  }
-
-  return false;
-}
-
-/**
- * Builds an exact-match clause for one Airtable email field.
- *
- * ARRAYJOIN turns the field into a comma-separated list, so both sides are
- * comma-wrapped to anchor the match to a whole address. Spaces are stripped
- * because string fields may be written as "a@x.com, b@x.com".
- */
-function buildEmailFieldMatchClause(field: string, emailLiteral: string): string {
-  const joined = `LOWER(ARRAYJOIN({${field}}, ","))`;
-  // Normalize the field into a comma-delimited list: strip spaces and treat
-  // display-name brackets ("Name <a@x.com>") as delimiters so an exact match
-  // still finds the address.
-  const normalized = `SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(${joined}, " ", ""), "<", ","), ">", ",")`;
-  const haystack = `',' & ${normalized} & ','`;
-  return `FIND(',' & ${emailLiteral} & ',', ${haystack}) > 0`;
-}
-
-function buildEmailMatchFormula(fields: readonly string[], email: string): string {
-  const emailLiteral = airtableFormulaValue(email.trim().toLowerCase());
-  const clauses = fields.map((field) => buildEmailFieldMatchClause(field, emailLiteral));
-
-  return `OR(${clauses.join(', ')})`;
-}
-
-export function buildCreatorEmailMatchFormula(email: string): string {
-  return buildEmailMatchFormula(CREATOR_EMAIL_FORMULA_FIELDS, email);
-}
-
-export function buildCreatorRecordEmailMatchFormula(email: string): string {
-  return buildEmailMatchFormula(CREATOR_RECORD_EMAIL_FIELDS, email);
 }
 
 export function buildAssetListFormula(email: string): string {
@@ -1537,13 +1447,19 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
     }> {
       const snapshot = await getSnapshot();
       if (snapshot) return { records: options.maxRecords === null ? snapshot.leaderboard : snapshot.leaderboard.slice(0, options.maxRecords ?? 50), freshness: {timestamp: snapshot.snapshotAt, source: 'field', fieldName: 'SNAPSHOT_AT'}, snapshotVersion: snapshot.contentVersion, marketplaceSummary: snapshot.summary };
-      const records = await base(TABLES.LEADERBOARD)
-        .select({
+      // The view stacks every weekly snapshot, so an Airtable-side maxRecords
+      // would mix weeks. Sort newest snapshot first and stop paging once an
+      // older week appears, then cut to the requested size.
+      const latest = await selectLatestSnapshotRecords(
+        base(TABLES.LEADERBOARD).select({
           view: VIEWS.LEADERBOARD,
-          ...(options.maxRecords === null ? {} : { maxRecords: options.maxRecords ?? 50 }),
-          sort: [{ field: 'SALES_RANK', direction: 'asc' }]
+          sort: [
+            { field: 'SNAPSHOT_AT', direction: 'desc' },
+            { field: 'SALES_RANK', direction: 'asc' }
+          ]
         })
-        .all();
+      );
+      const records = options.maxRecords === null ? latest : latest.slice(0, options.maxRecords ?? 50);
 
       return {
         records: records.map((record) => ({
@@ -1576,12 +1492,15 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
     }> {
       const snapshot = await getSnapshot();
       if (snapshot) return {records: snapshot.categories, freshness: {timestamp: snapshot.snapshotAt, source: 'field', fieldName: 'SNAPSHOT_AT'}, snapshotVersion: snapshot.contentVersion, marketplaceSummary: snapshot.summary};
-      const records = await base(TABLES.CATEGORY_PERFORMANCE)
-        .select({
+      const records = await selectLatestSnapshotRecords(
+        base(TABLES.CATEGORY_PERFORMANCE).select({
           view: VIEWS.CATEGORY_PERFORMANCE,
-          sort: [{ field: 'REVENUE_RANK', direction: 'asc' }]
+          sort: [
+            { field: 'SNAPSHOT_AT', direction: 'desc' },
+            { field: 'REVENUE_RANK', direction: 'asc' }
+          ]
         })
-        .all();
+      );
 
       return {
         records: records.map((record) => ({

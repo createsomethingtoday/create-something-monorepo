@@ -1,0 +1,15 @@
+{
+  "name": "review-queue",
+  "version": "0.1.0",
+  "description": "/queue opens a live pane of the Marketplace App review queue from the App Review MCP: open counts by status, then ready-to-review and in-review versions by age, reviewer, and capability.",
+  "author": { "name": "Webflow Marketplace team (internal)" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "server": {
+      "type": "string",
+      "title": "App Review MCP server name",
+      "description": "The server's name as /mcp lists it",
+      "default": "claude.ai App Review MCP"
+    }
+  }
+}

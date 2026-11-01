@@ -1,0 +1,70 @@
+name: Draw agent contracts
+on:
+  pull_request:
+    paths:
+      [
+        'packages/mapping-canvas/**',
+        'packages/canon/**',
+        'packages/agency/canon-overlay/**',
+        'apps/draw-native/scripts/**',
+        '.github/workflows/draw-agent.yml',
+        '.github/workflows/draw-macos-release.yml',
+        '.github/workflows/draw-native-release.yml'
+      ]
+  push:
+    branches: [main]
+    paths:
+      [
+        'packages/mapping-canvas/**',
+        'packages/canon/**',
+        'packages/agency/canon-overlay/**',
+        'apps/draw-native/scripts/**',
+        '.github/workflows/draw-agent.yml',
+        '.github/workflows/draw-macos-release.yml',
+        '.github/workflows/draw-native-release.yml'
+      ]
+permissions:
+  contents: read
+jobs:
+  adapter:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - run: python3 -m unittest discover -s packages/mapping-canvas/scripts -p 'test_draw_*.py' -v
+      - run: node --test apps/draw-native/scripts/mac-release.test.mjs
+  composition:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @create-something/canon package
+      - run: pnpm --filter @create-something/mapping-canvas check
+      - run: pnpm --filter @create-something/mapping-canvas test
+      - run: pnpm --filter @create-something/mapping-canvas build
+      - name: Verify composition behavior and offline exports in isolated Chrome
+        shell: bash
+        env:
+          DRAW_COMPOSITION_URL: http://127.0.0.1:51957
+        run: |
+          set -euo pipefail
+          export CHROME_PATH="$(command -v google-chrome)"
+          pnpm --filter @create-something/mapping-canvas exec vite preview --host 127.0.0.1 --port 51957 --strictPort > /tmp/draw-preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent "$DRAW_COMPOSITION_URL/compose" > /dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent "$DRAW_COMPOSITION_URL/compose" > /dev/null
+          pnpm --filter @create-something/mapping-canvas verify:polish
+          pnpm --filter @create-something/mapping-canvas verify:composition
+          pnpm --filter @create-something/mapping-canvas verify:hyperframes

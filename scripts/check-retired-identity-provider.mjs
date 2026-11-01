@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 
 const retiredProvider = ['cl', 'erk'].join('');
 const standaloneProvider = new RegExp(`(^|[^a-z0-9_])${retiredProvider}([^a-z0-9_]|$)`, 'i');
@@ -39,7 +39,7 @@ if (process.argv.includes('--self-test')) {
 const tracked = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' }).split('\0').filter(Boolean);
 const violations = [];
 for (const file of tracked) {
-  if (!existsSync(file)) continue;
+  if (!existsSync(file) || !statSync(file).isFile()) continue;
   const buffer = readFileSync(file);
   if (buffer.includes(0)) continue;
   const text = buffer.toString('utf8');

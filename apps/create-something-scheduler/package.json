@@ -19,10 +19,12 @@
     "check": "tsc --noEmit",
     "dev": "pnpm build:room-client && wrangler dev",
     "sync:webflow-busy": "swift scripts/sync-webflow-busy-projection.swift",
-    "test": "vitest run && vitest run --config vitest.worker.config.ts",
+    "test": "vitest run && vitest run --config vitest.worker.config.ts && vitest run --config vitest.monitor.config.ts",
     "test:unit": "vitest run",
     "test:worker": "vitest run --config vitest.worker.config.ts",
-    "types": "wrangler types"
+    "types": "wrangler types",
+    "build:monitor": "wrangler deploy --config wrangler.monitor.jsonc --dry-run --outdir dist-monitor",
+    "types:monitor": "wrangler types --config wrangler.monitor.test.jsonc --env-interface SyncMonitorEnv --include-runtime false --strict-vars false src/monitor-env.d.ts"
   },
   "dependencies": {
     "@cloudflare/realtimekit": "2.0.0",
@@ -30,7 +32,7 @@
     "@cloudflare/realtimekit-virtual-background": "0.0.2",
     "@create-something/canon": "workspace:*",
     "@js-temporal/polyfill": "^0.5.1",
-    "@modelcontextprotocol/sdk": "^1.26.0",
+    "@modelcontextprotocol/sdk": "^1.32.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {

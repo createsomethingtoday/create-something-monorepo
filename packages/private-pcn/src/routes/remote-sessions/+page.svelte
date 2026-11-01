@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SerifPhrase from '$lib/components/SerifPhrase.svelte';
   import { api } from '$lib/client';
   import { invalidateAll } from '$app/navigation';
   import { onMount } from 'svelte';
@@ -50,7 +51,7 @@
 >
 <main id="main" class="builder-workspace">
   <p class="eyebrow">PRIVATE / WORK TOGETHER</p>
-  <h1>Your environment.<br /><em>A builder beside you.</em></h1>
+  <h1>Your environment.<br /><SerifPhrase text="A builder beside you." /></h1>
   <p class="lede">
     Get hands-on help with the assets you own or your company’s agreed workflow. RustDesk provides
     attended screen control without a video call. Your creator can offer their own Zoom meeting

@@ -1,4 +1,8 @@
-import { escapePerformanceEmailAttribute, renderPerformanceEmail } from '../performance/email.js';
+import {
+  escapePerformanceEmailAttribute,
+  performanceEmailTokens as emailTokens,
+  renderPerformanceEmail
+} from '../performance/email.js';
 
 const PLAYBOOK_MEDIA = {
   src: 'https://createsomething.agency/images/performance-lab/playbook-home-agent-macro.webp',
@@ -32,10 +36,10 @@ export function buildSubscriberReengagementEmail(
     status: 'SUBSCRIBER CHECK-IN',
     title: 'What brought you here?',
     media: PLAYBOOK_MEDIA,
-    contentHtml: `<p style="margin:0 0 16px;font-size:17px;line-height:1.6;">You subscribed to CREATE SOMETHING. I have not done a good job of following up.</p>
-          <p style="margin:0 0 16px;font-size:17px;line-height:1.6;">The work has moved since then. We are showing more of how we map a workflow, decide where AI helps, and keep the approvals and proof in view.</p>
-          <p style="margin:0 0 24px;font-size:17px;line-height:1.6;">Before I send anything else, I would like to know why you joined, whether this still interests you, what you have seen, and what would be useful next.</p>
-          <p style="margin:0 0 24px;"><a href="${checkInUrl}" style="display:inline-block;padding:13px 18px;border-radius:8px;background:#181713;color:#fffdf7;font-weight:650;text-decoration:none;">Tell me what would help</a></p>
+    contentHtml: `<p style="margin:0 0 16px;font-size:16px;line-height:1.6;">You subscribed to CREATE SOMETHING. I have not done a good job of following up.</p>
+          <p style="margin:0 0 16px;font-size:16px;line-height:1.6;">The work has moved since then. We are showing more of how we map a workflow, decide where AI helps, and keep the approvals and proof in view.</p>
+          <p style="margin:0 0 24px;font-size:16px;line-height:1.6;">Before I send anything else, I would like to know why you joined, whether this still interests you, what you have seen, and what would be useful next.</p>
+          <p style="margin:0 0 24px;"><a href="${checkInUrl}" style="display:inline-block;padding:16px 20px;border:1px solid ${emailTokens.color.ink};background-color:${emailTokens.color.ink};color:${emailTokens.color.panel};font-family:${escapePerformanceEmailAttribute(emailTokens.font.mono)};font-size:13px;line-height:1.2;text-decoration:none;">Tell me what would help</a></p>
           <p style="margin:0;font-size:15px;line-height:1.6;">If you would rather leave, that is completely fine. Either answer is useful.</p>
           <p style="margin:24px 0 0;font-size:15px;line-height:1.6;">Micah<br />CREATE SOMETHING</p>`,
     footerHtml: `You received this because you signed up for CREATE SOMETHING email updates. <a href="${unsubscribeUrl}" style="color:inherit;text-decoration:underline;">Unsubscribe</a>.`

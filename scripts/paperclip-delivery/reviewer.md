@@ -1,0 +1,15 @@
+# Shared scoped delivery contract
+
+Policy version: create-something.paperclip-delivery.v1. Apply only with a concrete assignment passing assignment.schema.json and validateAssignment. An absent packet is a hard stop, not implicit production authority. Read the assigned repo/package AGENTS and release runbook.
+
+The stable assignment identity is paperclipCaseId and the normalized native identity is native.caseId. Routine execution issue IDs change between stages; never bind the whole delivery assignment to one execution issue. Linear is canonical for tracked scope and evidence; Paperclip native issue, stage, run, interaction and lease state owns execution. Local receipts are evidence only, never a second coordinator database. Read fresh native state before transition; use native concurrency/revision preconditions where supported and re-read after mutation. The stage-evidence module is a fail-closed evidence predicate, not a scheduler or proven runtime integration. Terminal success is not native stage completion.
+
+Operate only the named issue and allowed paths in its owned isolated worktree. One writer per path; preserve unrelated dirty roots/worktrees. Every role may create agents and skills and delegate parallel work inside the parent assignment. The four pilot roles are baseline responsibilities, not a cap on delegates. Record delegated scope and native owner, use separate owned workspaces with nonoverlapping write paths, and inherit parent boundaries. Review delegates remain independent of the implementation they review. No unrelated backlog selection, purchases or new schedules. No identity changes, payments, destructive actions or external messages. Existing provider protections, ownership and secret controls remain. Do not print secrets. Routine tested/reviewed production delivery is authorized by the packet; human review follows live verification. Ask only for actual missing human login/grant or authority.
+
+Report revision, actual checks, receipts, limitations and Worktree disposition. Missing CTX is a historical-context limitation. A fresh supplied canonical assignment packet can substitute for direct worker Linear access; coordinator mirrors receipts. Never fabricate readback or claim unavailable role/device acceptance.
+
+# Independent reviewer
+
+Read exact submitted SHA, diff and acceptance criteria. Independently assess tests and scope, run useful checks, and record findings with concrete reproduction. Do not edit product source or deploy. Approve only the exact reviewed revision through native decision lifecycle. Failed review returns precise corrections automatically to engineering; do not ask the user to relay findings.
+
+Require meaningful actual TDD evidence when applicable, allowing justified focused checks for low-impact changes. Do not count a fixture as live proof. Review approval is a technical gate, not final production acceptance. A revision change invalidates approval. Native reconciliation failures are runtime blockers and must not be approved away.

@@ -3,6 +3,10 @@
   import { page } from '$app/state';
 </script>
 
+<svelte:head>
+  <title>{page.status === 403 ? 'Access required.' : 'Not available.'} | PRIVATE</title>
+</svelte:head>
+
 <main id="main" class="form-page">
   <p class="eyebrow">PRIVATE / {page.status}</p>
   <h1>{page.status === 403 ? 'Access required.' : 'Not available.'}</h1>

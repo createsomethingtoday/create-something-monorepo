@@ -56,7 +56,16 @@ export interface TokenMapping {
 /**
  * Visual description for agents without vision
  */
+export interface ReferenceSource {
+	channel: string;
+	url: string;
+	syncedAt: string;
+}
+
 export interface VisualDescription {
+	/** Fetch the image before making visual claims. */
+	basis: 'metadata';
+	requiresVisualInspection: true;
 	/** Brief textual description of the visual */
 	summary: string;
 	/** Dominant colors detected or described */
@@ -74,7 +83,10 @@ export interface ReferenceWithContext {
 	id: string;
 	type: 'example' | 'resource';
 	title: string;
-	channel: string;
+	channel: string | null;
+	/** Verified memberships; empty for legacy records awaiting sync. */
+	channels: string[];
+	sources: ReferenceSource[];
 	/** Visual description for agents without vision */
 	visual: VisualDescription;
 	/** Design principles this reference exemplifies */
@@ -236,6 +248,30 @@ export const CHANNELS_WITH_CONTEXT: ChannelContext[] = [
 			'Single accent color maximum',
 			'Content-first layouts',
 			'Subtle interactions'
+		]
+	},
+	{
+		slug: 'clean-mymjklzsah4',
+		name: 'Clean',
+		description: 'Clean and clear minimalist design',
+		isPrimary: false,
+		intents: ['minimalism', 'layout', 'spacing'],
+		principles: [
+			'Clear hierarchy with restrained composition',
+			'Space separates related groups',
+			'Remove decoration that competes with content'
+		]
+	},
+	{
+		slug: 'minimalism-cpx4fblmr3i',
+		name: 'Minimalism',
+		description: 'Minimalist design references',
+		isPrimary: false,
+		intents: ['minimalism', 'layout', 'spacing'],
+		principles: [
+			'Reduction makes the primary task visible',
+			'Negative space supports hierarchy',
+			'Restrained composition keeps attention on content'
 		]
 	}
 ];
@@ -400,9 +436,7 @@ export function filterChannelsByIntent(intent: DesignIntent): ChannelContext[] {
 /**
  * Filter token mappings by category
  */
-export function filterTokensByCategory(
-	category: TokenMapping['category']
-): TokenMapping[] {
+export function filterTokensByCategory(category: TokenMapping['category']): TokenMapping[] {
 	return CORE_TOKEN_MAPPINGS.filter((token) => token.category === category);
 }
 
@@ -412,57 +446,16 @@ export function filterTokensByCategory(
  */
 export function generateVisualDescription(
 	item: Example | Resource,
-	channel: string
+	channel: string | null
 ): VisualDescription {
 	const channelContext = CHANNELS_WITH_CONTEXT.find((c) => c.slug === channel);
-
-	// Build description from available data
-	const parts: string[] = [];
-
-	if (item.title) {
-		parts.push(item.title);
-	}
-
-	if (item.description) {
-		parts.push(item.description);
-	}
-
-	// Add channel context
-	if (channelContext) {
-		parts.push(`From ${channelContext.name} collection.`);
-	}
-
-	// Infer style from channel
-	const style = inferStyleFromChannel(channel);
-
+	const parts = [item.title, item.description].filter(Boolean);
+	if (channelContext) parts.push(`From ${channelContext.name} collection.`);
 	return {
-		summary: parts.join('. ') || 'Visual reference from taste collection',
-		style,
-		composition: inferCompositionFromChannel(channel)
+		summary: parts.join('. ') || 'Visual reference awaiting inspection',
+		basis: 'metadata',
+		requiresVisualInspection: true
 	};
-}
-
-/**
- * Infer visual style from channel slug
- */
-function inferStyleFromChannel(channel: string): string {
-	if (channel.includes('minimal')) return 'minimalist';
-	if (channel.includes('brutalist')) return 'brutalist';
-	if (channel.includes('swiss')) return 'Swiss International Style';
-	if (channel.includes('rams') || channel.includes('dieter')) return 'Braun industrial';
-	if (channel.includes('motion')) return 'motion-focused';
-	return 'curated reference';
-}
-
-/**
- * Infer composition style from channel
- */
-function inferCompositionFromChannel(channel: string): string {
-	if (channel.includes('swiss')) return 'Grid-based, asymmetric balance';
-	if (channel.includes('brutalist')) return 'Raw, exposed structure';
-	if (channel.includes('minimal')) return 'Generous negative space';
-	if (channel.includes('motion')) return 'Temporal, state-transition focused';
-	return 'Curated visual composition';
 }
 
 /**
@@ -583,21 +576,13 @@ export async function fetchTasteContext(
 			.first<{ count: number }>()
 	]);
 
-	// Get last sync time
-	const lastSyncResult = await db
-		.prepare(
-			`SELECT MAX(created_at) as last_sync FROM examples WHERE master_id = ?`
-		)
-		.bind(MASTER_ID)
-		.first<{ last_sync: number | null }>();
+	const lastSync = await readLastSuccessfulTasteSync(db);
 
 	const stats: TasteStats = {
 		totalExamples: examplesResult?.count ?? 0,
 		totalResources: resourcesResult?.count ?? 0,
 		channelsCurated: CHANNELS_WITH_CONTEXT.length,
-		lastSync: lastSyncResult?.last_sync
-			? new Date(lastSyncResult.last_sync * 1000).toISOString()
-			: null
+		lastSync
 	};
 
 	// Filter channels and tokens by intent if specified
@@ -611,7 +596,7 @@ export async function fetchTasteContext(
 	}
 
 	const context: TasteContext = {
-		version: '1.0.0',
+		version: '1.1.0',
 		generatedAt: new Date().toISOString(),
 		channels,
 		principles: DESIGN_PRINCIPLES,
@@ -632,155 +617,165 @@ export async function fetchTasteContext(
 }
 
 /**
- * Fetch references with full context
+ * Latest completed channel import, independent of source block creation dates.
+ * Null means no verified checkpoint, not that synchronization has never run.
  */
+export async function readLastSuccessfulTasteSync(db: D1Database): Promise<string | null> {
+	const result = await db
+		.prepare('SELECT MAX(last_successful_sync_at) AS last_sync FROM taste_sync_state')
+		.first<{ last_sync: number | null }>();
+	return result?.last_sync != null ? new Date(result.last_sync * 1000).toISOString() : null;
+}
+
+interface Membership {
+	reference_id: string;
+	channel_slug: string;
+	source_url: string;
+	synced_at: number;
+}
+
+async function referenceSources(
+	db: D1Database,
+	ids: string[]
+): Promise<Map<string, ReferenceSource[]>> {
+	const sources = new Map<string, ReferenceSource[]>();
+	if (!ids.length) return sources;
+	const rows = await db
+		.prepare(
+			`SELECT * FROM taste_reference_channels WHERE reference_id IN (${ids.map(() => '?').join(',')}) ORDER BY channel_slug`
+		)
+		.bind(...ids)
+		.all<Membership>();
+	for (const row of rows.results ?? []) {
+		const entries = sources.get(row.reference_id) ?? [];
+		entries.push({
+			channel: row.channel_slug,
+			url: row.source_url,
+			syncedAt: new Date(row.synced_at * 1000).toISOString()
+		});
+		sources.set(row.reference_id, entries);
+	}
+	return sources;
+}
+
+function contextualize(
+	item: Example | Resource,
+	type: 'example' | 'resource',
+	sources: ReferenceSource[],
+	intent?: DesignIntent
+): ReferenceWithContext {
+	const relevant = intent ? new Set(filterChannelsByIntent(intent).map((c) => c.slug)) : null;
+	sources = [...sources].sort((a, b) => {
+		const rank = (slug: string) =>
+			CHANNELS_WITH_CONTEXT.findIndex((channel) => channel.slug === slug);
+		return (
+			(rank(a.channel) < 0 ? Infinity : rank(a.channel)) -
+			(rank(b.channel) < 0 ? Infinity : rank(b.channel))
+		);
+	});
+	const primary = sources.find((source) => !relevant || relevant.has(source.channel));
+	const channel = primary?.channel ?? sources[0]?.channel ?? null;
+	const principles = new Set<string>();
+	const tokens = new Map<string, TokenMapping>();
+	for (const source of sources) {
+		if (relevant && !relevant.has(source.channel)) continue;
+		for (const principle of getPrinciplesForChannel(source.channel)) principles.add(principle);
+		for (const token of getTokensForChannel(source.channel)) tokens.set(token.token, token);
+	}
+	return {
+		id: item.id,
+		type,
+		title: item.title ?? 'Untitled',
+		channel,
+		channels: sources.map((source) => source.channel),
+		sources,
+		visual: generateVisualDescription(item, channel),
+		principles: [...principles],
+		tokens: [...tokens.values()],
+		relatedIds: [],
+		...(type === 'example'
+			? { imageUrl: (item as Example).image_url }
+			: { url: (item as Resource).url }),
+		description: item.description,
+		year: item.year
+	};
+}
+
+/** Retrieve actual channel members; unattributed legacy rows are never guessed. */
 export async function fetchReferencesWithContext(
 	db: D1Database,
 	options: { intent?: DesignIntent; limit?: number } = {}
 ): Promise<ReferenceWithContext[]> {
-	const { intent, limit = 50 } = options;
-
-	// Get channel slugs to filter if intent specified
-	const channelSlugs = intent
-		? filterChannelsByIntent(intent).map((c) => c.slug)
-		: CHANNELS_WITH_CONTEXT.map((c) => c.slug);
-
-	// Fetch examples
-	const examplesResult = await db
-		.prepare(
-			`SELECT * FROM examples WHERE master_id = ? ORDER BY created_at DESC LIMIT ?`
-		)
-		.bind(MASTER_ID, limit)
-		.all<Example>();
-
-	// Fetch resources
-	const resourcesResult = await db
-		.prepare(
-			`SELECT * FROM resources WHERE master_id = ? ORDER BY created_at DESC LIMIT ?`
-		)
-		.bind(MASTER_ID, limit)
-		.all<Resource>();
-
-	const references: ReferenceWithContext[] = [];
-
-	// Transform examples
-	for (const example of examplesResult.results ?? []) {
-		// Infer channel from source (would need to be stored)
-		// For now, use first primary channel
-		const channel = channelSlugs[0] ?? 'canon-minimalism';
-
-		references.push({
-			id: example.id,
-			type: 'example',
-			title: example.title ?? 'Untitled',
-			channel,
-			visual: generateVisualDescription(example, channel),
-			principles: getPrinciplesForChannel(channel),
-			tokens: getTokensForChannel(channel),
-			relatedIds: [], // Would require relationship table
-			imageUrl: example.image_url,
-			description: example.description,
-			year: example.year
-		});
-	}
-
-	// Transform resources
-	for (const resource of resourcesResult.results ?? []) {
-		const channel = channelSlugs[0] ?? 'canon-minimalism';
-
-		references.push({
-			id: resource.id,
-			type: 'resource',
-			title: resource.title,
-			channel,
-			visual: generateVisualDescription(resource, channel),
-			principles: getPrinciplesForChannel(channel),
-			tokens: getTokensForChannel(channel),
-			relatedIds: [],
-			url: resource.url,
-			description: resource.description,
-			year: resource.year
-		});
-	}
-
-	return references.slice(0, limit);
+	const { intent } = options;
+	const requestedLimit = options.limit ?? 50;
+	const limit = Number.isFinite(requestedLimit)
+		? Math.min(100, Math.max(1, Math.trunc(requestedLimit)))
+		: 50;
+	const channelSlugs = intent ? filterChannelsByIntent(intent).map((c) => c.slug) : [];
+	if (intent && !channelSlugs.length) return [];
+	const filter = intent
+		? ` AND EXISTS (SELECT 1 FROM taste_reference_channels membership WHERE membership.reference_id = item.id AND membership.channel_slug IN (${channelSlugs.map(() => '?').join(',')}))`
+		: '';
+	const [examples, resources] = await Promise.all([
+		db
+			.prepare(
+				`SELECT item.* FROM examples item WHERE item.master_id = ?${filter} ORDER BY item.created_at DESC, item.id LIMIT ?`
+			)
+			.bind(MASTER_ID, ...channelSlugs, limit)
+			.all<Example>(),
+		db
+			.prepare(
+				`SELECT item.* FROM resources item WHERE item.master_id = ?${filter} ORDER BY item.created_at DESC, item.id LIMIT ?`
+			)
+			.bind(MASTER_ID, ...channelSlugs, limit)
+			.all<Resource>()
+	]);
+	const items = [
+		...(examples.results ?? []).map((item) => ({ item, type: 'example' as const })),
+		...(resources.results ?? []).map((item) => ({ item, type: 'resource' as const }))
+	]
+		.sort((a, b) => b.item.created_at - a.item.created_at || a.item.id.localeCompare(b.item.id))
+		.slice(0, limit);
+	const sources = await referenceSources(
+		db,
+		items.map(({ item }) => item.id)
+	);
+	return items.map(({ item, type }) =>
+		contextualize(item, type, sources.get(item.id) ?? [], intent)
+	);
 }
 
-/**
- * Fetch a single reference by ID with full context
- */
+/** Single-reference access uses the same verified provenance as list retrieval. */
 export async function fetchReferenceById(
 	db: D1Database,
 	id: string
 ): Promise<ReferenceWithContext | null> {
-	// Try examples first
-	const example = await db
-		.prepare(`SELECT * FROM examples WHERE id = ?`)
-		.bind(id)
-		.first<Example>();
-
-	if (example) {
-		const channel = 'canon-minimalism'; // Would need channel tracking
-
-		// Find related references (same channel, similar time period)
-		const relatedResult = await db
-			.prepare(
-				`SELECT id FROM examples
-				 WHERE master_id = ? AND id != ?
-				 ORDER BY ABS(year - ?) ASC, created_at DESC
-				 LIMIT 5`
-			)
-			.bind(example.master_id, id, example.year ?? 2024)
-			.all<{ id: string }>();
-
-		return {
-			id: example.id,
-			type: 'example',
-			title: example.title ?? 'Untitled',
-			channel,
-			visual: generateVisualDescription(example, channel),
-			principles: getPrinciplesForChannel(channel),
-			tokens: getTokensForChannel(channel),
-			relatedIds: (relatedResult.results ?? []).map((r) => r.id),
-			imageUrl: example.image_url,
-			description: example.description,
-			year: example.year
-		};
-	}
-
-	// Try resources
-	const resource = await db
-		.prepare(`SELECT * FROM resources WHERE id = ?`)
-		.bind(id)
-		.first<Resource>();
-
-	if (resource) {
-		const channel = 'canon-minimalism';
-
-		const relatedResult = await db
-			.prepare(
-				`SELECT id FROM resources
-				 WHERE master_id = ? AND id != ?
-				 ORDER BY created_at DESC
-				 LIMIT 5`
-			)
-			.bind(resource.master_id ?? MASTER_ID, id)
-			.all<{ id: string }>();
-
-		return {
-			id: resource.id,
-			type: 'resource',
-			title: resource.title,
-			channel,
-			visual: generateVisualDescription(resource, channel),
-			principles: getPrinciplesForChannel(channel),
-			tokens: getTokensForChannel(channel),
-			relatedIds: (relatedResult.results ?? []).map((r) => r.id),
-			url: resource.url,
-			description: resource.description,
-			year: resource.year
-		};
-	}
-
-	return null;
+	const example = await db.prepare('SELECT * FROM examples WHERE id = ?').bind(id).first<Example>();
+	const resource = example
+		? null
+		: await db.prepare('SELECT * FROM resources WHERE id = ?').bind(id).first<Resource>();
+	const item = example ?? resource;
+	if (!item) return null;
+	const sources = await referenceSources(db, [id]);
+	// Preserve the single-reference API's existing same-master suggestions.
+	// Similarity does not establish channel membership or visual inspection.
+	const related = example
+		? await db
+				.prepare(
+					`SELECT id FROM examples WHERE master_id = ? AND id != ?
+					 ORDER BY ABS(year - ?) ASC, created_at DESC LIMIT 5`
+				)
+				.bind(example.master_id, id, example.year ?? 2024)
+				.all<{ id: string }>()
+		: await db
+				.prepare(
+					`SELECT id FROM resources WHERE master_id = ? AND id != ?
+					 ORDER BY created_at DESC LIMIT 5`
+				)
+				.bind(item.master_id ?? MASTER_ID, id)
+				.all<{ id: string }>();
+	return {
+		...contextualize(item, example ? 'example' : 'resource', sources.get(id) ?? []),
+		relatedIds: (related.results ?? []).map((reference) => reference.id)
+	};
 }

@@ -146,7 +146,7 @@ Categories are automatically sorted:
 ### 🔍 SEO Bulk Operations
 **Fix multiple pages efficiently:**
 - Title tags: 30-60 characters per page
-- Meta descriptions: 120-160 characters per page
+- Meta descriptions: 150-160 characters per page
 - Work through pages alphabetically for consistency
 
 ### ⚡ Speed Tips

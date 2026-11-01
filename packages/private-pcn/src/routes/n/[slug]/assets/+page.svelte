@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SerifPhrase from '$lib/components/SerifPhrase.svelte';
   import StateBadge from '$lib/components/StateBadge.svelte';
   import StatusNotice from '$lib/components/StatusNotice.svelte';
 
@@ -52,7 +53,7 @@
     <a href={`/n/${data.network?.slug}`}>{data.network?.name}</a><span>/</span><span>Assets</span>
   </div>
   <p class="eyebrow">MCP SERVERS / PLUGINS / SKILLS / WORKFLOWS</p>
-  <h1>Build on<br /><em>working practice.</em></h1>
+  <h1>Build on<br /><SerifPhrase text="working practice." /></h1>
   <p class="lede">
     Reusable engineering assets, with the context to understand them. Check the runtime, permissions
     and license before adding anything to your setup.
@@ -136,7 +137,7 @@
   {#if data.owner}<section class="builder-split">
       <div>
         <p class="eyebrow">01 / PACKAGE YOUR PRACTICE</p>
-        <h2>Make something<br /><em>others can use.</em></h2>
+        <h2>Make something<br /><SerifPhrase text="others can use." /></h2>
         <p>
           Start with one focused capability. Your draft stays private while you add a ZIP package,
           release notes and installation guidance.

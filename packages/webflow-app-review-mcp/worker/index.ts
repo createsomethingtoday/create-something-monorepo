@@ -30,7 +30,7 @@ import { registerPrompts } from '../src/prompts.js';
 import { attachRequestProps } from '../src/request-context.js';
 import { registerResources } from '../src/resources.js';
 import { registerTools } from '../src/tools.js';
-import { ZendeskClient } from '../src/zendesk.js';
+import { parseZendeskGroupId, ZendeskClient } from '../src/zendesk.js';
 
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
@@ -124,7 +124,7 @@ function buildZendesk(env: Env): ZendeskClient | null {
     subdomain: env.ZENDESK_SUBDOMAIN ?? 'webflow2579',
     email: env.ZENDESK_API_EMAIL,
     apiToken: env.ZENDESK_API_TOKEN,
-    marketplaceGroupId: env.MARKETPLACE_ZENDESK_GROUP_ID ? Number(env.MARKETPLACE_ZENDESK_GROUP_ID) : undefined,
+    marketplaceGroupId: parseZendeskGroupId(env.MARKETPLACE_ZENDESK_GROUP_ID),
   });
 }
 

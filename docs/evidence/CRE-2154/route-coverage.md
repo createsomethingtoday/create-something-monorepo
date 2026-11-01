@@ -1,0 +1,76 @@
+# Route coverage
+
+| Route | Palette policy | Inventory decision |
+| --- | --- | --- |
+| `/dispatch` | operator | index |
+| `/` | operator | index |
+| `/technical-review` | operator | index |
+| `/agent-foundation` | operator | index |
+| `/services` | operator | index |
+| `/workflow-compiler-integration` | operator | index |
+| `/agent-readiness` | operator | index |
+| `/book` | operator | index |
+| `/contact` | operator | index |
+| `/map` | operator | index |
+| `/control` | operator | index |
+| `/basketball-systems-lab` | operator | index |
+| `/proof/marketplace-workflow` | operator | index |
+| `/stack` | operator | index |
+| `/partners` | operator | index |
+| `/for-service-providers` | operator | index |
+| `/methodology` | operator | index |
+| `/practice` | operator | index |
+| `/security` | operator | index |
+| `/bearer-token-policy` | operator | index |
+| `/cloudflare` | operator | index |
+| `/dify` | excluded | archive |
+| `/dify/mcp-control-plane` | excluded | archive |
+| `/dify/agent-eval-gates` | excluded | archive |
+| `/dify/ship-dify-app-with-mcp-tools` | excluded | archive |
+| `/dify/template-marketplace-proof` | excluded | archive |
+| `/products` | operator | index |
+| `/products/ground` | operator | index |
+| `/products/signal` | operator | index |
+| `/products/decision` | operator | index |
+| `/products/proof` | operator | index |
+| `/products/loom` | operator | route |
+| `/field-reports` | operator | index |
+| `/field-reports/template-review` | operator | index |
+| `/field-reports/upstream-contributions` | operator | index |
+| `/use-cases/business` | operator | index |
+| `/use-cases/enterprise` | operator | index |
+| `/about` | operator | index |
+| `/workflows` | operator | index |
+| `/workflows/mcp-server-development` | operator | index |
+| `/workflows/ai-workflow-automation` | operator | index |
+| `/workflows/ai-workflow-governance` | operator | index |
+| `/workflows/human-in-the-loop-ai` | operator | index |
+| `/workflows/ai-agent-evaluation` | operator | index |
+| `/workflows/mcp-security-oauth` | operator | index |
+| `/workflows/mcp-vs-api` | operator | index |
+| `/workflows/webflow-marketplace-operations` | operator | index |
+| `/workflows/webflow-app-review` | operator | index |
+| `/workflows/webflow-template-review` | operator | index |
+| `/workflows/workflow-mapping` | operator | index |
+| `/workflows/ai-workflow-observability` | operator | index |
+| `/privacy` | operator | supporting |
+| `/terms` | operator | supporting |
+| `/ai-workflow-control` | operator | supporting |
+| `/ai-workflow-recovery` | operator | supporting |
+| `/marketplace-review-automation` | operator | supporting |
+| `/map/workspace` | operator | supporting |
+| `/arcs` | operator | noindex public catalog |
+| `/arc/{slug}` | operator | noindex public detail; loader checks slug |
+| `/experiments` | operator | noindex public catalog |
+| `/experiments/{slug}` | operator | noindex public detail; loader checks publication |
+
+| `/arcs` | operator | public-noindex |
+| `/arc/app-review-governance` | operator | public-noindex |
+| `/arc/operator-inbound-triage` | operator | public-noindex representative dynamic route |
+| `/experiments` | operator | public-noindex |
+
+`/products/loom` redirects to `/products`. `/map/workspace` is the existing approved utility entry opt-in; it is covered by policy tests, not the public browser sweep.
+
+The Arc and Experiments catalogs and detail route families were added in a follow-up. `{slug}` denotes a route pattern; only existing/public records are served by their loaders.
+
+Dynamic `/arc/[slug]` and `/experiments/[slug]` inherit this policy; Arc serves registered presentations and Experiments serves published visible D1 papers. Unknown/private routes remain outside the public palette.

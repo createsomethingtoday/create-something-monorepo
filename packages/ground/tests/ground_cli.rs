@@ -102,3 +102,110 @@ fn bounded_worker_option_reaches_duplicate_analysis() {
     }
     assert!(!run("5").status.success());
 }
+
+fn run_analysis(directory: &std::path::Path, flags: &[&str]) -> std::process::Output {
+    Command::new(env!("CARGO_BIN_EXE_ground"))
+        .arg("--db").arg(directory.join("registry.db"))
+        .arg("analyze").arg(directory).args(flags).output().unwrap()
+}
+
+#[test]
+fn omitted_checks_run_defaults_and_unknown_or_empty_checks_fail() {
+    let dir = tempdir().unwrap();
+    fs::write(dir.path().join("a.ts"), "export const value = 1;\n").unwrap();
+    let output = run_analysis(dir.path(), &[]);
+    let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(report["checks_run"], serde_json::json!(["duplicates", "orphans"]));
+    assert!(report["coverage"]["duplicates"].is_object());
+    for flags in [vec!["--checks", "typo"], vec!["--checks", ""], vec!["--checks", "typo", "--advisory"]] {
+        let output = run_analysis(dir.path(), &flags);
+        assert!(!output.status.success(), "invalid check accepted: {:?}", flags);
+    }
+}
+
+#[test]
+fn json_outcomes_have_distinct_exits_and_advisory_never_hides_invalid_checks() {
+    let dir = tempdir().unwrap();
+    let body = "export function same(x: number) {\n const a = x + 1;\n const b = a * 2;\n return b;\n}\n";
+    fs::write(dir.path().join("a.ts"), body).unwrap();
+    let assert_result = |flags: &[&str], exit, outcome| {
+        let output = run_analysis(dir.path(), flags);
+        let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+        assert_eq!(report["outcome"], outcome, "{}", report);
+        assert_eq!(output.status.code(), Some(exit), "{}", report);
+    };
+    assert_result(&["--checks", "duplicates"], 0, "CLEAN");
+    fs::write(dir.path().join("b.ts"), body).unwrap();
+    assert_result(&["--checks", "duplicates"], 1, "FINDINGS");
+    assert_result(&["--checks", "duplicates", "--advisory"], 0, "FINDINGS");
+    fs::write(dir.path().join("bad.ts"), "export function broken( {").unwrap();
+    assert_result(&["--checks", "duplicates"], 2, "INCOMPLETE");
+    assert_result(&["--checks", "duplicates", "--advisory"], 0, "INCOMPLETE");
+    fs::remove_file(dir.path().join("bad.ts")).unwrap();
+    assert_result(&["--checks", "duplicates", "--timeout-ms", "0"], 2, "INCOMPLETE");
+    assert_result(&["--checks", "duplicates,environment"], 2, "INCOMPLETE");
+    assert_result(&["--checks", "dead_exports"], 2, "INCOMPLETE");
+    fs::remove_file(dir.path().join("a.ts")).unwrap();
+    fs::remove_file(dir.path().join("b.ts")).unwrap();
+    assert_result(&["--checks", "duplicates"], 3, "NOT_APPLICABLE");
+    assert!(!run_analysis(dir.path(), &["--checks", "typo", "--advisory"]).status.success());
+}
+
+#[test]
+fn invalid_policy_semantics_never_produce_a_clean_analysis() {
+    let dir = tempdir().unwrap();
+    let duplicate = "export function same(x: number) {\n const a = x + 1;\n const b = a * 2;\n return b;\n}\n";
+    for file in ["a.ts", "b.ts"] {
+        fs::write(dir.path().join(file), duplicate).unwrap();
+    }
+    for (policy, field) in [
+        ("thresholds:\n  duplicate_similarity: 101\n", "thresholds.duplicate_similarity"),
+        ("version: '999'\n", "version"),
+        ("ignore:\n  paths: ['[']\n", "ignore.paths"),
+    ] {
+        fs::write(dir.path().join(".ground.yml"), policy).unwrap();
+        let output = run_analysis(dir.path(), &["--checks", "duplicates"]);
+        assert_eq!(output.status.code(), Some(2), "policy accepted: {policy}\n{}", String::from_utf8_lossy(&output.stdout));
+        assert!(String::from_utf8_lossy(&output.stderr).contains(field), "missing field diagnostic: {}", String::from_utf8_lossy(&output.stderr));
+    }
+}
+
+#[test]
+fn doctor_rejects_invalid_targets_and_checks_requested_provenance() {
+    let dir = tempdir().unwrap();
+    let run = |target: &std::path::Path, extra: &[&str]| Command::new(env!("CARGO_BIN_EXE_ground"))
+        .arg("doctor").arg(target).arg("--json").args(extra).output().unwrap();
+    let missing = run(&dir.path().join("missing"), &[]);
+    assert!(!missing.status.success());
+    assert!(String::from_utf8_lossy(&missing.stderr).contains("existing repository or package directory"));
+    fs::write(dir.path().join("file.ts"), "export const x = 1;").unwrap();
+    assert!(!run(&dir.path().join("file.ts"), &[]).status.success());
+    let normal = run(dir.path(), &[]);
+    assert!(normal.status.success());
+    let report: Value = serde_json::from_slice(&normal.stdout).unwrap();
+    assert_eq!(report["policy"]["version"], "1");
+    assert!(report["provenance"]["source_sha_matches"].is_null());
+    assert_eq!(report["provenance"]["attestation_verified"], false);
+    let source = report["build"]["source_sha"].as_str().unwrap();
+    assert!(run(dir.path(), &["--expected-source-sha", source]).status.success());
+    let mismatch = run(dir.path(), &["--expected-source-sha", "0000000000000000000000000000000000000000"]);
+    assert!(!mismatch.status.success());
+    assert!(String::from_utf8_lossy(&mismatch.stderr).contains("source SHA mismatch"));
+    assert!(!run(dir.path(), &["--expected-source-sha", "HEAD"]).status.success());
+    fs::write(dir.path().join(".ground.yml"), "thresholds:\n  duplicate_similarity: 101\n").unwrap();
+    assert!(!run(dir.path(), &[]).status.success());
+}
+
+#[test]
+fn duplicate_cli_threshold_overrides_reject_out_of_range_and_nonfinite_values() {
+    let dir = tempdir().unwrap();
+    for command in ["duplicates", "duplicate-functions"] {
+        for value in ["1.01", "-0.1", "NaN", "inf"] {
+            let output = Command::new(env!("CARGO_BIN_EXE_ground"))
+                .args(["find", command]).arg(dir.path())
+                .arg(format!("--threshold={value}")).output().unwrap();
+            assert!(!output.status.success(), "accepted {command} {value}");
+            assert!(String::from_utf8_lossy(&output.stderr).contains("between 0.0 and 1.0"));
+        }
+    }
+}

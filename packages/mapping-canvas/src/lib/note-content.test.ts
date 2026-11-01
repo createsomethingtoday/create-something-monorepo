@@ -14,6 +14,16 @@ describe('formatted note content', () => {
     expect(noteContentText(content)).toBe('Decision\nRead the proof\n• Ship safely\n“Policy is an artifact.”');
   });
 
+  it('normalizes reactive proxy-backed content into an independent snapshot', () => {
+    const proxied = new Proxy({ blocks: content.blocks.map(block => new Proxy({ ...block,
+      runs: block.runs.map(run => new Proxy({ ...run }, {})) }, {})) }, {});
+    const normalized = normalizeNoteContent(proxied)!;
+    expect(normalized).toEqual(content);
+    expect(() => structuredClone(normalized)).not.toThrow();
+    normalized.blocks[0].runs[0].text = 'Changed snapshot';
+    expect(proxied.blocks[0].runs[0].text).toBe('Decision');
+  });
+
   it('rejects unsafe links, unknown fields, empty runs, and oversized structures', () => {
     expect(normalizeNoteContent({ blocks: [{ type: 'paragraph', runs: [{ text: 'bad', link: 'javascript:alert(1)' }] }] })).toBeNull();
     expect(normalizeNoteContent({ blocks: [{ type: 'paragraph', runs: [{ text: 'space', link: 'https://example.com/a b' }] }] })).toBeNull();

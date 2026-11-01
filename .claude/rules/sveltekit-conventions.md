@@ -1,3 +1,10 @@
+---
+paths:
+  - "**/src/routes/**"
+  - "**/src/lib/**/*.svelte"
+  - "**/svelte.config.js"
+---
+
 # SvelteKit Conventions
 
 ## File Structure

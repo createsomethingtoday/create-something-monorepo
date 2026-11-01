@@ -1,0 +1,4 @@
+interface:
+  display_name: "CREATE SOMETHING Demo Director"
+  short_description: "Turn screen recordings into guided video demos"
+  default_prompt: "Use $create-something-demo-director to turn this screen recording and outcome into a guided CREATE SOMETHING walkthrough."

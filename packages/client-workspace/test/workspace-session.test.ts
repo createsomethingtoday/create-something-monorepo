@@ -23,6 +23,7 @@ class FakeCodexConnection implements CodexConnection {
   responses: Array<{ id: number | string; result: unknown }> = [];
   closed = false;
   resumeOptions: ResumeThreadOptions | undefined;
+  onStartTurn?: () => void;
   #listener: ((message: CodexServerMessage) => void) | undefined;
 
   onMessage(listener: (message: CodexServerMessage) => void): void {
@@ -41,6 +42,7 @@ class FakeCodexConnection implements CodexConnection {
 
   async startTurn(options: StartTurnOptions): Promise<{ turnId: string }> {
     this.turnOptions = options;
+    this.onStartTurn?.();
     return { turnId: 'turn-demo' };
   }
 
@@ -142,6 +144,61 @@ test('session rejects concurrent turns without calling Codex twice', async () =>
   });
 });
 
+test('accepted client request is saved in the session receipt before the agent reply', async () => {
+  await withSession(async ({ session, receiptStore }) => {
+    await session.open();
+    const turn = await session.startTurn({ text: '  Change only the hero heading.  ' });
+
+    const saved = await receiptStore.get('session-demo');
+    assert.deepEqual(
+      saved?.events.filter((event) => event.type === 'user.message').map((event) => event.message),
+      ['Client edit request submitted.']
+    );
+    assert.equal(turn.userEventSequence, saved?.events.find((event) => event.type === 'user.message')?.sequence);
+    assert.ok(
+      (saved?.events.findIndex((event) => event.type === 'user.message') ?? -1) <
+        (saved?.events.findIndex((event) => event.type === 'turn.started') ?? -1)
+    );
+  });
+});
+
+test('client conversation receipts never persist the submitted prompt body', async () => {
+  await withSession(async ({ session, codex, sourceRoot, receiptStore }) => {
+    const prompt = `Set the heading. API key: secret-value sk-example123 at ${sourceRoot}/src/routes/+page.svelte and /private/tmp/client/source.ts and C:\\Users\\client\\source.ts`;
+    await session.open();
+    await session.startTurn({ text: prompt });
+
+    assert.deepEqual(codex.turnOptions?.input[0], { type: 'text', text: prompt });
+    const saved = await receiptStore.get('session-demo');
+    const conversation = saved?.events.find((event) => event.type === 'user.message')?.message;
+    assert.equal(conversation, 'Client edit request submitted.');
+    assert.equal(conversation?.includes('secret-value'), false);
+    assert.equal(conversation?.includes('sk-example123'), false);
+    assert.equal(conversation?.includes(sourceRoot), false);
+    assert.equal(conversation?.includes('/private/tmp/client'), false);
+    assert.equal(conversation?.includes('C:\\Users\\client'), false);
+  });
+});
+
+test('client message precedes immediately streamed agent output in the saved receipt', async () => {
+  await withSession(async ({ session, codex, receiptStore }) => {
+    await session.open();
+    codex.onStartTurn = () => {
+      codex.emit({
+        method: 'item/completed',
+        params: { item: { id: 'instant-reply', type: 'agentMessage', text: 'Done.' } }
+      });
+    };
+    await session.startTurn({ text: 'Set the heading.' });
+
+    const saved = await receiptStore.get('session-demo');
+    const conversation = saved?.events.filter((event) =>
+      event.type === 'user.message' || event.type === 'agent.message'
+    );
+    assert.deepEqual(conversation?.map((event) => event.type), ['user.message', 'agent.message']);
+  });
+});
+
 test('session rejects deploy, publish, invite, and credential intents before Codex', async () => {
   await withSession(async ({ session, codex }) => {
     await session.open();
@@ -159,6 +216,62 @@ test('session rejects deploy, publish, invite, and credential intents before Cod
     }
     assert.equal(codex.turnOptions, undefined);
   });
+});
+
+test('session accepts bounded edits with explicit safety prohibitions', async () => {
+  for (const text of [
+    'Update the headline. Do not deploy, publish, invite, or change credentials.',
+    "Change the hero. Don't deploy or publish. Never rotate API keys.",
+    'Edit the page. Do not deploy or publish.',
+    'Change the hero from “Build what clients can see.” to “Build what clients can verify.” Do not deploy or publish. Use the registered preview.',
+    'Update the hero. “Do not deploy or publish.”',
+    'Update the hero. “Do not deploy or publish”'
+  ]) {
+    await withSession(async ({ session, codex }) => {
+      await session.startTurn({ text });
+      assert.deepEqual(codex.turnOptions?.input, [{ type: 'text', text }]);
+      assert.equal(codex.turnOptions?.sandboxPolicy.networkAccess, false);
+      assert.equal(codex.turnOptions?.approvalPolicy, 'untrusted');
+    });
+  }
+});
+
+test('negative safety language does not exempt a separate restricted request', async () => {
+  for (const text of [
+    'Do not deploy, but publish this site.',
+    'Never publish. Deploy it now.',
+    "Don't forget to deploy this site.",
+    'Do not deploy and then change the password.',
+    'Do not deploy unless I say so; publish now.',
+    'Do not change credentials. Rotate the API keys.'
+  ]) {
+    await withSession(async ({ session, codex }) => {
+      await assert.rejects(session.startTurn({ text }),
+        (error: unknown) => error instanceof WorkspaceSessionError && error.code === 'forbidden_intent');
+      assert.equal(codex.turnOptions, undefined);
+    });
+  }
+});
+
+test('qualified negative wording cannot authorize a restricted positive request', async () => {
+  for (const text of [
+    'Do not deploy only the frontend; include the backend too.',
+    'Do not deploy without approval; approval is granted now.',
+    'Do not publish only the draft.',
+    'Update the hero. “Do not deploy only the frontend.”',
+    'Update the hero. “Do not deploy” only the frontend.',
+    'Never deploy unless approval is granted.',
+    'Do not change credentials without asking; I approve.',
+    'Do not skip this: do not deploy.',
+    'Do not edit the page without deploying.',
+    'Edit the page without deploying or publishing.'
+  ]) {
+    await withSession(async ({ session, codex }) => {
+      await assert.rejects(session.startTurn({ text }),
+        (error: unknown) => error instanceof WorkspaceSessionError && error.code === 'forbidden_intent');
+      assert.equal(codex.turnOptions, undefined);
+    });
+  }
 });
 
 test('session normalizes activity and persists a sanitized terminal receipt', async () => {
@@ -219,6 +332,8 @@ test('session normalizes activity and persists a sanitized terminal receipt', as
     assert.match(serializedEvents, /image_input_failed/);
     assert.match(serializedEvents, /agent_execution_failed/);
 
+    // Let the ordered in-memory receipt saves drain after the event burst.
+    await new Promise<void>((resolve) => setImmediate(resolve));
     const receipt = await receiptStore.get('session-demo');
     assert.equal(receipt?.status, 'failed');
     assert.equal(JSON.stringify(receipt).includes(sourceRoot), false);
@@ -355,4 +470,77 @@ test('JSON receipt store reloads sanitized session state and rejects path-like i
   } finally {
     await rm(stateRoot, { recursive: true, force: true });
   }
+});
+
+
+test('new and resumed Codex threads receive the registered protected preview and proof boundary', async () => {
+  await withSession(async ({ session, codex, sourceRoot, uploadRoot, receiptStore }) => {
+    await session.open();
+    const receipt = session.receipt();
+    session.disconnect();
+    const resumed = new WorkspaceSession({
+      id: receipt.sessionId,
+      workspace: { id: 'demo', label: 'Demo', sourceRoot, editableRoots: [join(sourceRoot, 'src')],
+        preview: { command: 'pnpm', args: ['dev'], port: 4310 } },
+      codex, uploadRoot, receiptStore, initialReceipt: receipt
+    });
+    try {
+      await resumed.open();
+      for (const options of [codex.threadOptions, codex.resumeOptions]) {
+        assert.ok(options);
+        assert.match(options.developerInstructions, /\/api\/workspaces\/demo\/preview/);
+        assert.match(options.developerInstructions, /Do not probe localhost/);
+        assert.match(options.developerInstructions, /Do not look up or launch native desktop apps/);
+        assert.match(options.developerInstructions, /visual verification was not performed/);
+        assert.match(options.developerInstructions, /Do not claim.*verified/i);
+        assert.equal(options.approvalPolicy, 'untrusted');
+      }
+    } finally {
+      await resumed.close();
+    }
+  });
+});
+
+
+test('closing a session drains earlier receipt writes before persisting closed authority', async (t) => {
+  await withSession(async ({ session, codex, receiptStore }) => {
+    await session.open();
+    let releaseWrite!: () => void;
+    let signalWrite!: () => void;
+    let signalWritten!: () => void;
+    const paused = new Promise<void>((resolve) => { releaseWrite = resolve; });
+    const started = new Promise<void>((resolve) => { signalWrite = resolve; });
+    const written = new Promise<void>((resolve) => { signalWritten = resolve; });
+    const put = receiptStore.put.bind(receiptStore);
+    t.mock.method(receiptStore, 'put', async (receipt: Parameters<typeof receiptStore.put>[0]) => {
+      if (receipt.status === 'completed') {
+        signalWrite();
+        await paused;
+        await put(receipt);
+        signalWritten();
+      } else {
+        await put(receipt);
+      }
+    });
+    codex.emit({ method: 'turn/completed', params: { turn: { id: 'turn-delayed', status: 'completed' } } });
+    await started;
+    const closing = session.close();
+    releaseWrite();
+    await written;
+    await closing;
+    assert.equal((await receiptStore.get(session.receipt().sessionId))?.status, 'closed');
+  });
+});
+
+
+test('late Codex events cannot revive a closed session receipt', async () => {
+  await withSession(async ({ session, codex, receiptStore }) => {
+    await session.open();
+    await session.close();
+    const closed = session.receipt();
+    codex.emit({ method: 'turn/completed', params: { turn: { id: 'late-turn', status: 'completed' } } });
+    assert.deepEqual(session.receipt(), closed);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.deepEqual(await receiptStore.get(closed.sessionId), closed);
+  });
 });

@@ -51,17 +51,21 @@ Google OAuth scopes are limited to:
 
 ## Webflow conflict-projection activation
 
-The scheduler OAuth identity remains `micah@createsomething.io`. The Webflow-managed account cannot depend on cross-organization sharing, so the local EventKit producer publishes busy-only state from the exact macOS Calendar source `WEBFLOW` and calendar `micah@webflow.com`:
+The scheduler OAuth identity remains `micah@createsomething.io`. On October 27, 2026, Google Calendar allowed `micah@webflow.com` to share **See only free/busy (hide details)** with that identity. A direct free/busy read verified access. No Webflow event details or additional OAuth credentials are required.
 
-1. Run `pnpm --filter @create-something/create-something-scheduler sync:webflow-busy -- --dry-run` to verify EventKit access and the exact calendar match without making a network request. The producer projects event data immediately to opaque `{ start, end }` intervals; it never reads titles, attendees, descriptions, locations, or private Calendar URLs into the output or Worker payload.
-2. Send the complete replacement projection to `PUT /api/v1/operator/conflict-projections/webflow-google-calendar` with operator authorization and `explicitIntent: true`. The payload must include `source`, `rangeStart`, `rangeEnd`, `observedAt`, `expiresAt`, and `intervals`.
-3. Keep `expiresAt` no more than 90 minutes after `observedAt`. Production cadence is 15 minutes, so a missed run has bounded grace while repeated failures quickly fail closed.
-4. Cover at least the next 28 days. Operator status must report `webflowProjectionFresh: true` and `webflowProjectionHorizonCovered: true` before `/ready` can pass.
-5. Confirm a real Webflow busy interval is absent from Browser, API, and MCP availability while a neighboring open interval remains. Record only timestamps and receipt IDs in CRE-1376.
+The production Worker runs `*/15 * * * *` in UTC. Its scheduled handler calls the host Durable Object, which uses the existing encrypted OAuth credential and `GoogleCalendarPort` to query only `micah@webflow.com`. Successful refreshes publish a 42-day, busy-only projection with a 45-minute TTL through the existing projection validator. Provider errors do not overwrite or extend the previous projection; failed scheduled events surface in Cloudflare observability.
 
-The production sync command is `infisical run --env=prod --path=/ --include-imports=true -- pnpm --filter @create-something/create-something-scheduler sync:webflow-busy`. The script reads the scoped `SCHEDULER_OPERATOR_API_TOKEN` injected at runtime; never place it in the repository, automation prompt, arguments, or logs. The committed defaults intentionally bind to one source/calendar pair and abort if the match is missing or ambiguous.
+Verification:
 
-The recurring job is an ingestion producer, not a runtime dependency. If it stops, the projection expires, `/ready` returns unavailable, and public availability exposes no bookable slots. Restore the job and publish a fresh full replacement; do not extend expiry or disable the projection requirement to make readiness green.
+1. Keep the local producer running during migration.
+2. Read operator status: `webflowCloudRefresh` records the last cloud attempt, trigger (`cron` or `operator`), outcome, receipt, coverage, and expiry without intervals or event metadata.
+3. An operator can invoke `POST /api/v1/operator/conflict-projections/webflow-google-calendar/refresh` with bearer authorization and JSON `{"explicitIntent":true}` to test cloud access. An operator-triggered success is not proof of the cron trigger.
+4. Require a successful `trigger: cron` receipt, advancing `observedAt`, and `ready`, `webflowProjectionFresh`, and `webflowProjectionHorizonCovered` all true. Check public availability excludes a known busy interval and includes a neighboring open interval before retiring the local trigger.
+5. Only after that proof, unload the local LaunchAgent `com.createsomething.scheduler.webflow-busy-sync`. Preserve its wrapper and plist for rollback.
+
+Local fallback remains `apps/create-something-scheduler/scripts/sync-webflow-busy-projection.swift`, bound to EventKit source `WEBFLOW` / calendar `micah@webflow.com`. Runtime credentials come from Infisical. The local producer and cloud producer both publish opaque intervals through the same validator. Do not extend the TTL or disable the projection requirement to hide a refresh failure.
+
+Rollback: bootstrap the preserved local LaunchAgent and require an accepted projection and green readiness before rolling back the cloud deployment or removing its cron. Removing the free/busy share revokes cloud access; failures then retain the last projection only until its original expiry.
 
 ## Approval gates
 
@@ -88,3 +92,27 @@ Stop for explicit operator approval before:
 - If the public scheduling link itself is unhealthy, roll back Agency and Worker to the last green first-party deployments while preserving Durable Object records, first-party receipts, and Google event identifiers for diagnosis.
 - Do not delete RealtimeKit meetings or revoke the App token as part of an ordinary rollback. End active controlled rooms through `RoomService` first.
 - Rotate scheduler-specific secrets if a preview credential or action token is exposed. Do not rotate shared Resend or Turnstile credentials without confirming their other consumers.
+
+## Independent sync warning monitor
+
+`wrangler.monitor.jsonc` owns `create-something-scheduler-monitor`, a separate Worker and singleton `SyncMonitor` Durable Object. Its five-minute cron reads the scheduler's authenticated operator status. It never writes calendar events, bookings, or projections.
+
+Warnings go to `micah@createsomething.io` when the latest cloud refresh fails or is missing, the last successful refresh is at least 20 minutes old, projection expiry is within 20 minutes, or scheduler readiness/status cannot be confirmed. A missed refresh normally leaves 20–25 minutes of warning before the unchanged 45-minute expiry. Provider delivery latency and outages can affect notification timing.
+
+The monitor persists one warning per incident and one recovery after health returns. Frozen email content and an idempotency key are saved before sending. Uncertain sends retry with identical content/key; after 23 hours delivery retries stop for operator reconciliation while scheduler health checks continue rather than risk duplication beyond Resend's 24-hour dedupe window. Monitor failures surface as failed Cloudflare scheduled events; this monitor and the sync still share Cloudflare infrastructure.
+
+Bindings `OPERATOR_API_TOKEN` and `RESEND_API_KEY` are injected from the existing Infisical production secrets. Do not commit or print their values. Activate the cron only after installing the code and secret bindings and running a healthy operator check. The normal scheduler release and its 15-minute refresh remain independent of this monitor deployment.
+
+Operator endpoints on `https://create-something-scheduler-monitor.createsomething.workers.dev` require bearer authorization:
+
+- `GET /status`: last check, trigger provenance, open-incident state, and test receipt.
+- `POST /check`: JSON `{"explicitIntent":true}` performs a real check and sends a warning or recovery if warranted.
+- `POST /test`: JSON `{"explicitIntent":true,"idempotencyKey":"cre-2277-alert-test-v1"}` sends a clearly labelled delivery test to the fixed configured recipient. Reuse that exact key to reconcile this test, not to create a new test. It does not inject a fake incident or alter scheduler health.
+
+Validation adds `vitest.monitor.config.ts` and `pnpm build:monitor`. Generate binding types with `pnpm types:monitor`; the fixture includes secret names with controlled values, never production secrets. The pinned local Workers test binary uses compatibility date 2026-07-11; production monitor compatibility is 2026-10-27 and requires live deployment verification.
+
+Rollback: remove only the monitor's cron from its owning config and redeploy its triggers, preserving incident/delivery receipts for reconciliation. Keep the scheduler's refresh cron and Google sharing unchanged. To restore the old local refresh separately, first run `launchctl enable gui/503/com.createsomething.scheduler.webflow-busy-sync`, then bootstrap its preserved plist.
+
+`POST /reconcile` requires operator authorization plus `explicitIntent: true`, the exact pending `idempotencyKey`, a `reason`, and an evidence-backed `outcome` of `delivered` or `not_delivered`. A delivered outcome also requires the provider `messageId`. It records an atomic reconciliation receipt; stale keys are rejected and identical retries are idempotent. Confirming non-delivery archives the old incident so future checks can open a new incident; confirming delivery resumes the existing incident/recovery flow. Never confirm an outcome without checking provider evidence.
+
+The monitor enables `global_fetch_strictly_public` so its authenticated HTTPS status request reaches the scheduler Worker through Cloudflare’s public routing rather than bypassing Worker routing or failing a same-zone fetch.

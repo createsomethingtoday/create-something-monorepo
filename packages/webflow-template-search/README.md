@@ -19,6 +19,7 @@ Hosting endpoint above.
 - `GET /api/templates/admin/sync-status`
 - `POST /api/templates/admin/refresh-images`
 - `POST /api/templates/admin/backfill-images`
+- `POST /api/templates/admin/refresh-demo-signals`
 - `POST /api/templates/webhooks/webflow`
 
 ## Sync auth
@@ -40,6 +41,62 @@ Use `Authorization: Bearer <SYNC_ADMIN_TOKEN>` or `X-API-Key`.
 
 Designer profile pages should use the Webflow **Template Filter Bar** plus **Template Grid** components instead of a native Collection List when the page needs to show every published template for a creator. The components infer `creator_slug` from `/templates/designers/{slug}` automatically and can bind `creator_record_id` when the current Designer CMS item exposes the sync record ID.
 
+## Demo site signals
+
+`view=full` items carry `demo_signals`: a small, documented summary of the
+template's public demo homepage (`website_url`, the `*.webflow.io` site). It exists so a third party can
+match a live site to a Marketplace template without crawling demo sites. The
+worker fetches each demo homepage itself, on a schedule, with the User-Agent
+`WebflowTemplateSearch/1.0`.
+
+```json
+"demo_signals": {
+  "version": 1,
+  "fetched_at": "2026-10-14T18:07:12.000Z",
+  "frameworks": ["gsap", "scrolltrigger", "swiper"],
+  "has_interactions": true,
+  "class_count": 212,
+  "class_minhash": [1835017, 2301144, "... 32 unsigned 32-bit integers"]
+}
+```
+
+`demo_signals` is `null` until the first successful fetch, and absent on
+`view=grid`. To compare a live site, compute the same signals from its homepage
+HTML with the algorithm below and treat matching `class_minhash` slots divided
+by 32 as the estimated Jaccard similarity of the two class sets.
+
+Algorithm (`src/demo-signals.ts`, output version 1):
+
+1. **Class set.** Collect every value of a `class` attribute, split on
+   whitespace, drop names starting with `w-` or `wf-` (Webflow runtime and
+   font-loader classes shared by every site). Deduplicate.
+2. **`class_count`.** The size of that set.
+3. **`class_minhash`.** For each slot `i` from 0 to 31, the minimum over the set
+   of `fnv1a32(i + ":" + className)`, where `fnv1a32` is the 32-bit FNV-1a hash
+   of the UTF-8 bytes (`fnv1a32("a") === 0xe40c292c`). Empty array when the set
+   is empty.
+4. **`frameworks`.** Library ids whose marker matches the concatenated
+   `<script>` and `<link>` tags. Ids are stable and only ever added:
+   `gsap`, `scrolltrigger`, `lenis`, `swiper`, `splide`, `locomotive-scroll`,
+   `barba`, `three`, `lottie`, `finsweet`, `split-type`, `splitting`, `alpine`,
+   `anime`, `aos`, `typed`, `rive`, `spline`, `matter`.
+5. **`has_interactions`.** Whether any `data-w-id` attribute is present
+   (Webflow interactions).
+
+Refresh: the `7 * * * *` cron resolves 120 templates an hour, never-attempted
+rows first. A failed fetch (404, timeout, non-HTML, body over 2 MB) is retried
+after a day and keeps any previous signals; a success is refreshed after thirty
+days. When a sync changes a template's `website_url`, its signals are cleared
+so the next run re-fetches the new demo. Each batch of eight is written as it
+resolves. `POST /api/templates/admin/refresh-demo-signals?limit=&slug=&slugs=&async=true`
+runs the same job on demand; `async=true` is best effort, because Cloudflare
+cancels HTTP-triggered background work about 30 s after the response, so the
+cron is the durable path and an interrupted run simply resumes there. Progress
+is in `GET /api/templates/admin/sync-status` under `last_demo_signal_refresh`.
+
+Changing anything that alters the output bumps `version`; consumers should
+compare only signals with the same `version`.
+
 ## Search caching
 
 Public responses can be cached for pages 1–10 and queries up to 64 characters.
@@ -51,9 +108,37 @@ Memo entries expire after five minutes for counts and thirty minutes
 for facets. Cache failures fall back to D1. Direct `searchTemplates` callers that
 omit a sync version bypass query memoization.
 
-The retained CMS-filter prototype is not part of this recovery: its `has_cms`
-column and backfill are absent from the current schema. Do not advertise that
-filter or apply its older snapshot over the current listing-visibility rules.
+## CMS capability recovery (not activated)
+
+Production already records migration `0008_template_capabilities.sql` and has
+its six columns. This recovery restores that exact historical migration in source;
+no duplicate column migration should be applied. Read-only production verification
+found 11,501 rows: 9,973 true, 999 false, and 529 unknown on September 21, 2026.
+Unknown values remain null in responses.
+
+Source is Assets checkbox `fldZY9vzOYaaCR5vv` (`ℹ️Type: CMS? (🏗️ only)`).
+Successful Airtable checkbox reads omit unchecked values; malformed values fail.
+With `CMS_FILTER_ENABLED` unset, existing `has_cms` callers retain legacy
+unconstrained search and `applied_filters.has_cms` is null. After explicit enablement,
+true/false filters require zero unknown rows; readiness errors retain CORS headers
+and occur before cache reads.
+
+Authenticated `POST /api/templates/admin/backfill-cms` accepts JSON
+`{"limit":50}` for a read-only preview or `{"limit":50,"apply":true}` for one
+bounded batch (maximum100). Repeat until `counts.unknown` is zero. Each batch
+selects unknown rows, validates a complete source response before writes, updates
+only has_cms with a synced_at concurrency guard, and atomically invalidates search
+caches. Changed rows are skipped and remain resumable; no index rows are removed.
+For a reconciled mismatch in an already-known value, supply an explicit
+`recordIds` array (at most the batch limit). All targets must exist; both the
+previous capability value and synced_at must still match at write time.
+Stop on provider errors or repeated no-progress batches and inspect the source.
+
+Promotion: confirm schema, deploy with filtering disabled, preview/apply bounded
+backfill batches, reconcile counts and IDs, then enable filtering and verify true,
+false and unconstrained results. Do not use a full rebuild to fill this column.
+Rollback: disable CMS_FILTER_ENABLED and restore the prior Worker version, retaining
+the pre-existing database columns and migration history.
 
 ## Featured creator monthly batch
 
@@ -156,7 +241,21 @@ lookup never gates. A pass where the gated share is implausibly high (at least 5
 Summaries report `listing_gated_records`, and each gated slug appears in a `listing_gate`
 warning on `GET /api/templates/admin/sync-status`. Held-out templates are retried by the
 recent-published sweep every incremental run, and the Templates `collection_item_created`
-webhook indexes the record as soon as the CMS item appears. The 2026-09-15 baseline against
+webhook indexes the record as soon as the CMS item appears.
+
+Templates and Designers are read from `/items/live`, not the staged `/items` endpoint: a
+created-but-unpublished item, or a pending edit to a published one, does not exist on the
+public site yet.
+
+Each indexed row stores `listing_confirmed` (1 when the sync matched a live CMS item). When
+the gate fails open, because the lookup failed or the guard kept the batch, the row is indexed
+with `listing_confirmed = 0`. Each incremental run re-checks up to 10 unconfirmed rows, chosen
+from D1 (newest template first), so the gate holds one out once the lookup works. They are not
+taken from the LMT-sorted Airtable sweeps: a quiet row that nobody edits never reaches the top
+of those 50-row fetches (Ironclaw sat behind 1,000+ rows modified after it, 2026-10-08), and
+re-checking every unconfirmed row at once drew Webflow 429s the same day. Summaries report
+`unconfirmed_recheck_records`. (Ironclaw, 2026-10: a paid template stuck on Stripe onboarding stayed indexed as a blank
+card linking to a 404 because nothing re-checked it.) The 2026-09-15 baseline against
 production found exactly 5 of 11,460 indexed rows without a live listing, all of them 404s.
 
 Two details keep the gate safe around edge cases:
@@ -229,6 +328,11 @@ Scheduled maintenance keeps this path hands-off:
 - `17 * * * *`: runs a bounded `image_backfill` pass (`limit=96`) for missing or temporary thumbnails.
 - `47 3 * * *`: runs a conservative `image_prune` pass (`limit=24`) for unresolved missing-image rows
   whose Webflow listing returns `404`.
+- `37 * * * *`: runs a `creator_refresh` pass that re-reads every live Designers CMS item and
+  updates `creator_slug`, `creator_profile_url`, and avatars on the creator's templates by
+  `sync-record-id`. A creator rename changes the Designer item but not the template rows in
+  Airtable, so the incremental sync only catches the templates whose own `📅LMT` moved; this
+  pass closes that gap within the hour when the Designers webhook is missing or not delivered.
 
 ## Sync locking
 
@@ -268,3 +372,15 @@ Set `WEBFLOW_WEBHOOK_SECRET` to the comma-separated signing secrets for the acti
 webhook subscriptions. Template collection events update image fields by `sync-record-id`;
 designer collection events update creator avatars by `sync-record-id` first, then exact
 creator name for older rows missing a linked creator record.
+
+### Project brief price ceiling
+
+`GET /api/templates/search?max_price=99&has_cms=true` applies an inclusive USD template-price ceiling before pagination, counts and facets. `max_price=0` includes confirmed free templates. Unknown prices are excluded under a ceiling unless the free flag confirms a zero price. Omit or leave empty for the existing unconstrained behavior. Invalid/negative/non-finite amounts, values above100000, and more than two decimal places return400. Cache entries include the normalized ceiling. This covers the template price, not a Webflow plan or implementation services.
+
+## Opt-in discovery intent
+
+`discovery=true&q=A+portfolio+site&sort=recommended&strict=true` interprets bounded portfolio requests as Design Portfolio or Photography & Video category membership. `portfolio_kind=designer|photographer|developer|studio|all` makes the audience explicit. Developer retains a keyword constraint because no dedicated developer category exists. Residual terms and all explicit budget, CMS, style, category and price filters still apply before pagination. Negated or ambiguous audience requests stay on the legacy keyword path. Exact template and creator searches are never reinterpreted.
+
+The optional `interpretation` response contains original_query, keywords, audience, label and the resolved category_slugs. Clients must show this interpretation so buyers can correct it. No model call, new database field or source mutation is involved.
+
+`sort=recommended` prioritizes matching featured templates with a nonempty Marketplace pick note, then catalog popularity. For unrecognized keyword intent, text relevance still comes first. This is an attributed editorial signal, not a design-quality score or guarantee of suitability. Existing sort defaults and requests without discovery remain unchanged. Discovery bypasses the public HTTP response cache; query memoization includes the intent and all filters.

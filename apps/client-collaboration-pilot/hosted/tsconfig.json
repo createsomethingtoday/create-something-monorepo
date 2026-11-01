@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target":"ES2022","module":"ESNext","moduleResolution":"Bundler",
+    "lib":["ES2022","DOM"],"types":["@cloudflare/workers-types"],
+    "strict":true,"noEmit":true,"skipLibCheck":true,
+    "baseUrl":"../../../",
+    "paths": {
+      "@create-something/canon/auth/server":["packages/canon/src/lib/auth/server.ts"],
+      "@create-something/auth-platform":["packages/auth-platform/src/index.ts"]
+    }
+  },
+  "include":["./*.ts"]
+}

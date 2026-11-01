@@ -7,8 +7,8 @@
   <meta name="description" content="How CREATE SOMETHING collects, uses, and protects your data. We use Cloudflare only—no Google, no Meta. Session data: 7 days. Analytics: 90 days. Full control over your data." />
 </svelte:head>
 
-<div class="max-w-4xl mx-auto px-6 py-16">
-  <section class="mb-12">
+<div class="privacy-page">
+  <section class="privacy-header">
     <p class="eyebrow">Being-as-Trust</p>
     <h1 class="page-title">Privacy Policy</h1>
     <p class="date-text">Last updated: January 29, 2026</p>
@@ -22,6 +22,17 @@
 </div>
 
 <style>
+  .privacy-page {
+    width: min(56rem, calc(100% - 2.5rem));
+    margin-inline: auto;
+    padding-block: 2rem 3rem;
+  }
+
+  .privacy-header {
+    padding: 0;
+    margin-bottom: 1.5rem;
+  }
+
   .eyebrow {
     font-size: var(--text-body-sm);
     text-transform: uppercase;
@@ -31,7 +42,7 @@
   }
 
   .page-title {
-    font-size: var(--text-h1);
+    font-size: clamp(2rem, 4vw, 3.25rem);
     font-weight: 700;
     color: var(--color-fg-primary);
     margin-bottom: var(--space-xs);

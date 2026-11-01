@@ -30,6 +30,7 @@
 		"library:health": "tsx scripts/check-canon-library-health.ts",
 		"stable-component:depth": "tsx scripts/check-stable-component-depth.ts",
 		"stable-component:depth:gate": "tsx scripts/check-stable-component-depth.ts --fail-on-gaps",
+		"tokens:operator:check": "node scripts/check-operator-palette.mjs",
 		"tokens:performance:check": "tsx scripts/migrate-performance-token-contract.ts",
 		"tokens:performance:write": "tsx scripts/migrate-performance-token-contract.ts --write",
 		"visual:screenshot:check": "tsx scripts/check-canon-visual-screenshots.ts",
@@ -45,7 +46,7 @@
 		"overlay:candidate-readiness": "tsx scripts/render-overlay-candidate-readiness.ts",
 		"overlay:template-files": "tsx scripts/render-project-overlay-template-files.ts",
 		"overlay:instantiate": "tsx scripts/instantiate-project-overlay.ts",
-		"test": "vitest run",
+		"test": "pnpm --dir ../io exec svelte-kit sync && pnpm --dir ../agency exec svelte-kit sync && vitest run",
 		"test:watch": "vitest"
 	},
 	"files": [
@@ -63,7 +64,18 @@
 			"types": "./dist/index.d.ts",
 			"svelte": "./dist/index.js"
 		},
+		"./isometric": {
+			"types": "./dist/isometric/index.d.ts",
+			"svelte": "./dist/isometric/index.js"
+		},
 		"./styles/tokens.css": "./dist/styles/tokens.css",
+		"./styles/workspace.css": "./dist/styles/workspace.css",
+		"./styles/operator.css": "./dist/styles/operator.css",
+		"./styles/operator.tokens.json": "./dist/styles/operator.tokens.json",
+		"./styles/operator-document": {
+			"types": "./dist/styles/operator-document.d.ts",
+			"default": "./dist/styles/operator-document.js"
+		},
 		"./styles/canon.css": "./dist/styles/canon.css",
 		"./styles/components.css": "./dist/styles/components.css",
 		"./styles/editorial.css": "./dist/styles/editorial.css",

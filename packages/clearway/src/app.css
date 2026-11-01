@@ -1,5 +1,6 @@
 /* Canon design tokens (the deprecated @create-something/components package was removed) */
 @import '@create-something/canon/styles/tokens.css';
+@import '@create-something/canon/styles/operator.css';
 
 @tailwind base;
 @tailwind components;
@@ -64,6 +65,56 @@ body {
 	min-height: 100vh;
 	background: var(--color-bg-pure);
 	color: var(--color-fg-primary);
+}
+
+/* Public CLEARWAY pages opt in without changing the embedded or protected app. */
+.clearway-public,
+.docs-public {
+	--color-bg-pure: var(--color-operator-background);
+	--color-bg-elevated: var(--color-operator-background);
+	--color-bg-surface: var(--color-operator-secondary);
+	--color-bg-subtle: var(--color-operator-raised);
+	--color-fg-primary: var(--color-operator-foreground);
+	--color-fg-secondary: var(--color-operator-muted);
+	--color-fg-tertiary: var(--color-operator-muted);
+	--color-fg-muted: var(--color-operator-muted);
+	--color-border-default: var(--color-operator-border);
+	--color-border-emphasis: var(--color-operator-input-border);
+	--color-border-strong: var(--color-operator-focus-ring-accessible);
+	--color-focus: var(--color-operator-focus-ring-accessible);
+	--color-hover: var(--color-operator-hover);
+	--text-h1: clamp(2.25rem, 3.6vw, 3.25rem);
+	--text-h2: clamp(1.5rem, 2.5vw, 2rem);
+	--text-h3: 1.125rem;
+	--text-body-lg: 1rem;
+	--space-xs: 0.5rem;
+	--space-sm: 0.75rem;
+	--space-md: 1rem;
+	--space-lg: 1.5rem;
+	--space-xl: 2rem;
+	--space-2xl: 3rem;
+	--radius-sm: var(--radius-operator-control);
+	--radius-md: 8px;
+	--radius-lg: var(--radius-operator-panel);
+	--radius-performance-sm: 8px;
+	--radius-performance-md: var(--radius-operator-panel);
+	color-scheme: dark;
+	min-height: 100vh;
+	background: var(--color-bg-pure);
+	color: var(--color-fg-primary);
+}
+
+.clearway-public :is(a, button, input, select, textarea):focus-visible,
+.docs-public :is(a, button, input, select, textarea):focus-visible {
+	outline: 2px solid var(--color-focus);
+	outline-offset: 3px;
+}
+
+@media (forced-colors: active) {
+	.clearway-public :is(a, button, input, select, textarea):focus-visible,
+	.docs-public :is(a, button, input, select, textarea):focus-visible {
+		outline-color: Highlight;
+	}
 }
 
 /* Smooth scrolling with reduced motion respect */

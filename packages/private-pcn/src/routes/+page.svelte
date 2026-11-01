@@ -1,4 +1,7 @@
 <script lang="ts">
+  import SerifPhrase from '$lib/components/SerifPhrase.svelte';
+  import HumanInkHandoff from '$lib/components/HumanInkHandoff.svelte';
+  import { inkReveal } from '$lib/ink-motion';
   import Icon from '$lib/components/Icon.svelte';
   let { data } = $props();
   import NetworkPreview from '$lib/components/NetworkPreview.svelte';
@@ -21,15 +24,15 @@
     </div>
     <div class="creator-hero-grid">
       <div>
-        <h1>Share the practice.<br /><em>Package the work.</em></h1>
+        <h1>Share the practice.<br /><SerifPhrase text="Package the work." /></h1>
         <p class="lede">
           Build a private home for your agentic engineering techniques and the tools behind them.
           Bring MCP servers, agent plugins and skills together with the context that makes them
           useful.
         </p>
         <div class="hero-actions">
-          <a class="button" href="/apply" data-impact="primary_action"
-            >Apply as a creator <Icon name="arrow-right" /></a
+          <a class="button" href="/join" data-impact="primary_action"
+            >Request an invitation <Icon name="arrow-right" /></a
           ><a class="inline-link" href="#network-preview"
             >Explore the possibilities <Icon name="arrow-down" /></a
           >
@@ -50,9 +53,9 @@
   <NetworkPreview />
   {#if data.selfServiceEnabled}
     <section id="pricing" class="launch-plan">
-      <div>
+      <div use:inkReveal>
         <p class="eyebrow">CREATOR / MONTHLY</p>
-        <h2>A private home<br />for your <em>practice.</em></h2>
+        <h2>A private home<br />for your <SerifPhrase text="practice." /></h2>
         <p>For independent creators teaching agent workflows, technical methods, and research.</p>
       </div>
       <div>
@@ -65,7 +68,7 @@
           <li>Your network address, membership controls, and record export</li>
         </ul>
         <p>No automatic overage charges. Cancel renewal through your billing portal.</p>
-        <a class="button" href="/apply">Apply to create a network <Icon name="arrow-right" /></a>
+        <a class="button" href="/join">Introduce your practice <Icon name="arrow-right" /></a>
         <p class="muted">
           Custom domains, migrations, and bespoke integrations are available through a separately
           scoped managed build.
@@ -74,16 +77,17 @@
     </section>
   {/if}
   <section class="service-section creator-service" id="the-service">
-    <div>
+    <div use:inkReveal>
       <p class="eyebrow">03 / THE NETWORK IS YOURS</p>
-      <h2>Keep the depth.<br /><em>Choose the boundaries.</em></h2>
+      <h2>Keep the depth.<br /><SerifPhrase text="Choose the boundaries." /></h2>
       <p class="section-intro">
         Your work can be public. Your deeper explanation can have a more deliberate home. We build
         the library, access, and publishing workflow around how you want to teach.
       </p>
+      <HumanInkHandoff />
     </div>
     <div class="service-rows">
-      <article>
+      <article use:inkReveal>
         <span>01</span>
         <div>
           <h3>Organize around what people learn</h3>
@@ -93,7 +97,7 @@
           </p>
         </div>
       </article>
-      <article>
+      <article use:inkReveal>
         <span>02</span>
         <div>
           <h3>Choose what stays private</h3>
@@ -103,7 +107,7 @@
           </p>
         </div>
       </article>
-      <article>
+      <article use:inkReveal>
         <span>03</span>
         <div>
           <h3>Publish without rebuilding a platform</h3>
@@ -113,7 +117,7 @@
           </p>
         </div>
       </article>
-      <article>
+      <article use:inkReveal>
         <span>04</span>
         <div>
           <h3>Make it unmistakably yours</h3>
@@ -128,25 +132,25 @@
   <section class="creator-handoff" id="start">
     <div>
       <p class="eyebrow">04 / A REVIEWED CREATOR NETWORK</p>
-      <h2>Useful work.<br /><em>A standard worth sharing.</em></h2>
+      <h2>Useful work.<br /><SerifPhrase text="A standard worth sharing." /></h2>
       <p>
         Show your credentials and teach one concrete agentic engineering technique. Once approved,
         build a network around the practice and assets you want to share.
       </p>
-      <a class="button" href="/apply" data-impact="primary_action"
-        >Apply as a creator <Icon name="arrow-right" /></a
+      <a class="button" href="/join" data-impact="primary_action"
+        >Request an invitation <Icon name="arrow-right" /></a
       >
       <p>
         <a href="/support">Company project? Explore private support <Icon name="arrow-right" /></a>
       </p>
     </div>
     <div class="delivery-steps">
-      <article>
+      <article use:inkReveal>
         <span>01 / SUBMIT</span>
         <h3>Credentials and a teaching video.</h3>
         <p>Explain the technique, its constraints, how you evaluated it, and where it can fail.</p>
       </article>
-      <article>
+      <article use:inkReveal>
         <span>02 / REVIEW</span>
         <h3>Human judgment before access.</h3>
         <p>
@@ -154,7 +158,7 @@
           hosting after approval.
         </p>
       </article>
-      <article>
+      <article use:inkReveal>
         <span>03 / SHARE</span>
         <h3>Your practice, your offerings.</h3>
         <p>
@@ -168,7 +172,7 @@
 
 <style>
   .launch-plan {
-    padding: 80px 4.5vw;
+    padding: 80px var(--pcn-page-gutter);
     border-top: 1px solid var(--line);
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -177,8 +181,11 @@
   .launch-plan h2 {
     font-size: clamp(36px, 4vw, 60px);
     letter-spacing: -2px;
+    line-height: var(--pcn-leading-heading);
+    margin-bottom: var(--pcn-gap-heading);
   }
   .plan-price {
+    line-height: var(--pcn-leading-price);
     font-size: 48px;
     letter-spacing: -2px;
   }
@@ -187,6 +194,8 @@
     font-size: 14px;
     letter-spacing: 0;
     color: var(--muted);
+    line-height: var(--pcn-leading-body);
+    margin-top: var(--pcn-gap-action);
   }
   .launch-plan li {
     line-height: 1.6;

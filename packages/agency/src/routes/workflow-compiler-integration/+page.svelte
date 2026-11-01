@@ -9,6 +9,8 @@
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
+  import AgencyWayfindingGroup from '$lib/components/AgencyWayfindingGroup.svelte';
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import {
     workflowCompilerIntegrationClose,
     workflowCompilerIntegrationHandoff,
@@ -70,9 +72,11 @@
     <div class="scope__heading">
       <p>Fixed-scope Build</p>
       <h2 id="compiler-scope-title">A narrow integration boundary, written down.</h2>
-      <div>
-        <a href="/services">See the Map → Build → Control path</a>
-        <a href="/map">Start with Map if the workflow is not yet defined</a>
+      <div class="scope__links">
+        <AgencyWayfindingGroup label="Choose a related service path">
+          <AgencyWayfindingSign kind="build" label="See the Build path" detail="This integration is a separately scoped project." href="/services" />
+          <AgencyWayfindingSign kind="map" label="Still defining the task?" detail="Use Map to name the workflow and approval points." href="/map" />
+        </AgencyWayfindingGroup>
       </div>
     </div>
 
@@ -177,24 +181,10 @@
     line-height: 0.96;
   }
 
-  .scope__heading div {
+  .scope__links {
     grid-column: 2;
     grid-row: 1 / 3;
-    display: grid;
-    gap: 0.85rem;
     align-self: end;
-  }
-
-  .scope__heading a {
-    color: inherit;
-    font-size: 0.9rem;
-    line-height: 1.4;
-    text-underline-offset: 0.25rem;
-  }
-
-  .scope__heading a:hover,
-  .scope__heading a:focus-visible {
-    color: var(--color-performance-signal, #0f62fe);
   }
 
   .scope__grid {
@@ -255,12 +245,12 @@
 
     .scope__heading > p,
     .scope__heading h2,
-    .scope__heading div {
+    .scope__links {
       grid-column: 1;
       grid-row: auto;
     }
 
-    .scope__heading div {
+    .scope__links {
       margin-top: 1rem;
     }
 

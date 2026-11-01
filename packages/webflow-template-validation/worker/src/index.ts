@@ -34,13 +34,15 @@ import {
 	SnippetInstallResponse,
 	SnippetStatusResponse,
 	SnippetRotateTokenRequest,
+	OauthSiteAccessEvidence,
 	ValidationRunScope,
 	ValidationSubmitRequest,
 	ValidationSubmitResponse
 } from './types';
+import { normalizePublishedHost, verifyOauthSiteAccess } from './utils/oauth-site-evidence';
 
 const REVIEW_SNIPPET_VERSION = '0.3.0';
-const WORKER_VERSION = '2.4.0';
+const WORKER_VERSION = '2.7.0';
 const REVIEW_SNIPPET_MARKER = '__wf_review_snippet_v1';
 const REVIEW_SNIPPET_ASSET_PATH = '/app-validator/snippet/review.js';
 const REVIEW_JOB_RETENTION_MS = 30 * 60 * 1000;
@@ -173,6 +175,12 @@ interface ValidationCategoryDetail {
 	issues: ValidationCategoryIssueDetail[];
 }
 
+interface PublishedHostLookupRecord {
+	publishedHostSha256: string;
+	siteId: string;
+	updatedAt: string;
+}
+
 interface ValidationResultRecord {
 	schemaVersion: 'validator_app_submission_latest.v0.1';
 	siteId: string;
@@ -186,6 +194,7 @@ interface ValidationResultRecord {
 	failedCategoryDetails?: ValidationCategoryDetail[];
 	warningCategoryDetails?: ValidationCategoryDetail[];
 	scope?: ValidationRunScope;
+	evidence?: OauthSiteAccessEvidence | null;
 	artifact: ValidationResultArtifactPersistResult;
 }
 
@@ -286,6 +295,7 @@ const snippetTokens = new Map<string, SnippetTokenRecord>();
 const snippetTokenLookups = new Map<string, SnippetTokenLookupRecord>();
 const submissionStates = new Map<string, SubmissionRateLimitState>();
 const validationResultRecords = new Map<string, ValidationResultRecord>();
+const publishedHostLookups = new Map<string, PublishedHostLookupRecord>();
 const bridgeUsageRecords = new Map<string, BridgeUsageIndexRecord>();
 
 export class ReviewJobsDurableObject {
@@ -941,6 +951,26 @@ async function handleValidationSubmit(
 		);
 	}
 
+	const evidenceInput = body.evidence;
+	if (
+		evidenceInput !== undefined &&
+		(!evidenceInput ||
+			typeof evidenceInput !== 'object' ||
+			evidenceInput.type !== 'oauth_site_access' ||
+			typeof evidenceInput.accessToken !== 'string' ||
+			evidenceInput.accessToken.trim() === '')
+	) {
+		return jsonResponse(
+			{
+				error: "Invalid evidence: expected { type: 'oauth_site_access', accessToken: string }",
+				correlationId
+			},
+			400,
+			request
+		);
+	}
+	const evidenceAccessToken = evidenceInput?.accessToken?.trim();
+
 	const submittedAt = new Date().toISOString();
 	const siteName =
 		typeof body.siteName === 'string' && body.siteName.trim() !== ''
@@ -1013,6 +1043,40 @@ async function handleValidationSubmit(
 		});
 	}
 
+	let evidence: OauthSiteAccessEvidence | null = null;
+	if (evidenceAccessToken) {
+		const verification = await verifyOauthSiteAccess(env, siteId, evidenceAccessToken);
+		if (!verification.ok) {
+			ctx.waitUntil(
+				emitTelemetry(env, {
+					event: 'submission.evidence_rejected',
+					correlationId,
+					level: 'error',
+					payload: {
+						siteId,
+						siteUrl,
+						evidenceType: 'oauth_site_access',
+						reason: verification.reason
+					}
+				})
+			);
+			return jsonResponse(
+				{ error: 'oauth_site_access evidence could not be verified', correlationId },
+				403,
+				request
+			);
+		}
+		evidence = {
+			type: 'oauth_site_access',
+			verified: true,
+			verifiedAt: new Date().toISOString(),
+			workspaceId: verification.workspaceId,
+			accessTokenSha256: await sha256Hex(evidenceAccessToken),
+			rawAccessTokenStored: false,
+			publishedHosts: verification.publishedHosts
+		};
+	}
+
 	const nextAttempt: SubmissionAttemptRecord = {
 		at: submittedAt,
 		origin: request.headers.get('Origin'),
@@ -1061,6 +1125,7 @@ async function handleValidationSubmit(
 		submittedAt,
 		correlationId,
 		payloadHash,
+		evidence,
 		validationResults: sanitizedResults
 	});
 	const latestResult: ValidationResultRecord = {
@@ -1076,9 +1141,14 @@ async function handleValidationSubmit(
 		failedCategoryDetails: getFailedCategoryDetails(sanitizedResults),
 		warningCategoryDetails: getWarningCategoryDetails(sanitizedResults),
 		scope: sanitizeValidationScope(sanitizedResults.scope),
+		evidence,
 		artifact: artifactResult
 	};
+	const previousResult = await getValidationResultState(env, siteId);
 	await persistValidationResultState(env, latestResult);
+	if (evidence) {
+		await persistPublishedHostLookups(env, siteId, evidence.publishedHosts, submittedAt, previousResult?.evidence?.publishedHosts ?? []);
+	}
 	const knownSnippetState = await getSnippetTokenState(env, siteId);
 	await recordBridgeUsage(env, {
 		event: 'validation_submit',
@@ -1118,7 +1188,8 @@ async function handleValidationSubmit(
 			flagged: anomalyReasons.length > 0,
 			reasons: anomalyReasons
 		},
-		artifact: artifactResult
+		artifact: artifactResult,
+		evidence
 	};
 
 	ctx.waitUntil(
@@ -1135,6 +1206,8 @@ async function handleValidationSubmit(
 				artifactPersisted: artifactResult.persisted,
 				artifactKey: artifactResult.key,
 				artifactReason: artifactResult.reason,
+				evidenceType: evidence?.type,
+				evidenceVerified: evidence ? true : undefined,
 				remaining,
 				anomalyReasons
 			}
@@ -1225,6 +1298,7 @@ async function handleValidationSubmissionLatest(
 	const url = new URL(request.url);
 	const siteIdParam = normalizeSiteId(url.searchParams.get('siteId'));
 	const bridgeTokenSha256 = normalizeSha256(url.searchParams.get('bridgeTokenSha256'));
+	const publishedHost = normalizePublishedHost(url.searchParams.get('publishedUrl'));
 	let siteId = siteIdParam;
 
 	if (!siteId && bridgeTokenSha256) {
@@ -1232,9 +1306,17 @@ async function handleValidationSubmissionLatest(
 		siteId = lookup?.siteId || null;
 	}
 
-	if (!siteId && !bridgeTokenSha256) {
+	if (!siteId && !bridgeTokenSha256 && publishedHost) {
+		const lookup = await getPublishedHostLookupState(env, publishedHost);
+		siteId = lookup?.siteId || null;
+	}
+
+	if (!siteId && !bridgeTokenSha256 && !publishedHost) {
 		return jsonResponse(
-			{ error: 'Missing required query param: siteId or bridgeTokenSha256', correlationId },
+			{
+				error: 'Missing required query param: siteId, bridgeTokenSha256, or publishedUrl',
+				correlationId
+			},
 			400,
 			request
 		);
@@ -1246,7 +1328,9 @@ async function handleValidationSubmissionLatest(
 				status: 'missing',
 				accepted: false,
 				passed: false,
-				message: 'No Validator app site mapping was found for this bridge token.',
+				message: bridgeTokenSha256
+					? 'No Validator app site mapping was found for this bridge token.'
+					: 'No verified Validator site mapping was found for this published URL.',
 				correlationId,
 				rawBridgeTokenStored: false
 			},
@@ -1300,6 +1384,7 @@ async function handleValidationSubmissionLatest(
 			failedCategoryDetails: record.failedCategoryDetails || [],
 			warningCategoryDetails: record.warningCategoryDetails || [],
 			scope: record.scope,
+			evidence: record.evidence ?? null,
 			artifact: record.artifact
 		},
 		200,
@@ -2014,6 +2099,51 @@ async function getSnippetTokenLookupState(
 	return record;
 }
 
+async function getPublishedHostLookupState(
+	env: unknown,
+	publishedHost: string
+): Promise<PublishedHostLookupRecord | null> {
+	const publishedHostSha256 = await sha256Hex(publishedHost);
+	const inMemory = publishedHostLookups.get(publishedHostSha256);
+	if (inMemory) return inMemory;
+
+	const persisted = await readDurableState(env, `published-host:${publishedHostSha256}`);
+	if (!persisted) return null;
+
+	const record = persisted as PublishedHostLookupRecord;
+	publishedHostLookups.set(publishedHostSha256, record);
+	return record;
+}
+
+/**
+ * Write the host → site mappings for the latest verified host set and retire
+ * mappings from the previous verification that are no longer in it, so a
+ * renamed or removed domain cannot keep resolving to this site's record.
+ */
+async function persistPublishedHostLookups(
+	env: unknown,
+	siteId: string,
+	publishedHosts: string[],
+	updatedAt: string,
+	previousHosts: string[] = []
+): Promise<void> {
+	for (const publishedHost of publishedHosts) {
+		const publishedHostSha256 = await sha256Hex(publishedHost);
+		const lookup: PublishedHostLookupRecord = { publishedHostSha256, siteId, updatedAt };
+		publishedHostLookups.set(publishedHostSha256, lookup);
+		await writeDurableState(env, `published-host:${publishedHostSha256}`, lookup);
+	}
+	const current = new Set(publishedHosts);
+	for (const staleHost of previousHosts.filter((host) => !current.has(host))) {
+		const publishedHostSha256 = await sha256Hex(staleHost);
+		const existing = await getPublishedHostLookupState(env, staleHost);
+		// Only retire a mapping this site still owns; another site may have claimed the host since.
+		if (existing && existing.siteId !== siteId) continue;
+		publishedHostLookups.delete(publishedHostSha256);
+		await deleteDurableState(env, `published-host:${publishedHostSha256}`);
+	}
+}
+
 async function getSubmissionState(
 	env: unknown,
 	siteId: string
@@ -2430,6 +2560,17 @@ async function readDurableState(env: unknown, name: string): Promise<unknown | n
 	}
 }
 
+async function deleteDurableState(env: unknown, name: string): Promise<void> {
+	const ns = getDurableNamespace(env);
+	if (!ns) return;
+	try {
+		const stub = ns.get(ns.idFromName(name));
+		await stub.fetch('https://internal/state', { method: 'DELETE' });
+	} catch {
+		// A failed retire leaves a stale mapping; the next verification retries it.
+	}
+}
+
 async function writeDurableState(
 	env: unknown,
 	name: string,
@@ -2445,13 +2586,26 @@ async function writeDurableState(
 	});
 }
 
+const TELEMETRY_SECRET_KEYS = new Set(['accesstoken', 'access_token', 'authorization', 'bridgetoken']);
+
+function redactTelemetryPayload(value: unknown, depth = 0): unknown {
+	if (depth > 6 || !value || typeof value !== 'object') return value;
+	if (Array.isArray(value)) return value.map((item) => redactTelemetryPayload(item, depth + 1));
+	return Object.fromEntries(
+		Object.entries(value as Record<string, unknown>).map(([key, entry]) => [
+			key,
+			TELEMETRY_SECRET_KEYS.has(key.toLowerCase()) ? '[redacted]' : redactTelemetryPayload(entry, depth + 1)
+		])
+	);
+}
+
 async function emitTelemetry(env: unknown, event: TelemetryEvent): Promise<void> {
 	const payload = {
 		event: event.event,
 		correlationId: event.correlationId,
 		level: event.level || 'info',
 		timestamp: new Date().toISOString(),
-		...event.payload
+		...(redactTelemetryPayload(event.payload) as Record<string, unknown>)
 	};
 	const line = JSON.stringify(payload);
 	if (event.level === 'error') {
@@ -3084,6 +3238,7 @@ async function persistValidationResultArtifact(
 		submittedAt: string;
 		correlationId: string;
 		payloadHash: string;
+		evidence: OauthSiteAccessEvidence | null;
 		validationResults: ValidationSubmitRequest['validationResults'];
 	}
 ): Promise<ValidationResultArtifactPersistResult> {
@@ -3091,7 +3246,7 @@ async function persistValidationResultArtifact(
 	if (!bucket) return { persisted: false, reason: 'r2_not_configured' };
 
 	const artifact = {
-		schema_version: 'validator_app_results_submission.v0.1',
+		schema_version: 'validator_app_results_submission.v0.2',
 		source_lane: 'validator_app_supplemental_results',
 		site_id: input.siteId,
 		site_name: input.siteName,
@@ -3100,6 +3255,7 @@ async function persistValidationResultArtifact(
 		correlation_id: input.correlationId,
 		payload_hash: input.payloadHash,
 		raw_bridge_token_stored: false,
+		evidence: input.evidence,
 		validation_results: input.validationResults
 	};
 	const body = JSON.stringify(artifact, null, 2);

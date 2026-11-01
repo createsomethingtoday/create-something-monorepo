@@ -1,0 +1,228 @@
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { mkdtemp, readFile, stat, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import test from 'node:test';
+import { login, logout, getSessionAccessToken, LoginError } from '../src/auth.ts';
+
+const ISSUER='https://id.createsomething.space';
+const RESOURCE='https://gigi-connector.createsomething.workers.dev';
+
+test('PKCE login binds registered redirect, resource, userinfo and private session', async () => {
+  const root=await mkdtemp(join(tmpdir(),'gigi-auth-'));
+  const calls:Request[]=[];
+  let redirect='';
+  let challenge='';
+  let state='';
+  let verifier='';
+  const request:typeof fetch=async (input,init)=>{
+    const req=new Request(input,init);calls.push(req);
+    const url=new URL(req.url);
+    if(url.pathname==='/.well-known/oauth-authorization-server') return Response.json({issuer:ISSUER,authorization_endpoint:ISSUER+'/oauth/authorize',token_endpoint:ISSUER+'/oauth/token',registration_endpoint:ISSUER+'/oauth/register',userinfo_endpoint:ISSUER+'/oauth/userinfo',token_endpoint_auth_methods_supported:['none'],code_challenge_methods_supported:['S256']});
+    if(url.pathname==='/oauth/register'){const body=await req.json() as Record<string,unknown>;redirect=(body.redirect_uris as string[])[0]!;assert.match(String(body.scope),/offline_access/);assert.deepEqual(body.grant_types,['authorization_code','refresh_token']);return Response.json({client_id:'oauth_gigi_test',redirect_uris:[redirect],token_endpoint_auth_method:'none',scope:'openid profile email mcp offline_access'}, {status:201});}
+    if(url.pathname==='/oauth/token'){const body=new URLSearchParams(await req.text());assert.equal(body.get('redirect_uri'),redirect);assert.equal(body.get('resource'),RESOURCE);verifier=body.get('code_verifier')!;assert.equal(body.get('code'),'code_123');return Response.json({access_token:'test-access-token',refresh_token:'test-refresh-token',token_type:'Bearer',expires_in:3600,scope:'openid profile email mcp offline_access',resource:RESOURCE});}
+    if(url.pathname==='/oauth/userinfo'){await assert.rejects(logout({dataDir:root}),/session_busy/);assert.equal(req.headers.get('authorization'),'Bearer test-access-token');return Response.json({sub:'user-1',email:'gigi@example.test',email_verified:true,name:'GiGi',client_id:'oauth_gigi_test',resource:RESOURCE,scope:'openid profile email mcp'});}
+    throw new Error('unexpected request '+req.url);
+  };
+  try{
+    const result=await login({dataDir:root,fetch:request,openBrowser:async url=>{
+      const opened=new URL(url);challenge=opened.searchParams.get('code_challenge')!;state=opened.searchParams.get('state')!;
+      assert.equal(opened.origin,ISSUER);assert.equal(opened.searchParams.get('redirect_uri'),redirect);
+      assert.equal(opened.searchParams.get('resource'),RESOURCE);
+      assert.equal(opened.searchParams.get('code_challenge_method'),'S256');
+      const callback=new URL(redirect);callback.searchParams.set('code','code_123');callback.searchParams.set('state',state);
+      const response=await fetch(callback);assert.equal(response.status,200);
+    }});
+    assert.equal(result.sub,'user-1');assert.equal(result.email,'gigi@example.test');
+    const session=JSON.parse(await readFile(join(root,'broker-session.json'),'utf8'));
+    assert.equal(session.baseUrl,RESOURCE);assert.equal(session.accessToken,'test-access-token');
+    assert.equal(session.refreshToken,'test-refresh-token');
+    assert.equal((await stat(join(root,'broker-session.json'))).mode & 0o777,0o600);
+    const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier));
+    assert.equal(challenge,Buffer.from(digest).toString('base64url'));
+    assert.ok(state.length>=32);
+    assert.equal(calls.length,4);
+    assert.deepEqual(await logout({dataDir:root}),{signedOut:true,localOnly:true});
+    await assert.rejects(getSessionAccessToken({dataDir:root}),/reauthentication_required/);
+  }finally{await rm(root,{recursive:true,force:true});}
+});
+
+test('redirect registration mismatch fails before browser launch and writes no session', async()=>{
+  const root=await mkdtemp(join(tmpdir(),'gigi-auth-'));
+  let opened=false;
+  const request:typeof fetch=async(input,init)=>{
+    const req=new Request(input,init);const path=new URL(req.url).pathname;
+    if(path==='/.well-known/oauth-authorization-server')return Response.json({issuer:ISSUER,authorization_endpoint:ISSUER+'/oauth/authorize',token_endpoint:ISSUER+'/oauth/token',registration_endpoint:ISSUER+'/oauth/register',userinfo_endpoint:ISSUER+'/oauth/userinfo',token_endpoint_auth_methods_supported:['none'],code_challenge_methods_supported:['S256']});
+    if(path==='/oauth/register')return Response.json({client_id:'oauth_test',redirect_uris:['http://127.0.0.1:9999/callback'],token_endpoint_auth_method:'none'}, {status:201});
+    throw new Error('unexpected request');
+  };
+  try{
+    await assert.rejects(login({dataDir:root,fetch:request,openBrowser:()=>{opened=true}}),/redirect_registration_mismatch/);
+    assert.equal(opened,false);
+    await assert.rejects(stat(join(root,'broker-session.json')),{code:'ENOENT'});
+  }finally{await rm(root,{recursive:true,force:true});}
+});
+
+test('wrong callback state is denied and cancellation closes loopback', async()=>{
+  const root=await mkdtemp(join(tmpdir(),'gigi-auth-'));
+  const controller=new AbortController();
+  let redirect='';
+  const request:typeof fetch=async(input,init)=>{
+    const req=new Request(input,init);const path=new URL(req.url).pathname;
+    if(path==='/.well-known/oauth-authorization-server')return Response.json({issuer:ISSUER,authorization_endpoint:ISSUER+'/oauth/authorize',token_endpoint:ISSUER+'/oauth/token',registration_endpoint:ISSUER+'/oauth/register',userinfo_endpoint:ISSUER+'/oauth/userinfo',token_endpoint_auth_methods_supported:['none'],code_challenge_methods_supported:['S256']});
+    if(path==='/oauth/register'){redirect=((await req.json()) as {redirect_uris:string[]}).redirect_uris[0]!;return Response.json({client_id:'oauth_test',redirect_uris:[redirect],token_endpoint_auth_method:'none'},{status:201});}
+    throw new Error('token must not be requested');
+  };
+  try{
+    await assert.rejects(login({dataDir:root,fetch:request,signal:controller.signal,openBrowser:async()=>{
+      const wrong=new URL(redirect);wrong.searchParams.set('state','wrong');wrong.searchParams.set('code','stolen');
+      assert.equal((await fetch(wrong)).status,400);
+      controller.abort();
+    }}),/cancelled/);
+    await assert.rejects(stat(join(root,'broker-session.json')),{code:'ENOENT'});
+    await assert.rejects(fetch(redirect));
+  }finally{await rm(root,{recursive:true,force:true});}
+});
+
+test('refresh rotates once and unknown response blocks replay',async()=>{
+  const root=await mkdtemp(join(tmpdir(),'gigi-auth-'));
+  const path=join(root,'broker-session.json');
+  const initial={baseUrl:RESOURCE,accessToken:'expired',refreshToken:'refresh-a',clientId:'oauth_test',sub:'user-1',expiresAt:1,status:'active'};
+  try{
+    await writeFile(path,JSON.stringify(initial),{mode:0o600});
+    let attempts=0;
+    const success:typeof fetch=async(input,init)=>{const req=new Request(input,init);attempts++;const form=new URLSearchParams(await req.text());assert.equal(form.get('refresh_token'),'refresh-a');assert.equal(form.get('resource'),RESOURCE);return Response.json({access_token:'new-access',refresh_token:'refresh-b',token_type:'Bearer',resource:RESOURCE,expires_in:3600,scope:'openid profile email mcp offline_access'});};
+    assert.equal(await getSessionAccessToken({dataDir:root,fetch:success}),'new-access');
+    assert.equal(attempts,1);
+    const rotated=JSON.parse(await readFile(path,'utf8'));assert.equal(rotated.refreshToken,'refresh-b');assert.equal(rotated.status,'active');
+    assert.equal(await getSessionAccessToken({dataDir:root,fetch:success}),'new-access');assert.equal(attempts,1);
+    await writeFile(path,JSON.stringify(initial),{mode:0o600});
+    const uncertain:typeof fetch=async()=>{attempts++;throw new Error('network lost after submit')};
+    await assert.rejects(getSessionAccessToken({dataDir:root,fetch:uncertain}),/refresh_outcome_unknown/);
+    assert.equal(JSON.parse(await readFile(path,'utf8')).status,'refresh_unknown');
+    await assert.rejects(getSessionAccessToken({dataDir:root,fetch:uncertain}),/reauthentication_required/);
+    assert.equal(attempts,2);
+  }finally{await rm(root,{recursive:true,force:true});}
+});
+
+test('cancelled provider request preserves typed nonsecret login reason',async()=>{
+  const root=await mkdtemp(join(tmpdir(),'gigi-auth-'));
+  const controller=new AbortController();controller.abort();
+  try{
+    await assert.rejects(login({dataDir:root,signal:controller.signal,fetch:async()=>{throw new Error('secret transport detail')}}),error=>{
+      assert.ok(error instanceof LoginError);
+      assert.equal(error.reason,'cancelled');
+      assert.equal(error.message,'cancelled');
+      return true;
+    });
+    const transport:typeof fetch=async()=>{throw new Error('secret transport detail')};
+    await assert.rejects(login({dataDir:root,fetch:transport}),error=>{
+      assert.ok(error instanceof LoginError);
+      assert.equal(error.reason,'provider_unavailable');
+      assert.equal(error.message,'provider_unavailable');
+      return true;
+    });
+  }finally{await rm(root,{recursive:true,force:true});}
+});
+
+
+test('sign-out refuses a pending refresh, then removes the committed session without resurrection', async()=>{
+  const root=await mkdtemp(join(tmpdir(),'gigi-auth-logout-refresh-'));
+  const path=join(root,'broker-session.json');
+  await writeFile(path,JSON.stringify({baseUrl:RESOURCE,accessToken:'expired',refreshToken:'synthetic-refresh',clientId:'oauth_test',sub:'user-1',expiresAt:1,status:'active'}),{mode:0o600});
+  let entered!:()=>void;
+  const started=new Promise<void>(resolve=>{entered=resolve;});
+  let release!:(response:Response)=>void;
+  const pending=new Promise<Response>(resolve=>{release=resolve;});
+  try{
+    const refresh=getSessionAccessToken({dataDir:root,fetch:async()=>{entered();return pending;}});
+    await started;
+    await assert.rejects(logout({dataDir:root}),/session_busy/);
+    let browserOpened=false;
+    await assert.rejects(login({dataDir:root,openBrowser:()=>{browserOpened=true;}}),/session_busy/);
+    assert.equal(browserOpened,false);
+    release(Response.json({access_token:'synthetic-new',refresh_token:'synthetic-rotated',token_type:'Bearer',resource:RESOURCE,expires_in:3600}));
+    assert.equal(await refresh,'synthetic-new');
+    assert.deepEqual(await logout({dataDir:root}),{signedOut:true,localOnly:true});
+    await assert.rejects(getSessionAccessToken({dataDir:root}),/reauthentication_required/);
+    await assert.rejects(stat(path),{code:'ENOENT'});
+  }finally{await rm(root,{recursive:true,force:true});}
+});
+
+
+test('a killed interactive sign-in owner releases its source lock for refresh, sign-out and a new sign-in', async()=>{
+  const root=await mkdtemp(join(tmpdir(),'gigi-auth-crash-'));
+  const path=join(root,'broker-session.json');
+  await writeFile(path,JSON.stringify({baseUrl:RESOURCE,accessToken:'expired',refreshToken:'synthetic-refresh',clientId:'oauth_test',sub:'user-1',expiresAt:1,status:'active'}),{mode:0o600});
+  const script=`import { login } from ${JSON.stringify(new URL('../src/auth.ts',import.meta.url).href)}; await login({dataDir:${JSON.stringify(root)},fetch:async()=>{process.stdout.write('lock-held\\n');return new Promise(()=>{});}});`;
+  const child=spawn(process.execPath,['--import','tsx','--input-type=module','-e',script],{stdio:['ignore','pipe','pipe']});
+  try{
+    await new Promise<void>((resolve,reject)=>{
+      const timer=setTimeout(()=>reject(Error('Synthetic login did not acquire its lock')),5000);
+      child.stdout.on('data',chunk=>{if(String(chunk).includes('lock-held')){clearTimeout(timer);resolve();}});
+      child.once('error',reject);child.once('exit',()=>{clearTimeout(timer);reject(Error('Synthetic login exited before lock acquisition'));});
+    });
+    child.kill('SIGKILL');await once(child,'exit');
+    const token=await getSessionAccessToken({dataDir:root,fetch:async()=>Response.json({access_token:'synthetic-after-crash',refresh_token:'synthetic-rotated',token_type:'Bearer',resource:RESOURCE,expires_in:3600})});
+    assert.equal(token,'synthetic-after-crash');
+    assert.deepEqual(await logout({dataDir:root}),{signedOut:true,localOnly:true});
+    let reachedIdentity=false;
+    await assert.rejects(login({dataDir:root,fetch:async()=>{reachedIdentity=true;return Response.json({});}}),/identity_contract_mismatch/);
+    assert.equal(reachedIdentity,true);
+    await assert.rejects(stat(path),{code:'ENOENT'});
+  }finally{child.kill('SIGKILL');await rm(root,{recursive:true,force:true});}
+});
+
+test('legacy unknown session locks are retained with fixed recovery guidance', async()=>{
+  const root=await mkdtemp(join(tmpdir(),'gigi-auth-legacy-lock-'));
+  const lock=join(root,'.broker-refresh.lock');
+  try{
+    for(const marker of ['', 'unknown-owner']){
+      await writeFile(lock,marker,{mode:0o600});
+      let requested=false;
+      await assert.rejects(login({dataDir:root,fetch:async()=>{requested=true;return Response.json({});}}),/session_lock_unverified/);
+      await assert.rejects(logout({dataDir:root}),/session_lock_unverified/);
+      assert.equal(requested,false);assert.equal(await readFile(lock,'utf8'),marker);
+    }
+  }finally{await rm(root,{recursive:true,force:true});}
+});
+
+test('live concurrent source writers have exactly one owner across processes', async()=>{
+  const root=await mkdtemp(join(tmpdir(),'gigi-auth-concurrent-'));
+  const script=String.raw`import { login } from ${JSON.stringify(new URL('../src/auth.ts',import.meta.url).href)}; process.stdout.write('ready\n'); await new Promise(resolve=>process.stdin.once('data',resolve)); try {await login({dataDir:${JSON.stringify(root)},fetch:async()=>{process.stdout.write('owned\n');return new Promise(()=>{});}});}catch(error){process.stdout.write(error.reason+'\n');}`;
+  const children=[0,1].map(()=>spawn(process.execPath,['--import','tsx','--input-type=module','-e',script],{stdio:['pipe','pipe','pipe']}));
+  const outputs=['',''];
+  const waitFor=(index:number,pattern:RegExp)=>new Promise<void>((resolve,reject)=>{
+    const timer=setTimeout(()=>reject(Error('Concurrent fixture timeout: '+outputs[index])),5000);
+    const check=()=>{if(pattern.test(outputs[index]!)){clearTimeout(timer);resolve();}};
+    children[index]!.stdout.on('data',chunk=>{outputs[index]+=String(chunk);check();});
+    check();
+  });
+  try{
+    await Promise.all(children.map((_,i)=>waitFor(i,/ready/)));
+    children.forEach(child=>child.stdin.write('go\n'));
+    await Promise.all(children.map((_,i)=>waitFor(i,/owned|session_busy/)));
+    assert.equal(outputs.filter(output=>output.includes('owned')).length,1);
+    assert.equal(outputs.filter(output=>output.includes('session_busy')).length,1);
+  }finally{
+    await Promise.all(children.map(async child=>{if(child.exitCode===null&&child.signalCode===null){const exited=once(child,'exit');child.kill('SIGKILL');await exited;}}));
+    assert.deepEqual(await logout({dataDir:root}),{signedOut:true,localOnly:true});
+    await rm(root,{recursive:true,force:true});
+  }
+});
+
+test('releasing an older lock never unlinks a replacement inode', async()=>{
+  const root=await mkdtemp(join(tmpdir(),'gigi-auth-replaced-lock-'));
+  const path=join(root,'.broker-refresh.lock');
+  try{
+    await assert.rejects(login({dataDir:root,fetch:async()=>{
+      const {rename}=await import('node:fs/promises');
+      await rename(path,path+'.old');
+      await writeFile(path,'replacement-owner',{mode:0o600});
+      return Response.json({});
+    }}),/identity_contract_mismatch/);
+    assert.equal(await readFile(path,'utf8'),'replacement-owner');
+  }finally{await rm(root,{recursive:true,force:true});}
+});

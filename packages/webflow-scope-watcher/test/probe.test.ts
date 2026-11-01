@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { buildAuthorizeUrl, detectLoginPage, parseCookieHeader } from '../src/probe';
+import { buildAuthorizeUrl, detectBotChallenge, detectLoginPage, parseCookieHeader } from '../src/probe';
 
 const loginSnippet = readFileSync(
 	join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'login-page-snippet.html'),
@@ -48,5 +48,28 @@ describe('detectLoginPage', () => {
 		expect(
 			detectLoginPage('<h1>Authorize Scope Probe</h1><p>This app can: Read Site data</p>')
 		).toBe(false);
+	});
+});
+
+describe('detectBotChallenge', () => {
+	const consent = '<h1>Authorize Scope Probe</h1><p>This app can: Read Site data</p>';
+
+	it('detects the press-and-hold challenge interstitial (observed 2026-10-26)', () => {
+		const challenge =
+			'<h1>Confirm you’re not a bot</h1><p>Before we continue, press and hold the button to confirm you’re human.</p>' +
+			'<button>Press and hold</button><footer>Reference ID 275d0270-9b4d-11f1-935e-d1d83f105f0c</footer>';
+		expect(detectBotChallenge(challenge)).toBe(true);
+	});
+
+	it('accepts the straight-apostrophe and HTML-entity variants of the heading', () => {
+		expect(detectBotChallenge("<h1>Confirm you're not a bot</h1>")).toBe(true);
+		expect(detectBotChallenge('<h1>Confirm you&#39;re not a bot</h1>')).toBe(true);
+	});
+
+	it('does not flag consent or login content', () => {
+		expect(detectBotChallenge(consent)).toBe(false);
+		expect(detectBotChallenge(loginSnippet)).toBe(false);
+		// "Press and hold" alone (e.g. in app copy) is not enough without the Reference ID footer.
+		expect(detectBotChallenge('<p>Press and hold to record</p>')).toBe(false);
 	});
 });

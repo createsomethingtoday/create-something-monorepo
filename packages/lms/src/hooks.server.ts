@@ -51,6 +51,9 @@ interface JWTPayload {
 export const handle: Handle = async ({ event, resolve }) => {
 	const pathname = event.url.pathname;
 
+	// Public reference retrieval has its own request controls and never uses learner credentials.
+	if (pathname === '/api/foundation' || pathname.startsWith('/api/foundation/')) return resolve(event);
+
 	// Hard-retired surfaces: return 410 Gone with replacement guidance.
 	if (RETIRED_PAGE_PATTERN.test(pathname)) {
 		return new Response(

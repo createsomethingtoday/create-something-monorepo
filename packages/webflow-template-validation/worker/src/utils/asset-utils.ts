@@ -20,6 +20,15 @@ const OPTIMAL_FORMATS = ['webp', 'avif'];
 const GOOD_FORMATS = ['jpeg', 'jpg', 'png'];
 const OUTDATED_FORMATS = ['bmp', 'tiff', 'tif'];
 
+/**
+ * Webflow generates a poster frame for every background video and names it
+ * `<asset-id>_<name>_poster.<frame>.<ext>`. Creators cannot replace or compress
+ * these in the Designer, so validators must not ask them to.
+ */
+export function isWebflowGeneratedVideoPosterSource(src: string): boolean {
+	return /(?:^|[/_-])[^/?#]*(?:[_-]poster|poster)\.\d+\.(?:jpe?g|png|webp|avif)(?:$|[?#])/.test(src.toLowerCase());
+}
+
 export function detectLicensingIssues(fileName: string, url: string): { hasIssues: boolean; issues: string[] } {
 	const issues: string[] = [];
 

@@ -1,0 +1,31 @@
+{
+  "name": "Marketplace template support request",
+  "description": "Buyer → creator support request from a template detail page form. Triggered by webflow-template-search POST /api/templates/support-request. Reply-to is the buyer. Data contract: packages/webflow-template-search/src/supportRequest.ts. Owner: Micah.",
+  "steps": [
+    {
+      "type": "channel",
+      "template": {
+        "subject": "New support request for {{ template_name }}",
+        "settings": {
+          "layout_key": "default",
+          "attachment_key": "attachments"
+        },
+        "is_mjml": false,
+        "preview_text": "{{ request_type_label }} from {{ buyer_name | default: buyer_email }}",
+        "html_body@": "email_1/html_body.html"
+      },
+      "ref": "email_1",
+      "channel_type": "email",
+      "channel_key": "postmark",
+      "channel_overrides": {
+        "from_address": "support@webflow.com",
+        "reply_to_address": "{{ buyer_email }}"
+      }
+    }
+  ],
+  "categories": [
+    "Marketplace"
+  ],
+  "trigger_frequency": "every_trigger",
+  "$schema": "https://schemas.knock.app/cli/workflow.json"
+}

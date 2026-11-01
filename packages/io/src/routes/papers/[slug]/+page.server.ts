@@ -10,6 +10,7 @@
  * 3. Delete static route in /routes/papers/{slug}/
  */
 
+import { dev } from '$app/environment';
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { isFileBasedPaper, getFileBasedPaper } from '$lib/config/fileBasedPapers';
@@ -61,12 +62,13 @@ export const load: PageServerLoad = async ({ params }) => {
 	// Check if this is a file-based paper (markdown content)
 	if (isFileBasedPaper(slug)) {
 		const paper = getFileBasedPaper(slug);
-		if (!paper) {
+		if (!paper || (paper.publication_status === 'draft' && !dev)) {
 			throw error(404, 'Paper not found');
 		}
 
 		// Transform to Paper interface for consistent rendering
 		const transformedPaper = transformExperimentToPaper(paper);
+		if (paper.publication_status === 'draft') transformedPaper.published = 0;
 		const content = getPaperContent(slug);
 		return {
 			paper: content ? { ...transformedPaper, content } : transformedPaper,

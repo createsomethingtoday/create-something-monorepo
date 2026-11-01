@@ -1,0 +1,76 @@
+name: Extract ZIP backport qualification
+on:
+  pull_request:
+    paths:
+      - '.gitattributes'
+      - 'config/security-advisory-exceptions.v1.json'
+      - 'scripts/security-*remediation*'
+      - 'scripts/security-standalone-removal.mjs'
+      - 'scripts/security-advisory-exceptions.mjs'
+      - 'scripts/test/security-*'
+      - 'security/advisory-history/**'
+      - 'security/extract-zip/**'
+      - 'security/basic-ftp/**'
+      - 'patches/extract-zip@2.0.1.patch'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'packages/huggingface-spaces/motion-ontology/**'
+      - '.github/workflows/extract-zip-backport.yml'
+permissions:
+  contents: read
+jobs:
+  archive-security:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '22.23.4'
+      - name: Reproduce standalone tarball from upstream and patch
+        if: runner.os == 'Linux'
+        run: |
+          python3 security/extract-zip/build-vendor.py
+          git diff --exit-code -- packages/huggingface-spaces/motion-ontology/vendor
+      - name: Verify policy rejection cases
+        run: node --test scripts/test/security-advisory-exceptions.test.mjs scripts/test/security-local-remediation.test.mjs scripts/test/security-standalone-removal.test.mjs
+      - name: Clean workspace dependency installation
+        run: pnpm install --frozen-lockfile --ignore-scripts --side-effects-cache=false
+      - name: Verify actual reachable packages and archive containment
+        run: node security/extract-zip/verify-installed.mjs .
+      - name: Clean standalone installation (no workspace inheritance)
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/motion-standalone/vendor"
+          cp packages/huggingface-spaces/motion-ontology/package{,-lock}.json "$RUNNER_TEMP/motion-standalone/"
+          cp packages/huggingface-spaces/motion-ontology/vendor/*.tgz "$RUNNER_TEMP/motion-standalone/vendor/"
+          cd "$RUNNER_TEMP/motion-standalone"
+          npm ci --ignore-scripts --no-audit --no-fund
+      - name: Verify standalone removed dependency closure
+        run: node scripts/security-standalone-removal.mjs "${{ runner.temp }}/motion-standalone"
+
+  standalone-node22:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '22.23.4'
+          package-manager-cache: false
+      - name: Clean standalone install on Docker runtime major
+        run: |
+          mkdir -p "$RUNNER_TEMP/motion-node22/vendor"
+          cp packages/huggingface-spaces/motion-ontology/package{,-lock}.json "$RUNNER_TEMP/motion-node22/"
+          cp packages/huggingface-spaces/motion-ontology/vendor/*.tgz "$RUNNER_TEMP/motion-node22/vendor/"
+          cd "$RUNNER_TEMP/motion-node22"
+          npm ci --ignore-scripts --no-fund
+      - name: Verify standalone dependency removal
+        run: node scripts/security-standalone-removal.mjs "${{ runner.temp }}/motion-node22"

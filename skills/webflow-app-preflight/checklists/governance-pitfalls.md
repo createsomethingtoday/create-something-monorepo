@@ -24,8 +24,8 @@ These are the recurring, real-world patterns that most often trigger a rejection
 
 - Deliver code through the **Custom Code API**, not manual paste (manual paste can't be versioned/removed and can double-run).
 - Script versions are **immutable** — to change code that runs on sites, register a **new version** and submit an **App update** for review. Never modify in place.
-- Loaders are only allowed if every remote resource is declared at submission **and pinned** (hosted scripts need `hostedLocation` + `integrityHash`/SRI on a fixed version).
-- On uninstall, remove applied scripts at **both site and page level** — keep the `custom_code:write` + `sites:write`/`pages:write` scopes needed to do it — and prompt the user to publish (don't auto-publish). Injected code persists until removed; the platform does not clean it up for you. Where programmatic removal genuinely isn't possible, give the user explicit in-app removal instructions instead — but never just leave it running.
+- Loaders are only allowed if every remote resource is declared at submission **and pinned** (hosted scripts need `hostedLocation` + `integrityHash`/SRI on a fixed version). Runtime behavior on customers' published sites is outside review scope — review verifies what the App registers, discloses, and removes through Webflow — so disclosure at submission is the gate, and pinning is how what runs stays equal to what was disclosed.
+- On uninstall, Webflow removes the Custom Code your App applied through the API; it reaches the live site on the next publish. Your App can't call the API after uninstall. When your App removes scripts while it stays installed (for example, a feature toggle), remove them at **both site and page level** before revoking, keep `custom_code:write` + `sites:write`/`pages:write`, and prompt the user to publish (don't auto-publish). Code a user pasted manually is not removed — give clear removal instructions for it.
 
 ## 4. Calling the API after the user said no
 
@@ -71,11 +71,19 @@ Note the actual objection, because it explains the carve-out: a Designer Extensi
 
 **Pattern:** The submitted bundle points at staging, localhost, or a tunnel host, or the declared installation URL is a non-production endpoint. Sometimes it's even disclosed in the submission notes and shipped anyway.
 
-**Not this pattern:** a `localhost` literal in a hostname blocklist or in a library's URL-parsing fallback, a source map that resolves a dependency to a `dist/development` path the package routes every consumer through (react-router 7.x), or the `telemetry.global` block the Webflow CLI writes into `webflow.json`. Those ship in production builds and are not development residue. Prove a development build with a marker that differs from the dependency's production output.
+**Not this pattern:** a bare `localhost` literal in a hostname blocklist or in a library's URL-parsing fallback (Preflight reports it as a Suggested update to confirm; a localhost URL with a port or a path, or a tunnel host, is a Required update), a source map that resolves a dependency to a `dist/development` path the package routes every consumer through (react-router 7.x), or the `telemetry.global` block the Webflow CLI writes into `webflow.json`. Those ship in production builds and are not development residue. Prove a development build with a marker that differs from the dependency's production output.
 
 **Why it matters:** Marketplace Apps must run on production infrastructure that stays available through review and in use. A staging dependency means customers rely on a host with no production guarantees, and reviewers can't verify what the App really does. It also tends to travel with test credentials and permissive CORS.
 
 **Fix:** Deploy a documented production service, generate a production-only bundle, keep test and production data separate, and add a build rule that fails when development, staging, localhost, or tunnel endpoints appear as request destinations in a Marketplace artifact. Check the installation URL you declare, not just the code.
+
+## 11. Keying behavior on `element.type`
+
+**Pattern:** A Designer Extension recognises the elements it works with by comparing `element.type` to a string — `if (el.type === 'Section')` — including the elements it just created with `webflow.elementPresets.Section`.
+
+**Why it matters:** `type` is not the stable identity of a tag-bearing block. A section created through the preset reports `type: 'Block'` with tag `section`; the same section added by hand in the Designer reports `type: 'Section'`. Both are valid sections. An App keyed on `type` works in the developer's own testing, then silently stops recognising its own output for users, and the fix has to go back through review as an App update.
+
+**Fix:** Identify sections by the tag they carry: `(await el.getTag()) === 'section'`. It returns the same value whichever way the element was created. This is a section-only fix: the `section` tag is unique, while Container, VFlex, HFlex, Row, Column and plain Div Blocks all return `div`, so for those `element.type` remains the only discriminator. Because a Div Block retagged to `section` also matches, add a guard on any path that removes or rewrites what it identifies. Preflight reports `element.type` comparisons against `'Section'` as a Suggested update.
 
 ---
 

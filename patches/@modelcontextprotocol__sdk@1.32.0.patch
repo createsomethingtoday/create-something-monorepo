@@ -1,0 +1,19 @@
+diff --git a/package.json b/package.json
+index 2036f9a..306befa 100644
+--- a/package.json
++++ b/package.json
+@@ -31,9 +31,13 @@
+         },
+         "./server": {
+             "types": "./dist/esm/server/index.d.ts",
+-            "import": "./dist/esm/server/index.js",
++            "import": "./dist/cjs/server/index.js",
+             "require": "./dist/cjs/server/index.js"
+         },
++        "./server/*": {
++            "import": "./dist/cjs/server/*",
++            "require": "./dist/cjs/server/*"
++        },
+         "./validation": {
+             "types": "./dist/esm/validation/index.d.ts",
+             "import": "./dist/esm/validation/index.js",

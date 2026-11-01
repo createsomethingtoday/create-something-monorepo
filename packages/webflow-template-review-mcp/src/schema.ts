@@ -44,6 +44,10 @@ export const CONFIRMED_ASSET_FIELDS = {
   priceString: '🥞💲Template Price String (🏗️ only)',
   mrpId: 'ℹ️MRP ID',
   mrpIdOverride: '👀ℹ️MRP ID (Override)',
+  /** Rollup of the linked 🎨Creator's email (fldHhxmfSNMp117SP); the Override wins when set. */
+  creatorEmail: '🎨📧 Creator Email',
+  creatorEmailOverride: '👀🎨📧 Creator Email (Override)',
+  creatorName: '🎨Creator Name',
 } as const;
 
 export const ASSET_COMPATIBILITY_ALIASES = {
@@ -88,6 +92,10 @@ export const FEATURED_ASSET_FIELDS = {
   creatorTimesFeatured: 'How many times the creator has been featured',
   creatorTemplatesInUpcomingBatch: 'Templates featured in upcoming batch (from 🎨Creator)',
   votingStateLink: '🏗️Voting State',
+  /** Lookup from 🎨Creator — the notifier's Knock recipient id; empty means the creator is skipped. */
+  creatorWfUserId: '🎨🔑Creator WF User ID',
+  /** Formula: Marketplace listing URL with a campaign UTM appended — strip the query before showing reviewers. */
+  listingUrlUtm: '🔗Listing URL + UTM',
 } as const;
 
 /** Field IDs matching FEATURED_ASSET_FIELDS, kept so display-name drift is detectable. Writes use these IDs. */
@@ -104,6 +112,8 @@ export const FEATURED_ASSET_FIELD_IDS = {
   creatorTimesFeatured: 'fld2XFywmXYpSY1Le',
   creatorTemplatesInUpcomingBatch: 'fld4ZEgSBDzuLMvZf',
   votingStateLink: 'flderXfksiA19t4l4',
+  creatorWfUserId: 'fld2jvWS6WF5rvVXr',
+  listingUrlUtm: 'fldfodjuCUF7xlfke',
 } as const;
 
 /** 🏗️Asset Voting State — per-asset vote tallies for featured curation. */
@@ -155,6 +165,10 @@ export const CONFIRMED_VERSION_FIELDS = {
   rejectReason: '🚩Rejection Reason',
   rejectionFeedback: '🚩Rejection Feedback',
   mrpIdOverwrite: '❗ℹ️MRP ID',
+  /** Zendesk ticket the submission-form automation opened for this version (fldHKvyh55jJ0VK1u). */
+  zendeskTicketId: '🧘ZD ID',
+  /** Formula: "Your Webflow Marketplace Template submission" (fldit9ZTSm7non29Z). */
+  zendeskSubject: '🧘ZD Msg Subject',
 } as const;
 
 export const CONFIRMED_WRITE_FIELD_IDS = {
@@ -166,8 +180,33 @@ export const CONFIRMED_WRITE_FIELD_IDS = {
     reviewFeedback: 'fldHxIGHMHn4xb9U4',
     agentReviewFeedback: 'fld6OITvSQPxfXJ0Z',
     release: 'fld3CQjSWa9lVBLgT',
+    /** 🧘ZD ID — the Zendesk ticket the review emails go to. Written only by template_review_link_version_ticket. */
+    zendeskTicketId: 'fldHKvyh55jJ0VK1u',
   },
 } as const;
+
+/**
+ * 👛Assets fields read and written by the Marketplace delist/relist tools.
+ * Reads and writes are id-keyed so display-name drift cannot break a takedown.
+ */
+export const DELIST_ASSET_FIELD_IDS = {
+  type: 'fld7kubS6EE1LOC8d',
+  name: 'fldUzJBor3Gnkykjc',
+  marketplaceStatus: 'fld51CeQNGDgW9b0D',
+  delistReason: 'fldoWOdsRchGYa7Td',
+  cmsStatus: 'fldQRpdwNXArAOYFA',
+  /** 🏸Admin Detail Page Path — the real public path (slugs do not always match the UID). */
+  detailPagePath: 'fldNN1C3STWNQ4QBc',
+  /** 🥞CMS Record ID — lookup of every Webflow Templates item linked to the asset (can be more than one). */
+  cmsItemIds: 'fldJ1WxYdIhxAXMm0',
+  /** 🕸️🚰🥞CMS Status (Actual) — Whalesync's read-back of the Webflow item state. */
+  cmsStatusActual: 'fldStZzIuQLCZ587l',
+} as const;
+
+export const MARKETPLACE_STATUS_PUBLISHED = '3️⃣Published🚀';
+export const MARKETPLACE_STATUS_DELISTED = '4️⃣Delisted☠️';
+export const DELIST_REASON_VALUES = ['Creator request', 'Stripe status', 'Policy infringement'] as const;
+export type DelistReason = (typeof DELIST_REASON_VALUES)[number];
 
 export const PENDING_VERSION_FIELDS = {
   createdAt: 'pending_verification',

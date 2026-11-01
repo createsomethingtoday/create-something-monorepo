@@ -1,0 +1,188 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:create-something:paperclip-delivery:assignment:v1",
+  "title": "Explicit bounded production delivery authority",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "paperclipCaseId",
+    "companyId",
+    "workspace",
+    "releaseRunbook",
+    "targetSurface",
+    "policyVersion",
+    "linearIssue",
+    "targetEnvironment",
+    "productionAuthorized",
+    "maxRepairRounds",
+    "maxResumeAttempts",
+    "allowedPaths",
+    "acceptanceCriteria",
+    "requiredCiChecks",
+    "authorization",
+    "boundaries",
+    "roles",
+    "delegation"
+  ],
+  "properties": {
+    "paperclipCaseId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "companyId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "workspace": {
+      "type": "string",
+      "minLength": 1
+    },
+    "releaseRunbook": {
+      "type": "string",
+      "minLength": 1
+    },
+    "targetSurface": {
+      "type": "string",
+      "minLength": 1
+    },
+    "policyVersion": {
+      "const": "create-something.paperclip-delivery.v1"
+    },
+    "linearIssue": {
+      "type": "string",
+      "pattern": "^CRE-[0-9]+$"
+    },
+    "targetEnvironment": {
+      "const": "production"
+    },
+    "productionAuthorized": {
+      "const": true
+    },
+    "maxRepairRounds": {
+      "const": 3
+    },
+    "maxResumeAttempts": {
+      "const": 2
+    },
+    "allowedPaths": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "acceptanceCriteria": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "requiredCiChecks": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "authorization": {
+      "type": "object",
+      "required": [
+        "source",
+        "reference"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "const": "user"
+        },
+        "reference": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "boundaries": {
+      "type": "object",
+      "required": [
+        "identityChanges",
+        "payments",
+        "destructiveActions",
+        "externalMessages"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "identityChanges": {
+          "const": false
+        },
+        "payments": {
+          "const": false
+        },
+        "destructiveActions": {
+          "const": false
+        },
+        "externalMessages": {
+          "const": false
+        }
+      }
+    },
+    "roles": {
+      "type": "object",
+      "required": [
+        "coordinator",
+        "engineering",
+        "reviewer",
+        "releaseQa"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "coordinator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "engineering": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reviewer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "releaseQa": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "delegation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "createAgents",
+        "createSkills",
+        "parallel",
+        "scope"
+      ],
+      "properties": {
+        "createAgents": {
+          "const": true
+        },
+        "createSkills": {
+          "const": true
+        },
+        "parallel": {
+          "const": true
+        },
+        "scope": {
+          "const": "parent-assignment"
+        }
+      }
+    }
+  }
+}

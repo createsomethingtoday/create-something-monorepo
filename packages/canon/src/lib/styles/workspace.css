@@ -1,0 +1,118 @@
+/* Opt-in operator chrome. Canon owns the palette; products own layout and actions.
+ * See docs/CLIENT_WORKSPACE_DRAW_DESIGN_CONTRACT.md. No :root or global overrides. */
+.cs-workspace {
+  --workspace-bg: var(--color-performance-shell-surface);
+  --workspace-panel: var(--color-performance-shell-surface-secondary);
+  --workspace-raised: var(--color-performance-shell-surface-elevated);
+  --workspace-hover: var(--color-performance-shell-surface-hover);
+  --workspace-line: var(--color-performance-shell-border-default);
+  --workspace-strong-line: var(--color-performance-shell-border-strong);
+  --workspace-fg: var(--color-performance-fg-primary);
+  --workspace-muted: var(--color-performance-fg-secondary);
+  --workspace-quiet: var(--color-performance-fg-tertiary);
+  --workspace-focus: var(--color-performance-brand-secondary);
+  --workspace-gap: var(--space-performance-sm);
+  --workspace-gap-small: var(--space-performance-xs);
+  --workspace-radius: var(--radius-performance-sm);
+  --workspace-text: var(--text-performance-caption);
+  --workspace-meta: var(--text-performance-operator-label);
+  --workspace-control-height: 36px;
+  color-scheme: dark;
+  color: var(--workspace-fg);
+  background: var(--workspace-bg);
+  font-family: var(--font-performance-interface);
+  font-size: var(--workspace-text);
+}
+.cs-workspace [data-work-state] {
+  --workspace-state-text: var(--workspace-muted);
+  --workspace-state-background: var(--workspace-raised);
+  --workspace-state-border: var(--workspace-strong-line);
+}
+.cs-workspace [data-work-state='planning'] {
+  --workspace-state-text: var(--color-performance-signal-soft);
+  --workspace-state-background: color-mix(
+    in srgb,
+    var(--color-performance-signal) 18%,
+    var(--workspace-bg)
+  );
+  --workspace-state-border: var(--color-performance-signal);
+}
+.cs-workspace [data-work-state='running'] {
+  --workspace-state-text: var(--color-performance-pressure-soft);
+  --workspace-state-background: color-mix(
+    in srgb,
+    var(--color-performance-pressure) 18%,
+    var(--workspace-bg)
+  );
+  --workspace-state-border: var(--color-performance-pressure);
+}
+.cs-workspace [data-work-state='approval'],
+.cs-workspace [data-work-state='warning'] {
+  --workspace-state-text: var(--color-performance-review-soft);
+  --workspace-state-background: color-mix(
+    in srgb,
+    var(--color-performance-review) 18%,
+    var(--workspace-bg)
+  );
+  --workspace-state-border: var(--color-performance-review);
+}
+.cs-workspace [data-work-state='success'] {
+  --workspace-state-text: var(--color-performance-ready-soft);
+  --workspace-state-background: color-mix(
+    in srgb,
+    var(--color-performance-ready) 18%,
+    var(--workspace-bg)
+  );
+  --workspace-state-border: var(--color-performance-ready);
+}
+.cs-workspace [data-work-state='failure'] {
+  --workspace-state-text: var(--color-performance-stop-soft);
+  --workspace-state-background: color-mix(
+    in srgb,
+    var(--color-performance-stop) 18%,
+    var(--workspace-bg)
+  );
+  --workspace-state-border: var(--color-performance-stop);
+}
+.cs-workspace :where(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--workspace-focus);
+  outline-offset: 3px;
+}
+.cs-workspace .cs-product-name {
+  font-size: var(--text-performance-body-sm);
+  font-weight: var(--font-performance-semibold);
+  letter-spacing: var(--tracking-performance-tight);
+}
+.cs-workspace .cs-label {
+  color: var(--workspace-quiet);
+  font: var(--workspace-meta) var(--font-performance-mono);
+}
+.cs-workspace .cs-state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--workspace-gap-small);
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--workspace-state-border);
+  border-radius: var(--workspace-radius);
+  color: var(--workspace-state-text);
+  background: var(--workspace-state-background);
+  font: var(--workspace-meta) var(--font-performance-mono);
+}
+.cs-workspace .cs-skip-link {
+  position: fixed;
+  top: var(--workspace-gap);
+  left: var(--workspace-gap);
+  z-index: 100;
+  padding: var(--workspace-gap);
+  background: var(--workspace-fg);
+  color: var(--workspace-bg);
+  transform: translateY(-200%);
+}
+.cs-workspace .cs-skip-link:focus {
+  transform: none;
+}
+@media (pointer: coarse), (max-width: 720px) {
+  .cs-workspace {
+    --workspace-control-height: 44px;
+  }
+}

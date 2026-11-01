@@ -1,10 +1,11 @@
 <script lang="ts">
+  import { createContactRequest } from '$lib/contact/request';
+  let contactRequest: ReturnType<typeof createContactRequest> | undefined;
   import {
-    PerformanceCardGrid,
-    PerformancePageSection,
-    SEO,
-    type PerformanceCardItem
+    Button,
+    SEO
   } from '@create-something/canon';
+  import { page } from '$app/stores';
   import { getAnalytics } from '@create-something/canon/analytics';
   import { ScheduleButton } from '@create-something/canon/domains/agency';
   import FunnelLadder from '$lib/components/FunnelLadder.svelte';
@@ -13,6 +14,7 @@
   let { data }: { data: PageData } = $props();
 
   type ContactIntent =
+    | 'system-support'
     | 'membership'
     | 'governance-checklist'
     | 'workflow-teardown'
@@ -23,6 +25,7 @@
     | 'enterprise_extension'
     | 'system_development_referral'
     | 'not_sure';
+  type MembershipPlan = 'focused' | 'team';
 
   const contactPathOptions: Array<{
     value: ContactIntent;
@@ -34,15 +37,24 @@
     successMessage: string;
   }> = [
     {
+      value: 'system-support',
+      label: 'Get software support',
+      description: 'Get remote help with a failing automation, integration, form or AI-built project.',
+      funnelStage: 'decision',
+      serviceInterest: 'Remote software and workflow support',
+      submitLabel: 'Send support inquiry',
+      successMessage: 'Received. We will review the problem and reply about fit and scope.'
+    },
+    {
       value: 'membership',
       label: 'Discuss membership',
       description:
-        '$900/month for skills, workflow guidance and operator support. Confirm fit before payment.',
+        'Focused is $900/month for one agreed workstream and one milestone. Team is $2,500/month for up to two workstreams and two milestones. We work between check-ins and show what changed.',
       funnelStage: 'decision',
-      serviceInterest: 'Agent engineering membership',
+      serviceInterest: 'AI-native technical support membership',
       submitLabel: 'Send membership inquiry',
       successMessage:
-        'Received. We will review your workflow and reply with fit and onboarding details.'
+        'Received. We will review your goals and reply with fit and onboarding details.'
     },
     {
       value: 'governance-checklist',
@@ -96,19 +108,31 @@
       messagePlaceholder: string;
     }
   > = {
+    'system-support': {
+      seoTitle: 'Remote Software Support Inquiry | CREATE SOMETHING',
+      seoDescription: 'Request remote help with a failing automation, integration, form or AI-built project. Agree on scope before work begins.',
+      eyebrow: 'Remote software support',
+      title: 'Tell us what stopped working.',
+      description: 'Bring one software or workflow problem. We review fit, then agree on scope, price and access before work begins.',
+      formTitle: 'Send a support inquiry',
+      formDescription: 'A short description is enough to start. This form does not book emergency support.',
+      messageLabel: 'What is failing, and what should happen instead?',
+      messageHelper: 'Name the tools, the last working state and who owns the system. Do not include passwords, API keys or private customer records.',
+      messagePlaceholder: 'Our form stopped sending leads to Airtable. It last worked on… The system owner is…'
+    },
     membership: {
-      seoTitle: 'Discuss Membership | CREATE SOMETHING',
-      seoDescription: 'Discuss the $900/month agent engineering membership before payment.',
-      eyebrow: 'Agent engineering membership',
-      title: 'Start with the workflow you want to improve.',
+      seoTitle: 'Discuss Technical Support | CREATE SOMETHING',
+      seoDescription: 'Discuss AI-native technical support: Focused at $900/month or Team at $2,500/month. Agree on diagnosis, engineering work, and scope before payment.',
+      eyebrow: 'AI-native technical support',
+      title: 'Start with the work you want to improve.',
       description:
-        '$900/month. Cancel anytime. We confirm support scope and onboarding availability before you pay. Custom builds and AI usage are separate.',
+        'A workstream is one agreed area of work, such as improving a product or connecting a workflow. Focused is $900/month for one workstream and one milestone. Team is $2,500/month for up to two workstreams and two milestones. We agree the next useful change, work between check-ins and show what changed. Scope is agreed before payment. Project costs are separate.',
       formTitle: 'Discuss membership',
-      formDescription: 'Tell us where you are starting and what is getting in the way.',
+      formDescription: 'Tell us what needs diagnosis or improvement, and what your team needs help learning.',
       messageLabel: 'What would you like help with?',
       messageHelper:
-        'Include your tools and the result you want. Do not include passwords or client secrets.',
-      messagePlaceholder: 'We want to improve one workflow. We currently use…'
+        'Include your tools, the result you want and whether AI usage is involved. We will agree on any development and runtime budgets before billable work. Do not include API keys, passwords or client secrets.',
+      messagePlaceholder: 'We want to improve our product or connect a workflow. We currently use…'
     },
     'governance-checklist': {
       seoTitle: 'Get the Workflow Control Checklist | CREATE SOMETHING .agency',
@@ -162,22 +186,11 @@
     }
   };
 
-  const contactPathCards: PerformanceCardItem[] = contactPathOptions.map((option) => ({
-    eyebrow: 'Get started',
-    icon:
-      option.funnelStage === 'awareness'
-        ? 'document'
-        : option.funnelStage === 'consideration'
-          ? 'search'
-          : 'check',
-    title: option.label,
-    detail: option.description
-  }));
-
   const contactSource = $derived(data.contactSource);
   const contactCampaign = $derived(data.contactCampaign);
   const initialIntent = $derived(data.contactIntent as ContactIntent);
   const initialLane = $derived(data.contactLane as ServiceLane);
+  const initialPlan = $derived(data.contactPlan as MembershipPlan);
 
   function initial<T>(read: () => T): T {
     return read();
@@ -185,17 +198,20 @@
 
   let selectedIntent = $state<ContactIntent>(initial(() => data.contactIntent as ContactIntent));
   let selectedLane = $state<ServiceLane>(initial(() => data.contactLane as ServiceLane));
+  let selectedPlan = $state<MembershipPlan>(initial(() => data.contactPlan as MembershipPlan));
   let submitting = $state(false);
   let submitMessage = $state('');
   let submitSuccess = $state(false);
   const selectedPath = $derived(
     contactPathOptions.find((option) => option.value === selectedIntent) ?? contactPathOptions[1]
   );
+  const hasChosenIntent = $derived(contactPathOptions.some(option => option.value === $page.url.searchParams.get('intent')));
   const selectedContent = $derived(contactIntentContent[selectedIntent]);
 
   $effect(() => {
     selectedIntent = initialIntent;
     selectedLane = initialLane;
+    selectedPlan = initialPlan;
     submitMessage = '';
   });
 
@@ -209,17 +225,19 @@
 
     try {
       const analytics = getAnalytics();
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
+      if (!contactRequest) {
+        let storage: Storage | undefined;
+        try { storage = window.sessionStorage; } catch { /* Storage may be disabled. */ }
+        contactRequest = createContactRequest(storage);
+      }
+      const result = await contactRequest({
           name: formData.get('name'),
           email: formData.get('email'),
           company: formData.get('company') || undefined,
           message: formData.get('message'),
-          service: selectedPath.serviceInterest,
+          service: selectedIntent === 'membership'
+            ? `${selectedPath.serviceInterest}: ${selectedPlan === 'team' ? 'Team' : 'Focused'}`
+            : selectedPath.serviceInterest,
           source: contactSource,
           intent: selectedIntent,
           lane: selectedLane,
@@ -228,32 +246,35 @@
           source_property: analytics?.getSourceProperty() ?? undefined,
           landing_url: typeof window !== 'undefined' ? window.location.href : undefined,
           referrer: typeof document !== 'undefined' ? document.referrer : undefined
-        })
       });
 
-      const result = (await response.json()) as { success?: boolean; message?: string };
-
-      if (response.ok && result.success) {
+      if (result.success) {
         submitSuccess = true;
-        submitMessage = selectedPath.successMessage;
+        submitMessage = result.message;
         analytics?.conversion('contact_submitted', {
           source: contactSource,
           intent: selectedIntent,
           lane: selectedLane,
           funnelStage: selectedPath.funnelStage,
           serviceInterest: selectedPath.serviceInterest,
+          ...(selectedIntent === 'membership' ? { membershipPlan: selectedPlan } : {}),
           surface: 'contact_form'
         });
-        form.reset();
-        selectedIntent = initialIntent;
-        selectedLane = initialLane;
+        // Keep the submitted routing choices for the scheduling handoff.
+        // Native form reset also resets Svelte-bound radios and selects.
+        for (const name of ['name', 'email', 'company', 'message']) {
+          const field = form.elements.namedItem(name);
+          if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) {
+            field.value = '';
+          }
+        }
       } else {
         submitSuccess = false;
         submitMessage = result.message || 'Something went wrong. Try again.';
       }
     } catch (error) {
       submitSuccess = false;
-      submitMessage = 'Something went wrong. Try again.';
+      submitMessage = 'We could not confirm receipt. Please keep this request open and do not start a new submission.';
     } finally {
       submitting = false;
     }
@@ -268,27 +289,21 @@
   propertyName="agency"
 />
 
-<PerformancePageSection
-  variant="hero"
-  layout="split"
-  titleLevel="h1"
-  expression="editorial"
-  eyebrow={selectedContent.eyebrow}
-  title={selectedContent.title}
-  description={selectedContent.description}
->
-  {#snippet aside()}
-    <PerformanceCardGrid items={contactPathCards} columns={1} ariaLabel="Contact path options" />
-  {/snippet}
-</PerformancePageSection>
+<header class="inquiry-intro">
+  <p class="inquiry-eyebrow">{selectedContent.eyebrow}</p>
+  <h1>{selectedContent.title}</h1>
+  <p>{selectedContent.description}</p>
+  <a href="#inquiry-form">{selectedContent.formTitle} ↓</a>
+</header>
 
 <section class="contact-section">
   <div class="contact-container">
     <div class="contact-option">
-      <h2>{selectedContent.formTitle}</h2>
+      <h2>{hasChosenIntent ? "Tell us about the work." : selectedContent.formTitle}</h2>
       <p>{selectedContent.formDescription}</p>
 
-      <form class="contact-form" onsubmit={handleSubmit}>
+      <form id="inquiry-form" class="contact-form" onsubmit={handleSubmit}>
+        <details class="path-choice"><summary>{selectedPath.label} · Change inquiry type</summary>
         <fieldset class="form-field path-field">
           <legend class="form-label">What should happen next?</legend>
           <div class="path-options">
@@ -307,7 +322,7 @@
               </label>
             {/each}
           </div>
-        </fieldset>
+        </fieldset></details>
 
         <div class="form-field">
           <label for="name" class="form-label">Name</label>
@@ -353,7 +368,18 @@
           </select>
         </div>
 
-        <div class="form-field">
+        {#if selectedIntent === 'membership'}
+          <div class="form-field">
+            <label for="membership-plan" class="form-label">Support plan</label>
+            <select id="membership-plan" name="membership-plan" class="form-input" aria-describedby="membership-plan-help" bind:value={selectedPlan}>
+              <option value="focused">Focused · 1 workstream</option>
+              <option value="team">Team · up to 2 workstreams</option>
+            </select>
+            <p id="membership-plan-help" class="form-helper">Focused is $900/month. Team is $2,500/month. Both plans include two 30-minute check-ins each month. Focused has two 60-minute remote sessions available; Team has four. Use remote sessions when helpful for onboarding, pairing or troubleshooting. Scope and times are agreed before payment.</p>
+          </div>
+        {/if}
+
+        <div class="form-field form-field--message">
           <label for="message" class="form-label">{selectedContent.messageLabel}</label>
           <p class="form-helper">{selectedContent.messageHelper}</p>
           <textarea
@@ -366,6 +392,13 @@
           ></textarea>
         </div>
 
+        {#if selectedIntent === 'membership'}
+          <p class="form-helper form-note" role="note">
+            This is an inquiry, not a payment or permission to spend. We confirm delivery scope and
+            separate AI usage costs before work begins. For substantial AI work, we arrange scoped
+            access to your provider account or agree on metered billing. Do not send credentials here.
+          </p>
+        {/if}
         <button type="submit" disabled={submitting} class="form-submit">
           {submitting ? 'Sending...' : selectedPath.submitLabel}
         </button>
@@ -390,46 +423,68 @@
         decision, and what needs to be decided.
       </p>
       <div class="cal-button">
-        <ScheduleButton variant="primary" size="lg" />
-        <a href="/book" class="calendar-link">Review scheduling details</a>
+        {#if selectedIntent === 'system-support'}
+          <Button href={`/book?${new URLSearchParams({ source: contactSource, intent: selectedIntent, lane: selectedLane })}`}>Review scheduling details</Button>
+        {:else}
+          <ScheduleButton variant="primary" size="lg" />
+        {/if}
+        {#if selectedIntent !== 'system-support'}
+          <a href="/book" class="calendar-link">Review scheduling details</a>
+        {/if}
       </div>
     </div>
   </div>
 </section>
 
-<PerformancePageSection variant="white" eyebrow="Funnel routing" title="Choose a useful next step.">
-  {#snippet after()}
-    <FunnelLadder />
-  {/snippet}
-</PerformancePageSection>
+<details class="contact-alternatives"><summary>Other ways to begin</summary><FunnelLadder /></details>
 
 <section class="email-section">
   <div class="section-container">
     <p class="email-text">
-      Or email directly: <a href="mailto:micah@createsomething.agency" class="email-link"
-        >micah@createsomething.agency</a
+      Or email directly: <a href="mailto:support@createsomething.io" class="email-link"
+        >support@createsomething.io</a
       >
     </p>
   </div>
 </section>
 
 <style>
+  .inquiry-intro { width: min(var(--content-width-performance), 86%); margin: 0 auto; padding-block: var(--space-performance-lg) var(--space-performance-sm); }
+  .contact-alternatives { width: min(var(--content-width-performance), 86%); margin: var(--space-performance-md) auto; }
+  .contact-alternatives > summary { display: flex; align-items: center; min-height: 48px; cursor: pointer; }
+  .contact-alternatives > summary:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 4px; }
+  .inquiry-intro h1 { max-width: 24ch; margin: var(--space-performance-sm) 0; font: var(--font-performance-medium) clamp(1.8rem, 3vw, 2.75rem)/1.15 var(--font-performance-interface); letter-spacing: var(--tracking-performance-tight); }
+  .inquiry-intro p { max-width: 70ch; line-height: 1.55; }
+  .inquiry-eyebrow { font: var(--text-performance-operator-label) var(--font-performance-mono); }
+  .inquiry-intro a { display: inline-flex; align-items: center; min-height: 44px; color: inherit; text-underline-offset: .2em; }
+  .contact-form summary { cursor: pointer; min-height: 44px; padding-block: var(--space-performance-xs); }
+  .contact-form summary:focus-visible, .inquiry-intro a:focus-visible, .form-submit:focus-visible, .calendar-link:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 3px; }
+  #inquiry-form { scroll-margin-top: 7rem; }
+  .path-choice, .form-field--message, .form-note, .form-submit, .form-message { grid-column: 1 / -1; }
+  .form-field { min-width: 0; }
+  .form-input, .form-submit { scroll-margin-block: 7rem; }
+  .form-input { width: 100%; box-sizing: border-box; }
+  .path-option:focus-within { outline: 2px solid var(--color-performance-focus); outline-offset: 2px; }
+  @media (min-width: 900px) { .contact-form { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (prefers-reduced-motion: reduce) { .path-option, .form-input, .form-submit, .email-link { transition: none; } }
+
+
   .section-container {
-    width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
+    width: min(var(--content-width-performance, 85rem), 86%);
     margin: 0 auto;
   }
 
   .contact-section {
-    padding: 4.5rem 0;
+    padding: var(--space-performance-sm) 0 var(--space-performance-xl);
     background: var(--color-performance-paper, #f3f3f0);
     border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   .contact-container {
-    width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
+    width: min(var(--content-width-performance, 85rem), 86%);
     margin: 0 auto;
     display: grid;
-    grid-template-columns: minmax(0, 1.1fr) minmax(18rem, 0.9fr);
+    grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
     gap: 1rem;
     align-items: start;
   }
@@ -444,15 +499,14 @@
 
   .contact-option--calendar {
     border-color: var(--color-performance-line-strong, #9c9c96);
-    background:
-      linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 3rem 3rem,
-      color-mix(in srgb, var(--color-performance-signal-soft, #dce8f5) 18%, white);
+    background: var(--color-performance-paper);
   }
 
   .contact-option h2 {
+    font-family: var(--font-performance-interface);
     margin: 0 0 0.65rem;
     color: var(--color-performance-ink, #090909);
-    font-size: 1.75rem;
+    font-size: 1.35rem;
     font-weight: var(--font-performance-medium);
     line-height: 1.1;
   }
@@ -605,7 +659,7 @@
   }
 
   .form-textarea {
-    resize: none;
+    resize: vertical;
     min-height: 8.75rem;
   }
 
@@ -679,9 +733,10 @@
   }
 
   @media (max-width: 768px) {
+    .inquiry-intro { padding-top: var(--space-performance-sm); }
     .contact-container,
     .section-container {
-      width: min(100% - 1.5rem, var(--content-width-performance, 85rem));
+      width: min(86%, var(--content-width-performance, 85rem));
     }
 
     .contact-container {
@@ -689,7 +744,7 @@
     }
 
     .contact-section {
-      padding-block: 2.75rem;
+      padding-block: var(--space-performance-sm) var(--space-performance-lg);
     }
   }
 </style>

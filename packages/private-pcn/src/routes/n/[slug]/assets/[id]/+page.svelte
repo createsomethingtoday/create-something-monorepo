@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SerifPhrase from '$lib/components/SerifPhrase.svelte';
   import StateBadge from '$lib/components/StateBadge.svelte';
   import StatusNotice from '$lib/components/StatusNotice.svelte';
   import Icon from '$lib/components/Icon.svelte';
@@ -347,7 +348,7 @@
   {#if data.owner}<section class="builder-split">
       <div>
         <p class="eyebrow">01 / SHAPE THE OFFER</p>
-        <h2>Be clear about<br /><em>what it does.</em></h2>
+        <h2>Be clear about<br /><SerifPhrase text="what it does." /></h2>
         <p>
           Make the outcome specific. Buyers should understand the technique, intended runtime and
           scope before they purchase.
@@ -390,7 +391,7 @@
     <section class="builder-split">
       <div>
         <p class="eyebrow">02 / MAKE IT REPRODUCIBLE</p>
-        <h2>A release someone<br /><em>can actually use.</em></h2>
+        <h2>A release someone<br /><SerifPhrase text="can actually use." /></h2>
         <p>
           Upload a ZIP up to 16 MiB. Include the package, documentation and license. Five immutable
           releases per asset: a new version never replaces a buyer’s existing files.

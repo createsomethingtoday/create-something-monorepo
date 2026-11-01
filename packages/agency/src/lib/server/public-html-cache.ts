@@ -1,5 +1,8 @@
 const PUBLIC_HTML_CACHE_CONTROL = 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400';
 const PUBLIC_HTML_CACHE_STATUS_HEADER = 'X-Agency-Edge-Cache';
+// Bump when a public HTML release changes its asset or composition contract.
+// Pages application caches can outlive promotion and zone purge acceptance.
+const PUBLIC_HTML_CACHE_REVISION = 'approved-copy-20261031';
 
 const UNCACHED_PATH_PREFIXES = [
   '/account',
@@ -44,7 +47,9 @@ export function shouldAttemptPublicHtmlCache(input: PublicHtmlCacheDecisionInput
 }
 
 export function createPublicHtmlCacheKey(request: Request): Request {
-  return new Request(request.url, { method: 'GET' });
+  const url = new URL(request.url);
+  url.searchParams.set('__agency_html_revision', PUBLIC_HTML_CACHE_REVISION);
+  return new Request(url, { method: 'GET' });
 }
 
 export function withPublicHtmlCacheHeaders(

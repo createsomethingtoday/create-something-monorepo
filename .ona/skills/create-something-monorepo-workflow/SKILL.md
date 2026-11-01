@@ -18,7 +18,7 @@ Use this skill when the task is about operating inside this repository rather th
 ## Runtime Rules
 
 - Use the repo-pinned runtime:
-  - Node `22.21.1`
+  - Node `22.23.4`
   - pnpm `9.15.0`
 - If bootstrap fails on a different local Node version, do not wave it through because `package.json` has a broader engine range.
 - Prefer opening the repo through `.devcontainer/devcontainer.json` or using `./scripts/ona-bootstrap-local.sh` before improvising local fixes.

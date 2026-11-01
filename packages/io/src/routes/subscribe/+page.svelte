@@ -378,7 +378,7 @@
 		<!-- Footer Links -->
 		<div class="footer-section mt-16 pt-8 text-center">
 			<p>
-				Questions? Email <a href="mailto:micah@createsomething.io" class="footer-link">micah@createsomething.io</a>
+				Questions? Email <a href="mailto:support@createsomething.io" class="footer-link">support@createsomething.io</a>
 				·
 				<a href="/" class="footer-link">Back to experiments</a>
 			</p>

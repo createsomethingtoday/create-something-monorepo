@@ -49,12 +49,12 @@ if (failures.length === 0) {
   }
 
   const nvmVersion = readText('.nvmrc').trim();
-  if (nvmVersion !== '22.21.1') {
-    failures.push(`Expected .nvmrc to pin Node 22.21.1, found ${nvmVersion || '(empty)'}`);
+  if (nvmVersion !== '22.23.4') {
+    failures.push(`Expected .nvmrc to pin Node 22.23.4, found ${nvmVersion || '(empty)'}`);
   }
 
   const devcontainer = readText('.devcontainer/devcontainer.json');
-  for (const expected of ['"NODE_VERSION": "22.21.1"', '"PNPM_VERSION": "9.15.0"']) {
+  for (const expected of ['"NODE_VERSION": "22.23.4"', '"PNPM_VERSION": "9.15.0"']) {
     if (!devcontainer.includes(expected)) {
       failures.push(`Missing devcontainer runtime pin: ${expected}`);
     }

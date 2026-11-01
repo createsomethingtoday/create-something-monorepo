@@ -1,0 +1,290 @@
+{
+  "version": 1,
+  "canvas": {
+    "width": 360,
+    "height": 558,
+    "background": "#171717"
+  },
+  "metadata": {
+    "title": "A contract reader: four responsibilities",
+    "description": "Illustrative model: readable contract, orchestration, actual host controls, and an observed receipt. This is not a running system."
+  },
+  "elements": [
+    {
+      "id": "reader",
+      "type": "rect",
+      "x": 24,
+      "y": 130,
+      "width": 312,
+      "height": 288,
+      "fill": "#262626",
+      "stroke": "#8a8a86",
+      "contains": [
+        "window-route",
+        "window-gate",
+        "route-label",
+        "gate-label",
+        "route-note",
+        "gate-note",
+        "divider",
+        "mount-a",
+        "mount-b",
+        "mount-c",
+        "mount-d"
+      ]
+    },
+    {
+      "id": "contract",
+      "type": "rect",
+      "x": 66,
+      "y": 12,
+      "width": 228,
+      "height": 100,
+      "fill": "#333333",
+      "stroke": "#8a8a86",
+      "contains": [
+        "contract-label",
+        "contract-note"
+      ]
+    },
+    {
+      "id": "contract-label",
+      "type": "text",
+      "x": 82,
+      "y": 25,
+      "width": 196,
+      "height": 24,
+      "lines": [
+        "01  CONTRACT"
+      ],
+      "fontSize": 16,
+      "lineHeight": 23.2,
+      "fontFamily": "Arial, sans-serif",
+      "fill": "#f7f7f2"
+    },
+    {
+      "id": "contract-note",
+      "type": "text",
+      "x": 82,
+      "y": 59,
+      "width": 196,
+      "height": 40,
+      "lines": [
+        "Goal, scope, evidence"
+      ],
+      "fontSize": 13,
+      "lineHeight": 18.849999999999998,
+      "fontFamily": "Arial, sans-serif",
+      "fill": "#f7f7f2"
+    },
+    {
+      "id": "window-route",
+      "type": "rect",
+      "x": 48,
+      "y": 158,
+      "width": 264,
+      "height": 92,
+      "fill": "#171717",
+      "stroke": "#8a8a86",
+      "contains": [
+        "route-label",
+        "route-note"
+      ]
+    },
+    {
+      "id": "route-label",
+      "type": "text",
+      "x": 64,
+      "y": 170,
+      "width": 232,
+      "height": 24,
+      "lines": [
+        "02  ORCHESTRATION"
+      ],
+      "fontSize": 16,
+      "lineHeight": 23.2,
+      "fontFamily": "Arial, sans-serif",
+      "fill": "#f7f7f2"
+    },
+    {
+      "id": "route-note",
+      "type": "text",
+      "x": 64,
+      "y": 206,
+      "width": 232,
+      "height": 32,
+      "lines": [
+        "Roles, order, handoffs"
+      ],
+      "fontSize": 13,
+      "lineHeight": 18.849999999999998,
+      "fontFamily": "Arial, sans-serif",
+      "fill": "#f7f7f2"
+    },
+    {
+      "id": "divider",
+      "type": "rect",
+      "x": 48,
+      "y": 264,
+      "width": 264,
+      "height": 2,
+      "fill": "#8a8a86",
+      "stroke": "#8a8a86",
+      "contains": []
+    },
+    {
+      "id": "window-gate",
+      "type": "rect",
+      "x": 48,
+      "y": 280,
+      "width": 264,
+      "height": 106,
+      "fill": "#171717",
+      "stroke": "#8a8a86",
+      "contains": [
+        "gate-label",
+        "gate-note"
+      ]
+    },
+    {
+      "id": "gate-label",
+      "type": "text",
+      "x": 64,
+      "y": 293,
+      "width": 232,
+      "height": 24,
+      "lines": [
+        "03  HOST CONTROLS"
+      ],
+      "fontSize": 16,
+      "lineHeight": 23.2,
+      "fontFamily": "Arial, sans-serif",
+      "fill": "#f7f7f2"
+    },
+    {
+      "id": "gate-note",
+      "type": "text",
+      "x": 64,
+      "y": 329,
+      "width": 232,
+      "height": 40,
+      "lines": [
+        "Access, approval, checks"
+      ],
+      "fontSize": 13,
+      "lineHeight": 18.849999999999998,
+      "fontFamily": "Arial, sans-serif",
+      "fill": "#f7f7f2"
+    },
+    {
+      "id": "mount-a",
+      "type": "rect",
+      "x": 30,
+      "y": 136,
+      "width": 6,
+      "height": 6,
+      "fill": "#8a8a86",
+      "stroke": "#8a8a86",
+      "contains": []
+    },
+    {
+      "id": "mount-b",
+      "type": "rect",
+      "x": 324,
+      "y": 136,
+      "width": 6,
+      "height": 6,
+      "fill": "#8a8a86",
+      "stroke": "#8a8a86",
+      "contains": []
+    },
+    {
+      "id": "mount-c",
+      "type": "rect",
+      "x": 30,
+      "y": 404,
+      "width": 6,
+      "height": 6,
+      "fill": "#8a8a86",
+      "stroke": "#8a8a86",
+      "contains": []
+    },
+    {
+      "id": "mount-d",
+      "type": "rect",
+      "x": 324,
+      "y": 404,
+      "width": 6,
+      "height": 6,
+      "fill": "#8a8a86",
+      "stroke": "#8a8a86",
+      "contains": []
+    },
+    {
+      "id": "receipt",
+      "type": "rect",
+      "x": 66,
+      "y": 440,
+      "width": 228,
+      "height": 102,
+      "fill": "#333333",
+      "stroke": "#8a8a86",
+      "contains": [
+        "receipt-label",
+        "receipt-note"
+      ]
+    },
+    {
+      "id": "receipt-label",
+      "type": "text",
+      "x": 82,
+      "y": 453,
+      "width": 196,
+      "height": 24,
+      "lines": [
+        "04  RECEIPT"
+      ],
+      "fontSize": 16,
+      "lineHeight": 23.2,
+      "fontFamily": "Arial, sans-serif",
+      "fill": "#f7f7f2"
+    },
+    {
+      "id": "receipt-note",
+      "type": "text",
+      "x": 82,
+      "y": 487,
+      "width": 196,
+      "height": 40,
+      "lines": [
+        "Observed result + limits"
+      ],
+      "fontSize": 13,
+      "lineHeight": 18.849999999999998,
+      "fontFamily": "Arial, sans-serif",
+      "fill": "#f7f7f2"
+    },
+    {
+      "id": "in",
+      "type": "connector",
+      "x1": 180,
+      "y1": 112,
+      "x2": 180,
+      "y2": 130,
+      "stroke": "#bdbdb8",
+      "strokeWidth": 1,
+      "markerEnd": true
+    },
+    {
+      "id": "out",
+      "type": "connector",
+      "x1": 180,
+      "y1": 418,
+      "x2": 180,
+      "y2": 440,
+      "stroke": "#bdbdb8",
+      "strokeWidth": 1,
+      "markerEnd": true
+    }
+  ]
+}

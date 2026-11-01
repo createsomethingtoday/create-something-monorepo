@@ -1,0 +1,7 @@
+{
+  "name": "app-review-guard",
+  "version": "0.1.0",
+  "description": "Stops a developer-facing App Review MCP write (request changes, reject, approve, public ticket reply, new ticket, solve, marketplace status, exception request) until the reviewer answers Send on the engine's dialog, with the exact text shown in a pane. Lints feedback first and refuses decisions on a version whose review context has not been loaded this session.",
+  "author": { "name": "Webflow Marketplace team (internal)" },
+  "types": "./types/index.d.ts"
+}

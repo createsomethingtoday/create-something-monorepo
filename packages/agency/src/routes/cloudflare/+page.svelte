@@ -206,7 +206,7 @@
 
 <SEO
   title="Cloudflare Workflow Runtime | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING builds Cloudflare-native workflow systems on Workers, Pages, and D1, with scoped tool surfaces and runtime control."
+  description="AI-native technical support for Cloudflare workflows on Workers, Pages and D1. We diagnose failures, engineer improvements and document recovery."
   keywords="Cloudflare workflow runtime, Cloudflare Workers, scoped tools, D1, workflow control, AI workflow infrastructure"
   ogImage="/og/cloudflare-lane.png"
   propertyName="agency"
@@ -220,7 +220,7 @@
   expression="editorial"
   eyebrow="Cloudflare Workflow Runtime"
   title="Cloudflare runtime with controlled workflows."
-  description="Cloudflare hosts the application, stores records, and runs background tasks. We build the workflow around your access rules and document how to undo a release."
+  description="Cloudflare hosts the application, stores records, and runs background tasks. Within agreed technical support, we diagnose failures, build improvements around your access rules, and document how to undo a release."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>

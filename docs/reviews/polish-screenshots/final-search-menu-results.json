@@ -1,0 +1,176 @@
+[
+  {
+    "n": "io",
+    "w": 390,
+    "search": {
+      "x": 266,
+      "y": 10,
+      "width": 44,
+      "height": 44
+    },
+    "menu": {
+      "x": 314,
+      "y": 8,
+      "width": 44,
+      "height": 44
+    },
+    "colors": {
+      "color": "oklch(0.985 0 0)",
+      "bg": "oklch(0.269 0 0)",
+      "z": "51"
+    },
+    "input": {
+      "value": "Ground",
+      "focused": true
+    },
+    "searchVisible": true,
+    "dismissed": true,
+    "menuExpanded": "true",
+    "searchWithMenu": false
+  },
+  {
+    "n": "io",
+    "w": 768,
+    "search": {
+      "x": 644,
+      "y": 10,
+      "width": 44,
+      "height": 44
+    },
+    "menu": {
+      "x": 708,
+      "y": 8,
+      "width": 44,
+      "height": 44
+    },
+    "colors": {
+      "color": "oklch(0.985 0 0)",
+      "bg": "oklch(0.269 0 0)",
+      "z": "51"
+    },
+    "input": {
+      "value": "Ground",
+      "focused": true
+    },
+    "searchVisible": true,
+    "dismissed": true,
+    "menuExpanded": "true",
+    "searchWithMenu": false
+  },
+  {
+    "n": "ltd",
+    "w": 390,
+    "search": {
+      "x": 266,
+      "y": 10,
+      "width": 44,
+      "height": 44
+    },
+    "menu": {
+      "x": 334,
+      "y": 12.46875,
+      "width": 44,
+      "height": 44
+    },
+    "colors": {
+      "color": "oklch(0.985 0 0)",
+      "bg": "oklch(0.269 0 0)",
+      "z": "51"
+    },
+    "input": {
+      "value": "Ground",
+      "focused": true
+    },
+    "searchVisible": true,
+    "dismissed": true,
+    "menuExpanded": "true",
+    "searchWithMenu": false
+  },
+  {
+    "n": "ltd",
+    "w": 768,
+    "search": {
+      "x": 644,
+      "y": 10,
+      "width": 44,
+      "height": 44
+    },
+    "menu": {
+      "x": 704,
+      "y": 12.46875,
+      "width": 44,
+      "height": 44
+    },
+    "colors": {
+      "color": "oklch(0.985 0 0)",
+      "bg": "oklch(0.269 0 0)",
+      "z": "51"
+    },
+    "input": {
+      "value": "Ground",
+      "focused": true
+    },
+    "searchVisible": true,
+    "dismissed": true,
+    "menuExpanded": "true",
+    "searchWithMenu": false
+  },
+  {
+    "n": "space",
+    "w": 390,
+    "search": {
+      "x": 266,
+      "y": 10,
+      "width": 44,
+      "height": 44
+    },
+    "menu": {
+      "x": 334,
+      "y": 12.46875,
+      "width": 44,
+      "height": 44
+    },
+    "colors": {
+      "color": "oklch(0.985 0 0)",
+      "bg": "oklch(0.269 0 0)",
+      "z": "51"
+    },
+    "input": {
+      "value": "Ground",
+      "focused": true
+    },
+    "searchVisible": true,
+    "dismissed": true,
+    "menuExpanded": "true",
+    "searchWithMenu": false
+  },
+  {
+    "n": "space",
+    "w": 768,
+    "search": {
+      "x": 644,
+      "y": 10,
+      "width": 44,
+      "height": 44
+    },
+    "menu": {
+      "x": 704,
+      "y": 12.46875,
+      "width": 44,
+      "height": 44
+    },
+    "colors": {
+      "color": "oklch(0.985 0 0)",
+      "bg": "oklch(0.269 0 0)",
+      "z": "51"
+    },
+    "input": {
+      "value": "Ground",
+      "focused": true
+    },
+    "searchVisible": true,
+    "dismissed": true,
+    "menuExpanded": "true",
+    "searchWithMenu": false
+  }
+]

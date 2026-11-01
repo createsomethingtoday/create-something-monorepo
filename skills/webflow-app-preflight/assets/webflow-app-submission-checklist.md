@@ -33,14 +33,16 @@ If you can answer yes to all three _with evidence_, the App passes.
 ### Is it safe and inspectable?
 
 - [ ] Production build shipped — no `eval()`, no dev-mode bundle, no framework error-decoder URLs.
-- [ ] No direct DOM manipulation of the Designer; Designer APIs used instead.
+- [ ] No direct DOM manipulation of the Designer; Designer APIs used instead. Self-check — Preflight does not detect this.
+- [ ] Sections identified with `getTag()`, not `element.type` (preset-created sections report `type: 'Block'`; `div`-tagged types still need `type`).
 - [ ] No externally hosted iframe as the primary App UI or runtime surface. Iframes are fine for authentication flows.
-- [ ] No excessive global variables.
+- [ ] No excessive global variables. Self-check — Preflight does not detect this.
 - [ ] Third-party dependencies are known and nameable; no dead or unused external connection URLs.
 - [ ] No credential fields (password/login) read from any published DOM.
 - [ ] Data comes from official APIs (for example the Forms API), not DOM scraping.
 - [ ] Client Secret is server-side only — not in the bundle, client JS, or repo.
 - [ ] Designer Extension source is readable and uploaded through the version manager.
+- [ ] No `.map` files or inline `data:` source maps inside `bundle.zip` — Preflight reports them as a Required update; source maps go in the submission form's private upload, not in the artifact that ships to customers.
 - [ ] Archive contains exactly one canonical `webflow.json`, and the app title is your real product name — no scaffold defaults like "My React App".
 - [ ] The **bundled** `webflow.json` carries no CLI telemetry block (`telemetry.global.allowTelemetry`). Webflow CLI 2.3.0 and earlier write that block into the project's `webflow.json` when you answer the telemetry prompt (2.7.x moved the global preference out of the project file), so it appears without you adding it. Strip it or upgrade the CLI. It is packaging hygiene, not a security finding.
 - [ ] The artifact you verify is the artifact you upload — run your production checks against the contents of `bundle.zip`, not a working-directory build a dev server can overwrite.
@@ -68,9 +70,9 @@ Reviewers verify these by calling your endpoints and asking for evidence, not by
 - [ ] Values interpolated into generated scripts, markup, or custom attributes are JSON-serialized and format-validated.
 - [ ] Uploads validated server-side for type, size, count, and file signature; archive contents inspected.
 - [ ] Actions are attributed to the authenticated user — no hardcoded owner or service identity standing in for real users.
-- [ ] `[control]` Dependency audit clean of High and Critical advisories, or a documented function-level reachability analysis. Production manifest and lockfile available on request.
-- [ ] No staging, localhost, or tunnel hostname is used as a request destination in the artifact, and the installation URL you declare is a production host. A `localhost` string in a hostname blocklist, in a library's URL-parsing fallback, or in a test fixture is not a development artifact — check what the string does, not that it exists.
-- [ ] `[control]` OAuth callback validates a single-use, server-stored `state` bound to the pending authorization — the CSRF control in Webflow's OAuth flow (PKCE is not part of Webflow's documented flow; use PKCE on third-party OAuth flows your app performs that support it).
+- [ ] `[control]` Dependency audit clean of High and Critical advisories, or a documented function-level reachability analysis. Production `package.json` and lockfile go in the private review ZIP.
+- [ ] No staging, localhost, or tunnel hostname is used as a request destination in the artifact, and the installation URL you declare is a production host. A bare `localhost` string in a hostname blocklist, in a library's URL-parsing fallback, or in a test fixture is not a development artifact — Preflight reports it as a Suggested update to confirm, and a localhost URL with a port or a path, or any tunnel host, as a Required update — check what the string does, not that it exists.
+- [ ] `[control]` Data Client/Hybrid Webflow OAuth only (Designer Extension-only: `N/A`, no partner-owned Install URL or callback): Marketplace Install URL is an endpoint you own that mints a fresh, single-use `state` per request and binds it to the browser session — never a fixed `webflow.com/oauth/authorize` URL. The OAuth callback verifies and consumes that `state` in one operation before exchanging the code, rejecting any value that is missing, mismatched, expired, already used, or not bound to the session that started the request — the CSRF control in Webflow's OAuth flow (PKCE is not part of Webflow's documented flow; use PKCE on third-party OAuth flows your app performs that support it). The Workspace Install button under Apps & Integrations sends no `state`; it is developer-only and not the path review tests.
 - [ ] Client bundle contains client code only — no server handlers, database schema, JWT logic, or backend dependencies (check the source map, which will reveal whatever the bundle contains).
 - [ ] Production logs contain no personal data or credentials; sensitive fields redacted at the logging boundary.
 
@@ -80,10 +82,11 @@ Reviewers verify these by calling your endpoints and asking for evidence, not by
 - [ ] Data Client/Hybrid only: Webflow Install URL scopes are equal to or a subset of configured Webflow scopes. Otherwise `N/A`.
 - [ ] Webflow Data API only: App stops calling immediately on revoke or uninstall; third-party 401 behavior follows that provider's documented contract.
 - [ ] Code on customer sites is delivered via the Custom Code API, not manual copy-paste.
-- [ ] Injected scripts are version-pinned — hosted scripts use an SRI `integrityHash`. No runtime loaders unless every remote resource is declared and pinned at submission.
+- [ ] Injected scripts are version-pinned — hosted scripts registered through the Custom Code API carry an SRI `integrityHash`. Every remotely loaded resource is declared at submission; no undisclosed runtime loaders. `[control]` SRI `integrity` + `crossorigin="anonymous"` on `<script>` tags in published-site code is a recommended practice in the Marketplace Guidelines, not a review gate; Preflight's production-runtime validation still reports a missing or mismatched pin as a blocker; for Partner Program apps the review team routes that finding to the exceptions queue rather than rejecting.
 - [ ] Any change to injected code ships as a new script version plus an App update — never edited in place.
-- [ ] App retains the scopes needed to clean up (`custom_code:write` plus `sites:write`/`pages:write`) and removes scripts at both site and page level on uninstall.
-- [ ] If programmatic removal isn't possible, the App gives clear in-app instructions telling the user exactly what to remove and where — injected code is never simply left behind.
+- [ ] App does not depend on calling the API after uninstall (uninstall removes API-applied Custom Code; the token is revoked). If the App removes scripts while it stays installed, it retains `custom_code:write` + `sites:write`/`pages:write` and removes them at site and page level.
+- [ ] If the App links a Webflow site or Workspace to an account in its service, it has an in-App Disconnect that ends that account link **without** calling `/oauth/revoke_authorization`, and the user can connect again without redoing Webflow OAuth.
+- [ ] Webflow-side data the platform doesn't remove (CMS items, assets, manually pasted code) has clear removal instructions.
 - [ ] User is prompted to publish after any API-managed apply, update, or removal, since the change only reaches the published site on publish.
 
 ### Privacy and data handling
@@ -114,8 +117,8 @@ Reviewers verify these by calling your endpoints and asking for evidence, not by
 ### Submission artifacts
 
 - [ ] A published `.webflow.io` testing site exists with the App installed, and the full experience — including anything the App adds to the published site — works there end to end.
-- [ ] Source maps ready for the form's private upload (one `.map` or one ZIP of version-3 maps from the exact build that produced the bundle) when the submission ships a minified or generated bundle. Not in the public bundle, not in notes.
-- [ ] App Review Preflight ([install into your Workspace](https://webflow.com/oauth/authorize?response_type=code&client_id=0b5411e62233387925e082350666ef374377f81a9abba0dcc2542d6b5b1e4388&scope=authorized_user%3Aread)) run in the Designer on the same bundle + source-map artifact (Data Clients: on the declared production JavaScript URLs), findings resolved, and the `wfpre_…` submission receipt copied for the form.
+- [ ] One review ZIP ready for the form's **Source map artifact** field — the `.map` files, `package.json`, and lockfile from the exact build that produced the bundle, or, if the app ships its source unchanged, the source files as shipped plus a short README (with `package.json` and the lockfile if the app uses them) — for a new Designer Extension or Hybrid App, or an update that changes the bundle. Not in the public bundle, not a link in notes.
+- [ ] App Review Preflight ([install into your Workspace](https://webflow.com/oauth/authorize?response_type=code&client_id=0b5411e62233387925e082350666ef374377f81a9abba0dcc2542d6b5b1e4388&scope=authorized_user%3Aread)) run in the Designer on the same bundle + source-map artifact (Data Clients with the Custom code scope: on the declared production JavaScript URLs; a Data Client with no Custom code scope skips this item — the form marks the receipt **Not needed for this app**), every **Blocker** and **Required update** resolved — except an auth-only external iframe or a runtime check only review can close (a Partner Program exception, a no-proxy declaration, a privately supplied source), each explained in the review notes — every **Manual review** item (an unscanned executable such as `.wasm`, or a Data Client's unscanned hosted runtime) explained in the review notes with readable source, and the `wfpre_…` submission receipt copied for the form. Readiness `ready` is not an approval; `needs_review` is not a pass. Preflight's production-runtime validation (hash and SRI pinning on your test site) reports a failed check as a blocker even though the Marketplace Guidelines list SRI and immutable URLs as recommended practices; for Partner Program apps the review team routes that finding to the exceptions queue rather than rejecting.
 
 ### Account
 
@@ -139,7 +142,7 @@ These are the recurring reasons a well-intentioned App gets bounced or pulled in
 
 **2 · DOM scraping and credential-field access.** Reading data out of the published DOM instead of an API, or reaching into password and login inputs. _Use official APIs. Never read credential fields. If an API gap is forcing you to scrape, that's a signal to reconsider the approach._
 
-**3 · Injecting code you don't pin, version, or clean up.** Manual paste snippets, runtime loaders that fetch remote code, in-place edits to an approved script, or scripts left behind after uninstall. Swapping what a hosted script serves after approval can get an App removed and possibly banned. _Deliver through the Custom Code API. Script versions are immutable — register a new version and submit an App update. Loaders are allowed only when every remote resource is declared and SRI-pinned at submission. Remove your scripts at site and page level on uninstall, and prompt the user to publish._
+**3 · Injecting code you don't pin, version, or clean up.** Manual paste snippets, runtime loaders that fetch remote code, in-place edits to an approved script, or scripts left behind after uninstall. Swapping what a hosted script serves after approval can get an App removed and possibly banned. _Deliver through the Custom Code API. Script versions are immutable — register a new version and submit an App update. Loaders are allowed only when every remote resource is declared and SRI-pinned at submission. Uninstall removes API-applied scripts; if your App removes scripts while it stays installed, do it at site and page level and prompt the user to publish._
 
 **4 · Calling the API after the user said no.** There is no uninstall webhook. _Treat persistent 401s on a previously valid token as revocation: stop all calls for that site, tear down scheduled jobs, forget cached tokens. Do not retry past it._
 
@@ -149,11 +152,13 @@ These are the recurring reasons a well-intentioned App gets bounced or pulled in
 
 **7 · Backend endpoints that trust the client.** An endpoint acting on a client-supplied site, account, or project ID with no caller authentication — or with authentication but no check that this caller owns that record. Often paired with `Access-Control-Allow-Origin: *` or a credential returned contrary to its provider's documented client architecture. This is the class reviewers find by _calling_ your endpoint, so it survives an otherwise clean-looking submission. _Classify authority first. For Webflow-authorized actions, resolve identity server-side from the Webflow ID token and bind it to the record. Enforce and test object-level authorization. Treat CORS as defense-in-depth, never as the control that keeps callers out._
 
-**8 · Non-production infrastructure in a production artifact.** The bundle points at staging, localhost, or a tunnel host, or the declared installation URL is a non-production endpoint. Not this pattern: a `localhost` literal in a hostname blocklist or a library's URL-parsing fallback, a source map resolving a dependency to a `dist/development` path the package routes everyone through (react-router 7.x), or the `telemetry.global` block the Webflow CLI writes into `webflow.json` — those ship in production builds. _Deploy a documented production service, generate a production-only bundle, separate test and production data, and add a build rule that fails when development endpoints appear as request destinations in a Marketplace artifact. Check the installation URL you declare, not just the code._
+**8 · Non-production infrastructure in a production artifact.** The bundle points at staging, localhost, or a tunnel host, or the declared installation URL is a non-production endpoint. Not this pattern: a bare `localhost` literal in a hostname blocklist or a library's URL-parsing fallback (Preflight reports it as a Suggested update to confirm; a localhost URL with a port or a path, or a tunnel host, is a Required update), a source map resolving a dependency to a `dist/development` path the package routes everyone through (react-router 7.x), or the `telemetry.global` block the Webflow CLI writes into `webflow.json` — those ship in production builds. _Deploy a documented production service, generate a production-only bundle, separate test and production data, and add a build rule that fails when development endpoints appear as request destinations in a Marketplace artifact. Check the installation URL you declare, not just the code._
 
 **9 · "Private" is not a lower bar or a testing tier.** Private Apps go through the same rigorous review as public Apps — a private App is a workspace-specific custom App, not a beta tier. _Build to the production bar from the start. To validate with outside users before launch, use Webflow's user testing process._
 
 **10 · Listing and behavior mismatch.** A listing that oversells or misdescribes the App; undisclosed fees or data collection. _Make the description, screenshots, and demo video match exactly what the App does, and disclose every fee and category of data you collect._
+
+**11 · Keying behavior on `element.type`.** A Designer Extension that recognises sections with `el.type === 'Section'`, including ones it just created with `webflow.elementPresets.Section`. Preset-created sections report `type: 'Block'` with tag `section`; hand-added ones report `type: 'Section'`. The check passes in your own testing and silently fails for users. _Identify sections with `(await el.getTag()) === 'section'`. This is section-only: Container, VFlex, HFlex, Row, Column and plain Div Blocks all return `div`, so `element.type` remains the discriminator there. A Div Block retagged to `section` also matches, so guard any path that removes or rewrites what it identifies._
 
 ---
 
@@ -162,14 +167,19 @@ These are the recurring reasons a well-intentioned App gets bounced or pulled in
 Worth stating plainly, because each one inverts a real requirement:
 
 - ❌ "Add exponential backoff and retry on the 401." A persistent 401 on a previously valid token is **revocation**. Stop calling. (429s and transient 5xx are the opposite case — back off and retry those.)
-- ❌ "Drop the extra scopes on uninstall." You must **retain** `custom_code:write` plus `sites:write`/`pages:write`, or cleanup is impossible.
-- ❌ "Webflow removes injected scripts automatically on uninstall." It does not. Removal is your responsibility, at site _and_ page level.
+- ❌ "Make Disconnect revoke the Webflow token." Disconnect ends your App's own account link. Revoking the Webflow authorization is uninstall's job; calling `/oauth/revoke_authorization` from Disconnect leaves the App installed with no Webflow access.
+- ❌ "Detect the 401 after uninstall, then delete your scripts." The token is already revoked, so that call fails. Uninstall removes API-applied Custom Code on its own; it reaches the live site on the next publish.
 
 Two more on the backend side:
 
 - ❌ "The endpoint is safe because CORS restricts which origins can call it." CORS is a browser policy, not authorization. A non-browser client ignores it entirely.
 - ❌ "Only our extension knows that site ID, so it's safe to key on." Site IDs appear in published page source.
-- ❌ "The source map points at `dist/development`, so rebuild for production." A path name is not a build mode. react-router 7.x publishes every consumer's code under `dist/development`, and its `localhost` URL fallback ships in production too. Prove a development build with a marker that differs from the package's production output, or drop the finding.
+- ❌ "The source map points at `dist/development`, so rebuild for production." A path name is not a build mode. react-router 7.x publishes every consumer's code under `dist/development`, and its bare `localhost` URL fallback ships in production too (Preflight reports that bare literal as a Suggested update to confirm, not a Required update). Prove a development build with a marker that differs from the package's production output, or drop the finding.
+
+Two more on OAuth installs:
+
+- ❌ "Use the Install link from Apps & Integrations as the Marketplace Install URL." For Data Client/Hybrid Webflow OAuth installs, that link is a fixed authorize URL with no `state`. Your Install URL must be an endpoint you own that mints a session-bound `state` per request.
+- ❌ "Accept code-only callbacks so the Workspace Install button keeps working." For Data Client/Hybrid Webflow OAuth installs, that button is a developer-only shortcut outside the customer install path. Keep rejecting any callback without a session-bound `state`; a callback that accepts a stripped `state` fails review.
 
 ---
 

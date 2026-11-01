@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ResearchScene from '$lib/components/ResearchScene.svelte';
   import { NewsletterSignup, SEO } from '@create-something/canon';
 
   let { data } = $props();
@@ -35,6 +36,7 @@
         <a href="#subscribe">Get the operator edition <span aria-hidden="true">→</span></a>
       </div>
     </div>
+    <ResearchScene sizes="(min-width: 960px) 720px, 94vw" scene="about-careful-working-notes" caption="An agent opens the notebook so the next attempt can build on the record." />
     <div class="signal-rail" aria-label="Publication contract">
       <span><strong>Signal</strong> field evidence</span>
       <span><strong>Decision</strong> operator judgment</span>
@@ -43,7 +45,7 @@
   </div>
 </header>
 
-<main class="archive-main">
+<div class="archive-main">
   <section class="archive-shell" aria-labelledby="archive-heading">
     <div class="section-heading">
       <div>
@@ -90,7 +92,7 @@
       source="io-newsletter-archive"
     />
   </div>
-</main>
+</div>
 
 <style>
   :global(html) {

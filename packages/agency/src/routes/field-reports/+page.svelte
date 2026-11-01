@@ -1,4 +1,8 @@
 <script lang="ts">
+  import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
+  import AgencyWayfindingHero from '$lib/components/AgencyWayfindingHero.svelte';
+  import AgencyWayfindingOpening from '$lib/components/AgencyWayfindingOpening.svelte';
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import {
     Button,
     PerformanceCampaignOpening,
@@ -9,7 +13,6 @@
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { upstreamContributionFieldReport } from '$lib/data/fieldReports';
-  import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
 
   const reports: PerformanceEvidenceItem[] = [
     {
@@ -41,14 +44,14 @@
   propertyName="agency"
 />
 
+<AgencyWayfindingOpening>
 <PerformanceCampaignOpening
   eyebrow="Performance Lab / Public evidence"
   expression="editorial"
   title="Read the results, including the limits."
   lede="Each report shows a test and its evidence. Read what was measured, what failed, and what remains unknown."
-  media={playbookHeroMedia.fieldReports}
-  mediaMobilePlacement="background"
   density="compact"
+  artifactMobilePlacement="flow"
   proof={[
     { label: 'Measured', value: 'Sourced' },
     { label: 'Blocked', value: 'Visible' },
@@ -61,7 +64,11 @@
       {agencyCoreMessaging.selfMapLabel}
     </Button>
   {/snippet}
+  {#snippet artifact()}<AgencyWayfindingHero route="fieldReports" />{/snippet}
 </PerformanceCampaignOpening>
+</AgencyWayfindingOpening>
+
+<WorkflowSignalBand motionOnly quiet tall showMotionControl />
 
 <PerformanceEvidenceIndex
   id="reports"
@@ -92,5 +99,8 @@
     >
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
+  {/snippet}
+  {#snippet aside()}
+    <AgencyWayfindingSign kind="map" label="Explore Map" detail="Define the workflow and the evidence your team needs." href="/map" />
   {/snippet}
 </PerformanceConversionHandoff>

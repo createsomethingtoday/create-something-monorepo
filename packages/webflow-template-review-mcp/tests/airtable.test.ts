@@ -1417,6 +1417,141 @@ test('updateVersionReview rejects raw HTML tags in creator-facing feedback befor
   assert.equal(called, false);
 });
 
+test('findCrossProjectAssetClaim detects "another project" asset claims but not ordinary feedback', async () => {
+  const { findCrossProjectAssetClaim } = await import('../src/airtable.js');
+
+  // The Upodes / Aentoria wording: a CMS database ID prefix read as another project.
+  assert.equal(
+    findCrossProjectAssetClaim('The service and case study images (19 files) are served from a different Webflow project. Re-upload them into this project.'),
+    'different Webflow project',
+  );
+  assert.equal(findCrossProjectAssetClaim('21 images still load from another project'), 'another project');
+  assert.equal(findCrossProjectAssetClaim('Images hosted in a separate project will break if it is unpublished'), 'separate project');
+
+  assert.equal(findCrossProjectAssetClaim('Re-upload the OG image at 1200x630.'), null);
+  assert.equal(findCrossProjectAssetClaim('The "Buy Template" buttons link to "#".'), null);
+  assert.equal(findCrossProjectAssetClaim('Add a project showcase section with at least 3 CMS items.'), null);
+
+  // The phrase without asset + hosting context is legitimate link/navigation/content feedback.
+  assert.equal(findCrossProjectAssetClaim('The Services nav link points to another project. Link it to /services.'), null);
+  assert.equal(findCrossProjectAssetClaim('Buy Template should open the marketplace listing, not a different Webflow project.'), null);
+  assert.equal(findCrossProjectAssetClaim('The case-study image depicts another project and does not match this client.'), null);
+  assert.equal(findCrossProjectAssetClaim('The case-study image depicting another project loads slowly on mobile.'), null);
+  // A claim that cites the prefix is evidenced (genuine cross-site paste dependency); let it through.
+  assert.equal(
+    findCrossProjectAssetClaim('Hero images are served from a different Webflow project (prefix 5f1a2b3c4d5e6f7a8b9c0d1e is neither the site ID nor the CMS database ID). Re-upload them.'),
+    null,
+  );
+  assert.equal(findCrossProjectAssetClaim("These are another project's images; re-upload them."), 'another project\'s');
+  // Negation and evidence bind to the sentence holding the claim, not the whole item.
+  assert.equal(
+    findCrossProjectAssetClaim('The images are not hosted on this project; they come from another project.'),
+    'another project',
+  );
+  assert.equal(
+    findCrossProjectAssetClaim('Site ID: 5f1a2b3c4d5e6f7a8b9c0d1e. Images are hosted in another project; re-upload them.'),
+    'another project',
+  );
+  // A full CDN prefix cited in the same sentence is evidence; its dots are not sentence breaks.
+  assert.equal(
+    findCrossProjectAssetClaim('Images are hosted in another project, prefix cdn.prod.website-files.com/5f1a2b3c4d5e6f7a8b9c0d1e/. Re-upload them.'),
+    null,
+  );
+  // CDN/URL terminology is asset context too.
+  assert.equal(findCrossProjectAssetClaim('### CDN URLs\n- These are served from another Webflow project.'), 'another Webflow project');
+  // A Markdown heading starts a new item even without a blank line before it.
+  assert.equal(
+    findCrossProjectAssetClaim('### Layout\n- Fix spacing.\n### Images\n- These are served from another project.'),
+    'another project',
+  );
+  assert.equal(findCrossProjectAssetClaim('### Images\n- Compress the hero.\n### Links\n- The footer link opens another project.'), null);
+  // Originality/similarity remarks are not hosting claims.
+  assert.equal(
+    findCrossProjectAssetClaim('The hero image is also used in another Webflow project, so replace this duplicated portfolio work.'),
+    null,
+  );
+  // A list item carries its introducing heading, so a claim split across them is still caught.
+  assert.equal(findCrossProjectAssetClaim('### Images\n- These are served from another Webflow project.'), 'another Webflow project');
+  assert.equal(findCrossProjectAssetClaim('Images:\n- served from another project\n- fix the footer'), 'another project');
+  // An intro paragraph is not a heading: its asset words (or withdrawals) do not leak into the list.
+  assert.equal(
+    findCrossProjectAssetClaim(
+      '**Thanks for the quick turnaround. Most items are resolved, and the remaining images and copy are in good shape overall. Please address the two remaining items below.**\n1. These are served from another project.',
+    ),
+    null,
+  );
+  assert.equal(
+    findCrossProjectAssetClaim('Ignore the earlier note; here is the new list.\n1. The blog images are served from a different Webflow project.'),
+    'different Webflow project',
+  );
+  // Asset context in a different item does not rescue the match.
+  assert.equal(findCrossProjectAssetClaim('1. Optimize the hero images.\n2. The footer link opens another project.'), null);
+  // Asset + hosting context in the same item does.
+  assert.equal(findCrossProjectAssetClaim('1. Fix the footer.\n2. Team photos are hosted in another project.'), 'another project');
+  // Plural form and heading-plus-continuation items are still claims.
+  assert.equal(findCrossProjectAssetClaim('Images are hosted in other Webflow projects.'), 'other Webflow projects');
+  assert.equal(findCrossProjectAssetClaim('Images:\nThese come from another Webflow project.'), 'another Webflow project');
+  assert.equal(findCrossProjectAssetClaim('- Hero images\n  are served from a different project\n- Fix the footer'), 'different project');
+
+  // Withdrawing or negating the claim is the correction the policy asks for; let it through.
+  assert.equal(
+    findCrossProjectAssetClaim("You can ignore the earlier item about images from a different Webflow project. Those images come from this site's own CMS, so no change is needed."),
+    null,
+  );
+  assert.equal(
+    findCrossProjectAssetClaim('I withdraw the earlier claim that these images are from another project; the second prefix is the CMS database ID.'),
+    null,
+  );
+  assert.equal(findCrossProjectAssetClaim('The case study images are not from another project after all.'), null);
+  // A withdrawal on one line does not excuse a fresh assertion on another.
+  assert.equal(
+    findCrossProjectAssetClaim('1. Ignore the earlier note about the logo.\n2. The blog images are served from a different Webflow project. Re-upload them.'),
+    'different Webflow project',
+  );
+});
+
+test('updateVersionReview rejects cross-project asset claims in creator-facing feedback before calling Airtable', async () => {
+  let called = false;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async () => {
+      called = true;
+      throw new Error('should not run');
+    },
+  });
+
+  await assert.rejects(
+    client.updateVersionReview('rec_version_cross_project', {
+      review_feedback: '6. The service images are served from a different Webflow project. Re-upload them into this project so they do not break if that project is unpublished.',
+    }),
+    (error: unknown) => {
+      assert.equal((error as { code?: string }).code, 'CROSS_PROJECT_ASSET_CLAIM');
+      assert.deepEqual((error as { details?: unknown }).details, {
+        field: 'review_feedback',
+        phrase: 'different Webflow project',
+      });
+      assert.match((error as Error).message, /CMS database ID/);
+      return true;
+    },
+  );
+
+  await assert.rejects(
+    client.updateVersionReview('rec_version_cross_project_rejection', {
+      rejection_feedback: 'Most assets load from another project.',
+    }),
+    (error: unknown) => {
+      assert.equal((error as { code?: string }).code, 'CROSS_PROJECT_ASSET_CLAIM');
+      assert.deepEqual((error as { details?: unknown }).details, {
+        field: 'rejection_feedback',
+        phrase: 'another project',
+      });
+      return true;
+    },
+  );
+
+  assert.equal(called, false);
+});
+
 test('updateVersionReview allows autolinks and internal agent feedback with raw tags', async () => {
   const client = new AirtableClient({
     apiKey: 'test',
@@ -1484,6 +1619,9 @@ test('listFeaturedCandidates filters to the remaining-eligible pool and summariz
               [FEATURED_ASSET_FIELDS.reviewerPick]: true,
               [FEATURED_ASSET_FIELDS.reviewerPickReason]: 'Strong layout system for agency sites.',
               [FEATURED_ASSET_FIELDS.votingStateLink]: ['rec_state_ald'],
+              [CONFIRMED_ASSET_FIELDS.marketplaceStatus]: '3️⃣Published🚀',
+              [FEATURED_ASSET_FIELDS.creatorWfUserId]: ['5afb33b1a028bed3150386aa'],
+              [FEATURED_ASSET_FIELDS.listingUrlUtm]: 'https://webflow.com/templates/html/alderas-website-template?utm_source=youtube&utm_medium=video-description',
             },
           },
           {
@@ -1497,6 +1635,7 @@ test('listFeaturedCandidates filters to the remaining-eligible pool and summariz
               [FEATURED_ASSET_FIELDS.creatorLink]: ['rec_creator_grabui'],
               [FEATURED_ASSET_FIELDS.creatorName]: 'Grabui Library',
               [FEATURED_ASSET_FIELDS.creatorTimesFeatured]: [4],
+              [CONFIRMED_ASSET_FIELDS.marketplaceStatus]: '3️⃣Published🚀',
             },
           },
         ],
@@ -1510,8 +1649,10 @@ test('listFeaturedCandidates filters to the remaining-eligible pool and summariz
   assert.ok(formula.includes(`{${FEATURED_ASSET_FIELDS.isEligibleForUpcomingFeatured}} = 1`));
   assert.ok(formula.includes(`DATETIME_DIFF(TODAY(), {${CONFIRMED_ASSET_FIELDS.submittedDate}}, 'months') <= 1`));
   assert.ok(formula.includes(`NOT({${FEATURED_ASSET_FIELDS.isFeatured}})`));
+  assert.ok(formula.includes(`{${CONFIRMED_ASSET_FIELDS.marketplaceStatus}} = '3️⃣Published🚀'`));
 
   assert.equal(result.monthsBackApplied, 1);
+  assert.equal(result.publishedOnlyApplied, true);
   assert.equal(result.includeAlreadyFeaturedApplied, false);
   assert.equal(result.summary.templatesAvailable, 2);
   assert.equal(result.summary.creatorsAvailable, 2);
@@ -1520,6 +1661,7 @@ test('listFeaturedCandidates filters to the remaining-eligible pool and summariz
   assert.equal(result.summary.reviewerPicksMade, 1);
   assert.equal(result.summary.pickReasonsWritten, 1);
   assert.deepEqual(result.summary.categoryCounts, { Business: 2, Agency: 1 });
+  assert.equal(result.summary.missingCreatorWfUserIdCount, 1);
 
   // Current-month submissions sort ahead of past-month fallback candidates.
   assert.equal(result.candidates[0]?.templateName, 'Brokerwise');
@@ -1536,6 +1678,20 @@ test('listFeaturedCandidates filters to the remaining-eligible pool and summariz
   assert.equal(result.candidates[1]?.votingStateId, 'rec_state_ald');
   assert.deepEqual(result.candidates[1]?.voteTallies, { up: 3, down: 1, net: 2, inQualifiedPool: true });
   assert.equal(result.candidates[0]?.voteTallies, undefined);
+
+  // Reviewers get a clean listing link (campaign UTM stripped) next to the live site.
+  assert.equal(result.candidates[1]?.listingUrl, 'https://webflow.com/templates/html/alderas-website-template');
+  assert.equal(result.candidates[1]?.websiteUrl, 'https://alderas.webflow.io');
+  assert.equal(result.candidates[0]?.listingUrl, undefined);
+
+  // The notifier skips creators without a WF User ID — flag it before the pick.
+  assert.equal(result.candidates[1]?.hasCreatorWfUserId, true);
+  assert.deepEqual(result.candidates[1]?.readinessWarnings, []);
+  assert.equal(result.candidates[0]?.hasCreatorWfUserId, false);
+  assert.deepEqual(
+    result.candidates[0]?.readinessWarnings.map((warning) => warning.split(':')[0]),
+    ['missing_creator_wf_user_id'],
+  );
 });
 
 test('listFeaturedCandidates keeps already-featured templates only when asked', async () => {
@@ -1554,6 +1710,41 @@ test('listFeaturedCandidates keeps already-featured templates only when asked', 
   const formula = capturedFormulas[0] ?? '';
   assert.ok(!formula.includes(`NOT({${FEATURED_ASSET_FIELDS.isFeatured}})`));
   assert.ok(formula.includes(`DATETIME_DIFF(TODAY(), {${CONFIRMED_ASSET_FIELDS.submittedDate}}, 'months') <= 0`));
+});
+
+test('listFeaturedCandidates can include unpublished assets and flags them', async () => {
+  const capturedFormulas: string[] = [];
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+      capturedFormulas.push(url.searchParams.get('filterByFormula') ?? '');
+      return jsonResponse({
+        records: [
+          {
+            id: 'rec_candidate_archived',
+            createdTime: new Date().toISOString(),
+            fields: {
+              [CONFIRMED_ASSET_FIELDS.name]: 'Terrot Archived 20261015',
+              [CONFIRMED_ASSET_FIELDS.submittedDate]: new Date().toISOString(),
+              [CONFIRMED_ASSET_FIELDS.marketplaceStatus]: '4️⃣Delisted☠️',
+              [FEATURED_ASSET_FIELDS.creatorWfUserId]: ['5afb33b1a028bed3150386aa'],
+            },
+          },
+        ],
+      });
+    },
+  });
+
+  const result = await client.listFeaturedCandidates({ publishedOnly: false });
+
+  assert.ok(!(capturedFormulas[0] ?? '').includes(CONFIRMED_ASSET_FIELDS.marketplaceStatus));
+  assert.equal(result.publishedOnlyApplied, false);
+  assert.equal(result.candidates[0]?.marketplaceStatus, '4️⃣Delisted☠️');
+  assert.deepEqual(
+    result.candidates[0]?.readinessWarnings.map((warning) => warning.split(':')[0]),
+    ['not_published'],
+  );
 });
 
 test('setFeaturedPick stages drafts by field ID and surfaces style warnings', async () => {
@@ -1999,4 +2190,39 @@ test('setFeaturedFlag rejects unmet selection state unless deliberately overridd
   assert.equal(patched, true);
   assert.equal(result.isFeatured, true);
   assert.equal(result.overriddenChecks?.length, 3);
+});
+
+test('setVersionZendeskTicket enforces a fresh-read precondition and writes only 🧘ZD ID', async () => {
+  const { AirtableClient } = await import('../src/airtable.js');
+  const calls: Array<{ method: string; url: string; body?: unknown }> = [];
+  const versionRecord = (zd: string | undefined) => ({
+    id: 'recVersionZD',
+    createdTime: '2026-09-29T00:00:00.000Z',
+    fields: { '⚙️👛Asset Record ID': 'recAssetZD', '📝Review Status': '🏃🏾In Review', ...(zd ? { '🧘ZD ID': zd } : {}) },
+  });
+  const assetRecord = { id: 'recAssetZD', createdTime: '2026-09-29T00:00:00.000Z', fields: { '⚙️🆎Type (Text)': 'Template🏗️', Name: 'Studio Portfolio' } };
+  const client = new AirtableClient({
+    apiKey: 'k',
+    baseId: 'appTest',
+    fetchFn: (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = init?.method ?? 'GET';
+      calls.push({ method, url, body: init?.body ? JSON.parse(String(init.body)) : undefined });
+      if (method === 'PATCH') return new Response(JSON.stringify(versionRecord('1200001')), { status: 200 });
+      if (url.includes('/tblHxZ2hgSFLZxsZu/recVersionZD')) return new Response(JSON.stringify(versionRecord('1199299')), { status: 200 });
+      if (url.includes('/tblRwzpWoLgE9MrUm/recAssetZD')) return new Response(JSON.stringify(assetRecord), { status: 200 });
+      return new Response('{}', { status: 404 });
+    }) as typeof fetch,
+  } as never);
+
+  await assert.rejects(client.setVersionZendeskTicket('recVersionZD', '1200001', null), (e: unknown) => (e as { code: string }).code === 'VERSION_TICKET_CONFLICT');
+  await assert.rejects(client.setVersionZendeskTicket('recVersionZD', 'abc', '1199299'), (e: unknown) => (e as { code: string }).code === 'INVALID_TICKET_ID');
+  assert.equal(calls.filter((c) => c.method === 'PATCH').length, 0);
+
+  const result = await client.setVersionZendeskTicket('recVersionZD', '1200001', '1199299');
+  const patch = calls.find((c) => c.method === 'PATCH');
+  assert.ok(patch);
+  assert.deepEqual(patch!.body, { fields: { fldHKvyh55jJ0VK1u: '1200001' } });
+  assert.equal(result.previousTicketId, '1199299');
+  assert.equal(result.version.zendeskTicketId, '1200001');
 });

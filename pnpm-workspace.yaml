@@ -13,6 +13,7 @@ packages:
   - 'packages/*/extension'
   - 'packages/*/npm'
   - 'packages/*/worker'
+  - 'packages/webflow-template-validation/cli'
   - 'packages/*/workers/*'
   - 'packages/huggingface-spaces/*'
   - 'packages/seeing/*'

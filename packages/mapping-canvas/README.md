@@ -13,6 +13,8 @@ pnpm bootstrap:worktree
 pnpm --filter @create-something/mapping-canvas dev
 ```
 
+For the local Kimi preview/apply experiment, see the [motion generation prototype guide](docs/motion-generation-prototype.md).
+
 Quality gates:
 
 ```bash
@@ -22,11 +24,19 @@ pnpm --filter @create-something/mapping-canvas build
 pnpm --filter @create-something/mapping-canvas verify:download
 ```
 
+## Agent activity
+
+Completed agent activity collapses automatically to a compact status button. Reopen it to inspect the last action or adjust follow and motion controls. Working tasks, approval waits and failures remain expanded. This disclosure is temporary UI state and does not change the drawing or its undo history.
+
+Run `pnpm --filter @create-something/mapping-canvas verify:activity` against a local server (`CANVAS_URL`); set `CANVAS_BROWSER_CHANNEL=chrome` to use installed Chrome. The check uses disposable synthetic browser contexts and covers completion, keyboard/focus, approval/failure visibility, new-document scope and annotation preservation at desktop/mobile sizes.
+
 ## WebMCP site tools
 
-Draw registers twenty-four tools through `document.modelContext.registerTool`, with a compatibility fallback for older `navigator.modelContext` or `provideContext` implementations:
+Draw registers its current tool catalog through `document.modelContext.registerTool`, with a compatibility fallback for older `navigator.modelContext` or `provideContext` implementations:
 
 - `draw_get_state` reads the full local document and shared focus state.
+- `draw_execute` runs a revision-guarded edit batch plus object/rendered verification and real activity in one browser command. The agent plugin exposes `draw_agent_run` and optional bounded Jev routing via `draw_agent_intent`; see [fast execution](docs/fast-execution.md).
+- `draw_edit` applies revision-required, atomic transforms, styles, layer metadata, duplication, clipboard paste, arrangement, alignment and distribution through the same compiler as the workbench. See [editing contract](docs/editing-contract.md).
 - `draw_inspect` returns a compact, filterable projection with revision, palette, surface, and visible-world geometry.
 - `draw_get_rendered_geometry` reads settled SVG/DOM bounds, connector routes and labels, clipping, missing elements, and containment-aware overlaps from the browser canvas.
 - `draw_compose` creates semantic notes, shapes, labeled relationships, and groups with local references, automatic identity, layout, and placement.

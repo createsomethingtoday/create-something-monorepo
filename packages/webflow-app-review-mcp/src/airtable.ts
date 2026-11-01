@@ -12,6 +12,7 @@ import {
   HOLD_REASON_OPTIONS,
   MARKETPLACE_STATUS_OPTIONS,
   PENDING_EXCEPTION_STATUS_OPTIONS,
+  PREFLIGHT_FIELD_KEYS,
   REJECTION_REASON_OPTIONS,
   REVIEW_STATUS_OPTIONS,
   REVIEW_TYPE_OPTIONS,
@@ -64,6 +65,11 @@ const ASSET_QUEUE_FIELD_IDS = [
   FIELD_IDS.assets.visibility,
 ] as const;
 
+const PREFLIGHT_FIELD_IDS = {
+  assets: Object.values(PREFLIGHT_FIELD_KEYS).map((key) => FIELD_IDS.assets[key]),
+  versions: Object.values(PREFLIGHT_FIELD_KEYS).map((key) => FIELD_IDS.versions[key]),
+};
+
 const ASSET_DETAIL_FIELD_IDS = [
   ...ASSET_QUEUE_FIELD_IDS,
   FIELD_IDS.assets.relationshipOwner,
@@ -86,8 +92,12 @@ const ASSET_DETAIL_FIELD_IDS = [
   FIELD_IDS.assets.termsAndConditionsUrl,
   FIELD_IDS.assets.websiteUrl,
   FIELD_IDS.assets.supportEmailOrUrl,
+  FIELD_IDS.assets.creatorEmail,
+  FIELD_IDS.assets.creatorEmailOverride,
+  FIELD_IDS.assets.creatorName,
   FIELD_IDS.assets.previewSiteUrl,
   FIELD_IDS.assets.promoVideoUrl,
+  ...PREFLIGHT_FIELD_IDS.assets,
 ] as const;
 
 const VERSION_FIELD_IDS = [
@@ -122,6 +132,7 @@ const VERSION_FIELD_IDS = [
   FIELD_IDS.versions.partnershipApp,
   FIELD_IDS.versions.zendeskTicketId,
   FIELD_IDS.versions.zendeskSubject,
+  ...PREFLIGHT_FIELD_IDS.versions,
 ] as const;
 
 // Airtable-side twin of isAppLikeAsset: the Assets table is ~90% template records, so
@@ -229,6 +240,9 @@ export interface AppReviewQueueItem {
 }
 
 export interface AppReviewAsset extends AppReviewQueueItem {
+  /** Creator contact for outbound Zendesk tickets: 👀 Override when set, else the 🎨Creator rollup. */
+  creatorEmail?: string;
+  creatorName?: string;
   relationshipOwner?: CollaboratorRef | null;
   featuresText?: string;
   notes?: string;
@@ -251,6 +265,25 @@ export interface AppReviewAsset extends AppReviewQueueItem {
   supportEmailOrUrl?: string;
   previewSiteUrl?: string;
   promoVideoUrl?: string;
+  preflight?: AppReviewPreflight | null;
+}
+
+/**
+ * Preflight evidence written by the Marketplace submission form webhook onto both the
+ * asset and the version. Read-only from the MCP. Null when no preflight field is set.
+ */
+export interface AppReviewPreflight {
+  receipt?: string;
+  bundleSha?: string;
+  readiness?: string;
+  sourceMapStatus?: string;
+  runtimeStatus?: string;
+  verifiedAt?: string;
+  traceError?: string;
+  installUrlStatus?: string;
+  installUrlProbe?: string;
+  installUrlCheckedAt?: string;
+  installUrlCheckedBy?: string;
 }
 
 export interface AppReviewVersion {
@@ -285,6 +318,7 @@ export interface AppReviewVersion {
   isPartnershipApp?: boolean;
   zendeskTicketId?: string;
   zendeskSubject?: string;
+  preflight?: AppReviewPreflight | null;
   createdTime?: string;
 }
 
@@ -374,6 +408,8 @@ export interface AppReviewContext {
   reviewFeedback?: string;
   rejectionFeedback?: string;
   isAssigned: boolean;
+  /** Version preflight when present, else the asset's latest preflight; `source` says which. */
+  preflight: (AppReviewPreflight & { source: 'version' | 'asset' }) | null;
   asset?: AppReviewAsset | null;
   version: AppReviewVersion;
 }
@@ -655,6 +691,24 @@ function toBooleanValue(value: unknown): boolean | undefined {
   return undefined;
 }
 
+function mapPreflight(fields: Record<string, unknown>, table: 'assets' | 'versions'): AppReviewPreflight | null {
+  const ids = FIELD_IDS[table];
+  const preflight: AppReviewPreflight = {
+    receipt: firstString(fields[ids.preflightReceipt]),
+    bundleSha: firstString(fields[ids.preflightBundleSha]),
+    readiness: firstString(fields[ids.preflightReadiness]),
+    sourceMapStatus: firstString(fields[ids.preflightSourceMapStatus]),
+    runtimeStatus: firstString(fields[ids.preflightRuntimeStatus]),
+    verifiedAt: firstString(fields[ids.preflightVerifiedAt]),
+    traceError: firstString(fields[ids.preflightTraceError]),
+    installUrlStatus: firstString(fields[ids.preflightInstallUrlStatus]),
+    installUrlProbe: firstString(fields[ids.preflightInstallUrlProbe]),
+    installUrlCheckedAt: firstString(fields[ids.preflightInstallUrlCheckedAt]),
+    installUrlCheckedBy: firstString(fields[ids.preflightInstallUrlCheckedBy]),
+  };
+  return Object.values(preflight).some((value) => value !== undefined) ? preflight : null;
+}
+
 function mapQueueRecord(record: AirtableRecord): AppReviewQueueItem {
   const fields = record.fields;
   return {
@@ -698,8 +752,11 @@ function mapAssetRecord(record: AirtableRecord): AppReviewAsset {
     termsAndConditionsUrl: firstString(fields[FIELD_IDS.assets.termsAndConditionsUrl]),
     websiteUrl: firstString(fields[FIELD_IDS.assets.websiteUrl]),
     supportEmailOrUrl: firstString(fields[FIELD_IDS.assets.supportEmailOrUrl]),
+    creatorEmail: firstString(fields[FIELD_IDS.assets.creatorEmailOverride]) ?? firstString(fields[FIELD_IDS.assets.creatorEmail]),
+    creatorName: firstString(fields[FIELD_IDS.assets.creatorName]),
     previewSiteUrl: firstString(fields[FIELD_IDS.assets.previewSiteUrl]),
     promoVideoUrl: firstString(fields[FIELD_IDS.assets.promoVideoUrl]),
+    preflight: mapPreflight(fields, 'assets'),
   };
 }
 
@@ -741,6 +798,7 @@ function mapVersionRecord(record: AirtableRecord): AppReviewVersion {
     isPartnershipApp: toBooleanValue(fields[FIELD_IDS.versions.partnershipApp]),
     zendeskTicketId: firstString(fields[FIELD_IDS.versions.zendeskTicketId]),
     zendeskSubject: firstString(fields[FIELD_IDS.versions.zendeskSubject]),
+    preflight: mapPreflight(fields, 'versions'),
     createdTime: record.createdTime,
   };
 }
@@ -1721,9 +1779,43 @@ export class AirtableClient {
       reviewFeedback: version.reviewFeedback,
       rejectionFeedback: version.rejectionFeedback,
       isAssigned: Boolean(version.reviewer?.id),
+      preflight: version.preflight
+        ? { ...version.preflight, source: 'version' }
+        : asset?.preflight
+          ? { ...asset.preflight, source: 'asset' }
+          : null,
       asset,
       version,
     };
+  }
+
+  /**
+   * Point an app version at a different Zendesk ticket (🧘ZD ID). Decision emails go to
+   * this ticket, so the write is guarded by a fresh-read precondition:
+   * `expectedCurrentTicketId` must equal what is stored now (null for empty).
+   */
+  async setVersionZendeskTicket(
+    versionId: string,
+    ticketId: string,
+    expectedCurrentTicketId: string | null | undefined,
+  ): Promise<{ version: AppReviewVersion; previousTicketId: string | null }> {
+    if (!/^\d+$/.test(ticketId)) {
+      throw new AirtableClientError('INVALID_TICKET_ID', 'Zendesk ticket ID must be numeric.', 400, { ticketId });
+    }
+    const version = await this.getVersionById(versionId);
+    if (!version) throw new AirtableClientError('VERSION_NOT_FOUND', 'Version not found.', 404, { versionId });
+    const current = version.zendeskTicketId ?? null;
+    if ((expectedCurrentTicketId ?? null) !== current) {
+      throw new AirtableClientError(
+        'VERSION_TICKET_CONFLICT',
+        `Version ${versionId} is linked to ticket ${current ?? '(none)'}, not ${expectedCurrentTicketId ?? '(none)'}. Re-read and confirm again.`,
+        409,
+        { versionId, currentTicketId: current, expectedCurrentTicketId: expectedCurrentTicketId ?? null },
+      );
+    }
+    if (current === ticketId) return { version, previousTicketId: current };
+    const record = await this.updateRecord(TABLE_IDS.assetVersions, versionId, { [FIELD_IDS.versions.zendeskTicketId]: ticketId });
+    return { version: mapVersionRecord(record), previousTicketId: current };
   }
 
   async updateVersionReview(versionId: string, input: VersionReviewUpdateInput): Promise<AppReviewVersion> {

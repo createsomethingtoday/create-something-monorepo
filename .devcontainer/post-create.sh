@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-EXPECTED_NODE="v22.21.1"
+EXPECTED_NODE="v22.23.4"
 EXPECTED_PNPM="9.15.0"
 
 export PATH="/usr/local/bin:/usr/local/sbin:${PATH}"
@@ -16,7 +16,7 @@ print_runtime_alignment_help() {
   cat >&2 <<'EOF'
 Use the repo-pinned runtime before rerunning the dev container post-create step:
   - Preferred: rebuild/reopen the repository with .devcontainer/devcontainer.json so the pinned image is used
-  - Local fallback: install Node 22.21.1 from .nvmrc, then run corepack prepare "pnpm@9.15.0" --activate
+  - Local fallback: install Node 22.23.4 from .nvmrc, then run corepack prepare "pnpm@9.15.0" --activate
 EOF
 }
 

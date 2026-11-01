@@ -1,0 +1,55 @@
+{
+  "baselineCommit": "40863d40a2a02daef10cd8ba3f832eb83f4b88f0",
+  "current": {
+    "failedFiles": 8,
+    "failedTests": 21,
+    "passedTests": 653
+  },
+  "allCurrentFailuresReproducedAtHead": true,
+  "failureNames": [
+    "FAIL  test/contact-agency.test.ts > agency contact email contract > omits optional service and company rows without losing default next-step information",
+    "FAIL  src/lib/codification/codification.test.ts > Canon codification audit > classifies every current repo UI source file without undecided Canon ownership",
+    "FAIL  src/lib/library-health/library-health.test.ts > Canon library health > combines registry, export policy, overlays, modalities, and codification into one report",
+    "FAIL  src/lib/library-health/library-health.test.ts > Canon library health > renders the prioritized candidate-review backlog for agent handoff",
+    "FAIL  src/lib/overlays/property-coverage.test.ts > Canon property overlay coverage > requires overlays for every downstream UI property surface",
+    "FAIL  src/lib/overlays/quality-gate.test.ts > Canon overlay quality gate > keeps property coverage and overlay inventory in the same validation path",
+    "FAIL  src/lib/overlays/quality-gate.test.ts > Canon overlay quality gate > generates cross-property consumer fixtures against the public Canon registry export",
+    "FAIL  src/lib/stable-component-depth/licensed-editorial-rollout.test.ts > Licensed Meridian public-system rollout > uses property-specific shells with an exact licensed-reference palette where editorial expression applies",
+    "FAIL  src/lib/stable-component-depth/licensed-editorial-rollout.test.ts > Licensed Meridian public-system rollout > keeps the licensed component inventory owned while each property adopts its approved expression",
+    "FAIL  src/lib/stable-component-depth/licensed-editorial-rollout.test.ts > Licensed Meridian public-system rollout > frames .agency as the embedded operating partner and names the client-owned Playbook",
+    "FAIL  src/lib/stable-component-depth/licensed-editorial-rollout.test.ts > Licensed Meridian public-system rollout > keeps the Agency ownership proposition in the editorial public-heading expression",
+    "FAIL  src/lib/stable-component-depth/licensed-editorial-rollout.test.ts > Licensed Meridian public-system rollout > keeps .io distinct as the research and field-evidence property",
+    "FAIL  src/lib/stable-component-depth/licensed-editorial-rollout.test.ts > Licensed Meridian public-system rollout > keeps .ltd distinct as the court and Playbook operator library",
+    "FAIL  src/lib/stable-component-depth/licensed-editorial-rollout.test.ts > Licensed Meridian public-system rollout > keeps .space distinct as the public systems workbench",
+    "FAIL  src/lib/stable-component-depth/performance-composition-rollout.test.ts > Performance composition cross-property rollout > lands the .agency story in three chapters without duplicating its delivery roster",
+    "FAIL  src/lib/stable-component-depth/performance-composition-rollout.test.ts > Performance composition cross-property rollout > keeps .ltd as a court and Playbook operator library instead of restoring the editorial shell",
+    "FAIL  src/lib/stable-component-depth/performance-composition-rollout.test.ts > Performance composition cross-property rollout > lands the .io research decision in no more than three chapters",
+    "FAIL  src/lib/stable-component-depth/performance-composition-rollout.test.ts > Performance composition cross-property rollout > distills the .space entry surface to opening, runtime proof, route collection, and handoff",
+    "FAIL  src/lib/stable-component-depth/performance-composition-rollout.test.ts > Performance composition cross-property rollout > lands the .learn path in three chapters with proof and handoff intact",
+    "FAIL  src/lib/stable-component-depth/performance-composition-rollout.test.ts > Performance composition cross-property rollout > preserves every primary homepage destination inside the sharper compositions",
+    "FAIL  src/lib/tokens/performance-contract.test.ts > Performance token contract > prevents first-party Canon and property source from consuming legacy design tokens"
+  ],
+  "method": "git archive HEAD into /tmp/agency-canon-baseline, excluding binary media; symlinked existing dependency directories; baseline Agency svelte-kit sync for contact test. Baseline-only absent-media/generated-artifact failures do not characterize current tree.",
+  "codificationBlocker": "packages/dotfiles/claude-code/mods/outbound-guard/hooks/register.tsx",
+  "logs": [
+    "/tmp/canon-final-tests.log",
+    "/tmp/canon-baseline-tests.log",
+    "/tmp/canon-baseline-contact.log",
+    "/tmp/canon-baseline-codification.log"
+  ],
+  "upstreamCompared": "e59c5030a22274e03fbfe6ab7a785b1bd9d6899a",
+  "boundedRepair": "Applied exact 6-line exemption from upstream 8dfacd302ae4e6658b5339234017efdc9e2df514. Canon check passes; codification and backlog health tests pass. Aggregate health test still fails on stale inventory counts.",
+  "afterRepair": {
+    "passed": 655,
+    "failed": 19,
+    "failedFiles": 7
+  },
+  "remainingCauses": {
+    "contactCopy": 1,
+    "staleInventoryCountsIncludingAggregateHealth": 4,
+    "licensedEditorialSourceContracts": 7,
+    "compositionSourceContracts": 6,
+    "existingLegacyTokenUses": 1
+  },
+  "recommendation": "Separate contact-copy and inventory expectation reconciliation; review current design contracts for 13 rollout assertions; migrate 24 existing token violations with visual QA. Do not restore old marketing layouts to satisfy string assertions."
+}

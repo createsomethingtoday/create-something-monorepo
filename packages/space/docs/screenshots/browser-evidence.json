@@ -1,0 +1,272 @@
+[
+  {
+    "size": "desktop",
+    "route": "/",
+    "overflow": false,
+    "images": [
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/products-workbench-paths-continuity-v2-960.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/ground-compare-before-claim-640.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/compiler-from-plan-to-tested-jig-640.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/tool-fit-without-forcing-640.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/about-careful-working-notes-640.webp",
+        "loaded": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "size": "desktop",
+    "route": "/projects",
+    "overflow": false,
+    "images": [
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/tool-fit-without-forcing-960.webp",
+        "loaded": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "size": "desktop",
+    "route": "/projects/ground",
+    "overflow": false,
+    "images": [
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/ground-compare-before-claim-960.webp",
+        "loaded": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "size": "desktop",
+    "route": "/about",
+    "overflow": false,
+    "images": [
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/about-careful-working-notes-960.webp",
+        "loaded": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "size": "desktop",
+    "route": "/workbench",
+    "overflow": false,
+    "images": [
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/editorial-experiments-isolated-sandbox-960.webp",
+        "loaded": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "size": "desktop",
+    "filter": [
+      "Ground",
+      "Intent Mapping"
+    ],
+    "url": "http://127.0.0.1:4175/projects?q=verification"
+  },
+  {
+    "size": "desktop",
+    "empty": true
+  },
+  {
+    "size": "tablet",
+    "route": "/",
+    "overflow": false,
+    "images": [
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/products-workbench-paths-continuity-v2-640.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/ground-compare-before-claim-640.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/compiler-from-plan-to-tested-jig-640.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/tool-fit-without-forcing-640.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/about-careful-working-notes-640.webp",
+        "loaded": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "size": "tablet",
+    "route": "/projects",
+    "overflow": false,
+    "images": [
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/tool-fit-without-forcing-640.webp",
+        "loaded": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "size": "tablet",
+    "route": "/projects/ground",
+    "overflow": false,
+    "images": [
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/ground-compare-before-claim-640.webp",
+        "loaded": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "size": "tablet",
+    "route": "/about",
+    "overflow": false,
+    "images": [
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/about-careful-working-notes-640.webp",
+        "loaded": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "size": "tablet",
+    "route": "/workbench",
+    "overflow": false,
+    "images": [
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/editorial-experiments-isolated-sandbox-640.webp",
+        "loaded": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "size": "tablet",
+    "filter": [
+      "Ground",
+      "Intent Mapping"
+    ],
+    "url": "http://127.0.0.1:4175/projects?q=verification"
+  },
+  {
+    "size": "tablet",
+    "empty": true
+  },
+  {
+    "size": "mobile",
+    "route": "/",
+    "overflow": false,
+    "images": [
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/products-workbench-paths-continuity-v2-640.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/ground-compare-before-claim-640.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/compiler-from-plan-to-tested-jig-640.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/tool-fit-without-forcing-640.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/about-careful-working-notes-640.webp",
+        "loaded": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "size": "mobile",
+    "route": "/projects",
+    "overflow": false,
+    "images": [
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/tool-fit-without-forcing-640.webp",
+        "loaded": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "size": "mobile",
+    "route": "/projects/ground",
+    "overflow": false,
+    "images": [
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/ground-compare-before-claim-640.webp",
+        "loaded": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "size": "mobile",
+    "route": "/about",
+    "overflow": false,
+    "images": [
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/about-careful-working-notes-640.webp",
+        "loaded": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "size": "mobile",
+    "route": "/workbench",
+    "overflow": false,
+    "images": [
+      {
+        "src": "http://127.0.0.1:4175/images/workshop/stories/editorial-experiments-isolated-sandbox-640.webp",
+        "loaded": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "size": "mobile",
+    "filter": [
+      "Ground",
+      "Intent Mapping"
+    ],
+    "url": "http://127.0.0.1:4175/projects?q=verification"
+  },
+  {
+    "size": "mobile",
+    "empty": true
+  },
+  {
+    "reduced": "none"
+  },
+  {
+    "firstFocus": "Skip to main content"
+  }
+]

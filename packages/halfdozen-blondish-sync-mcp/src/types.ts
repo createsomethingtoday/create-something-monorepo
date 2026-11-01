@@ -25,6 +25,7 @@ export interface Env {
   SYNC_OWNER_EMAIL?: string;
   SYNC_OWNER_LABEL?: string;
   SYNC_CLIENT_LABEL?: string;
+  SYNC_CLIENT_PAGE_ID?: string;
   SYNC_SOURCE_LABEL?: string;
   LANGFUSE_PUBLIC_KEY?: string;
   LANGFUSE_SECRET_KEY?: string;
@@ -77,6 +78,7 @@ export interface SyncConfig {
   ownerEmail: string;
   ownerLabel: string;
   clientLabel: string;
+  clientPageId?: string;
   sourceLabel: string;
 }
 

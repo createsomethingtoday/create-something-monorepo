@@ -20,12 +20,25 @@ CS_IDENTITY_ISSUER = "https://id.createsomething.space"
 OAUTH_ALLOWED_EMAIL_DOMAIN = "webflow.com"
 OAUTH_ALLOWED_EMAILS = "natalia.ledford@webflow.com,eric.unger@webflow.com,vicki.chen@webflow.com,mariana.segura@webflow.com,micah@webflow.com,micah@createsomething.io"
 REVIEWER_AUTH_EMAIL_ALIASES_JSON = '{"acct_wf_micah":["micah@createsomething.io"]}'
+# Featured-batch finalization grant (template_review_set_featured_flag), merged over the directory.
+FEATURED_COORDINATOR_ACCOUNT_IDS = "acct_wf_micah"
 CF_ACCESS_TEAM_DOMAIN = "https://webflow.cloudflareaccess.com"
 CF_ACCESS_AUD = "3b4a38c7c99ec7127bcbb99d9c8aae7b0011a51370bff31b7085385e1a2807ba"
 WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL = "https://validation-worker.createsomething.workers.dev/validate"
 GSAP_VALIDATION_WORKER_URL = "https://gsap-validation-worker.createsomething.workers.dev/validateGsap"
 E2B_BROWSER_TEMPLATE = "webflow-template-review-browser-v1"
 WORKER_PUBLIC_ORIGIN = "https://webflow-template-review-mcp.createsomething.workers.dev"
+
+# Zendesk leg (get_ticket_thread, search_tickets, update_ticket_status,
+# send_ticket_followup). Same integration identity and group boundary as the
+# App Review MCP. The token is a secret (wrangler secret put ZENDESK_API_TOKEN —
+# value lives in Infisical at /webflow/zendesk key `wfm`); the tools fail closed
+# with ZENDESK_NOT_CONFIGURED until it is provisioned.
+ZENDESK_API_EMAIL = "support-admin@webflow.com"
+ZENDESK_SUBDOMAIN = "webflow2579"
+# Marketplace Review Team group. Ticket search defaults to it; status writes
+# refuse tickets outside it. Programs Support (46157931219347) is out of scope.
+MARKETPLACE_ZENDESK_GROUP_ID = "1500002744702"
 
 [browser]
 binding = "BROWSER"
@@ -61,12 +74,17 @@ CS_IDENTITY_ISSUER = "https://id.createsomething.space"
 OAUTH_ALLOWED_EMAIL_DOMAIN = "webflow.com"
 OAUTH_ALLOWED_EMAILS = "micah@webflow.com,micah@createsomething.io"
 REVIEWER_AUTH_EMAIL_ALIASES_JSON = '{"acct_wf_micah":["micah@createsomething.io"]}'
+# Featured-batch finalization grant (template_review_set_featured_flag), merged over the directory.
+FEATURED_COORDINATOR_ACCOUNT_IDS = "acct_wf_micah"
 CF_ACCESS_TEAM_DOMAIN = ""
 CF_ACCESS_AUD = ""
 WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL = "https://validation-worker.createsomething.workers.dev/validate"
 GSAP_VALIDATION_WORKER_URL = "https://gsap-validation-worker.createsomething.workers.dev/validateGsap"
 E2B_BROWSER_TEMPLATE = "webflow-template-review-browser-v1"
 WORKER_PUBLIC_ORIGIN = "https://webflow-template-review-mcp-dev.createsomething.workers.dev"
+ZENDESK_API_EMAIL = "support-admin@webflow.com"
+ZENDESK_SUBDOMAIN = "webflow2579"
+MARKETPLACE_ZENDESK_GROUP_ID = "1500002744702"
 
 [env.dev.browser]
 binding = "BROWSER"

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import { page } from '$app/stores';
   import {
     Button,
@@ -63,6 +64,17 @@
     {/snippet}
   </PerformanceNarrativeStage>
 
+  <aside class="route-handoff" aria-label="AI Buyer Readiness Audit next steps">
+    <div class="route-handoff__inner">
+      <p class="route-handoff__current">Current path · AI Buyer Readiness Audit · diagnostic</p>
+      <p class="route-handoff__context">Next, book the audit to inspect the evidence. If it supports changes, implementation needs a separate scope; ongoing Control is optional.</p>
+      <div class="route-handoff__links">
+        <AgencyWayfindingSign kind="build" label="Explore implementation services" href="/services" detail="Build is scoped after the findings." />
+        <AgencyWayfindingSign kind="control" label="Explore post-launch Control" href="/control" detail="Optional operations; includes Map." />
+      </div>
+    </div>
+  </aside>
+
   <PerformanceConversionHandoff
     expression="editorial"
     eyebrow="The boundary"
@@ -78,6 +90,18 @@
 </main>
 
 <style>
+  .route-handoff {
+    padding: var(--space-performance-lg) clamp(1.25rem, 5vw, 6rem);
+    color: var(--color-performance-ink);
+    background: var(--color-performance-paper);
+    border-block: 1px solid var(--color-performance-line);
+  }
+  .route-handoff__inner { max-width: var(--content-width-performance); margin-inline: auto; }
+  .route-handoff__current { margin: 0 0 var(--space-performance-sm); font-size: var(--text-performance-caption); font-family: var(--font-performance-mono); }
+  .route-handoff__context { max-width: 70ch; margin: 0 0 var(--space-performance-md); line-height: 1.6; }
+  .route-handoff__links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-performance-sm); }
+  @media (max-width: 760px) { .route-handoff__links { grid-template-columns: 1fr; } }
+
   .audit-record {
     display: grid;
     gap: 0.75rem;

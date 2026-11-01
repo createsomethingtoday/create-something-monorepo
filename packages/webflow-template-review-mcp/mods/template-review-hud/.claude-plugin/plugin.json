@@ -1,0 +1,9 @@
+{
+  "name": "template-review-hud",
+  "version": "0.1.0",
+  "description": "Shows where each template review stands in the playbook (context, ownership, validation, screenshots, draft, decision) above the prompt, with a /tr pane for every version touched this session.",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Webflow Marketplace Review Team"
+  }
+}

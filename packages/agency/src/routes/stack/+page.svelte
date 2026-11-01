@@ -1,4 +1,9 @@
 <script lang="ts">
+  import PublicHandoffExplorer from '$lib/components/PublicHandoffExplorer.svelte';
+  import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
+  import AgencyWayfindingHero from '$lib/components/AgencyWayfindingHero.svelte';
+  import AgencyWayfindingOpening from '$lib/components/AgencyWayfindingOpening.svelte';
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import {
     Button,
     PerformanceCardGrid,
@@ -13,7 +18,6 @@
   import OpenAIQualifications from '$lib/components/OpenAIQualifications.svelte';
   import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-  import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
 
   const journey: PerformanceCardItem[] = [
     {
@@ -36,45 +40,6 @@
       title: 'Control',
       detail:
         'Decide which tasks can run automatically, which need approval, and which must stop.'
-    }
-  ];
-
-  const deliveryArtifacts: PerformanceCardItem[] = [
-    {
-      eyebrow: 'Map',
-      icon: 'folder',
-      title: 'Workflow Map',
-      detail: 'One workflow, source systems, owners, handoffs, and failure points.'
-    },
-    {
-      eyebrow: 'Boundary',
-      icon: 'check',
-      title: 'Who owns what',
-      detail: 'What your team owns, what CREATE SOMETHING owns, and what vendors provide.'
-    },
-    {
-      eyebrow: 'Contract',
-      icon: 'document',
-      title: 'Tool/API contract',
-      detail: 'Which tools the agent can use, the access it needs, and the limits on each action.'
-    },
-    {
-      eyebrow: 'Control',
-      icon: 'settings',
-      title: 'Policy rules',
-      detail: 'Auto-allow, approval-needed, and blocked states with reasons.'
-    },
-    {
-      eyebrow: 'Operate',
-      icon: 'refresh',
-      title: 'Runbook',
-      detail: 'How to run the system, check a release, undo a change, and recover from failure.'
-    },
-    {
-      eyebrow: 'Surface',
-      icon: 'document',
-      title: 'Operator brief',
-      detail: 'A view of current work in your application or our database system, Substrate.'
     }
   ];
 
@@ -106,7 +71,7 @@
     {
       question: 'Who owns the system?',
       answer:
-        'We agree on ownership before building: what your team keeps, what we deliver, and which services outside vendors provide.'
+        'We record ownership in the agreement. You retain your materials. After full payment, you own specifically commissioned deliverables, except our reusable tools. Incorporated provider tools are licensed for continued use.'
     },
     {
       question: 'Why does vendor ownership matter?',
@@ -153,7 +118,7 @@
       summary: 'Map → pilot → control',
       title: 'Know what happens at each stage.',
       detail:
-        'Plan the task, test a first version, then add ongoing support when the system is ready for live work.',
+        'Diagnose the problem, agree on the change, then build and test it. Ongoing support preserves context and helps your team use the result.',
       tone: 'allow',
       receipts: ['workflow map', 'controlled pilot', 'operating control']
     },
@@ -173,14 +138,14 @@
       summary: 'Keep the durable assets',
       title: 'Keep the instructions and work history.',
       detail:
-        'Your team keeps the account details, access rules, approvals, instructions, and work history. The handover also explains how to remove access.',
+        'Your team keeps its account details, access rules, approvals, instructions, and work history. We document deliverables and reusable tools under the agreement. The handover explains how to remove access.',
       tone: 'review',
       receipts: ['workflow map', 'tool contract', 'policy rules', 'runbook', 'operator brief']
     },
     {
       id: 'portability',
       label: 'Portability',
-      summary: 'Conviction without dependence',
+      summary: 'Change models after testing.',
       title: 'Built with OpenAI. Prepared for change.',
       detail:
         'We build primarily with OpenAI Codex. Your project keeps its data, code, tool definitions, instructions, tests, and recovery guide. A different model must pass the relevant checks before you switch. CREATE SOMETHING maintains the system layer; Cloudflare provides infrastructure and OpenAI provides intelligence.',
@@ -204,7 +169,7 @@
       label: 'Boundary',
       icon: 'user',
       title: 'Vendor and ownership boundary',
-      detail: 'What your team owns, what I deliver, and what vendors provide.',
+      detail: 'What your team owns, what we deliver, and what vendors provide.',
       state: 'controlled'
     },
     {
@@ -219,24 +184,24 @@
 
 <SEO
   title="What You Keep | CREATE SOMETHING .agency"
-  description="See what your team keeps after delivery: code, accounts, data, instructions, tests, and work history. Understand what outside vendors provide."
+  description="AI-native technical support with clear ownership. See what your team keeps, what we maintain, and what outside vendors provide."
   keywords="delegated work control, workflow control layer, Substrate database, transparent AI stack, MCP stack, vendor boundaries, Cloudflare, OpenAI"
   ogImage="/og-image.png"
   propertyName="agency"
   {faqItems}
 />
 
+<AgencyWayfindingOpening>
 <PerformanceCampaignOpening
   expression="editorial"
   eyebrow="What You Keep"
   title="Your system should stay yours."
-  lede="You keep the accounts, data, approval rights, and operating history. We document the system so your team can understand it, change it, and evaluate other tools."
-  media={playbookHeroMedia.stack}
-  mediaMobilePlacement="background"
+  lede="Your accounts, data, and decisions stay with your team. We document the work so you can use it, change it, and evaluate other tools. Deliverable ownership follows your agreement."
   density="compact"
+  artifactMobilePlacement="flow"
   proof={[
     { label: 'Your team keeps', value: 'Accounts + decisions' },
-    { label: 'Substrate records', value: 'State + evidence' },
+    { label: 'Work records', value: 'Status + evidence' },
     { label: 'Vendors provide', value: 'Replaceable infrastructure' }
   ]}
 >
@@ -248,12 +213,16 @@
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
   {/snippet}
+  {#snippet artifact()}<AgencyWayfindingHero route="stack" />{/snippet}
 </PerformanceCampaignOpening>
+</AgencyWayfindingOpening>
+
+<WorkflowSignalBand motionOnly quiet tall showMotionControl />
 
 <PerformanceNarrativeStage
   id="stack-ownership-story"
   eyebrow="One ownership story"
-  title="You should be able to leave with everything that matters."
+  title="Know what your team keeps and what we maintain."
   description="See what we deliver, what your team controls, and which services come from outside vendors."
   scenes={stackScenes}
   ariaLabel="Stack ownership story"
@@ -271,11 +240,7 @@
         compact
       />
     {:else if scene.id === 'ownership'}
-      <PerformanceCardGrid
-        items={deliveryArtifacts}
-        columns={3}
-        ariaLabel="Stack delivery artifacts"
-      />
+      <PublicHandoffExplorer />
     {:else}
       <div class="stack-proof-pair">
         <section aria-labelledby="platform-conviction-title">
@@ -305,7 +270,7 @@
   expression="editorial"
   eyebrow="Start with the workflow"
   title="Bring the workflow, the accounts, and the decision owner."
-  description="We’ll agree on the task, the tools it needs, and who can approve its actions before implementation starts."
+  description="We’ll diagnose the problem and agree on scope, ownership, and approvals before implementation. Support helps your team use the delivered changes."
   steps={ctaItems}
   handoff={{
     owner: 'Workflow owner',
@@ -321,6 +286,9 @@
     <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
+  {/snippet}
+  {#snippet aside()}
+    <AgencyWayfindingSign kind="proof" label="Read the Template Review report" detail="Measured collection, blocked judgment, unmeasured time savings." href="/field-reports/template-review" />
   {/snippet}
 </PerformanceConversionHandoff>
 

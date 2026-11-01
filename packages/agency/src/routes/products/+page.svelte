@@ -1,10 +1,12 @@
 <script lang="ts">
+  import CatoProjectTour from '$lib/components/CatoProjectTour.svelte';
+  import AgencyRecordedWork from '$lib/components/AgencyRecordedWork.svelte';
   import {
+    IsometricIllustration,
     Button,
     PerformanceCampaignOpening,
     PerformanceConversionHandoff,
     PerformanceNarrativeStage,
-    PerformanceWorkflowMiniArtifact,
     SEO,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
@@ -16,8 +18,11 @@
   import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { PUBLIC_PRODUCT_SEQUENCE, getPublicProduct } from '$lib/data/productFamily';
-  import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
+  import AgencyProductJunction from '$lib/components/AgencyProductJunction.svelte';
+  import { filmStories } from '$lib/data/filmStories';
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
+  import AgencyPathChoices from '$lib/components/AgencyPathChoices.svelte';
 
   type ProductSurfaceKind = 'signal' | 'decision' | 'proof';
 
@@ -136,38 +141,51 @@
 </script>
 
 <SEO
-  title="Map, Build, and Control | CREATE SOMETHING .agency"
-  description="Plan with Map, implement with Build, and support live work with Control. Compare the services and the tools included."
+  title="Services & tools | CREATE SOMETHING .agency"
+  description="Tools and services for AI-native technical support. Plan with Map, implement with Build, and support agreed live work with separate managed Control."
   keywords="workflow mapping subscription, AI workflow control, governed execution, workflow implementation service, operator surfaces"
   ogImage="/og-image.png"
   propertyName="agency"
   {faqItems}
 />
 
+<div id="products-opening" class="products-opening">
 <PerformanceCampaignOpening
-  eyebrow="Product system"
+  eyebrow="Services & tools"
   expression="editorial"
-  title="Plan, build, and support your AI workflow."
-  lede="Map helps you plan the work. Build turns the plan into a tested system. Control keeps it monitored and supported after launch. Your team keeps the code and operating instructions."
-  media={playbookHeroMedia.products}
-  mediaMobilePlacement="background"
+  title="Three ways to work together."
+  lede="Map defines the workflow. Build creates or improves agreed software. Control operates agreed live systems with approvals and records. Deliverable ownership follows your agreement; reusable provider tools are licensed for continued use. Your team keeps approval authority."
   density="compact"
-  proof={[
-    { label: 'Map', value: 'Define' },
-    { label: 'Build', value: 'Connect' },
-    { label: 'Control', value: 'Operate' }
-  ]}
 >
   {#snippet actions()}
-    <Button href="#choose-product">Choose the right path</Button>
+    <Button href="#capabilities">Inspect the work</Button>
   {/snippet}
+  {#snippet artifact()}<AgencyProductJunction />{/snippet}
 </PerformanceCampaignOpening>
+
+</div>
+
+<AgencyRecordedWork id="product-recorded-work" title="Start with the actual work." />
+
+<div class="products-paths"><AgencyPathChoices label="Choose a product path" /></div>
+<section id="capabilities" class="capabilities" aria-labelledby="capabilities-title">
+  <p>Apps, workflows & agents</p><h2 id="capabilities-title">Inspect what your team will keep.</h2>
+  <p>Review the linked implementations and clearly labeled scenarios below. For your Build, agree on the source, instructions, tests and handoff your team will own, plus what agents may do and what needs human approval. Production launch is agreed separately.</p>
+  <details class="capacity-note"><summary>Membership capacity and separate costs</summary><p>Membership supports agreed improvements between check-ins. Focused is {PUBLIC_PRICING.membership.focused.label} for one workstream and one milestone each billing month. Team is {PUBLIC_PRICING.membership.team.label} for up to two workstreams and two milestones. Both include two 30-minute check-ins. Focused has two 60-minute remote sessions available; Team has four. Use remote sessions when helpful for onboarding, pairing or troubleshooting. Larger Builds, managed Control and project costs are separate.</p></details>
+  <CatoProjectTour />
+  {#each filmStories as story}
+    <article><div><h3>{story.name}</h3><p>{story.desc}</p><p class="deliverable">What you keep: {story.deliver}</p><p class="evidence-status">{story.status}</p><p class="evidence-proof">{story.proof}</p></div>
+      <div class="capability-links"><a href={story.id === 'webflow' ? '#cato-tour' : `/?film=${story.id}#work`}>{story.id === 'webflow' ? 'Explore the annotated tour →' : 'Watch the story →'}</a><a href={story.source}>{story.sourceLabel} ↗</a><a href={agencyCoreMessaging.membershipInquiryHref}>Discuss this work →</a></div>
+    </article>
+  {/each}
+  <AgencyWayfindingSign kind="map" label="Compare ways to work together" href="#choose-product" direction="down" />
+</section>
 
 <PerformanceNarrativeStage
   id="choose-product"
-  eyebrow="Product chooser"
-  title="Choose the help you need now."
-  description="Map and Control are subscriptions. Build is quoted for the agreed project. Control includes Map and the views for incoming work, approvals, and results."
+  eyebrow="Ways to work together"
+  title="How we work together."
+  description="Our technical support membership helps with scoped improvements and learning. Map and Control are subscriptions. Build is quoted for the agreed project. Control includes Map and the views for incoming work, approvals, and results."
   scenes={productScenes}
   ariaLabel="Choose a CREATE SOMETHING product path"
 >
@@ -185,6 +203,13 @@
         <strong>{product.name}</strong>
         <p>{product.customerJob}</p>
         <small>{product.accessLabel}</small>
+        {#if product.id === 'map'}
+          <p><strong>Availability:</strong> Explore the browser-local starter now. The separate account workspace has pricing at launch; this is not a paid workspace checkout.</p>
+        {:else if product.id === 'build'}
+          <p><strong>Requirements:</strong> Build is a service scoped and quoted separately. Agree on the workflow, deliverables and acceptance checks before work begins. Production launch is agreed separately.</p>
+        {:else}
+          <p><strong>Requirements:</strong> Managed Control starts after launch for an agreed live environment. Scope, access, response times and activation require a separate agreement.</p>
+        {/if}
       </div>
       <ul>
         {#each familyPoints(index) as point}<li>{point}</li>{/each}
@@ -197,7 +222,9 @@
           <a href={item.href}>
             <span>{item.label}</span>
             {#if item.kind}
-              <PerformanceWorkflowMiniArtifact kind={item.kind} />
+              <div class="control-surface-icon" data-icon={item.kind}>
+                <IsometricIllustration kind={item.kind === 'decision' ? 'approve' : item.kind === 'proof' ? 'verify' : 'operate'} size="100%" />
+              </div>
             {/if}
             <strong>{item.title}</strong>
             <p>{item.detail}</p>
@@ -208,7 +235,7 @@
   {/snippet}
 </PerformanceNarrativeStage>
 
-<AgencyPerformanceReadback embedded={true} />
+<AgencyPerformanceReadback embedded={true} wayfinding />
 
 <section class="product-proof-shelf" aria-labelledby="product-proof-title">
   <div class="product-proof-shelf__heading">
@@ -234,6 +261,12 @@
     </a>
   </div>
   <div class="proof-chooser" aria-label="Public product proof">
+    <a href="/scopefield">
+      <span>Mac public beta</span>
+      <strong>Scopefield</strong>
+      <p>A browser with a collapsible Page workspace and explicit human control.</p>
+      <small>Apple Silicon · macOS 13+ · Review beta limits</small>
+    </a>
     {#each featured.map(productCard) as item}
       <a href={item.href}>
         <span>{item.label}</span>
@@ -266,6 +299,53 @@
 </PerformanceConversionHandoff>
 
 <style>
+  .capacity-note { margin-block: var(--space-performance-md); border-block: 1px solid var(--color-performance-shell-border-default); }
+  .capacity-note summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-size: var(--text-performance-body-sm); }
+  .capacity-note summary:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+  .capacity-note p { line-height: 1.65; font-size: var(--text-performance-body-sm); margin-block: var(--space-performance-md); }
+
+  #capabilities { scroll-margin-top: 6rem; }
+  .products-opening { background: var(--color-performance-mode-campaign-surface); color: var(--color-performance-mode-campaign-ink); }
+  .products-paths { padding: 0 max(1.25rem, 5vw) var(--space-performance-sm); }
+  /* Route-local specificity keeps Canon's full-field artifact defaults from
+     placing this choice diagram behind the headline or reserving mobile space. */
+  #products-opening :global(.performance-campaign-opening) {
+    min-height: 0;
+    background: var(--color-performance-mode-campaign-surface);
+  }
+  #products-opening :global(.performance-campaign-opening::before) { display: none; }
+  #products-opening :global(.performance-campaign-opening__content) {
+    display: block;
+    width: 44%;
+    min-height: 0;
+    margin-inline: 5% auto;
+    padding-block: 8.5rem var(--space-performance-lg);
+  }
+  #products-opening :global(.performance-campaign-opening__content > header) {
+    width: 100%;
+    align-content: start;
+  }
+  #products-opening :global(.performance-campaign-opening__artifact) {
+    position: absolute;
+    inset: 8.5rem 5% auto auto;
+    width: 44%;
+    max-width: 40rem;
+    min-height: 0;
+    height: auto;
+    background: transparent;
+    pointer-events: none;
+  }
+  @media (max-width: 1000px) {
+    #products-opening :global(.performance-campaign-opening__content) {
+      width: 90%;
+      margin-inline: auto;
+      padding-top: 7rem;
+    }
+    #products-opening :global(.performance-campaign-opening__artifact) { display: none; }
+  }
+
+.capabilities{padding:80px 7vw;color:var(--color-performance-ink);background:var(--color-performance-paper)}.capabilities>p{max-width:720px;line-height:1.65}.capabilities h2{font:400 clamp(38px,4vw,64px)/1.1 var(--font-performance-editorial)}.capabilities article{display:grid;grid-template-columns:2fr 1fr;gap:5vw;padding:32px 0;border-top:1px solid var(--color-performance-line);margin-top:24px}.capabilities h3{font-size:25px;margin:0 0 14px}.capabilities article p{max-width:650px;line-height:1.65}.capability-links{display:flex;flex-direction:column;justify-content:center;gap:20px}.capability-links a{color:inherit;text-underline-offset:5px}.deliverable{font-size:14px}.evidence-status{margin-top:20px;font:var(--text-performance-operator-label) var(--font-performance-mono);text-transform:uppercase;color:var(--color-performance-muted)}.evidence-proof{font-size:14px;color:var(--color-performance-muted)}@media(max-width:700px){.capabilities article{grid-template-columns:1fr;gap:16px}}
+
   .product-choice,
   .control-surfaces,
   .proof-chooser {
@@ -468,9 +548,12 @@
     font-weight: var(--font-performance-semibold);
   }
 
-  .control-surfaces :global(.performance-workflow-mini-artifact) {
-    max-height: 7rem;
-    overflow: hidden;
+  .control-surface-icon {
+    display: grid;
+    align-items: center;
+    width: 4.5rem;
+    height: 7rem;
+    color: var(--color-performance-ink);
   }
 
   @media (max-width: 48rem) {
@@ -492,35 +575,18 @@
       border-left: 0;
     }
 
+    /* Keep native keyboard focus visible: mandatory horizontal snapping can
+       return a partially scrolled focused card to the preceding snap point. */
     .control-surfaces,
-    .proof-chooser {
-      grid-template-columns: none;
-      grid-auto-flow: column;
-      grid-auto-columns: minmax(15rem, 82vw);
-      max-width: 100%;
-      overflow-x: auto;
-      overscroll-behavior-inline: contain;
-      scroll-snap-type: inline mandatory;
-    }
-
-    .control-surfaces a,
-    .proof-chooser a {
-      scroll-snap-align: start;
-    }
-
-    .control-surfaces a + a,
-    .proof-chooser a + a {
-      border-left: 1px solid var(--color-performance-line, #d7d7d2);
-    }
-
     .proof-chooser {
       grid-template-columns: 1fr;
       grid-auto-flow: row;
       grid-auto-columns: auto;
+      max-width: 100%;
       overflow-x: visible;
-      scroll-snap-type: none;
     }
 
+    .control-surfaces a + a,
     .proof-chooser a + a {
       border-top: 1px solid var(--color-performance-line, #d7d7d2);
       border-left: 0;

@@ -1,3 +1,13 @@
+---
+paths:
+  - "packages/agency/content/social/**"
+  - "packages/agency/src/lib/social/**"
+  - "packages/agency/src/routes/api/social/**"
+  - "packages/agency/workers/social-poster/**"
+  - "packages/social-agent/**"
+  - "packages/social-mcp/**"
+---
+
 # Social Posting Patterns
 
 Automated LinkedIn posting with research-backed timing. The tool recedes; the content distributes itself.

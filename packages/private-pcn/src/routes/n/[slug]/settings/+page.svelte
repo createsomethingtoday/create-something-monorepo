@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SerifPhrase from '$lib/components/SerifPhrase.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import { api } from '$lib/client';
   import { invalidateAll } from '$app/navigation';
@@ -89,7 +90,7 @@
 <main id="main" class="form-page">
   <a href="/dashboard"><Icon name="arrow-left" /> Your networks</a>
   <p class="eyebrow">PRIVATE / NETWORK SETTINGS</p>
-  <h1>Shape your<br /><em>network.</em></h1>
+  <h1>Shape your<br /><SerifPhrase text="network." /></h1>
   <p class="muted">/n/{data.network?.slug} · {data.network?.status}</p>
   {#if data.trial}<p class="availability">
       Your creator free month ends {new Date(data.trial.ends_at * 1000).toLocaleDateString()}. No

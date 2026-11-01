@@ -1,0 +1,105 @@
+/* Opt-in product-family refinement. Existing artifacts, controls and forms stay in flow. */
+body.design-preview[data-preview-family='product'] {
+  font-family: var(--font-performance-interface);
+}
+body.design-preview[data-preview-family='product'] :is(.performance-campaign-opening__content,.performance-narrative-stage__inner,.clear-page-section__inner) {
+  width: 88%;
+  max-width: 90rem;
+  margin-inline: auto;
+}
+body.design-preview[data-preview-family='product'] :is(.performance-campaign-opening,.clear-page-section--hero) {
+  padding-block: clamp(3rem,7vw,7rem);
+}
+body.design-preview[data-preview-family='product'] :is(.performance-campaign-opening h1,.clear-page-section--hero h1) {
+  font-family: var(--font-performance-interface);
+  font-weight: var(--font-performance-medium);
+  font-size: clamp(2.75rem,5.8vw,6.25rem);
+  line-height: 1.03;
+  letter-spacing: var(--tracking-performance-tight);
+  text-wrap: balance;
+  max-width: 18ch;
+}
+body.design-preview[data-preview-family='product'] :is(.performance-campaign-opening__lede,.clear-page-section__description) {
+  max-width: 54ch;
+  line-height: 1.65;
+}
+body.design-preview[data-preview-family='product'] :is(.performance-narrative-stage,.clear-page-section:not(.clear-page-section--hero),.capabilities,.product-proof-shelf,.compiler-integration-page .scope) {
+  padding-block: clamp(3rem,6vw,6rem);
+}
+body.design-preview[data-preview-family='product'] :is(.performance-narrative-stage__header h2,.clear-page-section h2,.capabilities h2,.product-proof-shelf h2,.compiler-integration-page .scope h2) {
+  font-family: var(--font-performance-interface);
+  font-weight: var(--font-performance-medium);
+  font-size: clamp(2rem,3.7vw,4rem);
+  line-height: 1.1;
+  letter-spacing: var(--tracking-performance-tight);
+  text-wrap: balance;
+}
+body.design-preview[data-preview-family='product'] .performance-narrative-stage__composition {
+  gap: var(--space-performance-xl);
+}
+body.design-preview[data-preview-family='product'] :is(.performance-narrative-stage__panel,.clear-page-section__copy,.clear-page-section__aside,.product-choice,.scope__grid>*,.install-card) {
+  min-width: 0;
+}
+body.design-preview[data-preview-family='product'] :is(.performance-narrative-stage__panel p,.capabilities article p,.intent-receipt,.integration-record,.governance-product-artifact) {
+  line-height: 1.65;
+}
+body.design-preview[data-preview-family='product'] .performance-conversion-handoff {
+  padding: clamp(3rem,6vw,6rem) 6%;
+  gap: var(--space-performance-xl);
+}
+body.design-preview[data-preview-family='product'] :is(.performance-campaign-opening__actions,.clear-page-section__actions,.performance-conversion-handoff__actions) {
+  gap: var(--space-performance-sm);
+  flex-wrap: wrap;
+}
+body.design-preview[data-preview-family='product'] :is(.install-card pre,.install-card code,.integration-record code,.acceptance-receipt code) {
+  overflow-wrap: anywhere;
+}
+body.design-preview[data-preview-family='product'] .map-page .hero-track {
+  padding-block: clamp(3rem,7vw,7rem);
+}
+body.design-preview[data-preview-family='product'] .map-page .hero-copy h1 {
+  font-family: var(--font-performance-interface);
+  font-size: clamp(2.75rem,5.8vw,6.25rem);
+  line-height: 1.03;
+  letter-spacing: var(--tracking-performance-tight);
+}
+body.design-preview[data-preview-family='product'] .map-page .draw-workbench {
+  border-color: var(--color-performance-line);
+  margin-block: var(--space-performance-xl);
+}
+body.design-preview[data-preview-family='product'] .map-page .mapping-steps {
+  gap: var(--space-performance-md);
+}
+body.design-preview[data-preview-family='product'] :is(.scopefield-page .opening,.scopefield-page .proof,.scopefield-page .download,.technical-review .review-section) {
+  padding-block: clamp(3rem,6vw,6rem);
+}
+body.design-preview[data-preview-family='product'] :is(.scopefield-page h1,.technical-review h1) {
+  font-family: var(--font-performance-interface);
+  line-height: 1.04;
+  letter-spacing: var(--tracking-performance-tight);
+}
+body.design-preview[data-preview-family='product'] :is(.scopefield-page .compatibility,.scopefield-page .candidate-note,.technical-review .finding-limit,.map-page .draw-note) {
+  line-height: 1.65;
+}
+@media (max-width: 760px) {
+  body.design-preview[data-preview-family='product'] :is(.performance-conversion-handoff,.clear-page-section--split .clear-page-section__layout,.compiler-integration-page .scope__grid,.capabilities article,.install-grid,.scopefield-page .hero-grid,.technical-review .report-layout) {
+    grid-template-columns: minmax(0,1fr);
+    gap: var(--space-performance-lg);
+  }
+  body.design-preview[data-preview-family='product'] :is(.performance-campaign-opening__content,.performance-narrative-stage__inner,.clear-page-section__inner) {
+    width: 88%;
+  }
+  body.design-preview[data-preview-family='product'] :is(.capability-links,.map-page .draw-toolbar) {
+    flex-wrap: wrap;
+    gap: var(--space-performance-md);
+  }
+  body.design-preview[data-preview-family='product'] .map-page .mapping-steps {
+    grid-template-columns: minmax(0,1fr);
+  }
+  body.design-preview[data-preview-family='product'] :is(.performance-conversion-handoff__actions,.clear-page-section__actions) {
+    align-items: flex-start;
+  }
+}
+/* A synthetic record is a working object, not another campaign headline. */
+body.design-preview[data-preview-family='product'] .example .record h2{font-size:clamp(1.4rem,2.5vw,2.2rem);line-height:1.12;max-width:24ch}
+body.design-preview[data-preview-family='product'] .example .record{min-width:0}

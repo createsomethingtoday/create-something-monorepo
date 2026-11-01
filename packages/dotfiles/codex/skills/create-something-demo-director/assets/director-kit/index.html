@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="A CREATE SOMETHING walkthrough: follow the screen, the prompt, and the evidence.">
+  <title>Walkthroughs — CREATE SOMETHING</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="player.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#watch">Skip to recording</a>
+  <div class="shell">
+    <header class="masthead">
+      <a class="wordmark" href="./" aria-label="CREATE SOMETHING walkthrough home">CREATE SOMETHING</a>
+      <span class="mono">Walkthroughs / 001</span>
+    </header>
+    <main>
+      <div class="intro">
+        <div><p class="eyebrow">Observe. Understand. Try it.</p><h1>See the work. Follow the decisions.</h1></div>
+        <p class="intro-note">A screen, a clear next step, and the evidence behind it. Move at your own pace.</p>
+      </div>
+      <p id="load-status" class="system-message" role="status">Loading the walkthrough…</p>
+      <section id="walkthrough" class="walkthrough" aria-labelledby="walkthrough-title" hidden>
+        <aside class="wayfinder">
+          <div class="wayfinder-top"><p class="eyebrow">The route</p><span id="duration" class="mono"></span></div>
+          <h2 id="walkthrough-title"></h2>
+          <nav aria-label="Walkthrough chapters"><ol id="chapters" class="chapters"></ol></nav>
+          <div class="scene-detail" aria-live="polite" aria-atomic="true">
+            <p id="scene-step" class="eyebrow"></p>
+            <h3 id="scene-title"></h3>
+            <p class="field-label">Follow along</p>
+            <p id="scene-prompt" tabindex="0"></p>
+            <div class="evidence"><p class="field-label">Look for</p><p id="scene-evidence"></p></div>
+          </div>
+          <button id="copy-prompt" class="copy-button" type="button">Copy this prompt <span aria-hidden="true">↗</span></button>
+          <p id="copy-status" class="copy-status" role="status" aria-live="polite"></p>
+        </aside>
+        <div class="recording-column">
+          <div class="recording-heading"><p class="eyebrow">On screen</p><span id="playback-state" class="mono" role="status" aria-live="polite">Ready to watch</span></div>
+          <div id="view-controls" class="view-controls" hidden>
+            <label for="view-select">Recording view</label>
+            <select id="view-select"><option value="focused">Focused view</option><option value="full">Full recording</option></select>
+            <span>Cropped for detail. Switch views for full context.</span>
+          </div>
+          <p id="focus-label" class="focus-label" hidden></p>
+          <div id="watch" class="video-frame" tabindex="-1">
+            <video id="video" tabindex="0" controls playsinline preload="metadata" poster="poster.jpg" aria-label="Screen recording. Use the chapter navigation to follow the walkthrough."></video>
+            <p id="video-error" class="video-error" role="alert" hidden></p>
+            <button id="retry-recording" class="retry-button" type="button" hidden>Retry recording</button>
+          </div>
+          <div class="recording-footer">
+            <p class="recording-note">Recording · guidance follows the screen</p>
+            <div class="step-controls"><button id="previous" type="button">← Previous</button><button id="next" type="button">Next →</button></div>
+          </div>
+          <details class="notes"><summary>Read the walkthrough</summary><p id="description" class="description"></p><ol id="scene-notes"></ol></details>
+          <p id="attribution" class="attribution"></p>
+        </div>
+      </section>
+      <noscript><p class="system-message">This player needs JavaScript to synchronize its chapters. You can <a href="screen.mp4">open the screen recording</a> directly.</p></noscript>
+    </main>
+    <footer class="page-footer"><span>CREATE SOMETHING / Performance Lab</span><span>Screen → decision → evidence</span></footer>
+  </div>
+</body>
+</html>

@@ -47,7 +47,6 @@ test('keeps the Agency commercial cohort precise and advances only verified comm
 
 test('consolidates section-heavy commercial routes into one focused proof stage', () => {
   for (const route of [
-    'about',
     'cloudflare',
     'control',
     'stack',
@@ -79,7 +78,7 @@ test('preserves the primary destinations carried by the commercial cohort', () =
       '/partners'
     ],
     partners: ['/products', '/cloudflare', '/stack'],
-    security: ['/bearer-token-policy', 'mailto:legal@createsomething.io'],
+    security: ['/bearer-token-policy', 'mailto:support@createsomething.io'],
     // The opening CTA moved from an in-page '#map-warmup' jump to the canonical Map
     // destination in 10e3f02b5; Map and Control routes now travel in ServicesProductPath.
     services: ['agencyCoreMessaging.selfMapHref', 'agencyCoreMessaging.servicesMappingSessionHref'],
@@ -117,19 +116,7 @@ test('preserves the primary destinations carried by the commercial cohort', () =
 
 test('preserves the complete proof inventory inside each consolidated stage', () => {
   const proofInventory: Record<string, string[]> = {
-    about: [
-      'Control before speed',
-      'Protocols before improvisation',
-      'Care leaves a record',
-      'Map the operating path',
-      'Classify the judgment states',
-      'Ship the control layer',
-      'Brief the operator',
-      'Start with the cleanup loop',
-      'Subtract before automating',
-      'Bring the workflow and owner',
-      'WORKWAY'
-    ],
+
     cloudflare: [
       'Cloudflare Runtime Stack',
       'Remote MCP Fleet',
@@ -220,3 +207,13 @@ function sourceForRoute(route: string) {
 function readRoute(route: string) {
   return readFileSync(resolve(workspaceRoot, sourceForRoute(route)), 'utf8');
 }
+
+// About is intentionally a readable letter, not an interactive proof stage.
+test('About keeps its human story, boundaries and next step in static HTML', () => {
+  const source = readRoute('about');
+  assert.match(source, /<article[^>]*aria-labelledby="about-title"/);
+  for (const phrase of ['Division III basketball', 'equine veterinary technician', 'what needs approval', 'Ownership follows our agreement', 'href="/book"']) assert.ok(source.includes(phrase), phrase);
+  assert.doesNotMatch(source, /PerformanceNarrativeStage|<img[^>]*signature/);
+  assert.match(source, /@media print/);
+  assert.match(source, /prefers-reduced-motion/);
+});

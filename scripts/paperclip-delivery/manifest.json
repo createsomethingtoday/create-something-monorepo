@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "policyVersion": "create-something.paperclip-delivery.v1",
+  "algorithm": "sha256",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 10711,
+      "sha256": "8b4b731cd1fdc1ea7c7fa876cfa5925b2e53b42e85251d5883ab1f9397eebb89"
+    },
+    {
+      "path": "RELEASE.md",
+      "bytes": 9564,
+      "sha256": "91f55e8216aceb03c15d08347e09cea0df1925b5f6f45b3deaad1c3000260d69"
+    },
+    {
+      "path": "SKILL.md",
+      "bytes": 2136,
+      "sha256": "d6b23b625b730b2411f833d1e9d91eff31832a439c5b4a34c54937b7e8bf233e"
+    },
+    {
+      "path": "assignment-schema.mjs",
+      "bytes": 1988,
+      "sha256": "5bb33bc4a792c098cbc594cb4f7f6033f0b0a6338a1ed31caccaae7326484483"
+    },
+    {
+      "path": "assignment.schema.json",
+      "bytes": 3852,
+      "sha256": "dac9ba57b3eb506058d77a1bee7757ca326ff09b085534e904706a7b6a9f553e"
+    },
+    {
+      "path": "cli.mjs",
+      "bytes": 1687,
+      "sha256": "04817243ea4b16e610f9f8f960efaf14c29b2f72b421d0acbe9d28bf0db2bd76"
+    },
+    {
+      "path": "cli.test.mjs",
+      "bytes": 4636,
+      "sha256": "d9774949504f071e88a3db88ba97b7b3d11f80345ed74a72e20ec0413dd3e429"
+    },
+    {
+      "path": "coordinator.md",
+      "bytes": 5738,
+      "sha256": "f8025b2654bf3f2f5b2c514d0805b86e6e170038fcd6102fbd78edfac2732259"
+    },
+    {
+      "path": "engineering.md",
+      "bytes": 3107,
+      "sha256": "6f0056c129b1054a2f4fc393bc87073e7521a7798b28e3452d2984209ce3a84f"
+    },
+    {
+      "path": "manifest.mjs",
+      "bytes": 1700,
+      "sha256": "3ce4b83436e0af29716a4129189d513e75934eca28133930a207128e242c3304"
+    },
+    {
+      "path": "regressions.test.mjs",
+      "bytes": 2673,
+      "sha256": "bec0541d76d716ed9d15bdeedc452755d263eed6345baf00d2fe820a9e7e0b99"
+    },
+    {
+      "path": "release-qa.md",
+      "bytes": 3477,
+      "sha256": "c8dc56728a9794003fe972b1854f5be0079f54f06828f94ad0db3c1edd1f3a6b"
+    },
+    {
+      "path": "reviewer.md",
+      "bytes": 3024,
+      "sha256": "5fa968cad390d373d0fa49d5520320da5b4e3cb65c8512d3764cfc54243f6e63"
+    },
+    {
+      "path": "stage-evidence.mjs",
+      "bytes": 10748,
+      "sha256": "6860a4f99e36c79eaeab10d53b22ec210e29be92c6842bc97a0334cd556269a1"
+    },
+    {
+      "path": "stage-evidence.test.mjs",
+      "bytes": 7548,
+      "sha256": "a73f7d6bc488af974ff4a0aeb6620c47f80e24846bf531d31674f7e3d0394e83"
+    }
+  ]
+}

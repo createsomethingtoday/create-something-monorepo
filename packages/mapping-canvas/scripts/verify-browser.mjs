@@ -1,4 +1,4 @@
-import { chromium } from '@playwright/test';
+import { chromium, expect } from '@playwright/test';
 import { mkdir, readFile, stat } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
@@ -6,7 +6,7 @@ const baseUrl = process.env.CANVAS_URL ?? 'http://127.0.0.1:5173';
 const runLabel = process.env.CANVAS_RUN_LABEL ?? 'local';
 const outputRoot = fileURLToPath(new URL(`../output/${runLabel}/`, import.meta.url));
 await mkdir(outputRoot, { recursive: true });
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ headless: true, ...(process.env.CANVAS_BROWSER_CHANNEL ? { channel: process.env.CANVAS_BROWSER_CHANNEL } : {}) });
 
 async function clearDatabase(page) {
   await page.evaluate(() => new Promise((resolve) => {
@@ -70,8 +70,8 @@ try {
   const svg = page.locator('svg[aria-label="Canvas objects"]');
   const box = await svg.boundingBox();
   if (!box) throw new Error('Canvas surface unavailable');
-  const brandLogo = page.getByRole('img', { name: 'CREATE SOMETHING .agency' });
-  if (!(await brandLogo.isVisible()) || !(await brandLogo.getAttribute('src'))?.endsWith('/brand/create-something-agency-white.svg')) throw new Error('Governed CREATE SOMETHING logo is unavailable');
+  const brandLogo = page.locator('.identity img');
+  if (!(await brandLogo.isVisible()) || !(await brandLogo.getAttribute('src'))?.endsWith('/brand/draw-dark.svg')) throw new Error('Governed Draw logo is unavailable');
   if (await page.locator('link[rel="canonical"][href="https://draw.createsomething.agency/"]').count() !== 1) throw new Error('Canonical Draw URL is unavailable');
   if (await page.locator('meta[property="og:image"][content="https://draw.createsomething.agency/og-image.png"]').count() !== 1) throw new Error('Draw social image metadata is unavailable');
   const schemas = await page.locator('script[type="application/ld+json"]').allTextContents();
@@ -118,6 +118,9 @@ try {
   await shortcutsTrigger.focus();
   const toolbarOverflows = await page.locator('.toolbar button').evaluateAll((buttons) => buttons.some((button) => button.scrollWidth > button.clientWidth));
   if (toolbarOverflows) throw new Error('Desktop tool sidebar text overflows its rail');
+  await page.evaluate(() => window.__drawWebMcpTools.draw_get_state.execute({}));
+  await page.getByRole('button', { name: 'Show completed agent activity', exact: true }).click();
+  await page.getByRole('button', { name: 'Follow agent', exact: true }).click();
   const agentFollow = await page.evaluate(async () => {
     const tools = window.__drawWebMcpTools;
     const before = await tools.draw_get_state.execute({});
@@ -134,6 +137,9 @@ try {
     const interrupted = await tools.draw_get_state.execute({});
     const renderedAfterPress = new DOMMatrixReadOnly(getComputedStyle(content).transform);
     await tools.draw_undo.execute({});
+    // Human navigation disengaged following; explicitly opt back in for this case.
+    document.querySelector('.agent-activity .disclosure[aria-expanded="false"]')?.click();
+    document.querySelector('.agent-activity .controls button').click();
     const seed = { id: 'browser-agent-seed', kind: 'note', createdAt: new Date().toISOString(), x: 180, y: 160, width: 260, height: 132, text: 'Seed' };
     await tools.draw_apply_operations.execute({ operations: [{ type: 'put_object', object: seed }] });
     await tools.draw_apply_operations.execute({ operations: [{ type: 'remove_objects', ids: [seed.id] }, { type: 'put_object', object: { ...seed, id: 'browser-agent-mixed-note', x: 5200, y: 3600, text: 'Mixed replacement' } }] });
@@ -172,8 +178,9 @@ try {
     const composedState = await tools.draw_get_state.execute({});
     const briefModelWidth = composedState.document.objects.find(({ id }) => id === composed.refs.brief)?.width;
     const connectorLabel = [...document.querySelectorAll('.connector-label')].find((node) => node.textContent === 'approved');
-    const rawConnectorLabelBounds = connectorLabel?.getBoundingClientRect().toJSON();
     const renderedGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [composed.refs.brief, composed.refs.launch, composed.refs.approval, composed.refs.mission], limit: 10 });
+    // The geometry tool settles viewport transitions; compare the same settled frame.
+    const rawConnectorLabelBounds = connectorLabel?.getBoundingClientRect().toJSON();
     const formatted = await tools.draw_edit_note.execute({ id: composed.refs.brief, content: { blocks: [{ type: 'heading1', runs: [{ text: 'Mission', bold: true }] }, { type: 'bullet', runs: [{ text: 'Evidence link', link: 'https://example.com/proof' }] }] } });
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     const formattedVisible = Boolean(document.querySelector(`[data-object-id="${composed.refs.brief}"] h1`) && document.querySelector(`[data-object-id="${composed.refs.brief}"] a[href="https://example.com/proof"]`));
@@ -403,9 +410,9 @@ try {
       staleError, deleteError, replaceError, focus, restoredCount: restored.document.objects.length, beforeCount: before.document.objects.length
     };
   });
-  const requiredSemanticTools = ['draw_auto_layout', 'draw_compose', 'draw_create_freehand_arrow', 'draw_delete', 'draw_edit_note', 'draw_focus', 'draw_get_rendered_geometry', 'draw_get_share_status', 'draw_inspect', 'draw_layout', 'draw_patch_objects', 'draw_path', 'draw_publish_snapshot', 'draw_replace_canvas', 'draw_revert_change', 'draw_revoke_snapshot', 'draw_update_snapshot'];
-  if (!requiredSemanticTools.every((name) => semantic.drawNames.includes(name)) || semantic.drawNames.length !== 24) throw new Error(`Semantic Draw tool inventory is incomplete: ${JSON.stringify(semantic.drawNames)} (all registered tools: ${JSON.stringify(semantic.names)})`);
-  if (semantic.version !== '2026-09-10.1' || !semantic.composed.changeId || !semantic.connectorVisible) throw new Error(`Semantic composition or visible connector label failed: ${JSON.stringify(semantic)}`);
+  const requiredSemanticTools = ['draw_agent_activity', 'draw_execute', 'draw_edit', 'draw_auto_layout', 'draw_compose', 'draw_create_freehand_arrow', 'draw_delete', 'draw_edit_note', 'draw_focus', 'draw_get_rendered_geometry', 'draw_get_share_status', 'draw_inspect', 'draw_layout', 'draw_patch_objects', 'draw_path', 'draw_publish_snapshot', 'draw_replace_canvas', 'draw_revert_change', 'draw_revoke_snapshot', 'draw_update_snapshot'];
+  if (!requiredSemanticTools.every((name) => semantic.drawNames.includes(name)) || semantic.drawNames.length !== 27) throw new Error(`Semantic Draw tool inventory is incomplete: ${JSON.stringify(semantic.drawNames)} (all registered tools: ${JSON.stringify(semantic.names)})`);
+  if (semantic.version !== '2026-09-23.2' || !semantic.composed.changeId || !semantic.connectorVisible) throw new Error(`Semantic composition or visible connector label failed: ${JSON.stringify(semantic)}`);
   if (!semantic.formatted.receipt.formatted || !semantic.formatted.visible) throw new Error(`Formatted note did not render through its semantic WebMCP contract: ${JSON.stringify(semantic.formatted)}`);
   const unexpectedSemanticPeers = semantic.renderedGeometry.overlaps.filter(({ firstId, secondId, classification }) => classification === 'peer' && !([firstId, secondId].includes(semantic.composed.refs.approval) && [firstId, secondId].includes(semantic.composed.refs.mission)));
   if (semantic.renderedGeometry.objects.length !== 4 || semantic.renderedGeometry.connectors.length !== 1 || !semantic.renderedGeometry.connectors[0].labelBounds || unexpectedSemanticPeers.length || !semantic.renderedGeometry.overlaps.some(({ classification }) => classification === 'containment')) throw new Error(`Rendered geometry did not match the visible semantic graph: ${JSON.stringify(semantic.renderedGeometry)}`);
@@ -443,6 +450,7 @@ try {
   await sidebarToggle.click();
   const collapsedToolbarBox = await page.locator('.toolbar').boundingBox();
   if (!collapsedToolbarBox || collapsedToolbarBox.width < 56 || collapsedToolbarBox.width > 72) throw new Error('Collapsed tool sidebar is not a compact letter rail');
+  await expect.poll(async () => Math.abs(((await svg.boundingBox())?.width ?? 0) - await svg.evaluate(node => node.viewBox.baseVal.width))).toBeLessThanOrEqual(1);
   const collapsedCanvasWidth = (await svg.boundingBox())?.width;
   const collapsedViewBoxWidth = await svg.evaluate((node) => node.viewBox.baseVal.width);
   if (!collapsedCanvasWidth || Math.abs(collapsedCanvasWidth - collapsedViewBoxWidth) > 1) throw new Error('Canvas viewBox did not follow the collapsed sidebar layout');
@@ -627,6 +635,7 @@ try {
   if (JSON.stringify(afterInvalidLink) !== JSON.stringify(retainedFormatting)) throw new Error('Malformed human link corrupted structured note content');
 
   const exports = {};
+  await page.locator('.file-menu summary').click();
   for (const extension of ['json', 'svg', 'png']) {
     const event = page.waitForEvent('download', { timeout: 15_000 });
     await page.getByRole('button', { name: extension.toUpperCase() }).click();
@@ -664,7 +673,8 @@ try {
   if (countAfterReload < countBeforeReload - 1) throw new Error('Reload lost canvas objects');
 
   page.once('dialog', (dialog) => dialog.accept());
-  await page.getByRole('button', { name: 'Reset', exact: true }).click();
+  if ((await page.locator('.file-menu').getAttribute('open')) === null) await page.locator('.file-menu summary').click();
+  await page.getByRole('button', { name: 'New canvas', exact: true }).click();
   await page.waitForFunction(() => document.querySelector('.statusbar')?.textContent?.includes('New local session'));
   await page.locator('input[type=file]').setInputFiles(`${outputRoot}canvas.json`);
   await page.waitForFunction(() => document.querySelector('.statusbar')?.textContent?.includes('Canvas imported'));
@@ -678,7 +688,8 @@ try {
   await page.getByRole('button', { name: /Note tool/ }).click();
   await page.mouse.click(box.x + 520, box.y + 210);
   page.once('dialog', (dialog) => dialog.accept());
-  await page.getByRole('button', { name: 'Reset', exact: true }).click();
+  if ((await page.locator('.file-menu').getAttribute('open')) === null) await page.locator('.file-menu summary').click();
+  await page.getByRole('button', { name: 'New canvas', exact: true }).click();
   await page.waitForFunction(() => document.querySelector('.statusbar')?.textContent?.includes('New local session'));
   await page.waitForTimeout(200);
   await page.reload({ waitUntil: 'networkidle' });
@@ -696,6 +707,7 @@ try {
   for (const width of [320, 390, 820]) {
     await mobile.page.setViewportSize({ width, height: 844 });
     const clippedControls = await mobile.page.locator('.toolbar button:not(.sidebar-toggle),.file-actions button,.history button,.shortcuts-trigger').evaluateAll((buttons) => buttons.filter((button) => {
+      if(!button.checkVisibility()) return false;
       const bounds = button.getBoundingClientRect();
       return bounds.left < 0 || bounds.right > innerWidth || bounds.top < 0 || bounds.bottom > innerHeight || bounds.width < 24 || bounds.height < 24;
     }).map((button) => button.getAttribute('aria-label') || button.textContent));
@@ -710,7 +722,7 @@ try {
   const mobileSvg = mobile.page.locator('svg[aria-label="Canvas objects"]');
   const mobileBox = await mobileSvg.boundingBox();
   if (!mobileBox) throw new Error('Mobile canvas unavailable');
-  if (!(await mobile.page.getByRole('img', { name: 'CREATE SOMETHING .agency' }).isVisible())) throw new Error('Mobile CREATE SOMETHING logo is unavailable');
+  if (!(await mobile.page.locator('.identity img').isVisible())) throw new Error('Mobile CREATE SOMETHING logo is unavailable');
   const mobileSwatches = mobile.page.locator('.palette button');
   if (await mobileSwatches.count() !== 5 || (await mobileSwatches.first().boundingBox())?.height < 44) throw new Error('Mobile palette is incomplete or below the touch target');
   if (await mobileSwatches.locator('small').allTextContents().then((labels) => labels.join(',')) !== 'Chalk,Amber,Signal,Growth,Risk') throw new Error('Mobile palette lacks color-independent labels');

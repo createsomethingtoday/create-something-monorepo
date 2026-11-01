@@ -31,12 +31,12 @@
   <section>
     <h2 class="section-title">Lessons</h2>
 
-    <div class="flex flex-col gap-4">
+    <div class="lesson-collection">
       {#each path.lessons as lesson, index}
         <a href="/paths/{path.id}/{lesson.id}" class="lesson-card">
           <div class="lesson-number">{index + 1}</div>
 
-          <div class="flex-1">
+          <div class="lesson-summary">
             <h3 class="lesson-title">{lesson.title}</h3>
             <p class="lesson-description">{lesson.description}</p>
 
@@ -56,14 +56,14 @@
   .path-shell {
     width: min(56rem, calc(100% - 2.5rem));
     margin-inline: auto;
-    padding: clamp(3rem, 8vw, 5.25rem) 0 clamp(4rem, 8vw, 6rem);
+    padding: clamp(1.75rem, 4vw, 2.5rem) 0;
     color: var(--color-performance-ink, #090909);
   }
 
   .path-hero {
     display: grid;
     gap: var(--space-md);
-    margin-bottom: clamp(3rem, 7vw, 5rem);
+    margin-bottom: 2rem;
   }
 
   .path-kicker {
@@ -101,7 +101,7 @@
     max-width: 12ch;
     margin: 0;
     color: var(--color-performance-ink, #090909);
-    font-size: var(--text-display);
+    font-size: clamp(2rem, 4vw, 3.25rem);
     font-weight: var(--font-medium);
     line-height: 0.98;
     letter-spacing: 0;
@@ -119,7 +119,7 @@
   .path-description {
     max-width: 46rem;
     margin: 0;
-    font-size: var(--text-body-lg);
+    font-size: 1rem;
     color: var(--color-performance-muted, #5e6268);
     line-height: var(--leading-relaxed);
   }
@@ -136,7 +136,7 @@
     border-radius: var(--radius-performance-sm, 4px);
     border: 1px solid var(--color-performance-ink, #090909);
     background: var(--color-performance-ink, #090909);
-    color: #ffffff;
+    color: var(--color-performance-paper);
     font-size: var(--text-body);
     font-weight: var(--font-medium);
   }
@@ -157,13 +157,25 @@
     margin-bottom: var(--space-lg);
   }
 
+  .path-shell section {
+    padding-block: 0 2rem;
+  }
+
+  .lesson-collection {
+    border-top: 1px solid var(--color-performance-line);
+  }
+
+  .lesson-summary {
+    flex: 1;
+    min-width: 0;
+  }
+
   .lesson-card {
     display: flex;
     align-items: center;
     gap: var(--space-md);
     padding: var(--space-md);
-    border-radius: var(--radius-performance-md, 4px);
-    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-bottom: 1px solid var(--color-performance-line);
     background: var(--color-performance-panel, #ffffff);
     color: var(--color-performance-ink, #090909);
     transition:
@@ -179,7 +191,9 @@
   .lesson-number {
     width: 2.5rem;
     height: 2.5rem;
-    border-radius: var(--radius-full);
+    flex: 0 0 auto;
+    font-family: var(--font-mono);
+    border-radius: var(--radius-performance-sm);
     background: var(--color-performance-court, #e6e6e0);
     display: flex;
     align-items: center;

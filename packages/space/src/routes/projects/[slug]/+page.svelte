@@ -1,4 +1,7 @@
 <script lang="ts">
+  import WorkshopScene from '$lib/workshop/WorkshopScene.svelte';
+  import WorkshopTrace from '$lib/workshop/WorkshopTrace.svelte';
+  import { projectScene } from '$lib/workshop/scenes';
   import { SEO } from '@create-something/canon';
   import type { PageData } from './$types';
   import '$lib/workshop/workshop.css';
@@ -12,31 +15,30 @@
   ogImage={data.project.image}
 />
 <article class="workshop">
-  <header class="wrap section">
-    <a class="text-link" href="/projects">← All projects</a>
-    <p class="eyebrow category">{data.project.kind} / {data.project.distribution}</p>
-    <h1>{data.project.name}</h1>
-    <p class="lead summary">{data.project.summary}</p>
+  <header class="wrap section story-opening">
+    <div>
+      <a class="text-link" href="/projects">← All projects</a>
+      <p class="eyebrow category">
+        {data.project.kind} / {data.project.distribution}
+      </p>
+      <h1>{data.project.name}</h1>
+      <p class="lead summary">{data.project.summary}</p>
+    </div>
+    <WorkshopScene scene={projectScene(data.project.slug)} eager />
   </header>
   <section class="wrap detail" aria-label="Project overview">
-    <figure>
-      <img
-        src={data.project.image}
-        alt="A material study of reusable ivory and machined-metal instruments."
-        width="1536"
-        height="1024"
-      />
-      <figcaption>Conceptual material study. See the source for the working software.</figcaption>
-    </figure>
     <div class="instructions">
-      <p class="eyebrow">Put it to work</p>
-      <h2>Start here.</h2>
-      <p class="lead">{data.project.usage}</p>
-      <div class="actions">
-        <a class="primary" href={data.project.install ?? data.project.source}
-          >{data.project.install ? 'Installation & releases' : 'Source & instructions'} ↗</a
-        >{#if data.project.install}<a class="text-link" href={data.project.source}>View source ↗</a
-          >{/if}
+      <div>
+        <p class="eyebrow">Put it to work</p>
+        <h2>Start here.</h2>
+        <p class="lead">{data.project.usage}</p>
+        <div class="actions">
+          <a class="primary" href={data.project.install ?? data.project.source}
+            >{data.project.install ? 'Installation & releases' : 'Source & instructions'} ↗</a
+          >{#if data.project.install}<a class="text-link" href={data.project.source}
+              >View source ↗</a
+            >{/if}
+        </div>
       </div>
       <div class="limit">
         <h3>Before you begin</h3>
@@ -48,6 +50,7 @@
       </div>
     </div>
   </section>
+  <div class="wrap section"><WorkshopTrace /></div>
   <footer class="wrap section continuation">
     <div>
       <p class="eyebrow">Keep exploring</p>
@@ -69,31 +72,22 @@
   .summary {
     margin-top: 1.5rem;
   }
-  .detail {
+  .instructions {
     display: grid;
     grid-template-columns: 1.15fr 1fr;
     gap: 3rem;
     align-items: start;
   }
-  figure {
-    margin: 0;
-  }
-  img {
-    width: 100%;
-    height: auto;
-  }
-  figcaption {
-    font-size: 0.75rem;
-    color: var(--color-performance-fg-secondary);
-    margin-top: 0.75rem;
-  }
   h2 {
     margin: 1rem 0;
   }
   .limit {
-    margin-top: 2.5rem;
-    border-top: 1px solid #b8b8b0;
-    padding-top: 1.5rem;
+    margin-top: 0;
+    border-top: 1px solid var(--color-performance-line);
+    padding: var(--space-performance-md);
+    background: var(--color-performance-panel);
+    border: 1px solid var(--color-performance-line);
+    border-radius: var(--radius-performance-md);
   }
   .limit h3 {
     font-size: 1rem;
@@ -111,10 +105,10 @@
   .continuation a {
     display: block;
     padding: 1rem 0;
-    border-bottom: 1px solid #b8b8b0;
+    border-bottom: 1px solid var(--color-performance-line);
   }
   @media (max-width: 800px) {
-    .detail,
+    .instructions,
     .continuation {
       grid-template-columns: 1fr;
       gap: 2rem;

@@ -1,3 +1,5 @@
+> Historical hosting-release receipt (September 21, 2026). Status statements below describe that release, not current GA readiness. Current policy is in [reviewed launch](reviewed-launch.md); remaining provider/browser gates and release evidence are tracked in CRE-2030. The approved support split is now 75/25 after actual processing fees, with Billing/Connect paid by the platform. Do not use the historical 95/5 statement below to configure payments.
+
 # Live payment activation — CRE-2030
 
 ## Hosting release candidate, September 21, 2026

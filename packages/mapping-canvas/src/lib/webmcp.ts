@@ -1,9 +1,13 @@
+import { fastExecutionTool } from './fast-execution';
+import { createConnectorResolver } from './connector-geometry';
+import { createAgentActivity, type AgentActivity } from './agent-activity';
+import { compileEdits, editCommandSchema, assertLockedLayersPreserved, visibleObjects, isLayerLocked } from './editing';
 import { createObjectCenterResolver, expandCompoundIds, objectBounds, type CanvasDocument, type CanvasObject, type Point, type Tool } from './document';
-import type { CanvasOperation } from './paired-session';
+import { applyCanvasOperations, type CanvasOperation } from './paired-session';
 import { DRAWING_PALETTE } from './palette';
 import { normalizeNoteContent, noteContentText } from './note-content';
 
-export const DRAW_WEBMCP_VERSION = '2026-09-10.1';
+export const DRAW_WEBMCP_VERSION = '2026-09-23.2';
 export const REPLACE_CONFIRMATION = 'REPLACE CANVAS';
 export const RESET_CONFIRMATION = 'RESET CANVAS';
 export const DELETE_CONFIRMATION = 'DELETE OBJECTS';
@@ -32,6 +36,7 @@ export type DrawRenderedGeometry = {
 
 export type DrawTransitionKind = 'create' | 'update' | 'remove' | 'convert' | 'restore' | 'history' | 'reset';
 export type DrawController = {
+  activity?: (value: AgentActivity) => void;
   getState: () => DrawState;
   applyOperations: (operations: CanvasOperation[], expectedRevision?: string) => Promise<{ before: CanvasDocument; after: CanvasDocument }> | { before: CanvasDocument; after: CanvasDocument };
   select: (ids: string[]) => void;
@@ -387,15 +392,16 @@ function stackedLabelY(index: Map<string, number>, x: number, baseY: number, wid
 }
 
 export function connectorLabelLayout(objects: CanvasObject[]) {
-  const byId = new Map(objects.map((object) => [object.id, object])), resolveCenter = createObjectCenterResolver(objects);
+  const resolveConnector = createConnectorResolver(objects);
   const occupiedSlots = new Map<string, number>(), result = new Map<string, { x: number; y: number; width: number; height: number }>();
   const connectors = objects.filter((object): object is Extract<CanvasObject, { kind: 'connector' }> => object.kind === 'connector').sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
-  const segments = connectors.flatMap((connector) => { const from = byId.get(connector.fromId), to = byId.get(connector.toId); return from && to ? [{ id: connector.id, start: resolveCenter(from), end: resolveCenter(to) }] : []; });
+  const segments = connectors.flatMap((connector) => { const route = resolveConnector(connector); return route ? [{ id: connector.id, start: route.a, end: route.b }] : []; });
   const routes = connectorRouteIndex(segments);
   for (const connector of connectors.filter(({ label }) => Boolean(label))) {
-    const from = byId.get(connector.fromId), to = byId.get(connector.toId);
-    if (!from || !to) continue;
-    const a = resolveCenter(from), b = resolveCenter(to), width = estimatedTextWidth(connector.label) + 5, x = (a.x + b.x) / 2;
+    const route = resolveConnector(connector);
+    if (!route) continue;
+    const { a, b } = route;
+    const width = estimatedTextWidth(connector.label) + 5, x = (a.x + b.x) / 2;
     const routeKey = routes.keyById.get(connector.id);
     const fallbackTop = routes.fallback.find(({ key }) => key !== routeKey)?.fallbackTop;
     const baseY = (a.y + b.y) / 2 - 10, y = stackedLabelY(occupiedSlots, x, baseY, width, (bounds) => routes.query(bounds).some((route) => route.key !== routeKey && route.segments.some((segment) => connectorPaintHitsBounds(segment.start, segment.end, bounds))), fallbackTop);
@@ -520,11 +526,13 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
   const segmentIntersects = (start: Point, end: Point, bounds: { x: number; y: number; width: number; height: number }) => segmentHitsBounds(start, end, bounds, gap + 19);
   const connectors = document.objects.filter((object): object is Extract<CanvasObject, { kind: 'connector' }> => object.kind === 'connector').sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
   const positionedLabels = () => {
+    const positionedConnector = createConnectorResolver(document.objects, object => layoutCenter(object).center);
     const occupied = new Map<string, number>(), labels = new Map<string, { x: number; y: number; width: number; height: number }>();
     const segments = connectors.flatMap((connector) => {
       const fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
       if (!fromObject || !toObject) return [];
-      return [{ id: connector.id, start: layoutCenter(fromObject).center, end: layoutCenter(toObject).center }];
+      const route = positionedConnector(connector);
+      return route ? [{ id: connector.id, start: route.a, end: route.b }] : [];
     });
     const routes = connectorRouteIndex(segments);
     for (const connector of connectors) {
@@ -533,7 +541,9 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
       if (!fromObject || !toObject) continue;
       const endpointRoots = new Set([...layoutRoots(fromObject), ...layoutRoots(toObject)]);
       if (!endpointRoots.size) continue;
-      const start = layoutCenter(fromObject).center, end = layoutCenter(toObject).center, width = estimatedTextWidth(connector.label) + 5, x = (start.x + end.x) / 2;
+      const route = positionedConnector(connector);
+      if (!route) continue;
+      const start = route.a, end = route.b, width = estimatedTextWidth(connector.label) + 5, x = (start.x + end.x) / 2;
       const routeKey = routes.keyById.get(connector.id), fallbackTop = routes.fallback.find(({ key }) => key !== routeKey)?.fallbackTop;
       const baseY = (start.y + end.y) / 2 - 10, y = stackedLabelY(occupied, x, baseY, width, (bounds) => routes.query(bounds).some((route) => route.key !== routeKey && route.segments.some((segment) => connectorPaintHitsBounds(segment.start, segment.end, bounds))), fallbackTop);
       labels.set(connector.id, { x: x - width / 2, y: y - 12, width, height: 16 });
@@ -812,6 +822,16 @@ function receipt(controller: DrawController, kind: DrawTransitionKind, ids: stri
 }
 
 export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpTool[] {
+  const originalController=controller;
+  controller={...controller,applyOperations:(operations,expectedRevision)=>{
+    const before=originalController.getState().document;
+    if(before.objects.some(o=>o.locked)) {
+      const candidate=applyCanvasOperations(before,operations);
+      if(!candidate) throw new Error('Invalid operation batch.');
+      assertLockedLayersPreserved(before,candidate);
+    }
+    return originalController.applyOperations(operations,expectedRevision);
+  }};
   const maxJournalBytes = 4 * 1024 * 1024;
   const changes = new Map<string, { before: CanvasDocument; after: CanvasDocument; ids: string[]; objectIds: string[]; orderIds: string[]; bytes: number }>();
   let journalBytes = 0;
@@ -833,13 +853,29 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
     }
     return receipt(controller, kind, ids, preserveViewport);
   };
-  return [
+  const activity = createAgentActivity(() => controller.getState().document.id, value => controller.activity?.(value));
+  const tools: DrawWebMcpTool[] = [
     {
       name: 'draw_get_state', title: 'Inspect Draw canvas',
       description: 'Read the complete current Draw document, selected object IDs, active tool, and undo/redo availability.',
       inputSchema: emptySchema,
       annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
       execute: async () => controller.getState()
+    },
+    {
+      name: 'draw_edit', title: 'Edit Draw objects',
+      description: 'Apply the same typed editing commands used by the Draw inspector and layers: transform, style, rename, lock, hide, duplicate, paste, arrange, align and distribute. Atomic, revision guarded and undoable. Locked objects must be explicitly unlocked first. Returns selected IDs and a reversible change receipt.',
+      inputSchema: { type: 'object', additionalProperties: false, required: ['expectedRevision','commands'], properties: { expectedRevision: {type:'string'}, commands: {type:'array',minItems:1,maxItems:100,items:editCommandSchema} } },
+      annotations: {readOnlyHint:false,openWorldHint:false},
+      execute: async (input) => {
+        if (typeof input.expectedRevision !== 'string') throw new Error('expectedRevision is required. Inspect the canvas first.');
+        assertRevision(controller,input.expectedRevision);
+        const before = controller.getState().document;
+        const compiled = compileEdits(before,input.commands,{id:()=>`object-${crypto.randomUUID()}`,now:new Date().toISOString()});
+        if (!compiled.operations.length) return {ok:true,revision:drawRevision(before),selectedIds:compiled.selectedIds,changedIds:[]};
+        const result = await controller.applyOperations(compiled.operations,input.expectedRevision);
+        return {...finish('update',compiled.changedIds,result.before,result.after),selectedIds:compiled.selectedIds};
+      }
     },
     {
       name: 'draw_inspect', title: 'Inspect Draw efficiently',
@@ -855,6 +891,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
       annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
       execute: async (input) => {
         const state = controller.getState();
+        const visibleIds = new Set(visibleObjects(state.document).map(object => object.id));
         const requestedIds = Array.isArray(input.ids) ? new Set(input.ids.map(String)) : undefined;
         const requestedKinds = Array.isArray(input.kinds) ? new Set(input.kinds.map(String)) : undefined;
         const needle = typeof input.text === 'string' ? input.text.trim().toLowerCase() : '';
@@ -864,7 +901,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           if (requestedKinds && !requestedKinds.has(object.kind)) return false;
           if (!needle) return true;
           const searchable = object.kind === 'note' ? object.text : object.kind === 'connector' || object.kind === 'group' ? object.label : '';
-          return searchable.toLowerCase().includes(needle);
+          return `${object.name || ''} ${searchable}`.toLowerCase().includes(needle);
         });
         const surface = state.surface ?? { width: 1440, height: 900 };
         const { x, y, zoom } = state.document.viewport;
@@ -880,7 +917,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
             const { sourceSnapshot, sourceIds } = object;
             const sources = sourceIds ? { sourceIds: sourceIds.slice(0, 50), sourceIdCount: sourceIds.length, ...(sourceIds.length > 50 ? { sourceIdsTruncated: true } : {}) } : {};
             const snapshots = sourceSnapshot ? { sourceSnapshotCount: sourceSnapshot.length } : {};
-            const base = { id: object.id, kind: object.kind, createdAt: object.createdAt, ...sources, ...snapshots };
+            const base = { id: object.id, kind: object.kind, name: object.name, hidden: !visibleIds.has(object.id), locked: isLayerLocked(state.document, object.id), ownHidden: object.hidden ?? false, ownLocked: object.locked ?? false, rotation: object.rotation ?? 0, fill: object.fill, strokeWidth: object.strokeWidth, createdAt: object.createdAt, ...sources, ...snapshots };
             if (object.kind === 'stroke') {
               return { ...base, color: object.color, width: object.width, pointCount: object.points.length, bounds: objectBounds([object], state.document.objects) };
             }
@@ -1514,6 +1551,32 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
       execute: async (input) => { if (input.confirmation !== RESET_CONFIRMATION) throw new Error(`Reset requires confirmation exactly "${RESET_CONFIRMATION}".`); await controller.reset(); return receipt(controller, 'reset', []); }
     }
   ];
+  const wrapped = tools.map(tool => ({ ...tool, execute: async (input: Record<string, unknown>) => {
+    if (!controller.activity) return tool.execute(input);
+    const known = new Set(controller.getState().document.objects.map(object => object.id));
+    const requested = Array.isArray(input.ids) ? input.ids : typeof input.id === 'string' ? [input.id] : [];
+    const actionLabel = ({ draw_inspect: 'Inspecting objects', draw_get_state: 'Reading canvas', draw_get_rendered_geometry: 'Checking geometry', draw_edit: 'Editing objects', draw_compose: 'Creating objects', draw_select: 'Selecting objects' } as Record<string, string>)[tool.name] ?? tool.title;
+    const token = activity.begin(actionLabel, requested.filter((id): id is string => typeof id === 'string' && known.has(id)), tool.name);
+    try {
+      const result = await tool.execute(input);
+      const output = result as { objects?: Array<{ id: string }>; document?: CanvasDocument; transition?: { affectedIds: string[] }; ids?: string[] };
+      const ids = output?.transition?.affectedIds ?? output?.objects?.map(object => object.id) ?? output?.document?.objects.map(object => object.id) ?? output?.ids;
+      activity.end(token, ids);
+      // Following can change the camera. Return a fresh read so the revision and
+      // visible-world projection describe the viewport the user now sees.
+      if (tool.name === 'draw_inspect') return tool.execute(input);
+      return result;
+    } catch (error) { activity.end(token, undefined, true); throw error; }
+  }}));
+  wrapped.push({
+    name: 'draw_agent_activity', title: 'Report agent task activity',
+    description: 'Report a real task lifecycle without modifying the document. One active task per canvas tool session. Begin returns a taskId required for subsequent working/waiting/completed/failed updates. Use concise user-facing labels and existing target IDs; never invent thinking or progress. Ordinary tools automatically report their own actions. Task state is agent-reported, ephemeral and cleared on reload.',
+    inputSchema: { type: 'object', additionalProperties: false, required: ['state', 'label', 'ids'], properties: { state: { type: 'string', enum: ['begin', 'working', 'waiting', 'completed', 'failed'] }, label: { type: 'string', minLength: 1, maxLength: 160 }, ids: { type: 'array', maxItems: 100, uniqueItems: true, items: { type: 'string' } }, taskId: { type: 'string' } } },
+    annotations: { readOnlyHint: false, openWorldHint: false },
+    execute: async input => activity.task(input, new Set(controller.getState().document.objects.map(object => object.id)))
+  });
+  wrapped.push(fastExecutionTool(wrapped, controller, tools.find(tool => tool.name === 'draw_inspect')!.execute));
+  return wrapped;
 }
 
 type ModelContextLike = { registerTool?: (tool: unknown) => unknown; provideContext?: (context: { tools: unknown[] }) => unknown };

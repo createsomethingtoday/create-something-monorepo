@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import {
     Button,
     PerformanceCampaignOpening,
@@ -343,6 +344,9 @@
       >
         Choose a mapping session
       </Button>
+    {/snippet}
+    {#snippet aside()}
+      <AgencyWayfindingSign kind="proof" label="Return to Field Reports" detail="Compare the measured results and limits of each report." href="/field-reports" direction="back" />
     {/snippet}
   </PerformanceConversionHandoff>
 </main>

@@ -13,6 +13,7 @@ declare global {
         PCN_ADMIN_EMAILS: string;
         CLOUDFLARE_ACCOUNT_ID: string;
         CLOUDFLARE_STREAM_API_TOKEN?: string;
+        PCN_INTAKE_RATE_LIMIT?: { limit(input: { key: string }): Promise<{ success: boolean }> };
         PCN_RATE_LIMIT?: { limit(input: { key: string }): Promise<{ success: boolean }> };
         [key: string]: unknown;
       };

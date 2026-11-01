@@ -1,0 +1,9 @@
+{
+  "repo": "webflow/openapi-internal",
+  "ref": "main",
+  "sha": "112cc9d20136941632126772de0e85abd4e74292",
+  "committedAt": "2026-09-09T19:26:58Z",
+  "dir": "fern/products/data/pages/MARKETPLACE",
+  "syncedAt": "2026-09-10T17:40:00Z",
+  "note": "Snapshot of the Marketplace docs pages. Refresh with `pnpm sync-source` (needs `gh auth` as micahwithwf)."
+}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LibraryScene from '$lib/components/LibraryScene.svelte';
 	import { SubtractiveTriadAnimation } from '@create-something/canon/domains/ltd';
 	import {
 		PerformanceNarrativeStage,
@@ -64,6 +65,7 @@
 		<p class="intro-text leading-relaxed">
 			Keep what helps someone decide, act, or verify. Remove what only explains itself.
 		</p>
+		<LibraryScene scene="subtract-the-extra-route" caption="Creation is the discipline of removing what obscures." />
 	</div>
 </section>
 

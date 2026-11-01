@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import { Button, PerformanceCampaignOpening, SEO } from '@create-something/canon';
   import { getAnalytics } from '@create-something/canon/analytics';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
@@ -152,6 +153,17 @@
     </p>
   </section>
 
+  <aside class="route-handoff" aria-label="Build next steps">
+    <div class="route-handoff__inner">
+      <p class="route-handoff__current">Current path · Build · Agent Foundation</p>
+      <p class="route-handoff__context">Next, discuss one useful task. You keep the result; production launch is scoped separately and ongoing Control is optional.</p>
+      <div class="route-handoff__links">
+        <AgencyWayfindingSign kind="map" label="Still defining the task?" href="/map" detail="Explore Map before deciding what to build." />
+        <AgencyWayfindingSign kind="control" label="Need operations after launch?" href="/control" detail="Explore optional Control; it includes Map." />
+      </div>
+    </div>
+  </aside>
+
   <section class="foundation-fit" aria-labelledby="foundation-fit-title">
     <div class="foundation-fit__inner">
       <div class="foundation-fit__copy">
@@ -183,6 +195,18 @@
 </main>
 
 <style>
+  .route-handoff {
+    padding: var(--space-performance-lg) clamp(1.25rem, 5vw, 6rem);
+    color: var(--color-performance-ink);
+    background: var(--color-performance-paper);
+    border-block: 1px solid var(--color-performance-line);
+  }
+  .route-handoff__inner { max-width: var(--content-width-performance); margin-inline: auto; }
+  .route-handoff__current { margin: 0 0 var(--space-performance-sm); font-size: var(--text-performance-caption); font-family: var(--font-performance-mono); }
+  .route-handoff__context { max-width: 70ch; margin: 0 0 var(--space-performance-md); line-height: 1.6; }
+  .route-handoff__links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-performance-sm); }
+  @media (max-width: 760px) { .route-handoff__links { grid-template-columns: 1fr; } }
+
   .agent-foundation-page {
     background: var(--color-performance-panel, #fff);
     color: var(--color-performance-ink, #090909);

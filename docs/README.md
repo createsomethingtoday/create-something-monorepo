@@ -23,6 +23,10 @@ Read in this order when you need broad repo context:
 
 ## Navigation by task
 
+### Daily work log
+
+- [Daily Slack work log playbook and runbook](./guides/DAILY_WORK_LOG_RUNBOOK.md) — discovery certification, task-thread deduplication, verified delivery, durable state, and recovery
+
 ### Strategy and positioning
 
 - [CREATE_SOMETHING_SYSTEMS_THESIS.md](./CREATE_SOMETHING_SYSTEMS_THESIS.md)
@@ -127,6 +131,8 @@ Read in this order when you need broad repo context:
 
 ### MCP creation and integration patterns
 
+- [guides/EFFECT_INTEGRATION_ENGINEERING.md](./guides/EFFECT_INTEGRATION_ENGINEERING.md) — Effect pattern for failure-heavy TypeScript integrations and client delivery
+
 - [MCP_SCAFFOLD.md](./MCP_SCAFFOLD.md)
 - [examples/endpoint-construction-contract.template.yaml](./examples/endpoint-construction-contract.template.yaml)
 - [examples/living-research-transparency.template.yaml](./examples/living-research-transparency.template.yaml)
@@ -151,6 +157,8 @@ Read in this order when you need broad repo context:
 - [guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md](./guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md)
 - [guides/MARKETING_SCREENSHOT_IMAGE_WORKFLOW.md](./guides/MARKETING_SCREENSHOT_IMAGE_WORKFLOW.md)
 - [guides/COMMIT_DRIVEN_MARKETING_SCHEDULE.md](./guides/COMMIT_DRIVEN_MARKETING_SCHEDULE.md)
+- [guides/NEWSLETTER_DISTRIBUTION_PLAYBOOK.md](./guides/NEWSLETTER_DISTRIBUTION_PLAYBOOK.md) — cross-channel field-note distribution, publication receipts, and outcome review
+- [guides/NEWSLETTER_ENGAGEMENT_RUNBOOK.md](./guides/NEWSLETTER_ENGAGEMENT_RUNBOOK.md) — first-party email delivery and engagement evidence
 - [IMAGE_LANGUAGE_FOUNDATION.md](./IMAGE_LANGUAGE_FOUNDATION.md)
 - [guides/CLOUDFLARE_BOT_ACCESS_HARDENING.md](./guides/CLOUDFLARE_BOT_ACCESS_HARDENING.md)
 - [LINEAR_COORDINATION.md](./LINEAR_COORDINATION.md)
@@ -163,6 +171,7 @@ Read in this order when you need broad repo context:
 
 ### Guides and reference material
 
+- [guides/CLIENT_AGENT_CODEX_PILOT.md](./guides/CLIENT_AGENT_CODEX_PILOT.md)
 - [guides/EXAMPLES.md](./guides/EXAMPLES.md)
 - [guides/COMPONENT_GUIDE.md](./guides/COMPONENT_GUIDE.md)
 - [guides/SKILLS.md](./guides/SKILLS.md)

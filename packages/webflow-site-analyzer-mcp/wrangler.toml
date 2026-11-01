@@ -31,6 +31,8 @@ custom_domain = true
 ENVIRONMENT = "production"
 CLOUDFLARE_ACCOUNT_ID = "9645bd52e640b8a4f40a3a55ff1dd75a"
 BROWSER_RUN_ENABLED = "true"
+# off -> authenticated canary -> active crawl classification
+JEV_URL_CLASSIFIER_MODE = "active"
 
 # Secrets (set via `wrangler secret put`):
 # - CLOUDFLARE_BROWSER_RUN_API_TOKEN (Browser Rendering - Edit only)
@@ -39,3 +41,5 @@ BROWSER_RUN_ENABLED = "true"
 # - WEBFLOW_GROQ_API_KEY (preferred for URL classifier — fast + cheap)
 # - WEBFLOW_OPENAI_API_KEY (fallback for URL classifier)
 # - LANGFUSE_SECRET_KEY (optional, for observability)
+
+# - TYPESAFE_API_KEY (server-side Jev URL classification, optional until activation)

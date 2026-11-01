@@ -1,11 +1,12 @@
 <script lang="ts">
+  import SerifPhrase from '$lib/components/SerifPhrase.svelte';
   let { data } = $props();
 </script>
 
 <svelte:head><title>Impact | Private</title><meta name="robots" content="noindex" /></svelte:head>
 <main id="main" class="builder-workspace">
   <p class="eyebrow">PRIVATE / IMPACT</p>
-  <h1>Separate attention<br /><em>from outcomes.</em></h1>
+  <h1>Separate attention<br /><SerifPhrase text="from outcomes." /></h1>
   <p class="lede">{data.report.note}</p>
   <div class="builder-split">
     <section class="builder-panel">

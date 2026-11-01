@@ -1180,3 +1180,76 @@ describe('review preparation mutation boundary', () => {
   });
 
 });
+
+describe('outbound Zendesk tickets', () => {
+  const asset = { assetId: 'recAppAsset', appName: 'CMS Smart Sync', creatorEmail: 'dev@example.com', creatorName: 'Dev Person' };
+  const version = { versionId: 'recAppVersion', assetId: 'recAppAsset', versionNumber: 3, zendeskTicketId: '1188879' };
+  const outbound = () => {
+    const createOutboundTicket = vi.fn().mockResolvedValue({ ticketId: '1200001', status: 'open', groupId: 1500002744702, brandId: 35121420416531, requesterId: 555, agentId: 1, publicCommentAuditId: 7, requesterNotified: true, steps: ['created'] });
+    const zendesk = { createOutboundTicket, agentTicketUrl: (id: string) => `https://webflow2579.zendesk.com/agent/tickets/${id}`, marketplaceGroupId: 1500002744702 } as unknown as ZendeskClient;
+    return { createOutboundTicket, zendesk };
+  };
+
+  it('create_ticket resolves the developer email from the asset and sends through the outbound flow', async () => {
+    const { server, handlers } = createServerHarness();
+    const { createOutboundTicket, zendesk } = outbound();
+    const client = { getAssetById: vi.fn().mockResolvedValue(asset) } as unknown as AirtableClient;
+    registerTools(server, () => client, () => null, () => zendesk);
+    const result = parsePayload((await handlers.get('app_review_create_ticket')!({ asset_id: 'recAppAsset', subject: 'About your app', message: 'Hi Dev,\n\nPlease remove the `<script>` tag.\n\nThanks', confirm_send: true })) as never);
+    expect(result.ok).toBe(true);
+    expect(result.data).toMatchObject({ ticket_id: '1200001', requester_email: 'dev@example.com', requester_email_source: 'airtable', requester_notified: true });
+    const input = createOutboundTicket.mock.calls[0]![0] as { requesterEmail: string; publicHtml: string; tags: string[]; externalId: string };
+    expect(input.requesterEmail).toBe('dev@example.com');
+    expect(input.publicHtml).toContain('<code>&lt;script&gt;</code>');
+    expect(input.tags).toEqual(['app_review_mcp_outbound']);
+    expect(input.externalId).toMatch(/^app-review-mcp:recAppAsset:[0-9a-f]{24}$/);
+  });
+
+  it('create_ticket via version_id returns a next_step and fails closed on guards', async () => {
+    const { server, handlers } = createServerHarness();
+    const { createOutboundTicket, zendesk } = outbound();
+    const client = { getVersionById: vi.fn().mockResolvedValue(version), getAssetById: vi.fn().mockResolvedValue(asset) } as unknown as AirtableClient;
+    registerTools(server, () => client, () => null, () => zendesk);
+    const ok = parsePayload((await handlers.get('app_review_create_ticket')!({ version_id: 'recAppVersion', subject: 'Hello', message: 'Hi', requester_email: 'other@example.com', confirm_send: true })) as never);
+    expect(ok.ok).toBe(true);
+    expect(ok.data).toMatchObject({ requester_email: 'other@example.com', requester_email_source: 'override' });
+    expect(String(ok.data!.next_step)).toContain('expected_current_ticket_id="1188879"');
+
+    const codes = async (args: Record<string, unknown>) => (parsePayload((await handlers.get('app_review_create_ticket')!(args)) as never) as { error?: { code: string } }).error?.code;
+    expect(await codes({ asset_id: 'recAppAsset', subject: 'Hello', message: 'Hi', confirm_send: false })).toBe('SEND_CONFIRMATION_REQUIRED');
+    expect(await codes({ asset_id: 'recAppAsset', version_id: 'recAppVersion', subject: 'Hello', message: 'Hi', confirm_send: true })).toBe('ASSET_REFERENCE_REQUIRED');
+    expect(createOutboundTicket).toHaveBeenCalledTimes(1);
+
+    const { server: s2, handlers: h2 } = createServerHarness();
+    registerTools(s2, () => ({ getAssetById: vi.fn().mockResolvedValue({ ...asset, creatorEmail: undefined }) }) as unknown as AirtableClient, () => null, () => zendesk);
+    expect((parsePayload((await h2.get('app_review_create_ticket')!({ asset_id: 'recAppAsset', subject: 'Hello', message: 'Hi', confirm_send: true })) as never) as { error?: { code: string } }).error?.code).toBe('NO_CREATOR_EMAIL');
+    const { server: s3, handlers: h3 } = createServerHarness();
+    registerTools(s3, () => client);
+    expect((parsePayload((await h3.get('app_review_create_ticket')!({ asset_id: 'recAppAsset', subject: 'Hello', message: 'Hi', confirm_send: true })) as never) as { error?: { code: string } }).error?.code).toBe('ZENDESK_NOT_CONFIGURED');
+  });
+
+  it('link_version_ticket verifies the ticket against the asset before writing 🧘ZD ID', async () => {
+    const summaries: Record<string, unknown> = {
+      '1200001': { groupId: 1500002744702, externalId: 'app-review-mcp:recAppAsset:abc', requesterEmail: 'someone@example.com' },
+      '1200002': { groupId: 1500002744702, externalId: null, requesterEmail: 'Dev@Example.com' },
+      '1200003': { groupId: 46157931219347, externalId: 'app-review-mcp:recAppAsset:abc', requesterEmail: 'dev@example.com' },
+      '1200004': { groupId: 1500002744702, externalId: 'app-review-mcp:recOTHER:abc', requesterEmail: 'other@example.com' },
+    };
+    const setVersionZendeskTicket = vi.fn().mockResolvedValue({ version: { ...version, zendeskTicketId: '1200001' }, previousTicketId: '1188879' });
+    const client = { getVersionById: vi.fn().mockResolvedValue(version), getAssetById: vi.fn().mockResolvedValue(asset), setVersionZendeskTicket } as unknown as AirtableClient;
+    const zendesk = { marketplaceGroupId: 1500002744702, agentTicketUrl: (id: string) => id, getTicketSummary: vi.fn(async (id: string) => summaries[id]) } as unknown as ZendeskClient;
+    const { server, handlers } = createServerHarness();
+    registerTools(server, () => client, () => null, () => zendesk);
+    const call = async (ticket_id: string, confirm = true) => parsePayload((await handlers.get('app_review_link_version_ticket')!({ version_id: 'recAppVersion', ticket_id, expected_current_ticket_id: '1188879', confirm_replace: confirm })) as never) as { ok: boolean; data?: Record<string, unknown>; error?: { code: string } };
+    expect((await call('1200001', false)).error?.code).toBe('REPLACE_CONFIRMATION_REQUIRED');
+    expect((await call('1200003')).error?.code).toBe('ZENDESK_TICKET_OUT_OF_SCOPE');
+    expect((await call('1200004')).error?.code).toBe('TICKET_CREATOR_MISMATCH');
+    expect(setVersionZendeskTicket).not.toHaveBeenCalled();
+    const byKey = await call('1200001');
+    expect(byKey.ok).toBe(true);
+    expect(byKey.data).toMatchObject({ ticket_verified_by: 'external_id', previous_ticket_id: '1188879', changed: true });
+    const byEmail = await call('1200002');
+    expect(byEmail.data).toMatchObject({ ticket_verified_by: 'requester_email' });
+    expect(setVersionZendeskTicket).toHaveBeenCalledWith('recAppVersion', '1200001', '1188879');
+  });
+});

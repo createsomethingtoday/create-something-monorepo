@@ -468,6 +468,7 @@
 				<div class="slider-container">
 					<input
 						type="range"
+						aria-label="Agent count"
 						min={MIN_AGENTS}
 						max={MAX_AGENTS}
 						step="1000"
@@ -498,6 +499,7 @@
 				<div class="seed-input-group">
 					<input
 						type="text"
+						aria-label="Simulation seed"
 						placeholder="Random"
 						bind:value={seedInput}
 						class="seed-input"
@@ -826,7 +828,7 @@
 		align-items: center;
 		gap: var(--space-performance-xs);
 		padding: var(--space-performance-xs) var(--space-performance-sm);
-		background: linear-gradient(135deg, var(--color-accent), var(--color-performance-data-1));
+		background: var(--color-performance-fg-primary);
 		border-radius: var(--radius-performance-scale-md);
 		font-size: var(--text-performance-body-sm);
 		color: var(--color-performance-bg-pure);
@@ -858,7 +860,7 @@
 
 	.event-phase {
 		font-size: var(--text-performance-caption);
-		color: var(--color-accent);
+		color: var(--color-performance-fg-primary);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
@@ -1061,7 +1063,7 @@
 		gap: var(--space-performance-xs);
 		margin-top: var(--space-performance-lg);
 		padding: var(--space-performance-sm) var(--space-performance-md);
-		background: var(--color-accent);
+		background: var(--color-performance-fg-primary);
 		color: var(--color-performance-bg-pure);
 		border-radius: var(--radius-performance-scale-md);
 		text-decoration: none;
@@ -1201,7 +1203,7 @@
 	}
 
 	.notif-system {
-		color: var(--color-accent);
+		color: var(--color-performance-fg-primary);
 		font-weight: 600;
 	}
 
@@ -1266,8 +1268,8 @@
 
 	.scenario-tab.active {
 		background: var(--color-performance-bg-pure);
-		border-color: var(--color-accent);
-		box-shadow: 0 0 0 1px var(--color-accent);
+		border-color: var(--color-performance-fg-primary);
+		box-shadow: 0 0 0 1px var(--color-performance-fg-primary);
 	}
 
 	.tab-number {
@@ -1284,7 +1286,7 @@
 	}
 
 	.scenario-tab.active .tab-number {
-		background: var(--color-accent);
+		background: var(--color-performance-fg-primary);
 		color: var(--color-performance-bg-pure);
 	}
 
@@ -1352,7 +1354,7 @@
 	.response-system {
 		font-size: var(--text-performance-body-sm);
 		font-weight: 600;
-		color: var(--color-accent);
+		color: var(--color-performance-fg-primary);
 		min-width: 80px;
 	}
 
@@ -1477,8 +1479,8 @@
 	}
 
 	.share-button:hover {
-		border-color: var(--color-accent);
-		color: var(--color-accent);
+		border-color: var(--color-performance-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* Controls Bar */
@@ -1531,7 +1533,7 @@
 		appearance: none;
 		width: 16px;
 		height: 16px;
-		background: var(--color-accent);
+		background: var(--color-performance-fg-primary);
 		border-radius: var(--radius-performance-scale-full);
 		cursor: pointer;
 		transition: transform var(--duration-performance-standard) var(--ease-performance-standard);
@@ -1544,7 +1546,7 @@
 	.agent-slider::-moz-range-thumb {
 		width: 16px;
 		height: 16px;
-		background: var(--color-accent);
+		background: var(--color-performance-fg-primary);
 		border-radius: var(--radius-performance-scale-full);
 		cursor: pointer;
 		border: none;
@@ -1560,7 +1562,7 @@
 
 	.apply-button {
 		padding: var(--space-performance-xs) var(--space-performance-sm);
-		background: var(--color-accent);
+		background: var(--color-performance-fg-primary);
 		border: none;
 		border-radius: var(--radius-performance-scale-sm);
 		font-size: var(--text-performance-caption);
@@ -1599,7 +1601,7 @@
 	}
 
 	.seed-input:focus {
-		border-color: var(--color-accent);
+		border-color: var(--color-performance-fg-primary);
 	}
 
 	.seed-input::placeholder {
@@ -1619,8 +1621,8 @@
 	}
 
 	.seed-apply:hover {
-		background: var(--color-accent);
-		border-color: var(--color-accent);
+		background: var(--color-performance-fg-primary);
+		border-color: var(--color-performance-fg-primary);
 		color: var(--color-performance-bg-pure);
 	}
 
@@ -1632,7 +1634,7 @@
 
 	/* Telemetry Panel */
 	.telemetry-panel {
-		background: linear-gradient(135deg, var(--color-performance-bg-surface), rgba(var(--color-accent-rgb), 0.05));
+		background: linear-gradient(135deg, var(--color-performance-bg-surface), var(--color-performance-bg-elevated));
 	}
 
 	.telemetry-metrics {

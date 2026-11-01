@@ -1,4 +1,7 @@
 <script lang="ts">
+  import AgencyWayfindingHero from '$lib/components/AgencyWayfindingHero.svelte';
+  import AgencyWayfindingOpening from '$lib/components/AgencyWayfindingOpening.svelte';
+  import AgencyRecordedWork from '$lib/components/AgencyRecordedWork.svelte';
   import BuiltWork from '$lib/components/BuiltWork.svelte';
   import MembershipOffer from '$lib/components/MembershipOffer.svelte';
   import ProjectReviewEntry from '$lib/components/ProjectReviewEntry.svelte';
@@ -8,7 +11,6 @@
   import ServicesProductPath from '$lib/components/ServicesProductPath.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { getPublicProduct } from '$lib/data/productFamily';
-  import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
 
   const mapProduct = getPublicProduct('map');
@@ -16,7 +18,7 @@
   const controlProduct = getPublicProduct('control');
 
   const services = [
-    { name: 'Agent engineering membership', description: 'Skills, workflow guidance, Slack support and weekly check-ins.', type: 'Membership', price: PUBLIC_PRICING.membership.label, priceDescription: PUBLIC_PRICING.membership.terms },
+    { name: 'AI-native technical support membership', description: 'Recurring diagnosis, engineering improvements and learning support within an agreed scope.', type: 'Membership', price: PUBLIC_PRICING.membership.label, priceDescription: PUBLIC_PRICING.membership.terms },
     {
       name: mapProduct.name,
       description: mapProduct.customerJob,
@@ -52,7 +54,7 @@
     {
       question: 'What is your primary service?',
       answer:
-        'The membership provides skills, guidance and operator support for $900/month. Map, custom Build projects and managed Control remain separate paths for planning, implementation and live operations.'
+        'We provide AI-native technical support: diagnosis, engineering improvements and help using what we deliver. We work between check-ins, show what changed and agree the next step. Focused is $900/month for one workstream and one milestone, with two check-ins and two remote work sessions available when useful. Team is $2,500/month for up to two workstreams and two milestones, with two check-ins and four remote sessions available. Remote sessions are an option for onboarding, pairing or troubleshooting. Larger Builds, managed Control and project costs are separate.'
     },
     {
       question: 'Are agents part of the workforce?',
@@ -72,14 +74,14 @@
     {
       question: 'Do clients own the implementation?',
       answer:
-        'Yes. Clients retain ownership of code, workflows, operating documentation, and approval authority.'
+        'You retain your materials and approval authority. After full payment, you own commissioned code, workflows and documentation, except reusable provider tools licensed for continued use.'
     }
   ];
 </script>
 
 <SEO
-  title="AI Workflow Systems | How It Works"
-  description="How CREATE SOMETHING turns one messy business handoff into a reliable AI-assisted workflow with connected tools, approvals, stop conditions, and an audit trail."
+  title="AI-native Technical Support | How It Works"
+  description="Recurring technical support for your tools and workflows. We diagnose problems, engineer improvements and help your team use the result within an agreed scope."
   keywords="AI workflow systems, workflow mapping, AI interaction design, governed AI workflow, workflow pilot, production automation, agent reliability"
   ogImage="/og-image.png"
   propertyName="agency"
@@ -88,14 +90,15 @@
 />
 
 <div class="services-performance property-performance">
+  <div class="services-opening">
+  <AgencyWayfindingOpening>
   <PerformanceCampaignOpening
-    eyebrow="How It Works"
+    eyebrow="AI-native technical support"
     expression="editorial"
-    title="Support for the work ahead."
-    lede="Bring a task to automate or a product you have already built. Our $900/month membership helps you learn, troubleshoot and improve one workflow at a time. Custom implementation is scoped separately."
-    media={playbookHeroMedia.services}
-    mediaMobilePlacement="background"
+    title="Bring a workflow, software problem or existing product."
+    lede="We diagnose problems in your software and AI workflows, agree on the change, build it, and help your team use the result."
     density="compact"
+    artifactMobilePlacement="flow"
     proof={[
       { label: 'Owner', value: 'Named' },
       { label: 'Protected action', value: 'Held' },
@@ -110,15 +113,48 @@
         {agencyCoreMessaging.bookMappingSessionLabel}
       </Button>
     {/snippet}
-  </PerformanceCampaignOpening>
 
-  <BuiltWork />
+  </PerformanceCampaignOpening>
+  </AgencyWayfindingOpening>
+  </div>
+
+  <AgencyRecordedWork id="service-recorded-work" title="See what the work looks like." />
+
+  <PerformancePageSection
+    id="support-scope"
+    eyebrow="Membership and scope"
+    title="Agree on the work before it begins."
+    variant="white"
+    layout="split"
+    density="compact"
+    ariaLabel="Technical support pricing, scope and ownership"
+  >
+    <p>
+      We work between check-ins, show what changed and agree the next step.
+      Compare the plans and complete membership terms below.
+    </p>
+    <p>
+      Delivered code follows your agreement; reusable provider tools are licensed for continued use.
+      Your team keeps approval authority.
+    </p>
+    {#snippet aside()}
+      <p>
+        Managed Control starts at $900/month for agreed live operations under a separate agreement.
+        Larger Builds and project costs are separate.
+      </p>
+    {/snippet}
+  </PerformancePageSection>
+
+  <details class="service-work-library">
+    <summary>Explore more work and delivery stages <span aria-hidden="true">+</span></summary>
+    <BuiltWork />
+  </details>
 
   <MembershipOffer />
 
   <ProjectReviewEntry />
 
-  <ServicesProductPath />
+  <details class="service-path-library"><summary>Compare Map, Build and Control <span aria-hidden="true">+</span></summary><AgencyWayfindingHero route="services" /><ServicesProductPath /></details>
   <PerformancePageSection
     id="remote-support"
     eyebrow="Remote support"
@@ -156,12 +192,52 @@
     {/snippet}
   </PerformancePageSection>
 
-  <AgencyPerformanceReadback embedded={true} />
+  <AgencyPerformanceReadback embedded={true} wayfinding />
 
   <ServicesMapPreview />
 </div>
 
 <style>
+  .service-work-library, .service-path-library { border-block: 1px solid var(--color-performance-shell-border-default); }
+  .service-work-library > summary, .service-path-library > summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-performance-md); min-height: 64px; padding: var(--space-performance-md) 6vw; cursor: pointer; font: var(--text-performance-body-sm)/1.5 var(--font-performance-interface); }
+  .service-work-library > summary:focus-visible, .service-path-library > summary:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
+
+  .services-opening :global(.performance-campaign-opening[data-density='compact']) { min-height: 0; }
+  .services-opening :global(.performance-campaign-opening[data-expression='editorial'][data-density='compact'] .performance-campaign-opening__content) { padding-bottom: var(--space-performance-xl); }
+
+  @media (min-width: 64rem) {
+    .services-opening :global(.performance-campaign-opening[data-expression='editorial'][data-density='compact']) {
+      grid-template-columns: minmax(0, 49fr) minmax(0, 44fr);
+      grid-template-rows: auto auto;
+      column-gap: 7%;
+      padding: 8.5rem 5% var(--space-performance-xl);
+    }
+    .services-opening :global(.performance-campaign-opening[data-expression='editorial'][data-density='compact'] .performance-campaign-opening__content) {
+      display: contents;
+    }
+    .services-opening :global(.performance-campaign-opening[data-expression='editorial'][data-density='compact'] .performance-campaign-opening__content header) {
+      grid-column: 1;
+      grid-row: 1;
+      width: 100%;
+      align-self: center;
+    }
+    .services-opening :global(.performance-campaign-opening[data-expression='editorial'][data-density='compact'] .performance-campaign-opening__artifact) {
+      position: relative;
+      inset: auto;
+      grid-column: 2;
+      grid-row: 1;
+      width: 100%;
+      height: auto;
+      min-height: 0;
+      align-self: center;
+    }
+    .services-opening :global(.performance-campaign-opening[data-expression='editorial'][data-density='compact'] .performance-campaign-opening__proof) {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      margin-top: var(--space-performance-xl);
+    }
+  }
+
   .services-performance {
     background: var(--color-performance-paper, #f3f3f0);
   }

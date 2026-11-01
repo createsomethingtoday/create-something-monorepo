@@ -5,7 +5,7 @@ import { ZendeskClient, ZendeskClientError, renderCreatorFacingHtml } from './ze
 describe('renderCreatorFacingHtml', () => {
   it('escapes raw HTML tags so they render as visible text', () => {
     const html = renderCreatorFacingHtml('Remove the <script type="application/ld+json"> block.');
-    expect(html).toContain('&lt;script type="application/ld+json"&gt;');
+    expect(html).toContain('&lt;script type=&quot;application/ld+json&quot;&gt;');
     expect(html).not.toMatch(/<script/);
   });
 
@@ -155,7 +155,7 @@ describe('ZendeskClient.getTicketThread', () => {
       author: { name: 'Dev Person' },
       attachments: [{ fileName: 'bundle.zip' }],
     });
-    expect(thread.totalCommentsOnTicket).toBe(3);
+    expect(thread.totalCommentsOnTicket).toBeNull(); // raw count includes private notes; only exposed with includeInternalNotes
     expect(thread.includesInternalNotes).toBe(false);
   });
 

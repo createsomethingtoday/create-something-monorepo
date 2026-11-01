@@ -19,12 +19,14 @@ import { registerPrompts, SERVER_INSTRUCTIONS } from '../src/prompts.js';
 import { registerResources } from '../src/resources.js';
 import { parseBooleanFlag, resolveRuntimePolicy } from '../src/runtime-policy.js';
 import {
+  applyFeaturedCoordinators,
   applyReviewerAuthEmailAliases,
   parseReviewerDirectory,
   getReviewerProfileForAccount,
   getReviewerProfileForEmail,
 } from '../src/reviewer-directory.js';
 import { registerTools } from '../src/tools.js';
+import { parseZendeskGroupId, ZendeskClient } from '../src/zendesk.js';
 import { handleThumbnailProxyRequest, THUMBNAIL_PROXY_PATH } from '../src/thumbnail-proxy.js';
 import {
   buildScreenshotViewUrl,
@@ -52,6 +54,7 @@ interface Env {
   AIRTABLE_BASE_ID?: string;
   REVIEWER_DIRECTORY_JSON?: string;
   REVIEWER_AUTH_EMAIL_ALIASES_JSON?: string;
+  FEATURED_COORDINATOR_ACCOUNT_IDS?: string;
   CS_IDENTITY_ISSUER?: string;
   CF_ACCESS_TEAM_DOMAIN?: string;
   CF_ACCESS_AUD?: string;
@@ -66,6 +69,14 @@ interface Env {
   TEMPLATE_REVIEW_FORCE_READ_ONLY?: string;
   WORKER_PUBLIC_ORIGIN?: string;
   MARKETPLACE_ADMIN_API_KEY?: string;
+  /** Zendesk API token (secret via `wrangler secret put`) — enables the ticket thread/search/status/follow-up tools. */
+  ZENDESK_API_TOKEN?: string;
+  ZENDESK_API_EMAIL?: string;
+  ZENDESK_SUBDOMAIN?: string;
+  /** Zendesk group that owns Marketplace review tickets; search default + status-write boundary. */
+  MARKETPLACE_ZENDESK_GROUP_ID?: string;
+  /** cms:write site token for the Marketplace site (secret) — enables delist/relist. Infisical dev /webflow/template-marketplace TEMPLATE_MARKETPLACE. */
+  MARKETPLACE_CMS_TOKEN?: string;
 }
 
 type RequestProps = {
@@ -113,6 +124,8 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
       return getReviewerProfileForAccount(reviewerDirectory, this.props?.accountId ?? null);
     };
 
+    const zendesk = buildZendesk(this.env);
+
     const runtimePolicy = resolveRuntimePolicy({
       authMode: this.props?.authMode,
       scopes: this.props?.scopes,
@@ -141,6 +154,8 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
         marketplaceAdmin: {
           apiKey: this.env.MARKETPLACE_ADMIN_API_KEY,
         },
+        getZendeskClient: () => zendesk,
+        marketplaceCms: { siteToken: this.env.MARKETPLACE_CMS_TOKEN },
         ...(this.env.BROWSER
           ? {
               screenshotCapture: {
@@ -160,6 +175,16 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
     );
     registerPrompts(this.server);
   }
+}
+
+function buildZendesk(env: Env): ZendeskClient | null {
+  if (!env.ZENDESK_API_TOKEN || !env.ZENDESK_API_EMAIL) return null;
+  return new ZendeskClient({
+    subdomain: env.ZENDESK_SUBDOMAIN ?? 'webflow2579',
+    email: env.ZENDESK_API_EMAIL,
+    apiToken: env.ZENDESK_API_TOKEN,
+    marketplaceGroupId: parseZendeskGroupId(env.MARKETPLACE_ZENDESK_GROUP_ID),
+  });
 }
 
 const CORS_HEADERS: Record<string, string> = {
@@ -187,10 +212,15 @@ function allowedDomain(env: Env): string {
   return (env.OAUTH_ALLOWED_EMAIL_DOMAIN ?? 'webflow.com').trim().toLowerCase();
 }
 
-function resolveReviewerDirectory(env: Pick<Env, 'REVIEWER_DIRECTORY_JSON' | 'REVIEWER_AUTH_EMAIL_ALIASES_JSON'>) {
-  return applyReviewerAuthEmailAliases(
-    parseReviewerDirectory(env.REVIEWER_DIRECTORY_JSON),
-    env.REVIEWER_AUTH_EMAIL_ALIASES_JSON,
+function resolveReviewerDirectory(
+  env: Pick<Env, 'REVIEWER_DIRECTORY_JSON' | 'REVIEWER_AUTH_EMAIL_ALIASES_JSON' | 'FEATURED_COORDINATOR_ACCOUNT_IDS'>,
+) {
+  return applyFeaturedCoordinators(
+    applyReviewerAuthEmailAliases(
+      parseReviewerDirectory(env.REVIEWER_DIRECTORY_JSON),
+      env.REVIEWER_AUTH_EMAIL_ALIASES_JSON,
+    ),
+    env.FEATURED_COORDINATOR_ACCOUNT_IDS,
   );
 }
 

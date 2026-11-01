@@ -121,7 +121,7 @@ test('3d topology artifact declares an agent-native context API contract', () =>
   assert.ok(topology3d.contextApi.mcp.boundaries.some((boundary) => boundary.includes('do not mutate topology truth')));
 });
 
-test('3d operational edge view attaches Knowledge groups to actionable surfaces', () => {
+test('3d operational edge view preserves evidenced Knowledge connections without inventing targets', () => {
   const knowledgeClusterIds = new Set(['knowledge:doc', 'knowledge:guide', 'knowledge:policy']);
   const knowledgeIndexesByCluster = new Map();
 
@@ -153,10 +153,18 @@ test('3d operational edge view attaches Knowledge groups to actionable surfaces'
     }
 
     assert.ok(operationalEdges.length > 0, `${clusterId} should have visible operational edges`);
-    assert.equal(
-      connectedKnowledgeIndexes.size,
-      indexes.length,
-      `${clusterId} should not render as operationally disconnected`
+    const clusterIds = new Set(indexes.map((index) => topology3d.nodes[index].id));
+    const expectedIds = new Set();
+    for (const edge of topology.edges) {
+      if (edge.relation === 'contains' || edge.source === topology.rootNodeId || edge.target === topology.rootNodeId) continue;
+      if (clusterIds.has(edge.source) === clusterIds.has(edge.target)) continue;
+      if (clusterIds.has(edge.source)) expectedIds.add(edge.source);
+      if (clusterIds.has(edge.target)) expectedIds.add(edge.target);
+    }
+    assert.deepEqual(
+      [...connectedKnowledgeIndexes].map((index) => topology3d.nodes[index].id).sort(),
+      [...expectedIds].sort(),
+      `${clusterId} must preserve exactly the canonical operational connections`
     );
   }
 });

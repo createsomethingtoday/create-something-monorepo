@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import { Button, SEO } from '@create-something/canon';
   import InspectionScrollStory from '$lib/components/InspectionScrollStory.svelte';
   import TechnicalReviewVisual from '$lib/components/TechnicalReviewVisual.svelte';
@@ -68,6 +69,17 @@
     </div></div>
   </section>
 
+  <aside class="route-handoff" aria-label="Technical review next steps">
+    <div class="route-handoff__inner">
+      <p class="route-handoff__current">Current path · Technical review · existing project</p>
+      <p class="route-handoff__context">Next, discuss the project you already have. The review does not enroll you in implementation or ongoing support.</p>
+      <div class="route-handoff__links">
+        <AgencyWayfindingSign kind="map" label="Need to define the workflow?" href="/map" detail="Explore a plan before implementation." />
+        <AgencyWayfindingSign kind="build" label="Need something built?" href="/agent-foundation" detail="Explore a separately scoped Agent Foundation." />
+      </div>
+    </div>
+  </aside>
+
   <section class="review-section closing" aria-labelledby="next-title">
     <div>
     <h2 id="next-title">Bring the product and the question you need answered.</h2>
@@ -84,16 +96,28 @@
 </div>
 
 <style>
+  .route-handoff {
+    padding: var(--space-performance-lg) clamp(1.25rem, 5vw, 6rem);
+    color: var(--color-performance-ink);
+    background: var(--color-performance-paper);
+    border-block: 1px solid var(--color-performance-line);
+  }
+  .route-handoff__inner { max-width: var(--content-width-performance); margin-inline: auto; }
+  .route-handoff__current { margin: 0 0 var(--space-performance-sm); font-size: var(--text-performance-caption); font-family: var(--font-performance-mono); }
+  .route-handoff__context { max-width: 70ch; margin: 0 0 var(--space-performance-md); line-height: 1.6; }
+  .route-handoff__links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-performance-sm); }
+  @media (max-width: 760px) { .route-handoff__links { grid-template-columns: 1fr; } }
+
   .technical-review { background: var(--color-performance-paper); color: var(--color-performance-ink); }
   .review-section { padding: clamp(2rem, 5vw, 5rem) max(1.25rem, calc((100% - 80rem) / 2)); border-bottom: 1px solid var(--color-performance-line); }
-  .eyebrow { color: var(--color-performance-ink, var(--color-fg-primary)); font-family: var(--font-mono); font-size: var(--text-body-sm); }
+  .eyebrow { color: var(--color-performance-ink, var(--color-performance-fg-primary)); font-family: var(--font-performance-mono); font-size: var(--text-performance-body-sm); }
   h1 { font-size: clamp(2.75rem, 6vw, 5.5rem); line-height: 1.05; max-width: 18ch; margin: 1rem 0 1.5rem; }
   h2 { font-size: clamp(2rem, 3.5vw, 3rem); line-height: 1.15; max-width: 28ch; margin: 0 0 1.5rem; }
-  h3 { font-size: var(--text-h3); line-height: 1.3; margin: 1.5rem 0 .75rem; }
-  p { font-size: var(--text-body); line-height: 1.65; max-width: 68ch; }
+  h3 { font-size: var(--text-performance-h3); line-height: 1.3; margin: 1.5rem 0 .75rem; }
+  p { font-size: var(--text-performance-body); line-height: 1.65; max-width: 68ch; }
   p { margin: 0 0 1.25rem; }
   .opening :global(.btn), .review-section:last-child :global(.btn) { margin-bottom: 1rem; }
-  .lede { font-size: var(--text-body-lg); }
+  .lede { font-size: var(--text-performance-body-lg); }
   .opening { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: clamp(2rem, 4vw, 4rem); align-items: center; }
   .opening h1 { font-size: clamp(2.75rem, 4.5vw, 4.5rem); }
   .report-layout { display: grid; grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr); gap: clamp(2rem, 4vw, 4rem); align-items: start; margin-top: 2.5rem; }
@@ -107,7 +131,7 @@
   .fit-layout, .scope-layout, .closing { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(2rem, 5vw, 5rem); }
   .fit-rows { list-style: none; padding: 0; margin: 0; }
   .fit-rows li { display: flex; gap: 1.25rem; border-top: 1px solid var(--color-performance-line); padding: 1.25rem 0; }
-  .fit-rows span { font-family: var(--font-mono); font-size: .75rem; padding-top: .35rem; }
+  .fit-rows span { font-family: var(--font-performance-mono); font-size: .75rem; padding-top: .35rem; }
   .fit-rows h3, .scope-questions h3 { margin-top: 0; }
   .fit-rows h3 { font-size: 1.25rem; }
   .fit-rows p { margin-bottom: 0; }

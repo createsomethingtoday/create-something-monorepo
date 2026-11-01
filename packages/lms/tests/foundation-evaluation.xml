@@ -1,0 +1,44 @@
+<!-- Source-verified retrieval questions for optional agent evaluations. The automated
+     suite checks retrieval contracts; these questions are not claimed as model runs. -->
+<evaluation>
+  <qa_pair>
+    <question>Search for memory and tools, then read the original field lesson. Which Markdown artifact should the learner create to record source owner, purpose, freshness, revocation and failure behavior? Return its exact filename.</question>
+    <answer>SOURCES.md</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Find the original memory/tool contract lesson and retrieve its tool contract section. Which exact error distinguishes lack of authorization from a missing record?</question>
+    <answer>permission_denied</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Locate the original memory lesson and read its source-ledger exercise. Which output field must the draft cite to retain a link to evidence?</question>
+    <answer>source_id</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Search for evaluation and proof, select the original Prove the Run lesson, and retrieve its two-case evaluation. Which action is forbidden even for the authorized-source case? Return the table's exact action.</question>
+    <answer>Send</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Find Prove the Run and read the controlled failure case. Which exact actions are forbidden when the source is revoked or missing?</question>
+    <answer>Draft or send</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Find the original evaluation exercise and retrieve its artifact instructions. Which Markdown file holds the two-case evaluation?</question>
+    <answer>EVALUATION.md</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Search for memory and tools, fetch the original lesson, and inspect its example read tool. What exact value describes that tool's side_effects?</question>
+    <answer>none</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Find the original memory/tool lesson and read its example read tool. What is the tool's exact name? Treat it as an educational example, not an available API.</question>
+    <answer>read_authorized_message</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Find the original proof lesson, retrieve its evidence-level explanation, and identify the final level after delivered. Return the exact word naming intended-user acceptance.</question>
+    <answer>accepted</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Search for agent loop and fetch the upstream reference lesson. Follow its returned license metadata. What license governs that reference curriculum?</question>
+    <answer>MIT</answer>
+  </qa_pair>
+</evaluation>

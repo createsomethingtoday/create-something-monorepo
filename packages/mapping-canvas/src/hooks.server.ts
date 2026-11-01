@@ -27,5 +27,12 @@ const SECURITY_HEADERS = {
 export const handle: Handle = async ({ event, resolve }) => {
   const response = await resolve(event);
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) response.headers.set(name, value);
+  // Only the public canvas explicitly requested by the Agency mapping workbench
+  // may be framed. Shared views and other routes retain their deny policy.
+  if (event.url.pathname === '/' && event.url.searchParams.get('embed') === 'agency') {
+    response.headers.set('Content-Security-Policy', SECURITY_HEADERS['Content-Security-Policy']
+      .replace("frame-ancestors 'none'", 'frame-ancestors https://createsomething.agency'));
+    response.headers.delete('X-Frame-Options');
+  }
   return response;
 };

@@ -51,10 +51,14 @@ class MockPreparedStatement {
     return { results: runSqlite(this.dbPath, bindSql(this.sql, this.values), true) as T[] };
   }
 
+  batchSql() {
+    return `${bindSql(this.sql, this.values)}; SELECT changes() AS changes, last_insert_rowid() AS last_row_id;`;
+  }
+
   async run() {
     const rows = runSqlite(
       this.dbPath,
-      `${bindSql(this.sql, this.values)}; SELECT changes() AS changes, last_insert_rowid() AS last_row_id;`,
+      this.batchSql(),
       true,
     ) as Array<{ changes: number; last_row_id: number }>;
     return { success: true, meta: rows[0] };
@@ -69,11 +73,18 @@ class MockD1Database {
   }
 
   async batch(statements: Array<ReturnType<MockD1Database['prepare']>>) {
-    const results = [];
-    for (const statement of statements) {
-      results.push(await statement.run());
-    }
-    return results;
+    if (statements.length === 0) return [];
+    // Keep a batch in one process/transaction instead of paying process startup
+    // and durable commit costs for every fixture row. -bail stops on errors;
+    // closing that connection rolls back the incomplete transaction.
+    const output = execFileSync('sqlite3', ['-json', '-bail', '--', this.dbPath], {
+      encoding: 'utf8',
+      input: ['BEGIN;', ...statements.map((statement) => statement.batchSql()), 'COMMIT;'].join('\n'),
+    });
+    return output.trim().split('\n').map((line) => ({
+      success: true,
+      meta: (JSON.parse(line) as Array<{ changes: number; last_row_id: number }>)[0],
+    }));
   }
 
   async exec(sql: string) {

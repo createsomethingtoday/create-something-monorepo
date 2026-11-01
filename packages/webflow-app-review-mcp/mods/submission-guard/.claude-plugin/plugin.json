@@ -1,0 +1,8 @@
+{
+  "name": "submission-guard",
+  "version": "0.1.0",
+  "description": "Keeps the Marketplace submit click with the developer and keeps source maps out of the extension bundle: denies submit-form requests, .map files copied into public/, and bundling while a .map sits in public/.",
+  "author": {
+    "name": "Webflow Marketplace team (internal)"
+  }
+}

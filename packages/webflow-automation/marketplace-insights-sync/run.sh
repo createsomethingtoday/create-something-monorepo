@@ -2,7 +2,9 @@
 # Marketplace Insights publisher — manual, explicitly configured execution.
 # No launchd schedule is installed or activated by this recovery.
 #
-# Snowflake auth is Okta externalbrowser: a browser window may open on runs
+# Seller source: MARKETPLACE_INSIGHTS_SOURCE=airtable reads the Fivetran
+# activation's Airtable table and needs no Snowflake login. The default
+# (snowflake) uses Okta externalbrowser: a browser window may open on runs
 # where no cached SSO token exists. Airtable PAT resolution order:
 #   1. AIRTABLE_API_KEY already in the environment
 #   2. Infisical: prod /webflow/app-reviewer-airtable-mcp AIRTABLE_API_KEY
@@ -16,7 +18,7 @@ if [[ ! "${MARKETPLACE_INSIGHTS_SNAPSHOT_TABLE_ID:-}" =~ ^tbl[a-zA-Z0-9]{14}$ ]]
 fi
 
 PKG="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-NODE="${NODE_BIN:-/Users/micahjohnson/.nvm/versions/node/v22.21.1/bin/node}"
+NODE="${NODE_BIN:-/Users/micahjohnson/.nvm/versions/node/v22.23.4/bin/node}"
 INFISICAL="$(command -v infisical || echo /opt/homebrew/bin/infisical)"
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 

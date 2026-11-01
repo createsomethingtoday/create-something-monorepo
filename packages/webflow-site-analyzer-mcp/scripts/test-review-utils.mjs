@@ -246,10 +246,10 @@ test('/templates/licensing is utility:license', () => {
   assert.equal(result.priority, 'critical');
 });
 
-test('/legal/terms is utility:license', () => {
+test('/legal/terms is general legal, not template licensing', () => {
   const result = classifyUrlDeterministic('https://ex.webflow.io/legal/terms', false);
-  assert.equal(result.classification, 'utility:license');
-  assert.equal(result.priority, 'critical');
+  assert.equal(result.classification, 'utility:other');
+  assert.equal(result.priority, 'low');
 });
 
 test('/utility/instruction is utility:instructions', () => {

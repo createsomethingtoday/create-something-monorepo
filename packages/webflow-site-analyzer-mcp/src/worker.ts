@@ -13,11 +13,14 @@ import {
   getAnalyzerHealth,
 } from './index.js';
 import type { TemplateReviewJobDurableObjectNamespace } from './template-review-jobs.js';
+import { handleUrlClassification } from './url-classifier-runtime.js';
 import { isWorkerRequestAuthorized } from './worker-auth.js';
 
 export { TemplateReviewJobDurableObject } from './template-review-job-durable-object.js';
 
 interface Env {
+  JEV_URL_CLASSIFIER_MODE?: string;
+  TYPESAFE_API_KEY?: string;
   TEMPLATE_REVIEW_JOBS?: TemplateReviewJobDurableObjectNamespace;
   STEEL_API_KEY?: string;
   BROWSERLESS_API_KEY?: string;
@@ -83,6 +86,7 @@ function injectLegacyNonBrowserSecrets(env: Env): void {
 function configureRuntime(env: Env): void {
   configureAnalyzerRuntime({
     runtime: 'worker',
+    urlClassifier: { JEV_URL_CLASSIFIER_MODE: env.JEV_URL_CLASSIFIER_MODE, TYPESAFE_API_KEY: env.TYPESAFE_API_KEY },
     apiKey: env.WEBFLOW_SITE_ANALYZER_MCP_API_KEY,
     browserProvider: {
       cloudflareBrowserRunEnabled: env.BROWSER_RUN_ENABLED === 'true',
@@ -115,6 +119,10 @@ export default {
         endpoint: '/mcp',
         runtime: 'cloudflare-worker',
       });
+    }
+
+    if (url.pathname === '/classify-urls') {
+      return handleUrlClassification(request, env);
     }
 
     // MCP endpoint — use Web Standard transport directly

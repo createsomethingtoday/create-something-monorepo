@@ -4,6 +4,24 @@ on:
   pull_request:
     paths:
       - 'packages/mcp-authz/**'
+      - 'packages/canon/src/lib/auth/**'
+      - 'packages/auth-platform/**'
+      - 'packages/io/src/hooks.server.ts'
+      - 'packages/io/src/routes/+layout.server.ts'
+      - 'packages/io/src/routes/login/**'
+      - 'packages/io/src/routes/api/auth/**'
+      - 'packages/io/test/*session*.test.ts'
+      - 'packages/agency/src/hooks.server.ts'
+      - 'packages/agency/src/lib/server/*identity*'
+      - 'packages/agency/src/lib/server/mcp-token.ts'
+      - 'packages/agency/src/routes/+layout.server.ts'
+      - 'packages/concierge-chat/src/lib/server/agency-access.ts'
+      - 'packages/concierge-chat/src/routes/+layout.server.ts'
+      - 'scripts/ci-auth-regressions.mjs'
+      - 'scripts/test/ci-auth-regressions.test.mjs'
+      - 'packages/canon/package.json'
+      - 'packages/io/package.json'
+      - 'pnpm-workspace.yaml'
       - 'packages/policy-os-engine/**'
       - 'packages/cs-mcp-hub-remote/**'
       - 'packages/identity-worker/**'
@@ -53,7 +71,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'pnpm'
 
       - name: Install dependencies

@@ -8,7 +8,7 @@ Deliver owned code/configuration, client domain, isolated data/media bindings, p
 
 ## Access and isolation
 
-Use one deployment and database per network. This demo is not shared multi-tenant SaaS. Reuse implementation patterns, never client database IDs, secrets, administrator emails or media. Database owns content/members/receipts; Automation owns upload/process/publish/playback; Judgment owns invitation/publication/promotion policy.
+PRIVATE hosts creator-owned networks in a shared application with network-scoped records, membership and authorization. The default network retains the original managed-library workflow. Preview and production use separate resources. Dedicated client deployments are a separately scoped delivery option, not the default requirement for each creator network. Never reuse unrelated client bindings, secrets, administrator emails or media. Database owns content/members/receipts; Automation owns upload/process/publish/playback; Judgment owns invitation/publication/promotion policy.
 
 This .agency application uses the exact `agency` Identity audience, host-only secure cookies, verified token contract, online active-account readback, and fresh network membership. Agency commercial entitlement does not imply PCN access. No preview/demo administrator bypass is permitted.
 
@@ -17,7 +17,7 @@ This .agency application uses the exact `agency` Identity audience, host-only se
 ## Provision and publish
 
 1. Record issue, owner, approved scope, exact account/domains and rollback owner.
-2. Create isolated D1, commit its real binding ID and apply the schema to that target. Keep preview and production separate; do not copy client seeds.
+2. For a creator network, use the approved creator setup flow and verify the server-owned network owner and membership boundaries. For a separately scoped dedicated deployment, provision isolated bindings and apply the complete current schema to that target. Keep preview and production separate; do not copy client seeds.
 3. Configure verified administrator emails and an account-scoped Stream Read/Edit credential through the owning secret manager. Bind `CLOUDFLARE_STREAM_API_TOKEN` as a Worker secret. Never place it in code, browser responses, CLI arguments or logs.
 4. Inspect existing domain records before attaching Worker custom domains. Never replace an existing service without reconciling ownership.
 5. Upload via the admin browser. TUS creates a private original and draft row, bounded to 1 GB/30 minutes. Confirm existing storage capacity; do not silently buy more.
@@ -45,6 +45,14 @@ Demo limit: 20 unarchived films. Archiving does not delete stored originals or r
 Use the supported D1 export against the exact named database, saving private member data outside the repo in approved storage. Verify restore into a separate non-production database. Retention/deletion follows the client agreement. Do not hand over paste-ready configurations with placeholder bindings.
 
 Before promotion, record the prior Worker version. Roll back to that known-good version through Cloudflare/Wrangler after confirming the exact application. Preserve additive schema/data. Revoke secrets only through the owning workflow. If the initial release fails, preserve its database for diagnosis and remove only task-owned domains/Worker through a reviewed cleanup.
+
+## Commerce and support delivery
+
+Use [reviewed launch](reviewed-launch.md) for admission and payment policy. Creator review and support-partner approval are separate. Invited approved creators receive one calendar month of network hosting, not a support trial. Ordinary creator assets use the creator merchant account and creator-selected prices.
+
+The CREATE SOMETHING support subscription is USD900/month with a minimum of three hours of support per paid period. The approved split is 75% to the partner and 25% to CREATE SOMETHING after actual transaction-processing fees; CREATE SOMETHING covers Billing/Connect fees from its share. Support uses its own verified payout account. Never reuse the creator merchant account or activate a paid flag based only on platform approval.
+
+Follow [remote sessions](remote-sessions.md) for attended consent, recorded time, buyer confirmation and disputes. PRIVATE records support receipts; it does not prove native RustDesk connection duration or automatically disconnect a device. Device acceptance, paid-period eligibility and the production ledger must each be verified.
 
 ## Closeout
 

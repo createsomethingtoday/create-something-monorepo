@@ -6,10 +6,13 @@ Classify every credential and scope by issuer, audience, protected resource, App
 
 Do not infer Webflow authority from generic names such as `token`, `scope`, `OAuth`, `session`, `Authorization`, or a 401 response. For third-party credentials, check the provider's documented client architecture and evaluate scope, lifetime, storage, exposure, and revocation as security controls. If a provider's browser SDK explicitly requires a short-lived client token, do not declare a Marketplace violation or require a proxy without separate evidence. For inapplicable Webflow checks, report `N/A`, not failure.
 
-## OAuth flow (Data Clients)
+## OAuth flow (Data Clients and Hybrid Apps)
 
-1. Send the user to the **Install URL** (authorization URL). The recommended form initiates OAuth directly:
-   `https://webflow.com/oauth/authorize?response_type=code&client_id=YOUR_CLIENT_ID&scope=YOUR_SCOPES`
+The partner-owned Install URL, callback, and Webflow OAuth `state` checks in this section apply only to Data Client/Hybrid Apps. For Designer Extension-only Apps, mark them `N/A`; Webflow handles installation. Third-party OAuth flows remain subject to their own provider requirements.
+
+1. Send the user to your **Install URL** — an HTTPS endpoint on your domain that you submit in the Marketplace form. It mints a fresh `state` for this request, stores it server-side against the browser session with an expiry, and redirects to the **Authorization URL**:
+   `https://webflow.com/oauth/authorize?response_type=code&client_id=YOUR_CLIENT_ID&scope=YOUR_SCOPES&state=YOUR_STATE`
+   Do not submit a fixed `webflow.com/oauth/authorize` URL as your Install URL: it cannot carry a per-request `state`, so it fails the OAuth flow security gate. The Marketplace "Install App" button and the Designer's Apps panel open whatever Install URL your listing declares; the Install button under **Apps & Integrations → App Development** in your own Workspace opens authorize directly with no `state` and is a developer-only shortcut, not a customer path.
    `redirect_uri` is **optional** here — Webflow uses the Redirect URI configured in your app settings. Only pass it explicitly if you registered more than one and need to select between them.
 2. The user approves or denies. Your demo video must show **both** paths.
 3. On approval, Webflow redirects to your Redirect URI with an authorization code.
@@ -22,10 +25,10 @@ Designer Extension–only Apps need no install URL — Webflow handles the insta
 
 Steps 1→4 cross a trust boundary, and your callback endpoint is publicly reachable. Two controls, both engineering practice rather than a Webflow-specific rule:
 
-- **Carry a `state` value and validate it.** Generate a single-use, unguessable value before step 1, store it server-side against the pending authorization, and reject any callback whose `state` is missing, unknown, expired, or already consumed. Without it, an attacker can deliver their own authorization code to your callback and get it exchanged under someone else's session — the code-injection form of CSRF. Webflow's OAuth docs document `state` explicitly as the CSRF protection for this flow.
+- **Carry a `state` value bound to the browser session, and validate it.** Generate a single-use, cryptographically random value in step 1, store it server-side against the browser session that started the request with an expiry, and reject any callback whose `state` is missing, mismatched, expired, already consumed, or not bound to that session. Verify and mark the value used in one operation before exchanging the code, so two callbacks carrying the same `state` cannot both succeed. Session binding is what makes the check "is this ticket mine" rather than only "is this ticket real": a `state` minted by one client and completed in another browser must fail. Without all of this, an attacker can deliver their own authorization code to your callback and get it exchanged under someone else's session — the code-injection form of CSRF. Webflow's authorization server accepts requests without `state`; Marketplace review does not.
 - **PKCE is not part of Webflow's documented OAuth flow.** The parameters documented for Webflow's authorize and token-exchange endpoints do not include `code_challenge`/`code_verifier` (verified against the public OAuth reference, 2026-08-03) — so in the Webflow flow, the `state` check is your CSRF control. Do use PKCE (`code_verifier`/`code_challenge`) on any third-party OAuth flows your app performs that support it: it binds the exchange to the client that began the flow, so an intercepted code isn't independently redeemable.
 
-A reviewer reading your callback handler looks for the `state` check specifically. If your exchange function takes only an authorization code as input, that reads as the check being absent.
+A reviewer reading your callback handler looks for the `state` check specifically. If your exchange function takes only an authorization code as input, that reads as the check being absent. Review also exercises the live flow from your listing's Install URL: two requests must carry different `state` values, and a callback with `state` stripped, altered, replayed, or minted outside the browser session must be rejected before any code exchange. Do not weaken the check to keep the Workspace Install button working; that developer-only button is outside the customer path and outside review.
 
 Scopes in the Install URL must be **equal to or a subset of** the scopes configured in app settings, or the install fails with an error shown to the user. Scopes use `scope:action` format; encode the colon as `%3A` in the URL.
 
@@ -33,7 +36,7 @@ Scopes in the Install URL must be **equal to or a subset of** the scopes configu
 
 Request only what your App actually calls. Each Data API endpoint documents its required scope — take the union of the endpoints you use and stop there.
 
-Table regenerated from the public scopes reference (<https://developers.webflow.com/data/reference/scopes>) on 2026-08-03 — re-check that page before relying on it, since scopes can be added.
+Table checked against the public scopes reference (<https://developers.webflow.com/data/reference/scopes>) and Webflow's scope registry on 2026-10-27 — re-check that page before relying on it, since scopes can be added.
 
 | Resource           | Scopes                                  |
 | ------------------ | --------------------------------------- |
@@ -46,12 +49,16 @@ Table regenerated from the public scopes reference (<https://developers.webflow.
 | Ecommerce          | `ecommerce:read`, `ecommerce:write`     |
 | Forms              | `forms:read`, `forms:write`             |
 | Pages              | `pages:read`, `pages:write`             |
+| Branches           | `branches:read`, `branches:create`, `branches:update`, `branches:delete`, `branches:merge`, `branches:publish` |
 | Sites              | `sites:read`, `sites:write`             |
+| Site Access        | `site_access:read`, `site_access:write` |
 | Site Activity      | `site_activity:read`                    |
+| Site Plans         | `site_plans:read`, `site_plans:write`   |
 | Site Configuration | `site_config:read`, `site_config:write` |
 | Users              | `users:read`, `users:write`             |
 | Workspace          | `workspace:read`, `workspace:write`     |
 | Workspace Activity | `workspace_activity:read`               |
+| Workspace Members  | `workspace_members:read`, `workspace_members:write` |
 | Webhooks           | Varies by trigger type                  |
 
 `authorized_user:read` is required for the **Get Authorized User** endpoint — the natural first call after a token exchange to resolve who authorized your App — so most Data Clients need it. (Authorization info requires no scope.)
@@ -60,7 +67,9 @@ Table regenerated from the public scopes reference (<https://developers.webflow.
 
 A `:write` scope you only read with, or an `ecommerce` scope on a non-commerce App, is exactly what a reviewer asks about. Drop it — **with one exception below.**
 
-**Keep the scopes you need to clean up.** If your App applies custom code, it must retain the scopes required to remove that code on uninstall: `custom_code:write`, plus `sites:write` or `pages:write` for scripts applied at the site or page level. Dropping them would strand code on the user's site.
+**Keep the scopes you need to remove code while installed.** Uninstall removes the Custom Code your App applied through the API, and your App can't call the API after uninstall. If your App removes scripts while it stays installed (for example, a feature toggle), keep `custom_code:write`, plus `sites:write` or `pages:write` for scripts applied at the site or page level.
+
+**Membership scopes get a closer look.** `site_access:*` and `workspace_members:*` became generally available on 2026-10-27; their endpoints are under `/beta/`. They apply to the whole Workspace, not one site. With `:write`, an App can invite or remove Workspace members and grant or revoke site access. Request them only for a visible member-management feature, and name that feature and each endpoint it calls in the scope justification. With `:read`, the App receives member names and emails; expect the reviewer to check that your privacy policy covers that data.
 
 ## Token lifecycle — the part apps get wrong
 
@@ -74,12 +83,12 @@ If your App runs any code on a customer's site, deliver it through the **Custom 
 
 The rules that get apps removed if broken:
 
-- **The reviewed version is the approved version.** Any code, scripts, or runtime your App causes to run is part of the reviewed experience. The version evaluated at review is the version approved to run on customer sites.
+- **The reviewed version is the approved version.** Review covers code running in the Designer, your App's Webflow API interactions, credential and user-data handling, and the scripts you register, disclose, and remove through Webflow. Runtime behavior on customers' published sites is outside review scope and runs under your responsibility. The version evaluated at review is the version approved to run on customer sites.
 - **Script versions are immutable.** You cannot overwrite a registered script — each needs a unique `displayName` + `version`. To change code that runs on customer sites, **register a new version and submit an App update for review.** Scripts may not be modified in place.
 - **Loaders are not allowed** unless every remotely loaded resource is declared at submission **and** pinned. Hosted scripts require a `hostedLocation` plus an `integrityHash` (SRI, e.g. sha256) computed over the exact contents. A remote endpoint referenced by an approved script may not start serving different functional code after approval.
 - **No self-certified live updates.** Routing new functional code to sites through any path that bypasses review — swapping a hosted script's contents, a loader endpoint, or a dynamically imported module — results in Marketplace removal and may result in a ban.
 - **Changes take effect on publish.** Applying/updating/removing a script only goes live when the site is published, and publish pushes _all_ staged changes. Prompt the user to publish when ready; don't auto-publish on their behalf.
-- **Remove on uninstall.** Remove applied scripts at **both site and page level** when the App is uninstalled, where technically feasible. If automated removal isn't possible, give the user clear removal instructions.
+- **Know what uninstall removes.** Webflow removes API-applied scripts on uninstall (live after the next publish). If your App removes scripts while it stays installed, remove them at **both site and page level**. Give clear removal instructions for anything the platform doesn't remove, such as manually pasted code.
 
 Two different surfaces, two different limits (verified 2026-08-03):
 
@@ -88,12 +97,12 @@ Two different surfaces, two different limits (verified 2026-08-03):
 
 ## Designer Extension security patterns
 
-Prohibited / flagged in Designer Extension code:
+Prohibited in Designer Extension code by the Marketplace Guidelines:
 
-- `eval()` and other dynamic code execution.
-- Direct DOM manipulation of the Designer instead of the Designer APIs.
-- Excessive global variables.
-- **Externally hosted iframes used as the primary App UI or runtime surface** when that surface can change independently of the reviewed submission. Iframes are fine **for authentication flows**.
+- `eval()` and other dynamic code execution. App Review Preflight reports this as a Blocker.
+- Direct DOM manipulation of the Designer instead of the Designer APIs. Self-check — Preflight does not detect it (it detects only parent/top document access).
+- Excessive global variables. Self-check — Preflight does not detect them (it detects only reassignment of native or Webflow globals).
+- **Externally hosted iframes used as the primary App UI or runtime surface** when that surface can change independently of the reviewed submission. Iframes are fine **for authentication flows**. Preflight reports an external iframe `src` as a Required update, and a reviewer judges its purpose.
 
 Ship-clean rules:
 

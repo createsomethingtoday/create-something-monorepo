@@ -1,35 +1,54 @@
 {
   "schemaVersion": 1,
-  "policy": "Exceptions keep scanner findings visible and expire unless a named owner renews the evidence. They are not audit suppressions and do not make a vulnerable dependency safe.",
-  "exceptions": [
+  "policy": "Active exceptions retain expiry checks. Local remediation is not risk acceptance or scanner suppression: exact provenance, installed bytes and behavioral coverage must pass. Human review remains a separate release requirement.",
+  "exceptions": [],
+  "remediations": [
     {
-      "advisoryId": "GHSA-jmr9-qjv8-65gv",
-      "alertNumber": 1586,
+      "id": "extract-zip-2.0.1-local-backport",
       "package": "extract-zip",
-      "severity": "high",
-      "affectedRange": "<= 2.0.1",
-      "firstPatchedVersion": null,
+      "version": "2.0.1",
+      "advisories": [
+        "GHSA-jmr9-qjv8-65gv",
+        "GHSA-7pqw-9j4j-h8q3"
+      ],
       "owner": "createsomethingtoday",
       "trackingIssue": "CRE-1634",
-      "acceptedOn": "2026-08-21",
-      "reviewBy": "2026-09-21",
-      "state": "open-upstream-unpatched",
+      "backportSourceCommit": "abe81a478331623f2d745c9440c777dbee3f6b0e",
+      "humanReviewRequired": true,
       "suppressesScanner": false,
       "runtimeExposure": "tooling-only",
-      "exploitPreconditions": [
-        "An attacker-controlled ZIP archive must reach extract-zip through Puppeteer browser installation or Remotion browser acquisition on a writable host."
+      "provenance": {
+        "upstreamVersion": "2.0.1",
+        "upstreamSha512": "GDhU9ntwuKyGXdZBUgTIe+vXnWj0fppUEtMDL0+idd5Sta8TGpHssn/eusA9mrPr9qNDym6SxAYZjNvCn/9RBg==",
+        "advisories": [
+          "GHSA-jmr9-qjv8-65gv",
+          "GHSA-7pqw-9j4j-h8q3"
+        ],
+        "patchedIndexSha256": "25d3ab1dc8dd11ae3a41503f46bad9cd47c55f040ccc3371481708d372f0c3ea",
+        "patchSha256": "d3483128118385874d6691cceddeb52e6a300f12b933ed7ed853702fde7b13e2",
+        "standaloneTarballSha256": "11b811b526156a487386ba04ab48c4366c7f01a467a4f6a174c1b691abfccbd7"
+      },
+      "regressionSuiteSha256": "8ae17eab4c6bc2a9ba24c4a72ca2cf74c918e4f59f855ec96fdbeacde54b1ce0",
+      "installRoots": [
+        "workspace",
+        "standalone-motion-ontology"
       ],
-      "compensatingControls": [
-        "No tracked application source imports extract-zip directly; the policy check fails if such an import is introduced.",
-        "Deployed Cloudflare browser workflows launch the platform Browser Rendering binding and do not download or extract user-provided browser archives.",
-        "Local and CI browser/video installation must use pinned package-manager dependencies and upstream browser distributions; untrusted ZIP input is prohibited."
+      "historicalException": "security/advisory-history/extract-zip-exception-expired-2026-10-20.json",
+      "historicalExceptionSha256": "6659d23a2c0204c575adcea8899e20e7082f69c743391c9ccc55f8ba05d3e532",
+      "limitations": [
+        "Private extraction destination; no concurrent filesystem mutation.",
+        "Rejected extraction may leave ordinary in-root files; discard failed installations.",
+        "No ZIP-bomb mitigation or remediation of other dependencies is claimed."
       ],
-      "evidence": [
-        "GitHub Dependabot alert 1586 reports no first patched version.",
-        "pnpm why extract-zip -r shows only Puppeteer, Cloudflare Puppeteer, and Remotion dependency chains.",
-        "scripts/security-advisory-exceptions.mjs verifies expiry, ownership, non-suppression, controls, and absence of direct source imports."
-      ],
-      "removalTrigger": "Replace or upgrade the affected dependency immediately when an upstream patched release is available, then delete this exception after the alert closes."
+      "standaloneRemoval": {
+        "mode": "dependency-removed",
+        "sourceCommit": "8afe370f995761a114c95cd825a78c12b293b827",
+        "files": {
+          "package.json": "3303598d3ff085b2c297f286b0d9e427da812d8d4b9ba15f2cbb47dea737a981",
+          "package-lock.json": "522d10371c087ce5d2dc671483f1e7049cfe8531e82122c5bf244101f3440198",
+          "src/extractor.ts": "0a67d8dc0e6b92afe52b7d1251af35032de3e3cda113c83932845ed1c482185c"
+        }
+      }
     }
   ]
 }

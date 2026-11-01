@@ -18,7 +18,7 @@ import {
 	ParsedHTML
 } from '../types';
 import { fetchHTML, parseHTML, fetchAsset, fetchAssetMetadata } from '../utils/fetch-utils';
-import { analyzeImageOptimization, analyzeImageOptimizationFromMetadata } from '../utils/asset-utils';
+import { analyzeImageOptimization, analyzeImageOptimizationFromMetadata, isWebflowGeneratedVideoPosterSource } from '../utils/asset-utils';
 
 const WEBFLOW_WAY_COMPRESSION_TARGET = 150 * 1024; // 150KB in bytes, where possible
 const EXTREME_SIZE_LIMIT = 4 * 1024 * 1024; // 4MB in bytes
@@ -561,8 +561,9 @@ export function generateAssetIssues(assets: AnalyzedAsset[]): ValidationIssue[] 
 	const issues: ValidationIssue[] = [];
 
 	// Check for assets above the 150KB compression target. This is a review target, not the hard maximum.
+	// Webflow-generated video posters are excluded: the creator cannot compress them. The 4MB check below still applies.
 	const assetsAboveCompressionTarget = assets.filter(asset =>
-		!isVectorAsset(asset) &&
+		isCreatorCompressible(asset) &&
 		asset.size > WEBFLOW_WAY_COMPRESSION_TARGET && asset.size <= EXTREME_SIZE_LIMIT
 	);
 	if (assetsAboveCompressionTarget.length > 0) {
@@ -607,7 +608,7 @@ export function generateAssetIssues(assets: AnalyzedAsset[]): ValidationIssue[] 
 	}
 
 	// Check for unoptimized formats
-	const unoptimizedAssets = assets.filter(asset => !isVectorAsset(asset) && !asset.isOptimized);
+	const unoptimizedAssets = assets.filter(asset => isCreatorCompressible(asset) && !asset.isOptimized);
 	if (unoptimizedAssets.length > 0) {
 		issues.push({
 			id: 'assets-not-optimized',
@@ -653,7 +654,7 @@ export function generateAssetIssues(assets: AnalyzedAsset[]): ValidationIssue[] 
 function calculateAssetStats(assets: AnalyzedAsset[]) {
 	return {
 		totalAssets: assets.length,
-		oversizedAssets: assets.filter(a => a.size > WEBFLOW_WAY_COMPRESSION_TARGET).length,
+		oversizedAssets: assets.filter(a => isCreatorCompressible(a) && a.size > WEBFLOW_WAY_COMPRESSION_TARGET).length,
 		unoptimizedAssets: assets.filter(a => !a.isOptimized).length,
 		unusedAssets: assets.filter(a => a.usageCount === 0).length,
 		licensingIssues: 0, // Removed: all Webflow assets are properly hosted
@@ -692,6 +693,15 @@ function getAssetFormat(url: string, ...candidates: Array<string | undefined>): 
 
 function isSvgAssetLike(asset: { mimeType?: string; url?: string; name?: string }): boolean {
 	return isSvgFormat(asset.mimeType) || isSvgPath(asset.url) || isSvgPath(asset.name);
+}
+
+function isWebflowGeneratedVideoPoster(asset: AnalyzedAsset): boolean {
+	return isWebflowGeneratedVideoPosterSource(asset.url) || isWebflowGeneratedVideoPosterSource(asset.name);
+}
+
+// Assets the creator can actually resize or re-encode in the Designer.
+function isCreatorCompressible(asset: AnalyzedAsset): boolean {
+	return !isVectorAsset(asset) && !isWebflowGeneratedVideoPoster(asset);
 }
 
 function isVectorAsset(asset: AnalyzedAsset): boolean {

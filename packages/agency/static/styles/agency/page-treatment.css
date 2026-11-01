@@ -1,0 +1,172 @@
+@font-face{font-family:'Geist Variable';src:url('/fonts/agency-geist-latin.woff2') format('woff2');font-weight:100 900;font-display:swap}@font-face{font-family:'IBM Plex Mono';src:url('/fonts/agency-ibm-plex-mono.woff2') format('woff2');font-weight:400;font-display:swap}
+.agency-preview-marker{display:flex;gap:24px;align-items:center;flex-wrap:wrap;padding:12px var(--space-performance-page-gutter);background:var(--color-performance-shell-surface);color:var(--color-performance-fg-secondary);border-bottom:1px solid var(--color-performance-shell-border-strong);font:11px/1.5 var(--font-performance-mono)}.agency-preview-marker>a{display:inline-flex;align-items:center;min-height:30px;color:inherit;text-underline-offset:4px}.agency-preview-marker>span{margin-right:auto}
+body.design-preview{font-family:var(--font-performance-interface);background:var(--color-performance-mode-campaign-surface);color:var(--color-performance-mode-campaign-ink)}body.design-preview :is(input,textarea,select,button){font-family:var(--font-performance-interface)}body.design-preview h1{letter-spacing:var(--tracking-performance-tight);text-wrap:balance}body.design-preview h2{letter-spacing:var(--tracking-performance-tight)}body.design-preview p{line-height:var(--leading-performance-relaxed)}body.design-preview :is(button,a,summary):focus-visible{outline:2px solid currentColor;outline-offset:4px}body.design-preview :is(button,summary){min-height:44px}
+body.design-preview .agency-preview-media{position:relative;margin:0;background:var(--color-performance-ink);padding:var(--space-performance-lg) 7vw;border-bottom:1px solid var(--color-performance-shell-border-default)}body.design-preview .agency-preview-media img{display:block;width:100%;height:auto;max-height:640px;object-fit:cover;object-position:center}body.design-preview .agency-preview-media[data-shot='macro'] img{max-height:520px;object-position:center 56%}body.design-preview .agency-preview-media figcaption{font:11px/1.6 var(--font-performance-mono);color:var(--color-performance-fg-secondary);padding-top:var(--space-performance-sm);max-width:80ch}body.design-preview .agency-preview-media[data-shot='team']{padding-inline:12vw}body.design-preview[data-preview-family='utility'] :is(article,.legal-content,.privacy-content,.terms-content){max-width:76ch;margin-inline:auto}body.design-preview[data-preview-family='utility'] :is(h1,h2,h3){text-wrap:balance}body.design-preview[data-preview-family='utility'] :is(form,input,textarea,select){scroll-margin-top:100px}body.design-preview .signal-band{background:var(--color-performance-mode-campaign-surface)}body.design-preview .agency-sign{border-radius:var(--radius-performance-sm)}
+@media(max-width:800px){body.design-preview .agency-preview-media,body.design-preview .agency-preview-media[data-shot='team']{padding:var(--space-performance-md) 6vw}body.design-preview .agency-preview-media img{object-fit:contain;max-height:none}body.design-preview .agency-preview-media figcaption{font-size:10px}body.design-preview h1{overflow-wrap:normal}.agency-preview-marker{gap:15px;font-size:10px}}@media(prefers-reduced-motion:reduce){body.design-preview *{animation-duration:.001ms!important;transition:none!important;scroll-behavior:auto!important}}
+body.design-preview #main-content{padding-top:100px!important}body.design-preview footer img[src*='performance-lab']{display:none}
+/* Preview navigation already supplies the header clearance; avoid a second empty opening. */
+body.design-preview .performance-campaign-opening{padding-block:var(--space-performance-xl)!important;min-height:0!important}
+body.design-preview .performance-campaign-opening .performance-campaign-opening__content{padding-block:var(--space-performance-lg)!important;min-height:0!important}
+@media(max-width:800px){body.design-preview .performance-campaign-opening .performance-campaign-opening__content{padding-block:var(--space-performance-md)!important}}
+/* Product/operator palettes may invert ink; keep each caption paired with that surface. */
+body.design-preview[data-preview-family='product'] .agency-preview-media figcaption,
+body.design-preview[data-preview-family='products'] .agency-preview-media figcaption{color:var(--color-performance-bg-pure)}
+/* The photograph belongs to the existing hero, with its actual proof and controls retained. */
+body.design-preview .agency-preview-hero>.agency-preview-media{grid-column:1/-1;grid-row:auto;position:relative;z-index:3;min-width:0;width:100%;box-sizing:border-box;margin-top:var(--space-performance-lg);padding:0!important;background:transparent!important;border:0}
+body.design-preview .agency-preview-media img{object-position:var(--preview-image-focus,center)!important}
+body.design-preview .agency-preview-media[data-shot='wide'] img{height:clamp(17rem,34vw,34rem)!important;object-fit:cover!important}
+body.design-preview .agency-preview-media[data-shot='medium'] img{height:clamp(18rem,40vw,38rem)!important;object-fit:cover!important}
+body.design-preview .agency-preview-media[data-shot='macro'] img{height:clamp(18rem,32vw,32rem)!important;object-fit:cover!important}
+body.design-preview .about-letter .agency-preview-media img{height:18rem!important}
+body.design-preview .agency-preview-media figcaption{color:var(--color-performance-fg-secondary)!important}
+body.design-preview .agency-closing-trace{height:112px;position:relative;overflow:hidden;background:var(--color-performance-bg-pure);border-block:1px solid var(--color-performance-shell-border-default);color:var(--color-performance-fg-primary);isolation:isolate}
+body.design-preview .agency-closing-trace canvas{display:block;width:100%;height:100%}
+body.design-preview .agency-closing-trace pre{position:absolute;inset:30px 20px;font:11px var(--font-performance-mono);opacity:.45;white-space:pre-wrap}
+body.design-preview .agency-closing-trace.is-ready pre{display:none}
+body.design-preview .agency-closing-trace button{position:absolute;right:16px;bottom:10px;z-index:2;border:1px solid var(--color-performance-shell-border-strong);color:inherit;background:var(--color-performance-bg-pure);padding:6px 10px;font:11px var(--font-performance-mono);min-height:44px}
+@media(max-width:800px){body.design-preview .agency-preview-media img{height:18rem!important}body.design-preview .agency-closing-trace{height:96px}}
+body.design-preview [data-agency-original='true']{display:none!important}
+/* Photography comes before optional technical artifacts in the opening. */
+body.design-preview .performance-campaign-opening.agency-preview-hero{display:grid!important;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)!important;column-gap:var(--space-performance-xl);padding-inline:6vw!important;align-items:center}
+body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__content{grid-column:1!important;grid-row:1!important;width:100%!important;min-height:0!important;max-width:none;margin:0!important}
+body.design-preview .performance-campaign-opening.agency-preview-hero>.agency-preview-media{grid-column:2!important;grid-row:1!important;align-self:stretch;margin-top:0!important;display:flex;flex-direction:column;justify-content:center}
+body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__artifact{grid-column:1/-1!important;grid-row:2!important;position:relative!important;inset:auto!important;width:100%!important;min-height:0!important;margin-top:var(--space-performance-lg)}
+@media(max-width:800px){body.design-preview .performance-campaign-opening.agency-preview-hero{grid-template-columns:minmax(0,1fr)!important;gap:var(--space-performance-md)}body.design-preview .performance-campaign-opening.agency-preview-hero>.agency-preview-media{grid-column:1!important;grid-row:2!important}body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__artifact{grid-row:3!important}}
+body.design-preview .agency-closing-trace{box-sizing:border-box!important;padding:0!important;min-height:0!important;height:112px!important}
+body.design-preview .agency-closing-trace canvas{position:absolute;inset:0;width:100%;height:100%}
+@media(max-width:800px){body.design-preview .agency-closing-trace{height:96px!important}}
+body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__content{display:block!important}
+body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__content>header{width:100%!important;max-width:none!important;min-width:0!important}
+body.design-preview .performance-campaign-opening.agency-preview-hero .performance-campaign-opening__proof{margin-top:var(--space-performance-lg)}
+@media(max-width:800px){
+ body.design-preview .performance-campaign-opening.agency-preview-hero{padding-block:var(--space-performance-md)!important}
+ body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__content{display:contents!important;padding:0!important}
+ body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__content>header{grid-column:1!important;grid-row:1!important;padding:0!important}
+ body.design-preview .performance-campaign-opening.agency-preview-hero .performance-campaign-opening__proof{grid-column:1!important;grid-row:4!important}
+}
+/* Draw's working brief remains available after the planning scene. */
+body.design-preview .map-page .hero-track.agency-preview-hero{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:var(--space-performance-lg);align-items:center}
+body.design-preview .map-page .hero-track.agency-preview-hero>.hero-layout{display:contents}
+body.design-preview .map-page .hero-track.agency-preview-hero .hero-copy{grid-column:1;grid-row:1;min-width:0}
+body.design-preview .map-page .hero-track.agency-preview-hero>.agency-preview-media{grid-column:2;grid-row:1;margin:0}
+body.design-preview .map-page .hero-track.agency-preview-hero .handoff{grid-column:1/-1;grid-row:2;max-width:none;width:100%;box-sizing:border-box}
+body.design-preview .map-page .hero-track.agency-preview-hero>.hero-bottom{grid-column:1/-1;grid-row:3}
+@media(max-width:800px){body.design-preview .map-page .hero-track.agency-preview-hero{grid-template-columns:minmax(0,1fr)}body.design-preview .map-page .hero-track.agency-preview-hero>.agency-preview-media{grid-column:1;grid-row:2}body.design-preview .map-page .hero-track.agency-preview-hero .handoff{grid-row:3}body.design-preview .map-page .hero-track.agency-preview-hero>.hero-bottom{grid-row:4}}
+body.design-preview .map-page .hero-track.agency-preview-hero{box-sizing:border-box;width:100%;padding-inline:6vw!important}
+/* Multi-part scenes must keep their full explanatory frame on every screen. */
+body.design-preview .agency-preview-media[data-frame='whole'] img{height:auto!important;aspect-ratio:3/2;object-fit:contain!important;max-height:none!important}
+/* Mobile display:contents must retain the copy's foreground stacking above inherited scrims. */
+body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__content>header,
+body.design-preview .performance-campaign-opening.agency-preview-hero .performance-campaign-opening__proof{position:relative;z-index:4}
+/* The new review scene replaces the older opening illustration; deeper inspection remains. */
+body.design-preview .technical-review .opening.agency-preview-hero>.review-visual{display:none}
+body.design-preview .technical-review .opening.agency-preview-hero>.agency-preview-media{grid-column:2;grid-row:1;margin:0;min-width:0}
+@media(max-width:800px){body.design-preview .technical-review .opening.agency-preview-hero>.agency-preview-media{grid-column:1;grid-row:2}}
+@media(max-width:1000px){body.design-preview .technical-review .opening.agency-preview-hero>.agency-preview-media{grid-column:1;grid-row:2}}
+/* Keep each original's native frame, including close scenes with a different ratio. */
+body.design-preview .agency-preview-hero .agency-preview-media[data-frame='whole'] img{height:auto!important;aspect-ratio:auto!important;object-fit:contain!important}
+body.design-preview .about-letter .letter-category{color:var(--color-performance-fg-secondary)!important}
+/* Tablet receives the same story-first stack as small screens, before columns become cramped. */
+@media(min-width:801px) and (max-width:1000px){
+ body.design-preview .performance-campaign-opening.agency-preview-hero{grid-template-columns:minmax(0,1fr)!important;gap:var(--space-performance-md);padding-block:var(--space-performance-md)!important}
+ body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__content{display:contents!important;padding:0!important}
+ body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__content>header{grid-column:1!important;grid-row:1!important;padding:0!important}
+ body.design-preview .performance-campaign-opening.agency-preview-hero>.agency-preview-media{grid-column:1!important;grid-row:2!important}
+ body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__artifact{grid-row:3!important}
+ body.design-preview .performance-campaign-opening.agency-preview-hero .performance-campaign-opening__proof{grid-column:1!important;grid-row:4!important}
+}
+body.design-preview .clear-page-section--hero.agency-preview-hero{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:var(--space-performance-lg);align-items:center;padding-inline:6vw}
+body.design-preview .clear-page-section--hero.agency-preview-hero :is(.clear-page-section__inner,.clear-page-section__layout){display:contents}
+body.design-preview .clear-page-section--hero.agency-preview-hero .clear-page-section__copy{grid-column:1;grid-row:1;min-width:0}
+body.design-preview .clear-page-section--hero>.agency-preview-media{grid-column:2;grid-row:1;margin:0}
+body.design-preview .clear-page-section--hero.agency-preview-hero .clear-page-section__aside{grid-column:1/-1;grid-row:2;min-width:0}
+@media(max-width:1000px){body.design-preview .clear-page-section--hero.agency-preview-hero{grid-template-columns:minmax(0,1fr)}body.design-preview .clear-page-section--hero>.agency-preview-media{grid-column:1;grid-row:2}body.design-preview .clear-page-section--hero.agency-preview-hero .clear-page-section__aside{grid-row:3}}
+/* Replace prior decorative opening photography without suppressing real artifacts or proof. */
+body.design-preview .performance-campaign-opening:has(>.agency-preview-media[data-asset^='original-stories/'])>.performance-campaign-opening__media{display:none!important}
+body.design-preview .methodology-page>.hero.agency-preview-hero{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:var(--space-performance-lg);align-items:center;padding:var(--space-performance-xl) 6vw;min-height:0;height:auto}
+body.design-preview .methodology-page>.hero.agency-preview-hero>.hero-content{grid-column:1;grid-row:1;width:100%;max-width:none;text-align:left;padding:0}
+body.design-preview .methodology-page>.hero.agency-preview-hero :is(.hero-title,.hero-subtitle){text-align:left;max-width:none}
+body.design-preview .methodology-page>.hero.agency-preview-hero>.agency-preview-media{grid-column:2;grid-row:1;margin:0}
+@media(max-width:1000px){body.design-preview .methodology-page>.hero.agency-preview-hero{grid-template-columns:minmax(0,1fr)}body.design-preview .methodology-page>.hero.agency-preview-hero>.agency-preview-media{grid-column:1;grid-row:2}}
+/* Custom support openings keep their technical studies after the first visual explanation. */
+body.design-preview :is(.dfw-support,.airtable-workflow)>.opening.agency-preview-hero{display:grid!important;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)!important;gap:var(--space-performance-lg);align-items:center}
+body.design-preview :is(.dfw-support,.airtable-workflow)>.opening.agency-preview-hero>div:first-child{grid-column:1;grid-row:1;min-width:0}
+body.design-preview :is(.dfw-support,.airtable-workflow)>.opening.agency-preview-hero>.agency-preview-media{grid-column:2;grid-row:1;margin:0}
+body.design-preview :is(.dfw-support,.airtable-workflow)>.opening.agency-preview-hero>:is(.support-study,.workflow-map){grid-column:1/-1;grid-row:2;min-width:0}
+body.design-preview :is(.arc-catalog__hero,.arc-hero,.registry-arc__hero).agency-preview-hero{display:grid!important;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)!important;gap:var(--space-performance-lg);align-items:center}
+body.design-preview :is(.arc-catalog__hero,.arc-hero,.registry-arc__hero).agency-preview-hero>div{grid-column:1;grid-row:1;min-width:0}
+body.design-preview :is(.arc-catalog__hero,.arc-hero,.registry-arc__hero).agency-preview-hero>.agency-preview-media{grid-column:2;grid-row:1;margin:0}
+body.design-preview :is(.arc-catalog__hero,.arc-hero,.registry-arc__hero).agency-preview-hero>dl{grid-column:1/-1;grid-row:2;min-width:0}
+@media(max-width:1000px){body.design-preview :is(.dfw-support,.airtable-workflow)>.opening.agency-preview-hero,body.design-preview :is(.arc-catalog__hero,.arc-hero,.registry-arc__hero).agency-preview-hero{grid-template-columns:minmax(0,1fr)!important}body.design-preview :is(.dfw-support,.airtable-workflow)>.opening.agency-preview-hero>.agency-preview-media,body.design-preview :is(.arc-catalog__hero,.arc-hero,.registry-arc__hero).agency-preview-hero>.agency-preview-media{grid-column:1;grid-row:2}body.design-preview :is(.dfw-support,.airtable-workflow)>.opening.agency-preview-hero>:is(.support-study,.workflow-map),body.design-preview :is(.arc-catalog__hero,.arc-hero,.registry-arc__hero).agency-preview-hero>dl{grid-row:3}}
+body.design-preview .dfw-support>.opening.agency-preview-hero>.support-study{width:min(100%,48rem);max-width:48rem;justify-self:center;box-sizing:border-box}
+/* The brief is a working tool: keep its illustrative header compact beside the instructions. */
+body.design-preview .brief-workspace>header.agency-preview-hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:0 var(--space-performance-lg);align-items:center}
+body.design-preview .brief-workspace>header.agency-preview-hero>:is(h1,p){grid-column:1}
+body.design-preview .brief-workspace>header.agency-preview-hero>.agency-preview-media{grid-column:2;grid-row:1/span 4;max-width:24rem;margin:0;justify-self:center}
+@media(max-width:800px){body.design-preview .brief-workspace>header.agency-preview-hero{grid-template-columns:minmax(0,1fr)}body.design-preview .brief-workspace>header.agency-preview-hero>.agency-preview-media{grid-column:1;grid-row:auto;max-width:17rem;margin-block:var(--space-performance-md)}}
+/* Logged-out workspace entry stays in the same Canon slate shell as public preview pages. */
+body.design-preview[data-preview-route='/prospects'] :is(.layout-root.property-performance,.portal-splash){background:var(--color-performance-bg-pure)!important;color:var(--color-performance-fg-primary)!important}
+body.design-preview[data-preview-route='/prospects'] :is(.nav-editorial,footer){background:var(--color-performance-shell-surface)!important;color:var(--color-performance-fg-primary)!important}
+body.design-preview[data-preview-route='/prospects'] .nav-editorial a{color:var(--color-performance-fg-primary)!important}
+body.design-preview[data-preview-route='/prospects'] .nav-editorial .nav-cta{background:var(--color-performance-fg-primary)!important;color:var(--color-performance-bg-pure)!important}
+body.design-preview[data-preview-route='/prospects'] .portal-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 var(--space-performance-lg);max-width:70rem;background:var(--color-performance-shell-surface)!important;color:var(--color-performance-fg-primary)!important;border-color:var(--color-performance-shell-border-strong)}
+body.design-preview[data-preview-route='/prospects'] .portal-card>:not(.agency-preview-media){grid-column:1}
+body.design-preview[data-preview-route='/prospects'] .portal-card h1{font-family:var(--font-performance-interface);color:var(--color-performance-fg-primary)}
+body.design-preview[data-preview-route='/prospects'] .portal-card :is(.lede,.footnote,.eyebrow){color:var(--color-performance-fg-secondary)}
+body.design-preview[data-preview-route='/prospects'] .portal-card>.agency-preview-media{grid-column:2;grid-row:1/span 5;align-self:center;margin:0}
+@media(max-width:1000px){body.design-preview[data-preview-route='/prospects'] .portal-card{grid-template-columns:minmax(0,1fr)}body.design-preview[data-preview-route='/prospects'] .portal-card>.agency-preview-media{grid-column:1;grid-row:auto;max-width:24rem;justify-self:center;margin-top:var(--space-performance-md)}}
+body.design-preview[data-preview-route='/prospects'] .nav-editorial .nav-logo-asset{filter:invert(1)}
+body.design-preview[data-preview-route='/prospects'] .nav-editorial :is(.nav-dropdown__trigger,.nav-menu-button){color:var(--color-performance-fg-primary)!important;background:transparent!important;border-color:var(--color-performance-shell-border-strong)!important}
+body.design-preview[data-preview-route='/prospects'] .nav-editorial :is(.nav-dropdown__menu,.nav-mobile-menu,.nav-mobile-backdrop){background:var(--color-performance-shell-surface)!important;color:var(--color-performance-fg-primary)!important;border-color:var(--color-performance-shell-border-strong)!important}
+body.design-preview[data-preview-route='/prospects'] .nav-editorial .nav-cta,body.design-preview[data-preview-route='/prospects'] .meridian-offer-panel__action{border-color:var(--color-performance-shell-border-strong)!important;background:var(--color-performance-fg-primary)!important;color:var(--color-performance-bg-pure)!important}
+/* Catalog guides explain the task visually before route instructions and fit details. */
+body.design-preview .guide-shell>.guide-opening.agency-preview-hero{display:grid!important;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)!important;gap:var(--space-performance-md) var(--space-performance-lg);max-width:none;width:100%;min-height:0;height:auto;overflow:visible;align-items:center}
+body.design-preview .guide-shell>.guide-opening.agency-preview-hero>:is(.guide-back,.guide-eyebrow,h1,.guide-answer,.guide-actions){grid-column:1;margin-block:0}
+body.design-preview .guide-shell>.guide-opening.agency-preview-hero>h1{max-width:none}
+body.design-preview .guide-shell>.guide-opening.agency-preview-hero>.agency-preview-media{grid-column:2;grid-row:1/span 5;margin:0;align-self:center}
+body.design-preview .guide-shell>.guide-opening.agency-preview-hero>.guide-route{grid-column:1/-1;grid-row:6}
+body.design-preview .guide-shell>.guide-opening.agency-preview-hero>.guide-decision{grid-column:1/-1;grid-row:7}
+@media(max-width:1000px){body.design-preview .guide-shell>.guide-opening.agency-preview-hero{grid-template-columns:minmax(0,1fr)!important}body.design-preview .guide-shell>.guide-opening.agency-preview-hero>.agency-preview-media{grid-column:1;grid-row:6}body.design-preview .guide-shell>.guide-opening.agency-preview-hero>.guide-route{grid-row:7}body.design-preview .guide-shell>.guide-opening.agency-preview-hero>.guide-decision{grid-row:8}}
+@media(max-width:1000px){
+ body.design-preview .guide-shell>.guide-opening.agency-preview-hero>.guide-back{grid-row:1}
+ body.design-preview .guide-shell>.guide-opening.agency-preview-hero>.guide-eyebrow{grid-row:2}
+ body.design-preview .guide-shell>.guide-opening.agency-preview-hero>h1{grid-row:3}
+ body.design-preview .guide-shell>.guide-opening.agency-preview-hero>.agency-preview-media{grid-row:4}
+ body.design-preview .guide-shell>.guide-opening.agency-preview-hero>.guide-answer{grid-row:5}
+ body.design-preview .guide-shell>.guide-opening.agency-preview-hero>.guide-actions{grid-row:6}
+}
+/* Registry titles include compound service names; keep every word inside its copy column. */
+body.design-preview .registry-arc__hero.agency-preview-hero h1{overflow-wrap:anywhere;hyphens:auto;min-width:0}
+/* Technical catalog titles share the stage with imagery, rather than using full-width campaign scale. */
+body.design-preview .registry-arc__hero.agency-preview-hero h1{font-size:clamp(2.5rem,4.3vw,4.5rem)!important}
+@media(max-width:1000px){body.design-preview .registry-arc__hero.agency-preview-hero h1{font-size:clamp(2.5rem,7vw,4.5rem)!important}}
+
+/* Page-family composition: the subject sets the space; working tasks keep priority. */
+body.design-preview .agency-preview-media figcaption{font-size:11px!important;line-height:1.6!important;overflow-wrap:anywhere}
+body.design-preview .agency-preview-hero[data-agency-composition='wide']{grid-template-columns:minmax(0,1fr)!important}
+body.design-preview .performance-campaign-opening[data-agency-composition='wide']>.performance-campaign-opening__content{grid-column:1!important;grid-row:1!important;max-width:70rem!important;justify-self:start}
+body.design-preview .performance-campaign-opening[data-agency-composition='wide']>.agency-preview-media{grid-column:1!important;grid-row:2!important;width:100%;margin-top:var(--space-performance-md)!important}
+body.design-preview .performance-campaign-opening[data-agency-composition='wide']>.performance-campaign-opening__artifact{grid-row:3!important}
+body.design-preview .performance-campaign-opening[data-agency-composition='wide']>.agency-preview-media img{max-height:42rem!important}
+@media(min-width:1001px){
+ body.design-preview .performance-campaign-opening[data-agency-composition='inspection']{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)!important}
+ body.design-preview .performance-campaign-opening[data-agency-composition='inspection']>.performance-campaign-opening__content{grid-column:2!important;grid-row:1!important}
+ body.design-preview .performance-campaign-opening[data-agency-composition='inspection']>.agency-preview-media{grid-column:1!important;grid-row:1!important}
+ body.design-preview .clear-page-section--hero[data-agency-composition='inspection']{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)!important}
+ body.design-preview .clear-page-section--hero[data-agency-composition='inspection'] .clear-page-section__copy{grid-column:2!important;grid-row:1!important}
+ body.design-preview .clear-page-section--hero[data-agency-composition='inspection']>.agency-preview-media{grid-column:1!important;grid-row:1!important}
+ body.design-preview .agency-preview-hero[data-agency-composition='proof']>.agency-preview-media{max-width:32rem;justify-self:end;align-self:center}
+ body.design-preview .guide-opening[data-agency-composition='study']>.agency-preview-media{max-width:40rem;justify-self:end}
+}
+@media(max-width:1000px){
+ body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__content,
+ body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__content>header{display:contents!important}
+ body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__content>header>.performance-campaign-opening__identity{grid-column:1;grid-row:1}
+ body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__content>header>h1{grid-column:1;grid-row:2}
+ body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__content>header>.performance-campaign-opening__lede{grid-column:1;grid-row:3}
+ body.design-preview .performance-campaign-opening.agency-preview-hero>.agency-preview-media{grid-column:1!important;grid-row:4!important;margin-top:0!important}
+ body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__content>header>.performance-campaign-opening__actions{grid-column:1;grid-row:5;margin-top:0!important}
+ body.design-preview .performance-campaign-opening.agency-preview-hero .performance-campaign-opening__proof{grid-column:1!important;grid-row:6!important;margin-top:0!important}
+ body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__artifact{grid-column:1!important;grid-row:7!important;margin-top:0!important}
+ body.design-preview .agency-preview-hero .agency-preview-media[data-frame='whole'] img{max-height:none!important}
+}

@@ -1,0 +1,21 @@
+name: Agent Wiki
+on:
+  # Topology inputs span packages, apps, workers, Dify config and policy docs.
+  # Keep this unfiltered so new input locations cannot silently skip validation.
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  wiki:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - run: node --test packages/database-layer/test/agent-wiki*.test.mjs
+      - run: node packages/database-layer/scripts/generate-agent-wiki.mjs --check

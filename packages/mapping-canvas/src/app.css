@@ -1,2 +1,3 @@
 @import '@create-something/canon/styles/tokens.css';
+@import '@create-something/canon/styles/workspace.css';
 :root { color-scheme: dark; }

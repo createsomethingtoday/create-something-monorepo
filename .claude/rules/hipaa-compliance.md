@@ -1,3 +1,10 @@
+---
+paths:
+  - "packages/tend/src/lib/verticals/dental/**"
+  - "packages/agent-sdk/**"
+  - "packages/abundance-healthcare-mcp/**"
+---
+
 # HIPAA Compliance for Dental Practice Management
 
 Absolute rules for handling Protected Health Information (PHI) in AI-native dental practice management systems.

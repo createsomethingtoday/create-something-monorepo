@@ -1,5 +1,8 @@
 import { extractDescriptionList } from './html.js';
+import { parseDemoSignals } from './demo-signals.js';
+import { applyPopularShuffle, popularShuffleFor, popularShuffleWindow } from './popular-shuffle.js';
 import { lookupPublicSlugMap, resolveAlias } from './db.js';
+import { publicPurchaseBucket, publicViewerBucket } from './public-signals.js';
 import type {
   DocumentCountRow,
   DocumentRow,
@@ -41,6 +44,8 @@ function orderTieBreaker(includeTextRank: boolean): string {
 function sortClause(sort: TemplateSort, options: { textRankTieBreaker?: boolean } = {}): string {
   const tieBreaker = orderTieBreaker(options.textRankTieBreaker === true);
   switch (sort) {
+    case 'recommended':
+      return `CASE WHEN d.is_featured = 1 AND LENGTH(TRIM(COALESCE(d.reviewer_pick_reason, ''))) > 0 THEN 0 ELSE 1 END ASC, COALESCE(d.popularity_score, 0) DESC, COALESCE(d.published_date, '') DESC, ${tieBreaker}`;
     case 'best_selling':
       return `COALESCE(d.cumulative_purchases, 0) DESC, COALESCE(d.unique_viewers, 0) DESC, COALESCE(d.popularity_score, 0) DESC, COALESCE(d.published_date, '') DESC, ${tieBreaker}`;
     case 'newest':
@@ -104,6 +109,7 @@ const GRID_ITEM_SELECT_COLUMNS = [
   'd.child_categories_json',
   'd.child_category_slugs_json',
   'd.template_type',
+  'd.has_cms',
   'd.is_free',
   'd.is_featured',
   'd.reviewer_pick_reason',
@@ -196,6 +202,7 @@ function creatorSearchCandidates(query: string, mode: 'strict' | 'relaxed'): { f
 async function resolveAliases(env: Env, params: SearchParams): Promise<SearchParams> {
   return {
     ...params,
+    intent: params.intent ? {...params.intent, category_slugs: await Promise.all(params.intent.category_slugs.map(async slug => (await resolveAlias(env.DB, 'child_category', slug)) || slug))} : undefined,
     childCategorySlug: await resolveAlias(env.DB, 'child_category', params.childCategorySlug),
   };
 }
@@ -211,6 +218,11 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
     fromClause = candidates.fromClause;
     binds.push(...candidates.binds);
     queryMode = true;
+  }
+
+  if (params.intent) {
+    clauses.push(`EXISTS (SELECT 1 FROM template_child_categories portfolio_category WHERE portfolio_category.template_document_id = d.id AND portfolio_category.child_category_slug IN (${placeholderList(params.intent.category_slugs.length)}))`);
+    binds.push(...params.intent.category_slugs);
   }
 
   if (params.templateSlug) { clauses.push('d.template_slug = ?'); binds.push(params.templateSlug); }
@@ -330,6 +342,17 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
     binds.push(...params.types);
   }
 
+  if (params.maxPrice != null) {
+    // Unknown price is not proof of affordability. A confirmed free flag is.
+    clauses.push('(CASE WHEN d.price IS NOT NULL THEN d.price WHEN d.is_free = 1 THEN 0 ELSE NULL END) <= ?');
+    binds.push(params.maxPrice);
+  }
+
+  if (params.hasCms != null) {
+    clauses.push('d.has_cms = ?');
+    binds.push(params.hasCms ? 1 : 0);
+  }
+
   return {
     fromClause,
     whereClause: clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '',
@@ -341,6 +364,7 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
 function queryOrderClause(params: SearchParams, queryMode: boolean): string {
   if (!queryMode) return sortClause(params.sort);
   const creatorMatchFirst = 'search_candidates.creator_match DESC, ';
+  if (params.sort === 'recommended' && !params.intent) return `${creatorMatchFirst}text_rank ASC, ${sortClause(params.sort)}`;
   if (params.sort === 'popular') return `${creatorMatchFirst}text_rank ASC, ${sortClause(params.sort)}`;
   return `${creatorMatchFirst}${sortClause(params.sort, { textRankTieBreaker: true })}`;
 }
@@ -721,6 +745,8 @@ export async function searchTemplates(env: Env, rawParams: SearchParams, cacheVe
       }
     }
 
+    const shuffle = sqlParts.queryMode ? null : popularShuffleFor(env, params);
+    const shuffleWindow = shuffle ? popularShuffleWindow(shuffle, offset, params.pageSize) : null;
     rows = await env.DB
       .prepare(`
         SELECT
@@ -731,8 +757,12 @@ export async function searchTemplates(env: Env, rawParams: SearchParams, cacheVe
         ORDER BY ${orderClause}
         LIMIT ? OFFSET ?
       `)
-      .bind(...sqlParts.binds, params.pageSize, offset)
+      .bind(...sqlParts.binds, shuffleWindow?.limit ?? params.pageSize, shuffleWindow?.offset ?? offset)
       .all<DocumentRow>();
+    if (shuffle && shuffleWindow) {
+      const pageStart = offset - shuffleWindow.offset;
+      rows = { ...rows, results: applyPopularShuffle(shuffle, rows.results ?? [], shuffleWindow.offset).slice(pageStart, pageStart + params.pageSize) };
+    }
   }
 
   if (includeFacets) {
@@ -786,9 +816,10 @@ export async function searchTemplates(env: Env, rawParams: SearchParams, cacheVe
       is_featured: row.is_featured === 1,
       reviewer_pick_reason: row.reviewer_pick_reason,
       template_type: row.template_type,
+      has_cms: row.has_cms === null ? null : row.has_cms === 1,
       popularity_score: row.popularity_score,
-      unique_viewers: row.unique_viewers,
-      cumulative_purchases: row.cumulative_purchases,
+      unique_viewers: publicViewerBucket(row.unique_viewers),
+      cumulative_purchases: publicPurchaseBucket(row.cumulative_purchases),
       published_date: row.published_date,
       category_groups: buildCategoryGroups(categoryGroups, categoryGroupSlugs),
       child_categories: buildChildCategories(childCategories, childCategorySlugs, childSlugMap),
@@ -805,6 +836,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams, cacheVe
       item.included_pages = extractDescriptionList(row.description_long_html, 'pages');
       item.features = extractDescriptionList(row.description_long_html, 'features');
       item.source_updated_at = row.source_last_modified_time;
+      item.demo_signals = parseDemoSignals(row.demo_signals_json);
     }
 
     return item;
@@ -823,6 +855,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams, cacheVe
       has_previous_page: params.page > 1,
     },
     sort: params.sort,
+    ...(params.intent ? {interpretation: params.intent} : {}),
     applied_filters: {
       q: params.q,
       scope: params.scope,
@@ -836,6 +869,8 @@ export async function searchTemplates(env: Env, rawParams: SearchParams, cacheVe
       tags: params.tags,
       types: params.types,
       free_only: params.freeOnly,
+      has_cms: params.hasCms,
+      max_price: params.maxPrice ?? null,
       relaxed: relaxedQuery,
     },
     available_facets: {

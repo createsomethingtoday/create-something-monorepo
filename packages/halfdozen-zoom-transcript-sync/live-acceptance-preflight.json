@@ -1,0 +1,43 @@
+{
+  "checkedAt": "2026-10-23T16:34:39.886Z",
+  "credential": {
+    "project": "e1532079-2f2b-46b5-8972-cf7a025eb803",
+    "path": "/mcp-hub/hubs",
+    "environment": "prod",
+    "secretName": "CS_HUB_DANNY_API_TOKEN",
+    "available": true
+  },
+  "hubDiscovery": {
+    "authenticated": true,
+    "listServicesHttpStatus": 200,
+    "searchProxyToolsHttpStatus": 200,
+    "pinnedTool": "halfdozen-operator-notion-mcp__halfdozen_notion"
+  },
+  "target": {
+    "databaseId": "8f646f93-fdc8-4b43-8ad8-93125c38f8e0",
+    "dataSourceId": "cdd1ddf1-de0c-4470-ac13-ed190f8bc624",
+    "action": "get_database",
+    "executedAgainstNotion": false
+  },
+  "upstreamFailure": {
+    "httpStatus": 401,
+    "code": 801,
+    "slug": "APIKey_InvalidAPIKey",
+    "requestId": "7c3456cd-75b5-48d3-94dc-e7929b06a8a2",
+    "layer": "Composio API authentication"
+  },
+  "scopeMetadata": {
+    "operatorSyncContractCount": 2,
+    "contractsMatchingSyntheticDataSource": 0,
+    "notionNativeAutomationScopeVerified": false
+  },
+  "disposition": {
+    "pageCreated": false,
+    "pageModified": false,
+    "revokedGoldinConnectionUsed": false,
+    "credentialsChanged": false,
+    "permissionsChanged": false,
+    "deploymentAttempted": false,
+    "productionCutoffSelected": false
+  }
+}

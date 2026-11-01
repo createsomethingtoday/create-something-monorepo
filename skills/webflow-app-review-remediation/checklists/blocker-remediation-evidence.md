@@ -25,12 +25,14 @@ Use this checklist for each issued blocker — P1 or `unassigned` (treat `unassi
 - [ ] Responses omit reusable credentials and unnecessary tenant data.
 - [ ] Generated JavaScript, markup, and attributes use safe serialization and validation.
 - [ ] Custom Code lifecycle tests cover apply, update, site/page removal, and publish prompting when applicable.
+- [ ] Data Client/Hybrid Webflow OAuth `state` findings only (Designer Extension-only: `N/A`, no partner-owned Install URL or callback): the listing's Install URL is partner-owned and mints a fresh, single-use `state` per request; negative tests prove a stripped, mismatched, expired, replayed, or out-of-session `state` is rejected before the code exchange; the developer-Workspace Install button is recorded as outside the customer path, not accommodated.
 
 ## Production artifact
 
 - [ ] The exact production build command is recorded and passed.
 - [ ] The final submitted directory and `bundle.zip` were inspected—not only source output.
-- [ ] Development endpoints, tunnel hosts, stub identities, test data, and development framework code are absent from every submitted file, including source maps — judged by a marker that differs from the dependency's production output, not by a `dist/development` path name or a `localhost` literal in library or validation code.
+- [ ] Development endpoints, tunnel hosts, stub identities, test data, and development framework code are absent from every submitted file, including source maps — judged by a marker that differs from the dependency's production output, not by a `dist/development` path name or a bare `localhost` literal in library or validation code (Preflight reports the bare literal as a Suggested update; a localhost URL with a port, a path, or a tunnel host is a Required update).
+- [ ] No `.map` files or inline `data:` source maps remain inside the public bundle (a Required update on its own); the maps go in the submission form's private upload.
 - [ ] The manifest, product title, installation URL, requested scopes, dependency manifest, and source-map relationship match the intended release.
 - [ ] The artifact identifier or checksum is recorded.
 
@@ -42,6 +44,7 @@ Use this checklist for each issued blocker — P1 or `unassigned` (treat `unassi
 - [ ] GET and write-path authorization are tested separately when both exist.
 - [ ] Runtime URL, version, child resources, integrity behavior, and readiness signal are recorded when applicable.
 - [ ] App Review Preflight observations are labeled as evidence from the Webflow-controlled run, not reviewer acceptance — and any partner-supplied runtime test package is recorded as test input only, never as evidence.
+- [ ] Preflight results are reported in Preflight's own labels (Blocker, Required update, Manual review, Suggested update) and readiness (`ready`, `changes_required`, `needs_review`); a `needs_review` run and any Manual review item are recorded as evidence still owed, and a failed production-runtime check as a Preflight blocker (routed by the review team to the exceptions queue for Partner Program apps), never as advisory.
 
 ## Resubmission
 

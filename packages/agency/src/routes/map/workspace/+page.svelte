@@ -1,4 +1,5 @@
 <script lang="ts">
+	import '@create-something/canon/styles/workspace.css';
 	import { SEO } from '@create-something/canon';
 
 	let { data, form } = $props();
@@ -11,7 +12,7 @@
 	noindex={true}
 />
 
-<main class="workspace-shell">
+<main class="workspace-shell cs-workspace">
 	<header>
 		<div>
 			<p class="eyebrow">Authenticated workspace</p>
@@ -31,10 +32,12 @@
 				<span>Map title</span>
 				<input name="title" required maxlength="120" placeholder="Lead routing control map" />
 			</label>
+			<details><summary>Import a public canvas (optional)</summary>
 			<label>
 				<span>Optional canvas JSON</span>
 				<textarea name="canvas" rows="5" placeholder="Paste an exported public canvas to import it"></textarea>
 			</label>
+			</details>
 			{#if form?.message}<p class="error" role="alert">{form.message}</p>{/if}
 			<button type="submit">Create durable map</button>
 		</form>
@@ -74,32 +77,35 @@
 </main>
 
 <style>
-	.workspace-shell { max-width: 1120px; margin: 0 auto; padding: 7rem 1.5rem 5rem; color: var(--color-performance-ink, #090909); }
-	header { display: flex; justify-content: space-between; align-items: flex-end; gap: 2rem; margin-bottom: 3rem; }
-	.eyebrow { margin: 0 0 .75rem; text-transform: uppercase; letter-spacing: .12em; font-size: .75rem; color: var(--color-performance-muted, #5e6268); }
-	h1 { margin: 0; font-size: clamp(2.5rem, 7vw, 5.5rem); letter-spacing: -.06em; }
-	.lede { max-width: 680px; margin: 1rem 0 0; color: var(--color-performance-muted, #5e6268); line-height: 1.65; }
-	.public-link { color: inherit; white-space: nowrap; }
-	.create-card { display: grid; grid-template-columns: minmax(0, .8fr) minmax(320px, 1.2fr); gap: 2rem; padding: 2rem; border: 1px solid var(--color-performance-ink-soft, #262626); border-radius: 1rem; background: var(--color-performance-ink, #090909); color: var(--color-performance-panel, #ffffff); margin-bottom: 3rem; }
-	h2 { margin: 0 0 .6rem; }
-	.create-card p { color: #a1a1aa; line-height: 1.6; }
-	.empty { color: var(--color-performance-muted, #5e6268); line-height: 1.6; }
-	form { display: grid; gap: 1rem; }
-	label { display: grid; gap: .45rem; font-size: .8rem; color: #d4d4d8; }
-	input, textarea { width: 100%; box-sizing: border-box; border: 1px solid #3f3f46; border-radius: .6rem; padding: .8rem; background: #09090b; color: #fff; font: inherit; }
-	textarea { resize: vertical; font-family: ui-monospace, monospace; font-size: .8rem; }
-	button { justify-self: start; border: 0; border-radius: 999px; padding: .8rem 1.15rem; background: var(--color-performance-panel, #ffffff); color: var(--color-performance-ink, #090909); font-weight: 700; cursor: pointer; }
-	.error { color: #fca5a5 !important; }
-	.section-heading { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #2a2a2a; padding-bottom: 1rem; margin-bottom: 1.25rem; }
-	.section-heading span { color: #71717a; font-size: .85rem; }
-	.map-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
-	.map-card { display: grid; gap: 1.5rem; min-height: 150px; padding: 1.25rem; border: 1px solid var(--color-performance-ink-soft, #262626); border-radius: .8rem; color: var(--color-performance-panel, #ffffff); text-decoration: none; background: var(--color-performance-ink, #090909); }
-	.map-card:hover { border-color: #71717a; }
-	.map-card div { display: flex; justify-content: space-between; gap: 1rem; }
-	.map-card span, .map-card small { color: #a1a1aa; }
-	.map-card p { margin: 0; text-transform: capitalize; }
-	.archive { margin-top: 3rem; }
-	.archive-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid #27272a; }
-	.archive-row div { display: grid; gap: .25rem; } .archive-row small { color: var(--color-performance-muted, #5e6268); }
-	@media (max-width: 720px) { header { align-items: flex-start; flex-direction: column; } .create-card { grid-template-columns: 1fr; padding: 1.25rem; } }
+  .workspace-shell { box-sizing: border-box; min-height: 100svh; max-width: 1120px; margin: 0 auto; padding: var(--space-performance-xl) var(--workspace-gap) var(--space-performance-xl); }
+  header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--workspace-gap); margin-bottom: var(--space-performance-lg); }
+  .eyebrow { color: var(--workspace-quiet); font: var(--workspace-meta) var(--font-performance-mono); }
+  h1, h2 { font-family: var(--font-performance-interface); }
+  h1 { margin: 0; font-size: clamp(1.75rem, 4vw, 2.25rem); letter-spacing: var(--tracking-performance-tight); }
+  .lede { max-width: 65ch; color: var(--workspace-muted); line-height: 1.6; }
+  .public-link { color: var(--workspace-fg); min-height: var(--workspace-control-height); display: inline-flex; align-items: center; }
+  .create-card { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: var(--space-performance-md); padding: var(--space-performance-md); border: 1px solid var(--workspace-line); border-radius: var(--workspace-radius); background: var(--workspace-panel); margin-bottom: var(--space-performance-lg); }
+  h2 { margin: 0 0 var(--workspace-gap-small); font-size: var(--text-performance-body-sm); }
+  .create-card p, .empty { color: var(--workspace-muted); line-height: 1.6; }
+  form, label { display: grid; gap: var(--workspace-gap-small); min-width: 0; }
+  form { gap: var(--workspace-gap); }
+  label { color: var(--workspace-muted); }
+  summary { min-height: var(--workspace-control-height); cursor: pointer; padding-block: var(--workspace-gap-small); }
+  input, textarea { width: 100%; box-sizing: border-box; min-height: var(--workspace-control-height); border: 1px solid var(--workspace-strong-line); border-radius: var(--workspace-radius); padding: var(--workspace-gap-small); background: var(--workspace-bg); color: var(--workspace-fg); font: inherit; }
+  textarea { resize: vertical; font-family: var(--font-performance-mono); }
+  button { min-height: var(--workspace-control-height); justify-self: start; padding: var(--workspace-gap-small) var(--workspace-gap); border: 1px solid var(--workspace-fg); border-radius: var(--workspace-radius); background: var(--workspace-fg); color: var(--workspace-bg); font-weight: var(--font-performance-semibold); cursor: pointer; }
+  button:hover { background: var(--workspace-bg); color: var(--workspace-fg); }
+  .error { color: var(--color-performance-stop-soft); }
+  .section-heading { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--workspace-gap-small); border-bottom: 1px solid var(--workspace-line); padding-bottom: var(--workspace-gap); margin-bottom: var(--workspace-gap); }
+  .section-heading span { color: var(--workspace-muted); }
+  .map-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: var(--workspace-gap); }
+  .map-card { display: grid; gap: var(--workspace-gap); padding: var(--workspace-gap); border: 1px solid var(--workspace-line); border-radius: var(--workspace-radius); color: var(--workspace-fg); text-decoration: none; background: var(--workspace-panel); overflow-wrap: anywhere; }
+  .map-card:hover { background: var(--workspace-hover); border-color: var(--workspace-strong-line); }
+  .map-card div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--workspace-gap-small); }
+  .map-card span, .map-card small, .archive-row small { color: var(--workspace-muted); }
+  .map-card p { margin: 0; text-transform: capitalize; }
+  .archive { margin-top: var(--space-performance-lg); }
+  .archive-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--workspace-gap); padding-block: var(--workspace-gap); border-bottom: 1px solid var(--workspace-line); overflow-wrap: anywhere; }
+  .archive-row div { display: grid; gap: var(--workspace-gap-small); }
+  @media (max-width: 720px) { .create-card { grid-template-columns: 1fr; padding: var(--workspace-gap); } }
 </style>

@@ -1,0 +1,1757 @@
+use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
+use serde_json::{json, Value};
+use std::{fs, path::Path};
+use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
+use std::io::Write;
+use uuid::Uuid;
+use unicode_normalization::{UnicodeNormalization, char::is_combining_mark};
+
+const CATALOG: &str = include_str!("../migrations/notion_fields.json");
+const ENTITIES: [&str; 13] = [
+    "tasks",
+    "interactions",
+    "notes",
+    "gigs",
+    "finances",
+    "contacts",
+    "companies",
+    "documents",
+    "locations",
+    "schedule",
+    "tags",
+    "profile",
+    "services",
+];
+
+// Two scans replace a correlated contacts × companies × relations search.
+// Keep Unicode name normalization in Rust; never project private searchable fields.
+const CONTACT_COMPANY_SEARCH_SQL: &str = "SELECT r.from_id,co.title FROM relations r JOIN companies co ON co.id=r.to_id AND co.workspace_id=r.workspace_id WHERE r.workspace_id=?1 AND r.from_entity='contacts' AND r.to_entity='companies'
+    UNION ALL SELECT r.to_id,co.title FROM relations r JOIN companies co ON co.id=r.from_id AND co.workspace_id=r.workspace_id WHERE r.workspace_id=?1 AND r.from_entity='companies' AND r.to_entity='contacts'";
+const CONTACT_SEARCH_SQL: &str = "SELECT id,title,status,updated_at,json_extract(fields_json,'$.Email'),json_extract(fields_json,'$.Phone'),json_extract(fields_json,'$.Contact') FROM contacts WHERE workspace_id=?1 ORDER BY updated_at DESC,id";
+pub(crate) fn search_fold(value: &str) -> String {
+    value.nfd().filter(|ch| !is_combining_mark(*ch)).collect::<String>().to_lowercase()
+}
+fn search_contacts(db: &Connection, wid: &str, query: &str, offset: i64, limit: i64) -> Result<Value,String> {
+    // Both scans see the same state even if an agent edits companies concurrently.
+    let snapshot = db.unchecked_transaction().map_err(|e|e.to_string())?;
+    let folded=search_fold(query);
+    let tokens: Vec<&str>=folded.split_whitespace().collect();
+    // Empty after normalization is not a wildcard (e.g. combining marks alone).
+    if tokens.is_empty() {return Ok(json!({"items":[],"count":0,"limit":limit,"nextCursor":null}));}
+    let mut company_matches: std::collections::HashMap<String,Vec<bool>> = std::collections::HashMap::new();
+    let mut companies = snapshot.prepare(CONTACT_COMPANY_SEARCH_SQL).map_err(|e|e.to_string())?;
+    let links = companies.query_map([wid], |r| Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?))).map_err(|e|e.to_string())?;
+    for row in links {
+        let (id,title) = row.map_err(|e|e.to_string())?;
+        let title=search_fold(&title);
+        let matched:Vec<bool>=tokens.iter().map(|token|title.contains(token)).collect();
+        if matched.iter().any(|hit|*hit) {
+            let flags=company_matches.entry(id).or_insert_with(||vec![false;tokens.len()]);
+            for (flag,hit) in flags.iter_mut().zip(matched) {*flag |= hit;}
+        }
+    }
+    let mut contacts = snapshot.prepare(CONTACT_SEARCH_SQL).map_err(|e|e.to_string())?;
+    let found = contacts.query_map([wid], |r| Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?,r.get::<_,Option<String>>(2)?,r.get::<_,String>(3)?,r.get::<_,Option<String>>(4)?,r.get::<_,Option<String>>(5)?,r.get::<_,Option<String>>(6)?))).map_err(|e|e.to_string())?;
+    let mut count = 0i64; let mut items = Vec::new();
+    for row in found {
+        let (id,title,status,updated,email,phone,contact) = row.map_err(|e|e.to_string())?;
+        let values=[title.as_str(),email.as_deref().unwrap_or(""),phone.as_deref().unwrap_or(""),contact.as_deref().unwrap_or("")].map(search_fold);
+        if tokens.iter().enumerate().all(|(index,token)|values.iter().any(|value|value.contains(token)) || company_matches.get(&id).is_some_and(|flags|flags[index])) {
+            if count >= offset && count < offset + limit {items.push(json!({"id":id,"workspaceId":wid,"entity":"contacts","title":title.chars().take(120).collect::<String>(),"titleTruncated":title.chars().count()>120,"status":status,"updatedAt":updated}));}
+            count += 1;
+        }
+    }
+    let next = if offset + limit < count {Some((offset + limit).to_string())} else {None};
+    Ok(json!({"items":items,"count":count,"limit":limit,"nextCursor":next}))
+}
+
+fn need<'a>(input: &'a Value, key: &str) -> Result<&'a str, String> {
+    input
+        .get(key)
+        .and_then(Value::as_str)
+        .filter(|s| !s.trim().is_empty())
+        .ok_or_else(|| format!("{key} is required"))
+}
+fn table<'a>(input: &'a Value, key: &str) -> Result<&'a str, String> {
+    let name = need(input, key)?;
+    if ENTITIES.contains(&name) {
+        Ok(name)
+    } else {
+        Err(format!("unknown entity: {name}"))
+    }
+}
+fn catalog() -> Value {
+    serde_json::from_str(CATALOG).expect("reviewed Notion field catalog")
+}
+fn fields_for(entity: &str, input: &Value) -> Result<Value, String> {
+    let fields = input.get("fields").cloned().unwrap_or_else(|| json!({}));
+    let map = fields.as_object().ok_or("fields must be an object")?;
+    let c = catalog();
+    for (name, value) in map {
+        let kind = c[entity]["fields"][name]
+            .as_str()
+            .ok_or_else(|| format!("unknown {entity} field: {name}"))?;
+        if [
+            "Relation",
+            "Rollup",
+            "Formula",
+            "Created time",
+            "Last edited time",
+            "ID",
+        ]
+        .contains(&kind)
+        {
+            return Err(format!("{name} is relational or derived"));
+        }
+        let valid = if kind.contains("currency") {
+            value.as_i64().is_some()
+        } else if kind.starts_with("Number") {
+            value.is_number()
+        } else if kind == "Checkbox" {
+            value.is_boolean()
+        } else {
+            value.is_string() || value.is_null()
+        };
+        if !valid {
+            return Err(format!("invalid value for {name}: {kind}"));
+        }
+        if entity=="gigs"&&name=="Work kind"&&!value.is_null()&&!["Performance","Crew / work","Other"].contains(&value.as_str().unwrap_or("")){
+            return Err("Work kind must be Performance, Crew / work or Other; omit it to leave unclassified".into());
+        }
+        if entity=="profile"&&name=="Currency"&&!["USD","CAD","EUR","GBP"].contains(&value.as_str().unwrap_or("")){
+            return Err("unsupported currency for integer-cent beta".into());
+        }
+        if entity=="finances"&&name=="Direction"&&!["Income","Expense"].contains(&value.as_str().unwrap_or("")){
+            return Err("invalid finance direction".into());
+        }
+        if entity=="finances"&&name=="Status"&&!["Expected","Invoiced","Paid","Overdue"].contains(&value.as_str().unwrap_or("")){
+            return Err("invalid finance status".into());
+        }
+    }
+    Ok(fields)
+}
+pub(crate) fn open(root: &Path) -> Result<Connection, String> {
+    fs::create_dir_all(root).map_err(|e| e.to_string())?;
+    private_dir(root)?;
+    let path=root.join("gigi.sqlite");
+    private_file(&path)?;
+    let db = Connection::open(path).map_err(|e| e.to_string())?;
+    db.execute_batch("PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL;")
+        .map_err(|e| e.to_string())?;
+    let version: i64 = db
+        .query_row("PRAGMA user_version", [], |r| r.get(0))
+        .map_err(|e| e.to_string())?;
+    if version > 1 {
+        return Err(format!("database version {version} is newer than this app"));
+    }
+    if version == 0 {
+        db.execute_batch("BEGIN IMMEDIATE;
+            CREATE TABLE workspaces(id TEXT PRIMARY KEY,name TEXT NOT NULL,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+            CREATE TABLE record_index(workspace_id TEXT NOT NULL REFERENCES workspaces(id),entity TEXT NOT NULL,id TEXT NOT NULL,PRIMARY KEY(workspace_id,entity,id));
+            CREATE TABLE relations(workspace_id TEXT NOT NULL,from_entity TEXT NOT NULL,from_id TEXT NOT NULL,role TEXT NOT NULL,to_entity TEXT NOT NULL,to_id TEXT NOT NULL,PRIMARY KEY(workspace_id,from_entity,from_id,role,to_entity,to_id),
+                FOREIGN KEY(workspace_id,from_entity,from_id) REFERENCES record_index(workspace_id,entity,id),
+                FOREIGN KEY(workspace_id,to_entity,to_id) REFERENCES record_index(workspace_id,entity,id));
+            CREATE TABLE history(id TEXT PRIMARY KEY,workspace_id TEXT NOT NULL REFERENCES workspaces(id),operation TEXT NOT NULL,entity TEXT,record_id TEXT,summary TEXT NOT NULL,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+            CREATE TABLE mutation_receipts(workspace_id TEXT NOT NULL REFERENCES workspaces(id),operation TEXT NOT NULL,idempotency_key TEXT NOT NULL,request_json TEXT NOT NULL,result_json TEXT NOT NULL,PRIMARY KEY(workspace_id,operation,idempotency_key));").map_err(|e|e.to_string())?;
+        for entity in ENTITIES {
+            db.execute_batch(&format!("CREATE TABLE {entity}(id TEXT PRIMARY KEY,workspace_id TEXT NOT NULL REFERENCES workspaces(id),entity_name TEXT NOT NULL DEFAULT '{entity}' CHECK(entity_name='{entity}'),title TEXT NOT NULL,fields_json TEXT NOT NULL,source_json TEXT NOT NULL,source_key TEXT,money_cents INTEGER,status TEXT,occurred_at TEXT,rate_type TEXT,hours REAL,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(workspace_id,entity_name,id) REFERENCES record_index(workspace_id,entity,id));
+                CREATE INDEX idx_{entity}_workspace ON {entity}(workspace_id,updated_at,id);
+                CREATE UNIQUE INDEX idx_{entity}_source ON {entity}(workspace_id,source_key) WHERE source_key IS NOT NULL;")).map_err(|e|e.to_string())?;
+        }
+        db.execute_batch("PRAGMA user_version=1; COMMIT;")
+            .map_err(|e| e.to_string())?;
+    }
+    crate::artwork::ensure(&db)?;
+    Ok(db)
+}
+
+fn private_dir(path:&Path)->Result<(),String>{
+    if fs::symlink_metadata(path).map_err(|e|e.to_string())?.file_type().is_symlink(){return Err("GiGi data directory cannot be a symlink".into())}
+    fs::set_permissions(path,fs::Permissions::from_mode(0o700)).map_err(|e|e.to_string())
+}
+fn private_file(path:&Path)->Result<(),String>{
+    if path.exists(){
+        if fs::symlink_metadata(path).map_err(|e|e.to_string())?.file_type().is_symlink(){return Err("GiGi database path cannot be a symlink".into())}
+    }else{
+        let _=fs::OpenOptions::new().write(true).create_new(true).mode(0o600).open(path).map_err(|e|e.to_string())?;
+    }
+    fs::set_permissions(path,fs::Permissions::from_mode(0o600)).map_err(|e|e.to_string())
+}
+
+fn rfc3339(sqlite_timestamp:&str)->Result<String,String>{
+    if sqlite_timestamp.len()!=19 || sqlite_timestamp.as_bytes().get(10)!=Some(&b' '){return Err("invalid history timestamp".into())}
+    Ok(format!("{}T{}Z",&sqlite_timestamp[..10],&sqlite_timestamp[11..]))
+}
+fn audit_summary(entity:&str,id:&str,title:&str,fields:&Value)->String{
+    let mut parts=vec![format!("Saved {entity} {id}: {}",title.chars().take(120).collect::<String>())];
+    for key in ["Status","Date","Due Date","Fee","Amount","Direction","Rate Type","Role"]{
+        if let Some(value)=fields.get(key){
+            let display=if key=="Fee"||key=="Amount"{format!("{} cents",value)}else{value.as_str().unwrap_or("").chars().take(80).collect()};
+            if !display.is_empty(){parts.push(format!("{key} {display}"))}
+        }
+    }
+    parts.join("; ")
+}
+
+fn valid_iso_day(day: &str) -> bool {
+    let bytes = day.as_bytes();
+    if bytes.len() != 10 || bytes[4] != b'-' || bytes[7] != b'-'
+        || !bytes.iter().enumerate().all(|(i, b)| i == 4 || i == 7 || b.is_ascii_digit()) {
+        return false;
+    }
+    let year = day[0..4].parse::<u32>().unwrap_or(0);
+    let month = day[5..7].parse::<usize>().unwrap_or(0);
+    let date = day[8..10].parse::<u32>().unwrap_or(0);
+    if year == 0 || !(1..=12).contains(&month) { return false; }
+    let leap = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+    let days = [31, if leap {29} else {28}, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    date >= 1 && date <= days[month - 1]
+}
+
+fn overview_section(db: &Connection, wid: &str, entity: &str, cte: &str, order: &str, field_names: &[&str]) -> Result<Value, String> {
+    let count: i64 = db.query_row(&format!("{cte} SELECT count(*) FROM eligible"), [wid], |r| r.get(0)).map_err(|e| e.to_string())?;
+    let sql = format!("{cte} SELECT id,title,status,day,money_cents,fields_json FROM eligible ORDER BY {order} LIMIT 5");
+    let mut stmt = db.prepare(&sql).map_err(|e| e.to_string())?;
+    let rows = stmt.query_map([wid], |r| {
+        Ok((r.get::<_,String>(0)?, r.get::<_,String>(1)?, r.get::<_,Option<String>>(2)?, r.get::<_,Option<String>>(3)?, r.get::<_,Option<i64>>(4)?, r.get::<_,String>(5)?))
+    }).map_err(|e| e.to_string())?;
+    let mut items = Vec::new();
+    for row in rows {
+        let (id, title, status, day, money, stored_fields) = row.map_err(|e| e.to_string())?;
+        let fields: Value = serde_json::from_str(&stored_fields).map_err(|e| e.to_string())?;
+        let selected = field_names.iter().filter_map(|key| match fields.get(*key) {
+            Some(Value::String(value)) => Some(((*key).to_string(), json!(value.chars().take(160).collect::<String>()))),
+            Some(Value::Null) => Some(((*key).to_string(), Value::Null)),
+            _ => None,
+        }).collect::<serde_json::Map<String, Value>>();
+        let truncated = title.chars().count() > 120;
+        items.push(json!({"id":id,"workspaceId":wid,"entity":entity,"title":title.chars().take(120).collect::<String>(),"titleTruncated":truncated,"status":status.map(|s|s.chars().take(160).collect::<String>()),"date":day,"moneyCents":money,"fields":selected}));
+    }
+    Ok(json!({"items":items,"count":count}))
+}
+
+fn overview(db: &Connection, wid: &str, today: &str) -> Result<Value, String> {
+    workspace(db, wid)?;
+    // SQLite's julianday conversion normalizes impossible calendar days, so the
+    // round trip excludes malformed dates without treating text order as proof.
+    let is_valid = |column: &str| format!("{column} GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(julianday({column}))={column}");
+    let valid_day = is_valid("day");
+    let active = "lower(trim(coalesce(status,''))) NOT IN ('done','complete','completed','cancelled','canceled')";
+    let gigs_cte = format!("WITH source AS (SELECT id,title,status,substr(occurred_at,1,10) AS day,money_cents,fields_json FROM gigs WHERE workspace_id=?1), eligible AS (SELECT * FROM source WHERE {active} AND {valid_day} AND day>='{today}')");
+    let tasks_cte = format!("WITH source AS (SELECT id,title,status,substr(json_extract(fields_json,'$.\"Due Date\"'),1,10) AS due_day,substr(json_extract(fields_json,'$.\"Do Date\"'),1,10) AS do_day,money_cents,fields_json FROM tasks WHERE workspace_id=?1), resolved AS (SELECT *,CASE WHEN {due_valid} THEN due_day WHEN {do_valid} THEN do_day ELSE NULL END AS day FROM source), eligible AS (SELECT * FROM resolved WHERE {active})",due_valid=is_valid("due_day"),do_valid=is_valid("do_day"));
+    let finances_cte = format!("WITH source AS (SELECT id,title,status,substr(json_extract(fields_json,'$.\"Due Date\"'),1,10) AS due_day,substr(occurred_at,1,10) AS occurred_day,money_cents,fields_json FROM finances WHERE workspace_id=?1), resolved AS (SELECT *,CASE WHEN {due_valid} THEN due_day WHEN {occurred_valid} THEN occurred_day ELSE NULL END AS day FROM source), eligible AS (SELECT * FROM resolved WHERE lower(trim(coalesce(status,''))) IN ('expected','invoiced','overdue'))",due_valid=is_valid("due_day"),occurred_valid=is_valid("occurred_day"));
+    let gigs = overview_section(db,wid,"gigs",&gigs_cte,"day ASC,id ASC", &["Date"])?;
+    let tasks = overview_section(db,wid,"tasks",&tasks_cte,"day IS NULL,day ASC,id ASC", &["Due Date","Do Date","Priority"])?;
+    let finances = overview_section(db,wid,"finances",&finances_cte,"day IS NULL,day ASC,id ASC", &["Date","Due Date","Direction"])?;
+    let counts: (i64,i64,i64,i64) = db.query_row("SELECT (SELECT count(*) FROM gigs WHERE workspace_id=?1),(SELECT count(*) FROM tasks WHERE workspace_id=?1),(SELECT count(*) FROM contacts WHERE workspace_id=?1),(SELECT count(*) FROM finances WHERE workspace_id=?1)",[wid],|r|Ok((r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)?))).map_err(|e|e.to_string())?;
+    let undated_count: i64 = db.query_row(&format!("WITH source AS (SELECT status,substr(occurred_at,1,10) AS day FROM gigs WHERE workspace_id=?1) SELECT count(*) FROM source WHERE {active} AND coalesce(({valid_day}),0)=0"),[wid],|r|r.get(0)).map_err(|e|e.to_string())?;
+    Ok(json!({"gigs":gigs,"tasks":tasks,"finances":finances,"counts":{"gigs":counts.0,"tasks":counts.1,"contacts":counts.2,"finances":counts.3},"undatedGigsCount":undated_count}))
+}
+
+/// Stage this app's private workspace history as CTX Custom History JSONL v2.
+pub fn export_history(root:&Path)->Result<Value,String>{
+    let db=open(root)?;
+    let (wid,created):(String,String)=db.query_row("SELECT id,created_at FROM workspaces ORDER BY created_at LIMIT 1",[],|r|Ok((r.get(0)?,r.get(1)?))).map_err(|_|"workspace not found")?;
+    let source_id=format!("gigi-{wid}");
+    let session_id=format!("workspace-{wid}");
+    let mut lines=Vec::<Value>::new();
+    lines.push(json!({"record_type":"manifest","schema_version":"ctx-history-jsonl-v2","producer":"gigi-desktop"}));
+    lines.push(json!({"record_type":"source","source_id":source_id,"provider_key":"gigi-local","source_format":"gigi-sqlite-history-v1","trust":"provider_export","fidelity":"summary_only"}));
+    lines.push(json!({"record_type":"session","source_id":source_id,"provider_session_id":session_id,"started_at":rfc3339(&created)?,"status":"active","fidelity":"summary_only"}));
+    let mut stmt=db.prepare("SELECT rowid,id,operation,entity,record_id,summary,created_at FROM history WHERE workspace_id=?1 ORDER BY rowid").map_err(|e|e.to_string())?;
+    let events=stmt.query_map([&wid],|r|Ok((r.get::<_,i64>(0)?,r.get::<_,String>(1)?,r.get::<_,String>(2)?,r.get::<_,Option<String>>(3)?,r.get::<_,Option<String>>(4)?,r.get::<_,String>(5)?,r.get::<_,String>(6)?))).map_err(|e|e.to_string())?;
+    let mut count=0_usize;
+    for event in events{
+        let (index,id,operation,entity,record_id,summary,created_at)=event.map_err(|e|e.to_string())?;
+        if index<1{return Err("invalid history index".into())}
+        lines.push(json!({"record_type":"event","source_id":source_id,"provider_session_id":session_id,"event_index":index-1,"event_id":id,"event_type":"message","role":"tool","occurred_at":rfc3339(&created_at)?,"fidelity":"summary_only","payload":{"text":summary,"operation":operation,"entity":entity,"recordId":record_id}}));
+        count+=1;
+    }
+    let imports=root.join("imports");fs::create_dir_all(&imports).map_err(|e|e.to_string())?;private_dir(&imports)?;
+    let temporary=imports.join(format!(".gigi-history-{}.tmp",Uuid::new_v4()));
+    let target=imports.join("gigi-history.jsonl");
+    let write_result=(||->Result<(),String>{
+        let mut file=fs::OpenOptions::new().write(true).create_new(true).mode(0o600).open(&temporary).map_err(|e|e.to_string())?;
+        for line in &lines {file.write_all(line.to_string().as_bytes()).and_then(|_|file.write_all(b"\n")).map_err(|e|e.to_string())?;}
+        file.sync_all().map_err(|e|e.to_string())?;
+        fs::rename(&temporary,&target).map_err(|e|e.to_string())?;
+        Ok(())
+    })();
+    if write_result.is_err(){let _=fs::remove_file(&temporary);}
+    write_result?;
+    Ok(json!({"workspaceId":wid,"events":count,"format":"ctx-history-jsonl-v2","staged":true}))
+}
+fn workspace(db: &Connection, id: &str) -> Result<(), String> {
+    let count: i64 = db
+        .query_row("SELECT count(*) FROM workspaces WHERE id=?1", [id], |r| {
+            r.get(0)
+        })
+        .map_err(|e| e.to_string())?;
+    if count == 1 {
+        Ok(())
+    } else {
+        Err("workspace not found".into())
+    }
+}
+fn get(db: &Connection, wid: &str, entity: &str, id: &str) -> Result<Value, String> {
+    let sql=format!("SELECT title,fields_json,source_json,created_at,updated_at FROM {entity} WHERE workspace_id=?1 AND id=?2");
+    let row: (String, String, String, String, String) = db
+        .query_row(&sql, params![wid, id], |r| {
+            Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?))
+        })
+        .optional()
+        .map_err(|e| e.to_string())?
+        .ok_or("record not found")?;
+    let mut stmt=db.prepare("SELECT from_entity,from_id,role,to_entity,to_id FROM relations WHERE workspace_id=?1 AND ((from_entity=?2 AND from_id=?3) OR (to_entity=?2 AND to_id=?3)) ORDER BY from_entity,from_id,role,to_entity,to_id LIMIT 100").map_err(|e|e.to_string())?;
+    let mut links=stmt.query_map(params![wid,entity,id],|r|Ok(json!({"fromEntity":r.get::<_,String>(0)?,"fromId":r.get::<_,String>(1)?,"role":r.get::<_,String>(2)?,"toEntity":r.get::<_,String>(3)?,"toId":r.get::<_,String>(4)?}))).map_err(|e|e.to_string())?.collect::<Result<Vec<_>,_>>().map_err(|e|e.to_string())?;
+    for link in &mut links {
+        for side in ["from","to"] {
+            let endpoint_entity=link[format!("{side}Entity")].as_str().ok_or("invalid relation entity")?;
+            let endpoint_id=link[format!("{side}Id")].as_str().ok_or("invalid relation id")?;
+            if !ENTITIES.contains(&endpoint_entity){return Err("invalid relation entity".into())}
+            let title:Option<String>=db.query_row(&format!("SELECT title FROM {endpoint_entity} WHERE workspace_id=?1 AND id=?2"),params![wid,endpoint_id],|r|r.get(0)).optional().map_err(|e|e.to_string())?;
+            let title=title.ok_or("relation endpoint missing")?;
+            link[format!("{side}Title")]=json!(title.chars().take(120).collect::<String>());
+            link[format!("{side}TitleTruncated")]=json!(title.chars().count()>120);
+        }
+    }
+    let link_count:i64=db.query_row("SELECT count(*) FROM relations WHERE workspace_id=?1 AND ((from_entity=?2 AND from_id=?3) OR (to_entity=?2 AND to_id=?3))",params![wid,entity,id],|r|r.get(0)).map_err(|e|e.to_string())?;
+    Ok(
+        json!({"id":id,"workspaceId":wid,"entity":entity,"title":row.0,"fields":serde_json::from_str::<Value>(&row.1).map_err(|e|e.to_string())?,"source":serde_json::from_str::<Value>(&row.2).map_err(|e|e.to_string())?,"createdAt":row.3,"updatedAt":row.4,"relations":links,"relationCount":link_count,"relationsTruncated":link_count>100,"identity":crate::event_identity::project(entity,&serde_json::from_str::<Value>(&row.1).map_err(|e|e.to_string())?,&serde_json::from_str::<Value>(&row.2).map_err(|e|e.to_string())?),"cover":crate::artwork::resolved_cover(db,wid,entity,id)?,"coverRevision":crate::artwork::revision(db,wid,entity,id)?}),
+    )
+}
+fn relation_page(db:&Connection,input:&Value)->Result<Value,String>{
+    let wid=need(input,"workspaceId")?;let entity=table(input,"entity")?;let id=need(input,"id")?;
+    workspace(db,wid)?;
+    if db.query_row("SELECT 1 FROM record_index WHERE workspace_id=?1 AND entity=?2 AND id=?3",params![wid,entity,id],|r|r.get::<_,i64>(0)).optional().map_err(|e|e.to_string())?.is_none(){return Err("record not found".into())}
+    let limit=match input.get("limit"){None=>100,Some(v)=>v.as_u64().filter(|v|*v>0&&*v<=100).ok_or("relation limit must be 1..100")? as i64};
+    let mut after=vec![String::new();5];let mut has_cursor=false;
+    if let Some(cursor)=input.get("cursor").filter(|v|!v.is_null()){
+        let text=cursor.as_str().filter(|s|s.len()<=8192).ok_or("invalid relation cursor")?;
+        let parts:Vec<String>=serde_json::from_str(text).map_err(|_|"invalid relation cursor")?;
+        if parts.len()!=8 || parts[0]!=wid || parts[1]!=entity || parts[2]!=id{return Err("relation cursor scope mismatch".into())}
+        after=parts[3..].to_vec();has_cursor=true;
+    }
+    let mut stmt=db.prepare("SELECT from_entity,from_id,role,to_entity,to_id FROM relations WHERE workspace_id=?1 AND ((from_entity=?2 AND from_id=?3) OR (to_entity=?2 AND to_id=?3)) AND (?4=0 OR (from_entity,from_id,role,to_entity,to_id)>(?5,?6,?7,?8,?9)) ORDER BY from_entity,from_id,role,to_entity,to_id LIMIT ?10").map_err(|e|e.to_string())?;
+    let mut keys=stmt.query_map(params![wid,entity,id,has_cursor,after[0],after[1],after[2],after[3],after[4],limit+1],|r|Ok(vec![r.get::<_,String>(0)?,r.get(1)?,r.get(2)?,r.get(3)?,r.get(4)?])).map_err(|e|e.to_string())?.collect::<Result<Vec<_>,_>>().map_err(|e|e.to_string())?;
+    let more=keys.len()>limit as usize;keys.truncate(limit as usize);
+    let next=if more {let mut scoped=vec![wid.to_owned(),entity.to_owned(),id.to_owned()];scoped.extend(keys.last().unwrap().clone());Some(serde_json::to_string(&scoped).map_err(|e|e.to_string())?)}else{None};
+    let mut items=Vec::new();
+    for k in keys {let mut link=json!({"fromEntity":k[0],"fromId":k[1],"role":k[2],"toEntity":k[3],"toId":k[4]});
+        for (side,e,i) in [("from",&k[0],&k[1]),("to",&k[3],&k[4])]{if !ENTITIES.contains(&e.as_str()){return Err("invalid relation entity".into())}let title:String=db.query_row(&format!("SELECT title FROM {e} WHERE workspace_id=?1 AND id=?2"),params![wid,i],|r|r.get(0)).map_err(|_|"relation endpoint missing")?;link[format!("{side}Title")]=json!(title.chars().take(120).collect::<String>());link[format!("{side}TitleTruncated")]=json!(title.chars().count()>120);}
+        items.push(link);
+    }
+    let count:i64=db.query_row("SELECT count(*) FROM relations WHERE workspace_id=?1 AND ((from_entity=?2 AND from_id=?3) OR (to_entity=?2 AND to_id=?3))",params![wid,entity,id],|r|r.get(0)).map_err(|e|e.to_string())?;
+    Ok(json!({"items":items,"count":count,"limit":limit,"nextCursor":next}))
+}
+
+fn bounded(mut record: Value, full: bool) -> Value {
+    if full {
+        return record;
+    }
+    let mut remaining = 3500_usize;
+    let mut truncated = Vec::<String>::new();
+    if let Some(fields) = record.get_mut("fields").and_then(Value::as_object_mut) {
+        for (key, value) in fields {
+            if let Some(text) = value.as_str() {
+                let allowed = remaining.min(512);
+                let cut: String = text.chars().take(allowed).collect();
+                let count = text.chars().count();
+                remaining = remaining.saturating_sub(cut.chars().count());
+                if count > cut.chars().count() {
+                    truncated.push(key.clone())
+                }
+                *value = Value::String(cut);
+            }
+        }
+    }
+    if let Some(source) = record.get_mut("source") {
+        *source = json!({"kind":source["kind"],"provider":source["provider"],"externalId":source["externalId"]});
+    }
+    if let Some(relations) = record.get_mut("relations").and_then(Value::as_array_mut) {
+        if relations.len() > 10 {
+            relations.truncate(10);
+            record["relationsTruncated"] = json!(true)
+        }
+    }
+    record["truncatedFields"] = json!(truncated);
+    record
+}
+fn history(
+    db: &Connection,
+    wid: &str,
+    op: &str,
+    entity: Option<&str>,
+    id: Option<&str>,
+    summary: &str,
+) -> Result<(), String> {
+    db.execute("INSERT INTO history(id,workspace_id,operation,entity,record_id,summary) VALUES(?1,?2,?3,?4,?5,?6)",params![Uuid::new_v4().to_string(),wid,op,entity,id,summary]).map_err(|e|e.to_string())?;
+    Ok(())
+}
+fn replay(db: &Connection, wid: &str, op: &str, input: &Value) -> Result<Option<Value>, String> {
+    let Some(key) = input.get("idempotencyKey").and_then(Value::as_str) else {
+        return Ok(None);
+    };
+    if key.is_empty() || key.len() > 200 {
+        return Err("idempotencyKey must be 1-200 characters".into());
+    }
+    let prior:Option<(String,String)>=db.query_row("SELECT request_json,result_json FROM mutation_receipts WHERE workspace_id=?1 AND operation=?2 AND idempotency_key=?3",params![wid,op,key],|r|Ok((r.get(0)?,r.get(1)?))).optional().map_err(|e|e.to_string())?;
+    let request_json = input.to_string();
+    match prior {
+        Some((request, result)) if request == request_json => Ok(Some(
+            serde_json::from_str(&result).map_err(|e| e.to_string())?,
+        )),
+        Some(_) => Err("idempotency key reused with different input".into()),
+        None => Ok(None),
+    }
+}
+fn receipt(
+    db: &Connection,
+    wid: &str,
+    op: &str,
+    input: &Value,
+    result: &Value,
+) -> Result<(), String> {
+    if let Some(key) = input.get("idempotencyKey").and_then(Value::as_str) {
+        db.execute(
+            "INSERT INTO mutation_receipts VALUES(?1,?2,?3,?4,?5)",
+            params![wid, op, key, input.to_string(), result.to_string()],
+        )
+        .map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
+    if !input.is_object() {
+        return Err("input must be an object".into());
+    }
+    let mut db = open(root)?;
+    match op {
+        "schema.describe" => {
+            let entity = table(&input, "entity")?;
+            let c = catalog();
+            let relations = c[entity]["relationFields"]
+                .as_object()
+                .ok_or("relation catalog unavailable")?;
+            let relation_fields: Vec<Value> = relations
+                .iter()
+                .map(|(name, target)| json!({"name":name,"targetEntity":target}))
+                .collect();
+            Ok(
+                json!({"entity":entity,"fields":c[entity]["fields"],"relationFields":relation_fields}),
+            )
+        }
+        "workspace.create" => {
+            let name = need(&input, "name")?.trim();
+            if name.len() > 200 {
+                return Err("name too long".into());
+            }
+            let existing: Option<(String, String)> = db
+                .query_row(
+                    "SELECT id,name FROM workspaces ORDER BY created_at LIMIT 1",
+                    [],
+                    |r| Ok((r.get(0)?, r.get(1)?)),
+                )
+                .optional()
+                .map_err(|e| e.to_string())?;
+            if let Some((id, name)) = existing {
+                return Ok(json!({"id":id,"name":name,"existing":true}));
+            }
+            let id = Uuid::new_v4().to_string();
+            db.execute(
+                "INSERT INTO workspaces(id,name) VALUES(?1,?2)",
+                params![id, name],
+            )
+            .map_err(|e| e.to_string())?;
+            history(&db, &id, op, None, None, "Workspace created")?;
+            Ok(json!({"id":id,"name":name,"existing":false}))
+        }
+        "workspace.get" => {
+            let row: Option<(String, String, String)> =
+                if let Some(id) = input.get("workspaceId").and_then(Value::as_str) {
+                    db.query_row(
+                        "SELECT id,name,created_at FROM workspaces WHERE id=?1",
+                        [id],
+                        |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+                    )
+                    .optional()
+                } else {
+                    db.query_row(
+                        "SELECT id,name,created_at FROM workspaces ORDER BY created_at LIMIT 1",
+                        [],
+                        |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+                    )
+                    .optional()
+                }
+                .map_err(|e| e.to_string())?;
+            Ok(row
+                .map(|(id, name, created)| json!({"id":id,"name":name,"createdAt":created}))
+                .unwrap_or(Value::Null))
+        }
+        "agenda.list" => {
+            let wid=need(&input,"workspaceId")?;workspace(&db,wid)?;
+            let today=need(&input,"today")?;let zone=need(&input,"timeZone")?;
+            let kind=input.get("recordKind").map(|v|v.as_str().ok_or("recordKind must be text")).transpose()?;
+            if kind.is_some_and(|k|!["calendar_event","performance","crew_work","other","unclassified"].contains(&k)){return Err("Unknown agenda classification".into())}
+            let number=|key:&str,default:u64,max:u64|->Result<usize,String>{match input.get(key){None=>Ok(default as usize),Some(v)=>v.as_u64().filter(|n|*n<=max && (key!="limit" || *n>0)).map(|n|n as usize).ok_or_else(||format!("Invalid agenda {key}"))}};
+            crate::agenda::list(&db,wid,today,zone,kind,number("offset",0,10000)?,number("limit",5,50)?)
+        }
+        "workspace.overview" => {
+            let wid = need(&input, "workspaceId")?;
+            let today = need(&input, "today")?;
+            if !valid_iso_day(today) { return Err("today must be a valid YYYY-MM-DD date".into()); }
+            let mut result=overview(&db, wid, today)?;
+            result["events"]=crate::agenda::overview(&db,wid,today,input["timeZone"].as_str().unwrap_or("UTC"))?;
+            Ok(result)
+        }
+        "records.save" => {
+            let wid = need(&input, "workspaceId")?;
+            let entity = table(&input, "entity")?;
+            let title = need(&input, "title")?.trim();
+            if title.len() > 500 {
+                return Err("title too long".into());
+            }
+            let replace_fields = match input.get("fieldsMode") {
+                None => false,
+                Some(Value::String(mode)) if mode == "merge" => false,
+                Some(Value::String(mode)) if mode == "replace" => true,
+                _ => return Err("fieldsMode must be merge or replace".into()),
+            };
+            if replace_fields && input.get("fields").and_then(Value::as_object).is_none() {
+                return Err("fieldsMode replace requires an object fields".into());
+            }
+            let mut fields = fields_for(entity, &input)?;
+            let tx = db.transaction_with_behavior(TransactionBehavior::Immediate).map_err(|e| e.to_string())?;
+            workspace(&tx, wid)?;
+            if let Some(previous) = replay(&tx, wid, op, &input)? {
+                return Ok(previous);
+            }
+            let id = input
+                .get("id")
+                .and_then(Value::as_str)
+                .map(str::to_string)
+                .unwrap_or_else(|| Uuid::new_v4().to_string());
+            if id.is_empty() || id.len() > 200 {
+                return Err("invalid id".into());
+            }
+            // Resolve attribution from stored data inside the creation transaction.
+            let conversion = if let Some(reference) = input.get("sourceRecord") {
+                if !["tasks", "gigs"].contains(&entity) || input.get("source").is_some()
+                    || input.get("expectedRecord").is_some() || input.get("fieldsMode").is_some() {
+                    return Err("source conversion requires a new task or gig without source overrides".into());
+                }
+                need(&input, "idempotencyKey")?;
+                let from = need(reference, "entity")?;
+                let provider = match from { "interactions" => "gmail", "schedule" => "googlecalendar", _ => return Err("invalid source record type".into()) };
+                let origin_id = need(reference, "id")?;
+                let account = need(reference, "connectedAccountId")?;
+                let origin = get(&tx, wid, from, origin_id)?;
+                let expected = reference.get("expectedRecord").ok_or("source snapshot required")?;
+                if expected.get("title") != origin.get("title") || expected.get("fields") != origin.get("fields")
+                    || expected.get("source") != origin.get("source") {
+                    return Err("source record changed; reopen it and review a new proposal".into());
+                }
+                let mut attribution = origin["source"].clone();
+                if attribution["kind"] != "import" || attribution["provider"] != provider
+                    || attribution["connectedAccountId"] != account {
+                    return Err("source account or provenance mismatch".into());
+                }
+                need(&attribution, "externalId")?;
+                need(&attribution, "collectionId")?;
+                attribution["kind"] = json!("derived");
+                let c = catalog();
+                let roles = c[entity]["relationFields"].as_object().ok_or("relation catalog unavailable")?;
+                let role = roles.iter().find(|(_, target)| target.as_str() == Some(from))
+                    .map(|(role, _)| role.clone()).ok_or("source relation unavailable")?;
+                let exists: bool = tx.query_row(&format!("SELECT EXISTS(SELECT 1 FROM {entity} WHERE id=?1)"), [&id], |r| r.get(0)).map_err(|e|e.to_string())?;
+                if exists { return Err("source conversion cannot overwrite an existing record".into()); }
+                Some((from.to_string(), origin_id.to_string(), role, attribution))
+            } else { None };
+            let prior:Option<(String,String,Option<String>,String)>=tx.query_row(&format!("SELECT title,source_json,source_key,fields_json FROM {entity} WHERE workspace_id=?1 AND id=?2"),params![wid,id],|r|Ok((r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)?))).optional().map_err(|e|e.to_string())?;
+            if let Some(expected) = input.get("expectedRecord") {
+                let expected_title = expected.get("title").and_then(Value::as_str).ok_or("expectedRecord requires title, fields, and source")?;
+                let expected_fields = expected.get("fields").filter(|v| v.is_object()).ok_or("expectedRecord requires title, fields, and source")?;
+                let expected_source = expected.get("source").filter(|v| v.is_object()).ok_or("expectedRecord requires title, fields, and source")?;
+                let matches = match &prior {
+                    Some((prior_title, prior_source, _, prior_fields)) => {
+                        prior_title == expected_title
+                            && serde_json::from_str::<Value>(prior_fields).map_err(|e|e.to_string())? == *expected_fields
+                            && serde_json::from_str::<Value>(prior_source).map_err(|e|e.to_string())? == *expected_source
+                    }
+                    None => false,
+                };
+                if !matches {
+                    return Err("record changed since it was opened. Your edits are still here; copy them, then reopen the record and try again".into());
+                }
+            }
+            if !replace_fields {
+                if let Some((_, _, _, prior_fields)) = &prior {
+                    let mut merged: Value = serde_json::from_str(prior_fields).map_err(|e|e.to_string())?;
+                    let saved = merged.as_object_mut().ok_or("stored fields must be an object")?;
+                    saved.extend(fields.as_object().ok_or("fields must be an object")?.clone());
+                    fields = merged;
+                }
+            }
+            if entity=="profile" {
+                let current:Option<String>=tx.query_row("SELECT json_extract(fields_json,'$.Currency') FROM profile WHERE workspace_id=?1 ORDER BY updated_at DESC LIMIT 1",[wid],|r|r.get(0)).optional().map_err(|e|e.to_string())?.flatten();
+                let next=fields.get("Currency").and_then(Value::as_str);
+                if current.is_some() && current.as_deref()!=next {
+                    let has_money:i64=tx.query_row("SELECT (SELECT count(*) FROM gigs WHERE workspace_id=?1 AND money_cents IS NOT NULL)+(SELECT count(*) FROM finances WHERE workspace_id=?1 AND money_cents IS NOT NULL)+(SELECT count(*) FROM profile WHERE workspace_id=?1 AND money_cents IS NOT NULL)",[wid],|r|r.get(0)).map_err(|e|e.to_string())?;
+                    if has_money>0{return Err("currency cannot change after monetary records exist; export and convert values explicitly before changing currency".into())}
+                }
+            }
+            let prior_source = prior
+                .as_ref()
+                .and_then(|p| serde_json::from_str::<Value>(&p.1).ok());
+            let mut source = conversion.as_ref().map(|value| value.3.clone()).or_else(|| input
+                .get("source")
+                .cloned())
+                .or_else(|| prior_source.clone())
+                .unwrap_or_else(|| json!({"kind":"manual"}));
+            if source.get("kind").and_then(Value::as_str).is_none() {
+                return Err("source.kind is required".into());
+            }
+            if source["kind"] == "manual"
+                && prior_source.as_ref().is_some_and(|s| s["kind"] != "manual")
+            {
+                source["origin"] = prior_source.unwrap();
+            }
+            if fields.to_string().len() > 32_000 || source.to_string().len() > 2_000 {
+                return Err("record detail exceeds local limit".into());
+            }
+            let source_key = if source["kind"] == "manual" {
+                prior.as_ref().and_then(|p| p.2.clone())
+            } else {
+                let provider = source
+                    .get("provider")
+                    .and_then(Value::as_str)
+                    .ok_or("source.provider required for import")?;
+                let external_id = source
+                    .get("externalId")
+                    .and_then(Value::as_str)
+                    .ok_or("source.externalId required for import")?;
+                let connected_account=source.get("connectedAccountId").and_then(Value::as_str);
+                let collection=source.get("collectionId").and_then(Value::as_str);
+                Some(json!([provider,connected_account,collection,external_id]).to_string())
+            };
+            if let Some(ref key) = source_key {
+                let prior: Option<String> = tx
+                    .query_row(
+                        &format!("SELECT id FROM {entity} WHERE workspace_id=?1 AND source_key=?2"),
+                        params![wid, key],
+                        |r| r.get(0),
+                    )
+                    .optional()
+                    .map_err(|e| e.to_string())?;
+                if let Some(prior_id) = prior {
+                    if prior_id != id && (input.get("id").is_none() || conversion.is_some()) {
+                        let mut result = get(&tx, wid, entity, &prior_id)?;
+                        if source["kind"] == "import" { result["importDisposition"] = json!("existing"); }
+                        if let Some((from, origin_id, _, _)) = &conversion {
+                            result["sourceProposal"] = json!({"outcome":"existing","sourceEntity":from,"sourceId":origin_id});
+                        }
+                        receipt(&tx, wid, op, &input, &result)?;
+                        tx.commit().map_err(|e| e.to_string())?;
+                        return Ok(result);
+                    }
+                }
+            }
+            let money = fields
+                .get(if entity == "gigs" {
+                    "Fee"
+                } else if entity == "finances" {
+                    "Amount"
+                } else {
+                    "Default Day Rate"
+                })
+                .and_then(Value::as_i64);
+            let status = fields.get("Status").and_then(Value::as_str);
+            let occurred = fields.get("Date").and_then(Value::as_str);
+            let rate = fields.get("Rate Type").and_then(Value::as_str);
+            let hours = fields.get("Hours").and_then(Value::as_f64);
+            tx.execute(
+                "INSERT OR IGNORE INTO record_index(workspace_id,entity,id) VALUES(?1,?2,?3)",
+                params![wid, entity, id],
+            )
+            .map_err(|e| e.to_string())?;
+            let sql=format!("INSERT INTO {entity}(id,workspace_id,title,fields_json,source_json,source_key,money_cents,status,occurred_at,rate_type,hours) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11) ON CONFLICT(id) DO UPDATE SET title=excluded.title,fields_json=excluded.fields_json,source_json=excluded.source_json,source_key=excluded.source_key,money_cents=excluded.money_cents,status=excluded.status,occurred_at=excluded.occurred_at,rate_type=excluded.rate_type,hours=excluded.hours,updated_at=CURRENT_TIMESTAMP WHERE workspace_id=excluded.workspace_id");
+            tx.execute(
+                &sql,
+                params![
+                    id,
+                    wid,
+                    title,
+                    fields.to_string(),
+                    source.to_string(),
+                    source_key,
+                    money,
+                    status,
+                    occurred,
+                    rate,
+                    hours
+                ],
+            )
+            .map_err(|e| e.to_string())?;
+            if let Some((from, origin_id, role, _)) = &conversion {
+                tx.execute("INSERT INTO relations VALUES(?1,?2,?3,?4,?5,?6)", params![wid,entity,id,role,from,origin_id]).map_err(|e|e.to_string())?;
+            }
+            let mut result = get(&tx, wid, entity, &id)?;
+            if source["kind"] == "import" && prior.is_none() { result["importDisposition"] = json!("created"); }
+            if let Some((from, origin_id, _, _)) = &conversion {
+                result["sourceProposal"] = json!({"outcome":"created","sourceEntity":from,"sourceId":origin_id});
+            }
+            history(&tx, wid, op, Some(entity), Some(&id), &audit_summary(entity,&id,title,&fields))?;
+            receipt(&tx, wid, op, &input, &result)?;
+            tx.commit().map_err(|e| e.to_string())?;
+            Ok(result)
+        }
+        "records.relations" => relation_page(&db,&input),
+        "records.get" => {
+            let wid = need(&input, "workspaceId")?;
+            let entity = table(&input, "entity")?;
+            let id = need(&input, "id")?;
+            if let Some(lookup) = input.get("saveReceipt") {
+                workspace(&db, wid)?;
+                let key = need(lookup, "idempotencyKey")?;
+                let expected = lookup.get("expectedInput").filter(|value| value.is_object()).ok_or("expected save input required")?;
+                if expected.get("workspaceId").and_then(Value::as_str) != Some(wid)
+                    || expected.get("entity").and_then(Value::as_str) != Some(entity)
+                    || expected.get("id").and_then(Value::as_str) != Some(id)
+                    || expected.get("idempotencyKey").and_then(Value::as_str) != Some(key)
+                    || expected.to_string().len() > 65_536 {
+                    return Err("save receipt scope mismatch".into());
+                }
+                // Query one records.save receipt only; never execute or replay a write.
+                match replay(&db, wid, "records.save", expected)? {
+                    Some(record) => Ok(json!({"receiptFound":true,"record":record})),
+                    None => Ok(json!({"receiptFound":false})),
+                }
+            } else {
+                Ok(bounded(get(&db, wid, entity, id)?, input["detail"] == "full"))
+            }
+        },
+        "records.list" => {
+            let wid = need(&input, "workspaceId")?;
+            let entity = table(&input, "entity")?;
+            workspace(&db, wid)?;
+            if entity == "gigs" && input.get("gigs").is_some() {
+                return crate::gig_list::list(&db, wid, &input);
+            }
+            let limit = input
+                .get("limit")
+                .and_then(Value::as_u64)
+                .unwrap_or(20)
+                .clamp(1, 50) as i64;
+            let offset = input
+                .get("cursor")
+                .and_then(Value::as_str)
+                .and_then(|x| x.parse::<u64>().ok())
+                .or_else(|| input.get("offset").and_then(Value::as_u64))
+                .unwrap_or(0)
+                .min(100_000) as i64;
+            let query = input.get("query").and_then(Value::as_str).unwrap_or("").trim().to_lowercase();
+            if query.chars().count() > 160 { return Err("search query is too long".into()); }
+            if entity == "contacts" && !query.is_empty() {
+                return search_contacts(&db, wid, &query, offset, limit);
+            }
+            // Transaction Date governs the complete finance dataset before pagination.
+            // Validate the literal calendar day before SQLite normalizes impossible dates.
+            // Explicit offsets compare as instants; date-only/floating times get no local-time
+            // modifier, and the original Date string remains unchanged in the projection.
+            let order = if entity == "finances" {
+                "CASE WHEN substr(occurred_at,1,10) GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'
+                  AND substr(occurred_at,1,4) != '0000'
+                  AND date(julianday(substr(occurred_at,1,10))) = substr(occurred_at,1,10)
+                  AND (length(occurred_at)=10 OR (substr(occurred_at,11,1) IN ('T',' ')
+                    AND substr(occurred_at,12,5) GLOB '[0-9][0-9]:[0-9][0-9]'
+                    AND substr(occurred_at,12,2) BETWEEN '00' AND '23'
+                    AND substr(occurred_at,15,2) BETWEEN '00' AND '59'))
+                  THEN julianday(occurred_at) ELSE NULL END DESC NULLS LAST,id ASC"
+            } else { "updated_at DESC,id" };
+            let sql=format!("SELECT id,title,status,occurred_at,money_cents,updated_at,json_extract(fields_json,'$.\"All Day\"'),json_extract(fields_json,'$.\"Call Time\"'),json_extract(fields_json,'$.\"Set Time\"') FROM {entity} WHERE workspace_id=?1 ORDER BY {order} LIMIT ?2 OFFSET ?3");
+            let mut stmt = db.prepare(&sql).map_err(|e| e.to_string())?;
+            let items=stmt.query_map(params![wid,limit,offset],|r|{
+                let title:String=r.get(1)?;let truncated=title.chars().count()>120;let display:String=title.chars().take(120).collect();
+                Ok(json!({"id":r.get::<_,String>(0)?,"workspaceId":wid,"entity":entity,"title":display,"titleTruncated":truncated,"status":r.get::<_,Option<String>>(2)?,"date":r.get::<_,Option<String>>(3)?,"moneyCents":r.get::<_,Option<i64>>(4)?,"updatedAt":r.get::<_,String>(5)?,"allDay":(entity == "schedule" || entity == "gigs") && r.get::<_,Option<i64>>(6)?.unwrap_or(0) == 1,"callTime":if entity == "gigs" { r.get::<_,Option<String>>(7)? } else { None },"setTime":if entity == "gigs" { r.get::<_,Option<String>>(8)? } else { None }}))
+            }).map_err(|e|e.to_string())?.collect::<Result<Vec<_>,_>>().map_err(|e|e.to_string())?;
+            let count: i64 = db
+                .query_row(
+                    &format!("SELECT count(*) FROM {entity} WHERE workspace_id=?1"),
+                    [wid],
+                    |r| r.get(0),
+                )
+                .map_err(|e| e.to_string())?;
+            let next = if offset + limit < count {
+                Some((offset + limit).to_string())
+            } else {
+                None
+            };
+            Ok(json!({"items":items,"count":count,"limit":limit,"nextCursor":next}))
+        }
+        "relations.link" => {
+            let wid = need(&input, "workspaceId")?;
+            let from = table(&input, "fromEntity")?;
+            let to = table(&input, "toEntity")?;
+            let from_id = need(&input, "fromId")?;
+            let to_id = need(&input, "toId")?;
+            if from == to && from_id == to_id {
+                return Err("self link is invalid".into());
+            }
+            let c = catalog();
+            let roles = c[from]["relationFields"]
+                .as_object()
+                .ok_or("relation catalog unavailable")?;
+            let matching: Vec<&str> = roles
+                .iter()
+                .filter_map(|(role, target)| {
+                    if target.as_str() == Some(to) {
+                        Some(role.as_str())
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+            if matching.is_empty() {
+                return Err(format!("{from} cannot link to {to}"));
+            }
+            let role = match input.get("role").and_then(Value::as_str) {
+                Some(role) if matching.contains(&role) => role,
+                Some(_) => return Err("role is not a valid relation property".into()),
+                None if matching.len() == 1 => matching[0],
+                None => return Err(format!("role required; choose {}", matching.join(" or "))),
+            };
+            workspace(&db, wid)?;
+            let from_record=get(&db, wid, from, from_id)?;
+            let to_record=get(&db, wid, to, to_id)?;
+            if let Some(previous) = replay(&db, wid, op, &input)? {
+                return Ok(previous);
+            }
+            let tx = db.transaction().map_err(|e| e.to_string())?;
+            tx.execute(
+                "INSERT OR IGNORE INTO relations VALUES(?1,?2,?3,?4,?5,?6)",
+                params![wid, from, from_id, role, to, to_id],
+            )
+            .map_err(|e| e.to_string())?;
+            let result = json!({"workspaceId":wid,"fromEntity":from,"fromId":from_id,"role":role,"toEntity":to,"toId":to_id,"linked":true});
+            let from_title=from_record["title"].as_str().unwrap_or("").chars().take(120).collect::<String>();
+            let to_title=to_record["title"].as_str().unwrap_or("").chars().take(120).collect::<String>();
+            history(&tx, wid, op, Some(from), Some(from_id), &format!("Linked {from} {from_id} {from_title} via {role} to {to} {to_id} {to_title}"))?;
+            receipt(&tx, wid, op, &input, &result)?;
+            tx.commit().map_err(|e| e.to_string())?;
+            Ok(result)
+        }
+        "gigs.summary" => {
+            let wid = need(&input, "workspaceId")?;
+            let gig_id = need(&input, "gigId")?;
+            let gig = get(&db, wid, "gigs", gig_id)?;
+            let fee = gig["fields"]["Fee"].as_i64();
+            let mut stmt=db.prepare("SELECT DISTINCT CASE WHEN from_entity='gigs' THEN to_id ELSE from_id END FROM relations WHERE workspace_id=?1 AND ((from_entity='gigs' AND from_id=?2 AND to_entity='finances') OR (to_entity='gigs' AND to_id=?2 AND from_entity='finances'))").map_err(|e|e.to_string())?;
+            let ids = stmt
+                .query_map(params![wid, gig_id], |r| r.get::<_, String>(0))
+                .map_err(|e| e.to_string())?
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|e| e.to_string())?;
+            let (mut paid, mut expenses) = (Some(0_i64), Some(0_i64));
+            let mut incomplete = Vec::new();
+            if fee.is_none() {
+                incomplete.push("gig.Fee")
+            }
+            for id in ids {
+                let f = get(&db, wid, "finances", &id)?;
+                let amount = f["fields"]["Amount"].as_i64();
+                match f["fields"]["Direction"].as_str() {
+                    Some("Expense") => {
+                        expenses = expenses
+                            .and_then(|sum| amount.and_then(|value| sum.checked_add(value)));
+                        if amount.is_none() {
+                            incomplete.push("finance.Amount")
+                        }
+                    }
+                    Some("Income") => match f["fields"]["Status"].as_str() {
+                        Some("Paid") => {
+                            paid = paid.and_then(|sum| amount.and_then(|value| sum.checked_add(value)));
+                            if amount.is_none() { incomplete.push("finance.Amount") }
+                        }
+                        Some("Expected"|"Invoiced"|"Overdue") => {}
+                        _ => incomplete.push("finance.Status"),
+                    },
+                    _ => incomplete.push("finance.Direction"),
+                }
+            }
+            let currency:Option<String>=db.query_row("SELECT json_extract(fields_json,'$.Currency') FROM profile WHERE workspace_id=?1 ORDER BY updated_at DESC LIMIT 1",[wid],|r|r.get(0)).optional().map_err(|e|e.to_string())?.flatten();
+            let supported_currency=currency.as_deref().is_some_and(|c|["USD","CAD","EUR","GBP"].contains(&c));
+            if !supported_currency{incomplete.push("profile.Currency")}
+            Ok(
+                json!({"gig":gig,"currency":currency,"feeCents":fee,"expensesCents":expenses,"netCents":fee.zip(expenses).and_then(|(a,b)|a.checked_sub(b)),"paidCents":paid,"balanceDueCents":fee.zip(paid).and_then(|(a,b)|a.checked_sub(b)),"financialsComplete":incomplete.is_empty()&&fee.is_some()&&expenses.is_some()&&paid.is_some()&&supported_currency,"incompleteFields":incomplete}),
+            )
+        }
+        "history.list" => {
+            let wid = need(&input, "workspaceId")?;
+            workspace(&db, wid)?;
+            let limit = input
+                .get("limit")
+                .and_then(Value::as_u64)
+                .unwrap_or(50)
+                .clamp(1, 100) as i64;
+            let mut stmt=db.prepare("SELECT id,operation,entity,record_id,summary,created_at FROM history WHERE workspace_id=?1 ORDER BY created_at DESC,id DESC LIMIT ?2").map_err(|e|e.to_string())?;
+            let items=stmt.query_map(params![wid,limit],|r|Ok(json!({"id":r.get::<_,String>(0)?,"operation":r.get::<_,String>(1)?,"entity":r.get::<_,Option<String>>(2)?,"recordId":r.get::<_,Option<String>>(3)?,"summary":r.get::<_,String>(4)?,"createdAt":r.get::<_,String>(5)?}))).map_err(|e|e.to_string())?.collect::<Result<Vec<_>,_>>().map_err(|e|e.to_string())?;
+            Ok(json!({"items":items,"limit":limit}))
+        }
+        "backup.create" => {
+            let wid = need(&input, "workspaceId")?;
+            workspace(&db, wid)?;
+            let id = Uuid::new_v4().to_string();
+            let folder = root.join("backups");
+            fs::create_dir_all(&folder).map_err(|e| e.to_string())?;
+            private_dir(&folder)?;
+            let backup_path=folder.join(format!("{id}.sqlite"));
+            private_file(&backup_path)?;
+            let mut target =
+                Connection::open(backup_path).map_err(|e| e.to_string())?;
+            rusqlite::backup::Backup::new(&db, &mut target)
+                .map_err(|e| e.to_string())?
+                .run_to_completion(256, std::time::Duration::from_millis(5), None)
+                .map_err(|e| e.to_string())?;
+            Ok(json!({"backupId":id,"workspaceId":wid,"created":true}))
+        }
+        "backup.restore" => {
+            let id = need(&input, "backupId")?;
+            Uuid::parse_str(id).map_err(|_| "invalid backupId")?;
+            let source_path = root.join("backups").join(format!("{id}.sqlite"));
+            if !source_path.is_file() {
+                return Err("backup not found".into());
+            }
+            let source = Connection::open_with_flags(
+                source_path,
+                rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY,
+            )
+            .map_err(|e| e.to_string())?;
+            let check: String = source
+                .query_row("PRAGMA integrity_check", [], |r| r.get(0))
+                .map_err(|e| e.to_string())?;
+            if check != "ok" {
+                return Err("backup integrity failed".into());
+            }
+            let version: i64 = source
+                .query_row("PRAGMA user_version", [], |r| r.get(0))
+                .map_err(|e| e.to_string())?;
+            if version != 1 {
+                return Err("backup schema version is incompatible".into());
+            }
+            let backup_workspace: String = source
+                .query_row("SELECT id FROM workspaces LIMIT 1", [], |r| r.get(0))
+                .map_err(|_| "backup has no GiGi workspace")?;
+            let current_workspace: String = db
+                .query_row("SELECT id FROM workspaces LIMIT 1", [], |r| r.get(0))
+                .map_err(|_| "current GiGi workspace missing")?;
+            if backup_workspace != current_workspace {
+                return Err("backup belongs to a different workspace".into());
+            }
+            for entity in ENTITIES {
+                let present: i64 = source
+                    .query_row(
+                        "SELECT count(*) FROM sqlite_master WHERE type='table' AND name=?1",
+                        [entity],
+                        |r| r.get(0),
+                    )
+                    .map_err(|e| e.to_string())?;
+                if present != 1 {
+                    return Err(format!("backup missing {entity} table"));
+                }
+            }
+            let safety_id = Uuid::new_v4().to_string();
+            let safety_path=root.join("backups").join(format!("{safety_id}.sqlite"));
+            private_file(&safety_path)?;
+            let mut safety =
+                Connection::open(safety_path)
+                    .map_err(|e| e.to_string())?;
+            rusqlite::backup::Backup::new(&db, &mut safety)
+                .map_err(|e| e.to_string())?
+                .run_to_completion(256, std::time::Duration::from_millis(5), None)
+                .map_err(|e| e.to_string())?;
+            drop(safety);
+            rusqlite::backup::Backup::new(&source, &mut db)
+                .map_err(|e| e.to_string())?
+                .run_to_completion(256, std::time::Duration::from_millis(5), None)
+                .map_err(|e| e.to_string())?;
+            Ok(json!({"restored":true,"backupId":id,"safetyBackupId":safety_id}))
+        }
+        _ => Err(format!("unknown operation: {op}")),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    fn temp() -> std::path::PathBuf {
+        std::env::temp_dir().join(format!("gigi-domain-test-{}", Uuid::new_v4()))
+    }
+
+    fn source_proposal(root: &Path, from: &str, target: &str) -> Value {
+        let wid = dispatch(root,"workspace.create",json!({"name":"Synthetic"})).unwrap()["id"].clone();
+        let provider = if from == "interactions" { "gmail" } else { "googlecalendar" };
+        let record = dispatch(root,"records.save",json!({"workspaceId":wid,"entity":from,"title":"Synthetic source","fields":{"Date":"2026-11-01T06:30:00Z/2026-11-01T07:30:00Z"},"source":{"kind":"import","provider":provider,"connectedAccountId":"ca_one","collectionId":"collection","externalId":"external","url":"https://example.com/source","timeZone":"America/Chicago"}})).unwrap();
+        json!({"workspaceId":wid,"entity":target,"id":Uuid::new_v4().to_string(),"title":"Review source","fields":{"Status":"Open"},"idempotencyKey":"proposal-one","sourceRecord":{"entity":from,"id":record["id"],"connectedAccountId":"ca_one","expectedRecord":{"title":record["title"],"fields":record["fields"],"source":record["source"]}}})
+    }
+
+    #[test]
+    fn contact_relations_can_be_read_to_the_end_without_duplicates_or_writes() {
+        let root=temp();let wid=dispatch(&root,"workspace.create",json!({"name":"Synthetic many meetings"})).unwrap()["id"].as_str().unwrap().to_owned();
+        let contact=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"Synthetic contact","fields":{}})).unwrap()["id"].as_str().unwrap().to_owned();
+        let db=open(&root).unwrap();
+        for i in 0..205 {let id=format!("synthetic-meeting-{i:04}");db.execute("INSERT INTO record_index VALUES(?1,'interactions',?2)",params![wid,id]).unwrap();db.execute("INSERT INTO interactions(id,workspace_id,title,fields_json,source_json) VALUES(?1,?2,?3,'{}','{}')",params![id,wid,format!("Synthetic meeting {i}")]).unwrap();db.execute("INSERT INTO relations VALUES(?1,'interactions',?2,'People','contacts',?3)",params![wid,id,contact]).unwrap();}
+        let before:i64=db.query_row("SELECT count(*) FROM history",[],|r|r.get(0)).unwrap();drop(db);
+        let mut cursor=Value::Null;let mut ids=Vec::new();let mut first=Value::Null;
+        loop {let page=dispatch(&root,"records.relations",json!({"workspaceId":wid,"entity":"contacts","id":contact,"cursor":cursor,"limit":37})).unwrap();assert_eq!(page["count"],205);if first.is_null(){first=page["nextCursor"].clone();}for link in page["items"].as_array().unwrap(){ids.push(link["fromId"].as_str().unwrap().to_owned());}cursor=page["nextCursor"].clone();if cursor.is_null(){break;}}
+        assert_eq!(ids,(0..205).map(|i|format!("synthetic-meeting-{i:04}")).collect::<Vec<_>>());
+        assert!(dispatch(&root,"records.relations",json!({"workspaceId":wid,"entity":"interactions","id":"synthetic-meeting-0000","cursor":first})).is_err());
+        assert!(dispatch(&root,"records.relations",json!({"workspaceId":wid,"entity":"contacts","id":contact,"limit":101})).is_err());
+        assert_eq!(open(&root).unwrap().query_row("SELECT count(*) FROM history",[],|r|r.get::<_,i64>(0)).unwrap(),before);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn source_conversion_preserves_provenance_relations_retry_and_duplicate() {
+        for from in ["interactions", "schedule"] { for target in ["tasks", "gigs"] {
+            let root=temp(); let input=source_proposal(&root,from,target);
+            let saved=dispatch(&root,"records.save",input.clone()).unwrap();
+            assert_eq!(saved["source"]["kind"],"derived");
+            for key in ["provider","connectedAccountId","collectionId","externalId","url","timeZone"] { assert_eq!(saved["source"][key],input["sourceRecord"]["expectedRecord"]["source"][key]); }
+            assert_eq!(saved["relationCount"],1);
+            assert_eq!(dispatch(&root,"records.save",input.clone()).unwrap(),saved);
+            dispatch(&root,"records.save",json!({"workspaceId":input["workspaceId"],"entity":target,"id":saved["id"],"title":"User correction"})).unwrap();
+            let mut duplicate=input.clone(); duplicate["id"]=json!(Uuid::new_v4().to_string()); duplicate["idempotencyKey"]=json!("another-proposal");
+            let existing=dispatch(&root,"records.save",duplicate).unwrap();
+            assert_eq!(existing["id"],saved["id"]); assert_eq!(existing["title"],"User correction");
+            assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":input["workspaceId"],"entity":target})).unwrap()["count"],1);
+            let _=fs::remove_dir_all(root);
+        }}
+    }
+
+    #[test]
+    fn source_conversion_rejects_stale_wrong_scope_and_override_without_writes() {
+        let root=temp(); let input=source_proposal(&root,"interactions","tasks");
+        let mut cases=Vec::new();
+        let mut wrong=input.clone();wrong["sourceRecord"]["connectedAccountId"]=json!("ca_other");cases.push(wrong);
+        let mut stale=input.clone();stale["sourceRecord"]["expectedRecord"]["title"]=json!("stale");cases.push(stale);
+        let mut forged=input.clone();forged["source"]=json!({"kind":"manual"});cases.push(forged);
+        let mut keyless=input.clone();keyless.as_object_mut().unwrap().remove("idempotencyKey");cases.push(keyless);
+        let other=Uuid::new_v4().to_string();open(&root).unwrap().execute("INSERT INTO workspaces(id,name) VALUES(?1,'Other')",[&other]).unwrap();
+        let mut cross=input.clone();cross["workspaceId"]=json!(other);cases.push(cross);
+        for case in cases { assert!(dispatch(&root,"records.save",case).is_err()); }
+        dispatch(&root,"records.save",json!({"workspaceId":input["workspaceId"],"entity":"interactions","id":input["sourceRecord"]["id"],"title":"Source changed since review"})).unwrap();
+        assert!(dispatch(&root,"records.save",input.clone()).unwrap_err().contains("source record changed"));
+        let db=open(&root).unwrap();
+        for table in ["tasks","relations","mutation_receipts"] { let count:i64=db.query_row(&format!("SELECT count(*) FROM {table}"),[],|r|r.get(0)).unwrap();assert_eq!(count,0); }
+        let _=fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn source_conversion_separates_matching_external_ids_across_accounts() {
+        let root=temp();let input=source_proposal(&root,"interactions","tasks");
+        let first=dispatch(&root,"records.save",input.clone()).unwrap();
+        let mut attribution=input["sourceRecord"]["expectedRecord"]["source"].clone();
+        attribution["connectedAccountId"]=json!("ca_two");
+        let origin=dispatch(&root,"records.save",json!({"workspaceId":input["workspaceId"],"entity":"interactions","title":"Second account email","source":attribution})).unwrap();
+        let mut other=input.clone();other["id"]=json!(Uuid::new_v4().to_string());other["idempotencyKey"]=json!("second-account");
+        other["sourceRecord"]=json!({"entity":"interactions","id":origin["id"],"connectedAccountId":"ca_two","expectedRecord":{"title":origin["title"],"fields":origin["fields"],"source":origin["source"]}});
+        let second=dispatch(&root,"records.save",other).unwrap();
+        assert_ne!(first["id"],second["id"]);assert_eq!(second["source"]["connectedAccountId"],"ca_two");
+        let _=fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn source_receipt_lookup_recovers_created_and_existing_without_writes() {
+        let root=temp();let input=source_proposal(&root,"interactions","tasks");
+        let lookup = |save: &Value| json!({"workspaceId":save["workspaceId"],"entity":save["entity"],"id":save["id"],"saveReceipt":{"idempotencyKey":save["idempotencyKey"],"expectedInput":save}});
+        assert_eq!(dispatch(&root,"records.get",lookup(&input)).unwrap(),json!({"receiptFound":false}));
+        open(&root).unwrap().execute("INSERT INTO mutation_receipts VALUES(?1,'relations.link',?2,?3,'{}')",params![input["workspaceId"].as_str().unwrap(),input["idempotencyKey"].as_str().unwrap(),input.to_string()]).unwrap();
+        assert_eq!(dispatch(&root,"records.get",lookup(&input)).unwrap(),json!({"receiptFound":false}));
+        let created=dispatch(&root,"records.save",input.clone()).unwrap();
+        assert_eq!(dispatch(&root,"records.get",lookup(&input)).unwrap(),json!({"receiptFound":true,"record":created}));
+        let mut duplicate=input.clone();duplicate["id"]=json!(Uuid::new_v4().to_string());duplicate["idempotencyKey"]=json!("duplicate-receipt");
+        let existing=dispatch(&root,"records.save",duplicate.clone()).unwrap();
+        assert_ne!(existing["id"],duplicate["id"]);
+        let before:i64=open(&root).unwrap().query_row("SELECT count(*) FROM history",[],|r|r.get(0)).unwrap();
+        assert_eq!(dispatch(&root,"records.get",lookup(&duplicate)).unwrap(),json!({"receiptFound":true,"record":existing}));
+        let mut tampered=input.clone();tampered["sourceRecord"]["connectedAccountId"]=json!("ca_intruder");
+        assert!(dispatch(&root,"records.get",lookup(&tampered)).is_err());
+        for key in ["workspaceId","entity","id"] { let mut request=lookup(&input);request[key]=json!(if key=="entity" {"gigs"} else {"wrong"});assert!(dispatch(&root,"records.get",request).is_err()); }
+        let other=Uuid::new_v4().to_string();open(&root).unwrap().execute("INSERT INTO workspaces(id,name) VALUES(?1,'Other')",[&other]).unwrap();
+        let mut foreign=input.clone();foreign["workspaceId"]=json!(other);
+        assert_eq!(dispatch(&root,"records.get",lookup(&foreign)).unwrap(),json!({"receiptFound":false}));
+        let after:i64=open(&root).unwrap().query_row("SELECT count(*) FROM history",[],|r|r.get(0)).unwrap();assert_eq!(before,after);
+        let _=fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn source_conversion_relation_failure_rolls_back_creation() {
+        let root=temp();let input=source_proposal(&root,"schedule","gigs");
+        open(&root).unwrap().execute_batch("CREATE TRIGGER reject_link BEFORE INSERT ON relations BEGIN SELECT RAISE(ABORT,'synthetic relation failure'); END;").unwrap();
+        assert!(dispatch(&root,"records.save",input.clone()).is_err());
+        let db=open(&root).unwrap();for table in ["gigs","mutation_receipts"] { let count:i64=db.query_row(&format!("SELECT count(*) FROM {table}"),[],|r|r.get(0)).unwrap();assert_eq!(count,0); }
+        assert!(get(&db,input["workspaceId"].as_str().unwrap(),"gigs",input["id"].as_str().unwrap()).is_err());
+        let _=fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn finances_sort_transaction_dates_before_paging_and_keep_invalid_last() {
+        let root=temp();let wid=dispatch(&root,"workspace.create",json!({"name":"Synthetic finance order"})).unwrap()["id"].clone();
+        let other=Uuid::new_v4().to_string();open(&root).unwrap().execute("INSERT INTO workspaces(id,name) VALUES(?1,'Other synthetic workspace')",[&other]).unwrap();
+        // Larger rank means newer. Offset timestamps cross local date/year boundaries.
+        let mut cases:Vec<(Option<String>,i32)>=vec![
+            (Some("2026-12-31T23:00:00-12:00".into()),90),
+            (Some("2027-01-01T11:00:00Z".into()),90),
+            (Some("2027-01-01".into()),80),
+            (Some("2027-01-01T00:00:00+14:00".into()),70),
+            (Some("2026-10-20T12:00:00".into()),60),
+            (Some("2026-10-20".into()),50),
+            (Some("2024-02-29".into()),40),
+            (Some("2023-12-31".into()),30),
+            (None,-1),(Some("".into()),-1),(Some("not-a-date".into()),-1),(Some("2460000".into()),-1),(Some("2026-02".into()),-1),(Some("0000-01-01".into()),-1),
+            (Some("2026-02-30".into()),-1),(Some("2025-02-29".into()),-1),
+            (Some("2028-01-01T99:00:00Z".into()),-1),
+        ];
+        for day in 1..=55 {cases.push((Some(format!("2022-{:02}-{:02}",1+day/28,1+day%28)),0));}
+        let mut expected=Vec::new();let mut originals=std::collections::HashMap::new();
+        for (index,(date,rank)) in cases.into_iter().enumerate(){
+            let fields=if let Some(ref date)=date{json!({"Date":date,"Amount":100})}else{json!({"Amount":100})};
+            let record=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"finances","title":format!("Transaction {index}"),"fields":fields})).unwrap();
+            let id=record["id"].as_str().unwrap().to_string();originals.insert(id.clone(),date.clone());
+            expected.push((rank,if rank==0{date.clone().unwrap()}else{String::new()},id));
+        }
+        dispatch(&root,"records.save",json!({"workspaceId":other,"entity":"finances","title":"Never include foreign finance","fields":{"Date":"2099-01-01"}})).unwrap();
+        // Editing an old/undated record must not promote it above newer transactions.
+        let db=open(&root).unwrap();for (rank,_,id) in &expected{db.execute("UPDATE finances SET updated_at=?2 WHERE id=?1",params![id,if *rank<0{"2099-01-01 00:00:00"}else{"2000-01-01 00:00:00"}]).unwrap();}drop(db);
+        expected.sort_by(|a,b|b.0.cmp(&a.0).then_with(||b.1.cmp(&a.1)).then_with(||a.2.cmp(&b.2)));
+        let read_all=|limit:i64|{let mut cursor=Value::Null;let mut ids=Vec::new();loop{let page=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"finances","limit":limit,"cursor":cursor})).unwrap();assert_eq!(page["count"].as_u64().unwrap() as usize,expected.len());for item in page["items"].as_array().unwrap(){let id=item["id"].as_str().unwrap().to_string();assert_eq!(item["date"],json!(originals[&id]),"date/offset must not be rewritten");ids.push(id);}cursor=page["nextCursor"].clone();if cursor.is_null(){break;}}ids};
+        let expected_ids:Vec<_>=expected.iter().map(|item|item.2.clone()).collect();
+        assert_eq!(read_all(7),expected_ids);assert_eq!(read_all(50),expected_ids);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn overview_finds_eligible_records_beyond_recent_page_and_sorts_by_real_dates() {
+        let root = temp();
+        let wid = dispatch(&root,"workspace.create",json!({"name":"Solo"})).unwrap()["id"].clone();
+        let save = |entity: &str, title: &str, fields: Value| {
+            dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":entity,"title":title,"fields":fields})).unwrap();
+        };
+        save("gigs","Next show",json!({"Date":"2026-10-01","Status":"Confirmed","Fee":25000,"Requirements":"private detail"}));
+        save("gigs","Later show",json!({"Date":"2026-10-05T18:00:00","Status":"Open"}));
+        for day in 6..=9 { save("gigs",&format!("October {day}"),json!({"Date":format!("2026-10-{day:02}"),"Status":"Open"})); }
+        save("gigs","Past show",json!({"Date":"2026-09-29","Status":"Confirmed"}));
+        save("gigs","Completed show",json!({"Date":"2026-10-02","Status":" Completed "}));
+        save("gigs","Invalid show",json!({"Date":"2026-02-30","Status":"Open"}));
+        save("gigs","Undated show",json!({"Status":"Open"}));
+        save("tasks","Overdue task",json!({"Due Date":"2026-09-28","Do Date":"2026-10-04","Priority":"High","Status":"Open"}));
+        save("tasks","Today task",json!({"Due Date":"2026-09-30","Status":"In progress"}));
+        save("tasks","Do date task",json!({"Do Date":"2026-10-02"}));
+        save("tasks","Undated task",json!({"Priority":"Low"}));
+        save("tasks","Done task",json!({"Due Date":"2026-09-20","Status":"Done"}));
+        for status in ["Done","Complete","Completed","Cancelled","Canceled"] {
+            save("tasks",&format!("Closed task {status}"),json!({"Due Date":"2026-09-21","Status":status}));
+            save("gigs",&format!("Closed gig {status}"),json!({"Date":"2026-10-02","Status":status}));
+        }
+        save("finances","Income invoice",json!({"Date":"2026-09-15","Due Date":"2026-09-29","Amount":12000,"Direction":"Income","Status":"Invoiced"}));
+        save("finances","Expense expected",json!({"Date":"2026-10-03","Amount":3000,"Direction":"Expense","Status":"Expected"}));
+        save("finances","Past due",json!({"Due Date":"2026-09-27","Amount":5000,"Direction":"Income","Status":"Overdue"}));
+        save("finances","Paid item",json!({"Amount":2000,"Direction":"Income","Status":"Paid"}));
+        for i in 0..25 { save("gigs",&format!("No date {i}"),json!({})); }
+        let overview = dispatch(&root,"workspace.overview",json!({"workspaceId":wid,"today":"2026-09-30"})).unwrap();
+        let titles = |section: &str| overview[section]["items"].as_array().unwrap().iter().map(|item|item["title"].as_str().unwrap().to_string()).collect::<Vec<_>>();
+        assert_eq!(titles("gigs"),["Next show","Later show","October 6","October 7","October 8"]);
+        assert_eq!(overview["gigs"]["count"],6);
+        assert_eq!(overview["undatedGigsCount"],27);
+        assert_eq!(titles("tasks"),["Overdue task","Today task","Do date task","Undated task"]);
+        assert_eq!(overview["tasks"]["items"][0]["date"],"2026-09-28");
+        assert_eq!(overview["tasks"]["items"][2]["date"],"2026-10-02");
+        assert_eq!(overview["tasks"]["count"],4);
+        assert_eq!(titles("finances"),["Past due","Income invoice","Expense expected"]);
+        assert_eq!(overview["finances"]["items"][1]["moneyCents"],12000);
+        assert_eq!(overview["finances"]["items"][1]["fields"]["Direction"],"Income");
+        assert_eq!(overview["finances"]["items"][2]["fields"]["Direction"],"Expense");
+        assert_eq!(overview["finances"]["count"],3);
+        assert_eq!(overview["counts"],json!({"gigs":40,"tasks":10,"contacts":0,"finances":4}));
+        assert!(overview["gigs"]["items"][0]["fields"].get("Requirements").is_none());
+        assert!(overview["tasks"]["items"][0]["fields"].get("Priority").is_some());
+        let _=fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn overview_validates_today_scopes_workspace_and_does_not_record_mutation() {
+        let root=temp();
+        let wid=dispatch(&root,"workspace.create",json!({"name":"Solo"})).unwrap()["id"].clone();
+        let other=Uuid::new_v4().to_string();
+        open(&root).unwrap().execute("INSERT INTO workspaces(id,name) VALUES(?1,'Other')",[&other]).unwrap();
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"gigs","title":"Mine","fields":{"Date":"2028-02-29"}})).unwrap();
+        dispatch(&root,"records.save",json!({"workspaceId":other,"entity":"gigs","title":"Other gig","fields":{"Date":"2028-03-01"}})).unwrap();
+        for invalid in ["2026-02-29","2026-13-01","2026-01-00","2026-1-01","2026-10-01' OR 1=1"] {
+            assert!(dispatch(&root,"workspace.overview",json!({"workspaceId":wid,"today":invalid})).is_err());
+        }
+        assert!(dispatch(&root,"workspace.overview",json!({"workspaceId":"absent","today":"2028-02-29"})).is_err());
+        let before:i64=open(&root).unwrap().query_row("SELECT count(*) FROM history",[],|r|r.get(0)).unwrap();
+        let result=dispatch(&root,"workspace.overview",json!({"workspaceId":wid,"today":"2028-02-29"})).unwrap();
+        let after:i64=open(&root).unwrap().query_row("SELECT count(*) FROM history",[],|r|r.get(0)).unwrap();
+        assert_eq!(before,after);
+        assert_eq!(result["gigs"]["count"],1);
+        assert_eq!(result["gigs"]["items"][0]["title"],"Mine");
+        assert_eq!(result["counts"]["gigs"],1);
+        let _=fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn overview_date_fallback_uses_first_valid_candidate_and_bounds_field_strings() {
+        let root=temp();
+        let wid=dispatch(&root,"workspace.create",json!({"name":"Solo"})).unwrap()["id"].clone();
+        let long="x".repeat(900);
+        for (entity,title,fields) in [
+            ("tasks","Invalid due",json!({"Due Date":long,"Do Date":"2026-10-01","Priority":long})),
+            ("tasks","Valid due wins",json!({"Due Date":"2026-10-04","Do Date":"2026-09-28"})),
+            ("tasks","No valid date",json!({"Due Date":"2026-02-30","Do Date":"not-a-date"})),
+            ("finances","Invalid due finance",json!({"Due Date":"2026-02-30","Date":"2026-09-29","Direction":"Income","Amount":4100,"Status":"Expected"})),
+            ("finances","Valid due finance",json!({"Due Date":"2026-10-06","Date":"2026-09-20","Direction":"Expense","Amount":1200,"Status":"Invoiced"})),
+            ("finances","No valid finance date",json!({"Due Date":"bad","Date":"2026-02-30","Direction":"Income","Status":"Overdue"})),
+        ] {
+            dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":entity,"title":title,"fields":fields})).unwrap();
+        }
+        let result=dispatch(&root,"workspace.overview",json!({"workspaceId":wid,"today":"2026-09-30"})).unwrap();
+        let tasks=&result["tasks"]["items"];
+        assert_eq!(tasks[0]["title"],"Invalid due");
+        assert_eq!(tasks[0]["date"],"2026-10-01");
+        assert_eq!(tasks[1]["title"],"Valid due wins");
+        assert_eq!(tasks[1]["date"],"2026-10-04");
+        assert_eq!(tasks[2]["title"],"No valid date");
+        assert!(tasks[2]["date"].is_null());
+        assert!(tasks[0]["fields"]["Due Date"].as_str().unwrap().chars().count()<=160);
+        assert!(tasks[0]["fields"]["Priority"].as_str().unwrap().chars().count()<=160);
+        let finances=&result["finances"]["items"];
+        assert_eq!(finances[0]["title"],"Invalid due finance");
+        assert_eq!(finances[0]["date"],"2026-09-29");
+        assert_eq!(finances[1]["title"],"Valid due finance");
+        assert_eq!(finances[1]["date"],"2026-10-06");
+        assert_eq!(finances[2]["title"],"No valid finance date");
+        assert!(finances[2]["date"].is_null());
+        let _=fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn workspace_and_record_survive_reopen() {
+        let root = std::env::temp_dir().join(format!("gigi-domain-test-{}", uuid::Uuid::new_v4()));
+        let workspace = dispatch(
+            &root,
+            "workspace.create",
+            serde_json::json!({"name":"Micah's Work"}),
+        )
+        .unwrap();
+        let workspace_id = workspace["id"].as_str().unwrap();
+        let gig = dispatch(&root, "records.save", serde_json::json!({"workspaceId":workspace_id,"entity":"gigs","title":"Friday set","fields":{"Fee":12500,"Status":"Confirmed"},"source":{"kind":"manual"},"idempotencyKey":"gig-1"})).unwrap();
+        assert_eq!(gig["title"], "Friday set");
+        let got = dispatch(
+            &root,
+            "records.get",
+            serde_json::json!({"workspaceId":workspace_id,"entity":"gigs","id":gig["id"]}),
+        )
+        .unwrap();
+        assert_eq!(got["fields"]["Fee"], 12500);
+        let _ = std::fs::remove_dir_all(root);
+    }
+    fn large_contact_fixture(contact_count: usize) -> (std::path::PathBuf,String) {
+        let root=temp(); let w=dispatch(&root,"workspace.create",json!({"name":"Synthetic scale"})).unwrap();
+        let wid=w["id"].as_str().unwrap().to_string(); let mut db=open(&root).unwrap();let tx=db.transaction().unwrap();
+        for (entity,total) in [("contacts",contact_count),("companies",200)] {
+            for n in 0..total {
+                let id=format!("{entity}-{n:05}");
+                let title=if entity=="contacts" && n==4458 {"Danny Morgan".to_string()} else if entity=="companies" && n==0 {"ÉLODIE Studio".to_string()} else {format!("Synthetic {entity} {n}")};
+                tx.execute("INSERT INTO record_index VALUES(?1,?2,?3)",params![wid,entity,id]).unwrap();
+                tx.execute(&format!("INSERT INTO {entity}(id,workspace_id,title,fields_json,source_json) VALUES(?1,?2,?3,?4,'{{}}')"),params![id,wid,title,json!({"Email":format!("person{n}@example.test"),"Phone":format!("555-{n:05}"),"Rate Notes":"private-search-excluded"}).to_string()]).unwrap();
+            }
+        }
+        for n in 0..contact_count {
+            let contact=format!("contacts-{n:05}");let company=format!("companies-{:05}",n%200);
+            if n%2==0 {tx.execute("INSERT INTO relations VALUES(?1,'contacts',?2,'Company','companies',?3)",params![wid,contact,company]).unwrap();}
+            else {tx.execute("INSERT INTO relations VALUES(?1,'companies',?3,'Contacts','contacts',?2)",params![wid,contact,company]).unwrap();}
+        }
+        // Reverse duplicate must not duplicate a contact in the search result.
+        tx.execute("INSERT INTO relations VALUES(?1,'companies','companies-00000','Contacts','contacts','contacts-00000')",[&wid]).unwrap();
+        tx.commit().unwrap();drop(db);(root,wid)
+    }
+
+    #[test]
+    fn contact_search_realistic_scale_has_linear_work_and_correct_global_pages() {
+        let (root,wid)=large_contact_fixture(4459);let started=std::time::Instant::now();
+        let call=|query:&str,cursor:Option<&str>|dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":query,"limit":7,"cursor":cursor})).unwrap();
+        let named=call("DANNY MORGAN",None);assert_eq!(named["count"],1);assert_eq!(named["items"][0]["id"],"contacts-04458");
+        assert_eq!(call("person4458@",None)["count"],1);assert_eq!(call("555-04458",None)["count"],1);
+        let mut cursor=None;let mut ids=std::collections::HashSet::new();let mut pages=0;
+        loop {let page=call("élodie",cursor.as_deref());assert_eq!(page["count"],23);for item in page["items"].as_array().unwrap(){assert!(ids.insert(item["id"].as_str().unwrap().to_string()));assert!(item.get("fields").is_none());}pages+=1;cursor=page["nextCursor"].as_str().map(str::to_string);if cursor.is_none(){break;}}
+        assert_eq!(ids.len(),23);assert_eq!(pages,4);assert_eq!(call("private-search-excluded",None)["count"],0);
+        assert_eq!(call("no such person",None)["count"],0);assert_eq!(call("",None)["count"],4459);
+        // Deterministic SQLite work budget, not a machine-speed timing assertion.
+        let db=open(&root).unwrap();let mut steps=0;
+        for sql in [CONTACT_COMPANY_SEARCH_SQL,CONTACT_SEARCH_SQL] {
+            let mut stmt=db.prepare(sql).unwrap(); {let mut rows=stmt.query([&wid]).unwrap();while rows.next().unwrap().is_some(){}}
+            steps+=stmt.get_status(rusqlite::StatementStatus::VmStep);
+        }
+        assert!(steps<1_000_000,"search used {steps} VM steps");
+        eprintln!("4459-contact searches: {:?}; one scan pair: {steps} VM steps",started.elapsed());
+        // A concurrent WAL writer must not prevent a consistent read of committed contacts.
+        db.execute_batch("BEGIN IMMEDIATE; UPDATE contacts SET title='Uncommitted' WHERE id='contacts-04458';").unwrap();
+        assert_eq!(call("danny morgan",None)["count"],1);db.execute_batch("ROLLBACK;").unwrap();
+        drop(db);let _=fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn contact_search_above_reported_scale_keeps_full_collection_count() {
+        let (root,wid)=large_contact_fixture(5000);
+        for (query,count) in [("",5000),("danny morgan",1),("élodie",25)] {
+            let page=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":query})).unwrap();
+            assert_eq!(page["count"],count);assert!(page["items"].as_array().unwrap().len()<=20);
+        }
+        let _=fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn contact_search_sqlite_lock_uses_busy_timeout_and_recovers() {
+        let root=temp();let w=dispatch(&root,"workspace.create",json!({"name":"Lock fixture"})).unwrap();let wid=w["id"].as_str().unwrap().to_string();
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"Danny Morgan"})).unwrap();
+        let lock=open(&root).unwrap();
+        // Verify SQLite's deadline directly: shared-runner scheduling can exceed
+        // wall-clock margins even when SQLite honors its configured busy timeout.
+        assert_eq!(lock.query_row("PRAGMA busy_timeout",[],|r|r.get::<_,i64>(0)).unwrap(),5000);
+        lock.execute_batch("PRAGMA locking_mode=EXCLUSIVE; BEGIN EXCLUSIVE; UPDATE contacts SET title='Locked';").unwrap();
+        let error=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"danny"})).unwrap_err();
+        assert!(error.contains("locked") || error.contains("busy"),"{error}");
+        lock.execute_batch("ROLLBACK;").unwrap();drop(lock);
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"danny"})).unwrap()["count"],1);
+        let _=fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn contact_search_matches_all_name_tokens_without_cross_contact_leaks() {
+        let root=temp();let w=dispatch(&root,"workspace.create",json!({"name":"Name matching"})).unwrap();let wid=&w["id"];
+        let target=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"Latasha Nicole Baxter"})).unwrap();
+        for n in 0..60 {dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":format!("Other {n}")})).unwrap();}
+        for query in ["latasha baxter","BAXTER LATASHA","  latasha   baxter  ","latasha\tbaxter","latasha nicole baxter","latasha","baxter"] {
+            let page=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":query,"limit":1})).unwrap();
+            assert_eq!(page["count"],1,"{query}");assert_eq!(page["items"][0]["id"],target["id"]);
+        }
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"Élodie Bäxter"})).unwrap();
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"elodie baxter"})).unwrap()["count"],1);
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"latasha elodie"})).unwrap()["count"],0);
+        for query in ["ELODIE BAXTER", "e\u{301}lodie ba\u{308}xter", "baxter\u{a0}elodie"] {
+            assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":query})).unwrap()["count"],1,"{query}");
+        }
+        let company=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"companies","title":"Northern Agency"})).unwrap();
+        dispatch(&root,"relations.link",json!({"workspaceId":wid,"fromEntity":"contacts","fromId":target["id"],"toEntity":"companies","toId":company["id"],"role":"Company"})).unwrap();
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"northern latasha"})).unwrap()["count"],1);
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"northern elodie"})).unwrap()["count"],0);
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"Imported alias","fields":{"Contact":"Maya Jane López"}})).unwrap();
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"maya lopez"})).unwrap()["count"],1);
+        let foreign=Uuid::new_v4().to_string();
+        open(&root).unwrap().execute("INSERT INTO workspaces(id,name) VALUES(?1,'Other search workspace')",[&foreign]).unwrap();
+        dispatch(&root,"records.save",json!({"workspaceId":foreign,"entity":"contacts","title":"Latasha Baxter"})).unwrap();
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"latasha baxter"})).unwrap()["count"],1);
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"\u{301}"})).unwrap()["count"],0);
+        // The supported schema has Contact (title), not separately stored first/last fields.
+        assert!(dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"Separate","fields":{"First Name":"Latasha","Last Name":"Baxter"}})).unwrap_err().contains("unknown contacts field"));
+        let greek=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"ΟΣ"})).unwrap();
+        for query in ["ΟΣ","ος"] {assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":query})).unwrap()["items"][0]["id"],greek["id"],"{query}");}
+        let greek_company=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"companies","title":"ΝΙΚΟΣ"})).unwrap();
+        dispatch(&root,"relations.link",json!({"workspaceId":wid,"fromEntity":"contacts","fromId":target["id"],"toEntity":"companies","toId":greek_company["id"],"role":"Company"})).unwrap();
+        for query in ["ΝΙΚΟΣ latasha","νικος latasha"] {assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":query})).unwrap()["items"][0]["id"],target["id"],"{query}");}
+        let _=fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn contact_search_matches_local_fields_companies_and_paginates_without_private_payloads() {
+        let root = temp();
+        let w = dispatch(&root,"workspace.create",json!({"name":"Search"})).unwrap(); let wid=&w["id"];
+        let a=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"ÉLODIE Rivera","fields":{"Email":"Stage@Example.test","Phone":"555-0101","Rate Notes":"hidden-secret"}})).unwrap();
+        let b=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"Other person"})).unwrap();
+        let company=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"companies","title":"North Studio"})).unwrap();
+        dispatch(&root,"relations.link",json!({"workspaceId":wid,"fromEntity":"companies","fromId":company["id"],"toEntity":"contacts","toId":a["id"],"role":"Contacts"})).unwrap();
+        for q in ["élodie", "STAGE@EXAMPLE", "555-0101", "north studio"] {
+            let r=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":q})).unwrap();
+            assert_eq!(r["count"],1,"{q}"); assert_eq!(r["items"][0]["id"],a["id"]); assert!(!r.to_string().contains("hidden-secret"));
+        }
+        for q in ["hidden-secret", "%", "no match"] {assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":q})).unwrap()["count"],0);}
+        let r=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":" ","limit":1})).unwrap(); assert_eq!(r["count"],2); assert_eq!(r["nextCursor"],"1");
+        let r=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"other","limit":1})).unwrap(); assert_eq!(r["items"][0]["id"],b["id"]); assert!(r["nextCursor"].is_null());
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"Another person"})).unwrap();
+        let first=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"person","limit":1})).unwrap();
+        let second=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"person","limit":1,"cursor":first["nextCursor"]})).unwrap();
+        assert_eq!(first["count"],2);assert_eq!(second["count"],2);assert_ne!(first["items"][0]["id"],second["items"][0]["id"]);assert!(second["nextCursor"].is_null());
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"companies","title":"Unlinked Company"})).unwrap();
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"Unlinked"})).unwrap()["count"],0);
+        let _=fs::remove_dir_all(root);
+    }
+    #[test]
+    fn gig_list_exposes_only_agenda_times_without_full_private_fields() {
+        let root = temp();
+        let workspace = dispatch(&root, "workspace.create", json!({"name":"Agenda"})).unwrap();
+        let wid = &workspace["id"];
+        dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","title":"Soundcheck","fields":{"Date":"2026-10-22","Call Time":"18:30","Set Time":"20:00","Requirements":"Private notes"}})).unwrap();
+        let result = dispatch(&root, "records.list", json!({"workspaceId":wid,"entity":"gigs"})).unwrap();
+        assert_eq!(result["items"][0]["callTime"], "18:30");
+        assert_eq!(result["items"][0]["setTime"], "20:00");
+        assert!(result["items"][0].get("fields").is_none());
+        assert!(!result.to_string().contains("Private notes"));
+        let _ = fs::remove_dir_all(root);
+    }
+    #[test]
+    fn title_only_save_preserves_gig_details_source_and_links() {
+        let root = temp();
+        let workspace = dispatch(&root, "workspace.create", json!({"name":"Solo"})).unwrap();
+        let wid = &workspace["id"];
+        let source = json!({"kind":"import","provider":"gmail","externalId":"booking-thread-1"});
+        let gig = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","title":"Friday set","fields":{"Fee":12500,"Status":"Confirmed","Date":"2026-10-02","Requirements":"Bring a mic"},"source":source})).unwrap();
+        let contact = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"contacts","title":"Booking contact"})).unwrap();
+        dispatch(&root, "relations.link", json!({"workspaceId":wid,"fromEntity":"gigs","fromId":gig["id"],"toEntity":"contacts","toId":contact["id"],"role":"Booked Through"})).unwrap();
+
+        let saved = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","id":gig["id"],"title":"Friday evening set"})).unwrap();
+        assert_eq!(saved["title"], "Friday evening set");
+        assert_eq!(saved["fields"], gig["fields"]);
+        assert_eq!(saved["source"], source);
+        assert_eq!(saved["relationCount"], 1);
+        let listed = dispatch(&root, "records.list", json!({"workspaceId":wid,"entity":"gigs"})).unwrap();
+        assert_eq!(listed["items"][0]["status"], "Confirmed");
+        assert_eq!(listed["items"][0]["moneyCents"], 12500);
+        assert_eq!(listed["items"][0]["date"], "2026-10-02");
+        let fee_changed = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","id":gig["id"],"title":"Friday evening set","fields":{"Fee":14000,"Requirements":null}})).unwrap();
+        assert_eq!(fee_changed["fields"]["Fee"], 14000);
+        assert!(fee_changed["fields"]["Requirements"].is_null());
+        assert_eq!(fee_changed["fields"]["Status"], "Confirmed");
+        assert_eq!(fee_changed["source"], source);
+        assert_eq!(fee_changed["relationCount"], 1);
+        let listed = dispatch(&root, "records.list", json!({"workspaceId":wid,"entity":"gigs"})).unwrap();
+        assert_eq!(listed["items"][0]["moneyCents"], 14000);
+        assert_eq!(listed["items"][0]["status"], "Confirmed");
+        let _ = fs::remove_dir_all(root);
+    }
+    #[test]
+    fn replace_fields_clears_omitted_details_but_keeps_source_and_links() {
+        let root = temp();
+        let wid = dispatch(&root, "workspace.create", json!({"name":"Solo"})).unwrap()["id"].clone();
+        let source = json!({"kind":"import","provider":"gmail","externalId":"booking-1"});
+        let gig = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","title":"Show","fields":{"Fee":12500,"Status":"Confirmed","Date":"2026-10-02","Requirements":"Bring a mic"},"source":source})).unwrap();
+        let contact = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"contacts","title":"Booker"})).unwrap();
+        dispatch(&root, "relations.link", json!({"workspaceId":wid,"fromEntity":"gigs","fromId":gig["id"],"toEntity":"contacts","toId":contact["id"],"role":"Booked Through"})).unwrap();
+        let saved = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","id":gig["id"],"title":"Show","fieldsMode":"replace","fields":{"Requirements":"Bring stands"}})).unwrap();
+        assert_eq!(saved["fields"], json!({"Requirements":"Bring stands"}));
+        assert_eq!(saved["source"], source);
+        assert_eq!(saved["relationCount"], 1);
+        let listed = dispatch(&root, "records.list", json!({"workspaceId":wid,"entity":"gigs"})).unwrap();
+        assert!(listed["items"][0]["moneyCents"].is_null());
+        assert!(listed["items"][0]["status"].is_null());
+        assert!(listed["items"][0]["date"].is_null());
+        assert!(dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","id":gig["id"],"title":"Show","fieldsMode":"replace"})).is_err());
+        let _ = fs::remove_dir_all(root);
+    }
+    #[test]
+    fn stale_editor_replace_rejects_newer_record_without_losing_it_and_replays_receipt() {
+        let root = temp();
+        let wid = dispatch(&root, "workspace.create", json!({"name":"Solo"})).unwrap()["id"].clone();
+        let original = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","title":"Show","fields":{"Status":"Open","Fee":1200}})).unwrap();
+        let expected = json!({"title":original["title"],"fields":original["fields"],"source":original["source"]});
+        let editor_save = json!({"workspaceId":wid,"entity":"gigs","id":original["id"],"title":"Show","fieldsMode":"replace","fields":{"Status":"Confirmed"},"expectedRecord":expected,"idempotencyKey":"editor-save"});
+        dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","id":original["id"],"title":"Show","fields":{"Fee":1400}})).unwrap();
+        assert!(dispatch(&root, "records.save", editor_save.clone()).unwrap_err().contains("record changed"));
+        let current = dispatch(&root, "records.get", json!({"workspaceId":wid,"entity":"gigs","id":original["id"],"detail":"full"})).unwrap();
+        assert_eq!(current["fields"], json!({"Status":"Open","Fee":1400}));
+        let fresh = json!({"title":current["title"],"fields":current["fields"],"source":current["source"]});
+        let fresh_save = json!({"workspaceId":wid,"entity":"gigs","id":original["id"],"title":"Show","fieldsMode":"replace","fields":{"Status":"Confirmed"},"expectedRecord":fresh,"idempotencyKey":"editor-fresh"});
+        let saved = dispatch(&root, "records.save", fresh_save.clone()).unwrap();
+        dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","id":original["id"],"title":"Another edit","fields":{"Fee":2000}})).unwrap();
+        assert_eq!(dispatch(&root, "records.save", fresh_save).unwrap(), saved);
+        let _ = fs::remove_dir_all(root);
+    }
+    #[test]
+    fn concurrent_disjoint_patches_keep_both_fields() {
+        use std::sync::{Arc, Barrier};
+        let root = temp();
+        let wid = dispatch(&root, "workspace.create", json!({"name":"Solo"})).unwrap()["id"].clone();
+        let gig = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","title":"Show"})).unwrap();
+        for iteration in 0..20 {
+            let barrier = Arc::new(Barrier::new(3));
+            let handles: Vec<_> = [("Fee", json!(10000 + iteration)), ("Status", json!(format!("Status {iteration}")))]
+                .into_iter()
+                .map(|(key, value)| {
+                    let root = root.clone();
+                    let wid = wid.clone();
+                    let id = gig["id"].clone();
+                    let barrier = Arc::clone(&barrier);
+                    std::thread::spawn(move || {
+                        barrier.wait();
+                        dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","id":id,"title":"Show","fields":{key:value}})).unwrap();
+                    })
+                })
+                .collect();
+            barrier.wait();
+            for handle in handles { handle.join().unwrap(); }
+            let saved = dispatch(&root, "records.get", json!({"workspaceId":wid,"entity":"gigs","id":gig["id"],"detail":"full"})).unwrap();
+            assert_eq!(saved["fields"]["Fee"], json!(10000 + iteration));
+            assert_eq!(saved["fields"]["Status"], json!(format!("Status {iteration}")));
+        }
+        let _ = fs::remove_dir_all(root);
+    }
+    #[test]
+    fn typed_relations_money_and_restore() {
+        let root = temp();
+        let w = dispatch(&root, "workspace.create", json!({"name":"Solo"})).unwrap();
+        let wid = &w["id"];
+        let gig=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"gigs","title":"Show","fields":{"Fee":20000,"Status":"Confirmed"}})).unwrap();
+        let deposit=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"finances","title":"Deposit","fields":{"Amount":5000,"Direction":"Income","Status":"Paid"}})).unwrap();
+        let expense=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"finances","title":"Travel","fields":{"Amount":3000,"Direction":"Expense"}})).unwrap();
+        for finance in [&deposit, &expense] {
+            dispatch(&root,"relations.link",json!({"workspaceId":wid,"fromEntity":"gigs","fromId":gig["id"],"toEntity":"finances","toId":finance["id"],"role":"Finances"})).unwrap();
+        }
+        let summary = dispatch(
+            &root,
+            "gigs.summary",
+            json!({"workspaceId":wid,"gigId":gig["id"]}),
+        )
+        .unwrap();
+        assert_eq!(summary["netCents"], 17000);
+        assert_eq!(summary["balanceDueCents"], 15000);
+        let backup = dispatch(&root, "backup.create", json!({"workspaceId":wid})).unwrap();
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"gigs","id":gig["id"],"title":"Changed","fields":{"Fee":10000}})).unwrap();
+        dispatch(
+            &root,
+            "backup.restore",
+            json!({"backupId":backup["backupId"]}),
+        )
+        .unwrap();
+        let restored = dispatch(
+            &root,
+            "gigs.summary",
+            json!({"workspaceId":wid,"gigId":gig["id"]}),
+        )
+        .unwrap();
+        assert_eq!(restored["feeCents"], 20000);
+        assert!(root.join("backups").read_dir().unwrap().count() >= 2);
+        let _ = fs::remove_dir_all(root);
+    }
+    #[test]
+    fn restore_removes_task_created_after_snapshot_and_survives_reopen(){
+        let root=temp();
+        let w=dispatch(&root,"workspace.create",json!({"name":"Solo"})).unwrap();
+        let wid=&w["id"];
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"profile","title":"Operator","fields":{"Currency":"USD"}})).unwrap();
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"gigs","title":"Acceptance gig","fields":{"Fee":12500}})).unwrap();
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"Acceptance contact"})).unwrap();
+        let backup=dispatch(&root,"backup.create",json!({"workspaceId":wid})).unwrap();
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"tasks","title":"Acceptance: restore should remove this task"})).unwrap();
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"tasks"})).unwrap()["count"],1);
+        let restored=dispatch(&root,"backup.restore",json!({"backupId":backup["backupId"]})).unwrap();
+        assert_eq!(restored["restored"],true);
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"tasks"})).unwrap()["count"],0);
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"gigs"})).unwrap()["count"],1);
+        let _=fs::remove_dir_all(root);
+    }
+    #[test]
+    fn schema_rejects_cross_workspace_missing_and_ambiguous_links() {
+        let root = temp();
+        let w = dispatch(&root, "workspace.create", json!({"name":"Solo"})).unwrap();
+        let wid = &w["id"];
+        let gig = dispatch(
+            &root,
+            "records.save",
+            json!({"workspaceId":wid,"entity":"gigs","title":"Show"}),
+        )
+        .unwrap();
+        let contact = dispatch(
+            &root,
+            "records.save",
+            json!({"workspaceId":wid,"entity":"contacts","title":"Agent"}),
+        )
+        .unwrap();
+        assert!(dispatch(&root,"relations.link",json!({"workspaceId":wid,"fromEntity":"gigs","fromId":gig["id"],"toEntity":"contacts","toId":contact["id"]})).unwrap_err().contains("role required"));
+        for role in ["Booked Through", "Contacts"] {
+            dispatch(&root,"relations.link",json!({"workspaceId":wid,"fromEntity":"gigs","fromId":gig["id"],"toEntity":"contacts","toId":contact["id"],"role":role})).unwrap();
+        }
+        let got = dispatch(
+            &root,
+            "records.get",
+            json!({"workspaceId":wid,"entity":"gigs","id":gig["id"]}),
+        )
+        .unwrap();
+        assert_eq!(got["relations"].as_array().unwrap().len(), 2);
+        assert_eq!(got["relations"][0]["fromTitle"],"Show");
+        assert_eq!(got["relations"][0]["toTitle"],"Agent");
+        assert!(dispatch(&root,"relations.link",json!({"workspaceId":wid,"fromEntity":"gigs","fromId":gig["id"],"toEntity":"contacts","toId":Uuid::new_v4().to_string(),"role":"Contacts"})).is_err());
+        assert!(dispatch(
+            &root,
+            "records.get",
+            json!({"workspaceId":Uuid::new_v4().to_string(),"entity":"gigs","id":gig["id"]})
+        )
+        .is_err());
+        let _ = fs::remove_dir_all(root);
+    }
+    #[test]
+    fn import_duplicate_preserves_correction_and_receipt_collision_fails() {
+        let root = temp();
+        let w = dispatch(&root, "workspace.create", json!({"name":"Solo"})).unwrap();
+        let wid = &w["id"];
+        let source = json!({"kind":"import","provider":"gmail","externalId":"thread-1"});
+        let original=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"gigs","title":"Imported","fields":{"Fee":10000},"source":source,"idempotencyKey":"import-1"})).unwrap();
+        let same=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"gigs","title":"Imported","fields":{"Fee":10000},"source":source,"idempotencyKey":"import-1"})).unwrap();
+        assert_eq!(same["id"], original["id"]);
+        assert!(dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"gigs","title":"Changed key","source":source,"idempotencyKey":"import-1"})).is_err());
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"gigs","id":original["id"],"title":"Manual correction","fields":{"Fee":12000},"source":{"kind":"manual"}})).unwrap();
+        let duplicate=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"gigs","title":"Stale import","fields":{"Fee":10000},"source":source})).unwrap();
+        assert_eq!(duplicate["title"], "Manual correction");
+        assert_eq!(duplicate["source"]["origin"]["externalId"], "thread-1");
+        let _ = fs::remove_dir_all(root);
+    }
+    #[test]
+    fn duplicate_source_save_records_receipt_for_later_replay() {
+        let root = temp();
+        let wid = dispatch(&root, "workspace.create", json!({"name":"Solo"})).unwrap()["id"].clone();
+        let source = json!({"kind":"import","provider":"gmail","externalId":"thread-2"});
+        let original = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","title":"Imported","source":source})).unwrap();
+        let duplicate_request = json!({"workspaceId":wid,"entity":"gigs","title":"Stale import","source":source,"idempotencyKey":"duplicate-1"});
+        let duplicate = dispatch(&root, "records.save", duplicate_request.clone()).unwrap();
+        assert_eq!(duplicate["id"], original["id"]);
+        let history = dispatch(&root, "history.list", json!({"workspaceId":wid})).unwrap();
+        assert_eq!(history["items"].as_array().unwrap().iter().filter(|item| item["operation"] == "records.save").count(), 1);
+        dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","id":original["id"],"title":"Corrected"})).unwrap();
+        let replayed = dispatch(&root, "records.save", duplicate_request).unwrap();
+        assert_eq!(replayed["id"], original["id"]);
+        assert_eq!(replayed["title"], "Imported");
+        assert!(dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","title":"Different request","source":source,"idempotencyKey":"duplicate-1"})).unwrap_err().contains("idempotency key reused"));
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn imported_ids_are_scoped_to_connected_account_and_collection() {
+        let root=temp();let w=dispatch(&root,"workspace.create",json!({"name":"Solo"})).unwrap();let wid=&w["id"];
+        let a=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"interactions","title":"Message A","source":{"kind":"import","provider":"gmail","connectedAccountId":"account-a","collectionId":"inbox","externalId":"same"}})).unwrap();
+        let b=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"interactions","title":"Message B","source":{"kind":"import","provider":"gmail","connectedAccountId":"account-b","collectionId":"inbox","externalId":"same"}})).unwrap();
+        let c=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"interactions","title":"Message C","source":{"kind":"import","provider":"gmail","connectedAccountId":"account-a","collectionId":"archive","externalId":"same"}})).unwrap();
+        assert_ne!(a["id"],b["id"]);assert_ne!(a["id"],c["id"]);
+        let replay=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"interactions","title":"Stale","source":{"kind":"import","provider":"gmail","connectedAccountId":"account-a","collectionId":"inbox","externalId":"same"}})).unwrap();
+        assert_eq!(replay["id"],a["id"]);
+        let _=fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn cents_require_supported_currency_and_finance_status() {
+        let root=temp();let w=dispatch(&root,"workspace.create",json!({"name":"Solo"})).unwrap();let wid=&w["id"];
+        assert!(dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"profile","title":"Operator","fields":{"Currency":"JPY"}})).is_err());
+        assert!(dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"finances","title":"Mystery","fields":{"Amount":100,"Direction":"Unknown"}})).is_err());
+        let profile=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"profile","title":"Operator","fields":{"Currency":"USD"}})).unwrap();
+        assert_eq!(profile["fields"]["Currency"],"USD");
+        let _=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"gigs","title":"Paid set","fields":{"Fee":12000}})).unwrap();
+        let changed=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"profile","id":profile["id"],"title":"Operator","fields":{"Currency":"EUR"}}));
+        assert!(changed.unwrap_err().contains("currency cannot change"));
+        let _=fs::remove_dir_all(root);
+    }
+    #[test]
+    fn default_record_detail_is_bounded_and_full_detail_is_explicit() {
+        let root = temp();
+        let w = dispatch(&root, "workspace.create", json!({"name":"Solo"})).unwrap();
+        let wid = &w["id"];
+        let note=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"notes","title":"Long note","fields":{"Note Details":"x".repeat(12000)}})).unwrap();
+        let request = json!({"workspaceId":wid,"entity":"notes","id":note["id"]});
+        let brief = dispatch(&root, "records.get", request.clone()).unwrap();
+        assert!(brief.to_string().len() < 6000);
+        assert_eq!(brief["truncatedFields"][0], "Note Details");
+        let full = dispatch(
+            &root,
+            "records.get",
+            json!({"workspaceId":wid,"entity":"notes","id":note["id"],"detail":"full"}),
+        )
+        .unwrap();
+        assert_eq!(
+            full["fields"]["Note Details"].as_str().unwrap().len(),
+            12000
+        );
+        let _ = fs::remove_dir_all(root);
+    }
+    #[test]
+    fn default_detail_has_byte_ceiling_with_escaping_and_many_links(){
+        let root=temp();let w=dispatch(&root,"workspace.create",json!({"name":"Solo"})).unwrap();let wid=&w["id"];
+        let note=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"notes","title":"Escaped","fields":{"Note Details":"\n".repeat(12000)}})).unwrap();
+        let brief=dispatch(&root,"records.get",json!({"workspaceId":wid,"entity":"notes","id":note["id"]})).unwrap();
+        assert!(brief.to_string().len()<8000);
+        assert_eq!(brief["truncatedFields"][0],"Note Details");
+        let gig=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"gigs","title":"Show"})).unwrap();
+        for n in 0..20 {
+            let contact=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":format!("{n}{}","\n".repeat(490))})).unwrap();
+            dispatch(&root,"relations.link",json!({"workspaceId":wid,"fromEntity":"gigs","fromId":gig["id"],"toEntity":"contacts","toId":contact["id"],"role":"Contacts"})).unwrap();
+        }
+        let linked=dispatch(&root,"records.get",json!({"workspaceId":wid,"entity":"gigs","id":gig["id"]})).unwrap();
+        assert!(linked.to_string().len()<8000);
+        assert_eq!(linked["relationCount"],20);
+        assert_eq!(linked["relationsTruncated"],true);
+        let _=fs::remove_dir_all(root);
+    }
+    #[test]
+    fn list_is_paginated_and_unknown_fee_stays_unknown() {
+        let root = temp();
+        let w = dispatch(&root, "workspace.create", json!({"name":"Solo"})).unwrap();
+        let wid = &w["id"];
+        for i in 0..55 {
+            dispatch(
+                &root,
+                "records.save",
+                json!({"workspaceId":wid,"entity":"gigs","title":format!("Gig {i}")}),
+            )
+            .unwrap();
+        }
+        let first = dispatch(
+            &root,
+            "records.list",
+            json!({"workspaceId":wid,"entity":"gigs","limit":100}),
+        )
+        .unwrap();
+        assert_eq!(first["items"].as_array().unwrap().len(), 50);
+        assert!(first.to_string().len() < 20000);
+        let next = dispatch(
+            &root,
+            "records.list",
+            json!({"workspaceId":wid,"entity":"gigs","cursor":first["nextCursor"]}),
+        )
+        .unwrap();
+        assert_eq!(next["items"].as_array().unwrap().len(), 5);
+        let summary = dispatch(
+            &root,
+            "gigs.summary",
+            json!({"workspaceId":wid,"gigId":first["items"][0]["id"]}),
+        )
+        .unwrap();
+        assert!(summary["feeCents"].is_null());
+        assert_eq!(summary["financialsComplete"], false);
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn private_database_permissions() {
+        use std::os::unix::fs::PermissionsExt;
+        let root = temp();
+        dispatch(&root, "workspace.create", json!({"name":"Solo"})).unwrap();
+        assert_eq!(fs::metadata(&root).unwrap().permissions().mode() & 0o777, 0o700);
+        assert_eq!(fs::metadata(root.join("gigi.sqlite")).unwrap().permissions().mode() & 0o777, 0o600);
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn history_export_uses_scoped_ctx_v2_events_and_private_file() {
+        use std::os::unix::fs::PermissionsExt;
+        let root=temp();let w=dispatch(&root,"workspace.create",json!({"name":"Solo"})).unwrap();let wid=&w["id"];
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"gigs","title":"Friday set"})).unwrap();
+        let result=export_history(&root).unwrap();assert_eq!(result["events"],2);
+        let path=root.join("imports/gigi-history.jsonl");
+        let content=fs::read_to_string(&path).unwrap();let lines:Vec<Value>=content.lines().map(|line|serde_json::from_str(line).unwrap()).collect();
+        assert_eq!(lines[0]["schema_version"],"ctx-history-jsonl-v2");
+        assert_eq!(lines[1]["provider_key"],"gigi-local");
+        assert_eq!(lines[2]["source_id"],format!("gigi-{}",wid.as_str().unwrap()));
+        assert_eq!(lines[4]["event_index"],1);
+        assert_eq!(lines[4]["event_type"],"message");
+        assert!(lines[4]["payload"]["text"].as_str().unwrap().contains("Friday set"));
+        assert_eq!(fs::metadata(&path).unwrap().permissions().mode()&0o777,0o600);
+        let _=fs::remove_dir_all(root);
+    }
+}

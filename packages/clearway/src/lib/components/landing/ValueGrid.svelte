@@ -69,27 +69,27 @@
 	.section-title {
 		font-size: var(--text-h2);
 		font-weight: 600;
-		text-align: center;
+		text-align: left;
 		margin: 0 0 var(--space-sm);
 		color: var(--color-fg-primary);
 	}
 
 	.section-subtitle {
 		font-size: var(--text-body-lg);
-		text-align: center;
+		text-align: left;
 		color: var(--color-fg-secondary);
 		margin: 0 0 var(--space-xl);
 	}
 
 	.value-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-		gap: var(--space-md);
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+		gap: var(--space-sm);
 	}
 
 	.value-card {
-		padding: var(--space-lg);
-		border-radius: var(--radius-lg);
+		padding: var(--space-md);
+		border-radius: var(--radius-md);
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		transition: border-color var(--duration-micro) var(--ease-standard);

@@ -11,6 +11,7 @@ const NOTION_VERSION = '2022-06-28';
 
 export interface NotionClientConfig {
 	accessToken: string;
+	signal?: AbortSignal;
 }
 
 export interface NotionPage {
@@ -88,9 +89,11 @@ export interface NotionDatabaseObject {
  */
 export class NotionClient {
 	private accessToken: string;
+	private signal?: AbortSignal;
 
 	constructor(config: NotionClientConfig) {
 		this.accessToken = config.accessToken;
+		this.signal = config.signal;
 	}
 
 	private async request<T>(
@@ -99,6 +102,7 @@ export class NotionClient {
 	): Promise<T> {
 		const response = await fetch(`${NOTION_API_BASE}${endpoint}`, {
 			...options,
+			signal: this.signal,
 			headers: {
 				'Authorization': `Bearer ${this.accessToken}`,
 				'Notion-Version': NOTION_VERSION,

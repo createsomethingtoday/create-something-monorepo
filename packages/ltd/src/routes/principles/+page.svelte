@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LibraryScene from '$lib/components/LibraryScene.svelte';
 	import { PrincipleCard } from '$lib/components';
 	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
@@ -43,6 +44,7 @@
 			Principles should help a team decide what to keep, remove, prove, or ship. Each one is a
 			reusable rule for making better work easier to recognize.
 		</p>
+		<LibraryScene scene="subtract-the-extra-route" caption="Remove the extra route when it no longer serves the whole." />
 	</div>
 </section>
 

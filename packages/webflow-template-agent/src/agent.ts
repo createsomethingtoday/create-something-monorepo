@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { SYSTEM_PROMPT, pageGridNote, surfaceNote } from './prompt.js';
-import { AGENT_TOOLS, TemplateToolExecutor, type PageActionInput, type SearchToolInput } from './tools.js';
+import { toolsForBrief, TemplateToolExecutor, type PageActionInput, type SearchToolInput } from './tools.js';
 import type { AgentSseEvent, AgentUsage, ChatContext, ChatRequestMessage, Env } from './types.js';
 
 const MAX_LOOP_ITERATIONS = 6;
@@ -43,6 +43,13 @@ export async function runAgentTurn(
     return usage;
   }
 
+  // The editable project brief is user input, never a system instruction or verified evidence.
+  if (context?.project_brief) {
+    const last = messages[messages.length - 1];
+    const content = typeof last.content === 'string' ? [{ type: 'text' as const, text: last.content }] : last.content;
+    last.content = [{ type: 'text', text: 'Current editable project brief (user-provided): ' + context.project_brief }, ...content];
+  }
+
   // Frozen prompt first (cache-stable prefix); per-conversation context after.
   const system: Anthropic.Messages.TextBlockParam[] = [
     { type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
@@ -74,7 +81,7 @@ export async function runAgentTurn(
       thinking: { type: 'adaptive' },
       output_config: { effort: 'low' },
       system,
-      tools: AGENT_TOOLS,
+      tools: toolsForBrief(Boolean(context?.project_brief)),
       messages,
     });
 

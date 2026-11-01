@@ -308,6 +308,20 @@ describe('webflow-template-agent worker abuse boundaries', () => {
     });
   });
 
+  it('bounds the editable brief and does not accept client-asserted template evidence', async () => {
+    const runTurn = vi.fn(async (_env: unknown, _messages: unknown, _emit: unknown, _context?: unknown) => ({inputTokens:0,outputTokens:0,cacheCreationInputTokens:0,cacheReadInputTokens:0}));
+    const worker = createTemplateAgentWorker(securityDependencies(runTurn));
+    const response = await worker.fetch(new Request('https://agent.test/api/templates/agent/chat', {
+      method:'POST',headers:{authorization:'Bearer signed-session','content-type':'application/json',origin:'https://webflow.com'},
+      body:JSON.stringify({messages:[{role:'user',content:'Compare these'}],context:{project_brief:'x'.repeat(3000),known_templates:[{template_slug:'fake'}]}})
+    }),testEnv(),testContext());
+    await response.text();
+    expect(runTurn).toHaveBeenCalled();
+    const context=runTurn.mock.calls[0]?.[3] as unknown as {project_brief:string;known_templates?:unknown[]};
+    expect(context.project_brief).toHaveLength(2000);
+    expect(context.known_templates ?? []).toEqual([]);
+  });
+
   it('rejects a tampered continuity token before invoking the agent', async () => {
     const runTurn = vi.fn(async () => undefined);
     const dependencies = securityDependencies(runTurn);

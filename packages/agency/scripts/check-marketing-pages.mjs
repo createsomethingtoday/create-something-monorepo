@@ -211,8 +211,15 @@ function pageFileForRoute(route) {
 
 function sourceFilesForEntry(entry) {
   const files = [pageFileForRoute(entry.sourceRoute ?? entry.path)];
+  // The homepage composes its public argument in shared components. Audit the rendered copy too.
+  if (entry.path === '/') {
+    files.push(...['AgencySalesHome.svelte', 'BuiltWork.svelte', 'MembershipOffer.svelte']
+      .map((file) => path.join(packageRoot, 'src/lib/components', file)));
+  }
+  if (entry.path === '/') files.push(path.join(packageRoot, 'src/lib/content/agency-home.html'));
   if (entry.sourceRoute === '/workflows/[slug]') {
     files.push(path.join(packageRoot, 'src/lib/data/workflowPages.ts'));
+    files.push(path.join(packageRoot, 'src/lib/data/workflowWorkedExamples.ts'));
   }
   return files;
 }

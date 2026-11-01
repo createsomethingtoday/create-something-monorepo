@@ -1,0 +1,127 @@
+{
+  "reference": "Agency PR2045 cc86a62e4fa36ecfd9106e57434877725b803f63",
+  "source": "packages/agency/static/images/agency-stories",
+  "derivatives": "Full frame resized to 640/960 widths, Sharp WebP quality 82; full image copied unchanged",
+  "assets": [
+    {
+      "file": "about-careful-working-notes-640.webp",
+      "bytes": 14840,
+      "sha256": "92164134e27dca6a2bd3a9dd8274602a7dc1ed5b06d6f5011b46ae592b3127e1"
+    },
+    {
+      "file": "about-careful-working-notes-960.webp",
+      "bytes": 27764,
+      "sha256": "d788902a25b375f649a7dde4865c2d4262f73ffb04216d68404e16fa4557605c"
+    },
+    {
+      "file": "about-careful-working-notes.webp",
+      "bytes": 74518,
+      "sha256": "94076a7d73327481ba59b3f3a213241942877cd3431375335d6398cae053fd19"
+    },
+    {
+      "file": "compiler-from-plan-to-tested-jig-640.webp",
+      "bytes": 29808,
+      "sha256": "a2285244a6923547e1b831487ef54a36f87b92b2f01bfbc8dc08f1300f2eef84"
+    },
+    {
+      "file": "compiler-from-plan-to-tested-jig-960.webp",
+      "bytes": 55404,
+      "sha256": "cec47f46b36ea403434fe26a18bd5d87c6b6a1094c5fdd9a0b6fb11b18198b7d"
+    },
+    {
+      "file": "compiler-from-plan-to-tested-jig.webp",
+      "bytes": 159122,
+      "sha256": "5acb6cc5739aa93ab3a5d234f71fad1c2b75b4524f4256a6692ad523cfb4bc50"
+    },
+    {
+      "file": "editorial-experiments-isolated-sandbox-640.webp",
+      "bytes": 41754,
+      "sha256": "6ee6b01c247efd50ac2946ea6bddb4004b029d66263d225bc4ae128d6bc46713"
+    },
+    {
+      "file": "editorial-experiments-isolated-sandbox-960.webp",
+      "bytes": 79350,
+      "sha256": "ee4bf1f56ce7f34c89f78ecaab126500c5122508b2e92bbec4a273aa911722ea"
+    },
+    {
+      "file": "editorial-experiments-isolated-sandbox.webp",
+      "bytes": 200182,
+      "sha256": "5c4479b22dc1b7c149fcf6f3955af9c2f87fbf9e3de97e425d361d22e200370d"
+    },
+    {
+      "file": "editorial-upstream-shared-tool-repair-640.webp",
+      "bytes": 39740,
+      "sha256": "c3e7e48dd169985aa7becc04a49aab0fbf7411e9659feef37b3d6949a149f6d4"
+    },
+    {
+      "file": "editorial-upstream-shared-tool-repair-960.webp",
+      "bytes": 71130,
+      "sha256": "6507bbb59296b61fc0ea773591471c8efe65313634b129604739ccf0abe2fea9"
+    },
+    {
+      "file": "editorial-upstream-shared-tool-repair.webp",
+      "bytes": 173530,
+      "sha256": "36048042f0870339e9941af8fd32da36b61222856b80b40498d6db9a495937f8"
+    },
+    {
+      "file": "ground-compare-before-claim-640.webp",
+      "bytes": 38096,
+      "sha256": "9194be373c3f70294956d26bcdeaae4b80125afe836376a6eeca0b9758b5b22d"
+    },
+    {
+      "file": "ground-compare-before-claim-960.webp",
+      "bytes": 67968,
+      "sha256": "305a6cab6e1eda4cd0cf410af3872e3aeaacf8793ae85cd1870bac92de1d20d6"
+    },
+    {
+      "file": "ground-compare-before-claim.webp",
+      "bytes": 148860,
+      "sha256": "5f5ce1c69d5a59487da0878a09d1a15bc2cfa9d456bea159340fd98ebb1ebf88"
+    },
+    {
+      "file": "products-workbench-paths-continuity-v2-640.webp",
+      "bytes": 47882,
+      "sha256": "890b575f8741b16de3c0bfdfc964863b2960317e8d0fdac3db6accd2628f6666"
+    },
+    {
+      "file": "products-workbench-paths-continuity-v2-960.webp",
+      "bytes": 83166,
+      "sha256": "3a0c043188671020a9652b07833c3ec46d29ac4003f3f67fa2596205dafb15c6"
+    },
+    {
+      "file": "products-workbench-paths-continuity-v2.webp",
+      "bytes": 199522,
+      "sha256": "b4df45a6e5483e116d18d5bd8ba2bae08d3f53c7b16171613976b5691d8ef335"
+    },
+    {
+      "file": "subtract-the-extra-route-640.webp",
+      "bytes": 23170,
+      "sha256": "11d47819427ad38ef06a0eb860308d27e948dc1082520bd2220b9c940b29a3cd"
+    },
+    {
+      "file": "subtract-the-extra-route-960.webp",
+      "bytes": 45882,
+      "sha256": "bfb9e23da715f9c01f59a6df6ef9c54a3074c52bd070001f4ba5aa01bfd36db1"
+    },
+    {
+      "file": "subtract-the-extra-route.webp",
+      "bytes": 130706,
+      "sha256": "1f68c6fb4ba84db2e7933decb88286ab11e96610800bb2685d566c852aa103e1"
+    },
+    {
+      "file": "tool-fit-without-forcing-640.webp",
+      "bytes": 18168,
+      "sha256": "ffc6df2c2788373d942510070e29bc81421c9b235d76971782242011436a064a"
+    },
+    {
+      "file": "tool-fit-without-forcing-960.webp",
+      "bytes": 32768,
+      "sha256": "5c8a7331c4fc001d8dcf46a514cc261306c3809802b6134ea6681ee2b47a2406"
+    },
+    {
+      "file": "tool-fit-without-forcing.webp",
+      "bytes": 84766,
+      "sha256": "9c45d0f1b96f5039eaac220a031cb53ea5c98d6116f733baa7d6b2b3da8cd7a6"
+    }
+  ]
+}

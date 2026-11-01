@@ -379,6 +379,7 @@
     "linear:done": "node scripts/linear/remote.mjs done",
     "linear:comment": "node scripts/linear/remote.mjs comment",
     "linear:registry:sync": "node scripts/linear/sync-registry.mjs",
+    "forge": "node packages/webflow-app-forge/src/cli.mjs",
     "airtable:primary-tags:dry-run": "node --import tsx scripts/airtable-tag-agent.ts --dry-run",
     "airtable:primary-tags:run": "node --import tsx scripts/airtable-tag-agent.ts --live",
     "template-review:agent-feedback": "node --import tsx scripts/template-review-agent-feedback.ts",
@@ -433,7 +434,8 @@
     "operator:langfuse-quality": "pnpm --dir packages/calm-operator-ink-bridge post:langfuse-quality",
     "zellij:cockpit": "node scripts/zellij-cockpit.mjs",
     "zellij:cockpit:build": "cargo build --manifest-path packages/zellij-cockpit/Cargo.toml --target wasm32-wasip1 --release --locked",
-    "zellij:cockpit:install": "node scripts/zellij-cockpit-install.mjs"
+    "zellij:cockpit:install": "node scripts/zellij-cockpit-install.mjs",
+    "atlas:context": "node packages/database-layer/scripts/atlas-context.mjs"
   },
   "devDependencies": {
     "@create-something/observability": "workspace:*",
@@ -466,10 +468,9 @@
     "overrides": {
       "undici": ">=7.29.0 <8",
       "@types/node": "24.10.9",
-      "@modelcontextprotocol/sdk": "1.26.0",
+      "@modelcontextprotocol/sdk": "1.32.0",
       "protobufjs": ">=7.5.5 <8",
       "tar@>=7.0.0": ">=7.5.19 <8",
-      "basic-ftp": ">=5.3.1 <6",
       "fast-uri": ">=3.1.5 <4",
       "axios": ">=1.18.0 <2",
       "ws@8": ">=8.21.0 <9",
@@ -582,10 +583,12 @@
       "dompurify@<=3.4.12": ">=3.4.13",
       "@hono/node-server@<1.19.15": ">=1.19.15",
       "postcss@<=8.5.17": ">=8.5.18",
-      "tar@<=7.5.20": ">=7.5.21"
+      "tar@<=7.5.20": ">=7.5.21",
+      "get-uri>basic-ftp": "6.2.1"
     },
     "patchedDependencies": {
-      "@modelcontextprotocol/sdk@1.26.0": "patches/@modelcontextprotocol__sdk@1.26.0.patch"
+      "@modelcontextprotocol/sdk@1.32.0": "patches/@modelcontextprotocol__sdk@1.32.0.patch",
+      "extract-zip@2.0.1": "patches/extract-zip@2.0.1.patch"
     }
   },
   "dependencies": {

@@ -26,6 +26,7 @@ export type RuntimeConfig = {
   ownerEmail: string;
   ownerLabel: string;
   clientLabel: string;
+  clientPageId?: string;
   sourceLabel: string;
 };
 
@@ -56,6 +57,7 @@ export function resolveRuntimeConfig(env: Env): RuntimeConfig {
     ownerEmail: env.SYNC_OWNER_EMAIL?.trim() || DEFAULT_OWNER_EMAIL,
     ownerLabel: env.SYNC_OWNER_LABEL?.trim() || DEFAULT_OWNER_LABEL,
     clientLabel: env.SYNC_CLIENT_LABEL?.trim() || DEFAULT_SYNC_CLIENT_LABEL,
+    clientPageId: env.SYNC_CLIENT_PAGE_ID?.trim() || undefined,
     sourceLabel: env.SYNC_SOURCE_LABEL?.trim() || DEFAULT_SOURCE_LABEL,
   };
 }

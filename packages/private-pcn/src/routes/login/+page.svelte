@@ -1,7 +1,8 @@
 <script lang="ts">
+  import SerifPhrase from '$lib/components/SerifPhrase.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import { api } from '$lib/client';
-  import { safeReturnPath } from '$lib/return-path';
+  import { safeReturnPath, safeLoginReturnPath } from '$lib/return-path';
   import { page } from '$app/state';
   let email = $state('');
   let password = $state('');
@@ -13,7 +14,7 @@
     error = '';
     try {
       await api('login', { email, password });
-      window.location.assign(safeReturnPath(page.url.searchParams.get('next')));
+      window.location.assign(safeLoginReturnPath(page.url.searchParams.get('next')));
     } catch (e) {
       error = (e as Error).message;
     } finally {
@@ -28,9 +29,9 @@
     content="noindex"
   /></svelte:head
 >
-<main id="main" class="form-page">
+<main id="main" tabindex="-1" class="form-page">
   <p class="eyebrow">PRIVATE / BUILDER ACCESS</p>
-  <h1>Welcome<br /><em>back.</em></h1>
+  <h1>Welcome<br /><SerifPhrase text="back." /></h1>
   <p>
     Sign in to your CREATE SOMETHING account to open your collection or manage your network. Private
     networks may require a member invitation. Creator publishing requires approval.
