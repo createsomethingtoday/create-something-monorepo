@@ -35,8 +35,15 @@ export function composeTopology(modules) {
       }
     }
   }
+  const roots = new Set();
   for (const module of modules) {
-    if (module.rootNodeId !== undefined && !nodes.has(module.rootNodeId)) throw new Error(`unknown root ${module.rootNodeId}`);
+    if (module.rootNodeIds !== undefined && !Array.isArray(module.rootNodeIds)) throw new Error('rootNodeIds must be an array');
+    const declared = [...(module.rootNodeIds ?? []), ...(module.rootNodeId === undefined ? [] : [module.rootNodeId])];
+    for (const root of declared) {
+      requiredText(root, 'root node id');
+      if (!nodes.has(root)) throw new Error(`unknown root ${root}`);
+      roots.add(root);
+    }
   }
   for (const node of nodes.values()) {
     if (typeof node.path !== 'string') throw new Error(`${node.id}.path must be a string`);
@@ -49,7 +56,7 @@ export function composeTopology(modules) {
     if (!own(ontologyContract.relations, edge.relation)) throw new Error(`${edge.id}: unknown relation ${edge.relation}`);
     for (const key of ['source', 'target']) if (!nodes.has(edge[key])) throw new Error(`${edge.id}: unknown ${key} ${edge[key]}`);
   }
-  return { id: 'substrate:ontology:composed', nodes: sorted(nodes.values()), edges: sorted(edges.values()) };
+  return { id: 'substrate:ontology:composed', rootNodeIds: [...roots].sort(), nodes: sorted(nodes.values()), edges: sorted(edges.values()) };
 }
 
 export function topologyDigest(topology) {
@@ -77,7 +84,9 @@ export function exportTopologyRdf(topology) {
 export function planTopologyChange(before, after, { protectedNodeIds = [] } = {}) {
   const base = composeTopology([before]);
   const next = composeTopology([after]);
-  const changedNodes = new Set();
+  const changedRootNodeIds = [...new Set([...base.rootNodeIds, ...next.rootNodeIds])]
+    .filter((id) => base.rootNodeIds.includes(id) !== next.rootNodeIds.includes(id)).sort();
+  const changedNodes = new Set(changedRootNodeIds);
   const changedEdges = new Set();
   for (const [key, changes] of [['nodes', changedNodes], ['edges', changedEdges]]) {
     const left = new Map(base[key].map((record) => [record.id, record]));
@@ -111,7 +120,7 @@ export function planTopologyChange(before, after, { protectedNodeIds = [] } = {}
   return {
     schema: 'substrate-ontology-plan/v1', verification: 'local_structural_and_modeled_impact', authority: 'review_only',
     baselineDigest: topologyDigest(base), proposedDigest: topologyDigest(next),
-    changedNodeIds: [...changedNodes].sort(), changedEdgeIds: [...changedEdges].sort(), affectedNodeIds: [...affected].sort(),
+    changedRootNodeIds, changedNodeIds: [...changedNodes].sort(), changedEdgeIds: [...changedEdges].sort(), affectedNodeIds: [...affected].sort(),
     protectedViolations: violations, requiresReview: affected.size > 0, protectedContractsSatisfied: violations.length === 0,
     limits: ['Impact follows declared relation directions only.', 'No OWL entailment, SHACL engine, proof checker, live state or execution authorization verified.']
   };

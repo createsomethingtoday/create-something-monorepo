@@ -20,7 +20,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { exportTopologyRdf, exportShapes, exportVocabulary, topologyDigest, planTopologyChange } from '../scripts/lib/ontology.mjs';
+import { exportTopologyRdf, exportShapes, exportVocabulary, topologyDigest, planTopologyChange, ontologyContract } from '../scripts/lib/ontology.mjs';
 const edge = (source, target) => ({ id: `${source}-${target}`, source, target, relation: 'depends_on' });
 const fixture = () => ({ id: 'fixture', nodes: ['a', 'b', 'c'].map(node), edges: [edge('b', 'a'), edge('c', 'b'), edge('a', 'c')] });
 
@@ -121,4 +121,43 @@ test('engine verifier rejects exit-zero nonconformance and incomplete or malform
       assert.equal(run.status, mode === 'valid' ? 0 : 1, run.stderr);
     }
   } finally { fs.rmSync(temporary, { recursive: true, force: true }); }
+});
+
+
+test('root-only changes alter digests, require review and protect affected roots', () => {
+  const before = { id: 'root-change', rootNodeId: 'a', nodes: ['a', 'b', 'c'].map(node), edges: [edge('c', 'b')] };
+  const after = { ...before, rootNodeId: 'b' };
+  const plan = planTopologyChange(before, after, { protectedNodeIds: ['a', 'c'] });
+  assert.notEqual(plan.baselineDigest, plan.proposedDigest);
+  assert.equal(plan.requiresReview, true);
+  assert.deepEqual(plan.changedRootNodeIds, ['a', 'b']);
+  assert.deepEqual(plan.affectedNodeIds, ['a', 'b', 'c']);
+  assert.equal(plan.protectedContractsSatisfied, false);
+  for (const graph of [before, after]) {
+    const composed = composeTopology([graph]);
+    assert.equal(topologyDigest(graph), topologyDigest(composed));
+  }
+  const other = { ...before, id: 'other-root', rootNodeId: 'c' };
+  assert.deepEqual(composeTopology([before, other]), composeTopology([other, before]));
+  assert.deepEqual(composeTopology([before, other]).rootNodeIds, ['a', 'c']);
+  assert.equal(planTopologyChange(before, { ...before, rootNodeId: undefined }).requiresReview, true);
+});
+
+test('configures relations compose, export and propagate configuration impact', () => {
+  const before = { id: 'configures', nodes: ['config', 'runtime'].map(node), edges: [{ id: 'config-runtime', source: 'config', target: 'runtime', relation: 'configures' }] };
+  const after = structuredClone(before); after.nodes[0].title = 'Changed config';
+  assert.equal(composeTopology([before]).edges[0].relation, 'configures');
+  assert.match(exportTopologyRdf(before), /cs:configures/);
+  assert.match(exportVocabulary(), /cs:configures a owl:ObjectProperty/);
+  assert.match(exportShapes(), /sh:path cs:configures/);
+  assert.deepEqual(planTopologyChange(before, after).affectedNodeIds, ['config', 'runtime']);
+});
+
+
+test('ontology relation vocabulary stays compatible with the package edge contract', () => {
+  const types = fs.readFileSync(new URL('../src/types.ts', import.meta.url), 'utf8');
+  const declaration = types.match(/export type DatabaseLayerTopologyEdge = \{([\s\S]*?)\n\};/)[1];
+  const relation = declaration.match(/relation:([\s\S]*?);/)[1];
+  const terms = [...relation.matchAll(/'([^']+)'/g)].map((match) => match[1]).sort();
+  assert.deepEqual(Object.keys(ontologyContract.relations).sort(), terms);
 });

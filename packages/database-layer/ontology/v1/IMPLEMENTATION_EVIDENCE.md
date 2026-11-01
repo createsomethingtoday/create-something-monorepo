@@ -91,3 +91,21 @@ No separate Worker deployment or npm publication is needed for this repository C
 and refresh-pipeline integration. Formal certificates and live state remain untested.
 
 Worktree disposition: retained until PR promotion and merged-source verification.
+
+## PR review corrections
+
+Both automated P2 findings were reproduced by failing regressions before repair:
+the original suite reported 218 passed / 2 failed. Composition now retains all
+declared roots in a sorted `rootNodeIds` set, including repeated composition.
+Root switches/additions/removals alter the canonical digest and seed impact, so
+protected roots and their dependents cannot bypass review through a root-only edit.
+The existing package-supported `configures` relation is now accepted and propagates
+configuration changes to the configured target. Its vocabulary and SHACL terms are
+generated from the same contract. A source-contract parity regression catches
+future relation omissions.
+
+After correction: 221 package tests (13 ontology tests), build and typecheck pass.
+Actual Open Ontologies v2.1.0 again accepts the fresh 555-node/1,164-edge export.
+The root-aware canonical digest is
+`1de6329a316d2c548808bbd4507440068f1a789d0f5dde057b9f71a4adaf1d1f`.
+Earlier digests/test counts above describe the earlier reviewed artifacts.

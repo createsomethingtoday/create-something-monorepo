@@ -11,7 +11,8 @@
     "client_overlay": "both",
     "governs": "target",
     "documents": "source",
-    "renders": "source"
+    "renders": "source",
+    "configures": "target"
   },
   "upstream": {
     "repository": "https://github.com/fabio-rovai/open-ontologies",

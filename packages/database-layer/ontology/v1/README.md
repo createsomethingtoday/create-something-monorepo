@@ -33,7 +33,10 @@ Nodes require an ID, title, owner, string path, tier, surface, and coverage stat
 The existing empty root-package path is preserved. IDs are opaque identities;
 renaming a title does not rename a node. Unknown terms, duplicate IDs within a
 module, conflicting shared records, and unresolved roots or endpoints fail closed.
-Identical shared records deduplicate. Composition does not mutate its inputs.
+Identical shared records deduplicate. Declared `rootNodeId` values compose into a
+sorted `rootNodeIds` set, retained when composing an already-composed graph.
+Root additions, removals and switches change the digest, seed impact, and require
+review. Composition does not mutate its inputs.
 
 `contract.json` owns allowed terms and relation impact directions. Add terms with
 review and regression coverage; incompatible meaning changes require a new version.
@@ -51,7 +54,7 @@ An edge change seeds both endpoints conservatively. For record changes:
 | Relation | Change propagates toward |
 | --- | --- |
 | `depends_on`, `documents`, `renders` | source |
-| `contains`, `runs`, `governs` | target |
+| `contains`, `runs`, `governs`, `configures` | target |
 | `client_overlay` | both endpoints |
 
 These directions are a repo-owned model, not a theorem about runtime behavior.
