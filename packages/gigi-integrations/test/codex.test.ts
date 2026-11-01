@@ -1640,3 +1640,37 @@ test('terminal retry snapshots cannot hide a later approval or its rejected rece
     assert.equal(next.state, 'running'); assert.equal(next.approvals.length, 0); assert.equal(next.decisionReceipt?.outcome, 'rejected');
   } finally { await rm(dataDir, { recursive: true, force: true }); }
 });
+
+test('a later turn retains authoritative transcript through its first history outage and new deltas', async (t) => {
+  const { adapter, server, dataDir } = await setup();
+  let elapsed = 0; const started = Date.now(); t.mock.method(Date, 'now', () => started + elapsed);
+  try {
+    const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'First question' });
+    const input = { workspaceId: 'w', sessionId };
+    const prior = [{ id: 'u1', type: 'userMessage', content: [{ type: 'text', text: 'First question' }] }, { id: 'a1', type: 'agentMessage', text: 'First answer' }];
+    server.thread.turns = [{ id: 'turn-1', status: 'completed', items: prior }];
+    assert.equal((await adapter.read(input)).state, 'idle');
+    const original = server.request.bind(server);
+    server.request = async (method, params) => {
+      if (method === 'turn/start') { server.calls.push({ method, params }); return { turn: { id: 'turn-2' } }; }
+      if (method === 'thread/read') { server.calls.push({ method, params }); throw Error('synthetic first-read outage'); }
+      return original(method, params);
+    };
+    await adapter.send({ ...input, message: 'Second question' });
+    const emit = async (delta: string) => Promise.all(server.events.map(fn => fn({ method: 'item/agentMessage/delta', params: { threadId: 'thread-1', turnId: 'turn-2', itemId: 'a2', delta } })));
+    await emit('Second partial');
+    const pending = await adapter.poll(input);
+    assert.equal(pending.state, 'running'); assert.equal(pending.approvals.length, 0);
+    assert.deepEqual(pending.messages.map(x => x.text), ['First question', 'First answer', 'Second partial']);
+    const reads = server.calls.filter(x => x.method === 'thread/read').length;
+    await emit(' response'); elapsed += 250;
+    assert.deepEqual((await adapter.poll(input)).messages.map(x => x.text), ['First question', 'First answer', 'Second partial response']);
+    assert.equal(server.calls.filter(x => x.method === 'thread/read').length, reads, 'retaining transcript must not bypass safe outage cadence');
+    server.request = original;
+    server.thread.turns.push({ id: 'turn-2', status: 'completed', items: [{ id: 'u2', type: 'userMessage', content: [{ type: 'text', text: 'Second question' }] }, { id: 'a2', type: 'agentMessage', text: 'Second partial response complete' }] });
+    elapsed += 3001; const recovered = await adapter.poll(input);
+    assert.equal(recovered.state, 'idle');
+    assert.deepEqual(recovered.messages.map(x => x.text), ['First question', 'First answer', 'Second question', 'Second partial response complete']);
+    assert.equal(new Set(recovered.messages.map(x => x.id)).size, recovered.messages.length);
+  } finally { await rm(dataDir, { recursive: true, force: true }); }
+});

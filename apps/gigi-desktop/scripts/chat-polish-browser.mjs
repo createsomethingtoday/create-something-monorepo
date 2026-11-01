@@ -31,6 +31,7 @@ try{
    globalThis.chatAppend=text=>{chat.current.messages[1].text+=text;renderChat();};
    globalThis.chatSetState=state=>{chat.current.state=state;renderChat();};
    globalThis.chatFullRender=render;
+   globalThis.chatAcceptSnapshot=snapshot=>chat.accept(snapshot);
    globalThis.chatClearDraft=()=>{chat.draft='';renderChat();};
    `);
   }
@@ -44,6 +45,20 @@ try{
  assert.equal(await page.evaluate(()=>retainedComposer===document.querySelector('#chat-message')),true,'streaming must retain mounted composer');
  assert.equal(await page.locator('#chat-message').inputValue(),'Keep this draft');
  assert.equal(await page.locator('#chat-message').evaluate(e=>e.selectionStart),4);
+ // The adapter's outage fallback supplies retained authoritative messages
+ // alongside the new observed delta; exercise their controller/DOM boundary.
+ const priorMessages=[{id:'u1',role:'user',text:'First question'},{id:'a1',role:'assistant',text:'First answer'}];
+ await page.evaluate(messages=>chatAcceptSnapshot({sessionId:'s0',state:'running',messages:[...messages,{id:'a2',role:'assistant',text:'Second partial'}],approvals:[],recordLinks:[]}),priorMessages);
+ let transcript=await page.locator('.chat-transcript').innerText();
+ assert.ok(transcript.includes('First question')&&transcript.includes('First answer')&&transcript.includes('Second partial'));
+ assert.equal(await page.locator('#chat-message').inputValue(),'Keep this draft');
+ assert.equal(await page.evaluate(()=>retainedComposer===document.querySelector('#chat-message')),true);
+ await page.screenshot({path:resolve(out,'outage-retained-transcript.png')});
+ await page.evaluate(messages=>chatAcceptSnapshot({sessionId:'s0',state:'idle',messages:[...messages,{id:'u2',role:'user',text:'Second question'},{id:'a2',role:'assistant',text:'Second partial response complete'}],approvals:[],recordLinks:[]}),priorMessages);
+ transcript=await page.locator('.chat-transcript').innerText();
+ assert.ok(transcript.indexOf('First answer')<transcript.indexOf('Second question'));
+ assert.ok(transcript.indexOf('Second question')<transcript.indexOf('Second partial response complete'));
+ assert.equal(await page.locator('#chat-message').inputValue(),'Keep this draft');
  for(const width of [880,1280])for(const theme of ['studio','paper','midnight'])for(const chatWidth of ['standard','wide']){
   await page.setViewportSize({width,height:width===880?620:840});await page.evaluate(({theme,chatWidth})=>chatFixture(theme,{chatWidth,chatTextSize:'larger'}),{theme,chatWidth});
   const rects=await page.evaluate(()=>{

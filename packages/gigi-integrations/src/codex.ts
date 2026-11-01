@@ -266,7 +266,11 @@ export function createCodexAdapter(options: CodexOptions) {
       const plugins = await options.server.request('plugin/installed', { cwds: [root] });
       if (!Array.isArray(plugins?.marketplaces)) throw new Error('plugin_inventory_unavailable');
       const disabledPluginIds = plugins.marketplaces.flatMap((market: Json) => Array.isArray(market.plugins) ? market.plugins.filter((x: Json) => x.installed).map((x: Json) => required(x.id)) : []);
-      snapshots.delete(session.sessionId); terminalReads.delete(session.sessionId); terminalRetries.delete(session.sessionId); activity.delete(session.sessionId);
+      // Keep confirmed transcript text for a first-read outage, but invalidate
+      // all prior turn metadata until read() constructs a fresh response.
+      const previousSnapshot = snapshots.get(session.sessionId);
+      if (previousSnapshot) previousSnapshot.at = Number.NEGATIVE_INFINITY;
+      terminalReads.delete(session.sessionId); terminalRetries.delete(session.sessionId); activity.delete(session.sessionId);
       session.state = 'running'; session.error = 'turn_outcome_unknown'; session.turnId = undefined; session.pendingMessageId = randomUUID(); await persist(); submitted = true;
       const response = await options.server.request('turn/start', { threadId: session.threadId, clientUserMessageId: session.pendingMessageId, disabledPluginIds, input: [{ type: 'text', text: message, text_elements: [] }, { type: 'skill', name: 'gigi', path: options.skillPath }], environments: [], runtimeWorkspaceRoots: [], approvalPolicy: 'on-request', approvalsReviewer: 'user' });
       session.turnId = required(response?.turn?.id); session.pendingMessageId = undefined; session.state = 'running'; session.error = undefined; await persist();
