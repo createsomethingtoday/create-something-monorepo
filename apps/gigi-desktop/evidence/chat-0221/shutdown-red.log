@@ -1,0 +1,31 @@
+   Compiling gigi_desktop v0.2.20 (/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/apps/gigi-desktop/src-tauri)
+warning: unused import: `std::os::unix::net::UnixStream`
+   --> src/chat.rs:458:5
+    |
+458 | use std::os::unix::net::UnixStream;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `gigi_desktop` (lib test) generated 1 warning (run `cargo fix --lib -p gigi_desktop --tests` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.98s
+     Running unittests src/lib.rs (apps/gigi-desktop/src-tauri/target/debug/deps/gigi_desktop_lib-81a6e070d95755aa)
+
+running 1 test
+test chat::tests::shutdown_interrupts_a_reader_that_never_observes_pipe_eof ... FAILED
+
+failures:
+
+---- chat::tests::shutdown_interrupts_a_reader_that_never_observes_pipe_eof stdout ----
+
+thread 'chat::tests::shutdown_interrupts_a_reader_that_never_observes_pipe_eof' (6478621) panicked at src/chat.rs:720:9:
+shutdown waited 4.800106s for a reply channel without EOF
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    chat::tests::shutdown_interrupts_a_reader_that_never_observes_pipe_eof
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 149 filtered out; finished in 5.01s
+
+error: test failed, to rerun pass `--lib`

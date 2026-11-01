@@ -14,7 +14,7 @@ type RecordRef = { entity: string; id: string; title?: string };
 type DecisionReceipt = { tool?: string; approvalId: string; outcome: 'cancelled' | 'verified' | 'existing' | 'rejected' | 'failed' | 'unknown' };
 type Session = { sessionId: string; threadId: string; workspaceId: string; title: string; record?: RecordRef; recordLinks?: RecordRef[]; state: State; turnId?: string; pendingMessageId?: string; cancelPending?: boolean; recoveryPending?: boolean; decisionReceipt?: DecisionReceipt; error?: string; uncertainWrite?: { tool: string; arguments: Json; result?: Json; sourcePreview?: Json }; createdAt: number };
 type Approval = { id: string; title: string; detail: string; requestId: string | number; sessionId: string; kind: 'server' | 'tool'; tool?: string; arguments?: Json; sourcePreview?: Json };
-export type ChatRead = { sessionId: string; messages: Array<{ id: string; role: 'user' | 'assistant'; text: string }>; state: State; approvals: Array<{ id: string; title: string; detail: string }>; recordLinks: RecordRef[]; workspaceVerifiedEdits?: string[]; decisionReceipt?: DecisionReceipt; error?: string; cancelPending?: boolean; recoveryPending?: boolean };
+export type ChatRead = { activity?: 'reading' | 'preparing' | 'checking'; sessionId: string; messages: Array<{ id: string; role: 'user' | 'assistant'; text: string }>; state: State; approvals: Array<{ id: string; title: string; detail: string }>; recordLinks: RecordRef[]; workspaceVerifiedEdits?: string[]; decisionReceipt?: DecisionReceipt; error?: string; cancelPending?: boolean; recoveryPending?: boolean };
 export interface AppServer { request(method: string, params: Json): Promise<any>; onMessage(handler: (message: Json) => void): () => void; reply(id: string | number, result: unknown): Promise<void> | void; close?(): Promise<void> | void }
 export type CodexOptions = { dataDir: string; mcpBinary: string; skillPath: string; server: AppServer; mcp?: AppServer };
 
@@ -87,6 +87,7 @@ function validRecord(value: unknown): RecordRef | undefined {
 function asObject(value: unknown): Json { return value && typeof value === 'object' && !Array.isArray(value) ? value as Json : {}; }
 function textContent(items: unknown): string { return Array.isArray(items) ? items.filter(x => x?.type === 'text').map(x => x.text).join('\n') : ''; }
 
+const UNRESOLVED_OUTCOME_ERRORS = new Set(['turn_outcome_unknown', 'write_outcome_unknown', 'approval_delivery_unknown', 'reconciliation_required']);
 const RECORD_ENTITIES = new Set(['tasks','interactions','notes','gigs','finances','contacts','companies','documents','locations','schedule','tags','profile','services']);
 const MAX_RECORD_LINKS = 20;
 function sourceRecordRef(value: unknown, workspaceId: string, expectedEntity?: string, expectedId?: string): RecordRef | undefined {
@@ -113,6 +114,10 @@ export function createCodexAdapter(options: CodexOptions) {
   const retiringSessions = new Set<string>();
   const loadedThreads = new Set<string>();
   const liveMessages = new Map<string, Map<string, { text: string; turnId?: string }>>();
+  const snapshots = new Map<string, { value: ChatRead; at: number }>();
+  const terminalReads = new Set<string>();
+  const terminalRetries = new Map<string, { value: ChatRead; at: number }>();
+  const activity = new Map<string, 'reading' | 'preparing' | 'checking'>();
   let loaded = false;
   let queue = Promise.resolve();
 
@@ -204,7 +209,7 @@ export function createCodexAdapter(options: CodexOptions) {
     const settled = (session: Session) =>
       !['running', 'approval'].includes(session.state) && !session.pendingMessageId &&
       !session.cancelPending && !session.recoveryPending && !session.uncertainWrite &&
-      !['turn_outcome_unknown', 'write_outcome_unknown', 'approval_delivery_unknown', 'reconciliation_required'].includes(session.error ?? '') &&
+      !UNRESOLVED_OUTCOME_ERRORS.has(session.error ?? '') &&
       session.decisionReceipt?.outcome !== 'unknown' &&
       ![...approvals.values()].some(approval => approval.sessionId === session.sessionId);
     const retiring = sessions.size >= MAX_SESSIONS
@@ -234,7 +239,7 @@ export function createCodexAdapter(options: CodexOptions) {
         await appendFile(join(root, 'retired-sessions.jsonl'), JSON.stringify({ retiredAt: Date.now(), session: retiring }) + '\n', { mode: 0o600 });
         sessions.delete(retiring.sessionId);
       } finally { retiringSessions.delete(retiring.sessionId); }
-      liveMessages.delete(retiring.sessionId);
+      liveMessages.delete(retiring.sessionId); snapshots.delete(retiring.sessionId); terminalReads.delete(retiring.sessionId); terminalRetries.delete(retiring.sessionId); activity.delete(retiring.sessionId);
       if (![...sessions.values()].some(item => item.threadId === retiring.threadId)) loadedThreads.delete(retiring.threadId);
     }
     sessions.set(session.sessionId, session); await persist();
@@ -261,6 +266,11 @@ export function createCodexAdapter(options: CodexOptions) {
       const plugins = await options.server.request('plugin/installed', { cwds: [root] });
       if (!Array.isArray(plugins?.marketplaces)) throw new Error('plugin_inventory_unavailable');
       const disabledPluginIds = plugins.marketplaces.flatMap((market: Json) => Array.isArray(market.plugins) ? market.plugins.filter((x: Json) => x.installed).map((x: Json) => required(x.id)) : []);
+      // Keep confirmed transcript text for a first-read outage, but invalidate
+      // all prior turn metadata until read() constructs a fresh response.
+      const previousSnapshot = snapshots.get(session.sessionId);
+      if (previousSnapshot) previousSnapshot.at = Number.NEGATIVE_INFINITY;
+      terminalReads.delete(session.sessionId); terminalRetries.delete(session.sessionId); activity.delete(session.sessionId);
       session.state = 'running'; session.error = 'turn_outcome_unknown'; session.turnId = undefined; session.pendingMessageId = randomUUID(); await persist(); submitted = true;
       const response = await options.server.request('turn/start', { threadId: session.threadId, clientUserMessageId: session.pendingMessageId, disabledPluginIds, input: [{ type: 'text', text: message, text_elements: [] }, { type: 'skill', name: 'gigi', path: options.skillPath }], environments: [], runtimeWorkspaceRoots: [], approvalPolicy: 'on-request', approvalsReviewer: 'user' });
       session.turnId = required(response?.turn?.id); session.pendingMessageId = undefined; session.state = 'running'; session.error = undefined; await persist();
@@ -360,6 +370,16 @@ export function createCodexAdapter(options: CodexOptions) {
     const ids = [...sessions.values()].filter(session => session.workspaceId === workspaceId && session.decisionReceipt?.outcome === 'verified').map(session => session.decisionReceipt!.approvalId);
     return ids.length ? { workspaceVerifiedEdits: ids } : {};
   }
+  function safeRunningSnapshot(session: Session, value: ChatRead): boolean {
+    // A historical provider failure is not itself an unresolved workspace action.
+    const uncertain = Boolean(session.error) || [...sessions.values()].some(x => x.workspaceId === session.workspaceId && (
+      x.uncertainWrite || x.pendingMessageId || x.cancelPending || x.recoveryPending || x.decisionReceipt?.outcome === 'unknown'
+      || UNRESOLVED_OUTCOME_ERRORS.has(x.error ?? '')
+    ));
+    return session.state === 'running' && value.state === 'running' && value.approvals.length === 0
+      && !value.error && !value.cancelPending && !value.recoveryPending
+      && value.decisionReceipt?.outcome !== 'unknown' && !uncertain;
+  }
   async function read(input: Json): Promise<ChatRead> {
     const session = await owner(input);
     await reconcileSavedEdits(session.workspaceId);
@@ -382,8 +402,14 @@ export function createCodexAdapter(options: CodexOptions) {
     }
     catch (error) {
       if (session.state !== 'running' && session.state !== 'approval') throw error;
-      const pending: ChatRead = { sessionId: session.sessionId, messages: [...(liveMessages.get(session.sessionId) ?? [])].filter(([, entry]) => entry.turnId === session.turnId).slice(-50).map(([id, entry]) => ({ id, role: 'assistant' as const, text: entry.text })), state: session.state, approvals: [...approvals.values()].filter(x => x.sessionId === session.sessionId).map(({ id, title, detail }) => ({ id, title, detail })), recordLinks: sessionRecordLinks(session), ...workspaceVerifiedEdits(session.workspaceId), ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}), ...(session.error ? { error: session.error } : {}), ...(session.cancelPending ? { cancelPending: true } : {}), ...(session.recoveryPending ? { recoveryPending: true } : {}) };
+      const pending: ChatRead = { ...(activity.has(session.sessionId) ? { activity: activity.get(session.sessionId) } : {}), sessionId: session.sessionId, messages: [...(liveMessages.get(session.sessionId) ?? [])].filter(([, entry]) => entry.turnId === session.turnId).slice(-50).map(([id, entry]) => ({ id, role: 'assistant' as const, text: entry.text })), state: session.state, approvals: [...approvals.values()].filter(x => x.sessionId === session.sessionId).map(({ id, title, detail }) => ({ id, title, detail })), recordLinks: sessionRecordLinks(session), ...workspaceVerifiedEdits(session.workspaceId), ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}), ...(session.error ? { error: session.error } : {}), ...(session.cancelPending ? { cancelPending: true } : {}), ...(session.recoveryPending ? { recoveryPending: true } : {}) };
+      const retained = structuredClone(snapshots.get(session.sessionId)?.value.messages ?? []);
+      for (const message of pending.messages) { const index = retained.findIndex(x => x.id === message.id); if (index >= 0) retained[index] = message; else retained.push(message); }
+      pending.messages = retained.slice(-50);
       while (pending.messages.length && Buffer.byteLength(JSON.stringify(pending)) > 500_000) pending.messages.shift();
+      // An unavailable history page is not a reason to retry the entire history
+      // on every UI tick. Cache only through the same safety gates as poll().
+      if (!terminalReads.has(session.sessionId) && safeRunningSnapshot(session, pending)) snapshots.set(session.sessionId, { value: structuredClone(pending), at: Date.now() });
       return pending;
     }
     const messages: ChatRead['messages'] = [];
@@ -404,7 +430,11 @@ export function createCodexAdapter(options: CodexOptions) {
       const existing = messages.find(x => x.id === id);
       if (existing) {
         if (entry.text.length > existing.text.length) existing.text = entry.text.slice(0, MAX_TEXT);
-        else stream?.delete(id); // Authoritative text now contains the whole streamed item.
+        else if (entry.turnId === session.turnId && session.state === 'running') {
+          // Future deltas for this item are suffixes, including after history
+          // catches up. Retain the authoritative prefix as their base.
+          entry.text = existing.text;
+        } else stream?.delete(id);
       } else if (entry.turnId === session.turnId) messages.push({ id, role: 'assistant', text: entry.text.slice(0, MAX_TEXT) });
       else stream?.delete(id); // Older items outside the authoritative window cannot reappear.
     }
@@ -413,9 +443,46 @@ export function createCodexAdapter(options: CodexOptions) {
     await persist();
     const output: ChatRead = { sessionId: session.sessionId, messages: messages.slice(-50), state: session.state, approvals: pending.map(({ id, title, detail }) => ({ id, title, detail })), recordLinks: sessionRecordLinks(session), ...workspaceVerifiedEdits(session.workspaceId), ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}), ...(session.error ? { error: session.error } : {}), ...(session.cancelPending ? { cancelPending: true } : {}), ...(session.recoveryPending ? { recoveryPending: true } : {}) };
     while (output.messages.length && Buffer.byteLength(JSON.stringify(output)) > 500_000) output.messages.shift();
+    if (session.state !== 'running') activity.delete(session.sessionId);
+    if (activity.has(session.sessionId)) output.activity = activity.get(session.sessionId);
+    snapshots.set(session.sessionId, { value: structuredClone(output), at: Date.now() });
     return output;
   }
-  async function poll(input: Json) { return read(input); }
+  async function poll(input: Json): Promise<ChatRead> {
+    const session = await owner(input);
+    const terminalRetry = terminalReads.has(session.sessionId) ? terminalRetries.get(session.sessionId) : undefined;
+    const cached = terminalRetry ?? snapshots.get(session.sessionId);
+    // Live deltas are already observed provider output. Keep the one-reply IPC
+    // contract and periodically reconcile durable history. The first terminal
+    // signal forces readback; subsequent safe running retries remain bounded.
+    // Cancellation, approval and uncertain outcomes still require reconciliation.
+    const live = liveMessages.get(session.sessionId);
+    // The current conversation's errors still force a fresh read. A historical
+    // provider failure elsewhere is not an unresolved workspace operation.
+    if (cached && safeRunningSnapshot(session, cached.value) && (!terminalReads.has(session.sessionId) || terminalRetry) && Date.now() - cached.at < 3000) {
+      const output = structuredClone(cached.value);
+      for (const [id, entry] of live ?? []) {
+        if (entry.turnId !== session.turnId) continue;
+        const existing = output.messages.find(x => x.id === id);
+        if (existing) { if (entry.text.length > existing.text.length) existing.text = entry.text; }
+        else output.messages.push({ id, role: 'assistant', text: entry.text });
+      }
+      output.messages = output.messages.slice(-50);
+      output.recordLinks = sessionRecordLinks(session);
+      if (activity.has(session.sessionId)) output.activity = activity.get(session.sessionId); else delete output.activity;
+      while (output.messages.length && Buffer.byteLength(JSON.stringify(output)) > 500_000) output.messages.shift();
+      return output;
+    }
+    // Keep terminal reconciliation separate from ordinary running snapshots.
+    // A retry can return only a safe running state, never inferred completion.
+    const output = await read(input);
+    if (['idle', 'failed', 'interrupted'].includes(output.state)) {
+      terminalReads.delete(session.sessionId); terminalRetries.delete(session.sessionId);
+    } else if (terminalReads.has(session.sessionId) && safeRunningSnapshot(session, output)) {
+      terminalRetries.set(session.sessionId, { value: structuredClone(output), at: Date.now() });
+    } else terminalRetries.delete(session.sessionId);
+    return output;
+  }
   async function cancel(input: Json, immediate = false) {
     const session = await owner(input);
     if (!['running', 'approval'].includes(session.state)) return read(input);
@@ -552,6 +619,12 @@ export function createCodexAdapter(options: CodexOptions) {
     if (!approval || approval.sessionId !== session.sessionId) throw new Error('approval_not_found');
     const decision = input.decision;
     if (decision !== 'approve' && decision !== 'reject') throw new Error('invalid_request');
+    // Keep the transcript for fallback, but a decision makes all prior snapshot
+    // metadata stale until an authoritative read succeeds.
+    const previousSnapshot = snapshots.get(session.sessionId);
+    if (previousSnapshot) previousSnapshot.at = Number.NEGATIVE_INFINITY;
+    terminalRetries.delete(session.sessionId);
+    if (decision === 'approve') activity.set(session.sessionId, 'checking');
     if (approval.kind === 'tool') {
       if (decision === 'reject') {
         approvals.delete(approval.id);
@@ -635,7 +708,9 @@ export function createCodexAdapter(options: CodexOptions) {
     if (typeof message?.id !== 'number' && typeof message?.id !== 'string') {
       const threadId = message?.params?.threadId;
       const session = [...sessions.values()].find(x => x.threadId === threadId);
-      if (session && message.method === 'item/agentMessage/delta') {
+      if (session && message.method === 'turn/completed' && message.params?.turn?.id === session.turnId) terminalReads.add(session.sessionId);
+      if (session && message.method === 'item/agentMessage/delta' && (!message.params?.turnId || message.params.turnId === session.turnId) && ['running', 'approval'].includes(session.state)) {
+        activity.delete(session.sessionId);
         const id = String(message.params?.itemId ?? '');
         const part = String(message.params?.delta ?? '');
         const stream = liveMessages.get(session.sessionId) ?? new Map<string, { text: string; turnId?: string }>();
@@ -657,6 +732,7 @@ export function createCodexAdapter(options: CodexOptions) {
       if (SOURCE_KEYS[tool] && Object.keys(args).some(key => key !== 'workspaceId' && !SOURCE_KEYS[tool].includes(key))) { await options.server.reply(message.id, { contentItems: [{ type: 'inputText', text: 'Unsupported source tool argument.' }], success: false }); return; }
       if (tool !== 'gigi_schema_describe') args.workspaceId = session.workspaceId;
       if (READ_TOOLS.has(tool)) {
+        activity.set(session.sessionId, 'reading');
         try { const result = await options.mcp!.request('tools/call', { name: tool, arguments: args });
           await captureReadLinks(session,tool,args,result);
           if (!result.isError && tool === 'gigi_records_get' && args.detail === 'full') {
@@ -680,6 +756,7 @@ export function createCodexAdapter(options: CodexOptions) {
         return;
       }
       if ([...sessions.values()].some(x => x.workspaceId === session.workspaceId && x.uncertainWrite)) { await options.server.reply(message.id, { contentItems: [{ type: 'inputText', text: 'Previous write outcome is unknown; fresh record read and reconciliation required.' }], success: false }); return; }
+      activity.set(session.sessionId, 'preparing');
       const originatingTurn = session.turnId;
       const id = randomUUID();
       let sourcePreview: Json | undefined;

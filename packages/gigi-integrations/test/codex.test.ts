@@ -299,7 +299,8 @@ test('turn completion keeps a held GiGi approval visible while provider read is 
   assert.equal(poll.approvals.length, 1);
 });
 
-test('completed turn notification does not settle before its transcript is readable', async () => {
+test('completed turn notification does not settle before its transcript is readable', async (t) => {
+  let elapsed = 0; const started = Date.now(); t.mock.method(Date, 'now', () => started + elapsed);
   const { adapter, server } = await setup();
   const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'Read the gig' });
   await Promise.all(server.events.map(fn => fn({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed' } } }) as unknown as Promise<void>));
@@ -309,6 +310,7 @@ test('completed turn notification does not settle before its transcript is reada
   assert.equal((await adapter.poll({ workspaceId: 'w', sessionId })).state, 'running');
   server.request = original;
   server.thread.turns = [{ id: 'turn-1', status: 'completed', items: [{ id: 'a1', type: 'agentMessage', text: 'Fee: $450.00 USD' }] }];
+  elapsed += 3001; // Retry the still-fenced terminal read after the bounded window.
   const settled = await adapter.poll({ workspaceId: 'w', sessionId });
   assert.equal(settled.state, 'idle');
   assert.equal(settled.messages.find(x => x.id === 'a1')?.text, 'Fee: $450.00 USD');
@@ -1424,4 +1426,251 @@ test('relation continuation is offered as a workspace-pinned read with no write 
   assert.equal((await adapter.read({workspaceId:'w',sessionId})).approvals.length,0);
   await notify({workspaceId:'foreign',entity:'contacts',id:'synthetic-contact'},902);assert.equal(requests.length,1);assert.equal(replies.at(-1).result.success,false);
  }finally{await rm(dataDir,{recursive:true,force:true});}
+});
+
+test('active polling uses observed deltas without repeatedly hydrating history; terminal notification forces readback', async (t) => {
+  let elapsed = 0; const started = Date.now(); t.mock.method(Date, 'now', () => started + elapsed);
+  const {adapter,server}=await setup(); const {sessionId}=await adapter.start({workspaceId:'w',message:'Read only'});
+  const input={workspaceId:'w',sessionId};
+  server.thread.turns=[{id:'turn-1',status:'inProgress',items:[{id:'u1',type:'userMessage',content:[{type:'text',text:'Read only'}]}]}];
+  await adapter.read(input);const reads=server.calls.filter(x=>x.method==='thread/read').length;
+  const emit=async(message:any)=>Promise.all(server.events.map(fn=>fn(message)));
+  await emit({method:'item/agentMessage/delta',params:{threadId:'thread-1',turnId:'turn-1',itemId:'a1',delta:'**Partial** '}});
+  const partial=await adapter.poll(input); assert.equal(partial.state,'running');assert.equal(partial.messages.at(-1)?.text,'**Partial** ');assert.equal(partial.messages[0].text,'Read only');
+  await emit({method:'item/agentMessage/delta',params:{threadId:'thread-1',turnId:'other-turn',itemId:'foreign',delta:'Ignore this stale turn'}});
+  const second=await adapter.poll(input);assert.equal(second.messages.some(x=>x.id==='foreign'),false);
+  assert.equal(server.calls.filter(x=>x.method==='thread/read').length,reads,'rapid deltas must not hydrate all history');
+  await emit({method:'turn/completed',params:{threadId:'thread-1',turn:{id:'turn-1',status:'completed'}}});
+  assert.equal((await adapter.poll(input)).state,'running','notification is not terminal transcript proof');
+  const terminalReads = server.calls.filter(x => x.method === 'thread/read').length;
+  assert.equal((await adapter.poll(input)).state, 'running');
+  assert.equal(server.calls.filter(x => x.method === 'thread/read').length, terminalReads, 'successful but lagging terminal history is also bounded');
+  server.thread.turns=[{id:'turn-1',status:'completed',items:[{id:'a1',type:'agentMessage',text:'**Partial** complete.'}]}];
+  await emit({method:'turn/completed',params:{threadId:'thread-1',turn:{id:'turn-1',status:'completed'}}});
+  elapsed += 3001; // Duplicate terminal notifications do not bypass the retry window.
+  assert.equal((await adapter.poll(input)).state,'idle');
+});
+
+test('activity is allowlisted observed local work and never includes tool arguments or reasoning', async () => {
+ const {adapter,server}=await setup(); const {sessionId}=await adapter.start({workspaceId:'w',message:'Read only'});
+ server.thread.turns=[{id:'turn-1',status:'inProgress',items:[]}];
+ await Promise.all(server.events.map(fn=>fn({id:2401,method:'item/tool/call',params:{threadId:'thread-1',tool:'gigi_records_get',arguments:{workspaceId:'w',entity:'tasks',id:'r',privateNote:'synthetic-secret-not-for-UI'}}})));
+ const observed=await adapter.read({workspaceId:'w',sessionId});assert.equal(observed.activity,'reading');assert.doesNotMatch(JSON.stringify(observed),/privateNote|synthetic-secret|arguments|reasoning/);
+ await Promise.all(server.events.map(fn=>fn({method:'item/reasoning/summaryTextDelta',params:{threadId:'thread-1',turnId:'turn-1',delta:'Never expose synthetic reasoning'}})));
+ assert.doesNotMatch(JSON.stringify(await adapter.poll({workspaceId:'w',sessionId})),/Never expose/);
+ server.thread.turns=[{id:'turn-1',status:'completed',items:[]}];assert.equal((await adapter.read({workspaceId:'w',sessionId})).activity,undefined);
+});
+
+test('transient history failure retains previous transcript alongside observed partial output', async () => {
+ const {adapter,server}=await setup(); const {sessionId}=await adapter.start({workspaceId:'w',message:'Read only'});const input={workspaceId:'w',sessionId};
+ server.thread.turns=[{id:'turn-1',status:'inProgress',items:[{id:'u',type:'userMessage',content:[{type:'text',text:'Read only'}]}]}];await adapter.read(input);
+ await Promise.all(server.events.map(fn=>fn({method:'item/agentMessage/delta',params:{threadId:'thread-1',turnId:'turn-1',itemId:'a',delta:'Retained partial'}})));
+ const original=server.request.bind(server);server.request=async(method,params)=>{if(method==='thread/read')throw Error('synthetic unavailable');return original(method,params);};
+ const pending=await adapter.read(input);assert.equal(pending.messages[0].text,'Read only');assert.equal(pending.messages.at(-1)?.text,'Retained partial');assert.equal(pending.state,'running');
+});
+
+test('running snapshots bound history reads before the first delta and after history catches up', async (t) => {
+  const { adapter, server, dataDir } = await setup();
+  let elapsed = 0; const started = Date.now(); t.mock.method(Date, 'now', () => started + elapsed);
+  try {
+    const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'Read only' });
+    const input = { workspaceId: 'w', sessionId };
+    server.thread.turns = [{ id: 'turn-1', status: 'inProgress', items: [] }];
+    await adapter.read(input);
+    const countReads = () => server.calls.filter(x => x.method === 'thread/read').length;
+    const initial = countReads();
+    for (let i = 0; i < 8; i++) { elapsed += 250; assert.equal((await adapter.poll(input)).state, 'running'); }
+    assert.equal(countReads(), initial, 'no first delta must not trigger history hydration on every UI poll');
+    elapsed += 1001; await adapter.poll(input);
+    assert.equal(countReads(), initial + 1, 'authoritative history still refreshes after three seconds');
+    await Promise.all(server.events.map(fn => fn({ method: 'item/agentMessage/delta', params: { threadId: 'thread-1', turnId: 'turn-1', itemId: 'a', delta: 'Observed text' } })));
+    server.thread.turns[0].items = [{ id: 'a', type: 'agentMessage', text: 'Observed text' }];
+    await adapter.read(input); const caughtUp = countReads();
+    elapsed += 250; assert.equal((await adapter.poll(input)).messages.at(-1)?.text, 'Observed text');
+    assert.equal(countReads(), caughtUp, 'authoritative text replacing live deltas must retain the snapshot cadence');
+  } finally { await rm(dataDir, { recursive: true, force: true }); }
+});
+
+for (const decision of ['approve', 'reject'] as const) for (const failureTiming of ['before-approval-snapshot', 'after-approval-snapshot'] as const) test(`${decision} cannot resurrect a cached approval after transient history failure (${failureTiming})`, async (t) => {
+  let elapsed = 0; const started = Date.now(); t.mock.method(Date, 'now', () => started + elapsed);
+  const { adapter, server, mcp, dataDir } = await setup();
+  let record = { id: 'r', title: 'Before', fields: { Status: 'Open' }, source: { kind: 'manual' }, relations: [] };
+  let writes = 0; const originalMcp = mcp.request.bind(mcp);
+  mcp.request = async (method, params) => {
+    if (method === 'tools/call' && params.name === 'gigi_records_get') return { structuredContent: structuredClone(record) };
+    if (method === 'tools/call' && params.name === 'gigi_records_save') { writes++; record = { ...record, title: params.arguments.title }; return { structuredContent: structuredClone(record) }; }
+    return originalMcp(method, params);
+  };
+  try {
+    const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'Propose one task edit' });
+    const input = { workspaceId: 'w', sessionId };
+    server.thread.turns = [{ id: 'turn-1', status: 'inProgress', items: [] }];
+    const emit = async (message: any) => Promise.all(server.events.map(fn => fn(message)));
+    await emit({ method: 'item/agentMessage/delta', params: { threadId: 'thread-1', turnId: 'turn-1', itemId: 'a', delta: 'Preparing the reviewed task edit.' } });
+    await adapter.read(input); // Retain a running snapshot before an approval arrives.
+    await emit({ id: 2701, method: 'item/tool/call', params: { threadId: 'thread-1', tool: 'gigi_records_save', arguments: { workspaceId: 'w', entity: 'tasks', id: 'r', title: 'Reviewed title' } } });
+    const original = server.request.bind(server);
+    const unavailable = async (method: string, params: any) => { if (method === 'thread/read') throw Error('synthetic transient history failure'); return original(method, params); };
+    if (failureTiming === 'before-approval-snapshot') server.request = unavailable;
+    const pending = await adapter.read(input); assert.equal(pending.state, 'approval');
+    server.request = unavailable;
+    const decided = await adapter.approve({ ...input, approvalId: pending.approvals[0].id, decision });
+    assert.equal(decided.state, 'running'); assert.equal(decided.approvals.length, 0);
+    const next = await adapter.poll(input);
+    assert.equal(next.state, 'running', 'resolved approval must never return from an older cached snapshot');
+    assert.equal(next.approvals.length, 0);
+    assert.equal(next.decisionReceipt?.outcome, decision === 'approve' ? 'verified' : 'rejected');
+    assert.equal(writes, decision === 'approve' ? 1 : 0, 'polling cannot repeat a reviewed operation');
+    server.request = original;
+    server.thread.turns = [{ id: 'turn-1', status: 'completed', items: [{ id: 'a', type: 'agentMessage', text: 'Checked result.' }] }];
+    elapsed += 3001; // A safe outage fallback now retains the ordinary reconciliation cadence.
+    assert.equal((await adapter.poll(input)).state, 'idle', 'terminal reconciliation remains available after transient history recovers');
+  } finally { await rm(dataDir, { recursive: true, force: true }); }
+});
+
+for (const [error, unresolved] of [
+  ['Provider usage limit reached', false], ['provider_turn_rejected', false],
+  ['turn_outcome_unknown', true], ['write_outcome_unknown', true],
+  ['approval_delivery_unknown', true], ['reconciliation_required', true],
+] as const) for (const historyUnavailable of [false, true]) test(`historical session error ${error} ${unresolved ? 'retains' : 'does not poison'} the workspace cache fence (history unavailable: ${historyUnavailable})`, async () => {
+  const { adapter, server, dataDir } = await setup();
+  try {
+    const old = await adapter.start({ workspaceId: 'w', message: 'Earlier request' });
+    server.thread.turns = [{ id: 'turn-1', status: 'failed', error: { message: error }, items: [] }];
+    const failed = await adapter.read({ workspaceId: 'w', sessionId: old.sessionId });
+    assert.equal(failed.error, error); assert.equal(failed.state, 'failed');
+    server.thread = { id: 'thread-2', status: { type: 'idle' }, turns: [] };
+    const active = await adapter.start({ workspaceId: 'w', message: 'New read-only conversation' });
+    const input = { workspaceId: 'w', sessionId: active.sessionId };
+    server.thread.turns = [{ id: 'turn-1', status: 'inProgress', items: [] }];
+    if (historyUnavailable) {
+      const original = server.request.bind(server);
+      server.request = async (method, params) => { if (method === 'thread/read') { server.calls.push({ method, params }); throw Error('synthetic history outage'); } return original(method, params); };
+    }
+    await adapter.read(input);
+    const reads = server.calls.filter(x => x.method === 'thread/read').length;
+    for (let i = 0; i < 3; i++) assert.equal((await adapter.poll(input)).state, 'running');
+    assert.equal(server.calls.filter(x => x.method === 'thread/read').length, reads + (unresolved ? 3 : 0),
+      unresolved ? 'unresolved workspace outcomes must still force reconciliation' : 'an ordinary historical failure must not disable healthy active snapshots');
+  } finally { await rm(dataDir, { recursive: true, force: true }); }
+});
+
+for (const historyAhead of [false, true]) test(`streamed prefixes survive active history reconciliation (history ahead: ${historyAhead})`, async () => {
+  const { adapter, server, dataDir } = await setup();
+  try {
+    const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'Read only' });
+    const input = { workspaceId: 'w', sessionId };
+    const emit = async (delta: string) => Promise.all(server.events.map(fn => fn({ method: 'item/agentMessage/delta', params: { threadId: 'thread-1', turnId: 'turn-1', itemId: 'a', delta } })));
+    await emit('Prefix');
+    let expected = historyAhead ? 'Prefix caught up' : 'Prefix';
+    server.thread.turns = [{ id: 'turn-1', status: 'inProgress', items: [{ id: 'a', type: 'agentMessage', text: expected }] }];
+    assert.equal((await adapter.read(input)).messages.at(-1)?.text, expected);
+    const reads = server.calls.filter(x => x.method === 'thread/read').length;
+    for (const suffix of ['!', ' a suffix longer than the original prefix']) {
+      await emit(suffix); expected += suffix;
+      assert.equal((await adapter.poll(input)).messages.at(-1)?.text, expected);
+    }
+    assert.equal(server.calls.filter(x => x.method === 'thread/read').length, reads);
+    server.thread.turns[0].items[0].text = expected;
+    await adapter.read(input); await emit(' after another refresh'); expected += ' after another refresh';
+    const original = server.request.bind(server);
+    server.request = async (method, params) => { if (method === 'thread/read') throw Error('synthetic unavailable'); return original(method, params); };
+    assert.equal((await adapter.read(input)).messages.at(-1)?.text, expected);
+    server.request = original; server.thread.turns[0].status = 'completed'; server.thread.turns[0].items[0].text = expected;
+    assert.equal((await adapter.read(input)).state, 'idle');
+  } finally { await rm(dataDir, { recursive: true, force: true }); }
+});
+
+for (const failure of ['thread/read', 'last-history-page']) test(`initial history outage keeps safe running polls bounded (${failure})`, async (t) => {
+  const { adapter, server, dataDir } = await setup();
+  let elapsed = 0; const started = Date.now(); t.mock.method(Date, 'now', () => started + elapsed);
+  try {
+    const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'Read only' });
+    const input = { workspaceId: 'w', sessionId };
+    server.thread.turns = Array.from({ length: 20 }, (_, i) => ({ id: `turn-${i + 1}`, status: 'inProgress', items: [] }));
+    const original = server.request.bind(server);
+    server.request = async (method, params) => {
+      if ((failure === 'thread/read' && method === 'thread/read') || (failure === 'last-history-page' && method === 'thread/turns/list' && params.cursor === '19')) {
+        server.calls.push({ method, params }); throw Error('synthetic history outage');
+      }
+      return original(method, params);
+    };
+    await adapter.read(input);
+    const count = () => server.calls.filter(x => x.method === 'thread/read' || x.method === 'thread/turns/list').length;
+    const initial = count();
+    await Promise.all(server.events.map(fn => fn({ method: 'item/agentMessage/delta', params: { threadId: 'thread-1', turnId: 'turn-1', itemId: 'a', delta: 'Observed during outage' } })));
+    for (let i = 0; i < 8; i++) {
+      elapsed += 250; const output = await adapter.poll(input);
+      assert.equal(output.state, 'running'); assert.equal(output.messages.at(-1)?.text, 'Observed during outage');
+    }
+    assert.equal(count(), initial, 'failed initial history must not retry on every UI poll');
+    elapsed += 1001; await adapter.poll(input); assert.equal(count(), initial * 2, 'retry after three seconds even when still unavailable');
+    await Promise.all(server.events.map(fn => fn({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed' } } })));
+    assert.equal((await adapter.poll(input)).state, 'running'); assert.equal(count(), initial * 3, 'terminal notification bypasses a safe fallback');
+    for (let i = 0; i < 8; i++) {
+      elapsed += 250;
+      await Promise.all(server.events.map(fn => fn({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed' } } })));
+      assert.equal((await adapter.poll(input)).state, 'running', 'terminal signal alone cannot complete the transcript');
+    }
+    assert.equal(count(), initial * 3, 'terminal retries are bounded even with duplicate notifications');
+    elapsed += 1001; assert.equal((await adapter.poll(input)).state, 'running');
+    assert.equal(count(), initial * 4, 'terminal reconciliation retries after three seconds');
+    server.request = original; server.thread.turns = [{ id: 'turn-1', status: 'completed', items: [{ id: 'a', type: 'agentMessage', text: 'Observed during outage; final answer' }] }];
+    elapsed += 3001;
+    const final = await adapter.poll(input); assert.equal(final.state, 'idle'); assert.equal(final.messages.at(-1)?.text, 'Observed during outage; final answer');
+  } finally { await rm(dataDir, { recursive: true, force: true }); }
+});
+
+test('terminal retry snapshots cannot hide a later approval or its rejected receipt', async () => {
+  const { adapter, server, dataDir } = await setup();
+  try {
+    const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'Review a task' });
+    const input = { workspaceId: 'w', sessionId };
+    const emit = async (message: any) => Promise.all(server.events.map(fn => fn(message)));
+    server.thread.turns = [{ id: 'turn-1', status: 'inProgress', items: [] }];
+    await emit({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed' } } });
+    assert.equal((await adapter.poll(input)).state, 'running');
+    await emit({ id: 2901, method: 'item/tool/call', params: { threadId: 'thread-1', tool: 'gigi_records_save', arguments: { workspaceId: 'w', entity: 'tasks', id: 'r', title: 'Reviewed title' } } });
+    const pending = await adapter.poll(input); assert.equal(pending.state, 'approval');
+    const original = server.request.bind(server);
+    server.request = async (method, params) => { if (method === 'thread/read') throw Error('synthetic history outage'); return original(method, params); };
+    const rejected = await adapter.approve({ ...input, approvalId: pending.approvals[0].id, decision: 'reject' });
+    assert.equal(rejected.decisionReceipt?.outcome, 'rejected');
+    const next = await adapter.poll(input);
+    assert.equal(next.state, 'running'); assert.equal(next.approvals.length, 0); assert.equal(next.decisionReceipt?.outcome, 'rejected');
+  } finally { await rm(dataDir, { recursive: true, force: true }); }
+});
+
+test('a later turn retains authoritative transcript through its first history outage and new deltas', async (t) => {
+  const { adapter, server, dataDir } = await setup();
+  let elapsed = 0; const started = Date.now(); t.mock.method(Date, 'now', () => started + elapsed);
+  try {
+    const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'First question' });
+    const input = { workspaceId: 'w', sessionId };
+    const prior = [{ id: 'u1', type: 'userMessage', content: [{ type: 'text', text: 'First question' }] }, { id: 'a1', type: 'agentMessage', text: 'First answer' }];
+    server.thread.turns = [{ id: 'turn-1', status: 'completed', items: prior }];
+    assert.equal((await adapter.read(input)).state, 'idle');
+    const original = server.request.bind(server);
+    server.request = async (method, params) => {
+      if (method === 'turn/start') { server.calls.push({ method, params }); return { turn: { id: 'turn-2' } }; }
+      if (method === 'thread/read') { server.calls.push({ method, params }); throw Error('synthetic first-read outage'); }
+      return original(method, params);
+    };
+    await adapter.send({ ...input, message: 'Second question' });
+    const emit = async (delta: string) => Promise.all(server.events.map(fn => fn({ method: 'item/agentMessage/delta', params: { threadId: 'thread-1', turnId: 'turn-2', itemId: 'a2', delta } })));
+    await emit('Second partial');
+    const pending = await adapter.poll(input);
+    assert.equal(pending.state, 'running'); assert.equal(pending.approvals.length, 0);
+    assert.deepEqual(pending.messages.map(x => x.text), ['First question', 'First answer', 'Second partial']);
+    const reads = server.calls.filter(x => x.method === 'thread/read').length;
+    await emit(' response'); elapsed += 250;
+    assert.deepEqual((await adapter.poll(input)).messages.map(x => x.text), ['First question', 'First answer', 'Second partial response']);
+    assert.equal(server.calls.filter(x => x.method === 'thread/read').length, reads, 'retaining transcript must not bypass safe outage cadence');
+    server.request = original;
+    server.thread.turns.push({ id: 'turn-2', status: 'completed', items: [{ id: 'u2', type: 'userMessage', content: [{ type: 'text', text: 'Second question' }] }, { id: 'a2', type: 'agentMessage', text: 'Second partial response complete' }] });
+    elapsed += 3001; const recovered = await adapter.poll(input);
+    assert.equal(recovered.state, 'idle');
+    assert.deepEqual(recovered.messages.map(x => x.text), ['First question', 'First answer', 'Second question', 'Second partial response complete']);
+    assert.equal(new Set(recovered.messages.map(x => x.id)).size, recovered.messages.length);
+  } finally { await rm(dataDir, { recursive: true, force: true }); }
 });

@@ -10,7 +10,7 @@ async function fixture(run, { storage = new Map(), workspace = 'custom-test', bl
   const root = { get innerHTML() { return html; }, set innerHTML(value) { html = value; controls.clear(); if (globalThis.document) globalThis.document.activeElement = null; for (const [, id] of value.matchAll(/id="([^"]+)"/g)) controls.set(`#${id}`, { id, tagName: id === 'preferences-import' ? 'TEXTAREA' : 'SELECT', dataset: {}, focus() { globalThis.document.activeElement = this; }, setSelectionRange(start, end, direction) { this.selectionStart = start; this.selectionEnd = end; this.selectionDirection = direction; } }); if (value.includes('id="preferences-import-form"')) { const id = value.includes('id="preferences-import-submit"') ? 'preferences-import-submit' : ''; const button = controls.get(`#${id}`) || { id, dataset: {}, focus() { globalThis.document.activeElement = this; } }; button.tagName = 'BUTTON'; controls.set('#preferences-import-form button[type="submit"]', button); } }, classList: { toggle() {} }, addEventListener(name, handler) { const before = listeners.get(name); listeners.set(name, before ? event => { before(event); handler(event); } : handler); }, querySelector(selector) { return controls.get(selector) || null; }, contains(node) { return [...controls.values()].includes(node); }, querySelectorAll(selector) { if (selector === 'input, select, textarea, button, a, summary') return [...controls.values()]; return []; } };
   const element = { dataset: {} };
   globalThis.document = { documentElement: element, querySelector: () => root, addEventListener() {} };
-  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: { getItem: key => storage.get(key) ?? null, setItem(key, value) { if (blocked) throw new Error('Unavailable'); storage.set(key, value); } } });
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: { getItem: key => storage.get(key) ?? null, setItem(key, value) { if (blocked) throw new Error('Unavailable'); storage.set(key, value); }, removeItem(key) { storage.delete(key); } } });
   globalThis.__TAURI__ = { core: { invoke: async (_command, { operation, input }) => {
     calls.push({ operation, input });
     if (operation === 'workspace.get') return { id: workspace, name: 'Synthetic studio' };
@@ -33,6 +33,9 @@ test('appearance settings save, apply, survive restart, and reset without record
     await change('density', 'compact');
     await change('startPage', 'gigs');
     await change('collectionView', 'cards');
+    await change('chatWidth', 'wide');
+    await change('chatTextSize', 'larger');
+    await change('chatDensity', 'compact');
     assert.equal(element.dataset.theme, 'paper');
     assert.equal(element.dataset.density, 'compact');
     await click({ page: 'gigs' });
@@ -42,6 +45,9 @@ test('appearance settings save, apply, survive restart, and reset without record
   await fixture(async ({ root, element, click }) => {
     assert.equal(element.dataset.collectionView, 'cards');
     assert.equal(element.dataset.theme, 'paper');
+    assert.equal(element.dataset.chatWidth, 'wide');
+    assert.equal(element.dataset.chatTextSize, 'larger');
+    assert.equal(element.dataset.chatDensity, 'compact');
     await click({ page: 'appearance' });
     await click({ preferencesReset: '1' });
     assert.equal(element.dataset.theme, 'studio');
@@ -77,6 +83,9 @@ test('configuration import validates before saving and export contains presentat
     const config = JSON.parse([...storage.values()][0]);
     assert.equal(config.scheduleView, 'all');
     assert.deepEqual(Object.keys(config).sort(), ['collectionView','density','scheduleView','startPage','theme','version']);
+    const chat = JSON.parse(storage.get('gigi:chat-preferences:v1:custom-test'));
+    assert.deepEqual(Object.keys(chat).sort(), ['chatDensity','chatTextSize','chatWidth','version']);
+    assert.match(root.innerHTML, /chatWidth/);
     assert.equal(calls.some(call => /save|import|restore|link/.test(call.operation)), false);
   });
 });
@@ -125,6 +134,9 @@ test('appearance route keeps setup separate and card layout preserves Gigs filte
     await click({ page: 'appearance' });
     assert.doesNotMatch(root.innerHTML, /Library navigation|landing-page palette/);
     await change('collectionView', 'cards');
+    await change('chatWidth', 'wide');
+    await change('chatTextSize', 'larger');
+    await change('chatDensity', 'compact');
     await click({ page: 'gigs' });
     assert.equal(element.dataset.collectionView, 'cards');
     assert.match(root.innerHTML, /data-collection-view="cards"/);
@@ -160,4 +172,34 @@ test('successful configuration import retains keyboard focus on its submit contr
     await settle();
     assert.equal(globalThis.document.activeElement?.id, 'preferences-import-submit');
   });
+});
+
+test('copy configuration defaults to rollback compatibility and explicitly includes chat in the newer format', async () => {
+  const previous = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  const copied = [];
+  Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { clipboard: { writeText: async text => copied.push(text) } } });
+  try {
+    const rollback = await import('../scripts/fixtures/preferences-0218.mjs');
+    await fixture(async ({ root, calls, click, change, listeners }) => {
+      await click({ page: 'appearance' });
+      await change('theme', 'paper'); await change('chatWidth', 'wide'); await change('chatTextSize', 'larger');
+      await click({ preferencesExport: '1' }); await click({ preferencesCopy: '1' });
+      assert.equal(rollback.importPreferences(copied.at(-1)).theme, 'paper');
+      assert.equal(JSON.parse(copied.at(-1)).version, 1);
+      assert.equal(Object.hasOwn(JSON.parse(copied.at(-1)), 'chatWidth'), false);
+      assert.match(root.innerHTML, /GiGi 0.2.18 or later/);
+      const format = async value => { listeners.get('change')({ target: { id: 'preferences-export-format', value, dataset: {} } }); await settle(); };
+      await format('chat');
+      assert.equal(globalThis.document.activeElement.id, 'preferences-export-format');
+      await click({ preferencesCopy: '1' });
+      let full = JSON.parse(copied.at(-1)); assert.equal(full.version, 2); assert.equal(full.chatWidth, 'wide'); assert.equal(full.chatTextSize, 'larger');
+      await change('theme', 'midnight'); await click({ preferencesCopy: '1' });
+      full = JSON.parse(copied.at(-1)); assert.equal(full.version, 2); assert.equal(full.theme, 'midnight');
+      await format('compatible'); await click({ preferencesCopy: '1' });
+      assert.equal(rollback.importPreferences(copied.at(-1)).theme, 'midnight');
+      assert.equal(calls.some(call => /save|import|restore|link/.test(call.operation)), false);
+    });
+  } finally {
+    if (previous) Object.defineProperty(globalThis, 'navigator', previous); else delete globalThis.navigator;
+  }
 });

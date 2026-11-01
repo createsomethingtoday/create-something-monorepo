@@ -23,6 +23,7 @@ import { canUseSource, sourceDraft, reviewSourceDraft, sourceProposalView } from
 import { icon, entityIcon } from './icons.mjs';
 import { tauriBridge } from './bridge.mjs';
 import { ChatController, chatView } from './chat.mjs';
+import { updateChatPanel } from './chat-dom.mjs';
 import { AiConnection, aiConnectionView, updateAiDraft } from './ai-connection.mjs';
 import { sections, fields, moneyFields, booleanFields, fieldOptions, listFrom, recordFields, editedFields, formatMoney, gigBalance, relatedEndpoint, sourcePreview, sourceSessionBlocked, sourceCanBegin, sourceNeedsOperatorReview, importRunForAccount, pendingConsentForProvider, pendingAccountForProvider, linkInput } from './model.mjs';
 
@@ -65,6 +66,7 @@ const workspaceId = () => state.workspace?.workspaceId || state.workspace?.id;
 let preferences = { ...defaults };
 let preferencesDraft = '';
 let preferencesExported = null;
+let preferencesExportChat = false;
 let preferencesFeedback = null;
 function preferenceStorage() { try { return globalThis.localStorage; } catch { return null; } }
 function restorePreferences() {
@@ -74,12 +76,14 @@ function restorePreferences() {
 }
 function savePreferences(next, message = 'Preferences saved on this Mac.') {
   try {
+    const previous = preferences;
     preferences = writePreferences(preferenceStorage(), workspaceId(), next);
+    const chatOnly = Object.keys(defaults).every(key => key.startsWith('chat') || preferences[key] === previous[key]);
     applyPreferences(preferences);
     state.scheduleView = preferences.scheduleView;
-    preferencesExported = preferencesExported ? exportPreferences(preferences) : null;
+    preferencesExported = preferencesExported ? exportPreferences(preferences, { includeChat: preferencesExportChat }) : null;
     preferencesFeedback = { message, error: false };
-    render();
+    if (chatOnly && state.page !== 'appearance') renderChat(); else render();
     return true;
   } catch (error) {
     preferencesFeedback = { message: explain(error), error: true };
@@ -88,7 +92,7 @@ function savePreferences(next, message = 'Preferences saved on this Mac.') {
   }
 }
 function appearance() {
-  return heading('Workspace', 'Appearance & views', 'Choose a workspace that feels right for your day.', '<button type="button" class="btn" data-page="settings">Setup & safety</button>') + preferencesView(preferences, { draft: preferencesDraft, exported: preferencesExported, feedback: preferencesFeedback });
+  return heading('Workspace', 'Appearance & views', 'Choose a workspace that feels right for your day.', '<button type="button" class="btn" data-page="settings">Setup & safety</button>') + preferencesView(preferences, { draft: preferencesDraft, exported: preferencesExported, includeChat: preferencesExportChat, feedback: preferencesFeedback });
 }
 
 installArtworkUI(root,{call:bridge.call,workspaceId,canEdit:async()=>!state.editing&&(!creatorMount?.canLeave||await creatorMount.canLeave()),onChanged:async()=>{if(state.selected)await selectRecord(state.selected.id,state.page);else if(state.page==='music')globalThis.dispatchEvent(new Event('focus'));else await openPage(state.page);}});
@@ -221,6 +225,7 @@ function initializeChat() {
     else if (state.page === 'overview') await openPage('overview');
     else if (fields[state.page] && !state.editing) await openPage(state.page);
   });
+  Object.defineProperty(chat, 'preferences', { get: () => preferences });
   chat.currency = () => state.currency;
   chat.currencyKnown = () => state.currencyKnown;
   initializeAttention();
@@ -614,7 +619,18 @@ function render() {
   const selection = composer ? { start: composer.selectionStart, end: composer.selectionEnd, scrollTop: composer.scrollTop } : null;
   const transcript = root.querySelector?.('.chat-transcript');
   const transcriptPosition = transcript ? { top: transcript.scrollTop, stick: transcript.scrollHeight - transcript.scrollTop - transcript.clientHeight < 48 } : null;
+  const retainedChat = chat?.visible ? root.querySelector?.('.chat-panel') : null;
+  const nativeSelection = globalThis.document?.getSelection?.();
+  const retainedSelection = retainedChat?.contains?.(nativeSelection?.anchorNode) && !nativeSelection.isCollapsed
+    ? { anchor: nativeSelection.anchorNode, start: nativeSelection.anchorOffset, focus: nativeSelection.focusNode, end: nativeSelection.focusOffset } : null;
+  retainedChat?.classList?.remove?.('chat-entering');
   root.innerHTML = shell(body);
+  const replacementChat = root.querySelector?.('.chat-panel');
+  if (retainedChat?.ownerDocument && replacementChat?.replaceWith) {
+    replacementChat.replaceWith(retainedChat);
+    if (retainedSelection?.anchor?.isConnected && retainedSelection.focus?.isConnected) nativeSelection.setBaseAndExtent?.(retainedSelection.anchor, retainedSelection.start, retainedSelection.focus, retainedSelection.end);
+    updateChatPanel(retainedChat, chatView(chat, true), { draft: chat.draft, sessionId: chat.current?.sessionId ?? null });
+  }
   if (['music','social'].includes(state.page)) {
     const placeholder=root.querySelector?.('#creator-workspace');
     const key=workspaceId()+':'+state.page;
@@ -665,7 +681,7 @@ function render() {
 
 }
 
-function renderChat() {
+function renderChat({ replaceDraft = false } = {}) {
   const panel = root.querySelector?.('.chat-panel');
   if (!chat?.visible) {
     if (panel?.remove) { panel.remove(); return; }
@@ -682,6 +698,11 @@ function renderChat() {
     }
     render(); root.querySelector?.('[data-chat-close]')?.focus?.(); return;
   }
+  if (panel.ownerDocument?.createElement) {
+    updateChatPanel(panel, chatView(chat, true), { draft: chat.draft, sessionId: chat?.current?.sessionId ?? null, replaceDraft });
+    renderedChatSession = chat?.current?.sessionId ?? null;
+    return;
+  }
   const composer = globalThis.document?.activeElement?.id === 'chat-message' ? globalThis.document.activeElement : null;
   const selection = composer ? { start: composer.selectionStart, end: composer.selectionEnd, scrollTop: composer.scrollTop } : null;
   const transcript = panel.querySelector?.('.chat-transcript');
@@ -689,7 +710,7 @@ function renderChat() {
   const activeAction = ['chatClose','chatRefresh','chatSetup','chatNew','chatStop'].find(key => globalThis.document?.activeElement?.dataset?.[key] !== undefined);
   const session = chat?.current?.sessionId ?? null;
   const viewState = session === renderedChatSession ? captureViewState(panel) : null;
-  panel.innerHTML = chatView(chat, true);
+  updateChatPanel(panel, chatView(chat, true), { draft: chat.draft, sessionId: session });
   renderedChatSession = session;
   restoreViewState(panel, viewState);
   if (activeAction) { const attr = activeAction.replace(/[A-Z]/g, letter => '-'+letter.toLowerCase()); root.querySelector?.(`[data-${attr}]`)?.focus?.(); }
@@ -778,11 +799,12 @@ root.addEventListener('click', (event) => {
   if (button.dataset.attentionOpen || button.dataset.attentionAsk) { void attention?.open(button.dataset.attentionOpen || button.dataset.attentionAsk,button.dataset.attentionAsk?'ask':'review'); return; }
   if (button.dataset.attentionUpdate) { void attention?.update(button.dataset.attentionUpdate,button.dataset.attentionAction); return; }
   if (button.dataset.notificationSettings) { void bridge.call('notifications.openSettings',{}).catch(error=>notice(explain(error),true)); return; }
-  if (button.dataset.chatPrompt) { const prompt=button.dataset.chatPrompt;void (async()=>{if(!chat)return;if(!chat.current)await chat.start();chat.draft=prompt;renderChat();root.querySelector?.('#chat-message')?.focus?.();})();return; }
+  if (button.dataset.chatLatest) { const transcript=root.querySelector?.('.chat-transcript'); if(transcript)transcript.scrollTop=transcript.scrollHeight; button.hidden=true; root.querySelector?.('#chat-message')?.focus?.({preventScroll:true}); return; }
+  if (button.dataset.chatPrompt) { const prompt=button.dataset.chatPrompt;void (async()=>{if(!chat)return;if(!chat.current)await chat.start();chat.draft=prompt;renderChat({replaceDraft:true});root.querySelector?.('#chat-message')?.focus?.();})();return; }
   if (button.dataset.preferencesTheme) { savePreferences({ ...preferences, theme: button.dataset.preferencesTheme }); root.querySelector?.(`[data-preferences-theme="${preferences.theme}"]`)?.focus?.({ preventScroll: true }); return; }
   if (button.dataset.preferencesReset) { savePreferences(defaults, 'Appearance and views reset to Studio defaults.'); return; }
-  if (button.dataset.preferencesExport) { preferencesExported = exportPreferences(preferences); render(); const detail = root.querySelector?.('.portable-preferences'); if (detail) detail.open = true; root.querySelector?.('#preferences-export')?.focus?.(); return; }
-  if (button.dataset.preferencesCopy) { void (async () => { try { if (!globalThis.navigator?.clipboard?.writeText) throw new Error('Clipboard unavailable'); await globalThis.navigator.clipboard.writeText(exportPreferences(preferences)); preferencesFeedback = { message: 'Configuration copied.', error: false }; } catch { preferencesFeedback = { message: 'Could not copy. Select the configuration JSON and copy it manually.', error: true }; } render(); })(); return; }
+  if (button.dataset.preferencesExport) { preferencesExported = exportPreferences(preferences, { includeChat: preferencesExportChat }); render(); const detail = root.querySelector?.('.portable-preferences'); if (detail) detail.open = true; root.querySelector?.('#preferences-export')?.focus?.(); return; }
+  if (button.dataset.preferencesCopy) { void (async () => { try { if (!globalThis.navigator?.clipboard?.writeText) throw new Error('Clipboard unavailable'); await globalThis.navigator.clipboard.writeText(exportPreferences(preferences, { includeChat: preferencesExportChat })); preferencesFeedback = { message: 'Configuration copied.', error: false }; } catch { preferencesFeedback = { message: 'Could not copy. Select the configuration JSON and copy it manually.', error: true }; } render(); })(); return; }
   if (button.dataset.aiAction) { const action=button.dataset.aiAction, client=button.dataset.aiClient; void ai.action(action,client).then(()=>{ if(state.page==='settings') root.querySelector('[data-ai-action="refresh"]')?.focus?.({preventScroll:true}); }); return; }
   if(button.dataset.agentPreflight){
     if(state.busy)return;
@@ -982,7 +1004,7 @@ root.addEventListener('change',event=>{if(event.target.id==='ai-model'){ai.model
 
 root.addEventListener('toggle', (event) => { if (event.target.dataset?.libraryNav) state.libraryOpen = event.target.open; }, true);
 
-root.addEventListener('change', (event) => { if (event.target.dataset?.preference) { const key = event.target.dataset.preference; if (Object.hasOwn(defaults, key) && key !== 'version') savePreferences({ ...preferences, [key]: event.target.value }); } else if (event.target.id === 'link-entity') void run(() => loadLinkChoices(event.target.value)); });
+root.addEventListener('change', (event) => { if (event.target.id === 'preferences-export-format') { preferencesExportChat = event.target.value === 'chat'; if (preferencesExported) preferencesExported = exportPreferences(preferences, { includeChat: preferencesExportChat }); render(); root.querySelector('#preferences-export-format')?.focus?.({ preventScroll: true }); return; } if (event.target.dataset?.preference) { const key = event.target.dataset.preference; if (Object.hasOwn(defaults, key) && key !== 'version') savePreferences({ ...preferences, [key]: event.target.value }); } else if (event.target.id === 'link-entity') void run(() => loadLinkChoices(event.target.value)); });
 root.addEventListener('input', (event) => {
   if (event.target.id === 'preferences-import') { preferencesDraft = event.target.value; return; }
   if (event.target.dataset?.sourceDate) {
@@ -1045,8 +1067,20 @@ root.addEventListener('submit', (event) => {
 
 
 
+// A terminal response can arrive while its text is selected. Reconcile the
+// withheld answer once selection clears, even after response polling stops.
+globalThis.document?.addEventListener?.('selectionchange', () => {
+  if (!chat?.visible || !root.querySelector?.('.chat-answer[data-chat-selection-deferred]')) return;
+  const selection = globalThis.document.getSelection?.();
+  const panel = root.querySelector?.('.chat-panel');
+  if (selection && !selection.isCollapsed && (panel?.contains(selection.anchorNode) || panel?.contains(selection.focusNode))) return;
+  renderChat();
+});
+
 load().catch((error) => { root.innerHTML = `<div class="setup"><span class="brand-mark">g.</span><h1>Couldn’t open GiGi.</h1><p class="subhead">${safe(explain(error))}</p><button class="btn section-gap" id="retry">Retry</button></div>`; document.querySelector('#retry')?.addEventListener('click', () => location.reload()); });
 
 root.addEventListener('change',event=>{if(event.target?.closest?.('#attention-settings'))attentionSettingsDirty=true;});
 globalThis.addEventListener?.('focus',()=>{void processNotificationOpen();void attention?.refresh();void bridge.call('notifications.status',{}).then(value=>{if(attention){attention.permission=value.permission || 'unknown';attention.alertsEnabled=value.alertsEnabled;renderAttention();}}).catch(()=>{});});
 globalThis.addEventListener?.('beforeunload',()=>{attention?.stop();notificationUnlisten?.();});
+
+root.addEventListener('scroll', event => { if(event.target?.classList?.contains('chat-transcript') && event.target.scrollHeight-event.target.scrollTop-event.target.clientHeight<48) { const latest=root.querySelector?.('[data-chat-latest]');if(latest)latest.hidden=true; } }, true);

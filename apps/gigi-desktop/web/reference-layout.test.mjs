@@ -30,7 +30,8 @@ test('appearance preferences extend the product theme after reference geometry',
  const {readFile}=await import('node:fs/promises');
  const html=await readFile(new URL('./index.html',import.meta.url),'utf8');
  const sheets=[...html.matchAll(/rel="stylesheet" href="([^"]+)"/g)].map(match=>match[1]);
- assert.equal(sheets.at(-1),'preferences.css');
+ assert.equal(sheets.at(-1),'chat.css');
+ assert.ok(sheets.indexOf('preferences.css')<sheets.indexOf('chat.css'));
  assert.ok(sheets.indexOf('studio.css')<sheets.indexOf('preferences.css'));
  assert.ok(sheets.indexOf('reference-layout.css')<sheets.indexOf('studio.css'));
 });

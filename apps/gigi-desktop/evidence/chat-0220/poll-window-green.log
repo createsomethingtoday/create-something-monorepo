@@ -1,0 +1,16 @@
+TAP version 13
+# Subtest: streaming observes a running turn for the original eight-minute window and can resume afterward
+ok 1 - streaming observes a running turn for the original eight-minute window and can resume afterward
+  ---
+  duration_ms: 10.391625
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 71.468584

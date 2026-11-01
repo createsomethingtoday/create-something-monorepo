@@ -1,0 +1,9 @@
+# Bound safe fallbacks during history outages — CRE-2308
+
+Review4433858155 reproduced: initial thread/read failure caused9requests across8rapid polls rather than1; failure on the20thhistorypage caused189requests rather than21. Both cases now pass with a single initial attempt, live partial output retained, another full attempt after3seconds, immediate terminal-notification bypass, continued reconciliation until terminal materialization, and final idle transcript.
+
+Fallback insertion and cached polling share one canCacheRunning predicate. It requires running/approval-free/error-free/non-cancelling/non-recovering state, known decision outcomes and no unresolved workspace action or terminal signal. Ordinary historical errors remain eligible; all four unresolved-outcome code fences were repeated with unavailable history as well as successful history. Verified/rejected decision fallbacks now carry fresh receipts under the ordinary3second cadence; earlier decision tests advance the fake clock before checking terminal recovery without a notification. The new tests independently cover immediate notification bypass. No completed state is fabricated from provider notifications or history failure.
+
+Functional:passed locally,322integration tests plus1optionalCTXskip,typecheck passed. Both red/green outage cases use offline fake provider history and fake elapsed time; no new real provider acceptance claimed. Perceptual/product:not-applicable for this adapter-only fix; no UI changes. Release readiness:untested for current source; latest private artifact remains superseded. New exact build/sign/notarize/packaged acceptance and immutable upload/readback are required before Agency repin. Published0.2.18 retained.
+
+Worktree disposition:preserved at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e (t3/gigi-chat-polish).
