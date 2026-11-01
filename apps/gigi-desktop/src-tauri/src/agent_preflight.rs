@@ -96,6 +96,12 @@ pub fn check(resources: &Path, data: &Path) -> Value {
 
 #[cfg(test)] mod tests {
     use super::*;
+    // A script written for exec can stay open in a child that another test thread forked
+    // until that child execs; exec then fails with ETXTBSY, reported as "could not start".
+    fn retry_busy<T>(run:impl Fn()->Result<T,String>)->Result<T,String> {
+        for _ in 0..50 { match run() { Err(e) if e.contains("could not start") => std::thread::sleep(Duration::from_millis(20)), other => return other } }
+        run()
+    }
     #[test] fn registration_is_narrow_and_rejects_stale_path_profile_arguments_and_disabled_entries() {
         let root=std::env::temp_dir().join(format!("preflight-{}",uuid::Uuid::new_v4())); std::fs::create_dir_all(&root).unwrap();
         let binary=root.join("GiGi with spaces"); std::fs::write(&binary,b"fixture").unwrap();
@@ -122,7 +128,7 @@ pub fn check(resources: &Path, data: &Path) -> Value {
             // Consume both requests so early exit cannot race stdin delivery.
             let script=script.replacen("#!/bin/sh\n", "#!/bin/sh\nIFS= read -r first\nIFS= read -r second\n", 1);
             std::fs::write(&binary,script).unwrap();std::fs::set_permissions(&binary,std::fs::Permissions::from_mode(0o700)).unwrap();
-            let error=probe(&binary,&root).unwrap_err();
+            let error=retry_busy(||probe(&binary,&root)).unwrap_err();
             assert!(error.contains(expected), "expected {expected:?}, got {error:?}");
         }
         assert!(probe(&root.join("missing"),&root).unwrap_err().contains("could not start"));
@@ -132,8 +138,8 @@ pub fn check(resources: &Path, data: &Path) -> Value {
         use std::os::unix::fs::PermissionsExt;
         let root=std::env::temp_dir().join(format!("cli-version-{}",uuid::Uuid::new_v4()));std::fs::create_dir_all(&root).unwrap();let path=root.join("codex with spaces");
         std::fs::write(&path,"#!/bin/sh\n[ \"$1\" = --version ] || exit 1\nprintf 'codex-cli 0.120.0\\n'\n").unwrap();std::fs::set_permissions(&path,std::fs::Permissions::from_mode(0o700)).unwrap();
-        assert_eq!(cli_version(&path).unwrap(),"0.120.0");
-        std::fs::write(&path,"#!/bin/sh\nprintf 'unexpected secret text\\n'\n").unwrap();assert_eq!(cli_version(&path).unwrap_err(),"Codex version format unrecognized");
+        assert_eq!(retry_busy(||cli_version(&path)).unwrap(),"0.120.0");
+        std::fs::write(&path,"#!/bin/sh\nprintf 'unexpected secret text\\n'\n").unwrap();assert_eq!(retry_busy(||cli_version(&path)).unwrap_err(),"Codex version format unrecognized");
         std::fs::remove_dir_all(root).unwrap();
     }
 }
