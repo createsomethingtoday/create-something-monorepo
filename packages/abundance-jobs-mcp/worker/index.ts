@@ -251,9 +251,9 @@ export class AbundanceJobsChatGPTMCP extends McpAgent<Env> {
 
   async init() {
     enableTelemetry(this.server, this.env.TELEMETRY_DB, `${SERVER_NAME}:chatgpt-public`, () => this.currentAccountId, {
-      apiKey: this.env.BRAINTRUST_API_KEY,
-      projectName: resolveBraintrustProjectName(this.env),
-      projectId: this.env.BRAINTRUST_PROJECT_ID,
+      publicKey: this.env.LANGFUSE_PUBLIC_KEY,
+      secretKey: this.env.LANGFUSE_SECRET_KEY,
+      projectName: resolveLangfuseProjectName(this.env),
     });
 
     registerAbundanceJobsTools(
