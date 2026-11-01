@@ -12,7 +12,9 @@
     "db:migrate:remote": "node ../../scripts/run-wrangler.mjs d1 migrations apply create-something-agent-runtime --remote --config wrangler.jsonc",
     "deploy": "node ../../scripts/run-wrangler.mjs deploy --config wrangler.jsonc --var CS_IDENTITY_ISSUER:https://id.createsomething.space --var CS_IDENTITY_JWKS_URL:https://id.createsomething.space/.well-known/jwks.json --var CS_IDENTITY_AUDIENCE:https://create-something-agent-runtime.createsomething.workers.dev/mcp",
     "deploy:dry-run": "node ../../scripts/run-wrangler.mjs deploy --dry-run --config wrangler.jsonc --var CS_IDENTITY_ISSUER:https://id.createsomething.space --var CS_IDENTITY_JWKS_URL:https://id.createsomething.space/.well-known/jwks.json --var CS_IDENTITY_AUDIENCE:https://create-something-agent-runtime.createsomething.workers.dev/mcp",
-    "tail": "node ../../scripts/run-wrangler.mjs tail --config wrangler.jsonc"
+    "tail": "node ../../scripts/run-wrangler.mjs tail --config wrangler.jsonc",
+    "decisions": "tsx scripts/decisions.ts",
+    "decisions:live": "tsx scripts/decision-live.ts"
   },
   "dependencies": {
     "@createsomething/workflow-runtime": "workspace:*",
