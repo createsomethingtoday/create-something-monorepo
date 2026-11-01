@@ -272,6 +272,9 @@ test('ChatGPT search only infers a location when a place is anchored', () => {
   assert.deepEqual(locations('oncology RN jobs'), [undefined]);
   assert.ok(locations('RN jobs in Dallas').includes('Dallas'));
   assert.ok(locations('ICU jobs near Fort Worth').includes('Fort Worth'));
+  assert.deepEqual(locations('RN jobs at Baylor'), [undefined], 'an employer after "at" is not a place');
+  const nyc = buildSearchFallbackAttempts({ query: 'RN jobs in New York City', status: 'open', limit: 10 }, 'RN jobs in New York City');
+  assert.ok(nyc.some((attempt) => attempt.filters.location === 'New York City' && attempt.filters.state === 'NY'));
 });
 
 test('ChatGPT search reads OR next to a nursing word as the operating room, not Oregon', () => {

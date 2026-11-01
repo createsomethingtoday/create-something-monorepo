@@ -760,7 +760,8 @@ export function buildSearchFallbackAttempts(filters: DbFilters, context: string)
 }
 
 // A location is only inferred when something anchors it: the words right before the
-// state ("Arlington TX") or right after "in"/"near"/"around"/"at" ("jobs in Dallas").
+// state ("Arlington TX") or right after "in"/"near"/"around" ("jobs in Dallas"). "At" is left
+// out because it usually names an employer ("RN jobs at Baylor").
 // Unanchored words such as "pediatric" or "night shift" describe the job, not a place.
 const LOCATION_STOP_PATTERNS = [
   /\bl(?:abor|abou?r)\s*(?:and|&)?\s*delivery\b/g,
@@ -782,6 +783,9 @@ function inferRequestedLocation(context: string, state: string | undefined): str
   if (!normalizedContext) return undefined;
 
   let value = ` ${normalizeGeoText(normalizedContext)} `;
+  // "New York City" or "Oklahoma City" is a city that contains a state name; keep it whole.
+  const stateCity = value.match(new RegExp(`\\b(${US_STATE_CODES.map(([name]) => escapeRegExp(name)).join('|')}) city\\b`));
+  if (stateCity) return toTitleCase(stateCity[0]);
   const stateEntries = state ? US_STATE_CODES.filter(([, code]) => code === state) : [];
   for (const [stateName, stateCode] of stateEntries) {
     value = value.replace(new RegExp(`\\b${escapeRegExp(stateName)}\\b`, 'g'), ` ${STATE_MARK} `);
@@ -790,7 +794,7 @@ function inferRequestedLocation(context: string, state: string | undefined): str
       value = value.replace(new RegExp(`\\b${escapeRegExp(stateCode.toLowerCase())}\\b`, 'g'), ` ${STATE_MARK} `);
     }
   }
-  value = value.replace(/\b(?:in|near|around|at)\b/g, ` ${ANCHOR_MARK} `);
+  value = value.replace(/\b(?:in|near|around)\b/g, ` ${ANCHOR_MARK} `);
   for (const pattern of LOCATION_STOP_PATTERNS) value = value.replace(pattern, ` ${STOP_MARK} `);
   const tokens = value
     .replace(/[^a-z0-9\s\u0001-\u0003-]/g, ' ')
