@@ -1124,9 +1124,11 @@ export async function queryPublicJobs(
     const stateCode = normalizeStateCode(state);
     const stateName = stateNameForCode(stateCode) ?? state;
     where.push(
-      '(upper(state) = ? OR lower(state) = lower(?) OR lower(location_text) LIKE lower(?) OR lower(location_text) LIKE lower(?))',
+      '(upper(state) = ? OR lower(state) = lower(?) OR lower(location_text) LIKE lower(?) OR lower(location_text) LIKE lower(?) OR lower(location_text) LIKE lower(?) OR lower(location_text) LIKE lower(?))',
     );
-    args.push(stateCode ?? state.toUpperCase(), stateName, `%, ${stateCode ?? state},%`, `%, ${stateName},%`);
+    // ", CA," mid-text or ", CA" at the end; never a bare substring such as "CA" inside "Chicago".
+    const code = stateCode ?? state;
+    args.push(stateCode ?? state.toUpperCase(), stateName, `%, ${code},%`, `%, ${stateName},%`, `%, ${code}`, `%, ${stateName}`);
   }
 
   if (filters.specialty?.trim()) {
@@ -1775,7 +1777,6 @@ async function findReusableRapidApiIngestionRun(
           AND COALESCE(CASE WHEN json_valid(metadata_json) THEN json_extract(metadata_json, '$.skipped') END, 0) != 1
           AND COALESCE(CASE WHEN json_valid(metadata_json) THEN json_extract(metadata_json, '$.dry_run') END, 0) != 1
         ORDER BY finished_at DESC
-        LIMIT 20
       `,
     )
     .bind('rapidapi', 'active_jobs_db', 'succeeded', cutoff)

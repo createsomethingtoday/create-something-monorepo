@@ -242,11 +242,8 @@ export class AbundanceJobsChatGPTMCP extends McpAgent<Env> {
   private currentAccountId = CHATGPT_PUBLIC_ACCOUNT_ID;
 
   override async fetch(request: Request): Promise<Response> {
-    this.currentAccountId =
-      request.headers.get('X-MCP-Account-ID')?.trim() ||
-      request.headers.get('X-Account-ID')?.trim() ||
-      request.headers.get('X-CS-Account-ID')?.trim() ||
-      CHATGPT_PUBLIC_ACCOUNT_ID;
+    // Unauthenticated route: callers cannot choose the account their telemetry is filed under.
+    this.currentAccountId = CHATGPT_PUBLIC_ACCOUNT_ID;
     return super.fetch(request);
   }
 

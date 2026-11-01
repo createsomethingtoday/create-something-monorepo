@@ -314,6 +314,8 @@ test('public job state filters do not match arbitrary two-letter substrings', as
   assert.ok(boundArgs.includes('california'));
   assert.ok(boundArgs.includes('%, CA,%'));
   assert.ok(boundArgs.includes('%, california,%'));
+  assert.ok(boundArgs.includes('%, CA'), 'state at the end of location text');
+  assert.ok(boundArgs.includes('%, california'));
 });
 
 test('fresh Cloudflare D1 ingestion run skips a paid RapidAPI fetch', async () => {
