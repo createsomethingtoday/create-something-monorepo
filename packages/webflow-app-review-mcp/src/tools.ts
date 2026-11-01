@@ -8,6 +8,8 @@ import type { ZendeskClient } from './zendesk.js';
 import { ZENDESK_WRITABLE_STATUSES, ZendeskClientError, renderCreatorFacingHtml } from './zendesk.js';
 import {
   APP_REVIEW_FIELD_MAP,
+  BACKEND_HOSTING_MODEL_OPTIONS,
+  BACKEND_RUNTIME_OPTIONS,
   CAPABILITIES_OPTIONS,
   EXCEPTION_STATUS_OPTIONS,
   EXCEPTION_TYPE_OPTIONS,
@@ -1481,7 +1483,7 @@ export function registerTools(
 
   server.tool(
     'app_review_update_asset_metadata',
-    'Update writable app metadata fields on Assets. Read-only/computed fields are rejected or routed. latest_review_status requires explicit status_change confirmation and a fresh expected status; never change status merely to prepare a review cycle.',
+    'Update writable app metadata fields on Assets, including the self-attested backend declaration (backend_hosting_model, backend_runtime, backend_runtime_version, backend_hosting_provider, backend_declared_at) when a reviewer corrects a plausibility error. Read-only/computed fields are rejected or routed. latest_review_status requires explicit status_change confirmation and a fresh expected status; never change status merely to prepare a review cycle.',
     {
       asset_id: z.string().min(1),
       app_name: z.string().optional(),
@@ -1508,6 +1510,11 @@ export function registerTools(
       support_email_or_url: z.string().optional(),
       preview_site_url: z.string().url().optional(),
       promo_video_url: z.string().url().optional(),
+      backend_hosting_model: z.enum(BACKEND_HOSTING_MODEL_OPTIONS).optional(),
+      backend_runtime: z.enum(BACKEND_RUNTIME_OPTIONS).optional(),
+      backend_runtime_version: z.string().optional(),
+      backend_hosting_provider: z.string().optional(),
+      backend_declared_at: z.string().datetime({ offset: true }).optional(),
       marketplace_status: z.enum(MARKETPLACE_STATUS_OPTIONS).optional(),
       latest_review_status: z.enum(REVIEW_STATUS_OPTIONS).optional(),
       status_change: statusChangeSchema.optional(),
@@ -1570,6 +1577,11 @@ export function registerTools(
           support_email_or_url: params.support_email_or_url,
           preview_site_url: params.preview_site_url,
           promo_video_url: params.promo_video_url,
+          backend_hosting_model: params.backend_hosting_model,
+          backend_runtime: params.backend_runtime,
+          backend_runtime_version: params.backend_runtime_version,
+          backend_hosting_provider: params.backend_hosting_provider,
+          backend_declared_at: params.backend_declared_at,
           marketplace_status: params.marketplace_status,
         });
 

@@ -81,6 +81,14 @@ Common remediation lanes:
 - Dependency reachability and upgrade evidence
 - OAuth, error recovery, accessibility, listing, and demo-flow accuracy
 
+### Backend declaration findings
+
+Data Client and Hybrid Apps self-declare their backend hosting model, runtime family and version, and hosting provider on the submission form; Webflow does not verify the infrastructure. Three rulings follow from that:
+
+- A finding that cites an **end-of-life or vulnerable backend runtime** is a Behavior lane item. The remediation is to upgrade to a vendor-supported version and re-declare the runtime and version on the next **App Update** submission; a fixed server with a stale declaration is not resolved.
+- A **mismatch between the declared hosting and the Install URL host** is a reviewer question to answer, not a blocker to fix. Explain the topology (proxy, CDN, separate API domain) in the reviewer response.
+- **Residual EOL-runtime risk** that the developer cannot close before resubmission is a Judgment lane item: route it to the ⚖️ exception flow with type **Security** and record the owner. Do not invent a new rule or threshold for it.
+
 ## Step 3 — Make an evidence-first plan
 
 Use `assets/remediation-plan.md`. For every P1 or unassigned finding define before editing:

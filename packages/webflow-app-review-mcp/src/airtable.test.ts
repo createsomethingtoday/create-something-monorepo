@@ -66,6 +66,57 @@ describe('AirtableClient scope and validation', () => {
     expect(fetchFn).not.toHaveBeenCalled();
   });
 
+  it('rejects a backend declaration select value outside the Airtable options', async () => {
+    const fetchFn = vi.fn();
+    const client = new AirtableClient({ apiKey: 'token', fetchFn });
+
+    await expect(
+      client.updateAssetMetadata('recAsset', { backend_hosting_model: 'Heroku' }),
+    ).rejects.toMatchObject({ code: 'INVALID_BACKEND_HOSTING_MODEL' });
+    await expect(
+      client.updateAssetMetadata('recAsset', { backend_runtime: 'Perl' }),
+    ).rejects.toMatchObject({ code: 'INVALID_BACKEND_RUNTIME' });
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+
+  it('writes the backend declaration to the asset field IDs and maps it back', async () => {
+    const requests: { url: string; body: { records: Array<{ id: string; fields: Record<string, unknown> }> } }[] = [];
+    const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body)) as { records: Array<{ id: string; fields: Record<string, unknown> }> };
+      requests.push({ url: String(input), body });
+      return jsonResponse({ records: [assetRecord('recAsset', body.records[0]!.fields)] });
+    });
+    const client = new AirtableClient({ apiKey: 'token', fetchFn });
+
+    const asset = await client.updateAssetMetadata('recAsset', {
+      backend_hosting_model: 'Own server / VPS',
+      backend_runtime: 'PHP',
+      backend_runtime_version: '8.3',
+      backend_hosting_provider: 'api.example.com (Hetzner)',
+      backend_declared_at: '2026-10-30T15:00:00.000Z',
+    });
+
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(requests[0]!.url).toContain(`/${TABLE_IDS.assets}?`);
+    expect(requests[0]!.body.records[0]).toEqual({
+      id: 'recAsset',
+      fields: {
+        [FIELD_IDS.assets.backendHostingModel]: 'Own server / VPS',
+        [FIELD_IDS.assets.backendRuntime]: 'PHP',
+        [FIELD_IDS.assets.backendRuntimeVersion]: '8.3',
+        [FIELD_IDS.assets.backendHostingProvider]: 'api.example.com (Hetzner)',
+        [FIELD_IDS.assets.backendDeclaredAt]: '2026-10-30T15:00:00.000Z',
+      },
+    });
+    expect(asset.backend).toEqual({
+      hostingModel: 'Own server / VPS',
+      runtime: 'PHP',
+      runtimeVersion: '8.3',
+      hostingProvider: 'api.example.com (Hetzner)',
+      declaredAt: '2026-10-30T15:00:00.000Z',
+    });
+  });
+
   it('rejects read-only asset metadata keys', async () => {
     const fetchFn = vi.fn();
     const client = new AirtableClient({
@@ -864,6 +915,51 @@ describe('AirtableClient app review context and queue helpers', () => {
     const fromAsset = await pfClient.getReviewContext('rec-version-asset-only');
     expect(fromAsset.version.preflight).toBeNull();
     expect(fromAsset.preflight).toMatchObject({ source: 'asset', receipt: 'wfpre_asset', installUrlStatus: 'pass' });
+  });
+
+  it('surfaces the backend declaration snapshot on the version and the live declaration on the asset', async () => {
+    const { client } = createClient();
+    const empty = await client.getReviewContext('rec-version-self');
+    expect(empty.version.backend).toBeNull();
+    expect(empty.asset?.backend).toBeNull();
+
+    const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      if (url.pathname.endsWith(`/${TABLE_IDS.assetVersions}/rec-version-be`)) {
+        const base = versionRecord('rec-version-be', null);
+        return jsonResponse({
+          ...base,
+          fields: {
+            ...base.fields,
+            [FIELD_IDS.versions.backendHostingModel]: 'Serverless / PaaS',
+            [FIELD_IDS.versions.backendRuntime]: 'Node.js',
+            [FIELD_IDS.versions.backendRuntimeVersion]: '18.20.4',
+            [FIELD_IDS.versions.backendHostingProvider]: 'api.example.com',
+          },
+        });
+      }
+      if (url.pathname.endsWith(`/${TABLE_IDS.assets}/recAsset`)) {
+        return jsonResponse(assetRecord('recAsset', {
+          [FIELD_IDS.assets.backendHostingModel]: 'Serverless / PaaS',
+          [FIELD_IDS.assets.backendRuntime]: 'Node.js',
+          [FIELD_IDS.assets.backendRuntimeVersion]: '22.11.0',
+          [FIELD_IDS.assets.backendHostingProvider]: 'api.example.com',
+          [FIELD_IDS.assets.backendDeclaredAt]: '2026-10-30T15:00:00.000Z',
+        }));
+      }
+      return new Response('not found', { status: 404 });
+    });
+    const beClient = new AirtableClient({ apiKey: 'token', fetchFn });
+
+    const context = await beClient.getReviewContext('rec-version-be');
+    expect(context.version.backend).toEqual({
+      hostingModel: 'Serverless / PaaS',
+      runtime: 'Node.js',
+      runtimeVersion: '18.20.4',
+      hostingProvider: 'api.example.com',
+      declaredAt: undefined,
+    });
+    expect(context.asset?.backend).toMatchObject({ runtimeVersion: '22.11.0', declaredAt: '2026-10-30T15:00:00.000Z' });
   });
 
   it('finds app_id matches across paginated asset results', async () => {
