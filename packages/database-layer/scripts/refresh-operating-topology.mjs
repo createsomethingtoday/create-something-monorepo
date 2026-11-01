@@ -74,6 +74,8 @@ for (const [label, stepArgs] of scriptSteps) {
   runStep(label, process.execPath, stepArgs);
 }
 
+runStep('Ontology structural contract', process.execPath, ['scripts/ontology.mjs', 'check']);
+
 const tscBin = require.resolve('typescript/bin/tsc');
 runStep('TypeScript build', process.execPath, [tscBin]);
 runStep('Completion report', process.execPath, ['scripts/report-internal-topology.mjs']);
