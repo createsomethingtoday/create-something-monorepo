@@ -244,7 +244,6 @@ test('public Agency commercial propositions declare the shared editorial express
     'stack',
     'control',
     'products',
-    'products/ground',
     'products/loom',
     'field-reports',
     'field-reports/template-review',
@@ -365,6 +364,13 @@ test('commercial conversion handoffs use editorial propositions while task surfa
       assert.equal(openings.length, 0, 'homepage owns its native plan and conversational conversion sections');
       continue;
     }
+    if (route === 'products/ground') {
+      assert.match(source, /class="ground-handoff"/);
+      assert.match(source, /data-performance-chapter="continuation"/);
+      assert.match(source, /Install Ground from npm/);
+      assert.match(source, /codebase operator reviews the finding/);
+      continue;
+    }
     if (route === 'about') {
       assert.match(source, /class="letter-signoff"/);
       assert.match(source, /href="\/book"/);
@@ -410,6 +416,13 @@ test('commercial conversion handoffs use editorial propositions while task surfa
     );
     const openings = conversionHandoffOpenings(source);
 
+    if (route === 'products/ground') {
+      assert.match(source, /class="ground-handoff"/);
+      assert.match(source, /data-performance-chapter="continuation"/);
+      assert.match(source, /Install Ground from npm/);
+      assert.match(source, /codebase operator reviews the finding/);
+      continue;
+    }
     if (route === 'about') {
       assert.match(source, /class="letter-signoff"/);
       assert.match(source, /href="\/book"/);
