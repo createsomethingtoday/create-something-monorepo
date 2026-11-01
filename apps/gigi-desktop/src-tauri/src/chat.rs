@@ -66,6 +66,25 @@ fn read_reply(reader: &mut impl BufRead) -> Result<Value, ()> {
     serde_json::from_slice(&line).map_err(|_| ())
 }
 
+// Pipe EOF can be delayed by inherited descriptors. Observe app shutdown
+// independently rather than holding the protocol mutex for the full timeout.
+fn receive_interruptibly<T>(receiver: &mpsc::Receiver<T>, deadline: Instant) -> Result<T, String> {
+    loop {
+        if CLOSING.load(Ordering::SeqCst) {
+            return Err("Chat companion is shutting down".into());
+        }
+        let remaining = deadline.saturating_duration_since(Instant::now());
+        if remaining.is_zero() {
+            return Err("Chat operation timed out. Read the session before retrying.".into());
+        }
+        match receiver.recv_timeout(remaining.min(Duration::from_millis(50))) {
+            Ok(value) => return Ok(value),
+            Err(mpsc::RecvTimeoutError::Timeout) => continue,
+            Err(mpsc::RecvTimeoutError::Disconnected) => return Err("Chat operation timed out. Read the session before retrying.".into()),
+        }
+    }
+}
+
 fn permitted(operation: &str) -> bool {
     matches!(
         operation,
@@ -410,17 +429,11 @@ fn dispatch_with_timeout(
             .writer
             .send((request, ack_sender))
             .map_err(|_| "Chat request could not be delivered")?;
-        match ack_receiver.recv_timeout(deadline.saturating_duration_since(Instant::now())) {
-            Ok(Ok(())) => {}
-            Ok(Err(())) => return Err("Chat request could not be delivered".into()),
-            Err(_) => {
-                return Err("Chat operation timed out. Read the session before retrying.".into())
-            }
+        match receive_interruptibly(&ack_receiver, deadline)? {
+            Ok(()) => {}
+            Err(()) => return Err("Chat request could not be delivered".into()),
         }
-        let response = companion
-            .replies
-            .recv_timeout(deadline.saturating_duration_since(Instant::now()))
-            .map_err(|_| "Chat operation timed out. Read the session before retrying.")?
+        let response = receive_interruptibly(&companion.replies, deadline)?
             .map_err(|_| "Chat companion returned an invalid or oversized reply")?;
         if response.get("id").and_then(Value::as_u64) != Some(id) {
             return Err("Chat companion reply ID mismatch".into());
@@ -689,6 +702,35 @@ use std::os::unix::net::UnixStream;
         let mut reader = BufReader::new(std::io::Cursor::new(bytes));
         assert_eq!(read_reply(&mut reader).unwrap(), value);
         assert_eq!(read_reply(&mut reader).unwrap(), json!({"id":2}));
+    }
+    #[test]
+    fn shutdown_interrupts_a_reader_that_never_observes_pipe_eof() {
+        let _guard = test_lock();
+        let root = fixture("#!/bin/sh\nwhile IFS= read -r line; do touch \"$GIGI_DATA_DIR/waiting\"; sleep 10; done\n");
+        let mut companion = spawn(&root, &root, Some(root.join("codex"))).unwrap();
+        // Model a reader held open by an inherited descriptor outside the killed
+        // group: killing the child does not disconnect this reply channel.
+        let (_held_sender, stalled_replies) = mpsc::channel();
+        companion.replies = stalled_replies;
+        cancellation_groups().lock().unwrap().insert(root.clone(), companion.child.id());
+        companions().lock().unwrap().insert(root.clone(), companion);
+        let worker_root = root.clone();
+        let worker = std::thread::spawn(move || dispatch_with_timeout(
+            &worker_root, &worker_root, "agent.chat.send", json!({"message":"hi"}), Duration::from_secs(5),
+        ));
+        let deadline = Instant::now() + Duration::from_secs(3);
+        while !root.join("waiting").exists() && Instant::now() < deadline {
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        let ready = root.join("waiting").exists();
+        let started = Instant::now();
+        cancel_all();
+        let elapsed = started.elapsed();
+        let result = worker.join().unwrap();
+        std::fs::remove_dir_all(root).unwrap();
+        assert!(ready, "fixture never received the request");
+        assert!(result.is_err());
+        assert!(elapsed < Duration::from_secs(2), "shutdown waited {elapsed:?} for a reply channel without EOF");
     }
     #[test]
     fn shutdown_interrupts_in_flight_request_and_prevents_relaunch() {

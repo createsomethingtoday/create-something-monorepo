@@ -1,5 +1,7 @@
 # GiGi 0.2.20 qualification — CRE-2308
 
+Status: superseded before page promotion by the 0.2.21 shutdown repair. The immutable 0.2.20 object is retained; do not overwrite it. Agency is restored to published 0.2.18 while the replacement is qualified.
+
 R5 supersedes all earlier unpromoted 0.2.20 candidates. Runtime source is clean `46884ba674f4bd4ad4bf1ee123e98a1501f4dde8`, independently reviewed by Sol and GitHub Codex with no remaining blocker. The signed executable contains that SHA; compiler identity reports `dirty=false`. This checkpoint changes release evidence and Agency metadata only.
 
 **Functional correctness: passed** within local, synthetic and packaged-provider scope. All 334 desktop tests passed against the signed companion with zero skips. All 323 integration tests passed, with one optional CTX skip; typecheck passed. The 173 Rust checks passed after the test-only main merge, and Rust production source has not changed. Independent final Sol repeated the desktop/integration suites, typecheck and committed browser qualifier. Regressions cover rollback/re-upgrade, the eight-minute observation window, bounded ordinary/outage/terminal reads, duplicate terminal signals, approval receipts and uncertainty fences. Offline outages and fake elapsed time are not live acceptance.
