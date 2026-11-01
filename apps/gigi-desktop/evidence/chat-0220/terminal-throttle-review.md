@@ -1,0 +1,9 @@
+# Bound terminal reconciliation retries — CRE-2308
+
+Review4433878369 reproduced by changing the prior outage regressions to require one immediate terminal read followed by bounded retries. Both thread/read failure and20thpage failure were red before repair; now duplicate terminal signals and8rapid polls cause no extra history hydration. Retry occurs after3seconds; completion remains running until a subsequent authoritative terminal transcript succeeds.
+
+A separate per-session terminal retry snapshot now rate-limits safe still-running responses after the first forced terminal read. The terminal fence remains set; no notification or failed history read fabricates completion. Successful-but-lagging terminal history is bounded too. New turns and retirement clear retry state; approvals and unknown/cancellation/recovery outcomes bypass safe reuse. Decisions invalidate prior terminal snapshots, and a new regression proves a later approval and rejected receipt cannot be hidden by one. The terminal fence is retained through approval; only authoritative idle/failed/interrupted responses clear it. Two existing completion tests now advance the fake clock to the bounded retry instead of requiring immediate repeated hydration.
+
+Functional:passed locally,323integration tests plus1optionalCTXskip,typecheck passed. Evidence uses fake elapsed time/provider fixtures; no new live acceptance claim. Perceptual/product:not-applicable to this adapter-only change. Release readiness:untested for this source; private R4 remains superseded. Exact new build/sign/notarize/packaged acceptance and immutable upload/readback are required before Agency repin. Published0.2.18 retained.
+
+Worktree disposition:preserved at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e (t3/gigi-chat-polish).

@@ -299,7 +299,8 @@ test('turn completion keeps a held GiGi approval visible while provider read is 
   assert.equal(poll.approvals.length, 1);
 });
 
-test('completed turn notification does not settle before its transcript is readable', async () => {
+test('completed turn notification does not settle before its transcript is readable', async (t) => {
+  let elapsed = 0; const started = Date.now(); t.mock.method(Date, 'now', () => started + elapsed);
   const { adapter, server } = await setup();
   const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'Read the gig' });
   await Promise.all(server.events.map(fn => fn({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed' } } }) as unknown as Promise<void>));
@@ -309,6 +310,7 @@ test('completed turn notification does not settle before its transcript is reada
   assert.equal((await adapter.poll({ workspaceId: 'w', sessionId })).state, 'running');
   server.request = original;
   server.thread.turns = [{ id: 'turn-1', status: 'completed', items: [{ id: 'a1', type: 'agentMessage', text: 'Fee: $450.00 USD' }] }];
+  elapsed += 3001; // Retry the still-fenced terminal read after the bounded window.
   const settled = await adapter.poll({ workspaceId: 'w', sessionId });
   assert.equal(settled.state, 'idle');
   assert.equal(settled.messages.find(x => x.id === 'a1')?.text, 'Fee: $450.00 USD');
@@ -1426,7 +1428,8 @@ test('relation continuation is offered as a workspace-pinned read with no write 
  }finally{await rm(dataDir,{recursive:true,force:true});}
 });
 
-test('active polling uses observed deltas without repeatedly hydrating history; terminal notification forces readback', async () => {
+test('active polling uses observed deltas without repeatedly hydrating history; terminal notification forces readback', async (t) => {
+  let elapsed = 0; const started = Date.now(); t.mock.method(Date, 'now', () => started + elapsed);
   const {adapter,server}=await setup(); const {sessionId}=await adapter.start({workspaceId:'w',message:'Read only'});
   const input={workspaceId:'w',sessionId};
   server.thread.turns=[{id:'turn-1',status:'inProgress',items:[{id:'u1',type:'userMessage',content:[{type:'text',text:'Read only'}]}]}];
@@ -1439,8 +1442,12 @@ test('active polling uses observed deltas without repeatedly hydrating history; 
   assert.equal(server.calls.filter(x=>x.method==='thread/read').length,reads,'rapid deltas must not hydrate all history');
   await emit({method:'turn/completed',params:{threadId:'thread-1',turn:{id:'turn-1',status:'completed'}}});
   assert.equal((await adapter.poll(input)).state,'running','notification is not terminal transcript proof');
+  const terminalReads = server.calls.filter(x => x.method === 'thread/read').length;
+  assert.equal((await adapter.poll(input)).state, 'running');
+  assert.equal(server.calls.filter(x => x.method === 'thread/read').length, terminalReads, 'successful but lagging terminal history is also bounded');
   server.thread.turns=[{id:'turn-1',status:'completed',items:[{id:'a1',type:'agentMessage',text:'**Partial** complete.'}]}];
   await emit({method:'turn/completed',params:{threadId:'thread-1',turn:{id:'turn-1',status:'completed'}}});
+  elapsed += 3001; // Duplicate terminal notifications do not bypass the retry window.
   assert.equal((await adapter.poll(input)).state,'idle');
 });
 
@@ -1600,8 +1607,36 @@ for (const failure of ['thread/read', 'last-history-page']) test(`initial histor
     elapsed += 1001; await adapter.poll(input); assert.equal(count(), initial * 2, 'retry after three seconds even when still unavailable');
     await Promise.all(server.events.map(fn => fn({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed' } } })));
     assert.equal((await adapter.poll(input)).state, 'running'); assert.equal(count(), initial * 3, 'terminal notification bypasses a safe fallback');
-    assert.equal((await adapter.poll(input)).state, 'running'); assert.equal(count(), initial * 4, 'unmaterialized terminal remains fenced');
+    for (let i = 0; i < 8; i++) {
+      elapsed += 250;
+      await Promise.all(server.events.map(fn => fn({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed' } } })));
+      assert.equal((await adapter.poll(input)).state, 'running', 'terminal signal alone cannot complete the transcript');
+    }
+    assert.equal(count(), initial * 3, 'terminal retries are bounded even with duplicate notifications');
+    elapsed += 1001; assert.equal((await adapter.poll(input)).state, 'running');
+    assert.equal(count(), initial * 4, 'terminal reconciliation retries after three seconds');
     server.request = original; server.thread.turns = [{ id: 'turn-1', status: 'completed', items: [{ id: 'a', type: 'agentMessage', text: 'Observed during outage; final answer' }] }];
+    elapsed += 3001;
     const final = await adapter.poll(input); assert.equal(final.state, 'idle'); assert.equal(final.messages.at(-1)?.text, 'Observed during outage; final answer');
+  } finally { await rm(dataDir, { recursive: true, force: true }); }
+});
+
+test('terminal retry snapshots cannot hide a later approval or its rejected receipt', async () => {
+  const { adapter, server, dataDir } = await setup();
+  try {
+    const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'Review a task' });
+    const input = { workspaceId: 'w', sessionId };
+    const emit = async (message: any) => Promise.all(server.events.map(fn => fn(message)));
+    server.thread.turns = [{ id: 'turn-1', status: 'inProgress', items: [] }];
+    await emit({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed' } } });
+    assert.equal((await adapter.poll(input)).state, 'running');
+    await emit({ id: 2901, method: 'item/tool/call', params: { threadId: 'thread-1', tool: 'gigi_records_save', arguments: { workspaceId: 'w', entity: 'tasks', id: 'r', title: 'Reviewed title' } } });
+    const pending = await adapter.poll(input); assert.equal(pending.state, 'approval');
+    const original = server.request.bind(server);
+    server.request = async (method, params) => { if (method === 'thread/read') throw Error('synthetic history outage'); return original(method, params); };
+    const rejected = await adapter.approve({ ...input, approvalId: pending.approvals[0].id, decision: 'reject' });
+    assert.equal(rejected.decisionReceipt?.outcome, 'rejected');
+    const next = await adapter.poll(input);
+    assert.equal(next.state, 'running'); assert.equal(next.approvals.length, 0); assert.equal(next.decisionReceipt?.outcome, 'rejected');
   } finally { await rm(dataDir, { recursive: true, force: true }); }
 });

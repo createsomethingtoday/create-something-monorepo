@@ -116,6 +116,7 @@ export function createCodexAdapter(options: CodexOptions) {
   const liveMessages = new Map<string, Map<string, { text: string; turnId?: string }>>();
   const snapshots = new Map<string, { value: ChatRead; at: number }>();
   const terminalReads = new Set<string>();
+  const terminalRetries = new Map<string, { value: ChatRead; at: number }>();
   const activity = new Map<string, 'reading' | 'preparing' | 'checking'>();
   let loaded = false;
   let queue = Promise.resolve();
@@ -238,7 +239,7 @@ export function createCodexAdapter(options: CodexOptions) {
         await appendFile(join(root, 'retired-sessions.jsonl'), JSON.stringify({ retiredAt: Date.now(), session: retiring }) + '\n', { mode: 0o600 });
         sessions.delete(retiring.sessionId);
       } finally { retiringSessions.delete(retiring.sessionId); }
-      liveMessages.delete(retiring.sessionId); snapshots.delete(retiring.sessionId); terminalReads.delete(retiring.sessionId); activity.delete(retiring.sessionId);
+      liveMessages.delete(retiring.sessionId); snapshots.delete(retiring.sessionId); terminalReads.delete(retiring.sessionId); terminalRetries.delete(retiring.sessionId); activity.delete(retiring.sessionId);
       if (![...sessions.values()].some(item => item.threadId === retiring.threadId)) loadedThreads.delete(retiring.threadId);
     }
     sessions.set(session.sessionId, session); await persist();
@@ -265,7 +266,7 @@ export function createCodexAdapter(options: CodexOptions) {
       const plugins = await options.server.request('plugin/installed', { cwds: [root] });
       if (!Array.isArray(plugins?.marketplaces)) throw new Error('plugin_inventory_unavailable');
       const disabledPluginIds = plugins.marketplaces.flatMap((market: Json) => Array.isArray(market.plugins) ? market.plugins.filter((x: Json) => x.installed).map((x: Json) => required(x.id)) : []);
-      snapshots.delete(session.sessionId); terminalReads.delete(session.sessionId); activity.delete(session.sessionId);
+      snapshots.delete(session.sessionId); terminalReads.delete(session.sessionId); terminalRetries.delete(session.sessionId); activity.delete(session.sessionId);
       session.state = 'running'; session.error = 'turn_outcome_unknown'; session.turnId = undefined; session.pendingMessageId = randomUUID(); await persist(); submitted = true;
       const response = await options.server.request('turn/start', { threadId: session.threadId, clientUserMessageId: session.pendingMessageId, disabledPluginIds, input: [{ type: 'text', text: message, text_elements: [] }, { type: 'skill', name: 'gigi', path: options.skillPath }], environments: [], runtimeWorkspaceRoots: [], approvalPolicy: 'on-request', approvalsReviewer: 'user' });
       session.turnId = required(response?.turn?.id); session.pendingMessageId = undefined; session.state = 'running'; session.error = undefined; await persist();
@@ -365,7 +366,7 @@ export function createCodexAdapter(options: CodexOptions) {
     const ids = [...sessions.values()].filter(session => session.workspaceId === workspaceId && session.decisionReceipt?.outcome === 'verified').map(session => session.decisionReceipt!.approvalId);
     return ids.length ? { workspaceVerifiedEdits: ids } : {};
   }
-  function canCacheRunning(session: Session, value: ChatRead): boolean {
+  function safeRunningSnapshot(session: Session, value: ChatRead): boolean {
     // A historical provider failure is not itself an unresolved workspace action.
     const uncertain = Boolean(session.error) || [...sessions.values()].some(x => x.workspaceId === session.workspaceId && (
       x.uncertainWrite || x.pendingMessageId || x.cancelPending || x.recoveryPending || x.decisionReceipt?.outcome === 'unknown'
@@ -373,7 +374,7 @@ export function createCodexAdapter(options: CodexOptions) {
     ));
     return session.state === 'running' && value.state === 'running' && value.approvals.length === 0
       && !value.error && !value.cancelPending && !value.recoveryPending
-      && value.decisionReceipt?.outcome !== 'unknown' && !uncertain && !terminalReads.has(session.sessionId);
+      && value.decisionReceipt?.outcome !== 'unknown' && !uncertain;
   }
   async function read(input: Json): Promise<ChatRead> {
     const session = await owner(input);
@@ -404,7 +405,7 @@ export function createCodexAdapter(options: CodexOptions) {
       while (pending.messages.length && Buffer.byteLength(JSON.stringify(pending)) > 500_000) pending.messages.shift();
       // An unavailable history page is not a reason to retry the entire history
       // on every UI tick. Cache only through the same safety gates as poll().
-      if (canCacheRunning(session, pending)) snapshots.set(session.sessionId, { value: structuredClone(pending), at: Date.now() });
+      if (!terminalReads.has(session.sessionId) && safeRunningSnapshot(session, pending)) snapshots.set(session.sessionId, { value: structuredClone(pending), at: Date.now() });
       return pending;
     }
     const messages: ChatRead['messages'] = [];
@@ -445,14 +446,16 @@ export function createCodexAdapter(options: CodexOptions) {
   }
   async function poll(input: Json): Promise<ChatRead> {
     const session = await owner(input);
-    const cached = snapshots.get(session.sessionId);
+    const terminalRetry = terminalReads.has(session.sessionId) ? terminalRetries.get(session.sessionId) : undefined;
+    const cached = terminalRetry ?? snapshots.get(session.sessionId);
     // Live deltas are already observed provider output. Keep the one-reply IPC
-    // contract and periodically reconcile durable history. Never cache through a
-    // terminal notification, cancellation, approval or any uncertain write fence.
+    // contract and periodically reconcile durable history. The first terminal
+    // signal forces readback; subsequent safe running retries remain bounded.
+    // Cancellation, approval and uncertain outcomes still require reconciliation.
     const live = liveMessages.get(session.sessionId);
     // The current conversation's errors still force a fresh read. A historical
     // provider failure elsewhere is not an unresolved workspace operation.
-    if (cached && canCacheRunning(session, cached.value) && Date.now() - cached.at < 3000) {
+    if (cached && safeRunningSnapshot(session, cached.value) && (!terminalReads.has(session.sessionId) || terminalRetry) && Date.now() - cached.at < 3000) {
       const output = structuredClone(cached.value);
       for (const [id, entry] of live ?? []) {
         if (entry.turnId !== session.turnId) continue;
@@ -466,10 +469,14 @@ export function createCodexAdapter(options: CodexOptions) {
       while (output.messages.length && Buffer.byteLength(JSON.stringify(output)) > 500_000) output.messages.shift();
       return output;
     }
-    // A terminal signal stays fenced until an authoritative read sees terminal
-    // materialization; a lagging rollout must never re-enable the cached path.
+    // Keep terminal reconciliation separate from ordinary running snapshots.
+    // A retry can return only a safe running state, never inferred completion.
     const output = await read(input);
-    if (output.state !== 'running') terminalReads.delete(session.sessionId);
+    if (['idle', 'failed', 'interrupted'].includes(output.state)) {
+      terminalReads.delete(session.sessionId); terminalRetries.delete(session.sessionId);
+    } else if (terminalReads.has(session.sessionId) && safeRunningSnapshot(session, output)) {
+      terminalRetries.set(session.sessionId, { value: structuredClone(output), at: Date.now() });
+    } else terminalRetries.delete(session.sessionId);
     return output;
   }
   async function cancel(input: Json, immediate = false) {
@@ -612,6 +619,7 @@ export function createCodexAdapter(options: CodexOptions) {
     // metadata stale until an authoritative read succeeds.
     const previousSnapshot = snapshots.get(session.sessionId);
     if (previousSnapshot) previousSnapshot.at = Number.NEGATIVE_INFINITY;
+    terminalRetries.delete(session.sessionId);
     if (decision === 'approve') activity.set(session.sessionId, 'checking');
     if (approval.kind === 'tool') {
       if (decision === 'reject') {
