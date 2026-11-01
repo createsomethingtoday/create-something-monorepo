@@ -525,9 +525,21 @@ async function searchPublicJobDocuments(db: D1Database, input: Record<string, un
   });
 }
 
+// "OR RN jobs" means the operating room, not Oregon: an uppercase OR next to a nursing word is clinical.
+function isClinicalOperatingRoom(query: string): boolean {
+  return (
+    /\boperating room\b|\bperi-?op(?:erative)?\b/i.test(query) ||
+    /\bOR\s+(?:RN|nurses?|nursing|tech|jobs?)\b/i.test(query) ||
+    /\b(?:RN|nurses?)\s+OR\b/i.test(query)
+  );
+}
+
 export function inferNursingRolePlan(query: string): RoleSearchPlan {
   const normalized = query.toLowerCase();
   // Specialties first: "ER RN" or "travel RN" must not fall back to generic registered nurse roles.
+  if (isClinicalOperatingRoom(query)) {
+    return roleSearchPlan(['operating room', 'perioperative', 'surgical'], false);
+  }
   if (/\bl(?:abor|abou?r)\s*(?:and|&)?\s*delivery\b/.test(normalized) || /\bl&d\b/.test(normalized)) {
     return roleSearchPlan(['labor', 'delivery'], false);
   }
@@ -604,6 +616,7 @@ function inferUsState(query: string | undefined): string | undefined {
     if (new RegExp(`\\b${escapeRegExp(name)}\\b`).test(normalized)) return code;
   }
   for (const [, code] of US_STATE_CODES) {
+    if (code === 'OR' && isClinicalOperatingRoom(query)) continue;
     if (new RegExp(`\\b${code}\\b`).test(query)) return code;
     if (!AMBIGUOUS_STATE_CODES.has(code) && new RegExp(`\\b${code.toLowerCase()}\\b`).test(normalized)) return code;
   }
@@ -747,39 +760,63 @@ export function buildSearchFallbackAttempts(filters: DbFilters, context: string)
   return attempts;
 }
 
+// A location is only inferred when something anchors it: the words right before the
+// state ("Arlington TX") or right after "in"/"near"/"around"/"at" ("jobs in Dallas").
+// Unanchored words such as "pediatric" or "night shift" describe the job, not a place.
+const LOCATION_STOP_PATTERNS = [
+  /\bl(?:abor|abou?r)\s*(?:and|&)?\s*delivery\b/g,
+  /\b(?:registered|licensed practical|licensed vocational) nurse\b/g,
+  /\bcertified (?:nursing|nurse) (?:assistant|aide)\b/g,
+  /\bnurse practitioner\b/g,
+  /\bintensive care\b/g,
+  /\b(?:emergency|operating) (?:room|department)\b/g,
+  /\b(?:day|night|evening|overnight|weekend|rotating|swing)\s+shifts?\b/g,
+  /\b(?:per diem|prn|full[- ]time|part[- ]time|contract|temporary|temp|permanent|remote|hybrid|new grad(?:uate)?|entry[- ]level|experienced|senior|shifts?|days|nights|weekends)\b/g,
+  /\b(?:nursing|nurse|nurses|jobs?|openings?|roles?|positions?|for|the|and|or|with|travel|rn|lpn|lvn|cna|np|icu|er|ed|emergency|dfw)\b/g,
+];
+const STATE_MARK = '\u0001';
+const ANCHOR_MARK = '\u0002';
+const STOP_MARK = '\u0003';
+
 function inferRequestedLocation(context: string, state: string | undefined): string | undefined {
   const normalizedContext = context.trim();
   if (!normalizedContext) return undefined;
 
   let value = ` ${normalizeGeoText(normalizedContext)} `;
-  for (const [stateName, stateCode] of US_STATE_CODES) {
-    if (state && state !== stateCode) continue;
-    value = value.replace(new RegExp(`\\b${escapeRegExp(stateName)}\\b`, 'g'), ' ');
-    value = value.replace(new RegExp(`\\b${escapeRegExp(stateCode.toLowerCase())}\\b`, 'g'), ' ');
+  const stateEntries = state ? US_STATE_CODES.filter(([, code]) => code === state) : [];
+  for (const [stateName, stateCode] of stateEntries) {
+    value = value.replace(new RegExp(`\\b${escapeRegExp(stateName)}\\b`, 'g'), ` ${STATE_MARK} `);
+    // Same rule as inferUsState: "in" is only Indiana when written "IN".
+    if (!AMBIGUOUS_STATE_CODES.has(stateCode) || new RegExp(`\\b${stateCode}\\b`).test(normalizedContext)) {
+      value = value.replace(new RegExp(`\\b${escapeRegExp(stateCode.toLowerCase())}\\b`, 'g'), ` ${STATE_MARK} `);
+    }
   }
+  value = value.replace(/\b(?:in|near|around|at)\b/g, ` ${ANCHOR_MARK} `);
+  for (const pattern of LOCATION_STOP_PATTERNS) value = value.replace(pattern, ` ${STOP_MARK} `);
+  const tokens = value
+    .replace(/[^a-z0-9\s\u0001-\u0003-]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
 
-  value = value
-    .replace(/\bl(?:abor|abou?r)\s*(?:and|&)?\s*delivery\b/g, ' ')
-    .replace(/\bregistered nurse\b/g, ' ')
-    .replace(/\blicensed practical nurse\b/g, ' ')
-    .replace(/\blicensed vocational nurse\b/g, ' ')
-    .replace(/\bcertified nursing assistant\b/g, ' ')
-    .replace(/\bcertified nurse assistant\b/g, ' ')
-    .replace(/\bcertified nurse aide\b/g, ' ')
-    .replace(/\bnurse practitioner\b/g, ' ')
-    .replace(/\bintensive care\b/g, ' ')
-    .replace(/\bemergency (?:room|department)\b/g, ' ')
-    // Schedule and employment qualifiers describe the job, not where it is.
-    .replace(/\b(?:day|night|evening|overnight|weekend|rotating|swing)\s+shifts?\b/g, ' ')
-    .replace(/\b(?:per diem|prn|full[- ]time|part[- ]time|contract|temporary|temp|permanent|remote|hybrid|new grad(?:uate)?|entry[- ]level|experienced|senior|shifts?|days|nights|weekends)\b/g, ' ')
-    .replace(/\b(?:nursing|nurse|jobs?|openings?|roles?|positions?|near|around|in|for|the|and|travel|rn|lpn|lvn|cna|np|icu|er|ed|emergency|dfw)\b/g, ' ')
-    .replace(/[^a-z0-9\s-]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const isMark = (token: string) => token === STATE_MARK || token === ANCHOR_MARK || token === STOP_MARK;
+  const anchored: string[][] = [];
+  tokens.forEach((token, index) => {
+    if (token === ANCHOR_MARK) {
+      const words: string[] = [];
+      for (let next = index + 1; next < tokens.length && !isMark(tokens[next]!); next += 1) words.push(tokens[next]!);
+      anchored.push(words);
+    }
+    if (token === STATE_MARK) {
+      const words: string[] = [];
+      for (let previous = index - 1; previous >= 0 && !isMark(tokens[previous]!); previous -= 1) words.unshift(tokens[previous]!);
+      anchored.push(words);
+    }
+  });
 
-  if (!value) return undefined;
-  if (US_STATE_CODES.some(([stateName, stateCode]) => value === stateName || value === stateCode.toLowerCase())) return undefined;
-  return toTitleCase(value);
+  const location = anchored.map((words) => words.join(' ')).find((words) => words.length > 0);
+  if (!location) return undefined;
+  if (US_STATE_CODES.some(([stateName, stateCode]) => location === stateName || location === stateCode.toLowerCase())) return undefined;
+  return toTitleCase(location);
 }
 
 function toTitleCase(value: string): string {
@@ -1186,7 +1223,7 @@ export async function ingestRapidApiJobs(input: {
 
   try {
     const recentRun =
-      request.force_refresh || request.freshness_window_minutes <= 0
+      request.force_refresh || request.dry_run || request.freshness_window_minutes <= 0
         ? null
         : await findReusableRapidApiIngestionRun(input.db, request, startedAt);
     if (recentRun) {

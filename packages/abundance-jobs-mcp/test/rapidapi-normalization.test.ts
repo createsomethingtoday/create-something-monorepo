@@ -266,6 +266,22 @@ test('public job freshness reports the newest listing, not the first ranked one'
   assert.deepEqual(result.freshness, { newest_last_seen_at: '2026-10-30T00:00:00Z', newest_provider: 'new-provider' });
 });
 
+test('ChatGPT search only infers a location when a place is anchored', () => {
+  const locations = (query: string) => [...new Set(buildSearchFallbackAttempts({ query, status: 'open', limit: 10 }, query).map((attempt) => attempt.filters.location))];
+  assert.deepEqual(locations('pediatric nurse jobs'), [undefined]);
+  assert.deepEqual(locations('oncology RN jobs'), [undefined]);
+  assert.ok(locations('RN jobs in Dallas').includes('Dallas'));
+  assert.ok(locations('ICU jobs near Fort Worth').includes('Fort Worth'));
+});
+
+test('ChatGPT search reads OR next to a nursing word as the operating room, not Oregon', () => {
+  assert.deepEqual(inferNursingRolePlan('OR RN jobs').queries, ['operating room', 'perioperative', 'surgical']);
+  const orAttempts = buildSearchFallbackAttempts({ query: 'OR RN jobs', status: 'open', limit: 10 }, 'OR RN jobs');
+  assert.ok(orAttempts.every((attempt) => attempt.filters.state !== 'OR'));
+  const oregonAttempts = buildSearchFallbackAttempts({ query: 'RN jobs in Oregon', status: 'open', limit: 10 }, 'RN jobs in Oregon');
+  assert.ok(oregonAttempts.some((attempt) => attempt.filters.state === 'OR'));
+});
+
 test('ChatGPT search does not read schedule qualifiers as a location', () => {
   const attempts = buildSearchFallbackAttempts({ query: 'night shift nursing jobs', status: 'open', limit: 10 }, 'night shift nursing jobs');
   assert.ok(attempts.every((attempt) => !attempt.filters.location), JSON.stringify(attempts.map((attempt) => attempt.filters.location)));
@@ -351,6 +367,46 @@ test('fresh Cloudflare D1 ingestion run skips a paid RapidAPI fetch', async () =
     assert.equal(result.reused_run_id, 'abjobrun_recent');
     assert.equal(writes.length, 1);
     assert.match(String(writes[0]?.args[8]), /fresh_cloudflare_d1_ingestion/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('a dry-run refresh performs the provider request even when a fresh run exists', async () => {
+  const originalFetch = globalThis.fetch;
+  let fetchCalls = 0;
+  globalThis.fetch = (async () => {
+    fetchCalls += 1;
+    return new Response('[]', { status: 200, headers: { 'content-type': 'application/json' } });
+  }) as typeof fetch;
+
+  let reuseLookups = 0;
+  const db = {
+    prepare(sql: string) {
+      return {
+        bind() {
+          return {
+            async all() {
+              if (/FROM abundance_public_job_ingestion_runs/.test(sql)) reuseLookups += 1;
+              return { results: [] };
+            },
+            async run() {
+              return {};
+            },
+            async first() {
+              return null;
+            },
+          };
+        },
+      };
+    },
+  } as unknown as D1Database;
+
+  try {
+    const result = await ingestRapidApiJobs({ db, config: { rapidApiKey: 'test-key' }, request: { dry_run: true } });
+    assert.equal(reuseLookups, 0, 'dry runs must not look for a reusable run');
+    assert.ok(fetchCalls > 0, 'dry runs must call the provider');
+    assert.notEqual(result.skipped, true);
   } finally {
     globalThis.fetch = originalFetch;
   }
