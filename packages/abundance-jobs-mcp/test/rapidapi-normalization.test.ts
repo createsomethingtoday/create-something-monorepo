@@ -219,6 +219,33 @@ test('ChatGPT search fallbacks preserve specialty and geography constraints', ()
   );
 });
 
+test('ChatGPT search reads full state names before English words that look like codes', () => {
+  const texasAttempts = buildSearchFallbackAttempts({ query: 'RN jobs in Texas', status: 'open', limit: 10 }, 'RN jobs in Texas');
+  assert.ok(texasAttempts.every((attempt) => !attempt.filters.state || attempt.filters.state === 'TX'));
+  assert.ok(texasAttempts.some((attempt) => attempt.filters.state === 'TX'));
+
+  const oregonWordAttempts = buildSearchFallbackAttempts({ query: 'RN or LPN jobs near me', status: 'open', limit: 10 }, 'RN or LPN jobs near me');
+  assert.ok(oregonWordAttempts.every((attempt) => !attempt.filters.state), 'lowercase "or" and "me" are words, not states');
+
+  const westVirginiaAttempts = buildSearchFallbackAttempts({ query: 'CNA West Virginia', status: 'open', limit: 10 }, 'CNA West Virginia');
+  assert.ok(westVirginiaAttempts.some((attempt) => attempt.filters.state === 'WV'));
+
+  const uppercaseCodeAttempts = buildSearchFallbackAttempts({ query: 'ICU nurse IN', status: 'open', limit: 10 }, 'ICU nurse IN');
+  assert.ok(uppercaseCodeAttempts.some((attempt) => attempt.filters.state === 'IN'), 'an uppercase code is still a state');
+});
+
+test('ChatGPT search keeps specialty constraints when RN is also present', () => {
+  assert.deepEqual(inferNursingRolePlan('ER RN in Texas').queries, ['emergency', 'emergency room', 'emergency department']);
+  assert.deepEqual(inferNursingRolePlan('travel RN').queries, ['travel nurse', 'travel']);
+  assert.deepEqual(inferNursingRolePlan('ICU registered nurse').queries, ['icu', 'intensive care']);
+  assert.equal(inferNursingRolePlan('RN Dallas').allowGenericFallback, true);
+});
+
+test('ChatGPT search does not read schedule qualifiers as a location', () => {
+  const attempts = buildSearchFallbackAttempts({ query: 'night shift nursing jobs', status: 'open', limit: 10 }, 'night shift nursing jobs');
+  assert.ok(attempts.every((attempt) => !attempt.filters.location), JSON.stringify(attempts.map((attempt) => attempt.filters.location)));
+});
+
 test('public job state filters do not match arbitrary two-letter substrings', async () => {
   let boundArgs: unknown[] = [];
   const db = {

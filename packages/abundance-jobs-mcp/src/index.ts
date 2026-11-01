@@ -525,6 +525,19 @@ async function searchPublicJobDocuments(db: D1Database, input: Record<string, un
 
 export function inferNursingRolePlan(query: string): RoleSearchPlan {
   const normalized = query.toLowerCase();
+  // Specialties first: "ER RN" or "travel RN" must not fall back to generic registered nurse roles.
+  if (/\bl(?:abor|abou?r)\s*(?:and|&)?\s*delivery\b/.test(normalized) || /\bl&d\b/.test(normalized)) {
+    return roleSearchPlan(['labor', 'delivery'], false);
+  }
+  if (/\bicu\b/.test(normalized) || /\bintensive care\b/.test(normalized)) {
+    return roleSearchPlan(['icu', 'intensive care'], false);
+  }
+  if (/\ber\b/.test(normalized) || /\bed\b/.test(normalized) || /\bemergency\b/.test(normalized)) {
+    return roleSearchPlan(['emergency', 'emergency room', 'emergency department'], false);
+  }
+  if (/\btravel nurse\b/.test(normalized) || /\btravel rn\b/.test(normalized)) {
+    return roleSearchPlan(['travel nurse', 'travel'], false);
+  }
   if (/\bregistered nurse\b/.test(normalized) || /\brn\b/.test(normalized)) {
     return roleSearchPlan(['registered nurse', 'rn'], true);
   }
@@ -544,18 +557,6 @@ export function inferNursingRolePlan(query: string): RoleSearchPlan {
   }
   if (/\bnurse practitioner\b/.test(normalized) || /\bnp\b/.test(normalized)) {
     return roleSearchPlan(['nurse practitioner'], false);
-  }
-  if (/\bl(?:abor|abou?r)\s*(?:and|&)?\s*delivery\b/.test(normalized) || /\bl&d\b/.test(normalized)) {
-    return roleSearchPlan(['labor', 'delivery'], false);
-  }
-  if (/\bicu\b/.test(normalized) || /\bintensive care\b/.test(normalized)) {
-    return roleSearchPlan(['icu', 'intensive care'], false);
-  }
-  if (/\ber\b/.test(normalized) || /\bed\b/.test(normalized) || /\bemergency\b/.test(normalized)) {
-    return roleSearchPlan(['emergency', 'emergency room', 'emergency department'], false);
-  }
-  if (/\btravel nurse\b/.test(normalized) || /\btravel rn\b/.test(normalized)) {
-    return roleSearchPlan(['travel nurse', 'travel'], false);
   }
   if (/\bnurs(?:e|ing)\b/.test(normalized)) {
     return roleSearchPlan(['nurse'], true);
@@ -584,11 +585,20 @@ function uniqueNonEmpty(values: Array<string | undefined>): string[] {
   return result;
 }
 
+// State codes that are also common English words only count when written in capitals ("IN", not "in").
+const AMBIGUOUS_STATE_CODES = new Set(['AL', 'CO', 'DE', 'HI', 'ID', 'IN', 'LA', 'MA', 'ME', 'MO', 'OH', 'OK', 'OR', 'PA']);
+const STATE_NAMES_LONGEST_FIRST = [...US_STATE_CODES].sort(([a], [b]) => b.length - a.length);
+
 function inferUsState(query: string | undefined): string | undefined {
   if (!query) return undefined;
   const normalized = query.toLowerCase();
-  for (const [name, code] of US_STATE_CODES) {
-    if (normalized.includes(name) || new RegExp(`\\b${code.toLowerCase()}\\b`).test(normalized)) return code;
+  // A full name wins over any code, and "west virginia" is checked before "virginia".
+  for (const [name, code] of STATE_NAMES_LONGEST_FIRST) {
+    if (new RegExp(`\\b${escapeRegExp(name)}\\b`).test(normalized)) return code;
+  }
+  for (const [, code] of US_STATE_CODES) {
+    if (new RegExp(`\\b${code}\\b`).test(query)) return code;
+    if (!AMBIGUOUS_STATE_CODES.has(code) && new RegExp(`\\b${code.toLowerCase()}\\b`).test(normalized)) return code;
   }
   return undefined;
 }
@@ -752,6 +762,9 @@ function inferRequestedLocation(context: string, state: string | undefined): str
     .replace(/\bnurse practitioner\b/g, ' ')
     .replace(/\bintensive care\b/g, ' ')
     .replace(/\bemergency (?:room|department)\b/g, ' ')
+    // Schedule and employment qualifiers describe the job, not where it is.
+    .replace(/\b(?:day|night|evening|overnight|weekend|rotating|swing)\s+shifts?\b/g, ' ')
+    .replace(/\b(?:per diem|prn|full[- ]time|part[- ]time|contract|temporary|temp|permanent|remote|hybrid|new grad(?:uate)?|entry[- ]level|experienced|senior|shifts?|days|nights|weekends)\b/g, ' ')
     .replace(/\b(?:nursing|nurse|jobs?|openings?|roles?|positions?|near|around|in|for|the|and|travel|rn|lpn|lvn|cna|np|icu|er|ed|emergency|dfw)\b/g, ' ')
     .replace(/[^a-z0-9\s-]/g, ' ')
     .replace(/\s+/g, ' ')
@@ -877,13 +890,20 @@ export async function getPublicJob(db: D1Database, input: Record<string, unknown
 
 async function fetchPublicJobDocument(db: D1Database, input: Record<string, unknown>): Promise<CallToolResult> {
   const jobId = readRequiredString(input.id, 'id');
-  const row = await getPublicJobRow(db, jobId);
-  if (!row) {
+  const document = await getPublicJobDocument(db, jobId);
+  if (!document) {
     return toolErrorContent({ ok: false, error: `Job not found: ${jobId}` });
   }
+  return structuredJsonContent(document);
+}
+
+/** Public job document served by the ChatGPT fetch tool and the /public/jobs/:id route. */
+export async function getPublicJobDocument(db: D1Database, jobId: string): Promise<Record<string, unknown> | undefined> {
+  const row = await getPublicJobRow(db, jobId);
+  if (!row) return undefined;
 
   const job = toPublicJob(row, false);
-  return structuredJsonContent({
+  return {
     id: job.id,
     title: jobDocumentTitle(job),
     text: jobDocumentText(job),
@@ -912,7 +932,7 @@ async function fetchPublicJobDocument(db: D1Database, input: Record<string, unkn
       last_seen_at: job.last_seen_at,
       fetched_at: job.fetched_at,
     }),
-  });
+  };
 }
 
 async function sendJobToFunnel(db: D1Database, input: Record<string, unknown>): Promise<CallToolResult> {

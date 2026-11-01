@@ -4,6 +4,7 @@ import { enableTelemetry } from '@create-something/mcp-core';
 import {
   DEFAULT_RAPIDAPI_HOST,
   DEFAULT_TIMEOUT_MS,
+  getPublicJobDocument,
   getRapidApiProviderStatus,
   ingestRapidApiJobs,
   listAbundanceJobToolNames,
@@ -360,6 +361,16 @@ export default {
           500,
         );
       }
+    }
+
+    // Canonical URL for jobs without an application or source link (search and fetch tools).
+    const publicJob = url.pathname.match(/^\/public\/jobs\/([^/]+)$/);
+    if (publicJob && request.method === 'GET') {
+      if (!env.JOBS_DB) return Response.json({ ok: false, error: 'Job database is not configured' }, { status: 503 });
+      const document = await getPublicJobDocument(env.JOBS_DB, decodeURIComponent(publicJob[1]));
+      return document
+        ? Response.json(document)
+        : Response.json({ ok: false, error: 'Job not found' }, { status: 404 });
     }
 
     if (url.pathname === '/' || url.pathname === '/health') {
