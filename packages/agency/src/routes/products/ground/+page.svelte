@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from 'svelte';
   import { SEO } from '@create-something/canon';
 
   // Installation guidance follows the package release; historical benchmarks retain their versions.
@@ -43,8 +44,12 @@
 
   let copied = $state<string | null>(null);
   let copyError = $state<string | null>(null);
+  let copyReset: ReturnType<typeof setTimeout> | undefined;
+  onDestroy(() => clearTimeout(copyReset));
 
   async function copyCommand(id: string, command: string) {
+    clearTimeout(copyReset);
+    copied = null;
     copyError = null;
     try {
       await navigator.clipboard.writeText(command);
@@ -53,7 +58,7 @@
       return;
     }
     copied = id;
-    setTimeout(() => {
+    copyReset = setTimeout(() => {
       if (copied === id) copied = null;
     }, 2000);
   }
@@ -111,7 +116,7 @@
       <p>Choose one client. Install Ground, check the source, then inspect the finding.</p>
     </header>
     <div id="ground-operating-path" class="install-section">
-      <p class="release-note">Installation commands follow the current {groundVersion} release.</p>
+      <p class="release-note">{`Version ${groundVersion} · Choose the configuration for your client.`}</p>
       <p class="copy-status" role="status">{copyError ?? (copied ? 'Command copied.' : '')}</p>
       <div class="install-grid" aria-label="Ground MCP install commands">
         {#each installs as install}
@@ -183,7 +188,7 @@ ground compare utils.ts helpers.ts</code
       </header>
       <details class="tool-disclosure">
         <summary
-          >Explore the tool reference <span>Verification, patterns, and claims +</span></summary
+          >Explore the tool reference <span>Verification, patterns, and claims</span></summary
         >
         <div class="proof-artifact">
           <div class="tool-groups">
@@ -594,6 +599,12 @@ ground compare utils.ts helpers.ts</code
     min-height: 64px;
     cursor: pointer;
     font-size: 0.9rem;
+  }
+  summary span::after {
+    content: ' +';
+  }
+  details[open] summary span::after {
+    content: ' −';
   }
   summary span {
     font-size: 0.75rem;
