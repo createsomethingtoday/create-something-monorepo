@@ -445,7 +445,7 @@
     "@typescript-eslint/parser": "^8.50.1",
     "ajv": "^8.17.1",
     "esbuild": "^0.24.2",
-    "glob": "^13.0.0",
+    "glob": "^14.0.2",
     "langfuse": "^3.38.6",
     "openai": "^6.22.0",
     "prettier": "^3.7.4",
