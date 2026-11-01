@@ -526,12 +526,11 @@ async function searchPublicJobDocuments(db: D1Database, input: Record<string, un
 }
 
 // "OR RN jobs" means the operating room, not Oregon: an uppercase OR next to a nursing word is clinical.
+// "RN OR LPN" is Boolean, so an OR that follows a role word never counts.
 function isClinicalOperatingRoom(query: string): boolean {
-  return (
-    /\boperating room\b|\bperi-?op(?:erative)?\b/i.test(query) ||
-    /\bOR\s+(?:RN|nurses?|nursing|tech|jobs?)\b/i.test(query) ||
-    /\b(?:RN|nurses?)\s+OR\b/i.test(query)
-  );
+  if (/\boperating room\b|\bperi-?op(?:erative)?\b/i.test(query)) return true;
+  if (/\b(?:RN|LPN|LVN|CNA|NP|nurses?)\s+OR\b/i.test(query)) return false;
+  return /\bOR\s+(?:RN|nurses?|nursing|tech|jobs?)\b/.test(query);
 }
 
 export function inferNursingRolePlan(query: string): RoleSearchPlan {

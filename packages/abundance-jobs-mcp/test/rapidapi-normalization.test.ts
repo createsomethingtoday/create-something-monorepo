@@ -278,6 +278,8 @@ test('ChatGPT search reads OR next to a nursing word as the operating room, not 
   assert.deepEqual(inferNursingRolePlan('OR RN jobs').queries, ['operating room', 'perioperative', 'surgical']);
   const orAttempts = buildSearchFallbackAttempts({ query: 'OR RN jobs', status: 'open', limit: 10 }, 'OR RN jobs');
   assert.ok(orAttempts.every((attempt) => attempt.filters.state !== 'OR'));
+  assert.deepEqual(inferNursingRolePlan('RN OR LPN jobs').queries, ['registered nurse', 'rn'], 'Boolean OR keeps the role plan');
+  assert.deepEqual(inferNursingRolePlan('LPN OR RN Dallas').queries, ['registered nurse', 'rn']);
   const oregonAttempts = buildSearchFallbackAttempts({ query: 'RN jobs in Oregon', status: 'open', limit: 10 }, 'RN jobs in Oregon');
   assert.ok(oregonAttempts.some((attempt) => attempt.filters.state === 'OR'));
 });
