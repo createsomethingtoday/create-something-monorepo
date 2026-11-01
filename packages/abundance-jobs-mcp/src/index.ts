@@ -526,11 +526,13 @@ async function searchPublicJobDocuments(db: D1Database, input: Record<string, un
 }
 
 // "OR RN jobs" means the operating room, not Oregon: an uppercase OR next to a nursing word is clinical.
-// "RN OR LPN" is Boolean, so an OR that follows a role word never counts.
+// OR between two roles is Boolean ("RN OR LPN"); next to one role it is the operating room
+// ("OR RN jobs", "RN OR jobs").
+const OR_ROLE = '(?:RN|LPN|LVN|CNA|NP|nurses?)';
 function isClinicalOperatingRoom(query: string): boolean {
   if (/\boperating room\b|\bperi-?op(?:erative)?\b/i.test(query)) return true;
-  if (/\b(?:RN|LPN|LVN|CNA|NP|nurses?)\s+OR\b/i.test(query)) return false;
-  return /\bOR\s+(?:RN|nurses?|nursing|tech|jobs?)\b/.test(query);
+  if (new RegExp(`\\b${OR_ROLE}\\s+OR\\s+${OR_ROLE}\\b`, 'i').test(query)) return false;
+  return /\bOR\s+(?:RN|nurses?|nursing|tech|jobs?)\b/.test(query) || new RegExp(`\\b${OR_ROLE}\\s+OR\\b`).test(query);
 }
 
 export function inferNursingRolePlan(query: string): RoleSearchPlan {
@@ -1805,7 +1807,7 @@ function sameRapidApiRefreshRequest(previous: unknown, current: NormalizedRapidA
     comparableString(firstString(previous, ['organization_filter'])) === comparableString(current.organization_filter) &&
     firstNumber(previous, ['limit']) === current.limit &&
     firstNumber(previous, ['offset']) === current.offset &&
-    Boolean(previous.include_backfill) === current.include_backfill &&
+    // The effective endpoints decide what was fetched; include_backfill only selects them.
     sameStringArray(previousEndpoints, current.endpoints)
   );
 }
