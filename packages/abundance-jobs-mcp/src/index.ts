@@ -22,6 +22,8 @@ const FUNNEL_TOOL_NAME = 'send_job_to_funnel' as const;
 const TOOL_NAMES = [...READ_ONLY_TOOL_NAMES, FUNNEL_TOOL_NAME] as const;
 const NORMALIZED_STATUSES = ['open', 'closed', 'expired', 'unknown'] as const;
 const US_STATE_CODES = [
+  ['district of columbia', 'DC'],
+  ['washington dc', 'DC'],
   ['alabama', 'AL'],
   ['alaska', 'AK'],
   ['arizona', 'AZ'],
@@ -589,9 +591,14 @@ function uniqueNonEmpty(values: Array<string | undefined>): string[] {
 const AMBIGUOUS_STATE_CODES = new Set(['AL', 'CO', 'DE', 'HI', 'ID', 'IN', 'LA', 'MA', 'ME', 'MO', 'OH', 'OK', 'OR', 'PA']);
 const STATE_NAMES_LONGEST_FIRST = [...US_STATE_CODES].sort(([a], [b]) => b.length - a.length);
 
+// "Washington, D.C." and "washington dc" read the same; commas never separate a state name.
+function normalizeGeoText(value: string): string {
+  return value.toLowerCase().replace(/\bd\.\s?c\b\.?/g, 'dc').replace(/,/g, ' ').replace(/\s+/g, ' ');
+}
+
 function inferUsState(query: string | undefined): string | undefined {
   if (!query) return undefined;
-  const normalized = query.toLowerCase();
+  const normalized = normalizeGeoText(query);
   // A full name wins over any code, and "west virginia" is checked before "virginia".
   for (const [name, code] of STATE_NAMES_LONGEST_FIRST) {
     if (new RegExp(`\\b${escapeRegExp(name)}\\b`).test(normalized)) return code;
@@ -744,7 +751,7 @@ function inferRequestedLocation(context: string, state: string | undefined): str
   const normalizedContext = context.trim();
   if (!normalizedContext) return undefined;
 
-  let value = ` ${normalizedContext.toLowerCase()} `;
+  let value = ` ${normalizeGeoText(normalizedContext)} `;
   for (const [stateName, stateCode] of US_STATE_CODES) {
     if (state && state !== stateCode) continue;
     value = value.replace(new RegExp(`\\b${escapeRegExp(stateName)}\\b`, 'g'), ' ');
@@ -1117,11 +1124,17 @@ export async function queryPublicJobs(
     jobs,
     limit,
     offset,
-    freshness: {
-      newest_last_seen_at: jobs[0]?.last_seen_at,
-      newest_provider: jobs[0]?.provider,
-    },
+    freshness: newestJobFreshness(jobs),
   };
+}
+
+// Rows are ordered by nursing rank, so the newest listing is not necessarily first.
+function newestJobFreshness(jobs: PublicJob[]): { newest_last_seen_at?: string; newest_provider?: string } {
+  let newest: PublicJob | undefined;
+  for (const job of jobs) {
+    if (job.last_seen_at && (!newest?.last_seen_at || job.last_seen_at > newest.last_seen_at)) newest = job;
+  }
+  return { newest_last_seen_at: newest?.last_seen_at, newest_provider: newest?.provider };
 }
 
 async function getPublicJobRow(db: D1Database, jobId: string): Promise<PublicJobRow | null> {
@@ -1722,6 +1735,8 @@ async function findReusableRapidApiIngestionRun(
           AND status = ?
           AND finished_at IS NOT NULL
           AND finished_at >= ?
+          AND COALESCE(CASE WHEN json_valid(metadata_json) THEN json_extract(metadata_json, '$.skipped') END, 0) != 1
+          AND COALESCE(CASE WHEN json_valid(metadata_json) THEN json_extract(metadata_json, '$.dry_run') END, 0) != 1
         ORDER BY finished_at DESC
         LIMIT 20
       `,

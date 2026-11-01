@@ -241,6 +241,31 @@ test('ChatGPT search keeps specialty constraints when RN is also present', () =>
   assert.equal(inferNursingRolePlan('RN Dallas').allowGenericFallback, true);
 });
 
+test('ChatGPT search maps Washington DC to DC, not Washington state', () => {
+  for (const query of ['RN jobs in Washington DC', 'RN jobs in Washington, D.C.', 'ICU nurse District of Columbia']) {
+    const attempts = buildSearchFallbackAttempts({ query, status: 'open', limit: 10 }, query);
+    assert.ok(attempts.some((attempt) => attempt.filters.state === 'DC'), query);
+    assert.ok(attempts.every((attempt) => attempt.filters.state !== 'WA'), query);
+  }
+  const seattle = buildSearchFallbackAttempts({ query: 'RN Seattle Washington', status: 'open', limit: 10 }, 'RN Seattle Washington');
+  assert.ok(seattle.some((attempt) => attempt.filters.state === 'WA'));
+});
+
+test('public job freshness reports the newest listing, not the first ranked one', async () => {
+  const rows = [
+    { id: 'rn-old', title: 'Registered Nurse', provider: 'old-provider', last_seen_at: '2026-10-01T00:00:00Z' },
+    { id: 'cna-new', title: 'CNA', provider: 'new-provider', last_seen_at: '2026-10-30T00:00:00Z' },
+  ];
+  const db = {
+    prepare() {
+      return { bind() { return { async all() { return { results: rows }; } }; } };
+    },
+  } as unknown as D1Database;
+  const result = await queryPublicJobs(db, { status: 'open', limit: 10 });
+  assert.equal(result.jobs[0]?.id, 'rn-old');
+  assert.deepEqual(result.freshness, { newest_last_seen_at: '2026-10-30T00:00:00Z', newest_provider: 'new-provider' });
+});
+
 test('ChatGPT search does not read schedule qualifiers as a location', () => {
   const attempts = buildSearchFallbackAttempts({ query: 'night shift nursing jobs', status: 'open', limit: 10 }, 'night shift nursing jobs');
   assert.ok(attempts.every((attempt) => !attempt.filters.location), JSON.stringify(attempts.map((attempt) => attempt.filters.location)));
