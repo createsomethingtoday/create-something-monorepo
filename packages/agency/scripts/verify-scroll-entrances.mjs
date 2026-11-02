@@ -18,7 +18,7 @@ try {
       new MutationObserver(records => {
         for (const { target } of records) {
           if (!(target instanceof HTMLElement) || !target.hasAttribute('data-scroll-entrance') || seen.has(target)) continue;
-          if (target.style.opacity && Number(target.style.opacity) < 1) {
+          if (target.style.opacity && Number(target.style.opacity) > 0 && Number(target.style.opacity) < 1) {
             seen.add(target);
             window.entrances.push({ text: target.textContent.trim().slice(0, 45) });
           }
@@ -31,11 +31,11 @@ try {
     const target = page.locator('.work .chapterhead');
     await target.evaluate(el => window.scrollTo({ top: scrollY + el.getBoundingClientRect().top - innerHeight + 48, behavior: 'instant' }));
     await page.waitForTimeout(200);
-    assert.equal(await target.evaluate(el => el.style.opacity), '', 'Reveal waits until the group is clearly inside the viewport');
+    assert.equal(await target.evaluate(el => el.style.opacity), '0', 'Unseen groups start at zero before entering the reading area');
     await target.evaluate(el => window.scrollTo({ top: scrollY + el.getBoundingClientRect().top - 180, behavior: 'instant' }));
-    await page.waitForFunction(() => Number(getComputedStyle(document.querySelector('.work .chapterhead')).opacity) < 1);
+    await page.waitForFunction(() => { const opacity=Number(getComputedStyle(document.querySelector('.work .chapterhead')).opacity); return opacity > 0 && opacity < 1; });
     const motion = await target.evaluate(el => ({ opacity: Number(getComputedStyle(el).opacity), y: new DOMMatrix(getComputedStyle(el).transform).m42 }));
-    assert.ok(motion.opacity >= 0.4 && motion.opacity < 1 && motion.y > 0 && motion.y <= 16, 'Actual GSAP intermediate state');
+    assert.ok(motion.opacity > 0 && motion.opacity < 1 && motion.y > 0 && motion.y <= 16, 'Actual GSAP intermediate state');
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     assert.equal(await target.evaluate(el => el.style.opacity), '', 'Preference change restores authored inline state');
@@ -66,6 +66,11 @@ try {
     await page.locator('.plan a').first().focus();
     assert.equal(await page.locator('.planrow').evaluate(el => el.getAnimations().length), 0, 'Keyboard focus stays immediate');
     assert.equal(await page.locator('.planrow').evaluate(el => getComputedStyle(el).opacity), '1');
+    await page.goto(base, { waitUntil: 'networkidle' });
+    await page.waitForFunction(() => [...document.querySelectorAll('[data-scroll-entrance]')].some(el => el.style.opacity === '0'));
+    await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
+    await page.emulateMedia({ media: 'print' });
+    assert.ok(await page.locator('[data-scroll-entrance]').evaluateAll(elements => elements.every(el => el.style.opacity === '' && getComputedStyle(el).opacity === '1')), 'Printing restores all unvisited groups');
     results.push({ width, entrances: count, passed: true });
     await page.close();
   }
@@ -81,7 +86,7 @@ try {
   assert.equal(await hash.locator('.workshot').evaluate(el => getComputedStyle(el).opacity), '1');
   assert.equal(await hash.locator('[data-scroll-entrance]').evaluateAll(elements => elements.reduce((n, el) => n + el.getAnimations().length, 0)), 0);
   await hash.close();
-  const receipt = { base, passed: true, results, checks: ['real scroll animation', 'once-only reverse scroll', 'live reduced motion', 'focus', 'no JavaScript', 'initial reduced motion', 'hash arrival', 'responsive overflow'] };
+  const receipt = { base, passed: true, results, checks: ['real scroll animation', 'once-only reverse scroll', 'live reduced motion', 'focus', 'no JavaScript', 'initial reduced motion', 'hash arrival', 'print visibility', 'responsive overflow'] };
   await writeFile(`${evidence}/results.json`, JSON.stringify(receipt, null, 2));
   console.log(JSON.stringify(receipt));
 } finally { await browser.close(); }

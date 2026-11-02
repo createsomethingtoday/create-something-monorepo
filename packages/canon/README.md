@@ -800,18 +800,22 @@ For authored campaign HTML, import `scrollEntrance` from
 and mark independent child groups with `data-scroll-entrance`. IntersectionObserver
 triggers one-time entrances; the helper dynamically imports Canon's pinned GSAP
 runtime and CustomEase to apply Canon duration and cubic-bezier easing tokens.
-Once loaded, entrances wait until the group is 12% into the viewport (64–120px),
-pause for the 100ms instant token, then ease from 40% opacity and 16px displacement
-to rest over the 700ms slow token. Loading-time visibility still uses the full
-viewport so already-viewed groups stay settled.
+Once loaded, unseen offscreen groups are prepared at zero opacity and 16px
+displacement before the reader can see them. Entrances play once the group is
+12% into the viewport (64–120px), pause for the 100ms instant token, then ease to
+rest over the 700ms slow token. A per-reveal real-time deadline (delay + duration
++ 100ms scheduling grace) restores authored styles if animation frames stall;
+completion, focus, hash, printing, reduced-motion changes and teardown clear that deadline.
+Loading-time visibility still uses the full viewport so already-viewed groups
+stay settled.
 The runtime is bundled with the application; no CDN script or inline script is
 required. GSAP writes inline animation styles, so consumers with a restrictive
 style CSP must account for that runtime requirement.
 
-Resting and server-rendered content is always visible. Missing browser APIs or
+Server-rendered, loading and fallback content is always visible. Missing browser APIs or
 failed runtime loading leave it visible. Groups viewed while the runtime loads
 remain settled on later visits. The helper preserves native scrolling,
-settles on focus/hash navigation and reduced-motion changes, restores authored
+settles on focus/hash navigation, printing and reduced-motion changes, restores authored
 inline styles after completion or cancellation, and returns `destroy()` for plain
 HTML consumers. It skips initial-viewport, nested and already-transformed groups.
 See `docs/PERFORMANCE_LAB_VISUAL_GRAMMAR.md` for the motion and review contract.
