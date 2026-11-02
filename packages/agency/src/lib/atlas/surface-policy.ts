@@ -1,3 +1,11 @@
+export const AGENCY_WEBFLOW_PORTFOLIO_PATHS = [
+  '/case-studies/webflow-marketplace',
+  ...['asset-dashboard', 'validator', 'preflight', 'apps', 'submission', 'review-mcp', 'skills', 'listings'].map(id => `/case-studies/webflow-marketplace/${id}`)
+];
+export function isAgencyWebflowPortfolioPath(pathname: string): boolean {
+  return AGENCY_WEBFLOW_PORTFOLIO_PATHS.includes(normalizeAgencyPathname(pathname));
+}
+
 export const AGENCY_DIFY_ARTICLE_PATHS = [
   '/dify/ship-dify-app-with-mcp-tools',
   '/dify/agent-eval-gates',
@@ -18,6 +26,7 @@ export const AGENCY_ATLAS_PROOF_PATHS = [
 ] as const;
 
 export const AGENCY_COMPACT_PRIVACY_PATHS = [
+  ...AGENCY_WEBFLOW_PORTFOLIO_PATHS,
   '/scopefield',
   '/airtable-workflow-consulting',
   '/dfw-tech-support',
@@ -38,6 +47,7 @@ export const AGENCY_COMPACT_PRIVACY_PATHS = [
 ] as const;
 
 export const AGENCY_ROUTE_OWNED_PERFORMANCE_ENDING_PATHS = [
+  ...AGENCY_WEBFLOW_PORTFOLIO_PATHS,
   '/dispatch',
   '/scopefield',
   '/airtable-workflow-consulting',

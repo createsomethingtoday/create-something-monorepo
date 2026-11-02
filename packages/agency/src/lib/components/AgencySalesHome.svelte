@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { webflowStages } from '$lib/data/webflowMarketplace';
   import { scrollEntrance } from '@create-something/canon/motion';
   import { enhanceHomeInteractions } from '$lib/motion/homeInteractions';
   import { enhanceEvidenceDisclosure } from '$lib/motion/evidenceDisclosure';
@@ -41,15 +42,36 @@
     const dialog = root.querySelector<HTMLDialogElement>('#work-dialog');
     let originalOverflow = '';
     let opener: HTMLElement | null = null;
-    root.querySelector<HTMLButtonElement>('[data-home-open="work-dialog"]')?.addEventListener('click', event => {
-      if (!dialog) return;
-      opener = event.currentTarget as HTMLElement;
+    const video = dialog?.querySelector('video');
+    const chapterButtons = root.querySelectorAll<HTMLButtonElement>('[data-work-chapter]');
+    let requestedTime = 0;
+    const openWalkthrough = (trigger: HTMLElement, time = 0) => {
+      if (!dialog || !video) return;
+      opener = trigger;
+      requestedTime = time;
       originalOverflow = document.body.style.overflow;
       dialog.showModal();
       filmOverlayOpen.set(true);
       document.body.style.overflow = 'hidden';
-      // Start from the explicit Watch gesture; native Play remains available if denied.
-      void dialog.querySelector('video')?.play().catch(() => {});
+      if (video.readyState >= 1) video.currentTime = requestedTime;
+      void video.play().catch(() => {});
+    };
+    video?.addEventListener('loadedmetadata', () => { video.currentTime = requestedTime; }, { signal: abort.signal });
+    const updateChapter = () => {
+      if (!video) return;
+      const index = webflowStages.findIndex(stage => video.currentTime + .00001 >= stage.start && video.currentTime + .00001 < stage.end);
+      chapterButtons.forEach((button, i) => button.setAttribute('aria-current', i === (index < 0 ? webflowStages.length - 1 : index) ? 'step' : 'false'));
+    };
+    video?.addEventListener('timeupdate', updateChapter, { signal: abort.signal });
+    video?.addEventListener('seeked', updateChapter, { signal: abort.signal });
+    chapterButtons.forEach((button, index) => {
+      button.disabled = false;
+      button.addEventListener('click', () => openWalkthrough(button, webflowStages[index].start), { signal: abort.signal });
+    });
+    const watchButton = root.querySelector<HTMLButtonElement>('[data-home-open="work-dialog"]');
+    if (watchButton) watchButton.disabled = false;
+    watchButton?.addEventListener('click', event => {
+      openWalkthrough(event.currentTarget as HTMLElement);
     }, { signal: abort.signal });
     dialog?.querySelector<HTMLButtonElement>('[data-home-close]')?.addEventListener('click', () => dialog.close(), { signal: abort.signal });
     dialog?.addEventListener('close', () => {
@@ -71,7 +93,7 @@
   });
 </script>
 
-<svelte:head><link rel="stylesheet" href="/styles/agency/home.css?v=20261102-gsap-interactions" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /></svelte:head>
+<svelte:head><link rel="stylesheet" href="/styles/agency/home.css?v=20261102-webflow-feature-gsap" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /></svelte:head>
 <div class="agency-home" bind:this={root} use:scrollEntrance>
   {@html content}
   <details id="work-library" class="work-library" bind:open={libraryOpen}>

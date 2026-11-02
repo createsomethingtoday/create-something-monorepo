@@ -295,10 +295,10 @@ test('homepage links to evidence while Services retains the qualified readback',
   assert.match(salesHome, /\{@html content\}/);
   assert.match(salesHome, /<BuiltWork sectionId="engineering-work"/);
   assert.match(salesHome, /<noscript>[\s\S]*?href="\/field-reports"/);
-  assert.match(content, /href="https:\/\/www\.maverickx\.com\/"/);
-  assert.match(content, /href="\/products#cato-tour"/);
+  assert.match(content, /href="\/case-studies\/webflow-marketplace"/);
+  assert.match(content, /src="\/films\/webflow-marketplace\/overview\.mp4"/);
   assert.match(content, /Original conceptual illustration/);
-  assert.match(content, /not a measured business outcome/);
+  assert.match(content, /no measured business outcome/);
   assert.match(content, /not evidence of client adoption of OpenAI tools/);
   assert.match(readback, /import \{ templateReviewFieldReport \} from '\$lib\/data\/fieldReports'/);
   assert.match(readback, /templateReviewFieldReport\.id/);

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { isAgencyWebflowPortfolioPath } from '$lib/atlas/surface-policy';
   import '../app.css';
   import { IO_EXPERIMENTS_URL, IO_PAPERS_URL } from '$lib/data/ioResearchLinks';
   import AgencyPageTreatment from '$lib/components/AgencyPageTreatment.svelte';
@@ -334,7 +335,7 @@
   <UnifiedSearch currentProperty="agency" localItems={quickAccessItems} showMobileButton={false} />
 {/if}
 
-<div class="layout-root min-h-screen property-performance" class:film-shell={usesPublicNavigation} class:film-home={isPublicMarketingRoute && $page.url.pathname === "/"}>
+<div class="layout-root min-h-screen property-performance" class:webflow-portfolio-shell={isAgencyWebflowPortfolioPath($page.url.pathname)} class:film-shell={usesPublicNavigation} class:film-home={isPublicMarketingRoute && $page.url.pathname === "/"}>
   <Navigation
     logo="CREATE SOMETHING"
     logoSuffix=".agency"
@@ -357,7 +358,7 @@
   />
 
   <main id="main-content" class="pt-[72px]">
-    {#if usesPublicNavigation && $page.url.pathname !== '/'}
+    {#if usesPublicNavigation && $page.url.pathname !== '/' && !isAgencyWebflowPortfolioPath($page.url.pathname)}
       <AgencyPageTreatment />
     {/if}
     {@render children()}
@@ -399,6 +400,14 @@
 </div>
 
 <style>
+  .layout-root.webflow-portfolio-shell { background:var(--color-performance-mode-campaign-surface); color:var(--color-performance-mode-campaign-ink); }
+  .film-shell.webflow-portfolio-shell :global(main#main-content) { padding-top:0; }
+  .film-shell.webflow-portfolio-shell :global(.nav-editorial.nav-fixed) { top:0; left:0; right:0; border:0; border-radius:0; background:var(--color-performance-mode-campaign-surface); }
+  .webflow-portfolio-shell :global(.nav-editorial :is(a,button)) { color:var(--color-performance-mode-campaign-ink); }
+  .webflow-portfolio-shell :global(.nav-editorial .nav-logo-asset) { filter:invert(1); }
+  .webflow-portfolio-shell :global(.nav-editorial .nav-cta) { background:var(--color-performance-fg-primary); color:var(--color-performance-bg-pure); }
+  .webflow-portfolio-shell :global(.nav-editorial :is(.nav-mobile-menu,.nav-dropdown__menu)) { background:var(--color-performance-bg-elevated); color:var(--color-performance-fg-primary); }
+
   .film-shell :global(main#main-content) { padding-top: 112px; }
   .film-home :global(main#main-content),
   .film-shell :global(main#main-content:has(.performance-campaign-opening)),

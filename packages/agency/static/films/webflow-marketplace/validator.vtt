@@ -1,0 +1,13 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:03.500
+Setup: The published Validator script is missing.
+This is a setup state, not a completed check.
+
+00:00:03.500 --> 00:00:09.100
+Scope: Review Designer, asset, content, and page scope.
+The app explains that partial runs support iteration.
+
+00:00:09.100 --> 00:00:13.200
+Next: Resolve setup before a full submission run.
+This recording does not show a passing result.
