@@ -10,7 +10,7 @@ import {
   open,
   unlink
 } from 'node:fs/promises';
-import { resolve, relative, join, dirname, isAbsolute } from 'node:path';
+import { resolve, relative, join, dirname, isAbsolute, sep } from 'node:path';
 import { scanRepository } from './scan.mjs';
 
 const canonical = (value) =>
@@ -330,7 +330,7 @@ export async function runDiscovery({ repoRoot, outDir, historyFile, maximumCandi
   const out = resolve(outDir);
   const inside = (root, path) => {
     const rel = relative(root, path);
-    return rel === '' || (!rel.startsWith('..') && !isAbsolute(rel));
+    return rel === '' || (rel !== '..' && !rel.startsWith(`..${sep}`) && !isAbsolute(rel));
   };
   const parent = await realpath(dirname(out));
   const physicalOut = join(parent, out.split(/[\\/]/).at(-1));

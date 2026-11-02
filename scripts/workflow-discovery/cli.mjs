@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { writeFile, realpath } from 'node:fs/promises';
-import { resolve, relative, dirname, isAbsolute } from 'node:path';
+import { resolve, relative, dirname, isAbsolute, sep } from 'node:path';
 import { runDiscovery, verifyGeneration } from './loop.mjs';
 
 const usage =
@@ -46,7 +46,7 @@ try {
     const target = resolve(flags.get('--out'));
     const parent = await realpath(dirname(target));
     const rel = relative(repo, parent);
-    if (rel === '' || (!rel.startsWith('..') && !isAbsolute(rel)))
+    if (rel === '' || (rel !== '..' && !rel.startsWith(`..${sep}`) && !isAbsolute(rel)))
       throw new Error('history_output_must_remain_outside_repository');
     const { collectHistory } = await import('./history.mjs');
     const history = await collectHistory({ repoRoot: repo });

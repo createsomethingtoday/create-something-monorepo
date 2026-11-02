@@ -214,3 +214,18 @@ test('rewriting candidate and self-hashed manifest cannot bypass current artifac
     await rm(f.root, { recursive: true, force: true });
   }
 });
+
+test('dot-dot-prefixed repository children cannot become output directories', async () => {
+  const f = await fixture();
+  try {
+    for (const child of ['..output', '..', 'nested/..output']) {
+      if (child.startsWith('nested/')) await mkdir(join(f.repo, 'nested'));
+      await assert.rejects(
+        runDiscovery({ repoRoot: f.repo, outDir: join(f.repo, child) }),
+        /discovery_output_overlaps_source/
+      );
+    }
+  } finally {
+    await rm(f.root, { recursive: true, force: true });
+  }
+});

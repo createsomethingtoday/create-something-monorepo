@@ -77,3 +77,31 @@ test('verification and history validation work in a checkout with no compiler bu
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test('private history rejects dot-dot-prefixed parents inside the repository before CTX', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'discovery-history-boundary-'));
+  try {
+    const repo = join(root, 'repo');
+    await mkdir(join(repo, '..private'), { recursive: true });
+    assert.throws(
+      () =>
+        execFileSync(
+          process.execPath,
+          [
+            cli,
+            'collect-history',
+            '--repo',
+            repo,
+            '--out',
+            join(repo, '..private', 'history.json')
+          ],
+          { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, PATH: '' } }
+        ),
+      (error) =>
+        error.status === 1 &&
+        JSON.parse(error.stderr).code === 'history_output_must_remain_outside_repository'
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
