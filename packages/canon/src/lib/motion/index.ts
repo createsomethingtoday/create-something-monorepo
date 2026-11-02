@@ -48,3 +48,6 @@ export {
 	type ReducedMotionPolicy,
 	type SemanticColorRole
 } from './intent.js';
+
+// Progressive enhancement for authored HTML and Svelte action roots
+export { scrollEntrance } from './scroll-entrance.js';
