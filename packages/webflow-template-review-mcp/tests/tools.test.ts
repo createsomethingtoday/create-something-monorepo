@@ -351,7 +351,7 @@ function completeComprehensiveFeedbackInput() {
     e2b_urls_fetched: ['https://kairova.webflow.io/', 'https://kairova.webflow.io/utility-pages/licenses'],
     human_follow_up: ['Verify placeholder content, utility-page license text, and Designer/Admin requirements before any official action.'],
     manual_checks_remaining: [
-      'Designer/Admin checks for components, variables, unused styles/classes, interactions cleanup, Designer responsive QA, forms, CMS/dynamic page setup, site settings, custom fonts and licenses, asset thumbnail, template name and categories, pricing/page-count calculation, MRP/admin publishing prerequisites, visual quality, originality, similarity/flooding, and category fit remain manual.',
+      'Designer/Admin checks for components, button components, variables, Variable Modes and linked values, baseline tag styles, connected apps, form success messages, unused styles/classes, interactions cleanup, Designer responsive QA, forms, CMS/dynamic page setup, site settings, custom fonts and licenses, asset thumbnail, template name and categories, pricing/page-count calculation, MRP/admin publishing prerequisites, visual quality, originality, similarity/flooding, and category fit remain manual.',
     ],
     validator_summary: {
       rubric_coverage: 'partial_published_site_validation',
