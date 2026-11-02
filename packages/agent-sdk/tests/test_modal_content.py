@@ -15,7 +15,7 @@ def test_modal_content_uses_shared_voice_criteria(monkeypatch):
     packet = {
         "url": "https://example.invalid/source",
         "source_ref": "a" * 40,
-        "sha256": "fixture",
+        "sha256": "b" * 64,
         "retrieved_at": "2026-11-02T00:00:00Z",
         "verification": "repository record only; not live runtime acceptance",
         "text": "The fixture record describes a qualitative operator handoff.",
@@ -116,3 +116,207 @@ def test_missing_evidence_blocks_model_generation(monkeypatch):
     assert result["status"] == "blocked_missing_evidence"
     assert result["cost_usd"] == 0
     assert logged == [("content", result)]
+
+
+@pytest.fixture(autouse=True)
+def offline_content_state(monkeypatch, tmp_path):
+    import modal_agents
+
+    monkeypatch.setattr(
+        modal_agents, "CONTENT_STATE_PATH", str(tmp_path / "content-state.json"), raising=False
+    )
+    monkeypatch.setattr(modal_agents.logs_volume, "reload", lambda: None)
+    monkeypatch.setattr(modal_agents.logs_volume, "commit", lambda: None)
+
+
+def test_same_source_bytes_skip_after_main_ref_changes(monkeypatch):
+    import modal_agents
+
+    snapshots = iter(["a" * 40, "b" * 40])
+
+    def evidence(_client):
+        return {
+            "url": "https://example.invalid/record",
+            "source_ref": next(snapshots),
+            "sha256": "c" * 64,
+            "retrieved_at": "fixture",
+            "verification": "source only",
+            "text": "Fixture evidence",
+        }
+
+    calls = []
+
+    def generate(**kwargs):
+        calls.append(kwargs)
+        return {"success": True, "output": "Fixture draft awaiting review"}
+
+    monkeypatch.setattr(modal_agents, "load_content_evidence", evidence)
+    monkeypatch.setattr(modal_agents, "run_agent", generate)
+    monkeypatch.setattr(modal_agents, "log_result", lambda *_: None)
+    first = modal_agents.content_agent.local()
+    second = modal_agents.content_agent.local()
+    assert first["success"] is True
+    assert len(calls) == 1
+    assert second["status"] == "skipped_unchanged_evidence"
+    assert second["cost_usd"] == 0
+    assert second["evidence"]["source_ref"] == "b" * 40
+
+
+def source_packet(text="Fixture evidence", ref="a" * 40):
+    import hashlib
+
+    return {
+        "url": "https://example.invalid/record",
+        "source_ref": ref,
+        "sha256": hashlib.sha256(text.encode()).hexdigest(),
+        "retrieved_at": "fixture",
+        "verification": "source only",
+        "text": text,
+    }
+
+
+def prepare_content_job(monkeypatch, packets, generate):
+    import modal_agents
+
+    values = iter(packets)
+    monkeypatch.setattr(modal_agents, "load_content_evidence", lambda *_: next(values))
+    monkeypatch.setattr(modal_agents, "run_agent", generate)
+    monkeypatch.setattr(modal_agents, "log_result", lambda *_: None)
+
+
+def test_new_source_bytes_allow_another_attempt(monkeypatch):
+    import modal_agents
+
+    calls = []
+
+    def generate(**kwargs):
+        calls.append(kwargs)
+        return {"success": True, "output": "Fixture draft"}
+
+    prepare_content_job(monkeypatch, [source_packet("first"), source_packet("second")], generate)
+    assert modal_agents.content_agent.local()["success"] is True
+    assert modal_agents.content_agent.local()["success"] is True
+    assert len(calls) == 2
+    assert len(modal_agents.load_content_source_state()["attempts"]) == 2
+
+
+def test_reservation_is_committed_before_model_call(monkeypatch):
+    import json
+    from pathlib import Path
+    import modal_agents
+
+    events = []
+    packet = source_packet()
+
+    def commit():
+        state = json.loads(Path(modal_agents.CONTENT_STATE_PATH).read_text())
+        events.append(state["attempts"][packet["sha256"]]["status"])
+
+    def generate(**_kwargs):
+        events.append("model")
+        return {"success": True, "output": "Fixture draft"}
+
+    monkeypatch.setattr(modal_agents.logs_volume, "commit", commit)
+    prepare_content_job(monkeypatch, [packet], generate)
+    modal_agents.content_agent.local()
+    assert events == ["reserved", "model", "processed"]
+
+
+@pytest.mark.parametrize("failure", ["exception", "failure", "empty"])
+def test_unresolved_attempt_is_not_automatically_replayed(monkeypatch, failure):
+    import modal_agents
+
+    calls = []
+    packet = source_packet()
+
+    def generate(**_kwargs):
+        calls.append(1)
+        if failure == "exception":
+            raise RuntimeError("Fixture response outcome unknown")
+        return {"success": failure == "empty", "output": "", "error": "Fixture failed"}
+
+    prepare_content_job(monkeypatch, [packet, packet], generate)
+    first = modal_agents.content_agent.local()
+    second = modal_agents.content_agent.local()
+    assert first["success"] is False
+    assert second["status"] == "blocked_source_attempt_unresolved"
+    assert second["cost_usd"] == 0
+    assert len(calls) == 1
+
+
+def test_failed_reservation_commit_prevents_model_call(monkeypatch):
+    import modal_agents
+
+    def fail_commit():
+        raise RuntimeError("Fixture volume commit failed")
+
+    def generate(**_kwargs):
+        pytest.fail("No billed request before reservation acknowledgement")
+
+    monkeypatch.setattr(modal_agents.logs_volume, "commit", fail_commit)
+    prepare_content_job(monkeypatch, [source_packet()], generate)
+    result = modal_agents.content_agent.local()
+    assert result["status"] == "blocked_content_state"
+    assert result["cost_usd"] == 0
+
+
+def test_failed_final_checkpoint_does_not_replay_model(monkeypatch):
+    import modal_agents
+
+    commits = []
+    calls = []
+    packet = source_packet()
+
+    def commit():
+        commits.append(1)
+        if len(commits) == 2:
+            raise RuntimeError("Fixture final commit outcome unknown")
+
+    def generate(**_kwargs):
+        calls.append(1)
+        return {"success": True, "output": "Fixture draft retained for review"}
+
+    monkeypatch.setattr(modal_agents.logs_volume, "commit", commit)
+    prepare_content_job(monkeypatch, [packet, packet], generate)
+    first = modal_agents.content_agent.local()
+    second = modal_agents.content_agent.local()
+    assert first["status"] == "blocked_state_commit_uncertain"
+    assert "retained" in first["output"]
+    assert second["status"] in {"skipped_unchanged_evidence", "blocked_source_attempt_unresolved"}
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize("raw", [b"invalid json", b'{"version":9,"attempts":{}}', b"x" * 1048577])
+def test_corrupt_state_is_preserved_and_blocks_generation(monkeypatch, raw):
+    from pathlib import Path
+    import modal_agents
+
+    path = Path(modal_agents.CONTENT_STATE_PATH)
+    path.write_bytes(raw)
+
+    def generate(**_kwargs):
+        pytest.fail("Malformed state must not be replaced or bypassed")
+
+    prepare_content_job(monkeypatch, [source_packet()], generate)
+    result = modal_agents.content_agent.local()
+    assert result["status"] == "blocked_content_state"
+    assert path.read_bytes() == raw
+
+
+def test_atomic_state_failure_preserves_previous_ledger(monkeypatch):
+    import os
+    from pathlib import Path
+    import modal_agents
+
+    path = Path(modal_agents.CONTENT_STATE_PATH)
+    previous = b'{"version":1,"attempts":{}}'
+    path.write_bytes(previous)
+
+    def fail_replace(*_args):
+        raise OSError("Fixture replacement failed")
+
+    monkeypatch.setattr(os, "replace", fail_replace)
+    with pytest.raises(OSError):
+        modal_agents.persist_content_source_state({"version": 1, "attempts": {}})
+    assert path.read_bytes() == previous
+    assert not list(path.parent.glob(".source-attempt-*"))
