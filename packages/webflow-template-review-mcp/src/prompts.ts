@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
-import { COMPREHENSIVE_REVIEW_WORKFLOW_GUIDANCE } from './comprehensive-review-contract.js';
+import { COMPREHENSIVE_REVIEW_WORKFLOW_GUIDANCE, CREATOR_FEEDBACK_FORMAT } from './comprehensive-review-contract.js';
 
 /**
  * Server-level instructions surfaced to MCP clients (claude.ai shows these to
@@ -405,7 +405,9 @@ Rewrite the feedback to:
 - keep the same intent,
 - remove ambiguity,
 - include concrete next steps,
-- avoid unnecessary length.
+- avoid unnecessary length,
+- follow the creator feedback format:
+${CREATOR_FEEDBACK_FORMAT.map((rule) => `  - ${rule}`).join('\n')}
 
 Return only the refined feedback text.`,
           },

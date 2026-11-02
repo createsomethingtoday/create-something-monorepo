@@ -1,5 +1,14 @@
 export const COMPREHENSIVE_REVIEW_CONTRACT_VERSION = 'template-review-comprehensive-evidence.v1';
 
+export const CREATOR_FEEDBACK_FORMAT = [
+  'One numbered item per issue, one or two sentences: what is wrong, then what to do.',
+  'Name the page and section, or attach a screenshot, for every item.',
+  'Add "sitewide issue, revisit all assets" when the issue repeats across pages, and "persisting issue" when it survived an earlier round.',
+  'On re-reviews, start with a dated round header and keep fixed items from earlier rounds struck through.',
+  'When design already meets the bar, open with "Design wise your template is good, please address the following issues to improve the overall quality rating."',
+  'Do not lead with low-signal checks (PageSpeed bands, animation milliseconds, combo depth, OG ratio); list them last or omit them.',
+] as const;
+
 export const RUBRIC_DIMENSIONS = [
   'overall_user_experience',
   'graphic_design',
@@ -78,12 +87,13 @@ export const COMPREHENSIVE_REVIEW_CONTRACT = {
       id: 'designer_admin_manual_checks',
       evidenceLabel: 'Manual',
       requiredEvidence: [
-        'components',
-        'variables',
+        'components (buttons with variants; nav, footer, and CTAs)',
+        'variables (repeated static values linked, Variable Modes for breakpoints, role-based names, baseline tag styles)',
         'unused styles/classes',
         'interactions cleanup',
+        'connected apps',
         'Designer responsive QA',
-        'forms',
+        'forms (custom success and error messages)',
         'CMS/dynamic page setup',
         'site settings',
         'custom fonts and licenses',
@@ -104,6 +114,32 @@ export const COMPREHENSIVE_REVIEW_CONTRACT = {
     'Manual checks remaining',
     'Decision boundary',
   ],
+  reviewerCalibration: {
+    source: 'Lead reviewer creator-facing feedback, 586 reviews, July to November 2026',
+    mostCitedFindings: [
+      'static values not linked to Variables',
+      'color contrast, including text over images (light overlay as the fix)',
+      'missing alt text',
+      'unused classes/styles',
+      'images without defined width and height',
+      'pixelated or blurry graphics',
+      'browser console errors',
+      'baseline tag styles and Variable Modes',
+      'uncustomized form success messages',
+      'connected apps other than Webflow Validation',
+      'imagery that lacks cohesive branding',
+      'buttons not built as components',
+      'mobile layouts that only stack vertically',
+    ],
+    lowSignalChecks: [
+      'PageSpeed score bands',
+      'animation duration in milliseconds',
+      'combo class depth',
+      'Open Graph image aspect ratio',
+      'localization',
+    ],
+  },
+  creatorFeedbackFormat: CREATOR_FEEDBACK_FORMAT,
   utilityPagePolicy:
     'Required utility pages do not need root-only slugs. Treat a failed guessed path, such as /utility-pages/licenses, as a failed candidate path unless the site linked to it. Verify discoverable linked utility pages and required license text before calling a license page missing.',
   sitemapPolicy:
@@ -146,6 +182,10 @@ The coverage matrix must include these lanes and label each as Auto, Partial, or
 The rubric matrix must mention every dimension: overall user experience, graphic design, typography, interaction design, hierarchy, layout design quality, responsive design, conversion best practices, site optimization, and accessibility.
 
 Manual checks remaining must include Designer/Admin review areas that published-site automation cannot prove: components, variables, unused styles/classes, interactions cleanup, Designer responsive QA, forms, CMS/dynamic page setup, site settings, custom fonts/licenses, asset thumbnail, template name/categories, pricing/page-count calculation, MRP/admin publishing prerequisites, visual quality, originality, similarity/flooding, and category fit.
+
+Lead with the lead reviewer's most cited findings (contract \`reviewerCalibration.mostCitedFindings\`). Several are Designer-side; when no Designer pass ran, list them under manual checks remaining instead of dropping them. Treat \`reviewerCalibration.lowSignalChecks\` as supporting evidence, never as the only reason for a change request.
+
+Creator-facing drafts follow \`creatorFeedbackFormat\`: one numbered item per issue with page or screenshot evidence, "sitewide issue" and "persisting issue" tags, and a dated header with struck-through fixed items on re-reviews.
 
 For utility pages, do not overstate guessed path failures. Required utility pages may be nested. If a sampled candidate path such as \`/utility-pages/licenses\` returns 404, say the candidate path failed and ask the reviewer to verify the actual linked license page unless the site itself linked to that broken URL.
 
