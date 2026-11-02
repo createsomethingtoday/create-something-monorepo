@@ -359,65 +359,7 @@ def build_paper_task(
         else f"4. After creating files successfully, close the Beads issue:\n   bd close {config.issue_id} --no-db"
     )
 
-    # Build task prompt
-    task = f'''
-Generate a CREATE SOMETHING {content_type} from this {work_item_kind}.
-
-## Work Item Details
-- ID: {config.issue_id}
-- Title: {title}
-- Description: {description}
-- Labels: {", ".join(labels)}
-
-## MANDATORY: Use Tools Before Writing
-
-**You MUST call bash and file_read tools before writing ANY content.**
-
-### Step 1: Search with bash tool (REQUIRED)
-Call the bash tool with these commands:
-- grep -ri "{title.split()[0].lower()}" .claude/rules/ --include="*.md" | head -30
-- ls -la .claude/rules/
-- grep -ri "{title.split()[0].lower()}" packages/ --include="*.ts" --include="*.py" | head -20
-
-### Step 2: Read files with file_read tool (REQUIRED)
-After searching, read the relevant files you found:
-- file_read(path=".claude/rules/beads-patterns.md") if about Beads
-- file_read(path="CLAUDE.md") for architecture overview
-- Read any files that grep found
-
-### Step 3: Extract facts from what you read
-From the actual file contents:
-- Quote exact text with line numbers
-- Note real function/class names you saw
-- Count actual files, lines, or patterns
-
-### Step 4: Write paper citing your sources
-Every claim must reference a file you read:
-- "In .claude/rules/beads-patterns.md:42, the pattern shows..."
-- "CLAUDE.md documents that..."
-
-**If you skip Steps 1-2 and write without tool calls, your paper will be rejected.**
-
-## Output Requirements
-
-1. Create directory: {output_dir}
-
-2. Create +page.svelte with:
-   - Canon design tokens (var(--color-*), var(--radius-*), var(--text-*))
-   - NO Tailwind design utilities (bg-white, rounded-lg, etc.)
-   - Tailwind ONLY for layout (flex, grid, p-*, m-*, gap-*)
-   - Proper <script lang="ts"> with types DEFINED INLINE (not imported)
-   - Semantic HTML structure
-   - Escape curly braces in code examples: {{`code`}}
-   - Content based ONLY on verified facts
-
-3. {"Create +page.server.ts for data fetching" if content_type == "experiment" else "Static paper - no server file needed"}
-
-{close_instruction}
-
-{"## PAPER STRUCTURE REQUIREMENTS (MINIMUM)" if content_type == "paper" else "## EXPERIMENT STRUCTURE REQUIREMENTS (MINIMUM)"}
-
-{'''Your paper MUST include ALL of these elements:
+    paper_structure = '''Your paper MUST include ALL of these elements:
 
 ### 1. Header Section
 ```html
@@ -578,7 +520,8 @@ Style: centered, italic, `background: var(--color-bg-subtle); border-radius: var
 - Minimum 12 minute read time
 - Minimum 5 numbered sections
 - Minimum 3 visual elements (tables, cards, or code blocks)
-- Minimum 2 references with file paths''' if content_type == "paper" else '''Your experiment MUST include ALL of these elements:
+- Minimum 2 references with file paths'''
+    experiment_structure = '''Your experiment MUST include ALL of these elements:
 
 ### 1. Header with Status Banner
 ```html
@@ -671,7 +614,73 @@ export const load: PageServerLoad = async ({{ fetch }}) => {{
 - At least 1-2 real data endpoints
 - Include supported metrics when available, otherwise qualitative evidence and measurement limits
 - Minimum 3 status cards
-- Architecture explanation section'''}
+- Architecture explanation section'''
+    structure_requirements = paper_structure if content_type == "paper" else experiment_structure
+
+    search_match = re.search(r"[A-Za-z0-9_]+", title)
+    search_term = search_match.group(0).lower() if search_match else "evidence"
+
+    # Build task prompt
+    task = f'''
+Generate a CREATE SOMETHING {content_type} from this {work_item_kind}.
+
+## Work Item Details
+- ID: {config.issue_id}
+- Title: {title}
+- Description: {description}
+- Labels: {", ".join(labels)}
+
+## MANDATORY: Use Tools Before Writing
+
+**You MUST call bash and file_read tools before writing ANY content.**
+
+### Step 1: Search with bash tool (REQUIRED)
+Call the bash tool with these commands:
+- rg --max-count 30 --glob "*.md" --fixed-strings -- "{search_term}" .claude/rules/
+- ls -la .claude/rules/
+- rg --max-count 20 --glob "*.ts" --glob "*.py" --fixed-strings -- "{search_term}" packages/
+
+If a search query is blocked by the tool policy, choose an allowed equivalent and record the limitation. Do not bypass the tool policy or invent evidence.
+
+### Step 2: Read files with file_read tool (REQUIRED)
+After searching, read the relevant files you found:
+- file_read(path=".claude/rules/beads-patterns.md") if about Beads
+- file_read(path="CLAUDE.md") for architecture overview
+- Read any files that grep found
+
+### Step 3: Extract facts from what you read
+From the actual file contents:
+- Quote exact text with line numbers
+- Note real function/class names you saw
+- Count actual files, lines, or patterns
+
+### Step 4: Write paper citing your sources
+Every claim must reference a file you read:
+- "In .claude/rules/beads-patterns.md:42, the pattern shows..."
+- "CLAUDE.md documents that..."
+
+**If you skip Steps 1-2 and write without tool calls, your paper will be rejected.**
+
+## Output Requirements
+
+1. Create directory: {output_dir}
+
+2. Create +page.svelte with:
+   - Canon design tokens (var(--color-*), var(--radius-*), var(--text-*))
+   - NO Tailwind design utilities (bg-white, rounded-lg, etc.)
+   - Tailwind ONLY for layout (flex, grid, p-*, m-*, gap-*)
+   - Proper <script lang="ts"> with types DEFINED INLINE (not imported)
+   - Semantic HTML structure
+   - Escape curly braces in code examples: {{`code`}}
+   - Content based ONLY on verified facts
+
+3. {"Create +page.server.ts for data fetching" if content_type == "experiment" else "Static paper - no server file needed"}
+
+{close_instruction}
+
+{"## PAPER STRUCTURE REQUIREMENTS (MINIMUM)" if content_type == "paper" else "## EXPERIMENT STRUCTURE REQUIREMENTS (MINIMUM)"}
+
+{structure_requirements}
 
 ## Quality Gate
 
