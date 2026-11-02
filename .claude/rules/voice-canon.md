@@ -1,3 +1,11 @@
+---
+paths:
+  - '**/*.md'
+  - '**/src/routes/**/*.svelte'
+  - '**/src/lib/data/**'
+  - '**/src/content/**'
+---
+
 # Voice Canon
 
 CREATE SOMETHING sounds like a capable systems partner: calm, precise, warm, and prepared.
