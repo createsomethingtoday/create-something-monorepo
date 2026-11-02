@@ -208,3 +208,33 @@ page, not only the component:
 - reduced motion preserves meaning and settled state;
 - no implementation-caused console or request errors;
 - campaign and product surfaces satisfy their different mode contracts.
+
+## Scroll entrances for campaign pages
+
+Use `scrollEntrance` from `@create-something/canon/motion` to introduce an
+independent chapter heading, scene, proof group, or handoff as it enters view.
+Apply it to a stable root (`use:scrollEntrance` in Svelte); mark the authored
+children with `data-scroll-entrance`. For plain HTML call `scrollEntrance(root)`
+after mounting and call the returned `destroy()` when removing the surface.
+
+- Preserve native scroll speed, document flow, anchors, and browser restoration.
+- Keep the hero and initially visible content immediate. Entrance targets remain
+  visible in SSR, without JavaScript, and when browser animation APIs are absent.
+- Introduce each offscreen group once per mount: 16px upward travel, opacity
+  from 0.25 to 1, `--duration-performance-complex` (500ms), and
+  `--ease-performance-decelerate`. No delays, blur, scaling, pinning, or looping.
+- Group related information. Do not mark every paragraph or nest targets; do not
+  animate a section containing a dialog or replace an existing transform.
+- Focus reveals its group immediately. Hash navigation settles pending entrances.
+  Reduced motion, including a preference change during playback, settles all
+  groups immediately. Do not hide or remove content from the accessibility tree.
+- Keep scene selection, disclosures, media playback, and approval states under
+  their owning controls. Scrolling must not change the selected scene or start
+  a video.
+
+Agency uses this pattern for its Learn/Build/Run introduction, delivered-work
+proof, qualifications, team handoff, plans, and closing invitation. It preserves
+the distinction between conceptual illustrations and recorded client work.
+Validate actual entrances, fast scrolling, reverse scrolling, keyboard access,
+hash arrivals, reduced motion, no JavaScript, and responsive boundaries before
+promotion. Screenshots establish composition; runtime checks establish motion.

@@ -792,3 +792,13 @@ This validates local rendering, not delivery or hosted Resend templates. See
 `UnifiedSearch` accepts an optional `content` snippet. Without it, existing cross-property search is unchanged. With it, Canon retains the dialog shell, mobile launcher, Cmd/Ctrl+K, Escape and scroll lock; the property owns its form, state, focus management and result navigation. Legacy input, Enter/arrow selection and remote search are bypassed. Set `enableAnalytics={false}` when search state must remain local. Agency's shared public search is the reference consumer and its browser QA covers this opt-in contract.
 
 Local-only input surfaces can set `data-analytics-ignore` on their root to exclude descendant interaction/error, copy and content-link events from Canon trackers. Existing page-level consent and page views are unchanged. This does not suppress DOM events or break delegated controls. Agency uses this alongside `enableAnalytics={false}`; search text remains only in session history.
+
+### Progressive scroll entrances
+
+For authored campaign HTML, import `scrollEntrance` from
+`@create-something/canon/motion`, apply `use:scrollEntrance` to its stable root,
+and mark independent child groups with `data-scroll-entrance`. The helper uses
+IntersectionObserver and Web Animations; resting and server-rendered content is
+always visible. It preserves native scrolling, settles on focus/hash navigation
+and reduced-motion changes, and returns `destroy()` for plain HTML consumers.
+See `docs/PERFORMANCE_LAB_VISUAL_GRAMMAR.md` for the motion and review contract.

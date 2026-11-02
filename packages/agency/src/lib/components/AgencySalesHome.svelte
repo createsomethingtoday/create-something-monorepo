@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { scrollEntrance } from '@create-something/canon/motion';
   import { enhanceEvidenceDisclosure } from '$lib/motion/evidenceDisclosure';
   import { page } from '$app/stores';
   import content from '$lib/content/agency-home.html?raw';
@@ -66,8 +67,8 @@
   });
 </script>
 
-<svelte:head><link rel="stylesheet" href="/styles/agency/home.css?v=20261031-partner-evidence" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /></svelte:head>
-<div class="agency-home" bind:this={root}>
+<svelte:head><link rel="stylesheet" href="/styles/agency/home.css?v=20261101-scroll-entrances" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /></svelte:head>
+<div class="agency-home" bind:this={root} use:scrollEntrance>
   {@html content}
   <details id="work-library" class="work-library" bind:open={libraryOpen}>
     <summary>Explore the work library <span>Films, source and field reports +</span></summary>
