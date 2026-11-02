@@ -85,6 +85,7 @@
     "@create-something/playbook-mcp": "workspace:*",
     "@create-something/tufte": "workspace:^",
     "effect": "3.22.2",
+    "gsap": "3.15.0",
     "lucide-svelte": "^0.562.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
