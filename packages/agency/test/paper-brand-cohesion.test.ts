@@ -131,10 +131,9 @@ test('the Agency opening exposes proof, approval and ownership alongside the app
   assert.match(home, /<AgencySalesHome \/>/);
   assert.match(content, /href="\/book\?source=agency&intent=workflow-mapping&lane=workflow_infrastructure"/);
   assert.match(content, /href="#plans"/);
-  assert.match(content, /href="https:\/\/www\.maverickx\.com\/"/);
-  assert.match(content, /href="\/films\/websites\/reference\.png"/);
-  assert.match(content, /href="\/products#cato-tour"/);
-  assert.match(content, /href="\/films\/cato-tour\/overview\.jpg"/);
+  assert.match(content, /href="\/case-studies\/webflow-marketplace"/);
+  assert.match(content, /Webflow did not commission this work through CREATE SOMETHING/);
+  assert.match(content, /src="\/films\/webflow-marketplace\/overview\.mp4"/);
   // The official Select Partner badge is authorized; retain its qualification link and accessible identity.
   assert.match(content, /href="\/stack#openai-qualifications"[^>]*><img src="\/images\/agency-sales\/OpenAI_Select_Partner_Badge\.png"[^>]*alt="OpenAI Select Partner"/);
   assert.match(content, /href="https:\/\/github\.com\/openai\/codex-security\/commit\/[a-f0-9]{40}"/);

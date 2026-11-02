@@ -1,0 +1,21 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:03.000
+Locate: Start with the test portfolio.
+The recording uses test assets.
+
+00:00:03.000 --> 00:00:05.200
+Inspect: Inspect the selected test asset.
+Its details stay in the creator workspace.
+
+00:00:05.200 --> 00:00:09.600
+Trace: Inspect the submission journey.
+The timeline stays connected to the asset.
+
+00:00:09.600 --> 00:00:13.400
+Editor: See where listing changes begin.
+No fields change and no save occurs.
+
+00:00:13.400 --> 00:00:22.400
+Context: Return to the asset, then open Marketplace insights.
+This is a recorded view, not a new analytics audit.
