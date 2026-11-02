@@ -18,6 +18,7 @@ This symlinks repo-owned skills into `~/.codex/skills` without deleting unrelate
 - `canon-design-review` - TASTE-first visual research with optional Mobbin interaction evidence, translated through Canon and Performance Lab
 - `canon-public-surface` - Performance public-page research and sharpness without generic SaaS drift
 - `claude-agent-cli-handoff` - route bounded work to the local Claude CLI when Claude owns the needed tools or connectors
+- `create-something-demo-director` - turn a recording and viewer outcome into a synchronized wayfinder, prompts, video, and interactive player
 - `debug-feedback-loop` - repro-first debugging for bugs, failing checks, flaky behavior, and performance regressions
 - `deep-module-design` - interface and module design using leverage, locality, tests, and tier ownership
 - `intent-mapping` - decision, scope, validation, and handoff capture before ambiguous or long-running work
@@ -25,7 +26,7 @@ This symlinks repo-owned skills into `~/.codex/skills` without deleting unrelate
 - `svg-education-precision` - exact educational SVGs from structured specs with overflow, text-fit, collision, and browser-render gates
 - `tdd-vertical-slice` - test-first behavior slices through public interfaces
 - `target-reader-review` - review whether the least-tenured credible practitioner can understand, act, recover, and verify without turning judgment into CI
-- `writing-for-humans` - route clear nonfiction through the smallest useful structure, sentence, revision, and operator-usability stack
+- `writing-for-humans` - draft and revise clear nonfiction with the shared CREATE SOMETHING voice guide
 - `webflow-template-review-reviewer`
 - `webflow-template-review-analysis-calibration`
 - `webflow-template-review-write-guardrails`
