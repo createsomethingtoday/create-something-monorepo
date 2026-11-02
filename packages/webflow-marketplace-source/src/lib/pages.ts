@@ -192,6 +192,8 @@ export async function pageFor(url:URL):Promise<Page>{
    const browse=related.find('#browseRelated');
    const destination=related.find('.util-related-category').first().attr('href');
    if(destination&&destination!=='#')browse.attr('href',localLink(destination));else if(browse.attr('href')==='#')browse.remove();
+   // Production hides empty related sections with page scripts, which clean() strips.
+   related.find('.more-templates-container').filter((_,e)=>cms(e).find('.w-dyn-empty').length>0&&!cms(e).find('.w-dyn-item').length).remove();
    $('#marketing').replaceWith(related.toString());
   }else $('#marketing').remove();
   const comments=$('.w-tab-pane[data-w-tab="Comments"]');
