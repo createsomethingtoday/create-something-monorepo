@@ -7,7 +7,9 @@
   const studies = webflowStudies.slice(1);
   let index = $derived(studies.findIndex(study => study.id === data.study.id));
 </script>
-<SEO title={`${data.study.label} | Webflow Marketplace study`} description={data.study.summary} />
+{#key data.study.id}
+  <SEO propertyName="agency" canonical={`https://createsomething.agency/case-studies/webflow-marketplace/${data.study.id}`} title={`${data.study.label} | Webflow Marketplace study`} description={data.study.summary} />
+{/key}
 <article class="webflow-case property-performance">
   <header class="case-opening" data-performance-chapter="opening"><a class="back" href="/case-studies/webflow-marketplace#studies">← All eight Webflow studies</a><p class="eyebrow">Webflow Marketplace / {String(index + 1).padStart(2, '0')} of 08</p><h1>{data.study.title}</h1><p class="lede">{data.study.summary}</p><p class="attribution">{webflowAttribution}</p><p class="focus">Contribution focus: {data.study.focus}</p>{#if data.study.id === "review-mcp"}<p class="focus">MCP is the Model Context Protocol, which connects an AI assistant to structured tools and information.</p>{/if}</header>
 <div data-performance-chapter="evidence">

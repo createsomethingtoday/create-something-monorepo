@@ -55,7 +55,7 @@ Skills replay source and static evaluations. Dashboard is historical test footag
 Listings shows owned app search, and Apps shows public browsing. These are bounded
 recordings, not complete production acceptance or business-impact measurements.
 
-## Validation and release
+## Initial validation and release checkpoint
 
 - Functional: passed. Full Agency package check, Svelte diagnostics, production
   build, and the preserved `scripts/verify-webflow-feature.mjs` browser regression.
@@ -109,3 +109,24 @@ including intermediate animation, live reduced motion, keyboard control,
 disclosure, and theater focus restoration. Evidence for this pass is in
 `/tmp/agency-webflow-rebase-review`. Production remains blocked by the separate
 Ground release evidence requirement.
+
+## Canonical metadata and deployment follow-through
+
+The current review found that Canon SEO defaults to the Space property and
+captures derived metadata at initialization. Both new page instances now name
+the Agency property and their explicit canonical URLs. The dynamic detail page
+keys its SEO instance by study ID, so Next and Back navigation rebuild the title,
+description, canonical and Open Graph metadata for the selected study. The HTML
+cache revision advanced for the corrected metadata.
+
+`node --import tsx packages/agency/scripts/verify-webflow-seo.mjs` reproduces the
+original failures and verifies the fix against all nine server-rendered routes,
+plus same-document Next and Back navigation. It checks the actual rendered head,
+not just source strings. Before/after evidence is retained under
+`/tmp/agency-webflow-seo-before` and `/tmp/agency-webflow-seo-review`.
+
+At the operator’s explicit Deploy request, the Ground-v0.5.4 production gate was
+re-run. The previously missing files are now present; source parity, archive and
+receipt checksums, five-platform native/consumer evidence, calibration and npm
+provenance all passed. The release is waiting for the final PR head’s checks and
+review, then merge, production deployment and canonical live readback.

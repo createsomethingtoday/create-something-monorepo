@@ -5,7 +5,7 @@
   import '$lib/styles/webflow-case-study.css';
   const story = webflowStudies[0];
 </script>
-<SEO title="Webflow Marketplace: connected work | CREATE SOMETHING" description="Micah Johnson’s individual professional work across Webflow’s Marketplace: creator tools, submission, review systems, and discovery." />
+<SEO propertyName="agency" canonical="https://createsomething.agency/case-studies/webflow-marketplace" title="Webflow Marketplace: connected work | CREATE SOMETHING" description="Micah Johnson’s individual professional work across Webflow’s Marketplace: creator tools, submission, review systems, and discovery." />
 <article class="webflow-case property-performance">
   <header class="case-opening" data-performance-chapter="opening"><a class="back" href="/#workflow">← Featured work</a><p class="eyebrow">Selected professional work / Webflow Marketplace</p><h1>One Marketplace.<br />Connected work.</h1><p class="lede">{story.summary.replace('My work', 'Micah’s work')}</p><p class="attribution">{webflowAttribution}</p><dl class="case-facts"><div><dt>Contribution</dt><dd>Product development, workflow design, integration engineering, reusable review guidance</dd></div><div><dt>Story</dt><dd>Eight studies · Five stages · A 2:48 walkthrough</dd></div><div><dt>Evidence</dt><dd>Recorded interfaces, historical footage, and labeled offline replays · October 2026</dd></div></dl></header>
 <div data-performance-chapter="evidence">
