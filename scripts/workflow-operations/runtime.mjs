@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { createHash, generateKeyPairSync, randomUUID, sign, verify } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { mkdir, readFile, writeFile, rename, lstat, realpath } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, rename, lstat, realpath, open } from 'node:fs/promises';
 import { resolve, join, dirname, relative, isAbsolute, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -281,9 +281,64 @@ async function writeDerived(out, files, repair = false) {
     }
   }
 }
+// A write-once host-store reservation survives restarts and concurrent calls.
+// It is local recovery state, not a cryptographic authorization or replacement for
+// externally trusted run provenance. Never delete it to regain a repair budget.
+async function repairReservation(context, files) {
+  let value;
+  try {
+    value = await parse(join(context.out, 'repair-intent.json'));
+  } catch (error) {
+    if (error.code === 'ENOENT') return null;
+    throw error;
+  }
+  const { digest: claimed, observedAt, ...binding } = value;
+  const expected = {
+    schema: 'internal-evidence-repair-intent@1',
+    runId: context.run.id,
+    registrationSha256: digest(context.r),
+    checkpointReceiptSha256: context.run.receipts.at(-1).receiptSha256,
+    attempt: 1,
+    derivedSha256: digest(files)
+  };
+  assert.deepEqual(binding, expected, 'runtime_repair_binding_mismatch');
+  assert.equal(new Date(observedAt).toISOString(), observedAt, 'runtime_repair_time_invalid');
+  assert.ok(
+    Date.parse(observedAt) >= Date.parse(context.run.receipts.at(-1).createdAt),
+    'runtime_repair_time_invalid'
+  );
+  assert.equal(claimed, digest({ ...binding, observedAt }), 'runtime_repair_intent_mismatch');
+  return value;
+}
+async function reserveRepair(context, files) {
+  const body = {
+    schema: 'internal-evidence-repair-intent@1',
+    runId: context.run.id,
+    registrationSha256: digest(context.r),
+    checkpointReceiptSha256: context.run.receipts.at(-1).receiptSha256,
+    attempt: 1,
+    derivedSha256: digest(files),
+    observedAt: now()
+  };
+  const handle = await open(join(context.out, 'repair-intent.json'), 'wx', 0o600);
+  try {
+    await handle.writeFile(json({ ...body, digest: digest(body) }) + '\n');
+    await handle.sync();
+  } finally {
+    await handle.close();
+  }
+  const directory = await open(context.out, 'r');
+  try {
+    await directory.sync();
+  } finally {
+    await directory.close();
+  }
+  await repairReservation(context, files);
+}
 export async function verifyInternalValidation(options) {
   const context = await base(options);
   const files = await derived(context);
+  await repairReservation(context, files);
   for (const [name, value] of Object.entries(files))
     assert.equal(
       (await read(join(context.out, name))).toString(),
@@ -305,6 +360,7 @@ export async function explainInternalValidation(options) {
 export async function repairInternalEvidence(options) {
   const context = await base(options);
   const files = await derived(context);
+  const consumed = await repairReservation(context, files);
   let invalid = false;
   for (const [name, value] of Object.entries(files)) {
     try {
@@ -314,11 +370,16 @@ export async function repairInternalEvidence(options) {
       else throw error;
     }
   }
-  if (invalid) await writeDerived(context.out, files, true);
+  if (invalid) {
+    assert.equal(consumed, null, 'runtime_repair_limit_exhausted');
+    await reserveRepair(context, files);
+    await writeDerived(context.out, files, true);
+  }
   const verified = await verifyInternalValidation(options);
   return {
     ...verified,
-    repairAttempts: invalid ? 1 : 0,
+    repairAttempts: invalid || consumed ? 1 : 0,
+    repairPerformed: invalid,
     repairScope: 'derived_evidence_only',
     commandDispatches: 0
   };

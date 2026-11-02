@@ -24,3 +24,9 @@ Independent Sol 6.1 retest reran those 52 tests and exercised an actual command,
 No shared state or hosted/customer activation was written during local qualification. Workflow artifacts retain signing public keys and trusted Actions provenance; the private key is ephemeral and never persisted. Internal data-branch writes and the fixed validation command become deployed only after normal PR promotion. Rollback disables the internal Actions workflow and preserves state/evidence.
 
 Worktree disposition: retained at `/tmp/cre-2328-workflow-operations` on `codex/cre-2328-workflow-operations` until deployed-run acceptance. The draft Control graph worktree/PR is preserved separately.
+
+## PR review correction
+
+The P2 finding about per-call repair limits was reproduced with a failing cross-process regression. Repair now exclusively reserves and fsyncs `repair-intent.json` before modifying derived evidence. The closed record binds the run, registration, checkpoint receipt and expected derived digest. Verification checks the record; a consumed budget blocks a second repair across restarts and concurrent calls, while unchanged output remains verifiable and reports cumulative consumption. A crash after reservation holds rather than refunds the allowance. Corrupt reservation tests fail closed. This local host-store record is not signed authorization and must be preserved with the retained run. The parent performed this focused correction; independent initial qualification remains scoped to the original implementation.
+
+Post-correction validation: 51 Node tests plus 3 ranking tests passed on the pinned toolchain; `git diff --check` passed.

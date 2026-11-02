@@ -281,3 +281,50 @@ test('CLI reconciliation repairs missing derived evidence without redispatching'
     await rm(f, { recursive: true, force: true });
   }
 });
+
+test('one retained run consumes its repair budget across separate processes', async () => {
+  const f = await fixture();
+  try {
+    await runInternalValidation({ outDir: f.out });
+    const key = f.out + '.trusted-public.pem';
+    await rm(join(f.out, 'explanation.json'));
+    const args = [
+      resolve('scripts/workflow-operations/runtime.mjs'),
+      'reconcile',
+      '--out',
+      f.out,
+      '--trusted-key',
+      key
+    ];
+    const first = spawnSync(process.execPath, args, { encoding: 'utf8' });
+    assert.equal(first.status, 0, first.stderr);
+    const again = spawnSync(process.execPath, args, { encoding: 'utf8' });
+    assert.equal(again.status, 0, again.stderr);
+    assert.equal(JSON.parse(again.stdout).repairAttempts, 1);
+    assert.equal(JSON.parse(again.stdout).repairPerformed, false);
+    await writeFile(join(f.out, 'explanation.json'), 'second corruption');
+    const second = spawnSync(process.execPath, args, { encoding: 'utf8' });
+    assert.notEqual(second.status, 0);
+    assert.equal(await readFile(join(f.out, 'explanation.json'), 'utf8'), 'second corruption');
+  } finally {
+    await rm(f.root, { recursive: true, force: true });
+  }
+});
+
+test('corrupt repair reservation holds verification and cannot reset the allowance', async () => {
+  const f = await fixture();
+  try {
+    await runInternalValidation({ outDir: f.out });
+    const options = { outDir: f.out, trustedKeyPath: f.out + '.trusted-public.pem' };
+    await rm(join(f.out, 'explanation.json'));
+    await repairInternalEvidence(options);
+    const marker = join(f.out, 'repair-intent.json');
+    const value = JSON.parse(await readFile(marker, 'utf8'));
+    value.attempt = 0;
+    await writeFile(marker, JSON.stringify(value));
+    await assert.rejects(verifyInternalValidation(options));
+    await assert.rejects(repairInternalEvidence(options));
+  } finally {
+    await rm(f.root, { recursive: true, force: true });
+  }
+});
