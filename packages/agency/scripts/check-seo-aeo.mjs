@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { pageFileForRoute, sourceDeclaresNoindex } from './seo-route-paths.mjs';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const routesRoot = path.join(packageRoot, 'src/routes');
@@ -48,7 +49,7 @@ for (const entry of routeEntries) {
     errors.push(`${entry.path} has invalid lastmod: ${entry.lastmod}`);
   }
 
-  const pageFile = pageFileForRoute(entry.path);
+  const pageFile = pageFileForRoute(entry.path, routesRoot);
   if (!fs.existsSync(pageFile)) {
     errors.push(`${entry.path} is in searchRoutes.json but has no +page.svelte`);
     continue;
@@ -183,18 +184,6 @@ function routeFromPageFile(file) {
   const relativeDir = path.relative(routesRoot, path.dirname(file));
   if (!relativeDir) return '/';
   return `/${relativeDir.split(path.sep).join('/')}`;
-}
-
-function pageFileForRoute(route) {
-  if (route.startsWith('/workflows/')) {
-    return path.join(routesRoot, 'workflows', '[slug]', '+page.svelte');
-  }
-  const routeDir = route === '/' ? routesRoot : path.join(routesRoot, route.slice(1));
-  return path.join(routeDir, '+page.svelte');
-}
-
-function sourceDeclaresNoindex(source) {
-  return /noindex=\{true\}/.test(source) || /search-policy:\s*noindex/.test(source);
 }
 
 function escapeRegExp(value) {

@@ -87,3 +87,25 @@ No external product records or Webflow site content were changed.
 Worktree disposition: preserved at `/tmp/agency-webflow-feature` on
 `codex/agency-webflow-feature` until release review. The original dirty checkout
 remains untouched.
+
+## PR review follow-through
+
+Rebased onto `50782fbed` after the homepage GSAP release. The merged page keeps
+`enhanceHomeInteractions`, scene changes, directional marks, GSAP-owned styles
+and cleanup alongside the five Webflow chapter launch controls. Both public cache
+and stylesheet revisions identify the combined release.
+
+The review finding was reproduced: the original SEO checker reported all eight
+concrete study URLs as missing pages. It now resolves this family to `[study]`.
+Three regression checks cover actual sitemap ownership, retained static/workflow
+routing, and authored robots metadata. The last check also preserves the existing
+private support-brief page’s static `noindex` directive. All nine Webflow routes
+now have marketing-portfolio entries, including their dynamic source ownership.
+The complete `seo:check`, including marketing validation, passes.
+
+The feature browser regression passed again at five widths. The upstream GSAP
+interaction verifier also passed at320/390/768/1024/1025/1440px plus touch input,
+including intermediate animation, live reduced motion, keyboard control,
+disclosure, and theater focus restoration. Evidence for this pass is in
+`/tmp/agency-webflow-rebase-review`. Production remains blocked by the separate
+Ground release evidence requirement.
