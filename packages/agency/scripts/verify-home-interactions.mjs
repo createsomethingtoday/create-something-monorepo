@@ -43,6 +43,12 @@ try {
     await watch.click();
     assert.equal(await page.locator('#work-dialog').evaluate(el => el.open), true);
     await page.keyboard.press('Escape');
+    // Native dialog.close queues its close event; wait for the observable
+    // playback, scroll and focus restoration before checking the settled state.
+    await page.waitForFunction(() => {
+      const dialog = document.querySelector('#work-dialog');
+      return !dialog.open && dialog.querySelector('video').paused && document.body.style.overflow === '' && document.activeElement?.hasAttribute('data-home-open');
+    });
     assert.equal(await page.locator('#work-dialog').evaluate(el => el.open), false);
     assert.equal(await watch.evaluate(el => el === document.activeElement), true);
     assert.equal(await page.evaluate(() => document.body.style.overflow), '');
