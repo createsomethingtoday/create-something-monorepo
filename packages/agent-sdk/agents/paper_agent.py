@@ -26,10 +26,10 @@ SYSTEM_PROMPT = """You are a RESEARCH-FIRST content agent for CREATE SOMETHING.
 
 **This is mandatory, not optional.** Before writing ANY content:
 
-1. USE the bash tool to search: bash(command="grep -r 'topic' .claude/rules/ --include='*.md' | head -20")
-2. USE the bash tool to find files: bash(command="find . -name '*.md' -path './.claude/*' | head -20")
-3. USE the file_read tool to read what you find: file_read(path=".claude/rules/beads-patterns.md")
-4. ONLY THEN write content based on what you actually read
+1. USE bash for the bounded discovery commands supplied in the task.
+2. Select at most 3 existing source files using work-item citations and focused directory listings. Search explicit files only, at most 20 matching lines per file and 60 across selected files in a research pass. Do not use shell pipelines or broad recursive content searches.
+3. USE file_read to read the relevant selected files.
+4. ONLY THEN write from what you actually read. If output is truncated or a query is blocked, narrow the file/query selection and record the limit; do not bypass the tool policy or treat partial results as complete research.
 
 **If you write content without first calling bash or file_read tools, you are doing it wrong.**
 
@@ -50,14 +50,6 @@ You generate papers and experiments based ONLY on verified facts from the codeba
 - Use real function/class names from files you actually read
 - Say "Not measured" only AFTER you searched and couldn't find data
 - Document what files you examined in Methodology section
-
-## Mandatory Research Steps
-
-1. **Search first**: bash(command="grep -ri 'topic' . --include='*.md' | head -30")
-2. **Find docs**: bash(command="ls -la .claude/rules/")
-3. **Read files**: file_read(path=".claude/rules/relevant-file.md")
-4. **Extract facts**: Note exact quotes and line numbers
-5. **Write from evidence**: Every claim cites a file you read
 
 ## Canon Design Principles
 
@@ -634,19 +626,21 @@ Generate a CREATE SOMETHING {content_type} from this {work_item_kind}.
 
 **You MUST call bash and file_read tools before writing ANY content.**
 
-### Step 1: Search with bash tool (REQUIRED)
-Call the bash tool with these commands:
-- rg --max-count 30 --glob "*.md" --fixed-strings -- "{search_term}" .claude/rules/
-- ls -la .claude/rules/
-- rg --max-count 20 --glob "*.ts" --glob "*.py" --fixed-strings -- "{search_term}" packages/
+### Step 1: Select files before searching (REQUIRED)
+Start with these pipe-free discovery commands:
+- ls .claude/rules/
+- ls packages/
+- rg --max-count 20 --fixed-strings -- "{search_term}" .claude/rules/voice-canon.md
 
-If a search query is blocked by the tool policy, choose an allowed equivalent and record the limitation. Do not bypass the tool policy or invent evidence.
+Use work-item citations and focused directory listings to choose at most 3 source files relevant to the task. Before searching their contents, confirm those files exist. Pass explicit file paths, never a directory tree, to rg. Use at most 20 matching lines per selected file, at most 60 across the selected files in a research pass.
+
+If a query is blocked or output is truncated, narrow the query or file selection, choose an allowed equivalent, and record the limitation. Never treat a truncated search as complete research, bypass the tool policy, or invent evidence.
 
 ### Step 2: Read files with file_read tool (REQUIRED)
 After searching, read the relevant files you found:
 - file_read(path=".claude/rules/beads-patterns.md") if about Beads
 - file_read(path="CLAUDE.md") for architecture overview
-- Read any files that grep found
+- Read the relevant selected files, including when the initial string query has no matches
 
 ### Step 3: Extract facts from what you read
 From the actual file contents:

@@ -82,12 +82,12 @@ def test_shared_paper_builder_parses_on_supported_python311():
 
 @pytest.mark.parametrize("content_type", ["paper", "experiment"])
 def test_required_paper_searches_are_allowed_by_gemini(tmp_path, content_type):
-    from agents.paper_agent import PaperConfig, build_paper_task
+    from agents.paper_agent import SYSTEM_PROMPT, PaperConfig, build_paper_task
     from create_something_agents.providers.gemini_tools import GeminiToolsProvider
 
     task = build_paper_task(
         PaperConfig(issue_id="CRE-123", content_type=content_type, monorepo_path=tmp_path),
-        issue={"title": "Qualitative findings", "description": "No measurements", "labels": []},
+        issue={"title": "Create findings", "description": "No measurements", "labels": []},
     )
     search = task.split("### Step 1:", 1)[1].split("### Step 2:", 1)[0]
     commands = [line[2:] for line in search.splitlines() if line.startswith("- ")]
@@ -95,13 +95,26 @@ def test_required_paper_searches_are_allowed_by_gemini(tmp_path, content_type):
     provider = object.__new__(GeminiToolsProvider)
     provider.working_dir = str(tmp_path)
     (tmp_path / ".claude/rules").mkdir(parents=True)
-    (tmp_path / ".claude/rules/evidence.md").write_text("qualitative fixture observation")
+    (tmp_path / ".claude/rules/evidence.md").write_text("create fixture observation")
+    (tmp_path / ".claude/rules/voice-canon.md").write_text("create fixture evidence\n" * 80)
+    for index in range(30):
+        (tmp_path / f".claude/rules/extra-{index}.md").write_text("create fixture evidence\n" * 80)
     (tmp_path / "packages").mkdir()
-    (tmp_path / "packages/evidence.py").write_text("# qualitative fixture source")
-    for command in commands:
+    (tmp_path / "packages/evidence.py").write_text("# create fixture source")
+    import re
+
+    system_commands = re.findall(r'bash\(command="([^"]+)"\)', SYSTEM_PROMPT)
+    for command in commands + system_commands:
         safe, reason = provider._is_command_safe(command)
         assert safe, (command, reason)
+        if command.startswith("rg "):
+            import shlex
+
+            target = tmp_path / shlex.split(command)[-1]
+            assert target.is_file(), "Bound content search to selected files, not the tree"
         output = provider._execute_bash(command)
+        if command.startswith("rg "):
+            assert len(output.splitlines()) <= 20
         assert "blocked for safety" not in output.lower()
         assert "not found" not in output.lower()
         assert "evidence" in output.lower()
