@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { mkdtemp, mkdir, writeFile, readFile, rm, symlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -177,6 +178,38 @@ test('candidate capacity is explicit and existing invalid workflows are held wit
     const before = await readFile(join(f.out, 'current.json'), 'utf8');
     await assert.rejects(() => runDiscovery({ repoRoot: f.repo, outDir: f.out }));
     assert.equal(await readFile(join(f.out, 'current.json'), 'utf8'), before);
+  } finally {
+    await rm(f.root, { recursive: true, force: true });
+  }
+});
+
+test('rewriting candidate and self-hashed manifest cannot bypass current artifact binding', async () => {
+  const f = await fixture();
+  const canonical = (v) =>
+    Array.isArray(v)
+      ? v.map(canonical)
+      : v && typeof v === 'object'
+        ? Object.fromEntries(
+            Object.keys(v)
+              .sort()
+              .map((k) => [k, canonical(v[k])])
+          )
+        : v;
+  const hash = (v) => `sha256:${createHash('sha256').update(v).digest('hex')}`;
+  try {
+    const result = await runDiscovery({ repoRoot: f.repo, outDir: f.out });
+    const dir = join(f.out, result.generation);
+    const manifest = JSON.parse(await readFile(join(dir, 'artifacts.json'), 'utf8'));
+    const artifact = manifest.files.find((file) => file.path.endsWith('/compiled-bundle.json'));
+    const forged = '{"forged":true}';
+    await writeFile(join(dir, artifact.path), forged);
+    artifact.sha256 = hash(forged);
+    const { digest, ...body } = manifest;
+    manifest.digest = hash(JSON.stringify(canonical(body)));
+    await writeFile(join(dir, 'artifacts.json'), JSON.stringify(manifest));
+    assert.equal((await verifyGeneration(f.out)).valid, false);
+    assert.equal((await runDiscovery({ repoRoot: f.repo, outDir: f.out })).status, 'repaired');
+    assert.equal((await verifyGeneration(f.out)).valid, true);
   } finally {
     await rm(f.root, { recursive: true, force: true });
   }

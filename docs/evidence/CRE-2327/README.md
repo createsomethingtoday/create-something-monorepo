@@ -21,3 +21,9 @@ Independent Sol 6.1 review reran all 26 tests and scanned the actual checkout in
 The deployment target is the repository's internal GitHub Actions workflow. Every runner starts with fresh output; repair across scheduled runs is not claimed. Candidate compiler bundles are unreviewed artifacts, not runtime registrations. Customer activation and the draft Control graph runtime remain separate. Rollback: disable the workflow schedule and retain the last verified artifact; no business/runtime activation needs reversal.
 
 Worktree disposition: retained at `/tmp/cre-2327-workflow-discovery` on `codex/cre-2327-workflow-discovery` until deployed-run acceptance and closeout.
+
+## PR review corrections
+
+Both automated P2 findings were reproduced with failing regression checks, then repaired. The current pointer is now version 2 and binds the artifact-manifest digest as well as the catalog digest. Replacing a compiled candidate and recomputing the self-hashed manifest fails against the current pointer. This is an internal integrity check; replacing the entire generation and pointer still requires external Actions provenance to detect. Prior version 1 pointers fail verification and regenerate on the next discovery run.
+
+Compiler loading is deferred to generation. A regression test copies the CLI/modules into a fresh tree without any compiler package/build and verifies actual output successfully; history path validation also runs without a compiler import. All 28 tests passed. An actual existing-output migration regenerated once and independently verified successfully with the same catalog digest. The original independent review covered the initial 26-test implementation; these two focused regression fixes and the 28-test rerun were performed by the parent.

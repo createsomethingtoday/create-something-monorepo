@@ -11,7 +11,6 @@ import {
   unlink
 } from 'node:fs/promises';
 import { resolve, relative, join, dirname, isAbsolute } from 'node:path';
-import { compileWorkflowDefinition } from '../../packages/workflow-compiler/dist/index.js';
 import { scanRepository } from './scan.mjs';
 
 const canonical = (value) =>
@@ -182,7 +181,9 @@ function definition(source, pattern, scripts) {
   };
 }
 
-export function createWorkflowCatalog(inventory, history, { maximumCandidates = 64 } = {}) {
+export async function createWorkflowCatalog(inventory, history, { maximumCandidates = 64 } = {}) {
+  const { compileWorkflowDefinition } =
+    await import('../../packages/workflow-compiler/dist/index.js');
   if (!Number.isSafeInteger(maximumCandidates) || maximumCandidates < 1 || maximumCandidates > 256)
     throw new Error('discovery_candidate_limit_invalid');
   const proposed = [];
@@ -254,13 +255,11 @@ export function createWorkflowCatalog(inventory, history, { maximumCandidates = 
     history,
     candidates,
     existingWorkflows,
-    deferred: proposed
-      .slice(maximumCandidates)
-      .map((entry) => ({
-        path: entry.source.path,
-        pattern: entry.pattern,
-        reason: 'bounded_candidate_capacity'
-      })),
+    deferred: proposed.slice(maximumCandidates).map((entry) => ({
+      path: entry.source.path,
+      pattern: entry.pattern,
+      reason: 'bounded_candidate_capacity'
+    })),
     safety: { commandsExecuted: 0, sourceMutations: 0, policyChanges: 0, activations: 0 }
   };
   return { ...catalog, digest: digest(catalog) };
@@ -294,9 +293,9 @@ export async function verifyGeneration(outDir, expected) {
     const root = resolve(outDir);
     await ownedRoot(root);
     const current = expected ?? JSON.parse(await boundedRead(join(root, 'current.json')));
-    exact(current, ['schema', 'generation', 'catalogDigest']);
+    exact(current, ['schema', 'generation', 'catalogDigest', 'artifactsDigest']);
     if (
-      current.schema !== 'workflow-discovery-current@1' ||
+      current.schema !== 'workflow-discovery-current@2' ||
       !/^run-[a-f0-9-]{36}$/.test(current.generation)
     )
       throw new Error('discovery_pointer_invalid');
@@ -308,6 +307,7 @@ export async function verifyGeneration(outDir, expected) {
     if (
       manifest.schema !== 'workflow-discovery-artifacts@1' ||
       claimed !== digest(body) ||
+      claimed !== current.artifactsDigest ||
       current.catalogDigest !== manifest.catalogDigest ||
       !Array.isArray(manifest.files) ||
       manifest.files.some((file) => !safePath(file.path))
@@ -338,7 +338,9 @@ export async function runDiscovery({ repoRoot, outDir, historyFile, maximumCandi
     throw new Error('discovery_output_overlaps_source');
   const inventory = await scanRepository(repo);
   const history = await historySummary(historyFile, Date.now());
-  const catalog = createWorkflowCatalog(inventory, history, { maximumCandidates });
+  const { compileWorkflowDefinition } =
+    await import('../../packages/workflow-compiler/dist/index.js');
+  const catalog = await createWorkflowCatalog(inventory, history, { maximumCandidates });
   const prior = await exists(out);
   if (prior) await ownedRoot(out);
   else {
@@ -400,9 +402,10 @@ export async function runDiscovery({ repoRoot, outDir, historyFile, maximumCandi
       { flag: 'wx', mode: 0o600 }
     );
     const next = {
-      schema: 'workflow-discovery-current@1',
+      schema: 'workflow-discovery-current@2',
       generation,
-      catalogDigest: catalog.digest
+      catalogDigest: catalog.digest,
+      artifactsDigest: digest(body)
     };
     const checked = await verifyGeneration(out, next);
     if (!checked.valid) throw new Error('discovery_generated_output_invalid');
