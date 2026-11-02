@@ -95,7 +95,15 @@
 
 /* Move only the directional mark; the control and its hit area stay anchored. */
 .agency-home [data-motion-arrow]{display:inline-block}
-.agency-home .steps button{transition:color var(--duration-performance-micro) var(--ease-performance-standard),border-color var(--duration-performance-micro) var(--ease-performance-standard)}
+/* Reveal a stationary scene over its decoded predecessor. Both layers inherit
+   the same responsive crop; the caption stays above the moving reveal edge. */
+.agency-home .scene #journey-image{position:relative;z-index:1;display:block}
+.agency-home .scene [data-scene-previous]{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;display:block}
+.agency-home .scene figcaption{z-index:2}
+/* The handoff entrance owns only the image crop; its caption stays at rest. */
+.agency-home img[data-image-entrance]{transition-property:none!important}
+.agency-home .steps button{transition:color var(--duration-performance-micro) var(--ease-performance-standard)}
+.agency-home .steps button[aria-pressed=true]{transition:none}
 .agency-home .steps button:enabled:hover{color:var(--ag-fg)}
 .agency-home .steps button:focus-visible{transition:none}
 @media(prefers-reduced-motion:reduce){.agency-home .steps button{transition:none}}

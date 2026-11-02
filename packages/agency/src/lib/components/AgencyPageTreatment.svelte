@@ -2,6 +2,7 @@
   import { tick } from 'svelte';
   import { usesAgentReadinessStudyCopy } from '$lib/data/agentReadinessStudyVariants';
   import { mountPreviewTrace } from '$lib/motion/previewWorkflowTrace';
+  import { enhanceImageEntrance } from '$lib/motion/imageEntrance';
   import { page } from '$app/stores';
   import { agencyPageComposition, usesCampaignFigure } from '$lib/data/agencyPageComposition';
   import { originalHeroImages } from '$lib/data/agencyPreviewOriginalImages';
@@ -30,7 +31,7 @@
     const study = $page.url.searchParams.get('study');
     const useBaselineCopy = !usesAgentReadinessStudyCopy(route, study);
     let compositionTarget:HTMLElement|undefined; let priorComposition:string|undefined;
-    let alive=true; let figure:HTMLElement|undefined; let closing:HTMLElement|undefined; let stopTrace:(()=>void)|undefined;
+    let alive=true; let figure:HTMLElement|undefined; let closing:HTMLElement|undefined; let stopTrace:(()=>void)|undefined; let stopImageEntrance:(()=>void)|undefined;
     const originals: Array<{element:HTMLElement; clone:Element; hidden:boolean; id:string}> = [];
     const replaceCopy = (element:Element|null, text:string|undefined, selector:string) => {
       if (!text || !(element instanceof HTMLElement) || element.querySelector('a,button,input,select,textarea')) return;
@@ -61,12 +62,17 @@
       const image=document.createElement('img');image.src=item.image.startsWith('original-stories/')?'/images/agency-stories/'+item.image.slice('original-stories/'.length)+'.webp':'/images/agency-sales/'+item.image+'.webp';image.alt=item.caption;image.width=framing.width??1536;image.height=framing.height??1024;image.loading='eager';image.fetchPriority='high';
       const caption=document.createElement('figcaption');caption.textContent=item.caption;
       figure.appendChild(image);figure.appendChild(caption);target.appendChild(figure);target.classList.add('agency-preview-hero');
+      // Keep the proposed hero treatment bounded to one explicit review URL.
+      if(route === '/agent-foundation' && study === 'image-reveal'){
+        image.dataset.imageEntrance='hero-study';
+        stopImageEntrance=enhanceImageEntrance(image,{mode:'hero'}).destroy;
+      }
     });
-    return()=>{alive=false;figure?.parentElement?.classList.remove('agency-preview-hero');figure?.remove();if(compositionTarget){if(priorComposition)compositionTarget.dataset.agencyComposition=priorComposition;else delete compositionTarget.dataset.agencyComposition;}stopTrace?.();closing?.remove();for(const {element,clone,hidden,id}of originals){clone.remove();if(id&&!element.id)element.id=id;element.hidden=hidden;delete element.dataset.agencyOriginal;}document.body.classList.remove('design-preview');delete document.body.dataset.previewFamily;delete document.body.dataset.previewRoute;};
+    return()=>{alive=false;stopImageEntrance?.();figure?.parentElement?.classList.remove('agency-preview-hero');figure?.remove();if(compositionTarget){if(priorComposition)compositionTarget.dataset.agencyComposition=priorComposition;else delete compositionTarget.dataset.agencyComposition;}stopTrace?.();closing?.remove();for(const {element,clone,hidden,id}of originals){clone.remove();if(id&&!element.id)element.id=id;element.hidden=hidden;delete element.dataset.agencyOriginal;}document.body.classList.remove('design-preview');delete document.body.dataset.previewFamily;delete document.body.dataset.previewRoute;};
   });
 </script>
 <svelte:head>
-  <link rel="stylesheet" href="/styles/agency/page-treatment.css?v=map-brief-removal-20261102" />
+  <link rel="stylesheet" href="/styles/agency/page-treatment.css?v=agency-image-reveal-release-20261102" />
   <link rel="stylesheet" href="/styles/agency/commercial.css" />
   <link rel="stylesheet" href="/styles/agency/products.css" />
   <link rel="stylesheet" href="/styles/agency/editorial.css" />
