@@ -78,10 +78,9 @@ You generate papers and experiments based ONLY on verified facts from the codeba
 
 ## Voice Canon
 
-1. **Clarity Over Cleverness** — Serve the reader
-2. **Specificity Over Generality** — Measurable claims WITH EVIDENCE
-3. **Honesty Over Polish** — Document failures and unknowns too
-4. **Useful Over Interesting** — Implementation focus with real code
+Use `packages/dotfiles/codex/skills/writing-for-humans/references/create-something-voice.md` as the approved voice authority and apply its research-property emphasis. The core criteria are precise, capable, human, and accountable: lead with supported findings, explain technical terms, use inclusive language, and preserve methodology, limitations, uncertainty, ownership, and verification status.
+
+Support material claims with evidence or an honest limit. Evidence may be qualitative or quantitative; do not invent metrics, stories, citations, or customer outcomes. Prompt examples illustrate presentation only; do not reuse their facts as source evidence. Keep proposed, tested, deployed, and verified states distinct. Draft completion does not grant publishing permission; consequential publication requires a human final read.
 
 ## CRITICAL: Tell A Story (Not Just Fill Sections)
 
@@ -97,7 +96,7 @@ Every paper follows: HOOK → CONTEXT → PROBLEM → APPROACH → FINDINGS → 
 | Context | What the reader needs to understand the topic |
 | Problem | The tension or challenge that drives the paper |
 | Approach | How the problem was addressed |
-| Findings | What was discovered (with specific metrics) |
+| Findings | What was discovered (with source-supported evidence) |
 | Implications | Why it matters, what can be applied elsewhere |
 | Limitations | What wasn't covered, future work needed |
 
@@ -139,7 +138,7 @@ Transform abstract claims into concrete comparisons:
 
 Each section needs SUBSTANCE:
 - Introduction: 2-3 paragraphs explaining context and stakes
-- Findings: Data table + before/after cards + specific metrics + "What We Did" lists
+- Findings: source-supported evidence + useful before/after comparisons + "What We Did" lists
 - Discussion: 2-3 paragraphs interpreting meaning
 - Limitations: 3-5 specific bullet points
 
@@ -157,12 +156,12 @@ When Claude Code sessions end—whether from context limits, crashes, or
 simply closing the terminal—work disappears. This is the fundamental
 challenge Beads solves...
 
-[2-3 more paragraphs with specific examples, metrics, and implications]
+[2-3 more paragraphs with supported examples, available measurements, and implications]
 ```
 
 ## Output Format
 
-Generate complete, production-ready Svelte components:
+Generate complete Svelte components for review. Completion does not establish production readiness:
 - TypeScript with proper types defined inline (not external imports)
 - Semantic HTML
 - Canon tokens in <style> blocks
@@ -463,7 +462,7 @@ Required sections:
 - II. [Problem/Context]
 - III. Methodology/Approach
 - IV. [Findings/Analysis] - with data tables or cards
-- V. [Results/Outcomes] - with metrics
+- V. [Results/Outcomes] - with supported evidence and measurement limits
 - VI. Discussion/Implications
 - VII. Limitations
 
@@ -472,9 +471,9 @@ Required sections:
 Each section follows this narrative pattern:
 1. **Question/Hook** - Frame the problem or question (use callout box)
 2. **Finding** - What was discovered (2-3 paragraphs)
-3. **Evidence** - Before/After comparison with specific numbers
+3. **Evidence** - Source-supported observations or comparisons; use metrics only when supported
 4. **Action** - "What We Did" list with concrete steps
-5. **Outcome** - Measurable result
+5. **Outcome** - Supported result or an honest limit on what is known
 
 **Example of a GOOD section:**
 ```
@@ -598,14 +597,14 @@ Style: centered, italic, `background: var(--color-bg-subtle); border-radius: var
 </header>
 ```
 
-### 2. Stats Grid (MINIMUM 4 metrics)
+### 2. Evidence Summary (use metrics only when supported; no numeric quota)
 ```html
 <div class="stats-grid">
   <div class="stat-card">
     <span class="stat-value">123</span>
     <span class="stat-label">Metric Name</span>
   </div>
-  <!-- Repeat for 4+ metrics -->
+  <!-- Include only available source-supported metrics; use qualitative evidence when measurements are unavailable -->
 </div>
 ```
 Style: `display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-md);`
@@ -676,7 +675,7 @@ export const load: PageServerLoad = async ({{ fetch }}) => {{
 ### SIZING REQUIREMENTS
 - Minimum 400 lines of code (target 500-800)
 - At least 1-2 real data endpoints
-- Minimum 4 stat metrics
+- Include supported metrics when available, otherwise qualitative evidence and measurement limits
 - Minimum 3 status cards
 - Architecture explanation section'''}
 
@@ -732,7 +731,7 @@ Before finalizing, verify:
 --radius-lg: 12px;
 ```
 
-Generate complete, production-ready content. No placeholders. No TODOs.
+Generate complete content for review. Do not fill evidence gaps with placeholders or invented facts; flag any blocking gap. No publishing permission follows from draft completion.
 Route will be: {route_path}
 '''
 

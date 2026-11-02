@@ -111,12 +111,12 @@ CONTENT:
 ${fileContent}
 \`\`\`
 
-REVIEW CRITERIA (from voice-canon.md):
-1. Marketing jargon - Flag: cutting-edge, revolutionary, leverage, synergy, solutions, seamless, robust
-2. Vague claims - Flag: significantly improved, many users, better outcomes, considerable improvements
-3. Specificity - All claims should be measurable with numbers
-4. Structure - Lead with outcome or insight, philosophy earns place after metrics
-5. Clarity - Prefer shorter words, active voice, plain language
+REVIEW CRITERIA (approved authority: packages/dotfiles/codex/skills/writing-for-humans/references/create-something-voice.md):
+1. Precise: identify the reader's task, visible actions, and supported findings.
+2. Capable: support material claims with evidence or an honest limit; qualitative evidence is valid. Never invent metrics or citations.
+3. Human: use clear, respectful, inclusive language in the artifact's property context. Review jargon in context rather than using automatic word bans.
+4. Accountable: preserve uncertainty, ownership, permissions, and verification status. Distinguish proposed, tested, deployed, and verified.
+5. Preserve exact labels, code, quotations, and source facts. Flag missing evidence instead of supplying plausible facts. Publication requires its owning approval workflow and a human final read.
 
 OUTPUT FORMAT:
 For each issue found, provide:
