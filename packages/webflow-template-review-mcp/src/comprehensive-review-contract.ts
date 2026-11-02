@@ -138,6 +138,12 @@ export const COMPREHENSIVE_REVIEW_CONTRACT = {
       'Open Graph image aspect ratio',
       'localization',
     ],
+    decisionFactors: [
+      'Recommend Reject for low design quality even with few items; a long list on a Good design is Changes Requested.',
+      'Courtesy round: a Low quality template from a new creator, in a less common category, or with an original twist on its category gets one final Changes Requested round instead of Reject. A second courtesy round exceeds stated policy.',
+      'Last review: when the same issues return unchanged (usually the third round), request changes under a dated "Last Review" header saying no further rounds will be offered without proper corrections. It is a warning, not a reject.',
+      'Upgrade path: on a Good design, open with the "Design wise your template is good" line; when fixes would reach Exceptional, open with "Your template could be rated as exceptional". Present Exceptional as a real option for strong templates.',
+    ],
   },
   creatorFeedbackFormat: CREATOR_FEEDBACK_FORMAT,
   utilityPagePolicy:
@@ -184,6 +190,8 @@ The rubric matrix must mention every dimension: overall user experience, graphic
 Manual checks remaining must include Designer/Admin review areas that published-site automation cannot prove: components, variables, unused styles/classes, interactions cleanup, Designer responsive QA, forms, CMS/dynamic page setup, site settings, custom fonts/licenses, asset thumbnail, template name/categories, pricing/page-count calculation, MRP/admin publishing prerequisites, visual quality, originality, similarity/flooding, and category fit.
 
 Lead with the lead reviewer's most cited findings (contract \`reviewerCalibration.mostCitedFindings\`). Several are Designer-side; when no Designer pass ran, list them under manual checks remaining instead of dropping them. Treat \`reviewerCalibration.lowSignalChecks\` as supporting evidence, never as the only reason for a change request.
+
+When recommending a decision, apply \`reviewerCalibration.decisionFactors\` (quality over item count, courtesy round, last review as a warning, upgrade path). The decision itself stays with the reviewer.
 
 Creator-facing drafts follow \`creatorFeedbackFormat\`: one numbered item per issue with page or screenshot evidence, "sitewide issue" and "persisting issue" tags, and a dated header with struck-through fixed items on re-reviews.
 
