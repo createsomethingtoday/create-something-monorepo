@@ -350,3 +350,20 @@ test('active public journey does not leak compatibility names as commercial copy
     assert.doesNotMatch(source, /\bPolicy OS\b/, routePath);
   }
 });
+
+
+test('products opening omits the decorative junction while retaining its action and product paths', () => {
+  const products = readFileSync(
+    new URL('../src/routes/products/+page.svelte', import.meta.url),
+    'utf8'
+  );
+  const opening = products.split('<div id="products-opening"')[1].split('<section id="capabilities"')[0];
+  assert.doesNotMatch(products, /AgencyProductJunction/);
+  assert.doesNotMatch(opening, /\{#snippet artifact\(/);
+  assert.doesNotMatch(products, /performance-campaign-opening__artifact/);
+  assert.match(opening, /title="Three ways to work together\."/);
+  assert.match(opening, /<Button href="#capabilities">Inspect the work<\/Button>/);
+  assert.match(opening, /<AgencyRecordedWork id="product-recorded-work" title="Start with the actual work\." \/>/);
+  assert.match(opening, /<AgencyPathChoices label="Choose a product path" \/>/);
+  assert.match(products, /\{#each filmStories as story\}/);
+});
