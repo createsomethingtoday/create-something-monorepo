@@ -1,0 +1,48 @@
+{
+  "schema": "internal-workflow-registration@1",
+  "id": "internal.database-layer.contract-validation@1",
+  "scope": {
+    "accountId": "create-something",
+    "tenantId": "internal-actions",
+    "workspaceId": "create-something-monorepo"
+  },
+  "owner": "create-something-engineering",
+  "workflowDefinition": "packages/database-layer/workflows/internal-contract-validation/workflow.json",
+  "definitionHash": "sha256:54ecaaf9ac33bbba1a1925352c6096baaeb22c926c0f278a9cbbf0ab80249674",
+  "executable": "node:current-process",
+  "argv": [
+    "packages/database-layer/scripts/ontology.mjs",
+    "check"
+  ],
+  "timeoutMs": 15000,
+  "maximumOutputBytes": 1048576,
+  "effects": "read_only_validation",
+  "recovery": {
+    "maximumCommandRetries": 0,
+    "ambiguous": "reconcile_then_operator_review",
+    "sourceRepair": "forbidden",
+    "maximumDerivedRepairAttempts": 1
+  },
+  "sourceFiles": [
+    {
+      "path": "packages/database-layer/workflows/internal-contract-validation/workflow.json",
+      "sha256": "sha256:f457c93962e5f94d0c6700195a395910236c07c37a06a6903983877fa0b87656"
+    },
+    {
+      "path": "packages/database-layer/scripts/ontology.mjs",
+      "sha256": "sha256:c1a5f2e1f9d3fa353c43c15f06571ca415360c99468fc79caf92ca5635697978"
+    },
+    {
+      "path": "packages/database-layer/scripts/lib/ontology.mjs",
+      "sha256": "sha256:3c5c41f84b75487b449a38ef02d66cf1f2398c2ab9f9cf9ec552db61e1496665"
+    },
+    {
+      "path": "packages/database-layer/ontology/v1/contract.json",
+      "sha256": "sha256:c658aca7a12bd7faadd04fce45126292e611e8f2cbd3c78f98fc31a3371893e6"
+    },
+    {
+      "path": "packages/database-layer/data/create-something-internal-topology.json",
+      "sha256": "sha256:9c4f8f412cc3dd2d0c2dde4d9416fc0cf13ea76ad4b4b13efb6a3271234386d9"
+    }
+  ]
+}

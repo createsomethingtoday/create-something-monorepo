@@ -12,6 +12,7 @@ import {
 } from 'node:fs/promises';
 import { resolve, relative, join, dirname, isAbsolute, sep } from 'node:path';
 import { scanRepository } from './scan.mjs';
+import { selectCandidates } from './lifecycle.mjs';
 
 const canonical = (value) =>
   Array.isArray(value)
@@ -203,13 +204,19 @@ export async function createWorkflowCatalog(inventory, history, { maximumCandida
     if (contracts.length)
       proposed.push({ source, pattern: 'contract-reconciliation', scripts: contracts.slice(0, 8) });
   }
-  const priority = (pattern) =>
-    ['contract-reconciliation', 'release-evidence', 'package-validation'].indexOf(pattern);
-  proposed.sort(
-    (a, b) =>
-      priority(a.pattern) - priority(b.pattern) || a.source.path.localeCompare(b.source.path)
-  );
-  const candidates = proposed.slice(0, maximumCandidates).map((entry) => {
+  const { selected, deferred } = selectCandidates(proposed, maximumCandidates);
+  const candidateIndex = proposed
+    .map((entry) => {
+      const workflow = definition(entry.source, entry.pattern, entry.scripts);
+      return {
+        id: workflow.workflowId,
+        pattern: entry.pattern,
+        source: { path: entry.source.path, sha256: entry.source.sha256 },
+        definitionSha256: digest(workflow)
+      };
+    })
+    .sort((a, b) => a.id.localeCompare(b.id));
+  const candidates = selected.map((entry) => {
     const workflow = definition(entry.source, entry.pattern, entry.scripts);
     compileWorkflowDefinition(workflow);
     return {
@@ -255,7 +262,8 @@ export async function createWorkflowCatalog(inventory, history, { maximumCandida
     history,
     candidates,
     existingWorkflows,
-    deferred: proposed.slice(maximumCandidates).map((entry) => ({
+    candidateIndex,
+    deferred: deferred.map((entry) => ({
       path: entry.source.path,
       pattern: entry.pattern,
       reason: 'bounded_candidate_capacity'

@@ -436,6 +436,7 @@
     "zellij:cockpit:build": "cargo build --manifest-path packages/zellij-cockpit/Cargo.toml --target wasm32-wasip1 --release --locked",
     "zellij:cockpit:install": "node scripts/zellij-cockpit-install.mjs",
     "atlas:context": "node packages/database-layer/scripts/atlas-context.mjs",
+    "workflow:operations:test": "pnpm --filter @createsomething/workflow-compiler build && pnpm --filter @createsomething/workflow-runtime build && node --test scripts/workflow-discovery/*.test.mjs scripts/workflow-operations/*.test.mjs && pnpm exec tsx --test scripts/workflow-discovery/rank.test.ts",
     "workflow:discover": "node scripts/workflow-discovery/cli.mjs",
     "workflow:discover:test": "pnpm --filter @createsomething/workflow-compiler build && node --test scripts/workflow-discovery/*.test.mjs",
     "graph:evidence": "node scripts/graph-engineering/cli.mjs",

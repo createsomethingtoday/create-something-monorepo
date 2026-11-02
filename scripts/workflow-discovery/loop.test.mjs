@@ -229,3 +229,28 @@ test('dot-dot-prefixed repository children cannot become output directories', as
     await rm(f.root, { recursive: true, force: true });
   }
 });
+
+test('capacity selection covers validation and release procedures and indexes every proposal', async () => {
+  const f = await fixture();
+  try {
+    for (let n = 0; n < 8; n++) {
+      await mkdir(join(f.repo, 'packages', `release-${n}`));
+      await writeFile(
+        join(f.repo, 'packages', `release-${n}`, 'package.json'),
+        JSON.stringify({
+          name: `release-${n}`,
+          scripts: { deploy: 'never', build: 'never', test: 'never' }
+        })
+      );
+    }
+    const run = await runDiscovery({ repoRoot: f.repo, outDir: f.out, maximumCandidates: 4 });
+    assert.equal(
+      run.catalog.candidates.filter((x) => x.pattern === 'package-validation').length,
+      2
+    );
+    assert.equal(run.catalog.candidates.filter((x) => x.pattern === 'release-evidence').length, 2);
+    assert.equal(run.catalog.candidateIndex.length, run.catalog.coverage.proposed);
+  } finally {
+    await rm(f.root, { recursive: true, force: true });
+  }
+});

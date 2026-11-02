@@ -72,6 +72,8 @@ Read in this order when you need broad repo context:
 
 ### Architecture and control planes
 
+- [Internal workflow operations](../scripts/workflow-operations/README.md) — reviewed registration, actual validation runs, durable candidate lifecycle, and bounded evidence recovery
+
 - [Workflow discovery and reconciliation](../scripts/workflow-discovery/README.md) — bounded repository discovery, private session signals, approval-required candidates, and derived-artifact repair
 
 - [Execution evidence graph pilot](../scripts/graph-engineering/README.md) — offline task, coordination, and runtime evidence with explicit trust and ownership boundaries
