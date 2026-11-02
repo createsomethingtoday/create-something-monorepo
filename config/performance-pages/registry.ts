@@ -74,8 +74,20 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     contract(
       'landing',
       'Decide whether AI-native technical support can help one task and the team that uses it.',
-      'A recorded client website walkthrough demonstrates inspectable work; labeled conceptual scenes explain learning, connection and reviewed operation, while explicit membership capacity preserves cost and responsibility boundaries.',
+      'Micah Johnson’s individual Webflow Marketplace portfolio connects preparation, intake, review, asset management and discovery through recorded interfaces and labeled offline replays, with clear personal-work attribution; labeled conceptual scenes explain learning, connection and reviewed operation, while explicit membership capacity preserves cost and responsibility boundaries.',
       'Talk through the workflow'
+    )
+  ),
+  group(
+    'agency-webflow-portfolio',
+    'agency',
+    ['case-studies/webflow-marketplace', 'case-studies/webflow-marketplace/[study]'],
+    'migrated',
+    contract(
+      'editorial',
+      'Inspect Micah Johnson’s individual work across the Webflow Marketplace lifecycle.',
+      'Real recorded interfaces and labeled offline replays place the contribution, design decisions and evidence limits beside each study.',
+      'Explore another study or discuss a workflow'
     )
   ),
   group(

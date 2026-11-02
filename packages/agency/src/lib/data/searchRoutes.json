@@ -286,5 +286,59 @@
     "changefreq": "monthly",
     "priority": "0.65",
     "lastmod": "2026-10-13"
+  },
+  {
+    "path": "/case-studies/webflow-marketplace",
+    "changefreq": "monthly",
+    "priority": "0.8",
+    "lastmod": "2026-11-02"
+  },
+  {
+    "path": "/case-studies/webflow-marketplace/asset-dashboard",
+    "changefreq": "monthly",
+    "priority": "0.6",
+    "lastmod": "2026-11-02"
+  },
+  {
+    "path": "/case-studies/webflow-marketplace/validator",
+    "changefreq": "monthly",
+    "priority": "0.6",
+    "lastmod": "2026-11-02"
+  },
+  {
+    "path": "/case-studies/webflow-marketplace/preflight",
+    "changefreq": "monthly",
+    "priority": "0.6",
+    "lastmod": "2026-11-02"
+  },
+  {
+    "path": "/case-studies/webflow-marketplace/apps",
+    "changefreq": "monthly",
+    "priority": "0.6",
+    "lastmod": "2026-11-02"
+  },
+  {
+    "path": "/case-studies/webflow-marketplace/submission",
+    "changefreq": "monthly",
+    "priority": "0.6",
+    "lastmod": "2026-11-02"
+  },
+  {
+    "path": "/case-studies/webflow-marketplace/review-mcp",
+    "changefreq": "monthly",
+    "priority": "0.6",
+    "lastmod": "2026-11-02"
+  },
+  {
+    "path": "/case-studies/webflow-marketplace/skills",
+    "changefreq": "monthly",
+    "priority": "0.6",
+    "lastmod": "2026-11-02"
+  },
+  {
+    "path": "/case-studies/webflow-marketplace/listings",
+    "changefreq": "monthly",
+    "priority": "0.6",
+    "lastmod": "2026-11-02"
   }
 ]

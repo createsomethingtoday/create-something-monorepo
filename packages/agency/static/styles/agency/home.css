@@ -102,3 +102,17 @@
 /* GSAP owns these channels. Global reduced-motion duration resets must not
    manufacture CSS transitions as GSAP restores an authored style. */
 .agency-home [data-scroll-entrance],.agency-home [data-motion-arrow],.agency-home #journey-image{transition-property:none!important}
+
+/* Featured portfolio: show the lifecycle before the individual tools. */
+.agency-home .webflow-workshot{background:var(--color-performance-bg-elevated)}
+.agency-home .webflow-workshot img{aspect-ratio:16/9;object-fit:contain;object-position:center}
+.agency-home .webflow-stages{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));list-style:none;margin:var(--space-performance-lg) 0 0;padding:0;border-block:1px solid var(--ag-line)}
+.agency-home .webflow-stages li{min-width:0}
+.agency-home .webflow-stages button{width:100%;height:100%;min-height:112px;padding:var(--space-performance-sm);text-align:left;border:0;border-top:2px solid transparent;background:transparent}
+.agency-home .webflow-stages button:hover,.agency-home .webflow-stages button[aria-current=step]{border-top-color:var(--ag-signal);background:var(--color-performance-bg-elevated)}
+.agency-home .webflow-stages strong{display:block;margin-block:var(--space-performance-xs);font-size:16px;font-weight:400}
+.agency-home .webflow-stages small{font-size:12px;line-height:1.5;color:var(--ag-muted);display:block}
+.agency-home .webflow-scope{margin-top:var(--space-performance-sm);max-width:90ch}
+.agency-home #work-caption a{text-decoration:underline;text-underline-offset:3px}
+@media(max-width:700px){.agency-home .webflow-stages{grid-template-columns:repeat(2,minmax(0,1fr))}.agency-home .webflow-stages li:last-child{grid-column:1/-1}.agency-home .webflow-stages button{min-height:96px}.agency-home .webflow-workshot img{aspect-ratio:3/2}}
+@media(scripting:none){.agency-home .webflow-stages{display:none}}

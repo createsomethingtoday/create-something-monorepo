@@ -199,11 +199,11 @@ test('the builder-facing homepage retains commercial terms, film evidence and di
   assert.match(content, /href="\/book\?source=agency&intent=workflow-mapping&lane=workflow_infrastructure"/);
   assert.match(content, /You approve the budget first/);
   assert.match(content, /href="\/services"/);
-  assert.match(content, /href="https:\/\/www\.maverickx\.com\/"/);
-  assert.match(content, /href="\/films\/websites\/reference\.png"/);
-  assert.match(content, /href="\/products#cato-tour"/);
+  assert.match(content, /href="\/case-studies\/webflow-marketplace"/);
+  assert.match(content, /Webflow did not commission this work through CREATE SOMETHING/);
+  assert.match(content, /src="\/films\/webflow-marketplace\/overview\.mp4"/);
   assert.match(content, /Original conceptual illustration/);
-  assert.match(content, /not a measured business outcome/);
+  assert.match(content, /no measured business outcome/);
   assert.match(services, /Control starts at \$900\/month/);
   assert.match(registry, /Your next step, already prepared/);
   assert.match(registry, /tools and workflows that help agents do useful work/);
