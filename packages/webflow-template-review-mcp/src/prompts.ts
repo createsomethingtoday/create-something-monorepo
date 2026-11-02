@@ -405,9 +405,13 @@ Rewrite the feedback to:
 - keep the same intent,
 - remove ambiguity,
 - include concrete next steps,
-- avoid unnecessary length,
+- avoid unnecessary length${
+  decision === 'APPROVE'
+    ? '.'
+    : `,
 - follow the creator feedback format:
-${CREATOR_FEEDBACK_FORMAT.map((rule) => `  - ${rule}`).join('\n')}
+${CREATOR_FEEDBACK_FORMAT.map((rule) => `  - ${rule}`).join('\n')}`
+}
 
 Return only the refined feedback text.`,
           },
