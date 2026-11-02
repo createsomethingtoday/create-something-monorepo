@@ -797,8 +797,16 @@ Local-only input surfaces can set `data-analytics-ignore` on their root to exclu
 
 For authored campaign HTML, import `scrollEntrance` from
 `@create-something/canon/motion`, apply `use:scrollEntrance` to its stable root,
-and mark independent child groups with `data-scroll-entrance`. The helper uses
-IntersectionObserver and Web Animations; resting and server-rendered content is
-always visible. It preserves native scrolling, settles on focus/hash navigation
-and reduced-motion changes, and returns `destroy()` for plain HTML consumers.
+and mark independent child groups with `data-scroll-entrance`. IntersectionObserver
+triggers one-time entrances; the helper dynamically imports Canon's pinned GSAP
+runtime and CustomEase to apply Canon duration and cubic-bezier easing tokens.
+The runtime is bundled with the application; no CDN script or inline script is
+required. GSAP writes inline animation styles, so consumers with a restrictive
+style CSP must account for that runtime requirement.
+
+Resting and server-rendered content is always visible. Missing browser APIs or
+failed runtime loading leave it visible. The helper preserves native scrolling,
+settles on focus/hash navigation and reduced-motion changes, restores authored
+inline styles after completion or cancellation, and returns `destroy()` for plain
+HTML consumers. It skips initial-viewport, nested and already-transformed groups.
 See `docs/PERFORMANCE_LAB_VISUAL_GRAMMAR.md` for the motion and review contract.
