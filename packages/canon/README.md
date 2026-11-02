@@ -800,12 +800,17 @@ For authored campaign HTML, import `scrollEntrance` from
 and mark independent child groups with `data-scroll-entrance`. IntersectionObserver
 triggers one-time entrances; the helper dynamically imports Canon's pinned GSAP
 runtime and CustomEase to apply Canon duration and cubic-bezier easing tokens.
+Once loaded, entrances wait until the group is 12% into the viewport (64–120px),
+pause for the 100ms instant token, then ease from 40% opacity and 16px displacement
+to rest over the 700ms slow token. Loading-time visibility still uses the full
+viewport so already-viewed groups stay settled.
 The runtime is bundled with the application; no CDN script or inline script is
 required. GSAP writes inline animation styles, so consumers with a restrictive
 style CSP must account for that runtime requirement.
 
 Resting and server-rendered content is always visible. Missing browser APIs or
-failed runtime loading leave it visible. The helper preserves native scrolling,
+failed runtime loading leave it visible. Groups viewed while the runtime loads
+remain settled on later visits. The helper preserves native scrolling,
 settles on focus/hash navigation and reduced-motion changes, restores authored
 inline styles after completion or cancellation, and returns `destroy()` for plain
 HTML consumers. It skips initial-viewport, nested and already-transformed groups.

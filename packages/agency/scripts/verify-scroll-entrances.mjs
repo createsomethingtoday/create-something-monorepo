@@ -29,10 +29,13 @@ try {
     assert.equal(await page.locator('[data-scroll-entrance]').count(), 12, 'Authored groups mounted');
     assert.equal(await page.locator('.herocopy').evaluate(el => getComputedStyle(el).opacity), '1');
     const target = page.locator('.work .chapterhead');
+    await target.evaluate(el => window.scrollTo({ top: scrollY + el.getBoundingClientRect().top - innerHeight + 48, behavior: 'instant' }));
+    await page.waitForTimeout(200);
+    assert.equal(await target.evaluate(el => el.style.opacity), '', 'Reveal waits until the group is clearly inside the viewport');
     await target.evaluate(el => window.scrollTo({ top: scrollY + el.getBoundingClientRect().top - 180, behavior: 'instant' }));
     await page.waitForFunction(() => Number(getComputedStyle(document.querySelector('.work .chapterhead')).opacity) < 1);
     const motion = await target.evaluate(el => ({ opacity: Number(getComputedStyle(el).opacity), y: new DOMMatrix(getComputedStyle(el).transform).m42 }));
-    assert.ok(motion.opacity >= 0.25 && motion.opacity < 1 && motion.y > 0 && motion.y <= 16, 'Actual GSAP intermediate state');
+    assert.ok(motion.opacity >= 0.4 && motion.opacity < 1 && motion.y > 0 && motion.y <= 16, 'Actual GSAP intermediate state');
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     assert.equal(await target.evaluate(el => el.style.opacity), '', 'Preference change restores authored inline state');
