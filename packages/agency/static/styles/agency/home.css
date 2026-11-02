@@ -116,3 +116,15 @@
 .agency-home #work-caption a{text-decoration:underline;text-underline-offset:3px}
 @media(max-width:700px){.agency-home .webflow-stages{grid-template-columns:repeat(2,minmax(0,1fr))}.agency-home .webflow-stages li:last-child{grid-column:1/-1}.agency-home .webflow-stages button{min-height:96px}.agency-home .webflow-workshot img{aspect-ratio:3/2}}
 @media(scripting:none){.agency-home .webflow-stages{display:none}}
+
+/* Native disclosures share immediate state cues and short, scoped feedback. */
+.agency-home .boundary summary::after { content:'+'; display:inline-block; transition:transform var(--duration-performance-micro) var(--ease-performance-standard); }
+.agency-home .boundary details[open]:not(.is-closing) > summary::after { content:'+'; transform:rotate(45deg); }
+.agency-home .boundary details.is-closing > summary::after { content:'+'; }
+.agency-home .cc-disclosure > summary b { display:inline-block; font-weight:400; transition:transform var(--duration-performance-micro) var(--ease-performance-standard); }
+.agency-home .cc-disclosure[open]:not(.is-closing) > summary b { transform:rotate(45deg); }
+.agency-home .cc-faq details > summary::after { content:'+'; display:inline-block; transition:transform var(--duration-performance-micro) var(--ease-performance-standard); }
+.agency-home .cc-faq details[open]:not(.is-closing) > summary::after { transform:rotate(45deg); }
+@media(prefers-reduced-motion:reduce) {
+  .agency-home .boundary summary::after,.agency-home .cc-disclosure > summary b,.agency-home .cc-faq details > summary::after { transition:none; }
+}

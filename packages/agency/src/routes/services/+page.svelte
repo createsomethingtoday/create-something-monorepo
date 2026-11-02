@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { nativeDisclosure } from '$lib/motion/evidenceDisclosure';
   import AgencyWayfindingHero from '$lib/components/AgencyWayfindingHero.svelte';
   import AgencyWayfindingOpening from '$lib/components/AgencyWayfindingOpening.svelte';
   import AgencyRecordedWork from '$lib/components/AgencyRecordedWork.svelte';
@@ -145,16 +146,16 @@
     {/snippet}
   </PerformancePageSection>
 
-  <details class="service-work-library">
+  <details class="service-work-library" use:nativeDisclosure>
     <summary>Explore more work and delivery stages <span aria-hidden="true">+</span></summary>
-    <BuiltWork />
+    <div data-disclosure-body><BuiltWork /></div>
   </details>
 
   <MembershipOffer />
 
   <ProjectReviewEntry />
 
-  <details class="service-path-library"><summary>Compare Map, Build and Control <span aria-hidden="true">+</span></summary><AgencyWayfindingHero route="services" /><ServicesProductPath /></details>
+  <details class="service-path-library" use:nativeDisclosure><summary>Compare Map, Build and Control <span aria-hidden="true">+</span></summary><div data-disclosure-body><AgencyWayfindingHero route="services" /><ServicesProductPath /></div></details>
   <PerformancePageSection
     id="remote-support"
     eyebrow="Remote support"
@@ -200,6 +201,9 @@
 <style>
   .service-work-library, .service-path-library { border-block: 1px solid var(--color-performance-shell-border-default); }
   .service-work-library > summary, .service-path-library > summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-performance-md); min-height: 64px; padding: var(--space-performance-md) 6vw; cursor: pointer; font: var(--text-performance-body-sm)/1.5 var(--font-performance-interface); }
+  .service-work-library > summary > span, .service-path-library > summary > span { display: inline-block; transition: transform var(--duration-performance-micro) var(--ease-performance-standard); }
+  .service-work-library[open]:not(:global(.is-closing)) > summary > span, .service-path-library[open]:not(:global(.is-closing)) > summary > span { transform: rotate(45deg); }
+  @media (prefers-reduced-motion: reduce) { .service-work-library > summary > span, .service-path-library > summary > span { transition: none; } }
   .service-work-library > summary:focus-visible, .service-path-library > summary:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
 
   .services-opening :global(.performance-campaign-opening[data-density='compact']) { min-height: 0; }

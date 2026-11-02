@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Button, MeridianAccordion } from '@create-something/canon';
+  import { nativeDisclosure } from '$lib/motion/evidenceDisclosure';
   import MembershipPlanJourney from './MembershipPlanJourney.svelte';
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
@@ -99,10 +100,12 @@
     </div>
     <p class="availability">A milestone is one agreed workflow map or one scoped improvement to an existing workflow. Remote sessions are an option for onboarding, pairing or troubleshooting within the plan allowance. We agree on scope, session times, response times and any usage budget before payment. {PUBLIC_PRICING.membership.terms}. Larger Builds, managed Control and production incident response need separate agreements.</p>
     <p class="availability">Build days are Monday and Wednesday. Meetings are scheduled on Tuesday and Thursday, within your plan’s allowance and the times agreed before payment.</p>
-    <details class="membership-agreement-details">
-      <summary>Agreement and handoff details</summary>
+    <details class="membership-agreement-details" use:nativeDisclosure>
+      <summary>Agreement and handoff details <span class="disclosure-icon" aria-hidden="true">+</span></summary>
+      <div data-disclosure-body>
       <p>Before payment, we agree on the milestone, selected tool access, human approval boundary, acceptance check, session and response times, and any usage budget.</p>
       <p>Your handoff records what changed, actual check results, blockers and the next step. We explain how to use the result. Resource access and Slack setup are confirmed during onboarding.</p>
+      </div>
     </details>
     {#if compact}
       <p class="next-steps"><a href={agencyCoreMessaging.workflowMappingSessionHref}>Book a mapping session →</a></p>
@@ -135,7 +138,11 @@
 
 <style>
   .membership-agreement-details { margin-top: 1.5rem; max-width: 62ch; border-top: 1px solid var(--color-performance-line-strong); }
-  .membership-agreement-details summary { min-height: 44px; padding: .75rem 0; cursor: pointer; font-size: .875rem; }
+  .membership-agreement-details summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-performance-sm); list-style: none; min-height: 44px; padding: .75rem 0; cursor: pointer; font-size: .875rem; }
+  .membership-agreement-details summary::-webkit-details-marker { display: none; }
+  .disclosure-icon { display: inline-block; font-weight: 400; transition: transform var(--duration-performance-micro) var(--ease-performance-standard); }
+  .membership-agreement-details[open]:not(:global(.is-closing)) .disclosure-icon { transform: rotate(45deg); }
+  @media (prefers-reduced-motion: reduce) { .disclosure-icon { transition: none; } }
   .membership-agreement-details summary:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
   .membership-agreement-details p { font-size: .875rem; line-height: 1.7; }
   .membership.compact { --membership-gutter: 7vw; }
