@@ -16,7 +16,7 @@
   onMount(() => {
     const abort = new AbortController();
     const interactions = enhanceHomeInteractions(root);
-    const disposeEvidence = Array.from(root.querySelectorAll<HTMLDetailsElement>('[data-evidence-reveal]'), enhanceEvidenceDisclosure);
+    const disposeEvidence = Array.from(root.querySelectorAll<HTMLDetailsElement>('[data-evidence-reveal], .boundary details, .cc-disclosure, .cc-faq details'), enhanceEvidenceDisclosure);
     const image = root.querySelector<HTMLImageElement>('#journey-image');
     const caption = root.querySelector<HTMLElement>('#journey-caption');
     const status = root.querySelector<HTMLElement>('#journey-status');
@@ -93,7 +93,7 @@
   });
 </script>
 
-<svelte:head><link rel="stylesheet" href="/styles/agency/home.css?v=20261102-webflow-feature-gsap" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /></svelte:head>
+<svelte:head><link rel="stylesheet" href="/styles/agency/home.css?v=20261102-membership-motion" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /></svelte:head>
 <div class="agency-home" bind:this={root} use:scrollEntrance>
   {@html content}
   <details id="work-library" class="work-library" bind:open={libraryOpen}>
