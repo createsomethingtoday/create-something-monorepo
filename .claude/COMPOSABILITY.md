@@ -37,7 +37,7 @@ Composability follows the Hermeneutic Circle: each skill informs the others, cre
 │     └── Generates required structure                    │
 ├─────────────────────────────────────────────────────────┤
 │  2. voice-validator                                     │
-│     └── Validates Five Principles compliance            │
+│     └── Applies the approved voice guide                │
 ├─────────────────────────────────────────────────────────┤
 │  3. experiment-auditor OR paper-auditor                 │
 │     └── Validates structure & Canon tokens              │
@@ -209,11 +209,11 @@ Agent creates:
 Agent/human writes experiment content
 
 # Step 3: Voice validation (voice-validator)
-Agent checks:
-- No marketing jargon
-- Claims are specific/measurable
-- Failures documented
-- Master citations present
+Agent reads `packages/dotfiles/codex/skills/writing-for-humans/references/create-something-voice.md` and checks:
+- Reader use and the four pillars in the artifact’s property context
+- Material claims supported by evidence or honest limits
+- Uncertainty, inclusive language, ownership, and verification status
+- Citations where the artifact’s source and purpose require them
 
 # Step 4: Structure audit (experiment-auditor)
 Agent verifies:
@@ -260,12 +260,12 @@ Reviewer ensures:
 # Step 1: Write paper content
 
 # Step 2: Voice validation (voice-validator)
-Check Five Principles:
-- Clarity over cleverness
-- Specificity over generality
-- Honesty over polish
-- Useful over interesting
-- Grounded over trendy
+Read `packages/dotfiles/codex/skills/writing-for-humans/references/create-something-voice.md`.
+Apply its four pillars and research-property emphasis:
+- Lead with supported findings and explain technical terms as needed
+- Preserve methodology, limitations, uncertainty, and verification status
+- Check inclusive language and reader use
+- Keep source citations attached to the claims they support
 
 # Step 3: Paper audit (paper-auditor)
 Verify structure:

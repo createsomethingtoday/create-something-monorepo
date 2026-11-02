@@ -16,12 +16,15 @@ priority: P0
 
 # Voice Validator
 
+This repository compatibility skill follows the monorepo’s current writing guide. The separately versioned `createsomethingtoday/claude-plugins` marketplace release has its own manifest and release contract; changing this skill does not update that installed plugin or its public catalog.
+
 Use this compatibility skill to apply the canonical writing system:
 
 - `packages/dotfiles/codex/skills/writing-for-humans/SKILL.md` owns drafting and structural editing.
 - `packages/dotfiles/codex/skills/target-reader-review/SKILL.md` owns independent judgment.
 - `docs/policies/v1/policy.prose-quality.v1.md` owns enforcement boundaries.
-- `.claude/rules/voice-canon.md` owns the final clarity, honesty, humanity, and revision pass.
+- `packages/dotfiles/codex/skills/writing-for-humans/references/create-something-voice.md` owns the approved voice, property emphasis, and writing criteria. Read it before reviewing CREATE SOMETHING prose.
+- `.claude/rules/voice-canon.md` routes the final clarity, honesty, humanity, and revision pass.
 
 ## Validation Sequence
 
@@ -30,19 +33,15 @@ Use this compatibility skill to apply the canonical writing system:
 3. Check the information hierarchy and paragraph jobs before editing sentences.
 4. For operator content, simulate orientation, default selection, starting, completion, recovery, and verification.
 5. Check visible characters and actions, familiar-to-new information flow, and emphasis.
-6. Check material claims against evidence, uncertainty, and limitations.
+6. Check material claims against evidence, uncertainty, and limitations. Apply the approved guide’s accountability, inclusive-language, property-emphasis, and verification-status criteria.
 7. Remove clutter and unexplained terminology without erasing exact labels or technical meaning.
 8. Separate deterministic tool findings from editorial judgment.
 
-## Voice Principles
+## Voice authority
 
-- **Clarity over cleverness:** make the idea or action easy to follow.
-- **Specificity over generality:** support material claims with the right evidence or honest limit.
-- **Honesty over polish:** keep failures, uncertainty, and intervention visible when relevant.
-- **Useful over interesting:** help the reader understand, decide, or act.
-- **Grounded over trendy:** prefer precise mechanisms and durable concepts to empty novelty.
+Apply the shared guide’s four pillars: **precise, capable, human, and accountable**. Use its criteria in context; preserve the artifact’s reader, purpose, exact labels, source truth, and uncertainty. The guide owns the reusable rules, so this compatibility skill does not maintain a separate checklist of voice principles.
 
-These principles do not require a number in every sentence, a master citation in every artifact, or owned vocabulary where familiar language is clearer.
+These criteria do not require a number in every sentence, a master citation in every artifact, or owned vocabulary where familiar language is clearer.
 
 ## Operator Standard
 

@@ -50,10 +50,11 @@ Skills for validating code, content, and design against CREATE SOMETHING standar
 #### voice-validator
 - **File**: `skills/voice-validator.md`
 - **Priority**: P0
-- **Description**: Validate content against CREATE SOMETHING's Five Principles of Communication
+- **Description**: Review reader use, evidence, and the approved CREATE SOMETHING voice
 - **Triggers**: `*.md publish`, content review, before deployment
 - **Related**: canon-maintenance, experiment-scaffold, voice-audit-worker
 - **Composable**: Yes — layer with property-specific rules
+- **Voice authority**: Read `packages/dotfiles/codex/skills/writing-for-humans/references/create-something-voice.md`; apply its four pillars and property emphasis.
 
 #### canon-maintenance
 - **File**: `skills/canon-maintenance.md`
