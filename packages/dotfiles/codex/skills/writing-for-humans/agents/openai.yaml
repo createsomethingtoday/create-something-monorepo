@@ -1,0 +1,6 @@
+interface:
+  display_name: 'Writing for humans'
+  short_description: 'Clear writing with CREATE SOMETHING’s Canon voice'
+  default_prompt: 'Use $writing-for-humans to draft or revise this in CREATE SOMETHING’s Canon voice while preserving facts, scope, and uncertainty.'
+policy:
+  allow_implicit_invocation: true
