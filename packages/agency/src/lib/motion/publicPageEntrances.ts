@@ -7,7 +7,7 @@ import { usesAgencyOperatorPalette } from '../data/publicSurfacePolicy';
 export function usesPublicPageEntrances(pathname: string): boolean {
   const path = pathname.replace(/\/+$/, '') || '/';
   if (path === '/' || /^\/(?:prospects|experiments|account|admin|auth|dashboard|login|logout|mcp-access|delivery|api)(?:\/|$)/.test(path)) return false;
-  if (path.startsWith('/map/')) return false;
+  if (path === '/map' || path.startsWith('/map/')) return false;
   return usesAgencyOperatorPalette(path) || marketingPagePortfolio.some(entry => entry.path === path && entry.decision !== 'archive') || /^\/workflows\/[^/]+$/.test(path);
 }
 

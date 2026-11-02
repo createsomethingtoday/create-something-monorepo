@@ -7,6 +7,10 @@ await mkdir(evidence,{recursive:true});
 const browser=await chromium.launch({headless:true});
 const results=[];
 try {
+ const utility=await browser.newPage();
+ await utility.goto(base+'/map',{waitUntil:'networkidle'});
+ assert.equal(await utility.locator('[data-agency-page-entrance]').count(),0,'Root Map workbench keeps its own motion ownership');
+ await utility.close();
  for(const width of [320,390,768,1024,1025,1440]) {
   const page=await browser.newPage({viewport:{width,height:900}});
   for(const route of ['/services','/products','/products/ground','/about','/dispatch','/field-reports/template-review','/workflows','/workflows/mcp-server-development','/case-studies/webflow-marketplace','/case-studies/webflow-marketplace/validator','/dify/mcp-control-plane','/privacy','/security']) {
