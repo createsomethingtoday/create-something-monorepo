@@ -88,7 +88,7 @@ Each section needs **substance**, not just structure:
 |--------------|-----------------|
 | Introduction | 2-3 paragraphs explaining context and stakes |
 | Methodology | Numbered steps OR table showing approach |
-| Findings | Data table + before/after cards + specific metrics |
+| Findings | Source-supported observations or comparisons; metrics only when measured |
 | Discussion | 2-3 paragraphs interpreting what findings mean |
 | Limitations | 3-5 specific bullet points of what wasn't covered |
 
@@ -100,7 +100,7 @@ Every findings section needs an action component:
 ### What We Did
 - [Concrete action 1 with specific detail]
 - [Concrete action 2 with file paths or commands]
-- [Concrete action 3 with measurable result]
+- [Concrete action 3 with supported result or an honest limit]
 ```
 
 **Example:**
@@ -237,20 +237,20 @@ Each section MUST have:
 
 #### Case Study Paper
 
-Focus on real implementation with measurable outcomes.
+Focus on real implementation with supported outcomes. Use qualitative observations when measurements are unavailable.
 
 **Required sections**:
 1. Context/Background
-2. Initial State (metrics, problems)
+2. Initial State (observed problems and available measurements)
 3. Methodology/Approach
 4. Transformation Process
-5. Results (before/after metrics)
+5. Results (supported comparisons and measurement limits)
 6. Lessons Learned
 7. Limitations
 
 **Must include**:
 - Specific project name
-- Quantitative before/after metrics
+- Source-supported before/after evidence, qualitative or quantitative
 - At least 2 comparison cards
 - Code examples from actual implementation
 
@@ -304,7 +304,7 @@ Every experiment MUST include:
 |---------|----------|---------|
 | Title | Yes | H1 with experiment name |
 | Status banner | Yes | Current state with visual indicator |
-| Stats grid | Yes | 4+ key metrics |
+| Evidence summary | Yes | Supported measurements or qualitative findings and limits |
 | Status cards | Yes | Individual component status |
 | Data section | Yes | Tables or logs |
 | Architecture | Yes | How it works |
@@ -331,7 +331,7 @@ export const load: PageServerLoad = async ({ fetch }) => {
 | Element | Required | Purpose |
 |---------|----------|---------|
 | Status banner | Yes | Overall health indicator |
-| Stats grid | Yes | Key metrics (4+ items) |
+| Stats grid | When measurements exist | Available source-supported metrics; no numeric quota |
 | Status cards | Yes | Per-component status |
 | Activity log | Recommended | Recent events |
 | Error display | If applicable | Failure information |
@@ -343,7 +343,7 @@ export const load: PageServerLoad = async ({ fetch }) => {
 | Lines of code | 300 | 500-800 |
 | Data endpoints | 1 | 2-3 |
 | Status cards | 3 | 5-8 |
-| Stat metrics | 4 | 6-8 |
+| Stat metrics | No quota | Include only available source-supported measurements |
 
 ---
 
@@ -458,7 +458,7 @@ Before publication, verify:
 
 - [ ] Live data from real endpoint(s)
 - [ ] Status banner present
-- [ ] Stats grid with 4+ metrics
+- [ ] Evidence summary with supported measurements or qualitative findings and explicit limits
 - [ ] Status cards for components
 - [ ] Architecture section
 - [ ] Footer with links

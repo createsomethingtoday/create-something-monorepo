@@ -16,6 +16,8 @@ priority: P0
 
 # Voice Validator
 
+This repository compatibility skill follows the monorepo’s current writing guide. The separately versioned `createsomethingtoday/claude-plugins` marketplace release has its own manifest and release contract; changing this skill does not update that installed plugin or its public catalog.
+
 Use this compatibility skill to apply the canonical writing system:
 
 - `packages/dotfiles/codex/skills/writing-for-humans/SKILL.md` owns drafting and structural editing.

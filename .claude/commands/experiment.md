@@ -18,7 +18,7 @@ Before scaffolding, gather:
 1. **Experiment name** (slug format, e.g., "motion-ontology")
 2. **Property** (.space or .io)
 3. **Hypothesis** (testable claim)
-4. **Key metric** (one number that captures value)
+4. **Key evidence** (a supported measurement or qualitative finding and its limits)
 
 ## Structure to Generate
 
@@ -28,7 +28,7 @@ Every experiment must include these sections in order:
 ```
 ╔══════════════════════════════════════════╗
 ║  EXPERIMENT: [Name]                      ║
-║  [Key Metric]: [Value]                   ║
+║  [Key Evidence]: [Value]                   ║
 ║  createsomething.[property]              ║
 ╚══════════════════════════════════════════╝
 ```
@@ -43,7 +43,7 @@ Every experiment must include these sections in order:
 - Time boundaries
 
 ### 4. Results
-- Metrics table (Target | Actual | Status)
+- Evidence summary: supported measurements or qualitative observations, with explicit limits
 - Success criteria outcomes (✓/△/✗)
 
 ### 5. Honest Assessment
@@ -103,7 +103,7 @@ Use Canon pattern: Tailwind for layout, CSS variables for design.
 
 Read the `experiment-scaffold` skill at `.claude/skills/experiment-scaffold.md` for full reference, then:
 
-1. Ask for experiment name, property, hypothesis, and key metric
+1. Ask for experiment name, property, hypothesis, and key evidence
 2. Create the route structure
 3. Generate the page following all sections
 4. Add entry to fileBasedExperiments.ts
