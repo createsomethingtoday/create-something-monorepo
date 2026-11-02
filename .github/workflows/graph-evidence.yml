@@ -1,0 +1,36 @@
+name: Execution evidence graph
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/graph-evidence.yml'
+      - 'scripts/graph-engineering/**'
+      - 'packages/workflow-compiler/**'
+      - 'packages/workflow-runtime/**'
+      - 'packages/symphony/src/**'
+      - 'packages/database-layer/ontology/**'
+      - 'packages/database-layer/scripts/lib/ontology.mjs'
+      - 'packages/database-layer/test/ontology.test.mjs'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+      - run: pnpm bootstrap:worktree
+      - run: pnpm graph:evidence:test
+      - run: node --test packages/database-layer/test/ontology.test.mjs
