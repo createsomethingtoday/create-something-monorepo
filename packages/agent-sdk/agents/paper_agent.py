@@ -318,28 +318,22 @@ def detect_content_type(title: str, labels: list[str]) -> Literal["paper", "expe
     return "paper"
 
 
-def create_paper_agent(
+def build_paper_task(
     config: PaperConfig,
-) -> CreateSomethingAgent:
-    """
-    Create an agent for generating papers/experiments from Linear or Beads issues.
+    issue: dict[str, Any] | None = None,
+) -> str:
+    """Build the shared task for CLI and agent-factory callers.
 
-    Args:
-        config: Paper generation configuration
-
-    Returns:
-        Configured CreateSomethingAgent
-
-    Example:
-        agent = create_paper_agent(PaperConfig(issue_id="CRE-123"))
-        result = await agent.run()
+    Supplied issue data avoids a second remote lookup after a CLI has fetched it.
+    This only builds instructions; it does not create a provider or generate files.
     """
     monorepo = config.monorepo_path or Path.cwd()
     tracking_system = detect_tracking_system(config.issue_id)
     work_item_kind = "Linear issue" if tracking_system == "linear" else "Beads issue"
 
     # Fetch issue details
-    issue = get_issue_details(config.issue_id, monorepo)
+    if issue is None:
+        issue = get_issue_details(config.issue_id, monorepo)
     if not issue:
         raise ValueError(f"Could not fetch issue {config.issue_id}")
 
@@ -734,6 +728,13 @@ Before finalizing, verify:
 Generate complete content for review. Do not fill evidence gaps with placeholders or invented facts; flag any blocking gap. No publishing permission follows from draft completion.
 Route will be: {route_path}
 '''
+
+    return task
+
+
+def create_paper_agent(config: PaperConfig) -> CreateSomethingAgent:
+    """Create a paper/experiment agent using the shared evidence-preserving task."""
+    task = build_paper_task(config)
 
     # Select model
     model = config.model or "claude-sonnet-4-20250514"

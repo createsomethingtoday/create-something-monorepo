@@ -52,3 +52,22 @@ test('reviewing qualitative evidence does not demand invented numbers or grant p
   assert.doesNotMatch(result.feedback, /ready for publishing/i);
   assert.match(result.feedback, /does not.*authorize publication/i);
 });
+
+test('technically necessary terms are contextual signals rather than score penalties', () => {
+  const content =
+    'We use robust statistics and numerical solutions to describe a scalable test harness. The evidence comes from the local workflow and does not establish production behavior. Costs remain unknown, and deployment remains pending. The reader can inspect the source and decide whether the terminology fits the actual mechanism.';
+  const reviewer = new ContentReviewer();
+  const result = reviewer.review(content, 'linkedin');
+  const baseline = reviewer.review(
+    content
+      .replace('robust', 'resistant')
+      .replace('solutions', 'methods')
+      .replace('scalable', 'extensible'),
+    'linkedin'
+  );
+  assert.equal(result.score, baseline.score);
+  const signals = result.violations.filter((entry) => entry.type === 'forbidden');
+  assert.ok(signals.length >= 3);
+  assert.ok(signals.every((entry) => entry.severity === 'warning'));
+  assert.ok(reviewer.quickCheck(content).likely);
+});
