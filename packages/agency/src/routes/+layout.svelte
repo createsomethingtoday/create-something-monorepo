@@ -1,6 +1,7 @@
 <script lang="ts">
   import { isAgencyWebflowPortfolioPath } from '$lib/atlas/surface-policy';
   import '../app.css';
+  import { publicPageEntrances } from '$lib/motion/publicPageEntrances';
   import { IO_EXPERIMENTS_URL, IO_PAPERS_URL } from '$lib/data/ioResearchLinks';
   import AgencyPageTreatment from '$lib/components/AgencyPageTreatment.svelte';
   import CanonBrandSignature from '$lib/components/CanonBrandSignature.svelte';
@@ -357,7 +358,7 @@
     onMobileMenuChange={(open) => { mobileNavigationOpen = open; filmNavigationOpen.set(open); }}
   />
 
-  <main id="main-content" class="pt-[72px]">
+  <main id="main-content" class="pt-[72px]" use:publicPageEntrances={$page.url.pathname}>
     {#if usesPublicNavigation && $page.url.pathname !== '/' && !isAgencyWebflowPortfolioPath($page.url.pathname)}
       <AgencyPageTreatment />
     {/if}
