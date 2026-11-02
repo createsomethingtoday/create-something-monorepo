@@ -100,6 +100,7 @@ export function scrollEntrance(root: HTMLElement): { destroy: () => void } {
   const hashNavigation = () => { if (view.location.hash) settleAll(); };
   root.addEventListener('focusin', focus);
   view.addEventListener('hashchange', hashNavigation);
+  view.addEventListener('beforeprint', settleAll);
   preference.addEventListener('change', changePreference);
   void loadRuntime().then(loaded => {
     if (destroyed || preference.matches || view.location.hash) return;
@@ -123,6 +124,7 @@ export function scrollEntrance(root: HTMLElement): { destroy: () => void } {
     observer.disconnect();
     root.removeEventListener('focusin', focus);
     view.removeEventListener('hashchange', hashNavigation);
+    view.removeEventListener('beforeprint', settleAll);
     preference.removeEventListener('change', changePreference);
   } };
 }

@@ -140,7 +140,7 @@ describe('progressive GSAP scroll entrances', () => {
     expect(element.style.opacity).toBe('');
   });
 
-  it.each(['completion', 'focus', 'hash', 'reduced motion', 'destroy'])('clears the settlement deadline on %s', async kind => {
+  it.each(['completion', 'focus', 'hash', 'reduced motion', 'print', 'destroy'])('clears the settlement deadline on %s', async kind => {
     const element = target();
     const action = start(); await ready();
     vi.useFakeTimers();
@@ -150,12 +150,27 @@ describe('progressive GSAP scroll entrances', () => {
     else if (kind === 'focus') element.querySelector('a')!.focus();
     else if (kind === 'hash') { history.replaceState(null, '', '#built-work'); window.dispatchEvent(new HashChangeEvent('hashchange')); }
     else if (kind === 'reduced motion') { preference.matches = true; preference.dispatchEvent(new Event('change')); }
+    else if (kind === 'print') window.dispatchEvent(new Event('beforeprint'));
     else action.destroy();
     vi.advanceTimersByTime(0); // Flush jsdom focus bookkeeping, not the reveal deadline.
     expect(vi.getTimerCount()).toBe(0);
     vi.advanceTimersByTime(5000);
     expect(tweens[0].revert).toHaveBeenCalledOnce();
     expect(element.style.opacity).toBe('');
+  });
+
+  it('restores prepared and active groups before printing and prevents late preparation', async () => {
+    const prepared = target(); const active = target();
+    start(); await ready(); enter(active);
+    window.dispatchEvent(new Event('beforeprint'));
+    expect(prepared.style.opacity).toBe('');
+    expect(active.style.opacity).toBe('');
+    enter(prepared);
+    expect(tweens[0].restart).not.toHaveBeenCalled();
+    const loading = target(); start();
+    window.dispatchEvent(new Event('beforeprint'));
+    await ready();
+    expect(loading.style.opacity).toBe('');
   });
 
   it('never animates a group viewed and left before the GSAP import resolves', async () => {

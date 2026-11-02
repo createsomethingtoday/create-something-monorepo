@@ -66,6 +66,11 @@ try {
     await page.locator('.plan a').first().focus();
     assert.equal(await page.locator('.planrow').evaluate(el => el.getAnimations().length), 0, 'Keyboard focus stays immediate');
     assert.equal(await page.locator('.planrow').evaluate(el => getComputedStyle(el).opacity), '1');
+    await page.goto(base, { waitUntil: 'networkidle' });
+    await page.waitForFunction(() => [...document.querySelectorAll('[data-scroll-entrance]')].some(el => el.style.opacity === '0'));
+    await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
+    await page.emulateMedia({ media: 'print' });
+    assert.ok(await page.locator('[data-scroll-entrance]').evaluateAll(elements => elements.every(el => el.style.opacity === '' && getComputedStyle(el).opacity === '1')), 'Printing restores all unvisited groups');
     results.push({ width, entrances: count, passed: true });
     await page.close();
   }
@@ -81,7 +86,7 @@ try {
   assert.equal(await hash.locator('.workshot').evaluate(el => getComputedStyle(el).opacity), '1');
   assert.equal(await hash.locator('[data-scroll-entrance]').evaluateAll(elements => elements.reduce((n, el) => n + el.getAnimations().length, 0)), 0);
   await hash.close();
-  const receipt = { base, passed: true, results, checks: ['real scroll animation', 'once-only reverse scroll', 'live reduced motion', 'focus', 'no JavaScript', 'initial reduced motion', 'hash arrival', 'responsive overflow'] };
+  const receipt = { base, passed: true, results, checks: ['real scroll animation', 'once-only reverse scroll', 'live reduced motion', 'focus', 'no JavaScript', 'initial reduced motion', 'hash arrival', 'print visibility', 'responsive overflow'] };
   await writeFile(`${evidence}/results.json`, JSON.stringify(receipt, null, 2));
   console.log(JSON.stringify(receipt));
 } finally { await browser.close(); }

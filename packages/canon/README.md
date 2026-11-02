@@ -805,7 +805,7 @@ displacement before the reader can see them. Entrances play once the group is
 12% into the viewport (64–120px), pause for the 100ms instant token, then ease to
 rest over the 700ms slow token. A per-reveal real-time deadline (delay + duration
 + 100ms scheduling grace) restores authored styles if animation frames stall;
-completion, focus, hash, reduced-motion changes and teardown clear that deadline.
+completion, focus, hash, printing, reduced-motion changes and teardown clear that deadline.
 Loading-time visibility still uses the full viewport so already-viewed groups
 stay settled.
 The runtime is bundled with the application; no CDN script or inline script is
@@ -815,7 +815,7 @@ style CSP must account for that runtime requirement.
 Server-rendered, loading and fallback content is always visible. Missing browser APIs or
 failed runtime loading leave it visible. Groups viewed while the runtime loads
 remain settled on later visits. The helper preserves native scrolling,
-settles on focus/hash navigation and reduced-motion changes, restores authored
+settles on focus/hash navigation, printing and reduced-motion changes, restores authored
 inline styles after completion or cancellation, and returns `destroy()` for plain
 HTML consumers. It skips initial-viewport, nested and already-transformed groups.
 See `docs/PERFORMANCE_LAB_VISUAL_GRAMMAR.md` for the motion and review contract.
