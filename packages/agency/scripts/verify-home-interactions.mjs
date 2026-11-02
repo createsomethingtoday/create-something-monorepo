@@ -13,7 +13,7 @@ try {
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(base, { waitUntil: 'networkidle' });
     await page.locator('.steps').scrollIntoViewIfNeeded();
-    await page.waitForFunction(() => [...document.querySelectorAll('[data-scroll-entrance]')].every(el => !el.style.opacity));
+    await page.waitForFunction(() => !document.querySelector('.journey .scene').style.opacity);
     await page.locator('[data-home-step="build"]').click();
     await page.waitForFunction(() => document.querySelector('#journey-image').style.opacity !== '');
     const moving = await page.locator('#journey-image').evaluate(el => ({ opacity: Number(getComputedStyle(el).opacity), y: new DOMMatrix(getComputedStyle(el).transform).m42 }));

@@ -47,7 +47,7 @@ try {
     assert.equal(await seen.evaluate(el => getComputedStyle(el).opacity), '1');
     const unseen = page.locator('.plans .chapterhead');
     await unseen.evaluate(el => scrollTo({ top: scrollY + el.getBoundingClientRect().top - 180, behavior: 'instant' }));
-    await page.waitForFunction(() => Number(getComputedStyle(document.querySelector('.plans .chapterhead')).opacity) < 1);
+    await page.waitForFunction(() => { const opacity=Number(getComputedStyle(document.querySelector('.plans .chapterhead')).opacity); return opacity > 0 && opacity < 1; });
     await page.waitForFunction(() => !document.querySelector('.plans .chapterhead').style.opacity);
     results.push({ width, passed: true });
     await page.screenshot({ path: `${evidence}/settled-${width}.png` });

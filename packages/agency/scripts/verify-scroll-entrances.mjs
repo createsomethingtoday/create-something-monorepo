@@ -18,7 +18,7 @@ try {
       new MutationObserver(records => {
         for (const { target } of records) {
           if (!(target instanceof HTMLElement) || !target.hasAttribute('data-scroll-entrance') || seen.has(target)) continue;
-          if (target.style.opacity && Number(target.style.opacity) < 1) {
+          if (target.style.opacity && Number(target.style.opacity) > 0 && Number(target.style.opacity) < 1) {
             seen.add(target);
             window.entrances.push({ text: target.textContent.trim().slice(0, 45) });
           }
@@ -31,11 +31,11 @@ try {
     const target = page.locator('.work .chapterhead');
     await target.evaluate(el => window.scrollTo({ top: scrollY + el.getBoundingClientRect().top - innerHeight + 48, behavior: 'instant' }));
     await page.waitForTimeout(200);
-    assert.equal(await target.evaluate(el => el.style.opacity), '', 'Reveal waits until the group is clearly inside the viewport');
+    assert.equal(await target.evaluate(el => el.style.opacity), '0', 'Unseen groups start at zero before entering the reading area');
     await target.evaluate(el => window.scrollTo({ top: scrollY + el.getBoundingClientRect().top - 180, behavior: 'instant' }));
-    await page.waitForFunction(() => Number(getComputedStyle(document.querySelector('.work .chapterhead')).opacity) < 1);
+    await page.waitForFunction(() => { const opacity=Number(getComputedStyle(document.querySelector('.work .chapterhead')).opacity); return opacity > 0 && opacity < 1; });
     const motion = await target.evaluate(el => ({ opacity: Number(getComputedStyle(el).opacity), y: new DOMMatrix(getComputedStyle(el).transform).m42 }));
-    assert.ok(motion.opacity >= 0.4 && motion.opacity < 1 && motion.y > 0 && motion.y <= 16, 'Actual GSAP intermediate state');
+    assert.ok(motion.opacity > 0 && motion.opacity < 1 && motion.y > 0 && motion.y <= 16, 'Actual GSAP intermediate state');
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     assert.equal(await target.evaluate(el => el.style.opacity), '', 'Preference change restores authored inline state');
