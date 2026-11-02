@@ -6,7 +6,7 @@ export const CREATOR_FEEDBACK_FORMAT = [
   'Add "sitewide issue, revisit all assets" when the issue repeats across pages, and "persisting issue" when it survived an earlier round.',
   'On re-reviews, start with a dated round header and keep fixed items from earlier rounds struck through.',
   'When design already meets the bar, open with "Design wise your template is good, please address the following issues to improve the overall quality rating."',
-  'Do not lead with low-signal checks (PageSpeed bands, animation milliseconds, combo depth, OG ratio); list them last or omit them.',
+  'Do not lead with low-signal checks (PageSpeed bands, animation milliseconds, combo depth, OG ratio); list them last or omit them. Localization is rare but still a hard fail when present.',
 ] as const;
 
 export const RUBRIC_DIMENSIONS = [
@@ -136,7 +136,6 @@ export const COMPREHENSIVE_REVIEW_CONTRACT = {
       'animation duration in milliseconds',
       'combo class depth',
       'Open Graph image aspect ratio',
-      'localization',
     ],
     decisionFactors: [
       'Recommend Reject for low design quality even with few items; a long list on a Good design is Changes Requested.',
@@ -187,7 +186,7 @@ The coverage matrix must include these lanes and label each as Auto, Partial, or
 
 The rubric matrix must mention every dimension: overall user experience, graphic design, typography, interaction design, hierarchy, layout design quality, responsive design, conversion best practices, site optimization, and accessibility.
 
-Manual checks remaining must include Designer/Admin review areas that published-site automation cannot prove: components, variables, unused styles/classes, interactions cleanup, Designer responsive QA, forms, CMS/dynamic page setup, site settings, custom fonts/licenses, asset thumbnail, template name/categories, pricing/page-count calculation, MRP/admin publishing prerequisites, visual quality, originality, similarity/flooding, and category fit.
+Manual checks remaining must include Designer/Admin review areas that published-site automation cannot prove: components, button components, variables, Variable Modes and linked values, baseline tag styles, connected apps, unused styles/classes, interactions cleanup, Designer responsive QA, forms, form success messages, CMS/dynamic page setup, site settings, custom fonts/licenses, asset thumbnail, template name/categories, pricing/page-count calculation, MRP/admin publishing prerequisites, visual quality, originality, similarity/flooding, and category fit.
 
 Lead with the lead reviewer's most cited findings (contract \`reviewerCalibration.mostCitedFindings\`). Several are Designer-side; when no Designer pass ran, list them under manual checks remaining instead of dropping them. Treat \`reviewerCalibration.lowSignalChecks\` as supporting evidence, never as the only reason for a change request.
 
