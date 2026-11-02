@@ -34,6 +34,12 @@ omitted `schemaVersion`. The builder added its exact required value and verified
 the corrected table. The final README prose check passed with zero findings.
 No behavior changed after the independent functional re-test.
 
+GitHub review then identified a CI trigger gap: the demo imports Symphony's
+`errors.js` transitively, but the workflow watched only two Symphony source files.
+A targeted path-coverage check failed before the correction. The workflow now
+watches `packages/symphony/src/**`; the same check passes for all three imported
+modules. This correction changes CI selection only, not runtime behavior.
+
 ## Quality gates
 
 - **Functional correctness: passed for offline synthetic evidence.** Owning
