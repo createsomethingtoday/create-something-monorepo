@@ -72,6 +72,8 @@ Read in this order when you need broad repo context:
 
 ### Architecture and control planes
 
+- [Workflow discovery and reconciliation](../scripts/workflow-discovery/README.md) — bounded repository discovery, private session signals, approval-required candidates, and derived-artifact repair
+
 - [Execution evidence graph pilot](../scripts/graph-engineering/README.md) — offline task, coordination, and runtime evidence with explicit trust and ownership boundaries
 - [THREE_TIER_FRAMEWORK.md](./THREE_TIER_FRAMEWORK.md)
 - [internal/BUSINESS_DIGITAL_THREAD_LIFETIME_CONTROL_BASELINE_2026-07-23.md](./internal/BUSINESS_DIGITAL_THREAD_LIFETIME_CONTROL_BASELINE_2026-07-23.md)
