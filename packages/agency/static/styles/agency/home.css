@@ -92,3 +92,13 @@
   .agency-home .home-team h2{font-size:clamp(32px,6vw,44px)}
   .agency-home .home-team figure img{aspect-ratio:4/5;object-position:center}
 }
+
+/* Move only the directional mark; the control and its hit area stay anchored. */
+.agency-home [data-motion-arrow]{display:inline-block}
+.agency-home .steps button{transition:color var(--duration-performance-micro) var(--ease-performance-standard),border-color var(--duration-performance-micro) var(--ease-performance-standard)}
+.agency-home .steps button:enabled:hover{color:var(--ag-fg)}
+.agency-home .steps button:focus-visible{transition:none}
+@media(prefers-reduced-motion:reduce){.agency-home .steps button{transition:none}}
+/* GSAP owns these channels. Global reduced-motion duration resets must not
+   manufacture CSS transitions as GSAP restores an authored style. */
+.agency-home [data-scroll-entrance],.agency-home [data-motion-arrow],.agency-home #journey-image{transition-property:none!important}

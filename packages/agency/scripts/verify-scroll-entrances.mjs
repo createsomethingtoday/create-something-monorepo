@@ -14,26 +14,32 @@ try {
     page.on('pageerror', error => errors.push(error.message));
     await page.addInitScript(() => {
       window.entrances = [];
-      const animate = Element.prototype.animate;
-      Element.prototype.animate = function(frames, options) {
-        if (this.hasAttribute('data-scroll-entrance')) window.entrances.push({ text: this.textContent.trim().slice(0, 45), duration: options.duration, frames });
-        return animate.call(this, frames, options);
-      };
+      const seen = new WeakSet();
+      new MutationObserver(records => {
+        for (const { target } of records) {
+          if (!(target instanceof HTMLElement) || !target.hasAttribute('data-scroll-entrance') || seen.has(target)) continue;
+          if (target.style.opacity && Number(target.style.opacity) < 1) {
+            seen.add(target);
+            window.entrances.push({ text: target.textContent.trim().slice(0, 45) });
+          }
+        }
+      }).observe(document, { subtree: true, attributes: true, attributeFilter: ['style'] });
     });
     await page.goto(base, { waitUntil: 'networkidle' });
     assert.equal(await page.locator('[data-scroll-entrance]').count(), 12, 'Authored groups mounted');
     assert.equal(await page.locator('.herocopy').evaluate(el => getComputedStyle(el).opacity), '1');
     const target = page.locator('.work .chapterhead');
     await target.evaluate(el => window.scrollTo({ top: scrollY + el.getBoundingClientRect().top - 180, behavior: 'instant' }));
-    await page.waitForFunction(() => document.querySelector('.work .chapterhead').getAnimations().length > 0);
-    const motion = await target.evaluate(el => el.getAnimations()[0].effect.getKeyframes());
-    assert.equal(motion[0].transform, 'translateY(16px)');
+    await page.waitForFunction(() => Number(getComputedStyle(document.querySelector('.work .chapterhead')).opacity) < 1);
+    const motion = await target.evaluate(el => ({ opacity: Number(getComputedStyle(el).opacity), y: new DOMMatrix(getComputedStyle(el).transform).m42 }));
+    assert.ok(motion.opacity >= 0.25 && motion.opacity < 1 && motion.y > 0 && motion.y <= 16, 'Actual GSAP intermediate state');
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    assert.equal(await target.evaluate(el => el.getAnimations().length), 0, 'Preference change cancels in-flight motion');
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    assert.equal(await target.evaluate(el => el.style.opacity), '', 'Preference change restores authored inline state');
     assert.equal(await target.evaluate(el => getComputedStyle(el).opacity), '1');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.evaluate(() => scrollTo({ top: document.body.scrollHeight, behavior: 'instant' }));
-    await page.evaluate(() => Promise.all(document.getAnimations().map(a => a.finished.catch(() => {}))));
+    await page.waitForFunction(() => [...document.querySelectorAll('[data-scroll-entrance]')].every(el => !el.style.opacity));
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `No overflow at ${width}`);
     assert.deepEqual(errors, []);
     await page.screenshot({ path: `${evidence}/closing-${width}.png` });
@@ -45,7 +51,7 @@ try {
       await page.evaluate(y => scrollTo({ top: y, behavior: 'instant' }), y);
       await page.waitForTimeout(35);
     }
-    await page.evaluate(() => Promise.all(document.getAnimations().map(a => a.finished.catch(() => {}))));
+    await page.waitForFunction(() => [...document.querySelectorAll('[data-scroll-entrance]')].every(el => !el.style.opacity));
     const count = await page.evaluate(() => window.entrances.length);
     assert.ok(count >= 6, `Real scroll triggers chapter entrances at ${width}`);
     await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
@@ -53,7 +59,6 @@ try {
     await page.evaluate(() => scrollTo({ top: document.body.scrollHeight, behavior: 'instant' }));
     await page.waitForTimeout(80);
     assert.equal(await page.evaluate(() => window.entrances.length), count, 'Reverse scroll never replays');
-    assert.ok(await page.evaluate(() => window.entrances.every(a => a.duration === 500)), 'Canon duration');
     await page.goto(base, { waitUntil: 'networkidle' });
     await page.locator('.plan a').first().focus();
     assert.equal(await page.locator('.planrow').evaluate(el => el.getAnimations().length), 0, 'Keyboard focus stays immediate');

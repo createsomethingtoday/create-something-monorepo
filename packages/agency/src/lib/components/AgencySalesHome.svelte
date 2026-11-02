@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { scrollEntrance } from '@create-something/canon/motion';
+  import { enhanceHomeInteractions } from '$lib/motion/homeInteractions';
   import { enhanceEvidenceDisclosure } from '$lib/motion/evidenceDisclosure';
   import { page } from '$app/stores';
   import content from '$lib/content/agency-home.html?raw';
@@ -13,6 +14,7 @@
   $effect(() => { if ($page.url.searchParams.has('film') || $page.url.hash === '#work') libraryOpen = true; });
   onMount(() => {
     const abort = new AbortController();
+    const interactions = enhanceHomeInteractions(root);
     const disposeEvidence = Array.from(root.querySelectorAll<HTMLDetailsElement>('[data-evidence-reveal]'), enhanceEvidenceDisclosure);
     const image = root.querySelector<HTMLImageElement>('#journey-image');
     const caption = root.querySelector<HTMLElement>('#journey-caption');
@@ -27,7 +29,8 @@
       button.disabled = false;
       button.addEventListener('click', () => {
         const scene = scenes[button.dataset.homeStep as keyof typeof scenes];
-        if (!scene || !image || !caption || !status) return;
+        if (!scene || !image || !caption || !status || button.getAttribute('aria-pressed') === 'true') return;
+        interactions.sceneChanged();
         image.src = scene.src;
         image.alt = scene.alt;
         caption.textContent = scene.caption;
@@ -57,6 +60,7 @@
     }, { signal: abort.signal });
     return () => {
       abort.abort();
+      interactions.destroy();
       disposeEvidence.forEach(dispose => dispose());
       dialog?.querySelector('video')?.pause();
       if (dialog?.open) {
@@ -67,7 +71,7 @@
   });
 </script>
 
-<svelte:head><link rel="stylesheet" href="/styles/agency/home.css?v=20261101-scroll-entrances" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /></svelte:head>
+<svelte:head><link rel="stylesheet" href="/styles/agency/home.css?v=20261102-gsap-interactions" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /></svelte:head>
 <div class="agency-home" bind:this={root} use:scrollEntrance>
   {@html content}
   <details id="work-library" class="work-library" bind:open={libraryOpen}>
