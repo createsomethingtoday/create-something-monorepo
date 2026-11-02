@@ -44,14 +44,13 @@ body.design-preview .performance-campaign-opening.agency-preview-hero .performan
  body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__content>header{grid-column:1!important;grid-row:1!important;padding:0!important}
  body.design-preview .performance-campaign-opening.agency-preview-hero .performance-campaign-opening__proof{grid-column:1!important;grid-row:4!important}
 }
-/* Draw's working brief remains available after the planning scene. */
+/* Keep Draw copy and its injected planning scene above the canvas/approval strip. */
 body.design-preview .map-page .hero-track.agency-preview-hero{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:var(--space-performance-lg);align-items:center}
 body.design-preview .map-page .hero-track.agency-preview-hero>.hero-layout{display:contents}
 body.design-preview .map-page .hero-track.agency-preview-hero .hero-copy{grid-column:1;grid-row:1;min-width:0}
 body.design-preview .map-page .hero-track.agency-preview-hero>.agency-preview-media{grid-column:2;grid-row:1;margin:0}
-body.design-preview .map-page .hero-track.agency-preview-hero .handoff{grid-column:1/-1;grid-row:2;max-width:none;width:100%;box-sizing:border-box}
-body.design-preview .map-page .hero-track.agency-preview-hero>.hero-bottom{grid-column:1/-1;grid-row:3}
-@media(max-width:800px){body.design-preview .map-page .hero-track.agency-preview-hero{grid-template-columns:minmax(0,1fr)}body.design-preview .map-page .hero-track.agency-preview-hero>.agency-preview-media{grid-column:1;grid-row:2}body.design-preview .map-page .hero-track.agency-preview-hero .handoff{grid-row:3}body.design-preview .map-page .hero-track.agency-preview-hero>.hero-bottom{grid-row:4}}
+body.design-preview .map-page .hero-track.agency-preview-hero>.hero-bottom{grid-column:1/-1;grid-row:2}
+@media(max-width:800px){body.design-preview .map-page .hero-track.agency-preview-hero{grid-template-columns:minmax(0,1fr)}body.design-preview .map-page .hero-track.agency-preview-hero>.agency-preview-media{grid-column:1;grid-row:2}body.design-preview .map-page .hero-track.agency-preview-hero>.hero-bottom{grid-row:3}}
 body.design-preview .map-page .hero-track.agency-preview-hero{box-sizing:border-box;width:100%;padding-inline:6vw!important}
 /* Multi-part scenes must keep their full explanatory frame on every screen. */
 body.design-preview .agency-preview-media[data-frame='whole'] img{height:auto!important;aspect-ratio:3/2;object-fit:contain!important;max-height:none!important}
