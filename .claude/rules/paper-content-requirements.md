@@ -114,14 +114,7 @@ Every findings section needs an action component:
 
 ### Voice Requirements
 
-Papers must follow Voice Canon:
-
-| Principle | Application |
-|-----------|-------------|
-| **Clarity Over Cleverness** | Lead with outcomes, explain as you go |
-| **Specificity Over Generality** | Every claim has a number or file path |
-| **Honesty Over Polish** | Include what didn't work in Limitations |
-| **Useful Over Interesting** | Show actual code, commands, file paths |
+Read `packages/dotfiles/codex/skills/writing-for-humans/references/create-something-voice.md` and apply its research-property emphasis. Lead with supported findings; preserve methodology, limitations, exact technical terms, inclusive language, and verification status. Use the shared four pillars rather than a separate paper-specific voice checklist. Evidence can be qualitative or quantitative; do not invent a number to make a claim appear specific.
 
 ### Transformation Examples
 
@@ -477,17 +470,11 @@ Before publication, verify:
 
 ## Voice Canon Integration
 
-Papers must follow Voice Canon principles:
-
-| Principle | Application to Papers |
-|-----------|----------------------|
-| Clarity Over Cleverness | Lead with outcomes, not jargon |
-| Specificity Over Generality | Every claim has a number or citation |
-| Honesty Over Polish | Include limitations section |
-| Useful Over Interesting | Code examples, not just theory |
-| Grounded Over Trendy | Reference timeless principles |
+Use the shared voice guide named in Voice Requirements above. Keep the paper’s structural requirements separate from editorial voice review. A structural check does not establish claim accuracy or authorize publication.
 
 ### Transformation Examples
+
+The following examples illustrate specificity. Use a number, outcome, or citation only when the actual source supports it; never copy these example facts into a paper.
 
 | Before (vague) | After (specific) |
 |----------------|------------------|
