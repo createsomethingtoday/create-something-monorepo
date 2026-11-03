@@ -1,0 +1,90 @@
+{
+  "created": "2026-10-30",
+  "tool": "built-in image_gen",
+  "model": "not exposed by tool",
+  "generation_quality": "not exposed by tool",
+  "transparent_background": false,
+  "surface": "Agency homepage: reviewed operation and team handoff; user-authorized production release CRE-2302",
+  "family": "editorial-hybrid graphite workshop conceptual illustration",
+  "owner": "CREATE SOMETHING / CRE-2302",
+  "references": {
+    "owned": [
+      "packages/agency/static/images/agency-sales/hero.webp",
+      "packages/agency/static/images/agency-sales/team.webp"
+    ],
+    "taste": [
+      {
+        "url": "https://www.are.na/block/32688970",
+        "adopt": "subject-led composition and subordinate captions",
+        "avoid": "retail styling and copied arrangements"
+      },
+      {
+        "url": "https://www.are.na/block/39660465",
+        "adopt": "compact wayfinding around a dominant visual",
+        "avoid": "report-level density"
+      },
+      {
+        "url": "https://www.are.na/block/35345375",
+        "adopt": "tangible inspectable objects",
+        "avoid": "mockups hiding actual work"
+      }
+    ]
+  },
+  "rights_note": "New conceptual renders from the current site character/material references. Third-party reference images were not supplied to generation or copied into this artifact. Human review remains required before production release.",
+  "assets": [
+    {
+      "id": "run-v1",
+      "file": "packages/agency/static/images/agency-sales/run-reviewed-v1.webp",
+      "sha256": "01dd7587d8f1b3496a054bdcc9ad981993611335cebc08bc1db5d2041925c677",
+      "intended_chapter": "Learn / Build / Run: Run selected",
+      "proof_requirement": "Illustrates workflow use or learning; not evidence of delivered hardware, live agents or client outcomes.",
+      "review": "User-approved direction; private mock passed independent review; production integration validation in CRE-2302.",
+      "crop": "Desktop wide2:1; phone1.45:1 centered; retain all3 faces, slider and output tray.",
+      "refresh_condition": "Replace if character/material continuity drifts, action is lost in crop, or actual delivery evidence becomes available.",
+      "dimensions": {
+        "width": 1600,
+        "height": 800
+      },
+      "format": "WebP",
+      "generation_size": "selected by built-in tool",
+      "web_derivative": {
+        "width": 1600,
+        "quality": 84,
+        "format": "WebP"
+      },
+      "source_file": "packages/agency/content/assets/brand/agency-image-led-20261030/run-reviewed-v1.png",
+      "source_sha256": "59d8dabf4c48bb14365342faedd1ce5bce6aa5ebfe63299ed60fb11c28d7418c",
+      "source_dimensions": {
+        "width": 1774,
+        "height": 887
+      }
+    },
+    {
+      "id": "handoff-v1",
+      "file": "packages/agency/static/images/agency-sales/team-handoff-v1.webp",
+      "sha256": "13cd5298efa9cb22f8d2ea45c5fede1eedfdf5aa51bcd64d7fc72e4ec03a8259",
+      "intended_chapter": "Built together. Used by your team.",
+      "proof_requirement": "Illustrates workflow use or learning; not evidence of delivered hardware, live agents or client outcomes.",
+      "review": "User-approved direction; private mock passed independent review; production integration validation in CRE-2302.",
+      "crop": "Portrait4:5 retained on desktop and phone; keep notebook, both receiving hands and operating peer visible.",
+      "refresh_condition": "Replace if character/material continuity drifts, action is lost in crop, or actual delivery evidence becomes available.",
+      "dimensions": {
+        "width": 1100,
+        "height": 1375
+      },
+      "format": "WebP",
+      "generation_size": "selected by built-in tool",
+      "web_derivative": {
+        "width": 1100,
+        "quality": 84,
+        "format": "WebP"
+      },
+      "source_file": "packages/agency/content/assets/brand/agency-image-led-20261030/team-handoff-v1.png",
+      "source_sha256": "2ad6417679e5bb0dcdd7e85604140082575b2d553940f747a89aba36855dbead",
+      "source_dimensions": {
+        "width": 1122,
+        "height": 1402
+      }
+    }
+  ]
+}

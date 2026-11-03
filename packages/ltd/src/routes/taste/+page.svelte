@@ -46,7 +46,7 @@
 
   // Format date for display
   function formatDate(dateValue: string | number | null): string {
-    if (dateValue === null) return 'Never';
+    if (dateValue === null) return 'Not recorded';
     const date =
       typeof dateValue === 'number'
         ? new Date(dateValue < 1_000_000_000_000 ? dateValue * 1000 : dateValue)

@@ -1,0 +1,499 @@
+/* CSS-compatible Sass. Regenerate gigi-landing-styles.ts after changes. */
+:root  {
+
+  --color-operator-background: oklch(20.5% 0 0);
+
+  --color-operator-panel: oklch(20.5% 0 0);
+
+  --color-operator-secondary: oklch(26.9% 0 0);
+
+  --color-operator-foreground: oklch(98.5% 0 0);
+
+  --color-operator-muted: oklch(70.8% 0 0);
+
+  --color-operator-border: oklch(100% 0 0 / .1);
+
+  --g-text: var(--color-operator-foreground);
+
+  --g-muted: var(--color-operator-muted);
+
+  --g-panel: var(--color-operator-panel);
+
+  --g-secondary: var(--color-operator-secondary);
+
+  --g-line: var(--color-operator-border);
+
+  --g-accent: var(--color-operator-foreground);
+
+  --g-bg: var(--color-operator-background);
+
+  font-family: Arial, Helvetica, system-ui, sans-serif;
+
+  color: var(--g-text);
+
+  background: var(--g-bg);
+
+  color-scheme: dark;
+
+}
+
+* {
+  box-sizing:border-box}
+html {
+  scroll-behavior:smooth}
+body {
+  margin:0}
+a {
+  color:inherit;
+  text-decoration:none}
+a:focus-visible,summary:focus-visible {
+  outline:3px solid var(--g-accent);
+  outline-offset:5px}
+p {
+  color:var(--g-muted);
+  line-height:1.65}
+ .site {
+  max-width:1120px;
+  margin:auto}
+.pad {
+  padding-inline:clamp(20px,5vw,64px)}
+.nav {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  padding-block:24px;
+  border-bottom:1px solid var(--g-line)}
+.brand {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:700;
+  font-size:24px;
+  letter-spacing:-1px}
+.brand svg {
+  border-radius:9px}
+.navlinks {
+  display:flex;
+  align-items:center;
+  gap:26px;
+  font-size:12px}
+.quiet {
+  color:var(--g-muted)}
+.nav-cta {
+  padding:11px 15px;
+  border:1px solid var(--g-line);
+  border-radius:4px}
+.eyebrow {
+  font:10px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.12em;
+  text-transform:uppercase}
+.eyebrow {
+  color:var(--g-accent)}
+.dot {
+  display:inline-block;
+  width:6px;
+  height:6px;
+  background:var(--g-accent);
+  border-radius:50%;
+  margin-right:8px}
+.hero {
+  padding-block:66px 38px;
+  text-align:center}
+.hero h1 {
+  font-size:clamp(46px,8vw,88px);
+  line-height:1.03;
+  letter-spacing:-.065em;
+  font-weight:500;
+  margin:22px 0}
+.hero .intro {
+  font-size:17px;
+  max-width:490px;
+  margin:0 auto 24px}
+.button {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:25px;
+  padding:15px 22px;
+  background:var(--g-text);
+  color:var(--g-bg);
+  font-size:13px;
+  font-weight:700;
+  border-radius:4px;
+  min-height:46px}
+.requirements {
+  font-size:11px;
+  margin-top:14px}
+.preview {
+  background:var(--g-panel);
+  border:1px solid var(--g-line);
+  border-radius:8px;
+  overflow:hidden}
+.windowbar {
+  height:36px;
+  border-bottom:1px solid var(--g-line);
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:0 14px;
+  font-size:10px;
+  color:var(--g-muted)}
+.windowbar i {
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:var(--g-line)}
+.windowbar span {
+  margin:auto}
+.work {
+  padding:26px;
+  min-width:0}
+.workhead {
+  display:flex;
+  justify-content:space-between;
+  align-items:start;
+  gap:10px}
+.workhead h3 {
+  font-family:Georgia,serif;
+  font-size:28px;
+  font-weight:400;
+  letter-spacing:-1px;
+  margin:0}
+.workhead p {
+  font-size:10px;
+  margin:8px 0 20px}
+.tag {
+  font:9px ui-monospace,monospace;
+  color:var(--g-muted);
+  border:1px solid var(--g-line);
+  padding:6px 8px;
+  border-radius:4px;
+  white-space:nowrap}
+.stats {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-bottom:20px}
+.stat {
+  border:1px solid var(--g-line);
+  padding:12px;
+  border-radius:5px}
+.stat small {
+  font-size:9px;
+  color:var(--g-muted)}
+.stat strong {
+  display:block;
+  font-family:Georgia,serif;
+  font-size:25px;
+  font-weight:400;
+  margin-top:8px}
+.sectionlabel {
+  font-size:10px;
+  margin:15px 0 6px}
+.caption {
+  font-size:10px;
+  color:var(--g-muted);
+  margin:12px 0 0;
+  display:flex;
+  justify-content:space-between;
+  gap:16px}
+.facts {
+  display:flex;
+  justify-content:center;
+  gap:28px;
+  padding:30px 0 42px;
+  font-size:11px;
+  color:var(--g-muted);
+  border-bottom:1px solid var(--g-line)}
+.story {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:52px;
+  padding-block:56px;
+  border-bottom:1px solid var(--g-line)}
+h2 {
+  font-size:clamp(30px,4vw,43px);
+  line-height:1.08;
+  font-weight:500;
+  letter-spacing:-.045em;
+  margin:14px 0 20px}
+.story p {
+  font-size:13px}
+.record {
+  padding:20px;
+  background:var(--g-panel);
+  border:1px solid var(--g-line);
+  border-radius:6px}
+.record h3 {
+  font-family:Georgia,serif;
+  font-size:25px;
+  font-weight:400;
+  margin:12px 0 22px}
+.record dl {
+  margin:0}
+.record dl div {
+  display:flex;
+  justify-content:space-between;
+  gap:20px;
+  border-top:1px solid var(--g-line);
+  padding:12px 0;
+  font-size:11px}
+.record dt {
+  color:var(--g-muted)}
+.record dd {
+  margin:0;
+  text-align:right}
+.note {
+  font-size:10px!important}
+.faq {
+  padding-block:46px}
+.faq h2 {
+  font-size:29px}
+.faq details {
+  border-bottom:1px solid var(--g-line);
+  font-size:12px}
+.faq summary {
+  cursor:pointer;
+  min-height:48px;
+  padding-block:16px}
+.faq details p {
+  max-width:650px;
+  font-size:12px;
+  margin:0 0 18px}
+.closing {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:24px;
+  padding:30px;
+  background:var(--g-panel);
+  border:1px solid var(--g-line);
+  border-radius:6px}
+.closing h2 {
+  font-size:29px;
+  margin:0 0 8px}
+.closing p {
+  font-size:11px;
+  margin:0}
+.footer {
+  display:flex;
+  justify-content:space-between;
+  gap:20px;
+  padding-block:30px;
+  font-size:9px;
+  color:var(--g-muted)}
+@media(max-width:600px) {
+  .navlinks .optional {
+  display:none}
+.nav {
+  padding-block:18px}
+.hero {
+  padding-top:42px}
+.hero h1 {
+  font-size:52px}
+.hero .intro {
+  font-size:15px}
+.work {
+  padding:18px}
+.stats {
+  gap:6px}
+.stat {
+  padding:10px}
+.stat strong {
+  font-size:22px}
+.workhead .tag {
+  display:none}
+.facts {
+  gap:12px;
+  flex-wrap:wrap;
+  line-height:1.6;
+  padding-block:24px}
+.story {
+  grid-template-columns:1fr;
+  gap:28px;
+  padding-block:38px}
+.closing {
+  align-items:start;
+  flex-direction:column;
+  padding:24px}
+.footer {
+  flex-direction:column;
+  gap:10px}
+.caption {
+  font-size:9px}
+.navlinks {
+  gap:12px}
+.faq {
+  padding-block:35px}
+}
+@media(prefers-reduced-motion:reduce) {
+  html {
+  scroll-behavior:auto}
+}
+
+/* Current desktop UI: a compact navigation and centered Today board. */
+.appnav {
+  display:flex;
+  align-items:center;
+  gap:20px;
+  padding:14px 22px;
+  border-bottom:1px solid var(--g-line);
+  font-size:11px;
+  color:var(--g-muted)}
+
+.appnav b {
+  color:var(--g-text);
+  font-size:16px;
+  letter-spacing:-.04em}
+.appnav .current {
+  color:var(--g-text);
+  padding-block:5px;
+  border-bottom:1px solid var(--g-text)}
+.appnav .appfind {
+  margin-right:auto}
+.appnav .appask {
+  margin-left:auto}
+
+.work {
+  max-width:780px;
+  margin:auto;
+  padding:32px}
+.workhead h3 {
+  font-family:Arial,Helvetica,sans-serif;
+  font-size:32px;
+  font-weight:500}
+.workhead p {
+  font-size:12px}
+.stats {
+  margin:4px 0 25px}
+.stat small {
+  font-size:11px}
+.stat strong {
+  font-family:Arial,Helvetica,sans-serif;
+  font-size:27px}
+.sectionlabel {
+  font-size:12px;
+  margin:20px 0 12px}
+.todaygrid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px}
+.todaycard {
+  padding:18px;
+  border:1px solid var(--g-line);
+  border-radius:6px;
+  min-width:0}
+.todaycard small {
+  font-size:10px;
+  color:var(--g-muted)}
+.todaycard h4 {
+  font-size:15px;
+  font-weight:500;
+  margin:12px 0 10px}
+.todaycard p {
+  font-size:11px;
+  margin:0 0 18px}
+.todaycard footer {
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  font-size:10px;
+  border-top:1px solid var(--g-line);
+  padding-top:12px;
+  color:var(--g-muted)}
+.taskline {
+  font-size:12px;
+  border-top:1px solid var(--g-line);
+  padding:14px 0;
+  display:flex;
+  justify-content:space-between;
+  gap:18px}
+.taskline span {
+  color:var(--g-muted)}
+
+.skip {
+  position:absolute;
+  left:20px;
+  top:-100px;
+  background:var(--g-text);
+  color:var(--g-bg);
+  padding:12px;
+  z-index:2}
+.skip:focus {
+  top:12px}
+.release-link {
+  display:inline-block;
+  font-size:12px;
+  margin-top:16px;
+  text-decoration:underline;
+  text-underline-offset:4px}
+.beta-note {
+  font-size:12px;
+  max-width:640px;
+  margin:24px auto 0}
+.faq details p {
+  font-size:14px}
+.faq summary {
+  font-size:14px}
+.caption {
+  font-size:11px}
+.button:hover {
+  background:var(--g-muted)}
+.nav-cta:hover {
+  background:var(--g-secondary)}
+.record dl div {
+  font-size:12px}
+.closing .requirements {
+  margin-top:12px}
+.closing h2 {
+  margin-top:10px}
+
+@media(max-width:700px) {
+  .appnav {
+  gap:14px;
+  padding:12px 16px}
+.appfind,.appask,.appmore {
+  display:none}
+.work {
+  padding:22px}
+.todaycard {
+  padding:14px}
+.todaycard h4 {
+  font-size:14px}
+.todaycard footer {
+  flex-direction:column;
+  gap:5px}
+.stat small {
+  font-size:10px}
+}
+
+@media(max-width:420px) {
+  .work {
+  padding:18px 14px}
+.todaygrid {
+  grid-template-columns:1fr}
+.todaycard footer {
+  flex-direction:row}
+.appnav {
+  font-size:10px;
+  gap:16px}
+.stat {
+  padding:10px 8px}
+.stat strong {
+  font-size:24px}
+.hero h1 {
+  font-size:46px}
+.caption {
+  display:block;
+  line-height:1.6}
+.caption span {
+  display:block}
+.taskline {
+  font-size:11px}
+.closing .button {
+  width:100%}
+}
+
+
+.product-preview { margin: 0; }

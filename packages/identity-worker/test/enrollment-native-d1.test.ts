@@ -32,7 +32,7 @@ test('native local D1 validates additive upgrade, atomic recovery and invitation
   const migrations = readdirSync(new URL('../migrations/', import.meta.url))
     .filter((file) => file.endsWith('.sql'))
     .sort();
-  for (const file of migrations.filter((file) => !file.startsWith('0017_')))
+  for (const file of migrations.filter((file) => file < '0017_'))
     await db.batch(migrationStatements(file).map((sql) => db.prepare(sql)));
   await db
     .prepare(
@@ -54,6 +54,14 @@ test('native local D1 validates additive upgrade, atomic recovery and invitation
     ),
     true
   );
+  await db.prepare(
+    "INSERT INTO enrollment_challenges(token_hash,email,purpose,expires_at,created_at) VALUES('legacy-migration-fixture','legacy-migration@example.com','signup',9999999999,1)"
+  ).run();
+  await db.batch(
+    migrationStatements('0018_gigi_enrollment.sql').map((sql) => db.prepare(sql))
+  );
+  assert.equal((await db.prepare("SELECT application FROM enrollment_challenges WHERE token_hash='legacy-migration-fixture'").first()).application, null);
+  assert.equal((await db.prepare('SELECT COUNT(*) AS count FROM users').first()).count, 1);
   const env: any = {
     DB: db,
     PUBLIC_ENROLLMENT_ENABLED: 'false',
@@ -154,6 +162,17 @@ test('native local D1 validates additive upgrade, atomic recovery and invitation
       );
     }
   );
+
+  await t.test('GiGi public signup uses native additive provenance and grants no app access', async () => {
+    const gigiEnv = { ...env, GIGI_ENROLLMENT_ENABLED: 'true' };
+    assert.equal((await startEnrollment(request({ email: 'public-gigi@example.com', purpose: 'signup', app: 'gigi' }), gigiEnv)).status, 200);
+    const proof = token();
+    assert.match(mails.at(-1).text, /https:\/\/id\.createsomething\.space\/verify\?mode=signup&app=gigi#token=/);
+    assert.equal((await completeEnrollment(request({ token: proof, password: 'public GiGi fixture password' }), { ...gigiEnv, GIGI_ENROLLMENT_ENABLED: 'false' })).status, 503);
+    assert.equal((await completeEnrollment(request({ token: proof, password: 'public GiGi fixture password' }), gigiEnv)).status, 200);
+    assert.equal((await db.prepare("SELECT email_verified FROM users WHERE email='public-gigi@example.com'").first()).email_verified, 1);
+    assert.equal((await db.prepare('SELECT COUNT(*) AS count FROM mcp_accounts').first()).count, 0);
+  });
 
   const issue = (email: string, requestId: string) =>
     manageEnrollmentInvitation(

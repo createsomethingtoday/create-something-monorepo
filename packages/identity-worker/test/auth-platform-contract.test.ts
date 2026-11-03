@@ -70,3 +70,18 @@ test('discovery distinguishes restricted enrollment without exposing mailboxes',
     assert.doesNotMatch(JSON.stringify(body),/invited@example.com/);
   }
 });
+
+test('GiGi public enrollment is advertised separately from restricted global enrollment', async () => {
+  for (const enabled of [false, true]) {
+    const response = await identityWorker.fetch(new Request('https://id.createsomething.space/.well-known/create-something-auth'), {
+      ...env, GIGI_ENROLLMENT_ENABLED: String(enabled), PUBLIC_ENROLLMENT_ENABLED: 'false',
+      ENROLLMENT_INVITATIONS_ENABLED: 'true', RESEND_API_KEY: 'synthetic',
+    });
+    const body = await response.json() as any;
+    assert.equal(body.enrollment.mode, 'restricted');
+    assert.equal(body.enrollment.direct_signup_enabled, false);
+    assert.equal(body.applications.gigi.enrollment_enabled, enabled);
+    assert.equal(body.applications.gigi.signup_uri, 'https://id.createsomething.space/signup?app=gigi');
+    assert.equal(body.applications.gigi.application_access_separate, true);
+  }
+});

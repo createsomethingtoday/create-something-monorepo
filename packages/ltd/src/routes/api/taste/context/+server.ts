@@ -43,7 +43,10 @@ export const GET: RequestHandler = async ({ platform, url }) => {
 	const intentParam = url.searchParams.get('intent');
 	const includeReferences = url.searchParams.get('include') === 'references';
 	const limitParam = url.searchParams.get('limit');
-	const limit = limitParam ? parseInt(limitParam, 10) : 50;
+	const limit = limitParam === null ? 50 : Number(limitParam);
+	if (!Number.isSafeInteger(limit) || limit < 1) {
+		return json({ error: 'limit must be a positive integer' }, { status: 400 });
+	}
 
 	// Validate intent if provided
 	let intent: DesignIntent | undefined;
@@ -64,7 +67,7 @@ export const GET: RequestHandler = async ({ platform, url }) => {
 	// If no database, return static context (still useful for agents)
 	if (!db) {
 		const staticContext = {
-			version: '1.0.0',
+			version: '1.1.0',
 			generatedAt: new Date().toISOString(),
 			channels: intent
 				? CHANNELS_WITH_CONTEXT.filter((c) => c.intents.includes(intent!))

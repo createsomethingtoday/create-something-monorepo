@@ -118,7 +118,7 @@ export function createAuthOpenApi(origin = PRODUCTION_IDENTITY_ORIGIN) {
       '/v1/auth/signup': { post: { ...operation('signup', 'Retired direct signup; mailbox verification is required'), responses: { '403': { description: 'Mailbox verification required' } } } },
       '/v1/auth/enrollment/start': { post: {
         ...operation('startEnrollment', 'Email a single-use mailbox proof for signup or password recovery when enabled'),
-        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['email','purpose'], properties: { email: { type: 'string', format: 'email', maxLength: 254 }, purpose: { type: 'string', enum: ['signup','recovery'] } } } } } },
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['email','purpose'], properties: { email: { type: 'string', format: 'email', maxLength: 254 }, purpose: { type: 'string', enum: ['signup','recovery'] }, app: { type: 'string', enum: ['gigi'], description: 'GiGi-scoped signup when separately enabled; other application admission remains separate.' }, experience: { type: 'string', enum: ['identity'], description: 'Identity-hosted recovery presentation; GiGi signup always stays on Identity.' } } } } } },
         responses: { '200': { description: 'Request accepted; no account existence is disclosed' }, '400': { description: 'Invalid input' }, '429': { description: 'Rate limited' }, '503': { description: 'Enrollment disabled or mail unavailable' } }
       } },
       '/v1/auth/enrollment/complete': { post: {

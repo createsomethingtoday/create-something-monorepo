@@ -97,9 +97,9 @@ body { line-height: 1.5; }
 .reference-header { height: 56px; gap: 8px; }
 .reference-header .reference-brand { font-size: 22px; letter-spacing: -1px; padding-right: 16px; }
 .reference-nav { gap: 4px; }
-.reference-nav > button, .reference-more > summary { min-height: 36px; padding-inline: 12px; }
+.reference-nav > button, .reference-more > summary { min-height: 36px; padding-inline: 12px; border-radius: 0; }
 .reference-nav > button[aria-current=page], .reference-more > summary.selected {
-  color: var(--text); background: var(--raised); box-shadow: inset 0 -2px var(--signal);
+  color: var(--signal); background: transparent; box-shadow: none; font-weight: 700;
 }
 .reference-header .reference-ask { border: 1px solid var(--control-border); padding-inline: 12px; }
 .reference-menu { padding: 12px; }

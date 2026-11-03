@@ -35,5 +35,9 @@ export { ELIGIBLE_SUBSCRIBERS_SQL, classifySubscriberEligibility } from './audie
 export type { NewsletterAudienceRecord, NewsletterEligibilityReason } from './audience.js';
 
 // Components
+export { newsletterSignupContext } from './client.js';
 export { default as UnsubscribePage } from './UnsubscribePage.svelte';
 export { default as NewsletterSignup } from './NewsletterSignup.svelte';
+
+export { NEWSLETTER_CAMPAIGNS, resolveNewsletterAttribution, recordNewsletterSignupAttribution, confirmNewsletterAttribution } from './attribution.js';
+export type { NewsletterAttribution, NewsletterAttributionContext } from './attribution.js';

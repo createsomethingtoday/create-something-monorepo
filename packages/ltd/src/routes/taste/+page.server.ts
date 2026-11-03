@@ -7,6 +7,7 @@
 
 import type { PageServerLoad } from './$types';
 import type { Example, Resource } from '$lib/types';
+import { readLastSuccessfulTasteSync } from '$lib/taste/context';
 
 interface Channel {
 	slug: string;
@@ -97,7 +98,7 @@ export const load: PageServerLoad = async ({ platform, parent }) => {
 	}
 
 	try {
-		const [examplesResult, resourcesResult] = await Promise.all([
+		const [examplesResult, resourcesResult, lastSync] = await Promise.all([
 			db
 				.prepare(
 					`SELECT * FROM examples
@@ -113,7 +114,8 @@ export const load: PageServerLoad = async ({ platform, parent }) => {
 					 ORDER BY created_at DESC`
 				)
 				.bind(MASTER_ID)
-				.all<Resource>()
+				.all<Resource>(),
+			readLastSuccessfulTasteSync(db)
 		]);
 
 		const examples = examplesResult.results || [];
@@ -126,7 +128,7 @@ export const load: PageServerLoad = async ({ platform, parent }) => {
 			stats: {
 				examples: examples.length,
 				resources: resources.length,
-				lastSync: examples[0]?.created_at || resources[0]?.created_at || null
+				lastSync
 			},
 			user
 		};

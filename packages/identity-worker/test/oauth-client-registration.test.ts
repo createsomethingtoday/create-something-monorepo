@@ -75,3 +75,23 @@ test('OAuth access review preserves escaped parameters and shows access before c
 	assert.ok(html.indexOf('Requested access</h2>') < html.indexOf('<form'));
 	assert.doesNotMatch(html, /fontshare|@import|<script|linear-gradient/);
 });
+
+
+test('GiGi OAuth signup entry is enabled only for its exact resource and preserves the original request', async () => {
+  const db = createClientDb();
+  await createOAuthClient(db, {client_id:'gigi_signup_review',client_name:'GiGi review',redirect_uris:['http://127.0.0.1:12345/callback'],token_endpoint_auth_method:'none',grant_types:['authorization_code'],response_types:['code'],scope:'openid mcp'});
+  const params = new URLSearchParams({response_type:'code',client_id:'gigi_signup_review',redirect_uri:'http://127.0.0.1:12345/callback',code_challenge:'test-pkce-challenge',code_challenge_method:'S256',state:'original-state',resource:'https://gigi-connector.createsomething.workers.dev'});
+  const page = async (enabled:boolean,resource:string) => {
+    params.set('resource',resource);
+    const response = await identityWorker.fetch(new Request('https://id.createsomething.space/oauth/authorize?'+params),{DB:db,GIGI_ENROLLMENT_ENABLED:String(enabled)} as any);
+    assert.equal(response.status,200);
+    return response.text();
+  };
+  const html = await page(true,'https://gigi-connector.createsomething.workers.dev');
+  assert.match(html,/href="\/signup\?app=gigi" target="_blank" rel="noopener noreferrer">Create account/);
+  assert.match(html,/name="state" value="original-state"/);
+  assert.match(html,/name="code_challenge" value="test-pkce-challenge"/);
+  assert.match(html,/href="\/recover\?app=gigi"/);
+  assert.doesNotMatch(await page(false,'https://gigi-connector.createsomething.workers.dev'),/Create account/);
+  assert.doesNotMatch(await page(true,'https://gigi-connector.createsomething.workers.dev/other'),/Create account/);
+});

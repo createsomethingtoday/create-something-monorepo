@@ -32,6 +32,13 @@ The package models:
 - Atlas/Substrate agent wiki projection
 - read-only demo state
 
+## Composable ontology boundary
+
+[Ontology v1](./ontology/v1/README.md) adds conflict-checked topology module
+composition, deterministic RDF/OWL and SHACL export, and protected dependency
+change planning. Run `pnpm --filter @create-something/database-layer ontology:check`.
+This validates local structure; it does not establish live health or grant action authority.
+
 ## Agent Commercial Contract v1
 
 `contracts/agent-commercial/v1/` is the commercial policy layer over

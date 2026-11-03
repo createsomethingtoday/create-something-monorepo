@@ -9,7 +9,8 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "lint": "pnpm run typecheck",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test test/*.test.ts"
   },
   "dependencies": {
     "@cloudflare/workers-types": "^4.20260621.1"

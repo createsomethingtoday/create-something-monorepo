@@ -781,3 +781,24 @@ under accepted evidence and independently verifying compiler signature/policy.
 The SQL guard rechecks the active activation and exact delivery identities;
 it does not perform cryptographic verification. Legacy equality-only inserts
 are rejected. This draft migration is not production promotion evidence.
+
+### Public page entrances
+
+The public layout uses `publicPageEntrances` to extend the homepage's Canon
+scroll reveal to other reviewed public pages and published workflow guides.
+It selects bounded semantic reading groups after route DOM and scroll handling
+settle, and destroys the previous action when internal navigation changes pages.
+The homepage retains its authored groups. Authenticated, operational, map utility
+and interactive experiment screens keep their existing behavior.
+
+Heroes, forms, media/canvas owners, sticky/fixed scenes, existing transforms and
+animations, nested targets and very tall groups remain outside this treatment.
+Use `data-scroll-entrance-skip` to preserve ownership of a custom reading group.
+The shared helper preserves SSR/loading/no-JS, initial/restored viewport, focus,
+hash links, reduced motion and print visibility, with the approved zero start,
+100ms pause, 700ms reveal and bounded settlement deadline. No scroll hijacking.
+
+Run `node scripts/verify-public-page-entrances.mjs` against a built preview with
+`AGENCY_BASE_URL` and optional `AGENCY_EVIDENCE_DIR`. It exercises public page
+families at 320,390,768,1024,1025,1440, actual intermediate motion, internal
+navigation, print, no-JS/reduced motion, hash arrival and form ownership.

@@ -1,0 +1,21 @@
+{
+  "schema": "workflow-discovery-reviewed-bindings@1",
+  "reviews": [
+    {
+      "candidateId": "discovered.contract-reconciliation.02415a6b0fde887ef8ed",
+      "sourceSha256": "sha256:1a55af1a1a1ba33e0254ae0cb272d1f8ee14273de09d2b31bd44501cbdb1f693",
+      "definitionSha256": "sha256:0c1911c6da4554d65b14f75a96e2424be49166e1ce213a817ce1f910bb5e12ba",
+      "policySha256": "sha256:034abe39a189ff4dc15dcb98d272283e3e16d04cc40c8c54b4bacdc675b56631",
+      "decision": "approved",
+      "reviewedBy": "create-something-engineering",
+      "reviewedAt": "2026-11-02T22:52:00.618Z"
+    }
+  ],
+  "registration": {
+    "candidateId": "discovered.contract-reconciliation.02415a6b0fde887ef8ed",
+    "sourceSha256": "sha256:1a55af1a1a1ba33e0254ae0cb272d1f8ee14273de09d2b31bd44501cbdb1f693",
+    "definitionSha256": "sha256:0c1911c6da4554d65b14f75a96e2424be49166e1ce213a817ce1f910bb5e12ba",
+    "policySha256": "sha256:034abe39a189ff4dc15dcb98d272283e3e16d04cc40c8c54b4bacdc675b56631",
+    "registrationId": "internal.database-layer.contract-validation@1"
+  }
+}

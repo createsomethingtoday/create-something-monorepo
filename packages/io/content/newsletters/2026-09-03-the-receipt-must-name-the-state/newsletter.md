@@ -6,6 +6,9 @@ delivery_target: "2026-09-03T09:00:00-05:00"
 timezone: "America/Chicago"
 status: "production-candidate"
 linear_issue: "CRE-1920"
+author: "CREATE SOMETHING"
+owner: "Micah Johnson"
+state_reconciled_at: "2026-11-03"
 audience: "unverified; regenerate the governed audience receipt before scheduling"
 web_status: "draft"
 public_end_before: "## Email edition"
@@ -120,5 +123,5 @@ Required footer: subscriber-specific unsubscribe URL.
 - CTX was available for search but only partially ready: 875 indexed sources, 866 indexed sessions, 394,832 searchable events, and 131 skipped records at the time of research.
 - CTX evidence recovered the Webflow shared-library distinction, the exact-head release distinction, and the governed-email distinction. Exact citations are recorded in `research-notes.md`.
 - Current source and provider facts were rechecked directly: PR #1574 merged, Cloudflare production promotion completed, the public archive returned HTTP 200, and both September 1 Resend messages reported `delivered`.
-- Thursday would be the second newsletter in September and therefore reaches the current strategy limit of two emails per month.
-- No audience readback, test send, operator approval, production schedule, or provider send has occurred for this candidate.
+- The September 3 target was a proposed review/send time, not a confirmed audience send. Any future send requires a new date and a current cadence check.
+- The September 2 operator test was delivered, as recorded in `production-receipt.md`. The September 7 engagement review found no audience message for this subject in the reviewed provider window. Final human approval, a current audience fingerprint, and an audience schedule remain unproved. Reconciled November 3 under `CRE-2337`; this is historical evidence, not a fresh provider readback.

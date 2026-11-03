@@ -12,6 +12,7 @@ export type NewsletterDeliveryEvent =
   | 'email.delivery_delayed'
   | 'email.complained'
   | 'email.bounced'
+  | 'email.suppressed'
   | 'email.opened'
   | 'email.clicked';
 
@@ -26,16 +27,19 @@ export async function recordNewsletterDeliveryReceipt(
       ? 'delivered'
       : event === 'email.delivery_delayed'
         ? 'delayed'
-        : event === 'email.bounced' || event === 'email.complained'
+        : event === 'email.bounced' || event === 'email.complained' || event === 'email.suppressed'
           ? 'failed'
           : 'sent';
-  const errorCode = event === 'email.bounced' || event === 'email.complained' ? event : null;
+  const errorCode =
+    event === 'email.bounced' || event === 'email.complained' || event === 'email.suppressed'
+      ? event
+      : null;
   await db
     .prepare(
       `UPDATE newsletter_reengagement_deliveries
-     SET status = ?,
-         delivered_at = CASE WHEN ? = 'delivered' THEN datetime('now') ELSE delivered_at END,
-         error_code = ?,
+     SET status = CASE WHEN status = 'failed' THEN status ELSE ? END,
+         delivered_at = CASE WHEN ? = 'delivered' AND status != 'failed' THEN datetime('now') ELSE delivered_at END,
+         error_code = CASE WHEN status = 'failed' THEN error_code ELSE ? END,
          updated_at = datetime('now')
      WHERE resend_email_id = ?`
     )

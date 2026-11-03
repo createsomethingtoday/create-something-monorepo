@@ -1,0 +1,60 @@
+   Compiling gigi_desktop v0.2.21 (/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/apps/gigi-desktop/src-tauri)
+warning: unused import: `std::os::unix::net::UnixStream`
+   --> src/chat.rs:471:5
+    |
+471 | use std::os::unix::net::UnixStream;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `gigi_desktop` (lib test) generated 1 warning (run `cargo fix --lib -p gigi_desktop --tests` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 9.47s
+     Running unittests src/lib.rs (apps/gigi-desktop/src-tauri/target/debug/deps/gigi_desktop_lib-dba4a9d2f4f7e453)
+
+running 1 test
+test chat::tests::shutdown_interrupts_a_reader_that_never_observes_pipe_eof ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 149 filtered out; finished in 0.17s
+
+     Running unittests src/main.rs (apps/gigi-desktop/src-tauri/target/debug/deps/gigi-496682aeea108d15)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/gigi-mcp.rs (apps/gigi-desktop/src-tauri/target/debug/deps/gigi_mcp-6693ef61340b0c89)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
+     Running tests/artwork_safety.rs (apps/gigi-desktop/src-tauri/target/debug/deps/artwork_safety-8422a466c7e347d8)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/artwork_stdio.rs (apps/gigi-desktop/src-tauri/target/debug/deps/artwork_stdio-02958cf4dbddef57)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/artwork_workflow.rs (apps/gigi-desktop/src-tauri/target/debug/deps/artwork_workflow-abce04096820f2f9)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/music_mcp_protocol.rs (apps/gigi-desktop/src-tauri/target/debug/deps/music_mcp_protocol-db2b0e6605cb471d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/today_agenda.rs (apps/gigi-desktop/src-tauri/target/debug/deps/today_agenda-5751a568da7320d0)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+

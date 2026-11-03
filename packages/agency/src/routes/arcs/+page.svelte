@@ -2,6 +2,12 @@
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
+  let query = $state('');
+  let selectedKind = $state('all');
+  const filteredArcs = $derived(data.arcs.filter((arc) => {
+    const text = `${arc.title} ${arc.description} ${arc.source.registry} ${arc.source.kind}`.toLowerCase();
+    return (selectedKind === 'all' || arc.source.kind === selectedKind) && query.toLowerCase().trim().split(/\s+/).every((term) => text.includes(term));
+  }));
 
   const groups = [
     { kind: 'prototype', label: 'Proven prototype' },
@@ -61,8 +67,20 @@
     <span>A Runbook contains the steps to run.</span>
   </section>
 
+  <section class="arc-filters" aria-labelledby="arc-filter-title">
+    <div><h2 id="arc-filter-title">Find one useful starting point.</h2><p>Search for a task, tool or domain, then choose the kind of presentation.</p></div>
+    <div class="arc-filter-controls">
+      <label>Find a presentation<input type="search" bind:value={query} placeholder="Try app review, onboarding or Codex" /></label>
+      <label>Presentation kind<select bind:value={selectedKind}><option value="all">All kinds</option>{#each groups as group}<option value={group.kind}>{group.label}</option>{/each}</select></label>
+      <button type="button" onclick={() => { query = ''; selectedKind = 'all'; }}>Clear filters</button>
+    </div>
+    <p class="arc-result-count" role="status" aria-live="polite">{filteredArcs.length} of {data.arcs.length} read-only presentations</p>
+    {#if !filteredArcs.length}<p>No presentations match. Try another task or clear the filters.</p>{/if}
+  </section>
+
   {#each groups as group}
-    {@const arcs = data.arcs.filter((arc) => arc.source.kind === group.kind)}
+    {@const arcs = filteredArcs.filter((arc) => arc.source.kind === group.kind)}
+    {#if arcs.length}
     <section class="arc-group" aria-labelledby={`arc-group-${group.kind}`}>
       <header>
         <span>{String(arcs.length).padStart(2, '0')} routes</span>
@@ -86,6 +104,7 @@
         {/each}
       </ol>
     </section>
+    {/if}
   {/each}
 </main>
 
@@ -97,10 +116,21 @@
   }
   .arc-catalog__hero,
   .arc-catalog__rule,
+  .arc-filters,
   .arc-group {
     width: min(calc(100% - 2rem), 1120px);
     margin-inline: auto;
   }
+  .arc-filters { padding-block: var(--space-performance-lg); border-bottom: 1px solid var(--color-performance-line); }
+  .arc-filters h2 { margin: 0 0 var(--space-performance-sm); font-size: clamp(1.5rem, 3vw, 2.5rem); letter-spacing: var(--tracking-performance-tight); }
+  .arc-filters p { margin: 0 0 var(--space-performance-md); line-height: 1.6; }
+  .arc-filter-controls { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) auto; gap: var(--space-performance-sm); align-items: end; }
+  .arc-filter-controls label { display: grid; gap: var(--space-performance-sm); font-size: var(--text-performance-caption); min-width: 0; }
+  .arc-filter-controls input, .arc-filter-controls select, .arc-filter-controls button { min-width: 0; width: 100%; min-height: 44px; padding: var(--space-performance-sm); border: 1px solid var(--color-performance-line); border-radius: var(--radius-performance-sm); background: var(--color-performance-paper); color: var(--color-performance-ink); font: inherit; }
+  .arc-filter-controls input { font-size: 16px; }
+  .arc-filter-controls button { width: auto; cursor: pointer; }
+  .arc-filter-controls :focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 4px; }
+  .arc-result-count { padding-top: var(--space-performance-md); font-size: var(--text-performance-caption); }
   .arc-catalog__hero {
     display: grid;
     grid-template-columns: minmax(0, 1.25fr) minmax(17rem, 0.75fr);
@@ -225,6 +255,7 @@
     outline-offset: 4px;
   }
   @media (max-width: 760px) {
+    .arc-filter-controls { grid-template-columns: 1fr; }
     .arc-catalog__hero,
     .arc-group {
       grid-template-columns: 1fr;

@@ -1,5 +1,6 @@
 <script lang="ts">
   import AgencyLegalContent from '$lib/components/AgencyLegalContent.svelte';
+  import AgencyLegalPage from '$lib/components/AgencyLegalPage.svelte';
   import { PerformancePageSection, SEO, TermsOfServiceContent } from '@create-something/canon';
 </script>
 
@@ -10,6 +11,7 @@
   noindex={true}
 />
 
+<AgencyLegalPage>
 <PerformancePageSection
   variant="hero"
   expression="editorial"
@@ -19,7 +21,7 @@
   description="These terms explain the conditions for using our website and services."
 >
   {#snippet after()}
-    <AgencyLegalContent>
+    <AgencyLegalContent sectionNavigation>
       <TermsOfServiceContent
         property="agency"
         domain="createsomething.agency"
@@ -29,3 +31,4 @@
     </AgencyLegalContent>
   {/snippet}
 </PerformancePageSection>
+</AgencyLegalPage>

@@ -40,6 +40,8 @@ export interface NewsletterRequest {
 	sessionId?: string;
 	sourceProperty?: Property;
 	landingUrl?: string;
+	/** Existing analytics preference; separate from subscription consent. */
+	analyticsEnabled?: boolean;
 	referrer?: string;
 	intent?: string;
 	lane?: string;

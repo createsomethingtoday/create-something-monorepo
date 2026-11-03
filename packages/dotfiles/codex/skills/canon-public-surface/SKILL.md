@@ -1,6 +1,6 @@
 ---
 name: canon-public-surface
-description: Research and polish CREATE SOMETHING public-facing pages, landing pages, service pages, and hero sections using Canon, Performance Lab, trust-first messaging, and informative visuals without drifting into generic AI SaaS marketing. Use with canon-design-review when comparative Mobbin section or journey evidence would materially improve hierarchy, proof, or conversion.
+description: Research and polish CREATE SOMETHING public-facing pages, landing pages, service pages, and hero sections using Canon, Performance Lab, trust-first messaging, and informative visuals without drifting into generic AI SaaS marketing. Use with canon-design-review for image-inspected TASTE research and optional comparative evidence when hierarchy, proof, or conversion needs investigation.
 ---
 
 # Canon Public Surface
@@ -16,7 +16,7 @@ For general component or internal UI work, prefer [$canon-design-review](../cano
 3. Read `docs/CREATE_SOMETHING_PERFORMANCE_LAB_DESIGN_LANGUAGE.md`, `docs/PERFORMANCE_LAB_VISUAL_GRAMMAR.md`, and `docs/PERFORMANCE_PAGE_SHARPNESS.md`.
 4. Open the current route plus the nearest layout, nav, footer, Performance page registry entry, and live surface.
 5. Preserve established cross-property patterns unless the user is explicitly rebranding a surface.
-6. When comparative evidence would materially change section hierarchy, proof placement, or handoff, use [$canon-design-review](../canon-design-review/SKILL.md) and its Mobbin research protocol before proposing the change.
+6. For substantial changes to a public surface, use [$canon-design-review](../canon-design-review/SKILL.md) and its TASTE-first research protocol before proposing the change. Inspect 3–7 relevant approved references when available, then use optional outside precedent for material questions the packet leaves unresolved.
 
 ## Surface Pattern
 

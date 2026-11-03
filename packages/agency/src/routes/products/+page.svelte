@@ -1,6 +1,6 @@
 <script lang="ts">
   import CatoProjectTour from '$lib/components/CatoProjectTour.svelte';
-  import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
+  import AgencyRecordedWork from '$lib/components/AgencyRecordedWork.svelte';
   import {
     IsometricIllustration,
     Button,
@@ -18,7 +18,6 @@
   import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { PUBLIC_PRODUCT_SEQUENCE, getPublicProduct } from '$lib/data/productFamily';
-  import AgencyProductJunction from '$lib/components/AgencyProductJunction.svelte';
   import { filmStories } from '$lib/data/filmStories';
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
   import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
@@ -160,16 +159,17 @@
   {#snippet actions()}
     <Button href="#capabilities">Inspect the work</Button>
   {/snippet}
-  {#snippet artifact()}<AgencyProductJunction />{/snippet}
 </PerformanceCampaignOpening>
-<WorkflowSignalBand motionOnly quiet tall showMotionControl />
-<div class="products-paths"><AgencyPathChoices label="Choose a product path" /></div>
+
 </div>
 
+<AgencyRecordedWork id="product-recorded-work" title="Start with the actual work." />
+
+<div class="products-paths"><AgencyPathChoices label="Choose a product path" /></div>
 <section id="capabilities" class="capabilities" aria-labelledby="capabilities-title">
   <p>Apps, workflows & agents</p><h2 id="capabilities-title">Inspect what your team will keep.</h2>
   <p>Review the linked implementations and clearly labeled scenarios below. For your Build, agree on the source, instructions, tests and handoff your team will own, plus what agents may do and what needs human approval. Production launch is agreed separately.</p>
-  <p>Membership supports agreed improvements between check-ins. Focused is {PUBLIC_PRICING.membership.focused.label} for one workstream and one milestone each billing month. Team is {PUBLIC_PRICING.membership.team.label} for up to two workstreams and two milestones. Both include two 30-minute check-ins. Focused has two 60-minute remote sessions available; Team has four. Use remote sessions when helpful for onboarding, pairing or troubleshooting. Larger Builds, managed Control and project costs are separate.</p>
+  <details class="capacity-note"><summary>Membership capacity and separate costs</summary><p>Membership supports agreed improvements between check-ins. Focused is {PUBLIC_PRICING.membership.focused.label} for one workstream and one milestone each billing month. Team is {PUBLIC_PRICING.membership.team.label} for up to two workstreams and two milestones. Both include two 30-minute check-ins. Focused has two 60-minute remote sessions available; Team has four. Use remote sessions when helpful for onboarding, pairing or troubleshooting. Larger Builds, managed Control and project costs are separate.</p></details>
   <CatoProjectTour />
   {#each filmStories as story}
     <article><div><h3>{story.name}</h3><p>{story.desc}</p><p class="deliverable">What you keep: {story.deliver}</p><p class="evidence-status">{story.status}</p><p class="evidence-proof">{story.proof}</p></div>
@@ -297,11 +297,15 @@
 </PerformanceConversionHandoff>
 
 <style>
+  .capacity-note { margin-block: var(--space-performance-md); border-block: 1px solid var(--color-performance-shell-border-default); }
+  .capacity-note summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-size: var(--text-performance-body-sm); }
+  .capacity-note summary:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+  .capacity-note p { line-height: 1.65; font-size: var(--text-performance-body-sm); margin-block: var(--space-performance-md); }
+
   #capabilities { scroll-margin-top: 6rem; }
   .products-opening { background: var(--color-performance-mode-campaign-surface); color: var(--color-performance-mode-campaign-ink); }
   .products-paths { padding: 0 max(1.25rem, 5vw) var(--space-performance-sm); }
-  /* Route-local specificity keeps Canon's full-field artifact defaults from
-     placing this choice diagram behind the headline or reserving mobile space. */
+  /* Preserve the compact editorial hero layout across viewport sizes. */
   #products-opening :global(.performance-campaign-opening) {
     min-height: 0;
     background: var(--color-performance-mode-campaign-surface);
@@ -318,23 +322,12 @@
     width: 100%;
     align-content: start;
   }
-  #products-opening :global(.performance-campaign-opening__artifact) {
-    position: absolute;
-    inset: 8.5rem 5% auto auto;
-    width: 44%;
-    max-width: 40rem;
-    min-height: 0;
-    height: auto;
-    background: transparent;
-    pointer-events: none;
-  }
   @media (max-width: 1000px) {
     #products-opening :global(.performance-campaign-opening__content) {
       width: 90%;
       margin-inline: auto;
       padding-top: 7rem;
     }
-    #products-opening :global(.performance-campaign-opening__artifact) { display: none; }
   }
 
 .capabilities{padding:80px 7vw;color:var(--color-performance-ink);background:var(--color-performance-paper)}.capabilities>p{max-width:720px;line-height:1.65}.capabilities h2{font:400 clamp(38px,4vw,64px)/1.1 var(--font-performance-editorial)}.capabilities article{display:grid;grid-template-columns:2fr 1fr;gap:5vw;padding:32px 0;border-top:1px solid var(--color-performance-line);margin-top:24px}.capabilities h3{font-size:25px;margin:0 0 14px}.capabilities article p{max-width:650px;line-height:1.65}.capability-links{display:flex;flex-direction:column;justify-content:center;gap:20px}.capability-links a{color:inherit;text-underline-offset:5px}.deliverable{font-size:14px}.evidence-status{margin-top:20px;font:var(--text-performance-operator-label) var(--font-performance-mono);text-transform:uppercase;color:var(--color-performance-muted)}.evidence-proof{font-size:14px;color:var(--color-performance-muted)}@media(max-width:700px){.capabilities article{grid-template-columns:1fr;gap:16px}}

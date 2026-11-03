@@ -99,28 +99,43 @@ export class ArenaClient {
 	 * Get all blocks from a channel (handles pagination)
 	 */
 	async getAllChannelBlocks(slug: string): Promise<ArenaBlock[]> {
-		const cacheKey = `arena:all-blocks:${slug}`;
+		const cacheKey = `arena:all-blocks:v2:${slug}`;
 
 		if (this.cache) {
 			const cached = await this.cache.get(cacheKey, { type: 'json' });
-			if (cached) {
-				return cached as ArenaBlock[];
-			}
+			if (cached) return cached as ArenaBlock[];
 		}
 
+		// v2 contents responses can contain only "contents". Read channel metadata
+		// directly so a cached count cannot certify an incomplete import.
+		const before = await this.fetch<ArenaChannel>(`/channels/${slug}`);
+		if (
+			!Number.isSafeInteger(before.length) ||
+			before.length < 0 ||
+			before.length > 10000 ||
+			typeof before.updated_at !== 'string'
+		) {
+			throw new Error('Channel snapshot has invalid metadata or exceeds the 10000-item limit');
+		}
 		const blocks: ArenaBlock[] = [];
-		let page = 1;
-		let hasMore = true;
-
-		while (hasMore) {
+		for (let page = 1; page <= Math.ceil(before.length / 100); page++) {
 			const response = await this.fetch<ArenaChannelContentsResponse>(
 				`/channels/${slug}/contents?page=${page}&per=100`
 			);
-
+			if (!Array.isArray(response.contents) || response.contents.length === 0) {
+				throw new Error('Channel snapshot is incomplete');
+			}
 			blocks.push(...response.contents);
-
-			hasMore = page < response.total_pages;
-			page++;
+		}
+		const unique = new Set(blocks.map((block) => `${block.base_class ?? block.class}:${block.id}`));
+		if (blocks.length !== before.length || unique.size !== blocks.length) {
+			throw new Error('Channel snapshot is incomplete or contains duplicate entries');
+		}
+		const after = await this.fetch<ArenaChannel>(`/channels/${slug}`);
+		if (after.length !== before.length || after.updated_at !== before.updated_at) {
+			throw new Error(
+				'Channel changed while its snapshot was being fetched; retry after reviewing'
+			);
 		}
 
 		if (this.cache) {
@@ -144,9 +159,7 @@ export class ArenaClient {
 	 */
 	async searchChannels(query: string, page = 1, per = 10): Promise<ArenaSearchResponse> {
 		const encoded = encodeURIComponent(query);
-		return this.fetch<ArenaSearchResponse>(
-			`/search/channels?q=${encoded}&page=${page}&per=${per}`
-		);
+		return this.fetch<ArenaSearchResponse>(`/search/channels?q=${encoded}&page=${page}&per=${per}`);
 	}
 
 	/**
@@ -254,7 +267,8 @@ export class ArenaClient {
 
 		await Promise.all([
 			this.cache.delete(`arena:channel:${slug}`),
-			this.cache.delete(`arena:all-blocks:${slug}`)
+			this.cache.delete(`arena:all-blocks:${slug}`),
+			this.cache.delete(`arena:all-blocks:v2:${slug}`)
 		]);
 
 		// Also clear paginated content (first 10 pages)

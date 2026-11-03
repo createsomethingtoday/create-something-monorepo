@@ -10,11 +10,128 @@ export const DEFAULT_TIMEOUT_MS = 30_000;
 export const DEFAULT_MAX_RESPONSE_BYTES = 512 * 1024;
 export const DEFAULT_INGEST_LIMIT = 100;
 export const MAX_INGEST_LIMIT = 500;
+export const DEFAULT_FRESHNESS_WINDOW_MINUTES = 60;
+export const NURSING_JOBS_TITLE_FILTER = 'nurse';
+export const DEFAULT_NURSING_JOBS_LOCATION_FILTER = 'United States';
 export const EXPIRED_ENDPOINT = '/active-ats-expired';
 
 const ACTIVE_ENDPOINTS = ['/active-ats-7d', '/modified-ats-24h'] as const;
-const TOOL_NAMES = ['list_public_jobs', 'search_public_jobs', 'get_job', 'send_job_to_funnel'] as const;
+const DEFAULT_REFRESH_ENDPOINTS = ['/modified-ats-24h'] as const satisfies readonly RapidApiActiveJobsEndpoint[];
+const READ_ONLY_TOOL_NAMES = ['search', 'fetch', 'list_public_jobs', 'search_public_jobs', 'get_job'] as const;
+const FUNNEL_TOOL_NAME = 'send_job_to_funnel' as const;
+const TOOL_NAMES = [...READ_ONLY_TOOL_NAMES, FUNNEL_TOOL_NAME] as const;
 const NORMALIZED_STATUSES = ['open', 'closed', 'expired', 'unknown'] as const;
+const US_STATE_CODES = [
+  ['district of columbia', 'DC'],
+  ['washington dc', 'DC'],
+  ['alabama', 'AL'],
+  ['alaska', 'AK'],
+  ['arizona', 'AZ'],
+  ['arkansas', 'AR'],
+  ['california', 'CA'],
+  ['colorado', 'CO'],
+  ['connecticut', 'CT'],
+  ['delaware', 'DE'],
+  ['florida', 'FL'],
+  ['georgia', 'GA'],
+  ['hawaii', 'HI'],
+  ['idaho', 'ID'],
+  ['illinois', 'IL'],
+  ['indiana', 'IN'],
+  ['iowa', 'IA'],
+  ['kansas', 'KS'],
+  ['kentucky', 'KY'],
+  ['louisiana', 'LA'],
+  ['maine', 'ME'],
+  ['maryland', 'MD'],
+  ['massachusetts', 'MA'],
+  ['michigan', 'MI'],
+  ['minnesota', 'MN'],
+  ['mississippi', 'MS'],
+  ['missouri', 'MO'],
+  ['montana', 'MT'],
+  ['nebraska', 'NE'],
+  ['nevada', 'NV'],
+  ['new hampshire', 'NH'],
+  ['new jersey', 'NJ'],
+  ['new mexico', 'NM'],
+  ['new york', 'NY'],
+  ['north carolina', 'NC'],
+  ['north dakota', 'ND'],
+  ['ohio', 'OH'],
+  ['oklahoma', 'OK'],
+  ['oregon', 'OR'],
+  ['pennsylvania', 'PA'],
+  ['rhode island', 'RI'],
+  ['south carolina', 'SC'],
+  ['south dakota', 'SD'],
+  ['tennessee', 'TN'],
+  ['texas', 'TX'],
+  ['utah', 'UT'],
+  ['vermont', 'VT'],
+  ['virginia', 'VA'],
+  ['washington', 'WA'],
+  ['west virginia', 'WV'],
+  ['wisconsin', 'WI'],
+  ['wyoming', 'WY'],
+] as const;
+const METRO_LOCATION_FALLBACKS = [
+  {
+    id: 'dfw',
+    label: 'Dallas-Fort Worth / Tarrant County',
+    state: 'TX',
+    triggers: ['arlington', 'dfw', 'dallas fort worth', 'dallas-fort worth', 'tarrant county', 'fort worth', 'dallas'],
+    locations: ['Arlington', 'Tarrant County', 'Fort Worth', 'Dallas', 'Irving', 'Grand Prairie', 'DFW'],
+  },
+] as const;
+const NURSING_TITLE_RANK_SQL = `
+      CASE
+        WHEN (
+          lower(title) LIKE '%registered nurse%'
+          OR lower(title) LIKE 'rn %'
+          OR lower(title) LIKE 'rn-%'
+          OR lower(title) LIKE 'rn,%'
+          OR lower(title) LIKE 'rn/%'
+          OR lower(title) LIKE '% rn %'
+          OR lower(title) LIKE '% rn-%'
+          OR lower(title) LIKE '% rn,%'
+          OR lower(title) LIKE '% rn/%'
+          OR lower(title) LIKE '%(rn)%'
+          OR lower(title) LIKE '%/rn%'
+        )
+        AND lower(title) NOT LIKE '%intern%'
+        AND lower(title) NOT LIKE '%non paid%'
+        AND lower(title) NOT LIKE '%unpaid%' THEN 0
+        WHEN (
+          lower(title) LIKE '%licensed practical nurse%'
+          OR lower(title) LIKE '%licensed vocational nurse%'
+          OR lower(title) LIKE 'lpn %'
+          OR lower(title) LIKE 'lpn-%'
+          OR lower(title) LIKE '% lpn%'
+          OR lower(title) LIKE '%(lpn)%'
+          OR lower(title) LIKE '%/lpn%'
+          OR lower(title) LIKE 'lvn %'
+          OR lower(title) LIKE 'lvn-%'
+          OR lower(title) LIKE '% lvn%'
+          OR lower(title) LIKE '%(lvn)%'
+          OR lower(title) LIKE '%/lvn%'
+        ) THEN 1
+        WHEN (
+          lower(title) LIKE '%certified nurse aide%'
+          OR lower(title) LIKE '%certified nurse assistant%'
+          OR lower(title) LIKE '% cna%'
+          OR lower(title) LIKE '%(cna)%'
+        ) THEN 2
+        WHEN lower(title) LIKE '%nurse practitioner%' AND lower(title) NOT LIKE '%physician assistant%' THEN 3
+        WHEN lower(title) LIKE '%nurse%'
+          AND lower(title) NOT LIKE '%intern%'
+          AND lower(title) NOT LIKE '%non paid%'
+          AND lower(title) NOT LIKE '%unpaid%'
+          AND lower(title) NOT LIKE '%physician assistant%' THEN 4
+        WHEN lower(title) LIKE '%nurse%' THEN 5
+        ELSE 9
+      END
+    `;
 const LEGACY_STATUS_TO_NORMALIZED: Record<string, PublicJobStatus> = {
   new: 'open',
   reviewing: 'open',
@@ -39,6 +156,10 @@ export interface AbundanceJobsServerOptions {
   getDb: () => D1Database | undefined;
 }
 
+export interface AbundanceJobsToolRegistrationOptions {
+  includeFunnelTool?: boolean;
+}
+
 export interface RapidApiIngestInput {
   title_filter?: string;
   location_filter?: string;
@@ -46,6 +167,19 @@ export interface RapidApiIngestInput {
   limit?: number;
   offset?: number;
   endpoints?: RapidApiActiveJobsEndpoint[];
+  include_backfill?: boolean;
+  force_refresh?: boolean;
+  freshness_window_minutes?: number;
+  dry_run?: boolean;
+}
+
+export interface NursingJobsIngestInput {
+  location_filter?: string;
+  limit?: number;
+  offset?: number;
+  include_backfill?: boolean;
+  force_refresh?: boolean;
+  freshness_window_minutes?: number;
   dry_run?: boolean;
 }
 
@@ -153,7 +287,7 @@ interface NormalizedJobInput {
   metadata?: Record<string, unknown>;
 }
 
-interface DbFilters {
+export interface DbFilters {
   query?: string;
   location?: string;
   provider?: string;
@@ -163,6 +297,27 @@ interface DbFilters {
   specialty?: string;
   limit?: number;
   offset?: number;
+}
+
+interface PublicJobsQueryResult {
+  jobs: PublicJob[];
+  limit: number;
+  offset: number;
+  freshness: { newest_last_seen_at?: string; newest_provider?: string };
+}
+
+export interface SearchFallbackMetadata {
+  applied: boolean;
+  reason: string;
+  original_filters: DbFilters;
+  matched_filters?: DbFilters;
+  metro?: string;
+  searched_locations?: string[];
+}
+
+export interface RoleSearchPlan {
+  queries: string[];
+  allowGenericFallback: boolean;
 }
 
 interface PreparedUpsert {
@@ -177,7 +332,20 @@ interface RapidApiProviderStatus {
   timeout_ms: number;
   max_response_bytes: number;
   active_endpoints: RapidApiActiveJobsEndpoint[];
+  default_refresh_endpoints: RapidApiActiveJobsEndpoint[];
+  default_freshness_window_minutes: number;
   expired_ingest_enabled: boolean;
+}
+
+type NormalizedRapidApiIngestRequest = Required<Omit<RapidApiIngestInput, 'endpoints'>> & {
+  endpoints: RapidApiActiveJobsEndpoint[];
+};
+
+interface RecentRapidApiIngestionRun {
+  id: string;
+  requested_filters_json: string;
+  metadata_json: string;
+  finished_at: string;
 }
 
 const listSchema = {
@@ -199,6 +367,32 @@ const searchSchema = {
   source_system: optionalStringParam('Source system filter.'),
 };
 
+const standardSearchSchema = {
+  query: requiredStringParam('Search text for nursing jobs, such as "registered nurse Arlington Texas".'),
+};
+
+const standardFetchSchema = {
+  id: requiredStringParam('Abundance public job ID returned by search.'),
+};
+
+const standardSearchOutputSchema = {
+  results: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+      url: z.string(),
+    }),
+  ),
+};
+
+const standardFetchOutputSchema = {
+  id: z.string(),
+  title: z.string(),
+  text: z.string(),
+  url: z.string(),
+  metadata: z.record(z.unknown()).optional(),
+};
+
 const getJobSchema = {
   job_id: requiredStringParam('Abundance public job ID.'),
   include_raw_payload: optionalBooleanParam('Default false.'),
@@ -208,20 +402,27 @@ const sendJobToFunnelSchema = {
   job_id: requiredStringParam('Abundance public job ID to send into the Agency funnel after user confirmation.'),
 };
 
-export function listAbundanceJobToolNames(): string[] {
-  return [...TOOL_NAMES];
+export function listAbundanceJobToolNames(options: AbundanceJobsToolRegistrationOptions = {}): string[] {
+  return options.includeFunnelTool === false ? [...READ_ONLY_TOOL_NAMES] : [...TOOL_NAMES];
 }
 
-export function createAbundanceJobsServer(options: AbundanceJobsServerOptions): McpServer {
+export function createAbundanceJobsServer(
+  options: AbundanceJobsServerOptions,
+  toolOptions: AbundanceJobsToolRegistrationOptions = {},
+): McpServer {
   const server = new McpServer({
     name: SERVER_NAME,
     version: SERVER_VERSION,
   });
-  registerAbundanceJobsTools(server, options);
+  registerAbundanceJobsTools(server, options, toolOptions);
   return server;
 }
 
-export function registerAbundanceJobsTools(server: McpServer, options: AbundanceJobsServerOptions): void {
+export function registerAbundanceJobsTools(
+  server: McpServer,
+  options: AbundanceJobsServerOptions,
+  toolOptions: AbundanceJobsToolRegistrationOptions = {},
+): void {
   server.resource(
     'abundance-jobs-status',
     'abundance-jobs://status',
@@ -234,14 +435,46 @@ export function registerAbundanceJobsTools(server: McpServer, options: Abundance
         name: SERVER_NAME,
         version: SERVER_VERSION,
         jobs_db_configured: Boolean(options.getDb()),
-        tools: listAbundanceJobToolNames(),
+        tools: listAbundanceJobToolNames(toolOptions),
       }),
+  );
+
+  const readOnlyAnnotations = {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  };
+
+  server.registerTool(
+    'search',
+    {
+      title: 'Search Nursing Jobs',
+      description: 'Search current public nursing jobs. Use this when the user asks to find nursing jobs by role, location, employer, specialty, or pay terms.',
+      inputSchema: standardSearchSchema,
+      outputSchema: standardSearchOutputSchema,
+      annotations: readOnlyAnnotations,
+    },
+    async (input) => executeDb(options.getDb(), (db) => searchPublicJobDocuments(db, normalizeInput(input))),
+  );
+
+  server.registerTool(
+    'fetch',
+    {
+      title: 'Fetch Nursing Job',
+      description: 'Fetch one public nursing job by ID returned from search. Use this when the user asks for details about a specific job.',
+      inputSchema: standardFetchSchema,
+      outputSchema: standardFetchOutputSchema,
+      annotations: readOnlyAnnotations,
+    },
+    async (input) => executeDb(options.getDb(), (db) => fetchPublicJobDocument(db, normalizeInput(input))),
   );
 
   server.tool(
     'list_public_jobs',
     'List a representative national shortlist of public job listings from the normalized Abundance jobs database. Read-only.',
     listSchema,
+    readOnlyAnnotations,
     async (input) => executeDb(options.getDb(), (db) => listPublicJobs(db, normalizeInput(input))),
   );
 
@@ -249,6 +482,7 @@ export function registerAbundanceJobsTools(server: McpServer, options: Abundance
     'search_public_jobs',
     'Search public job listings by title, employer, location, specialty, source, or category. Read-only.',
     searchSchema,
+    readOnlyAnnotations,
     async (input) => executeDb(options.getDb(), (db) => searchPublicJobs(db, normalizeInput(input))),
   );
 
@@ -256,15 +490,394 @@ export function registerAbundanceJobsTools(server: McpServer, options: Abundance
     'get_job',
     'Get one public job listing by ID.',
     getJobSchema,
+    readOnlyAnnotations,
     async (input) => executeDb(options.getDb(), (db) => getPublicJob(db, normalizeInput(input))),
   );
 
-  server.tool(
-    'send_job_to_funnel',
-    'Send a qualified public job listing into the Agency funnel. Writes to the shared database and should only be called after user confirmation.',
-    sendJobToFunnelSchema,
-    async (input) => executeDb(options.getDb(), (db) => sendJobToFunnel(db, normalizeInput(input))),
+  if (toolOptions.includeFunnelTool !== false) {
+    server.tool(
+      FUNNEL_TOOL_NAME,
+      'Send a qualified public job listing into the Agency funnel. Writes to the shared database and should only be called after user confirmation.',
+      sendJobToFunnelSchema,
+      async (input) => executeDb(options.getDb(), (db) => sendJobToFunnel(db, normalizeInput(input))),
+    );
+  }
+}
+
+async function searchPublicJobDocuments(db: D1Database, input: Record<string, unknown>): Promise<CallToolResult> {
+  const query = readRequiredString(input.query, 'query');
+  const result = await queryPublicJobsWithFallback(
+    db,
+    {
+      query,
+      status: 'open',
+      limit: 10,
+    },
+    query,
   );
+
+  return structuredJsonContent({
+    results: result.jobs.map((job) => ({
+      id: job.id,
+      title: jobDocumentTitle(job),
+      url: jobCanonicalUrl(job),
+    })),
+  });
+}
+
+// "OR RN jobs" means the operating room, not Oregon: an uppercase OR next to a nursing word is clinical.
+// OR between two roles is Boolean ("RN OR LPN"); next to one role it is the operating room
+// ("OR RN jobs", "RN OR jobs").
+const OR_ROLE = '(?:RN|LPN|LVN|CNA|NP|nurses?)';
+function isClinicalOperatingRoom(query: string): boolean {
+  if (/\boperating room\b|\bperi-?op(?:erative)?\b/i.test(query)) return true;
+  if (new RegExp(`\\b${OR_ROLE}\\s+OR\\s+${OR_ROLE}\\b`, 'i').test(query)) return false;
+  return /\bOR\s+(?:RN|nurses?|nursing|tech|jobs?)\b/.test(query) || new RegExp(`\\b${OR_ROLE}\\s+OR\\b`).test(query);
+}
+
+export function inferNursingRolePlan(query: string): RoleSearchPlan {
+  const normalized = query.toLowerCase();
+  // Specialties first: "ER RN" or "travel RN" must not fall back to generic registered nurse roles.
+  if (isClinicalOperatingRoom(query)) {
+    return roleSearchPlan(['operating room', 'perioperative', 'surgical'], false);
+  }
+  if (/\bl(?:abor|abou?r)\s*(?:and|&)?\s*delivery\b/.test(normalized) || /\bl&d\b/.test(normalized)) {
+    return roleSearchPlan(['labor', 'delivery'], false);
+  }
+  if (/\bicu\b/.test(normalized) || /\bintensive care\b/.test(normalized)) {
+    return roleSearchPlan(['icu', 'intensive care'], false);
+  }
+  if (/\ber\b/.test(normalized) || /\bed\b/.test(normalized) || /\bemergency\b/.test(normalized)) {
+    return roleSearchPlan(['emergency', 'emergency room', 'emergency department'], false);
+  }
+  if (/\btravel nurse\b/.test(normalized) || /\btravel rn\b/.test(normalized)) {
+    return roleSearchPlan(['travel nurse', 'travel'], false);
+  }
+  if (/\bregistered nurse\b/.test(normalized) || /\brn\b/.test(normalized)) {
+    return roleSearchPlan(['registered nurse', 'rn'], true);
+  }
+  if (/\blicensed practical nurse\b/.test(normalized) || /\blpn\b/.test(normalized)) {
+    return roleSearchPlan(['licensed practical nurse', 'licensed vocational nurse', 'lpn', 'lvn'], false);
+  }
+  if (/\blicensed vocational nurse\b/.test(normalized) || /\blvn\b/.test(normalized)) {
+    return roleSearchPlan(['licensed vocational nurse', 'licensed practical nurse', 'lvn', 'lpn'], false);
+  }
+  if (
+    /\bcertified nursing assistant\b/.test(normalized) ||
+    /\bcertified nurse assistant\b/.test(normalized) ||
+    /\bcertified nurse aide\b/.test(normalized) ||
+    /\bcna\b/.test(normalized)
+  ) {
+    return roleSearchPlan(['cna', 'certified nursing assistant', 'certified nurse assistant', 'certified nurse aide'], false);
+  }
+  if (/\bnurse practitioner\b/.test(normalized) || /\bnp\b/.test(normalized)) {
+    return roleSearchPlan(['nurse practitioner'], false);
+  }
+  if (/\bnurs(?:e|ing)\b/.test(normalized)) {
+    return roleSearchPlan(['nurse'], true);
+  }
+  return roleSearchPlan([query], false);
+}
+
+function roleSearchPlan(queries: string[], allowGenericFallback: boolean): RoleSearchPlan {
+  return {
+    queries: uniqueNonEmpty(queries),
+    allowGenericFallback,
+  };
+}
+
+function uniqueNonEmpty(values: Array<string | undefined>): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const value of values) {
+    const normalized = value?.trim().replace(/\s+/g, ' ');
+    if (!normalized) continue;
+    const key = normalized.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(normalized);
+  }
+  return result;
+}
+
+// State codes that are also common English words only count when written in capitals ("IN", not "in").
+const AMBIGUOUS_STATE_CODES = new Set(['AL', 'CO', 'DE', 'HI', 'ID', 'IN', 'LA', 'MA', 'ME', 'MO', 'OH', 'OK', 'OR', 'PA']);
+const STATE_NAMES_LONGEST_FIRST = [...US_STATE_CODES].sort(([a], [b]) => b.length - a.length);
+
+// "Washington, D.C." and "washington dc" read the same; commas never separate a state name.
+function normalizeGeoText(value: string): string {
+  return value.toLowerCase().replace(/\bd\.\s?c\b\.?/g, 'dc').replace(/,/g, ' ').replace(/\s+/g, ' ');
+}
+
+function inferUsState(query: string | undefined): string | undefined {
+  if (!query) return undefined;
+  const normalized = normalizeGeoText(query);
+  // A full name wins over any code, and "west virginia" is checked before "virginia".
+  for (const [name, code] of STATE_NAMES_LONGEST_FIRST) {
+    if (new RegExp(`\\b${escapeRegExp(name)}\\b`).test(normalized)) return code;
+  }
+  for (const [, code] of US_STATE_CODES) {
+    if (code === 'OR' && isClinicalOperatingRoom(query)) continue;
+    if (new RegExp(`\\b${code}\\b`).test(query)) return code;
+    if (!AMBIGUOUS_STATE_CODES.has(code) && new RegExp(`\\b${code.toLowerCase()}\\b`).test(normalized)) return code;
+  }
+  return undefined;
+}
+
+function normalizeStateCode(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  if (value.trim().length === 2) return value.trim().toUpperCase();
+  return inferUsState(value);
+}
+
+function stateNameForCode(code: string | undefined): string | undefined {
+  if (!code) return undefined;
+  return US_STATE_CODES.find(([, stateCode]) => stateCode === code.toUpperCase())?.[0];
+}
+
+export function buildSearchFallbackAttempts(filters: DbFilters, context: string): Array<{ filters: DbFilters; fallback?: SearchFallbackMetadata }> {
+  const contextState = normalizeStateCode(filters.state) ?? inferUsState(context);
+  const rolePlan = inferNursingRolePlan([filters.query, context].filter(Boolean).join(' '));
+  const attempts: Array<{ filters: DbFilters; fallback?: SearchFallbackMetadata }> = [];
+  const metro = inferMetroFallback(context, contextState);
+  const inferredLocation = filters.location?.trim() || inferRequestedLocation(context, contextState);
+  const hasLocationConstraint = Boolean(contextState || inferredLocation || metro);
+  const baseFilters = pruneUndefined({
+    provider: filters.provider,
+    source_system: filters.source_system,
+    status: filters.status ?? 'open',
+    specialty: filters.specialty,
+    limit: filters.limit,
+    offset: filters.offset,
+  });
+
+  if (inferredLocation && (!metro || !metro.locations.some((location) => location.toLowerCase() === inferredLocation.toLowerCase()))) {
+    for (const roleQuery of rolePlan.queries) {
+      attempts.push({
+        filters: pruneUndefined({
+          ...baseFilters,
+          query: roleQuery,
+          location: inferredLocation,
+          state: contextState,
+        }),
+        fallback: {
+          applied: true,
+          reason: 'location_role_fallback',
+          original_filters: filters,
+          matched_filters: pruneUndefined({ ...baseFilters, query: roleQuery, location: inferredLocation, state: contextState }),
+        },
+      });
+    }
+  }
+
+  if (metro) {
+    for (const location of metro.locations) {
+      for (const roleQuery of rolePlan.queries) {
+        attempts.push({
+          filters: pruneUndefined({
+            ...baseFilters,
+            query: roleQuery,
+            location,
+            state: metro.state,
+          }),
+          fallback: {
+            applied: true,
+            reason: 'metro_location_fallback',
+            original_filters: filters,
+            matched_filters: pruneUndefined({ ...baseFilters, query: roleQuery, location, state: metro.state }),
+            metro: metro.label,
+            searched_locations: [...metro.locations],
+          },
+        });
+      }
+    }
+  }
+
+  if (contextState) {
+    for (const roleQuery of rolePlan.queries) {
+      attempts.push({
+        filters: pruneUndefined({
+          ...baseFilters,
+          query: roleQuery,
+          state: contextState,
+        }),
+        fallback: {
+          applied: true,
+          reason: 'state_role_fallback',
+          original_filters: filters,
+          matched_filters: pruneUndefined({ ...baseFilters, query: roleQuery, state: contextState }),
+        },
+      });
+    }
+  }
+
+  if (contextState && rolePlan.allowGenericFallback) {
+    attempts.push({
+      filters: pruneUndefined({
+        ...baseFilters,
+        state: contextState,
+      }),
+      fallback: {
+        applied: true,
+        reason: 'state_fallback',
+        original_filters: filters,
+        matched_filters: pruneUndefined({ ...baseFilters, state: contextState }),
+      },
+    });
+  }
+
+  if (!hasLocationConstraint) {
+    for (const roleQuery of rolePlan.queries) {
+      attempts.push({
+        filters: pruneUndefined({
+          ...baseFilters,
+          query: roleQuery,
+        }),
+        fallback: {
+          applied: true,
+          reason: 'role_fallback',
+          original_filters: filters,
+          matched_filters: pruneUndefined({ ...baseFilters, query: roleQuery }),
+        },
+      });
+    }
+  }
+
+  if (!hasLocationConstraint && rolePlan.allowGenericFallback && !rolePlan.queries.some((query) => query.toLowerCase() === 'nurse')) {
+    attempts.push({
+      filters: pruneUndefined({
+        ...baseFilters,
+        query: 'nurse',
+      }),
+      fallback: {
+        applied: true,
+        reason: 'nurse_role_fallback',
+        original_filters: filters,
+        matched_filters: pruneUndefined({ ...baseFilters, query: 'nurse' }),
+      },
+    });
+  }
+
+  return attempts;
+}
+
+// A location is only inferred when something anchors it: the words right before the
+// state ("Arlington TX") or right after "in"/"near"/"around" ("jobs in Dallas"). "At" is left
+// out because it usually names an employer ("RN jobs at Baylor").
+// Unanchored words such as "pediatric" or "night shift" describe the job, not a place.
+const LOCATION_STOP_PATTERNS = [
+  /\bl(?:abor|abou?r)\s*(?:and|&)?\s*delivery\b/g,
+  /\b(?:registered|licensed practical|licensed vocational) nurse\b/g,
+  /\bcertified (?:nursing|nurse) (?:assistant|aide)\b/g,
+  /\bnurse practitioner\b/g,
+  /\bintensive care\b/g,
+  /\b(?:emergency|operating) (?:room|department)\b/g,
+  /\b(?:day|night|evening|overnight|weekend|rotating|swing)\s+shifts?\b/g,
+  /\b(?:per diem|prn|full[- ]time|part[- ]time|contract|temporary|temp|permanent|remote|hybrid|new grad(?:uate)?|entry[- ]level|experienced|senior|shifts?|days|nights|weekends)\b/g,
+  /\b(?:nursing|nurse|nurses|jobs?|openings?|roles?|positions?|for|the|and|or|with|travel|rn|lpn|lvn|cna|np|icu|er|ed|emergency|dfw)\b/g,
+];
+const STATE_MARK = '\u0001';
+const ANCHOR_MARK = '\u0002';
+const STOP_MARK = '\u0003';
+
+function inferRequestedLocation(context: string, state: string | undefined): string | undefined {
+  const normalizedContext = context.trim();
+  if (!normalizedContext) return undefined;
+
+  let value = ` ${normalizeGeoText(normalizedContext)} `;
+  // "New York City" or "Oklahoma City" is a city that contains a state name; keep it whole.
+  const stateCity = value.match(new RegExp(`\\b(${US_STATE_CODES.map(([name]) => escapeRegExp(name)).join('|')}) city\\b`));
+  if (stateCity) return toTitleCase(stateCity[0]);
+  const stateEntries = state ? US_STATE_CODES.filter(([, code]) => code === state) : [];
+  for (const [stateName, stateCode] of stateEntries) {
+    value = value.replace(new RegExp(`\\b${escapeRegExp(stateName)}\\b`, 'g'), ` ${STATE_MARK} `);
+    // Same rule as inferUsState: "in" is only Indiana when written "IN".
+    if (!AMBIGUOUS_STATE_CODES.has(stateCode) || new RegExp(`\\b${stateCode}\\b`).test(normalizedContext)) {
+      value = value.replace(new RegExp(`\\b${escapeRegExp(stateCode.toLowerCase())}\\b`, 'g'), ` ${STATE_MARK} `);
+    }
+  }
+  value = value.replace(/\b(?:in|near|around)\b/g, ` ${ANCHOR_MARK} `);
+  for (const pattern of LOCATION_STOP_PATTERNS) value = value.replace(pattern, ` ${STOP_MARK} `);
+  const tokens = value
+    .replace(/[^a-z0-9\s\u0001-\u0003-]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+
+  const isMark = (token: string) => token === STATE_MARK || token === ANCHOR_MARK || token === STOP_MARK;
+  const anchored: string[][] = [];
+  tokens.forEach((token, index) => {
+    if (token === ANCHOR_MARK) {
+      const words: string[] = [];
+      for (let next = index + 1; next < tokens.length && !isMark(tokens[next]!); next += 1) words.push(tokens[next]!);
+      anchored.push(words);
+    }
+    if (token === STATE_MARK) {
+      const words: string[] = [];
+      for (let previous = index - 1; previous >= 0 && !isMark(tokens[previous]!); previous -= 1) words.unshift(tokens[previous]!);
+      anchored.push(words);
+    }
+  });
+
+  const location = anchored.map((words) => words.join(' ')).find((words) => words.length > 0);
+  if (!location) return undefined;
+  if (US_STATE_CODES.some(([stateName, stateCode]) => location === stateName || location === stateCode.toLowerCase())) return undefined;
+  return toTitleCase(location);
+}
+
+function toTitleCase(value: string): string {
+  return value
+    .split(/\s+/)
+    .map((part) =>
+      part
+        .split('-')
+        .map((piece) => (piece ? `${piece[0]?.toUpperCase() ?? ''}${piece.slice(1)}` : piece))
+        .join('-'),
+    )
+    .join(' ');
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function inferMetroFallback(context: string, state: string | undefined) {
+  const normalized = context.toLowerCase();
+  for (const metro of METRO_LOCATION_FALLBACKS) {
+    if (state && state !== metro.state) continue;
+    const hasTrigger = metro.triggers.some((trigger) => normalized.includes(trigger));
+    if (!hasTrigger) continue;
+    const hasStateSignal = state === metro.state || normalized.includes('texas') || /\btx\b/.test(normalized) || normalized.includes('dfw');
+    if (hasStateSignal) return metro;
+  }
+  return undefined;
+}
+
+async function queryPublicJobsWithFallback(
+  db: D1Database,
+  filters: DbFilters,
+  context: string,
+): Promise<PublicJobsQueryResult & { fallback?: SearchFallbackMetadata }> {
+  const exact = await queryPublicJobs(db, filters);
+  if (exact.jobs.length > 0) return exact;
+
+  for (const attempt of buildSearchFallbackAttempts(filters, context)) {
+    const result = await queryPublicJobs(db, attempt.filters);
+    if (result.jobs.length > 0) {
+      return {
+        ...result,
+        fallback: attempt.fallback,
+      };
+    }
+  }
+
+  return {
+    ...exact,
+    fallback: {
+      applied: false,
+      reason: 'no_fallback_results',
+      original_filters: filters,
+    },
+  };
 }
 
 async function executeDb(
@@ -301,7 +914,7 @@ async function listPublicJobs(db: D1Database, input: Record<string, unknown>): P
 }
 
 async function searchPublicJobs(db: D1Database, input: Record<string, unknown>): Promise<CallToolResult> {
-  const result = await queryPublicJobs(db, {
+  const filters = {
     query: readRequiredString(input.query, 'query'),
     location: readOptionalString(input.location),
     limit: readOptionalInteger(input.limit),
@@ -309,11 +922,12 @@ async function searchPublicJobs(db: D1Database, input: Record<string, unknown>):
     source_system: readOptionalString(input.source_system),
     specialty: readOptionalString(input.specialty),
     state: readOptionalString(input.state),
-  });
+  };
+  const result = await queryPublicJobsWithFallback(db, filters, [filters.query, filters.location, filters.state].filter(Boolean).join(' '));
   return jsonContent(result);
 }
 
-async function getPublicJob(db: D1Database, input: Record<string, unknown>): Promise<CallToolResult> {
+export async function getPublicJob(db: D1Database, input: Record<string, unknown>): Promise<CallToolResult> {
   const jobId = readRequiredString(input.job_id, 'job_id');
   const includeRawPayload = readOptionalBoolean(input.include_raw_payload) ?? false;
   const row = await getPublicJobRow(db, jobId);
@@ -321,6 +935,53 @@ async function getPublicJob(db: D1Database, input: Record<string, unknown>): Pro
     return toolErrorContent({ ok: false, error: `Job not found: ${jobId}` });
   }
   return jsonContent({ job: toPublicJob(row, includeRawPayload) });
+}
+
+async function fetchPublicJobDocument(db: D1Database, input: Record<string, unknown>): Promise<CallToolResult> {
+  const jobId = readRequiredString(input.id, 'id');
+  const document = await getPublicJobDocument(db, jobId);
+  if (!document) {
+    return toolErrorContent({ ok: false, error: `Job not found: ${jobId}` });
+  }
+  return structuredJsonContent(document);
+}
+
+/** Public job document served by the ChatGPT fetch tool and the /public/jobs/:id route. */
+export async function getPublicJobDocument(db: D1Database, jobId: string): Promise<Record<string, unknown> | undefined> {
+  const row = await getPublicJobRow(db, jobId);
+  if (!row) return undefined;
+
+  const job = toPublicJob(row, false);
+  return {
+    id: job.id,
+    title: jobDocumentTitle(job),
+    text: jobDocumentText(job),
+    url: jobCanonicalUrl(job),
+    metadata: pruneUndefined({
+      employer: job.employer,
+      location: job.location,
+      city: job.city,
+      state: job.state,
+      country: job.country,
+      specialty: job.specialty,
+      discipline: job.discipline,
+      employment_type: job.employment_type,
+      shift: job.shift,
+      duration: job.duration,
+      start_date: job.start_date,
+      pay_min: job.pay_min,
+      pay_max: job.pay_max,
+      pay_text: job.pay_text,
+      currency: job.currency,
+      openings: job.openings,
+      status: job.status,
+      provider: job.provider,
+      source_system: job.source_system,
+      posted_at: job.posted_at,
+      last_seen_at: job.last_seen_at,
+      fetched_at: job.fetched_at,
+    }),
+  };
 }
 
 async function sendJobToFunnel(db: D1Database, input: Record<string, unknown>): Promise<CallToolResult> {
@@ -395,6 +1056,49 @@ async function sendJobToFunnel(db: D1Database, input: Record<string, unknown>): 
   });
 }
 
+function jobDocumentTitle(job: PublicJob): string {
+  const parts = [job.title, job.employer, job.location].filter(Boolean);
+  return parts.join(' - ');
+}
+
+function jobCanonicalUrl(job: PublicJob): string {
+  return job.application_url ?? job.source_url ?? `https://abundance-jobs-mcp.createsomething.workers.dev/public/jobs/${encodeURIComponent(job.id)}`;
+}
+
+function jobDocumentText(job: PublicJob): string {
+  return [
+    `Title: ${job.title}`,
+    job.employer ? `Employer: ${job.employer}` : null,
+    job.location ? `Location: ${job.location}` : null,
+    job.specialty ? `Specialty: ${job.specialty}` : null,
+    job.discipline ? `Discipline: ${job.discipline}` : null,
+    job.employment_type ? `Employment type: ${job.employment_type}` : null,
+    job.shift ? `Shift: ${job.shift}` : null,
+    job.duration ? `Duration: ${job.duration}` : null,
+    job.start_date ? `Start date: ${job.start_date}` : null,
+    job.pay_text ? `Pay: ${job.pay_text}` : null,
+    job.pay_min || job.pay_max
+      ? `Pay range: ${job.pay_min ?? 'unknown'}-${job.pay_max ?? 'unknown'} ${job.currency ?? ''}`.trim()
+      : null,
+    job.openings ? `Openings: ${job.openings}` : null,
+    `Status: ${job.status}`,
+    `Source: ${job.source_system}`,
+    job.application_url ? `Apply: ${job.application_url}` : null,
+    job.source_url && job.source_url !== job.application_url ? `Source URL: ${job.source_url}` : null,
+    `Job ID: ${job.id}`,
+    `Last seen: ${job.last_seen_at}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
+function structuredJsonContent<T extends Record<string, unknown>>(data: T): CallToolResult {
+  return {
+    structuredContent: data,
+    content: [{ type: 'text' as const, text: JSON.stringify(data) }],
+  };
+}
+
 export async function queryPublicJobs(
   db: D1Database,
   filters: DbFilters,
@@ -421,9 +1125,15 @@ export async function queryPublicJobs(
   }
 
   if (filters.state?.trim()) {
-    where.push('(upper(state) = ? OR lower(location_text) LIKE lower(?))');
     const state = filters.state.trim();
-    args.push(state.toUpperCase(), `%${state}%`);
+    const stateCode = normalizeStateCode(state);
+    const stateName = stateNameForCode(stateCode) ?? state;
+    where.push(
+      '(upper(state) = ? OR lower(state) = lower(?) OR lower(location_text) LIKE lower(?) OR lower(location_text) LIKE lower(?) OR lower(location_text) LIKE lower(?) OR lower(location_text) LIKE lower(?))',
+    );
+    // ", CA," mid-text or ", CA" at the end; never a bare substring such as "CA" inside "Chicago".
+    const code = stateCode ?? state;
+    args.push(stateCode ?? state.toUpperCase(), stateName, `%, ${code},%`, `%, ${stateName},%`, `%, ${code}`, `%, ${stateName}`);
   }
 
   if (filters.specialty?.trim()) {
@@ -448,7 +1158,7 @@ export async function queryPublicJobs(
   const sql = `
     SELECT * FROM abundance_public_jobs
     ${where.length > 0 ? `WHERE ${where.join(' AND ')}` : ''}
-    ORDER BY last_seen_at DESC, posted_at DESC, created_at DESC
+    ORDER BY ${NURSING_TITLE_RANK_SQL}, last_seen_at DESC, posted_at DESC, created_at DESC
     LIMIT ? OFFSET ?
   `;
   const { results } = await db.prepare(sql).bind(...args, limit, offset).all<PublicJobRow>();
@@ -458,11 +1168,17 @@ export async function queryPublicJobs(
     jobs,
     limit,
     offset,
-    freshness: {
-      newest_last_seen_at: jobs[0]?.last_seen_at,
-      newest_provider: jobs[0]?.provider,
-    },
+    freshness: newestJobFreshness(jobs),
   };
+}
+
+// Rows are ordered by nursing rank, so the newest listing is not necessarily first.
+function newestJobFreshness(jobs: PublicJob[]): { newest_last_seen_at?: string; newest_provider?: string } {
+  let newest: PublicJob | undefined;
+  for (const job of jobs) {
+    if (job.last_seen_at && (!newest?.last_seen_at || job.last_seen_at > newest.last_seen_at)) newest = job;
+  }
+  return { newest_last_seen_at: newest?.last_seen_at, newest_provider: newest?.provider };
 }
 
 async function getPublicJobRow(db: D1Database, jobId: string): Promise<PublicJobRow | null> {
@@ -479,6 +1195,8 @@ export function getRapidApiProviderStatus(config: AbundanceJobsProviderConfig): 
     timeout_ms: resolved.timeoutMs,
     max_response_bytes: resolved.maxResponseBytes,
     active_endpoints: [...ACTIVE_ENDPOINTS],
+    default_refresh_endpoints: [...DEFAULT_REFRESH_ENDPOINTS],
+    default_freshness_window_minutes: DEFAULT_FRESHNESS_WINDOW_MINUTES,
     expired_ingest_enabled: resolved.allowExpiredIngest,
   };
 }
@@ -493,6 +1211,10 @@ export async function ingestRapidApiJobs(input: {
   dry_run: boolean;
   endpoints: Array<{ endpoint: RapidApiActiveJobsEndpoint; status: number; count: number; upserted: number }>;
   result_count: number;
+  request_count: number;
+  skipped: boolean;
+  skip_reason?: string;
+  reused_run_id?: string;
   jobs: PublicJob[];
 }> {
   const config = resolveProviderConfig(input.config);
@@ -507,6 +1229,42 @@ export async function ingestRapidApiJobs(input: {
   const endpointResults: Array<{ endpoint: RapidApiActiveJobsEndpoint; status: number; count: number; upserted: number }> = [];
 
   try {
+    const recentRun =
+      request.force_refresh || request.dry_run || request.freshness_window_minutes <= 0
+        ? null
+        : await findReusableRapidApiIngestionRun(input.db, request, startedAt);
+    if (recentRun) {
+      await createPublicJobIngestionRun(input.db, {
+        id: runId,
+        provider: 'rapidapi',
+        sourceSystem: 'active_jobs_db',
+        status: 'succeeded',
+        requestedFilters: request,
+        resultCount: 0,
+        metadata: {
+          skipped: true,
+          skip_reason: 'fresh_cloudflare_d1_ingestion',
+          reused_run_id: recentRun.id,
+          freshness_window_minutes: request.freshness_window_minutes,
+        },
+        startedAt,
+        finishedAt: new Date().toISOString(),
+      });
+
+      return {
+        ok: true,
+        run_id: runId,
+        dry_run: request.dry_run,
+        endpoints: [],
+        result_count: 0,
+        request_count: 0,
+        skipped: true,
+        skip_reason: 'fresh_cloudflare_d1_ingestion',
+        reused_run_id: recentRun.id,
+        jobs: [],
+      };
+    }
+
     for (const endpoint of request.endpoints) {
       const response = await fetchRapidApiEndpoint(config, endpoint, request);
       const normalized = await Promise.all(
@@ -533,19 +1291,21 @@ export async function ingestRapidApiJobs(input: {
       });
     }
 
-    if (!request.dry_run) {
-      await createPublicJobIngestionRun(input.db, {
-        id: runId,
-        provider: 'rapidapi',
-        sourceSystem: 'active_jobs_db',
-        status: 'succeeded',
-        requestedFilters: request,
-        resultCount: endpointResults.reduce((sum, result) => sum + result.upserted, 0),
-        metadata: { endpoints: endpointResults },
-        startedAt,
-        finishedAt: new Date().toISOString(),
-      });
-    }
+    await createPublicJobIngestionRun(input.db, {
+      id: runId,
+      provider: 'rapidapi',
+      sourceSystem: 'active_jobs_db',
+      status: 'succeeded',
+      requestedFilters: request,
+      resultCount: endpointResults.reduce((sum, result) => sum + result.upserted, 0),
+      metadata: {
+        endpoints: endpointResults,
+        dry_run: request.dry_run,
+        request_count: endpointResults.length,
+      },
+      startedAt,
+      finishedAt: new Date().toISOString(),
+    });
 
     return {
       ok: true,
@@ -553,22 +1313,23 @@ export async function ingestRapidApiJobs(input: {
       dry_run: request.dry_run,
       endpoints: endpointResults,
       result_count: endpointResults.reduce((sum, result) => sum + result.count, 0),
+      request_count: endpointResults.length,
+      skipped: false,
       jobs: jobs.map((job) => toPublicJob(job, false)),
     };
   } catch (error) {
-    if (!request.dry_run) {
-      await createPublicJobIngestionRun(input.db, {
-        id: runId,
-        provider: 'rapidapi',
-        sourceSystem: 'active_jobs_db',
-        status: 'failed',
-        requestedFilters: request,
-        resultCount: 0,
-        error: error instanceof Error ? error.message : String(error),
-        startedAt,
-        finishedAt: new Date().toISOString(),
-      }).catch(() => undefined);
-    }
+    await createPublicJobIngestionRun(input.db, {
+      id: runId,
+      provider: 'rapidapi',
+      sourceSystem: 'active_jobs_db',
+      status: 'failed',
+      requestedFilters: request,
+      resultCount: 0,
+      error: error instanceof Error ? error.message : String(error),
+      metadata: { dry_run: request.dry_run },
+      startedAt,
+      finishedAt: new Date().toISOString(),
+    }).catch(() => undefined);
     throw error;
   }
 }
@@ -614,7 +1375,7 @@ export async function probeRapidApiExpired(input: {
 async function fetchRapidApiEndpoint(
   config: ResolvedProviderConfig,
   endpoint: RapidApiActiveJobsEndpoint,
-  request: Required<RapidApiIngestInput> & { endpoints: RapidApiActiveJobsEndpoint[] },
+  request: NormalizedRapidApiIngestRequest,
 ): Promise<{ status: number; records: Record<string, unknown>[] }> {
   const url = new URL(`${config.rapidApiBaseUrl}${endpoint}`);
   url.searchParams.set('limit', String(request.limit));
@@ -917,6 +1678,29 @@ function toPublicJob(row: PublicJobRow, includeRawPayload: boolean): PublicJob {
   });
 }
 
+export function classifyNursingJobTitle(title: string): { rank: number; role: string; reason: string } {
+  const normalized = title.toLowerCase();
+  const hasRn = /\br\.?n\.?\b/i.test(title) || normalized.includes('registered nurse');
+  const hasLpnLvn =
+    /\blpn\b/i.test(title) ||
+    /\blvn\b/i.test(title) ||
+    normalized.includes('licensed practical nurse') ||
+    normalized.includes('licensed vocational nurse');
+  const hasCna = /\bcna\b/i.test(title) || normalized.includes('certified nurse aide') || normalized.includes('certified nurse assistant');
+  const hasPractitioner = normalized.includes('nurse practitioner');
+  const hasNurse = normalized.includes('nurse');
+  const isInternOrUnpaid = normalized.includes('intern') || normalized.includes('non paid') || normalized.includes('unpaid');
+  const isPaBlended = normalized.includes('physician assistant') || /\bpa\b/i.test(title);
+
+  if (hasRn && !isInternOrUnpaid) return { rank: 0, role: 'registered_nurse', reason: 'RN or Registered Nurse title' };
+  if (hasLpnLvn) return { rank: 1, role: 'licensed_practical_or_vocational_nurse', reason: 'LPN/LVN title' };
+  if (hasCna) return { rank: 2, role: 'certified_nursing_assistant', reason: 'CNA title' };
+  if (hasPractitioner && !isPaBlended) return { rank: 3, role: 'nurse_practitioner', reason: 'Nurse practitioner title' };
+  if (hasNurse && !isInternOrUnpaid && !isPaBlended) return { rank: 4, role: 'nursing_general', reason: 'General nurse title' };
+  if (hasNurse) return { rank: 5, role: 'nurse_adjacent_or_mixed', reason: 'Contains nurse but includes mixed, intern, unpaid, or PA language' };
+  return { rank: 9, role: 'not_nursing_title', reason: 'Title does not contain nursing signal' };
+}
+
 type ResolvedProviderConfig = Required<Omit<AbundanceJobsProviderConfig, 'rapidApiKey' | 'rapidApiHost' | 'rapidApiBaseUrl'>> & {
   rapidApiKey: string;
   rapidApiHost: string;
@@ -936,22 +1720,108 @@ function resolveProviderConfig(config: AbundanceJobsProviderConfig): ResolvedPro
   };
 }
 
-function normalizeIngestInput(input: RapidApiIngestInput): Required<RapidApiIngestInput> & { endpoints: RapidApiActiveJobsEndpoint[] } {
-  const endpoints = input.endpoints && input.endpoints.length > 0 ? input.endpoints : [...ACTIVE_ENDPOINTS];
+export function normalizeRapidApiIngestInput(input: RapidApiIngestInput): NormalizedRapidApiIngestRequest {
+  const endpoints =
+    input.endpoints && input.endpoints.length > 0
+      ? input.endpoints
+      : input.include_backfill
+        ? [...ACTIVE_ENDPOINTS]
+        : [...DEFAULT_REFRESH_ENDPOINTS];
   for (const endpoint of endpoints) {
     if (!ACTIVE_ENDPOINTS.includes(endpoint)) {
       throw new Error(`Unsupported RapidAPI Active Jobs endpoint: ${endpoint}`);
     }
   }
   return {
-    title_filter: input.title_filter?.trim() || 'nurse',
-    location_filter: input.location_filter?.trim() || 'United States',
+    title_filter: input.title_filter?.trim() || NURSING_JOBS_TITLE_FILTER,
+    location_filter: input.location_filter?.trim() || DEFAULT_NURSING_JOBS_LOCATION_FILTER,
     organization_filter: input.organization_filter?.trim() || '',
     limit: clamp(input.limit ?? DEFAULT_INGEST_LIMIT, 1, MAX_INGEST_LIMIT),
     offset: Math.max(0, Math.trunc(input.offset ?? 0)),
     endpoints,
+    include_backfill: input.include_backfill ?? false,
+    force_refresh: input.force_refresh ?? false,
+    freshness_window_minutes: clamp(input.freshness_window_minutes ?? DEFAULT_FRESHNESS_WINDOW_MINUTES, 0, 24 * 60),
     dry_run: input.dry_run ?? false,
   };
+}
+
+export function normalizeNursingJobsIngestInput(input: NursingJobsIngestInput): NormalizedRapidApiIngestRequest {
+  return normalizeRapidApiIngestInput({
+    title_filter: NURSING_JOBS_TITLE_FILTER,
+    location_filter: input.location_filter?.trim() || DEFAULT_NURSING_JOBS_LOCATION_FILTER,
+    limit: input.limit,
+    offset: input.offset,
+    include_backfill: input.include_backfill,
+    force_refresh: input.force_refresh,
+    freshness_window_minutes: input.freshness_window_minutes,
+    dry_run: input.dry_run,
+  });
+}
+
+function normalizeIngestInput(input: RapidApiIngestInput): NormalizedRapidApiIngestRequest {
+  return normalizeRapidApiIngestInput(input);
+}
+
+async function findReusableRapidApiIngestionRun(
+  db: D1Database,
+  request: NormalizedRapidApiIngestRequest,
+  nowIso: string,
+): Promise<RecentRapidApiIngestionRun | null> {
+  const cutoff = new Date(Date.parse(nowIso) - request.freshness_window_minutes * 60_000).toISOString();
+  const { results } = await db
+    .prepare(
+      `
+        SELECT id, requested_filters_json, metadata_json, finished_at
+        FROM abundance_public_job_ingestion_runs
+        WHERE provider = ?
+          AND source_system = ?
+          AND status = ?
+          AND finished_at IS NOT NULL
+          AND finished_at >= ?
+          AND COALESCE(CASE WHEN json_valid(metadata_json) THEN json_extract(metadata_json, '$.skipped') END, 0) != 1
+          AND COALESCE(CASE WHEN json_valid(metadata_json) THEN json_extract(metadata_json, '$.dry_run') END, 0) != 1
+        ORDER BY finished_at DESC
+      `,
+    )
+    .bind('rapidapi', 'active_jobs_db', 'succeeded', cutoff)
+    .all<RecentRapidApiIngestionRun>();
+
+  for (const run of results) {
+    const metadata = parseJsonSafe(run.metadata_json);
+    if (isRecord(metadata) && metadata.skipped === true) continue;
+    if (isRecord(metadata) && metadata.dry_run === true) continue;
+    const previous = parseJsonSafe(run.requested_filters_json);
+    if (sameRapidApiRefreshRequest(previous, request)) return run;
+  }
+
+  return null;
+}
+
+function sameRapidApiRefreshRequest(previous: unknown, current: NormalizedRapidApiIngestRequest): boolean {
+  if (!isRecord(previous)) return false;
+  const previousEndpoints = Array.isArray(previous.endpoints) ? previous.endpoints.filter(isRapidApiActiveJobsEndpoint) : [];
+  return (
+    comparableString(firstString(previous, ['title_filter'])) === comparableString(current.title_filter) &&
+    comparableString(firstString(previous, ['location_filter'])) === comparableString(current.location_filter) &&
+    comparableString(firstString(previous, ['organization_filter'])) === comparableString(current.organization_filter) &&
+    firstNumber(previous, ['limit']) === current.limit &&
+    firstNumber(previous, ['offset']) === current.offset &&
+    // The effective endpoints decide what was fetched; include_backfill only selects them.
+    sameStringArray(previousEndpoints, current.endpoints)
+  );
+}
+
+function isRapidApiActiveJobsEndpoint(value: unknown): value is RapidApiActiveJobsEndpoint {
+  return typeof value === 'string' && (ACTIVE_ENDPOINTS as readonly string[]).includes(value);
+}
+
+function sameStringArray(left: readonly string[], right: readonly string[]): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function comparableString(value: string | undefined): string {
+  return value?.trim() ?? '';
 }
 
 function rapidApiHeaders(config: ResolvedProviderConfig): Headers {

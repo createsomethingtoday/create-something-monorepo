@@ -792,3 +792,57 @@ This validates local rendering, not delivery or hosted Resend templates. See
 `UnifiedSearch` accepts an optional `content` snippet. Without it, existing cross-property search is unchanged. With it, Canon retains the dialog shell, mobile launcher, Cmd/Ctrl+K, Escape and scroll lock; the property owns its form, state, focus management and result navigation. Legacy input, Enter/arrow selection and remote search are bypassed. Set `enableAnalytics={false}` when search state must remain local. Agency's shared public search is the reference consumer and its browser QA covers this opt-in contract.
 
 Local-only input surfaces can set `data-analytics-ignore` on their root to exclude descendant interaction/error, copy and content-link events from Canon trackers. Existing page-level consent and page views are unchanged. This does not suppress DOM events or break delegated controls. Agency uses this alongside `enableAnalytics={false}`; search text remains only in session history.
+
+### Progressive scroll entrances
+
+For authored campaign HTML, import `scrollEntrance` from
+`@create-something/canon/motion`, apply `use:scrollEntrance` to its stable root,
+and mark independent child groups with `data-scroll-entrance`. IntersectionObserver
+triggers one-time entrances; the helper dynamically imports Canon's pinned GSAP
+runtime and CustomEase to apply Canon duration and cubic-bezier easing tokens.
+Once loaded, unseen offscreen groups are prepared at zero opacity and 16px
+displacement before the reader can see them. Entrances play once the group is
+12% into the viewport (64–120px), pause for the 100ms instant token, then ease to
+rest over the 700ms slow token. A per-reveal real-time deadline (delay + duration
++ 100ms scheduling grace) restores authored styles if animation frames stall;
+completion, focus, hash, printing, reduced-motion changes and teardown clear that deadline.
+Loading-time visibility still uses the full viewport so already-viewed groups
+stay settled.
+The runtime is bundled with the application; no CDN script or inline script is
+required. GSAP writes inline animation styles, so consumers with a restrictive
+style CSP must account for that runtime requirement.
+
+Server-rendered, loading and fallback content is always visible. Missing browser APIs or
+failed runtime loading leave it visible. Groups viewed while the runtime loads
+remain settled on later visits. The helper preserves native scrolling,
+settles on focus/hash navigation, printing and reduced-motion changes, restores authored
+inline styles after completion or cancellation, and returns `destroy()` for plain
+HTML consumers. It skips initial-viewport, nested and already-transformed groups.
+See `docs/PERFORMANCE_LAB_VISUAL_GRAMMAR.md` for the motion and review contract.
+
+### Newsletter attribution
+
+`NewsletterSignup` sends the existing analytics preference separately from subscription
+consent. Campaign attribution is collected only when `AnalyticsClient.isTrackingDisabled()`
+is false; the handler also honors DNT and GPC headers. A newsletter confirmation is still
+required before the strict audience selector considers a fresh subscriber eligible.
+Existing legacy records are not promoted by this change.
+
+All first-party signup clients use `newsletterSignupContext()`: the shared signup
+component, shared footer, and `.io` subscribe page. It forwards the existing enabled
+analytics context only; absent clients, disabled preferences, and GPC return an explicit
+disabled flag without session or landing data. It does not create a client or grant consent.
+
+The `@create-something/canon/newsletter/attribution` entrypoint owns reviewed public
+campaign IDs and validates edition/channel/campaign tags. It can reuse the latest tagged
+landing in the existing analytics session for 30 minutes when a reader navigates to an
+untagged signup page. It creates no tracking cookie and does not copy arbitrary UTM
+content, recipient identifiers, or unsubscribe tokens into attribution. Properties must
+apply the owning `.io` attribution migration before reporting these snapshots, and must
+pass the current privacy context when confirming them. See
+[the newsletter workflow](../../docs/guides/NEWSLETTER_WORKFLOW.md) for delivery and
+measurement boundaries.
+
+Receipt and attribution writes require the request's current confirmation token.
+Out-of-order provider responses cannot attach an older campaign to a newer link.
+The token is used only as a write condition; attribution does not retain it.

@@ -199,11 +199,11 @@ test('the builder-facing homepage retains commercial terms, film evidence and di
   assert.match(content, /href="\/book\?source=agency&intent=workflow-mapping&lane=workflow_infrastructure"/);
   assert.match(content, /You approve the budget first/);
   assert.match(content, /href="\/services"/);
-  assert.match(content, /href="https:\/\/www\.maverickx\.com\/"/);
-  assert.match(content, /href="\/films\/websites\/reference\.png"/);
-  assert.match(content, /href="\/products#cato-tour"/);
-  assert.match(content, /not evidence of client adoption of OpenAI tools/);
-  assert.match(content, /Illustrative example<br>Not a client delivery/);
+  assert.match(content, /href="\/case-studies\/webflow-marketplace"/);
+  assert.match(content, /Webflow did not commission this work through CREATE SOMETHING/);
+  assert.match(content, /src="\/films\/webflow-marketplace\/overview\.mp4"/);
+  assert.match(content, /Original conceptual illustration/);
+  assert.match(content, /no measured business outcome/);
   assert.match(services, /Control starts at \$900\/month/);
   assert.match(registry, /Your next step, already prepared/);
   assert.match(registry, /tools and workflows that help agents do useful work/);
@@ -222,11 +222,14 @@ test('commercial decision routes explain the task, delivery, ownership, and proo
   assert.match(layout, /label: 'Technical Support', href: '\/services'/);
   assert.match(layout, /label: 'What You Keep', href: '\/stack'/);
   const homeContent = readFileSync(new URL('../src/lib/content/agency-home.html', import.meta.url), 'utf8');
-  assert.match(homeContent, /Agree the scope, then build and test a useful workflow together/);
+  assert.match(homeContent, /Connect it to the work/);
+  assert.match(homeContent, /Review. Keep improving/);
   assert.match(homeContent, /Your team keeps approval authority/);
   assert.match(read('services/+page.svelte'), /Bring a workflow, software problem or existing product/);
   assert.match(read('services/+page.svelte'), /Your team keeps approval authority/);
-  assert.match(read('services/+page.svelte'), /one agreed workstream/);
+  // Plan detail is consolidated in the component rendered by Services.
+  assert.match(read('services/+page.svelte'), /<MembershipOffer \/>/);
+  assert.match(readFileSync(new URL('../src/lib/components/MembershipOffer.svelte', import.meta.url), 'utf8'), /Choose Focused for one agreed workstream or Team for up to two/);
   assert.match(read('services/+page.svelte'), /Managed Control starts at \$900\/month/);
   assert.match(read('products/+page.svelte'), /Map and Control are subscriptions/);
   assert.match(read('products/+page.svelte'), /Control includes Map/);
@@ -241,7 +244,6 @@ test('public Agency commercial propositions declare the shared editorial express
     'stack',
     'control',
     'products',
-    'products/ground',
     'products/loom',
     'field-reports',
     'field-reports/template-review',
@@ -362,6 +364,13 @@ test('commercial conversion handoffs use editorial propositions while task surfa
       assert.equal(openings.length, 0, 'homepage owns its native plan and conversational conversion sections');
       continue;
     }
+    if (route === 'products/ground') {
+      assert.match(source, /class="ground-handoff"/);
+      assert.match(source, /data-performance-chapter="continuation"/);
+      assert.match(source, /Install Ground from npm/);
+      assert.match(source, /codebase operator reviews the finding/);
+      continue;
+    }
     if (route === 'about') {
       assert.match(source, /class="letter-signoff"/);
       assert.match(source, /href="\/book"/);
@@ -407,6 +416,13 @@ test('commercial conversion handoffs use editorial propositions while task surfa
     );
     const openings = conversionHandoffOpenings(source);
 
+    if (route === 'products/ground') {
+      assert.match(source, /class="ground-handoff"/);
+      assert.match(source, /data-performance-chapter="continuation"/);
+      assert.match(source, /Install Ground from npm/);
+      assert.match(source, /codebase operator reviews the finding/);
+      continue;
+    }
     if (route === 'about') {
       assert.match(source, /class="letter-signoff"/);
       assert.match(source, /href="\/book"/);

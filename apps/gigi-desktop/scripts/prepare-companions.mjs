@@ -1,3 +1,4 @@
+import {prepareNotifications} from './prepare-notifications.mjs';
 import {prepareCtx} from './ctx-companion.mjs';
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, copyFileSync, cpSync, chmodSync } from 'node:fs';
@@ -21,4 +22,5 @@ chmodSync(join(resources,'gigi-codex'),0o755);
 cpSync(join(app,'agent'),join(resources,'agent'),{recursive:true});
 
 await prepareCtx(resources);
+await prepareNotifications(resources);
 cpSync(join(app,'third-party'),join(resources,'third-party'),{recursive:true});

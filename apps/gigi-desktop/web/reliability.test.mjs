@@ -24,7 +24,7 @@ async function appFixture(exercise, custom = () => undefined) {
   let record = { id:'g1',title:'Saved title',fields:{Requirements:'Saved notes',Date:'2026-10-03'},source:{kind:'manual'},relations:[] };
   globalThis.document = document; globalThis.scrollX=0; globalThis.scrollY=0;
   globalThis.scrollTo=(x,y)=>{globalThis.scrollX=x;globalThis.scrollY=y;};
-  globalThis.setTimeout=(callback,delay)=>{if(delay===10000)return previous.setTimeout(callback,delay);assert.equal(delay,5000);timers.push(callback);return timers.length;};
+  globalThis.setTimeout=(callback,delay)=>{if(delay===10000)return previous.setTimeout(callback,delay);if(delay===15000)return {unref(){}};assert.equal(delay,5000);timers.push(callback);return timers.length;};
   globalThis.FormData=class{constructor(target){this.entries=Object.entries(target.values);}[Symbol.iterator](){return this.entries[Symbol.iterator]();}};
   globalThis.__TAURI__={core:{invoke:async(_,{operation,input})=>{
     calls.push({operation,input}); const result=custom(operation,input); if(result!==undefined)return result;
@@ -219,4 +219,18 @@ test('Today creation enters workspace history and protects the new draft on Back
   assert.match(root.innerHTML,/GiGi \/ Overview/);
   assert.equal(calls.some(({operation})=>operation==='records.save'),false);
  });
+});
+
+test('save errors remain available until dismissed without losing the unsaved draft', async()=>{
+ await appFixture(async({root,click,type,submit,controls,timers,calls})=>{
+  await click({new:'tasks'});type('title','Recover this unsaved task');await submit();
+  assert.match(root.innerHTML,/synthetic disk failure/);
+  for(const expire of timers)expire();
+  assert.match(root.innerHTML,/synthetic disk failure/,'error recovery must not disappear on a timer');
+  assert.match(root.innerHTML,/data-notice-dismiss/);
+  await click({noticeDismiss:'1'});
+  assert.doesNotMatch(root.innerHTML,/synthetic disk failure/);
+  assert.equal(controls.get('title').value,'Recover this unsaved task');
+  assert.equal(calls.filter(({operation})=>operation==='records.save').length,1);
+ },operation=>operation==='records.save'?Promise.reject(Error('synthetic disk failure')):undefined);
 });

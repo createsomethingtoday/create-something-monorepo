@@ -79,6 +79,8 @@ No subscriber address or unsubscribe token is stored in this receipt. The named 
 - Cancellation endpoint: `POST /emails/:email_id/cancel` for each Resend ID, or cancel from the Resend dashboard.
 - Operator cancellation deadline: September 1, 2026 at 8:45 AM America/Chicago (`2026-09-01T13:45:00Z`). This is a conservative operating deadline, not a provider-stated minimum.
 
-## Remaining delivery gate
+## Historical delivery reconciliation
 
-- After the scheduled time, read back provider delivery events and record delivery, bounce, complaint, or cancellation evidence. A scheduled state is not a delivery receipt.
+The September 7 [engagement review](../2026-09-08-test-the-checker/engagement-review.md) records `last_event: delivered` for both exact audience message IDs above. That review proves receiving-mail-server acceptance for two messages as observed on September 7. It does not establish inbox placement or readership.
+
+Reconciled November 3, 2026 under `CRE-2337` from that retained evidence. The original scheduling receipt remains unchanged above. No fresh Resend readback was performed by this reconciliation; a current operator check must report provider unavailability explicitly.

@@ -294,6 +294,10 @@
 			"types": "./dist/newsletter/index.d.ts",
 			"default": "./dist/newsletter/index.js"
 		},
+		"./newsletter/attribution": {
+			"types": "./dist/newsletter/attribution.d.ts",
+			"default": "./dist/newsletter/attribution.js"
+		},
 		"./newsletter/audience": {
 			"types": "./dist/newsletter/audience.d.ts",
 			"default": "./dist/newsletter/audience.js"

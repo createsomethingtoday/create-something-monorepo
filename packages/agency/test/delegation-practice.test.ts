@@ -78,7 +78,7 @@ test('the experience connects diagnosis, workflow map, proof, defense, and pract
 	const route = readFileSync(routeUrl, 'utf8');
 
 	assert.ok(route.includes('<PerformanceThesisConditions'));
-	assert.ok(route.includes("title=\"Diagnose the system before changing the policy.\""));
+	assert.ok(route.includes("title: 'Diagnose the system before changing the policy.'"));
 	assert.ok(route.includes("label: 'Database'"));
 	assert.ok(route.includes("label: 'Automation'"));
 	assert.ok(route.includes("label: 'Judgment'"));
@@ -87,8 +87,9 @@ test('the experience connects diagnosis, workflow map, proof, defense, and pract
 	assert.ok(route.includes('storyId="delegation-practice-marketplace-story"'));
 	assert.ok(route.includes('<PerformanceEvidenceIndex'));
 	assert.ok(route.includes('Governed Agent Delivery'));
-	assert.ok(route.includes('Practice Receipt'));
-	assert.ok(route.includes('Skeptical review'));
+	assert.ok(route.includes('<DelegationPracticeWorkbench'));
+	assert.ok(readFileSync(modelUrl, 'utf8').includes("artifact: 'Practice Receipt'"));
+	assert.ok(route.includes('independent verdict'));
 	assert.ok(route.includes('href="/proof/marketplace-workflow"'));
 	assert.equal(route.includes('Now available'), false);
 	assert.equal(route.includes('Certified'), false);

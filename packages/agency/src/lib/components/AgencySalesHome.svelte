@@ -1,8 +1,14 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { webflowStages } from '$lib/data/webflowMarketplace';
+  import { scrollEntrance } from '@create-something/canon/motion';
+  import { enhanceHomeInteractions } from '$lib/motion/homeInteractions';
+  import { enhanceSceneReveal } from '$lib/motion/sceneReveal';
+  import { enhanceImageEntrance } from '$lib/motion/imageEntrance';
+  import { enhanceEvidenceDisclosure } from '$lib/motion/evidenceDisclosure';
   import { page } from '$app/stores';
   import content from '$lib/content/agency-home.html?raw';
-  import { mountPreviewTrace } from '$lib/motion/previewWorkflowTrace';
+  import { filmOverlayOpen } from '$lib/motion/filmPlayback';
   import FilmCollection from './films/FilmCollection.svelte';
   import BuiltWork from './BuiltWork.svelte';
   import SelectedClientWork from './SelectedClientWork.svelte';
@@ -10,13 +16,88 @@
   let libraryOpen = $state(false);
   $effect(() => { if ($page.url.searchParams.has('film') || $page.url.hash === '#work') libraryOpen = true; });
   onMount(() => {
-    const cleanups = Array.from(root.querySelectorAll<HTMLElement>('.workflow-trace')).map(mountPreviewTrace);
-    return () => cleanups.forEach(cleanup => cleanup());
+    const abort = new AbortController();
+    const interactions = enhanceHomeInteractions(root);
+    const handoffImage = root.querySelector<HTMLImageElement>('[data-image-entrance="handoff"]');
+    const handoffEntrance = handoffImage ? enhanceImageEntrance(handoffImage, { mode: 'scroll' }) : undefined;
+    const disposeEvidence = Array.from(root.querySelectorAll<HTMLDetailsElement>('[data-evidence-reveal], .boundary details, .cc-disclosure, .cc-faq details'), enhanceEvidenceDisclosure);
+    const image = root.querySelector<HTMLImageElement>('#journey-image');
+    const scenes = {
+      learn: { src: image?.getAttribute('src') ?? '/images/agency-sales/team.webp', alt: 'Concept illustration: teammates work through an example with a shared guide.', caption: 'Learn / Work through an example together.' },
+      build: { src: '/images/agency-sales/macro.webp', alt: 'Concept illustration: teammates inspect the join between connected graphite modules.', caption: 'Build / Connect the tools. Inspect the join.' },
+      run: { src: '/images/agency-sales/run-reviewed-v1.webp', alt: 'Original conceptual illustration: teammates operate a completed rail tool while their guide reviews the result.', caption: 'Run / Review the result. Agree the next step.' }
+    };
+    const sceneReveal = enhanceSceneReveal(root, scenes);
+    const dialog = root.querySelector<HTMLDialogElement>('#work-dialog');
+    let originalOverflow = '';
+    let opener: HTMLElement | null = null;
+    const video = dialog?.querySelector('video');
+    const chapterButtons = root.querySelectorAll<HTMLButtonElement>('[data-work-chapter]');
+    const contextTitle = dialog?.querySelector<HTMLElement>('[data-work-context-title]');
+    const contextEvidence = dialog?.querySelector<HTMLElement>('[data-work-context-evidence]');
+    let activeChapter = -1;
+    const showChapter = (index: number) => {
+      if (index === activeChapter) return;
+      activeChapter = index;
+      const stage = webflowStages[index];
+      if (contextTitle) contextTitle.textContent = `${stage.label} / ${stage.title}`;
+      if (contextEvidence) contextEvidence.textContent = stage.evidence;
+      chapterButtons.forEach((button, i) => button.setAttribute('aria-current', i === index ? 'step' : 'false'));
+    };
+    let requestedTime = 0;
+    const openWalkthrough = (trigger: HTMLElement, time = 0) => {
+      if (!dialog || !video) return;
+      opener = trigger;
+      requestedTime = time;
+      showChapter(Math.max(0, webflowStages.findIndex(stage => time >= stage.start && time < stage.end)));
+      originalOverflow = document.body.style.overflow;
+      dialog.showModal();
+      filmOverlayOpen.set(true);
+      document.body.style.overflow = 'hidden';
+      if (video.readyState >= 1) video.currentTime = requestedTime;
+      void video.play().catch(() => {});
+    };
+    video?.addEventListener('loadedmetadata', () => { video.currentTime = requestedTime; }, { signal: abort.signal });
+    const updateChapter = () => {
+      if (!video) return;
+      const index = webflowStages.findIndex(stage => video.currentTime + .00001 >= stage.start && video.currentTime + .00001 < stage.end);
+      showChapter(index < 0 ? webflowStages.length - 1 : index);
+    };
+    video?.addEventListener('timeupdate', updateChapter, { signal: abort.signal });
+    video?.addEventListener('seeked', updateChapter, { signal: abort.signal });
+    chapterButtons.forEach((button, index) => {
+      button.disabled = false;
+      button.addEventListener('click', () => openWalkthrough(button, webflowStages[index].start), { signal: abort.signal });
+    });
+    const watchButton = root.querySelector<HTMLButtonElement>('[data-home-open="work-dialog"]');
+    if (watchButton) watchButton.disabled = false;
+    watchButton?.addEventListener('click', event => {
+      openWalkthrough(event.currentTarget as HTMLElement);
+    }, { signal: abort.signal });
+    dialog?.querySelector<HTMLButtonElement>('[data-home-close]')?.addEventListener('click', () => dialog.close(), { signal: abort.signal });
+    dialog?.addEventListener('close', () => {
+      dialog.querySelector('video')?.pause();
+      filmOverlayOpen.set(false);
+      document.body.style.overflow = originalOverflow;
+      opener?.focus({ preventScroll: true });
+    }, { signal: abort.signal });
+    return () => {
+      abort.abort();
+      interactions.destroy();
+      handoffEntrance?.destroy();
+      sceneReveal.destroy();
+      disposeEvidence.forEach(dispose => dispose());
+      dialog?.querySelector('video')?.pause();
+      if (dialog?.open) {
+        filmOverlayOpen.set(false);
+        document.body.style.overflow = originalOverflow;
+      }
+    };
   });
 </script>
 
-<svelte:head><link rel="stylesheet" href="/styles/agency/home.css" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /></svelte:head>
-<div class="agency-home" bind:this={root}>
+<svelte:head><link rel="stylesheet" href="/styles/agency/home.css?v=agency-intake-story-20261103" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /></svelte:head>
+<div class="agency-home" bind:this={root} use:scrollEntrance>
   {@html content}
   <details id="work-library" class="work-library" bind:open={libraryOpen}>
     <summary>Explore the work library <span>Films, source and field reports +</span></summary>

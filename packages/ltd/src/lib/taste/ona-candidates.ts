@@ -1,4 +1,4 @@
-import type { ArenaBlock } from '$lib/integrations/arena';
+import type { CandidateBlock } from '../integrations/arena/premium-search';
 
 export const DEFAULT_PERFORMANCE_LAB_CANDIDATE_QUERIES = [
 	'background agents interface',
@@ -26,7 +26,7 @@ export interface PerformanceLabCandidateCard {
 	id: string;
 	arenaId: number;
 	title: string;
-	class: ArenaBlock['class'];
+	class: CandidateBlock['class'];
 	score: number;
 	url: string;
 	sourceUrl: string | null;
@@ -43,7 +43,7 @@ interface SignalRule {
 	terms: string[];
 }
 
-const ACCEPTED_CLASSES = new Set<ArenaBlock['class']>(['Image', 'Link', 'Media', 'Text']);
+const ACCEPTED_CLASSES = new Set<CandidateBlock['class']>(['Image', 'Link', 'Media', 'Text']);
 
 const POSITIVE_SIGNALS: SignalRule[] = [
 	{
@@ -106,7 +106,10 @@ const RISK_SIGNALS: SignalRule[] = [
 	}
 ];
 
-export function rankPerformanceLabCandidates(blocks: ArenaBlock[], limit: number): PerformanceLabCandidateCard[] {
+export function rankPerformanceLabCandidates(
+	blocks: CandidateBlock[],
+	limit: number
+): PerformanceLabCandidateCard[] {
 	const seen = new Set<number>();
 
 	return blocks
@@ -121,7 +124,7 @@ export function rankPerformanceLabCandidates(blocks: ArenaBlock[], limit: number
 		.slice(0, limit);
 }
 
-export function scorePerformanceLabCandidate(block: ArenaBlock): PerformanceLabCandidateCard {
+export function scorePerformanceLabCandidate(block: CandidateBlock): PerformanceLabCandidateCard {
 	const text = blockSearchText(block);
 	const reasons = collectSignals(text, POSITIVE_SIGNALS);
 	const risks = collectSignals(text, RISK_SIGNALS);
@@ -137,13 +140,8 @@ export function scorePerformanceLabCandidate(block: ArenaBlock): PerformanceLabC
 		class: block.class,
 		score,
 		url: `https://www.are.na/block/${block.id}`,
-		sourceUrl: block.source?.url ?? block.embed?.source_url ?? block.embed?.url ?? null,
-		imageUrl:
-			block.image?.display?.url ??
-			block.image?.large?.url ??
-			block.embed?.thumbnail_url ??
-			block.image?.thumb?.url ??
-			null,
+		sourceUrl: block.source?.url ?? null,
+		imageUrl: block.imageUrl ?? null,
 		summary: summarizeBlock(block),
 		reasons,
 		risks,
@@ -151,29 +149,20 @@ export function scorePerformanceLabCandidate(block: ArenaBlock): PerformanceLabC
 	};
 }
 
-function blockTitle(block: ArenaBlock): string {
+function blockTitle(block: CandidateBlock): string {
 	return decodeBasicEntities(
-		block.title ||
-			block.generated_title ||
-			block.source?.title ||
-			block.embed?.title ||
-			`Are.na block ${block.id}`
+		block.title || block.generated_title || block.source?.title || `Are.na block ${block.id}`
 	).trim();
 }
 
-function blockSearchText(block: ArenaBlock): string {
+function blockSearchText(block: CandidateBlock): string {
 	return [
 		block.title,
 		block.generated_title,
 		block.content,
 		block.description,
 		block.source?.title,
-		block.source?.url,
-		block.source?.provider?.name,
-		block.embed?.title,
-		block.embed?.author_name,
-		block.embed?.source_url,
-		block.connections?.map((channel) => channel.title).join(' ')
+		block.source?.url
 	]
 		.filter(Boolean)
 		.join(' ')
@@ -181,14 +170,8 @@ function blockSearchText(block: ArenaBlock): string {
 		.toLowerCase();
 }
 
-function summarizeBlock(block: ArenaBlock): string {
-	const summary = [
-		block.description,
-		block.content,
-		block.source?.title,
-		block.embed?.title,
-		block.source?.provider?.name
-	]
+function summarizeBlock(block: CandidateBlock): string {
+	const summary = [block.description, block.content, block.source?.title]
 		.filter(Boolean)
 		.join(' ')
 		.replace(/<[^>]+>/g, ' ')
@@ -197,9 +180,7 @@ function summarizeBlock(block: ArenaBlock): string {
 
 	if (!summary) return `${block.class} block from Are.na.`;
 	const decodedSummary = decodeBasicEntities(summary);
-	return decodedSummary.length > 220
-		? `${decodedSummary.slice(0, 217).trim()}...`
-		: decodedSummary;
+	return decodedSummary.length > 220 ? `${decodedSummary.slice(0, 217).trim()}...` : decodedSummary;
 }
 
 function collectSignals(text: string, rules: SignalRule[]): string[] {
@@ -215,7 +196,7 @@ function scoreSignals(labels: string[], rules: SignalRule[]): number {
 	}, 0);
 }
 
-function classSignal(block: ArenaBlock): number {
+function classSignal(block: CandidateBlock): number {
 	switch (block.class) {
 		case 'Link':
 			return 8;

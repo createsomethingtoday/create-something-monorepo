@@ -100,3 +100,6 @@ body.design-preview[data-preview-family='product'] :is(.scopefield-page .compati
     align-items: flex-start;
   }
 }
+/* A synthetic record is a working object, not another campaign headline. */
+body.design-preview[data-preview-family='product'] .example .record h2{font-size:clamp(1.4rem,2.5vw,2.2rem);line-height:1.12;max-width:24ch}
+body.design-preview[data-preview-family='product'] .example .record{min-width:0}

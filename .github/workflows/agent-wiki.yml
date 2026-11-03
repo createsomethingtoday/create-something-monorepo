@@ -10,12 +10,19 @@ permissions:
 jobs:
   wiki:
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    # Large repository fetches can consume five minutes before validation starts.
+    # Bound checkout separately and leave time for every existing contract check.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        timeout-minutes: 10
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: '22'
           package-manager-cache: false
       - run: node --test packages/database-layer/test/agent-wiki*.test.mjs
       - run: node packages/database-layer/scripts/generate-agent-wiki.mjs --check
+      - name: Validate composable ontology contracts
+        run: |
+          node --test packages/database-layer/test/ontology.test.mjs
+          node packages/database-layer/scripts/ontology.mjs check

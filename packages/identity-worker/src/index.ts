@@ -121,7 +121,12 @@ async function route(request: Request, env: Env, method: string, path: string): 
     // Registered OAuth clients retain their existing validation and code/PKCE flow.
     if (path === '/login' && new URL(request.url).searchParams.has('client_id'))
       return handleOAuthAuthorizePage(request, env);
-    const page = accountPage(path);
+    const query = new URL(request.url).searchParams;
+    const page = accountPage(path, {
+      gigiSignupEnabled: env.GIGI_ENROLLMENT_ENABLED === 'true',
+      app: query.get('app') ?? undefined,
+      verificationMode: query.get('mode') ?? undefined,
+    });
     if (page) return page;
   }
 	// Health check
@@ -137,7 +142,14 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	if (path === '/.well-known/create-something-auth' && method === 'GET') {
 		const enabled = enrollmentOpen(env) && !!env.RESEND_API_KEY;
 		const contract = createAuthPlatformContract(new URL(request.url).origin, { enrollmentEnabled: enabled, enrollmentMode: env.PUBLIC_ENROLLMENT_ENABLED === 'true' ? 'public' : 'restricted' });
-		return json({ ...contract, recovery: { enabled: !!env.RESEND_API_KEY && (env.VERIFIED_RECOVERY_ENABLED === 'true' || enrollmentOpen(env)), mode: env.VERIFIED_RECOVERY_ENABLED === 'true' ? 'verified-existing-accounts' : 'legacy-enrollment' } }, 200, {
+		return json({ ...contract,
+      applications: { gigi: {
+        enrollment_enabled: env.GIGI_ENROLLMENT_ENABLED === 'true' && !!env.RESEND_API_KEY,
+        signup_uri: 'https://id.createsomething.space/signup?app=gigi',
+        mailbox_proof_required: true,
+        application_access_separate: true,
+      } },
+      recovery: { enabled: !!env.RESEND_API_KEY && (env.VERIFIED_RECOVERY_ENABLED === 'true' || enrollmentOpen(env)), mode: env.VERIFIED_RECOVERY_ENABLED === 'true' ? 'verified-existing-accounts' : 'legacy-enrollment' } }, 200, {
 			'Cache-Control': 'public, max-age=300',
 		});
 	}
@@ -4624,6 +4636,8 @@ function renderOAuthAuthorizePage(params: URLSearchParams, env: Env, errorMessag
 		requestedResource,
 		env.CONTROL_RUNTIME_RESOURCES
 	);
+	const gigiResource = requestedResource === 'https://gigi-connector.createsomething.workers.dev';
+	const gigiSignupEnabled = gigiResource && env.GIGI_ENROLLMENT_ENABLED === 'true';
 	const requestedScopes = normalizeScope(params.get('scope') ?? 'openid mcp');
 	const accessEyebrow = applicationPolicy ? 'Application MCP Access' : 'Managed MCP Access';
 	const accessDescription = applicationPolicy
@@ -4684,6 +4698,8 @@ function renderOAuthAuthorizePage(params: URLSearchParams, env: Env, errorMessag
     button { width: 100%; min-height: 54px; margin-top: 28px; border: 1px solid var(--color-performance-ink); border-radius: var(--radius-performance-sm); background: var(--color-performance-ink); color: var(--color-performance-panel); padding: 14px 18px; font: 600 15px/1.5 var(--font-performance-sans); cursor: pointer; }
     button:hover { background: var(--color-performance-ink-soft); }
     :focus-visible { outline: 3px solid var(--color-performance-controlled); outline-offset: 4px; }
+    .account-help { display: flex; flex-wrap: wrap; gap: 12px 24px; margin-top: 24px; font-size: 14px; line-height: 1.6; }
+    .signup-note { margin-top: 16px; font-size: 14px; }
     .error { margin-top: 20px; padding: 14px; border: 1px solid var(--color-performance-risk); border-inline-start-width: 3px; background: var(--color-performance-risk-soft); color: var(--color-performance-risk); font-size: 14px; }
     footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px; border-top: 1px solid var(--color-performance-line); padding: 24px 0; color: var(--color-performance-muted); font-size: 12px; line-height: 1.6; }
     footer nav { display: flex; gap: 24px; }
@@ -4718,6 +4734,7 @@ function renderOAuthAuthorizePage(params: URLSearchParams, env: Env, errorMessag
           <label>Password<input type="password" name="password" autocomplete="current-password" required /></label>
           <button type="submit">Sign in and authorize</button>
         </form>
+        ${gigiResource ? `<nav class="account-help" aria-label="Account help">${gigiSignupEnabled ? '<a href="/signup?app=gigi" target="_blank" rel="noopener noreferrer">Create account ↗</a>' : ''}<a href="/recover?app=gigi" target="_blank" rel="noopener noreferrer">Forgot your password? ↗</a></nav>${gigiSignupEnabled ? '<p class="signup-note">New to GiGi? Create your account in a separate tab, then return here to sign in. If this request expires, start source sign-in again in GiGi on your Mac.</p>' : ''}` : ''}
       </section>
     </main>
     <footer><span>CREATE SOMETHING Identity</span><nav aria-label="Legal"><a href="https://createsomething.agency/privacy">Privacy</a><a href="https://createsomething.agency/terms">Terms</a></nav></footer>

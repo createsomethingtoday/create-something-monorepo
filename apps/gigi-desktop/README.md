@@ -1,5 +1,9 @@
 # GiGi desktop beta
 
+## Daily-use polish (0.2.17 candidate)
+
+Today puts **New task** beside **New gig** and uses the minimum window more efficiently. Attention keeps its decisions and safety boundary with less repeated framing; record cards retain readable titles in two columns where space permits. Errors remain until dismissed, successful feedback respects keyboard focus, and failed attention checks never claim you are caught up. Studio, Paper, Midnight and protected record/approval flows remain established. See [candidate evidence](evidence/daily-polish-0217/REVIEW.md) for synthetic/native checks and remaining release gates.
+
 ## Tauri polish (0.2.10 local candidate)
 
 Restores the slate studio theme after reference layout styles, clarifies active secondary-page navigation, and standardizes system typography, metadata, dates and artwork/media surfaces. Music keeps in-progress controls and focus during reads, distinguishes loading/read failure from an empty library, offers explicit retry/filter reset, and restores focus after a cancelled picker. Artwork saves return focus to the matching action after the detail refresh. Database, integration and MCP contracts are unchanged.
@@ -200,3 +204,59 @@ GiGi is a free, open-source local desktop app. The optional app-owned connection
 Settings offers system-browser sign-in, cancel, account selection/reconnect/disconnect, a model catalog and a separate text-only message box. Only explicitly typed text is sent; it has no record context or tools. Eligible plan use is limited, with no automatic API billing fallback. Native Rust owns the persistent controller and credential store. Credentials never enter the renderer; cancel invalidates in-flight output and app exit cancels work. Non-macOS builds remain disabled. Account identity and permission for eligible plan inference are distinct.
 
 A separately configured DEV variant built from `e115e337` completed owner-performed browser consent, model discovery, one synthetic typed-text request and persisted local sign-out on 2026-10-24. That test used an incognito WebView, an isolated synthetic database and a disabled installed-Codex probe. It establishes only that earlier condition and selected account; it does not qualify a later installer or the existing Codex workflow. Historical remote revocation remains unverified. Mock tests and prior-build results do not replace exact-artifact native/provider acceptance, signing/notarization and published-download verification.
+
+
+## Appearance and views
+
+Choose **Customize** in the workspace strip, or **Settings → Customize appearance
+& views**. Appearance has its own page; connection setup and first-run guidance
+remain in Setup & safety. Studio follows the landing illustration's neutral
+operator palette. Paper and Midnight offer light and deeper-dark alternatives.
+
+Choose comfortable or compact spacing, a starting page (including Music or
+Instagram drafts), list/card record collections, and the remembered Schedule
+view. Gigs retains its search, filters and pagination in either record layout.
+Today, Music, Instagram and Schedule retain their purpose-built layouts.
+
+Preferences save automatically to this desktop webview's local storage under the
+workspace ID. They survive restarts on this device, but are not included in the
+SQLite backup or synced to another account/device. Saving failures remain visible;
+Schedule can still switch views for the current session if storage is blocked.
+
+Expand **Share or edit a configuration** to show/copy configuration JSON or import
+an edited document. Version 1 accepts only `version`, `theme`, `density`,
+`startPage`, `collectionView`, and `scheduleView`, with a 16 KiB UTF-8 limit. The
+whole document is validated before application; omitted fields use defaults.
+Credentials, records, scripts, arbitrary CSS, and unknown keys are rejected.
+**Reset appearance & views** restores Studio and the default views without
+changing business records or connections. Executable plugins and custom palette
+authoring are outside this release's presentation-configuration scope.
+
+## Assistance and desktop notifications
+
+Today’s **Needs your attention** feed keeps dated unfinished tasks, upcoming gigs,
+pending conversation decisions, checked results and uncertain outcomes available
+outside Ask GiGi. Review a source, ask for help, snooze for one hour or dismiss an
+item. Chat starting points prepare a draft; sending remains explicit. Answers
+support a bounded text format, without provider-authored HTML or action controls.
+
+Attention state and notification policy live in the workspace SQLite database.
+A read-only workspace observer checks existing conversations independently of the
+drawer, with bounded rotating reads. It never starts model turns, approves edits
+or retries uncertain writes. Before opening an item, GiGi rechecks its source and
+revision. Existing approval and verified-readback rules remain in force.
+
+Settings → Assistance & notifications offers opt-in macOS alerts, optional dated
+reminders, quiet hours in this Mac’s local time, and detailed previews (off by
+default). The native UserNotifications companion checks actual macOS permission
+and alert settings. Foreground work stays in the feed. Clicking an alert opens
+current work for review; it never approves a change. Delivery receipts record OS
+submission, not whether someone saw an alert. Backlogs coalesce, and uncertain
+or failed deliveries are not automatically replayed. Snooze returns an item to
+the feed but does not repeat an already-submitted same-revision alert.
+
+Observation runs while the app is running; sleeping hosts may delay checks until
+wake. Quitting stops observation. This release does not add phone delivery,
+teammate messaging, unattended model runs or new mutation authority. Native
+notifications are packaged in a signed macOS 13/Apple Silicon Swift companion;
+release verification requires it alongside the existing companions.

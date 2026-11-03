@@ -33,6 +33,8 @@ const SELECTED_CALENDAR_SCOPES = [
 export interface ConnectorEnv {
   COMPOSIO_API_KEY?: string;
   GIGI_ALLOWED_SUBJECTS?: string;
+  /** Explicit application policy; never changes Identity or provider permissions. */
+  GIGI_PUBLIC_ACCESS_ENABLED?: string;
   INSTAGRAM_MEDIA?: {
     put(key:string,value:Uint8Array,options:{customMetadata:Record<string,string>}):Promise<unknown>;
     get(key:string):Promise<{body:ReadableStream<Uint8Array>;customMetadata?:Record<string,string>}|null>;
@@ -74,7 +76,7 @@ export async function handleConnectorRequest(
   const staged = await instagramStagedMedia(request,env);
   if(staged)return staged;
   if (url.pathname === '/health' && request.method === 'GET') {
-    const configured = Boolean(env.DB && env.COMPOSIO_API_KEY && env.GIGI_ALLOWED_SUBJECTS?.trim() &&
+    const configured = Boolean(env.DB && env.COMPOSIO_API_KEY && (env.GIGI_PUBLIC_ACCESS_ENABLED === 'true' || env.GIGI_ALLOWED_SUBJECTS?.trim()) &&
       env.GIGI_GMAIL_AUTH_CONFIG_ID && env.GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID &&
       approvedScopes('gmail', env.GIGI_GMAIL_AUTH_CONFIG_ID, env.GIGI_GMAIL_APPROVED_SCOPES) &&
       approvedScopes('googlecalendar', env.GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID, env.GIGI_GOOGLECALENDAR_APPROVED_SCOPES));
@@ -473,7 +475,8 @@ async function authenticate(request: Request, env: ConnectorEnv, providerFetch: 
   const token = request.headers.get('authorization')?.match(/^Bearer ([^\s]+)$/iu)?.[1];
   if (!token || token.length > 4096) return { error: 'session_expired', status: 401 };
   const allowlist = new Set((env.GIGI_ALLOWED_SUBJECTS ?? '').split(',').map((item) => item.trim()).filter(Boolean));
-  if (allowlist.size === 0) return { error: 'unconfigured', status: 503 };
+  const publicAccess = env.GIGI_PUBLIC_ACCESS_ENABLED === 'true';
+  if (!publicAccess && allowlist.size === 0) return { error: 'unconfigured', status: 503 };
   try {
     const response = await providerFetch(new Request(IDENTITY_USERINFO, {
       method: 'GET',
@@ -489,7 +492,7 @@ async function authenticate(request: Request, env: ConnectorEnv, providerFetch: 
       return { error: 'provider_unavailable', status: 503 };
     }
     // Valid Identity is not admission. Do not expose which policy dimension failed.
-    if (data.resource !== GIGI_RESOURCE || data.email_verified !== true || !allowlist.has(data.sub)) {
+    if (data.resource !== GIGI_RESOURCE || data.email_verified !== true || (!publicAccess && !allowlist.has(data.sub))) {
       return { error: 'access_denied', status: 403 };
     }
     return { subject: data.sub };

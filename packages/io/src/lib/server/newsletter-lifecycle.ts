@@ -31,6 +31,7 @@ export async function markNewsletterConfirmed(
            updated_at = datetime('now')
        WHERE id = ?
          AND confirmation_token = ?
+         AND confirmed_at IS NULL
          AND unsubscribed_at IS NULL
          AND active = 1
          AND status = 'active'`

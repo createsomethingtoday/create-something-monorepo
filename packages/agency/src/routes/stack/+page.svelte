@@ -145,7 +145,7 @@
     {
       id: 'portability',
       label: 'Portability',
-      summary: 'Conviction without dependence',
+      summary: 'Change models after testing.',
       title: 'Built with OpenAI. Prepared for change.',
       detail:
         'We build primarily with OpenAI Codex. Your project keeps its data, code, tool definitions, instructions, tests, and recovery guide. A different model must pass the relevant checks before you switch. CREATE SOMETHING maintains the system layer; Cloudflare provides infrastructure and OpenAI provides intelligence.',
@@ -201,7 +201,7 @@
   artifactMobilePlacement="flow"
   proof={[
     { label: 'Your team keeps', value: 'Accounts + decisions' },
-    { label: 'Substrate records', value: 'State + evidence' },
+    { label: 'Work records', value: 'Status + evidence' },
     { label: 'Vendors provide', value: 'Replaceable infrastructure' }
   ]}
 >

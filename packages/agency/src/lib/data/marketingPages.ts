@@ -17,6 +17,7 @@ export type MarketingPageCluster =
   | 'proof-lab'
   | 'workflow-proof'
   | 'workflow-library'
+  | 'webflow-portfolio'
   | 'trust'
   | 'business-use-case'
   | 'enterprise-use-case'
@@ -169,7 +170,32 @@ const workflowMarketingDefinitions: Array<{
   }
 ];
 
+const webflowPortfolioPages: MarketingPageEntry[] = [
+  {
+    path: '/case-studies/webflow-marketplace',
+    cluster: 'webflow-portfolio', role: 'pillar', decision: 'index',
+    audience: 'Operations and product leaders inspecting Micah Johnson’s individual Webflow work.',
+    funnelStage: 'evaluate', intent: 'Inspect the connected Marketplace lifecycle and its evidence limits.',
+    primaryAction: 'Talk through your workflow', requiredTerms: ['Webflow', 'Marketplace'],
+    requiredLinks: ['/#workflow'], schema: 'page',
+    search: { changefreq: 'monthly', priority: '0.8', lastmod: '2026-11-02' },
+    selfHealing: ['search-route:sync', 'canonical-route:review']
+  },
+  ...['asset-dashboard', 'validator', 'preflight', 'apps', 'submission', 'review-mcp', 'skills', 'listings'].map((id): MarketingPageEntry => ({
+    path: `/case-studies/webflow-marketplace/${id}`,
+    sourceRoute: '/case-studies/webflow-marketplace/[study]',
+    cluster: 'webflow-portfolio', role: 'support', decision: 'index',
+    audience: 'Operations and product leaders inspecting a specific professional contribution.',
+    funnelStage: 'evaluate', intent: 'Inspect the contribution, recording, design decision and evidence limits.',
+    primaryAction: 'The complete story', requiredTerms: ['Webflow'],
+    requiredLinks: ['/case-studies/webflow-marketplace'], schema: 'page',
+    search: { changefreq: 'monthly', priority: '0.6', lastmod: '2026-11-02' },
+    selfHealing: ['search-route:sync', 'canonical-route:review']
+  }))
+];
+
 export const marketingPagePortfolio: MarketingPageEntry[] = [
+  ...webflowPortfolioPages,
   {
     path: '/dfw-tech-support', cluster: 'core-services', role: 'support', decision: 'index',
     audience: 'DFW business owners with a failing software system or operational workflow.',
@@ -216,8 +242,8 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     intent:
       'Explain recurring AI-native technical support, its engineering capability, ownership and agreed capacity.',
     primaryAction: 'Talk through your workflow',
-    requiredTerms: ['technical support', 'diagnose', 'improvements', 'workstream', 'code'],
-    requiredLinks: ['/agent-foundation', '/services', '/stack'],
+    requiredTerms: ['technical support', 'workflow', 'team', 'workstream', 'code'],
+    requiredLinks: ['/products', '/services', '/stack'],
     schema: 'page',
     search: {
       changefreq: 'weekly',
@@ -959,8 +985,8 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     audience: 'Readers who want to understand the operator behind CREATE SOMETHING .agency.',
     funnelStage: 'evaluate',
     intent: 'Explain Micah Johnson and the diagnosis, engineering, and learning behind technical support.',
-    primaryAction: 'Book',
-    requiredTerms: ['workflow', 'operator', 'judgment', 'evidence', 'trust'],
+    primaryAction: 'Talk through your workflow',
+    requiredTerms: ['workflow', 'people', 'approval', 'instructions', 'trust'],
     requiredLinks: ['/services'],
     schema: 'page',
     search: {

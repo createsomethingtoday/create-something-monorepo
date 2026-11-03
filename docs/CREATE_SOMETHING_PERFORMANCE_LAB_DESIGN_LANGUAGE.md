@@ -62,12 +62,18 @@ The name carries two different jobs that must remain visible together:
 - **The hybrid** pairs visceral campaign energy with rigorous operating proof.
   A surface fails when it becomes only a calm dashboard or only a sports image.
 
-The primary campaign field is Playbook notation: an original court-like
+The operating field is Playbook notation: an original court-like
 operating diagram with owners, constraints, delegated routes, human decision
 gates, zones, and receipts. Offense creates advantage by advancing approved
 work. Defense protects authority, quality, evidence, and recovery. The field
 must stay understandable without sports knowledge and must never collapse into
 basketball clip art, team branding, or generic X/O decoration.
+
+Agency's approved commercial campaign uses an original graphite workshop story to show
+learning, useful connections, reviewed operation, and team handoff. Images determine the
+composition and mobile crop, while real recordings and source artifacts support delivery
+claims. These labeled conceptual scenes complement operating notation. The full contract
+is in `PERFORMANCE_LAB_VISUAL_GRAMMAR.md` under “Agency campaign story: graphite workshop.”
 
 Paper remains available for editorial source material, research, receipts, and
 historical campaign studies. It is no longer the primary brand material for the
@@ -201,7 +207,7 @@ Canon exposes this through the Performance state tokens,
 
 | Surface | Direction |
 | --- | --- |
-| Homepage | Combine the plain offer with one property-specific Playbook field, decisive scale, technical annotation, and integrated proof. |
+| Homepage | Combine the plain offer with a property-specific performance study or approved Agency workshop story, decisive scale, concise annotation, and nearby inspectable proof. |
 | Services | Show the workflow as a training and pressure sequence, not only a list of steps. |
 | Products | Present Atlas, Signal, Decision, and Proof as a performance system for delegated work. |
 | Articles | Combine high-fidelity operating artifacts with an original editorial field or material study when it clarifies pressure, testing, or proof. |

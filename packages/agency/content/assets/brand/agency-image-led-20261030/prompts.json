@@ -1,0 +1,9 @@
+{
+  "tool": "built-in image_gen",
+  "model": "not exposed by tool",
+  "created": "2026-10-30",
+  "references": [
+    "packages/agency/static/images/agency-sales/hero.webp",
+    "packages/agency/static/images/agency-sales/team.webp"
+  ]
+}

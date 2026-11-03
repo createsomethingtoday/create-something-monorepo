@@ -1,5 +1,6 @@
 <script lang="ts">
   import { getAnalytics } from '../analytics/client.js';
+  import { newsletterSignupContext } from './client.js';
 
   /**
    * NewsletterSignup Component
@@ -77,10 +78,7 @@
           email: email.trim(),
           website: honeypot, // Honeypot field
           source,
-          sessionId: analytics?.getSessionId(),
-          sourceProperty: analytics?.getSourceProperty() ?? undefined,
-          landingUrl: typeof window !== 'undefined' ? window.location.href : undefined,
-          referrer: typeof document !== 'undefined' ? document.referrer : undefined
+          ...newsletterSignupContext()
         })
       });
 

@@ -1,0 +1,192 @@
+{
+  "schema": "agent-decision-provider-qualification-bundle/v1",
+  "scope": "synthetic_live_provider_contract_only",
+  "qualityImprovementClaim": false,
+  "fixturesFrozenBeforeLiveRun": true,
+  "reports": [
+    {
+      "schema": "agent-decision-live-qualification/v1",
+      "recordedAt": "2026-11-01T01:07:00.643Z",
+      "provider": "openai",
+      "requestedModel": "gpt-6-luna",
+      "adapterVersion": "finite-choice-v1",
+      "fixtureHash": "037854572c13144f5e947a3fceaf524fa80d228ba16d66c260da51af0f64e560",
+      "scope": "synthetic_provider_contract_only",
+      "timeoutMs": 5000,
+      "retries": 0,
+      "liveProviderVerified": false,
+      "fixtureMatches": 0,
+      "fixtureCount": 4,
+      "downstreamImprovement": "not_established",
+      "rows": [
+        {
+          "id": "framework",
+          "requestedModel": "gpt-6-luna",
+          "servedModel": null,
+          "selectedId": null,
+          "expectedId": "framework",
+          "passed": false,
+          "elapsedMs": 1215,
+          "failure": "http",
+          "httpStatus": 429
+        },
+        {
+          "id": "host-setup",
+          "requestedModel": "gpt-6-luna",
+          "servedModel": null,
+          "selectedId": null,
+          "expectedId": "playbook",
+          "passed": false,
+          "elapsedMs": 412,
+          "failure": "http",
+          "httpStatus": 429
+        },
+        {
+          "id": "company",
+          "requestedModel": "gpt-6-luna",
+          "servedModel": null,
+          "selectedId": null,
+          "expectedId": "company",
+          "passed": false,
+          "elapsedMs": 107,
+          "failure": "http",
+          "httpStatus": 429
+        },
+        {
+          "id": "out-of-scope",
+          "requestedModel": "gpt-6-luna",
+          "servedModel": null,
+          "selectedId": null,
+          "expectedId": null,
+          "passed": false,
+          "elapsedMs": 99,
+          "failure": "http",
+          "httpStatus": 429
+        }
+      ],
+      "credentialSource": "generic-production-openai"
+    },
+    {
+      "schema": "agent-decision-live-qualification/v1",
+      "recordedAt": "2026-11-01T01:07:05.087Z",
+      "provider": "jev",
+      "requestedModel": "jev-1.13.0",
+      "adapterVersion": "finite-choice-v1",
+      "fixtureHash": "037854572c13144f5e947a3fceaf524fa80d228ba16d66c260da51af0f64e560",
+      "scope": "synthetic_provider_contract_only",
+      "timeoutMs": 5000,
+      "retries": 0,
+      "liveProviderVerified": true,
+      "fixtureMatches": 4,
+      "fixtureCount": 4,
+      "downstreamImprovement": "not_established",
+      "rows": [
+        {
+          "id": "framework",
+          "requestedModel": "jev-1.13.0",
+          "servedModel": "jev-1.13.0",
+          "selectedId": "framework",
+          "expectedId": "framework",
+          "passed": true,
+          "elapsedMs": 446,
+          "failure": null
+        },
+        {
+          "id": "host-setup",
+          "requestedModel": "jev-1.13.0",
+          "servedModel": "jev-1.13.0",
+          "selectedId": "playbook",
+          "expectedId": "playbook",
+          "passed": true,
+          "elapsedMs": 124,
+          "failure": null
+        },
+        {
+          "id": "company",
+          "requestedModel": "jev-1.13.0",
+          "servedModel": "jev-1.13.0",
+          "selectedId": "company",
+          "expectedId": "company",
+          "passed": true,
+          "elapsedMs": 124,
+          "failure": null
+        },
+        {
+          "id": "out-of-scope",
+          "requestedModel": "jev-1.13.0",
+          "servedModel": "jev-1.13.0",
+          "selectedId": null,
+          "expectedId": null,
+          "passed": true,
+          "elapsedMs": 115,
+          "failure": null
+        }
+      ],
+      "credentialSource": "existing-development-typesafe"
+    },
+    {
+      "schema": "agent-decision-live-qualification/v1",
+      "recordedAt": "2026-11-01T01:08:03.441Z",
+      "provider": "openai",
+      "requestedModel": "gpt-6-luna",
+      "adapterVersion": "finite-choice-v1",
+      "fixtureHash": "037854572c13144f5e947a3fceaf524fa80d228ba16d66c260da51af0f64e560",
+      "scope": "synthetic_provider_contract_only",
+      "timeoutMs": 5000,
+      "retries": 0,
+      "liveProviderVerified": true,
+      "fixtureMatches": 4,
+      "fixtureCount": 4,
+      "downstreamImprovement": "not_established",
+      "rows": [
+        {
+          "id": "framework",
+          "requestedModel": "gpt-6-luna",
+          "servedModel": "gpt-6-luna",
+          "selectedId": "framework",
+          "expectedId": "framework",
+          "passed": true,
+          "elapsedMs": 1113,
+          "failure": null
+        },
+        {
+          "id": "host-setup",
+          "requestedModel": "gpt-6-luna",
+          "servedModel": "gpt-6-luna",
+          "selectedId": "playbook",
+          "expectedId": "playbook",
+          "passed": true,
+          "elapsedMs": 165,
+          "failure": null
+        },
+        {
+          "id": "company",
+          "requestedModel": "gpt-6-luna",
+          "servedModel": "gpt-6-luna",
+          "selectedId": "company",
+          "expectedId": "company",
+          "passed": true,
+          "elapsedMs": 235,
+          "failure": null
+        },
+        {
+          "id": "out-of-scope",
+          "requestedModel": "gpt-6-luna",
+          "servedModel": "gpt-6-luna",
+          "selectedId": null,
+          "expectedId": null,
+          "passed": true,
+          "elapsedMs": 235,
+          "failure": null
+        }
+      ],
+      "credentialSource": "existing-runtime-webflow-openai"
+    }
+  ],
+  "references": {
+    "openai": "https://developers.openai.com/api/docs/guides/decisions",
+    "jevClient": "https://github.com/itsmostafa/typesafe-mcp/blob/e5e7d69cf14912de3b789a2140e2becdaf056022/cmd/evaluate/client.go",
+    "jevEndpoint": "https://github.com/itsmostafa/typesafe-mcp/blob/e5e7d69cf14912de3b789a2140e2becdaf056022/cmd/evaluate/main.go"
+  },
+  "runtimeOpenAIQualification": "passed with existing runtime credential source; generic production OpenAI credential failures retained separately"
+}

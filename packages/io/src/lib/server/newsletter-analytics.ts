@@ -34,24 +34,98 @@ SELECT REPLACE(campaign, '_', '-') AS campaign, traffic_class, COUNT(*) AS landi
 FROM sessions GROUP BY campaign, traffic_class ORDER BY campaign, traffic_class`;
 
 export async function readNewsletterDelivery(
-  entry: typeof NEWSLETTER_DELIVERIES[number], apiKey: string | undefined, fetcher: typeof fetch = fetch
+  entry: { campaign: string; subject: string; ids: string[] }, apiKey: string | undefined, fetcher: typeof fetch = fetch,
+  wait: (milliseconds: number) => Promise<void> = (milliseconds) => new Promise(resolve => setTimeout(resolve, milliseconds))
 ) {
   if (!entry.ids.length) return { campaign: entry.campaign, status: 'not-registered', registered: 0, delivered: null, states: {} };
   if (!apiKey) return { campaign: entry.campaign, status: 'unavailable', registered: entry.ids.length, delivered: null, states: {} };
   try {
     const states: Record<string, number> = {};
-    // Sequential requests respect provider rate limits; API route reads campaigns sequentially too.
+    // Leave headroom below the default team-wide limit, including between campaigns.
+    // Other callers can consume the same quota, so also honor bounded 429 retries.
     for (const id of entry.ids) {
-      const response = await fetcher(`https://api.resend.com/emails/${id}`, {
-        headers: { Authorization: `Bearer ${apiKey}` }, signal: AbortSignal.timeout(8000)
-      });
+      await wait(125);
+      let response: Response;
+      for (let attempt = 0; ; attempt++) {
+        response = await fetcher(`https://api.resend.com/emails/${id}`, {
+          headers: { Authorization: `Bearer ${apiKey}`, 'User-Agent': 'create-something-newsletter/1.0' },
+          signal: AbortSignal.timeout(8000)
+        });
+        if (response.status !== 429 || attempt >= 2) break;
+        const retryAfter = response.headers.get('Retry-After');
+        const seconds = retryAfter === null ? NaN : Number(retryAfter);
+        const delay = retryAfter === null ? 1000 : Number.isFinite(seconds)
+          ? seconds * 1000 : Date.parse(retryAfter) - Date.now();
+        // Stop instead of retrying early when the provider requests a longer pause.
+        if (!Number.isFinite(delay) || delay > 5000) break;
+        await response.body?.cancel();
+        await wait(Math.max(125, delay));
+      }
       if (!response.ok) throw new Error('Provider readback unavailable');
       const value = await response.json() as { id?: string; subject?: string; last_event?: string };
       if (value.id !== id || value.subject !== entry.subject || typeof value.last_event !== 'string') throw new Error('Provider receipt mismatch');
-      states[value.last_event] = (states[value.last_event] ?? 0) + 1;
+      // Later engagement proves delivery; engagement details remain unmeasured.
+      const state = ['opened', 'clicked'].includes(value.last_event) ? 'delivered' : value.last_event;
+      states[state] = (states[state] ?? 0) + 1;
     }
     return { campaign: entry.campaign, status: 'verified', registered: entry.ids.length, delivered: states.delivered ?? 0, states };
   } catch {
     return { campaign: entry.campaign, status: 'unavailable', registered: entry.ids.length, delivered: null, states: {} };
   }
+}
+
+/** Configured campaign attribution, never recipient click or causal conversion rates. */
+export const NEWSLETTER_ATTRIBUTION_SQL = `WITH visits AS (
+  SELECT CASE WHEN json_extract(metadata, '$.newsletterMeasurement') = 'first-party-social-v1'
+      THEN '2026-09-01-the-interface-is-becoming-executable'
+      ELSE REPLACE(json_extract(metadata, '$.newsletterCampaign'), '_', '-') END AS edition,
+    CASE WHEN json_extract(metadata, '$.newsletterMeasurement') = 'first-party-v1' THEN 'newsletter'
+      ELSE json_extract(metadata, '$.newsletterSource') END AS channel,
+    REPLACE(json_extract(metadata, '$.newsletterCampaign'), '_', '-') AS campaign,
+    COALESCE(json_extract(metadata, '$.trafficClass'), 'unknown') AS traffic_class,
+    COUNT(DISTINCT session_id) AS landing_sessions, 0 AS requested, 0 AS confirmed
+  FROM unified_events
+  WHERE property = 'io' AND action = 'page_view' AND json_valid(metadata)
+    AND ((json_extract(metadata, '$.newsletterMeasurement') = 'first-party-v1'
+      AND REPLACE(json_extract(metadata, '$.newsletterCampaign'), '_', '-') IN (${NEWSLETTER_CAMPAIGNS.map(id => `'${id}'`).join(',')}))
+      OR (json_extract(metadata, '$.newsletterMeasurement') = 'first-party-social-v1'
+        AND json_extract(metadata, '$.newsletterCampaign') = 'field_notes_20260928'
+        AND json_extract(metadata, '$.newsletterSource') IN ('linkedin', 'substack')))
+    AND julianday(created_at) >= julianday('now', '-30 days')
+  GROUP BY edition, channel, campaign, traffic_class
+), signups AS (
+  SELECT edition, channel, campaign, traffic_class, 0 AS landing_sessions,
+    SUM(julianday(requested_at) >= julianday('now', '-30 days')) AS requested,
+    SUM(CASE WHEN julianday(confirmed_at) >= julianday('now', '-30 days') THEN 1 ELSE 0 END) AS confirmed
+  FROM newsletter_signup_attributions
+  WHERE julianday(requested_at) >= julianday('now', '-30 days') OR julianday(confirmed_at) >= julianday('now', '-30 days')
+  GROUP BY edition, channel, campaign, traffic_class
+), combined AS (SELECT * FROM visits UNION ALL SELECT * FROM signups)
+SELECT edition, channel, campaign, traffic_class, SUM(landing_sessions) AS landing_sessions,
+  SUM(requested) AS requested, SUM(confirmed) AS confirmed
+FROM combined GROUP BY edition, channel, campaign, traffic_class
+ORDER BY edition, channel, campaign, traffic_class`;
+
+export interface NewsletterAudienceDeliveryRow {
+  campaign: string;
+  subject: string;
+  resend_email_id: string | null;
+}
+
+/** Operator seeds are excluded in SQL; IDs are deduplicated across historical imports. */
+export const NEWSLETTER_AUDIENCE_DELIVERIES_SQL = `SELECT e.slug AS campaign, e.subject, d.resend_email_id
+  FROM newsletter_editions e LEFT JOIN newsletter_edition_deliveries d
+    ON d.edition_slug = e.slug AND d.kind IN ('audience', 'historical-audience')
+    AND d.resend_email_id IS NOT NULL ORDER BY e.slug, d.resend_email_id`;
+
+export function mergeNewsletterDeliveryEntries(rows: NewsletterAudienceDeliveryRow[]) {
+  const entries = new Map<string, {campaign:string;subject:string;ids:string[]}>();
+  for (const entry of NEWSLETTER_DELIVERIES) entries.set(entry.campaign, {...entry,ids:[...entry.ids]});
+  for (const row of rows) {
+    const entry = entries.get(row.campaign) ?? {campaign:row.campaign,subject:row.subject,ids:[]};
+    entry.subject = row.subject;
+    if (row.resend_email_id && !entry.ids.includes(row.resend_email_id)) entry.ids.push(row.resend_email_id);
+    entries.set(row.campaign,entry);
+  }
+  return [...entries.values()];
 }

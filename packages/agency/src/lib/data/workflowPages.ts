@@ -556,7 +556,7 @@ export const workflowPages: WorkflowPage[] = [
     "eyebrow": "Architecture comparison",
     "title": "MCP or an API: which connection does your project need?",
     "seoTitle": "MCP vs API: When to Use Each Interface",
-    "description": "An API lets software exchange information or request actions.",
+    "description": "Compare MCP and APIs for AI integrations. Learn when to use each, how they work together, and which permissions and checks your connection needs.",
     "keywords": [
       "MCP vs API",
       "Model Context Protocol vs REST API",

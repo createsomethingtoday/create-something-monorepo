@@ -40,7 +40,9 @@
     "./organization-review.json": "./data/create-something-organization-review.json",
     "./performance-contract.json": "./data/create-something-performance-contract.json",
     "./runtime-binding-coverage.json": "./data/create-something-runtime-binding-coverage.json",
-    "./topology-diagnostics.json": "./data/create-something-topology-diagnostics.json"
+    "./topology-diagnostics.json": "./data/create-something-topology-diagnostics.json",
+    "./ontology": "./scripts/lib/ontology.mjs",
+    "./ontology/v1/contract.json": "./ontology/v1/contract.json"
   },
   "scripts": {
     "prebuild": "pnpm --filter @create-something/canvas-kernel build",
@@ -79,7 +81,11 @@
     "agent-wiki:route": "node scripts/agent-wiki-route.mjs",
     "context:search": "node scripts/atlas-context.mjs search",
     "context:index": "node scripts/atlas-context.mjs index",
-    "context:benchmark": "node scripts/benchmark-atlas-context.mjs"
+    "context:benchmark": "node scripts/benchmark-atlas-context.mjs",
+    "ontology:check": "node scripts/ontology.mjs check",
+    "ontology:export": "node scripts/ontology.mjs export",
+    "ontology:plan": "node scripts/ontology.mjs plan",
+    "ontology:verify:engine": "node scripts/verify-ontology-engine.mjs"
   },
   "dependencies": {
     "@create-something/canvas-kernel": "workspace:*"

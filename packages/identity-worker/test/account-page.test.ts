@@ -68,3 +68,94 @@ test('verification mismatch clears both fields and never sends credentials', asy
   assert.equal(error.textContent, 'The passwords do not match.');
   assert.equal(button.disabled, false);
 });
+
+
+test('GiGi signup is explicitly enabled and scoped to its application', async () => {
+  assert.equal(accountPage('/signup'), null);
+  assert.equal(accountPage('/signup', { app: 'gigi' }), null);
+  assert.equal(accountPage('/signup', { app: 'private', gigiSignupEnabled: true }), null);
+  const response = accountPage('/signup', { app: 'gigi', gigiSignupEnabled: true });
+  assert.ok(response);
+  const html = await response.text();
+  assert.match(html, /Create your GiGi account/);
+  assert.match(html, /Email verification link/);
+  assert.doesNotMatch(html, /name="password"|by invitation|localStorage|sessionStorage/);
+});
+
+async function runAccountForm(path: string, options: Parameters<typeof accountPage>[1], response: Response | Error, search = '?app=gigi') {
+  const html = await accountPage(path, options)!.text();
+  const fields = [{value:'synthetic-password-123'}, {value:'synthetic-password-123'}];
+  const links: Record<string, any> = {};
+  const error = {textContent:''};
+  const status = {textContent:'', focus() {}};
+  const button = {disabled:false};
+  let submit: (event: unknown) => Promise<void>;
+  let request: {url:string;body:unknown}|undefined;
+  let cleared = false;
+  const form = {hidden:false, querySelector:()=>button, querySelectorAll:()=>fields, addEventListener:(_:string, handler:typeof submit)=>{submit=handler},reset(){fields.forEach(f=>f.value='')}};
+  runInNewContext(html.match(/<script nonce="[^"]+">([\s\S]*?)<\/script>/)![1], {
+    URLSearchParams, AbortSignal,
+    location:{search,hash:'#token='+'a'.repeat(64),pathname:path},
+    history:{replaceState(){cleared=true}},
+    document:{querySelector:(selector:string)=>selector==='form'?form:selector==='[role="alert"]'?error:selector==='[role="status"]'?status:(links[selector]??={hidden:true})},
+    FormData:class {get(name:string){return name==='email'?'new-user@example.test':name==='password'?fields[0].value:fields[1].value}},
+    fetch:async (url:string,init:RequestInit)=>{request={url,body:JSON.parse(String(init.body))};if(response instanceof Error)throw response;return response}
+  });
+  await submit!({preventDefault(){}});
+  return {request,error,status,fields,form,button,cleared,links};
+}
+
+test('signup sends mailbox proof request and explains existing account recovery', async () => {
+  const result = await runAccountForm('/signup', {app:'gigi',gigiSignupEnabled:true}, Response.json({accepted:true}));
+  assert.equal(result.request?.url, '/v1/auth/enrollment/start');
+  assert.deepEqual(result.request?.body, {email:'new-user@example.test',purpose:'signup',experience:'identity',app:'gigi'});
+  assert.match(result.status.textContent, /15 minutes/);
+  assert.match(result.status.textContent, /already have an account/i);
+  assert.equal(result.form.hidden,true);
+});
+
+test('signup proof completion returns to existing GiGi sign-in without claiming a desktop session', async () => {
+  const result = await runAccountForm('/verify', {app:'gigi',verificationMode:'signup'}, Response.json({success:true}), '?app=gigi&mode=signup');
+  assert.equal(result.request?.url, '/v1/auth/enrollment/complete');
+  assert.deepEqual(result.request?.body, {token:'a'.repeat(64),password:'synthetic-password-123'});
+  assert.match(result.status.textContent,/account is ready/i);
+  assert.match(result.status.textContent,/sign-in tab/i);
+  assert.match(result.status.textContent,/expired/i);
+  assert.doesNotMatch(result.status.textContent,/password has been updated|signed in/i);
+  assert.equal(result.cleared,true);
+  assert.deepEqual(result.fields.map(f=>f.value),['','']);
+});
+
+test('signup verification failures retain proof in memory and offer a fresh signup link', async () => {
+  const result = await runAccountForm('/verify', {app:'gigi',verificationMode:'signup'}, Response.json({error:'invalid'}, {status:400}), '?app=gigi&mode=signup');
+  assert.match(result.error.textContent,/invalid or expired/);
+  assert.match(result.error.textContent,/verification link/);
+  assert.equal(result.form.hidden,false);
+  assert.equal(result.button.disabled,false);
+  assert.deepEqual(result.fields.map(f=>f.value),['','']);
+});
+
+test('signup network error leaves email form available and does not claim delivery', async () => {
+  const result = await runAccountForm('/signup', {app:'gigi',gigiSignupEnabled:true}, new Error('offline'));
+  assert.match(result.error.textContent,/could not connect/);
+  assert.equal(result.status.textContent,'');
+  assert.equal(result.form.hidden,false);
+  assert.equal(result.button.disabled,false);
+});
+
+
+test('signup rate limit does not claim delivery and permits a later retry', async () => {
+  const result = await runAccountForm('/signup', {app:'gigi',gigiSignupEnabled:true}, Response.json({error:'rate_limit'}, {status:429}));
+  assert.match(result.error.textContent,/Too many attempts/);
+  assert.equal(result.status.textContent,'');
+  assert.equal(result.form.hidden,false);
+  assert.equal(result.button.disabled,false);
+});
+
+test('existing signup identity conflict offers sign-in or recovery without changing a password', async () => {
+  const result = await runAccountForm('/verify', {app:'gigi',verificationMode:'signup'}, Response.json({error:'exists'}, {status:409}), '?app=gigi&mode=signup');
+  assert.match(result.error.textContent,/already have an account/);
+  assert.match(result.error.textContent,/recover your password/);
+  assert.equal(result.status.textContent,'');
+  assert.deepEqual(result.fields.map(f=>f.value),['','']);
+});

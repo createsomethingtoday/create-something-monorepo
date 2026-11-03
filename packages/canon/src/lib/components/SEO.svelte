@@ -51,7 +51,7 @@
     space: {
       domain: 'https://createsomething.space',
       name: 'CREATE SOMETHING SPACE',
-      tagline: 'Interactive Tutorials for AI-Native Development - Learn by doing with runnable code examples',
+      tagline: 'The public workshop for useful tools, workflows, skills, and building blocks. Inspect the source and make them your own.',
       color: '#000000',
     },
     agency: {
@@ -63,7 +63,7 @@
     ltd: {
       domain: 'https://createsomething.ltd',
       name: 'CREATE SOMETHING',
-      tagline: 'Weniger, aber besser',
+      tagline: 'The operating library for AI work: practical playbooks to name the owner, set the boundary, and leave proof behind.',
       color: '#000000',
     }
   };
@@ -197,6 +197,27 @@
     ...(articleTags.length > 0 && { keywords: articleTags.join(', ') })
   } : null;
 
+  // Schema prices are amounts, never display labels such as "From $900/month".
+  // Keep bare decimal strings compatible with existing callers, including zero.
+  function servicePrice(value: unknown): number | undefined {
+    const amount = typeof value === 'number'
+      ? value
+      : typeof value === 'string' && /^\d+(?:\.\d+)?$/.test(value.trim())
+        ? Number(value.trim())
+        : undefined;
+    return amount !== undefined && Number.isFinite(amount) && amount >= 0 ? amount : undefined;
+  }
+
+  function serviceOffer(service: { price?: unknown; priceDescription?: string }) {
+    const price = servicePrice(service.price);
+    if (price === undefined && !service.priceDescription) return undefined;
+    return {
+      '@type': 'Offer',
+      ...(price !== undefined && { price, priceCurrency: 'USD' }),
+      ...(service.priceDescription && { description: service.priceDescription })
+    };
+  }
+
   // Service schema (for .agency services page)
   const serviceSchemas = services.length > 0 ? services.map(service => ({
     '@context': 'https://schema.org',
@@ -209,14 +230,7 @@
       '@type': 'Place',
       name: 'Worldwide'
     },
-    ...(service.price && {
-      offers: {
-        '@type': 'Offer',
-        price: service.price,
-        priceCurrency: 'USD',
-        description: service.priceDescription
-      }
-    })
+    offers: serviceOffer(service)
   })) : [];
 
   // FAQ schema (for AEO)

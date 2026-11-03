@@ -1,0 +1,60 @@
+   Compiling gigi_desktop v0.2.20 (/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/apps/gigi-desktop/src-tauri)
+warning: unused import: `std::os::unix::net::UnixStream`
+   --> src/chat.rs:458:5
+    |
+458 | use std::os::unix::net::UnixStream;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `gigi_desktop` (lib test) generated 1 warning (run `cargo fix --lib -p gigi_desktop --tests` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.14s
+     Running unittests src/lib.rs (apps/gigi-desktop/src-tauri/target/debug/deps/gigi_desktop_lib-81a6e070d95755aa)
+
+running 1 test
+test agent_preflight::tests::connector_probe_bounds_time_output_and_does_not_run_registration_commands ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 148 filtered out; finished in 6.06s
+
+     Running unittests src/main.rs (apps/gigi-desktop/src-tauri/target/debug/deps/gigi-671757314ab996c7)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/gigi-mcp.rs (apps/gigi-desktop/src-tauri/target/debug/deps/gigi_mcp-38d844ce03cb9d89)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
+     Running tests/artwork_safety.rs (apps/gigi-desktop/src-tauri/target/debug/deps/artwork_safety-eeecf6d690901b33)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/artwork_stdio.rs (apps/gigi-desktop/src-tauri/target/debug/deps/artwork_stdio-142d1dc16673c48a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/artwork_workflow.rs (apps/gigi-desktop/src-tauri/target/debug/deps/artwork_workflow-13fc26fbf6ed7367)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/music_mcp_protocol.rs (apps/gigi-desktop/src-tauri/target/debug/deps/music_mcp_protocol-207b524328a77630)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/today_agenda.rs (apps/gigi-desktop/src-tauri/target/debug/deps/today_agenda-fc11d987ffcf8c17)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+

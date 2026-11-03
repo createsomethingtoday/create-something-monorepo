@@ -1,6 +1,6 @@
 ---
 name: canon-design-review
-description: Research, review, or refine CREATE SOMETHING UI and frontend work using Mobbin interaction evidence, Canon contracts, Performance Lab, and informative-over-decorative guardrails. Use for greenfield UX, unfamiliar or consequential flows, design critique, polish, responsive cleanup, motion review, and adapting outside references so they fit CREATE SOMETHING instead of generic SaaS output.
+description: Research, review, or refine CREATE SOMETHING UI and frontend work using the curated TASTE library, Canon contracts, Performance Lab, and optional comparative interaction evidence. Use for greenfield UX, unfamiliar or consequential flows, design critique, polish, responsive cleanup, motion review, and adapting outside references so they fit CREATE SOMETHING instead of generic SaaS output.
 ---
 
 # Canon Design Review
@@ -20,22 +20,18 @@ If the task is specifically a public-facing landing page, hero, product page, or
    - the route or component being changed
    - `packages/agency/CANON_AUDIT.md` for `.agency`
    - `packages/space/BRAND_ALIGNMENT_HERMENEUTIC.md` when decorative drift is a risk
-3. Preserve the existing visual language unless the user explicitly asks for a new direction.
+3. For substantial UI work, follow [taste-research.md](./references/taste-research.md) to retrieve and inspect a small packet from the existing TASTE library.
+4. Preserve the existing visual language unless the user explicitly asks for a new direction.
 
 ## Reference Research
 
-Read [mobbin-research.md](./references/mobbin-research.md) before using Mobbin.
+TASTE is the first reference source for substantial UI work: new surfaces, material changes to composition or hierarchy, unfamiliar interactions, and consequential journeys. Read [taste-research.md](./references/taste-research.md). Literal copy changes, token normalization, and isolated fixes can use the existing product contract without another research pass.
 
-Use Mobbin when the task creates a new experience, introduces an unfamiliar interaction, changes a high-consequence journey, or asks whether outside precedent would materially improve UX. It is optional for narrow visual fixes where the existing contract is already clear.
+Start with the task and an initial domain-derived approach. Inspect the actual images for 3–7 relevant approved TASTE references when available; record what each contributes and what must not be copied. Plain `/llm.txt` provides vocabulary and token context; it does not replace viewing references. The JSON API includes reference data only with `include=references`.
 
-1. Define the user intent and decision before searching.
-2. Use `search_flows` for journeys, `search_screens` for interaction details, and `search_sections` for public-page sections.
-3. Search one intent at a time and inspect the returned images, not metadata alone.
-4. Compare three distinct products when useful results exist.
-5. Extract the common pattern, tradeoff, what to adopt, what to avoid, and the Mobbin source links.
-6. Translate the evidence through Canon, Performance Lab, the owning product contract, accessibility, and client context before proposing a change.
+Use Mobbin as an optional supplement when TASTE leaves a material interaction question unresolved or the user requests Mobbin research. Read [mobbin-research.md](./references/mobbin-research.md) before using it. Compare distinct products and translate the useful behavior through Canon, Performance Lab, accessibility, policy, and client context.
 
-If Mobbin is unavailable, authentication or credits fail, or the corpus has no relevant precedent, state the evidence gap and continue with repository sources, live product inspection, and user research. Never present a failed search as proof that no pattern exists.
+If either source is unavailable or lacks relevant coverage, state the evidence gap and continue with repository sources, permitted direct product inspection, user evidence, and prototypes. Missing precedent must never remove a required capability. Neither a failed search nor a channel label establishes relevance or quality.
 
 ## Working Mode
 
@@ -61,7 +57,7 @@ Treat Impeccable-style operations as review passes, not external law:
 ## Review Sequence
 
 1. Confirm the surface type: campaign, product, proof, operator, experiment, internal tool, or docs.
-2. Confirm the task decision and evidence boundary; run reference research when the trigger applies.
+2. Confirm the task decision and evidence boundary; inspect the TASTE packet when the trigger applies, then resolve any remaining interaction question with appropriate additional evidence.
 3. Fix hierarchy first: task sequence, section order, headline strength, measure, and action focus.
 4. Fix system drift next: tokens, spacing, borders, radii, timing, and state styles.
 5. Fix copy after structure: remove generic claims and make the nouns operational.
@@ -77,7 +73,7 @@ When you explain changes or findings, lead with:
 3. what was removed or simplified
 4. any unresolved tradeoff
 
-When Mobbin informed the work, also include a compact evidence table or list with `Pattern`, `Why`, `Adopt`, `Avoid`, and `Source`. Cite the Mobbin flow, screen, or section URLs used.
+When references informed the work, include a compact evidence table or list with `Reference`, `Why`, `Adopt`, `Avoid`, and `Source`. Cite the TASTE/Are.na references and any supplemental Mobbin flow, screen, or section URLs used. Record which images were actually inspected and any unverified media.
 
 ## Escalate
 

@@ -1,10 +1,30 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import { onMount } from 'svelte';
 
-  let { children }: { children: Snippet } = $props();
+  let { children, sectionNavigation = false }: { children: Snippet; sectionNavigation?: boolean } = $props();
+  let root: HTMLDivElement;
+  let sections = $state<Array<{ id: string; title: string }>>([]);
+
+  onMount(() => {
+    if (!sectionNavigation) return;
+    sections = Array.from(root.querySelectorAll('h2')).map((heading, index) => {
+      const id = heading.id || `legal-section-${index + 1}`;
+      heading.id = id;
+      return { id, title: heading.textContent?.trim() || `Section ${index + 1}` };
+    });
+  });
 </script>
 
-<div class="agency-legal-content">
+<div class="agency-legal-content" bind:this={root}>
+  {#if sections.length}
+    <details class="legal-section-navigation">
+      <summary>On this page</summary>
+      <nav aria-label="Policy sections">
+        {#each sections as section}<a href={`#${section.id}`}>{section.title}</a>{/each}
+      </nav>
+    </details>
+  {/if}
   {@render children()}
 </div>
 
@@ -30,6 +50,7 @@
   }
 
   .agency-legal-content :global(h2) {
+    scroll-margin-top: 7rem;
     font-family: var(--font-performance-editorial);
     font-weight: var(--font-performance-editorial-weight);
     line-height: var(--leading-performance-editorial);
@@ -60,4 +81,8 @@
     outline: 2px solid var(--color-performance-ink);
     outline-offset: 4px;
   }
+  .legal-section-navigation { margin-bottom: var(--space-performance-lg); border-block: 1px solid var(--color-performance-line); }
+  .legal-section-navigation summary { display: flex; align-items: center; min-height: 48px; cursor: pointer; }
+  .legal-section-navigation nav { display: grid; padding-bottom: var(--space-performance-sm); }
+  .legal-section-navigation a { display: flex; align-items: center; min-height: 44px; font-size: var(--text-performance-caption); }
 </style>

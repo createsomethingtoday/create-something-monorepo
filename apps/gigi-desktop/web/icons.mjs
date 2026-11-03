@@ -1,6 +1,6 @@
 import { ICON_NODES } from './lucide-icons.mjs';
 
-const entities = Object.freeze({ overview: 'house', music: 'music', social: 'files', gigs: 'music', schedule: 'calendar-days', contacts: 'users', companies: 'building-2', tasks: 'list-checks', finances: 'wallet', locations: 'map-pin', notes: 'sticky-note', documents: 'files', interactions: 'messages-square', services: 'briefcase', tags: 'tags', profile: 'user-round', history: 'history', settings: 'settings' });
+const entities = Object.freeze({ overview: 'house', music: 'music', social: 'files', gigs: 'music', schedule: 'calendar-days', contacts: 'users', companies: 'building-2', tasks: 'list-checks', finances: 'wallet', locations: 'map-pin', notes: 'sticky-note', documents: 'files', interactions: 'messages-square', services: 'briefcase', tags: 'tags', profile: 'user-round', history: 'history', appearance: 'settings', settings: 'settings' });
 export const entityIcon = (entity) => entities[entity] || 'database';
 const safe = (value) => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 

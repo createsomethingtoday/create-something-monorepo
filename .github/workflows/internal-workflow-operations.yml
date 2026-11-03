@@ -1,0 +1,112 @@
+name: Internal workflow operations
+
+on:
+  schedule:
+    - cron: '43 8 * * 1-5'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/internal-workflow-operations.yml'
+      - 'scripts/workflow-operations/**'
+      - 'scripts/workflow-discovery/**'
+      - 'scripts/graph-engineering/**'
+      - 'packages/workflow-compiler/**'
+      - 'packages/workflow-runtime/**'
+      - 'packages/symphony/src/**'
+      - 'packages/database-layer/package.json'
+      - 'packages/database-layer/scripts/ontology.mjs'
+      - 'packages/database-layer/scripts/lib/ontology.mjs'
+      - 'packages/database-layer/ontology/**'
+      - 'packages/database-layer/data/create-something-internal-topology.json'
+      - 'packages/database-layer/workflows/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: internal-workflow-operations
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+      - run: pnpm bootstrap:worktree
+      - run: pnpm workflow:operations:test
+      - run: mkdir -p "$RUNNER_TEMP/operations"
+      - name: Discover every candidate identity with fair bounded compilation
+        run: node scripts/workflow-discovery/cli.mjs run --out "$RUNNER_TEMP/operations/catalog"
+      - name: Run registered internal validation
+        run: node scripts/workflow-operations/runtime.mjs run --out "$RUNNER_TEMP/operations/runtime"
+      - name: Reconcile derived evidence without redispatching validation
+        if: ${{ always() && !cancelled() }}
+        run: node scripts/workflow-operations/runtime.mjs reconcile --out "$RUNNER_TEMP/operations/runtime" --trusted-key "$RUNNER_TEMP/operations/runtime.trusted-public.pem"
+      - name: Independently verify signed checkpoints and graph
+        run: node scripts/workflow-operations/runtime.mjs verify --out "$RUNNER_TEMP/operations/runtime" --trusted-key "$RUNNER_TEMP/operations/runtime.trusted-public.pem"
+      - name: Validate lifecycle reconciliation without writing shared state
+        run: >-
+          node scripts/workflow-operations/publish.mjs
+          --catalog-root "$RUNNER_TEMP/operations/catalog"
+          --runtime-out "$RUNNER_TEMP/operations/runtime"
+          --trusted-key "$RUNNER_TEMP/operations/runtime.trusted-public.pem"
+          --commit "$GITHUB_SHA"
+          --run-url "https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+      - name: Retain real run and recovery evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: internal-workflow-operations-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/operations
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
+
+  persist:
+    if: ${{ always() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && needs.validate.result != 'cancelled' }}
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+      - run: pnpm bootstrap:worktree
+      - run: pnpm --filter @createsomething/workflow-compiler build
+      - run: pnpm --filter @createsomething/workflow-runtime build
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: internal-workflow-operations-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/operations
+      - name: Verify again and persist descriptive state with compare-and-swap
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          node scripts/workflow-operations/publish.mjs
+          --catalog-root "$RUNNER_TEMP/operations/catalog"
+          --runtime-out "$RUNNER_TEMP/operations/runtime"
+          --trusted-key "$RUNNER_TEMP/operations/runtime.trusted-public.pem"
+          --commit "$GITHUB_SHA"
+          --run-url "https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          --persist

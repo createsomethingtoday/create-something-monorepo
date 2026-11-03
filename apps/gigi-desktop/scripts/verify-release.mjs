@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 const execFileAsync=promisify(execFile);
 const firstPartyTeam='PRP5VQQPPB';
-const firstParty=['Contents/MacOS/gigi','Contents/Resources/gigi-mcp','Contents/Resources/gigi-integrations','Contents/Resources/gigi-codex'];
+const firstParty=['Contents/MacOS/gigi','Contents/MacOS/gigi-mcp','Contents/Resources/gigi-mcp','Contents/Resources/gigi-integrations','Contents/Resources/gigi-codex','Contents/Resources/libgigi_notifications.dylib'];
 const upstream='Contents/Resources/ctx';
 
 class ReleaseError extends Error {constructor(reason){super(reason);this.reason=reason;}}

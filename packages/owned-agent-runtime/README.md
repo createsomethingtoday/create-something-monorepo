@@ -5,6 +5,31 @@ Control runs. The public, read-only Guide Agent remains available while the
 Control lane consumes the canonical Agency activation ledger rather than
 creating another customer-state or execution foundation.
 
+## Decision improvement loop
+
+The shared runtime exports a bounded decision service with Jev and OpenAI
+Decisions adapters. The host supplies the eligible choices, fallback, scope,
+policy version and state version. Pinned and resumed work preserves its fixed
+choice. Revalidation rejects changed state, and a failed receipt append returns
+no choice. Selection is advisory; the owning host still enforces permissions
+and current capability definitions at dispatch.
+
+Decision and outcome receipts can be retained using the terminal-only file
+repository. Offline replay compares baseline and candidate selections on the
+same frozen scenarios and produces a proposal for human review. It never
+dispatches business tools or changes policy. See [the operator guide](docs/decisions.md)
+for commands, host integration, privacy boundaries and rollback.
+
+`AGENT_DECISION_MODE=shadow` enables evidence-focus measurement for fresh public
+Guide runs after admission and conversation lease acquisition. It uses the
+existing OpenAI recipient, retains a query digest rather than query text, and
+writes scoped D1 receipts and terminal observations. Resumed conversations bypass
+selection. The ordinary executor, model, tools and Control bindings stay in force;
+neither the shadow suggestion nor model confidence grants execution authority.
+Set the mode to `off` to disable measurement. Terminal generation is recorded
+as unknown task quality, and any active-routing change still needs reviewed
+baseline evidence and its owning release path.
+
 ## Contract
 
 - `GET /health`

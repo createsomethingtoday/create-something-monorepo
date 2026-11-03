@@ -435,7 +435,13 @@
     "zellij:cockpit": "node scripts/zellij-cockpit.mjs",
     "zellij:cockpit:build": "cargo build --manifest-path packages/zellij-cockpit/Cargo.toml --target wasm32-wasip1 --release --locked",
     "zellij:cockpit:install": "node scripts/zellij-cockpit-install.mjs",
-    "atlas:context": "node packages/database-layer/scripts/atlas-context.mjs"
+    "atlas:context": "node packages/database-layer/scripts/atlas-context.mjs",
+    "workflow:operations:test": "pnpm --filter @createsomething/workflow-compiler build && pnpm --filter @createsomething/workflow-runtime build && node --test scripts/workflow-discovery/*.test.mjs scripts/workflow-operations/*.test.mjs && pnpm exec tsx --test scripts/workflow-discovery/rank.test.ts",
+    "workflow:discover": "node scripts/workflow-discovery/cli.mjs",
+    "workflow:discover:test": "pnpm --filter @createsomething/workflow-compiler build && node --test scripts/workflow-discovery/*.test.mjs",
+    "graph:evidence": "node scripts/graph-engineering/cli.mjs",
+    "graph:evidence:build": "pnpm --filter @createsomething/workflow-compiler build && pnpm --filter @createsomething/workflow-runtime build",
+    "graph:evidence:test": "pnpm graph:evidence:build && node --test scripts/graph-engineering/*.test.mjs"
   },
   "devDependencies": {
     "@create-something/observability": "workspace:*",
@@ -468,8 +474,7 @@
     "overrides": {
       "undici": ">=7.29.0 <8",
       "@types/node": "24.10.9",
-      "@modelcontextprotocol/sdk": "1.26.0",
-      "@create-something/client-collaboration-pilot>@modelcontextprotocol/sdk": "1.31.0",
+      "@modelcontextprotocol/sdk": "1.32.0",
       "protobufjs": ">=7.5.5 <8",
       "tar@>=7.0.0": ">=7.5.19 <8",
       "fast-uri": ">=3.1.5 <4",
@@ -588,7 +593,7 @@
       "get-uri>basic-ftp": "6.2.1"
     },
     "patchedDependencies": {
-      "@modelcontextprotocol/sdk@1.26.0": "patches/@modelcontextprotocol__sdk@1.26.0.patch",
+      "@modelcontextprotocol/sdk@1.32.0": "patches/@modelcontextprotocol__sdk@1.32.0.patch",
       "extract-zip@2.0.1": "patches/extract-zip@2.0.1.patch"
     }
   },
