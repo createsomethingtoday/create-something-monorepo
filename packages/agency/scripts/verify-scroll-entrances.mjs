@@ -26,7 +26,7 @@ try {
       }).observe(document, { subtree: true, attributes: true, attributeFilter: ['style'] });
     });
     await page.goto(base, { waitUntil: 'networkidle' });
-    assert.equal(await page.locator('[data-scroll-entrance]').count(), 12, 'Authored groups mounted');
+    assert.equal(await page.locator('[data-scroll-entrance]').count(), 10, 'Authored homepage groups mounted; story panels use immediate selection feedback');
     assert.equal(await page.locator('.herocopy').evaluate(el => getComputedStyle(el).opacity), '1');
     const target = page.locator('.work .chapterhead');
     await target.evaluate(el => window.scrollTo({ top: scrollY + el.getBoundingClientRect().top - innerHeight + 48, behavior: 'instant' }));

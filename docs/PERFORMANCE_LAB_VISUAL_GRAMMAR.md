@@ -221,8 +221,10 @@ after mounting and call the returned `destroy()` when removing the surface.
 - Keep the hero and initially visible content immediate. Entrance targets remain
   visible in SSR, without JavaScript, and when browser animation APIs are absent.
 - Introduce each offscreen group once per mount: 16px upward travel, opacity
-  from 0.25 to 1, `--duration-performance-complex` (500ms), and
-  `--ease-performance-decelerate`. No delays, blur, scaling, pinning, or looping.
+  from 0 to 1, `--duration-performance-slow` (700ms), a
+  `--duration-performance-instant` (100ms) lead-in, and
+  `--ease-performance-standard`. The operator retained this 700ms treatment
+  in the Agency interaction review. No blur, scaling, pinning, or looping.
 - Group related information. Do not mark every paragraph or nest targets; do not
   animate a section containing a dialog or replace an existing transform.
 - Focus reveals its group immediately. Hash navigation settles pending entrances.

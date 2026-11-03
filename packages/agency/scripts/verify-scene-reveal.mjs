@@ -20,12 +20,20 @@ const settled = async step => {
   }, file);
   assert.equal(await page.locator('[data-home-step][aria-pressed="true"]').count(), 1);
   assert.equal(await page.locator(`[data-home-step="${step}"]`).getAttribute('aria-pressed'), 'true');
+  assert.equal(await page.locator('[data-home-story]:visible').count(), 1, 'One explanation accompanies the displayed scene');
+  assert.equal(await page.locator(`[data-home-story="${step}"]`).isVisible(), true, 'Explanation follows the decoded image');
+  assert.equal(await page.locator(`[data-home-step="${step}"]`).getAttribute('aria-controls'), `journey-story-${step}`);
 };
 
 try {
   await page.goto(base, { waitUntil: 'networkidle' });
   await page.locator('#journey-image').scrollIntoViewIfNeeded();
   await settled('learn');
+  const entranceDuration = await page.locator('[data-scroll-entrance]').first().evaluate(element => {
+    const token = getComputedStyle(element).getPropertyValue('--duration-performance-slow').trim();
+    return parseFloat(token) * (token.endsWith('ms') ? 1 : 1000);
+  });
+  assert.equal(entranceDuration, 700, 'Preserve the operator-approved 700ms reading entrance');
 
   // A request deliberately held behind a later selection must never win.
   let release;
@@ -33,6 +41,7 @@ try {
   await page.route('**/images/agency-sales/macro.webp', async route => { await held; await route.continue(); });
   await select('build');
   assert.match(await page.locator('#journey-image').getAttribute('src'), /team\.webp$/);
+  assert.equal(await page.locator('[data-home-story="learn"]').isVisible(), true, 'Keep the current explanation while the next image loads');
   assert.equal(await page.locator('[data-home-step="build"]').getAttribute('aria-pressed'), 'true');
   assert.match(await page.locator('#journey-status').innerText(), /load/i);
   await select('run');
@@ -119,13 +128,23 @@ try {
   await settled('build');
   results.push('Failed image retains the displayed scene and selection; retry succeeds.');
 
-  for (const width of [320, 390, 768, 1024, 1025, 1440]) {
-    await page.setViewportSize({ width, height: 1000 });
-    await page.locator('#journey-image').scrollIntoViewIfNeeded();
-    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `No overflow at ${width}`);
-    await page.screenshot({ path: `${evidence}/scene-${width}.png` });
+  for (const reducedMotion of ['no-preference', 'reduce']) {
+    await page.emulateMedia({ reducedMotion });
+    for (const width of [320, 390, 768, 1024, 1025, 1440]) {
+      await page.setViewportSize({ width, height: 1000 });
+      for (const step of ['learn', 'build', 'run']) {
+        await select(step);
+        await settled(step);
+        assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `No overflow at ${width}, ${reducedMotion}, ${step}`);
+      }
+      await page.locator('[data-home-story="run"]').scrollIntoViewIfNeeded();
+      await page.screenshot({ path: `${evidence}/scene-${width}-${reducedMotion}.png` });
+    }
   }
-  results.push('Responsive scene and captions checked at 320, 390, 768, 1024, 1025, 1440.');
+  await page.emulateMedia({ media: 'print' });
+  assert.equal(await page.locator('[data-home-story]:visible').count(), 3, 'Print includes all story stages');
+  await page.emulateMedia({ media: 'screen' });
+  results.push('All three story stages checked at 320, 390, 768, 1024, 1025, 1440 in normal and reduced motion; print includes the full story.');
 
   const noJs = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
   const fallback = await noJs.newPage();
@@ -135,6 +154,7 @@ try {
   assert.equal(await fallback.locator('#journey-image').count(), 1);
   assert.match(await fallback.locator('#journey-image').getAttribute('src'), /team\.webp/);
   assert.equal(await fallback.locator('[data-home-step]:disabled').count(), 3);
+  assert.equal(await fallback.locator('[data-home-story]:visible').count(), 3, 'No-JavaScript readers receive the complete story');
   await noJs.close();
   results.push('No-JavaScript retains the initial image and disables enhancement-only selection.');
   assert.deepEqual(errors, []);

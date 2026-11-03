@@ -62,6 +62,11 @@ export function enhanceSceneReveal(root: HTMLElement, sceneMap: Record<string, H
   if (!view || !image || !caption || !status || !figure || !buttons.length) return { destroy() {} };
   const scenes = buttons.map(button => sceneMap[button.dataset.homeStep ?? '']);
   if (scenes.some(scene => !scene)) return { destroy() {} };
+  const stories = Array.from(root.querySelectorAll<HTMLElement>('[data-home-story]'));
+  const showStory = (scene: HomeScene) => {
+    const step = buttons[scenes.indexOf(scene)]?.dataset.homeStep;
+    for (const story of stories) story.hidden = story.dataset.homeStory !== step;
+  };
   const reduced = view.matchMedia?.('(prefers-reduced-motion: reduce)');
   const abort = new AbortController();
   let animation: Animation | undefined;
@@ -135,6 +140,7 @@ export function enhanceSceneReveal(root: HTMLElement, sceneMap: Record<string, H
     },
     ready(scene) {
       markSelected(scene);
+      showStory(scene);
       figure.removeAttribute('aria-busy');
       caption.textContent = scene.caption;
       status.textContent = `Conceptual illustration / ${scene.caption}`;
@@ -145,6 +151,7 @@ export function enhanceSceneReveal(root: HTMLElement, sceneMap: Record<string, H
       status.textContent = `${scene.caption.split(' / ')[0]} could not load. Showing ${current.caption} Select the step to try again.`;
     }
   });
+  showStory(scenes[0]);
   buttons.forEach((button, index) => {
     button.disabled = false;
     button.addEventListener('click', () => { void selection.select(index); }, { signal: abort.signal });
@@ -155,6 +162,7 @@ export function enhanceSceneReveal(root: HTMLElement, sceneMap: Record<string, H
       abort.abort();
       selection.destroy();
       figure.removeAttribute('aria-busy');
+      for (const story of stories) story.hidden = false;
     }
   };
 }

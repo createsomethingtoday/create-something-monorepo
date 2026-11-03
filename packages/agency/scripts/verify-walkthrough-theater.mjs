@@ -21,6 +21,10 @@ try {
     await dialog.waitFor({ state: 'visible' });
     // Remote metadata/poster delivery can trail the modal opening; measure the loaded frame.
     await page.waitForFunction(() => { const v=document.querySelector('#work-dialog video'); return !v.paused && v.currentTime > .1 && v.videoWidth > 0; }, undefined, { timeout: 15000 });
+    assert.match(await dialog.locator('[data-work-context]').innerText(), /Prepare before review/);
+    await dialog.locator('video').evaluate(v => { v.pause(); v.currentTime = 85; });
+    await page.waitForFunction(() => /Keep evidence and authority separate/.test(document.querySelector('[data-work-context]')?.textContent ?? ''));
+    assert.match(await dialog.locator('[data-work-context]').innerText(), /Offline replay with synthetic clients/);
     const geometry = await dialog.evaluate(d => {
       const v = d.querySelector('video'), r = v.getBoundingClientRect(), b = d.getBoundingClientRect();
       return { dialog: { x:b.x, y:b.y, width:b.width, height:b.height }, video: { x:r.x, y:r.y, width:r.width, height:r.height }, overflow:d.scrollHeight > d.clientHeight + 1, fit:getComputedStyle(v).objectFit, controls:v.controls, inline:v.playsInline };
