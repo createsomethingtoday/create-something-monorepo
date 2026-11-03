@@ -45,3 +45,9 @@ Independent bounded re-test passed 31 Node newsletter checks, 13 Vitest checks, 
 Migration 020 was applied to production after independent review and before code deployment. Independent readback showed all three historical/draft editions retain empty membership and no approval; 14 subscribers (13 active, 1 unsubscribed) and two retained historical receipts remain unchanged. No historical approval membership was inferred.
 
 Two hosted Agent Wiki attempts hit the five-minute job cap during repository checkout, before validation. The tracked tree measured 1.05 GiB. Recovery raises the bounded checkout limit to ten minutes within a fifteen-minute job, preserving all commands, assertions and immutable action pins. Local wiki/ontology/pin checks passed; hosted recovery requires the next CI run.
+
+## Prepared-subject and adapter checkout follow-up
+
+Review reproduced a prepared edition's valid provider receipt being rejected against the registry's older default subject. Runtime edition metadata now replaces that default during receipt merging. The regression failed before repair and passes through actual merged entry/provider readback afterward; all 13 analytics checks pass.
+
+The current Draw adapter job also exceeded its five-minute cap during checkout, before either validation command. Its checkout is now bounded to ten minutes within a fifteen-minute job, retaining both validation commands and immutable action references. The configuration regression failed before repair; eight CI contract checks, nine Python adapter tests and 55 native-release contract tests pass locally. Composition was green on the inspected current run and is unchanged. Hosted adapter recovery remains pending the next CI run. No UI, schema, consent or sending change is part of this follow-up.

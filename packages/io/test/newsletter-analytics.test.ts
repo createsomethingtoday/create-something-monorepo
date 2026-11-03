@@ -235,3 +235,14 @@ test('later engagement states count only as delivery evidence', async () => {
     assert.deepEqual(result.states, { delivered: 2 });
   }
 });
+
+test('a prepared edition subject replaces the registry default when reading its actual receipts', async () => {
+  const { mergeNewsletterDeliveryEntries } = await import('../src/lib/server/newsletter-analytics');
+  const campaign = NEWSLETTER_DELIVERIES[2].campaign;
+  const subject = 'A revised subject for the reviewed edition';
+  const entry = mergeNewsletterDeliveryEntries([{campaign,subject,resend_email_id:'actual-audience-receipt'}]).find(e=>e.campaign===campaign)!;
+  assert.equal(entry.subject,subject);
+  const report = await readNewsletterDelivery(entry,'offline',async()=>Response.json({id:'actual-audience-receipt',subject,last_event:'delivered'}));
+  assert.equal(report.status,'verified');
+  assert.equal(report.delivered,1);
+});

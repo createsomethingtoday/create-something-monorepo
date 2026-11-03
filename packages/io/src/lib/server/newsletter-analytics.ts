@@ -107,6 +107,7 @@ export function mergeNewsletterDeliveryEntries(rows: NewsletterAudienceDeliveryR
   for (const entry of NEWSLETTER_DELIVERIES) entries.set(entry.campaign, {...entry,ids:[...entry.ids]});
   for (const row of rows) {
     const entry = entries.get(row.campaign) ?? {campaign:row.campaign,subject:row.subject,ids:[]};
+    entry.subject = row.subject;
     if (row.resend_email_id && !entry.ids.includes(row.resend_email_id)) entry.ids.push(row.resend_email_id);
     entries.set(row.campaign,entry);
   }
