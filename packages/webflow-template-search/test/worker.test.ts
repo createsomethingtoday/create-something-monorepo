@@ -3559,12 +3559,12 @@ describe('webflow-template-search worker', () => {
         {
           name: 'Renewable energy',
           slug: 'renewable-energy',
-          url: 'https://webflow.com/templates/subcategory/renewable-energy',
+          url: 'https://webflow.com/templates/subcategory/renewable-energy-websites',
         },
         {
           name: 'Nature & Conservation',
           slug: 'nature-and-conservation',
-          url: 'https://webflow.com/templates/subcategory/nature-and-conservation',
+          url: 'https://webflow.com/templates/subcategory/nature-and-conservation-websites',
         },
       ]);
     } finally {

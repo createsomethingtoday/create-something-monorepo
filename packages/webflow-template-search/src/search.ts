@@ -682,6 +682,17 @@ function buildTags(names: string[], slugs: string[]): Array<{ name: string; slug
   return names.map((name, index) => ({ name, slug: slugs[index] ?? '' }));
 }
 
+// Live subcategory pages use the Templates CMS slug (`fitness-and-gym-websites`),
+// not the short public API slug. One legacy CMS slug has no suffix.
+const SUBCATEGORY_PAGE_SLUG_OVERRIDES: Record<string, string> = {
+  'events-websites': 'events',
+};
+
+function subcategoryPageUrl(canonicalSlug: string): string {
+  const pageSlug = SUBCATEGORY_PAGE_SLUG_OVERRIDES[canonicalSlug] ?? canonicalSlug;
+  return `https://webflow.com/templates/subcategory/${pageSlug}`;
+}
+
 function buildChildCategories(
   names: string[],
   slugs: string[],
@@ -693,7 +704,7 @@ function buildChildCategories(
     return {
       name,
       slug: publicSlug,
-      url: `https://webflow.com/templates/subcategory/${publicSlug}`,
+      url: subcategoryPageUrl(canonicalSlug),
     };
   });
 }
@@ -889,7 +900,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams, cacheVe
       return {
         name: pill.name,
         slug: publicSlug,
-        url: `https://webflow.com/templates/subcategory/${publicSlug}`,
+        url: subcategoryPageUrl(pill.slug),
         count: Number(pill.count),
         active: publicSlug === (params.childCategorySlug ? childSlugMap[params.childCategorySlug] ?? params.childCategorySlug : ''),
       };
