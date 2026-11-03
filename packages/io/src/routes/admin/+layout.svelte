@@ -9,7 +9,7 @@
 		{ href: '/admin/submissions', label: 'Submissions', icon: 'inbox' },
 		{ href: '/admin/subscribers', label: 'Subscribers', icon: 'users' },
 		{ href: '/admin/analytics', label: 'Analytics', icon: 'graph' },
-		{ href: '/admin/newsletter-analytics', label: 'Newsletter', icon: 'graph' }
+		{ href: '/admin/newsletter', label: 'Newsletter', icon: 'graph' }
 	];
 
 	async function logout() {

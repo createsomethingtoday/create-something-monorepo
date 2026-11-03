@@ -12,6 +12,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { createLogger } from '@create-something/canon/utils';
 import { recordNewsletterDeliveryReceipt } from '$lib/server/newsletter-delivery-receipt';
+import { recordEditionDeliveryReceipt } from '$lib/server/newsletter-workflow';
 
 const logger = createLogger('NewsletterWebhook');
 
@@ -174,6 +175,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 		const db = platform.env.DB;
 		await recordNewsletterDeliveryReceipt(db, event.data.email_id, event.type);
+		await recordEditionDeliveryReceipt(db, event.data.email_id, event.type);
 
 		// Open and click events are deliberately not retained. Delivery events are
 		// recorded above; only bounces and complaints also suppress subscribers.

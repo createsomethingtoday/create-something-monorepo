@@ -6,6 +6,7 @@ import {
 	generateWelcomeEmailHtml,
 	generateWelcomeEmailText
 } from '@create-something/canon/newsletter';
+import { confirmNewsletterAttribution } from '@create-something/canon/newsletter/attribution';
 import { markNewsletterConfirmed } from '$lib/server/newsletter-lifecycle';
 
 const validProperties: Property[] = ['space', 'io', 'agency', 'ltd', 'lms'];
@@ -21,7 +22,7 @@ function propertyFromSource(source: unknown): Property {
 	return validProperties.find((property) => normalized.startsWith(property)) ?? 'io';
 }
 
-export const load: PageServerLoad = async ({ url, platform, request }) => {
+export const load: PageServerLoad = async ({ url, platform, request, parent }) => {
 	const token = url.searchParams.get('token');
 
 	if (!token) {
@@ -124,16 +125,25 @@ export const load: PageServerLoad = async ({ url, platform, request }) => {
 		}
 
 		try {
-			await recordServerConversion(
+			const layout = await parent();
+			const attribution = await confirmNewsletterAttribution(db, subscriber.id as number, {
+				doNotTrack: request.headers.get('dnt') === '1' || request.headers.get('sec-gpc') === '1',
+				userOptedOut: layout.user?.analytics_opt_out ?? false
+			});
+			if (attribution) await recordServerConversion(
 				db,
 				{
 					property,
 					action: 'newsletter_confirmed',
-					url: url.toString(),
+					url: 'https://createsomething.io/confirm',
 					target: '/confirm',
 					metadata: {
 						source: source || property,
-						surface: 'newsletter_confirmation'
+						surface: 'newsletter_confirmation',
+						newsletterEdition: attribution.edition.replaceAll('-', '_'),
+						newsletterCampaign: attribution.campaign.replaceAll('-', '_'),
+						newsletterSource: attribution.channel,
+						trafficClass: attribution.traffic_class
 					}
 				},
 				{

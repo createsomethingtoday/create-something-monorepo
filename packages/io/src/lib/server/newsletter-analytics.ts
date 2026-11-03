@@ -34,7 +34,7 @@ SELECT REPLACE(campaign, '_', '-') AS campaign, traffic_class, COUNT(*) AS landi
 FROM sessions GROUP BY campaign, traffic_class ORDER BY campaign, traffic_class`;
 
 export async function readNewsletterDelivery(
-  entry: typeof NEWSLETTER_DELIVERIES[number], apiKey: string | undefined, fetcher: typeof fetch = fetch
+  entry: { campaign: string; subject: string; ids: string[] }, apiKey: string | undefined, fetcher: typeof fetch = fetch
 ) {
   if (!entry.ids.length) return { campaign: entry.campaign, status: 'not-registered', registered: 0, delivered: null, states: {} };
   if (!apiKey) return { campaign: entry.campaign, status: 'unavailable', registered: entry.ids.length, delivered: null, states: {} };
@@ -54,4 +54,59 @@ export async function readNewsletterDelivery(
   } catch {
     return { campaign: entry.campaign, status: 'unavailable', registered: entry.ids.length, delivered: null, states: {} };
   }
+}
+
+/** Configured campaign attribution, never recipient click or causal conversion rates. */
+export const NEWSLETTER_ATTRIBUTION_SQL = `WITH visits AS (
+  SELECT CASE WHEN json_extract(metadata, '$.newsletterMeasurement') = 'first-party-social-v1'
+      THEN '2026-09-01-the-interface-is-becoming-executable'
+      ELSE REPLACE(json_extract(metadata, '$.newsletterCampaign'), '_', '-') END AS edition,
+    CASE WHEN json_extract(metadata, '$.newsletterMeasurement') = 'first-party-v1' THEN 'newsletter'
+      ELSE json_extract(metadata, '$.newsletterSource') END AS channel,
+    REPLACE(json_extract(metadata, '$.newsletterCampaign'), '_', '-') AS campaign,
+    COALESCE(json_extract(metadata, '$.trafficClass'), 'unknown') AS traffic_class,
+    COUNT(DISTINCT session_id) AS landing_sessions, 0 AS requested, 0 AS confirmed
+  FROM unified_events
+  WHERE property = 'io' AND action = 'page_view' AND json_valid(metadata)
+    AND ((json_extract(metadata, '$.newsletterMeasurement') = 'first-party-v1'
+      AND REPLACE(json_extract(metadata, '$.newsletterCampaign'), '_', '-') IN (${NEWSLETTER_CAMPAIGNS.map(id => `'${id}'`).join(',')}))
+      OR (json_extract(metadata, '$.newsletterMeasurement') = 'first-party-social-v1'
+        AND json_extract(metadata, '$.newsletterCampaign') = 'field_notes_20260928'
+        AND json_extract(metadata, '$.newsletterSource') IN ('linkedin', 'substack')))
+    AND julianday(created_at) >= julianday('now', '-30 days')
+  GROUP BY edition, channel, campaign, traffic_class
+), signups AS (
+  SELECT edition, channel, campaign, traffic_class, 0 AS landing_sessions,
+    SUM(julianday(requested_at) >= julianday('now', '-30 days')) AS requested,
+    SUM(CASE WHEN julianday(confirmed_at) >= julianday('now', '-30 days') THEN 1 ELSE 0 END) AS confirmed
+  FROM newsletter_signup_attributions
+  WHERE julianday(requested_at) >= julianday('now', '-30 days') OR julianday(confirmed_at) >= julianday('now', '-30 days')
+  GROUP BY edition, channel, campaign, traffic_class
+), combined AS (SELECT * FROM visits UNION ALL SELECT * FROM signups)
+SELECT edition, channel, campaign, traffic_class, SUM(landing_sessions) AS landing_sessions,
+  SUM(requested) AS requested, SUM(confirmed) AS confirmed
+FROM combined GROUP BY edition, channel, campaign, traffic_class
+ORDER BY edition, channel, campaign, traffic_class`;
+
+export interface NewsletterAudienceDeliveryRow {
+  campaign: string;
+  subject: string;
+  resend_email_id: string | null;
+}
+
+/** Operator seeds are excluded in SQL; IDs are deduplicated across historical imports. */
+export const NEWSLETTER_AUDIENCE_DELIVERIES_SQL = `SELECT e.slug AS campaign, e.subject, d.resend_email_id
+  FROM newsletter_editions e LEFT JOIN newsletter_edition_deliveries d
+    ON d.edition_slug = e.slug AND d.kind IN ('audience', 'historical-audience')
+    AND d.resend_email_id IS NOT NULL ORDER BY e.slug, d.resend_email_id`;
+
+export function mergeNewsletterDeliveryEntries(rows: NewsletterAudienceDeliveryRow[]) {
+  const entries = new Map<string, {campaign:string;subject:string;ids:string[]}>();
+  for (const entry of NEWSLETTER_DELIVERIES) entries.set(entry.campaign, {...entry,ids:[...entry.ids]});
+  for (const row of rows) {
+    const entry = entries.get(row.campaign) ?? {campaign:row.campaign,subject:row.subject,ids:[]};
+    if (row.resend_email_id && !entry.ids.includes(row.resend_email_id)) entry.ids.push(row.resend_email_id);
+    entries.set(row.campaign,entry);
+  }
+  return [...entries.values()];
 }

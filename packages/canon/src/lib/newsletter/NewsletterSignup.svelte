@@ -77,7 +77,8 @@
           email: email.trim(),
           website: honeypot, // Honeypot field
           source,
-          sessionId: analytics?.getSessionId(),
+          analyticsEnabled: !!analytics && !analytics.isTrackingDisabled(),
+          sessionId: analytics && !analytics.isTrackingDisabled() ? analytics.getSessionId() : undefined,
           sourceProperty: analytics?.getSourceProperty() ?? undefined,
           landingUrl: typeof window !== 'undefined' ? window.location.href : undefined,
           referrer: typeof document !== 'undefined' ? document.referrer : undefined

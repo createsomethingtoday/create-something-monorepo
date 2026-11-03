@@ -37,3 +37,6 @@ export type { NewsletterAudienceRecord, NewsletterEligibilityReason } from './au
 // Components
 export { default as UnsubscribePage } from './UnsubscribePage.svelte';
 export { default as NewsletterSignup } from './NewsletterSignup.svelte';
+
+export { NEWSLETTER_CAMPAIGNS, resolveNewsletterAttribution, recordNewsletterSignupAttribution, confirmNewsletterAttribution } from './attribution.js';
+export type { NewsletterAttribution, NewsletterAttributionContext } from './attribution.js';

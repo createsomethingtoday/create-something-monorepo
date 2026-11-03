@@ -819,3 +819,21 @@ settles on focus/hash navigation, printing and reduced-motion changes, restores 
 inline styles after completion or cancellation, and returns `destroy()` for plain
 HTML consumers. It skips initial-viewport, nested and already-transformed groups.
 See `docs/PERFORMANCE_LAB_VISUAL_GRAMMAR.md` for the motion and review contract.
+
+### Newsletter attribution
+
+`NewsletterSignup` sends the existing analytics preference separately from subscription
+consent. Campaign attribution is collected only when `AnalyticsClient.isTrackingDisabled()`
+is false; the handler also honors DNT and GPC headers. A newsletter confirmation is still
+required before the strict audience selector considers a fresh subscriber eligible.
+Existing legacy records are not promoted by this change.
+
+The `@create-something/canon/newsletter/attribution` entrypoint owns reviewed public
+campaign IDs and validates edition/channel/campaign tags. It can reuse the latest tagged
+landing in the existing analytics session for 30 minutes when a reader navigates to an
+untagged signup page. It creates no tracking cookie and does not copy arbitrary UTM
+content, recipient identifiers, or unsubscribe tokens into attribution. Properties must
+apply the owning `.io` attribution migration before reporting these snapshots, and must
+pass the current privacy context when confirming them. See
+[the newsletter workflow](../../docs/guides/NEWSLETTER_WORKFLOW.md) for delivery and
+measurement boundaries.

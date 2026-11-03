@@ -13,6 +13,7 @@ import type {
   TurnstileResponse,
   PropertyDomain
 } from './types.js';
+import { recordNewsletterSignupAttribution, type NewsletterAttributionContext } from './attribution.js';
 import { recordServerConversion } from '../analytics/conversions.js';
 import type { Property } from '../analytics/types.js';
 import {
@@ -103,7 +104,9 @@ export function createNewsletterHandler(options: { property: PropertyDomain }) {
       body,
       platform?.env,
       getClientAddress(),
-      options.property
+      options.property,
+      { doNotTrack: request.headers.get('dnt') === '1' || request.headers.get('sec-gpc') === '1',
+        userAgent: request.headers.get('user-agent') ?? undefined, requestUrl: request.url }
     );
 
     if (result.success) {
@@ -221,7 +224,8 @@ export async function processSubscription(
   body: NewsletterRequest,
   env: NewsletterEnv | undefined,
   clientIP: string,
-  property: PropertyDomain
+  property: PropertyDomain,
+  attributionContext: NewsletterAttributionContext = {}
 ): Promise<{ result: NewsletterResult; status: number }> {
   const { email: rawEmail, website, turnstileToken, source } = body;
   const email = rawEmail?.trim().toLowerCase() ?? '';
@@ -379,8 +383,8 @@ export async function processSubscription(
         `INSERT INTO newsletter_subscribers (
            email, subscribed_at, unsubscribe_token, confirmation_token,
            confirmed_at, source, consent_requested_at, consent_method,
-           consent_evidence, active, status
-         ) VALUES (?, datetime('now'), ?, ?, NULL, ?, ?, 'double_opt_in', 'pending_confirmation', 1, 'active')`
+           consent_evidence, active, status, audience_classification
+         ) VALUES (?, datetime('now'), ?, ?, NULL, ?, ?, 'double_opt_in', 'pending_confirmation', 1, 'active', 'confirmed_subscriber')`
       )
         .bind(email, unsubscribeToken, confirmationToken, subscriberSource, consentRequestedAt)
         .run();
@@ -435,7 +439,15 @@ export async function processSubscription(
   }
 
   try {
-    await recordServerConversion(
+    if (resendData.id) await recordNewsletterSignupAttribution(env.DB, {
+      email, confirmationEmailId: resendData.id, landingUrl: body.landingUrl, analyticsEnabled: body.analyticsEnabled, sessionId: body.sessionId
+    }, attributionContext);
+  } catch (attributionError) {
+    console.warn('Newsletter attribution unavailable; subscription remains valid', attributionError);
+  }
+
+  try {
+    if (body.analyticsEnabled === true && !attributionContext.doNotTrack && !attributionContext.userOptedOut) await recordServerConversion(
       env.DB,
       {
         property,
