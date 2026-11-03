@@ -21,6 +21,6 @@
   <section class="case-narrative"><p class="eyebrow">The problem</p><h2>{data.study.label}</h2><p>{data.study.problem}</p></section>
   <section class="case-narrative"><p class="eyebrow">The contribution</p><h2>The work behind the interface.</h2>{#each data.study.approach as paragraph}<p>{paragraph}</p>{/each}</section>
   <section class="case-narrative"><p class="eyebrow">The key decision</p><h2>What needed to stay clear.</h2><p>{data.study.decision}</p></section>
-  <section class="case-narrative evidence-limits"><p class="eyebrow">The documented result</p><h2>What the evidence shows.</h2><p>{data.study.result}</p><p>{data.study.limit}</p><p>Portfolio evidence captured October 2026. Historical implementation and recordings do not establish the current state of every production system.</p></section>
+  <section class="case-narrative evidence-limits"><p class="eyebrow">The documented result</p><h2>What the evidence shows.</h2><p>{data.study.result}</p><p>{data.study.limit}</p><p>Recording and replay evidence captured October 2026. Historical implementation and recordings do not establish the current state of every production system.</p></section>
   </div><nav data-performance-chapter="handoff" class="case-handoff" aria-label="Continue the Webflow study"><a href="/case-studies/webflow-marketplace">The complete story →</a>{#if studies[index + 1]}<a href={`/case-studies/webflow-marketplace/${studies[index + 1].id}`}>Next: {studies[index + 1].label} ↗</a>{/if}</nav>
 </article>
