@@ -51,10 +51,14 @@ export function buildSearchImpactSql(options) {
 ), scoped AS (
   SELECT *,
     CASE WHEN host IN (primary_host, 'www.' || primary_host) THEN
-      CASE WHEN path IN ('/admin', '/account', '/api', '/login', '/auth', '/dashboard', '/mcp-access', '/prospects')
+      CASE WHEN instr(path, '%') > 0 THEN 'redacted_path'
+        WHEN path IN ('/admin', '/account', '/api', '/login', '/auth', '/dashboard', '/mcp-access', '/prospects')
         OR path GLOB '/admin/*' OR path GLOB '/account/*' OR path GLOB '/api/*' OR path GLOB '/login/*'
         OR path GLOB '/auth/*' OR path GLOB '/dashboard/*' OR path GLOB '/mcp-access/*'
-        OR path GLOB '/prospects/*' OR path GLOB '/delivery/*' THEN 'private_route' ELSE 'public_site' END
+        OR path GLOB '/prospects/*' OR path GLOB '/delivery/*'
+        OR path IN ('/map/share', '/map/workspace', '/map/subscribe')
+        OR path GLOB '/map/share/*' OR path GLOB '/map/workspace*' OR path GLOB '/map/subscribe*'
+        THEN 'private_route' ELSE 'public_site' END
       WHEN host LIKE '%.' || primary_host THEN 'subdomain' ELSE 'other_host' END AS host_scope
   FROM normalized
 ), session_classes AS (

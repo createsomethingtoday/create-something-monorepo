@@ -1,6 +1,6 @@
 # SEO/AEO impact and measurement follow-up
 
-Agency activity increased during October 25–31. A small search-referral signal is visible. The available evidence does not establish that SEO or AI answers caused most of the growth, or that it produced more completed bookings.
+Agency activity increased during October 25–31, but Search Console recorded zero conventional Google Search clicks in both weeks. Google's generative-AI report showed 2 agency impressions, down from 4. The available evidence does not establish that SEO or AI answers caused the agency traffic increase or produced more completed bookings.
 
 Linear: [CRE-2336](https://linear.app/createsomething/issue/CRE-2336).
 
@@ -28,7 +28,7 @@ These are property rollups including subdomains. They must not be presented as a
 | Public apex and www, own-property referral | 10 | 20 |
 | Public apex and www, Google referral | None observed | 20 |
 
-The source rows subdivide public visits; do not add them again to the public total. Latest subdomain visits include Draw 80, scheduling 50, and Outerfields 10. No identifiable AI referral hosts appeared in either query. Missing referrers can include privacy filtering, stripped referrals, internal checks, automation, and direct readers. They do not establish direct human acquisition. Google referrals do not distinguish conventional results from Google's AI features.
+The source rows subdivide public visits; do not add them again to the public total. Latest subdomain visits include Draw 80, scheduling 50, and Outerfields 10. No identifiable AI referral hosts appeared in either query. Missing referrers can include privacy filtering, stripped referrals, internal checks, automation, and direct readers. They do not establish direct human acquisition. Cloudflare's Google-host referral estimate does not distinguish conventional results from Google's AI features and is not corroborated by the zero agency clicks in Search Console.
 
 ## Keep booking clicks separate from completed bookings
 
@@ -63,25 +63,45 @@ To print the corresponding Cloudflare GraphQL query for the connected Cloudflare
 pnpm --filter @create-something/agency analytics:search-impact --start 2026-10-25 --end 2026-11-01 --cloudflare-query --account-id 9645bd52e640b8a4f40a3a55ff1dd75a
 ```
 
-The D1 report groups by property, exact host, public/private/subdomain scope, traffic class, first observed landing source, and landing path. It strips query strings and fragments and suppresses private-route paths. First observed means the first page view within the requested window and host/scope, not an inferred lifetime acquisition source. No new cookie, storage, consent rule, or tracking event was added. Session counts are scoped to each host and public/private scope; do not sum across hosts or scopes to claim unique sessions or people. Public-site scope includes public legal or noindex pages; use landing paths and the sitemap to identify acquisition pages.
+The D1 report groups by property, exact host, public/private/subdomain scope, traffic class, first observed landing source, and landing path. It strips query strings and fragments and suppresses private-route paths, including Map bearer links and workspaces. Percent-encoded paths are conservatively grouped as `redacted_path`; SQLite does not decode application routing segments. First observed means the first page view within the requested window and host/scope, not an inferred lifetime acquisition source. No new cookie, storage, consent rule, or tracking event was added. Session counts are scoped to each host and public/private scope; do not sum across hosts or scopes to claim unique sessions or people. Public-site scope includes public legal or noindex pages; use landing paths and the sitemap to identify acquisition pages.
 
 Traffic classification is conservative across each property/session. Test, internal, preview, and detected automation labels take precedence over external. Missing classifications remain `unclassified`. Search and AI referral hosts use explicit allowlists; unrecognized hosts remain other referrals. A known referrer does not prove an unpaid click, and an absent AI referrer does not prove the absence of AI influence. Campaign attribution remains in the existing marketing-attribution report.
 
 The Cloudflare query returns at most 1,000 groups. If it returns exactly 1,000, narrow the host/date scope before publishing totals. Keep dimensions, bot filtering, timezone, and windows the same across comparisons. See [Cloudflare sampling](https://developers.cloudflare.com/analytics/graphql-api/sampling/).
 
-## Finish the Search Console comparison when access is available
+## Search Console does not corroborate the agency acquisition increase
 
-The connected tools do not expose Search Console. The available browser session redirects to Google's sign-in page. No existing query integration or matching credential names were found in the root production secret scope. Google rankings, impressions, click-through rates, and query changes were not verified.
+The operator completed Google sign-in on November 3. The signed-in Search Console UI and a native agency CSV export now establish the following comparison. These are Search Console calendar dates, not an asserted UTC match to Cloudflare. Both periods use Web search, all countries and devices. The UI last-update label was four hours ago.
 
-The property owner can unblock the comparison with a Performance export from a verified Search Console account, or by connecting authorized read access. Do not send passwords or tokens in chat. For each public property:
+| Search Console metric | Oct 18–24 | Oct 25–31 |
+| --- | ---: | ---: |
+| Agency domain Web clicks | 0 | 0 |
+| Agency domain Web impressions | 56 | 49 |
+| Agency domain average position | 11.2 | 18.1 |
+| Agency apex/www page-filter Web clicks | 0 | 0 |
+| Agency apex/www page-filter impressions | 110 | 45 |
+| Agency apex/www page-filter average position | 7.4 | 11.0 |
+| Agency domain generative-AI impressions (Beta) | 4 | 2 |
+| IO domain Web clicks | 0 | 2 |
+| IO domain Web impressions | 8 | 26 |
+| IO domain average position | 5.5 | 40.5 |
+| IO domain generative-AI impressions (Beta) | 1 | 5 |
 
-1. Export Web performance for October 18–24 and October 25–31, including totals, queries, and pages. Preserve the export's timezone and final/preliminary status.
-2. Separate apex/www pages from operational and client subdomains. Apply the same country, device, and search-type filters to both periods.
-3. Compare clicks and impressions by landing page and query. Separate branded queries from service/problem queries before claiming new acquisition.
-4. Compare the winning landing pages with the report's observed booking-click and completion sessions. Treat the systems as parallel evidence; Search Console cannot join individual queries to first-party sessions.
-5. Reconcile actual bookings through an owner-approved scheduler report before claiming conversion or revenue impact. Do not create fake bookings to fill missing evidence.
+Sources: [agency Web comparison](https://search.google.com/u/1/search-console/performance/search-analytics?resource_id=sc-domain%3Acreatesomething.agency&start_date=20261025&end_date=20261031&compare_start_date=20261018&compare_end_date=20261024), [agency generative-AI comparison](https://search.google.com/u/1/search-console/performance/search-analytics/ai?resource_id=sc-domain%3Acreatesomething.agency&start_date=20261025&end_date=20261031&compare_start_date=20261018&compare_end_date=20261024), and the same reports for `sc-domain:createsomething.io`. The public agency filter was `^https?://(www\.)?createsomething\.agency/`.
 
-AI-answer contribution remains a separate unanswered question. Referral evidence and verified citations can support it; crawlability and valid schema alone cannot. Google's AI features use the existing search foundations: [Google's guidance](https://developers.google.com/search/docs/appearance/ai-features).
+Page-filtered and domain-level totals use different aggregation. They are not additive, and filtered totals must not be compared directly with unfiltered totals. Google also warns that filtered charts/tables can be partial. Average position is query-mix dependent; a larger number alone does not establish a site-wide ranking regression. The generative-AI Beta view exposed impressions without a click or conversion metric. Its chart accessibility label contained an invalid-date string; the visible metric cards and comparison dates were read directly and retained as evidence.
+
+Agency landing-page impressions fell for `/agent-foundation` (18 to 5), `/services` (11 to 4), and the homepage (9 to 5). `/field-reports` increased from 5 to 7. Every one of these rows had zero clicks in both weeks. Visible nonbranded queries included `workflow reports` (2 to 5 impressions) and `agent foundation` (5 to 1), also without clicks. Query rows omit some data, so their totals are not the chart total. The sample is too small to justify a broad content rewrite or a reliable conversion-rate claim.
+
+IO's two Web clicks both landed on `/experiments/living-arena-gpu`. First-party D1 separately recorded two Google-referred IO sessions on that path. The matching path/count supports a narrow search-acquisition observation; it is not a user-level join and does not explain agency growth or establish revenue. No visible query row carried those clicks, so their queries remain unknown.
+
+The agency export contained 95 Draw project-URL rows, many with project query parameters. These are not agency service acquisition pages. Do not publish their identifiers or count them as evidence of buyer demand. A separate Draw indexing review must determine which application routes should be indexable before changing robots, canonicals, or removal settings. Domain indexing counts also include subdomains and legacy URLs; they do not measure how many of the 57 current acquisition routes are indexed.
+
+The signed-in account listed agency and IO properties, but no `.ltd` or `.space` property. Those two Search Console comparisons remain access/configuration gaps. Authoritative scheduler booking reconciliation remains open as described above. Visibility in Google's AI results is now observed at a small scale; attributable AI visits, completed bookings, and revenue are still unproven.
+
+## Sitemap discovery was repaired
+
+Search Console initially showed the agency sitemap last read January 6, 2026, with 13 discovered URLs. The actual live XML contained 57 canonical URLs. The existing `https://createsomething.agency/sitemap.xml` was resubmitted once through the verified property. A fresh page reload showed submitted November 3, last read November 3, status **Success**, and **57 discovered pages**. This verifies renewed discovery, not indexing or ranking acceptance.
 
 ## Validate and release the bounded fixes
 
@@ -89,4 +109,4 @@ The change corrects Offer prices, preserves zero-cost starters and custom-quote 
 
 Promotion uses a reviewed PR and the repository's production deployment workflows. Agency deploys from main after its release gate; `.ltd` and `.space` use the manual Property Pages Deploy workflow after merge. Retain the previous production deployment IDs for rollback. Do not treat a merged PR, preview, or build as live verification. Check canonical HTML and repeated warm-cache reads after deployment.
 
-Search Console access and authoritative booking reconciliation remain explicit open checkpoints even after the code ships. Record exact deployment receipts, independent review, three quality gates, and worktree disposition in CRE-2336.
+Search Console access for `.ltd`/`.space`, Draw indexing scope, and authoritative booking reconciliation remain explicit open checkpoints even after the code ships. Record exact deployment receipts, independent review, three quality gates, and worktree disposition in CRE-2336.
