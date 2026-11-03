@@ -57,3 +57,11 @@ The current Draw adapter job also exceeded its five-minute cap during checkout, 
 Review identified two older first-party forms that omitted the explicit analytics preference after the server began requiring it. All three first-party clients now use one shared `newsletterSignupContext()` helper: Canon footer, Canon newsletter signup, and IO subscribe page. It reuses an enabled existing client/session, respects disabled tracking and GPC, and supplies an explicit disabled flag without analytics context when permission is unavailable. The server does not infer permission from an omitted flag.
 
 Five helper contract tests pass. A local browser harness mounted the actual three components and captured their HTTP request bodies without delivery: enabled, disabled preference, DNT, and GPC were exercised on each form, twelve cases total. Enabled context included the session and landing; disabled modes omitted session/landing/referrer. Existing form layout/copy was not changed by this compatibility fix. Full IO check reports zero errors/warnings and production build/lint pass. No live email, schema, subscriber or analytics writes occurred.
+
+## Fresh re-subscription classification
+
+The next review reproduced a legacy/pending-review address remaining ineligible after a new self-requested signup and direct confirmation. Fresh signup now uses the same audience classification as a new address, while clearing prior confirmation evidence and requiring the newly issued link. This does not promote existing legacy records in bulk.
+
+Actual SQLite regressions failed before repair and pass afterward for both classifications, rejection of the old link, eligibility only after the new confirmation, and terminal suppression arriving during the update. A guarded update returns a retryable conflict without provider delivery if subscriber confirmation, opt-out or suppression state changed after inspection.
+
+Validation passed: 33 Node newsletter checks, 18 Vitest workflow checks, eight shared email contracts, full IO check with zero errors/warnings, and the production build. No UI or schema changes, production subscriber mutation, or live email send were required. Existing visual evidence applies; hosted CI/review and live release remain pending.

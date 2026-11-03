@@ -46,6 +46,7 @@ interface D1PreparedStatement {
 
 interface D1Result<T = unknown> {
   success: boolean;
+  meta?: { changes?: number };
   results?: T[];
 }
 
@@ -357,7 +358,7 @@ export async function processSubscription(
   try {
     if (existingSubscriber) {
       // Update existing subscriber (may have unsubscribed before)
-      await env.DB.prepare(
+      const updated = await env.DB.prepare(
         `UPDATE newsletter_subscribers
 				 SET confirmation_token = ?,
 				     unsubscribe_token = ?,
@@ -367,16 +368,29 @@ export async function processSubscription(
 				     consent_confirmed_at = NULL,
 				     consent_method = 'double_opt_in',
 				     consent_evidence = 'pending_confirmation',
+				     audience_classification = 'confirmed_subscriber',
 				     confirmation_email_id = NULL,
 				     welcome_email_id = NULL,
 				     active = 1,
 				     status = 'active',
 				     subscribed_at = datetime('now'),
 				     source = ?
-				 WHERE email = ?`
+				 WHERE email = ?
+             AND COALESCE(status, 'active') NOT IN ('bounced', 'complained', 'suppressed')
+             AND confirmed_at IS ? AND unsubscribed_at IS ?`
       )
-        .bind(confirmationToken, unsubscribeToken, consentRequestedAt, subscriberSource, email)
+        .bind(
+          confirmationToken, unsubscribeToken, consentRequestedAt, subscriberSource, email,
+          existingSubscriber.confirmed_at, existingSubscriber.unsubscribed_at
+        )
         .run();
+      if (!updated.success) throw new Error('Subscription update failed');
+      if (Number(updated.meta?.changes ?? 0) !== 1) {
+        return {
+          result: { success: false, message: 'Subscription state changed. Please try again.' },
+          status: 409
+        };
+      }
     } else {
       // Insert new subscriber
       await env.DB.prepare(
