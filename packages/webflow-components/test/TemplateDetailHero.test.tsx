@@ -44,6 +44,25 @@ test('links the Documentation & Help Center label to the canonical Documentation
   assert.doesNotMatch(html, /documentation-and-help-center-websites/);
 });
 
+test('links legacy Airtable category group labels to the live category routes', () => {
+  const cases: Array<[string, string]> = [
+    ['Government & Political', 'government-websites'],
+    ['HR & Recruiting', 'hr-and-hiring-websites'],
+    ['Health & Wellness', 'wellness-websites'],
+    ['Product Launch / Coming Soon', 'launch-and-coming-soon-websites'],
+    ['Resume & Personal', 'personal-websites'],
+    ['Travel & Hospitality', 'travel-websites'],
+    ['UI Kit & Landing Page Components', 'ui-kit-websites'],
+  ];
+
+  for (const [label, slug] of cases) {
+    const html = renderToStaticMarkup(
+      <TemplateDetailHero templateName="Example" categoryNames={label} enableAnalytics={false} />,
+    );
+    assert.match(html, new RegExp(`href="https://webflow\\.com/templates/category/${slug}"`), label);
+  }
+});
+
 test('uses the first category name in the template title', () => {
   const html = renderToStaticMarkup(
     <TemplateDetailHero

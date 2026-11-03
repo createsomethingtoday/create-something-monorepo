@@ -87,6 +87,13 @@ const CATEGORY_ROUTE_ALIASES: Record<string, string> = {
   'construction-and-home-services': 'home-services-websites',
   'construction-and-home-services-websites': 'home-services-websites',
   'documentation-and-help-center': 'documentation-websites',
+  'government-and-political': 'government-websites',
+  'hr-and-recruiting': 'hr-and-hiring-websites',
+  'health-and-wellness': 'wellness-websites',
+  'product-launch-coming-soon': 'launch-and-coming-soon-websites',
+  'resume-and-personal': 'personal-websites',
+  'travel-and-hospitality': 'travel-websites',
+  'ui-kit-and-landing-page-components': 'ui-kit-websites',
 };
 
 const CATEGORY_LABEL_ALIASES: Record<string, string> = {
