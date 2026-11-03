@@ -820,7 +820,7 @@ export async function recordEditionDeliveryReceipt(
   if (!status) return;
   await db
     .prepare(
-      `UPDATE newsletter_edition_deliveries SET status=CASE WHEN status='failed' THEN status WHEN ?='sent' AND status IN ('delivered','delayed') THEN status WHEN ?='delayed' AND status='delivered' THEN status ELSE ? END,error_code=CASE WHEN ?='failed' THEN ? ELSE error_code END,updated_at=CURRENT_TIMESTAMP WHERE resend_email_id=?`
+      `UPDATE newsletter_edition_deliveries SET status=CASE WHEN status IN ('failed','canceled') THEN status WHEN ?='sent' AND status IN ('delivered','delayed') THEN status WHEN ?='delayed' AND status='delivered' THEN status ELSE ? END,error_code=CASE WHEN status IN ('failed','canceled') THEN error_code WHEN ?='failed' THEN ? ELSE error_code END,updated_at=CURRENT_TIMESTAMP WHERE resend_email_id=?`
     )
     .bind(status, status, status, status, `provider-${eventType.replace('email.', '')}`, emailId)
     .run();

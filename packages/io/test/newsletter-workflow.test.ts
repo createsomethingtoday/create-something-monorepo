@@ -64,7 +64,7 @@ function fixture() {
       to: [message?.to],
       html: message?.html,
       text: message?.text,
-      last_event: ['complained', 'suppressed', 'opened', 'clicked'].includes(outcome)
+      last_event: ['complained', 'suppressed', 'opened', 'clicked', 'canceled'].includes(outcome)
         ? outcome
         : 'delivered'
     });
@@ -653,5 +653,53 @@ test('a fresh smaller audience excludes old receipts from completion without del
     (await readNewsletterWorkflow(f.db)).editions.find((e) => e.slug === f.edition.slug)!
       .email_status,
     'sent'
+  );
+});
+
+test('provider cancellation remains terminal across late webhook replays', async (t) => {
+  const f = fixture();
+  t.after(() => f.sqlite.close());
+  await f.run({ action: 'prepare', edition: f.edition });
+  await f.run({ action: 'review', slug: f.edition.slug });
+  await f.run({ action: 'seed', slug: f.edition.slug });
+  await f.run({ action: 'reconcile', slug: f.edition.slug });
+  await f.run({ action: 'approve', slug: f.edition.slug, send_at: '2026-11-03T15:00:00Z' });
+  await f.run({ action: 'send', slug: f.edition.slug });
+  f.setOutcome('canceled');
+  await f.run({ action: 'reconcile', slug: f.edition.slug });
+  for (const event of [
+    'email.sent',
+    'email.delivery_delayed',
+    'email.delivered',
+    'email.complained'
+  ]) {
+    for (const id of ['message-1', 'message-2']) {
+      await recordEditionDeliveryReceipt(f.db, id, event);
+      assert.deepEqual(
+        {
+          ...f.sqlite
+            .prepare(
+              'SELECT status,error_code FROM newsletter_edition_deliveries WHERE resend_email_id=?'
+            )
+            .get(id)
+        },
+        { status: 'canceled', error_code: 'provider-canceled' },
+        `${id}: ${event}`
+      );
+    }
+    const edition = (await readNewsletterWorkflow(f.db)).editions.find(
+      (e) => e.slug === f.edition.slug
+    )!;
+    assert.equal(edition.seed_status, 'canceled');
+    assert.equal(edition.email_status, 'failed');
+  }
+  await assert.rejects(
+    f.run({ action: 'retry_failed', slug: f.edition.slug }),
+    /terminal|suppression|accepted/i
+  );
+  assert.equal(f.sent.length, 2);
+  assert.equal(
+    f.sqlite.prepare('SELECT status FROM newsletter_subscribers WHERE id=1').get()?.status,
+    'complained'
   );
 });
