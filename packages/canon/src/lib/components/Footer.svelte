@@ -2,6 +2,7 @@
   import { onMount, type Snippet } from 'svelte';
   import { RingMark } from '../brand/marks/index.js';
   import { getAnalytics } from '../analytics/client.js';
+  import { newsletterSignupContext } from '../newsletter/client.js';
   import MeridianOfferPanel from './meridian/MeridianOfferPanel.svelte';
 
   interface QuickLink {
@@ -183,10 +184,7 @@
           email,
           turnstileToken: turnstileToken || undefined,
           source: mode,
-          sessionId: analytics?.getSessionId(),
-          sourceProperty: analytics?.getSourceProperty() ?? undefined,
-          landingUrl: typeof window !== 'undefined' ? window.location.href : undefined,
-          referrer: typeof document !== 'undefined' ? document.referrer : undefined
+          ...newsletterSignupContext()
         })
       });
 

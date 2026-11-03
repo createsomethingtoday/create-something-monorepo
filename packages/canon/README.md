@@ -819,3 +819,30 @@ settles on focus/hash navigation, printing and reduced-motion changes, restores 
 inline styles after completion or cancellation, and returns `destroy()` for plain
 HTML consumers. It skips initial-viewport, nested and already-transformed groups.
 See `docs/PERFORMANCE_LAB_VISUAL_GRAMMAR.md` for the motion and review contract.
+
+### Newsletter attribution
+
+`NewsletterSignup` sends the existing analytics preference separately from subscription
+consent. Campaign attribution is collected only when `AnalyticsClient.isTrackingDisabled()`
+is false; the handler also honors DNT and GPC headers. A newsletter confirmation is still
+required before the strict audience selector considers a fresh subscriber eligible.
+Existing legacy records are not promoted by this change.
+
+All first-party signup clients use `newsletterSignupContext()`: the shared signup
+component, shared footer, and `.io` subscribe page. It forwards the existing enabled
+analytics context only; absent clients, disabled preferences, and GPC return an explicit
+disabled flag without session or landing data. It does not create a client or grant consent.
+
+The `@create-something/canon/newsletter/attribution` entrypoint owns reviewed public
+campaign IDs and validates edition/channel/campaign tags. It can reuse the latest tagged
+landing in the existing analytics session for 30 minutes when a reader navigates to an
+untagged signup page. It creates no tracking cookie and does not copy arbitrary UTM
+content, recipient identifiers, or unsubscribe tokens into attribution. Properties must
+apply the owning `.io` attribution migration before reporting these snapshots, and must
+pass the current privacy context when confirming them. See
+[the newsletter workflow](../../docs/guides/NEWSLETTER_WORKFLOW.md) for delivery and
+measurement boundaries.
+
+Receipt and attribution writes require the request's current confirmation token.
+Out-of-order provider responses cannot attach an older campaign to a newer link.
+The token is used only as a write condition; attribution does not retain it.

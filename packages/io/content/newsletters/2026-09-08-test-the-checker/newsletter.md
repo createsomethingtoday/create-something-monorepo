@@ -7,13 +7,19 @@ timezone: "America/Chicago"
 status: "draft"
 web_status: "draft"
 linear_issue: "CRE-1952"
+workflow_issue: "CRE-2337"
+author: "CREATE SOMETHING"
+owner: "Micah Johnson"
+editorial_review_at: "2026-11-03"
+delivery_target_status: "historical-review-target"
+evidence_source: "docs/guides/GROUND_SEEDED_TRIAL.md at ground-v0.4.1"
 ---
 
 # Test the checker before trusting the result
 
 Before you trust an automated check, give it a mistake you already know is there.
 
-We did that with Ground, our code analysis tool. A small trial covered 11 cases: duplicates, unused exports, imports, malformed files, and the checks that belong to the compiler. The published 0.4.0 release passed seven and failed four.
+In September, we did that with Ground, our code analysis tool. A small trial covered 11 cases: duplicates, unused exports, imports, malformed files, and the checks that belong to the compiler. The published 0.4.0 release passed seven and failed four.
 
 One failure was especially useful. Two files exported a function with the same name. Another file imported only one of them. Ground treated the matching name as evidence that the other export was used too.
 
@@ -25,7 +31,7 @@ Other cases showed malformed source being accepted as usable evidence. A tool ca
 
 For the import case, the expectation was simple: preserve the export that has a consumer, and report the unused one. For malformed source, the check had to report incomplete analysis or an error. An empty result was not acceptable.
 
-Ground 0.4.1 now checks syntax completeness and resolves import usage to the target module. The [release and trial notes](https://github.com/createsomethingtoday/create-something-monorepo/blob/ground-v0.4.1/docs/guides/GROUND_SEEDED_TRIAL.md) describe the cases and the limits.
+Ground 0.4.1 addressed these cases by checking syntax completeness and resolving import usage to the target module. This is a historical release example; later versions need their own release evidence. The [release and trial notes](https://github.com/createsomethingtoday/create-something-monorepo/blob/ground-v0.4.1/docs/guides/GROUND_SEEDED_TRIAL.md) describe the cases and the limits.
 
 The useful lesson travels beyond code analysis. A check needs a known failure it can recognize. Otherwise, a green result may tell you only that the check ran.
 

@@ -1,9 +1,6 @@
 /** Public campaign IDs only. Never put recipient IDs or tokens in campaign URLs. */
-export const NEWSLETTER_CAMPAIGNS = [
-  '2026-09-01-the-interface-is-becoming-executable',
-  '2026-09-03-the-receipt-must-name-the-state',
-  '2026-09-08-test-the-checker'
-] as const;
+import { NEWSLETTER_CAMPAIGNS } from '@create-something/canon/newsletter/attribution';
+export { NEWSLETTER_CAMPAIGNS };
 
 const SOCIAL_CAMPAIGN_PATHS = new Set([
   '/newsletters',
@@ -14,7 +11,8 @@ export function newsletterMetadata(url: URL): Record<string, string> | undefined
   const campaign = url.searchParams.get('utm_campaign');
   const source = url.searchParams.get('utm_source');
   const medium = url.searchParams.get('utm_medium');
-  if (url.pathname.startsWith('/admin')) return undefined;
+  if (url.pathname.startsWith('/admin') || url.origin !== 'https://createsomething.io' ||
+      ['utm_source', 'utm_medium', 'utm_campaign'].some(key => url.searchParams.getAll(key).length !== 1)) return undefined;
 
   if (source === 'newsletter' && medium === 'email' &&
       NEWSLETTER_CAMPAIGNS.some((id) => id === campaign)) {
