@@ -1,6 +1,7 @@
 <script lang="ts">
   import { SEO } from '@create-something/canon';
   import WebflowWalkthrough from '$lib/components/WebflowWalkthrough.svelte';
+  import WebflowUsageEvidence from '$lib/components/WebflowUsageEvidence.svelte';
   import { webflowStudies, webflowAttribution } from '$lib/data/webflowMarketplace';
   import '$lib/styles/webflow-case-study.css';
   const story = webflowStudies[0];
@@ -10,6 +11,7 @@
   <header class="case-opening" data-performance-chapter="opening"><a class="back" href="/#workflow">← Featured work</a><p class="eyebrow">Selected professional work / Webflow Marketplace</p><h1>One Marketplace.<br />Connected work.</h1><p class="lede">{story.summary.replace('My work', 'Micah’s work')}</p><p class="attribution">{webflowAttribution}</p><dl class="case-facts"><div><dt>Contribution</dt><dd>Product development, workflow design, integration engineering, reusable review guidance</dd></div><div><dt>Story</dt><dd>Eight studies · Five stages · A 2:48 walkthrough</dd></div><div><dt>Evidence</dt><dd>Recorded interfaces, historical footage, and labeled offline replays · October 2026</dd></div></dl></header>
 <div data-performance-chapter="evidence">
   <section class="case-film" aria-label="Comprehensive walkthrough"><WebflowWalkthrough capture={{...story.captures[0], poster:'/films/webflow-marketplace/feature.jpg'}} chapters /></section>
+  <WebflowUsageEvidence />
   <section class="case-narrative" aria-labelledby="problem-title"><p class="eyebrow">The challenge</p><h2 id="problem-title">The handoff is part of the product.</h2><p>{story.problem}</p><p>Micah’s work addresses those handoffs across creator tools, submission flows, review tooling, the creator workspace, and the public Apps Marketplace. The individual studies describe the contribution within Webflow’s wider team and platform context.</p><p>The review tools use the Model Context Protocol (MCP) to give an AI assistant structured access to review information.</p></section>
   <section id="studies" class="study-index" aria-labelledby="studies-title"><p class="eyebrow">Explore the work</p><h2 id="studies-title">Eight connected studies.</h2>{#each webflowStudies.slice(1) as study, i}<a class="study-row" href={`/case-studies/webflow-marketplace/${study.id}`}><span class="row-number">{String(i + 1).padStart(2,'0')}</span><div><h3>{study.label}</h3><p>{study.title}</p></div><span aria-hidden="true">↗</span></a>{/each}</section>
   <section class="case-narrative" aria-labelledby="decision-title"><p class="eyebrow">The design decision</p><h2 id="decision-title">Make the evidence clear.<br />Keep the decision with its owner.</h2><p>{story.decision}</p><p>The creator gets a clearer next action. The reviewer can inspect the version, findings, and context behind a proposed action. An assistant’s access to review information does not grant authority to approve an asset.</p></section>
