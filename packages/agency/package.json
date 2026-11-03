@@ -73,6 +73,7 @@
     "smoke:membership-story": "node ./scripts/verify-membership-story.mjs",
     "smoke:public-page-system": "node ./scripts/verify-public-page-system.mjs",
     "smoke:utility-polish": "node ./test/agency-utility-polish.browser.mjs",
+    "smoke:security-hero": "node ./test/security-hero.browser.mjs",
     "test:image-entrance": "node --import tsx --test test/image-entrance.test.ts",
     "test:scene-reveal": "node --import tsx --test test/scene-reveal.test.ts",
     "smoke:image-entrances": "node ./scripts/verify-image-entrances.mjs",

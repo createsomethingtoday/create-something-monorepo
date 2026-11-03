@@ -143,6 +143,10 @@ body.design-preview .registry-arc__hero.agency-preview-hero h1{font-size:clamp(2
 /* Page-family composition: the subject sets the space; working tasks keep priority. */
 body.design-preview .agency-preview-media figcaption{font-size:11px!important;line-height:1.6!important;overflow-wrap:anywhere}
 body.design-preview .agency-preview-hero[data-agency-composition='wide']{grid-template-columns:minmax(0,1fr)!important}
+/* Clear heroes flatten their inner layout into this grid. Wide imagery must
+   use its single explicit column, or column 2 collapses the copy to zero. */
+body.design-preview .clear-page-section--hero.agency-preview-hero[data-agency-composition='wide']>.agency-preview-media{grid-column:1;grid-row:2}
+body.design-preview .clear-page-section--hero.agency-preview-hero[data-agency-composition='wide'] .clear-page-section__aside{grid-row:3}
 body.design-preview .performance-campaign-opening[data-agency-composition='wide']>.performance-campaign-opening__content{grid-column:1!important;grid-row:1!important;max-width:70rem!important;justify-self:start}
 body.design-preview .performance-campaign-opening[data-agency-composition='wide']>.agency-preview-media{grid-column:1!important;grid-row:2!important;width:100%;margin-top:var(--space-performance-md)!important}
 body.design-preview .performance-campaign-opening[data-agency-composition='wide']>.performance-campaign-opening__artifact{grid-row:3!important}
