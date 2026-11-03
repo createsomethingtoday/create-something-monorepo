@@ -65,3 +65,9 @@ The next review reproduced a legacy/pending-review address remaining ineligible 
 Actual SQLite regressions failed before repair and pass afterward for both classifications, rejection of the old link, eligibility only after the new confirmation, and terminal suppression arriving during the update. A guarded update returns a retryable conflict without provider delivery if subscriber confirmation, opt-out or suppression state changed after inspection.
 
 Validation passed: 33 Node newsletter checks, 18 Vitest workflow checks, eight shared email contracts, full IO check with zero errors/warnings, and the production build. No UI or schema changes, production subscriber mutation, or live email send were required. Existing visual evidence applies; hosted CI/review and live release remain pending.
+
+## Provider readback rate limits
+
+Review reproduced analytics losing campaign evidence on a 429 once the governed ledger exceeds ten receipts. The actual 20-receipt readback now spaces requests by at least 125 ms and retries a rate-limited receipt at most twice. Numeric or HTTP-date Retry-After is honored up to five seconds; longer or malformed instructions stop with unavailable evidence rather than retrying early. Missing Retry-After uses a one-second pause. Exact ID/subject validation and null delivery on failure remain intact. The provider request includes an explicit User-Agent. See [Resend API rate limits](https://resend.com/docs/api-reference/introduction#rate-limit).
+
+Both new regressions failed before repair. All 16 analytics checks now pass, including 20 verified receipts after a simulated shared-quota 429, bounded persistent throttling and no early retry for a longer requested pause. Full IO check passed with zero errors/warnings; production build and lint passed. These are offline provider fixtures; no live rate-limit exhaustion was attempted. No UI, schema, consent or send changes were required.

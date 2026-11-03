@@ -34,17 +34,33 @@ SELECT REPLACE(campaign, '_', '-') AS campaign, traffic_class, COUNT(*) AS landi
 FROM sessions GROUP BY campaign, traffic_class ORDER BY campaign, traffic_class`;
 
 export async function readNewsletterDelivery(
-  entry: { campaign: string; subject: string; ids: string[] }, apiKey: string | undefined, fetcher: typeof fetch = fetch
+  entry: { campaign: string; subject: string; ids: string[] }, apiKey: string | undefined, fetcher: typeof fetch = fetch,
+  wait: (milliseconds: number) => Promise<void> = (milliseconds) => new Promise(resolve => setTimeout(resolve, milliseconds))
 ) {
   if (!entry.ids.length) return { campaign: entry.campaign, status: 'not-registered', registered: 0, delivered: null, states: {} };
   if (!apiKey) return { campaign: entry.campaign, status: 'unavailable', registered: entry.ids.length, delivered: null, states: {} };
   try {
     const states: Record<string, number> = {};
-    // Sequential requests respect provider rate limits; API route reads campaigns sequentially too.
+    // Leave headroom below the default team-wide limit, including between campaigns.
+    // Other callers can consume the same quota, so also honor bounded 429 retries.
     for (const id of entry.ids) {
-      const response = await fetcher(`https://api.resend.com/emails/${id}`, {
-        headers: { Authorization: `Bearer ${apiKey}` }, signal: AbortSignal.timeout(8000)
-      });
+      await wait(125);
+      let response: Response;
+      for (let attempt = 0; ; attempt++) {
+        response = await fetcher(`https://api.resend.com/emails/${id}`, {
+          headers: { Authorization: `Bearer ${apiKey}`, 'User-Agent': 'create-something-newsletter/1.0' },
+          signal: AbortSignal.timeout(8000)
+        });
+        if (response.status !== 429 || attempt >= 2) break;
+        const retryAfter = response.headers.get('Retry-After');
+        const seconds = retryAfter === null ? NaN : Number(retryAfter);
+        const delay = retryAfter === null ? 1000 : Number.isFinite(seconds)
+          ? seconds * 1000 : Date.parse(retryAfter) - Date.now();
+        // Stop instead of retrying early when the provider requests a longer pause.
+        if (!Number.isFinite(delay) || delay > 5000) break;
+        await response.body?.cancel();
+        await wait(Math.max(125, delay));
+      }
       if (!response.ok) throw new Error('Provider readback unavailable');
       const value = await response.json() as { id?: string; subject?: string; last_event?: string };
       if (value.id !== id || value.subject !== entry.subject || typeof value.last_event !== 'string') throw new Error('Provider receipt mismatch');
