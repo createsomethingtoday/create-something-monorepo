@@ -74,6 +74,12 @@
 .agency-home .theater-stage { display:flex; align-items:center; justify-content:center; min-height:0; min-width:0; }
 .agency-home .dialog video { display:block; width:auto; height:auto; max-width:100%; max-height:100%; object-fit:contain; }
 .agency-home .dialog #work-caption { margin:0; padding:12px; font-size:13px; line-height:1.5; color:var(--ag-muted); }
+.agency-home .theater-notes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-performance-sm);padding:12px;border-top:1px solid var(--ag-line)}
+.agency-home .theater-notes #work-caption{padding:0}
+.agency-home #work-context{font-size:13px;line-height:1.5;color:var(--ag-muted)}
+.agency-home #work-context strong{display:block;font-weight:400;color:var(--ag-fg);margin-bottom:var(--space-performance-xs)}
+@media(max-width:700px){.agency-home .theater-notes{grid-template-columns:minmax(0,1fr);gap:8px;padding:8px 12px}.agency-home #work-context{font-size:12px}.agency-home .dialog .theater-notes #work-caption{padding:0}}
+@media(max-height:500px) and (min-width:701px){.agency-home #work-context,.agency-home .dialog .theater-notes #work-caption{font-size:11px}.agency-home .dialog .theater-notes #work-caption{padding:0}}
 @media(max-width:700px), (max-height:500px) {
   .agency-home .dialog { width:100vw; height:100dvh; padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
   .agency-home .dialog h2 { font-size:16px; }
@@ -106,6 +112,17 @@
 .agency-home .steps button[aria-pressed=true]{transition:none}
 .agency-home .steps button:enabled:hover{color:var(--ag-fg)}
 .agency-home .steps button:focus-visible{transition:none}
+.agency-home .journey-example{margin-top:var(--space-performance-sm)}
+.agency-home .journey-story{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--space-performance-lg);padding-block:var(--space-performance-md);border-bottom:1px solid var(--ag-line)}
+.agency-home .journey-story[hidden]{display:none}
+.agency-home .journey-story h3{font-size:clamp(24px,3vw,34px);font-weight:400;line-height:1.15;letter-spacing:-.035em;margin-block:var(--space-performance-xs) var(--space-performance-sm)}
+.agency-home .journey-story-intro>p:last-child,.agency-home .journey-story dd{font-size:13px;line-height:1.65;color:var(--ag-muted);max-width:48ch}
+.agency-home .journey-story dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-performance-md);margin:0;align-content:start}
+.agency-home .journey-story dt{font:11px/1.6 var(--font-performance-mono);letter-spacing:.04em;text-transform:uppercase;margin-bottom:var(--space-performance-xs)}
+.agency-home .journey-story dd{margin:0}
+@media(max-width:700px){.agency-home .journey-story{grid-template-columns:minmax(0,1fr);gap:var(--space-performance-md)}}
+@media(max-width:360px){.agency-home .journey-story dl{grid-template-columns:minmax(0,1fr)}}
+@media print{.agency-home .journey-story[hidden]{display:grid}.agency-home .steps,.agency-home #journey-status{display:none}}
 @media(prefers-reduced-motion:reduce){.agency-home .steps button{transition:none}}
 /* GSAP owns these channels. Global reduced-motion duration resets must not
    manufacture CSS transitions as GSAP restores an authored style. */

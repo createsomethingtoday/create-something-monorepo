@@ -10,15 +10,23 @@ export function enhanceHomeInteractions(root: HTMLElement): { destroy: () => voi
   const active = new Map<HTMLElement, gsap.core.Tween>();
   let runtime: typeof import('gsap').gsap | undefined;
   let ease: string | gsap.EaseFunction | undefined;
+  let loading = false;
   // No static import: loading failures keep every native control usable.
-  void Promise.all([import('gsap'), import('gsap/CustomEase')]).then(([{ gsap }, { CustomEase }]) => {
-    if (disposed) return;
-    gsap.registerPlugin(CustomEase);
-    const curve = view.getComputedStyle(root).getPropertyValue('--ease-performance-standard').trim();
-    const values = /^cubic-bezier\(([^)]+)\)$/.exec(curve)?.[1];
-    ease = values ? CustomEase.create('agency-feedback', values) : 'power2.out';
-    runtime = gsap;
-  }).catch(() => {});
+  const load = () => {
+    if (disposed || runtime || loading || reduced.matches || !hover.matches) return;
+    loading = true;
+    void Promise.all([import('gsap'), import('gsap/CustomEase')]).then(([{ gsap }, { CustomEase }]) => {
+      if (disposed || reduced.matches || !hover.matches) return;
+      gsap.registerPlugin(CustomEase);
+      const curve = view.getComputedStyle(root).getPropertyValue('--ease-performance-standard').trim();
+      const values = /^cubic-bezier\(([^)]+)\)$/.exec(curve)?.[1];
+      ease = values ? CustomEase.create('agency-feedback', values) : 'power2.out';
+      runtime = gsap;
+    }).catch(() => {}).finally(() => { loading = false; });
+  };
+  load();
+  reduced.addEventListener('change', load, { signal: abort.signal });
+  hover.addEventListener('change', load, { signal: abort.signal });
   const duration = (element: HTMLElement, token: string) => {
     const value = view.getComputedStyle(element).getPropertyValue(token).trim();
     const seconds = parseFloat(value) / (value.endsWith('ms') ? 1000 : 1);

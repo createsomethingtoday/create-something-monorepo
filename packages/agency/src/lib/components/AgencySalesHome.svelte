@@ -33,11 +33,23 @@
     let opener: HTMLElement | null = null;
     const video = dialog?.querySelector('video');
     const chapterButtons = root.querySelectorAll<HTMLButtonElement>('[data-work-chapter]');
+    const contextTitle = dialog?.querySelector<HTMLElement>('[data-work-context-title]');
+    const contextEvidence = dialog?.querySelector<HTMLElement>('[data-work-context-evidence]');
+    let activeChapter = -1;
+    const showChapter = (index: number) => {
+      if (index === activeChapter) return;
+      activeChapter = index;
+      const stage = webflowStages[index];
+      if (contextTitle) contextTitle.textContent = `${stage.label} / ${stage.title}`;
+      if (contextEvidence) contextEvidence.textContent = stage.evidence;
+      chapterButtons.forEach((button, i) => button.setAttribute('aria-current', i === index ? 'step' : 'false'));
+    };
     let requestedTime = 0;
     const openWalkthrough = (trigger: HTMLElement, time = 0) => {
       if (!dialog || !video) return;
       opener = trigger;
       requestedTime = time;
+      showChapter(Math.max(0, webflowStages.findIndex(stage => time >= stage.start && time < stage.end)));
       originalOverflow = document.body.style.overflow;
       dialog.showModal();
       filmOverlayOpen.set(true);
@@ -49,7 +61,7 @@
     const updateChapter = () => {
       if (!video) return;
       const index = webflowStages.findIndex(stage => video.currentTime + .00001 >= stage.start && video.currentTime + .00001 < stage.end);
-      chapterButtons.forEach((button, i) => button.setAttribute('aria-current', i === (index < 0 ? webflowStages.length - 1 : index) ? 'step' : 'false'));
+      showChapter(index < 0 ? webflowStages.length - 1 : index);
     };
     video?.addEventListener('timeupdate', updateChapter, { signal: abort.signal });
     video?.addEventListener('seeked', updateChapter, { signal: abort.signal });
@@ -84,7 +96,7 @@
   });
 </script>
 
-<svelte:head><link rel="stylesheet" href="/styles/agency/home.css?v=agency-image-reveal-release-20261102" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /></svelte:head>
+<svelte:head><link rel="stylesheet" href="/styles/agency/home.css?v=agency-intake-story-20261103" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /></svelte:head>
 <div class="agency-home" bind:this={root} use:scrollEntrance>
   {@html content}
   <details id="work-library" class="work-library" bind:open={libraryOpen}>
