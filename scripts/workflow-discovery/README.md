@@ -17,6 +17,8 @@ The output directory must be outside the checkout and cannot contain it. A new d
 
 Review `catalog.json` for source paths, SHA256 values, script JSON pointers, unresolved ownership/execution/activation requirements, and capacity-deferred candidates. The scanner reads the root and direct `packages/*` and `apps/*` manifests, canonical `packages/*/workflows/*/workflow.json` definitions, and direct GitHub workflow files. GitHub workflows are inventoried by hash; their YAML steps are not inferred as business procedures. Only package script names enter proposals; script bodies are never executed or copied into candidates. Canonical workflow definitions must already compile. Symlinks, malformed sources, and resource bounds hold the run instead of changing inputs.
 
+Every proposal now appears in `candidateIndex`; compiler capacity alternates among patterns for coverage fairness. The [internal operations host](../workflow-operations/README.md) adds reviewed lifecycle state and one fixed registered validator.
+
 Three explicit heuristics propose package validation, release evidence, and contract reconciliation. Each candidate contains approval-required **decision** stages for reviewing script contracts, with an unassigned operator role. The order is a review order, not a runnable deployment sequence. At most 64 candidates are emitted; all remaining proposals are listed as deferred. This is a bounded inventory, not a claim to discover every workflow.
 
 ## Optional previous-session signals
