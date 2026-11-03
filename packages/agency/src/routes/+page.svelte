@@ -4,21 +4,20 @@
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
 
   const services = [
-    { name: 'AI-native technical support membership', description: 'Recurring diagnosis, engineering improvements and learning support within an agreed scope.', type: 'Membership', price: PUBLIC_PRICING.membership.label, priceDescription: PUBLIC_PRICING.membership.terms },
+    { name: 'AI-native technical support membership', description: 'Recurring diagnosis, engineering improvements and learning support within an agreed scope.', type: 'Membership', price: PUBLIC_PRICING.membership.monthlyUsd, priceDescription: `${PUBLIC_PRICING.membership.label}; ${PUBLIC_PRICING.membership.terms}` },
     {
       name: 'Map',
       description:
         'A plan showing how work moves between people and tools, and where AI could help.',
       type: 'First workflow map',
-      price: PUBLIC_PRICING.map.publicStarterLabel,
-      priceDescription: PUBLIC_PRICING.map.workspaceLabel
+      price: 0,
+      priceDescription: `${PUBLIC_PRICING.map.publicStarterLabel}; ${PUBLIC_PRICING.map.workspaceLabel}`
     },
     {
       name: 'Agent Foundation',
       description:
         'An AI agent that does one agreed job, with code, instructions, tests, and a handover.',
       type: 'Fixed-scope Build',
-      price: 'Custom',
       priceDescription: 'Quoted after fit; production promoted separately'
     },
     {
@@ -26,15 +25,14 @@
       description:
         'Ongoing monitoring, incident response, and regular reviews for AI systems already in use.',
       type: 'Operating Plan',
-      price: PUBLIC_PRICING.managedControl.label,
-      priceDescription: 'Managed Control after launch'
+      price: PUBLIC_PRICING.managedControl.startingMonthlyUsd,
+      priceDescription: `${PUBLIC_PRICING.managedControl.longLabel}; separately agreed managed Control scope`
     },
     {
       name: 'Enterprise Extension',
       description:
         'Custom work for teams with higher volumes, stricter requirements, or several connected systems.',
       type: 'Project + Managed',
-      price: 'Custom',
       priceDescription: 'Scoped implementation with optional ongoing support'
     }
   ];

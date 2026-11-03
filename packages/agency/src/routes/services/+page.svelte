@@ -19,34 +19,32 @@
   const controlProduct = getPublicProduct('control');
 
   const services = [
-    { name: 'AI-native technical support membership', description: 'Recurring diagnosis, engineering improvements and learning support within an agreed scope.', type: 'Membership', price: PUBLIC_PRICING.membership.label, priceDescription: PUBLIC_PRICING.membership.terms },
+    { name: 'AI-native technical support membership', description: 'Recurring diagnosis, engineering improvements and learning support within an agreed scope.', type: 'Membership', price: PUBLIC_PRICING.membership.monthlyUsd, priceDescription: `${PUBLIC_PRICING.membership.label}; ${PUBLIC_PRICING.membership.terms}` },
     {
       name: mapProduct.name,
       description: mapProduct.customerJob,
       type: 'Standalone product',
-      price: PUBLIC_PRICING.map.publicStarterLabel,
-      priceDescription: PUBLIC_PRICING.map.workspaceLabel
+      price: 0,
+      priceDescription: `${PUBLIC_PRICING.map.publicStarterLabel}; ${PUBLIC_PRICING.map.workspaceLabel}`
     },
     {
       name: buildProduct.name,
       description: buildProduct.customerJob,
       type: 'Implementation service',
-      price: 'Custom',
       priceDescription: 'Scoped build'
     },
     {
       name: controlProduct.name,
       description: controlProduct.customerJob,
       type: 'Managed AI Operations',
-      price: PUBLIC_PRICING.managedControl.label,
-      priceDescription: 'After launch; Control includes Map'
+      price: PUBLIC_PRICING.managedControl.startingMonthlyUsd,
+      priceDescription: `${PUBLIC_PRICING.managedControl.label}; after launch; Control includes Map`
     },
     {
       name: 'Enterprise Extension',
       description:
         'Audit-ready orchestration for regulated, high-volume, or multi-system workflows that need deterministic recovery.',
       type: 'Project + Managed',
-      price: 'Custom',
       priceDescription: 'Scoped implementation'
     }
   ];
