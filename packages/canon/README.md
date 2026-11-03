@@ -837,3 +837,7 @@ apply the owning `.io` attribution migration before reporting these snapshots, a
 pass the current privacy context when confirming them. See
 [the newsletter workflow](../../docs/guides/NEWSLETTER_WORKFLOW.md) for delivery and
 measurement boundaries.
+
+Receipt and attribution writes require the request's current confirmation token.
+Out-of-order provider responses cannot attach an older campaign to a newer link.
+The token is used only as a write condition; attribution does not retain it.

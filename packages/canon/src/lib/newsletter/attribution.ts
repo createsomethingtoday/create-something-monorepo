@@ -77,13 +77,20 @@ export async function recordNewsletterSignupAttribution(
   input: {
     email: string;
     confirmationEmailId: string;
+    confirmationToken: string;
     landingUrl?: string;
     analyticsEnabled?: boolean;
     sessionId?: string;
   },
   context: NewsletterAttributionContext = {}
 ): Promise<void> {
-  if (input.analyticsEnabled !== true || context.doNotTrack || context.userOptedOut) return;
+  if (
+    input.analyticsEnabled !== true ||
+    !input.confirmationToken ||
+    context.doNotTrack ||
+    context.userOptedOut
+  )
+    return;
   let attribution = resolveNewsletterAttribution(input.landingUrl);
   let trafficClass: string = 'unknown';
   if (attribution) {
@@ -155,7 +162,7 @@ export async function recordNewsletterSignupAttribution(
       `INSERT INTO newsletter_signup_attributions
     (subscriber_id, confirmation_email_id, edition, channel, campaign, traffic_class, requested_at)
     SELECT id, ?, ?, ?, ?, ?, datetime('now') FROM newsletter_subscribers
-    WHERE email = ? AND confirmation_email_id = ? AND confirmed_at IS NULL
+    WHERE email = ? AND confirmation_email_id = ? AND confirmation_token = ? AND confirmed_at IS NULL
     ON CONFLICT(subscriber_id) DO UPDATE SET
       confirmation_email_id = excluded.confirmation_email_id,
       edition = excluded.edition, channel = excluded.channel, campaign = excluded.campaign,
@@ -169,7 +176,8 @@ export async function recordNewsletterSignupAttribution(
       attribution.campaign,
       trafficClass,
       input.email,
-      input.confirmationEmailId
+      input.confirmationEmailId,
+      input.confirmationToken
     )
     .run();
 }

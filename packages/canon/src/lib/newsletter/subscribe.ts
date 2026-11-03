@@ -429,9 +429,9 @@ export async function processSubscription(
       await env.DB.prepare(
         `UPDATE newsletter_subscribers
          SET confirmation_email_id = ?, updated_at = datetime('now')
-         WHERE email = ?`
+         WHERE email = ? AND confirmation_token = ?`
       )
-        .bind(resendData.id, email)
+        .bind(resendData.id, email, confirmationToken)
         .run();
     } catch (receiptError) {
       console.warn('Newsletter confirmation receipt update failed:', receiptError);
@@ -440,7 +440,7 @@ export async function processSubscription(
 
   try {
     if (resendData.id) await recordNewsletterSignupAttribution(env.DB, {
-      email, confirmationEmailId: resendData.id, landingUrl: body.landingUrl, analyticsEnabled: body.analyticsEnabled, sessionId: body.sessionId
+      email, confirmationEmailId: resendData.id, confirmationToken, landingUrl: body.landingUrl, analyticsEnabled: body.analyticsEnabled, sessionId: body.sessionId
     }, attributionContext);
   } catch (attributionError) {
     console.warn('Newsletter attribution unavailable; subscription remains valid', attributionError);

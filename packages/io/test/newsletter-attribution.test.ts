@@ -14,8 +14,8 @@ test('a replaced confirmation attributes the new request and never rewrites conf
   const { DatabaseSync } = await import('node:sqlite');
   const { readFileSync } = await import('node:fs');
   const sqlite = new DatabaseSync(':memory:');
-  sqlite.exec(`CREATE TABLE newsletter_subscribers(id INTEGER PRIMARY KEY,email TEXT,confirmation_email_id TEXT,confirmed_at TEXT,consent_evidence TEXT,unsubscribed_at TEXT,active INTEGER,status TEXT);
-    INSERT INTO newsletter_subscribers VALUES(1,'reader@example.com','old',NULL,'pending_confirmation',NULL,1,'active');`);
+  sqlite.exec(`CREATE TABLE newsletter_subscribers(id INTEGER PRIMARY KEY,email TEXT,confirmation_email_id TEXT,confirmation_token TEXT,confirmed_at TEXT,consent_evidence TEXT,unsubscribed_at TEXT,active INTEGER,status TEXT);
+    INSERT INTO newsletter_subscribers VALUES(1,'reader@example.com','old','old-token',NULL,'pending_confirmation',NULL,1,'active');`);
   sqlite.exec(
     readFileSync(
       new URL('../migrations/019_newsletter_signup_attribution.sql', import.meta.url),
@@ -43,13 +43,14 @@ test('a replaced confirmation attributes the new request and never rewrites conf
     {
       email: 'reader@example.com',
       confirmationEmailId: 'old',
+      confirmationToken: 'old-token',
       landingUrl: link,
       analyticsEnabled: true
     },
     {}
   );
   sqlite.exec(
-    "UPDATE newsletter_signup_attributions SET requested_at='2025-01-01'; UPDATE newsletter_subscribers SET confirmation_email_id='new';"
+    "UPDATE newsletter_signup_attributions SET requested_at='2025-01-01'; UPDATE newsletter_subscribers SET confirmation_email_id='new',confirmation_token='new-token';"
   );
   const next =
     'https://createsomething.io/newsletters?utm_source=newsletter&utm_medium=email&utm_campaign=2026-09-08-test-the-checker&traffic_class=test';
@@ -58,6 +59,7 @@ test('a replaced confirmation attributes the new request and never rewrites conf
     {
       email: 'reader@example.com',
       confirmationEmailId: 'new',
+      confirmationToken: 'new-token',
       landingUrl: next,
       analyticsEnabled: true
     },
@@ -76,13 +78,14 @@ test('a replaced confirmation attributes the new request and never rewrites conf
   const confirmed = await confirmNewsletterAttribution(db, 1);
   assert.equal(confirmed?.edition, '2026-09-08-test-the-checker');
   sqlite.exec(
-    "UPDATE newsletter_subscribers SET confirmed_at=NULL, confirmation_email_id='later';"
+    "UPDATE newsletter_subscribers SET confirmed_at=NULL, confirmation_email_id='later',confirmation_token='later-token';"
   );
   await recordNewsletterSignupAttribution(
     db,
     {
       email: 'reader@example.com',
       confirmationEmailId: 'later',
+      confirmationToken: 'later-token',
       landingUrl: link,
       analyticsEnabled: true
     },
@@ -403,6 +406,7 @@ test('direct attribution keeps missing agent unknown, preview separate and opt-o
       {
         email: 'reader@example.com',
         confirmationEmailId: 'seed',
+        confirmationToken: 'seed-token',
         landingUrl: link,
         analyticsEnabled: true
       },
@@ -444,6 +448,7 @@ test('session attribution requires a recent reviewed landing and revalidates per
     {
       email: 'reader@example.com',
       confirmationEmailId: 'seed',
+      confirmationToken: 'seed-token',
       landingUrl: 'https://createsomething.io/newsletters',
       sessionId: 'session',
       analyticsEnabled: true
