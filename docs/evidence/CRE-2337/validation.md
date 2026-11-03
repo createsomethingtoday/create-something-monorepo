@@ -25,3 +25,11 @@ Production admin navigation reached the existing login gate. No authenticated ad
 Apply additive migrations 018 and 019 before deployment; preserve subscriber and historical data. Release through PR review/CI, deploy the exact qualified artifact to create-something-io, verify unauthenticated API rejection and seeded runtime records, then record deployment and readback in Linear. Roll back code using the prior production artifact; retain additive tables and receipts. Rollback does not retract sent email or cancel any provider schedule.
 
 An operator must inspect the revised candidate, send/reconcile the operator test, and approve the exact displayed content hash, audience fingerprint, and delivery time before an audience send. Dispatch is deliberately manual within the approved 15-minute window, with at most 20 recipients per request. Larger batches require a separately reviewed execution path.
+
+## PR review follow-up
+
+All three substantive automated findings were reproduced and repaired: provider `suppressed` is a terminal failure and excludes the subscriber; exact `opened`/`clicked` provider receipts normalize to delivery without retaining engagement counts; issuing a new confirmation replaces all unresolved attribution fields while confirmed history remains unchanged. Provider states were checked against the [Resend suppression contract](https://resend.com/changelog/email-suppression-visibility) and [sent-email response examples](https://resend.com/changelog/list-sent-emails-endpoint).
+
+Independent review additionally reproduced a late-event concurrency case. Reconciliation now preserves the current terminal ledger state and error atomically, updates seed state from the live ledger, and derives edition outcomes in one SQL statement. Legacy re-engagement receipts likewise preserve failure against late delivery events. The signed-webhook test exercises authentication rejection, suppression, and late delivery; suppressed addresses cannot re-subscribe through the public API.
+
+Final bounded independent re-test passed 41 Node checks and 11 Vitest checks, including the original concurrent suppression reproducer. No UI or schema change was needed for this follow-up. Existing visual evidence applies. No audience send or new consent mutation occurred during these tests.

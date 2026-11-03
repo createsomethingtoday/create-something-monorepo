@@ -224,3 +224,14 @@ test('campaign identity survives the real event ingestion sanitizer', async () =
   assert.equal(stored.newsletterCampaign, '2026_09_08_test_the_checker');
   assert.equal(stored.trafficClass, 'test');
 });
+
+test('later engagement states count only as delivery evidence', async () => {
+  const entry = NEWSLETTER_DELIVERIES[0];
+  for (const last_event of ['opened', 'clicked']) {
+    const result = await readNewsletterDelivery(entry, 'test', async (url) =>
+      Response.json({ id: String(url).split('/').at(-1), subject: entry.subject, last_event })
+    );
+    assert.equal(result.delivered, 2);
+    assert.deepEqual(result.states, { delivered: 2 });
+  }
+});

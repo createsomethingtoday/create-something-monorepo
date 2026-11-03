@@ -156,7 +156,10 @@ export async function recordNewsletterSignupAttribution(
     (subscriber_id, confirmation_email_id, edition, channel, campaign, traffic_class, requested_at)
     SELECT id, ?, ?, ?, ?, ?, datetime('now') FROM newsletter_subscribers
     WHERE email = ? AND confirmation_email_id = ? AND confirmed_at IS NULL
-    ON CONFLICT(subscriber_id) DO UPDATE SET confirmation_email_id = excluded.confirmation_email_id
+    ON CONFLICT(subscriber_id) DO UPDATE SET
+      confirmation_email_id = excluded.confirmation_email_id,
+      edition = excluded.edition, channel = excluded.channel, campaign = excluded.campaign,
+      traffic_class = excluded.traffic_class, requested_at = excluded.requested_at
       WHERE newsletter_signup_attributions.confirmed_at IS NULL`
     )
     .bind(

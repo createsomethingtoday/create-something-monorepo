@@ -10,6 +10,92 @@ import {
 const link =
   'https://createsomething.io/newsletters/2026-09-01-the-interface-is-becoming-executable?utm_source=linkedin&utm_medium=social&utm_campaign=field-notes-20260928';
 
+test('a replaced confirmation attributes the new request and never rewrites confirmed history', async () => {
+  const { DatabaseSync } = await import('node:sqlite');
+  const { readFileSync } = await import('node:fs');
+  const sqlite = new DatabaseSync(':memory:');
+  sqlite.exec(`CREATE TABLE newsletter_subscribers(id INTEGER PRIMARY KEY,email TEXT,confirmation_email_id TEXT,confirmed_at TEXT,consent_evidence TEXT,unsubscribed_at TEXT,active INTEGER,status TEXT);
+    INSERT INTO newsletter_subscribers VALUES(1,'reader@example.com','old',NULL,'pending_confirmation',NULL,1,'active');`);
+  sqlite.exec(
+    readFileSync(
+      new URL('../migrations/019_newsletter_signup_attribution.sql', import.meta.url),
+      'utf8'
+    )
+  );
+  const db = {
+    prepare(sql: string) {
+      const statement = sqlite.prepare(sql);
+      return {
+        bind(...values: unknown[]) {
+          return {
+            run: async () => {
+              statement.run(...(values as []));
+              return { success: true };
+            },
+            first: async <T>() => (statement.get(...(values as [])) ?? null) as T | null
+          };
+        }
+      };
+    }
+  };
+  await recordNewsletterSignupAttribution(
+    db,
+    {
+      email: 'reader@example.com',
+      confirmationEmailId: 'old',
+      landingUrl: link,
+      analyticsEnabled: true
+    },
+    {}
+  );
+  sqlite.exec(
+    "UPDATE newsletter_signup_attributions SET requested_at='2025-01-01'; UPDATE newsletter_subscribers SET confirmation_email_id='new';"
+  );
+  const next =
+    'https://createsomething.io/newsletters?utm_source=newsletter&utm_medium=email&utm_campaign=2026-09-08-test-the-checker&traffic_class=test';
+  await recordNewsletterSignupAttribution(
+    db,
+    {
+      email: 'reader@example.com',
+      confirmationEmailId: 'new',
+      landingUrl: next,
+      analyticsEnabled: true
+    },
+    {}
+  );
+  const snapshot = sqlite.prepare('SELECT * FROM newsletter_signup_attributions').get()!;
+  assert.equal(snapshot.confirmation_email_id, 'new');
+  assert.equal(snapshot.edition, '2026-09-08-test-the-checker');
+  assert.equal(snapshot.channel, 'newsletter');
+  assert.equal(snapshot.campaign, '2026-09-08-test-the-checker');
+  assert.equal(snapshot.traffic_class, 'test');
+  assert.notEqual(snapshot.requested_at, '2025-01-01');
+  sqlite.exec(
+    "UPDATE newsletter_subscribers SET confirmed_at='2026-11-03',consent_evidence='confirmation_link';"
+  );
+  const confirmed = await confirmNewsletterAttribution(db, 1);
+  assert.equal(confirmed?.edition, '2026-09-08-test-the-checker');
+  sqlite.exec(
+    "UPDATE newsletter_subscribers SET confirmed_at=NULL, confirmation_email_id='later';"
+  );
+  await recordNewsletterSignupAttribution(
+    db,
+    {
+      email: 'reader@example.com',
+      confirmationEmailId: 'later',
+      landingUrl: link,
+      analyticsEnabled: true
+    },
+    {}
+  );
+  assert.equal(
+    sqlite.prepare('SELECT confirmation_email_id FROM newsletter_signup_attributions').get()!
+      .confirmation_email_id,
+    'new'
+  );
+  sqlite.close();
+});
+
 test('only configured public non-personal campaign tags resolve to an edition', () => {
   assert.deepEqual(resolveNewsletterAttribution(link), {
     edition: '2026-09-01-the-interface-is-becoming-executable',

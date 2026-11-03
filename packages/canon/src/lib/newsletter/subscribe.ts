@@ -338,7 +338,7 @@ export async function processSubscription(
   }
 
   // If email was previously bounced or complained, reject re-subscription
-  if (existingSubscriber?.status === 'bounced' || existingSubscriber?.status === 'complained') {
+  if (existingSubscriber?.status && ['bounced', 'complained', 'suppressed'].includes(existingSubscriber.status)) {
     return {
       result: { success: false, message: 'This email address cannot receive our newsletters.' },
       status: 400

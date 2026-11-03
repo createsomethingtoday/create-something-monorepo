@@ -56,7 +56,9 @@ function fixture() {
       to: [message?.to],
       html: message?.html,
       text: message?.text,
-      last_event: outcome === 'complained' ? 'complained' : 'delivered'
+      last_event: ['complained', 'suppressed', 'opened', 'clicked'].includes(outcome)
+        ? outcome
+        : 'delivered'
     });
   };
   const now = new Date('2026-11-03T15:00:00Z');
@@ -472,4 +474,134 @@ test('an explicit seed retry recovers only a known provider rejection', async ()
   );
   await f.run({ action: 'seed', slug: f.edition.slug });
   assert.equal(f.sent.length, 2);
+});
+
+test('provider suppression is terminal through webhook and exact provider reconciliation', async () => {
+  for (const path of ['webhook', 'reconcile']) {
+    const f = fixture();
+    await f.run({ action: 'prepare', edition: f.edition });
+    await f.run({ action: 'review', slug: f.edition.slug });
+    await f.run({ action: 'seed', slug: f.edition.slug });
+    await f.run({ action: 'reconcile', slug: f.edition.slug });
+    await f.run({ action: 'approve', slug: f.edition.slug, send_at: '2026-11-03T15:00:00Z' });
+    await f.run({ action: 'send', slug: f.edition.slug });
+    if (path === 'webhook')
+      await recordEditionDeliveryReceipt(f.db, 'message-2', 'email.suppressed');
+    else {
+      f.setOutcome('suppressed');
+      await f.run({ action: 'reconcile', slug: f.edition.slug });
+    }
+    const report = await readNewsletterWorkflow(f.db);
+    assert.equal(report.audience.eligible, 0, path);
+    assert.equal(report.editions.find((e) => e.slug === f.edition.slug)!.email_status, 'failed');
+    assert.equal(
+      f.sqlite.prepare('SELECT status FROM newsletter_subscribers WHERE id=1').get()!.status,
+      'suppressed'
+    );
+    await assert.rejects(f.run({ action: 'retry_failed', slug: f.edition.slug }));
+    await recordEditionDeliveryReceipt(f.db, 'message-2', 'email.delivered');
+    assert.equal(
+      f.sqlite
+        .prepare(
+          "SELECT status FROM newsletter_edition_deliveries WHERE resend_email_id='message-2'"
+        )
+        .get()!.status,
+      'failed'
+    );
+    f.setOutcome('opened');
+    await f.run({ action: 'reconcile', slug: f.edition.slug });
+    assert.equal(
+      (await readNewsletterWorkflow(f.db)).editions.find((e) => e.slug === f.edition.slug)!
+        .email_status,
+      'failed'
+    );
+  }
+});
+
+test('opened and clicked exact receipts resolve uncertainty without retaining engagement', async () => {
+  for (const providerState of ['opened', 'clicked']) {
+    const f = fixture();
+    await f.run({ action: 'prepare', edition: f.edition });
+    await f.run({ action: 'review', slug: f.edition.slug });
+    await f.run({ action: 'seed', slug: f.edition.slug });
+    await f.run({ action: 'reconcile', slug: f.edition.slug });
+    await f.run({ action: 'approve', slug: f.edition.slug, send_at: '2026-11-03T15:00:00Z' });
+    f.setOutcome('timeout');
+    await f.run({ action: 'send', slug: f.edition.slug });
+    const row = f.sqlite
+      .prepare("SELECT id FROM newsletter_edition_deliveries WHERE kind='audience'")
+      .get()!;
+    f.setOutcome(providerState);
+    await f.run({
+      action: 'attach_receipt',
+      slug: f.edition.slug,
+      delivery_id: row.id,
+      provider_email_id: 'message-2'
+    });
+    await f.run({ action: 'reconcile', slug: f.edition.slug });
+    assert.equal(
+      f.sqlite
+        .prepare('SELECT status FROM newsletter_edition_deliveries WHERE id=?')
+        .get(row.id as string)!.status,
+      'delivered'
+    );
+    assert.equal(
+      (await readNewsletterWorkflow(f.db)).editions.find((e) => e.slug === f.edition.slug)!
+        .email_status,
+      'sent'
+    );
+    assert.equal(f.sent.length, 2);
+    assert.equal(
+      f.sqlite
+        .prepare(
+          "SELECT COUNT(*) AS count FROM newsletter_edition_deliveries WHERE status IN ('opened','clicked')"
+        )
+        .get()!.count,
+      0
+    );
+  }
+});
+
+test('a suppression arriving during provider readback cannot be overwritten by stale delivery evidence', async () => {
+  const f = fixture();
+  await f.run({ action: 'prepare', edition: f.edition });
+  await f.run({ action: 'review', slug: f.edition.slug });
+  await f.run({ action: 'seed', slug: f.edition.slug });
+  await f.run({ action: 'reconcile', slug: f.edition.slug });
+  await f.run({ action: 'approve', slug: f.edition.slug, send_at: '2026-11-03T15:00:00Z' });
+  await f.run({ action: 'send', slug: f.edition.slug });
+  await handleNewsletterAction(
+    f.db,
+    { action: 'reconcile', slug: f.edition.slug },
+    { email: 'operator@example.com', id: 'operator' },
+    {
+      apiKey: 'test',
+      fetcher: async (input) => {
+        const id = String(input).split('/').at(-1)!;
+        const message = f.sent[Number(id.split('-').at(-1)) - 1];
+        if (id === 'message-2') await recordEditionDeliveryReceipt(f.db, id, 'email.suppressed');
+        return Response.json({
+          id,
+          subject: message.subject,
+          to: [message.to],
+          last_event: 'opened'
+        });
+      }
+    }
+  );
+  assert.deepEqual(
+    {
+      ...f.sqlite
+        .prepare(
+          "SELECT status,error_code FROM newsletter_edition_deliveries WHERE resend_email_id='message-2'"
+        )
+        .get()
+    },
+    { status: 'failed', error_code: 'provider-suppressed' }
+  );
+  assert.equal(
+    (await readNewsletterWorkflow(f.db)).editions.find((e) => e.slug === f.edition.slug)!
+      .email_status,
+    'failed'
+  );
 });

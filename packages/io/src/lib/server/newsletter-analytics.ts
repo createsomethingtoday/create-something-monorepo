@@ -48,7 +48,9 @@ export async function readNewsletterDelivery(
       if (!response.ok) throw new Error('Provider readback unavailable');
       const value = await response.json() as { id?: string; subject?: string; last_event?: string };
       if (value.id !== id || value.subject !== entry.subject || typeof value.last_event !== 'string') throw new Error('Provider receipt mismatch');
-      states[value.last_event] = (states[value.last_event] ?? 0) + 1;
+      // Later engagement proves delivery; engagement details remain unmeasured.
+      const state = ['opened', 'clicked'].includes(value.last_event) ? 'delivered' : value.last_event;
+      states[state] = (states[state] ?? 0) + 1;
     }
     return { campaign: entry.campaign, status: 'verified', registered: entry.ids.length, delivered: states.delivered ?? 0, states };
   } catch {

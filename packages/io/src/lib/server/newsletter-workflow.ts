@@ -553,6 +553,7 @@ export async function handleNewsletterAction(
       )
       .bind(state, slug)
       .run();
+    await reconcileAggregate(db, slug, e.content_hash);
   } else if (action === 'retry_failed') {
     if (e.email_status !== 'failed')
       throw new Error('Only confirmed failed deliveries may be retried');
@@ -632,14 +633,24 @@ export async function handleNewsletterAction(
     )
       throw new Error('Provider content mismatch');
     if (
-      !['sent', 'delivered', 'delivery_delayed', 'bounced', 'complained', 'failed'].includes(
-        receipt.last_event ?? ''
-      )
+      ![
+        'sent',
+        'delivered',
+        'delivery_delayed',
+        'bounced',
+        'complained',
+        'suppressed',
+        'failed',
+        'opened',
+        'clicked'
+      ].includes(receipt.last_event ?? '')
     )
       throw new Error('Provider delivery state unavailable');
-    const state = ['bounced', 'complained'].includes(receipt.last_event!)
+    const state = ['bounced', 'complained', 'suppressed'].includes(receipt.last_event!)
       ? 'failed'
-      : receipt.last_event!;
+      : ['opened', 'clicked'].includes(receipt.last_event!)
+        ? 'delivered'
+        : receipt.last_event!;
     await db
       .prepare(
         'UPDATE newsletter_edition_deliveries SET resend_email_id=?,status=?,error_code=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND resend_email_id IS NULL'
@@ -647,7 +658,7 @@ export async function handleNewsletterAction(
       .bind(
         emailId,
         state,
-        ['bounced', 'complained', 'failed', 'canceled'].includes(receipt.last_event!)
+        ['bounced', 'complained', 'suppressed', 'failed', 'canceled'].includes(receipt.last_event!)
           ? `provider-${receipt.last_event}`
           : null,
         id
@@ -696,6 +707,9 @@ export async function handleNewsletterAction(
           'delivered',
           'bounced',
           'complained',
+          'suppressed',
+          'opened',
+          'clicked',
           'delivery_delayed',
           'scheduled',
           'canceled',
@@ -711,17 +725,23 @@ export async function handleNewsletterAction(
           (await newsletterHash(value.to[0].toLowerCase())) !== row.recipient_hash)
       )
         throw new Error('Provider recipient mismatch');
-      const state =
-        value.last_event === 'bounced' || value.last_event === 'complained'
+      const state = ['failed', 'canceled'].includes(row.status)
+        ? row.status
+        : ['bounced', 'complained', 'suppressed'].includes(value.last_event!)
           ? 'failed'
-          : value.last_event!;
+          : ['opened', 'clicked'].includes(value.last_event!)
+            ? 'delivered'
+            : value.last_event!;
       await db
         .prepare(
-          'UPDATE newsletter_edition_deliveries SET status=?,error_code=?,updated_at=CURRENT_TIMESTAMP WHERE id=?'
+          `UPDATE newsletter_edition_deliveries
+           SET status=CASE WHEN status IN ('failed','canceled') THEN status ELSE ? END,
+               error_code=CASE WHEN status IN ('failed','canceled') THEN error_code ELSE ? END,
+               updated_at=CURRENT_TIMESTAMP WHERE id=?`
         )
         .bind(
           state,
-          ['bounced', 'complained', 'failed', 'canceled'].includes(value.last_event!)
+          ['bounced', 'complained', 'suppressed', 'failed', 'canceled'].includes(value.last_event!)
             ? `provider-${value.last_event}`
             : row.error_code,
           row.id
@@ -734,8 +754,12 @@ export async function handleNewsletterAction(
         e.content_hash === row.content_hash
       )
         await db
-          .prepare('UPDATE newsletter_editions SET seed_status=? WHERE slug=?')
-          .bind(state, slug)
+          .prepare(
+            `UPDATE newsletter_editions
+            SET seed_status=(SELECT status FROM newsletter_edition_deliveries WHERE id=?)
+            WHERE slug=? AND seed_email_id=? AND content_hash=?`
+          )
+          .bind(row.id, slug, row.resend_email_id, row.content_hash)
           .run();
     }
     await reconcileAggregate(db, slug, e.content_hash);
@@ -745,27 +769,22 @@ export async function handleNewsletterAction(
 }
 
 async function reconcileAggregate(db: WorkflowDatabase, slug: string, hash: string | null) {
-  const rows = (
-    await db
-      .prepare(
-        "SELECT status FROM newsletter_edition_deliveries WHERE edition_slug=? AND content_hash=? AND kind='audience'"
-      )
-      .bind(slug, hash)
-      .all<{ status: string }>()
-  ).results;
-  if (!rows.length) return;
-  const edition = await readEdition(db, slug);
-  const state = rows.some((r) => ['uncertain', 'sending'].includes(r.status))
-    ? 'uncertain'
-    : rows.length !== edition.audience_count ||
-        rows.some((r) => ['failed', 'ready', 'canceled'].includes(r.status))
-      ? 'failed'
-      : 'sent';
+  // Derive from the ledger inside the same statement. A webhook may arrive
+  // between any two awaits; a stale read must never overwrite terminal proof.
   await db
     .prepare(
-      "UPDATE newsletter_editions SET email_status=? WHERE slug=? AND email_status IN ('sending','uncertain','failed','sent')"
+      `WITH receipts AS (
+      SELECT status FROM newsletter_edition_deliveries
+      WHERE edition_slug=? AND content_hash=? AND kind='audience'
+    ) UPDATE newsletter_editions SET email_status=CASE
+      WHEN EXISTS(SELECT 1 FROM receipts WHERE status IN ('uncertain','sending')) THEN 'uncertain'
+      WHEN (SELECT COUNT(*) FROM receipts) != audience_count
+        OR EXISTS(SELECT 1 FROM receipts WHERE status IN ('failed','ready','canceled')) THEN 'failed'
+      ELSE 'sent' END
+      WHERE slug=? AND content_hash=? AND EXISTS(SELECT 1 FROM receipts)
+        AND email_status IN ('sending','uncertain','failed','sent')`
     )
-    .bind(state, slug)
+    .bind(slug, hash, slug, hash)
     .run();
 }
 
@@ -781,7 +800,8 @@ export async function recordEditionDeliveryReceipt(
     'email.delivered': 'delivered',
     'email.delivery_delayed': 'delayed',
     'email.bounced': 'failed',
-    'email.complained': 'failed'
+    'email.complained': 'failed',
+    'email.suppressed': 'failed'
   };
   const status = states[eventType];
   if (!status) return;
@@ -800,9 +820,11 @@ export async function recordEditionDeliveryReceipt(
   if (row.kind === 'seed')
     await db
       .prepare(
-        'UPDATE newsletter_editions SET seed_status=? WHERE slug=? AND seed_email_id=? AND content_hash=?'
+        `UPDATE newsletter_editions
+         SET seed_status=(SELECT status FROM newsletter_edition_deliveries WHERE id=?)
+         WHERE slug=? AND seed_email_id=? AND content_hash=?`
       )
-      .bind(row.status, row.edition_slug, emailId, row.content_hash)
+      .bind(row.id, row.edition_slug, emailId, row.content_hash)
       .run();
   await reconcileAggregate(db, row.edition_slug, row.content_hash);
 }
@@ -810,7 +832,7 @@ export async function recordEditionDeliveryReceipt(
 async function applyProviderSuppression(db: WorkflowDatabase, row: Delivery, event: string) {
   if (
     row.kind !== 'audience' ||
-    !['bounced', 'complained'].includes(event) ||
+    !['bounced', 'complained', 'suppressed'].includes(event) ||
     !/^\d+$/.test(row.subscriber_key) ||
     !row.recipient_hash
   )
