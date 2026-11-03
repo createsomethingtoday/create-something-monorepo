@@ -64,7 +64,15 @@ function fixture() {
       to: [message?.to],
       html: message?.html,
       text: message?.text,
-      last_event: ['complained', 'suppressed', 'opened', 'clicked', 'canceled'].includes(outcome)
+      last_event: [
+        'complained',
+        'suppressed',
+        'opened',
+        'clicked',
+        'canceled',
+        'queued',
+        'scheduled'
+      ].includes(outcome)
         ? outcome
         : 'delivered'
     });
@@ -702,4 +710,74 @@ test('provider cancellation remains terminal across late webhook replays', async
     f.sqlite.prepare('SELECT status FROM newsletter_subscribers WHERE id=1').get()?.status,
     'complained'
   );
+});
+
+test('exact uncertain receipts accept canceled, queued and scheduled provider states', async (t) => {
+  for (const kind of ['seed', 'audience']) {
+    for (const providerState of ['canceled', 'queued', 'scheduled']) {
+      const f = fixture();
+      t.after(() => f.sqlite.close());
+      await f.run({ action: 'prepare', edition: f.edition });
+      await f.run({ action: 'review', slug: f.edition.slug });
+      if (kind === 'seed') f.setOutcome('timeout');
+      await f.run({ action: 'seed', slug: f.edition.slug });
+      if (kind === 'audience') {
+        await f.run({ action: 'reconcile', slug: f.edition.slug });
+        await f.run({ action: 'approve', slug: f.edition.slug, send_at: '2026-11-03T15:00:00Z' });
+        f.setOutcome('timeout');
+        await f.run({ action: 'send', slug: f.edition.slug });
+      }
+      const row = f.sqlite
+        .prepare('SELECT id FROM newsletter_edition_deliveries WHERE edition_slug=? AND kind=?')
+        .get(f.edition.slug, kind)!;
+      f.setOutcome(providerState);
+      const emailId = kind === 'seed' ? 'message-1' : 'message-2';
+      await f.run({
+        action: 'attach_receipt',
+        slug: f.edition.slug,
+        delivery_id: row.id,
+        provider_email_id: emailId
+      });
+      const receipt = f.sqlite
+        .prepare(
+          'SELECT status,error_code,resend_email_id FROM newsletter_edition_deliveries WHERE id=?'
+        )
+        .get(row.id as string)!;
+      assert.deepEqual(
+        { ...receipt },
+        {
+          status: providerState,
+          error_code: providerState === 'canceled' ? 'provider-canceled' : null,
+          resend_email_id: emailId
+        }
+      );
+      await f.run({ action: 'reconcile', slug: f.edition.slug });
+      const edition = (await readNewsletterWorkflow(f.db)).editions.find(
+        (e) => e.slug === f.edition.slug
+      )!;
+      if (kind === 'seed') {
+        assert.equal(edition.seed_status, providerState);
+        await assert.rejects(
+          f.run({ action: 'approve', slug: f.edition.slug, send_at: '2026-11-03T15:00:00Z' }),
+          /seed|test|deliver/i
+        );
+      } else {
+        assert.equal(edition.email_status, providerState === 'canceled' ? 'failed' : 'sent');
+        if (providerState === 'canceled') {
+          await assert.rejects(
+            f.run({ action: 'retry_failed', slug: f.edition.slug }),
+            /terminal|suppression|accepted/i
+          );
+          await recordEditionDeliveryReceipt(f.db, emailId, 'email.delivered');
+          assert.equal(
+            f.sqlite
+              .prepare('SELECT status FROM newsletter_edition_deliveries WHERE id=?')
+              .get(row.id as string)!.status,
+            'canceled'
+          );
+        }
+      }
+      assert.equal(f.sent.length, kind === 'seed' ? 1 : 2);
+    }
+  }
 });

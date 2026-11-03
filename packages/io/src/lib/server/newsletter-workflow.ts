@@ -4,6 +4,22 @@ import {
   type NewsletterAudienceRecord
 } from '@create-something/canon/newsletter/audience';
 
+// Receipt attachment and subsequent reconciliation must recognize the same provider states.
+const PROVIDER_RECEIPT_STATES = [
+  'sent',
+  'delivered',
+  'delivery_delayed',
+  'bounced',
+  'complained',
+  'suppressed',
+  'failed',
+  'opened',
+  'clicked',
+  'canceled',
+  'queued',
+  'scheduled'
+];
+
 interface WorkflowStatement {
   bind(...values: unknown[]): WorkflowStatement;
   run(): Promise<{ success: boolean; meta?: { changes?: number } }>;
@@ -641,19 +657,7 @@ export async function handleNewsletterAction(
         edition.html.replaceAll('{{unsubscribe_url}}', unsubscribe.replaceAll('&', '&amp;'))
     )
       throw new Error('Provider content mismatch');
-    if (
-      ![
-        'sent',
-        'delivered',
-        'delivery_delayed',
-        'bounced',
-        'complained',
-        'suppressed',
-        'failed',
-        'opened',
-        'clicked'
-      ].includes(receipt.last_event ?? '')
-    )
+    if (!PROVIDER_RECEIPT_STATES.includes(receipt.last_event ?? ''))
       throw new Error('Provider delivery state unavailable');
     const state = ['bounced', 'complained', 'suppressed'].includes(receipt.last_event!)
       ? 'failed'
@@ -711,20 +715,7 @@ export async function handleNewsletterAction(
       if (
         value.id !== row.resend_email_id ||
         value.subject !== row.subject ||
-        ![
-          'sent',
-          'delivered',
-          'bounced',
-          'complained',
-          'suppressed',
-          'opened',
-          'clicked',
-          'delivery_delayed',
-          'scheduled',
-          'canceled',
-          'failed',
-          'queued'
-        ].includes(value.last_event ?? '')
+        !PROVIDER_RECEIPT_STATES.includes(value.last_event ?? '')
       )
         throw new Error('Provider receipt mismatch');
       if (
