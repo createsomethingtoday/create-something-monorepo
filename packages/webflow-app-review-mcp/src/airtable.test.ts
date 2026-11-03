@@ -327,6 +327,42 @@ describe('AirtableClient exception handling', () => {
     });
   });
 
+  it('writes the reviewer-observed backend to the version field and maps it back', async () => {
+    // 2026-11-03: 🖥️Backend Observed in Review (fldOVa3eJoScorAwU) is reviewer-written and never
+    // substitutes for the developer's declaration.
+    const fetchFn = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const payload = JSON.parse(String(init?.body)) as {
+        records: Array<{ id: string; fields: Record<string, unknown> }>;
+      };
+      const base = versionRecord(payload.records[0]!.id, null);
+      return jsonResponse({
+        records: [{ ...base, fields: { ...base.fields, ...payload.records[0]!.fields } }],
+      });
+    });
+
+    const client = new AirtableClient({ apiKey: 'token', fetchFn });
+    const updated = await client.updateVersionReview('recVersion', {
+      backend_observed_in_review: 'Bundle calls https://api.example.com/sync.php; declaration says no server-side code.',
+    });
+
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(String(fetchFn.mock.calls[0]?.[1]?.body)) as {
+      records: Array<{ fields: Record<string, unknown> }>;
+    };
+    expect(payload.records[0]?.fields).toEqual({
+      [FIELD_IDS.versions.backendObservedInReview]:
+        'Bundle calls https://api.example.com/sync.php; declaration says no server-side code.',
+    });
+    expect(updated.backend).toEqual({
+      hostingModel: undefined,
+      runtime: undefined,
+      runtimeVersion: undefined,
+      hostingProvider: undefined,
+      declaredAt: undefined,
+      observedInReview: 'Bundle calls https://api.example.com/sync.php; declaration says no server-side code.',
+    });
+  });
+
   it('rejects invalid exception status and hold reason without calling Airtable', async () => {
     const fetchFn = vi.fn();
     const client = new AirtableClient({ apiKey: 'token', fetchFn });
@@ -958,8 +994,41 @@ describe('AirtableClient app review context and queue helpers', () => {
       runtimeVersion: '18.20.4',
       hostingProvider: 'api.example.com',
       declaredAt: undefined,
+      observedInReview: null,
     });
     expect(context.asset?.backend).toMatchObject({ runtimeVersion: '22.11.0', declaredAt: '2026-10-30T15:00:00.000Z' });
+  });
+
+  it('reads the legacy "None" hosting model and the reviewer-observed backend on a version', async () => {
+    const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      if (url.pathname.endsWith(`/${TABLE_IDS.assetVersions}/rec-version-obs`)) {
+        const base = versionRecord('rec-version-obs', null);
+        return jsonResponse({
+          ...base,
+          fields: {
+            ...base.fields,
+            [FIELD_IDS.versions.backendHostingModel]: 'None (browser-only Designer Extension)',
+            [FIELD_IDS.versions.backendRuntime]: 'None',
+            [FIELD_IDS.versions.backendObservedInReview]: 'Extension posts to https://bot.example.com/chat (chatbot backend).',
+          },
+        });
+      }
+      if (url.pathname.endsWith(`/${TABLE_IDS.assets}/recAsset`)) {
+        return jsonResponse(assetRecord('recAsset'));
+      }
+      return new Response('not found', { status: 404 });
+    });
+    const client = new AirtableClient({ apiKey: 'token', fetchFn });
+
+    const version = await client.getVersionById('rec-version-obs');
+    expect(version?.backend).toMatchObject({
+      hostingModel: 'None (browser-only Designer Extension)',
+      runtime: 'None',
+      observedInReview: 'Extension posts to https://bot.example.com/chat (chatbot backend).',
+    });
+    const asset = await client.getAssetById('recAsset');
+    expect(asset?.backend).toBeNull();
   });
 
   it('finds app_id matches across paginated asset results', async () => {

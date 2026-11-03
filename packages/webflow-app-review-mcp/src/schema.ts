@@ -125,6 +125,10 @@ export const FIELD_IDS = {
     backendRuntime: 'fld2FauecT0r0zwKJ',
     backendRuntimeVersion: 'fld6qkHQbkK12EUvG',
     backendHostingProvider: 'fld5eqefnCFivlpfF',
+    // Reviewer-written (2026-11-03): backend seen during bundle, injected-script, or install
+    // checks that the developer's declaration does not cover. Never a substitute for the
+    // declaration; the developer completes it on the next Update.
+    backendObservedInReview: 'fldOVa3eJoScorAwU',
   },
   exceptions: {
     item: 'fldmJcVJCytD1VY1r',
@@ -257,7 +261,7 @@ export const PREFLIGHT_READINESS_OPTIONS = ['ready', 'changes_required', 'needs_
 export const PREFLIGHT_INSTALL_URL_STATUS_OPTIONS = ['pass', 'warn', 'block', 'not_checked'] as const;
 
 export const BACKEND_HOSTING_MODEL_OPTIONS = [
-  'None (browser-only Designer Extension)',
+  'None (no server-side code)',
   'Webflow Cloud',
   'Serverless / PaaS',
   'Own server / VPS',
@@ -276,6 +280,13 @@ export const BACKEND_RUNTIME_OPTIONS = [
   'Other',
   'Undeclared',
 ] as const;
+
+/**
+ * Earlier name of the "None" hosting-model option, before the form gated on server-side code
+ * instead of app type (2026-11-03). Airtable records may still carry it until the option rename
+ * lands, so reads accept it; writes use BACKEND_HOSTING_MODEL_OPTIONS only.
+ */
+export const LEGACY_BACKEND_HOSTING_MODEL_OPTIONS = ['None (browser-only Designer Extension)'] as const;
 
 /**
  * Backend declaration keys (snake_case, as exposed by the field map) -> FIELD_IDS key.
@@ -397,6 +408,7 @@ export type ExceptionStatus = (typeof EXCEPTION_STATUS_OPTIONS)[number];
 export type ExceptionType = (typeof EXCEPTION_TYPE_OPTIONS)[number];
 export type HoldReason = (typeof HOLD_REASON_OPTIONS)[number];
 export type BackendHostingModel = (typeof BACKEND_HOSTING_MODEL_OPTIONS)[number];
+export type LegacyBackendHostingModel = (typeof LEGACY_BACKEND_HOSTING_MODEL_OPTIONS)[number];
 export type BackendRuntime = (typeof BACKEND_RUNTIME_OPTIONS)[number];
 export type GovernanceFindingCategory = (typeof GOVERNANCE_FINDING_CATEGORY_OPTIONS)[number];
 export type GovernanceFindingStatus = (typeof GOVERNANCE_FINDING_STATUS_OPTIONS)[number];
@@ -544,8 +556,12 @@ export function isHoldReason(value: string): value is HoldReason {
   return (HOLD_REASON_OPTIONS as readonly string[]).includes(value);
 }
 
-export function isBackendHostingModel(value: string): value is BackendHostingModel {
-  return (BACKEND_HOSTING_MODEL_OPTIONS as readonly string[]).includes(value);
+/** Read-side guard: accepts the current options and the legacy "None" spelling still in Airtable. */
+export function isBackendHostingModel(value: string): value is BackendHostingModel | LegacyBackendHostingModel {
+  return (
+    (BACKEND_HOSTING_MODEL_OPTIONS as readonly string[]).includes(value) ||
+    (LEGACY_BACKEND_HOSTING_MODEL_OPTIONS as readonly string[]).includes(value)
+  );
 }
 
 export function isBackendRuntime(value: string): value is BackendRuntime {
@@ -654,6 +670,7 @@ export const APP_REVIEW_FIELD_MAP = {
       exception_decision_notes: FIELD_IDS.versions.exceptionDecisionNotes,
       hold_reason: FIELD_IDS.versions.holdReason,
       hold_notes: FIELD_IDS.versions.holdNotes,
+      backend_observed_in_review: FIELD_IDS.versions.backendObservedInReview,
     },
     readOnly: {
       reviewer: FIELD_IDS.versions.reviewer,

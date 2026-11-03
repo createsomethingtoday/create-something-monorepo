@@ -1094,7 +1094,7 @@ export function registerTools(
 
   server.tool(
     'app_review_update_version_review',
-    'Update review fields on an Asset Version record, including exception and hold fields. Reviewer assignment is read-only; never send reviewer, even null. review_status requires explicit operator status_change confirmation and a fresh expected status. Preparing a review cycle is read-only via app_review_get_review_context. Exception sequencing rule: fill exception_type + exception_rationale first, then flip exception_status to 🆕Requested in a separate call — the status flip triggers the #app-review-exceptions Slack post. Refuses an approved review_status while any ⚖️exception on the app is undecided, and refuses exception_status ❌Denied while ⚖️Exceptions items are undecided.',
+    'Update review fields on an Asset Version record, including exception and hold fields, and backend_observed_in_review (what the reviewer saw of a backend during bundle, injected-script, or install checks that the developer declaration does not cover; it never substitutes for the declaration, which the developer completes on the next Update). Reviewer assignment is read-only; never send reviewer, even null. review_status requires explicit operator status_change confirmation and a fresh expected status. Preparing a review cycle is read-only via app_review_get_review_context. Exception sequencing rule: fill exception_type + exception_rationale first, then flip exception_status to 🆕Requested in a separate call — the status flip triggers the #app-review-exceptions Slack post. Refuses an approved review_status while any ⚖️exception on the app is undecided, and refuses exception_status ❌Denied while ⚖️Exceptions items are undecided.',
     {
       version_id: z.string().min(1),
       review_status: z.enum(REVIEW_STATUS_OPTIONS).optional(),
@@ -1110,6 +1110,7 @@ export function registerTools(
       exception_decision_notes: z.string().optional(),
       hold_reason: z.union([z.enum(HOLD_REASON_OPTIONS), z.null()]).optional(),
       hold_notes: z.string().optional(),
+      backend_observed_in_review: z.string().optional().describe('Reviewer-observed backend the declaration does not cover, e.g. .php endpoints, API calls to a developer domain, a chatbot backend. Never a substitute for the declaration.'),
     },
     async (params) => {
       try {
@@ -1137,6 +1138,7 @@ export function registerTools(
           exception_decision_notes: params.exception_decision_notes,
           hold_reason: params.hold_reason,
           hold_notes: params.hold_notes,
+          backend_observed_in_review: params.backend_observed_in_review,
         });
 
         if (Object.keys(mutation).length === 0) {

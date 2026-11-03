@@ -78,7 +78,10 @@ const BACKEND_DECLARATION_FIELD_IDS = {
     ...Object.values(BACKEND_DECLARATION_FIELD_KEYS).map((key) => FIELD_IDS.assets[key]),
     FIELD_IDS.assets.backendDeclaredAt,
   ],
-  versions: Object.values(BACKEND_DECLARATION_FIELD_KEYS).map((key) => FIELD_IDS.versions[key]),
+  versions: [
+    ...Object.values(BACKEND_DECLARATION_FIELD_KEYS).map((key) => FIELD_IDS.versions[key]),
+    FIELD_IDS.versions.backendObservedInReview,
+  ],
 };
 
 const ASSET_DETAIL_FIELD_IDS = [
@@ -294,6 +297,13 @@ export interface AppReviewBackendDeclaration {
   runtimeVersion?: string;
   hostingProvider?: string;
   declaredAt?: string;
+  /**
+   * Versions only. What the reviewer saw of a backend during bundle, injected-script, or
+   * install checks that the declaration does not cover (.php endpoints, API calls to a
+   * developer domain, a chatbot backend). Reviewer-written; never a substitute for the
+   * declaration, which the developer completes on the next Update.
+   */
+  observedInReview?: string | null;
 }
 
 /**
@@ -516,6 +526,8 @@ export interface VersionReviewUpdateInput {
   exception_decision_notes?: string;
   hold_reason?: string | null;
   hold_notes?: string;
+  /** Reviewer-observed backend the declaration does not cover. Not the declaration itself. */
+  backend_observed_in_review?: string;
 }
 
 export interface ExceptionItemCreateInput {
@@ -750,7 +762,10 @@ function mapBackendDeclaration(
     hostingProvider: firstString(fields[ids.backendHostingProvider]),
     declaredAt: table === 'assets' ? firstString(fields[FIELD_IDS.assets.backendDeclaredAt]) : undefined,
   };
-  return Object.values(backend).some((value) => value !== undefined) ? backend : null;
+  if (table === 'versions') {
+    backend.observedInReview = firstString(fields[FIELD_IDS.versions.backendObservedInReview]) ?? null;
+  }
+  return Object.values(backend).some((value) => value !== undefined && value !== null) ? backend : null;
 }
 
 function mapQueueRecord(record: AirtableRecord): AppReviewQueueItem {
@@ -1950,6 +1965,10 @@ export class AirtableClient {
 
     if (input.hold_notes !== undefined) {
       fields[FIELD_IDS.versions.holdNotes] = input.hold_notes;
+    }
+
+    if (input.backend_observed_in_review !== undefined) {
+      fields[FIELD_IDS.versions.backendObservedInReview] = input.backend_observed_in_review;
     }
 
     if (Object.keys(fields).length === 0) {
