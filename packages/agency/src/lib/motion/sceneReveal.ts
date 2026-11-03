@@ -22,7 +22,7 @@ export function createSceneSelection<Scene, Asset>(scenes: readonly Scene[], hoo
   return {
     async select(index: number): Promise<void> {
       if (disposed || !Number.isInteger(index) || index < 0 || index >= scenes.length || index === selected) return;
-      const direction = index > selected ? 1 : -1;
+      const direction = index > displayed ? 1 : -1;
       selected = index;
       const request = ++generation;
       hooks.settle();

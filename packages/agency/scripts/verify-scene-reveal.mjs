@@ -80,6 +80,26 @@ try {
     results.push({ step, animation, layers });
   }
 
+  // Direction follows the image on screen, even if a different step is loading.
+  await select('learn');
+  await settled('learn');
+  let releaseRun;
+  const heldRun = new Promise(resolve => { releaseRun = resolve; });
+  await page.route('**/images/agency-sales/run-reviewed-v1.webp', async route => { await heldRun; await route.continue(); });
+  await select('run');
+  assert.match(await page.locator('#journey-image').getAttribute('src'), /team\.webp$/);
+  await select('build');
+  await page.waitForFunction(() => document.querySelector('#journey-image')?.getAnimations().length > 0);
+  assert.equal(await page.locator('.scene').getAttribute('data-scene-revealing'), 'forward', 'Build must uncover forward over Learn, regardless of the pending Run selection');
+  await settled('build');
+  const runResponse = page.waitForResponse(response => response.url().endsWith('/run-reviewed-v1.webp'));
+  releaseRun();
+  await runResponse;
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  await settled('build');
+  await page.unroute('**/images/agency-sales/run-reviewed-v1.webp');
+  results.push('Learn to Build wipes forward when a pending Run load is superseded, and the stale Run does not replace it.');
+
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.locator('[data-home-step="run"]').focus();
   await page.keyboard.press('Enter');

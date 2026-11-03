@@ -21,7 +21,7 @@ function harness() {
   return { selection, events, request: (scene: string, index = 0) => requests.get(scene)![index] };
 }
 
-test('keeps the displayed scene until loading completes and uses selection direction', async () => {
+test('keeps the displayed scene until loading completes and uses the visual transition direction', async () => {
   const h = harness();
   const build = h.selection.select(1);
   assert.deepEqual(h.events, [['settle'], ['loading', 'build', 'learn']]);
@@ -54,6 +54,33 @@ test('returning to the displayed scene cancels a pending selection without loadi
   await build;
   assert.deepEqual(h.events.at(-1), ['ready', 'learn']);
   assert.equal(h.events.filter(event => event[0] === 'show').length, 0);
+});
+
+test('Learn to Build still wipes forward when a pending Run selection is superseded', async () => {
+  const h = harness();
+  const run = h.selection.select(2);
+  const build = h.selection.select(1);
+  h.request('build').resolve('decoded-build');
+  await build;
+  assert.deepEqual(h.events.filter(event => event[0] === 'show'), [['show', 'build', 'decoded-build', 1]]);
+  h.request('run').resolve('stale-run');
+  await run;
+  assert.deepEqual(h.events.at(-1), ['ready', 'build']);
+});
+
+test('Run to Build still wipes backward when a pending Learn selection is superseded', async () => {
+  const h = harness();
+  const initialRun = h.selection.select(2);
+  h.request('run').resolve('decoded-run');
+  await initialRun;
+  const learn = h.selection.select(0);
+  const build = h.selection.select(1);
+  h.request('build').resolve('decoded-build');
+  await build;
+  assert.deepEqual(h.events.filter(event => event[0] === 'show').at(-1), ['show', 'build', 'decoded-build', -1]);
+  h.request('learn').resolve('stale-learn');
+  await learn;
+  assert.deepEqual(h.events.at(-1), ['ready', 'build']);
 });
 
 test('settles an interrupted reveal before loading the next scene', async () => {
