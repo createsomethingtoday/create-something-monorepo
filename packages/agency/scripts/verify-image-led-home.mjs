@@ -19,8 +19,14 @@ try {
     await page.locator(`[data-home-step="${step}"]`).click();
     assert.equal(await page.locator(`[data-home-step="${step}"]`).getAttribute('aria-pressed'), 'true');
     assert.equal(await page.locator('[data-home-step][aria-pressed="true"]').count(), 1);
+    // The current frame remains visible until the selected scene has decoded.
+    await page.waitForFunction(step => {
+      const image = document.querySelector('#journey-image');
+      const file = { learn: 'team.webp', build: 'macro.webp', run: 'run-reviewed-v1.webp' }[step];
+      return image?.getAttribute('src')?.endsWith(file) && image.complete && !document.querySelector('[data-scene-previous]');
+    }, step);
     const src = await page.locator('#journey-image').getAttribute('src');
-    if (step === 'learn') assert.equal(src, initialLearn, 'Learn must return to the original scene after inspection');
+    if (step === 'learn') assert.equal(new URL(src, base).href, new URL(initialLearn, base).href, 'Learn must return to the original scene after inspection');
     else assert.notEqual(src, initialLearn, `${step} must advance the visual story`);
     if (step === 'run') assert.match(src, /run-reviewed/);
   }

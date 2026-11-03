@@ -169,3 +169,9 @@ body.design-preview .performance-campaign-opening[data-agency-composition='wide'
  body.design-preview .performance-campaign-opening.agency-preview-hero>.performance-campaign-opening__artifact{grid-column:1!important;grid-row:7!important;margin-top:0!important}
  body.design-preview .agency-preview-hero .agency-preview-media[data-frame='whole'] img{max-height:none!important}
 }
+
+/* A bounded hero study animates the crop only, never its caption or controls. */
+body.design-preview .agency-preview-media img[data-image-entrance="hero-study"]{transition-property:none!important}
+/* This study gives the image its own frame. The former background-image scrim
+   would paint over unboxed mobile copy, so it has no role in this composition. */
+body.design-preview .performance-campaign-opening.agency-preview-hero:has(>.agency-preview-media>img[data-image-entrance="hero-study"])::before{display:none}

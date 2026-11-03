@@ -3,6 +3,8 @@
   import { webflowStages } from '$lib/data/webflowMarketplace';
   import { scrollEntrance } from '@create-something/canon/motion';
   import { enhanceHomeInteractions } from '$lib/motion/homeInteractions';
+  import { enhanceSceneReveal } from '$lib/motion/sceneReveal';
+  import { enhanceImageEntrance } from '$lib/motion/imageEntrance';
   import { enhanceEvidenceDisclosure } from '$lib/motion/evidenceDisclosure';
   import { page } from '$app/stores';
   import content from '$lib/content/agency-home.html?raw';
@@ -16,29 +18,16 @@
   onMount(() => {
     const abort = new AbortController();
     const interactions = enhanceHomeInteractions(root);
+    const handoffImage = root.querySelector<HTMLImageElement>('[data-image-entrance="handoff"]');
+    const handoffEntrance = handoffImage ? enhanceImageEntrance(handoffImage, { mode: 'scroll' }) : undefined;
     const disposeEvidence = Array.from(root.querySelectorAll<HTMLDetailsElement>('[data-evidence-reveal], .boundary details, .cc-disclosure, .cc-faq details'), enhanceEvidenceDisclosure);
     const image = root.querySelector<HTMLImageElement>('#journey-image');
-    const caption = root.querySelector<HTMLElement>('#journey-caption');
-    const status = root.querySelector<HTMLElement>('#journey-status');
     const scenes = {
       learn: { src: image?.getAttribute('src') ?? '/images/agency-sales/team.webp', alt: 'Concept illustration: teammates work through an example with a shared guide.', caption: 'Learn / Work through an example together.' },
       build: { src: '/images/agency-sales/macro.webp', alt: 'Concept illustration: teammates inspect the join between connected graphite modules.', caption: 'Build / Connect the tools. Inspect the join.' },
       run: { src: '/images/agency-sales/run-reviewed-v1.webp', alt: 'Original conceptual illustration: teammates operate a completed rail tool while their guide reviews the result.', caption: 'Run / Review the result. Agree the next step.' }
     };
-    const buttons = root.querySelectorAll<HTMLButtonElement>('[data-home-step]');
-    for (const button of buttons) {
-      button.disabled = false;
-      button.addEventListener('click', () => {
-        const scene = scenes[button.dataset.homeStep as keyof typeof scenes];
-        if (!scene || !image || !caption || !status || button.getAttribute('aria-pressed') === 'true') return;
-        interactions.sceneChanged();
-        image.src = scene.src;
-        image.alt = scene.alt;
-        caption.textContent = scene.caption;
-        status.textContent = `Conceptual illustration / ${scene.caption}`;
-        for (const candidate of buttons) candidate.setAttribute('aria-pressed', String(candidate === button));
-      }, { signal: abort.signal });
-    }
+    const sceneReveal = enhanceSceneReveal(root, scenes);
     const dialog = root.querySelector<HTMLDialogElement>('#work-dialog');
     let originalOverflow = '';
     let opener: HTMLElement | null = null;
@@ -83,6 +72,8 @@
     return () => {
       abort.abort();
       interactions.destroy();
+      handoffEntrance?.destroy();
+      sceneReveal.destroy();
       disposeEvidence.forEach(dispose => dispose());
       dialog?.querySelector('video')?.pause();
       if (dialog?.open) {
@@ -93,7 +84,7 @@
   });
 </script>
 
-<svelte:head><link rel="stylesheet" href="/styles/agency/home.css?v=20261102-membership-motion" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /></svelte:head>
+<svelte:head><link rel="stylesheet" href="/styles/agency/home.css?v=agency-image-reveal-release-20261102" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /></svelte:head>
 <div class="agency-home" bind:this={root} use:scrollEntrance>
   {@html content}
   <details id="work-library" class="work-library" bind:open={libraryOpen}>

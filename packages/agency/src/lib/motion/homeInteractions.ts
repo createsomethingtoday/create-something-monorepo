@@ -1,9 +1,8 @@
 /** DOM-only enhancement; page code owns selection and accessible state. */
-export function enhanceHomeInteractions(root: HTMLElement): { sceneChanged: () => void; destroy: () => void } {
+export function enhanceHomeInteractions(root: HTMLElement): { destroy: () => void } {
   const view = root.ownerDocument.defaultView;
   let disposed = false;
-  let scenePending = false;
-  const noop = { sceneChanged() {}, destroy() {} };
+  const noop = { destroy() {} };
   if (!view?.matchMedia) return noop;
   const reduced = view.matchMedia('(prefers-reduced-motion: reduce)');
   const hover = view.matchMedia('(hover: hover) and (pointer: fine)');
@@ -56,24 +55,8 @@ export function enhanceHomeInteractions(root: HTMLElement): { sceneChanged: () =
     reduced.addEventListener('change', preference, { signal: abort.signal });
     hover.addEventListener('change', preference, { signal: abort.signal });
   }
-  const image = root.querySelector<HTMLImageElement>('#journey-image');
-  image?.addEventListener('load', () => {
-    if (!scenePending || !image) return;
-    scenePending = false;
-    settle(image);
-    if (!runtime || reduced.matches || view.getComputedStyle(image).transform !== 'none') return;
-    const seconds = duration(image, '--duration-performance-standard');
-    if (!seconds) return;
-    const tween = runtime.fromTo(image, { opacity: 0.55, y: 6 }, {
-      opacity: 1, y: 0, duration: seconds, ease,
-      onComplete: () => settle(image)
-    });
-    active.set(image, tween);
-  }, { signal: abort.signal });
-  image?.addEventListener('error', () => { scenePending = false; if (image) settle(image); }, { signal: abort.signal });
   reduced.addEventListener('change', () => { if (reduced.matches) settleAll(); }, { signal: abort.signal });
   return {
-    sceneChanged() { scenePending = true; if (image) settle(image); },
     destroy() { disposed = true; abort.abort(); settleAll(); }
   };
 }
