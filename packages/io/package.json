@@ -47,7 +47,7 @@
 		"deploy:preview": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=create-something-io --branch=preview --commit-dirty=true",
 		"cf-typegen": "node ../../scripts/run-wrangler.mjs types",
 		"test:newsletter-analytics": "node --import tsx --test test/newsletter-analytics.test.ts",
-		"test:newsletter-workflow": "node --import tsx --test test/newsletter-workflow.test.ts test/newsletter-attribution.test.ts test/newsletter-signup-race.test.ts test/newsletter-delivery-receipt.test.ts && vitest run test/newsletter-confirmation-route.test.ts test/newsletter-webhook-route.test.ts test/newsletter-workflow-route.test.ts test/newsletter-workflow-source.test.ts test/newsletter-workbench.test.ts test/newsletter-archive.test.ts"
+		"test:newsletter-workflow": "node --import tsx --test test/newsletter-workflow.test.ts test/newsletter-attribution.test.ts test/newsletter-signup-race.test.ts test/newsletter-delivery-receipt.test.ts && vitest run test/newsletter-client-context.test.ts test/newsletter-confirmation-route.test.ts test/newsletter-webhook-route.test.ts test/newsletter-workflow-route.test.ts test/newsletter-workflow-source.test.ts test/newsletter-workbench.test.ts test/newsletter-archive.test.ts"
 	},
 	"dependencies": {
 		"@create-something/canon": "workspace:*",

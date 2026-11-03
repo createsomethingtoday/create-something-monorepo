@@ -828,6 +828,11 @@ is false; the handler also honors DNT and GPC headers. A newsletter confirmation
 required before the strict audience selector considers a fresh subscriber eligible.
 Existing legacy records are not promoted by this change.
 
+All first-party signup clients use `newsletterSignupContext()`: the shared signup
+component, shared footer, and `.io` subscribe page. It forwards the existing enabled
+analytics context only; absent clients, disabled preferences, and GPC return an explicit
+disabled flag without session or landing data. It does not create a client or grant consent.
+
 The `@create-something/canon/newsletter/attribution` entrypoint owns reviewed public
 campaign IDs and validates edition/channel/campaign tags. It can reuse the latest tagged
 landing in the existing analytics session for 30 minutes when a reader navigates to an
