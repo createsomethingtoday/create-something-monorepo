@@ -31,6 +31,8 @@ The canonical audience selector is `packages/canon/src/lib/newsletter/audience.t
 
 Recheck eligibility immediately before dispatch. If the selected audience no longer matches the approved fingerprint, stop and prepare a new approval. A subscriber's later opt-out takes precedence over the send plan.
 
+Approval freezes private subscriber keys and recipient hashes in `audience_snapshot`, alongside the fingerprint and count. Completion is calculated against that snapshot. A fresh approval for a smaller audience preserves excluded recipients' earlier receipts as history without counting them toward the new audience or sending them another message. Snapshot membership does not override current consent checks. Migration `020_newsletter_approved_audience.sql` adds this field without inferring membership for historical sends.
+
 ## Understand attribution
 
 Each edition records its author and evidence sources. Marketing attribution is separate: public edition, channel, and campaign values connect eligible tagged visits to requested and confirmed newsletter signup. Use only the configured public values. Preserve existing property-source semantics so an `.io` edition does not rewrite the originating property.
@@ -74,6 +76,8 @@ Cancel an existing provider schedule only through the documented provider path a
 Before production promotion, run the affected workflow, attribution, lifecycle, archive, and package checks. Independently exercise the actual admin interface, including loading, empty, error, blocked-approval, and uncertain-delivery states. Verify that an unauthenticated API call is rejected. Mark operator analytics checks as test traffic.
 
 Apply the reviewed additive D1 migrations before deploying code that depends on them. Verify the intended Cloudflare account and database. Preserve existing subscriber records, consent evidence, and delivery history. Do not backfill guessed attribution or approvals. Read back the seeded edition states and migration results before claiming they are live.
+
+The required newsletter schema is migrations 018, 019, and 020. A matching confirmed link retries pending attribution after a transient database failure; it does not resend a welcome email or repeat warm-lead work. Attribution updates remain once-only and retain the current privacy gates.
 
 Rollback code through the reviewed prior production artifact. Additive tables and historical receipts can remain for recovery; do not drop them as part of a routine rollback. Code rollback does not undo subscriber actions, migrate consent back, delete recorded events, or retract a sent email.
 

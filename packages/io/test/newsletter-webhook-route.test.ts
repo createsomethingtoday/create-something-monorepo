@@ -14,6 +14,12 @@ describe('signed provider suppression boundary', () => {
     sqlite.exec(
       readFileSync(new URL('../migrations/018_newsletter_editions.sql', import.meta.url), 'utf8')
     );
+    sqlite.exec(
+      readFileSync(
+        new URL('../migrations/020_newsletter_approved_audience.sql', import.meta.url),
+        'utf8'
+      )
+    );
     const recipientHash = Array.from(
       new Uint8Array(
         await crypto.subtle.digest('SHA-256', new TextEncoder().encode('reader@example.com'))
@@ -30,6 +36,9 @@ describe('signed provider suppression boundary', () => {
         "INSERT INTO newsletter_edition_deliveries(id,edition_slug,content_hash,subscriber_key,kind,status,resend_email_id,subject,recipient_hash) VALUES('delivery','test','revision','1','audience','sent','provider-message','Test',?)"
       )
       .run(recipientHash);
+    sqlite
+      .prepare("UPDATE newsletter_editions SET audience_snapshot=? WHERE slug='test'")
+      .run(JSON.stringify([{ subscriber_key: '1', recipient_hash: recipientHash }]));
     const db = {
       prepare(sql: string) {
         const statement = sqlite.prepare(sql);

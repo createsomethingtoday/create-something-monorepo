@@ -56,8 +56,51 @@ export const load: PageServerLoad = async ({ url, platform, request, parent }) =
 			};
 		}
 
-		// Check if already confirmed
+		const subscriberId = subscriber.id as number;
+		const email = subscriber.email as string;
+		const source = subscriber.source as string | null;
+		const property = propertyFromSource(source);
+
+		async function recordAttribution() {
+			try {
+				const layout = await parent();
+				const attribution = await confirmNewsletterAttribution(db, subscriberId, {
+					doNotTrack: request.headers.get('dnt') === '1' || request.headers.get('sec-gpc') === '1',
+					userOptedOut: layout.user?.analytics_opt_out ?? false
+				});
+				if (attribution)
+					await recordServerConversion(
+						db,
+						{
+							property,
+							action: 'newsletter_confirmed',
+							url: 'https://createsomething.io/confirm',
+							target: '/confirm',
+							metadata: {
+								source: source || property,
+								surface: 'newsletter_confirmation',
+								newsletterEdition: attribution.edition.replaceAll('-', '_'),
+								newsletterCampaign: attribution.campaign.replaceAll('-', '_'),
+								newsletterSource: attribution.channel,
+								trafficClass: attribution.traffic_class
+							}
+						},
+						{
+							userAgent: request.headers.get('user-agent') || undefined,
+							ipCountry: request.headers.get('cf-ipcountry') || undefined
+						}
+					);
+			} catch (conversionError) {
+				console.warn(
+					'Newsletter confirmation attribution failed; matching link can retry:',
+					conversionError
+				);
+			}
+		}
+
+		// A matching confirmed link may still have pending attribution after a transient failure.
 		if (subscriber.confirmed_at) {
+			await recordAttribution();
 			return {
 				success: true,
 				message: 'Your subscription is already confirmed!',
@@ -77,9 +120,6 @@ export const load: PageServerLoad = async ({ url, platform, request, parent }) =
 		}
 
 		// Send welcome email now that subscription is confirmed
-		const email = subscriber.email as string;
-		const source = subscriber.source as string | null;
-		const property = propertyFromSource(source);
 
 		// Get unsubscribe token from the subscriber record
 		const subscriberData = await db
@@ -124,34 +164,9 @@ export const load: PageServerLoad = async ({ url, platform, request, parent }) =
 			}
 		}
 
-		try {
-			const layout = await parent();
-			const attribution = await confirmNewsletterAttribution(db, subscriber.id as number, {
-				doNotTrack: request.headers.get('dnt') === '1' || request.headers.get('sec-gpc') === '1',
-				userOptedOut: layout.user?.analytics_opt_out ?? false
-			});
-			if (attribution) await recordServerConversion(
-				db,
-				{
-					property,
-					action: 'newsletter_confirmed',
-					url: 'https://createsomething.io/confirm',
-					target: '/confirm',
-					metadata: {
-						source: source || property,
-						surface: 'newsletter_confirmation',
-						newsletterEdition: attribution.edition.replaceAll('-', '_'),
-						newsletterCampaign: attribution.campaign.replaceAll('-', '_'),
-						newsletterSource: attribution.channel,
-						trafficClass: attribution.traffic_class
-					}
-				},
-				{
-					userAgent: request.headers.get('user-agent') || undefined,
-					ipCountry: request.headers.get('cf-ipcountry') || undefined
-				}
-			);
+		await recordAttribution();
 
+		try {
 			await upsertWarmLead(db, {
 				name: 'Newsletter subscriber',
 				email,
@@ -163,7 +178,7 @@ export const load: PageServerLoad = async ({ url, platform, request, parent }) =
 				touchedAt: new Date().toISOString()
 			});
 		} catch (conversionError) {
-			console.warn('Newsletter confirmation conversion tracking failed:', conversionError);
+			console.warn('Newsletter confirmation lead update failed:', conversionError);
 		}
 
 		return {

@@ -35,3 +35,13 @@ Independent review additionally reproduced a late-event concurrency case. Reconc
 Final bounded independent re-test passed 41 Node checks and 11 Vitest checks, including the original concurrent suppression reproducer. No UI or schema change was needed for this follow-up. Existing visual evidence applies. No audience send or new consent mutation occurred during these tests.
 
 The next automated review found overlapping signup responses could overwrite the current confirmation receipt and campaign. An actual SQLite signup regression with deferred provider responses failed before repair. Both the receipt update and attribution write now require the request's confirmation token to match the current subscriber token. Independent re-test passed 30 Node workflow checks and 11 Vitest checks: the older response cannot overwrite the newer receipt/campaign, the older link remains invalid, and the valid newer link confirms the expected campaign. Attribution does not store the token. No UI, schema, or live subscriber mutation was required.
+
+## Recovery and checkout follow-up
+
+A further review reproduced two recovery gaps: a transient attribution write after successful confirmation could never retry; and a smaller newly approved audience could never finish because old excluded receipts were counted. Matching confirmed links now retry pending attribution without welcome/lead duplication. Approval freezes private member keys/hashes in the new `audience_snapshot` field, included in approval audit details; completion joins only that snapshot while all delivery history remains intact.
+
+Independent bounded re-test passed 31 Node newsletter checks, 13 Vitest checks, and 21 wiki/CI contract checks. The actual confirmation route and the smaller-audience partial-send case were each demonstrated failing before repair. Existing privacy, suppression, duplicate and uncertain-outcome gates remain exercised.
+
+Migration 020 was applied to production after independent review and before code deployment. Independent readback showed all three historical/draft editions retain empty membership and no approval; 14 subscribers (13 active, 1 unsubscribed) and two retained historical receipts remain unchanged. No historical approval membership was inferred.
+
+Two hosted Agent Wiki attempts hit the five-minute job cap during repository checkout, before validation. The tracked tree measured 1.05 GiB. Recovery raises the bounded checkout limit to ten minutes within a fifteen-minute job, preserving all commands, assertions and immutable action pins. Local wiki/ontology/pin checks passed; hosted recovery requires the next CI run.

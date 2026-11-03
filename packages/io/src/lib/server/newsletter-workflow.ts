@@ -58,6 +58,7 @@ export interface Edition {
   approved_hash: string | null;
   audience_fingerprint: string | null;
   audience_count: number;
+  audience_snapshot: string;
   seed_email_id: string | null;
   seed_status: string | null;
   seed_hash: string | null;
@@ -454,9 +455,15 @@ export async function handleNewsletterAction(
       throw new Error(
         'Audience exceeds the bounded 20-recipient delivery limit; split into reviewed campaigns'
       );
+    const audienceSnapshot = await Promise.all(
+      current.recipients.map(async (recipient) => ({
+        subscriber_key: String(recipient.id),
+        recipient_hash: await newsletterHash(recipient.email.toLowerCase())
+      }))
+    );
     const approval = await db
       .prepare(
-        "UPDATE newsletter_editions SET editorial_status='approved',approved_by=?,approved_at=?,approved_hash=?,send_at=?,audience_fingerprint=?,audience_count=? WHERE slug=? AND content_hash=? AND email_status='not-sent' AND editorial_status IN ('reviewed','approved') AND seed_hash=? AND seed_status='delivered' AND seed_email_id=?"
+        "UPDATE newsletter_editions SET editorial_status='approved',approved_by=?,approved_at=?,approved_hash=?,send_at=?,audience_fingerprint=?,audience_count=?,audience_snapshot=? WHERE slug=? AND content_hash=? AND email_status='not-sent' AND editorial_status IN ('reviewed','approved') AND seed_hash=? AND seed_status='delivered' AND seed_email_id=?"
       )
       .bind(
         actor.email,
@@ -465,6 +472,7 @@ export async function handleNewsletterAction(
         new Date(ms).toISOString(),
         current.fingerprint,
         current.recipients.length,
+        JSON.stringify(audienceSnapshot),
         slug,
         e.content_hash,
         e.seed_hash,
@@ -477,6 +485,7 @@ export async function handleNewsletterAction(
       content_hash: e.content_hash,
       audience_fingerprint: current.fingerprint,
       audience_count: current.recipients.length,
+      audience_snapshot: audienceSnapshot,
       send_at: new Date(ms).toISOString(),
       approved_by: actor.email,
       approved_at: now.toISOString()
@@ -774,8 +783,12 @@ async function reconcileAggregate(db: WorkflowDatabase, slug: string, hash: stri
   await db
     .prepare(
       `WITH receipts AS (
-      SELECT status FROM newsletter_edition_deliveries
-      WHERE edition_slug=? AND content_hash=? AND kind='audience'
+      SELECT d.status FROM newsletter_edition_deliveries d
+      JOIN newsletter_editions e ON e.slug=d.edition_slug
+      JOIN json_each(e.audience_snapshot) member
+        ON json_extract(member.value,'$.subscriber_key')=d.subscriber_key
+        AND json_extract(member.value,'$.recipient_hash')=d.recipient_hash
+      WHERE d.edition_slug=? AND d.content_hash=? AND d.kind='audience'
     ) UPDATE newsletter_editions SET email_status=CASE
       WHEN EXISTS(SELECT 1 FROM receipts WHERE status IN ('uncertain','sending')) THEN 'uncertain'
       WHEN (SELECT COUNT(*) FROM receipts) != audience_count

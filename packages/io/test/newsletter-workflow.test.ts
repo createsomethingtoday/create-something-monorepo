@@ -16,6 +16,12 @@ function fixture() {
   sqlite.exec(
     readFileSync(new URL('../migrations/018_newsletter_editions.sql', import.meta.url), 'utf8')
   );
+  sqlite.exec(
+    readFileSync(
+      new URL('../migrations/020_newsletter_approved_audience.sql', import.meta.url),
+      'utf8'
+    )
+  );
   const db = {
     prepare(sql: string) {
       const s = sqlite.prepare(sql);
@@ -46,6 +52,8 @@ function fixture() {
       sent.push(JSON.parse(String(init.body)));
       if (outcome === 'timeout') throw new Error('timeout');
       if (outcome === 'rejected') return Response.json({ error: 'bad request' }, { status: 400 });
+      if (outcome === 'reject-second-recipient' && sent.at(-1)?.to === 'other@example.com')
+        return Response.json({ error: 'bad request' }, { status: 400 });
       return Response.json({ id: `message-${sent.length}` });
     }
     const id = String(_).split('/').at(-1)!;
@@ -603,5 +611,47 @@ test('a suppression arriving during provider readback cannot be overwritten by s
     (await readNewsletterWorkflow(f.db)).editions.find((e) => e.slug === f.edition.slug)!
       .email_status,
     'failed'
+  );
+});
+
+test('a fresh smaller audience excludes old receipts from completion without deleting delivery history', async () => {
+  const f = fixture();
+  f.sqlite.exec(
+    "INSERT INTO newsletter_subscribers SELECT 2,'other@example.com',source,'other-token',confirmed_at,consent_confirmed_at,consent_method,consent_evidence,audience_classification,NULL,1,'active' FROM newsletter_subscribers WHERE id=1"
+  );
+  await f.run({ action: 'prepare', edition: f.edition });
+  await f.run({ action: 'review', slug: f.edition.slug });
+  await f.run({ action: 'seed', slug: f.edition.slug });
+  await f.run({ action: 'reconcile', slug: f.edition.slug });
+  await f.run({ action: 'approve', slug: f.edition.slug, send_at: '2026-11-03T15:00:00Z' });
+  f.setOutcome('reject-second-recipient');
+  await f.run({ action: 'send', slug: f.edition.slug });
+  assert.equal(
+    (await readNewsletterWorkflow(f.db)).editions.find((e) => e.slug === f.edition.slug)!
+      .email_status,
+    'failed'
+  );
+  f.sqlite.exec(
+    "UPDATE newsletter_subscribers SET status='unsubscribed',active=0,unsubscribed_at='2026-11-03' WHERE id=1"
+  );
+  await f.run({ action: 'retry_failed', slug: f.edition.slug });
+  await f.run({ action: 'approve', slug: f.edition.slug, send_at: '2026-11-03T15:00:00Z' });
+  f.setOutcome('sent');
+  await f.run({ action: 'send', slug: f.edition.slug });
+  const report = await readNewsletterWorkflow(f.db);
+  assert.equal(report.editions.find((e) => e.slug === f.edition.slug)!.email_status, 'sent');
+  assert.equal(
+    f.sqlite
+      .prepare("SELECT COUNT(*) AS n FROM newsletter_edition_deliveries WHERE kind='audience'")
+      .get()!.n,
+    2
+  );
+  assert.equal(f.sent.filter((message) => message.to === 'reader@example.com').length, 1);
+  assert.equal(f.sent.filter((message) => message.to === 'other@example.com').length, 2);
+  await f.run({ action: 'reconcile', slug: f.edition.slug });
+  assert.equal(
+    (await readNewsletterWorkflow(f.db)).editions.find((e) => e.slug === f.edition.slug)!
+      .email_status,
+    'sent'
   );
 });
