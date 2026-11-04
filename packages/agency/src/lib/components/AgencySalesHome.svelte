@@ -1,11 +1,15 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import WorkflowSignalBand from './WorkflowSignalBand.svelte';
   import { webflowStages } from '$lib/data/webflowMarketplace';
   import { enhanceEvidenceDisclosure } from '$lib/motion/evidenceDisclosure';
   import { page } from '$app/stores';
   import rawContent from '$lib/content/agency-story-home.html?raw';
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
-  const content = rawContent.replaceAll('$900/month', PUBLIC_PRICING.membership.focused.label).replaceAll('$2,500/month', PUBLIC_PRICING.membership.team.label);
+  const renderedContent = rawContent.replaceAll('$900/month', PUBLIC_PRICING.membership.focused.label).replaceAll('$2,500/month', PUBLIC_PRICING.membership.team.label);
+  const heroEnd = renderedContent.indexOf('</section>') + '</section>'.length;
+  const heroContent = renderedContent.slice(0, heroEnd);
+  const content = renderedContent.slice(heroEnd);
   import { reducedFilmMotion, toggleFilmMotion, filmOverlayOpen } from '$lib/motion/filmPlayback';
   import FilmCollection from './films/FilmCollection.svelte';
   import BuiltWork from './BuiltWork.svelte';
@@ -84,10 +88,12 @@
   });
 </script>
 
-<svelte:head><link rel="stylesheet" href="/styles/agency/story-home.css?v=agency-handoff-story-20261104" /><link rel="preload" as="image" href="/images/agency-stories/one-manual-gap.webp" fetchpriority="high" /></svelte:head>
+<svelte:head><link rel="stylesheet" href="/styles/agency/story-home.css?v=agency-home-motion-strip-20261104" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /></svelte:head>
 <div class="agency-home" bind:this={root}>
   <div class="page-progress" aria-hidden="true"></div>
   <div class="story-tools"><button type="button" onclick={toggleFilmMotion} aria-pressed={$reducedFilmMotion}>{$reducedFilmMotion ? 'Enable motion' : 'Motion off'}</button></div>
+  {@html heroContent}
+  <WorkflowSignalBand motionOnly quiet tall showMotionControl />
   {@html content}
   <details id="work-library" class="work-library" bind:open={libraryOpen}>
     <summary>Explore the work library <span>Films, source and field reports +</span></summary>
