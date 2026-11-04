@@ -17,9 +17,9 @@
 			),
 			comparison: createBugFixComparison(
 				'published >= 5',
-				'Penalizes curation',
+				'Delisting revokes access',
 				'published + delisted >= 5',
-				'Preserves achievement'
+				'Past achievement still counts'
 			),
 			source: {
 				title: 'The Cumulative State Anti-Pattern',
@@ -40,14 +40,28 @@
 	<meta property="og:type" content="article" />
 </svelte:head>
 
+<h1 class="sr-only">{insight.principle}</h1>
 <KeyInsight
 	{insight}
 	property="io"
 	animation={{ enabled: true, trigger: 'click' }}
 	variant="fullscreen"
+	sourceAction="Read the full case"
 />
 
 <style>
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
+
 	:global(body) {
 		margin: 0;
 		padding: 0;

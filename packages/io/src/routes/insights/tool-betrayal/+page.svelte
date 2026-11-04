@@ -7,7 +7,7 @@
 	 * weaves context and essence together.
 	 */
 
-	import { KeyInsight, createInsight, parseStatement } from '@create-something/canon';
+	import { KeyInsight, createInsight, createBugFixComparison, parseStatement } from '@create-something/canon';
 
 	const insight = createInsight(
 		'tool-betrayal',
@@ -15,6 +15,12 @@
 		{
 			statement: parseStatement(
 				'**Tools** that are built to assist **should** have one purpose: to **enable,** never to punish, **not** to obstruct, never to **entrap.**'
+			),
+			comparison: createBugFixComparison(
+				'delist low-quality work',
+				'Lose submission access',
+				'delist low-quality work',
+				'Keep earned access'
 			),
 			source: {
 				title: 'The Cumulative State Anti-Pattern',
@@ -35,14 +41,28 @@
 	<meta property="og:type" content="article" />
 </svelte:head>
 
+<h1 class="sr-only">{insight.principle}</h1>
 <KeyInsight
 	{insight}
 	property="io"
 	animation={{ enabled: true, trigger: 'click' }}
 	variant="fullscreen"
+	sourceAction="Read the full case"
 />
 
 <style>
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
+
 	:global(body) {
 		margin: 0;
 		padding: 0;
