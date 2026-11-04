@@ -8,7 +8,7 @@
   import '$lib/styles/operator-palette.css';
   import { initializeFilmMotion, filmNavigationOpen, reducedFilmMotion, filmOverlayOpen } from '$lib/motion/filmPlayback';
   import { get } from 'svelte/store';
-  import { createRouteEntrance, shouldEnterHomeBoundary } from '$lib/motion/routeEntrance';
+  import { createRouteEntrance, shouldUseGridTransition } from '$lib/motion/routeEntrance';
   import { filmStories } from '$lib/data/filmStories';
   import { Navigation, Footer, LayoutSEO, ModeIndicator } from '@create-something/canon';
   import PageAnnotations from '$lib/annotations/PageAnnotations.svelte';
@@ -48,44 +48,17 @@
     document.body.scrollTop = 0;
   }
 
-  // View Transitions API - Hermeneutic Navigation
-  // .agency: Efficient (200ms)
   const routeEntrance = createRouteEntrance();
-  let activeRouteTransition: ViewTransition | undefined;
+  const routeMotionEnabled = () => !document.hidden && !get(reducedFilmMotion) && !get(filmNavigationOpen) && !get(filmOverlayOpen);
   onNavigate((navigation) => {
     routeEntrance.cancel();
-    activeRouteTransition?.skipTransition();
-    // Keep back/forward restoration, but force top-scroll on normal page links
-    if (navigation.type !== 'popstate' && !navigation.to?.url.hash) {
-      disableScrollHandling();
+    if (navigation.type !== 'popstate' && !navigation.to?.url.hash) disableScrollHandling();
+    if (shouldUseGridTransition({ from: navigation.from?.url.pathname, to: navigation.to?.url, type: navigation.type })) {
+      routeEntrance.start(navigation.complete, routeMotionEnabled);
     }
-
-    // Commit pilot route changes without waiting for a visual snapshot.
-    // SvelteKit updates history before awaiting onNavigate; delaying here lets
-    // early Back race an older, still-uncommitted destination.
-    if (navigation.from?.url.pathname === '/' || navigation.to?.url.pathname === '/') return;
-    // Local fragment selection already has bounded component feedback.
-    if (navigation.from?.url.pathname === navigation.to?.url.pathname && navigation.from?.url.search === navigation.to?.url.search) return;
-    if (!document.startViewTransition) return;
-    if (
-      typeof window !== 'undefined' &&
-      get(reducedFilmMotion)
-    )
-      return;
-
-    return new Promise((resolve) => {
-      const transition = document.startViewTransition(async () => {
-        resolve();
-        // Rapid Back/Forward can abort the older navigation. The newest route
-        // still owns state; skipping its predecessor is an expected outcome.
-        try { await navigation.complete; } catch { /* Superseded navigation. */ }
-      });
-      activeRouteTransition = transition;
-      void transition.ready.catch(() => {});
-      void transition.finished.catch(() => {}).finally(() => {
-        if (activeRouteTransition === transition) activeRouteTransition = undefined;
-      });
-    });
+    // Do not return a promise: SvelteKit commits immediately. The decorative
+    // grid closes and opens around that commit, without a second router or a
+    // competing native View Transition snapshot.
   });
 
   // Primary nav tells a first-time visitor what each destination contains.
@@ -234,7 +207,10 @@
     };
     const disposers = [reducedFilmMotion, filmNavigationOpen, filmOverlayOpen].map(store => store.subscribe(cancelWhenBlocked));
     document.addEventListener('visibilitychange', cancelWhenBlocked);
-    return () => { disposers.forEach(dispose => dispose()); routeEntrance.cancel(); document.removeEventListener('visibilitychange', cancelWhenBlocked); };
+    window.addEventListener('keydown', routeEntrance.cancel);
+    window.addEventListener('pointerdown', routeEntrance.cancel);
+    window.addEventListener('resize', routeEntrance.cancel);
+    return () => { disposers.forEach(dispose => dispose()); routeEntrance.cancel(); document.removeEventListener('visibilitychange', cancelWhenBlocked); window.removeEventListener('keydown', routeEntrance.cancel); window.removeEventListener('pointerdown', routeEntrance.cancel); window.removeEventListener('resize', routeEntrance.cancel); };
   });
   function getAgencyGlobalAnalyticsMetadata(pathname: string): Record<string, unknown> | undefined {
     const experimentMetadata = getAgencyMarketingExperimentMetadata(pathname);
@@ -311,11 +287,7 @@
   // - Preserve browser restore for popstate/back-forward
   // - Hash links scroll to section
   // - Other internal links scroll to top
-  afterNavigate(({ from, to, type }) => {
-    if (shouldEnterHomeBoundary({ from: from?.url.pathname, to: to?.url, type })) {
-      const main = document.getElementById('main-content');
-      if (main) void routeEntrance.enter(main, () => !document.hidden && !get(reducedFilmMotion) && !get(filmNavigationOpen) && !get(filmOverlayOpen));
-    }
+  afterNavigate(({ to, type }) => {
     if (to?.url.hash) {
       setTimeout(() => scrollToHash(to.url.hash), 100);
       return;

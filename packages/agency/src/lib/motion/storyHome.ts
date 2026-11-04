@@ -1,7 +1,7 @@
 import { derived } from 'svelte/store';
+import { startWordmarkIntro } from './wordmarkIntro';
 import { reducedFilmMotion, filmOverlayOpen, filmNavigationOpen } from './filmPlayback';
 
-let introConsumed = false;
 
 /** Native-scroll enhancement; the authored static state is the complete story. */
 export function enhanceStoryHome(root: HTMLElement) {
@@ -9,35 +9,7 @@ export function enhanceStoryHome(root: HTMLElement) {
   let cleanup = () => {};
   let resizeTimer: ReturnType<typeof setTimeout>;
   const abort = new AbortController();
-  let curtain: HTMLDivElement | undefined;
-  let curtainTimer: ReturnType<typeof setTimeout> | undefined;
-  const clearCurtain = () => { clearTimeout(curtainTimer); curtain?.remove(); curtain = undefined; };
-  // Child mount precedes the layout preference initializer. Resolve the same
-  // persisted preference before deciding whether to create the intro.
-  let introReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  try {
-    const saved = sessionStorage.getItem('agency-reduced-motion');
-    if (saved === 'true' || saved === 'false') introReduced = saved === 'true';
-  } catch { /* System preference remains available without storage. */ }
-  const showIntro = !introConsumed && !introReduced && !location.hash && scrollY < 30;
-  introConsumed = true;
-  if (showIntro) {
-    curtain = document.createElement('div');
-    curtain.className = 'story-curtain';
-    curtain.setAttribute('aria-hidden', 'true');
-    const logo = document.createElement('img');
-    logo.src = '/brand/create-something-agency-white.svg'; logo.alt = '';
-    curtain.appendChild(logo); root.appendChild(curtain);
-    curtainTimer = setTimeout(clearCurtain, 1700);
-    const ready = Promise.race([document.fonts.ready, new Promise(resolve => setTimeout(resolve, 900))]);
-    void ready.then(() => {
-      if (!curtain) return;
-      const animation = curtain.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 420, easing: 'ease-out', fill: 'forwards' });
-      void animation.finished.then(clearCurtain).catch(clearCurtain);
-    });
-    window.addEventListener('keydown', clearCurtain, { signal: abort.signal });
-    window.addEventListener('pointerdown', clearCurtain, { signal: abort.signal });
-  }
+  const intro = startWordmarkIntro(root);
   void Promise.all([import('gsap'), import('gsap/ScrollTrigger')]).then(([animation, plugin]) => {
     if (disposed) return;
     const gsap = animation.gsap;
@@ -109,7 +81,7 @@ export function enhanceStoryHome(root: HTMLElement) {
 
     };
     const blocked = derived([reducedFilmMotion, filmOverlayOpen, filmNavigationOpen], values => values.some(Boolean));
-    const unsubscribe = blocked.subscribe(value => { reduced = value; if (value) clearCurtain(); install(); });
+    const unsubscribe = blocked.subscribe(value => { reduced = value; if (value) intro.destroy(); install(); });
     const refresh = () => { if (!disposed) ScrollTrigger.refresh(); };
     root.addEventListener('toggle', refresh, { capture: true, signal: abort.signal });
     root.addEventListener('load', refresh, { capture: true, signal: abort.signal });
@@ -117,5 +89,5 @@ export function enhanceStoryHome(root: HTMLElement) {
     void document.fonts.ready.then(refresh);
     cleanup = () => { unsubscribe(); context?.revert(); };
   }).catch(() => { /* Complete static content remains readable if enhancement is unavailable. */ });
-  return { destroy() { disposed = true; clearCurtain(); clearTimeout(resizeTimer); abort.abort(); cleanup(); } };
+  return { destroy() { disposed = true; intro.destroy(); clearTimeout(resizeTimer); abort.abort(); cleanup(); } };
 }
