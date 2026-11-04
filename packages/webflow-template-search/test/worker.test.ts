@@ -3559,7 +3559,7 @@ describe('webflow-template-search worker', () => {
         {
           name: 'Renewable energy',
           slug: 'renewable-energy',
-          url: 'https://webflow.com/templates/subcategory/renewable-energy-websites',
+          url: 'https://webflow.com/templates/subcategory/renewable-energy',
         },
         {
           name: 'Nature & Conservation',
@@ -3577,7 +3577,7 @@ describe('webflow-template-search worker', () => {
       };
       expect(pillPayload.subcategory_pills.map((pill) => ({ slug: pill.slug, url: pill.url }))).toEqual([
         { slug: 'nature-and-conservation', url: 'https://webflow.com/templates/subcategory/nature-and-conservation-websites' },
-        { slug: 'renewable-energy', url: 'https://webflow.com/templates/subcategory/renewable-energy-websites' },
+        { slug: 'renewable-energy', url: 'https://webflow.com/templates/subcategory/renewable-energy' },
       ]);
     } finally {
       fetchMock.mockRestore();
