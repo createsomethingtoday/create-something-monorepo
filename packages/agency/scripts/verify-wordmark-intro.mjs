@@ -19,7 +19,11 @@ try {
           const flight = document.querySelector('[data-agency-wordmark]');
           if (!flight) return;
           const { x, y, width } = flight.getBoundingClientRect();
-          window.__wordmarkSamples.push({ x, y, width });
+          const pieces = [...flight.querySelectorAll('[data-wordmark-piece]')];
+          const glyphs = [...flight.querySelectorAll('[data-wordmark-glyph]')];
+          window.__wordmarkSamples.push({ x, y, width, glyphs: glyphs.length,
+            rises: pieces.map(piece => Number(piece.transform.baseVal.consolidate()?.matrix.f ?? 0)),
+            progress: pieces.map(piece => Number(piece.transform.baseVal.consolidate()?.matrix.f ?? 0) / Number(piece.dataset.wordmarkRise)) });
           requestAnimationFrame(sample);
         };
         sample();
@@ -27,10 +31,15 @@ try {
     });
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => window.__wordmarkSampling);
+    assert.equal(await page.locator('.wordmark-intro > div').first().evaluate(node => getComputedStyle(node).backgroundColor), 'rgb(8, 8, 8)', 'Intro uses the top navigation surface');
+    assert.equal(await page.locator('[data-agency-wordmark] > svg').first().evaluate(node => getComputedStyle(node).filter), await page.locator('.nav-logo-asset').evaluate(node => getComputedStyle(node).filter), 'Wordmark uses the actual nav logo color treatment');
     await page.waitForTimeout(1750);
     const samples = await page.evaluate(() => window.__wordmarkSamples);
     const logo = await page.locator('.nav-logo-asset').boundingBox();
     assert.ok(samples.length > 4, 'Observe actual intermediate logo frames');
+    assert.equal(samples[0].glyphs, width > 640 ? 15 : 0, 'Desktop animates the fifteen original outlined letters; compact layout uses the original ring shapes');
+    assert.ok(samples.some(sample => sample.progress.some((progress, index) => index && Math.abs(progress - sample.progress[0]) > .04)), 'Original shapes reveal at distinct staggered positions');
+    assert.ok(samples.at(-1).rises.every(rise => Math.abs(rise) < .01), 'All original shapes settle completely before docking finishes');
     assert.ok(samples[0].width > samples.at(-1).width * 2, 'Large responsive logo docks down');
     assert.ok(Math.abs(samples.at(-1).x - logo.x) < 2, 'Dock aligns with real header x');
     assert.ok(Math.abs(samples.at(-1).y - logo.y) < 2, 'Dock aligns with real header y');
@@ -40,13 +49,16 @@ try {
     results.push({ width, frames: samples.length, start: samples[0], dock: samples.at(-1) });
     await context.close();
   }
-  for (const mode of ['reduce', 'stored', 'key', 'hidden-event', 'resize', 'hash']) {
+  for (const mode of ['reduce', 'stored', 'key', 'hidden-event', 'resize', 'hash', 'svg-failure']) {
     const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: mode === 'reduce' ? 'reduce' : 'no-preference' });
     const page = await context.newPage();
     page.on('pageerror', error => errors.push(error.message));
+    if (mode === 'svg-failure') await page.addInitScript(() => {
+      SVGGraphicsElement.prototype.getBBox = () => { throw new Error('SVG geometry unavailable fixture'); };
+    });
     if (mode === 'stored') await page.addInitScript(() => sessionStorage.setItem('agency-reduced-motion', 'true'));
     await page.goto(`${base}${mode === 'hash' ? '/#example' : ''}`, { waitUntil: 'domcontentloaded' });
-    if (['reduce', 'stored', 'hash'].includes(mode)) {
+    if (['reduce', 'stored', 'hash', 'svg-failure'].includes(mode)) {
       await page.waitForFunction(() => document.querySelector('.story-tools button'));
       assert.equal(await page.locator('.story-curtain').count(), 0, `${mode} skips intro`);
     } else {

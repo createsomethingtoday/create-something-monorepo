@@ -1,4 +1,6 @@
 import { get } from 'svelte/store';
+import horizontalLogo from '../../../static/brand/create-something-horizontal-black.svg?raw';
+import compactLogo from '../../../static/brand/create-something-mark-black.svg?raw';
 import { filmNavigationOpen, filmOverlayOpen, reducedFilmMotion } from './filmPlayback';
 
 let introConsumed = false;
@@ -52,24 +54,73 @@ export function startWordmarkIntro(root: HTMLElement) {
   // Explicitly re-enabling motion overrides an OS reduced-motion default.
   overlay.style.setProperty('display', 'block', 'important');
   const cover = document.createElement('div');
-  Object.assign(cover.style, { position: 'absolute', inset: '0', background: '#101112', transformOrigin: 'center top' });
+  Object.assign(cover.style, { position: 'absolute', inset: '0', background: 'rgb(var(--agency-nav-surface-rgb,8,8,8))', transformOrigin: 'center top' });
   const flying = document.createElement('div');
   flying.dataset.wordmarkFlight = ''; flying.dataset.agencyWordmark = '';
   Object.assign(flying.style, { position: 'absolute', left: `${left}px`, top: `${top}px`, width: `${width}px`, height: `${height}px`, transformOrigin: 'left top' });
-  const pieces: HTMLImageElement[] = [];
-  const count = innerWidth <= 640 ? 2 : 8;
-  for (let i = 0; i < count; i++) {
-    const mask = document.createElement('div');
-    Object.assign(mask.style, { position: 'absolute', left: `${i * 100 / count}%`, top: '0', width: `${100 / count + .03}%`, height: '100%', overflow: 'hidden' });
-    const piece = document.createElement('img');
-    piece.src = image.currentSrc || image.src;
-    piece.alt = '';
-    Object.assign(piece.style, { position: 'absolute', left: `${-i * width / count}px`, top: '0', width: `${width}px`, maxWidth: 'none', height: `${height}px`, filter: 'brightness(0) invert(1)', transform: 'translateY(110%)' });
-    mask.appendChild(piece); flying.appendChild(mask); pieces.push(piece);
-  }
+  const logoFilter = getComputedStyle(image).filter;
+  const compact = /create-something-mark-/.test(image.currentSrc || image.src);
+  const source = new DOMParser().parseFromString(compact ? compactLogo : horizontalLogo, 'image/svg+xml');
+  const svg = document.importNode(source.documentElement, true) as unknown as SVGSVGElement;
+  svg.setAttribute('aria-hidden', 'true');
+  svg.removeAttribute('role');
+  svg.removeAttribute('aria-labelledby');
+  Object.assign(svg.style, { width: '100%', height: '100%', maxWidth: 'none', display: 'block', filter: logoFilter });
+  flying.appendChild(svg);
   overlay.appendChild(cover); overlay.appendChild(flying); root.appendChild(overlay);
-  logoFrame.style.opacity = '0';
+
   deadline = setTimeout(finish, 1700);
+
+  // Keep the original outlined glyphs and their spacing. Each real shape rises
+  // inside its own mask; only the enclosing lockup moves during the dock.
+  const pieces: SVGGraphicsElement[] = [];
+  try {
+    const namespace = 'http://www.w3.org/2000/svg';
+    let definitions = svg.querySelector('defs');
+    if (!definitions) { definitions = document.createElementNS(namespace, 'defs'); svg.insertBefore(definitions, svg.firstChild); }
+    const mark = svg.querySelector<SVGGraphicsElement>(':scope > g');
+    const letters = [...svg.querySelectorAll<SVGGraphicsElement>('g[fill="currentColor"] > use')];
+    const targets = compact
+      ? [...svg.querySelectorAll<SVGGraphicsElement>('#cs-mark-v3 > path, #cs-mark-v3 > circle')]
+      : [...(mark ? [mark] : []), ...letters];
+    targets.forEach((target, index) => {
+      const bounds = target.getBBox();
+      if (!bounds.width || !bounds.height) return; // The exported space stays a space.
+      const parent = target.parentElement as unknown as SVGGraphicsElement;
+      const transform = parent.getCTM()!.inverse().multiply(target.getCTM()!);
+      const padding = target.tagName.toLowerCase() === 'use' ? .6 : 6;
+      const corners = [
+        [bounds.x - padding, bounds.y - padding],
+        [bounds.x + bounds.width + padding, bounds.y - padding],
+        [bounds.x - padding, bounds.y + bounds.height + padding],
+        [bounds.x + bounds.width + padding, bounds.y + bounds.height + padding]
+      ].map(([x, y]) => new DOMPoint(x, y).matrixTransform(transform));
+      const x = Math.min(...corners.map(point => point.x));
+      const y = Math.min(...corners.map(point => point.y));
+      const pieceWidth = Math.max(...corners.map(point => point.x)) - x;
+      const pieceHeight = Math.max(...corners.map(point => point.y)) - y;
+      const clip = document.createElementNS(namespace, 'clipPath');
+      const clipId = `agency-wordmark-reveal-${index}`;
+      clip.id = clipId; clip.setAttribute('clipPathUnits', 'userSpaceOnUse');
+      const rect = document.createElementNS(namespace, 'rect');
+      for (const [name, value] of Object.entries({ x, y, width: pieceWidth, height: pieceHeight })) rect.setAttribute(name, String(value));
+      clip.appendChild(rect); definitions!.appendChild(clip);
+      const mask = document.createElementNS(namespace, 'g');
+      mask.setAttribute('clip-path', `url(#${clipId})`);
+      const motion = document.createElementNS(namespace, 'g');
+      motion.dataset.wordmarkPiece = String(index);
+      if (target.tagName.toLowerCase() === 'use') motion.dataset.wordmarkGlyph = target.getAttribute('x') ?? String(index);
+      motion.dataset.wordmarkRise = String(pieceHeight * 1.15);
+      motion.setAttribute('transform', `translate(0 ${pieceHeight * 1.15})`);
+      parent.insertBefore(mask, target); mask.appendChild(motion); motion.appendChild(target);
+      pieces.push(motion);
+    });
+  } catch {
+    // Unsupported SVG geometry must never strand a cover or stop page setup.
+    finish();
+    return { destroy: finish };
+  }
+  logoFrame.style.opacity = '0';
   window.addEventListener('keydown', finish, { signal: abort.signal });
   window.addEventListener('pointerdown', finish, { signal: abort.signal });
   window.addEventListener('resize', finish, { signal: abort.signal });
@@ -84,7 +135,7 @@ export function startWordmarkIntro(root: HTMLElement) {
   void import('gsap').then(({ gsap }) => {
     if (done) return;
     timeline = gsap.timeline({ onComplete: finish })
-      .fromTo(pieces, { yPercent: 110, y: 0 }, { yPercent: 0, duration: .40, stagger: .035, ease: 'power3.out' })
+      .fromTo(pieces, { y: (index: number) => Number(pieces[index].dataset.wordmarkRise) }, { y: 0, duration: .32, stagger: .018, ease: 'power3.out' })
       .to(flying, { x: target.left - left, y: target.top - top, scale: target.width / width, duration: .62, ease: 'power3.inOut' }, .62)
       .to(cover, { yPercent: -100, duration: .62, ease: 'power3.inOut' }, .66);
   }).catch(finish);
