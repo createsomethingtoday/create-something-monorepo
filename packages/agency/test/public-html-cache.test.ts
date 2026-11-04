@@ -11,7 +11,7 @@ import {
 test('a release cache key cannot reuse previously cached public HTML', async () => {
   const request = new Request('https://createsomething.agency/');
   const previousRelease = new URL(request.url);
-  previousRelease.searchParams.set('__agency_html_revision', 'agency-webflow-usage-technical-review-20261103');
+  previousRelease.searchParams.set('__agency_html_revision', 'agency-team-credit-20261104');
   const legacyCache = new Map([
     [request.url, '<link href="/styles/agency/home.css">'],
     [previousRelease.href, '<p>Previous release copy</p>']
