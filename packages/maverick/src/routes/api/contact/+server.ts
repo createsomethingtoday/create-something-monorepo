@@ -173,7 +173,7 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 		// Send notification to sales team
 		const notificationRecipients = [
 			'calvin@maverickmetals.com',
-			'matthew@maverickmetals.com'
+			'matthew.fontenot@maverickx.com'
 		];
 
 		const notificationPromise = fetch('https://api.resend.com/emails', {
