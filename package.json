@@ -134,6 +134,8 @@
     "agent:solo-loop:starter": "node scripts/agent-solo-loop.mjs --starter",
     "agent:solo-loop:check": "node scripts/agent-solo-loop.mjs --check",
     "agent:solo-loop:test": "node --test scripts/test/agent-solo-loop.test.mjs",
+    "operator-agent:a3-proof": "node scripts/operator-agent-a3-ownership-proof.mjs",
+    "operator-agent:a3-proof:test": "node --test scripts/test/operator-agent-a3-ownership-proof.test.mjs",
     "operator-agent": "node scripts/operator-agent-system.mjs",
     "operator-agent:readiness": "node scripts/operator-agent-system.mjs readiness",
     "operator-agent:profiles": "node scripts/operator-agent-system.mjs profiles",
