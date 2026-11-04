@@ -580,7 +580,7 @@ async function loadSubcategoryPills(
   params: SearchParams,
   relaxedQuery = false,
   cacheVersion?: string,
-): Promise<Array<{ name: string; slug: string; count: number }>> {
+): Promise<Array<{ name: string; slug: string; canonicalSlug: string; count: number }>> {
   const groupSlug =
     params.categoryGroupSlug ?? (params.childCategorySlug ? await resolveCategoryGroupSlugForChild(env, params.childCategorySlug) : null);
   if (!groupSlug) return [];
@@ -613,6 +613,7 @@ async function loadSubcategoryPills(
       SELECT
         MIN(tcm.child_category_name) AS name,
         COALESCE(public_child_slugs.alias_slug, tcm.child_category_slug) AS slug,
+        MIN(tcm.child_category_slug) AS canonical_slug,
         COUNT(DISTINCT tcm.template_document_id) AS count
       FROM filtered
       JOIN template_category_memberships tcm
@@ -629,6 +630,7 @@ async function loadSubcategoryPills(
     return (membershipResult.results ?? []).map((row) => ({
       name: row.name,
       slug: row.slug,
+      canonicalSlug: row.canonical_slug || row.slug,
       count: Number(row.count),
     }));
   }
@@ -644,6 +646,7 @@ async function loadSubcategoryPills(
       SELECT
         MIN(tcc.child_category_name) AS name,
         COALESCE(public_child_slugs.alias_slug, tcc.child_category_slug) AS slug,
+        MIN(tcc.child_category_slug) AS canonical_slug,
         COUNT(DISTINCT tcc.template_document_id) AS count
       FROM filtered
       JOIN template_child_categories tcc ON tcc.template_document_id = filtered.id
@@ -657,6 +660,7 @@ async function loadSubcategoryPills(
   return (result.results ?? []).map((row) => ({
     name: row.name,
     slug: row.slug,
+    canonicalSlug: row.canonical_slug || row.slug,
     count: Number(row.count),
   }));
   });
@@ -682,6 +686,17 @@ function buildTags(names: string[], slugs: string[]): Array<{ name: string; slug
   return names.map((name, index) => ({ name, slug: slugs[index] ?? '' }));
 }
 
+// Live subcategory pages use the Templates CMS slug (`fitness-and-gym-websites`),
+// not the short public API slug. One legacy CMS slug has no suffix.
+const SUBCATEGORY_PAGE_SLUG_OVERRIDES: Record<string, string> = {
+  'events-websites': 'events',
+};
+
+function subcategoryPageUrl(canonicalSlug: string): string {
+  const pageSlug = SUBCATEGORY_PAGE_SLUG_OVERRIDES[canonicalSlug] ?? canonicalSlug;
+  return `https://webflow.com/templates/subcategory/${pageSlug}`;
+}
+
 function buildChildCategories(
   names: string[],
   slugs: string[],
@@ -693,7 +708,7 @@ function buildChildCategories(
     return {
       name,
       slug: publicSlug,
-      url: `https://webflow.com/templates/subcategory/${publicSlug}`,
+      url: subcategoryPageUrl(canonicalSlug),
     };
   });
 }
@@ -889,7 +904,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams, cacheVe
       return {
         name: pill.name,
         slug: publicSlug,
-        url: `https://webflow.com/templates/subcategory/${publicSlug}`,
+        url: subcategoryPageUrl(pill.canonicalSlug ?? pill.slug),
         count: Number(pill.count),
         active: publicSlug === (params.childCategorySlug ? childSlugMap[params.childCategorySlug] ?? params.childCategorySlug : ''),
       };

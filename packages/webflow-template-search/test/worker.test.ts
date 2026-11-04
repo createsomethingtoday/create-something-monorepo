@@ -3559,13 +3559,25 @@ describe('webflow-template-search worker', () => {
         {
           name: 'Renewable energy',
           slug: 'renewable-energy',
-          url: 'https://webflow.com/templates/subcategory/renewable-energy',
+          url: 'https://webflow.com/templates/subcategory/renewable-energy-websites',
         },
         {
           name: 'Nature & Conservation',
           slug: 'nature-and-conservation',
-          url: 'https://webflow.com/templates/subcategory/nature-and-conservation',
+          url: 'https://webflow.com/templates/subcategory/nature-and-conservation-websites',
         },
+      ]);
+
+      const pillSearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?category_group_slug=environment-websites&include=pills'),
+        env,
+      );
+      const pillPayload = (await pillSearch.json()) as {
+        subcategory_pills: Array<{ slug: string; url: string }>;
+      };
+      expect(pillPayload.subcategory_pills.map((pill) => ({ slug: pill.slug, url: pill.url }))).toEqual([
+        { slug: 'nature-and-conservation', url: 'https://webflow.com/templates/subcategory/nature-and-conservation-websites' },
+        { slug: 'renewable-energy', url: 'https://webflow.com/templates/subcategory/renewable-energy-websites' },
       ]);
     } finally {
       fetchMock.mockRestore();
