@@ -687,9 +687,12 @@ function buildTags(names: string[], slugs: string[]): Array<{ name: string; slug
 }
 
 // Live subcategory pages use the Templates CMS slug (`fitness-and-gym-websites`),
-// not the short public API slug. One legacy CMS slug has no suffix.
+// not the short public API slug. A few legacy CMS slugs don't follow that pattern.
 const SUBCATEGORY_PAGE_SLUG_OVERRIDES: Record<string, string> = {
   'events-websites': 'events',
+  'music-events-and-festivals-websites': 'music-events-and-festivals--websites',
+  'renewable-energy-websites': 'renewable-energy',
+  'sports-websites': 'sports',
 };
 
 function subcategoryPageUrl(canonicalSlug: string): string {
