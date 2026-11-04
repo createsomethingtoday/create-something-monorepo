@@ -84,7 +84,7 @@
   });
 </script>
 
-<svelte:head><link rel="stylesheet" href="/styles/agency/story-home.css" /><link rel="preload" as="image" href="/images/agency-stories/one-manual-gap.webp" fetchpriority="high" /></svelte:head>
+<svelte:head><link rel="stylesheet" href="/styles/agency/story-home.css?v=agency-handoff-story-20261104" /><link rel="preload" as="image" href="/images/agency-stories/one-manual-gap.webp" fetchpriority="high" /></svelte:head>
 <div class="agency-home" bind:this={root}>
   <div class="page-progress" aria-hidden="true"></div>
   <div class="story-tools"><button type="button" onclick={toggleFilmMotion} aria-pressed={$reducedFilmMotion}>{$reducedFilmMotion ? 'Enable motion' : 'Motion off'}</button></div>
