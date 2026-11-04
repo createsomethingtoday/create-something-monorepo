@@ -6,14 +6,14 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "harness": "./dist/cli.js",
-    "gt-smart-sling": "./dist/bin/gt-smart-sling.js",
-    "gt-prime": "./dist/bin/gt-prime.js",
-    "gt-status": "./dist/bin/gt-status.js",
-    "gt-rig": "./dist/bin/gt-rig.js",
-    "gt-completion": "./dist/bin/gt-completion.js",
-    "routing-report": "./dist/bin/routing-report.js",
-    "ralph-escalate": "./dist/bin/ralph-escalate.js"
+    "harness": "./bin/harness.js",
+    "gt-smart-sling": "./bin/gt-smart-sling.js",
+    "gt-prime": "./bin/gt-prime.js",
+    "gt-status": "./bin/gt-status.js",
+    "gt-rig": "./bin/gt-rig.js",
+    "gt-completion": "./bin/gt-completion.js",
+    "routing-report": "./bin/routing-report.js",
+    "ralph-escalate": "./bin/ralph-escalate.js"
   },
   "exports": {
     ".": {
@@ -22,6 +22,7 @@
     }
   },
   "files": [
+    "bin",
     "dist"
   ],
   "scripts": {
