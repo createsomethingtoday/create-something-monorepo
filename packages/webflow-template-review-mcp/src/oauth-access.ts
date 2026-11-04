@@ -35,6 +35,7 @@ export async function fetchIdentityUserInfo(input: {
   issuer: string;
   token: string;
   expectedResource: string;
+  additionalExpectedResources?: Iterable<string>;
   fetch?: typeof globalThis.fetch;
 }): Promise<IdentityUserInfo> {
   const issuer = input.issuer.trim().replace(/\/+$/, '');
@@ -74,10 +75,14 @@ export async function fetchIdentityUserInfo(input: {
   const email = typeof payload.email === 'string' ? payload.email.trim().toLowerCase() : '';
   const resource = typeof payload.resource === 'string' ? payload.resource.trim().replace(/\/+$/, '') : '';
   const expectedResource = input.expectedResource.trim().replace(/\/+$/, '');
+  const expectedResources = new Set([
+    expectedResource,
+    ...Array.from(input.additionalExpectedResources ?? [], (candidate) => candidate.trim().replace(/\/+$/, '')),
+  ]);
   if (!subject || !email) {
     throw new IdentityUserInfoError('invalid_response', 502, 'CREATE SOMETHING Identity userinfo is incomplete.');
   }
-  if (!resource || resource !== expectedResource) {
+  if (!resource || !expectedResources.has(resource)) {
     throw new IdentityUserInfoError('invalid_token', 401, 'OAuth access token is not valid for this resource.');
   }
   if (payload.email_verified !== true) {
@@ -135,6 +140,7 @@ export async function resolveIdentityOAuthRequest(input: {
   request: Request;
   issuer: string;
   expectedResource: string;
+  additionalExpectedResources?: Iterable<string>;
   allowedDomain: string;
   allowedEmails: Set<string>;
   directory: ReviewerDirectory;
@@ -154,6 +160,7 @@ export async function resolveIdentityOAuthRequest(input: {
       issuer: input.issuer,
       token,
       expectedResource: input.expectedResource,
+      additionalExpectedResources: input.additionalExpectedResources,
       fetch: input.fetch,
     });
   } catch (error) {

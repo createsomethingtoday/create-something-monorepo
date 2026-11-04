@@ -1,0 +1,30 @@
+{
+  "name": "@create-something/webflow-template-review-cloud",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "check": "tsc --noEmit",
+    "test": "vitest run",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "webflow cloud deploy"
+  },
+  "dependencies": {
+    "next": "^15.5.13",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260621.1",
+    "@opennextjs/cloudflare": "1.8.0",
+    "@types/node": "^24.10.9",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.7.2",
+    "vitest": "^4.0.18",
+    "wrangler": "^4.103.0"
+  }
+}
