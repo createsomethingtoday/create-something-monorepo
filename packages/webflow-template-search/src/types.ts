@@ -466,4 +466,5 @@ export interface PillRow {
   name: string;
   slug: string;
   count: number;
+  canonical_slug?: string | null;
 }
