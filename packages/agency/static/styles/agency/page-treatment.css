@@ -143,6 +143,9 @@ body.design-preview .registry-arc__hero.agency-preview-hero h1{font-size:clamp(2
 /* Page-family composition: the subject sets the space; working tasks keep priority. */
 body.design-preview .agency-preview-media figcaption{font-size:11px!important;line-height:1.6!important;overflow-wrap:anywhere}
 body.design-preview .agency-preview-hero[data-agency-composition='wide']{grid-template-columns:minmax(0,1fr)!important}
+/* Wide review scenes follow the complete reading column; never create an implicit second track. */
+body.design-preview .technical-review .opening.agency-preview-hero[data-agency-composition='wide']>.opening-copy{grid-column:1;grid-row:1;min-width:0}
+body.design-preview .technical-review .opening.agency-preview-hero[data-agency-composition='wide']>.agency-preview-media{grid-column:1;grid-row:2}
 /* Clear heroes flatten their inner layout into this grid. Wide imagery must
    use its single explicit column, or column 2 collapses the copy to zero. */
 body.design-preview .clear-page-section--hero.agency-preview-hero[data-agency-composition='wide']>.agency-preview-media{grid-column:1;grid-row:2}
