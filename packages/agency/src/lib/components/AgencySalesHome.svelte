@@ -1,33 +1,23 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { webflowStages } from '$lib/data/webflowMarketplace';
-  import { scrollEntrance } from '@create-something/canon/motion';
-  import { enhanceHomeInteractions } from '$lib/motion/homeInteractions';
-  import { enhanceSceneReveal } from '$lib/motion/sceneReveal';
-  import { enhanceImageEntrance } from '$lib/motion/imageEntrance';
   import { enhanceEvidenceDisclosure } from '$lib/motion/evidenceDisclosure';
   import { page } from '$app/stores';
-  import content from '$lib/content/agency-home.html?raw';
-  import { filmOverlayOpen } from '$lib/motion/filmPlayback';
+  import rawContent from '$lib/content/agency-story-home.html?raw';
+  import { PUBLIC_PRICING } from '$lib/data/publicPricing';
+  const content = rawContent.replaceAll('$900/month', PUBLIC_PRICING.membership.focused.label).replaceAll('$2,500/month', PUBLIC_PRICING.membership.team.label);
+  import { reducedFilmMotion, toggleFilmMotion, filmOverlayOpen } from '$lib/motion/filmPlayback';
   import FilmCollection from './films/FilmCollection.svelte';
   import BuiltWork from './BuiltWork.svelte';
   import SelectedClientWork from './SelectedClientWork.svelte';
+  import { enhanceStoryHome } from '$lib/motion/storyHome';
   let root: HTMLDivElement;
   let libraryOpen = $state(false);
   $effect(() => { if ($page.url.searchParams.has('film') || $page.url.hash === '#work') libraryOpen = true; });
   onMount(() => {
     const abort = new AbortController();
-    const interactions = enhanceHomeInteractions(root);
-    const handoffImage = root.querySelector<HTMLImageElement>('[data-image-entrance="handoff"]');
-    const handoffEntrance = handoffImage ? enhanceImageEntrance(handoffImage, { mode: 'scroll' }) : undefined;
-    const disposeEvidence = Array.from(root.querySelectorAll<HTMLDetailsElement>('[data-evidence-reveal], .boundary details, .cc-disclosure, .cc-faq details'), enhanceEvidenceDisclosure);
-    const image = root.querySelector<HTMLImageElement>('#journey-image');
-    const scenes = {
-      learn: { src: image?.getAttribute('src') ?? '/images/agency-sales/team.webp', alt: 'Concept illustration: teammates work through an example with a shared guide.', caption: 'Learn / Work through an example together.' },
-      build: { src: '/images/agency-sales/macro.webp', alt: 'Concept illustration: teammates inspect the join between connected graphite modules.', caption: 'Build / Connect the tools. Inspect the join.' },
-      run: { src: '/images/agency-sales/run-reviewed-v1.webp', alt: 'Original conceptual illustration: teammates operate a completed rail tool while their guide reviews the result.', caption: 'Run / Review the result. Agree the next step.' }
-    };
-    const sceneReveal = enhanceSceneReveal(root, scenes);
+    const story = enhanceStoryHome(root);
+    const disposeEvidence = Array.from(root.querySelectorAll<HTMLDetailsElement>('details'), enhanceEvidenceDisclosure);
     const dialog = root.querySelector<HTMLDialogElement>('#work-dialog');
     let originalOverflow = '';
     let opener: HTMLElement | null = null;
@@ -83,9 +73,7 @@
     }, { signal: abort.signal });
     return () => {
       abort.abort();
-      interactions.destroy();
-      handoffEntrance?.destroy();
-      sceneReveal.destroy();
+      story.destroy();
       disposeEvidence.forEach(dispose => dispose());
       dialog?.querySelector('video')?.pause();
       if (dialog?.open) {
@@ -96,8 +84,10 @@
   });
 </script>
 
-<svelte:head><link rel="stylesheet" href="/styles/agency/home.css?v=agency-intake-story-20261103" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /></svelte:head>
-<div class="agency-home" bind:this={root} use:scrollEntrance>
+<svelte:head><link rel="stylesheet" href="/styles/agency/story-home.css" /><link rel="preload" as="image" href="/images/agency-stories/one-manual-gap.webp" fetchpriority="high" /></svelte:head>
+<div class="agency-home" bind:this={root}>
+  <div class="page-progress" aria-hidden="true"></div>
+  <div class="story-tools"><button type="button" onclick={toggleFilmMotion} aria-pressed={$reducedFilmMotion}>{$reducedFilmMotion ? 'Enable motion' : 'Motion off'}</button></div>
   {@html content}
   <details id="work-library" class="work-library" bind:open={libraryOpen}>
     <summary>Explore the work library <span>Films, source and field reports +</span></summary>

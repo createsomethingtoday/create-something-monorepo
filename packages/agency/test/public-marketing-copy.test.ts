@@ -181,29 +181,29 @@ test('public agency surfaces explain ownership and provider roles', () => {
 test('the builder-facing homepage retains commercial terms, film evidence and direct inspection links', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
   const salesHome = readFileSync(new URL('../src/lib/components/AgencySalesHome.svelte', import.meta.url), 'utf8');
-  const content = readFileSync(new URL('../src/lib/content/agency-home.html', import.meta.url), 'utf8');
+  const content = readFileSync(new URL('../src/lib/content/agency-story-home.html', import.meta.url), 'utf8');
   const films = readFileSync(new URL('../src/lib/components/films/FilmCollection.svelte', import.meta.url), 'utf8');
   const registry = readFileSync(new URL('../src/lib/data/filmStories.ts', import.meta.url), 'utf8');
   const services = readFileSync(new URL('../src/routes/services/+page.svelte', import.meta.url), 'utf8');
   assert.match(home, /<AgencySalesHome/);
-  assert.match(salesHome, /import content from '\$lib\/content\/agency-home\.html\?raw'/);
+  assert.match(salesHome, /import rawContent from '\$lib\/content\/agency-story-home\.html\?raw'/);
   assert.match(salesHome, /\{@html content\}/);
-  assert.match(content, /AI-native Technical support/);
-  assert.match(content, /Put AI to work\./);
+  assert.match(content, /We connect your tools and AI/);
+  assert.match(content, /Your tools should<br>work together\./);
   assert.match(content, /under your agreement/);
-  assert.match(content, /One agreed workstream/);
+  assert.match(content, /One workstream\. One milestone per month/);
   assert.match(content, /production incident response need separate agreements/);
-  assert.match(content, /\$900<span>\/month/);
-  assert.match(content, /\$2,500<span>\/month/);
-  assert.match(content, /href="#plans"/);
+  assert.match(content, /Focused · \$900\/month/);
+  assert.match(content, /Team · \$2,500\/month/);
+  assert.match(content, /id="plans"/);
   assert.match(content, /href="\/book\?source=agency&intent=workflow-mapping&lane=workflow_infrastructure"/);
   assert.match(content, /You approve the budget first/);
   assert.match(content, /href="\/services"/);
   assert.match(content, /href="\/case-studies\/webflow-marketplace"/);
-  assert.match(content, /Webflow did not commission this work through CREATE SOMETHING/);
+  assert.match(content, /independently of CREATE SOMETHING/);
   assert.match(content, /src="\/films\/webflow-marketplace\/overview\.mp4"/);
-  assert.match(content, /Original conceptual illustration/);
-  assert.match(content, /no measured business outcome/);
+  assert.match(content, /Illustrative example/);
+  assert.match(content, /Recorded interfaces and test replays/);
   assert.match(services, /Control starts at \$900\/month/);
   assert.match(registry, /Your next step, already prepared/);
   assert.match(registry, /tools and workflows that help agents do useful work/);
@@ -221,10 +221,10 @@ test('commercial decision routes explain the task, delivery, ownership, and proo
   const layout = read('+layout.svelte');
   assert.match(layout, /label: 'Technical Support', href: '\/services'/);
   assert.match(layout, /label: 'What You Keep', href: '\/stack'/);
-  const homeContent = readFileSync(new URL('../src/lib/content/agency-home.html', import.meta.url), 'utf8');
-  assert.match(homeContent, /Connect it to the work/);
-  assert.match(homeContent, /Review. Keep improving/);
-  assert.match(homeContent, /Your team keeps approval authority/);
+  const homeContent = readFileSync(new URL('../src/lib/content/agency-story-home.html', import.meta.url), 'utf8');
+  assert.match(homeContent, /We connect your tools and AI/);
+  assert.match(homeContent, /We make the<br>handoff reliable/);
+  assert.match(homeContent, /You approve the change/);
   assert.match(read('services/+page.svelte'), /Bring a workflow, software problem or existing product/);
   assert.match(read('services/+page.svelte'), /Your team keeps approval authority/);
   // Plan detail is consolidated in the component rendered by Services.
@@ -354,12 +354,12 @@ test('commercial conversion handoffs use editorial propositions while task surfa
     const openings = conversionHandoffOpenings(source);
 
     if (!route) {
-      const content = readFileSync(new URL('../src/lib/content/agency-home.html', import.meta.url), 'utf8');
+      const content = readFileSync(new URL('../src/lib/content/agency-story-home.html', import.meta.url), 'utf8');
       assert.match(source, /<AgencySalesHome/);
       assert.match(content, /id="plans"/);
-      assert.match(content, /Discuss Focused/);
-      assert.match(content, /Discuss Team/);
-      assert.match(content, /href="\/contact\?source=membership&amp;intent=membership/);
+      assert.match(content, /Focused · \$900/);
+      assert.match(content, /Team · \$2,500/);
+      assert.match(content, /href="\/book\?source=agency&intent=workflow-mapping&lane=workflow_infrastructure"/);
       assert.match(content, /id="next"/);
       assert.equal(openings.length, 0, 'homepage owns its native plan and conversational conversion sections');
       continue;
@@ -467,12 +467,12 @@ test('the Practice argument is editorial while its operating artifacts stay fiel
 test('the compact homepage preserves buying boundaries and detailed destinations', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
   const offer = readFileSync(new URL('../src/lib/components/MembershipOffer.svelte', import.meta.url), 'utf8');
-  const content = readFileSync(new URL('../src/lib/content/agency-home.html', import.meta.url), 'utf8');
-  assert.match(content, /which records can be read, which actions can run, and which need approval/);
+  const content = readFileSync(new URL('../src/lib/content/agency-story-home.html', import.meta.url), 'utf8');
+  assert.match(content, /You approve the change/);
   assert.match(home, /production incident response need separate agreements/);
   assert.match(home, /AI development, testing and production usage, hosting and third-party services are budgeted separately/);
   assert.match(home, /You approve the budget first/);
-  assert.match(content, /If usage cannot be confirmed, pause for review/);
+  assert.match(content, /Managed Control is a separate service/);
   assert.match(home, /Cancel before your next renewal/);
   assert.match(offer, /href="\/services"/);
   assert.match(offer, /href="\/stack"/);
@@ -482,11 +482,10 @@ test('the compact homepage preserves buying boundaries and detailed destinations
 
 test('the homepage has one FAQ and avoids redundant standalone explanations', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
-  const content = readFileSync(new URL('../src/lib/content/agency-home.html', import.meta.url), 'utf8');
+  const content = readFileSync(new URL('../src/lib/content/agency-story-home.html', import.meta.url), 'utf8');
   assert.match(home, /<AgencySalesHome/);
-  assert.equal((content.match(/class="cc-faq"/g) ?? []).length, 1);
-  assert.match(content, /<details class="cc-disclosure"><summary>Before we begin/);
-  const faq = content.match(/<div class="cc-faq">([\s\S]*?)<\/div><\/details>/)?.[1] ?? '';
+  assert.equal((content.match(/class="chapter cc-faq"/g) ?? []).length, 1);
+  const faq = content.match(/<section class="chapter cc-faq"[^>]*>([\s\S]*?)<\/section>/)?.[1] ?? '';
   assert.equal((faq.match(/<details>/g) ?? []).length, 5);
   for (const question of ['What needs a separate agreement?', 'What costs extra?', 'Who delivers the service?', 'What does our team keep?', 'Can we cancel?']) {
     assert.ok(faq.includes(`<summary>${question}</summary>`), `native FAQ must retain ${question}`);
@@ -495,7 +494,7 @@ test('the homepage has one FAQ and avoids redundant standalone explanations', ()
   assert.match(faq, /You approve the budget first/);
   const visibleFaq = [...faq.matchAll(/<details><summary>(.*?)<\/summary>([\s\S]*?)<\/details>/g)].map(([, question, answer]) => ({
     question,
-    answer: [...answer.matchAll(/<p>([\s\S]*?)<\/p>/g)]
+    answer: [...answer.matchAll(/<p(?:\s[^>]*)?>([\s\S]*?)<\/p>/g)]
       .map(([, paragraph]) => paragraph.replace(/<[^>]*>/g, ''))
       .join(' ')
   }));
