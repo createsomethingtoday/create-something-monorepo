@@ -18,3 +18,45 @@ export const webflowUsageSnapshot = {
     { label: 'Asset-update completion events', count: 251 }
   ]
 } as const;
+
+export type UsageStudy = 'all' | 'review-mcp' | 'asset-dashboard';
+
+/** Definitions share approved snapshot values; no derived ROI or conversion rate. */
+export const webflowUsageMetrics = [
+  {
+    id: 'template-review', study: 'review-mcp', label: 'Template Review MCP',
+    count: webflowUsageSnapshot.review[0].calls, unit: 'recorded tool calls',
+    definition: 'Calls to tools that retrieve template review context, run checks, and support review actions.',
+    detail: '87 tool failures were recorded within these calls. A tool call is one step in a review, not a completed review.',
+    limit: 'This count does not establish review quality or final approval.',
+    source: 'Cloudflare D1 · tool-invocation records',
+    href: '/case-studies/webflow-marketplace/review-mcp'
+  },
+  {
+    id: 'app-review', study: 'review-mcp', label: 'App Review MCP',
+    count: webflowUsageSnapshot.review[1].calls, unit: 'recorded tool calls',
+    definition: 'Calls to tools that bring app versions, review context, and submission evidence into the reviewer’s workflow.',
+    detail: 'No tool failures were recorded in this window. Recording is best effort, so that is not a guarantee of perfect reliability.',
+    limit: 'Tool results do not establish review quality or final approval.',
+    source: 'Cloudflare D1 · tool-invocation records',
+    href: '/case-studies/webflow-marketplace/review-mcp'
+  },
+  {
+    id: 'dashboard-loads', study: 'asset-dashboard', label: 'Dashboard loads',
+    count: webflowUsageSnapshot.dashboard[0].count, unit: 'recorded load events',
+    definition: 'Events recorded when the earlier Asset Dashboard loaded. Repeat visits can produce more than one event.',
+    detail: 'These records belong to the legacy application, not the Cloud port or native Creator Hub.',
+    limit: 'A load event does not establish a unique creator or a completed task.',
+    source: 'Cloudflare D1 · legacy Dashboard analytics',
+    href: '/case-studies/webflow-marketplace/asset-dashboard'
+  },
+  {
+    id: 'asset-updates', study: 'asset-dashboard', label: 'Asset updates',
+    count: webflowUsageSnapshot.dashboard[1].count, unit: 'completion events',
+    definition: 'Asset-update completion events recorded by the earlier Asset Dashboard.',
+    detail: 'A completion event is an application event label, not an independent check of the saved business record. Events can be missed or repeated.',
+    limit: 'This count does not describe the Cloud port or native Creator Hub.',
+    source: 'Cloudflare D1 · legacy Dashboard analytics',
+    href: '/case-studies/webflow-marketplace/asset-dashboard'
+  }
+] as const;
