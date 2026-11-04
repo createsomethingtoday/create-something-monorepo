@@ -18,6 +18,8 @@ try {
       await page.setViewportSize({ width, height: 900 });
       await page.waitForTimeout(250);
       assert.match(await page.locator('#hero-title').innerText(), /Your tools should\s+work together/);
+      assert.equal(await page.locator('.agency-home > .hero + .signal-band').count(), 1, 'One workflow strip directly follows the hero');
+      assert.equal(await page.locator('.signal-band canvas').evaluate(node => node.getBoundingClientRect().height), width <= 640 ? 108 : 145, 'Strip keeps its established responsive height');
       assert.equal(await page.locator('.shared-visual img').count(), 1, 'One uninterrupted conceptual image');
       assert.match(await page.locator('.shared-visual img').getAttribute('src'), /one-manual-gap/);
       assert.equal(await page.locator('.shared-visual svg, [data-scene-previous]').count(), 0, 'No targeting overlay or competing image layer');
