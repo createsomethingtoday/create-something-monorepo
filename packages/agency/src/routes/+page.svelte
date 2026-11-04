@@ -49,7 +49,7 @@
     },
     {
       "question": "Who delivers the service?",
-      "answer": "Micah Johnson and Huzaifa, our forward-deployed engineer, deliver the service as a small team, with agents assisting the work. The dedicated member portal is in development. We confirm resource access, session times and response times before payment."
+      "answer": "Micah Johnson and Huzaifa Tofeeq, our forward-deployed engineer, deliver the service as a small team, with agents assisting the work. The dedicated member portal is in development. We confirm resource access, session times and response times before payment."
     },
     {
       "question": "What does our team keep?",
