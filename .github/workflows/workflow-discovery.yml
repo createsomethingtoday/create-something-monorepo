@@ -37,6 +37,8 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: pnpm
+      - name: Verify bootstrap runtime precedence
+        run: node --test scripts/test/bootstrap-runtime-path.test.mjs
       - name: Bootstrap pinned dependencies
         run: pnpm bootstrap:worktree
       - name: Qualify discovery and repair boundaries
