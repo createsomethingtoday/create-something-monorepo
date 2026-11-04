@@ -70,7 +70,7 @@ try {
 
   for (const route of ['/', '/services']) {
     await goto(page, route);
-    const selectors = route === '/' ? ['.boundary details', '.cc-disclosure', '.cc-faq details'] : ['.membership-agreement-details', '.service-work-library', '.service-path-library'];
+    const selectors = route === '/' ? ['.support', '.cc-faq details'] : ['.membership-agreement-details', '.service-work-library', '.service-path-library'];
     for (const selector of selectors) {
       const details = page.locator(selector).first();
       const summary = details.locator(':scope > summary');
@@ -95,14 +95,14 @@ try {
       results.push({ route, disclosure: selector, pointerKeyboardReversal: true });
     }
     await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
-    assert.equal(await page.locator(route === '/' ? '.boundary details:not([open]),.cc-disclosure:not([open]),.cc-faq details:not([open])' : '.membership-agreement-details:not([open]),.service-work-library:not([open]),.service-path-library:not([open])').count(), 0, 'Printing reveals owned details');
+    assert.equal(await page.locator(route === '/' ? '.support:not([open]),.cc-faq details:not([open])' : '.membership-agreement-details:not([open]),.service-work-library:not([open]),.service-path-library:not([open])').count(), 0, 'Printing reveals owned details');
     await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
   }
 
   for (const route of ['/', '/services']) {
     const staticPage = await browser.newPage({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
     await staticPage.goto(`${base}${route}`, { waitUntil: 'domcontentloaded' });
-    const selector = route === '/' ? '.boundary details' : '.membership-agreement-details';
+    const selector = route === '/' ? '.support' : '.membership-agreement-details';
     await staticPage.locator(`${selector} > summary`).first().click();
     assert.equal(await staticPage.locator(selector).first().evaluate(node => node.open), true, 'Native disclosure works without JavaScript');
     if (route === '/services') assert.equal(await staticPage.locator('.inline-story-visual:visible').count(), 3);

@@ -6,7 +6,9 @@
   import AgencyPageTreatment from '$lib/components/AgencyPageTreatment.svelte';
   import CanonBrandSignature from '$lib/components/CanonBrandSignature.svelte';
   import '$lib/styles/operator-palette.css';
-  import { initializeFilmMotion, filmNavigationOpen } from '$lib/motion/filmPlayback';
+  import { initializeFilmMotion, filmNavigationOpen, reducedFilmMotion, filmOverlayOpen } from '$lib/motion/filmPlayback';
+  import { get } from 'svelte/store';
+  import { createRouteEntrance, shouldEnterHomeBoundary } from '$lib/motion/routeEntrance';
   import { filmStories } from '$lib/data/filmStories';
   import { Navigation, Footer, LayoutSEO, ModeIndicator } from '@create-something/canon';
   import PageAnnotations from '$lib/annotations/PageAnnotations.svelte';
@@ -48,8 +50,10 @@
 
   // View Transitions API - Hermeneutic Navigation
   // .agency: Efficient (200ms)
+  const routeEntrance = createRouteEntrance();
   let activeRouteTransition: ViewTransition | undefined;
   onNavigate((navigation) => {
+    routeEntrance.cancel();
     activeRouteTransition?.skipTransition();
     // Keep back/forward restoration, but force top-scroll on normal page links
     if (navigation.type !== 'popstate' && !navigation.to?.url.hash) {
@@ -65,7 +69,7 @@
     if (!document.startViewTransition) return;
     if (
       typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      get(reducedFilmMotion)
     )
       return;
 
@@ -224,6 +228,14 @@
     ] }
   ];
   onMount(initializeFilmMotion);
+  onMount(() => {
+    const cancelWhenBlocked = () => {
+      if (document.hidden || get(reducedFilmMotion) || get(filmNavigationOpen) || get(filmOverlayOpen)) routeEntrance.cancel();
+    };
+    const disposers = [reducedFilmMotion, filmNavigationOpen, filmOverlayOpen].map(store => store.subscribe(cancelWhenBlocked));
+    document.addEventListener('visibilitychange', cancelWhenBlocked);
+    return () => { disposers.forEach(dispose => dispose()); routeEntrance.cancel(); document.removeEventListener('visibilitychange', cancelWhenBlocked); };
+  });
   function getAgencyGlobalAnalyticsMetadata(pathname: string): Record<string, unknown> | undefined {
     const experimentMetadata = getAgencyMarketingExperimentMetadata(pathname);
     const contentMetadata = getAgencyContentAssetAnalyticsMetadata(pathname);
@@ -252,11 +264,20 @@
     }
     const element = document.getElementById(id);
     if (element) {
+      if (!element.hasAttribute('tabindex')) element.setAttribute('tabindex', '-1');
+      element.focus({ preventScroll: true });
       const nav = document.querySelector('.nav-fixed');
       const clearance = (nav?.getBoundingClientRect().bottom ?? 72) + 24;
-      window.scrollTo({ top: Math.max(0, window.scrollY + element.getBoundingClientRect().top - clearance), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+      window.scrollTo({ top: Math.max(0, window.scrollY + element.getBoundingClientRect().top - clearance), behavior: get(reducedFilmMotion) ? 'instant' : 'smooth' });
     }
   }
+
+  // Native same-document anchors do not always trigger SvelteKit navigation.
+  onMount(() => {
+    const changed = () => scrollToHash(window.location.hash);
+    window.addEventListener('hashchange', changed);
+    return () => window.removeEventListener('hashchange', changed);
+  });
 
   // Scroll to hash on mount (for direct links) + cross-property entry
   onMount(() => {
@@ -290,7 +311,11 @@
   // - Preserve browser restore for popstate/back-forward
   // - Hash links scroll to section
   // - Other internal links scroll to top
-  afterNavigate(({ to, type }) => {
+  afterNavigate(({ from, to, type }) => {
+    if (shouldEnterHomeBoundary({ from: from?.url.pathname, to: to?.url, type })) {
+      const main = document.getElementById('main-content');
+      if (main) void routeEntrance.enter(main, () => !document.hidden && !get(reducedFilmMotion) && !get(filmNavigationOpen) && !get(filmOverlayOpen));
+    }
     if (to?.url.hash) {
       setTimeout(() => scrollToHash(to.url.hash), 100);
       return;
