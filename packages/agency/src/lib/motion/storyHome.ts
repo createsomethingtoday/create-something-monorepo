@@ -72,7 +72,8 @@ export function enhanceStoryHome(root: HTMLElement) {
   tour?.classList.add('tour-enhanced');
   window.addEventListener('scroll', updateTour, { passive: true, signal: abort.signal });
   window.addEventListener('resize', updateTour, { passive: true, signal: abort.signal });
-  tour?.addEventListener('focusout', () => requestAnimationFrame(updateTour), { signal: abort.signal });
+  // Focus changes alone must preserve an explicitly explored disclosure.
+  // Native scroll/resize resume viewport selection and hand focus off above.
   root.querySelectorAll<HTMLAnchorElement>('[data-waypoint]').forEach(link => {
     link.addEventListener('click', event => {
       // Keep this local story navigation out of the site's route transition.

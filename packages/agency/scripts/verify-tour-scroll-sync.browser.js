@@ -13,7 +13,29 @@
   const scenes = [...document.querySelectorAll('[data-tour-scene]')];
   assert(steps.length === 3 && scenes.length === 3, 'Tour must be mounted');
   const samples = [];
-  for (const [from, to] of [[0, 1], [1, 2], [2, 0], [0, 2], [2, 1]]) {
+  if (matchMedia('(min-width: 901px) and (min-height: 751px)').matches) {
+    document.querySelector('[data-waypoint="0"]').click();
+    await settle();
+    const first = steps[0].getBoundingClientRect();
+    scrollBy({ top: first.top + first.height / 2 - (innerHeight * .48 - first.height * .45), behavior: 'instant' });
+    await settle();
+    assert(scenes[0].classList.contains('is-active'), 'Build should be nearest before explicit selection');
+    const link = steps[1].querySelector('a');
+    link.focus({ preventScroll: true });
+    const before = scrollY;
+    link.click();
+    await settle();
+    assert(scrollY === before, 'Desktop disclosure selection must not scroll');
+    assert(scenes[1].classList.contains('is-active'), 'Explicit Test disclosure must survive focusout without scrolling');
+    assert(scenes[1].querySelector('details').open, 'Selected disclosure must open');
+    assert(document.activeElement === scenes[1].querySelector('summary'), 'Selected disclosure must retain focus');
+    // Actual scroll, including an upward reversal, resumes viewport selection.
+    steps[0].scrollIntoView({ block: 'center', behavior: 'instant' });
+    await settle();
+    assert(scenes[0].classList.contains('is-active'), 'Scrolling must resume after explicit selection');
+    samples.push({ explicitSelectionUntilScroll: 'passed' });
+  }
+  for (const [from, to] of [[0, 1], [1, 2], [2, 0]]) {
     document.querySelector(`[data-waypoint="${from}"]`).click();
     await settle();
     const summary = scenes[from].querySelector('summary');
