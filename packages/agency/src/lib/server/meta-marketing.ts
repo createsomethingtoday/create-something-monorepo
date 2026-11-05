@@ -18,12 +18,12 @@ export interface MetaMarketingEnv {
   META_TEST_EVENT_CODE?: string;
 }
 interface MetaConfig { datasetId: string; token: string; version: string; endpoint: string; relayKey: string; testCode?: string }
-interface ConsentRow { consent_id: string; granted_at: number; expires_at: number; revoked_at: number | null }
-export interface MetaConsentState { marketing: boolean; available: boolean; blocked: boolean; consentId?: string }
+interface ConsentRow { consent_id: string; granted_at: number; expires_at: number; revoked_at: number | null; account_subject: string | null }
+export interface MetaConsentState { marketing: boolean; available: boolean; blocked: boolean; consentId?: string; accountSubject?: string }
 type LeadPayload = { event_name: 'Lead'; event_time: number; event_id: string; action_source: 'website'; event_source_url: string;
   user_data: { em: string[]; client_user_agent?: string; client_ip_address?: string } };
 interface LeadRow { event_id: string; consent_id: string; dataset_id: string; payload_json: string | null; attempts: number }
-export interface PreparedMetaLead { consentId: string; datasetId: string; payload: LeadPayload; preparedAt: number }
+export interface PreparedMetaLead { consentId: string; datasetId: string; payload: LeadPayload; preparedAt: number; accountSubject?: string }
 export type MetaDeliveryOutcome = { state: 'accepted'; receipt: string } | { state: 'transient_failure' | 'permanent_failure' | 'unknown' };
 export class MetaProviderError extends Data.TaggedError('MetaProviderError')<{ kind: 'transport' | 'timeout'; cause?: unknown }> {}
 
@@ -39,8 +39,12 @@ function config(env: MetaMarketingEnv): MetaConfig | undefined {
       ...(env.META_TEST_EVENT_CODE && env.ENVIRONMENT !== 'production' ? { testCode: env.META_TEST_EVENT_CODE } : {}) };
   } catch { return; }
 }
-export function isMetaRequestBlocked(request: Request, optedOut = false): boolean {
-  return optedOut || request.headers.get('DNT') === '1' || request.headers.get('Sec-GPC') === '1';
+function browserPrivacyBlock(request: Request): boolean {
+  return request.headers.get('DNT') === '1' || request.headers.get('Sec-GPC') === '1';
+}
+export function isMetaRequestBlocked(request: Request, optedOut = false, accountSubject?: string): boolean {
+  const hasAccountCookie = /(?:^|;\s*)cs_access_token=/.test(request.headers.get('Cookie') ?? '');
+  return optedOut || browserPrivacyBlock(request) || (hasAccountCookie && !accountSubject);
 }
 function consentCookie(request: Request): string | undefined {
   const value = request.headers.get('Cookie')?.split(';').map(part => part.trim()).find(part => part.startsWith(`${META_CONSENT_COOKIE}=`))?.slice(META_CONSENT_COOKIE.length + 1);
@@ -54,15 +58,27 @@ function json(value: unknown, status = 200, cookie?: string): Response {
 const cookieValue = (id?: string) => `${META_CONSENT_COOKIE}=${id ?? ''}; Path=/; Max-Age=${id ? META_CONSENT_MAX_AGE : 0}; HttpOnly; Secure; SameSite=Strict`;
 const publicState = ({ marketing, available, blocked }: MetaConsentState) => ({ marketing, available, blocked });
 
-export async function readMetaConsent(request: Request, env: MetaMarketingEnv, optedOut = false, now = Date.now()): Promise<MetaConsentState> {
+export async function readMetaConsent(request: Request, env: MetaMarketingEnv, optedOut = false, now = Date.now(), accountSubject?: string): Promise<MetaConsentState> {
   const available = Boolean(config(env));
-  const blocked = isMetaRequestBlocked(request, optedOut);
+  const blocked = isMetaRequestBlocked(request, optedOut, accountSubject);
   const id = consentCookie(request);
-  if (!available || blocked || !id) return { marketing: false, available, blocked };
-  const row = await primary(env.DB!).prepare('SELECT consent_id, granted_at, expires_at, revoked_at FROM meta_marketing_consents WHERE consent_id = ?')
+  if (!id || !env.DB) return { marketing: false, available, blocked };
+  if (blocked) {
+    if (browserPrivacyBlock(request)) await revoke(env.DB, id, seconds(now));
+    else if (optedOut && accountSubject) {
+      const owner = await primary(env.DB).prepare('SELECT account_subject FROM meta_marketing_consents WHERE consent_id = ?')
+        .bind(id).first<{ account_subject: string | null }>();
+      if (owner && (owner.account_subject === null || owner.account_subject === accountSubject)) await revoke(env.DB, id, seconds(now));
+    }
+    // Missing fresh identity blocks this request but cannot permanently change another account's choice.
+    return { marketing: false, available, blocked };
+  }
+  if (!available) return { marketing: false, available, blocked };
+  const row = await primary(env.DB).prepare('SELECT consent_id, granted_at, expires_at, revoked_at, account_subject FROM meta_marketing_consents WHERE consent_id = ?')
     .bind(id).first<ConsentRow>();
-  const marketing = Boolean(row && row.revoked_at === null && row.expires_at > seconds(now));
-  return { marketing, available, blocked, ...(marketing ? { consentId: id } : {}) };
+  const marketing = Boolean(row && row.revoked_at === null && row.expires_at > seconds(now) &&
+    (row.account_subject === null || row.account_subject === accountSubject));
+  return { marketing, available, blocked, ...(marketing ? { consentId: id, ...(row?.account_subject ? { accountSubject: row.account_subject } : {}) } : {}) };
 }
 async function revoke(db: D1Database, id: string, now: number): Promise<void> {
   const session = primary(db);
@@ -91,41 +107,56 @@ async function boundedJson(request: Request | Response, max = 2048): Promise<unk
 }
 function sameOrigin(request: Request) { return request.headers.get('Origin') === new URL(request.url).origin; }
 
-export async function metaConsentResponse(request: Request, env: MetaMarketingEnv, optedOut = false, now = Date.now()): Promise<Response> {
+export async function metaConsentResponse(request: Request, env: MetaMarketingEnv, optedOut = false, now = Date.now(), accountSubject?: string): Promise<Response> {
   try {
     if (request.method !== 'GET' && request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
     if (request.method === 'POST' && !sameOrigin(request)) return json({ error: 'Origin not allowed' }, 403);
     const id = consentCookie(request);
-    const blocked = isMetaRequestBlocked(request, optedOut);
+    const blocked = isMetaRequestBlocked(request, optedOut, accountSubject);
+    const clearBlockedCookie = browserPrivacyBlock(request) || (optedOut && Boolean(accountSubject));
     if (request.method === 'GET') {
-      if (blocked && id && env.DB) await revoke(env.DB, id, seconds(now));
-      return json(publicState(await readMetaConsent(request, env, optedOut, now)), 200, blocked ? cookieValue() : undefined);
+      return json(publicState(await readMetaConsent(request, env, optedOut, now, accountSubject)), 200, clearBlockedCookie ? cookieValue() : undefined);
     }
     const body = await boundedJson(request);
     if (!body || typeof body !== 'object' || !('marketing' in body) || typeof body.marketing !== 'boolean' || Object.keys(body).some(key => key !== 'marketing'))
       return json({ error: 'Invalid consent choice' }, 400);
     const available = Boolean(config(env));
-    if (!body.marketing || blocked || !available) {
+    if (!body.marketing) {
       if (id && env.DB) await revoke(env.DB, id, seconds(now));
       return json({ marketing: false, available, blocked }, 200, cookieValue());
     }
-    const current = await readMetaConsent(request, env, optedOut, now);
-    if (current.marketing) return json(publicState(current));
+    const current = await readMetaConsent(request, env, optedOut, now, accountSubject);
+    if (blocked || !available) return json(publicState(current), 200, clearBlockedCookie ? cookieValue() : undefined);
+    if (current.marketing) {
+      if (accountSubject && !current.accountSubject) {
+        // Only an explicit signed grant may bind an existing anonymous choice.
+        const result = await primary(env.DB!).prepare(`UPDATE meta_marketing_consents SET account_subject = ?
+          WHERE consent_id = ? AND account_subject IS NULL AND revoked_at IS NULL AND expires_at > ?`)
+          .bind(accountSubject, current.consentId!, seconds(now)).run();
+        if (!result.success || result.meta.changes !== 1) throw new Error('Marketing account binding not acknowledged');
+      }
+      return json(publicState(await readMetaConsent(request, env, optedOut, now, accountSubject)));
+    }
+    if (id && !accountSubject) {
+      const owner = await primary(env.DB!).prepare('SELECT account_subject FROM meta_marketing_consents WHERE consent_id = ?')
+        .bind(id).first<{ account_subject: string | null }>();
+      if (owner?.account_subject) return json({ marketing: false, available, blocked: true });
+    }
     const consentId = crypto.randomUUID();
-    const result = await primary(env.DB!).prepare(`INSERT INTO meta_marketing_consents (consent_id, granted_at, expires_at, policy_version)
-      VALUES (?, ?, ?, 'agency-meta-v1')`).bind(consentId, seconds(now), seconds(now) + META_CONSENT_MAX_AGE).run();
+    const result = await primary(env.DB!).prepare(`INSERT INTO meta_marketing_consents (consent_id, granted_at, expires_at, policy_version, account_subject)
+      VALUES (?, ?, ?, 'agency-meta-v1', ?)`).bind(consentId, seconds(now), seconds(now) + META_CONSENT_MAX_AGE, accountSubject ?? null).run();
     if (!result.success) throw new Error('Marketing consent not acknowledged');
     return json({ marketing: true, available: true, blocked: false }, 200, cookieValue(consentId));
   } catch {
     // A failed withdrawal must stay visibly unresolved; do not claim success or delete its retry handle.
-    return json({ marketing: false, available: false, blocked: isMetaRequestBlocked(request, optedOut), error: 'Privacy preference could not be saved. Please try again.' }, 503);
+    return json({ marketing: false, available: false, blocked: isMetaRequestBlocked(request, optedOut, accountSubject), error: 'Privacy preference could not be saved. Please try again.' }, 503);
   }
 }
 
-export async function metaPageViewResponse(request: Request, env: MetaMarketingEnv, optedOut = false, send: typeof fetch = fetch): Promise<Response> {
+export async function metaPageViewResponse(request: Request, env: MetaMarketingEnv, optedOut = false, send: typeof fetch = fetch, accountSubject?: string): Promise<Response> {
   try {
     if (!sameOrigin(request)) return json({ error: 'Origin not allowed' }, 403);
-    const consent = await readMetaConsent(request, env, optedOut);
+    const consent = await readMetaConsent(request, env, optedOut, undefined, accountSubject);
     if (!consent.marketing) return json({ forwarded: false }, 200);
     const body = await boundedJson(request);
     if (!body || typeof body !== 'object' || !('url' in body) || !('eventId' in body) || typeof body.url !== 'string' ||
@@ -140,14 +171,16 @@ export async function metaPageViewResponse(request: Request, env: MetaMarketingE
           cookies: { cs_zaraz_consent: JSON.stringify({ csMetaMarketing: true }) } } }] }) });
     // Zaraz accepts the relay, not a Meta delivery receipt. Never execute its returned browser code.
     await response.body?.cancel();
-    await drainMetaLead(request, env, optedOut, send).catch(() => {});
+    await drainMetaLead(request, env, optedOut, send, undefined, accountSubject).catch(() => {});
     return json({ forwarded: response.ok }, response.ok ? 200 : 502);
   } catch { return json({ forwarded: false }, 503); }
 }
 
-export async function prepareMetaLead(request: Request, env: MetaMarketingEnv, input: { requestId: string; email: string }, optedOut = false, now = Date.now()): Promise<PreparedMetaLead | undefined> {
-  const consent = await readMetaConsent(request, env, optedOut, now);
+export async function prepareMetaLead(request: Request, env: MetaMarketingEnv, input: { requestId: string; email: string }, optedOut = false, now = Date.now(), accountSubject?: string): Promise<PreparedMetaLead | undefined> {
+  const consent = await readMetaConsent(request, env, optedOut, now, accountSubject);
   if (!consent.marketing || !consent.consentId) return;
+  // A signed inquiry cannot enter the anonymous retry lane before an explicit account-bound grant.
+  if (accountSubject && !consent.accountSubject) return;
   // Detect a missing delivery migration before adding optional work to the inquiry transaction.
   await primary(env.DB!).prepare('SELECT event_id FROM meta_lead_deliveries LIMIT 1').first();
   const hash = async (value: string) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))))
@@ -157,7 +190,7 @@ export async function prepareMetaLead(request: Request, env: MetaMarketingEnv, i
     event_source_url: 'https://createsomething.agency/contact', user_data: { em: [await hash(input.email.trim().toLowerCase())],
       ...(request.headers.get('User-Agent') ? { client_user_agent: request.headers.get('User-Agent')!.slice(0, 512) } : {}),
       ...(request.headers.get('CF-Connecting-IP') ? { client_ip_address: request.headers.get('CF-Connecting-IP')! } : {}) } };
-  return { consentId: consent.consentId, datasetId: config(env)!.datasetId, payload, preparedAt: seconds(now) };
+  return { consentId: consent.consentId, datasetId: config(env)!.datasetId, payload, preparedAt: seconds(now), ...(consent.accountSubject ? { accountSubject: consent.accountSubject } : {}) };
 }
 
 /** Commit this statement in the same D1 batch as the NEW source inquiry receipt. */
@@ -165,10 +198,11 @@ export function metaLeadInsertStatement(session: D1DatabaseSession, requestId: s
   return session.prepare(`INSERT INTO meta_lead_deliveries
     (event_id, request_id, consent_id, dataset_id, payload_json, next_attempt_at, created_at, updated_at)
     SELECT ?, ?, ?, ?, ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM meta_marketing_consents
-      WHERE consent_id = ? AND revoked_at IS NULL AND expires_at > CAST(strftime('%s', 'now') AS INTEGER))
+      WHERE consent_id = ? AND revoked_at IS NULL AND expires_at > CAST(strftime('%s', 'now') AS INTEGER)
+        AND (account_subject IS NULL OR account_subject = ?))
       AND EXISTS (SELECT 1 FROM contact_request_receipts WHERE request_id = ?)`)
     .bind(prepared.payload.event_id, requestId, prepared.consentId, prepared.datasetId, JSON.stringify(prepared.payload),
-      prepared.preparedAt, prepared.preparedAt, prepared.preparedAt, prepared.consentId, requestId);
+      prepared.preparedAt, prepared.preparedAt, prepared.preparedAt, prepared.consentId, prepared.accountSubject ?? null, requestId);
 }
 
 export async function sendMetaLead(payload: LeadPayload, settings: { datasetId: string; token: string; version: string; testCode?: string }, send: typeof fetch = fetch): Promise<MetaDeliveryOutcome> {
@@ -222,9 +256,9 @@ export async function maintainMetaRetention(db: D1Database, now = Date.now()): P
   return { settled: settled.meta.changes, payloadsPurged, receiptsDeleted: results[0].meta.changes, consentsDeleted: results[1].meta.changes };
 }
 
-export async function drainMetaLead(request: Request, env: MetaMarketingEnv, optedOut = false, send: typeof fetch = fetch, now = Date.now()): Promise<MetaDeliveryOutcome | undefined> {
+export async function drainMetaLead(request: Request, env: MetaMarketingEnv, optedOut = false, send: typeof fetch = fetch, now = Date.now(), accountSubject?: string): Promise<MetaDeliveryOutcome | undefined> {
   if (env.DB && config(env)) await purgeExpiredMetaPayloads(env.DB, now);
-  const consent = await readMetaConsent(request, env, optedOut, now);
+  const consent = await readMetaConsent(request, env, optedOut, now, accountSubject);
   if (!consent.marketing || !consent.consentId) return;
   const session = primary(env.DB!); const timestamp = seconds(now); const settings = config(env)!;
   // Lost in-flight acknowledgements become unknown and require reconciliation, never takeover.
@@ -234,13 +268,14 @@ export async function drainMetaLead(request: Request, env: MetaMarketingEnv, opt
     lease_until = ?, updated_at = ? WHERE event_id = (SELECT event_id FROM meta_lead_deliveries
       WHERE consent_id = ? AND dataset_id = ? AND state IN ('pending', 'transient_failure') AND attempts < 3 AND next_attempt_at <= ?
         AND created_at > ? AND payload_json IS NOT NULL ORDER BY created_at, event_id LIMIT 1)
-    AND EXISTS (SELECT 1 FROM meta_marketing_consents WHERE consent_id = ? AND revoked_at IS NULL AND expires_at > ?)
+    AND EXISTS (SELECT 1 FROM meta_marketing_consents WHERE consent_id = ? AND revoked_at IS NULL AND expires_at > ?
+      AND (account_subject IS NULL OR account_subject = ?))
     RETURNING event_id, consent_id, dataset_id, payload_json, attempts`)
     .bind(timestamp + 30, timestamp, consent.consentId, settings.datasetId, timestamp, timestamp - 86400,
-      consent.consentId, timestamp).first<LeadRow>();
+      consent.consentId, timestamp, accountSubject ?? null).first<LeadRow>();
   if (!row?.payload_json) return;
   // Re-read after claiming, immediately before the external boundary.
-  if (!(await readMetaConsent(request, env, optedOut, now)).marketing) {
+  if (!(await readMetaConsent(request, env, optedOut, now, accountSubject)).marketing) {
     await session.prepare("UPDATE meta_lead_deliveries SET state = 'cancelled', payload_json = NULL WHERE event_id = ?").bind(row.event_id).run();
     return;
   }

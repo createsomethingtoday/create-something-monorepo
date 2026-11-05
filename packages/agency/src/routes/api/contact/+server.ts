@@ -145,7 +145,8 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 		// Once the body is validated, receipt and follow-up work must survive a client disconnect.
 		// Provider calls have their own deadlines; the browser's abort signal must not cancel this Effect.
 		// Consent is snapshotted before the NEW receipt. Replays cannot attach an older inquiry.
-		const metaLead = await prepareMetaLead(request, env, { requestId, email }, Boolean(locals?.user?.analytics_opt_out))
+		const marketingAccountSubject = locals?.user?.analytics_preference_verified === true ? locals.user.id : undefined;
+		const metaLead = await prepareMetaLead(request, env, { requestId, email }, Boolean(locals?.user?.analytics_opt_out), undefined, marketingAccountSubject)
 			.catch(() => undefined);
 		const intake = Effect.runPromise(contactIntake(
 			{ ...parseResult.data, source, intent, lane }, requestId,
@@ -157,7 +158,7 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 		if (result.receipt === 'saved') {
 			// Marketing is optional and cannot change the authoritative inquiry result.
 			// The outbox verifies this saved receipt and the separate consent before queuing.
-			const marketing = drainMetaLead(request, env, Boolean(locals?.user?.analytics_opt_out))
+			const marketing = drainMetaLead(request, env, Boolean(locals?.user?.analytics_opt_out), undefined, undefined, marketingAccountSubject)
 				.catch(() => undefined);
 			platform?.context?.waitUntil(marketing);
 		}

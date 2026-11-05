@@ -72,6 +72,15 @@ current user's opt-out suppress delivery. Withdrawal revokes the server record
 and purges queued matching data. Events already accepted by Meta cannot be recalled
 through this control.
 
+For signed-in visitors, Agency reads the current preference from Identity's
+`/v1/users/me` after verifying the session signature and audience. An unavailable,
+malformed, or mismatched response pauses marketing. Account-bound consent
+requires a fresh check for that same account. The scheduled Worker cannot reuse
+that consent without the visitor returning. After signing in with an earlier
+anonymous choice, explicitly save the marketing choice again before an inquiry
+can qualify for account-bound delivery. Logging out does not turn account-bound
+consent into anonymous consent.
+
 `POST /api/marketing/page-view` checks consent and the exact public-route
 allowlist in `meta-policy.ts`. It strips campaign queries and fragments and
 rejects unknown or access-bearing query parameters. The server forwards only
@@ -89,8 +98,9 @@ records its trace ID and discards the matching payload. Only acknowledged
 throttling retries, at most three attempts with the same event ID. Timeouts,
 5xx responses and malformed acknowledgements remain `unknown` for reconciliation.
 
-The hourly `agency-meta-maintenance` Worker checks at most ten active consent
-records with due deliveries. It purges matching payloads after the 24-hour
+The hourly `agency-meta-maintenance` Worker checks at most ten active anonymous
+consent records with due deliveries. Account-bound deliveries retry only during
+a request with a fresh verified account preference. The Worker purges matching payloads after the 24-hour
 delivery window on its next run, deletes delivery metadata after 90 days, and
 deletes expired or revoked consent records 90 days later once references clear.
 Withdrawal and accepted delivery purge their payload immediately. Source inquiry
@@ -110,7 +120,7 @@ Agency and its maintenance Worker. Tokens and relay credentials belong in
 Infisical and encrypted Cloudflare bindings. Keep them out of source, URLs, logs,
 and browser code. Production ignores `META_TEST_EVENT_CODE`.
 
-Apply migration `0060_meta_marketing.sql` before enabling the feature. Run the
+Apply migrations `0060_meta_marketing.sql` and `0061_meta_marketing_account_binding.sql` before enabling the feature. Run the
 checks below, inspect responsive consent controls, and confirm synthetic events
 in the intended Meta Test Events dataset. Clear Zaraz's test code before live
 activation. Promote the reviewed PR, set `META_MARKETING_ENABLED=true`, and verify

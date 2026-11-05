@@ -2,13 +2,16 @@
 
 This private Worker retries existing consented inquiry deliveries and removes
 expired matching data. It runs at minute 17 each hour, processes at most ten
-active consent records, and exposes no public application route.
+active anonymous consent records, and exposes no public application route.
 
 Delivery uses Agency's shared consent and outbox implementation. It never creates
 an inquiry or sends a booking conversion. Revoked or expired consent prevents a
 retry. Cleanup runs even when `META_MARKETING_ENABLED` is false.
+Account-bound deliveries require a fresh Identity preference check during a
+visitor request; the scheduled Worker skips them.
 
-Before deployment, apply Agency migration `0060_meta_marketing.sql`. Configure
+Before deployment, apply Agency migrations `0060_meta_marketing.sql` and
+`0061_meta_marketing_account_binding.sql`. Configure
 the dataset and Graph API version in Wrangler. Store `META_CAPI_ACCESS_TOKEN`,
 `META_ZARAZ_ENDPOINT`, and `META_ZARAZ_RELAY_KEY` in encrypted Worker bindings
 using the owning Infisical secrets. Keep secret values out of source and logs.

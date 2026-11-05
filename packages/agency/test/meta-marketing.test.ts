@@ -27,21 +27,21 @@ async function fixture() {
     compatibilityDate: '2025-11-15', d1Databases: ['DB'] });
   const db: D1Database = await mf.getD1Database('DB');
   await db.prepare(readFileSync(new URL('./contact-production-schema.sql', import.meta.url), 'utf8')).run();
-  for (const name of ['0058_contact_request_receipts.sql', '0059_contact_request_attribution.sql', '0060_meta_marketing.sql']) {
+  for (const name of ['0058_contact_request_receipts.sql', '0059_contact_request_attribution.sql', '0060_meta_marketing.sql', '0061_meta_marketing_account_binding.sql']) {
     const sql = readFileSync(new URL(`../migrations/${name}`, import.meta.url), 'utf8');
     for (const statement of sql.replace(/--[^\n]*/g, '').split(';').filter(s => s.trim())) await db.prepare(statement).run();
   }
   const env: MetaMarketingEnv = { ...baseEnv, DB: db };
   return { env, db, dispose: () => mf.dispose() };
 }
-async function grant(env: MetaMarketingEnv) {
-  const reply = await metaConsentResponse(request('POST', { marketing: true }), env);
+async function grant(env: MetaMarketingEnv, accountSubject?: string) {
+  const reply = await metaConsentResponse(request('POST', { marketing: true }), env, false, undefined, accountSubject);
   assert.equal(reply.status, 200);
   return reply.headers.get('set-cookie')!;
 }
-async function saveLead(env: MetaMarketingEnv, cookie: string, id = 'fixture-contact-request-1') {
+async function saveLead(env: MetaMarketingEnv, cookie: string, id = 'fixture-contact-request-1', accountSubject?: string) {
   const source = request('POST', undefined, cookie, { 'User-Agent': 'fixture-agent', 'CF-Connecting-IP': '192.0.2.1' });
-  const prepared = await prepareMetaLead(source, env, { requestId: id, email: ' Fixture@Example.Invalid ' });
+  const prepared = await prepareMetaLead(source, env, { requestId: id, email: ' Fixture@Example.Invalid ' }, false, undefined, accountSubject);
   await createD1ContactRepository(env.DB!, prepared).create(id, 'fixture-hash', 'owner', {
     name: 'Private Person', email: 'fixture@example.invalid', message: 'private inquiry body'
   });
@@ -61,6 +61,94 @@ test('marketing defaults off, requires its own explicit consent and can be withd
     assert.equal((await revoke.json() as { marketing: boolean }).marketing, false);
     assert.equal((await readMetaConsent(request('GET', undefined, cookie), f.env)).marketing, false);
   } finally { await f.dispose(); }
+});
+
+test('signed consent requires the same freshly verified account and never downgrades to anonymous', async () => {
+  const f = await fixture();
+  try {
+    const cookie = await grant(f.env, 'account-one');
+    const source = request('GET', undefined, cookie);
+    assert.deepEqual(await f.db.prepare('SELECT account_subject FROM meta_marketing_consents').first(), { account_subject: 'account-one' });
+    assert.equal((await readMetaConsent(source, f.env)).marketing, false);
+    assert.equal((await readMetaConsent(source, f.env, false, undefined, 'account-two')).marketing, false);
+    assert.equal((await readMetaConsent(source, f.env, false, undefined, 'account-one')).marketing, true);
+    assert.equal(await prepareMetaLead(source, f.env, { requestId: 'wrong-account-request', email: 'fixture@example.invalid' }, false, undefined, 'account-two'), undefined);
+    const unavailable = await metaConsentResponse(source, f.env, true);
+    assert.equal((await unavailable.json() as { marketing: boolean }).marketing, false);
+    assert.equal(unavailable.headers.get('Set-Cookie'), null);
+    assert.deepEqual(await f.db.prepare('SELECT account_subject, revoked_at FROM meta_marketing_consents').first(), { account_subject: 'account-one', revoked_at: null });
+    assert.equal((await readMetaConsent(source, f.env, false, undefined, 'account-one')).marketing, true);
+    const downgrade = await metaConsentResponse(request('POST', { marketing: true }, cookie), f.env);
+    assert.deepEqual(await downgrade.json(), { marketing: false, available: true, blocked: true });
+    assert.equal((await f.db.prepare('SELECT count(*) n FROM meta_marketing_consents').first<{ n: number }>())!.n, 1);
+  } finally { await f.dispose(); }
+});
+
+test('fresh account opt-out revokes consent and purges queued match data through every entrypoint', async () => {
+  const handlers = [
+    (source: Request, env: MetaMarketingEnv) => metaConsentResponse(new Request(source.url, { headers: source.headers }), env, true, undefined, 'account-one'),
+    (source: Request, env: MetaMarketingEnv) => metaPageViewResponse(source, env, true, async () => { throw new Error('Must not send'); }, 'account-one'),
+    (source: Request, env: MetaMarketingEnv) => prepareMetaLead(source, env, { requestId: 'optout-preparation', email: 'fixture@example.invalid' }, true, undefined, 'account-one'),
+    (source: Request, env: MetaMarketingEnv) => drainMetaLead(source, env, true, async () => { throw new Error('Must not send'); }, undefined, 'account-one')
+  ];
+  for (const [index, handler] of handlers.entries()) {
+    const f = await fixture();
+    try {
+      const cookie = await grant(f.env, 'account-one');
+      const source = await saveLead(f.env, cookie, `account-optout-request-${index}`, 'account-one');
+      await handler(source, f.env);
+      assert.notEqual((await f.db.prepare('SELECT revoked_at FROM meta_marketing_consents').first<{ revoked_at: number | null }>())!.revoked_at, null);
+      assert.deepEqual(await f.db.prepare('SELECT state, payload_json FROM meta_lead_deliveries').first(), { state: 'cancelled', payload_json: null });
+    } finally { await f.dispose(); }
+  }
+});
+
+test('an explicit signed choice binds an existing anonymous consent without implicit GET binding', async () => {
+  const f = await fixture();
+  try {
+    const cookie = await grant(f.env);
+    const source = request('GET', undefined, cookie);
+    assert.equal((await readMetaConsent(source, f.env, false, undefined, 'account-one')).marketing, true);
+    assert.deepEqual(await f.db.prepare('SELECT account_subject FROM meta_marketing_consents').first(), { account_subject: null });
+    assert.equal(await prepareMetaLead(source, f.env, { requestId: 'signed-anonymous-request', email: 'fixture@example.invalid' }, false, undefined, 'account-one'), undefined);
+    await metaConsentResponse(request('POST', { marketing: true }, cookie), f.env, false, undefined, 'account-one');
+    assert.deepEqual(await f.db.prepare('SELECT account_subject FROM meta_marketing_consents').first(), { account_subject: 'account-one' });
+    assert.equal((await readMetaConsent(source, f.env)).marketing, false);
+  } finally { await f.dispose(); }
+});
+
+test('an invalid or unavailable account session cannot grant or use anonymous marketing consent', async () => {
+  const f = await fixture();
+  try {
+    const cookie = await grant(f.env);
+    const invalidSession = `${cookie}; cs_access_token=invalid-fixture`;
+    const source = request('GET', undefined, invalidSession);
+    assert.deepEqual(await readMetaConsent(source, f.env), { marketing: false, available: true, blocked: true });
+    const response = await metaConsentResponse(request('POST', { marketing: true }, invalidSession), f.env);
+    assert.deepEqual(await response.json(), { marketing: false, available: true, blocked: true });
+    assert.equal(response.headers.get('Set-Cookie'), null);
+    assert.equal(await prepareMetaLead(source, f.env, { requestId: 'invalid-session-request', email: 'fixture@example.invalid' }), undefined);
+    let sends = 0;
+    const page = await metaPageViewResponse(request('POST', { url: `${origin}/contact`, eventId: crypto.randomUUID() }, invalidSession), f.env, false,
+      async () => { sends++; throw new Error('Must not send'); });
+    assert.deepEqual(await page.json(), { forwarded: false }); assert.equal(sends, 0);
+    assert.deepEqual(await f.db.prepare('SELECT account_subject, revoked_at FROM meta_marketing_consents').first(), { account_subject: null, revoked_at: null });
+    const reject = await metaConsentResponse(request('POST', { marketing: false }, invalidSession), f.env);
+    assert.equal((await reject.json() as { marketing: boolean }).marketing, false);
+    assert.notEqual((await f.db.prepare('SELECT revoked_at FROM meta_marketing_consents').first<{ revoked_at: number | null }>())!.revoked_at, null);
+  } finally { await f.dispose(); }
+});
+
+test('browser privacy signals durably revoke a queued consent during a plain consent read', async () => {
+  for (const headers of [{ DNT: '1' }, { 'Sec-GPC': '1' }] as Record<string, string>[]) {
+    const f = await fixture();
+    try {
+      const cookie = await grant(f.env); await saveLead(f.env, cookie);
+      assert.equal((await readMetaConsent(request('GET', undefined, cookie, headers), f.env)).marketing, false);
+      assert.notEqual((await f.db.prepare('SELECT revoked_at FROM meta_marketing_consents').first<{ revoked_at: number | null }>())!.revoked_at, null);
+      assert.deepEqual(await f.db.prepare('SELECT state, payload_json FROM meta_lead_deliveries').first(), { state: 'cancelled', payload_json: null });
+    } finally { await f.dispose(); }
+  }
 });
 
 test('DNT, GPC, opt-out, missing configuration, and expired consent prevent delivery', async () => {

@@ -12,7 +12,7 @@ export async function runMetaMaintenance(env: MetaMarketingEnv & { DB: D1Databas
     FROM meta_lead_deliveries d JOIN meta_marketing_consents c ON c.consent_id = d.consent_id
     WHERE d.state IN ('pending', 'transient_failure') AND d.attempts < 3 AND d.next_attempt_at <= ?
       AND d.created_at > ? AND d.payload_json IS NOT NULL AND d.dataset_id = ?
-      AND c.revoked_at IS NULL AND c.expires_at > ?
+      AND c.revoked_at IS NULL AND c.expires_at > ? AND c.account_subject IS NULL
     GROUP BY d.consent_id ORDER BY MIN(d.created_at), d.consent_id LIMIT 10`)
     .bind(timestamp, timestamp - 86400, env.META_DATASET_ID ?? '', timestamp).all<{ consent_id: string }>();
   if (!due.success) throw new Error('Meta maintenance queue read not acknowledged');

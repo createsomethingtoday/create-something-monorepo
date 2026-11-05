@@ -12,6 +12,7 @@ declare global {
 				tier: 'free' | 'pro' | 'agency';
 				source: 'workway' | 'templates' | 'io' | 'space' | 'lms';
 				analytics_opt_out?: boolean;
+				analytics_preference_verified?: boolean;
 			};
 		}
 		// interface PageData {}

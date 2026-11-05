@@ -84,7 +84,7 @@
     "test:workshop-tour": "node --import tsx --test test/waypoint-guide.test.ts",
     "smoke:image-entrances": "node ./scripts/verify-image-entrances.mjs",
     "smoke:scene-reveal": "node ./scripts/verify-scene-reveal.mjs",
-    "test:meta-marketing": "node --import tsx --test test/meta-policy.test.ts test/meta-marketing-client.test.ts test/meta-marketing.test.ts test/marketing-attribution.test.ts test/marketing-attribution-report.test.mjs"
+    "test:meta-marketing": "node --import tsx --test test/identity-session.test.ts test/meta-policy.test.ts test/meta-marketing-client.test.ts test/meta-marketing.test.ts test/marketing-attribution.test.ts test/marketing-attribution-report.test.mjs"
   },
   "dependencies": {
     "@composio/core": "^0.6.4",
