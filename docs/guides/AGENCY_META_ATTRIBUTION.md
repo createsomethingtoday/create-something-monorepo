@@ -86,7 +86,7 @@ allowlist in `meta-policy.ts`. It strips campaign queries and fragments and
 rejects unknown or access-bearing query parameters. The server forwards only
 the canonical public URL, event ID, IP address and browser user agent to Zaraz.
 Zaraz has automatic script injection disabled, purpose `csMetaMarketing`, and a
-header-protected HTTP endpoint. No Meta or Zaraz browser script is installed.
+header-protected HTTP endpoint. Agency enables `global_fetch_strictly_public` so same-zone server fetches reach the protected public Zaraz endpoint rather than bypassing Cloudflare and reaching the origin. No Meta or Zaraz browser script is installed.
 The route reports `forwarded`; only Meta's own evidence proves provider processing.
 
 A new consented contact submission commits its Lead delivery record in the same
@@ -141,6 +141,23 @@ pnpm --filter @create-something/agency test:contact
 pnpm --filter @create-something/agency-meta-maintenance test
 ```
 
+The production smoke is read-only by default:
+
+```bash
+node scripts/verify-agency-meta-release.mjs
+```
+
+To exercise an operator-owned consent receipt and one real PageView explicitly:
+
+```bash
+node scripts/verify-agency-meta-release.mjs --exercise-consent --send-page-view
+```
+
+The smoke withdraws its own consent in cleanup. It checks the canonical custom
+domain because a successful `pages.dev` request does not establish same-zone
+relay behavior. A Zaraz acknowledgement is not a Meta processing receipt. It
+never submits an inquiry or creates a booking.
+
 These checks exercise campaign parsing, SQLite report aggregation, consent races,
 and actual workerd/D1 persistence with simulated provider boundaries. They do not
 replace rendered browser review or live provider verification. Release evidence
@@ -148,4 +165,5 @@ and worktree disposition belong in Linear `CRE-2359`.
 
 Sources: [Zaraz supported tools](https://developers.cloudflare.com/zaraz/reference/supported-tools/),
 [Zaraz consent management](https://developers.cloudflare.com/zaraz/consent-management/),
-and [Zaraz HTTP Events API](https://developers.cloudflare.com/zaraz/http-events-api/).
+[Zaraz HTTP Events API](https://developers.cloudflare.com/zaraz/http-events-api/),
+and [strictly public fetch routing](https://developers.cloudflare.com/workers/configuration/compatibility-flags/#global-fetch-strictly-public).
