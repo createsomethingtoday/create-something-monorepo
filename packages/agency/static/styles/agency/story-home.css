@@ -297,7 +297,7 @@
 .agency-home .handoff-footer{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:48px;border-top:1px solid var(--border);padding-top:28px}
 .agency-home .handoff-footer .caption{font-size:14px;line-height:1.6}
 .agency-home .handoff-word{display:inline-block}
-@media(min-width:901px) and (min-height:651px){
+@media(min-width:901px) and (min-height:751px){
 .agency-home .tour-enhanced .handoff-scenes{position:sticky;top:140px;align-self:start;display:grid}
 .agency-home .tour-enhanced .handoff-scene{grid-area:1/1;opacity:0;visibility:hidden;pointer-events:none;margin-bottom:0}
 .agency-home .tour-enhanced .handoff-scene.is-active{opacity:1;visibility:visible;pointer-events:auto}
@@ -306,7 +306,7 @@
 .agency-home .tour-enhanced .handoff-step .label{opacity:.5}
 .agency-home .tour-enhanced .handoff-step.is-active .label{opacity:1}
 }
-@media(max-width:900px), (max-height:650px){
+@media(max-width:900px), (max-height:750px){
 .agency-home .handoff-tour{grid-template-columns:minmax(0,1fr);gap:0}
 .agency-home .handoff-scenes,.agency-home .handoff-steps{display:contents}
 .agency-home .handoff-scene[data-tour-scene="0"]{grid-row:1}.agency-home .handoff-step[data-tour-step="0"]{grid-row:2}
@@ -322,17 +322,19 @@
 .agency-home .handoff-heading .handoff-word{color:inherit;transform-origin:center bottom}
 
 /* Keep annotation copy outside the work; each leader ends at its own artifact. */
-.agency-home .handoff-art{margin-bottom:120px}
+.agency-home .handoff-art{margin-bottom:16px}
 .agency-home .handoff-hotspot{position:static;width:auto;font-size:14px}
 .agency-home .handoff-hotspot>summary{position:absolute;left:var(--hotspot-x);top:var(--hotspot-y);transform:translate(-50%,-50%);width:44px;z-index:2}
 .agency-home .hotspot-mark{font:13px/1 var(--font-mono);background:var(--background);color:var(--foreground);border-color:var(--foreground)}
 .agency-home .hotspot-label{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);white-space:nowrap;background:var(--background);color:var(--foreground)}
-.agency-home .handoff-hotspot>p{top:calc(100% + 16px);left:0;right:auto;width:100%;min-height:80px;margin:0;padding:16px 20px;border-color:var(--border);box-shadow:none;background:var(--card);color:var(--foreground);font-size:15px}
+.agency-home .handoff-hotspot>p{top:calc(100% + 16px);left:0;right:auto;width:100%;margin:0;padding:12px 16px;border-color:var(--border);box-shadow:none;background:var(--card);color:var(--foreground);font-size:14px}
 .agency-home .hotspot-leader{opacity:0;stroke:var(--foreground);filter:none}
 .agency-home .handoff-art:has(details[open]) .hotspot-leader{opacity:1}
 .agency-home .handoff-art:has(details[open]) .hotspot-mark{background:var(--foreground);color:var(--background)}
 .agency-home .handoff-scene figcaption{padding-top:0}
-@media(max-width:600px){.agency-home .handoff-hotspot>p{font-size:14px;padding:12px;min-height:92px}.agency-home .handoff-art{margin-bottom:128px}}
+/* Stacked scenes reserve annotation space only while the disclosure is open. */
+.agency-home .handoff-art:has(details[open]){margin-bottom:120px}
+@media(max-width:600px){.agency-home .handoff-hotspot>p{padding:12px}.agency-home .handoff-art:has(details[open]){margin-bottom:136px}}
 
 /* The unenhanced page keeps each scene next to its explanation at every width. */
 .agency-home .handoff-tour:not(.tour-enhanced){grid-template-columns:minmax(0,1fr);gap:0}
@@ -346,18 +348,22 @@
 
 /* The guide follows three named stops, separate from artifact annotations. */
 .agency-home .handoff-waypoints{position:relative;min-width:0;padding-top:8px;margin-top:20px;grid-column:1;grid-row:2}
-.agency-home .waypoint-track{position:relative;height:104px;margin:0 12px}
+.agency-home .waypoint-track{position:relative;height:136px;margin:0 12px}
 .agency-home .waypoint-track svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;fill:none;stroke:var(--muted);stroke-width:1;vector-effect:non-scaling-stroke}
 .agency-home .waypoint-track path{vector-effect:non-scaling-stroke}
-.agency-home .waypoint-guide{position:absolute;left:10%;top:78%;height:88px;width:70.4px;transform:translate(-50%,-100%);pointer-events:none;transition:none!important}
+.agency-home .waypoint-guide{position:absolute;left:10%;top:78%;height:112px;width:89.6px;transform:translate(-50%,-100%);pointer-events:none;transition:none!important}
 .agency-home .waypoint-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .agency-home .waypoint-links a{display:flex;justify-content:center;align-items:center;min-height:44px;text-align:center;font:11px/1.4 var(--font-mono);color:var(--muted);border-bottom:1px solid var(--border)}
 .agency-home .waypoint-links a[aria-current=step]{color:var(--foreground);border-color:var(--foreground)}
 .agency-home .waypoint-links a:focus-visible{outline:2px solid var(--foreground);outline-offset:3px}
-@media(max-width:900px), (max-height:650px){.agency-home .handoff-waypoints{grid-row:1;margin:0 0 28px}.agency-home .handoff-tour .handoff-scenes .handoff-scene[data-tour-scene="0"]{grid-row:2}.agency-home .handoff-tour .handoff-steps .handoff-step[data-tour-step="0"]{grid-row:3}.agency-home .handoff-tour .handoff-scenes .handoff-scene[data-tour-scene="1"]{grid-row:4}.agency-home .handoff-tour .handoff-steps .handoff-step[data-tour-step="1"]{grid-row:5}.agency-home .handoff-tour .handoff-scenes .handoff-scene[data-tour-scene="2"]{grid-row:6}.agency-home .handoff-tour .handoff-steps .handoff-step[data-tour-step="2"]{grid-row:7}}
+@media(max-width:900px), (max-height:750px){.agency-home .handoff-waypoints{grid-row:1;margin:0 0 28px}.agency-home .handoff-tour .handoff-scenes .handoff-scene[data-tour-scene="0"]{grid-row:2}.agency-home .handoff-tour .handoff-steps .handoff-step[data-tour-step="0"]{grid-row:3}.agency-home .handoff-tour .handoff-scenes .handoff-scene[data-tour-scene="1"]{grid-row:4}.agency-home .handoff-tour .handoff-steps .handoff-step[data-tour-step="1"]{grid-row:5}.agency-home .handoff-tour .handoff-scenes .handoff-scene[data-tour-scene="2"]{grid-row:6}.agency-home .handoff-tour .handoff-steps .handoff-step[data-tour-step="2"]{grid-row:7}}
 .agency-home .handoff-tour:not(.tour-enhanced) .handoff-waypoints{grid-row:1}
 .agency-home .handoff-tour:not(.tour-enhanced) .handoff-scenes [data-tour-scene="0"]{grid-row:2}.agency-home .handoff-tour:not(.tour-enhanced) .handoff-steps [data-tour-step="0"]{grid-row:3}.agency-home .handoff-tour:not(.tour-enhanced) .handoff-scenes [data-tour-scene="1"]{grid-row:4}.agency-home .handoff-tour:not(.tour-enhanced) .handoff-steps [data-tour-step="1"]{grid-row:5}.agency-home .handoff-tour:not(.tour-enhanced) .handoff-scenes [data-tour-scene="2"]{grid-row:6}.agency-home .handoff-tour:not(.tour-enhanced) .handoff-steps [data-tour-step="2"]{grid-row:7}
-@media(min-width:901px) and (min-height:651px){.agency-home .tour-enhanced .handoff-scene{width:100%;max-width:min(100%,calc((100svh - 460px)*1.5));justify-self:center}.agency-home .tour-enhanced .handoff-waypoints{margin-top:12px}}
+@media(min-width:901px) and (min-height:751px){.agency-home .tour-enhanced .handoff-scene{width:100%;max-width:min(100%,calc((100svh - 500px)*1.5));justify-self:center}.agency-home .tour-enhanced .handoff-waypoints{margin-top:12px}.agency-home .tour-enhanced .handoff-art{margin-bottom:120px}}
 
 .agency-home .waypoint-guide [data-guide-pose]{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;opacity:0;transition:none!important}
 .agency-home .waypoint-guide [data-guide-pose="0"]{opacity:1}
+
+/* Waypoint navigation focuses the reading heading rather than outlining a tall article. */
+.agency-home .handoff-step:focus{outline:none}
+.agency-home .handoff-step:focus-visible h3{outline:2px solid var(--foreground);outline-offset:8px}
