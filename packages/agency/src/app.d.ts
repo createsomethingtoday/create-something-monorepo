@@ -23,6 +23,14 @@ declare global {
 				CACHE: KVNamespace;
 				STORAGE: R2Bucket;
 				RESEND_API_KEY: string;
+				// Separate, default-off Meta marketing delivery. Values are configured through secrets/env.
+				META_MARKETING_ENABLED?: string;
+				META_DATASET_ID?: string;
+				META_CAPI_ACCESS_TOKEN?: string;
+				META_GRAPH_VERSION?: string;
+				META_ZARAZ_ENDPOINT?: string;
+				META_ZARAZ_RELAY_KEY?: string;
+				META_TEST_EVENT_CODE?: string;
 				TURNSTILE_SECRET_KEY?: string;
 				TURNSTILE_SITE_KEY?: string;
 				ENVIRONMENT: string;

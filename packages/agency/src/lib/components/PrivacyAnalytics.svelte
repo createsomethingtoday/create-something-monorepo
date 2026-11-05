@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { afterNavigate } from '$app/navigation';
   import { Analytics } from '@create-something/canon';
   import type { Property } from '@create-something/canon/analytics';
@@ -18,6 +18,8 @@
     clearMarketingAttribution,
     type MarketingAttribution
   } from '$lib/analytics/marketing-attribution';
+  import { browserBlocksMetaMarketing, createMetaMarketingClient, type MetaMarketingConsent } from '$lib/analytics/meta-marketing-client';
+  import { sanitizeMetaPageUrl } from '$lib/analytics/meta-policy';
 
   interface Props {
     property?: Property;
@@ -47,10 +49,21 @@
   let consentState = $state<ConsentState | null>(null);
   let paidSearchAttribution = $state<HighIntentSearchAttribution | undefined>(undefined);
   let marketingAttribution = $state<MarketingAttribution | undefined>(undefined);
+  let marketingConsent = $state<MetaMarketingConsent>({ marketing: false, available: false, blocked: false });
+  let analyticsChoice = $state(false);
+  let marketingChoice = $state(false);
+  let marketingLoading = $state(true);
+  let saving = $state(false);
+  let privacyError = $state('');
+  let marketingTouched = false;
+  let privacyTrigger = $state<HTMLButtonElement | undefined>(undefined);
+  let analyticsCheckbox = $state<HTMLInputElement | undefined>(undefined);
+  let marketingClient: ReturnType<typeof createMetaMarketingClient> | undefined;
+  let readVersion = 0;
 
   const hasStoredChoice = $derived(consentState !== null);
   const statusLabel = $derived(
-    userOptedOut || consentState?.analytics === false ? 'Analytics off' : 'Analytics on'
+    marketingConsent.marketing ? 'Meta marketing on' : analyticsAllowed ? 'Analytics on' : 'Tracking off'
   );
   const effectiveGlobalMetadata = $derived(
     globalMetadata || paidSearchAttribution || marketingAttribution
@@ -65,16 +78,55 @@
   }
 
   afterNavigate((navigation) => {
-    if (navigation.to?.url) syncPaidSearchAttribution(navigation.to.url);
+    if (navigation.to?.url) {
+      syncPaidSearchAttribution(navigation.to.url);
+      if (mounted) void syncMetaMarketing(navigation.to.url);
+    }
   });
+
+  $effect(() => {
+    if (mounted && userOptedOut) void syncMetaMarketing(new URL(window.location.href), false);
+  });
+
+  async function syncMetaMarketing(url: URL, track = true) {
+    if (!marketingClient) return;
+    const version = ++readVersion;
+    try {
+      const next = track ? await marketingClient.trackPage(url) : await marketingClient.refresh();
+      if (version !== readVersion) return;
+      marketingConsent = next;
+      if (!marketingTouched) marketingChoice = next.marketing;
+    } catch {
+      if (version !== readVersion) return;
+      marketingConsent = marketingClient.state;
+      if (!marketingTouched) marketingChoice = false;
+    } finally {
+      if (version === readVersion) marketingLoading = false;
+    }
+  }
 
   onMount(() => {
     consentState = getConsentState();
     analyticsAllowed = Boolean(consentState?.analytics) && !userOptedOut;
+    analyticsChoice = analyticsAllowed;
     if (analyticsAllowed) syncPaidSearchAttribution(new URL(window.location.href));
     compactPromptActive = compactPrompt && !consentState && !userOptedOut;
     showPanel = !consentState && !userOptedOut && !compactPromptActive;
+    if (property === 'agency') {
+      marketingClient = createMetaMarketingClient({
+        sanitizePageUrl: sanitizeMetaPageUrl,
+        privacyBlocked: () => userOptedOut || browserBlocksMetaMarketing()
+      });
+      void syncMetaMarketing(new URL(window.location.href));
+    } else {
+      marketingLoading = false;
+    }
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') void syncMetaMarketing(new URL(window.location.href));
+    };
+    document.addEventListener('visibilitychange', refreshWhenVisible);
     mounted = true;
+    return () => document.removeEventListener('visibilitychange', refreshWhenVisible);
   });
 
   function setAnalyticsConsent(analytics: boolean) {
@@ -88,13 +140,46 @@
       paidSearchAttribution = undefined;
       marketingAttribution = undefined;
     }
-    showPanel = false;
-    compactPromptActive = false;
   }
 
-  function openPrivacyPanel() {
+  async function saveChoices(necessaryOnly = false) {
+    if (saving) return;
+    saving = true;
+    privacyError = '';
+    ++readVersion;
+    const nextAnalytics = necessaryOnly ? false : analyticsChoice;
+    const nextMarketing = !necessaryOnly && marketingChoice && !marketingConsent.blocked && !userOptedOut;
+    setAnalyticsConsent(nextAnalytics);
+    analyticsChoice = nextAnalytics;
+    try {
+      if (marketingClient) marketingConsent = await marketingClient.setConsent(nextMarketing);
+      marketingChoice = marketingConsent.marketing;
+      marketingTouched = false;
+      showPanel = false;
+      compactPromptActive = false;
+      await tick();
+      privacyTrigger?.focus();
+      if (marketingConsent.marketing) void syncMetaMarketing(new URL(window.location.href));
+    } catch {
+      marketingConsent = marketingClient?.state ?? { marketing: false, available: false, blocked: false };
+      marketingChoice = false;
+      privacyError = 'Your analytics choice is saved. We could not confirm the Meta marketing change. Marketing requests from this page are paused. Please try again.';
+    } finally {
+      marketingLoading = false;
+      saving = false;
+    }
+  }
+
+  async function openPrivacyPanel() {
     compactPromptActive = false;
+    analyticsChoice = analyticsAllowed;
+    marketingChoice = marketingConsent.marketing;
+    marketingTouched = false;
+    privacyError = '';
     showPanel = true;
+    void syncMetaMarketing(new URL(window.location.href), false);
+    await tick();
+    analyticsCheckbox?.focus();
   }
 </script>
 
@@ -105,6 +190,7 @@
 {#if mounted}
   <aside
     class="privacy-choice"
+    class:privacy-choice--expanded={showPanel}
     class:privacy-choice--compact={compactPromptActive}
     class:privacy-choice--obscured={obscured}
     class:privacy-choice--safe-corner={mobilePlacement === 'safe-corner'}
@@ -116,28 +202,48 @@
       <div class="privacy-panel" role="dialog" aria-modal="false" aria-labelledby="privacy-title">
         <div class="privacy-panel__copy">
           <p class="privacy-panel__eyebrow">Privacy</p>
-          <h2 id="privacy-title">First-party analytics only.</h2>
+          <h2 id="privacy-title">Your privacy choices</h2>
           <p>
-            We use analytics to learn which workflow pages help. No ad pixels, no cross-site
-            tracking.
+            Choose how we measure visits. Both choices are optional, and you can change them here.
           </p>
           <a href="/privacy">Privacy policy</a>
         </div>
+        <div class="privacy-options">
+          <label class="privacy-option">
+            <input bind:this={analyticsCheckbox} type="checkbox" bind:checked={analyticsChoice} disabled={saving || userOptedOut} aria-label="First-party analytics" />
+            <span><strong>First-party analytics</strong><span>Help us learn which pages and workflows are useful.</span></span>
+          </label>
+          {#if property === 'agency'}
+            <label class="privacy-option">
+              <input type="checkbox" bind:checked={marketingChoice} onchange={() => { marketingTouched = true; }} disabled={saving || marketingLoading || !marketingConsent.available || marketingConsent.blocked || userOptedOut} aria-label="Meta marketing" aria-describedby="meta-marketing-detail meta-marketing-status" />
+              <span><strong>Meta marketing</strong><span id="meta-marketing-detail">Share public page visits and saved inquiries with Meta to measure Facebook and Instagram campaigns. Inquiries include a hashed email for matching.</span></span>
+            </label>
+            <p id="meta-marketing-status" class="privacy-option-status" role="status">
+              {#if marketingLoading}Checking marketing availability…
+              {:else if marketingConsent.blocked || userOptedOut}Meta marketing is off because of your privacy settings.
+              {:else if !marketingConsent.available}Meta marketing is currently unavailable and stays off.
+              {:else}Off unless you choose to allow it. Your analytics choice does not enable Meta marketing.{/if}
+            </p>
+          {/if}
+        </div>
+        {#if privacyError}<p class="privacy-error" role="alert">{privacyError}</p>{/if}
         <div class="privacy-panel__actions">
           <button
             type="button"
             class="privacy-button privacy-button--ghost"
-            onclick={() => setAnalyticsConsent(false)}
+            disabled={saving}
+            onclick={() => saveChoices(true)}
           >
             Necessary only
           </button>
-          <button type="button" class="privacy-button" onclick={() => setAnalyticsConsent(true)}>
-            Allow analytics
+          <button type="button" class="privacy-button" disabled={saving} onclick={() => saveChoices()}>
+            {saving ? 'Saving…' : 'Save choices'}
           </button>
         </div>
       </div>
     {:else if compactPromptActive}
       <button
+        bind:this={privacyTrigger}
         type="button"
         class="privacy-pill privacy-pill--compact"
         aria-label="Privacy choices"
@@ -148,6 +254,7 @@
       </button>
     {:else}
       <button
+        bind:this={privacyTrigger}
         type="button"
         class="privacy-pill"
         aria-expanded={showPanel}
@@ -185,6 +292,75 @@
       linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 2.75rem 2.75rem,
       var(--color-performance-panel, #ffffff);
     box-shadow: 0 18px 44px rgba(10, 14, 25, 0.16);
+    max-height: min(38rem, calc(100dvh - 6rem));
+    overflow-y: auto;
+  }
+
+  .privacy-choice--expanded {
+    z-index: var(--z-performance-modal, 100);
+  }
+
+  .privacy-options {
+    display: grid;
+    gap: 0.65rem;
+  }
+
+  .privacy-option {
+    display: grid;
+    grid-template-columns: 1.25rem minmax(0, 1fr);
+    align-items: start;
+    gap: 0.65rem;
+    min-height: 2.75rem;
+    padding-block: 0.3rem;
+    cursor: pointer;
+  }
+
+  .privacy-option input {
+    width: 1.1rem;
+    height: 1.1rem;
+    margin: 0.1rem 0 0;
+    accent-color: var(--color-performance-ink, #090909);
+  }
+
+  .privacy-option > span,
+  .privacy-option > span > span {
+    display: block;
+  }
+
+  .privacy-option strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.84rem;
+  }
+
+  .privacy-option > span > span,
+  .privacy-option-status,
+  .privacy-error {
+    color: var(--color-performance-muted, #5e6268);
+    font-size: 0.76rem;
+    line-height: 1.5;
+  }
+
+  .privacy-option-status,
+  .privacy-error {
+    margin: 0;
+  }
+
+  .privacy-error {
+    border-left: 2px solid var(--color-performance-ink, #090909);
+    padding-left: 0.65rem;
+  }
+
+  .privacy-button:disabled,
+  .privacy-option:has(input:disabled) {
+    cursor: default;
+    opacity: 0.7;
+  }
+
+  .privacy-button:focus-visible,
+  .privacy-option input:focus-visible {
+    outline: 2px solid var(--color-performance-ink, #090909);
+    outline-offset: 3px;
   }
 
   .privacy-panel__copy {
@@ -341,16 +517,14 @@
     }
 
     .privacy-panel {
-      gap: 0.42rem;
-      padding: 0.52rem;
+      gap: 0.75rem;
+      padding: 0.85rem;
       border-radius: var(--radius-performance-sm, 4px);
     }
 
     .privacy-panel__copy {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.65rem;
+      display: grid;
+      gap: 0.4rem;
       min-width: 0;
     }
 
@@ -359,16 +533,12 @@
     }
 
     .privacy-panel h2 {
-      overflow: hidden;
-      min-width: 0;
-      font-size: 0.78rem;
-      line-height: 1.12;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      font-size: 1rem;
+      line-height: 1.25;
     }
 
     .privacy-panel p {
-      display: none;
+      font-size: 0.76rem;
     }
 
     .privacy-panel a {

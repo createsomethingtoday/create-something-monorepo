@@ -19,12 +19,14 @@ export function buildMarketingAttributionSql({ days = 30 } = {}) {
   SELECT source, medium, campaign, content, traffic_class, session_id,
     MAX(action = 'page_view') AS landed,
     MAX(action = 'booking_cta_click') AS clicked_booking,
-    MAX(action = 'booking_completed') AS completed_booking
+    MAX(action = 'booking_completed') AS completed_booking,
+    MAX(action = 'contact_submitted') AS submitted_contact
   FROM attributed GROUP BY source, medium, campaign, content, traffic_class, session_id
 )
 SELECT source, medium, campaign, content, traffic_class, COUNT(*) AS sessions,
   SUM(landed) AS landing_sessions, SUM(clicked_booking) AS booking_cta_sessions,
-  SUM(completed_booking) AS booking_completed_sessions
+  SUM(completed_booking) AS booking_completed_sessions,
+  SUM(submitted_contact) AS contact_submission_sessions
 FROM sessions GROUP BY source, medium, campaign, content, traffic_class
 ORDER BY sessions DESC, source, campaign, content;`;
 }
