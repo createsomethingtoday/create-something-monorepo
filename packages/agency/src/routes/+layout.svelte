@@ -240,8 +240,13 @@
     }
     const element = document.getElementById(id);
     if (element) {
-      if (!element.hasAttribute('tabindex')) element.setAttribute('tabindex', '-1');
-      element.focus({ preventScroll: true });
+      // Announce the handoff heading without outlining the entire story chapter.
+      // Keep scrolling anchored to the section so its introductory label remains visible.
+      const focusTarget = id === 'together'
+        ? document.getElementById('handoff-title') ?? element
+        : element;
+      if (!focusTarget.hasAttribute('tabindex')) focusTarget.setAttribute('tabindex', '-1');
+      focusTarget.focus({ preventScroll: true });
       const nav = document.querySelector('.nav-fixed');
       const clearance = (nav?.getBoundingClientRect().bottom ?? 72) + 24;
       window.scrollTo({ top: Math.max(0, window.scrollY + element.getBoundingClientRect().top - clearance), behavior: get(reducedFilmMotion) ? 'instant' : 'smooth' });
