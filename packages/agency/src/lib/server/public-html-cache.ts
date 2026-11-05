@@ -2,7 +2,7 @@ const PUBLIC_HTML_CACHE_CONTROL = 'public, max-age=60, s-maxage=300, stale-while
 const PUBLIC_HTML_CACHE_STATUS_HEADER = 'X-Agency-Edge-Cache';
 // Bump when a public HTML release changes its asset or composition contract.
 // Pages application caches can outlive promotion and zone purge acceptance.
-const PUBLIC_HTML_CACHE_REVISION = 'chapter-navigation-20261105';
+const PUBLIC_HTML_CACHE_REVISION = 'home-service-links-20261105';
 
 const UNCACHED_PATH_PREFIXES = [
   '/account',
