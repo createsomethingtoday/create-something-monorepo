@@ -36,8 +36,15 @@ export function enhanceStoryHome(root: HTMLElement) {
   let moveGuide = (_index: number) => {};
   let headingPlayed = false;
   const selectScene = (index: number) => {
-    // Native scroll must never hide the control a keyboard reader is using.
-    if (scenes.some(scene => scene.contains(document.activeElement)) && index !== activeScene) return;
+    // A focused hotspot must not pin the previous image while the text scrolls.
+    // Hand focus to the matching step before its old scene becomes hidden.
+    if (index !== activeScene && scenes.some(scene => scene.contains(document.activeElement))) {
+      const heading = steps[index]?.querySelector<HTMLElement>('h3');
+      if (heading) {
+        heading.tabIndex = -1;
+        heading.focus({ preventScroll: true });
+      }
+    }
     activeScene = index;
     moveGuide(index);
     root.querySelectorAll<HTMLElement>('[data-waypoint]').forEach((link, i) => {
@@ -65,7 +72,8 @@ export function enhanceStoryHome(root: HTMLElement) {
   tour?.classList.add('tour-enhanced');
   window.addEventListener('scroll', updateTour, { passive: true, signal: abort.signal });
   window.addEventListener('resize', updateTour, { passive: true, signal: abort.signal });
-  tour?.addEventListener('focusout', () => requestAnimationFrame(updateTour), { signal: abort.signal });
+  // Focus changes alone must preserve an explicitly explored disclosure.
+  // Native scroll/resize resume viewport selection and hand focus off above.
   root.querySelectorAll<HTMLAnchorElement>('[data-waypoint]').forEach(link => {
     link.addEventListener('click', event => {
       // Keep this local story navigation out of the site's route transition.

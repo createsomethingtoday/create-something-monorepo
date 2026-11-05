@@ -64,7 +64,9 @@ try {
   await page.keyboard.press('Enter');
   assert.equal(await page.evaluate(() => document.activeElement.closest('details').open), true);
   await page.evaluate(() => document.querySelector('[data-tour-step="2"]').scrollIntoView({ behavior: 'instant', block: 'center' }));
-  assert.equal(await page.evaluate(() => getComputedStyle(document.activeElement.closest('[data-tour-scene]')).visibility), 'visible');
+  await page.waitForFunction(() => document.querySelector('.handoff-scene.is-active').dataset.tourScene === '2');
+  assert.equal(await page.evaluate(() => document.activeElement === document.querySelector('#handoff-validate h3')), true);
+  assert.equal(await page.evaluate(() => getComputedStyle(document.activeElement).visibility), 'visible');
   results.push({ keyboardDisclosure: 'passed', focusRetention: 'passed' });
   await page.cdp('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
   await page.evaluate(() => sessionStorage.removeItem('agency-reduced-motion'));
