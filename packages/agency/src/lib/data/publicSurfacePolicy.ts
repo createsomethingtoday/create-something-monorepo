@@ -19,6 +19,8 @@ const publicPreviewRoute = /^\/(?:arc|experiments)\/[^/]+$/;
 
 export function usesAgencyOperatorPalette(pathname: string): boolean {
   const path = pathname.split(/[?#]/)[0].replace(/\/+$/, '') || '/';
+  // Customer entry adopts Agency styling; private workspace policy stays separate.
+  if (path === '/login') return true;
   if (privateOrUtilityRoute.test(path)) return false;
   // Preserve the already approved opt-in for the Map entry only. Nested maps,
   // handoffs, subscriptions and shared maps retain their own utility policy.
