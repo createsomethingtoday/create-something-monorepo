@@ -4,7 +4,7 @@
 
 - **Effective:** 2026-08-04
 - **Review by:** first working week after Webflow Conf
-- **Owner while provisional:** app review (Shea Sisco, Pablo Miranda, Micah Johnson); escalation Adam Lehman / Yan Xie
+- **Owner while provisional:** app review (Shea Sisco, Pablo Miranda, Micah Johnson); app review also decides exceptions and escalates to Legal or Security at its discretion (since 11/04/2026); Yan Xie for product questions
 - **Applies to:** apps whose primary function is consent management, cookie banners, tracker blocking, or privacy compliance
 
 ## Why this category has its own standard
