@@ -56,13 +56,28 @@ function homeReveals(){
  if(mcp&&below(mcp))gsap.fromTo(mcp,{clipPath:'inset(0% 6% round 16px)',autoAlpha:.4},{clipPath:'inset(0% 0% round 8px)',autoAlpha:1,duration:1.1,ease:'power3.out',clearProps:'clipPath',scrollTrigger:{trigger:mcp,start:'top 85%',once:true}});
 }
 
-// Cards below the fold rise into place as they scroll in.
+// Cards below the fold rise into place as they scroll in. An IntersectionObserver decides when,
+// not a ScrollTrigger: a sort change reorders the grid's existing cards in place, and a trigger
+// measured before the move keeps its stale start, so a card moved into view stayed at the hidden
+// offset. The observer re-evaluates after any layout change, wherever the card ends up.
+let cardObserver:IntersectionObserver|undefined;
+const pendingCards=new Set<HTMLElement>();
 function revealCards(cards:HTMLElement[]){
  if(!cards.length)return;
+ cardObserver??=new IntersectionObserver(entries=>{
+  const entered=entries.filter(entry=>entry.isIntersecting).map(entry=>entry.target as HTMLElement);
+  if(!entered.length)return;
+  entered.forEach(forgetCard);
+  gsap.to(entered,{y:0,scale:1,duration:.8,stagger:.06,ease:'power3.out',overwrite:'auto'});
+ },{rootMargin:'0px 0px -5% 0px'});
+ // Cards a filter change removed never intersect again; drop them so the set stays small.
+ pendingCards.forEach(card=>{if(!card.isConnected)forgetCard(card)});
  cards=cards.map(lift);
  gsap.set(cards,{y:36,scale:.985,transformOrigin:'50% 100%'});
- ScrollTrigger.batch(cards,{start:'top 95%',once:true,onEnter:batched=>gsap.to(batched,{y:0,scale:1,duration:.8,stagger:.06,ease:'power3.out',overwrite:'auto'})});
+ cards.forEach(card=>{pendingCards.add(card);cardObserver!.observe(card)});
 }
+function forgetCard(card:HTMLElement){cardObserver?.unobserve(card);pendingCards.delete(card)}
+function disposeCardReveal(){cardObserver?.disconnect();cardObserver=undefined;pendingCards.clear()}
 
 function arrowOf(link:Element){
  return [...link.querySelectorAll<HTMLElement>('[aria-hidden="true"]')].find(span=>span.textContent?.trim()===ARROW_TEXT);
@@ -274,7 +289,7 @@ export function initMotion(){
    revealCards(gsap.utils.toArray<HTMLElement>(CARD).filter(below));
   };
   start();
-  const off=[microinteractions(),pillRows(true)];
+  const off=[microinteractions(),pillRows(true),disposeCardReveal];
   return()=>off.forEach(fn=>fn());
  });
  mm.add('(prefers-reduced-motion: reduce)',()=>{document.documentElement.classList.remove('rd-motion');return pillRows(false)});
