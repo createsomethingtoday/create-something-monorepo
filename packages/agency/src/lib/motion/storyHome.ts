@@ -1,4 +1,4 @@
-import { createWaypointGuide } from './waypointGuide';
+import { createWaypointGuide, waypointPose } from './waypointGuide';
 import { derived } from 'svelte/store';
 import { startWordmarkIntro } from './wordmarkIntro';
 import { reducedFilmMotion, filmOverlayOpen, filmNavigationOpen } from './filmPlayback';
@@ -98,6 +98,28 @@ export function enhanceStoryHome(root: HTMLElement) {
     const ScrollTrigger = plugin.ScrollTrigger;
     gsap.registerPlugin(ScrollTrigger, motion.MotionPathPlugin);
     const guide = root.querySelector<HTMLElement>('.waypoint-guide');
+    const poses = Array.from(guide?.querySelectorAll<HTMLImageElement>('[data-guide-pose]') ?? []);
+    const systemMotion = matchMedia('(prefers-reduced-motion: reduce)');
+    let guideBlocked = true;
+    let renderedProgress = 0;
+    let visiblePose = 0;
+    const renderPose = () => {
+      const next = waypointPose(renderedProgress);
+      // Stop a partial crossfade immediately when motion becomes blocked.
+      if (guideBlocked) {
+        gsap.killTweensOf(poses);
+        gsap.set(poses, { opacity: (index: number) => index === visiblePose ? 1 : 0 });
+      }
+      // Keep the previous loaded cutout visible until its replacement is ready.
+      if (!poses[next]?.complete || !poses[next]?.naturalWidth) return;
+      if (next === visiblePose && !guideBlocked) return;
+      visiblePose = next;
+      gsap.killTweensOf(poses);
+      if (guideBlocked) gsap.set(poses, { opacity: (index: number) => index === next ? 1 : 0 });
+      else gsap.to(poses, { opacity: (index: number) => index === next ? 1 : 0, duration: .12, ease: 'none', overwrite: true });
+      if (guide) guide.dataset.guidePose = String(next);
+    };
+    poses.forEach(pose => pose.addEventListener('load', renderPose, { signal: abort.signal }));
     // Animate a normalized point, not the image's pixel transform. CSS owns
     // responsive positioning, including resize while motion is disabled.
     const point = { x: 10, y: 78 };
@@ -111,6 +133,8 @@ export function enhanceStoryHome(root: HTMLElement) {
       fromCurrent: false, curviness: 1, autoRotate: false
     } });
     const transport = createWaypointGuide(progress => {
+      renderedProgress = progress;
+      renderPose();
       // Semantic stops are exact and synchronous, including reduced motion.
       // MotionPath interpolates only the travel between those fixed anchors.
       if (progress === 0 || progress === .5 || progress === 1) {
@@ -193,14 +217,24 @@ export function enhanceStoryHome(root: HTMLElement) {
 
     };
     const blocked = derived([reducedFilmMotion, filmOverlayOpen, filmNavigationOpen], values => values.some(Boolean));
-    const unsubscribe = blocked.subscribe(value => { reduced = value; transport.block(value); if (value) intro.destroy(); install(); });
+    let storeBlocked = true;
+    const updateBlocked = () => {
+      const value = storeBlocked || systemMotion.matches;
+      guideBlocked = value;
+      reduced = storeBlocked;
+      transport.block(value);
+      if (storeBlocked) intro.destroy();
+      install();
+    };
+    const unsubscribe = blocked.subscribe(value => { storeBlocked = value; updateBlocked(); });
+    systemMotion.addEventListener('change', updateBlocked, { signal: abort.signal });
     const refresh = () => { if (!disposed) ScrollTrigger.refresh(); };
     root.addEventListener('toggle', refresh, { capture: true, signal: abort.signal });
     root.addEventListener('load', refresh, { capture: true, signal: abort.signal });
     window.addEventListener('resize', () => { transport.refresh(); clearTimeout(resizeTimer); resizeTimer = setTimeout(install, 160); }, { signal: abort.signal });
     void document.fonts.ready.then(refresh);
     if (guide) guide.dataset.waypointReady = 'true';
-    cleanup = () => { unsubscribe(); transport.destroy(); pathTween.kill(); guide?.style.removeProperty('left'); guide?.style.removeProperty('top'); if (guide) delete guide.dataset.waypointReady; context?.revert(); moveGuide = () => {}; };
+    cleanup = () => { unsubscribe(); transport.destroy(); pathTween.kill(); gsap.killTweensOf(poses); poses.forEach(pose => pose.style.removeProperty('opacity')); guide?.style.removeProperty('left'); guide?.style.removeProperty('top'); if (guide) { delete guide.dataset.waypointReady; delete guide.dataset.guidePose; } context?.revert(); moveGuide = () => {}; };
   }).catch(() => { /* Complete static content remains readable if enhancement is unavailable. */ });
   return { destroy() { disposed = true; intro.destroy(); clearTimeout(resizeTimer); abort.abort(); cleanup(); tour?.classList.remove('tour-enhanced'); if (heading && headingMarkup) { heading.innerHTML = headingMarkup; heading.removeAttribute('aria-label'); } } };
 }

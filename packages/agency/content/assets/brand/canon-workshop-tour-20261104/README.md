@@ -15,6 +15,8 @@ All three public demos were inspected in ego-browser. The implementation is orig
 
 `canon-guide-cutout-v1.png` is an original transparent character master; `cutout-prompt.json` records its generation. The 307 × 384 WebP preserves alpha and weighs approximately 28 kB. It carries a paper guide and points toward the next stage; its movement represents story position, not autonomous execution.
 
+Two matching transparent poses, `canon-guide-test-v1.png` and `canon-guide-validate-v1.png`, add caliper inspection and an open handoff guide. Exact edit prompts are in `pose-prompts.json`; alpha WebPs are 307 × 384 (24 / 25 kB). All three layers preload in the same frame. Pose changes follow rendered path progress at the quarter and three-quarter boundaries, including reversal, with a 120 ms crossfade. Reduced motion and blocking overlays settle immediately; an unavailable image leaves the previous loaded pose visible. These poses remain conceptual storytelling, not execution status.
+
 CTX searches supplied historical character and interaction context, corroborated against the current source and live Agency page. Retrieval reported 1,015 skipped history records; coverage is not complete. The current graphite-workshop contract remains `docs/PERFORMANCE_LAB_VISUAL_GRAMMAR.md`.
 
 ## Acceptance and release
@@ -29,6 +31,6 @@ pnpm --filter @create-something/agency test:workshop-tour
 ego-browser nodejs < packages/agency/scripts/verify-workshop-tour.ego.mjs
 ```
 
-The browser regression exercises actual waypoint positions at six widths, link selection, keyboard disclosure, focus retention, and immediate reduced-motion selection after resize. It caught a CSS-translation leak into the first path position, a race between waypoint links and global hash navigation, and the global reduced-motion rule creating a 0.01ms transition on position. The final guide uses responsive percentage coordinates, local native scrolling, and a scoped `transition: none !important` override. The controller tests cover stale animation callbacks, reversal, teardown, and immediate motion-block settling. Screenshots and the no-JS review remain necessary to assess composition and readability.
+The browser regression exercises actual waypoint positions at six widths, link selection, sampled pose crossfades and mid-travel reversal with no blank frames, keyboard disclosure, focus retention, and immediate reduced-motion selection after resize. It caught a CSS-translation leak into the first path position, a race between waypoint links and global hash navigation, and the global reduced-motion rule creating a 0.01ms transition on position. The final guide uses responsive percentage coordinates, local native scrolling, and a scoped `transition: none !important` override. The controller tests cover stale animation callbacks, reversal, teardown, and immediate motion-block settling. Screenshots and the no-JS review remain necessary to assess composition and readability.
 
 Rollback: revert the scoped CRE-2351 commit and deploy the previously verified Agency artifact. The prior image remains available as `team-handoff-v1.webp`.

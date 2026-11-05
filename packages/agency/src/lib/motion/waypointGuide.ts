@@ -1,3 +1,8 @@
+/** Nearest semantic pose follows the rendered journey, including reversal. */
+export function waypointPose(progress: number): number {
+  return progress < .25 ? 0 : progress < .75 ? 1 : 2;
+}
+
 /** Interruptible waypoint transport. Rendering and animation stay with the caller. */
 export function createWaypointGuide(
   render: (progress: number) => void,

@@ -349,7 +349,7 @@
 .agency-home .waypoint-track{position:relative;height:104px;margin:0 12px}
 .agency-home .waypoint-track svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;fill:none;stroke:var(--muted);stroke-width:1;vector-effect:non-scaling-stroke}
 .agency-home .waypoint-track path{vector-effect:non-scaling-stroke}
-.agency-home .waypoint-guide{position:absolute;left:10%;top:78%;height:88px;width:auto;max-width:80px;object-fit:contain;transform:translate(-50%,-100%);pointer-events:none;transition:none!important}
+.agency-home .waypoint-guide{position:absolute;left:10%;top:78%;height:88px;width:70.4px;transform:translate(-50%,-100%);pointer-events:none;transition:none!important}
 .agency-home .waypoint-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .agency-home .waypoint-links a{display:flex;justify-content:center;align-items:center;min-height:44px;text-align:center;font:11px/1.4 var(--font-mono);color:var(--muted);border-bottom:1px solid var(--border)}
 .agency-home .waypoint-links a[aria-current=step]{color:var(--foreground);border-color:var(--foreground)}
@@ -358,3 +358,6 @@
 .agency-home .handoff-tour:not(.tour-enhanced) .handoff-waypoints{grid-row:1}
 .agency-home .handoff-tour:not(.tour-enhanced) .handoff-scenes [data-tour-scene="0"]{grid-row:2}.agency-home .handoff-tour:not(.tour-enhanced) .handoff-steps [data-tour-step="0"]{grid-row:3}.agency-home .handoff-tour:not(.tour-enhanced) .handoff-scenes [data-tour-scene="1"]{grid-row:4}.agency-home .handoff-tour:not(.tour-enhanced) .handoff-steps [data-tour-step="1"]{grid-row:5}.agency-home .handoff-tour:not(.tour-enhanced) .handoff-scenes [data-tour-scene="2"]{grid-row:6}.agency-home .handoff-tour:not(.tour-enhanced) .handoff-steps [data-tour-step="2"]{grid-row:7}
 @media(min-width:901px) and (min-height:651px){.agency-home .tour-enhanced .handoff-scene{width:100%;max-width:min(100%,calc((100svh - 460px)*1.5));justify-self:center}.agency-home .tour-enhanced .handoff-waypoints{margin-top:12px}}
+
+.agency-home .waypoint-guide [data-guide-pose]{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;opacity:0;transition:none!important}
+.agency-home .waypoint-guide [data-guide-pose="0"]{opacity:1}

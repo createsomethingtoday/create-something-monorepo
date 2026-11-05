@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createWaypointGuide } from '../src/lib/motion/waypointGuide';
+import { createWaypointGuide, waypointPose } from '../src/lib/motion/waypointGuide';
 
 test('rapid reversals discard stale frames and continue from the rendered position', () => {
   let rendered = 0;
@@ -27,4 +27,22 @@ test('reduced motion, overlays and resize settle at the latest stop without star
   guide.block(true); assert.equal(rendered, 1);
   guide.select(0); assert.equal(rendered, 0);
   guide.refresh(); assert.equal(rendered, 0); assert.equal(travels, 1);
+});
+
+
+test('poses use nearest rendered waypoint across boundaries and reversals', () => {
+  assert.deepEqual([0, .2499, .25, .5, .7499, .75, 1].map(waypointPose), [0, 0, 1, 1, 1, 2, 2]);
+  let pose = 0;
+  const frames: Array<(value: number) => void> = [];
+  const guide = createWaypointGuide(progress => { pose = waypointPose(progress); }, (_from, _to, update) => {
+    frames.push(update); return () => {};
+  });
+  guide.block(false); guide.select(2);
+  assert.equal(pose, 0);
+  frames[0](.76); assert.equal(pose, 2);
+  guide.select(0); assert.equal(pose, 2);
+  frames[1](.74); assert.equal(pose, 1);
+  frames[1](.24); assert.equal(pose, 0);
+  frames[0](1); assert.equal(pose, 0);
+  guide.block(true); guide.select(2); assert.equal(pose, 2);
 });
