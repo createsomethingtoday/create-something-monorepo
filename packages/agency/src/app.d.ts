@@ -29,8 +29,6 @@ declare global {
 				META_DATASET_ID?: string;
 				META_CAPI_ACCESS_TOKEN?: string;
 				META_GRAPH_VERSION?: string;
-				META_ZARAZ_ENDPOINT?: string;
-				META_ZARAZ_RELAY_KEY?: string;
 				META_TEST_EVENT_CODE?: string;
 				TURNSTILE_SECRET_KEY?: string;
 				TURNSTILE_SITE_KEY?: string;

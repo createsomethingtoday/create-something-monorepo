@@ -12,9 +12,8 @@ visitor request; the scheduled Worker skips them.
 
 Before deployment, apply Agency migrations `0060_meta_marketing.sql` and
 `0061_meta_marketing_account_binding.sql`. Configure
-the dataset and Graph API version in Wrangler. Store `META_CAPI_ACCESS_TOKEN`,
-`META_ZARAZ_ENDPOINT`, and `META_ZARAZ_RELAY_KEY` in encrypted Worker bindings
-using the owning Infisical secrets. Keep secret values out of source and logs.
+the dataset and Graph API version in Wrangler. Store `META_CAPI_ACCESS_TOKEN`
+in encrypted Worker bindings using the owning Infisical secrets. Keep secret values out of source and logs.
 
 Verify the Worker with:
 
@@ -30,8 +29,9 @@ The scheduled handler logs only aggregate cleanup and delivery counts. Inspect
 Cloudflare invocation evidence after release; do not manufacture a live inquiry
 to test it.
 
-For rollback, disable the Worker schedule or remove the Worker and roll Agency
-back through its owning deployment workflow. Preserve D1 source receipts and
+For rollback, set `META_MARKETING_ENABLED=false` and redeploy to stop delivery
+while retention cleanup continues. Roll Agency back through its owning deployment
+workflow if needed. Preserve D1 source receipts and
 delivery evidence for reconciliation. See
 [Agency Meta attribution](../../docs/guides/AGENCY_META_ATTRIBUTION.md) and Linear
 `CRE-2359` for the full delivery boundary.

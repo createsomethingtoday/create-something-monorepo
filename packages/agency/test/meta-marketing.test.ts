@@ -14,8 +14,7 @@ const require = createRequire(import.meta.url);
 const { Miniflare } = createRequire(require.resolve('wrangler/package.json'))('miniflare');
 const baseEnv = {
   META_MARKETING_ENABLED: 'true', META_DATASET_ID: '123456789012345',
-  META_CAPI_ACCESS_TOKEN: 'fixture-secret', META_GRAPH_VERSION: 'v26.0',
-  META_ZARAZ_ENDPOINT: 'https://createsomething.agency/meta-relay-fixture', META_ZARAZ_RELAY_KEY: 'fixture-relay-secret'
+  META_CAPI_ACCESS_TOKEN: 'fixture-secret', META_GRAPH_VERSION: 'v26.0'
 };
 const origin = 'https://createsomething.agency';
 const request = (method = 'GET', body?: unknown, cookie?: string, headers: Record<string, string> = {}) =>
@@ -253,28 +252,111 @@ test('consent revoked between preparation and atomic save cannot queue a convers
   } finally { await f.dispose(); }
 });
 
-test('page-view relay strips untrusted input, rejects private URLs, and never claims Meta acceptance', async () => {
+test('direct Meta measurement is available without Zaraz relay configuration', async () => {
+  const f = await fixture();
+  try {
+    assert.equal((await readMetaConsent(request(), f.env)).available, true);
+    const choice = await metaConsentResponse(request('POST', { marketing: true }), f.env);
+    assert.deepEqual(await choice.json(), { marketing: true, available: true, blocked: false });
+  } finally { await f.dispose(); }
+});
+
+test('consented PageView goes directly to Meta with bounded matching data and an acknowledged receipt', async () => {
   const f = await fixture();
   try {
     const cookie = await grant(f.env); let calls = 0;
-    const send: typeof fetch = async (_url, init) => {
+    const eventId = crypto.randomUUID(); const before = Math.floor(Date.now() / 1000);
+    const send: typeof fetch = async (url, init) => {
       calls++;
-      assert.equal(new Headers(init!.headers).get('x-cs-meta-relay-key'), 'fixture-relay-secret');
+      assert.equal(String(url), 'https://graph.facebook.com/v26.0/123456789012345/events');
+      assert.equal(new Headers(init!.headers).get('Authorization'), 'Bearer fixture-secret');
+      assert.equal(new Headers(init!.headers).get('Cookie'), null);
+      assert.equal(new Headers(init!.headers).get('x-cs-meta-relay-key'), null);
       const body = JSON.parse(init!.body as string);
-      assert.equal(body.events[0].client.dl, `${origin}/contact`);
-      assert.deepEqual(Object.keys(body.events[0].system.cookies), ['cs_zaraz_consent']);
-      assert.doesNotMatch(init!.body as string, /private-session/);
-      return new Response(JSON.stringify([{ execute: 'must-never-run()' }]));
+      assert.deepEqual(Object.keys(body), ['data']);
+      assert.equal(body.data.length, 1);
+      const page = body.data[0];
+      assert.deepEqual(Object.keys(page).sort(), ['action_source', 'event_id', 'event_name', 'event_source_url', 'event_time', 'user_data']);
+      assert.equal(page.event_name, 'PageView'); assert.equal(page.event_id, eventId);
+      assert.equal(page.event_source_url, `${origin}/contact`); assert.equal(page.action_source, 'website');
+      assert.ok(page.event_time >= before && page.event_time <= Math.floor(Date.now() / 1000));
+      assert.deepEqual(page.user_data, { client_ip_address: '192.0.2.1', client_user_agent: 'a'.repeat(512) });
+      assert.doesNotMatch(init!.body as string, /private-session|private@example|utm_|fbclid|_fbp|_fbc/);
+      return Response.json({ events_received: 1, fbtrace_id: 'fixture-page-receipt' });
     };
-    const eventId = crypto.randomUUID();
-    const invoke = (url: string, extra = {}) => metaPageViewResponse(request('POST', { url, eventId, ...extra }, `${cookie}; private=private-session`), f.env, false, send);
+    const invoke = (url: string, extra = {}) => metaPageViewResponse(request('POST', { url, eventId, ...extra }, `${cookie}; private=private-session`,
+      { 'User-Agent': 'a'.repeat(700), 'CF-Connecting-IP': '192.0.2.1' }), f.env, false, send);
     assert.equal((await invoke(`${origin}/map/share/private-token`)).status, 400);
     assert.equal((await invoke(`${origin}/contact?email=private@example.invalid`)).status, 400);
     assert.equal((await invoke('https://evil.invalid/contact')).status, 400);
     assert.equal((await invoke(`${origin}/contact`, { email: 'private@example.invalid' })).status, 400);
-    assert.deepEqual(await (await invoke(`${origin}/contact`)).json(), { forwarded: true });
+    const accepted = await invoke(`${origin}/contact`);
+    assert.equal(accepted.status, 200); assert.deepEqual(await accepted.json(), { forwarded: true });
     assert.equal(calls, 1);
+    assert.equal((await f.db.prepare('SELECT count(*) n FROM meta_lead_deliveries').first<{ n: number }>())!.n, 0);
     assert.deepEqual(await (await metaPageViewResponse(request('POST', { url: `${origin}/contact`, eventId }), f.env, false, send)).json(), { forwarded: false });
+  } finally { await f.dispose(); }
+});
+
+test('PageView does not send without both browser matching fields', async () => {
+  const f = await fixture();
+  try {
+    const cookie = await grant(f.env); let calls = 0;
+    for (const headers of [{}, { 'User-Agent': 'fixture-agent' }, { 'CF-Connecting-IP': '192.0.2.1' }] as Record<string, string>[]) {
+      const response = await metaPageViewResponse(request('POST', { url: `${origin}/services`, eventId: crypto.randomUUID() }, cookie, headers), f.env, false,
+        async () => { calls++; return Response.json({ events_received: 1, fbtrace_id: 'must-not-send' }); });
+      assert.equal(response.status, 200); assert.deepEqual(await response.json(), { forwarded: false });
+    }
+    assert.equal(calls, 0);
+  } finally { await f.dispose(); }
+});
+
+test('withdrawal while reading a PageView body prevents the subsequent provider call', async () => {
+  const f = await fixture();
+  try {
+    const cookie = await grant(f.env); let calls = 0;
+    const stream = new ReadableStream<Uint8Array>({
+      async pull(controller) {
+        await metaConsentResponse(request('POST', { marketing: false }, cookie), f.env);
+        controller.enqueue(new TextEncoder().encode(JSON.stringify({ url: `${origin}/services`, eventId: crypto.randomUUID() })));
+        controller.close();
+      }
+    }, { highWaterMark: 0 });
+    const source = new Request(`${origin}/api/marketing/page-view`, {
+      method: 'POST', headers: { Origin: origin, Cookie: cookie, 'User-Agent': 'fixture-agent', 'CF-Connecting-IP': '192.0.2.1' },
+      body: stream, duplex: 'half'
+    } as RequestInit & { duplex: 'half' });
+    const reply = await metaPageViewResponse(source, f.env, false,
+      async () => { calls++; return Response.json({ events_received: 1, fbtrace_id: 'must-not-send' }); });
+    assert.deepEqual(await reply.json(), { forwarded: false }); assert.equal(calls, 0);
+    assert.notEqual((await f.db.prepare('SELECT revoked_at FROM meta_marketing_consents').first<{ revoked_at: number | null }>())!.revoked_at, null);
+  } finally { await f.dispose(); }
+});
+
+test('PageView requires a valid Meta acknowledgement and never queues or retries uncertain delivery', async () => {
+  const f = await fixture();
+  try {
+    const cookie = await grant(f.env);
+    for (const [status, body] of [
+      [200, {}], [200, { events_received: 0, fbtrace_id: 'trace' }],
+      [200, { events_received: 2, fbtrace_id: 'trace' }], [200, { events_received: 1, fbtrace_id: '' }], [200, { events_received: 1, fbtrace_id: ' ' }],
+      [200, { events_received: 1 }], [400, {}], [429, {}], [500, {}]
+    ] as const) {
+      let calls = 0;
+      const reply = await metaPageViewResponse(request('POST', { url: `${origin}/services`, eventId: crypto.randomUUID() }, cookie,
+        { 'User-Agent': 'fixture-agent', 'CF-Connecting-IP': '192.0.2.1' }), f.env, false, async () => {
+          calls++; return Response.json(body, { status });
+        });
+      assert.equal(reply.status, 502); assert.deepEqual(await reply.json(), { forwarded: false });
+      assert.equal(calls, 1);
+    }
+    let calls = 0;
+    const reply = await metaPageViewResponse(request('POST', { url: `${origin}/services`, eventId: crypto.randomUUID() }, cookie,
+      { 'User-Agent': 'fixture-agent', 'CF-Connecting-IP': '192.0.2.1' }), f.env, false, async () => {
+        calls++; throw new Error('uncertain transport');
+      });
+    assert.equal(reply.status, 502); assert.deepEqual(await reply.json(), { forwarded: false }); assert.equal(calls, 1);
+    assert.equal((await f.db.prepare('SELECT count(*) n FROM meta_lead_deliveries').first<{ n: number }>())!.n, 0);
   } finally { await f.dispose(); }
 });
 
