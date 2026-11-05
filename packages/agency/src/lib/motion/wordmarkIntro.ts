@@ -59,7 +59,10 @@ export function startWordmarkIntro(root: HTMLElement) {
   flying.dataset.wordmarkFlight = ''; flying.dataset.agencyWordmark = '';
   Object.assign(flying.style, { position: 'absolute', left: `${left}px`, top: `${top}px`, width: `${width}px`, height: `${height}px`, transformOrigin: 'left top' });
   const logoFilter = getComputedStyle(image).filter;
-  const compact = /create-something-mark-/.test(image.currentSrc || image.src);
+  // currentSrc can still contain the desktop fallback during hydration.
+  const responsiveSource = [...(image.closest('picture')?.querySelectorAll('source') ?? [])]
+    .find(source => !source.media || matchMedia(source.media).matches);
+  const compact = /create-something-mark-/.test(responsiveSource?.srcset || image.src);
   const source = new DOMParser().parseFromString(compact ? compactLogo : horizontalLogo, 'image/svg+xml');
   const svg = document.importNode(source.documentElement, true) as unknown as SVGSVGElement;
   svg.setAttribute('aria-hidden', 'true');

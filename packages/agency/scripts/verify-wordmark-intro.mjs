@@ -10,6 +10,14 @@ try {
     const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'no-preference' });
     const page = await context.newPage();
     page.on('pageerror', error => errors.push(error.message));
+    if (width <= 640) await page.addInitScript(() => {
+      // Reproduce picture.currentSrc lag during first hydration: the rendered
+      // compact source is selected, but the property still reports fallback.
+      const native = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'currentSrc').get;
+      Object.defineProperty(HTMLImageElement.prototype, 'currentSrc', { configurable: true, get() {
+        return this.matches('.nav-logo-asset') ? this.src : native.call(this);
+      } });
+    });
     await page.addInitScript(() => {
       window.__wordmarkSamples = [];
       new MutationObserver(() => {
