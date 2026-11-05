@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import { createMetaMarketingClient } from '../src/lib/analytics/meta-marketing-client.ts';
 import { sanitizeMetaPageUrl } from '../src/lib/analytics/meta-policy.ts';
 
@@ -115,4 +116,30 @@ test('a refresh cannot restore consent while withdrawal is pending', async () =>
   await withdrawal;
   await navigation;
   assert.deepEqual(pages, []);
+});
+
+// Exercise the actual layout-to-client privacy boundary, including unavailable Identity data.
+test('layout only turns a verified account opt-out into a durable browser withdrawal', async () => {
+  const layout = readFileSync(new URL('../src/routes/+layout.svelte', import.meta.url), 'utf8');
+  const component = readFileSync(new URL('../src/lib/components/PrivacyAnalytics.svelte', import.meta.url), 'utf8');
+  const callback = component.match(/privacyBlocked: \(\) => ([^\n]+)/)?.[1];
+  assert.ok(callback);
+  const blocked = new Function('userOptedOut', 'metaAccountOptedOut', 'browserBlocksMetaMarketing', `return ${callback};`);
+  const binding = layout.match(/metaAccountOptedOut=\{([^}]+)\}/)?.[1];
+  for (const verified of [false, true]) {
+    const data = { user: { analytics_opt_out: true, analytics_preference_verified: verified } };
+    const metaOptOut = binding ? new Function('data', `return ${binding};`)(data) : undefined;
+    const methods: string[] = [];
+    const client = createMetaMarketingClient({
+      sanitizePageUrl: publicUrl,
+      privacyBlocked: () => blocked(true, metaOptOut, () => false),
+      fetch: async (_url, init) => {
+        methods.push(init?.method ?? 'GET');
+        return Response.json({ ...denied, blocked: true });
+      }
+    });
+    await client.trackPage(new URL('https://createsomething.agency/'));
+    assert.deepEqual(methods, verified ? ['POST'] : ['GET'], `preference verified: ${verified}`);
+    assert.equal(client.state.marketing, false);
+  }
 });

@@ -25,6 +25,8 @@
     property?: Property;
     userId?: string;
     userOptedOut?: boolean;
+    /** Only a verified account preference may durably revoke Meta consent. */
+    metaAccountOptedOut?: boolean;
     globalMetadata?: Record<string, unknown>;
     compactPrompt?: boolean;
     obscured?: boolean;
@@ -36,6 +38,7 @@
     property = 'agency',
     userId = undefined,
     userOptedOut = false,
+    metaAccountOptedOut = false,
     globalMetadata = undefined,
     compactPrompt = false,
     obscured = false,
@@ -85,7 +88,7 @@
   });
 
   $effect(() => {
-    if (mounted && userOptedOut) void syncMetaMarketing(new URL(window.location.href), false);
+    if (mounted && metaAccountOptedOut) void syncMetaMarketing(new URL(window.location.href), false);
   });
 
   async function syncMetaMarketing(url: URL, track = true) {
@@ -115,7 +118,7 @@
     if (property === 'agency') {
       marketingClient = createMetaMarketingClient({
         sanitizePageUrl: sanitizeMetaPageUrl,
-        privacyBlocked: () => userOptedOut || browserBlocksMetaMarketing()
+        privacyBlocked: () => metaAccountOptedOut || browserBlocksMetaMarketing()
       });
       void syncMetaMarketing(new URL(window.location.href));
     } else {

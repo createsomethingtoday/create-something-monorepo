@@ -325,6 +325,7 @@
   property="agency"
   userId={data.user?.id}
   userOptedOut={data.user?.analytics_opt_out ?? false}
+  metaAccountOptedOut={data.user?.analytics_preference_verified === true && data.user.analytics_opt_out === true}
   globalMetadata={globalAnalyticsMetadata}
   compactPrompt={useCompactPrivacyPrompt}
   obscured={mobileNavigationOpen}
