@@ -88,7 +88,7 @@ export function enhanceStoryHome(root: HTMLElement) {
       scenes[index]?.querySelector<HTMLElement>('summary')?.focus({ preventScroll: true });
       const details = scenes[index]?.querySelector<HTMLDetailsElement>('details');
       if (details) details.open = true;
-      if (matchMedia('(max-width: 900px), (max-height: 650px)').matches) scenes[index]?.scrollIntoView({ block: 'center', behavior: 'instant' });
+      if (matchMedia('(max-width: 900px), (max-height: 750px)').matches) scenes[index]?.scrollIntoView({ block: 'center', behavior: 'instant' });
     }, { signal: abort.signal });
   });
   updateTour();

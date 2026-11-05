@@ -34,3 +34,7 @@ ego-browser nodejs < packages/agency/scripts/verify-workshop-tour.ego.mjs
 The browser regression exercises actual waypoint positions at six widths, link selection, sampled pose crossfades and mid-travel reversal with no blank frames, keyboard disclosure, focus retention, and immediate reduced-motion selection after resize. It caught a CSS-translation leak into the first path position, a race between waypoint links and global hash navigation, and the global reduced-motion rule creating a 0.01ms transition on position. The final guide uses responsive percentage coordinates, local native scrolling, and a scoped `transition: none !important` override. The controller tests cover stale animation callbacks, reversal, teardown, and immediate motion-block settling. Screenshots and the no-JS review remain necessary to assess composition and readability.
 
 Rollback: revert the scoped CRE-2351 commit and deploy the previously verified Agency artifact. The prior image remains available as `team-handoff-v1.webp`.
+
+## November 5 polish
+
+CRE-2352 tightens closed annotation spacing in stacked layouts, enlarges the guide to 112 px, and draws the waypoint destination focus outline around its heading. Desktop reserves annotation space to avoid moving the guide when a hotspot opens. Windows up to 750 px tall use the complete stacked story; taller desktop windows size the full illustration to leave room for the annotation and guide. The image/cutout assets and conceptual evidence boundary are unchanged.
