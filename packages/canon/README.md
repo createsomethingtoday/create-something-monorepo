@@ -660,6 +660,14 @@ property can inherit the discipline without copying third-party identity.
 Use the performance layer for labs, systems maps, operational dashboards, simulation surfaces, and
 high-stakes decision rooms where clarity needs more physical energy than a standard SaaS panel.
 
+`Navigation` uses button disclosures for desktop submenus. Tab follows native link order;
+Escape closes the disclosure and returns focus to its trigger. Clicking or moving focus
+outside dismisses it without taking focus from the next control. Menus stay anchored
+while the document scrolls, contain scrolling on short viewports, and close when the
+viewport width changes so a hidden desktop or mobile menu cannot remain open.
+Height-only viewport changes preserve the active menu. Consumer layers such as reading
+progress should use the sticky layer below fixed navigation.
+
 ```svelte
 <Navigation visualStyle="performance" {...navProps} />
 

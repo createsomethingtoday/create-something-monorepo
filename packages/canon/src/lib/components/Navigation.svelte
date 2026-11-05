@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import { RingMark } from '../brand/marks/index.js';
   import { UserMenu } from '../auth/components/index.js';
   import type { User } from '../auth/types.js';
@@ -89,6 +89,8 @@
   let mobileMenuButton = $state<HTMLButtonElement>();
   let navigationElement = $state<HTMLElement>();
   let openDesktopMenu = $state<string | null>(null);
+  let desktopMenuButton: HTMLButtonElement | undefined;
+  let viewportWidth: number | undefined;
   let logoRouteMotionDesktopElement = $state<SVGSVGElement>();
   let logoRouteMotionMobileElement = $state<SVGSVGElement>();
   let logoRouteMotionRequest = 0;
@@ -120,6 +122,26 @@
   function closeMobileMenu(restoreFocus = false) {
     setMobileMenuOpen(false);
     if (restoreFocus) queueMicrotask(() => mobileMenuButton?.focus());
+  }
+
+  function closeDesktopMenu(restoreFocus = false) {
+    openDesktopMenu = null;
+    if (restoreFocus) queueMicrotask(() => desktopMenuButton?.focus());
+  }
+
+  function handleWindowPointerDown(event: PointerEvent) {
+    if (!openDesktopMenu || !(event.target instanceof Node)) return;
+    if (!desktopMenuButton?.closest('.nav-dropdown')?.contains(event.target)) closeDesktopMenu();
+  }
+
+  function handleWindowResize() {
+    const nextWidth = window.innerWidth;
+    if (viewportWidth !== undefined && viewportWidth !== nextWidth) {
+      // Height-only changes include mobile browser chrome and keep the menu usable.
+      closeDesktopMenu();
+      if (mobileMenuOpen) closeMobileMenu();
+    }
+    viewportWidth = nextWidth;
   }
 
   function cancelLogoRouteMotion() {
@@ -190,7 +212,8 @@
   function handleWindowKeydown(event: KeyboardEvent) {
     if (event.key !== 'Escape') return;
     if (openDesktopMenu) {
-      openDesktopMenu = null;
+      event.preventDefault();
+      closeDesktopMenu(true);
       return;
     }
     if (!mobileMenuOpen) return;
@@ -198,10 +221,11 @@
     closeMobileMenu(true);
   }
 
+  onMount(() => { viewportWidth = window.innerWidth; });
   onDestroy(cancelLogoRouteMotion);
 </script>
 
-<svelte:window onkeydown={handleWindowKeydown} onclickcapture={handleRouteEngagement} />
+<svelte:window onkeydown={handleWindowKeydown} onclickcapture={handleRouteEngagement} onpointerdown={handleWindowPointerDown} onresize={handleWindowResize} />
 
 <nav
   bind:this={navigationElement}
@@ -310,15 +334,19 @@
           <div class="nav-link-list">
             {#each links as link}
               {#if link.children?.length}
-                <div class="nav-dropdown">
+                <div class="nav-dropdown" onfocusout={(event) => {
+                  if (!(event.relatedTarget instanceof Node) || !event.currentTarget.contains(event.relatedTarget)) closeDesktopMenu();
+                }}>
                   <button
                     type="button"
                     class="nav-link nav-dropdown__trigger"
                     class:active={isActive(link)}
                     aria-expanded={openDesktopMenu === link.href}
                     aria-controls={`nav-submenu-${link.href.replaceAll('/', '') || 'root'}`}
-                    onclick={() =>
-                      (openDesktopMenu = openDesktopMenu === link.href ? null : link.href)}
+                    onclick={(event) => {
+                      desktopMenuButton = event.currentTarget;
+                      openDesktopMenu = openDesktopMenu === link.href ? null : link.href;
+                    }}
                   >
                     {link.label}
                     <span class="nav-dropdown__chevron" aria-hidden="true">
@@ -625,6 +653,10 @@
     left: 0;
     display: grid;
     width: min(20rem, 38vw);
+    max-height: calc(100vh - 8rem);
+    max-height: calc(100dvh - 8rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 0.45rem;
     border: 1px solid var(--color-performance-shell-border-default);
     border-radius: var(--radius-performance-scale-md);

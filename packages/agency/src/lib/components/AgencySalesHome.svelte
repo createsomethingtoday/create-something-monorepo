@@ -15,12 +15,16 @@
   import BuiltWork from './BuiltWork.svelte';
   import SelectedClientWork from './SelectedClientWork.svelte';
   import { enhanceStoryHome } from '$lib/motion/storyHome';
+  import { enhanceChapterEntrances } from '$lib/motion/chapterEntrance';
+  import { alignScrollProgress } from '$lib/motion/scrollProgress';
   let root: HTMLDivElement;
   let libraryOpen = $state(false);
   $effect(() => { if ($page.url.searchParams.has('film') || $page.url.hash === '#work') libraryOpen = true; });
   onMount(() => {
     const abort = new AbortController();
     const story = enhanceStoryHome(root);
+    const chapters = enhanceChapterEntrances(root);
+    const progress = alignScrollProgress(root);
     const disposeEvidence = Array.from(root.querySelectorAll<HTMLDetailsElement>('details'), enhanceEvidenceDisclosure);
     const dialog = root.querySelector<HTMLDialogElement>('#work-dialog');
     let originalOverflow = '';
@@ -78,6 +82,8 @@
     return () => {
       abort.abort();
       story.destroy();
+      chapters.destroy();
+      progress.destroy();
       disposeEvidence.forEach(dispose => dispose());
       dialog?.querySelector('video')?.pause();
       if (dialog?.open) {
@@ -88,7 +94,7 @@
   });
 </script>
 
-<svelte:head><link rel="stylesheet" href="/styles/agency/story-home.css?v=canon-tour-polish-20261105" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /></svelte:head>
+<svelte:head><link rel="stylesheet" href="/styles/agency/story-home.css?v=chapter-navigation-20261105" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /></svelte:head>
 <div class="agency-home" bind:this={root}>
   <div class="page-progress" aria-hidden="true"></div>
   <div class="story-tools"><button type="button" onclick={toggleFilmMotion} aria-pressed={$reducedFilmMotion}>{$reducedFilmMotion ? 'Enable motion' : 'Motion off'}</button></div>
