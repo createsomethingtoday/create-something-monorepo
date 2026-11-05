@@ -53,9 +53,9 @@ try {
       const eventId = randomUUID();
       const page = await request('/api/marketing/page-view', { method: 'POST',
         body: JSON.stringify({ url: origin + '/services', eventId }) });
-      assert.equal(page.response.status, 200, 'canonical-domain Zaraz relay must succeed');
+      assert.equal(page.response.status, 200, 'canonical-domain Meta delivery must succeed');
       assert.equal(page.body.forwarded, true);
-      checks.push(`Zaraz forwarding acknowledged for operator PageView ${eventId}; not a Meta delivery receipt`);
+      checks.push(`Meta API accepted operator PageView ${eventId}; campaign attribution is not established`);
     }
     const blocked = await request('/api/marketing/consent', { headers: { 'Sec-GPC': '1' } });
     assert.equal(blocked.body.marketing, false);

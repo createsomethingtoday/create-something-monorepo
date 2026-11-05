@@ -2,8 +2,7 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "create-something-agency",
 	"compatibility_date": "2025-11-15",
-	// Send the same-zone Zaraz relay through Cloudflare’s public edge.
-	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	"compatibility_flags": ["nodejs_compat"],
 	"pages_build_output_dir": ".svelte-kit/cloudflare",
 
 	"dev": {

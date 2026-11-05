@@ -143,3 +143,23 @@ test('layout only turns a verified account opt-out into a durable browser withdr
     assert.equal(client.state.marketing, false);
   }
 });
+
+test('does not resend a PageView after an ambiguous provider response', async () => {
+  for (const failure of ['response', 'transport']) {
+    let attempts = 0;
+    const client = createMetaMarketingClient({
+      sanitizePageUrl: publicUrl,
+      privacyBlocked: () => false,
+      fetch: async (url) => {
+        if (url !== '/api/marketing/page-view') return Response.json(accepted);
+        attempts++;
+        if (failure === 'transport') throw new Error('Acknowledgement unavailable');
+        return Response.json({ forwarded: false }, { status: 502 });
+      }
+    });
+    await client.trackPage(new URL('https://createsomething.agency/services'));
+    await client.trackPage(new URL('https://createsomething.agency/services'));
+    assert.equal(attempts, 1, failure);
+    assert.equal(client.state.marketing, true);
+  }
+});

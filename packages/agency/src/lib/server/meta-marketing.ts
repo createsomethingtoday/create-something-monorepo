@@ -13,15 +13,15 @@ export interface MetaMarketingEnv {
   META_DATASET_ID?: string;
   META_CAPI_ACCESS_TOKEN?: string;
   META_GRAPH_VERSION?: string;
-  META_ZARAZ_ENDPOINT?: string;
-  META_ZARAZ_RELAY_KEY?: string;
   META_TEST_EVENT_CODE?: string;
 }
-interface MetaConfig { datasetId: string; token: string; version: string; endpoint: string; relayKey: string; testCode?: string }
+interface MetaConfig { datasetId: string; token: string; version: string; testCode?: string }
 interface ConsentRow { consent_id: string; granted_at: number; expires_at: number; revoked_at: number | null; account_subject: string | null }
 export interface MetaConsentState { marketing: boolean; available: boolean; blocked: boolean; consentId?: string; accountSubject?: string }
 type LeadPayload = { event_name: 'Lead'; event_time: number; event_id: string; action_source: 'website'; event_source_url: string;
   user_data: { em: string[]; client_user_agent?: string; client_ip_address?: string } };
+type PageViewPayload = Omit<LeadPayload, 'event_name' | 'user_data'> & { event_name: 'PageView';
+  user_data: { client_user_agent: string; client_ip_address: string } };
 interface LeadRow { event_id: string; consent_id: string; dataset_id: string; payload_json: string | null; attempts: number }
 export interface PreparedMetaLead { consentId: string; datasetId: string; payload: LeadPayload; preparedAt: number; accountSubject?: string }
 export type MetaDeliveryOutcome = { state: 'accepted'; receipt: string } | { state: 'transient_failure' | 'permanent_failure' | 'unknown' };
@@ -29,15 +29,9 @@ export class MetaProviderError extends Data.TaggedError('MetaProviderError')<{ k
 
 function config(env: MetaMarketingEnv): MetaConfig | undefined {
   if (env.META_MARKETING_ENABLED !== 'true' || !env.DB || !/^\d{5,25}$/.test(env.META_DATASET_ID ?? '') ||
-    !env.META_CAPI_ACCESS_TOKEN || !/^v\d{1,3}\.0$/.test(env.META_GRAPH_VERSION ?? '') || !env.META_ZARAZ_RELAY_KEY) return;
-  try {
-    const endpoint = new URL(env.META_ZARAZ_ENDPOINT ?? '');
-    if (endpoint.origin !== 'https://createsomething.agency' || endpoint.pathname === '/' ||
-      endpoint.pathname.startsWith('/api/') || endpoint.search || endpoint.hash || endpoint.username || endpoint.password) return;
-    return { datasetId: env.META_DATASET_ID!, token: env.META_CAPI_ACCESS_TOKEN,
-      version: env.META_GRAPH_VERSION!, endpoint: endpoint.href, relayKey: env.META_ZARAZ_RELAY_KEY,
-      ...(env.META_TEST_EVENT_CODE && env.ENVIRONMENT !== 'production' ? { testCode: env.META_TEST_EVENT_CODE } : {}) };
-  } catch { return; }
+    !env.META_CAPI_ACCESS_TOKEN || !/^v\d{1,3}\.0$/.test(env.META_GRAPH_VERSION ?? '')) return;
+  return { datasetId: env.META_DATASET_ID!, token: env.META_CAPI_ACCESS_TOKEN, version: env.META_GRAPH_VERSION!,
+    ...(env.META_TEST_EVENT_CODE && env.ENVIRONMENT !== 'production' ? { testCode: env.META_TEST_EVENT_CODE } : {}) };
 }
 function browserPrivacyBlock(request: Request): boolean {
   return request.headers.get('DNT') === '1' || request.headers.get('Sec-GPC') === '1';
@@ -163,16 +157,18 @@ export async function metaPageViewResponse(request: Request, env: MetaMarketingE
       typeof body.eventId !== 'string' || !UUID.test(body.eventId) || Object.keys(body).some(key => key !== 'url' && key !== 'eventId')) return json({ error: 'Invalid event' }, 400);
     const url = sanitizeMetaPageUrl(new URL(body.url));
     if (!url || body.url !== url) return json({ error: 'Public canonical URL required' }, 400);
-    const settings = config(env)!;
-    const response = await send(settings.endpoint, { method: 'POST', signal: AbortSignal.timeout(5000),
-      headers: { 'Content-Type': 'application/json', 'x-cs-meta-relay-key': settings.relayKey },
-      body: JSON.stringify({ events: [{ client: { __zarazTrack: 'cs_meta_page_view', ev: 'PageView', event_id: body.eventId, dl: url },
-        system: { page: { url }, device: { 'user-agent': request.headers.get('User-Agent') ?? '', ip: request.headers.get('CF-Connecting-IP') ?? '' },
-          cookies: { cs_zaraz_consent: JSON.stringify({ csMetaMarketing: true }) } } }] }) });
-    // Zaraz accepts the relay, not a Meta delivery receipt. Never execute its returned browser code.
-    await response.body?.cancel();
+    const userAgent = request.headers.get('User-Agent')?.slice(0, 512);
+    const ip = request.headers.get('CF-Connecting-IP');
+    if (!userAgent || !ip) return json({ forwarded: false }, 200);
+    // The body read can yield; recheck the durable choice immediately before the provider boundary.
+    if (!(await readMetaConsent(request, env, optedOut, undefined, accountSubject)).marketing)
+      return json({ forwarded: false }, 200);
+    const outcome = await sendMetaEvent({ event_name: 'PageView', event_time: seconds(Date.now()), event_id: body.eventId,
+      action_source: 'website', event_source_url: url, user_data: { client_user_agent: userAgent, client_ip_address: ip } }, config(env)!, send);
     await drainMetaLead(request, env, optedOut, send, undefined, accountSubject).catch(() => {});
-    return json({ forwarded: response.ok }, response.ok ? 200 : 502);
+    // A PageView has no queue or automatic retry; ambiguous acknowledgements remain unconfirmed.
+    const forwarded = outcome.state === 'accepted';
+    return json({ forwarded }, forwarded ? 200 : 502);
   } catch { return json({ forwarded: false }, 503); }
 }
 
@@ -205,7 +201,11 @@ export function metaLeadInsertStatement(session: D1DatabaseSession, requestId: s
       prepared.preparedAt, prepared.preparedAt, prepared.preparedAt, prepared.consentId, prepared.accountSubject ?? null, requestId);
 }
 
-export async function sendMetaLead(payload: LeadPayload, settings: { datasetId: string; token: string; version: string; testCode?: string }, send: typeof fetch = fetch): Promise<MetaDeliveryOutcome> {
+export async function sendMetaLead(payload: LeadPayload, settings: MetaConfig, send: typeof fetch = fetch): Promise<MetaDeliveryOutcome> {
+  return sendMetaEvent(payload, settings, send);
+}
+
+async function sendMetaEvent(payload: LeadPayload | PageViewPayload, settings: MetaConfig, send: typeof fetch): Promise<MetaDeliveryOutcome> {
   const operation = Effect.tryPromise({
     try: async signal => {
       const response = await send(`https://graph.facebook.com/${settings.version}/${settings.datasetId}/events`, {
@@ -217,7 +217,7 @@ export async function sendMetaLead(payload: LeadPayload, settings: { datasetId: 
       if (!response.ok) { await response.body?.cancel(); return { state: 'unknown' } as const; }
       const body = await boundedJson(response, 8192);
       if (body && typeof body === 'object' && 'events_received' in body && body.events_received === 1 &&
-        'fbtrace_id' in body && typeof body.fbtrace_id === 'string' && body.fbtrace_id.length > 0 && body.fbtrace_id.length <= 200)
+        'fbtrace_id' in body && typeof body.fbtrace_id === 'string' && body.fbtrace_id.trim().length > 0 && body.fbtrace_id.length <= 200)
         return { state: 'accepted', receipt: body.fbtrace_id } as const;
       return { state: 'unknown' } as const;
     }, catch: cause => new MetaProviderError({ kind: 'transport', cause })

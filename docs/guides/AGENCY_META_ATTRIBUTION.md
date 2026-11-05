@@ -2,7 +2,8 @@
 
 Use campaign tags to measure Facebook and Instagram traffic in Agency's
 first-party analytics. Meta delivery uses a separate marketing choice, a
-server-only Zaraz relay for public page views, and durable saved-inquiry receipts.
+server-only Meta Conversions API delivery for public page views, and durable
+saved-inquiry receipts.
 
 ## Tag organic posts and ads
 
@@ -84,10 +85,18 @@ consent into anonymous consent.
 `POST /api/marketing/page-view` checks consent and the exact public-route
 allowlist in `meta-policy.ts`. It strips campaign queries and fragments and
 rejects unknown or access-bearing query parameters. The server forwards only
-the canonical public URL, event ID, IP address and browser user agent to Zaraz.
-Zaraz has automatic script injection disabled, purpose `csMetaMarketing`, and a
-header-protected HTTP endpoint. Agency enables `global_fetch_strictly_public` so same-zone server fetches reach the protected public Zaraz endpoint rather than bypassing Cloudflare and reaching the origin. No Meta or Zaraz browser script is installed.
-The route reports `forwarded`; only Meta's own evidence proves provider processing.
+the canonical public URL, event ID, event time, IP address and bounded browser
+user agent to Meta's Conversions API. It sends no email or browser identifiers
+for PageViews. No Meta or Zaraz browser script is installed. The route reports
+`forwarded: true` only after Meta acknowledges exactly one event and returns a
+trace ID. A PageView has no automatic delivery retry; an ambiguous response does
+not prove acceptance. Provider acceptance does not establish campaign attribution.
+
+The earlier Zaraz relay passed synthetic and `pages.dev` tests but failed on the
+canonical domain, including after the public-fetch flag and encrypted binding
+reconciliation. PageViews now share the direct authenticated provider boundary
+already used for saved inquiries. The unused Zaraz tool must remain disabled;
+Agency does not require the public-fetch compatibility flag.
 
 A new consented contact submission commits its Lead delivery record in the same
 transaction as the saved inquiry. The payload contains a stable event ID,
@@ -115,23 +124,22 @@ attributing a confirmed booking to that visitor.
 ## Configure and promote
 
 Configure `META_DATASET_ID`, `META_GRAPH_VERSION` (`v26.0` verified),
-`META_CAPI_ACCESS_TOKEN`, `META_ZARAZ_ENDPOINT`, and `META_ZARAZ_RELAY_KEY` on
-Agency and its maintenance Worker. Tokens and relay credentials belong in
+`META_CAPI_ACCESS_TOKEN` on Agency and its maintenance Worker. Tokens belong in
 Infisical and encrypted Cloudflare bindings. Keep them out of source, URLs, logs,
 and browser code. Production ignores `META_TEST_EVENT_CODE`.
 
 Apply migrations `0060_meta_marketing.sql` and `0061_meta_marketing_account_binding.sql` before enabling the feature. Run the
 checks below, inspect responsive consent controls, and confirm synthetic events
-in the intended Meta Test Events dataset. Clear Zaraz's test code before live
+in the intended Meta Test Events dataset. Disable the unused Zaraz tool before
 activation. Promote the reviewed PR, set `META_MARKETING_ENABLED=true`, and verify
 the deployed version's consent behavior and a consented PageView. Live inquiry
 delivery needs its own source receipt and provider receipt; a test event is not
 a real lead. Keep Meta's attributed results separate from first-party counts.
 
-For rollback, disable the Zaraz tool and the maintenance Worker, then roll Agency
-back to the prior deployment. Restore the prior Zaraz configuration and verify
-that events stop. The additive D1 tables can remain for reconciliation; do not
-drop source inquiry receipts or restore an older database over new inquiries.
+For rollback, set `META_MARKETING_ENABLED=false` and redeploy Agency and the
+maintenance Worker, then verify that delivery stops. Retention cleanup continues
+with delivery disabled. Keep the abandoned Zaraz tool disabled. The additive D1
+tables can remain for reconciliation; do not drop source inquiry receipts or restore an older database over new inquiries.
 
 ## Verify locally
 
@@ -154,16 +162,15 @@ node scripts/verify-agency-meta-release.mjs --exercise-consent --send-page-view
 ```
 
 The smoke withdraws its own consent in cleanup. It checks the canonical custom
-domain because a successful `pages.dev` request does not establish same-zone
-relay behavior. A Zaraz acknowledgement is not a Meta processing receipt. It
-never submits an inquiry or creates a booking.
+domain because a successful `pages.dev` request does not establish the custom
+domain's runtime behavior. A valid Meta API acknowledgement does not prove ad matching
+or campaign attribution. The smoke never submits an inquiry or creates a booking.
 
 These checks exercise campaign parsing, SQLite report aggregation, consent races,
 and actual workerd/D1 persistence with simulated provider boundaries. They do not
 replace rendered browser review or live provider verification. Release evidence
 and worktree disposition belong in Linear `CRE-2359`.
 
-Sources: [Zaraz supported tools](https://developers.cloudflare.com/zaraz/reference/supported-tools/),
-[Zaraz consent management](https://developers.cloudflare.com/zaraz/consent-management/),
-[Zaraz HTTP Events API](https://developers.cloudflare.com/zaraz/http-events-api/),
-and [strictly public fetch routing](https://developers.cloudflare.com/workers/configuration/compatibility-flags/#global-fetch-strictly-public).
+Sources: [Meta Conversions API](https://developers.facebook.com/docs/marketing-api/conversions-api/),
+[Meta server-event example](https://github.com/fbsamples/lead-ads-webhook-sample/blob/main/postman/FB%20Conversions%20API%20%28Part%201%20-%20online%29.postman_collection.json),
+and [Meta server-side SDK](https://github.com/meta/facebook-php-business-sdk/blob/main/README.md).

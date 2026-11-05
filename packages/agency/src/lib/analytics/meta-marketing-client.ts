@@ -91,18 +91,16 @@ export function createMetaMarketingClient(options: MetaMarketingClientOptions) {
     const consent = await refresh();
     const page = options.sanitizePageUrl(url);
     if (!consent.marketing || privacyBlocked() || !page || lastPage === page) return state;
-    const version = choiceVersion;
     lastPage = page;
     try {
-      const response = await send('/api/marketing/page-view', {
+      await send('/api/marketing/page-view', {
         method: 'POST', credentials: 'same-origin', cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
         signal: AbortSignal.timeout(5000),
         body: JSON.stringify({ url: page, eventId: eventId() })
       });
-      if (!response.ok && version === choiceVersion && lastPage === page) lastPage = undefined;
     } catch {
-      if (version === choiceVersion && lastPage === page) lastPage = undefined;
+      // Keep the attempted page: an unavailable acknowledgement may follow acceptance.
     }
     return state;
   }

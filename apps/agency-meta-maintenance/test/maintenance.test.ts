@@ -21,8 +21,7 @@ async function fixture() {
     for (const statement of sql.replace(/--[^\n]*/g, '').split(';').filter(s => s.trim())) await db.prepare(statement).run();
   }
   const env: MetaMarketingEnv & { DB: D1Database } = { DB: db, META_MARKETING_ENABLED: 'true', META_DATASET_ID: '123456789012345',
-    META_CAPI_ACCESS_TOKEN: 'fixture-secret', META_GRAPH_VERSION: 'v26.0', META_ZARAZ_RELAY_KEY: 'fixture-relay-key',
-    META_ZARAZ_ENDPOINT: 'https://createsomething.agency/fixture-relay' };
+    META_CAPI_ACCESS_TOKEN: 'fixture-secret', META_GRAPH_VERSION: 'v26.0' };
   async function lead(index: number, options: { age?: number; revoked?: boolean; expires?: number; state?: string; attempts?: number; lease?: number; accountSubject?: string } = {}) {
     const id = crypto.randomUUID(); const eventId = `fixture-event-${index}`; const created = sec - (options.age ?? 0);
     const payload = { event_name: 'Lead', event_time: created, event_id: eventId, action_source: 'website',
