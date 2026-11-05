@@ -431,7 +431,8 @@
   }
 
   /* Homepage campaign preview: preserve the shared navigation behavior and logo. */
-  .film-home :global(.nav-editorial.nav-fixed) { top: 0; left: 0; right: 0; border: 0; border-radius: 0; background: rgba(8,8,8,.88); backdrop-filter: blur(16px); }
+  .film-home { --agency-nav-surface-rgb: 8,8,8; }
+  .film-home :global(.nav-editorial.nav-fixed) { top: 0; left: 0; right: 0; border: 0; border-radius: 0; background: rgba(var(--agency-nav-surface-rgb),.88); backdrop-filter: blur(16px); }
   .film-home :global(.nav-editorial .nav-inner) { padding-inline: 3vw; }
   .film-home :global(main#main-content) { padding-top: 0; }
   .film-home :global(.nav-editorial .nav-link-list) { font-size: 12px; }
