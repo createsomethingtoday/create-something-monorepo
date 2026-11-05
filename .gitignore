@@ -56,6 +56,7 @@ packages/canon/scripts/check-property-overlay-coverage.d.ts
 # Client apps (in development)
 # Keep apps ignored by default, but track Meeting Capture.
 apps/*
+!apps/agency-meta-maintenance/
 !apps/client-collaboration-pilot/
 !apps/client-collaboration-pilot/**
 apps/client-collaboration-pilot/.local/
