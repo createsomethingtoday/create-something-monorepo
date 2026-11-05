@@ -14,6 +14,10 @@ The retained August 24, 2026 record reports the executor deployed with: `cron we
 14:00 UTC → `findRecords` where `fldDwkkTHErvn4atw = 1` → `sort` by 📅Requested ascending →
 `conditionalGroup` (silent on an empty queue) → one `sendToSlack` DM to `U0ACR9V5UC9`.
 
+**Retargeted 2026-11-04:** The final decider is now Micah Johnson + the app review team. The live executor DMs Micah (`U9FSLPKRB`), published 11/04 and
+read back with no draft/deployed difference; `workflow.json` (`final-decider` title) and
+`cases.json` (`decider_id`) were updated to match. The August notes below are historical.
+
 Two details worth preserving. The DM is addressed by **Slack user ID, not email** — email and
 D-channel targets can report success without delivering. And the conditional cannot test
 `findRecords.records` directly (`isNotEmpty` rejects an array of Record); it tests the mapped id
@@ -36,10 +40,10 @@ node packages/workflow-compiler/dist/cli.js compile --workflow packages/exceptio
 node packages/workflow-compiler/dist/cli.js verify --dir /tmp/exception-decision-escalation
 ```
 
-Revalidated 2026-09-21: four decisions, all six replay cases match, 18 compiled files,
-`externalMutations: false`, `integrity_verified`, unsigned attestation. Definition hash:
-`sha256:99aff26ba610d9108c488bddecd783d670ba56363c363f2ad25bbf5e8d2da7f1`.
-Manifest hash: `sha256:c7e67bc604276450aef3226a7c13bb1fc7f2f6d4a006da0a8e0520243aa87dc0`.
+Revalidated 2026-11-04 (decider retarget): four decisions, all six replay cases match, 18 compiled
+files, `externalMutations: false`, unsigned attestation. Definition hash:
+`sha256:c54c0ead68ded2ce4882aa42e0d1eaa3a3b7a76d62812c6f28fe72dd4844f41a`.
+Manifest hash: `sha256:347c06f2fe367e27dfba6093a25b996f40c38f7da67dc8c19e991ee3e7f914b6`.
 This validates the contract only. The August deployment observations below are historical,
 not a September readback of Airtable or Slack.
 
