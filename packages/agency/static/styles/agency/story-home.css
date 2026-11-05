@@ -96,7 +96,7 @@
 .agency-home .story-curtain img{width:min(260px,65%);height:auto}
 .agency-home #motion{display:none;min-width:44px}
 .agency-home .motion-ready #motion{display:block}
-.agency-home .page-progress{position:fixed;top:0;left:0;right:0;height:2px;z-index:90;pointer-events:none;transform:scaleX(0);transform-origin:left;background:var(--accent)}
+.agency-home .page-progress{position:fixed;top:var(--agency-navigation-bottom,var(--height-performance-header,72px));left:0;right:0;height:2px;z-index:var(--z-performance-sticky,20);pointer-events:none;transform:scaleX(0);transform-origin:left;background:var(--accent)}
 @media(min-width:1440px){.agency-home,.agency-home .nav,.agency-home .footer{max-width:1320px;margin-left:auto;margin-right:auto}
 }
 @media(max-width:900px){.agency-home .nav{gap:18px}
@@ -226,7 +226,7 @@
 }
 
 .agency-home{background:#101112;color:#f2f1ee;padding:100px 6vw 0;font:22px/1.45 var(--font-sans);overflow:clip;max-width:none;margin:0}.agency-home>section,.agency-home>.needs{max-width:1320px;margin-left:auto;margin-right:auto}.agency-home [id]{scroll-margin-top:112px}.agency-home .story-tools{display:flex;justify-content:flex-end;padding:12px 0}.agency-home .story-tools button{font-size:14px}.agency-home .workshot-button{margin-top:20px}.agency-home .work-library{padding:45px 0}.agency-home .dialog{background:#101112;color:#f2f1ee;max-width:1100px;width:94vw;border:1px solid #414346;padding:20px}.agency-home .dialog::backdrop{background:#000c}.agency-home .theater-header{display:flex;justify-content:space-between;gap:20px}.agency-home .theater-header h2{font-size:24px}.agency-home .theater-stage video{width:100%;height:auto}.agency-home .theater-notes p{font-size:16px;margin-top:16px}.agency-home .theater-notes strong,.agency-home .theater-notes span{display:block}@media(max-width:600px){.agency-home{padding:84px 6vw 0;font-size:18px}.agency-home .hero-copy h1{font-size:clamp(38px,11.5vw,49px)}.agency-home .handoff-heading{font-size:clamp(36px,11vw,48px)}.agency-home .closing-title{font-size:clamp(36px,11vw,47px)}}
-.agency-home .cc-faq details{padding:20px 0;border-bottom:1px solid var(--border)}.agency-home .cc-faq h2{margin-bottom:30px}.agency-home .cc-faq summary{min-height:44px;cursor:pointer;font-size:20px}.agency-home .cc-faq p{font-size:18px;margin-top:14px;max-width:780px}.agency-home .page-progress{top:72px}.agency-home .story-curtain{opacity:1;visibility:visible;background:#101112;z-index:1000}
+.agency-home .cc-faq details{padding:20px 0;border-bottom:1px solid var(--border)}.agency-home .cc-faq h2{margin-bottom:30px}.agency-home .cc-faq summary{min-height:44px;cursor:pointer;font-size:20px}.agency-home .cc-faq p{font-size:18px;margin-top:14px;max-width:780px}.agency-home .story-curtain{opacity:1;visibility:visible;background:#101112;z-index:1000}
 
 .agency-home .dialog {
   position:fixed;
@@ -367,3 +367,7 @@
 /* Waypoint navigation focuses the reading heading rather than outlining a tall article. */
 .agency-home .handoff-step:focus{outline:none}
 .agency-home .handoff-step:focus-visible h3{outline:2px solid var(--foreground);outline-offset:8px}
+
+/* Authored lines keep their measure; only the inner type moves. */
+.agency-home .chapter-line-mask{display:inline-block;overflow:clip;vertical-align:top;padding:.08em .03em;margin:-.08em -.03em}
+.agency-home [data-chapter-line]{display:inline-block}
