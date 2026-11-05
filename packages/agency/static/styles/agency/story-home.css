@@ -62,7 +62,7 @@
 .agency-home .proof-boundary{font-size:14px;margin-top:20px}
 .agency-home .handoff-heading{font-size:clamp(44px,7vw,100px);margin:0 0 45px;max-width:1000px}
 .agency-home .handoff-heading span{display:inline-block;transform-origin:left bottom}
-.agency-home .handoff-heading span:last-child{color:var(--muted)}
+.agency-home .handoff-heading > span:last-child{color:var(--muted)}
 .agency-home .handoff-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:45px;align-items:center}
 .agency-home .handoff-image{aspect-ratio:.98;overflow:hidden;background:var(--card)}
 .agency-home .handoff-image img{width:100%;height:100%;object-fit:cover;object-position:center 45%;transform-origin:45% 42%}
@@ -273,3 +273,91 @@
 @media(max-width:600px){.agency-home .hero{min-height:660px;justify-content:flex-start}.agency-home .hero::before{inset:-84px -6vw 0;background-position:center,center,65% bottom;background-size:auto,auto,auto 100%;background-image:linear-gradient(180deg,rgba(16,17,18,.88),rgba(16,17,18,.74) 55%,rgba(16,17,18,.30)),linear-gradient(0deg,#101112,transparent 28%),url('/images/agency-sales/hero.webp')}}
 
 .agency-home .team a{text-decoration:underline;text-underline-offset:.2em}
+
+/* Native-scroll handoff study: complete stacked content is the baseline. */
+.agency-home .handoff-intro{max-width:660px;margin-bottom:40px;color:var(--muted)}
+.agency-home .handoff-tour{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:clamp(24px,5vw,72px);position:relative}
+.agency-home .handoff-scenes{min-width:0}
+.agency-home .handoff-scene{margin:0 0 32px;min-width:0}
+.agency-home .handoff-art{position:relative;aspect-ratio:3/2;background:var(--card)}
+.agency-home .handoff-art>img{width:100%;height:100%;object-fit:cover;display:block}
+.agency-home .hotspot-leader{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;stroke:#f2f1ee;stroke-width:.3;fill:none;filter:drop-shadow(0 1px 2px #000)}
+.agency-home .handoff-hotspot{position:absolute;left:52%;top:60%;width:45%;border:0;margin:0;padding:0;font-size:14px;z-index:2}
+.agency-home .handoff-hotspot>summary{display:flex;align-items:center;gap:8px;min-height:44px;padding:0;border:0;list-style:none;cursor:pointer}
+.agency-home .handoff-hotspot>summary::-webkit-details-marker{display:none}
+.agency-home .hotspot-mark{display:grid;place-items:center;width:44px;height:44px;flex:0 0 44px;border:1px solid #f2f1ee;border-radius:50%;background:#101112;color:#f2f1ee;font:24px/1 var(--font-sans)}
+.agency-home .hotspot-label{background:#101112;color:#f2f1ee;padding:5px 8px;font-size:12px;line-height:1.3}
+.agency-home .handoff-hotspot>p{position:absolute;right:0;top:100%;margin:4px 0 0;padding:12px;background:#101112;color:#f2f1ee;border:1px solid #626466;font-size:14px;line-height:1.45;width:min(280px,40vw);box-shadow:0 5px 20px #0005}
+.agency-home .handoff-hotspot>summary:focus-visible{outline:2px solid #f2f1ee;outline-offset:4px}
+.agency-home .handoff-scene figcaption{display:flex;justify-content:space-between;gap:8px;font:11px/1.5 var(--font-mono);color:var(--muted);padding-top:12px}
+.agency-home .handoff-step{padding:24px 0 48px;min-width:0}
+.agency-home .handoff-step h3{font-size:clamp(28px,3vw,44px);margin:18px 0}
+.agency-home .handoff-step>p:not(.label){color:var(--muted);margin-bottom:24px}
+.agency-home .handoff-step>a{font-size:14px;border-bottom:1px solid var(--muted);padding-bottom:5px}
+.agency-home .handoff-footer{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:48px;border-top:1px solid var(--border);padding-top:28px}
+.agency-home .handoff-footer .caption{font-size:14px;line-height:1.6}
+.agency-home .handoff-word{display:inline-block}
+@media(min-width:901px) and (min-height:651px){
+.agency-home .tour-enhanced .handoff-scenes{position:sticky;top:140px;align-self:start;display:grid}
+.agency-home .tour-enhanced .handoff-scene{grid-area:1/1;opacity:0;visibility:hidden;pointer-events:none;margin-bottom:0}
+.agency-home .tour-enhanced .handoff-scene.is-active{opacity:1;visibility:visible;pointer-events:auto}
+.agency-home .tour-enhanced .handoff-step{min-height:70vh;display:flex;flex-direction:column;justify-content:center}
+.agency-home .tour-enhanced .handoff-step>a{align-self:start}
+.agency-home .tour-enhanced .handoff-step .label{opacity:.5}
+.agency-home .tour-enhanced .handoff-step.is-active .label{opacity:1}
+}
+@media(max-width:900px), (max-height:650px){
+.agency-home .handoff-tour{grid-template-columns:minmax(0,1fr);gap:0}
+.agency-home .handoff-scenes,.agency-home .handoff-steps{display:contents}
+.agency-home .handoff-scene[data-tour-scene="0"]{grid-row:1}.agency-home .handoff-step[data-tour-step="0"]{grid-row:2}
+.agency-home .handoff-scene[data-tour-scene="1"]{grid-row:3}.agency-home .handoff-step[data-tour-step="1"]{grid-row:4}
+.agency-home .handoff-scene[data-tour-scene="2"]{grid-row:5}.agency-home .handoff-step[data-tour-step="2"]{grid-row:6}
+.agency-home .handoff-scene{margin-bottom:0}.agency-home .handoff-step{padding:28px 0 64px}
+.agency-home .handoff-footer{grid-template-columns:1fr;gap:24px;margin-top:0}
+.agency-home .handoff-hotspot{left:48%;top:54%;width:49%}
+.agency-home .handoff-hotspot>p{width:min(270px,70vw);font-size:13px}
+.agency-home .handoff-art{margin-bottom:70px}
+}
+.agency-home .handoff-heading .handoff-word-mask{display:inline-block;overflow:clip;vertical-align:bottom;color:inherit;padding-bottom:.12em;margin-bottom:-.12em;perspective:600px}
+.agency-home .handoff-heading .handoff-word{color:inherit;transform-origin:center bottom}
+
+/* Keep annotation copy outside the work; each leader ends at its own artifact. */
+.agency-home .handoff-art{margin-bottom:120px}
+.agency-home .handoff-hotspot{position:static;width:auto;font-size:14px}
+.agency-home .handoff-hotspot>summary{position:absolute;left:var(--hotspot-x);top:var(--hotspot-y);transform:translate(-50%,-50%);width:44px;z-index:2}
+.agency-home .hotspot-mark{font:13px/1 var(--font-mono);background:var(--background);color:var(--foreground);border-color:var(--foreground)}
+.agency-home .hotspot-label{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);white-space:nowrap;background:var(--background);color:var(--foreground)}
+.agency-home .handoff-hotspot>p{top:calc(100% + 16px);left:0;right:auto;width:100%;min-height:80px;margin:0;padding:16px 20px;border-color:var(--border);box-shadow:none;background:var(--card);color:var(--foreground);font-size:15px}
+.agency-home .hotspot-leader{opacity:0;stroke:var(--foreground);filter:none}
+.agency-home .handoff-art:has(details[open]) .hotspot-leader{opacity:1}
+.agency-home .handoff-art:has(details[open]) .hotspot-mark{background:var(--foreground);color:var(--background)}
+.agency-home .handoff-scene figcaption{padding-top:0}
+@media(max-width:600px){.agency-home .handoff-hotspot>p{font-size:14px;padding:12px;min-height:92px}.agency-home .handoff-art{margin-bottom:128px}}
+
+/* The unenhanced page keeps each scene next to its explanation at every width. */
+.agency-home .handoff-tour:not(.tour-enhanced){grid-template-columns:minmax(0,1fr);gap:0}
+.agency-home .handoff-tour:not(.tour-enhanced) .handoff-scenes,.agency-home .handoff-tour:not(.tour-enhanced) .handoff-steps{display:contents}
+.agency-home .handoff-tour:not(.tour-enhanced) [data-tour-scene="0"]{grid-row:1}
+.agency-home .handoff-tour:not(.tour-enhanced) [data-tour-step="0"]{grid-row:2}
+.agency-home .handoff-tour:not(.tour-enhanced) [data-tour-scene="1"]{grid-row:3}
+.agency-home .handoff-tour:not(.tour-enhanced) [data-tour-step="1"]{grid-row:4}
+.agency-home .handoff-tour:not(.tour-enhanced) [data-tour-scene="2"]{grid-row:5}
+.agency-home .handoff-tour:not(.tour-enhanced) [data-tour-step="2"]{grid-row:6}
+
+/* The guide follows three named stops, separate from artifact annotations. */
+.agency-home .handoff-waypoints{position:relative;min-width:0;padding-top:8px;margin-top:20px;grid-column:1;grid-row:2}
+.agency-home .waypoint-track{position:relative;height:104px;margin:0 12px}
+.agency-home .waypoint-track svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;fill:none;stroke:var(--muted);stroke-width:1;vector-effect:non-scaling-stroke}
+.agency-home .waypoint-track path{vector-effect:non-scaling-stroke}
+.agency-home .waypoint-guide{position:absolute;left:10%;top:78%;height:88px;width:70.4px;transform:translate(-50%,-100%);pointer-events:none;transition:none!important}
+.agency-home .waypoint-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.agency-home .waypoint-links a{display:flex;justify-content:center;align-items:center;min-height:44px;text-align:center;font:11px/1.4 var(--font-mono);color:var(--muted);border-bottom:1px solid var(--border)}
+.agency-home .waypoint-links a[aria-current=step]{color:var(--foreground);border-color:var(--foreground)}
+.agency-home .waypoint-links a:focus-visible{outline:2px solid var(--foreground);outline-offset:3px}
+@media(max-width:900px), (max-height:650px){.agency-home .handoff-waypoints{grid-row:1;margin:0 0 28px}.agency-home .handoff-tour .handoff-scenes .handoff-scene[data-tour-scene="0"]{grid-row:2}.agency-home .handoff-tour .handoff-steps .handoff-step[data-tour-step="0"]{grid-row:3}.agency-home .handoff-tour .handoff-scenes .handoff-scene[data-tour-scene="1"]{grid-row:4}.agency-home .handoff-tour .handoff-steps .handoff-step[data-tour-step="1"]{grid-row:5}.agency-home .handoff-tour .handoff-scenes .handoff-scene[data-tour-scene="2"]{grid-row:6}.agency-home .handoff-tour .handoff-steps .handoff-step[data-tour-step="2"]{grid-row:7}}
+.agency-home .handoff-tour:not(.tour-enhanced) .handoff-waypoints{grid-row:1}
+.agency-home .handoff-tour:not(.tour-enhanced) .handoff-scenes [data-tour-scene="0"]{grid-row:2}.agency-home .handoff-tour:not(.tour-enhanced) .handoff-steps [data-tour-step="0"]{grid-row:3}.agency-home .handoff-tour:not(.tour-enhanced) .handoff-scenes [data-tour-scene="1"]{grid-row:4}.agency-home .handoff-tour:not(.tour-enhanced) .handoff-steps [data-tour-step="1"]{grid-row:5}.agency-home .handoff-tour:not(.tour-enhanced) .handoff-scenes [data-tour-scene="2"]{grid-row:6}.agency-home .handoff-tour:not(.tour-enhanced) .handoff-steps [data-tour-step="2"]{grid-row:7}
+@media(min-width:901px) and (min-height:651px){.agency-home .tour-enhanced .handoff-scene{width:100%;max-width:min(100%,calc((100svh - 460px)*1.5));justify-self:center}.agency-home .tour-enhanced .handoff-waypoints{margin-top:12px}}
+
+.agency-home .waypoint-guide [data-guide-pose]{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;opacity:0;transition:none!important}
+.agency-home .waypoint-guide [data-guide-pose="0"]{opacity:1}
