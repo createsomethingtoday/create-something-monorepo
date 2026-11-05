@@ -112,14 +112,15 @@ test('agency signs customers up through an Identity-supported source', async () 
 	});
 });
 
-test('agency presents the first-party sign-in form with Performance styling', () => {
+test('agency presents first-party sign-in with its current operator styling', () => {
 	const source = readFileSync(new URL('../src/routes/login/+page.svelte', import.meta.url), 'utf8');
 
-	assert.match(source, /CREATE SOMETHING Identity/);
+	assert.match(source, /CREATE SOMETHING credentials/);
 	assert.match(source, /LoginForm/);
 	assert.match(source, /SignupForm/);
 	assert.match(source, /property-performance/);
-	assert.match(source, /auth-form-panel theme-light/);
+	assert.match(source, /class="auth-form-panel"/);
+	assert.doesNotMatch(source, /theme-light/);
 	assert.match(source, /fetch\('\/api\/auth\/login'/);
 	assert.match(source, /fetch\('\/api\/auth\/signup'/);
 	assert.doesNotMatch(source, /Auth0/i);

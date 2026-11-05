@@ -10,8 +10,14 @@ test('every current portfolio page owns the operator palette, including workflow
 });
 
 test('utility, private, archive and unknown paths fail closed', () => {
-  for (const path of ['/account', '/admin/security', '/dashboard', '/login', '/logout', '/auth/callback', '/mcp-access/tools', '/delivery/abundance', '/prospects', '/prospects/secret', '/map/workspace/123', '/map/workspace/123/handoff/456', '/map/share/123', '/map/subscribe', '/dify', '/dify/unknown', '/workflows/unknown', '/products/unknown', '/unknown']) {
+  for (const path of ['/account', '/admin/security', '/dashboard', '/login/unknown', '/logout', '/auth/callback', '/mcp-access/tools', '/delivery/abundance', '/prospects', '/prospects/secret', '/map/workspace/123', '/map/workspace/123/handoff/456', '/map/share/123', '/map/subscribe', '/dify', '/dify/unknown', '/workflows/unknown', '/products/unknown', '/unknown']) {
     assert.equal(usesAgencyOperatorPalette(path), false, path);
+  }
+});
+
+test('customer sign-in explicitly owns the current Agency palette', () => {
+  for (const path of ['/login', '/login/', '/login?redirect=/dashboard', '/login?error=expired']) {
+    assert.equal(usesAgencyOperatorPalette(path), true, path);
   }
 });
 

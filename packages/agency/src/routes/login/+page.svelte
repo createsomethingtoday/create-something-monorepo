@@ -65,24 +65,18 @@
 <div class="auth-shell property-performance">
 	<section class="auth-context" aria-labelledby="auth-heading">
 		<div class="auth-status">
-			<span class="status-label">Identity</span>
-			<span class="status-value">Controlled</span>
+			<span class="status-label">Customer workspace</span>
+			<a class="status-value" href="/">Back to Agency ↗</a>
 		</div>
-		<p class="auth-eyebrow">First-party customer access</p>
-		<h1 id="auth-heading">Sign in to your .agency workspace.</h1>
+		<p class="auth-eyebrow">Your account</p>
+		<h1 id="auth-heading">Sign in to your workspace.</h1>
 		<p class="auth-summary">
-			Credentials are verified by CREATE SOMETHING Identity. Your workspace applies its own account,
-			tenant, and entitlement boundaries after authentication.
+			Access your projects, tools, and account with your CREATE SOMETHING credentials.
 		</p>
-		<div class="auth-proof" aria-label="Authentication controls">
-			<span>Surface / Customer workspace</span>
-			<span>Session / HttpOnly</span>
-			<span>Policy / Fail closed</span>
-		</div>
 	</section>
 
 	<section
-		class="auth-form-panel theme-light"
+		class="auth-form-panel"
 		aria-label={mode === 'login' ? 'Sign-in form' : 'Account creation form'}
 	>
 		{#if mode === 'login'}
@@ -108,7 +102,7 @@
 
 <style>
 	.auth-shell {
-		width: min(var(--content-width-performance), calc(100% - 2rem));
+		width: min(76rem, calc(100% - clamp(2rem, 12vw, 10rem)));
 		min-height: calc(100vh - 8rem);
 		margin: 0 auto;
 		padding: clamp(2rem, 7vw, 6rem) 0;
@@ -123,8 +117,7 @@
 		padding-top: var(--space-performance-md);
 	}
 
-	.auth-status,
-	.auth-proof {
+	.auth-status {
 		display: flex;
 		flex-wrap: wrap;
 		gap: var(--space-performance-sm) var(--space-performance-lg);
@@ -139,13 +132,12 @@
 	}
 
 	.status-label,
-	.auth-eyebrow,
-	.auth-proof {
+	.auth-eyebrow {
 		color: var(--color-performance-muted);
 	}
 
 	.status-value {
-		color: var(--color-performance-ready);
+		color: var(--color-performance-muted);
 	}
 
 	.auth-eyebrow {
@@ -160,11 +152,11 @@
 		max-width: 12ch;
 		margin: 0;
 		color: var(--color-performance-ink);
-		font-family: var(--font-performance-display);
-		font-size: clamp(2.5rem, 6vw, 5.5rem);
+		font-family: var(--font-performance-sans);
+		font-size: clamp(2.5rem, 5vw, 4.5rem);
 		font-weight: var(--font-performance-bold);
 		letter-spacing: -0.055em;
-		line-height: 0.94;
+		line-height: 1.08;
 	}
 
 	.auth-summary {
@@ -175,16 +167,40 @@
 		line-height: 1.65;
 	}
 
-	.auth-proof {
-		padding-top: var(--space-performance-md);
-		border-top: 1px solid var(--color-performance-line);
-	}
-
 	.auth-form-panel {
-		padding: var(--space-performance-lg);
+		padding: clamp(1.25rem, 3vw, 2.5rem);
 		background: var(--color-performance-panel);
 		border: 1px solid var(--color-performance-line);
-		box-shadow: var(--shadow-performance-panel);
+		border-radius: var(--radius-operator-panel);
+	}
+
+	/* Agency owns this presentation; shared auth behavior stays in Canon. */
+	.auth-form-panel :global(.form-title) {
+		font-family: var(--font-performance-sans);
+		font-size: var(--text-performance-h3);
+		letter-spacing: -0.03em;
+	}
+
+	.auth-form-panel :global(.form-header) { text-align: left; }
+	.auth-form-panel :global(.input) {
+		background: var(--color-operator-secondary);
+		border: 1px solid var(--color-operator-focus-ring-accessible);
+		border-radius: var(--radius-operator-control);
+		min-height: 48px;
+	}
+	.auth-form-panel :global(.input::placeholder) { color: var(--color-operator-muted); }
+	.auth-form-panel :global(.submit-button) { border-radius: var(--radius-operator-control); }
+	.auth-form-panel :global(.link-button) { min-height: 44px; }
+	.auth-form-panel :global(.error-message) {
+		background: var(--color-operator-secondary);
+		border-color: var(--color-operator-status-blocked-text);
+		color: var(--color-operator-status-blocked-text);
+		border-radius: var(--radius-operator-control);
+		overflow-wrap: anywhere;
+	}
+	.auth-form-panel :global(:is(input, button):focus-visible) {
+		outline: 2px solid var(--color-operator-focus-ring-accessible);
+		outline-offset: 3px;
 	}
 
 	@media (max-width: 760px) {
@@ -192,12 +208,14 @@
 			grid-template-columns: 1fr;
 		}
 
+		.auth-summary { margin-block: var(--space-performance-md) 0; }
+
 		.auth-eyebrow {
-			margin-top: var(--space-performance-xl);
+			margin-top: var(--space-performance-lg);
 		}
 
 		h1 {
-			font-size: clamp(2.5rem, 13vw, 4rem);
+			font-size: clamp(2rem, 9vw, 3rem);
 		}
 	}
 </style>

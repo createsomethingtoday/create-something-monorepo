@@ -109,6 +109,7 @@ export function isAgencyAtlasProofPath(pathname: string): boolean {
 export function usesCompactAgencyPrivacyPrompt(pathname: string): boolean {
   const normalized = normalizeAgencyPathname(pathname);
   return (
+    normalized === '/login' ||
     AGENCY_COMPACT_PRIVACY_PATHS.includes(
       normalized as (typeof AGENCY_COMPACT_PRIVACY_PATHS)[number]
     ) || isAgencyDifyArticlePath(normalized)
