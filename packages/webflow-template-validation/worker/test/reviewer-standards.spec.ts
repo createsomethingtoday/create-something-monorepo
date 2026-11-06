@@ -132,6 +132,20 @@ describe('Reviewer standards', () => {
 		expect(licenses.findings['trademark-symbols']).toBeUndefined();
 	});
 
+	it('ignores forms, videos and navigation inside <template> and <noscript>', () => {
+		const inert =
+			'<template><div class="w-nav"><nav>Menu</nav></div><form data-name="Email Form"></form>' +
+			'<video src="/clip.mp4" autoplay></video><div class="w-background-video"><video autoplay></video></div></template>' +
+			'<noscript><form data-name="Email Form 2"></form></noscript>';
+		const page = audit('/about', inert + FOOTER);
+		expect(page.findings['form-default-names']).toBeUndefined();
+		expect(page.findings['video-play-pause']).toBeUndefined();
+		expect(page.hasNav).toBe(false);
+		expect(pagesOf('404-navigation', audit('/', NAV + FOOTER), audit('/404', inert + FOOTER))).toEqual([
+			{ url: `${SITE}/404`, detail: 'no navbar, but the home page has one' }
+		]);
+	});
+
 	it('skips an empty document and normalizes the page path', () => {
 		expect(auditReviewerStandards('', `${SITE}/about`)).toBeNull();
 		expect(audit('/about/', NAV + FOOTER).path).toBe('/about');

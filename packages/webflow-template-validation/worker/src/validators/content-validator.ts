@@ -21,12 +21,12 @@ import {
 } from '../types';
 import { fetchHTML, isPlatformManagedHeading, parseHTML } from '../utils/fetch-utils';
 import { analyzeHeadingSequence, extractDocumentOutline, visibleOutlineHeadings } from '../utils/document-outline';
-import { parseDocument } from 'htmlparser2';
 import { isWebflowGeneratedVideoPosterSource } from '../utils/asset-utils';
 import {
 	REVIEWER_UTILITY_PATHS,
 	auditReviewerStandards,
-	generateReviewerStandardIssues
+	generateReviewerStandardIssues,
+	parseRenderedElements
 } from './reviewer-standards';
 
 const LOREM_IPSUM_PATTERNS = [
@@ -495,30 +495,16 @@ export function analyzeImageDimensions(parsedHTML: ParsedHTML): {
 	return { missing, details };
 }
 
-interface MarkupNode {
-	name?: string;
-	attribs?: Record<string, string>;
-	children?: MarkupNode[];
-}
-
 /**
  * Images a browser renders. The Worker's regex parser also returns <img> tags
  * inside comments, scripts, <template> and <noscript>, which never render and
- * cannot shift the layout. In the parsed tree, comments and script text are
- * not elements, and template and noscript subtrees are skipped.
+ * cannot shift the layout.
  */
 function renderedImages(parsedHTML: ParsedHTML): Array<HTMLImageElement | any> {
 	if (!parsedHTML.rawHtml) return parsedHTML.images;
-	const images: MarkupNode[] = [];
-	const walk = (node: MarkupNode) => {
-		for (const child of node.children ?? []) {
-			if (!child.name || child.name === 'template' || child.name === 'noscript') continue;
-			if (child.name === 'img') images.push(child);
-			walk(child);
-		}
-	};
-	walk(parseDocument(parsedHTML.rawHtml) as unknown as MarkupNode);
-	return images.map(img => ({ getAttribute: (name: string) => img.attribs?.[name] ?? null }));
+	return parseRenderedElements(parsedHTML.rawHtml)
+		.filter(el => el.name === 'img')
+		.map(img => ({ getAttribute: (name: string) => img.attribs?.[name] ?? null }));
 }
 
 function hasPositiveDimension(img: HTMLImageElement | any, name: 'width' | 'height'): boolean {

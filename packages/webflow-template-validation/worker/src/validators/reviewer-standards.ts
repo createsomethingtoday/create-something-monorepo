@@ -11,7 +11,7 @@ import { parseDocument } from 'htmlparser2';
 import type { ReviewerPageAudit, ReviewerStandardId, ValidationIssue } from '../types';
 
 /** The subset of a domhandler node that the checks read. */
-interface Node {
+export interface MarkupNode {
 	type: string;
 	name?: string;
 	attribs?: Record<string, string>;
@@ -19,6 +19,8 @@ interface Node {
 	parent?: Node | null;
 	data?: string;
 }
+
+type Node = MarkupNode;
 
 interface Standard {
 	message: (pageCount: number) => string;
@@ -74,6 +76,7 @@ const NON_FIELD_INPUT_TYPES = new Set(['hidden', 'submit', 'reset', 'button', 'i
 const FOOTER_TOKEN = /(?:^|[\s_-])footer(?:$|[\s_-])/i;
 const DEFAULT_ICON_PATHS = { favicon: '/img/favicon.ico', webclip: '/img/webclip.png' } as const;
 const NO_TEXT_TAGS = new Set(['script', 'style', 'noscript', 'template', 'svg', 'head']);
+const INERT_TAGS = new Set(['template', 'noscript']);
 const LICENSES_PATH = '/licenses';
 /** Utility pages: the guideline asks for the link on the site's pages, and the 404 page has its own navbar/footer check. */
 const NO_LICENSES_LINK_PATHS = new Set(['/401', '/404', '/licenses', '/changelog', '/style-guide', '/styleguide', '/instructions']);
@@ -87,7 +90,7 @@ export function auditReviewerStandards(html: string, pageUrl: string): ReviewerP
 	const url = new URL(pageUrl);
 	const path = url.pathname.replace(/\/+$/, '') || '/';
 	const root = parseDocument(html) as unknown as Node;
-	const elements = descendants(root);
+	const elements = renderedDescendants(root);
 	const findings: ReviewerPageAudit['findings'] = {};
 	const record = (id: ReviewerStandardId, detail: string | null) => {
 		if (detail) findings[id] = detail;
@@ -178,7 +181,7 @@ function videoControlsDetail(elements: Node[]): string | null {
 	for (const el of elements) {
 		// Webflow puts the play/pause button inside the Background Video element.
 		if (classes(el).includes('w-background-video')) {
-			if (!descendants(el).some(isControl)) background++;
+			if (!renderedDescendants(el).some(isControl)) background++;
 		} else if (
 			el.name === 'video' &&
 			el.attribs?.autoplay !== undefined &&
@@ -227,11 +230,22 @@ function trademarksDetail(elements: Node[], root: Node): string | null {
 	return `${count} symbol(s), for example "…${sample}…"`;
 }
 
-function descendants(node: Node): Node[] {
+/** Elements of an HTML document that a browser renders (template and noscript subtrees are skipped). */
+export function parseRenderedElements(html: string): MarkupNode[] {
+	return renderedDescendants(parseDocument(html) as unknown as Node);
+}
+
+/**
+ * Element descendants a browser renders. Comments and script text are not
+ * elements in the parsed tree; <template> content and <noscript> fallbacks
+ * never render, so unused markup there cannot fail or satisfy a check.
+ */
+function renderedDescendants(node: Node): Node[] {
 	const out: Node[] = [];
 	const walk = (parent: Node) => {
 		for (const child of parent.children ?? []) {
-			if (child.name) out.push(child);
+			if (!child.name || INERT_TAGS.has(child.name)) continue;
+			out.push(child);
 			walk(child);
 		}
 	};
