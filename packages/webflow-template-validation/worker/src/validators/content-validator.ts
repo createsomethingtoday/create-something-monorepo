@@ -26,7 +26,8 @@ import {
 	REVIEWER_UTILITY_PATHS,
 	auditReviewerStandards,
 	generateReviewerStandardIssues,
-	parseRenderedElements
+	parseRenderedElements,
+	type MarkupNode
 } from './reviewer-standards';
 
 const LOREM_IPSUM_PATTERNS = [
@@ -504,7 +505,26 @@ function renderedImages(parsedHTML: ParsedHTML): Array<HTMLImageElement | any> {
 	if (!parsedHTML.rawHtml) return parsedHTML.images;
 	return parseRenderedElements(parsedHTML.rawHtml)
 		.filter(el => el.name === 'img')
-		.map(img => ({ getAttribute: (name: string) => img.attribs?.[name] ?? null }));
+		.map(img => ({
+			getAttribute: (name: string) => img.attribs?.[name] ?? null,
+			// Keeps the ancestor exemption in isLikelyPlatformVideoFallbackImage working.
+			closest: (selector: string) => closestNode(img, selector)
+		}));
+}
+
+/** Element.closest() for selector lists of `.class`, `[attribute]` and tag names, over the parsed tree. */
+function closestNode(node: MarkupNode, selector: string): MarkupNode | null {
+	const parts = selector.split(',').map(part => part.trim()).filter(Boolean);
+	const matches = (el: MarkupNode, part: string) => {
+		if (part.startsWith('.')) return (el.attribs?.class ?? '').split(/\s+/).includes(part.slice(1));
+		const attribute = /^\[([\w-]+)\]$/.exec(part);
+		if (attribute) return el.attribs?.[attribute[1]] !== undefined;
+		return el.name === part.toLowerCase();
+	};
+	for (let current: MarkupNode | null | undefined = node; current; current = current.parent) {
+		if (current.name && parts.some(part => matches(current!, part))) return current;
+	}
+	return null;
 }
 
 function hasPositiveDimension(img: HTMLImageElement | any, name: 'width' | 'height'): boolean {

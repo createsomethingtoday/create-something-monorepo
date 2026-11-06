@@ -1555,6 +1555,19 @@ describe('Content Validator', () => {
 		expect(audit.details.map(detail => detail.src)).toEqual(['/rendered.webp']);
 	});
 
+	it('keeps the video-fallback exemption for images identified by their container', async () => {
+		const actual = await vi.importActual<typeof import('../src/utils/fetch-utils')>('../src/utils/fetch-utils');
+		const parsed = actual.parseHTMLWorker(`<!doctype html><html><body>
+			<div class="hero w-background-video w-background-video-atom"><div class="inner"><img src="/hero.webp" alt=""></div></div>
+			<div data-poster-url="/poster.jpg"><img src="/poster-frame.webp" alt=""></div>
+			<div class="w-video"><img src="/embed-thumb.webp" alt=""></div>
+			<div class="w-background-video--control"><img src="/pause-icon.svg" alt=""></div>
+		</body></html>`);
+
+		const audit = analyzeImageDimensions(parsed);
+		expect(audit.details.map(detail => detail.src)).toEqual(['/pause-icon.svg']);
+	});
+
 	it('reports missing image dimensions as a blocking error, even when every toggled content check is off', () => {
 		const allTogglesOff = { lorem: false, headings: false, altText: false, seo: false, links: false, contentQuality: false };
 		const pages = [
