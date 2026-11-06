@@ -1,0 +1,81 @@
+/* Workshop images sit in a graphite mount: a crisp rim, an inset image and a
+ * caption rail. The image keeps its full material detail and original edges.
+ * Proof recordings, guide cutouts and the full-bleed opening keep their own UI.
+ */
+.agency-home .shared-visual,
+.agency-home .handoff-scene,
+body.design-preview .agency-preview-hero > .agency-preview-media {
+  --image-frame-inset: clamp(6px, .7vw, 10px);
+  box-sizing: border-box;
+  min-width: 0;
+  padding: var(--image-frame-inset);
+  border: 1px solid var(--color-performance-shell-border-default);
+  border-radius: var(--radius-performance-sm);
+  background: var(--color-performance-shell-surface-secondary);
+  box-shadow: var(--shadow-performance-scale-sm);
+}
+
+/* The existing page-composition layer owns placement. Override only its bare
+ * figure treatment, including its legacy important background/padding rules. */
+body.design-preview .agency-surface .agency-preview-hero > .agency-preview-media {
+  padding: var(--image-frame-inset) !important;
+  background: var(--color-performance-shell-surface-secondary) !important;
+  align-self: center;
+  justify-content: flex-start;
+}
+
+.agency-home .shared-visual {
+  height: auto;
+  aspect-ratio: auto;
+  overflow: visible;
+}
+
+.agency-home .shared-visual > img {
+  height: auto;
+}
+
+.agency-home .shared-visual > figcaption,
+.agency-home .handoff-scene > figcaption,
+body.design-preview .agency-surface .agency-preview-hero > .agency-preview-media > figcaption {
+  box-sizing: border-box;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-performance-sm);
+  max-width: none;
+  margin: var(--image-frame-inset) 0 0;
+  padding: 10px 6px 4px;
+  border-top: 1px solid var(--color-performance-shell-border-default);
+  color: var(--color-performance-fg-secondary);
+  font: 12px/1.5 var(--font-performance-mono);
+}
+
+.agency-home .shared-visual > figcaption > span:last-child,
+.agency-home .handoff-scene > figcaption > span {
+  text-align: right;
+}
+
+/* The frame contains the annotation as well as the image. Keep it unclipped,
+ * and reserve disclosure space only while a native annotation is open. */
+.agency-home .handoff-scene .handoff-art {
+  margin-bottom: 0;
+  background: var(--background);
+}
+
+.agency-home .handoff-scene .handoff-art:has(details[open]) {
+  margin-bottom: 120px;
+}
+
+@media (max-width: 600px) {
+  .agency-home .shared-visual > figcaption,
+  .agency-home .handoff-scene > figcaption,
+  body.design-preview .agency-surface .agency-preview-hero > .agency-preview-media > figcaption {
+    gap: var(--space-performance-xs);
+    padding-inline: 4px;
+    font-size: 11px;
+  }
+
+  .agency-home .handoff-scene .handoff-art:has(details[open]) {
+    margin-bottom: 136px;
+  }
+}
