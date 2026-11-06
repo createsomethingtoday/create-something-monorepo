@@ -14,12 +14,12 @@ test('standalone page retains the owning Agency Canon operator palette', () => {
 });
 
 test('download contract pins exact qualified installer, platform and checksum', () => {
-  assert.equal(gigiBeta.version, '0.2.22');
-  assert.equal(gigiBeta.filename, 'GiGi-0.2.22-arm64-private-beta.dmg');
-  assert.equal(gigiBeta.bytes, 84794714);
-  assert.equal(gigiBeta.sha256, 'dd159be1c8ccc122692efbd913d69cb152659facfec4e06be93e2d97ba40eb4e');
-  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.22/GiGi-0.2.22-arm64-private-beta.dmg`);
-  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '84,794,714', '84.8 MB']) assert.ok(gigiBetaHtml.includes(text), text);
+  assert.equal(gigiBeta.version, '0.2.23');
+  assert.equal(gigiBeta.filename, 'GiGi-0.2.23-arm64-private-beta.dmg');
+  assert.equal(gigiBeta.bytes, 84790943);
+  assert.equal(gigiBeta.sha256, '372a4e754fd98530ca48f0af823f7002b4f135bdece09e80cfa2e5a60b0f4bdc');
+  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.23/GiGi-0.2.23-arm64-private-beta.dmg`);
+  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '84,790,943', '84.8 MB']) assert.ok(gigiBetaHtml.includes(text), text);
 });
 
 test('beta stays unlisted and has no active content or tracking shell', () => {
@@ -131,13 +131,13 @@ test('artwork release preserves local previews and external generation boundarie
 test('setup and classification release keeps session and acceptance boundaries explicit', () => {
   const changes = gigiBetaHtml.match(/<section aria-labelledby="changes">([\s\S]*?)<\/section>/)?.[1] ?? '';
   for (const text of ['Included from 0.2.8', 'Work kind', 'leaves existing records unchanged', 'not automatically a performance', 'Configuration stays unchanged', 'already-open agent session', 'before pagination', 'Original Type values']) assert.ok(changes.includes(text), text);
-  for (const text of ['final compiled app code and data in isolated QA wrappers', 'One real Codex-generated illustration', 'using the installed 0.2.8 MCP', 'Follow-up 0.2.9 checks', 'already-running agent session remain unverified', 'GiGi 0.2.8: Earlier checks', 'Previous installer:', '0.2.18/GiGi-0.2.18-arm64-private-beta.dmg']) assert.ok(gigiBetaHtml.includes(text), text);
+  for (const text of ['final compiled app code and data in isolated QA wrappers', 'One real Codex-generated illustration', 'using the installed 0.2.8 MCP', 'Follow-up 0.2.9 checks', 'already-running agent session remain unverified', 'GiGi 0.2.8: Earlier checks', 'Previous installer:', '0.2.22/GiGi-0.2.22-arm64-private-beta.dmg']) assert.ok(gigiBetaHtml.includes(text), text);
 });
 
 test("current release clearly defers phone qualification and preserves rollback", () => {
- assert.ok(gigiBetaHtml.includes("Phone workflow unverified for 0.2.22"));
+ assert.ok(gigiBetaHtml.includes("Phone workflow unverified for 0.2.23"));
  assert.ok(gigiBetaHtml.includes("Physical-phone qualification is deferred"));
- assert.ok(gigiBetaHtml.includes("GiGi 0.2.18 for Apple Silicon"));
+ assert.ok(gigiBetaHtml.includes("GiGi 0.2.22 for Apple Silicon"));
 });
 
 
