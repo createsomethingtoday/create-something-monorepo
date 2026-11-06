@@ -3,8 +3,8 @@
 
 Recipients are 🎨Creators with at least one published asset and a 🔑WF User ID.
 The Knock workflow `marketplace-creator-news` puts the post in the dashboard
-bell and in the Creator Hub Overview. With KNOCK_SECRET_API_KEY set, the same list is
-also added to the Knock audience `marketplace-creators` (adds only).
+bell and in the Creator Hub Overview. With --send and KNOCK_SECRET_API_KEY set, the
+same list is also added to the Knock audience `marketplace-creators` (adds only).
 
 Dry run by default: prints the post and the recipient count. Add --send to
 trigger production. A human must approve the post text before --send.
@@ -85,12 +85,13 @@ def main() -> None:
 
     print(f'Post: {json.dumps(data, ensure_ascii=False)}')
     print(f'Recipients: {len(recipients)} creators')
-    if os.environ.get('KNOCK_SECRET_API_KEY'):
-        sync_audience(os.environ['KNOCK_SECRET_API_KEY'], recipients)
-        print(f'Synced audience {AUDIENCE}')
     if not args.send:
         print('Dry run. Add --send to post.')
         return
+
+    if os.environ.get('KNOCK_SECRET_API_KEY'):
+        sync_audience(os.environ['KNOCK_SECRET_API_KEY'], recipients)
+        print(f'Synced audience {AUDIENCE}')
 
     for start in range(0, len(recipients), BATCH_SIZE):
         batch = recipients[start : start + BATCH_SIZE]
