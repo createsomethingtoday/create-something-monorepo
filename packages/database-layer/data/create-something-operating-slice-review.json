@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-review:internal",
-  "generatedAt": "2026-10-22T14:00:48.969Z",
+  "generatedAt": "2026-11-06T21:42:44.921Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceCoverageId": "substrate:create-something:atlas-coverage:internal",
@@ -13,6 +13,7 @@
         "substrate:create-something:atlas-coverage-group:automation-surface-automation-worker"
       ],
       "recordIds": [
+        "substrate:create-something:worker:apps-agency-meta-maintenance-wrangler-jsonc",
         "substrate:create-something:worker:apps-bettermode-marketplace-creator-agent-wrangler-jsonc",
         "substrate:create-something:worker:apps-create-something-scheduler-wrangler-jsonc",
         "substrate:create-something:worker:apps-guard-performance-lab-wrangler-toml",
@@ -52,6 +53,8 @@
         "substrate:create-something:worker:packages-composio-toolkit-mcp-wrangler-toml",
         "substrate:create-something:worker:packages-concierge-chat-wrangler-toml",
         "substrate:create-something:worker:packages-create-something-mcp-worker-wrangler-toml",
+        "substrate:create-something:package:create-something-creator-storefront-packages-creator-storefront",
+        "substrate:create-something:worker:packages-creator-storefront-wrangler-toml",
         "substrate:create-something:worker:packages-cs-mcp-hub-notion-bridge-wrangler-toml",
         "substrate:create-something:worker:packages-cs-mcp-hub-remote-wrangler-toml",
         "substrate:create-something:worker:packages-cs-telemetry-mcp-worker-wrangler-toml",
@@ -131,6 +134,8 @@
         "substrate:create-something:worker:packages-template-form-uploads-worker-wrangler-toml",
         "substrate:create-something:worker:packages-tend-wrangler-toml",
         "substrate:create-something:worker:packages-three-tier-framework-mcp-worker-wrangler-toml",
+        "substrate:create-something:package:create-something-walkthrough-system-packages-walkthrough-system",
+        "substrate:create-something:worker:packages-walkthrough-system-wrangler-jsonc",
         "substrate:create-something:worker:packages-webflow-app-review-mcp-worker-wrangler-toml",
         "substrate:create-something:worker:packages-webflow-apps-admin-dashboard-wrangler-toml",
         "substrate:create-something:worker:packages-webflow-apps-admin-workers-audit-agent-wrangler-toml",
@@ -153,7 +158,6 @@
         "substrate:create-something:worker:packages-webflow-template-analyzer-cloudflare-wrangler-jsonc",
         "substrate:create-something:worker:packages-webflow-template-review-mcp-worker-wrangler-toml",
         "substrate:create-something:worker:packages-webflow-template-search-wrangler-toml",
-        "substrate:create-something:package:create-something-webflow-template-validation-worker-packages-webflow-template-validation-worker",
         "substrate:create-something:worker:packages-webflow-template-validation-worker-wrangler-jsonc",
         "substrate:create-something:worker:packages-webflow-template-views-wrangler-toml",
         "substrate:create-something:worker:packages-wf-search-category-wrangler-toml",
@@ -162,8 +166,9 @@
       "owner": "CREATE SOMETHING",
       "tier": "Automation",
       "surface": "worker",
-      "nodeCount": 145,
+      "nodeCount": 149,
       "evidence": [
+        "apps/agency-meta-maintenance/wrangler.jsonc",
         "apps/bettermode-marketplace-creator-agent/wrangler.jsonc",
         "apps/create-something-scheduler/wrangler.jsonc",
         "apps/guard-performance-lab/wrangler.toml",
@@ -174,8 +179,7 @@
         "packages/abundance-jobs-mcp/worker/wrangler.toml",
         "packages/agency",
         "packages/agency/clients/cato-supply-insights-cms/wrangler.toml",
-        "packages/agency/clients/cato-supply-insights-review/wrangler.toml",
-        "packages/agency/clients/jandjhomehealth/wrangler.toml"
+        "packages/agency/clients/cato-supply-insights-review/wrangler.toml"
       ],
       "validationCommands": [
         "pnpm --filter @create-something/database-layer runtime-bindings:generate",
@@ -196,6 +200,8 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
         "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
         "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
         "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md",
@@ -245,6 +251,7 @@
         "substrate:create-something:guide:docs-guides-monorepo-delivery-updates-md",
         "substrate:create-something:guide:docs-guides-newsletter-distribution-playbook-md",
         "substrate:create-something:guide:docs-guides-newsletter-engagement-runbook-md",
+        "substrate:create-something:guide:docs-guides-newsletter-workflow-md",
         "substrate:create-something:guide:docs-guides-notion-api-compatibility-audit-2026-md",
         "substrate:create-something:guide:docs-guides-notion-workers-and-cli-2026-md",
         "substrate:create-something:guide:docs-guides-npm-saved-auth-and-release-promotion-runbook-md",
@@ -268,6 +275,7 @@
         "substrate:create-something:guide:docs-guides-solo-operator-control-tower-playbook-md",
         "substrate:create-something:guide:docs-guides-steel-cli-md",
         "substrate:create-something:guide:docs-guides-substrate-topology-operator-contract-md",
+        "substrate:create-something:guide:docs-guides-t3-code-workflow-md",
         "substrate:create-something:guide:docs-guides-ui-preview-system-md",
         "substrate:create-something:guide:docs-guides-understanding-template-md",
         "substrate:create-something:guide:docs-guides-webflow-code-components-control-plane-md",
@@ -279,20 +287,20 @@
       "owner": "CREATE SOMETHING",
       "tier": "Mixed",
       "surface": "guide",
-      "nodeCount": 82,
+      "nodeCount": 86,
       "evidence": [
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
         "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
         "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
         "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md",
         "docs/guides/AGENT_LEGIBILITY_CONTRACT.md",
         "docs/guides/ANTIGRAVITY_MCP_ENABLEMENT.md",
         "docs/guides/ARENA_TASTE_INTEGRATION.md",
-        "docs/guides/ATLAS_LINEAR_INTEGRATION.md",
-        "docs/guides/ATLAS_SUBSTRATE_AGENT_CONTEXT.md",
-        "docs/guides/BOUNDED_RESEARCH_INTERRUPT_RUNBOOK.md"
+        "docs/guides/ATLAS_LINEAR_INTEGRATION.md"
       ],
       "validationCommands": [
         "pnpm --filter @create-something/database-layer atlas-coverage:generate",
@@ -690,6 +698,7 @@
       ],
       "recordIds": [
         "substrate:create-something:package:create-something-auth-platform-packages-auth-platform",
+        "substrate:create-something:package:create-something-walkthrough-system-packages-dotfiles-codex-skills-create-something-demo-director-assets-director-kit",
         "substrate:create-something:package:create-something-half-dozen-youtube-sync-packages-half-dozen-youtube-sync",
         "substrate:create-something:package:create-something-halfdozen-gmail-sync-packages-halfdozen-gmail-sync",
         "substrate:create-something:package:createsomething-subtractive-triad-space-packages-huggingface-spaces-subtractive-triad-ts",
@@ -700,6 +709,7 @@
         "substrate:create-something:package:create-something-webflow-review-packages-webflow-review",
         "substrate:create-something:package:create-something-webflow-review-extension-packages-webflow-review-extension",
         "substrate:create-something:package:create-something-webflow-template-validation-packages-webflow-template-validation",
+        "substrate:create-something:package:create-something-webflow-template-validation-cli-packages-webflow-template-validation-cli",
         "substrate:create-something:package:createsomething-workflow-compiler-packages-workflow-compiler",
         "substrate:create-something:package:create-something-workflow-evidence-extractor-packages-workflow-evidence-extractor",
         "substrate:create-something:package:create-something-workflow-observation-reconciler-packages-workflow-observation-reconciler",
@@ -710,9 +720,10 @@
       "owner": "CREATE SOMETHING",
       "tier": "Automation",
       "surface": "package",
-      "nodeCount": 17,
+      "nodeCount": 19,
       "evidence": [
         "packages/auth-platform",
+        "packages/dotfiles/codex/skills/create-something-demo-director/assets/director-kit",
         "packages/half-dozen-youtube-sync",
         "packages/halfdozen-gmail-sync",
         "packages/huggingface-spaces/subtractive-triad-ts",
@@ -722,8 +733,7 @@
         "packages/webflow-automation",
         "packages/webflow-review",
         "packages/webflow-review/extension",
-        "packages/webflow-template-validation",
-        "packages/workflow-compiler"
+        "packages/webflow-template-validation"
       ],
       "validationCommands": [
         "pnpm --filter @create-something/database-layer test"
@@ -969,12 +979,13 @@
         "substrate:create-something:package:create-something-search-packages-search",
         "substrate:create-something:package:create-something-webflow-scope-watcher-packages-webflow-scope-watcher",
         "substrate:create-something:package:create-something-webflow-template-search-packages-webflow-template-search",
+        "substrate:create-something:package:create-something-webflow-template-validation-worker-packages-webflow-template-validation-worker",
         "substrate:create-something:package:create-something-wf-search-category-packages-wf-search-category"
       ],
       "owner": "CREATE SOMETHING",
       "tier": "Database",
       "surface": "worker",
-      "nodeCount": 8,
+      "nodeCount": 9,
       "evidence": [
         "packages/app-governance-db/worker",
         "packages/codebase-vector-database",
@@ -983,6 +994,7 @@
         "packages/search",
         "packages/webflow-scope-watcher",
         "packages/webflow-template-search",
+        "packages/webflow-template-validation/worker",
         "packages/wf-search-category"
       ],
       "validationCommands": [
@@ -1109,6 +1121,7 @@
         "substrate:create-something:atlas-coverage-group:application-surface-automation-app"
       ],
       "recordIds": [
+        "substrate:create-something:app:create-something-agency-meta-maintenance-apps-agency-meta-maintenance",
         "substrate:create-something:app:create-something-bettermode-marketplace-creator-agent-apps-bettermode-marketplace-creator-agent",
         "substrate:create-something:app:create-something-even-codex-presence-apps-even-codex-presence",
         "substrate:create-something:app:create-something-even-operator-brief-apps-even-operator-brief",
@@ -1117,8 +1130,9 @@
       "owner": "CREATE SOMETHING",
       "tier": "Automation",
       "surface": "app",
-      "nodeCount": 4,
+      "nodeCount": 5,
       "evidence": [
+        "apps/agency-meta-maintenance",
         "apps/bettermode-marketplace-creator-agent",
         "apps/even-codex-presence",
         "apps/even-operator-brief",

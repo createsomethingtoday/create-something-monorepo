@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:business-operating-recommendations:internal",
-  "generatedAt": "2026-10-22T14:00:49.912Z",
+  "generatedAt": "2026-11-06T21:42:45.815Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceOrganizationReviewId": "substrate:create-something:organization-review:internal",
@@ -10,9 +10,9 @@
   "summary": {
     "recommendedMoves": 4,
     "operationalizedLanes": 4,
-    "topologyNodes": 555,
-    "topologyEdges": 1164,
-    "managementResources": 625,
+    "topologyNodes": 567,
+    "topologyEdges": 1188,
+    "managementResources": 637,
     "managementOperations": 29,
     "operatingSlices": 23,
     "workerSlices": 4,
@@ -30,7 +30,7 @@
       "operatingLane": "substrate_product_surface",
       "summary": "The healthiest next move is to make the database layer a first-class product surface rather than a hidden app-governance implementation detail.",
       "evidence": [
-        "28 Database records currently support 282 Automation records",
+        "29 Database records currently support 289 Automation records",
         "Management surface exposes stable API/MCP/agent access",
         "Atlas UI projects the same records instead of becoming a separate source of truth"
       ],
@@ -84,9 +84,9 @@
         }
       ],
       "metrics": {
-        "databaseRecords": 28,
-        "automationRecords": 282,
-        "resourceCount": 625,
+        "databaseRecords": 29,
+        "automationRecords": 289,
+        "resourceCount": 637,
         "operationCount": 29,
         "readOperations": 26
       },
@@ -114,8 +114,8 @@
       "operatingLane": "worker_runtime_review",
       "summary": "The worker surface is the largest concentration of operational risk and should be the first ongoing review lane.",
       "evidence": [
-        "Worker records=173",
-        "145 records in the primary worker slice"
+        "Worker records=178",
+        "149 records in the primary worker slice"
       ],
       "sourceArtifacts": [
         "packages/database-layer/data/create-something-operating-slice-readiness.json",
@@ -129,8 +129,8 @@
           "surface": "worker",
           "status": "review_ready",
           "productionStatus": "approval_required",
-          "recordCount": 145,
-          "mappedRecordCount": 145,
+          "recordCount": 149,
+          "mappedRecordCount": 149,
           "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-worker",
           "readinessApiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-worker/readiness",
           "validationCommands": [
@@ -142,19 +142,19 @@
       ],
       "metrics": {
         "workerSlices": 4,
-        "primaryWorkerSliceRecords": 145,
-        "runtimeConfigRecords": 119,
-        "bindingRefs": 638,
+        "primaryWorkerSliceRecords": 149,
+        "runtimeConfigRecords": 122,
+        "bindingRefs": 657,
         "routeRefs": 26,
         "bindingKinds": {
-          "assets": 8,
-          "d1": 95,
-          "durable_object": 46,
+          "assets": 9,
+          "d1": 97,
+          "durable_object": 48,
           "kv": 39,
           "queue": 16,
           "r2": 24,
           "route": 52,
-          "var": 382,
+          "var": 396,
           "vectorize": 2
         },
         "secretValuesCaptured": false
@@ -276,7 +276,7 @@
       "summary": "Policy is already present; the improvement is to make every critical workflow show its policy, guide, approval boundary, and receipt path in context.",
       "evidence": [
         "Policy records=64",
-        "Guide records=82",
+        "Guide records=86",
         "23 operating slices are review-ready"
       ],
       "sourceArtifacts": [
@@ -373,7 +373,7 @@
         "operatingSlices": 23,
         "attachedSlices": 23,
         "policyRecords": 64,
-        "guideRecords": 82,
+        "guideRecords": 86,
         "docRecords": 6
       },
       "relatedSliceIds": [
@@ -424,8 +424,8 @@
       "surface": "worker",
       "status": "review_ready",
       "productionStatus": "approval_required",
-      "recordCount": 145,
-      "mappedRecordCount": 145,
+      "recordCount": 149,
+      "mappedRecordCount": 149,
       "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-worker",
       "readinessApiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-worker/readiness",
       "validationCommands": [
@@ -442,8 +442,8 @@
         "surface": "worker",
         "status": "review_ready",
         "productionStatus": "approval_required",
-        "recordCount": 145,
-        "mappedRecordCount": 145,
+        "recordCount": 149,
+        "mappedRecordCount": 149,
         "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-worker",
         "readinessApiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-worker/readiness",
         "validationCommands": [
@@ -476,8 +476,8 @@
         "surface": "worker",
         "status": "review_ready",
         "productionStatus": "approval_required",
-        "recordCount": 8,
-        "mappedRecordCount": 8,
+        "recordCount": 9,
+        "mappedRecordCount": 9,
         "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-worker",
         "readinessApiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-worker/readiness",
         "validationCommands": [
@@ -506,18 +506,18 @@
     ],
     "runtime": {
       "runtime": "cloudflare",
-      "runtimeConfigRecords": 119,
-      "bindingRefs": 638,
+      "runtimeConfigRecords": 122,
+      "bindingRefs": 657,
       "routeRefs": 26,
       "bindingKinds": {
-        "assets": 8,
-        "d1": 95,
-        "durable_object": 46,
+        "assets": 9,
+        "d1": 97,
+        "durable_object": 48,
         "kv": 39,
         "queue": 16,
         "r2": 24,
         "route": 52,
-        "var": 382,
+        "var": 396,
         "vectorize": 2
       },
       "secretHandling": "Runtime recommendation uses binding names, route refs, and environment variable keys from repo config. It does not capture secret values."
@@ -731,9 +731,9 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md"
       ],
       "docRecordIds": [
         "substrate:create-something:doc:docs-canon-database-layer-design-md",
@@ -753,9 +753,9 @@
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md"
       ],
       "docPaths": [
         "docs/CANON_DATABASE_LAYER_DESIGN.md",
@@ -785,9 +785,9 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md"
       ],
       "docRecordIds": [
         "substrate:create-something:doc:docs-canon-database-layer-design-md",
@@ -807,9 +807,9 @@
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md"
       ],
       "docPaths": [
         "docs/CANON_DATABASE_LAYER_DESIGN.md",
@@ -839,9 +839,9 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md"
       ],
       "docRecordIds": [
         "substrate:create-something:doc:docs-canon-database-layer-design-md",
@@ -861,9 +861,9 @@
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md"
       ],
       "docPaths": [
         "docs/CANON_DATABASE_LAYER_DESIGN.md",
@@ -893,9 +893,9 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md"
       ],
       "docRecordIds": [
         "substrate:create-something:doc:docs-canon-database-layer-design-md",
@@ -915,9 +915,9 @@
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md"
       ],
       "docPaths": [
         "docs/CANON_DATABASE_LAYER_DESIGN.md",
@@ -947,9 +947,9 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md"
       ],
       "docRecordIds": [
         "substrate:create-something:doc:docs-canon-database-layer-design-md",
@@ -969,9 +969,9 @@
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md"
       ],
       "docPaths": [
         "docs/CANON_DATABASE_LAYER_DESIGN.md",
@@ -1001,9 +1001,9 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md"
       ],
       "docRecordIds": [
         "substrate:create-something:doc:docs-canon-database-layer-design-md",
@@ -1023,9 +1023,9 @@
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md"
       ],
       "docPaths": [
         "docs/CANON_DATABASE_LAYER_DESIGN.md",
@@ -1055,9 +1055,9 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md"
       ],
       "docRecordIds": [
         "substrate:create-something:doc:docs-canon-database-layer-design-md",
@@ -1077,9 +1077,9 @@
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md"
       ],
       "docPaths": [
         "docs/CANON_DATABASE_LAYER_DESIGN.md",
@@ -1109,9 +1109,9 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md"
       ],
       "docRecordIds": [
         "substrate:create-something:doc:docs-canon-database-layer-design-md",
@@ -1131,9 +1131,9 @@
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md"
       ],
       "docPaths": [
         "docs/CANON_DATABASE_LAYER_DESIGN.md",
@@ -1163,9 +1163,9 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md"
       ],
       "docRecordIds": [
         "substrate:create-something:doc:docs-canon-database-layer-design-md",
@@ -1185,9 +1185,9 @@
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md"
       ],
       "docPaths": [
         "docs/CANON_DATABASE_LAYER_DESIGN.md",
@@ -1217,9 +1217,9 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md"
       ],
       "docRecordIds": [
         "substrate:create-something:doc:docs-canon-database-layer-design-md",
@@ -1239,9 +1239,9 @@
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md"
       ],
       "docPaths": [
         "docs/CANON_DATABASE_LAYER_DESIGN.md",
@@ -1271,9 +1271,9 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md"
       ],
       "docRecordIds": [
         "substrate:create-something:doc:docs-canon-database-layer-design-md",
@@ -1293,9 +1293,9 @@
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md"
       ],
       "docPaths": [
         "docs/CANON_DATABASE_LAYER_DESIGN.md",
@@ -1325,9 +1325,9 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md"
       ],
       "docRecordIds": [
         "substrate:create-something:doc:docs-canon-database-layer-design-md",
@@ -1347,9 +1347,9 @@
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md"
       ],
       "docPaths": [
         "docs/CANON_DATABASE_LAYER_DESIGN.md",
@@ -1379,9 +1379,9 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md"
       ],
       "docRecordIds": [
         "substrate:create-something:doc:docs-canon-database-layer-design-md",
@@ -1401,9 +1401,9 @@
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md"
       ],
       "docPaths": [
         "docs/CANON_DATABASE_LAYER_DESIGN.md",
@@ -1433,9 +1433,9 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md"
       ],
       "docRecordIds": [
         "substrate:create-something:doc:docs-canon-database-layer-design-md",
@@ -1455,9 +1455,9 @@
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md"
       ],
       "docPaths": [
         "docs/CANON_DATABASE_LAYER_DESIGN.md",
@@ -1487,9 +1487,9 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md"
       ],
       "docRecordIds": [
         "substrate:create-something:doc:docs-canon-database-layer-design-md",
@@ -1509,9 +1509,9 @@
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md"
       ],
       "docPaths": [
         "docs/CANON_DATABASE_LAYER_DESIGN.md",
@@ -1541,9 +1541,9 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md"
       ],
       "docRecordIds": [
         "substrate:create-something:doc:docs-canon-database-layer-design-md",
@@ -1563,9 +1563,9 @@
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md"
       ],
       "docPaths": [
         "docs/CANON_DATABASE_LAYER_DESIGN.md",
@@ -1595,9 +1595,9 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md"
       ],
       "docRecordIds": [
         "substrate:create-something:doc:docs-canon-database-layer-design-md",
@@ -1617,9 +1617,9 @@
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md"
       ],
       "docPaths": [
         "docs/CANON_DATABASE_LAYER_DESIGN.md",
@@ -1649,9 +1649,9 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md"
       ],
       "docRecordIds": [
         "substrate:create-something:doc:docs-canon-database-layer-design-md",
@@ -1671,9 +1671,9 @@
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md"
       ],
       "docPaths": [
         "docs/CANON_DATABASE_LAYER_DESIGN.md",
@@ -1703,9 +1703,9 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md"
       ],
       "docRecordIds": [
         "substrate:create-something:doc:docs-canon-database-layer-design-md",
@@ -1725,9 +1725,9 @@
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md"
       ],
       "docPaths": [
         "docs/CANON_DATABASE_LAYER_DESIGN.md",
@@ -1757,9 +1757,9 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md"
       ],
       "docRecordIds": [
         "substrate:create-something:doc:docs-canon-database-layer-design-md",
@@ -1779,9 +1779,9 @@
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md"
       ],
       "docPaths": [
         "docs/CANON_DATABASE_LAYER_DESIGN.md",
@@ -1811,9 +1811,9 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md"
       ],
       "docRecordIds": [
         "substrate:create-something:doc:docs-canon-database-layer-design-md",
@@ -1833,9 +1833,9 @@
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md"
       ],
       "docPaths": [
         "docs/CANON_DATABASE_LAYER_DESIGN.md",
@@ -1865,9 +1865,9 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md"
       ],
       "docRecordIds": [
         "substrate:create-something:doc:docs-canon-database-layer-design-md",
@@ -1887,9 +1887,9 @@
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md"
       ],
       "docPaths": [
         "docs/CANON_DATABASE_LAYER_DESIGN.md",
@@ -1919,9 +1919,9 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md"
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md"
       ],
       "docRecordIds": [
         "substrate:create-something:doc:docs-canon-database-layer-design-md",
@@ -1941,9 +1941,9 @@
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md"
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md"
       ],
       "docPaths": [
         "docs/CANON_DATABASE_LAYER_DESIGN.md",
@@ -1962,32 +1962,32 @@
       "recordId": "business:promote_database_layer_as_product_surface",
       "type": "proof",
       "summary": "Promote Substrate as the CREATE SOMETHING database layer is represented as a CREATE SOMETHING business operating lane.",
-      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-10-22T14:00:49.912Z.",
-      "createdAt": "2026-10-22T14:00:49.912Z"
+      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-11-06T21:42:45.815Z.",
+      "createdAt": "2026-11-06T21:42:45.815Z"
     },
     {
       "id": "receipt:business:review_worker_runtime_slice_first",
       "recordId": "business:review_worker_runtime_slice_first",
       "type": "proof",
       "summary": "Review worker runtime slices before production claims is represented as a CREATE SOMETHING business operating lane.",
-      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-10-22T14:00:49.912Z.",
-      "createdAt": "2026-10-22T14:00:49.912Z"
+      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-11-06T21:42:45.815Z.",
+      "createdAt": "2026-11-06T21:42:45.815Z"
     },
     {
       "id": "receipt:business:turn_client_overlays_into_repeatable_delivery",
       "recordId": "business:turn_client_overlays_into_repeatable_delivery",
       "type": "proof",
       "summary": "Turn client overlays into repeatable delivery is represented as a CREATE SOMETHING business operating lane.",
-      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-10-22T14:00:49.912Z.",
-      "createdAt": "2026-10-22T14:00:49.912Z"
+      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-11-06T21:42:45.815Z.",
+      "createdAt": "2026-11-06T21:42:45.815Z"
     },
     {
       "id": "receipt:business:attach_policy_to_slices",
       "recordId": "business:attach_policy_to_slices",
       "type": "proof",
       "summary": "Attach policy and guides to operating slices is represented as a CREATE SOMETHING business operating lane.",
-      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-10-22T14:00:49.912Z.",
-      "createdAt": "2026-10-22T14:00:49.912Z"
+      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-11-06T21:42:45.815Z.",
+      "createdAt": "2026-11-06T21:42:45.815Z"
     }
   ],
   "approvalBoundary": "This artifact completes local business operating recommendations only. Production, third-party, client, Cloudflare, Dify, Slack, Airtable, Webflow, and external writes remain approval-gated."

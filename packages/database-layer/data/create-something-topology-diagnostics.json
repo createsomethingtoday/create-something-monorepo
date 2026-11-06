@@ -2,34 +2,34 @@
   "id": "substrate:create-something:topology-diagnostics:internal",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-10-22T14:00:48.677Z",
+  "generatedAt": "2026-11-06T21:42:44.687Z",
   "summary": {
     "valueState": "connected_map_with_review_signals",
-    "nodes": 555,
-    "edges": 1164,
-    "mapped": 555,
+    "nodes": 567,
+    "edges": 1188,
+    "mapped": 567,
     "hardGapCount": 0,
     "reviewSignalCount": 6,
     "exactDuplicatePathCount": 0,
     "isolatedNodeCount": 0,
     "surfaceCounts": {
       "repo": 1,
-      "package": 70,
-      "app": 14,
+      "package": 72,
+      "app": 15,
       "agent": 36,
       "mcp": 77,
       "client": 8,
-      "worker": 173,
+      "worker": 178,
       "doc": 6,
       "policy": 64,
-      "guide": 82,
+      "guide": 86,
       "config": 24
     },
     "tierCounts": {
-      "Mixed": 136,
+      "Mixed": 140,
       "Judgment": 109,
-      "Automation": 282,
-      "Database": 28
+      "Automation": 289,
+      "Database": 29
     }
   },
   "signals": [
@@ -60,11 +60,11 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Automation and Database balance",
-      "summary": "Automation has 282 record(s); Database has 28 record(s). This is a business-shape review signal, not a hard gap.",
+      "summary": "Automation has 289 record(s); Database has 29 record(s). This is a business-shape review signal, not a hard gap.",
       "evidence": [
-        "Automation=282",
-        "Database=28",
-        "Total nodes=555"
+        "Automation=289",
+        "Database=29",
+        "Total nodes=567"
       ],
       "nodeIds": [],
       "paths": [],
@@ -75,7 +75,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Worker surface concentration",
-      "summary": "173 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.",
+      "summary": "178 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.",
       "evidence": [
         "worker: packages/agency",
         "worker: packages/agency/workers/social-poster",
@@ -100,6 +100,7 @@
         "substrate:create-something:package:create-something-court-reserve-router-packages-clearway-workers-router",
         "substrate:create-something:package:create-something-codebase-vector-database-packages-codebase-vector-database",
         "substrate:create-something:package:create-something-concierge-chat-packages-concierge-chat",
+        "substrate:create-something:package:create-something-creator-storefront-packages-creator-storefront",
         "substrate:create-something:package:create-something-database-layer-worker-packages-database-layer-worker",
         "substrate:create-something:package:create-something-github-actions-runner-broker-packages-github-actions-runner-broker",
         "substrate:create-something:package:create-something-gsap-validation-worker-packages-gsap-validation-worker",
@@ -109,8 +110,7 @@
         "substrate:create-something:package:create-something-halfdozen-zoom-transcript-sync-packages-halfdozen-zoom-transcript-sync",
         "substrate:create-something:package:create-something-identity-worker-packages-identity-worker",
         "substrate:create-something:package:create-something-bundle-scanner-api-packages-io-workers-bundle-scanner-api",
-        "substrate:create-something:package:create-something-webflow-validation-packages-io-workers-webflow-validation",
-        "substrate:create-something:package:create-something-landing-page-filter-packages-landing-page-filter"
+        "substrate:create-something:package:create-something-webflow-validation-packages-io-workers-webflow-validation"
       ],
       "paths": [
         "packages/agency",
@@ -126,6 +126,7 @@
         "packages/clearway/workers/router",
         "packages/codebase-vector-database",
         "packages/concierge-chat",
+        "packages/creator-storefront",
         "packages/database-layer/worker",
         "packages/github-actions-runner-broker",
         "packages/gsap-validation-worker",
@@ -135,8 +136,7 @@
         "packages/halfdozen-zoom-transcript-sync",
         "packages/identity-worker",
         "packages/io/workers/bundle-scanner-api",
-        "packages/io/workers/webflow-validation",
-        "packages/landing-page-filter"
+        "packages/io/workers/webflow-validation"
       ],
       "nextAction": "Review worker records through runtime binding coverage before promoting execution claims."
     },
@@ -145,7 +145,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "worker surface review",
-      "summary": "173 record(s) are classified as worker.",
+      "summary": "178 record(s) are classified as worker.",
       "evidence": [
         "@create-something/agency: packages/agency",
         "social-poster-worker: packages/agency/workers/social-poster",
@@ -188,41 +188,41 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "guide surface review",
-      "summary": "82 record(s) are classified as guide.",
+      "summary": "86 record(s) are classified as guide.",
       "evidence": [
         "AGENCY_ARTICLE_IMAGE_WORKFLOW.md: docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md: docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md: docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md: docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md: docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md"
+        "AGENCY_META_ATTRIBUTION.md: docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "AGENCY_MOBBIN_MOTION_RESEARCH.md: docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md"
       ],
       "nodeIds": [
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
         "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
         "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
         "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md",
         "substrate:create-something:guide:docs-guides-agent-legibility-contract-md",
         "substrate:create-something:guide:docs-guides-antigravity-mcp-enablement-md",
         "substrate:create-something:guide:docs-guides-arena-taste-integration-md",
-        "substrate:create-something:guide:docs-guides-atlas-linear-integration-md",
-        "substrate:create-something:guide:docs-guides-atlas-substrate-agent-context-md",
-        "substrate:create-something:guide:docs-guides-bounded-research-interrupt-runbook-md"
+        "substrate:create-something:guide:docs-guides-atlas-linear-integration-md"
       ],
       "paths": [
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
         "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
         "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
         "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md",
         "docs/guides/AGENT_LEGIBILITY_CONTRACT.md",
         "docs/guides/ANTIGRAVITY_MCP_ENABLEMENT.md",
         "docs/guides/ARENA_TASTE_INTEGRATION.md",
-        "docs/guides/ATLAS_LINEAR_INTEGRATION.md",
-        "docs/guides/ATLAS_SUBSTRATE_AGENT_CONTEXT.md",
-        "docs/guides/BOUNDED_RESEARCH_INTERRUPT_RUNBOOK.md"
+        "docs/guides/ATLAS_LINEAR_INTEGRATION.md"
       ],
       "nextAction": "Use group explanation before drawing product or business conclusions from this surface."
     },
@@ -274,7 +274,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "package surface review",
-      "summary": "70 record(s) are classified as package.",
+      "summary": "72 record(s) are classified as package.",
       "evidence": [
         "@create-something/components: .archive/components-deprecated",
         "@create-something/monorepo: ",
