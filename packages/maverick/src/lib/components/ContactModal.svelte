@@ -63,7 +63,6 @@
 	let isSubmitting = $state(false);
 	let submitStatus = $state<'idle' | 'success' | 'error'>('idle');
 	let errors = $state<Record<string, string>>({});
-	let isAnimating = $state(false);
 	let categoryDropdownOpen = $state(false);
 
 	// Categories
@@ -230,7 +229,6 @@
 	// Handle ESC key and body scroll
 	$effect(() => {
 		if (isOpen) {
-			isAnimating = true;
 			document.body.style.overflow = 'hidden';
 
 			// Set default category if provided
@@ -283,7 +281,7 @@
 	}
 </script>
 
-{#if isOpen || isAnimating}
+{#if isOpen}
 	<!-- Overlay -->
 	<div
 		class="modal-overlay"
