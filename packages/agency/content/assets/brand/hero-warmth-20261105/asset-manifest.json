@@ -19,7 +19,13 @@
       "height": 1024,
       "bytes": 131510,
       "sha256": "756070343630ce9143a948c3023f5551db82b93e4ba0019ccf0b201b76c1fe0f",
-      "review": "Builder inspected generated master and rendered page; independent review and live release receipts in CRE-2360"
+      "review": "Passed builder and independent Sol 6.1 visual review of integrated production-build preview; live release pending, tracked in CRE-2360",
+      "master": {
+        "file": "hero-desktop-warm-v2.png",
+        "width": 1536,
+        "height": 1024,
+        "sha256": "2b0e485aa4c43604b16ec0e4536f45cfbc2531041f07150853757aadcb17e172"
+      }
     },
     {
       "id": "hero-mobile-warm-v2",
@@ -28,7 +34,13 @@
       "height": 900,
       "bytes": 118294,
       "sha256": "9fffba1130679998092ccc529ebc6ea2ffaa5822ec09f74eb408b934c19f2472",
-      "review": "Builder inspected generated master and rendered page; independent review and live release receipts in CRE-2360"
+      "review": "Passed builder and independent Sol 6.1 visual review of integrated production-build preview; live release pending, tracked in CRE-2360",
+      "master": {
+        "file": "hero-mobile-warm-v2.png",
+        "width": 1254,
+        "height": 1254,
+        "sha256": "fa9e249635229567a187eb28112bbde6f043237a0feb721e348f38205975ce94"
+      }
     },
     {
       "id": "services-diagnosis-warm-v2",
@@ -37,7 +49,13 @@
       "height": 1024,
       "bytes": 167888,
       "sha256": "5fba31ae83c1878c17835ac00383187b3aeb2dc48bc1539fd18a5d0e5bcfe83f",
-      "review": "Builder inspected generated master and rendered page; independent review and live release receipts in CRE-2360"
+      "review": "Passed builder and independent Sol 6.1 visual review of integrated production-build preview; live release pending, tracked in CRE-2360",
+      "master": {
+        "file": "services-diagnosis-warm-v2.png",
+        "width": 1536,
+        "height": 1024,
+        "sha256": "c4702c88b92979cb7c43d9f6abf68323bf31c1659a7876a96f4fb4a5f7ce60fa"
+      }
     },
     {
       "id": "foundation-single-job-warm-v2",
@@ -46,7 +64,14 @@
       "height": 1024,
       "bytes": 164966,
       "sha256": "31a855ef72073eb0d98a258768f9f8f6298076eadc574c08029e0e724af7c18c",
-      "review": "Builder inspected generated master and rendered page; independent review and live release receipts in CRE-2360"
+      "review": "Passed builder and independent Sol 6.1 visual review of integrated production-build preview; live release pending, tracked in CRE-2360",
+      "master": {
+        "file": "foundation-single-job-warm-v2.png",
+        "width": 1536,
+        "height": 1024,
+        "sha256": "e7a8516d5377e44b9a8147baa30ce2bb2a5dbf0c9af3732cfaca1e6175a06743"
+      }
     }
-  ]
+  ],
+  "quality": "Not exposed by built-in tool"
 }

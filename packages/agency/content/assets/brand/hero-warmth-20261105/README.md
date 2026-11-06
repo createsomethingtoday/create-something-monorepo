@@ -37,3 +37,5 @@ The Agency package check passed with zero Svelte errors/warnings. The browser su
 - A cold long homepage jump to `#next` could stop midway as the lazy workshop images loaded and the existing scroll runtime refreshed. A captured failure stopped near scrollY1263 with the destination still5089px away; a warmed-cache retry succeeded. This target now explicitly requests an immediate jump through the existing hash handler. Other anchors retain their behavior. Cold-cache normal/reduced tests reached the destination at89/112px below the top.
 
 The expanded Agency check passed again with zero Svelte errors/warnings. The 21-case dev browser suite passed. Independent final production-build re-test and promotion evidence remain in CRE-2360.
+
+Independent Sol 6.1 final re-test of the integrated production-build preview passed all21 cases and direct visual review at all six widths. The complete390px mobile scene, visible1440px motion control, readable Foundation390px copy and Services story were inspected. Cold #next arrived at87/112px in normal/reduced motion; actual #example arrived at112px. These establish local acceptance, not production verification.
