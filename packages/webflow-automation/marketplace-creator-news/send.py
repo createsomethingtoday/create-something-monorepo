@@ -27,7 +27,7 @@ WF_USER_ID_FIELD = 'fldpwkyHcmErSNkzX'  # 🔑WF User ID
 RECIPIENT_FORMULA = "AND({#️⃣👛Published}>0, {🔑WF User ID}!='')"
 WORKFLOW = 'marketplace-creator-news'
 AUDIENCE = 'marketplace-creators'
-BATCH_SIZE = 100
+BATCH_SIZE = 5  # knock workflow run --recipients: documented maximum is 5
 
 
 def creator_user_ids(api_key: str) -> list[str]:
