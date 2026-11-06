@@ -6,6 +6,7 @@
   import AgencyPageTreatment from '$lib/components/AgencyPageTreatment.svelte';
   import CanonBrandSignature from '$lib/components/CanonBrandSignature.svelte';
   import '$lib/styles/operator-palette.css';
+  import '$lib/styles/measured-public.css';
   import { initializeFilmMotion, filmNavigationOpen, reducedFilmMotion, filmOverlayOpen } from '$lib/motion/filmPlayback';
   import { get } from 'svelte/store';
   import { createRouteEntrance, shouldUseGridTransition } from '$lib/motion/routeEntrance';
@@ -32,11 +33,14 @@
   } from '$lib/atlas/surface-policy';
   import { marketingPagePortfolio } from '$lib/data/marketingPages';
 
-  import { usesAgencyOperatorPalette } from '$lib/data/publicSurfacePolicy';
+  import { usesAgencyMeasuredPublicSurface, usesAgencyOperatorPalette } from '$lib/data/publicSurfacePolicy';
 
   let { children, data } = $props();
   const usesOperatorPalette = $derived(
     usesAgencyOperatorPalette($page.url.pathname)
+  );
+  const usesMeasuredPublicSurface = $derived(
+    usesAgencyMeasuredPublicSurface($page.url.pathname)
   );
   let mobileNavigationOpen = $state(false);
 
@@ -320,7 +324,7 @@
 <LayoutSEO property="agency" />
 <PageAnnotations pathname={$page.url.pathname} />
 
-<div class="agency-surface" data-canon-palette={usesOperatorPalette ? "operator" : undefined}>
+<div class="agency-surface" data-canon-palette={usesOperatorPalette ? "operator" : undefined} data-agency-brand={usesMeasuredPublicSurface ? "measured" : undefined}>
 <PrivacyAnalytics
   property="agency"
   userId={data.user?.id}

@@ -1,0 +1,128 @@
+/* Agency's approved public identity. The SSR route policy owns this opt-in;
+   the operator palette also serves private tools and is a separate contract.
+   Keep Canon's shared components, semantic status colors and media intact. */
+html:has(.agency-surface[data-agency-brand='measured']),
+body:has(.agency-surface[data-agency-brand='measured']) {
+  background: #000;
+  color-scheme: dark;
+}
+
+.agency-surface[data-agency-brand='measured'] {
+  --color-performance-measured-black: #000;
+  --color-performance-measured-white: #fff;
+  --color-performance-measured-muted: #b4b4b4;
+  --color-performance-measured-rule: #414141;
+  --color-operator-background: var(--color-performance-measured-black);
+  --color-operator-panel: var(--color-performance-measured-black);
+  --color-operator-secondary: #0d0d0d;
+  --color-operator-raised: #171717;
+  --color-operator-hover: #222;
+  --color-operator-foreground: var(--color-performance-measured-white);
+  --color-operator-muted: var(--color-performance-measured-muted);
+  --color-operator-border: var(--color-performance-measured-rule);
+  --color-operator-focus-ring-accessible: var(--color-performance-measured-white);
+  --radius-operator-control: 0px;
+  --radius-operator-panel: 0px;
+  --radius-performance-sm: 0px;
+  --radius-performance-md: 0px;
+  --radius-performance-lg: 0px;
+  --radius-performance-editorial: 0px;
+  --radius-performance-scale-sm: 0px;
+  --radius-performance-scale-md: 0px;
+  --radius-performance-scale-lg: 0px;
+  background: var(--color-performance-measured-black);
+  color: var(--color-performance-measured-white);
+}
+
+/* Property containers re-derive these roles locally in Canon. Resolve them at
+   that boundary too, including SSR, instead of letting the old warm mix return.
+   Components with explicit inversions and semantic state roles keep ownership. */
+.agency-surface[data-agency-brand='measured'] .property-performance {
+  --color-performance-paper: var(--color-performance-measured-black);
+  --color-performance-panel: var(--color-performance-measured-black);
+  --color-performance-ink: var(--color-performance-measured-white);
+  --color-performance-ink-soft: var(--color-performance-measured-white);
+  --color-performance-muted: var(--color-performance-measured-muted);
+  --color-performance-line: var(--color-performance-measured-rule);
+  --color-performance-line-strong: var(--color-performance-measured-white);
+  --color-performance-mode-campaign-surface: var(--color-performance-measured-black);
+  --color-performance-mode-campaign-ink: var(--color-performance-measured-white);
+  --color-performance-mode-proof-surface: var(--color-performance-measured-black);
+  --color-performance-mode-proof-ink: var(--color-performance-measured-white);
+  --color-performance-mode-operator-surface: var(--color-performance-measured-black);
+  --color-performance-mode-operator-ink: var(--color-performance-measured-white);
+}
+
+/* One edge-to-edge masthead. Existing menus, links, focus and disclosure
+   behavior remain owned by Navigation. A rule marks the current destination. */
+.agency-surface[data-agency-brand='measured'] .film-shell .nav-editorial.nav-fixed {
+  inset: 0 0 auto;
+  width: auto;
+  border: 0;
+  border-bottom: 1px solid var(--color-performance-line);
+  border-radius: 0;
+  background: #000;
+  backdrop-filter: none;
+}
+.agency-surface[data-agency-brand='measured'] .film-shell .nav-editorial .nav-inner {
+  padding-inline: 3vw;
+}
+.agency-surface[data-agency-brand='measured'] .nav-editorial :is(.nav-cta, .nav-menu-button, .nav-dropdown__menu, .nav-mobile-menu) {
+  border-radius: 0;
+}
+.agency-surface[data-agency-brand='measured'] .nav-editorial :is(.nav-dropdown__menu, .nav-mobile-menu, .nav-mobile-backdrop) {
+  background: #000;
+}
+.agency-surface[data-agency-brand='measured'] .nav-editorial .nav-cta {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+}
+.agency-surface[data-agency-brand='measured'] .nav-editorial .nav-cta:hover {
+  background: #dedede;
+}
+.agency-surface[data-agency-brand='measured'] .nav-editorial .nav-link.active {
+  box-shadow: inset 0 -1px #fff;
+}
+
+/* The image mount is a measured frame, not an effect on the original asset.
+   Composition, object position and native ratios stay with each page. */
+.agency-surface[data-agency-brand='measured'] .film-shell .agency-preview-hero > .agency-preview-media {
+  border-color: var(--color-performance-line);
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--color-performance-measured-black) !important;
+}
+.agency-surface[data-agency-brand='measured'] .agency-preview-hero > .agency-preview-media > figcaption {
+  margin-top: var(--image-frame-inset);
+  padding-block: 12px 4px;
+  border-top-color: var(--color-performance-line);
+  color: var(--color-performance-fg-secondary);
+  font-family: var(--font-performance-mono);
+  letter-spacing: .025em;
+}
+
+/* Footer roles are inverted by the operator palette. Keep their own readable
+   light-on-dark contract and connect the directory with fine white rules. */
+.agency-surface[data-agency-brand='measured'] .footer-editorial {
+  --color-performance-editorial-dark-secondary: #000;
+  border-top: 1px solid var(--color-performance-line);
+}
+.agency-surface[data-agency-brand='measured'] .footer-editorial .footer-links-grid {
+  border-radius: 0;
+  border-color: var(--color-performance-line);
+  background: #000;
+}
+.agency-surface[data-agency-brand='measured'] .footer-editorial :is(.section-title, .footer-editorial-identity p) {
+  font-family: var(--font-performance-mono);
+  letter-spacing: .045em;
+}
+.agency-surface[data-agency-brand='measured'] .footer-editorial .footer-cta {
+  border-radius: 0;
+}
+
+@media (max-width: 700px) {
+  .agency-surface[data-agency-brand='measured'] .film-shell .nav-editorial .nav-inner {
+    padding-inline: 6vw;
+  }
+}
