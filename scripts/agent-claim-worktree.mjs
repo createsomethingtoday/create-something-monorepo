@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execFile } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -16,8 +16,9 @@ function usage() {
   console.log(`Usage:
   node scripts/agent-claim-worktree.mjs --issue CRE-123 [options]
 
-Claims a Linear issue, creates an isolated git worktree, and records the
-branch/worktree/base SHA handoff back to Linear.
+Claims a Linear issue and records its branch/worktree/base SHA handoff.
+By default creates a worktree; --register-existing validates an existing linked
+worktree without changing git. Registration never fetches or bootstraps.
 
 Options:
   --issue <id>          Required Linear issue identifier or id
@@ -26,6 +27,7 @@ Options:
   --root <path>         Parent directory for default worktree path
   --base <ref>          Base ref for new branches; default origin/main
   --reuse-branch        Use an existing local branch without resetting it
+  --register-existing   Register --worktree instead of creating one; detect its branch
   --no-fetch            Skip fetching origin/main before resolving --base
   --bootstrap           Run pnpm bootstrap:worktree inside the new worktree
   --dry-run             Print the plan without mutating git or Linear
@@ -53,6 +55,7 @@ export function parseArgs(argv) {
     else if (arg === '--root' && args[index + 1]) options.root = args[++index];
     else if (arg === '--base' && args[index + 1]) options.base = args[++index];
     else if (arg === '--reuse-branch') options.reuseBranch = true;
+    else if (arg === '--register-existing') options.registerExisting = true;
     else if (arg === '--no-fetch') options.fetch = false;
     else if (arg === '--bootstrap') options.bootstrap = true;
     else if (arg === '--dry-run') options.dryRun = true;
@@ -91,18 +94,25 @@ export function normalizeBranchName(branch) {
 export function buildDefaults(options) {
   const issue = normalizeIssueIdentifier(options.issue);
   const issueSlug = issue.toLowerCase();
-  const branch = options.branch || `codex/${issue}-agent-worktree`;
+  if (options.registerExisting && !options.worktree) {
+    throw new Error('--register-existing requires --worktree <path>.');
+  }
+  if (options.registerExisting && (options.bootstrap || options.reuseBranch)) {
+    throw new Error('--register-existing cannot be combined with --bootstrap or --reuse-branch.');
+  }
+  const branch = options.branch || (options.registerExisting ? null : `codex/${issue}-agent-worktree`);
   const root = options.root || process.env.AGENT_WORKTREE_ROOT || os.tmpdir();
   const worktree = options.worktree || path.join(path.resolve(root), `${issueSlug}-agent-worktree`);
 
   return {
     issue,
-    branch: normalizeBranchName(branch),
+    branch: branch === null ? null : normalizeBranchName(branch),
     worktree: path.resolve(worktree),
     base: options.base || DEFAULT_BASE_REF,
     bootstrap: Boolean(options.bootstrap),
     dryRun: Boolean(options.dryRun),
-    fetch: options.fetch !== false,
+    fetch: options.registerExisting ? false : options.fetch !== false,
+    registerExisting: Boolean(options.registerExisting),
     reuseBranch: Boolean(options.reuseBranch),
   };
 }
@@ -116,9 +126,15 @@ export function formatClaimBody(context) {
     `- Worktree: \`${context.worktree}\``,
     `- Base ref: \`${context.base}\``,
     `- Base SHA: \`${context.baseSha}\``,
+    ...(context.registerExisting ? [
+      '- Mode: registered existing linked worktree (git unchanged)',
+      `- Head SHA: \`${context.headSha}\``,
+      `- Base ref tip SHA: \`${context.baseTipSha}\``,
+    ] : []),
     `- Branch existed before claim: ${context.branchExisted ? 'yes' : 'no'}`,
     `- Bootstrap run: ${context.bootstrap ? 'yes' : 'no'}`,
     `- Created at: ${context.createdAt}`,
+    '- Worktree disposition: retained until task closeout',
     '',
     'Before pushing or promoting this work, rebase or merge current `origin/main` if the base SHA is stale.',
   ].join('\n');
@@ -146,6 +162,35 @@ async function branchExists(branch, dryRun, plan) {
   }
 }
 
+// Reads still run during --dry-run so invalid registrations never appear valid.
+async function inspectExistingWorktree(context, plan) {
+  const worktree = realpathSync(context.worktree);
+  const readGit = (args, cwd = worktree) => git(args, { cwd, plan });
+  const root = realpathSync(await readGit(['rev-parse', '--show-toplevel']));
+  if (root !== worktree) throw new Error('--worktree must name the checkout root, not a subdirectory.');
+  const commonDir = realpathSync(await readGit(['rev-parse', '--path-format=absolute', '--git-common-dir']));
+  const owningCommonDir = realpathSync(await readGit(['rev-parse', '--path-format=absolute', '--git-common-dir'], ROOT));
+  if (commonDir !== owningCommonDir) throw new Error('Worktree belongs to another repository.');
+  const gitDir = realpathSync(await readGit(['rev-parse', '--absolute-git-dir']));
+  if (gitDir === commonDir) throw new Error('Registration requires a linked worktree, not the primary checkout.');
+  // A copied .git pointer must not masquerade as the worktree Git actually owns.
+  const registeredRoot = realpathSync(path.dirname(readFileSync(path.join(gitDir, 'gitdir'), 'utf8').trim()));
+  if (registeredRoot !== worktree) throw new Error('Path is not the registered linked worktree.');
+  let branch;
+  try {
+    branch = await readGit(['symbolic-ref', '--quiet', '--short', 'HEAD']);
+  } catch {
+    throw new Error('Registration requires a named branch; HEAD is detached.');
+  }
+  if (context.branch && context.branch !== branch) {
+    throw new Error(`Worktree branch mismatch: expected ${context.branch}, found ${branch}.`);
+  }
+  const headSha = await readGit(['rev-parse', '--verify', 'HEAD^{commit}']);
+  const baseTipSha = await readGit(['rev-parse', '--verify', `${context.base}^{commit}`]);
+  const baseSha = await readGit(['merge-base', headSha, baseTipSha]);
+  return { ...context, branch, worktree, headSha, baseTipSha, baseSha, branchExisted: true };
+}
+
 async function main() {
   const options = parseArgs(process.argv);
   if (options.help) {
@@ -153,8 +198,19 @@ async function main() {
     return;
   }
 
-  const context = buildDefaults(options);
+  let context = buildDefaults(options);
   const plan = [];
+
+  if (context.registerExisting) {
+    context = await inspectExistingWorktree(context, plan);
+    context.createdAt = new Date().toISOString();
+    const body = formatClaimBody(context);
+    await run(process.execPath, ['scripts/linear/remote.mjs', 'claim', '--issue', context.issue], { dryRun: context.dryRun, plan });
+    await run(process.execPath, ['scripts/linear/remote.mjs', 'comment', '--issue', context.issue, '--body', body], { dryRun: context.dryRun, plan });
+    if (options.json || context.dryRun) console.log(JSON.stringify({ ...context, linearComment: body, plan }, null, 2));
+    else console.log(`Registered ${context.issue}\nWorktree: ${context.worktree}\nBranch: ${context.branch}\nBase: ${context.base} ${context.baseSha}`);
+    return;
+  }
 
   if (context.fetch) {
     await git(['fetch', '--quiet', 'origin', 'main'], { dryRun: context.dryRun, plan });

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://t3.codes/schema/t3.json",
+  "scripts": [
+    {
+      "name": "Bootstrap worktree",
+      "command": "bash scripts/bootstrap-worktree.sh",
+      "icon": "configure",
+      "runOnWorktreeCreate": true,
+      "async": false
+    },
+    {
+      "name": "Agency dev",
+      "command": "bash scripts/ona-bootstrap-local.sh pnpm dev:agency",
+      "icon": "play"
+    },
+    {
+      "name": "Developer workflow checks",
+      "command": "bash scripts/ona-bootstrap-local.sh node --test scripts/test/agent-claim-worktree.test.mjs",
+      "icon": "test"
+    },
+    {
+      "name": "Linear ready",
+      "command": "infisical run --env=prod --path=/ --include-imports=true --silent -- bash scripts/ona-bootstrap-local.sh pnpm linear:ready",
+      "icon": "configure"
+    }
+  ]
+}
