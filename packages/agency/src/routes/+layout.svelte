@@ -6,7 +6,9 @@
   import AgencyPageTreatment from '$lib/components/AgencyPageTreatment.svelte';
   import CanonBrandSignature from '$lib/components/CanonBrandSignature.svelte';
   import '$lib/styles/operator-palette.css';
-  import { initializeFilmMotion, filmNavigationOpen } from '$lib/motion/filmPlayback';
+  import { initializeFilmMotion, filmNavigationOpen, reducedFilmMotion, filmOverlayOpen } from '$lib/motion/filmPlayback';
+  import { get } from 'svelte/store';
+  import { createRouteEntrance, shouldUseGridTransition } from '$lib/motion/routeEntrance';
   import { filmStories } from '$lib/data/filmStories';
   import { Navigation, Footer, LayoutSEO, ModeIndicator } from '@create-something/canon';
   import PageAnnotations from '$lib/annotations/PageAnnotations.svelte';
@@ -46,42 +48,17 @@
     document.body.scrollTop = 0;
   }
 
-  // View Transitions API - Hermeneutic Navigation
-  // .agency: Efficient (200ms)
-  let activeRouteTransition: ViewTransition | undefined;
+  const routeEntrance = createRouteEntrance();
+  const routeMotionEnabled = () => !document.hidden && !get(reducedFilmMotion) && !get(filmNavigationOpen) && !get(filmOverlayOpen);
   onNavigate((navigation) => {
-    activeRouteTransition?.skipTransition();
-    // Keep back/forward restoration, but force top-scroll on normal page links
-    if (navigation.type !== 'popstate' && !navigation.to?.url.hash) {
-      disableScrollHandling();
+    routeEntrance.cancel();
+    if (navigation.type !== 'popstate' && !navigation.to?.url.hash) disableScrollHandling();
+    if (shouldUseGridTransition({ from: navigation.from?.url.pathname, to: navigation.to?.url, type: navigation.type })) {
+      routeEntrance.start(navigation.complete, routeMotionEnabled);
     }
-
-    // Commit pilot route changes without waiting for a visual snapshot.
-    // SvelteKit updates history before awaiting onNavigate; delaying here lets
-    // early Back race an older, still-uncommitted destination.
-    if (navigation.from?.url.pathname === '/' || navigation.to?.url.pathname === '/') return;
-    // Local fragment selection already has bounded component feedback.
-    if (navigation.from?.url.pathname === navigation.to?.url.pathname && navigation.from?.url.search === navigation.to?.url.search) return;
-    if (!document.startViewTransition) return;
-    if (
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    )
-      return;
-
-    return new Promise((resolve) => {
-      const transition = document.startViewTransition(async () => {
-        resolve();
-        // Rapid Back/Forward can abort the older navigation. The newest route
-        // still owns state; skipping its predecessor is an expected outcome.
-        try { await navigation.complete; } catch { /* Superseded navigation. */ }
-      });
-      activeRouteTransition = transition;
-      void transition.ready.catch(() => {});
-      void transition.finished.catch(() => {}).finally(() => {
-        if (activeRouteTransition === transition) activeRouteTransition = undefined;
-      });
-    });
+    // Do not return a promise: SvelteKit commits immediately. The decorative
+    // grid closes and opens around that commit, without a second router or a
+    // competing native View Transition snapshot.
   });
 
   // Primary nav tells a first-time visitor what each destination contains.
@@ -224,6 +201,17 @@
     ] }
   ];
   onMount(initializeFilmMotion);
+  onMount(() => {
+    const cancelWhenBlocked = () => {
+      if (document.hidden || get(reducedFilmMotion) || get(filmNavigationOpen) || get(filmOverlayOpen)) routeEntrance.cancel();
+    };
+    const disposers = [reducedFilmMotion, filmNavigationOpen, filmOverlayOpen].map(store => store.subscribe(cancelWhenBlocked));
+    document.addEventListener('visibilitychange', cancelWhenBlocked);
+    window.addEventListener('keydown', routeEntrance.cancel);
+    window.addEventListener('pointerdown', routeEntrance.cancel);
+    window.addEventListener('resize', routeEntrance.cancel);
+    return () => { disposers.forEach(dispose => dispose()); routeEntrance.cancel(); document.removeEventListener('visibilitychange', cancelWhenBlocked); window.removeEventListener('keydown', routeEntrance.cancel); window.removeEventListener('pointerdown', routeEntrance.cancel); window.removeEventListener('resize', routeEntrance.cancel); };
+  });
   function getAgencyGlobalAnalyticsMetadata(pathname: string): Record<string, unknown> | undefined {
     const experimentMetadata = getAgencyMarketingExperimentMetadata(pathname);
     const contentMetadata = getAgencyContentAssetAnalyticsMetadata(pathname);
@@ -252,11 +240,25 @@
     }
     const element = document.getElementById(id);
     if (element) {
+      // Announce the handoff heading without outlining the entire story chapter.
+      // Keep scrolling anchored to the section so its introductory label remains visible.
+      const focusTarget = id === 'together'
+        ? document.getElementById('handoff-title') ?? element
+        : element;
+      if (!focusTarget.hasAttribute('tabindex')) focusTarget.setAttribute('tabindex', '-1');
+      focusTarget.focus({ preventScroll: true });
       const nav = document.querySelector('.nav-fixed');
       const clearance = (nav?.getBoundingClientRect().bottom ?? 72) + 24;
-      window.scrollTo({ top: Math.max(0, window.scrollY + element.getBoundingClientRect().top - clearance), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+      window.scrollTo({ top: Math.max(0, window.scrollY + element.getBoundingClientRect().top - clearance), behavior: get(reducedFilmMotion) || element.dataset.scrollBehavior === 'instant' ? 'instant' : 'smooth' });
     }
   }
+
+  // Native same-document anchors do not always trigger SvelteKit navigation.
+  onMount(() => {
+    const changed = () => scrollToHash(window.location.hash);
+    window.addEventListener('hashchange', changed);
+    return () => window.removeEventListener('hashchange', changed);
+  });
 
   // Scroll to hash on mount (for direct links) + cross-property entry
   onMount(() => {
@@ -323,6 +325,7 @@
   property="agency"
   userId={data.user?.id}
   userOptedOut={data.user?.analytics_opt_out ?? false}
+  metaAccountOptedOut={data.user?.analytics_preference_verified === true && data.user.analytics_opt_out === true}
   globalMetadata={globalAnalyticsMetadata}
   compactPrompt={useCompactPrivacyPrompt}
   obscured={mobileNavigationOpen}
@@ -434,10 +437,12 @@
   }
 
   /* Homepage campaign preview: preserve the shared navigation behavior and logo. */
-  .film-home :global(.nav-editorial.nav-fixed) { top: 0; left: 0; right: 0; border: 0; border-radius: 0; background: rgba(8,8,8,.88); backdrop-filter: blur(16px); }
+  .film-home { --agency-nav-surface-rgb: 8,8,8; }
+  .film-home :global(.nav-editorial.nav-fixed) { top: 0; left: 0; right: 0; border: 0; border-radius: 0; background: rgba(var(--agency-nav-surface-rgb),.88); backdrop-filter: blur(16px); }
   .film-home :global(.nav-editorial .nav-inner) { padding-inline: 3vw; }
   .film-home :global(main#main-content) { padding-top: 0; }
   .film-home :global(.nav-editorial .nav-link-list) { font-size: 12px; }
+  .film-home :global(.nav-editorial .nav-dropdown__menu) { box-shadow: var(--color-performance-shell-shadow); }
   @media(max-width:700px) { .film-home :global(.nav-editorial.nav-fixed) { top: 0; left: 0; right: 0; } .film-home :global(.nav-editorial .nav-inner) { padding-inline: 6vw; } }
   @media(max-width:700px) {
     .film-shell :global(.footer-link-groups) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 20px; }

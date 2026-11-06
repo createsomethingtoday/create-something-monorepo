@@ -105,8 +105,8 @@ export const originalHeroImages: Record<string, {image:string; shot:'wide'|'medi
  '/workflows':{image:'original-stories/editorial-workflow-library-tool-drawers-continuity-v2',shot:'wide',focus:'50% 50%',preserveFrame:true,caption:'Concept illustration · choose one useful workflow to explore.'},
  '/products':{image:'original-stories/products-workbench-paths-continuity-v2',shot:'wide',focus:'50% 50%',preserveFrame:true,caption:'Concept illustration · choose planning, building or ongoing support.'},
  '/scopefield':{image:'original-stories/scopefield-room-and-boundary',shot:'wide',focus:'50% 50%',preserveFrame:true,caption:'Concept illustration · room for the work, with a deliberate boundary. Not a beta feature demonstration.'},
- '/agent-foundation':{image:'original-stories/foundation-single-job',shot:'medium',focus:'47% 52%',caption:'Concept illustration · one useful job and a handover. Going live is scoped separately.'},
- '/services':{image:'original-stories/services-diagnosis',shot:'medium',focus:'54% 52%',caption:'Concept illustration · find the blockage before choosing the repair.'},
+ '/agent-foundation':{image:'original-stories/foundation-single-job-warm-v2',shot:'medium',focus:'47% 52%',caption:'Concept illustration · one useful job and a handover. Going live is scoped separately.'},
+ '/services':{image:'original-stories/services-diagnosis-warm-v2',shot:'medium',focus:'54% 52%',caption:'Concept illustration · find the blockage before choosing the repair.'},
  '/map':{image:'original-stories/map-draw-the-handoffs',shot:'wide',focus:'52% 52%',caption:'Concept illustration · map the steps and approval handoffs first.'},
  '/control':{image:'original-stories/control-attend-the-running-work',shot:'medium',focus:'66% 52%',caption:'Concept illustration · attend the live work, with a clear way to stop.'}
 };

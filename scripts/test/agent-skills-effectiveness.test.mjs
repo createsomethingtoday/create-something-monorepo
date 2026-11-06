@@ -113,12 +113,12 @@ const codexOnlySkills = [
     name: 'canon-design-review',
     codex: 'packages/dotfiles/codex/skills/canon-design-review/SKILL.md',
     expectations: [
-      /curated TASTE library/i,
+      /supporting curated TASTE references/i,
       /Performance Lab is the house identity/i,
       /taste-research\.md/,
       /3[–-]7/,
       /actual images/i,
-      /Mobbin as an optional supplement/i,
+      /Mobbin as the primary interaction research source/i,
       /Never copy a Mobbin layout/i,
       /desktop, mobile, keyboard, reduced-motion/i
     ]
@@ -131,7 +131,7 @@ const codexOnlySkills = [
       /PERFORMANCE_LAB_VISUAL_GRAMMAR\.md/,
       /PERFORMANCE_PAGE_SHARPNESS\.md/,
       /registered archetype and chapter budget/i,
-      /TASTE-first research protocol/i,
+      /Mobbin-first research protocol/i,
       /campaign mode/,
       /product mode/,
       /reproducing a section or page found in Mobbin/i
@@ -340,7 +340,7 @@ test('Codex-only skills retain their local runtime handoff contracts', () => {
   }
 });
 
-test('Canon design skills keep TASTE-first research and optional Mobbin boundaries', () => {
+test('Canon design skills prioritize Mobbin research with supporting TASTE without surrendering authority', () => {
   const designAgent = read('packages/dotfiles/codex/skills/canon-design-review/agents/openai.yaml');
   const publicAgent = read(
     'packages/dotfiles/codex/skills/canon-public-surface/agents/openai.yaml'
@@ -349,8 +349,15 @@ test('Canon design skills keep TASTE-first research and optional Mobbin boundari
     'packages/dotfiles/codex/skills/canon-design-review/references/mobbin-research.md'
   );
 
-  assert.doesNotMatch(designAgent, /value: ['"]mobbin['"]/);
-  const taste = read('packages/dotfiles/codex/skills/canon-design-review/references/taste-research.md');
+  for (const agent of [designAgent, publicAgent]) {
+    assert.match(agent, /type: ['"]mcp['"]/);
+    assert.match(agent, /value: ['"]mobbin['"]/);
+    assert.match(agent, /transport: ['"]streamable_http['"]/);
+    assert.match(agent, /url: ['"]https:\/\/api\.mobbin\.com\/mcp['"]/);
+  }
+  const taste = read(
+    'packages/dotfiles/codex/skills/canon-design-review/references/taste-research.md'
+  );
   assert.match(taste, /include=references/);
   assert.match(taste, /Open and inspect the actual images/);
   assert.match(taste, /unknown provenance explicitly/);
@@ -363,7 +370,13 @@ test('Canon design skills keep TASTE-first research and optional Mobbin boundari
     /Do not build a competing reference library/i,
     /Store conclusions, source URLs, and CREATE SOMETHING translations/i,
     /current \[Mobbin Terms of Use\]/,
-    /useful decisions and avoided rework/i
+    /useful decisions and avoided rework/i,
+    /codex mcp add mobbin --url https:\/\/api\.mobbin\.com\/mcp/,
+    /codex mcp login mobbin/,
+    /static.*cannot establish.*timing/is,
+    /playable.*motion/i,
+    /save_content.*add_comment/is,
+    /explicit user request/i
   ]) {
     assert.match(research, expectation);
   }

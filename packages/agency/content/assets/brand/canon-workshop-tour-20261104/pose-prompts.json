@@ -1,0 +1,16 @@
+{
+  "generated": "2026-11-04",
+  "tool": "image_gen",
+  "reference": "canon-guide-cutout-v1.png",
+  "transparent_background": true,
+  "poses": [
+    {
+      "file": "canon-guide-test-v1.png",
+      "prompt": "Edit target: the attached transparent Canon robot cutout. Produce a matching transparent PNG pose for the TEST waypoint of a website story. Preserve EXACT identity, graphite cube head, short single antenna, warm ivory oval eyes, chipped charcoal material, compact articulated mechanical body, camera angle, lighting, scale and full-body framing from the reference. Change only the pose and handheld prop: remove notebook and pointing gesture, have Canon stand balanced with both feet on the same baseline, head inclined slightly in careful inspection, holding a small brushed steel caliper with both hands at chest height and inspecting its jaws. Caliper should read clearly at small size without covering the eyes. Full character from antenna to feet with the same transparent margins and head-to-body proportions as reference. No extra hands or limbs. Soft upper-left light. Absolutely transparent background, no backdrop, no floor, no external cast shadow, no letters, no text, no logos, no watermark. Keep character on the same 4:5 portrait canvas and same overall height for a clean pose swap."
+    },
+    {
+      "file": "canon-guide-validate-v1.png",
+      "prompt": "Edit target: attached transparent Canon character cutout. Create its matching VALIDATE / HANDOFF pose. Preserve EXACT graphite cube head with short antenna, warm ivory oval eyes, compact articulated graphite and brushed-metal body, chipped stone surface, head/body proportions, camera view, light direction and full character height. Change only arms, feet stance and prop: Canon stands steady, slightly turned toward the viewer, calmly holds an OPEN ivory paper guide with both hands at mid-chest to show its contents. Guide has only a simple fine graphite line drawing of the two-rail workshop mechanism with three rectangular blocks and three small empty inspection squares, NO letters or text or checkmarks. Head attentive, no smile/mouth. Full body visible antenna to both feet with reference-matched margins on 4:5 portrait canvas. Clear silhouette readable at 88px high. Same natural upper-left studio light and graphite/ivory palette. Transparent background, no floor, no workshop, no backdrop, no cast shadow outside silhouette, no other characters, no logos, no watermark, no extra hands. Keep Canon recognizably the same character and scale for a seamless website pose swap."
+    }
+  ]
+}

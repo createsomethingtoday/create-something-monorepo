@@ -72,9 +72,10 @@
   });
 </script>
 <svelte:head>
-  <link rel="stylesheet" href="/styles/agency/page-treatment.css?v=security-wide-hero-20261102" />
+  <link rel="stylesheet" href="/styles/agency/page-treatment.css?v=hero-warmth-20261105" />
   <link rel="stylesheet" href="/styles/agency/commercial.css" />
   <link rel="stylesheet" href="/styles/agency/products.css" />
   <link rel="stylesheet" href="/styles/agency/editorial.css" />
+  <link rel="stylesheet" href="/styles/agency/image-treatment.css?v=graphite-frames-20261105" />
 </svelte:head>
 

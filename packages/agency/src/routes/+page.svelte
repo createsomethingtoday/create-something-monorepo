@@ -49,7 +49,7 @@
     },
     {
       "question": "Who delivers the service?",
-      "answer": "Micah Johnson currently delivers the service, with agents assisting the work. The dedicated member portal is in development. We confirm resource access, session times and response times before payment."
+      "answer": "Micah Johnson and Huzaifa Tofeeq, our forward-deployed engineer, deliver the service as a small team, with agents assisting the work. The dedicated member portal is in development. We confirm resource access, session times and response times before payment."
     },
     {
       "question": "What does our team keep?",
@@ -63,8 +63,8 @@
 </script>
 
 <SEO
-  title="AI-native Technical Support | CREATE SOMETHING .agency"
-  description="AI-native Technical support from $900/month. Progress in an agreed workstream, between check-ins. Remote sessions available when useful."
+  title="Your tools should work together | CREATE SOMETHING .agency"
+  description="We connect your tools and AI, fix what breaks, and leave your team in control. Technical support from $900/month."
   keywords="AI-native technical support, workflow support, software engineering, client-owned AI agent, agent foundation"
   ogImage="/og-image.png"
   propertyName="agency"

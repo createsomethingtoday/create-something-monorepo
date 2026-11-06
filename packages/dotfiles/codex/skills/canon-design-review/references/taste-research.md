@@ -1,6 +1,6 @@
 # TASTE Research Protocol
 
-TASTE is CREATE SOMETHING's existing human-curated reference library, fed by Are.na. Use it first for substantial frontend work. Canon, Performance Lab, the owning product, accessibility, and policy remain the implementation authorities.
+TASTE is CREATE SOMETHING's existing human-curated reference library, fed by Are.na. Use it as supporting curated visual evidence when it helps a frontend or motion task. [Mobbin interaction research](./mobbin-research.md) takes precedence for substantial UI work; TASTE retrieval is not a prerequisite. Canon, Performance Lab, the owning product, accessibility, and policy remain the implementation authorities.
 
 ## Retrieve A Bounded Packet
 
@@ -18,13 +18,13 @@ Keep the packet small enough to compare deliberately. Prefer approved material a
 
 Record the useful observation and its limitation for each reference:
 
-| Reference | Why it helps this task | Adopt or adapt | Avoid or do not copy | Source |
-| --- | --- | --- | --- | --- |
+| Reference           | Why it helps this task                                              | Adopt or adapt               | Avoid or do not copy                   | Source                  |
+| ------------------- | ------------------------------------------------------------------- | ---------------------------- | -------------------------------------- | ----------------------- |
 | Inspected reference | Specific hierarchy, proportion, rhythm, disclosure, or state lesson | CREATE SOMETHING translation | Product-specific treatment or tradeoff | TASTE/Are.na/source URL |
 
 Conclude with `adopt`, `adapt`, `test`, or `reject`, and name the downstream change. A source can teach composition without serving as evidence for an interaction it does not show. Keep reference media as research inputs; do not copy third-party images, layouts, copy, fonts, assets, marks, or trade dress into the implementation.
 
-If the packet leaves a material interaction question unresolved, choose additional evidence that addresses it: permitted direct product inspection, user research, analytics, prototypes, or optional Mobbin research using [mobbin-research.md](./mobbin-research.md). For consequential choices, compare an independently derived alternative or an outside-corpus reference. The library is evidence, not a ceiling on the product's capabilities.
+Compare any supporting curated packet with the primary [Mobbin research](./mobbin-research.md). For remaining questions, choose evidence that addresses the gap: permitted direct product inspection, user research, analytics, or prototypes. For consequential choices, compare an independently derived alternative or an outside-corpus reference. The library is evidence, not a ceiling on the product's capabilities.
 
 ## Validate The Result
 

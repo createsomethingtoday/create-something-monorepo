@@ -1,11 +1,12 @@
 # Mobbin Research Protocol
 
-Use Mobbin as an optional comparative product-research library after the TASTE-first review in [taste-research.md](./taste-research.md), or when the user specifically requests Mobbin. Canon and the owning product remain the implementation authorities.
+Mobbin is the primary reference library for substantial UI, public-surface, and motion work. Research polished real-product patterns first, then translate what helps through Canon and the owning product. [TASTE](./taste-research.md) supplies supporting curation when useful; it is not a prerequisite. Canon and the owning product remain the implementation authorities.
 
 ## Trigger
 
-Consider Mobbin when TASTE leaves a material question unresolved and at least one condition is true:
+Use Mobbin proactively before substantial implementation or review, including:
 
+- new surfaces or material changes to hierarchy, composition, or motion;
 - the experience or journey is greenfield;
 - the interaction is unfamiliar to the team;
 - the flow changes authorization, money, destructive action, onboarding, handoff, approval, recovery, or another consequential decision;
@@ -14,17 +15,33 @@ Consider Mobbin when TASTE leaves a material question unresolved and at least on
 
 Skip or keep the search lightweight for literal copy changes, token normalization, isolated responsive fixes, and other work where the product contract already determines the answer.
 
+## Connect And Verify
+
+The official research server uses Streamable HTTP at `https://api.mobbin.com/mcp`. For Codex CLI and the Codex app:
+
+```bash
+codex mcp add mobbin --url https://api.mobbin.com/mcp
+codex mcp login mobbin
+codex mcp get mobbin
+```
+
+Complete account authorization in the browser. Other clients should add that endpoint and follow [Mobbin's client-specific setup](https://docs.mobbin.com/mcp/clients/overview). Keep credentials and account-specific authorization URLs out of repo files.
+
+Discover the active tools, inspect their schemas, and verify one bounded standard search after login. Configuration, an active subscription, and OAuth success are separate from callable tools and successful reference retrieval. Reconnect or start a fresh session when the client requires it. If tools remain unavailable, report the exact limitation; do not claim Mobbin-informed work from setup alone.
+
+Default to read-only search and reading relevant saved references. `create_collection`, `save_content`, and `add_comment` change the user's Mobbin account and need an explicit user request; research permission does not imply permission to save or comment.
+
 ## Choose The Tool
 
 - `search_flows`: multi-step journeys, onboarding, creation, review, checkout, approval, recovery, and completion.
 - `search_screens`: one state or micro-decision such as empty state, command entry, comparison, confirmation, or error recovery.
 - `search_sections`: public web sections such as hero, proof, pricing, process, case study, FAQ, or handoff.
 
-Use the tool's platform parameter instead of adding a platform word to the query. Search one intent per query. Start with 3-5 results and standard depth; deepen only when the first comparison leaves a meaningful decision unresolved.
+Use the active tool's platform parameter when available instead of adding a platform word to the query. Search one intent per query. Start with 3-5 results and standard depth when the schema supports those options; deepen only when the first comparison leaves a meaningful decision unresolved. Do not guess argument names or use paid deep search merely to make the research look thorough.
 
 ## Evidence Procedure
 
-1. State the user's intent, task state, and decision under review.
+1. State the user's intent, task state, decision under review, and acceptance criteria. Sketch an initial approach from the domain before searching; the corpus must not set the capability boundary.
 2. Query the behavior in plain product language, not visual-style language.
 3. Inspect every returned image used as evidence.
 4. Prefer three distinct products over three examples from one product.
@@ -44,6 +61,14 @@ Finish with a recommendation in one of four states:
 - `adapt`: the underlying behavior is useful but needs a Canon or policy translation;
 - `test`: evidence is plausible but a prototype or user check is required;
 - `reject`: the pattern conflicts with the task, product contract, accessibility, policy, or identity.
+
+## Motion Evidence
+
+Search for the state change that needs explanation: selection feedback, chapter orientation, disclosure, handoff, interruption, or recovery. A static screen or a flow's still previews can inform hierarchy and before/after states; they cannot establish timing, easing, continuity, interruption, or smoothness. Label that evidence as static.
+
+For temporal claims, inspect playable reference motion or a sufficiently sampled recorded sequence with timing. If only stills are available, use them for the state model and treat the proposed timing as a local experiment. Verify the implemented motion in playback, including intermediate states, repeated actions, reversal, keyboard use, reduced motion, no-JavaScript meaning, and supported viewport sizes. Successful retrieval, a build, and endpoint screenshots do not establish perceptual quality.
+
+Compare the library pattern with an independently derived alternative or permitted outside-corpus evidence for consequential decisions. A missing example must never remove a product requirement or prevent a clearer original solution.
 
 ## Rights And Retention Boundary
 
@@ -69,6 +94,6 @@ For each consequential use, record:
 - the pattern status: adopt, adapt, test, or reject;
 - the source links;
 - the downstream change or reason no change was made;
-- the validation result.
+- the validation result, including which reference images or playback were actually inspected and which motion claims remain unverified.
 
 This record is how CREATE SOMETHING evaluates the subscription: useful decisions and avoided rework, not searches performed or screenshots collected.

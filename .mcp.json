@@ -1,5 +1,9 @@
 {
   "mcpServers": {
+    "mobbin": {
+      "type": "http",
+      "url": "https://api.mobbin.com/mcp"
+    },
     "stripe": {
       "type": "http",
       "url": "https://mcp.stripe.com"

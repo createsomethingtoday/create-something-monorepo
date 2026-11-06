@@ -12,6 +12,9 @@ Allow: /
 Disallow: /admin
 Disallow: /account
 Disallow: /api
+# Public agent discovery and offer evaluation; other APIs remain excluded.
+Allow: /api/manifest$
+Allow: /api/agent-inquiry$
 Disallow: /login
 Disallow: /auth
 Disallow: /dashboard

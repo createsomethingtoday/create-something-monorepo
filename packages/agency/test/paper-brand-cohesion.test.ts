@@ -100,17 +100,17 @@ test('the Agency footer uses one linked lockup instead of repeating the brand in
 test('the homepage retains a readable listing independent of scene motion', () => {
   const home = read('src/routes/+page.svelte');
   const salesHome = read('src/lib/components/AgencySalesHome.svelte');
-  const content = read('src/lib/content/agency-home.html');
+  const content = read('src/lib/content/agency-story-home.html');
 
   assert.match(home, /<AgencySalesHome \/>/);
-  assert.match(salesHome, /import content from '\$lib\/content\/agency-home\.html\?raw'/);
+  assert.match(salesHome, /import rawContent from '\$lib\/content\/agency-story-home\.html\?raw'/);
   assert.match(salesHome, /\{@html content\}/);
-  assert.match(content, /<h1 id="hero-title">Put AI to work\./);
-  assert.match(content, /We diagnose problems in your tools and workflows, build agreed improvements, and help your team use what we deliver\./);
-  assert.match(content, /id="cc-focused-title">Focused<\/h3>[\s\S]*?\$900<span>\/month/);
-  assert.match(content, /id="cc-team-plan-title">Team<\/h3>[\s\S]*?\$2,500<span>\/month/);
-  assert.match(content, /id="journey-image"[^>]*src="\/images\/agency-sales\/team\.webp"/);
-  assert.match(content, /Conceptual scenes \/ select a step/);
+  assert.match(content, /Your tools should<br>work together/);
+  assert.match(content, /We connect your tools and AI/);
+  assert.match(content, /Focused/);
+  assert.match(content, /Team/);
+  assert.match(content, /one-manual-gap-warm-v2\.webp/);
+  assert.match(content, /Illustrative example/);
   assert.doesNotMatch(content, /<canvas|autoplay/);
   assert.match(salesHome, /<details id="work-library" class="work-library" bind:open=\{libraryOpen\}>/);
   assert.match(salesHome, /<summary>Explore the work library/);
@@ -120,7 +120,7 @@ test('the homepage retains a readable listing independent of scene motion', () =
   assert.doesNotMatch(home + salesHome, /PerformanceNarrativeStage|motionIntent|ScrollTrigger|Lenis|SmoothScroll/);
 });
 
-test('the Agency opening exposes proof, approval and ownership alongside the approved partner badge', () => {
+test('the preserved previous homepage retains its evidence and partner qualification records', () => {
   const home = read('src/routes/+page.svelte');
   const content = read('src/lib/content/agency-home.html');
   const campaignOpening = read(

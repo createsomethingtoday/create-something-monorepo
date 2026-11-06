@@ -1,13 +1,87 @@
 openapi: 3.1.1
 info:
   title: CREATE SOMETHING Public Agent API
-  version: 1.0.0
+  version: 1.1.0
   description: |
-    Read-only service discovery and bounded public workflow mapping.
+    Service discovery, bounded public workflow mapping and inquiry preparation.
+    Contact submission saves an inquiry and sends emails only after explicit visitor approval.
     This API does not create accounts, issue credentials, make purchases, or bypass approval controls.
 servers:
   - url: https://createsomething.agency
 paths:
+  /api/agent-inquiry:
+    get:
+      operationId: getAgentInquiryCatalog
+      summary: Read current offers, source links, brief schema and approval boundaries.
+      responses:
+        '200':
+          description: Public catalog including preparation and contact submission instructions. No authentication required.
+          content:
+            application/json:
+              schema:
+                type: object
+    post:
+      operationId: prepareAgentInquiry
+      summary: Prepare a reviewable inquiry without saving it or sending emails.
+      description: |
+        Accepts at most 48000 request bytes. Returns a contactDraft without name or email.
+        No model calls, application persistence, analytics or external actions.
+        Unknown optional brief values must be empty strings. Offer selection is not qualification.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentInquiry'
+      responses:
+        '200':
+          description: Prepared, not submitted. Includes offer, contactDraft, missingContext and explicit human approval instructions.
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Invalid JSON, offer, brief version, fields or values.
+        '413':
+          description: Request exceeds 48000 bytes.
+        '415':
+          description: Content-Type must be application/json.
+        '422':
+          description: Prepared message exceeds 5000 characters. Shorten and review the brief; nothing was truncated or submitted.
+  /api/contact:
+    post:
+      operationId: submitApprovedAgencyInquiry
+      summary: Save an explicitly visitor-approved inquiry and send confirmation and team notification emails.
+      description: |
+        Show the exact final payload and obtain explicit visitor approval before calling.
+        Approval is enforced by the calling agent and host, not by a preparation token.
+        No booking, purchase or implementation authority is granted.
+        Use the same Idempotency-Key and exact body to reconcile a lost response or 503.
+        Never create a new key to bypass an uncertain receipt or conflict.
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+            pattern: '^[a-zA-Z0-9_-]{16,128}$'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentContactSubmission'
+      responses:
+        '200':
+          description: Inquiry saved and both emails accepted by the provider. Does not establish inbox delivery.
+        '202':
+          description: Inquiry saved, email confirmation incomplete. Do not submit a new inquiry.
+        '400':
+          description: Invalid payload or request ID. Review corrections with the visitor before resending.
+        '409':
+          description: Key belongs to another payload. Stop for human reconciliation; do not bypass with a new key.
+        '503':
+          description: Receipt unknown. Reconcile with the same key and exact body.
   /api/manifest:
     get:
       operationId: getPublicServiceManifest
@@ -76,6 +150,42 @@ paths:
         '401':
           description: Missing, invalid, or insufficient bearer token. Includes a resource_metadata challenge.
 components:
+  schemas:
+    AgentInquiry:
+      type: object
+      additionalProperties: false
+      required: [offer, brief]
+      properties:
+        offer:
+          type: string
+          enum: [explore, membership, build, control]
+        brief:
+          $ref: '#/components/schemas/SupportBrief'
+    SupportBrief:
+      type: object
+      additionalProperties: false
+      required: [version, workflow, problem, desiredOutcome, tools, owner, constraints, evidence, unknowns]
+      properties:
+        version: { const: '1.0.0' }
+        workflow: { type: string, minLength: 1, pattern: '\S', maxLength: 200 }
+        problem: { type: string, minLength: 1, pattern: '\S', maxLength: 4000 }
+        desiredOutcome: { type: string, minLength: 1, pattern: '\S', maxLength: 2000 }
+        tools: { type: string, maxLength: 1000 }
+        owner: { type: string, maxLength: 200 }
+        constraints: { type: string, maxLength: 2000 }
+        evidence: { type: string, maxLength: 4000 }
+        unknowns: { type: string, maxLength: 2000 }
+    AgentContactSubmission:
+      type: object
+      required: [name, email, message, service, source, intent, lane]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        email: { type: string, format: email }
+        message: { type: string, minLength: 1, maxLength: 5000 }
+        service: { type: string, maxLength: 100 }
+        source: { const: agent-assisted }
+        intent: { type: string, enum: [workflow-mapping, membership, workflow-teardown, system-support] }
+        lane: { type: string, enum: [not_sure, workflow_infrastructure, reliability_and_control] }
   securitySchemes:
     oauth2:
       type: oauth2

@@ -1,0 +1,25 @@
+{
+  "name": "@create-something/agency-meta-maintenance",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "createSomething": {
+    "agentLegibilityContract": true,
+    "tier": "automation",
+    "surface": "app",
+    "entrypoints": ["src/index.ts"],
+    "smoke": "pnpm check && pnpm test"
+  },
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "node --import tsx --test test/maintenance.test.ts",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "types": "wrangler types --env-interface MaintenanceBindings --include-runtime false --strict-vars false worker-configuration.d.ts"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "4.20260621.1",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3",
+    "wrangler": "4.103.0"
+  }
+}

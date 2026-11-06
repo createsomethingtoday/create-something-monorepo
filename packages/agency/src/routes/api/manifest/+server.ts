@@ -127,6 +127,7 @@ const WORK: ContentItem[] = [
 export const GET: RequestHandler = async () => {
 	return json({
 		property: 'agency',
+		agentInquiry: 'https://createsomething.agency/api/agent-inquiry',
 		services: SERVICES,
 		work: WORK,
 		// Legacy format for backward compatibility

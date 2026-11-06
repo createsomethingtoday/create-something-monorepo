@@ -5,7 +5,7 @@ import { chromium } from '@playwright/test';
 const base = process.env.AGENCY_BASE_URL ?? 'http://127.0.0.1:4186';
 const evidence = process.env.AGENCY_EVIDENCE_DIR ?? '/tmp/agency-walkthrough-theater';
 await mkdir(evidence, { recursive: true });
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}) });
 const results = [];
 try {
   for (const [width, height] of [[1440, 1000], [1440, 800], [728, 1000], [390, 844], [320, 568], [844, 390]]) {

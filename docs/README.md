@@ -23,6 +23,10 @@ Read in this order when you need broad repo context:
 
 ## Navigation by task
 
+### T3 Code
+
+- [T3 Code project workflow](./guides/T3_CODE_WORKFLOW.md) — shared actions, existing-checkout registration, bounded CTX retrieval, and rollback
+
 ### Daily work log
 
 - [Daily Slack work log playbook and runbook](./guides/DAILY_WORK_LOG_RUNBOOK.md) — discovery certification, task-thread deduplication, verified delivery, durable state, and recovery

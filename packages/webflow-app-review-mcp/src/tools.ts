@@ -167,41 +167,6 @@ function cleanObject<T extends Record<string, unknown>>(value: T): T {
   return Object.fromEntries(entries) as T;
 }
 
-const APPROVAL_GATED_REVIEW_STATUSES = new Set<string>(['✅Approved', '✅Approved (No Notification)']);
-const UNDECIDED_VERSION_EXCEPTION_STATUSES = new Set<string>(['🆕Requested', '👀Under Review']);
-
-// Server-side half of the ⚖️Approval Gate + Partnership Shield automation (dual sign-off
-// rule, 8/6/2026): the Airtable guard reverts a stray approval after the fact, so on that
-// path the creator email can win the race — refusing before the write closes the MCP path
-// entirely. Empty rollups (no ⚖️Exceptions rows anywhere) pass; only a real count blocks.
-function ensureApprovalUnblocked(version: AppReviewVersion): void {
-  const blockers: string[] = [];
-  if (version.exceptionStatus && UNDECIDED_VERSION_EXCEPTION_STATUSES.has(version.exceptionStatus)) {
-    blockers.push(`version-level ⚖️Exception Status is ${version.exceptionStatus}`);
-  }
-  if ((version.undecidedExceptionItems ?? 0) > 0) {
-    blockers.push(`${version.undecidedExceptionItems} undecided ⚖️Exceptions item(s) on this version`);
-  }
-  if ((version.assetUndecidedExceptions ?? 0) > 0) {
-    blockers.push(
-      `${version.assetUndecidedExceptions} undecided ⚖️exception(s) across the app (see ⚖️Asset Exception History)`,
-    );
-  }
-  if (blockers.length > 0) {
-    throw new AirtableClientError(
-      'APPROVAL_BLOCKED_UNDECIDED_EXCEPTIONS',
-      `Cannot set an approved status: ${blockers.join('; ')}. Decide every open ⚖️exception in #app-review-exceptions first — final approval requires both review sign-off and settled exceptions.`,
-      409,
-      {
-        versionId: version.versionId,
-        exceptionStatus: version.exceptionStatus ?? null,
-        undecidedExceptionItems: version.undecidedExceptionItems ?? null,
-        assetUndecidedExceptions: version.assetUndecidedExceptions ?? null,
-      },
-    );
-  }
-}
-
 // Mirror of exception-decisions-mcp v1.3.1's decide_version_exception refusal: the version-level
 // aggregate flipping to ❌Denied releases the developer-facing rejection email, so it must not
 // happen while per-item rows are still open.
@@ -1043,7 +1008,7 @@ export function registerTools(
 
   server.tool(
     'app_review_approve_version',
-    'Approve an app version without reviewer-session scoping. Refuses while any ⚖️exception on the app is undecided (dual sign-off rule: approval requires review sign-off AND settled exceptions).',
+    'Approve an app version without reviewer-session scoping. Undecided ⚖️exceptions no longer block approval (gate retired 11/4/2026); the Airtable automation posts a soft warning in #app-review-exceptions instead.',
     {
       version_id: z.string().min(1),
       review_feedback: z.string().optional(),
@@ -1051,8 +1016,7 @@ export function registerTools(
     },
     async ({ version_id, review_feedback, review_type }) => {
       try {
-        const version = await requireAppVersion(getClient(), version_id);
-        ensureApprovalUnblocked(version);
+        await requireAppVersion(getClient(), version_id);
         const updated = await getClient().updateVersionReview(version_id, {
           review_status: '✅Approved',
           review_type,
@@ -1114,9 +1078,6 @@ export function registerTools(
         assertReviewerAssignmentReadOnly(params.reviewer);
         const client = getClient();
         const version = await requireAppVersion(client, params.version_id);
-        if (params.review_status && APPROVAL_GATED_REVIEW_STATUSES.has(params.review_status)) {
-          ensureApprovalUnblocked(version);
-        }
         if (params.review_status !== undefined) {
           ensureStatusChangeConfirmed(version, params.status_change);
         }
@@ -1598,9 +1559,6 @@ export function registerTools(
           }
 
           const currentVersion = await requireAppVersion(client, latestVersion.versionId);
-          if (APPROVAL_GATED_REVIEW_STATUSES.has(params.latest_review_status)) {
-            ensureApprovalUnblocked(currentVersion);
-          }
           ensureStatusChangeConfirmed(currentVersion, params.status_change);
 
           const routed = await client.updateVersionReview(latestVersion.versionId, {
