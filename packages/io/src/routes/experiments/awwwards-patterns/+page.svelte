@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { QuoteBlock, SEO } from '@create-something/canon';
+	import ExperimentOrientation from '$lib/components/ExperimentOrientation.svelte';
+	import ExperimentRecord from '$lib/components/ExperimentRecord.svelte';
+	import { experimentGuides } from '$lib/config/experimentSharpness';
 
 	// Parallax tracking - relative to container
 	let parallaxContainer: HTMLElement;
@@ -77,10 +80,12 @@
 			<span class="reading-time">8 min read</span>
 		</div>
 		<h1>Award-Winning Patterns in Monochrome</h1>
+		<ExperimentOrientation guide={experimentGuides['experiments/awwwards-patterns']} />
 		<p class="subtitle">
 			How constraint produces excellence: black & white design patterns from 2024 Awwwards winners
 		</p>
 	</header>
+	<ExperimentRecord>
 
 	<!-- Abstract -->
 	<section class="section">
@@ -441,6 +446,7 @@ const scroll = window.scrollY;
 		</p>
 	</section>
 
+	</ExperimentRecord>
 	<!-- Footer -->
 	<footer class="experiment-footer">
 		<div class="tags">

@@ -7,7 +7,9 @@
 	 */
 
 	import { SEO } from '@create-something/canon';
+	import ExperimentOrientation from '$lib/components/ExperimentOrientation.svelte';
 	import ExperimentVisualSummary from '$lib/components/ExperimentVisualSummary.svelte';
+	import { experimentGuides } from '$lib/config/experimentSharpness';
 	import {
 		ComparativeSparklines,
 		TrendIndicator,
@@ -108,6 +110,7 @@
 		<!-- Header -->
 		<div class="header-section pb-8">
 			<h1 class="page-title mb-3">Revealing Data Patterns</h1>
+			<ExperimentOrientation guide={experimentGuides['experiments/data-patterns']} />
 			<p class="text-secondary max-w-3xl">
 				A demonstration of how agentic visualization components automatically reveal patterns,
 				trends, and anomalies without manual analysis. The components make the insights obvious.

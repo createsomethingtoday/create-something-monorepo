@@ -6,7 +6,10 @@
 	 * with the filter agent from $lib/agents/filter-agent.
 	 */
 	import { QuoteBlock, SEO } from '@create-something/canon';
+	import ExperimentOrientation from '$lib/components/ExperimentOrientation.svelte';
+	import ProgressiveExperiment from '$lib/components/ProgressiveExperiment.svelte';
 	import ExperimentVisualSummary from '$lib/components/ExperimentVisualSummary.svelte';
+	import { experimentGuides } from '$lib/config/experimentSharpness';
 	import {
 		FilterTogglePanel,
 		ProductGrid,
@@ -148,8 +151,10 @@
 				<span>{experiment.reading_time_minutes} min</span>
 			</div>
 			<h1 class="page-title text-2xl mb-2">{experiment.title}</h1>
+			<ExperimentOrientation guide={experimentGuides['experiments/ai-native-filtering']} />
 			<p class="text-secondary text-sm max-w-2xl">{experiment.description}</p>
 		</div>
+		<ProgressiveExperiment fallback="The experiment question, evidence test, and limit remain available above. Enable JavaScript to try natural-language and manual filtering.">
 
 		<!-- ASCII Art -->
 		{#if experiment.ascii_art}
@@ -728,6 +733,7 @@ Estimated cost reduction: 80% for cache hits`}</code></pre>
 				</p>
 			</div>
 		</section>
+		</ProgressiveExperiment>
 	</div>
 </div>
 

@@ -7,6 +7,8 @@
 	 */
 
 	import { SEO } from '@create-something/canon';
+	import ExperimentOrientation from '$lib/components/ExperimentOrientation.svelte';
+	import { experimentGuides } from '$lib/config/experimentSharpness';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -95,10 +97,11 @@
 	);
 
 	const overallSuccessRate = $derived(() => {
+		if (totalRuns === 0) return null;
 		const successfulRuns = Object.entries(data.agentStats).reduce((sum, [_, s]) => {
 			return sum + (s.totalRuns * s.successRate / 100);
 		}, 0);
-		return totalRuns > 0 ? (successfulRuns / totalRuns) * 100 : 100;
+		return (successfulRuns / totalRuns) * 100;
 	});
 
 	// Get sorted agents by last run time
@@ -136,6 +139,7 @@
 		<!-- Header -->
 		<div class="header-section pb-8">
 			<h1 class="page-title mb-3">Agent Operations Tracking</h1>
+			<ExperimentOrientation guide={experimentGuides['experiments/agent-operations']} />
 			<p class="text-secondary max-w-3xl">
 				Real-time monitoring of CREATE SOMETHING's Modal-deployed agents. These autonomous
 				agents handle infrastructure monitoring, code review, content generation, and deployments.
@@ -153,6 +157,11 @@
 					Updated {formatRelativeTime(data.status.updated_at)}
 				</span>
 			</section>
+		{:else}
+			<section class="status-banner degraded" role="status">
+				<span class="status-label">Data unavailable</span>
+				<span class="status-updated">The status service did not return a current result.</span>
+			</section>
 		{/if}
 
 		<!-- Stats Overview -->
@@ -163,9 +172,15 @@
 			</div>
 			<div class="stat-card">
 				<div class="stat-label">Success Rate</div>
-				<div class="stat-value" class:success={overallSuccessRate() > 95} class:warning={overallSuccessRate() <= 95 && overallSuccessRate() > 80}>
-					{overallSuccessRate().toFixed(1)}%
-				</div>
+				{#if !data.dataAvailability.logs}
+					<div class="stat-value unavailable">Data unavailable</div>
+				{:else if overallSuccessRate() === null}
+					<div class="stat-value unavailable">No runs recorded</div>
+				{:else}
+					<div class="stat-value" class:success={overallSuccessRate()! > 95} class:warning={overallSuccessRate()! <= 95 && overallSuccessRate()! > 80}>
+						{overallSuccessRate()!.toFixed(1)}%
+					</div>
+				{/if}
 			</div>
 			<div class="stat-card">
 				<div class="stat-label">Total Cost (7d)</div>
