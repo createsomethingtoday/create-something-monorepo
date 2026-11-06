@@ -390,3 +390,18 @@
 /* Authored lines keep their measure; only the inner type moves. */
 .agency-home .chapter-line-mask{display:inline-block;overflow:clip;vertical-align:top;padding:.08em .03em;margin:-.08em -.03em}
 .agency-home [data-chapter-line]{display:inline-block}
+
+/* The recorded preview is the doorway into the native theater. */
+.agency-home .proof-launch{position:relative;display:block;width:100%;padding:0;border:1px solid var(--border);background:var(--background);color:var(--foreground);font:inherit;text-align:left;cursor:pointer;isolation:isolate}
+.agency-home .proof-launch:focus-visible{outline:2px solid var(--foreground);outline-offset:6px}
+.agency-home .proof-launch:disabled{cursor:default}
+.agency-home .proof-launch:disabled .proof-play,.agency-home .proof-launch:disabled .proof-invitation{display:none}
+.agency-home .proof-play{position:absolute;left:calc(50% - 40px);top:calc(50% - 40px);width:80px;height:80px;pointer-events:none;color:var(--foreground)}
+.agency-home .proof-play svg{display:block;width:100%;height:100%;overflow:visible}
+.agency-home .proof-play rect{fill:var(--background);stroke:var(--foreground);stroke-width:1.5}
+.agency-home .proof-play-triangle{fill:currentColor}
+.agency-home .proof-invitation{position:absolute;inset:auto 0 0;display:flex;align-items:center;justify-content:space-between;gap:var(--space-performance-sm);padding:16px 20px;border-top:1px solid var(--border);background:var(--background);font:14px/1.4 var(--font-performance-mono)}
+.agency-home .proof-invitation>span:first-child{display:flex;align-items:center;gap:var(--space-performance-md);font-family:var(--font-performance-sans);font-size:18px}
+.agency-home .walkthrough-flight{position:fixed;left:0;top:0;z-index:1;display:block;max-width:none;max-height:none;object-fit:contain;pointer-events:none;transform-origin:0 0;will-change:transform,opacity}
+@media(max-width:600px){.agency-home .proof-play{left:calc(50% - 30px);top:calc(50% - 42px);width:60px;height:60px}.agency-home .proof-invitation{padding:10px 12px;font-size:10px}.agency-home .proof-invitation>span:first-child{font-size:14px;gap:var(--space-performance-xs)}}
+@media print{.agency-home .proof-play,.agency-home .proof-invitation,.agency-home .walkthrough-flight{display:none}}
