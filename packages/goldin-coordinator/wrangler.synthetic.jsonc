@@ -1,0 +1,19 @@
+{
+  "name": "goldin-coordinator-synthetic-20261022",
+  "main": "dist/worker.mjs",
+  "build": { "command": "node build.mjs" },
+  "compatibility_date": "2026-10-22",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "durable_objects": {
+    "bindings": [{ "name": "COORDINATOR", "class_name": "GoldinCoordinator" }],
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["GoldinCoordinator"] }],
+  "observability": { "enabled": true, "traces": { "enabled": true } },
+  "vars": {
+    "ENVIRONMENT": "synthetic",
+    "PROJECTION_WRITES": "disabled",
+    "OPERATOR_POLICY": "{}",
+  },
+}
