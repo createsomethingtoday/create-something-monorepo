@@ -3,7 +3,8 @@ import { auditReviewerStandards, generateReviewerStandardIssues } from '../src/v
 
 const SITE = 'https://example-template.webflow.io';
 const NAV = '<div class="navbar w-nav"><nav class="w-nav-menu"><a href="/">Home</a></nav></div>';
-const FOOTER = '<footer class="footer"><a href="/licenses">Licenses</a><a href="/changelog">Changelog</a></footer>';
+const FOOTER =
+	'<footer class="footer"><a href="/licenses">Licenses</a><a href="/changelog">Changelog</a> Powered by <a href="https://webflow.com">Webflow</a></footer>';
 const HEAD = '<link href="https://cdn.example.com/site/icon.png" rel="shortcut icon"/><link href="https://cdn.example.com/site/clip.png" rel="apple-touch-icon"/>';
 
 function html(body: string, head = HEAD) {
@@ -44,7 +45,8 @@ describe('Reviewer standards', () => {
 			'form-default-names',
 			'licenses-link',
 			'default-favicon',
-			'trademark-symbols'
+			'trademark-symbols',
+			'powered-by-webflow'
 		]);
 		expect(result.every((issue) => issue.severity === 'error' && issue.category === 'Content & Accessibility')).toBe(true);
 		expect(result[0].message).toBe("Forms show Webflow's default success or error message on 2 page(s)");
@@ -194,6 +196,20 @@ describe('Reviewer standards', () => {
 		expect(ids([custom], undefined)).not.toContain('gsap-instructions-page');
 		expect(ids([webflowOnly], ['/instructions'])).not.toContain('gsap-instructions-page');
 		expect(ids([custom, audit('/instructions', '<h1>How to Edit GSAP Animations</h1>')], ['/instructions'])).not.toContain('gsap-instructions-page');
+	});
+
+	it('requires a footer link to webflow.com on the home page, whatever the wording or path', () => {
+		const footer = (link: string) => `<footer class="footer"><a href="/licenses">Licenses</a>${link}</footer>`;
+		const detail = (body: string, path = '/') => audit(path, NAV + body).findings['powered-by-webflow'];
+		expect(detail(footer('Powered by <a href="https://webflow.com">Webflow</a>'))).toBeUndefined();
+		expect(detail(footer('<a href="https://www.webflow.com/?utm_source=template">Made with Webflow</a>'))).toBeUndefined();
+		expect(detail(footer(''))).toBe('the footer has no link to webflow.com');
+		expect(detail(footer('Built with <a href="https://webflow.com/templates">Webflow</a>'))).toBeUndefined();
+		expect(detail(footer('<a href="https://webflow.io.example.com">Webflow</a>'))).toBe('the footer has no link to webflow.com');
+		expect(detail(`<div class="w-nav"><a href="https://webflow.com">Webflow</a></div>${footer('')}`)).toBe('webflow.com is linked, but not from the footer');
+		expect(detail('<main><a href="https://webflow.com">Webflow</a></main>')).toBeUndefined();
+		expect(detail('<main><h1>No chrome</h1></main>')).toBe('no footer and no link to webflow.com found');
+		expect(detail(footer(''), '/about')).toBeUndefined();
 	});
 
 	it('skips an empty document and normalizes the page path', () => {

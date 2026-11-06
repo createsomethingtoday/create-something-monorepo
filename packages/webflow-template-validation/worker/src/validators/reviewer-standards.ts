@@ -82,6 +82,11 @@ const STANDARDS: Record<ReviewerStandardId, Standard> = {
 		message: () => 'GSAP is used in custom code, but there is no Instructions page',
 		description: 'When custom code uses GSAP, buyers need an Instructions page at /instructions with a "How to Edit GSAP Animations" section.',
 		howToFix: 'Create a page at /instructions with a "How to Edit GSAP Animations" section that lists the animated selectors and how to change or remove them.'
+	},
+	'powered-by-webflow': {
+		message: () => 'The footer has no "Powered by Webflow" link to webflow.com',
+		description: 'The guidelines ask for a "Powered by Webflow" credit in the footer that links to Webflow\'s homepage. The link is checked; the exact wording is not.',
+		howToFix: 'Add "Powered by Webflow" to the footer component, with "Webflow" linking to https://webflow.com.'
 	}
 };
 
@@ -129,6 +134,7 @@ export function auditReviewerStandards(html: string, pageUrl: string): ReviewerP
 	record('video-play-pause', videoControlsDetail(elements));
 	if (!NO_LICENSES_LINK_PATHS.has(path)) record('licenses-link', licensesLinkDetail(elements, url));
 	if (path === '/') record('default-favicon', faviconDetail(elements, url));
+	if (path === '/') record('powered-by-webflow', poweredByWebflowDetail(elements, url));
 	if (path !== LICENSES_PATH) record('trademark-symbols', trademarksDetail(elements, root));
 	record('self-promotion', selfPromotionDetail(elements, url));
 	if (path === LICENSES_PATH) record('licenses-boilerplate', licensesBoilerplateDetail(elements, root));
@@ -396,6 +402,29 @@ function isNav(node: Node): boolean {
 /** Same footer rule as the template-preflight skill: a footer element, role contentinfo, or a footer class or id token. */
 function isFooter(node: Node): boolean {
 	return node.name === 'footer' || attr(node, 'role') === 'contentinfo' || FOOTER_TOKEN.test(`${attr(node, 'class')} ${attr(node, 'id')}`);
+}
+
+/**
+ * Guideline seo-03: a footer link to webflow.com. Only a missing link blocks; the
+ * wording and the exact webflow.com path are not enforced, matching review
+ * practice. Only the home page is checked, since the footer is shared.
+ */
+function poweredByWebflowDetail(elements: Node[], pageUrl: URL): string | null {
+	const links = elements.filter((el) => el.name === 'a' && isWebflowHref(attr(el, 'href'), pageUrl));
+	if (links.some((link) => ancestors(link).some(isFooter))) return null;
+	const hasFooter = elements.some(isFooter);
+	if (!hasFooter && links.length > 0) return null; // No footer found, so the link's placement cannot be judged.
+	if (!hasFooter) return 'no footer and no link to webflow.com found';
+	return links.length > 0 ? 'webflow.com is linked, but not from the footer' : 'the footer has no link to webflow.com';
+}
+
+function isWebflowHref(href: string, pageUrl: URL): boolean {
+	try {
+		const url = new URL(href, pageUrl);
+		return /^https?:$/.test(url.protocol) && /^(?:www\.)?webflow\.com$/i.test(url.hostname);
+	} catch {
+		return false;
+	}
 }
 
 function isLicensesHref(href: string, pageUrl: URL): boolean {
