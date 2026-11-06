@@ -75,6 +75,7 @@
     "smoke:motion-polish": "node ./scripts/verify-agency-motion-polish.mjs",
     "smoke:membership-story": "node ./scripts/verify-membership-story.mjs",
     "smoke:public-page-system": "node ./scripts/verify-public-page-system.mjs",
+    "smoke:contact-onboarding": "node ./test/contact-onboarding.browser.mjs",
     "smoke:utility-polish": "node ./test/agency-utility-polish.browser.mjs",
     "smoke:security-hero": "node ./test/security-hero.browser.mjs",
     "smoke:technical-review-hero": "node ./test/technical-review-hero.browser.mjs",

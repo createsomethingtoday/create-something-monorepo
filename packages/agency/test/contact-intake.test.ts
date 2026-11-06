@@ -144,3 +144,18 @@ test('interrupted database write may commit later; readback never dispatches it'
   assert.equal((await f.run()).message, CONTACT_SAVED_MESSAGE);
   assert.equal(f.counts().creates, 1); assert.equal(f.counts().sends, 0);
 });
+
+
+test('browser exposes validation rejection so the review can unlock corrections under the same ID', async () => {
+  const submit = createContactRequest();
+  const attempts: RequestInit[] = [];
+  const send: typeof fetch = async (_url, init) => {
+    attempts.push(init!);
+    return new Response(JSON.stringify({ success: false, message: 'Check your email.' }), { status: 400 });
+  };
+  const rejected = await submit(input, send);
+  assert.equal(rejected.status, 400);
+  await submit({ ...input, email: 'corrected@example.com' }, send);
+  assert.deepEqual(attempts[0].headers, attempts[1].headers);
+  assert.equal(JSON.parse(String(attempts[1].body)).email, 'corrected@example.com');
+});
