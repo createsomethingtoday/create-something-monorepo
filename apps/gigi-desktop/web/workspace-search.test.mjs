@@ -141,7 +141,7 @@ test('finishing a page read clears pointer blocking without replacing the active
     assert.equal(overviewStarted,true,'hold the actual page read');
     assert.equal(loading,true);
     listeners.get('click')({target:{closest:()=>({dataset:{workspaceSearch:'1'}})}});
-    input.focus();const before=replacements;
+    input.focus();input.value='Miか';const before=replacements;
     finishOverview({});await new Promise(resolve=>setTimeout(resolve,30));
     assert.equal(loading,false,'completed page reads must release pointer events while Search stays open');
     assert.equal(replacements,before,'keep the active input ancestor');
