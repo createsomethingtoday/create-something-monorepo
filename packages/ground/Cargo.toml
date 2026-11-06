@@ -25,7 +25,7 @@ path = "src/bin/ground-mcp.rs"
 # AST parsing
 tree-sitter = "0.24"
 tree-sitter-typescript = "0.23"
-tree-sitter-javascript = "0.23"
+tree-sitter-javascript = "0.25"
 tree-sitter-rust = "0.23"
 tree-sitter-python = "0.23"
 
