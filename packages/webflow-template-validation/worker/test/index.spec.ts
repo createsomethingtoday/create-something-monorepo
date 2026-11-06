@@ -49,7 +49,7 @@ vi.mock('../src/utils/fetch-utils', () => {
 });
 
 import { validateDesignerData } from '../src/validators/designer-validator';
-import { generateContentIssues, validateContent } from '../src/validators/content-validator';
+import { analyzeImageDimensions, generateContentIssues, validateContent } from '../src/validators/content-validator';
 import { validateAccessibility } from '../src/validators/accessibility-validator';
 import { validateInteractions } from '../src/validators/interactions-validator';
 import { generateAssetIssues } from '../src/validators/asset-validator';
@@ -1395,9 +1395,52 @@ describe('Content Validator', () => {
 			} as any
 		);
 
-		expect(fetchHTML).toHaveBeenCalledTimes(2);
+		// The reviewer standards also read /404 and /401; the excluded slug is never fetched.
+		expect(fetchHTML).toHaveBeenCalledTimes(4);
 		const calledUrls = (fetchHTML as any).mock.calls.map((c: any[]) => c[0]);
-		expect(calledUrls).toEqual(['https://example.com', 'https://example.com/about']);
+		expect(calledUrls).toEqual([
+			'https://example.com',
+			'https://example.com/about',
+			'https://example.com/404',
+			'https://example.com/401'
+		]);
+	});
+
+	it('audits /404 even when it answers with HTTP 404, and skips excluded utility pages', async () => {
+		(fetchHTML as any).mockClear();
+
+		await validateContent(
+			'https://example.com',
+			['/about'],
+			{
+				excludePageSlugs: ['/401'],
+				contentChecks: { lorem: false, headings: false, altText: false, seo: false, links: false, contentQuality: false }
+			} as any
+		);
+
+		const calls = (fetchHTML as any).mock.calls;
+		expect(calls.map((c: any[]) => c[0])).toEqual(['https://example.com', 'https://example.com/about', 'https://example.com/404']);
+		expect(calls[2][1]).toEqual({ acceptStatus: [404] });
+	});
+
+	it('fetchHTML keeps the HTML of an accepted non-OK status and rejects any other', async () => {
+		const actual = await vi.importActual<typeof import('../src/utils/fetch-utils')>('../src/utils/fetch-utils');
+		const notFound = () => new Response('<html><body><nav>Site</nav><h1>Not found</h1></body></html>', {
+			status: 404,
+			headers: { 'content-type': 'text/html; charset=utf-8' }
+		});
+		const fetchSpy = vi.spyOn(globalThis, 'fetch');
+		try {
+			fetchSpy.mockResolvedValueOnce(notFound());
+			const page = await actual.fetchHTML('https://example.com/404', { acceptStatus: [404] });
+			expect(page.status).toBe(404);
+			expect(page.html).toContain('Not found');
+
+			fetchSpy.mockResolvedValueOnce(notFound());
+			await expect(actual.fetchHTML('https://example.com/404')).rejects.toThrow('HTTP 404');
+		} finally {
+			fetchSpy.mockRestore();
+		}
 	});
 
 	it('pageScope=current returns warning without fetching when current page is excluded', async () => {
@@ -1477,6 +1520,71 @@ describe('Content Validator', () => {
 			linkOnlyChecks as any
 		);
 		expect(singlePage.some(i => i.id === 'required-pages-not-linked')).toBe(false);
+	});
+
+	it('counts images without a positive width and height, skipping background video fallbacks', async () => {
+		const actual = await vi.importActual<typeof import('../src/utils/fetch-utils')>('../src/utils/fetch-utils');
+		const parsed = actual.parseHTMLWorker(`<!doctype html><html><body>
+			<img src="/sized.webp" width="640" height="480" alt="">
+			<img src="/width-only.webp" width="640" alt="">
+			<img src="/auto.webp" width="auto" height="480" alt="">
+			<img src="/none.webp" class="hero-image" alt="">
+			<img src="/poster.jpg" data-wf-bgvideo-fallback-img="true" alt="">
+		</body></html>`);
+
+		const audit = analyzeImageDimensions(parsed);
+
+		expect(audit.missing).toBe(3);
+		expect(audit.details.map(detail => detail.src)).toEqual(['/width-only.webp', '/auto.webp', '/none.webp']);
+		expect(audit.details[2].selector).toBe('img.hero-image');
+	});
+
+	it('ignores images that never render: comments, scripts, templates and noscript', async () => {
+		const actual = await vi.importActual<typeof import('../src/utils/fetch-utils')>('../src/utils/fetch-utils');
+		const parsed = actual.parseHTMLWorker(`<!doctype html><html><body>
+			<!-- <img src="/old.jpg" alt=""> -->
+			<script>const card = '<img src="/from-script.jpg">';</script>
+			<template><img src="/from-template.jpg" alt=""></template>
+			<noscript><img src="/pixel.gif" alt=""></noscript>
+			<img src="/rendered.webp" alt="">
+		</body></html>`);
+
+		expect(parsed.images.length).toBeGreaterThan(1);
+		const audit = analyzeImageDimensions(parsed);
+		expect(audit.missing).toBe(1);
+		expect(audit.details.map(detail => detail.src)).toEqual(['/rendered.webp']);
+	});
+
+	it('keeps the video-fallback exemption for images identified by their container', async () => {
+		const actual = await vi.importActual<typeof import('../src/utils/fetch-utils')>('../src/utils/fetch-utils');
+		const parsed = actual.parseHTMLWorker(`<!doctype html><html><body>
+			<div class="hero w-background-video w-background-video-atom"><div class="inner"><img src="/hero.webp" alt=""></div></div>
+			<div data-poster-url="/poster.jpg"><img src="/poster-frame.webp" alt=""></div>
+			<div class="w-video"><img src="/embed-thumb.webp" alt=""></div>
+			<div class="w-background-video--control"><img src="/pause-icon.svg" alt=""></div>
+		</body></html>`);
+
+		const audit = analyzeImageDimensions(parsed);
+		expect(audit.details.map(detail => detail.src)).toEqual(['/pause-icon.svg']);
+	});
+
+	it('reports missing image dimensions as a blocking error, even when every toggled content check is off', () => {
+		const allTogglesOff = { lorem: false, headings: false, altText: false, seo: false, links: false, contentQuality: false };
+		const pages = [
+			{
+				...linkAuditPage('https://example.com', []),
+				imagesMissingDimensions: 2,
+				imagesMissingDimensionsDetails: [{ src: '/a.webp', selector: 'img.a' }, { src: '/b.webp', selector: 'img.b' }]
+			},
+			{ ...linkAuditPage('https://example.com/about', []), imagesMissingDimensions: 0 }
+		];
+
+		const issue = generateContentIssues(pages as any, allTogglesOff as any).find(i => i.id === 'images-missing-dimensions');
+		expect(issue).toEqual(expect.objectContaining({ severity: 'error', category: 'Content & Accessibility' }));
+		expect(issue!.message).toBe('2 image(s) on 1 page(s) have no width and height attributes');
+		expect(issue!.details!.pagesWithIssues).toEqual([
+			expect.objectContaining({ url: 'https://example.com', imagesMissingDimensions: 2 })
+		]);
 	});
 });
 

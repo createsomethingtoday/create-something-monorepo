@@ -21,7 +21,8 @@
 		"analyze": "node test-analyzer.js"
 	},
 	"dependencies": {
-		"@create-something/gsap-validation-worker": "workspace:*"
+		"@create-something/gsap-validation-worker": "workspace:*",
+		"htmlparser2": "^10.1.0"
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.18.4",
