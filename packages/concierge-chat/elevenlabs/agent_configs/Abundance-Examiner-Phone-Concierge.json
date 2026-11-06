@@ -108,7 +108,8 @@
           "transfer_to_genesys_chat": null,
           "transfer_to_genesys_bot": null,
           "run_subagent": null,
-          "request_help": null
+          "request_help": null,
+          "transfer_to_agent": null
         },
         "enable_parallel_tool_calls": false,
         "mcp_server_ids": [],
@@ -129,8 +130,7 @@
         "backup_llm_config": {
           "preference": "default"
         },
-        "cascade_timeout_seconds": 4,
-        "tools": []
+        "cascade_timeout_seconds": 4
       }
     }
   },

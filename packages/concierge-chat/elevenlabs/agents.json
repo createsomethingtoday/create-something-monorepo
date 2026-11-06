@@ -11,6 +11,12 @@
       "id": "agent_5501kz9wx04yewdapr01g7v82np7",
       "version_id": "agtvrsn_1901kzedrvnbf2trh6gxx1yvr28b",
       "branch_id": "agtbrch_6701kz9wx050ear9rr9tmdx9y1gm"
+    },
+    {
+      "config": "agent_configs/NPG-Client-Service-Phone-Concierge.json",
+      "id": "agent_5101kzf7qxfzewrtr9vyw62d5xby",
+      "version_id": "agtvrsn_0701kzf8n1bff5n8sa3hx85fb1m5",
+      "branch_id": "agtbrch_7301kzf7qy6bex7tvac2v5ze7hf7"
     }
   ]
 }

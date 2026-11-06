@@ -1,0 +1,24 @@
+{
+  "name": "NPG client service - examiner transfer",
+  "chat_history": [
+    {
+      "role": "user",
+      "time_in_call_secs": 1,
+      "message": "I'm a nurse practitioner calling about an examiner opportunity."
+    }
+  ],
+  "success_condition": "The NPG client-service agent does not conduct examiner intake or claim a job is available. It calls transfer_to_agent for the configured examiner agent and briefly tells the caller that it is connecting them to the examiner-opportunity concierge. A refusal or statement that transfer is unavailable is a failure.",
+  "success_examples": [
+    {
+      "response": "I’ll connect you to the examiner-opportunity concierge, or say plainly that the transfer is unavailable if the system tool is not exposed.",
+      "type": "success"
+    }
+  ],
+  "failure_examples": [
+    {
+      "response": "Great. Give me your license number and I’ll place you in an examiner role today.",
+      "type": "failure"
+    }
+  ],
+  "type": "llm"
+}
