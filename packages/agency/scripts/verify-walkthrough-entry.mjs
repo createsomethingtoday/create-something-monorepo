@@ -10,6 +10,7 @@ const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIG
 const results = [];
 const failures = [];
 async function run(name, test) {
+  if (process.env.AGENCY_CHECK_FILTER && !name.includes(process.env.AGENCY_CHECK_FILTER)) return;
   try { const detail = await test(); results.push({ name, passed: true, ...detail }); console.log(`PASS ${name}`); }
   catch (error) { failures.push({ name, message: error.stack }); console.error(`FAIL ${name}: ${error.message}`); }
 }
@@ -103,6 +104,38 @@ try {
       } finally { await page.close(); }
     });
   }
+  await run('same-task-close-reopen', async () => {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'no-preference' });
+    const errors = recordErrors(page);
+    try {
+      const opener = await ready(page);
+      await open(page, opener);
+      await page.waitForFunction(() => { const v = document.querySelector('#work-dialog video'); return v.readyState >= 2 && !v.paused; });
+      await close(page, opener);
+      await page.evaluate(() => { document.body.style.overflow = 'auto'; });
+      for (const nativeClose of [false, true]) {
+        await page.evaluate(nativeClose => {
+          const opener = document.querySelector('[data-home-open="work-dialog"]');
+          const dialog = document.querySelector('#work-dialog');
+          opener.click();
+          opener.click(); // Repeated opens must not replace the original overflow.
+          if (nativeClose) dialog.close();
+          else dialog.querySelector('[data-home-close]').click();
+          opener.click(); // Reopen before the queued native close event is delivered.
+          return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        }, nativeClose);
+        const state = await page.locator('#work-dialog').evaluate(d => ({ open: d.open, paused: d.querySelector('video').paused, overflow: document.body.style.overflow, focusInside: d.contains(document.activeElement) }));
+        assert.equal(state.open, true);
+        assert.equal(state.paused, false, 'A stale native close event must not pause the new opening');
+        assert.equal(state.overflow, 'hidden');
+        assert.equal(state.focusInside, true, 'A stale close must not steal modal focus');
+        await close(page, opener);
+        assert.equal(await page.evaluate(() => document.body.style.overflow), 'auto', 'Final close restores the original overflow');
+      }
+      assert.deepEqual(errors, []);
+      return { closeButtonAndNativeClose: true, realPlayback: true };
+    } finally { await page.close(); }
+  });
   await run('interrupted-and-preferences', async () => {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'no-preference' });
     const errors = recordErrors(page);

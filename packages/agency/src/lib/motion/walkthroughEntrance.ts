@@ -63,7 +63,7 @@ export function enhanceWalkthroughEntrance(
   preview?.addEventListener('pointerleave', reset, { signal: abort.signal });
   preview?.addEventListener('blur', reset, { signal: abort.signal });
   const interrupt = () => { settle(); resetBadge(); };
-  dialog?.addEventListener('close', interrupt, { signal: abort.signal });
+  dialog?.addEventListener('close', () => { if (!dialog.open) interrupt(); }, { signal: abort.signal });
   // Cancel is synchronous; close can arrive on the next event-loop turn.
   dialog?.addEventListener('cancel', interrupt, { signal: abort.signal });
   view?.addEventListener('resize', interrupt, { signal: abort.signal });
