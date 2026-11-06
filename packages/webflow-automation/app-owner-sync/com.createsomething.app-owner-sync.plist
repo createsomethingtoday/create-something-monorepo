@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Daily app owner sync: Webflow OAuth app owner workspace + workspace owner (Snowflake) ->
+  👛Assets 👀🔄Workspace ID (Override) / creator email override, 🎨Creators 🔑WF User ID + 📧WF Account Email.
+  Keeps the submission form's ownership rule current after app transfers and fills creator identity.
+  Runs the INSTALLED copy at ~/.config/webflow-automation/app-owner-sync. Reinstall after edits:
+    rsync -a --delete --exclude runs packages/webflow-automation/app-owner-sync/ ~/.config/webflow-automation/app-owner-sync/
+    cp packages/webflow-automation/app-owner-sync/com.createsomething.app-owner-sync.plist ~/Library/LaunchAgents/
+    launchctl unload ~/Library/LaunchAgents/com.createsomething.app-owner-sync.plist; launchctl load ~/Library/LaunchAgents/com.createsomething.app-owner-sync.plist
+  Snowflake auth: keychain PAT (snowflake-pat-popularity-sync) when valid, else Okta externalbrowser (needs a cached SSO session).
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.createsomething.app-owner-sync</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string><string>-lc</string>
+    <string>/Users/micahjohnson/.config/webflow-automation/app-owner-sync/run.sh --execute</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict><key>Hour</key><integer>7</integer><key>Minute</key><integer>41</integer></dict>
+  <key>StandardOutPath</key><string>/Users/micahjohnson/.config/webflow-automation/app-owner-sync/launchd.log</string>
+  <key>StandardErrorPath</key><string>/Users/micahjohnson/.config/webflow-automation/app-owner-sync/launchd.log</string>
+</dict>
+</plist>
