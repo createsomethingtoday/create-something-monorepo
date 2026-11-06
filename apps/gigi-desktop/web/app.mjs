@@ -1,3 +1,4 @@
+import {WorkspaceSearch, workspaceSearchView, workspaceSearchKey, workspaceSearchShortcut, updateWorkspaceSearchHost} from './workspace-search.mjs';
 import { AttentionController } from './attention.mjs';
 import { attentionView, attentionSettingsView } from './attention-view.mjs';
 import { defaults, readPreferences, writePreferences, importPreferences, exportPreferences, applyPreferences } from './preferences.mjs';
@@ -8,7 +9,7 @@ import {eventLabel} from './event-identity.mjs';
 import {artworkPanel,installArtworkUI} from './artwork.mjs';
 import {createGigs, gigsView, gigsFilterValue} from './gigs.mjs';
 import {sourceSelection, sourceImportView, sourceImportRunning} from './source-center.mjs';
-import {statusLabel, peopleShortcut, todaySummary, builtInChatSetup} from './desktop-polish.mjs';
+import {statusLabel, todaySummary, builtInChatSetup} from './desktop-polish.mjs';
 import {referenceHeader, referenceCards, createWorkspaceHistory, installReferenceMenu} from './reference-layout.mjs';
 import {createContactRead} from './contact-read.mjs';
 import { historyPresentation, copyableRecordField } from './record-polish.mjs';
@@ -57,6 +58,7 @@ const contactRead=createContactRead();
 let contactSearchTimer;
 let contactSearchVersion = 0;
 const state = { workspace: null, setupProfile: false, setupDraft: null, currency: null, currencyKnown: false, page: 'overview', contactQuery: '', contactSearching: false, contactSearchError: false, scheduleView: 'upcoming', libraryOpen: false, records: [], recordCount: 0, nextCursor: null, selected: null, editing: false, editorDraft: null, editorOrigin: null, sourceExpanded: false, busy: false, signingIn: false, signingOut: false, sourceSignedOut: false, justCreated: false, agentProvider: 'codex', toast: null, summary: null, summaryUnavailable: false, history: [], backupId: null, pendingRestoreId: null, agent: null, agentReceipt: null, relationSchema: null, linkChoices: null, sources: {}, sourceAttempts: {}, connectionRequests: {}, imports: {}, sourceDrafts: {}, sourceBusy: {}, contextHits: [], contextQueried: false, diagnostics: { status: null, review: null, exported: null } };
+const workspaceSearch=new WorkspaceSearch(input=>bridge.call('workspace.search',input),()=>renderWorkspaceSearch());
 const gigs=createGigs({read:(workspace,criteria,cursor)=>bridge.listGigs(workspace,criteria,cursor),changed(){if(state.page==='gigs'&&!state.selected&&!state.editing)render();}});
 const safe = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const label = (name) => name === 'appearance' ? 'Appearance & views' : sections.find((item) => item.id === name)?.label || name;
@@ -401,7 +403,7 @@ function newRecord(entity) {
 
 
 function shell(body) {
-  return `<div class="shell" data-collection-view="${preferences.collectionView}">${referenceHeader({page:state.page,sections,workspace:state.workspace?.name,history:workspaceHistory,attentionCount:attention?.unreadCount || 0})}<main class="main" tabindex="-1" aria-label="GiGi / ${safe(label(state.page))}"><div class="content"><div class="content-primary"><button type="button" class="btn mobile-chat-entry" data-chat-open="1">Ask GiGi</button>${body}</div></div></main>${chatView(chat || { visible: false })}</div>${pendingLeave ? '<div class="record-leave-backdrop"><section class="record-leave-dialog panel" role="alertdialog" aria-modal="true" aria-labelledby="leave-title" aria-describedby="leave-description"><h2 id="leave-title">Keep your changes?</h2><p id="leave-description">This record has unsaved changes. Keep editing to save them, or discard them to leave.</p><div class="inline-actions"><button class="btn primary" data-keep-editing="1">Keep editing</button><button class="btn" data-discard-changes="1">Discard changes</button></div></section></div>' : ''}${noticeView()}`;
+  return `<div class="shell" data-collection-view="${preferences.collectionView}">${referenceHeader({page:state.page,sections,workspace:state.workspace?.name,history:workspaceHistory,attentionCount:attention?.unreadCount || 0})}<main class="main" tabindex="-1" aria-label="GiGi / ${safe(label(state.page))}"><div class="content"><div class="content-primary"><button type="button" class="btn mobile-chat-entry" data-chat-open="1">Ask GiGi</button>${body}</div></div></main>${chatView(chat || { visible: false })}<div id="workspace-search-host">${workspaceSearchView(workspaceSearch)}</div></div>${pendingLeave ? '<div class="record-leave-backdrop"><section class="record-leave-dialog panel" role="alertdialog" aria-modal="true" aria-labelledby="leave-title" aria-describedby="leave-description"><h2 id="leave-title">Keep your changes?</h2><p id="leave-description">This record has unsaved changes. Keep editing to save them, or discard them to leave.</p><div class="inline-actions"><button class="btn primary" data-keep-editing="1">Keep editing</button><button class="btn" data-discard-changes="1">Discard changes</button></div></section></div>' : ''}${noticeView()}`;
 }
 
 function heading(eyebrow, title, description, action = '') {
@@ -450,7 +452,7 @@ function searchContacts(query, immediate = false) {
   if (immediate) return search(); else contactSearchTimer = setTimeout(search, 150);
 }
 function contactSearchControls() {
-  return `<div class="contact-search"><div class="field"><label for="contact-search">Search people</label><input id="contact-search" type="search" maxlength="160" value="${safe(state.contactQuery)}" placeholder="Name, email, phone or company" aria-describedby="contact-search-help" aria-controls="contact-results" autocomplete="off"></div><button type="button" class="btn" data-clear-contacts="1" ${state.contactQuery ? '' : 'disabled'}>Clear search</button></div><p class="muted" id="contact-search-help">Local contacts only · name, email, phone or company. Escape clears; ⌘F focuses this search.</p>`;
+  return `<div class="contact-search"><div class="field"><label for="contact-search">Search people</label><input id="contact-search" type="search" maxlength="160" value="${safe(state.contactQuery)}" placeholder="Name, email, phone or company" aria-describedby="contact-search-help" aria-controls="contact-results" autocomplete="off"></div><button type="button" class="btn" data-clear-contacts="1" ${state.contactQuery ? '' : 'disabled'}>Clear search</button></div><p class="muted" id="contact-search-help">Local contacts only · name, email, phone or company. Escape clears this filter; ⌘F searches your workspace.</p>`;
 }
 
 function collection() {
@@ -625,6 +627,7 @@ function render() {
     ? { anchor: nativeSelection.anchorNode, start: nativeSelection.anchorOffset, focus: nativeSelection.focusNode, end: nativeSelection.focusOffset } : null;
   retainedChat?.classList?.remove?.('chat-entering');
   root.innerHTML = shell(body);
+  renderWorkspaceSearch();
   const replacementChat = root.querySelector?.('.chat-panel');
   if (retainedChat?.ownerDocument && replacementChat?.replaceWith) {
     replacementChat.replaceWith(retainedChat);
@@ -786,13 +789,31 @@ function submitLink(data) {
   });
 }
 
-async function findPeople() {
-  if(!protectEditor(()=>void run(findPeople))) return;
-  if(await openPage('contacts',true)) root.querySelector?.('#contact-search')?.focus?.();
+function renderWorkspaceSearch() {
+  const host=root.querySelector?.('#workspace-search-host');
+  if(!host)return;
+  updateWorkspaceSearchHost(host,workspaceSearch);
+  for(const element of root.querySelectorAll?.('.shell > header, .shell > main, .shell > .chat-panel')||[])element.inert=workspaceSearch.visible;
+  root.querySelector?.('[data-workspace-search]')?.setAttribute?.('aria-expanded',String(workspaceSearch.visible));
+}
+function openWorkspaceSearch() {
+  if(!workspaceId() || state.setupProfile || pendingLeave)return;
+  workspaceSearch.open(workspaceId());
+  root.querySelector?.('#workspace-search-input')?.focus?.();
+}
+function closeWorkspaceSearch(restoreFocus=true) {
+  workspaceSearch.close();
+  if(restoreFocus)root.querySelector?.('[data-workspace-search]')?.focus?.({preventScroll:true});
 }
 
 root.addEventListener('click', (event) => {
+  if(event.target?.dataset?.searchBackdrop){closeWorkspaceSearch();return;}
   const button = event.target.closest('button'); if (!button) return;
+  if(button.dataset.workspaceSearch){openWorkspaceSearch();return;}
+  if(button.dataset.searchClose){closeWorkspaceSearch();return;}
+  if(button.dataset.searchRetry){void workspaceSearch.search();return;}
+  if(button.dataset.searchMore){if(!workspaceSearch.busy)void workspaceSearch.search(button.dataset.searchMore);return;}
+  if(button.dataset.searchRecord){const {searchEntity,searchRecord}=button.dataset;closeWorkspaceSearch(false);void run(()=>navigateRecord(searchEntity,searchRecord));return;}
   if (button.dataset.noticeDismiss) { state.toast = null; render(); ((chat?.visible ? root.querySelector?.('#chat-message:not(:disabled)') || root.querySelector?.('[data-chat-close]') : null) || root.querySelector?.('#title') || root.querySelector?.('.main') || root.querySelector?.('#owner-name'))?.focus?.({ preventScroll: true }); return; }
   if (button.dataset.attentionHome) { void run(async()=>{if(await openPage('overview',true)){root.querySelector?.('#attention-title')?.setAttribute?.('tabindex','-1');root.querySelector?.('#attention-title')?.focus?.();}}); return; }
   if (button.dataset.attentionRefresh) { void attention?.refresh(); return; }
@@ -916,7 +937,6 @@ root.addEventListener('click', (event) => {
   else if (button.dataset.chatStop) void chat?.cancel();
   else if (button.dataset.chatApproval) void chat?.decide(button.dataset.chatApproval, button.dataset.chatDecision);
   else if (button.dataset.chatLinkEntity) void run(() => navigateRecord(button.dataset.chatLinkEntity, button.dataset.chatLinkId));
-  else if (button.dataset.findPeople) void run(findPeople);
   else if (button.dataset.workspaceHistory) { const target=workspaceHistory.target(Number(button.dataset.workspaceHistory)); if(target) void run(()=>openPage(target.page,true,target.index)); }
   else if (button.dataset.page) void run(() => openPage(button.dataset.page, true));
   else if (button.dataset.new) newRecord(button.dataset.new);
@@ -980,8 +1000,9 @@ globalThis.document?.addEventListener?.('focusin', event => {
 globalThis.document?.addEventListener?.('pointerdown', () => { chatRefreshFocus = null; });
 (globalThis.document?.addEventListener ? document : root).addEventListener('keydown', (event) => {
   if (chatRefreshFocus && event.key === 'Tab') chatRefreshFocus = null;
+  if(workspaceSearch.visible){workspaceSearchKey(root,event,closeWorkspaceSearch);return;}
+  if(workspaceSearchShortcut(event) && workspaceId() && !state.setupProfile && !pendingLeave){event.preventDefault?.();openWorkspaceSearch();return;}
   if(state.page==='gigs'&&!state.selected&&!state.editing&&!chat?.visible){
-    if(event.metaKey&&!event.shiftKey&&event.key.toLowerCase()==='f'){event.preventDefault?.();root.querySelector?.('#gigs-search')?.focus?.();return;}
     if(event.target?.id==='gigs-search'&&event.key==='Escape'){event.preventDefault?.();gigs.update({query:''},false);root.querySelector?.('#gigs-search')?.focus?.();return;}
     if(event.key==='Escape'){const filter=root.querySelector?.('.gigs-filters[open]');if(filter){filter.open=false;filter.querySelector?.('summary')?.focus?.();event.preventDefault?.();return;}}
   }
@@ -991,7 +1012,6 @@ globalThis.document?.addEventListener?.('pointerdown', () => { chatRefreshFocus 
     if (event.key === 'Tab') { event.preventDefault?.(); const keep = root.querySelector?.('[data-keep-editing]'); const discard = root.querySelector?.('[data-discard-changes]'); (document.activeElement === keep ? discard : keep)?.focus?.(); }
     return;
   }
-  if (peopleShortcut(event, state.page, chat?.visible)) { event.preventDefault?.(); void run(findPeople); return; }
   if (event.metaKey && ['[',']'].includes(event.key) && !chat?.visible) { const target=workspaceHistory.target(event.key==='['?-1:1); if(target){event.preventDefault?.();void run(()=>openPage(target.page,true,target.index));} return; }
   if(event.key==='Escape' && !chat?.visible) { const more=root.querySelector?.('.reference-more[open]'); if(more){more.open=false;more.querySelector?.('summary')?.focus?.();event.preventDefault?.();} }
   if (event.key !== 'Escape' || !chat?.visible) return;
@@ -1015,6 +1035,7 @@ root.addEventListener('input', (event) => {
     }
     return;
   }
+  if(event.target.id==='workspace-search-input'){workspaceSearch.update(event.target.value);return;}
   if(event.target.id==='ai-message'){updateAiDraft(ai,event.target.value,root);return;}
   if(event.target.id==='gigs-search'){gigs.update({query:event.target.value});return;}
   if (event.target.id === 'contact-search') { searchContacts(event.target.value); return; }

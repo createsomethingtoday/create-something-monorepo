@@ -195,12 +195,13 @@ test('sidebar navigation protects an unfinished record and explicitly discards o
  });
 });
 
-test('reference history and scoped search cannot discard an unfinished task', async()=>{
+test('reference history and global search results cannot discard an unfinished task', async()=>{
  await appFixture(async({root,click,type,controls,calls})=>{
   await click({page:'gigs'});await click({page:'tasks'});await click({new:'tasks'});type('title','Keep navigation draft');
   await click({workspaceHistory:'-1'});assert.match(root.innerHTML,/Keep your changes/);
   await click({keepEditing:'1'});assert.equal(controls.get('title').value,'Keep navigation draft');
-  await click({findPeople:'1'});assert.match(root.innerHTML,/Keep your changes/);
+  await click({workspaceSearch:'1'});assert.doesNotMatch(root.innerHTML,/Keep your changes/);assert.equal(controls.get('title').value,'Keep navigation draft');
+  await click({searchRecord:'contacts1',searchEntity:'contacts'});assert.match(root.innerHTML,/Keep your changes/);
   await click({keepEditing:'1'});assert.equal(controls.get('title').value,'Keep navigation draft');
   await click({workspaceHistory:'-1'});await click({discardChanges:'1'});assert.match(root.innerHTML,/GiGi \/ Gigs &amp; shifts/);
   await click({workspaceHistory:'1'});assert.match(root.innerHTML,/GiGi \/ Tasks/);

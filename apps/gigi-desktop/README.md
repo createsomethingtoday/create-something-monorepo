@@ -1,5 +1,26 @@
 # GiGi desktop beta
 
+## Workspace search (0.2.23)
+
+The header Search control and Command/Control-F open a local workspace search
+without changing the current page. Results group People, Gigs, Finances and
+Tasks; People matches names, email, phone and linked companies, while the other
+groups match saved titles. Each group pages independently. Arrow keys and Enter
+move through results; Escape closes the dialog. Opening a result uses the
+existing unsaved-edit guard.
+
+Imported for CRE-2365 from `gigi-team/grantbot` PR #1426, feature commit
+`b76d3d03c13eb098dff2edc26e809fec0a2e9cf9` only, using the selected-commit
+procedure in that repository's `sandbox/gigi-desktop/UPSTREAM.md`. The import
+excludes its onboarding, navigation PR #1424, and concurrent chat/Today work.
+Conflict resolution retains the regular app's existing setup and navigation.
+No provider connection, migration, import, or financial action is introduced.
+
+For disposable native acceptance, run
+`cargo run --manifest-path apps/gigi-desktop/src-tauri/Cargo.toml --example seed_workspace_search_review -- <new-absolute-profile-path>`
+and use that profile through `GIGI_DATA_DIR`. The fixture contains one match in
+People/Gigs/Finances, nine matching Tasks, and an excluded other-workspace task.
+
 ## Daily-use polish (0.2.17 candidate)
 
 Today puts **New task** beside **New gig** and uses the minimum window more efficiently. Attention keeps its decisions and safety boundary with less repeated framing; record cards retain readable titles in two columns where space permits. Errors remain until dismissed, successful feedback respects keyboard focus, and failed attention checks never claim you are caught up. Studio, Paper, Midnight and protected record/approval flows remain established. See [candidate evidence](evidence/daily-polish-0217/REVIEW.md) for synthetic/native checks and remaining release gates.
