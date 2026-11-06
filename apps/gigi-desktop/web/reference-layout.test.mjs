@@ -5,7 +5,7 @@ import {referenceHeader,referenceCards,createWorkspaceHistory} from './reference
 test('reference shell retains every destination and labels its real search scope',()=>{
  const history=createWorkspaceHistory(); const html=referenceHeader({page:'social',sections,workspace:'<private>',history});
  for(const section of sections) assert.ok(html.includes(`data-page="${section.id}"`),section.id);
- assert.match(html,/aria-label="Find people"/); assert.match(html,/Find people/); assert.doesNotMatch(html,/Search GiGi/); assert.match(html,/&lt;private&gt;/);
+ assert.match(html,/aria-label="Search workspace"/); assert.match(html,/<span>Search<\/span><kbd>⌘F/); assert.match(html,/aria-haspopup="dialog"/); assert.doesNotMatch(html,/Find people/); assert.match(html,/&lt;private&gt;/);
  assert.match(html,/class="selected"/); assert.match(html,/data-workspace-history="-1"[^>]*disabled/);
 });
 test('workspace history preserves forward destinations and truncates only on new navigation',()=>{

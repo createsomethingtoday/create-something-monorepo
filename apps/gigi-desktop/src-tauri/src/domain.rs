@@ -31,7 +31,7 @@ const CONTACT_SEARCH_SQL: &str = "SELECT id,title,status,updated_at,json_extract
 pub(crate) fn search_fold(value: &str) -> String {
     value.nfd().filter(|ch| !is_combining_mark(*ch)).collect::<String>().to_lowercase()
 }
-fn search_contacts(db: &Connection, wid: &str, query: &str, offset: i64, limit: i64) -> Result<Value,String> {
+pub(crate) fn search_contacts(db: &Connection, wid: &str, query: &str, offset: i64, limit: i64) -> Result<Value,String> {
     // Both scans see the same state even if an agent edits companies concurrently.
     let snapshot = db.unchecked_transaction().map_err(|e|e.to_string())?;
     let folded=search_fold(query);
@@ -731,6 +731,11 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
                 Ok(bounded(get(&db, wid, entity, id)?, input["detail"] == "full"))
             }
         },
+        "workspace.search" => {
+            let wid = need(&input, "workspaceId")?;
+            workspace(&db, wid)?;
+            crate::workspace_search::search(&db, wid, &input)
+        }
         "records.list" => {
             let wid = need(&input, "workspaceId")?;
             let entity = table(&input, "entity")?;

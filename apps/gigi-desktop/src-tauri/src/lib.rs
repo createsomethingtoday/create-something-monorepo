@@ -1,4 +1,5 @@
 mod gig_list;
+mod workspace_search;
 pub mod artwork;
 pub mod artwork_mcp;
 pub mod artwork_protocol;
