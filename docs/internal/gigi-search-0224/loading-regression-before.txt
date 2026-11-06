@@ -8,9 +8,9 @@ not ok 1 - finishing a page read clears pointer blocking without replacing the a
   failureType: 'testCodeFailure'
   error: |-
     completed page reads must release pointer events while Search stays open
-    
+
     true !== false
-    
+
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected: false
