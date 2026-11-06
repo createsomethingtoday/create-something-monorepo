@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "codex-instruction-ablation-hidden-evaluation.v1",
+  "passed": false,
+  "build": {
+    "passed": true,
+    "exitCode": 0,
+    "signal": null,
+    "stdoutTail": "\n> @create-something/mcp-authz@0.1.0 build /private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/codex-mcp-authz-instructions-v1-fixtures/01-control-r1/packages/mcp-authz\n> tsc\n\n",
+    "stderrTail": ""
+  },
+  "cases": [
+    {
+      "name": "read description ignores control-plane prose",
+      "passed": false,
+      "error": "accessType: expected \"read\", received \"control_plane\""
+    },
+    {
+      "name": "read description ignores destructive prose",
+      "passed": false,
+      "error": "accessType: expected \"read\", received \"destructive\""
+    },
+    {
+      "name": "multiplexed list invocation classifies as read",
+      "passed": false,
+      "error": "accessType: expected \"read\", received \"write\""
+    },
+    {
+      "name": "multiplexed mutation invocation classifies as write",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "destructive invocation takes precedence",
+      "passed": false,
+      "error": "accessType: expected \"destructive\", received \"read\""
+    },
+    {
+      "name": "authentication invocation takes precedence",
+      "passed": false,
+      "error": "accessType: expected \"auth_admin\", received \"read\""
+    },
+    {
+      "name": "control-plane invocation remains control-plane",
+      "passed": false,
+      "error": "control-plane accessType: expected \"control_plane\", received \"read\""
+    },
+    {
+      "name": "authorization request retains invocation evidence",
+      "passed": false,
+      "error": "resource accessType: expected \"read\", received \"write\""
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "total": 8
+  }
+}
