@@ -230,6 +230,8 @@ their existing contracts. The homepage retains its authored five-chapter dial.
 On narrow public pages, search sits beside the menu in the masthead so it cannot
 cover reading or booking controls. The menu temporarily hides that entry while
 open; the existing search dialog and keyboard shortcut remain available.
+Closing search returns keyboard focus to its live launcher after the dialog's
+render update.
 
 `packages/agency/scripts/verify-measured-public.ego.mjs` runs in the parent's
 existing Ego TaskSpace. Supply `globalThis.MEASURED_PUBLIC` with `taskSpaceId`,

@@ -80,4 +80,13 @@ for (const route of config.routes ?? ['/services','/products','/stack','/field-r
   console.log(`PASS ${route}: responsive public shell and content.`);
 }
 await fs.writeFile(`${output}/browser-report.json`,JSON.stringify(reports,null,2));
+// The launcher is recreated when the shared dialog closes; focus must return
+// to that live control rather than the detached button that opened it.
+await p.cdp('Emulation.setDeviceMetricsOverride', {width:320,height:1000,deviceScaleFactor:1,mobile:false});
+await p.goto(new URL('/services?public-brand-check=search-focus',base).href);
+await p.waitForFunction(()=>document.querySelector('[data-agency-search-ready]')?.dataset.agencySearchReady==='true');
+await p.focus('.mobile-search-button'); await p.keyboard.press('Enter');
+await p.waitForSelector('.agency-search'); await p.keyboard.press('Escape');
+await p.waitForFunction(()=>!document.querySelector('.agency-search') && document.activeElement?.matches('.mobile-search-button'));
+console.log('PASS mobile search opens and restores keyboard focus.');
 console.log(`PASS ${reports.length} route/width observations. No forms submitted.`);

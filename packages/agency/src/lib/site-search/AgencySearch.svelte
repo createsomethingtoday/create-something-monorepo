@@ -49,7 +49,14 @@
     if (view.status === 'searching') controller.cancel();
     open = false;
     save();
-    previousFocus?.focus();
+    // UnifiedSearch recreates its mobile launcher after the dialog closes.
+    // Wait for that update before restoring a removed launcher's focus.
+    void tick().then(() => {
+      const target = previousFocus?.isConnected
+        ? previousFocus
+        : document.querySelector<HTMLButtonElement>('.mobile-search-button');
+      target?.focus({ preventScroll: true });
+    });
   }
   async function navigate(id: string) {
     if (!view.results.some((entry) => entry.id === id)) return;
