@@ -34,6 +34,14 @@ test('worker operating slice joins topology records to Cloudflare runtime covera
   const expectedRuntimeRecords = runtimeBindingCoverage.records.filter((record) =>
     workerReview?.recordIds.includes(record.recordId)
   );
+  // The repository inventory grows; verify the join against source records,
+  // rather than freezing the number of worker packages at a past snapshot.
+  const expectedWorkerPackages = topology.nodes.filter((node) =>
+    workerReview?.recordIds.includes(node.id) &&
+    node.id.includes(':package:') &&
+    node.runtime.split(',').map((runtime) => runtime.trim()).includes('cloudflare')
+  );
+  assert.ok(expectedWorkerPackages.length > 0);
   const expectedBindingRefs = expectedRuntimeRecords.reduce(
     (total, record) => total + record.bindings.length,
     0
@@ -49,7 +57,7 @@ test('worker operating slice joins topology records to Cloudflare runtime covera
   assert.equal(worker?.missingRecordIds.length, 0);
   assert.equal(worker?.workerRuntime?.runtime, 'cloudflare');
   assert.equal(worker?.workerRuntime?.runtimeConfigRecords, expectedRuntimeRecords.length);
-  assert.equal(worker?.workerRuntime?.workerPackageRecords, 28);
+  assert.equal(worker?.workerRuntime?.workerPackageRecords, expectedWorkerPackages.length);
   assert.equal(worker?.workerRuntime?.bindingRefs, expectedBindingRefs);
   assert.equal(worker?.workerRuntime?.routeRefs, expectedRouteRefs);
   assert.ok(worker?.workerRuntime?.workersWithD1 >= 60);

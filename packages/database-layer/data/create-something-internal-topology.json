@@ -4,14 +4,14 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-10-22T14:00:48.677Z",
+    "generatedAt": "2026-11-06T21:42:44.687Z",
     "rootPath": ".",
-    "packageCount": 245,
-    "appCount": 14,
-    "workerCount": 117,
+    "packageCount": 250,
+    "appCount": 15,
+    "workerCount": 120,
     "clientOverlayCount": 8,
     "policyCount": 64,
-    "guideCount": 82,
+    "guideCount": 86,
     "configCount": 40
   },
   "nodes": [
@@ -53,6 +53,24 @@
       ],
       "packageName": "@create-something/components",
       "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:app:create-something-agency-meta-maintenance-apps-agency-meta-maintenance",
+      "atlasNodeId": "atlas_create-something_app_create-something-agency-meta-maintenance-apps-agency-meta-maintenance",
+      "title": "@create-something/agency-meta-maintenance",
+      "path": "apps/agency-meta-maintenance",
+      "tier": "Automation",
+      "surface": "app",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at apps/agency-meta-maintenance.",
+      "tags": [
+        "package",
+        "app",
+        "automation"
+      ],
+      "packageName": "@create-something/agency-meta-maintenance",
+      "runtime": "cloudflare, node"
     },
     {
       "id": "substrate:create-something:app:create-something-atlas-studio-desktop-apps-atlas-studio-desktop",
@@ -1502,6 +1520,23 @@
       "runtime": "cloudflare, node"
     },
     {
+      "id": "substrate:create-something:package:create-something-creator-storefront-packages-creator-storefront",
+      "atlasNodeId": "atlas_create-something_package_create-something-creator-storefront-packages-creator-storefront",
+      "title": "@create-something/creator-storefront",
+      "path": "packages/creator-storefront",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Creator storefront authoring service (serialized per-Creator writer) and public read API for the Webflow template marketplace",
+      "tags": [
+        "package",
+        "worker"
+      ],
+      "packageName": "@create-something/creator-storefront",
+      "runtime": "cloudflare, node"
+    },
+    {
       "id": "substrate:create-something:package:create-something-cs-mcp-hub-notion-bridge-packages-cs-mcp-hub-notion-bridge",
       "atlasNodeId": "atlas_create-something_package_create-something-cs-mcp-hub-notion-bridge-packages-cs-mcp-hub-notion-bridge",
       "title": "@create-something/cs-mcp-hub-notion-bridge",
@@ -1630,6 +1665,23 @@
         "package"
       ],
       "packageName": "@create-something/delivery-schema",
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-walkthrough-system-packages-dotfiles-codex-skills-create-something-demo-director-assets-director-kit",
+      "atlasNodeId": "atlas_create-something_package_create-something-walkthrough-system-packages-dotfiles-codex-skills-create-something-demo-director-assets-director-kit",
+      "title": "@create-something/walkthrough-system",
+      "path": "packages/dotfiles/codex/skills/create-something-demo-director/assets/director-kit",
+      "tier": "Automation",
+      "surface": "package",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Manifest-driven screen walkthroughs with a synchronized wayfinder and deterministic video exports.",
+      "tags": [
+        "package",
+        "package"
+      ],
+      "packageName": "@create-something/walkthrough-system",
       "runtime": "node"
     },
     {
@@ -3837,6 +3889,23 @@
       "runtime": "node"
     },
     {
+      "id": "substrate:create-something:package:create-something-walkthrough-system-packages-walkthrough-system",
+      "atlasNodeId": "atlas_create-something_package_create-something-walkthrough-system-packages-walkthrough-system",
+      "title": "@create-something/walkthrough-system",
+      "path": "packages/walkthrough-system",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Manifest-driven screen walkthroughs with a synchronized wayfinder and deterministic video exports.",
+      "tags": [
+        "package",
+        "worker"
+      ],
+      "packageName": "@create-something/walkthrough-system",
+      "runtime": "cloudflare, node"
+    },
+    {
       "id": "substrate:create-something:package:create-something-webflow-app-forge-packages-webflow-app-forge",
       "atlasNodeId": "atlas_create-something_package_create-something-webflow-app-forge-packages-webflow-app-forge",
       "title": "@create-something/webflow-app-forge",
@@ -4438,6 +4507,23 @@
       "runtime": "cloudflare, node"
     },
     {
+      "id": "substrate:create-something:package:create-something-webflow-template-validation-cli-packages-webflow-template-validation-cli",
+      "atlasNodeId": "atlas_create-something_package_create-something-webflow-template-validation-cli-packages-webflow-template-validation-cli",
+      "title": "@create-something/webflow-template-validation-cli",
+      "path": "packages/webflow-template-validation/cli",
+      "tier": "Automation",
+      "surface": "package",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Creator CLI for the Webflow Way template validator: login, sites, validate",
+      "tags": [
+        "package",
+        "package"
+      ],
+      "packageName": "@create-something/webflow-template-validation-cli",
+      "runtime": "node"
+    },
+    {
       "id": "substrate:create-something:package:create-something-webflow-template-validation-extension-packages-webflow-template-validation-extension",
       "atlasNodeId": "atlas_create-something_package_create-something-webflow-template-validation-extension-packages-webflow-template-validation-extension",
       "title": "@create-something/webflow-template-validation-extension",
@@ -4481,7 +4567,7 @@
       "atlasNodeId": "atlas_create-something_package_create-something-webflow-template-validation-worker-packages-webflow-template-validation-worker",
       "title": "@create-something/webflow-template-validation-worker",
       "path": "packages/webflow-template-validation/worker",
-      "tier": "Automation",
+      "tier": "Database",
       "surface": "worker",
       "owner": "CREATE SOMETHING",
       "status": "mapped",
@@ -4732,6 +4818,23 @@
       ],
       "packageName": "zendesk-mcp-worker",
       "runtime": "cloudflare, node"
+    },
+    {
+      "id": "substrate:create-something:worker:apps-agency-meta-maintenance-wrangler-jsonc",
+      "atlasNodeId": "atlas_create-something_worker_apps-agency-meta-maintenance-wrangler-jsonc",
+      "title": "apps/agency-meta-maintenance/wrangler.jsonc",
+      "path": "apps/agency-meta-maintenance/wrangler.jsonc",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at apps/agency-meta-maintenance/wrangler.jsonc.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
     },
     {
       "id": "substrate:create-something:worker:apps-bettermode-marketplace-creator-agent-wrangler-jsonc",
@@ -5270,6 +5373,23 @@
       "owner": "CREATE SOMETHING",
       "status": "mapped",
       "summary": "Cloudflare runtime configuration at packages/create-something-mcp/worker/wrangler.toml.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
+      "id": "substrate:create-something:worker:packages-creator-storefront-wrangler-toml",
+      "atlasNodeId": "atlas_create-something_worker_packages-creator-storefront-wrangler-toml",
+      "title": "packages/creator-storefront/wrangler.toml",
+      "path": "packages/creator-storefront/wrangler.toml",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/creator-storefront/wrangler.toml.",
       "tags": [
         "worker",
         "cloudflare",
@@ -6341,6 +6461,23 @@
       "owner": "CREATE SOMETHING",
       "status": "mapped",
       "summary": "Cloudflare runtime configuration at packages/three-tier-framework-mcp/worker/wrangler.toml.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
+      "id": "substrate:create-something:worker:packages-walkthrough-system-wrangler-jsonc",
+      "atlasNodeId": "atlas_create-something_worker_packages-walkthrough-system-wrangler-jsonc",
+      "title": "packages/walkthrough-system/wrangler.jsonc",
+      "path": "packages/walkthrough-system/wrangler.jsonc",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/walkthrough-system/wrangler.jsonc.",
       "tags": [
         "worker",
         "cloudflare",
@@ -7818,6 +7955,36 @@
       ]
     },
     {
+      "id": "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-agency-meta-attribution-md",
+      "title": "AGENCY_META_ATTRIBUTION.md",
+      "path": "docs/guides/AGENCY_META_ATTRIBUTION.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
+      "id": "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-agency-mobbin-motion-research-md",
+      "title": "AGENCY_MOBBIN_MOTION_RESEARCH.md",
+      "path": "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
       "id": "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
       "atlasNodeId": "atlas_create-something_guide_docs-guides-agency-ops-pm-agent-notion-review-2026-md",
       "title": "AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
@@ -8553,6 +8720,21 @@
       ]
     },
     {
+      "id": "substrate:create-something:guide:docs-guides-newsletter-workflow-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-newsletter-workflow-md",
+      "title": "NEWSLETTER_WORKFLOW.md",
+      "path": "docs/guides/NEWSLETTER_WORKFLOW.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
       "id": "substrate:create-something:guide:docs-guides-notion-api-compatibility-audit-2026-md",
       "atlasNodeId": "atlas_create-something_guide_docs-guides-notion-api-compatibility-audit-2026-md",
       "title": "NOTION_API_COMPATIBILITY_AUDIT_2026.md",
@@ -8887,6 +9069,21 @@
       "atlasNodeId": "atlas_create-something_guide_docs-guides-substrate-topology-operator-contract-md",
       "title": "SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md",
       "path": "docs/guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
+      "id": "substrate:create-something:guide:docs-guides-t3-code-workflow-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-t3-code-workflow-md",
+      "title": "T3_CODE_WORKFLOW.md",
+      "path": "docs/guides/T3_CODE_WORKFLOW.md",
       "tier": "Mixed",
       "surface": "guide",
       "owner": "CREATE SOMETHING",
@@ -9652,6 +9849,13 @@
       "evidence": ".archive/components-deprecated is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-app-create-something-agency-meta-maintenance-apps-agency-meta-maintenance",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:app:create-something-agency-meta-maintenance-apps-agency-meta-maintenance",
+      "relation": "contains",
+      "evidence": "apps/agency-meta-maintenance is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-app-create-something-atlas-studio-desktop-apps-atlas-studio-desktop",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:app:create-something-atlas-studio-desktop-apps-atlas-studio-desktop",
@@ -10198,6 +10402,13 @@
       "evidence": "packages/create-something-mcp/worker is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-creator-storefront-packages-creator-storefront",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-creator-storefront-packages-creator-storefront",
+      "relation": "contains",
+      "evidence": "packages/creator-storefront is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-cs-mcp-hub-notion-bridge-packages-cs-mcp-hub-notion-bridge",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-cs-mcp-hub-notion-bridge-packages-cs-mcp-hub-notion-bridge",
@@ -10245,6 +10456,13 @@
       "target": "substrate:create-something:package:create-something-delivery-schema-packages-delivery-schema",
       "relation": "contains",
       "evidence": "packages/delivery-schema is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-walkthrough-system-packages-dotfiles-codex-skills-create-something-demo-director-assets-director-kit",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-walkthrough-system-packages-dotfiles-codex-skills-create-something-demo-director-assets-director-kit",
+      "relation": "contains",
+      "evidence": "packages/dotfiles/codex/skills/create-something-demo-director/assets/director-kit is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-dotfiles-packages-dotfiles",
@@ -11017,6 +11235,13 @@
       "evidence": "packages/ui-preview-mcp is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-walkthrough-system-packages-walkthrough-system",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-walkthrough-system-packages-walkthrough-system",
+      "relation": "contains",
+      "evidence": "packages/walkthrough-system is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-app-forge-packages-webflow-app-forge",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-webflow-app-forge-packages-webflow-app-forge",
@@ -11248,6 +11473,13 @@
       "evidence": "packages/webflow-template-search is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-template-validation-cli-packages-webflow-template-validation-cli",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-webflow-template-validation-cli-packages-webflow-template-validation-cli",
+      "relation": "contains",
+      "evidence": "packages/webflow-template-validation/cli is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-template-validation-extension-packages-webflow-template-validation-extension",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-webflow-template-validation-extension-packages-webflow-template-validation-extension",
@@ -11358,6 +11590,13 @@
       "target": "substrate:create-something:package:zendesk-mcp-worker-packages-zendesk-mcp-worker",
       "relation": "contains",
       "evidence": "packages/zendesk-mcp/worker is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-apps-agency-meta-maintenance-wrangler-jsonc",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:apps-agency-meta-maintenance-wrangler-jsonc",
+      "relation": "contains",
+      "evidence": "apps/agency-meta-maintenance/wrangler.jsonc is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-apps-bettermode-marketplace-creator-agent-wrangler-jsonc",
@@ -11582,6 +11821,13 @@
       "target": "substrate:create-something:worker:packages-create-something-mcp-worker-wrangler-toml",
       "relation": "contains",
       "evidence": "packages/create-something-mcp/worker/wrangler.toml is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-creator-storefront-wrangler-toml",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-creator-storefront-wrangler-toml",
+      "relation": "contains",
+      "evidence": "packages/creator-storefront/wrangler.toml is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-cs-mcp-hub-notion-bridge-wrangler-toml",
@@ -12023,6 +12269,13 @@
       "target": "substrate:create-something:worker:packages-three-tier-framework-mcp-worker-wrangler-toml",
       "relation": "contains",
       "evidence": "packages/three-tier-framework-mcp/worker/wrangler.toml is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-walkthrough-system-wrangler-jsonc",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-walkthrough-system-wrangler-jsonc",
+      "relation": "contains",
+      "evidence": "packages/walkthrough-system/wrangler.jsonc is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-webflow-app-review-mcp-worker-wrangler-toml",
@@ -12690,6 +12943,20 @@
       "evidence": "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-agency-meta-attribution-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+      "relation": "contains",
+      "evidence": "docs/guides/AGENCY_META_ATTRIBUTION.md is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-agency-mobbin-motion-research-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+      "relation": "contains",
+      "evidence": "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-agency-ops-pm-agent-notion-review-2026-md",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
@@ -13033,6 +13300,13 @@
       "evidence": "docs/guides/NEWSLETTER_ENGAGEMENT_RUNBOOK.md is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-newsletter-workflow-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-newsletter-workflow-md",
+      "relation": "contains",
+      "evidence": "docs/guides/NEWSLETTER_WORKFLOW.md is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-notion-api-compatibility-audit-2026-md",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:guide:docs-guides-notion-api-compatibility-audit-2026-md",
@@ -13192,6 +13466,13 @@
       "target": "substrate:create-something:guide:docs-guides-substrate-topology-operator-contract-md",
       "relation": "contains",
       "evidence": "docs/guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-t3-code-workflow-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-t3-code-workflow-md",
+      "relation": "contains",
+      "evidence": "docs/guides/T3_CODE_WORKFLOW.md is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-ui-preview-system-md",
@@ -13528,6 +13809,13 @@
       "target": "substrate:create-something:package:create-something-tufte-packages-tufte",
       "relation": "depends_on",
       "evidence": "@create-something/components declares @create-something/tufte."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-app-create-something-agency-meta-maintenance-apps-agency-meta-maintenance-runs-substrate-create-something-worker-apps-agency-meta-maintenance-wrangler-jsonc",
+      "source": "substrate:create-something:app:create-something-agency-meta-maintenance-apps-agency-meta-maintenance",
+      "target": "substrate:create-something:worker:apps-agency-meta-maintenance-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for apps/agency-meta-maintenance."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-app-create-something-bettermode-marketplace-creator-agent-apps-bettermode-marketplace-creator-agent-runs-substrate-create-something-worker-apps-bettermode-marketplace-creator-agent-wrangler-jsonc",
@@ -14144,6 +14432,20 @@
       "target": "substrate:create-something:worker:packages-create-something-mcp-worker-wrangler-toml",
       "relation": "runs",
       "evidence": "wrangler.toml configures runtime for packages/create-something-mcp/worker."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-creator-storefront-packages-creator-storefront-depends-on-substrate-create-something-package-create-something-webflow-dashboard-core-packages-webflow-dashboard-core",
+      "source": "substrate:create-something:package:create-something-creator-storefront-packages-creator-storefront",
+      "target": "substrate:create-something:package:create-something-webflow-dashboard-core-packages-webflow-dashboard-core",
+      "relation": "depends_on",
+      "evidence": "@create-something/creator-storefront declares @create-something/webflow-dashboard-core."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-creator-storefront-packages-creator-storefront-runs-substrate-create-something-worker-packages-creator-storefront-wrangler-toml",
+      "source": "substrate:create-something:package:create-something-creator-storefront-packages-creator-storefront",
+      "target": "substrate:create-something:worker:packages-creator-storefront-wrangler-toml",
+      "relation": "runs",
+      "evidence": "wrangler.toml configures runtime for packages/creator-storefront."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-cs-mcp-hub-notion-bridge-packages-cs-mcp-hub-notion-bridge-runs-substrate-create-something-worker-packages-cs-mcp-hub-notion-bridge-wrangler-toml",
@@ -15371,6 +15673,13 @@
       "evidence": "@create-something/ui-preview-mcp declares @create-something/observability."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-walkthrough-system-packages-walkthrough-system-runs-substrate-create-something-worker-packages-walkthrough-system-wrangler-jsonc",
+      "source": "substrate:create-something:package:create-something-walkthrough-system-packages-walkthrough-system",
+      "target": "substrate:create-something:worker:packages-walkthrough-system-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/walkthrough-system."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-app-review-mcp-packages-webflow-app-review-mcp-runs-substrate-create-something-worker-packages-webflow-app-review-mcp-worker-wrangler-toml",
       "source": "substrate:create-something:package:create-something-webflow-app-review-mcp-packages-webflow-app-review-mcp",
       "target": "substrate:create-something:worker:packages-webflow-app-review-mcp-worker-wrangler-toml",
@@ -16218,6 +16527,20 @@
       "evidence": "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md is an operating guide."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-meta-attribution-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/AGENCY_META_ATTRIBUTION.md is an operating guide."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-mobbin-motion-research-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md is an operating guide."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-ops-pm-agent-notion-review-2026-md-documents-substrate-create-something-root",
       "source": "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
       "target": "substrate:create-something:root",
@@ -16561,6 +16884,13 @@
       "evidence": "docs/guides/NEWSLETTER_ENGAGEMENT_RUNBOOK.md is an operating guide."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-newsletter-workflow-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-newsletter-workflow-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/NEWSLETTER_WORKFLOW.md is an operating guide."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-notion-api-compatibility-audit-2026-md-documents-substrate-create-something-root",
       "source": "substrate:create-something:guide:docs-guides-notion-api-compatibility-audit-2026-md",
       "target": "substrate:create-something:root",
@@ -16720,6 +17050,13 @@
       "target": "substrate:create-something:root",
       "relation": "documents",
       "evidence": "docs/guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md is an operating guide."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-t3-code-workflow-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-t3-code-workflow-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/T3_CODE_WORKFLOW.md is an operating guide."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-ui-preview-system-md-documents-substrate-create-something-root",
@@ -17282,6 +17619,20 @@
       "evidence": "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md documents packages/agency through the stable guide platform anchor."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-meta-attribution-md-documents-substrate-create-something-app-create-something-agency-meta-maintenance-apps-agency-meta-maintenance",
+      "source": "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+      "target": "substrate:create-something:app:create-something-agency-meta-maintenance-apps-agency-meta-maintenance",
+      "relation": "documents",
+      "evidence": "docs/guides/AGENCY_META_ATTRIBUTION.md documents apps/agency-meta-maintenance through matching topology terms."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-mobbin-motion-research-md-documents-substrate-create-something-package-create-something-io-packages-io",
+      "source": "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
+      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "relation": "documents",
+      "evidence": "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md documents packages/io through matching topology terms."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-ops-pm-agent-notion-review-2026-md-documents-substrate-create-something-agent-config-config-dify-agents-template-review-hub-json",
       "source": "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
       "target": "substrate:create-something:agent-config:config-dify-agents-template-review-hub-json",
@@ -17317,11 +17668,11 @@
       "evidence": "docs/guides/ANTIGRAVITY_MCP_ENABLEMENT.md documents packages/io through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-arena-taste-integration-md-documents-substrate-create-something-package-create-something-database-layer-packages-database-layer",
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-arena-taste-integration-md-documents-substrate-create-something-package-create-something-dotfiles-packages-dotfiles",
       "source": "substrate:create-something:guide:docs-guides-arena-taste-integration-md",
-      "target": "substrate:create-something:package:create-something-database-layer-packages-database-layer",
+      "target": "substrate:create-something:package:create-something-dotfiles-packages-dotfiles",
       "relation": "documents",
-      "evidence": "docs/guides/ARENA_TASTE_INTEGRATION.md documents packages/database-layer through the stable guide platform anchor."
+      "evidence": "docs/guides/ARENA_TASTE_INTEGRATION.md documents packages/dotfiles through an explicit repository link."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-atlas-linear-integration-md-documents-substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
@@ -17590,6 +17941,13 @@
       "evidence": "docs/guides/NEWSLETTER_ENGAGEMENT_RUNBOOK.md documents packages/arc through matching topology terms."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-newsletter-workflow-md-documents-substrate-create-something-package-create-something-io-packages-io",
+      "source": "substrate:create-something:guide:docs-guides-newsletter-workflow-md",
+      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "relation": "documents",
+      "evidence": "docs/guides/NEWSLETTER_WORKFLOW.md documents packages/io through an explicit repository link."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-notion-workers-and-cli-2026-md-documents-substrate-create-something-agent-config-config-dify-agents-youtube-transcript-notion-agent-json",
       "source": "substrate:create-something:guide:docs-guides-notion-workers-and-cli-2026-md",
       "target": "substrate:create-something:agent-config:config-dify-agents-youtube-transcript-notion-agent-json",
@@ -17721,6 +18079,13 @@
       "target": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
       "relation": "documents",
       "evidence": "docs/guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md documents packages/substrate-mcp through matching topology terms."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-t3-code-workflow-md-documents-substrate-create-something-package-createsomething-loom-mcp-packages-loom-npm",
+      "source": "substrate:create-something:guide:docs-guides-t3-code-workflow-md",
+      "target": "substrate:create-something:package:createsomething-loom-mcp-packages-loom-npm",
+      "relation": "documents",
+      "evidence": "docs/guides/T3_CODE_WORKFLOW.md documents packages/loom/npm through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-ui-preview-system-md-documents-substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
