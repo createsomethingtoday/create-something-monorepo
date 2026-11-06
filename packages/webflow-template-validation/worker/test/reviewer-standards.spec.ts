@@ -146,6 +146,56 @@ describe('Reviewer standards', () => {
 		]);
 	});
 
+	it('flags off-site links that sell or promote templates, but not internal links or a footer credit', () => {
+		const page = audit(
+			'/',
+			NAV +
+				'<a href="https://webflow.com/templates/html/example-template" class="button">Get this template</a>' +
+				'<a href="https://example.gumroad.com/l/kit">UI kit</a>' +
+				'<a href="/templates">All templates</a>' +
+				'<footer class="footer"><a href="/licenses">Licenses</a> Designed by <a href="https://studio.example.com">Studio</a></footer>'
+		);
+		expect(page.findings['self-promotion']).toBe('"Get this template" → webflow.com; "UI kit" → example.gumroad.com');
+		expect(audit('/', NAV + '<a href="https://webflow.com/@studio">More templates</a>' + FOOTER).findings['self-promotion']).toBe(
+			'"More templates" → webflow.com'
+		);
+		expect(audit('/', NAV + '<a href="https://studio.example.com">Designed by Studio</a>' + FOOTER).findings['self-promotion']).toBeUndefined();
+	});
+
+	it('requires the exact Licenses opening text on /licenses only, ignoring case, spacing and quote style', () => {
+		const exact = 'All graphical assets in this template are licensed for personal and commercial use. If you\u2019d like to use a specific asset, please check the license below.';
+		expect(audit('/licenses', `${NAV}<h1>Licenses</h1><p>${exact}</p>${FOOTER}`).findings['licenses-boilerplate']).toBeUndefined();
+		expect(audit('/licenses', `${NAV}<h1>Licenses</h1><p>${exact.toUpperCase().replace(/ /g, '  ')}</p>${FOOTER}`).findings['licenses-boilerplate']).toBeUndefined();
+		expect(audit('/licenses', `${NAV}<h1>Licenses</h1><p>All assets are free to use.</p>${FOOTER}`).findings['licenses-boilerplate']).toBe(
+			'the exact opening text was not found'
+		);
+		expect(audit('/about', `${NAV}<p>No boilerplate here.</p>${FOOTER}`).findings['licenses-boilerplate']).toBeUndefined();
+		const formatted =
+			'<p>All graphical assets in this template are licensed for <em>personal and commercial use</em>. If you\'d like to use a specific <strong>asset</strong>, please check the license below.</p>';
+		expect(audit('/licenses', `${NAV}<h1>Licenses</h1>${formatted}${FOOTER}`).findings['licenses-boilerplate']).toBeUndefined();
+	});
+
+	it('requires /instructions only when custom code calls GSAP and the site answered 404 for it', () => {
+		const inert = audit(
+			'/contact',
+			`${NAV}<script>// gsap.to(".hero", { y: 0 });\n/* gsap.from(".card") */\nconst example = "gsap.to('.x')"; const tip = \`ScrollTrigger.create({})\`;</script>${FOOTER}`
+		);
+		expect(inert.usesCustomGsap).toBe(false);
+		const afterComment = audit('/team', `${NAV}<script>// intro\nconst url = "https://example.com//x"; gsap.timeline();</script>${FOOTER}`);
+		expect(afterComment.usesCustomGsap).toBe(true);
+		const custom = audit('/', `${NAV}<script>gsap.registerPlugin(ScrollTrigger); gsap.to('.hero', { y: 0 });</script>${FOOTER}`);
+		const webflowOnly = audit('/about', `${NAV}<script src="https://cdn.prod.website-files.com/gsap/3.14.2/gsap.min.js"></script>${FOOTER}`);
+		expect(custom.usesCustomGsap).toBe(true);
+		expect(webflowOnly.usesCustomGsap).toBe(false);
+
+		const ids = (audits: ReturnType<typeof audit>[], missingPaths?: string[]) =>
+			generateReviewerStandardIssues(audits, { missingPaths }).map((issue) => issue.id);
+		expect(ids([custom, webflowOnly], ['/instructions'])).toContain('gsap-instructions-page');
+		expect(ids([custom], undefined)).not.toContain('gsap-instructions-page');
+		expect(ids([webflowOnly], ['/instructions'])).not.toContain('gsap-instructions-page');
+		expect(ids([custom, audit('/instructions', '<h1>How to Edit GSAP Animations</h1>')], ['/instructions'])).not.toContain('gsap-instructions-page');
+	});
+
 	it('skips an empty document and normalizes the page path', () => {
 		expect(auditReviewerStandards('', `${SITE}/about`)).toBeNull();
 		expect(audit('/about/', NAV + FOOTER).path).toBe('/about');

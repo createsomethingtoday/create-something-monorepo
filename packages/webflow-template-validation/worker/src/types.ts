@@ -495,7 +495,10 @@ export type ReviewerStandardId =
 	| '404-navigation'
 	| 'licenses-link'
 	| 'default-favicon'
-	| 'trademark-symbols';
+	| 'trademark-symbols'
+	| 'self-promotion'
+	| 'licenses-boilerplate'
+	| 'gsap-instructions-page';
 
 export interface ReviewerPageAudit {
 	url: string;
@@ -505,6 +508,8 @@ export interface ReviewerPageAudit {
 	findings: Partial<Record<ReviewerStandardId, string>>;
 	hasNav: boolean;
 	hasFooter: boolean;
+	/** The page calls GSAP from inline custom code (not only Webflow's own GSAP-powered Interactions). */
+	usesCustomGsap: boolean;
 }
 
 export interface PageSEOData {

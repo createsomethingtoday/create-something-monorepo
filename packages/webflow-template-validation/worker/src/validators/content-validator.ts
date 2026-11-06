@@ -290,14 +290,14 @@ export async function validateContent(
 			: combinedPages;
 
 		// Generate content validation issues. The reviewer standards also read
-		// /404 and /401, which the crawl does not always reach.
-		const utilityAudits = await auditUtilityPages(siteUrl, allPages, excludedSlugs);
+		// the utility pages, which the crawl does not always reach.
+		const utility = await auditUtilityPages(siteUrl, allPages, excludedSlugs);
 		const issues = [
 			...generateContentIssues(allPages, resolvedChecks),
-			...generateReviewerStandardIssues([
-				...allPages.flatMap(page => (page.reviewerAudit ? [page.reviewerAudit] : [])),
-				...utilityAudits
-			])
+			...generateReviewerStandardIssues(
+				[...allPages.flatMap(page => (page.reviewerAudit ? [page.reviewerAudit] : [])), ...utility.audits],
+				{ missingPaths: utility.missingPaths }
+			)
 		];
 
 		// Calculate content statistics
@@ -400,25 +400,29 @@ async function analyzePage(url: string, parsedHTML: ParsedHTML): Promise<Analyze
 }
 
 /**
- * Fetch and audit /404 and /401 when the crawl did not include them and they
- * are not excluded. The 404 page may answer with HTTP 404, so its HTML is kept;
- * any other page that does not load is skipped.
+ * Fetch and audit the reviewer-standard utility pages (/404, /401, /licenses,
+ * /instructions) when the crawl did not include them and they are not
+ * excluded. The 404 page may answer with HTTP 404, so its HTML is kept. Any
+ * other path that answers HTTP 404 is reported as missing; a page that fails
+ * to load for another reason is skipped, so a network error never blocks.
  */
 async function auditUtilityPages(siteUrl: string, pages: AnalyzedPage[], excludedSlugs: Set<string>) {
 	const crawled = new Set(pages.map(page => page.reviewerAudit?.path).filter(Boolean));
 	const paths = REVIEWER_UTILITY_PATHS.filter(path => !crawled.has(path) && !excludedSlugs.has(normalizeSlugForComparison(path) ?? ''));
+	const missingPaths: string[] = [];
 	const audits = await Promise.all(
 		paths.map(async path => {
 			const pageUrl = new URL(path, siteUrl).href;
 			try {
 				const page = await fetchHTML(pageUrl, path === '/404' ? { acceptStatus: [404] } : undefined);
 				return auditReviewerStandards(page.html, pageUrl);
-			} catch {
+			} catch (error) {
+				if (error instanceof Error && /^HTTP 404\b/.test(error.message)) missingPaths.push(path);
 				return null;
 			}
 		})
 	);
-	return audits.filter((audit): audit is NonNullable<typeof audit> => audit !== null);
+	return { audits: audits.filter((audit): audit is NonNullable<typeof audit> => audit !== null), missingPaths };
 }
 
 function isUtilityPagePlaceholderAllowed(url: string): boolean {
