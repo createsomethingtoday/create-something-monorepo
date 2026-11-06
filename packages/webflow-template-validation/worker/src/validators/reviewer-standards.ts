@@ -29,6 +29,8 @@ interface Standard {
 }
 
 const CATEGORY = 'Content & Accessibility';
+const LICENSES_BOILERPLATE =
+	"All graphical assets in this template are licensed for personal and commercial use. If you'd like to use a specific asset, please check the license below.";
 
 const STANDARDS: Record<ReviewerStandardId, Standard> = {
 	'form-default-messages': {
@@ -65,6 +67,21 @@ const STANDARDS: Record<ReviewerStandardId, Standard> = {
 		message: (n) => `The copy uses ® or ™ symbols on ${n} page(s)`,
 		description: 'Template brands are fictional, and the symbols claim a registered trademark.',
 		howToFix: 'Remove the ® and ™ symbols from the copy.'
+	},
+	'self-promotion': {
+		message: (n) => `Links promote the creator or other templates on ${n} page(s)`,
+		description: 'Buyers publish the template as their own site, so "Buy template", "Get template" and "More templates" links ship to their visitors. One "Designed by" credit in the footer is allowed.',
+		howToFix: 'Remove buy, get and more-templates links and links to template stores. Keep at most one "Designed by" credit in the footer.'
+	},
+	'licenses-boilerplate': {
+		message: () => 'The Licenses page is missing the required opening text',
+		description: `The Licenses page must start with this exact text: "${LICENSES_BOILERPLATE}"`,
+		howToFix: 'Paste the exact text at the top of the Licenses page, then list each asset with its license link.'
+	},
+	'gsap-instructions-page': {
+		message: () => 'GSAP is used in custom code, but there is no Instructions page',
+		description: 'When custom code uses GSAP, buyers need an Instructions page at /instructions with a "How to Edit GSAP Animations" section.',
+		howToFix: 'Create a page at /instructions with a "How to Edit GSAP Animations" section that lists the animated selectors and how to change or remove them.'
 	}
 };
 
@@ -78,11 +95,17 @@ const DEFAULT_ICON_PATHS = { favicon: '/img/favicon.ico', webclip: '/img/webclip
 const NO_TEXT_TAGS = new Set(['script', 'style', 'noscript', 'template', 'svg', 'head']);
 const INERT_TAGS = new Set(['template', 'noscript']);
 const LICENSES_PATH = '/licenses';
+const INSTRUCTIONS_PATH = '/instructions';
+/** Calls to buy, get or see more templates (guideline layout-and-content-18). Matched only on links that leave the site. */
+const PROMO_LINK_TEXT = /\b(?:buy|get|purchase)\b[^.]{0,20}\btemplates?\b|\b(?:more|all|other|browse|explore)\b[^.]{0,12}\btemplates\b/i;
+const TEMPLATE_STORE_HOST = /(?:^|\.)(?:gumroad\.com|lemonsqueezy\.com|themeforest\.net|creativemarket\.com|ui8\.net|templatemonster\.com|envato\.com)$/i;
+/** GSAP called from inline custom code. Webflow's own GSAP-powered Interactions do not write these calls inline. */
+const CUSTOM_GSAP_CALL = /\bgsap\.(?:to|from|fromTo|timeline|set|registerPlugin|matchMedia|context)\s*\(|\bScrollTrigger\.(?:create|batch)\s*\(/;
 /** Utility pages: the guideline asks for the link on the site's pages, and the 404 page has its own navbar/footer check. */
 const NO_LICENSES_LINK_PATHS = new Set(['/401', '/404', '/licenses', '/changelog', '/style-guide', '/styleguide', '/instructions']);
 
 /** Paths the content crawl may not reach but the standards need. */
-export const REVIEWER_UTILITY_PATHS = ['/404', '/401'];
+export const REVIEWER_UTILITY_PATHS = ['/404', '/401', LICENSES_PATH, INSTRUCTIONS_PATH];
 
 /** Audit one published page. Returns null for an empty document. */
 export function auditReviewerStandards(html: string, pageUrl: string): ReviewerPageAudit | null {
@@ -102,12 +125,24 @@ export function auditReviewerStandards(html: string, pageUrl: string): ReviewerP
 	if (!NO_LICENSES_LINK_PATHS.has(path)) record('licenses-link', licensesLinkDetail(elements, url));
 	if (path === '/') record('default-favicon', faviconDetail(elements, url));
 	if (path !== LICENSES_PATH) record('trademark-symbols', trademarksDetail(elements, root));
+	record('self-promotion', selfPromotionDetail(elements, url));
+	if (path === LICENSES_PATH) record('licenses-boilerplate', licensesBoilerplateDetail(elements, root));
 
-	return { url: url.href, path, findings, hasNav: elements.some(isNav), hasFooter: elements.some(isFooter) };
+	return {
+		url: url.href,
+		path,
+		findings,
+		hasNav: elements.some(isNav),
+		hasFooter: elements.some(isFooter),
+		usesCustomGsap: elements.some((el) => el.name === 'script' && !attr(el, 'src') && CUSTOM_GSAP_CALL.test(rawText(el)))
+	};
 }
 
-/** One blocking issue per standard, listing every page that fails it. */
-export function generateReviewerStandardIssues(audits: ReviewerPageAudit[]): ValidationIssue[] {
+/**
+ * One blocking issue per standard, listing every page that fails it.
+ * missingPaths: utility paths the site answered with HTTP 404 (known only on a full-site run).
+ */
+export function generateReviewerStandardIssues(audits: ReviewerPageAudit[], context: { missingPaths?: string[] } = {}): ValidationIssue[] {
 	const byPath = new Map(audits.map((audit) => [audit.path, audit]));
 	const home = byPath.get('/');
 	const notFound = byPath.get('/404');
@@ -120,6 +155,11 @@ export function generateReviewerStandardIssues(audits: ReviewerPageAudit[]): Val
 	if (home && notFound) {
 		const missing = [...(home.hasNav && !notFound.hasNav ? ['navbar'] : []), ...(home.hasFooter && !notFound.hasFooter ? ['footer'] : [])];
 		if (missing.length) add('404-navigation', notFound.url, `no ${missing.join(' or ')}, but the home page has one`);
+	}
+	if (context.missingPaths?.includes(INSTRUCTIONS_PATH) && !byPath.has(INSTRUCTIONS_PATH)) {
+		for (const audit of byPath.values()) {
+			if (audit.usesCustomGsap) add('gsap-instructions-page', audit.url, 'GSAP calls in inline custom code; /instructions was not found');
+		}
 	}
 
 	return (Object.keys(STANDARDS) as ReviewerStandardId[]).flatMap((id) => {
@@ -218,6 +258,38 @@ function faviconDetail(elements: Node[], pageUrl: URL): string | null {
 		return found.some(isDefault) ? [`Webflow default ${kind}`] : [];
 	});
 	return problems.length ? problems.join(' and ') : null;
+}
+
+/** Guideline layout-and-content-18: promotional links that leave the site, and links to template stores. */
+function selfPromotionDetail(elements: Node[], pageUrl: URL): string | null {
+	const found = new Set<string>();
+	for (const link of elements.filter((el) => el.name === 'a')) {
+		let target: URL;
+		try {
+			target = new URL(attr(link, 'href'), pageUrl);
+		} catch {
+			continue;
+		}
+		if (!/^https?:$/.test(target.protocol) || target.origin === pageUrl.origin) continue;
+		const label = normalize(text(link));
+		if (PROMO_LINK_TEXT.test(label) || TEMPLATE_STORE_HOST.test(target.hostname)) found.add(`"${label.slice(0, 40)}" → ${target.hostname}`);
+	}
+	return found.size ? [...found].slice(0, 3).join('; ') : null;
+}
+
+/** Guideline required-pages-10: the exact opening text, compared without case, spacing or quote-style differences. */
+function licensesBoilerplateDetail(elements: Node[], root: Node): string | null {
+	const body = elements.find((el) => el.name === 'body') ?? root;
+	return comparable(text(body)).includes(comparable(LICENSES_BOILERPLATE)) ? null : 'the exact opening text was not found';
+}
+
+function comparable(value: string): string {
+	return normalize(value.replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '"')).toLowerCase();
+}
+
+/** Raw text of a script element (its contents are not parsed as markup). */
+function rawText(node: Node): string {
+	return (node.children ?? []).map((child) => child.data ?? '').join('');
 }
 
 function trademarksDetail(elements: Node[], root: Node): string | null {

@@ -1395,14 +1395,16 @@ describe('Content Validator', () => {
 			} as any
 		);
 
-		// The reviewer standards also read /404 and /401; the excluded slug is never fetched.
-		expect(fetchHTML).toHaveBeenCalledTimes(4);
+		// The reviewer standards also read the utility pages; the excluded slug is never fetched.
+		expect(fetchHTML).toHaveBeenCalledTimes(6);
 		const calledUrls = (fetchHTML as any).mock.calls.map((c: any[]) => c[0]);
 		expect(calledUrls).toEqual([
 			'https://example.com',
 			'https://example.com/about',
 			'https://example.com/404',
-			'https://example.com/401'
+			'https://example.com/401',
+			'https://example.com/licenses',
+			'https://example.com/instructions'
 		]);
 	});
 
@@ -1419,8 +1421,35 @@ describe('Content Validator', () => {
 		);
 
 		const calls = (fetchHTML as any).mock.calls;
-		expect(calls.map((c: any[]) => c[0])).toEqual(['https://example.com', 'https://example.com/about', 'https://example.com/404']);
+		expect(calls.map((c: any[]) => c[0])).toEqual([
+			'https://example.com',
+			'https://example.com/about',
+			'https://example.com/404',
+			'https://example.com/licenses',
+			'https://example.com/instructions'
+		]);
 		expect(calls[2][1]).toEqual({ acceptStatus: [404] });
+	});
+
+	it('blocks custom-code GSAP when /instructions answers HTTP 404, and not when it fails for another reason', async () => {
+		const original = (fetchHTML as any).getMockImplementation();
+		const gsapPage = '<!doctype html><html><head><title>T</title></head><body><script>gsap.to(".hero", { y: 0 });</script></body></html>';
+		const run = async (instructionsError: string) => {
+			(fetchHTML as any).mockImplementation(async (url: string) => {
+				if (url.endsWith('/instructions')) throw new Error(instructionsError);
+				return { html: gsapPage, status: 200, headers: {}, size: 0, loadTime: 0 };
+			});
+			const result = await validateContent('https://example.com', [], {
+				contentChecks: { lorem: false, headings: false, altText: false, seo: false, links: false, contentQuality: false }
+			} as any);
+			return result.issues.find(issue => issue.id === 'gsap-instructions-page');
+		};
+		try {
+			expect(await run('HTTP 404: Not Found')).toEqual(expect.objectContaining({ severity: 'error', category: 'Content & Accessibility' }));
+			expect(await run('The operation was aborted')).toBeUndefined();
+		} finally {
+			(fetchHTML as any).mockImplementation(original);
+		}
 	});
 
 	it('fetchHTML keeps the HTML of an accepted non-OK status and rejects any other', async () => {
