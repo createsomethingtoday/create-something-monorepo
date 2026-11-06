@@ -227,6 +227,9 @@ separately from operator-palette ownership. Sign-in, private workspaces, client
 surfaces, unknown/archived routes and the separately composed Webflow portfolio
 remain outside that boundary. Canon's shared components and status colors keep
 their existing contracts. The homepage retains its authored five-chapter dial.
+On narrow public pages, search sits beside the menu in the masthead so it cannot
+cover reading or booking controls. The menu temporarily hides that entry while
+open; the existing search dialog and keyboard shortcut remain available.
 
 `packages/agency/scripts/verify-measured-public.ego.mjs` runs in the parent's
 existing Ego TaskSpace. Supply `globalThis.MEASURED_PUBLIC` with `taskSpaceId`,
@@ -234,7 +237,8 @@ existing Ego TaskSpace. Supply `globalThis.MEASURED_PUBLIC` with `taskSpaceId`,
 `ego-browser nodejs`. It exercises the six principal public journeys at
 320, 390, 768, 1024, 1025 and 1440 pixels. It checks black document, opening and
 inquiry surfaces, white titles, full-width navigation, readable content bounds,
-original-image captions, and retained scheduler/form entry points. It never
+original-image captions, and retained scheduler/form entry points. It also checks
+that mobile search overlaps neither a page action nor the menu. It never
 creates or finishes a TaskSpace and never submits a form. The foundation script
 continues to cover the homepage's eight-width interaction contract.
 

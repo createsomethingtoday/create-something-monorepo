@@ -23,6 +23,9 @@ for (const route of config.routes ?? ['/services','/products','/stack','/field-r
       const style = selector => getComputedStyle(document.querySelector(selector));
       const nav = document.querySelector('.nav-fixed').getBoundingClientRect();
       const headings = [...document.querySelectorAll('main h1')].filter(h=>h.getClientRects().length && getComputedStyle(h).display!=='none');
+      const search = document.querySelector('.mobile-search-button');
+      const searchRect = search?.getBoundingClientRect();
+      const overlap = (a,b)=>a && b && Math.min(a.right,b.right)>Math.max(a.left,b.left) && Math.min(a.bottom,b.bottom)>Math.max(a.top,b.top);
       return {
         path:location.pathname,width:innerWidth,clientWidth:document.documentElement.clientWidth,
         brand:document.querySelector('.agency-surface').dataset.agencyBrand,
@@ -30,6 +33,11 @@ for (const route of config.routes ?? ['/services','/products','/stack','/field-r
         nav:{background:style('.nav-fixed').backgroundColor,radius:style('.nav-fixed').borderRadius,x:nav.x,y:nav.y,right:nav.right,bottom:nav.bottom},
         headings:headings.map(h=>({text:h.textContent.trim(),color:getComputedStyle(h).color,rect:h.getBoundingClientRect().toJSON()})),
         overflow:document.documentElement.scrollWidth>innerWidth,
+        search:search && getComputedStyle(search).display!=='none' ? {
+          height:searchRect.height,top:searchRect.top,bottom:searchRect.bottom,
+          coversAction:[...document.querySelectorAll('main a,main button')].some(a=>a.getClientRects().length && overlap(searchRect,a.getBoundingClientRect())),
+          coversMenu:overlap(searchRect,document.querySelector('.nav-menu-button')?.getBoundingClientRect())
+        } : undefined,
         openingBackground:document.querySelector('.performance-campaign-opening') ? style('.performance-campaign-opening').backgroundColor : undefined,
         inquiryBackground:document.querySelector('.onboarding') ? style('.onboarding').backgroundColor : undefined,
         media:[...document.querySelectorAll('.agency-preview-media img')].map(i=>({src:i.getAttribute('src'),loaded:i.complete&&i.naturalWidth>0,caption:i.closest('figure')?.querySelector('figcaption')?.textContent.trim()})),
@@ -47,6 +55,11 @@ for (const route of config.routes ?? ['/services','/products','/stack','/field-r
     assert.equal(report.nav.x,0); assert.equal(report.nav.y,0);
     assert.ok(Math.abs(report.nav.right-report.clientWidth)<1);
     assert.equal(report.overflow,false,`${route} overflow at ${width}`);
+    if(report.search && width<1280){
+      assert.ok(report.search.height>=44 && report.search.top>=0 && report.search.bottom<=report.nav.bottom,'Search fits in the masthead');
+      assert.equal(report.search.coversAction,false,`${route} search does not cover a reading or booking control`);
+      assert.equal(report.search.coversMenu,false,'Search and menu have distinct targets');
+    }
     if (report.openingBackground) assert.equal(report.openingBackground,'rgb(0, 0, 0)',`${route} opening resolves public surface roles`);
     if (report.inquiryBackground) assert.equal(report.inquiryBackground,'rgb(0, 0, 0)','Inquiry panel resolves public surface roles');
     assert.equal(report.headings.length,1,`${route} one visible title`);
