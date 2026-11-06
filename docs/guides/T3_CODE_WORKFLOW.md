@@ -37,19 +37,48 @@ registration does not fetch; refresh remote refs separately when the task needs
 current upstream evidence. Keep the Linear closeout's `Worktree disposition:`
 explicit.
 
-## Retrieve task context
+## Choose a workflow entry point
 
-Use `$cs-context` for previous decisions, continuation work, or unfamiliar project
-context. Its canonical instructions live in
-[`.agents/skills/cs-context/SKILL.md`](../../.agents/skills/cs-context/SKILL.md),
-with a shared Claude skill link. After installing or changing skills, use T3's
+Each entry point composes the existing repository policies and specialist skills.
+Use the one that fits the task, and load another only when the work reaches it.
+
+| Skill | Use it for |
+| --- | --- |
+| [`$cs-context`](../../.agents/skills/cs-context/SKILL.md) | Recovering previous decisions or unfamiliar project context, then checking current sources. |
+| [`$cs-build`](../../.agents/skills/cs-build/SKILL.md) | Implementing a scoped feature or bug with acceptance criteria and independent verification. |
+| [`$cs-design`](../../.agents/skills/cs-design/SKILL.md) | Applying Canon research and reviewing a rendered UI against its baseline. |
+| [`$cs-release`](../../.agents/skills/cs-release/SKILL.md) | Completing authorized promotion or handoff with durable evidence and rollback. |
+
+Canonical instructions live under `.agents/skills/`, with shared Claude skill
+links. After installing or changing skills, use T3's
 **Restart agent session** command so the next turn discovers the updated setup.
 History can locate evidence; current source and the owning service establish
 current state. Partial CTX coverage is reported rather than repaired on every task.
 
-This workstation also has a reviewed copy at `~/.codex/skills/cs-context/SKILL.md`
-for discovery before older checkouts contain the shared skill. Update that copy
-deliberately from the canonical repo skill when its instructions change.
+This workstation also has reviewed copies at `~/.codex/skills/cs-*/SKILL.md`
+for discovery before older checkouts contain the shared skills. Update each copy
+deliberately from its canonical repo skill when its instructions change.
+
+The release entry point records the issue, acceptance criteria, exact artifact,
+three quality gates, PR/deployment evidence, rollback, next owner, and explicit
+worktree disposition. Preserve those receipts in Linear and the owning artifact
+location before temporary captures or worktrees expire.
+
+## Workstation visibility and retention
+
+Keep the project's Sol 6.1 medium-effort default for normal implementation;
+increase effort when difficult debugging or consequential review warrants it.
+In **Settings → Appearance → Thread details**, enable **Usage limits** and
+**Context window**. These are the current thread-details controls; enabling the
+legacy context meter as well is unnecessary.
+
+On this workstation, **Settings → Maintenance → Artifacts and logs** retains
+browser captures and rotated logs for 30 days. This gives review evidence more
+time than the previous eight-day window. Worktree cleanup settings are unchanged.
+Capture retention is not a durable evidence store: copy required proof into the
+owning artifact location and link it in Linear before cleanup, including before
+merge-triggered worktree removal. Settings apply to the selected environment;
+do not assume offline machines received them.
 
 ## Validation and rollback
 
@@ -58,10 +87,9 @@ and confirm the imported project actions by reading them back. A new-worktree
 smoke should confirm bootstrap finishes before the agent begins dependency-based
 work. Config readback alone does not establish that runtime ordering.
 
-To roll back a local activation, restore the saved project action list. Remove
-an action-list override with **Reset Actions to default** if the prior setting
-inherited its environment's actions. Remove
-the rollout-installed global skill copy only if it still matches the installation
+To roll back a local activation, restore the saved project action list. If the
+prior list inherited its environment's actions, choose **Reset Actions to default**.
+Remove a rollout-installed global skill copy only if it still matches the installation
 receipt's SHA-256; preserve any subsequent edits. Revert the corresponding repo
 change through the normal Git review path. Do not delete worktrees or undo their
 Linear ownership records as a configuration rollback.
