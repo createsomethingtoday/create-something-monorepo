@@ -57,12 +57,16 @@ export class WorkspaceSearch {
   }
 }
 
-export function workspaceSearchView(search) {
-  if(!search.visible)return '';
+function searchResults(search) {
   const groups=search.groups.filter(group=>group.items.length);
   const results=groups.map(group=>`<section class="workspace-search-group" aria-labelledby="search-group-${safe(group.entity)}"><h2 id="search-group-${safe(group.entity)}">${icon(entityIcon(group.entity))}${safe(group.label)}<span>${Number(group.count)||0}</span></h2>${group.items.map(item=>`<button type="button" class="workspace-search-result" data-search-record="${safe(item.id)}" data-search-entity="${safe(group.entity)}"><span>${safe(item.title||'Untitled')}${item.titleTruncated?'…':''}</span><span aria-hidden="true">↗</span></button>`).join('')}${group.nextCursor?`<button type="button" class="workspace-search-more" data-search-more="${safe(group.entity)}" aria-disabled="${search.busy}">Show more ${safe(group.label.toLowerCase())}</button>`:''}</section>`).join('');
   const message=search.error?'<div class="workspace-search-empty" role="alert"><strong>Couldn’t finish this search.</strong><p>Try again to search your local workspace.</p><button type="button" class="btn" data-search-retry="1">Retry search</button></div>':search.busy?'<p class="workspace-search-status" role="status">Searching…</p>':!search.query.trim()?'<div class="workspace-search-empty"><strong>Find something in your workspace.</strong><p>Search people, gigs, finances and tasks.</p></div>':!groups.length?`<div class="workspace-search-empty" role="status"><strong>No results for “${safe(search.query)}”.</strong><p>Try another name or a few words from a title.</p></div>`:'';
-  return `<div class="workspace-search-backdrop" data-search-backdrop="1"><section class="workspace-search-dialog" role="dialog" aria-modal="true" aria-label="Search workspace"><div class="workspace-search-input">${icon('search')}<input type="search" id="workspace-search-input" aria-label="Search people, gigs, finances and tasks" placeholder="Search your workspace…" maxlength="160" autocomplete="off" value="${safe(search.query)}" aria-controls="workspace-search-results"><button type="button" data-search-close="1" aria-label="Close search"><kbd>esc</kbd></button></div><div id="workspace-search-results" class="workspace-search-results" aria-busy="${search.busy}">${message}${results}</div><footer><span>↑ ↓ to move</span><span>↵ to open</span><span>esc to close</span></footer></section></div>`;
+  return `${message}${results}`;
+}
+
+export function workspaceSearchView(search) {
+  if(!search.visible)return '';
+  return `<div class="workspace-search-backdrop" data-search-backdrop="1"><section class="workspace-search-dialog" role="dialog" aria-modal="true" aria-label="Search workspace"><div class="workspace-search-input">${icon('search')}<input type="search" id="workspace-search-input" aria-label="Search people, gigs, finances and tasks" placeholder="Search your workspace…" maxlength="160" autocomplete="off" value="${safe(search.query)}" aria-controls="workspace-search-results"><button type="button" data-search-close="1" aria-label="Close search"><kbd>esc</kbd></button></div><div id="workspace-search-results" class="workspace-search-results" aria-busy="${search.busy}">${searchResults(search)}</div><footer><span>↑ ↓ to move</span><span>↵ to open</span><span>esc to close</span></footer></section></div>`;
 }
 
 export function workspaceSearchKey(root,event,close) {
@@ -90,9 +94,16 @@ export function workspaceSearchKey(root,event,close) {
 export function updateWorkspaceSearchHost(host,search) {
   const focused=host.contains?.(globalThis.document?.activeElement);
   const snapshot=focused?captureViewState(host):null;
-  const scroll=host.querySelector?.('.workspace-search-results')?.scrollTop || 0;
-  host.innerHTML=workspaceSearchView(search);
-  restoreViewState(host,snapshot);
+  const previousResults=host.querySelector?.('.workspace-search-results');
+  const input=host.querySelector?.('#workspace-search-input');
+  const scroll=previousResults?.scrollTop || 0;
+  // Keep the live input (and its native IME composition) across result reads.
+  if(search.visible && previousResults && input){
+    previousResults.innerHTML=searchResults(search);
+    previousResults.setAttribute('aria-busy',String(search.busy));
+    if(globalThis.document?.activeElement!==input)input.value=search.query;
+  }else host.innerHTML=workspaceSearchView(search);
+  if(!input || globalThis.document?.activeElement!==input)restoreViewState(host,snapshot);
   const results=host.querySelector?.('.workspace-search-results');
   if(results)results.scrollTop=scroll;
   if(focused&&!host.contains?.(globalThis.document?.activeElement))host.querySelector?.('#workspace-search-input')?.focus?.({preventScroll:true});

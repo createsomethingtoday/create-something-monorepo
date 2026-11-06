@@ -101,3 +101,19 @@ test('pagination retains keyboard focus while loading and restores input when th
     assert.equal(doc.activeElement.id,'workspace-search-input');
   }finally{globalThis.document=previous;}
 });
+
+test('refreshing results preserves the active input node and unfinished composition text',()=>{
+  const previous=globalThis.document;
+  const input={id:'workspace-search-input',value:'Miか',tagName:'INPUT',dataset:{},focus(){globalThis.document.activeElement=this;}};
+  const results={innerHTML:'',scrollTop:12,setAttribute(){}};
+  let replacements=0;
+  const host={contains:node=>node===input,querySelector(selector){return selector==='#workspace-search-input'?input:selector==='.workspace-search-results'?results:selector==='.workspace-search-dialog'?{}:null;},querySelectorAll(){return[input];},set innerHTML(_){replacements++;globalThis.document.activeElement=null;}};
+  globalThis.document={activeElement:input};
+  try{
+    updateWorkspaceSearchHost(host,{visible:true,query:'Mi',groups:[],busy:true,error:false});
+    assert.equal(replacements,0,'result refresh must retain the composing input');
+    assert.equal(input.value,'Miか');
+    assert.equal(globalThis.document.activeElement,input);
+    assert.equal(results.scrollTop,12);
+  }finally{globalThis.document=previous;}
+});
