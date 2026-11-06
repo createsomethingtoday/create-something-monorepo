@@ -498,7 +498,8 @@ export type ReviewerStandardId =
 	| 'trademark-symbols'
 	| 'self-promotion'
 	| 'licenses-boilerplate'
-	| 'gsap-instructions-page';
+	| 'gsap-instructions-page'
+	| 'powered-by-webflow';
 
 export interface ReviewerPageAudit {
 	url: string;
