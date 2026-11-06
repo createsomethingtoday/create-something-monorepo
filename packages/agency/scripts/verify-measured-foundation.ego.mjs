@@ -29,6 +29,8 @@ for (const width of [320, 390, 768, 1024, 1025, 1440, 1920, 2560]) {
     })),
     background: getComputedStyle(document.querySelector('.agency-home')).backgroundColor,
     heading: getComputedStyle(document.querySelector('h1')).color,
+    heroWidth: document.querySelector('.hero').getBoundingClientRect().width,
+    heroCopyWidth: document.querySelector('.hero-copy').getBoundingClientRect().width,
     nav: getComputedStyle(document.querySelector('.nav-fixed')).backgroundColor,
     heroBackdropHidden: [...document.querySelectorAll('.hero-workshop')].every(image => getComputedStyle(image).display === 'none'),
     workshopImage: document.querySelector('[data-workshop-plate] img')?.getAttribute('src'),
@@ -42,6 +44,7 @@ for (const width of [320, 390, 768, 1024, 1025, 1440, 1920, 2560]) {
   assert.equal(report.background, 'rgb(0, 0, 0)');
   assert.equal(report.heading, 'rgb(255, 255, 255)');
   assert.equal(report.nav, 'rgb(0, 0, 0)');
+  assert.ok(Math.abs(report.heroWidth - report.heroCopyWidth) < 1, `legacy hero width constraint at ${width}`);
   assert.equal(report.heroBackdropHidden, true, `duplicate hero backdrop at ${width}`);
   assert.equal(report.workshopImage, '/images/agency-sales/hero.webp');
   assert.equal(report.links.length, 5);
