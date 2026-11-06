@@ -1,0 +1,21 @@
+{
+  "issue": "CRE-2363",
+  "file": "packages/agency/static/images/agency-stories/one-manual-gap-warm-v2.webp",
+  "master": "packages/agency/content/assets/brand/handoff-warmth-20261106/one-manual-gap-warm-v2.png",
+  "format": "webp",
+  "width": 1536,
+  "height": 1024,
+  "channels": 3,
+  "premultiplied": false,
+  "hasAlpha": false,
+  "size": 116216,
+  "sha256": "5fd86d34e2c87881705bdd611b75a79b13121c0a17ea4245a90ffae388c2bd74",
+  "family": "material-prototype-study",
+  "owner": "CREATE SOMETHING",
+  "rights": "Original built-in imagegen edit; first-party target and reference only.",
+  "crop": "Full 3:2 frame at all widths; preserve both characters, both trays, connecting channel and visible bench gap.",
+  "proofBoundary": "Concept illustration, not delivered product/client evidence.",
+  "review": "Accepted in independent Sol 6.1 production-build review across six widths; final release evidence tracked in CRE-2363.",
+  "refreshCondition": "Replace if handoff story, character identity or mobile readability no longer holds.",
+  "masterSha256": "b1d91d4512b608fb58928304f0f035b643a3c8cabfe689f7ea7fdb5b71881ed7"
+}
