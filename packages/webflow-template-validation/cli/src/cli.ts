@@ -16,7 +16,7 @@ import { randomBytes } from 'node:crypto';
 import { parseArgs } from 'node:util';
 import { collectDesignerData, type CollectResult } from '../../spike/headless-collector/collect.ts';
 import { applyDesignerEnhancements } from '../../spike/headless-collector/enhance.ts';
-import type { EnhanceableResults } from '../../shared/designer-enhancements.ts';
+import { CANVAS_CHECKS_CATEGORY, type EnhanceableResults } from '../../shared/designer-enhancements.ts';
 import { McpClient, findArray } from './mcp/client.ts';
 import { TOKEN_PATH, hasToken, loadToken, login, logout } from './mcp/login.ts';
 import { runGsapCrawl, type GsapOutcome } from './gsap-client.ts';
@@ -55,7 +55,8 @@ Commands:
 
 Validate options:
   --site <siteId>              Site to read Designer data from. Turns on --designer-source mcp when a token exists.
-  --page <pageId>              Page id for the style, variable, and component tools (default: first page).
+  --page <pageId>              Page for the canvas checks (heading order, image alt text), like the page open in
+                               the Validator app (default: the home page).
   --designer-source mcp        Explicit form of the default above. Needs --site and a stored token.
   --no-record                  Collect Designer data and run the checks, but do not record the result.
   --checks <list>              Published-site checks to run: ${PUBLISHED_SITE_CHECKS.join(',')} (default: all).
@@ -278,8 +279,8 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 	}
 	log('Waiting for GSAP crawl');
 	const gsap = await gsapPromise;
-	// Same client-side enhancements the extension applies (Style System, Page Structure, Variable Modes, summary totals).
-	if (collected) applyDesignerEnhancements(outcome.result as unknown as EnhanceableResults, collected.designerData);
+	// Same client-side enhancements the extension applies (Style System, canvas checks, Page Structure, Variable Modes, summary totals).
+	if (collected) applyDesignerEnhancements(outcome.result as unknown as EnhanceableResults, collected.designerData, collected.canvas?.result);
 
 	const categories = outcome.result.categories ?? [];
 	const rows: Row[] = categories.flatMap((cat) =>
@@ -301,7 +302,25 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 		checksRequested: checks,
 		checksNotRun: checks.includes('designer') ? [] : ['designer'],
 		designerSource: collected
-			? { source: 'mcp', siteId: values.site, pageId: collected.pageId, siteInfo: collected.designerData.siteInfo, counts: collected.counts, notes: collected.notes }
+			? {
+					source: 'mcp',
+					siteId: values.site,
+					pageId: collected.pageId,
+					siteInfo: collected.designerData.siteInfo,
+					counts: collected.counts,
+					canvas: collected.canvas
+						? {
+								pageId: collected.canvas.pageId,
+								pageName: collected.canvas.result.pageName,
+								headingsChecked: collected.canvas.result.headingsChecked,
+								headingIssues: collected.canvas.result.headingIssues.length,
+								imagesChecked: collected.canvas.result.imagesChecked,
+								imagesMissingAlt: collected.canvas.result.imagesMissingAlt,
+								elements: collected.canvas.elements
+							}
+						: null,
+					notes: collected.notes
+				}
 			: null,
 		score,
 		passedCategories: passed,
@@ -430,6 +449,12 @@ function printHuman(ctx: {
 		out.push(
 			`Designer data: MCP, site "${collected.designerData.siteInfo?.name ?? '?'}" (${collected.designerData.siteInfo?.id ?? '?'}), page ${collected.pageId}; ${c.styles} styles, ${c.pages} pages, ${c.variables} variables, ${c.components} components`
 		);
+		const canvas = collected.canvas?.result;
+		out.push(
+			canvas
+				? `Canvas checks: page "${canvas.pageName}" (${collected.pageId}), ${canvas.headingsChecked} heading(s), ${canvas.imagesChecked} image(s); component contents not included, as in the Validator app`
+				: 'Canvas checks: not run (see Incomplete)'
+		);
 	}
 	out.push(
 		runsDesigner
@@ -472,6 +497,12 @@ function printHuman(ctx: {
 			out.push(`  [${category}] ${issue.id}: ${issue.message}${policy}`);
 			const fix = howToFix(issue);
 			if (fix) out.push(`      Fix: ${fix}`);
+			if (category === CANVAS_CHECKS_CATEGORY) {
+				if (typeof issue.details?.location === 'string') out.push(`      Where: ${issue.details.location}`);
+				const keys: unknown = issue.details?.canvasElementKeys;
+				const labels = Array.isArray(keys) ? keys.map((key) => collected?.canvas?.elements[String(key)]).filter(Boolean) : [];
+				if (labels.length > 0) out.push(`      Element${labels.length > 1 ? 's' : ''}: ${labels.join('; ')}`);
+			}
 		}
 	}
 

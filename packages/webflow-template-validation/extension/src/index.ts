@@ -43,7 +43,10 @@ import {
   deriveCollectionMetadata,
   deriveEnhancedValidation,
   enhanceValidationResults,
+  evaluateCanvasAccessibility,
   type CanvasAccessibilityResult,
+  type CanvasHeadingInput,
+  type CanvasImageInput,
   type CategoryResult,
   type EnhancedValidation,
   type ValidationIssue,
@@ -1866,10 +1869,7 @@ async function collectCanvasAccessibility(
     ]);
     const pageName = (await currentPage?.getName?.()) || 'Current Page';
 
-    const headingIssues: CanvasAccessibilityResult['headingIssues'] = [];
-    let headingsChecked = 0;
-    let lastLevel = 0;
-
+    const headings: Array<CanvasHeadingInput<AnyElement>> = [];
     for (const element of elements) {
       if (element.type !== 'Heading') continue;
       let level: number | null = null;
@@ -1883,61 +1883,22 @@ async function collectCanvasAccessibility(
         level = null;
       }
       if (!level) continue;
-
-      headingsChecked++;
-      if (headingsChecked === 1 && level !== 1) {
-        const elementKey = `canvas-heading-${headingsChecked}`;
-        canvasElementRegistry.set(elementKey, element);
-        headingIssues.push({
-          issue: `First heading on the canvas is H${level} — it should be H1`,
-          position: headingsChecked,
-          level,
-          elementKey,
-        });
-      } else if (headingsChecked > 1 && level > lastLevel + 1) {
-        const elementKey = `canvas-heading-${headingsChecked}`;
-        canvasElementRegistry.set(elementKey, element);
-        headingIssues.push({
-          issue: `H${level} follows H${lastLevel}, skipping H${lastLevel + 1}`,
-          position: headingsChecked,
-          level,
-          elementKey,
-        });
-      }
-      lastLevel = level;
+      headings.push({ level, ref: element });
     }
 
-    let imagesChecked = 0;
-    let imagesMissingAlt = 0;
-    const missingAltElementKeys: string[] = [];
+    const images: Array<CanvasImageInput<AnyElement>> = [];
     for (const element of elements) {
       if (element.type !== 'Image') continue;
-      imagesChecked++;
       try {
-        const altText = await element.getAltText();
-        if (!altText || !altText.trim()) {
-          imagesMissingAlt++;
-          if (missingAltElementKeys.length < 10) {
-            const elementKey = `canvas-image-${imagesMissingAlt}`;
-            canvasElementRegistry.set(elementKey, element);
-            missingAltElementKeys.push(elementKey);
-          }
-        }
+        images.push({ altText: await element.getAltText(), ref: element });
       } catch {
         // Ignore unreadable images rather than miscounting them
-        imagesChecked--;
       }
     }
 
-    return {
-      available: true,
-      pageName,
-      headingsChecked,
-      headingIssues,
-      imagesChecked,
-      imagesMissingAlt,
-      missingAltElementKeys,
-    };
+    const { result, elementRefs } = evaluateCanvasAccessibility({ pageName, headings, images });
+    for (const [elementKey, element] of elementRefs) canvasElementRegistry.set(elementKey, element);
+    return result;
   } catch (error) {
     console.warn('Canvas accessibility collection failed:', error);
     return unavailable(error instanceof Error ? error.message : 'Canvas analysis failed');

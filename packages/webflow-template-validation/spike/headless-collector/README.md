@@ -90,8 +90,8 @@ The extension's client-side checks now live in `shared/designer-enhancements.ts`
 | Variable Modes normalization (name-only warning to info when modes exist) | produced |
 | Category sort and recomputed summary totals | produced |
 | `enhancedValidation` flags and `collectionMetadata` in the payload | produced by `collect.ts` |
-| "Canvas Checks (Current Page)" (heading order, image alt text on the open page) | needs the Designer. Reported as unavailable with one info issue that gives the reason |
-| Republish hints on published-site issues | needs the Designer canvas result. Not added |
+| "Canvas Checks (Current Page)" (heading order, image alt text on the open page) | produced by `canvas.ts` from `data_element_tool get_all_elements` on `--page` (default the home page), evaluated by the shared `evaluateCanvasAccessibility`. Component instances are not entered, as with `webflow.getAllElements()`. Alt text bound to a field counts as set. A truncated or failed read marks the run incomplete |
+| Republish hints on published-site issues | produced when the canvas result passes a dimension the published site fails |
 | `enhancedValidation.seoCompliance` (current page SEO) | needs the Designer current page. All flags stay false |
 | `addVariableValidation`, `addComponentValidation` | moved to the shared module, but neither path calls them: they duplicate the worker's Variables and Components categories |
 

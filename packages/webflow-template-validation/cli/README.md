@@ -48,7 +48,7 @@ Lists the sites the stored token can read, with id and name. Use the id as `--si
 | Option | Meaning |
 | --- | --- |
 | `--site <siteId>` | Read Designer data for this site through MCP. With a stored token this turns on `--designer-source mcp`. Without a token the CLI stops and tells you to run `login`. |
-| `--page <pageId>` | Page id for the style, variable, and component tools. Default: the first page from `list_pages`. |
+| `--page <pageId>` | Page for the canvas checks (heading order, image alt text), the headless stand-in for the page open in the Validator app. Default: the home page. |
 | `--designer-source mcp` | Explicit form of the default above. Needs `--site`. |
 | `--no-record` | Run everything, but do not record the result with the worker. |
 | `--checks <list>` | Published-site checks: any of `assets,content,accessibility`. Default: all. |
@@ -61,7 +61,7 @@ Exit codes: `0` no blockers, `1` one or more blockers, `2` network, worker, logi
 What runs:
 
 - Without `--site`: the worker's published-site checks (assets, content, accessibility, interactions and IX2 policy, custom code) on the homepage plus up to 50 discovered pages, and the GSAP crawl worker. Nothing is recorded.
-- With `--site`: the same, plus the worker's Designer checks (variables, modes, components, styles, required pages, page structure, SEO metadata) on data collected through MCP. After a completed async run, the CLI posts the result to `POST /app-validator/submit` with `oauth_site_access` evidence (the access token) unless `--no-record` is set. The worker verifies the token can read `--site` and stores a SHA-256 of the token, not the token.
+- With `--site`: the same, plus the worker's Designer checks (variables, modes, components, styles, required pages, page structure, SEO metadata) on data collected through MCP, and the Validator app's canvas checks on one page (`--page`, default the home page). The canvas checks read that page's element tree with `data_element_tool` (saved Designer state, including unpublished changes; no Designer needed) and apply the app's rules: the first heading is H1, no heading level is skipped, every image has alt text. Like the app, they do not look inside component instances. If the tree cannot be read in full, the run is incomplete (exit 2) and is not recorded. After a completed async run, the CLI posts the result to `POST /app-validator/submit` with `oauth_site_access` evidence (the access token) unless `--no-record` is set. The worker verifies the token can read `--site` and stores a SHA-256 of the token, not the token.
 
 ## What `validate` proves, and what it does not
 
@@ -93,7 +93,7 @@ It does not prove:
 - `src/mcp/login.ts`: PKCE login, token storage, refresh, logout.
 - `src/mcp/client.ts`: minimal MCP Streamable HTTP client. `spike/mcp-client/client.ts` re-exports it for the headless collector.
 - `src/mcp/call.ts`, `src/mcp/discover.ts`: diagnostic scripts from the spike. Not part of the bundle.
-- Designer data comes from `spike/headless-collector/collect.ts`, and the extension's client-side enhancements (Style System, Page Structure, Variable Modes, summary totals) from `spike/headless-collector/enhance.ts`. Both are imported by relative path until they move into this package.
+- Designer data comes from `spike/headless-collector/collect.ts` (canvas element tree: `canvas.ts`), and the extension's client-side enhancements (Style System, canvas checks, Page Structure, Variable Modes, summary totals) from `spike/headless-collector/enhance.ts`. Both are imported by relative path until they move into this package.
 
 
 ## Custom workers and the access token

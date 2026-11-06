@@ -1,5 +1,12 @@
 # Webflow Way Validator - Release Notes
 
+## Version 1.3.9 - Shared client-side checks
+
+- No change to checks, results, or the panel.
+- Style System, canvas checks (heading order and image alt text on the current page), Page Structure, and Variable Modes now come from `shared/designer-enhancements.ts`, the same module the `wf-template-validate` CLI uses. The canvas rules moved into `evaluateCanvasAccessibility`; the extension still reads the canvas through the Designer API. A comparison of the old and new canvas logic on 20,000 generated pages found no differences.
+
+---
+
 ## Version 1.3.8 - Per-site last run
 
 - Restores the last report only for the site that produced it. The panel iframe shares one browser origin across every site a creator opens, so earlier builds could show the previous site's report (and its URL) when the Validator opened on a different site.
