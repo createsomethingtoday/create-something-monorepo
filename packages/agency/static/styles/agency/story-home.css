@@ -269,7 +269,7 @@
 /* Warm workshop: keep the shared task clear of live copy at every width. */
 .agency-home .hero{position:relative;isolation:isolate;min-height:650px;display:flex;flex-direction:column;justify-content:center}
 .agency-home .hero::before{content:none}
-.agency-home .hero-workshop{position:absolute;z-index:-1;inset:auto -6vw auto auto;top:calc(50% - 50px);width:68vw;aspect-ratio:3/2;transform:translateY(-50%);pointer-events:none}
+.agency-home .hero-workshop{position:absolute;z-index:-1;inset:auto -6vw auto auto;top:50%;width:min(68vw,975px);aspect-ratio:3/2;transform:translateY(-50%);pointer-events:none}
 .agency-home .hero-workshop img{width:100%;height:100%;object-fit:contain;object-position:right center}
 .agency-home .hero-workshop::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--background),transparent 32%),linear-gradient(180deg,var(--background),transparent 15%,transparent 78%,var(--background))}
 .agency-home .hero .label-row{margin-bottom:38px;width:46%}

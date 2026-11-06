@@ -249,7 +249,7 @@
       focusTarget.focus({ preventScroll: true });
       const nav = document.querySelector('.nav-fixed');
       const clearance = (nav?.getBoundingClientRect().bottom ?? 72) + 24;
-      window.scrollTo({ top: Math.max(0, window.scrollY + element.getBoundingClientRect().top - clearance), behavior: get(reducedFilmMotion) ? 'instant' : 'smooth' });
+      window.scrollTo({ top: Math.max(0, window.scrollY + element.getBoundingClientRect().top - clearance), behavior: get(reducedFilmMotion) || element.dataset.scrollBehavior === 'instant' ? 'instant' : 'smooth' });
     }
   }
 

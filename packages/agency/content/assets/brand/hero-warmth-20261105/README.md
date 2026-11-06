@@ -28,4 +28,12 @@ Revert the scoped CRE-2360 PR and redeploy the prior verified Agency release. Pr
 
 ## Validation evidence
 
-The Agency package check passed with zero Svelte errors/warnings. The browser suite initially caught a 1024px cover-crop overlap, then passed all 19 cases after full-frame containment. The suite also waits for homepage hydration and the intro overlay to settle before capturing visual evidence. Final production-build review and deployment receipts are recorded in Linear CRE-2360.
+The Agency package check passed with zero Svelte errors/warnings. The browser suite initially caught a 1024px cover-crop overlap, then passed all 21 cases after full-frame containment and the bounded control/CTA repairs below. The suite also waits for homepage hydration and the intro overlay to settle before capturing visual evidence. Final production-build review and deployment receipts are recorded in Linear CRE-2360.
+
+## Findings repaired during independent review
+
+- Keep the desktop image inside the hero: its height is capped at the 650px hero minimum so it cannot paint over the preceding motion control. The browser suite preserves that geometry check.
+- The live Foundation baseline also dimmed mobile copy: a retired editorial-background scrim remained above unboxed text after the separate figure was introduced. A Foundation-only rule removes that obsolete scrim; screenshot review verifies the actual copy.
+- A cold long homepage jump to `#next` could stop midway as the lazy workshop images loaded and the existing scroll runtime refreshed. A captured failure stopped near scrollY1263 with the destination still5089px away; a warmed-cache retry succeeded. This target now explicitly requests an immediate jump through the existing hash handler. Other anchors retain their behavior. Cold-cache normal/reduced tests reached the destination at89/112px below the top.
+
+The expanded Agency check passed again with zero Svelte errors/warnings. The 21-case dev browser suite passed. Independent final production-build re-test and promotion evidence remain in CRE-2360.

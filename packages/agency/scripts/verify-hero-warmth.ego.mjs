@@ -43,7 +43,7 @@ const homeGeometry = () => {
   } : null;
   return {
     width: innerWidth, scrollWidth: document.documentElement.scrollWidth,
-    image: rect(image), copy: rect(copy), title: rect(title), subject,
+    image: rect(image), motionControl: rect(document.querySelector('.story-tools button')), copy: rect(copy), title: rect(title), subject,
     source: image?.currentSrc ?? '', loaded: !!image?.complete && image.naturalWidth > 0,
     naturalWidth: image?.naturalWidth ?? 0, naturalHeight: image?.naturalHeight ?? 0,
     objectFit: style?.objectFit, objectPosition: style?.objectPosition,
@@ -65,6 +65,7 @@ const checkHome = (state, width) => {
   assert.equal(state.primary, '#next', 'Primary CTA destination is preserved');
   assert.equal(state.secondary, '#example', 'Secondary CTA destination is preserved');
   assert.ok(state.image.width > 0 && state.image.height > 0, 'Hero image reserves visible space');
+  if (state.motionControl?.height) assert.ok(state.image.top >= state.motionControl.bottom - 1, 'Hero image cannot paint over the earlier motion control');
   if (width <= 900) {
     assert.ok(state.image.top >= state.copy.bottom - 1, 'Mobile image follows the complete copy and CTA');
     assert.equal(state.objectFit, 'contain', 'Mobile preserves the entire shared scene');
@@ -77,7 +78,7 @@ const checkHome = (state, width) => {
     assert.ok(state.subject.x >= -1 && state.subject.right <= state.width + 1,
       'Desktop subject stays within the visible horizontal frame');
     assert.ok(state.subject.y >= state.image.top - 1 && state.subject.bottom <= state.image.bottom + 1,
-      'Desktop cover crop retains the subject vertically');
+      'Desktop frame retains the subject vertically');
   }
 };
 
@@ -136,17 +137,37 @@ try {
         const image = [...document.images].find(image => /warm-v2\.webp(?:$|\?)/.test(image.currentSrc));
         return {
           width: innerWidth, scrollWidth: document.documentElement.scrollWidth,
+          scrimDisplay: getComputedStyle(document.querySelector('.agency-preview-hero'), '::before').display,
           source: image.currentSrc, alt: image.alt, image: image.getBoundingClientRect().toJSON(),
         };
       });
       assert.ok(state.scrollWidth <= width + 1, `No overflow at ${route}/${width}`);
       assert.ok(state.alt.includes('Concept illustration'), 'Service concept boundary is retained');
+      if (route === '/agent-foundation') assert.equal(state.scrimDisplay, 'none', 'Separate Foundation figure must not leave a scrim painting over mobile copy');
       assert.ok(state.image.width > 0 && state.image.height > 0, 'Service image is visible');
       const screenshot = `${EVIDENCE_DIR}/${route.slice(1)}-${width}.png`;
       await page.screenshot({ path: screenshot });
       results.push({ route, status: 'passed', screenshot, ...state });
     }
   }
+
+  // A cold long-page CTA jump must reach its destination even as lazy tour images load.
+  await page.cdp('Network.enable');
+  await page.cdp('Network.setCacheDisabled', { cacheDisabled: true });
+  for (const motion of ['no-preference', 'reduce']) {
+    await viewport(390, motion);
+    await page.goto(`${BASE_URL}/`);
+    await page.waitForFunction(() => document.querySelector('.handoff-tour.tour-enhanced')
+      && !document.querySelector('.story-curtain'));
+    await page.click('.hero-links .button');
+    await page.waitForFunction(() => {
+      const top = document.getElementById('next').getBoundingClientRect().top;
+      return location.hash === '#next' && top >= 0 && top < 250;
+    }, undefined, { timeout: 10000 });
+    results.push({ check: 'cold-primary-cta', motion, status: 'passed',
+      ...await page.evaluate(() => ({ hash: location.hash, targetTop: document.getElementById('next').getBoundingClientRect().top })) });
+  }
+  await page.cdp('Network.setCacheDisabled', { cacheDisabled: false });
 
   // Explicit SSR/no-JS check: keep the real page script disabled, not a mocked fixture.
   await page.cdp('Emulation.setScriptExecutionDisabled', { value: true });
@@ -168,6 +189,7 @@ try {
   await page.screenshot({ path: `${EVIDENCE_DIR}/failure.png` }).catch(() => {});
 } finally {
   await page.cdp('Emulation.setScriptExecutionDisabled', { value: false });
+  await page.cdp('Network.setCacheDisabled', { cacheDisabled: false });
   await page.cdp('Emulation.clearDeviceMetricsOverride');
   await page.cdp('Emulation.setEmulatedMedia', { features: [] });
   const report = {
