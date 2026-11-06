@@ -266,11 +266,26 @@
 
 .agency-home .dialog .theater-notes p{margin:0}.agency-home .dialog .theater-stage video{width:auto;height:auto;max-width:100%;max-height:100%;object-fit:contain}
 
-/* Existing workshop frame: quiet space behind the opening copy. */
-.agency-home .hero{position:relative;isolation:isolate;min-height:600px;display:flex;flex-direction:column;justify-content:center}
-.agency-home .hero::before{content:"";position:absolute;z-index:-1;inset:-100px -6vw 0;background:linear-gradient(90deg,rgba(16,17,18,.92) 0%,rgba(16,17,18,.78) 42%,rgba(16,17,18,.15) 100%),linear-gradient(0deg,#101112 0%,transparent 35%),url('/images/agency-sales/hero.webp') 70% center/cover no-repeat}
-.agency-home .hero .label-row{margin-bottom:38px}
-@media(max-width:600px){.agency-home .hero{min-height:660px;justify-content:flex-start}.agency-home .hero::before{inset:-84px -6vw 0;background-position:center,center,65% bottom;background-size:auto,auto,auto 100%;background-image:linear-gradient(180deg,rgba(16,17,18,.88),rgba(16,17,18,.74) 55%,rgba(16,17,18,.30)),linear-gradient(0deg,#101112,transparent 28%),url('/images/agency-sales/hero.webp')}}
+/* Warm workshop: keep the shared task clear of live copy at every width. */
+.agency-home .hero{position:relative;isolation:isolate;min-height:650px;display:flex;flex-direction:column;justify-content:center}
+.agency-home .hero::before{content:none}
+.agency-home .hero-workshop{position:absolute;z-index:-1;inset:auto -6vw auto auto;top:calc(50% - 50px);width:68vw;aspect-ratio:3/2;transform:translateY(-50%);pointer-events:none}
+.agency-home .hero-workshop img{width:100%;height:100%;object-fit:contain;object-position:right center}
+.agency-home .hero-workshop::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--background),transparent 32%),linear-gradient(180deg,var(--background),transparent 15%,transparent 78%,var(--background))}
+.agency-home .hero .label-row{margin-bottom:38px;width:46%}
+.agency-home .hero-copy{width:46%;position:relative}
+.agency-home .hero-copy h1{font-size:clamp(44px,4.6vw,72px)}
+.agency-home .hero-links{flex-wrap:wrap;gap:22px}
+@media(max-width:900px){
+  .agency-home .hero{min-height:0;justify-content:flex-start;padding-bottom:38px}
+  .agency-home .hero .label-row{order:0;margin-bottom:30px;width:100%}
+  .agency-home .hero-copy{order:1;width:100%;max-width:660px}
+  .agency-home .hero-copy h1{font-size:clamp(38px,7vw,64px)}
+  .agency-home .hero-workshop{order:2;position:relative;inset:auto;transform:none;z-index:auto;width:100%;max-width:620px;aspect-ratio:1;margin:32px auto 0}
+  .agency-home .hero-workshop img{height:auto;aspect-ratio:1;object-fit:contain}
+  .agency-home .hero-workshop::after{content:none}
+}
+@media(max-width:600px){.agency-home .hero-copy h1{font-size:clamp(38px,11.5vw,49px)}}
 
 .agency-home .team a{text-decoration:underline;text-underline-offset:.2em}
 

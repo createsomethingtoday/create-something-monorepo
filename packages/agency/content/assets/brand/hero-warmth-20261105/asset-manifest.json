@@ -1,0 +1,52 @@
+{
+  "issue": "CRE-2360",
+  "created": "2026-11-05",
+  "owner": "CREATE SOMETHING",
+  "tool": "built-in image_gen",
+  "model": "not exposed by built-in tool",
+  "family": "material-prototype-study",
+  "rights": "Original AI-generated Agency concept illustrations, references are existing first-party assets; no third-party imagery copied.",
+  "proofBoundary": "Conceptual craft scenes, not product or client-delivery evidence.",
+  "desktopCrop": "Right-aligned containment, faces/task begin at 40% of master; separate left live-copy lane.",
+  "mobileCrop": "Dedicated square <=900px; full frame contained below live copy.",
+  "serviceCrop": "Existing route-specific focus preserved; illumination edit only.",
+  "refreshCondition": "Replace if character identity, service story, crop or text separation no longer passes rendered review.",
+  "assets": [
+    {
+      "id": "hero-desktop-warm-v2",
+      "file": "static/images/agency-sales/hero-desktop-warm-v2.webp",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 131510,
+      "sha256": "756070343630ce9143a948c3023f5551db82b93e4ba0019ccf0b201b76c1fe0f",
+      "review": "Builder inspected generated master and rendered page; independent review and live release receipts in CRE-2360"
+    },
+    {
+      "id": "hero-mobile-warm-v2",
+      "file": "static/images/agency-sales/hero-mobile-warm-v2.webp",
+      "width": 900,
+      "height": 900,
+      "bytes": 118294,
+      "sha256": "9fffba1130679998092ccc529ebc6ea2ffaa5822ec09f74eb408b934c19f2472",
+      "review": "Builder inspected generated master and rendered page; independent review and live release receipts in CRE-2360"
+    },
+    {
+      "id": "services-diagnosis-warm-v2",
+      "file": "static/images/agency-stories/services-diagnosis-warm-v2.webp",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 167888,
+      "sha256": "5fba31ae83c1878c17835ac00383187b3aeb2dc48bc1539fd18a5d0e5bcfe83f",
+      "review": "Builder inspected generated master and rendered page; independent review and live release receipts in CRE-2360"
+    },
+    {
+      "id": "foundation-single-job-warm-v2",
+      "file": "static/images/agency-stories/foundation-single-job-warm-v2.webp",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 164966,
+      "sha256": "31a855ef72073eb0d98a258768f9f8f6298076eadc574c08029e0e724af7c18c",
+      "review": "Builder inspected generated master and rendered page; independent review and live release receipts in CRE-2360"
+    }
+  ]
+}
