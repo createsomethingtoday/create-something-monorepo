@@ -82,6 +82,11 @@ must understand the operating meaning without sports knowledge.
 
 ### Agency campaign story: graphite workshop
 
+The November 6, 2026 [measured whimsy foundation](CREATE_SOMETHING_MEASURED_WHIMSY_FOUNDATION.md)
+extends this story with a black shell, white structure, meaningful numbered
+wayfinding, and character-led warmth. Its first implementation is the Agency
+homepage; other surfaces keep their current contracts until adopted explicitly.
+
 The approved Agency commercial direction pairs **“Put AI to work. Bring your team with it.”**
 with original graphite workshop scenes. These are conceptual illustrations of learning,
 connection, inspection, and handoff. They are not product screenshots, delivered hardware,

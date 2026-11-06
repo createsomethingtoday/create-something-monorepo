@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import WorkflowSignalBand from './WorkflowSignalBand.svelte';
+  import AgencyChapterDial from './AgencyChapterDial.svelte';
+  import AgencyWorkshopPlate from './AgencyWorkshopPlate.svelte';
   import { webflowStages } from '$lib/data/webflowMarketplace';
   import { enhanceEvidenceDisclosure } from '$lib/motion/evidenceDisclosure';
   import { page } from '$app/stores';
@@ -10,7 +11,7 @@
   const heroEnd = renderedContent.indexOf('</section>') + '</section>'.length;
   const heroContent = renderedContent.slice(0, heroEnd);
   const content = renderedContent.slice(heroEnd);
-  import { reducedFilmMotion, toggleFilmMotion, filmOverlayOpen } from '$lib/motion/filmPlayback';
+  import { filmOverlayOpen } from '$lib/motion/filmPlayback';
   import FilmCollection from './films/FilmCollection.svelte';
   import BuiltWork from './BuiltWork.svelte';
   import SelectedClientWork from './SelectedClientWork.svelte';
@@ -117,12 +118,12 @@
   });
 </script>
 
-<svelte:head><link rel="stylesheet" href="/styles/agency/story-home.css?v=walkthrough-entry-20261106" /><link rel="preload" as="image" href="/images/agency-sales/hero-desktop-warm-v2.webp" media="(min-width: 901px)" fetchpriority="high" /><link rel="preload" as="image" href="/images/agency-sales/hero-mobile-warm-v2.webp" media="(max-width: 900px)" fetchpriority="high" /><link rel="stylesheet" href="/styles/agency/image-treatment.css?v=graphite-frames-20261105" /></svelte:head>
-<div class="agency-home" bind:this={root}>
+<svelte:head><link rel="stylesheet" href="/styles/agency/story-home.css?v=walkthrough-entry-20261106" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /><link rel="stylesheet" href="/styles/agency/image-treatment.css?v=graphite-frames-20261105" /><link rel="stylesheet" href="/styles/agency/measured-foundation.css?v=measured-foundation-20261106" /></svelte:head>
+<div class="agency-home measured-foundation" bind:this={root}>
   <div class="page-progress" aria-hidden="true"></div>
-  <div class="story-tools"><button type="button" onclick={toggleFilmMotion} aria-pressed={$reducedFilmMotion}>{$reducedFilmMotion ? 'Enable motion' : 'Motion off'}</button></div>
+  <AgencyChapterDial />
   {@html heroContent}
-  <WorkflowSignalBand motionOnly quiet tall showMotionControl />
+  <AgencyWorkshopPlate />
   {@html content}
   <details id="work-library" class="work-library" bind:open={libraryOpen}>
     <summary>Explore the work library <span>Films, source and field reports +</span></summary>

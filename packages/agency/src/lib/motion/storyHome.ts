@@ -239,7 +239,9 @@ export function enhanceStoryHome(root: HTMLElement) {
     };
     const unsubscribe = blocked.subscribe(value => { storeBlocked = value; updateBlocked(); });
     systemMotion.addEventListener('change', updateBlocked, { signal: abort.signal });
-    const refresh = () => { if (!disposed) ScrollTrigger.refresh(); };
+    // Image loads, disclosures and fonts can settle during native hash scrolling.
+    // Defer recalculation until scrolling ends so refresh cannot restore a partial position.
+    const refresh = () => { if (!disposed) ScrollTrigger.refresh(true); };
     root.addEventListener('toggle', refresh, { capture: true, signal: abort.signal });
     root.addEventListener('load', refresh, { capture: true, signal: abort.signal });
     window.addEventListener('resize', () => { transport.refresh(); clearTimeout(resizeTimer); resizeTimer = setTimeout(install, 160); }, { signal: abort.signal });

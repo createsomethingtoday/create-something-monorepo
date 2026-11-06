@@ -1,0 +1,165 @@
+/* Agency's measured/whimsical extension. Keep the instrument quiet; let the work have character. */
+html:has(.measured-foundation),body:has(.measured-foundation),
+.film-home:has(.measured-foundation){
+  --agency-nav-surface-rgb:0,0,0;
+  --color-performance-measured-black:#000;
+  --color-performance-measured-white:#fff;
+  --color-performance-measured-muted:#b4b4b4;
+  --color-performance-measured-rule:#414141;
+  --color-performance-paper:var(--color-performance-measured-black);
+  --color-performance-ink:var(--color-performance-measured-white);
+  --color-performance-muted:var(--color-performance-measured-muted);
+  --color-performance-line:var(--color-performance-measured-rule);
+  --color-performance-fg-primary:var(--color-performance-measured-white);
+  --color-performance-fg-secondary:var(--color-performance-measured-muted);
+  --color-performance-fg-tertiary:var(--color-performance-measured-muted);
+  --color-performance-bg-pure:var(--color-performance-measured-black);
+  --color-performance-focus:var(--color-performance-measured-white);
+  --color-operator-background:var(--color-performance-measured-black);
+  --color-operator-panel:var(--color-performance-measured-black);
+  --color-operator-secondary:var(--color-performance-measured-black);
+  --color-operator-foreground:var(--color-performance-measured-white);
+  background:var(--color-performance-measured-black);
+  color:var(--color-performance-measured-white);
+  color-scheme:dark;
+}
+.layout-root.film-home:has(.measured-foundation) .nav-editorial.nav-fixed{background:var(--color-performance-measured-black);border-bottom:1px solid var(--color-performance-measured-rule);backdrop-filter:none}
+.film-home:has(.measured-foundation) .nav-editorial .nav-cta{border-radius:0;background:var(--color-performance-measured-white);color:var(--color-performance-measured-black)}
+.film-home:has(.measured-foundation) .nav-editorial .nav-dropdown__menu{background:var(--color-performance-measured-black);color:var(--color-performance-measured-white)}
+.agency-home.measured-foundation{
+  --background:var(--color-performance-measured-black);
+  --foreground:var(--color-performance-measured-white);
+  --muted:var(--color-performance-measured-muted);
+  --border:var(--color-performance-measured-rule);
+  --accent:var(--foreground);
+  --card:var(--background);
+  --primary:var(--foreground);
+  --secondary:var(--background);
+  --font-sans:var(--font-performance-interface);
+  --font-mono:var(--font-performance-mono);
+  background:var(--background);color:var(--foreground);
+  padding:100px 3vw 0;
+  font-size:20px;
+}
+.measured-foundation>.chapter-instrument,.measured-foundation>.workshop-plate,
+.measured-foundation>section,.measured-foundation>.needs,.measured-foundation>.work-library{max-width:1760px;margin-inline:auto}
+.measured-foundation .chapter-instrument{font:11px/1.5 var(--font-mono);text-transform:uppercase;letter-spacing:.045em}
+.measured-foundation .instrument-register{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:44px;margin-bottom:18px}
+.measured-foundation .register-divider{padding-inline:10px;color:var(--muted)}
+.measured-foundation .instrument-purpose{margin-left:auto;color:var(--muted)}
+.measured-foundation .instrument-register button{display:flex;align-items:center;gap:8px;padding:8px 0 8px 16px;border:0;border-left:1px solid var(--border);font:inherit;white-space:nowrap}
+.measured-foundation .chapter-dial{position:relative}
+.measured-foundation .dial-scale{height:25px;position:relative;border-top:1px solid var(--muted)}
+.measured-foundation .dial-ticks{height:18px;background:repeating-linear-gradient(90deg,var(--border) 0 1px,transparent 1px 1%),repeating-linear-gradient(90deg,var(--muted) 0 1px,transparent 1px 10%);mask-image:linear-gradient(to bottom,var(--foreground) 0 8px,transparent 8px 13px,var(--foreground) 13px);mask-size:100% 18px}
+.measured-foundation .dial-needle{position:absolute;left:var(--dial-position);top:0;height:31px;width:1px;background:var(--foreground);transition:left 300ms var(--ease-performance-standard,cubic-bezier(.2,0,0,1));transform:translateX(-50%)}
+.measured-foundation .dial-needle::after{content:'';position:absolute;bottom:0;left:-3px;width:7px;height:7px;background:var(--foreground);border-radius:50%}
+.measured-foundation .chapter-dial ol{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));padding:0;list-style:none;margin:0;border-bottom:1px solid var(--border)}
+.measured-foundation .chapter-dial li{min-width:0}
+.measured-foundation .chapter-dial a{display:flex;align-items:center;justify-content:center;gap:10px;min-height:64px;padding:12px 8px;color:var(--muted);border-inline-start:1px solid var(--border);font-size:12px;transition:color 160ms linear}
+.measured-foundation .chapter-dial li:last-child a{border-inline-end:1px solid var(--border)}
+.measured-foundation .chapter-dial a[aria-current],.measured-foundation .chapter-dial a:is(:hover,:focus-visible){color:var(--foreground)}
+.measured-foundation .dial-index{font-size:10px;align-self:start;padding-top:2px}
+.measured-foundation .dial-label-short{display:none}
+.measured-foundation .dial-link-arrow{font-size:16px}
+.measured-foundation .instrument-reading{display:flex;justify-content:space-between;gap:20px;padding-block:12px;color:var(--muted);font-size:10px}
+.measured-foundation .hero{padding:48px 0 42px;border:0;min-height:0;display:block}
+/* The measured plate owns the hero image; keep the upstream warm picture out of the copy. */
+.measured-foundation .hero::before,.measured-foundation .hero-workshop{display:none}
+.measured-foundation .hero .label-row{margin-bottom:22px}
+.measured-foundation .hero .label-row .caption{display:none}
+.measured-foundation .hero-copy{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);column-gap:6vw;align-items:end}
+.measured-foundation .hero-copy h1{grid-row:1/3;font-size:clamp(56px,6.8vw,112px);letter-spacing:-.065em;line-height:.98;font-weight:500;max-width:none}
+.measured-foundation .hero-copy>p{font-size:clamp(17px,1.5vw,23px);max-width:30ch;margin:0 0 28px;line-height:1.45}
+.measured-foundation .hero-links{margin:0;flex-wrap:wrap;gap:18px}
+.measured-foundation .hero-links .button{font-size:14px;padding:14px 16px;gap:20px}
+.measured-foundation .hero-links .simplelink{font-size:13px;min-height:44px;display:inline-flex;align-items:center}
+.measured-foundation .label{font-size:11px}
+.measured-foundation .caption{font-size:12px}
+.measured-foundation .plate-register{display:flex;justify-content:space-between;gap:20px;padding:12px 0;border-top:1px solid var(--border);font:10px/1.5 var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.measured-foundation .plate-composition{display:grid;grid-template-columns:84px minmax(0,1fr);gap:20px}
+.measured-foundation .plate-spine{display:flex;justify-content:center;align-items:center;writing-mode:vertical-rl;transform:rotate(180deg);min-height:0;overflow:hidden;padding-block:4px}
+.measured-foundation .plate-spine>span{font-size:clamp(45px,4.7vw,72px);font-weight:750;letter-spacing:-.075em;line-height:1;white-space:nowrap}
+.measured-foundation .plate-spine small{display:none}
+.measured-foundation .plate-image{position:relative;min-width:0;margin:0;border:1px solid var(--border)}
+.measured-foundation .plate-image>img{width:100%;height:auto;aspect-ratio:2.25;object-fit:cover;object-position:center 62%}
+.measured-foundation .plate-image figcaption{display:flex;justify-content:space-between;gap:16px;padding:12px 16px;border-top:1px solid var(--border);font:10px/1.5 var(--font-mono);text-transform:uppercase;color:var(--muted)}
+.measured-foundation .plate-annotations{position:absolute;inset:0 0 40px}
+.measured-foundation .plate-annotation{position:absolute;display:flex;align-items:center;gap:8px;min-height:44px;font:10px/1.3 var(--font-mono);text-transform:uppercase}
+.measured-foundation .plate-annotation::after{content:'';position:absolute;top:calc(50% + 12px);left:11px;width:1px;height:var(--leader-height,110px);background:var(--foreground);pointer-events:none}
+.measured-foundation .annotation-number{display:grid;place-items:center;border:1px solid var(--foreground);background:var(--background);border-radius:50%;width:24px;height:24px}
+.measured-foundation .annotation-label{background:var(--background);border:1px solid var(--foreground);padding:5px 8px}
+.measured-foundation .plate-annotation:is(:hover,:focus-visible) .annotation-label{background:var(--foreground);color:var(--background)}
+.measured-foundation .annotation-one{left:35%;top:40%;--leader-height:100px}
+.measured-foundation .annotation-two{left:67%;top:57%;--leader-height:65px}
+.measured-foundation .annotation-three{left:58%;top:16%;--leader-height:90px}
+.measured-foundation .plate-destinations{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:20px;border-block:1px solid var(--border)}
+.measured-foundation .plate-destinations>a{position:relative;min-width:0;padding:24px 56px 28px 24px;border-inline-start:1px solid var(--border);transition:background 160ms linear,color 160ms linear}
+.measured-foundation .plate-destinations>a:last-child{border-inline-end:1px solid var(--border)}
+.measured-foundation .destination-index{font:10px/1.5 var(--font-mono);letter-spacing:.045em}
+.measured-foundation .plate-destinations h2{font-size:clamp(24px,2.2vw,34px);letter-spacing:-.04em;margin:16px 0 12px}
+.measured-foundation .plate-destinations p{max-width:32ch;font-size:14px;line-height:1.55}
+.measured-foundation .destination-arrow{position:absolute;right:24px;top:24px;font-size:22px}
+.measured-foundation .plate-destinations>a:is(:hover,:focus-visible){background:var(--foreground);color:var(--background)}
+.measured-foundation .plate-destinations>a:is(:hover,:focus-visible) p{color:inherit}
+.measured-foundation .opening-workshop,.measured-foundation .chapter:not(.hero){padding-block:90px}
+.measured-foundation .chapter:not(.hero)>.label-row{border-top:1px solid var(--border);padding-top:16px;margin-bottom:36px}
+.measured-foundation .hero-visual,.measured-foundation .handoff-art,.measured-foundation .proof-window{border-radius:0}
+.measured-foundation .hero-visual::before,.measured-foundation .handoff-art::before,.measured-foundation .proof-window::before{border-radius:0}
+.measured-foundation .request-note,.measured-foundation .hotspot-mark,.measured-foundation .hotspot-label{border-radius:0}
+.measured-foundation .handoff-hotspot .hotspot-mark{border-radius:50%}
+.measured-foundation .work-library{padding-inline:0}
+@media(min-width:1920px){.agency-home.measured-foundation{padding-inline:max(3vw,calc((100vw - 1760px)/2))}}
+@media(max-width:1100px){
+  .measured-foundation .hero-copy{column-gap:4vw;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+  .measured-foundation .hero-copy h1{font-size:7.2vw}
+  .measured-foundation .hero-links{gap:10px}
+  .measured-foundation .plate-composition{grid-template-columns:60px minmax(0,1fr);gap:16px}
+  .measured-foundation .plate-spine>span{font-size:48px}
+  .measured-foundation .plate-spine small{display:none}
+  .measured-foundation .plate-image>img{aspect-ratio:1.8}
+  .measured-foundation .plate-destinations>a{padding:20px 32px 24px 16px}
+  .measured-foundation .destination-arrow{right:12px;top:18px}
+}
+@media(max-width:700px){
+  .agency-home.measured-foundation{padding:88px 6vw 0;font-size:18px}
+  .measured-foundation .instrument-purpose{display:none}
+  .measured-foundation .instrument-register{gap:12px;font-size:9px;margin-bottom:12px}
+  .measured-foundation .register-divider{padding-inline:3px}
+  .measured-foundation .chapter-dial a{flex-direction:column;gap:5px;font-size:10px;letter-spacing:0;text-align:center;line-height:1.3;padding:10px 2px;min-height:74px}
+  .measured-foundation .dial-label-full{display:none}
+  .measured-foundation .dial-label-short{display:inline}
+  .measured-foundation .dial-index{align-self:center;padding:0;font-size:9px}
+  .measured-foundation .dial-link-arrow{display:none}
+  .measured-foundation .instrument-reading{font-size:9px;padding-block:10px}
+  .measured-foundation .instrument-reading>span:last-child{display:none}
+  .measured-foundation .hero{padding-block:30px 34px}
+  .measured-foundation .hero .label-row{margin-bottom:18px}
+  .measured-foundation .hero-copy{display:block}
+  .measured-foundation .hero-copy h1{font-size:clamp(38px,10.3vw,70px);line-height:1.02;letter-spacing:-.055em}
+  .measured-foundation .hero-copy>p{font-size:17px;max-width:32ch;margin:22px 0}
+  .measured-foundation .hero-links{gap:12px 18px}
+  .measured-foundation .hero-links .button{font-size:13px;padding:14px;gap:16px}
+  .measured-foundation .plate-register{font-size:9px;gap:8px}
+  .measured-foundation .plate-register>span:last-child{display:none}
+  .measured-foundation .plate-composition{grid-template-columns:30px minmax(0,1fr);gap:10px}
+  .measured-foundation .plate-spine>span{font-size:29px}
+  .measured-foundation .plate-image>img{aspect-ratio:1;object-position:right center}
+  .measured-foundation .plate-image figcaption{display:block;padding:10px;font-size:9px}
+  .measured-foundation .plate-image figcaption>span:last-child{display:none}
+  .measured-foundation .plate-annotations{bottom:34px}
+  .measured-foundation .plate-annotation{min-width:44px;justify-content:center}
+  .measured-foundation .annotation-label{display:none}
+  .measured-foundation .plate-annotation::after{left:21px;height:45px}
+  .measured-foundation .annotation-one{left:15%;top:40%}
+  .measured-foundation .annotation-two{left:70%;top:62%}
+  .measured-foundation .annotation-three{left:49%;top:16%}
+  .measured-foundation .plate-destinations{grid-template-columns:1fr;margin-top:18px}
+  .measured-foundation .plate-destinations>a{padding:20px 44px 22px 0;border-inline:0;border-bottom:1px solid var(--border)}
+  .measured-foundation .plate-destinations>a:last-child{border:0}
+  .measured-foundation .plate-destinations h2{font-size:27px;margin:10px 0 8px}
+  .measured-foundation .plate-destinations p{font-size:14px}
+  .measured-foundation .opening-workshop,.measured-foundation .chapter:not(.hero){padding-block:54px}
+}
+@media(prefers-reduced-motion:reduce){.measured-foundation .dial-needle,.measured-foundation .chapter-dial a,.measured-foundation .plate-destinations>a{transition:none}}
+.measured-foundation .chapter-dial[data-reduced=true] .dial-needle{transition:none}
+@media print{.measured-foundation .chapter-instrument{display:none}.agency-home.measured-foundation{padding-top:0}.measured-foundation .plate-spine{display:none}.measured-foundation .plate-composition{grid-template-columns:1fr}}
