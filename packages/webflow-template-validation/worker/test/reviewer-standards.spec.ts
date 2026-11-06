@@ -42,7 +42,7 @@ describe('Reviewer standards', () => {
 		expect(result.map((issue) => issue.id)).toEqual([
 			'form-default-messages',
 			'form-default-names',
-			'licenses-footer-link',
+			'licenses-link',
 			'default-favicon',
 			'trademark-symbols'
 		]);
@@ -98,19 +98,19 @@ describe('Reviewer standards', () => {
 		expect(pagesOf('404-navigation', audit('/', '<h1>Home</h1>'), audit('/404', '<h1>Page not found</h1>'))).toBeUndefined();
 	});
 
-	it('flags pages whose footer does not link to /licenses, and skips the password and 404 pages', () => {
-		const navOnly = audit('/about', `<div class="w-nav"><a href="/licenses">Licenses</a></div><div class="footer_component"><a href="/">Home</a></div>`);
-		const absolute = audit('/team', `<div id="site-footer"><a href="${SITE}/licenses/">Licenses</a></div>`);
-		const noFooterButLink = audit('/blog', '<main><a href="/licenses">Licenses</a></main>');
+	it('accepts a Licenses link in the footer or the navigation, and skips utility pages', () => {
+		const inNav = audit('/about', `<div class="w-nav"><a href="/licenses">Licenses</a></div><div class="footer_component"><a href="/">Home</a></div>`);
+		const absoluteInFooter = audit('/team', `<div id="site-footer"><a href="${SITE}/licenses/">Licenses</a></div>`);
+		const noChromeButLink = audit('/blog', '<main><a href="/licenses">Licenses</a></main>');
+		const bodyLinkOnly = audit('/legal', `${NAV}<main><a href="/licenses">Licenses</a></main><footer class="footer"><a href="/">Home</a></footer>`);
 		const nothing = audit('/pricing', '<main><h1>Pricing</h1></main>');
-		const password = audit('/401', '<form data-name="Password Form"></form>');
-		const notFound = audit('/404', '<h1>Page not found</h1>');
 		const otherSite = audit('/faq', '<footer><a href="https://other.webflow.io/licenses">Licenses</a></footer>');
+		const utility = ['/401', '/404', '/licenses', '/changelog', '/style-guide', '/instructions'].map((path) => audit(path, '<h1>Utility</h1>'));
 
-		expect(pagesOf('licenses-footer-link', navOnly, absolute, noFooterButLink, nothing, password, notFound, otherSite)).toEqual([
-			{ url: `${SITE}/about`, detail: 'the footer has no Licenses link' },
-			{ url: `${SITE}/pricing`, detail: 'no footer and no Licenses link found' },
-			{ url: `${SITE}/faq`, detail: 'the footer has no Licenses link' }
+		expect(pagesOf('licenses-link', inNav, absoluteInFooter, noChromeButLink, bodyLinkOnly, nothing, otherSite, ...utility)).toEqual([
+			{ url: `${SITE}/legal`, detail: 'Licenses is linked, but not from the footer or navigation' },
+			{ url: `${SITE}/pricing`, detail: 'no Licenses link on the page' },
+			{ url: `${SITE}/faq`, detail: 'no Licenses link on the page' }
 		]);
 	});
 

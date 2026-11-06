@@ -49,10 +49,10 @@ const STANDARDS: Record<ReviewerStandardId, Standard> = {
 		description: 'Without the site navbar and footer, visitors who reach the 404 page cannot get back into the site.',
 		howToFix: 'Add the site navbar and footer to the 404 page.'
 	},
-	'licenses-footer-link': {
-		message: (n) => `The footer does not link to the Licenses page on ${n} page(s)`,
-		description: 'The Licenses page must be linked from the footer on every page.',
-		howToFix: 'Add a Licenses link to the footer component so it shows on every page.'
+	'licenses-link': {
+		message: (n) => `The Licenses page is not linked from the footer or navigation on ${n} page(s)`,
+		description: 'Link the Licenses page from the footer or a utility navigation, so buyers can find it from every page.',
+		howToFix: 'Add a Licenses link to the footer component (or the navbar\'s utility menu) so it shows on every page.'
 	},
 	'default-favicon': {
 		message: () => "The favicon or webclip is missing or still Webflow's default",
@@ -75,8 +75,8 @@ const FOOTER_TOKEN = /(?:^|[\s_-])footer(?:$|[\s_-])/i;
 const DEFAULT_ICON_PATH = /^\/img\/(?:favicon\.ico|webclip\.png)$/i;
 const NO_TEXT_TAGS = new Set(['script', 'style', 'noscript', 'template', 'svg', 'head']);
 const LICENSES_PATH = '/licenses';
-/** Utility pages: the password page has no site chrome, and the 404 page has its own navbar/footer check. */
-const NO_FOOTER_LINK_PATHS = new Set(['/401', '/404']);
+/** Utility pages: the guideline asks for the link on the site's pages, and the 404 page has its own navbar/footer check. */
+const NO_LICENSES_LINK_PATHS = new Set(['/401', '/404', '/licenses', '/changelog', '/style-guide', '/styleguide', '/instructions']);
 
 /** Paths the content crawl may not reach but the standards need. */
 export const REVIEWER_UTILITY_PATHS = ['/404', '/401'];
@@ -96,7 +96,7 @@ export function auditReviewerStandards(html: string, pageUrl: string): ReviewerP
 	record('form-default-messages', formMessagesDetail(elements));
 	record('form-default-names', formNamesDetail(elements));
 	record('video-play-pause', videoControlsDetail(elements));
-	if (!NO_FOOTER_LINK_PATHS.has(path)) record('licenses-footer-link', licensesLinkDetail(elements, url));
+	if (!NO_LICENSES_LINK_PATHS.has(path)) record('licenses-link', licensesLinkDetail(elements, url));
 	if (path === '/') record('default-favicon', faviconDetail(elements, url));
 	if (path !== LICENSES_PATH) record('trademark-symbols', trademarksDetail(elements, root));
 
@@ -195,12 +195,13 @@ function videoControlsDetail(elements: Node[]): string | null {
 	return parts.length ? parts.join(', ') : null;
 }
 
+/** Guideline required-pages-07: link Licenses from the footer or a utility navigation. */
 function licensesLinkDetail(elements: Node[], pageUrl: URL): string | null {
 	const links = elements.filter((el) => el.name === 'a' && isLicensesHref(attr(el, 'href'), pageUrl));
-	if (links.some((link) => ancestors(link).some(isFooter))) return null;
-	const hasFooter = elements.some(isFooter);
-	if (!hasFooter && links.length > 0) return null; // No footer found, so its placement cannot be judged.
-	return hasFooter ? 'the footer has no Licenses link' : 'no footer and no Licenses link found';
+	if (links.some((link) => ancestors(link).some((parent) => isFooter(parent) || isNav(parent)))) return null;
+	const hasChrome = elements.some((el) => isFooter(el) || isNav(el));
+	if (!hasChrome && links.length > 0) return null; // No footer or navbar found, so the link's placement cannot be judged.
+	return links.length > 0 ? 'Licenses is linked, but not from the footer or navigation' : 'no Licenses link on the page';
 }
 
 function faviconDetail(elements: Node[], pageUrl: URL): string | null {

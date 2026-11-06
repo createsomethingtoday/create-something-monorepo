@@ -493,7 +493,7 @@ export type ReviewerStandardId =
 	| 'form-default-names'
 	| 'video-play-pause'
 	| '404-navigation'
-	| 'licenses-footer-link'
+	| 'licenses-link'
 	| 'default-favicon'
 	| 'trademark-symbols';
 
