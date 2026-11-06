@@ -1,0 +1,58 @@
+{
+  "checkedAt": "2026-09-21T23:08:32.137Z",
+  "origin": "http://127.0.0.1:4322",
+  "routes": [
+    {
+      "path": "/templates",
+      "status": 200,
+      "canonical": "https://webflow.com/templates"
+    },
+    {
+      "path": "/templates/all",
+      "status": 200,
+      "canonical": "https://webflow.com/templates/all"
+    },
+    {
+      "path": "/templates/category/technology-websites",
+      "status": 200,
+      "canonical": "https://webflow.com/templates/category/technology-websites"
+    },
+    {
+      "path": "/templates/designers/caseflow",
+      "status": 200,
+      "canonical": "https://webflow.com/templates/designers/caseflow"
+    },
+    {
+      "path": "/templates/categories",
+      "status": 200,
+      "canonical": "https://webflow.com/templates/categories"
+    },
+    {
+      "path": "/templates/html/fycare-website-template",
+      "status": 200,
+      "canonical": "https://webflow.com/templates/html/fycare-website-template"
+    },
+    {
+      "path": "/templates/template-licenses",
+      "status": 200,
+      "canonical": "https://webflow.com/templates/template-licenses"
+    },
+    {
+      "path": "/templates/does-not-exist",
+      "status": 404,
+      "canonical": "https://webflow.com/templates/does-not-exist"
+    },
+    {
+      "path": "/templates/html/cre-2050-not-a-template",
+      "status": 404,
+      "canonical": "https://webflow.com/templates/html/cre-2050-not-a-template"
+    },
+    {
+      "path": "/templates/designers/cre-2050-not-a-creator",
+      "status": 404,
+      "canonical": "https://webflow.com/templates/designers/cre-2050-not-a-creator"
+    }
+  ],
+  "strictEmptySearch": true,
+  "previewNoindex": true
+}

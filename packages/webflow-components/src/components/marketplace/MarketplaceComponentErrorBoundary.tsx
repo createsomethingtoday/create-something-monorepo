@@ -1,5 +1,5 @@
-import React, { ErrorInfo, ReactNode, useEffect } from 'react';
-import { MarketplaceAnalyticsData, trackMarketplaceComponentError } from './analytics';
+import React, { type ErrorInfo, type ReactNode, useEffect } from 'react';
+import { type MarketplaceAnalyticsData, trackMarketplaceComponentError } from './analytics';
 
 interface MarketplaceComponentErrorBoundaryProps {
   component: string;
