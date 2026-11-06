@@ -21,6 +21,15 @@ import { McpClient, findArray } from './mcp/client.ts';
 import { TOKEN_PATH, hasToken, loadToken, login, logout } from './mcp/login.ts';
 import { runGsapCrawl, type GsapOutcome } from './gsap-client.ts';
 import {
+	bucketOf,
+	exitCodeFor,
+	howToFix,
+	incompleteReasons,
+	parseChecks,
+	recordSkipReason,
+	type Bucket
+} from './decisions.ts';
+import {
 	DEFAULT_WORKER_BASE,
 	PUBLISHED_SITE_CHECKS,
 	WorkerError,
@@ -69,32 +78,7 @@ Validate options:
 Exit codes: 0 no blockers, 1 blockers found, 2 incomplete run (network, worker, login, or argument failure,
             GSAP crawl unavailable, or the recording step failed).`;
 
-type Bucket = 'blocker' | 'warning' | 'info';
 type Row = { category: string; issue: ValidationIssue; bucket: Bucket };
-
-function bucketOf(issue: ValidationIssue): Bucket {
-	if (issue.severity === 'error' || typeof issue.details?.policy === 'string') return 'blocker';
-	return issue.severity === 'warning' ? 'warning' : 'info';
-}
-
-function howToFix(issue: ValidationIssue): string | undefined {
-	const value = issue.details?.howToFix ?? issue.howToFix;
-	return typeof value === 'string' && value.trim() ? value.trim() : undefined;
-}
-
-function parseChecks(value: string | undefined): string[] {
-	if (!value) return [...PUBLISHED_SITE_CHECKS];
-	const requested = value.split(',').map((c) => c.trim().toLowerCase()).filter(Boolean);
-	const allowed = new Set<string>(PUBLISHED_SITE_CHECKS);
-	const bad = requested.filter((c) => !allowed.has(c));
-	if (bad.length > 0 || requested.length === 0) {
-		const extra = bad.includes('designer')
-			? ' The designer check needs Designer data; run `wf-template-validate login`, then pass --site <siteId>, or run the Template Validator app.'
-			: '';
-		throw new Error(`Unknown or unsupported check(s): ${bad.join(', ') || '(none)'}. Allowed: ${PUBLISHED_SITE_CHECKS.join(', ')}.${extra}`);
-	}
-	return [...new Set(requested)];
-}
 
 const OPTIONS = {
 	json: { type: 'boolean', default: false },
@@ -345,14 +329,14 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 
 	let record: RecordOutcome | { skipped: string } | null = null;
 	if (collected && !values['no-record']) {
-		if (outcome.mode !== 'async') {
-			record = { skipped: 'the /validate fallback does not run the Designer checks, so this result was not recorded' };
-		} else if (collected.incomplete.length > 0) {
-			record = { skipped: `the Designer data collection was incomplete, so this result was not recorded (${collected.incomplete.join('; ')})` };
-		} else if (workerBase !== DEFAULT_WORKER_BASE && !values['trust-worker']) {
-			// Recording posts the Webflow access token as evidence. Never send it
-			// to a worker the creator did not explicitly trust.
-			record = { skipped: `recording sends your Webflow access token to the worker; pass --trust-worker to allow it for ${workerBase}` };
+		const skipped = recordSkipReason({
+			mode: outcome.mode,
+			collectionIncomplete: collected.incomplete,
+			workerBase,
+			trustWorker: Boolean(values['trust-worker'])
+		});
+		if (skipped) {
+			record = { skipped };
 		} else {
 			log('Recording the result with the worker (oauth_site_access evidence)');
 			try {
@@ -372,16 +356,14 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 	}
 	const recorded = Boolean(record && 'ok' in record && record.ok);
 	const recordFailed = Boolean(record && 'ok' in record && !record.ok);
-	// Exit 2 means the validation is incomplete: a declared step (the GSAP
-	// crawl or the recording) did not finish, so a clean result must not read
-	// as a pass. Exit 1 means every step ran and blockers were found.
-	const incomplete = [
-		...(gsap.status !== 'complete' ? [`GSAP crawl ${gsap.status}${'reason' in gsap && gsap.reason ? `: ${gsap.reason}` : ''}`] : []),
-		...(collected && outcome.mode !== 'async' ? ['Designer checks did not run: the worker fell back to /validate'] : []),
-		...(collected?.incomplete ?? []),
-		...(recordFailed ? ['recording failed'] : [])
-	];
-	const exitCode = incomplete.length > 0 ? 2 : summary.blockers > 0 ? 1 : 0;
+	const incomplete = incompleteReasons({
+		gsap: { status: gsap.status, reason: 'reason' in gsap ? gsap.reason : undefined },
+		designerCollected: Boolean(collected),
+		mode: outcome.mode,
+		collectionIncomplete: collected?.incomplete ?? [],
+		recordFailed
+	});
+	const exitCode = exitCodeFor(incomplete, summary.blockers);
 	const fullSummary = {
 		...summary,
 		record,

@@ -15,11 +15,13 @@
 	},
 	"scripts": {
 		"build": "esbuild src/cli.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/cli.js --banner:js=\"#!/usr/bin/env node\"",
-		"check": "tsc --noEmit"
+		"check": "tsc --noEmit",
+		"test": "vitest run"
 	},
 	"devDependencies": {
 		"@types/node": "24.10.9",
 		"esbuild": "^0.28.1",
-		"typescript": "^5.9.3"
+		"typescript": "^5.9.3",
+		"vitest": "^4.1.8"
 	}
 }

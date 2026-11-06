@@ -89,7 +89,9 @@ It does not prove:
 ## Layout
 
 - `src/cli.ts`: command dispatch, report formatting, record step.
+- `src/decisions.ts`: issue buckets, `--checks` parsing, when a result may be recorded, and exit codes.
 - `src/worker-client.ts`, `src/gsap-client.ts`: validation worker and GSAP crawl worker clients.
+- `test/`: offline Vitest suites (`pnpm --filter @create-something/webflow-template-validation-cli test`). No network calls; the login tests use a temporary home directory. CI runs them, with the extension's tests, in `.github/workflows/webflow-template-validation.yml`.
 - `src/mcp/login.ts`: PKCE login, token storage, refresh, logout.
 - `src/mcp/client.ts`: minimal MCP Streamable HTTP client. `spike/mcp-client/client.ts` re-exports it for the headless collector.
 - `src/mcp/call.ts`, `src/mcp/discover.ts`: diagnostic scripts from the spike. Not part of the bundle.
