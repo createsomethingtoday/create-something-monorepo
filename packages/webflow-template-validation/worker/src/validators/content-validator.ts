@@ -22,6 +22,11 @@ import {
 import { fetchHTML, isPlatformManagedHeading, parseHTML } from '../utils/fetch-utils';
 import { analyzeHeadingSequence, extractDocumentOutline, visibleOutlineHeadings } from '../utils/document-outline';
 import { isWebflowGeneratedVideoPosterSource } from '../utils/asset-utils';
+import {
+	REVIEWER_UTILITY_PATHS,
+	auditReviewerStandards,
+	generateReviewerStandardIssues
+} from './reviewer-standards';
 
 const LOREM_IPSUM_PATTERNS = [
 	/lorem\s+ipsum/i,
@@ -244,7 +249,10 @@ export async function validateContent(
 			const parsedHTML = parseHTML(htmlResult.html);
 			const pageAnalysis = await analyzePage(pageUrl, parsedHTML);
 
-			const issues = generateContentIssues([pageAnalysis], resolvedChecks);
+			const issues = [
+				...generateContentIssues([pageAnalysis], resolvedChecks),
+				...generateReviewerStandardIssues(pageAnalysis.reviewerAudit ? [pageAnalysis.reviewerAudit] : [])
+			];
 			const stats = calculateContentStats([pageAnalysis]);
 
 			return { issues, stats, pages: [pageAnalysis] };
@@ -279,8 +287,16 @@ export async function validateContent(
 			})
 			: combinedPages;
 
-		// Generate content validation issues
-		const issues = generateContentIssues(allPages, resolvedChecks);
+		// Generate content validation issues. The reviewer standards also read
+		// /404 and /401, which the crawl does not always reach.
+		const utilityAudits = await auditUtilityPages(siteUrl, allPages);
+		const issues = [
+			...generateContentIssues(allPages, resolvedChecks),
+			...generateReviewerStandardIssues([
+				...allPages.flatMap(page => (page.reviewerAudit ? [page.reviewerAudit] : [])),
+				...utilityAudits
+			])
+		];
 
 		// Calculate content statistics
 		const stats = calculateContentStats(allPages);
@@ -352,6 +368,8 @@ async function analyzePage(url: string, parsedHTML: ParsedHTML): Promise<Analyze
 	const imageAltAudit = analyzeContentImages(parsedHTML);
 	const imageCount = imageAltAudit.totalImages;
 	const imagesWithoutAlt = imageAltAudit.imagesWithoutAlt.length;
+	const imageDimensionAudit = analyzeImageDimensions(parsedHTML);
+	const reviewerAudit = auditReviewerStandards(parsedHTML.rawHtml, url) ?? undefined;
 
 	// Extract comprehensive SEO data
 	const seo = extractSEOData(parsedHTML);
@@ -370,10 +388,29 @@ async function analyzePage(url: string, parsedHTML: ParsedHTML): Promise<Analyze
 		imageCount,
 		imagesWithoutAlt,
 		imagesWithoutAltDetails: imageAltAudit.imagesWithoutAlt,
+		imagesMissingDimensions: imageDimensionAudit.missing,
+		imagesMissingDimensionsDetails: imageDimensionAudit.details,
+		reviewerAudit,
 		seo,
 		links,
 		contentQuality
 	};
+}
+
+/** Fetch and audit /404 and /401 when the crawl did not include them. A page that does not load is skipped. */
+async function auditUtilityPages(siteUrl: string, pages: AnalyzedPage[]) {
+	const crawled = new Set(pages.map(page => page.reviewerAudit?.path).filter(Boolean));
+	const audits = await Promise.all(
+		REVIEWER_UTILITY_PATHS.filter(path => !crawled.has(path)).map(async path => {
+			const pageUrl = new URL(path, siteUrl).href;
+			try {
+				return auditReviewerStandards((await fetchHTML(pageUrl)).html, pageUrl);
+			} catch {
+				return null;
+			}
+		})
+	);
+	return audits.filter((audit): audit is NonNullable<typeof audit> => audit !== null);
 }
 
 function isUtilityPagePlaceholderAllowed(url: string): boolean {
@@ -421,6 +458,38 @@ function analyzeContentImages(parsedHTML: ParsedHTML): { totalImages: number; im
 	});
 
 	return { totalImages, imagesWithoutAlt };
+}
+
+const MAX_DIMENSION_DETAILS_PER_PAGE = 10;
+
+/**
+ * Images without a positive width and height attribute. Webflow writes the
+ * attributes only when they are set in the image settings, and reviewers ask
+ * for both (same rule as the template-preflight skill). Background video
+ * fallback and poster images are platform markup, so they are skipped.
+ */
+export function analyzeImageDimensions(parsedHTML: ParsedHTML): {
+	missing: number;
+	details: Array<{ src: string; selector: string }>;
+} {
+	const details: Array<{ src: string; selector: string }> = [];
+	let missing = 0;
+
+	parsedHTML.images.forEach((img, index) => {
+		if (isLikelyPlatformVideoFallbackImage(img)) return;
+		if (hasPositiveDimension(img, 'width') && hasPositiveDimension(img, 'height')) return;
+
+		missing++;
+		if (details.length < MAX_DIMENSION_DETAILS_PER_PAGE) {
+			details.push({ src: getImageSource(img), selector: buildImageSelector(img, index) });
+		}
+	});
+
+	return { missing, details };
+}
+
+function hasPositiveDimension(img: HTMLImageElement | any, name: 'width' | 'height'): boolean {
+	return /^[1-9]\d*$/.test(String(img.getAttribute?.(name) ?? '').trim());
 }
 
 function shouldIgnoreImageForAltAudit(img: HTMLImageElement | any): boolean {
@@ -907,6 +976,31 @@ export function generateContentIssues(
 					title: p.title,
 					url: p.url,
 					imagesWithoutAlt: p.imagesWithoutAlt
+				}))
+			}
+		});
+	}
+
+	// Blocks the submission gate, like the other reviewer standards: reviewers
+	// ask for it on every template, so creators fix it before review.
+	const pagesMissingDimensions = pages.filter(page => (page.imagesMissingDimensions ?? 0) > 0);
+	if (pagesMissingDimensions.length > 0) {
+		const totalMissingDimensions = pagesMissingDimensions.reduce((sum, page) => sum + (page.imagesMissingDimensions ?? 0), 0);
+
+		issues.push({
+			id: 'images-missing-dimensions',
+			category: 'Content & Accessibility',
+			severity: 'error',
+			message: `${totalMissingDimensions} image(s) on ${pagesMissingDimensions.length} page(s) have no width and height attributes`,
+			description: 'Every image needs a defined width and height. Without them, the browser cannot reserve space before the image loads, so the layout shifts.',
+			howToFix: 'In the Designer, select each image and set its Width and Height in the image settings, using the image\'s own size. Classes still control how the image displays.',
+			details: {
+				imagesMissingDimensions: totalMissingDimensions,
+				pagesWithIssues: pagesMissingDimensions.map(page => ({
+					title: page.title,
+					url: page.url,
+					imagesMissingDimensions: page.imagesMissingDimensions,
+					images: page.imagesMissingDimensionsDetails || []
 				}))
 			}
 		});

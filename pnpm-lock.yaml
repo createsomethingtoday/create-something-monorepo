@@ -5426,6 +5426,9 @@ importers:
       '@create-something/gsap-validation-worker':
         specifier: workspace:*
         version: link:../../gsap-validation-worker
+      htmlparser2:
+        specifier: ^10.1.0
+        version: 10.1.0
     devDependencies:
       '@cloudflare/vitest-pool-workers':
         specifier: ^0.18.4

@@ -49,7 +49,7 @@ vi.mock('../src/utils/fetch-utils', () => {
 });
 
 import { validateDesignerData } from '../src/validators/designer-validator';
-import { generateContentIssues, validateContent } from '../src/validators/content-validator';
+import { analyzeImageDimensions, generateContentIssues, validateContent } from '../src/validators/content-validator';
 import { validateAccessibility } from '../src/validators/accessibility-validator';
 import { validateInteractions } from '../src/validators/interactions-validator';
 import { generateAssetIssues } from '../src/validators/asset-validator';
@@ -1395,9 +1395,15 @@ describe('Content Validator', () => {
 			} as any
 		);
 
-		expect(fetchHTML).toHaveBeenCalledTimes(2);
+		// The reviewer standards also read /404 and /401; the excluded slug is never fetched.
+		expect(fetchHTML).toHaveBeenCalledTimes(4);
 		const calledUrls = (fetchHTML as any).mock.calls.map((c: any[]) => c[0]);
-		expect(calledUrls).toEqual(['https://example.com', 'https://example.com/about']);
+		expect(calledUrls).toEqual([
+			'https://example.com',
+			'https://example.com/about',
+			'https://example.com/404',
+			'https://example.com/401'
+		]);
 	});
 
 	it('pageScope=current returns warning without fetching when current page is excluded', async () => {
@@ -1477,6 +1483,42 @@ describe('Content Validator', () => {
 			linkOnlyChecks as any
 		);
 		expect(singlePage.some(i => i.id === 'required-pages-not-linked')).toBe(false);
+	});
+
+	it('counts images without a positive width and height, skipping background video fallbacks', async () => {
+		const actual = await vi.importActual<typeof import('../src/utils/fetch-utils')>('../src/utils/fetch-utils');
+		const parsed = actual.parseHTMLWorker(`<!doctype html><html><body>
+			<img src="/sized.webp" width="640" height="480" alt="">
+			<img src="/width-only.webp" width="640" alt="">
+			<img src="/auto.webp" width="auto" height="480" alt="">
+			<img src="/none.webp" class="hero-image" alt="">
+			<img src="/poster.jpg" data-wf-bgvideo-fallback-img="true" alt="">
+		</body></html>`);
+
+		const audit = analyzeImageDimensions(parsed);
+
+		expect(audit.missing).toBe(3);
+		expect(audit.details.map(detail => detail.src)).toEqual(['/width-only.webp', '/auto.webp', '/none.webp']);
+		expect(audit.details[2].selector).toBe('img.hero-image');
+	});
+
+	it('reports missing image dimensions as a blocking error, even when every toggled content check is off', () => {
+		const allTogglesOff = { lorem: false, headings: false, altText: false, seo: false, links: false, contentQuality: false };
+		const pages = [
+			{
+				...linkAuditPage('https://example.com', []),
+				imagesMissingDimensions: 2,
+				imagesMissingDimensionsDetails: [{ src: '/a.webp', selector: 'img.a' }, { src: '/b.webp', selector: 'img.b' }]
+			},
+			{ ...linkAuditPage('https://example.com/about', []), imagesMissingDimensions: 0 }
+		];
+
+		const issue = generateContentIssues(pages as any, allTogglesOff as any).find(i => i.id === 'images-missing-dimensions');
+		expect(issue).toEqual(expect.objectContaining({ severity: 'error', category: 'Content & Accessibility' }));
+		expect(issue!.message).toBe('2 image(s) on 1 page(s) have no width and height attributes');
+		expect(issue!.details!.pagesWithIssues).toEqual([
+			expect.objectContaining({ url: 'https://example.com', imagesMissingDimensions: 2 })
+		]);
 	});
 });
 

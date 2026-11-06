@@ -475,9 +475,36 @@ export interface AnalyzedPage {
 		context: string;
 		selector?: string;
 	}>;
+	/** Images without a positive width and height attribute (layout shift; reviewers ask for both). */
+	imagesMissingDimensions?: number;
+	imagesMissingDimensionsDetails?: Array<{
+		src: string;
+		selector: string;
+	}>;
+	/** Reviewer standards found on this page (validators/reviewer-standards.ts). */
+	reviewerAudit?: ReviewerPageAudit;
 	seo: PageSEOData;
 	links: LinkAnalysis;
 	contentQuality: ContentQualityAnalysis;
+}
+
+export type ReviewerStandardId =
+	| 'form-default-messages'
+	| 'form-default-names'
+	| 'video-play-pause'
+	| '404-navigation'
+	| 'licenses-footer-link'
+	| 'default-favicon'
+	| 'trademark-symbols';
+
+export interface ReviewerPageAudit {
+	url: string;
+	/** Pathname without a trailing slash; "/" for the home page. */
+	path: string;
+	/** One detail line per reviewer standard this page fails. */
+	findings: Partial<Record<ReviewerStandardId, string>>;
+	hasNav: boolean;
+	hasFooter: boolean;
 }
 
 export interface PageSEOData {
