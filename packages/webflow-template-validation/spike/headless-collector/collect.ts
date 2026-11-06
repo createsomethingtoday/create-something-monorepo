@@ -16,6 +16,7 @@ import {
 	type McpVariable
 } from './map';
 import { withDerivedFields, type HeadlessDesignerData } from './enhance';
+import { collectCanvasAccessibility, type CanvasCollectResult } from './canvas';
 
 const PAGE_LIMIT = 100;
 const COMPONENT_QUERY_LIMIT = 200;
@@ -26,8 +27,10 @@ const COMPONENT_KEYWORDS = ['a', 'e', 'i', 'o', 'u'];
 export interface CollectResult {
 	/** DesignerData plus enhancedValidation and collectionMetadata, like the extension payload. */
 	designerData: HeadlessDesignerData;
-	/** The page id sent to the style, variable, and component tools. */
+	/** The page for the canvas checks and the page-scoped style, variable, and component tools. */
 	pageId: string;
+	/** Heading order and image alt text on `pageId`, the extension's "current page" checks. Undefined when the read failed (then `incomplete` says why). */
+	canvas?: CanvasCollectResult;
 	/** Raw counts before mapping filters. */
 	counts: { styles: number; pages: number; collections: number; variables: number; components: number };
 	/** What the server did that a reader should know (truncation, caps, unverified shapes). */
@@ -75,9 +78,23 @@ export async function collectDesignerData(params: {
 		if (batch.length < PAGE_LIMIT || pages.length >= total) break;
 	}
 
-	const pageId = params.pageId ?? pages[0]?.id;
+	// The extension checks the page open in the Designer. Headless, the
+	// creator picks it with --page; otherwise use the home page.
+	const homePage = pages.find((p) => p.publishedPath === '/' || p.slug === '');
+	const pageId = params.pageId ?? homePage?.id ?? pages[0]?.id;
 	if (!pageId) throw new Error(`site ${siteId} has no pages; the style, variable, and component tools need a pageId`);
 	const scoped = { siteId, pageId };
+	const incomplete: string[] = [];
+
+	onProgress?.(`MCP get_all_elements (canvas checks, page ${pageId})`);
+	let canvas: CanvasCollectResult | undefined;
+	try {
+		const page = pages.find((p) => p.id === pageId);
+		canvas = await collectCanvasAccessibility({ client, siteId, pageId, pageName: page?.title || page?.slug || pageId, agentId });
+		notes.push(...canvas.notes);
+	} catch (error) {
+		incomplete.push(`canvas checks could not read the page element tree (${error instanceof Error ? error.message : String(error)})`);
+	}
 
 	onProgress?.('MCP get_styles (with breakpoints)');
 	const breakpoints = boundedBreakpointIds();
@@ -152,6 +169,7 @@ export async function collectDesignerData(params: {
 	return {
 		designerData,
 		pageId,
+		canvas,
 		counts: {
 			styles: styles.length,
 			pages: pages.length,
@@ -160,7 +178,7 @@ export async function collectDesignerData(params: {
 			components: components.length
 		},
 		notes,
-		incomplete: styleTruncation.map((marker) => `style collection truncated by the MCP server (${marker})`)
+		incomplete: [...incomplete, ...styleTruncation.map((marker) => `style collection truncated by the MCP server (${marker})`)]
 	};
 }
 

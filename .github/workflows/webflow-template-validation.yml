@@ -1,0 +1,48 @@
+name: Webflow template validation
+
+on:
+  pull_request:
+    paths:
+      - 'packages/webflow-template-validation/cli/**'
+      - 'packages/webflow-template-validation/extension/**'
+      - 'packages/webflow-template-validation/shared/**'
+      - 'packages/webflow-template-validation/spike/**'
+      - 'packages/webflow-template-validation/worker/src/types.ts'
+      - '.github/workflows/webflow-template-validation.yml'
+      - 'pnpm-lock.yaml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/webflow-template-validation/cli/**'
+      - 'packages/webflow-template-validation/extension/**'
+      - 'packages/webflow-template-validation/shared/**'
+      - 'packages/webflow-template-validation/spike/**'
+      - 'packages/webflow-template-validation/worker/src/types.ts'
+      - '.github/workflows/webflow-template-validation.yml'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cli-and-extension:
+    name: CLI and Designer Extension checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install scoped dependencies
+        run: pnpm install --frozen-lockfile --filter @create-something/webflow-template-validation-cli --filter @create-something/webflow-template-validation-extension
+      - run: pnpm --filter @create-something/webflow-template-validation-cli check
+      - run: pnpm --filter @create-something/webflow-template-validation-cli test
+      - run: pnpm --filter @create-something/webflow-template-validation-cli build
+      - run: pnpm --filter @create-something/webflow-template-validation-extension check
+      - run: pnpm --filter @create-something/webflow-template-validation-extension test

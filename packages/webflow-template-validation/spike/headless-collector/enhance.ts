@@ -3,10 +3,11 @@
  * built from headless (MCP) DesignerData. One implementation, shared with the
  * extension: shared/designer-enhancements.ts.
  *
- * Produces "Style System", the Page Structure naming and slug rewrite, the
- * Variable Modes normalization, sorted categories, and recomputed summary
- * totals. Canvas checks need the Designer, so the canvas category is reported
- * as unavailable and no republish hints are added.
+ * Produces "Style System", the canvas checks and republish hints, the Page
+ * Structure naming and slug rewrite, the Variable Modes normalization, sorted
+ * categories, and recomputed summary totals. Without a canvas result (see
+ * canvas.ts), the canvas category is reported as unavailable and no republish
+ * hints are added.
  */
 
 import type { DesignerData } from '../../worker/src/types';
@@ -14,6 +15,7 @@ import {
 	deriveCollectionMetadata,
 	deriveEnhancedValidation,
 	enhanceValidationResults,
+	type CanvasAccessibilityResult,
 	type EnhanceableResults,
 	type EnhancedValidation
 } from '../../shared/designer-enhancements';
@@ -39,9 +41,10 @@ export function withDerivedFields(data: DesignerData): HeadlessDesignerData {
  */
 export function applyDesignerEnhancements<T extends EnhanceableResults>(
 	results: T,
-	designerData: HeadlessDesignerData
+	designerData: HeadlessDesignerData,
+	canvas?: CanvasAccessibilityResult
 ): T & EnhanceableResults {
 	const data = designerData.enhancedValidation ? designerData : withDerivedFields(designerData);
-	enhanceValidationResults(results, data, undefined);
+	enhanceValidationResults(results, data, canvas);
 	return results;
 }

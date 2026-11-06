@@ -9,8 +9,10 @@
  *   System", canvas checks, republish hints, Page Structure rewrite, Variable
  *   Modes normalization) to a worker result and recomputes the summary.
  *
- * Canvas accessibility needs Designer element access, so it is an input here,
- * not something this module collects.
+ * - evaluateCanvasAccessibility turns one page's headings and images (in
+ *   document order) into the canvas result. Each caller collects the
+ *   elements its own way: the extension through the Designer API, the
+ *   headless collector through the MCP element tree.
  */
 
 // --- Result types (shared with extension/src/index.ts) ---
@@ -619,15 +621,90 @@ export function normalizeVariableModesCategory(results: EnhanceableResults): voi
 
 export const CANVAS_CHECKS_CATEGORY = 'Canvas Checks (Current Page)';
 
-/** Reason reported when no canvas result was collected (headless runs). */
+/** Reason reported when no canvas result was collected (for example, the page element tree could not be read). */
 export const CANVAS_NOT_COLLECTED_REASON =
-	'Canvas checks need the Webflow Designer. This run read site data without a Designer canvas, so heading order and image alt text on the current page were not checked.';
+	'Canvas checks did not run for this result, so heading order and image alt text in the Designer were not checked.';
+
+/** A heading in document order. `ref` is the caller's handle for the element (a Designer element, an element id). */
+export interface CanvasHeadingInput<T> {
+	level: number;
+	ref: T;
+}
+
+/** An image in document order. `altText` is the alt text set in the Designer. */
+export interface CanvasImageInput<T> {
+	altText: string | null | undefined;
+	ref: T;
+}
+
+/**
+ * Heading order and image alt text for one page, from its elements in
+ * document order. The extension feeds it from the Designer API and the
+ * headless collector from the MCP element tree, so both report the same
+ * findings. `elementRefs` maps each issue's elementKey to the caller's ref.
+ *
+ * Headings without a level are skipped. The first heading must be H1, and a
+ * heading may go at most one level deeper than the one before it. An image
+ * with empty or whitespace-only alt text counts as missing; at most 10 of
+ * them get an elementKey.
+ */
+export function evaluateCanvasAccessibility<T>(input: {
+	pageName: string;
+	headings: Array<CanvasHeadingInput<T>>;
+	images: Array<CanvasImageInput<T>>;
+}): { result: CanvasAccessibilityResult; elementRefs: Map<string, T> } {
+	const elementRefs = new Map<string, T>();
+	const headingIssues: CanvasAccessibilityResult['headingIssues'] = [];
+	let headingsChecked = 0;
+	let lastLevel = 0;
+	for (const { level, ref } of input.headings) {
+		if (!level) continue;
+		headingsChecked++;
+		let issue: string | undefined;
+		if (headingsChecked === 1 && level !== 1) {
+			issue = `First heading on the canvas is H${level} — it should be H1`;
+		} else if (headingsChecked > 1 && level > lastLevel + 1) {
+			issue = `H${level} follows H${lastLevel}, skipping H${lastLevel + 1}`;
+		}
+		if (issue) {
+			const elementKey = `canvas-heading-${headingsChecked}`;
+			elementRefs.set(elementKey, ref);
+			headingIssues.push({ issue, position: headingsChecked, level, elementKey });
+		}
+		lastLevel = level;
+	}
+
+	let imagesMissingAlt = 0;
+	const missingAltElementKeys: string[] = [];
+	for (const { altText, ref } of input.images) {
+		if (altText && altText.trim()) continue;
+		imagesMissingAlt++;
+		if (missingAltElementKeys.length < 10) {
+			const elementKey = `canvas-image-${imagesMissingAlt}`;
+			elementRefs.set(elementKey, ref);
+			missingAltElementKeys.push(elementKey);
+		}
+	}
+
+	return {
+		result: {
+			available: true,
+			pageName: input.pageName,
+			headingsChecked,
+			headingIssues,
+			imagesChecked: input.images.length,
+			imagesMissingAlt,
+			missingAltElementKeys
+		},
+		elementRefs
+	};
+}
 
 /**
  * Canvas checks reflect the current Designer state (including unpublished
  * edits), complementing the published-site checks which lag behind edits.
  *
- * - `canvas` undefined (no Designer): adds the category as unavailable with
+ * - `canvas` undefined (not collected): adds the category as unavailable with
  *   one info issue that states the reason.
  * - `canvas.available` false (Designer without canvas access): adds nothing,
  *   as the extension always has.
@@ -643,7 +720,7 @@ export function addCanvasChecksCategory(results: EnhanceableResults, canvas: Can
 				severity: 'info',
 				message: CANVAS_NOT_COLLECTED_REASON,
 				details: {
-					howToFix: 'Run the Validator app in the Designer to check the current page canvas.'
+					howToFix: 'Run validation again, or run the Validator app in the Designer to check the current page canvas.'
 				}
 			}],
 			stats: { available: false, reason: CANVAS_NOT_COLLECTED_REASON }
@@ -801,8 +878,9 @@ function sortCategories(results: EnhanceableResults): void {
  * Append the client-side categories to a worker result, rewrite Page
  * Structure, sort categories, and recompute summary totals. Mutates `results`.
  *
- * `canvasAccessibility` is the Designer canvas result; pass undefined when no
- * Designer is open (the canvas category then reports itself as unavailable).
+ * `canvasAccessibility` is the canvas result from evaluateCanvasAccessibility;
+ * pass undefined when it was not collected (the canvas category then reports
+ * itself as unavailable).
  */
 export function enhanceValidationResults(
 	results: EnhanceableResults,

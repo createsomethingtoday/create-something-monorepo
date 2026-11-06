@@ -1,7 +1,7 @@
 "use strict";
 (() => {
   // src/utils.ts
-  var EXTENSION_VERSION = "1.3.8";
+  var EXTENSION_VERSION = "1.3.9";
   function filterRetiredAccessibilityIssues(issues) {
     return issues.filter((issue) => issue.id !== "color-contrast-violations");
   }
@@ -746,7 +746,52 @@
     }
   }
   var CANVAS_CHECKS_CATEGORY = "Canvas Checks (Current Page)";
-  var CANVAS_NOT_COLLECTED_REASON = "Canvas checks need the Webflow Designer. This run read site data without a Designer canvas, so heading order and image alt text on the current page were not checked.";
+  var CANVAS_NOT_COLLECTED_REASON = "Canvas checks did not run for this result, so heading order and image alt text in the Designer were not checked.";
+  function evaluateCanvasAccessibility(input) {
+    const elementRefs = /* @__PURE__ */ new Map();
+    const headingIssues = [];
+    let headingsChecked = 0;
+    let lastLevel = 0;
+    for (const { level, ref } of input.headings) {
+      if (!level) continue;
+      headingsChecked++;
+      let issue;
+      if (headingsChecked === 1 && level !== 1) {
+        issue = `First heading on the canvas is H${level} \u2014 it should be H1`;
+      } else if (headingsChecked > 1 && level > lastLevel + 1) {
+        issue = `H${level} follows H${lastLevel}, skipping H${lastLevel + 1}`;
+      }
+      if (issue) {
+        const elementKey = `canvas-heading-${headingsChecked}`;
+        elementRefs.set(elementKey, ref);
+        headingIssues.push({ issue, position: headingsChecked, level, elementKey });
+      }
+      lastLevel = level;
+    }
+    let imagesMissingAlt = 0;
+    const missingAltElementKeys = [];
+    for (const { altText, ref } of input.images) {
+      if (altText && altText.trim()) continue;
+      imagesMissingAlt++;
+      if (missingAltElementKeys.length < 10) {
+        const elementKey = `canvas-image-${imagesMissingAlt}`;
+        elementRefs.set(elementKey, ref);
+        missingAltElementKeys.push(elementKey);
+      }
+    }
+    return {
+      result: {
+        available: true,
+        pageName: input.pageName,
+        headingsChecked,
+        headingIssues,
+        imagesChecked: input.images.length,
+        imagesMissingAlt,
+        missingAltElementKeys
+      },
+      elementRefs
+    };
+  }
   function addCanvasChecksCategory(results, canvas) {
     if (!canvas) {
       results.categories.push({
@@ -758,7 +803,7 @@
           severity: "info",
           message: CANVAS_NOT_COLLECTED_REASON,
           details: {
-            howToFix: "Run the Validator app in the Designer to check the current page canvas."
+            howToFix: "Run validation again, or run the Validator app in the Designer to check the current page canvas."
           }
         }],
         stats: { available: false, reason: CANVAS_NOT_COLLECTED_REASON }
@@ -2179,9 +2224,7 @@
         webflow.getCurrentPage()
       ]);
       const pageName = await currentPage?.getName?.() || "Current Page";
-      const headingIssues = [];
-      let headingsChecked = 0;
-      let lastLevel = 0;
+      const headings = [];
       for (const element of elements) {
         if (element.type !== "Heading") continue;
         let level = null;
@@ -2195,57 +2238,19 @@
           level = null;
         }
         if (!level) continue;
-        headingsChecked++;
-        if (headingsChecked === 1 && level !== 1) {
-          const elementKey = `canvas-heading-${headingsChecked}`;
-          canvasElementRegistry.set(elementKey, element);
-          headingIssues.push({
-            issue: `First heading on the canvas is H${level} \u2014 it should be H1`,
-            position: headingsChecked,
-            level,
-            elementKey
-          });
-        } else if (headingsChecked > 1 && level > lastLevel + 1) {
-          const elementKey = `canvas-heading-${headingsChecked}`;
-          canvasElementRegistry.set(elementKey, element);
-          headingIssues.push({
-            issue: `H${level} follows H${lastLevel}, skipping H${lastLevel + 1}`,
-            position: headingsChecked,
-            level,
-            elementKey
-          });
-        }
-        lastLevel = level;
+        headings.push({ level, ref: element });
       }
-      let imagesChecked = 0;
-      let imagesMissingAlt = 0;
-      const missingAltElementKeys = [];
+      const images = [];
       for (const element of elements) {
         if (element.type !== "Image") continue;
-        imagesChecked++;
         try {
-          const altText = await element.getAltText();
-          if (!altText || !altText.trim()) {
-            imagesMissingAlt++;
-            if (missingAltElementKeys.length < 10) {
-              const elementKey = `canvas-image-${imagesMissingAlt}`;
-              canvasElementRegistry.set(elementKey, element);
-              missingAltElementKeys.push(elementKey);
-            }
-          }
+          images.push({ altText: await element.getAltText(), ref: element });
         } catch {
-          imagesChecked--;
         }
       }
-      return {
-        available: true,
-        pageName,
-        headingsChecked,
-        headingIssues,
-        imagesChecked,
-        imagesMissingAlt,
-        missingAltElementKeys
-      };
+      const { result, elementRefs } = evaluateCanvasAccessibility({ pageName, headings, images });
+      for (const [elementKey, element] of elementRefs) canvasElementRegistry.set(elementKey, element);
+      return result;
     } catch (error) {
       console.warn("Canvas accessibility collection failed:", error);
       return unavailable(error instanceof Error ? error.message : "Canvas analysis failed");

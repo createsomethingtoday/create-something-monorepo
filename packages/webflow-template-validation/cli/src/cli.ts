@@ -16,10 +16,19 @@ import { randomBytes } from 'node:crypto';
 import { parseArgs } from 'node:util';
 import { collectDesignerData, type CollectResult } from '../../spike/headless-collector/collect.ts';
 import { applyDesignerEnhancements } from '../../spike/headless-collector/enhance.ts';
-import type { EnhanceableResults } from '../../shared/designer-enhancements.ts';
+import { CANVAS_CHECKS_CATEGORY, type EnhanceableResults } from '../../shared/designer-enhancements.ts';
 import { McpClient, findArray } from './mcp/client.ts';
 import { TOKEN_PATH, hasToken, loadToken, login, logout } from './mcp/login.ts';
 import { runGsapCrawl, type GsapOutcome } from './gsap-client.ts';
+import {
+	bucketOf,
+	exitCodeFor,
+	howToFix,
+	incompleteReasons,
+	parseChecks,
+	recordSkipReason,
+	type Bucket
+} from './decisions.ts';
 import {
 	DEFAULT_WORKER_BASE,
 	PUBLISHED_SITE_CHECKS,
@@ -55,7 +64,8 @@ Commands:
 
 Validate options:
   --site <siteId>              Site to read Designer data from. Turns on --designer-source mcp when a token exists.
-  --page <pageId>              Page id for the style, variable, and component tools (default: first page).
+  --page <pageId>              Page for the canvas checks (heading order, image alt text), like the page open in
+                               the Validator app (default: the home page).
   --designer-source mcp        Explicit form of the default above. Needs --site and a stored token.
   --no-record                  Collect Designer data and run the checks, but do not record the result.
   --checks <list>              Published-site checks to run: ${PUBLISHED_SITE_CHECKS.join(',')} (default: all).
@@ -68,32 +78,7 @@ Validate options:
 Exit codes: 0 no blockers, 1 blockers found, 2 incomplete run (network, worker, login, or argument failure,
             GSAP crawl unavailable, or the recording step failed).`;
 
-type Bucket = 'blocker' | 'warning' | 'info';
 type Row = { category: string; issue: ValidationIssue; bucket: Bucket };
-
-function bucketOf(issue: ValidationIssue): Bucket {
-	if (issue.severity === 'error' || typeof issue.details?.policy === 'string') return 'blocker';
-	return issue.severity === 'warning' ? 'warning' : 'info';
-}
-
-function howToFix(issue: ValidationIssue): string | undefined {
-	const value = issue.details?.howToFix ?? issue.howToFix;
-	return typeof value === 'string' && value.trim() ? value.trim() : undefined;
-}
-
-function parseChecks(value: string | undefined): string[] {
-	if (!value) return [...PUBLISHED_SITE_CHECKS];
-	const requested = value.split(',').map((c) => c.trim().toLowerCase()).filter(Boolean);
-	const allowed = new Set<string>(PUBLISHED_SITE_CHECKS);
-	const bad = requested.filter((c) => !allowed.has(c));
-	if (bad.length > 0 || requested.length === 0) {
-		const extra = bad.includes('designer')
-			? ' The designer check needs Designer data; run `wf-template-validate login`, then pass --site <siteId>, or run the Template Validator app.'
-			: '';
-		throw new Error(`Unknown or unsupported check(s): ${bad.join(', ') || '(none)'}. Allowed: ${PUBLISHED_SITE_CHECKS.join(', ')}.${extra}`);
-	}
-	return [...new Set(requested)];
-}
 
 const OPTIONS = {
 	json: { type: 'boolean', default: false },
@@ -278,8 +263,8 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 	}
 	log('Waiting for GSAP crawl');
 	const gsap = await gsapPromise;
-	// Same client-side enhancements the extension applies (Style System, Page Structure, Variable Modes, summary totals).
-	if (collected) applyDesignerEnhancements(outcome.result as unknown as EnhanceableResults, collected.designerData);
+	// Same client-side enhancements the extension applies (Style System, canvas checks, Page Structure, Variable Modes, summary totals).
+	if (collected) applyDesignerEnhancements(outcome.result as unknown as EnhanceableResults, collected.designerData, collected.canvas?.result);
 
 	const categories = outcome.result.categories ?? [];
 	const rows: Row[] = categories.flatMap((cat) =>
@@ -301,7 +286,25 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 		checksRequested: checks,
 		checksNotRun: checks.includes('designer') ? [] : ['designer'],
 		designerSource: collected
-			? { source: 'mcp', siteId: values.site, pageId: collected.pageId, siteInfo: collected.designerData.siteInfo, counts: collected.counts, notes: collected.notes }
+			? {
+					source: 'mcp',
+					siteId: values.site,
+					pageId: collected.pageId,
+					siteInfo: collected.designerData.siteInfo,
+					counts: collected.counts,
+					canvas: collected.canvas
+						? {
+								pageId: collected.canvas.pageId,
+								pageName: collected.canvas.result.pageName,
+								headingsChecked: collected.canvas.result.headingsChecked,
+								headingIssues: collected.canvas.result.headingIssues.length,
+								imagesChecked: collected.canvas.result.imagesChecked,
+								imagesMissingAlt: collected.canvas.result.imagesMissingAlt,
+								elements: collected.canvas.elements
+							}
+						: null,
+					notes: collected.notes
+				}
 			: null,
 		score,
 		passedCategories: passed,
@@ -326,14 +329,14 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 
 	let record: RecordOutcome | { skipped: string } | null = null;
 	if (collected && !values['no-record']) {
-		if (outcome.mode !== 'async') {
-			record = { skipped: 'the /validate fallback does not run the Designer checks, so this result was not recorded' };
-		} else if (collected.incomplete.length > 0) {
-			record = { skipped: `the Designer data collection was incomplete, so this result was not recorded (${collected.incomplete.join('; ')})` };
-		} else if (workerBase !== DEFAULT_WORKER_BASE && !values['trust-worker']) {
-			// Recording posts the Webflow access token as evidence. Never send it
-			// to a worker the creator did not explicitly trust.
-			record = { skipped: `recording sends your Webflow access token to the worker; pass --trust-worker to allow it for ${workerBase}` };
+		const skipped = recordSkipReason({
+			mode: outcome.mode,
+			collectionIncomplete: collected.incomplete,
+			workerBase,
+			trustWorker: Boolean(values['trust-worker'])
+		});
+		if (skipped) {
+			record = { skipped };
 		} else {
 			log('Recording the result with the worker (oauth_site_access evidence)');
 			try {
@@ -353,16 +356,14 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 	}
 	const recorded = Boolean(record && 'ok' in record && record.ok);
 	const recordFailed = Boolean(record && 'ok' in record && !record.ok);
-	// Exit 2 means the validation is incomplete: a declared step (the GSAP
-	// crawl or the recording) did not finish, so a clean result must not read
-	// as a pass. Exit 1 means every step ran and blockers were found.
-	const incomplete = [
-		...(gsap.status !== 'complete' ? [`GSAP crawl ${gsap.status}${'reason' in gsap && gsap.reason ? `: ${gsap.reason}` : ''}`] : []),
-		...(collected && outcome.mode !== 'async' ? ['Designer checks did not run: the worker fell back to /validate'] : []),
-		...(collected?.incomplete ?? []),
-		...(recordFailed ? ['recording failed'] : [])
-	];
-	const exitCode = incomplete.length > 0 ? 2 : summary.blockers > 0 ? 1 : 0;
+	const incomplete = incompleteReasons({
+		gsap: { status: gsap.status, reason: 'reason' in gsap ? gsap.reason : undefined },
+		designerCollected: Boolean(collected),
+		mode: outcome.mode,
+		collectionIncomplete: collected?.incomplete ?? [],
+		recordFailed
+	});
+	const exitCode = exitCodeFor(incomplete, summary.blockers);
 	const fullSummary = {
 		...summary,
 		record,
@@ -430,6 +431,12 @@ function printHuman(ctx: {
 		out.push(
 			`Designer data: MCP, site "${collected.designerData.siteInfo?.name ?? '?'}" (${collected.designerData.siteInfo?.id ?? '?'}), page ${collected.pageId}; ${c.styles} styles, ${c.pages} pages, ${c.variables} variables, ${c.components} components`
 		);
+		const canvas = collected.canvas?.result;
+		out.push(
+			canvas
+				? `Canvas checks: page "${canvas.pageName}" (${collected.pageId}), ${canvas.headingsChecked} heading(s), ${canvas.imagesChecked} image(s); component contents not included, as in the Validator app`
+				: 'Canvas checks: not run (see Incomplete)'
+		);
 	}
 	out.push(
 		runsDesigner
@@ -472,6 +479,12 @@ function printHuman(ctx: {
 			out.push(`  [${category}] ${issue.id}: ${issue.message}${policy}`);
 			const fix = howToFix(issue);
 			if (fix) out.push(`      Fix: ${fix}`);
+			if (category === CANVAS_CHECKS_CATEGORY) {
+				if (typeof issue.details?.location === 'string') out.push(`      Where: ${issue.details.location}`);
+				const keys: unknown = issue.details?.canvasElementKeys;
+				const labels = Array.isArray(keys) ? keys.map((key) => collected?.canvas?.elements[String(key)]).filter(Boolean) : [];
+				if (labels.length > 0) out.push(`      Element${labels.length > 1 ? 's' : ''}: ${labels.join('; ')}`);
+			}
 		}
 	}
 
