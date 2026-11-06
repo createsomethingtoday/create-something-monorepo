@@ -94,7 +94,7 @@
   });
 </script>
 
-<svelte:head><link rel="stylesheet" href="/styles/agency/story-home.css?v=chapter-navigation-20261105" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /><link rel="stylesheet" href="/styles/agency/image-treatment.css?v=graphite-frames-20261105" /></svelte:head>
+<svelte:head><link rel="stylesheet" href="/styles/agency/story-home.css?v=hero-warmth-20261105" /><link rel="preload" as="image" href="/images/agency-sales/hero-desktop-warm-v2.webp" media="(min-width: 901px)" fetchpriority="high" /><link rel="preload" as="image" href="/images/agency-sales/hero-mobile-warm-v2.webp" media="(max-width: 900px)" fetchpriority="high" /><link rel="stylesheet" href="/styles/agency/image-treatment.css?v=graphite-frames-20261105" /></svelte:head>
 <div class="agency-home" bind:this={root}>
   <div class="page-progress" aria-hidden="true"></div>
   <div class="story-tools"><button type="button" onclick={toggleFilmMotion} aria-pressed={$reducedFilmMotion}>{$reducedFilmMotion ? 'Enable motion' : 'Motion off'}</button></div>

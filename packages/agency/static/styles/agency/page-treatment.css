@@ -182,3 +182,7 @@ body.design-preview .agency-preview-media img[data-image-entrance="hero-study"]{
 /* This study gives the image its own frame. The former background-image scrim
    would paint over unboxed mobile copy, so it has no role in this composition. */
 body.design-preview .performance-campaign-opening.agency-preview-hero:has(>.agency-preview-media>img[data-image-entrance="hero-study"])::before{display:none}
+
+/* Foundation uses a separate concept figure; the retired background scrim
+   must not paint over its stacked mobile heading and actions. */
+body.design-preview[data-preview-route="/agent-foundation"] .performance-campaign-opening.agency-preview-hero::before{display:none}
