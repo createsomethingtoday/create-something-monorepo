@@ -92,9 +92,13 @@
       node.removeEventListener('keydown', keys);
     } };
   }
-  $effect(() => {
+  // Capture the opener before the shared component removes its launcher.
+  $effect.pre(() => {
     if (!mounted || !open) return;
     previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  });
+  $effect(() => {
+    if (!mounted || !open) return;
     void tick().then(() => input?.focus());
   });
   $effect(() => {
