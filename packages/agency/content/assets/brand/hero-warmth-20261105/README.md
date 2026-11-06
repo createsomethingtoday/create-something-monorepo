@@ -16,7 +16,7 @@ These are conceptual illustrations, not product screenshots, execution traces or
 
 ## Acceptance and validation
 
-Check 320,390,768,1024,1025,1440px; normal/reduced motion; keyboard focus; homepage without JavaScript; loaded route-specific images; no horizontal overflow; and copy/subject separation. Review actual rendered images against the Build reference. Functional geometry does not establish perceptual quality.
+Check 320,390,768,1024,1025,1440,1920,2560px; normal/reduced motion; keyboard focus; homepage without JavaScript; loaded route-specific images; no horizontal overflow; and copy/subject separation. Review actual rendered images against the Build reference. Functional geometry does not establish perceptual quality.
 
 The before-change mobile regression failed: the baseline had no complete scene below the copy and cropped collaborators behind the headline. A lighter desktop overlay exposed more detail but retained the overlap. The selected composition resolves both causes.
 
@@ -39,3 +39,5 @@ The Agency package check passed with zero Svelte errors/warnings. The browser su
 The expanded Agency check passed again with zero Svelte errors/warnings. The 21-case dev browser suite passed. Independent final production-build re-test and promotion evidence remain in CRE-2360.
 
 Independent Sol 6.1 final re-test of the integrated production-build preview passed all21 cases and direct visual review at all six widths. The complete390px mobile scene, visible1440px motion control, readable Foundation390px copy and Services story were inspected. Cold #next arrived at87/112px in normal/reduced motion; actual #example arrived at112px. These establish local acceptance, not production verification.
+
+The deployed branch preview also passed the expanded25-case suite. Direct1920/2560px inspection confirms the975px image cap preserves copy separation: at2560px the copy ends at1222px and the subject begins at1504px. These wide cases are retained for the earlier Codex review finding4487802437.

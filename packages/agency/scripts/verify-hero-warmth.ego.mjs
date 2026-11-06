@@ -4,7 +4,7 @@
 const TASK_SPACE_ID = 36;
 const BASE_URL = 'http://127.0.0.1:4193';
 const EVIDENCE_DIR = '/tmp/cre-2360-evidence';
-const WIDTHS = [320, 390, 768, 1024, 1025, 1440];
+const WIDTHS = [320, 390, 768, 1024, 1025, 1440, 1920, 2560];
 const assert = (await import('node:assert/strict')).default;
 const { mkdir, writeFile } = await import('node:fs/promises');
 await mkdir(EVIDENCE_DIR, { recursive: true });
