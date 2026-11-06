@@ -170,9 +170,19 @@ describe('Reviewer standards', () => {
 			'the exact opening text was not found'
 		);
 		expect(audit('/about', `${NAV}<p>No boilerplate here.</p>${FOOTER}`).findings['licenses-boilerplate']).toBeUndefined();
+		const formatted =
+			'<p>All graphical assets in this template are licensed for <em>personal and commercial use</em>. If you\'d like to use a specific <strong>asset</strong>, please check the license below.</p>';
+		expect(audit('/licenses', `${NAV}<h1>Licenses</h1>${formatted}${FOOTER}`).findings['licenses-boilerplate']).toBeUndefined();
 	});
 
 	it('requires /instructions only when custom code calls GSAP and the site answered 404 for it', () => {
+		const inert = audit(
+			'/contact',
+			`${NAV}<script>// gsap.to(".hero", { y: 0 });\n/* gsap.from(".card") */\nconst example = "gsap.to('.x')"; const tip = \`ScrollTrigger.create({})\`;</script>${FOOTER}`
+		);
+		expect(inert.usesCustomGsap).toBe(false);
+		const afterComment = audit('/team', `${NAV}<script>// intro\nconst url = "https://example.com//x"; gsap.timeline();</script>${FOOTER}`);
+		expect(afterComment.usesCustomGsap).toBe(true);
 		const custom = audit('/', `${NAV}<script>gsap.registerPlugin(ScrollTrigger); gsap.to('.hero', { y: 0 });</script>${FOOTER}`);
 		const webflowOnly = audit('/about', `${NAV}<script src="https://cdn.prod.website-files.com/gsap/3.14.2/gsap.min.js"></script>${FOOTER}`);
 		expect(custom.usesCustomGsap).toBe(true);

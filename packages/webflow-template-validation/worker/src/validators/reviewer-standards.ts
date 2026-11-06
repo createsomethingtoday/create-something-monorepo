@@ -94,6 +94,11 @@ const FOOTER_TOKEN = /(?:^|[\s_-])footer(?:$|[\s_-])/i;
 const DEFAULT_ICON_PATHS = { favicon: '/img/favicon.ico', webclip: '/img/webclip.png' } as const;
 const NO_TEXT_TAGS = new Set(['script', 'style', 'noscript', 'template', 'svg', 'head']);
 const INERT_TAGS = new Set(['template', 'noscript']);
+const BLOCK_TAGS = new Set([
+	'address', 'article', 'aside', 'blockquote', 'br', 'dd', 'details', 'div', 'dl', 'dt', 'fieldset', 'figcaption', 'figure',
+	'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hr', 'li', 'main', 'nav', 'ol', 'p', 'pre', 'section',
+	'summary', 'table', 'tbody', 'td', 'tfoot', 'th', 'thead', 'tr', 'ul'
+]);
 const LICENSES_PATH = '/licenses';
 const INSTRUCTIONS_PATH = '/instructions';
 /** Calls to buy, get or see more templates (guideline layout-and-content-18). Matched only on links that leave the site. */
@@ -134,7 +139,9 @@ export function auditReviewerStandards(html: string, pageUrl: string): ReviewerP
 		findings,
 		hasNav: elements.some(isNav),
 		hasFooter: elements.some(isFooter),
-		usesCustomGsap: elements.some((el) => el.name === 'script' && !attr(el, 'src') && CUSTOM_GSAP_CALL.test(rawText(el)))
+		usesCustomGsap: elements.some(
+			(el) => el.name === 'script' && !attr(el, 'src') && CUSTOM_GSAP_CALL.test(withoutCommentsAndStrings(rawText(el)))
+		)
 	};
 }
 
@@ -292,6 +299,32 @@ function rawText(node: Node): string {
 	return (node.children ?? []).map((child) => child.data ?? '').join('');
 }
 
+/**
+ * JavaScript with comments removed and string and template literals emptied,
+ * so a commented-out or quoted `gsap.to(...)` does not count as a call.
+ */
+function withoutCommentsAndStrings(code: string): string {
+	let out = '';
+	for (let i = 0; i < code.length; i++) {
+		const char = code[i];
+		const next = code[i + 1];
+		if (char === '/' && next === '/') {
+			while (i < code.length && code[i] !== '\n') i++;
+			out += '\n';
+		} else if (char === '/' && next === '*') {
+			const end = code.indexOf('*/', i + 2);
+			i = end === -1 ? code.length : end + 1;
+			out += ' ';
+		} else if (char === '"' || char === "'" || char === '`') {
+			for (i++; i < code.length && code[i] !== char; i++) if (code[i] === '\\') i++;
+			out += char + char;
+		} else {
+			out += char;
+		}
+	}
+	return out;
+}
+
 function trademarksDetail(elements: Node[], root: Node): string | null {
 	const body = elements.find((el) => el.name === 'body') ?? root;
 	const content = normalize(text(body));
@@ -331,11 +364,17 @@ function ancestors(node: Node): Node[] {
 	return out;
 }
 
-/** Text a visitor could read, without script, style, SVG, or head content. CSS-hidden text is included. */
+/**
+ * Text a visitor could read, without script, style, SVG, or head content.
+ * Inline elements join without a gap, as a browser renders them
+ * ("specific <strong>asset</strong>, please" reads "specific asset, please");
+ * block elements and <br> are separated by a space. CSS-hidden text is included.
+ */
 function text(node: Node): string {
 	if (node.type === 'text') return node.data ?? '';
 	if (node.name && NO_TEXT_TAGS.has(node.name)) return '';
-	return (node.children ?? []).map(text).join(' ');
+	const inner = (node.children ?? []).map(text).join('');
+	return node.name && BLOCK_TAGS.has(node.name) ? ` ${inner} ` : inner;
 }
 
 function attr(node: Node, name: string): string {
