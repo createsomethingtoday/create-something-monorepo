@@ -48,6 +48,18 @@ test('an explicit agent category overrides stale category-page route context', (
   assert.deepEqual(route.types, ['One Page']);
 });
 
+test('a category page linking to itself with ?category stays route-owned', () => {
+  const route = parseTemplateRoute({
+    href: 'https://webflow.com/templates/category/portfolio-and-agency-websites?category=portfolio-and-agency-websites&subcategory=freelancers-and-consultants',
+    useWindow: false,
+  });
+
+  assert.equal(route.categoryGroupSlug, 'portfolio-and-agency-websites');
+  assert.equal(route.childCategorySlug, 'freelancers-and-consultants');
+  assert.equal(route.categoryIsRoute, true);
+  assert.equal(route.childCategoryIsRoute, false);
+});
+
 test('resolves conversational category aliases only through the closed Marketplace vocabulary', () => {
   assert.equal(resolveTemplateCategoryRouteSlug('portfolio-agency'), 'portfolio-and-agency-websites');
   assert.equal(resolveTemplateCategoryRouteSlug('food-and-drink'), 'food-and-drink-websites');
