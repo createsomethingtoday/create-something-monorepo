@@ -1,5 +1,7 @@
 # GiGi 0.2.23 workspace search — CRE-2365
 
+Superseded candidate: GitHub review later found a pointer-blocking loading-state bug. This version was not promoted to the canonical public pages. See the corrected 0.2.24 qualification in `../gigi-search-0224/REVIEW.md`; the immutable 0.2.23 object is retained unchanged.
+
 User authority: import Danny's global search into regular GiGi. [Source handoff](https://halfdozensolutions.slack.com/archives/D07NUM2EAP8/p1793988102086709). Owning tracking: [CRE-2365](https://linear.app/createsomething/issue/CRE-2365/import-danny-global-search-into-regular-gigi).
 
 Runtime source is clean `9cc6800c5dca846c0aa1b3a0cfc0de773f0e0b48`. Both compiler manifests recorded that SHA and `GIGI_BUILD_SOURCE_DIRTY=false`; the signed executable contains the SHA. Later receipt and Agency metadata commits do not change desktop runtime. Artifact: 84,790,943 bytes; SHA-256 `372a4e754fd98530ca48f0af823f7002b4f135bdece09e80cfa2e5a60b0f4bdc`. The public pointer and production promotion require the normal PR/check/merge/deploy path.

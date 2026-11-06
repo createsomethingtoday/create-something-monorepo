@@ -14,12 +14,12 @@ test('standalone page retains the owning Agency Canon operator palette', () => {
 });
 
 test('download contract pins exact qualified installer, platform and checksum', () => {
-  assert.equal(gigiBeta.version, '0.2.23');
-  assert.equal(gigiBeta.filename, 'GiGi-0.2.23-arm64-private-beta.dmg');
-  assert.equal(gigiBeta.bytes, 84790943);
-  assert.equal(gigiBeta.sha256, '372a4e754fd98530ca48f0af823f7002b4f135bdece09e80cfa2e5a60b0f4bdc');
-  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.23/GiGi-0.2.23-arm64-private-beta.dmg`);
-  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '84,790,943', '84.8 MB']) assert.ok(gigiBetaHtml.includes(text), text);
+  assert.equal(gigiBeta.version, '0.2.24');
+  assert.equal(gigiBeta.filename, 'GiGi-0.2.24-arm64-private-beta.dmg');
+  assert.equal(gigiBeta.bytes, 84790250);
+  assert.equal(gigiBeta.sha256, 'be95fbe0dd11cfeb06e7455cd662a3a5b1406d6f3c29d02d772f59f19c2e0e62');
+  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.24/GiGi-0.2.24-arm64-private-beta.dmg`);
+  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '84,790,250', '84.8 MB']) assert.ok(gigiBetaHtml.includes(text), text);
 });
 
 test('beta stays unlisted and has no active content or tracking shell', () => {
@@ -135,7 +135,7 @@ test('setup and classification release keeps session and acceptance boundaries e
 });
 
 test("current release clearly defers phone qualification and preserves rollback", () => {
- assert.ok(gigiBetaHtml.includes("Phone workflow unverified for 0.2.23"));
+ assert.ok(gigiBetaHtml.includes("Phone workflow unverified for 0.2.24"));
  assert.ok(gigiBetaHtml.includes("Physical-phone qualification is deferred"));
  assert.ok(gigiBetaHtml.includes("GiGi 0.2.22 for Apple Silicon"));
 });
