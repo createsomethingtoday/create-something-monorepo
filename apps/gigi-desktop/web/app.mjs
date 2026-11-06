@@ -597,6 +597,7 @@ function captureEditorDraft() {
 }
 
 function render() {
+  root.classList.toggle('loading', state.busy);
   // Background reads must not detach the search input during native composition.
   // Refresh the underlying page when the search dialog closes.
   if(workspaceSearch.visible){renderWorkspaceSearch();return;}
@@ -607,7 +608,6 @@ function render() {
   const viewState = view === renderedView ? captureViewState(root) : null;
   renderedView = view;
   const editorPosition = captureEditorDraft();
-  root.classList.toggle('loading', state.busy);
   if (!state.workspace || state.setupProfile) { root.innerHTML = onboarding(); restoreViewState(root, viewState); return; }
   let body;
   if (sourceProposal) body = sourceProposalView(sourceProposal, state.busy);

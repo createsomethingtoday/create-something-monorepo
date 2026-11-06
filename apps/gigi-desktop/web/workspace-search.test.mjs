@@ -117,3 +117,34 @@ test('refreshing results preserves the active input node and unfinished composit
     assert.equal(results.scrollTop,12);
   }finally{globalThis.document=previous;}
 });
+
+test('finishing a page read clears pointer blocking without replacing the active search input',async()=>{
+  const previous={document:globalThis.document,tauri:globalThis.__TAURI__};
+  const listeners=new Map();let loading=false,replacements=0,finishOverview,overviewStarted=false,holdOverview=false;
+  const input={id:'workspace-search-input',value:'Miか',tagName:'INPUT',dataset:{},focus(){globalThis.document.activeElement=this;}};
+  const results={innerHTML:'',scrollTop:0,setAttribute(){}};
+  const host={contains:node=>node===input,querySelector(selector){return selector==='#workspace-search-input'?input:selector==='.workspace-search-results'?results:null;},querySelectorAll(){return[input];},set innerHTML(_){}};
+  const root={classList:{toggle(name,value){if(name==='loading')loading=value;}},addEventListener(name,fn){listeners.set(name,fn);},querySelector(selector){return selector==='#workspace-search-host'?host:selector==='#workspace-search-input'?input:null;},querySelectorAll(){return[];},get innerHTML(){return'';},set innerHTML(_){replacements++;globalThis.document.activeElement=null;}};
+  globalThis.document={activeElement:null,querySelector:()=>root};
+  globalThis.__TAURI__={core:{invoke:async(_,{operation,input})=>{
+    if(operation==='workspace.get')return{id:'synthetic',name:'Synthetic search'};
+    if(operation==='records.list')return{items:input.entity==='profile'?[{id:'profile'}]:[],count:0};
+    if(operation==='records.get')return{id:input.id,title:'Synthetic',fields:{Currency:'USD'},relations:[]};
+    if(operation==='workspace.overview' && holdOverview){overviewStarted=true;return new Promise(resolve=>{finishOverview=resolve;});}
+    return{};
+  }}};
+  try{
+    await import(`./app.mjs?workspace-search-loading=${Date.now()}`);
+    await new Promise(resolve=>setTimeout(resolve,30));holdOverview=true;
+    listeners.get('click')({target:{closest:()=>({dataset:{page:'overview'}})}});
+    for(let n=0;n<100&&!overviewStarted;n++)await new Promise(resolve=>setTimeout(resolve,5));
+    assert.equal(overviewStarted,true,'hold the actual page read');
+    assert.equal(loading,true);
+    listeners.get('click')({target:{closest:()=>({dataset:{workspaceSearch:'1'}})}});
+    input.focus();const before=replacements;
+    finishOverview({});await new Promise(resolve=>setTimeout(resolve,30));
+    assert.equal(loading,false,'completed page reads must release pointer events while Search stays open');
+    assert.equal(replacements,before,'keep the active input ancestor');
+    assert.equal(globalThis.document.activeElement,input);assert.equal(input.value,'Miか');
+  }finally{globalThis.document=previous.document;globalThis.__TAURI__=previous.tauri;}
+});

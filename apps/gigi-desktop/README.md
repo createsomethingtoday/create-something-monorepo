@@ -1,6 +1,6 @@
 # GiGi desktop beta
 
-## Workspace search (0.2.23)
+## Workspace search (0.2.24)
 
 The header Search control and Command/Control-F open a local workspace search
 without changing the current page. Results group People, Gigs, Finances and
