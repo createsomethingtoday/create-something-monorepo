@@ -14,6 +14,7 @@
   import FilmCollection from './films/FilmCollection.svelte';
   import BuiltWork from './BuiltWork.svelte';
   import SelectedClientWork from './SelectedClientWork.svelte';
+  import { enhanceWalkthroughEntrance } from '$lib/motion/walkthroughEntrance';
   import { enhanceStoryHome } from '$lib/motion/storyHome';
   import { enhanceChapterEntrances } from '$lib/motion/chapterEntrance';
   import { alignScrollProgress } from '$lib/motion/scrollProgress';
@@ -27,7 +28,9 @@
     const progress = alignScrollProgress(root);
     const disposeEvidence = Array.from(root.querySelectorAll<HTMLDetailsElement>('details'), enhanceEvidenceDisclosure);
     const dialog = root.querySelector<HTMLDialogElement>('#work-dialog');
+    const entrance = enhanceWalkthroughEntrance(root, dialog);
     let originalOverflow = '';
+    let walkthroughOpen = false;
     let opener: HTMLElement | null = null;
     const video = dialog?.querySelector('video');
     const chapterButtons = root.querySelectorAll<HTMLButtonElement>('[data-work-chapter]');
@@ -42,16 +45,34 @@
       if (contextEvidence) contextEvidence.textContent = stage.evidence;
       chapterButtons.forEach((button, i) => button.setAttribute('aria-current', i === index ? 'step' : 'false'));
     };
+    const restoreWalkthrough = () => {
+      if (!walkthroughOpen) return;
+      walkthroughOpen = false;
+      video?.pause();
+      filmOverlayOpen.set(false);
+      document.body.style.overflow = originalOverflow;
+      opener?.focus({ preventScroll: true });
+    };
+    const closeWalkthrough = () => {
+      dialog?.close();
+      // Native close events are queued. Restore this session before another
+      // opening can capture its scroll lock or receive a stale close event.
+      restoreWalkthrough();
+    };
     let requestedTime = 0;
     const openWalkthrough = (trigger: HTMLElement, time = 0) => {
-      if (!dialog || !video) return;
+      if (!dialog || !video || dialog.open) return;
+      restoreWalkthrough(); // Also handles an external native close before its event arrives.
+      const sourceFrame = entrance.capture();
       opener = trigger;
       requestedTime = time;
       showChapter(Math.max(0, webflowStages.findIndex(stage => time >= stage.start && time < stage.end)));
       originalOverflow = document.body.style.overflow;
       dialog.showModal();
+      walkthroughOpen = true;
       filmOverlayOpen.set(true);
       document.body.style.overflow = 'hidden';
+      entrance.enter(sourceFrame);
       if (video.readyState >= 1) video.currentTime = requestedTime;
       void video.play().catch(() => {});
     };
@@ -72,21 +93,23 @@
     watchButton?.addEventListener('click', event => {
       openWalkthrough(event.currentTarget as HTMLElement);
     }, { signal: abort.signal });
-    dialog?.querySelector<HTMLButtonElement>('[data-home-close]')?.addEventListener('click', () => dialog.close(), { signal: abort.signal });
+    dialog?.querySelector<HTMLButtonElement>('[data-home-close]')?.addEventListener('click', closeWalkthrough, { signal: abort.signal });
+    dialog?.addEventListener('cancel', event => {
+      event.preventDefault();
+      closeWalkthrough();
+    }, { signal: abort.signal });
     dialog?.addEventListener('close', () => {
-      dialog.querySelector('video')?.pause();
-      filmOverlayOpen.set(false);
-      document.body.style.overflow = originalOverflow;
-      opener?.focus({ preventScroll: true });
+      if (!dialog.open) restoreWalkthrough();
     }, { signal: abort.signal });
     return () => {
       abort.abort();
+      entrance.destroy();
       story.destroy();
       chapters.destroy();
       progress.destroy();
       disposeEvidence.forEach(dispose => dispose());
       dialog?.querySelector('video')?.pause();
-      if (dialog?.open) {
+      if (walkthroughOpen) {
         filmOverlayOpen.set(false);
         document.body.style.overflow = originalOverflow;
       }
@@ -94,7 +117,7 @@
   });
 </script>
 
-<svelte:head><link rel="stylesheet" href="/styles/agency/story-home.css?v=mobbin-handoff-motion-20261105" /><link rel="preload" as="image" href="/images/agency-sales/hero-desktop-warm-v2.webp" media="(min-width: 901px)" fetchpriority="high" /><link rel="preload" as="image" href="/images/agency-sales/hero-mobile-warm-v2.webp" media="(max-width: 900px)" fetchpriority="high" /><link rel="stylesheet" href="/styles/agency/image-treatment.css?v=graphite-frames-20261105" /></svelte:head>
+<svelte:head><link rel="stylesheet" href="/styles/agency/story-home.css?v=walkthrough-entry-20261106" /><link rel="preload" as="image" href="/images/agency-sales/hero-desktop-warm-v2.webp" media="(min-width: 901px)" fetchpriority="high" /><link rel="preload" as="image" href="/images/agency-sales/hero-mobile-warm-v2.webp" media="(max-width: 900px)" fetchpriority="high" /><link rel="stylesheet" href="/styles/agency/image-treatment.css?v=graphite-frames-20261105" /></svelte:head>
 <div class="agency-home" bind:this={root}>
   <div class="page-progress" aria-hidden="true"></div>
   <div class="story-tools"><button type="button" onclick={toggleFilmMotion} aria-pressed={$reducedFilmMotion}>{$reducedFilmMotion ? 'Enable motion' : 'Motion off'}</button></div>
