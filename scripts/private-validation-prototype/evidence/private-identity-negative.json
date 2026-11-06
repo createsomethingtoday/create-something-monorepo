@@ -1,0 +1,24 @@
+{
+  "checkedAt": "2026-09-24T04:45:27.991Z",
+  "url": "https://private.createsomething.agency/api/networks/create-something/export",
+  "checks": [
+    {
+      "name": "anonymous",
+      "status": 403,
+      "denied": true
+    },
+    {
+      "name": "spoofed-authority",
+      "status": 403,
+      "denied": true
+    },
+    {
+      "name": "invalid-session",
+      "status": 403,
+      "denied": true
+    }
+  ],
+  "passed": true,
+  "positiveIdentityVerified": false,
+  "crossTenantVerified": false
+}

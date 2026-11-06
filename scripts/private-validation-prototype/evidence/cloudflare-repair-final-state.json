@@ -1,0 +1,121 @@
+{
+  "checkedAt": "2026-09-24T04:26:47.740Z",
+  "workerVersion": "3eb7f57c-e305-4e70-822a-f398c0d1e89d",
+  "applicationId": "a03a0de4-bc04-4f6b-a183-32287814648f",
+  "image": "registry.cloudflare.com/9645bd52e640b8a4f40a3a55ff1dd75a/private-validation-preview-validationsandbox@sha256:503e4abcbe29eb2ffc87c7dab35baadc9f41dd5c3fe0ee39c6cd37896337c8b1",
+  "network": {
+    "assign_ipv6": "none",
+    "assign_ipv4": "none",
+    "mode": "private"
+  },
+  "health": {
+    "errors": [],
+    "instances": {
+      "active": 0,
+      "assigned": 0,
+      "healthy": 1,
+      "stopped": 0,
+      "failed": 0,
+      "scheduling": 0,
+      "starting": 0
+    }
+  },
+  "wrongImageRejected": true,
+  "state": {
+    "issued": 4,
+    "active": null,
+    "runs": {
+      "run-acceptance-0": {
+        "id": "run-acceptance-0",
+        "mode": "normal",
+        "startedAt": 1790223805835,
+        "deadline": 1790223850835,
+        "status": "cleaned",
+        "cleanupAttempts": 0,
+        "dispatchPending": false,
+        "error": "HTTP error! status: 500",
+        "cleanupReason": "normal",
+        "beforeDestroy": {
+          "status": "healthy",
+          "lastChange": 1790223808661
+        },
+        "stoppedState": {
+          "status": "stopped",
+          "lastChange": 1790223822222
+        },
+        "endedAt": 1790223822257,
+        "elapsedMs": 16422
+      },
+      "run-acceptance-1": {
+        "id": "run-acceptance-1",
+        "mode": "abandon",
+        "startedAt": 1790223823210,
+        "deadline": 1790223868210,
+        "status": "cleaned",
+        "cleanupAttempts": 0,
+        "dispatchPending": false,
+        "cleanupReason": "deadline-reaper",
+        "beforeDestroy": {
+          "status": "healthy",
+          "lastChange": 1790223825331
+        },
+        "stoppedState": {
+          "status": "stopped",
+          "lastChange": 1790223868374
+        },
+        "endedAt": 1790223868414,
+        "elapsedMs": 45204
+      },
+      "run-acceptance-2": {
+        "id": "run-acceptance-2",
+        "mode": "cleanup-fault",
+        "startedAt": 1790223870129,
+        "deadline": 1790223915129,
+        "status": "cleaned",
+        "cleanupAttempts": 0,
+        "dispatchPending": false,
+        "execution": {
+          "exitCode": 0,
+          "output": "{\"node\":\"24.21.0\",\"platform\":\"linux\",\"arch\":\"x64\",\"uid\":65534,\"fresh\":true,\"probes\":[{\"kind\":\"tcp\",\"host\":\"1.1.1.1\",\"port\":443,\"result\":\"timeout-inconclusive\",\"childSignal\":\"SIGKILL\",\"childStatus\":null},{\"kind\":\"tcp\",\"host\":\"1.1.1.1\",\"port\":53,\"result\":\"timeout-inconclusive\",\"childSignal\":\"SIGKILL\",\"childStatus\":null},{\"kind\":\"tcp\",\"host\":\"169.254.169.254\",\"port\":80,\"result\":\"timeout-inconclusive\",\"childSignal\":\"SIGKILL\",\"childStatus\":null},{\"kind\":\"tcp\",\"host\":\"10.0.0.1\",\"port\":80,\"result\":\"ECONNREFUSED\",\"childSignal\":null,\"childStatus\":0},{\"kind\":\"https\",\"result\":\"timeout-inconclusive\",\"childSignal\":\"SIGKILL\",\"childStatus\":null},{\"kind\":\"dns\",\"result\":\"timeout-inconclusive\",\"childSignal\":\"SIGKILL\",\"childStatus\":null}]}\n",
+          "stderr": ""
+        },
+        "cleanupReason": "deadline-reaper",
+        "beforeDestroy": {
+          "status": "healthy",
+          "lastChange": 1790223875985
+        },
+        "stoppedState": {
+          "status": "stopped",
+          "lastChange": 1790223915354
+        },
+        "endedAt": 1790223917282,
+        "elapsedMs": 47153
+      },
+      "run-acceptance-3": {
+        "id": "run-acceptance-3",
+        "mode": "normal",
+        "startedAt": 1790223919264,
+        "deadline": 1790223964264,
+        "status": "cleaned",
+        "cleanupAttempts": 0,
+        "dispatchPending": false,
+        "execution": {
+          "exitCode": 0,
+          "output": "{\"node\":\"24.21.0\",\"platform\":\"linux\",\"arch\":\"x64\",\"uid\":65534,\"fresh\":true,\"probes\":[{\"kind\":\"tcp\",\"host\":\"1.1.1.1\",\"port\":443,\"result\":\"timeout-inconclusive\",\"childSignal\":\"SIGKILL\",\"childStatus\":null},{\"kind\":\"tcp\",\"host\":\"1.1.1.1\",\"port\":53,\"result\":\"timeout-inconclusive\",\"childSignal\":\"SIGKILL\",\"childStatus\":null},{\"kind\":\"tcp\",\"host\":\"169.254.169.254\",\"port\":80,\"result\":\"timeout-inconclusive\",\"childSignal\":\"SIGKILL\",\"childStatus\":null},{\"kind\":\"tcp\",\"host\":\"10.0.0.1\",\"port\":80,\"result\":\"ECONNREFUSED\",\"childSignal\":null,\"childStatus\":0},{\"kind\":\"https\",\"result\":\"timeout-inconclusive\",\"childSignal\":\"SIGKILL\",\"childStatus\":null},{\"kind\":\"dns\",\"result\":\"timeout-inconclusive\",\"childSignal\":\"SIGKILL\",\"childStatus\":null}]}\n",
+          "stderr": ""
+        },
+        "cleanupReason": "normal",
+        "beforeDestroy": {
+          "status": "healthy",
+          "lastChange": 1790223925862
+        },
+        "stoppedState": {
+          "status": "stopped",
+          "lastChange": 1790223929620
+        },
+        "endedAt": 1790223929688,
+        "elapsedMs": 10424
+      }
+    }
+  }
+}

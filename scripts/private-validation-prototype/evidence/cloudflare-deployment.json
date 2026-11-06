@@ -1,0 +1,19 @@
+{
+  "schema": "private-preview-deployment/v1",
+  "environment": "isolated-preview",
+  "worker": "private-validation-preview",
+  "url": "https://private-validation-preview.createsomething.workers.dev",
+  "workerSourceVersion": "fcea9d5c-65f3-4349-8b9f-06b03899a610",
+  "activeVersionAfterSecret": "94f03bc2-3bfb-4d69-abf4-b40422bdbb48",
+  "activeDeployment": "a77cae41-2bef-4c17-b689-f4a44f6d4847",
+  "applicationId": "a03a0de4-bc04-4f6b-a183-32287814648f",
+  "imageDigest": "sha256:cb0c08d50483d46c57fb433bc378b2afdfa43dea3c7fc8afc882bd825a89b8f7",
+  "maxInstances": 1,
+  "instanceType": "lite",
+  "observedVia": [
+    "wrangler deploy",
+    "wrangler deployments list --json"
+  ],
+  "privateProductionChanged": false,
+  "initialApplicationCreation": "Provider rejected first create; cached-image deployment retry succeeded"
+}
