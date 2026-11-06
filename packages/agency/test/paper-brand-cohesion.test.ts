@@ -109,7 +109,7 @@ test('the homepage retains a readable listing independent of scene motion', () =
   assert.match(content, /We connect your tools and AI/);
   assert.match(content, /Focused/);
   assert.match(content, /Team/);
-  assert.match(content, /one-manual-gap\.webp/);
+  assert.match(content, /one-manual-gap-warm-v2\.webp/);
   assert.match(content, /Illustrative example/);
   assert.doesNotMatch(content, /<canvas|autoplay/);
   assert.match(salesHome, /<details id="work-library" class="work-library" bind:open=\{libraryOpen\}>/);
