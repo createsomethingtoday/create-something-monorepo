@@ -15,7 +15,7 @@ This symlinks repo-owned skills into `~/.codex/skills` without deleting unrelate
 - `anatomy-xray` - original translucent systems explainers with accessible zoom/pan, evidence mapping and static SVG fallback
 
 - `bootstrap-gitpod-ona` - prepare Gitpod/Ona or other fresh workspaces so repo-owned Codex skills are installed and verified
-- `canon-design-review` - TASTE-first visual research with optional Mobbin interaction evidence, translated through Canon and Performance Lab
+- `canon-design-review` - Mobbin-first interaction research with supporting TASTE visual references, translated through Canon and Performance Lab
 - `canon-public-surface` - Performance public-page research and sharpness without generic SaaS drift
 - `claude-agent-cli-handoff` - route bounded work to the local Claude CLI when Claude owns the needed tools or connectors
 - `create-something-demo-director` - turn a recording and viewer outcome into a synchronized wayfinder, prompts, video, and interactive player
@@ -51,7 +51,25 @@ Use $target-reader-review to judge whether a junior practitioner can understand 
 Use $writing-for-humans to draft or edit this prose with the smallest framework stack that fits its job.
 ```
 
-The two Canon design skills also allow implicit invocation. When Codex recognizes relevant UI, UX, or public-surface work, it should load the matching skill without requiring the user to name it. Substantial UI work starts with a bounded, image-inspected TASTE packet. Mobbin remains optional for material interaction questions that the packet leaves unresolved. Literal edits and routine token cleanup can use the existing contract.
+The two Canon design skills also allow implicit invocation. When Codex recognizes relevant UI, UX, or public-surface work, it should load the matching skill without requiring the user to name it. Substantial UI and motion work starts with bounded, image-inspected Mobbin research. TASTE supplies supporting curated visual references when useful. Canon and Performance Lab govern identity; neither library defines product requirements or replaces rendered validation. Literal edits and routine token cleanup can use the existing contract.
+
+## Mobbin MCP
+
+The Canon design skills declare Mobbin as a research dependency. Configure its official remote MCP once per client and authorize your own account; a renewed subscription alone does not connect a client.
+
+For Codex CLI (also shared with the Codex app):
+
+```bash
+codex mcp add mobbin --url https://api.mobbin.com/mcp
+codex mcp login mobbin
+codex mcp get mobbin
+```
+
+The repository `.mcp.json` also registers the endpoint for clients that read project MCP configuration; each client still needs its own account authorization.
+
+For another MCP client, add a Streamable HTTP server named `mobbin` at `https://api.mobbin.com/mcp`, then complete that client's OAuth flow. Follow [Mobbin's client setup](https://docs.mobbin.com/mcp/clients/overview) for the exact client. Never put tokens, cookies, or account-specific authorization URLs in the repository.
+
+After authorization, verify the active session exposes `search_screens`, `search_flows`, and `search_sections`, then make one bounded standard search. A config entry or successful login alone does not prove that this running session can call the tools; reconnect or start a fresh session if required. Default to read-only research. Collection creation, saving, and comments require an explicit user request. See [the Mobbin research protocol](./skills/canon-design-review/references/mobbin-research.md) for image inspection, motion evidence, originality, and retention boundaries.
 
 ## Testing
 

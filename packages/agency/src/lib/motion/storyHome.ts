@@ -2,6 +2,7 @@ import { createWaypointGuide, waypointPose } from './waypointGuide';
 import { derived } from 'svelte/store';
 import { startWordmarkIntro } from './wordmarkIntro';
 import { reducedFilmMotion, filmOverlayOpen, filmNavigationOpen } from './filmPlayback';
+import { enhanceHandoffSceneMotion } from './handoffSceneMotion';
 
 
 /** Native-scroll enhancement; the authored static state is the complete story. */
@@ -11,6 +12,7 @@ export function enhanceStoryHome(root: HTMLElement) {
   let resizeTimer: ReturnType<typeof setTimeout>;
   const abort = new AbortController();
   const intro = startWordmarkIntro(root);
+  const sceneMotion = enhanceHandoffSceneMotion(root);
   const heading = root.querySelector<HTMLElement>('.handoff-heading');
   const headingMarkup = heading?.innerHTML;
   if (heading) {
@@ -56,6 +58,7 @@ export function enhanceStoryHome(root: HTMLElement) {
       step.classList.toggle('is-active', i === index);
       step.querySelector('a')?.setAttribute('aria-current', i === index ? 'step' : 'false');
     });
+    sceneMotion.select(index);
   };
   const updateTour = () => {
     const target = innerHeight * .48;
@@ -68,8 +71,8 @@ export function enhanceStoryHome(root: HTMLElement) {
     });
     selectScene(nearest);
   };
-  selectScene(0);
   tour?.classList.add('tour-enhanced');
+  selectScene(0);
   window.addEventListener('scroll', updateTour, { passive: true, signal: abort.signal });
   window.addEventListener('resize', updateTour, { passive: true, signal: abort.signal });
   // Focus changes alone must preserve an explicitly explored disclosure.
@@ -244,5 +247,5 @@ export function enhanceStoryHome(root: HTMLElement) {
     if (guide) guide.dataset.waypointReady = 'true';
     cleanup = () => { unsubscribe(); transport.destroy(); pathTween.kill(); gsap.killTweensOf(poses); poses.forEach(pose => pose.style.removeProperty('opacity')); guide?.style.removeProperty('left'); guide?.style.removeProperty('top'); if (guide) { delete guide.dataset.waypointReady; delete guide.dataset.guidePose; } context?.revert(); moveGuide = () => {}; };
   }).catch(() => { /* Complete static content remains readable if enhancement is unavailable. */ });
-  return { destroy() { disposed = true; intro.destroy(); clearTimeout(resizeTimer); abort.abort(); cleanup(); tour?.classList.remove('tour-enhanced'); if (heading && headingMarkup) { heading.innerHTML = headingMarkup; heading.removeAttribute('aria-label'); } } };
+  return { destroy() { disposed = true; sceneMotion.destroy(); intro.destroy(); clearTimeout(resizeTimer); abort.abort(); cleanup(); tour?.classList.remove('tour-enhanced'); if (heading && headingMarkup) { heading.innerHTML = headingMarkup; heading.removeAttribute('aria-label'); } } };
 }

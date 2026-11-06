@@ -371,6 +371,10 @@
 .agency-home .waypoint-links a{display:flex;justify-content:center;align-items:center;min-height:44px;text-align:center;font:11px/1.4 var(--font-mono);color:var(--muted);border-bottom:1px solid var(--border)}
 .agency-home .waypoint-links a[aria-current=step]{color:var(--foreground);border-color:var(--foreground)}
 .agency-home .waypoint-links a:focus-visible{outline:2px solid var(--foreground);outline-offset:3px}
+/* One moving selection marker links the named stop to its incoming artifact. */
+.agency-home .waypoint-links.has-selection-rail{position:relative}
+.agency-home .has-selection-rail a[aria-current=step]{border-color:var(--border)}
+.agency-home .handoff-selection-rail{position:absolute;left:0;bottom:0;height:1px;background:var(--foreground);transform-origin:left center;pointer-events:none}
 @media(max-width:900px), (max-height:750px){.agency-home .handoff-waypoints{grid-row:1;margin:0 0 28px}.agency-home .handoff-tour .handoff-scenes .handoff-scene[data-tour-scene="0"]{grid-row:2}.agency-home .handoff-tour .handoff-steps .handoff-step[data-tour-step="0"]{grid-row:3}.agency-home .handoff-tour .handoff-scenes .handoff-scene[data-tour-scene="1"]{grid-row:4}.agency-home .handoff-tour .handoff-steps .handoff-step[data-tour-step="1"]{grid-row:5}.agency-home .handoff-tour .handoff-scenes .handoff-scene[data-tour-scene="2"]{grid-row:6}.agency-home .handoff-tour .handoff-steps .handoff-step[data-tour-step="2"]{grid-row:7}}
 .agency-home .handoff-tour:not(.tour-enhanced) .handoff-waypoints{grid-row:1}
 .agency-home .handoff-tour:not(.tour-enhanced) .handoff-scenes [data-tour-scene="0"]{grid-row:2}.agency-home .handoff-tour:not(.tour-enhanced) .handoff-steps [data-tour-step="0"]{grid-row:3}.agency-home .handoff-tour:not(.tour-enhanced) .handoff-scenes [data-tour-scene="1"]{grid-row:4}.agency-home .handoff-tour:not(.tour-enhanced) .handoff-steps [data-tour-step="1"]{grid-row:5}.agency-home .handoff-tour:not(.tour-enhanced) .handoff-scenes [data-tour-scene="2"]{grid-row:6}.agency-home .handoff-tour:not(.tour-enhanced) .handoff-steps [data-tour-step="2"]{grid-row:7}
