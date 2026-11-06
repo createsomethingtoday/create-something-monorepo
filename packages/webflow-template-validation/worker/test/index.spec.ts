@@ -1539,6 +1539,22 @@ describe('Content Validator', () => {
 		expect(audit.details[2].selector).toBe('img.hero-image');
 	});
 
+	it('ignores images that never render: comments, scripts, templates and noscript', async () => {
+		const actual = await vi.importActual<typeof import('../src/utils/fetch-utils')>('../src/utils/fetch-utils');
+		const parsed = actual.parseHTMLWorker(`<!doctype html><html><body>
+			<!-- <img src="/old.jpg" alt=""> -->
+			<script>const card = '<img src="/from-script.jpg">';</script>
+			<template><img src="/from-template.jpg" alt=""></template>
+			<noscript><img src="/pixel.gif" alt=""></noscript>
+			<img src="/rendered.webp" alt="">
+		</body></html>`);
+
+		expect(parsed.images.length).toBeGreaterThan(1);
+		const audit = analyzeImageDimensions(parsed);
+		expect(audit.missing).toBe(1);
+		expect(audit.details.map(detail => detail.src)).toEqual(['/rendered.webp']);
+	});
+
 	it('reports missing image dimensions as a blocking error, even when every toggled content check is off', () => {
 		const allTogglesOff = { lorem: false, headings: false, altText: false, seo: false, links: false, contentQuality: false };
 		const pages = [

@@ -21,6 +21,7 @@ import {
 } from '../types';
 import { fetchHTML, isPlatformManagedHeading, parseHTML } from '../utils/fetch-utils';
 import { analyzeHeadingSequence, extractDocumentOutline, visibleOutlineHeadings } from '../utils/document-outline';
+import { parseDocument } from 'htmlparser2';
 import { isWebflowGeneratedVideoPosterSource } from '../utils/asset-utils';
 import {
 	REVIEWER_UTILITY_PATHS,
@@ -481,7 +482,7 @@ export function analyzeImageDimensions(parsedHTML: ParsedHTML): {
 	const details: Array<{ src: string; selector: string }> = [];
 	let missing = 0;
 
-	parsedHTML.images.forEach((img, index) => {
+	renderedImages(parsedHTML).forEach((img, index) => {
 		if (isLikelyPlatformVideoFallbackImage(img)) return;
 		if (hasPositiveDimension(img, 'width') && hasPositiveDimension(img, 'height')) return;
 
@@ -492,6 +493,32 @@ export function analyzeImageDimensions(parsedHTML: ParsedHTML): {
 	});
 
 	return { missing, details };
+}
+
+interface MarkupNode {
+	name?: string;
+	attribs?: Record<string, string>;
+	children?: MarkupNode[];
+}
+
+/**
+ * Images a browser renders. The Worker's regex parser also returns <img> tags
+ * inside comments, scripts, <template> and <noscript>, which never render and
+ * cannot shift the layout. In the parsed tree, comments and script text are
+ * not elements, and template and noscript subtrees are skipped.
+ */
+function renderedImages(parsedHTML: ParsedHTML): Array<HTMLImageElement | any> {
+	if (!parsedHTML.rawHtml) return parsedHTML.images;
+	const images: MarkupNode[] = [];
+	const walk = (node: MarkupNode) => {
+		for (const child of node.children ?? []) {
+			if (!child.name || child.name === 'template' || child.name === 'noscript') continue;
+			if (child.name === 'img') images.push(child);
+			walk(child);
+		}
+	};
+	walk(parseDocument(parsedHTML.rawHtml) as unknown as MarkupNode);
+	return images.map(img => ({ getAttribute: (name: string) => img.attribs?.[name] ?? null }));
 }
 
 function hasPositiveDimension(img: HTMLImageElement | any, name: 'width' | 'height'): boolean {
