@@ -3,8 +3,8 @@
 **Status: PROVISIONAL.** Written 2026-08-04 to give the partner-app exception a stated general form, so it can be applied consistently and explained on request. Companion to the standing-guidance record in the reviewer-exceptions base (`recAIZJnheIHrdBiD`) and to `consent-category-standard-provisional.md`.
 
 - **Review by:** first working week after Webflow Conf
-- **Decision owner:** Adam Lehman (7/24 principles); Partner-lead / legal own the covered patterns
-- **Escalation:** Adam Lehman / Yan Xie
+- **Decision owner:** Micah Johnson + the app review team (Shea Sisco, Pablo Miranda) since 11/04/2026 (Adam Lehman set the 7/24 principles; those rulings stay as precedent); legal owns the covered patterns
+- **Escalation:** Legal or Security, at the review team's call; Yan Xie for product questions
 
 ## The question this answers
 
@@ -66,7 +66,7 @@ Every application is recorded. An exception that is not in the loop is not an ex
 
 As of 2026-08-04 this is **unresolved and should be resolved before Concord next asks.** Concord Privacy was rejected 2026-07-20 on loader-chain findings and its listing set to private; Consent Pro was approved 2026-08-04 on materially similar published-site findings under the partner-app principles. An exception was raised for Concord v6 (`recjS9tofX6uVuAKY`) and assessed as covered by the 7/24 principles, but the outcomes currently differ.
 
-Two defensible resolutions, and the choice belongs to Adam and the Partner lead, not to app review:
+Two defensible resolutions, and the choice belonged to Adam and the Partner lead; since 11/04/2026 it belongs to Micah + the app review team, with Legal if they escalate:
 
 1. **Concord is covered too** — apply the same exception, restore listing visibility, and pursue only the app-level findings. Consistent, and consistent with app review's stated intent that both receive identical treatment.
 2. **Concord is not covered** — then the rationale must name what Concord lacks in part 1 of the rule (no accountable owner has accepted the risk), and that should be stated to Concord as the reason, not left to inference.
