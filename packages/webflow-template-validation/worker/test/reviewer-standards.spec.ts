@@ -117,8 +117,10 @@ describe('Reviewer standards', () => {
 	it('flags a missing or Webflow-default favicon and webclip on any CDN host, on the home page only', () => {
 		const defaults = '<link href="https://cdn.prod.website-files.com/img/favicon.ico" rel="shortcut icon" type="image/x-icon"/>' +
 			'<link href="https://d1example.cloudfront.net/img/webclip.png" rel="apple-touch-icon"/>';
-		expect(audit('/', NAV + FOOTER, defaults).findings['default-favicon']).toBe('Webflow default favicon.ico and webclip.png');
-		expect(audit('/', NAV + FOOTER, '').findings['default-favicon']).toBe('no favicon or webclip link');
+		expect(audit('/', NAV + FOOTER, defaults).findings['default-favicon']).toBe('Webflow default favicon and Webflow default webclip');
+		expect(audit('/', NAV + FOOTER, '').findings['default-favicon']).toBe('no favicon and no webclip');
+		expect(audit('/', NAV + FOOTER, '<link href="https://cdn.example.com/site/icon.png" rel="shortcut icon"/>').findings['default-favicon']).toBe('no webclip');
+		expect(audit('/', NAV + FOOTER, '<link href="https://cdn.example.com/site/clip.png" rel="apple-touch-icon"/>').findings['default-favicon']).toBe('no favicon');
 		expect(audit('/about', NAV + FOOTER, '').findings['default-favicon']).toBeUndefined();
 		expect(audit('/', NAV + FOOTER).findings['default-favicon']).toBeUndefined();
 	});

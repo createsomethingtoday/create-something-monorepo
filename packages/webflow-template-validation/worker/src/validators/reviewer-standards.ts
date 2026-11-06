@@ -72,7 +72,7 @@ const DEFAULT_NAME = /^(?:field(?:[- ]\d+)?|email[- ]form(?:[- ]\d+)?|name[- ]\d
 const FIELD_TAGS = new Set(['input', 'select', 'textarea']);
 const NON_FIELD_INPUT_TYPES = new Set(['hidden', 'submit', 'reset', 'button', 'image']);
 const FOOTER_TOKEN = /(?:^|[\s_-])footer(?:$|[\s_-])/i;
-const DEFAULT_ICON_PATH = /^\/img\/(?:favicon\.ico|webclip\.png)$/i;
+const DEFAULT_ICON_PATHS = { favicon: '/img/favicon.ico', webclip: '/img/webclip.png' } as const;
 const NO_TEXT_TAGS = new Set(['script', 'style', 'noscript', 'template', 'svg', 'head']);
 const LICENSES_PATH = '/licenses';
 /** Utility pages: the guideline asks for the link on the site's pages, and the 404 page has its own navbar/footer check. */
@@ -204,14 +204,17 @@ function licensesLinkDetail(elements: Node[], pageUrl: URL): string | null {
 	return links.length > 0 ? 'Licenses is linked, but not from the footer or navigation' : 'no Licenses link on the page';
 }
 
+/** The favicon (rel "icon" or "shortcut icon") and the webclip (rel "apple-touch-icon") are checked separately. */
 function faviconDetail(elements: Node[], pageUrl: URL): string | null {
-	const icons = elements.filter((el) => el.name === 'link' && /\bicon\b/i.test(attr(el, 'rel')));
-	if (icons.length === 0) return 'no favicon or webclip link';
-	const defaults = icons.flatMap((el) => {
-		const path = pathnameOf(attr(el, 'href'), pageUrl);
-		return path && DEFAULT_ICON_PATH.test(path) ? [path.split('/').pop()!] : [];
+	const links = elements.filter((el) => el.name === 'link');
+	const rels = (el: Node) => attr(el, 'rel').toLowerCase().split(/\s+/);
+	const problems = (Object.keys(DEFAULT_ICON_PATHS) as Array<keyof typeof DEFAULT_ICON_PATHS>).flatMap((kind) => {
+		const found = links.filter((el) => rels(el).includes(kind === 'favicon' ? 'icon' : 'apple-touch-icon'));
+		if (found.length === 0) return [`no ${kind}`];
+		const isDefault = (el: Node) => pathnameOf(attr(el, 'href'), pageUrl)?.toLowerCase() === DEFAULT_ICON_PATHS[kind];
+		return found.some(isDefault) ? [`Webflow default ${kind}`] : [];
 	});
-	return defaults.length ? `Webflow default ${[...new Set(defaults)].join(' and ')}` : null;
+	return problems.length ? problems.join(' and ') : null;
 }
 
 function trademarksDetail(elements: Node[], root: Node): string | null {

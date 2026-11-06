@@ -1406,6 +1406,43 @@ describe('Content Validator', () => {
 		]);
 	});
 
+	it('audits /404 even when it answers with HTTP 404, and skips excluded utility pages', async () => {
+		(fetchHTML as any).mockClear();
+
+		await validateContent(
+			'https://example.com',
+			['/about'],
+			{
+				excludePageSlugs: ['/401'],
+				contentChecks: { lorem: false, headings: false, altText: false, seo: false, links: false, contentQuality: false }
+			} as any
+		);
+
+		const calls = (fetchHTML as any).mock.calls;
+		expect(calls.map((c: any[]) => c[0])).toEqual(['https://example.com', 'https://example.com/about', 'https://example.com/404']);
+		expect(calls[2][1]).toEqual({ acceptStatus: [404] });
+	});
+
+	it('fetchHTML keeps the HTML of an accepted non-OK status and rejects any other', async () => {
+		const actual = await vi.importActual<typeof import('../src/utils/fetch-utils')>('../src/utils/fetch-utils');
+		const notFound = () => new Response('<html><body><nav>Site</nav><h1>Not found</h1></body></html>', {
+			status: 404,
+			headers: { 'content-type': 'text/html; charset=utf-8' }
+		});
+		const fetchSpy = vi.spyOn(globalThis, 'fetch');
+		try {
+			fetchSpy.mockResolvedValueOnce(notFound());
+			const page = await actual.fetchHTML('https://example.com/404', { acceptStatus: [404] });
+			expect(page.status).toBe(404);
+			expect(page.html).toContain('Not found');
+
+			fetchSpy.mockResolvedValueOnce(notFound());
+			await expect(actual.fetchHTML('https://example.com/404')).rejects.toThrow('HTTP 404');
+		} finally {
+			fetchSpy.mockRestore();
+		}
+	});
+
 	it('pageScope=current returns warning without fetching when current page is excluded', async () => {
 		(fetchHTML as any).mockClear();
 

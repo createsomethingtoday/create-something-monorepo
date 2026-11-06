@@ -289,7 +289,7 @@ export async function validateContent(
 
 		// Generate content validation issues. The reviewer standards also read
 		// /404 and /401, which the crawl does not always reach.
-		const utilityAudits = await auditUtilityPages(siteUrl, allPages);
+		const utilityAudits = await auditUtilityPages(siteUrl, allPages, excludedSlugs);
 		const issues = [
 			...generateContentIssues(allPages, resolvedChecks),
 			...generateReviewerStandardIssues([
@@ -397,14 +397,20 @@ async function analyzePage(url: string, parsedHTML: ParsedHTML): Promise<Analyze
 	};
 }
 
-/** Fetch and audit /404 and /401 when the crawl did not include them. A page that does not load is skipped. */
-async function auditUtilityPages(siteUrl: string, pages: AnalyzedPage[]) {
+/**
+ * Fetch and audit /404 and /401 when the crawl did not include them and they
+ * are not excluded. The 404 page may answer with HTTP 404, so its HTML is kept;
+ * any other page that does not load is skipped.
+ */
+async function auditUtilityPages(siteUrl: string, pages: AnalyzedPage[], excludedSlugs: Set<string>) {
 	const crawled = new Set(pages.map(page => page.reviewerAudit?.path).filter(Boolean));
+	const paths = REVIEWER_UTILITY_PATHS.filter(path => !crawled.has(path) && !excludedSlugs.has(normalizeSlugForComparison(path) ?? ''));
 	const audits = await Promise.all(
-		REVIEWER_UTILITY_PATHS.filter(path => !crawled.has(path)).map(async path => {
+		paths.map(async path => {
 			const pageUrl = new URL(path, siteUrl).href;
 			try {
-				return auditReviewerStandards((await fetchHTML(pageUrl)).html, pageUrl);
+				const page = await fetchHTML(pageUrl, path === '/404' ? { acceptStatus: [404] } : undefined);
+				return auditReviewerStandards(page.html, pageUrl);
 			} catch {
 				return null;
 			}
