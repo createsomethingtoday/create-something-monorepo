@@ -2,12 +2,10 @@
   import { createContactRequest } from '$lib/contact/request';
   let contactRequest: ReturnType<typeof createContactRequest> | undefined;
   import {
-    Button,
     SEO
   } from '@create-something/canon';
-  import { page } from '$app/stores';
   import { getAnalytics } from '@create-something/canon/analytics';
-  import { ScheduleButton } from '@create-something/canon/domains/agency';
+  import ContactOnboarding from '$lib/components/ContactOnboarding.svelte';
   import FunnelLadder from '$lib/components/FunnelLadder.svelte';
   import type { PageData } from './$types';
 
@@ -49,7 +47,7 @@
       value: 'membership',
       label: 'Discuss membership',
       description:
-        'Focused is $900/month for one agreed workstream and one milestone. Team is $2,500/month for up to two workstreams and two milestones. We work between check-ins and show what changed.',
+        'Ongoing technical support. Focused is $900/month. Team is $2,500/month. We agree on scope before payment.',
       funnelStage: 'decision',
       serviceInterest: 'AI-native technical support membership',
       submitLabel: 'Send membership inquiry',
@@ -83,14 +81,6 @@
       submitLabel: 'Send mapping details',
       successMessage: 'Received. I’ll review the details and reply about the next step.'
     }
-  ];
-
-  const laneOptions: Array<{ value: ServiceLane; label: string }> = [
-    { value: 'not_sure', label: 'Not sure yet' },
-    { value: 'workflow_infrastructure', label: 'Plan or build an AI task' },
-    { value: 'reliability_and_control', label: 'Fix or support a live system' },
-    { value: 'enterprise_extension', label: 'A larger or more complex project' },
-    { value: 'system_development_referral', label: 'System Development Referral' }
   ];
 
   const contactIntentContent: Record<
@@ -202,10 +192,10 @@
   let submitting = $state(false);
   let submitMessage = $state('');
   let submitSuccess = $state(false);
+  let retryLocked = $state(false);
   const selectedPath = $derived(
     contactPathOptions.find((option) => option.value === selectedIntent) ?? contactPathOptions[1]
   );
-  const hasChosenIntent = $derived(contactPathOptions.some(option => option.value === $page.url.searchParams.get('intent')));
   const selectedContent = $derived(contactIntentContent[selectedIntent]);
 
   $effect(() => {
@@ -217,6 +207,7 @@
 
   async function handleSubmit(event: Event) {
     event.preventDefault();
+    if (submitting || submitSuccess) return;
     submitting = true;
     submitMessage = '';
 
@@ -248,6 +239,7 @@
           referrer: typeof document !== 'undefined' ? document.referrer : undefined
       });
 
+      retryLocked = !result.success && result.status !== 400;
       if (result.success) {
         submitSuccess = true;
         submitMessage = result.message;
@@ -260,19 +252,12 @@
           ...(selectedIntent === 'membership' ? { membershipPlan: selectedPlan } : {}),
           surface: 'contact_form'
         });
-        // Keep the submitted routing choices for the scheduling handoff.
-        // Native form reset also resets Svelte-bound radios and selects.
-        for (const name of ['name', 'email', 'company', 'message']) {
-          const field = form.elements.namedItem(name);
-          if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) {
-            field.value = '';
-          }
-        }
       } else {
         submitSuccess = false;
         submitMessage = result.message || 'Something went wrong. Try again.';
       }
-    } catch (error) {
+    } catch {
+      retryLocked = true;
       submitSuccess = false;
       submitMessage = 'We could not confirm receipt. Please keep this request open and do not start a new submission.';
     } finally {
@@ -289,462 +274,48 @@
   propertyName="agency"
 />
 
-<header class="inquiry-intro">
-  <p class="inquiry-eyebrow">{selectedContent.eyebrow}</p>
-  <h1>{selectedContent.title}</h1>
-  <p>{selectedContent.description}</p>
-  <a href="#inquiry-form">{selectedContent.formTitle} ↓</a>
+<header class="contact-intro">
+  <p class="contact-eyebrow">Start a conversation</p>
+  <h1>Let’s find your next step.</h1>
+  <p>Tell us what needs attention. We’ll review your brief and reply about fit, scope and the next useful step.</p>
 </header>
 
-<section class="contact-section">
-  <div class="contact-container">
-    <div class="contact-option">
-      <h2>{hasChosenIntent ? "Tell us about the work." : selectedContent.formTitle}</h2>
-      <p>{selectedContent.formDescription}</p>
-
-      <form id="inquiry-form" class="contact-form" onsubmit={handleSubmit}>
-        <details class="path-choice"><summary>{selectedPath.label} · Change inquiry type</summary>
-        <fieldset class="form-field path-field">
-          <legend class="form-label">What should happen next?</legend>
-          <div class="path-options">
-            {#each contactPathOptions as option}
-              <label class="path-option" class:selected={selectedIntent === option.value}>
-                <input
-                  type="radio"
-                  name="intent"
-                  value={option.value}
-                  bind:group={selectedIntent}
-                />
-                <span>
-                  <strong>{option.label}</strong>
-                  <small>{option.description}</small>
-                </span>
-              </label>
-            {/each}
-          </div>
-        </fieldset></details>
-
-        <div class="form-field">
-          <label for="name" class="form-label">Name</label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            required
-            class="form-input"
-            autocomplete="name"
-          />
-        </div>
-
-        <div class="form-field">
-          <label for="email" class="form-label">Email</label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            required
-            class="form-input"
-            autocomplete="email"
-          />
-        </div>
-
-        <div class="form-field">
-          <label for="company" class="form-label">Company <span>(optional)</span></label>
-          <input
-            type="text"
-            id="company"
-            name="company"
-            class="form-input"
-            autocomplete="organization"
-          />
-        </div>
-
-        <div class="form-field">
-          <label for="lane" class="form-label">Operating lane</label>
-          <select id="lane" name="lane" class="form-input" bind:value={selectedLane}>
-            {#each laneOptions as lane}
-              <option value={lane.value}>{lane.label}</option>
-            {/each}
-          </select>
-        </div>
-
-        {#if selectedIntent === 'membership'}
-          <div class="form-field">
-            <label for="membership-plan" class="form-label">Support plan</label>
-            <select id="membership-plan" name="membership-plan" class="form-input" aria-describedby="membership-plan-help" bind:value={selectedPlan}>
-              <option value="focused">Focused · 1 workstream</option>
-              <option value="team">Team · up to 2 workstreams</option>
-            </select>
-            <p id="membership-plan-help" class="form-helper">Focused is $900/month. Team is $2,500/month. Both plans include two 30-minute check-ins each month. Focused has two 60-minute remote sessions available; Team has four. Use remote sessions when helpful for onboarding, pairing or troubleshooting. Scope and times are agreed before payment.</p>
-          </div>
-        {/if}
-
-        <div class="form-field form-field--message">
-          <label for="message" class="form-label">{selectedContent.messageLabel}</label>
-          <p class="form-helper">{selectedContent.messageHelper}</p>
-          <textarea
-            id="message"
-            name="message"
-            required
-            rows="4"
-            class="form-input form-textarea"
-            placeholder={selectedContent.messagePlaceholder}
-          ></textarea>
-        </div>
-
-        {#if selectedIntent === 'membership'}
-          <p class="form-helper form-note" role="note">
-            This is an inquiry, not a payment or permission to spend. We confirm delivery scope and
-            separate AI usage costs before work begins. For substantial AI work, we arrange scoped
-            access to your provider account or agree on metered billing. Do not send credentials here.
-          </p>
-        {/if}
-        <button type="submit" disabled={submitting} class="form-submit">
-          {submitting ? 'Sending...' : selectedPath.submitLabel}
-        </button>
-
-        {#if submitMessage}
-          <p
-            class="form-message"
-            class:success={submitSuccess}
-            class:error={!submitSuccess}
-            role="alert"
-          >
-            {submitMessage}
-          </p>
-        {/if}
-      </form>
-    </div>
-
-    <div class="contact-option contact-option--calendar">
-      <h2>Ready to book?</h2>
-      <p>
-        Use the calendar when you can bring one real workflow, the tools involved, who owns the
-        decision, and what needs to be decided.
-      </p>
-      <div class="cal-button">
-        {#if selectedIntent === 'system-support'}
-          <Button href={`/book?${new URLSearchParams({ source: contactSource, intent: selectedIntent, lane: selectedLane })}`}>Review scheduling details</Button>
-        {:else}
-          <ScheduleButton variant="primary" size="lg" />
-        {/if}
-        {#if selectedIntent !== 'system-support'}
-          <a href="/book" class="calendar-link">Review scheduling details</a>
-        {/if}
-      </div>
-    </div>
+<section class="contact-workspace" aria-label="Prepare your inquiry">
+  <ContactOnboarding
+    bind:selectedIntent bind:selectedLane bind:selectedPlan
+    options={contactPathOptions} content={selectedContent}
+    submitLabel={selectedPath.submitLabel}
+    {submitting} {submitMessage} {submitSuccess} {retryLocked}
+    onsubmit={handleSubmit}
+  />
+  <div class="contact-other">
+    <p>Already have a workflow and owner in mind?</p>
+    <a href={`/book?${new URLSearchParams({ source: contactSource, intent: selectedIntent, lane: selectedLane })}`}>Review scheduling details <span aria-hidden="true">↗</span></a>
   </div>
 </section>
 
 <details class="contact-alternatives"><summary>Other ways to begin</summary><FunnelLadder /></details>
 
 <section class="email-section">
-  <div class="section-container">
-    <p class="email-text">
-      Or email directly: <a href="mailto:support@createsomething.io" class="email-link"
-        >support@createsomething.io</a
-      >
-    </p>
-  </div>
+  <p>Prefer email? <a href="mailto:support@createsomething.io">support@createsomething.io</a></p>
 </section>
 
 <style>
-  .inquiry-intro { width: min(var(--content-width-performance), 86%); margin: 0 auto; padding-block: var(--space-performance-lg) var(--space-performance-sm); }
-  .contact-alternatives { width: min(var(--content-width-performance), 86%); margin: var(--space-performance-md) auto; }
-  .contact-alternatives > summary { display: flex; align-items: center; min-height: 48px; cursor: pointer; }
-  .contact-alternatives > summary:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 4px; }
-  .inquiry-intro h1 { max-width: 24ch; margin: var(--space-performance-sm) 0; font: var(--font-performance-medium) clamp(1.8rem, 3vw, 2.75rem)/1.15 var(--font-performance-interface); letter-spacing: var(--tracking-performance-tight); }
-  .inquiry-intro p { max-width: 70ch; line-height: 1.55; }
-  .inquiry-eyebrow { font: var(--text-performance-operator-label) var(--font-performance-mono); }
-  .inquiry-intro a { display: inline-flex; align-items: center; min-height: 44px; color: inherit; text-underline-offset: .2em; }
-  .contact-form summary { cursor: pointer; min-height: 44px; padding-block: var(--space-performance-xs); }
-  .contact-form summary:focus-visible, .inquiry-intro a:focus-visible, .form-submit:focus-visible, .calendar-link:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 3px; }
-  #inquiry-form { scroll-margin-top: 7rem; }
-  .path-choice, .form-field--message, .form-note, .form-submit, .form-message { grid-column: 1 / -1; }
-  .form-field { min-width: 0; }
-  .form-input, .form-submit { scroll-margin-block: 7rem; }
-  .form-input { width: 100%; box-sizing: border-box; }
-  .path-option:focus-within { outline: 2px solid var(--color-performance-focus); outline-offset: 2px; }
-  @media (min-width: 900px) { .contact-form { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  @media (prefers-reduced-motion: reduce) { .path-option, .form-input, .form-submit, .email-link { transition: none; } }
-
-
-  .section-container {
-    width: min(var(--content-width-performance, 85rem), 86%);
-    margin: 0 auto;
+  .contact-intro, .contact-workspace, .contact-alternatives, .email-section {
+    width: min(var(--content-width-performance), 90%);
+    margin-inline: auto;
   }
-
-  .contact-section {
-    padding: var(--space-performance-sm) 0 var(--space-performance-xl);
-    background: var(--color-performance-paper, #f3f3f0);
-    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
-  }
-
-  .contact-container {
-    width: min(var(--content-width-performance, 85rem), 86%);
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
-    gap: 1rem;
-    align-items: start;
-  }
-
-  .contact-option {
-    padding: 1.15rem;
-    border: 1px solid var(--color-performance-line, #d7d7d2);
-    border-radius: var(--radius-performance-md, 4px);
-    background: var(--color-performance-panel, #ffffff);
-    color: var(--color-performance-ink, #090909);
-  }
-
-  .contact-option--calendar {
-    border-color: var(--color-performance-line-strong, #9c9c96);
-    background: var(--color-performance-paper);
-  }
-
-  .contact-option h2 {
-    font-family: var(--font-performance-interface);
-    margin: 0 0 0.65rem;
-    color: var(--color-performance-ink, #090909);
-    font-size: 1.35rem;
-    font-weight: var(--font-performance-medium);
-    line-height: 1.1;
-  }
-
-  .contact-option > p {
-    margin: 0 0 1.25rem;
-    color: var(--color-performance-muted, #5e6268);
-    font-size: 0.95rem;
-    line-height: 1.55;
-  }
-
-  .cal-button {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    align-items: center;
-  }
-
-  .calendar-link {
-    color: var(--color-performance-ink, #090909);
-    font-size: 0.95rem;
-    font-weight: var(--font-performance-medium);
-    text-decoration: underline;
-    text-underline-offset: 0.18em;
-  }
-
-  .contact-option :global(.booking-cta) {
-    border-radius: var(--radius-performance-sm, 4px);
-    box-shadow: none;
-    letter-spacing: 0;
-  }
-
-  .contact-option :global(.booking-cta.primary) {
-    background: var(--color-performance-ink, #090909);
-    border: 1px solid var(--color-performance-ink, #090909);
-    color: #ffffff;
-  }
-
-  .contact-option :global(.booking-cta.primary:hover) {
-    background: #1a2030;
-    border-color: #1a2030;
-  }
-
-  .contact-form {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .form-field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    border: 0;
-    margin: 0;
-    padding: 0;
-  }
-
-  .form-label {
-    color: var(--color-performance-muted, #5e6268);
-    font-family: var(--font-performance-mono);
-    font-size: 0.76rem;
-    font-weight: var(--font-performance-medium);
-    letter-spacing: 0;
-    text-transform: uppercase;
-  }
-
-  .form-label span {
-    color: var(--color-performance-muted, #5e6268);
-    font-weight: 400;
-  }
-
-  .form-helper {
-    margin: 0;
-    color: var(--color-performance-muted, #5e6268);
-    font-size: 0.86rem;
-    line-height: 1.45;
-  }
-
-  .path-field {
-    gap: 0.75rem;
-  }
-
-  .path-options {
-    display: grid;
-    gap: 0.65rem;
-  }
-
-  .path-option {
-    display: grid;
-    grid-template-columns: 1rem minmax(0, 1fr);
-    gap: 0.75rem;
-    align-items: start;
-    padding: 0.85rem;
-    border: 1px solid var(--color-performance-line, #d7d7d2);
-    border-radius: var(--radius-performance-sm, 4px);
-    background: var(--color-performance-paper, #f3f3f0);
-    cursor: pointer;
-    transition:
-      border-color 160ms ease,
-      background 160ms ease;
-  }
-
-  .path-option:hover,
-  .path-option.selected {
-    border-color: var(--color-performance-signal, #0057b8);
-    background: color-mix(in srgb, var(--color-performance-signal-soft, #dce8f5) 42%, white);
-  }
-
-  .path-option input {
-    margin-top: 0.22rem;
-    accent-color: var(--color-performance-signal, #0057b8);
-  }
-
-  .path-option span {
-    display: grid;
-    gap: 0.28rem;
-  }
-
-  .path-option strong {
-    color: var(--color-performance-ink, #090909);
-    font-size: 0.9rem;
-    line-height: 1.25;
-  }
-
-  .path-option small {
-    color: var(--color-performance-muted, #5e6268);
-    font-size: 0.8rem;
-    line-height: 1.45;
-  }
-
-  .form-input {
-    padding: 0.75rem 1rem;
-    background: var(--color-performance-panel, #ffffff);
-    border: 1px solid var(--color-performance-line, #d7d7d2);
-    border-radius: var(--radius-performance-sm, 4px);
-    color: var(--color-performance-ink, #090909);
-    font-size: 1rem;
-    transition: border-color var(--duration-performance-micro, 200ms)
-      var(--ease-performance-standard);
-  }
-
-  .form-input::placeholder {
-    color: var(--color-performance-muted, #5e6268);
-  }
-
-  .form-input:focus {
-    outline: 2px solid var(--color-performance-focus);
-    outline-offset: 2px;
-    border-color: var(--color-performance-signal, #0057b8);
-  }
-
-  .form-textarea {
-    resize: vertical;
-    min-height: 8.75rem;
-  }
-
-  .form-submit {
-    padding: 0.75rem 1.5rem;
-    background: var(--color-performance-ink, #090909);
-    color: #ffffff;
-    font-size: 1rem;
-    font-weight: var(--font-performance-semibold);
-    border: 1px solid var(--color-performance-ink, #090909);
-    border-radius: var(--radius-performance-sm, 4px);
-    cursor: pointer;
-    transition:
-      background var(--duration-performance-micro, 200ms) var(--ease-performance-standard),
-      border-color var(--duration-performance-micro, 200ms) var(--ease-performance-standard),
-      opacity var(--duration-performance-micro, 200ms) var(--ease-performance-standard);
-  }
-
-  .form-submit:hover:not(:disabled) {
-    background: #1a2030;
-    border-color: #1a2030;
-    opacity: 1;
-  }
-
-  .form-submit:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  .form-message {
-    margin: 0;
-    padding: 0.75rem;
-    border-radius: var(--radius-performance-sm, 4px);
-    font-size: 0.9rem;
-    line-height: 1.4;
-  }
-
-  .form-message.success {
-    background: var(--color-performance-success-muted);
-    color: var(--color-performance-success);
-    border: 1px solid var(--color-performance-success-border);
-  }
-
-  .form-message.error {
-    background: var(--color-performance-error-muted);
-    color: var(--color-performance-error);
-    border: 1px solid var(--color-performance-error-border);
-  }
-
-  .email-section {
-    padding: 2.5rem 0;
-    text-align: center;
-    background: var(--color-performance-panel, #ffffff);
-    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
-  }
-
-  .email-text {
-    margin: 0;
-    color: var(--color-performance-muted, #5e6268);
-    font-size: 0.95rem;
-  }
-
-  .email-link {
-    color: var(--color-performance-ink, #090909);
-    font-weight: var(--font-performance-medium);
-    transition: opacity var(--duration-performance-micro, 200ms) var(--ease-performance-standard);
-  }
-
-  .email-link:hover {
-    opacity: 0.7;
-  }
-
-  @media (max-width: 768px) {
-    .inquiry-intro { padding-top: var(--space-performance-sm); }
-    .contact-container,
-    .section-container {
-      width: min(86%, var(--content-width-performance, 85rem));
-    }
-
-    .contact-container {
-      grid-template-columns: 1fr;
-    }
-
-    .contact-section {
-      padding-block: var(--space-performance-sm) var(--space-performance-lg);
-    }
-  }
+  .contact-intro { padding-block: var(--space-performance-md) var(--space-performance-sm); }
+  .contact-eyebrow { font: var(--text-performance-operator-label) var(--font-performance-mono); text-transform: uppercase; letter-spacing: var(--tracking-performance-label); }
+  h1 { max-width: 24ch; margin-block: var(--space-performance-xs); font: var(--font-performance-medium) clamp(2rem, 4vw, 3.5rem)/1.08 var(--font-performance-interface); letter-spacing: var(--tracking-performance-tight); }
+  .contact-intro > p:last-child { max-width: 62ch; line-height: 1.6; color: var(--color-performance-muted); }
+  .contact-workspace { padding-top: 0; padding-bottom: var(--space-performance-md); }
+  .contact-other { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; justify-content: space-between; padding-block: var(--space-performance-sm); border-bottom: 1px solid var(--color-performance-line); font-size: .9rem; }
+  .contact-other p { margin: 0; color: var(--color-performance-muted); }
+  a { color: inherit; text-underline-offset: .25em; }
+  .contact-other a, summary { display: inline-flex; align-items: center; min-height: 44px; gap: .75rem; }
+  summary { cursor: pointer; }
+  a:focus-visible, summary:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 4px; }
+  .contact-alternatives { margin-bottom: var(--space-performance-sm); }
+  .email-section { padding-bottom: var(--space-performance-md); font-size: .9rem; }
 </style>

@@ -1,6 +1,6 @@
 // Browser-only Promise boundary. Effect stays in lib/server.
 export const CONTACT_TRANSPORT_MESSAGE = 'We could not confirm receipt. Please keep this request open and do not start a new submission.';
-type ContactReply = { success: boolean; message: string; requestId?: string };
+type ContactReply = { success: boolean; message: string; requestId?: string; status?: number };
 export function createContactRequest(storage?: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>) {
   const key = 'agency.contact.pending-request';
   let id: string | undefined;
@@ -26,7 +26,7 @@ export function createContactRequest(storage?: Pick<Storage, 'getItem' | 'setIte
         try { storage?.removeItem(key); } catch { /* No sensitive payload is persisted. */ }
       }
       if (response.status === 400) body = undefined; // Allow corrections under the same ID.
-      return { success, message: result.message, requestId };
+      return { success, message: result.message, requestId, status: response.status };
     } catch { return { success: false, message: CONTACT_TRANSPORT_MESSAGE, requestId: id }; }
   };
 }
