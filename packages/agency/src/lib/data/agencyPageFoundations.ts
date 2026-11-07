@@ -29,6 +29,10 @@ const foundation = (label: string, spine: string, chapters: AgencyPageChapter[] 
    order only. They do not imply activity, readiness, measurements or results.
    Pages with working interfaces keep their task containers, not hidden steps. */
 const foundations: Record<string, AgencyPageFoundation> = {
+  '/arc/app-review-governance': foundation('App Review Governance', 'FOLLOW THE REVIEW.', [
+    chapter('app-review-deck', 'Follow the review', 'Review', 'Explore the authored presentation and its decision path.'),
+    chapter('arc-contract-title', 'Reuse the story', 'Context', 'Read how the same review supports different kinds of work.')
+  ]),
   '/dfw-tech-support': foundation('DFW software support', 'KEEP IT WORKING.', [
     chapter('fit-title', 'When we can help', 'Fit', 'Check the software support boundary.'),
     chapter('proof-title', 'Inspect the evidence', 'Evidence', 'Read the evidence and its limits.'),

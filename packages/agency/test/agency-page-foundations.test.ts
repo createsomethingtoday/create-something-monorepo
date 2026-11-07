@@ -39,12 +39,20 @@ test('workflow labels come from the reviewed portfolio and link to the shared gu
 });
 
 test('public Arc details share real template destinations while redirected experiments stay with io', () => {
-  assert.deepEqual(getAgencyPageFoundation('/arc/app-review-governance')?.chapters.map(chapter => chapter.id), ['main-content', 'arc-presentation', 'registry-arc-contract-title', 'agency-directory']);
+  assert.deepEqual(getAgencyPageFoundation('/arc/runbook-claude-desktop-mcp-quick-access')?.chapters.map(chapter => chapter.id), ['main-content', 'arc-presentation', 'registry-arc-contract-title', 'agency-directory']);
   // Publication/404 decisions belong to the loader, not this presentation map.
   assert.equal(getAgencyPageFoundation('/arc/future-published-slug')?.label, 'Workflow presentation');
   assert.equal(getAgencyPageFoundation('/arc/example/nested'), null);
   assert.equal(getAgencyPageFoundation('/experiments/example'), null);
   assert.equal(getAgencyPageFoundation('/experiments/example/?source=brand'), null);
+});
+
+test('the separately authored App Review Arc uses its own visible presentation and context', () => {
+  const result=getAgencyPageFoundation('/arc/app-review-governance')!;
+  assert.deepEqual(result.chapters.map(chapter=>chapter.id),['main-content','app-review-deck','arc-contract-title','agency-directory']);
+  assert.equal(result.label,'App Review Governance');
+  const source=read('src/routes/arc/app-review-governance/+page.svelte');
+  for(const chapter of result.chapters.slice(1,-1)) assert.ok(source.includes(`id="${chapter.id}"`),chapter.id);
 });
 
 test('wayfinding targets stable task containers and not hidden or conditional UI states', () => {

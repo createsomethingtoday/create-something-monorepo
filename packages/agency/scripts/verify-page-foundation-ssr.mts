@@ -8,7 +8,7 @@ const output = process.env.AGENCY_PATTERN_OUTPUT ?? '/tmp/agency-page-foundation
 const routes = [...new Set([
   ...marketingPagePortfolio.filter(p=>p.decision!=='archive').map(p=>p.path),
   '/privacy','/terms','/support-brief','/ai-workflow-control','/ai-workflow-recovery',
-  '/marketplace-review-automation','/arcs','/experiments','/arc/runbook-claude-desktop-mcp-quick-access'
+  '/marketplace-review-automation','/arcs','/experiments','/arc/app-review-governance','/arc/runbook-claude-desktop-mcp-quick-access'
 ])].filter(path=>getAgencyPageFoundation(path));
 const reports: Array<Record<string, unknown>> = [];
 for(let i=0;i<routes.length;i+=4){

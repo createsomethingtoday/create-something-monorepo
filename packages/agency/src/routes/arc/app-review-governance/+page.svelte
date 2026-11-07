@@ -43,6 +43,7 @@
   </header>
 </AgencyHeroFrame>
 
+  <section id="app-review-deck" tabindex="-1" aria-label="App Review Governance presentation">
   <ArcDeck
     {composition}
     routeId="app-review-governance-arc"
@@ -52,6 +53,7 @@
     actionEndpoint="/api/arcs/app-review-governance"
     enablePresentation
   />
+  </section>
 
   <section class="arc-contract" aria-labelledby="arc-contract-title">
     <div>
