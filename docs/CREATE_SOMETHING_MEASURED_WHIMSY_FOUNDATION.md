@@ -217,3 +217,50 @@ Worktree disposition: preserved at
 `/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-99ce72a0`,
 branch `t3/agency-measured-whimsy-release`, until the parent release checkpoint.
 The original shared checkout remains untouched.
+
+## Public Agency extension — CRE-2370
+
+The approved foundation is deployed. The next pass carries its neutral roles,
+square masthead, fine rules, image mounts and directory into the reviewed public
+Agency portfolio. `usesAgencyMeasuredPublicSurface` owns the SSR opt-in,
+separately from operator-palette ownership. Sign-in, private workspaces, client
+surfaces, unknown/archived routes and the separately composed Webflow portfolio
+remain outside that boundary. Canon's shared components and status colors keep
+their existing contracts. The homepage retains its authored five-chapter dial.
+On narrow public pages, search sits beside the menu in the masthead so it cannot
+cover reading or booking controls. The menu temporarily hides that entry while
+open; the existing search dialog and keyboard shortcut remain available.
+Closing search returns keyboard focus to its live launcher after the dialog's
+render update.
+
+`packages/agency/scripts/verify-measured-public.ego.mjs` runs in the parent's
+existing Ego TaskSpace. Supply `globalThis.MEASURED_PUBLIC` with `taskSpaceId`,
+`pageId`, `baseURL` and an absolute `output` path, then evaluate the script through
+`ego-browser nodejs`. It exercises the six principal public journeys at
+320, 390, 768, 1024, 1025 and 1440 pixels. It checks black document, opening and
+inquiry surfaces, white titles, full-width navigation, readable content bounds,
+original-image captions, and retained scheduler/form entry points. It also checks
+that mobile search overlaps neither a page action nor the menu. It never
+creates or finishes a TaskSpace and never submits a form. The foundation script
+continues to cover the homepage's eight-width interaction contract.
+
+### Storytelling context
+
+The user identified Palantir as business-model context on November 6. Its public
+documentation describes an operation-specific model connecting data, logic,
+actions and security, and a bootcamp approach that starts with an actual use
+case and helps people adopt it. These are useful story principles, not evidence
+that our commercial terms or capabilities match Palantir's.
+
+Canon and the workshop crew make the customer's existing operation legible:
+read the plan, connect the tools, repair within bounds, pause for human judgment,
+test the result, and keep the receipt. Let the characters carry curiosity and
+care. Let the structure explain actual relationships, authority and evidence.
+Use the existing planning, repair, test-bench and handoff imagery; concept
+illustrations remain distinct from real recordings and operational proof.
+
+Sources: [Palantir Ontology system](https://www.palantir.com/docs/foundry/architecture-center/ontology-system),
+[AIP Bootcamp](https://www.palantir.com/platforms/aip/bootcamp).
+The supplied [David Carbutt video](https://youtu.be/_hFiiaf6Mi8) was identified as
+“No One Sees What Elon & Palantir Are Building”; its public player required
+sign-in to confirm a human, so its spoken content was not verified.
