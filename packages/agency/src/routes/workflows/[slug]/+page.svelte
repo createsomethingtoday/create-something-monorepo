@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import WorkflowWorkedExample from '$lib/components/WorkflowWorkedExample.svelte';
   import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import { Button, SEO } from '@create-something/canon';
@@ -31,7 +32,8 @@
 />
 
 <article class="guide-shell" data-performance-mode="proof">
-  <header class="guide-opening">
+  <AgencyHeroFrame>
+<header class="guide-opening">
     <a class="guide-back" href="/workflows">Workflow guides</a>
     <p class="guide-eyebrow">{guide.eyebrow}</p>
     <h1>{guide.title}</h1>
@@ -59,6 +61,7 @@
       </div>
     </dl>
   </header>
+</AgencyHeroFrame>
 
   <section class="guide-section guide-signals" aria-labelledby="signals-heading">
     <div class="section-label">01 / When to use it</div>

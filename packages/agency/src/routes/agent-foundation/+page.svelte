@@ -1,6 +1,7 @@
 <script lang="ts">
+  import PerformanceCampaignOpening from '$lib/components/AgencyMeasuredOpening.svelte';
   import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
-  import { Button, PerformanceCampaignOpening, SEO } from '@create-something/canon';
+  import { Button, SEO } from '@create-something/canon';
   import { getAnalytics } from '@create-something/canon/analytics';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';

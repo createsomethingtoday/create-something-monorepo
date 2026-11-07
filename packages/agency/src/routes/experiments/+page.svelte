@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { PerformanceCampaignOpening, SEO } from '@create-something/canon';
+  import PerformanceCampaignOpening from '$lib/components/AgencyMeasuredOpening.svelte';
+  import { SEO } from '@create-something/canon';
   import { IO_EXPERIMENTS_URL, IO_PAPERS_URL } from '$lib/data/ioResearchLinks';
 </script>
 
@@ -15,7 +16,7 @@
   proof={[{label:'Research home',value:'.io'},{label:'Claims',value:'Inspectable'},{label:'Limits',value:'Visible'}]}
 >
   {#snippet actions()}
-    <nav class="research-links" aria-label="Research destinations">
+    <nav id="research-destinations" class="research-links" aria-label="Research destinations">
       <a href={IO_EXPERIMENTS_URL}>Browse experiments on .io <span aria-hidden="true">↗</span></a>
       <a href={IO_PAPERS_URL}>Read research papers on .io <span aria-hidden="true">↗</span></a>
     </nav>

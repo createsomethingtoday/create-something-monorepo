@@ -264,3 +264,46 @@ Sources: [Palantir Ontology system](https://www.palantir.com/docs/foundry/archit
 The supplied [David Carbutt video](https://youtu.be/_hFiiaf6Mi8) was identified as
 “No One Sees What Elon & Palantir Are Building”; its public player required
 sign-in to confirm a human, so its spoken content was not verified.
+
+## A reusable page pattern — CRE-2371
+
+Measured and whimsical is the brand, across the public Agency pages. The
+homepage is the approved reference for a repeatable opening: a useful chapter
+dial, decisive proposition, original scene, meaningful spine and caption rail.
+The composition follows the page's job rather than repeating the same five
+labels or adding readings that have no source.
+
+`agencyPageFoundations.ts` authors the page names, spines and actual section
+destinations. `AgencyPageWayfinding` uses the shared `AgencyChapterDial` with
+each page's sequence. `AgencyHeroFrame` and `AgencyHeroPlate` compose the
+opening and original image in server-rendered HTML. `AgencyMeasuredOpening`
+adapts the existing Canon campaign opening without changing shared Canon.
+The existing hero metadata is shared between SSR and copy enhancement.
+
+Each destination must exist in SSR and remain visible after enhancement.
+Do not link into an inactive narrative panel, a hidden wizard step or a result
+that requires a prior action. Ordinals describe reading order. They are not
+telemetry. Unknown/private/archived routes and separately owned portfolio pages
+stay outside the pattern; errors and redirects do not acquire a reading sequence.
+
+Booking, inquiry and legal pages use the compact composition. Map, Ground and
+the Basketball Systems Lab preserve their authored working visuals and
+controls, with shared page guidance around them. Real interfaces and recordings
+are never replaced by concept illustrations. Explicit design-study URLs retain
+their existing study composition. The homepage retains its authored workshop.
+
+For a new page, register a useful reading sequence, wrap its actual opening,
+choose an existing approved scene, and verify every link and image. The registry
+tests guard ownership and source anchors; `verify-page-foundation-ssr.mts`
+checks the served public inventory and `verify-page-foundations.ego.mjs` checks
+actual rendered destinations, touch targets, titles, images and overflow. Review
+keyboard/hash/current chapter behavior, reduced motion and no-JS content before
+promotion. Release and canonical evidence belong to CRE-2371.
+
+Booking uses one task-focused opening across the mapping, Agent Foundation,
+technical review, integration and software support intents. The short invitation
+leads to the time picker; the original preparation details remain in a native
+disclosure. Keep the full-page scheduler link visible above the embed, preserve
+context and access handling, and verify without creating a booking. On narrow
+screens the workshop scene becomes a quiet captioned cue and the privacy utility
+stays in the header so it cannot cover the booking action.

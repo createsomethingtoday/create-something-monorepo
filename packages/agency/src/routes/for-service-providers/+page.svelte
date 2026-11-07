@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import {
     Button,
     PerformanceCardGrid,
@@ -92,7 +93,8 @@
 />
 
 <main class="service-provider-page">
-  <PerformancePageSection
+  <AgencyHeroFrame>
+<PerformancePageSection
     variant="hero"
     layout="stack"
     titleLevel="h1"
@@ -109,8 +111,10 @@
       >
     {/snippet}
   </PerformancePageSection>
+</AgencyHeroFrame>
 
   <PerformancePageSection
+  id="provider-lifecycle"
     variant="white"
     eyebrow="Client delivery lifecycle"
     title="From planning to client handover."
@@ -126,6 +130,7 @@
   </PerformancePageSection>
 
   <PerformancePageSection
+  id="provider-boundaries"
     variant="soft"
     eyebrow="What can travel"
     title="Reuse the approach. Keep client access separate."

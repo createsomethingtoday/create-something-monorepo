@@ -268,7 +268,9 @@ test('booking carries the Field Report handoff into the owned mapping scheduler'
 
   assert.match(book, /Choose a time to talk through the task/);
   assert.match(book, /30- or 60-minute/);
-  assert.match(book, /Choose a 30- or 60-minute opening/);
+  assert.match(book, /30 or 60 minutes\./);
+  assert.match(book, /<Button href="#first-party-scheduler"[^>]*>Choose a time<\/Button>/);
+  assert.match(book, /href=\{schedulerHref\}[^>]*>Open full page/);
   assert.match(book, /first-party scheduler/);
   assert.match(book, /createBookingHandoffState/);
   assert.doesNotMatch(book, /Review your booking context/);

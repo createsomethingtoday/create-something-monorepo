@@ -1,10 +1,10 @@
 <script lang="ts">
+  import PerformanceCampaignOpening from '$lib/components/AgencyMeasuredOpening.svelte';
   import CatoProjectTour from '$lib/components/CatoProjectTour.svelte';
   import AgencyRecordedWork from '$lib/components/AgencyRecordedWork.svelte';
   import {
     IsometricIllustration,
     Button,
-    PerformanceCampaignOpening,
     PerformanceConversionHandoff,
     PerformanceNarrativeStage,
     SEO,

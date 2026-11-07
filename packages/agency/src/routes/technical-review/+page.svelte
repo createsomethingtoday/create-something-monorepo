@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import { Button, SEO } from '@create-something/canon';
   import InspectionScrollStory from '$lib/components/InspectionScrollStory.svelte';
@@ -9,7 +10,8 @@
 <SEO title="Technical Review Before Your Customer Pilot | CREATE SOMETHING" description="Already built a product with AI? Get an experienced technical review of one customer workflow, a prioritized findings report, and a clear next step. Scope and price agreed before work starts." propertyName="agency" />
 
 <div class="technical-review property-performance">
-  <section class="review-section opening" aria-labelledby="review-title">
+  <AgencyHeroFrame>
+<section class="review-section opening" aria-labelledby="review-title">
     <div class="opening-copy">
       <p class="eyebrow">Technical review of an existing project</p>
       <h1 id="review-title">Know what to fix before your first customer pilot.</h1>
@@ -20,6 +22,7 @@
     </div>
     <TechnicalReviewVisual portraitOnMobile priority />
   </section>
+</AgencyHeroFrame>
 
   <section class="review-section fit-layout" aria-labelledby="fit-title">
     <div>

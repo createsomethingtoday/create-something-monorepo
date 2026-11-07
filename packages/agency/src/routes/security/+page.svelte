@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import {
     Button,
     PerformanceCardGrid,
@@ -97,6 +98,7 @@
   propertyName="agency"
 />
 
+<AgencyHeroFrame>
 <PerformancePageSection
   variant="hero"
   layout="split"
@@ -122,8 +124,10 @@
     />
   {/snippet}
 </PerformancePageSection>
+</AgencyHeroFrame>
 
 <PerformancePageSection
+  id="security-controls"
   variant="white"
   eyebrow={`Last updated ${updatedDate}`}
   title="Check access at every step."

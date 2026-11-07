@@ -5,26 +5,11 @@
   import { enhanceImageEntrance } from '$lib/motion/imageEntrance';
   import { page } from '$app/stores';
   import { agencyPageComposition, usesCampaignFigure } from '$lib/data/agencyPageComposition';
-  import { originalHeroImages } from '$lib/data/agencyPreviewOriginalImages';
-  import { commercialPageTreatments } from '$lib/data/agencyPreviewCommercial';
-  import { productPageTreatments } from '$lib/data/agencyPreviewProducts';
-  import { editorialPageTreatments } from '$lib/data/agencyPreviewEditorial';
+  import { getAgencyHeroTreatment } from '$lib/data/agencyHeroTreatment';
   type CopyEdit = { selector: string; text: string };
   type PreviewCopy = { title?: string; lede?: string; titleSelector?: string; ledeSelector?: string; copyEdits?: readonly CopyEdit[] };
-  const utilityHeroes = [
-    {route:'/contact',family:'utility',image:'team',caption:'Concept illustration · bring one task to the conversation.',heroSelector:'.inquiry-intro',shot:'medium',focus:'55% 60%'},
-    {route:'/book',family:'utility',image:'team',caption:'Concept illustration · plan the next step together.',heroSelector:'.booking-entry,.agent-booking__intro',shot:'medium',focus:'65% 55%'},
-    {route:'/support-brief',family:'utility',image:'macro',caption:'Concept illustration · make the problem inspectable.',heroSelector:'.brief-workspace > header',shot:'macro',focus:'55% 65%'},
-    {route:'/security',family:'utility',image:'macro',caption:'Concept illustration · check access before acting.',heroSelector:'.clear-page-section--hero',shot:'macro',focus:'40% 55%'},
-    {route:'/prospects',family:'utility',image:'team',caption:'Concept illustration · connect only the approved tools.',heroSelector:'.portal-card',shot:'medium',focus:'60% 55%'}
-  ];
-  const records = [...commercialPageTreatments, ...productPageTreatments, ...editorialPageTreatments,...utilityHeroes];
   const utilityPaths = ['/book','/contact','/support-brief','/privacy','/terms','/security','/bearer-token-policy','/prospects'];
-  const current = $derived.by(() => {
-    const item=records.find(r => r.route === $page.url.pathname) ?? records.find(r => r.route.includes('[') && new RegExp('^'+r.route.replace(/\[[^\]]+\]/g,'[^/]+')+'$').test($page.url.pathname));
-    const original=originalHeroImages[$page.url.pathname];
-    return item && original ? {...item,...original} : item;
-  });
+  const current = $derived(getAgencyHeroTreatment($page.url.pathname));
   const family = $derived(current?.family ?? (utilityPaths.includes($page.url.pathname) ? 'utility' : 'editorial'));
   $effect(() => {
     const route = $page.url.pathname; const item = current; const f = family;
@@ -33,6 +18,7 @@
     let compositionTarget:HTMLElement|undefined; let priorComposition:string|undefined;
     let alive=true; let figure:HTMLElement|undefined; let closing:HTMLElement|undefined; let stopTrace:(()=>void)|undefined; let stopImageEntrance:(()=>void)|undefined;
     const originals: Array<{element:HTMLElement; clone:Element; hidden:boolean; id:string}> = [];
+    const resolve = (selector:string) => document.querySelector(selector) ?? document.querySelector(selector.replace(/>/g,' '));
     const replaceCopy = (element:Element|null, text:string|undefined, selector:string) => {
       if (!text || !(element instanceof HTMLElement) || element.querySelector('a,button,input,select,textarea')) return;
       // Preserve Svelte-owned nodes: its reactive titles and study variants continue updating.
@@ -45,14 +31,15 @@
       if(!alive)return;
       if(item && useBaselineCopy){const copy=item as typeof item & PreviewCopy;
         const edits=[{selector:copy.titleSelector ?? item.heroSelector+' h1',text:copy.title},{selector:copy.ledeSelector ?? item.heroSelector+' p',text:copy.lede},...(copy.copyEdits??[])];
-        const targets=edits.map(edit=>({element:document.querySelector(edit.selector),text:edit.text,selector:edit.selector}));
+        const targets=edits.map(edit=>({element:resolve(edit.selector),text:edit.text,selector:edit.selector}));
         for(const edit of targets)replaceCopy(edit.element,edit.text,edit.selector);
       }
       const candidates=Array.from(document.querySelectorAll<HTMLElement>('.performance-conversion-handoff,.route-handoff,.closing,.handoff,.next-step,.closing-section,.email-section,.letter-signoff,.membership .next-steps,.scopefield-page .download,.booking-content,.map-preview' )).filter(e=>(!e.closest('footer')||e.classList.contains('letter-signoff'))&&e.querySelector('a,button'));
       const finalCTA=candidates.at(-1);
       if(finalCTA && !['/book','/contact'].includes(route)){closing=document.createElement('section');closing.className='agency-closing-trace';closing.setAttribute('aria-label','Illustrative workflow trace');closing.innerHTML='<pre aria-hidden="true">. : + / = #     . : + / = #     . : + / = #</pre><canvas aria-hidden="true"></canvas><button type="button" hidden>Pause motion</button>';finalCTA.insertAdjacentElement('beforebegin',closing);stopTrace=mountPreviewTrace(closing);}
       if(!item)return;
-      const target=document.querySelector<HTMLElement>(item.heroSelector);if(!target)return;
+      const target=resolve(item.heroSelector) as HTMLElement | null;if(!target)return;
+      if(target.closest('[data-measured-opening]'))return;
       compositionTarget=target;priorComposition=target.dataset.agencyComposition;
       target.dataset.agencyComposition=agencyPageComposition(route,f,(item as typeof item & {shot?:string}).shot);
       if(!item.image || !usesCampaignFigure(route))return;

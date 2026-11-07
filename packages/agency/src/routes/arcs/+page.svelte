@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -29,7 +30,8 @@
 </svelte:head>
 
 <main class="arc-catalog property-performance">
-  <header class="arc-catalog__hero">
+  <AgencyHeroFrame>
+<header class="arc-catalog__hero">
     <div>
       <a href="/products">Products / Arcs</a>
       <p>Workflow presentations · read only</p>
@@ -59,6 +61,7 @@
       </div>
     </dl>
   </header>
+</AgencyHeroFrame>
 
   <section class="arc-catalog__rule" aria-label="Arc product boundary">
     <strong>Map holds the workflow plan.</strong>

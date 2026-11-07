@@ -16,7 +16,7 @@
   });
 </script>
 
-<div class="agency-legal-content" bind:this={root}>
+<div id="policy-content" class="agency-legal-content" bind:this={root}>
   {#if sections.length}
     <details class="legal-section-navigation">
       <summary>On this page</summary>
@@ -42,6 +42,7 @@
 
     width: 100%;
     max-width: 72ch;
+    margin-inline: auto;
     min-width: 0;
     color: var(--color-performance-ink);
     font-family: var(--font-performance-prose);

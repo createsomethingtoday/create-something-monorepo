@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import { SEO } from '@create-something/canon';
 </script>
 
@@ -14,12 +15,14 @@
   <div class="page-label"><span>CREATE SOMETHING</span><span>About the work</span></div>
   <article class="about-letter" aria-labelledby="about-title">
     <span class="paper-tape" aria-hidden="true"></span>
-    <header class="letter-heading">
+    <AgencyHeroFrame>
+<header class="letter-heading">
       <p class="letter-kicker">A note from Micah Johnson</p>
       <h1 id="about-title">Good tools still<br />need people.</h1>
       <p class="letter-category">AI-native Technical support</p>
     </header>
-    <div class="letter-body">
+</AgencyHeroFrame>
+    <div id="about-letter" class="letter-body">
       <p>I help teams fix, improve, and use their tools. Sometimes that means repairing a broken handoff. Sometimes it means connecting software or helping someone make sense of an AI-built project. The starting point is the work you need to do.</p>
       <p>I played Division III basketball. It taught me to read the whole floor before forcing the next move: who is doing what, where the pressure is, and what happens next. Later, working as an equine veterinary technician made clear records and continuity of care feel concrete. Those habits stay with me in technical work.</p>
       <p>That is the approach behind CREATE SOMETHING. First, understand the task and the people responsible for it. Remove unnecessary steps. Then build the agreed change and check that it works.</p>
