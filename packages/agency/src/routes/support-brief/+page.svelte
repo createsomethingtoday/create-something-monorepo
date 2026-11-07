@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import { Button } from '@create-something/canon';
   import { briefFields, parseBrief, briefMarkdown, type BriefField } from '$lib/support-brief/contract';
   import { initialBriefState, reduceBrief, type BriefEvent } from '$lib/support-brief/state';
@@ -28,12 +29,14 @@
 </svelte:head>
 
 <div class="brief-workspace" data-no-track data-analytics-ignore>
-  <header>
+  <AgencyHeroFrame compact={true}>
+<header>
     <p class="brief-eyebrow">AI-native technical support · Local preview</p>
     <h1>Make the problem clear.</h1>
     <p>Describe one real workflow. Review the evidence, boundaries and unknowns before sharing it with an accountable expert.</p>
     <p class="boundary">This form keeps your brief in page memory. Reloading clears it. Export requests a file download; it does not open a ticket or authorize work. Omit passwords, tokens and confidential customer details.</p>
   </header>
+</AgencyHeroFrame>
   <section aria-labelledby="agent-heading">
     <h2 id="agent-heading">Start with your agent, or write here.</h2>
     <p>Ask your agent to help describe the workflow using the <a href="/api/support-brief">versioned brief contract</a>. Paste its JSON below and review it. Your agent’s host controls its own data handling and available tools.</p>
@@ -44,7 +47,7 @@
       <Button variant="secondary" onclick={load}>Import for review</Button>
     </details>
   </section>
-  <form aria-label="Support brief" onsubmit={(event) => { event.preventDefault(); dispatch({ type: 'prepare' }); }}>
+  <form id="brief-form" aria-label="Support brief" onsubmit={(event) => { event.preventDefault(); dispatch({ type: 'prepare' }); }}>
     {#each fields as [key, field]}
       <div class="field" class:field-wide={key !== 'tools' && key !== 'owner'}>
         <label for={`brief-${key}`}>{field.label}{field.required ? ' (required)' : ' (optional)'}</label>

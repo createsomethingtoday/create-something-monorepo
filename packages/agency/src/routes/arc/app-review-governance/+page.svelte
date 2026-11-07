@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import { ArcDeck } from '@create-something/arc';
   import { APP_REVIEW_GOVERNANCE_COMPOSITION } from '@create-something/atlas-composition';
 
@@ -23,7 +24,8 @@
 </svelte:head>
 
 <main class="arc-prototype property-performance">
-  <header class="arc-hero">
+  <AgencyHeroFrame>
+<header class="arc-hero">
     <div>
       <p>Arc / App Review Governance / reference artifact</p>
       <h1>Tell the whole operating story.</h1>
@@ -39,7 +41,9 @@
       <div><dt>Leadership</dt><dd>Where is the proof?</dd></div>
     </dl>
   </header>
+</AgencyHeroFrame>
 
+  <section id="app-review-deck" tabindex="-1" aria-label="App Review Governance presentation">
   <ArcDeck
     {composition}
     routeId="app-review-governance-arc"
@@ -49,6 +53,7 @@
     actionEndpoint="/api/arcs/app-review-governance"
     enablePresentation
   />
+  </section>
 
   <section class="arc-contract" aria-labelledby="arc-contract-title">
     <div>

@@ -7,6 +7,9 @@
   import CanonBrandSignature from '$lib/components/CanonBrandSignature.svelte';
   import '$lib/styles/operator-palette.css';
   import '$lib/styles/measured-public.css';
+  import '$lib/styles/measured-pages.css';
+  import AgencyPageWayfinding from '$lib/components/AgencyPageWayfinding.svelte';
+  import { getAgencyPageFoundation } from '$lib/data/agencyPageFoundations';
   import { initializeFilmMotion, filmNavigationOpen, reducedFilmMotion, filmOverlayOpen } from '$lib/motion/filmPlayback';
   import { get } from 'svelte/store';
   import { createRouteEntrance, shouldUseGridTransition } from '$lib/motion/routeEntrance';
@@ -43,6 +46,7 @@
     usesAgencyMeasuredPublicSurface($page.url.pathname)
   );
   let mobileNavigationOpen = $state(false);
+  const pageFoundation = $derived($page.status < 400 ? getAgencyPageFoundation($page.url.pathname, $page.url.pathname === '/book' ? $page.url.searchParams.get('intent') : null) : null);
 
   function scrollToTop() {
     // A booking action may run before the delayed page-entry reset settles.
@@ -320,6 +324,31 @@
 </script>
 
 {#snippet canonFooterBrand()}<CanonBrandSignature />{/snippet}
+{#snippet agencyFooter()}
+  <Footer
+    mode="agency"
+    brandContent={usesPublicNavigation ? canonFooterBrand : undefined}
+    showNewsletter={false}
+    aboutText="AI-native technical support for your tools and workflows. We diagnose problems, engineer improvements, and help your team use what we deliver."
+    quickLinkGroups={usesPublicNavigation ? filmFooterGroups : footerQuickLinkGroups}
+    footerCta={routeOwnsPerformanceEnding
+      ? undefined
+      : {
+          title: 'Ready to put AI to work on a useful task?',
+          label: agencyCoreMessaging.membershipLabel,
+          href: primaryCtaHref,
+          description: 'Bring an idea or a project and one task you want help with.',
+          media: agencyFooterMacroMedia
+        }}
+    showSocial={true}
+    isAuthenticated={!!data.user}
+    visualStyle="editorial"
+    brandAsset={{
+      src: '/brand/create-something-agency-white.svg',
+      label: 'CREATE SOMETHING .agency'
+    }}
+  />
+{/snippet}
 
 <LayoutSEO property="agency" />
 <PageAnnotations pathname={$page.url.pathname} />
@@ -333,7 +362,7 @@
   globalMetadata={globalAnalyticsMetadata}
   compactPrompt={useCompactPrivacyPrompt}
   obscured={mobileNavigationOpen}
-  mobilePlacement={["/", "/services", "/contact", "/book"].includes($page.url.pathname) ? "safe-corner" : "header-edge"}
+  mobilePlacement={pageFoundation || ["/", "/services", "/contact", "/book"].includes($page.url.pathname) ? "safe-corner" : "header-edge"}
 />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
@@ -366,6 +395,9 @@
   />
 
   <main id="main-content" class="pt-[72px]" use:publicPageEntrances={$page.url.pathname}>
+    {#if pageFoundation}
+      {#key $page.url.pathname}<AgencyPageWayfinding foundation={pageFoundation} />{/key}
+    {/if}
     {#if usesPublicNavigation && $page.url.pathname !== '/' && !isAgencyWebflowPortfolioPath($page.url.pathname)}
       <AgencyPageTreatment />
     {/if}
@@ -376,29 +408,11 @@
     <AgencyPerformanceHandoff />
   {/if}
 
-  <Footer
-    mode="agency"
-    brandContent={usesPublicNavigation ? canonFooterBrand : undefined}
-    showNewsletter={false}
-    aboutText="AI-native technical support for your tools and workflows. We diagnose problems, engineer improvements, and help your team use what we deliver."
-    quickLinkGroups={usesPublicNavigation ? filmFooterGroups : footerQuickLinkGroups}
-    footerCta={routeOwnsPerformanceEnding
-      ? undefined
-      : {
-          title: 'Ready to put AI to work on a useful task?',
-          label: agencyCoreMessaging.membershipLabel,
-          href: primaryCtaHref,
-          description: 'Bring an idea or a project and one task you want help with.',
-          media: agencyFooterMacroMedia
-        }}
-    showSocial={true}
-    isAuthenticated={!!data.user}
-    visualStyle="editorial"
-    brandAsset={{
-      src: '/brand/create-something-agency-white.svg',
-      label: 'CREATE SOMETHING .agency'
-    }}
-  />
+  {#if pageFoundation}
+    <div id="agency-directory" tabindex="-1" aria-label="Agency directory">{@render agencyFooter()}</div>
+  {:else}
+    {@render agencyFooter()}
+  {/if}
 
   {#if !routeOwnsPerformanceEnding && $page.url.pathname !== '/basketball-systems-lab' && !isDifyArticleRoute}
     <ModeIndicator current="agency" />

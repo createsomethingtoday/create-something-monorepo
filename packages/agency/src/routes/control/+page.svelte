@@ -1,10 +1,10 @@
 <script lang="ts">
+  import PerformanceCampaignOpening from '$lib/components/AgencyMeasuredOpening.svelte';
   import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import AgencyWayfindingHero from '$lib/components/AgencyWayfindingHero.svelte';
   import AgencyWayfindingOpening from '$lib/components/AgencyWayfindingOpening.svelte';
   import {
     Button,
-    PerformanceCampaignOpening,
     PerformanceCardGrid,
     PerformanceConversionHandoff,
     PerformanceNarrativeStage,

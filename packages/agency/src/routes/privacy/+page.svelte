@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import AgencyLegalContent from '$lib/components/AgencyLegalContent.svelte';
   import AgencyLegalPage from '$lib/components/AgencyLegalPage.svelte';
   import { PerformancePageSection, PrivacyPolicyContent, SEO } from '@create-something/canon';
@@ -12,6 +13,7 @@
 />
 
 <AgencyLegalPage>
+<AgencyHeroFrame compact={true}>
 <PerformancePageSection
   variant="hero"
   expression="editorial"
@@ -19,15 +21,14 @@
   eyebrow="Privacy"
   title="Your data. Your privacy choices."
   description="First-party analytics and Meta marketing are separate choices. Meta marketing stays off unless you allow it. You can change either choice at any time."
->
-  {#snippet after()}
-    <AgencyLegalContent sectionNavigation>
+/>
+</AgencyHeroFrame>
+<AgencyLegalContent sectionNavigation>
       <PrivacyPolicyContent
         property="agency"
         domain="createsomething.agency"
         lastUpdated="November 5, 2026"
       />
-    </AgencyLegalContent>
-  {/snippet}
-</PerformancePageSection>
+</AgencyLegalContent>
+
 </AgencyLegalPage>

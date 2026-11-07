@@ -1,7 +1,7 @@
 <script lang="ts">
+  import PerformanceCampaignOpening from './AgencyMeasuredOpening.svelte';
   import {
     Button,
-    PerformanceCampaignOpening,
     PerformanceConversionHandoff,
     PerformanceNarrativeStage,
     SEO,

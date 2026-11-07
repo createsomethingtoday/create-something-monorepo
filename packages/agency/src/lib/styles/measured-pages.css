@@ -1,0 +1,126 @@
+/* The approved instrument and workshop composition, adapted to actual page
+   chapters. No runtime readings or subject annotations are invented. */
+.agency-page-wayfinding {
+  --font-mono: var(--font-performance-mono);
+  --foreground: #fff;
+  --muted: var(--color-performance-measured-muted);
+  --border: var(--color-performance-measured-rule);
+  max-width: 1760px;
+  margin: 0 auto 36px;
+  padding-inline: 3vw;
+  font: 11px/1.5 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: .045em;
+}
+.agency-surface:has(.agency-page-wayfinding) .film-shell main#main-content { padding-top: 100px !important; }
+.agency-page-wayfinding .instrument-register { display:flex; align-items:center; justify-content:space-between; gap:24px; min-height:44px; margin-bottom:18px; }
+.agency-page-wayfinding .register-divider { padding-inline:10px; color:var(--muted); }
+.agency-page-wayfinding .instrument-purpose { margin-left:auto; color:var(--muted); }
+.agency-page-wayfinding .instrument-register button { display:flex; align-items:center; gap:8px; min-height:44px; padding:8px 0 8px 16px; border:0; border-left:1px solid var(--border); font:inherit; white-space:nowrap; }
+.agency-page-wayfinding .chapter-dial { position:relative; }
+.agency-page-wayfinding .dial-scale { height:25px; position:relative; border-top:1px solid var(--muted); }
+.agency-page-wayfinding .dial-ticks { height:18px; background:repeating-linear-gradient(90deg,var(--border) 0 1px,transparent 1px 1%),repeating-linear-gradient(90deg,var(--muted) 0 1px,transparent 1px 10%); mask-image:linear-gradient(to bottom,#fff 0 8px,transparent 8px 13px,#fff 13px); }
+.agency-page-wayfinding .dial-needle { position:absolute; left:var(--dial-position); top:0; height:31px; width:1px; background:#fff; transform:translateX(-50%); transition:left 300ms var(--ease-performance-standard); }
+.agency-page-wayfinding .dial-needle::after { content:''; position:absolute; bottom:0; left:-3px; width:7px; height:7px; background:#fff; border-radius:50%; }
+.agency-page-wayfinding .chapter-dial ol { display:grid; grid-template-columns:repeat(var(--dial-count),minmax(0,1fr)); margin:0; padding:0; list-style:none; border-bottom:1px solid var(--border); }
+.agency-page-wayfinding .chapter-dial li { min-width:0; }
+.agency-page-wayfinding .chapter-dial a { display:flex; align-items:center; justify-content:center; gap:10px; min-height:64px; padding:12px 8px; border-inline-start:1px solid var(--border); color:var(--muted); font-size:12px; }
+.agency-page-wayfinding .chapter-dial li:last-child a { border-inline-end:1px solid var(--border); }
+.agency-page-wayfinding .chapter-dial a[aria-current],.agency-page-wayfinding .chapter-dial a:is(:hover,:focus-visible) { color:#fff; }
+.agency-page-wayfinding .dial-index { font-size:10px; }
+.agency-page-wayfinding .dial-label-short { display:none; }
+.agency-page-wayfinding .dial-link-arrow { font-size:16px; }
+.agency-page-wayfinding .instrument-reading { display:flex; justify-content:space-between; gap:20px; padding-block:12px; color:var(--muted); font-size:10px; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame { width:100%; max-width:1760px; margin-inline:auto; padding:0 6vw 48px; color:var(--color-performance-measured-white); }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame__copy { min-width:0; }
+.agency-hero-plate { min-width:0; margin-top:32px; }
+.agency-hero-plate__register { display:flex; justify-content:space-between; gap:16px; border-top:1px solid var(--color-performance-line); padding-block:12px; font:10px/1.5 var(--font-performance-mono); text-transform:uppercase; color:var(--color-performance-muted); }
+.agency-hero-plate__composition { display:grid; grid-template-columns:70px minmax(0,1fr); gap:20px; }
+.agency-hero-plate__spine { writing-mode:vertical-rl; transform:rotate(180deg); display:flex; align-items:center; justify-content:center; overflow:hidden; font:650 clamp(36px,4.3vw,68px)/1 var(--font-performance-sans); letter-spacing:-.065em; text-transform:uppercase; white-space:nowrap; }
+.agency-hero-plate figure { min-width:0; margin:0; border:1px solid var(--color-performance-line); }
+.agency-hero-plate img { display:block; width:100%; height:auto; max-height:640px; object-fit:contain; background:#000; }
+.agency-hero-plate figcaption { border-top:1px solid var(--color-performance-line); padding:12px 16px; color:var(--color-performance-muted); font:11px/1.6 var(--font-performance-mono); }
+.agency-hero-plate__destinations { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); margin-top:20px; border-block:1px solid var(--color-performance-line); }
+.agency-hero-plate__destinations a { display:flex; gap:16px; align-items:baseline; min-width:0; min-height:70px; padding:20px 16px; border-inline-start:1px solid var(--color-performance-line); font-size:17px; }
+.agency-hero-plate__destinations a:last-child { border-inline-end:1px solid var(--color-performance-line); }
+.agency-hero-plate__index { font:10px var(--font-performance-mono); }
+.agency-hero-plate__destinations small { display:block; margin-top:8px; font-size:12px; color:var(--color-performance-muted); line-height:1.6; }
+.agency-hero-plate__destinations a>span:last-child { margin-left:auto; }
+/* Normalize only the opening owned by this frame; never hide proof/artifacts. */
+.agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening { display:block !important; min-height:0 !important; padding:0 !important; overflow:visible; background:#000; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening::before,.agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening__media { display:none; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening__content { width:100% !important; max-width:none; min-height:0; padding:0 !important; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening__content>header { display:grid !important; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:22px 5vw; width:100% !important; max-width:none !important; padding:0 !important; align-items:end; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening__identity { grid-column:1/-1; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening h1 { grid-column:1; grid-row:2/4; max-width:none !important; font:500 clamp(42px,5.6vw,88px)/1.02 var(--font-performance-sans); font-size:clamp(42px,5.6vw,88px) !important; line-height:1.02 !important; letter-spacing:-.06em; margin:0; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening__lede { grid-column:2; margin:0; max-width:40ch; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening__actions { grid-column:2; margin:0; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening__proof { position:relative; width:100%; margin-top:32px; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening__artifact { position:relative !important; inset:auto !important; width:100% !important; height:auto !important; min-height:0; margin-top:32px; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame .clear-page-section--hero { padding:0; min-height:0; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame .clear-page-section__inner { width:100%; max-width:none; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame--compact { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,.6fr); gap:36px; align-items:center; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame--compact .agency-hero-plate { margin:0; }
+.agency-hero-plate--compact .agency-hero-plate__composition { grid-template-columns:28px minmax(0,1fr); gap:10px; }
+.agency-hero-plate--compact .agency-hero-plate__spine { font-size:27px; }
+.agency-hero-plate--compact img { max-height:210px; }
+.agency-hero-plate--compact .agency-hero-plate__register>span:last-child { display:none; }
+@media(min-width:1920px){.agency-surface[data-agency-brand=measured] .agency-hero-frame { padding-inline:0; }.agency-page-wayfinding { padding-inline:0; }}
+@media(max-width:1000px){
+  .agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening__content>header { display:block !important; }
+  .agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening__lede { margin-top:24px; }
+  .agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening__actions { margin-top:24px; }
+  .agency-surface[data-agency-brand=measured] .agency-hero-frame--compact { grid-template-columns:minmax(0,1fr); gap:24px; }
+}
+@media(max-width:700px){
+  .agency-surface:has(.agency-page-wayfinding) .film-shell main#main-content { padding-top:88px !important; }
+  .agency-page-wayfinding { padding-inline:6vw; margin-bottom:24px; }
+  .agency-page-wayfinding .instrument-register { gap:12px; font-size:9px; margin-bottom:12px; }
+  .agency-page-wayfinding .instrument-purpose { display:none; }
+  .agency-page-wayfinding .register-divider { padding-inline:3px; }
+  .agency-page-wayfinding .chapter-dial a { flex-direction:column; gap:5px; font-size:10px; text-align:center; line-height:1.3; padding:10px 2px; min-height:74px; }
+  .agency-page-wayfinding .dial-label-full,.agency-page-wayfinding .dial-link-arrow { display:none; }
+  .agency-page-wayfinding .dial-label-short { display:inline; }
+  .agency-page-wayfinding .instrument-reading { font-size:9px; }
+  .agency-page-wayfinding .instrument-reading>span:last-child { display:none; }
+  .agency-surface[data-agency-brand=measured] .agency-hero-frame { padding-inline:6vw; padding-bottom:32px; }
+  .agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening h1 { font-size:clamp(34px,9.5vw,64px) !important; }
+  .agency-hero-plate { margin-top:24px; }
+  .agency-hero-plate__register { font-size:9px; }
+  .agency-hero-plate__register>span:last-child { display:none; }
+  .agency-hero-plate__composition { grid-template-columns:28px minmax(0,1fr); gap:10px; }
+  .agency-hero-plate__spine { font-size:29px; }
+  .agency-hero-plate figcaption { padding:10px; font-size:10px; }
+  .agency-hero-plate__destinations { grid-template-columns:1fr; }
+  .agency-hero-plate__destinations a { border-inline:0; border-bottom:1px solid var(--color-performance-line); padding-inline:0; }
+  .agency-hero-plate__destinations a:last-child { border:0; }
+  .agency-hero-plate--compact img { max-height:140px; }
+}
+@media(prefers-reduced-motion:reduce){.agency-page-wayfinding .dial-needle { transition:none; }}
+.agency-page-wayfinding .chapter-dial[data-reduced=true] .dial-needle { transition:none; }
+/* Keep the privacy utility in the mobile header, away from page actions. */
+@media(max-width:640px){
+  .agency-surface[data-agency-brand=measured]:has(.agency-page-wayfinding) .privacy-choice:not(.privacy-choice--expanded) {
+    top:max(10px,env(safe-area-inset-top));
+    left:calc(6vw + 64px);
+    right:auto;
+    bottom:auto;
+    z-index:60;
+  }
+}
+/* The route still owns its opening content, without a second set of gutters. */
+.agency-surface[data-agency-brand=measured] .agency-hero-frame__copy > :is(header,.opening,.hero,.review-section,.booking-entry,.agent-booking__intro) { padding:0 !important; margin:0; min-height:0; }
+.agency-hero-plate__spine { font-size:min(clamp(36px,4.3vw,68px),calc(950px / var(--spine-count))); }
+.agency-hero-plate--compact .agency-hero-plate__spine { font-size:min(27px,calc(420px / var(--spine-count))); }
+@media(max-width:700px){
+  .agency-hero-plate__spine,.agency-hero-plate--compact .agency-hero-plate__spine { font-size:min(29px,calc(330px / var(--spine-count))); }
+}
+/* Booking is a task: keep the shared workshop cue small on narrow screens. */
+@media(max-width:700px){
+  .booking-page .agency-hero-plate__register { display:none; }
+  .booking-page .agency-hero-plate__composition { grid-template-columns:18px minmax(0,1fr); gap:8px; }
+  .booking-page .agency-hero-plate__spine { font-size:12px; }
+  .booking-page .agency-hero-plate figure { display:grid; grid-template-columns:80px minmax(0,1fr); align-items:center; }
+  .booking-page .agency-hero-plate img { width:80px; height:80px; object-fit:cover; }
+  .booking-page .agency-hero-plate figcaption { border-top:0; border-left:1px solid var(--color-performance-line); padding:10px; font-size:9px; }
+}

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import PerformanceCampaignOpening from '$lib/components/AgencyMeasuredOpening.svelte';
   import { nativeDisclosure } from '$lib/motion/evidenceDisclosure';
   import AgencyWayfindingHero from '$lib/components/AgencyWayfindingHero.svelte';
   import AgencyWayfindingOpening from '$lib/components/AgencyWayfindingOpening.svelte';
@@ -6,7 +7,7 @@
   import BuiltWork from '$lib/components/BuiltWork.svelte';
   import MembershipOffer from '$lib/components/MembershipOffer.svelte';
   import ProjectReviewEntry from '$lib/components/ProjectReviewEntry.svelte';
-  import { Button, PerformanceCampaignOpening, PerformancePageSection, SEO } from '@create-something/canon';
+  import { Button, PerformancePageSection, SEO } from '@create-something/canon';
   import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
   import ServicesMapPreview from '$lib/components/ServicesMapPreview.svelte';
   import ServicesProductPath from '$lib/components/ServicesProductPath.svelte';

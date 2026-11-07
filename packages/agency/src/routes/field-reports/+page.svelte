@@ -1,11 +1,11 @@
 <script lang="ts">
+  import PerformanceCampaignOpening from '$lib/components/AgencyMeasuredOpening.svelte';
   import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
   import AgencyWayfindingHero from '$lib/components/AgencyWayfindingHero.svelte';
   import AgencyWayfindingOpening from '$lib/components/AgencyWayfindingOpening.svelte';
   import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import {
     Button,
-    PerformanceCampaignOpening,
     PerformanceConversionHandoff,
     PerformanceEvidenceIndex,
     SEO,

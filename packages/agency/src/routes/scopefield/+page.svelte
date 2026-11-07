@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import { SEO } from '@create-something/canon';
   import ScopefieldStory from '$lib/components/scopefield/ScopefieldStory.svelte';
 
@@ -13,7 +14,8 @@
 />
 
 <div class="scopefield-page">
-  <section class="opening" id="opening" aria-labelledby="scopefield-title">
+  <AgencyHeroFrame>
+<section class="opening" id="opening" aria-labelledby="scopefield-title">
     <div class="edition"><a href="/products">Products</a><span>Mac public beta · 0.1.0-beta.1</span></div>
     <div class="hero-grid">
       <div><p class="eyebrow">Scopefield / A browser by CREATE SOMETHING</p><h1 id="scopefield-title">Your browser.<br /><em>Your call.</em></h1></div>
@@ -26,6 +28,7 @@
     </div>
     <div class="opening-footer"><span class="product-name"><img src="/scopefield/mark.svg" width="52" height="52" alt="" />Scopefield</span><a href="#focused-proof">Understand the boundary <span aria-hidden="true">↓</span></a></div>
   </section>
+</AgencyHeroFrame>
 
   <section class="proof" id="focused-proof" aria-labelledby="story-title">
     <div class="story-heading"><p class="eyebrow">01 / Anatomy of a bounded task</p><h2 id="story-title">What crosses<br /><em>the boundary?</em></h2><p>A conceptual model of context, recipient, approval, interruption, and evidence. The capability record below states what is actually available.</p></div>

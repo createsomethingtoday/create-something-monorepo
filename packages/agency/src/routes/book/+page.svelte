@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
 	import { page } from '$app/stores';
 	import { replaceState } from '$app/navigation';
 	import { onMount, tick } from 'svelte';
@@ -25,6 +26,7 @@
 			'Choose a 30- or 60-minute time to discuss technical support for your tools and workflows.',
 		eyebrow: 'Workflow mapping session',
 		title: 'Choose a time to talk through the task.',
+		shortDescription: 'Bring one problem or improvement and the person responsible.',
 		description:
 			'Bring one problem or improvement and the person responsible. We discuss diagnosis, engineering work, and learning needs. If you already have a workflow map, review it before choosing a time.',
 		secondaryHref: '/map',
@@ -40,6 +42,7 @@
 			'Choose a verified 30- or 60-minute opening to assess one fixed-scope Workflow Compiler Integration.',
 		eyebrow: 'Workflow Compiler Integration fit call',
 		title: 'Choose a time to discuss the integration.',
+		shortDescription: 'Bring one repository and the workflow you want to connect.',
 		description:
 			'Bring one code repository, the workflow you want to connect, and the tools it needs. We’ll assess the work and whether it fits a defined project.',
 		secondaryHref: '/workflow-compiler-integration',
@@ -55,6 +58,7 @@
 			'Choose a 30- or 60-minute time to discuss an AI project for your business.',
 		eyebrow: 'Agent Foundation fit call',
 		title: 'Choose a time to talk about your project.',
+		shortDescription: 'Bring one useful AI task and the team it should help.',
 		description:
 			'Bring an idea or a project, the team it should help, and an example of the work. We’ll discuss whether we can help and agree on the first useful task.',
 		secondaryHref: '/agent-foundation',
@@ -68,6 +72,7 @@
 		seoDescription: 'Talk through a technical review before your customer pilot. Agree on scope and price before work starts.',
 		eyebrow: 'Technical review fit call',
 		title: 'Talk through the project you have built.',
+		shortDescription: 'Discuss fit and scope for a paid technical review.',
 		description: 'Bring a demo, the problem you need help with, and any customer requirement or deadline. We will discuss fit and the scope of a paid review. Do not include credentials or private customer records in booking notes.',
 		secondaryHref: '/technical-review',
 		secondaryLabel: 'Review the technical review service',
@@ -80,6 +85,7 @@
 		seoDescription: 'Choose a time to discuss remote software or workflow support. Agree on fit, scope and price before work begins.',
 		eyebrow: 'Remote software support discussion',
 		title: 'Choose a time to discuss the failure.',
+		shortDescription: 'Discuss fit and scope for a software problem.',
 		description: 'Bring the tools involved, the last working state and the person who can approve a change. We will discuss fit and scope. Keep credentials and private customer records out of booking notes.',
 		secondaryHref: '/dfw-tech-support',
 		secondaryLabel: 'Review remote software support',
@@ -219,306 +225,90 @@
 	propertyName="agency"
 />
 
-<div class="booking-page" data-performance-surface="booking">
-	{#if intent === 'agent-foundation' || intent === 'technical-review'}
-		<section
-			class="agent-booking"
-			data-agent-foundation-booking
-			aria-labelledby="agent-booking-title"
-		>
-			<div class="agent-booking__intro">
-				<p>{bookingOffer.eyebrow}</p>
-				<h1 id="agent-booking-title">{bookingOffer.title}</h1>
-				<p>{bookingOffer.description}</p>
-				<div class="agent-booking__outcome">
-					<span>What you leave with</span>
-					<p>A fit decision and, if it fits, a proposed scope and the basis for a quote.</p>
-				</div>
-				<Button href="#first-party-scheduler" onclick={chooseMeetingTime}>Choose a time</Button>
-			</div>
-
-			{#if handoffSheet.warmupNotes}
-				<aside class="agent-booking__context">
-					<span>Private draft attached</span>
-					<p>{handoffSheet.warmupNotes}</p>
-					<small>Do not include credentials, client secrets, or private records.</small>
-				</aside>
-			{/if}
-
-			<section
-				id="first-party-scheduler"
-					bind:this={schedulerSection}
-					tabindex="-1"
-				class="scheduler-shell"
-				aria-label="Choose a verified opening"
-			>
-				<iframe
-					bind:this={schedulerFrame}
-					src={schedulerHref}
-					title={bookingOffer.iframeTitle}
-					loading="eager"
-					referrerpolicy="no-referrer"
-					sandbox="allow-forms allow-popups allow-same-origin allow-scripts"
-					onload={sendSchedulerContext}
-				></iframe>
-				<p class="scheduler-shell__fallback">
-					If the embedded scheduler is unavailable,
-					<a href={schedulerHref} target="_blank" rel="noopener noreferrer"
-						>open the first-party scheduler</a
-					>. Review <a href={bookingOffer.fallbackHref}>{bookingOffer.fallbackLabel}</a> before choosing
-					a time.
-				</p>
-			</section>
-		</section>
-	{:else}
-<section class="booking-entry" aria-labelledby="booking-entry-title">
-	<div class="booking-entry__copy">
-		<p class="booking-entry__eyebrow">{bookingOffer.eyebrow}</p>
-		<h1 id="booking-entry-title">{bookingOffer.title}</h1>
-		<p class="booking-entry__description">{bookingOffer.description}</p>
-		<div class="booking-entry__action">
-			<Button href="#first-party-scheduler" onclick={chooseMeetingTime}>Choose a time</Button>
-			<p>Choose a 30- or 60-minute opening.<br />Review the details before confirming your booking.</p>
-		</div>
-	</div>
-</section>
-<div class="booking-content">
-
-				<section
-					id="first-party-scheduler"
-					bind:this={schedulerSection}
-					tabindex="-1"
-					class="scheduler-shell"
-					aria-label="Choose a verified opening"
-				>
-					<iframe
-						bind:this={schedulerFrame}
-						src={schedulerHref}
-						title={bookingOffer.iframeTitle}
-						loading="eager"
-						referrerpolicy="no-referrer"
-						sandbox="allow-forms allow-popups allow-same-origin allow-scripts"
-						onload={sendSchedulerContext}
-					></iframe>
-
-					<p class="scheduler-shell__fallback">
-						If the embedded scheduler is unavailable,
-						<a href={schedulerHref} target="_blank" rel="noopener noreferrer"
-							>open the first-party scheduler</a
-						>. Review <a href={bookingOffer.fallbackHref}>{bookingOffer.fallbackLabel}</a> before choosing
-						a time.
-					</p>
-				</section>
-</div>
-	{/if}
+<div class="booking-page" data-performance-surface="booking" data-agent-foundation-booking={intent === 'agent-foundation' || intent === 'technical-review' ? true : undefined}>
+  <AgencyHeroFrame compact={true}>
+    <section class="booking-entry" aria-labelledby={intent === 'agent-foundation' || intent === 'technical-review' ? 'agent-booking-title' : 'booking-entry-title'}>
+      <p class="booking-entry__eyebrow">{bookingOffer.eyebrow}</p>
+      <h1 id={intent === 'agent-foundation' || intent === 'technical-review' ? 'agent-booking-title' : 'booking-entry-title'}>{bookingOffer.title}</h1>
+      <p class="booking-entry__description">{bookingOffer.shortDescription}</p>
+      <div class="booking-entry__action">
+        <Button href="#first-party-scheduler" onclick={chooseMeetingTime}>Choose a time</Button>
+        <p>30 or 60 minutes.<br />Review the details before confirming.</p>
+      </div>
+      <details class="booking-preparation">
+        <summary>Before the conversation <span aria-hidden="true">+</span></summary>
+        <div>
+          <p>{bookingOffer.description}</p>
+          {#if intent === 'agent-foundation' || intent === 'technical-review'}
+            <p class="agent-booking__outcome"><strong>What you leave with</strong><br />A fit decision and, if it fits, a proposed scope and the basis for a quote.</p>
+          {/if}
+          <a href={bookingOffer.secondaryHref}>{bookingOffer.secondaryLabel} ↗</a>
+        </div>
+      </details>
+    </section>
+  </AgencyHeroFrame>
+  {#if handoffSheet.warmupNotes}
+    <aside class="agent-booking__context" aria-label="Prepared conversation context">
+      <span>Private draft attached</span>
+      <p>{handoffSheet.warmupNotes}</p>
+      <small>Do not include credentials, client secrets, or private records.</small>
+    </aside>
+  {/if}
+  <div class="booking-content">
+    <section id="first-party-scheduler" bind:this={schedulerSection} tabindex="-1" class="scheduler-shell" aria-labelledby="scheduler-heading">
+      <header class="scheduler-shell__heading">
+        <div><p>Find a time</p><h2 id="scheduler-heading">Choose a time.</h2></div>
+        <a href={schedulerHref} target="_blank" rel="noopener noreferrer">Open full page <span aria-hidden="true">↗</span></a>
+      </header>
+      <iframe bind:this={schedulerFrame} src={schedulerHref} title={bookingOffer.iframeTitle} loading="eager" referrerpolicy="no-referrer" sandbox="allow-forms allow-popups allow-same-origin allow-scripts" onload={sendSchedulerContext}></iframe>
+      <p class="scheduler-shell__fallback">If the embedded scheduler is unavailable, <a href={schedulerHref} target="_blank" rel="noopener noreferrer">open the first-party scheduler</a>. Review <a href={bookingOffer.fallbackHref}>{bookingOffer.fallbackLabel}</a> before choosing a time.</p>
+      <p class="booking-privacy-note">Keep passwords, tokens and private customer records out of booking notes.</p>
+    </section>
+  </div>
 </div>
 
 <style>
-	.booking-entry {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr);
-		align-items: center;
-		gap: var(--space-performance-md);
-		max-width: 85rem;
-		margin-inline: auto;
-		padding: clamp(1.5rem, 3vw, 3rem) clamp(1.25rem, 5vw, 5rem) var(--space-performance-lg);
-		color: var(--color-performance-ink);
-	}
-
-	.booking-entry__copy { min-width: 0; max-width: 72ch; }
-	.booking-entry__eyebrow {
-		margin: 0 0 1.25rem;
-		font-family: var(--font-performance-mono, monospace);
-		font-size: 0.75rem;
-		font-weight: 600;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--color-performance-muted);
-	}
-	.booking-entry h1 {
-		max-width: 26ch;
-		margin: 0;
-		font-family: var(--font-performance-interface);
-		font-size: clamp(2rem, 3.5vw, 3.25rem);
-		font-weight: var(--font-performance-medium, 500);
-		line-height: 1.06;
-		letter-spacing: -0.045em;
-		text-wrap: balance;
-	}
-	.booking-entry__description {
-		max-width: 49ch;
-		margin: 1.5rem 0 0;
-		font-size: clamp(1rem, 1.3vw, 1.125rem);
-		line-height: 1.65;
-		color: var(--color-performance-muted);
-	}
-	.booking-entry__action {
-		display: flex;
-		align-items: center;
-		flex-wrap: wrap;
-		gap: 1rem 1.5rem;
-		margin-top: var(--space-performance-md);
-	}
-	.booking-entry__action p {
-		margin: 0;
-		font-size: 0.8125rem;
-		line-height: 1.55;
-		color: var(--color-performance-muted);
-	}
-	/* Keep the shared illustration subordinate to this live booking workspace. */
-	:global(body.design-preview[data-preview-route='/book'] .booking-entry > .agency-preview-media) {
-		grid-column: 2;
-		grid-row: 1;
-		margin: 0;
-		align-self: center;
-	}
-	:global(body.design-preview[data-preview-route='/book'] .booking-entry > .agency-preview-media img) {
-		height: auto !important;
-		max-height: 24rem;
-		object-fit: contain !important;
-	}
-	.booking-content {
-		display: grid;
-		align-items: start;
-		gap: var(--space-performance-md);
-		width: min(100%, 85rem);
-		margin-inline: auto;
-		padding: 0 clamp(1.25rem, 5vw, 5rem) var(--space-performance-xl);
-	}
-	@media (max-width: 800px) {
-		.booking-entry { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
-		.booking-entry h1 { max-width: 20ch; }
-		:global(body.design-preview[data-preview-route='/book'] .booking-entry > .agency-preview-media) {
-			grid-column: 1;
-			grid-row: auto;
-			max-width: 28rem;
-			justify-self: center;
-		}
-		:global(body.design-preview[data-preview-route='/book'] .booking-entry > .agency-preview-media img) {
-			max-height: 13rem;
-		}
-	}
-
-
-	.booking-page {
-		background: var(--color-performance-paper, #f3f3f0);
-		color: var(--color-performance-ink, #090909);
-	}
-
-	.agent-booking {
-		display: grid;
-		grid-template-columns: minmax(18rem, 0.72fr) minmax(0, 1.28fr);
-		gap: clamp(2rem, 6vw, 6rem);
-		width: min(85rem, 100%);
-		margin-inline: auto;
-		padding: var(--space-performance-lg) 7vw;
-	}
-
-	.agent-booking__intro {
-		align-self: start;
-	}
-
-	.agent-booking__intro > p:first-child,
-	.agent-booking__outcome span,
-	.agent-booking__context span {
-		color: var(--color-performance-signal, #0057b8);
-		font-family: var(--font-performance-mono, monospace);
-		font-size: 0.72rem;
-		font-weight: 700;
-		letter-spacing: 0.07em;
-		text-transform: uppercase;
-	}
-
-	.agent-booking h1 {
-		max-width: 12ch;
-		margin: 0.8rem 0 1.25rem;
-		font-size: clamp(1.8rem, 3vw, 2.75rem);
-		font-weight: 400;
-		letter-spacing: -0.06em;
-		line-height: 1.15;
-	}
-
-	.agent-booking__intro > p:nth-child(3),
-	.agent-booking__outcome p,
-	.agent-booking__context p,
-	.agent-booking__context small {
-		color: var(--color-performance-muted, #5e6268);
-		line-height: 1.55;
-	}
-
-	.agent-booking__outcome,
-	.agent-booking__context {
-		margin: 2rem 0;
-		padding: 1rem;
-		border-left: 3px solid var(--color-performance-signal, #0057b8);
-		background: var(--color-performance-panel, #fff);
-	}
-
-	.agent-booking__outcome p,
-	.agent-booking__context p {
-		margin: 0.5rem 0 0;
-	}
-
-	.agent-booking__context {
-		grid-column: 1 / -1;
-		margin: 0;
-	}
-
-	.agent-booking > .scheduler-shell {
-		grid-column: 2;
-		grid-row: 1;
-	}
-
-	.scheduler-shell {
-		padding: 0;
-		margin: 0;
-		min-width: 0;
-		width: 100%;
-		scroll-margin-top: 7rem;
-		border-radius: var(--radius-performance-sm);
-	}
-
-	.scheduler-shell:focus {
-		outline: 2px solid var(--color-performance-focus, #a7b8ff);
-		outline-offset: 6px;
-	}
-
-	iframe {
-		display: block;
-		width: 100%;
-		min-height: 860px;
-		border: 1px solid var(--color-performance-line, #d7d7d2);
-		background: var(--color-performance-panel, #ffffff);
-	}
-
-	.scheduler-shell__fallback {
-		margin: 0;
-		padding: 0.85rem 1rem;
-		border: 1px solid var(--color-performance-line, #d7d7d2);
-		border-top: 0;
-		background: var(--color-performance-panel, #ffffff);
-		color: var(--color-performance-muted, #5e6268);
-		font-family: var(--font-performance-mono, var(--font-performance-mono));
-		font-size: 0.78rem;
-	}
-
-	.scheduler-shell__fallback a {
-		color: var(--color-performance-ink, #090909);
-		font-weight: 700;
-	}
-
-	@media (max-width: 720px) {
-		.agent-booking {
-			grid-template-columns: 1fr;
-		}
-
-		.agent-booking > .scheduler-shell {
-			grid-column: 1;
-			grid-row: auto;
-		}
-
-		iframe {
-			min-height: 940px;
-		}
-	}
+  .booking-page { background:var(--color-performance-paper); color:var(--color-performance-ink); }
+  .booking-entry { min-width:0; }
+  .booking-entry__eyebrow,.scheduler-shell__heading p,.agent-booking__context>span { margin:0 0 18px; font:11px/1.5 var(--font-performance-mono); text-transform:uppercase; letter-spacing:.045em; color:var(--color-performance-muted); }
+  .booking-entry h1 { max-width:22ch; margin:0; font:500 clamp(36px,4.2vw,64px)/1.04 var(--font-performance-interface); letter-spacing:-.055em; text-wrap:balance; }
+  .booking-entry__description { max-width:46ch; margin:22px 0 0; font-size:clamp(17px,1.5vw,20px); line-height:1.6; color:var(--color-performance-muted); }
+  .booking-entry__action { display:flex; align-items:center; gap:24px; flex-wrap:wrap; margin-top:28px; }
+  .booking-entry__action p { margin:0; font-size:13px; line-height:1.6; color:var(--color-performance-muted); }
+  .booking-preparation { max-width:55ch; margin-top:24px; border-block:1px solid var(--color-performance-line); }
+  summary { display:flex; justify-content:space-between; align-items:center; min-height:48px; gap:16px; cursor:pointer; font-size:13px; }
+  summary::marker { content:''; }
+  details[open] summary>span { transform:rotate(45deg); }
+  .booking-preparation>div { padding:0 0 20px; font-size:14px; line-height:1.65; color:var(--color-performance-muted); }
+  .booking-preparation p { margin:0 0 16px; }
+  .booking-preparation a { display:inline-flex; align-items:center; min-height:44px; text-decoration:underline; text-underline-offset:4px; color:var(--color-performance-ink); }
+  .agent-booking__outcome strong { color:var(--color-performance-ink); }
+  .agent-booking__context { width:min(88%,80rem); margin:0 auto 24px; padding:20px; border:1px solid var(--color-performance-line); }
+  .agent-booking__context p { margin:12px 0; line-height:1.65; }
+  .agent-booking__context small { color:var(--color-performance-muted); }
+  .booking-content { width:min(88%,80rem); margin:0 auto; padding-bottom:48px; }
+  .scheduler-shell { padding:0; min-width:0; width:100%; margin:0; scroll-margin-top:100px; }
+  .scheduler-shell:focus { outline:2px solid var(--color-performance-focus); outline-offset:6px; }
+  .scheduler-shell__heading { display:flex; justify-content:space-between; gap:24px; align-items:center; padding:24px; border:1px solid var(--color-performance-line); border-bottom:0; }
+  .scheduler-shell__heading p { margin-bottom:8px; }
+  .scheduler-shell__heading h2 { margin:0; font-size:clamp(24px,2.5vw,36px); line-height:1.15; letter-spacing:-.04em; }
+  .scheduler-shell__heading>a { display:inline-flex; align-items:center; gap:16px; min-height:44px; padding:10px 14px; border:1px solid var(--color-performance-line); font:12px/1.5 var(--font-performance-mono); white-space:nowrap; }
+  iframe { display:block; width:100%; box-sizing:border-box; min-height:860px; border:1px solid var(--color-performance-line); background:var(--color-performance-panel); }
+  .scheduler-shell__fallback { margin:0; padding:16px 24px; border:1px solid var(--color-performance-line); border-top:0; font:12px/1.7 var(--font-performance-mono); color:var(--color-performance-muted); }
+  .scheduler-shell__fallback a { color:var(--color-performance-ink); text-decoration:underline; text-underline-offset:3px; }
+  .booking-privacy-note { margin:14px 0 0; color:var(--color-performance-muted); font-size:12px; line-height:1.6; }
+  @media(max-width:700px){
+    .booking-entry h1 { font-size:clamp(32px,8.6vw,48px); }
+    .booking-entry__description { margin-top:18px; font-size:16px; }
+    .booking-entry__action { margin-top:22px; gap:16px; }
+    .booking-entry__action p { font-size:12px; }
+    .booking-preparation { margin-top:20px; }
+    .booking-content { width:100%; }
+    .scheduler-shell__heading { padding:20px 6vw; gap:16px; align-items:start; flex-wrap:wrap; border-inline:0; }
+    .scheduler-shell__heading h2 { font-size:26px; }
+    .scheduler-shell__heading>a { padding-inline:10px; }
+    iframe { border-inline:0; }
+    .scheduler-shell__fallback { border-inline:0; padding-inline:6vw; }
+    .booking-privacy-note { padding-inline:6vw; }
+  }
 </style>

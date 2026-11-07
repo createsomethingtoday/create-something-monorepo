@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import { onDestroy } from 'svelte';
   import { SEO } from '@create-something/canon';
 
@@ -73,7 +74,8 @@
 />
 
 <div class="ground-page">
-  <section class="ground-hero" aria-labelledby="ground-title" data-performance-chapter="thesis">
+  <AgencyHeroFrame showPlate={false}>
+<section class="ground-hero" aria-labelledby="ground-title" data-performance-chapter="thesis">
     <picture>
       <img
         src="/images/agency-stories/ground-compare-before-claim.webp"
@@ -97,6 +99,7 @@
     </div>
     <p class="hero-caption">Concept illustration / Compare before claiming</p>
   </section>
+</AgencyHeroFrame>
   <nav class="ground-rail" aria-label="On this page">
     <a href="#ground-operating-path">01 / Install Ground <span aria-hidden="true">↓</span></a>
     <a href="#ground-guardrail">02 / Inspect the guardrail <span aria-hidden="true">↓</span></a>

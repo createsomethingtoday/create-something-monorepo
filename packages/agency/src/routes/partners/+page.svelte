@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import {
     Button,
     PerformanceCardGrid,
@@ -112,6 +113,7 @@
   {faqItems}
 />
 
+<AgencyHeroFrame>
 <PerformancePageSection
   variant="hero"
   layout="stack"
@@ -130,8 +132,10 @@
     </Button>
   {/snippet}
 </PerformancePageSection>
+</AgencyHeroFrame>
 
 <PerformancePageSection
+  id="tool-fit"
   variant="white"
   eyebrow="Tool fit"
   title="What each part of the system does."
@@ -145,6 +149,7 @@
 </PerformancePageSection>
 
 <PerformancePageSection
+  id="tool-deliverables"
   variant="soft"
   eyebrow="What you keep"
   title="See how the tools work together."

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import { createContactRequest } from '$lib/contact/request';
   let contactRequest: ReturnType<typeof createContactRequest> | undefined;
   import {
@@ -274,11 +275,13 @@
   propertyName="agency"
 />
 
+<AgencyHeroFrame compact={true}>
 <header class="contact-intro">
   <p class="contact-eyebrow">Start a conversation</p>
   <h1>Let’s find your next step.</h1>
   <p>Tell us what needs attention. We’ll review your brief and reply about fit, scope and the next useful step.</p>
 </header>
+</AgencyHeroFrame>
 
 <section class="contact-workspace" aria-label="Prepare your inquiry">
   <ContactOnboarding

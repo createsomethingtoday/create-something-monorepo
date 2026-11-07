@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import { PencilLine } from 'lucide-svelte';
   import { IsometricIllustration, Button, PerformanceConversionHandoff, PerformancePageSection, SEO } from '@create-something/canon';
   import AgencyMapHero from '$lib/components/AgencyMapHero.svelte';
@@ -25,7 +26,9 @@
 />
 
 <main class="map-page">
-  <AgencyMapHero />
+  <AgencyHeroFrame showPlate={false}>
+<AgencyMapHero />
+</AgencyHeroFrame>
   <WorkflowSignalBand proofHref="/#built-work" />
 
   <PerformancePageSection
