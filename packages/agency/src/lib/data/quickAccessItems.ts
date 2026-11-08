@@ -2,6 +2,14 @@ import { agencyCoreMessaging } from './marketingCopy';
 
 export const quickAccessItems = [
     {
+      id: 'nav-openai-dots',
+      label: 'OpenAI dots: A little more room',
+      description: 'Meet Canon, our personal dot. Explore an illustrative task, permissions, human review, and a mapping session.',
+      href: '/openai-dots',
+      icon: '○',
+      keywords: ['OpenAI', 'dots', 'Canon', 'personal agent', 'permissions', 'workflow mapping']
+    },
+    {
       id: 'nav-scopefield',
       label: 'Scopefield',
       description: 'Mac browser with a collapsible Page workspace. Public beta for Apple Silicon, macOS 13+.',

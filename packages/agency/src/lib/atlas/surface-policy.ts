@@ -43,6 +43,7 @@ export const AGENCY_COMPACT_PRIVACY_PATHS = [
   '/marketplace-review-automation',
   '/workflow-compiler-integration',
   '/workflows',
+  '/openai-dots',
   ...AGENCY_ATLAS_PROOF_PATHS
 ] as const;
 
@@ -84,6 +85,7 @@ export const AGENCY_ROUTE_OWNED_PERFORMANCE_ENDING_PATHS = [
   '/field-reports/upstream-contributions',
   '/marketplace-review-automation',
   '/workflows',
+  '/openai-dots',
   '/use-cases/business',
   '/use-cases/enterprise',
   '/about'

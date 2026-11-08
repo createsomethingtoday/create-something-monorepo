@@ -340,5 +340,11 @@
     "changefreq": "monthly",
     "priority": "0.6",
     "lastmod": "2026-11-02"
+  },
+  {
+    "path": "/openai-dots",
+    "changefreq": "monthly",
+    "priority": "0.72",
+    "lastmod": "2026-11-08"
   }
 ]
