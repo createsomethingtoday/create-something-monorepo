@@ -785,6 +785,7 @@ export function LinkEditor({ ctx }) {
               options={candidates.map((v) => [v, pageName(v)])}
             />
             <Choice
+              key={`role-${selected}`}
               id="link-role"
               name="role"
               label="Relationship"
@@ -793,6 +794,7 @@ export function LinkEditor({ ctx }) {
               options={roles.map((f) => [f.name, f.name])}
             />
             <Choice
+              key={`record-${selected}`}
               id="link-record"
               name="id"
               label="Record"

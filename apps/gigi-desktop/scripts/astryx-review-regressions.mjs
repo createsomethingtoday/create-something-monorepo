@@ -239,6 +239,40 @@ try {
         'Back restores the list position with the same filter geometry'
       );
     },
+    link_entity: async () => {
+      await open('gigs');
+      await page.getByRole('button', { name: 'Autumn showcase', exact: true }).click();
+      await page.getByRole('button', { name: 'Link a record', exact: true }).click();
+      await page.locator('#link-record-display').click();
+      await page.getByRole('option', { name: 'Rehearsal contact', exact: true }).click();
+      assert.equal(await page.locator('#link-record').inputValue(), 'person-1');
+      await page.locator('#link-entity-display').click();
+      await page.getByRole('option', { name: 'Tasks', exact: true }).click();
+      await page.waitForFunction(
+        () =>
+          gigiTest.snapshot().state.linkChoices?.entity === 'tasks' &&
+          !gigiTest.snapshot().state.busy
+      );
+      assert.equal(
+        await page.locator('#link-record').inputValue(),
+        '',
+        'changing the target entity clears its previous record ID'
+      );
+      await page.getByRole('button', { name: 'Link records', exact: true }).click();
+      assert.equal(await count('relations.link'), 0, 'a fresh record selection is required');
+      await page.locator('#link-record-display').click();
+      await page.getByRole('option', { name: 'Confirm the rehearsal time', exact: true }).click();
+      await page.getByRole('button', { name: 'Link records', exact: true }).click();
+      await page.waitForFunction(() =>
+        gigiTest.calls.some((call) => call.operation === 'relations.link')
+      );
+      const link = await page.evaluate(
+        () => gigiTest.calls.find((call) => call.operation === 'relations.link').input
+      );
+      assert.equal(link.toEntity, 'tasks');
+      assert.equal(link.toId, 'task-1');
+      assert.equal(link.role, 'Tasks');
+    },
     profile: async () => {
       await open('overview');
       await page.evaluate(() => {

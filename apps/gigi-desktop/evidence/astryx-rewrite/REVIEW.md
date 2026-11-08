@@ -17,7 +17,7 @@ models remain shared. See `../../DESIGN_FOUNDATION.md` for source ownership,
 dependency pins, theme generation, CSP and older-WebKit fallback details.
 
 Current native and distribution status is maintained in the
-[0.3.0 release receipt](../../../../docs/internal/gigi-astryx-030/REVIEW.md).
+[0.3.1 release receipt](../../../../docs/internal/gigi-astryx-031/REVIEW.md).
 The source-review checkpoint below predates native qualification.
 
 ## Initial source-review gates

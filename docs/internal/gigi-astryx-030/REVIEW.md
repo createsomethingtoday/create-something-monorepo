@@ -1,5 +1,7 @@
 # GiGi 0.3.0 full React / Astryx rewrite — CRE-2373
 
+**Superseded candidate.** GitHub review found a retained record selection when changing link type after this upload. The immutable 0.3.0 object was not replaced and was not promoted to canonical pages. The corrected 0.3.1 release is recorded in [CRE-2373](https://linear.app/createsomething/issue/CRE-2373/gigi-full-react-and-astryx-application-rewrite).
+
 [PR #2216](https://github.com/createsomethingtoday/create-something-monorepo/pull/2216) implements the user's full-rewrite instruction. [CRE-2373](https://linear.app/createsomething/issue/CRE-2373/gigi-full-react-and-astryx-application-rewrite) owns final CI, merge, Agency deployment and canonical-page readback. This packet records the qualified immutable installer; production closeout is recorded in that issue.
 
 ## Intent and authority
