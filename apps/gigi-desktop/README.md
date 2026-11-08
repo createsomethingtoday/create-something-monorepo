@@ -8,7 +8,8 @@ artwork and Instagram drafts. Vite builds `dist` for Tauri. Existing native
 transactions, saved theme IDs and preference schemas remain compatible.
 See [the implementation contract](DESIGN_FOUNDATION.md) and
 [rewrite evidence](evidence/astryx-rewrite/REVIEW.md) for checks and native release
-limits. This source rewrite has not replaced the distributed installer.
+limits. See the [0.3.0 release receipt](../../docs/internal/gigi-astryx-030/REVIEW.md)
+for exact native artifact and distribution status.
 
 ## Workspace search (0.2.24)
 

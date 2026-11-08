@@ -211,6 +211,34 @@ try {
         'new page starts at top of actual AppShell scroller'
       );
     },
+    gigs_back: async () => {
+      await open('gigs');
+      await page.getByText('Filters', { exact: true }).click();
+      await page.getByRole('main').evaluate((node) => {
+        node.scrollTop = node.scrollHeight;
+      });
+      const before = await page.getByRole('main').evaluate((node) => node.scrollTop);
+      assert.ok(before > 0, 'expanded filters make this minimum-window view scroll');
+      await page.getByRole('button', { name: 'Autumn showcase', exact: true }).click();
+      await page
+        .getByRole('main')
+        .getByRole('button', { name: 'Gigs & shifts', exact: true })
+        .click();
+      await page.locator('#gigs-search').waitFor();
+      await page.waitForFunction(() => !gigiTest.snapshot().gigs.loading);
+      assert.equal(
+        await page
+          .locator('details')
+          .filter({ has: page.getByText('Filters', { exact: true }) })
+          .evaluate((node) => node.open),
+        true,
+        'Back preserves expanded gig filters'
+      );
+      assert.ok(
+        Math.abs((await page.getByRole('main').evaluate((node) => node.scrollTop)) - before) <= 1,
+        'Back restores the list position with the same filter geometry'
+      );
+    },
     profile: async () => {
       await open('overview');
       await page.evaluate(() => {

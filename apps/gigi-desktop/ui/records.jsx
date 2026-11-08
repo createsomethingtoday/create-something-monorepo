@@ -292,7 +292,13 @@ function Gigs({ ctx }) {
           </B>
         ))}
       </HStack>
-      <Disclosure title="Filters">
+      <Disclosure
+        title="Filters"
+        open={Boolean(s.filtersOpen)}
+        onToggle={(event) => {
+          if (event.target === event.currentTarget) s.filtersOpen = event.currentTarget.open;
+        }}
+      >
         <VStack gap={4} className="gigi-form-grid">
           {['status', 'type'].map((key) => (
             <Choice
