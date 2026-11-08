@@ -1,5 +1,5 @@
 /* Owning GiGi product tokens, across Studio / Paper / Midnight. */
-.chat-panel{width:min(480px,100vw - 12px);--chat-font:14px;--chat-gap:22px;--chat-leading:1.7}
+.chat-panel{width:min(480px,100vw - 12px);--chat-font:var(--text-body-size);--chat-gap:var(--spacing-6);--chat-leading:1.7}
 :root[data-chat-width=wide] .chat-panel{width:min(720px,100vw - 24px)}
 :root[data-chat-text-size=larger] .chat-panel{--chat-font:16px;--chat-leading:1.8}
 :root[data-chat-density=compact] .chat-panel{--chat-gap:12px;--chat-leading:1.55}
@@ -9,8 +9,9 @@
 .chat-scope{padding:0 20px;font-size:11px}.chat-capabilities{margin:2px 20px}
 .chat-observed-state{margin:4px 20px 0;padding:5px 0;gap:4px 10px;border-bottom:0;align-items:center}
 .chat-observed-state strong{font-size:12px}.chat-observed-state span{font-size:11px;line-height:1.5}
-.chat-observed-state:before{content:'';width:6px;height:6px;border-radius:50%;background:var(--muted);flex:none;transition:background-color 200ms ease}
-.chat-observed-state[data-state=running]:before,.chat-observed-state[data-state=approval]:before{background:var(--signal)}
+.chat-observed-state:before{content:'';width:6px;height:6px;border-radius:50%;background:var(--muted);flex:none;transition:background-color var(--duration-fast) var(--ease-standard)}
+.chat-observed-state[data-state=running]:before{background:var(--color-text-info)}
+.chat-observed-state[data-state=approval]:before{background:var(--color-text-warning)}
 .chat-observed-state[data-state=failed]:before{background:var(--danger)}
 .chat-conversation-controls{display:flex;align-items:start;gap:12px;padding:0 20px 10px;flex-wrap:wrap}
 .chat-conversation-controls>.btn{font-size:11px;padding:5px 0;min-height:28px}
@@ -34,7 +35,7 @@
 .chat-latest[hidden]{display:none}
 .chat-composer{padding:12px 20px;flex-shrink:0;background:var(--panel)}
 .chat-composer textarea{height:66px;min-height:66px;max-height:120px;font-size:13px;resize:vertical}.chat-composer label{margin-bottom:5px}
-.chat-actions{margin-top:8px;gap:8px}.chat-actions .btn{transition:background-color 200ms ease,border-color 200ms ease}
+.chat-actions{margin-top:8px;gap:8px}.chat-actions .btn{transition:background-color var(--duration-fast) var(--ease-standard),border-color var(--duration-fast) var(--ease-standard)}
 .chat-panel button:focus-visible,.chat-panel summary:focus-visible,.chat-transcript:focus-visible,.chat-table-scroll:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 @media(max-width:700px){.chat-panel,:root[data-chat-width=wide] .chat-panel{width:100vw}.chat-panel .chat-intro{max-height:43%}}
 @media(prefers-reduced-motion:reduce){.chat-panel,.chat-panel *,.chat-panel *:before,.chat-panel *:after,.chat-panel .chat-actions .btn{animation:none;transition:none;scroll-behavior:auto}}

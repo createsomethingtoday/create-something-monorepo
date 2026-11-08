@@ -1,5 +1,14 @@
 # GiGi desktop beta
 
+## Design foundation
+
+GiGi's shared visual foundation follows Meta Astryx: semantic theme colors,
+consistent typography and spacing, control/container shapes, focus and status
+roles. Studio, Paper and Midnight keep their saved preference IDs. The existing
+Tauri HTML/ESM app uses a local adaptation, not the React component package.
+See [the design contract](DESIGN_FOUNDATION.md) for source review, implementation
+ownership, synthetic UI checks and native release limits.
+
 ## Workspace search (0.2.24)
 
 The header Search control and Command/Control-F open a local workspace search
