@@ -24,6 +24,16 @@ export interface AgencyContentAssetAnalytics {
 }
 
 const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics> = {
+  '/openai-dots': {
+    contentAssetId: 'guide.openai-dots.v20261108',
+    contentType: 'guide',
+    contentCluster: 'workflow-library',
+    contentIntent: 'definition',
+    contentAudience: 'reader choosing a useful first task for a personal dot',
+    contentFunnelStage: 'consideration',
+    contentPrimaryKeyword: 'OpenAI dots',
+    contentPrimaryCta: 'book-mapping-session'
+  },
   '/marketplace-review-automation': {
     contentAssetId: 'conversion.marketplace-review-automation.v20260810',
     contentType: 'conversion-page',

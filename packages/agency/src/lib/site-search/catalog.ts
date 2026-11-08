@@ -1,5 +1,6 @@
 import routes from '../data/searchRoutes.json';
 import { quickAccessItems } from '../data/quickAccessItems';
+import { dotsAnswer } from '../data/openaiDots';
 import { workflowPages } from '../data/workflowPages';
 
 export type SearchCategory = 'all' | 'overview' | 'guides';
@@ -11,7 +12,7 @@ const overviews = quickAccessItems.filter((item) => allowed.has(item.href)).map(
 }));
 // Only public editorial sources. Never import account navigation or client data.
 export const searchCatalog: SearchEntry[] = [
-  ...overviews.map((entry) => ({ ...entry, excerpt: entry.description, category: 'overview' as const, url: `https://createsomething.agency${entry.id}` })),
+  ...overviews.map((entry) => ({ ...entry, excerpt: entry.id === '/openai-dots' ? dotsAnswer : entry.description, category: entry.id === '/openai-dots' ? 'guides' as const : 'overview' as const, url: `https://createsomething.agency${entry.id}` })),
   ...workflowPages.map((entry) => ({ id: `/workflows/${entry.slug}`, title: entry.title, description: entry.description, excerpt: entry.directAnswer, keywords: entry.keywords, category: 'guides' as const, url: `https://createsomething.agency/workflows/${entry.slug}` }))
 ].filter((entry) => allowed.has(entry.id));
 

@@ -5,6 +5,11 @@ import type {
 } from '../../packages/canon/src/lib/components/performance/page-contract.ts';
 
 export const performancePageRegistry: PerformancePageRegistryGroup[] = [
+  group('agency-openai-dots', 'agency', ['openai-dots'], 'pending',
+    contract('learning', 'Understand personal dots and choose one useful task to try.',
+      'An explicitly illustrative Gather, Make, and Hand back example explains continuity and human review; official sources establish capability boundaries.',
+      'Book a mapping session or map one useful task')),
+
   group('agency-scopefield', 'agency', ['scopefield'], 'pending',
     contract('landing', 'Decide whether to try the Scopefield Mac public beta.',
       'A labeled conceptual isometric story explains the browser/workspace direction; explicit beta facts and linked release notes establish current capability and limits.',

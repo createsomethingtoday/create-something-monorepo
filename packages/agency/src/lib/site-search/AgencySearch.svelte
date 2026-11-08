@@ -5,10 +5,12 @@
   import { UnifiedSearch } from '@create-something/canon/navigation';
   import { createSearchController, type SearchState } from './controller';
   import { searchCatalog, type SearchCategory } from './catalog';
+  import { agencySearchOpen } from './presentation';
   import { registerSearchTools, type SiteDocument } from './webmcp';
 
   let { showMobileButton = true }: { showMobileButton?: boolean } = $props();
   let open = $state(false);
+  $effect(() => { agencySearchOpen.set(open); });
   let view = $state<SearchState>({ query: '', category: 'all', results: searchCatalog, selectedId: null, status: 'ready', source: 'human', revision: 0 });
   let query = $state('');
   let category = $state<SearchCategory>('all');
@@ -128,7 +130,7 @@
     const openInlineSearch = () => { open = true; };
     window.addEventListener('agency:open-search', openInlineSearch);
     mounted = true;
-    return () => { window.removeEventListener('agency:open-search', openInlineSearch); historyRevision++; cleanup(); controller.dispose(); };
+    return () => { agencySearchOpen.set(false); window.removeEventListener('agency:open-search', openInlineSearch); historyRevision++; cleanup(); controller.dispose(); };
   });
 </script>
 

@@ -197,6 +197,17 @@ const webflowPortfolioPages: MarketingPageEntry[] = [
 export const marketingPagePortfolio: MarketingPageEntry[] = [
   ...webflowPortfolioPages,
   {
+    path: '/openai-dots', cluster: 'workflow-library', role: 'support', decision: 'index',
+    audience: 'People learning what OpenAI dots can do and how to start with one useful task.',
+    funnelStage: 'understand',
+    intent: 'Explain personal dots through an illustrative task, with permissions and human review.',
+    primaryAction: 'Book a mapping session',
+    requiredTerms: ['OpenAI dots', 'Canon', 'illustrative', 'review', 'permissions'],
+    requiredLinks: ['/workflows'], schema: 'page',
+    search: { changefreq: 'monthly', priority: '0.72', lastmod: '2026-11-08' },
+    selfHealing: ['search-route:sync', 'canonical-route:review']
+  },
+  {
     path: '/dfw-tech-support', cluster: 'core-services', role: 'support', decision: 'index',
     audience: 'DFW business owners with a failing software system or operational workflow.',
     funnelStage: 'implement', intent: 'Assess fit for scoped remote software and workflow support.',

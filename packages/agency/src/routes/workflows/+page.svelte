@@ -75,7 +75,7 @@
 
 <SEO
   title="Practical AI Workflow Guides | CREATE SOMETHING .agency"
-  description="Twelve guides to planning AI tasks, connecting tools, testing results, and keeping people in control."
+  description="Practical guides to planning AI tasks, connecting tools, testing results, and keeping people in control. Includes a field guide to OpenAI dots."
   keywords="AI workflow guides, MCP server development, AI workflow governance, human in the loop AI, Webflow Marketplace operations"
   canonical="https://createsomething.agency/workflows"
   {faqItems}
@@ -84,13 +84,13 @@
 
 <div class="workflow-library property-performance" data-performance-mode="proof">
   <PerformanceCampaignOpening
-    eyebrow="Operator playbook / 12 field guides"
+    eyebrow="Operator playbook / Workflow guides"
     propertyRole="Workflow library"
     expression="editorial"
     title="Practical guides to putting AI to work."
     lede="Choose the guide for your task. Each explains when the approach helps, the steps to take, and how to check the result."
     proof={[
-      { label: 'Library', value: '12 field guides' },
+      { label: 'Library', value: '12 workflow guides + dots' },
       { label: 'Operating route', value: 'Map / Build / Control' },
       { label: 'Receipt', value: 'Signal → Decision → Proof' }
     ]}
@@ -112,6 +112,17 @@
       </header>
 
       <ol>
+        <li>
+          <a href="/openai-dots">
+            <span class="guide-number">○</span>
+            <div>
+              <span>Personal agents / OpenAI dots</span>
+              <h3>A little more room. Meet Canon.</h3>
+              <p>What are OpenAI dots? Follow one illustrative task through context, creation, and human review.</p>
+            </div>
+            <span class="guide-arrow" aria-hidden="true">↗</span>
+          </a>
+        </li>
         {#each workflowPages as guide, index}
           <li>
             <a href={`/workflows/${guide.slug}`}>
