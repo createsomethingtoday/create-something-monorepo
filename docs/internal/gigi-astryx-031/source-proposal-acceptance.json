@@ -1,7 +1,7 @@
 {
   "passed": true,
   "binary": "/tmp/gigi-031-release/GiGi.app/Contents/Resources/gigi-mcp",
-  "binarySha256": "d3c7997bbebfeff29ae40e49bfe13820de023d60496f280c83dadcc280c42cda",
+  "binarySha256": "1b1d071ad3438320ef474f56af5cb618842efcd0bb6050aa931d40be9909819a",
   "calls": 39,
   "checks": [
     "four Gmail/Calendar to task/gig creates preserve source and relation",

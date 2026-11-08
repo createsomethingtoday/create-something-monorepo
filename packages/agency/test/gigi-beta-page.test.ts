@@ -16,10 +16,10 @@ test('standalone page retains the owning Agency Canon operator palette', () => {
 test('download contract pins exact qualified installer, platform and checksum', () => {
   assert.equal(gigiBeta.version, '0.3.1');
   assert.equal(gigiBeta.filename, 'GiGi-0.3.1-arm64-private-beta.dmg');
-  assert.equal(gigiBeta.bytes, 85090239);
-  assert.equal(gigiBeta.sha256, '4248f8cfc50308994e8f5e27868cfd5977e5c19334b7eeaf2d8872a67110582d');
+  assert.equal(gigiBeta.bytes, 85090374);
+  assert.equal(gigiBeta.sha256, '6cc6de0975e1f2819d351c991df5b783352c32377e0bbe5df133061b1555d091');
   assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.3.1/GiGi-0.3.1-arm64-private-beta.dmg`);
-  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '85,090,239', '85.1 MB']) assert.ok(gigiBetaHtml.includes(text), text);
+  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '85,090,374', '85.1 MB']) assert.ok(gigiBetaHtml.includes(text), text);
 });
 
 test('beta stays unlisted and has no active content or tracking shell', () => {
@@ -194,7 +194,7 @@ test('current rewrite qualification separates passed checks from unverified acce
   const current = release.split('<details><summary>Prior-version evidence:')[0];
   for (const text of [
     'Acceptance status for GiGi 0.3.1', 'all 19 browser routes',
-    '12 theme/window/spacing combinations', 'nine recovery/navigation regressions',
+    '12 theme/window/spacing combinations', '11 recovery/navigation regressions',
     'All 346 desktop checks passed', '325 integration checks with bundled CTX', '175 Rust checks',
     'independently re-tested', 'The exact installer passed Developer ID signing',
     'Fresh installation, older macOS versions', 'screen-reader speech',

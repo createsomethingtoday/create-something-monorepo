@@ -2,8 +2,8 @@
 export const gigiBeta = {
   version: '0.3.1',
   filename: 'GiGi-0.3.1-arm64-private-beta.dmg',
-  bytes: 85090239,
-  sha256: '4248f8cfc50308994e8f5e27868cfd5977e5c19334b7eeaf2d8872a67110582d',
+  bytes: 85090374,
+  sha256: '6cc6de0975e1f2819d351c991df5b783352c32377e0bbe5df133061b1555d091',
   url: 'https://media.createsomething.io/releases/gigi/0.3.1/GiGi-0.3.1-arm64-private-beta.dmg'
 } as const;
 

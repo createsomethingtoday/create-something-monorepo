@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "timezone": "America/Chicago",
+  "today": {
+    "Imported calendar appointment": "Imported calendar appointment\nCalendar event · Confirmed · Thu, Nov 12, 2026 · 6:00 PM – 8:00 PM\n↗",
+    "Stage performance": "Stage performance\nPerformance · Booked · Thu, Nov 12, 2026 · Call 17:00 · Set 19:00 · Festival\n↗",
+    "Stage crew shift": "Stage crew shift\nCrew / work · Booked · Thu, Nov 12, 2026 · Call 09:00\n↗",
+    "Undecided booking": "Undecided booking\nUnclassified gig · Thu, Nov 12, 2026 · Time not set\n↗",
+    "All-day calendar block": "All-day calendar block\nCalendar event · Thu, Nov 12, 2026 · All day · ends Nov 14, 2026 (exclusive)\n↗",
+    "Incoming payment": "Incoming payment\nExpected · Income · $100.00\n↗",
+    "Outgoing payment": "Outgoing payment\nExpected · Expense · $100.00\n↗",
+    "Payment to classify": "Payment to classify\nExpected · Direction not set · $100.00\n↗"
+  },
+  "gig": "Autumn showcase\nPerformance · Booked · Thu, Nov 12, 2026 · Call 17:00 · Set 19:00 · Festival\n↗",
+  "errors": [],
+  "scope": "Independent actual React fixture with synthetic backend only. No source edits, native app, real providers or release actions."
+}

@@ -34,6 +34,14 @@
       "passed": true
     },
     {
+      "name": "today_direction",
+      "passed": true
+    },
+    {
+      "name": "event_identity",
+      "passed": true
+    },
+    {
       "name": "profile",
       "passed": true
     }
