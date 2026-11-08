@@ -1,6 +1,6 @@
 {
   "name": "@create-something/gigi-desktop",
-  "version": "0.2.24",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -22,7 +22,8 @@
     "astryx": "node node_modules/@astryxdesign/cli/clients/cli/bin/astryx.mjs",
     "theme:build": "pnpm astryx theme build ui/gigi-theme.ts --out ui/gigi-theme.css",
     "test:rewrite": "node scripts/astryx-rewrite-browser.mjs",
-    "test:creators": "node scripts/astryx-creators-browser.mjs"
+    "test:creators": "node scripts/astryx-creators-browser.mjs",
+    "test:review-regressions": "node scripts/astryx-review-regressions.mjs"
   },
   "devDependencies": {
     "@astryxdesign/cli": "0.7.11",

@@ -517,6 +517,19 @@ export function startController({ renderUI, invoke, initialize } = {}) {
     root.querySelector?.(`#${editorReturnFocus || 'title'}`)?.focus?.();
   }
   async function openPage(page, resetScroll = false, historyIndex = null) {
+    // A repeated navigation click is not leaving the creator. React retains
+    // this component's route key, so disposing here would permanently disable
+    // its actions and drop the unsaved-change guard without remounting it.
+    if (
+      page === state.page &&
+      ['music', 'social'].includes(page) &&
+      !state.selected &&
+      !state.editing
+    ) {
+      workspaceHistory.visit(page, historyIndex);
+      if (resetScroll) globalThis.scrollTo?.(0, 0);
+      return true;
+    }
     if (!protectEditor(() => void run(() => openPage(page, resetScroll, historyIndex))))
       return false;
     if (creatorMount?.canLeave && !(await creatorMount.canLeave())) return false;

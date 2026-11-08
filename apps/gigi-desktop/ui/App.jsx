@@ -17,6 +17,17 @@ import { Music, Social } from './creators.jsx';
 import { Chat, WorkspaceSearch } from './chat.jsx';
 import { sections } from '../web/model.mjs';
 
+function Notices({ state }) {
+  return state.toast ? (
+    <aside className={`toast gigi-toast ${state.toast.error ? 'error' : ''}`}>
+      <Message error={state.toast.error}>{state.toast.message}</Message>
+      <B variant="ghost" data-notice-dismiss="1" label="Dismiss message">
+        Dismiss
+      </B>
+    </aside>
+  ) : null;
+}
+
 export function App({ ctx }) {
   const s = ctx.state;
   if (s.startupError)
@@ -26,7 +37,13 @@ export function App({ ctx }) {
         <B onClick={() => location.reload()}>Retry</B>
       </Panel>
     );
-  if (!s.workspace || s.setupProfile) return <Onboarding ctx={ctx} />;
+  if (!s.workspace || s.setupProfile)
+    return (
+      <>
+        <Onboarding ctx={ctx} />
+        <Notices state={s} />
+      </>
+    );
   let body = ctx.sourceProposal ? (
     <SourceProposal ctx={ctx} />
   ) : s.editing === 'link' ? (
@@ -191,14 +208,7 @@ export function App({ ctx }) {
           </HStack>
         </VStack>
       </Dialog>
-      {s.toast && (
-        <aside className={`toast gigi-toast ${s.toast.error ? 'error' : ''}`}>
-          <Message error={s.toast.error}>{s.toast.message}</Message>
-          <B variant="ghost" data-notice-dismiss="1" label="Dismiss message">
-            Dismiss
-          </B>
-        </aside>
-      )}
+      <Notices state={s} />
     </>
   );
 }

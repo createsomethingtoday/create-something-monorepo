@@ -44,6 +44,7 @@ export function startFixture({ startController, renderUI }) {
   };
   const calls = [],
     sessions = new Map();
+  const faults = new Map();
   let id = 0,
     ctx;
   const attention = {
@@ -59,6 +60,14 @@ export function startFixture({ startController, renderUI }) {
   };
   const invoke = async (_, { operation, input = {} }) => {
     calls.push({ operation, input: structuredClone(input) });
+    const faultKey = faults.has(`${operation}:${input.entity}`)
+      ? `${operation}:${input.entity}`
+      : operation;
+    if (faults.has(faultKey)) {
+      const message = faults.get(faultKey);
+      faults.delete(faultKey);
+      throw Error(message);
+    }
     if (operation === 'workspace.get') return workspace;
     if (operation === 'workspace.create') return { ...workspace, name: input.name };
     if (operation === 'workspace.overview')
@@ -189,7 +198,26 @@ export function startFixture({ startController, renderUI }) {
     if (operation === 'agent.status') return { prepared: false };
     if (operation === 'diagnostics.status') return { enabled: false, eventCount: 0 };
     if (operation === 'ai.connection.status') return { state: 'signed_out', available: true };
-    if (operation === 'music.list') return { items: [], total: 0, hasMore: false };
+    if (operation === 'music.list') {
+      const items =
+        query.get('review') === '1'
+          ? [
+              {
+                id: 'music-review-1',
+                title: 'Synthetic review track',
+                artist: 'Crew',
+                kind: 'audio',
+                filename: 'review.wav',
+                bytes: 1200,
+                availability: 'available',
+                organizationRevision: 1
+              }
+            ]
+          : [];
+      return { items, total: items.length, hasMore: false };
+    }
+    if (operation === 'music.edit' && query.get('review') === '1')
+      return { ...input, organizationRevision: input.expectedRevision + 1 };
     if (operation === 'social.list') return { items: [], count: 0 };
     if (operation === 'social.connection.status')
       return { configured: false, state: 'disconnected' };
@@ -220,6 +248,9 @@ export function startFixture({ startController, renderUI }) {
     calls,
     records,
     sessions,
+    failNext(operation, message) {
+      faults.set(operation, message);
+    },
     snapshot: () => ctx.actions.snapshot(),
     open: (page) => ctx.actions.openPage(page),
     render: () => ctx.actions.render(),

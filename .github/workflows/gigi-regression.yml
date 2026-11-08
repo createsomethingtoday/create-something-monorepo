@@ -56,6 +56,8 @@ jobs:
         run: pnpm --filter @create-something/gigi-desktop test:rewrite
       - name: Exercise creator recovery and exact publication guards
         run: pnpm --filter @create-something/gigi-desktop test:creators
+      - name: Exercise creator navigation and onboarding recovery regressions
+        run: pnpm --filter @create-something/gigi-desktop test:review-regressions
       - name: Source conversion process acceptance
         run: node apps/gigi-desktop/scripts/source-proposal-acceptance.mjs "$GIGI_INSTALLED_MCP"
       - run: pnpm auth:retired-provider:check
