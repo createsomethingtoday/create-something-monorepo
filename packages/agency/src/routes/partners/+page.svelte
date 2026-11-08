@@ -143,6 +143,7 @@
 >
   {#snippet after()}
     <PerformanceCardGrid items={fitCards} columns={3} ariaLabel="Workflow tool fit" />
+    <p class="dots-guide-link">Curious about personal agents? <a href="/openai-dots">Meet Canon in our OpenAI dots guide.</a> Follow a task from first thought to human review.</p>
     <IntegrationCompatibilityRail surface="partners" />
     <IntegrationCatalog />
   {/snippet}
@@ -187,3 +188,8 @@
     <Button href="/for-service-providers" variant="secondary">Use it with clients</Button>
   {/snippet}
 </PerformanceConversionHandoff>
+
+<style>
+  .dots-guide-link {margin-block:24px; max-width:65ch; line-height:1.7; color:var(--color-performance-muted);}
+  .dots-guide-link a {color:var(--color-performance-ink); text-decoration:underline; text-underline-offset:4px;}
+</style>

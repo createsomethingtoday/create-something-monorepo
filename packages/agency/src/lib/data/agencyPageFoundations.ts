@@ -29,6 +29,12 @@ const foundation = (label: string, spine: string, chapters: AgencyPageChapter[] 
    order only. They do not imply activity, readiness, measurements or results.
    Pages with working interfaces keep their task containers, not hidden steps. */
 const foundations: Record<string, AgencyPageFoundation> = {
+  '/openai-dots': foundation('OpenAI dots / Canon', 'A LITTLE MORE ROOM.', [
+    chapter('why', 'The possibilities', 'Why', 'Context and follow-through, with access you choose.'),
+    chapter('with-canon', 'A day with Canon', 'Example', 'Follow the illustrative Gather, Make, and Hand back sequence.'),
+    chapter('your-call', 'Your call', 'Control', 'Keep permissions and consequential decisions in view.'),
+    chapter('begin', 'A place to begin', 'Begin', 'Choose one useful task and a way to map it.')
+  ]),
   '/arc/app-review-governance': foundation('App Review Governance', 'FOLLOW THE REVIEW.', [
     chapter('app-review-deck', 'Follow the review', 'Review', 'Explore the authored presentation and its decision path.'),
     chapter('arc-contract-title', 'Reuse the story', 'Context', 'Read how the same review supports different kinds of work.')
