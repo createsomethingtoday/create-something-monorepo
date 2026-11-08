@@ -1,0 +1,25 @@
+{
+  "runtimeSourceSha": "4a2d8ed8271e6254de1f3f8098a61c872f916372",
+  "compilerManifests": [
+    {
+      "manifest": "/tmp/cre-2373-gigi-astryx/apps/gigi-desktop/src-tauri/target/release/build/gigi_desktop-aa575cf7ffbcf392/output",
+      "sourceSha": "4a2d8ed8271e6254de1f3f8098a61c872f916372",
+      "dirtyFalse": true,
+      "compilerEvidence": [
+        "cargo:rustc-env=GIGI_BUILD_SOURCE_SHA=4a2d8ed8271e6254de1f3f8098a61c872f916372",
+        "cargo:rustc-env=GIGI_BUILD_SOURCE_DIRTY=false"
+      ]
+    },
+    {
+      "manifest": "/tmp/cre-2373-gigi-astryx/apps/gigi-desktop/src-tauri/target/release/build/gigi_desktop-5f2f50122f976af8/output",
+      "sourceSha": "4a2d8ed8271e6254de1f3f8098a61c872f916372",
+      "dirtyFalse": true,
+      "compilerEvidence": [
+        "cargo:rustc-env=GIGI_BUILD_SOURCE_SHA=4a2d8ed8271e6254de1f3f8098a61c872f916372",
+        "cargo:rustc-env=GIGI_BUILD_SOURCE_DIRTY=false"
+      ]
+    }
+  ],
+  "mainEmbeddedShaVerified": true,
+  "unsignedMainSha256": "e9a7f038b9cafd56ee36f4eb44189f8704ea0e4d435af1abc0af998ec19db72f"
+}
