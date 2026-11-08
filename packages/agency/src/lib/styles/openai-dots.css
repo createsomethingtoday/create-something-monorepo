@@ -14,6 +14,16 @@
   font: 16px/1.5 var(--font-sans);
 }
 /* Canon measured-whimsy palette and the existing, licensed house fonts. */
+/* The six-chapter ruler precedes this route in the shared shell. Its short
+   labels retain full accessible names without crowding intermediate widths. */
+@media (max-width: 1199px) {
+  #main-content:has(> .openai-dots) .agency-page-wayfinding .dial-label-full {
+    display: none;
+  }
+  #main-content:has(> .openai-dots) .agency-page-wayfinding .dial-label-short {
+    display: inline;
+  }
+}
 .openai-dots * {
   box-sizing: border-box;
 }
@@ -165,6 +175,9 @@
   font-weight: 500;
   min-height: 48px;
   margin-top: 28px;
+}
+.openai-dots .hero-last-line {
+  white-space: nowrap;
 }
 .openai-dots .action span {
   font-size: 21px;
@@ -998,7 +1011,7 @@
     font-size: 8px;
   }
   .openai-dots .hero h1 {
-    font-size: 62px;
+    font-size: 60px;
   }
   .openai-dots .hero-description {
     font-size: 21px;

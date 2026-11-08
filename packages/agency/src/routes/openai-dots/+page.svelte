@@ -36,7 +36,11 @@
       </div>
       <div class="hero-grid">
         <div class="hero-copy">
-          <h1 id="hero-title">A little<br />more room<span class="title-period">.</span></h1>
+          <h1 id="hero-title">
+            A little<br /><span class="hero-last-line"
+              >more room<span class="title-period">.</span></span
+            >
+          </h1>
           <p class="hero-description">
             For the thinking. The making.<br />The things you keep meaning to do.
           </p>

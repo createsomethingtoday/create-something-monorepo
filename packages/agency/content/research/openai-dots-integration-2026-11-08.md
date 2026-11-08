@@ -1,6 +1,6 @@
 # OpenAI dots guide: local website integration
 
-Status: implemented for parent review; no push, PR, merge, or deployment.
+Status: independently verified locally; PR, merge, deployment and live acceptance pending.
 Tier: **Automation**, with **Judgment** explained through a review boundary.
 
 ## Acceptance and placement
@@ -115,17 +115,27 @@ Commands from the repo root unless noted:
 Logs are local `/tmp/openai-dots-{build,check,types-final,focused,seo,ssr,performance,baseline-performance,dev}.log`.
 The dev runtime is `http://127.0.0.1:4198/openai-dots`.
 
-Quality gates:
+Quality gates after parent and independent review:
 
-- Functional correctness: **passed for local source, package, build and SSR**.
-  Native interaction, runtime import failure, and return navigation await browser
-  review; tests above do not establish those behaviors.
-- Perceptual/product quality: **untested** by this implementation agent. Parent
-  owns the actual UI review at 320, 390, 768, 1024, 1025, 1440 (and useful wider
-  widths), keyboard/hash focus, no-JS, reduced motion, interruption and resize.
-- Release readiness: **untested for production**. Local deployable build exists;
-  parent owns final integration, independent Sol review and promotion. No
-  shipping authorization is inferred from the prototype.
+- Functional correctness: **passed locally** for source/package checks, build,
+  SSR and actual browser interactions. This includes native radios, keyboard
+  and hash focus, active/preview ruler state, pause, reduced motion, menu/search
+  interruption, no-JavaScript and failed-GSAP fallbacks, reversal and route
+  departure/return cleanup. This does not establish a Canon run or conversion.
+- Perceptual/product quality: **passed locally** after direct parent views and
+  independent Sol 6.1 review at all six supported widths. The demonstrated
+  narrow headline, intermediate ruler and search-pause defects were repaired
+  and re-tested. No blocking finding remains in the reviewed states.
+- Release readiness: **pending production promotion**. The source has a local
+  deployable artifact; required GitHub checks, merge, deployment and live
+  readback remain separate checkpoints. Chromium was reviewed; other engines,
+  physical touch devices, assistive-technology speech and actual bookings are
+  untested.
+
+The independent final report is retained in
+`openai-dots-independent-review-2026-11-08.md`. Its underlying screenshots and
+runtime JSON remain in the retained worktree's
+`artifacts/openai-dots-integration/`.
 
 Linear coordination is blocked: `node scripts/linear/remote.mjs ready` reports
 `LINEAR_API_KEY is required.` No secret was requested or printed, and no shadow
@@ -136,3 +146,54 @@ registrations, and two inbound links. Existing static images and root prototype
 are outside the change. Worktree disposition: retained at
 `/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-3919c772`
 (branch `t3/integrate-openai-dots-guide`) until parent final review/release.
+
+## Parent integration review
+
+The parent viewed the actual page with its shared navigation and ruler. Six
+widths (`320,390,768,1024,1025,1440`) passed local runtime overflow, canonical,
+monochrome, chapter-destination, minimum chapter-target height, and
+ruler-below-navigation checks. Screenshots are under the retained worktree's
+`artifacts/openai-dots-integration/`. These are local runtime observations,
+not production acceptance.
+
+The 320px rendering exposed a real headline defect: the period wrapped onto its
+own line. Before repair, a DOM range recorded the text at `523.02px` and period
+at `593.65px`, failing the line-alignment assertion. The final line is now kept
+together, with the narrow breakpoint reduced from 62px to 60px. The retained
+`scripts/verify-openai-dots-headline.ego.mjs` regression passes at 320px and 390px.
+The comparison permits the font's glyph-box/line-box offset, but rejects a
+separate line. The source template remains complete without JavaScript.
+
+The public HTML cache revision is `openai-dots-guide-20261108`. Existing cache
+eligibility, TTL, privacy exclusions, and canonical URLs are unchanged. This
+namespaces the changed entry-link HTML as well as the new route. Eleven focused
+route/cache tests passed after this change; SSR readback also passed again.
+
+A parent browser automation pass verified the six layouts. A later scripted
+chapter-click attempt stopped on Ego's off-viewport locator resolution. It is
+not recorded as a passing interaction check; final independent rendered review
+owns the complete interaction/fallback acceptance.
+
+Independent review caught a second responsive defect at 768px: the full ruler
+label “The possibilities” made its 118px anchor scroll to 130px and crowded the
+adjacent arrow. The dots route now uses the ruler's existing short labels below
+1200px. Full accessible names remain intact, and the scoped selector applies
+only while this route is present. Parent runtime re-test at 768px, 1024px and
+1025px found every anchor's scroll width equal to its available width. The
+retained headline verifier also asserts ruler-cell fit at all six review widths.
+
+The independent review also demonstrated a search-overlay interruption defect:
+with the actual Unified search dialog open, the guide still reported motion
+`on` and replay visible. A retained browser assertion failed on that state.
+Search now publishes only its open/closed presentation state through
+`site-search/presentation.ts`; dots motion subscribes to it alongside the
+existing reduced-motion, navigation, and film-dialog stores. It does not write
+the film dialog's independently owned boolean or publish query content. The
+`scripts/verify-openai-dots-motion.ego.mjs` browser regression now passes opening
+search (motion paused, replay hidden) and closing it (normal policy resumes).
+
+Final parent validation after the search bridge and responsive repairs:
+Svelte check passed with zero errors and zero warnings; Agency production build
+passed. The independent report records passing local functional and perceptual
+acceptance with no unresolved finding. Production readiness remains untested
+until the PR checks, promotion and live readback complete.

@@ -1,5 +1,6 @@
 import { get } from 'svelte/store';
 import { filmNavigationOpen, filmOverlayOpen, reducedFilmMotion } from './filmPlayback';
+import { agencySearchOpen } from '../site-search/presentation';
 
 /** Native radios own selection. Finite, optional gestures never gate the content. */
 export function enhanceDotsGuide(root: HTMLElement) {
@@ -17,7 +18,8 @@ export function enhanceDotsGuide(root: HTMLElement) {
     !document.hidden &&
     !get(reducedFilmMotion) &&
     !get(filmNavigationOpen) &&
-    !get(filmOverlayOpen);
+    !get(filmOverlayOpen) &&
+    !get(agencySearchOpen);
   const settle = () => {
     stepContext?.revert();
     stepContext = undefined;
@@ -72,8 +74,8 @@ export function enhanceDotsGuide(root: HTMLElement) {
   };
   radios.forEach((radio) => radio.addEventListener('change', change));
   replay?.addEventListener('click', showStep);
-  const disposers = [reducedFilmMotion, filmNavigationOpen, filmOverlayOpen].map((store) =>
-    store.subscribe(sync)
+  const disposers = [reducedFilmMotion, filmNavigationOpen, filmOverlayOpen, agencySearchOpen].map(
+    (store) => store.subscribe(sync)
   );
   document.addEventListener('visibilitychange', sync);
   // Interruption settles every authored transform. Selection remains native.
