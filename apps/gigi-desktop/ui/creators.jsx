@@ -332,10 +332,12 @@ export function ArtworkManager({ ctx, entity, item, onChanged = () => {}, disabl
             <strong>Selected record: </strong>
             {targetDescription(item, entity)}
           </Text>
-          <Text color="secondary">
-            Check this title, kind and date before choosing artwork. An unclassified gig is not a
-            confirmed performance.
-          </Text>
+          {['gigs', 'schedule'].includes(entity) && (
+            <Text color="secondary">
+              Check this title, kind and date before choosing artwork. An unclassified gig is not a
+              confirmed performance.
+            </Text>
+          )}
           <Text>
             One local JPEG or PNG, up to 8 MiB and 24 megapixels. Nothing is uploaded. Generated
             illustrations stay distinct from supplied flyers.

@@ -78,6 +78,15 @@ import {
 } from '../web/model.mjs';
 export function startController({ renderUI, invoke, initialize } = {}) {
   const root = document.querySelector('#app');
+  // Astryx AppShell owns the page scroller; onboarding still uses the window.
+  const pageScroll = () => root.querySelector('[role="main"]');
+  const scrollX = () => pageScroll()?.scrollLeft ?? globalThis.scrollX ?? 0;
+  const scrollY = () => pageScroll()?.scrollTop ?? globalThis.scrollY ?? 0;
+  const scrollTo = (x, y) => {
+    const main = pageScroll();
+    if (main) main.scrollTo({ left: x, top: y, behavior: 'instant' });
+    else globalThis.scrollTo?.(x, y);
+  };
   function applyPreferences(value) {
     const normalized = applyLegacyPreferences(value);
     document.documentElement.dataset.gigiTheme = normalized.theme;
@@ -527,7 +536,7 @@ export function startController({ renderUI, invoke, initialize } = {}) {
       !state.editing
     ) {
       workspaceHistory.visit(page, historyIndex);
-      if (resetScroll) globalThis.scrollTo?.(0, 0);
+      if (resetScroll) scrollTo(0, 0);
       return true;
     }
     if (!protectEditor(() => void run(() => openPage(page, resetScroll, historyIndex))))
@@ -545,8 +554,7 @@ export function startController({ renderUI, invoke, initialize } = {}) {
     contactSearchVersion++;
     state.contactSearching = false;
     state.contactSearchError = false;
-    if (state.page === 'gigs' && !state.selected && !state.editing)
-      gigs.remember(globalThis.scrollY || 0);
+    if (state.page === 'gigs' && !state.selected && !state.editing) gigs.remember(scrollY());
     workspaceHistory.visit(page, historyIndex);
     state.page = page;
     state.selected = null;
@@ -640,7 +648,7 @@ export function startController({ renderUI, invoke, initialize } = {}) {
         await searchContacts(state.contactQuery, true);
         if (!currentRoute(route)) return false;
         render();
-        if (resetScroll) globalThis.scrollTo?.(0, 0);
+        if (resetScroll) scrollTo(0, 0);
         return true;
       }
       const result =
@@ -665,15 +673,14 @@ export function startController({ renderUI, invoke, initialize } = {}) {
       root
         .querySelector?.(`[data-preferences-theme="${preferences.theme}"]`)
         ?.focus?.({ preventScroll: true });
-    if (page === 'gigs') globalThis.scrollTo?.(0, gigs.state?.scroll || 0);
-    else if (resetScroll) globalThis.scrollTo?.(0, 0);
+    if (page === 'gigs') scrollTo(0, gigs.state?.scroll || 0);
+    else if (resetScroll) scrollTo(0, 0);
     return true;
   }
 
   async function selectRecord(id, entity = state.page) {
     if (state.page !== entity) return false;
-    if (entity === 'gigs' && !state.selected && !state.editing)
-      gigs.remember(globalThis.scrollY || 0, id);
+    if (entity === 'gigs' && !state.selected && !state.editing) gigs.remember(scrollY(), id);
     const route = nextRoute();
     state.selected = null;
     state.editing = false;
@@ -690,7 +697,7 @@ export function startController({ renderUI, invoke, initialize } = {}) {
     state.summary = summary.status === 'fulfilled' ? summary.value : null;
     state.summaryUnavailable = summary.status === 'rejected';
     render();
-    globalThis.scrollTo?.(0, 0);
+    scrollTo(0, 0);
     return true;
   }
 
@@ -714,7 +721,7 @@ export function startController({ renderUI, invoke, initialize } = {}) {
       state.editorDraft = null;
       state.editing = true;
     });
-    if (currentRoute(route) && state.editing === true) globalThis.scrollTo?.(0, 0);
+    if (currentRoute(route) && state.editing === true) scrollTo(0, 0);
   }
 
   async function refreshSelected(sourceExpanded = false) {
@@ -732,8 +739,8 @@ export function startController({ renderUI, invoke, initialize } = {}) {
       selected,
       focus,
       reloadCollection: !selected && !keepPosition,
-      x: keepPosition ? globalThis.scrollX || 0 : 0,
-      y: keepPosition ? globalThis.scrollY || 0 : 0,
+      x: keepPosition ? scrollX() : 0,
+      y: keepPosition ? scrollY() : 0,
       openDetails: [...(root.querySelectorAll?.('.content-primary details') || [])].map(
         (detail) => detail.open
       )
@@ -766,7 +773,7 @@ export function startController({ renderUI, invoke, initialize } = {}) {
       });
       root.querySelector?.(origin.focus)?.focus?.({ preventScroll: true });
     }
-    globalThis.scrollTo?.(origin?.x || 0, origin?.y || 0);
+    scrollTo(origin?.x || 0, origin?.y || 0);
   }
 
   function newRecord(entity) {
@@ -780,7 +787,7 @@ export function startController({ renderUI, invoke, initialize } = {}) {
     state.editorDraft = null;
     state.editing = true;
     render();
-    globalThis.scrollTo?.(0, 0);
+    scrollTo(0, 0);
     root.querySelector?.('#title')?.focus?.();
   }
 
@@ -934,8 +941,8 @@ export function startController({ renderUI, invoke, initialize } = {}) {
     state.editorDraft = Object.fromEntries(new FormData(form));
     const active = globalThis.document?.activeElement;
     return {
-      x: globalThis.scrollX || 0,
-      y: globalThis.scrollY || 0,
+      x: scrollX(),
+      y: scrollY(),
       focus:
         active?.form === form && active.id
           ? {
@@ -1261,12 +1268,12 @@ export function startController({ renderUI, invoke, initialize } = {}) {
     if (button.dataset.agentPreflight) {
       if (state.busy) return;
       const route = readRoute(),
-        x = globalThis.scrollX || 0,
-        y = globalThis.scrollY || 0;
+        x = scrollX(),
+        y = scrollY();
       const restore = () => {
         if (currentRoute(route)) {
           root.querySelector?.('[data-agent-preflight]')?.focus?.({ preventScroll: true });
-          globalThis.scrollTo?.(x, y);
+          scrollTo(x, y);
         }
       };
       const pending = run(async () => {
@@ -1506,7 +1513,7 @@ export function startController({ renderUI, invoke, initialize } = {}) {
           Array.from(root.querySelectorAll?.('[data-open]') || [])
             .find((row) => row.dataset.open === gigs.state?.focusId)
             ?.focus?.({ preventScroll: true });
-          globalThis.scrollTo?.(0, gigs.state?.scroll || 0);
+          scrollTo(0, gigs.state?.scroll || 0);
         }
       });
     } else if (button.dataset.back && state.page === 'contacts')
@@ -1519,7 +1526,7 @@ export function startController({ renderUI, invoke, initialize } = {}) {
       state.editorDraft = null;
       state.editorOrigin = null;
       render();
-      globalThis.scrollTo?.(0, 0);
+      scrollTo(0, 0);
     } else if (button.dataset.edit) void enterEditor();
     else if (button.dataset.full) void run(() => refreshSelected());
     else if (button.dataset.sourceDetail) void run(() => refreshSelected(true));

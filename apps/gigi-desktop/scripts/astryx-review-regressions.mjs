@@ -2,7 +2,7 @@
 // backend only: no native app, user profile, picker, provider or database opens.
 import { createServer } from 'vite';
 import { createRequire } from 'node:module';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import assert from 'node:assert/strict';
 
@@ -15,6 +15,19 @@ const { chromium } = createRequire(
 const server = await createServer({
   configFile: resolve(app, 'vite.config.mjs'),
   root: app,
+  // Replay a frozen pre-fix controller against the current public UI fixture.
+  plugins: process.env.GIGI_REVIEW_CONTROLLER_ORACLE
+    ? [
+        {
+          name: 'gigi-controller-regression-oracle',
+          enforce: 'pre',
+          load(id) {
+            if (id === resolve(app, 'ui/controller.mjs'))
+              return readFileSync(process.env.GIGI_REVIEW_CONTROLLER_ORACLE, 'utf8');
+          }
+        }
+      ]
+    : [],
   server: { port: 0, strictPort: false, host: '127.0.0.1' }
 });
 await server.listen();
@@ -137,6 +150,66 @@ try {
       const frame = await page.locator('.gigi-onboarding').boundingBox();
       assert.ok(frame.x >= 24 && frame.width <= 800, 'setup has a bounded centered frame');
       await page.screenshot({ path: resolve(out, 'native-controls.png'), fullPage: true });
+    },
+    record_artwork: async () => {
+      for (const entity of ['tasks', 'contacts', 'finances', 'profile']) {
+        await open(entity);
+        await page.evaluate(
+          (page) =>
+            gigiTest.set({
+              page,
+              selected: {
+                id: 'guard-record',
+                title: 'Synthetic detail',
+                fields: {},
+                relations: []
+              },
+              editing: false
+            }),
+          entity
+        );
+        assert.equal(
+          await page.getByRole('button', { name: 'Add artwork', exact: true }).count(),
+          0,
+          `${entity} cannot attach unsupported artwork`
+        );
+      }
+      for (const entity of ['gigs', 'schedule']) {
+        await open(entity);
+        await page.evaluate(
+          (page) =>
+            gigiTest.set({
+              page,
+              selected: { id: 'guard-event', title: 'Synthetic event', fields: {}, relations: [] },
+              editing: false
+            }),
+          entity
+        );
+        assert.equal(
+          await page.getByRole('button', { name: 'Add artwork', exact: true }).count(),
+          1,
+          `${entity} retains artwork`
+        );
+      }
+    },
+    page_scroll: async () => {
+      await open('appearance');
+      await page.getByRole('main').evaluate((node) => {
+        node.scrollTop = 700;
+      });
+      assert.ok(
+        await page.getByRole('main').evaluate((node) => node.scrollTop > 0),
+        'fixture scrolls within Astryx AppShell'
+      );
+      await nav('Today').click();
+      await page.waitForFunction(
+        () => gigiTest.snapshot().state.page === 'overview' && !gigiTest.snapshot().state.busy
+      );
+      assert.equal(
+        await page.getByRole('main').evaluate((node) => node.scrollTop),
+        0,
+        'new page starts at top of actual AppShell scroller'
+      );
     },
     profile: async () => {
       await open('overview');

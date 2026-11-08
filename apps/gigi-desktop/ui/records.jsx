@@ -651,12 +651,14 @@ export function RecordDetail({ ctx }) {
           )}
         </Panel>
       )}
-      <ArtworkManager
-        ctx={ctx}
-        entity={s.page}
-        item={r}
-        onChanged={() => ctx.actions.selectRecord(r.id, s.page)}
-      />
+      {['gigs', 'schedule'].includes(s.page) && (
+        <ArtworkManager
+          ctx={ctx}
+          entity={s.page}
+          item={r}
+          onChanged={() => ctx.actions.selectRecord(r.id, s.page)}
+        />
+      )}
       {r.truncatedFields?.length > 0 && (
         <Message>
           Some details are shortened. <B data-full="1">Show full details</B>
