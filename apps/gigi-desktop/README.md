@@ -1,13 +1,14 @@
 # GiGi desktop beta
 
-## Design foundation
+## React / Astryx application
 
-GiGi's shared visual foundation follows Meta Astryx: semantic theme colors,
-consistent typography and spacing, control/container shapes, focus and status
-roles. Studio, Paper and Midnight keep their saved preference IDs. The existing
-Tauri HTML/ESM app uses a local adaptation, not the React component package.
-See [the design contract](DESIGN_FOUNDATION.md) for source review, implementation
-ownership, synthetic UI checks and native release limits.
+GiGi's frontend is rewritten with React 19 and actual Meta Astryx components,
+including the shell, record workflows, settings/imports, chat/search, Music,
+artwork and Instagram drafts. Vite builds `dist` for Tauri. Existing native
+transactions, saved theme IDs and preference schemas remain compatible.
+See [the implementation contract](DESIGN_FOUNDATION.md) and
+[rewrite evidence](evidence/astryx-rewrite/REVIEW.md) for checks and native release
+limits. This source rewrite has not replaced the distributed installer.
 
 ## Workspace search (0.2.24)
 

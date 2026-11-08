@@ -4,8 +4,10 @@
   "version": "0.2.24",
   "identifier": "agency.createsomething.gigi",
   "build": {
-    "frontendDist": "../web",
-    "beforeBuildCommand": "pnpm prepare:companions"
+    "frontendDist": "../dist",
+    "beforeBuildCommand": "pnpm build:web && pnpm prepare:companions",
+    "devUrl": "http://localhost:4383",
+    "beforeDevCommand": "pnpm dev:web"
   },
   "app": {
     "withGlobalTauri": true,
@@ -20,7 +22,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: gigi-image: http://gigi-image.localhost; connect-src ipc: http://ipc.localhost; object-src 'none'; base-uri 'none'; media-src 'self' gigi-media: http://gigi-media.localhost"
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: gigi-image: http://gigi-image.localhost; connect-src ipc: http://ipc.localhost; object-src 'none'; base-uri 'none'; media-src 'self' gigi-media: http://gigi-media.localhost"
     }
   },
   "bundle": {

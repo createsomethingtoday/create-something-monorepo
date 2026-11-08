@@ -1,12 +1,47 @@
-# GiGi presentation work
+# GiGi application work
 
-Read `DESIGN_FOUNDATION.md` before changing shared UI. The user-selected product
-foundation is Astryx, adapted locally for this HTML/ESM Tauri renderer.
+Read `DESIGN_FOUNDATION.md` before changing the UI. The user selected a full
+React 19 / Astryx component rewrite. Tauri ships `dist` built from `index.html`
+and `ui/main.jsx`; the old `web/index.html` renderer is a regression reference,
+not the production entry.
 
-- `web/foundation.css` owns design primitives, theme roles and compatibility aliases.
-- Use those roles in feature CSS; do not add another root palette or arbitrary scale.
-- Preserve `studio`, `paper`, `midnight` preference IDs and user chat overrides.
-- Keep record meaning, source consent, approval and receipt behavior intact.
-- Exercise the synthetic foundation browser harness and directly view changed
-  surfaces. Native minimum is 880×620. Chromium fixtures do not prove WebKit or
-  signed/notarized installer acceptance.
+- Use actual Astryx components and theme packages. `ui/app.css` owns layout only.
+- `ui/controller.mjs` retains native transactions, stale-read/write checks,
+  consent, approval, recovery and navigation guards. Pure models remain in `web`.
+- Theme source is `ui/gigi-theme.ts`; regenerate its built assets with
+  `pnpm theme:build`. Keep saved theme IDs and chat preferences compatible.
+- Run `pnpm build:web`, `pnpm test`, `pnpm test:rewrite` and Astryx doctor.
+- Directly view output. Native minimum is 880×620. Synthetic Chromium does not
+  establish native WebKit, pickers/media, provider or installer acceptance.
+
+<!-- ASTRYX:START -->
+Astryx v0.7.11 · 174 components
+CLI: run every command as `pnpm exec astryx <cmd>` (shown below as `astryx ...`).
+
+SETUP (once, in app entry e.g. main.tsx) — without these, components render unstyled:
+  import "@astryxdesign/core/reset.css";
+  import "@astryxdesign/core/astryx.css";
+
+WORKFLOW — start every page from a template, never from scratch:
+1. `astryx build "<idea>"` — names the template to scaffold from and the parts it lacks.
+2. `astryx template <name> <path>` — scaffold it; keep its frame, gap and padding; replace the content.
+3. `astryx template <Block>` for parts it lacks; `astryx component <Name>` to read props before using one.
+Changing an existing page? Keep it: skip step 2 and add blocks/components inside its sections.
+Before you deliver a build, run `astryx doctor --built <dir>`; don't deliver it if it fails.
+
+RULES:
+- No <div> — components handle all layout and spacing.
+- Read `astryx docs layout` before changing a template's frame.
+- Dense data = rows (Table, List/Item), not Card-wrapped lists. Badge = counts only.
+- Style with component props first, then tokens (var(--color-*|--spacing-*|--radius-*)). No raw hex/px. No StyleX/Tailwind compiler here — don't use xstyle/utility classes directly. Some templates use StyleX and need a compiler plugin; see `astryx docs styling-overview`.
+- Palettes and custom colors go through the theme, never :root overrides. Run `astryx theme add <slug>` to import; `theme eject <slug>` only forks source. See `astryx docs theme`.
+- SELF-CHECK: re-read the file; replace any raw <div>/<span>, imported .css/@apply, or hardcoded #hex/px with the component or a token.
+
+`astryx help` lists every command. Key ones beyond the workflow:
+  search "<query>"   find any component / hook / doc / template
+  discover <words>   integrations you could add
+  docs <topic>       getting-started, principles, tokens, theme … (`astryx docs` lists all)
+  docs cli           commands and API reference
+  docs authoring     build an integration package, and every field it holds
+  upgrade --from <old version> --apply   run after a dependency bump
+<!-- ASTRYX:END -->

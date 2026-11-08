@@ -1,0 +1,271 @@
+/* Product layout only. Astryx owns components, type, color, spacing and shape. */
+html,
+body,
+#app {
+  min-block-size: 100%;
+  margin: 0;
+  background: var(--color-background-body);
+  color: var(--color-text-primary);
+}
+body {
+  font-family: var(--font-family-body);
+}
+* {
+  box-sizing: border-box;
+}
+.gigi-topbar {
+  padding: var(--spacing-3) var(--spacing-5);
+  border-block-end: var(--border-width) solid var(--color-border);
+}
+.gigi-header-content,
+.gigi-section-head,
+.gigi-page-head,
+.gigi-row-content {
+  justify-content: space-between;
+  min-inline-size: 0;
+}
+.gigi-header-actions {
+  margin-inline-start: auto;
+  flex-wrap: wrap;
+}
+.gigi-header-content {
+  flex-wrap: wrap;
+}
+.gigi-sidenav {
+  inline-size: calc(var(--spacing-12) * 4);
+  padding: var(--spacing-4);
+  min-block-size: 100%;
+  border-inline-end: var(--border-width) solid var(--color-border);
+}
+.gigi-sidenav button {
+  justify-content: start;
+  inline-size: 100%;
+}
+.gigi-main {
+  min-inline-size: 0;
+  inline-size: 100%;
+  overflow: auto;
+}
+.gigi-page {
+  max-inline-size: calc(var(--spacing-12) * 26);
+  inline-size: 100%;
+  margin-inline: auto;
+  padding: var(--spacing-6);
+}
+.gigi-page-head {
+  flex-wrap: wrap;
+  align-items: start;
+}
+.gigi-page-head > *,
+.gigi-attention-row > * {
+  min-inline-size: 0;
+}
+.gigi-wrap {
+  flex-wrap: wrap;
+}
+.gigi-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-4);
+}
+.gigi-record-row {
+  inline-size: 100%;
+  block-size: auto !important;
+  min-block-size: var(--size-element-lg);
+  padding: var(--spacing-4) !important;
+  border-block-end: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-none) !important;
+  justify-content: stretch !important;
+  text-align: start;
+  white-space: normal;
+}
+.gigi-row-content {
+  inline-size: 100%;
+  white-space: normal;
+  text-align: start;
+}
+.gigi-row-content > :first-child {
+  min-inline-size: 0;
+}
+.gigi-row-content * {
+  overflow-wrap: anywhere;
+}
+.gigi-card-collection {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-4);
+}
+.gigi-card-collection .gigi-record-row {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-container) !important;
+}
+.gigi-attention-row {
+  justify-content: space-between;
+  align-items: start;
+  flex-wrap: wrap;
+  padding-block: var(--spacing-4);
+  border-block-start: var(--border-width) solid var(--color-border);
+}
+.gigi-empty {
+  padding-block: var(--spacing-8);
+  align-items: start;
+}
+.gigi-details {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: var(--spacing-3);
+  margin: 0;
+}
+.gigi-details dt {
+  color: var(--color-text-secondary);
+}
+.gigi-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+details > summary {
+  cursor: pointer;
+  padding-block: var(--spacing-3);
+  color: var(--color-text-secondary);
+}
+details[open] > summary {
+  margin-block-end: var(--spacing-3);
+}
+.gigi-toast {
+  position: fixed;
+  inset-block-end: var(--spacing-4);
+  inset-inline-end: var(--spacing-4);
+  z-index: 100;
+  max-inline-size: min(90vw, calc(var(--spacing-12) * 12));
+  background: var(--color-background-popover);
+  border-radius: var(--radius-container);
+  box-shadow: var(--shadow-med);
+  padding: var(--spacing-3);
+}
+.gigi-creator-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+  gap: var(--spacing-6);
+}
+.gigi-artwork-image,
+.gigi-artwork-original {
+  max-inline-size: 100%;
+  max-block-size: 60vh;
+  object-fit: contain;
+}
+.gigi-preserve-lines {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.chat-panel {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-end: 0;
+  inline-size: min(100vw, calc(var(--spacing-12) * 10));
+  z-index: 30;
+  background: var(--color-background-surface);
+  border-inline-start: var(--border-width) solid var(--color-border);
+  box-shadow: var(--shadow-med);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.chat-intro {
+  flex: 0 1 auto;
+  max-block-size: 42%;
+  overflow: auto;
+  padding: var(--spacing-4);
+  border-block-end: var(--border-width) solid var(--color-border);
+}
+.chat-transcript {
+  flex: 1;
+  min-block-size: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: var(--spacing-4);
+  gap: var(--spacing-6);
+  overflow-anchor: none;
+}
+.chat-composer {
+  padding: var(--spacing-4);
+  flex-shrink: 0;
+  border-block-start: var(--border-width) solid var(--color-border);
+}
+.chat-conversation-controls,
+.chat-view-options {
+  flex-wrap: wrap;
+}
+.chat-table-scroll {
+  overflow: auto;
+  max-inline-size: 100%;
+}
+.chat-approval {
+  flex-shrink: 0;
+  overflow-wrap: anywhere;
+}
+.workspace-search-dialog {
+  inline-size: min(90vw, calc(var(--spacing-12) * 14));
+}
+.workspace-search-results {
+  max-block-size: 60vh;
+  overflow: auto;
+  min-inline-size: 0;
+}
+.workspace-search-result {
+  inline-size: 100%;
+  height: auto !important;
+  white-space: normal;
+  justify-content: stretch !important;
+  min-block-size: var(--size-element-lg);
+}
+:root[data-chat-width='wide'] .chat-panel {
+  inline-size: min(100vw, calc(var(--spacing-12) * 15));
+}
+:root[data-chat-text-size='larger'] .chat-answer {
+  font-size: var(--font-size-lg);
+}
+:root[data-chat-text-size='larger'] .chat-answer :is(p, li, td, th, code, blockquote) {
+  font-size: var(--font-size-lg);
+}
+:root[data-chat-text-size='larger'] .chat-answer :is(h3, h4) {
+  font-size: var(--font-size-xl);
+}
+:root[data-chat-density='compact'] .chat-transcript {
+  gap: var(--spacing-3);
+}
+:root[data-density='compact'] .gigi-page {
+  padding: var(--spacing-4);
+}
+:root[data-density='compact'] .gigi-record-row {
+  padding-block: var(--spacing-2) !important;
+}
+@media (max-width: 1000px) {
+  .gigi-creator-grid {
+    grid-template-columns: 1fr;
+  }
+  .gigi-page {
+    padding: var(--spacing-4);
+  }
+}
+@media (max-width: 700px) {
+  .gigi-form-grid,
+  .gigi-card-collection {
+    grid-template-columns: 1fr;
+  }
+  .gigi-details {
+    grid-template-columns: 1fr;
+  }
+  .gigi-header-content > p {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

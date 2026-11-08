@@ -1,88 +1,117 @@
-# GiGi design foundation
+# GiGi: React and Astryx
 
-GiGi uses Meta's Astryx foundations as its product design contract. The user
-selected this direction on 2026-11-08. The runtime implementation is
-[`web/foundation.css`](web/foundation.css), a framework-neutral adaptation for
-GiGi's existing Tauri HTML/ESM renderer. It does not install or claim to render
-Astryx React components. The official component package requires React 19+;
-a component migration would be separate work.
+GiGi's application UI is rewritten in React 19 using Meta Astryx Core 0.7.11.
+The user selected Astryx on 2026-11-08 and clarified that the scope is a full
+component rewrite. This supersedes the earlier CSS-only adaptation.
 
-This serves the Database tier through readable records and state, and the
-Judgment tier through explicit consent, approval and receipt presentation.
-Presentation changes do not change those workflows or their authority.
+`index.html` loads `ui/main.jsx`; Vite builds `dist`, which Tauri now packages.
+The production entry does not load `web/index.html`, the old stylesheet stack,
+or the old HTML-string renderer. Existing pure models and native APIs remain.
 
-## Reviewed source and translation
+## Ownership and parity
 
-The official docs and Button preview were inspected in the browser on
-2026-11-08 (Button docs identified Core v0.7.11).
+- `ui/App.jsx`: actual Astryx AppShell, navigation and guarded dialogs.
+- `ui/records.jsx`: Today, attention, all record collections, date agenda, editors,
+  full/source details, relations, history and incomplete financial summaries.
+- `ui/settings.jsx`: onboarding, consent/verification, bounded preview/import,
+  receipts/recovery, agent/AI setup, notifications, diagnostics, backups and CTX.
+- `ui/appearance.jsx`: saved theme/view/chat preferences and configuration sharing.
+- `ui/chat*.jsx`: Astryx chat, safe React prose/code/tables, approval comparisons,
+  recovery, selection/drafts, response text preferences and workspace search.
+- `ui/creators.jsx`: Music, native media references, revision-safe organization,
+  artwork/provenance/recovery, Instagram draft/verified review/exact publication.
+- `ui/components.jsx`: small actual-component adapters. Controlled Astryx fields
+  bridge to native FormData without weakening transaction guards.
+- `ui/controller.mjs`: transaction, route, stale-read/write and consent/approval
+  logic extracted from the existing app. It generates no HTML.
+- `ui/app.css`: product layout and preference behavior; Astryx supplies component
+  anatomy, semantic tokens, typography, spacing and shapes.
 
-| Reference | Adopt in GiGi | Boundary |
-| --- | --- | --- |
-| [Principles](https://astryx.atmeta.com/docs/principles) | Semantic roles; decide the frame before content; dense data stays in rows with dividers | Existing navigation and optional saved card view remain |
-| [Tokens](https://astryx.atmeta.com/docs/tokens) and [Color](https://astryx.atmeta.com/docs/color) | Purpose-named colors; neutral light/dark surfaces; separate status foregrounds and backgrounds | Stronger control borders and secondary text for contrast; Midnight retains its local identity |
-| [Spacing](https://astryx.atmeta.com/docs/spacing) | 4px base, rem-based gaps and padding | 44px primary action target retained; supported window stays 880×620 |
-| [Typography](https://astryx.atmeta.com/docs/typography) | 14px body, 24/20/17px heading hierarchy, supporting text and consistent leading | System fonts are local and available offline; user chat size still wins |
-| [Shape](https://astryx.atmeta.com/docs/shape) | 8px inner, 12px control, 16px container roles | Artwork and media keep their proportions |
-| [Elevation](https://astryx.atmeta.com/docs/elevation) | Flat inline surfaces; medium popovers and high dialogs | No decorative shadows on every card |
-| [Motion](https://astryx.atmeta.com/docs/motion) | Fast interaction feedback; medium panel entrance; shared easing | Reduced motion disables transitions; no spring/gesture-engine claims |
-| [Button](https://astryx.atmeta.com/components/Button) | Clear primary, secondary, text and destructive states | Native HTML semantics and existing handlers retained |
-| [Getting started](https://astryx.atmeta.com/docs/getting-started) | Explicit cascade and framework requirements | No React/StyleX dependency added to a plain ESM app |
+The old `web` renderer and its tests remain a behavioral reference. Those tests
+alone do not validate React. The new browser harness exercises the actual React
+entry, components and extracted controller. The Rust database, tool API, profiles,
+source permissions and native transaction contracts are unchanged.
 
-Supporting static appearance references were inspected through Mobbin:
+This serves Database (records and provenance), Automation (native actions) and
+Judgment (consent, approvals, recovery and receipt interpretation).
 
-| Reference | Why / adopt | Avoid |
-| --- | --- | --- |
-| [Revolut appearance](https://mobbin.com/screens/d6d26e5a-fcb7-4903-bc5b-af4099a0df59) | Distinct selected theme preview | Background effects and banking navigation |
-| [Sprig settings](https://mobbin.com/screens/bec05de8-cf7f-4c59-97bb-2dc01212df32) | Separate appearance from account setup | CSS authoring and its product layout |
-| [hilos appearance](https://mobbin.com/screens/c1fcba88-fba8-43f1-9eb3-90914d71e75d) | Honest previews plus readable text/spacing controls | Its palette, fonts and modal composition |
+## Actual package and theme setup
 
-These support GiGi's existing Appearance flow. They do not dictate identity or
-prove motion behavior. No third-party screenshots or assets are retained.
+Core/CLI/Neutral are pinned together at **0.7.11**; React/ReactDOM at **19.2.4**
+and StyleX runtime at **0.19.1**. Astryx's prebuilt component CSS/JS is used; no
+copy of its components or custom StyleX compiler is introduced.
 
-## Ownership
+`astryx-themes.js` is the CLI-generated Neutral theme module. Studio maps to
+Neutral dark; Paper maps to Neutral light. `ui/gigi-theme.ts` extends Neutral for
+Midnight and is compiled by the Astryx CLI into its local theme assets. Existing
+stored IDs (`studio`, `paper`, `midnight`) and preference schemas remain stable.
+Root `data-theme` uses Astryx's light/dark mode; `data-gigi-theme` keeps the product
+ID. Nested real Theme previews use the same definitions.
 
-`foundation.css` owns primitives, theme colors, compatibility aliases and shared
-control anatomy. Feature sheets use semantic variables. Older feature-specific
-layout rules remain local; superseded root palette definitions were removed from
-`style.css`, `reference-layout.css`, `studio.css` and `preferences.css`.
-`foundation.css` loads after these sheets. `chat.css` stays last so chat width,
-text size and spacing preferences remain authoritative.
+Figtree's local variable font is sourced from pinned
+`@fontsource-variable/figtree@5.3.0`, with its SIL license in
+`third-party/Figtree-OFL.txt` and the bundled `public/licenses` notices. Vite aliases Astryx's Google-font stylesheet to
+`ui/fonts.css`; neither app UI nor fonts need a remote request. Doctor cannot
+resolve that build alias and reports a font-proof warning; the browser harness
+verifies the actual font loads and no external requests occur.
 
-Search uses one borderless 17px query row inside its 16px dialog container. Its
-focus indicator spans the row; rounding an unfilled inner input would add no
-visible control boundary. This is an intentional shared-container exception.
+## Browser and native boundaries
 
-Studio and Paper adapt Astryx's neutral dark/light roles. Midnight uses the same
-roles with GiGi's deeper slate surfaces. Stored IDs (`studio`, `paper`,
-`midnight`) and preference schema are unchanged. Theme previews consume these
-same palette roles instead of maintaining separate swatches.
+[Official browser guidance](https://astryx.atmeta.com/docs/browser-support)
+identifies light-dark(), Popover and CSS anchors as capability boundaries.
+GiGi uses explicit theme-token resolution when light-dark() is unavailable and
+Astryx modal selector sheets when CSS anchors are unavailable. Date fields use
+Astryx TextInput with ISO input in that case. These fallbacks preserve the
+existing macOS minimum; they are not a claim of tested macOS 13/WebKit support.
 
-The `canon-overlay` directory records house governance and registry compatibility;
-its theme is not loaded by this renderer. It must not be mistaken for the
-runtime palette. Canon's consent, provenance and approval policies still apply.
+Tauri builds target Safari 16.4 syntax. Native WebKit at the advertised platform
+floor still needs exact-artifact verification. The CSP retains the existing
+script and connection restrictions. Style attributes are now allowed because
+Astryx/React set layout properties; user-supplied HTML, CSS and scripts are never
+rendered as trusted content.
 
-## Verification
+## Reviewed official sources
 
-Run from the app directory after `pnpm bootstrap:worktree` at the repo root:
+The Astryx site and Button preview were directly inspected; installed pinned
+package APIs, generated agent guidance, layout templates and browser-support
+docs were read before implementation.
+
+- [Getting started](https://astryx.atmeta.com/docs/getting-started): actual React
+  setup, prebuilt CSS, Theme and package compatibility.
+- [Principles](https://astryx.atmeta.com/docs/principles) and
+  [layout](https://astryx.atmeta.com/docs/layout): frame first; dense data as rows.
+- [Tokens](https://astryx.atmeta.com/docs/tokens),
+  [typography](https://astryx.atmeta.com/docs/typography),
+  [spacing](https://astryx.atmeta.com/docs/spacing),
+  [shape](https://astryx.atmeta.com/docs/shape): semantic component roles.
+- [Elevation](https://astryx.atmeta.com/docs/elevation) and
+  [motion](https://astryx.atmeta.com/docs/motion): state/depth meaning and reduced motion.
+- [Button](https://astryx.atmeta.com/components/Button): primary, secondary,
+  destructive and keyboard behavior.
+
+Supporting appearance research from the prior review remains documented in
+`evidence/astryx-foundation/REVIEW.md`. Astryx now owns the component foundation;
+outside product layouts and assets were not copied.
+
+## Verify and deliver
+
+After repository bootstrap, from this app:
 
 ```sh
-node --test web/*.test.mjs scripts/*.test.mjs
-node scripts/astryx-foundation-browser.mjs --check --out /tmp/gigi-astryx-evidence
-node scripts/astryx-foundation-browser.mjs --serve --port 4383
+pnpm build:web
+pnpm test
+pnpm test:rewrite
+pnpm astryx doctor --built dist
+pnpm dev:web
 ```
 
-The preview server serves the actual app source with synthetic records and a
-denied native bridge; it never opens a user's profile or a provider. Direct
-review routes include `?fixture=overview`, `appearance`, `tasks`, `settings`,
-and `chat`; `theme=paper|midnight`, `density=compact`, `empty=1`, and
-`state=approval` select states. The harness cannot establish production source
-consent/import, native WebKit, signing/notarization or installed-app acceptance.
+Development-only `?fixture=overview` (or a route name) selects synthetic data;
+`theme=paper|midnight` and `density=compact` exercise appearance. It never invokes
+Tauri or a real provider. Vite excludes the fixture module from production.
 
-Acceptance covers all themes and densities at 880×620 and 1280×840; contrast;
-shared control shape; keyboard focus and More-menu recovery; unsaved drafts;
-empty/error/approval states; saved appearance/chat preferences; reduced motion;
-and direct perceptual review of the rendered output. See CRE-2373 for the final
-evidence and promotion state.
+See `evidence/astryx-rewrite/REVIEW.md` and CRE-2373 for evidence and limits.
+Source/build/browser acceptance is separate from native WebKit, picker/media,
+provider, signing/notarization and installer distribution acceptance.
 
-Rollback: revert the scoped foundation commit and restore the previous stylesheet
-order. There is no database or stored-preference migration to undo.
+Rollback: revert the rewrite source commit and restore the previous Tauri
+frontendDist/build command. No database or preference migration is involved.
