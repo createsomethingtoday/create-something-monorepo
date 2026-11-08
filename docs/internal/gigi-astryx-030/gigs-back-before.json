@@ -1,0 +1,12 @@
+{
+  "passed": false,
+  "cases": [
+    {
+      "name": "gigs_back",
+      "passed": false,
+      "error": "Back preserves expanded gig filters\n\nfalse !== true\n"
+    }
+  ],
+  "errors": [],
+  "scope": "Actual React application with synthetic development backend; no native or provider acceptance."
+}

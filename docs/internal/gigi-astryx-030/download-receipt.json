@@ -1,0 +1,18 @@
+{
+  "url": "https://media.createsomething.io/releases/gigi/0.3.0/GiGi-0.3.0-arm64-private-beta.dmg",
+  "finalUrl": "https://media.createsomething.io/releases/gigi/0.3.0/GiGi-0.3.0-arm64-private-beta.dmg",
+  "status": 200,
+  "bytes": 85090921,
+  "sha256": "4f9f25ef6eff3d39010ca35bc14eb2ac784e6c0c40e07482c5e578903215fb01",
+  "matchedQualifiedInstaller": true,
+  "downloadedAt": "2026-11-08T22:44:52.528Z",
+  "headers": {
+    "etag": "\"ea9ce2502dccaa4b331b9f462934c049\"",
+    "content-type": "application/x-apple-diskimage",
+    "content-length": "85090921",
+    "cache-control": "max-age=14400",
+    "cf-cache-status": "MISS",
+    "age": null,
+    "last-modified": "Sun, 08 Nov 2026 22:43:19 GMT"
+  }
+}
