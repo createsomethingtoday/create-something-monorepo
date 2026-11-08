@@ -1,6 +1,6 @@
 /* Exact reference: grantbot 3f39f6468, DesktopStudioStyle/WorkspaceStrip/DecisionCard.
    Layout preview only. Current local data, approvals and providers are retained. */
-:root{--bg:#151613;--panel:#1e201b;--raised:#292d25;--text:#eeeee5;--muted:#b1b4a7;--line:#363a30;--signal:#9dd278;--control-border:#7b8270}
+
 .shell{display:block}.main{min-width:0}.content{max-width:1220px;padding:16px 32px 40px;margin:auto}.content-primary{container-type:inline-size}
 .reference-header{height:48px;padding:0 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0;z-index:10;font-size:13px}
 .reference-header button,.reference-header summary{border:0;background:transparent;color:var(--text);border-radius:6px;min-height:32px;padding:6px 8px;white-space:nowrap;font-size:13px;cursor:pointer}

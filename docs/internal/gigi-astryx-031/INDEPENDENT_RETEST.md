@@ -1,0 +1,13 @@
+# Independent Sol 6.1 — final exact 0.3.1 re-test
+
+Final source `f62331cb267e1e6f446d216364f6c272db630beb` was independently found embedded in the executable; actual bundle version is 0.3.1. Main SHA256 `b23a25e7c3bf886d6928eceb5a17c2e2f0d2d6dfff8a77d6dcfc5515b7425bda`. Deep/strict signature passed. The reviewer did not edit source or artifacts, change consent, invoke providers, publish, or mutate a real profile.
+
+Functional passed: native Music preserves an unsent search draft across ordinary app focus changes; applying it produces no matches; Clear filters visibly empties the field and restores the synthetic tone. Native Today/Gigs show Income, Calendar event / All day, Performance, call/set times and the original gig type where supplied. The exact app's 346/346 baseline checks passed with its signed MCP; final actual React regressions passed 11/11 and creator checks passed 16/16, with zero browser errors.
+
+Perceptual/product quality passed within inspected states. The reviewer directly viewed native Music clearing and event/money metadata, plus the rendered interval fixture without doubled timestamps. The parent independently viewed [Music cleared](native-music-cleared.png), [Gigs metadata](native-event-metadata.png) and [Today metadata](native-today-metadata.png). Expense, unknown direction, crew and time-range variants were absent from the native QA dataset; those variants have actual React fixture coverage and an independent rendered audit, not native runtime acceptance.
+
+This is an incremental final re-test. Earlier exact-candidate native qualification covered onboarding, selectors, three themes, comfortable/compact, default/minimum windows, records/guards/search, local pickers/audio/artwork and local Instagram drafts. The preceding 0.3.1 candidate `4a2d8ed` independently passed the unchanged link flow: changing People to Tasks cleared the old target and reset Relationship; an empty replacement blocked safely; selecting a QA Task saved the right relation, destination and reciprocal readback. The retained link captures are from that preceding candidate, not relabeled as final-source captures.
+
+No unresolved findings remained. Release readiness was untested by the native reviewer and remained parent-owned for full DMG qualification, CI, publication and promotion. The separate verifier in this packet qualifies the exact final local app/DMG.
+
+QA app and launcher safely quit. Fresh installation, older macOS floor, real Google/provider execution, physical phone, OS notification clicks, screen-reader speech/IME, audible quality and human acceptance remain unverified. Native focus retention does not prove failure-injected background recovery; synthetic checks cover that path.

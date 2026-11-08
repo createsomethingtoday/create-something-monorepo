@@ -1,0 +1,272 @@
+/* GiGi's framework-neutral adaptation of Astryx foundations (reviewed 2026-11-08).
+ * Owning contract: ../DESIGN_FOUNDATION.md. No React/StyleX runtime is implied.
+ * Primitives live here; components consume semantic roles. Keep chat.css last
+ * so user-selected chat size, width and density remain authoritative.
+ */
+:root {
+  --spacing-0: 0rem;
+  --spacing-0-5: .125rem;
+  --spacing-1: .25rem;
+  --spacing-1-5: .375rem;
+  --spacing-2: .5rem;
+  --spacing-3: .75rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+  --spacing-10: 2.5rem;
+  --spacing-12: 3rem;
+  --radius-none: 0px;
+  --radius-inner: 8px;
+  --radius-element: 12px;
+  --radius-container: 16px;
+  --radius-page: 32px;
+  --radius-chat: 28px;
+  --radius-full: 9999px;
+  --border-width: 1px;
+  --size-element-sm: 28px;
+  --size-element-md: 32px;
+  --size-element-lg: 36px;
+  /* GiGi keeps its 44px primary action target at the native minimum size. */
+  --size-action: 44px;
+  --font-family-body: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-family-heading: var(--font-family-body);
+  --font-family-code: "SF Mono", ui-monospace, monospace;
+  --font-size-sm: .75rem;
+  --font-size-base: .875rem;
+  --font-size-lg: 1.0625rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.8125rem;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --text-heading-1-size: var(--font-size-2xl);
+  --text-heading-1-leading: 1.3333;
+  --text-heading-2-size: var(--font-size-xl);
+  --text-heading-2-leading: 1.4;
+  --text-heading-3-size: var(--font-size-lg);
+  --text-heading-3-leading: 1.4118;
+  --text-body-size: var(--font-size-base);
+  --text-body-leading: 1.4286;
+  --text-supporting-size: var(--font-size-sm);
+  --text-supporting-leading: 1.6667;
+  --focus-outline-width: 2px;
+  --focus-outline-offset: 3px;
+  --focus-outline-color: var(--color-accent);
+  --duration-fast: 175ms;
+  --duration-medium: 410ms;
+  --duration-exit: 175ms;
+  --ease-standard: cubic-bezier(.24, 1, .4, 1);
+  --ease-entrance: var(--ease-standard);
+  --ease-exit: cubic-bezier(.3, 0, .6, .6);
+  --shadow-low: 0 2px 8px var(--color-shadow);
+  --shadow-med: 0 8px 24px var(--color-shadow);
+  --shadow-high: 0 24px 64px var(--color-shadow);
+}
+
+/* Neutral Astryx roles. Explicit modes retain support for GiGi's WebKit floor;
+ * no light-dark() or remote font/network dependency is required. */
+:root, :root[data-theme="studio"], .theme-preview-studio {
+  color-scheme: dark;
+  --color-background-body: #1b1b1b;
+  --color-background-surface: #262626;
+  --color-background-muted: #1b1b1b;
+  --color-background-raised: #303030;
+  --color-background-popover: #262626;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #b9b9b9;
+  --color-accent: #f1f1f1;
+  --color-accent-hover: #d4d4d4;
+  --color-accent-pressed: #b9b9b9;
+  --color-on-accent: #111111;
+  --color-accent-muted: #474747;
+  --color-border: #414141;
+  --color-border-emphasized: #919191;
+  --color-overlay-hover: #ffffff0d;
+  --color-overlay-pressed: #ffffff1a;
+  --color-overlay: #000000cc;
+  --color-shadow: #0000004d;
+  --color-text-info: #a1caff;
+  --color-text-success: #90ca90;
+  --color-text-warning: #eec448;
+  --color-text-error: #ffaea7;
+  --color-info-muted: #253c5a;
+  --color-success-muted: #2b422b;
+  --color-warning-muted: #453a1c;
+  --color-error-muted: #5b2b28;
+}
+:root[data-theme="paper"], .theme-preview-paper {
+  color-scheme: light;
+  --color-background-body: #f1f1f1;
+  --color-background-surface: #ffffff;
+  --color-background-muted: #f1f1f1;
+  --color-background-raised: #e2e2e2;
+  --color-background-popover: #ffffff;
+  --color-text-primary: #111111;
+  --color-text-secondary: #474747;
+  --color-accent: #1b1b1b;
+  --color-accent-hover: #303030;
+  --color-accent-pressed: #474747;
+  --color-on-accent: #ffffff;
+  --color-accent-muted: #d4d4d4;
+  --color-border: #d4d4d4;
+  --color-border-emphasized: #767676;
+  --color-overlay-hover: #0000000d;
+  --color-overlay-pressed: #0000001a;
+  --color-overlay: #00000080;
+  --color-shadow: #0000001a;
+  --color-text-info: #003978;
+  --color-text-success: #00490b;
+  --color-text-warning: #4b3900;
+  --color-text-error: #76000c;
+  --color-info-muted: #b9d7ff;
+  --color-success-muted: #bce0bb;
+  --color-warning-muted: #fae19e;
+  --color-error-muted: #ffc4be;
+}
+/* Midnight is a GiGi theme adaptation using the same Astryx semantic roles. */
+:root[data-theme="midnight"], .theme-preview-midnight {
+  color-scheme: dark;
+  --color-background-body: #101216;
+  --color-background-surface: #1b1e24;
+  --color-background-muted: #101216;
+  --color-background-raised: #292e37;
+  --color-background-popover: #1b1e24;
+  --color-text-primary: #f4f5f7;
+  --color-text-secondary: #b0b8c5;
+  --color-accent: #d4e2f6;
+  --color-accent-hover: #b9cce8;
+  --color-accent-pressed: #a1b8da;
+  --color-on-accent: #13171e;
+  --color-accent-muted: #3d4a60;
+  --color-border: #353b45;
+  --color-border-emphasized: #8793a4;
+}
+
+:root {
+  /* Compatibility bridge: feature CSS keeps stable names, never its own palette. */
+  --bg: var(--color-background-body);
+  --sidebar: var(--color-background-body);
+  --panel: var(--color-background-surface);
+  --raised: var(--color-background-raised);
+  --input: var(--color-background-muted);
+  --text: var(--color-text-primary);
+  --muted: var(--color-text-secondary);
+  --signal: var(--color-accent);
+  --signal-ink: var(--color-on-accent);
+  --line: var(--color-border);
+  --control-line: var(--color-border-emphasized);
+  --control-border: var(--color-border-emphasized);
+  --danger: var(--color-text-error);
+  --studio-sans: var(--font-family-body);
+  --studio-action: var(--color-accent);
+  --studio-action-ink: var(--color-on-accent);
+  --artwork-ground: var(--color-background-body);
+  font-family: var(--font-family-body);
+  font-size: 100%;
+  color: var(--color-text-primary);
+  background: var(--color-background-body);
+}
+body { font-size: var(--text-body-size); line-height: var(--text-body-leading); }
+h1, h2, h3, .page-head h1, .music-header h1, .social-workspace h1,
+.setup h1, .chat-head h2 { font-family: var(--font-family-heading); font-weight: var(--font-weight-semibold); letter-spacing: -.02em; }
+h1, .page-head h1, .music-header h1, .social-workspace h1, .setup h1 {
+  font-size: var(--text-heading-1-size); line-height: var(--text-heading-1-leading);
+}
+h2, .chat-head h2, .today-sections .panel-head h2 {
+  font-size: var(--text-heading-2-size); line-height: var(--text-heading-2-leading);
+}
+h3 { font-size: var(--text-heading-3-size); line-height: var(--text-heading-3-leading); }
+.subhead, .row strong, .btn { font-size: var(--text-body-size); }
+.eyebrow, .field label, .field-help, .today-card-kind, .today-card-footer,
+.theme-choice-description, .row small, .attention-source {
+  font-size: var(--text-supporting-size); line-height: var(--text-supporting-leading);
+}
+code, pre, kbd, .portable-preferences textarea { font-family: var(--font-family-code); }
+
+/* One frame and a 4px rhythm; dense records remain rows with dividers. */
+.reference-header { height: 56px; padding-inline: var(--spacing-4); gap: var(--spacing-2); background: var(--panel); }
+.content { padding: var(--spacing-6) var(--spacing-8) var(--spacing-10); }
+.page-head { margin-block: var(--spacing-2) var(--spacing-6); gap: var(--spacing-4); }
+.panel, .card, .step, .empty, .today-card, .theme-choice, .chat-approval,
+.social-connection, .social-connection-setup, .social-draft-card, .social-preview,
+.music-player:not(:empty), .music-empty { border-radius: var(--radius-container); box-shadow: none; }
+.panel, .card { padding: var(--spacing-5); }
+.today-sections { gap: var(--spacing-6); }
+.content-primary:has(.today-summary) .today-grid { gap: var(--spacing-4); }
+.content-primary:has(.today-summary) .today-card { padding: var(--spacing-4); border-radius: var(--radius-container); }
+.content-primary:has(.today-summary) .today-card strong { font-size: var(--text-heading-3-size); line-height: var(--text-heading-3-leading); }
+.content-primary:has(.today-summary) .today-card { gap: var(--spacing-2); }
+.today-card-footer { padding-top: var(--spacing-3); }
+.attention-panel { padding: var(--spacing-5); }
+.attention-item { padding-block: var(--spacing-4); gap: var(--spacing-4); }
+.row { padding-block: var(--spacing-4); }
+[data-collection-view="cards"] .content-primary .rows .row { border-radius: var(--radius-container); }
+
+/* Shared control anatomy: distinct default, hover, press, focus and disabled. */
+.btn, .reference-header button, .reference-header summary, .music-more summary,
+.field input, .field select, .field textarea, .compact-input, .chat-composer textarea,
+.music-filters input, .music-filters select, .music-edit-fields input,
+.social-editor input, .social-editor select, .social-editor textarea,
+.chat-view-fields select { border-radius: var(--radius-element); }
+.btn { min-height: var(--size-element-lg); padding: var(--spacing-2) var(--spacing-4); gap: var(--spacing-2); background: var(--panel); border-color: var(--control-border); font-weight: var(--font-weight-medium); }
+.btn.primary { min-height: var(--size-action); background: var(--color-accent); color: var(--color-on-accent); border-color: var(--color-accent); }
+.btn.text { background: transparent; }
+.btn.danger { color: var(--color-text-error); background: var(--color-error-muted); border-color: var(--color-text-error); }
+button, summary, input, select, textarea { accent-color: var(--color-accent); }
+.btn, .today-card, .theme-choice, .reference-header button, .reference-header summary {
+  transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+}
+.btn:hover:not(:disabled), .today-card:hover, .theme-choice:hover { background: var(--raised); border-color: var(--color-accent); }
+.btn.primary:hover:not(:disabled) { background: var(--color-accent-hover); box-shadow: none; }
+.btn.danger:hover:not(:disabled) { color: var(--color-text-error); background: var(--color-error-muted); border-color: var(--color-text-error); }
+.btn:active:not(:disabled), .today-card:active { box-shadow: inset 0 0 0 100px var(--color-overlay-pressed); }
+.btn.primary:active:not(:disabled) { background: var(--color-accent-pressed); box-shadow: none; }
+button:disabled { cursor: not-allowed; }
+.reference-nav > button, .reference-more > summary { border-radius: var(--radius-element); }
+.reference-nav > button[aria-current="page"], .reference-more:has([aria-current="page"]) > summary { background: var(--raised); color: var(--text); }
+.field input, .field select, .field textarea, .compact-input,
+.chat-composer textarea, .music-filters input, .music-filters select, .music-edit-fields input,
+.social-editor input, .social-editor select, .social-editor textarea {
+  border-color: var(--control-border); background-color: var(--input); color: var(--text); padding: var(--spacing-3); font-size: var(--text-body-size);
+}
+input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
+:focus-visible, .reference-header button:focus-visible, .reference-header summary:focus-visible,
+.theme-choice:focus-visible, .attention-options summary:focus-visible, .attention-check input:focus-visible,
+.social-workspace :focus-visible {
+  outline: var(--focus-outline-width) solid var(--focus-outline-color); outline-offset: var(--focus-outline-offset);
+}
+
+/* Status colors describe meaning. Review/approval is never styled as success. */
+.chat-approval { background: var(--color-warning-muted); border-color: var(--color-text-warning); }
+.chat-approval, .chat-approval .chat-proposal-fields th, .chat-approval .chat-proposal-note { color: var(--color-text-warning); }
+.chat-error, .toast.error, .music-error:not(:empty) { color: var(--color-text-error); background: var(--color-error-muted); border-color: var(--color-text-error); }
+.chat-context, .chat-message.from-user { background: var(--raised); border-color: var(--line); }
+.tag { border-radius: var(--radius-full); }
+.theme-preview { border-radius: var(--radius-inner); background: var(--color-background-body); border-color: var(--color-border-emphasized); gap: var(--spacing-2); padding: var(--spacing-2); }
+.theme-preview-nav { background: var(--color-background-surface); }
+.theme-preview-body i { border-color: var(--color-border-emphasized); }
+.theme-preview-body i:first-child { background: var(--color-accent); }
+.preferences-feedback:empty { display: none; }
+
+/* Only surfaces that overlap content receive elevation. */
+.reference-menu, .music-more > div, .toast { background: var(--color-background-popover); border-radius: var(--radius-container); box-shadow: var(--shadow-med); }
+.record-leave-dialog, .artwork-dialog, .social-confirm > div, .workspace-search-dialog { border-radius: var(--radius-container); box-shadow: var(--shadow-high); }
+.record-leave-backdrop, .social-confirm, .workspace-search-backdrop { background: var(--color-overlay); }
+.workspace-search-input button, .workspace-search-result { border-radius: var(--radius-inner); }
+.form-actions { border-radius: var(--radius-container); box-shadow: var(--shadow-low); }
+.chat-panel { top: 56px; border-radius: var(--radius-container) 0 0 0; box-shadow: var(--shadow-med); }
+.chat-entering { animation-duration: var(--duration-medium); animation-timing-function: var(--ease-entrance); }
+.agenda-day, #source-connections, #agent-setup, #phone-access, #source-diagnostics { scroll-margin-top: 72px; }
+:root[data-density="compact"] .panel { padding: var(--spacing-4); }
+:root[data-density="compact"] .attention-item, :root[data-density="compact"] .row { padding-block: var(--spacing-3); }
+:root[data-density="compact"] .content-primary:has(.today-summary) .today-card { padding: var(--spacing-3); }
+@media (max-width: 700px) {
+  .reference-header { height: auto; min-height: 56px; padding: var(--spacing-2); }
+  .content { padding: var(--spacing-4); }
+  .chat-panel { top: 0; border-radius: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

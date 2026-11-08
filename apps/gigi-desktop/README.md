@@ -1,5 +1,16 @@
 # GiGi desktop beta
 
+## React / Astryx application
+
+GiGi's frontend is rewritten with React 19 and actual Meta Astryx components,
+including the shell, record workflows, settings/imports, chat/search, Music,
+artwork and Instagram drafts. Vite builds `dist` for Tauri. Existing native
+transactions, saved theme IDs and preference schemas remain compatible.
+See [the implementation contract](DESIGN_FOUNDATION.md) and
+[rewrite evidence](evidence/astryx-rewrite/REVIEW.md) for checks and native release
+limits. See the [0.3.1 release receipt](../../docs/internal/gigi-astryx-031/REVIEW.md)
+for exact native artifact and distribution status.
+
 ## Workspace search (0.2.24)
 
 The header Search control and Command/Control-F open a local workspace search

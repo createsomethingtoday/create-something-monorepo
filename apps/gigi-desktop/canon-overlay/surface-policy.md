@@ -1,6 +1,6 @@
 # GiGi surface policy
 
-The beta ships a macOS desktop app and a compact agent skill. This overlay records how GiGi's local design relates to Canon; it does not add a web, voice, or glasses client. Paperclip's workspace patterns and Griffin's visual treatment are references, not runtime dependencies.
+The beta ships a macOS desktop app and a compact agent skill. This overlay records how GiGi's local design relates to Canon; it does not add a web, voice, or glasses client. The user-selected runtime design foundation is actual Astryx components in the React app under `../ui`; see `../DESIGN_FOUNDATION.md`. This registry overlay's `theme.css` is not loaded by the desktop renderer. Paperclip's workspace patterns and Griffin's visual treatment remain historical references, not runtime dependencies.
 
 ## App
 

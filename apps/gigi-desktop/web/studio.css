@@ -1,22 +1,7 @@
 /* GiGi studio treatment: native system type and neutral slate surfaces.
  * Reference evidence and tradeoffs: evidence/visual-alignment/REVIEW.md.
  * Presentation only; navigation, stores, requests and approvals are unchanged. */
-:root {
-  --studio-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --bg: #17191c;
-  --panel: #22252a;
-  --raised: #2d3238;
-  --text: #f1f3f5;
-  --muted: #b1b8c2;
-  --line: #3b414a;
-  --control-border: #7d8794;
-  --signal: #9dd278;
-  --studio-action: #c8e3aa;
-  --studio-action-ink: #172410;
-  font-family: var(--studio-sans);
-  color: var(--text);
-  background: var(--bg);
-}
+/* Shared primitives and theme roles live in foundation.css. */
 h1, h2, .card .value, .empty strong {
   font-family: var(--studio-sans);
   font-weight: 500;

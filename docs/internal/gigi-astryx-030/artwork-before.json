@@ -1,0 +1,12 @@
+{
+  "passed": false,
+  "cases": [
+    {
+      "name": "record_artwork",
+      "passed": false,
+      "error": "tasks cannot attach unsupported artwork\n\n1 !== 0\n"
+    }
+  ],
+  "errors": [],
+  "scope": "Actual React application with synthetic development backend; no native or provider acceptance."
+}

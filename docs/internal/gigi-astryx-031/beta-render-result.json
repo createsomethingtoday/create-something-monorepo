@@ -1,0 +1,31 @@
+{
+  "passed": true,
+  "noJS": true,
+  "scope": "Exact exported beta HTML, static browser render; canonical production readback remains separate",
+  "results": [
+    {
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "width": 1024,
+      "overflow": false
+    },
+    {
+      "width": 1025,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "overflow": false
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "passed": false,
+  "cases": [
+    {
+      "name": "native_controls",
+      "passed": false,
+      "error": "locator.waitFor: Timeout 2500ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('dialog', { name: 'Currency', exact: true }) to be visible\u001b[22m\n"
+    }
+  ],
+  "errors": [],
+  "scope": "Actual React application with synthetic development backend; no native or provider acceptance."
+}
