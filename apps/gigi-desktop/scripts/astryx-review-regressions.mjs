@@ -116,6 +116,28 @@ try {
       assert.equal(await count('workspace.create'), 2, 'one failed create and one explicit retry');
       assert.equal(await count('records.save'), 1, 'successful retry saves one profile');
     },
+    native_controls: async () => {
+      await open('overview');
+      await page.evaluate(() => {
+        globalThis.__TAURI__ = {};
+        gigiTest.set({ workspace: null, setupProfile: false, setupDraft: null, toast: null });
+      });
+      await page.locator('#currency-display').click();
+      const sheet = page.getByRole('dialog', { name: 'Currency', exact: true });
+      await sheet.waitFor();
+      for (const currency of ['USD', 'CAD', 'EUR', 'GBP'])
+        assert.equal(
+          await sheet.getByRole('option', { name: currency, exact: true }).isVisible(),
+          true
+        );
+      await sheet.getByRole('option', { name: 'USD', exact: true }).click();
+      await page.waitForFunction(() => document.querySelector('#currency').value === 'USD');
+      await sheet.waitFor({ state: 'hidden' });
+      await page.waitForFunction(() => document.activeElement?.id === 'currency-display');
+      const frame = await page.locator('.gigi-onboarding').boundingBox();
+      assert.ok(frame.x >= 24 && frame.width <= 800, 'setup has a bounded centered frame');
+      await page.screenshot({ path: resolve(out, 'native-controls.png'), fullPage: true });
+    },
     profile: async () => {
       await open('overview');
       await page.evaluate(() => {

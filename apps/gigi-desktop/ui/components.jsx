@@ -13,6 +13,10 @@ import { VStack } from '@astryxdesign/core/VStack';
 import { HStack } from '@astryxdesign/core/HStack';
 
 export { Heading, Text, VStack, HStack, Card, Banner };
+// WebKit in the bundled custom-protocol view exposes CSS anchors but does not
+// reliably display the anchored option surface. Use Astryx's modal sheet there.
+const anchoredControls = () =>
+  !globalThis.__TAURI__ && globalThis.CSS?.supports?.('anchor-name', '--gigi');
 const textContent = (node) =>
   React.Children.toArray(node)
     .map((value) =>
@@ -117,7 +121,7 @@ function DateField({ id, name, value, onChange, ...props }) {
   return (
     <VStack gap={1}>
       <input type="hidden" ref={input} id={id} name={name} value={value} {...data} />
-      {globalThis.CSS?.supports?.('anchor-name', '--gigi') ? (
+      {anchoredControls() ? (
         <DateInput
           {...clean}
           ref={visible}
@@ -189,9 +193,7 @@ export function Choice({
         isRequired={required}
         size="lg"
         width="100%"
-        presentation={
-          globalThis.CSS?.supports?.('anchor-name', '--gigi') ? 'popover' : 'bottom-sheet'
-        }
+        presentation={anchoredControls() ? 'popover' : 'bottom-sheet'}
         onChange={(next) => {
           setSelected(next);
           if (input.current) {

@@ -60,9 +60,12 @@ verifies the actual font loads and no external requests occur.
 [Official browser guidance](https://astryx.atmeta.com/docs/browser-support)
 identifies light-dark(), Popover and CSS anchors as capability boundaries.
 GiGi uses explicit theme-token resolution when light-dark() is unavailable and
-Astryx modal selector sheets when CSS anchors are unavailable. Date fields use
-Astryx TextInput with ISO input in that case. These fallbacks preserve the
-existing macOS minimum; they are not a claim of tested macOS 13/WebKit support.
+Astryx modal selector sheets in the native host and when CSS anchors are
+unavailable. Native WebKit exposed anchor support but failed to display the
+anchored currency menu during exact-app inspection; the modal sheet keeps all
+choices visible and returns focus. Date fields use Astryx TextInput with ISO
+input under the same policy. These fallbacks preserve the existing macOS
+minimum; they are not a claim of tested macOS 13/WebKit support.
 
 Tauri builds target Safari 16.4 syntax. Native WebKit at the advertised platform
 floor still needs exact-artifact verification. The CSP retains the existing

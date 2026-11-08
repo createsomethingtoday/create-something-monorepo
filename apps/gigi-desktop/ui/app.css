@@ -10,6 +10,22 @@ body,
 body {
   font-family: var(--font-family-body);
 }
+.gigi-onboarding {
+  inline-size: 100%;
+  max-inline-size: calc(var(--spacing-12) * 16);
+  margin-inline: auto;
+  padding: var(--spacing-8) var(--spacing-6);
+}
+.gigi-onboarding ol {
+  display: grid;
+  gap: var(--spacing-3);
+  margin: 0;
+  padding: 0;
+}
+.gigi-onboarding li p {
+  margin-block: var(--spacing-1) 0;
+  color: var(--color-text-secondary);
+}
 * {
   box-sizing: border-box;
 }
