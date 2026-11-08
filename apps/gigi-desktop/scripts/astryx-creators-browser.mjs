@@ -18,7 +18,7 @@ const entry = `
 import React from 'react';import {createRoot} from 'react-dom/client';import {Theme} from '@astryxdesign/core/theme';import {neutralTheme} from '@astryxdesign/theme-neutral/built';import '@astryxdesign/core/reset.css';import '@astryxdesign/core/astryx.css';import '@astryxdesign/theme-neutral/theme.css';import {Music,Social} from './creators.jsx';
 const records=[];const requestLog=[];const music=[{id:'music-1',title:'Synthetic demo',artist:'Crew',kind:'audio',filename:'demo.wav',bytes:1200,availability:'available',organizationRevision:3}];
 window.requests=requestLog;window.ctx={workspaceId:'test-workspace',actions:{setCreatorMount(mount){window.creatorMount=mount;},notice(){}},bridge:{call:async(operation,input={})=>{requestLog.push({operation,input});
-if(operation==='music.list')return {items:music,total:music.length,offset:0,hasMore:false};if(operation==='music.edit'){music[0]={...music[0],...input,organizationRevision:4};return music[0];}if(operation==='music.import'){if(window.dropImportReply){window.dropImportReply=false;throw Error('Synthetic lost import response');}return {added:1,duplicates:0,skipped:0};}if(operation==='music.importStatus')return {state:'completed',receipt:{added:1,duplicates:0,skipped:0}};
+if(operation==='music.list'){const query=String(input.query||'').toLowerCase();const items=music.filter(item=>(!input.kind||item.kind===input.kind)&&(!query||[item.title,item.artist,item.project,item.collection,item.tags].filter(Boolean).join(' ').toLowerCase().includes(query)));return {items,total:items.length,offset:input.offset||0,hasMore:false};}if(operation==='music.edit'){music[0]={...music[0],...input,organizationRevision:4};return music[0];}if(operation==='music.import'){if(window.dropImportReply){window.dropImportReply=false;throw Error('Synthetic lost import response');}return {added:1,duplicates:0,skipped:0};}if(operation==='music.importStatus')return {state:'completed',receipt:{added:1,duplicates:0,skipped:0}};
 if(operation==='social.list')return {items:records,total:records.length,nextOffset:null};if(operation==='social.save'){const {workspaceId,requestId,id,expectedRevision,...body}=input;const record={id:id||'draft-1',revision:(expectedRevision||0)+1,state:'draft',body};records.splice(0,records.length,record);if(window.dropSaveReply){window.dropSaveReply=false;throw Error('timeout');}return record;}if(operation==='connections.status')return {provider:'instagram',state:'connected',connectedAccountId:'account-1'};if(operation==='instagram.account')return {username:'synthetic',connectedAccountId:'account-1',instagramAccountId:'ig-1'};if(operation==='instagram.preview')return {imageUrl:input.imageUrl,expectedImageSha256:'a'.repeat(64),dataUrl:'data:image/jpeg;base64,/9j/2Q=='};if(operation==='social.publish'){const record={...records[0],revision:records[0].revision+1,state:'published',receipt:{state:'published',mediaId:'post-1'}};records.splice(0,records.length,record);return record;}if(operation==='media.list')return {items:[],nextOffset:null};throw Error('Synthetic operation not configured: '+operation);}}};
 const root=createRoot(document.querySelector('#app'));const mode=new URLSearchParams(location.search).get('view');root.render(<Theme theme={neutralTheme} mode='light'>{mode==='social'?<Social ctx={window.ctx}/>:<Music ctx={window.ctx}/>}</Theme>);
 `;
@@ -75,6 +75,82 @@ try {
     await page.goto(origin + '/__creator_smoke');
     await page.getByRole('heading', { name: 'Synthetic demo' }).waitFor();
     console.log('music loaded');
+    const queryField = page.getByRole('searchbox', { name: 'Search', exact: true });
+    const search = page.getByRole('button', { name: 'Search', exact: true });
+    const clearFilters = page.getByRole('button', { name: 'Clear filters', exact: true });
+    const listAfter = async (task, query, kind = '') => {
+      const before = await page.evaluate(
+        () => requests.filter((request) => request.operation === 'music.list').length
+      );
+      await task();
+      await page.waitForFunction(
+        (count) =>
+          requests.filter((request) => request.operation === 'music.list').length > count &&
+          document
+            .querySelector('[aria-label="Local music library"]')
+            ?.getAttribute('aria-busy') === 'false',
+        before
+      );
+      assert.deepEqual(
+        await page.evaluate(() => {
+          const { query, kind, offset } = requests
+            .filter((request) => request.operation === 'music.list')
+            .at(-1).input;
+          return { query, kind, offset };
+        }),
+        { query, kind, offset: 0 },
+        'the backend receives the applied filters, independently of unsent input'
+      );
+    };
+    await queryField.fill('Unsent search text');
+    await listAfter(() => page.evaluate(() => window.dispatchEvent(new Event('focus'))), '');
+    assert.equal(await queryField.inputValue(), 'Unsent search text');
+    await page.getByRole('heading', { name: 'Synthetic demo', exact: true }).waitFor();
+    await page.screenshot({ path: resolve(out, 'music-unsent-refresh.png'), fullPage: true });
+    await queryField.fill('No matching track');
+    await listAfter(() => search.click(), 'No matching track');
+    await page.getByRole('heading', { name: 'Nothing matches this view', exact: true }).waitFor();
+    assert.equal(
+      await page.getByRole('heading', { name: 'Synthetic demo', exact: true }).count(),
+      0
+    );
+    await listAfter(() => clearFilters.click(), '');
+    assert.equal(await queryField.inputValue(), '', 'Clear filters empties the visible search');
+    await page.getByRole('heading', { name: 'Synthetic demo', exact: true }).waitFor();
+    await listAfter(() => search.click(), '');
+    await page.getByRole('heading', { name: 'Synthetic demo', exact: true }).waitFor();
+    console.log('music Clear and repeated Search passed');
+    await page.locator('#music-kind-display').click();
+    await page.getByRole('option', { name: 'Music video', exact: true }).click();
+    await listAfter(() => search.click(), '', 'video');
+    await page.getByRole('heading', { name: 'Nothing matches this view', exact: true }).waitFor();
+    await queryField.fill('Unsent text with media-only filter');
+    await listAfter(() => clearFilters.click(), '');
+    assert.equal(
+      await queryField.inputValue(),
+      '',
+      'Clear also discards unsent text with only a media filter'
+    );
+    assert.equal(await page.locator('#music-kind').inputValue(), '');
+    await listAfter(() => search.click(), '');
+    await page.getByRole('heading', { name: 'Synthetic demo', exact: true }).waitFor();
+    console.log('music media-only Clear passed');
+    await queryField.fill('Synthetic');
+    await listAfter(() => search.click(), 'Synthetic');
+    await queryField.fill('Pending replacement search');
+    await listAfter(
+      () => page.evaluate(() => window.dispatchEvent(new Event('focus'))),
+      'Synthetic'
+    );
+    assert.equal(await queryField.inputValue(), 'Pending replacement search');
+    await page.getByRole('heading', { name: 'Synthetic demo', exact: true }).waitFor();
+    await listAfter(() => search.click(), 'Pending replacement search');
+    await page.getByRole('heading', { name: 'Nothing matches this view', exact: true }).waitFor();
+    await listAfter(() => clearFilters.click(), '');
+    assert.equal(await queryField.inputValue(), '');
+    await page.getByRole('heading', { name: 'Synthetic demo', exact: true }).waitFor();
+    await page.screenshot({ path: resolve(out, 'music-clear-search.png'), fullPage: true });
+    console.log('music applied-query refresh preserves unsent replacement passed');
     await page.getByRole('button', { name: 'Organize', exact: true }).click();
     await page.locator('#music-edit-title').fill('Updated synthetic demo');
     await page.evaluate(() => {
@@ -210,6 +286,11 @@ try {
       passed: true,
       out,
       checks: [
+        'Music no-results query filters the returned library',
+        'Clear resets visible search and repeated Search keeps the full library',
+        'Media-only Clear discards unsent search text and clears the media filter',
+        'Background refresh preserves unsent text while using the applied query',
+        'Submitting preserved replacement text applies it to the library',
         'Music organization expectedRevision',
         'Unsaved music leave guard',
         'Stable import request UUID',
@@ -229,6 +310,11 @@ try {
     console.log(JSON.stringify(result));
   } catch (error) {
     await page.screenshot({ path: resolve(out, 'failure.png'), fullPage: true }).catch(() => {});
+    writeFileSync(
+      resolve(out, 'result.json'),
+      JSON.stringify({ passed: false, error: error.message, errors, browserDiagnostics }, null, 2) +
+        '\n'
+    );
     console.log('FAIL DOM', await page.locator('body').innerText());
     console.log('ERRORS', errors);
     console.log('BROWSER DIAGNOSTICS', browserDiagnostics);

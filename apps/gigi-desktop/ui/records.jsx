@@ -59,7 +59,7 @@ export const pageName = (name) =>
   })[name] || name.charAt(0).toUpperCase() + name.slice(1);
 const status = (record) => statusLabel(record?.fields?.Status || record?.status || '');
 
-function Rows({ ctx, entity, items = [], disabled = false }) {
+function Rows({ ctx, entity, items = [], disabled = false, showFinancialDirection = false }) {
   if (!items.length) {
     const copy = emptyCopy(entity);
     return (
@@ -70,6 +70,28 @@ function Rows({ ctx, entity, items = [], disabled = false }) {
       </VStack>
     );
   }
+  const metadata = (record) => {
+    const actualEntity = record.entity || entity;
+    const event = ['gigs', 'schedule'].includes(entity)
+      ? scheduleEntry({ ...record, entity: actualEntity })
+      : null;
+    // Event time/range/all-day meaning has its own label, so use the local
+    // calendar date here rather than repeating a timestamp's time twice.
+    const date = event?.key || record.date;
+    return (
+      [
+        event ? eventLabel(record, actualEntity) : '',
+        status(record),
+        date ? displayField('Date', date) : '',
+        event?.time,
+        actualEntity === 'gigs' ? record.type : '',
+        showFinancialDirection ? record.fields?.Direction || 'Direction not set' : '',
+        entity === 'finances' ? formatMoney(record.moneyCents, ctx.state.currency) : ''
+      ]
+        .filter(Boolean)
+        .join(' · ') || 'Open record'
+    );
+  };
   return (
     <VStack
       gap={0}
@@ -81,6 +103,7 @@ function Rows({ ctx, entity, items = [], disabled = false }) {
           label={record.title || 'Untitled'}
           variant="ghost"
           className="gigi-record-row"
+          aria-describedby={`gigi-record-${entity}-${record.id}-meta`}
           data-open={record.id}
           data-entity={record.entity || entity}
           disabled={disabled}
@@ -88,14 +111,12 @@ function Rows({ ctx, entity, items = [], disabled = false }) {
           <HStack gap={4} className="gigi-row-content">
             <VStack gap={1}>
               <Text weight="semibold">{record.title || 'Untitled'}</Text>
-              <Text type="supporting" color="secondary">
-                {[
-                  status(record),
-                  record.date ? displayField('Date', record.date) : '',
-                  entity === 'finances' ? formatMoney(record.moneyCents, ctx.state.currency) : ''
-                ]
-                  .filter(Boolean)
-                  .join(' · ') || 'Open record'}
+              <Text
+                id={`gigi-record-${entity}-${record.id}-meta`}
+                type="supporting"
+                color="secondary"
+              >
+                {metadata(record)}
               </Text>
             </VStack>
             <Text aria-hidden="true">↗</Text>
@@ -234,7 +255,12 @@ export function Today({ ctx }) {
                   </B>
                 </HStack>
                 {value.items?.length ? (
-                  <Rows ctx={ctx} entity={entity} items={value.items} />
+                  <Rows
+                    ctx={ctx}
+                    entity={entity}
+                    items={value.items}
+                    showFinancialDirection={entity === 'finances'}
+                  />
                 ) : (
                   <Text color="secondary">
                     {key === 'tasks'

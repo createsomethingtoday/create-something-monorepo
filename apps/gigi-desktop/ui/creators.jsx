@@ -496,6 +496,9 @@ export function Music({ ctx }) {
     preview: null,
     previewStatus: ''
   }).current;
+  // Refreshes use the applied query while preserving what is still being typed.
+  // Explicit Clear resets this draft as well, even when only media was filtered.
+  const [queryDraft, setQueryDraft] = useState('');
   const [, paint] = useState(0),
     alive = useRef(true),
     revision = useRef(0),
@@ -854,7 +857,8 @@ export function Music({ ctx }) {
               name="query"
               label="Search"
               type="search"
-              defaultValue={state.query}
+              value={queryDraft}
+              onChange={setQueryDraft}
               placeholder="Title, artist, project, collection or tags"
             />
             <Choice
@@ -897,6 +901,7 @@ export function Music({ ctx }) {
                   state.editing = null;
                   state.dirty = false;
                   state.query = '';
+                  setQueryDraft('');
                   state.kind = '';
                   state.offset = 0;
                   await load();

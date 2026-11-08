@@ -273,6 +273,163 @@ try {
       assert.equal(link.toId, 'task-1');
       assert.equal(link.role, 'Tasks');
     },
+    today_direction: async () => {
+      await open('overview');
+      await page.evaluate(() => {
+        const overview = gigiTest.snapshot().state.overview;
+        gigiTest.set({
+          overview: {
+            ...overview,
+            finances: {
+              count: 3,
+              items: [
+                {
+                  id: 'income-equal',
+                  entity: 'finances',
+                  title: 'QA receivable',
+                  status: 'Expected',
+                  moneyCents: 10000,
+                  fields: { Direction: 'Income' }
+                },
+                {
+                  id: 'expense-equal',
+                  entity: 'finances',
+                  title: 'QA payable',
+                  status: 'Expected',
+                  moneyCents: 10000,
+                  fields: { Direction: 'Expense' }
+                },
+                {
+                  id: 'unknown-equal',
+                  entity: 'finances',
+                  title: 'QA unknown direction',
+                  status: 'Expected',
+                  moneyCents: 10000,
+                  fields: {}
+                }
+              ]
+            }
+          }
+        });
+      });
+      const income = page.getByRole('button', { name: 'QA receivable', exact: true });
+      const expense = page.getByRole('button', { name: 'QA payable', exact: true });
+      const unknown = page.getByRole('button', { name: 'QA unknown direction', exact: true });
+      assert.ok(
+        (await income.innerText()).includes('Income') &&
+          (await income.innerText()).includes('$100.00'),
+        'Today identifies incoming money beside its amount'
+      );
+      assert.ok(
+        (await expense.innerText()).includes('Expense') &&
+          (await expense.innerText()).includes('$100.00'),
+        'Today identifies outgoing money beside its amount'
+      );
+      assert.ok(
+        (await unknown.innerText()).includes('Direction not set'),
+        'unknown direction stays explicit'
+      );
+      await page.screenshot({ path: resolve(out, 'today-money-direction.png'), fullPage: true });
+    },
+    event_identity: async () => {
+      await open('overview');
+      await page.evaluate(() => {
+        const overview = gigiTest.snapshot().state.overview;
+        gigiTest.set({
+          overview: {
+            ...overview,
+            events: {
+              count: 4,
+              items: [
+                {
+                  id: 'qa-calendar',
+                  entity: 'schedule',
+                  title: 'QA calendar call',
+                  status: 'Confirmed',
+                  date: '2026-11-12T18:00:00Z/2026-11-12T19:00:00Z',
+                  fields: { Date: '2026-11-12T18:00:00Z/2026-11-12T19:00:00Z' }
+                },
+                {
+                  id: 'qa-performance',
+                  entity: 'gigs',
+                  title: 'QA stage set',
+                  status: 'Booked',
+                  date: '2026-11-12',
+                  fields: {
+                    Date: '2026-11-12',
+                    'Work kind': 'Performance',
+                    'Call Time': '17:00',
+                    'Set Time': '19:00'
+                  }
+                },
+                {
+                  id: 'qa-crew',
+                  entity: 'gigs',
+                  title: 'QA crew shift',
+                  status: 'Booked',
+                  date: '2026-11-12',
+                  fields: { Date: '2026-11-12', 'Work kind': 'Crew / work' }
+                },
+                {
+                  id: 'qa-all-day',
+                  entity: 'schedule',
+                  title: 'QA all day',
+                  date: '2026-11-12',
+                  fields: { Date: '2026-11-12', 'All Day': true }
+                }
+              ]
+            }
+          }
+        });
+      });
+      const calendar = await page
+        .getByRole('button', { name: 'QA calendar call', exact: true })
+        .innerText();
+      const performance = await page
+        .getByRole('button', { name: 'QA stage set', exact: true })
+        .innerText();
+      const crew = await page
+        .getByRole('button', { name: 'QA crew shift', exact: true })
+        .innerText();
+      const allDay = await page
+        .getByRole('button', { name: 'QA all day', exact: true })
+        .innerText();
+      assert.ok(calendar.includes('Calendar event'), 'Today identifies a Calendar record');
+      const expectedRange = await page.evaluate(() => {
+        const format = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' });
+        return `${format.format(new Date('2026-11-12T18:00:00Z'))} – ${format.format(new Date('2026-11-12T19:00:00Z'))}`;
+      });
+      assert.ok(
+        calendar.includes(expectedRange),
+        'Calendar range is explicit in viewer local time'
+      );
+      assert.ok(
+        performance.includes('Performance') &&
+          performance.includes('Call 17:00') &&
+          performance.includes('Set 19:00'),
+        'performance keeps its kind and call/set times'
+      );
+      assert.ok(
+        crew.includes('Crew / work') && crew.includes('Time not set'),
+        'crew stays distinct without invented times'
+      );
+      assert.ok(
+        allDay.includes('Calendar event') && allDay.includes('All day'),
+        'all-day semantics remain explicit'
+      );
+      await page.screenshot({ path: resolve(out, 'today-event-identity.png'), fullPage: true });
+      await page.evaluate(() => {
+        gigiTest.records.gigs[0].type = 'Festival';
+      });
+      await nav('Gigs & shifts').click();
+      const gig = await page
+        .getByRole('button', { name: 'Autumn showcase', exact: true })
+        .innerText();
+      assert.ok(
+        gig.includes('Performance') && gig.includes('Time not set') && gig.includes('Festival'),
+        'Gigs list retains kind, time and original type'
+      );
+    },
     profile: async () => {
       await open('overview');
       await page.evaluate(() => {
