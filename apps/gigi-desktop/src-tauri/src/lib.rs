@@ -1,3 +1,4 @@
+pub mod memory;
 mod gig_list;
 mod task_list;
 mod workspace_search;

@@ -1804,3 +1804,25 @@ test('a later turn retains authoritative transcript through its first history ou
     assert.equal(new Set(recovered.messages.map(x => x.id)).size, recovered.messages.length);
   } finally { await rm(dataDir, { recursive: true, force: true }); }
 });
+
+test('curated memory tools reach embedded chat with citations and requests stay native-review-only', async () => {
+  const {adapter,server,mcp}=await setup();const calls:any[]=[];const replies:any[]=[];
+  const original=mcp.request.bind(mcp);
+  mcp.request=async(method,params)=>{
+    if(method==='tools/list')return {tools:[...toolCatalog(),...['gigi_memory_search','gigi_memory_get','gigi_memory_request'].map(name=>({name,description:'Workspace memory is advisory; pending requires human review.',inputSchema:{type:'object'}}))]};
+    if(method==='tools/call'&&params.name.startsWith('gigi_memory_')){calls.push(params);return {content:[{type:'text',text:JSON.stringify(params.name==='gigi_memory_request'?{state:'pending_user_approval',requestId:'proposal'}:{items:[{text:'Morning rehearsal',state:'inferred',citation:'gigi-memory://w/m?revision=1'}]})}]};}
+    return original(method,params);
+  };
+  server.reply=(_id,result)=>{replies.push(result);};
+  await adapter.start({workspaceId:'w',message:'Remember rehearsal preferences'});
+  const profile=server.calls.find(x=>x.method==='thread/start')!.params;
+  assert.match(profile.baseInstructions,/Memory is advisory/);
+  assert.ok(profile.dynamicTools[0].tools.some((t:any)=>t.name==='gigi_memory_search'));
+  const emit=(tool:string,args:any)=>Promise.all(server.events.map(fn=>fn({id:2026,method:'item/tool/call',params:{threadId:'thread-1',tool,arguments:args}})));
+  await emit('gigi_memory_search',{query:'rehearsal',limit:1});
+  assert.equal(calls.at(-1).arguments.workspaceId,'w');assert.match(replies.at(-1).contentItems[0].text,/gigi-memory:\/\/w/);
+  await emit('gigi_memory_request',{requestId:'proposal',action:'save',entry:{text:'Morning rehearsal'}});
+  assert.match(replies.at(-1).contentItems[0].text,/pending_user_approval/);
+  const before=calls.length;await emit('gigi_memory_search',{workspaceId:'foreign',query:'rehearsal'});assert.equal(calls.length,before);assert.equal(replies.at(-1).success,false);
+  await emit('gigi_memory_review',{workspaceId:'w',requestId:'proposal',decision:'approve'});assert.equal(calls.length,before);assert.equal(replies.at(-1).success,false);
+});

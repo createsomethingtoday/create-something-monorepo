@@ -12,10 +12,10 @@ const groups = [
   ['Work', [['gigs', 'Gigs'], ['music', 'Music'], ['finances', 'Money'], ['services', 'Services']]],
   ['Admin', [['tasks', 'Tasks'], ['schedule', 'Schedule'], ['notes', 'Notes'], ['documents', 'Documents'], ['tags', 'Tags']]],
   ['Network', [['contacts', 'People'], ['companies', 'Companies'], ['locations', 'Places'], ['interactions', 'Interactions']]],
-  ['Platform', [['profile', 'Profile'], ['history', 'History'], ['appearance', 'Appearance'], ['settings', 'Settings'], ['appearance', 'Customize', 'preference-startPage'], ['settings', 'Safety', 'workspace-safety']]]
+  ['Platform', [['memory', 'Memory'], ['profile', 'Profile'], ['history', 'History'], ['appearance', 'Appearance'], ['settings', 'Settings'], ['appearance', 'Customize', 'preference-startPage'], ['settings', 'Safety', 'workspace-safety']]]
 ];
 const icons = {
-  gigs: 'calendar-days', music: 'music', finances: 'wallet', services: 'briefcase',
+  memory: 'sticky-note', gigs: 'calendar-days', music: 'music', finances: 'wallet', services: 'briefcase',
   tasks: 'list-checks', schedule: 'calendar-days', notes: 'sticky-note', documents: 'files',
   tags: 'tags', contacts: 'users', companies: 'building-2', locations: 'map-pin',
   interactions: 'messages-square', profile: 'user-round', history: 'history',

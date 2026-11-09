@@ -1,4 +1,4 @@
-use gigi_desktop_lib::{domain,music_mcp,social_mcp,source_jobs,artwork_mcp};
+use gigi_desktop_lib::{domain,music_mcp,social_mcp,source_jobs,artwork_mcp,memory};
 use serde_json::{json, Value};
 use std::fs;
 use std::io::{self, BufRead, Read, Write};
@@ -120,6 +120,7 @@ fn tool_catalog() -> Value {
             "annotations":{"readOnlyHint":read_only,"destructiveHint":operation == &"backup.restore"}
         })
     }).collect();
+    tools.extend(memory::catalog());
     tools.extend(music_mcp::catalog());
     tools.extend(artwork_mcp::catalog());
     tools.extend(social_mcp::catalog());
@@ -156,7 +157,7 @@ fn reply(root: &std::path::Path, request: &Value) -> Option<Value> {
         "tools/call" => {
             let params = request.get("params").unwrap_or(&Value::Null);
             let name = params.get("name").and_then(Value::as_str).unwrap_or("");
-            let operation = if let Some(op)=source_jobs::tool_operation(name){op}else if music_mcp::handles(name)||social_mcp::handles(name)||artwork_mcp::handles(name){name}else if let Some((_,operation,_))=TOOLS.iter().find(|(candidate,_,_)|*candidate==name){*operation}else{
+            let operation = if let Some(op)=memory::tool_operation(name){op}else if let Some(op)=source_jobs::tool_operation(name){op}else if music_mcp::handles(name)||social_mcp::handles(name)||artwork_mcp::handles(name){name}else if let Some((_,operation,_))=TOOLS.iter().find(|(candidate,_,_)|*candidate==name){*operation}else{
                 return Some(json!({"jsonrpc":"2.0","id":id,"error":{"code":-32602,"message":"unknown GiGi tool"}}));
             };
             let arguments = params
@@ -303,7 +304,7 @@ mod tests {
             &json!({"jsonrpc":"2.0","id":1,"method":"tools/list"}),
         )
         .unwrap();
-        assert_eq!(listed["result"]["tools"].as_array().unwrap().len(), TOOLS.len()+music_mcp::catalog().len()+social_mcp::catalog().len()+source_jobs::catalog().len()+artwork_mcp::catalog().len());
+        assert_eq!(listed["result"]["tools"].as_array().unwrap().len(), TOOLS.len()+memory::catalog().len()+music_mcp::catalog().len()+social_mcp::catalog().len()+source_jobs::catalog().len()+artwork_mcp::catalog().len());
         assert_eq!(
             listed["result"]["tools"].as_array().unwrap().iter().find(|tool|tool["name"]=="gigi_records_list").unwrap()["inputSchema"]["properties"]["limit"]["type"],
             "integer"

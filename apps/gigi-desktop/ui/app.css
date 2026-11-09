@@ -506,3 +506,5 @@ details[open] > summary {
 }
 
 /* GIGI_RECONCILED_NAVIGATION_STATES_END */
+
+.memory-row { border-block-start: var(--border-width-1, 1px) solid var(--color-border-primary); overflow-wrap: anywhere; }

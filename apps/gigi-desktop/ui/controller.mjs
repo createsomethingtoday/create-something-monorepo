@@ -1,3 +1,4 @@
+import { createWorkspaceMemory } from '../web/workspace-memory.mjs';
 // Native transaction/navigation controller, extracted from the tested ESM app.
 // This module renders no HTML; React/Astryx owns every shipped surface.
 import {
@@ -80,6 +81,7 @@ import {
   linkInput
 } from '../web/model.mjs';
 export function startController({ renderUI, invoke, initialize } = {}) {
+  const memoryControllers = new Map();
   const root = document.querySelector('#app');
   // Astryx AppShell owns the page scroller; onboarding still uses the window.
   const pageScroll = () => root.querySelector('[role="main"]');
@@ -2205,8 +2207,19 @@ async function finishTask(id) {
   );
 
   function context() {
+    const memoryWorkspace = workspaceId();
+    if (!memoryControllers.has(memoryWorkspace)) {
+      memoryControllers.set(memoryWorkspace, createWorkspaceMemory({
+        call: bridge.call,
+        workspaceId: () => memoryWorkspace,
+        changed: () => { if (workspaceId() === memoryWorkspace) render(); },
+        notice: (message) => { if (workspaceId() === memoryWorkspace) notice(message); }
+      }));
+    }
+    const memoryController = memoryControllers.get(memoryWorkspace);
     return {
       state,
+      memory: memoryController,
       preferences,
       preferencesDraft,
       preferencesExported,
