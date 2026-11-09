@@ -10,7 +10,7 @@ import {
 	OVERFLOW_TOLERANCE_PX,
 	RENDER_VIEWPORTS,
 	describePageError,
-	emulatePointerInPage,
+	emulateVisitorInPage,
 	isIgnoredPageError,
 	measureLayoutInPage,
 	scrollSweepInPage,
@@ -62,7 +62,8 @@ async function renderViewport(
 	browser: Browser,
 	url: string,
 	viewport: RenderViewport,
-	errors: Map<string, PageErrorObservation>
+	errors: Map<string, PageErrorObservation>,
+	userAgent: string
 ): Promise<ViewportObservation> {
 	const page = await browser.newPage();
 	page.on('pageerror', (error: Error) => {
@@ -74,7 +75,8 @@ async function renderViewport(
 	});
 	try {
 		await page.setViewport({ width: viewport.width, height: viewport.height, deviceScaleFactor: 1 });
-		await page.evaluateOnNewDocument(emulatePointerInPage, viewport.pointer);
+		await page.setUserAgent(userAgent);
+		await page.evaluateOnNewDocument(emulateVisitorInPage, viewport.pointer);
 		let response: Awaited<ReturnType<Page['goto']>> = null;
 		try {
 			response = await page.goto(url, { waitUntil: 'load', timeout: NAVIGATION_TIMEOUT_MS });
@@ -117,12 +119,12 @@ async function renderViewport(
 	}
 }
 
-async function renderPage(browser: Browser, url: string): Promise<PageRenderObservation> {
+async function renderPage(browser: Browser, url: string, userAgent: string): Promise<PageRenderObservation> {
 	const errors = new Map<string, PageErrorObservation>();
 	try {
 		// One tab per viewport: each loads the page fresh at its own width, as a visitor would.
 		const viewports = await Promise.all(
-			RENDER_VIEWPORTS.map((viewport) => renderViewport(browser, url, viewport, errors))
+			RENDER_VIEWPORTS.map((viewport) => renderViewport(browser, url, viewport, errors, userAgent))
 		);
 		return { url, status: 'ok', viewports, uncaughtErrors: [...errors.values()] };
 	} catch (error) {
@@ -172,11 +174,13 @@ export async function validateRendering(
 	}
 
 	try {
+		// The same Chrome, without the "HeadlessChrome" product token some scripts check for.
+		const userAgent = (await browser.userAgent()).replace('HeadlessChrome/', 'Chrome/');
 		const pages: PageRenderObservation[] = [];
 		for (const url of targets) {
 			// Pages left when the time budget runs out count as not rendered.
 			if (options.deadline !== undefined && Date.now() > options.deadline) break;
-			pages.push(await renderPage(browser, url));
+			pages.push(await renderPage(browser, url, userAgent));
 		}
 		return summarizeRendering(pages, context);
 	} finally {

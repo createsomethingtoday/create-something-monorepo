@@ -169,15 +169,24 @@ export function measureLayoutInPage(tolerancePx: number, maxOffenders: number): 
 }
 
 /**
- * Answer matchMedia hover and pointer queries as a mouse or a touch device
- * would. Cloudflare's headless Chrome reports (hover: none) and
- * (pointer: none) at every width and cannot emulate either, so a script that
- * runs only for mouse users (for example, smooth scrolling) would never run
- * and its errors would be missed. Runs in the page before any page script
- * (evaluateOnNewDocument); CSS media rules are not affected. See the module
- * comment for the constraints.
+ * Make the headless browser look like a visitor's browser to page scripts.
+ * Runs in the page before any page script (evaluateOnNewDocument). See the
+ * module comment for the constraints.
+ *
+ * - matchMedia hover and pointer queries answer as a mouse or a touch device
+ *   would. Cloudflare's headless Chrome reports (hover: none) and
+ *   (pointer: none) at every width and cannot emulate either, so a script
+ *   that runs only for mouse users (for example, smooth scrolling) would never
+ *   run and its errors would be missed. CSS media rules are not affected.
+ * - navigator.webdriver reads false, as in a visitor's browser, so scripts
+ *   that change behavior for automated browsers behave normally.
  */
-export function emulatePointerInPage(pointer: 'touch' | 'mouse'): void {
+export function emulateVisitorInPage(pointer: 'touch' | 'mouse'): void {
+	try {
+		Object.defineProperty(Navigator.prototype, 'webdriver', { value: false, configurable: true });
+	} catch {
+		// Leave the flag as it is if the browser refuses.
+	}
 	const original = window.matchMedia.bind(window);
 	const mouse = pointer === 'mouse';
 	const always = '(min-width: 0px)';
