@@ -200,7 +200,7 @@ describe('bounded JWKS rotation', () => {
 		expect(fetcher).toHaveBeenCalledTimes(2);
 		const args = fetcher.mock.calls[1] as unknown as [string, RequestInit];
 		expect(args[1].signal).toBeInstanceOf(AbortSignal);
-		expect(args[1].redirect).toBe('error');
+		expect(args[1].redirect).toBe('manual');
 	});
 	it('fails closed on outage and invalid documents without retry storms or expired-key fallback', async () => {
 		let clock = now * 1000;
