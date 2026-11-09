@@ -1,0 +1,30 @@
+{
+  "name": "@create-something/a2a",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node ../../scripts/run-wrangler.mjs dev",
+    "build": "vite build",
+    "check": "tsc --noEmit && tsc -p tsconfig.web.json --noEmit",
+    "test": "tsx --test test/*.test.ts",
+    "types": "node ../../scripts/run-wrangler.mjs types --env-interface A2AEnv --include-runtime=false --strict-vars=false",
+    "deploy": "pnpm build && node ../../scripts/run-wrangler.mjs deploy",
+    "cli": "tsx src/cli.ts"
+  },
+  "dependencies": {
+    "effect": "3.22.2",
+    "ipaddr.js": "2.2.0",
+    "jose": "6.1.3",
+    "standardwebhooks": "1.0.0",
+    "@cloudflare/containers": "0.3.7"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "4.20260621.1",
+    "@types/node": "24.10.9",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3",
+    "vite": "7.3.6",
+    "wrangler": "4.159.0"
+  }
+}

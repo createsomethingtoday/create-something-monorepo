@@ -1,0 +1,30 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cs-a2a",
+  "main": "src/index.ts",
+  "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
+  "compatibility_date": "2026-11-09",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "routes": [{"pattern":"a2a.createsomething.agency","custom_domain":true}],
+  "assets": {"directory":"dist/client","binding":"ASSETS","run_worker_first":true},
+  "vars": {
+    "ENVIRONMENT":"production",
+    "BASE_URL":"https://a2a.createsomething.agency",
+    "IDENTITY_ISSUER":"https://id.createsomething.space",
+    "AUTH_RESOURCE":"https://a2a.createsomething.agency/mcp",
+    "AUTH_CLIENT_ID":"oauth_create-something-a2a-owner-console-and-cli_c64d074ca02f",
+    "ALLOWED_EMAILS":"micah@createsomething.io,dm@halfdozen.co",
+    "BUILD_REVISION":"development"
+  },
+  "d1_databases":[{"binding":"DB","database_name":"cs-a2a","database_id":"8724401c-8526-4a3a-a799-c721ad468aaf","migrations_dir":"migrations"}],
+  "queues": {
+    "producers":[{"binding":"DELIVERIES","queue":"cs-a2a-deliveries"}],
+    "consumers":[{"queue":"cs-a2a-deliveries","max_batch_size":10,"max_batch_timeout":1,"max_retries":5,"dead_letter_queue":"cs-a2a-deliveries-dlq"}]
+  },
+  "durable_objects":{"bindings":[{"name":"CALLBACK_SENDER","class_name":"A2ACallbackSender"}]},
+  "migrations":[{"tag":"v1","new_sqlite_classes":["A2ACallbackSender"]}],
+  "containers":[{"class_name":"A2ACallbackSender","image":"./sender/Dockerfile","instance_type":"lite","max_instances":1}],
+  "triggers":{"crons":["* * * * *"]},
+  "observability":{"enabled":true,"head_sampling_rate":1,"traces":{"enabled":true,"head_sampling_rate":0.1}}
+}
