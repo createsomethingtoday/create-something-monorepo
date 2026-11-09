@@ -1023,6 +1023,52 @@ function extractExternalScripts(html) {
   }
 }
 __name(extractExternalScripts, "extractExternalScripts");
+// Wiring around GSAP tweens: guards, function and listener headers, flags,
+// tween vars, and reordering of existing nodes (looping sliders). None of
+// these blocks changes what the page shows or sends by itself, so they do not
+// count as unapproved code. The exemption applies only when GSAP is the
+// script's only behavior: a script that creates elements, uses the network,
+// timers, or storage, or writes markup, text, styles, or URLs keeps the
+// stricter count.
+var NON_GSAP_BEHAVIOR_PATTERN = new RegExp([
+  String.raw`createElement\s*\(`,
+  String.raw`\bfetch\s*\(`,
+  String.raw`XMLHttpRequest|sendBeacon|WebSocket|EventSource`,
+  String.raw`\bset(?:Interval|Timeout)\s*\(|requestAnimationFrame`,
+  String.raw`localStorage|sessionStorage|indexedDB|document\.cookie`,
+  String.raw`\b(?:eval|Function)\s*\(|\bimport\s*\(`,
+  String.raw`innerHTML|outerHTML|insertAdjacent(?:HTML|Element|Text)|document\.write`,
+  String.raw`\.(?:textContent|innerText|src|href|srcdoc|action)\s*\+?=(?!=)`,
+  String.raw`\.style\.[\w$]+\s*\+?=(?!=)|\.style\[|\.style\.(?:setProperty|cssText)`,
+  String.raw`setAttribute\s*\(|\blocation\b`
+].join("|"));
+var GSAP_WIRING_LISTENER_EVENTS = "DOMContentLoaded|load|click|resize|mouseenter|mouseleave|pointerenter|pointerleave";
+var GSAP_WIRING_CALLBACK = String.raw`(?:\(?[\w$\s,]*\)?\s*=>|function\s*[\w$]*\s*\([\w$\s,]*\))`;
+// Guard or branch header with a call-free condition: `if (busy) return`
+var GSAP_WIRING_GUARD_PATTERN = /^(?:else\s+)?if\s*\((.*)\)\s*(?:return)?$/;
+var GSAP_WIRING_BLOCK_PATTERNS = [
+  // Named function header: `function step(direction)`
+  /^(?:async\s+)?function\s*[\w$]*\s*\([\w$\s,=]*\)$/,
+  // UI listener header; the callback body is checked as separate blocks
+  new RegExp(String.raw`^[\w$.]+\.addEventListener\(\s*['"](?:${GSAP_WIRING_LISTENER_EVENTS})['"]\s*,\s*${GSAP_WIRING_CALLBACK}$`),
+  // Flag or counter set to a literal: `busy = true`
+  /^[\w$]+\s*=\s*(?:true|false|null|-?\d+(?:\.\d+)?)$/,
+  // Tween var with a literal or variable value: `x: -distance,`
+  /^[\w$]+\s*:\s*(?:-?[\w$.]+|"[^"]*"|'[^']*')\s*,?$/,
+  // Tween callback header: `onComplete: () =>`
+  new RegExp(String.raw`^[\w$]+\s*:\s*${GSAP_WIRING_CALLBACK}$`),
+  // Event plumbing: `e.preventDefault()`
+  /^[\w$.]+\.(?:preventDefault|stopPropagation)\(\)$/,
+  // Moving existing nodes: `rail.appendChild(lead)`
+  /^[\w$.]+\.(?:appendChild|insertBefore|prepend|append)\([\w$.\[\]\s,+-]*\)$/
+];
+function isGsapWiringBlock(block) {
+  if (containsPotentiallyHarmfulCode(block)) return false;
+  const guard = GSAP_WIRING_GUARD_PATTERN.exec(block);
+  if (guard) return !/[\w$\])]\s*\(/.test(guard[1]);
+  return GSAP_WIRING_BLOCK_PATTERNS.some((pattern) => pattern.test(block));
+}
+__name(isGsapWiringBlock, "isGsapWiringBlock");
 function findUnacceptedCode(script, acceptedPatterns) {
   const totalLength = script.length;
   let acceptedLength = 0;
@@ -1049,7 +1095,9 @@ function findUnacceptedCode(script, acceptedPatterns) {
   if (blockAcceptedRatio >= 0.3) {
     return [];
   }
+  const wiringExempt = !NON_GSAP_BEHAVIOR_PATTERN.test(script);
   const harmlessUnacceptedBlocks = unacceptedBlocks.filter((block) => {
+    if (wiringExempt && isGsapWiringBlock(block.trim())) return false;
     if (/^(var|let|const)\s+\w+\s*=/.test(block.trim())) return false;
     if (/^\w+\.\w+$/.test(block.trim())) return false;
     if (/^\w+\([^)]*\)$/.test(block.trim()) && !containsPotentiallyHarmfulCode(block)) return false;

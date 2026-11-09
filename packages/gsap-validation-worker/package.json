@@ -13,11 +13,12 @@
   "scripts": {
     "dev": "node ../../scripts/run-wrangler.mjs dev",
     "deploy": "node ../../scripts/run-wrangler.mjs deploy",
-    "test": "pnpm test:unicorn && pnpm test:keyboard && pnpm test:html-embed",
+    "test": "pnpm test:unicorn && pnpm test:keyboard && pnpm test:html-embed && pnpm test:dom-glue",
     "test:unicorn": "node scripts/test-unicorn-detection.mjs",
     "test:live": "node scripts/repro-live-worker.mjs",
     "test:keyboard": "node scripts/test-keyboard-accessibility.mjs",
-    "test:html-embed": "node scripts/test-html-embed-policy.mjs"
+    "test:html-embed": "node scripts/test-html-embed-policy.mjs",
+    "test:dom-glue": "node scripts/test-gsap-dom-glue.mjs"
   },
   "dependencies": {
     "parse5": "7.3.0"
