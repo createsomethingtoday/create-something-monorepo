@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	RENDERING_CATEGORY,
 	generateRenderingIssues,
+	describePageError,
 	isIgnoredPageError,
 	scriptSourceFromStack,
 	summarizeRendering,
@@ -136,6 +137,18 @@ describe('page error helpers', () => {
 		expect(scriptSourceFromStack(`ReferenceError: gsap is not defined\n    at ${SITE}/:123:5`)).toBe(`${SITE}/`);
 		expect(scriptSourceFromStack('ReferenceError: x is not defined')).toBeUndefined();
 		expect(scriptSourceFromStack(undefined)).toBeUndefined();
+	});
+
+	it('splits the location Cloudflare appends to the message, else falls back to the stack', () => {
+		expect(describePageError(`Lenis is not defined ${SITE}/:66:17`, undefined)).toEqual({
+			message: 'Lenis is not defined',
+			source: `${SITE}/:66:17`
+		});
+		expect(describePageError('gsap is not defined', `ReferenceError: gsap is not defined\n    at ${SITE}/js/app.js:3:1`)).toEqual({
+			message: 'gsap is not defined',
+			source: `${SITE}/js/app.js`
+		});
+		expect(describePageError("Unexpected token '}'", undefined)).toEqual({ message: "Unexpected token '}'" });
 	});
 });
 

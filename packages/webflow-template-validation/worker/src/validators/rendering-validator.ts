@@ -21,13 +21,15 @@ export interface RenderViewport {
 	name: 'mobile' | 'tablet' | 'desktop';
 	width: number;
 	height: number;
+	/** The input device scripts see through matchMedia hover and pointer queries. */
+	pointer: 'touch' | 'mouse';
 }
 
 /** Widths reviewers check: phone, tablet, and laptop. */
 export const RENDER_VIEWPORTS: readonly RenderViewport[] = [
-	{ name: 'mobile', width: 375, height: 812 },
-	{ name: 'tablet', width: 768, height: 1024 },
-	{ name: 'desktop', width: 1440, height: 900 }
+	{ name: 'mobile', width: 375, height: 812, pointer: 'touch' },
+	{ name: 'tablet', width: 768, height: 1024, pointer: 'touch' },
+	{ name: 'desktop', width: 1440, height: 900, pointer: 'mouse' }
 ];
 
 /** Pages rendered per run, home page first. */
@@ -167,6 +169,33 @@ export function measureLayoutInPage(tolerancePx: number, maxOffenders: number): 
 }
 
 /**
+ * Answer matchMedia hover and pointer queries as a mouse or a touch device
+ * would. Cloudflare's headless Chrome reports (hover: none) and
+ * (pointer: none) at every width and cannot emulate either, so a script that
+ * runs only for mouse users (for example, smooth scrolling) would never run
+ * and its errors would be missed. Runs in the page before any page script
+ * (evaluateOnNewDocument); CSS media rules are not affected. See the module
+ * comment for the constraints.
+ */
+export function emulatePointerInPage(pointer: 'touch' | 'mouse'): void {
+	const original = window.matchMedia.bind(window);
+	const mouse = pointer === 'mouse';
+	const always = '(min-width: 0px)';
+	const never = '(max-width: 0.001px)';
+	window.matchMedia = function (query: string) {
+		const rewritten = String(query)
+			.replace(/\(\s*(?:any-)?hover\s*:\s*hover\s*\)/gi, mouse ? always : never)
+			.replace(/\(\s*(?:any-)?hover\s*:\s*none\s*\)/gi, mouse ? never : always)
+			.replace(/\(\s*(?:any-)?hover\s*\)/gi, mouse ? always : never)
+			.replace(/\(\s*(?:any-)?pointer\s*:\s*fine\s*\)/gi, mouse ? always : never)
+			.replace(/\(\s*(?:any-)?pointer\s*:\s*coarse\s*\)/gi, mouse ? never : always)
+			.replace(/\(\s*(?:any-)?pointer\s*:\s*none\s*\)/gi, never)
+			.replace(/\(\s*(?:any-)?pointer\s*\)/gi, always);
+		return original(rewritten);
+	} as typeof window.matchMedia;
+}
+
+/**
  * Scroll to the bottom and back so scroll-triggered scripts run. Runs in the
  * page. See the module comment for the constraints.
  */
@@ -195,6 +224,18 @@ export function isIgnoredPageError(message: string): boolean {
 export function scriptSourceFromStack(stack: string | undefined): string | undefined {
 	const match = stack?.match(/https?:\/\/[^\s)]+?(?=:\d+:\d+|\)|\s|$)/);
 	return match?.[0];
+}
+
+/**
+ * Describe an uncaught page error. Cloudflare's puppeteer appends the throwing
+ * location ("Lenis is not defined https://site/:66:17") to the message; split
+ * it off and keep it as the source, since a line number helps the creator.
+ */
+export function describePageError(message: string, stack: string | undefined): PageErrorObservation {
+	const located = message.match(/^([\s\S]*?)\s+(https?:\/\/\S+:\d+:\d+)$/);
+	if (located) return { message: located[1], source: located[2] };
+	const source = scriptSourceFromStack(stack);
+	return source ? { message, source } : { message };
 }
 
 function pathOf(url: string): string {

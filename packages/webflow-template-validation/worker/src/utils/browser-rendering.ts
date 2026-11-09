@@ -9,9 +9,10 @@ import {
 	MAX_RENDERED_PAGES,
 	OVERFLOW_TOLERANCE_PX,
 	RENDER_VIEWPORTS,
+	describePageError,
+	emulatePointerInPage,
 	isIgnoredPageError,
 	measureLayoutInPage,
-	scriptSourceFromStack,
 	scrollSweepInPage,
 	summarizeRendering,
 	type PageErrorObservation,
@@ -65,14 +66,15 @@ async function renderViewport(
 ): Promise<ViewportObservation> {
 	const page = await browser.newPage();
 	page.on('pageerror', (error: Error) => {
-		const message = error?.message || String(error);
-		if (isIgnoredPageError(message)) return;
-		const source = scriptSourceFromStack(error?.stack);
-		const key = `${message}\n${source ?? ''}`;
-		if (!errors.has(key)) errors.set(key, source ? { message, source } : { message });
+		const observed = describePageError(error?.message || String(error), error?.stack);
+		if (isIgnoredPageError(observed.message)) return;
+		// Keyed without the line, so one error does not repeat per viewport or page variant.
+		const key = `${observed.message}\n${observed.source?.replace(/:\d+:\d+$/, '') ?? ''}`;
+		if (!errors.has(key)) errors.set(key, observed);
 	});
 	try {
 		await page.setViewport({ width: viewport.width, height: viewport.height, deviceScaleFactor: 1 });
+		await page.evaluateOnNewDocument(emulatePointerInPage, viewport.pointer);
 		let response: Awaited<ReturnType<Page['goto']>> = null;
 		try {
 			response = await page.goto(url, { waitUntil: 'load', timeout: NAVIGATION_TIMEOUT_MS });
