@@ -24,8 +24,9 @@ or the old HTML-string renderer. Existing pure models and native APIs remain.
   bridge to native FormData without weakening transaction guards.
 - `ui/controller.mjs`: transaction, route, stale-read/write and consent/approval
   logic extracted from the existing app. It generates no HTML.
-- `ui/app.css`: product layout and preference behavior; Astryx supplies component
-  anatomy, semantic tokens, typography, spacing and shapes.
+- `ui/app.css`: product states, preference behavior, calendar positioning and
+  decorative composition; Astryx component props own the application frame,
+  rows, spacing, typography and shapes.
 
 The old `web` renderer and its tests remain a behavioral reference. Those tests
 alone do not validate React. The new browser harness exercises the actual React
@@ -41,7 +42,7 @@ Core/CLI/Neutral are pinned together at **0.7.11**; React/ReactDOM at **19.2.4**
 and StyleX runtime at **0.19.1**. Astryx's prebuilt component CSS/JS is used; no
 copy of its components or custom StyleX compiler is introduced.
 
-Danny’s published DEV interface remains the approved layout baseline. The public 0.3.2 reconciliation imports the active React navigation, weekly Today, Calm Tasks/Gigs, G-train green, combined Search and guided/connected setup from Grantbot’s reviewed 71594fb source. `dev-*` source names identify that provenance; the shipped app remains the public GiGi identity. The technical foundation supplements his UI direction.
+Danny’s published DEV interface remains the approved layout baseline. The public 0.3.3 reconciliation imports the active React navigation, weekly Today, Calm Tasks/Gigs, G-train green, combined Search and guided/connected setup from Grantbot’s reviewed 71594fb source. `dev-*` source names identify that provenance; the shipped app remains the public GiGi identity. The technical foundation supplements his UI direction. Follow-up review replaces imported raw layout containers with actual Astryx layout and typography components and their spacing props. Decorative collage coordinates remain separate from the application layout. Partial and cancelled source imports offer an explicit recovery preview, including retries beginning at the first page; saving still requires a reviewed preview and approval.
 
 `astryx-themes.js` registers the generated `gigiDevTheme`, extending Neutral with the approved green for Studio and Paper. `ui/gigi-dev-theme.ts` and `ui/gigi-theme.ts` compile into local assets; the latter supplies Midnight. Existing theme IDs and preference schemas remain stable. Generated Theme previews use the same definitions.
 

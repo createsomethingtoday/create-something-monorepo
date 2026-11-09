@@ -3,7 +3,7 @@
 // Evidence is written outside the source tree unless explicitly overridden.
 import { createServer } from "vite";
 import { createRequire } from "node:module";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
@@ -391,11 +391,28 @@ try {
       `${label}: no document overflow`,
     );
   const snap = async (label) => {
+    // Astryx briefly carries an inert visual copy during viewport adaptation.
+    // Review the settled layout rather than capturing that finite transition.
+    await page.waitForFunction(() => [...document.querySelectorAll('[aria-hidden="true"][inert]')]
+      .every((copy) => !copy.querySelector('.gigi-dev-topbar')));
     await fits(label);
+    const geometry = await page.evaluate(() => ({
+      viewport: {width: innerWidth, height: innerHeight},
+      body: {width: document.body.scrollWidth, height: document.body.scrollHeight},
+      topbars: [...document.querySelectorAll('.gigi-dev-topbar')].map((bar) => ({
+        rect: bar.getBoundingClientRect().toJSON(),
+        hidden: Boolean(bar.closest('[aria-hidden="true"], [inert]')),
+        parent: bar.parentElement?.outerHTML.slice(0, 200)
+      }))
+    }));
+    writeFileSync(resolve(out, `${label}-geometry.json`), JSON.stringify(geometry, null, 2));
     await page.screenshot({
       path: resolve(out, `${label}.png`),
       fullPage: true,
     });
+    if (label === 'react-tasks-880x620' || label === 'react-tasks-390x844') {
+      await page.screenshot({ path: resolve(out, `${label}-viewport.png`), fullPage: false });
+    }
   };
   const choose = async (id, label, value) => {
     await page.locator(`#${id}-display`).click();
@@ -407,6 +424,15 @@ try {
   await page
     .getByRole("heading", { name: "Upcoming Gigs", exact: true })
     .waitFor();
+  assert.equal(await page.locator(".dev-calendar-day").count(), 7,
+    "weekly calendar keeps all seven days");
+  const calendarGeometry = await page.locator(".dev-week-calendar").evaluate((calendar) => {
+    const days = [...calendar.querySelectorAll(".dev-calendar-day")].map((day) => day.getBoundingClientRect());
+    return {sameRow: days.every((day) => Math.abs(day.top - days[0].top) < 1),
+      ordered: days.every((day, index) => index === 0 || day.left >= days[index - 1].right - 1)};
+  });
+  assert.ok(calendarGeometry.sameRow && calendarGeometry.ordered,
+    "calendar days stay in one ordered weekly row");
   // Calendar navigation changes only the week input. Task/payment windows
   // are returned by the native Today query and remain tied to today's date.
   const week = () =>
@@ -488,6 +514,11 @@ try {
     "soon",
   );
   await snap("react-tasks-studio-1280");
+  for (const [width, height] of [[1440, 900], [880, 620], [390, 844]]) {
+    await page.setViewportSize({ width, height });
+    await snap(`react-tasks-${width}x${height}`);
+  }
+  await page.setViewportSize({ width: 1280, height: 900 });
   await page.locator("#tasks-search").fill("No matching synthetic task");
   await page
     .getByRole("heading", { name: "No matching tasks.", exact: true })
@@ -616,12 +647,19 @@ try {
   assert.ok(
     (await page.locator(".dev-gig-row").innerText()).includes("The Green Room"),
   );
-  for (const width of [1280, 880, 600]) {
-    await page.setViewportSize({ width, height: 900 });
+  for (const width of [1440, 1280, 880, 600, 390]) {
+    await page.setViewportSize({ width, height: width === 880 ? 620 : 900 });
     await snap(`react-gigs-${width}`);
   }
   await page.setViewportSize({ width: 1280, height: 900 });
   await dismiss();
+  await page.locator(".dev-gig-row button").focus();
+  await page.keyboard.press("Enter");
+  await page.getByRole("button", { name: "Edit details", exact: true }).waitFor();
+  await page.locator("[data-back]").click();
+  await page.locator(".dev-gig-row").waitFor();
+  assert.equal(await page.locator(".dev-gig-row button").evaluate((button) => document.activeElement === button), true,
+    "record row returns focus to its own real button");
   await page.evaluate(() => {
     calmRecords.gigs[0].relations = [];
   });

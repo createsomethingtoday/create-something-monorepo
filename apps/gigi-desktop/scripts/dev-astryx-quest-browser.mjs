@@ -157,6 +157,63 @@ try {
   assert.equal(await page.evaluate(() => gigiTest.snapshot().state.selected?.title), 'Synthetic Friday');
   assert.deepEqual(errors, []);
   results.push('Saved progress restores through reads, reduced motion keeps final content visible without horizontal overflow at 390px, and Finish opens the exact saved gig.');
+  // Terminal receipts use recovery cursors; only an explicit preview may retry.
+  for (const state of ['partial', 'cancelled']) for (const retryCursor of [null, 'synthetic-retry-page-2']) {
+    await page.evaluate(({ state, retryCursor }) => {
+      const ctx = gigiTest.snapshot(), connected = ctx.devQuest.connected, imports = connected.imports;
+      connected.journey.start('results', 'contacts');
+      imports.state = { ...imports._empty('contacts'), source: { provider: 'gmail', state: 'connected', connectedAccountId: 'synthetic-account' },
+        receipt: { jobId: 'synthetic-terminal', state, retryCursor, nextCursor: null, createdCount: 1, failedCount: state === 'partial' ? 1 : 0,
+          scope: { workspaceId: ctx.state.workspace.id, provider: 'gmail', connectedAccountId: 'synthetic-account' } } };
+      globalThis.questRetryPreviewCalls = [];
+      imports.bridge.previewSource = async (workspaceId, provider, connectedAccountId, selection, cursor) => {
+        questRetryPreviewCalls.push({ workspaceId, provider, connectedAccountId, cursor: cursor ?? null });
+        return { previewId: 'synthetic-retry-preview', revision: 'synthetic-revision', expiresAt: Math.floor(Date.now()/1000)+60,
+          scope: { workspaceId, provider, connectedAccountId }, records: [], scannedCount: 0, selectedCount: 0, existingCount: 0, coverage: 'complete' };
+      };
+      gigiTest.render();
+    }, { state, retryCursor });
+    const writesBefore = await page.evaluate(() => gigiTest.calls.filter(entry => /records.save|relations.link|imports.commit|connections\.|auth.login|agent.chat.send/.test(entry.operation)).length);
+    assert.equal(await page.evaluate(() => questRetryPreviewCalls.length), 0);
+    const retry = page.getByRole('button', { name: 'Preview remaining records →', exact: true });
+    await retry.waitFor();
+    await page.screenshot({ path: resolve(out, `recovery-${state}-${retryCursor ? 'continuation' : 'first-page'}.png`), fullPage: true });
+    await retry.focus();
+    await page.keyboard.press('Enter');
+    await page.getByRole('heading', { name: 'Preview before importing', exact: true }).waitFor();
+    assert.deepEqual(await page.evaluate(() => questRetryPreviewCalls), [{ workspaceId: 'synthetic-astryx-rewrite', provider: 'gmail', connectedAccountId: 'synthetic-account', cursor: retryCursor }]);
+    assert.equal(await page.evaluate(() => gigiTest.calls.filter(entry => /records.save|relations.link|imports.commit|connections\.|auth.login|agent.chat.send/.test(entry.operation)).length), writesBefore);
+    assert.equal(await page.getByRole('button', { name: 'Preview remaining records →', exact: true }).count(), 0);
+    await page.screenshot({ path: resolve(out, `retry-${state}-${retryCursor ? 'continuation' : 'first-page'}.png`), fullPage: true });
+    results.push(`${state} receipt exposes an explicit keyboard-operable retry preview using ${retryCursor ? 'the recovery cursor' : 'the first page when retryCursor is null'}, without automatic import, consent or record writes.`);
+  }
+  // Exercise the rendered Astryx-owned frame and responsive budgets, not source wrappers.
+  for (const theme of ['paper', 'midnight']) for (const viewport of [{ width: 880, height: 620 }, { width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport);
+    await page.evaluate(theme => {
+      const ctx = gigiTest.snapshot();
+      ctx.actions.setPreferences({ ...ctx.preferences, theme });
+      ctx.devQuest.connected.journey.start('assistant');
+      gigiTest.render();
+    }, theme);
+    await page.locator('#setup-heading').waitFor();
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    const frame = await page.evaluate(() => ({
+      stack: document.querySelector('main.quest').classList.contains('astryx-stack'),
+      grid: document.querySelector('.quest-layout').classList.contains('astryx-grid'),
+      mission: document.querySelector('.quest-mission').classList.contains('astryx-stack'),
+      route: document.querySelector('.quest-map').classList.contains('astryx-grid'),
+      padding: document.querySelector('main.quest').dataset.paddingInline,
+      columns: getComputedStyle(document.querySelector('.quest-layout')).gridTemplateColumns.split(' ').length
+    }));
+    assert.equal(frame.stack && frame.grid && frame.mission && frame.route, true);
+    assert.equal(frame.columns, viewport.width === 390 ? 1 : 2);
+    await page.getByRole('button', { name: 'Add a gig myself', exact: true }).focus();
+    assert.equal(await page.getByRole('button', { name: 'Add a gig myself', exact: true }).evaluate(node => node === document.activeElement), true);
+    await page.screenshot({ path: resolve(out, `layout-${theme}-${viewport.width}.png`), fullPage: true });
+  }
+  assert.deepEqual(errors, []);
+  results.push('Actual Astryx Grid/Stack frames retain two desktop columns and one mobile column, keyboard access and no horizontal overflow at 880×620,1440×900,390×844 in Paper and Midnight.');
   const report = { status: 'passed', results, limits: 'Synthetic browser fixture only. Native WebKit, live provider consent/import, phone access and real profiles are not exercised.' };
   writeFileSync(resolve(out, 'report.json'), JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report, null, 2));

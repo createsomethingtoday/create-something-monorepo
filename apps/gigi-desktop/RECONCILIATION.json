@@ -1,5 +1,5 @@
 {
-  "version": "0.3.2",
+  "version": "0.3.3",
   "sourceRepository": "gigi-team/grantbot",
   "sourceCommit": "71594fb0412dbd1c8523f3791e2adba9cf32c942",
   "sourceCanonicalMerge": "b083717a1aadea9f19d121e238a5b4ed64d397b1",
@@ -22,7 +22,9 @@
   ],
   "boundedCorrections": [
     "out-of-date AI connection status cannot overwrite a newer request",
-    "Today uses the same finished/archived-task classification as the task collection"
+    "Today uses the same finished/archived-task classification as the task collection",
+    "Astryx layout and typography components own the reconciled Work and setup containers",
+    "Partial and cancelled imports expose an explicit recovery preview, including first-page retries"
   ],
   "limits": [
     "Unpublished contributor-device changes are unavailable",

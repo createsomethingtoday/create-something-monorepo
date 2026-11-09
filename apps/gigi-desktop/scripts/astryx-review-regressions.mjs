@@ -251,8 +251,8 @@ try {
       });
       const incoming = page.getByRole('region', { name: 'Receivable', exact: true });
       const outgoing = page.getByRole('region', { name: 'Payable', exact: true });
-      assert.ok((await incoming.getByRole('button', { name: 'QA receivable', exact: true }).innerText()).includes('$100.00'), 'Today labels incoming money by its Receivable column');
-      assert.ok((await outgoing.getByRole('button', { name: 'QA payable', exact: true }).innerText()).includes('$100.00'), 'Today labels outgoing money by its Payable column');
+      assert.ok((await incoming.getByRole('listitem').filter({ has: page.getByRole('button', { name: 'QA receivable', exact: true }) }).innerText()).includes('$100.00'), 'Today labels incoming money by its Receivable column');
+      assert.ok((await outgoing.getByRole('listitem').filter({ has: page.getByRole('button', { name: 'QA payable', exact: true }) }).innerText()).includes('$100.00'), 'Today labels outgoing money by its Payable column');
       assert.equal(await incoming.getByRole('button', { name: 'QA payable', exact: true }).count(), 0, 'payable cannot appear as receivable');
       assert.equal(await outgoing.getByRole('button', { name: 'QA receivable', exact: true }).count(), 0, 'receivable cannot appear as payable');
       await page.screenshot({ path: resolve(out, 'today-money-direction.png'), fullPage: true });

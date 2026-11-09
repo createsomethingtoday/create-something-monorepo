@@ -5,7 +5,7 @@ React 19 / Astryx component rewrite. Tauri ships `dist` built from `index.html`
 and `ui/main.jsx`; the old `web/index.html` renderer is a regression reference,
 not the production entry.
 
-- Use actual Astryx components and theme packages. `ui/app.css` owns layout only.
+- Use actual Astryx components and theme packages. Their props own ordinary layout and spacing; `ui/app.css` retains product states, calendar positioning and decorative composition.
 - `ui/controller.mjs` retains native transactions, stale-read/write checks,
   consent, approval, recovery and navigation guards. Pure models remain in `web`.
 - Theme source is `ui/gigi-theme.ts`; regenerate its built assets with
