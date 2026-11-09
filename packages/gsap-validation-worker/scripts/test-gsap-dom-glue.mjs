@@ -132,6 +132,31 @@ const nonGsapBehavior = {
   frame.src = 'https://widget.example.com/embed';
   document.body.appendChild(frame);
 });`,
+  'class-driven panel toggle': `document.addEventListener('DOMContentLoaded', () => {
+  gsap.to('.hero', { opacity: 1, duration: 1 });
+  const trigger = document.querySelector('.panel-trigger');
+  const panel = document.querySelector('.panel');
+  if (!trigger || !panel) return;
+  let open = false;
+  function togglePanel() {
+    if (!panel) return;
+    open = !open;
+    panel.classList.toggle('is-open');
+  }
+  trigger.addEventListener('click', (e) => { e.preventDefault(); togglePanel(); });
+});`,
+  'dataset and attribute state': `document.addEventListener('DOMContentLoaded', () => {
+  gsap.to('.hero', { opacity: 1, duration: 1 });
+  const toggle = document.querySelector('.menu-toggle');
+  const menu = document.querySelector('.menu');
+  if (!toggle || !menu) return;
+  function flip() {
+    if (!menu) return;
+    menu.dataset.state = menu.dataset.state === 'open' ? 'closed' : 'open';
+    menu.toggleAttribute('hidden');
+  }
+  toggle.addEventListener('click', (e) => { e.preventDefault(); flip(); });
+});`,
   'network request': `document.addEventListener('DOMContentLoaded', () => {
   gsap.from('.feed', { opacity: 0, duration: 0.5 });
   const feed = document.querySelector('.feed');

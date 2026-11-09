@@ -1028,7 +1028,9 @@ __name(extractExternalScripts, "extractExternalScripts");
 // these blocks changes what the page shows or sends by itself, so they do not
 // count as unapproved code. The exemption applies only when GSAP is the
 // script's only behavior: a script that creates elements, uses the network,
-// timers, or storage, or writes markup, text, styles, or URLs keeps the
+// timers, or storage, writes markup, text, styles, or URLs, or changes UI
+// state another way (classes, data attributes, attributes, form or
+// visibility properties, programmatic clicks or scrolling) keeps the
 // stricter count.
 var NON_GSAP_BEHAVIOR_PATTERN = new RegExp([
   String.raw`createElement\s*\(`,
@@ -1040,7 +1042,11 @@ var NON_GSAP_BEHAVIOR_PATTERN = new RegExp([
   String.raw`innerHTML|outerHTML|insertAdjacent(?:HTML|Element|Text)|document\.write`,
   String.raw`\.(?:textContent|innerText|src|href|srcdoc|action)\s*\+?=(?!=)`,
   String.raw`\.style\.[\w$]+\s*\+?=(?!=)|\.style\[|\.style\.(?:setProperty|cssText)`,
-  String.raw`setAttribute\s*\(|\blocation\b`
+  String.raw`setAttribute\s*\(|\blocation\b`,
+  String.raw`classList\.(?:add|remove|toggle|replace)\s*\(|\.className\s*\+?=(?!=)`,
+  String.raw`\.dataset\.[\w$]+\s*=(?!=)|\.dataset\[|(?:toggle|remove)Attribute\s*\(`,
+  String.raw`\.(?:hidden|checked|disabled|open|value|selected)\s*=(?!=)`,
+  String.raw`\.(?:click|scrollIntoView|scrollTo|scrollBy)\s*\(`
 ].join("|"));
 var GSAP_WIRING_LISTENER_EVENTS = "DOMContentLoaded|load|click|resize|mouseenter|mouseleave|pointerenter|pointerleave";
 var GSAP_WIRING_CALLBACK = String.raw`(?:\(?[\w$\s,]*\)?\s*=>|function\s*[\w$]*\s*\([\w$\s,]*\))`;
