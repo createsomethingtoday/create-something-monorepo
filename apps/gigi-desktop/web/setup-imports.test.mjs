@@ -111,3 +111,46 @@ test('native expired-session rejection becomes a recoverable source status',asyn
  const html=setupJourneyView({journey:{state:{step:'source'}},workspace:{id:'w1',name:'Synthetic'},imports:flow});
  assert.match(html,/data-guided-action="source-signin"/);assert.doesNotMatch(html,/reauthentication_required/);
 });
+
+for (const failedRead of ['receipt', 'candidate']) test(`an unconfirmed import survives ${failedRead} read failures until continuation reconciles its exact job`, async()=>{
+  const f=fixture(),flow=new SetupImports(f.bridge,'w1',{storage:f.local,now});
+  await flow.restore('contacts');await flow.preview('contacts');
+  let outage=true;
+  const status=f.bridge.importStatus,get=f.bridge.getRecord;
+  f.bridge.importStatus=async(...args)=>{if(outage&&failedRead==='receipt'){f.calls.push(['receipt',...args]);throw new Error('Synthetic receipt unavailable');}return status(...args);};
+  f.bridge.getRecord=async(...args)=>{if(outage&&failedRead==='candidate'){f.calls.push(['get',...args]);throw new Error('Synthetic imported record unavailable');}return get(...args);};
+  assert.equal(await flow.importReviewed(),null);
+  const exact=structuredClone(flow.state.importInput);
+  assert.ok(exact);assert.equal(f.calls.filter(c=>c[0]==='commit').length,1);
+  for(const options of [{},{fresh:true}]) {
+    assert.equal(await flow.preview('contacts',options),null);
+    assert.equal(f.calls.filter(c=>c[0]==='preview').length,1,'failed recovery must not fetch another preview');
+    assert.deepEqual(flow.state.importInput,exact);
+  }
+  const reopened=new SetupImports(f.bridge,'w1',{storage:f.local,now});await reopened.restore('contacts');
+  assert.deepEqual(reopened.state.importInput,exact);assert.equal(f.calls.filter(c=>c[0]==='commit').length,1);
+  outage=false;
+  const before=f.calls.length;f.preview.previewId='p2';f.preview.jobId='p2';
+  await reopened.preview('contacts');
+  const continuation=f.calls.slice(before);
+  assert.deepEqual(continuation.map(c=>c[0]),['receipt','get','preview']);
+  assert.equal(continuation[0][2],exact.previewId);assert.equal(continuation[2][5],'opaque-next');
+  assert.equal(reopened.state.preview.previewId,'p2');assert.equal(reopened.state.importInput,null);
+  assert.equal(f.calls.filter(c=>c[0]==='commit').length,1,'receipt recovery never repeats the import');
+});
+
+test('a still-preview import blocks continuation but retains the exact approved retry key',async()=>{
+  const f=fixture(),flow=new SetupImports(f.bridge,'w1',{storage:f.local,now});
+  await flow.restore('contacts');await flow.preview('contacts');
+  let committed=false;
+  f.bridge.commitSource=async(...args)=>{f.calls.push(['commit',...args]);if(f.calls.filter(c=>c[0]==='commit').length===1)throw new Error('Synthetic request not confirmed');committed=true;return structuredClone(f.receipt);};
+  f.bridge.importStatus=async(...args)=>{f.calls.push(['receipt',...args]);return structuredClone(committed?f.receipt:{...f.preview,state:'preview'});};
+  await flow.importReviewed();const exact=structuredClone(flow.state.importInput);assert.ok(exact);
+  assert.equal(await flow.preview('contacts'),null);assert.equal(f.calls.filter(c=>c[0]==='preview').length,1);
+  assert.deepEqual(flow.state.importInput,exact);assert.equal(f.calls.filter(c=>c[0]==='commit').length,1);
+  await flow.importReviewed();
+  const commits=f.calls.filter(c=>c[0]==='commit');assert.equal(commits.length,2);assert.deepEqual(commits[0],commits[1]);
+  assert.equal(flow.state.receipt.state,'complete');assert.equal(flow.state.candidates[0].id,'mail-1');
+  assert.deepEqual(flow.state.importInput,exact);await flow.importReviewed();
+  assert.equal(f.calls.filter(c=>c[0]==='commit').length,2,'a confirmed terminal import remains a read-only retry');
+});

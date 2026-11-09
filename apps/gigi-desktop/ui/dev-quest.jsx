@@ -203,14 +203,15 @@ function CandidateProposal({ ctx }) {
 
 function SourceReview({ ctx }) {
   const q = ctx.devQuest, imports = q.connected.imports, s = imports.state, p = s.preview, r = s.receipt, busy = !!imports.busy;
-  const retry = r && ['partial', 'cancelled'].includes(r.state);
-  const next = !retry && (r?.nextCursor || (!r && p?.nextCursor));
+  const unconfirmed = imports.hasUnconfirmedImport;
+  const retry = !unconfirmed && r && ['partial', 'cancelled'].includes(r.state);
+  const next = !unconfirmed && !retry && (r?.nextCursor || (!r && p?.nextCursor));
   const action = (name, label, primary = false) => <QuestButton disabled={busy} primary={primary} onClick={() => q.guided(name)}>{label}</QuestButton>;
   return <>
-    {s.needsFreshPreview || s.sourceMismatch ? action('fresh-preview', 'Start a fresh preview →', !s.wins.length) : !p && !r ? action('preview', 'Preview a source page →', true) : null}
-    {p && !r && <VStack as="section" gap={3} className="guided-review"><Heading level={2} weight="medium">Preview before importing</Heading><Text as="p">{p.scannedCount} checked · {p.selectedCount} in range · {p.existingCount} already saved.</Text>
-      {p.records?.length ? <><VStack as="ul" gap={3} paddingInlineStart={5} isScrollable className="guided-preview-list">{p.records.map((record, index) => <VStack as="li" gap={1} key={record.id || index}><Text type="label" weight="medium">{record.title}</Text>{record.fields?.Date && <Text type="supporting" size="xsm">{record.fields.Date}</Text>}</VStack>)}</VStack>{action('import-reviewed', 'Import this reviewed page →', true)}</> : <Text as="p">No matching records in this page. More may be available.</Text>}
-      {action('discard-preview', 'Discard preview')}
+    {!unconfirmed && (s.needsFreshPreview || s.sourceMismatch ? action('fresh-preview', 'Start a fresh preview →', !s.wins.length) : !p && !r ? action('preview', 'Preview a source page →', true) : null)}
+    {p && !r && <VStack as="section" gap={3} className="guided-review"><Heading level={2} weight="medium">{unconfirmed ? 'Check the import result' : 'Preview before importing'}</Heading><Text as="p">{p.scannedCount} checked · {p.selectedCount} in range · {p.existingCount} already saved.</Text>
+      {p.records?.length ? <><VStack as="ul" gap={3} paddingInlineStart={5} isScrollable className="guided-preview-list">{p.records.map((record, index) => <VStack as="li" gap={1} key={record.id || index}><Text type="label" weight="medium">{record.title}</Text>{record.fields?.Date && <Text type="supporting" size="xsm">{record.fields.Date}</Text>}</VStack>)}</VStack>{action('import-reviewed', unconfirmed ? 'Recover or retry exact import' : 'Import this reviewed page →', !unconfirmed)}</> : <Text as="p">No matching records in this page. More may be available.</Text>}
+      {!unconfirmed && action('discard-preview', 'Discard preview')}
     </VStack>}
     {r && <VStack as="section" gap={3} className="guided-receipt" role="status"><Heading level={2} weight="medium">{['committing', 'cancelling'].includes(r.state) ? 'Import is still running' : r.state === 'partial' ? 'Import needs review' : r.state === 'cancelled' ? 'Import stopped' : 'Source records saved'}</Heading>
       <Text as="p">{r.createdCount || 0} saved · {r.existingCount || 0} existing · {r.failedCount || 0} failed.</Text>
@@ -218,7 +219,7 @@ function SourceReview({ ctx }) {
       {retry && !s.needsFreshPreview && !s.sourceMismatch && action('preview', 'Preview remaining records →', true)}
       {action('check-import', 'Check import receipt')}{['committing', 'cancelling'].includes(r.state) && action('discard-preview', 'Stop import')}
     </VStack>}
-    {s.importInput && !r && <><Text as="p" role="status">An import was submitted. Check its receipt before starting another.</Text>{action('check-import', 'Check import result →', true)}</>}
+    {s.importInput && !r && <><Text as="p" role="status">An import was submitted. Check its receipt before starting another. Stopping keeps records already saved.</Text>{action('check-import', 'Check import result →', true)}{action('discard-preview', 'Stop import')}</>}
     {!!s.candidates.length && <VStack as="section" gap={3} className="guided-candidates"><Heading level={2} weight="medium">Choose a record to use</Heading>{s.candidates.map((record) => <QuestButton key={record.id} disabled={busy} onClick={() => q.selectCandidate(record.id)}>{record.title} · {record.fields?.Date || 'Open and review details'}</QuestButton>)}</VStack>}
     {next && action('next-preview', 'Preview the next page')}
     <details className="guided-coverage"><summary>Date range and coverage</summary><Text as="p">{s.selection?.from?.slice(0, 10) || 'Start'} to {s.selection?.to?.slice(0, 10) || 'end'}. Dates filter each page we check. {next ? 'More pages remain. Continue when you want to read more.' : p?.coverage === 'complete' ? 'This scan reached its end.' : 'This small scan does not establish complete date coverage.'}</Text></details>
@@ -300,7 +301,7 @@ export function DevQuest({ ctx }) {
         {!connected && view.storageWarning && <Text as="p" className="quest-storage-warning" role="status">Your records are saved, but tutorial progress could not be remembered on this Mac. You can keep using GiGi.</Text>}
         {connected && busy && <Text as="p" type="supporting" className="guided-busy" role="status">Checking this step. You can still explore your local work.</Text>}
       </VStack>;
-  return <VStack width="100%" gap={0} hAlign="center" ref={host} hAlign="center" className="dev-quest-surface" data-quest-owned="true">
+  return <VStack width="100%" gap={0} hAlign="center" ref={host} className="dev-quest-surface" data-quest-owned="true">
     <VStack as="main" width="100%" maxWidth="67.5rem" paddingInline={compact ? 4 : 8} paddingBlock={short || compact ? 4 : 6} gap={short || compact ? 4 : 6} className={`quest${connected ? ' setup-journey' : ''}`} data-quest-phase={phase} data-quest-route-ready={linked} data-quest-motion={connected ? wins.length ? 'gig' : '' : view.animation} data-quest-win={wins.at(-1)?.id || ''} aria-label={connected ? 'Connect and set up GiGi' : 'Set up GiGi'} aria-busy={busy}>
       <HStack as="header" gap={compact ? 3 : 5} vAlign="center" paddingBlockEnd={3} minHeight="3rem" className="quest-header"><HStack gap={1} vAlign="end" className="quest-brand"><Text type="large" size="2xl" weight="semibold">GiGi</Text><Text className="quest-brand-dot" aria-hidden="true" /></HStack><StackItem size="fill"><Text type="supporting" className="quest-header-label">{connected ? 'A little setup. Useful first results.' : 'A little setup. A lot less to remember.'}</Text></StackItem>
         {connected || ctx.state.workspace && phase > 0 ? <QuestButton variant="ghost" className="quest-pause" disabled={!connected && busy} onClick={() => connected ? q.guided('pause') : q.action('pause')}>Explore freely</QuestButton> : null}
