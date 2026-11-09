@@ -184,6 +184,42 @@ const nonGsapBehavior = {
   }
   trigger.addEventListener('click', (e) => { e.preventDefault(); reveal(); });
 });`,
+  'behavior inside a declaration (remove)': `document.addEventListener('DOMContentLoaded', () => {
+  gsap.to('.hero', { opacity: 1, duration: 1 });
+  const trigger = document.querySelector('.panel-close');
+  const panel = document.querySelector('.panel');
+  if (!trigger || !panel) return;
+  const closePanel = () => panel.remove();
+  function onClose() {
+    if (!panel) return;
+    closePanel();
+  }
+  trigger.addEventListener('click', (e) => { e.preventDefault(); onClose(); });
+});`,
+  'behavior inside a declaration (jQuery)': `document.addEventListener('DOMContentLoaded', () => {
+  gsap.to('.hero', { opacity: 1, duration: 1 });
+  const trigger = document.querySelector('.panel-trigger');
+  const panel = $('.panel');
+  if (!trigger || !panel) return;
+  const togglePanel = () => panel.slideToggle(300);
+  function onToggle() {
+    if (!panel) return;
+    togglePanel();
+  }
+  trigger.addEventListener('click', (e) => { e.preventDefault(); onToggle(); });
+});`,
+  'property write and global call': `document.addEventListener('DOMContentLoaded', () => {
+  gsap.to('.hero', { opacity: 1, duration: 1 });
+  const trigger = document.querySelector('.panel-trigger');
+  const panel = document.querySelector('.panel');
+  if (!trigger || !panel) return;
+  function onOpen() {
+    if (!panel) return;
+    panel.title = 'Opened';
+    alert('Panel opened');
+  }
+  trigger.addEventListener('click', (e) => { e.preventDefault(); onOpen(); });
+});`,
   'network request': `document.addEventListener('DOMContentLoaded', () => {
   gsap.from('.feed', { opacity: 0, duration: 0.5 });
   const feed = document.querySelector('.feed');

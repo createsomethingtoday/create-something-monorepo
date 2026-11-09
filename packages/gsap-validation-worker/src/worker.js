@@ -1026,8 +1026,10 @@ __name(extractExternalScripts, "extractExternalScripts");
 // Wiring around GSAP tweens: guards, function and listener headers, flags,
 // tween vars, and reordering of existing nodes (looping sliders). None of
 // these blocks changes what the page shows or sends by itself. A script
-// passes on wiring only when every block that is not GSAP or already
-// harmless is wiring; any other leftover block keeps the original count.
+// passes on wiring only when EVERY block that is not GSAP is wiring, a
+// read-only declaration (DOM lookups, measurements, math), or a call to a
+// function the script itself declares. Any other block, including behavior
+// hidden in a declaration, keeps the original count.
 // The exemption is also off when the script does anything besides GSAP:
 // creates elements, uses the network, timers, or storage, writes markup,
 // text, styles, or URLs, changes UI state another way (classes, data
@@ -1077,6 +1079,44 @@ function isGsapWiringBlock(block) {
   return GSAP_WIRING_BLOCK_PATTERNS.some((pattern) => pattern.test(block));
 }
 __name(isGsapWiringBlock, "isGsapWiringBlock");
+// Calls that only read the DOM or compute a value.
+var GSAP_WIRING_READ_ONLY_CALLS = /* @__PURE__ */ new Set([
+  "querySelector", "querySelectorAll", "getElementById", "getElementsByClassName", "getElementsByTagName",
+  "closest", "matches", "contains", "getComputedStyle", "getBoundingClientRect",
+  "parseFloat", "parseInt", "Number", "isNaN", "min", "max", "round", "floor", "ceil", "abs"
+]);
+var GSAP_WIRING_DECLARATION_PATTERN = /^(?:const|let|var)\s+[\w$]+\s*=\s*(.+)$/;
+var GSAP_WIRING_CALLBACK_HEADER_PATTERN = new RegExp(String.raw`^(?:async\s*)?${GSAP_WIRING_CALLBACK}$`);
+function isReadOnlyDeclaration(block, localFunctions) {
+  const declaration = GSAP_WIRING_DECLARATION_PATTERN.exec(block);
+  if (!declaration) return false;
+  const value = declaration[1].trim();
+  // `const step = (direction) =>`: the body is checked as separate blocks.
+  if (GSAP_WIRING_CALLBACK_HEADER_PATTERN.test(value)) return true;
+  // An expression body or an assignment in the value is behavior.
+  if (value.includes("=>") || /(?<![=!<>])=(?![=>])/.test(value) || /\bnew\b/.test(value)) return false;
+  for (const call of value.matchAll(/([\w$]+)\s*\(/g)) {
+    if (!GSAP_WIRING_READ_ONLY_CALLS.has(call[1]) && !localFunctions.has(call[1])) return false;
+  }
+  return true;
+}
+__name(isReadOnlyDeclaration, "isReadOnlyDeclaration");
+function isGsapWiringOnlyScript(script, unacceptedBlocks) {
+  if (NON_GSAP_BEHAVIOR_PATTERN.test(script)) return false;
+  const localFunctions = new Set();
+  for (const match of script.matchAll(/\bfunction\s+([\w$]+)\s*\(/g)) localFunctions.add(match[1]);
+  for (const match of script.matchAll(new RegExp(String.raw`\b(?:const|let|var)\s+([\w$]+)\s*=\s*(?:async\s*)?${GSAP_WIRING_CALLBACK}`, "g"))) {
+    localFunctions.add(match[1]);
+  }
+  return unacceptedBlocks.every((rawBlock) => {
+    const block = rawBlock.trim();
+    if (isGsapWiringBlock(block) || isReadOnlyDeclaration(block, localFunctions)) return true;
+    // A call to a function this script declares; its body is checked separately.
+    const call = /^([\w$]+)\(([^()]*)\)$/.exec(block);
+    return Boolean(call) && localFunctions.has(call[1]) && !/[\w$\])]\s*\(/.test(call[2]);
+  });
+}
+__name(isGsapWiringOnlyScript, "isGsapWiringOnlyScript");
 function findUnacceptedCode(script, acceptedPatterns) {
   const totalLength = script.length;
   let acceptedLength = 0;
@@ -1115,7 +1155,7 @@ function findUnacceptedCode(script, acceptedPatterns) {
   if (harmlessUnacceptedBlocks.length <= Math.ceil(unacceptedBlocks.length * 0.3)) {
     return [];
   }
-  if (!NON_GSAP_BEHAVIOR_PATTERN.test(script) && harmlessUnacceptedBlocks.every((block) => isGsapWiringBlock(block.trim()))) {
+  if (isGsapWiringOnlyScript(script, unacceptedBlocks)) {
     return [];
   }
   return harmlessUnacceptedBlocks.map((block) => truncateScript(block, 100));
