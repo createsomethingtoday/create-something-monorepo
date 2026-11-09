@@ -1,3 +1,5 @@
+> Superseded before public promotion by [0.3.3](../gigi-reconciled-033/REVIEW.md). This local 0.3.2 candidate was never uploaded or promoted. Subsequent review found component-layout ownership and terminal-import recovery gaps; both were corrected and requalified for 0.3.3.
+
 # GiGi 0.3.2 reconciled interface — CRE-2377
 
 The user explicitly authorized reconciliation and deployment of both the public installer and Danny’s separate DEV build. Danny’s published interface owns the layout direction; the Astryx foundation supplements it. The curated import and two bounded consistency corrections are recorded in `apps/gigi-desktop/RECONCILIATION.json`. Unpublished edits on another device are outside the available source.

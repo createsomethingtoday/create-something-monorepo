@@ -1,0 +1,38 @@
+{
+  "passed": true,
+  "runtimeSourceSha": "fa37fb904a47b29476bc7a7089bd9438e3a3f781",
+  "app": "GiGi 0.3.3 Review",
+  "bundleId": "agency.createsomething.gigi.qa.cre2377",
+  "syntheticProfile": true,
+  "checks": [
+    "Native saved workspace opens and local read succeeds",
+    "Work summary Down/Return opens Gigs and closes menu",
+    "Astryx ListItem opens saved gig with exact title/date/16:00/Confirmed readback",
+    "Back restores focus to exact gig row",
+    "Admin keyboard opens Tasks",
+    "Synthetic task due2026-11-09 saved then completed with readback",
+    "Done count increases1→2 and task appears; no open task onToday",
+    "Command-F Search shows saved People/Gigs/Tasks and new0.3.3 task",
+    "Escape returns focus to Search trigger",
+    "Next calendar week changesNov9–15→Nov16–22 whilefinancialdeadlineThroughNov15 staysfixed",
+    "Current week restored, Command-Q/reopen resets navigationhistory and reads savedworkspace/gig/completedtask state"
+  ],
+  "directlyViewed": [
+    "NativeToday",
+    "Gigdetail",
+    "Tasks editor/detail/Done collection",
+    "CombinedSearch"
+  ],
+  "evidence": [
+    "search.png",
+    "search.ax.txt",
+    "today-after-restart.png",
+    "today-after-restart.ax.txt"
+  ],
+  "limits": [
+    "Same-source separately identified QA app, not the exact signed installer GUI",
+    "CurrentMac/WebKit only; minimum880×620 responsive evidence is independentbrowser coverage",
+    "No live provider/import/phone/freshdevice/macOS13floor/screenreader/IME/notification/humanacceptance",
+    "No originalpublic or existingDEV profile used"
+  ]
+}
