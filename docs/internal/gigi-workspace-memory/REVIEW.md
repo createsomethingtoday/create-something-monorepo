@@ -1,8 +1,8 @@
 # GiGi workspace-owned curated memory — CRE-2382
 
-Source-only delivery. Parent owns integration, native qualification, and promotion.
-No installers, merge, deploy, Slack, host-memory import, or Linq work is authorized
-in this lane. Worktree disposition: preserved at
+Release-candidate preparation is authorized for 0.3.5. Parent owns integration
+and promotion. No merge, upload/publication, deploy, Slack/email, installed-app
+mutation, host-memory import or Linq work is authorized in this lane. Worktree disposition: preserved at
 `/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-0597f042`, branch
 `t3/gigi-workspace-agent-memory`, until parent integration.
 
@@ -160,3 +160,26 @@ Rust and actual React/native-domain flows, directly viewed fresh editor output,
 and additionally checked pagination across nonmatches, workspace/forgotten-status
 exclusion and list pagination. Functional and Chromium perceptual gates passed;
 release readiness remains held within the documented limits.
+
+
+## 0.3.5 candidate checkpoint (2026-11-09)
+
+The memory branch synchronized PR #2220 published head
+`a4c3500bc3ad5be0ca5d1dbbe56e765e52c081cc` while #2220 remained OPEN.
+This preserves its published receipt correction and release evidence without
+mutating the active release branch or its memory-free 0.3.4 installers.
+The package, Tauri, Rust lock/package, agent plugin and reconciliation identity
+are coordinated at 0.3.5. Production bundle ID remains
+`agency.createsomething.gigi`; do not install over the operator's public/DEV app.
+No Agency download metadata is changed to 0.3.5 in this lane.
+
+[Sanitized native qualification](NATIVE-QUALIFICATION.md) establishes actual
+WebKit lifecycle and a live embedded provider at clean `99dbc201c`, using a
+separate debug/ad-hoc QA app. It does not qualify a signed release installer.
+External-host connection/search passed; proposal was blocked before execution:
+“MCP tool call requires approval, but approval policy is never”. No installed
+policy/config was weakened. Installed-host proposal acceptance remains open.
+
+The new source head requires its own exact-head review. Native/perceptual and
+provider receipts are bounded to the recorded QA source; final signed-candidate
+runtime acceptance remains a parent gate. See [release and DEV handoff](RELEASE-035.md).
