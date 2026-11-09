@@ -14,6 +14,8 @@ not the production entry.
 - Directly view output. Native minimum is 880×620. Synthetic Chromium does not
   establish native WebKit, pickers/media, provider or installer acceptance.
 
+Danny’s published DEV interface owns the current layout direction: Work/Admin/Network/Platform top navigation, weekly Today, Calm Tasks/Gigs, G-train green and guided/connected setup. The Astryx foundation supplements that direction. Theme generation now builds both `ui/gigi-theme.ts` and `ui/gigi-dev-theme.ts`; keep the production `agency.createsomething.gigi` identity distinct from the separate DEV app. `DESIGN_FOUNDATION.md` records the curated reconciliation.
+
 <!-- ASTRYX:START -->
 Astryx v0.7.11 · 174 components
 CLI: run every command as `pnpm exec astryx <cmd>` (shown below as `astryx ...`).

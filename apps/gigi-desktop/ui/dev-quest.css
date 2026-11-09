@@ -1,0 +1,160 @@
+/* Danny's DEV setup composition, rendered with React and Astryx controls.
+   Photograph colors describe the decorative paper collage; product colors use Astryx roles. */
+.dev-quest-surface {
+  --text: var(--color-text-primary);
+  --muted: var(--color-text-secondary);
+  --line: var(--color-border);
+  --bg: var(--color-background-body);
+  --panel: var(--color-background-surface);
+  --raised: var(--color-background-raised, var(--color-background-surface));
+  --signal: var(--color-text-accent);
+  --signal-ink: var(--color-background-body);
+  --danger: var(--color-text-error);
+  --studio-sans: var(--font-family-body);
+  min-width: 0;
+  width: 100%;
+}
+/* App setup: one question, one action, a persistent route and an explanatory scene.
+   All content is visible at rest. quest-motion owns optional GSAP choreography. */
+.quest{width:min(100%,1080px);min-width:0;margin:0 auto;padding:24px 32px;color:var(--text);font-family:var(--studio-sans,inherit)}
+.quest *{box-sizing:border-box}
+.quest-header{display:flex;align-items:center;gap:20px;min-height:48px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.quest-brand{display:inline-flex;align-items:center;gap:5px;font-size:27px;font-weight:600;letter-spacing:-.065em;line-height:1}
+.quest-brand-dot{width:6px;height:6px;align-self:flex-end;margin-bottom:3px;border-radius:50%;background:var(--signal)}
+.quest-header-label{flex:1;color:var(--muted);font-size:12px;line-height:1.5}
+.quest .dev-quest-button{min-height:44px;white-space:normal;line-height:1.5}
+.quest .dev-quest-button:focus-visible,.quest input:focus-visible,.quest summary:focus-visible{outline:2px solid var(--signal);outline-offset:4px}
+.quest h1:focus{outline:none}
+.quest .ui-icon{flex-shrink:0;vertical-align:middle}
+.quest-progress{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:23px 0 16px;color:var(--muted);font-size:12px;line-height:1.5}
+.quest-progress strong{color:var(--text);font-weight:500}
+.quest-route{position:relative;margin-bottom:32px}
+.quest-route::before{content:"";position:absolute;top:17px;left:12.5%;right:12.5%;height:1px;background:var(--line)}
+.quest-map{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));position:relative;list-style:none;padding:0;margin:0}
+.quest-node{display:flex;align-items:center;flex-direction:column;gap:7px;position:relative;min-width:0;padding:0 6px;text-align:center;font-size:12px;line-height:1.4;color:var(--muted)}
+.quest-node-mark{display:grid;place-items:center;width:34px;height:34px;border:1px solid var(--line);border-radius:50%;background:var(--bg);color:var(--muted)}
+.quest-node-mark .ui-icon{width:17px;height:17px}
+.quest-node[aria-current=step]{color:var(--text)}
+.quest-node[aria-current=step] .quest-node-mark{border-color:var(--signal);color:var(--signal);background:var(--bg)}
+.quest-node-complete .quest-node-mark{background:var(--signal);color:var(--signal-ink,var(--bg));border-color:var(--signal)}
+.quest-node small{font-size:10px;color:var(--muted)}
+.quest-wayfinder{position:absolute;z-index:1;top:-4px;left:calc(var(--quest-position) - var(--quest-marker-radius,21px));width:42px;height:42px;border:1px solid var(--signal);border-radius:50%;pointer-events:none}
+.quest-wayfinder[data-current="0"]{--quest-position:12.5%}
+.quest-wayfinder[data-current="1"]{--quest-position:37.5%}
+.quest-wayfinder[data-current="2"]{--quest-position:62.5%}
+.quest-wayfinder[data-current="3"]{--quest-position:87.5%}
+.quest-layout{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.15fr);gap:clamp(28px,5vw,64px);align-items:start}
+.quest-mission{min-width:0;padding-top:12px}
+.quest-status{min-height:20px;margin:0 0 20px;font-size:12px;line-height:1.6;color:var(--muted)}
+.quest-kicker{font-size:11px;line-height:1.5;letter-spacing:.025em;color:var(--signal);margin:0 0 10px}
+.quest h1{display:block;font-family:var(--studio-sans,inherit);font-weight:500;font-size:34px;line-height:1.17;letter-spacing:-.04em;margin:0 0 12px}
+.quest-description{font-size:14px;line-height:1.65;color:var(--muted);margin:0 0 24px;max-width:40ch}
+.quest-form{margin:0}
+.quest .field{margin:0 0 18px}
+
+
+.quest .quest-primary{display:flex;justify-content:center;width:100%;font-size:14px;padding:13px 18px;border-radius:9px}
+.quest .quest-skip{padding:10px 0;margin-top:8px;text-align:left;justify-content:start;font-size:12px;text-decoration:underline;text-underline-offset:4px}
+.quest-saved-person{display:grid;gap:6px;padding:0 0 18px;overflow-wrap:anywhere}
+.quest-saved-person strong{font-weight:500;font-size:16px}
+.quest-error{padding:12px 0 0;margin:0;color:var(--danger);font-size:13px;line-height:1.6;overflow-wrap:anywhere}
+.quest-storage-warning{border-left:2px solid var(--signal);padding-left:12px;color:var(--muted);font-size:12px;line-height:1.6;margin:16px 0 0}
+.quest-world{min-width:0}
+.quest-illustration{margin:0;border:1px solid #bcb9ae;border-radius:3px;background:#e8e5dc;overflow:hidden;color:#292e29}
+.quest-scene{display:block;position:relative;width:100%;aspect-ratio:560/340;isolation:isolate;overflow:hidden}
+.quest-collage-canvas{position:absolute;inset:0}
+.quest-paper-stamp{position:absolute;z-index:8;left:6%;top:19%;display:grid;place-items:center;width:12%;aspect-ratio:1;border:1px solid #929a83;border-radius:50%;color:#535e45;font-family:Georgia,serif;font-size:clamp(24px,3.2vw,42px);line-height:1;letter-spacing:-.1em;padding-right:.09em;rotate:-9deg;background:#e1e4d5}
+.quest-divider-set{position:absolute;inset:0}
+.quest-divider{position:absolute;z-index:2;display:block;width:21%;height:41%;padding:7px 8px;text-align:center;border:1px solid #c2bcab;border-radius:4px 4px 0 0;background:#ece8da;color:#555a4e;font-family:Georgia,serif;font-size:13px;line-height:1.2;box-shadow:1px 1px 0 #aeaa9a33}
+.quest-divider-music{left:68%;top:0;rotate:5deg;background:#c2cbb2}
+.quest-divider-people{left:46%;top:0;rotate:1deg;background:#ddd8c7}
+.quest-divider-gigs{left:24%;top:0;rotate:-5deg}
+.quest-crate{position:absolute;inset:0;pointer-events:none}
+.quest-crate img{position:absolute;left:9%;top:0;width:93%;height:auto}
+.quest-crate-back{z-index:1}
+.quest-crate-front{z-index:7;clip-path:polygon(0 51%,13% 60%,87% 60%,100% 51%,100% 100%,0 100%)}
+.quest-vinyl{position:absolute;z-index:3;left:33%;top:14%;width:64%;height:74%}
+.quest-vinyl img,.quest-musician img{display:block;width:100%;height:100%;object-fit:contain}
+.quest-collage-with-person .quest-vinyl{left:39%;top:14%;width:62%;height:74%}
+.quest-musician{position:absolute;z-index:4;left:9%;top:17%;width:42%;height:68%;rotate:-8deg}
+.quest-musician-example{filter:contrast(.93)}
+.quest-collage-with-person .quest-paper-stamp{left:7%;top:7%;width:9%;font-size:clamp(18px,3vw,24px);rotate:-9deg}
+.quest-photo-connection{position:absolute;z-index:6;inset:0;width:100%;height:100%;overflow:visible}
+.quest-illustration figcaption{padding:0 26px 20px;font-size:13px;line-height:1.65;text-align:center;color:#525b4e;max-width:48ch;margin:auto}
+.quest-world-note{margin:15px 0 0;text-align:center;font-size:12px;line-height:1.6;color:var(--muted)}
+.quest-saved{margin:16px 5px 0;padding-left:14px;border-left:2px solid var(--line);overflow-wrap:anywhere}
+.quest-help{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:11px;line-height:1.5}
+.quest-help .ui-icon{width:13px;height:13px}
+.quest-saved-label{margin:0 0 8px;color:var(--signal)}
+.quest-saved h2{display:flex;align-items:start;gap:8px;font-family:var(--studio-sans,inherit);font-size:13px;font-weight:500;line-height:1.5;letter-spacing:0;margin:0;overflow-wrap:anywhere}
+.quest-saved h2 .ui-icon{width:14px;height:14px;margin-top:2px}
+.quest-gig{margin-top:12px}
+.quest-gig>.quest-help{margin:0 0 3px}
+.quest-gig h3{font-size:13px;font-weight:500;line-height:1.5;margin:0;overflow-wrap:anywhere}
+.quest-person{margin-top:12px}
+.quest-person p{font-size:12px;line-height:1.5;margin:3px 0 0;overflow-wrap:anywhere}
+.quest-link-description{display:block;color:var(--muted);font-size:11px}
+.quest-sidequests{margin-top:18px;font-size:12px;color:var(--muted)}
+.quest-sidequests summary{min-height:44px;padding:12px 0;cursor:pointer}
+.quest .quest-sidequest{display:grid;gap:4px;width:100%;margin-top:8px;text-align:left;justify-items:start;min-width:0}
+.quest-sidequest span{display:flex;align-items:center;gap:9px;font-size:13px}
+.quest-sidequest small{font-size:11px;font-weight:400;color:var(--muted);white-space:normal}
+.quest-footer{display:flex;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid var(--line);padding-top:8px;margin-top:28px;color:var(--muted);font-size:11px;line-height:1.6}
+.quest .quest-replay{white-space:nowrap;flex-shrink:0;padding-inline:0;font-size:11px;font-weight:400;gap:7px}
+.quest-replay .ui-icon{width:13px;height:13px}
+.quest-resume{margin-bottom:24px}.quest-resume p{margin:6px 0 12px}
+/* Native short windows retain the primary action before supplementary detail. */
+@media(min-width:701px) and (max-height:720px){.quest{padding-top:18px}.quest-header{min-height:38px;padding-bottom:12px}.quest-progress{margin-top:16px;margin-bottom:12px}.quest-route{margin-bottom:22px}.quest-mission{padding-top:5px}.quest-status{margin-bottom:12px}.quest h1{font-size:30px}.quest-description{margin-bottom:18px}.quest-illustration{max-width:400px;margin-inline:auto}.quest-illustration figcaption{padding-bottom:16px;font-size:12px}.quest-saved{margin-top:12px}.quest-gig,.quest-person{margin-top:8px}.quest-footer{margin-top:20px}}
+@media(max-width:700px){.quest{padding:18px}.quest-header{gap:12px;min-height:38px;padding-bottom:12px}.quest-brand{font-size:25px}.quest-header-label{font-size:11px}.quest .quest-pause{font-size:11px;padding-inline:0}.quest-progress{margin-top:16px;margin-bottom:12px}.quest-route{margin-bottom:18px}.quest-node{font-size:11px;gap:5px}.quest-node small{display:none}.quest-layout{grid-template-columns:1fr;gap:18px}.quest-world{display:contents}.quest-illustration{grid-row:1;display:block;border-radius:3px}.quest-scene{height:176px;aspect-ratio:auto}.quest-collage-canvas{position:relative;inset:auto;width:min(100%,290px);height:176px;margin:auto}.quest-illustration figcaption{padding:0 16px 13px;text-align:center;font-size:12px}.quest-paper-stamp{font-size:29px}.quest-divider{font-size:11px;padding:6px 8px}.quest-mission{grid-row:2;padding-top:0}.quest-status{margin-bottom:12px;font-size:11px;min-height:0}.quest-kicker{margin-bottom:8px}.quest h1{font-size:30px}.quest-description{margin-bottom:18px;font-size:13px}.quest-saved{grid-row:3;margin-top:0}.quest-world-note{display:none}.quest-footer{margin-top:20px;align-items:flex-start}.quest-footer>span{padding-top:11px}.quest-illustration figcaption{max-width:38ch}}
+@media(max-width:390px){.quest{padding:14px}.quest-header-label{max-width:18ch}.quest-header{gap:10px}.quest .quest-pause{margin-left:auto;font-size:10px}.quest-progress{font-size:11px}.quest-node{padding-inline:2px;font-size:10px}.quest-node-mark{width:30px;height:30px}.quest-route::before{top:15px}.quest-wayfinder{top:-4px;width:38px;height:38px;--quest-marker-radius:19px}.quest-node-mark .ui-icon{width:15px;height:15px}.quest-scene{height:160px}.quest-collage-canvas{width:min(100%,264px);height:160px}.quest-illustration figcaption{font-size:11px;padding-inline:12px}.quest h1{font-size:27px}.quest-layout{gap:16px}.quest-footer{gap:10px;font-size:10px}.quest .quest-replay{font-size:10px}}
+
+/* Connected setup uses the same app and record-collection language as the first gig. */
+.setup-journey .quest-layout{grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:36px}
+.setup-journey .quest-mission{padding-top:0}
+.setup-journey .quest-primary,.setup-journey .quest-mission>.dev-quest-button.primary{display:flex;width:100%;align-items:center;justify-content:center;margin-block:12px}
+.setup-journey h1{font-size:32px}.setup-journey h2{font-family:var(--studio-sans,inherit);font-size:18px;line-height:1.4;letter-spacing:-.02em;margin:18px 0 10px;font-weight:500}
+.setup-journey .quest-description{margin-bottom:18px}
+.setup-journey p,.guided-phone p{line-height:1.6;font-size:13px}
+.guided-fact,.guided-help{color:var(--muted);font-size:12px!important;line-height:1.6;overflow-wrap:anywhere}
+.guided-fact .ui-icon{width:16px;height:16px;margin-right:6px}
+.guided-advanced{margin-top:18px;border-top:1px solid var(--line)}
+.guided-advanced summary,.guided-phone-disclosure>summary,.guided-phone details>summary{padding:12px 0;min-height:44px;cursor:pointer;font-size:13px;color:var(--muted)}
+.guided-advanced .config,.guided-phone .config{white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%;font-size:12px}
+.guided-intents{display:grid;gap:9px;margin-bottom:16px}.guided-intents .dev-quest-button{display:flex;align-items:center;text-align:left;gap:10px;font-weight:400}
+.guided-intents .dev-quest-button[aria-pressed=true]{border-color:var(--signal);background:var(--raised);color:var(--text)}
+.guided-intents .ui-icon{width:18px;height:18px}
+.setup-journey .quest-mission>.dev-quest-button:not(.primary){margin:4px 8px 4px 0}
+.guided-preview-list{padding-left:18px;max-height:240px;overflow:auto;font-size:13px;line-height:1.6}.guided-preview-list li{padding-bottom:10px}.guided-preview-list small{display:block;color:var(--muted)}
+.guided-review,.guided-receipt,.guided-wins,.guided-candidates{border-top:1px solid var(--line);margin-top:18px;padding-top:4px;min-width:0}
+.guided-review .dev-quest-button,.guided-receipt .dev-quest-button,.guided-wins .dev-quest-button{margin:5px 8px 5px 0}
+.guided-review dl{display:grid;grid-template-columns:80px minmax(0,1fr);gap:8px;font-size:13px;line-height:1.6}.guided-review dt{color:var(--muted)}.guided-review dd{margin:0;overflow-wrap:anywhere}
+.guided-busy{color:var(--muted);font-size:12px}.guided-next{display:grid;gap:9px;margin-top:20px}.guided-next h2{margin-bottom:0}
+.guided-invitation{display:flex;justify-content:space-between;align-items:center;gap:24px;border-left:2px solid var(--signal);padding:16px 20px;background:var(--panel);border-radius:0 8px 8px 0;min-width:0}
+.guided-invitation h2{font-family:var(--studio-sans,inherit);font-size:22px;font-weight:500;line-height:1.3;letter-spacing:-.03em;margin:0 0 10px}.guided-invitation p{font-size:13px;line-height:1.65;margin:5px 0;color:var(--muted)}.guided-invitation .dev-quest-button{flex-shrink:0;min-height:44px}
+.guided-phone{min-width:0;border-top:1px solid var(--line);margin-top:22px;padding-top:8px}.guided-phone .panel-head{gap:15px;flex-wrap:wrap}.guided-phone .panel-head h2{display:flex;gap:9px;align-items:center;margin:14px 0}
+.guided-phone .setup-instructions{padding-left:22px}.guided-phone li{padding:0 0 18px;line-height:1.65;font-size:13px}.guided-phone li>strong{display:block}.guided-phone .dev-quest-button{display:inline-flex;align-items:center;min-height:44px;margin:8px 8px 0 0}
+@media(max-width:700px){.setup-journey .quest-layout{grid-template-columns:1fr;gap:18px}.setup-journey h1{font-size:28px}.setup-journey .quest-world{display:contents}.setup-journey .quest-illustration{grid-row:1}.setup-journey .quest-mission{grid-row:2}.setup-journey .quest-saved{grid-row:3}.guided-invitation{align-items:flex-start;flex-direction:column;gap:12px}.guided-invitation .dev-quest-button{width:100%}}
+
+.guided-intents{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.guided-intents .dev-quest-button{flex-direction:column;align-items:flex-start;padding:12px 10px;font-size:13px;min-width:0}.guided-intents small{display:block;color:var(--muted);font-size:10px;margin-top:4px;font-weight:400;line-height:1.5}.guided-intents .ui-icon{margin-bottom:3px}
+.guided-more,.guided-coverage{border-top:1px solid var(--line);margin-top:18px}.guided-more>summary,.guided-coverage>summary{padding:12px 0;min-height:44px;cursor:pointer;font-size:12px;color:var(--muted)}
+.setup-journey .guided-wins{margin-top:0}.setup-journey .guided-wins+.dev-quest-button.primary{width:100%;justify-content:center;margin-block:12px}.setup-journey select:focus-visible{outline:2px solid var(--signal);outline-offset:4px}
+@media(max-width:390px){.guided-intents .dev-quest-button{font-size:12px;padding:10px 7px}.guided-intents small{font-size:9px}}
+
+/* Astryx owns button/input states and focus. These rules retain the approved DEV layout. */
+.dev-quest-button { max-inline-size: 100%; }
+.quest .quest-form { min-width: 0; }
+.quest .quest-form > * { min-width: 0; }
+.quest .quest-existing { margin-top: 16px; }
+.quest .quest-existing > summary { cursor: pointer; min-height: 44px; padding-block: 12px; font-size: 12px; color: var(--muted); }
+.quest .guided-candidates { display: grid; gap: 8px; }
+.quest .guided-candidates .dev-quest-button, .quest .guided-wins .dev-quest-button { width: 100%; justify-content: start; white-space: normal; text-align: start; }
+.quest .guided-wins { display: grid; gap: 8px; }
+.quest .guided-intents .dev-quest-button { min-height: 72px; white-space: normal; overflow-wrap: anywhere; }
+.quest .quest-photo-connection { color: #75875d; }
+.dev-quest-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.dev-quest-surface .config { white-space: pre-wrap; overflow-wrap: anywhere; font-family: var(--font-family-mono, monospace); padding: 12px; background: var(--raised); border: 1px solid var(--line); }
+.dev-quest-resume { display: grid; gap: 16px; }
+.dev-quest-resume:empty { display: none; }
+@media (prefers-reduced-motion: reduce) {
+ .quest *, .quest *::before, .quest *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

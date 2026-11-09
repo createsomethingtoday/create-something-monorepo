@@ -14,6 +14,9 @@ import {
   exportPreferences,
   applyPreferences as applyLegacyPreferences
 } from '../web/preferences.mjs';
+import { createTasks, completeTask as completeCalmTask } from '../web/calm-work.mjs';
+import { boundedStatusRead } from '../web/optional-status.mjs';
+import { createDevQuestController } from './dev-quest-controller.mjs';
 import { loadRelationPage } from '../web/relation-pagination.mjs';
 import { agentPreflightView } from '../web/agent-preflight.mjs';
 import { eventLabel } from '../web/event-identity.mjs';
@@ -97,6 +100,7 @@ export function startController({ renderUI, invoke, initialize } = {}) {
   const bridge = (invoke ? (callback) => createBridge(invoke, callback) : tauriBridge)(
     (workspace) => {
       gigs.invalidate(workspace);
+      tasks.invalidate(workspace);
       if (attention?.workspaceId === workspace) void attention.refresh();
     }
   );
@@ -128,8 +132,13 @@ export function startController({ renderUI, invoke, initialize } = {}) {
   const contactRead = createContactRead();
   let contactSearchTimer;
   let contactSearchVersion = 0;
+  let todayWeekStart = null;
+  let overviewWorkspace = null;
   const state = {
     workspace: null,
+    overview: null,
+    overviewCheckedAt: null,
+    overviewError: "",
     setupProfile: false,
     setupDraft: null,
     currency: null,
@@ -184,6 +193,12 @@ export function startController({ renderUI, invoke, initialize } = {}) {
       if (state.page === 'gigs' && !state.selected && !state.editing) render();
     }
   });
+  const tasks = createTasks({
+    read: (workspace, criteria, cursor) => bridge.listTasks(workspace, criteria, cursor),
+    changed() {
+      if (state.page === 'tasks' && !state.selected && !state.editing) render();
+    }
+  });
   const safe = (value) =>
     String(value ?? '').replace(
       /[&<>"']/g,
@@ -204,6 +219,33 @@ export function startController({ renderUI, invoke, initialize } = {}) {
     })[name] || name.replace(/s$/, '');
   const status = (record) => statusLabel(record?.fields?.Status || record?.status || '');
   const workspaceId = () => state.workspace?.workspaceId || state.workspace?.id;
+  const devQuest = createDevQuestController({
+    bridge, state, workspaceId, run, render,
+    onProfileReady: async (profile) => {
+      currencyVersion++;
+      state.currency = profile.fields?.Currency || null;
+      state.currencyKnown = true;
+      state.setupProfile = false;
+      state.setupDraft = null;
+      restorePreferences();
+      state.page = 'overview';
+      if (!chat) initializeChat();
+    },
+    openPage, navigateRecord,
+    openSetup: async (section) => {
+      chat?.close();
+      await openPage('settings', true, null, section);
+    },
+    onAsk: async (prompt) => {
+      if (!chat) initializeChat();
+      await chat.open();
+      if (!chat.current) await chat.start();
+      chat.draft = prompt;
+      renderChat({ replaceDraft: true });
+      root.querySelector?.('#chat-message')?.focus?.();
+    },
+    newGig: () => newRecord('gigs')
+  });
   let preferences = { ...defaults };
   let preferencesDraft = '';
   let preferencesExported = null;
@@ -295,6 +337,7 @@ export function startController({ renderUI, invoke, initialize } = {}) {
     clearTimeout(contactSearchTimer);
     contactRead.cancel();
     gigs.cancel();
+    tasks.cancel();
     return readRoute();
   }
   function currentRoute(route) {
@@ -310,6 +353,7 @@ export function startController({ renderUI, invoke, initialize } = {}) {
     clearTimeout(contactSearchTimer);
     contactRead.cancel();
     gigs.cancel();
+    tasks.cancel();
   }
 
   async function run(task) {
@@ -457,6 +501,7 @@ export function startController({ renderUI, invoke, initialize } = {}) {
       async () => {
         const route = readRoute();
         gigs.invalidate();
+        tasks.invalidate();
         await refreshCurrency();
         if (!currentRoute(route) || state.editing) return;
         if (state.selected?.id) await selectRecord(state.selected.id);
@@ -477,6 +522,7 @@ export function startController({ renderUI, invoke, initialize } = {}) {
     chat = null;
     state.workspace =
       result?.workspace || (result?.workspaceId && result) || (result?.id && result) || null;
+    let profile = null;
     if (state.workspace) {
       restorePreferences();
       state.page = preferences.startPage;
@@ -485,13 +531,14 @@ export function startController({ renderUI, invoke, initialize } = {}) {
       state.currencyKnown = false;
       const profiles = listFrom(await bridge.listRecords(workspaceId(), 'profile'));
       state.setupProfile = profiles.length === 0;
-      state.currency = profiles[0]
-        ? (await bridge.getRecord(workspaceId(), 'profile', profiles[0].id)).fields?.Currency ||
-          null
+      profile = profiles[0]
+        ? await bridge.getRecord(workspaceId(), 'profile', profiles[0].id)
         : null;
+      state.currency = profile?.fields?.Currency || null;
       state.currencyKnown = true;
-      if (!state.setupProfile) await openPage(state.page);
     }
+    await devQuest.load(profile);
+    if (state.workspace && !devQuest.view.active) await openPage(state.page);
     render();
   }
 
@@ -525,7 +572,7 @@ export function startController({ renderUI, invoke, initialize } = {}) {
     render();
     root.querySelector?.(`#${editorReturnFocus || 'title'}`)?.focus?.();
   }
-  async function openPage(page, resetScroll = false, historyIndex = null) {
+  async function openPage(page, resetScroll = false, historyIndex = null, focusTarget = null) {
     // A repeated navigation click is not leaving the creator. React retains
     // this component's route key, so disposing here would permanently disable
     // its actions and drop the unsaved-change guard without remounting it.
@@ -539,7 +586,7 @@ export function startController({ renderUI, invoke, initialize } = {}) {
       if (resetScroll) scrollTo(0, 0);
       return true;
     }
-    if (!protectEditor(() => void run(() => openPage(page, resetScroll, historyIndex))))
+    if (!protectEditor(() => void run(() => openPage(page, resetScroll, historyIndex, focusTarget))))
       return false;
     if (creatorMount?.canLeave && !(await creatorMount.canLeave())) return false;
     if (creatorMount) {
@@ -554,11 +601,13 @@ export function startController({ renderUI, invoke, initialize } = {}) {
     contactSearchVersion++;
     state.contactSearching = false;
     state.contactSearchError = false;
-    if (state.page === 'gigs' && !state.selected && !state.editing) gigs.remember(scrollY());
+    if (['gigs','tasks'].includes(state.page) && !state.selected && !state.editing)
+      (state.page === 'tasks' ? tasks : gigs).remember(scrollY());
     workspaceHistory.visit(page, historyIndex);
     state.page = page;
     state.selected = null;
     state.editing = false;
+    state.linkPurpose = null;
     state.editorDraft = null;
     state.editorOrigin = null;
     state.sourceExpanded = false;
@@ -568,75 +617,52 @@ export function startController({ renderUI, invoke, initialize } = {}) {
     if (page !== 'settings') state.pendingRestoreId = null;
     if (page === 'overview') {
       void attention?.refresh();
-      const value = await bridge.overview(route.workspace, localToday());
-      if (!currentRoute(route)) return false;
-      state.overview = value;
+      if (overviewWorkspace !== route.workspace) { state.overview = null; state.overviewCheckedAt = null; state.overviewError = ''; }
+      try {
+        const value = await bridge.today(route.workspace, localToday(), todayWeekStart);
+        if (!currentRoute(route)) return false;
+        state.overview = value; state.overviewCheckedAt = new Date().toISOString(); state.overviewError = ''; overviewWorkspace = route.workspace;
+      } catch(error) { if (currentRoute(route)) state.overviewError = explain(error); }
     } else if (page === 'history') {
       const value = await bridge.listHistory(route.workspace, 40);
       if (!currentRoute(route)) return false;
       state.history = listFrom(value);
-    } else if (page === 'settings') {
-      attentionSettingsDirty = false;
-      await ai.refresh();
-      const providers = ['gmail', 'googlecalendar'];
-      state.setupChatStatus = null;
-      state.setupChatFailed = false;
-      state.sources = Object.fromEntries(
-        providers.map((provider) => [provider, { provider, state: 'checking' }])
-      );
-      render();
-      const results = await Promise.allSettled([
-        ...providers.map((provider) => bridge.sourceStatus(route.workspace, provider)),
-        bridge.agentStatus(),
-        bridge.call('diagnostics.status'),
-        bridge.chatStatus(route.workspace)
-      ]);
-      if (!currentRoute(route)) return false;
-      state.sources = Object.fromEntries(
-        providers.map((provider, index) => [
-          provider,
-          results[index].status === 'fulfilled'
-            ? results[index].value
-            : {
-                provider,
-                state: 'unavailable',
-                detail:
-                  results[index].reason instanceof Error
-                    ? results[index].reason.message
-                    : String(results[index].reason)
-              }
-        ])
-      );
-      for (const provider of providers) {
-        const source = state.sources[provider];
-        if (
-          source.latestImport &&
-          !importRunForAccount(state.imports[provider], source.connectedAccountId)
-        ) {
-          const receipt = source.latestImport,
-            selection = receipt.scope?.selection || {};
-          state.imports[provider] = {
-            accountId: source.connectedAccountId,
-            receipt,
-            selection,
-            restoredScope: true,
-            selectionKey: JSON.stringify(selection),
-            cursor: receipt.retryCursor
-          };
-          state.sourceDrafts[provider] = {
-            from: selection.from?.slice(0, 10) || '',
-            to: selection.to?.slice(0, 10) || ''
-          };
+  } else if (page === 'settings') {
+    attentionSettingsDirty = false;
+    state.setupChatStatus = null; state.setupChatFailed = false;
+    state.agentReceipt = null;
+    state.sources = Object.fromEntries(['gmail', 'googlecalendar'].map(provider => [provider, { provider, state: 'checking' }]));
+    render();
+    void ai.refresh();
+    const initialAgent = state.agent, initialAgentReceipt = state.agentReceipt;
+    state.diagnostics = {status:null,review:null,exported:null};
+    const initialDiagnostics = state.diagnostics;
+    const observe = (read, accept, reject, valid = () => true) => {
+      void boundedStatusRead(read).then(value => { if (currentRoute(route) && valid()) { accept(value); render(); } }, error => { if (currentRoute(route) && valid()) { reject(error); render(); } });
+    };
+    for (const provider of ['gmail', 'googlecalendar']) {
+      const checking = state.sources[provider];
+      observe(
+      () => bridge.sourceStatus(route.workspace, provider),
+      source => {
+        state.sources[provider] = source;
+        if (source.latestImport && !importRunForAccount(state.imports[provider], source.connectedAccountId)) {
+          const receipt = source.latestImport, selection = receipt.scope?.selection || {};
+          state.imports[provider] = {accountId: source.connectedAccountId, receipt, selection, restoredScope:true, selectionKey:JSON.stringify(selection), cursor:receipt.retryCursor};
+          state.sourceDrafts[provider] = {from:selection.from?.slice(0,10) || '',to:selection.to?.slice(0,10) || ''};
         }
-      }
-      state.setupChatStatus = results[4].status === 'fulfilled' ? results[4].value : null;
-      state.setupChatFailed = results[4].status === 'rejected';
-      state.agentReceipt = results[2].status === 'fulfilled' ? results[2].value : null;
-      state.diagnostics = {
-        status: results[3].status === 'fulfilled' ? results[3].value : null,
-        review: null,
-        exported: null
-      };
+      },
+      error => { state.sources[provider] = { provider, state: 'unavailable', detail:error instanceof Error ? error.message : String(error) }; },
+      () => state.sources[provider] === checking && !state.sourceBusy[provider] && !state.signingIn && !state.signingOut
+      );
+    }
+    observe(() => bridge.agentStatus(), value => { state.agentReceipt = value; }, () => { state.agentReceipt = null; }, () => state.agent === initialAgent && state.agentReceipt === initialAgentReceipt);
+    observe(() => bridge.call('diagnostics.status'), value => { state.diagnostics = { status:value, review:null, exported:null }; }, () => { state.diagnostics = {status:null,review:null,exported:null}; }, () => state.diagnostics === initialDiagnostics);
+    observe(() => bridge.chatStatus(route.workspace), value => { state.setupChatStatus = value; }, () => { state.setupChatFailed = true; });
+
+    } else if (page === 'tasks') {
+      await tasks.open(route.workspace);
+      if (!currentRoute(route)) return false;
     } else if (page === 'gigs') {
       await gigs.open(route.workspace);
       if (!currentRoute(route)) return false;
@@ -673,14 +699,20 @@ export function startController({ renderUI, invoke, initialize } = {}) {
       root
         .querySelector?.(`[data-preferences-theme="${preferences.theme}"]`)
         ?.focus?.({ preventScroll: true });
-    if (page === 'gigs') scrollTo(0, gigs.state?.scroll || 0);
+    if (['gigs','tasks'].includes(page)) scrollTo(0, (page === 'tasks' ? tasks : gigs).state?.scroll || 0);
     else if (resetScroll) scrollTo(0, 0);
+    if (focusTarget && /^[a-zA-Z0-9_-]+$/.test(focusTarget)) {
+      const target = root.querySelector?.(`#${focusTarget}`);
+      target?.scrollIntoView?.({ block: 'start' });
+      (target?.querySelector?.('button,input,select,textarea') || target)?.focus?.({ preventScroll: true });
+    }
     return true;
   }
 
   async function selectRecord(id, entity = state.page) {
     if (state.page !== entity) return false;
-    if (entity === 'gigs' && !state.selected && !state.editing) gigs.remember(scrollY(), id);
+    if (['gigs','tasks'].includes(entity) && !state.selected && !state.editing)
+      (entity === 'tasks' ? tasks : gigs).remember(scrollY(), id);
     const route = nextRoute();
     state.selected = null;
     state.editing = false;
@@ -764,7 +796,8 @@ export function startController({ renderUI, invoke, initialize } = {}) {
       state.editing = false;
       state.editorDraft = null;
       state.editorOrigin = null;
-      if (state.page === 'gigs' && !state.selected) await gigs.open(workspaceId());
+      if (!state.selected && ['gigs', 'tasks'].includes(state.page))
+        await (state.page === 'tasks' ? tasks : gigs).open(workspaceId());
       render();
     }
     if (origin) {
@@ -1012,11 +1045,14 @@ export function startController({ renderUI, invoke, initialize } = {}) {
     render();
   }
 
-  async function enterLinkEditor() {
+  async function enterLinkEditor(preferred = null) {
     const route = nextRoute();
     const schema = await bridge.describeSchema(route.page);
     if (!currentRoute(route)) return;
-    const first = schema.relationFields?.[0]?.targetEntity;
+    const first = preferred && schema.relationFields?.some(
+      field => field.targetEntity === preferred && field.name === 'Location'
+    ) ? preferred : schema.relationFields?.[0]?.targetEntity;
+    state.linkPurpose = preferred === 'locations' && first === preferred ? 'place' : null;
     const result = first ? await bridge.listRecords(route.workspace, first) : null;
     if (!currentRoute(route)) return;
     state.relationSchema = schema;
@@ -1111,6 +1147,21 @@ export function startController({ renderUI, invoke, initialize } = {}) {
       notice('Records linked.');
     });
   }
+async function finishTask(id) {
+  if(state.busy||state.page!=='tasks')return;
+  const listed=state.selected?.id===id?state.selected:tasks.state?.result?.items?.find(item=>item.id===id);
+  if(!listed)return;
+  const route=readRoute(),wasSelected=Boolean(state.selected);
+  await run(async()=>{
+    const saved=await completeCalmTask(bridge,route.workspace,listed,()=>currentRoute(route));
+    if(!saved||!currentRoute(route))return;
+    if(wasSelected)state.selected=saved;else await tasks.refresh();
+    notice('Task completed.');
+  });
+  if(currentRoute(route)&&!state.selected)(root.querySelector?.('[data-task-done]:not(:disabled)')||root.querySelector?.('[data-tasks-view="past"]'))?.focus?.({preventScroll:true});
+}
+
+
   function renderWorkspaceSearch() {
     renderUI(context());
   }
@@ -1171,6 +1222,19 @@ export function startController({ renderUI, invoke, initialize } = {}) {
       )?.focus?.({ preventScroll: true });
       return;
     }
+    if (button.dataset.todayWeek) {
+      if (state.busy) return;
+      const start = state.overview?.calendar?.weekStart;
+      if (button.dataset.todayWeek === 'current') todayWeekStart = null;
+      else if (start) { const day = new Date(`${start}T12:00:00`); day.setDate(day.getDate() + (button.dataset.todayWeek === 'next' ? 7 : -7)); todayWeekStart = localToday(day); }
+      void run(() => openPage('overview')).then(opened => { if (opened && state.page === 'overview') root.querySelector?.(`[data-today-week="${button.dataset.todayWeek}"]`)?.focus?.({preventScroll:true}); });
+      return;
+    }
+    if (button.dataset.todayRefresh) { void run(() => openPage('overview')); return; }
+    if (button.dataset.taskDone) { void finishTask(button.dataset.taskDone); return; }
+    if (button.dataset.tasksView) { tasks.update({view:button.dataset.tasksView},false); return; }
+    if (button.dataset.tasksRefresh) { void tasks.refresh(); return; }
+    if (button.dataset.tasksMore) { void tasks.more(); return; }
     if (button.dataset.attentionHome) {
       void run(async () => {
         if (await openPage('overview', true)) {
@@ -1495,25 +1559,26 @@ export function startController({ renderUI, invoke, initialize } = {}) {
     else if (button.dataset.workspaceHistory) {
       const target = workspaceHistory.target(Number(button.dataset.workspaceHistory));
       if (target) void run(() => openPage(target.page, true, target.index));
-    } else if (button.dataset.page) void run(() => openPage(button.dataset.page, true));
+    } else if (button.dataset.page) void run(() => openPage(button.dataset.page, true, null, button.dataset.navTarget));
     else if (button.dataset.new) newRecord(button.dataset.new);
     else if (button.dataset.open)
       void run(() => navigateRecord(button.dataset.entity, button.dataset.open));
     else if (button.dataset.cancel) void cancelEditor();
-    else if (button.dataset.back && state.page === 'gigs') {
-      if (!protectEditor(() => void run(() => openPage('gigs')))) return;
+    else if (button.dataset.back && ['gigs','tasks'].includes(state.page)) {
+      const page = state.page, collection = page === 'tasks' ? tasks : gigs;
+      if (!protectEditor(() => void run(() => openPage(page)))) return;
       leaveRoute();
       state.selected = null;
       state.editing = false;
       state.editorDraft = null;
       state.editorOrigin = null;
-      void gigs.open(workspaceId()).then(() => {
-        if (state.page === 'gigs' && !state.selected && !state.editing) {
+      void collection.open(workspaceId()).then(() => {
+        if (state.page === page && !state.selected && !state.editing) {
           render();
           Array.from(root.querySelectorAll?.('[data-open]') || [])
-            .find((row) => row.dataset.open === gigs.state?.focusId)
+            .find((row) => row.dataset.open === collection.state?.focusId)
             ?.focus?.({ preventScroll: true });
-          scrollTo(0, gigs.state?.scroll || 0);
+          scrollTo(0, collection.state?.scroll || 0);
         }
       });
     } else if (button.dataset.back && state.page === 'contacts')
@@ -1530,6 +1595,7 @@ export function startController({ renderUI, invoke, initialize } = {}) {
     } else if (button.dataset.edit) void enterEditor();
     else if (button.dataset.full) void run(() => refreshSelected());
     else if (button.dataset.sourceDetail) void run(() => refreshSelected(true));
+    else if (button.dataset.gigPlace) void run(() => enterLinkEditor('locations'));
     else if (button.dataset.link) void run(() => enterLinkEditor());
     else if (button.dataset.linkMore)
       void run(() => loadLinkChoices(state.linkChoices.entity, state.linkChoices.nextCursor));
@@ -1795,6 +1861,9 @@ export function startController({ renderUI, invoke, initialize } = {}) {
         }
       }
     }
+    if (event.target?.id === 'tasks-search' && event.key === 'Escape' && state.page === 'tasks' && !state.selected && !state.editing && !chat?.visible) {
+      event.preventDefault?.(); tasks.update({query:''},false); root.querySelector?.('#tasks-search')?.focus?.(); return;
+    }
     if (event.target?.id === 'contact-search' && event.key === 'Escape') {
       event.preventDefault?.();
       searchContacts('', true);
@@ -1912,6 +1981,7 @@ export function startController({ renderUI, invoke, initialize } = {}) {
       render();
       return;
     }
+    if (event.target.id === 'tasks-search') { tasks.update({query:event.target.value}); return; }
     if (event.target.id === 'gigs-search') {
       gigs.update({ query: event.target.value });
       return;
@@ -1928,7 +1998,7 @@ export function startController({ renderUI, invoke, initialize } = {}) {
   });
 
   root.addEventListener('submit', (event) => {
-    if (event.target.closest?.('[data-creator-owned]')) return;
+    if (event.target.closest?.('[data-creator-owned], [data-quest-owned]')) return;
     event.preventDefault();
     const form = event.target;
     const missing = Array.from(form.querySelectorAll('[data-gigi-required]')).find(
@@ -2006,27 +2076,6 @@ export function startController({ renderUI, invoke, initialize } = {}) {
         chat.draft = value;
         void chat.send(value);
       }
-    } else if (form.id === 'workspace-form') {
-      const data = Object.fromEntries(new FormData(form));
-      state.setupDraft = { ...data };
-      void run(async () => {
-        if (!state.workspace) state.workspace = await bridge.createWorkspace(data.name);
-        state.setupProfile = true;
-        await bridge.saveRecord(workspaceId(), 'profile', {
-          title: String(data.ownerName).trim(),
-          fields: { Currency: String(data.currency) }
-        });
-        state.currency = String(data.currency);
-        state.currencyKnown = true;
-        currencyVersion++;
-        state.setupProfile = false;
-        state.setupDraft = null;
-        restorePreferences();
-        state.justCreated = true;
-        initializeChat();
-        await openPage('settings');
-        notice('Your private workspace is ready. Connections are optional.');
-      });
     } else if (form.id === 'record-form') {
       const data = Object.fromEntries(new FormData(form));
       state.editorDraft = { ...data };
@@ -2036,6 +2085,17 @@ export function startController({ renderUI, invoke, initialize } = {}) {
       void run(async () => {
         const title = String(data.title).trim();
         delete data.title;
+    const chosenCurrency = data.__workspaceCurrency; delete data.__workspaceCurrency;
+    const hasMoney = Object.entries(data).some(([field,value]) => moneyFields.has(field) && String(value ?? '').trim() !== '');
+    if (!state.currency && route.page !== 'profile' && (chosenCurrency || hasMoney)) {
+      if (!['USD','CAD','EUR','GBP'].includes(chosenCurrency)) throw new Error('Choose your currency below before saving an amount. Your draft is kept.');
+      const profiles = listFrom(await bridge.listRecords(route.workspace,'profile'));
+      if (!profiles[0]) throw new Error('Open your Profile and choose a currency before saving money. Your draft is kept.');
+      const profile = await bridge.getRecord(route.workspace,'profile',profiles[0].id);
+      const updated = await bridge.saveRecord(route.workspace,'profile',{id:profile.id,title:profile.title,fieldsMode:'replace',expectedRecord:{title:profile.title,fields:profile.fields,source:profile.source},fields:{...profile.fields,Currency:chosenCurrency}});
+      state.currency = updated.fields?.Currency || null; state.currencyKnown = true; currencyVersion++;
+      if (state.currency !== chosenCurrency) throw new Error('The currency could not be confirmed. Your money record has not been saved.');
+    }
         const saved = await bridge.saveRecord(route.workspace, route.page, {
           ...(selected?.id
             ? {
@@ -2054,6 +2114,7 @@ export function startController({ renderUI, invoke, initialize } = {}) {
             : recordFields(data, route.page)
         });
         if (route.page === 'gigs' && route.workspace === workspaceId()) gigs.invalidate();
+        if (route.page === 'tasks' && route.workspace === workspaceId()) tasks.invalidate();
         if (route.page === 'profile' && route.workspace === workspaceId()) {
           state.currency = saved.fields?.Currency || null;
           state.currencyKnown = true;
@@ -2154,6 +2215,8 @@ export function startController({ renderUI, invoke, initialize } = {}) {
       ai,
       attention,
       gigs: gigs.state,
+      tasks: tasks.state,
+      devQuest,
       chat,
       workspaceSearch,
       sourceProposal,

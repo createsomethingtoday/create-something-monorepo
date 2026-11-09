@@ -1,0 +1,88 @@
+/* Danny's workspace strip, composed with Astryx controls and generated tokens.
+   Native details keep menus visible in the bundled WebKit without CSS anchors. */
+.gigi-dev-topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-4);
+  background: var(--color-background-body);
+  min-inline-size: 0;
+  position: relative;
+  z-index: 20;
+}
+.gigi-dev-topbar button { flex-shrink: 0; }
+.gigi-dev-topbar .reference-history { flex-shrink: 0; }
+.gigi-dev-topbar .reference-history button { inline-size: var(--size-element-md); }
+.gigi-dev-topbar .reference-history button span { font-size: var(--text-heading-3-size); }
+.gigi-dev-topbar .reference-brand { padding-inline: var(--spacing-1) var(--spacing-3); }
+.gigi-dev-topbar .reference-brand span { font-size: calc(var(--text-body-size) * 1.5); font-weight: var(--font-weight-semibold); letter-spacing: -.06em; }
+.gigi-dev-topbar .reference-find { color: var(--color-text-secondary); }
+.gigi-dev-topbar .reference-find kbd { font: inherit; font-size: var(--text-supporting-size); }
+.gigi-dev-topbar .reference-nav { display: flex; align-items: center; gap: var(--spacing-1); margin-inline-start: auto; }
+.gigi-dev-topbar .reference-dropdown { position: relative; }
+.gigi-dev-topbar .reference-dropdown > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  min-block-size: var(--size-element-md);
+  padding: var(--spacing-2) var(--spacing-3);
+  margin: 0;
+  color: var(--color-text-primary);
+  border-radius: var(--radius-element);
+  list-style: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.gigi-dev-topbar .reference-dropdown > summary::-webkit-details-marker { display: none; }
+.gigi-dev-topbar .reference-dropdown > summary:hover { background: var(--color-neutral); }
+.gigi-dev-topbar .reference-dropdown > summary:focus-visible { outline: var(--focus-outline-width) solid var(--color-accent); outline-offset: var(--focus-outline-offset); }
+.gigi-dev-topbar .reference-dropdown > summary.selected,
+.gigi-dev-topbar .reference-today[aria-current='page'] {
+  color: var(--color-text-accent);
+  background: var(--color-accent-muted);
+}
+.gigi-dev-topbar .reference-menu {
+  position: absolute;
+  inset-block-start: calc(100% + var(--spacing-2));
+  inset-inline-end: 0;
+  display: grid;
+  gap: var(--spacing-1);
+  inline-size: min(calc(var(--spacing-12) * 6), calc(100vw - var(--spacing-6)));
+  max-block-size: calc(100dvh - var(--spacing-12) * 2);
+  overflow: auto;
+  padding: var(--spacing-2);
+  background: var(--color-background-popover);
+  border: var(--border-width) solid var(--color-border-emphasized);
+  border-radius: var(--radius-container);
+  box-shadow: var(--shadow-med);
+  z-index: 30;
+}
+.gigi-dev-topbar .reference-menu button { inline-size: 100%; justify-content: start; text-align: start; }
+.gigi-dev-topbar .reference-menu button[aria-current='page'] { color: var(--color-text-accent); background: var(--color-accent-muted); }
+.gigi-dev-topbar .gigi-nav-menu-label { flex: 1; text-align: start; }
+.gigi-dev-topbar .reference-menu-current { margin-inline-start: auto; color: var(--color-text-accent); }
+.gigi-dev-topbar .reference-menu-footer { margin: var(--spacing-2) 0 0; border-block-start: var(--border-width) solid var(--color-border); padding: var(--spacing-3) var(--spacing-2) var(--spacing-1); overflow-wrap: anywhere; }
+.gigi-nav-icon { inline-size: var(--spacing-4); block-size: var(--spacing-4); flex-shrink: 0; }
+.gigi-dev-topbar .reference-date { display: inline-flex; justify-content: center; align-items: center; min-inline-size: var(--spacing-5); block-size: var(--spacing-5); border: var(--border-width) solid var(--color-text-accent); border-block-start-width: var(--spacing-1); border-radius: var(--radius-inner); font-size: var(--text-supporting-size); line-height: 1; font-variant-numeric: tabular-nums; }
+.gigi-dev-topbar .reference-attention { min-inline-size: var(--size-element-md); padding-inline: var(--spacing-2); }
+.gigi-dev-topbar .attention-badge { display: inline-flex; align-items: center; justify-content: center; min-inline-size: var(--spacing-5); block-size: var(--spacing-5); border-radius: var(--radius-full); background: var(--color-neutral); font-size: var(--text-supporting-size); font-variant-numeric: tabular-nums; }
+@media (max-width: 68rem) {
+  .gigi-dev-topbar { gap: var(--spacing-1); padding-inline: var(--spacing-3); }
+  .gigi-dev-topbar .reference-find kbd { display: none; }
+  .gigi-dev-topbar .reference-dropdown > summary { padding-inline: var(--spacing-2); }
+}
+@media (max-width: 58rem) {
+  .gigi-dev-topbar .gigi-nav-search-label { display: none; }
+}
+@media (max-width: 47rem) {
+  .gigi-dev-topbar { flex-wrap: wrap; }
+  .gigi-dev-topbar .reference-find { margin-inline-end: auto; }
+  .gigi-dev-topbar .reference-nav { order: 2; flex: 1 0 100%; justify-content: center; margin: 0; gap: 0; }
+  .gigi-dev-topbar .reference-dropdown > summary { padding-inline: var(--spacing-1); gap: var(--spacing-1); }
+  .gigi-dev-topbar .reference-dropdown > summary > .astryx-text { font-size: var(--text-supporting-size); }
+  .gigi-dev-topbar .reference-today { padding-inline: var(--spacing-2); }
+  .gigi-dev-topbar .reference-menu { position: fixed; inset-block-start: calc(var(--size-element-md) * 2 + var(--spacing-6)); inset-inline: var(--spacing-3); inline-size: auto; max-block-size: calc(100dvh - var(--size-element-md) * 2 - var(--spacing-9)); }
+}
+@media (max-width: 23rem) {
+  .gigi-dev-topbar .reference-chevron { display: none; }
+}

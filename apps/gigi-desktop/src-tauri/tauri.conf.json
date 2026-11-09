@@ -1,11 +1,11 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "GiGi",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "identifier": "agency.createsomething.gigi",
   "build": {
     "frontendDist": "../dist",
-    "beforeBuildCommand": "pnpm build:web && pnpm prepare:companions",
+    "beforeBuildCommand": "pnpm prepare:motion && pnpm build:web && pnpm prepare:companions",
     "devUrl": "http://localhost:4383",
     "beforeDevCommand": "pnpm dev:web"
   },

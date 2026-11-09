@@ -14,13 +14,13 @@ function criteria(value={}) {
  return next;
 }
 /** UI state only, scoped per workspace; business records remain in the domain. */
-export function createGigs({read,changed=()=>{},storage=globalThis.localStorage,schedule=setTimeout,clear=clearTimeout}={}) {
+export function createGigs({read,changed=()=>{},storage=globalThis.localStorage,schedule=setTimeout,clear=clearTimeout,storagePrefix='gigi:gigs'}={}) {
  const workspaces=new Map(),reader=createContactRead();let current,active=false,version=0,timer;
- const persist=()=>{try{storage?.setItem(`gigi:gigs:${current.workspace}`,JSON.stringify({criteria:current.criteria,scroll:current.scroll}));}catch{}};
+ const persist=()=>{try{storage?.setItem(`${storagePrefix}:${current.workspace}`,JSON.stringify({criteria:current.criteria,scroll:current.scroll}));}catch{}};
  const stop=()=>{version++;clear(timer);reader.cancel();if(current)current.loading=false;};
  function get(workspace){
   if(!workspaces.has(workspace)){
-   let saved;try{saved=JSON.parse(storage?.getItem(`gigi:gigs:${workspace}`)||'null');}catch{}
+   let saved;try{saved=JSON.parse(storage?.getItem(`${storagePrefix}:${workspace}`)||'null');}catch{}
    workspaces.set(workspace,{workspace,criteria:criteria(saved?.criteria),scroll:Math.max(0,Number(saved?.scroll)||0),scrollRevision:0,focusId:null,result:null,error:'',loading:false,stale:false});
   }
   return workspaces.get(workspace);

@@ -11,6 +11,26 @@ fn origin(source: &Value) -> &Value {
         source
     }
 }
+// Display provenance only. Never expose connector identities or treat a local
+// Today read as a new observation. Oversized values are omitted, not clipped.
+pub(crate) fn source_summary(source: &Value) -> Value {
+    let source = if source["kind"] == "manual" && source["origin"].is_object() {
+        &source["origin"]
+    } else {
+        source
+    };
+    let mut summary = serde_json::Map::new();
+    for (key, limit) in [("kind", 32), ("provider", 160), ("observedAt", 64)] {
+        if let Some(value) = source[key].as_str().filter(|value| {
+            !value.is_empty() && value.chars().count() <= limit
+                && !value.chars().any(char::is_control)
+                && (key != "observedAt" || chrono::DateTime::parse_from_rfc3339(value).is_ok())
+        }) {
+            summary.insert(key.to_string(), json!(value));
+        }
+    }
+    Value::Object(summary)
+}
 fn same_source(gig: &Value, event: &Value) -> bool {
     let a = origin(gig);
     let b = origin(event);
@@ -66,6 +86,12 @@ pub(crate) fn overview(
     list(db,wid,today,time_zone,None,0,5)
 }
 pub(crate) fn list(db:&Connection,wid:&str,today:&str,time_zone:&str,kind:Option<&str>,offset:usize,limit:usize)->Result<Value,String> {
+    range(db,wid,today,time_zone,kind,offset,limit,None)
+}
+pub(crate) fn week(db:&Connection,wid:&str,start:&str,end:chrono::NaiveDate,time_zone:&str)->Result<Value,String>{
+    range(db,wid,start,time_zone,None,0,500,Some(end))
+}
+fn range(db:&Connection,wid:&str,today:&str,time_zone:&str,kind:Option<&str>,offset:usize,limit:usize,through:Option<chrono::NaiveDate>)->Result<Value,String>{
     let today = day(today).ok_or("Today needs a valid local date")?;
     let zone: chrono_tz::Tz = time_zone
         .parse()
@@ -97,7 +123,8 @@ pub(crate) fn list(db:&Connection,wid:&str,today:&str,time_zone:&str,kind:Option
             }
             let fields: Value = serde_json::from_str(&fields).map_err(|e| e.to_string())?;
             if kind.is_some_and(|k|k!=crate::event_identity::kind(entity,&fields)) {continue;}
-            let identity=crate::event_identity::project(entity,&fields,&serde_json::from_str::<Value>(&source).map_err(|e|e.to_string())?);
+            let source: Value = serde_json::from_str(&source).map_err(|e|e.to_string())?;
+            let identity=crate::event_identity::project(entity,&fields,&source);
             let verified = if entity == "gigs" {
                 verified_source(&snapshot, wid, &id)?
             } else {
@@ -151,10 +178,10 @@ pub(crate) fn list(db:&Connection,wid:&str,today:&str,time_zone:&str,kind:Option
                         .date_naive();
                 }
             }
-            if time.end < today {
+            if time.end < today || through.is_some_and(|end|time.start>end) {
                 continue;
             }
-            items.push((json!({"workspaceId":wid,"entity":entity,"id":id,"identity":identity,"title":title.chars().take(120).collect::<String>(),"status":status,"date":time.start.to_string(),"endDate":time.end.to_string(),"allDay":all_day,"fields":{"Date":fields["Date"],"All Day":all_day,"Call Time":fields["Call Time"].as_str().map(|s|s.chars().take(160).collect::<String>()),"Set Time":fields["Set Time"].as_str().map(|s|s.chars().take(160).collect::<String>())},"coverRevision":crate::artwork::revision(&snapshot,wid,entity,&id)?,"cover":crate::artwork::cover(&snapshot,wid,entity,&id)?}),time));
+            items.push((json!({"workspaceId":wid,"entity":entity,"id":id,"identity":identity,"source":source_summary(&source),"title":title.chars().take(120).collect::<String>(),"status":status,"date":time.start.to_string(),"endDate":time.end.to_string(),"allDay":all_day,"fields":{"Date":fields["Date"],"All Day":all_day,"Call Time":fields["Call Time"].as_str().map(|s|s.chars().take(160).collect::<String>()),"Set Time":fields["Set Time"].as_str().map(|s|s.chars().take(160).collect::<String>())},"coverRevision":crate::artwork::revision(&snapshot,wid,entity,&id)?,"cover":crate::artwork::cover(&snapshot,wid,entity,&id)?}),time));
         }
     }
     let event_ids: HashSet<String> = items
@@ -202,4 +229,22 @@ pub(crate) fn list(db:&Connection,wid:&str,today:&str,time_zone:&str,kind:Option
         })
         .collect::<Vec<_>>();
     Ok(json!({"items":records,"count":count,"undatedCount":undated,"timeZone":time_zone,"offset":offset,"limit":limit,"nextOffset":if offset+limit<count {Some(offset+limit)}else{None},"recordKind":kind}))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn source_summary_omits_unknown_malformed_or_oversized_observation_data() {
+        assert_eq!(source_summary(&json!({"kind":"manual"})),json!({"kind":"manual"}));
+        assert_eq!(source_summary(&Value::Null),json!({}));
+        for observed in [json!(null),json!(12345),json!("2026-11-05"),json!("not a timestamp"),json!("2026-11-05T25:00:00Z")] {
+            assert_eq!(source_summary(&json!({"kind":"import","provider":"gmail","observedAt":observed,"preview":{"snippet":"private"}})),json!({"kind":"import","provider":"gmail"}));
+        }
+        assert_eq!(source_summary(&json!({"kind":"x".repeat(33),"provider":"x".repeat(161),"observedAt":"x".repeat(65)})),json!({}));
+        assert_eq!(source_summary(&json!({"kind":"import\n","provider":"gmail\n"})),json!({}));
+        let saved=json!({"kind":"manual","origin":{"kind":"derived","provider":"googlecalendar","observedAt":"2026-10-30T12:34:56.123Z","connectedAccountId":"private","externalId":"private"}});
+        assert_eq!(source_summary(&saved),json!({"kind":"derived","provider":"googlecalendar","observedAt":"2026-10-30T12:34:56.123Z"}));
+    }
 }
