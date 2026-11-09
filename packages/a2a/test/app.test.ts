@@ -208,3 +208,124 @@ test('offline signing lifecycle: verification cache expires and prior signing ke
     assert.equal(row.secret_ciphertext,'');assert.equal(row.previous_secret_ciphertext,null);assert.equal(row.previous_secret_until,null);
   }finally{f.storage.close();}
 });
+
+test('offline admission: concurrent creates and lapsed reactivation never exceed four active subscriptions',async()=>{
+  const f=await fixture();try{
+    const p=await subscriptionPair(f);
+    const results=await Promise.all(Array.from({length:5},(_,i)=>f.rpc(f.bob,'events/subscribe',{...p.params,delivery:{...p.params.delivery,url:`https://receiver.example/callback-${i}`}})));
+    assert.equal(results.filter(r=>Boolean(r.result)).length,3);
+    assert.equal(results.filter(r=>Boolean(r.error)).length,2);
+    assert.equal(f.storage.sqlite.prepare("SELECT count(*) AS n FROM subscriptions WHERE status='active' AND expires_at>?").get(Date.now())!.n,4);
+    f.storage.sqlite.prepare('UPDATE subscriptions SET expires_at=? WHERE id=?').run(Date.now()-1,p.sub.id);
+    assert.ok((await f.rpc(f.bob,'events/subscribe',{...p.params,delivery:{...p.params.delivery,url:'https://receiver.example/fill-vacancy'}})).result);
+    assert.ok((await f.rpc(f.bob,'events/subscribe',{...p.params,cursor:'0'})).error);
+    assert.equal(f.storage.sqlite.prepare("SELECT count(*) AS n FROM subscriptions WHERE status='active' AND expires_at>?").get(Date.now())!.n,4);
+  }finally{f.storage.close();}
+});
+
+test('offline admission: invalid duration and replay floors cause no activation or callback',async()=>{
+  const f=await fixture();try{
+    const p=await subscriptionPair(f),before=f.envelopes.length;
+    for(const extra of [{maxAgeMs:-1},{maxAgeMs:0.5},{maxAgeMs:null},{maxAgeMs:'1'},{maxAgeMs:Number.MAX_SAFE_INTEGER+1},{ttlMs:0},{ttlMs:-1},{ttlMs:1.5},{ttlMs:'5'}]){
+      const result=await f.rpc(f.bob,'events/subscribe',{...p.params,...extra});assert.ok(result.error,JSON.stringify(extra));
+    }
+    assert.equal(f.envelopes.length,before);
+    assert.equal(f.storage.sqlite.prepare('SELECT count(*) AS n FROM subscriptions').get()!.n,1);
+  }finally{f.storage.close();}
+});
+
+test('offline admission: owner subscribe rate is bounded across cached refreshes',async()=>{
+  const f=await fixture();try{
+    const p=await subscriptionPair(f);
+    for(let i=0;i<9;i++)assert.ok((await f.rpc(f.bob,'events/subscribe',{...p.params,cursor:'0'})).result);
+    assert.ok((await f.rpc(f.bob,'events/subscribe',{...p.params,cursor:'0'})).error);
+    assert.equal(f.envelopes.length,1);
+    assert.equal(f.storage.sqlite.prepare('SELECT count FROM admission_buckets WHERE bucket_key LIKE ?').get('subscribe:bob:%')!.count,11);
+  }finally{f.storage.close();}
+});
+
+test('offline lifecycle: null or absent cursor starts now while active stale cursor preserves accepted receipts',async()=>{
+  const f=await fixture();try{
+    const p=await subscriptionPair(f);await f.value('/api/v1/messages',f.alice,'POST',p.input);await f.flush();
+    const refreshed=await f.rpc(f.bob,'events/subscribe',{...p.params,cursor:'0'});
+    assert.equal(refreshed.result.cursor,'1');await f.flush();assert.equal(f.received.length,1);
+    for(const cursor of [null,undefined]){
+      const sent=await f.value('/api/v1/messages',f.alice,'POST',{...p.input,idempotencyKey:`start-now-${String(cursor)}`});
+      f.jobs.splice(0);await fanoutEvent(f.env,sent.eventId);
+      const now=await f.rpc(f.bob,'events/subscribe',{...p.params,...(cursor===null?{cursor}: {})});
+      assert.equal(now.result.cursor,String(sent.message.cursor));assert.equal(now.result.truncated,false);
+      await f.flush();assert.equal(f.received.length,1);
+      assert.equal(f.storage.sqlite.prepare('SELECT state FROM deliveries WHERE event_id=?').get(sent.eventId)!.state,'expired');
+    }
+  }finally{f.storage.close();}
+});
+
+test('offline signing lifecycle: cache lasts five minutes and is scoped to both owner and callback URL',async()=>{
+  const f=await fixture();try{
+    const p=await subscriptionPair(f);let challenges=f.envelopes.length;
+    f.storage.sqlite.prepare('UPDATE subscriptions SET verified_at=?').run(Date.now()-4*60000);
+    assert.ok((await f.rpc(f.bob,'events/subscribe',{...p.params,cursor:'0'})).result);assert.equal(f.envelopes.length,challenges);
+    f.storage.sqlite.prepare('UPDATE subscriptions SET verified_at=?').run(Date.now()-5*60000-1);
+    assert.ok((await f.rpc(f.bob,'events/subscribe',{...p.params,cursor:'0'})).result);assert.equal(f.envelopes.length,++challenges);
+    assert.ok((await f.rpc(f.bob,'events/subscribe',{...p.params,delivery:{...p.params.delivery,url:'https://receiver.example/another-callback'}})).result);assert.equal(f.envelopes.length,++challenges);
+    assert.ok((await f.rpc(f.alice,'events/subscribe',{...p.params,arguments:{agent_id:p.a.id}})).result);assert.equal(f.envelopes.length,++challenges);
+  }finally{f.storage.close();}
+});
+
+test('offline signing lifecycle: key overlap is at most thirty seconds and expiry/410 clear both encrypted keys',async()=>{
+  for(const end of ['overlap','expiry','gone']){
+    const f=await fixture();try{
+      const p=await subscriptionPair(f),replacement='whsec_'+Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64');
+      const before=Date.now();assert.ok((await f.rpc(f.bob,'events/subscribe',{...p.params,cursor:'0',delivery:{...p.params.delivery,secret:replacement}})).result);
+      const rotation=f.storage.sqlite.prepare('SELECT previous_secret_until,previous_secret_ciphertext FROM subscriptions').get()!;
+      assert.ok(Number(rotation.previous_secret_until)>=before+30000&&Number(rotation.previous_secret_until)<=Date.now()+30000);
+      assert.ok(rotation.previous_secret_ciphertext);
+      f.setReceiverSecret(replacement);
+      if(end==='overlap'){
+        f.storage.sqlite.prepare('UPDATE subscriptions SET previous_secret_until=?').run(Date.now()-1);
+        await recoverDelivery(f.env);
+      }else if(end==='expiry'){
+        f.storage.sqlite.prepare('UPDATE subscriptions SET expires_at=?').run(Date.now()-1);await recoverDelivery(f.env);
+      }else{
+        f.setStatus(410);
+      }
+      if(end!=='expiry'){
+        await f.value('/api/v1/messages',f.alice,'POST',p.input);await f.flush();
+        const envelope=f.envelopes.at(-1)!;
+        assert.ok(new Webhook(replacement).verify(envelope.body,envelope.headers));
+        if(end==='overlap')assert.throws(()=>new Webhook(f.secret).verify(envelope.body,envelope.headers));
+      }
+      const row=f.storage.sqlite.prepare('SELECT secret_ciphertext,previous_secret_ciphertext,previous_secret_until FROM subscriptions').get()!;
+      assert.equal(row.previous_secret_ciphertext,null);assert.equal(row.previous_secret_until,null);
+      if(end!=='overlap')assert.equal(row.secret_ciphertext,'');
+    }finally{f.storage.close();}
+  }
+});
+
+test('offline lifecycle: the granted TTL does not exceed a short client suggestion',async()=>{
+  const f=await fixture();try{
+    const p=await subscriptionPair(f);const response=await f.rpc(f.bob,'events/subscribe',{...p.params,cursor:'0',ttlMs:10});assert.ok(response.result);
+    assert.ok(Date.parse(response.result.refreshBefore)<=Date.now()+10);
+    await new Promise(resolve=>setTimeout(resolve,15));await recoverDelivery(f.env);
+    const row=f.storage.sqlite.prepare('SELECT status,secret_ciphertext,previous_secret_ciphertext FROM subscriptions').get()!;
+    assert.equal(row.status,'expired');assert.equal(row.secret_ciphertext,'');assert.equal(row.previous_secret_ciphertext,null);
+  }finally{f.storage.close();}
+});
+
+test('offline recovery: excessive replay resets to now with explicit truncation and expired receipts',async()=>{
+  const f=await fixture();try{
+    const p=await subscriptionPair(f),now=Date.now();
+    // Durable upstream fixture deliberately exceeds ordinary pilot send quotas.
+    for(let i=0;i<1001;i++){
+      const thread=`cap-thread-${i}`,message=`cap-message-${i}`;
+      f.storage.sqlite.prepare('INSERT INTO threads(id,agent_a_id,agent_b_id,created_at,expires_at) VALUES(?,?,?,?,?)').run(thread,p.a.id,p.b.id,now,now+86400000);
+      f.storage.sqlite.prepare('INSERT INTO messages(id,thread_id,sequence,from_agent_id,to_agent_id,text,created_at,expires_at) VALUES(?,?,1,?,?,?,?,?)').run(message,thread,p.a.id,p.b.id,'Synthetic replay ceiling',now,now+86400000);
+      f.storage.sqlite.prepare('INSERT INTO outbox_events(id,message_id,recipient_agent_id,created_at,published_at) VALUES(?,?,?,?,?)').run(`cap-event-${i}`,message,p.b.id,now,now);
+    }
+    f.storage.sqlite.prepare('UPDATE subscriptions SET expires_at=?').run(now-1);
+    const resumed=await f.rpc(f.bob,'events/subscribe',{...p.params,cursor:'0'});assert.ok(resumed.result,JSON.stringify(resumed));
+    assert.equal(resumed.result.truncated,true);assert.equal(resumed.result.cursor,'1001');
+    await f.flush();assert.equal(f.received.length,0);
+    assert.equal(f.storage.sqlite.prepare("SELECT count(*) AS n FROM deliveries WHERE state='expired'").get()!.n,1001);
+  }finally{f.storage.close();}
+});
