@@ -1,3 +1,5 @@
+> Historical local qualification only. Public0.3.3 was never uploaded, merged or deployed; the unconfirmed-import correction and current candidate are documented in [0.3.4](../gigi-reconciled-034/REVIEW.md).
+
 # GiGi 0.3.3 reconciled release qualification
 
 CRE-2377; PR #2220. User authorized both the separate Danny DEV build and public installer. Danny’s published interface remains the visual authority: grouped Work/Admin/Network/Platform navigation, weekly Today and fixed deadlines, Calm Tasks/Gigs, green themes, combined Search and guided setup. The technical foundation supplements it.

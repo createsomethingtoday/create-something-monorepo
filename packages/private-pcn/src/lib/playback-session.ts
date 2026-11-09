@@ -131,6 +131,12 @@ export function createPlaybackSession(
     timer = undefined;
     const position = renew ? recoveryPosition : resume;
     const playing = renew && !element.paused;
+    const caption = renew
+      ? Array.from(element.textTracks).find(
+          (track) =>
+            (track.kind === 'captions' || track.kind === 'subtitles') && track.mode === 'showing'
+        )
+      : undefined;
     if (!renew || state.failed) {
       state.failed = false;
       state.captionLabels = null;
@@ -140,20 +146,18 @@ export function createPlaybackSession(
       const grant = await fetchGrant();
       if (stopped || request !== requestNumber || (renew && completed)) return;
       renewing = true;
-      if (element.canPlayType('application/vnd.apple.mpegurl')) {
-        if (seekOnMetadata) element.removeEventListener('loadedmetadata', seekOnMetadata);
-        seekOnMetadata = () => {
-          if (!stopped && request === requestNumber) element.currentTime = position;
-        };
-        element.addEventListener('loadedmetadata', seekOnMetadata, { once: true });
-        element.src = grant.hlsUrl;
-      } else {
-        const Hls = await loadHls();
-        if (stopped || request !== requestNumber || completed) return;
-        if (!Hls.isSupported())
-          throw new Error('This browser cannot play this video. Try a current browser.');
+      const Hls = await loadHls();
+      if (stopped || request !== requestNumber || completed) return;
+      // Some native HLS implementations advertise playback without exposing
+      // Stream's WebVTT tracks. Prefer MSE so caption controls remain available.
+      if (Hls.isSupported()) {
         hls?.destroy();
-        hls = new Hls({ startPosition: position });
+        hls = new Hls({
+          startPosition: position,
+          ...(caption
+            ? { subtitlePreference: { lang: caption.language, name: caption.label } }
+            : {})
+        });
         hls.loadSource(grant.hlsUrl);
         hls.attachMedia(element);
         hls.on(Hls.Events.ERROR, (_, data) => {
@@ -167,7 +171,14 @@ export function createPlaybackSession(
             timer = undefined;
           }
         });
-      }
+      } else if (element.canPlayType('application/vnd.apple.mpegurl')) {
+        if (seekOnMetadata) element.removeEventListener('loadedmetadata', seekOnMetadata);
+        seekOnMetadata = () => {
+          if (!stopped && request === requestNumber) element.currentTime = position;
+        };
+        element.addEventListener('loadedmetadata', seekOnMetadata, { once: true });
+        element.src = grant.hlsUrl;
+      } else throw new Error('This browser cannot play this video. Try a current browser.');
       // canplay/playing, not grant receipt, confirms media readiness.
       if (playing) await element.play().catch(() => {});
       if (stopped || request !== requestNumber || state.failed || completed) return;

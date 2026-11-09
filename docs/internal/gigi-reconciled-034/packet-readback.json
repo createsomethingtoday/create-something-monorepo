@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "copies": {
+    "release-identity.json": true,
+    "native-runtime.json": true,
+    "independent-public-artifact.json": true,
+    "independent-dev-artifact.json": true,
+    "independent-contained-app.json": true,
+    "independent-build-provenance.json": true
+  },
+  "reviewSha256": "17113042fed8385d817a3b2ebafbcb15d1c28425c821e608e0d52c33d00aed28"
+}
