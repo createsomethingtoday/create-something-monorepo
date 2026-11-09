@@ -130,6 +130,8 @@ try {
     );
     await page.screenshot({ path: join(out, `${theme}-${width}.png`), fullPage: true });
   }
+  await page.locator('[data-nav-overflow="Platform"]').click();
+  await page.locator('[data-page="memory"]').first().click();
   await page.getByRole('button', { name: 'Create memory', exact: true }).focus();
   assert.equal(
     await page

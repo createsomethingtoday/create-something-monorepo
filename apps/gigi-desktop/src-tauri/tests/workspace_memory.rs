@@ -196,3 +196,24 @@ fn corrections_supersession_and_stale_pending_approval_are_atomic() {
     assert!(call("memory.search", json!({"query":"Bounded","limit":6})).is_err());
     std::fs::remove_dir_all(root).unwrap();
 }
+
+#[test]
+fn unicode_search_matches_stored_case_and_keeps_pagination() {
+    let root = std::env::temp_dir().join(format!("gigi-memory-{}", uuid::Uuid::new_v4()));
+    let w = domain::dispatch(&root, "workspace.create", json!({"name":"Unicode search"})).unwrap()["id"].clone();
+    let call = |op: &str, mut v: Value| { v["workspaceId"] = w.clone(); domain::dispatch(&root, op, v).unwrap() };
+    for (key, text) in [("one", "Élodie prefers email"), ("two", "ÉLODIE books rehearsals"), ("other", "Other memory")] {
+        call("memory.request", json!({"requestId":key,"action":"save","entry":{"kind":"preference","text":text,"state":"confirmed","scope":"workspace","source":{"kind":"user","reference":"Synthetic Unicode statement"}}}));
+        call("memory.review", json!({"requestId":key,"decision":"approve"}));
+    }
+    for query in ["Élodie", "élodie", "ÉLODIE"] {
+        let first = call("memory.search", json!({"query":query,"limit":1}));
+        assert_eq!(first["items"].as_array().unwrap().len(), 1, "Unicode query {query}");
+        assert_eq!(first["nextOffset"], 1);
+        let second = call("memory.search", json!({"query":query,"limit":1,"offset":1}));
+        assert_eq!(second["items"].as_array().unwrap().len(), 1);
+        assert_ne!(first["items"][0]["id"], second["items"][0]["id"]);
+        assert!(second["nextOffset"].is_null());
+    }
+    std::fs::remove_dir_all(root).unwrap();
+}

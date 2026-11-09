@@ -580,7 +580,7 @@ export function startController({ renderUI, invoke, initialize } = {}) {
     // its actions and drop the unsaved-change guard without remounting it.
     if (
       page === state.page &&
-      ['music', 'social'].includes(page) &&
+      ['music', 'social', 'memory'].includes(page) &&
       !state.selected &&
       !state.editing
     ) {

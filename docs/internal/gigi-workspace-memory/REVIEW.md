@@ -133,3 +133,30 @@ new signed memory-bearing installer remain untested. Keep promotion held until
 those gates and the stacked source review are resolved. Use a distinct next
 release identity; do not reuse the qualified 0.3.4 artifact or immutable keys.
 Worktree disposition: preserved at the path and branch above until promotion.
+
+## PR review corrections
+
+Both automated P2 findings on `5c879e2fc` reproduced before correction:
+
+- Reopening Platform → Memory before editing disposed the navigation guard
+  while React retained the component. The actual browser regression then lost
+  the draft on Today navigation. Memory now uses the existing same-page creator
+  preservation path; the exact repeated-navigation regression passes.
+- `Élodie` search returned zero matches because SQLite lowercases ASCII while
+  Rust lowercases Unicode. Search now streams active, workspace-scoped rows and
+  applies Rust Unicode lowercase to stored text as well as queries. It retains
+  at most limit + 1 matching ids and paginates matches. Existing entries need
+  no migration. Native copied/lower/uppercase accented queries and two-page
+  matching-id regression fail before and pass after.
+
+After correction: 415 desktop tests pass (2 installed-artifact skips), web build
+passes, actual React/native-domain memory browser flow passes, and Rust lifecycle
+(3) plus real stdio MCP (1) tests pass. Search remains literal substring matching;
+it does not add accent folding, semantic matching or full Unicode case folding.
+Release/native/live-provider limits above still apply.
+
+Independent Sol 6.1 re-test found no blocker in either review fix. It reran the
+Rust and actual React/native-domain flows, directly viewed fresh editor output,
+and additionally checked pagination across nonmatches, workspace/forgotten-status
+exclusion and list pagination. Functional and Chromium perceptual gates passed;
+release readiness remains held within the documented limits.

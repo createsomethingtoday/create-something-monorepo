@@ -110,15 +110,27 @@ pub fn dispatch(root: &Path, op: &str, v: Value) -> Result<Value, String> {
             if offset > 10000 {
                 return Err("Invalid memory offset".into());
             }
-            // Search in SQLite before bounding; literal substring, never wildcard SQL.
-            let mut stmt=db.prepare("SELECT id FROM workspace_memory WHERE workspace_id=?1 AND status='active' AND (?2='' OR instr(lower(json_extract(entry_json,'$.text')),?2)>0) ORDER BY updated_at DESC,id LIMIT ?3 OFFSET ?4").map_err(|e|e.to_string())?;
-            let ids = stmt
-                .query_map(params![w, query, limit + 1, offset], |r| {
-                    r.get::<_, String>(0)
-                })
-                .map_err(|e| e.to_string())?
-                .collect::<Result<Vec<_>, _>>()
-                .map_err(|e| e.to_string())?;
+            // Use Rust's Unicode lowercase on both sides, including existing entries.
+            // Stream matching ids; retain at most limit + 1 and paginate matches.
+            let mut stmt = db.prepare("SELECT id,entry_json FROM workspace_memory WHERE workspace_id=?1 AND status='active' ORDER BY updated_at DESC,id").map_err(|e| e.to_string())?;
+            let rows = stmt.query_map([w], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?))).map_err(|e| e.to_string())?;
+            let mut ids = Vec::new();
+            let mut skipped = 0;
+            for row in rows {
+                let (id, raw) = row.map_err(|e| e.to_string())?;
+                if !query.is_empty() {
+                    let entry: Value = serde_json::from_str(&raw).map_err(|e| e.to_string())?;
+                    if !entry["text"].as_str().unwrap_or("").to_lowercase().contains(&query) {
+                        continue;
+                    }
+                }
+                if skipped < offset {
+                    skipped += 1;
+                    continue;
+                }
+                ids.push(id);
+                if ids.len() > limit as usize { break; }
+            }
             let more = ids.len() > limit as usize;
             let items = ids
                 .iter()
