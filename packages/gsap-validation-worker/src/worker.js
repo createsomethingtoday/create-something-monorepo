@@ -1032,7 +1032,7 @@ __name(extractExternalScripts, "extractExternalScripts");
 // count.
 // Second layer: the exemption is also off when the script does anything
 // besides GSAP: creates elements, uses the network, timers, or storage,
-// writes markup, text, styles, or URLs, changes UI state another way
+// writes markup, text, styles, or URLs, reveals template content, changes UI state another way
 // (classes, data attributes, attributes, form or visibility properties,
 // programmatic clicks or scrolling), or animates without GSAP (Web
 // Animations, jQuery).
@@ -1051,7 +1051,8 @@ var NON_GSAP_BEHAVIOR_PATTERN = new RegExp([
   String.raw`\.dataset\.[\w$]+\s*=(?!=)|\.dataset\[|(?:toggle|remove)Attribute\s*\(`,
   String.raw`\.(?:hidden|checked|disabled|open|value|selected)\s*=(?!=)`,
   String.raw`\.(?:click|scrollIntoView|scrollTo|scrollBy)\s*\(`,
-  String.raw`\.(?:animate|getAnimations)\s*\(|\bnew\s+(?:Animation|KeyframeEffect)\b`
+  String.raw`\.(?:animate|getAnimations)\s*\(|\bnew\s+(?:Animation|KeyframeEffect)\b`,
+  String.raw`\.content\b`
 ].join("|"));
 var GSAP_WIRING_LISTENER_EVENTS = "DOMContentLoaded|load|click|resize|mouseenter|mouseleave|pointerenter|pointerleave";
 var GSAP_WIRING_CALLBACK = String.raw`(?:\(?[\w$\s,]*\)?\s*=>|function\s*[\w$]*\s*\([\w$\s,]*\))`;
@@ -1085,10 +1086,24 @@ var GSAP_WIRING_BLOCK_PATTERNS = [
   // UI listener header; the callback body is checked as separate statements
   new RegExp(String.raw`^[\w$.]+\.addEventListener\(\s*['"](?:${GSAP_WIRING_LISTENER_EVENTS})['"]\s*,\s*${GSAP_WIRING_CALLBACK}$`),
   // Event plumbing: `e.preventDefault()`
-  /^[\w$.]+\.(?:preventDefault|stopPropagation)\(\)$/,
-  // Moving existing nodes: `rail.appendChild(lead)`
-  /^[\w$.]+\.(?:appendChild|insertBefore|prepend|append)\([\w$.\[\]\s,+-]*\)$/
+  /^[\w$.]+\.(?:preventDefault|stopPropagation)\(\)$/
 ];
+// Moving existing nodes: `rail.appendChild(lead)`,
+// `rail.insertBefore(cards[cards.length - 1], lead)`. Only methods that take
+// nodes (a string throws), and only plain names or indexed items as arguments.
+var GSAP_WIRING_REORDER_PATTERN = /^[\w$.]+\.(?:appendChild|insertBefore)\((.*)\)$/;
+// Where an existing node comes from: an item of a list of existing elements,
+// or a lookup with nothing read after it. Anything else (template content,
+// strings, clones) is not a known existing node.
+var GSAP_WIRING_LIST_SOURCE_PATTERN = /^(?:gsap\.utils\.toArray\([^()]*\)|[\w$.]+\.querySelectorAll\([^()]*\)|[\w$.]+\.children)$/;
+var GSAP_WIRING_ELEMENT_SOURCE_PATTERN = /^[\w$.]+\.(?:querySelector|getElementById|closest)\([^()]*\)$/;
+var GSAP_WIRING_LIST_ITEM_PATTERN = /^([\w$]+)\[[\w$.]+(?:\s*-\s*\d+)?\]$/;
+function isExistingNodeArgument(argument, context) {
+  const item = GSAP_WIRING_LIST_ITEM_PATTERN.exec(argument);
+  if (item) return context.lists.has(item[1]);
+  return context.elements.has(argument);
+}
+__name(isExistingNodeArgument, "isExistingNodeArgument");
 // Statements with no behavior: closing punctuation, bare keywords, comments.
 var GSAP_WIRING_INERT_PATTERN = /^(?:[)\],\s]+|else|return|break|continue|\/\/.*|\/\*(?:(?!\*\/)[\s\S])*\*\/)$/;
 // Calls that only read the DOM or compute a value.
@@ -1103,10 +1118,13 @@ function stripStringLiterals(code) {
   return code.replace(/'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"/g, '""');
 }
 __name(stripStringLiterals, "stripStringLiterals");
-function hasAssignment(code) {
-  return /(?<![=!<>])=(?![=>])/.test(stripStringLiterals(code));
+// Any assignment (`=`, `+=`, `>>=`, `??=`), update (`++`, `--`), or delete.
+function hasMutation(code) {
+  const stripped = stripStringLiterals(code);
+  if (/\+\+|--|<<=|>>>?=|\*\*=|\bdelete\b/.test(stripped)) return true;
+  return stripped.replace(/===|!==|==|!=|<=|>=|=>/g, "").includes("=");
 }
-__name(hasAssignment, "hasAssignment");
+__name(hasMutation, "hasMutation");
 // Paths of the functions an expression calls (`gsap.utils.toArray`,
 // `parseFloat`), or null when any invocation has no plain name: computed
 // (`a['x']()`), optional (`a.x?.()`), on a call result or group (`f()()`,
@@ -1146,15 +1164,17 @@ function isTweenVarsBlock(block) {
   });
 }
 __name(isTweenVarsBlock, "isTweenVarsBlock");
-function isGsapWiringBlock(block, localVariables) {
+function isGsapWiringBlock(block, context = {}) {
   if (containsPotentiallyHarmfulCode(block)) return false;
   const guard = GSAP_WIRING_GUARD_PATTERN.exec(block);
   if (guard) {
     const callees = findCallees(guard[1]);
-    return callees !== null && callees.length === 0 && !hasAssignment(guard[1]);
+    return callees !== null && callees.length === 0 && !hasMutation(guard[1]);
   }
   const flag = GSAP_WIRING_FLAG_PATTERN.exec(block);
-  if (flag) return Boolean(localVariables && localVariables.has(flag[1]));
+  if (flag) return Boolean(context.variables && context.variables.has(flag[1]));
+  const reorder = GSAP_WIRING_REORDER_PATTERN.exec(block);
+  if (reorder) return Boolean(context.lists && context.elements) && reorder[1].split(",").every((argument) => isExistingNodeArgument(argument.trim(), context));
   return isTweenVarsBlock(block) || GSAP_WIRING_BLOCK_PATTERNS.some((pattern) => pattern.test(block));
 }
 __name(isGsapWiringBlock, "isGsapWiringBlock");
@@ -1165,7 +1185,7 @@ function isReadOnlyDeclaration(block, localFunctions) {
   // `const step = (direction) =>`: the body is checked as separate statements.
   if (GSAP_WIRING_CALLBACK_HEADER_PATTERN.test(value)) return true;
   // An expression body, an assignment, or a constructor in the value is behavior.
-  if (value.includes("=>") || hasAssignment(value) || /\bnew\b/.test(stripStringLiterals(value))) return false;
+  if (value.includes("=>") || hasMutation(value) || /\bnew\b/.test(stripStringLiterals(value))) return false;
   const callees = findCallees(value);
   return callees !== null && callees.every((path) => isAllowedCallee(path, localFunctions));
 }
@@ -1178,7 +1198,7 @@ __name(isGsapCallBlock, "isGsapCallBlock");
 // A call to a function the script declares; its body is checked separately.
 function isLocalCallBlock(block, localFunctions) {
   const call = /^([\w$]+)\(([^()]*)\)$/.exec(block);
-  if (!call || !localFunctions.has(call[1]) || hasAssignment(call[2])) return false;
+  if (!call || !localFunctions.has(call[1]) || hasMutation(call[2])) return false;
   const argumentCallees = findCallees(call[2]);
   return argumentCallees !== null && argumentCallees.length === 0;
 }
@@ -1190,10 +1210,16 @@ function isGsapWiringOnlyScript(script) {
   for (const match of script.matchAll(new RegExp(String.raw`\b(?:const|let|var)\s+([\w$]+)\s*=\s*(?:async\s*)?${GSAP_WIRING_CALLBACK}`, "g"))) {
     localFunctions.add(match[1]);
   }
-  const localVariables = new Set(Array.from(script.matchAll(/\b(?:const|let|var)\s+([\w$]+)/g), (match) => match[1]));
+  const declarations = Array.from(script.matchAll(/\b(?:const|let|var)\s+([\w$]+)(?:\s*=\s*([^;\n]*))?/g), (match) => [match[1], (match[2] || "").trim()]);
+  const lists = new Set(declarations.filter(([, value]) => GSAP_WIRING_LIST_SOURCE_PATTERN.test(value)).map(([name]) => name));
+  const elements = new Set(declarations.filter(([, value]) => {
+    const item = GSAP_WIRING_LIST_ITEM_PATTERN.exec(value);
+    return item ? lists.has(item[1]) : GSAP_WIRING_ELEMENT_SOURCE_PATTERN.test(value);
+  }).map(([name]) => name));
+  const context = { variables: new Set(declarations.map(([name]) => name)), lists, elements };
   // Every statement counts, however short; the original count skips blocks of 10 characters or fewer.
   return script.split(/[;\n\r{}]/).map((block) => block.trim()).filter(Boolean).every(
-    (block) => GSAP_WIRING_INERT_PATTERN.test(block) || isGsapWiringBlock(block, localVariables) || isReadOnlyDeclaration(block, localFunctions) || isGsapCallBlock(block) || isLocalCallBlock(block, localFunctions)
+    (block) => GSAP_WIRING_INERT_PATTERN.test(block) || isGsapWiringBlock(block, context) || isReadOnlyDeclaration(block, localFunctions) || isGsapCallBlock(block) || isLocalCallBlock(block, localFunctions)
   );
 }
 __name(isGsapWiringOnlyScript, "isGsapWiringOnlyScript");

@@ -321,6 +321,52 @@ const nonGsapBehavior = {
   }
   trigger.addEventListener('click', (e) => { e.preventDefault(); onClose(); });
 });`,
+  'append a string': `document.addEventListener('DOMContentLoaded', () => {
+  gsap.to('.hero', { opacity: 1, duration: 1 });
+  const trigger = document.querySelector('.panel-trigger');
+  const panel = document.querySelector('.panel');
+  if (!trigger || !panel) return;
+  const message = 'Custom content';
+  function onOpen() {
+    if (!panel) return;
+    panel.append(message);
+  }
+  trigger.addEventListener('click', (e) => { e.preventDefault(); onOpen(); });
+});`,
+  'reveal template content': `document.addEventListener('DOMContentLoaded', () => {
+  gsap.to('.hero', { opacity: 1, duration: 1 });
+  const trigger = document.querySelector('.panel-trigger');
+  const panel = document.querySelector('.panel');
+  const extra = document.querySelector('template').content;
+  if (!trigger || !panel) return;
+  function onOpen() {
+    if (!panel) return;
+    panel.appendChild(extra);
+  }
+  trigger.addEventListener('click', (e) => { e.preventDefault(); onOpen(); });
+});`,
+  'increment in a declaration': `document.addEventListener('DOMContentLoaded', () => {
+  gsap.to('.hero', { opacity: 1, duration: 1 });
+  const plus = document.querySelector('.qty-plus');
+  const panel = document.querySelector('.qty-input');
+  if (!plus || !panel) return;
+  function onPlus() {
+    if (!panel) return;
+    const previous = panel.value++;
+  }
+  plus.addEventListener('click', (e) => { e.preventDefault(); onPlus(); });
+});`,
+  'decrement in a guard': `document.addEventListener('DOMContentLoaded', () => {
+  gsap.to('.hero', { opacity: 1, duration: 1 });
+  const minus = document.querySelector('.qty-minus');
+  const panel = document.querySelector('.qty-input');
+  if (!minus || !panel) return;
+  function onMinus() {
+    if (panel.value-- < 1) return;
+    if (!panel) return;
+  }
+  minus.addEventListener('click', (e) => { e.preventDefault(); onMinus(); });
+});`,
   'network request': `document.addEventListener('DOMContentLoaded', () => {
   gsap.from('.feed', { opacity: 0, duration: 0.5 });
   const feed = document.querySelector('.feed');
@@ -340,9 +386,16 @@ for (const [name, script] of Object.entries(nonGsapBehavior)) {
 }
 
 // Only call-free wiring is exempt; a call hidden in a guard or argument is behavior.
-for (const block of ['if (busy) return', 'if (!rail || !forward || !back) return', 'if (typeof gsap === "undefined") return', 'rail.insertBefore(cards[cards.length - 1], lead)']) {
+for (const block of ['if (busy) return', 'if (!rail || !forward || !back) return', 'if (typeof gsap === "undefined") return']) {
   assert.equal(sandbox.isGsapWiringBlock(block), true, `wiring: ${block}`);
 }
+
+// Reordering is wiring only for nodes from a known list or lookup.
+const nodes = { variables: new Set(['cards', 'lead', 'extra']), lists: new Set(['cards']), elements: new Set(['lead']) };
+assert.equal(sandbox.isGsapWiringBlock('rail.insertBefore(cards[cards.length - 1], lead)', nodes), true, 'reorder of known nodes');
+assert.equal(sandbox.isGsapWiringBlock('rail.appendChild(extra)', nodes), false, 'unknown node is not wiring');
+assert.equal(sandbox.isGsapWiringBlock('rail.append(lead)', nodes), false, 'append accepts strings, so it is not wiring');
+assert.equal(sandbox.isGsapWiringBlock('rail.appendChild(lead)'), false, 'no context, no reorder');
 for (const block of ['if (beacon.send(data)) return', 'if ((0, track)(id))', 'if (panel.close?.()) return', 'if (run`x`) return', 'rail.appendChild(build(lead))', 'x: makeValue(),', 'busy = getFlag()']) {
   assert.equal(sandbox.isGsapWiringBlock(block), false, `not wiring: ${block}`);
 }
@@ -367,7 +420,10 @@ for (const block of [
   'const result = run`x`',
   'const closePanel = () => panel.remove()',
   'const n = (count = 2)',
-  'const box = new Box()'
+  'const box = new Box()',
+  'const previous = panel.value++',
+  'const shifted = (bits >>= 1)',
+  'const gone = delete panel.dataset.state'
 ]) {
   assert.equal(sandbox.isReadOnlyDeclaration(block, local), false, `not read-only: ${block}`);
 }
