@@ -89,6 +89,10 @@ fn permitted(operation: &str) -> bool {
     matches!(
         operation,
         "agent.chat.status"
+            | "agent.chat.login.start"
+            | "agent.chat.login.read"
+            | "agent.chat.login.cancel"
+            | "agent.chat.login.open"
             | "agent.chat.list"
             | "agent.chat.start"
             | "agent.chat.read"
@@ -350,7 +354,34 @@ pub fn dispatch(
     operation: &str,
     input: Value,
 ) -> Result<Value, String> {
-    dispatch_with_timeout(resource_dir, data_dir, operation, input, REPLY_TIMEOUT)
+    let value = dispatch_with_timeout(resource_dir, data_dir, operation, input, REPLY_TIMEOUT)?;
+    if operation == "agent.chat.login.open" {
+        let url = login_url(value.get("authUrl").and_then(Value::as_str).ok_or("Sign-in page unavailable")?)?;
+        let opened = Command::new("/usr/bin/open").arg(url).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null()).status().map_err(|_| "browser_unavailable")?;
+        if !opened.success() { return Err("browser_unavailable".into()); }
+        return Ok(json!({"opened":true,"loginId":value["loginId"]}));
+    }
+    Ok(value)
+}
+
+fn login_url(value: &str) -> Result<String, String> {
+    let url = tauri::Url::parse(value).map_err(|_| "Invalid sign-in destination")?;
+    if url.scheme() != "https" || !matches!(url.host_str(), Some("auth.openai.com" | "chatgpt.com")) || !url.username().is_empty() || url.password().is_some() || url.port().is_some() || url.fragment().is_some() {
+        return Err("Invalid sign-in destination".into());
+    }
+    Ok(url.to_string())
+}
+
+#[cfg(test)]
+mod login_tests {
+    use super::*;
+    #[test]
+    fn login_opener_only_accepts_reviewed_provider_hosts() {
+        for url in ["https://auth.openai.com/authorize?state=synthetic", "https://chatgpt.com/auth"] { assert!(login_url(url).is_ok()); }
+        for url in ["http://auth.openai.com/authorize", "https://auth.openai.com.evil.test/a", "https://user@auth.openai.com/a", "https://auth.openai.com:8443/a", "https://chatgpt.com/a#fragment", "file:///tmp/a"] { assert!(login_url(url).is_err()); }
+        for op in ["agent.chat.login.start", "agent.chat.login.read", "agent.chat.login.cancel", "agent.chat.login.open"] { assert!(permitted(op)); }
+        assert!(!permitted("agent.chat.login.logout"));
+    }
 }
 
 fn dispatch_with_timeout(

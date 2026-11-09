@@ -1,0 +1,143 @@
+{
+  "checkedAt": "2026-11-09T23:02:35.002378+00:00",
+  "commands": [
+    {
+      "command": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit": 0,
+      "stdout": "9860f06169540aafa0c7b437ce16cb62e49099de\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "codesign",
+        "--verify",
+        "--deep",
+        "--strict",
+        "--verbose=2",
+        "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-034/GiGi.app"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "--prepared:/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-034/GiGi.app/Contents/MacOS/gigi-mcp\n--validated:/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-034/GiGi.app/Contents/MacOS/gigi-mcp\n/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-034/GiGi.app: valid on disk\n/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-034/GiGi.app: satisfies its Designated Requirement\n"
+    },
+    {
+      "command": [
+        "codesign",
+        "-dvv",
+        "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-034/GiGi.app"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "Executable=/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-034/GiGi.app/Contents/MacOS/gigi\nIdentifier=agency.createsomething.gigi\nFormat=app bundle with Mach-O thin (arm64)\nCodeDirectory v=20500 size=57575 flags=0x10000(runtime) hashes=1792+3 location=embedded\nSignature size=8991\nAuthority=Developer ID Application: Create Something LLC (PRP5VQQPPB)\nAuthority=Developer ID Certification Authority\nAuthority=Apple Root CA\nTimestamp=Nov 9, 2026 at 4:57:03\u202fPM\nNotarization Ticket=stapled\nInfo.plist entries=14\nTeamIdentifier=PRP5VQQPPB\nRuntime Version=27.0.0\nSealed Resources version=2 rules=13 files=15\nInternal requirements count=1 size=188\nTotal signatures=1\nChosen signature=1\n"
+    },
+    {
+      "command": [
+        "xcrun",
+        "stapler",
+        "validate",
+        "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-034/GiGi.app"
+      ],
+      "exit": 0,
+      "stdout": "Processing: /Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-034/GiGi.app\nThe validate action worked!\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "spctl",
+        "-a",
+        "-vv",
+        "-t",
+        "execute",
+        "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-034/GiGi.app"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-034/GiGi.app: accepted\nsource=Notarized Developer ID\norigin=Developer ID Application: Create Something LLC (PRP5VQQPPB)\n"
+    },
+    {
+      "command": [
+        "codesign",
+        "--verify",
+        "--verbose=2",
+        "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-034/GiGi-0.3.4-arm64-private-beta.dmg"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-034/GiGi-0.3.4-arm64-private-beta.dmg: valid on disk\n/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-034/GiGi-0.3.4-arm64-private-beta.dmg: satisfies its Designated Requirement\n"
+    },
+    {
+      "command": [
+        "xcrun",
+        "stapler",
+        "validate",
+        "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-034/GiGi-0.3.4-arm64-private-beta.dmg"
+      ],
+      "exit": 0,
+      "stdout": "Processing: /Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-034/GiGi-0.3.4-arm64-private-beta.dmg\nThe validate action worked!\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "spctl",
+        "-a",
+        "-vv",
+        "-t",
+        "open",
+        "--context",
+        "context:primary-signature",
+        "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-034/GiGi-0.3.4-arm64-private-beta.dmg"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-034/GiGi-0.3.4-arm64-private-beta.dmg: accepted\nsource=Notarized Developer ID\norigin=Developer ID Application: Create Something LLC (PRP5VQQPPB)\n"
+    },
+    {
+      "command": [
+        "hdiutil",
+        "verify",
+        "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-034/GiGi-0.3.4-arm64-private-beta.dmg"
+      ],
+      "exit": 0,
+      "stdout": "Checksumming Protective Master Boot Record (MBR : 0)\u2026\nProtective Master Boot Record (MBR :: verified   CRC32 $20683476\nChecksumming GPT Header (Primary GPT Header : 1)\u2026\n GPT Header (Primary GPT Header : 1): verified   CRC32 $A87DDF35\nChecksumming GPT Partition Data (Primary GPT Table : 2)\u2026\nGPT Partition Data (Primary GPT Tabl: verified   CRC32 $442156BD\nChecksumming  (Apple_Free : 3)\u2026\n                    (Apple_Free : 3): verified   CRC32 $00000000\nChecksumming disk image (Apple_APFS : 4)\u2026\n         disk image (Apple_APFS : 4): verified   CRC32 $DFCAA0D8\nChecksumming  (Apple_Free : 5)\u2026\n                    (Apple_Free : 5): verified   CRC32 $00000000\nChecksumming GPT Partition Data (Backup GPT Table : 6)\u2026\nGPT Partition Data (Backup GPT Table: verified   CRC32 $442156BD\nChecksumming GPT Header (Backup GPT Header : 7)\u2026\n  GPT Header (Backup GPT Header : 7): verified   CRC32 $5957683B\nverified   CRC32 $10ACA796\n",
+      "stderr": "hdiutil: verify: checksum of \"/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-034/GiGi-0.3.4-arm64-private-beta.dmg\" is VALID\n"
+    }
+  ],
+  "identity": {
+    "runtimeSourceSha": "9860f06169540aafa0c7b437ce16cb62e49099de",
+    "filename": "GiGi-0.3.4-arm64-private-beta.dmg",
+    "bytes": 91823696,
+    "sha256": "2abef152aea7f751080efaac9a79a8ddbfc02de58d5a93222d3acc53d9be62af",
+    "appExecutableSha256": "ed7926db28df627059d7649d9ca9312001288fe7ea0181083517f5b964999685",
+    "version": "0.3.4",
+    "url": "https://media.createsomething.io/releases/gigi/0.3.4/GiGi-0.3.4-arm64-private-beta.dmg"
+  },
+  "actualDmgBytes": 91823696,
+  "actualDmgSha256": "2abef152aea7f751080efaac9a79a8ddbfc02de58d5a93222d3acc53d9be62af",
+  "actualSignedMainSha256": "ed7926db28df627059d7649d9ca9312001288fe7ea0181083517f5b964999685",
+  "plist": {
+    "CFBundleIdentifier": "agency.createsomething.gigi",
+    "CFBundleShortVersionString": "0.3.4",
+    "CFBundleVersion": "0.3.4",
+    "LSMinimumSystemVersion": "13.0"
+  },
+  "independentPayloadComparison": {
+    "exit": 0,
+    "stdout": "{\"passed\": true, \"machoFiles\": 7, \"nonMachOFilesUnchanged\": 10}\n",
+    "stderr": ""
+  },
+  "passed": true
+}

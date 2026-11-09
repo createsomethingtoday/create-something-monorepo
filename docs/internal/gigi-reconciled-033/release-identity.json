@@ -1,0 +1,9 @@
+{
+  "runtimeSourceSha": "fa37fb904a47b29476bc7a7089bd9438e3a3f781",
+  "filename": "GiGi-0.3.3-arm64-private-beta.dmg",
+  "bytes": 91823319,
+  "sha256": "71fbca27313345d00db2a2604a50324e074bd0766aacd49768761fa43576547d",
+  "appExecutableSha256": "fe1880e5b734e4114e86f0bf82f4e258f4503b7b999c70ad72f54ccd36397851",
+  "version": "0.3.3",
+  "url": "https://media.createsomething.io/releases/gigi/0.3.3/GiGi-0.3.3-arm64-private-beta.dmg"
+}

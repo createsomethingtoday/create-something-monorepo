@@ -37,12 +37,19 @@ try {
     await page.waitForFunction(() => globalThis.gigiTest);
     await page.waitForTimeout(100);
   };
-  const fits = async (label) =>
-    assert.equal(
-      await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
-      true,
-      `${label}: horizontal overflow`
-    );
+  const navigate = async (group, destination) => {
+    const menu = page.locator(`[data-nav-menu="${group}"]`);
+    if (!(await menu.evaluate((node) => node.open))) await menu.locator('summary').click();
+    await menu.locator(`[data-page="${destination}"]:not([data-nav-target])`).click();
+  };
+  const fits = async (label) => {
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `${label}: horizontal overflow`);
+    const clipped = await page.locator('.reference-nav > button, .reference-nav > details, .reference-ask').evaluateAll((nodes) => nodes.some((node) => {
+      const box = node.getBoundingClientRect();
+      return box.width > 0 && (box.left < 0 || box.right > innerWidth);
+    }));
+    assert.equal(clipped, false, `${label}: navigation controls remain in the viewport`);
+  };
   const routes = [
     'overview',
     'gigs',
@@ -65,7 +72,7 @@ try {
     'social'
   ];
   if (!process.argv.includes('--regressions'))
-    for (const width of [880, 1280])
+    for (const width of [320, 390, 880, 1280])
       for (const theme of ['studio', 'paper', 'midnight'])
         for (const density of ['comfortable', 'compact']) {
           await page.setViewportSize({ width, height: width === 880 ? 620 : 840 });
@@ -88,6 +95,28 @@ try {
       assert.ok((await page.locator('h1').innerText()).length, `${route}: page heading`);
       await page.screenshot({ path: resolve(out, `route-${route}.png`), fullPage: true });
     }
+  await open('tasks');
+  const admin = page.locator('[data-nav-menu="Admin"]');
+  await admin.locator('summary').focus();
+  await page.keyboard.press('ArrowDown');
+  assert.equal(await admin.evaluate((node) => node.open), true, 'ArrowDown opens grouped navigation');
+  assert.equal(await page.evaluate(() => document.activeElement?.dataset.page), 'tasks', 'ArrowDown focuses first destination');
+  await page.keyboard.press('End');
+  assert.equal(await page.evaluate(() => document.activeElement?.dataset.page), 'tags', 'End reaches last destination');
+  await page.keyboard.press('Home');
+  assert.equal(await page.evaluate(() => document.activeElement?.dataset.page), 'tasks', 'Home reaches first destination');
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('.reference-dropdown[open]').count(), 0, 'Escape closes grouped navigation');
+  assert.equal(await page.evaluate(() => document.activeElement?.dataset.navOverflow), 'Admin', 'Escape restores summary focus');
+  await page.locator('[data-nav-menu="Work"] > summary').click();
+  await page.locator('[data-nav-menu="Platform"] > summary').click();
+  assert.equal(await page.locator('.reference-dropdown[open]').count(), 1, 'only one group remains open');
+  await page.locator('.gigi-main h1').click();
+  assert.equal(await page.locator('.reference-dropdown[open]').count(), 0, 'outside click closes grouped navigation');
+  await page.locator('[data-nav-menu="Platform"] > summary').click();
+  await page.locator('[data-nav-target="preference-startPage"]').click();
+  await page.locator('#preference-startPage-display').waitFor();
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'preference-startPage-display', 'Customize routes and focuses its preference');
   await open('overview');
   await page.getByRole('button', { name: 'Autumn showcase', exact: true }).click();
   await page.waitForFunction(() =>
@@ -103,9 +132,9 @@ try {
     'Today preserves the native entity for mixed agenda records'
   );
   await open('tasks');
-  await page.getByRole('button', { name: 'Add task', exact: true }).click();
+  await page.getByRole('button', { name: 'New task', exact: true }).click();
   await page.locator('#title').fill('Synthetic rewrite task');
-  await page.getByRole('button', { name: 'People', exact: true }).click();
+  await navigate('Network', 'contacts');
   await page.getByRole('alertdialog').waitFor();
   await page.keyboard.press('Escape');
   assert.equal(
@@ -144,7 +173,7 @@ try {
     true
   );
   await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: 'Appearance & views', exact: true }).click();
+  await navigate('Platform', 'appearance');
   await page.locator('[data-preferences-theme=paper]').click();
   assert.equal(await page.evaluate(() => gigiTest.snapshot().preferences.theme), 'paper');
   await page.getByRole('button', { name: 'Ask GiGi', exact: true }).first().click();
@@ -201,8 +230,9 @@ try {
   const result = {
     passed: true,
     routes: process.argv.includes('--regressions') ? 0 : routes.length,
-    appearanceCombinations: process.argv.includes('--regressions') ? 0 : 12,
+    appearanceCombinations: process.argv.includes('--regressions') ? 0 : 24,
     package: '@astryxdesign/core@0.7.11',
+    navigationChecks: ['visible bounds', 'ArrowDown', 'Home/End', 'Escape focus restoration', 'exclusive opening', 'outside dismissal', 'Customize focus'],
     scope:
       'Actual React/Astryx in synthetic Chromium. No native WebKit, real records, provider, signing or installer acceptance.'
   };

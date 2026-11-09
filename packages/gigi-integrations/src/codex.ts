@@ -120,6 +120,89 @@ export function createCodexAdapter(options: CodexOptions) {
   const activity = new Map<string, 'reading' | 'preparing' | 'checking'>();
   let loaded = false;
   let queue = Promise.resolve();
+  type LoginJob = { loginId: string; workspaceId: string; state: 'starting' | 'pending' | 'verifying' | 'completed' | 'cancelling' | 'cancelled' | 'failed' | 'unknown' | 'expired'; startedAt: number; expiresAt: number; providerLoginId?: string; authUrl?: string; completionSuccess?: boolean; cancelRequested?: boolean; expired?: boolean; reason?: string };
+  let login: LoginJob | undefined;
+  let loginTimer: ReturnType<typeof setTimeout> | undefined;
+  const earlyLoginEvents = new Map<string, boolean>();
+  function loginReceipt(job: LoginJob, account?: Json): Json {
+    return { loginId: job.loginId, state: job.state, startedAt: job.startedAt, expiresAt: job.expiresAt, ...(job.reason ? { reason: job.reason } : {}), ...(account ? { authenticated: account.authenticated === true } : {}) };
+  }
+  function loginOwner(input: Json): LoginJob {
+    if (!login || login.loginId !== required(input.loginId, 128) || login.workspaceId !== required(input.workspaceId, 128)) throw new Error('login_not_found');
+    return login;
+  }
+  function finishLogin(job: LoginJob, success: boolean): void {
+    if (['completed', 'cancelled', 'failed', 'expired'].includes(job.state)) return;
+    job.completionSuccess = success;
+    job.authUrl = undefined;
+    job.state = success ? 'verifying' : job.cancelRequested ? job.expired ? 'expired' : 'cancelled' : 'failed';
+    if (!success && !job.cancelRequested) job.reason = 'login_failed';
+    if (!success) { clearTimeout(loginTimer); loginTimer = undefined; }
+  }
+  async function loginStart(input: Json): Promise<Json> {
+    const workspaceId = required(input.workspaceId, 128);
+    if (login && ['starting', 'pending', 'verifying', 'cancelling', 'unknown'].includes(login.state)) throw new Error('login_in_progress');
+    const startedAt = Date.now();
+    const job: LoginJob = { loginId: randomUUID(), workspaceId, state: 'starting', startedAt, expiresAt: startedAt + 600_000 };
+    login = job; earlyLoginEvents.clear();
+    clearTimeout(loginTimer);
+    loginTimer = setTimeout(() => { if (login === job) void loginRead({ workspaceId, loginId: job.loginId }).catch(() => {}); }, 600_000);
+    loginTimer.unref?.();
+    try {
+      const result = await options.server.request('account/login/start', { type: 'chatgpt' });
+      job.providerLoginId = required(result?.loginId, 128);
+      const url = new URL(required(result?.authUrl, 8192));
+      if (result?.type !== 'chatgpt' || url.protocol !== 'https:' || !['auth.openai.com', 'chatgpt.com'].includes(url.hostname) || url.username || url.password || url.port || url.hash) throw new Error('login_unavailable');
+      job.authUrl = url.href; job.state = 'pending';
+      if (earlyLoginEvents.has(job.providerLoginId)) finishLogin(job, earlyLoginEvents.get(job.providerLoginId)!);
+    } catch (error) {
+      job.state = error instanceof ProviderResponseError ? 'failed' : 'unknown';
+      job.reason = error instanceof ProviderResponseError ? 'login_unavailable' : 'login_outcome_unknown'; job.authUrl = undefined;
+      if (job.state === 'failed') { clearTimeout(loginTimer); loginTimer = undefined; }
+    }
+    finally { earlyLoginEvents.clear(); }
+    return loginReceipt(job);
+  }
+  async function loginRead(input: Json): Promise<Json> {
+    if (input.loginId === undefined) {
+      const workspaceId = required(input.workspaceId, 128);
+      if (!login) return { state: 'idle', authenticated: (await accountStatus()).authenticated === true };
+      if (login.workspaceId !== workspaceId) throw new Error('login_not_found');
+      input = { ...input, loginId: login.loginId };
+    }
+    const job = loginOwner(input);
+    if (Date.now() >= job.expiresAt && ['pending', 'verifying', 'starting', 'unknown'].includes(job.state) && !job.cancelRequested) {
+      job.expired = true; job.reason = 'login_expired';
+      if (job.providerLoginId) await loginCancel(input);
+      else { job.state = 'unknown'; job.reason = 'login_outcome_unknown'; }
+    }
+    const account = await accountStatus();
+    if (job.completionSuccess === true && account.authenticated) { job.state = 'completed'; job.reason = undefined; clearTimeout(loginTimer); loginTimer = undefined; }
+    return loginReceipt(job, account);
+  }
+  async function loginCancel(input: Json): Promise<Json> {
+    const job = loginOwner(input);
+    if (!['pending', 'starting', 'verifying', 'unknown', 'cancelling'].includes(job.state)) return loginReceipt(job, await accountStatus());
+    if (!job.providerLoginId) { job.state = 'unknown'; job.reason = 'login_outcome_unknown'; return loginReceipt(job, await accountStatus()); }
+    if (job.cancelRequested) return loginReceipt(job, await accountStatus());
+    job.cancelRequested = true; job.authUrl = undefined; job.state = 'cancelling';
+    try {
+      const result = await options.server.request('account/login/cancel', { loginId: job.providerLoginId });
+      // The provider may confirm cancellation without a completion notification.
+      // A successful completion already received still requires account readback.
+      if (result?.status === 'canceled' && job.completionSuccess !== true) finishLogin(job, false);
+    }
+    catch { job.state = 'unknown'; job.reason = 'login_outcome_unknown'; }
+    const account = await accountStatus();
+    if (job.completionSuccess === true && account.authenticated) { job.state = 'completed'; job.reason = undefined; clearTimeout(loginTimer); loginTimer = undefined; }
+    return loginReceipt(job, account);
+  }
+  async function loginOpen(input: Json): Promise<Json> {
+    const job = loginOwner(input);
+    if (job.state !== 'pending' || !job.authUrl || Date.now() >= job.expiresAt) throw new Error('login_unavailable');
+    // Returned only to the native opener; its dispatch wrapper removes the URL.
+    return { loginId: job.loginId, authUrl: job.authUrl };
+  }
 
   async function load(): Promise<void> {
     if (loaded) return;
@@ -174,11 +257,19 @@ export function createCodexAdapter(options: CodexOptions) {
       return { provider: 'codex' as const, available: true, authenticated: true };
     } catch { return { provider: 'codex' as const, available: false, authenticated: false, reason: 'codex_unavailable' }; }
   }
-  async function status() {
+  async function status(input: Json = {}): Promise<Json> {
+    const workspaceId = input.workspaceId === undefined ? undefined : required(input.workspaceId, 128);
     const account = await accountStatus();
-    if (!account.available || !account.authenticated) return account;
-    try { await dynamicTools(); } catch { return { provider: 'codex' as const, available: false, authenticated: true, reason: 'gigi_tools_unavailable' }; }
-    return account;
+    // Keep the older account-only contract for clients without a selected workspace.
+    const checked = workspaceId ? { toolsAvailable: false, workspaceVerified: false, checkedAt: Date.now() } : {};
+    if (!account.available || !account.authenticated) return { ...account, ...checked };
+    try { await dynamicTools(); } catch { return { provider: 'codex' as const, available: false, authenticated: true, reason: 'gigi_tools_unavailable', ...checked }; }
+    if (!workspaceId) return account;
+    try {
+      const value = payload(await options.mcp!.request('tools/call', { name: 'gigi_workspace_get', arguments: { workspaceId } }));
+      if (!value || Array.isArray(value) || value.id !== workspaceId || typeof value.name !== 'string' || !value.name.trim() || value.name.length > 512 || /[\u0000-\u001f]/.test(value.name)) throw new Error('workspace_not_found');
+      return { ...account, toolsAvailable: true, workspaceVerified: true, workspace: { id: workspaceId, name: value.name }, checkedAt: Date.now() };
+    } catch { return { ...account, toolsAvailable: true, workspaceVerified: false, reason: 'workspace_not_found', checkedAt: Date.now() }; }
   }
   async function requireAuth(): Promise<void> { const s = await accountStatus(); if (!s.authenticated) throw new Error(s.reason); }
   async function dynamicTools() {
@@ -706,6 +797,12 @@ export function createCodexAdapter(options: CodexOptions) {
 
   options.server.onMessage(async message => {
     if (typeof message?.id !== 'number' && typeof message?.id !== 'string') {
+      if (message.method === 'account/login/completed' && typeof message.params?.loginId === 'string' && typeof message.params?.success === 'boolean') {
+        const providerId = message.params.loginId;
+        if (login && login.providerLoginId === providerId) finishLogin(login, message.params.success);
+        else if (login?.state === 'starting' && earlyLoginEvents.size < 4 && providerId.length <= 128) earlyLoginEvents.set(providerId, message.params.success);
+        return;
+      }
       const threadId = message?.params?.threadId;
       const session = [...sessions.values()].find(x => x.threadId === threadId);
       if (session && message.method === 'turn/completed' && message.params?.turn?.id === session.turnId) terminalReads.add(session.sessionId);
@@ -811,7 +908,7 @@ export function createCodexAdapter(options: CodexOptions) {
     // No built-in Codex tool, permission expansion, or external elicitation is approvable here.
     await options.server.reply(message.id, { decision: 'decline' });
   });
-  return { status, list, start, read, send, poll, cancel, approve };
+  return { status, list, start, read, send, poll, cancel, approve, 'login.start': loginStart, 'login.read': loginRead, 'login.cancel': loginCancel, 'login.open': loginOpen };
 }
 
 export class JsonLineProcess implements AppServer {

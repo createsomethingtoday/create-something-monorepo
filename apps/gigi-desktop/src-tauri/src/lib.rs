@@ -1,9 +1,11 @@
 mod gig_list;
+mod task_list;
 mod workspace_search;
 pub mod artwork;
 pub mod artwork_mcp;
 pub mod artwork_protocol;
 mod agenda;
+mod today;
 mod event_identity;
 pub mod media_protocol;
 pub mod music;

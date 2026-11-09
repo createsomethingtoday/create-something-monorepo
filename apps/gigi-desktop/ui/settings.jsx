@@ -1,4 +1,5 @@
 import React from 'react';
+import { DevQuest } from './dev-quest.jsx';
 import {
   B,
   Field,
@@ -43,89 +44,7 @@ const quietHours = Array.from({ length: 24 }, (_, hour) => [
 const muted = (children) => <Text color="secondary">{children}</Text>;
 
 export function Onboarding({ ctx }) {
-  const { state } = ctx;
-  const resume = Boolean(state.workspace);
-  return (
-    <VStack gap={6} className="gigi-onboarding">
-      <PageHeading
-        title={resume ? 'Finish your profile.' : 'Your work, in one place.'}
-        description={
-          resume
-            ? 'Your private workspace is ready. Add your profile to finish setup.'
-            : 'Build a private home for gigs, shifts, contacts, money and the details that connect them. Your records live on this Mac. No login is needed to start; connect sources and your subscribed agent when ready.'
-        }
-      />
-      <ol>
-        <li>
-          <strong>{resume ? 'Finish your profile' : 'Create your workspace'}</strong>
-          <p>Private local records for your gigs, people and money.</p>
-        </li>
-        <li>
-          <strong>Connect sources, if useful</strong>
-          <p>Separate GiGi sign-in and Google consent; import when you choose.</p>
-        </li>
-        <li>
-          <strong>Use your own agent</strong>
-          <p>Connect Codex or Claude Code on this Mac, then test a real tool call.</p>
-        </li>
-      </ol>
-      <Panel title={resume ? 'Your profile' : 'Make it yours'}>
-        <Text>
-          Choose your currency carefully: it locks after you save monetary records. Connect sources
-          later.
-        </Text>
-        <form id="workspace-form">
-          <VStack gap={4}>
-            <Field
-              id="owner-name"
-              name="ownerName"
-              label="Your name"
-              required
-              maxLength={80}
-              autoComplete="name"
-              value={state.setupDraft?.ownerName || ''}
-              disabled={state.busy}
-            />
-            {!resume && (
-              <Field
-                id="workspace-name"
-                name="name"
-                label="Workspace name"
-                required
-                maxLength={80}
-                autoComplete="off"
-                placeholder="e.g. Danny’s work"
-                value={state.setupDraft?.name || ''}
-                disabled={state.busy}
-              />
-            )}
-            <Choice
-              id="currency"
-              name="currency"
-              label="Currency"
-              required
-              value={state.setupDraft?.currency || ''}
-              options={[
-                ['', 'Choose currency'],
-                ...['USD', 'CAD', 'EUR', 'GBP'].map((v) => [v, v])
-              ]}
-              disabled={state.busy}
-            />
-            <B type="submit" primary disabled={state.busy}>
-              {state.busy
-                ? 'Saving workspace…'
-                : resume
-                  ? 'Finish setup'
-                  : 'Create private workspace'}
-            </B>
-          </VStack>
-        </form>
-      </Panel>
-      {muted(
-        'Gmail, Calendar and agent access are optional setup steps that require separate verification.'
-      )}
-    </VStack>
-  );
+  return <DevQuest ctx={ctx} />;
 }
 
 function NotificationSettings({ controller }) {

@@ -1,0 +1,35 @@
+{
+  "version": "0.3.4",
+  "sourceRepository": "gigi-team/grantbot",
+  "sourceCommit": "71594fb0412dbd1c8523f3791e2adba9cf32c942",
+  "sourceCanonicalMerge": "b083717a1aadea9f19d121e238a5b4ed64d397b1",
+  "productionBase": "1fa082281ccb3513be573ec41b24a7b4eb1873b7",
+  "uiAuthority": "Danny published UI takes precedence; technical foundation supplements it",
+  "preserved": [
+    "production bundle identity and data location",
+    "actual React/Astryx components",
+    "existing approval, consent, expectedRecord, retry and readback contracts",
+    "media, artwork, Instagram and local-source boundaries"
+  ],
+  "reconciled": [
+    "grouped Work/Admin/Network/Platform top navigation",
+    "weekly Today with fixed dated task/payable/receivable windows",
+    "native filtered task collection and calm task/gig editing",
+    "G-train green and compatible saved appearance IDs",
+    "combined workspace Search",
+    "guided and connected setup, verified local workspace, managed Codex login without an inference turn",
+    "local GSAP scenes, reduced-motion and interrupted recovery"
+  ],
+  "boundedCorrections": [
+    "out-of-date AI connection status cannot overwrite a newer request",
+    "Today uses the same finished/archived-task classification as the task collection",
+    "Astryx layout and typography components own the reconciled Work and setup containers",
+    "Partial and cancelled imports expose an explicit recovery preview, including first-page retries",
+    "Unconfirmed imports retain their exact pending job until receipt and imported-record readbacks complete before preview continuation"
+  ],
+  "limits": [
+    "Unpublished contributor-device changes are unavailable",
+    "No Worker service deployment or database migration",
+    "Live provider/phone/macOS13 floor/human acceptance are separate"
+  ]
+}
