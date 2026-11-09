@@ -220,6 +220,107 @@ const nonGsapBehavior = {
   }
   trigger.addEventListener('click', (e) => { e.preventDefault(); onOpen(); });
 });`,
+  'computed call in a declaration': `document.addEventListener('DOMContentLoaded', () => {
+  gsap.to('.hero', { opacity: 1, duration: 1 });
+  const trigger = document.querySelector('.panel-close');
+  const panel = document.querySelector('.panel');
+  if (!trigger || !panel) return;
+  function onClose() {
+    if (!panel) return;
+    const result = panel['remove']();
+  }
+  trigger.addEventListener('click', (e) => { e.preventDefault(); onClose(); });
+});`,
+  'optional call in a declaration': `document.addEventListener('DOMContentLoaded', () => {
+  gsap.to('.hero', { opacity: 1, duration: 1 });
+  const trigger = document.querySelector('.panel-close');
+  const panel = document.querySelector('.panel');
+  if (!trigger || !panel) return;
+  function onClose() {
+    if (!panel) return;
+    const result = panel.remove?.();
+  }
+  trigger.addEventListener('click', (e) => { e.preventDefault(); onClose(); });
+});`,
+  'optional call in a guard': `document.addEventListener('DOMContentLoaded', () => {
+  gsap.to('.hero', { opacity: 1, duration: 1 });
+  const trigger = document.querySelector('.panel-close');
+  const panel = document.querySelector('.panel');
+  if (!trigger || !panel) return;
+  function onClose() {
+    if (panel.remove?.()) return;
+    if (!panel) return;
+  }
+  trigger.addEventListener('click', (e) => { e.preventDefault(); onClose(); });
+});`,
+  'behavior inside a GSAP line': `document.addEventListener('DOMContentLoaded', () => {
+  gsap.to('.hero', { opacity: 1, duration: 1 });
+  const trigger = document.querySelector('.panel-close');
+  const panel = document.querySelector('.panel');
+  if (!trigger || !panel) return;
+  function onClose() {
+    if (!panel) return;
+    gsap.set('.hero', { opacity: 1 }), panel.remove();
+  }
+  trigger.addEventListener('click', (e) => { e.preventDefault(); onClose(); });
+});`,
+  'short statement': `document.addEventListener('DOMContentLoaded', () => {
+  gsap.to('.hero', { opacity: 1, duration: 1 });
+  const trigger = document.querySelector('.panel-close');
+  const p = document.querySelector('.panel');
+  if (!trigger || !p) return;
+  function onClose() {
+    if (!p) return;
+    p.remove();
+  }
+  trigger.addEventListener('click', (e) => { e.preventDefault(); onClose(); });
+});`,
+  'statement after a block comment': `document.addEventListener('DOMContentLoaded', () => {
+  gsap.to('.hero', { opacity: 1, duration: 1 });
+  const trigger = document.querySelector('.panel-close');
+  const panel = document.querySelector('.panel');
+  if (!trigger || !panel) return;
+  function onClose() {
+    if (!panel) return;
+    /* close the panel */ panel.remove();
+  }
+  trigger.addEventListener('click', (e) => { e.preventDefault(); onClose(); });
+});`,
+  'GSAP getter/setter on a method': `document.addEventListener('DOMContentLoaded', () => {
+  gsap.to('.hero', { opacity: 1, duration: 1 });
+  const trigger = document.querySelector('.panel-close');
+  const panel = document.querySelector('.panel');
+  if (!trigger || !panel) return;
+  function onClose() {
+    if (!panel) return;
+    gsap.set(panel, { remove: 0 });
+  }
+  trigger.addEventListener('click', (e) => { e.preventDefault(); onClose(); });
+});`,
+  'GSAP function-based value': `document.addEventListener('DOMContentLoaded', () => {
+  gsap.to('.hero', { opacity: 1, duration: 1 });
+  const trigger = document.querySelector('.panel-close');
+  const panel = document.querySelector('.panel');
+  const report = window.alert;
+  if (!trigger || !panel) return;
+  function onClose() {
+    if (!panel) return;
+    gsap.set(panel, { x: report });
+  }
+  trigger.addEventListener('click', (e) => { e.preventDefault(); onClose(); });
+});`,
+  'GSAP delayed call': `document.addEventListener('DOMContentLoaded', () => {
+  gsap.to('.hero', { opacity: 1, duration: 1 });
+  const trigger = document.querySelector('.panel-close');
+  const panel = document.querySelector('.panel');
+  const report = window.alert;
+  if (!trigger || !panel) return;
+  function onClose() {
+    if (!panel) return;
+    gsap.delayedCall(0.2, report);
+  }
+  trigger.addEventListener('click', (e) => { e.preventDefault(); onClose(); });
+});`,
   'network request': `document.addEventListener('DOMContentLoaded', () => {
   gsap.from('.feed', { opacity: 0, duration: 0.5 });
   const feed = document.querySelector('.feed');
@@ -242,8 +343,33 @@ for (const [name, script] of Object.entries(nonGsapBehavior)) {
 for (const block of ['if (busy) return', 'if (!rail || !forward || !back) return', 'if (typeof gsap === "undefined") return', 'rail.insertBefore(cards[cards.length - 1], lead)']) {
   assert.equal(sandbox.isGsapWiringBlock(block), true, `wiring: ${block}`);
 }
-for (const block of ['if (beacon.send(data)) return', 'if ((0, track)(id))', 'rail.appendChild(build(lead))', 'x: makeValue(),', 'busy = getFlag()']) {
+for (const block of ['if (beacon.send(data)) return', 'if ((0, track)(id))', 'if (panel.close?.()) return', 'if (run`x`) return', 'rail.appendChild(build(lead))', 'x: makeValue(),', 'busy = getFlag()']) {
   assert.equal(sandbox.isGsapWiringBlock(block), false, `not wiring: ${block}`);
+}
+
+// Read-only declarations allow only plain-named lookup, measurement, and math calls.
+const local = new Set(['step']);
+for (const block of [
+  "const rail = document.querySelector('.w-dyn-items')",
+  'const spacing = parseFloat(window.getComputedStyle(rail).columnGap) || 0',
+  'const distance = (lead.offsetWidth + spacing) * 2',
+  'const lead = cards[cards.length - 1]',
+  'const next = step(1)',
+  'const step = (direction) =>'
+]) {
+  assert.equal(sandbox.isReadOnlyDeclaration(block, local), true, `read-only: ${block}`);
+}
+for (const block of [
+  "const result = panel['remove']()",
+  'const result = panel.remove?.()',
+  'const result = (panel.remove)()',
+  'const result = panel.remove()',
+  'const result = run`x`',
+  'const closePanel = () => panel.remove()',
+  'const n = (count = 2)',
+  'const box = new Box()'
+]) {
+  assert.equal(sandbox.isReadOnlyDeclaration(block, local), false, `not read-only: ${block}`);
 }
 
 console.log('GSAP DOM glue checks passed.');

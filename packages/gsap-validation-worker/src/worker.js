@@ -1023,18 +1023,19 @@ function extractExternalScripts(html) {
   }
 }
 __name(extractExternalScripts, "extractExternalScripts");
-// Wiring around GSAP tweens: guards, function and listener headers, flags,
-// tween vars, and reordering of existing nodes (looping sliders). None of
-// these blocks changes what the page shows or sends by itself. A script
-// passes on wiring only when EVERY block that is not GSAP is wiring, a
-// read-only declaration (DOM lookups, measurements, math), or a call to a
-// function the script itself declares. Any other block, including behavior
-// hidden in a declaration, keeps the original count.
-// The exemption is also off when the script does anything besides GSAP:
-// creates elements, uses the network, timers, or storage, writes markup,
-// text, styles, or URLs, changes UI state another way (classes, data
-// attributes, attributes, form or visibility properties, programmatic
-// clicks or scrolling), or animates without GSAP (Web Animations, jQuery).
+// GSAP wiring exemption. A GSAP script needs wiring around its tweens:
+// guards, function and listener headers, flags, tween vars, and reordering of
+// existing nodes for looping sliders. The original count treats that wiring
+// as unapproved code. isGsapWiringOnlyScript passes a script only when EVERY
+// statement has one of the allowed shapes below. It is an allowlist: any
+// statement it does not recognize, including new syntax, keeps the original
+// count.
+// Second layer: the exemption is also off when the script does anything
+// besides GSAP: creates elements, uses the network, timers, or storage,
+// writes markup, text, styles, or URLs, changes UI state another way
+// (classes, data attributes, attributes, form or visibility properties,
+// programmatic clicks or scrolling), or animates without GSAP (Web
+// Animations, jQuery).
 var NON_GSAP_BEHAVIOR_PATTERN = new RegExp([
   String.raw`createElement\s*\(`,
   String.raw`\bfetch\s*\(`,
@@ -1054,31 +1055,42 @@ var NON_GSAP_BEHAVIOR_PATTERN = new RegExp([
 ].join("|"));
 var GSAP_WIRING_LISTENER_EVENTS = "DOMContentLoaded|load|click|resize|mouseenter|mouseleave|pointerenter|pointerleave";
 var GSAP_WIRING_CALLBACK = String.raw`(?:\(?[\w$\s,]*\)?\s*=>|function\s*[\w$]*\s*\([\w$\s,]*\))`;
+// Tween vars GSAP treats as data. A key outside this list could name a
+// method GSAP would call as a getter/setter, so it is not wiring.
+var GSAP_WIRING_TWEEN_KEYS = /* @__PURE__ */ new Set([
+  "x", "y", "z", "xPercent", "yPercent", "rotation", "rotate", "rotationX", "rotationY", "rotationZ", "rotateX", "rotateY", "rotateZ",
+  "scale", "scaleX", "scaleY", "skewX", "skewY", "transformOrigin", "transformPerspective", "force3D", "svgOrigin",
+  "opacity", "autoAlpha", "visibility", "display", "zIndex", "width", "height", "top", "left", "right", "bottom",
+  "color", "backgroundColor", "borderRadius", "clipPath", "filter", "willChange", "backfaceVisibility",
+  "duration", "delay", "ease", "stagger", "repeat", "repeatDelay", "yoyo", "overwrite", "paused", "immediateRender"
+]);
+// A literal, or a reference coerced to a number (`-distance`). A bare
+// reference could hold a function, which GSAP would call.
+var GSAP_WIRING_TWEEN_VALUE = String.raw`(?:-?\d+(?:\.\d+)?|true|false|null|"[^"]*"|'[^']*'|[-+][\w$.]+)`;
+// GSAP calls that only animate inline vars or read: `gsap.to(rail,`.
+// One target, then inline vars (checked as separate statements).
+var GSAP_WIRING_TWEEN_CALL_PATTERN = /^gsap\.(?:to|from|fromTo|set)\(\s*(?:[\w$.]+|"[^"]*"|'[^']*')\s*,$/;
+var GSAP_WIRING_TWEEN_PAIR_PATTERN = new RegExp(String.raw`^([\w$]+)\s*:\s*${GSAP_WIRING_TWEEN_VALUE}$`);
+// Inline tween callbacks; the body is checked as separate statements.
+var GSAP_WIRING_TWEEN_CALLBACK_PATTERN = new RegExp(String.raw`^([\w$]+)\s*:\s*${GSAP_WIRING_CALLBACK}$`);
+var GSAP_WIRING_TWEEN_CALLBACK_KEYS = /* @__PURE__ */ new Set(["onComplete", "onStart", "onUpdate", "onRepeat", "onReverseComplete", "onInterrupt"]);
+var GSAP_WIRING_GSAP_READ_CALLS = /* @__PURE__ */ new Set(["gsap.utils.toArray", "gsap.isTweening"]);
 // Guard or branch header with a call-free condition: `if (busy) return`
 var GSAP_WIRING_GUARD_PATTERN = /^(?:else\s+)?if\s*\((.*)\)\s*(?:return)?$/;
+// Flag or counter the script declares, set to a literal: `busy = true`
+var GSAP_WIRING_FLAG_PATTERN = /^([\w$]+)\s*=\s*(?:true|false|null|-?\d+(?:\.\d+)?)$/;
 var GSAP_WIRING_BLOCK_PATTERNS = [
   // Named function header: `function step(direction)`
   /^(?:async\s+)?function\s*[\w$]*\s*\([\w$\s,=]*\)$/,
-  // UI listener header; the callback body is checked as separate blocks
+  // UI listener header; the callback body is checked as separate statements
   new RegExp(String.raw`^[\w$.]+\.addEventListener\(\s*['"](?:${GSAP_WIRING_LISTENER_EVENTS})['"]\s*,\s*${GSAP_WIRING_CALLBACK}$`),
-  // Flag or counter set to a literal: `busy = true`
-  /^[\w$]+\s*=\s*(?:true|false|null|-?\d+(?:\.\d+)?)$/,
-  // Tween var with a literal or variable value: `x: -distance,`
-  /^[\w$]+\s*:\s*(?:-?[\w$.]+|"[^"]*"|'[^']*')\s*,?$/,
-  // Tween callback header: `onComplete: () =>`
-  new RegExp(String.raw`^[\w$]+\s*:\s*${GSAP_WIRING_CALLBACK}$`),
   // Event plumbing: `e.preventDefault()`
   /^[\w$.]+\.(?:preventDefault|stopPropagation)\(\)$/,
   // Moving existing nodes: `rail.appendChild(lead)`
   /^[\w$.]+\.(?:appendChild|insertBefore|prepend|append)\([\w$.\[\]\s,+-]*\)$/
 ];
-function isGsapWiringBlock(block) {
-  if (containsPotentiallyHarmfulCode(block)) return false;
-  const guard = GSAP_WIRING_GUARD_PATTERN.exec(block);
-  if (guard) return !/[\w$\])]\s*\(/.test(guard[1]);
-  return GSAP_WIRING_BLOCK_PATTERNS.some((pattern) => pattern.test(block));
-}
-__name(isGsapWiringBlock, "isGsapWiringBlock");
+// Statements with no behavior: closing punctuation, bare keywords, comments.
+var GSAP_WIRING_INERT_PATTERN = /^(?:[)\],\s]+|else|return|break|continue|\/\/.*|\/\*(?:(?!\*\/)[\s\S])*\*\/)$/;
 // Calls that only read the DOM or compute a value.
 var GSAP_WIRING_READ_ONLY_CALLS = /* @__PURE__ */ new Set([
   "querySelector", "querySelectorAll", "getElementById", "getElementsByClassName", "getElementsByTagName",
@@ -1087,34 +1099,102 @@ var GSAP_WIRING_READ_ONLY_CALLS = /* @__PURE__ */ new Set([
 ]);
 var GSAP_WIRING_DECLARATION_PATTERN = /^(?:const|let|var)\s+[\w$]+\s*=\s*(.+)$/;
 var GSAP_WIRING_CALLBACK_HEADER_PATTERN = new RegExp(String.raw`^(?:async\s*)?${GSAP_WIRING_CALLBACK}$`);
+function stripStringLiterals(code) {
+  return code.replace(/'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"/g, '""');
+}
+__name(stripStringLiterals, "stripStringLiterals");
+function hasAssignment(code) {
+  return /(?<![=!<>])=(?![=>])/.test(stripStringLiterals(code));
+}
+__name(hasAssignment, "hasAssignment");
+// Paths of the functions an expression calls (`gsap.utils.toArray`,
+// `parseFloat`), or null when any invocation has no plain name: computed
+// (`a['x']()`), optional (`a.x?.()`), on a call result or group (`f()()`,
+// `(a.x)()`), or a template tag. A `(` after an operator or at the start is
+// grouping, not a call. A path that starts with `.` has an unknown receiver.
+function findCallees(expression) {
+  if (expression.includes("`")) return null;
+  const code = stripStringLiterals(expression);
+  const callees = [];
+  for (let index = code.indexOf("("); index !== -1; index = code.indexOf("(", index + 1)) {
+    let end = index - 1;
+    while (end >= 0 && /\s/.test(code[end])) end--;
+    if (end < 0) continue;
+    if (code[end] === "." || code[end] === "]" || code[end] === ")") return null;
+    if (!/[\w$]/.test(code[end])) continue;
+    let start = end;
+    while (start > 0 && /[\w$.]/.test(code[start - 1])) start--;
+    callees.push(code.slice(start, end + 1));
+  }
+  return callees;
+}
+__name(findCallees, "findCallees");
+function isAllowedCallee(path, localFunctions) {
+  const segments = path.split(".");
+  if (GSAP_WIRING_GSAP_READ_CALLS.has(path)) return true;
+  if (GSAP_WIRING_READ_ONLY_CALLS.has(segments[segments.length - 1])) return true;
+  return segments.length === 1 && localFunctions.has(path);
+}
+__name(isAllowedCallee, "isAllowedCallee");
+// Tween vars: `x: -distance, duration: 0.7,` or `onComplete: () =>`.
+function isTweenVarsBlock(block) {
+  const callback = GSAP_WIRING_TWEEN_CALLBACK_PATTERN.exec(block);
+  if (callback) return GSAP_WIRING_TWEEN_KEYS.has(callback[1]) || GSAP_WIRING_TWEEN_CALLBACK_KEYS.has(callback[1]);
+  return block.replace(/,\s*$/, "").split(",").every((pair) => {
+    const match = GSAP_WIRING_TWEEN_PAIR_PATTERN.exec(pair.trim());
+    return Boolean(match) && GSAP_WIRING_TWEEN_KEYS.has(match[1]);
+  });
+}
+__name(isTweenVarsBlock, "isTweenVarsBlock");
+function isGsapWiringBlock(block, localVariables) {
+  if (containsPotentiallyHarmfulCode(block)) return false;
+  const guard = GSAP_WIRING_GUARD_PATTERN.exec(block);
+  if (guard) {
+    const callees = findCallees(guard[1]);
+    return callees !== null && callees.length === 0 && !hasAssignment(guard[1]);
+  }
+  const flag = GSAP_WIRING_FLAG_PATTERN.exec(block);
+  if (flag) return Boolean(localVariables && localVariables.has(flag[1]));
+  return isTweenVarsBlock(block) || GSAP_WIRING_BLOCK_PATTERNS.some((pattern) => pattern.test(block));
+}
+__name(isGsapWiringBlock, "isGsapWiringBlock");
 function isReadOnlyDeclaration(block, localFunctions) {
   const declaration = GSAP_WIRING_DECLARATION_PATTERN.exec(block);
   if (!declaration) return false;
   const value = declaration[1].trim();
-  // `const step = (direction) =>`: the body is checked as separate blocks.
+  // `const step = (direction) =>`: the body is checked as separate statements.
   if (GSAP_WIRING_CALLBACK_HEADER_PATTERN.test(value)) return true;
-  // An expression body or an assignment in the value is behavior.
-  if (value.includes("=>") || /(?<![=!<>])=(?![=>])/.test(value) || /\bnew\b/.test(value)) return false;
-  for (const call of value.matchAll(/([\w$]+)\s*\(/g)) {
-    if (!GSAP_WIRING_READ_ONLY_CALLS.has(call[1]) && !localFunctions.has(call[1])) return false;
-  }
-  return true;
+  // An expression body, an assignment, or a constructor in the value is behavior.
+  if (value.includes("=>") || hasAssignment(value) || /\bnew\b/.test(stripStringLiterals(value))) return false;
+  const callees = findCallees(value);
+  return callees !== null && callees.every((path) => isAllowedCallee(path, localFunctions));
 }
 __name(isReadOnlyDeclaration, "isReadOnlyDeclaration");
-function isGsapWiringOnlyScript(script, unacceptedBlocks) {
-  if (NON_GSAP_BEHAVIOR_PATTERN.test(script)) return false;
-  const localFunctions = new Set();
+// The start of a tween with inline vars: `gsap.to(rail,`.
+function isGsapCallBlock(block) {
+  return GSAP_WIRING_TWEEN_CALL_PATTERN.test(block);
+}
+__name(isGsapCallBlock, "isGsapCallBlock");
+// A call to a function the script declares; its body is checked separately.
+function isLocalCallBlock(block, localFunctions) {
+  const call = /^([\w$]+)\(([^()]*)\)$/.exec(block);
+  if (!call || !localFunctions.has(call[1]) || hasAssignment(call[2])) return false;
+  const argumentCallees = findCallees(call[2]);
+  return argumentCallees !== null && argumentCallees.length === 0;
+}
+__name(isLocalCallBlock, "isLocalCallBlock");
+function isGsapWiringOnlyScript(script) {
+  if (script.includes("`") || NON_GSAP_BEHAVIOR_PATTERN.test(script)) return false;
+  const localFunctions = /* @__PURE__ */ new Set();
   for (const match of script.matchAll(/\bfunction\s+([\w$]+)\s*\(/g)) localFunctions.add(match[1]);
   for (const match of script.matchAll(new RegExp(String.raw`\b(?:const|let|var)\s+([\w$]+)\s*=\s*(?:async\s*)?${GSAP_WIRING_CALLBACK}`, "g"))) {
     localFunctions.add(match[1]);
   }
-  return unacceptedBlocks.every((rawBlock) => {
-    const block = rawBlock.trim();
-    if (isGsapWiringBlock(block) || isReadOnlyDeclaration(block, localFunctions)) return true;
-    // A call to a function this script declares; its body is checked separately.
-    const call = /^([\w$]+)\(([^()]*)\)$/.exec(block);
-    return Boolean(call) && localFunctions.has(call[1]) && !/[\w$\])]\s*\(/.test(call[2]);
-  });
+  const localVariables = new Set(Array.from(script.matchAll(/\b(?:const|let|var)\s+([\w$]+)/g), (match) => match[1]));
+  // Every statement counts, however short; the original count skips blocks of 10 characters or fewer.
+  return script.split(/[;\n\r{}]/).map((block) => block.trim()).filter(Boolean).every(
+    (block) => GSAP_WIRING_INERT_PATTERN.test(block) || isGsapWiringBlock(block, localVariables) || isReadOnlyDeclaration(block, localFunctions) || isGsapCallBlock(block) || isLocalCallBlock(block, localFunctions)
+  );
 }
 __name(isGsapWiringOnlyScript, "isGsapWiringOnlyScript");
 function findUnacceptedCode(script, acceptedPatterns) {
@@ -1155,7 +1235,7 @@ function findUnacceptedCode(script, acceptedPatterns) {
   if (harmlessUnacceptedBlocks.length <= Math.ceil(unacceptedBlocks.length * 0.3)) {
     return [];
   }
-  if (isGsapWiringOnlyScript(script, unacceptedBlocks)) {
+  if (isGsapWiringOnlyScript(script)) {
     return [];
   }
   return harmlessUnacceptedBlocks.map((block) => truncateScript(block, 100));
