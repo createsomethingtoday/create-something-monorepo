@@ -160,6 +160,23 @@ test('regression: owner conversation history includes sent messages without chan
     assert.equal((await f.value('/api/v1/messages?agentId='+p.a.id+'&includeSent=true',f.alice)).messages[0].id,sent.message.id);
   }finally{f.storage.close();}
 });
+test('regression: paged conversation history starts with newest handoffs and retains older pages',async()=>{
+  const f=await fixture();try{
+    const p=await subscriptionPair(f);
+    await f.value('/api/v1/grants',f.alice,'POST',{agentId:p.a.id,senderAgentId:p.b.id});
+    for(let i=0;i<60;i++){
+      const sent=await f.value('/api/v1/messages',f.alice,'POST',{...p.input,idempotencyKey:`page-request-${i}`});
+      await f.value('/api/v1/messages',f.bob,'POST',{fromAgentId:p.b.id,toAgentId:p.a.id,text:`Synthetic reply ${i}`,threadId:sent.message.threadId,idempotencyKey:`page-reply-${i}`});
+    }
+    const latest=await f.value(`/api/v1/messages?agentId=${p.a.id}&view=history&includeSent=true`,f.alice);
+    assert.equal(Math.max(...latest.messages.map((m:{cursor:number})=>m.cursor)),120);
+    assert.equal(latest.messages.length,100);assert.equal(latest.hasMore,true);assert.equal(latest.nextBefore,21);
+    const older=await f.value(`/api/v1/messages?agentId=${p.a.id}&view=history&includeSent=true&before=${latest.nextBefore}`,f.alice);
+    assert.equal(older.messages.length,20);assert.equal(older.hasMore,false);
+    assert.equal(new Set([...latest.messages,...older.messages].map(m=>m.id)).size,120);
+    assert.equal((await f.api(`/api/v1/messages?agentId=${p.a.id}&view=history&includeSent=true`,f.bob)).status,404);
+  }finally{f.storage.close();}
+});
 test('regression: MCP cookie requests reject an untrusted browser origin before processing',async()=>{
   const f=await fixture();try{
     const response=await app.fetch(new Request(origin+'/mcp',{method:'POST',headers:{cookie:'__Host-a2a_session=fixture','origin':'https://untrusted.example','content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'events/subscribe'})}),f.env);
@@ -327,5 +344,31 @@ test('offline recovery: excessive replay resets to now with explicit truncation 
     assert.equal(resumed.result.truncated,true);assert.equal(resumed.result.cursor,'1001');
     await f.flush();assert.equal(f.received.length,0);
     assert.equal(f.storage.sqlite.prepare("SELECT count(*) AS n FROM deliveries WHERE state='expired'").get()!.n,1001);
+  }finally{f.storage.close();}
+});
+
+test('offline authorization: grant revocation stops already-queued and explicitly resumed deliveries',async()=>{
+  const f=await fixture();try{
+    const p=await subscriptionPair(f);const sent=await f.value('/api/v1/messages',f.alice,'POST',p.input);
+    f.jobs.splice(0);await fanoutEvent(f.env,sent.eventId);
+    const grant=f.storage.sqlite.prepare('SELECT id FROM grants WHERE agent_id=?').get(p.b.id)!;
+    await f.value(`/api/v1/grants/${grant.id}`,f.bob,'DELETE');await f.flush();assert.equal(f.received.length,0);
+    assert.equal(f.storage.sqlite.prepare('SELECT state FROM deliveries').get()!.state,'suspended');
+    f.storage.sqlite.prepare('UPDATE subscriptions SET expires_at=?').run(Date.now()-1);
+    assert.ok((await f.rpc(f.bob,'events/subscribe',{...p.params,cursor:'0'})).result);
+    await f.flush();assert.equal(f.received.length,0);
+    assert.equal(f.storage.sqlite.prepare('SELECT state FROM deliveries').get()!.state,'suspended');
+  }finally{f.storage.close();}
+});
+
+test('offline retention: unavailable message history is expired explicitly and reported as truncated',async()=>{
+  const f=await fixture();try{
+    const p=await subscriptionPair(f);const sent=await f.value('/api/v1/messages',f.alice,'POST',p.input);f.jobs.splice(0);
+    f.storage.sqlite.prepare('UPDATE messages SET text=NULL,content_deleted_at=? WHERE id=?').run(Date.now(),sent.message.id);
+    f.storage.sqlite.prepare('UPDATE subscriptions SET expires_at=?').run(Date.now()-1);
+    const resumed=await f.rpc(f.bob,'events/subscribe',{...p.params,cursor:'0'});
+    assert.equal(resumed.result.truncated,true);assert.equal(resumed.result.cursor,'1');
+    await f.flush();assert.equal(f.received.length,0);
+    assert.equal(f.storage.sqlite.prepare('SELECT state FROM deliveries').get()!.state,'expired');
   }finally{f.storage.close();}
 });

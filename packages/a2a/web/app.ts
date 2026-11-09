@@ -9,6 +9,7 @@ type Subscription = { id: string; agentId: string; status: string; createdAt: nu
 type Delivery = { id: string; messageId: string; subscriptionId: string; state: string; attempts: number; lastStatus: number | null; lastError: string | null; createdAt: number; acceptedAt: number | null };
 type Runtime = { version: string; environment: string; eventDelivery: string; retention: {contentDays: number; auditDays: number; actionableDays: number} };
 type Pane = 'inbox' | 'connect' | 'access' | 'create';
+type HistoryPage = {messages:Message[];hasMore:boolean;nextBefore:number|null};
 
 const endpoint = 'https://a2a.createsomething.agency/mcp';
 const $ = <T extends HTMLElement = HTMLElement>(selector: string): T => {
@@ -20,6 +21,7 @@ const state = {
   agents: [] as Agent[], agentId: '', grants: [] as Grant[], messages: [] as Message[],
   subscriptions: [] as Subscription[], deliveries: [] as Delivery[], pane: 'inbox' as Pane,
   threadId: '', replyThreadId: '', idempotencyKey: '', generation: 0, failedSections: new Set<string>(),
+  historyHasMore:false, historyBefore:null as number|null,
 };
 class ApiError extends Error { constructor(public status: number, public code: string, message: string) { super(message); } }
 
@@ -94,6 +96,8 @@ function renderInbox() {
     status.append(statusTag(agent.paused ? 'paused' : 'open', 'Inbox: '), statusTag(subscriptionState, 'Event subscriptions: '));
   }
   $('#inbox-count').textContent = String(state.messages.filter(message => message.toAgentId === state.agentId).length).padStart(2,'0');
+  $('#load-older').hidden=!state.historyHasMore||state.failedSections.has('messages');
+  $('#history-summary').textContent=state.messages.length?`${state.messages.length} messages loaded${state.historyHasMore?' · older messages available':''}. Refresh shows the latest 100.`:'';
   const messagesUnavailable=state.failedSections.has('messages');
   $('#inbox-empty').hidden = !messagesUnavailable && (!!state.messages.length || !agent);
   $('#inbox-empty h3').textContent=messagesUnavailable?'Messages could not be loaded.':'No handoffs yet.';
@@ -172,7 +176,7 @@ function renderDeliveries() {
     const status=el('td');status.append(statusTag(delivery.state),el('span','detail-line',`${delivery.attempts} attempt${delivery.attempts===1?'':'s'}${delivery.lastStatus ? ` · HTTP ${delivery.lastStatus}` : ''}`));
     if(delivery.lastError) status.append(el('span','detail-line',delivery.lastError));
     const action=el('td');
-    if(['failed','suspended','expired'].includes(delivery.state)) action.append(actionButton('Replay',async()=>{try{await api(`/api/v1/deliveries/${encodeURIComponent(delivery.id)}/replay`,{method:'POST'});await refreshDetails();notice('Event replay requested. Inspect its next delivery receipt.');}catch(error){handleError(error);}}));
+    if(['failed','suspended','retrying'].includes(delivery.state)) action.append(actionButton('Replay',async()=>{try{await api(`/api/v1/deliveries/${encodeURIComponent(delivery.id)}/replay`,{method:'POST'});await refreshDetails();notice('Event replay requested. Inspect its next delivery receipt.');}catch(error){handleError(error);}}));
     else action.textContent='—';row.append(id,status,action);ledger.body.append(row);
   }
   container.replaceChildren(ledger.node);
@@ -192,13 +196,14 @@ async function refreshDetails() {
   const id=state.agentId;if(!id)return;const generation=++state.generation;$('#workspace').setAttribute('aria-busy','true');
   const suffix=`?agentId=${encodeURIComponent(id)}`;
   const results=await Promise.allSettled([
-    api<{messages:Message[]}>(`/api/v1/messages${suffix}&includeSent=true`),api<{grants:Grant[]}>(`/api/v1/grants${suffix}`),
+    api<HistoryPage>(`/api/v1/messages${suffix}&view=history`),api<{grants:Grant[]}>(`/api/v1/grants${suffix}`),
     api<{subscriptions:Subscription[]}>(`/api/v1/subscriptions${suffix}`),api<{deliveries:Delivery[]}>(`/api/v1/deliveries${suffix}`),
   ]);
   if(generation!==state.generation || id!==state.agentId)return;
   const [messages,grants,subscriptions,deliveries]=results;
   state.failedSections=new Set(results.flatMap((result,index)=>result.status==='rejected' ? [['messages','grants','subscriptions','deliveries'][index]] : []));
   state.messages=messages.status==='fulfilled'?messages.value.messages:[];state.grants=grants.status==='fulfilled'?grants.value.grants:[];
+  state.historyHasMore=messages.status==='fulfilled'&&messages.value.hasMore;state.historyBefore=messages.status==='fulfilled'?messages.value.nextBefore:null;
   state.subscriptions=subscriptions.status==='fulfilled'?subscriptions.value.subscriptions:[];state.deliveries=deliveries.status==='fulfilled'?deliveries.value.deliveries:[];
   renderInbox();renderConnect();renderGrants();$('#workspace').setAttribute('aria-busy','false');
   const failed=results.find(result=>result.status==='rejected');
@@ -206,6 +211,18 @@ async function refreshDetails() {
     if(failed.reason instanceof ApiError && (failed.reason.status===401 || (failed.reason.status===403 && /invite|access_denied|not_allowed/i.test(failed.reason.code))))throw failed.reason;
     handleError(failed.reason);
   }
+}
+async function loadOlder() {
+  if(!state.historyHasMore||state.historyBefore===null)return;
+  const id=state.agentId,generation=state.generation,button=$<HTMLButtonElement>('#load-older');button.disabled=true;
+  try{
+    const page=await api<HistoryPage>(`/api/v1/messages?agentId=${encodeURIComponent(id)}&view=history&before=${state.historyBefore}`);
+    if(id!==state.agentId||generation!==state.generation)return;
+    const messages=new Map([...state.messages,...page.messages].map(message=>[message.id,message]));state.messages=[...messages.values()];
+    state.historyHasMore=page.hasMore;state.historyBefore=page.nextBefore;renderInbox();
+    notice(`${page.messages.length} older messages loaded.`);
+    if(button.hidden)$('#inbox-title').focus({preventScroll:true});
+  }catch(error){handleError(error);}finally{button.disabled=false;}
 }
 async function refreshAgents(preferredId=state.agentId) {
   const data=await api<{agents:Agent[]}>('/api/v1/agents');state.agents=data.agents;
@@ -225,7 +242,7 @@ async function start() {
     }).catch(()=>{$('#event-system-status').textContent='Event service status unavailable';});
   } catch(error) {
     if(error instanceof ApiError && error.status===401)sessionScreen('signin');
-    else if(error instanceof ApiError && error.status===403){$('#denied-message').textContent=error.message;sessionScreen('denied');}
+    else if(error instanceof ApiError && error.status===403){$('#denied-message').textContent=error.message;$<HTMLButtonElement>('#logout').hidden=false;sessionScreen('denied');}
     else{$('#session-error-text').textContent=error instanceof Error?error.message:'We could not load your session. Try again.';sessionScreen('error');}
   }
 }
@@ -236,6 +253,7 @@ async function submit(form: HTMLFormElement, callback:()=>Promise<void>) {
 document.querySelectorAll<HTMLButtonElement>('[data-pane]').forEach(button=>button.addEventListener('click',()=>openPane(button.dataset.pane as Pane)));
 document.querySelectorAll<HTMLButtonElement>('[data-open-pane]').forEach(button=>button.addEventListener('click',()=>openPane(button.dataset.openPane as Pane)));
 $('#retry-session').addEventListener('click',start);
+$('#load-older').addEventListener('click',loadOlder);
 $('#logout').addEventListener('click',async()=>{try{await api('/auth/logout',{method:'POST'});window.location.assign('/app');}catch(error){handleError(error);}});
 $('#refresh').addEventListener('click',async()=>{const button=$<HTMLButtonElement>('#refresh');button.disabled=true;clearNotice();try{await refreshAgents();}catch(error){handleError(error);}finally{button.disabled=false;}});
 $('#agent-select').addEventListener('change',async(event)=>{state.agentId=(event.target as HTMLSelectElement).value;state.threadId='';state.messages=[];state.deliveries=[];state.subscriptions=[];state.grants=[];state.failedSections.clear();resetCompose();clearNotice();renderInbox();renderConnect();renderGrants();try{await refreshDetails();}catch(error){handleError(error);}});

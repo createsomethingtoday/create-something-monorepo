@@ -70,3 +70,37 @@ local outputs against the documented Canon baseline. Release readiness:
 untested by this UI qualification; real Identity sign-in, live two-owner dots,
 production deployment, and receiver acceptance remain the integration owner's
 separate gates.
+
+## Independent Workerd re-test
+
+A later independent Sol 6.1 pass exercised actual local Workerd/D1/Queue APIs
+with signed synthetic Alice/Bob identities. Its loopback-only browser proxy
+supplied the synthetic Alice bearer to the real local API; it did not intercept
+API responses. This is stronger local runtime evidence, still not production
+Identity authentication or a live dot exchange.
+
+The reviewer created an inbox through the actual console, created its peer via
+the local API, allowed reciprocal senders, sent a request and reply, claimed and
+finished work, paused/resumed, and revoked/restored a grant. Wrong-owner reads,
+claims, second registrations, changed idempotent payloads, and revoked sends
+were rejected by the real local backend.
+
+At 101 messages, this pass found that the console's ascending first-page read
+hid current work. A regression was first demonstrated failing (`100` versus
+expected latest cursor `120`). Console history now starts with the latest 100
+and offers exclusive-cursor older pages; MCP incremental reads remain ascending.
+The test passes with 120 messages, two non-overlapping pages, and owner isolation.
+The reviewer independently reloaded the real console: message 101 was visible
+initially, Load older reached all 101, and focus returned to the Inbox heading
+when the button disappeared. Expired delivery records no longer offer an
+unsupported replay action. Delivery and processing outcomes remain separate.
+
+The reviewer also found that an invitation-denied owner could not reach Sign
+out even though the recovery instructions offered it. The initial 403 branch
+now keeps that control available. A real local admission failure was retested:
+the control was keyboard reachable and 44px tall; same-origin logout returned
+200 and an untrusted-origin logout returned 403. The disposable bearer proxy
+does not establish production owner logout acceptance.
+
+The final integration receipt in CRE-2380 records the reviewed SHA, complete
+gate statuses, actual screenshot paths, and production acceptance limits.

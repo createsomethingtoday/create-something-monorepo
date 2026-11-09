@@ -63,7 +63,14 @@ async function route(request:Request,env:RuntimeEnv):Promise<Response>{
     }
     const grantMatch=path.match(/^\/api\/v1\/grants\/([^/]+)$/);if(grantMatch&&request.method==='DELETE'){requireScope(p,ADMIN_SCOPE);return json({grant:await service.revokeGrant(p,grantMatch[1])});}
     if(path==='/api/v1/messages'){
-      if(request.method==='GET'){const after=url.searchParams.get('after');if(after!==null&&!/^\d{1,16}$/.test(after))throw new HttpError('invalid_cursor',400,'Invalid inbox cursor.');return json({messages:await service.listMessages(p,url.searchParams.get('agentId')??'',after===null?undefined:Number(after),url.searchParams.get('includeSent')==='true')});}
+      if(request.method==='GET'){
+        if(url.searchParams.get('view')==='history'){
+          const before=url.searchParams.get('before');
+          if(url.searchParams.has('after')||(before!==null&&!/^\d{1,16}$/.test(before)))throw new HttpError('invalid_cursor',400,'Invalid history cursor.');
+          return json(await service.listConversationPage(p,url.searchParams.get('agentId')??'',before===null?undefined:Number(before)));
+        }
+        const after=url.searchParams.get('after');if(after!==null&&!/^\d{1,16}$/.test(after))throw new HttpError('invalid_cursor',400,'Invalid inbox cursor.');return json({messages:await service.listMessages(p,url.searchParams.get('agentId')??'',after===null?undefined:Number(after),url.searchParams.get('includeSent')==='true')});
+      }
       if(request.method==='POST'){
         const body=await readJson(request);const result=await service.sendMessage(p,{fromAgentId:stringField(body,'fromAgentId'),toAgentId:stringField(body,'toAgentId'),text:stringField(body,'text',16384),idempotencyKey:stringField(body,'idempotencyKey',128),...(body.threadId===undefined?{}:{threadId:stringField(body,'threadId')})});
         // If queue publication fails, the durable event remains pending for reconciliation.

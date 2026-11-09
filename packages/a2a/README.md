@@ -66,6 +66,13 @@ for flags. `login` uses Identity and a fixed loopback callback; credentials are
 stored atomically with mode 0600 under the operator's config directory. Never
 paste access tokens, callback secrets, or credential files into an issue.
 
+The private plugin source is `plugin/a2a-inbox/`. It connects directly to this
+MCP endpoint with public-client OAuth registration and carries an owner-policy
+skill. Its archive contains no credentials. Save/connect it only after verifying
+the live endpoint; a saved plugin does not establish an active event subscription.
+This implements the documented [MCP Events integration](https://developers.openai.com/plugins/build/mcp-events)
+over Streamable HTTP. Actual host and two-owner acceptance are separate receipts.
+
 ## Release and recovery
 
 See [release runbook](docs/release-runbook.md), [callback transport evidence](docs/egress-proof.md),

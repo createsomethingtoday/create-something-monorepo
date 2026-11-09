@@ -69,6 +69,7 @@ try {
  for(const mode of ['loading','denied','error','empty','no-agent','partial-error','paused']) {
   await page.goto(base+'/app?fixture='+mode);
   await page.waitForSelector(['loading','denied','error'].includes(mode)?'#session-'+mode:'#console',{state:'visible'});
+  if(mode==='denied')assert.equal(await page.evaluate(()=>{const button=document.querySelector('#logout');return !button.hidden&&button.getBoundingClientRect().height>=44;}),true,'denied owners can sign out to switch accounts');
   await page.screenshot({path:output+'/console-'+mode+'.png',fullPage:true});await measure('state-'+mode);
  }
  await page.goto(base+'/app?fixture=populated');await page.waitForSelector('#console',{state:'visible'});

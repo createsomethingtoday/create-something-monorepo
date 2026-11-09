@@ -1,0 +1,20 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "a2a-inbox": {
+      "type": "streamable-http",
+      "url": "https://a2a.createsomething.agency/mcp",
+      "extensions": {
+        "com.openai": {
+          "auth": {
+            "type": "oauth",
+            "client": { "mode": "dcr" },
+            "baseScopes": ["a2a:read", "a2a:write"],
+            "defaultScopes": ["a2a:read", "a2a:write"],
+            "oidcEnabled": false
+          }
+        }
+      }
+    }
+  }
+}

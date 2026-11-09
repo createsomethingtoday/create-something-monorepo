@@ -159,6 +159,19 @@ export class InboxService {
  AND EXISTS (SELECT 1 FROM agents a WHERE a.id=? AND a.owner_subject=?)
  AND ${AVAILABLE_MESSAGE} ORDER BY m.cursor LIMIT 100`, agentId, includeSent ? 1 : 0, agentId, after, agentId, principal(p), now, now)).map(r => message(r));
 	}
+	/** Console history starts with current work; older pages use an exclusive cursor.
+	 * MCP inbox reads retain their ascending incremental `after` contract. */
+	async listConversationPage(p: Principal, agentId: string, before = Number.MAX_SAFE_INTEGER): Promise<{messages:Message[];hasMore:boolean;nextBefore:number|null}> {
+		if (!Number.isSafeInteger(before) || before < 0) throw invalid('Cursor must be a nonnegative integer');
+		const owned = await this.requireOwnedAgent(p, agentId);
+		if (owned.paused) throw new DomainError('inbox_paused', 409);
+		const now = Date.now();
+		const rows = await this.all<MessageRow>(`SELECT m.* FROM messages m WHERE (m.to_agent_id=? OR m.from_agent_id=?) AND m.cursor<?
+ AND EXISTS (SELECT 1 FROM agents a WHERE a.id=? AND a.owner_subject=?)
+ AND ${AVAILABLE_MESSAGE} ORDER BY m.cursor DESC LIMIT 101`, agentId, agentId, before, agentId, principal(p), now, now);
+		const page = rows.slice(0,100);
+		return {messages:page.map(r=>message(r)).reverse(),hasMore:rows.length>100,nextBefore:page.at(-1)?.cursor??null};
+	}
 	async readMessage(p: Principal, messageId: string): Promise<Message> {
 		const now = Date.now();
 		const row = await this.first<MessageRow>(`SELECT m.* FROM messages m WHERE m.id=?
