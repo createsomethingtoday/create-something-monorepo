@@ -11,6 +11,7 @@ const clone=value=>structuredClone(value);
 const textError=error=>String(error?.message || error || 'This step could not be verified.').slice(0,500);
 const sourceStatusErrors=new Set(['session_expired','reauthentication_required','unauthorized','access_denied','session_busy','session_lock_unverified','provider_unavailable','unconfigured','refresh_in_progress','refresh_outcome_unknown']);
 const running=receipt=>['committing','cancelling'].includes(receipt?.state);
+const terminal=receipt=>['complete','partial','cancelled'].includes(receipt?.state);
 const sameSource=(a,b)=>['provider','connectedAccountId','collectionId','externalId'].every(key=>a?.[key]===b?.[key]);
 function windowFor(intent,now) {
   const end=new Date(now),start=new Date(now);
@@ -27,8 +28,14 @@ export class SetupImports {
     if(!workspaceId)throw new Error('Select a private workspace first.');
     this.bridge=bridge;this.workspaceId=workspaceId;this.storage=storage;this.now=now;this.onChange=onChange;
     this.busy=null;this.error=null;this.state=this._empty('contacts');
+    // Restored receipts must earn confirmation through fresh native readbacks.
+    this._confirmedReceipt=null;
   }
   _empty(intent) {return {intent,provider:intentFor(intent).provider,selection:windowFor(intent,this.now()),source:null,preview:null,receipt:null,candidates:[],proposal:null,wins:[],needsFreshPreview:false,sourceMismatch:false,importInput:null};}
+  get hasUnconfirmedImport() {
+    const input=this.state.importInput,receipt=this.state.receipt;
+    return !!input && (!terminal(receipt) || this._confirmedReceipt!==receipt || receipt.jobId!==input.previewId && receipt.previewId!==input.previewId);
+  }
   _key(intent=this.state.intent) {return `gigi.setup-imports.v1:${encodeURIComponent(this.workspaceId)}:${intentFor(intent).provider}:${intent}`;}
   _emit() {this.onChange(this);}
   _persist() {
@@ -108,26 +115,31 @@ export class SetupImports {
       if(this.state.proposal?.phase==='submitted')throw new Error('Check the unconfirmed save before reading another page.');
       if(running(this.state.receipt))throw new Error('Stop the import or check its receipt before reading another page.');
       if(this.state.needsFreshPreview&&!fresh)throw new Error('This preview or continuation expired. Start a fresh preview; existing records remain.');
+      if(this.hasUnconfirmedImport) {
+        const receipt=await this._readReceipt(this.state.importInput.previewId);
+        if(!terminal(receipt))throw new Error('Check the unconfirmed import or retry its exact reviewed request before reading another page.');
+      }
       if(!this.state.source)await this._refresh();
       const account=this._account(fresh);
       const cursor=fresh ? undefined : this.state.receipt ? this.state.receipt.state==='complete' ? this.state.receipt.nextCursor || undefined : this.state.receipt.retryCursor || undefined : this.state.preview?.nextCursor || undefined;
       const preview=await this.bridge.previewSource(this.workspaceId,this.state.provider,account,this.state.selection,cursor);
       if(!preview?.previewId||!preview.revision||preview.scope?.workspaceId!==this.workspaceId||preview.scope?.provider!==this.state.provider||preview.scope?.connectedAccountId!==account)throw new Error('The source preview scope could not be verified.');
       this.state.preview=preview;this.state.receipt=null;this.state.importInput=null;this.state.candidates=[];this.state.proposal=null;this.state.needsFreshPreview=false;this.state.sourceMismatch=false;
+      this._confirmedReceipt=null;
       this._persist();return preview;
     });
   }
   async _readReceipt(jobId) {
     const receipt=await this.bridge.importStatus(this.workspaceId,jobId);
     if(receipt?.previewId!==jobId && receipt?.jobId!==jobId)throw new Error('Import receipt could not be verified.');
-    if(receipt.state==='preview') {this.state.preview=receipt;return receipt;}
+    if(receipt.state==='preview') {this.state.preview=receipt;this.state.receipt=null;this._confirmedReceipt=null;return receipt;}
     if(!['complete','partial','cancelled','committing','cancelling'].includes(receipt.state))throw new Error('GiGi has not confirmed this import. Check its receipt before continuing.');
     if(receipt.scope?.workspaceId!==this.workspaceId || receipt.scope?.provider!==this.state.provider)throw new Error('Import receipt belongs to another workspace or source.');
     const account=this.state.preview?.scope?.connectedAccountId || this.state.receipt?.scope?.connectedAccountId;
     if(account && receipt.scope?.connectedAccountId!==account)throw new Error('Import account readback mismatch.');
-    this.state.receipt=receipt;
+    let candidates;
     if(!running(receipt)) {
-      const candidates=[];
+      candidates=[];
       for(const row of receipt.records || []) {
         if(candidates.length>=25)break;
         if(row.entity!==sourceEntity(this.state.provider)||!row.id)throw new Error('Import receipt contains an unexpected result.');
@@ -135,8 +147,11 @@ export class SetupImports {
         if(record?.id!==row.id || record.workspaceId!==this.workspaceId || record.entity!==row.entity || record.source?.kind!=='import' || record.source.provider!==this.state.provider || record.source.connectedAccountId!==receipt.scope.connectedAccountId || !record.source.collectionId || !record.source.externalId)throw new Error('Saved source record could not be verified. Check the import receipt and local records.');
         candidates.push(record);
       }
-      this.state.candidates=candidates;
     }
+    // A terminal receipt is confirmed only after every returned record is read
+    // back. Failed reads leave the original preview and import reference intact.
+    this.state.receipt=receipt;
+    if(candidates) {this.state.candidates=candidates;this._confirmedReceipt=receipt;}
     this._persist();return receipt;
   }
   checkReceipt() {return this._run('receipt',async()=>{const id=this.state.importInput?.previewId || this.state.receipt?.jobId || this.state.preview?.previewId;if(!id)throw new Error('No import is available to check.');return this._readReceipt(id);});}

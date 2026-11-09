@@ -1,5 +1,5 @@
 {
-  "version": "0.3.3",
+  "version": "0.3.4",
   "sourceRepository": "gigi-team/grantbot",
   "sourceCommit": "71594fb0412dbd1c8523f3791e2adba9cf32c942",
   "sourceCanonicalMerge": "b083717a1aadea9f19d121e238a5b4ed64d397b1",
@@ -24,7 +24,8 @@
     "out-of-date AI connection status cannot overwrite a newer request",
     "Today uses the same finished/archived-task classification as the task collection",
     "Astryx layout and typography components own the reconciled Work and setup containers",
-    "Partial and cancelled imports expose an explicit recovery preview, including first-page retries"
+    "Partial and cancelled imports expose an explicit recovery preview, including first-page retries",
+    "Unconfirmed imports retain their exact pending job until receipt and imported-record readbacks complete before preview continuation"
   ],
   "limits": [
     "Unpublished contributor-device changes are unavailable",

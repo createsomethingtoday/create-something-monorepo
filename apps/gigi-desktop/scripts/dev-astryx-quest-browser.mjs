@@ -187,6 +187,49 @@ try {
     await page.screenshot({ path: resolve(out, `retry-${state}-${retryCursor ? 'continuation' : 'first-page'}.png`), fullPage: true });
     results.push(`${state} receipt exposes an explicit keyboard-operable retry preview using ${retryCursor ? 'the recovery cursor' : 'the first page when retryCursor is null'}, without automatic import, consent or record writes.`);
   }
+  // A successful commit with an unreadable receipt must retain its recovery job.
+  await page.evaluate(() => {
+    const ctx=gigiTest.snapshot(),connected=ctx.devQuest.connected,imports=connected.imports;
+    const scope={workspaceId:ctx.state.workspace.id,provider:'gmail',connectedAccountId:'synthetic-account'};
+    connected.journey.start('results','contacts');
+    imports.state={...imports._empty('contacts'),source:{provider:'gmail',state:'connected',connectedAccountId:'synthetic-account'},
+      preview:{previewId:'pending-import-job',revision:'pending-revision',scope,expiresAt:Math.floor(Date.now()/1000)+900,
+        records:[{id:'pending-source',title:'Synthetic original page',fields:{}}],scannedCount:1,selectedCount:1,existingCount:0,nextCursor:'unconfirmed-next-page'}};
+    globalThis.questPending={outage:true,commits:[],reads:[],previews:[]};
+    imports.bridge.commitSource=async(...args)=>{questPending.commits.push(args);return {state:'partial'};};
+    imports.bridge.importStatus=async(workspaceId,jobId)=>{
+      questPending.reads.push({workspaceId,jobId});if(questPending.outage)throw new Error('Synthetic import receipt unavailable');
+      return {jobId,previewId:jobId,state:'partial',scope,records:[],createdCount:0,existingCount:0,failedCount:1,nextCursor:null,retryCursor:null};
+    };
+    imports.bridge.previewSource=async(workspaceId,provider,connectedAccountId,selection,cursor)=>{
+      questPending.previews.push({workspaceId,provider,connectedAccountId,cursor:cursor??null});
+      return {previewId:'recovered-page',revision:'recovered-revision',scope,expiresAt:Math.floor(Date.now()/1000)+900,
+        records:[],scannedCount:0,selectedCount:0,existingCount:0,coverage:'complete'};
+    };
+    gigiTest.render();
+  });
+  await page.getByRole('button',{name:'Import this reviewed page →',exact:true}).click();
+  await page.getByRole('alert').filter({hasText:'Synthetic import receipt unavailable'}).waitFor();
+  const pendingInput=await page.evaluate(()=>structuredClone(gigiTest.snapshot().devQuest.connected.imports.state.importInput));
+  assert.ok(pendingInput);
+  assert.equal(await page.getByRole('button',{name:'Preview the next page',exact:true}).count(),0);
+  assert.equal(await page.getByRole('button',{name:'Discard preview',exact:true}).count(),0);
+  assert.equal(await page.getByRole('button',{name:'Stop import',exact:true}).isVisible(),true);
+  await page.screenshot({path:resolve(out,'unconfirmed-import-keeps-recovery.png')});
+  await page.getByRole('button',{name:'Recover or retry exact import',exact:true}).click();
+  assert.deepEqual(await page.evaluate(()=>gigiTest.snapshot().devQuest.connected.imports.state.importInput),pendingInput);
+  assert.equal(await page.evaluate(()=>questPending.commits.length),1,'an unavailable receipt must not repeat the commit');
+  assert.equal(await page.evaluate(()=>questPending.previews.length),0);
+  await page.evaluate(()=>{questPending.outage=false;});
+  await page.getByRole('button',{name:'Check import result →',exact:true}).click();
+  await page.getByRole('button',{name:'Preview remaining records →',exact:true}).waitFor();
+  await page.getByRole('button',{name:'Preview remaining records →',exact:true}).click();
+  await page.getByRole('heading',{name:'Preview before importing',exact:true}).waitFor();
+  assert.deepEqual(await page.evaluate(()=>questPending.previews),[{workspaceId:'synthetic-astryx-rewrite',provider:'gmail',connectedAccountId:'synthetic-account',cursor:null}]);
+  assert.equal(await page.evaluate(()=>questPending.commits.length),1);
+  assert.equal(await page.evaluate(()=>gigiTest.snapshot().devQuest.connected.imports.state.importInput),null);
+  results.push('An approved import with a lost receipt keeps its exact recovery job, blocks continuation/discard, retries read-first without another commit, and permits a new preview only after receipt reconciliation.');
+
   // Exercise the rendered Astryx-owned frame and responsive budgets, not source wrappers.
   for (const theme of ['paper', 'midnight']) for (const viewport of [{ width: 880, height: 620 }, { width: 1440, height: 900 }, { width: 390, height: 844 }]) {
     await page.setViewportSize(viewport);
