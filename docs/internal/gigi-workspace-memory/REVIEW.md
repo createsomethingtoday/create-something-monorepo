@@ -111,3 +111,25 @@ failed B read: no A rows/requests/receipts appeared in B and no subsequent A
 entry read ran. The actual rendered harness adds a failed workspace transition
 check. Reviewer reported no remaining blocker; functional and perceptual passed
 within tested scope, shipping readiness untested.
+
+## Parent integration verification
+
+The parent integrated the release lane's frozen receipt-recovery correction
+`9860f06169540aafa0c7b437ce16cb62e49099de` as `c786df796` on top of the
+memory implementation. The correction retains its release-owned paths and
+version declarations; no memory-bearing 0.3.4 installer has been published.
+The release lane's existing 0.3.4 artifact does not contain memory.
+
+On this combined tree, the parent reran the desktop Node suite and web build,
+the actual React/native-domain memory lifecycle harness, all 13 guided-setup
+browser outcomes, and Rust workspace-memory + real stdio protocol tests. All
+passed; installed-artifact tests remain skipped. Fresh memory output at
+880 and 1280 pixels passed all three themes with no page errors; the parent
+viewed the rendered editor. A fresh independent integrated-source re-test
+was requested after this integration.
+
+Native WebKit, a live embedded provider turn, installed external host and a
+new signed memory-bearing installer remain untested. Keep promotion held until
+those gates and the stacked source review are resolved. Use a distinct next
+release identity; do not reuse the qualified 0.3.4 artifact or immutable keys.
+Worktree disposition: preserved at the path and branch above until promotion.
