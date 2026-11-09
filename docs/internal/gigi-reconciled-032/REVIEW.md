@@ -8,6 +8,8 @@ The active UI, weekly calendar, fixed due windows, Calm Tasks/Gigs, green theme,
 
 Functional preparation passed407 desktop checks (2 skipped),340 integration checks (1 skipped),integration typecheck and190 native checks. New managed-login process coverage failed before its companion handlers were included and passed afterward. Targeted fail/pass checks also caught stale optional-status overwrites and archived tasks reappearing on Today. The lockfile change adds only the pinned GSAP3.15.1 entry and preserves unrelated resolutions.
 
+Independent review also found signed-in Codex with missing GiGi tools incorrectly offered installation guidance. The actual React regression failed before a narrow recovery branch repair and passed afterward; it now offers a read-only workspace-tools check without login or inference. The same correction and archived-task rule are carried into the separate DEV0.3.2 candidate.
+
 Final exact-source rendered/native/artifact qualification, independent Sol6.1 clearance, immutable upload/full-download, public metadata and canonical deployment receipts follow in this packet before production promotion. Preparation counts are not live-provider acceptance. Both binaries require Developer ID/notarization, stapled tickets, Gatekeeper and mounted-image equality before distribution.
 
 Rollback is the qualified0.3.1 installer and reviewed pointer/source revert; no stored-record migration is needed. Full release identity, verification, public-readback and DEV access receipts will be recorded here and in CRE-2377. No claimed CI, deployment, installer or human outcome is implied by source preparation.

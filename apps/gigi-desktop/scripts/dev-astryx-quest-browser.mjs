@@ -60,6 +60,24 @@ try {
   assert.equal(await page.evaluate(() => gigiTest.calls.filter((entry) => entry.operation === 'records.save' && entry.input.entity === 'profile').length), 1);
   results.push('A failed local progress readback remains visible before optional connected setup; Check saved progress recovers through reads without another profile save.');
 
+  await page.evaluate(() => {
+    const ctx = gigiTest.snapshot();
+    ctx.devQuest.connected.assistant.status = {
+      provider: 'codex', available: false, authenticated: true, toolsAvailable: false,
+      workspaceVerified: false, reason: 'gigi_tools_unavailable', checkedAt: Date.now()
+    };
+    gigiTest.render();
+  });
+  assert.match(await page.locator('body').innerText(), /Codex is signed in, but GiGi’s workspace tools are unavailable/);
+  assert.equal(await page.getByRole('button', { name: 'Get Codex on this Mac ↗', exact: true }).count(), 0);
+  assert.equal(await page.getByRole('button', { name: 'Check again after installing', exact: true }).count(), 0);
+  await page.screenshot({ path: resolve(out, 'tools-unavailable-recovery.png'), fullPage: true });
+  const statusReads = await page.evaluate(() => gigiTest.calls.filter(entry => entry.operation === 'agent.chat.status').length);
+  await page.getByRole('button', { name: 'Check workspace tools', exact: true }).click();
+  await page.waitForFunction(count => gigiTest.calls.filter(entry => entry.operation === 'agent.chat.status').length > count, statusReads);
+  assert.equal(await page.evaluate(() => gigiTest.calls.some(entry => ['agent.chat.login.start', 'agent.chat.send', 'help.open'].includes(entry.operation))), false);
+  results.push('Signed-in Codex with missing workspace tools offers read-only tools recovery, without reinstall, new login, provider turn or record write.');
+
   // Supply a verified synthetic native status; this does not call a provider.
   await page.evaluate(() => {
     const ctx = gigiTest.snapshot();

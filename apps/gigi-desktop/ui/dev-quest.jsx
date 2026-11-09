@@ -122,6 +122,7 @@ function LocalMission({ ctx, view }) {
 function AssistantStage({ ctx }) {
   const q = ctx.devQuest, c = q.connected.assistant, ready = c.workspaceVerified, s = c.status, job = c.login, busy = !!c.busy;
   const waiting = job && ['starting', 'pending', 'verifying', 'cancelling', 'unknown'].includes(job.state);
+  const toolsMissing = s?.reason === 'gigi_tools_unavailable';
   const status = {
     starting: 'Starting secure sign-in…', pending: 'Finish sign-in in your browser. GiGi will check when you return.',
     verifying: 'Checking the signed-in account…', cancelling: 'Waiting for cancellation confirmation…',
@@ -133,10 +134,10 @@ function AssistantStage({ ctx }) {
   const command = c.provider === 'claude' ? c.external?.claudeCommand : c.external?.codexCommand;
   return <>
     <p className="quest-kicker">Step 1 · Your assistant</p><h1 id="setup-heading" tabIndex={-1}>{ready ? 'GiGi found your workspace.' : 'Let’s connect GiGi.'}</h1>
-    <p className="quest-description">{ready ? `Codex can read ${s.workspace.name}. Let’s bring in something useful.` : 'Use your ChatGPT account through Codex on this Mac. GiGi checks the workspace before you ask about your records.'}</p>
-    {ready ? <QuestButton primary onClick={() => q.guided('sources')}>Choose a source →</QuestButton> : waiting ? action('read-login', 'Check sign-in', true) : s?.available && !s.authenticated ? action('login', 'Sign in with ChatGPT →', true) : s && !s.available ? <Help ctx={ctx} topic="codex-setup">Get Codex on this Mac ↗</Help> : action('refresh', busy ? 'Checking your workspace…' : 'Check Ask GiGi →', true)}
+    <p className="quest-description">{ready ? `Codex can read ${s.workspace.name}. Let’s bring in something useful.` : toolsMissing ? 'Codex is signed in, but GiGi’s workspace tools are unavailable. Check again or ask the GiGi operator to check this app.' : 'Use your ChatGPT account through Codex on this Mac. GiGi checks the workspace before you ask about your records.'}</p>
+    {ready ? <QuestButton primary onClick={() => q.guided('sources')}>Choose a source →</QuestButton> : waiting ? action('read-login', 'Check sign-in', true) : toolsMissing ? action('refresh', 'Check workspace tools', true) : s?.available && !s.authenticated ? action('login', 'Sign in with ChatGPT →', true) : s && !s.available ? <Help ctx={ctx} topic="codex-setup">Get Codex on this Mac ↗</Help> : action('refresh', busy ? 'Checking your workspace…' : 'Check Ask GiGi →', true)}
     <p className="guided-fact">{ready ? `✓ Workspace access checked · ${stamp(s.checkedAt)}` : 'This check starts no conversation and changes no records.'}</p>
-    {ready ? action('ask', 'Try a read-only first answer') : s && !s.available ? action('refresh', 'Check again after installing') : null}
+    {ready ? action('ask', 'Try a read-only first answer') : s && !s.available && !toolsMissing ? action('refresh', 'Check again after installing') : null}
     {job && <p role="status">{status[job.state] || 'Check sign-in status.'}</p>}
     {waiting && <div className="dev-quest-actions">{job.state === 'pending' && action('open-login', 'Open sign-in again')}{action('cancel-login', 'Cancel sign-in')}</div>}
     <details className="guided-advanced"><summary>Other ways to connect</summary>
