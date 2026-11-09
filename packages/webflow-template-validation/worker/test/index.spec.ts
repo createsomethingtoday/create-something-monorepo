@@ -2926,6 +2926,13 @@ describe('Validation Submission Endpoint', () => {
 							{
 								category: 'Assets & Images',
 								passed: false,
+								stats: {
+									totalModes: 3,
+									hasResponsiveModes: false,
+									modeNames: ['Base', 'Dark'],
+									nested: { dropped: true },
+									mixed: ['ok', 1]
+								},
 							issues: [
 								{
 									id: 'seo.missing-title',
@@ -2936,6 +2943,8 @@ describe('Validation Submission Endpoint', () => {
 									details: {
 										pages: ['Log In (/log-in)'],
 										duplicates: [['About (/about)', 'Contact (/contact)']],
+										samples: ['About us (/about)', { name: 'not a label' }],
+										locations: ['/about — 375px: scrolls 40px sideways (widest: div.hero)'],
 										bridgeToken: 'wfbt_should_not_persist'
 									}
 								}
@@ -2968,6 +2977,11 @@ describe('Validation Submission Endpoint', () => {
 		expect(body).not.toContain('wfbt_should_not_persist');
 		expect(body).toContain('"raw_bridge_token_stored": false');
 		const artifact = JSON.parse(body);
+		expect(artifact.validation_results.categories[0].stats).toEqual({
+			totalModes: 3,
+			hasResponsiveModes: false,
+			modeNames: ['Base', 'Dark']
+		});
 		expect(artifact.validation_results.categories[0].issues[0]).toEqual({
 			id: 'seo.missing-title',
 			severity: 'error',
@@ -2976,7 +2990,9 @@ describe('Validation Submission Endpoint', () => {
 			location: 'Designer pages panel',
 			details: {
 				pages: ['Log In (/log-in)'],
-				duplicates: [['About (/about)', 'Contact (/contact)']]
+				duplicates: [['About (/about)', 'Contact (/contact)']],
+				samples: ['About us (/about)'],
+				locations: ['/about — 375px: scrolls 40px sideways (widest: div.hero)']
 			}
 		});
 	});
