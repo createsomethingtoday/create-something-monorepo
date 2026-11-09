@@ -157,6 +157,33 @@ const nonGsapBehavior = {
   }
   toggle.addEventListener('click', (e) => { e.preventDefault(); flip(); });
 });`,
+  'native Web Animations call': `document.addEventListener('DOMContentLoaded', () => {
+  gsap.to('.hero', { opacity: 1, duration: 1 });
+  const trigger = document.querySelector('.panel-trigger');
+  const panel = document.querySelector('.panel');
+  if (!trigger || !panel) return;
+  const frames = [
+    { opacity: 0 },
+    { opacity: 1 }
+  ];
+  function reveal() {
+    if (!panel) return;
+    panel.animate(frames, 300);
+  }
+  trigger.addEventListener('click', (e) => { e.preventDefault(); reveal(); });
+});`,
+  'native animation kept in a variable': `document.addEventListener('DOMContentLoaded', () => {
+  gsap.to('.hero', { opacity: 1, duration: 1 });
+  const trigger = document.querySelector('.panel-trigger');
+  const panel = document.querySelector('.panel');
+  if (!trigger || !panel) return;
+  function reveal() {
+    if (!panel) return;
+    const motion = panel.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 });
+    motion.play();
+  }
+  trigger.addEventListener('click', (e) => { e.preventDefault(); reveal(); });
+});`,
   'network request': `document.addEventListener('DOMContentLoaded', () => {
   gsap.from('.feed', { opacity: 0, duration: 0.5 });
   const feed = document.querySelector('.feed');

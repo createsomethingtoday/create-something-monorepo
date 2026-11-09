@@ -1025,13 +1025,14 @@ function extractExternalScripts(html) {
 __name(extractExternalScripts, "extractExternalScripts");
 // Wiring around GSAP tweens: guards, function and listener headers, flags,
 // tween vars, and reordering of existing nodes (looping sliders). None of
-// these blocks changes what the page shows or sends by itself, so they do not
-// count as unapproved code. The exemption applies only when GSAP is the
-// script's only behavior: a script that creates elements, uses the network,
-// timers, or storage, writes markup, text, styles, or URLs, or changes UI
-// state another way (classes, data attributes, attributes, form or
-// visibility properties, programmatic clicks or scrolling) keeps the
-// stricter count.
+// these blocks changes what the page shows or sends by itself. A script
+// passes on wiring only when every block that is not GSAP or already
+// harmless is wiring; any other leftover block keeps the original count.
+// The exemption is also off when the script does anything besides GSAP:
+// creates elements, uses the network, timers, or storage, writes markup,
+// text, styles, or URLs, changes UI state another way (classes, data
+// attributes, attributes, form or visibility properties, programmatic
+// clicks or scrolling), or animates without GSAP (Web Animations, jQuery).
 var NON_GSAP_BEHAVIOR_PATTERN = new RegExp([
   String.raw`createElement\s*\(`,
   String.raw`\bfetch\s*\(`,
@@ -1046,7 +1047,8 @@ var NON_GSAP_BEHAVIOR_PATTERN = new RegExp([
   String.raw`classList\.(?:add|remove|toggle|replace)\s*\(|\.className\s*\+?=(?!=)`,
   String.raw`\.dataset\.[\w$]+\s*=(?!=)|\.dataset\[|(?:toggle|remove)Attribute\s*\(`,
   String.raw`\.(?:hidden|checked|disabled|open|value|selected)\s*=(?!=)`,
-  String.raw`\.(?:click|scrollIntoView|scrollTo|scrollBy)\s*\(`
+  String.raw`\.(?:click|scrollIntoView|scrollTo|scrollBy)\s*\(`,
+  String.raw`\.(?:animate|getAnimations)\s*\(|\bnew\s+(?:Animation|KeyframeEffect)\b`
 ].join("|"));
 var GSAP_WIRING_LISTENER_EVENTS = "DOMContentLoaded|load|click|resize|mouseenter|mouseleave|pointerenter|pointerleave";
 var GSAP_WIRING_CALLBACK = String.raw`(?:\(?[\w$\s,]*\)?\s*=>|function\s*[\w$]*\s*\([\w$\s,]*\))`;
@@ -1101,9 +1103,7 @@ function findUnacceptedCode(script, acceptedPatterns) {
   if (blockAcceptedRatio >= 0.3) {
     return [];
   }
-  const wiringExempt = !NON_GSAP_BEHAVIOR_PATTERN.test(script);
   const harmlessUnacceptedBlocks = unacceptedBlocks.filter((block) => {
-    if (wiringExempt && isGsapWiringBlock(block.trim())) return false;
     if (/^(var|let|const)\s+\w+\s*=/.test(block.trim())) return false;
     if (/^\w+\.\w+$/.test(block.trim())) return false;
     if (/^\w+\([^)]*\)$/.test(block.trim()) && !containsPotentiallyHarmfulCode(block)) return false;
@@ -1113,6 +1113,9 @@ function findUnacceptedCode(script, acceptedPatterns) {
     return true;
   });
   if (harmlessUnacceptedBlocks.length <= Math.ceil(unacceptedBlocks.length * 0.3)) {
+    return [];
+  }
+  if (!NON_GSAP_BEHAVIOR_PATTERN.test(script) && harmlessUnacceptedBlocks.every((block) => isGsapWiringBlock(block.trim()))) {
     return [];
   }
   return harmlessUnacceptedBlocks.map((block) => truncateScript(block, 100));
