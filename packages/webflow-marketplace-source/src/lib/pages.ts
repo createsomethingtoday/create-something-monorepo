@@ -77,6 +77,15 @@ function errorPage(url:URL,status:number){
  const $=shell(`<main id="main" class="rd-home rd-error"><section class="rd-wrap" aria-labelledby="rd-error-h"><p class="rd-eyebrow">Webflow Templates</p><h1 id="rd-error-h" class="rd-h2">${title}</h1><p class="rd-lead">${missing?'This Marketplace page could not be found.':'The catalog did not respond in time. Please try again in a moment.'}</p><div class="rd-error-actions">${missing?'':`<a class="rd-btn rd-btn-primary" href="${escape(url.pathname+url.search)}">Try again</a>`}<a class="${missing?'rd-btn rd-btn-primary':'rd-text-link'}" href="/templates/all" data-source-back>Back to templates</a></div></section></main>`,title+' | Webflow','',false);
  return finish($,url,[],status);
 }
+// Each catalog read asks only for what its page uses. Without `include`, the catalog also
+// computes facets and category pills: about six database queries where two are enough.
+// CARDS is the card-sized row (name, creator, thumbnails, price) with no facets or pills.
+const CARDS={include:'items',view:'grid'} as const;
+// Home and the category directory share these two reads, so one cached result serves both.
+const NEWEST_READ={sort:'newest',page_size:'4',...CARDS};
+const PILLS_READ={page_size:'1',include:'pills'};
+/** The three popular thumbnails of a category tile. category-stacks-client sends the same read. */
+const stackRead=(slug:string)=>({category_group_slug:slug,sort:'popular',page_size:'3',...CARDS});
 const names:Record<string,string>={'all':'All Website Templates','featured':'Featured Website Templates','free-website-templates':'Free Website Templates','popular-website-templates':'Popular Website Templates','new-website-templates':'New Website Templates','landing-page':'Landing Page Templates','search':'Search Website Templates','search-results':'Search Website Templates','search-v2':'Search Website Templates','basic-website-templates':'Basic Website Templates','cms-website-templates':'CMS Website Templates','ecommerce-website-templates':'Ecommerce Website Templates','premium-website-templates':'Premium Website Templates','user-accounts-website-templates':'User Accounts Website Templates'};
 function hydrateCms($:ReturnType<typeof load>,islands:Island[],url?:URL){
  $('code-island').each((_,e)=>{
@@ -129,13 +138,13 @@ export async function pageFor(url:URL):Promise<Page>{
  }
  if(route.kind==='service'){
   const $=clean(route.page!);
-  if(route.page==='services/search-results'){const result=await search({q:url.searchParams.get('q')||url.searchParams.get('query')||'',page_size:'24',sort:'newest'});const $=shell('<main id="main" class="section"><div class="container"><source-island></source-island></div></main>','Find a template to customize | Webflow');return finish($,url,[{kind:'catalog',title:'Choose a template to customize',items:result.items}]);}
+  // The catalog island reads its own results in the browser, so these routes make no server catalog read.
+  if(route.page==='services/search-results'){const $=shell('<main id="main" class="section"><div class="container"><source-island></source-island></div></main>','Find a template to customize | Webflow');return finish($,url,[{kind:'catalog',title:'Choose a template to customize'}]);}
   if(route.page==='services/home'){
-   const result=await search({page_size:'24',sort:'newest'});
    $('.services_tab-wrapper').replaceWith('<source-island></source-island>');
    $('.w-dyn-list').filter((_,element)=>$(element).find('.w-dyn-bind-empty').length>0).remove();
    $('form[action="/search"]').attr('action','/templates/search');
-   return finish($,url,[{kind:'catalog',title:'Choose a template to customize',items:result.items}]);
+   return finish($,url,[{kind:'catalog',title:'Choose a template to customize'}]);
   }
   if(route.page==='services/schedule'){const modal=$('[fs-modal-element="modal"]');const content=modal.find('.ts_schedule-call--help-modal').first();modal.replaceWith('<dialog class="source-support-dialog" data-source-help="true" aria-label="Template customization services">'+content.html()+'</dialog>');}
   $('form').attr('data-source-example','true');
@@ -164,11 +173,11 @@ export async function pageFor(url:URL):Promise<Page>{
   // home page still renders; the hero search and category links need no catalog read at all.
   const none:SearchResult={items:[],pagination:{total_items:0,total_pages:0,page:1},category_pills:[],subcategory_pills:[]};
   const soft=(read:Promise<SearchResult>)=>read.catch(error=>{console.error('[marketplace-source] home section left out:',error instanceof Error?error.message:error);return none});
-  const [featured,newest,free,pills]=await Promise.all([soft(search({scope:'featured',sort:'newest',page_size:'7'})),soft(search({sort:'newest',page_size:'4'})),soft(search({scope:'free',sort:'newest',page_size:'3'})),soft(search({page_size:'1',include:'facets,pills'}))]);
+  const [featured,newest,free,pills]=await Promise.all([soft(search({scope:'featured',sort:'newest',page_size:'7',...CARDS})),soft(search(NEWEST_READ)),soft(search({scope:'free',sort:'newest',page_size:'3',...CARDS})),soft(search(PILLS_READ))]);
   // Category stacks never hold up the page: seven popular-sort reads on a cold render overloaded
   // the catalog database. A stack this server already holds renders inline; the rest load in the
   // browser as their tiles come near, through the same cache.
-  const stacks=Object.fromEntries(await Promise.all(TILE_CATEGORIES.map(async slug=>[slug,(await searchCached({category_group_slug:slug,sort:'popular',page_size:'3'})?.catch(()=>undefined))?.items||[]] as const)));
+  const stacks=Object.fromEntries(await Promise.all(TILE_CATEGORIES.map(async slug=>[slug,(await searchCached(stackRead(slug))?.catch(()=>undefined))?.items||[]] as const)));
   const index=clean('index');
   const faqSection=index('body > section.section').filter((_,element)=>/Frequently Asked Questions/i.test(index(element).text())).first();
   // The exported FAQ joins the home type scale and sentence case.
@@ -184,7 +193,7 @@ export async function pageFor(url:URL):Promise<Page>{
   return finish($,url,islands);
  }
  if(route.kind==='detail'){
-  const r=await search({template_slug:route.slug!,strict:'true',page_size:'1'});
+  const r=await search({template_slug:route.slug!,strict:'true',page_size:'1',include:'items'});
   const item=r.items.find(t=>t.template_slug===route.slug);if(!item)return errorPage(url,404);
   const $=clean('detail_html');$('title').text(`${item.name} - Website Template | Webflow`);$('meta[name="description"]').attr('content',item.description_short||'');
   const [cms,published]=await Promise.all([publishedCms('/html/'+route.slug),readPublishedStorefront(item.creator_slug,{origin:getSecret('CREATOR_STOREFRONT_SERVICE_URL'),timeoutMs:1200})]);
@@ -246,7 +255,7 @@ export async function pageFor(url:URL):Promise<Page>{
  if(route.kind==='catalog' && route.page==='designers' && route.slug){
   const [cms,catalog,published]=await Promise.all([
    publishedCms('/designers/'+route.slug),
-   search({creator_slug:route.slug,sort:'popular',page_size:'100'}),
+   search({creator_slug:route.slug,sort:'popular',page_size:'100',include:'items'}),
    readPublishedStorefront(route.slug,{origin:getSecret('CREATOR_STOREFRONT_SERVICE_URL')})
   ]);
   const header=cms('h1').first().closest('.section');
@@ -282,10 +291,12 @@ export async function pageFor(url:URL):Promise<Page>{
   return finish($,url,[{kind:'discovery'}]);
  }
  if(route.kind==='catalog'){
-  const p=searchFilters(route,url);p.set('page_size','24');
-  const data=await search(p);
   let title=names[route.page!]||'';
+  // The catalog island reads its own results in the browser. The server reads the catalog only
+  // to name a term route and to confirm that it exists.
   if(route.slug){
+   const p=searchFilters(route,url);p.set('page_size','1');
+   const data=await search(p);
    if(route.page==='designers'){
     if(!data.items.length)return errorPage(url,404);
     title=`Templates by ${data.items[0].creator_name}`;
@@ -297,14 +308,14 @@ export async function pageFor(url:URL):Promise<Page>{
    }
   }
   const $=shell('<main id="main" class="section cc-top-internal-2-2"><div class="container"><source-island></source-island></div></main>',title+' | Webflow');
-  return finish($,url,[{kind:'catalog',title,items:data.items,creatorSlug:route.page==='designers'?route.slug:undefined}]);
+  return finish($,url,[{kind:'catalog',title,creatorSlug:route.page==='designers'?route.slug:undefined}]);
  }
  if(route.kind==='static'){
   if(route.page==='template-licenses')return finish(clean('template-licenses'),url);
   if(route.page==='categories'){
    // Redesigned directory: search API counts; the CMS supplies titles, meta and card descriptions.
    // The pills read reports zero totals, so the count comes from the same newest read as home.
-   const [remote,pills,newest]=await Promise.all([publishedCms('/categories'),search({page_size:'1',include:'facets,pills'}),search({sort:'newest',page_size:'4'})]);
+   const [remote,pills,newest]=await Promise.all([publishedCms('/categories'),search(PILLS_READ),search(NEWEST_READ)]);
    const categories=pills.category_pills||[];
    const descriptions:Record<string,string>={};
    remote('a.categoryc-card_link').each((_,e)=>{const slug=(remote(e).attr('href')||'').split('/').pop()!;descriptions[slug]=remote(e).find('.u-text-gray600').first().text().trim();});
@@ -316,7 +327,7 @@ export async function pageFor(url:URL):Promise<Page>{
    // script that the bridge strips, so every page is read. The search API supplies popular creators,
    // and new creators: those with recent templates, newest CMS record first.
    const empty={items:[] as Template[]};
-   const [first,popular,newest]=await Promise.all([publishedCms('/designers'),search({sort:'popular',page_size:'48'}).catch(()=>empty),search({sort:'newest',page_size:'100'}).catch(()=>empty)]);
+   const [first,popular,newest]=await Promise.all([publishedCms('/designers'),search({sort:'popular',page_size:'48',...CARDS}).catch(()=>empty),search({sort:'newest',page_size:'100',...CARDS}).catch(()=>empty)]);
    const pageKey=(first('.w-pagination-next').attr('href')||'').match(/[a-z0-9]+_page/)?.[0];
    const pages=Number(first('.w-page-count').first().text().split('/')[1])||1;
    const rest=pageKey?await Promise.all(Array.from({length:pages-1},(_,i)=>publishedCms(`/designers?${pageKey}=${i+2}`))):[];

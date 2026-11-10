@@ -24,7 +24,8 @@ async function load(stack:HTMLElement,attempt=0):Promise<void>{
  const slug=stack.dataset.rdStack!;
  stack.dataset.rdStackState='loading';
  try{
-  const response=await fetch(`/templates-api/api/templates/search?${new URLSearchParams({category_group_slug:slug,sort:'popular',page_size:'3'})}`);
+  // Same read as stackRead in pages.ts, so the server's cached result serves both.
+  const response=await fetch(`/templates-api/api/templates/search?${new URLSearchParams({category_group_slug:slug,sort:'popular',page_size:'3',include:'items',view:'grid'})}`);
   if(!response.ok)throw new Error(String(response.status));
   const {items=[]}=await response.json() as {items?:{thumbnail_image_url:string}[]};
   const urls=items.slice(0,3).map(t=>t.thumbnail_image_url).filter(Boolean);
