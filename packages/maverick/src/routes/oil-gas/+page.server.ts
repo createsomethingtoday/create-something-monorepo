@@ -6,6 +6,8 @@ import type { PageServerLoad } from './$types';
 import { fetchPageContent } from '$lib/server/content';
 
 export interface PetroxContent {
+	/** Overrides for the September 2026 design; legacy fields remain untouched. */
+	redesign?: { title?: string; subtitle?: string };
 	hero?: {
 		title?: string;
 		subtitle?: string;
