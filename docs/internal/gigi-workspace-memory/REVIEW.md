@@ -235,3 +235,18 @@ native invalidation and late-workspace-response checks. The locked recovery
 editor was directly viewed with exact text and a reachable receipt action.
 Final parent desktop suite: 419 passed, 2 installed-artifact skips; web build
 and actual memory flow passed. Artifact release readiness remains held.
+
+## Combined navigation integration
+
+Reviewed navigation commit `ecf2e65db21f6a013a8aaeeb2c610ab9294c5921`
+(CRE-2384) was cherry-picked as `2ca26962c`. It touches only app.css,
+dev-navigation.jsx and the review-regression harness: nav disclosures retain
+fixed geometry on opening, and decorative chevrons use actual Astryx icons.
+Content disclosure spacing remains unchanged. The owner independently reviewed
+source/rendered output and verified native QA; the parent combined-source checks
+pass memory lifecycle, 419 desktop checks (2 skips), web build and all nine
+review-regression cases. Next exact-head review and newly qualified signed
+artifact must include both memory recovery and this navigation correction.
+Combined rewrite checks also passed 19 routes/24 appearance combinations and
+keyboard navigation. The parent directly viewed the combined Paper/880 Admin
+menu output; the geometry harness recorded 108 states without a failure.

@@ -7,11 +7,12 @@ Slack/email is performed in this lane.
 
 ## Source and release identity
 
-PR #2220 remains OPEN at published `a4c3500bc3ad5be0ca5d1dbbe56e765e52c081cc`
-at synchronization. That head is merged only into `t3/gigi-workspace-agent-memory`.
-Its clean memory-free 0.3.4 artifacts and release evidence are retained unchanged.
-PR #2222 remains stacked on #2220; if #2220 merges, parent retargets #2222 to main,
-synchronizes main if needed, and reviews the resulting exact head.
+PR #2220 merged normally as `b292f002b4d0b08eef2de5844bc838614d58f162`
+from reviewed head `a4c3500bc3ad5be0ca5d1dbbe56e765e52c081cc`.
+Public 0.3.4 is live and memory-free; PR #2222 now targets main.
+The next artifact includes memory staging recovery and reviewed navigation
+alignment `ecf2e65db21f6a013a8aaeeb2c610ab9294c5921` (integrated as `2ca26962c`).
+All earlier 0.3.5 candidates are superseded and must not be promoted.
 
 App/package/Rust/plugin/reconciliation version: **0.3.5**. Public identity:
 `agency.createsomething.gigi`. Complete release companion pipeline includes native
@@ -24,7 +25,9 @@ and a newly created DMG. Preserve signature-only payload equivalence and run the
 existing full verifier, which checks all signatures, Gatekeeper, staples and
 mounted-app byte/mode equality. Its --source-sha argument alone is only an assertion.
 
-Candidate outputs and logs are under worktree `.cache/gigi-release-035/`; final
+Superseded candidate outputs/logs remain under `.cache/gigi-release-035/` and
+`.cache/gigi-release-035-corrected/`; replacement outputs must use a new local
+directory with exact final-source provenance. Final
 artifact identities, build provenance and signing/verifier receipts are recorded
 there and in Linear. Neither prior 0.3.4 artifacts nor installed public/DEV apps
 may be overwritten. Sanitized native/provider evidence is in
@@ -32,19 +35,18 @@ may be overwritten. Sanitized native/provider evidence is in
 
 ## DEV parity handoff (read-only assessment)
 
-Canonical Grantbot repository default branch is
-`migration/grantbot-complete-handoff-2026-08-25`, head
-`3a961ac9b6eb2ac5671950cae6d735754eb8fdb3` (read 2026-11-09). It includes PR1431
-and the 0.3.3 Astryx/recovery work. DEV PR1432 is still OPEN at
-`5874fbc0ed10ff04e76e46a5f5751fc63b0837c7`; it owns the 0.3.4 receipt correction
-and its distinct `co.halfdozen.gigi.dev` candidate. The canonical config is `sandbox/gigi-desktop/apps/gigi-desktop/src-tauri/tauri.conf.json`, whose
-canonical source currently declares public identity and 0.3.3. A DEV artifact's
-override/identity cannot be inferred from that canonical file. Existing DEV034
-qualification evidence belongs to its exact source and separate packaging.
+Canonical Grantbot branch is `migration/grantbot-complete-handoff-2026-08-25`.
+PR1432 merged as `96b938d7401c08f9998bc3640dfc0e5cdb4fede5`, identical to frozen
+DEV source `5874fbc0ed10ff04e76e46a5f5751fc63b0837c7`.
+Its memory-free 0.3.4 private prerelease is published and download-verified.
+Preserve separate `co.halfdozen.gigi.dev` identity and data; never infer packaging
+identity from a generic config alone. Existing qualification belongs to that
+exact source and artifact.
 
-Later DEV owner must start from current canonical plus the reviewed/merged1432
-receipt correction, preserving any newer Danny commits and unpublished device
-work. Do not blanket-copy this monorepo or replace that checkout. Transfer the
+Later DEV owner must start from current canonical, preserving newer Danny commits
+and unpublished device work. Do not blanket-copy this monorepo or replace the
+checkout. Incorporate the narrow navigation correction with its owning lane,
+then transfer the
 reviewed memory delta, mapping `apps/gigi-desktop/` to
 `sandbox/gigi-desktop/apps/gigi-desktop/` and `packages/gigi-integrations/` to
 `sandbox/gigi-desktop/packages/gigi-integrations/`. Memory files include native
@@ -93,9 +95,11 @@ Retain qualified034 app/DMG and its evidence. Before any source reversion, retai
 a backup; older binaries ignore additive memory tables. Do not restore an old
 backup to roll back UI: it may resurrect forgotten content. If public promotion
 fails, restore canonical metadata to the then-current verified public release.
-Known verified fallback031: 85,090,374 bytes, SHA-256
-`6cc6de0975e1f2819d351c991df5b783352c32377e0bbe5df133061b1555d091`,
-`https://media.createsomething.io/releases/gigi/0.3.1/GiGi-0.3.1-arm64-private-beta.dmg`.
+Current verified public rollback is 0.3.4: 91,823,696 bytes, SHA-256
+`2abef152aea7f751080efaac9a79a8ddbfc02de58d5a93222d3acc53d9be62af`,
+`https://media.createsomething.io/releases/gigi/0.3.4/GiGi-0.3.4-arm64-private-beta.dmg`.
+The separately qualified historical 0.3.1 fallback remains preserved; prefer the
+current verified 0.3.4 identity when reverting a later 0.3.5 page promotion.
 Keep immutable objects and local data.
 
 Worktree disposition: preserved at
