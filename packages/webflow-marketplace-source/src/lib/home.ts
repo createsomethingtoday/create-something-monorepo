@@ -21,6 +21,10 @@ export interface HomeData {
  creators:Template[];
  categories:Term[];
  stacks:Record<string,Template[]>;
+ /** False when that catalog read failed; the section is then left out. */
+ featured:boolean;
+ free:boolean;
+ fresh:boolean;
 }
 
 function heroCard(t:Template){
@@ -57,14 +61,14 @@ export function homeMarkup(d:HomeData){
   </form>
   <nav class="rd-chips" aria-label="Popular categories">${CHIPS.map(([text,slug])=>`<a class="rd-chip" href="${categoryUrl(slug)}">${esc(text)}</a>`).join('')}</nav>
   <a class="rd-text-link" href="/templates/all">Browse all templates <span aria-hidden="true">→</span></a>
-  <p class="rd-muted rd-sm"><span data-rd-count="${d.total}">${count(d.total)}</span> templates · Free and paid · <a href="/templates/submission-guidelines">Explore our review guidelines</a></p>
-  <div class="rd-hero-shots">${d.hero.map(heroCard).join('')}</div>
+  <p class="rd-muted rd-sm">${d.total?`<span data-rd-count="${d.total}">${count(d.total)}</span> templates · Free and paid`:'Free and paid templates'} · <a href="/templates/submission-guidelines">Explore our review guidelines</a></p>
+  ${d.hero.length?`<div class="rd-hero-shots">${d.hero.map(heroCard).join('')}</div>`:''}
  </section>
 
- <section class="rd-wrap rd-feat" aria-labelledby="rd-feat-h">
+ ${d.featured?`<section class="rd-wrap rd-feat" aria-labelledby="rd-feat-h">
   <div class="rd-head rd-head-split"><div><p class="rd-eyebrow">Featured this month</p><h2 id="rd-feat-h" class="rd-h2">Picked by the template review team</h2></div><div><p class="rd-muted">Each month we feature templates that stand out for design quality, structure, and craft.</p><a class="rd-text-link" href="/templates/featured">See all featured →</a></div></div>
   <source-island></source-island>
- </section>
+ </section>`:''}
 
  <section class="rd-wrap rd-mcp-wrap" aria-labelledby="rd-mcp-h">
   <div class="rd-mcp">
@@ -73,32 +77,32 @@ export function homeMarkup(d:HomeData){
   </div>
  </section>
 
- <section class="rd-wrap" aria-labelledby="rd-cat-h">
+ ${tiles.length?`<section class="rd-wrap" aria-labelledby="rd-cat-h">
   ${heading('Browse by category','What are you building?','rd-cat-h')}
   <div class="rd-cat-grid">${tiles.map(c=>tile(c,d.stacks[c.slug]||[])).join('')}<a class="rd-cat-all" href="/templates/all"><span class="rd-h6">All templates</span><span class="rd-muted rd-sm">Browse every category, explore styles, and sort by newest <span aria-hidden="true">→</span></span></a></div>
   <nav class="rd-more" aria-labelledby="rd-more-h">
    <div class="rd-head"><h3 id="rd-more-h" class="rd-h6">More categories</h3><a class="rd-text-link" href="/templates/categories">All categories <span aria-hidden="true">→</span></a></div>
    <div class="rd-mcat-list">${rest.map(c=>`<a class="rd-mcat" href="${categoryUrl(c.slug)}"><span>${esc(label(c.name))}</span><span class="rd-muted">${count(c.count||0)}</span></a>`).join('')}</div>
   </nav>
- </section>
+ </section>`:''}
 
- <section class="rd-wrap" aria-labelledby="rd-free-h">
+ ${d.free?`<section class="rd-wrap" aria-labelledby="rd-free-h">
   <div class="rd-free">
    ${heading('Start for $0','Free templates','rd-free-h',['See all free templates →','/templates/free-website-templates'])}
    <p class="rd-muted rd-free-lead">Clone a free template into your Workspace and start building on a free Starter site.</p>
    <source-island></source-island>
   </div>
- </section>
+ </section>`:''}
 
- <section class="rd-wrap" aria-labelledby="rd-new-h">
+ ${d.fresh?`<section class="rd-wrap" aria-labelledby="rd-new-h">
   ${heading('Just added','New templates','rd-new-h',['See all new →','/templates/new-website-templates'])}
   <source-island></source-island>
- </section>
+ </section>`:''}
 
- <section class="rd-wrap rd-creators" aria-labelledby="rd-cr-h">
+ ${d.creators.length?`<section class="rd-wrap rd-creators" aria-labelledby="rd-cr-h">
   ${heading('Creators','Made by the creator community','rd-cr-h',['Browse all creators →','/templates/designers'])}
   <div class="rd-creator-row">${d.creators.map(t=>creator(t)).join('')}</div>
- </section>
+ </section>`:''}
 </main>`;
 }
 

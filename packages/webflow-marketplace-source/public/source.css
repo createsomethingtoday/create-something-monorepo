@@ -541,8 +541,15 @@ body .wfdt-sticky{background:#fff}
 ::view-transition-old(root){animation-duration:.16s}
 ::view-transition-new(root){animation-duration:.26s}
 @media(prefers-reduced-motion:reduce){@view-transition{navigation:none}}
-/* The exported FAQ takes the home type scale and section rhythm. */
-.rd-faq{--rd-fg:#080808;--rd-fg2:#5A5A5A;--rd-line:#E0E0E0;padding-top:0;color:var(--rd-fg);font-family:"WF Visual Sans Variable","WF Visual Sans",Arial,sans-serif}
+/* The exported FAQ takes the home type scale. It carries the gap above it, so the rhythm holds
+   whichever home section comes last. */
+.rd-creators{padding-bottom:0}
+.rd-faq{--rd-fg:#080808;--rd-fg2:#5A5A5A;--rd-line:#E0E0E0;padding-top:96px;color:var(--rd-fg);font-family:"WF Visual Sans Variable","WF Visual Sans",Arial,sans-serif}
 .rd-faq .rd-h3{margin:0 0 24px;color:var(--rd-fg)}
 .rd-faq .faq-section_title{font-size:1.25rem;line-height:1.4;font-weight:600;letter-spacing:0;color:var(--rd-fg)}
-@media(max-width:767px){.rd-faq .faq-section_title{font-size:1.125rem}}
+@media(max-width:991px){.rd-faq{padding-top:64px}}
+@media(max-width:767px){.rd-faq{padding-top:56px}.rd-faq .faq-section_title{font-size:1.125rem}}
+/* Error pages sit on the home type scale. */
+.rd-error{padding-bottom:160px}.rd-error .rd-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:16px}
+.rd-error .rd-error-actions{margin-top:16px}.rd-error .rd-btn-primary:hover{color:#fff}
+@media(max-width:767px){.rd-error{padding-bottom:80px}}

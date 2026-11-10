@@ -5,7 +5,7 @@ import {readPublishedStorefront} from './creator-storefront-api.mjs';
 import type {CreatorCustomization,CreatorSource} from './creator-storefront.mjs';
 import assetPathMap from '../../export-path-map.json';
 import {publishedCms,cmsProps,CmsNotFound} from './cms';
-import {SEARCH_ORIGIN,search,searchCached, type Template} from './api';
+import {SEARCH_ORIGIN,search,searchCached, type Template, type SearchResult} from './api';
 import {routeFor,localLink,searchFilters} from './routes.mjs';
 import {homeMarkup,categoriesMarkup,designersMarkup,pickCreators,TILE_CATEGORIES,type Designer} from './home';
 const exports = import.meta.glob('../../original-export/**/*.html',{eager:true,query:'?raw',import:'default'}) as Record<string,string>;
@@ -71,8 +71,10 @@ async function categoryCms(page:string,slug:string){
  }
 }
 function errorPage(url:URL,status:number){
- const title=status===404?'Page not found':'The template catalog is temporarily unavailable';
- const $=shell(`<main id="main" class="section"><div class="container"><h1>${title}</h1><p>${status===404?'This Marketplace page could not be found.':'Please try again in a moment.'}</p><div class="rd-error-actions">${status===503?`<a class="rd-control-trigger" href="${escape(url.pathname+url.search)}">Try again</a>`:''}<a href="/templates/all" data-source-back>Back to templates</a></div></div></main>`,title+' | Webflow');
+ const missing=status===404;
+ const title=missing?'Page not found':'The template catalog is temporarily unavailable';
+ // Error pages use the home type scale and leave out the seller call to action.
+ const $=shell(`<main id="main" class="rd-home rd-error"><section class="rd-wrap" aria-labelledby="rd-error-h"><p class="rd-eyebrow">Webflow Templates</p><h1 id="rd-error-h" class="rd-h2">${title}</h1><p class="rd-lead">${missing?'This Marketplace page could not be found.':'The catalog did not respond in time. Please try again in a moment.'}</p><div class="rd-error-actions">${missing?'':`<a class="rd-btn rd-btn-primary" href="${escape(url.pathname+url.search)}">Try again</a>`}<a class="${missing?'rd-btn rd-btn-primary':'rd-text-link'}" href="/templates/all" data-source-back>Back to templates</a></div></section></main>`,title+' | Webflow','',false);
  return finish($,url,[],status);
 }
 const names:Record<string,string>={'all':'All Website Templates','featured':'Featured Website Templates','free-website-templates':'Free Website Templates','popular-website-templates':'Popular Website Templates','new-website-templates':'New Website Templates','landing-page':'Landing Page Templates','search':'Search Website Templates','search-results':'Search Website Templates','search-v2':'Search Website Templates','basic-website-templates':'Basic Website Templates','cms-website-templates':'CMS Website Templates','ecommerce-website-templates':'Ecommerce Website Templates','premium-website-templates':'Premium Website Templates','user-accounts-website-templates':'User Accounts Website Templates'};
@@ -84,6 +86,8 @@ function hydrateCms($:ReturnType<typeof load>,islands:Island[],url?:URL){
   if(widget==='MarketplaceAgentTools'){el.remove();return;}
   // The published heading reads window at runtime. Give the server render the request route so the first paint carries the real title.
   if(widget==='TemplateMarketplaceHeading'&&url&&!props.staticRoutePath)props.staticRoutePath=url.pathname+url.search;
+  // CMS cards say "$59 USD" and the catalog grid says "59 USD". Cards use the grid's wording on every page.
+  if(widget==='TemplateCard'&&typeof props.price==='string'){const amount=props.price.match(/^\$?\s*(\d+(?:\.\d+)?)(?:\s*USD)?$/i);if(amount)props.price=`${amount[1]} USD`;}
   if(['TemplateCard','TemplateGrid','TemplateFilterBar','TemplateSupportRequest','TemplateSearchSidebar','TemplateMarketplaceHeading','TemplateChat'].includes(widget)){
    islands.push({kind:'widget',widget,props});el.replaceWith('<source-island></source-island>');
   }
@@ -156,7 +160,11 @@ export async function pageFor(url:URL):Promise<Page>{
  if(route.kind==='home'){
   // Redesigned home: own hero, MCP row, sections and category directory;
   // keeps the exported navigation, seller CTA, FAQ and footer.
-  const [featured,newest,free,pills]=await Promise.all([search({scope:'featured',sort:'newest',page_size:'7'}),search({sort:'newest',page_size:'4'}),search({scope:'free',sort:'newest',page_size:'3'}),search({page_size:'1',include:'facets,pills'})]);
+  // No catalog read is required. When one fails, its sections are left out and the rest of the
+  // home page still renders; the hero search and category links need no catalog read at all.
+  const none:SearchResult={items:[],pagination:{total_items:0,total_pages:0,page:1},category_pills:[],subcategory_pills:[]};
+  const soft=(read:Promise<SearchResult>)=>read.catch(error=>{console.error('[marketplace-source] home section left out:',error instanceof Error?error.message:error);return none});
+  const [featured,newest,free,pills]=await Promise.all([soft(search({scope:'featured',sort:'newest',page_size:'7'})),soft(search({sort:'newest',page_size:'4'})),soft(search({scope:'free',sort:'newest',page_size:'3'})),soft(search({page_size:'1',include:'facets,pills'}))]);
   // Category stacks never hold up the page: seven popular-sort reads on a cold render overloaded
   // the catalog database. A stack this server already holds renders inline; the rest load in the
   // browser as their tiles come near, through the same cache.
@@ -166,9 +174,14 @@ export async function pageFor(url:URL):Promise<Page>{
   // The exported FAQ joins the home type scale and sentence case.
   faqSection.addClass('rd-faq').find('h2').first().addClass('rd-h3').text('Frequently asked questions');
   const faq=faqSection.toString();
-  const main=homeMarkup({total:newest.pagination.total_items,hero:featured.items.slice(4,7),creators:pickCreators(featured.items),categories:pills.category_pills||[],stacks});
+  const main=homeMarkup({total:newest.pagination.total_items,hero:featured.items.slice(4,7),creators:pickCreators(featured.items),categories:pills.category_pills||[],stacks,featured:featured.items.length>0,free:free.items.length>0,fresh:newest.items.length>0});
   const $=shell(main+faq,'Free & Premium Website Templates | Webflow',index('meta[name="description"]').attr('content')||'');
-  return finish($,url,[{kind:'cards',items:featured.items.slice(0,4)},{kind:'cards',items:free.items,columns:3},{kind:'cards',items:newest.items}]);
+  // One island for each card section that homeMarkup rendered, in document order.
+  const islands:Island[]=[];
+  if(featured.items.length)islands.push({kind:'cards',items:featured.items.slice(0,4)});
+  if(free.items.length)islands.push({kind:'cards',items:free.items,columns:3});
+  if(newest.items.length)islands.push({kind:'cards',items:newest.items});
+  return finish($,url,islands);
  }
  if(route.kind==='detail'){
   const r=await search({template_slug:route.slug!,strict:'true',page_size:'1'});
