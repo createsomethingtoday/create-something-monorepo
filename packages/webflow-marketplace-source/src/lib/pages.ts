@@ -5,7 +5,7 @@ import {readPublishedStorefront} from './creator-storefront-api.mjs';
 import type {CreatorCustomization,CreatorSource} from './creator-storefront.mjs';
 import assetPathMap from '../../export-path-map.json';
 import {publishedCms,cmsProps,CmsNotFound} from './cms';
-import {SEARCH_ORIGIN,search, type Template} from './api';
+import {SEARCH_ORIGIN,search,searchCached, type Template} from './api';
 import {routeFor,localLink,searchFilters} from './routes.mjs';
 import {homeMarkup,categoriesMarkup,designersMarkup,pickCreators,TILE_CATEGORIES,type Designer} from './home';
 const exports = import.meta.glob('../../original-export/**/*.html',{eager:true,query:'?raw',import:'default'}) as Record<string,string>;
@@ -157,9 +157,15 @@ export async function pageFor(url:URL):Promise<Page>{
   // Redesigned home: own hero, MCP row, sections and category directory;
   // keeps the exported navigation, seller CTA, FAQ and footer.
   const [featured,newest,free,pills]=await Promise.all([search({scope:'featured',sort:'newest',page_size:'7'}),search({sort:'newest',page_size:'4'}),search({scope:'free',sort:'newest',page_size:'3'}),search({page_size:'1',include:'facets,pills'})]);
-  const stacks=Object.fromEntries(await Promise.all(TILE_CATEGORIES.map(async slug=>[slug,(await search({category_group_slug:slug,sort:'popular',page_size:'3'}).catch(()=>({items:[]}))).items] as const)));
+  // Category stacks never hold up the page: seven popular-sort reads on a cold render overloaded
+  // the catalog database. A stack this server already holds renders inline; the rest load in the
+  // browser as their tiles come near, through the same cache.
+  const stacks=Object.fromEntries(await Promise.all(TILE_CATEGORIES.map(async slug=>[slug,(await searchCached({category_group_slug:slug,sort:'popular',page_size:'3'})?.catch(()=>undefined))?.items||[]] as const)));
   const index=clean('index');
-  const faq=index('body > section.section').filter((_,element)=>/Frequently Asked Questions/i.test(index(element).text())).first().toString();
+  const faqSection=index('body > section.section').filter((_,element)=>/Frequently Asked Questions/i.test(index(element).text())).first();
+  // The exported FAQ joins the home type scale and sentence case.
+  faqSection.addClass('rd-faq').find('h2').first().addClass('rd-h3').text('Frequently asked questions');
+  const faq=faqSection.toString();
   const main=homeMarkup({total:newest.pagination.total_items,hero:featured.items.slice(4,7),creators:pickCreators(featured.items),categories:pills.category_pills||[],stacks});
   const $=shell(main+faq,'Free & Premium Website Templates | Webflow',index('meta[name="description"]').attr('content')||'');
   return finish($,url,[{kind:'cards',items:featured.items.slice(0,4)},{kind:'cards',items:free.items,columns:3},{kind:'cards',items:newest.items}]);

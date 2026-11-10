@@ -82,10 +82,10 @@ body:has(.section.cc-top-internal-2-2) .sb-nav-wrapper{position:fixed;top:0;left
 .rd-cat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:40px 24px}
 .rd-cat-tile{display:flex;flex-direction:column;gap:12px;color:var(--rd-fg);text-decoration:none}
 .rd-cstack{position:relative;display:block;height:200px;overflow:hidden;border-radius:8px;border:1px solid var(--rd-line);background:var(--rd-bg2);transition:border-color .2s,box-shadow .2s}
-.rd-cstack img{position:absolute;left:50%;bottom:-36px;width:42%;aspect-ratio:150/199;object-fit:cover;object-position:top;border-radius:6px;box-shadow:0 8px 24px rgba(0,21,53,.14);transform:translateX(calc(-50% + var(--i) * var(--fan,1) * 58%)) rotate(calc(var(--i) * var(--fan,1) * 6deg));transform-origin:50% 100%;transition:transform .3s cubic-bezier(.165,.84,.44,1)}
-.rd-cstack img:nth-child(2){z-index:1}
+.rd-cstack :is(img,i){position:absolute;left:50%;bottom:-36px;width:42%;aspect-ratio:150/199;object-fit:cover;object-position:top;border-radius:6px;box-shadow:0 8px 24px rgba(0,21,53,.14);transform:translateX(calc(-50% + var(--i) * var(--fan,1) * 58%)) rotate(calc(var(--i) * var(--fan,1) * 6deg));transform-origin:50% 100%;transition:transform .3s cubic-bezier(.165,.84,.44,1)}
+.rd-cstack :is(img,i):nth-of-type(2){z-index:1}
 .rd-cat-tile:hover .rd-cstack{border-color:#ABABAB;box-shadow:0 8px 24px rgba(0,21,53,.08)}
-.rd-cat-tile:hover .rd-cstack img{transform:translateX(calc(-50% + var(--i) * 66%)) rotate(calc(var(--i) * 8deg)) translateY(-6px)}
+.rd-cat-tile:hover .rd-cstack :is(img,i){transform:translateX(calc(-50% + var(--i) * 66%)) rotate(calc(var(--i) * 8deg)) translateY(-6px)}
 .rd-cat-name{display:flex;justify-content:space-between;font-weight:500}
 .rd-cat-all{display:flex;flex-direction:column;justify-content:flex-end;gap:8px;padding:24px;border:1px dashed var(--rd-line);border-radius:8px;color:var(--rd-fg);text-decoration:none}.rd-cat-all:hover{border-color:var(--rd-fg);background:var(--rd-bg2)}
 .rd-more{margin-top:64px}.rd-more .rd-head{margin-bottom:24px;align-items:baseline}
@@ -129,7 +129,7 @@ body:has(.section.cc-top-internal-2-2) .sb-nav-wrapper{position:fixed;top:0;left
  .rd-home .source-home-cards>*{scroll-snap-align:start;scroll-margin-left:16px}
  .rd-free .source-home-cards{margin:0 -16px}
  .rd-cat-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:24px 12px}
- .rd-cstack{height:120px}.rd-cstack img{bottom:-24px}
+ .rd-cstack{height:120px}.rd-cstack :is(img,i){bottom:-24px}
  .rd-cat-name{font-size:.875rem}
 }
 
@@ -527,3 +527,22 @@ body .wfdt-sticky{background:#fff}
 .rd-dir-empty{padding:32px 0}.rd-dir-group[hidden]{display:none}
 @media(max-width:991px){.rd-designers .rd-designers-head{padding-top:96px}.rd-dir{padding-top:72px;padding-bottom:112px}.rd-dir-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:767px){.rd-designers .rd-designers-head{padding-top:48px}.rd-dir{padding-bottom:80px}.rd-dir-bar{grid-template-columns:1fr}.rd-dir-group{grid-template-columns:1fr;gap:12px;padding:24px 0}.rd-dir-list{grid-template-columns:1fr}}
+
+/* Experience pass. Headings break into even lines, so no word is left alone on the last one. */
+.rd-h1,.rd-h2,.rd-h3,.rd-h5,.rd-discovery-head h1,.rd-storefront h1,.rd-storefront h2{text-wrap:balance}
+.rd-lead,.rd-home p,.rd-discovery p{text-wrap:pretty}
+/* A category tile without thumbnails shows three blank cards in the same fan, never an empty frame. */
+.rd-cstack i{display:block;background:#fff;border:1px solid var(--rd-line);box-shadow:0 8px 24px rgba(0,21,53,.06)}
+@media(prefers-reduced-motion:no-preference){.rd-cstack[data-rd-stack-state=loading] i{animation:rd-pulse 1.2s ease-in-out infinite alternate}}
+/* Page-to-page navigation cross-fades while the navigation bar holds still. Browsers without
+   cross-document view transitions navigate as before. */
+@view-transition{navigation:auto}
+.sb-nav-wrapper{view-transition-name:rd-nav}
+::view-transition-old(root){animation-duration:.16s}
+::view-transition-new(root){animation-duration:.26s}
+@media(prefers-reduced-motion:reduce){@view-transition{navigation:none}}
+/* The exported FAQ takes the home type scale and section rhythm. */
+.rd-faq{--rd-fg:#080808;--rd-fg2:#5A5A5A;--rd-line:#E0E0E0;padding-top:0;color:var(--rd-fg);font-family:"WF Visual Sans Variable","WF Visual Sans",Arial,sans-serif}
+.rd-faq .rd-h3{margin:0 0 24px;color:var(--rd-fg)}
+.rd-faq .faq-section_title{font-size:1.25rem;line-height:1.4;font-weight:600;letter-spacing:0;color:var(--rd-fg)}
+@media(max-width:767px){.rd-faq .faq-section_title{font-size:1.125rem}}

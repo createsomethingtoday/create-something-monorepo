@@ -83,6 +83,9 @@ Astro.response.headers.set('X-Robots-Tag','noindex, nofollow');
    new MutationObserver(sync).observe(menu,{attributes:true,attributeFilter:['class','data-nav-menu-open']});
    sync();
   });
+  // Phones get a search hint that fits the field.
+  const homeSearch=document.querySelector<HTMLInputElement>('[data-rd-placeholder-narrow]');
+  if(homeSearch&&matchMedia('(max-width:767px)').matches)homeSearch.placeholder=homeSearch.dataset.rdPlaceholderNarrow!;
   // Exported FAQ interactions are click-only divs; provide native keyboard control.
   document.querySelectorAll<HTMLElement>('.faq-section_title-wrapper,.feature_accordion_button').forEach(el=>{
    el.tabIndex=0;el.setAttribute('role','button');el.setAttribute('aria-expanded','false');

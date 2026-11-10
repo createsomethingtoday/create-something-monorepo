@@ -26,10 +26,12 @@ export interface HomeData {
 function heroCard(t:Template){
  return `<a class="rd-hero-card" href="${esc(localLink(t.url))}" aria-label="${esc(`View ${t.name} by ${t.creator_name}, ${t.is_free?'Free':`${t.price} USD`}`)}"><img src="${esc(t.thumbnail_image_url)}" alt="" loading="eager"><span class="rd-hero-caption"><span>${esc(t.name)} <span aria-hidden="true">→</span></span><span>${t.is_free?'Free':`${esc(t.price)} USD`}</span></span></a>`;
 }
+const STACK_BLANKS=[-1,0,1].map(i=>`<i style="--i:${i}"></i>`).join('');
 function tile(c:Term,stack:Template[],description=''){
  const imgs=stack.slice(0,3).map((t,i)=>`<img src="${esc(t.thumbnail_image_url)}" alt="" loading="lazy" style="--i:${i-1}">`).join('');
- // An empty stack is filled in the browser by category-stacks-client.
- return `<a class="rd-cat-tile" href="${categoryUrl(c.slug)}"><span class="rd-cstack" aria-hidden="true"${imgs?'':` data-rd-stack="${esc(c.slug)}"`}>${imgs}</span><span class="rd-cat-name"><span>${esc(label(c.name))}</span><span aria-hidden="true">→</span></span>${description?`<span class="rd-muted rd-sm">${esc(description)}</span>`:''}<span class="rd-muted rd-sm">${count(c.count||0)} templates</span></a>`;
+ // An empty stack shows three blank cards in the same fan; category-stacks-client swaps in
+ // the thumbnails as the tile comes near the viewport.
+ return `<a class="rd-cat-tile" href="${categoryUrl(c.slug)}"><span class="rd-cstack" aria-hidden="true"${imgs?'':` data-rd-stack="${esc(c.slug)}"`}>${imgs||STACK_BLANKS}</span><span class="rd-cat-name"><span>${esc(label(c.name))}</span><span aria-hidden="true">→</span></span>${description?`<span class="rd-muted rd-sm">${esc(description)}</span>`:''}<span class="rd-muted rd-sm">${count(c.count||0)} templates</span></a>`;
 }
 const avatar=(src:string,name:string)=>src?`<img src="${esc(src)}" alt="" loading="lazy">`:esc(name.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase());
 function creator(t:Template,note='Featured work'){
@@ -42,7 +44,7 @@ function heading(eyebrow:string,title:string,id:string,link?:[string,string],lev
 export function homeMarkup(d:HomeData){
  const byslug=new Map(d.categories.map(c=>[c.slug,c]));
  const tiles=TILE_CATEGORIES.map(s=>byslug.get(s)).filter((c):c is Term=>!!c);
- const rest=d.categories.filter(c=>!TILE_CATEGORIES.includes(c.slug)).sort((a,b)=>(b.count||0)-(a.count||0)||a.name.localeCompare(b.name)).slice(0,10);
+ const rest=d.categories.filter(c=>!TILE_CATEGORIES.includes(c.slug)).sort((a,b)=>(b.count||0)-(a.count||0)||a.name.localeCompare(b.name)).slice(0,12);
  return `<main id="main" class="rd-home">
  <section class="rd-hero" aria-labelledby="rd-hero-h">
   <p class="rd-eyebrow">Webflow Templates</p>
@@ -50,7 +52,7 @@ export function homeMarkup(d:HomeData){
   <p class="rd-lead">Templates from the Webflow creator community, reviewed by Webflow and ready to make your own in the Designer.</p>
   <form class="rd-search" action="/templates/search" method="get" role="search">
    <label class="rd-sr" for="rd-q">What are you building?</label>
-   <input id="rd-q" name="q" type="search" placeholder="What are you building? Try “architecture” or “portfolio”" autocomplete="off">
+   <input id="rd-q" name="q" type="search" placeholder="What are you building? Try “architecture” or “portfolio”" data-rd-placeholder-narrow="Try “portfolio” or “SaaS”" autocomplete="off">
    <button type="submit" class="rd-btn rd-btn-primary">Search</button>
   </form>
   <nav class="rd-chips" aria-label="Popular categories">${CHIPS.map(([text,slug])=>`<a class="rd-chip" href="${categoryUrl(slug)}">${esc(text)}</a>`).join('')}</nav>

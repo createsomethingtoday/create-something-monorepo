@@ -42,6 +42,15 @@ export async function search(params:URLSearchParams|Record<string,string>):Promi
  entry.value.catch(()=>{if(searchCache.get(key)===entry)searchCache.delete(key);});
  return entry.value;
 }
+/** A catalog read this server already holds, or undefined. It never waits on the catalog;
+ *  an entry past its minute starts one background refresh for the next render. */
+export function searchCached(params:Record<string,string>):Promise<SearchResult>|undefined{
+ const query=new URLSearchParams(params);query.sort();
+ const hit=searchCache.get(query.toString());
+ if(!hit?.ok)return undefined;
+ if(Date.now()-hit.at>=SEARCH_TTL_MS)search(params).catch(()=>{});
+ return hit.value;
+}
 export function localizePayload(value:unknown):unknown {
  if(Array.isArray(value))return value.map(localizePayload);
  if(value && typeof value==='object')return Object.fromEntries(Object.entries(value).map(([key,v])=>[key,['url','creator_profile_url'].includes(key)&&typeof v==='string'?localLink(v):localizePayload(v)]));

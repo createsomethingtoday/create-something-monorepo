@@ -7,6 +7,8 @@ import {ScrollToPlugin} from 'gsap/ScrollToPlugin';
 // and grids already animate opacity in CSS (tmcard-enter, tmgrid-fade-in), so the
 // card reveals here move transforms only and never fight those keyframes.
 // Reduced motion: nothing below runs, and the pre-paint class is removed.
+// Timing rule: a reveal finishes in about half a second and travels 20px or less, so a section
+// is readable as soon as it scrolls in. Longer, deeper reveals left content faded for over a second.
 
 gsap.registerPlugin(ScrollTrigger,ScrollToPlugin);
 
@@ -37,23 +39,23 @@ function heroLoad(){
 function homeReveals(){
  const home=document.querySelector('.rd-home');
  if(!home)return;
- const batch=(selector:string,from:gsap.TweenVars,each=.08)=>{
+ const batch=(selector:string,from:gsap.TweenVars,each=.06)=>{
   const els=gsap.utils.toArray<HTMLElement>(selector,home).filter(below);
   if(!els.length)return;
   gsap.set(els,from);
-  ScrollTrigger.batch(els,{start:'top 90%',once:true,onEnter:batched=>gsap.to(batched,{y:0,autoAlpha:1,duration:.9,stagger:each,ease:'power3.out',overwrite:true})});
+  ScrollTrigger.batch(els,{start:'top 94%',once:true,onEnter:batched=>gsap.to(batched,{y:0,autoAlpha:1,duration:.6,stagger:each,ease:'power3.out',overwrite:true})});
  };
- batch('.rd-head',{y:28,autoAlpha:0});
- batch('.rd-cat-tile,.rd-cat-all',{y:40,autoAlpha:0},.07);
- batch('.rd-mcat',{y:16,autoAlpha:0},.03);
- batch('.rd-creator',{y:32,autoAlpha:0},.09);
- batch('.rd-free-lead',{y:16,autoAlpha:0});
+ batch('.rd-head',{y:16,autoAlpha:0});
+ batch('.rd-cat-tile,.rd-cat-all',{y:20,autoAlpha:0},.05);
+ batch('.rd-mcat',{y:8,autoAlpha:0},.02);
+ batch('.rd-creator',{y:20,autoAlpha:0});
+ batch('.rd-free-lead',{y:12,autoAlpha:0});
  // Category stacks open like a fanned hand of cards as each tile arrives.
  gsap.utils.toArray<HTMLElement>('.rd-cstack',home).filter(below).forEach(stack=>{
-  gsap.fromTo(stack,{'--fan':0},{'--fan':1,duration:1.1,ease:'back.out(1.6)',scrollTrigger:{trigger:stack,start:'top 88%',once:true}});
+  gsap.fromTo(stack,{'--fan':0},{'--fan':1,duration:.8,ease:'back.out(1.4)',scrollTrigger:{trigger:stack,start:'top 92%',once:true}});
  });
  const mcp=home.querySelector<HTMLElement>('.rd-mcp');
- if(mcp&&below(mcp))gsap.fromTo(mcp,{clipPath:'inset(0% 6% round 16px)',autoAlpha:.4},{clipPath:'inset(0% 0% round 8px)',autoAlpha:1,duration:1.1,ease:'power3.out',clearProps:'clipPath',scrollTrigger:{trigger:mcp,start:'top 85%',once:true}});
+ if(mcp&&below(mcp))gsap.fromTo(mcp,{clipPath:'inset(0% 6% round 16px)',autoAlpha:.4},{clipPath:'inset(0% 0% round 8px)',autoAlpha:1,duration:.8,ease:'power3.out',clearProps:'clipPath',scrollTrigger:{trigger:mcp,start:'top 90%',once:true}});
 }
 
 // Cards below the fold rise into place as they scroll in. An IntersectionObserver decides when,
@@ -68,12 +70,12 @@ function revealCards(cards:HTMLElement[]){
   const entered=entries.filter(entry=>entry.isIntersecting).map(entry=>entry.target as HTMLElement);
   if(!entered.length)return;
   entered.forEach(forgetCard);
-  gsap.to(entered,{y:0,scale:1,duration:.8,stagger:.06,ease:'power3.out',overwrite:'auto'});
+  gsap.to(entered,{y:0,scale:1,duration:.55,stagger:.04,ease:'power3.out',overwrite:'auto'});
  },{rootMargin:'0px 0px -5% 0px'});
  // Cards a filter change removed never intersect again; drop them so the set stays small.
  pendingCards.forEach(card=>{if(!card.isConnected)forgetCard(card)});
  cards=cards.map(lift);
- gsap.set(cards,{y:36,scale:.985,transformOrigin:'50% 100%'});
+ gsap.set(cards,{y:20,scale:.99,transformOrigin:'50% 100%'});
  cards.forEach(card=>{pendingCards.add(card);cardObserver!.observe(card)});
 }
 function forgetCard(card:HTMLElement){cardObserver?.unobserve(card);pendingCards.delete(card)}
@@ -92,7 +94,7 @@ function microinteractions(){
   const el=target.closest<HTMLElement>(PRESS)||(card&&lift(card));
   if(!el||(el as HTMLButtonElement).disabled)return;
   pressed.add(el);
-  gsap.to(el,{scale:el===card||el.matches('.rd-search-card')?.985:.95,duration:.12,ease:'power2.out',overwrite:'auto'});
+  gsap.to(el,{scale:el===card||el.matches('.rd-search-card')?.985:.97,duration:.12,ease:'power2.out',overwrite:'auto'});
  };
  // Hover: cards lift, link arrows nudge forward. pointerover/out bubble, so one listener covers islands that mount later.
  const hover=(e:PointerEvent,on:boolean)=>{

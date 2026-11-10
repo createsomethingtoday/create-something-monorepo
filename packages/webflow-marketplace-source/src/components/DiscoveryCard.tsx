@@ -9,6 +9,8 @@ export default function DiscoveryCard({item,brief,index,picked=false,atLimit=fal
  const evidence=evidenceFor(item,brief,true);
  const pickNote=item.is_featured&&typeof item.reviewer_pick_reason==='string'?item.reviewer_pick_reason.trim():'';
  const stagger={['--tmcard-stagger' as string]:`${Math.min(index,8)*60}ms`};
+ // Cards use the catalog grid's price wording, so one template reads the same on every page.
+ const price=item.is_free||item.price===0?'Free':typeof item.price==='number'&&Number.isFinite(item.price)?`${item.price} USD`:priceLabel(item);
  return <article className={`rd-search-card${picked?' is-picked':''}`} data-template-slug={item.template_slug}>
   {item.is_featured&&<span className="rd-search-badge" style={stagger}><span aria-hidden="true">★</span> Featured</span>}
   {onToggle&&<label className="rd-search-compare"><input type="checkbox" checked={picked} disabled={!picked&&atLimit} onChange={onToggle} aria-label={`Compare ${item.name}`}/><span className="rd-search-compare-text">Compare</span></label>}
@@ -17,7 +19,7 @@ export default function DiscoveryCard({item,brief,index,picked=false,atLimit=fal
    creatorIcon={item.creator_avatar_url?{src:item.creator_avatar_url,alt:item.creator_name}:undefined}
    primaryImage={{src:item.thumbnail_image_url,alt:`${item.name} template preview`}}
    secondaryImage={item.thumbnail_image_secondary_url?{src:item.thumbnail_image_secondary_url,alt:`${item.name} additional preview`}:undefined}
-   price={priceLabel(item)} priceNumeric={typeof item.price==='number'?String(item.price):undefined} isFree={item.is_free}
+   price={price} priceNumeric={typeof item.price==='number'?String(item.price):undefined} isFree={item.is_free}
    categoryName={(item.category_groups?.find(group=>group.slug===brief.category)||item.category_groups?.[0])?.name}
    showCategoryMeta={true} showTemplateType={false} showPreviewLink={false} priorityIndex={index} stylesProvided={true}/>
   {onToggle&&pickNote&&<p className="rd-search-why"><span><b>Marketplace pick:</b> {firstSentence(pickNote)}</span></p>}
