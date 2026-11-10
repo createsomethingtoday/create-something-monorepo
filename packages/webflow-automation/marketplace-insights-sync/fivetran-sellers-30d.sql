@@ -37,7 +37,7 @@ sellers as (
         p.document_id as MRP_ID,
         t.template_name as TEMPLATE_NAME,
         count(*) as SALES_30D,
-        count_if(o.template_fulfillment_code_id is not null) as FULFILLMENT_SALES_30D,
+        coalesce(count_if(o.template_fulfillment_code_id is not null), 0) as FULFILLMENT_SALES_30D,
         round(sum(o.price_value), 2) as REVENUE_30D
     from analytics.webflow.marketplace_orders o
     join analytics.webflow.marketplace_products p
