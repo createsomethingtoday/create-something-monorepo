@@ -144,6 +144,7 @@
   {#snippet after()}
     <PerformanceCardGrid items={fitCards} columns={3} ariaLabel="Workflow tool fit" />
     <p class="dots-guide-link">Curious about personal agents? <a href="/openai-dots">Meet Canon in our OpenAI dots guide.</a> Follow a task from first thought to human review.</p>
+    <p class="dots-guide-link">For a practice-specific example, <a href="/dental-ai-agents">see how OpenAI can support a dental front desk.</a> Approved answers, confirmation, and visible records.</p>
     <IntegrationCompatibilityRail surface="partners" />
     <IntegrationCatalog />
   {/snippet}

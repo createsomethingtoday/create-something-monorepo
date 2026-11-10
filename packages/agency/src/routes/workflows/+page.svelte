@@ -137,6 +137,7 @@
           </li>
         {/each}
       </ol>
+      <p>Running a dental practice? <a href="/dental-ai-agents">Explore OpenAI integration for your front desk.</a> Follow a working synthetic example from a question to a confirmed record.</p>
       <p>Need implementation help with an existing operational system? <a href="/airtable-workflow-consulting">Explore Airtable workflow consulting.</a></p>
     </section>
   </div>

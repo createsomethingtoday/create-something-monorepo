@@ -24,6 +24,13 @@ export interface AgencyContentAssetAnalytics {
 }
 
 const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics> = {
+  '/dental-ai-agents': {
+    contentAssetId: 'service.dental-ai-agents.v20261110', contentType: 'service-page',
+    contentCluster: 'dental-front-desk', contentIntent: 'service',
+    contentAudience: 'dental practice owner evaluating a scoped front-desk integration',
+    contentFunnelStage: 'consideration', contentPrimaryKeyword: 'OpenAI integration for dental practices',
+    contentPrimaryCta: 'book-mapping-session', contentLinearIssue: 'CRE-2388'
+  },
   '/openai-dots': {
     contentAssetId: 'guide.openai-dots.v20261108',
     contentType: 'guide',
