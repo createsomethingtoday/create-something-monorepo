@@ -46,11 +46,12 @@ no automatic history ingestion and honest forget/conversation/backup limits.
 
 Functional correctness: passed within the recorded source/domain/signed-stdio
 scope. Perceptual/product quality: passed within combined Chromium evidence;
-fresh final signed native acceptance is assigned independently. Release
-readiness: cryptographic/packaging qualification passed, promotion held for that
-independent review plus final metadata-head review/CI and public-download proof.
-The signed native report is preserved separately by its reviewer; parent records
-its final result before promotion. External-host reads passed on isolated prior
+fresh final signed native acceptance passed independently on this exact artifact. Release
+readiness: cryptographic/packaging qualification passed, promotion held for final metadata-head review/CI and public-download proof.
+The final signed native report is preserved in INDEPENDENT_SIGNED_NATIVE.md.
+It passed real native lifecycle, contention/recovery, restart, navigation and
+live embedded provider/native approval/readback. Independent hashes and full
+verifier match this artifact exactly. External-host reads passed on isolated prior
 QA; proposal acceptance was blocked by that host's `never` approval policy.
 VoiceOver, older macOS floor, Google/phone/fresh-user and human acceptance remain
 outside these automated and bounded native checks.
@@ -84,3 +85,9 @@ DMG bytes/hash against metadata. It directly viewed fresh 320px and 1440px top
 and memory sections with readable Canon styling and preserved review/forget
 limits. No blocker was found; publication and signed-native acceptance remain
 separate gates.
+
+
+Final source maintenance merges current main's unrelated A2A/Identity changes.
+Desktop, GiGi integrations and chat-connection subtrees remain identical to the
+frozen compiled runtime. This does not change compile provenance or permit
+substituting a freshly built artifact without its own qualification.
