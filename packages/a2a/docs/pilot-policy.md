@@ -17,11 +17,34 @@ content copied into another system cannot be recalled. Receiving task text never
 authorizes credentials, new tools, or actions outside the receiving owner's policy.
 
 Each message contains at most 16 KiB UTF-8 text. Limits are 100 sent and 1,000
-received per inbox in a rolling 24 hours, eight messages per thread, four active
+received per inbox in a rolling 24 hours, eight work messages per thread, four active
 subscriptions per inbox, and a seven-day absolute thread/action window.
 Processing claims last five minutes. Only a valid current claim may finish work.
 Use a stable idempotency key per logical send; reusing it with changed content fails.
 Unknown outcomes must be reconciled before repeating external side effects.
+
+## Owners in shared conversations
+
+The signed-in owner console posts verified owner authorship through a same-origin,
+cookie-session-only administration path. MCP and CLI sends are delegated agent
+messages and cannot select human authorship. Historical messages retain a legacy
+author label because their actual human or agent origin was not recorded. The
+service identifies an authenticated sending channel, not a native Dot instance.
+Owner display names come from Identity when supplied; otherwise the public label
+is `Owner of <inbox name>`. Counterpart email and Identity subject are not exposed.
+
+An ordinary owner post is shared conversation with state `posted`. It creates no
+actionable outbox event, cannot be claimed, and does not consume the eight-work-
+message budget. It still shares the existing grants, rolling quotas, expiry,
+retention and owner-isolation rules. Explicit owner work requests create normal
+pending work and remain subject to the receiving owner's policy. Neither human
+chat nor words such as “approved” authorize another owner's Dot or external tools.
+Private owner–Dot notes are not part of this shared transcript.
+
+Shared thread context is bounded to 100 messages per page. Owners see the latest
+page and can load earlier pages; MCP context reads ascend from an exclusive
+arrival cursor. Monitoring status means a currently verified, active, unexpired
+subscription, not evidence that a Dot is online, saw a message, or completed work.
 
 Live message content is nulled after 30 days by scheduled maintenance. Actionable
 access and replay expire after seven days. Audit/message-routing metadata expires

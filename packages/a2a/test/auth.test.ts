@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { readFileSync } from 'node:fs';
 import { exportJWK, generateKeyPair, SignJWT } from 'jose';
 import { authenticate, verifyIdentityToken } from '../src/auth';
 import { hash, randomToken, seal } from '../src/crypto';
@@ -11,7 +10,6 @@ const issuer='https://id.createsomething.space';
 const resource='https://a2a.createsomething.agency/mcp';
 async function fixture(){
   const storage=createTestDatabase();
-  storage.sqlite.exec(readFileSync(new URL('../migrations/0002_delivery_auth.sql',import.meta.url),'utf8'));
   const pair=await generateKeyPair('ES256');const jwk=await exportJWK(pair.publicKey);jwk.kid='auth-fixture';
   const env={DB:storage.db,ENVIRONMENT:'test',IDENTITY_ISSUER:issuer,AUTH_RESOURCE:resource,ALLOWED_EMAILS:'alice@example.com',LOCAL_TEST_JWKS:JSON.stringify({keys:[jwk]}),SESSION_KEY:randomToken(),AUTH_CLIENT_ID:'fixture-client'} as unknown as RuntimeEnv;
   async function token(overrides:Record<string,unknown>={}){
