@@ -71,8 +71,8 @@ interface ViewportTab {
 	errors: Map<string, PageErrorObservation> | null;
 }
 
-/** An HTTP error status is the page's own failure; retrying it would not help. */
-class PageStatusError extends Error {}
+/** The page's own failure (an HTTP error status, or no response at all); retrying it would not help. */
+class PageLoadError extends Error {}
 
 async function openTabs(browser: Browser, userAgent: string): Promise<ViewportTab[]> {
 	return Promise.all(
@@ -110,10 +110,14 @@ async function renderViewport(tab: ViewportTab, url: string, errors: Map<string,
 		try {
 			response = await page.goto(url, { waitUntil: 'load', timeout: NAVIGATION_TIMEOUT_MS });
 		} catch (error) {
-			// A page that never fires load (a stalled beacon or video) is still measurable.
 			if (!(error instanceof Error && error.name === 'TimeoutError')) throw error;
+			// A page that never fires load (a stalled beacon or video) is still measurable,
+			// but only if its document arrived. Otherwise the tab is still on about:blank.
+			if (page.url() === 'about:blank') {
+				throw new PageLoadError(`The page did not respond within ${NAVIGATION_TIMEOUT_MS / 1000}s.`);
+			}
 		}
-		if (response && response.status() >= 400) throw new PageStatusError(`HTTP ${response.status()}`);
+		if (response && response.status() >= 400) throw new PageLoadError(`HTTP ${response.status()}`);
 		await page.waitForNetworkIdle({ idleTime: 500, timeout: NETWORK_IDLE_TIMEOUT_MS }).catch(() => undefined);
 		await page
 			.evaluate(() => (document.fonts ? document.fonts.ready.then(() => true) : true))
@@ -218,7 +222,7 @@ export async function validateRendering(
 					observation = await renderPage(tabs, url);
 				} catch (error) {
 					tabs = await closeTabs(tabs);
-					if (error instanceof PageStatusError || attempt >= 1) {
+					if (error instanceof PageLoadError || attempt >= 1) {
 						observation = failedPage(url, error);
 					} else if (!browser.connected) {
 						if (relaunched) {

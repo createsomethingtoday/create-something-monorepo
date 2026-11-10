@@ -1,5 +1,5 @@
-import { createExecutionContext, env, runDurableObjectAlarm, runInDurableObject } from 'cloudflare:test';
-import { describe, expect, it } from 'vitest';
+import { createExecutionContext, env, runDurableObjectAlarm, runInDurableObject, waitOnExecutionContext } from 'cloudflare:test';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import worker from '../src/index';
 
 const SITE = 'https://example-template.webflow.io';
@@ -81,6 +81,65 @@ describe('review job stage 2 (browser check in the Durable Object alarm)', () =>
 		const status = await readStatus(jobId);
 		expect(status.status).toBe('cancelled');
 		expect(status.result).toBeUndefined();
+	});
+});
+
+describe('review job stage 1 cancellation', () => {
+	afterEach(() => {
+		vi.unstubAllGlobals();
+	});
+
+	it('stays cancelled when the cancel arrives while the crawl is running', async () => {
+		// Hold every site request until the cancel has been saved.
+		let releaseCrawl: () => void = () => undefined;
+		const crawlHeld = new Promise<void>((resolve) => {
+			releaseCrawl = resolve;
+		});
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => {
+				await crawlHeld;
+				return new Response('<html><head><title>Home</title></head><body><h1>Home</h1></body></html>', {
+					headers: { 'content-type': 'text/html' }
+				});
+			})
+		);
+
+		const ctx = createExecutionContext();
+		const started = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/review/start', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({
+					siteUrl: SITE,
+					designerData: { variables: { collections: [] }, styles: [], components: [], pages: [], assets: [] }
+				})
+			}),
+			env,
+			ctx
+		);
+		const { jobId } = (await started.json()) as { jobId: string };
+
+		// Wait for the job to reach the crawl, which is now held.
+		for (let attempt = 0; attempt < 40; attempt += 1) {
+			if ((await readStatus(jobId)).progress >= 55) break;
+			await new Promise((resolve) => setTimeout(resolve, 25));
+		}
+		expect((await readStatus(jobId)).progress).toBe(55);
+
+		const cancelled = await worker.fetch(
+			new Request(`https://validation-worker.createsomething.workers.dev/app-validator/review/${jobId}/cancel`, { method: 'POST' }),
+			env,
+			createExecutionContext()
+		);
+		expect(cancelled.status).toBe(200);
+
+		releaseCrawl();
+		await waitOnExecutionContext(ctx);
+
+		const status = await readStatus(jobId);
+		expect(status.status).toBe('cancelled');
+		expect(status.result ?? null).toBeNull();
 	});
 });
 

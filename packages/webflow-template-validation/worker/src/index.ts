@@ -1550,16 +1550,21 @@ async function runReviewJob(jobId: string, env: unknown): Promise<void> {
 	if (!job) return;
 
 	const startedAtMs = Date.now();
-	try {
-		updateJobProgress(job, 5, 'running', 'Initializing validation pipeline');
+	// Each step first checks storage for a cancel, then saves its progress.
+	// A cancel request saves a separate copy of the job, so checking only this
+	// object would miss it and the next save would overwrite it.
+	const advance = async (progress: number, message: string) => {
+		if (await reviewJobCancelled(env, job)) throw new Error('Job cancelled');
+		updateJobProgress(job, progress, 'running', message);
 		await persistReviewJobState(env, job);
+	};
+	try {
+		await advance(5, 'Initializing validation pipeline');
 		await emitTelemetry(env, {
 			event: 'review.progress',
 			correlationId: job.correlationId,
 			payload: { jobId, progress: 5, message: job.message }
 		});
-
-		if (job.cancelRequested) throw new Error('Job cancelled');
 
 		const checks = normalizeChecks(job.request.checks);
 		const runDesigner = checks.designer;
@@ -1576,15 +1581,11 @@ async function runReviewJob(jobId: string, env: unknown): Promise<void> {
 		let enhancedResult: ValidationResponse | null = null;
 
 		if (runDesigner) {
-			updateJobProgress(job, 20, 'running', 'Running Designer validation');
-			await persistReviewJobState(env, job);
+			await advance(20, 'Running Designer validation');
 			designerResult = await performDesignerValidation(designerData, job.request.siteUrl);
 		}
 
-		if (job.cancelRequested) throw new Error('Job cancelled');
-
-		updateJobProgress(job, 55, 'running', 'Running crawl validation');
-		await persistReviewJobState(env, job);
+		await advance(55, 'Running crawl validation');
 		enhancedResult = await performEnhancedValidation({
 			siteUrl: job.request.siteUrl,
 			designerData,
@@ -1597,10 +1598,7 @@ async function runReviewJob(jobId: string, env: unknown): Promise<void> {
 			}
 		});
 
-		if (job.cancelRequested) throw new Error('Job cancelled');
-
-		updateJobProgress(job, 65, 'running', 'Merging validation result sets');
-		await persistReviewJobState(env, job);
+		await advance(65, 'Merging validation result sets');
 		const merged = mergeReviewResults(job.request.siteUrl, designerResult, enhancedResult);
 
 		// The browser check renders the pages the content crawl analyzed, so it
@@ -1608,6 +1606,7 @@ async function runReviewJob(jobId: string, env: unknown): Promise<void> {
 		// than waitUntil allows, so the job's Durable Object finishes the job.
 		if (runContent) {
 			const crawledUrls = enhancedResult?.analysis?.content?.pages?.map((page) => page.url) ?? [];
+			if (await reviewJobCancelled(env, job)) throw new Error('Job cancelled');
 			job.pendingRendering = { urls: crawledUrls.length > 0 ? crawledUrls : [job.request.siteUrl], result: merged };
 			updateJobProgress(job, 70, 'running', 'Loading pages in a browser');
 			await persistReviewJobState(env, job);
@@ -1624,6 +1623,7 @@ async function runReviewJob(jobId: string, env: unknown): Promise<void> {
 			return;
 		}
 
+		if (await reviewJobCancelled(env, job)) throw new Error('Job cancelled');
 		await finishReviewJob(env, job, merged);
 	} catch (error) {
 		job.status = job.cancelRequested ? 'cancelled' : 'failed';
@@ -2205,6 +2205,14 @@ async function getReviewJobState(
 	const restored = reviveReviewJobState(persisted as ReviewJobState);
 	reviewJobs.set(jobId, restored);
 	return restored;
+}
+
+/** True when this job or its stored copy has a cancel request; marks this job too. */
+async function reviewJobCancelled(env: unknown, job: ReviewJobState): Promise<boolean> {
+	if (job.cancelRequested) return true;
+	const stored = (await readDurableState(env, `job:${job.jobId}`)) as Partial<ReviewJobState> | null;
+	if (stored?.cancelRequested || stored?.status === 'cancelled') job.cancelRequested = true;
+	return job.cancelRequested;
 }
 
 async function persistReviewJobState(env: unknown, job: ReviewJobState): Promise<void> {
