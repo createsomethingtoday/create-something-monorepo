@@ -40,6 +40,8 @@ export async function captureSnapshot(env: Env, fetchImpl: typeof fetch = fetch)
   const body = await call(env, 'GET', '/api/cron/snapshot', fetchImpl);
   if (body?.marketplace?.success !== true)
     throw new Error(`Marketplace trend capture failed: ${body?.marketplace?.error ?? 'unknown error'}`);
+  if (!(body.marketplace.leaderboard?.captured > 0))
+    throw new Error('Leaderboard capture wrote 0 rows; trends will not accumulate');
   // Counts only: the response also lists every asset name.
   return { captured: body.captured ?? 0, date: body.date, marketplace: body.marketplace };
 }
