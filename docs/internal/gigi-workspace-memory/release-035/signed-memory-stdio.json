@@ -1,0 +1,61 @@
+{
+  "passed": true,
+  "artifactBuildSourceSha": "df51d22a257a1e053cb8d6a37acd3ba5c25908fd",
+  "currentHead": "df51d22a257a1e053cb8d6a37acd3ba5c25908fd",
+  "checks": [
+    {
+      "path": "Contents/MacOS/gigi-mcp",
+      "sha256": "9879fb09768bb082a3d1607f07e711532e7e23199be8ecd765b6d366c305142d",
+      "passed": true,
+      "toolCount": 44,
+      "rpcCalls": 13,
+      "checks": [
+        "read-only connection",
+        "memory tool catalog",
+        "no MCP approval tool",
+        "pending proposal hidden from retrieval",
+        "idempotent request",
+        "MCP cannot approve",
+        "isolated native fixture review",
+        "Unicode cited search",
+        "inferred/source get readback",
+        "foreign workspace denied",
+        "scoped not_found receipt",
+        "pending correction receipt",
+        "forget invalidates correction",
+        "invalidated request retry never recreates proposal",
+        "forgotten retrieval excluded"
+      ],
+      "limit": "Actual signed stdio + isolated native domain fixture; not installed host approval, GUI installer or provider acceptance",
+      "providerCalls": 0
+    },
+    {
+      "path": "Contents/Resources/gigi-mcp",
+      "sha256": "e33872749a37f09363dd3324238c00ee16b021f5b57fe0039945b3f7e718424c",
+      "passed": true,
+      "toolCount": 44,
+      "rpcCalls": 13,
+      "checks": [
+        "read-only connection",
+        "memory tool catalog",
+        "no MCP approval tool",
+        "pending proposal hidden from retrieval",
+        "idempotent request",
+        "MCP cannot approve",
+        "isolated native fixture review",
+        "Unicode cited search",
+        "inferred/source get readback",
+        "foreign workspace denied",
+        "scoped not_found receipt",
+        "pending correction receipt",
+        "forget invalidates correction",
+        "invalidated request retry never recreates proposal",
+        "forgotten retrieval excluded"
+      ],
+      "limit": "Actual signed stdio + isolated native domain fixture; not installed host approval, GUI installer or provider acceptance",
+      "providerCalls": 0
+    }
+  ],
+  "syntheticProfilesRemoved": true,
+  "hostPolicyChanged": false
+}
