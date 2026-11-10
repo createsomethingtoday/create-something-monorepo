@@ -3,8 +3,9 @@
  *
  * The webflow-dashboard Pages project does the work in POST /api/cron/insights
  * (read the Fivetran sellers window, build, publish, verify). Pages projects
- * have no cron triggers, so this Worker calls it on Tuesdays. It holds only the
- * dashboard's CRON_SECRET; the Airtable key stays with the dashboard.
+ * have no cron triggers, so this Worker calls it on Tuesdays. It holds only that
+ * endpoint's secret (the dashboard's INSIGHTS_CRON_SECRET); the Airtable key
+ * stays with the dashboard.
  *
  * A non-2xx response throws, so a failed run shows as an error in Workers
  * observability. The second cron slot is the retry.

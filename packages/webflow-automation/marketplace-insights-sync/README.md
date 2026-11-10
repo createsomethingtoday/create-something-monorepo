@@ -64,7 +64,7 @@ the activation finishes therefore fails instead of publishing a partial week.
 The read/build/publish steps live in
 `webflow-dashboard-core/src/marketplace-insights-publish.mjs`. Production runs
 them in the dashboard's `POST /api/cron/insights` endpoint (Airtable source,
-`Authorization: Bearer $CRON_SECRET`). The `marketplace-insights-cron` Worker
+`Authorization: Bearer $INSIGHTS_CRON_SECRET`). The `marketplace-insights-cron` Worker
 calls it Tuesdays at 08:15 UTC, after the Fivetran activation (07:05 UTC), and
 again at 14:15 UTC as a retry; publishing a window again replaces its record.
 To republish one window by hand, POST with `?asOf=<window end ISO>`.

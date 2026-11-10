@@ -44,6 +44,13 @@ describe('POST /api/cron/insights', () => {
     expect(mocks.publish).not.toHaveBeenCalled();
   });
 
+  it('uses its own secret when configured and then refuses the shared one', async () => {
+    const own = { INSIGHTS_CRON_SECRET: 'insights-secret' };
+    await expect(call('', { authorization: 'Bearer cron-secret' }, own)).rejects.toMatchObject({ status: 401 });
+    const response = await call('', { authorization: 'Bearer insights-secret' }, own);
+    expect((await response.json()).success).toBe(true);
+  });
+
   it('publishes the latest complete window and returns counts, not record-level notes', async () => {
     const response = await call();
     const body = await response.json();
