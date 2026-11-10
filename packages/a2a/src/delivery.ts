@@ -1,6 +1,6 @@
 import { Webhook } from 'standardwebhooks';
 import { timingSafeEqual } from 'node:crypto';
-import { InboxService, PILOT_POLICY, type Principal } from './domain';
+import { DomainError, InboxService, PILOT_POLICY, type Principal } from './domain';
 import { EVENT_NAME, type RuntimeEnv } from './env';
 import { decode64, hash, randomToken, seal, unseal } from './crypto';
 import { HttpError } from './http';
@@ -195,7 +195,10 @@ export async function deliver(env:RuntimeEnv,id:string):Promise<void>{
   }
   let eligible=Boolean(sub&&sub.status==='active'&&sub.expires_at>now&&event);
   if(eligible){
-    try{await new InboxService(env.DB).readMessage({subject:sub!.owner_subject,scopes:[]},event!.message_id);}catch{eligible=false;}
+    try{await new InboxService(env.DB).readMessage({subject:sub!.owner_subject,scopes:[]},event!.message_id);}catch(error){
+      if(error instanceof DomainError&&error.status<500)eligible=false;
+      else{await retry(env,row,null,'authorization_storage_failure');return;}
+    }
   }
   if(!eligible){await outcome(env,id,'suspended',null,'access_or_subscription_inactive');return;}
   const body=JSON.stringify({eventId:event!.id,name:EVENT_NAME,timestamp:new Date(event!.created_at).toISOString(),data:{agent_id:sub!.agent_id,message_id:event!.message_id,thread_id:event!.thread_id,sequence:event!.sequence},cursor:String(await nextReplayCursor(env,sub!,event!.id))});

@@ -43,7 +43,7 @@ function sessionScreen(name: 'loading'|'signin'|'denied'|'error'|'console') {
 }
 function handleError(error: unknown) {
   if (error instanceof ApiError && error.status === 401) { sessionScreen('signin'); return; }
-  if (error instanceof ApiError && error.status === 403 && /invite|access_denied|not_allowed/i.test(error.code)) {
+  if (error instanceof ApiError && error.status === 403 && error.code === 'invite_required') {
     $('#denied-message').textContent = error.message; sessionScreen('denied'); return;
   }
   notice(error instanceof Error ? error.message : 'The request could not be completed. Try again.', 'error');

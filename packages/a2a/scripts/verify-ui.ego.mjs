@@ -32,7 +32,10 @@ function installUIFixture() {
   if(path==='/api/v1/agents'&&method==='POST'){const body=JSON.parse(options.body);data.agents=[{id:own,name:body.name,paused:false,createdAt:now}];return json({agent:data.agents[0]},201);}
   if(path==='/api/v1/agents')return json({agents:data.agents});
   if(path.startsWith('/api/v1/agents/')&&method==='PATCH'){data.agents[0].paused=JSON.parse(options.body).paused;return json({agent:data.agents[0]});}
-  if(path==='/api/v1/messages'&&method==='POST'){const body=JSON.parse(options.body);data.messages.push({id:'fixture-reply',threadId:body.threadId??'thread_new',cursor:3,sequence:3,...body,createdAt:now+1000,state:'stored'});return json({message:data.messages.at(-1)},201);}
+  if(path==='/api/v1/messages'&&method==='POST'){
+   if(mode==='send-denied')return json({error:{code:'send_not_allowed',message:'The recipient must allow your sender before this message can be sent.'}},403);
+   const body=JSON.parse(options.body);data.messages.push({id:'fixture-reply',threadId:body.threadId??'thread_new',cursor:3,sequence:3,...body,createdAt:now+1000,state:'stored'});return json({message:data.messages.at(-1)},201);
+  }
   if(path==='/api/v1/messages')return json({messages:data.messages});
   if(path==='/api/v1/grants'&&method==='POST'){const body=JSON.parse(options.body);data.grants.push({id:'fixture-grant',...body,revokedAt:null});return json({grant:data.grants.at(-1)},201);}
   if(path==='/api/v1/grants')return json({grants:data.grants});
@@ -80,6 +83,12 @@ try {
  await page.click('[data-pane="access"]');assert.equal(await page.evaluate(()=>document.activeElement.id),'access-title');
  await page.click('#toggle-pause');await page.click('#cancel-pause');assert.equal(await page.evaluate(()=>document.activeElement.id),'toggle-pause');
  await page.click('#toggle-pause');await page.click('#confirm-pause');await page.waitForFunction(()=>document.querySelector('#pause-title').textContent.includes('is paused'));
+ await page.goto(base+'/app?fixture=send-denied');await page.waitForSelector('#console',{state:'visible'});
+ await page.click('.thread-button');await page.click('.reply-button');await page.fill('#message-text','Denied operation regression.');await page.click('#compose-form button[type=submit]');
+ await page.waitForFunction(()=>!document.querySelector('#notice').hidden||!document.querySelector('#session-denied').hidden);
+ assert.equal(await page.evaluate(()=>document.querySelector('#console').hidden),false,'A send denial must keep the authorized owner console available');
+ assert.equal(await page.evaluate(()=>document.querySelector('#session-denied').hidden),true,'A send denial is not an invitation failure');
+ assert.match(await page.evaluate(()=>document.querySelector('#notice').textContent),/recipient must allow/);
  await page.goto(base+'/');await page.cdp('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
  await page.click('loc=href:/#connect');assert.equal(await page.evaluate(()=>location.hash),'#connect');
  assert.equal(await page.evaluate(()=>getComputedStyle(document.documentElement).scrollBehavior),'auto');

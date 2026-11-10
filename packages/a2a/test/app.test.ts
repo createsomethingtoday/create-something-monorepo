@@ -111,6 +111,24 @@ async function subscriptionPair(f:Awaited<ReturnType<typeof fixture>>){
   const input={fromAgentId:a.id,toAgentId:b.id,text:'Replay regression fixture',idempotencyKey:'replay-1'};
   return {a,b,params,sub:sub.result,input};
 }
+test('regression: transient delivery authorization storage failure recovers without owner replay',async()=>{
+  const f=await fixture();try{
+    const p=await subscriptionPair(f);const sent=await f.value('/api/v1/messages',f.alice,'POST',p.input);
+    f.jobs.splice(0);await fanoutEvent(f.env,sent.eventId);
+    const database=f.env.DB;
+    f.env.DB={...database,prepare(sql:string){
+      if(sql.startsWith('SELECT m.* FROM messages m WHERE m.id='))return{bind(){return{async first(){throw new Error('injected temporary D1 failure');}}}};
+      return database.prepare(sql);
+    }} as unknown as D1Database;
+    await f.flush();assert.equal(f.received.length,0);
+    const failed=await f.value(`/api/v1/deliveries?agentId=${p.b.id}`,f.bob);
+    assert.equal(failed.deliveries[0].state,'retrying','A temporary storage failure must remain recoverable.');
+    f.env.DB=database;f.storage.sqlite.prepare('UPDATE deliveries SET next_attempt_at=0').run();
+    await recoverDelivery(f.env);await f.flush();assert.equal(f.received.length,1);
+    const recovered=await f.value(`/api/v1/deliveries?agentId=${p.b.id}`,f.bob);
+    assert.equal(recovered.deliveries[0].state,'accepted');
+  }finally{f.storage.close();}
+});
 test('regression: callback cursor cannot skip an earlier outbox event before fanout',async()=>{
   const f=await fixture();try{
     const p=await subscriptionPair(f);
