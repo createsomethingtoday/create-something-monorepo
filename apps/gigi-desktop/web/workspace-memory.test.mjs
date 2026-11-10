@@ -72,3 +72,30 @@ test('switching workspaces clears private rows immediately even when the new rea
   await assert.rejects(reading, /B unavailable/);
   assert.deepEqual(m.state.items, []);
 });
+
+test('pending save freezes the reviewed draft until staging completes', async () => {
+  let release;
+  const staged = new Promise(resolve => { release = resolve; });
+  let request;
+  const m = createWorkspaceMemory({
+    workspaceId: () => 'synthetic', changed() {}, notice() {},
+    call: async (op, input) => {
+      if (op === 'memory.request') { request = input; await staged; return {}; }
+      if (op === 'memory.review') return {};
+      if (op === 'memory.receipt') return { state: 'verified', receipt: { state: 'verified', action: 'save', memoryId: 'one', revision: 1 } };
+      if (op === 'memory.get') return { revision: 1, text: 'Reviewed text' };
+      if (op === 'memory.list' || op === 'memory.requests') return { items: [], nextOffset: null };
+      throw Error(op);
+    }
+  });
+  m.edit(); m.update('text', 'Reviewed text'); m.update('reference', 'Reviewed provenance');
+  const saving = m.save();
+  assert.equal(m.state.busy, true);
+  m.update('text', 'New text while saving');
+  m.update('reference', 'New provenance while saving');
+  assert.equal(m.state.draft.entry.text, 'Reviewed text', 'busy draft must be frozen');
+  assert.equal(m.state.draft.entry.source.reference, 'Reviewed provenance');
+  release(); await saving;
+  assert.equal(request.entry.text, 'Reviewed text');
+  assert.equal(m.state.receipt.state, 'verified');
+});

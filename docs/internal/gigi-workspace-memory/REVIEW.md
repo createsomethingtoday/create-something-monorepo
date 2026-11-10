@@ -183,3 +183,24 @@ policy/config was weakened. Installed-host proposal acceptance remains open.
 The new source head requires its own exact-head review. Native/perceptual and
 provider receipts are bounded to the recorded QA source; final signed-candidate
 runtime acceptance remains a parent gate. See [release and DEV handoff](RELEASE-035.md).
+
+## Pending-save editor correction
+
+Automated review on `ec8686d` found that edits entered while staging awaited its
+native response could be lost when the earlier submitted snapshot completed.
+A deferred-staging controller test and actual React/native-domain browser test
+both failed before the fix. All five memory editor inputs/selectors now disable
+while busy or reconciling; the controller also rejects late updates and cancel
+attempts during that interval. The exact submitted snapshot remains visible
+until staging completes. After correction the controller/browser regressions,
+416 desktop checks (2 installed-artifact skips) and web build pass.
+
+The original signed candidate compiled from `57757d6` is superseded, preserved
+with a `SUPERSEDED.md` marker, and must not be uploaded or promoted. New artifact
+qualification is required after this correction; previous cryptographic and
+native evidence describes the prior source, not the replacement artifact.
+Independent Sol 6.1 re-test passed all five disabled controls, deferred failure,
+cancel/retry and lost-approval recovery without approval replay. It directly
+viewed the disabled minimum-width editor with submitted text/provenance visible.
+No remaining source blocker was identified; replacement artifact qualification
+remains held.

@@ -132,10 +132,12 @@ export function createWorkspaceMemory({ call, workspaceId, changed, notice }) {
       changed();
     },
     cancel() {
+      if (state.busy || state.recovery) return;
       state.draft = null;
       changed();
     },
     update(field, value) {
+      if (state.busy || state.recovery || !state.draft) return;
       if (field === 'reference') state.draft.entry.source.reference = value;
       else if (field === 'sourceKind') state.draft.entry.source.kind = value;
       else state.draft.entry[field] = value;

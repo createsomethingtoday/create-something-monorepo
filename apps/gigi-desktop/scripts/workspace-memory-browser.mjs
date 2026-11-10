@@ -70,7 +70,21 @@ try {
   await page.locator('#memory-text').fill('Prefer morning rehearsals');
   await page.locator('#memory-source').fill('User statement at synthetic rehearsal');
   await page.screenshot({ path: join(out, 'editor-880.png'), fullPage: true });
+  let releaseStaging, stagingReached;
+  const stagingWait = new Promise(resolve => { stagingReached = resolve; });
+  const stagingHold = new Promise(resolve => { releaseStaging = resolve; });
+  await page.route('**/__synthetic_memory', async route => {
+    if (route.request().postDataJSON().operation === 'memory.request') {
+      stagingReached();
+      await stagingHold;
+    }
+    await route.continue();
+  });
   await page.getByRole('button', { name: 'Confirm and save memory' }).click();
+  await stagingWait;
+  assert.equal(await page.locator('#memory-text').isDisabled(), true, 'text frozen during submission');
+  assert.equal(await page.locator('#memory-source').isDisabled(), true, 'provenance frozen during submission');
+  releaseStaging();
   await page.getByText('Memory saved and read back.', { exact: true }).waitFor();
   assert.equal(
     call('memory.search', { workspaceId: workspace.id, query: 'morning' }).items[0].state,

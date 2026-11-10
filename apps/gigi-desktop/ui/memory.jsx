@@ -84,6 +84,7 @@ export function Memory({ ctx }) {
             <>
               <Field
                 id="memory-text"
+                disabled={s.busy || Boolean(s.recovery)}
                 label="Memory"
                 textarea
                 required
@@ -94,6 +95,7 @@ export function Memory({ ctx }) {
               <HStack gap={3} wrap="wrap">
                 <Choice
                   id="memory-kind"
+                disabled={s.busy || Boolean(s.recovery)}
                   label="Category"
                   value={draft.entry.kind}
                   options={options(kinds)}
@@ -101,6 +103,7 @@ export function Memory({ ctx }) {
                 />
                 <Choice
                   id="memory-state"
+                disabled={s.busy || Boolean(s.recovery)}
                   label="Confidence"
                   value={draft.entry.state}
                   options={options(['inferred', 'confirmed'])}
@@ -113,6 +116,7 @@ export function Memory({ ctx }) {
               </Text>
               <Choice
                 id="memory-source-kind"
+                disabled={s.busy || Boolean(s.recovery)}
                 label="Source type"
                 value={draft.entry.source.kind}
                 options={options(['user', 'record', 'conversation', 'observation'])}
@@ -120,6 +124,7 @@ export function Memory({ ctx }) {
               />
               <Field
                 id="memory-source"
+                disabled={s.busy || Boolean(s.recovery)}
                 label="Source / provenance"
                 required
                 maxLength={500}
