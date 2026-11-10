@@ -28,7 +28,9 @@ const fixture = () => ({
       MRP_ID: 'b'.repeat(24),
       NAME: 'Template',
       SALES_30D: 3,
-      REVENUE_30D: 150
+      FULFILLMENT_SALES_30D: 1,
+      REVENUE_30D: 150,
+      LOADED_THROUGH: '2026-09-22T05:00:00.000Z'
     }
   ],
   records: {
@@ -59,10 +61,8 @@ function run(data, args = ['--execute'], configured = true) {
     const core = join(root, 'packages/webflow-dashboard-core/src');
     mkdirSync(core, { recursive: true });
     copyFileSync(join(here, 'sync.mjs'), join(dir, 'sync.mjs'));
-    copyFileSync(
-      join(here, '../../webflow-dashboard-core/src/marketplace-snapshot.mjs'),
-      join(core, 'marketplace-snapshot.mjs')
-    );
+    for (const file of ['marketplace-snapshot.mjs', 'marketplace-insights-publish.mjs'])
+      copyFileSync(join(here, '../../webflow-dashboard-core/src', file), join(core, file));
     mkdirSync(join(root, 'bin'));
     writeFileSync(
       join(root, 'bin/uvx'),
@@ -137,6 +137,16 @@ test('publishes one complete snapshot and reads it back without legacy writes', 
     [['PATCH', tables.snapshot]]
   );
   assert.equal(result.snapshot.summary.totalSales, 3);
+  assert.equal(result.snapshot.summary.fulfillmentSales, 1);
+  assert.equal(result.snapshot.leaderboard[0].fulfillmentSales30d, 1);
+});
+test('snowflake source refuses a window the orders load does not cover yet', () => {
+  const data = fixture();
+  data.sellers[0].LOADED_THROUGH = '2026-09-21T09:00:00.000Z';
+  const result = run(data);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /loaded only through 2026-09-21T09:00:00.000Z/);
+  assert.deepEqual(result.writes, []);
 });
 test('dry-run writes only a local review artifact', () => {
   const result = run(fixture(), [], false);
@@ -165,6 +175,7 @@ test('duplicate names preserve stable IDs and creator attribution', () => {
     MRP_ID: 'd'.repeat(24),
     NAME: 'Template',
     SALES_30D: 2,
+    FULFILLMENT_SALES_30D: 0,
     REVENUE_30D: 100
   });
   data.records[tables.assets].push({
@@ -313,4 +324,17 @@ test('airtable source fails when revenue does not match the window total', () =>
   assert.equal(result.status, 1);
   assert.match(result.stderr, /incomplete/);
   assert.equal(result.writes.length, 0);
+});
+
+test('airtable source carries fulfillment-link sales when the activation writes them', () => {
+  const result = run(airtableFixture([sellerRow({ fld7zlIkAV4GDW7rk: 2 })]), ['--execute', '--source', 'airtable']);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.snapshot.summary.fulfillmentSales, 2);
+});
+test('airtable source fails when only some rows carry fulfillment-link sales', () => {
+  const second = sellerRow({ fldgZHXYZqlX2HSag: 'c'.repeat(24), fld7zlIkAV4GDW7rk: 1 });
+  const result = run(airtableFixture([sellerRow(), second]), ['--execute', '--source', 'airtable']);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /FULFILLMENT_SALES_30D on 1 of 2 rows/);
+  assert.deepEqual(result.writes, []);
 });

@@ -9,6 +9,8 @@ export interface SnapshotLeaderboardRow {
   avgRevenuePerSale: number;
   salesRank: number;
   revenueRank: number;
+  /** Sales through creator fulfillment links (paid off-platform). Absent in older snapshots. */
+  fulfillmentSales30d?: number;
 }
 export interface SnapshotCategoryRow {
   category: string;
@@ -22,7 +24,13 @@ export interface SnapshotCategoryRow {
 export interface MarketplaceSnapshot {
   schemaVersion: 1;
   snapshotAt: string;
-  summary: { totalSales: number; totalRevenue: number; sellingTemplates: number };
+  summary: {
+    totalSales: number;
+    totalRevenue: number;
+    sellingTemplates: number;
+    /** Part of totalSales made through fulfillment links. Absent in older snapshots. */
+    fulfillmentSales?: number;
+  };
   leaderboard: SnapshotLeaderboardRow[];
   categories: SnapshotCategoryRow[];
 }
@@ -35,6 +43,7 @@ export function buildMarketplaceSnapshot(input: {
     name: string;
     sales: number;
     revenue: number;
+    fulfillmentSales?: number;
   }>;
   assets: Array<{ templateId: string; creatorEmail: string; categories: string[] }>;
   categories: Array<{ name: string; group: string }>;

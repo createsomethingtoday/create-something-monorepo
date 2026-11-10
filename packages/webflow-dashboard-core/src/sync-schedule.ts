@@ -17,47 +17,38 @@ interface SyncMetadataOptions {
   staleThresholdHours?: number;
 }
 
-export function getLastSyncTime(): Date {
-  const now = new Date();
-  const currentDay = now.getUTCDay();
-  const currentHour = now.getUTCHours();
+/**
+ * Marketplace Insights schedule. Each weekly snapshot covers the 30 days that end
+ * Monday 16:00 UTC and is published on Tuesday, after the daily warehouse load
+ * holds every order in that window. (Publishing on Monday missed the window's
+ * last hours: the orders table had not loaded them yet.)
+ */
+const HOUR_MS = 60 * 60 * 1000;
+const WINDOW_END_HOUR_UTC = 16;
+const PUBLISH_DELAY_HOURS = 24;
 
-  let daysSinceMonday = currentDay === 0 ? 6 : currentDay - 1;
-  if (currentDay === 1 && currentHour < 16) {
-    daysSinceMonday = 7;
-  }
-
-  const lastSync = new Date(now);
-  lastSync.setUTCDate(now.getUTCDate() - daysSinceMonday);
-  lastSync.setUTCHours(16, 0, 0, 0);
-  return lastSync;
+/** Most recent Monday 16:00 UTC at or before `date`. */
+function windowEndAtOrBefore(date: Date): Date {
+  const end = new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), WINDOW_END_HOUR_UTC)
+  );
+  end.setUTCDate(end.getUTCDate() - ((end.getUTCDay() + 6) % 7));
+  if (end.getTime() > date.getTime()) end.setUTCDate(end.getUTCDate() - 7);
+  return end;
 }
 
-export function getNextSyncTime(): Date {
-  const now = new Date();
-  const currentDay = now.getUTCDay();
-  const currentHour = now.getUTCHours();
-
-  let daysUntilMonday: number;
-  if (currentDay === 1 && currentHour < 16) {
-    daysUntilMonday = 0;
-  } else if (currentDay === 1 && currentHour >= 16) {
-    daysUntilMonday = 7;
-  } else if (currentDay === 0) {
-    daysUntilMonday = 1;
-  } else {
-    daysUntilMonday = 8 - currentDay;
-  }
-
-  const nextSync = new Date(now);
-  nextSync.setUTCDate(now.getUTCDate() + daysUntilMonday);
-  nextSync.setUTCHours(16, 0, 0, 0);
-  return nextSync;
+/** Window end (Monday 16:00 UTC) of the newest snapshot that should be published by `now`. */
+export function getLastSyncTime(now: Date = new Date()): Date {
+  return windowEndAtOrBefore(new Date(now.getTime() - PUBLISH_DELAY_HOURS * HOUR_MS));
 }
 
-export function getTimeUntilNextSync(): string {
-  const now = new Date();
-  const nextSync = getNextSyncTime();
+/** When the next snapshot is due (Tuesday 16:00 UTC). */
+export function getNextSyncTime(now: Date = new Date()): Date {
+  return new Date(getLastSyncTime(now).getTime() + (7 * 24 + PUBLISH_DELAY_HOURS) * HOUR_MS);
+}
+
+export function getTimeUntilNextSync(now: Date = new Date()): string {
+  const nextSync = getNextSyncTime(now);
   const diffMs = nextSync.getTime() - now.getTime();
 
   const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -78,9 +69,12 @@ export function getTimeUntilNextSync(): string {
   return `in ${days} days`;
 }
 
-export function getSyncMetadata(options: SyncMetadataOptions = {}): SyncMetadata {
-  const expectedLastSync = getLastSyncTime();
-  const nextSync = getNextSyncTime();
+export function getSyncMetadata(
+  options: SyncMetadataOptions = {},
+  now: Date = new Date()
+): SyncMetadata {
+  const expectedLastSync = getLastSyncTime(now);
+  const nextSync = getNextSyncTime(now);
   const staleThresholdHours = options.staleThresholdHours ?? 12;
 
   let reportedLastSync = expectedLastSync;
@@ -109,9 +103,9 @@ export function getSyncMetadata(options: SyncMetadataOptions = {}): SyncMetadata
     lastSyncTime: reportedLastSync.toISOString(),
     expectedLastSyncTime: expectedLastSync.toISOString(),
     nextSyncTime: nextSync.toISOString(),
-    syncSchedule: 'Weekly on Mondays at 16:00 UTC (4 PM UTC)',
+    syncSchedule: 'Weekly on Tuesdays, covering the 30 days to Monday 16:00 UTC',
     dataWindow: 'Rolling 30-day window',
-    timeUntilNextSync: getTimeUntilNextSync(),
+    timeUntilNextSync: getTimeUntilNextSync(now),
     freshnessSource,
     isEstimated,
     isStale,

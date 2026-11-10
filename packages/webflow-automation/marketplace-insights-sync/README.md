@@ -25,6 +25,15 @@ artifact. No legacy leaderboard/category record is created, updated or deleted.
 The window is 30 days ending at the latest Monday 16:00 UTC; `--as-of` can specify
 another boundary. Revenue is `SUM(PRICE_VALUE)`, not a payout/net revenue measure.
 
+Sales include orders through creator fulfillment links (the buyer paid the
+creator on another platform; Webflow only delivered the template), counted at
+list price. Rows and the summary carry that part separately
+(`fulfillmentSales30d`, `summary.fulfillmentSales`); older snapshots have no split.
+
+Both sources refuse a window that the daily `MARKETPLACE_ORDERS` load (about
+05:30 UTC) does not cover yet. A Monday 16:05 UTC run missed the window's final
+hours of orders, so snapshots publish on Tuesday.
+
 ## Seller source
 
 The seller list (one row per selling template, 30-day window) comes from one
@@ -35,9 +44,11 @@ of two places. Both run the same query.
 | `airtable` (recommended) | `--source airtable` or `MARKETPLACE_INSIGHTS_SOURCE=airtable` | Fivetran activation "Marketplace Insights sellers (30d) → Airtable" (sync 3666218, dataset 149094) to have written the window |
 | `snowflake` (default) | nothing | a live Snowflake Okta session on this machine |
 
-The Fivetran activation runs Mondays at 16:05 UTC, five minutes after the window
-closes, and upserts on `TEMPLATE_ID` into **Marketplace Insights Sellers**
-(`tblkyKZ5nGOcEqb5r`). Each run overwrites a template's row, so the table holds
+The Fivetran activation runs Tuesdays at 07:05 UTC, after the daily orders load,
+and upserts on `TEMPLATE_ID` into **Marketplace Insights Sellers**
+(`tblkyKZ5nGOcEqb5r`). Its SQL is `fivetran-sellers-30d.sql`; keep the dataset
+identical to that file. The query emits no rows until the load covers the window
+end, so an early run leaves the window unwritten instead of short. Each run overwrites a template's row, so the table holds
 only the latest window; rows for templates that stopped selling keep an older
 `SNAPSHOT_AT` and are ignored. Rebuilding an older week needs `--source
 snowflake`: with `--source airtable` it fails the completeness check below.
@@ -46,7 +57,19 @@ and it fails unless their count, summed sales and summed revenue equal
 `WINDOW_SELLERS`, `WINDOW_SALES` and `WINDOW_REVENUE`, which the query writes on
 every row. A run that starts before
 the activation finishes therefore fails instead of publishing a partial week.
-Schedule the sync at least 30 minutes after 16:05 UTC.
+`FULFILLMENT_SALES_30D` must be on every row of the window or on none.
+
+## Weekly schedule (no local machine)
+
+The read/build/publish steps live in
+`webflow-dashboard-core/src/marketplace-insights-publish.mjs`. Production runs
+them in the dashboard's `POST /api/cron/insights` endpoint (Airtable source,
+`Authorization: Bearer $CRON_SECRET`). The `marketplace-insights-cron` Worker
+calls it Tuesdays at 08:15 UTC, after the Fivetran activation (07:05 UTC), and
+again at 14:15 UTC as a retry; publishing a window again replaces its record.
+To republish one window by hand, POST with `?asOf=<window end ISO>`.
+
+This CLI stays for dry runs, local review artifacts and the Snowflake source.
 
 ## Running
 
@@ -71,9 +94,8 @@ Its schema is documented in `AIRTABLE_PROPOSAL.md`. There are no placeholder IDs
 or automatic schema changes. `run.sh` also requires that configuration and uses
 its own checkout's script; it always executes. Do not use it for dry-run review.
 
-The historical launchd definition is not part of this recovery. The existing
-root checkout and active schedule remain untouched. Activating a new schedule
-requires a separate verified runtime checkpoint and retiring the old writer.
+The Worker replaces the local launchd job (`com.webflow.marketplace-insights-sync`).
+Once its first scheduled run succeeds, unload that job; `run.sh` stays for manual runs.
 
 ## Dashboard migration
 

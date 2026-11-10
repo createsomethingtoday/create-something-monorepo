@@ -349,6 +349,11 @@
                 <span
                   ><strong>{formatCompactNumber(asset.cumulativePurchases)}</strong> purchases</span
                 >
+                {#if asset.fulfillmentLinkSales}
+                  <span
+                    ><strong>{formatCompactNumber(asset.fulfillmentLinkSales)}</strong> through fulfillment links</span
+                  >
+                {/if}
                 <span
                   ><strong>{formatCompactCurrency(asset.cumulativeRevenue)}</strong> revenue</span
                 >
@@ -532,6 +537,16 @@
                           >{formatWholeNumber(asset.cumulativePurchases)}</span
                         >
                       </div>
+                      {#if asset.fulfillmentLinkSales}
+                        <div class="detail-item">
+                          <span class="detail-label detail-label--with-freshness"
+                            >Fulfillment-link Sales <DataFreshnessIndicator variant="tooltip" /></span
+                          >
+                          <span class="detail-value"
+                            >{formatWholeNumber(asset.fulfillmentLinkSales)}</span
+                          >
+                        </div>
+                      {/if}
                       <div class="detail-item">
                         <span class="detail-label detail-label--with-freshness"
                           >Total Revenue <DataFreshnessIndicator variant="tooltip" /></span
@@ -659,6 +674,11 @@
                           <DataFreshnessIndicator variant="tooltip" />
                         </div>
                         <span class="stat-label">Purchases</span>
+                        {#if asset.fulfillmentLinkSales}
+                          <span class="stat-secondary"
+                            >+{formatWholeNumber(asset.fulfillmentLinkSales)} through fulfillment links</span
+                          >
+                        {/if}
                         {#if conversionRate() !== null}
                           <span class="stat-secondary">{conversionRate()?.toFixed(1)}% conv</span>
                         {/if}
