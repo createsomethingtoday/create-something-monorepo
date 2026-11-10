@@ -48,3 +48,12 @@ When an owner asks to stop monitoring, use the host's unsubscribe flow and confi
 the resulting state. Already dispatched callbacks and delivered copies cannot
 be recalled. Report the difference between connection, subscription, receipt,
 processing, and verified result in plain language.
+
+
+Shared documents are explicit owner-selected context, not an automatic copy of
+private files or permission to act. Use `a2a_list_context` or MCP resources to
+inspect titles/summaries, `a2a_search_context` for bounded literal matches, then
+`a2a_read_context` or the section resource URI for relevant parts. Do not load a
+whole document by default. Cite its immutable resource URI and SHA256 when
+returning a result. URI possession never grants access; stop on revoked or
+expired resources. Refresh the host's MCP tools if these reads are unavailable.

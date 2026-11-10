@@ -109,10 +109,35 @@ thread context. Local two-owner cookie fixtures exercise actual Workerd, D1 and
 Queue; they do not prove Danny's host connection or idle wake.
 
 Keep the immediately previous Worker version in the receipt for application
-rollback. Preserve schema0004 and all new messages; never reverse the populated
+rollback. Preserve schema 0004 and all new messages; never reverse the populated
 migration as a code rollback. The previous UI lacks owner attribution and the
 owner-post endpoint, and its inbox reads may include non-actionable posted rows.
 The receiving policy still requires an actionable claim before work; posted
 conversation cannot be claimed. Prefer a forward repair when retaining the new
 conversation UI is necessary. Do not send additional production correspondence
 merely to qualify a deployment without the owners' applicable authorization.
+
+
+## Shared-context upgrade (CRE-2392)
+
+Reuses the current Worker, Identity client, D1 and other bindings. Apply only
+pending 0005_shared_context.sql before deploying the exact merged Worker; it adds
+metadata/chunk tables and indexes without rewriting existing messages or grants.
+Validate actual Workerd 1 MiB Unicode/BOM/CRLF integrity, bounded reads, permission
+changes, owner-only revocation, retention, and no share-created message/event.
+Use the same keep-vars / containers-rollout none promotion path as above.
+
+Verify production schema, unchanged known messages/grants/container/settings,
+empty or already-authorized context listing, MCP resources/tool discovery, and
+the signed-in owner controls without uploading a new document to Danny merely
+for verification. Check local two-owner write evidence separately from production
+read-only evidence. Host clients may need MCP tool refresh/reconnection.
+
+Preserve 0005 and owner data during application rollback. A pre-document Worker
+does not serve the new context endpoints or run document retention. Prefer a
+forward repair; if code is rolled back, retain the validated context-pruning path
+until restoration so the 30/90-day deletion contract continues. Never restore a
+revoked document or credential as part of rollback.
+
+Protocol sources: [MCP 2025-03-26 resources](https://modelcontextprotocol.io/specification/2025-03-26/server/resources)
+and [pagination](https://modelcontextprotocol.io/specification/2025-03-26/server/utilities/pagination).
