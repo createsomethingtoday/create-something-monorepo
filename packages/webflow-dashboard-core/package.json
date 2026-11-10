@@ -23,6 +23,7 @@
     "./upload-validation": "./src/upload-validation.ts",
     "./uploads-url": "./src/uploads-url.ts",
     "./marketplace-snapshot": "./src/marketplace-snapshot.mjs",
+    "./marketplace-insights-publish": "./src/marketplace-insights-publish.mjs",
     "./latest-snapshot": "./src/latest-snapshot.ts"
   },
   "scripts": {

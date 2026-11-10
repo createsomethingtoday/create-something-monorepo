@@ -1,0 +1,25 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "marketplace-insights-cron",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-04-30",
+  // Same account as the webflow-dashboard Pages project it calls.
+  "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
+  "triggers": {
+    "crons": [
+      // Tuesday 08:15 UTC: after the Fivetran sellers activation (Tue 07:05 UTC),
+      // which itself waits for the daily orders load. Window = 30 days to Monday 16:00 UTC.
+      "15 8 * * 2",
+      // Tuesday 14:15 UTC retry. Publishing a window again replaces its record.
+      "15 14 * * 2"
+    ]
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "vars": {
+    "DASHBOARD_URL": "https://webflow-dashboard-2v4.pages.dev"
+  }
+  // Secret (wrangler secret put): CRON_SECRET, the dashboard's CRON_SECRET.
+}

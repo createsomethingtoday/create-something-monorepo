@@ -61,10 +61,8 @@ function run(data, args = ['--execute'], configured = true) {
     const core = join(root, 'packages/webflow-dashboard-core/src');
     mkdirSync(core, { recursive: true });
     copyFileSync(join(here, 'sync.mjs'), join(dir, 'sync.mjs'));
-    copyFileSync(
-      join(here, '../../webflow-dashboard-core/src/marketplace-snapshot.mjs'),
-      join(core, 'marketplace-snapshot.mjs')
-    );
+    for (const file of ['marketplace-snapshot.mjs', 'marketplace-insights-publish.mjs'])
+      copyFileSync(join(here, '../../webflow-dashboard-core/src', file), join(core, file));
     mkdirSync(join(root, 'bin'));
     writeFileSync(
       join(root, 'bin/uvx'),

@@ -58,8 +58,18 @@ and it fails unless their count, summed sales and summed revenue equal
 every row. A run that starts before
 the activation finishes therefore fails instead of publishing a partial week.
 `FULFILLMENT_SALES_30D` must be on every row of the window or on none.
-Schedule the sync on Tuesday at least 30 minutes after 07:05 UTC (launchd:
-Tuesdays 08:30 local).
+
+## Weekly schedule (no local machine)
+
+The read/build/publish steps live in
+`webflow-dashboard-core/src/marketplace-insights-publish.mjs`. Production runs
+them in the dashboard's `POST /api/cron/insights` endpoint (Airtable source,
+`Authorization: Bearer $CRON_SECRET`). The `marketplace-insights-cron` Worker
+calls it Tuesdays at 08:15 UTC, after the Fivetran activation (07:05 UTC), and
+again at 14:15 UTC as a retry; publishing a window again replaces its record.
+To republish one window by hand, POST with `?asOf=<window end ISO>`.
+
+This CLI stays for dry runs, local review artifacts and the Snowflake source.
 
 ## Running
 
@@ -84,9 +94,8 @@ Its schema is documented in `AIRTABLE_PROPOSAL.md`. There are no placeholder IDs
 or automatic schema changes. `run.sh` also requires that configuration and uses
 its own checkout's script; it always executes. Do not use it for dry-run review.
 
-The historical launchd definition is not part of this recovery. The existing
-root checkout and active schedule remain untouched. Activating a new schedule
-requires a separate verified runtime checkpoint and retiring the old writer.
+The Worker replaces the local launchd job (`com.webflow.marketplace-insights-sync`).
+Once its first scheduled run succeeds, unload that job; `run.sh` stays for manual runs.
 
 ## Dashboard migration
 
