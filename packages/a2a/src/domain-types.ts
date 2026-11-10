@@ -1,17 +1,23 @@
 /** Identity has already verified this subject. Names and supplied agent IDs are never authority. */
-export interface Principal { subject: string; email?: string; scopes: string[]; admin?: boolean }
+export interface Principal { subject: string; email?: string; scopes: string[]; admin?: boolean; displayName?: string; authentication?: 'owner_session'|'bearer' }
 export interface Agent { id: string; name: string; ownerSubject: string; paused: boolean; createdAt: number }
 export interface Grant { id: string; agentId: string; senderAgentId: string; createdAt: number; revokedAt?: number }
-export type MessageState = 'pending' | 'claimed' | 'completed' | 'rejected' | 'approval_required';
+export type MessageState = 'posted' | 'pending' | 'claimed' | 'completed' | 'rejected' | 'approval_required';
+export type MessageKind = 'conversation' | 'request';
 export interface Message {
 	id: string;
 	threadId: string;
-	/** Monotone thread turn, from 1 to the pilot's maximum turn budget. */
+	/** Monotone position across chat and work; only requests consume work turns. */
 	sequence: number;
 	/** Monotone arrival cursor across all inbox threads. */
 	cursor: number;
 	fromAgentId: string;
 	toAgentId: string;
+	fromAgentName: string;
+	toAgentName: string;
+	authorKind: 'owner'|'agent'|'legacy';
+	authorName: string;
+	kind: MessageKind;
 	text: string;
 	createdAt: number;
 	expiresAt: number;
@@ -21,7 +27,10 @@ export interface Message {
 	claimToken?: string;
 }
 export interface SendMessageInput { fromAgentId: string; toAgentId: string; text: string; threadId?: string; idempotencyKey: string }
-export interface SendMessageResult { message: Message; duplicate: boolean; eventId: string }
+export interface SendOwnerMessageInput extends SendMessageInput { kind?: MessageKind }
+export interface SendMessageResult { message: Message; duplicate: boolean; eventId?: string }
+export interface ConversationParticipant {agentId:string;agentName:string;ownerName:string;paused:boolean;monitoringActive:boolean}
+export interface ConversationPage {threadId:string;participants:ConversationParticipant[];messages:Message[];hasMore:boolean;nextAfter:number|null}
 export interface FinishMessageInput { claimToken: string; state: 'completed' | 'rejected' | 'approval_required' }
 
 export const PILOT_POLICY = Object.freeze({

@@ -49,3 +49,16 @@ Independent alternative: a single centered “Connect now” screen would be vis
 Scoped web TypeScript check passed using the installed TypeScript binary. Vite production build passed. A first build exposed excess inherited font assets; the unused `performance.css` import was removed, retaining shared tokens and direct owned font imports.
 
 Functional gate: static type/build checks passed; actual API interaction remains parent-owned. Perceptual/product gate: **untested by this implementation agent** until the actual rendered output is inspected. Release gate: **untested by this implementation agent**; parent owns exact-artifact review, independent Sol 6.1 retest, deployment, and production verification. No commit, push, deployment, or external account write was performed by this implementation agent.
+
+
+## CRE-2389 owner participation
+
+Initial approach: preserve the existing Canon list/detail conversation. Add verified owner/Dot bylines, an owner-only composer defaulting to ordinary shared conversation, and an explicit Request work choice. Shared text never silently becomes private, approval, or an agent assignment. Subscription state describes a verified event path, not presence.
+
+Read-only standard Mobbin research returned three distinct web screens. The delegated research agent directly inspected all three inline static images; no media was retained. Adapted conventions:
+
+- [Hilos](https://mobbin.com/screens/2d45f64c-a20d-4eda-bf33-e7760623be7d): readable author names, textual role badges, timestamps. Avoid its additional side-thread pane.
+- [Quo](https://mobbin.com/screens/4b63267f-0e28-4c26-8333-0a2eac1c63e7): state audience beside the composer. Avoid private-note controls without a private storage boundary.
+- [Meetup](https://mobbin.com/screens/5294c46f-28ec-43bb-bcaa-32a46e8958d6): compact bylines and one focused reply. Avoid social reactions and avatar-dependent identity.
+
+The Conversation / Request work distinction is domain-derived. Human posts say Posted; work retains independent processing/event receipts. Legacy authorship stays unrecorded. No motion quality claims arise from static research. Functional and rendered verification receipts are recorded in CRE-2389.

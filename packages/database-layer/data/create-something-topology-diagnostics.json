@@ -2,33 +2,33 @@
   "id": "substrate:create-something:topology-diagnostics:internal",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-11-06T21:42:44.687Z",
+  "generatedAt": "2026-11-10T15:39:04.857Z",
   "summary": {
     "valueState": "connected_map_with_review_signals",
-    "nodes": 567,
-    "edges": 1188,
-    "mapped": 567,
+    "nodes": 570,
+    "edges": 1192,
+    "mapped": 570,
     "hardGapCount": 0,
     "reviewSignalCount": 6,
     "exactDuplicatePathCount": 0,
     "isolatedNodeCount": 0,
     "surfaceCounts": {
       "repo": 1,
-      "package": 72,
+      "package": 73,
       "app": 15,
       "agent": 36,
+      "worker": 180,
       "mcp": 77,
       "client": 8,
-      "worker": 178,
       "doc": 6,
       "policy": 64,
       "guide": 86,
       "config": 24
     },
     "tierCounts": {
-      "Mixed": 140,
+      "Mixed": 142,
       "Judgment": 109,
-      "Automation": 289,
+      "Automation": 290,
       "Database": 29
     }
   },
@@ -60,11 +60,11 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Automation and Database balance",
-      "summary": "Automation has 289 record(s); Database has 29 record(s). This is a business-shape review signal, not a hard gap.",
+      "summary": "Automation has 290 record(s); Database has 29 record(s). This is a business-shape review signal, not a hard gap.",
       "evidence": [
-        "Automation=289",
+        "Automation=290",
         "Database=29",
-        "Total nodes=567"
+        "Total nodes=570"
       ],
       "nodeIds": [],
       "paths": [],
@@ -75,18 +75,19 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Worker surface concentration",
-      "summary": "178 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.",
+      "summary": "180 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.",
       "evidence": [
+        "worker: packages/a2a",
         "worker: packages/agency",
         "worker: packages/agency/workers/social-poster",
         "worker: packages/airtable-primary-tags-worker",
         "worker: packages/app-governance-db/dashboard",
         "worker: packages/app-governance-db/worker",
         "worker: packages/calm-operator-ink-bridge",
-        "worker: packages/check-asset-name-worker",
-        "worker: packages/clearway"
+        "worker: packages/check-asset-name-worker"
       ],
       "nodeIds": [
+        "substrate:create-something:package:create-something-a2a-packages-a2a",
         "substrate:create-something:package:create-something-agency-packages-agency",
         "substrate:create-something:package:social-poster-worker-packages-agency-workers-social-poster",
         "substrate:create-something:package:create-something-airtable-primary-tags-worker-packages-airtable-primary-tags-worker",
@@ -109,10 +110,10 @@
         "substrate:create-something:package:halfdozen-zoom-sync-worker-packages-halfdozen-zoom-sync-worker",
         "substrate:create-something:package:create-something-halfdozen-zoom-transcript-sync-packages-halfdozen-zoom-transcript-sync",
         "substrate:create-something:package:create-something-identity-worker-packages-identity-worker",
-        "substrate:create-something:package:create-something-bundle-scanner-api-packages-io-workers-bundle-scanner-api",
-        "substrate:create-something:package:create-something-webflow-validation-packages-io-workers-webflow-validation"
+        "substrate:create-something:package:create-something-bundle-scanner-api-packages-io-workers-bundle-scanner-api"
       ],
       "paths": [
+        "packages/a2a",
         "packages/agency",
         "packages/agency/workers/social-poster",
         "packages/airtable-primary-tags-worker",
@@ -135,8 +136,7 @@
         "packages/halfdozen-zoom-sync/worker",
         "packages/halfdozen-zoom-transcript-sync",
         "packages/identity-worker",
-        "packages/io/workers/bundle-scanner-api",
-        "packages/io/workers/webflow-validation"
+        "packages/io/workers/bundle-scanner-api"
       ],
       "nextAction": "Review worker records through runtime binding coverage before promoting execution claims."
     },
@@ -145,15 +145,16 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "worker surface review",
-      "summary": "178 record(s) are classified as worker.",
+      "summary": "180 record(s) are classified as worker.",
       "evidence": [
+        "@create-something/a2a: packages/a2a",
         "@create-something/agency: packages/agency",
         "social-poster-worker: packages/agency/workers/social-poster",
         "@create-something/airtable-primary-tags-worker: packages/airtable-primary-tags-worker",
-        "app-governance-dashboard: packages/app-governance-db/dashboard",
-        "app-governance-db-worker: packages/app-governance-db/worker"
+        "app-governance-dashboard: packages/app-governance-db/dashboard"
       ],
       "nodeIds": [
+        "substrate:create-something:package:create-something-a2a-packages-a2a",
         "substrate:create-something:package:create-something-agency-packages-agency",
         "substrate:create-something:package:social-poster-worker-packages-agency-workers-social-poster",
         "substrate:create-something:package:create-something-airtable-primary-tags-worker-packages-airtable-primary-tags-worker",
@@ -164,10 +165,10 @@
         "substrate:create-something:package:create-something-clearway-packages-clearway",
         "substrate:create-something:package:court-reserve-notifier-worker-packages-clearway-workers-notifier",
         "substrate:create-something:package:court-reserve-realtime-worker-packages-clearway-workers-realtime",
-        "substrate:create-something:package:create-something-court-reserve-router-packages-clearway-workers-router",
-        "substrate:create-something:package:create-something-codebase-vector-database-packages-codebase-vector-database"
+        "substrate:create-something:package:create-something-court-reserve-router-packages-clearway-workers-router"
       ],
       "paths": [
+        "packages/a2a",
         "packages/agency",
         "packages/agency/workers/social-poster",
         "packages/airtable-primary-tags-worker",
@@ -178,8 +179,7 @@
         "packages/clearway",
         "packages/clearway/workers/notifier",
         "packages/clearway/workers/realtime",
-        "packages/clearway/workers/router",
-        "packages/codebase-vector-database"
+        "packages/clearway/workers/router"
       ],
       "nextAction": "Use group explanation before drawing product or business conclusions from this surface."
     },
@@ -274,17 +274,18 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "package surface review",
-      "summary": "72 record(s) are classified as package.",
+      "summary": "73 record(s) are classified as package.",
       "evidence": [
         "@create-something/components: .archive/components-deprecated",
         "@create-something/monorepo: ",
+        "a2a-private-callback-sender: packages/a2a/sender",
         "packages/agency/static/films/algorithms: packages/agency/static/films/algorithms",
-        "packages/agency/static/films/dashboard: packages/agency/static/films/dashboard",
-        "packages/agency/static/films/education: packages/agency/static/films/education"
+        "packages/agency/static/films/dashboard: packages/agency/static/films/dashboard"
       ],
       "nodeIds": [
         "substrate:create-something:package:create-something-components-archive-components-deprecated",
         "substrate:create-something:package:create-something-monorepo",
+        "substrate:create-something:package:a2a-private-callback-sender-packages-a2a-sender",
         "substrate:create-something:package:algorithms-packages-agency-static-films-algorithms",
         "substrate:create-something:package:dashboard-packages-agency-static-films-dashboard",
         "substrate:create-something:package:education-packages-agency-static-films-education",
@@ -293,12 +294,12 @@
         "substrate:create-something:package:webflow-packages-agency-static-films-webflow",
         "substrate:create-something:package:websites-packages-agency-static-films-websites",
         "substrate:create-something:package:create-something-airtable-system-architect-packages-airtable-system-architect",
-        "substrate:create-something:package:app-governance-desktop-packages-app-governance-desktop",
-        "substrate:create-something:package:create-something-arc-packages-arc"
+        "substrate:create-something:package:app-governance-desktop-packages-app-governance-desktop"
       ],
       "paths": [
         ".archive/components-deprecated",
         "",
+        "packages/a2a/sender",
         "packages/agency/static/films/algorithms",
         "packages/agency/static/films/dashboard",
         "packages/agency/static/films/education",
@@ -307,8 +308,7 @@
         "packages/agency/static/films/webflow",
         "packages/agency/static/films/websites",
         "packages/airtable-system-architect",
-        "packages/app-governance-desktop",
-        "packages/arc"
+        "packages/app-governance-desktop"
       ],
       "nextAction": "Use group explanation before drawing product or business conclusions from this surface."
     }

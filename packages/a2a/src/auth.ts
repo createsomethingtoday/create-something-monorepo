@@ -35,10 +35,12 @@ export async function verifyIdentityToken(env:RuntimeEnv,token:string):Promise<P
     ({payload}=await jwtVerify(token,resolver,{issuer:env.IDENTITY_ISSUER,audience:env.AUTH_RESOURCE,algorithms:['ES256'],requiredClaims:['sub','exp','iat']}));
   } catch {throw new HttpError('invalid_token',401,'Sign in with CREATE SOMETHING Identity.');}
   if(payload.kind!=='oauth_access_token'||payload.resource!==env.AUTH_RESOURCE||typeof payload.scope!=='string')throw new HttpError('invalid_token',401,'An access token for this service is required.');
-  let email:string|undefined;
+  let email:string|undefined;let displayName:string|undefined;
+  const name=(value:unknown)=>typeof value==='string'&&value.trim().length>0&&value.trim().length<=80&&!/[\u0000-\u001f\u007f]/.test(value)?value.trim():undefined;
   if(env.ENVIRONMENT==='test'&&env.LOCAL_TEST_JWKS){
     if(payload.email_verified!==true)throw new HttpError('invalid_token',401,'Verified identity required.');
     email=typeof payload.email==='string'?payload.email:undefined;
+    displayName=name(payload.name);
   }else{
     let response:Response;
     try{response=await fetch(`${productionIssuer}/oauth/userinfo`,{headers:{authorization:`Bearer ${token}`},redirect:'manual',signal:AbortSignal.timeout(5000)});}catch{throw new HttpError('identity_unavailable',503,'Identity verification is temporarily unavailable.');}
@@ -46,13 +48,14 @@ export async function verifyIdentityToken(env:RuntimeEnv,token:string):Promise<P
     const info=await response.json() as Record<string,unknown>;
     if(info.sub!==payload.sub||info.resource!==env.AUTH_RESOURCE||info.email_verified!==true)throw new HttpError('invalid_token',401,'Verified resource identity required.');
     email=typeof info.email==='string'?info.email:undefined;
+    displayName=name(info.name);
   }
-  const principal={subject:payload.sub!,email,scopes:payload.scope.split(/\s+/),admin:payload.scope.split(/\s+/).includes(ADMIN_SCOPE)};
+  const principal={subject:payload.sub!,email,displayName,scopes:payload.scope.split(/\s+/),admin:payload.scope.split(/\s+/).includes(ADMIN_SCOPE)};
   admission(env,principal);return principal;
 }
 export async function authenticate(request:Request,env:RuntimeEnv):Promise<Principal> {
   const header=request.headers.get('authorization');
-  if(header){const token=header.match(/^Bearer\s+(\S+)$/i)?.[1];if(!token)throw new HttpError('invalid_token',401,'Bearer token required.');return verifyIdentityToken(env,token);}
+  if(header){const token=header.match(/^Bearer\s+(\S+)$/i)?.[1];if(!token)throw new HttpError('invalid_token',401,'Bearer token required.');return {...await verifyIdentityToken(env,token),authentication:'bearer'};}
   const raw=cookie(request,sessionCookie);if(!raw)throw new HttpError('authentication_required',401,'Sign in to open your inbox.');
   const id=await hash(raw);const now=Date.now();
   const row=await env.DB.prepare('SELECT * FROM auth_sessions WHERE id_hash=? AND expires_at>?').bind(id,now).first<SessionRow>();
@@ -69,7 +72,7 @@ export async function authenticate(request:Request,env:RuntimeEnv):Promise<Princ
   }
   const principal=await verifyIdentityToken(env,tokens.access_token);
   if(principal.subject!==row.owner_subject)throw new HttpError('invalid_session',401,'Sign in again to continue.');
-  return principal;
+  return {...principal,authentication:'owner_session'};
 }
 async function exchangeTokens(env:RuntimeEnv,fields:Record<string,string>):Promise<Tokens> {
   const response=await fetch(`${productionIssuer}/oauth/token`,{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams(fields),redirect:'manual',signal:AbortSignal.timeout(10000)});

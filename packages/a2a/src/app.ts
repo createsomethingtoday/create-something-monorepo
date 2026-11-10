@@ -41,7 +41,7 @@ async function route(request:Request,env:RuntimeEnv):Promise<Response>{
     const write=!['GET','HEAD'].includes(request.method);
     if(write){requireScope(p,WRITE_SCOPE);if(!request.headers.has('authorization'))sameOrigin(request,env.BASE_URL);await limitAdmission(env,`write:${p.subject}`,120,60000);}
     const service=new InboxService(env.DB);
-    if(path==='/api/v1/me'&&request.method==='GET')return json({subject:p.subject,email:p.email});
+    if(path==='/api/v1/me'&&request.method==='GET')return json({subject:p.subject,email:p.email,displayName:p.displayName});
     if(path==='/api/v1/agents'){
       if(request.method==='GET')return json({agents:await service.listAgents(p)});
       if(request.method==='POST'){requireScope(p,ADMIN_SCOPE);return json({agent:await service.registerAgent(p,stringField(await readJson(request),'name',80))},201);}
@@ -62,6 +62,21 @@ async function route(request:Request,env:RuntimeEnv):Promise<Response>{
       if(request.method==='POST'){const body=await readJson(request);return json({grant:await service.grantSender(p,stringField(body,'agentId'),stringField(body,'senderAgentId'))},201);}
     }
     const grantMatch=path.match(/^\/api\/v1\/grants\/([^/]+)$/);if(grantMatch&&request.method==='DELETE'){requireScope(p,ADMIN_SCOPE);return json({grant:await service.revokeGrant(p,grantMatch[1])});}
+    if(path==='/api/v1/owner-messages'&&request.method==='POST'){
+      if(request.headers.has('authorization')||p.authentication!=='owner_session')throw new HttpError('owner_session_required',403,'Use your signed-in owner console to post as yourself.');
+      sameOrigin(request,env.BASE_URL);requireScope(p,ADMIN_SCOPE);
+      const body=await readJson(request);
+      if(Object.keys(body).some(key=>!['fromAgentId','toAgentId','text','idempotencyKey','threadId','kind'].includes(key)))throw new HttpError('invalid_request',400,'Unexpected message field.');
+      if(body.kind!==undefined&&body.kind!=='conversation'&&body.kind!=='request')throw new HttpError('invalid_request',400,'Select conversation or request.');
+      const result=await service.sendOwnerMessage(p,{fromAgentId:stringField(body,'fromAgentId'),toAgentId:stringField(body,'toAgentId'),text:stringField(body,'text',16384),idempotencyKey:stringField(body,'idempotencyKey',128),...(body.threadId===undefined?{}:{threadId:stringField(body,'threadId')}),...(body.kind===undefined?{}:{kind:body.kind})});
+      if(result.eventId)await publishOutbox(env).catch(()=>console.warn(JSON.stringify({event:'outbox_publication_deferred',eventId:result.eventId})));
+      return json(result,result.duplicate?200:201);
+    }
+    const conversationMatch=path.match(/^\/api\/v1\/conversations\/([^/]+)$/);
+    if(conversationMatch&&request.method==='GET'){
+      const before=url.searchParams.get('before');if(url.searchParams.has('after')||(before!==null&&!/^\d{1,16}$/.test(before)))throw new HttpError('invalid_cursor',400,'Invalid conversation history cursor.');
+      return json(await service.readThreadHistory(p,url.searchParams.get('agentId')??'',conversationMatch[1],before===null?undefined:Number(before)));
+    }
     if(path==='/api/v1/messages'){
       if(request.method==='GET'){
         if(url.searchParams.get('view')==='history'){
@@ -72,7 +87,7 @@ async function route(request:Request,env:RuntimeEnv):Promise<Response>{
         const after=url.searchParams.get('after');if(after!==null&&!/^\d{1,16}$/.test(after))throw new HttpError('invalid_cursor',400,'Invalid inbox cursor.');return json({messages:await service.listMessages(p,url.searchParams.get('agentId')??'',after===null?undefined:Number(after),url.searchParams.get('includeSent')==='true')});
       }
       if(request.method==='POST'){
-        const body=await readJson(request);const result=await service.sendMessage(p,{fromAgentId:stringField(body,'fromAgentId'),toAgentId:stringField(body,'toAgentId'),text:stringField(body,'text',16384),idempotencyKey:stringField(body,'idempotencyKey',128),...(body.threadId===undefined?{}:{threadId:stringField(body,'threadId')})});
+        const body=await readJson(request);if(Object.keys(body).some(key=>!['fromAgentId','toAgentId','text','idempotencyKey','threadId'].includes(key)))throw new HttpError('invalid_request',400,'Unexpected message field.');const result=await service.sendMessage(p,{fromAgentId:stringField(body,'fromAgentId'),toAgentId:stringField(body,'toAgentId'),text:stringField(body,'text',16384),idempotencyKey:stringField(body,'idempotencyKey',128),...(body.threadId===undefined?{}:{threadId:stringField(body,'threadId')})});
         // If queue publication fails, the durable event remains pending for reconciliation.
         await publishOutbox(env).catch(()=>console.warn(JSON.stringify({event:'outbox_publication_deferred',eventId:result.eventId})));
         return json(result,result.duplicate?200:201);

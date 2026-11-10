@@ -4,9 +4,14 @@ import { readFileSync } from 'node:fs';
 /** Offline SQLite implementation of the D1 calls used by the service.
  * Each batch is a real transaction, including statement failure rollback.
  */
-export function createTestDatabase() {
+export function createTestDatabase(options: {legacy?:boolean} = {}) {
 	const sqlite = new DatabaseSync(':memory:');
 	sqlite.exec(readFileSync(new URL('../migrations/0001_inbox.sql', import.meta.url), 'utf8'));
+	if(!options.legacy) {
+		sqlite.exec('BEGIN IMMEDIATE');
+		try { for(const name of ['0002_delivery_auth.sql','0003_subscription_replay.sql','0004_owner_conversations.sql'])sqlite.exec(readFileSync(new URL(`../migrations/${name}`, import.meta.url),'utf8'));sqlite.exec('COMMIT'); }
+		catch(error) { sqlite.exec('ROLLBACK');throw error; }
+	}
 	let beforeBatch: (() => void) | undefined;
 	class Statement {
 		constructor(readonly sql: string, readonly values: unknown[] = []) {}
