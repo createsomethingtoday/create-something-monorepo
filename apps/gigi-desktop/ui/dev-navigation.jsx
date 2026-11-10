@@ -4,6 +4,7 @@ import { sections } from '../web/model.mjs';
 import { ICON_NODES } from '../web/lucide-icons.mjs';
 import { StackItem } from '@astryxdesign/core/Stack';
 import { Badge } from '@astryxdesign/core/Badge';
+import { Icon as AstryxIcon } from '@astryxdesign/core/Icon';
 import { useMediaQuery } from '@astryxdesign/core/hooks';
 
 // Keep Danny's workspace organization in the active React renderer. Native
@@ -12,10 +13,10 @@ const groups = [
   ['Work', [['gigs', 'Gigs'], ['music', 'Music'], ['finances', 'Money'], ['services', 'Services']]],
   ['Admin', [['tasks', 'Tasks'], ['schedule', 'Schedule'], ['notes', 'Notes'], ['documents', 'Documents'], ['tags', 'Tags']]],
   ['Network', [['contacts', 'People'], ['companies', 'Companies'], ['locations', 'Places'], ['interactions', 'Interactions']]],
-  ['Platform', [['profile', 'Profile'], ['history', 'History'], ['appearance', 'Appearance'], ['settings', 'Settings'], ['appearance', 'Customize', 'preference-startPage'], ['settings', 'Safety', 'workspace-safety']]]
+  ['Platform', [['memory', 'Memory'], ['profile', 'Profile'], ['history', 'History'], ['appearance', 'Appearance'], ['settings', 'Settings'], ['appearance', 'Customize', 'preference-startPage'], ['settings', 'Safety', 'workspace-safety']]]
 ];
 const icons = {
-  gigs: 'calendar-days', music: 'music', finances: 'wallet', services: 'briefcase',
+  memory: 'sticky-note', gigs: 'calendar-days', music: 'music', finances: 'wallet', services: 'briefcase',
   tasks: 'list-checks', schedule: 'calendar-days', notes: 'sticky-note', documents: 'files',
   tags: 'tags', contacts: 'users', companies: 'building-2', locations: 'map-pin',
   interactions: 'messages-square', profile: 'user-round', history: 'history',
@@ -57,7 +58,7 @@ export function DevNavigation({ ctx }) {
       const selected = entries.some(([id]) => s.page === id);
       return <details key={name} className="reference-dropdown" name="workspace-navigation" data-nav-menu={name} data-view-key={`reference-${name.toLowerCase()}`}>
         <HStack as="summary" gap={narrow ? 1 : 2} height="var(--size-element-md)" paddingBlock={2} paddingInline={narrow ? 1 : compact ? 2 : 3} vAlign="center" data-nav-overflow={name} className={selected ? 'selected' : undefined}>
-          <Text type="label" size={narrow ? 'xsm' : undefined} color="inherit">{name}</Text>{!tiny && <Text color="inherit" aria-hidden="true">⌄</Text>}
+          <Text type="label" size={narrow ? 'xsm' : undefined} color="inherit">{name}</Text>{!tiny && <AstryxIcon icon="chevronDown" size="xsm" />}
         </HStack>
         <VStack as="nav" gap={1} padding={2} isScrollable className="reference-menu reference-menu-group" aria-label={name}>
           {entries.map(([id, label, target]) => <B key={`${id}:${target || ''}`} width="100%" size="md" variant="ghost" data-page={id} data-nav-target={target} aria-current={s.page === id && !target ? 'page' : undefined} icon={<Icon name={target === 'workspace-safety' ? 'shield-check' : icons[id]} />} endContent={s.page === id && !target ? <Text color="inherit" className="reference-menu-current" aria-hidden="true">✓</Text> : null}>{label}</B>)}

@@ -44,6 +44,7 @@ export const AGENCY_COMPACT_PRIVACY_PATHS = [
   '/workflow-compiler-integration',
   '/workflows',
   '/openai-dots',
+  '/dental-ai-agents',
   ...AGENCY_ATLAS_PROOF_PATHS
 ] as const;
 
@@ -86,6 +87,7 @@ export const AGENCY_ROUTE_OWNED_PERFORMANCE_ENDING_PATHS = [
   '/marketplace-review-automation',
   '/workflows',
   '/openai-dots',
+  '/dental-ai-agents',
   '/use-cases/business',
   '/use-cases/enterprise',
   '/about'

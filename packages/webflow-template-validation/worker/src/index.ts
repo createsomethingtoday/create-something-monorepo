@@ -15,6 +15,9 @@ import { validateAccessibility } from './validators/accessibility-validator';
 import { validateDesignerData } from './validators/designer-validator';
 import { validateInteractions, type CmsTemplateHint } from './validators/interactions-validator';
 import { validateCustomCode } from './validators/custom-code-validator';
+import { RENDERING_CATEGORY, summarizeRendering, type RenderingAnalysisResult } from './validators/rendering-validator';
+import { validateRendering } from './utils/browser-rendering';
+import type { BrowserWorker } from '@cloudflare/puppeteer';
 import { fetchHTML } from './utils/fetch-utils';
 import { Langfuse } from 'langfuse';
 import {
@@ -42,7 +45,7 @@ import {
 import { normalizePublishedHost, verifyOauthSiteAccess } from './utils/oauth-site-evidence';
 
 const REVIEW_SNIPPET_VERSION = '0.3.0';
-const WORKER_VERSION = '2.10.0';
+const WORKER_VERSION = '2.11.0';
 const REVIEW_SNIPPET_MARKER = '__wf_review_snippet_v1';
 const REVIEW_SNIPPET_ASSET_PATH = '/app-validator/snippet/review.js';
 const REVIEW_JOB_RETENTION_MS = 30 * 60 * 1000;
@@ -109,6 +112,8 @@ interface ReviewJobState {
 	events: ReviewJobEvent[];
 	seq: number;
 	cancelRequested: boolean;
+	/** Set while the browser check runs in the job's Durable Object alarm (stage 2). */
+	pendingRendering?: { urls: string[]; result: any } | null;
 }
 
 interface SnippetTokenRecord {
@@ -166,6 +171,10 @@ interface ValidationCategoryIssueDetail {
 	details?: {
 		pages?: string[];
 		duplicates?: string[][];
+		/** Names the naming checks flagged (page-naming, page-slug-mismatch), kept so those checks can be audited. */
+		samples?: string[];
+		/** Page and element lines (the browser check), shown by the Validator app as "View N locations". */
+		locations?: string[];
 	};
 }
 
@@ -298,19 +307,85 @@ const validationResultRecords = new Map<string, ValidationResultRecord>();
 const publishedHostLookups = new Map<string, PublishedHostLookupRecord>();
 const bridgeUsageRecords = new Map<string, BridgeUsageIndexRecord>();
 
+/**
+ * Each Durable Object stores one JSON record. This class uses key-value
+ * storage, which caps a value at 128 KiB, and a job with Designer data and a
+ * full result can exceed that, so the JSON text is split across keys. 60,000
+ * characters stay under the cap even when every character is non-ASCII.
+ */
+const STATE_CHUNK_CHARS = 60_000;
+const STATE_CHUNK_COUNT_KEY = 'state:chunks';
+
+async function readStoredState(storage: DurableObjectStorage): Promise<unknown | undefined> {
+	const legacy = await storage.get('state');
+	if (legacy !== undefined) return legacy;
+	const count = await storage.get<number>(STATE_CHUNK_COUNT_KEY);
+	if (!count) return undefined;
+	const keys = Array.from({ length: count }, (_, index) => `state:${index}`);
+	const parts = await storage.get<string>(keys);
+	let text = '';
+	for (const key of keys) {
+		const part = parts.get(key);
+		if (typeof part !== 'string') return undefined;
+		text += part;
+	}
+	return JSON.parse(text);
+}
+
+async function writeStoredState(storage: DurableObjectStorage, text: string): Promise<void> {
+	const count = Math.max(1, Math.ceil(text.length / STATE_CHUNK_CHARS));
+	const entries: Record<string, unknown> = { [STATE_CHUNK_COUNT_KEY]: count };
+	for (let index = 0; index < count; index += 1) {
+		entries[`state:${index}`] = text.slice(index * STATE_CHUNK_CHARS, (index + 1) * STATE_CHUNK_CHARS);
+	}
+	const previous = (await storage.get<number>(STATE_CHUNK_COUNT_KEY)) ?? 0;
+	await storage.put(entries);
+	const stale = ['state', ...Array.from({ length: Math.max(0, previous - count) }, (_, index) => `state:${count + index}`)];
+	await storage.delete(stale);
+}
+
+async function deleteStoredState(storage: DurableObjectStorage): Promise<void> {
+	const count = (await storage.get<number>(STATE_CHUNK_COUNT_KEY)) ?? 0;
+	await storage.delete(['state', STATE_CHUNK_COUNT_KEY, ...Array.from({ length: count }, (_, index) => `state:${index}`)]);
+}
+
 export class ReviewJobsDurableObject {
 	private readonly state: DurableObjectState;
+	private readonly env: unknown;
 
-	constructor(state: DurableObjectState) {
+	constructor(state: DurableObjectState, env: unknown) {
 		this.state = state;
+		this.env = env;
+	}
+
+	/**
+	 * Stage 2 of a review job: the browser check. It runs here rather than in
+	 * the Worker's waitUntil, which Cloudflare cancels 30 seconds after the
+	 * start request returns; an alarm may run for 15 minutes.
+	 */
+	async alarm(): Promise<void> {
+		const stored = (await readStoredState(this.state.storage)) as ReviewJobState | undefined;
+		if (!stored || !stored.pendingRendering) return;
+		const finished = await completeRenderingStage(reviveReviewJobState(stored), this.env);
+		// A cancel may have landed while the browser ran; it wins.
+		const latest = (await readStoredState(this.state.storage)) as ReviewJobState | undefined;
+		if (latest && TERMINAL_STATUSES.has(latest.status)) return;
+		await writeStoredState(this.state.storage, JSON.stringify(pruneReviewJobState(finished)));
 	}
 
 	async fetch(request: Request): Promise<Response> {
 		const url = new URL(request.url);
 
+		if (url.pathname === '/render' && request.method === 'POST') {
+			await this.state.storage.setAlarm(Date.now());
+			return new Response(JSON.stringify({ ok: true }), {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' }
+			});
+		}
+
 		if (url.pathname === '/state' && request.method === 'PUT') {
-			const body = await request.json();
-			await this.state.storage.put('state', body);
+			await writeStoredState(this.state.storage, await request.text());
 			return new Response(JSON.stringify({ ok: true }), {
 				status: 200,
 				headers: { 'Content-Type': 'application/json' }
@@ -318,7 +393,7 @@ export class ReviewJobsDurableObject {
 		}
 
 		if (url.pathname === '/state' && request.method === 'GET') {
-			const stored = await this.state.storage.get('state');
+			const stored = await readStoredState(this.state.storage);
 			if (!stored) {
 				return new Response(JSON.stringify({ error: 'Not found' }), {
 					status: 404,
@@ -332,7 +407,7 @@ export class ReviewJobsDurableObject {
 		}
 
 		if (url.pathname === '/state' && request.method === 'DELETE') {
-			await this.state.storage.delete('state');
+			await deleteStoredState(this.state.storage);
 			return new Response(JSON.stringify({ ok: true }), {
 				status: 200,
 				headers: { 'Content-Type': 'application/json' }
@@ -1470,20 +1545,26 @@ async function handleBridgeUsageList(
 }
 
 async function runReviewJob(jobId: string, env: unknown): Promise<void> {
-	const job = await getReviewJobState(env, jobId);
+	// handleReviewStart created the job in this isolate; read storage only as a fallback.
+	const job = reviewJobs.get(jobId) ?? (await getReviewJobState(env, jobId));
 	if (!job) return;
 
 	const startedAtMs = Date.now();
-	try {
-		updateJobProgress(job, 5, 'running', 'Initializing validation pipeline');
+	// Each step first checks storage for a cancel, then saves its progress.
+	// A cancel request saves a separate copy of the job, so checking only this
+	// object would miss it and the next save would overwrite it.
+	const advance = async (progress: number, message: string) => {
+		if (await reviewJobCancelled(env, job)) throw new Error('Job cancelled');
+		updateJobProgress(job, progress, 'running', message);
 		await persistReviewJobState(env, job);
+	};
+	try {
+		await advance(5, 'Initializing validation pipeline');
 		await emitTelemetry(env, {
 			event: 'review.progress',
 			correlationId: job.correlationId,
 			payload: { jobId, progress: 5, message: job.message }
 		});
-
-		if (job.cancelRequested) throw new Error('Job cancelled');
 
 		const checks = normalizeChecks(job.request.checks);
 		const runDesigner = checks.designer;
@@ -1500,15 +1581,11 @@ async function runReviewJob(jobId: string, env: unknown): Promise<void> {
 		let enhancedResult: ValidationResponse | null = null;
 
 		if (runDesigner) {
-			updateJobProgress(job, 20, 'running', 'Running Designer validation');
-			await persistReviewJobState(env, job);
+			await advance(20, 'Running Designer validation');
 			designerResult = await performDesignerValidation(designerData, job.request.siteUrl);
 		}
 
-		if (job.cancelRequested) throw new Error('Job cancelled');
-
-		updateJobProgress(job, 55, 'running', 'Running crawl validation');
-		await persistReviewJobState(env, job);
+		await advance(55, 'Running crawl validation');
 		enhancedResult = await performEnhancedValidation({
 			siteUrl: job.request.siteUrl,
 			designerData,
@@ -1521,36 +1598,33 @@ async function runReviewJob(jobId: string, env: unknown): Promise<void> {
 			}
 		});
 
-		if (job.cancelRequested) throw new Error('Job cancelled');
-
-		updateJobProgress(job, 85, 'running', 'Merging validation result sets');
-		await persistReviewJobState(env, job);
+		await advance(65, 'Merging validation result sets');
 		const merged = mergeReviewResults(job.request.siteUrl, designerResult, enhancedResult);
 
-		job.status = 'completed';
-		job.progress = 100;
-		job.message = 'Validation complete';
-		job.updatedAt = new Date().toISOString();
-		job.completedAt = job.updatedAt;
-		job.result = merged;
-		pushJobEvent(job, 'complete', {
-			jobId: job.jobId,
-			status: job.status,
-			progress: job.progress,
-			message: job.message
-		});
-		await persistReviewJobState(env, job);
+		// The browser check renders the pages the content crawl analyzed, so it
+		// runs with the content check and covers the same scope. It takes longer
+		// than waitUntil allows, so the job's Durable Object finishes the job.
+		if (runContent) {
+			const crawledUrls = enhancedResult?.analysis?.content?.pages?.map((page) => page.url) ?? [];
+			if (await reviewJobCancelled(env, job)) throw new Error('Job cancelled');
+			job.pendingRendering = { urls: crawledUrls.length > 0 ? crawledUrls : [job.request.siteUrl], result: merged };
+			updateJobProgress(job, 70, 'running', 'Loading pages in a browser');
+			await persistReviewJobState(env, job);
+			if (await scheduleRenderingStage(env, job.jobId)) return;
+			job.pendingRendering = null;
+			await finishReviewJob(
+				env,
+				job,
+				withRenderingCategory(
+					merged,
+					summarizeRendering([], { pagesRequested: crawledUrls.length, unavailableReason: 'The browser check could not be scheduled.' })
+				)
+			);
+			return;
+		}
 
-		await emitTelemetry(env, {
-			event: 'review.complete',
-			correlationId: job.correlationId,
-			payload: {
-				jobId: job.jobId,
-				durationMs: Date.now() - startedAtMs,
-				totalCategories: Array.isArray(merged?.categories) ? merged.categories.length : 0,
-				fallbackUsed: job.fallbackUsed
-			}
-		});
+		if (await reviewJobCancelled(env, job)) throw new Error('Job cancelled');
+		await finishReviewJob(env, job, merged);
 	} catch (error) {
 		job.status = job.cancelRequested ? 'cancelled' : 'failed';
 		job.error = error instanceof Error ? error.message : String(error);
@@ -1577,6 +1651,93 @@ async function runReviewJob(jobId: string, env: unknown): Promise<void> {
 			}
 		});
 	}
+}
+
+/**
+ * Mark a job complete with its final result. Used by both stages; the
+ * Durable Object alarm stores the job itself, so it passes persist: false.
+ */
+async function finishReviewJob(env: unknown, job: ReviewJobState, result: any, persist = true): Promise<void> {
+	job.status = 'completed';
+	job.progress = 100;
+	job.message = 'Validation complete';
+	job.updatedAt = new Date().toISOString();
+	job.completedAt = job.updatedAt;
+	job.result = result;
+	pushJobEvent(job, 'complete', {
+		jobId: job.jobId,
+		status: job.status,
+		progress: job.progress,
+		message: job.message
+	});
+	if (persist) await persistReviewJobState(env, job);
+
+	await emitTelemetry(env, {
+		event: 'review.complete',
+		correlationId: job.correlationId,
+		payload: {
+			jobId: job.jobId,
+			durationMs: Date.now() - Date.parse(job.startedAt),
+			totalCategories: Array.isArray(result?.categories) ? result.categories.length : 0,
+			fallbackUsed: job.fallbackUsed
+		}
+	});
+}
+
+async function scheduleRenderingStage(env: unknown, jobId: string): Promise<boolean> {
+	const ns = getDurableNamespace(env);
+	if (!ns) return false;
+	try {
+		const stub = ns.get(ns.idFromName(`job:${jobId}`));
+		const response = await stub.fetch('https://internal/render', { method: 'POST' });
+		return response.ok;
+	} catch {
+		return false;
+	}
+}
+
+/** How long stage 2 may spend loading pages before it reports the rest as not rendered. */
+const RENDERING_STAGE_BUDGET_MS = 4 * 60 * 1000;
+
+/**
+ * Stage 2: run the browser check and complete the job. Returns the updated
+ * job; the caller (the Durable Object alarm) stores it. Never throws, because
+ * a throwing alarm is retried.
+ */
+async function completeRenderingStage(job: ReviewJobState, env: unknown): Promise<ReviewJobState> {
+	const pending = job.pendingRendering;
+	if (!pending || TERMINAL_STATUSES.has(job.status)) return job;
+	job.pendingRendering = null;
+	try {
+		const rendering = await validateRendering(
+			(env as { BROWSER?: BrowserWorker } | undefined)?.BROWSER,
+			pending.urls,
+			{ deadline: Date.now() + RENDERING_STAGE_BUDGET_MS }
+		);
+		await finishReviewJob(env, job, withRenderingCategory(pending.result, rendering), false);
+	} catch (error) {
+		job.status = 'failed';
+		job.error = error instanceof Error ? error.message : String(error);
+		job.message = 'Validation failed';
+		job.updatedAt = new Date().toISOString();
+		job.completedAt = job.updatedAt;
+		pushJobEvent(job, 'error', { jobId: job.jobId, status: job.status, progress: job.progress, message: job.message, error: job.error });
+	}
+	return job;
+}
+
+/** Add the Browser Rendering category to a merged result and recount the summary. */
+function withRenderingCategory(result: any, rendering: RenderingAnalysisResult): any {
+	const categories = [
+		...(Array.isArray(result?.categories) ? result.categories : []),
+		{
+			category: RENDERING_CATEGORY,
+			passed: rendering.issues.every((issue) => issue.severity !== 'error'),
+			issues: rendering.issues,
+			stats: rendering.stats
+		}
+	];
+	return { ...result, categories, summary: { ...(result?.summary ?? {}), ...summarizeSummaryFromCategories(categories) } };
 }
 
 async function handleDesignerValidation(request: Request): Promise<Response> {
@@ -2033,15 +2194,25 @@ async function getReviewJobState(
 	env: unknown,
 	jobId: string
 ): Promise<ReviewJobState | null> {
+	// A running job may be finished by its Durable Object alarm, which this
+	// isolate's memory never sees, so only a terminal job is served from memory.
 	const inMemory = reviewJobs.get(jobId);
-	if (inMemory) return inMemory;
+	if (inMemory && TERMINAL_STATUSES.has(inMemory.status)) return inMemory;
 
 	const persisted = await readDurableState(env, `job:${jobId}`);
-	if (!persisted) return null;
+	if (!persisted) return inMemory ?? null;
 
 	const restored = reviveReviewJobState(persisted as ReviewJobState);
 	reviewJobs.set(jobId, restored);
 	return restored;
+}
+
+/** True when this job or its stored copy has a cancel request; marks this job too. */
+async function reviewJobCancelled(env: unknown, job: ReviewJobState): Promise<boolean> {
+	if (job.cancelRequested) return true;
+	const stored = (await readDurableState(env, `job:${job.jobId}`)) as Partial<ReviewJobState> | null;
+	if (stored?.cancelRequested || stored?.status === 'cancelled') job.cancelRequested = true;
+	return job.cancelRequested;
 }
 
 async function persistReviewJobState(env: unknown, job: ReviewJobState): Promise<void> {
@@ -2787,7 +2958,8 @@ function sanitizeValidationResults(
 						? category.issues
 								.map(sanitizeValidationIssue)
 								.filter((issue): issue is ValidationCategoryIssueDetail => issue !== null)
-						: []
+						: [],
+					...sanitizeCategoryStats((category as { stats?: unknown } | undefined)?.stats)
 			  }))
 		: [];
 
@@ -2800,6 +2972,29 @@ function sanitizeValidationResults(
 		categories,
 		scope: sanitizeValidationScope(validationResults?.scope)
 	};
+}
+
+const CATEGORY_STATS_KEY_LIMIT = 40;
+const CATEGORY_STATS_STRING_MAX_LENGTH = 200;
+
+/**
+ * Keep a category's flat stats (numbers, booleans, short strings, short string
+ * lists) so stored runs can answer questions the issue messages cannot, such as
+ * whether any variable mode is bound to a breakpoint. Nested objects are dropped.
+ */
+function sanitizeCategoryStats(value: unknown): { stats?: Record<string, unknown> } {
+	if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+	const stats: Record<string, unknown> = {};
+	for (const [key, raw] of Object.entries(value as Record<string, unknown>)) {
+		if (Object.keys(stats).length >= CATEGORY_STATS_KEY_LIMIT) break;
+		if (key.length > 64) continue;
+		if (typeof raw === 'boolean' || (typeof raw === 'number' && Number.isFinite(raw))) stats[key] = raw;
+		else if (typeof raw === 'string') stats[key] = raw.slice(0, CATEGORY_STATS_STRING_MAX_LENGTH);
+		else if (Array.isArray(raw) && raw.every((item) => typeof item === 'string')) {
+			stats[key] = raw.slice(0, ISSUE_DETAIL_PAGE_LIMIT).map((item) => item.slice(0, CATEGORY_STATS_STRING_MAX_LENGTH));
+		}
+	}
+	return Object.keys(stats).length > 0 ? { stats } : {};
 }
 
 const ISSUE_ID_MAX_LENGTH = 128;
@@ -2818,15 +3013,21 @@ function sanitizeBoundedString(value: unknown, maxLength: number): string | unde
 	return trimmed.slice(0, maxLength);
 }
 
+function sanitizeLabelList(value: unknown): string[] {
+	return Array.isArray(value)
+		? value
+				.map((label) => sanitizeBoundedString(label, ISSUE_DETAIL_LABEL_MAX_LENGTH))
+				.filter((label): label is string => Boolean(label))
+				.slice(0, ISSUE_DETAIL_PAGE_LIMIT)
+		: [];
+}
+
 function sanitizeIssueDetails(value: unknown): ValidationCategoryIssueDetail['details'] | undefined {
 	if (!value || typeof value !== 'object') return undefined;
 	const details = value as Record<string, unknown>;
-	const pages = Array.isArray(details.pages)
-		? details.pages
-				.map((page) => sanitizeBoundedString(page, ISSUE_DETAIL_LABEL_MAX_LENGTH))
-				.filter((page): page is string => Boolean(page))
-				.slice(0, ISSUE_DETAIL_PAGE_LIMIT)
-		: [];
+	const pages = sanitizeLabelList(details.pages);
+	const samples = sanitizeLabelList(details.samples);
+	const locations = sanitizeLabelList(details.locations);
 	const duplicates = Array.isArray(details.duplicates)
 		? details.duplicates
 				.filter((group): group is unknown[] => Array.isArray(group))
@@ -2840,10 +3041,12 @@ function sanitizeIssueDetails(value: unknown): ValidationCategoryIssueDetail['de
 				.slice(0, ISSUE_DETAIL_DUPLICATE_GROUP_LIMIT)
 		: [];
 
-	if (pages.length === 0 && duplicates.length === 0) return undefined;
+	if (pages.length === 0 && duplicates.length === 0 && samples.length === 0 && locations.length === 0) return undefined;
 	return {
 		...(pages.length > 0 ? { pages } : {}),
-		...(duplicates.length > 0 ? { duplicates } : {})
+		...(duplicates.length > 0 ? { duplicates } : {}),
+		...(samples.length > 0 ? { samples } : {}),
+		...(locations.length > 0 ? { locations } : {})
 	};
 }
 

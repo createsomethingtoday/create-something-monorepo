@@ -452,6 +452,7 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
     if !input.is_object() {
         return Err("input must be an object".into());
     }
+    if op.starts_with("memory.") { return crate::memory::dispatch(root,op,input); }
     let mut db = open(root)?;
     match op {
         "schema.describe" => {

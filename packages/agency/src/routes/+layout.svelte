@@ -398,7 +398,7 @@
     {#if pageFoundation}
       {#key $page.url.pathname}<AgencyPageWayfinding foundation={pageFoundation} />{/key}
     {/if}
-    {#if usesPublicNavigation && $page.url.pathname !== '/' && $page.url.pathname !== '/openai-dots' && !isAgencyWebflowPortfolioPath($page.url.pathname)}
+    {#if usesPublicNavigation && $page.url.pathname !== '/' && $page.url.pathname !== '/openai-dots' && $page.url.pathname !== '/dental-ai-agents' && !isAgencyWebflowPortfolioPath($page.url.pathname)}
       <AgencyPageTreatment />
     {/if}
     {@render children()}

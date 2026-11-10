@@ -197,6 +197,16 @@ const webflowPortfolioPages: MarketingPageEntry[] = [
 export const marketingPagePortfolio: MarketingPageEntry[] = [
   ...webflowPortfolioPages,
   {
+    path: '/dental-ai-agents', cluster: 'business-use-case', role: 'implementation', decision: 'index',
+    audience: 'Dental practice owners and front-desk managers evaluating a scoped OpenAI integration.',
+    funnelStage: 'evaluate', intent: 'Assess an OpenAI-powered dental front-desk workflow, its evidence, limits and implementation fit.',
+    primaryAction: 'Book a mapping session',
+    requiredTerms: ['OpenAI', 'dental', 'synthetic', 'confirmation', 'staff', 'analytics'],
+    requiredLinks: ['/services', '/security', '/workflows/mcp-vs-api'], schema: 'page',
+    search: { changefreq: 'monthly', priority: '0.78', lastmod: '2026-11-10' },
+    selfHealing: ['search-route:sync', 'canonical-route:review']
+  },
+  {
     path: '/openai-dots', cluster: 'workflow-library', role: 'support', decision: 'index',
     audience: 'People learning what OpenAI dots can do and how to start with one useful task.',
     funnelStage: 'understand',

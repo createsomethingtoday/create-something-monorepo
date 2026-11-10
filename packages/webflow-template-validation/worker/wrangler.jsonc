@@ -23,6 +23,9 @@
 			}
 		]
 	},
+	"browser": {
+		"binding": "BROWSER"
+	},
 	"r2_buckets": [
 		{
 			"binding": "VALIDATOR_RESULT_ARTIFACTS",

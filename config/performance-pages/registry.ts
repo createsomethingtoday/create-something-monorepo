@@ -5,6 +5,11 @@ import type {
 } from '../../packages/canon/src/lib/components/performance/page-contract.ts';
 
 export const performancePageRegistry: PerformancePageRegistryGroup[] = [
+  group('agency-dental-ai-agents', 'agency', ['dental-ai-agents'], 'migrated',
+    contract('commercial', 'Decide whether one dental front-desk workflow fits a scoped OpenAI integration.',
+      'A captured working fictional demonstration and an illustrative request sequence show source reads, confirmation, synthetic records and measurement limits.',
+      'Book a mapping session for one front-desk workflow')),
+
   group('agency-openai-dots', 'agency', ['openai-dots'], 'pending',
     contract('learning', 'Understand personal dots and choose one useful task to try.',
       'An explicitly illustrative Gather, Make, and Hand back example explains continuity and human review; official sources establish capability boundaries.',

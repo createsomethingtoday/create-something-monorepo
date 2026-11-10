@@ -1,7 +1,7 @@
 // Development-only synthetic backend. Vite removes this import from production.
 // It never invokes Tauri, a provider, a real workspace or the filesystem.
 export function startFixture({ startController, renderUI }) {
-  const workspace = { id: 'synthetic-astryx-rewrite', name: 'Rehearsal workspace · synthetic' };
+  const workspace = { id: new URLSearchParams(location.search).get('memoryWorkspace') || 'synthetic-astryx-rewrite', name: 'Rehearsal workspace · synthetic' };
   const make = (id, title, entity, fields = {}) => ({
     id,
     workspaceId: workspace.id,
@@ -69,6 +69,10 @@ export function startFixture({ startController, renderUI }) {
       const message = faults.get(faultKey);
       faults.delete(faultKey);
       throw Error(message);
+    }
+    if (operation.startsWith('memory.') && new URLSearchParams(location.search).get('nativeMemory') === '1') {
+      const response = await fetch('/__synthetic_memory', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({operation,input})});
+      const result = await response.json(); if (result.error) throw Error(result.error); return result.value;
     }
     if (operation === 'workspace.get') return workspace;
     if (operation === 'workspace.create') return { ...workspace, name: input.name };

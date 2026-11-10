@@ -1,4 +1,5 @@
 export const sections = [
+  { id: 'memory', label: 'Memory' },
   { id: 'overview', label: 'Overview' },
   { id: 'music', label: 'Music library' },
   { id: 'social', label: 'Instagram drafts' },

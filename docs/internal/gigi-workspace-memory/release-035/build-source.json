@@ -1,0 +1,23 @@
+{
+  "sourceSha": "df51d22a257a1e053cb8d6a37acd3ba5c25908fd",
+  "tree": "dfea8f71577b70c4ea148a6745451be51c72eca0",
+  "cleanBeforeAfter": true,
+  "version": "0.3.5",
+  "bundleId": "agency.createsomething.gigi",
+  "originalApp": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-0597f042/apps/gigi-desktop/src-tauri/target/release/bundle/macos/GiGi.app",
+  "originalMainSha256": "83dbdbf46564298ca05d00c86ec4bab29c147cd6b54cbf54e8fbd37fbaac3cdd",
+  "compilerManifestsDirtyFalse": [
+    "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-0597f042/apps/gigi-desktop/src-tauri/target/release/build/gigi_desktop-f0371914955ceb56/output",
+    "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-0597f042/apps/gigi-desktop/src-tauri/target/release/build/gigi_desktop-295538db663063e2/output"
+  ],
+  "embeddedExactSourceMain": true,
+  "mcpPayloadsMatchOwnCompileOutputs": true,
+  "mcpProvenance": "prepare-companions builds resource MCP; Tauri rebuilds the MacOS MCP with its feature configuration. Both build manifests report the same clean source. Each bundled path matches its corresponding compiler/resource output. MCP has no retained diagnostics SHA marker.",
+  "agentPluginVersion": "0.3.5",
+  "skillMatchesCommittedSource": true,
+  "ctxPinnedSha256": "90807a133453ed6a2a70b6fdfb70a1ce7da9b6d4eb2cf33248020c664d330d99",
+  "buildCommand": "pnpm --dir apps/gigi-desktop exec tauri build --bundles app",
+  "buildExitCode": 0,
+  "checkedAt": "2026-11-10T00:46:54.131911+00:00",
+  "provenanceCheckCorrection": "Initial auxiliary assertions expected an embedded MCP SHA marker and identical feature-built MCP bytes; both assumptions were rejected. No artifact was modified to satisfy those checks. Per-build manifests and per-path compile equality provide the recorded provenance."
+}
