@@ -3,6 +3,15 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { AiConnection, aiConnectionView, connectionError, messageBudget, updateAiDraft } from './ai-connection.mjs';
 const status={available:true,busy:false,activeClientId:'a',accounts:[{clientId:'a',email:'inez@example.test',connected:true,planEnabled:true}],pendingClientIds:[],error:null};
+
+test('a late optional status read cannot replace a newer connection result',async()=>{
+ let resolve;const c=new AiConnection({call:async op=>op==='ai.connection.status'?new Promise(r=>{resolve=r;}):{...structuredClone(status),activeClientId:'new'}});
+ c.status=structuredClone(status);
+ const pending=c.refresh();await Promise.resolve();
+ await c.action('connect');
+ resolve(structuredClone(status));await pending;
+ assert.equal(c.status.activeClientId,'new');
+});
 function fixture(fn=()=>structuredClone(status)){const calls=[];const c=new AiConnection({call:async(op,input)=>{calls.push([op,input]);return fn(op,input);}});return {c,calls};}
 
 test('unavailable status fails closed, source permissions and Codex remain distinct',()=>{

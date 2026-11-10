@@ -954,6 +954,9 @@ const OAUTH_SUPPORTED_SCOPES = [
 	'offer-savings:write',
 	'cracked-sync:read',
 	'cracked-sync:write',
+	'a2a:read',
+	'a2a:write',
+	'a2a:admin',
 ];
 const MIN_MCP_LEGACY_KEY_TTL_SECONDS = 3600;
 const DEFAULT_MCP_LEGACY_KEY_TTL_SECONDS = 7 * 24 * 60 * 60;
@@ -966,6 +969,14 @@ const OAUTH_APPLICATION_ACCESS_POLICIES = new Map<string, {
 	expiresIn: number;
 	controlAccess?: true;
 }>([
+	[
+		'https://a2a.createsomething.agency/mcp',
+		{
+			applicationId: 'a2a-inbox',
+			resource: 'https://a2a.createsomething.agency/mcp',
+			expiresIn: OAUTH_APPLICATION_ACCESS_TOKEN_EXPIRES_IN,
+		},
+	],
 	[
 		'https://gigi-connector.createsomething.workers.dev',
 		{

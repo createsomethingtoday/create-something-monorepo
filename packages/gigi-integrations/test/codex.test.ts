@@ -51,6 +51,136 @@ test('rejects API key auth and never starts a thread', async () => {
   assert.equal(server.calls.some(x => x.method === 'thread/start'), false);
 });
 
+test('workspace setup status verifies a bounded exact workspace read without starting a conversation', async () => {
+  const { adapter, server, mcp } = await setup();
+  const calls: any[] = [];
+  mcp.request = async (method, params) => {
+    calls.push({ method, params });
+    return method === 'tools/list' ? { tools: toolCatalog() } : { structuredContent: { id: 'w', name: 'Tour crew', privateExtra: 'excluded' } };
+  };
+  const before = Date.now();
+  const result = await adapter.status({ workspaceId: 'w' });
+  assert.equal(result.toolsAvailable, true);
+  assert.equal(result.workspaceVerified, true);
+  assert.deepEqual(result.workspace, { id: 'w', name: 'Tour crew' });
+  assert.ok(result.checkedAt >= before && result.checkedAt <= Date.now());
+  assert.deepEqual(calls.at(-1), { method: 'tools/call', params: { name: 'gigi_workspace_get', arguments: { workspaceId: 'w' } } });
+  assert.equal(server.calls.some(call => ['thread/start', 'turn/start'].includes(call.method)), false);
+  assert.deepEqual((await adapter.list({ workspaceId: 'w' })).sessions, []);
+});
+
+for (const invalid of [{ id: 'foreign', name: 'Other' }, { id: 'w' }, { id: 'w', name: 42 }, [], null]) test(`workspace setup status rejects invalid workspace readback ${JSON.stringify(invalid)}`, async () => {
+  const { adapter, mcp, server } = await setup();
+  mcp.request = async method => method === 'tools/list' ? { tools: toolCatalog() } : { structuredContent: invalid, content: [{ type: 'text', text: JSON.stringify(invalid) }] };
+  const result = await adapter.status({ workspaceId: 'w' });
+  assert.equal(result.workspaceVerified, false);
+  assert.equal(result.reason, 'workspace_not_found');
+  assert.equal(result.workspace, undefined);
+  assert.equal(server.calls.some(call => ['thread/start', 'turn/start'].includes(call.method)), false);
+});
+
+test('workspace status does not read local data when authentication or tool availability fails', async () => {
+  const { adapter, server, mcp } = await setup();
+  const local: any[] = [];
+  mcp.request = async (method, params) => { local.push({method,params}); return { tools: [] }; };
+  server.account = { account: { type: 'apiKey' } };
+  const signedOut = await adapter.status({ workspaceId: 'w' });
+  assert.equal(signedOut.workspaceVerified, false);
+  assert.equal(signedOut.toolsAvailable, false);
+  assert.equal(local.length, 0);
+  server.account = { account: { type: 'chatgpt' } };
+  const missing = await adapter.status({ workspaceId: 'w' });
+  assert.equal(missing.workspaceVerified, false);
+  assert.equal(missing.toolsAvailable, false);
+  assert.equal(missing.reason, 'gigi_tools_unavailable');
+  assert.equal(local.some(call => call.method === 'tools/call'), false);
+  await assert.rejects(adapter.status({workspaceId:''}), /invalid_request/);
+});
+
+test('managed browser login is explicit, keeps provider URL private and verifies the completion account', async () => {
+  const {adapter,server}=await setup();const original=server.request.bind(server);
+  server.account={account:null};
+  server.request=async(method,params)=>{if(method==='account/login/start'){server.calls.push({method,params});return {type:'chatgpt',loginId:'provider-1',authUrl:'https://auth.openai.com/authorize?state=fixture'};}return original(method,params);};
+  assert.equal(server.calls.length,0);
+  const job=await adapter['login.start']({workspaceId:'w'});
+  assert.equal(job.state,'pending');assert.equal(job.authUrl,undefined);assert.notEqual(job.loginId,'provider-1');
+  assert.equal((await adapter['login.open']({workspaceId:'w',loginId:job.loginId})).authUrl,'https://auth.openai.com/authorize?state=fixture');
+  await assert.rejects(adapter['login.read']({workspaceId:'other',loginId:job.loginId}),/login_not_found/);
+  await assert.rejects(adapter['login.start']({workspaceId:'w'}),/login_in_progress/);
+  for(const emit of server.events)await emit({method:'account/login/completed',params:{loginId:'foreign',success:true}});
+  assert.equal((await adapter['login.read']({workspaceId:'w',loginId:job.loginId})).state,'pending');
+  server.account={account:{type:'chatgpt'}};
+  for(const emit of server.events)await emit({method:'account/login/completed',params:{loginId:'provider-1',success:true}});
+  const completed=await adapter['login.read']({workspaceId:'w',loginId:job.loginId});
+  assert.equal(completed.state,'completed');assert.equal(completed.authenticated,true);
+  for(const emit of server.events)await emit({method:'account/login/completed',params:{loginId:'provider-1',success:false}});
+  assert.equal((await adapter['login.read']({workspaceId:'w',loginId:job.loginId})).state,'completed');
+  assert.equal(server.calls.some(call=>['thread/start','turn/start','account/logout'].includes(call.method)),false);
+});
+
+test('a definitive managed-login rejection permits an explicit retry without hiding unknown delivery',async()=>{
+  const {adapter,server}=await setup();let attempts=0;
+  server.request=async()=>{if(++attempts===1)throw new ProviderResponseError('provider login rejected');return {type:'chatgpt',loginId:'provider-2',authUrl:'https://auth.openai.com/authorize'};};
+  assert.equal((await adapter['login.start']({workspaceId:'w'})).state,'failed');
+  assert.equal((await adapter['login.start']({workspaceId:'w'})).state,'pending');
+});
+
+test('managed login rejects untrusted URLs and preserves an uncertain delivered start', async () => {
+  for(const authUrl of ['http://auth.openai.com/a','https://auth.openai.com.evil.test/a','https://user@auth.openai.com/a','https://auth.openai.com:8443/a','file:///tmp/a']){
+    const {adapter,server}=await setup();server.request=async()=>({type:'chatgpt',loginId:'provider-1',authUrl});
+    const job=await adapter['login.start']({workspaceId:'w'});
+    assert.equal(job.state,'unknown');assert.equal(job.authUrl,undefined);
+    await assert.rejects(adapter['login.open']({workspaceId:'w',loginId:job.loginId}),/login_unavailable/);
+    await assert.rejects(adapter['login.start']({workspaceId:'w'}),/login_in_progress/);
+  }
+});
+
+test('login cancellation never logs out an account and waits for its matched completion', async () => {
+  const {adapter,server}=await setup();const original=server.request.bind(server);
+  server.request=async(method,params)=>{if(method==='account/login/start')return {type:'chatgpt',loginId:'provider-1',authUrl:'https://chatgpt.com/auth'};if(method==='account/login/cancel'){server.calls.push({method,params});return {};}return original(method,params);};
+  const job=await adapter['login.start']({workspaceId:'w'});
+  assert.equal((await adapter['login.cancel']({workspaceId:'w',loginId:job.loginId})).state,'cancelling');
+  for(const emit of server.events)await emit({method:'account/login/completed',params:{loginId:'provider-1',success:false,error:'raw provider data excluded'}});
+  const cancelled=await adapter['login.read']({workspaceId:'w',loginId:job.loginId});
+  assert.equal(cancelled.state,'cancelled');assert.equal(cancelled.authenticated,true);
+  assert.equal(cancelled.error,undefined);
+  assert.deepEqual(server.calls.find(call=>call.method==='account/login/cancel')!.params,{loginId:'provider-1'});
+  assert.equal(server.calls.some(call=>call.method==='account/logout'),false);
+});
+
+for (const outcome of ['canceled','notFound','completed-during-cancel']) test(`native cancellation response resolves accurately: ${outcome}`,async()=>{
+  const {adapter,server}=await setup();const original=server.request.bind(server);
+  server.request=async(method,params)=>{
+    if(method==='account/login/start')return {type:'chatgpt',loginId:'provider-1',authUrl:'https://auth.openai.com/authorize'};
+    if(method==='account/login/cancel'){
+      if(outcome==='completed-during-cancel')for(const emit of server.events)await emit({method:'account/login/completed',params:{loginId:'provider-1',success:true}});
+      return {status:outcome==='notFound'?'notFound':'canceled'};
+    }
+    return original(method,params);
+  };
+  const job=await adapter['login.start']({workspaceId:'w'});
+  const receipt=await adapter['login.cancel']({workspaceId:'w',loginId:job.loginId});
+  assert.equal(receipt.state,outcome==='canceled'?'cancelled':outcome==='notFound'?'cancelling':'completed');
+  if(outcome==='canceled')assert.equal((await adapter['login.start']({workspaceId:'w'})).state,'pending');
+  if(outcome==='notFound')await assert.rejects(adapter['login.start']({workspaceId:'w'}),/login_in_progress/);
+  assert.equal(server.calls.some(c=>['account/logout','thread/start','turn/start'].includes(c.method)),false);
+});
+
+test('browser login expires after ten minutes and fences a new attempt until cancellation is confirmed', async t=>{
+  t.mock.timers.enable({apis:['Date'],now:100_000});
+  const {adapter,server}=await setup();const original=server.request.bind(server);
+  server.request=async(method,params)=>{if(method==='account/login/start')return {type:'chatgpt',loginId:'provider-1',authUrl:'https://auth.openai.com/authorize'};if(method==='account/login/cancel'){server.calls.push({method,params});return {};}return original(method,params);};
+  const job=await adapter['login.start']({workspaceId:'w'});assert.equal(job.expiresAt-job.startedAt,600_000);
+  assert.equal((await adapter['login.read']({workspaceId:'w'})).loginId,job.loginId);
+  t.mock.timers.tick(600_001);
+  assert.equal((await adapter['login.read']({workspaceId:'w',loginId:job.loginId})).state,'cancelling');
+  await assert.rejects(adapter['login.open']({workspaceId:'w',loginId:job.loginId}),/login_unavailable/);
+  await assert.rejects(adapter['login.start']({workspaceId:'w'}),/login_in_progress/);
+  for(const emit of server.events)await emit({method:'account/login/completed',params:{loginId:'provider-1',success:false}});
+  assert.equal((await adapter['login.read']({workspaceId:'w',loginId:job.loginId})).state,'expired');
+  assert.equal(server.calls.filter(call=>call.method==='account/login/cancel').length,1);
+});
+
 test('start without a message persists an idle session without a phantom Codex thread', async () => {
   const { adapter, server, mcp, dataDir } = await setup();
   const { sessionId } = await adapter.start({ workspaceId: 'w', record: { entity: 'tasks', id: 'r', title: 'Task' } });
@@ -1673,4 +1803,26 @@ test('a later turn retains authoritative transcript through its first history ou
     assert.deepEqual(recovered.messages.map(x => x.text), ['First question', 'First answer', 'Second question', 'Second partial response complete']);
     assert.equal(new Set(recovered.messages.map(x => x.id)).size, recovered.messages.length);
   } finally { await rm(dataDir, { recursive: true, force: true }); }
+});
+
+test('curated memory tools reach embedded chat with citations and requests stay native-review-only', async () => {
+  const {adapter,server,mcp}=await setup();const calls:any[]=[];const replies:any[]=[];
+  const original=mcp.request.bind(mcp);
+  mcp.request=async(method,params)=>{
+    if(method==='tools/list')return {tools:[...toolCatalog(),...['gigi_memory_search','gigi_memory_get','gigi_memory_request'].map(name=>({name,description:'Workspace memory is advisory; pending requires human review.',inputSchema:{type:'object'}}))]};
+    if(method==='tools/call'&&params.name.startsWith('gigi_memory_')){calls.push(params);return {content:[{type:'text',text:JSON.stringify(params.name==='gigi_memory_request'?{state:'pending_user_approval',requestId:'proposal'}:{items:[{text:'Morning rehearsal',state:'inferred',citation:'gigi-memory://w/m?revision=1'}]})}]};}
+    return original(method,params);
+  };
+  server.reply=(_id,result)=>{replies.push(result);};
+  await adapter.start({workspaceId:'w',message:'Remember rehearsal preferences'});
+  const profile=server.calls.find(x=>x.method==='thread/start')!.params;
+  assert.match(profile.baseInstructions,/Memory is advisory/);
+  assert.ok(profile.dynamicTools[0].tools.some((t:any)=>t.name==='gigi_memory_search'));
+  const emit=(tool:string,args:any)=>Promise.all(server.events.map(fn=>fn({id:2026,method:'item/tool/call',params:{threadId:'thread-1',tool,arguments:args}})));
+  await emit('gigi_memory_search',{query:'rehearsal',limit:1});
+  assert.equal(calls.at(-1).arguments.workspaceId,'w');assert.match(replies.at(-1).contentItems[0].text,/gigi-memory:\/\/w/);
+  await emit('gigi_memory_request',{requestId:'proposal',action:'save',entry:{text:'Morning rehearsal'}});
+  assert.match(replies.at(-1).contentItems[0].text,/pending_user_approval/);
+  const before=calls.length;await emit('gigi_memory_search',{workspaceId:'foreign',query:'rehearsal'});assert.equal(calls.length,before);assert.equal(replies.at(-1).success,false);
+  await emit('gigi_memory_review',{workspaceId:'w',requestId:'proposal',decision:'approve'});assert.equal(calls.length,before);assert.equal(replies.at(-1).success,false);
 });

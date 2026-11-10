@@ -1,0 +1,52 @@
+[
+  {
+    "repo": "public",
+    "suite": "rewrite",
+    "exit": 0
+  },
+  {
+    "repo": "public",
+    "suite": "creators",
+    "exit": 0
+  },
+  {
+    "repo": "public",
+    "suite": "regressions",
+    "exit": 0
+  },
+  {
+    "repo": "public",
+    "suite": "work",
+    "exit": 0
+  },
+  {
+    "repo": "public",
+    "suite": "quest",
+    "exit": 0
+  },
+  {
+    "repo": "dev",
+    "suite": "rewrite",
+    "exit": 0
+  },
+  {
+    "repo": "dev",
+    "suite": "creators",
+    "exit": 0
+  },
+  {
+    "repo": "dev",
+    "suite": "regressions",
+    "exit": 0
+  },
+  {
+    "repo": "dev",
+    "suite": "work",
+    "exit": 0
+  },
+  {
+    "repo": "dev",
+    "suite": "quest",
+    "exit": 0
+  }
+]

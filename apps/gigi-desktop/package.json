@@ -1,6 +1,6 @@
 {
   "name": "@create-something/gigi-desktop",
-  "version": "0.3.1",
+  "version": "0.3.5",
   "private": true,
   "type": "module",
   "scripts": {
@@ -20,10 +20,14 @@
     "dev:web": "vite",
     "build:web": "vite build",
     "astryx": "node node_modules/@astryxdesign/cli/clients/cli/bin/astryx.mjs",
-    "theme:build": "pnpm astryx theme build ui/gigi-theme.ts --out ui/gigi-theme.css",
+    "theme:build": "pnpm astryx theme build ui/gigi-theme.ts --out ui/gigi-theme.css && pnpm astryx theme build ui/gigi-dev-theme.ts --out ui/gigi-dev-theme.css",
     "test:rewrite": "node scripts/astryx-rewrite-browser.mjs",
     "test:creators": "node scripts/astryx-creators-browser.mjs",
-    "test:review-regressions": "node scripts/astryx-review-regressions.mjs"
+    "test:review-regressions": "node scripts/astryx-review-regressions.mjs",
+    "prepare:motion": "node scripts/prepare-motion.mjs",
+    "check:motion": "node scripts/prepare-motion.mjs --check",
+    "test:reconciled-work": "node scripts/dev-astryx-work-browser.mjs",
+    "test:reconciled-quest": "node scripts/dev-astryx-quest-browser.mjs"
   },
   "devDependencies": {
     "@astryxdesign/cli": "0.7.11",
@@ -37,6 +41,7 @@
     "@fontsource-variable/figtree": "5.3.0",
     "@stylexjs/stylex": "0.19.1",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "gsap": "3.15.1"
   }
 }

@@ -193,6 +193,7 @@ pub(crate) fn list(db: &Connection, wid: &str, input: &Value) -> Result<Value, S
         .map_err(|e| e.to_string())?;
     // One relation scan, scoped on both ends. Never multiply the result rows.
     let mut links: HashMap<String, Vec<String>> = HashMap::new();
+    let mut locations: HashMap<String, Vec<String>> = HashMap::new();
     let mut related=snapshot.prepare("SELECT CASE WHEN from_entity='gigs' THEN from_id ELSE to_id END, CASE WHEN from_entity='gigs' THEN to_entity ELSE from_entity END, CASE WHEN from_entity='gigs' THEN to_id ELSE from_id END FROM relations WHERE workspace_id=?1 AND ((from_entity='gigs' AND to_entity IN ('contacts','locations')) OR (to_entity='gigs' AND from_entity IN ('contacts','locations')))").map_err(|e|e.to_string())?;
     let relations = related
         .query_map([wid], |r| {
@@ -222,7 +223,8 @@ pub(crate) fn list(db: &Connection, wid: &str, input: &Value) -> Result<Value, S
     }
     for row in relations {
         let (id, entity, target) = row.map_err(|e| e.to_string())?;
-        if let Some(name) = names.get(&(entity, target)) {
+        if let Some(name) = names.get(&(entity.clone(), target)) {
+            if entity == "locations" { locations.entry(id.clone()).or_default().push(name.clone()); }
             links.entry(id).or_default().push(name.clone());
         }
     }
@@ -230,11 +232,14 @@ pub(crate) fn list(db: &Connection, wid: &str, input: &Value) -> Result<Value, S
         values.sort();
         values.dedup();
     }
+    for values in locations.values_mut() { values.sort(); values.dedup(); }
     let mut revision = Sha256::new();
     revision.update(serde_json::to_vec(&raw).unwrap());
     // A stable serialization also notices changed linked names between pages.
     let stable_links: std::collections::BTreeMap<_, _> = links.iter().collect();
     revision.update(serde_json::to_vec(&stable_links).unwrap());
+    let stable_locations: std::collections::BTreeMap<_, _> = locations.iter().collect();
+    revision.update(serde_json::to_vec(&stable_locations).unwrap());
     let revision = format!("{:x}", revision.finalize());
     let offset = if let Some(cursor) = input.get("cursor").filter(|v| !v.is_null()) {
         let value = cursor
@@ -302,7 +307,8 @@ pub(crate) fn list(db: &Connection, wid: &str, input: &Value) -> Result<Value, S
         if view != "all" && view != bucket {
             continue;
         }
-        let item = json!({"id":id,"workspaceId":wid,"entity":"gigs","title":title.chars().take(120).collect::<String>(),"titleTruncated":title.chars().count()>120,"status":status,"type":kind,"identity":crate::event_identity::project("gigs",&fields,&Value::Null),"date":date,"allDay":all_day,"callTime":fields["Call Time"],"setTime":fields["Set Time"],"updatedAt":updated,"moneyCents":money});
+        let place_names: Vec<_> = locations.get(&id).into_iter().flatten().take(4).map(|name|name.chars().take(160).collect::<String>()).collect();
+        let item = json!({"id":id,"workspaceId":wid,"entity":"gigs","title":title.chars().take(120).collect::<String>(),"titleTruncated":title.chars().count()>120,"status":status,"type":kind,"identity":crate::event_identity::project("gigs",&fields,&Value::Null),"date":date,"allDay":all_day,"callTime":fields["Call Time"],"setTime":fields["Set Time"],"updatedAt":updated,"moneyCents":money,"locationNames":place_names,"locationCount":locations.get(&id).map_or(0,Vec::len)});
         matches.push((when, updated, id, item));
     }
     matches.sort_by(|a, b| {

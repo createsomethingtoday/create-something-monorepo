@@ -145,7 +145,8 @@ details > summary {
   padding-block: var(--spacing-3);
   color: var(--color-text-secondary);
 }
-details[open] > summary {
+/* Content disclosures need a following gap; anchored navigation must not grow. */
+details[open]:not(.reference-dropdown) > summary {
   margin-block-end: var(--spacing-3);
 }
 .gigi-toast {
@@ -285,3 +286,226 @@ details[open] > summary {
     scroll-behavior: auto !important;
   }
 }
+
+/* GIGI_RECONCILED_WORK_STATES_START */
+/* Product states and the sticky seven-day calendar boundary only.
+   Astryx Grid/Stack/Section/ScrollableArea props own all layout and spacing. */
+.dev-today-home,
+.dev-calm-collection,
+.dev-work-detail,
+.dev-work-editor {
+  min-inline-size: 0;
+}
+.dev-calendar-scroll {
+  max-block-size: 25rem;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-container);
+}
+.dev-calendar-day-heading {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  background: var(--color-background-body);
+  border-block-end: var(--border-width) solid var(--color-border);
+}
+.dev-calendar-day-heading time {
+  border-radius: 50%;
+}
+.dev-calendar-day.is-today .dev-calendar-day-heading time {
+  background: var(--color-accent-muted);
+  color: var(--color-text-primary);
+  box-shadow: inset 0 0 0 var(--border-width) var(--color-border);
+}
+.dev-calendar-entry {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-element);
+  overflow-wrap: anywhere;
+}
+.dev-work-list,
+.dev-today-tasks {
+  overflow: hidden;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-container);
+}
+.dev-today-task-row,
+.dev-task-row,
+.dev-list-columns {
+  border-block-end: var(--border-width) solid var(--color-border);
+}
+.dev-today-task-row:last-child,
+.dev-task-row:last-child {
+  border-block-end: 0;
+}
+.dev-today-task-row.dev-list-columns {
+  background: var(--color-background-card);
+}
+.is-overdue,
+.dev-priority {
+  color: var(--color-text-error);
+}
+.dev-work-tabs [aria-pressed='true'] {
+  box-shadow: inset 0 0 0 var(--border-width) var(--color-border);
+}
+/* Rich record actions need content height; Button still owns padding and states. */
+.dev-calendar-event,
+.dev-record-name {
+  block-size: auto !important;
+  min-block-size: var(--size-element-lg);
+}
+
+/* GIGI_RECONCILED_WORK_STATES_END */
+
+/* GIGI_RECONCILED_QUEST_STATES_START */
+/* Astryx Stack/Grid/Text/Heading own the product frame, spacing and typography.
+   This sheet contains boundaries, content wrapping and the approved collage art.
+   Art coordinates are proportional to the original cutouts, never product layout. */
+.dev-quest-surface, .quest, .quest-mission, .quest-world,
+.quest-form, .quest-form > *, .guided-invitation > * { min-inline-size: 0; }
+.quest-header, .quest-footer, .guided-review, .guided-receipt,
+.guided-candidates, .guided-wins, .guided-phone,
+.guided-advanced, .guided-more, .guided-coverage {
+  border-color: var(--color-border);
+  border-style: solid;
+  border-width: 0;
+}
+.quest-header { border-block-end-width: var(--border-width); }
+.quest-footer, .guided-review, .guided-receipt, .guided-candidates,
+.guided-wins, .guided-phone, .guided-advanced, .guided-more, .guided-coverage {
+  border-block-start-width: var(--border-width);
+}
+.quest h1:focus { outline: none; }
+.quest summary { cursor: pointer; color: var(--color-text-secondary); }
+.quest summary:focus-visible {
+  outline: var(--spacing-0-5) solid var(--color-text-accent);
+  outline-offset: var(--spacing-1);
+}
+.quest-brand { letter-spacing: -.065em; }
+.quest-brand-dot {
+  inline-size: var(--spacing-1-5);
+  block-size: var(--spacing-1-5);
+  border-radius: var(--radius-circle, 50%);
+  background: var(--color-text-accent);
+}
+.quest-saved { border-inline-start: var(--spacing-0-5) solid var(--color-border); }
+.quest-error { color: var(--color-text-error); overflow-wrap: anywhere; }
+.quest-storage-warning { color: var(--color-text-secondary); }
+.quest-help, .quest-description, .quest-link-description, .guided-help, .guided-fact { overflow-wrap: anywhere; }
+.dev-quest-button { max-inline-size: 100%; white-space: normal; }
+.quest .quest-replay { white-space: nowrap; }
+.quest .guided-candidates .dev-quest-button,
+.quest .guided-wins .dev-quest-button { text-align: start; }
+.guided-intents .dev-quest-button[aria-pressed=true] {
+  border-color: var(--color-border-green);
+  background: var(--color-background-green);
+}
+.guided-preview-list { max-block-size: 15rem; }
+.guided-invitation {
+  border-inline-start: var(--spacing-0-5) solid var(--color-text-accent);
+  background: var(--color-background-surface);
+  border-radius: 0 var(--radius-container) var(--radius-container) 0;
+}
+.dev-quest-surface .config {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--font-family-mono, monospace);
+  background: var(--color-background-surface);
+  border: var(--border-width) solid var(--color-border);
+}
+.dev-quest-resume:empty { display: none; }
+/* The map is a four-stop diagram. Grid owns tracks; Stack owns every node. */
+.quest-route, .quest-map, .quest-node { position: relative; }
+.quest-route::before {
+  content: ""; position: absolute; inset-block-start: 1.0625rem;
+  inset-inline: 12.5%; block-size: var(--border-width); background: var(--color-border);
+}
+.quest-node-mark {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-circle, 50%);
+  background: var(--color-background-body);
+  color: var(--color-text-secondary);
+}
+.quest-node[aria-current=step] .quest-node-mark { border-color: var(--color-text-accent); color: var(--color-text-accent); }
+.quest-node-complete .quest-node-mark { background: var(--color-text-accent); color: var(--color-background-body); border-color: var(--color-text-accent); }
+.quest-wayfinder {
+  position: absolute; z-index: 1; inset-block-start: -.25rem;
+  inset-inline-start: calc(var(--quest-position) - 1.3125rem);
+  inline-size: 2.625rem; block-size: 2.625rem;
+  border: var(--border-width) solid var(--color-text-accent);
+  border-radius: var(--radius-circle, 50%); pointer-events: none;
+}
+.quest-wayfinder[data-current="0"] { --quest-position: 12.5%; }
+.quest-wayfinder[data-current="1"] { --quest-position: 37.5%; }
+.quest-wayfinder[data-current="2"] { --quest-position: 62.5%; }
+.quest-wayfinder[data-current="3"] { --quest-position: 87.5%; }
+/* Approved decorative cutout composition; data/readback never depends on it. */
+.quest-illustration {
+  /* Fixed-light paper is part of the collage, synthesized from existing theme roles. */
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-container);
+  background: color-mix(in srgb, var(--color-on-dark) 88%, var(--color-background-yellow));
+  overflow: hidden;
+}
+.quest-illustration figcaption .astryx-text { color: color-mix(in srgb, var(--color-on-light) 65%, var(--color-on-dark)); }
+.quest-scene { position: relative; inline-size: 100%; aspect-ratio: 560/340; isolation: isolate; overflow: hidden; }
+.quest-collage-canvas, .quest-divider-set, .quest-crate { position: absolute; inset: 0; }
+.quest-paper-stamp {
+  position: absolute; z-index: 8; inset-inline-start: 6%; inset-block-start: 19%;
+  inline-size: 12%; aspect-ratio: 1; border: var(--border-width) solid var(--color-border-green);
+  border-radius: var(--radius-circle, 50%); color: color-mix(in srgb, var(--color-on-light) 60%, var(--color-text-accent));
+  font-family: Georgia, serif; font-size: clamp(1.5rem, 3.2vw, 2.625rem);
+  line-height: 1; letter-spacing: -.1em; rotate: -9deg; background: color-mix(in srgb, var(--color-on-dark) 85%, var(--color-text-accent));
+  text-align: center; align-content: center;
+}
+.quest-divider {
+  position: absolute; z-index: 2; inline-size: 21%; block-size: 41%;
+  border: var(--border-width) solid var(--color-border); border-radius: var(--radius-control) var(--radius-control) 0 0;
+  background: color-mix(in srgb, var(--color-on-dark) 90%, var(--color-background-yellow)); color: var(--color-on-light);
+  font-family: Georgia, serif; text-align: center;
+}
+.quest-divider-music { inset-inline-start: 68%; inset-block-start: 0; rotate: 5deg; background: color-mix(in srgb, var(--color-on-dark) 70%, var(--color-text-accent)); }
+.quest-divider-people { inset-inline-start: 46%; inset-block-start: 0; rotate: 1deg; background: color-mix(in srgb, var(--color-on-dark) 84%, var(--color-background-yellow)); }
+.quest-divider-gigs { inset-inline-start: 24%; inset-block-start: 0; rotate: -5deg; }
+.quest-crate { pointer-events: none; }
+.quest-crate img { position: absolute; inset-inline-start: 9%; inset-block-start: 0; inline-size: 93%; block-size: auto; }
+.quest-crate-back { z-index: 1; }
+.quest-crate-front { z-index: 7; clip-path: polygon(0 51%,13% 60%,87% 60%,100% 51%,100% 100%,0 100%); }
+.quest-vinyl { position: absolute; z-index: 3; inset-inline-start: 33%; inset-block-start: 14%; inline-size: 64%; block-size: 74%; }
+.quest-vinyl img, .quest-musician img { display: block; inline-size: 100%; block-size: 100%; object-fit: contain; }
+.quest-collage-with-person .quest-vinyl { inset-inline-start: 39%; inset-block-start: 14%; inline-size: 62%; block-size: 74%; }
+.quest-musician { position: absolute; z-index: 4; inset-inline-start: 9%; inset-block-start: 17%; inline-size: 42%; block-size: 68%; rotate: -8deg; }
+.quest-musician-example { filter: contrast(.93); }
+.quest-collage-with-person .quest-paper-stamp { inset-inline-start: 7%; inset-block-start: 7%; inline-size: 9%; font-size: clamp(1.125rem,3vw,1.5rem); }
+.quest-photo-connection { position: absolute; z-index: 6; inset: 0; inline-size: 100%; block-size: 100%; overflow: visible; color: var(--color-text-accent); }
+@media (prefers-reduced-motion: reduce) {
+  .quest *, .quest *::before, .quest *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+/* GIGI_RECONCILED_QUEST_STATES_END */
+
+/* GIGI_RECONCILED_NAVIGATION_STATES_START */
+/* Native disclosure positioning is the documented WebKit fallback. Astryx
+   Stack/StackItem/Button/Badge props own frame, rows, spacing and sizing. */
+.gigi-dev-topbar { background: var(--color-background-body); min-inline-size: 0; position: relative; z-index: 20; }
+.gigi-nav-brand { font-size: calc(var(--text-body-size) * 1.5); font-weight: var(--font-weight-semibold); letter-spacing: -.06em; }
+.gigi-dev-topbar .reference-find { color: var(--color-text-secondary); }
+.gigi-dev-topbar kbd { font: inherit; font-size: var(--text-supporting-size); }
+.gigi-dev-topbar .reference-dropdown { position: relative; }
+.gigi-dev-topbar .reference-dropdown > summary { color: var(--color-text-primary); border-radius: var(--radius-element); list-style: none; white-space: nowrap; cursor: pointer; }
+.gigi-dev-topbar .reference-dropdown > summary::-webkit-details-marker { display: none; }
+.gigi-dev-topbar .reference-dropdown > summary:hover { background: var(--color-neutral); }
+.gigi-dev-topbar .reference-dropdown > summary:focus-visible { outline: var(--focus-outline-width) solid var(--color-accent); outline-offset: var(--focus-outline-offset); }
+.gigi-dev-topbar .reference-dropdown > summary.selected,
+.gigi-dev-topbar .reference-today[aria-current='page'] { color: var(--color-text-accent); background: var(--color-accent-muted); }
+.gigi-dev-topbar .reference-menu { position: absolute; inset-block-start: calc(100% + var(--spacing-2)); inset-inline-end: 0; inline-size: min(calc(var(--spacing-12) * 6), calc(100vw - var(--spacing-6))); max-block-size: calc(100dvh - var(--spacing-12) * 2); background: var(--color-background-popover); border: var(--border-width) solid var(--color-border-emphasized); border-radius: var(--radius-container); box-shadow: var(--shadow-med); z-index: 30; }
+.gigi-dev-topbar .reference-menu button[aria-current='page'] { color: var(--color-text-accent); background: var(--color-accent-muted); }
+.gigi-dev-topbar .reference-menu-current { color: var(--color-text-accent); }
+.gigi-dev-topbar .reference-menu-footer { border-block-start: var(--border-width) solid var(--color-border); overflow-wrap: anywhere; }
+.gigi-nav-icon { inline-size: var(--spacing-4); block-size: var(--spacing-4); }
+.gigi-dev-topbar .reference-date { border: var(--border-width) solid var(--color-text-accent); border-block-start-width: var(--spacing-1); border-radius: var(--radius-inner); font-variant-numeric: tabular-nums; }
+@media (max-width: 47rem) {
+ .gigi-dev-topbar .reference-menu { position: fixed; inset-block-start: calc(var(--size-element-md) * 2 + var(--spacing-6)); inset-inline: var(--spacing-3); inline-size: auto; max-block-size: calc(100dvh - var(--size-element-md) * 2 - var(--spacing-9)); }
+}
+
+/* GIGI_RECONCILED_NAVIGATION_STATES_END */
+
+.memory-row { border-block-start: var(--border-width-1, 1px) solid var(--color-border-primary); overflow-wrap: anywhere; }

@@ -31,6 +31,31 @@ const CONTACT_SEARCH_SQL: &str = "SELECT id,title,status,updated_at,json_extract
 pub(crate) fn search_fold(value: &str) -> String {
     value.nfd().filter(|ch| !is_combining_mark(*ch)).collect::<String>().to_lowercase()
 }
+
+// Deliberately narrow mailbox parsing: unsupported/ambiguous headers require
+// manual entry, never a guessed person. No provider-specific dot/plus folding.
+fn contact_email(value: &str) -> Option<String> {
+    let email=value.trim().to_ascii_lowercase();
+    if !email.is_ascii() || email.len()>254 {return None}
+    let parts:Vec<_>=email.split('@').collect();
+    if parts.len()!=2 {return None}
+    let(local,domain)=(parts[0],parts[1]);
+    if local.is_empty() || local.len()>64 || local.starts_with('.') || local.ends_with('.') || local.contains("..")
+        || !local.bytes().all(|b|b.is_ascii_alphanumeric() || b"!#$%&'*+-/=?^_`{|}~.".contains(&b))
+        || !domain.contains('.') || !domain.split('.').all(|label| !label.is_empty() && label.len()<=63
+            && label.as_bytes()[0].is_ascii_alphanumeric() && label.as_bytes()[label.len()-1].is_ascii_alphanumeric()
+            && label.bytes().all(|b|b.is_ascii_alphanumeric() || b==b'-')) {return None}
+    Some(email)
+}
+fn gmail_sender_email(value:&Value)->Result<String,String>{
+    let header=value.as_str().unwrap_or("").trim();
+    if header.is_empty() || header.chars().count()>320 || header.chars().any(|c|c.is_control() || ",;()".contains(c)) {return Err("Email must have one unambiguous sender; add the contact manually".into())}
+    let email=if let Some(start)=header.find('<') {
+        if !header.ends_with('>') || header[start+1..header.len()-1].contains(['<','>']) || header[..start].contains('>') {return Err("Email must have one unambiguous sender".into())}
+        &header[start+1..header.len()-1]
+    }else{header};
+    contact_email(email).ok_or_else(||"Email must have one unambiguous sender; add the contact manually".into())
+}
 pub(crate) fn search_contacts(db: &Connection, wid: &str, query: &str, offset: i64, limit: i64) -> Result<Value,String> {
     // Both scans see the same state even if an agent edits companies concurrently.
     let snapshot = db.unchecked_transaction().map_err(|e|e.to_string())?;
@@ -211,22 +236,23 @@ fn valid_iso_day(day: &str) -> bool {
 
 fn overview_section(db: &Connection, wid: &str, entity: &str, cte: &str, order: &str, field_names: &[&str]) -> Result<Value, String> {
     let count: i64 = db.query_row(&format!("{cte} SELECT count(*) FROM eligible"), [wid], |r| r.get(0)).map_err(|e| e.to_string())?;
-    let sql = format!("{cte} SELECT id,title,status,day,money_cents,fields_json FROM eligible ORDER BY {order} LIMIT 5");
+    let sql = format!("{cte} SELECT id,title,status,day,money_cents,fields_json,source_json FROM eligible ORDER BY {order} LIMIT 5");
     let mut stmt = db.prepare(&sql).map_err(|e| e.to_string())?;
     let rows = stmt.query_map([wid], |r| {
-        Ok((r.get::<_,String>(0)?, r.get::<_,String>(1)?, r.get::<_,Option<String>>(2)?, r.get::<_,Option<String>>(3)?, r.get::<_,Option<i64>>(4)?, r.get::<_,String>(5)?))
+        Ok((r.get::<_,String>(0)?, r.get::<_,String>(1)?, r.get::<_,Option<String>>(2)?, r.get::<_,Option<String>>(3)?, r.get::<_,Option<i64>>(4)?, r.get::<_,String>(5)?, r.get::<_,String>(6)?))
     }).map_err(|e| e.to_string())?;
     let mut items = Vec::new();
     for row in rows {
-        let (id, title, status, day, money, stored_fields) = row.map_err(|e| e.to_string())?;
+        let (id, title, status, day, money, stored_fields, stored_source) = row.map_err(|e| e.to_string())?;
         let fields: Value = serde_json::from_str(&stored_fields).map_err(|e| e.to_string())?;
+        let source: Value = serde_json::from_str(&stored_source).map_err(|e| e.to_string())?;
         let selected = field_names.iter().filter_map(|key| match fields.get(*key) {
             Some(Value::String(value)) => Some(((*key).to_string(), json!(value.chars().take(160).collect::<String>()))),
             Some(Value::Null) => Some(((*key).to_string(), Value::Null)),
             _ => None,
         }).collect::<serde_json::Map<String, Value>>();
         let truncated = title.chars().count() > 120;
-        items.push(json!({"id":id,"workspaceId":wid,"entity":entity,"title":title.chars().take(120).collect::<String>(),"titleTruncated":truncated,"status":status.map(|s|s.chars().take(160).collect::<String>()),"date":day,"moneyCents":money,"fields":selected}));
+        items.push(json!({"id":id,"workspaceId":wid,"entity":entity,"title":title.chars().take(120).collect::<String>(),"titleTruncated":truncated,"status":status.map(|s|s.chars().take(160).collect::<String>()),"date":day,"moneyCents":money,"fields":selected,"source":crate::agenda::source_summary(&source)}));
     }
     Ok(json!({"items":items,"count":count}))
 }
@@ -238,9 +264,9 @@ fn overview(db: &Connection, wid: &str, today: &str) -> Result<Value, String> {
     let is_valid = |column: &str| format!("{column} GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(julianday({column}))={column}");
     let valid_day = is_valid("day");
     let active = "lower(trim(coalesce(status,''))) NOT IN ('done','complete','completed','cancelled','canceled')";
-    let gigs_cte = format!("WITH source AS (SELECT id,title,status,substr(occurred_at,1,10) AS day,money_cents,fields_json FROM gigs WHERE workspace_id=?1), eligible AS (SELECT * FROM source WHERE {active} AND {valid_day} AND day>='{today}')");
-    let tasks_cte = format!("WITH source AS (SELECT id,title,status,substr(json_extract(fields_json,'$.\"Due Date\"'),1,10) AS due_day,substr(json_extract(fields_json,'$.\"Do Date\"'),1,10) AS do_day,money_cents,fields_json FROM tasks WHERE workspace_id=?1), resolved AS (SELECT *,CASE WHEN {due_valid} THEN due_day WHEN {do_valid} THEN do_day ELSE NULL END AS day FROM source), eligible AS (SELECT * FROM resolved WHERE {active})",due_valid=is_valid("due_day"),do_valid=is_valid("do_day"));
-    let finances_cte = format!("WITH source AS (SELECT id,title,status,substr(json_extract(fields_json,'$.\"Due Date\"'),1,10) AS due_day,substr(occurred_at,1,10) AS occurred_day,money_cents,fields_json FROM finances WHERE workspace_id=?1), resolved AS (SELECT *,CASE WHEN {due_valid} THEN due_day WHEN {occurred_valid} THEN occurred_day ELSE NULL END AS day FROM source), eligible AS (SELECT * FROM resolved WHERE lower(trim(coalesce(status,''))) IN ('expected','invoiced','overdue'))",due_valid=is_valid("due_day"),occurred_valid=is_valid("occurred_day"));
+    let gigs_cte = format!("WITH source AS (SELECT id,title,status,substr(occurred_at,1,10) AS day,money_cents,fields_json,source_json FROM gigs WHERE workspace_id=?1), eligible AS (SELECT * FROM source WHERE {active} AND {valid_day} AND day>='{today}')");
+    let tasks_cte = format!("WITH source AS (SELECT id,title,status,substr(json_extract(fields_json,'$.\"Due Date\"'),1,10) AS due_day,substr(json_extract(fields_json,'$.\"Do Date\"'),1,10) AS do_day,money_cents,fields_json,source_json FROM tasks WHERE workspace_id=?1), resolved AS (SELECT *,CASE WHEN {due_valid} THEN due_day WHEN {do_valid} THEN do_day ELSE NULL END AS day FROM source), eligible AS (SELECT * FROM resolved WHERE {active})",due_valid=is_valid("due_day"),do_valid=is_valid("do_day"));
+    let finances_cte = format!("WITH source AS (SELECT id,title,status,substr(json_extract(fields_json,'$.\"Due Date\"'),1,10) AS due_day,substr(occurred_at,1,10) AS occurred_day,money_cents,fields_json,source_json FROM finances WHERE workspace_id=?1), resolved AS (SELECT *,CASE WHEN {due_valid} THEN due_day WHEN {occurred_valid} THEN occurred_day ELSE NULL END AS day FROM source), eligible AS (SELECT * FROM resolved WHERE lower(trim(coalesce(status,''))) IN ('expected','invoiced','overdue'))",due_valid=is_valid("due_day"),occurred_valid=is_valid("occurred_day"));
     let gigs = overview_section(db,wid,"gigs",&gigs_cte,"day ASC,id ASC", &["Date"])?;
     let tasks = overview_section(db,wid,"tasks",&tasks_cte,"day IS NULL,day ASC,id ASC", &["Due Date","Do Date","Priority"])?;
     let finances = overview_section(db,wid,"finances",&finances_cte,"day IS NULL,day ASC,id ASC", &["Date","Due Date","Direction"])?;
@@ -426,6 +452,7 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
     if !input.is_object() {
         return Err("input must be an object".into());
     }
+    if op.starts_with("memory.") { return crate::memory::dispatch(root,op,input); }
     let mut db = open(root)?;
     match op {
         "schema.describe" => {
@@ -497,6 +524,10 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
             let number=|key:&str,default:u64,max:u64|->Result<usize,String>{match input.get(key){None=>Ok(default as usize),Some(v)=>v.as_u64().filter(|n|*n<=max && (key!="limit" || *n>0)).map(|n|n as usize).ok_or_else(||format!("Invalid agenda {key}"))}};
             crate::agenda::list(&db,wid,today,zone,kind,number("offset",0,10000)?,number("limit",5,50)?)
         }
+        "today.read" => {
+            let wid=need(&input,"workspaceId")?;workspace(&db,wid)?;
+            crate::today::read(&db,wid,need(&input,"today")?,need(&input,"timeZone")?,input.get("weekStart").map(|v|v.as_str().ok_or("weekStart must be text")).transpose()?)
+        }
         "workspace.overview" => {
             let wid = need(&input, "workspaceId")?;
             let today = need(&input, "today")?;
@@ -537,13 +568,14 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
             }
             // Resolve attribution from stored data inside the creation transaction.
             let conversion = if let Some(reference) = input.get("sourceRecord") {
-                if !["tasks", "gigs"].contains(&entity) || input.get("source").is_some()
+                if !["tasks", "gigs", "contacts"].contains(&entity) || input.get("source").is_some()
                     || input.get("expectedRecord").is_some() || input.get("fieldsMode").is_some() {
-                    return Err("source conversion requires a new task or gig without source overrides".into());
+                    return Err("source conversion requires a new task, gig or Gmail contact without source overrides".into());
                 }
                 need(&input, "idempotencyKey")?;
                 let from = need(reference, "entity")?;
                 let provider = match from { "interactions" => "gmail", "schedule" => "googlecalendar", _ => return Err("invalid source record type".into()) };
+                if entity=="contacts" && from!="interactions" {return Err("Contacts can only be reviewed from imported Gmail senders".into())}
                 let origin_id = need(reference, "id")?;
                 let account = need(reference, "connectedAccountId")?;
                 let origin = get(&tx, wid, from, origin_id)?;
@@ -559,6 +591,13 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
                 }
                 need(&attribution, "externalId")?;
                 need(&attribution, "collectionId")?;
+                if entity=="contacts" {
+                    let sender=gmail_sender_email(&attribution["preview"]["from"])?;
+                    if fields.get("Email").and_then(Value::as_str).and_then(contact_email).as_deref()!=Some(&sender) {
+                        return Err("Review the exact sender email; a different person must be added manually".into());
+                    }
+                    fields["Email"]=json!(sender);
+                }
                 attribution["kind"] = json!("derived");
                 let c = catalog();
                 let roles = c[entity]["relationFields"].as_object().ok_or("relation catalog unavailable")?;
@@ -568,6 +607,35 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
                 if exists { return Err("source conversion cannot overwrite an existing record".into()); }
                 Some((from.to_string(), origin_id.to_string(), role, attribution))
             } else { None };
+            // Contact source identity takes precedence over email, so later local
+            // corrections cannot make the same reviewed source create a duplicate.
+            // Deduplication and relation creation share this IMMEDIATE transaction.
+            if entity=="contacts" {
+                if let Some((from,origin_id,role,attribution))=&conversion {
+                    let key=json!([attribution["provider"],attribution["connectedAccountId"],attribution["collectionId"],attribution["externalId"]]).to_string();
+                    let mut matched=Vec::new();
+                    {
+                        let mut stmt=tx.prepare("SELECT id FROM contacts c WHERE workspace_id=?1 AND (source_key=?2 OR EXISTS(SELECT 1 FROM relations r WHERE r.workspace_id=?1 AND ((r.from_entity='contacts' AND r.from_id=c.id AND r.to_entity=?3 AND r.to_id=?4) OR (r.to_entity='contacts' AND r.to_id=c.id AND r.from_entity=?3 AND r.from_id=?4))))").map_err(|e|e.to_string())?;
+                        for row in stmt.query_map(params![wid,key,from,origin_id],|r|r.get::<_,String>(0)).map_err(|e|e.to_string())? {matched.push(row.map_err(|e|e.to_string())?)}
+                    }
+                    if matched.is_empty() {
+                        let expected=fields["Email"].as_str().unwrap();
+                        let mut stmt=tx.prepare("SELECT id,json_extract(fields_json,'$.Email') FROM contacts WHERE workspace_id=?1").map_err(|e|e.to_string())?;
+                        for row in stmt.query_map([wid],|r|Ok((r.get::<_,String>(0)?,r.get::<_,Option<String>>(1)?))).map_err(|e|e.to_string())? {
+                            let(id,email)=row.map_err(|e|e.to_string())?;
+                            if email.as_deref().and_then(contact_email).as_deref()==Some(expected) {matched.push(id)}
+                        }
+                    }
+                    if matched.len()>1 {return Err("More than one contact matches this sender. Review the existing contacts before saving".into())}
+                    if let Some(existing)=matched.first() {
+                        let linked=tx.execute("INSERT OR IGNORE INTO relations VALUES(?1,'contacts',?2,?3,?4,?5)",params![wid,existing,role,from,origin_id]).map_err(|e|e.to_string())?;
+                        let mut result=get(&tx,wid,entity,existing)?;
+                        result["sourceProposal"]=json!({"outcome":"existing","sourceEntity":from,"sourceId":origin_id});
+                        if linked>0 {history(&tx,wid,"relations.link",Some(entity),Some(existing),"Linked reviewed Gmail sender to existing contact")?;}
+                        receipt(&tx,wid,op,&input,&result)?;tx.commit().map_err(|e|e.to_string())?;return Ok(result)
+                    }
+                }
+            }
             let prior:Option<(String,String,Option<String>,String)>=tx.query_row(&format!("SELECT title,source_json,source_key,fields_json FROM {entity} WHERE workspace_id=?1 AND id=?2"),params![wid,id],|r|Ok((r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)?))).optional().map_err(|e|e.to_string())?;
             if let Some(expected) = input.get("expectedRecord") {
                 let expected_title = expected.get("title").and_then(Value::as_str).ok_or("expectedRecord requires title, fields, and source")?;
@@ -742,6 +810,9 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
             workspace(&db, wid)?;
             if entity == "gigs" && input.get("gigs").is_some() {
                 return crate::gig_list::list(&db, wid, &input);
+            }
+            if entity == "tasks" && input.get("tasks").is_some() {
+                return crate::task_list::list(&db, wid, &input);
             }
             let limit = input
                 .get("limit")
@@ -1000,6 +1071,86 @@ mod tests {
         json!({"workspaceId":wid,"entity":target,"id":Uuid::new_v4().to_string(),"title":"Review source","fields":{"Status":"Open"},"idempotencyKey":"proposal-one","sourceRecord":{"entity":from,"id":record["id"],"connectedAccountId":"ca_one","expectedRecord":{"title":record["title"],"fields":record["fields"],"source":record["source"]}}})
     }
 
+    fn contact_proposal(root: &Path) -> Value {
+        let mut input=source_proposal(root,"interactions","contacts");
+        let mut source=input["sourceRecord"]["expectedRecord"]["source"].clone();
+        source["preview"]=json!({"from":"Synthetic Booker <BOOKER@example.test>"});
+        let origin=dispatch(root,"records.save",json!({"workspaceId":input["workspaceId"],"entity":"interactions","id":input["sourceRecord"]["id"],"title":"Synthetic source","source":source})).unwrap();
+        input["sourceRecord"]["expectedRecord"]=json!({"title":origin["title"],"fields":origin["fields"],"source":origin["source"]});
+        input["fields"]=json!({"Email":"booker@example.test"});
+        input
+    }
+
+    #[test]
+    fn gmail_contact_conversion_reuses_exact_email_and_links_without_overwriting() {
+        let root=temp();let input=contact_proposal(&root);
+        let existing=dispatch(&root,"records.save",json!({"workspaceId":input["workspaceId"],"entity":"contacts","title":"Edited booker","fields":{"Email":"Booker@Example.test","Phone":"555-0100"}})).unwrap();
+        let saved=dispatch(&root,"records.save",input.clone()).unwrap();
+        assert_eq!(saved["id"],existing["id"]);assert_eq!(saved["title"],"Edited booker");
+        assert_eq!(saved["fields"],existing["fields"]);assert_eq!(saved["source"],existing["source"]);
+        assert_eq!(saved["sourceProposal"]["outcome"],"existing");assert_eq!(saved["relationCount"],1);
+        assert_eq!(dispatch(&root,"records.save",input.clone()).unwrap(),saved);
+        dispatch(&root,"records.save",json!({"workspaceId":input["workspaceId"],"entity":"contacts","id":existing["id"],"title":"Corrected again","fields":{"Email":"corrected@example.test"}})).unwrap();
+        let mut repeated=input.clone();repeated["id"]=json!(Uuid::new_v4().to_string());repeated["idempotencyKey"]=json!("second-contact-review");
+        let reused=dispatch(&root,"records.save",repeated.clone()).unwrap();
+        assert_eq!(reused["id"],existing["id"]);assert_eq!(reused["fields"]["Email"],"corrected@example.test");
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":input["workspaceId"],"entity":"contacts"})).unwrap()["count"],1);
+        let lookup=json!({"workspaceId":input["workspaceId"],"entity":"contacts","id":repeated["id"],"saveReceipt":{"idempotencyKey":repeated["idempotencyKey"],"expectedInput":repeated}});
+        assert_eq!(dispatch(&root,"records.get",lookup).unwrap()["record"]["id"],existing["id"]);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn gmail_contact_conversion_creates_once_across_source_messages_and_workspaces() {
+        let root=temp();let input=contact_proposal(&root);
+        let foreign=Uuid::new_v4().to_string();open(&root).unwrap().execute("INSERT INTO workspaces(id,name) VALUES(?1,'Foreign synthetic')",[&foreign]).unwrap();
+        dispatch(&root,"records.save",json!({"workspaceId":foreign,"entity":"contacts","title":"Foreign booker","fields":{"Email":"booker@example.test"}})).unwrap();
+        let first=dispatch(&root,"records.save",input.clone()).unwrap();
+        assert_eq!(first["sourceProposal"]["outcome"],"created");assert_eq!(first["fields"]["Email"],"booker@example.test");
+        let mut attribution=input["sourceRecord"]["expectedRecord"]["source"].clone();attribution["externalId"]=json!("another-message");
+        let origin=dispatch(&root,"records.save",json!({"workspaceId":input["workspaceId"],"entity":"interactions","title":"Second synthetic inquiry","source":attribution})).unwrap();
+        let mut second=input.clone();second["id"]=json!(Uuid::new_v4().to_string());second["idempotencyKey"]=json!("second-message-contact");
+        second["sourceRecord"]=json!({"entity":"interactions","id":origin["id"],"connectedAccountId":"ca_one","expectedRecord":{"title":origin["title"],"fields":origin["fields"],"source":origin["source"]}});
+        let reused=dispatch(&root,"records.save",second).unwrap();
+        assert_eq!(reused["id"],first["id"]);assert_eq!(reused["relationCount"],2);assert_eq!(reused["source"],first["source"]);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn gmail_contact_conversion_holds_ambiguous_matches_and_rejects_unsafe_scope_without_writes() {
+        let root=temp();let input=contact_proposal(&root);
+        for title in ["Duplicate one","Duplicate two"] {dispatch(&root,"records.save",json!({"workspaceId":input["workspaceId"],"entity":"contacts","title":title,"fields":{"Email":"booker@example.test"}})).unwrap();}
+        assert!(dispatch(&root,"records.save",input.clone()).unwrap_err().contains("More than one contact"));
+        let mut wrong_email=input.clone();wrong_email["fields"]["Email"]=json!("another@example.test");
+        assert!(dispatch(&root,"records.save",wrong_email).unwrap_err().contains("exact sender"));
+        let mut wrong_account=input.clone();wrong_account["sourceRecord"]["connectedAccountId"]=json!("ca_other");
+        assert!(dispatch(&root,"records.save",wrong_account).is_err());
+        let mut stale=input.clone();stale["sourceRecord"]["expectedRecord"]["title"]=json!("stale");
+        assert!(dispatch(&root,"records.save",stale).is_err());
+        let other=Uuid::new_v4().to_string();open(&root).unwrap().execute("INSERT INTO workspaces(id,name) VALUES(?1,'Other synthetic')",[&other]).unwrap();
+        let mut wrong_workspace=input.clone();wrong_workspace["workspaceId"]=json!(other);
+        assert!(dispatch(&root,"records.save",wrong_workspace).is_err());
+        let calendar=source_proposal(&root,"schedule","contacts");assert!(dispatch(&root,"records.save",calendar).is_err());
+        for header in ["a@example.test, b@example.test","Group: a@example.test;","<a@example.test> trailing","a@example.test\nBcc: b@example.test","a..b@example.test"] {assert!(gmail_sender_email(&json!(header)).is_err());}
+        let db=open(&root).unwrap();for table in ["relations","mutation_receipts"] {assert_eq!(db.query_row(&format!("SELECT count(*) FROM {table}"),[],|r|r.get::<_,i64>(0)).unwrap(),0);}
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn gmail_contact_relation_failure_rolls_back_new_contact_and_existing_reuse() {
+        for reuse in [false,true] {
+            let root=temp();let input=contact_proposal(&root);
+            if reuse {dispatch(&root,"records.save",json!({"workspaceId":input["workspaceId"],"entity":"contacts","title":"Preserved","fields":{"Email":"booker@example.test"}})).unwrap();}
+            let before=dispatch(&root,"history.list",json!({"workspaceId":input["workspaceId"]})).unwrap();
+            open(&root).unwrap().execute_batch("CREATE TRIGGER reject_contact_link BEFORE INSERT ON relations BEGIN SELECT RAISE(ABORT,'synthetic relation failure'); END;").unwrap();
+            assert!(dispatch(&root,"records.save",input.clone()).is_err());
+            assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":input["workspaceId"],"entity":"contacts"})).unwrap()["count"],if reuse {1}else{0});
+            assert_eq!(dispatch(&root,"history.list",json!({"workspaceId":input["workspaceId"]})).unwrap(),before);
+            assert_eq!(open(&root).unwrap().query_row("SELECT count(*) FROM mutation_receipts",[],|r|r.get::<_,i64>(0)).unwrap(),0);
+            fs::remove_dir_all(root).unwrap();
+        }
+    }
+
     #[test]
     fn contact_relations_can_be_read_to_the_end_without_duplicates_or_writes() {
         let root=temp();let wid=dispatch(&root,"workspace.create",json!({"name":"Synthetic many meetings"})).unwrap()["id"].as_str().unwrap().to_owned();
@@ -1133,6 +1284,46 @@ mod tests {
         let read_all=|limit:i64|{let mut cursor=Value::Null;let mut ids=Vec::new();loop{let page=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"finances","limit":limit,"cursor":cursor})).unwrap();assert_eq!(page["count"].as_u64().unwrap() as usize,expected.len());for item in page["items"].as_array().unwrap(){let id=item["id"].as_str().unwrap().to_string();assert_eq!(item["date"],json!(originals[&id]),"date/offset must not be rewritten");ids.push(id);}cursor=page["nextCursor"].clone();if cursor.is_null(){break;}}ids};
         let expected_ids:Vec<_>=expected.iter().map(|item|item.2.clone()).collect();
         assert_eq!(read_all(7),expected_ids);assert_eq!(read_all(50),expected_ids);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn overview_preserves_only_saved_source_summary_without_changing_filters_or_records() {
+        let root=temp();let wid=dispatch(&root,"workspace.create",json!({"name":"Synthetic source freshness"})).unwrap()["id"].clone();
+        let observed="2026-10-29T09:15:00-05:00";
+        let source=|provider:&str,id:&str,stamp:Option<&str>|{
+            let mut value=json!({"kind":"import","provider":provider,"connectedAccountId":"private-account","collectionId":"private-collection","externalId":id,"preview":{"snippet":"private source payload"}});
+            if let Some(stamp)=stamp {value["observedAt"]=json!(stamp);}value
+        };
+        let save=|entity:&str,title:&str,fields:Value,source:Value|dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":entity,"title":title,"fields":fields,"source":source})).unwrap();
+        let calendar=save("schedule","Imported calendar",json!({"Date":"2026-11-06"}),source("googlecalendar","calendar",Some(observed)));
+        let imported_gig=save("gigs","Locally edited gig",json!({"Date":"2026-11-07"}),source("googlecalendar","gig",Some(observed)));
+        let gig=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"gigs","id":imported_gig["id"],"title":"Locally edited gig","source":{"kind":"manual"}})).unwrap();
+        let task=save("tasks","Open sourced task",json!({"Status":"Open","Due Date":"2026-11-06"}),source("gmail","task",Some(observed)));
+        save("tasks","Completed sourced task",json!({"Status":"Done"}),source("gmail","done",Some(observed)));
+        let finance=save("finances","Unpaid sourced expense",json!({"Status":"Invoiced","Direction":"Expense","Amount":12000}),source("gmail","expense",None));
+        save("finances","Paid sourced expense",json!({"Status":"Paid","Amount":9000}),source("gmail","paid",Some(observed)));
+        let manual=save("schedule","Manual date",json!({"Date":"2026-11-08"}),json!({"kind":"manual"}));
+        let before=dispatch(&root,"history.list",json!({"workspaceId":wid})).unwrap();
+        let result=dispatch(&root,"workspace.overview",json!({"workspaceId":wid,"today":"2026-11-05","timeZone":"America/Chicago"})).unwrap();
+        let expected=|kind:&str,provider:&str|json!({"kind":kind,"provider":provider,"observedAt":observed});
+        let events=result["events"]["items"].as_array().unwrap();
+        let find=|id:&Value|events.iter().find(|item|item["id"]==*id).unwrap();
+        assert_eq!(find(&calendar["id"])["source"],expected("import","googlecalendar"));
+        assert_eq!(find(&gig["id"])["source"],expected("import","googlecalendar"));
+        assert_eq!(find(&manual["id"])["source"],json!({"kind":"manual"}));
+        assert_eq!(result["gigs"]["items"][0]["source"],expected("import","googlecalendar"));
+        assert_eq!(result["tasks"]["count"],1);assert_eq!(result["tasks"]["items"][0]["id"],task["id"]);
+        assert_eq!(result["tasks"]["items"][0]["source"],expected("import","gmail"));
+        assert_eq!(result["finances"]["count"],1);assert_eq!(result["finances"]["items"][0]["id"],finance["id"]);
+        assert_eq!(result["finances"]["items"][0]["source"],json!({"kind":"import","provider":"gmail"}));
+        assert_eq!(result["finances"]["items"][0]["moneyCents"],12000);
+        for record in events.iter().chain(result["gigs"]["items"].as_array().unwrap()).chain(result["tasks"]["items"].as_array().unwrap()).chain(result["finances"]["items"].as_array().unwrap()) {
+            assert!(record["source"].as_object().unwrap().keys().all(|key|["kind","provider","observedAt"].contains(&key.as_str())));
+            assert!(!record["source"].to_string().contains("private"));
+        }
+        assert_eq!(dispatch(&root,"records.get",json!({"workspaceId":wid,"entity":"gigs","id":gig["id"],"detail":"full"})).unwrap()["source"],gig["source"]);
+        assert_eq!(dispatch(&root,"history.list",json!({"workspaceId":wid})).unwrap(),before);
         fs::remove_dir_all(root).unwrap();
     }
 

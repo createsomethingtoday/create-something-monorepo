@@ -1,0 +1,25 @@
+GSAP 3.15.1
+
+Bundled file: web/vendor/gsap.mjs
+Upstream distribution: gsap@3.15.1/dist/gsap.min.js, including CSSPlugin
+Upstream source SHA-256: 3d1bea374ab1b703cc5c4105358eec63c4465efdc573931dc116e34a0a190c1b
+Source: https://www.npmjs.com/package/gsap/v/3.15.1
+Project: https://gsap.com/
+License declaration: Standard 'no charge' license: https://gsap.com/standard-license.
+Canonical terms: https://gsap.com/community/standard-license/
+
+The pinned npm package does not include a standalone LICENSE file. Its complete
+shipped license banner is retained below and unchanged within the vendor bundle.
+The standard license permits commercial digital-interface implementations and
+restricts competing no-code visual animation builders. GiGi uses GSAP to animate
+its own onboarding; it does not expose an animation-building tool. The canonical
+license terms govern; this notice is an attribution and scope record.
+
+/*!
+ * GSAP 3.15.1
+ * https://gsap.com
+ * 
+ * @license Copyright 2026, GreenSock. All rights reserved.
+ * Subject to the terms at https://gsap.com/standard-license.
+ * @author: Jack Doyle, jack@greensock.com
+ */

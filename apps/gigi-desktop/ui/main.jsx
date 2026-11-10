@@ -6,10 +6,10 @@ import '@astryxdesign/core/reset.css';
 import '@astryxdesign/core/astryx.css';
 import '@astryxdesign/theme-neutral/theme.css';
 import './fonts.css';
-import { themes, defaultThemeSlug } from '../astryx-themes.js';
-const neutralTheme = themes[defaultThemeSlug];
+import { gigiDevTheme } from './gigi-dev.js';
 import { gigiMidnightTheme } from './gigi-midnight.js';
 import './gigi-theme.css';
+import './gigi-dev-theme.css';
 import './app.css';
 import { App } from './App.jsx';
 import { startController } from './controller.mjs';
@@ -17,8 +17,8 @@ import { installCompatibility } from './compatibility.mjs';
 
 const root = createRoot(document.getElementById('app'));
 const renderUI = (ctx) => {
-  ctx.themeDefinitions = { studio: neutralTheme, paper: neutralTheme, midnight: gigiMidnightTheme };
-  const theme = ctx.preferences.theme === 'midnight' ? gigiMidnightTheme : neutralTheme;
+  ctx.themeDefinitions = { studio: gigiDevTheme, paper: gigiDevTheme, midnight: gigiMidnightTheme };
+  const theme = ctx.themeDefinitions[ctx.preferences.theme] || gigiDevTheme;
   const mode = ctx.preferences.theme === 'paper' ? 'light' : 'dark';
   installCompatibility(theme, mode);
   flushSync(() =>

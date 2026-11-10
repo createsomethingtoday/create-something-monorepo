@@ -12,11 +12,13 @@ export function createBridge(invoke, onMutation = () => {}) {
     return name;
   };
   return {
+    today: (workspaceId, today, weekStart) => call('today.read', { workspaceId: owned(workspaceId), today, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, ...(weekStart ? {weekStart} : {}) }),
     overview: (workspaceId, today) => call('workspace.overview', { workspaceId: owned(workspaceId), today, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
     getWorkspace: (workspaceId) => call('workspace.get', workspaceId ? { workspaceId } : {}),
     createWorkspace: (name) => call('workspace.create', { name: name.trim() }),
     listRecords: (workspaceId, name, cursor, query) => call('records.list', { workspaceId: owned(workspaceId), entity: entity(name), ...(cursor ? { cursor } : {}), ...(name === 'contacts' && query?.trim() ? { query: query.trim() } : {}) }),
     listGigs: (workspaceId, gigs, cursor) => call('records.list', { workspaceId: owned(workspaceId), entity: 'gigs', gigs: { ...gigs, today: localToday(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }, ...(cursor ? {cursor} : {}) }),
+    listTasks: (workspaceId, tasks, cursor) => call('records.list', {workspaceId:owned(workspaceId),entity:'tasks',tasks:{...tasks,today:localToday(),timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone},...(cursor?{cursor}:{})}),
     getRecord: (workspaceId, name, id, detail) => call('records.get', { workspaceId: owned(workspaceId), entity: entity(name), id, ...(detail ? { detail } : {}) }),
     saveRecord: (workspaceId, name, record) => call('records.save', { workspaceId: owned(workspaceId), entity: entity(name), ...record }),
     linkRecords: (workspaceId, fromEntity, fromId, toEntity, toId, role) => call('relations.link', { workspaceId: owned(workspaceId), fromEntity: entity(fromEntity), fromId, toEntity: entity(toEntity), toId, ...(role ? { role } : {}) }),

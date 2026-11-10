@@ -40,6 +40,7 @@ First-party self-service MCP session creation is a separate application boundary
 ## Security invariants
 
 - Verify the JWT signature, exact issuer, accepted audience, and expiration before evaluating access policy.
+- On Cloudflare Workers, fetch JWKS with `redirect: 'manual'` and reject non-2xx responses. Workers does not support `redirect: 'error'`; a failed key fetch must never become an authentication bypass. PCN's workerd regression verifies a valid signed fixture and rejection of redirected key sets.
 - Never trust client-supplied user, tenant, organization, or role headers.
 - A valid identity is not automatically an authorized application user. Configure at least one explicit allow rule or intentionally approve `allowAnyAuthenticated` for a private application.
 - Production cookies are `httpOnly`, `secure`, `sameSite=lax`, and scoped to the smallest useful domain.

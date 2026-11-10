@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type Hls from 'hls.js';
 import { createPlaybackSession, type PlaybackState } from '../src/lib/playback-session';
 const settle = async () => {
   for (let i = 0; i < 8; i++) await Promise.resolve();
@@ -41,7 +42,8 @@ function fixture(fetchGrant = vi.fn().mockResolvedValue({ hlsUrl: 'synthetic-hls
     fetchGrant,
     savePosition,
     onFirstPlay: vi.fn(),
-    pageEvents: new EventTarget()
+    pageEvents: new EventTarget(),
+    loadHls: async () => ({ isSupported: () => false }) as unknown as typeof Hls
   });
   const ready = () => {
     video.dispatchEvent(new Event('loadedmetadata'));

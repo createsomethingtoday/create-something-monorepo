@@ -1,9 +1,10 @@
 // Development-only synthetic backend. Vite removes this import from production.
 // It never invokes Tauri, a provider, a real workspace or the filesystem.
 export function startFixture({ startController, renderUI }) {
-  const workspace = { id: 'synthetic-astryx-rewrite', name: 'Rehearsal workspace · synthetic' };
+  const workspace = { id: new URLSearchParams(location.search).get('memoryWorkspace') || 'synthetic-astryx-rewrite', name: 'Rehearsal workspace · synthetic' };
   const make = (id, title, entity, fields = {}) => ({
     id,
+    workspaceId: workspace.id,
     title,
     entity,
     fields,
@@ -40,6 +41,7 @@ export function startFixture({ startController, renderUI }) {
         Status: 'Expected'
       })
     ],
+    locations: [make('place-1', 'Rehearsal room', 'locations')],
     schedule: []
   };
   const calls = [],
@@ -68,8 +70,25 @@ export function startFixture({ startController, renderUI }) {
       faults.delete(faultKey);
       throw Error(message);
     }
+    if (operation.startsWith('memory.') && new URLSearchParams(location.search).get('nativeMemory') === '1') {
+      const response = await fetch('/__synthetic_memory', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({operation,input})});
+      const result = await response.json(); if (result.error) throw Error(result.error); return result.value;
+    }
     if (operation === 'workspace.get') return workspace;
     if (operation === 'workspace.create') return { ...workspace, name: input.name };
+    if (operation === 'today.read') {
+      const today = input.today || '2026-11-09';
+      const shift = (day, offset) => { const date = new Date(`${day}T12:00:00Z`); date.setUTCDate(date.getUTCDate() + offset); return date.toISOString().slice(0, 10); };
+      const date = new Date(`${today}T12:00:00Z`);
+      const monday = shift(today, -((date.getUTCDay() + 6) % 7));
+      const start = input.weekStart || monday;
+      const section = items => ({ count: items.length, items: structuredClone(items) });
+      return { today, calendar: { weekStart: start, weekEnd: shift(start, 6), ...section(records.gigs.filter(r => r.date >= start && r.date <= shift(start, 6))) },
+        tasks: section(records.tasks.filter(r => r.date && r.date <= shift(today, 1) && !['done','completed','cancelled'].includes(String(r.fields.Status).toLowerCase()))),
+        payable: section(records.finances.filter(r => r.fields.Direction === 'Expense' && r.fields['Due Date'] <= shift(monday, 6))),
+        receivable: section(records.finances.filter(r => r.fields.Direction === 'Income' && r.fields['Due Date'] <= shift(monday, 6))),
+        financialThrough: shift(monday, 6) };
+    }
     if (operation === 'workspace.overview')
       return {
         counts: Object.fromEntries(Object.entries(records).map(([k, v]) => [k, v.length])),
@@ -91,8 +110,16 @@ export function startFixture({ startController, renderUI }) {
         total: 2
       };
     if (operation === 'records.list') {
-      const all = records[input.entity] || [],
-        items = input.query
+      const all = records[input.entity] || [];
+      if (input.entity === 'tasks' && input.tasks) {
+        const criteria = input.tasks, today = criteria.today || '2026-11-09';
+        const tomorrow = new Date(`${today}T12:00:00Z`); tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+        const open = r => !['done', 'complete', 'completed', 'cancelled', 'archived'].includes(String(r.fields.Status).toLowerCase());
+        const soon = r => open(r) && r.date && r.date <= tomorrow.toISOString().slice(0,10);
+        const items = all.filter(r => (criteria.view === 'done' ? !open(r) : criteria.view === 'all' ? open(r) : soon(r)) && r.title.toLowerCase().includes((criteria.query || '').toLowerCase()));
+        return { items: structuredClone(items), count: items.length, total: all.length, today, nextCursor: null, viewCounts: {soon: all.filter(soon).length, all: all.filter(open).length, done: all.filter(r => !open(r)).length} };
+      }
+      const items = input.query
           ? all.filter((r) => r.title.toLowerCase().includes(input.query.toLowerCase()))
           : all;
       return {
@@ -107,7 +134,7 @@ export function startFixture({ startController, renderUI }) {
     }
     if (operation === 'records.get') {
       const record = (records[input.entity] || []).find((r) => r.id === input.id);
-      if (!record) throw Error('Synthetic record unavailable');
+      if (!record) throw Error('Record not found.');
       return structuredClone(record);
     }
     if (operation === 'records.save') {
@@ -120,7 +147,7 @@ export function startFixture({ startController, renderUI }) {
       )
         throw Error('stale_record');
       const next = make(
-        current?.id || `synthetic-${++id}`,
+        current?.id || input.id || `synthetic-${++id}`,
         input.title,
         input.entity,
         input.fields || {}
@@ -134,6 +161,7 @@ export function startFixture({ startController, renderUI }) {
       return {
         relationFields: [
           { name: 'Contacts', targetEntity: 'contacts' },
+          { name: 'Location', targetEntity: 'locations' },
           { name: 'Tasks', targetEntity: 'tasks' }
         ]
       };
@@ -146,7 +174,7 @@ export function startFixture({ startController, renderUI }) {
         toId: input.toId,
         role: input.role
       });
-      return { linked: true };
+      return { linked: true, ...structuredClone(input) };
     }
     if (operation === 'history.list') return { items: [] };
     if (operation.startsWith('sources.'))
