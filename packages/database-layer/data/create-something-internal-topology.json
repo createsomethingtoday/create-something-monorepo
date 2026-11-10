@@ -4,11 +4,11 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-11-06T21:42:44.687Z",
+    "generatedAt": "2026-11-10T15:39:04.857Z",
     "rootPath": ".",
-    "packageCount": 250,
+    "packageCount": 252,
     "appCount": 15,
-    "workerCount": 120,
+    "workerCount": 121,
     "clientOverlayCount": 8,
     "policyCount": 64,
     "guideCount": 86,
@@ -395,6 +395,40 @@
         "package"
       ],
       "packageName": "@create-something/monorepo",
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-a2a-packages-a2a",
+      "atlasNodeId": "atlas_create-something_package_create-something-a2a-packages-a2a",
+      "title": "@create-something/a2a",
+      "path": "packages/a2a",
+      "tier": "Mixed",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at packages/a2a.",
+      "tags": [
+        "package",
+        "worker"
+      ],
+      "packageName": "@create-something/a2a",
+      "runtime": "cloudflare, node"
+    },
+    {
+      "id": "substrate:create-something:package:a2a-private-callback-sender-packages-a2a-sender",
+      "atlasNodeId": "atlas_create-something_package_a2a-private-callback-sender-packages-a2a-sender",
+      "title": "a2a-private-callback-sender",
+      "path": "packages/a2a/sender",
+      "tier": "Mixed",
+      "surface": "package",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at packages/a2a/sender.",
+      "tags": [
+        "package",
+        "package"
+      ],
+      "packageName": "a2a-private-callback-sender",
       "runtime": "node"
     },
     {
@@ -4931,6 +4965,23 @@
       "owner": "CREATE SOMETHING",
       "status": "mapped",
       "summary": "Cloudflare runtime configuration at apps/webflow-marketplace-category-cloud/wrangler.json.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
+      "id": "substrate:create-something:worker:packages-a2a-wrangler-jsonc",
+      "atlasNodeId": "atlas_create-something_worker_packages-a2a-wrangler-jsonc",
+      "title": "packages/a2a/wrangler.jsonc",
+      "path": "packages/a2a/wrangler.jsonc",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/a2a/wrangler.jsonc.",
       "tags": [
         "worker",
         "cloudflare",
@@ -9989,6 +10040,20 @@
       "evidence": " is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-a2a-packages-a2a",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-a2a-packages-a2a",
+      "relation": "contains",
+      "evidence": "packages/a2a is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-a2a-private-callback-sender-packages-a2a-sender",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:a2a-private-callback-sender-packages-a2a-sender",
+      "relation": "contains",
+      "evidence": "packages/a2a/sender is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-abundance-healthcare-mcp-packages-abundance-healthcare-mcp",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-abundance-healthcare-mcp-packages-abundance-healthcare-mcp",
@@ -11639,6 +11704,13 @@
       "target": "substrate:create-something:worker:apps-webflow-marketplace-category-cloud-wrangler-json",
       "relation": "contains",
       "evidence": "apps/webflow-marketplace-category-cloud/wrangler.json is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-a2a-wrangler-jsonc",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-a2a-wrangler-jsonc",
+      "relation": "contains",
+      "evidence": "packages/a2a/wrangler.jsonc is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-abundance-healthcare-mcp-worker-wrangler-toml",
@@ -13907,6 +13979,13 @@
       "target": "substrate:create-something:package:create-something-observability-packages-observability",
       "relation": "depends_on",
       "evidence": "@create-something/monorepo declares @create-something/observability."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-a2a-packages-a2a-runs-substrate-create-something-worker-packages-a2a-wrangler-jsonc",
+      "source": "substrate:create-something:package:create-something-a2a-packages-a2a",
+      "target": "substrate:create-something:worker:packages-a2a-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/a2a."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-abundance-healthcare-mcp-packages-abundance-healthcare-mcp-depends-on-substrate-create-something-package-create-something-mcp-core-packages-mcp-core",

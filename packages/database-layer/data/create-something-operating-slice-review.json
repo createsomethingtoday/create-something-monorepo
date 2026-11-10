@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-review:internal",
-  "generatedAt": "2026-11-06T21:42:44.921Z",
+  "generatedAt": "2026-11-10T15:39:05.088Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceCoverageId": "substrate:create-something:atlas-coverage:internal",
@@ -20,6 +20,7 @@
         "substrate:create-something:worker:apps-marketplace-template-submission-cloud-wrangler-json",
         "substrate:create-something:worker:apps-webflow-dashboard-cloud-wrangler-json",
         "substrate:create-something:worker:apps-webflow-marketplace-category-cloud-wrangler-json",
+        "substrate:create-something:worker:packages-a2a-wrangler-jsonc",
         "substrate:create-something:worker:packages-abundance-healthcare-mcp-worker-wrangler-toml",
         "substrate:create-something:worker:packages-abundance-jobs-mcp-worker-wrangler-toml",
         "substrate:create-something:package:create-something-agency-packages-agency",
@@ -166,7 +167,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Automation",
       "surface": "worker",
-      "nodeCount": 149,
+      "nodeCount": 150,
       "evidence": [
         "apps/agency-meta-maintenance/wrangler.jsonc",
         "apps/bettermode-marketplace-creator-agent/wrangler.jsonc",
@@ -175,11 +176,11 @@
         "apps/marketplace-template-submission-cloud/wrangler.json",
         "apps/webflow-dashboard-cloud/wrangler.json",
         "apps/webflow-marketplace-category-cloud/wrangler.json",
+        "packages/a2a/wrangler.jsonc",
         "packages/abundance-healthcare-mcp/worker/wrangler.toml",
         "packages/abundance-jobs-mcp/worker/wrangler.toml",
         "packages/agency",
-        "packages/agency/clients/cato-supply-insights-cms/wrangler.toml",
-        "packages/agency/clients/cato-supply-insights-review/wrangler.toml"
+        "packages/agency/clients/cato-supply-insights-cms/wrangler.toml"
       ],
       "validationCommands": [
         "pnpm --filter @create-something/database-layer runtime-bindings:generate",
@@ -575,6 +576,7 @@
         "substrate:create-something:atlas-coverage-group:package-surface-mixed-package"
       ],
       "recordIds": [
+        "substrate:create-something:package:a2a-private-callback-sender-packages-a2a-sender",
         "substrate:create-something:package:algorithms-packages-agency-static-films-algorithms",
         "substrate:create-something:package:dashboard-packages-agency-static-films-dashboard",
         "substrate:create-something:package:education-packages-agency-static-films-education",
@@ -608,8 +610,9 @@
       "owner": "CREATE SOMETHING",
       "tier": "Mixed",
       "surface": "package",
-      "nodeCount": 29,
+      "nodeCount": 30,
       "evidence": [
+        "packages/a2a/sender",
         "packages/agency/static/films/algorithms",
         "packages/agency/static/films/dashboard",
         "packages/agency/static/films/education",
@@ -620,8 +623,7 @@
         "packages/app-governance-desktop",
         "packages/ascii-renderer",
         "packages/atlas-composition",
-        "packages/bundle-scanner",
-        "packages/bundle-scanner-core"
+        "packages/bundle-scanner"
       ],
       "validationCommands": [
         "pnpm --filter @create-something/database-layer test"
@@ -1006,6 +1008,45 @@
       "nextAction": "Review runtime ownership and bind approved worker slices to production workflow checks before Cloudflare mutation."
     },
     {
+      "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-mixed-worker",
+      "title": "Mixed worker Atlas coverage",
+      "status": "review_ready",
+      "atlasCoverageGroupIds": [
+        "substrate:create-something:atlas-coverage-group:automation-surface-mixed-worker"
+      ],
+      "recordIds": [
+        "substrate:create-something:package:create-something-a2a-packages-a2a",
+        "substrate:create-something:package:create-something-calm-operator-ink-bridge-packages-calm-operator-ink-bridge",
+        "substrate:create-something:package:create-something-landing-page-filter-packages-landing-page-filter",
+        "substrate:create-something:package:pcn-workshop-starter-packages-lms-starter-pcn-workshop",
+        "substrate:create-something:package:create-something-meetings-packages-meetings",
+        "substrate:create-something:package:create-something-relay-packages-relay",
+        "substrate:create-something:package:webflow-template-analyzer-cloudflare-packages-webflow-template-analyzer-cloudflare",
+        "substrate:create-something:package:create-something-webflow-template-views-packages-webflow-template-views"
+      ],
+      "owner": "CREATE SOMETHING",
+      "tier": "Mixed",
+      "surface": "worker",
+      "nodeCount": 8,
+      "evidence": [
+        "packages/a2a",
+        "packages/calm-operator-ink-bridge",
+        "packages/landing-page-filter",
+        "packages/lms/starter/pcn-workshop",
+        "packages/meetings",
+        "packages/relay",
+        "packages/webflow-template-analyzer/cloudflare",
+        "packages/webflow-template-views"
+      ],
+      "validationCommands": [
+        "pnpm --filter @create-something/database-layer runtime-bindings:generate",
+        "pnpm --filter @create-something/database-layer test"
+      ],
+      "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
+      "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
+      "nextAction": "Review runtime ownership and bind approved worker slices to production workflow checks before Cloudflare mutation."
+    },
+    {
       "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-application-surface-mixed-app",
       "title": "Mixed app Atlas coverage",
       "status": "review_ready",
@@ -1040,43 +1081,6 @@
       "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
       "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
       "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
-    },
-    {
-      "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-mixed-worker",
-      "title": "Mixed worker Atlas coverage",
-      "status": "review_ready",
-      "atlasCoverageGroupIds": [
-        "substrate:create-something:atlas-coverage-group:automation-surface-mixed-worker"
-      ],
-      "recordIds": [
-        "substrate:create-something:package:create-something-calm-operator-ink-bridge-packages-calm-operator-ink-bridge",
-        "substrate:create-something:package:create-something-landing-page-filter-packages-landing-page-filter",
-        "substrate:create-something:package:pcn-workshop-starter-packages-lms-starter-pcn-workshop",
-        "substrate:create-something:package:create-something-meetings-packages-meetings",
-        "substrate:create-something:package:create-something-relay-packages-relay",
-        "substrate:create-something:package:webflow-template-analyzer-cloudflare-packages-webflow-template-analyzer-cloudflare",
-        "substrate:create-something:package:create-something-webflow-template-views-packages-webflow-template-views"
-      ],
-      "owner": "CREATE SOMETHING",
-      "tier": "Mixed",
-      "surface": "worker",
-      "nodeCount": 7,
-      "evidence": [
-        "packages/calm-operator-ink-bridge",
-        "packages/landing-page-filter",
-        "packages/lms/starter/pcn-workshop",
-        "packages/meetings",
-        "packages/relay",
-        "packages/webflow-template-analyzer/cloudflare",
-        "packages/webflow-template-views"
-      ],
-      "validationCommands": [
-        "pnpm --filter @create-something/database-layer runtime-bindings:generate",
-        "pnpm --filter @create-something/database-layer test"
-      ],
-      "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
-      "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
-      "nextAction": "Review runtime ownership and bind approved worker slices to production workflow checks before Cloudflare mutation."
     },
     {
       "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-doc",
