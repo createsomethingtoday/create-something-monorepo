@@ -1,7 +1,12 @@
 <script lang="ts">
   import { SEO } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-  import { dentalAgentAnswer, dentalAgentFaqs, dentalAgentService } from '$lib/data/dentalAgents';
+  import {
+    dentalAgentAnswer,
+    dentalAgentFaqs,
+    dentalAgentService,
+    dentalDemoHref
+  } from '$lib/data/dentalAgents';
   import { enhanceDentalAgents } from '$lib/motion/dentalAgents';
   import '$lib/styles/dental-agents.css';
 </script>
@@ -53,6 +58,13 @@
         <p class="dental-action-note">
           Bring one inquiry-to-appointment workflow.<br />No patient details or credentials needed.
         </p>
+        <a
+          class="dental-demo-link"
+          data-dental-demo-link
+          href={dentalDemoHref}
+          aria-label="Explore the dental demo"
+          >Explore the dental demo <span aria-hidden="true">↗</span></a
+        >
       </div>
       <figure class="dental-front-desk" aria-labelledby="dental-map-caption">
         <div class="desk-register mono">
@@ -127,10 +139,9 @@
         >
       </div>
       <a
-        href="/images/dental-agents/lumen-connected-desk-20261109.png"
-        target="_blank"
-        rel="noreferrer"
-        aria-label="Open the full captured Lumen demonstration image in a new tab"
+        href={dentalDemoHref}
+        data-dental-demo-link
+        aria-label="Open the interactive Lumen Dental demonstration"
         ><img
           src="/images/dental-agents/lumen-connected-desk-20261109.png"
           alt="Captured Lumen Dental demo: Lumi’s confirmation and a matching synthetic booking appear beside the practice database. No real patient records are shown."
@@ -141,8 +152,9 @@
       >
       <figcaption>
         <span>Actual demonstration interface · synthetic bookings, not patient data.</span><a
-          href={agencyCoreMessaging.dentalAgentsMappingSessionHref}
-          >Request a guided demonstration ↗</a
+          href={dentalDemoHref}
+          data-dental-demo-link
+          aria-label="Explore the live dental demo">Explore the live dental demo ↗</a
         >
       </figcaption>
     </figure>
@@ -236,8 +248,8 @@
       <p>
         Working model-to-tool calls, confirmed synthetic bookings, visible records, and aggregate
         interaction analytics. It does not establish a real clinic integration, time savings,
-        revenue, or patient outcomes. The live demonstration is owner-private; we can walk through
-        it with you.
+        revenue, or patient outcomes. The live demonstration is public: open it to explore the
+        fictional practice, try the concierge, and inspect its synthetic records.
       </p>
     </div>
   </section>

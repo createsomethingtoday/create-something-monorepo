@@ -10,7 +10,7 @@ Acceptance criteria: one crawlable vendor-service page; a direct answer, inspect
 
 Bounded CTX search recovered the November 8 evergreen `/openai-dots` decision (events `9aa53518` and `4801773f`): retain the Agency shell, add contextual links from Workflow Guides and Connected Tools, and keep the next step in the native scheduler. CTX was searchable with partial coverage (5,887 skipped records and no semantic search); an exact dental search found no additional history. Current Agency source and the current conversation establish the dental scope.
 
-Lumen Dental is an owner-private fictional demonstration, with synthetic practice data, Responses function tools, explicitly confirmed booking writes, conflict/idempotency protection, visible tool receipts, and aggregate website/agent analytics. The public page requests a guided demonstration and does not link a private login or change its audience.
+Lumen Dental is a fictional demonstration, with synthetic practice data, Responses function tools, explicitly confirmed booking writes, conflict/idempotency protection, visible tool receipts, and aggregate website/agent analytics. Following the visitor-access request on November 10, the public page links directly to the live demonstration. Sites access changed from owner-only custom access to public (revision 2), preserving editors, allowlists and secrets. Anonymous page and synthetic database access were independently verified.
 
 `static/images/dental-agents/lumen-connected-desk-20261109.png` is an unaltered owned interface capture from `sites/lumen-dental/outputs/review-proof.png` (1241 × 876). It depicts synthetic bookings and a confirmation beside the database. It proves a demonstration interface; it is not evidence of a real clinic, production software compatibility, patient outcomes, revenue or time savings. The hero workflow and native four-step selector are explicitly illustrative. Canon uses the existing owned `canon-guide-cutout-v1.webp`. The social image is authored typography; the SVG is retained for reproduction.
 
@@ -52,3 +52,11 @@ Implementation lives in the isolated CRE-2388 worktree. Preserve unrelated home-
 - Ground: direct bounded route analysis completed with no duplicate/orphan findings. The repository advisory wrapper reported incomplete duplicate coverage and a route-orphan flag; current SvelteKit runtime, sitemap and incoming-link checks demonstrate the route is reachable. Advisory output is not treated as complete code coverage.
 
 Production/live receipts and worktree disposition are recorded in Linear CRE-2388. Search indexing, AI citations, clinical integration and business outcomes require later independent evidence.
+
+## Visitor-access follow-up
+
+The user requested direct navigation from .agency into the dental website. Three native links now open Lumen from the opening section, captured interface and caption. The public FAQ and proof copy no longer describe owner-private access. A regression check failed before these links existed and passes after the change. Anonymous HTTP access changed from 401 to 200; the Sites policy readback confirms `public`, revision 2. An incognito live concierge request used `site.navigate` to move to the care section without sign-in. Existing synthetic-only booking validation, explicit confirmation, same-origin POST restriction and global daily AI budget remain in force; no secret, model, billing or application-source change was needed for the demo.
+
+Follow-up rollback: restore Sites access mode `custom` (preserving its allowlists), revert the Agency follow-up commit through the normal PR/deployment workflow, and recheck the public page copy. Production receipts and independent final re-test are recorded in CRE-2388.
+
+Follow-up local verification passed: Agency check355tests/zero Svelte diagnostics, 18 foundation tests, production build and SSR acceptance including anonymous demo/database reads. Parent incognito click-through and independent Sol 6.1 actual-output review verified all three same-tab links without login at desktop/mobile widths. No booking was submitted. Final Agency production receipt belongs in Linear.

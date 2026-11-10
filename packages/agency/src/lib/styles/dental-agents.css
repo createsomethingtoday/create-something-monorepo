@@ -279,6 +279,9 @@
   line-height: 1.8;
 }
 .lumen-evidence figcaption > a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   color: var(--dental-fg);
   white-space: nowrap;
 }
@@ -971,4 +974,13 @@
   .dental-reading-rail {
     padding-right: 110px;
   }
+}
+
+.dental-demo-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  margin-top: 12px;
+  font-size: 13px;
 }
