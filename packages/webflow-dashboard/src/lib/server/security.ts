@@ -187,3 +187,17 @@ export function isAuthorizedCronRequest(
 
   return (environment ?? 'production') !== 'production';
 }
+
+/**
+ * Cron routes driven by the marketplace-insights-cron Worker accept that
+ * Worker's own SCHEDULER_CRON_SECRET as well as the shared CRON_SECRET. (The
+ * shared value cannot be read back from Pages to hand to a new caller.)
+ */
+export function isAuthorizedSchedulerRequest(
+  request: Request,
+  env: { CRON_SECRET?: string; SCHEDULER_CRON_SECRET?: string; ENVIRONMENT?: string } | undefined
+): boolean {
+  if (env?.SCHEDULER_CRON_SECRET && isAuthorizedCronRequest(request, env.SCHEDULER_CRON_SECRET, env.ENVIRONMENT))
+    return true;
+  return isAuthorizedCronRequest(request, env?.CRON_SECRET, env?.ENVIRONMENT);
+}

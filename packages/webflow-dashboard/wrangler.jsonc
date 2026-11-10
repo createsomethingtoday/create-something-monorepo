@@ -40,7 +40,8 @@
 	// Cron triggers: NOT available here. This is a Pages project, and scheduled
 	// handlers are a Workers-only feature — a Pages project has no Triggers tab.
 	// /api/cron/* must be driven by an external scheduler:
-	//   - /api/cron/snapshot -> .github/workflows/webflow-dashboard-snapshot-cron.yml
+	//   - /api/cron/snapshot (daily) and /api/cron/insights (Tuesdays)
+	//       -> packages/marketplace-insights-cron (Worker, SCHEDULER_CRON_SECRET)
 	//   - /api/cron/cleanup  -> currently unscheduled
 	// Callers authenticate with `Authorization: Bearer $CRON_SECRET`.
 
