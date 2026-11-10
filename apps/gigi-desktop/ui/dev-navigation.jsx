@@ -4,6 +4,7 @@ import { sections } from '../web/model.mjs';
 import { ICON_NODES } from '../web/lucide-icons.mjs';
 import { StackItem } from '@astryxdesign/core/Stack';
 import { Badge } from '@astryxdesign/core/Badge';
+import { Icon as AstryxIcon } from '@astryxdesign/core/Icon';
 import { useMediaQuery } from '@astryxdesign/core/hooks';
 
 // Keep Danny's workspace organization in the active React renderer. Native
@@ -57,7 +58,7 @@ export function DevNavigation({ ctx }) {
       const selected = entries.some(([id]) => s.page === id);
       return <details key={name} className="reference-dropdown" name="workspace-navigation" data-nav-menu={name} data-view-key={`reference-${name.toLowerCase()}`}>
         <HStack as="summary" gap={narrow ? 1 : 2} height="var(--size-element-md)" paddingBlock={2} paddingInline={narrow ? 1 : compact ? 2 : 3} vAlign="center" data-nav-overflow={name} className={selected ? 'selected' : undefined}>
-          <Text type="label" size={narrow ? 'xsm' : undefined} color="inherit">{name}</Text>{!tiny && <Text color="inherit" aria-hidden="true">⌄</Text>}
+          <Text type="label" size={narrow ? 'xsm' : undefined} color="inherit">{name}</Text>{!tiny && <AstryxIcon icon="chevronDown" size="xsm" />}
         </HStack>
         <VStack as="nav" gap={1} padding={2} isScrollable className="reference-menu reference-menu-group" aria-label={name}>
           {entries.map(([id, label, target]) => <B key={`${id}:${target || ''}`} width="100%" size="md" variant="ghost" data-page={id} data-nav-target={target} aria-current={s.page === id && !target ? 'page' : undefined} icon={<Icon name={target === 'workspace-safety' ? 'shield-check' : icons[id]} />} endContent={s.page === id && !target ? <Text color="inherit" className="reference-menu-current" aria-hidden="true">✓</Text> : null}>{label}</B>)}
