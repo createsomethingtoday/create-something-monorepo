@@ -117,6 +117,9 @@ test('identity worker serves oauth authorization server metadata', async () => {
     'offer-savings:write',
     'cracked-sync:read',
     'cracked-sync:write',
+    'a2a:read',
+    'a2a:write',
+    'a2a:admin',
   ]);
   assert.deepEqual(body.agent_auth, {
     skill: 'https://createsomething.agency/auth.md',
