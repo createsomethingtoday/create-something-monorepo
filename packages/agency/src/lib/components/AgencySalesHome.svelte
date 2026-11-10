@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import AgencyChapterDial from './AgencyChapterDial.svelte';
+  import paperMarkup from '$lib/content/agency-paper-example.html?raw';
+  import { enhancePaperExample } from '$lib/motion/paperExample';
   import AgencyWorkshopPlate from './AgencyWorkshopPlate.svelte';
   import { webflowStages } from '$lib/data/webflowMarketplace';
   import { enhanceEvidenceDisclosure } from '$lib/motion/evidenceDisclosure';
@@ -10,7 +12,8 @@
   const renderedContent = rawContent.replaceAll('$900/month', PUBLIC_PRICING.membership.focused.label).replaceAll('$2,500/month', PUBLIC_PRICING.membership.team.label);
   const heroEnd = renderedContent.indexOf('</section>') + '</section>'.length;
   const heroContent = renderedContent.slice(0, heroEnd);
-  const content = renderedContent.slice(heroEnd);
+  const content = renderedContent.slice(heroEnd).replace('<!-- agency-paper-example -->', `<div class="paper-example" role="region" aria-labelledby="paper-example-title">${paperMarkup}</div>`);
+
   import { filmOverlayOpen } from '$lib/motion/filmPlayback';
   import FilmCollection from './films/FilmCollection.svelte';
   import BuiltWork from './BuiltWork.svelte';
@@ -24,6 +27,8 @@
   $effect(() => { if ($page.url.searchParams.has('film') || $page.url.hash === '#work') libraryOpen = true; });
   onMount(() => {
     const abort = new AbortController();
+    const paperRoot = root.querySelector<HTMLElement>('.paper-example');
+    const disposePaper = paperRoot ? enhancePaperExample(paperRoot) : () => {};
     const story = enhanceStoryHome(root);
     const chapters = enhanceChapterEntrances(root);
     const progress = alignScrollProgress(root);
@@ -104,6 +109,7 @@
     }, { signal: abort.signal });
     return () => {
       abort.abort();
+      disposePaper();
       entrance.destroy();
       story.destroy();
       chapters.destroy();
@@ -118,7 +124,7 @@
   });
 </script>
 
-<svelte:head><link rel="stylesheet" href="/styles/agency/story-home.css?v=walkthrough-entry-20261106" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /><link rel="stylesheet" href="/styles/agency/image-treatment.css?v=graphite-frames-20261105" /><link rel="stylesheet" href="/styles/agency/measured-foundation.css?v=measured-foundation-20261106" /></svelte:head>
+<svelte:head><link rel="stylesheet" href="/styles/agency/paper-example.css?v=paper-working-ui-20261110" /><link rel="stylesheet" href="/styles/agency/story-home.css?v=walkthrough-entry-20261106" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /><link rel="stylesheet" href="/styles/agency/image-treatment.css?v=graphite-frames-20261105" /><link rel="stylesheet" href="/styles/agency/measured-foundation.css?v=measured-foundation-20261106" /></svelte:head>
 <div class="agency-home measured-foundation" bind:this={root}>
   <div class="page-progress" aria-hidden="true"></div>
   <AgencyChapterDial />
