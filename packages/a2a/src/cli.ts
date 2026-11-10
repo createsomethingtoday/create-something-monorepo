@@ -61,6 +61,7 @@ export interface CliOptions {
 	sessionPath?: string;
 	openBrowser?: (url: string) => Promise<void>;
 	loginTimeoutMs?: number;
+	sessionLockTimeoutMs?: number;
 	now?: () => number;
 }
 interface Parsed { command: string; flags: Map<string, string>; help: boolean }
@@ -127,6 +128,31 @@ async function saveSession(path: string, session: Session): Promise<void> {
 		await rename(temporary, path);
 	} catch { throw new CliError('Session could not be saved privately.'); }
 	finally { await file?.close(); await unlink(temporary).catch(() => {}); }
+}
+/** All credential writers share this exclusive filesystem lock, including other
+ * CLI processes. A crashed holder fails closed: never steal its lock and risk
+ * replaying a refresh grant whose outcome is unknown.
+ */
+async function withSessionLock<T>(path: string, timeoutMs: number, operation: () => Promise<T>): Promise<T> {
+	const lockPath = `${path}.lock`, deadline = Date.now() + Math.min(Math.max(timeoutMs, 1), 20000);
+	await mkdir(dirname(path), { recursive: true, mode: 0o700 });
+	let lock;
+	while (!lock) {
+		try { lock = await open(lockPath, 'wx', 0o600); }
+		catch (cause) {
+			if (!cause || typeof cause !== 'object' || !('code' in cause) || cause.code !== 'EEXIST') throw new CliError('Could not lock the saved session privately.');
+			const remaining = deadline - Date.now();
+			if (remaining <= 0) throw new CliError(`Another CLI command holds ${lockPath}. Retry after it finishes. If it exited, confirm no A2A command is running, remove that lock file, and run login again.`);
+			await new Promise(resolve => setTimeout(resolve, Math.min(50, remaining)));
+		}
+	}
+	try {
+		await lock.writeFile(JSON.stringify({ pid: process.pid }), 'utf8');
+		return await operation();
+	} finally {
+		await lock.close();
+		try { await unlink(lockPath); } catch (cause) { if (!isMissing(cause)) throw new CliError('The saved session lock could not be released. Confirm no A2A command is running before removing it.'); }
+	}
 }
 async function browser(url: string): Promise<void> {
 	const command = process.platform === 'darwin' ? 'open' : process.platform === 'linux' ? 'xdg-open' : null;
@@ -218,7 +244,9 @@ export async function runCli(argv: string[], options: CliOptions = {}): Promise<
 		}
 		if (command === 'logout') {
 			allowFlags(flags, []);
-			try { await unlink(sessionPath); } catch (cause) { if (!isMissing(cause)) throw new CliError('Local session could not be removed.'); }
+			await withSessionLock(sessionPath, options.sessionLockTimeoutMs ?? 20000, async () => {
+				try { await unlink(sessionPath); } catch (cause) { if (!isMissing(cause)) throw new CliError('Local session could not be removed.'); }
+			});
 			out(env.A2A_TOKEN ? 'Local session removed. A2A_TOKEN remains set in your environment.' : 'Local session removed.'); return 0;
 		}
 		if (command === 'login') {
@@ -230,8 +258,10 @@ export async function runCli(argv: string[], options: CliOptions = {}): Promise<
 			authorization.search = new URLSearchParams({ response_type: 'code', client_id: config.clientId, redirect_uri: REDIRECT_URI, resource: RESOURCE, scope: OWNER_SCOPES, state, code_challenge: createHash('sha256').update(verifier).digest('base64url'), code_challenge_method: 'S256' }).toString();
 			out('Opening CREATE SOMETHING Identity for owner consent…');
 			const code = await receiveCode(authorization, state, options.openBrowser ?? browser, options.loginTimeoutMs ?? 120000);
-			const tokens = await exchange({ grant_type: 'authorization_code', code, client_id: config.clientId, redirect_uri: REDIRECT_URI, resource: RESOURCE, code_verifier: verifier });
-			await saveSession(sessionPath, { version: 1, baseUrl: base, issuer: ISSUER, resource: RESOURCE, clientId: config.clientId, accessToken: tokens.access_token, ...(tokens.refresh_token ? { refreshToken: tokens.refresh_token } : {}), expiresAt: now() + tokens.expires_in * 1000 });
+			await withSessionLock(sessionPath, options.sessionLockTimeoutMs ?? 20000, async () => {
+				const tokens = await exchange({ grant_type: 'authorization_code', code, client_id: config.clientId!, redirect_uri: REDIRECT_URI, resource: RESOURCE, code_verifier: verifier });
+				await saveSession(sessionPath, { version: 1, baseUrl: base, issuer: ISSUER, resource: RESOURCE, clientId: config.clientId!, accessToken: tokens.access_token, ...(tokens.refresh_token ? { refreshToken: tokens.refresh_token } : {}), expiresAt: now() + tokens.expires_in * 1000 });
+			});
 			out('Signed in. Credentials saved privately on this device.'); return 0;
 		}
 
@@ -269,10 +299,20 @@ export async function runCli(argv: string[], options: CliOptions = {}): Promise<
 		if (!token) {
 			let session = await readSession(sessionPath, base);
 			if (session.expiresAt <= now() + 60000) {
-				if (!session.refreshToken) throw new CliError('Session expired. Run login again.');
-				const refreshed = await exchange({ grant_type: 'refresh_token', refresh_token: session.refreshToken, client_id: session.clientId, resource: RESOURCE });
-				session = { ...session, accessToken: refreshed.access_token, refreshToken: refreshed.refresh_token ?? session.refreshToken, expiresAt: now() + refreshed.expires_in * 1000 };
-				await saveSession(sessionPath, session);
+				session = await withSessionLock(sessionPath, options.sessionLockTimeoutMs ?? 20000, async () => {
+					const current = await readSession(sessionPath, base);
+					if (current.expiresAt > now() + 60000) return current;
+					if (!current.refreshToken) throw new CliError('Session expired. Run login again.');
+					// A lost response may already have consumed this one-use grant.
+					// Remove it from disk before exchange so a later command cannot replay it.
+					await saveSession(sessionPath, { ...current, refreshToken: undefined });
+					try {
+						const refreshed = await exchange({ grant_type: 'refresh_token', refresh_token: current.refreshToken, client_id: current.clientId, resource: RESOURCE });
+						const replacement = { ...current, accessToken: refreshed.access_token, refreshToken: refreshed.refresh_token, expiresAt: now() + refreshed.expires_in * 1000 };
+						await saveSession(sessionPath, replacement);
+						return replacement;
+					} catch { throw new CliError('Session refresh could not be confirmed. Run login again.'); }
+				});
 			}
 			token = session.accessToken;
 		}

@@ -41,6 +41,11 @@ Identity login nor OpenAI subscription activation. The production environment
 ignores the fixture JWKS. Do not deploy a test environment or fixture credentials.
 
 The landing page works without JavaScript. The owner console requires it.
+Concurrent CLI credential changes use a private session lock. If a command is
+interrupted, confirm no A2A command is running before removing `session.json.lock`
+beside the saved session, then run `login` again. An uncertain refresh response
+also requires a fresh login; the CLI never replays its one-use credential.
+
 Assets owns canonical HTML routes; do not rewrite `/app` to `/app.html`, because
 Assets redirects that file back to `/app`.
 

@@ -5,6 +5,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { createServer } from 'node:net';
+import { createServer as createHttpServer } from 'node:http';
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { runCli } from '../src/cli.ts';
 
 const directories: string[] = [];
@@ -192,6 +195,63 @@ test('offline: file session refresh is pinned, saved privately, and used for one
 	assert.equal(JSON.parse(await readFile(path, 'utf8')).refreshToken, 'rotated-private');
 	assert.equal((await stat(path)).mode & 0o777, 0o600);
 	assert.equal(output.join('').includes('private'), false);
+});
+
+test('regression: concurrent CLI processes exchange a shared one-use refresh token only once', {timeout:15000}, async () => {
+	const path = await sessionFile();
+	await writeFile(path, JSON.stringify({ version:1,baseUrl:'https://a2a.createsomething.agency',...config,accessToken:'expired-fixture',refreshToken:'one-use-fixture',expiresAt:0 }), {mode:0o600});
+	const ready: import('node:http').ServerResponse[] = [];
+	let refreshes = 0, revoked = false;
+	const server = createHttpServer(async (request, response) => {
+		response.setHeader('content-type','application/json');
+		if(request.url==='/ready') { ready.push(response); if(ready.length===2)for(const pending of ready)pending.end('{}'); return; }
+		if(request.url==='/oauth/token') {
+			for await (const _chunk of request) { /* Consume the synthetic request. */ }
+			refreshes++; if(refreshes>1){revoked=true;response.writeHead(400).end('{"error":"invalid_grant"}');return;}
+			await new Promise(resolve=>setTimeout(resolve,100));
+			response.end(JSON.stringify({access_token:'new-fixture',refresh_token:'rotated-fixture',expires_in:3600}));return;
+		}
+		if(revoked||request.headers.authorization!=='Bearer new-fixture') { response.writeHead(401).end('{}');return; }
+		response.end('{"subject":"owner"}');
+	});
+	await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve));
+	const children:ReturnType<typeof spawn>[]=[];
+	try {
+		const address=server.address() as import('node:net').AddressInfo;
+		const target=`http://127.0.0.1:${address.port}`;
+		const run=()=>new Promise<number|null>((resolve,reject)=>{
+			const child=spawn(process.execPath,['--import','tsx',fileURLToPath(new URL('./fixtures/cli-concurrent.mjs',import.meta.url)),path,target],{stdio:'ignore'});
+			children.push(child);const timer=setTimeout(()=>{child.kill();reject(new Error('CLI fixture process timed out'));},10000);
+			child.once('error',error=>{clearTimeout(timer);reject(error);});child.once('exit',code=>{clearTimeout(timer);resolve(code);});
+		});
+		assert.deepEqual(await Promise.all([run(),run()]),[0,0]);
+		assert.equal(refreshes,1,'A waiting process must reread the newly saved credential.');
+		assert.equal(JSON.parse(await readFile(path,'utf8')).refreshToken,'rotated-fixture');
+		assert.deepEqual(await readdir(join(path,'..')),['session.json']);
+	} finally { for(const child of children)if(child.exitCode===null)child.kill();server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve())); }
+});
+
+test('CLI refresh: an uncertain exchange is never retried with its consumed credential', async () => {
+	const path=await sessionFile();
+	await writeFile(path,JSON.stringify({version:1,baseUrl:'https://a2a.createsomething.agency',...config,accessToken:'expired-fixture',refreshToken:'one-use-fixture',expiresAt:0}),{mode:0o600});
+	let exchanges=0;const errors:string[]=[];
+	const options={sessionPath:path,env:{},out:()=>{},err:(value:string)=>errors.push(value),fetch:async()=>{exchanges++;throw new Error('lost response after grant consumption');}};
+	assert.equal(await runCli(['whoami'],options),1);
+	assert.equal(await runCli(['whoami'],options),1);
+	assert.equal(exchanges,1);
+	assert.equal(JSON.parse(await readFile(path,'utf8')).refreshToken,undefined);
+	assert.match(errors.join(' '),/Run login again/);
+	assert.deepEqual(await readdir(join(path,'..')),['session.json']);
+});
+
+test('CLI refresh: a held or interrupted session lock fails closed with bounded recovery guidance', async () => {
+	const path=await sessionFile();const saved=JSON.stringify({version:1,baseUrl:'https://a2a.createsomething.agency',...config,accessToken:'expired-fixture',refreshToken:'one-use-fixture',expiresAt:0});
+	await writeFile(path,saved,{mode:0o600});await writeFile(path+'.lock','{"pid":1}',{mode:0o600});
+	const errors:string[]=[];let requests=0;
+	assert.equal(await runCli(['whoami'],{sessionPath:path,sessionLockTimeoutMs:10,env:{},out:()=>{},err:value=>errors.push(value),fetch:async()=>{requests++;return Response.json({});}}),1);
+	assert.equal(requests,0);assert.equal(await readFile(path,'utf8'),saved);
+	assert.match(errors[0],/confirm no A2A command is running/);
+	assert.ok(await stat(path+'.lock'));
 });
 
 test('offline: saved tokens cannot move to another API origin, and logout removes only its local session', async () => {
