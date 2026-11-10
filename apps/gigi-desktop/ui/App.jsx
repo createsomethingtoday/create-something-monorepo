@@ -15,6 +15,7 @@ import { Settings, Onboarding, SourceProposal } from './settings.jsx';
 import { Appearance } from './appearance.jsx';
 import { Music, Social } from './creators.jsx';
 import { Chat, WorkspaceSearch } from './chat.jsx';
+import { Memory } from './memory.jsx';
 import { DevNavigation } from './dev-navigation.jsx';
 
 function Notices({ state }) {
@@ -54,6 +55,8 @@ export function App({ ctx }) {
     <RecordDetail ctx={ctx} />
   ) : s.page === 'overview' ? (
     <Today ctx={ctx} />
+  ) : s.page === 'memory' ? (
+    <Memory ctx={ctx} />
   ) : s.page === 'settings' ? (
     <Settings ctx={ctx} />
   ) : s.page === 'appearance' ? (

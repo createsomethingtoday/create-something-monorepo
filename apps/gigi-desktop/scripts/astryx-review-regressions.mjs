@@ -65,6 +65,84 @@ try {
       operation
     );
   const cases = {
+    navigation_alignment: async () => {
+      const measurements = [];
+      const geometry = () => page.evaluate(() => {
+        const boxes = {};
+        for (const selector of ['.gigi-dev-topbar', '.reference-today', '.reference-brand', '.reference-find', '.reference-ask', '.reference-attention']) {
+          const rect = document.querySelector(selector).getBoundingClientRect();
+          boxes[selector] = { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+        }
+        for (const summary of document.querySelectorAll('.reference-dropdown > summary')) {
+          const rect = summary.getBoundingClientRect();
+          boxes[summary.dataset.navOverflow] = { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+        }
+        return boxes;
+      });
+      const settled = () => page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      const stable = (before, after, context) => {
+        measurements.push({ context, before, after });
+        writeFileSync(resolve(out, 'navigation-geometry.json'), JSON.stringify(measurements, null, 2));
+        for (const [item, rect] of Object.entries(before)) {
+          for (const property of ['x', 'y', 'width', 'height']) {
+            assert.ok(Math.abs(rect[property] - after[item][property]) <= .5,
+              `${context}: ${item} ${property} changed from ${rect[property]} to ${after[item][property]}`);
+          }
+        }
+      };
+      for (const theme of ['paper', 'midnight']) {
+        for (const [width, height] of [[1440, 900], [1024, 768], [880, 620], [740, 900], [390, 844], [350, 844]]) {
+          await page.setViewportSize({ width, height });
+          await page.goto(`${origin}/?fixture=overview&theme=${theme}`);
+          await page.waitForFunction(() => globalThis.gigiTest);
+          await page.evaluate(() => document.fonts.ready);
+          await settled();
+          const baseline = await geometry();
+          for (const group of ['Work', 'Admin', 'Network', 'Platform']) {
+            const menu = page.locator(`[data-nav-menu="${group}"]`), summary = menu.locator('summary');
+            await summary.click();
+            await settled();
+            assert.equal(await menu.evaluate(node => node.open), true);
+            stable(baseline, await geometry(), `${theme} ${width}: open ${group}`);
+            const visible = await menu.locator('.reference-menu').boundingBox();
+            const trigger = await summary.boundingBox();
+            assert.ok(visible.x >= 0 && visible.x + visible.width <= width + .5, 'menu stays inside the window');
+            assert.ok(visible.y >= trigger.y + trigger.height - .5, 'menu stays below its trigger');
+            if (group === 'Admin' && [1440, 880, 390].includes(width)) {
+              await page.screenshot({ path: resolve(out, `navigation-${theme}-${width}-open.png`) });
+            }
+            await page.keyboard.press('Escape');
+            await settled();
+            assert.equal(await menu.evaluate(node => node.open), false);
+            assert.equal(await summary.evaluate(node => node === document.activeElement), true, 'Escape returns trigger focus');
+            stable(baseline, await geometry(), `${theme} ${width}: close ${group}`);
+          }
+          const work = page.locator('[data-nav-menu="Work"]'), trigger = work.locator('summary');
+          await trigger.focus();
+          await page.keyboard.press('Enter');
+          assert.equal(await work.evaluate(node => node.open), true, 'Enter opens native disclosure');
+          await page.keyboard.press('Escape');
+          await page.keyboard.press('Space');
+          assert.equal(await work.evaluate(node => node.open), true, 'Space opens native disclosure');
+          await page.keyboard.press('ArrowDown');
+          assert.equal(await work.locator('.reference-menu button').first().evaluate(node => node === document.activeElement), true, 'Down enters menu');
+          await page.keyboard.press('Escape');
+          await trigger.click();
+          await page.getByRole('button', { name: 'GiGi Today', exact: true }).click();
+          assert.equal(await work.evaluate(node => node.open), false, 'outside click dismisses menu');
+          await settled();
+          stable(baseline, await geometry(), `${theme} ${width}: keyboard and dismissal`);
+          const centers = await page.locator('.reference-dropdown > summary').evaluateAll(nodes => nodes.flatMap(node => {
+            if (node.children.length < 2) return [];
+            const label = node.firstElementChild.getBoundingClientRect(), arrow = node.lastElementChild.getBoundingClientRect();
+            return [{ name: node.dataset.navOverflow, delta: Math.abs(label.y + label.height / 2 - arrow.y - arrow.height / 2) }];
+          }));
+          for (const arrow of centers) assert.ok(arrow.delta <= .5, `${arrow.name} arrow box shares the label center`);
+          assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'navigation does not overflow the document');
+        }
+      }
+      await page.setViewportSize({ width: 880, height: 620 });
+    },
     music: async () => {
       await open('music');
       await page.getByRole('button', { name: 'Organize', exact: true }).waitFor();
