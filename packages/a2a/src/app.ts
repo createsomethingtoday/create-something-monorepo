@@ -31,7 +31,7 @@ async function route(request:Request,env:RuntimeEnv):Promise<Response>{
   if(path.startsWith('/auth/'))return await authRoute(request,env)??new Response('Not found',{status:404});
   if(path==='/mcp'){
     if(request.method==='OPTIONS')return new Response(null,{status:204});
-    if(request.method==='POST'&&!request.headers.has('authorization'))sameOrigin(request,env.BASE_URL);
+    if(request.method==='POST'&&!request.headers.has('authorization')&&request.headers.has('cookie'))sameOrigin(request,env.BASE_URL);
     const principal=await authenticate(request,env);
     await limitAdmission(env,`mcp:${principal.subject}`,120,60000);
     return mcpRoute(request,env,principal);

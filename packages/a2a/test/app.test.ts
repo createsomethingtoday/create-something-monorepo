@@ -47,6 +47,14 @@ test('offline HTTP: exact-resource signed identities, scopes, admission and owne
   }finally{f.storage.close();}
 });
 
+test('regression: a new MCP client receives an OAuth challenge without ambient cookies',async()=>{
+  const f=await fixture();try{
+    const response=await app.fetch(new Request(origin+'/mcp',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'initialize'})}),f.env);
+    assert.equal(response.status,401);
+    assert.match(response.headers.get('www-authenticate')??'',/oauth-protected-resource\/mcp/);
+  }finally{f.storage.close();}
+});
+
 test('offline protocol: signed subscription → queued event → recipient claim → reply and completion',async()=>{
   const f=await fixture();try{
     const a=(await f.value('/api/v1/agents',f.alice,'POST',{name:'Alice'})).agent;
