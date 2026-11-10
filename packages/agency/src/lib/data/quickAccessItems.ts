@@ -2,6 +2,12 @@ import { agencyCoreMessaging } from './marketingCopy';
 
 export const quickAccessItems = [
     {
+      id: 'nav-dental-ai-agents', label: 'OpenAI agents for dental practices',
+      description: 'Practice questions, appointment workflows, staff handoff and visible records. Inspect a working synthetic demonstration.',
+      href: '/dental-ai-agents', icon: '↗',
+      keywords: ['OpenAI', 'dental', 'dentist', 'front desk', 'booking', 'website assistant', 'AI chatbot', 'integration', 'analytics']
+    },
+    {
       id: 'nav-openai-dots',
       label: 'OpenAI dots: A little more room',
       description: 'Meet Canon, our personal dot. Explore an illustrative task, permissions, human review, and a mapping session.',

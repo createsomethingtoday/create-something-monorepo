@@ -346,5 +346,11 @@
     "changefreq": "monthly",
     "priority": "0.72",
     "lastmod": "2026-11-08"
+  },
+  {
+    "path": "/dental-ai-agents",
+    "changefreq": "monthly",
+    "priority": "0.78",
+    "lastmod": "2026-11-10"
   }
 ]

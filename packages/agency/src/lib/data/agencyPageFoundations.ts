@@ -29,6 +29,11 @@ const foundation = (label: string, spine: string, chapters: AgencyPageChapter[] 
    order only. They do not imply activity, readiness, measurements or results.
    Pages with working interfaces keep their task containers, not hidden steps. */
 const foundations: Record<string, AgencyPageFoundation> = {
+  '/dental-ai-agents': foundation('Dental AI agents', 'A LITTLE BACKUP.', [
+    chapter('dental-proof', 'A working example', 'Example', 'Inspect the fictional demonstration and its synthetic records.'),
+    chapter('dental-fit', 'Your practice', 'Fit', 'Connect approved sources and keep care decisions with staff.'),
+    chapter('dental-next', 'A place to begin', 'Begin', 'Bring one front-desk workflow to a mapping session.')
+  ]),
   '/openai-dots': foundation('OpenAI dots / Canon', 'A LITTLE MORE ROOM.', [
     chapter('why', 'The possibilities', 'Why', 'Context and follow-through, with access you choose.'),
     chapter('with-canon', 'A day with Canon', 'Example', 'Follow the illustrative Gather, Make, and Hand back sequence.'),
