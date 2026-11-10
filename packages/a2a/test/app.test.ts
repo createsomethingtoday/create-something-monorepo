@@ -1,18 +1,17 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { readFileSync } from 'node:fs';
 import { exportJWK, generateKeyPair, SignJWT } from 'jose';
 import { Webhook } from 'standardwebhooks';
 import app from '../src/app';
 import { createTestDatabase } from './sqlite';
-import { randomToken } from '../src/crypto';
+import { hash, randomToken, seal } from '../src/crypto';
 import { fanoutEvent, recoverDelivery, type DeliveryJob } from '../src/delivery';
 import type { RuntimeEnv } from '../src/env';
 
 const origin='https://a2a.createsomething.agency';
 const resource=`${origin}/mcp`;
 async function fixture(){
-  const storage=createTestDatabase();storage.sqlite.exec(readFileSync(new URL('../migrations/0002_delivery_auth.sql',import.meta.url),'utf8'));storage.sqlite.exec(readFileSync(new URL('../migrations/0003_subscription_replay.sql',import.meta.url),'utf8'));
+  const storage=createTestDatabase();
   const {privateKey,publicKey}=await generateKeyPair('ES256');const jwk=await exportJWK(publicKey);jwk.kid='offline-fixture';
   const jobs:DeliveryJob[]=[];const received:Record<string,unknown>[]=[];const envelopes:{body:string;headers:Record<string,string>}[]=[];let callbackStatus=200;let throwQueue=false;
   const secret=`whsec_${Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64')}`;let receiverSecret=secret;
@@ -28,9 +27,44 @@ async function fixture(){
   async function api(path:string,bearer:string,method='GET',body?:unknown){return app.fetch(new Request(`${origin}${path}`,{method,headers:{authorization:`Bearer ${bearer}`,...(body===undefined?{}:{'content-type':'application/json'})},...(body===undefined?{}:{body:JSON.stringify(body)})}),env);}
   async function value(path:string,bearer:string,method='GET',body?:unknown){const response=await api(path,bearer,method,body);const data=await response.json() as Record<string,any>;assert.ok(response.ok,JSON.stringify(data));return data;}
   async function rpc(bearer:string,method:string,params:unknown={}){return (await value('/mcp',bearer,'POST',{jsonrpc:'2.0',id:1,method,params}));}
+  async function ownerRequest(subject:string,path:string,body:unknown,options:{origin?:string;scopes?:string[];name?:string}={}){
+    const raw=randomToken(),id=await hash(raw),now=Date.now();
+    const bearer=await token(subject,options.scopes??['a2a:read','a2a:write','a2a:admin'],options.name?{name:options.name}:{});
+    const ciphertext=await seal(env.SESSION_KEY,JSON.stringify({access_token:bearer,expires_in:300}),`session:${id}`);
+    await storage.db.prepare('INSERT INTO auth_sessions(id_hash,owner_subject,token_ciphertext,access_expires_at,expires_at,created_at) VALUES(?,?,?,?,?,?)').bind(id,subject,ciphertext,now+300000,now+86400000,now).run();
+    return app.fetch(new Request(`${origin}${path}`,{method:'POST',headers:{cookie:`__Host-a2a_session=${raw}`,origin:options.origin??origin,'content-type':'application/json'},body:JSON.stringify(body)}),env);
+  }
   async function flush(){while(jobs.length){const body=jobs.shift()!;let acked=false;await app.queue({messages:[{body,ack(){acked=true;},retry(){throw new Error('unexpected retry');}}]} as unknown as MessageBatch<DeliveryJob>,env);assert.ok(acked);}}
-  return {env,storage,jobs,received,envelopes,secret,alice,bob,token,api,value,rpc,flush,setReceiverSecret(value:string){receiverSecret=value;},setStatus(n:number){callbackStatus=n;},failEnqueue(n:boolean){throwQueue=n;}};
+  return {env,storage,jobs,received,envelopes,secret,alice,bob,token,api,value,rpc,ownerRequest,flush,setReceiverSecret(value:string){receiverSecret=value;},setStatus(n:number){callbackStatus=n;},failEnqueue(n:boolean){throwQueue=n;}};
 }
+
+test('owner chat HTTP: session-only authorship, no task delivery, and shared MCP context',async()=>{
+  const f=await fixture();try{
+    const a=(await f.value('/api/v1/agents',f.alice,'POST',{name:'Canon'})).agent;
+    const b=(await f.value('/api/v1/agents',f.bob,'POST',{name:'Six'})).agent;
+    await f.value('/api/v1/grants',f.bob,'POST',{agentId:b.id,senderAgentId:a.id});await f.value('/api/v1/grants',f.alice,'POST',{agentId:a.id,senderAgentId:b.id});
+    const input={fromAgentId:a.id,toAgentId:b.id,text:'A shared note. Approved is ordinary text here.',idempotencyKey:'owner-chat'};
+    assert.equal((await f.api('/api/v1/owner-messages',f.alice,'POST',input)).status,403,'Bearer cannot impersonate a human owner.');
+    assert.equal((await f.ownerRequest('alice','/api/v1/owner-messages',input,{origin:'https://evil.example'})).status,403);
+    assert.equal((await f.ownerRequest('alice','/api/v1/owner-messages',input,{scopes:['a2a:read','a2a:write']})).status,403);
+    assert.equal((await f.ownerRequest('alice','/api/v1/owner-messages',{...input,authorKind:'agent'})).status,400);
+    assert.equal((await f.api('/api/v1/messages',f.alice,'POST',{...input,authorKind:'owner'})).status,400);
+    const response=await f.ownerRequest('alice','/api/v1/owner-messages',input,{name:'Alice Person'});assert.equal(response.status,201);
+    const sent=await response.json() as {message:{id:string;threadId:string;authorName:string;authorKind:string;state:string}};
+    assert.equal(sent.message.authorName,'Alice Person');assert.equal(sent.message.authorKind,'owner');assert.equal(sent.message.state,'posted');
+    assert.equal(f.jobs.length,0);assert.equal(f.storage.sqlite.prepare('SELECT count(*) AS n FROM outbox_events').get()!.n,0);
+    assert.equal((await f.value(`/api/v1/messages?agentId=${b.id}`,f.bob)).messages.length,0);
+    assert.equal((await f.value(`/api/v1/messages?agentId=${b.id}&view=history`,f.bob)).messages[0].id,sent.message.id);
+    assert.equal((await f.api(`/api/v1/messages/${sent.message.id}/claim`,f.bob,'POST')).status,409);
+    const read=await f.rpc(f.bob,'tools/call',{name:'a2a_read_thread',arguments:{agent_id:b.id,thread_id:sent.message.threadId}});
+    assert.equal(read.result.structuredContent.messages[0].authorName,'Alice Person');assert.equal(read.result.structuredContent.participants.length,2);
+    assert.ok(!JSON.stringify(read).includes('alice@example.com'));assert.ok(!JSON.stringify(read.result.structuredContent.participants).includes('owner_subject'));
+    assert.equal((await f.api(`/api/v1/conversations/${sent.message.threadId}?agentId=${b.id}`,f.alice)).status,404);
+    const forged=await f.rpc(f.alice,'tools/call',{name:'a2a_send_message',arguments:{from_agent_id:a.id,to_agent_id:b.id,text:'Forgery',idempotency_key:'forged',authorKind:'owner'}});assert.equal(forged.result.isError,true);
+    const work=await f.ownerRequest('bob','/api/v1/owner-messages',{fromAgentId:b.id,toAgentId:a.id,text:'Explicit work request',kind:'request',threadId:sent.message.threadId,idempotencyKey:'owner-work'});
+    assert.equal(work.status,201);assert.equal(f.jobs.length,1);const requested=await work.json() as {message:{authorName:string;state:string;kind:string}};assert.equal(requested.message.authorName,'Owner of Six');assert.equal(requested.message.kind,'request');assert.equal(requested.message.state,'pending');
+  }finally{f.storage.close();}
+});
 
 test('offline HTTP: exact-resource signed identities, scopes, admission and owner-only grants',async()=>{
   const f=await fixture();try{

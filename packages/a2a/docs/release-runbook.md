@@ -87,3 +87,32 @@ and subscriptions. Never silently replace the key while old encrypted rows remai
 Record all gate statuses and remaining human acceptance in Linear. Keep work
 open until the required live two-owner dot exchange is proven. Every closeout
 includes `Worktree disposition:` with its actual retained or removed path.
+
+
+## Owner participation upgrade (CRE-2389)
+
+This upgrade reuses the existing Identity client, D1, Queue, sender container,
+owner grants, and secrets. Do not repeat initial provisioning or rotate keys.
+After the populated local D1 migration and independent UI/security gates pass,
+merge the scoped PR and apply pending `0004_owner_conversations.sql` to the
+existing product D1 before deploying the new Worker. The migration stages and
+restores dependent idempotency, outbox, and delivery rows within the transaction;
+it preserves message IDs, claim leases, and the arrival cursor high-water mark.
+Existing message authorship becomes legacy because actual origin was not recorded.
+
+Deploy the exact merged source with project-local Wrangler, `--keep-vars`,
+`--containers-rollout none`, and `--var BUILD_REVISION:<merged SHA>`. The private
+sender/container source is unchanged. Compare sanitized bindings and deployment
+metadata with the saved pre-release receipt. Verify current discovery, the
+owner-session console, legacy attribution, composer modes, and read-only MCP
+thread context. Local two-owner cookie fixtures exercise actual Workerd, D1 and
+Queue; they do not prove Danny's host connection or idle wake.
+
+Keep the immediately previous Worker version in the receipt for application
+rollback. Preserve schema0004 and all new messages; never reverse the populated
+migration as a code rollback. The previous UI lacks owner attribution and the
+owner-post endpoint, and its inbox reads may include non-actionable posted rows.
+The receiving policy still requires an actionable claim before work; posted
+conversation cannot be claimed. Prefer a forward repair when retaining the new
+conversation UI is necessary. Do not send additional production correspondence
+merely to qualify a deployment without the owners' applicable authorization.
