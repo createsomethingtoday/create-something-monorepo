@@ -15,8 +15,8 @@ describe('snapshot analytics API contracts', () => {
     const snapshot = buildMarketplaceSnapshot({
       snapshotAt: '2026-09-21T16:00:00.000Z',
       sellers: [
-        { templateId: 'a'.repeat(24), mrpId: 'b'.repeat(24), name: 'Same', sales: 3, revenue: 150 },
-        { templateId: 'c'.repeat(24), mrpId: 'd'.repeat(24), name: 'Same', sales: 2, revenue: 80 }
+        { templateId: 'a'.repeat(24), mrpId: 'b'.repeat(24), name: 'Same', sales: 3, revenue: 150, fulfillmentSales: 1 },
+        { templateId: 'c'.repeat(24), mrpId: 'd'.repeat(24), name: 'Same', sales: 2, revenue: 80, fulfillmentSales: 2 }
       ],
       assets: [
         {
@@ -59,14 +59,17 @@ describe('snapshot analytics API contracts', () => {
       salesSource: 'marketplace-snapshot'
     });
     expect(leaderboard.summary.totalMarketplaceSales).toBe(5);
+    expect(leaderboard.summary.totalFulfillmentSales).toBe(3);
     expect(leaderboard.leaderboard[0]).toMatchObject({
       templateId: 'a'.repeat(24),
       creatorEmail: 'owner@example.test',
-      totalRevenue30d: 150
+      totalRevenue30d: 150,
+      fulfillmentSales30d: 1
     });
     expect(leaderboard.leaderboard[1].templateId).toBe('c'.repeat(24));
     expect(leaderboard.leaderboard[1]).not.toHaveProperty('creatorEmail');
     expect(leaderboard.leaderboard[1]).not.toHaveProperty('totalRevenue30d');
+    expect(leaderboard.leaderboard[1]).not.toHaveProperty('fulfillmentSales30d');
   });
   it('denies anonymous requests before reading any source', async () => {
     await expect(categoriesGET(event())).rejects.toMatchObject({ status: 401 });

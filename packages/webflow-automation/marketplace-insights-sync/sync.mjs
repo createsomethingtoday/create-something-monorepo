@@ -30,6 +30,7 @@ const SELLER_FIELDS = {
   MRP_ID: 'fldA9ZA24286DtNyZ',
   TEMPLATE_NAME: 'fldgO5x1KhpKkL0QP',
   SALES_30D: 'fldXU6c3ERnqBbvSp',
+  FULFILLMENT_SALES_30D: 'fld7zlIkAV4GDW7rk',
   REVENUE_30D: 'fldxVd61LWea9SlEF',
   SNAPSHOT_AT: 'fldLJlqsFaukWP4Jq',
   WINDOW_SELLERS: 'fldkJiQBUdfWUMP7Q',
@@ -47,7 +48,9 @@ function latestMondayBoundary(now = new Date()) {
   d.setUTCDate(d.getUTCDate() - back);
   return d;
 }
-const toSqlTs = (date) => date.toISOString().replace('T', ' ').slice(0, 19);
+// Explicit UTC: the Snowflake session time zone is not UTC, and a bare literal
+// would shift the window by the session offset.
+const toSqlTs = (date) => `'${date.toISOString().replace('T', ' ').slice(0, 19)} +00:00'::TIMESTAMP_TZ`;
 function parseMetric(value) {
   if (
     value === null ||
@@ -61,24 +64,31 @@ function parseMetric(value) {
   return parsed;
 }
 function querySnowflake(windowStart, windowEnd) {
+  // LOADED_THROUGH is the newest order the warehouse holds. The orders table
+  // loads once a day, so a window that closed after the last load is missing
+  // its final hours; refuse it instead of publishing a short week.
   const sql = `
+    WITH loaded AS (SELECT MAX(CREATED_ON) AS LOADED_THROUGH FROM ANALYTICS.WEBFLOW.MARKETPLACE_ORDERS)
     SELECT
       t.TEMPLATE_ID AS TEMPLATE_ID,
       p.DOCUMENT_ID AS MRP_ID,
       t.TEMPLATE_NAME AS NAME,
       COUNT(*) AS SALES_30D,
-      ROUND(SUM(o.PRICE_VALUE), 2) AS REVENUE_30D
+      COUNT_IF(o.TEMPLATE_FULFILLMENT_CODE_ID IS NOT NULL) AS FULFILLMENT_SALES_30D,
+      ROUND(SUM(o.PRICE_VALUE), 2) AS REVENUE_30D,
+      TO_VARCHAR(CONVERT_TIMEZONE('UTC', ANY_VALUE(l.LOADED_THROUGH)), 'YYYY-MM-DD"T"HH24:MI:SS.FF3"Z"') AS LOADED_THROUGH
     FROM ANALYTICS.WEBFLOW.MARKETPLACE_ORDERS o
     JOIN ANALYTICS.WEBFLOW.MARKETPLACE_PRODUCTS p ON o.MARKETPLACE_PRODUCT_ID = p.DOCUMENT_ID
     JOIN ANALYTICS.WEBFLOW.TEMPLATES t ON p.RESOURCE_ID = t.TEMPLATE_ID
+    CROSS JOIN loaded l
     WHERE p.RESOURCE_TYPE = 'Template'
       AND o.STATUS = 'delivered'
-      AND o.CREATED_ON >= '${toSqlTs(windowStart)}'
-      AND o.CREATED_ON < '${toSqlTs(windowEnd)}'
+      AND o.CREATED_ON >= ${toSqlTs(windowStart)}
+      AND o.CREATED_ON < ${toSqlTs(windowEnd)}
     GROUP BY 1, 2, 3
   `;
 
-  log(`Querying Snowflake (window ${toSqlTs(windowStart)} → ${toSqlTs(windowEnd)} UTC)...`);
+  log(`Querying Snowflake (window ${windowStart.toISOString()} → ${windowEnd.toISOString()})...`);
   const result = spawnSync(
     'uvx',
     [
@@ -116,12 +126,18 @@ function querySnowflake(windowStart, windowEnd) {
   const start = stdout.indexOf('[');
   if (start === -1) fail(`snow sql returned no JSON payload: ${stdout.slice(0, 500)}`);
   const rows = JSON.parse(stdout.slice(start));
+  const loadedThrough = Date.parse(rows[0]?.LOADED_THROUGH);
+  if (!(loadedThrough >= windowEnd.getTime()))
+    fail(
+      `Snowflake orders are loaded only through ${rows[0]?.LOADED_THROUGH ?? 'unknown'}, before the window end ${windowEnd.toISOString()}; rerun after the next daily load`
+    );
 
   return rows.map((row) => ({
     templateId: row.TEMPLATE_ID,
     mrpId: row.MRP_ID,
     name: row.NAME,
     sales: parseMetric(row.SALES_30D),
+    fulfillmentSales: parseMetric(row.FULFILLMENT_SALES_30D),
     revenue: parseMetric(row.REVENUE_30D)
   }));
 }
@@ -168,17 +184,27 @@ async function readSellersFromAirtable(windowEnd) {
   const records = await listAll(SELLERS_TABLE, Object.values(F));
   const stamps = [...new Set(records.map((r) => r.fields[F.SNAPSHOT_AT]).filter(Boolean))].sort();
   const rows = records.filter((r) => r.fields[F.SNAPSHOT_AT] === want);
+  // The dataset emits no rows until Snowflake holds every order in the window,
+  // so a missing window can also mean the daily orders load has not run yet.
   if (!rows.length)
-    fail(`Fivetran sellers activation has no rows for window ${want} (newest: ${stamps.at(-1) ?? 'none'})`);
+    fail(
+      `Fivetran sellers activation has no rows for window ${want} (newest: ${stamps.at(-1) ?? 'none'}); the orders load may not cover the window end yet`
+    );
   const totals = new Set(
     rows.map((r) => `${r.fields[F.WINDOW_SELLERS]}/${r.fields[F.WINDOW_SALES]}/${r.fields[F.WINDOW_REVENUE]}`)
   );
   if (totals.size !== 1) fail(`Fivetran sellers rows disagree on window totals for ${want}`);
+  // FULFILLMENT_SALES_30D is all-or-nothing per window; a partial column would
+  // understate fulfillment-link sales without saying so.
+  const withFulfillment = rows.filter((r) => r.fields[F.FULFILLMENT_SALES_30D] !== undefined).length;
+  if (withFulfillment && withFulfillment !== rows.length)
+    fail(`Fivetran sellers rows for ${want} carry FULFILLMENT_SALES_30D on ${withFulfillment} of ${rows.length} rows`);
   const sellers = rows.map((r) => ({
     templateId: r.fields[F.TEMPLATE_ID],
     mrpId: r.fields[F.MRP_ID],
     name: r.fields[F.TEMPLATE_NAME],
     sales: parseMetric(r.fields[F.SALES_30D]),
+    ...(withFulfillment && { fulfillmentSales: parseMetric(r.fields[F.FULFILLMENT_SALES_30D]) }),
     revenue: parseMetric(r.fields[F.REVENUE_30D])
   }));
   const expectedSellers = parseMetric(rows[0].fields[F.WINDOW_SELLERS]);

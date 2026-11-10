@@ -665,6 +665,8 @@ export interface Asset {
 	beaconSlug?: string;
 	cumulativePurchases?: number;
 	cumulativeRevenue?: number;
+	/** Lifetime sales through the creator's fulfillment links (paid off-platform; not in purchases/revenue). */
+	fulfillmentLinkSales?: number;
 	latestReviewStatus?: string;
 	latestReviewDate?: string;
 	latestReviewFeedback?: string;
@@ -1203,6 +1205,7 @@ export function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asse
 		adminDetailPagePath: firstString(record.fields['🏸Admin Detail Page Path (🏗️ only)']),
 		cumulativePurchases: Number(record.fields['📋 Cumulative Purchases']) || 0,
 		cumulativeRevenue: Number(record.fields['📋 Cumulative Revenue']) || 0,
+		fulfillmentLinkSales: Number(record.fields['📋 Fulfillment-link Sales']) || 0,
 		latestReviewStatus: firstString(record.fields['📝Latest Review Status']),
 		latestReviewDate: firstString(record.fields['🚀📅Latest Version Review Status LMT']),
 		latestReviewFeedback: firstString(record.fields['🖌️📝Latest Review Feedback']),
@@ -2446,6 +2449,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				avgRevenuePerSale: number;
 				salesRank: number;
 				revenueRank: number;
+				fulfillmentSales30d?: number;
 			}>;
 			freshness: MarketplaceFreshnessMetadata;
       marketplaceSummary?: MarketplaceSnapshot['summary'];

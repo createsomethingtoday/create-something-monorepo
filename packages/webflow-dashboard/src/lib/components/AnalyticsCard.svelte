@@ -102,7 +102,8 @@
 	const hasData = $derived(
 		(viewersKnown && (asset.uniqueViewers ?? 0) > 0) ||
 		(asset.cumulativePurchases && asset.cumulativePurchases > 0) ||
-		(asset.cumulativeRevenue && asset.cumulativeRevenue > 0)
+		(asset.cumulativeRevenue && asset.cumulativeRevenue > 0) ||
+		(asset.fulfillmentLinkSales ?? 0) > 0
 	);
 </script>
 
@@ -146,6 +147,9 @@
 						<div class="metric-value">
 							<KineticNumber value={asset.cumulativePurchases || 0} />
 						</div>
+						{#if asset.fulfillmentLinkSales}
+							<span class="metric-support">+{asset.fulfillmentLinkSales.toLocaleString()} through fulfillment links</span>
+						{/if}
 						{#if historyLoaded && purchasesTrend.length >= 2}
 							<div class="metric-trend">
 								<Sparkline data={purchasesTrend} color="var(--color-warning)" height={24} />
@@ -359,6 +363,12 @@
 		font-size: var(--text-caption);
 		color: var(--color-fg-tertiary);
 		text-align: right;
+	}
+
+	.metric-support {
+		font-size: var(--text-caption);
+		color: var(--color-fg-tertiary);
+		font-variant-numeric: tabular-nums;
 	}
 
 	/* Insights Grid */

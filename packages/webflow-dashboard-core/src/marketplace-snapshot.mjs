@@ -71,6 +71,11 @@ export function buildMarketplaceSnapshot({ sellers, assets, categories, snapshot
       reject(`ambiguous asset mapping for ${key}`);
     byTemplate.set(key, normalized);
   }
+  // Fulfillment-link counts are optional (older sources lack them) but all or
+  // nothing: a partial split would understate the total without saying so.
+  const withFulfillment = sellers.filter((s) => s.fulfillmentSales !== undefined && s.fulfillmentSales !== null);
+  if (withFulfillment.length && withFulfillment.length !== sellers.length) reject('partial fulfillment-link counts');
+  const hasFulfillment = withFulfillment.length > 0;
   const seen = new Set();
   const rows = sellers.map((seller) => {
     const templateId = id(seller.templateId);
@@ -87,7 +92,7 @@ export function buildMarketplaceSnapshot({ sellers, assets, categories, snapshot
     // subcategory still contributes to its own category breakdown below.
     const totalSales30d = number(seller.sales, 'sales', true);
     if (totalSales30d === 0) reject('seller without delivered sales');
-    return {
+    const row = {
       templateId,
       mrpId,
       templateName: text(seller.name, 'template name'),
@@ -97,6 +102,11 @@ export function buildMarketplaceSnapshot({ sellers, assets, categories, snapshot
       totalSales30d,
       totalRevenue30d: round(number(seller.revenue, 'revenue'))
     };
+    if (hasFulfillment) {
+      row.fulfillmentSales30d = number(seller.fulfillmentSales, 'fulfillment-link sales', true);
+      if (row.fulfillmentSales30d > totalSales30d) reject('fulfillment-link sales exceed sales');
+    }
+    return row;
   });
   const salesRanks = ranks(rows, 'totalSales30d');
   const revenueRanks = ranks(rows, 'totalRevenue30d');
@@ -139,7 +149,10 @@ export function buildMarketplaceSnapshot({ sellers, assets, categories, snapshot
     summary: {
       totalSales: rows.reduce((sum, r) => sum + r.totalSales30d, 0),
       totalRevenue: round(rows.reduce((sum, r) => sum + r.totalRevenue30d, 0)),
-      sellingTemplates: rows.length
+      sellingTemplates: rows.length,
+      ...(hasFulfillment && {
+        fulfillmentSales: rows.reduce((sum, r) => sum + r.fulfillmentSales30d, 0)
+      })
     },
     leaderboard,
     categories: categoryRows
@@ -168,6 +181,10 @@ export function validateMarketplaceSnapshot(snapshot) {
   number(summary.totalSales, 'total sales', true);
   number(summary.totalRevenue, 'total revenue');
   number(summary.sellingTemplates, 'selling templates', true);
+  // Optional split: sales made through creator fulfillment links (paid off-platform).
+  const hasFulfillment = summary.fulfillmentSales !== undefined;
+  if (hasFulfillment && number(summary.fulfillmentSales, 'fulfillment-link sales', true) > summary.totalSales)
+    reject('fulfillment-link sales exceed sales');
   if (
     !Array.isArray(snapshot.leaderboard) ||
     !snapshot.leaderboard.length ||
@@ -187,6 +204,10 @@ export function validateMarketplaceSnapshot(snapshot) {
     for (const key of ['totalRevenue30d', 'avgRevenuePerSale']) number(row[key], key);
     if (!row.totalSales30d || !row.salesRank || !row.revenueRank)
       reject('zero seller sales or rank');
+    if (hasFulfillment !== (row.fulfillmentSales30d !== undefined))
+      reject('mixed fulfillment-link counts');
+    if (hasFulfillment && number(row.fulfillmentSales30d, 'fulfillment-link sales', true) > row.totalSales30d)
+      reject('fulfillment-link sales exceed sales');
   }
   const keys = new Set();
   for (const row of snapshot.categories) {
@@ -204,7 +225,9 @@ export function validateMarketplaceSnapshot(snapshot) {
     summary.sellingTemplates < snapshot.leaderboard.length ||
     summary.totalSales < snapshot.leaderboard.reduce((sum, row) => sum + row.totalSales30d, 0) ||
     summary.totalRevenue + 0.01 <
-      snapshot.leaderboard.reduce((sum, row) => sum + row.totalRevenue30d, 0)
+      snapshot.leaderboard.reduce((sum, row) => sum + row.totalRevenue30d, 0) ||
+    (hasFulfillment &&
+      summary.fulfillmentSales < snapshot.leaderboard.reduce((sum, row) => sum + row.fulfillmentSales30d, 0))
   )
     reject('summary smaller than leaderboard');
   return snapshot;

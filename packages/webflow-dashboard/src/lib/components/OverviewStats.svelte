@@ -17,6 +17,7 @@
     let viewers = 0;
     let purchases = 0;
     let revenue = 0;
+    let fulfillment = 0;
 
     for (const asset of assets) {
       // Only count performance from Published and Delisted
@@ -24,10 +25,11 @@
         viewers += asset.uniqueViewers || 0;
         purchases += asset.cumulativePurchases || 0;
         revenue += asset.cumulativeRevenue || 0;
+        fulfillment += asset.fulfillmentLinkSales || 0;
       }
     }
 
-    return { viewers, purchases, revenue };
+    return { viewers, purchases, revenue, fulfillment };
   });
 
   function getAssetTypeTheme(type: string): { accent: string } {
@@ -86,7 +88,7 @@
 
 <div class="overview-stats">
   <!-- Performance Summary -->
-  {#if (VIEWER_DATA_AVAILABLE && totals.viewers > 0) || totals.purchases > 0 || totals.revenue > 0}
+  {#if (VIEWER_DATA_AVAILABLE && totals.viewers > 0) || totals.purchases > 0 || totals.revenue > 0 || totals.fulfillment > 0}
     <section class="overview-panel overview-panel--performance">
       <Card>
         <CardHeader>
@@ -110,6 +112,11 @@
               <div class="performance-content">
                 <span class="performance-value"><KineticNumber value={totals.purchases} /></span>
                 <span class="performance-label">Total Purchases</span>
+                {#if totals.fulfillment > 0}
+                  <span class="performance-support"
+                    >+{totals.fulfillment.toLocaleString()} through fulfillment links</span
+                  >
+                {/if}
               </div>
             </div>
 
@@ -231,6 +238,12 @@
     font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
     letter-spacing: 0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .performance-support {
+    font-size: var(--text-caption);
+    color: var(--color-fg-tertiary);
     font-variant-numeric: tabular-nums;
   }
 
