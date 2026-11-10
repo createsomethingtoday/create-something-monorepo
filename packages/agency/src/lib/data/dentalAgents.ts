@@ -1,3 +1,5 @@
+export const dentalDemoHref = 'https://lumen-dental-agent.createsomethingltd.chatgpt.site';
+
 /** Public vendor-service copy. The demonstration contains synthetic records only. */
 export const dentalAgentAnswer =
   'We build OpenAI-powered website agents for dental practices that answer approved front-desk questions, guide visitors, and prepare appointment requests. Your practice controls the sources, permissions, confirmation steps, and handoff to staff.';
@@ -31,7 +33,7 @@ export const dentalAgentFaqs = [
   {
     question: 'What does the Lumen Dental demonstration prove?',
     answer:
-      'Lumen is a fictional practice with a working OpenAI agent, database-grounded answers, navigation, confirmed synthetic bookings, visible tool receipts, and aggregate website and agent analytics. It is an owner-private demonstration we can walk through with you. It does not establish real clinic integration, patient outcomes, time savings, revenue, or search visibility.'
+      'Lumen is a fictional practice with a working OpenAI agent, database-grounded answers, navigation, confirmed synthetic bookings, visible tool receipts, and aggregate website and agent analytics. It is a public demonstration you can open from this page. It does not establish real clinic integration, patient outcomes, time savings, revenue, or search visibility.'
   },
   {
     question: 'Will the agent improve our SEO or visibility in AI answers?',

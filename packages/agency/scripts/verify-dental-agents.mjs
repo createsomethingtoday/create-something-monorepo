@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { dentalAgentFaqs } from '../src/lib/data/dentalAgents.ts';
+import { dentalAgentFaqs, dentalDemoHref } from '../src/lib/data/dentalAgents.ts';
 
 // Bounded HTTP acceptance check for the actual SSR artifact, locally or deployed.
 const origin = process.argv[2] ?? 'http://127.0.0.1:4191';
@@ -42,7 +42,14 @@ for (const item of dentalAgentFaqs)
   assert.ok(summaryText.includes(item.question), `visible FAQ: ${item.question}`);
 for (const step of ['ask', 'read', 'confirm', 'record'])
   assert.match(html, new RegExp(`id="dental-${step}"`));
-assert.match(html, /owner-private/);
+assert.doesNotMatch(html, /owner-private/);
+const demoLinks = [...html.matchAll(/<a\b[^>]*>/g)].filter(([tag]) =>
+  tag.includes('data-dental-demo-link')
+);
+assert.ok(demoLinks.length >= 3, 'direct hero, image and caption links to demo');
+for (const [tag] of demoLinks) {
+  assert.ok(tag.includes(`href="${dentalDemoHref}"`));
+}
 assert.match(html, /not dental care/);
 assert.match(
   html,
@@ -62,6 +69,12 @@ for (const path of [
   assert.match(asset.headers.get('content-type'), /image\/png/);
   assert.ok((await asset.arrayBuffer()).byteLength > 1000);
 }
+const demoResponse = await fetch(dentalDemoHref, { redirect: 'manual' });
+assert.equal(demoResponse.status, 200, 'demo opens anonymously without a login redirect');
+const demoDataResponse = await fetch(new URL('/api/demo', dentalDemoHref), { redirect: 'manual' });
+assert.equal(demoDataResponse.status, 200, 'synthetic demo database is visitor-accessible');
+const demoData = await demoDataResponse.json();
+assert.ok(Array.isArray(demoData.services) && demoData.services.length > 0);
 console.log(
   JSON.stringify(
     {
@@ -73,6 +86,7 @@ console.log(
       nativeSequence: '4 controls in SSR',
       booking: 'source/intent/lane retained',
       media: '2 PNG assets',
+      demoAccess: 'anonymous HTTP 200 and synthetic database reachable',
       limits: 'No assertion of indexing, AI citations, clinical integration or real conversion.'
     },
     null,

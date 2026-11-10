@@ -12,7 +12,7 @@ import {
   buildFirstPartySchedulerUrl
 } from '../src/lib/scheduling/first-party';
 import { getAgencyContentAssetAnalyticsMetadata } from '../src/lib/analytics/content-assets';
-import { dentalAgentFaqs, dentalAgentService } from '../src/lib/data/dentalAgents';
+import { dentalAgentFaqs, dentalAgentService, dentalDemoHref } from '../src/lib/data/dentalAgents';
 import { performancePageRegistry } from '../../../config/performance-pages/registry';
 
 const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
@@ -85,10 +85,18 @@ test('visible FAQs and service schema share copy without impersonating the ficti
     dentalAgentFaqs.find((faq) => faq.question.includes('patient information'))!.answer,
     /not a compliance determination/
   );
-  assert.match(source, /owner-private/);
+  assert.match(dentalAgentFaqs[4].answer, /public demonstration/);
   assert.match(source, /not dental care/);
-  assert.doesNotMatch(
-    source,
-    /lumen-dental-agent\.createsomethingltd\.chatgpt\.site|api\.openai\.com|sk-[a-zA-Z0-9]{20,}/
+  assert.doesNotMatch(source, /api\.openai\.com|sk-[a-zA-Z0-9]{20,}/);
+});
+
+test('visitors can open the public dental site from the hero and demonstration proof', () => {
+  assert.equal(
+    new URL(dentalDemoHref).hostname,
+    'lumen-dental-agent.createsomethingltd.chatgpt.site'
   );
+  assert.match(source, /href=\{dentalDemoHref\}/);
+  assert.ok((source.match(/data-dental-demo-link/g) ?? []).length >= 3);
+  assert.match(source, /Explore the dental demo/);
+  assert.doesNotMatch(source, /owner-private|Request a guided demonstration/);
 });
