@@ -5,11 +5,10 @@
  * historical tracking. This enables real sparkline/category trend rendering
  * in the dashboard.
  *
- * Schedule: Run daily at midnight UTC via Cloudflare Cron Trigger
- * Trigger URL: /api/cron/snapshot
+ * Schedule: daily at 18:30 UTC, called by the marketplace-insights-cron Worker
+ * (Pages projects have no cron triggers).
  *
- * Trigger with CRON_SECRET:
- * curl -H "Authorization: Bearer YOUR_CRON_SECRET" https://webflow-dashboard.pages.dev/api/cron/snapshot
+ * curl -H "Authorization: Bearer $SCHEDULER_CRON_SECRET" https://webflow-dashboard.pages.dev/api/cron/snapshot
  */
 
 import { json, error } from '@sveltejs/kit';
@@ -19,7 +18,7 @@ import {
   captureMarketplaceSnapshots,
   type MarketplaceSnapshotCaptureResult
 } from '$lib/server/marketplace-history';
-import { isAuthorizedCronRequest } from '$lib/server/security';
+import { isAuthorizedSchedulerRequest } from '$lib/server/security';
 
 type MarketplaceCaptureStatus =
   | ({ success: true } & MarketplaceSnapshotCaptureResult)
@@ -31,7 +30,7 @@ function getErrorMessage(err: unknown): string {
 
 export const GET: RequestHandler = async ({ request, platform }) => {
   // Require explicit authorization in production to avoid spoofable-header bypasses.
-  if (!isAuthorizedCronRequest(request, platform?.env?.CRON_SECRET, platform?.env?.ENVIRONMENT)) {
+  if (!isAuthorizedSchedulerRequest(request, platform?.env)) {
     throw error(401, 'Unauthorized');
   }
 

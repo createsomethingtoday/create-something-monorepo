@@ -11,7 +11,7 @@
  * record. A window the orders load does not cover yet has no sellers rows, so
  * the call fails instead of publishing a short week.
  *
- *   curl -X POST -H "Authorization: Bearer $CRON_SECRET" <dashboard>/api/cron/insights
+ *   curl -X POST -H "Authorization: Bearer $SCHEDULER_CRON_SECRET" <dashboard>/api/cron/insights
  *   ...?asOf=2026-11-09T16:00:00.000Z   republish a specific window end
  */
 import { error, json } from '@sveltejs/kit';
@@ -21,11 +21,11 @@ import {
   latestMondayBoundary,
   publishMarketplaceInsights
 } from '@create-something/webflow-dashboard-core/marketplace-insights-publish';
-import { isAuthorizedCronRequest } from '$lib/server/security';
+import { isAuthorizedSchedulerRequest } from '$lib/server/security';
 
 export const POST: RequestHandler = async ({ request, url, platform }) => {
   const env = platform?.env;
-  if (!isAuthorizedCronRequest(request, env?.CRON_SECRET, env?.ENVIRONMENT)) {
+  if (!isAuthorizedSchedulerRequest(request, env)) {
     throw error(401, 'Unauthorized');
   }
   if (!env?.MARKETPLACE_INSIGHTS_SNAPSHOT_TABLE_ID) {

@@ -44,6 +44,14 @@ describe('POST /api/cron/insights', () => {
     expect(mocks.publish).not.toHaveBeenCalled();
   });
 
+  it('accepts the scheduler Worker secret alongside the shared one', async () => {
+    const own = { SCHEDULER_CRON_SECRET: 'scheduler-secret' };
+    await expect(call('', { authorization: 'Bearer wrong' }, own)).rejects.toMatchObject({ status: 401 });
+    expect(await (await call('', { authorization: 'Bearer cron-secret' }, own)).json()).toMatchObject({ success: true });
+    const response = await call('', { authorization: 'Bearer scheduler-secret' }, own);
+    expect(await response.json()).toMatchObject({ success: true });
+  });
+
   it('publishes the latest complete window and returns counts, not record-level notes', async () => {
     const response = await call();
     const body = await response.json();

@@ -11,6 +11,8 @@ declare global {
 				AIRTABLE_BASE_ID: string;
         MARKETPLACE_INSIGHTS_SNAPSHOT_TABLE_ID?: string;
 				CRON_SECRET?: string;
+				/** Credential of the marketplace-insights-cron Worker for /api/cron/insights and /api/cron/snapshot. */
+				SCHEDULER_CRON_SECRET?: string;
 				ADMIN_EMAILS?: string;
 				CSRF_TRUSTED_ORIGINS?: string;
 				SUBMISSION_STATUS_API_URL?: string;
