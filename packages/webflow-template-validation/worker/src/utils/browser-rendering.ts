@@ -58,25 +58,54 @@ async function measure(page: Page) {
 	return page.evaluate(measureLayoutInPage, OVERFLOW_TOLERANCE_PX, MAX_OFFENDERS);
 }
 
-async function renderViewport(
-	browser: Browser,
-	url: string,
-	viewport: RenderViewport,
-	errors: Map<string, PageErrorObservation>,
-	userAgent: string
-): Promise<ViewportObservation> {
-	const page = await browser.newPage();
-	page.on('pageerror', (error: Error) => {
-		const observed = describePageError(error?.message || String(error), error?.stack);
-		if (isIgnoredPageError(observed.message)) return;
-		// Keyed without the line, so one error does not repeat per viewport or page variant.
-		const key = `${observed.message}\n${observed.source?.replace(/:\d+:\d+$/, '') ?? ''}`;
-		if (!errors.has(key)) errors.set(key, observed);
-	});
+/**
+ * One reusable tab per viewport. Opening fresh tabs for every page after the
+ * previous ones closed often failed on Cloudflare ("Session with given id not
+ * found") once the browser had no tabs left, so the tabs stay open for the
+ * whole run and navigate from page to page.
+ */
+interface ViewportTab {
+	viewport: RenderViewport;
+	page: Page;
+	/** Where page errors go; set for the page being rendered, null in between. */
+	errors: Map<string, PageErrorObservation> | null;
+}
+
+/** An HTTP error status is the page's own failure; retrying it would not help. */
+class PageStatusError extends Error {}
+
+async function openTabs(browser: Browser, userAgent: string): Promise<ViewportTab[]> {
+	return Promise.all(
+		RENDER_VIEWPORTS.map(async (viewport) => {
+			const page = await browser.newPage();
+			const tab: ViewportTab = { viewport, page, errors: null };
+			page.on('pageerror', (error: Error) => {
+				if (!tab.errors) return;
+				const observed = describePageError(error?.message || String(error), error?.stack);
+				if (isIgnoredPageError(observed.message)) return;
+				// Keyed without the line, so one error does not repeat per viewport or page variant.
+				const key = `${observed.message}\n${observed.source?.replace(/:\d+:\d+$/, '') ?? ''}`;
+				if (!tab.errors.has(key)) tab.errors.set(key, observed);
+			});
+			await page.setViewport({ width: viewport.width, height: viewport.height, deviceScaleFactor: 1 });
+			await page.setUserAgent(userAgent);
+			await page.evaluateOnNewDocument(emulateVisitorInPage, viewport.pointer);
+			return tab;
+		})
+	);
+}
+
+async function closeTabs(tabs: ViewportTab[] | null): Promise<null> {
+	await Promise.all((tabs ?? []).map((tab) => tab.page.close().catch(() => undefined)));
+	return null;
+}
+
+async function renderViewport(tab: ViewportTab, url: string, errors: Map<string, PageErrorObservation>): Promise<ViewportObservation> {
+	const { page, viewport } = tab;
+	// Leave the previous page first, so its late errors are not counted against this one.
+	await page.goto('about:blank').catch(() => undefined);
+	tab.errors = errors;
 	try {
-		await page.setViewport({ width: viewport.width, height: viewport.height, deviceScaleFactor: 1 });
-		await page.setUserAgent(userAgent);
-		await page.evaluateOnNewDocument(emulateVisitorInPage, viewport.pointer);
 		let response: Awaited<ReturnType<Page['goto']>> = null;
 		try {
 			response = await page.goto(url, { waitUntil: 'load', timeout: NAVIGATION_TIMEOUT_MS });
@@ -84,7 +113,7 @@ async function renderViewport(
 			// A page that never fires load (a stalled beacon or video) is still measurable.
 			if (!(error instanceof Error && error.name === 'TimeoutError')) throw error;
 		}
-		if (response && response.status() >= 400) throw new Error(`HTTP ${response.status()}`);
+		if (response && response.status() >= 400) throw new PageStatusError(`HTTP ${response.status()}`);
 		await page.waitForNetworkIdle({ idleTime: 500, timeout: NETWORK_IDLE_TIMEOUT_MS }).catch(() => undefined);
 		await page
 			.evaluate(() => (document.fonts ? document.fonts.ready.then(() => true) : true))
@@ -115,21 +144,19 @@ async function renderViewport(
 			offenders: overflowPx > OVERFLOW_TOLERANCE_PX ? offenders : []
 		};
 	} finally {
-		await page.close().catch(() => undefined);
+		tab.errors = null;
 	}
 }
 
-async function renderPage(browser: Browser, url: string, userAgent: string): Promise<PageRenderObservation> {
+/** Load one page at every viewport, each tab at its own width, as a visitor would. */
+async function renderPage(tabs: ViewportTab[], url: string): Promise<PageRenderObservation> {
 	const errors = new Map<string, PageErrorObservation>();
-	try {
-		// One tab per viewport: each loads the page fresh at its own width, as a visitor would.
-		const viewports = await Promise.all(
-			RENDER_VIEWPORTS.map((viewport) => renderViewport(browser, url, viewport, errors, userAgent))
-		);
-		return { url, status: 'ok', viewports, uncaughtErrors: [...errors.values()] };
-	} catch (error) {
-		return { url, status: 'failed', error: errorMessage(error), viewports: [], uncaughtErrors: [] };
-	}
+	const viewports = await Promise.all(tabs.map((tab) => renderViewport(tab, url, errors)));
+	return { url, status: 'ok', viewports, uncaughtErrors: [...errors.values()] };
+}
+
+function failedPage(url: string, error: unknown): PageRenderObservation {
+	return { url, status: 'failed', error: errorMessage(error), viewports: [], uncaughtErrors: [] };
 }
 
 /** Unique page URLs without fragments, in crawl order. */
@@ -173,17 +200,47 @@ export async function validateRendering(
 		return summarizeRendering([], { ...context, unavailableReason: `The browser did not start: ${errorMessage(error)}` });
 	}
 
+	let tabs: ViewportTab[] | null = null;
+	let relaunched = false;
 	try {
 		// The same Chrome, without the "HeadlessChrome" product token some scripts check for.
-		const userAgent = (await browser.userAgent()).replace('HeadlessChrome/', 'Chrome/');
+		let userAgent = (await browser.userAgent()).replace('HeadlessChrome/', 'Chrome/');
 		const pages: PageRenderObservation[] = [];
 		for (const url of targets) {
 			// Pages left when the time budget runs out count as not rendered.
 			if (options.deadline !== undefined && Date.now() > options.deadline) break;
-			pages.push(await renderPage(browser, url, userAgent));
+			let observation: PageRenderObservation | null = null;
+			// A browser-side failure (a lost tab or connection) gets one retry on fresh
+			// tabs, and the browser is relaunched once per run if it disconnected.
+			for (let attempt = 0; observation === null; attempt += 1) {
+				try {
+					tabs ??= await openTabs(browser, userAgent);
+					observation = await renderPage(tabs, url);
+				} catch (error) {
+					tabs = await closeTabs(tabs);
+					if (error instanceof PageStatusError || attempt >= 1) {
+						observation = failedPage(url, error);
+					} else if (!browser.connected) {
+						if (relaunched) {
+							observation = failedPage(url, error);
+						} else {
+							relaunched = true;
+							await browser.close().catch(() => undefined);
+							try {
+								browser = await launchWithRetry(binding);
+								userAgent = (await browser.userAgent()).replace('HeadlessChrome/', 'Chrome/');
+							} catch (launchError) {
+								observation = failedPage(url, launchError);
+							}
+						}
+					}
+				}
+			}
+			pages.push(observation);
 		}
 		return summarizeRendering(pages, context);
 	} finally {
+		await closeTabs(tabs);
 		await browser.close().catch(() => undefined);
 	}
 }
