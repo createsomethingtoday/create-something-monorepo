@@ -479,6 +479,11 @@ function printHuman(ctx: {
 			out.push(`  [${category}] ${issue.id}: ${issue.message}${policy}`);
 			const fix = howToFix(issue);
 			if (fix) out.push(`      Fix: ${fix}`);
+			const locations: unknown = issue.details?.locations;
+			if (Array.isArray(locations)) {
+				for (const location of locations.slice(0, 5)) out.push(`      Where: ${String(location)}`);
+				if (locations.length > 5) out.push(`      … and ${locations.length - 5} more`);
+			}
 			if (category === CANVAS_CHECKS_CATEGORY) {
 				if (typeof issue.details?.location === 'string') out.push(`      Where: ${issue.details.location}`);
 				const keys: unknown = issue.details?.canvasElementKeys;

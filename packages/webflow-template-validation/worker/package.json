@@ -21,6 +21,7 @@
 		"analyze": "node test-analyzer.js"
 	},
 	"dependencies": {
+		"@cloudflare/puppeteer": "^1.3.0",
 		"@create-something/gsap-validation-worker": "workspace:*",
 		"htmlparser2": "^10.1.0"
 	},
