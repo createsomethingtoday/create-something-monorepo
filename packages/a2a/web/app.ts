@@ -1,4 +1,5 @@
 import './styles.css';
+import {createSharedContext} from './shared-context';
 
 document.documentElement.classList.add('js');
 
@@ -27,6 +28,14 @@ const state = {
   historyHasMore:false, historyBefore:null as number|null,
   conversations:new Map<string,ConversationView>(), contextGeneration:0, sendPayload:'', ownerName:'',
 };
+const sharedContext=createSharedContext({api,report:handleError,draft:(text,peer,thread)=>{
+  const form=$<HTMLFormElement>('#compose-form');
+  if(!form.hidden&&state.replyThreadId!==thread){notice('Finish or cancel your current draft before drafting a reference in another thread.','warning');$('#message-text').focus();return;}
+  if(form.hidden)showCompose(peer,thread);
+  const input=$<HTMLTextAreaElement>('#message-text');const draft=[input.value.trim(),text].filter(Boolean).join('\n\n');if(new TextEncoder().encode(draft).byteLength>16*1024){notice('Shorten your draft before adding this summary and reference. Messages are limited to 16 KiB.','warning');input.focus();return;}input.value=draft;state.idempotencyKey='';state.sendPayload='';renderCompose();input.focus();
+}});
+
+$('#pause-title').closest('.subsection')?.before(sharedContext.ownedElement);
 class ApiError extends Error { constructor(public status: number, public code: string, message: string) { super(message); } }
 
 async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -74,7 +83,7 @@ async function copy(text: string, label: string) {
   catch { notice(`Clipboard unavailable. Select and copy the ${label.toLowerCase()} text shown on this page.`, 'warning'); }
 }
 function openPane(pane: Pane, focus = true) {
-  state.pane = pane;
+  state.pane = pane;if(pane==='access')void sharedContext.refreshOwned();
   for (const panel of document.querySelectorAll<HTMLElement>('[data-panel]')) panel.hidden = panel.dataset.panel !== pane;
   for (const button of document.querySelectorAll<HTMLButtonElement>('[data-pane]')) {
     if (button.dataset.pane === pane) button.setAttribute('aria-current','page'); else button.removeAttribute('aria-current');
@@ -125,7 +134,7 @@ function renderInbox() {
 }
 function renderConversation(fallback:Message[]|undefined) {
   const container=$('#conversation');container.tabIndex=-1;container.replaceChildren();
-  if(!fallback){container.append(el('p','conversation-placeholder','Select a conversation to read its messages and receipts.'));return;}
+  if(!fallback){sharedContext.hide();container.append(el('p','conversation-placeholder','Select a conversation to read its messages and receipts.'));return;}
   const view=state.conversations.get(state.threadId), page=view?.page;
   const peerId=fallback.find(m=>m.fromAgentId!==state.agentId)?.fromAgentId??fallback[0].toAgentId;
   const peer=page?.participants.find(p=>p.agentId===peerId);
@@ -139,6 +148,7 @@ function renderConversation(fallback:Message[]|undefined) {
     participants.append(row);
   } else participants.append(el('p','small',view?.error?'Participant and monitoring details unavailable. Retry to check.':'Loading participant and monitoring details…'));
   participants.append(el('p','small','Subscription status does not confirm that a Dot has read a message.'));container.append(participants);
+  sharedContext.show({agentId:state.agentId,threadId:state.threadId,peerAgentId:peerId,ownerLabel:state.ownerName||`Owner of ${selectedAgent()?.name??'your Dot'}`});container.append(sharedContext.element);
   if(view?.error){const warning=el('div','context-warning');warning.append(el('p','small','Shared thread context could not be loaded. Showing only messages from inbox history.'),actionButton('Retry thread',()=>void loadConversation(state.threadId)));container.append(warning);}
   const messages=page?.messages??fallback;
   for(const message of [...messages].sort((a,b)=>a.sequence-b.sequence)){
@@ -155,7 +165,10 @@ function renderConversation(fallback:Message[]|undefined) {
       if(deliveries.length)for(const delivery of deliveries)receipt.append(statusTag(delivery.state,'Event: '));
       else receipt.append(el('span','','No event delivery recorded'));
     }
-    record.append(meta,el('p','message-text',message.text),receipt);container.append(record);
+    record.append(meta,el('p','message-text',message.text),receipt);
+    const references=[...new Set(message.text.match(/a2a:\/\/threads\/[A-Za-z0-9_-]+\/context\/[A-Za-z0-9_-]+/g)??[])];
+    for(const uri of references)if(uri.startsWith(`a2a://threads/${state.threadId}/context/`))record.append(actionButton('Open shared document',()=>sharedContext.openReference(uri)));
+    container.append(record);
   }
   if(page?.hasMore){const earlier=actionButton(view?.loading?'Loading…':'Load earlier in this thread',()=>void loadConversation(state.threadId,true));earlier.dataset.loadEarlier='true';if(view?.loading)earlier.setAttribute('aria-disabled','true');container.append(earlier);}
   const reply=actionButton('Reply as owner →',()=>showCompose(peerId,state.threadId));reply.classList.add('reply-button');reply.disabled=!!peer?.paused||!!selectedAgent()?.paused;container.append(reply);
@@ -271,7 +284,7 @@ async function refreshDetails() {
   state.messages=messages.status==='fulfilled'?messages.value.messages:[];state.grants=grants.status==='fulfilled'?grants.value.grants:[];
   state.historyHasMore=messages.status==='fulfilled'&&messages.value.hasMore;state.historyBefore=messages.status==='fulfilled'?messages.value.nextBefore:null;
   state.subscriptions=subscriptions.status==='fulfilled'?subscriptions.value.subscriptions:[];state.deliveries=deliveries.status==='fulfilled'?deliveries.value.deliveries:[];
-  state.contextGeneration++;state.conversations.clear();
+  state.contextGeneration++;state.conversations.clear();sharedContext.hide();
   renderInbox();renderConnect();renderGrants();if(state.threadId)void loadConversation(state.threadId);$('#workspace').setAttribute('aria-busy','false');
   const failed=results.find(result=>result.status==='rejected');
   if(failed?.status==='rejected') {

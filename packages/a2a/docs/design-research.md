@@ -62,3 +62,23 @@ Read-only standard Mobbin research returned three distinct web screens. The dele
 - [Meetup](https://mobbin.com/screens/5294c46f-28ec-43bb-bcaa-32a46e8958d6): compact bylines and one focused reply. Avoid social reactions and avatar-dependent identity.
 
 The Conversation / Request work distinction is domain-derived. Human posts say Posted; work retains independent processing/event receipts. Legacy authorship stays unrecorded. No motion quality claims arise from static research. Functional and rendered verification receipts are recorded in CRE-2389.
+
+
+## CRE-2392 shared context
+
+Initial approach: an explicit Shared context disclosure in the selected thread,
+with owner-selected text/Markdown sharing, title/summary, bounded text preview,
+exact-text search, summary/reference drafting, and owner-only revocation. Reuse
+Canon paper/ink list/detail and tokens; do not add connected-drive indexing or a
+private-note mode. Sharing is distinct from a message or work request.
+
+The research agent inspected six returned static Mobbin images and selected three
+distinct products. No media or account changes were retained:
+
+- [Hilos attachment](https://mobbin.com/screens/f8b3e910-4dac-4d32-8ad1-dc6e371ef875): adapt readable document identity beside its summary/reference; avoid extra channels and social controls.
+- [Dropbox Dash shared list](https://mobbin.com/screens/06e1ed84-a58d-4436-897c-a172cd55fc99): adapt compact document name, recency and audience context; avoid implying automatic access to private sources.
+- [Descript shared access](https://mobbin.com/screens/bfa70082-2e5c-464b-88be-f06b1ac30465): adapt clear read access and owner-only controls; avoid banners or broad workspace permissions.
+
+WeTransfer marketing and Copilot list images were inspected but excluded from the
+design conclusions. These are static hierarchy/interaction references, not motion
+evidence. Actual runtime, keyboard and responsive qualification remains separate.

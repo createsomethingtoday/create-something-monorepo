@@ -4,6 +4,7 @@ import { ADMIN_SCOPE, READ_SCOPE, VERSION, WRITE_SCOPE, type RuntimeEnv } from '
 import { HttpError, json, readJson, sameOrigin, stringField } from './http';
 import { cancelSubscription, deliver, fanoutEvent, publishOutbox, recoverDelivery, replayDelivery, type DeliveryJob } from './delivery';
 import { mcpRoute } from './mcp';
+import { ContextService, CONTEXT_POLICY } from './context';
 
 const securityHeaders={
   'x-content-type-options':'nosniff','referrer-policy':'strict-origin-when-cross-origin','x-frame-options':'DENY',
@@ -41,6 +42,42 @@ async function route(request:Request,env:RuntimeEnv):Promise<Response>{
     const write=!['GET','HEAD'].includes(request.method);
     if(write){requireScope(p,WRITE_SCOPE);if(!request.headers.has('authorization'))sameOrigin(request,env.BASE_URL);await limitAdmission(env,`write:${p.subject}`,120,60000);}
     const service=new InboxService(env.DB);
+    const contexts=new ContextService(env.DB);
+    if(path==='/api/v1/owned-context'&&request.method==='GET'){
+      if(request.headers.has('authorization')||p.authentication!=='owner_session')throw new HttpError('owner_session_required',403,'Use your signed-in owner console to manage shared context.');
+      requireScope(p,ADMIN_SCOPE);if(request.headers.has('origin'))sameOrigin(request,env.BASE_URL);
+      if([...url.searchParams.keys()].some(key=>key!=='after'))throw new HttpError('invalid_request',400,'Unexpected context management parameter.');
+      const after=url.searchParams.get('after');if(after!==null&&!/^\d{1,16}$/.test(after))throw new HttpError('invalid_cursor',400,'Invalid context cursor.');
+      return json(await contexts.listOwned(p,after===null?0:Number(after)));
+    }
+    if(path==='/api/v1/context'){
+      if(request.method==='GET'){
+        const after=url.searchParams.get('after');if(after!==null&&!/^\d{1,16}$/.test(after))throw new HttpError('invalid_cursor',400,'Invalid context cursor.');
+        const threadId=url.searchParams.get('threadId');if(!threadId)throw new HttpError('invalid_request',400,'Select a conversation first.');
+        return json(await contexts.list(p,threadId,after===null?undefined:Number(after)));
+      }
+      if(request.method==='POST'){
+        if(request.headers.has('authorization')||p.authentication!=='owner_session')throw new HttpError('owner_session_required',403,'Use your signed-in owner console to share context.');
+        sameOrigin(request,env.BASE_URL);requireScope(p,ADMIN_SCOPE);
+        const body=await readJson(request,CONTEXT_POLICY.maxDocumentBytes*6+16384,true);
+        if(Object.keys(body).some(key=>!['agentId','threadId','title','summary','mimeType','content','idempotencyKey'].includes(key)))throw new HttpError('invalid_request',400,'Unexpected context field.');
+        const mimeType=stringField(body,'mimeType',32);if(mimeType!=='text/plain'&&mimeType!=='text/markdown')throw new HttpError('invalid_request',400,'Share text or Markdown only.');
+        const result=await contexts.share(p,{agentId:stringField(body,'agentId',160),threadId:stringField(body,'threadId',160),title:stringField(body,'title',480),summary:stringField(body,'summary',2048),mimeType,content:stringField(body,'content',CONTEXT_POLICY.maxDocumentBytes),idempotencyKey:stringField(body,'idempotencyKey',128)});
+        return json(result,result.duplicate?200:201);
+      }
+    }
+    const contextMatch=path.match(/^\/api\/v1\/context\/([A-Za-z0-9_-]{1,160})(\/search)?$/);
+    if(contextMatch){
+      if(request.method==='GET'&&contextMatch[2])return json(await contexts.search(p,contextMatch[1],url.searchParams.get('q')??''));
+      if(request.method==='GET'){
+        const chunk=url.searchParams.get('chunk');if(chunk!==null&&!/^\d{1,3}$/.test(chunk))throw new HttpError('invalid_request',400,'Invalid context section.');
+        return json(await contexts.read(p,contextMatch[1],chunk===null?undefined:Number(chunk)));
+      }
+      if(request.method==='DELETE'&&!contextMatch[2]){
+        if(request.headers.has('authorization')||p.authentication!=='owner_session')throw new HttpError('owner_session_required',403,'Use your signed-in owner console to revoke context.');
+        sameOrigin(request,env.BASE_URL);requireScope(p,ADMIN_SCOPE);return json(await contexts.revoke(p,contextMatch[1]));
+      }
+    }
     if(path==='/api/v1/me'&&request.method==='GET')return json({subject:p.subject,email:p.email,displayName:p.displayName});
     if(path==='/api/v1/agents'){
       if(request.method==='GET')return json({agents:await service.listAgents(p)});
@@ -53,7 +90,8 @@ async function route(request:Request,env:RuntimeEnv):Promise<Response>{
       await env.DB.batch([
         env.DB.prepare('UPDATE agents SET deleted_at=?,paused=1 WHERE id=? AND owner_subject=?').bind(now,agentMatch[1],p.subject),
         env.DB.prepare('UPDATE messages SET text=NULL,content_deleted_at=?,claim_token=NULL,claimed_until=NULL,state=CASE WHEN state=\'claimed\' THEN \'rejected\' ELSE state END WHERE from_agent_id=? OR to_agent_id=?').bind(now,agentMatch[1],agentMatch[1]),
-        env.DB.prepare("UPDATE subscriptions SET status='revoked',secret_ciphertext='',previous_secret_ciphertext=NULL,previous_secret_until=NULL,verified_at=0 WHERE agent_id=? AND owner_subject=?").bind(agentMatch[1],p.subject)
+        env.DB.prepare("UPDATE subscriptions SET status='revoked',secret_ciphertext='',previous_secret_ciphertext=NULL,previous_secret_until=NULL,verified_at=0 WHERE agent_id=? AND owner_subject=?").bind(agentMatch[1],p.subject),
+        ...contexts.redactionStatementsForInbox(agentMatch[1],now)
       ]);return json({deleted:true});
     }
     if(path==='/api/v1/grants'){
@@ -120,7 +158,7 @@ async function route(request:Request,env:RuntimeEnv):Promise<Response>{
   return new Response(response.body,{status:response.status,headers});
 }
 async function retention(env:RuntimeEnv){
-  const now=Date.now();const cutoff=now-90*86400000;await new InboxService(env.DB).pruneRetention();
+  const now=Date.now();const cutoff=now-90*86400000;await new ContextService(env.DB).pruneRetention(now);await new InboxService(env.DB).pruneRetention();
   await env.DB.batch([
     env.DB.prepare('DELETE FROM deliveries WHERE event_id IN(SELECT e.id FROM outbox_events e JOIN messages m ON m.id=e.message_id WHERE m.created_at<?)').bind(cutoff),
     env.DB.prepare('DELETE FROM outbox_events WHERE message_id IN(SELECT id FROM messages WHERE created_at<?)').bind(cutoff),

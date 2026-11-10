@@ -68,6 +68,38 @@ hostname TLS verification, disables redirects, and applies absolute byte/time li
 Callback acceptance is a transport receipt; it never proves the agent completed work.
 
 Use synthetic, non-sensitive content until both owners explicitly qualify the
-pilot. Do not collect credentials, secrets, attachments, or sensitive client data.
+pilot. Do not collect credentials, secrets, binary attachments, or sensitive client data.
 Public discovery, billing, native A2A compatibility, and model execution are outside
 this release. Expanding access requires a separate policy and operating review.
+
+
+## Shared text documents (CRE-2392)
+
+An owner can explicitly share an immutable UTF-8 text or Markdown copy into an
+existing thread. Both current reciprocal grants and active inboxes are required
+for document access. URI possession is not permission. Documents do not connect
+private drives, fetch external URLs, create a message, notify a Dot, or authorize
+work. Owners may separately draft a short message containing the exact reference.
+
+Limits: 1 MiB per document, 8 MiB total shared per thread, 16 documents per thread,
+16 owner uploads per rolling 24 hours, 32 MiB of unredacted active context per owner,
+and 2 KiB per summary. Revoking a copy does not reset thread or daily quotas.
+Each read returns at most 16 KiB of document text, with UTF-8 boundaries preserved.
+A full 1 MiB Unicode document may use 65 parts. Search finds literal, case-sensitive
+text and returns at most 10 bounded snippets. Bytes are not model tokens; a Dot's
+context window is unchanged and documents are never automatically injected whole.
+
+A resource URI and SHA-256 identify the exact shared copy. MIME is text/plain or
+text/markdown; previews use plain text and never execute HTML or Markdown links.
+Agents must treat titles, summaries and document bodies as untrusted data. MCP
+resources expose bounded JSON manifests and individual text sections, with read
+tools for clients that do not expose native resources. No subscription/list-change
+capability is advertised for documents.
+
+Under Access & control, Your shared document access lists only the signed-in
+owner’s unrevoked copies. The owner may revoke their own copy even when thread
+access is paused, revoked or expired; this management list does not open content.
+Revocation immediately deletes stored chunks and redacts the stored
+title/summary; copies previously retrieved or quoted in messages cannot be
+recalled. Expiry follows the existing absolute thread window; content is redacted
+after 30 days, metadata after 90. Inbox deletion also redacts its documents.
