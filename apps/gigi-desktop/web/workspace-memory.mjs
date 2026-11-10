@@ -75,7 +75,20 @@ export function createWorkspaceMemory({ call, workspaceId, changed, notice }) {
       requestId: pending.requestId
     });
     if (pending !== state.recovery || pending.workspaceId !== workspaceId()) return;
+    if (status.state === 'not_found' && pending.phase === 'staging') {
+      state.recovery = null;
+      state.error = 'No staged proposal was found. Review your draft before trying again.';
+      return;
+    }
+    if (status.state === 'invalidated') {
+      state.draft = null;
+      state.recovery = null;
+      state.error = 'This proposal was invalidated by a later change. Read current memory before making a new proposal.';
+      await read();
+      return;
+    }
     if (status.state === 'pending_user_approval') {
+      state.draft = null;
       state.recovery = null;
       state.error =
         'No completed change is recorded. Review the pending request before trying again.';
@@ -96,6 +109,7 @@ export function createWorkspaceMemory({ call, workspaceId, changed, notice }) {
           'Memory readback changed or is unresolved. Review the saved entry before further changes.'
         );
     }
+    state.draft = null;
     state.receipt = result;
     state.recovery = null;
     await read();
@@ -163,6 +177,14 @@ export function createWorkspaceMemory({ call, workspaceId, changed, notice }) {
         const workspace = workspaceId();
         if (draft.workspaceId !== workspace)
           throw Error('Workspace changed. Cancel this draft and reopen memory.');
+        // Fence before crossing the durable staging boundary; a missing response
+        // cannot establish that no exact proposal was stored.
+        state.recovery = {
+          requestId: draft.requestId,
+          text: draft.entry.text,
+          workspaceId: workspace,
+          phase: 'staging'
+        };
         await call('memory.request', { ...draft, workspaceId: workspace });
         // The exact request is durable. A lost approval response must never be retried blindly.
         if (workspace !== workspaceId()) return;
@@ -170,7 +192,8 @@ export function createWorkspaceMemory({ call, workspaceId, changed, notice }) {
         state.recovery = {
           requestId: draft.requestId,
           text: draft.entry.text,
-          workspaceId: workspace
+          workspaceId: workspace,
+          phase: 'review'
         };
         await call('memory.review', {
           workspaceId: workspace,

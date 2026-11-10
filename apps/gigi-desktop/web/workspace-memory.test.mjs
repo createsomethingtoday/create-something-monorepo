@@ -99,3 +99,70 @@ test('pending save freezes the reviewed draft until staging completes', async ()
   assert.equal(request.entry.text, 'Reviewed text');
   assert.equal(m.state.receipt.state, 'verified');
 });
+
+test('lost staging response fences edits until a scoped receipt read reconciles the proposal', async () => {
+  let staged, receiptUnavailable = true;
+  const calls = [];
+  const m = createWorkspaceMemory({ workspaceId: () => 'synthetic', changed() {}, notice() {},
+    call: async (op, input) => {
+      calls.push(op);
+      if (op === 'memory.request') { staged = structuredClone(input); throw Error('staging response lost after commit'); }
+      if (op === 'memory.receipt') {
+        if (receiptUnavailable) throw Error('receipt offline');
+        return { state: 'pending_user_approval' };
+      }
+      if (op === 'memory.list') return { items: [], nextOffset: null };
+      if (op === 'memory.requests') return { items: [{ requestId: staged.requestId, request: staged }] };
+      throw Error(op);
+    }
+  });
+  m.edit(); m.update('text', 'Exact staged memory'); m.update('reference', 'Exact source');
+  await m.save();
+  assert.ok(m.state.recovery, 'stage uncertainty must fence edits');
+  m.update('text', 'Unreviewed change'); m.cancel();
+  assert.equal(m.state.draft.entry.text, 'Exact staged memory');
+  await m.recover(); assert.ok(m.state.recovery, 'failed receipt keeps fence');
+  receiptUnavailable = false;
+  await m.recover();
+  assert.equal(m.state.recovery, null);
+  assert.equal(m.state.draft, null, 'durable proposal moves to pending review');
+  assert.equal(m.state.requests.length, 1);
+  assert.equal(calls.filter(x => x === 'memory.request').length, 1);
+  assert.equal(calls.filter(x => x === 'memory.review').length, 0, 'recovery cannot approve');
+});
+
+test('confirmed absent staging receipt unlocks the unchanged draft for retry', async () => {
+  const m = createWorkspaceMemory({ workspaceId: () => 'synthetic', changed() {}, notice() {},
+    call: async op => {
+      if (op === 'memory.request') throw Error('failed before commit');
+      if (op === 'memory.receipt') return { state: 'not_found' };
+      throw Error(op);
+    }
+  });
+  m.edit(); m.update('text', 'Retry safely'); m.update('reference', 'User');
+  await m.save(); assert.ok(m.state.recovery);
+  await m.recover(); assert.equal(m.state.recovery, null);
+  m.update('text', 'Updated after confirmed absence');
+  assert.equal(m.state.draft.entry.text, 'Updated after confirmed absence');
+});
+
+test('durably retired staged proposals clear the frozen draft without approval replay', async () => {
+  for (const outcome of ['invalidated', 'rejected', 'verified']) {
+    const calls = [];
+    const m = createWorkspaceMemory({ workspaceId: () => 'synthetic', changed() {}, notice() {},
+      call: async op => {
+        calls.push(op);
+        if (op === 'memory.request') throw Error('response lost');
+        if (op === 'memory.receipt') return { state: outcome, receipt: outcome === 'invalidated' ? {} : { state: outcome, action: 'save', memoryId: 'one', revision: 1 } };
+        if (op === 'memory.get') return { text: 'Staged text', revision: 1 };
+        if (op === 'memory.list' || op === 'memory.requests') return { items: [], nextOffset: null };
+        throw Error(op);
+      }
+    });
+    m.edit(); m.update('text', 'Staged text'); m.update('reference', 'User');
+    await m.save(); await m.recover();
+    assert.equal(m.state.recovery, null, `${outcome} is a durable outcome`);
+    assert.equal(m.state.draft, null, `${outcome} must not reuse retired request id`);
+    assert.equal(calls.includes('memory.review'), false);
+  }
+});

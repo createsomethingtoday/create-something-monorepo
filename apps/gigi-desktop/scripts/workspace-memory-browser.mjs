@@ -163,6 +163,27 @@ try {
     'draft navigation guard'
   );
   await page.getByRole('button', { name: 'Cancel editing' }).click();
+  // Persist the exact native proposal, then simulate loss of its response.
+  await page.unroute('**/__synthetic_memory');
+  await page.route('**/__synthetic_memory', async route => {
+    if (route.request().postDataJSON().operation === 'memory.request') {
+      await route.fetch();
+      await route.fulfill({ json: { error: 'Synthetic staging response lost after commit' } });
+    } else await route.continue();
+  });
+  await page.getByRole('button', { name: 'Create memory', exact: true }).click();
+  await page.locator('#memory-text').fill('Exact proposal after lost staging response');
+  await page.locator('#memory-source').fill('Synthetic staging recovery source');
+  await page.getByRole('button', { name: 'Confirm and save memory' }).click();
+  await page.getByText('Synthetic staging response lost after commit', { exact: true }).waitFor();
+  assert.equal(await page.locator('#memory-text').isDisabled(), true, 'uncertain staging remains fenced');
+  await page.getByRole('button', { name: 'Check memory receipt' }).click();
+  await page.getByText('No completed change is recorded. Review the pending request before trying again.', { exact: true }).waitFor();
+  assert.equal(await page.getByRole('heading', { name: 'Create memory', exact: true }).count(), 0);
+  assert.equal(call('memory.requests', { workspaceId: workspace.id }).items.length, 1);
+  assert.equal(call('memory.search', { workspaceId: workspace.id, query: 'Exact proposal after lost' }).items.length, 0);
+  await page.getByRole('button', { name: 'Approve request', exact: true }).click();
+  await page.getByRole('article', { name: 'Exact proposal after lost staging response', exact: true }).waitFor();
   // Actual controller/App partitioning: a failed second-workspace read must never
   // retain the previous workspace's private rows in the rendered output.
   await page.evaluate(() => gigiTest.set({workspace:{id:'synthetic-other-workspace',name:'Other synthetic workspace'}}));

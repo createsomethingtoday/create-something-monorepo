@@ -217,3 +217,13 @@ fn unicode_search_matches_stored_case_and_keeps_pagination() {
     }
     std::fs::remove_dir_all(root).unwrap();
 }
+
+#[test]
+fn absent_staging_receipt_is_an_explicit_workspace_scoped_result() {
+    let root = std::env::temp_dir().join(format!("gigi-memory-{}", uuid::Uuid::new_v4()));
+    let w = domain::dispatch(&root, "workspace.create", json!({"name":"Absent staging"})).unwrap()["id"].clone();
+    let result = domain::dispatch(&root, "memory.receipt", json!({"workspaceId":w,"requestId":"never-staged"})).unwrap();
+    assert_eq!(result["state"], "not_found");
+    assert!(domain::dispatch(&root, "memory.receipt", json!({"workspaceId":"foreign","requestId":"never-staged"})).is_err());
+    std::fs::remove_dir_all(root).unwrap();
+}

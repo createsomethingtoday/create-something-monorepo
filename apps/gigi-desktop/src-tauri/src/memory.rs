@@ -88,7 +88,10 @@ pub fn dispatch(root: &Path, op: &str, v: Value) -> Result<Value, String> {
     match op {
         "memory.receipt" => {
             let id = need(&v, "requestId", 100)?;
-            let(state,raw):(String,Option<String>)=db.query_row("SELECT state,result_json FROM memory_requests WHERE workspace_id=?1 AND request_id=?2",params![w,id],|r|Ok((r.get(0)?,r.get(1)?))).map_err(|_|"Memory request not found")?;
+            let row: Option<(String, Option<String>)> = db.query_row("SELECT state,result_json FROM memory_requests WHERE workspace_id=?1 AND request_id=?2",params![w,id],|r|Ok((r.get(0)?,r.get(1)?))).optional().map_err(|e|e.to_string())?;
+            let Some((state, raw)) = row else {
+                return Ok(json!({"requestId":id,"state":"not_found","receipt":null}));
+            };
             Ok(
                 json!({"requestId":id,"state":state,"receipt":raw.and_then(|s|serde_json::from_str::<Value>(&s).ok())}),
             )

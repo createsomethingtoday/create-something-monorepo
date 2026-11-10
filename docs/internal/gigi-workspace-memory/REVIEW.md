@@ -204,3 +204,34 @@ cancel/retry and lost-approval recovery without approval replay. It directly
 viewed the disabled minimum-width editor with submitted text/provenance visible.
 No remaining source blocker was identified; replacement artifact qualification
 remains held.
+
+## Uncertain staging-response recovery
+
+Automated review on `d2c86ec68` reproduced a staging commit whose response was
+lost before recovery was recorded. Two controller regressions and a native
+absent-receipt contract test failed before correction. The controller now fences
+before `memory.request`, capturing exact request/workspace/text and staging phase.
+Failed receipt reads retain the fence. A pending receipt moves the exact durable
+proposal to native review without replay or approval; a scoped `not_found` receipt
+unlocks the unchanged draft. Approval-phase absence never unlocks staging edits.
+The native receipt distinguishes an absent request from a failed database read.
+
+After correction: 418 desktop checks pass (2 installed-artifact skips), web build,
+4 native lifecycle checks and real stdio MCP pass. The actual React/native-domain
+browser test commits a proposal then drops its response, verifies disabled fields,
+recovers the pending request through reads, and approves only via the explicit UI.
+No memory is saved before that approval. Superseded/in-flight `d2c86ec68` artifacts
+must also be replaced; next freeze includes the separately reviewed navigation
+alignment correction supplied by its owning lane.
+Independent review additionally reproduced a pending correction invalidated by a
+later forget. Recovery now treats native `invalidated` as retired, clears the
+frozen draft/fence and refreshes current memory without approval or replay.
+Verified/rejected staged outcomes also discard the retired draft/request id.
+The invalidated/rejected/verified outcome regression failed before and passes
+after this correction.
+Final independent Sol 6.1 retest found no remaining blocker: six controller,
+four Rust lifecycle, real stdio and actual React/native flows passed, plus
+native invalidation and late-workspace-response checks. The locked recovery
+editor was directly viewed with exact text and a reachable receipt action.
+Final parent desktop suite: 419 passed, 2 installed-artifact skips; web build
+and actual memory flow passed. Artifact release readiness remains held.
