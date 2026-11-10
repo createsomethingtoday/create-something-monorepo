@@ -140,6 +140,12 @@ false and unconstrained results. Do not use a full rebuild to fill this column.
 Rollback: disable CMS_FILTER_ENABLED and restore the prior Worker version, retaining
 the pre-existing database columns and migration history.
 
+`CMS_FILTER_ENABLED = "true"` is set in `wrangler.toml`. Keep it there. A flag passed
+only as a deploy-time `--var` is lost on the next plain deploy, and search then
+ignores `has_cms` without an error. To disable the filter, set the value to `"false"`
+in `wrangler.toml` and deploy. Before a deploy that enables it, confirm zero unknown
+rows with the read-only backfill preview (`{"limit":1}`, `counts.unknown`).
+
 ## Featured creator monthly batch
 
 Generate a read-only monthly candidate batch from Airtable for the Webflow CMS-backed

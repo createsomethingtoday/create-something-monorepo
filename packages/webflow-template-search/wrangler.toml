@@ -34,6 +34,11 @@ DEFAULT_PAGE_SIZE = "24"
 # Popular browse order shuffles daily inside 3 bands of 24 ranks (src/popular-shuffle.ts). "0" = strict order.
 POPULAR_SHUFFLE_BANDS = "3"
 DEFAULT_CLIENT_MODE = "shadow"
+# CMS capability filter (has_cms=true|false). It was enabled in production on 2026-10-30
+# with a deploy-time --var, and the next plain deploy dropped it: search then ignored
+# has_cms again. The flag lives here so every deploy keeps it. While any
+# template_documents.has_cms is NULL, has_cms requests fail closed with 503 (see README).
+CMS_FILTER_ENABLED = "true"
 # Buyer → creator support requests (see src/supportRequest.ts). Security + Enterprise
 # AI Ops signed off 2026-10-06. Served only through the templates.webflow.com/templates-api
 # proxy (webflow-template-marketplace), which supplies SUPPORT_REQUEST_PROXY_TOKEN.
