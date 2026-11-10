@@ -48,7 +48,7 @@ describe('POST /api/cron/insights', () => {
     const own = { INSIGHTS_CRON_SECRET: 'insights-secret' };
     await expect(call('', { authorization: 'Bearer cron-secret' }, own)).rejects.toMatchObject({ status: 401 });
     const response = await call('', { authorization: 'Bearer insights-secret' }, own);
-    expect((await response.json()).success).toBe(true);
+    expect(await response.json()).toMatchObject({ success: true });
   });
 
   it('publishes the latest complete window and returns counts, not record-level notes', async () => {
