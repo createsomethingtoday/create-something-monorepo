@@ -1,162 +1,292 @@
 import { derived } from 'svelte/store';
 import { reducedFilmMotion, filmNavigationOpen, filmOverlayOpen } from './filmPlayback';
 import { agencySearchOpen } from '../site-search/presentation';
+import { createDashboardState, visibleWork, approveWork, workCounts } from './paperDashboard';
 
-/** Scoped progressive enhancement of the approved single-form process example. */
+/** Local sample data only. Stage changes preserve the visitor's dashboard state. */
 export function enhancePaperExample(root: HTMLElement) {
   const abort = new AbortController();
-  let disposed = false, blocked = false;
+  let disposed = false,
+    blocked = false;
   let gsap: typeof import('gsap').gsap | undefined;
-  const query = <T = HTMLDivElement>(selector: string): T => {
-    const node = root.querySelector(selector);
+  const query = <T extends HTMLElement = HTMLElement>(selector: string): T => {
+    const node = root.querySelector<T>(selector);
     if (!node) throw new Error(`Missing paper example element: ${selector}`);
-    return node as unknown as T;
+    return node;
   };
-  void import('gsap').then(module => { if (!disposed) gsap = module.gsap; }).catch(() => {});
-
+  void import('gsap')
+    .then((module) => {
+      if (!disposed) gsap = module.gsap;
+    })
+    .catch(() => {});
   const stages = {
     plan: {
       title: 'Make the idea tangible.',
-      copy: 'A paper interface gives everyone something specific to discuss: what the request asks, and how someone moves forward.',
-      deliverable: 'A shared mockup of the request, before connecting any tools.',
-      number: '01', bench: 'Paper mockup / agree on the essentials',
-      agent: 'Turns your goals and constraints into a first wireframe.',
-      team: 'Sets the goal, brings context, and reviews the plan.'
+      copy: 'A paper dashboard makes the workflow specific: what needs attention, who owns it, and what someone needs to decide.',
+      deliverable: 'A shared view of the work, before connecting any tools.',
+      number: '01',
+      bench: 'Paper mockup / agree on the essentials',
+      agent: 'Turns your goals and constraints into a first dashboard wireframe.',
+      team: 'Sets the goal, names the owners, and reviews the plan.'
     },
     test: {
-      title: 'Review changes the design.',
-      copy: 'Two illustrative notes reveal missing context. Add a request type to support routing, and explain what happens next.',
-      deliverable: 'A revised paper interface, with each change connected to its review note.',
-      number: '02', bench: 'Revised mockup / context changes the design',
-      agent: 'Updates the mockup with your feedback and tests the flow.',
-      team: 'Adds missing context and approves the changes.'
+      title: 'Context changes the design.',
+      copy: 'Review reveals what matters: put urgent work first, name its owner, and show where the agent waits for a person.',
+      deliverable: 'A revised dashboard, with priority, ownership and review built into the flow.',
+      number: '02',
+      bench: 'Revised mockup / make the decision clear',
+      agent: 'Incorporates review notes and tests the decision flow with your team.',
+      team: 'Adds real operating context and agrees where human review belongs.'
     },
     run: {
-      title: 'Now, use the interface.',
-      copy: 'The revised design becomes a usable form. Try the fields and preview the handoff.',
-      deliverable: 'A usable interface, plus the checks and guidance to support its release.',
-      number: '03', bench: 'Finished interface / local demo only',
-      agent: 'Builds the interface, runs checks, and helps deploy the approved release.',
-      team: 'Reviews the evidence and approves deployment.'
+      title: 'Now, move the work forward.',
+      copy: 'Search the queue, inspect a request, and approve a sample review. Watch the counts and activity update together.',
+      deliverable:
+        'Working software, with checks, release guidance and a clear owner for each decision.',
+      number: '03',
+      bench: 'Working dashboard / try the local demo',
+      agent: 'Builds the dashboard, checks behavior, and helps deploy the approved release.',
+      team: 'Reviews the working result and approves deployment.'
     }
   };
-  const mat = query('.mat');
-  const form = query<HTMLFormElement>('#paper-request-form');
-  const fields = query<HTMLFieldSetElement>('#paper-form-fields');
-  const sheets = [...root.querySelectorAll<HTMLElement>('.sheet')];
-  const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-select]')];
-  const summary = query('#paper-confirmation');
-  const motion = matchMedia('(prefers-reduced-motion: reduce)');
-  const offsets = [[-5,-3,-1.5],[4,0,1.1],[-3,0,-.8],[3,1,-.7],[-2,0,.6],[2,3,1]];
   type Stage = keyof typeof stages;
-  let current: Stage = 'plan', settled = true;
+  let current: Stage = 'plan';
+  let state = createDashboardState();
+  const mat = query('.mat');
+  const sheets = [...root.querySelectorAll<HTMLElement>('.sheet')];
+  const controls = [
+    ...root.querySelectorAll<HTMLButtonElement | HTMLInputElement>(
+      '.dashboard button, .dashboard input'
+    )
+  ];
+  const rows = [...root.querySelectorAll<HTMLButtonElement>('[data-work-id]')];
+  const stageButtons = [...root.querySelectorAll<HTMLButtonElement>('[data-select]')];
+  const filterButtons = [...root.querySelectorAll<HTMLButtonElement>('[data-filter]')];
+  const motion = matchMedia('(prefers-reduced-motion: reduce)');
   let timeline: gsap.core.Timeline | null = null;
-
+  const offsets = [
+    [-2, -2, -0.35],
+    [2, 0, 0.45],
+    [-3, 0, -0.7],
+    [3, 0, 0.6],
+    [-1, 2, -0.35],
+    [2, 2, 0.6]
+  ];
   function target(index: number) {
-    const [x,y,r] = current === 'plan' ? offsets[index] : [0,0,0];
+    const [x, y, r] = current === 'plan' ? offsets[index] : [0, 0, 0];
     return { '--x': `${x}px`, '--y': `${y}px`, '--r': `${r}deg` };
   }
-  function stop() { if (timeline) { timeline.kill(); timeline = null; } }
+  function stop() {
+    timeline?.kill();
+    timeline = null;
+  }
   function finish() {
     stop();
-    sheets.forEach((sheet,index) => {
-      Object.entries(target(index)).forEach(([key,value]) => sheet.style.setProperty(key,value));
+    root
+      .querySelectorAll<HTMLElement>('.priority-signal,.work-owner,.review-boundary')
+      .forEach((node) => node.style.removeProperty('opacity'));
+    sheets.forEach((sheet, index) => {
+      Object.entries(target(index)).forEach(([key, value]) => sheet.style.setProperty(key, value));
       sheet.style.removeProperty('opacity');
     });
-    form.style.removeProperty('height');
-    form.style.setProperty('--paper', current === 'run' ? '0' : '1');
-    settled = true;
+  }
+  const labels = { review: 'Needs review', active: 'In progress', done: 'Completed' };
+  function render() {
+    const counts = workCounts(state),
+      visible = visibleWork(state);
+    Object.entries(counts).forEach(
+      ([key, count]) => (query(`[data-metric="${key}"]`).textContent = String(count))
+    );
+    filterButtons.forEach((button) => {
+      button.setAttribute('aria-pressed', String(button.dataset.filter === state.filter));
+      button.querySelector('span')!.textContent = String(
+        button.dataset.filter === 'all'
+          ? state.items.length
+          : counts[button.dataset.filter as keyof typeof counts]
+      );
+    });
+    rows.forEach((row) => {
+      const item = state.items.find((item) => item.id === row.dataset.workId)!;
+      row.hidden = !visible.includes(item);
+      row.dataset.workStatus = item.status;
+      row.dataset.workTitle = item.title;
+      row.setAttribute('aria-pressed', String(state.selected === item.id));
+      const pill = row.querySelector<HTMLElement>('.status-pill')!;
+      pill.dataset.status = item.status;
+      pill.textContent = labels[item.status];
+    });
+    query('#paper-result-count').textContent = String(visible.length);
+    query('#paper-empty').hidden = visible.length > 0;
+    const item = state.items.find((item) => item.id === state.selected)!;
+    query('#paper-detail-title').textContent = item.title;
+    query('#paper-detail-id').textContent = `#${item.id}`;
+    query('#paper-detail-owner').textContent = `${item.owner} · ${item.project}`;
+    query('#paper-detail-context').textContent = item.context;
+    query('#paper-detail-recommendation').textContent = item.recommendation;
+    query('#paper-boundary-copy').textContent =
+      item.status === 'review'
+        ? `${item.owner.split(' ')[0]} reviews before any external action.`
+        : item.status === 'active'
+          ? 'Work is in progress. The owner reviews the evidence before release.'
+          : 'Review complete in this sample. No external action occurred.';
+    const approve = query<HTMLButtonElement>('#paper-approve');
+    approve.disabled = current !== 'run' || item.status !== 'review';
+    approve.textContent =
+      item.status === 'done'
+        ? 'Review complete ✓'
+        : item.status === 'active'
+          ? 'In progress · review comes next'
+          : 'Approve sample review ↗';
+    const activity = query('#paper-activity-list');
+    activity.querySelectorAll('[data-demo-approval]').forEach((node) => node.remove());
+    [...state.approvals].reverse().forEach((id) => {
+      const item = state.items.find((item) => item.id === id)!;
+      const li = document.createElement('li');
+      li.dataset.demoApproval = id;
+      const dot = document.createElement('span');
+      dot.className = 'activity-dot approved';
+      const div = document.createElement('div');
+      const strong = document.createElement('strong');
+      strong.textContent = `${item.owner.split(' ')[0]} approved “${item.title}”`;
+      const p = document.createElement('p');
+      p.textContent = 'Local demo · no external action';
+      div.appendChild(strong);
+      div.appendChild(p);
+      li.appendChild(dot);
+      li.appendChild(div);
+      activity.insertBefore(li, activity.firstChild);
+    });
   }
   function select(stage: string | undefined, animate = true) {
     if (stage !== 'plan' && stage !== 'test' && stage !== 'run') return;
-    if (stage === current) { if (!animate) finish(); return; }
-    // Preserve the on-screen geometry, including a partially completed transition.
-    const previous = sheets.map(sheet => sheet.offsetParent ? sheet.getBoundingClientRect() : null);
-    const previousHeight = form.getBoundingClientRect().height;
     stop();
     current = stage;
-    const content = stages[stage];
     mat.dataset.stage = stage;
-    buttons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.select === stage)));
-    root.querySelectorAll<HTMLElement>('.added').forEach(element => { element.hidden = stage === 'plan'; });
-    fields.disabled = stage !== 'run';
-    if (stage !== 'run') summary.hidden = true;
-    for (const key of ['title','copy','deliverable','number']) query(`#paper-stage-${key}`).textContent = content[key as keyof typeof content];
-    query('#paper-bench-label').textContent = content.bench;
-    query('#paper-agent-role').textContent = content.agent;
-    query('#paper-team-role').textContent = content.team;
-    form.style.removeProperty('height');
-    if (!animate || motion.matches || !gsap || blocked) { finish(); return; }
-
-    const finalHeight = form.getBoundingClientRect().height;
-    const visible = sheets.map(sheet => Boolean(sheet.offsetParent));
-    sheets.forEach((sheet,index) => {
-      if (!visible[index]) return;
-      const after = sheet.getBoundingClientRect();
-      const css = getComputedStyle(sheet);
-      if (previous[index]) {
-        sheet.style.setProperty('--x', `${parseFloat(css.getPropertyValue('--x')) + previous[index]!.left - after.left}px`);
-        sheet.style.setProperty('--y', `${parseFloat(css.getPropertyValue('--y')) + previous[index]!.top - after.top}px`);
-      } else {
-        sheet.style.setProperty('--y','10px');
-        sheet.style.opacity = '0';
+    stageButtons.forEach((button) =>
+      button.setAttribute('aria-pressed', String(button.dataset.select === stage))
+    );
+    controls.forEach((control) => (control.disabled = stage !== 'run'));
+    for (const key of ['title', 'copy', 'deliverable', 'number'] as const)
+      query(`#paper-stage-${key}`).textContent = stages[stage][key];
+    query('#paper-bench-label').textContent = stages[stage].bench;
+    query('#paper-agent-role').textContent = stages[stage].agent;
+    query('#paper-team-role').textContent = stages[stage].team;
+    render();
+    if (!animate || motion.matches || !gsap || blocked) {
+      finish();
+      return;
+    }
+    timeline = gsap.timeline({
+      onComplete() {
+        timeline = null;
+        finish();
       }
     });
-    form.style.height = `${previousHeight}px`;
-    settled = false;
-    const next = gsap.timeline({onComplete() { timeline = null; finish(); }});
-    timeline = next;
-    sheets.forEach((sheet,index) => {
-      if (!visible[index]) return;
-      if (previous[index]) {
-        next.to(sheet, {...target(index), opacity:1, duration:.55, ease:'power2.inOut'}, index * .025);
-      } else {
-        // Let existing fields make room before revealing the newly learned context.
-        next.to(sheet, {...target(index), duration:.55, ease:'power2.inOut'}, index * .025);
-        next.to(sheet, {opacity:1, duration:.2, ease:'power1.out'}, .38 + index * .01);
-      }
-    });
-    next.to(form, {height:finalHeight, '--paper':stage === 'run' ? 0 : 1, duration:.68, ease:'power2.inOut'},0);
+    sheets.forEach((sheet, index) =>
+      timeline!.to(sheet, { ...target(index), duration: 0.55, ease: 'power2.inOut' }, index * 0.035)
+    );
+    if (stage === 'test')
+      timeline.fromTo(
+        root.querySelectorAll('.priority-signal,.work-owner,.review-boundary'),
+        { opacity: 0 },
+        { opacity: 1, duration: 0.3, clearProps: 'opacity' },
+        0.25
+      );
   }
-
-  form.addEventListener('focusin', () => { if (!settled) finish(); }, {signal: abort.signal});
-  form.addEventListener('input', event => {
-    if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement) event.target.setCustomValidity('');
-    summary.hidden = true;
-  }, {signal: abort.signal});
-  form.addEventListener('submit', event => {
-    event.preventDefault();
-    if (current !== 'run') return;
-    for (const id of ['request-name','request-brief']) {
-      const field = query<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(`#paper-${id}`);
-      field.setCustomValidity(field.value.trim() ? '' : 'Please add a little detail.');
-    }
-    if (!form.reportValidity()) return;
-    summary.replaceChildren();
-    const heading = document.createElement('h4');
-    heading.textContent = 'Handoff preview';
-    summary.appendChild(heading);
-    for (const [label,id] of [['From','request-name'],['Reply to','request-email'],['Request type','request-type'],['Brief','request-brief']]) {
-      const line = document.createElement('p'), strong = document.createElement('strong');
-      strong.textContent = `${label}: `;
-      line.appendChild(strong);
-      line.appendChild(document.createTextNode(query<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(`#paper-${id}`).value.trim()));
-      summary.appendChild(line);
-    }
-    const note = document.createElement('p');
-    note.textContent = 'Preview complete. Nothing was sent or saved. Your team would review this context before making a change.';
-    summary.appendChild(note);
-    summary.hidden = false;
-    summary.tabIndex = -1;
-    summary.focus({preventScroll:true});
-  }, {signal: abort.signal});
-  buttons.forEach(button => button.addEventListener('click', () => select(button.dataset.select), {signal: abort.signal}));
-  window.addEventListener('resize',finish, {signal: abort.signal});
-  motion.addEventListener('change',finish, {signal: abort.signal});
-  const unsubscribe = derived([reducedFilmMotion, filmNavigationOpen, filmOverlayOpen, agencySearchOpen], values => values.some(Boolean)).subscribe(value => { blocked = value; if (value) finish(); });
-  document.addEventListener('visibilitychange', () => { if (document.hidden) finish(); }, {signal: abort.signal});
-  window.addEventListener('beforeprint', finish, {signal: abort.signal});
+  stageButtons.forEach((button) =>
+    button.addEventListener('click', () => select(button.dataset.select), { signal: abort.signal })
+  );
+  filterButtons.forEach((button) =>
+    button.addEventListener(
+      'click',
+      () => {
+        state.filter = button.dataset.filter!;
+        render();
+        query('#paper-dashboard-status').textContent =
+          `${visibleWork(state).length} matching requests. Selected detail stays open.`;
+      },
+      { signal: abort.signal }
+    )
+  );
+  query<HTMLInputElement>('#paper-search').addEventListener(
+    'input',
+    (event) => {
+      state.query = (event.target as HTMLInputElement).value;
+      render();
+    },
+    { signal: abort.signal }
+  );
+  rows.forEach((row) =>
+    row.addEventListener(
+      'click',
+      () => {
+        state.selected = row.dataset.workId!;
+        render();
+        query('#paper-dashboard-status').textContent = `Opened request ${state.selected}.`;
+        if (window.innerWidth <= 850) {
+          const title = query('#paper-detail-title');
+          title.tabIndex = -1;
+          title.focus({ preventScroll: true });
+          title.scrollIntoView({ block: 'start' });
+        }
+      },
+      { signal: abort.signal }
+    )
+  );
+  query('#paper-back-to-queue').addEventListener(
+    'click',
+    () => {
+      const row = query<HTMLButtonElement>(`[data-work-id="${state.selected}"]`);
+      if (row.hidden) query<HTMLInputElement>('#paper-search').focus();
+      else row.focus();
+    },
+    { signal: abort.signal }
+  );
+  query('#paper-approve').addEventListener(
+    'click',
+    () => {
+      if (current !== 'run' || !approveWork(state)) return;
+      render();
+      query('#paper-dashboard-status').textContent =
+        'Sample review approved. Counts and activity updated. Nothing was sent or saved.';
+    },
+    { signal: abort.signal }
+  );
+  query('#paper-reset').addEventListener(
+    'click',
+    () => {
+      state = createDashboardState();
+      query<HTMLInputElement>('#paper-search').value = '';
+      render();
+      query('#paper-dashboard-status').textContent = 'Demo reset. Five sample requests restored.';
+    },
+    { signal: abort.signal }
+  );
+  root.addEventListener('focusin', finish, { signal: abort.signal });
+  window.addEventListener('resize', finish, { signal: abort.signal });
+  motion.addEventListener('change', finish, { signal: abort.signal });
+  const unsubscribe = derived(
+    [reducedFilmMotion, filmNavigationOpen, filmOverlayOpen, agencySearchOpen],
+    (values) => values.some(Boolean)
+  ).subscribe((value) => {
+    blocked = value;
+    if (value) finish();
+  });
+  document.addEventListener(
+    'visibilitychange',
+    () => {
+      if (document.hidden) finish();
+    },
+    { signal: abort.signal }
+  );
+  window.addEventListener('beforeprint', finish, { signal: abort.signal });
   root.classList.add('enhanced');
-  finish();
-  return () => { disposed = true; stop(); abort.abort(); unsubscribe(); root.classList.remove('enhanced'); };
+  select('plan', false);
+  return () => {
+    disposed = true;
+    stop();
+    abort.abort();
+    unsubscribe();
+    root.classList.remove('enhanced');
+  };
 }

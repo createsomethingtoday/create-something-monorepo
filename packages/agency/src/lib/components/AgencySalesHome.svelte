@@ -124,7 +124,7 @@
   });
 </script>
 
-<svelte:head><link rel="stylesheet" href="/styles/agency/paper-example.css?v=paper-working-ui-20261110" /><link rel="stylesheet" href="/styles/agency/story-home.css?v=walkthrough-entry-20261106" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /><link rel="stylesheet" href="/styles/agency/image-treatment.css?v=graphite-frames-20261105" /><link rel="stylesheet" href="/styles/agency/measured-foundation.css?v=measured-foundation-20261106" /></svelte:head>
+<svelte:head><link rel="stylesheet" href="/styles/agency/paper-example.css?v=paper-dashboard-20261110" /><link rel="stylesheet" href="/styles/agency/story-home.css?v=walkthrough-entry-20261106" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /><link rel="stylesheet" href="/styles/agency/image-treatment.css?v=graphite-frames-20261105" /><link rel="stylesheet" href="/styles/agency/measured-foundation.css?v=measured-foundation-20261106" /></svelte:head>
 <div class="agency-home measured-foundation" bind:this={root}>
   <div class="page-progress" aria-hidden="true"></div>
   <AgencyChapterDial />
