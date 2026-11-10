@@ -25,24 +25,31 @@ export function referenceHeader({page,sections,workspace,history,attentionCount}
   return `<header class="reference-header"><div class="reference-history"><button type="button" data-workspace-history="-1" aria-label="Previous page" title="Previous page (Command-[)" ${history.target(-1)?'':'disabled'}>‹</button><button type="button" data-workspace-history="1" aria-label="Next page" title="Next page (Command-])" ${history.target(1)?'':'disabled'}>›</button></div><button type="button" class="reference-brand" data-page="overview" aria-label="GiGi Today">GiGi</button><button type="button" class="reference-find" data-workspace-search="1" aria-label="Search workspace" aria-haspopup="dialog" aria-expanded="false" aria-controls="workspace-search-host" title="Search workspace (⌘F)">${icon('search')} <span>Search</span><kbd>⌘F</kbd></button><nav class="reference-nav" aria-label="Workspace pages">${primary.map(id=>button(id)).join('')}<details class="reference-more" data-view-key="reference-more"><summary data-nav-overflow="1" ${secondary?'class="selected"':''} aria-label="More workspace pages${secondary?` · ${safe(title(page))}`:''}">${secondary?safe(title(page)):'More'} <span aria-hidden="true">⌄</span></summary><div class="reference-menu"><div class="reference-menu-workspace"><small>Private workspace</small><p>${safe(workspace || 'Local workspace')}</p></div><nav class="reference-menu-grid" aria-label="More workspace pages">${menuGroups}</nav><div class="reference-menu-footer"><details class="reference-shortcuts" data-view-key="reference-shortcuts"><summary>Keyboard shortcuts</summary><p>Search workspace: ⌘F (Ctrl-F)<br>Previous / next page: ⌘[ / ⌘]<br>Move through pages: ↑ / ↓<br>Close navigation or Ask GiGi: Escape</p></details><small>Stored on this Mac</small></div></div></details></nav>${attentionCount === undefined ? '' : `<button type="button" class="reference-attention" data-attention-home="1" aria-label="Needs your attention">Attention <span class="attention-badge" data-attention-count>${Number.isSafeInteger(attentionCount) ? attentionCount : 0}</span></button>`}<button type="button" class="reference-ask" data-chat-open="1">Ask GiGi</button><button type="button" class="reference-customize" data-page="appearance" ${page==='appearance'?'aria-current="page"':''}>Customize</button><button type="button" class="reference-settings" data-page="settings" ${page==='settings'?'aria-current="page"':''} aria-label="Settings and connection status" title="Settings and connection status">${icon('settings')}</button></header>`;
 }
 
-// The navigation disclosure stays independent of route reads and domain writes.
+// Both the React groups and legacy More disclosure stay independent of data actions.
 export function installReferenceMenu(root,document=globalThis.document) {
-  const current=()=>root.querySelector?.('.reference-more[open]');
+  const openSelector='.reference-dropdown[open], .reference-more[open]';
+  const current=()=>root.querySelector?.(openSelector);
   const dismiss=(restoreFocus=false)=>{const menu=current();if(!menu)return;menu.open=false;if(restoreFocus)menu.querySelector?.('summary')?.focus?.({preventScroll:true});};
   const dismissOutside=event=>{const menu=current();if(menu&&!menu.contains(event.target))dismiss();};
   document?.addEventListener?.('pointerdown',dismissOutside);
   document?.addEventListener?.('click',dismissOutside);
   document?.addEventListener?.('focusin',event=>{const menu=current();if(menu&&!menu.contains(event.target))dismiss();});
   root.addEventListener('click',event=>{const button=event.target.closest?.('button[data-page]');const menu=current();if(button&&menu?.contains(button))dismiss();},true);
+  root.addEventListener('toggle',event=>{
+    if(!event.target.matches?.(openSelector))return;
+    for(const menu of root.querySelectorAll?.(openSelector)||[])if(menu!==event.target)menu.open=false;
+  },true);
   document?.addEventListener?.('keydown',event=>{
-    const open=current(),menu=open||root.querySelector?.('.reference-more');
-    if(!menu||!menu.contains(event.target))return;
+    const open=current();
     if(event.key==='Escape'&&open){dismiss(true);event.preventDefault?.();event.stopImmediatePropagation?.();return;}
+    const menu=event.target.closest?.('.reference-dropdown, .reference-more') || (open?.contains(event.target)?open:null) || root.querySelector?.('.reference-more');
+    if(!menu||!menu.contains(event.target)||(root.contains&&!root.contains(menu)))return;
     if(!['ArrowDown','ArrowUp','Home','End'].includes(event.key))return;
     const summary=menu.querySelector?.('summary');
     if(!open&&event.target!==summary)return;
     const buttons=[...(menu.querySelectorAll?.('.reference-menu [data-page]')||[])];
     if(!buttons.length)return;
+    if(open&&open!==menu)open.open=false;
     menu.open=true;
     const index=buttons.indexOf(document.activeElement);
     const next=event.key==='Home'?0:event.key==='End'?buttons.length-1:event.key==='ArrowDown'?(index+1)%buttons.length:(index<0?buttons.length-1:(index-1+buttons.length)%buttons.length);

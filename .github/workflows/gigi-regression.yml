@@ -58,6 +58,10 @@ jobs:
         run: pnpm --filter @create-something/gigi-desktop test:creators
       - name: Exercise creator navigation and onboarding recovery regressions
         run: pnpm --filter @create-something/gigi-desktop test:review-regressions
+      - name: Exercise reconciled Today, Tasks and Gigs
+        run: pnpm --filter @create-something/gigi-desktop test:reconciled-work
+      - name: Exercise guided setup and terminal import recovery
+        run: pnpm --filter @create-something/gigi-desktop test:reconciled-quest
       - name: Source conversion process acceptance
         run: node apps/gigi-desktop/scripts/source-proposal-acceptance.mjs "$GIGI_INSTALLED_MCP"
       - run: pnpm auth:retired-provider:check

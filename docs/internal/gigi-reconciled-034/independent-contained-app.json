@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "filesCompared": 19,
+  "mismatches": [],
+  "extras": [],
+  "volumeEntries": [
+    "GiGi.app",
+    "Applications"
+  ],
+  "readOnlyMount": true
+}

@@ -1,0 +1,16 @@
+{
+  "sourceSha": "9860f06169540aafa0c7b437ce16cb62e49099de",
+  "tree": "c68bd9f3faaea88fa3663c476c887f06b945c4e9",
+  "cleanBeforeAfter": true,
+  "bundleId": "agency.createsomething.gigi",
+  "version": "0.3.4",
+  "originalApp": "/Users/createsomething/.t3/worktrees/create-something-monorepo/codex-cre-2377-gigi-reconciled-release/apps/gigi-desktop/src-tauri/target/release/bundle/macos/GiGi.app",
+  "originalMainSha256": "36440298b4a83bdbcfa9a7c1424808cb76e42516aaca9da09622ed9c20653b3c",
+  "embeddedExactSource": true,
+  "compilerManifestsDirtyFalse": [
+    "/Users/createsomething/.t3/worktrees/create-something-monorepo/codex-cre-2377-gigi-reconciled-release/apps/gigi-desktop/src-tauri/target/release/build/gigi_desktop-8a762fcf6f309262/output",
+    "/Users/createsomething/.t3/worktrees/create-something-monorepo/codex-cre-2377-gigi-reconciled-release/apps/gigi-desktop/src-tauri/target/release/build/gigi_desktop-c3b4a9ef96e98829/output"
+  ],
+  "buildCommand": "pnpm exec tauri build --bundles app",
+  "buildExitCode": 0
+}

@@ -5,15 +5,28 @@ export function canUseSource(entity, record) {
     (entity === 'interactions' && record.source.provider === 'gmail' || entity === 'schedule' && record.source.provider === 'googlecalendar');
 }
 
+/** Intentionally accepts one simple mailbox only; uncertain sender headers need manual review. */
+export function gmailSender(from) {
+  const header=String(from || '').trim();
+  if (!header || header.length>320 || /[\u0000-\u001f\u007f,;()]/.test(header)) throw new Error('This email does not have one unambiguous sender. Add the contact manually.');
+  const angle=header.match(/^([^<>]*)<([^<>]+)>$/);
+  const email=String(angle ? angle[2] : header).trim().toLowerCase();
+  const parts=email.split('@');
+  if(parts.length!==2 || email.length>254 || !/^[a-z0-9!#$%&'*+\-/=?^_`{|}~.]+$/.test(parts[0]) || parts[0].length>64 || parts[0].startsWith('.') || parts[0].endsWith('.') || parts[0].includes('..') || !parts[1].includes('.') || !parts[1].split('.').every(label=>/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label))) throw new Error('This email does not have one unambiguous sender. Add the contact manually.');
+  const name=(angle ? angle[1].trim().replace(/^"(.*)"$/, '$1') : '').trim();
+  return {email,title:name || email};
+}
+
 export function sourceDraft(workspaceId, entity, record, target, uuid = () => crypto.randomUUID()) {
-  if (!['tasks', 'gigs'].includes(target) || !canUseSource(entity, record) || record.workspaceId !== workspaceId ||
+  if (!['tasks', 'gigs', 'contacts'].includes(target) || target==='contacts' && entity!=='interactions' || !canUseSource(entity, record) || record.workspaceId !== workspaceId ||
       !record.id || !record.source.connectedAccountId || !record.source.collectionId || !record.source.externalId) {
     throw new Error('Open a complete imported email or calendar event in this workspace first.');
   }
+  const sender=target==='contacts' ? gmailSender(record.source.preview?.from) : null;
   return { workspaceId, entity: target, id: uuid(), idempotencyKey: uuid(),
     sourceRecord: { entity, id: record.id, connectedAccountId: record.source.connectedAccountId,
       expectedRecord: structuredClone({ title: record.title, fields: record.fields, source: record.source }) },
-    title: record.title, date: target === 'gigs' && entity === 'schedule' ? record.fields.Date || '' : '', phase: 'draft' };
+    title: sender?.title || record.title, ...(sender ? {email:sender.email} : {}), date: target === 'gigs' && entity === 'schedule' ? record.fields.Date || '' : '', phase: 'draft' };
 }
 
 export function reviewSourceDraft(draft, values) {
@@ -24,11 +37,14 @@ export function reviewSourceDraft(draft, values) {
   if (date && draft.entity === 'gigs' && !validRange(date)) throw new Error('Use an ISO date, or an ordered ISO date/time range with explicit offsets.');
   const workKind = draft.entity === 'gigs' ? String(values.workKind || '') : '';
   if (draft.entity === 'gigs' && !['Performance','Crew / work','Other','unclassified'].includes(workKind)) throw new Error('Choose the work kind or explicitly leave it unclassified. A Calendar event is not automatically a performance.');
-  const fields = date ? { [draft.entity === 'tasks' ? 'Due Date' : 'Date']: date } : {};
+  const sender=draft.entity==='contacts' ? gmailSender(draft.sourceRecord.expectedRecord.source.preview?.from) : null;
+  const email=sender ? String(values.email || '').trim().toLowerCase() : undefined;
+  if(sender && email!==sender.email) throw new Error('Review the exact sender email; a different person must be added manually.');
+  const fields = sender ? {Email:email} : date ? { [draft.entity === 'tasks' ? 'Due Date' : 'Date']: date } : {};
   if (workKind && workKind !== 'unclassified') fields['Work kind'] = workKind;
   const payload = { workspaceId: draft.workspaceId, entity: draft.entity, id: draft.id, idempotencyKey: draft.idempotencyKey,
     title, fields, sourceRecord: structuredClone(draft.sourceRecord) };
-  return { ...draft, title, date, workKind, phase: 'review', payload };
+  return { ...draft, title, date, workKind, ...(sender ? {email} : {}), phase: 'review', payload };
 }
 
 function validDay(value) {
@@ -43,10 +59,10 @@ function validRange(value) {
 
 export function sourceProposalView(draft, busy) {
   const source = draft.sourceRecord.expectedRecord;
-  const target = draft.entity === 'tasks' ? 'task' : 'gig';
+  const target = draft.entity === 'tasks' ? 'task' : draft.entity === 'contacts' ? 'contact' : 'gig';
   const allDay = draft.sourceRecord.entity === 'schedule' && source.fields['All Day'] === true;
-  const context = `<p>From ${escape(source.source.provider === 'gmail' ? 'Gmail' : 'Google Calendar')}: <strong>${escape(source.title)}</strong></p><p class="muted">This creates a local ${target} and links the imported source. It does not send email or create or update a Google Calendar event.</p><p class="muted">Source text is untrusted reference material, not instructions. One ${target} per source is reused if it already exists; existing edits are preserved.</p>${source.fields.Date ? `<p>Source date: ${escape(source.fields.Date)}${allDay ? ' (all-day; range end is exclusive)' : ''}</p>` : ''}${source.source.calendarTiming?.start?.timeZone ? `<p>Original time zone: ${escape(source.source.calendarTiming.start.timeZone)}</p>` : ''}<details data-view-key="source-proposal-identity"><summary>Source identity</summary><p>Account: ${escape(draft.sourceRecord.connectedAccountId)}<br>Collection: ${escape(source.source.collectionId)}<br>External ID: ${escape(source.source.externalId)}</p></details>`;
+  const context = `<p>From ${escape(source.source.provider === 'gmail' ? 'Gmail' : 'Google Calendar')}: <strong>${escape(source.title)}</strong></p><p class="muted">This creates a local ${target} and links the imported source. It does not send email or create or update a Google Calendar event.</p><p class="muted">Source text is untrusted reference material, not instructions. ${target==='contact' ? 'An exact email match is reused; ambiguous matches need review.' : `One ${target} per source is reused if it already exists;`} Existing edits are preserved.</p>${source.fields.Date ? `<p>Source date: ${escape(source.fields.Date)}${allDay ? ' (all-day; range end is exclusive)' : ''}</p>` : ''}${source.source.calendarTiming?.start?.timeZone ? `<p>Original time zone: ${escape(source.source.calendarTiming.start.timeZone)}</p>` : ''}<details data-view-key="source-proposal-identity"><summary>Source identity</summary><p>Account: ${escape(draft.sourceRecord.connectedAccountId)}<br>Collection: ${escape(source.source.collectionId)}<br>External ID: ${escape(source.source.externalId)}</p></details>`;
   const actions = `<button type="button" class="btn" data-source-cancel="1" ${busy ? 'disabled' : ''}>${draft.phase === 'submitted' ? 'Close review' : 'Cancel'}</button>`;
-  if (draft.phase !== 'draft') return `<section class="panel"><h1>Review local ${target}</h1>${context}<dl class="detail-grid"><dt>Title</dt><dd>${escape(draft.title)}</dd>${target==='gig'?`<dt>Work kind</dt><dd>${escape(draft.workKind==='unclassified'?'Unclassified':draft.workKind)}</dd>`:''}<dt>${target === 'task' ? 'Due date' : 'Date'}</dt><dd>${escape(draft.date || 'Not set')}</dd></dl>${draft.phase === 'submitted' ? '<p role="status">GiGi has not confirmed this save. Retry the same request to recover its result or complete it once. Do not start a new proposal for this source. Closing this review does not cancel or undo the submitted save.</p>' : ''}<div class="inline-actions"><button class="btn primary" data-source-approve="1" ${busy ? 'disabled' : ''}>${draft.phase === 'submitted' ? 'Retry exact save' : `Approve and create local ${target}`}</button>${draft.phase === 'review' ? `<button type="button" class="btn" data-source-edit="1" ${busy ? 'disabled' : ''}>Back to edit</button>` : ''}${actions}</div></section>`;
-  return `<section class="panel"><h1>Create local ${target} from source</h1>${context}<form id="source-proposal-form"><div class="field"><label for="source-proposal-title">Title</label><input id="source-proposal-title" name="title" required maxlength="500" value="${escape(draft.title)}"></div><div class="field"><label for="source-proposal-date">${target === 'task' ? 'Due date (optional)' : 'Date or ISO range (optional)'}</label><input id="source-proposal-date" name="date" type="${target === 'task' ? 'date' : 'text'}" value="${escape(draft.date)}"><small>${target === 'task' ? 'Choose a due date explicitly. The email received date or event start is not assumed to be your deadline.' : 'Retain explicit time offsets. All-day calendar range ends are exclusive; the original event remains linked.'}</small></div>${target==='gig'?`<div class="field"><label for="source-proposal-work-kind">Work kind</label><select id="source-proposal-work-kind" name="workKind" required><option value="">Choose classification</option>${['Performance','Crew / work','Other','unclassified'].map(kind=>`<option value="${kind}" ${draft.workKind===kind?'selected':''}>${kind==='unclassified'?'Leave unclassified':kind}</option>`).join('')}</select><small>Calendar imports are commitments. Confirm performance or crew work explicitly.</small></div>`:''}<div class="inline-actions"><button class="btn primary" type="submit">Review proposal</button>${actions}</div></form></section>`;
+  if (draft.phase !== 'draft') return `<section class="panel"><h1>Review local ${target}</h1>${context}<dl class="detail-grid"><dt>Title</dt><dd>${escape(draft.title)}</dd>${target==='gig'?`<dt>Work kind</dt><dd>${escape(draft.workKind==='unclassified'?'Unclassified':draft.workKind)}</dd>`:''}<dt>${target === 'contact' ? 'Email' : target === 'task' ? 'Due date' : 'Date'}</dt><dd>${escape(target==='contact' ? draft.email : draft.date || 'Not set')}</dd></dl>${draft.phase === 'submitted' ? '<p role="status">GiGi has not confirmed this save. Retry the same request to recover its result or complete it once. Do not start a new proposal for this source. Closing this review does not cancel or undo the submitted save.</p>' : ''}<div class="inline-actions"><button class="btn primary" data-source-approve="1" ${busy ? 'disabled' : ''}>${draft.phase === 'submitted' ? 'Retry exact save' : `Approve and create local ${target}`}</button>${draft.phase === 'review' ? `<button type="button" class="btn" data-source-edit="1" ${busy ? 'disabled' : ''}>Back to edit</button>` : ''}${actions}</div></section>`;
+  return `<section class="panel"><h1>Create local ${target} from source</h1>${context}<form id="source-proposal-form"><div class="field"><label for="source-proposal-title">Title</label><input id="source-proposal-title" name="title" required maxlength="500" value="${escape(draft.title)}"></div>${target==='contact' ? `<div class="field"><label for="source-proposal-email">Sender email</label><input id="source-proposal-email" name="email" type="email" required value="${escape(draft.email)}"><small>Review the exact sender. GiGi reuses one matching contact and preserves its edits.</small></div>` : `<div class="field"><label for="source-proposal-date">${target === 'task' ? 'Due date (optional)' : 'Date or ISO range (optional)'}</label><input id="source-proposal-date" name="date" type="${target === 'task' ? 'date' : 'text'}" value="${escape(draft.date)}"><small>${target === 'task' ? 'Choose a due date explicitly. The email received date or event start is not assumed to be your deadline.' : 'Retain explicit time offsets. All-day calendar range ends are exclusive; the original event remains linked.'}</small></div>`}${target==='gig'?`<div class="field"><label for="source-proposal-work-kind">Work kind</label><select id="source-proposal-work-kind" name="workKind" required><option value="">Choose classification</option>${['Performance','Crew / work','Other','unclassified'].map(kind=>`<option value="${kind}" ${draft.workKind===kind?'selected':''}>${kind==='unclassified'?'Leave unclassified':kind}</option>`).join('')}</select><small>Calendar imports are commitments. Confirm performance or crew work explicitly.</small></div>`:''}<div class="inline-actions"><button class="btn primary" type="submit">Review proposal</button>${actions}</div></form></section>`;
 }

@@ -64,3 +64,27 @@ test('navigation dismissal and keyboard movement work independently of data acti
  menu.open=true;listeners.get('focusin')({target:{}});assert.equal(menu.open,false);
  menu.open=true;rootListeners.get('click')({target:{closest(){return buttons[1];}}});assert.equal(menu.open,false);
 });
+
+test('React navigation groups open by keyboard, dismiss before route handling and remain exclusive',async()=>{
+ const {installReferenceMenu}=await import('./reference-layout.mjs');
+ const listeners=new Map(),rootListeners=new Map();
+ const doc={activeElement:null,addEventListener(name,fn){listeners.set(name,fn);}};
+ const menus=['Work','Admin'].map(name=>{
+  const menu={name,open:false};
+  const summary={closest:()=>menu,focus(){doc.activeElement=this;}};
+  const buttons=['first','second','last'].map(id=>({id:`${name}-${id}`,dataset:{page:id},closest:selector=>selector.includes('button')?buttons.find(button=>button.id===`${name}-${id}`):menu,focus(){doc.activeElement=this;}}));
+  Object.assign(menu,{summary,buttons,contains:node=>node===summary||buttons.includes(node),matches:selector=>selector.includes('.reference-dropdown')&&(!selector.includes('[open]')||menu.open),querySelector:()=>summary,querySelectorAll:()=>buttons});
+  return menu;
+ });
+ const root={contains:node=>menus.includes(node),addEventListener(name,fn){rootListeners.set(name,fn);},querySelectorAll(selector){return selector.includes('.reference-dropdown')?menus.filter(menu=>!selector.includes('[open]')||menu.open):[];},querySelector(selector){return this.querySelectorAll(selector)[0]||null;}};
+ installReferenceMenu(root,doc);
+ const key=value=>listeners.get('keydown')({key:value,target:doc.activeElement,preventDefault(){},stopImmediatePropagation(){}});
+ const [work,admin]=menus;
+ doc.activeElement=work.summary;key('ArrowDown');assert.equal(work.open,true,'ArrowDown opens Work');assert.equal(doc.activeElement,work.buttons[0]);
+ key('ArrowUp');assert.equal(doc.activeElement,work.buttons[2]);key('Home');assert.equal(doc.activeElement,work.buttons[0]);key('End');assert.equal(doc.activeElement,work.buttons[2]);
+ doc.activeElement=admin.summary;key('ArrowDown');assert.equal(work.open,false);assert.equal(admin.open,true);assert.equal(doc.activeElement,admin.buttons[0]);
+ key('Escape');assert.equal(admin.open,false);assert.equal(doc.activeElement,admin.summary);
+ work.open=true;admin.open=true;rootListeners.get('toggle')({target:admin});assert.equal(work.open,false);assert.equal(admin.open,true);
+ rootListeners.get('click')({target:admin.buttons[0]});assert.equal(admin.open,false,'route action sees the group already closed');
+ for(const event of ['pointerdown','click','focusin']){work.open=true;listeners.get(event)({target:{}});assert.equal(work.open,false,`${event} outside dismisses Work`);}
+});

@@ -382,6 +382,9 @@ importers:
       '@stylexjs/stylex':
         specifier: 0.19.1
         version: 0.19.1
+      gsap:
+        specifier: 3.15.1
+        version: 3.15.1
       react:
         specifier: 19.2.4
         version: 19.2.4
@@ -13915,6 +13918,9 @@ packages:
   grok-mermaid@0.2.2:
     resolution: {integrity: sha512-XcJEP5dDC8liHBh52mlLjU18fNvu1ckFsu0QpIG3+APZ270fsj9wxpiA6cOURmbUEuoMVgjbC2+UYgTdCqqgzA==}
     engines: {node: '>=18'}
+
+  gsap@3.15.1:
+    resolution: {integrity: sha512-63yjWRFWj3QRP1UOuD8kcidCcy3nxb1mMRpwHr/xJRvPfm9GtWOXFAYUiL0ro1fgPq2nY53LR+98pAgy9BumBg==}
 
   gsap@3.15.0:
     resolution: {integrity: sha512-dMW4CWBTUK1AEEDeZc1g4xpPGIrSf9fJF960qbTZmN/QwZIWY5wgliS6JWl9/25fpTGJrMRtSjGtOmPnfjZB+A==}
@@ -29916,6 +29922,8 @@ snapshots:
   grok-mermaid@0.2.2: {}
 
   gsap@3.15.0: {}
+
+  gsap@3.15.1: {}
 
   gtoken@7.1.0:
     dependencies:

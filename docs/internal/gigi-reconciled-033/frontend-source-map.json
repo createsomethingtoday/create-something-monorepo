@@ -1,0 +1,18 @@
+{
+  "files": {
+    "ui/app.css": "0b972ad6e14383700073e7966ba0f04a13c35f07ce09cc5d72be4eaed3828e61",
+    "ui/dev-work.jsx": "3ac895c02755ff6a3d90bf9f74d18d387388e48d2a2964b21e67206063a12cfe",
+    "ui/dev-quest.jsx": "1545c70d3b3af44df8a0fae1c6c678249ce4495c18c1764695d64aad546246f7",
+    "ui/dev-navigation.jsx": "a9123bc1fa6087a678a8b237ae56c64526e3835817e1870412cb36522fa218d5",
+    "scripts/dev-astryx-work-browser.mjs": "80fef7dfc82e1e726a1fbfefd43c0c222dbb32d5499df17205ed711ee756d108",
+    "scripts/dev-astryx-quest-browser.mjs": "d03e197c2abaf91694e06e574eefc093ffca4623a4b54e39c07a672acc22fee6",
+    "scripts/astryx-review-regressions.mjs": "ebb4d6b39f65c27cfd36913bf1fc620a2ef5ff2c958eb94cdcb1ebf8c37704de",
+    "scripts/dev-work-astryx-layout.test.mjs": "7593f721c3669b38fc05a04a48b4ee4fa0be16608dd8579ae4441aee06e2eda8"
+  },
+  "preservedDEVIdentity": "co.halfdozen.gigi.dev",
+  "noNativeOrIntegrationSourceChange": true,
+  "runtimeUIIdenticalPublicAndDEV": true,
+  "harnessAdaptation": "DEV browser harnesses retain standalone workspace Playwright resolution through ../../../package.json; production UI source is byte-identical.",
+  "publicSourceSha": "fa37fb904a47b29476bc7a7089bd9438e3a3f781",
+  "devSourceSha": "f788f542a79edf140253192e956df98bb26e79b9"
+}
