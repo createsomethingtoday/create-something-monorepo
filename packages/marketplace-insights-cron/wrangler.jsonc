@@ -19,7 +19,9 @@
     "head_sampling_rate": 1
   },
   "vars": {
-    "DASHBOARD_URL": "https://webflow-dashboard-2v4.pages.dev"
+    // The git-integrated Pages project in this account. (webflow-dashboard-2v4.pages.dev
+    // is a stale direct-upload copy in another account and has no /api/cron/insights.)
+    "DASHBOARD_URL": "https://webflow-dashboard.pages.dev"
   }
   // Secret (wrangler secret put): CRON_SECRET, the dashboard's CRON_SECRET.
 }
