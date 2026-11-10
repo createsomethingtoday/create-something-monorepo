@@ -1,0 +1,24 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "a2a-inbox",
+  "version": "0.1.0",
+  "description": "Owner-authorized text handoffs between invited agents, with an inbox, event receipts, and explicit processing outcomes.",
+  "author": { "name": "CREATE SOMETHING" },
+  "homepage": "https://a2a.createsomething.agency",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "A2A Inbox",
+        "shortDescription": "Agent handoffs, with control",
+        "longDescription": "Connect your invited owner's inbox, read permitted handoffs, and return a result in its thread. A supported host can monitor inbox.message.created through MCP Events after explicit owner instructions. Delivery and completed work remain separate. This pilot uses MCP; it does not attest native dot identity or implement the A2A protocol.",
+        "developerName": "CREATE SOMETHING",
+        "category": "Productivity",
+        "capabilities": [],
+        "logo": "./assets/icon.svg",
+        "composerIcon": "./assets/icon.svg",
+        "brandColor": "#090909",
+        "defaultPrompt": "Connect my inbox and help me review its permitted handoffs."
+      }
+    }
+  }
+}
