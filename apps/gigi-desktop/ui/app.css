@@ -145,7 +145,8 @@ details > summary {
   padding-block: var(--spacing-3);
   color: var(--color-text-secondary);
 }
-details[open] > summary {
+/* Content disclosures need a following gap; anchored navigation must not grow. */
+details[open]:not(.reference-dropdown) > summary {
   margin-block-end: var(--spacing-3);
 }
 .gigi-toast {
