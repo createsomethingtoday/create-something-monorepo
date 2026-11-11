@@ -7,6 +7,7 @@ on:
       - 'scripts/graph-engineering/**'
       - 'packages/workflow-compiler/**'
       - 'packages/workflow-runtime/**'
+      - 'packages/owned-agent-runtime/**'
       - 'packages/symphony/src/**'
       - 'packages/database-layer/ontology/**'
       - 'packages/database-layer/scripts/lib/ontology.mjs'
@@ -33,4 +34,6 @@ jobs:
           cache: pnpm
       - run: pnpm bootstrap:worktree
       - run: pnpm graph:evidence:test
+      - run: pnpm --filter @create-something/owned-agent-runtime check
+      - run: pnpm --filter @create-something/owned-agent-runtime test
       - run: node --test packages/database-layer/test/ontology.test.mjs

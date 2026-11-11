@@ -83,6 +83,7 @@ Read in this order when you need broad repo context:
 - [Workflow discovery and reconciliation](../scripts/workflow-discovery/README.md) — bounded repository discovery, private session signals, approval-required candidates, and derived-artifact repair
 
 - [Execution evidence graph pilot](../scripts/graph-engineering/README.md) — offline task, coordination, and runtime evidence with explicit trust and ownership boundaries
+- [Control graph explanation candidate](../packages/owned-agent-runtime/docs/control-graph.md) — scoped blocker, work-owner, and required-evidence query with an explicit real-run acceptance hold
 - [THREE_TIER_FRAMEWORK.md](./THREE_TIER_FRAMEWORK.md)
 - [internal/BUSINESS_DIGITAL_THREAD_LIFETIME_CONTROL_BASELINE_2026-07-23.md](./internal/BUSINESS_DIGITAL_THREAD_LIFETIME_CONTROL_BASELINE_2026-07-23.md)
 - [internal/ADR_BUSINESS_DIGITAL_THREAD_V1_BOUNDARY_2026-07-23.md](./internal/ADR_BUSINESS_DIGITAL_THREAD_V1_BOUNDARY_2026-07-23.md)
