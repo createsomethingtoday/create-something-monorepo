@@ -13,6 +13,7 @@ import {
 } from '../src/index.js';
 
 interface Env {
+  APIFY_PRIVACY_DATASET_ID?: string;
   APIFY_API_TOKEN?: string;
   APIFY_DAILY_BUDGET_USD?: string;
   SKIP_TRACE: DurableObjectNamespace;
@@ -102,7 +103,7 @@ export class SkipTraceProfiles extends DurableObject<Env> {
   async fetch(request: Request): Promise<Response> {
     if(request.method !== 'POST' || new URL(request.url).pathname !== '/enrich') return new Response(null,{status:404});
     try {
-      return Response.json(await skipTrace(await request.json(), {token:this.env.APIFY_API_TOKEN,store:this.ctx.storage,dailyBudgetUsd:this.env.APIFY_DAILY_BUDGET_USD === undefined ? 1 : Number(this.env.APIFY_DAILY_BUDGET_USD)}));
+      return Response.json(await skipTrace(await request.json(), {token:this.env.APIFY_API_TOKEN,privacyDatasetId:this.env.APIFY_PRIVACY_DATASET_ID,store:this.ctx.storage,dailyBudgetUsd:this.env.APIFY_DAILY_BUDGET_USD === undefined ? 1 : Number(this.env.APIFY_DAILY_BUDGET_USD)}));
     } catch { return Response.json({error:'Unavailable'},{status:503}); }
   }
 }

@@ -1,0 +1,18 @@
+--- a/packages/agency/test/npg-analyst.test.ts
++++ b/packages/agency/test/npg-analyst.test.ts
+@@ -170,12 +170,13 @@
+   actionId: v.pending.id
+ });
+ 
+-test('captured V8 judgment and 12 names retained exactly; no public runtime definition', () => {
++test('captured V8 judgment retained with additive Skip Trace allowlist; no public runtime definition', () => {
+   assert.equal(NPG_SOURCE.snapshot_version, 8);
+   assert.equal(NPG_SOURCE.model, 'gpt-5.6-luna');
+   assert.equal(NPG_SYSTEM_PROMPT.length, 8052);
+   assert.equal(createHash('sha256').update(NPG_SYSTEM_PROMPT).digest('hex'), NPG_PROMPT_SHA256);
+-  assert.equal(NPG_TOOL_NAMES.length, 12);
++  assert.equal(NPG_TOOL_NAMES.length, 13);
++  assert.ok(NPG_TOOL_NAMES.includes('enrich_candidate_skip_trace'));
+   for (const phrase of [
+     'get_enrichment_readiness',
+     'USD100 TOTAL',

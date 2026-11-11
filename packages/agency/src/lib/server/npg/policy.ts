@@ -19,13 +19,18 @@ export const NPG_TOOL_NAMES = [
   'estimate_registry_travel',
   'search_registry_sourcing',
   'enrich_candidate_profile',
+  'enrich_candidate_skip_trace',
   'request_professional_contact_enrichment',
   'get_professional_contact_enrichment',
   'get_enrichment_readiness'
 ] as const;
 export const PAID_TOOLS = new Set<string>([
   'enrich_candidate_profile',
+  'enrich_candidate_skip_trace',
   'enrich_provider_professional_contact',
   'request_professional_contact_enrichment',
   'estimate_registry_travel'
 ]);
+
+export const NPG_SKIP_TRACE_POLICY =
+  'Skip Trace: only use enrich_candidate_skip_trace after explicit operator paid approval for an existing selected NPI. It is an optional provider, never automatic PDL fallback. Preserve blocked review, pending, privacy and billing states. Broker contacts and consent are unverified; first/last and practice geography are preliminary triage only. Never infer home from practice geography or recruiting readiness. Repeat identical arguments only to read/reconcile the same run; never broaden or start a second lookup.';

@@ -39,13 +39,15 @@ export function parseCommand(value: unknown): Command {
   return value as Command;
 }
 const providerFor = (tool: string) =>
-  tool === 'enrich_candidate_profile'
-    ? 'pdl'
-    : tool === 'request_professional_contact_enrichment'
-      ? 'clay'
-      : tool === 'enrich_provider_professional_contact'
-        ? 'exa'
-        : 'geocodio';
+  tool === 'enrich_candidate_skip_trace'
+    ? 'apify'
+    : tool === 'enrich_candidate_profile'
+      ? 'pdl'
+      : tool === 'request_professional_contact_enrichment'
+        ? 'clay'
+        : tool === 'enrich_provider_professional_contact'
+          ? 'exa'
+          : 'geocodio';
 /** Deliberately conservative adapter: unknown live readiness shapes cannot authorize spending.
  * Verify against the deployed tool before cutover. No schema is invented in Healthcare MCP. */
 export function enrichmentReview(data: unknown, provider: string) {
@@ -86,7 +88,9 @@ function fullClinicAddress(address: string) {
     parts.length >= 3 &&
     /^\d+[A-Za-z]?(?:-\d+)?\s+\S/.test(parts[0]) &&
     /[A-Za-z]{2}/.test(parts.at(-2) ?? '') &&
-    /^(?:AL|AK|AZ|AR|CA|CO|CT|DE|DC|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|AS|GU|MP|PR|VI)(?:\s+\d{5}(?:-\d{4})?)?$/i.test(parts.at(-1) ?? '')
+    /^(?:AL|AK|AZ|AR|CA|CO|CT|DE|DC|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|AS|GU|MP|PR|VI)(?:\s+\d{5}(?:-\d{4})?)?$/i.test(
+      parts.at(-1) ?? ''
+    )
   );
 }
 export function checkPaidScope(name: string, args: Record<string, unknown>, state: State) {
@@ -151,6 +155,15 @@ async function review(
       limits:
         '1–50 NPIs; 1–3 full clinic street addresses; 30 or 45 minutes; any or all clinics. Bounded shared credit reservation is enforced by the source.',
       cost: 'Exact cost unavailable. This action may reserve or spend routing credits.'
+    };
+  if (name === 'enrich_candidate_skip_trace')
+    return {
+      provider: 'Apify one-api/skip-trace',
+      scope:
+        'One selected registry NPI; broker personal contact candidates and home city/state. Practice geography is not residence.',
+      limits:
+        'One pinned run, ten-cent cap, shared daily reservations. Repeated identical input reconciles the same run. Private-at-creation preflight is enforced by the MCP before dispatch.',
+      cost: 'Up to $0.10 reserved. Contacts, ownership and consent remain unverified; never recruiter-ready.'
     };
   const readiness = tools.find((t) => t.name === 'get_enrichment_readiness');
   if (!readiness)
@@ -270,7 +283,15 @@ export async function executeCommand(
         result &&
         typeof result === 'object' &&
         'status' in result &&
-        ['ambiguous', 'unavailable', 'delivery_unknown'].includes(String(result.status))
+        [
+          'ambiguous',
+          'unavailable',
+          'delivery_unknown',
+          'pending',
+          'association_failure',
+          'privacy_blocked_review',
+          'billing_review'
+        ].includes(String(result.status))
       ) {
         state.sources.push({ tool: tool.name, data: result });
         await store.checkpoint(row, state);
