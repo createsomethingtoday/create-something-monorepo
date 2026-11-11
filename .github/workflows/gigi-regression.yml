@@ -54,6 +54,8 @@ jobs:
         run: pnpm --filter @create-something/gigi-desktop build:web
       - name: Exercise rewritten application with synthetic records
         run: pnpm --filter @create-something/gigi-desktop test:rewrite
+      - name: Exercise workspace refinement and paginated read retention
+        run: pnpm --filter @create-something/gigi-desktop test:refinement
       - name: Exercise creator recovery and exact publication guards
         run: pnpm --filter @create-something/gigi-desktop test:creators
       - name: Exercise creator navigation and onboarding recovery regressions
