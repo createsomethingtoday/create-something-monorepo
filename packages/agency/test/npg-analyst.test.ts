@@ -1162,6 +1162,25 @@ test(`real MCP refresh initializes transport and retains ${initialStatus} receip
     assert.equal(Boolean(state.skipTracePending),i===0);
     assert.equal(current.status,'idle');
   }
+  const settledVersion=current.version;
+  await assert.rejects(()=>executeCommand(store,'alice',{type:'message',id:current.id,version:current.version,text:'Refresh Skip Trace'},make),/no known Skip Trace/i);
+  const after=await store.view('alice',current.id);assert.equal(after.status,'idle');assert.equal(after.version,settledVersion);assert.equal(calls,2);
   assert.equal(methods.filter(m=>m==='initialize').length,2);
   assert.equal(methods.filter(m=>m==='tools/list').length,2);
+}));
+
+test('refresh without a receipt leaves an idle conversation usable',()=>database(async store=>{
+ const c=await conversation(store);let made=false;
+ await assert.rejects(()=>executeCommand(store,'alice',{type:'message',id:c.id,version:c.version,text:'Refresh Skip Trace'},()=>{made=true;throw new Error('unexpected provider');}),/no known Skip Trace/i);
+ const after=await store.view('alice',c.id);assert.equal(after.status,'idle');assert.equal(after.version,c.version);assert.equal(made,false);
+ const f=fixture('search_registry_sourcing',{});const done=await executeCommand(store,'alice',message(after),()=>f.p);assert.notEqual(done.status,'interrupted');
+}));
+for(const failure of ['privacy_blocked_review','association_failure','billing_review'])
+test(`failed refresh replaces stale contact evidence: ${failure}`,()=>database(async store=>{
+ const f=fixture('enrich_candidate_skip_trace',{npi:'1234567890',confirm_paid_enrichment:true});const base=await f.p.tools();f.p.tools=async()=>[...base,{name:'enrich_candidate_skip_trace',inputSchema:{type:'object',properties:{npi:{type:'string'},confirm_paid_enrichment:{const:true}},required:['npi','confirm_paid_enrichment'],additionalProperties:false}}];let calls=0;
+ f.p.call=async()=>({status:++calls===1?'review_required':failure,id:'a'.repeat(64),run_id:'run1',npi:'1234567890',charge_reconciled:false,...(calls===1?{contacts:{emails:['stale@example.test']}}:{})});
+ const c=await conversation(store);const proposal=await executeCommand(store,'alice',message(c),()=>f.p);const pending=await executeCommand(store,'alice',approve(proposal),()=>f.p);
+ const failed=await executeCommand(store,'alice',{type:'message',id:pending.id,version:pending.version,text:'Refresh Skip Trace'},()=>f.p);
+ assert.equal(failed.status,'ambiguous');assert.doesNotMatch(JSON.stringify(failed.sources),/stale@example.test/);assert.match(JSON.stringify(failed.sources),new RegExp(failure));
+ await assert.rejects(()=>store.acquirePaid('unrelated'),/reconciliation/);
 }));

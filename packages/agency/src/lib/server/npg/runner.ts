@@ -305,6 +305,11 @@ export async function executeCommand(
       )
         throw new NpgError(409, 'This review changed or was already used.');
     }
+    if (refreshing && !state.skipTracePending)
+      throw new NpgError(
+        409,
+        'There is no known Skip Trace run to refresh. No paid action was sent.'
+      );
     row = await store.start(owner, before.id, before.version, token);
     let input: unknown[];
     if (refreshing) {
@@ -340,6 +345,17 @@ export async function executeCommand(
         result = { status: 'pending', id: pending.id, run_id: pending.run_id, npi: args.npi };
       }
       toolCount++;
+      state.sources = state.sources.filter(
+        (source) =>
+          !(
+            source.tool === approved.tool &&
+            source.data &&
+            typeof source.data === 'object' &&
+            'id' in source.data &&
+            source.data.id === pending.id
+          )
+      );
+      delete state.responseId;
       if (
         !skipReceipt(result, args.npi) ||
         result.id !== pending.id ||
@@ -354,6 +370,27 @@ export async function executeCommand(
           'provider_timeout'
         ].includes(result.status)
       ) {
+        const failureStatus =
+          skipReceipt(result, args.npi) &&
+          result.id === pending.id &&
+          result.run_id === pending.run_id &&
+          ['privacy_blocked_review', 'association_failure', 'billing_review'].includes(
+            result.status
+          )
+            ? result.status
+            : 'association_failure';
+        state.sources.push({
+          tool: approved.tool,
+          data: {
+            id: pending.id,
+            run_id: pending.run_id,
+            npi: args.npi,
+            status: failureStatus,
+            charge_reconciled: false,
+            reason:
+              'Receipt reconciliation failed; previous contact evidence is withheld. Operator review is required.'
+          }
+        });
         await store.db
           .prepare(
             "UPDATE npg_analyst_actions SET status='ambiguous' WHERE id=? AND owner_id=? AND status='completed'"
@@ -369,16 +406,6 @@ export async function executeCommand(
         await store.finish(row, state, 'ambiguous', toolCount);
         return store.view(owner, row.id);
       }
-      state.sources = state.sources.filter(
-        (source) =>
-          !(
-            source.tool === approved.tool &&
-            source.data &&
-            typeof source.data === 'object' &&
-            'id' in source.data &&
-            source.data.id === pending.id
-          )
-      );
       state.sources.push({ tool: approved.tool, data: result });
       delete state.responseId;
       if (result.status === 'pending' || result.charge_reconciled !== true)
