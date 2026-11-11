@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["vite/client"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+  },
+  "include": ["src/lib/npg/**/*.ts", "src/lib/npg/**/*.tsx"],
+  "exclude": ["node_modules", "src/lib/npg/astryx/AGENTS.md"]
+}

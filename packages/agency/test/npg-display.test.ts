@@ -3,6 +3,64 @@ import test from 'node:test';
 import * as display from '../src/lib/npg/display.ts';
 import { readFileSync } from 'node:fs';
 
+test('Skip Trace contacts display only as exact review-required vendor evidence', () => {
+  const data = {
+    id: 'skiptrace-fixture',
+    npi: '1234567890',
+    status: 'review_required',
+    charge_usd: 0.05,
+    charge_reconciled: true,
+    contacts: {
+      emails: ['synthetic-person@example.invalid'],
+      phones: ['synthetic-phone'],
+      home_city: 'Example',
+      home_state: 'MO'
+    },
+    provenance: {
+      source: 'Apify one-api/skip-trace',
+      actor: 'one-api/skip-trace',
+      build: 'fixture',
+      retrieved_at: '2026-11-11',
+      ownership: 'unverified',
+      consent: 'unverified',
+      geography: 'registry_practice_not_home',
+      readiness: 'blocked'
+    },
+    reason: 'Manual recruiter review required.'
+  };
+  assert.equal(
+    display.actionLabel('enrich_candidate_skip_trace'),
+    'Look up one candidate with Skip Trace'
+  );
+  const artifact = display.sourceArtifact(data);
+  assert.ok(artifact.fields.some((field) => field.value === '0.05'));
+  assert.ok(artifact.fields.some((field) => field.value === 'Manual recruiter review required.'));
+  const section = artifact.sections.find((item) => /Skip Trace vendor contacts/.test(item.title));
+  assert.ok(section?.fields.some((field) => field.value === 'synthetic-person@example.invalid'));
+  assert.match(section!.title, /ownership and consent unverified/);
+  assert.match(section!.title, /recruiting readiness blocked/);
+  for (const status of [
+    'blocked_review',
+    'pending',
+    'billing_review',
+    'privacy_blocked',
+    'association_failure',
+    'ambiguous',
+    'matched'
+  ])
+    assert.ok(
+      !display
+        .sourceArtifact({ ...data, status })
+        .sections.some((item) => /Skip Trace/.test(item.title)),
+      status
+    );
+  assert.ok(
+    !display
+      .sourceArtifact({ ...data, provenance: { source: 'another vendor' } })
+      .sections.some((item) => /Skip Trace/.test(item.title))
+  );
+});
+
 test('saved drafts recover from malformed shapes and retain only bounded string drafts', () => {
   for (const raw of ['null', '[]', '42', '"text"', '{bad', '{"new":42}'])
     assert.deepEqual({ ...display.readDrafts(raw) }, {});
@@ -26,6 +84,7 @@ test('coverage projects nested snapshot evidence without substituting broad snap
       provider_count: 500000
     },
     report: {
+      persona: { taxonomy_code: '363LF0000X' },
       market_coverage_status: 'degraded',
       direct_outreach_status: 'blocked',
       completeness: { practice_phone_count: 150 },
@@ -37,6 +96,7 @@ test('coverage projects nested snapshot evidence without substituting broad snap
   assert.equal(artifact.shown, null);
   for (const value of [
     'snapshot-all-np',
+    '363LF0000X',
     'all_np_taxonomies',
     '2026-09-14',
     'degraded',
@@ -137,19 +197,15 @@ test('source artifact reads structured MCP content, preserving safe full export 
   assert.deepEqual(display.sourceArtifact({ csv_download_url: 'javascript:alert(1)' }).links, []);
 });
 
-test('NPG app owns its main landmark and root layout renders a scoped product branch', () => {
+test('NPG uses a dedicated Astryx document without injecting its reset into Agency layouts', () => {
   const layout = readFileSync(new URL('../src/routes/+layout.svelte', import.meta.url), 'utf8');
-  const page = readFileSync(
-    new URL('../src/routes/delivery/abundance/healthcare-analyst/+page.svelte', import.meta.url),
+  const workspace = readFileSync(
+    new URL('../src/lib/npg/astryx/Workspace.tsx', import.meta.url),
     'utf8'
   );
-  assert.match(layout, /\{#if isNpgChatRoute\}[\s\S]*?\{@render children\(\)\}[\s\S]*?\{:else\}/);
-  const productBranch = layout.split('{#if isNpgChatRoute}')[1].split('{:else}')[0];
-  assert.doesNotMatch(
-    productBranch,
-    /<(?:main|Navigation|Footer|ModeIndicator|UnifiedSearch|PrivacyAnalytics)\b/
-  );
-  assert.match(productBranch, /href="#main-content"/);
-  assert.match(page, /<main[^>]*id="main-content"/);
-  assert.doesNotMatch(page, /Conversation \{conversations.length/);
+  assert.doesNotMatch(layout, /isNpgChatRoute|@astryxdesign/);
+  assert.match(workspace, /<AppShell/);
+  assert.match(workspace, /<ChatLayout/);
+  assert.match(workspace, /<ChatComposerInput/);
+  assert.doesNotMatch(workspace, /<main\b|isStopShown=|isStreaming=\{true\}/);
 });

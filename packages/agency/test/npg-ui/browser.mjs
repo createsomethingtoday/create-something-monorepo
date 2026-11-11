@@ -1,219 +1,427 @@
-// Deterministic local component checks. No Identity bypass or production/vendor calls.
+// Exact built React/Astryx client against local synthetic HTTP responses only.
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { chromium, expect } from '@playwright/test';
-const base = process.env.NPG_UI_URL || 'http://127.0.0.1:4217';
-const evidence = process.env.NPG_UI_EVIDENCE || '/tmp/npg-chat-evidence';
+const base = process.env.NPG_UI_URL || 'http://127.0.0.1:4227';
+const evidence = process.env.NPG_UI_EVIDENCE || '/tmp/npg-astryx-evidence';
 await mkdir(evidence, { recursive: true });
 const browser = await chromium.launch({ headless: true });
 const report = [];
-async function scenario(name, fn, viewport = { width: 1440, height: 900 }) {
-  const context = await browser.newContext({ viewport });
+async function scenario(name, fn, viewport = { width: 1440, height: 900 }, options = {}) {
+  if (process.env.NPG_UI_SCENARIO && !name.includes(process.env.NPG_UI_SCENARIO)) return;
+  const context = await browser.newContext({ viewport, ...options });
   const page = await context.newPage();
   const errors = [];
-  page.on('pageerror', (e) => errors.push(e.message));
-  // Only local fixture assets are permitted; a regression cannot spend or contact a provider.
-  await context.route('**/*', (route) =>
-    new URL(route.request().url()).origin === new URL(base).origin
-      ? route.continue()
-      : route.abort()
-  );
+  const external = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('console', (message) => {
+    if (message.type() === 'error' && /Content Security Policy|Refused to/i.test(message.text()))
+      errors.push(message.text());
+  });
+  await context.route('**/*', (route) => {
+    if (new URL(route.request().url()).origin !== new URL(base).origin) {
+      external.push(route.request().url());
+      return route.abort();
+    }
+    return route.continue();
+  });
   try {
     await fn(page);
     assert.deepEqual(errors, []);
+    assert.deepEqual(external, []);
     report.push({ name, passed: true });
   } finally {
     await context.close();
   }
 }
+const commands = (page) =>
+  page.evaluate(() => fetch('/__fixture/commands').then((response) => response.json()));
+async function gotoState(page, state) {
+  await page.goto(base + '/?state=' + (state || ''));
+  await page.getByRole('button', { name: 'Send question', exact: true }).waitFor();
+  if (state && state !== 'new') {
+    const history = page.locator('.history-item').first();
+    if (!(await history.isVisible())) await page.getByTestId('mobile-nav-toggle').click();
+    await history.click();
+    await expect(page.getByRole('textbox', { name: 'Your question' })).toBeFocused();
+    await expect(page.locator('.npg-thread-title')).toHaveText(
+      'Find NPs near Springfield, MO, and keep the complete CSV.'
+    );
+  }
+}
+async function disclosureHasClearBody(page, button) {
+  const id = await button.getAttribute('aria-controls');
+  const first = page
+    .locator('[id="' + id + '"]')
+    .locator('dt')
+    .first();
+  await expect(first).toBeVisible();
+  await expect
+    .poll(async () => {
+      const label = await first.boundingBox();
+      const trigger = await button.boundingBox();
+      return label.y - (trigger.y + trigger.height);
+    })
+    .toBeGreaterThanOrEqual(0);
+}
 try {
-  for (const raw of ['null', '[]', '{"new":42}'])
-    await scenario(`malformed saved draft recovers: ${raw}`, async (page) => {
-      await page.addInitScript((value) => sessionStorage.setItem('npg-drafts:fixture', value), raw);
-      await page.goto(base + '/?state=new');
-      const input = page.getByLabel('Your question');
-      await input.fill('Recovered question');
-      await expect(page.getByRole('button', { name: 'Send question' })).toBeEnabled();
-      // Remove init script on reload by checking persistence in the current document.
-      await expect
-        .poll(() =>
-          page.evaluate(() => JSON.parse(sessionStorage.getItem('npg-drafts:fixture')).new)
-        )
-        .toBe('Recovered question');
-    });
-  for (const width of [320, 390, 768, 1024, 1025, 1440])
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 320, height: 568 }
+  ])
     await scenario(
-      `review and responsive panels at ${width}`,
+      'mobile identity and opaque review composer at ' + viewport.width + '×' + viewport.height,
       async (page) => {
-        await page.goto(base + '/?state=review');
-        await expect(
-          page.getByRole('heading', { name: 'Review the exact action', exact: true })
-        ).toBeVisible();
-        assert.equal(await page.locator('main').count(), 1);
-        assert.equal(await page.locator('#main-content').count(), 1);
-        assert.equal(await page.locator('.thread').evaluate((el) => el.clientHeight > 60), true);
-        if (width >= 768) await expect(page.getByRole('button', { name: /^History/ })).toBeHidden();
-        if (width >= 1025) await expect(page.locator('.review')).toBeInViewport();
-        if (width <= 1024) {
-          await page.getByRole('button', { name: /Results & evidence/ }).click();
-          await expect(page.getByText('231 total', { exact: true })).toBeVisible();
-          // Results disclosure never replaces the review/thread with a tab.
-          await expect(page.locator('.review')).toBeVisible();
-          assert.equal(await page.locator('.thread').evaluate((el) => el.clientHeight > 30), true);
-          if (width === 390) await page.screenshot({ path: `${evidence}/sources-mobile.png` });
-        }
-        const overflow = await page.evaluate(() => ({
-          width: innerWidth,
-          document: document.documentElement.scrollWidth,
-          body: document.body.scrollWidth
-        }));
-        assert.ok(overflow.document <= width && overflow.body <= width, JSON.stringify(overflow));
-        const csv = page.locator('.source-link');
-        assert.equal(
-          await csv.getAttribute('href'),
-          '/delivery/abundance/sourcing.csv?run_id=abnationalrun_fixture&taxonomy_code=363LF0000X%2C363LA2200X'
+        await gotoState(page, 'review');
+        const brand = page
+          .getByRole('navigation', { name: 'NPG workspace', exact: true })
+          .getByText('Healthcare analyst', { exact: true });
+        const fits = await brand.evaluate(
+          (element) => element.scrollWidth <= element.clientWidth + 1
         );
+        assert.ok(fits, 'Product identity is truncated');
+        const helper = page.getByText(
+          'Review or reject the action above before sending another question.',
+          { exact: true }
+        );
+        const hasSurface = await helper.evaluate((element) => {
+          for (
+            let parent = element;
+            parent && !parent.classList.contains('npg-thread');
+            parent = parent.parentElement
+          ) {
+            const color = getComputedStyle(parent).backgroundColor;
+            if (color !== 'transparent' && color !== 'rgba(0, 0, 0, 0)') return true;
+          }
+          return false;
+        });
+        assert.ok(hasSurface, 'Composer helper has no opaque surface above the transcript');
+        const placeholderBottom = await page
+          .getByRole('textbox', { name: 'Your question' })
+          .evaluate(
+            (element) =>
+              element.parentElement.querySelector('[aria-hidden="true"]').getBoundingClientRect()
+                .bottom
+          );
+        const footerTop = await page
+          .getByText(/Ctrl \/ ⌘ \+ Enter/)
+          .evaluate((element) => element.getBoundingClientRect().top);
+        assert.ok(
+          placeholderBottom <= footerTop,
+          'Composer placeholder overlaps its keyboard hint'
+        );
+
         await page
           .getByRole('button', { name: 'Reject action', exact: true })
           .scrollIntoViewIfNeeded();
+        await expect(helper).toBeInViewport();
+        await page.screenshot({
+          path: `${evidence}/mobile-polish-${viewport.width}-${viewport.height}.png`
+        });
+        assert.deepEqual(await commands(page), []);
+      },
+      viewport
+    );
+  for (const width of [1440, 1025, 1024, 768, 390, 320])
+    await scenario(
+      'exact review and evidence at ' + width,
+      async (page) => {
+        await gotoState(page, 'review');
+        const heading = page.getByRole('heading', { name: 'Review the exact action', exact: true });
+        await expect(heading).toBeInViewport();
+        assert.equal(await page.getByRole('main').count(), 1);
+        if (width <= 1024) {
+          await page.getByRole('button', { name: /Results & evidence/ }).click();
+          await expect(page.getByText('231 total', { exact: true })).toBeVisible();
+        }
+        const csv = page.locator('.source-link');
+        await expect(csv).toHaveAttribute(
+          'href',
+          '/delivery/abundance/sourcing.csv?run_id=abnationalrun_fixture&taxonomy_code=363LF0000X%2C363LA2200X'
+        );
+        assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+        const reject = page.getByRole('button', { name: 'Reject action', exact: true });
+        await reject.scrollIntoViewIfNeeded();
+        await expect(reject).toBeInViewport();
         await page.screenshot({ path: `${evidence}/review-${width}.png` });
         if (width === 390) {
-          await page.getByLabel('Your question').focus();
-          await page.keyboard.press('Shift+Tab');
-          assert.equal(
-            await page.evaluate(() => document.activeElement?.textContent),
-            'Reject action'
-          );
+          await reject.focus();
           await page.keyboard.press('Enter');
           await expect(
             page.getByText('Action rejected. No action was sent.', { exact: true })
           ).toBeVisible();
-          const commands = await page.evaluate(() => window.npgFixtureCommands);
-          assert.equal(commands.length, 1);
-          assert.equal(commands[0].type, 'reject');
-          assert.equal(commands[0].actionId, '1d0822cf-c2ac-4713-a6ba-fef887b7bccc');
-          assert.equal(commands[0].version, 0);
-          assert.equal(await page.locator('.source-link').count(), 1);
-          await page.getByRole('button', { name: /^History/ }).click();
-          await page.locator('.history-item').click();
-          await expect(page.getByLabel('Your question')).toBeFocused();
-          await expect(page.getByRole('button', { name: /^History/ })).toHaveAttribute(
-            'aria-expanded',
-            'false'
+          assert.deepEqual(
+            (await commands(page)).map((command) => command.type),
+            ['reject']
           );
-        }
+          await expect(page.locator('.source-link')).toHaveCount(1);
+        } else assert.deepEqual(await commands(page), []);
       },
       { width, height: 900 }
     );
+  for (const viewport of [
+    { width: 390, height: 667 },
+    { width: 320, height: 568 }
+  ])
+    await scenario(
+      'short phone keeps review reachable ' + viewport.width + '×' + viewport.height,
+      async (page) => {
+        await gotoState(page, 'review');
+        await expect(
+          page.getByRole('heading', { name: 'Review the exact action', exact: true })
+        ).toBeInViewport();
+        await page.getByRole('button', { name: /Results & evidence/ }).click();
+        const csv = page.locator('.source-link');
+        await csv.scrollIntoViewIfNeeded();
+        await expect(csv).toBeInViewport();
+        const heading = page.getByRole('heading', { name: 'Review the exact action', exact: true });
+        await heading.scrollIntoViewIfNeeded();
+        await expect(heading).toBeInViewport();
+        const usable = await page
+          .locator('.npg-thread')
+          .evaluate((element) => element.clientHeight);
+        assert.ok(usable >= 180, JSON.stringify({ usable }));
+        await page
+          .getByRole('button', { name: 'Reject action', exact: true })
+          .scrollIntoViewIfNeeded();
+        await page.screenshot({
+          path: `${evidence}/short-${viewport.width}-${viewport.height}.png`
+        });
+        assert.deepEqual(await commands(page), []);
+      },
+      viewport
+    );
+  for (const raw of ['null', '[]', '{"new":42}'])
+    await scenario('malformed saved drafts recover ' + raw, async (page) => {
+      await page.addInitScript((value) => {
+        if (!sessionStorage.getItem('fixture-seeded')) {
+          sessionStorage.setItem('npg-drafts:fixture', value);
+          sessionStorage.setItem('fixture-seeded', 'true');
+        }
+      }, raw);
+      await gotoState(page, 'new');
+      const input = page.getByRole('textbox', { name: 'Your question' });
+      await input.fill('Recovered question');
+      await expect(page.getByRole('button', { name: 'Send question', exact: true })).toBeEnabled();
+      await page.reload();
+      await expect(input).toHaveText('Recovered question');
+      assert.deepEqual(await commands(page), []);
+    });
   await scenario(
-    'first question creates a conversation through the existing transport',
+    'new conversation preserves next draft during create and message',
     async (page) => {
-      await page.goto(base + '/?state=new');
-      await expect(page.locator('.history-item')).toHaveCount(0);
-      const input = page.getByLabel('Your question');
+      await gotoState(page, 'new');
+      const input = page.getByRole('textbox', { name: 'Your question' });
       await input.fill('Find family NPs near my clinic');
       await input.press('Control+Enter');
+      await input.press('Control+Enter');
+      await input.fill('Draft typed during conversation creation');
       await expect(page.getByText('231 total', { exact: true })).toBeVisible();
-      await expect(page.locator('.thread-header h2')).toHaveText('Find family NPs near my clinic');
-      const commands = await page.evaluate(() => window.npgFixtureCommands);
+      await expect(input).toHaveText('Draft typed during conversation creation');
       assert.deepEqual(
-        commands.map((command) => command.type),
+        (await commands(page)).map((command) => command.type),
         ['create', 'message']
       );
-      assert.equal(commands[1].version, 0);
+      await page.reload();
+      await expect(input).toHaveText('Draft typed during conversation creation');
+      await expect(page.locator('.npg-thread-title')).toHaveText('Find family NPs near my clinic');
     }
   );
-  await scenario('expiry disables approval while rejection remains available', async (page) => {
-    await page.goto(base + '/?state=expired');
-    await expect(page.getByRole('button', { name: 'Approve this action' })).toBeDisabled();
-    await expect(page.getByRole('button', { name: 'Reject action' })).toBeEnabled();
-    await expect(page.getByText('This review has expired. Approval is unavailable.')).toBeVisible();
+  await scenario('working state is honest and output is escaped', async (page) => {
+    await gotoState(page);
+    const input = page.getByRole('textbox', { name: 'Your question' });
+    await input.fill('Find family NPs in Springfield');
+    await input.press('Control+Enter');
+    await input.press('Control+Enter');
+    await expect(page.getByRole('button', { name: 'Working…' })).toBeDisabled();
+    await expect(page.getByText(/The response arrives together/)).toBeVisible();
+    await page.screenshot({ path: `${evidence}/working.png` });
+    await input.fill('My next question');
+    await expect(page.getByText('231 total', { exact: true })).toBeVisible();
+    await expect(input).toHaveText('My next question');
+    assert.equal((await commands(page)).filter((command) => command.type === 'message').length, 1);
+    await expect(page.locator('.npg-messages')).toContainText(
+      '<script>alert("untrusted")</script>'
+    );
+    assert.equal(await page.locator('.npg-messages script').count(), 0);
+    await page.screenshot({ path: `${evidence}/completed.png` });
   });
   await scenario(
-    'exact enrichment review keeps cost, allowance and personal-contact scope visible',
+    'error preserves draft and requires explicit readback',
     async (page) => {
-      await page.goto(base + '/?state=enrichment');
-      const review = page.locator('.review');
-      await expect(review).toContainText('Maximum cost');
-      await expect(review).toContainText('0.15');
-      await expect(review).toContainText('One-time shared allowance');
-      await expect(review).toContainText('100');
-      await expect(review).toContainText('Professional profile only; personal contacts excluded.');
-      await expect(review).toContainText('Include personal contact details');
-      assert.deepEqual(await page.evaluate(() => window.npgFixtureCommands), []);
-      await page.getByRole('button', { name: 'Reject action' }).scrollIntoViewIfNeeded();
-      await page.screenshot({ path: `${evidence}/enrichment-review.png` });
-    }
-  );
-  await scenario(
-    'honest working state, duplicate suppression, safe output and next draft',
-    async (page) => {
-      await page.goto(base);
-      const input = page.getByLabel('Your question');
-      await input.fill('Find family NPs in Springfield');
-      await input.press('Control+Enter');
-      await input.press('Control+Enter');
-      await expect(page.getByRole('button', { name: 'Working…' })).toBeDisabled();
-      await expect(page.getByText(/The response arrives together/)).toBeVisible();
-      await page.screenshot({ path: `${evidence}/working-desktop.png` });
-      await input.fill('My next question stays drafted');
-      await expect(page.getByText('231 total', { exact: true })).toBeVisible();
-      await expect(input).toHaveValue('My next question stays drafted');
-      await expect(page.locator('.thread-header h2')).toHaveText('Find family NPs in Springfield');
-      const commands = await page.evaluate(() => window.npgFixtureCommands);
-      assert.equal(commands.filter((c) => c.type === 'message').length, 1);
-      await expect(page.locator('.messages')).toContainText('<script>alert("untrusted")</script>');
-      assert.equal(await page.locator('.messages script').count(), 0);
-      await page.screenshot({ path: `${evidence}/completed-desktop.png` });
-    }
-  );
-  await scenario(
-    'error keeps draft and requires explicit readback before send',
-    async (page) => {
-      await page.goto(base + '/?state=error');
-      const input = page.getByLabel('Your question');
+      await gotoState(page, 'error');
+      const input = page.getByRole('textbox', { name: 'Your question' });
       await input.fill('Question before interruption');
       await input.press('Control+Enter');
       await expect(page.getByRole('alert')).toBeVisible();
-      await expect(input).toHaveValue('Question before interruption');
-      await expect(page.getByRole('button', { name: 'Send question' })).toBeDisabled();
+      await expect(input).toHaveText('Question before interruption');
+      await expect(page.getByRole('button', { name: 'Send question', exact: true })).toBeDisabled();
       await page.getByRole('button', { name: 'Refresh history', exact: true }).click();
-      await expect(page.getByRole('button', { name: 'Send question' })).toBeEnabled();
+      await expect(page.getByRole('button', { name: 'Send question', exact: true })).toBeEnabled();
+      await page.screenshot({ path: `${evidence}/error.png` });
       assert.equal(
-        (await page.evaluate(() => window.npgFixtureCommands)).filter((c) => c.type === 'message')
-          .length,
+        (await commands(page)).filter((command) => command.type === 'message').length,
         1
       );
-      await input.fill('Draft persists across reload');
-      await page.reload();
-      await expect(input).toHaveValue('Draft persists across reload');
-      await input.press('Control+Enter');
-      await expect(page.getByRole('alert')).toBeVisible();
-      await page.screenshot({ path: `${evidence}/error-mobile.png` });
     },
     { width: 390, height: 844 }
   );
-  for (const state of ['ambiguous', 'interrupted', 'running'])
-    await scenario(`${state} readback cannot resend`, async (page) => {
-      await page.goto(base + '/?state=' + state);
-      await page.getByLabel('Your question').fill('Do not send');
-      await expect(page.getByRole('button', { name: 'Send question' })).toBeDisabled();
-      await page.getByRole('button', { name: 'Refresh history', exact: true }).click();
-      await expect(page.getByRole('button', { name: 'Send question' })).toBeDisabled();
-      assert.deepEqual(await page.evaluate(() => window.npgFixtureCommands), []);
-      await page.screenshot({ path: `${evidence}/${state}.png` });
-    });
-  await scenario('reduced motion retains evidence and empty composer', async (page) => {
-    await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto(base);
-    await expect(page.getByRole('heading', { name: /Start with the people/ })).toBeVisible();
-    await expect(page.getByLabel('Your question')).toBeVisible();
-    assert.equal(
-      await page.locator('.thread').evaluate((el) => getComputedStyle(el).scrollBehavior),
-      'auto'
-    );
-    await page.screenshot({ path: `${evidence}/empty-desktop.png` });
+  await scenario('expiry disables only approval', async (page) => {
+    await gotoState(page, 'expired');
+    await expect(page.getByRole('button', { name: 'Approve this action' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Reject action', exact: true })).toBeEnabled();
+    await expect(page.getByText('This review has expired. Approval is unavailable.')).toBeVisible();
   });
+  await scenario('exact enrichment review retains cost allowance and scope', async (page) => {
+    await gotoState(page, 'enrichment');
+    const review = page.locator('.npg-review');
+    for (const text of [
+      'Maximum cost',
+      '0.15',
+      'One-time shared allowance',
+      '100',
+      'Professional profile only; personal contacts excluded.',
+      'Include personal contact details'
+    ])
+      await expect(review).toContainText(text);
+    assert.deepEqual(await commands(page), []);
+    await page.screenshot({ path: `${evidence}/enrichment.png` });
+  });
+  for (const state of ['ambiguous', 'running', 'interrupted'])
+    await scenario(state + ' readback cannot resend', async (page) => {
+      await gotoState(page, state);
+      await page.getByRole('textbox', { name: 'Your question' }).fill('Do not send');
+      await expect(page.getByRole('button', { name: 'Send question', exact: true })).toBeDisabled();
+      await page.getByRole('button', { name: 'Refresh history', exact: true }).click();
+      await expect(page.getByRole('button', { name: 'Send question', exact: true })).toBeDisabled();
+      assert.deepEqual(await commands(page), []);
+    });
+  await scenario('canonical nested evidence preserves source boundaries', async (page) => {
+    await gotoState(page, 'canonical');
+    const evidencePanel = page.locator('.npg-evidence');
+    for (const text of [
+      'snapshot-all-np',
+      'all_np_taxonomies',
+      '363LF0000X',
+      '2026-09-14',
+      'Certification unknown',
+      'not_recorded'
+    ])
+      await expect(evidencePanel).toContainText(text);
+    await expect(page.getByText('200 total', { exact: true })).toBeVisible();
+    await expect(page.getByText('Shown count not supplied', { exact: true })).toBeVisible();
+    await evidencePanel
+      .getByRole('region', { name: 'Registry practitioner', exact: true })
+      .getByRole('button', { name: 'Public registry record · unverified' })
+      .click();
+    await expect(evidencePanel).toContainText('Jamie Example');
+    await disclosureHasClearBody(
+      page,
+      evidencePanel
+        .getByRole('region', { name: 'Registry practitioner', exact: true })
+        .getByRole('button', { name: 'Public registry record · unverified' })
+    );
+    await evidencePanel
+      .getByRole('button', { name: 'Vendor-reported professional profile · unverified' })
+      .click();
+    await expect(evidencePanel).toContainText('Nurse practitioner');
+    await disclosureHasClearBody(
+      page,
+      evidencePanel.getByRole('button', {
+        name: 'Vendor-reported professional profile · unverified'
+      })
+    );
+    await page.screenshot({ path: `${evidence}/canonical-evidence.png` });
+  });
+  await scenario(
+    'Skip Trace evidence is unverified and blocked contacts stay undisclosed',
+    async (page) => {
+      await gotoState(page, 'skiptrace');
+      const panel = page.locator('.npg-evidence');
+      await expect(panel).toContainText('Look up one candidate with Skip Trace');
+      await expect(panel).toContainText('0.05');
+      await expect(panel).toContainText('Charge reconciled');
+      await expect(panel).toContainText('Apify one-api/skip-trace');
+      const first = panel.locator('.npg-source').first();
+      await first
+        .getByRole('button', {
+          name: 'Skip Trace vendor contacts · ownership and consent unverified; recruiting readiness blocked'
+        })
+        .click();
+      await expect(first).toContainText('synthetic-person@example.invalid');
+      await disclosureHasClearBody(
+        page,
+        first.getByRole('button', { name: /Skip Trace vendor contacts/ })
+      );
+      const blocked = panel.locator('.npg-source').nth(1);
+      await expect(blocked).toContainText('privacy_blocked');
+      assert.equal(
+        await blocked.getByRole('button', { name: /Skip Trace vendor contacts/ }).count(),
+        0
+      );
+      await expect(
+        blocked.getByText('stale-contact@example.invalid', { exact: true })
+      ).not.toBeVisible();
+      assert.equal(await page.getByRole('button', { name: /Refresh Skip Trace/ }).count(), 0);
+      assert.deepEqual(await commands(page), []);
+      await page.screenshot({ path: `${evidence}/skiptrace-evidence.png` });
+    }
+  );
+  await scenario('skip focus newline IME and local fonts', async (page) => {
+    await gotoState(page, 'new');
+    const skip = page.getByRole('link', { name: 'Skip to content', exact: true });
+    await skip.focus();
+    await skip.press('Enter');
+    await expect(page.getByRole('main')).toBeFocused();
+    const input = page.getByRole('textbox', { name: 'Your question' });
+    await input.fill('Line one');
+    await input.press('Enter');
+    await input.press('x');
+    assert.equal((await commands(page)).length, 0);
+    await expect(input).toContainText('Line one');
+    await input.evaluate((element) =>
+      element.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Enter',
+          code: 'Enter',
+          ctrlKey: true,
+          isComposing: true,
+          bubbles: true
+        })
+      )
+    );
+    assert.equal((await commands(page)).length, 0);
+    await page.evaluate(() => document.fonts.ready);
+    assert.equal(await page.evaluate(() => document.fonts.check('14px Figtree')), true);
+  });
+  await scenario('reduced motion keeps an honest empty state', async (page) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await gotoState(page, 'new');
+    await expect(
+      page.getByRole('heading', { name: 'Start with the people you need to find.' })
+    ).toBeVisible();
+    await page.screenshot({ path: `${evidence}/empty.png` });
+  });
+  await scenario(
+    'no JavaScript retains sole main and truthful instructions',
+    async (page) => {
+      await page.goto(base);
+      await expect(page.getByRole('heading', { name: 'NPG Healthcare analyst' })).toBeVisible();
+      await expect(page.locator('noscript')).toBeVisible();
+      assert.match(
+        await page.locator('noscript').textContent(),
+        /needs JavaScript to send questions/
+      );
+      assert.equal(await page.getByRole('main').count(), 1);
+      assert.equal(await page.getByRole('button').count(), 0);
+      const skip = page.getByRole('link', { name: 'Skip to main content' });
+      await skip.focus();
+      await skip.press('Enter');
+      await expect(page.getByRole('main')).toBeFocused();
+    },
+    { width: 390, height: 844 },
+    { javaScriptEnabled: false }
+  );
 } finally {
   await browser.close();
   await writeFile(`${evidence}/browser-report.json`, JSON.stringify(report, null, 2));

@@ -31,7 +31,7 @@ import {
 } from '../src/lib/server/npg/access.ts';
 import { safeLink, sourceLinks, linkParts } from '../src/lib/npg/display.ts';
 import { GET, POST } from '../src/routes/delivery/abundance/healthcare-analyst/api/+server.ts';
-import { load } from '../src/routes/delivery/abundance/healthcare-analyst/+page.server.ts';
+import { GET as documentGET } from '../src/routes/delivery/abundance/healthcare-analyst/+server.ts';
 const require = createRequire(import.meta.url);
 const { Miniflare } = createRequire(require.resolve('wrangler/package.json'))('miniflare');
 const travelArgs = {
@@ -300,7 +300,7 @@ test('API and page deny anonymous/disallowed reads and mutations even outside ho
         (e: any) => [401, 403].includes(e.status)
       );
     await assert.rejects(
-      async () => load({ locals, setHeaders() {} } as any),
+      async () => documentGET({ locals, setHeaders() {} } as any),
       (e: any) => [401, 403].includes(e.status)
     );
   }
@@ -630,7 +630,7 @@ test('browser view contains no owner/provider state; sensitive fields and unsafe
 test('browser modules carry no MCP endpoint, credentials or model configuration', () => {
   for (const path of [
     '../src/lib/npg/display.ts',
-    '../src/routes/delivery/abundance/healthcare-analyst/+page.svelte'
+    '../src/lib/npg/astryx/Workspace.tsx'
   ]) {
     const source = readFileSync(new URL(path, import.meta.url), 'utf8');
     for (const forbidden of [

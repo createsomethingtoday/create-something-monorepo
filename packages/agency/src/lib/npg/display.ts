@@ -100,6 +100,7 @@ export function sourceLinks(data: unknown): string[] {
 const actionLabels: Record<string, string> = {
   estimate_registry_travel: 'Estimate practice-to-clinic driving times',
   enrich_candidate_profile: 'Look up one candidate with People Data Labs',
+  enrich_candidate_skip_trace: 'Look up one candidate with Skip Trace',
   request_professional_contact_enrichment: 'Request public professional contacts from Clay',
   enrich_provider_professional_contact: 'Research public professional contacts with Exa',
   search_registry_sourcing: 'Registry sourcing',
@@ -147,6 +148,11 @@ export function sourceArtifact(data: unknown) {
   const rows = Array.isArray(record.results) ? record.results : null;
   const shown = count(record.displayed) ?? (rows ? rows.length : null);
   const keys = [
+    'id',
+    'npi',
+    'charge_usd',
+    'charge_reconciled',
+    'reason',
     'run_id',
     'snapshot',
     'source_published_at',
@@ -175,6 +181,10 @@ export function sourceArtifact(data: unknown) {
     'csv_access'
   ];
   const labels: Record<string, string> = {
+    id: 'Source job',
+    npi: 'Candidate NPI',
+    charge_usd: 'Charged (USD)',
+    charge_reconciled: 'Charge reconciled',
     run_id: 'Source run',
     snapshot: 'Snapshot',
     source_published_at: 'Source published',
@@ -203,6 +213,8 @@ export function sourceArtifact(data: unknown) {
       ? (record.report as Record<string, unknown>)
       : {};
   for (const key of [
+    'persona',
+    'evaluated_at',
     'market_coverage_status',
     'market_coverage_reasons',
     'direct_outreach_status',
@@ -224,6 +236,16 @@ export function sourceArtifact(data: unknown) {
     {
       title: 'Vendor-reported personal contact · consent not recorded',
       value: record.status === 'matched' ? record.personal_contact : undefined
+    },
+    {
+      title:
+        'Skip Trace vendor contacts · ownership and consent unverified; recruiting readiness blocked',
+      value:
+        record.status === 'review_required' &&
+        (record.provenance as Record<string, unknown> | undefined)?.source ===
+          'Apify one-api/skip-trace'
+          ? record.contacts
+          : undefined
     }
   ]
     .map(({ title, value }) => ({ title, fields: evidenceFields(value) }))

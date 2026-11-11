@@ -1,0 +1,85 @@
+/* Only document/region geometry and source-data wrapping. Astryx owns component design. */
+html,
+body,
+#npg-app {
+  margin: 0;
+  min-height: 100%;
+}
+.npg-workspace {
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+.npg-chat-column {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+.npg-thread {
+  min-width: 0;
+  min-height: 0;
+}
+.npg-thread-title {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.npg-state {
+  flex-shrink: 0;
+}
+.npg-evidence {
+  width: 22rem;
+  flex-shrink: 0;
+  overflow: auto;
+}
+.npg-evidence-content,
+.npg-source {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.npg-source + .npg-source {
+  border-block-start: 1px solid var(--color-border);
+  padding-block-start: var(--spacing-6);
+}
+.npg-welcome {
+  max-width: 40rem;
+  margin-inline: auto;
+}
+.npg-preserve-lines,
+.npg-prose {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.npg-review {
+  scroll-margin-block-start: var(--spacing-4);
+  border: 1px solid var(--color-border);
+}
+.npg-json {
+  max-width: 100%;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--font-family-code);
+  font-size: var(--font-size-sm);
+}
+.npg-results-toggle {
+  display: none;
+}
+@media (max-width: 1024px) {
+  .npg-results-toggle {
+    display: inline-flex;
+  }
+}
+@media (max-width: 767px) {
+  .npg-inline-results {
+    padding-inline: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0s !important;
+    transition-duration: 0s !important;
+  }
+}

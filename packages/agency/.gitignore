@@ -23,3 +23,7 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Generated, content-addressed private-chat client (built before check/build).
+/static/npg-chat/
+/src/lib/server/npg/astryx-assets.generated.json

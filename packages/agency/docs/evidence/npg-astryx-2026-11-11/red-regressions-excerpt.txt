@@ -1,0 +1,111 @@
+npg-astryx-review-scroll-red.log
+/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/node_modules/.pnpm/playwright@1.58.2/node_modules/playwright/lib/matchers/expect.js:213
+        return matcher.call(target, ...args);
+                       ^
+
+A [Error]: expect(locator).toBeInViewport() failed
+
+Locator:  getByRole('heading', { name: 'Review the exact action', exact: true })
+Expected: in viewport
+Received: viewport ratio 0
+Timeout:  5000ms
+
+Call log:
+  - Expect "to.be.in.viewport" with timeout 5000ms
+  - waiting for getByRole('heading', { name: 'Review the exact action', exact: true })
+    9 × locator resolved to <h2 data-level="2" data-color="primary" id="npg-review-title" class="astryx-heading x1tgivj0 x1xvnhcw x1cpk1wn x12yy4cs x1lliihq xh015us">Review the exact action</h2>
+      - unexpected value "viewport ratio 0"
+
+    at Proxy.<anonymous> (/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/node_modules/.pnpm/playwright@1.58.2/node_modules/playwright/lib/matchers/expect.js:213:24)
+
+npg-astryx-mobile-polish-red.log
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Product identity is truncated
+    at file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency/test/npg-ui/browser.mjs:58:14
+    at runNextTicks (node:internal/process/task_queues:64:5)
+    at process.processImmediate (node:internal/timers:452:9)
+    at process.callbackTrampoline (node:internal/async_hooks:130:17)
+    at async scenario (file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency/test/npg-ui/browser.mjs:29:5)
+    at async file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency/test/npg-ui/browser.mjs:54:5 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+npg-astryx-disclosure-red.log
+/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/node_modules/.pnpm/playwright@1.58.2/node_modules/playwright/lib/matchers/expect.js:293
+    throw new Error(message);
+          ^
+
+Error: expect(received).toBeGreaterThanOrEqual(expected)
+
+Expected: >= 0
+Received:    -8
+
+Call Log:
+- Timeout 5000ms exceeded while waiting on the predicate
+    at pollMatcher (/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/node_modules/.pnpm/playwright@1.58.2/node_modules/playwright/lib/matchers/expect.js:293:11)
+    at async disclosureHasClearBody (file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency/test/npg-ui/browser.mjs:56:3)
+    at async file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency/test/npg-ui/browser.mjs:276:5
+    at async scenario (file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency/test/npg-ui/browser.mjs:29:5)
+    at async file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency/test/npg-ui/browser.mjs:257:3
+
+Node.js v22.23.4
+
+npg-astryx-placeholder-red.log
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Composer placeholder overlaps its keyboard hint
+    at file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency/test/npg-ui/browser.mjs:101:16
+    at async scenario (file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency/test/npg-ui/browser.mjs:29:5)
+    at async file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency/test/npg-ui/browser.mjs:72:5 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v22.23.4
+undefined
+
+npg-astryx-types-red.log
+src/lib/npg/astryx/Workspace.tsx(224,32): error TS2322: Type 'LucideIcon' is not assignable to type 'ReactNode'.
+src/lib/npg/astryx/Workspace.tsx(229,35): error TS2322: Type 'true' is not assignable to type '"wrap" | "nowrap" | "wrap-reverse" | undefined'.
+src/lib/npg/astryx/Workspace.tsx(231,32): error TS2322: Type 'LucideIcon' is not assignable to type 'ReactNode'.
+src/lib/npg/astryx/Workspace.tsx(238,86): error TS2322: Type 'true' is not assignable to type '"wrap" | "nowrap" | "wrap-reverse" | undefined'.
+src/lib/npg/astryx/Workspace.tsx(255,33): error TS2322: Type 'true' is not assignable to type '"wrap" | "nowrap" | "wrap-reverse" | undefined'.
+src/lib/npg/astryx/Workspace.tsx(255,51): error TS2322: Type 'LucideIcon' is not assignable to type 'ReactNode'.
+src/lib/npg/astryx/Workspace.tsx(259,50): error TS2322: Type 'LucideIcon' is not assignable to type 'ReactNode'.
+undefined
+/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 2: tsc --project tsconfig.npg.json
+
+npg-skiptrace-display-red.log
+TAP version 13
+# Subtest: Skip Trace contacts display only as exact review-required vendor evidence
+not ok 1 - Skip Trace contacts display only as exact review-required vendor evidence
+  ---
+  duration_ms: 1.163875
+  type: 'test'
+  location: '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency/test/npg-display.test.ts:1:152'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+
+    + 'enrich_candidate_skip_trace'
+    - 'Look up one candidate with Skip Trace'
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'Look up one candidate with Skip Trace'
