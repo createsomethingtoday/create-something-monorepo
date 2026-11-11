@@ -159,6 +159,12 @@ body:has(.agency-surface[data-agency-brand='measured']) {
 .agency-surface[data-agency-account='true'] .film-shell main#main-content {
   padding-top: 100px;
 }
+.agency-surface[data-agency-account='true'] .footer-links-grid > * { min-width: 0; }
+@media (min-width: 1024px) and (max-width: 1200px) {
+  .agency-surface[data-agency-account='true'] .footer-editorial .footer-links-grid {
+    grid-template-columns: minmax(0, .82fr) minmax(0, 1.12fr) minmax(0, .9fr);
+  }
+}
 @media (max-width: 700px) {
   .agency-surface[data-agency-account='true'] .film-shell main#main-content { padding-top: 88px; }
 }
