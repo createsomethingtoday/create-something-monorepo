@@ -142,7 +142,7 @@ export function summarizeNewsletterSessions(
   }>,
   window: { start: string; end: string }
 ) {
-  const landings = new Map<string, number>();
+  const landings = new Map<string, Map<string, number>>();
   for (const e of events) {
     if (
       e.action !== 'page_view' ||
@@ -153,17 +153,19 @@ export function summarizeNewsletterSessions(
     )
       continue;
     const time = Date.parse(e.created_at);
-    landings.set(e.session_id, Math.min(landings.get(e.session_id) ?? Infinity, time));
+    const campaign = e.campaign!.replaceAll('_', '-');
+    const sessionLandings = landings.get(e.session_id) ?? new Map<string, number>();
+    sessionLandings.set(campaign, Math.min(sessionLandings.get(campaign) ?? Infinity, time));
+    landings.set(e.session_id, sessionLandings);
   }
   const used = new Set<string>();
   for (const e of events) {
-    const start = landings.get(e.session_id);
+    const starts = landings.get(e.session_id);
     const time = Date.parse(e.created_at);
     if (
-      start !== undefined &&
+      starts !== undefined &&
       ['content_copy', 'content_link_click'].includes(e.action) &&
-      time >= start &&
-      time <= start + 30 * 60000 &&
+      [...starts.values()].some(start => time >= start && time <= start + 30 * 60000) &&
       e.created_at < window.end
     )
       used.add(e.session_id);

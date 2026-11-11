@@ -79,3 +79,12 @@ The report reader was executed with read-only Cloudflare D1 adapters against the
 Parent inspected the actual local Svelte route with captured aggregate responses at desktop and 390px, including source context, country disclosure, focus outline, no page overflow, failure and Retry recovery. Temporary loopback-only QA hooks blocked local analytics ingestion and were restored before checks. Horizontal keyboard scrolling needs independent re-test; a browser-driver ArrowRight attempt did not advance the new acquisition table. No production auth bypass or credentials were added. The live admin browser currently requires sign-in.
 
 Scheduler runtime regressions and the final combined artifact still require independent review and production promotion/readback. Production is not complete at this checkpoint. Worktree disposition: retained until review and release verification.
+
+
+## Independent final Sol 6.1 review
+
+The independent reviewer found one P2 accuracy bug: two approved campaign landings in one session shared only the first landing's resource-use window. Parent demonstrated the regression, retained a test, and corrected it to keep each campaign's first landing before unioning qualifying session IDs. The reviewer independently reproduced resourceUse changing from 0 to 1 and reran all 15 analytics tests and eight scheduler reporting runtime tests successfully. No remaining blocking findings were reported.
+
+The reviewer exercised the actual local route at 320 and 1440px, including loading, empty, partial, 503 and Retry recovery. No page overflow occurred. Native ArrowRight scrolled the acquisition comparison region to 80px after normal animation, with visible focus. No keyboard source change was required. The temporary loopback QA hook was restored byte-for-byte, and the owned server/tab were closed.
+
+Functional and perceptual gates passed for local output. Release readiness remains pending deployed bindings, production RPC and authenticated .io readback; no production pass is inferred from these tests. Worktree disposition: retained until production verification.

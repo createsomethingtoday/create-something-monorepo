@@ -439,3 +439,27 @@ test('booking interest stays distinct from authoritative booking outcomes', asyn
   assert.equal(metric(report, 'booking-intent').current, 1);
   assert.equal(metric(report, 'bookings').current, null);
 });
+
+test('newsletter resource use honors each reviewed campaign landing in the same session', async () => {
+  const { NEWSLETTER_CAMPAIGNS } = await import('../src/lib/newsletter/measurement');
+  const f = fixture();
+  for (const [campaign, date] of [
+    [NEWSLETTER_CAMPAIGNS[0], '2026-11-05 12:00:00'],
+    [NEWSLETTER_CAMPAIGNS[1], '2026-11-05 12:35:00']
+  ])
+    f.event('reader', 'https://createsomething.io/newsletters', {
+      date,
+      metadata: {
+        trafficClass: 'external',
+        newsletterMeasurement: 'first-party-v1',
+        newsletterCampaign: campaign
+      }
+    });
+  f.event('reader', 'https://createsomething.io/newsletters', {
+    date: '2026-11-05 12:40:00',
+    action: 'content_copy'
+  });
+  const report = await readWeeklyScorecard({ DB: f.db }, null, now);
+  assert.equal(metric(report, 'newsletter-landings').current, 1);
+  assert.equal(metric(report, 'newsletter-resourceUse').current, 1);
+});
