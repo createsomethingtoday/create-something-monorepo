@@ -158,10 +158,10 @@ const TEMPLATE_SYSTEM_BINDINGS: Record<string, AtlasPrimitiveBinding[]> = {
   ],
   data_review_receipt: [
     binding(
-      'agent-feedback-script',
-      'script',
-      'Template Review Hub agent feedback runner',
-      'scripts/template-review-hub-agent-feedback.ts',
+      'agent-feedback-save-tool',
+      'mcp_server',
+      'Agent Review Feedback save tool',
+      'packages/webflow-template-review-mcp/src/tools.ts',
       'template_review_save_agent_feedback'
     ),
     binding(

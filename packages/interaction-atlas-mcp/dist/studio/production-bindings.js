@@ -37,7 +37,7 @@ const TEMPLATE_SYSTEM_BINDINGS = {
         binding('validator-result-artifacts-r2', 'cloudflare_r2', 'Validator result artifacts R2 bucket', 'packages/webflow-template-validation/worker/wrangler.jsonc', '"bucket_name": "validator-result-artifacts"')
     ],
     data_review_receipt: [
-        binding('agent-feedback-script', 'script', 'Template Review Hub agent feedback runner', 'scripts/template-review-hub-agent-feedback.ts', 'template_review_save_agent_feedback'),
+        binding('agent-feedback-save-tool', 'mcp_server', 'Agent Review Feedback save tool', 'packages/webflow-template-review-mcp/src/tools.ts', 'template_review_save_agent_feedback'),
         binding('agent-feedback-formatter', 'policy', 'Agent review feedback formatter', 'packages/webflow-template-review-mcp/README.md', 'template_review_format_agent_review_feedback')
     ],
     system_submission_cloud: [
