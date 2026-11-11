@@ -1,0 +1,166 @@
+
+> @create-something/agency@1.0.0 astryx /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> node node_modules/@astryxdesign/cli/clients/cli/bin/astryx.mjs "doctor" "--built" "src/lib/npg/astryx" "--json"
+
+{
+  "apiVersion": 1,
+  "type": "doctor",
+  "data": {
+    "checks": [
+      {
+        "id": "node-version",
+        "label": "Node.js version",
+        "status": "pass",
+        "message": "Node v22.23.4 meets the minimum (>=22.13.0)."
+      },
+      {
+        "id": "core-installed",
+        "label": "@astryxdesign/core installed",
+        "status": "pass",
+        "message": "@astryxdesign/core resolved (v0.7.14)."
+      },
+      {
+        "id": "version-alignment",
+        "label": "@astryxdesign/core <-> @astryxdesign/cli alignment",
+        "status": "pass",
+        "message": "@astryxdesign/core v0.7.14 is in step with @astryxdesign/cli v0.7.14."
+      },
+      {
+        "id": "themes",
+        "label": "Theme packages",
+        "status": "pass",
+        "message": "Theme package(s) installed (@astryxdesign/theme-neutral); wired by import: neutral (src/lib/npg/astryx/main.tsx)."
+      },
+      {
+        "id": "theme-management",
+        "label": "CLI-managed app themes",
+        "status": "info",
+        "message": "The CLI manages no themes because this project has no generated theme module.",
+        "fix": "Start managing app themes with `pnpm exec astryx theme add <slug>`."
+      },
+      {
+        "id": "config",
+        "label": "astryx.config.mjs",
+        "status": "info",
+        "message": "No astryx.config.mjs found — using defaults."
+      },
+      {
+        "id": "implicit-integrations",
+        "label": "Implicitly linked integrations",
+        "status": "info",
+        "message": "None — no installed dependency ships an astryx.integration.* manifest."
+      },
+      {
+        "id": "configured-integrations",
+        "label": "Configured integrations",
+        "status": "info",
+        "message": "No integration is named in astryx.config."
+      },
+      {
+        "id": "provider-identity",
+        "label": "Integration provider identity",
+        "status": "info",
+        "message": "None — no loaded integration has a provider identity."
+      },
+      {
+        "id": "integration-issues",
+        "label": "Integration contributions",
+        "status": "info",
+        "message": "No integration is loaded, so there are no integration contributions to check."
+      },
+      {
+        "id": "agent-docs",
+        "label": "AI agent docs",
+        "status": "warn",
+        "message": "Agent docs present (AGENTS.md, CLAUDE.md) but no Astryx section markers found.",
+        "fix": "Add the Astryx section to your agent docs with `pnpm exec astryx init --features agents`."
+      },
+      {
+        "id": "peer-deps",
+        "label": "@astryxdesign/core peer dependencies",
+        "status": "pass",
+        "message": "All peer dependencies satisfied (@stylexjs/stylex, react, react-dom)."
+      },
+      {
+        "id": "package-manager",
+        "label": "Package manager",
+        "status": "info",
+        "message": "Detected package manager: pnpm (declared in /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/package.json)."
+      },
+      {
+        "id": "cli-command",
+        "label": "CLI command",
+        "status": "info",
+        "message": "No loaded integration declares a cliCommand, so printed commands start with `pnpm exec astryx`."
+      },
+      {
+        "id": "newest-release",
+        "label": "Newest release",
+        "status": "info",
+        "message": "Update check: not run yet, so the newest release is not known here; it runs in the background once a day, after a command. Last update notice skipped 2026-11-11T19:58:03.219Z (project): no newer release was known."
+      },
+      {
+        "id": "cli-on-path",
+        "label": "`astryx` on the search path",
+        "status": "pass",
+        "message": "`astryx` runs /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency/node_modules/.bin/astryx (CLI 0.7.14)."
+      },
+      {
+        "id": "computer-integrations",
+        "label": "Integrations installed for this computer",
+        "status": "info",
+        "message": "No integration installed for this computer is missing from this project."
+      },
+      {
+        "id": "authoring-docs",
+        "label": "Authoring docs",
+        "status": "pass",
+        "message": "All 19 authoring schemas are readable in `pnpm exec astryx docs authoring/field-reference`."
+      },
+      {
+        "id": "cli-docs",
+        "label": "CLI docs",
+        "status": "pass",
+        "message": "All 101 CLI docs are readable: 82 in the `pnpm exec astryx docs cli` tree and 19 in `pnpm exec astryx docs authoring/field-reference`."
+      },
+      {
+        "id": "docs-tree",
+        "label": "Docs tree",
+        "status": "pass",
+        "message": "The docs tree has 201 docs in 32 sections (13 at the top), each at one route."
+      },
+      {
+        "id": "docs-progressive-disclosure",
+        "label": "Documentation navigation and size",
+        "status": "pass",
+        "message": "119 topics: every section index and section fits in one 32 KB read."
+      },
+      {
+        "id": "built-astryx-usage",
+        "label": "Built output uses Astryx",
+        "status": "pass",
+        "message": "Read 3 source files and 2 built files: 20 imports from @astryxdesign/core, @astryxdesign/theme-neutral in 2 files; 95 component uses."
+      },
+      {
+        "id": "built-astryx-purity",
+        "label": "Source uses Astryx well",
+        "status": "warn",
+        "message": "23 findings (Styling 23): main.tsx:8 imports the stylesheet `./fonts.css`: use component props and tokens; main.tsx:9 imports the stylesheet `./workspace.css`: use component props and tokens; Workspace.tsx:103 a `className`: use a component prop or token first; Workspace.tsx:121 a `className`: use a component prop or token first; Workspace.tsx:131 a `className`: use a component prop or token first; and 18 more.",
+        "fix": "Replace each with the Astryx component, icon surface, prop or token it names; `pnpm exec astryx docs is-my-code-good` has the full rubric. Keep a raw element only where its native meaning is needed."
+      }
+    ],
+    "summary": {
+      "pass": 11,
+      "warn": 2,
+      "fail": 0,
+      "info": 10
+    }
+  },
+  "meta": {
+    "answeredBy": {
+      "cli": "0.7.14",
+      "core": "0.7.14",
+      "copy": "project"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "assets": {
+    "script": "/npg-chat/assets/main-B2uKRhwl.js",
+    "styles": [
+      "/npg-chat/assets/main-B8wNAXfF.css"
+    ]
+  },
+  "identity": [
+    {
+      "path": "/npg-chat/assets/main-B2uKRhwl.js",
+      "bytes": 847059,
+      "sha256": "0ce3b0fce25541716ad2025818bf1d0a35647334dbc9aaa0f646f541cc007ee4"
+    },
+    {
+      "path": "/npg-chat/assets/main-B8wNAXfF.css",
+      "bytes": 301845,
+      "sha256": "623d33d4cc35b3f07827b74326238a9f66be186bcd24bdfdf91ee2ca0c688881"
+    },
+    {
+      "path": "/npg-chat/assets/figtree-latin-wght-normal-D_ZTVpCC.woff2",
+      "bytes": 20156,
+      "sha256": "4ba7d3d096695818fe0686be4f1e82c6b05134e18a22260336130335027462dd"
+    }
+  ],
+  "guard": {
+    "fixtureAbsent": true,
+    "serverPromptAbsent": true,
+    "credentialNamesAbsent": true,
+    "mcpEndpointAbsent": true,
+    "providerResponseStateAbsent": true,
+    "licensedNotices": true
+  },
+  "entry": {
+    "file": "assets/main-B2uKRhwl.js",
+    "name": "main",
+    "src": "src/lib/npg/astryx/main.tsx",
+    "isEntry": true,
+    "css": [
+      "assets/main-B8wNAXfF.css"
+    ],
+    "assets": [
+      "assets/figtree-latin-wght-normal-D_ZTVpCC.woff2"
+    ]
+  }
+}

@@ -1,0 +1,5 @@
+
+> @create-something/monorepo@1.0.0 auth:retired-provider:check /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144
+> node scripts/check-retired-identity-provider.mjs
+
+retired identity provider check: pass (16567 tracked files)

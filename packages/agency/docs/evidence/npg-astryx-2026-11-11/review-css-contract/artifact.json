@@ -1,0 +1,71 @@
+{
+  "manifest": {
+    "script": "/npg-chat/assets/main-qaMUh4q_.js",
+    "styles": [
+      "/npg-chat/assets/main-Cn_sAb1H.css"
+    ]
+  },
+  "artifacts": [
+    {
+      "path": "/npg-chat/assets/main-qaMUh4q_.js",
+      "bytes": 847960,
+      "sha256": "e8cc10f082fed30fe64db24bff5d23bc5b8a67af21fab13548cbfc3b1c58062c"
+    },
+    {
+      "path": "/npg-chat/assets/main-Cn_sAb1H.css",
+      "bytes": 296293,
+      "sha256": "ca14eb7b580354f63383d50eadbb4660818819f4cd51b4b4f8185ba79355d263"
+    }
+  ],
+  "frameworkUtilities": {
+    ".min-h-0": {
+      "min-height": "0px"
+    },
+    ".w-80": {
+      "width": "20rem"
+    },
+    ".min-w-0": {
+      "min-width": "0px"
+    },
+    ".max-w-screen-sm": {
+      "max-width": "640px"
+    },
+    ".flex-1": {
+      "flex": "1 1 0%"
+    },
+    ".scroll-mt-4": {
+      "scroll-margin-top": "var(--spacing-4)"
+    },
+    ".whitespace-pre-wrap": {
+      "white-space": "pre-wrap"
+    }
+  },
+  "unlayeredTopLevelRules": [
+    ".mx-auto",
+    ".block",
+    ".hidden",
+    ".min-h-0",
+    ".w-80",
+    ".min-w-0",
+    ".max-w-full",
+    ".max-w-screen-sm",
+    ".flex-1",
+    ".shrink-0",
+    ".scroll-mt-4",
+    ".overflow-auto",
+    ".whitespace-pre-wrap",
+    ".break-all"
+  ],
+  "fonts": [
+    {
+      "font-family": "Figtree",
+      "font-style": "normal",
+      "font-weight": "300 900",
+      "font-display": "swap",
+      "src": "url(/npg-chat/assets/figtree-latin-wght-normal-D_ZTVpCC.woff2) format(\"woff2\")"
+    }
+  ],
+  "customHookSelectors": [],
+  "externalCssImports": [],
+  "clientSentinelScan": "passed: no test fixture or named server credential identifiers"
+}

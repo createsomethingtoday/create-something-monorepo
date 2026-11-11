@@ -1,0 +1,330 @@
+TAP version 13
+# Subtest: the NPG client delivery exposes the enabled healthcare coverage analyst
+ok 1 - the NPG client delivery exposes the enabled healthcare coverage analyst
+  ---
+  duration_ms: 10.433541
+  type: 'test'
+  ...
+# Subtest: the forward migration publishes the same analyst into the D1-backed delivery context
+ok 2 - the forward migration publishes the same analyst into the D1-backed delivery context
+  ---
+  duration_ms: 30.466833
+  type: 'test'
+  ...
+# Subtest: sourcing rejects unrelated signed-in users and geocode writes reject client sessions
+ok 3 - sourcing rejects unrelated signed-in users and geocode writes reject client sessions
+  ---
+  duration_ms: 12.640625
+  type: 'test'
+  ...
+# Subtest: sourcing CSV preserves registry fields, escapes cells and leaves clinical claims unverified
+ok 4 - sourcing CSV preserves registry fields, escapes cells and leaves clinical claims unverified
+  ---
+  duration_ms: 0.9455
+  type: 'test'
+  ...
+# (node:31579) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: radius inputs cannot silently degrade to city matches or commute estimates
+ok 5 - radius inputs cannot silently degrade to city matches or commute estimates
+  ---
+  duration_ms: 0.768666
+  type: 'test'
+  ...
+# Subtest: address geocoder accepts a single address-range match, never an ambiguous match
+ok 6 - address geocoder accepts a single address-range match, never an ambiguous match
+  ---
+  duration_ms: 12.217958
+  type: 'test'
+  ...
+# Subtest: spherical distance agrees at zero and across longitude boundary
+ok 7 - spherical distance agrees at zero and across longitude boundary
+  ---
+  duration_ms: 0.065667
+  type: 'test'
+  ...
+# Subtest: radius selection excludes same-city outside points and invalidates stale geocodes
+ok 8 - radius selection excludes same-city outside points and invalidates stale geocodes
+  ---
+  duration_ms: 3.846875
+  type: 'test'
+  ...
+# Subtest: CSV export ignores UI pagination and exports beyond one database batch
+ok 9 - CSV export ignores UI pagination and exports beyond one database batch
+  ---
+  duration_ms: 14.009167
+  type: 'test'
+  ...
+# Subtest: broader specialties require a completed broad snapshot and OR-match secondary taxonomies once
+ok 10 - broader specialties require a completed broad snapshot and OR-match secondary taxonomies once
+  ---
+  duration_ms: 2.089917
+  type: 'test'
+  ...
+# Subtest: warming a changed snapshot preserves the earlier geocode version
+ok 11 - warming a changed snapshot preserves the earlier geocode version
+  ---
+  duration_ms: 2.095375
+  type: 'test'
+  ...
+# Subtest: upstream geocoder network and JSON failures are service errors, not address validation
+ok 12 - upstream geocoder network and JSON failures are service errors, not address validation
+  ---
+  duration_ms: 0.4005
+  type: 'test'
+  ...
+# Subtest: travel calculations require service authorization even for a signed-in client
+ok 13 - travel calculations require service authorization even for a signed-in client
+  ---
+  duration_ms: 11.864958
+  type: 'test'
+  ...
+# Subtest: travel CSV rejects unrelated users and redirects signed-out users to sign in
+ok 14 - travel CSV rejects unrelated users and redirects signed-out users to sign in
+  ---
+  duration_ms: 5.636333
+  type: 'test'
+  ...
+# Subtest: an upstream geocoder outage returns 503 for an otherwise valid travel request
+ok 15 - an upstream geocoder outage returns 503 for an otherwise valid travel request
+  ---
+  duration_ms: 3.143083
+  type: 'test'
+  ...
+# Subtest: history titles project only the owner first question, without exposing full state
+ok 16 - history titles project only the owner first question, without exposing full state
+  ---
+  duration_ms: 419.862417
+  type: 'test'
+  ...
+# Subtest: captured V8 judgment and 12 names retained exactly; no public runtime definition
+ok 17 - captured V8 judgment and 12 names retained exactly; no public runtime definition
+  ---
+  duration_ms: 0.240666
+  type: 'test'
+  ...
+# Subtest: verified Identity subject and existing NPG access only
+ok 18 - verified Identity subject and existing NPG access only
+  ---
+  duration_ms: 0.263833
+  type: 'test'
+  ...
+# Subtest: mutations require exact same Origin, JSON and same-origin fetch metadata
+ok 19 - mutations require exact same Origin, JSON and same-origin fetch metadata
+  ---
+  duration_ms: 2.475625
+  type: 'test'
+  ...
+# Subtest: API and page deny anonymous/disallowed reads and mutations even outside hooks
+ok 20 - API and page deny anonymous/disallowed reads and mutations even outside hooks
+  ---
+  duration_ms: 1.172833
+  type: 'test'
+  ...
+# Subtest: fallback retains fixed https udify agent URL; disabled API is closed
+ok 21 - fallback retains fixed https udify agent URL; disabled API is closed
+  ---
+  duration_ms: 0.183333
+  type: 'test'
+  ...
+# Subtest: client cannot inject tool, model, provider IDs, response state, or altered approval args
+ok 22 - client cannot inject tool, model, provider IDs, response state, or altered approval args
+  ---
+  duration_ms: 0.286792
+  type: 'test'
+  ...
+# Subtest: owner isolation, server IDs, complete sourcing CSV and source snapshot survive model summary
+ok 23 - owner isolation, server IDs, complete sourcing CSV and source snapshot survive model summary
+  ---
+  duration_ms: 420.624959
+  type: 'test'
+  ...
+# Subtest: paid travel pauses, exact args immutable, owner/version bound, one-use approval
+ok 24 - paid travel pauses, exact args immutable, owner/version bound, one-use approval
+  ---
+  duration_ms: 652.844917
+  type: 'test'
+  ...
+# Subtest: approval cannot cross conversations and rejection closes the provider chain without spending
+ok 25 - approval cannot cross conversations and rejection closes the provider chain without spending
+  ---
+  duration_ms: 513.951958
+  type: 'test'
+  ...
+# Subtest: expired action is consumed safely without any paid dispatch
+ok 26 - expired action is consumed safely without any paid dispatch
+  ---
+  duration_ms: 450.688084
+  type: 'test'
+  ...
+# Subtest: simultaneous approvals dispatch at most once; admission applies across conversations
+ok 27 - simultaneous approvals dispatch at most once; admission applies across conversations
+  ---
+  duration_ms: 587.370708
+  type: 'test'
+  ...
+# Subtest: enrichment confirm flag is not approval; missing or unknown readiness fails closed
+ok 28 - enrichment confirm flag is not approval; missing or unknown readiness fails closed
+  ---
+  duration_ms: 643.122292
+  type: 'test'
+  ...
+# Subtest: confirmed cost/allowance readiness is reviewed and rechecked; changes require new review
+ok 29 - confirmed cost/allowance readiness is reviewed and rechecked; changes require new review
+  ---
+  duration_ms: 456.642541
+  type: 'test'
+  ...
+# Subtest: uncertain paid dispatch is terminal ambiguous, never retried; errors contain no provider secrets
+ok 30 - uncertain paid dispatch is terminal ambiguous, never retried; errors contain no provider secrets
+  ---
+  duration_ms: 556.024833
+  type: 'test'
+  ...
+# Subtest: expired lease recovers to interrupted/ambiguous and rejects late writes or dispatch
+ok 31 - expired lease recovers to interrupted/ambiguous and rejects late writes or dispatch
+  ---
+  duration_ms: 372.227792
+  type: 'test'
+  ...
+# Subtest: unknown tool and malformed args never dispatch; free errors do not retry
+ok 32 - unknown tool and malformed args never dispatch; free errors do not retry
+  ---
+  duration_ms: 622.279917
+  type: 'test'
+  ...
+# Subtest: rate/window and conversation length bounds stop before a provider call
+ok 33 - rate/window and conversation length bounds stop before a provider call
+  ---
+  duration_ms: 494.907959
+  type: 'test'
+  ...
+# Subtest: browser view contains no owner/provider state; sensitive fields and unsafe links are suppressed
+ok 34 - browser view contains no owner/provider state; sensitive fields and unsafe links are suppressed
+  ---
+  duration_ms: 226.658125
+  type: 'test'
+  ...
+# Subtest: browser modules carry no MCP endpoint, credentials or model configuration
+ok 35 - browser modules carry no MCP endpoint, credentials or model configuration
+  ---
+  duration_ms: 0.319
+  type: 'test'
+  ...
+# Subtest: NPG cannot silently use a shared Agency credential or an unselected model
+ok 36 - NPG cannot silently use a shared Agency credential or an unselected model
+  ---
+  duration_ms: 0.16675
+  type: 'test'
+  ...
+# Subtest: Responses HTTP uses only server-selected model, bounded tokens, prior ID and no automatic retry
+ok 37 - Responses HTTP uses only server-selected model, bounded tokens, prior ID and no automatic retry
+  ---
+  duration_ms: 0.704917
+  type: 'test'
+  ...
+# Subtest: paid readiness/dispatch lease serializes the shared allowance across different users
+ok 38 - paid readiness/dispatch lease serializes the shared allowance across different users
+  ---
+  duration_ms: 319.047583
+  type: 'test'
+  ...
+# Subtest: MCP transport uses fixed bearer endpoint, bounded allowlist and advertised optional readiness schema
+ok 39 - MCP transport uses fixed bearer endpoint, bounded allowlist and advertised optional readiness schema
+  ---
+  duration_ms: 6.902667
+  type: 'test'
+  ...
+# Subtest: same-origin route fixture creates private state with no CORS and returns only browser-safe view
+ok 40 - same-origin route fixture creates private state with no CORS and returns only browser-safe view
+  ---
+  duration_ms: 302.511292
+  type: 'test'
+  ...
+# Subtest: paid proposal rejects invented NPIs and clinics before review or vendor dispatch
+ok 41 - paid proposal rejects invented NPIs and clinics before review or vendor dispatch
+  ---
+  duration_ms: 499.99225
+  type: 'test'
+  ...
+# Subtest: interrupted process retains checkpointed user request; terminal recovery does not invoke providers
+ok 42 - interrupted process retains checkpointed user request; terminal recovery does not invoke providers
+  ---
+  duration_ms: 269.183166
+  type: 'test'
+  ...
+# Subtest: returned unresolved paid outcome retains source semantics and blocks all further spending
+ok 43 - returned unresolved paid outcome retains source semantics and blocks all further spending
+  ---
+  duration_ms: 518.179583
+  type: 'test'
+  ...
+# Subtest: personal-contact scope cannot default silently into an enrichment approval
+ok 44 - personal-contact scope cannot default silently into an enrichment approval
+  ---
+  duration_ms: 312.988375
+  type: 'test'
+  ...
+# Subtest: read-only evidence is durable before the next model response
+ok 45 - read-only evidence is durable before the next model response
+  ---
+  duration_ms: 327.494875
+  type: 'test'
+  ...
+# Subtest: travel cannot review incomplete clinic locations even when supplied by the operator
+ok 46 - travel cannot review incomplete clinic locations even when supplied by the operator
+  ---
+  duration_ms: 0.229625
+  type: 'test'
+  ...
+# Subtest: uncertain Clay webhook delivery preserves the global paid reconciliation hold
+ok 47 - uncertain Clay webhook delivery preserves the global paid reconciliation hold
+  ---
+  duration_ms: 523.727458
+  type: 'test'
+  ...
+# Subtest: pending review can approve at the conversation message limit
+ok 48 - pending review can approve at the conversation message limit
+  ---
+  duration_ms: 560.845209
+  type: 'test'
+  ...
+# Subtest: pending review can reject at the conversation message limit
+ok 49 - pending review can reject at the conversation message limit
+  ---
+  duration_ms: 521.498709
+  type: 'test'
+  ...
+# Subtest: pending review can expire at the conversation message limit
+ok 50 - pending review can expire at the conversation message limit
+  ---
+  duration_ms: 533.900458
+  type: 'test'
+  ...
+# Subtest: source artifact distinguishes returned page from matching total without inferring missing counts
+ok 51 - source artifact distinguishes returned page from matching total without inferring missing counts
+  ---
+  duration_ms: 1.144792
+  type: 'test'
+  ...
+# Subtest: source artifact reads structured MCP content, preserving safe full export queries
+ok 52 - source artifact reads structured MCP content, preserving safe full export queries
+  ---
+  duration_ms: 0.6205
+  type: 'test'
+  ...
+# Subtest: NPG app owns its main landmark and root layout renders a scoped product branch
+ok 53 - NPG app owns its main landmark and root layout renders a scoped product branch
+  ---
+  duration_ms: 1.085583
+  type: 'test'
+  ...
+1..53
+# tests 53
+# suites 0
+# pass 53
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 11753.654209

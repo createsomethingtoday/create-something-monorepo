@@ -1,0 +1,62 @@
+[
+  {
+    "name": "review and responsive panels at 320",
+    "passed": true
+  },
+  {
+    "name": "review and responsive panels at 390",
+    "passed": true
+  },
+  {
+    "name": "review and responsive panels at 768",
+    "passed": true
+  },
+  {
+    "name": "review and responsive panels at 1024",
+    "passed": true
+  },
+  {
+    "name": "review and responsive panels at 1025",
+    "passed": true
+  },
+  {
+    "name": "review and responsive panels at 1440",
+    "passed": true
+  },
+  {
+    "name": "first question creates a conversation through the existing transport",
+    "passed": true
+  },
+  {
+    "name": "expiry disables approval while rejection remains available",
+    "passed": true
+  },
+  {
+    "name": "exact enrichment review keeps cost, allowance and personal-contact scope visible",
+    "passed": true
+  },
+  {
+    "name": "honest working state, duplicate suppression, safe output and next draft",
+    "passed": true
+  },
+  {
+    "name": "error keeps draft and requires explicit readback before send",
+    "passed": true
+  },
+  {
+    "name": "ambiguous readback cannot resend",
+    "passed": true
+  },
+  {
+    "name": "interrupted readback cannot resend",
+    "passed": true
+  },
+  {
+    "name": "running readback cannot resend",
+    "passed": true
+  },
+  {
+    "name": "reduced motion retains evidence and empty composer",
+    "passed": true
+  }
+]
