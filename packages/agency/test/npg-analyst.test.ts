@@ -157,6 +157,35 @@ async function database(fn: (store: NpgStore, advance: (ms: number) => void) => 
 async function conversation(store: NpgStore, owner = 'alice') {
   return store.create(owner);
 }
+test('history titles project only the owner first question, without exposing full state', async () => {
+  await database(async (store) => {
+    const alice = await store.create('alice');
+    const bob = await store.create('bob');
+    await store.db
+      .prepare('UPDATE npg_analyst_conversations SET state_json=? WHERE id=?')
+      .bind(
+        JSON.stringify({
+          messages: [
+            { role: 'assistant', text: 'ignore this' },
+            { role: 'user', text: '  Find family NPs\nnear Springfield  ' },
+            { role: 'user', text: 'later question' }
+          ],
+          sources: [],
+          responseId: 'private-chain'
+        }),
+        alice.id
+      )
+      .run();
+    const rows = await store.list('alice');
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].id, alice.id);
+    assert.equal((rows[0] as any).title, 'Find family NPs near Springfield');
+    assert.ok(!JSON.stringify(rows).includes('private-chain'));
+    assert.ok(!JSON.stringify(rows).includes(bob.id));
+    assert.deepEqual(Object.keys(rows[0]).sort(), ['id', 'status', 'title', 'updated_at']);
+    assert.equal((await store.list('bob'))[0].title, 'New conversation');
+  });
+});
 const message = (c: { id: string; version: number }): Command => ({
   type: 'message',
   id: c.id,

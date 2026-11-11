@@ -39,6 +39,7 @@
   import { usesAgencyMeasuredAccountSurface, usesAgencyMeasuredPublicSurface, usesAgencyOperatorPalette } from '$lib/data/publicSurfacePolicy';
 
   let { children, data } = $props();
+  const isNpgChatRoute = $derived(/^\/delivery\/abundance\/healthcare-analyst\/?$/.test($page.url.pathname));
   const usesOperatorPalette = $derived(
     usesAgencyOperatorPalette($page.url.pathname)
   );
@@ -352,6 +353,10 @@
 {/snippet}
 
 <LayoutSEO property="agency" />
+{#if isNpgChatRoute}
+  <a class="skip-to-content" href="#main-content">Skip to main content</a>
+  {@render children()}
+{:else}
 <PageAnnotations pathname={$page.url.pathname} />
 
 <div class="agency-surface" data-canon-palette={usesOperatorPalette ? "operator" : undefined} data-agency-brand={usesMeasuredPublicSurface || usesMeasuredAccountSurface ? "measured" : undefined} data-agency-account={usesMeasuredAccountSurface ? "true" : undefined}>
@@ -422,6 +427,7 @@
 
 </div>
 
+{/if}
 <style>
   .layout-root.webflow-portfolio-shell { background:var(--color-performance-mode-campaign-surface); color:var(--color-performance-mode-campaign-ink); }
   .film-shell.webflow-portfolio-shell :global(main#main-content) { padding-top:0; }

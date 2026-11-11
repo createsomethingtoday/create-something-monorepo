@@ -12,10 +12,10 @@ const server = await createServer({
   },
   server: {
     host: '127.0.0.1',
-    port: 4197,
+    port: Number(process.env.NPG_UI_PORT || 4197),
     strictPort: true,
     fs: { allow: [fileURLToPath(new URL('../../../..', import.meta.url))] }
   }
 });
 await server.listen();
-console.log('NPG component fixture: http://127.0.0.1:4197');
+console.log('NPG component fixture: ' + server.resolvedUrls.local[0]);

@@ -1,0 +1,2535 @@
+
+> @create-something/agency@1.0.0 check /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> pnpm test:page-foundations && pnpm test:workshop-tour && pnpm test:handoff-scene-motion && pnpm test:paper-dashboard && pnpm test:image-entrance && pnpm test:scene-reveal && pnpm test:chapter-entrance && pnpm test:public-contact && pnpm test:support-brief && pnpm test:agent-inquiry && pnpm prepare:build-dir && pnpm prepare:local-deps && pnpm integrations:check && pnpm search:campaign:check && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs svelte-check svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm canon:check && pnpm copy:check && node --import tsx --test test/community-api-auth.test.ts test/identity-provider-retirement.test.ts test/public-html-cache.test.ts test/gigi-beta-page.test.ts test/scopefield-page.test.ts test/film-motion-preference.test.ts test/route-entrance.test.ts test/native-disclosure.test.ts test/usage-evidence-motion.test.ts test/contract-xray.test.ts && pnpm test:mcp-entitlement-authority && pnpm test:map-commercial-lifecycle && pnpm test:control-activation && pnpm test:inspection && pnpm test:meta-marketing && pnpm test:contact && pnpm test:interaction-pilot
+
+
+> @create-something/agency@1.0.0 test:page-foundations /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> node --import tsx --test test/agency-page-foundations.test.ts test/openai-dots.test.ts test/dental-agents.test.ts
+
+TAP version 13
+# Subtest: every reviewed fixed public page has a bounded, page-specific foundation
+ok 1 - every reviewed fixed public page has a bounded, page-specific foundation
+  ---
+  duration_ms: 0.552333
+  type: 'test'
+  ...
+# Subtest: route normalization preserves one foundation without widening ownership
+ok 2 - route normalization preserves one foundation without widening ownership
+  ---
+  duration_ms: 0.333166
+  type: 'test'
+  ...
+# Subtest: workflow labels come from the reviewed portfolio and link to the shared guide template
+ok 3 - workflow labels come from the reviewed portfolio and link to the shared guide template
+  ---
+  duration_ms: 0.119125
+  type: 'test'
+  ...
+# Subtest: public Arc details share real template destinations while redirected experiments stay with io
+ok 4 - public Arc details share real template destinations while redirected experiments stay with io
+  ---
+  duration_ms: 0.090458
+  type: 'test'
+  ...
+# Subtest: the separately authored App Review Arc uses its own visible presentation and context
+ok 5 - the separately authored App Review Arc uses its own visible presentation and context
+  ---
+  duration_ms: 0.258792
+  type: 'test'
+  ...
+# Subtest: wayfinding targets stable task containers and not hidden or conditional UI states
+ok 6 - wayfinding targets stable task containers and not hidden or conditional UI states
+  ---
+  duration_ms: 0.548875
+  type: 'test'
+  ...
+# Subtest: fixed chapter destinations are authored in the owning route or shared SSR component
+ok 7 - fixed chapter destinations are authored in the owning route or shared SSR component
+  ---
+  duration_ms: 12.421916
+  type: 'test'
+  ...
+# Subtest: callers cannot mutate another page visit through the registry result
+ok 8 - callers cannot mutate another page visit through the registry result
+  ---
+  duration_ms: 0.06925
+  type: 'test'
+  ...
+# Subtest: booking wayfinding follows known fit-call intents without reflecting arbitrary query text
+ok 9 - booking wayfinding follows known fit-call intents without reflecting arbitrary query text
+  ---
+  duration_ms: 0.155333
+  type: 'test'
+  ...
+# Subtest: dental service is discoverable through the sitemap, portfolio and public site search
+ok 10 - dental service is discoverable through the sitemap, portfolio and public site search
+  ---
+  duration_ms: 1.350292
+  type: 'test'
+  ...
+# Subtest: native scheduler handoff retains dental campaign context and consent-aware content attribution
+ok 11 - native scheduler handoff retains dental campaign context and consent-aware content attribution
+  ---
+  duration_ms: 0.394791
+  type: 'test'
+  ...
+# Subtest: ruler destinations exist and the commercial page stays within four authored chapters
+ok 12 - ruler destinations exist and the commercial page stays within four authored chapters
+  ---
+  duration_ms: 0.213583
+  type: 'test'
+  ...
+# Subtest: visible FAQs and service schema share copy without impersonating the fictional clinic
+ok 13 - visible FAQs and service schema share copy without impersonating the fictional clinic
+  ---
+  duration_ms: 0.150666
+  type: 'test'
+  ...
+# Subtest: visitors can open the public dental site from the hero and demonstration proof
+ok 14 - visitors can open the public dental site from the hero and demonstration proof
+  ---
+  duration_ms: 0.06625
+  type: 'test'
+  ...
+# Subtest: personal dots is an indexable educational support guide in the workflow cluster
+ok 15 - personal dots is an indexable educational support guide in the workflow cluster
+  ---
+  duration_ms: 0.549125
+  type: 'test'
+  ...
+# Subtest: site search finds the guide by product, character and permissions in the guides filter
+ok 16 - site search finds the guide by product, character and permissions in the guides filter
+  ---
+  duration_ms: 0.541958
+  type: 'test'
+  ...
+# Subtest: closing booking action preserves accepted source, intent and lane into the scheduler
+ok 17 - closing booking action preserves accepted source, intent and lane into the scheduler
+  ---
+  duration_ms: 0.418042
+  type: 'test'
+  ...
+# Subtest: the measured ruler uses existing stable chapters, preserving home ownership
+ok 18 - the measured ruler uses existing stable chapters, preserving home ownership
+  ---
+  duration_ms: 0.252916
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 154.458625
+
+> @create-something/agency@1.0.0 test:workshop-tour /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> node --import tsx --test test/waypoint-guide.test.ts
+
+TAP version 13
+# Subtest: rapid reversals discard stale frames and continue from the rendered position
+ok 1 - rapid reversals discard stale frames and continue from the rendered position
+  ---
+  duration_ms: 0.628166
+  type: 'test'
+  ...
+# Subtest: reduced motion, overlays and resize settle at the latest stop without starting travel
+ok 2 - reduced motion, overlays and resize settle at the latest stop without starting travel
+  ---
+  duration_ms: 0.063333
+  type: 'test'
+  ...
+# Subtest: poses use nearest rendered waypoint across boundaries and reversals
+ok 3 - poses use nearest rendered waypoint across boundaries and reversals
+  ---
+  duration_ms: 0.064209
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 127.977834
+
+> @create-something/agency@1.0.0 test:handoff-scene-motion /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> node --import tsx --test test/handoff-scene-motion.test.ts
+
+TAP version 13
+# Subtest: selection connects the new artifact to its waypoint without replaying or changing authored styles
+ok 1 - selection connects the new artifact to its waypoint without replaying or changing authored styles
+  ---
+  duration_ms: 1.507208
+  type: 'test'
+  ...
+# Subtest: rapid reversal cancels obsolete artwork and settles only the latest waypoint
+ok 2 - rapid reversal cancels obsolete artwork and settles only the latest waypoint
+  ---
+  duration_ms: 0.315625
+  type: 'test'
+  ...
+# Subtest: system preference, local control, overlays, stacked layout and unreadied images preserve a complete state
+ok 3 - system preference, local control, overlays, stacked layout and unreadied images preserve a complete state
+  ---
+  duration_ms: 0.710916
+  type: 'test'
+  ...
+# Subtest: interruptions settle active effects and selection during resize or print cannot restart them
+ok 4 - interruptions settle active effects and selection during resize or print cannot restart them
+  ---
+  duration_ms: 0.84075
+  type: 'test'
+  ...
+# Subtest: failed animation and destroy retain the current state and remove generated decoration
+ok 5 - failed animation and destroy retain the current state and remove generated decoration
+  ---
+  duration_ms: 0.333167
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 177.634375
+
+> @create-something/agency@1.0.0 test:paper-dashboard /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> node --import tsx --test test/paper-dashboard.test.ts
+
+TAP version 13
+# Subtest: review approval changes one item, preserves total work and rejects repeats
+ok 1 - review approval changes one item, preserves total work and rejects repeats
+  ---
+  duration_ms: 0.516708
+  type: 'test'
+  ...
+# Subtest: search intersects status while preserving selected context
+ok 2 - search intersects status while preserving selected context
+  ---
+  duration_ms: 0.070167
+  type: 'test'
+  ...
+# Subtest: reset restores isolated original data after every sample review
+ok 3 - reset restores isolated original data after every sample review
+  ---
+  duration_ms: 0.079083
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 108.984292
+
+> @create-something/agency@1.0.0 test:image-entrance /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> node --import tsx --test test/image-entrance.test.ts
+
+TAP version 13
+# Subtest: decoded offscreen scroll image arms once and plays a stationary 500ms wipe on entry
+ok 1 - decoded offscreen scroll image arms once and plays a stationary 500ms wipe on entry
+  ---
+  duration_ms: 0.805583
+  type: 'test'
+  ...
+# Subtest: a scroll image seen before decode stays visible and never hides late
+ok 2 - a scroll image seen before decode stays visible and never hides late
+  ---
+  duration_ms: 0.13525
+  type: 'test'
+  ...
+# Subtest: hero study opens only six percent of its crop, leaving most image visible
+ok 3 - hero study opens only six percent of its crop, leaving most image visible
+  ---
+  duration_ms: 0.069834
+  type: 'test'
+  ...
+# Subtest: initially visible scroll images, reduced motion, hashes and unavailable APIs stay static
+ok 4 - initially visible scroll images, reduced motion, hashes and unavailable APIs stay static
+  ---
+  duration_ms: 0.188917
+  type: 'test'
+  ...
+# Subtest: preference changes, hash navigation, focus and print settle pending or playing images
+ok 5 - preference changes, hash navigation, focus and print settle pending or playing images
+  ---
+  duration_ms: 0.271208
+  type: 'test'
+  ...
+# Subtest: destroy during loading prevents late decode, and destroy during playback cancels the mask
+ok 6 - destroy during loading prevents late decode, and destroy during playback cancels the mask
+  ---
+  duration_ms: 0.0885
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 110.299542
+
+> @create-something/agency@1.0.0 test:scene-reveal /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> node --import tsx --test test/scene-reveal.test.ts
+
+TAP version 13
+# Subtest: keeps the displayed scene until loading completes and uses the visual transition direction
+ok 1 - keeps the displayed scene until loading completes and uses the visual transition direction
+  ---
+  duration_ms: 0.637708
+  type: 'test'
+  ...
+# Subtest: latest selection wins when image decodes finish out of order
+ok 2 - latest selection wins when image decodes finish out of order
+  ---
+  duration_ms: 0.069
+  type: 'test'
+  ...
+# Subtest: returning to the displayed scene cancels a pending selection without loading or replacing it
+ok 3 - returning to the displayed scene cancels a pending selection without loading or replacing it
+  ---
+  duration_ms: 0.081833
+  type: 'test'
+  ...
+# Subtest: Learn to Build still wipes forward when a pending Run selection is superseded
+ok 4 - Learn to Build still wipes forward when a pending Run selection is superseded
+  ---
+  duration_ms: 0.044625
+  type: 'test'
+  ...
+# Subtest: Run to Build still wipes backward when a pending Learn selection is superseded
+ok 5 - Run to Build still wipes backward when a pending Learn selection is superseded
+  ---
+  duration_ms: 0.098792
+  type: 'test'
+  ...
+# Subtest: settles an interrupted reveal before loading the next scene
+ok 6 - settles an interrupted reveal before loading the next scene
+  ---
+  duration_ms: 0.046542
+  type: 'test'
+  ...
+# Subtest: failed loading retains the current scene and permits retry; stale failures do not overwrite feedback
+ok 7 - failed loading retains the current scene and permits retry; stale failures do not overwrite feedback
+  ---
+  duration_ms: 0.1005
+  type: 'test'
+  ...
+# Subtest: destroy settles animation and prevents late image completion from changing the page
+ok 8 - destroy settles animation and prevents late image completion from changing the page
+  ---
+  duration_ms: 0.073958
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 109.943333
+
+> @create-something/agency@1.0.0 test:chapter-entrance /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> node --import tsx --test test/chapter-entrance.test.ts
+
+TAP version 13
+# Subtest: offscreen chapter headings arm once, play on entry, and restore their own authored styles on completion
+ok 1 - offscreen chapter headings arm once, play on entry, and restore their own authored styles on completion
+  ---
+  duration_ms: 1.139583
+  type: 'test'
+  ...
+# Subtest: initially visible headings and headings reached during a slow module import never hide
+ok 2 - initially visible headings and headings reached during a slow module import never hide
+  ---
+  duration_ms: 0.309166
+  type: 'test'
+  ...
+# Subtest: font readiness is awaited and copy reached while fonts load remains visible
+ok 3 - font readiness is awaited and copy reached while fonts load remains visible
+  ---
+  duration_ms: 0.129917
+  type: 'test'
+  ...
+# Subtest: initial reduced motion and hash arrivals leave complete static headings
+ok 4 - initial reduced motion and hash arrivals leave complete static headings
+  ---
+  duration_ms: 0.240541
+  type: 'test'
+  ...
+# Subtest: reduced motion, dialog and navigation interruption settle armed or playing headings permanently
+ok 5 - reduced motion, dialog and navigation interruption settle armed or playing headings permanently
+  ---
+  duration_ms: 0.72575
+  type: 'test'
+  ...
+# Subtest: focus settles only its own chapter while hash navigation, print and hidden documents settle all
+ok 6 - focus settles only its own chapter while hash navigation, print and hidden documents settle all
+  ---
+  duration_ms: 0.290292
+  type: 'test'
+  ...
+# Subtest: resizing preserves armed, revealing and settled headings without rebuilding or replaying
+ok 7 - resizing preserves armed, revealing and settled headings without rebuilding or replaying
+  ---
+  duration_ms: 0.208667
+  type: 'test'
+  ...
+# Subtest: a skipped-past intersection settles directly instead of playing an offscreen entrance
+ok 8 - a skipped-past intersection settles directly instead of playing an offscreen entrance
+  ---
+  duration_ms: 0.073167
+  type: 'test'
+  ...
+# Subtest: failed module loading leaves authored content intact without an unhandled failure
+ok 9 - failed module loading leaves authored content intact without an unhandled failure
+  ---
+  duration_ms: 0.120583
+  type: 'test'
+  ...
+# Subtest: destroy before module resolution prevents late setup; active teardown restores styles and removes state
+ok 10 - destroy before module resolution prevents late setup; active teardown restores styles and removes state
+  ---
+  duration_ms: 0.310125
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 149.11425
+
+> @create-something/agency@1.0.0 test:public-contact /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> node --import tsx --test ../../scripts/test/public-contact-address.test.mjs
+
+TAP version 13
+# Subtest: public property UI has one first-party contact destination
+ok 1 - public property UI has one first-party contact destination
+  ---
+  duration_ms: 99.265042
+  type: 'test'
+  ...
+# Subtest: shared legal defaults use the public-only contact constant
+ok 2 - shared legal defaults use the public-only contact constant
+  ---
+  duration_ms: 0.646458
+  type: 'test'
+  ...
+# Subtest: both membership FAQs retain the full cancellation promise with the corrected contact
+ok 3 - both membership FAQs retain the full cancellation promise with the corrected contact
+  ---
+  duration_ms: 0.1355
+  type: 'test'
+  ...
+# Subtest: public trust cards change contact presentation without mutating source routing
+ok 4 - public trust cards change contact presentation without mutating source routing
+  ---
+  duration_ms: 6.385166
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 211.159584
+
+> @create-something/agency@1.0.0 test:support-brief /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> node --import tsx --test test/support-brief.test.ts
+
+TAP version 13
+# Subtest: valid context survives export and import without inventing evidence
+ok 1 - valid context survives export and import without inventing evidence
+  ---
+  duration_ms: 0.594
+  type: 'test'
+  ...
+# Subtest: rejects incompatible versions, authority fields, absent and oversized values
+ok 2 - rejects incompatible versions, authority fields, absent and oversized values
+  ---
+  duration_ms: 0.23225
+  type: 'test'
+  ...
+# Subtest: export keeps embedded markup as literal evidence and states authority boundary
+ok 3 - export keeps embedded markup as literal evidence and states authority boundary
+  ---
+  duration_ms: 0.173208
+  type: 'test'
+  ...
+# Subtest: distributed skill schema matches the form contract
+ok 4 - distributed skill schema matches the form contract
+  ---
+  duration_ms: 0.391209
+  type: 'test'
+  ...
+# Subtest: editing invalidates preparation and stale download events cannot restore it
+ok 5 - editing invalidates preparation and stale download events cannot restore it
+  ---
+  duration_ms: 0.129875
+  type: 'test'
+  ...
+# Subtest: bad import preserves the draft, duplicate prepare is stable, clear cannot revive old results
+ok 6 - bad import preserves the draft, duplicate prepare is stable, clear cannot revive old results
+  ---
+  duration_ms: 0.070167
+  type: 'test'
+  ...
+# Subtest: invalid import after preparation removes export eligibility, then valid import recovers
+ok 7 - invalid import after preparation removes export eligibility, then valid import recovers
+  ---
+  duration_ms: 0.144125
+  type: 'test'
+  ...
+# Subtest: export failure is recoverable, repeated notices are stable, later edits reject old outcomes
+ok 8 - export failure is recoverable, repeated notices are stable, later edits reject old outcomes
+  ---
+  duration_ms: 0.07
+  type: 'test'
+  ...
+# Subtest: invalid preparation recovers after editing; repeated clear stays empty
+ok 9 - invalid preparation recovers after editing; repeated clear stays empty
+  ---
+  duration_ms: 0.128208
+  type: 'test'
+  ...
+# Subtest: Markdown treats all newline forms as literal evidence lines
+ok 10 - Markdown treats all newline forms as literal evidence lines
+  ---
+  duration_ms: 0.246584
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 114.031875
+
+> @create-something/agency@1.0.0 test:agent-inquiry /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> node --import ./test/register-sveltekit-test-loader.mjs --import tsx --test test/agent-inquiry.test.ts
+
+TAP version 13
+# Subtest: an agent can discover current offers, source links, and the preparation contract without authentication
+ok 1 - an agent can discover current offers, source links, and the preparation contract without authentication
+  ---
+  duration_ms: 13.132042
+  type: 'test'
+  ...
+# Subtest: preparation produces a usable inquiry draft, preserves unknowns, and does not claim qualification or submission
+ok 2 - preparation produces a usable inquiry draft, preserves unknowns, and does not claim qualification or submission
+  ---
+  duration_ms: 3.04975
+  type: 'test'
+  ...
+# Subtest: each offer produces a payload accepted by the existing contact contract after the human supplies contact details
+ok 3 - each offer produces a payload accepted by the existing contact contract after the human supplies contact details
+  ---
+  duration_ms: 3.048791
+  type: 'test'
+  ...
+# Subtest: invalid briefs, unknown offers and forged authority fields are rejected without contact side effects
+ok 4 - invalid briefs, unknown offers and forged authority fields are rejected without contact side effects
+  ---
+  duration_ms: 1.7225
+  type: 'test'
+  ...
+# Subtest: long but schema-valid briefs must be shortened explicitly instead of silently losing evidence
+ok 5 - long but schema-valid briefs must be shortened explicitly instead of silently losing evidence
+  ---
+  duration_ms: 0.443208
+  type: 'test'
+  ...
+# Subtest: request transport rejects malformed JSON, unsupported media and oversized chunked bodies
+ok 6 - request transport rejects malformed JSON, unsupported media and oversized chunked bodies
+  ---
+  duration_ms: 0.61975
+  type: 'test'
+  ...
+# Subtest: embedded instructions remain literal context and cannot change offer selection or authority
+ok 7 - embedded instructions remain literal context and cannot change offer selection or authority
+  ---
+  duration_ms: 0.379542
+  type: 'test'
+  ...
+# Subtest: public discovery leads to the inquiry flow and the published skill integrity digest is correct
+ok 8 - public discovery leads to the inquiry flow and the published skill integrity digest is correct
+  ---
+  duration_ms: 7.879334
+  type: 'test'
+  ...
+# Subtest: OpenAPI brief fields match the live preparation schema and documented contact operations exist
+ok 9 - OpenAPI brief fields match the live preparation schema and documented contact operations exist
+  ---
+  duration_ms: 8.014542
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 241.128708
+
+> @create-something/agency@1.0.0 prepare:build-dir /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> node ./scripts/prepare-build-dir.mjs
+
+
+> @create-something/agency@1.0.0 prepare:local-deps /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> node ./scripts/prepare-local-deps.mjs
+
+
+> @create-something/tufte@1.0.0 package /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/tufte
+> svelte-kit sync && svelte-package && publint
+
+src/lib -> dist
+Running publint v0.3.17 for @create-something/tufte...
+Packing files with `pnpm pack`...
+Linting...
+All good!
+
+> @create-something/canon@0.1.0 package /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/canon
+> pnpm clean:package-tmp && svelte-kit sync && svelte-package && publint
+
+
+> @create-something/canon@0.1.0 clean:package-tmp /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/canon
+> node -e "const fs=require('fs'); fs.rmSync('.svelte-kit/__package__',{recursive:true,force:true}); fs.rmSync('.svelte-kit/__package_types_tmp__',{recursive:true,force:true});"
+
+src/lib -> dist
+Running publint v0.3.17 for @create-something/canon...
+Packing files with `pnpm pack`...
+Linting...
+All good!
+
+> @create-something/agency@1.0.0 integrations:check /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> node ./scripts/generate-integration-catalog.mjs --check
+
+Integration catalog is current (984 brokered connectors).
+
+> @create-something/agency@1.0.0 search:campaign:check /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> node ./scripts/check-high-intent-search.mjs && node --import tsx --test test/high-intent-search.test.ts test/high-intent-search-attribution.test.ts && node --test test/high-intent-search-campaign.test.mjs
+
+High-intent Search campaign check passed. Activation remains approval-required.
+TAP version 13
+# Subtest: captures only the allowlisted Google CPC campaign as first-party session metadata
+ok 1 - captures only the allowlisted Google CPC campaign as first-party session metadata
+  ---
+  duration_ms: 0.63125
+  type: 'test'
+  ...
+# Subtest: persists the bounded attribution across routes for 30 minutes and then removes it
+ok 2 - persists the bounded attribution across routes for 30 minutes and then removes it
+  ---
+  duration_ms: 0.102583
+  type: 'test'
+  ...
+# Subtest: rejects mismatched campaigns, media, intents, and landing paths
+ok 3 - rejects mismatched campaigns, media, intents, and landing paths
+  ---
+  duration_ms: 0.146958
+  type: 'test'
+  ...
+# Subtest: publishes three bounded paid-search destinations with route-owned proof and handoff
+ok 4 - publishes three bounded paid-search destinations with route-owned proof and handoff
+  ---
+  duration_ms: 0.735958
+  type: 'test'
+  ...
+# Subtest: registers the paid-search pages as commercial Performance routes
+ok 5 - registers the paid-search pages as commercial Performance routes
+  ---
+  duration_ms: 0.0525
+  type: 'test'
+  ...
+# Subtest: keeps the shared landing surface focused on one proof stage and one handoff
+ok 6 - keeps the shared landing surface focused on one proof stage and one handoff
+  ---
+  duration_ms: 0.106792
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 128.498417
+TAP version 13
+# Subtest: keeps the planning envelope bounded to Search, exact and phrase, and USD 50 per day
+ok 1 - keeps the planning envelope bounded to Search, exact and phrase, and USD 50 per day
+  ---
+  duration_ms: 1.95175
+  type: 'test'
+  ...
+# Subtest: keeps generic demand clusters paused and the three proof-backed routes prioritized
+ok 2 - keeps generic demand clusters paused and the three proof-backed routes prioritized
+  ---
+  duration_ms: 0.284792
+  type: 'test'
+  ...
+# Subtest: produces a read-only first-party campaign report
+ok 3 - produces a read-only first-party campaign report
+  ---
+  duration_ms: 2.967333
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 54.732666
+Loading svelte-check in workspace: /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+Getting Svelte diagnostics...
+
+Browserslist: browsers data (caniuse-lite) is 10 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+svelte-check found 0 errors and 0 warnings
+
+> @create-something/agency@1.0.0 canon:check /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> node ./scripts/check-canon-debt.mjs && node --import tsx --test test/canon-debt.test.ts test/paper-brand-cohesion.test.ts test/public-surface-policy.test.ts
+
+Canon debt check passed across 7 file(s): src/routes/admin/security
+TAP version 13
+# Subtest: canon debt guard discovers the managed admin security surface
+ok 1 - canon debt guard discovers the managed admin security surface
+  ---
+  duration_ms: 5.161916
+  type: 'test'
+  ...
+# Subtest: canon debt guard catches raw color and motion values
+ok 2 - canon debt guard catches raw color and motion values
+  ---
+  duration_ms: 1.319583
+  type: 'test'
+  ...
+# Subtest: canon debt pilot accepts tokenized color, shadow, and motion values
+ok 3 - canon debt pilot accepts tokenized color, shadow, and motion values
+  ---
+  duration_ms: 0.412459
+  type: 'test'
+  ...
+# Subtest: canon debt pilot reports changed-file findings without enforcing them
+ok 4 - canon debt pilot reports changed-file findings without enforcing them
+  ---
+  duration_ms: 0.755833
+  type: 'test'
+  ...
+# Subtest: admin security canon debt stays tokenized
+ok 5 - admin security canon debt stays tokenized
+  ---
+  duration_ms: 0.927292
+  type: 'test'
+  ...
+# Subtest: package check runs the canon debt guard
+ok 6 - package check runs the canon debt guard
+  ---
+  duration_ms: 0.208458
+  type: 'test'
+  ...
+# Subtest: Agency uses its property-owned outlined logo assets without changing Canon defaults
+ok 7 - Agency uses its property-owned outlined logo assets without changing Canon defaults
+  ---
+  duration_ms: 1.199417
+  type: 'test'
+  ...
+# Subtest: Agency serves the approved V3 logo files byte-for-byte at its public asset paths
+ok 8 - Agency serves the approved V3 logo files byte-for-byte at its public asset paths
+  ---
+  duration_ms: 0.462667
+  type: 'test'
+  ...
+# Subtest: the Agency footer uses one linked lockup instead of repeating the brand inside its link panel
+ok 9 - the Agency footer uses one linked lockup instead of repeating the brand inside its link panel
+  ---
+  duration_ms: 0.132875
+  type: 'test'
+  ...
+# Subtest: the homepage retains a readable listing independent of scene motion
+ok 10 - the homepage retains a readable listing independent of scene motion
+  ---
+  duration_ms: 0.266042
+  type: 'test'
+  ...
+# Subtest: the preserved previous homepage retains its evidence and partner qualification records
+ok 11 - the preserved previous homepage retains its evidence and partner qualification records
+  ---
+  duration_ms: 0.276667
+  type: 'test'
+  ...
+# Subtest: shared campaign titles keep every period optically separated and attached to its word
+ok 12 - shared campaign titles keep every period optically separated and attached to its word
+  ---
+  duration_ms: 0.145375
+  type: 'test'
+  ...
+# Subtest: the Agency footer handoff uses its own macro-real decision-gate image without replacing live CTA copy
+ok 13 - the Agency footer handoff uses its own macro-real decision-gate image without replacing live CTA copy
+  ---
+  duration_ms: 0.823541
+  type: 'test'
+  ...
+# Subtest: Field Reports uses the original isometric evidence route in place of campaign media
+ok 14 - Field Reports uses the original isometric evidence route in place of campaign media
+  ---
+  duration_ms: 0.150166
+  type: 'test'
+  ...
+# Subtest: Map leads with its Draw workbench while Template Review retains its campaign media
+ok 15 - Map leads with its Draw workbench while Template Review retains its campaign media
+  ---
+  duration_ms: 0.456584
+  type: 'test'
+  ...
+# Subtest: Workflow library opens with a route-specific macro Playbook hero and authored mobile companion
+ok 16 - Workflow library opens with a route-specific macro Playbook hero and authored mobile companion
+  ---
+  duration_ms: 0.338417
+  type: 'test'
+  ...
+# Subtest: the shared social preview states the current technical support positioning
+ok 17 - the shared social preview states the current technical support positioning
+  ---
+  duration_ms: 0.118208
+  type: 'test'
+  ...
+# Subtest: every current portfolio page owns the operator palette, including workflow details
+ok 18 - every current portfolio page owns the operator palette, including workflow details
+  ---
+  duration_ms: 0.46475
+  type: 'test'
+  ...
+# Subtest: utility, private, archive and unknown paths fail closed
+ok 19 - utility, private, archive and unknown paths fail closed
+  ---
+  duration_ms: 0.106792
+  type: 'test'
+  ...
+# Subtest: customer sign-in explicitly owns the current Agency palette
+ok 20 - customer sign-in explicitly owns the current Agency palette
+  ---
+  duration_ms: 0.0325
+  type: 'test'
+  ...
+# Subtest: approved Map entry and public supporting pages retain explicit ownership
+ok 21 - approved Map entry and public supporting pages retain explicit ownership
+  ---
+  duration_ms: 0.035084
+  type: 'test'
+  ...
+# Subtest: measured public brand follows the current portfolio while preserving separately owned compositions
+ok 22 - measured public brand follows the current portfolio while preserving separately owned compositions
+  ---
+  duration_ms: 0.133167
+  type: 'test'
+  ...
+# Subtest: measured public brand explicitly includes supporting pages and public catalog routes
+ok 23 - measured public brand explicitly includes supporting pages and public catalog routes
+  ---
+  duration_ms: 0.030833
+  type: 'test'
+  ...
+# Subtest: measured ownership normalizes query, hash and trailing slashes consistently
+ok 24 - measured ownership normalizes query, hash and trailing slashes consistently
+  ---
+  duration_ms: 0.058208
+  type: 'test'
+  ...
+# Subtest: operator-only, private, utility, archived and unknown pages never acquire measured public chrome
+ok 25 - operator-only, private, utility, archived and unknown pages never acquire measured public chrome
+  ---
+  duration_ms: 0.044459
+  type: 'test'
+  ...
+# Subtest: all Webflow portfolio compositions retain their independent visual ownership
+ok 26 - all Webflow portfolio compositions retain their independent visual ownership
+  ---
+  duration_ms: 0.109125
+  type: 'test'
+  ...
+1..26
+# tests 26
+# suites 0
+# pass 26
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 129.7085
+
+> @create-something/agency@1.0.0 copy:check /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> node ./scripts/check-public-copy.mjs && node --import tsx --test test/home-service-links.test.mjs test/public-marketing-copy.test.ts test/workflow-worked-examples.test.ts test/field-report-evidence.test.ts test/dispatch-reading-flow.test.ts test/product-family-contract.test.ts test/public-pricing-contract.test.ts test/membership-inquiry.test.ts test/integration-catalog.test.ts test/system-context-experience.test.ts test/playbook-hero-image-assets.test.ts test/public-ga-browser-policy.test.mjs
+
+Public copy check passed across 238 file(s).
+TAP version 13
+# Subtest: Dispatch owns its ending, including normalized entry URLs, without claiming other routes
+ok 1 - Dispatch owns its ending, including normalized entry URLs, without claiming other routes
+  ---
+  duration_ms: 0.40725
+  type: 'test'
+  ...
+# Subtest: Dispatch serves the approved headline before the browser copy treatment runs
+ok 2 - Dispatch serves the approved headline before the browser copy treatment runs
+  ---
+  duration_ms: 0.072917
+  type: 'test'
+  ...
+# Subtest: Dispatch preserves the selected-case evidence and reporting boundaries
+ok 3 - Dispatch preserves the selected-case evidence and reporting boundaries
+  ---
+  duration_ms: 0.04225
+  type: 'test'
+  ...
+# Subtest: upstream contribution report keeps acceptance evidence and relationship limits together
+ok 4 - upstream contribution report keeps acceptance evidence and relationship limits together
+  ---
+  duration_ms: 0.895416
+  type: 'test'
+  ...
+# Subtest: upstream contribution page exposes primary receipts without implying endorsement
+ok 5 - upstream contribution page exposes primary receipts without implying endorsement
+  ---
+  duration_ms: 0.530583
+  type: 'test'
+  ...
+# Subtest: template review Field Report separates packet completion, synthetic boundary checks, and business impact
+ok 6 - template review Field Report separates packet completion, synthetic boundary checks, and business impact
+  ---
+  duration_ms: 0.138459
+  type: 'test'
+  ...
+# Subtest: public Field Report leads with the decision and keeps eval scope explicit
+ok 7 - public Field Report leads with the decision and keeps eval scope explicit
+  ---
+  duration_ms: 0.701042
+  type: 'test'
+  ...
+# Subtest: Result metrics preserve the evidence and scale from their Performance cells
+ok 8 - Result metrics preserve the evidence and scale from their Performance cells
+  ---
+  duration_ms: 0.411459
+  type: 'test'
+  ...
+# Subtest: public Field Report orders the evidence argument before one combined economics scene
+ok 9 - public Field Report orders the evidence argument before one combined economics scene
+  ---
+  duration_ms: 0.605916
+  type: 'test'
+  ...
+# Subtest: public evidence records are inspectable and include the sanitized runtime audit
+ok 10 - public evidence records are inspectable and include the sanitized runtime audit
+  ---
+  duration_ms: 0.111166
+  type: 'test'
+  ...
+# Subtest: modeled capacity separates the supplied human baseline from measured agent runtime and savings
+ok 11 - modeled capacity separates the supplied human baseline from measured agent runtime and savings
+  ---
+  duration_ms: 0.53325
+  type: 'test'
+  ...
+# Subtest: Field Reports are a browsable proof chapter in the agency journey
+ok 12 - Field Reports are a browsable proof chapter in the agency journey
+  ---
+  duration_ms: 0.507041
+  type: 'test'
+  ...
+# Subtest: Products explains the product family and keeps operating surfaces inside Control
+ok 13 - Products explains the product family and keeps operating surfaces inside Control
+  ---
+  duration_ms: 0.478333
+  type: 'test'
+  ...
+# Subtest: booking carries the Field Report handoff into the owned mapping scheduler
+ok 14 - booking carries the Field Report handoff into the owned mapping scheduler
+  ---
+  duration_ms: 0.22425
+  type: 'test'
+  ...
+# Subtest: homepage links to evidence while Services retains the qualified readback
+ok 15 - homepage links to evidence while Services retains the qualified readback
+  ---
+  duration_ms: 0.536458
+  type: 'test'
+  ...
+# Subtest: homepage routes "Inspect actual work" to its intended destination
+ok 16 - homepage routes "Inspect actual work" to its intended destination
+  ---
+  duration_ms: 0.364666
+  type: 'test'
+  ...
+# Subtest: homepage routes "See what you keep" to its intended destination
+ok 17 - homepage routes "See what you keep" to its intended destination
+  ---
+  duration_ms: 0.210292
+  type: 'test'
+  ...
+# Subtest: homepage routes "Fix what keeps breaking." to its intended destination
+ok 18 - homepage routes "Fix what keeps breaking." to its intended destination
+  ---
+  duration_ms: 0.228625
+  type: 'test'
+  ...
+# Subtest: homepage routes "Check what you've built." to its intended destination
+ok 19 - homepage routes "Check what you've built." to its intended destination
+  ---
+  duration_ms: 0.129625
+  type: 'test'
+  ...
+# Subtest: homepage routes "Connect your tools." to its intended destination
+ok 20 - homepage routes "Connect your tools." to its intended destination
+  ---
+  duration_ms: 0.224166
+  type: 'test'
+  ...
+# Subtest: generated catalog exactly matches the public brokered registry boundary
+ok 21 - generated catalog exactly matches the public brokered registry boundary
+  ---
+  duration_ms: 0.662958
+  type: 'test'
+  ...
+# Subtest: curated compatibility marks use explicit roles, statuses, and destinations
+ok 22 - curated compatibility marks use explicit roles, statuses, and destinations
+  ---
+  duration_ms: 0.191292
+  type: 'test'
+  ...
+# Subtest: public catalog does not expose registry transport or descriptive metadata
+ok 23 - public catalog does not expose registry transport or descriptive metadata
+  ---
+  duration_ms: 0.88
+  type: 'test'
+  ...
+# Subtest: catalog connector context is bounded before it enters the public map
+ok 24 - catalog connector context is bounded before it enters the public map
+  ---
+  duration_ms: 0.178583
+  type: 'test'
+  ...
+# Subtest: membership CTA preserves inquiry intent and attribution through the public loader
+ok 25 - membership CTA preserves inquiry intent and attribution through the public loader
+  ---
+  duration_ms: 0.515625
+  type: 'test'
+  ...
+# Subtest: Team membership CTA selects the Team inquiry without changing the service lane
+ok 26 - Team membership CTA selects the Team inquiry without changing the service lane
+  ---
+  duration_ms: 0.10375
+  type: 'test'
+  ...
+# Subtest: unknown inquiry intents retain the existing safe fallback
+ok 27 - unknown inquiry intents retain the existing safe fallback
+  ---
+  duration_ms: 0.057417
+  type: 'test'
+  ...
+# Subtest: DFW support intent preserves its reliability lane and campaign attribution
+ok 28 - DFW support intent preserves its reliability lane and campaign attribution
+  ---
+  duration_ms: 0.055458
+  type: 'test'
+  ...
+# Subtest: support booking suppresses a previously stored Map draft after intent normalization
+ok 29 - support booking suppresses a previously stored Map draft after intent normalization
+  ---
+  duration_ms: 0.569291
+  type: 'test'
+  ...
+# Subtest: Playbook macro heroes keep distinct desktop and mobile source assets
+ok 30 - Playbook macro heroes keep distinct desktop and mobile source assets
+  ---
+  duration_ms: 2.745125
+  type: 'test'
+  ...
+# Subtest: the Home court candidate keeps its authored desktop and mobile studies distinct
+ok 31 - the Home court candidate keeps its authored desktop and mobile studies distinct
+  ---
+  duration_ms: 0.322834
+  type: 'test'
+  ...
+# Subtest: the Map chapter keeps a distinct overhead desktop and mobile study
+ok 32 - the Map chapter keeps a distinct overhead desktop and mobile study
+  ---
+  duration_ms: 0.332084
+  type: 'test'
+  ...
+# Subtest: Ground uses its current story image and preserves the historical instrument provenance
+ok 33 - Ground uses its current story image and preserves the historical instrument provenance
+  ---
+  duration_ms: 0.897084
+  type: 'test'
+  ...
+# Subtest: public product family separates Map, Build, and Control on one commercial path
+ok 34 - public product family separates Map, Build, and Control on one commercial path
+  ---
+  duration_ms: 0.5635
+  type: 'test'
+  ...
+# Subtest: standalone software supports monthly and yearly subscription shapes without fake prices
+ok 35 - standalone software supports monthly and yearly subscription shapes without fake prices
+  ---
+  duration_ms: 0.085791
+  type: 'test'
+  ...
+# Subtest: public names are projections over stable internal compatibility contracts
+ok 36 - public names are projections over stable internal compatibility contracts
+  ---
+  duration_ms: 0.035708
+  type: 'test'
+  ...
+# Subtest: canonical product documentation preserves the public and internal naming boundary
+ok 37 - canonical product documentation preserves the public and internal naming boundary
+  ---
+  duration_ms: 0.549875
+  type: 'test'
+  ...
+# Subtest: canonical commercial interface sells managed Control operation instead of agent creation
+ok 38 - canonical commercial interface sells managed Control operation instead of agent creation
+  ---
+  duration_ms: 0.359667
+  type: 'test'
+  ...
+# Subtest: sales and delivery enablement preserve the managed operations commercial boundary
+ok 39 - sales and delivery enablement preserve the managed operations commercial boundary
+  ---
+  duration_ms: 1.549125
+  type: 'test'
+  ...
+# Subtest: Canon overlay projects Map publicly while keeping stable Atlas contracts
+ok 40 - Canon overlay projects Map publicly while keeping stable Atlas contracts
+  ---
+  duration_ms: 0.386417
+  type: 'test'
+  ...
+# Subtest: Map is the canonical public canvas route and Atlas redirects for compatibility
+ok 41 - Map is the canonical public canvas route and Atlas redirects for compatibility
+  ---
+  duration_ms: 7.16175
+  type: 'test'
+  ...
+# Subtest: primary public entry points route visitors through Map -> Build -> Control
+ok 42 - primary public entry points route visitors through Map -> Build -> Control
+  ---
+  duration_ms: 0.5025
+  type: 'test'
+  ...
+# Subtest: Control is a standalone public product that includes Map and its operator surfaces
+ok 43 - Control is a standalone public product that includes Map and its operator surfaces
+  ---
+  duration_ms: 0.351334
+  type: 'test'
+  ...
+# Subtest: Control and Services present the approved Managed AI Operations offer
+ok 44 - Control and Services present the approved Managed AI Operations offer
+  ---
+  duration_ms: 0.316833
+  type: 'test'
+  ...
+# Subtest: Map and Control checkout shapes stay inactive until approved Stripe prices exist
+ok 45 - Map and Control checkout shapes stay inactive until approved Stripe prices exist
+  ---
+  duration_ms: 0.043458
+  type: 'test'
+  ...
+# Subtest: public manifest exposes Map, Build, and Control while retaining Policy OS as an alias
+ok 46 - public manifest exposes Map, Build, and Control while retaining Policy OS as an alias
+  ---
+  duration_ms: 7.349166
+  type: 'test'
+  ...
+# Subtest: active public journey does not leak compatibility names as commercial copy or links
+ok 47 - active public journey does not leak compatibility names as commercial copy or links
+  ---
+  duration_ms: 0.603125
+  type: 'test'
+  ...
+# Subtest: products opening omits the decorative junction while retaining its action and product paths
+ok 48 - products opening omits the decorative junction while retaining its action and product paths
+  ---
+  duration_ms: 0.112458
+  type: 'test'
+  ...
+# Subtest: only the Cloudflare-managed RUM abort is excluded from product request failures
+ok 49 - only the Cloudflare-managed RUM abort is excluded from product request failures
+  ---
+  duration_ms: 0.365
+  type: 'test'
+  ...
+# Subtest: rendered CSS casing does not weaken the required pricing tokens
+ok 50 - rendered CSS casing does not weaken the required pricing tokens
+  ---
+  duration_ms: 0.068792
+  type: 'test'
+  ...
+# Subtest: public agency copy guard discovers every visitor-facing route
+ok 51 - public agency copy guard discovers every visitor-facing route
+  ---
+  duration_ms: 30.008583
+  type: 'test'
+  ...
+# Subtest: public agency copy avoids internal strategy and unclear control language
+ok 52 - public agency copy avoids internal strategy and unclear control language
+  ---
+  duration_ms: 76.81575
+  type: 'test'
+  ...
+# Subtest: public agency copy guard catches phrases split across markup whitespace
+ok 53 - public agency copy guard catches phrases split across markup whitespace
+  ---
+  duration_ms: 0.802167
+  type: 'test'
+  ...
+# Subtest: public agency copy guard permits the bounded AI Buyer Readiness category
+ok 54 - public agency copy guard permits the bounded AI Buyer Readiness category
+  ---
+  duration_ms: 0.54625
+  type: 'test'
+  ...
+# Subtest: public agency copy guard catches old lane and partner framing
+ok 55 - public agency copy guard catches old lane and partner framing
+  ---
+  duration_ms: 0.532416
+  type: 'test'
+  ...
+# Subtest: public agency copy guard rejects unauthorized OpenAI relationship claims
+ok 56 - public agency copy guard rejects unauthorized OpenAI relationship claims
+  ---
+  duration_ms: 0.729333
+  type: 'test'
+  ...
+# Subtest: public agency surfaces explain ownership and provider roles
+ok 57 - public agency surfaces explain ownership and provider roles
+  ---
+  duration_ms: 0.355042
+  type: 'test'
+  ...
+# Subtest: the builder-facing homepage retains commercial terms, film evidence and direct inspection links
+ok 58 - the builder-facing homepage retains commercial terms, film evidence and direct inspection links
+  ---
+  duration_ms: 0.560167
+  type: 'test'
+  ...
+# Subtest: commercial decision routes explain the task, delivery, ownership, and proof
+ok 59 - commercial decision routes explain the task, delivery, ownership, and proof
+  ---
+  duration_ms: 0.599
+  type: 'test'
+  ...
+# Subtest: public Agency commercial propositions declare the shared editorial expression
+ok 60 - public Agency commercial propositions declare the shared editorial expression
+  ---
+  duration_ms: 1.06775
+  type: 'test'
+  ...
+# Subtest: commercial conversion handoffs use editorial propositions while task surfaces stay field-led
+ok 61 - commercial conversion handoffs use editorial propositions while task surfaces stay field-led
+  ---
+  duration_ms: 1.374833
+  type: 'test'
+  ...
+# Subtest: the Practice argument is editorial while its operating artifacts stay field-led
+ok 62 - the Practice argument is editorial while its operating artifacts stay field-led
+  ---
+  duration_ms: 0.08775
+  type: 'test'
+  ...
+# Subtest: the compact homepage preserves buying boundaries and detailed destinations
+ok 63 - the compact homepage preserves buying boundaries and detailed destinations
+  ---
+  duration_ms: 0.131959
+  type: 'test'
+  ...
+# Subtest: the homepage has one FAQ and avoids redundant standalone explanations
+ok 64 - the homepage has one FAQ and avoids redundant standalone explanations
+  ---
+  duration_ms: 0.292291
+  type: 'test'
+  ...
+# Subtest: commercial decision routes use one primary and one conversational action
+ok 65 - commercial decision routes use one primary and one conversational action
+  ---
+  duration_ms: 0.40275
+  type: 'test'
+  ...
+# Subtest: public stack positioning names the owned Cloudflare and OpenAI boundary
+ok 66 - public stack positioning names the owned Cloudflare and OpenAI boundary
+  ---
+  duration_ms: 0.42175
+  type: 'test'
+  ...
+# Subtest: the active product catalog leads with Substrate and keeps Notion only as client history
+ok 67 - the active product catalog leads with Substrate and keeps Notion only as client history
+  ---
+  duration_ms: 0.1005
+  type: 'test'
+  ...
+# Subtest: agency README documents the public copy contract
+ok 68 - agency README documents the public copy contract
+  ---
+  duration_ms: 0.440666
+  type: 'test'
+  ...
+# Subtest: integration proof keeps compatibility distinct from partnership and delivery
+ok 69 - integration proof keeps compatibility distinct from partnership and delivery
+  ---
+  duration_ms: 0.555791
+  type: 'test'
+  ...
+# Subtest: public agency copy permits the documented Select tier and named individual credentials
+ok 70 - public agency copy permits the documented Select tier and named individual credentials
+  ---
+  duration_ms: 0.6555
+  type: 'test'
+  ...
+# Subtest: public agency copy rejects tiers and organization specializations not documented for CREATE SOMETHING
+ok 71 - public agency copy rejects tiers and organization specializations not documented for CREATE SOMETHING
+  ---
+  duration_ms: 1.058375
+  type: 'test'
+  ...
+# Subtest: public pricing separates free source, the Map starter, and managed Control
+ok 72 - public pricing separates free source, the Map starter, and managed Control
+  ---
+  duration_ms: 0.493583
+  type: 'test'
+  ...
+# Subtest: canonical buyer surfaces render the shared pricing contract without the old Map ambiguity
+ok 73 - canonical buyer surfaces render the shared pricing contract without the old Map ambiguity
+  ---
+  duration_ms: 0.475625
+  type: 'test'
+  ...
+# Subtest: the implemented public source stays aligned with the approved design artifact
+ok 74 - the implemented public source stays aligned with the approved design artifact
+  ---
+  duration_ms: 0.851166
+  type: 'test'
+  ...
+# Subtest: all four lenses preserve explicit authority and deterministic public ordering
+ok 75 - all four lenses preserve explicit authority and deterministic public ordering
+  ---
+  duration_ms: 0.893666
+  type: 'test'
+  ...
+# Subtest: freshness becomes stale at the declared review boundary without changing coverage or authority
+ok 76 - freshness becomes stale at the declared review boundary without changing coverage or authority
+  ---
+  duration_ms: 0.088
+  type: 'test'
+  ...
+# Subtest: Control, Map, and the field report adapt one public contract without adding a product or second map
+ok 77 - Control, Map, and the field report adapt one public contract without adding a product or second map
+  ---
+  duration_ms: 0.199042
+  type: 'test'
+  ...
+# Subtest: visitor-facing system-context markup excludes internal architecture vocabulary and diagnostic counts
+ok 78 - visitor-facing system-context markup excludes internal architecture vocabulary and diagnostic counts
+  ---
+  duration_ms: 0.268
+  type: 'test'
+  ...
+# Subtest: the public Map booking summary hides compatibility vocabulary and identifiers
+ok 79 - the public Map booking summary hides compatibility vocabulary and identifiers
+  ---
+  duration_ms: 1.413583
+  type: 'test'
+  ...
+# Subtest: Map Fit View can include the complete workflow at the mobile verifier width
+ok 80 - Map Fit View can include the complete workflow at the mobile verifier width
+  ---
+  duration_ms: 0.063708
+  type: 'test'
+  ...
+# Subtest: every published guide has a complete worked artifact and an explicit pause path
+ok 81 - every published guide has a complete worked artifact and an explicit pause path
+  ---
+  duration_ms: 0.773334
+  type: 'test'
+  ...
+# Subtest: a token is not treated as unrestricted authority in the scoped-access example
+ok 82 - a token is not treated as unrestricted authority in the scoped-access example
+  ---
+  duration_ms: 0.122
+  type: 'test'
+  ...
+# Subtest: the evaluation artifact treats missing evidence and duplicate requests as release cases
+ok 83 - the evaluation artifact treats missing evidence and duplicate requests as release cases
+  ---
+  duration_ms: 0.061542
+  type: 'test'
+  ...
+# Subtest: task and operator pages do not receive illustrative campaign figures
+ok 84 - task and operator pages do not receive illustrative campaign figures
+  ---
+  duration_ms: 0.075375
+  type: 'test'
+  ...
+1..84
+# tests 84
+# suites 0
+# pass 84
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 316.675
+TAP version 13
+# Subtest: Signal community APIs are internal-only protected routes
+ok 1 - Signal community APIs are internal-only protected routes
+  ---
+  duration_ms: 0.46375
+  type: 'test'
+  ...
+# Subtest: Control activation API requires the first-party authenticated account scope
+ok 2 - Control activation API requires the first-party authenticated account scope
+  ---
+  duration_ms: 0.082875
+  type: 'test'
+  ...
+# Subtest: public governance and marketing routes remain public
+ok 3 - public governance and marketing routes remain public
+  ---
+  duration_ms: 0.053375
+  type: 'test'
+  ...
+# Subtest: four-part lesson stays inside a coherent three-dimensional enclosure
+ok 4 - four-part lesson stays inside a coherent three-dimensional enclosure
+  ---
+  duration_ms: 1.098208
+  type: 'test'
+  ...
+# Subtest: routed handoffs terminate on their actual assembly ports
+ok 5 - routed handoffs terminate on their actual assembly ports
+  ---
+  duration_ms: 0.172542
+  type: 'test'
+  ...
+# Subtest: navigation bounds, reset scale and selected-point projection are consistent
+ok 6 - navigation bounds, reset scale and selected-point projection are consistent
+  ---
+  duration_ms: 0.139958
+  type: 'test'
+  ...
+# Subtest: depth model overlaps in projection without conflating contract and host authority
+ok 7 - depth model overlaps in projection without conflating contract and host authority
+  ---
+  duration_ms: 0.241083
+  type: 'test'
+  ...
+# Subtest: motion follows OS until explicitly changed, and remembers the choice on reload
+ok 8 - motion follows OS until explicitly changed, and remembers the choice on reload
+  ---
+  duration_ms: 0.429833
+  type: 'test'
+  ...
+# Subtest: standalone page retains the owning Agency Canon operator palette
+ok 9 - standalone page retains the owning Agency Canon operator palette
+  ---
+  duration_ms: 0.6435
+  type: 'test'
+  ...
+# Subtest: download contract pins exact qualified installer, platform and checksum
+ok 10 - download contract pins exact qualified installer, platform and checksum
+  ---
+  duration_ms: 0.218458
+  type: 'test'
+  ...
+# Subtest: beta stays unlisted and has no active content or tracking shell
+ok 11 - beta stays unlisted and has no active content or tracking shell
+  ---
+  duration_ms: 9.086833
+  type: 'test'
+  ...
+# Subtest: onboarding and recovery limits are explicit
+ok 12 - onboarding and recovery limits are explicit
+  ---
+  duration_ms: 0.231709
+  type: 'test'
+  ...
+# Subtest: walkthroughs pin reviewed footage and use user-initiated native playback
+ok 13 - walkthroughs pin reviewed footage and use user-initiated native playback
+  ---
+  duration_ms: 0.244375
+  type: 'test'
+  ...
+# Subtest: release acceptance distinguishes this installer from historical workflow evidence
+ok 14 - release acceptance distinguishes this installer from historical workflow evidence
+  ---
+  duration_ms: 0.106
+  type: 'test'
+  ...
+# Subtest: creative work scope preserves local media and explicit publishing boundaries
+ok 15 - creative work scope preserves local media and explicit publishing boundaries
+  ---
+  duration_ms: 0.175917
+  type: 'test'
+  ...
+# Subtest: release describes bounded agent actions and separates saved tasks from sources
+ok 16 - release describes bounded agent actions and separates saved tasks from sources
+  ---
+  duration_ms: 0.092375
+  type: 'test'
+  ...
+# Subtest: search release explains token matching, bounded waits and synthetic acceptance
+ok 17 - search release explains token matching, bounded waits and synthetic acceptance
+  ---
+  duration_ms: 0.21425
+  type: 'test'
+  ...
+# Subtest: Today layout release describes presentation changes without overstating workflow acceptance
+ok 18 - Today layout release describes presentation changes without overstating workflow acceptance
+  ---
+  duration_ms: 0.254875
+  type: 'test'
+  ...
+# Subtest: Sources release explains scoped preview, approval, sign-out and synthetic evidence
+ok 19 - Sources release explains scoped preview, approval, sign-out and synthetic evidence
+  ---
+  duration_ms: 0.18025
+  type: 'test'
+  ...
+# Subtest: Gigs release explains collection-wide ordering and bounded acceptance
+ok 20 - Gigs release explains collection-wide ordering and bounded acceptance
+  ---
+  duration_ms: 0.07625
+  type: 'test'
+  ...
+# Subtest: artwork release preserves local previews and external generation boundaries
+ok 21 - artwork release preserves local previews and external generation boundaries
+  ---
+  duration_ms: 0.128625
+  type: 'test'
+  ...
+# Subtest: setup and classification release keeps session and acceptance boundaries explicit
+ok 22 - setup and classification release keeps session and acceptance boundaries explicit
+  ---
+  duration_ms: 0.090792
+  type: 'test'
+  ...
+# Subtest: current release clearly defers phone qualification and preserves rollback
+ok 23 - current release clearly defers phone qualification and preserves rollback
+  ---
+  duration_ms: 0.030833
+  type: 'test'
+  ...
+# Subtest: connection guidance separates admission from Google consent and limits acceptance claims
+ok 24 - connection guidance separates admission from Google consent and limits acceptance claims
+  ---
+  duration_ms: 0.058375
+  type: 'test'
+  ...
+# Subtest: download page offers public signup without claiming Google onboarding qualification
+ok 25 - download page offers public signup without claiming Google onboarding qualification
+  ---
+  duration_ms: 0.073541
+  type: 'test'
+  ...
+# Subtest: customization describes visible controls and portable device-local preferences
+ok 26 - customization describes visible controls and portable device-local preferences
+  ---
+  duration_ms: 0.175542
+  type: 'test'
+  ...
+# Subtest: prior-version qualification retains native evidence with its original limits
+ok 27 - prior-version qualification retains native evidence with its original limits
+  ---
+  duration_ms: 0.154291
+  type: 'test'
+  ...
+# Subtest: full Astryx rewrite describes actual components, local fonts and preserved approval boundaries
+ok 28 - full Astryx rewrite describes actual components, local fonts and preserved approval boundaries
+  ---
+  duration_ms: 0.119333
+  type: 'test'
+  ...
+# Subtest: current rewrite qualification separates passed checks from unverified acceptance
+ok 29 - current rewrite qualification separates passed checks from unverified acceptance
+  ---
+  duration_ms: 0.257833
+  type: 'test'
+  ...
+# Subtest: assistance release explains attention, consent and app-running notification limits
+ok 30 - assistance release explains attention, consent and app-running notification limits
+  ---
+  duration_ms: 0.102084
+  type: 'test'
+  ...
+# Subtest: workspace memory release preserves provenance, review and honest forgetting limits
+ok 31 - workspace memory release preserves provenance, review and honest forgetting limits
+  ---
+  duration_ms: 0.073083
+  type: 'test'
+  ...
+# Subtest: active Agency surfaces and operator commands use CREATE SOMETHING Identity
+ok 32 - active Agency surfaces and operator commands use CREATE SOMETHING Identity
+  ---
+  duration_ms: 42.878667
+  type: 'test'
+  ...
+# Subtest: pointer toggles can reverse without a stale completion closing the latest state
+ok 33 - pointer toggles can reverse without a stale completion closing the latest state
+  ---
+  duration_ms: 1.05125
+  type: 'test'
+  ...
+# Subtest: keyboard clicks retain native immediate toggle behavior
+ok 34 - keyboard clicks retain native immediate toggle behavior
+  ---
+  duration_ms: 0.119292
+  type: 'test'
+  ...
+# Subtest: reduced-motion changes settle a closing panel and remove transient styles
+ok 35 - reduced-motion changes settle a closing panel and remove transient styles
+  ---
+  duration_ms: 0.198375
+  type: 'test'
+  ...
+# Subtest: viewport changes and cleanup leave the native disclosure usable
+ok 36 - viewport changes and cleanup leave the native disclosure usable
+  ---
+  duration_ms: 0.106667
+  type: 'test'
+  ...
+# Subtest: nested content resizing settles the current panel without clipping new content
+ok 37 - nested content resizing settles the current panel without clipping new content
+  ---
+  duration_ms: 0.174542
+  type: 'test'
+  ...
+# Subtest: large library panels open immediately and print restores prior state
+ok 38 - large library panels open immediately and print restores prior state
+  ---
+  duration_ms: 0.163875
+  type: 'test'
+  ...
+# Subtest: keyboard activation during a pointer close immediately restores native state
+ok 39 - keyboard activation during a pointer close immediately restores native state
+  ---
+  duration_ms: 0.213583
+  type: 'test'
+  ...
+# Subtest: a wall-clock deadline settles animation even if frame completion stalls
+ok 40 - a wall-clock deadline settles animation even if frame completion stalls
+  ---
+  duration_ms: 341.1055
+  type: 'test'
+  ...
+# Subtest: rapid native keyboard toggles read current DOM before the queued toggle event
+ok 41 - rapid native keyboard toggles read current DOM before the queued toggle event
+  ---
+  duration_ms: 0.431458
+  type: 'test'
+  ...
+# Subtest: a release cache key cannot reuse previously cached public HTML
+ok 42 - a release cache key cannot reuse previously cached public HTML
+  ---
+  duration_ms: 9.032083
+  type: 'test'
+  ...
+# Subtest: public HTML cache does not read query state while SvelteKit prerenders
+ok 43 - public HTML cache does not read query state while SvelteKit prerenders
+  ---
+  duration_ms: 0.127084
+  type: 'test'
+  ...
+# Subtest: public HTML cache policy allows anonymous canonical public GETs
+ok 44 - public HTML cache policy allows anonymous canonical public GETs
+  ---
+  duration_ms: 0.179666
+  type: 'test'
+  ...
+# Subtest: public HTML cache policy skips personalized or high-variance requests
+ok 45 - public HTML cache policy skips personalized or high-variance requests
+  ---
+  duration_ms: 0.23175
+  type: 'test'
+  ...
+# Subtest: public HTML cache policy skips protected, API, and release-sensitive workflow routes
+ok 46 - public HTML cache policy skips protected, API, and release-sensitive workflow routes
+  ---
+  duration_ms: 0.102042
+  type: 'test'
+  ...
+# Subtest: public HTML cache only stores successful public HTML responses
+ok 47 - public HTML cache only stores successful public HTML responses
+  ---
+  duration_ms: 0.66525
+  type: 'test'
+  ...
+# Subtest: public HTML cache headers mark edge cache status and ttl
+ok 48 - public HTML cache headers mark edge cache status and ttl
+  ---
+  duration_ms: 0.207125
+  type: 'test'
+  ...
+# Subtest: public route changes use the grid; anchors, restoration and operational routes stay native
+ok 49 - public route changes use the grid; anchors, restoration and operational routes stay native
+  ---
+  duration_ms: 0.444875
+  type: 'test'
+  ...
+# Subtest: navigation and animation loading do not hold the route; cancelled imports cannot revive a cover
+ok 50 - navigation and animation loading do not hold the route; cancelled imports cannot revive a cover
+  ---
+  duration_ms: 1.225708
+  type: 'test'
+  ...
+# Subtest: only the newest navigation owns its grid; pending route completion cannot clear the newer cover
+ok 51 - only the newest navigation owns its grid; pending route completion cannot clear the newer cover
+  ---
+  duration_ms: 5.262417
+  type: 'test'
+  ...
+# Subtest: rejected navigation, enhancement failure and deadline all fail open
+ok 52 - rejected navigation, enhancement failure and deadline all fail open
+  ---
+  duration_ms: 23.96225
+  type: 'test'
+  ...
+# Subtest: reduced motion prevents any visual layer from mounting
+ok 53 - reduced motion prevents any visual layer from mounting
+  ---
+  duration_ms: 0.126625
+  type: 'test'
+  ...
+# Subtest: Scopefield parent navigation names the Products destination
+ok 54 - Scopefield parent navigation names the Products destination
+  ---
+  duration_ms: 0.468584
+  type: 'test'
+  ...
+# Subtest: selection made during a delayed GSAP import remains the settled selection
+ok 55 - selection made during a delayed GSAP import remains the settled selection
+  ---
+  duration_ms: 0.647333
+  type: 'test'
+  ...
+# Subtest: interrupted motion ignores stale completion and settles the latest selection
+ok 56 - interrupted motion ignores stale completion and settles the latest selection
+  ---
+  duration_ms: 0.194583
+  type: 'test'
+  ...
+# Subtest: reduced motion skips loading and preference changes immediately settle active motion
+ok 57 - reduced motion skips loading and preference changes immediately settle active motion
+  ---
+  duration_ms: 0.234375
+  type: 'test'
+  ...
+# Subtest: wall-clock deadline, resize and print leave the CSS-owned final state
+ok 58 - wall-clock deadline, resize and print leave the CSS-owned final state
+  ---
+  duration_ms: 0.10875
+  type: 'test'
+  ...
+# Subtest: load failure and unmount before resolution cannot leave animated or hidden state
+ok 59 - load failure and unmount before resolution cannot leave animated or hidden state
+  ---
+  duration_ms: 0.121
+  type: 'test'
+  ...
+1..59
+# tests 59
+# suites 0
+# pass 59
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 499.385291
+
+> @create-something/agency@1.0.0 test:mcp-entitlement-authority /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> node --import ./test/register-sveltekit-test-loader.mjs --import tsx --test test/mcp-entitlement-authority-loss.route.test.ts
+
+TAP version 13
+# Partner entitlement authority tables are unavailable; failing closed
+# Subtest: internal entitlement check clears stale allow state when all authority disappears
+ok 1 - internal entitlement check clears stale allow state when all authority disappears
+  ---
+  duration_ms: 165.025042
+  type: 'test'
+  ...
+# Subtest: internal entitlement check denies stale allow state when partner authority storage is unavailable
+ok 2 - internal entitlement check denies stale allow state when partner authority storage is unavailable
+  ---
+  duration_ms: 139.26375
+  type: 'test'
+  ...
+# Subtest: internal entitlement check preserves an explicitly identified manual authority
+ok 3 - internal entitlement check preserves an explicitly identified manual authority
+  ---
+  duration_ms: 110.846541
+  type: 'test'
+  ...
+# Subtest: manual override flag without trusted manual authority provenance fails closed
+ok 4 - manual override flag without trusted manual authority provenance fails closed
+  ---
+  duration_ms: 142.246959
+  type: 'test'
+  ...
+# Subtest: identity canonicalization cannot create trusted manual authority
+ok 5 - identity canonicalization cannot create trusted manual authority
+  ---
+  duration_ms: 186.65425
+  type: 'test'
+  ...
+# Subtest: current contract authority cannot borrow a stale commercial allow flag
+ok 6 - current contract authority cannot borrow a stale commercial allow flag
+  ---
+  duration_ms: 150.799916
+  type: 'test'
+  ...
+# Subtest: OAuth password maintenance denies a cached allow after authority disappears
+ok 7 - OAuth password maintenance denies a cached allow after authority disappears
+  ---
+  duration_ms: 159.982375
+  type: 'test'
+  ...
+# Subtest: Identity session and managed bearer resolution deny after Agency authority is removed
+ok 8 - Identity session and managed bearer resolution deny after Agency authority is removed
+  ---
+  duration_ms: 331.162417
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2169.721958
+
+> @create-something/agency@1.0.0 test:map-commercial-lifecycle /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> node --import ./test/register-sveltekit-test-loader.mjs --import tsx --test test/map-commercial.test.ts test/map-stripe-webhook-lifecycle.test.ts
+
+TAP version 13
+# Subtest: Map identity scope does not inherit unrelated MCP service authorization
+ok 1 - Map identity scope does not inherit unrelated MCP service authorization
+  ---
+  duration_ms: 0.697792
+  type: 'test'
+  ...
+# Subtest: Map workspace explicitly opts into the shared operator contract
+ok 2 - Map workspace explicitly opts into the shared operator contract
+  ---
+  duration_ms: 0.142
+  type: 'test'
+  ...
+# Subtest: Map checkout stays fail-closed until configuration and explicit approval are both present
+ok 3 - Map checkout stays fail-closed until configuration and explicit approval are both present
+  ---
+  duration_ms: 0.067708
+  type: 'test'
+  ...
+# Subtest: subscription lifecycle maps to account-scoped Map entitlement states
+ok 4 - subscription lifecycle maps to account-scoped Map entitlement states
+  ---
+  duration_ms: 0.05275
+  type: 'test'
+  ...
+# Subtest: webhook metadata must carry the complete first-party workspace binding
+ok 5 - webhook metadata must carry the complete first-party workspace binding
+  ---
+  duration_ms: 0.061667
+  type: 'test'
+  ...
+# Subtest: Map checkout route requires approval, first-party identity, and subscription metadata
+ok 6 - Map checkout route requires approval, first-party identity, and subscription metadata
+  ---
+  duration_ms: 0.096083
+  type: 'test'
+  ...
+# Subtest: signed Stripe events drive Map entitlement failure, recovery, cancellation, and durable receipts
+ok 7 - signed Stripe events drive Map entitlement failure, recovery, cancellation, and durable receipts
+  ---
+  duration_ms: 7.131333
+  type: 'test'
+  ...
+# Subtest: Stripe webhook rejects a payload without a valid signature before writing state
+ok 8 - Stripe webhook rejects a payload without a valid signature before writing state
+  ---
+  duration_ms: 2.330375
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 211.197833
+
+> @create-something/agency@1.0.0 test:control-activation /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> node --import ./test/register-sveltekit-test-loader.mjs --import tsx --test test/control-activation-d1.test.ts test/control-activation-migration.test.ts test/control-activation.test.ts
+
+TAP version 13
+# Error near line 7: Control projection must match activation scope and transition command
+# Subtest: D1 adapter atomically versions, suspends, rolls back, and replays tenant-scoped projections
+ok 1 - D1 adapter atomically versions, suspends, rolls back, and replays tenant-scoped projections
+  ---
+  duration_ms: 593.41025
+  type: 'test'
+  ...
+# Error near line 4: Control activation requires verified accepted Map and Build evidence in the same tenant scope
+# Error near line 1: Verified Build evidence is immutable
+# Error near line 4: Control activation lineage or current-version precondition failed
+# Error near line 1: Control activation source, authority, and policy contract are immutable
+# Error near line 1: UNIQUE constraint failed: customer_control_activation_outbox.account_id, customer_control_activation_outbox.tenant_id, customer_control_activation_outbox.workspace_account_id, customer_control_activation_outbox.command_id
+# Error near line 1: Control projection payload is immutable
+# Error near line 1: runtime_registration_activation_mismatch
+# Error near line 1: runtime_registration_activation_mismatch
+# Error near line 1: runtime_registration_activation_mismatch
+# Error near line 1: runtime_registration_activation_mismatch
+# Error near line 1: runtime_registration_activation_mismatch
+# Error near line 1: runtime_registration_activation_mismatch
+# Error near line 1: runtime_registration_activation_mismatch
+# Error near line 1: runtime_registration_activation_mismatch
+# Error near line 1: runtime_registration_activation_mismatch
+# Error near line 1: runtime_registration_activation_mismatch
+# Error near line 1: CHECK constraint failed: artifact_prefix = 'workflow-artifacts/' || substr(artifact_manifest_sha256,8) || '/'
+# Error near line 1: CHECK constraint failed: registration_version = 2
+# Error near line 1: NOT NULL constraint failed: customer_control_runtime_registrations.registration_version
+# Error near line 1: CHECK constraint failed: length(binding_sha256) = 71 AND substr(binding_sha256,1,7) = 'sha256:' AND substr(binding_sha256,8) NOT GLOB '*[^0-9a-f]*'
+# Error near line 1: runtime_registration_immutable
+# Error near line 1: runtime_registration_immutable
+# Error near line 1: runtime_registration_immutable
+# Subtest: Control activation migration pins accepted sources and immutable projection evidence
+ok 2 - Control activation migration pins accepted sources and immutable projection evidence
+  ---
+  duration_ms: 349.997625
+  type: 'test'
+  ...
+# Subtest: Control activation contract keeps API and MCP operations in parity
+ok 3 - Control activation contract keeps API and MCP operations in parity
+  ---
+  duration_ms: 0.572167
+  type: 'test'
+  ...
+# Subtest: Control transport derives roles from first-party state and maps client errors
+ok 4 - Control transport derives roles from first-party state and maps client errors
+  ---
+  duration_ms: 0.106167
+  type: 'test'
+  ...
+# Subtest: legacy entitlements do not silently gain new Control credential authority
+ok 5 - legacy entitlements do not silently gain new Control credential authority
+  ---
+  duration_ms: 0.030375
+  type: 'test'
+  ...
+# Subtest: scheduler authority requires the run frozen activation in its exact scope
+ok 6 - scheduler authority requires the run frozen activation in its exact scope
+  ---
+  duration_ms: 0.177708
+  type: 'test'
+  ...
+# Subtest: Control source is derived and registered only from a strict ready Build inspection
+ok 7 - Control source is derived and registered only from a strict ready Build inspection
+  ---
+  duration_ms: 1.313709
+  type: 'test'
+  ...
+# Subtest: activation is tenant scoped, accepted-source only, and idempotent
+ok 8 - activation is tenant scoped, accepted-source only, and idempotent
+  ---
+  duration_ms: 9.745917
+  type: 'test'
+  ...
+# Subtest: supersession, suspension, rollback, change links, and projection replay preserve history
+ok 9 - supersession, suspension, rollback, change links, and projection replay preserve history
+  ---
+  duration_ms: 7.043667
+  type: 'test'
+  ...
+# Subtest: accepted Build v2 reaches Agency activation without a contract hash cycle
+ok 10 - accepted Build v2 reaches Agency activation without a contract hash cycle
+  ---
+  duration_ms: 7.65125
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 709.956417
+
+> @create-something/agency@1.0.0 test:inspection /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> node --import tsx --test test/inspection-scene.test.ts
+
+TAP version 13
+# Subtest: inspection opens and rewinds without retaining a finding
+ok 1 - inspection opens and rewinds without retaining a finding
+  ---
+  duration_ms: 0.520208
+  type: 'test'
+  ...
+# Subtest: invalid scroll input cannot escape the closed-to-inspected range
+ok 2 - invalid scroll input cannot escape the closed-to-inspected range
+  ---
+  duration_ms: 0.177875
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 106.081875
+
+> @create-something/agency@1.0.0 test:meta-marketing /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> node --import tsx --test test/identity-session.test.ts test/meta-policy.test.ts test/meta-marketing-client.test.ts test/meta-marketing.test.ts test/marketing-attribution.test.ts test/marketing-attribution-report.test.mjs
+
+TAP version 13
+# Subtest: agency accepts only a cryptographically valid Identity customer-workspace session
+ok 1 - agency accepts only a cryptographically valid Identity customer-workspace session
+  ---
+  duration_ms: 13.845125
+  type: 'test'
+  ...
+# Subtest: account privacy preference is freshly loaded for the verified subject, including failure paths
+ok 2 - account privacy preference is freshly loaded for the verified subject, including failure paths
+  ---
+  duration_ms: 6.379708
+  type: 'test'
+  ...
+# Subtest: marketing attribution report is bounded, read-only, and follows booking outcomes
+ok 3 - marketing attribution report is bounded, read-only, and follows booking outcomes
+  ---
+  duration_ms: 0.563625
+  type: 'test'
+  ...
+# Subtest: SQLite report separates Meta channels, consent, traffic classes, and funnel outcomes
+ok 4 - SQLite report separates Meta channels, consent, traffic classes, and funnel outcomes
+  ---
+  duration_ms: 80.40175
+  type: 'test'
+  ...
+# Subtest: captures bounded social attribution without click identifiers
+ok 5 - captures bounded social attribution without click identifiers
+  ---
+  duration_ms: 0.708833
+  type: 'test'
+  ...
+# Subtest: persists attribution for the consented session and expires it
+ok 6 - persists attribution for the consented session and expires it
+  ---
+  duration_ms: 0.117625
+  type: 'test'
+  ...
+# Subtest: retains paid Meta campaign attribution across navigation without storing Meta identifiers
+ok 7 - retains paid Meta campaign attribution across navigation without storing Meta identifiers
+  ---
+  duration_ms: 0.444667
+  type: 'test'
+  ...
+# Subtest: keeps Meta organic posts distinct from paid campaigns
+ok 8 - keeps Meta organic posts distinct from paid campaigns
+  ---
+  duration_ms: 0.095625
+  type: 'test'
+  ...
+# Subtest: rejects unknown sources, media, missing campaigns, and unsafe values
+ok 9 - rejects unknown sources, media, missing campaigns, and unsafe values
+  ---
+  duration_ms: 0.068083
+  type: 'test'
+  ...
+# Subtest: does not infer marketing consent from analytics or emit before the consent read
+ok 10 - does not infer marketing consent from analytics or emit before the consent read
+  ---
+  duration_ms: 10.172959
+  type: 'test'
+  ...
+# Subtest: only emits sanitized public page activity after explicit server consent, once per navigation
+ok 11 - only emits sanitized public page activity after explicit server consent, once per navigation
+  ---
+  duration_ms: 0.899208
+  type: 'test'
+  ...
+# Subtest: privacy signals revoke server consent and prevent all page activity
+ok 12 - privacy signals revoke server consent and prevent all page activity
+  ---
+  duration_ms: 0.357583
+  type: 'test'
+  ...
+# Subtest: withdrawal wins over a stale consent read
+ok 13 - withdrawal wins over a stale consent read
+  ---
+  duration_ms: 1.003792
+  type: 'test'
+  ...
+# Subtest: failed or malformed consent responses fail closed without breaking analytics choices
+ok 14 - failed or malformed consent responses fail closed without breaking analytics choices
+  ---
+  duration_ms: 0.439791
+  type: 'test'
+  ...
+# Subtest: a refresh cannot restore consent while withdrawal is pending
+ok 15 - a refresh cannot restore consent while withdrawal is pending
+  ---
+  duration_ms: 0.400334
+  type: 'test'
+  ...
+# Subtest: layout only turns a verified account opt-out into a durable browser withdrawal
+ok 16 - layout only turns a verified account opt-out into a durable browser withdrawal
+  ---
+  duration_ms: 1.207667
+  type: 'test'
+  ...
+# Subtest: does not resend a PageView after an ambiguous provider response
+ok 17 - does not resend a PageView after an ambiguous provider response
+  ---
+  duration_ms: 0.430291
+  type: 'test'
+  ...
+# Subtest: marketing defaults off, requires its own explicit consent and can be withdrawn
+ok 18 - marketing defaults off, requires its own explicit consent and can be withdrawn
+  ---
+  duration_ms: 361.720584
+  type: 'test'
+  ...
+# Subtest: signed consent requires the same freshly verified account and never downgrades to anonymous
+ok 19 - signed consent requires the same freshly verified account and never downgrades to anonymous
+  ---
+  duration_ms: 326.124167
+  type: 'test'
+  ...
+# Subtest: fresh account opt-out revokes consent and purges queued match data through every entrypoint
+ok 20 - fresh account opt-out revokes consent and purges queued match data through every entrypoint
+  ---
+  duration_ms: 1181.371041
+  type: 'test'
+  ...
+# Subtest: an explicit signed choice binds an existing anonymous consent without implicit GET binding
+ok 21 - an explicit signed choice binds an existing anonymous consent without implicit GET binding
+  ---
+  duration_ms: 270.460417
+  type: 'test'
+  ...
+# Subtest: an invalid or unavailable account session cannot grant or use anonymous marketing consent
+ok 22 - an invalid or unavailable account session cannot grant or use anonymous marketing consent
+  ---
+  duration_ms: 210.287125
+  type: 'test'
+  ...
+# Subtest: browser privacy signals durably revoke a queued consent during a plain consent read
+ok 23 - browser privacy signals durably revoke a queued consent during a plain consent read
+  ---
+  duration_ms: 560.867959
+  type: 'test'
+  ...
+# Subtest: DNT, GPC, opt-out, missing configuration, and expired consent prevent delivery
+ok 24 - DNT, GPC, opt-out, missing configuration, and expired consent prevent delivery
+  ---
+  duration_ms: 229.674666
+  type: 'test'
+  ...
+# Subtest: new saved inquiry atomically queues one minimal Lead and accepts a provider receipt
+ok 25 - new saved inquiry atomically queues one minimal Lead and accepts a provider receipt
+  ---
+  duration_ms: 458.766167
+  type: 'test'
+  ...
+# Subtest: withdrawal purges pending match data and prevents subsequent dispatch
+ok 26 - withdrawal purges pending match data and prevents subsequent dispatch
+  ---
+  duration_ms: 296.732167
+  type: 'test'
+  ...
+# Subtest: a duplicate inquiry after new consent cannot retroactively enqueue an older inquiry
+ok 27 - a duplicate inquiry after new consent cannot retroactively enqueue an older inquiry
+  ---
+  duration_ms: 369.615458
+  type: 'test'
+  ...
+# Subtest: withdrawal during an in-flight accepted call retains its receipt without retaining match data
+ok 28 - withdrawal during an in-flight accepted call retains its receipt without retaining match data
+  ---
+  duration_ms: 362.976
+  type: 'test'
+  ...
+# Subtest: consent revoked between preparation and atomic save cannot queue a conversion
+ok 29 - consent revoked between preparation and atomic save cannot queue a conversion
+  ---
+  duration_ms: 278.077167
+  type: 'test'
+  ...
+# Subtest: direct Meta measurement is available without Zaraz relay configuration
+ok 30 - direct Meta measurement is available without Zaraz relay configuration
+  ---
+  duration_ms: 179.583708
+  type: 'test'
+  ...
+# Subtest: consented PageView goes directly to Meta with bounded matching data and an acknowledged receipt
+ok 31 - consented PageView goes directly to Meta with bounded matching data and an acknowledged receipt
+  ---
+  duration_ms: 316.398292
+  type: 'test'
+  ...
+# Subtest: PageView does not send without both browser matching fields
+ok 32 - PageView does not send without both browser matching fields
+  ---
+  duration_ms: 216.704125
+  type: 'test'
+  ...
+# Subtest: withdrawal while reading a PageView body prevents the subsequent provider call
+ok 33 - withdrawal while reading a PageView body prevents the subsequent provider call
+  ---
+  duration_ms: 226.681583
+  type: 'test'
+  ...
+# Subtest: PageView requires a valid Meta acknowledgement and never queues or retries uncertain delivery
+ok 34 - PageView requires a valid Meta acknowledgement and never queues or retries uncertain delivery
+  ---
+  duration_ms: 965.072542
+  type: 'test'
+  ...
+# Subtest: provider errors are classified without retrying uncertain writes
+ok 35 - provider errors are classified without retrying uncertain writes
+  ---
+  duration_ms: 1.29825
+  type: 'test'
+  ...
+# Subtest: acknowledged throttles retry at most three times with the same event ID
+ok 36 - acknowledged throttles retry at most three times with the same event ID
+  ---
+  duration_ms: 572.464208
+  type: 'test'
+  ...
+# Subtest: an unknown provider outcome is never automatically retried
+ok 37 - an unknown provider outcome is never automatically retried
+  ---
+  duration_ms: 378.025667
+  type: 'test'
+  ...
+# Subtest: maintenance purges expired pending match data without requiring its cookie
+ok 38 - maintenance purges expired pending match data without requiring its cookie
+  ---
+  duration_ms: 264.768833
+  type: 'test'
+  ...
+# Subtest: allows only explicitly public marketing pages and drops query and fragment data
+ok 39 - allows only explicitly public marketing pages and drops query and fragment data
+  ---
+  duration_ms: 0.476417
+  type: 'test'
+  ...
+# Subtest: excludes private, encoded, unrecognized and credential-bearing routes
+ok 40 - excludes private, encoded, unrecognized and credential-bearing routes
+  ---
+  duration_ms: 0.288666
+  type: 'test'
+  ...
+1..40
+# tests 40
+# suites 0
+# pass 40
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8776.571584
+
+> @create-something/agency@1.0.0 test:contact /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> node --import ./test/register-sveltekit-test-loader.mjs --import tsx --test test/contact-intake.test.ts test/contact-d1.test.ts test/contact-workerd.test.ts
+
+TAP version 13
+# Subtest: workerd D1 batch, rollback, unique receipt and owner claims
+ok 1 - workerd D1 batch, rollback, unique receipt and owner claims
+  ---
+  duration_ms: 504.235666
+  type: 'test'
+  ...
+# Subtest: Effect state machine on real SQL persists across repository recreation
+ok 2 - Effect state machine on real SQL persists across repository recreation
+  ---
+  duration_ms: 380.109541
+  type: 'test'
+  ...
+# {"level":"info","message":"[ContactAPI] Contact intake outcome","timestamp":"2026-11-11T19:32:57.395Z","correlationId":"cs-tocrmw-vat4ek","service":"ContactAPI","requestId":"request-0000000001","receipt":"saved","secondary":"failed"}
+# {"level":"info","message":"[ContactAPI] Contact intake outcome","timestamp":"2026-11-11T19:32:57.417Z","correlationId":"cs-tocrmw-vat4ek","service":"ContactAPI","requestId":"request-0000000001","receipt":"saved","secondary":"not_attempted"}
+# {"level":"info","message":"[ContactAPI] Contact intake outcome","timestamp":"2026-11-11T19:32:57.440Z","correlationId":"cs-tocrmw-vat4ek","service":"ContactAPI","requestId":"request-0000000001","receipt":"conflict","secondary":"not_attempted"}
+# {"level":"info","message":"[ContactAPI] Contact intake outcome","timestamp":"2026-11-11T19:32:57.591Z","correlationId":"cs-tocrmw-vat4ek","service":"ContactAPI","requestId":"957ecfab-3a3a-4e24-acd4-2320253d4dec","receipt":"saved","secondary":"failed"}
+# {"level":"info","message":"[ContactAPI] Contact intake outcome","timestamp":"2026-11-11T19:32:57.750Z","correlationId":"cs-tocrmw-vat4ek","service":"ContactAPI","requestId":"cb2ffe27-00c0-455b-892f-8a2fccc4875a","receipt":"saved","secondary":"failed"}
+# Subtest: route JSON contract, duplicate and legacy caller limit with fake provider
+ok 3 - route JSON contract, duplicate and legacy caller limit with fake provider
+  ---
+  duration_ms: 711.863
+  type: 'test'
+  ...
+# {"level":"info","message":"[ContactAPI] Contact intake outcome","timestamp":"2026-11-11T19:32:58.090Z","correlationId":"cs-tocrmw-vat4ek","service":"ContactAPI","requestId":"partial-request-0001","receipt":"saved","secondary":"failed"}
+# {"level":"info","message":"[ContactAPI] Contact intake outcome","timestamp":"2026-11-11T19:32:58.115Z","correlationId":"cs-tocrmw-vat4ek","service":"ContactAPI","requestId":"partial-request-0001","receipt":"saved","secondary":"not_attempted"}
+# Subtest: partial provider failure exposes saved message over HTTP and duplicate never sends
+ok 4 - partial provider failure exposes saved message over HTTP and duplicate never sends
+  ---
+  duration_ms: 386.403417
+  type: 'test'
+  ...
+# {"level":"info","message":"[ContactAPI] Contact intake outcome","timestamp":"2026-11-11T19:32:58.484Z","correlationId":"cs-tocrmw-vat4ek","service":"ContactAPI","requestId":"aborted-request-0001","receipt":"saved","secondary":"failed"}
+# {"level":"info","message":"[ContactAPI] Contact intake outcome","timestamp":"2026-11-11T19:32:58.508Z","correlationId":"cs-tocrmw-vat4ek","service":"ContactAPI","requestId":"aborted-request-0001","receipt":"saved","secondary":"not_attempted"}
+# Subtest: client disconnect leaves registered intake running through both receipts without replay
+ok 5 - client disconnect leaves registered intake running through both receipts without replay
+  ---
+  duration_ms: 394.628292
+  type: 'test'
+  ...
+# {"level":"info","message":"[ContactAPI] Contact intake outcome","timestamp":"2026-11-11T19:32:58.893Z","correlationId":"cs-tocrmw-vat4ek","service":"ContactAPI","requestId":"49ed34d6-1aa5-4bb0-842b-fcbd65e50f39","receipt":"saved","secondary":"failed"}
+# {"level":"info","message":"[ContactAPI] Contact intake outcome","timestamp":"2026-11-11T19:32:58.918Z","correlationId":"cs-tocrmw-vat4ek","service":"ContactAPI","requestId":"49ed34d6-1aa5-4bb0-842b-fcbd65e50f39","receipt":"saved","secondary":"not_attempted"}
+# Subtest: lost response, reload, invalid correction retains identity (changed=false)
+ok 6 - lost response, reload, invalid correction retains identity (changed=false)
+  ---
+  duration_ms: 392.536
+  type: 'test'
+  ...
+# {"level":"info","message":"[ContactAPI] Contact intake outcome","timestamp":"2026-11-11T19:32:59.287Z","correlationId":"cs-tocrmw-vat4ek","service":"ContactAPI","requestId":"26b9bac5-3956-47dc-a32b-4abcc90cfe12","receipt":"saved","secondary":"failed"}
+# {"level":"info","message":"[ContactAPI] Contact intake outcome","timestamp":"2026-11-11T19:32:59.310Z","correlationId":"cs-tocrmw-vat4ek","service":"ContactAPI","requestId":"26b9bac5-3956-47dc-a32b-4abcc90cfe12","receipt":"conflict","secondary":"not_attempted"}
+# Subtest: lost response, reload, invalid correction retains identity (changed=true)
+ok 7 - lost response, reload, invalid correction retains identity (changed=true)
+  ---
+  duration_ms: 391.907583
+  type: 'test'
+  ...
+# Subtest: attribution survives recreation, replay and rejects changed campaign without reassigning inquiry
+ok 8 - attribution survives recreation, replay and rejects changed campaign without reassigning inquiry
+  ---
+  duration_ms: 429.021667
+  type: 'test'
+  ...
+# Subtest: success requires two durable acceptances; duplicate does no work; changed payload conflicts
+ok 9 - success requires two durable acceptances; duplicate does no work; changed payload conflicts
+  ---
+  duration_ms: 14.894416
+  type: 'test'
+  ...
+# Subtest: permanent_failure is saved, never retried
+ok 10 - permanent_failure is saved, never retried
+  ---
+  duration_ms: 1.445
+  type: 'test'
+  ...
+# Subtest: transient_failure is saved, never retried
+ok 11 - transient_failure is saved, never retried
+  ---
+  duration_ms: 1.627958
+  type: 'test'
+  ...
+# Subtest: unknown is saved, never retried
+ok 12 - unknown is saved, never retried
+  ---
+  duration_ms: 4.292417
+  type: 'test'
+  ...
+# Subtest: partial acceptance is not success
+ok 13 - partial acceptance is not success
+  ---
+  duration_ms: 1.110875
+  type: 'test'
+  ...
+# Subtest: lost create acknowledgement reconciles saved without sending
+ok 14 - lost create acknowledgement reconciles saved without sending
+  ---
+  duration_ms: 0.954167
+  type: 'test'
+  ...
+# Subtest: absent/unavailable readback after uncertain create stays unknown
+ok 15 - absent/unavailable readback after uncertain create stays unknown
+  ---
+  duration_ms: 0.852792
+  type: 'test'
+  ...
+# Subtest: lost claim acknowledgement forbids sending even if claim committed
+ok 16 - lost claim acknowledgement forbids sending even if claim committed
+  ---
+  duration_ms: 1.438458
+  type: 'test'
+  ...
+# Subtest: lost post-send receipt stays sending and is never sent again
+ok 17 - lost post-send receipt stays sending and is never sent again
+  ---
+  duration_ms: 1.330459
+  type: 'test'
+  ...
+# Subtest: committed post-send receipt reconciles despite lost acknowledgement
+ok 18 - committed post-send receipt reconciles despite lost acknowledgement
+  ---
+  duration_ms: 1.527375
+  type: 'test'
+  ...
+# Subtest: concurrent identical requests have only one owner
+ok 19 - concurrent identical requests have only one owner
+  ---
+  duration_ms: 0.893
+  type: 'test'
+  ...
+# Subtest: provider 200/accepted is classified with one attempt
+ok 20 - provider 200/accepted is classified with one attempt
+  ---
+  duration_ms: 7.755917
+  type: 'test'
+  ...
+# Subtest: provider 200/unknown is classified with one attempt
+ok 21 - provider 200/unknown is classified with one attempt
+  ---
+  duration_ms: 0.146292
+  type: 'test'
+  ...
+# Subtest: provider 422/permanent_failure is classified with one attempt
+ok 22 - provider 422/permanent_failure is classified with one attempt
+  ---
+  duration_ms: 0.13425
+  type: 'test'
+  ...
+# Subtest: provider 429/transient_failure is classified with one attempt
+ok 23 - provider 429/transient_failure is classified with one attempt
+  ---
+  duration_ms: 0.142917
+  type: 'test'
+  ...
+# Subtest: provider 500/unknown is classified with one attempt
+ok 24 - provider 500/unknown is classified with one attempt
+  ---
+  duration_ms: 0.129709
+  type: 'test'
+  ...
+# Subtest: provider 408/unknown is classified with one attempt
+ok 25 - provider 408/unknown is classified with one attempt
+  ---
+  duration_ms: 0.118208
+  type: 'test'
+  ...
+# Subtest: transport failure and malformed success are unknown with no retry
+ok 26 - transport failure and malformed success are unknown with no retry
+  ---
+  duration_ms: 0.177625
+  type: 'test'
+  ...
+# Subtest: browser retains ID/body and shows saved/unknown message on non-success
+ok 27 - browser retains ID/body and shows saved/unknown message on non-success
+  ---
+  duration_ms: 0.548541
+  type: 'test'
+  ...
+# Subtest: interrupted provider call leaves a durable sending claim and no replay
+ok 28 - interrupted provider call leaves a durable sending claim and no replay
+  ---
+  duration_ms: 2.090917
+  type: 'test'
+  ...
+# Subtest: secondary failures cannot erase accepted inquiry or authorize resend
+ok 29 - secondary failures cannot erase accepted inquiry or authorize resend
+  ---
+  duration_ms: 1.279541
+  type: 'test'
+  ...
+# Subtest: secondary steps continue after an assessment update fails
+ok 30 - secondary steps continue after an assessment update fails
+  ---
+  duration_ms: 0.225916
+  type: 'test'
+  ...
+# Subtest: real database timeout reconciles without repeating the unacknowledged write
+ok 31 - real database timeout reconciles without repeating the unacknowledged write
+  ---
+  duration_ms: 5003.729916
+  type: 'test'
+  ...
+# Subtest: interrupted database write may commit later; readback never dispatches it
+ok 32 - interrupted database write may commit later; readback never dispatches it
+  ---
+  duration_ms: 1.9845
+  type: 'test'
+  ...
+# Subtest: browser exposes validation rejection so the review can unlock corrections under the same ID
+ok 33 - browser exposes validation rejection so the review can unlock corrections under the same ID
+  ---
+  duration_ms: 0.687166
+  type: 'test'
+  ...
+# Subtest: workerd D1 atomic batch/concurrency and reconciliation
+ok 34 - workerd D1 atomic batch/concurrency and reconciliation
+  ---
+  duration_ms: 866.71425
+  type: 'test'
+  ...
+1..34
+# tests 34
+# suites 0
+# pass 34
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5636.785833
+
+> @create-something/agency@1.0.0 test:interaction-pilot /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> node --import tsx --test test/interaction-pilot.test.ts
+
+TAP version 13
+# Subtest: the retained journey explains the handoff without directing visitors to a fictional exercise
+ok 1 - the retained journey explains the handoff without directing visitors to a fictional exercise
+  ---
+  duration_ms: 0.289667
+  type: 'test'
+  ...
+# Subtest: location parsing is exact, scoped and safely falls back for stale fragments
+ok 2 - location parsing is exact, scoped and safely falls back for stale fragments
+  ---
+  duration_ms: 0.3355
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 109.619375
