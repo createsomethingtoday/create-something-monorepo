@@ -16,6 +16,7 @@ import { Heading } from '@astryxdesign/core/Heading';
 import { Text } from '@astryxdesign/core/Text';
 import { HStack } from '@astryxdesign/core/HStack';
 import { VStack } from '@astryxdesign/core/VStack';
+import { Divider } from '@astryxdesign/core/Divider';
 import { Section } from '@astryxdesign/core/Section';
 import { Button } from '@astryxdesign/core/Button';
 import { Banner } from '@astryxdesign/core/Banner';
@@ -100,7 +101,7 @@ async function api<T>(body?: unknown, id?: string): Promise<T> {
 }
 function Prose({ text }: { text: string }) {
   return (
-    <Text as="p" size="lg" className="npg-prose">
+    <Text as="p" size="lg" wordBreak="break-word" className="npg-prose whitespace-pre-wrap">
       {linkParts(text).map((part, index) =>
         part.href ? (
           <Link key={index} href={part.href} isExternalLink hasUnderline>
@@ -118,7 +119,7 @@ function Fields({ fields }: { fields: Array<{ label: string; value: string }> })
     <MetadataList label={{ position: 'top' }} columns="single">
       {fields.map((field, index) => (
         <MetadataListItem key={index} label={field.label}>
-          <Text wordBreak="break-word" className="npg-preserve-lines">
+          <Text wordBreak="break-word" className="whitespace-pre-wrap">
             {field.value}
           </Text>
         </MetadataListItem>
@@ -128,7 +129,7 @@ function Fields({ fields }: { fields: Array<{ label: string; value: string }> })
 }
 function Evidence({ sources }: { sources: NpgView['sources'] }) {
   return (
-    <VStack gap={6} className="npg-evidence-content">
+    <VStack gap={6} className="npg-evidence-content min-w-0">
       <VStack gap={2}>
         <Heading level={2}>Results &amp; exports</Heading>
         <Text type="supporting" color="secondary">
@@ -139,83 +140,93 @@ function Evidence({ sources }: { sources: NpgView['sources'] }) {
         sources.map((source, index) => {
           const artifact = sourceArtifact(source.data);
           return (
-            <VStack
-              key={index}
-              as="section"
-              gap={4}
-              className="npg-source"
-              aria-labelledby={'source-' + index}
-            >
-              <VStack gap={1}>
-                <Text type="supporting" color="secondary">
-                  Source {index + 1}
-                </Text>
-                <Heading id={'source-' + index} level={3}>
-                  {actionLabel(source.tool)}
-                </Heading>
-              </VStack>
-              {(artifact.total !== null || artifact.shown !== null) && (
+            <React.Fragment key={index}>
+              {index > 0 && <Divider />}
+              <VStack
+                as="section"
+                gap={4}
+                className="npg-source min-w-0"
+                aria-labelledby={'source-' + index}
+              >
                 <VStack gap={1}>
-                  <Text type="large" weight="semibold">
-                    {artifact.total === null
-                      ? 'Total not supplied'
-                      : artifact.total.toLocaleString() + ' total'}
-                  </Text>
                   <Text type="supporting" color="secondary">
-                    {artifact.shown === null
-                      ? 'Shown count not supplied'
-                      : artifact.shown.toLocaleString() + ' shown in response'}
+                    Source {index + 1}
                   </Text>
+                  <Heading id={'source-' + index} level={3}>
+                    {actionLabel(source.tool)}
+                  </Heading>
                 </VStack>
-              )}
-              {artifact.links.map((href) => (
-                <VStack key={href} gap={1}>
-                  <Link className="source-link" href={href} hasUnderline isExternalLink>
-                    <HStack as="span" gap={2}>
-                      {href.startsWith('/delivery/') && <Icon icon={Download} size="sm" />}
-                      {href.startsWith('/delivery/') ? 'Download complete CSV' : 'Open source'}
-                    </HStack>
-                  </Link>
-                  <Text type="supporting" color="secondary" wordBreak="break-all">
-                    {href}
-                  </Text>
-                </VStack>
-              ))}
-              {artifact.fields.length > 0 && <Fields fields={artifact.fields} />}
-              {artifact.sections.map((section, i) => (
-                <Collapsible key={i} trigger={section.title} defaultIsOpen={false}>
-                  <VStack paddingBlock={3}>
-                    <Fields fields={section.fields} />
-                  </VStack>
-                </Collapsible>
-              ))}
-              {artifact.records.length > 0 && (
-                <Collapsible
-                  trigger={
-                    'Returned records · preview ' +
-                    artifact.previewCount +
-                    ' of ' +
-                    (artifact.shown ?? 'unknown')
-                  }
-                  defaultIsOpen={false}
-                >
-                  <VStack gap={4} paddingBlock={3}>
-                    {artifact.records.map((fields, i) => (
-                      <VStack key={i} gap={2}>
-                        <Heading level={4}>Record {i + 1}</Heading>
-                        <Fields fields={fields} />
-                      </VStack>
-                    ))}
+                {(artifact.total !== null || artifact.shown !== null) && (
+                  <VStack gap={1}>
+                    <Text type="large" weight="semibold">
+                      {artifact.total === null
+                        ? 'Total not supplied'
+                        : artifact.total.toLocaleString() + ' total'}
+                    </Text>
                     <Text type="supporting" color="secondary">
-                      This preview includes up to five returned source records.
+                      {artifact.shown === null
+                        ? 'Shown count not supplied'
+                        : artifact.shown.toLocaleString() + ' shown in response'}
                     </Text>
                   </VStack>
+                )}
+                {artifact.links.map((href) => (
+                  <VStack key={href} gap={1}>
+                    <Link className="source-link" href={href} hasUnderline isExternalLink>
+                      <HStack as="span" gap={2}>
+                        {href.startsWith('/delivery/') && <Icon icon={Download} size="sm" />}
+                        {href.startsWith('/delivery/') ? 'Download complete CSV' : 'Open source'}
+                      </HStack>
+                    </Link>
+                    <Text type="supporting" color="secondary" wordBreak="break-all">
+                      {href}
+                    </Text>
+                  </VStack>
+                ))}
+                {artifact.fields.length > 0 && <Fields fields={artifact.fields} />}
+                {artifact.sections.map((section, i) => (
+                  <Collapsible key={i} trigger={section.title} defaultIsOpen={false}>
+                    <VStack paddingBlock={3}>
+                      <Fields fields={section.fields} />
+                    </VStack>
+                  </Collapsible>
+                ))}
+                {artifact.records.length > 0 && (
+                  <Collapsible
+                    trigger={
+                      'Returned records · preview ' +
+                      artifact.previewCount +
+                      ' of ' +
+                      (artifact.shown ?? 'unknown')
+                    }
+                    defaultIsOpen={false}
+                  >
+                    <VStack gap={4} paddingBlock={3}>
+                      {artifact.records.map((fields, i) => (
+                        <VStack key={i} gap={2}>
+                          <Heading level={4}>Record {i + 1}</Heading>
+                          <Fields fields={fields} />
+                        </VStack>
+                      ))}
+                      <Text type="supporting" color="secondary">
+                        This preview includes up to five returned source records.
+                      </Text>
+                    </VStack>
+                  </Collapsible>
+                )}
+                <Collapsible trigger="Inspect original source data" defaultIsOpen={false}>
+                  <Text
+                    as="p"
+                    type="code"
+                    display="block"
+                    wordBreak="break-word"
+                    className="npg-json whitespace-pre-wrap max-w-full overflow-auto"
+                  >
+                    {JSON.stringify(source.data, null, 2)}
+                  </Text>
                 </Collapsible>
-              )}
-              <Collapsible trigger="Inspect original source data" defaultIsOpen={false}>
-                <pre className="npg-json">{JSON.stringify(source.data, null, 2)}</pre>
-              </Collapsible>
-            </VStack>
+              </VStack>
+            </React.Fragment>
           );
         })
       ) : (
@@ -251,6 +262,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
   const review = useRef<HTMLElement | null>(null);
   const inlineResults = useRef<HTMLElement | null>(null);
   const didRestore = useRef(false);
+  const focusIntent = useRef<'review' | 'composer' | null>(null);
   function setView(view: NpgView | null) {
     conversationRef.current = view;
     setConversation(view);
@@ -281,13 +293,17 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
   function rememberCurrent(id: string) {
     writeStorage(currentKey, id);
   }
-  function focusComposerAfterNavigation() {
-    const dialog = document.querySelector<HTMLDialogElement>('dialog[open]');
-    if (dialog)
-      dialog.addEventListener('close', () => requestAnimationFrame(() => input.current?.focus()), {
-        once: true
+  function focusAfterNavigation(hasReview = false) {
+    const focus = () =>
+      requestAnimationFrame(() => {
+        // A frame can precede React's commit for substantial saved evidence.
+        // Consume the intent in the layout effect once the returned view exists.
+        focusIntent.current = hasReview ? 'review' : 'composer';
+        setReveal((n) => n + 1);
       });
-    else requestAnimationFrame(() => input.current?.focus());
+    const dialog = document.querySelector<HTMLDialogElement>('dialog[open]');
+    if (dialog) dialog.addEventListener('close', focus, { once: true });
+    else focus();
   }
   async function open(id: string, moveFocus = false) {
     if (!begin('Loading conversation')) return;
@@ -296,10 +312,10 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
       setView(view);
       changeDraft(drafts.current[id] ?? '');
       setNeedsRefresh(view.status === 'running');
-      if (moveFocus) focusComposerAfterNavigation();
+      if (moveFocus) focusAfterNavigation(Boolean(view.pending));
       setNavOpen(false);
       rememberCurrent(id);
-      setReveal((n) => n + 1);
+      if (!moveFocus) setReveal((n) => n + 1);
     } catch (error) {
       setNotice((error as Error).message);
     } finally {
@@ -313,7 +329,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
       setView(view);
       changeDraft(drafts.current[view.id] ?? '');
       setNeedsRefresh(false);
-      focusComposerAfterNavigation();
+      focusAfterNavigation();
       setNavOpen(false);
       rememberCurrent(view.id);
       await refreshList();
@@ -366,7 +382,8 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
       });
       setView(result);
       await refreshList();
-      setReveal((n) => n + 1);
+      if (result.pending) focusAfterNavigation(true);
+      else setReveal((n) => n + 1);
     } catch (error) {
       if (!draftRef.current) changeDraft(value);
       setNotice((error as Error).message);
@@ -386,11 +403,16 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
     )
       return;
     try {
-      setView(
-        await api<NpgView>({ type, id: view.id, version: view.version, actionId: view.pending.id })
-      );
+      const result = await api<NpgView>({
+        type,
+        id: view.id,
+        version: view.version,
+        actionId: view.pending.id
+      });
+      setView(result);
       await refreshList();
-      setReveal((n) => n + 1);
+      if (result.pending) focusAfterNavigation(true);
+      else setReveal((n) => n + 1);
     } catch (error) {
       setNotice((error as Error).message);
       setNeedsRefresh(true);
@@ -410,6 +432,15 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
   }, []);
   useLayoutEffect(() => {
     if (!reveal || !thread.current) return;
+    if (focusIntent.current === 'review') {
+      const heading = document.getElementById('npg-review-title');
+      if (!heading) return;
+      heading.focus({ preventScroll: true });
+      focusIntent.current = null;
+    } else if (focusIntent.current === 'composer' && input.current) {
+      input.current.focus();
+      focusIntent.current = null;
+    }
     let settle = 0;
     const frame = requestAnimationFrame(() => {
       settle = requestAnimationFrame(() => {
@@ -430,7 +461,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
       cancelAnimationFrame(frame);
       cancelAnimationFrame(settle);
     };
-  }, [reveal]);
+  }, [reveal, conversation?.pending?.id]);
   useLayoutEffect(() => {
     if (resultsOpen && narrow)
       inlineResults.current?.scrollIntoView({ block: 'start', behavior: 'instant' });
@@ -461,12 +492,18 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
       ? 'Check the saved conversation before another request. Uncertain outcomes need reconciliation.'
       : 'Registry evidence first. Paid actions need your review.';
   const titleHeading = (
-    <Heading level={3} accessibilityLevel={1} maxLines={2} className="npg-thread-title">
+    <Heading
+      level={3}
+      accessibilityLevel={1}
+      maxLines={2}
+      wordBreak="break-word"
+      className="npg-thread-title min-w-0"
+    >
       {title}
     </Heading>
   );
   const statusContent = (
-    <HStack gap={1} className="npg-state" role="status">
+    <HStack gap={1} className="npg-state shrink-0" role="status">
       <Icon
         icon={
           busy
@@ -610,8 +647,8 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
         </SideNav>
       }
     >
-      <HStack gap={0} className="npg-workspace" align="stretch">
-        <VStack gap={0} className="npg-chat-column">
+      <HStack gap={0} height="100%" minHeight={0} className="npg-workspace min-w-0" align="stretch">
+        <VStack gap={0} minHeight={0} className="npg-chat-column flex-1 min-w-0">
           <Section padding={4} dividers={['bottom']}>
             {narrow ? (
               <VStack gap={3}>
@@ -629,7 +666,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
             )}
           </Section>
           <ChatLayout
-            className="npg-thread"
+            className="npg-thread min-w-0 min-h-0"
             ref={thread}
             density="compact"
             scrollButton={null}
@@ -642,7 +679,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
               isStreaming={false}
             >
               {!conversation?.messages.length && !submitted && (
-                <VStack gap={4} className="npg-welcome">
+                <VStack gap={4} width="100%" className="npg-welcome max-w-screen-sm mx-auto">
                   <Heading level={2}>Start with the people you need to find.</Heading>
                   <Text color="secondary">
                     Ask about a location, taxonomy, or candidate. Keep the complete sourcing list
@@ -691,12 +728,13 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
               {conversation?.pending && (
                 <Section
                   ref={review}
-                  className="npg-review"
+                  className="npg-review scroll-mt-4"
                   padding={4}
+                  dividers={['top', 'bottom', 'start', 'end']}
                   aria-labelledby="npg-review-title"
                 >
                   <VStack gap={4}>
-                    <Heading id="npg-review-title" level={2}>
+                    <Heading id="npg-review-title" level={2} tabIndex={-1}>
                       Review the exact action
                     </Heading>
                     <Text>
@@ -708,9 +746,15 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                     <Heading level={3}>Request to approve</Heading>
                     <Fields fields={reviewFields(conversation.pending.arguments)} />
                     <Collapsible trigger="Inspect exact request" defaultIsOpen={false}>
-                      <pre className="npg-json">
+                      <Text
+                        as="p"
+                        type="code"
+                        display="block"
+                        wordBreak="break-word"
+                        className="npg-json whitespace-pre-wrap max-w-full overflow-auto"
+                      >
                         {JSON.stringify(conversation.pending.arguments, null, 2)}
-                      </pre>
+                      </Text>
                     </Collapsible>
                     <Text role="status" type="supporting" color="secondary">
                       {expired
@@ -759,7 +803,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                   id="npg-inline-results"
                   hidden={!resultsOpen}
                   padding={4}
-                  className="npg-inline-results"
+                  className="npg-inline-results max-md:px-0"
                 >
                   <Evidence sources={conversation?.sources ?? []} />
                 </Section>
@@ -769,7 +813,8 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
         </VStack>
         {!narrow && (
           <Section
-            className="npg-evidence"
+            className="npg-evidence w-80 shrink-0 overflow-auto min-w-0"
+            height="100%"
             padding={6}
             dividers={['start']}
             aria-label="Results and evidence"

@@ -6,7 +6,7 @@ import '@astryxdesign/core/reset.css';
 import '@astryxdesign/core/astryx.css';
 import '@astryxdesign/theme-neutral/theme.css';
 import './fonts.css';
-import './workspace.css';
+import 'tailwindcss/utilities.css';
 import { Workspace } from './Workspace';
 import type { NpgBootstrap } from './types';
 const target = document.getElementById('npg-app');

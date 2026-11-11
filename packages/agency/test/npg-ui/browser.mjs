@@ -43,7 +43,11 @@ async function gotoState(page, state) {
     const history = page.locator('.history-item').first();
     if (!(await history.isVisible())) await page.getByTestId('mobile-nav-toggle').click();
     await history.click();
-    await expect(page.getByRole('textbox', { name: 'Your question' })).toBeFocused();
+    if (['review', 'expired', 'enrichment'].includes(state))
+      await expect(
+        page.getByRole('heading', { name: 'Review the exact action', exact: true })
+      ).toBeFocused();
+    else await expect(page.getByRole('textbox', { name: 'Your question' })).toBeFocused();
     await expect(page.locator('.npg-thread-title')).toHaveText(
       'Find NPs near Springfield, MO, and keep the complete CSV.'
     );
@@ -65,6 +69,28 @@ async function disclosureHasClearBody(page, button) {
     .toBeGreaterThanOrEqual(0);
 }
 try {
+  await scenario(
+    'large saved evidence retains review focus after the render commits',
+    async (page) => {
+      const session = await page.context().newCDPSession(page);
+      await session.send('Emulation.setCPUThrottlingRate', { rate: 8 });
+      await page.route('**/healthcare-analyst/api?*', async (route) => {
+        const response = await route.fetch();
+        const view = await response.json();
+        view.sources = Array.from({ length: 20 }, (_, index) => ({
+          tool: 'get_healthcare_coverage',
+          data: { total: index, limitation: 'Synthetic source evidence. '.repeat(200) }
+        }));
+        await route.fulfill({ response, json: view });
+      });
+      await gotoState(page, 'review');
+      await expect(
+        page.getByRole('heading', { name: 'Review the exact action', exact: true })
+      ).toBeInViewport();
+      assert.deepEqual(await commands(page), []);
+      await session.detach();
+    }
+  );
   for (const viewport of [
     { width: 390, height: 844 },
     { width: 320, height: 568 }

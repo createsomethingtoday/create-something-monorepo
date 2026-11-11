@@ -1,0 +1,14 @@
+[
+  {
+    "name": "actual pointer rejection at 1440x900",
+    "passed": true
+  },
+  {
+    "name": "actual pointer rejection at 390x667",
+    "passed": true
+  },
+  {
+    "name": "actual pointer rejection at 320x568",
+    "passed": true
+  }
+]

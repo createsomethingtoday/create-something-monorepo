@@ -2,7 +2,7 @@
 
 The operator explicitly selected a full migration to [Meta Astryx](https://astryx.atmeta.com/) on 2026-11-11, then requested iconography and typography polish. NPG now has a complete React/Astryx interface at its existing private Agency URL. This replaces the unpublished Svelte renderer; the existing owned NPG backend remains authoritative.
 
-Implementation checkout: `/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144`, branch `t3/npg-custom-chat`. The shared root checkout was not edited. CRE-2409 remains In Progress; parent owns independent final Sol 6.1 review, PR/release, authenticated live validation, and activation. This implementation pass performs no commit, push, PR, deploy, model/MCP/vendor call, credential change, grant, invitation, or Dify archival.
+Implementation checkout: `/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144`, branch `t3/npg-custom-chat`. The shared root checkout was not edited. CRE-2409 remains In Progress. Independent final Sol 6.1 review passed locally; [PR2252](https://github.com/createsomethingtoday/create-something-monorepo/pull/2252) carries the release candidate. Parent still owns promotion, authenticated live validation and activation. No production deploy, model/MCP/vendor call, credential change, grant, invitation or Dify archival occurred in this UI pass.
 
 ## Acceptance and implementation
 
@@ -14,7 +14,7 @@ This serves Automation (operator interface), Database (owner-scoped history/evid
 | Private same-origin document | Exact NPG route uses a SvelteKit GET endpoint returning its own HTML document and content-addressed React/CSS assets. The API remains its existing sibling. Identity hooks and `requireNpgUser` still run; disabled chat retains the fixed Dify redirect. Private/no-store/noindex/referrer headers are established before route guards and on success. |
 | Isolated styles | Astryx reset, base, Neutral theme, and local font CSS belong only to the separate NPG document. No Astryx CSS is imported by the Agency layout. Normal Agency routes keep their existing frame. No iframe or shadow-root focus/theme workaround. |
 | Useful history and drafts | Existing owner-and-NPG-scoped SQL title projection remains. First-question titles are bounded; no extra model call. Drafts are owner/conversation-scoped, bounded string values; null/arrays/numbers/malformed caches recover safely. Immediate in-flight ref lock suppresses duplicate operations. A next draft typed during conversation creation and model waiting survives. |
-| Exact reviews | Provider/scope/cost/allowance and exact NPIs/addresses/limits remain visible before one approve/reject pair. Expiry disables approval; reject remains available. Client sends only existing ID/version/action ID/decision. Review opens at its heading after Astryx initial layout; mobile history waits for native drawer close before focusing the composer. Narrow evidence controls stay below the title, preserving readable product identity; the helper/composer sits on an actual Astryx surface. Disclosure bodies use non-bleeding stack padding so labels do not overlap their triggers. |
+| Exact reviews | Provider/scope/cost/allowance and exact NPIs/addresses/limits remain visible before one approve/reject pair. Expiry disables approval; reject remains available. Client sends only existing ID/version/action ID/decision. Review opens at its heading after Astryx initial layout; mobile history waits for native drawer close, then focuses a pending review heading or an idle composer after React commits the returned view. Narrow evidence controls stay below the title, preserving readable product identity; the helper/composer sits on an actual Astryx surface. Disclosure bodies use non-bleeding stack padding so labels do not overlap their triggers. |
 | Honest recovery | The submitted question and real nonstreaming waiting state remain visible. No simulated tokens, thought trace, tool progress, Stop, always-allow, or auto-resend. Interrupted/ambiguous/running states require readback/reconciliation; errors retain the draft. |
 | Readable evidence | Nested snapshot and query taxonomy/date/completeness/limits are projected without replacing query totals with broad snapshot counts. Registry/readiness and matched-only vendor sections stay separate. Unknown qualifications, contact authority, consent and unresolved locations remain explicit. Up to five source records preview; original JSON remains inspectable. Full safe CSV query parameters are retained; a CSV is not claimed when no URL was returned. |
 | Responsive accessibility | AppShell owns the sole main **landmark** and skip link (its main is a `div role="main"`, not a literal main tag). Mobile history uses Astryx's native dialog; evidence flows inside the chat scroller and cannot consume the review's height. Short-phone cases, keyboard/IME/newlines, reduced motion, and truthful no-JS fallback are tested. Desktop emulation does not establish native software-keyboard acceptance. |
@@ -63,9 +63,30 @@ The synthetic HTTP fixture serves the **actual built production React bundle** a
 
 Useful regressions demonstrated red before correction: pending-review heading scrolled above clip; mobile drawer's delayed close swallowed composer focus/keyboard send; explicit TSX validation caught invalid icon-slot/wrap API values. Existing parent red/green draft-shape and canonical-source projection regressions remain. New document tests cover hostile bootstrap escaping, invalid asset paths, private owner-scoped initial data, guards/headers, and retained Dify redirect.
 
-Doctor currently reports zero failures. Its package-root agent-doc warning reflects intentionally scoped generated instructions. The source audit also flags custom classes and local CSS imports for region geometry, data wrapping, local fonts and reduced motion; these are reported warnings, not hidden zero-debt claims. The compiled-output inspection cannot assess JSX purity or aesthetics. Actual browser/render review is a separate gate.
+Doctor remains a heuristic and its warnings are retained: required font/framework setup imports and utility/test classes still trigger its source audit. They do not exempt custom component CSS from the scoped contract. The review follow-up removes that stylesheet, enforces font-face-only local CSS with a PostCSS AST regression, and verifies that compiled output has no custom NPG selectors. Actual browser/render review remains a separate gate.
 
-## Final local receipts
+## Current local receipts — PR review follow-up
+
+PR2252 review [4543151736](https://github.com/createsomethingtoday/create-something-monorepo/pull/2252#discussion_r4543151736) correctly identified the custom workspace stylesheet as a scoped Astryx-contract violation. `workspace.css` and its import are removed. Actual stack sizing, Section dividers, Divider separators and Text code roles own their component behavior; a dedicated Tailwind utility build provides wrapping and framework layout tokens. Only required local `@font-face` setup remains. The Agency Tailwind configuration, backend and provider policy are unchanged.
+
+Current client is `/npg-chat/assets/main-qaMUh4q_.js`, stylesheet `/npg-chat/assets/main-Cn_sAb1H.css`. Current evidence is in [review-css-contract](./evidence/npg-astryx-2026-11-11/review-css-contract/); the earlier receipts below are historical. The CSS-contract test failed before repair. A short-screen regression exposed competing composer focus; pending decisions now receive the focus. A throttled-render regression then demonstrated that a frame callback could precede React's commit for large saved evidence; focus intent is now consumed in a post-commit layout effect, without an arbitrary delay.
+
+- **61 focused tests** and explicit TSX checks passed.
+- **27 exact-built browser scenarios** passed, including the CPU-throttled saved-evidence focus regression, six widths, both short phones, source disclosures, drafts, no-JS and reduced-motion states.
+- Independent final Sol 6.1 re-test passed the same 61 functional and 27 browser checks, plus **15 keyboard/state checks, four wrapping/no-JS checks and three actual-pointer rejection checks**. No local acceptance finding remains. [Independent report](./evidence/npg-astryx-2026-11-11/review-css-contract/independent-review.md), [exact artifact](./evidence/npg-astryx-2026-11-11/review-css-contract/artifact.json).
+- Full Agency check passed after the styling refactor; the final affected checks and full production build cover the commit-aware focus follow-up.
+- Independent final re-test and current exact-byte artifact receipts are retained in the current evidence folder. Production activation, live Identity/account/source/CSV acceptance, other browser families and native software keyboards remain separate checks.
+
+| Quality gate | Status | Limit |
+| --- | --- | --- |
+| Functional correctness | Passed locally | Synthetic D1/provider fixtures and actual built React browser output; no live model/MCP/provider call. |
+| Perceptual/product quality | Passed for viewed local output | Parent Ego mobile review and independent actual-output inspection; production/human acceptance remains outstanding. |
+| Release readiness | Untested in production | Normal PR review/CI, merge, deployment, binding activation/readback and authenticated live parity remain. Dify is retained. |
+
+<details>
+<summary>Initial candidate receipts before the CSS-contract review</summary>
+
+### Initial candidate receipts (historical)
 
 Final built client: `/npg-chat/assets/main-B2uKRhwl.js`; stylesheet: `/npg-chat/assets/main-B8wNAXfF.css`. [Artifact hashes](evidence/npg-astryx-2026-11-11/artifact-sha256.json) identify the actual bytes. Source remains uncommitted relative to `5c0798c3e` for parent integration; this is not a deployment receipt.
 
@@ -85,11 +106,14 @@ Builder directly viewed the final [short phone](evidence/npg-astryx-2026-11-11/m
 | Perceptual/product quality | Passed for viewed fixtures | Actual final desktop/mobile/source/review output was viewed; targeted red/green fixes resolved mobile identity, opacity, placeholder and disclosure geometry. Native software keyboards and human/client acceptance remain untested. |
 | Release readiness | Untested | Parent owns independent final Sol review integration, PR/check/review/merge/deploy, authenticated current-origin parity, actual deployed binding/artifact readback, and activation. No release or Dify archival occurred in this pass. |
 
+
+</details>
+
 ## Release and rollback boundary
 
 No backend runner, provider, published V8 judgment, Canon credential/model selection, owner policy, exact approval ledger, readiness/budget guard, MCP/export implementation, or database schema is changed by the Astryx migration. No paid action is required as QA.
 
-Parent must finish independent Sol 6.1 re-test against the final asset, normal PR/check/review/merge/deploy, authenticated same-origin production behavior, source/CSV parity, account-route round-trip, and activation readback. A build or synthetic browser pass does not establish live model/provider behavior. Enrichment remains unavailable when live readiness/cost/shared-allowance evidence is missing.
+Independent Sol 6.1 re-test against the current final asset passed. Parent must finish normal PR/check/review/merge/deploy, authenticated same-origin production behavior, source/CSV parity, account-route round-trip, and activation readback. A build or synthetic browser pass does not establish live model/provider behavior. Enrichment remains unavailable when live readiness/cost/shared-allowance evidence is missing.
 
 UI rollback reverses the scoped Astryx change and restores the previous renderer through the normal release path. Runtime rollback remains `NPG_HEALTHCARE_CHAT_ENABLED=false` with the retained Dify URL, followed by a fresh deployment/readback; it does not erase saved conversations or paid-action outcomes. Dify remains available and is not archived.
 
@@ -97,7 +121,7 @@ Earlier `docs/evidence/npg-chat-2026-11-11/` captures are **historical Svelte fi
 
 Worktree disposition: **preserved at `/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144`, branch `t3/npg-custom-chat`, for parent integration and release.**
 
-## Parent independent acceptance checkpoint
+## Initial parent independent acceptance checkpoint (historical)
 
 Independent final Sol 6.1 review found no remaining local acceptance defect on `main-B2uKRhwl.js` / `main-B8wNAXfF.css`: focused60/60, exact-built browser26/26, supplemental15/15 and explicit TSX validation passed. Final captures were directly viewed across all six widths, both short phones, canonical/SkipTrace evidence and key conversation/recovery states. Parent separately viewed the actual final application in Ego at390×844 and320×568, with full identity, opaque composer/helper, readable evidence and no overflow. Expanded registry/vendor evidence was directly inspected in the independent final captures.
 

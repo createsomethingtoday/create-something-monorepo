@@ -1,11 +1,29 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFileSync, readdirSync } from 'node:fs';
+import { parse } from 'postcss';
 import { renderNpgDocument } from '../src/lib/server/npg/document.ts';
 import { GET } from '../src/routes/delivery/abundance/healthcare-analyst/+server.ts';
 const assets = {
   script: '/npg-chat/assets/main-safe.js',
   styles: ['/npg-chat/assets/main-safe.css']
 };
+test('Astryx workspace uses component props and framework utilities without custom selector CSS', () => {
+  const folder = new URL('../src/lib/npg/astryx/', import.meta.url);
+  const entry = readFileSync(new URL('main.tsx', folder), 'utf8');
+  assert.deepEqual(entry.match(/import\s+['"]\.\/[^'"]+\.css['"]/g), ["import './fonts.css'"]);
+  assert.match(entry, /import ['"]tailwindcss\/utilities\.css['"]/);
+  assert.deepEqual(
+    readdirSync(folder).filter((name) => name.endsWith('.css')),
+    ['fonts.css']
+  );
+  // Local font-face declarations are setup; component selector rules are not.
+  const fonts = parse(readFileSync(new URL('fonts.css', folder), 'utf8'));
+  fonts.walkRules((rule) =>
+    assert.fail(`Use Astryx props or utilities instead of ${rule.selector}`)
+  );
+  fonts.walkAtRules((rule) => assert.equal(rule.name, 'font-face'));
+});
 test('private document serializes untrusted titles as data, with one truthful no-JS main', () => {
   const title = '</script><script>alert("x")</script>&\u2028';
   const boot = {
