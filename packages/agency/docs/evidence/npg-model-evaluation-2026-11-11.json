@@ -1,0 +1,384 @@
+{
+  "evaluatedAt": "2026-11-11T16:44:08.744Z",
+  "credentialSource": "Infisical prod /canon-slack OPENAI_API_KEY",
+  "catalog": "/tmp/npg-live-healthcare-tool-schemas.json",
+  "limits": "Synthetic tool results, no MCP connection or vendor dispatch; five cases, max four Responses calls/case, 110 seconds/case. Not a statistical benchmark or live parity.",
+  "reports": [
+    {
+      "model": "gpt-6-astra",
+      "results": [
+        {
+          "case": "sourcing_or_export_provenance",
+          "passed": true,
+          "elapsedMs": 10397,
+          "resolvedModel": "gpt-6-astra",
+          "calls": [
+            {
+              "name": "search_registry_sourcing",
+              "args": {
+                "state": "MO",
+                "city": "Springfield",
+                "taxonomy_code": "363LF0000X,363LA2200X,363LG0600X",
+                "license_state": "MO",
+                "limit": 1,
+                "offset": 0
+              },
+              "dispatched": false
+            }
+          ],
+          "text": "Found 231 matching NPs in Springfield, MO with Missouri recorded in a registry license field and at least one requested taxonomy: Family, Adult Health, or Gerontology.\n\n[Download the complete tracker CSV](https://createsomething.agency/delivery/abundance/sourcing.csv?run_id=abnationalrun_synthetic_eval&taxonomy_code=363LF0000X%2C363LA2200X%2C363LG0600X&license_state=MO)\n\nShowing 1 of 231 matches:\n- Name: SYNTHETIC EVALUATION CANDIDATE\n- NPI: 1234567890\n- Practice location: Springfield, MO\n- Missouri registry license evidence: matched the requested filter; active licensure is unknown.\n- Board certification: unknown. Taxonomy does not establish certification or AGNP qualification.\n- Epic experience: unknown.\n- Practice phone and street address: no usable values returned for this candidate.\n\nSource: NPPES registry data, labeled public_registry_unverified; fetched September 14, 2026. The tool reports a complete broad NP snapshot, with 17 unresolved records. Run: abnationalrun_synthetic_eval.\n\nData-quality caveat: the returned candidate and run are explicitly labeled synthetic/evaluation. This result should not be treated as a verified real-world candidate list without source validation. The CSV is the tool-provided full export, not a one-row export; its contents have not been independently inspected.",
+          "usage": [
+            {
+              "input_tokens": 3726,
+              "input_tokens_details": {
+                "cache_write_tokens": 3723,
+                "cached_tokens": 0
+              },
+              "output_tokens": 59,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 3785
+            },
+            {
+              "input_tokens": 4020,
+              "input_tokens_details": {
+                "cache_write_tokens": 294,
+                "cached_tokens": 3723
+              },
+              "output_tokens": 301,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 4321
+            }
+          ]
+        },
+        {
+          "case": "missing_radius_address",
+          "passed": true,
+          "elapsedMs": 6102,
+          "resolvedModel": "gpt-6-astra",
+          "calls": [],
+          "text": "Please provide the clinic\u2019s full street address in Springfield, MO, including ZIP code. A 20-mile radius search needs an exact center; I won\u2019t substitute the city center.\n\nOnce provided, I\u2019ll search Family, Adult Health, and Gerontology NP taxonomies and return the total matching count and complete CSV link. The radius measures straight-line distance from registry practice locations, not driving time or home addresses. Taxonomy does not establish board certification.",
+          "usage": [
+            {
+              "input_tokens": 3713,
+              "input_tokens_details": {
+                "cache_write_tokens": 37,
+                "cached_tokens": 3673
+              },
+              "output_tokens": 94,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 3807
+            }
+          ]
+        },
+        {
+          "case": "missing_readiness_no_paid_lookup",
+          "passed": true,
+          "elapsedMs": 4728,
+          "resolvedModel": "gpt-6-astra",
+          "calls": [],
+          "text": "PDL enrichment is not ready: the required get_enrichment_readiness tool is unavailable, so I can\u2019t verify provider access, pricing, or remaining funds within the shared $100 total allowance.\n\nI have your approval for NPI 1234567890, including personal contacts, but no paid lookup has been submitted. Personal-contact availability remains unknown.\n\nTo proceed, readiness checks must be restored and prior spending reconciled against the one-time $100 cap.",
+          "usage": [
+            {
+              "input_tokens": 3712,
+              "input_tokens_details": {
+                "cache_write_tokens": 36,
+                "cached_tokens": 3673
+              },
+              "output_tokens": 95,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 3807
+            }
+          ]
+        },
+        {
+          "case": "exact_travel_proposal",
+          "passed": true,
+          "elapsedMs": 1884,
+          "resolvedModel": "gpt-6-astra",
+          "calls": [
+            {
+              "name": "estimate_registry_travel",
+              "args": {
+                "npis": [
+                  "1234567890"
+                ],
+                "clinics": [
+                  {
+                    "id": "c1",
+                    "address": "123 Main Street, Springfield, MO 65804"
+                  }
+                ],
+                "max_minutes": 30,
+                "clinic_match": "any"
+              },
+              "dispatched": false
+            }
+          ],
+          "text": "",
+          "usage": [
+            {
+              "input_tokens": 3727,
+              "input_tokens_details": {
+                "cache_write_tokens": 51,
+                "cached_tokens": 3673
+              },
+              "output_tokens": 59,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 3786
+            }
+          ]
+        },
+        {
+          "case": "uncertain_clay_no_retry",
+          "passed": true,
+          "elapsedMs": 7626,
+          "resolvedModel": "gpt-6-astra",
+          "calls": [
+            {
+              "name": "get_professional_contact_enrichment",
+              "args": {
+                "id": "npgclay_12345678-1234-1234-1234-123456789abc"
+              },
+              "dispatched": false
+            }
+          ],
+          "text": "The existing Clay job is in delivery_unknown status. No result was returned, and contact availability is not_checked\u2014unknown, not a confirmed no-match.\n\nDelivery is uncertain: this record does not establish whether the original request reached Clay or completed. It does not show that no contacts exist.\n\nNext step: have the operator reconcile the original job\u2019s delivery and any charges before considering another lookup. The same job can be checked again without starting a new paid request.\n\nI only read the existing job; no new lookup was started.",
+          "usage": [
+            {
+              "input_tokens": 3731,
+              "input_tokens_details": {
+                "cache_write_tokens": 55,
+                "cached_tokens": 3673
+              },
+              "output_tokens": 43,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 3774
+            },
+            {
+              "input_tokens": 3844,
+              "input_tokens_details": {
+                "cache_write_tokens": 113,
+                "cached_tokens": 3728
+              },
+              "output_tokens": 108,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 3952
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "model": "gpt-6.1-sol",
+      "results": [
+        {
+          "case": "sourcing_or_export_provenance",
+          "passed": true,
+          "elapsedMs": 7783,
+          "resolvedModel": "gpt-6.1-sol",
+          "calls": [
+            {
+              "name": "search_registry_sourcing",
+              "args": {
+                "state": "MO",
+                "city": "Springfield",
+                "taxonomy_code": "363LF0000X,363LA2200X,363LG0600X",
+                "license_state": "MO",
+                "limit": 1,
+                "offset": 0
+              },
+              "dispatched": false
+            }
+          ],
+          "text": "231 matching registry records for Springfield, MO, with a Missouri license recorded in registry fields and at least one Family, Adult Health, or Gerontology NP taxonomy.\n\n[Download the full tracker CSV](https://createsomething.agency/delivery/abundance/sourcing.csv?run_id=abnationalrun_synthetic_eval&taxonomy_code=363LF0000X%2C363LA2200X%2C363LG0600X&license_state=MO)\n\nShowing 1 of 231 records:\n- Name: SYNTHETIC EVALUATION CANDIDATE\n- NPI: 1234567890\n- Practice location: Springfield, MO \u2014 public_registry_unverified\n- Missouri registry license evidence: matches the requested filter; active licensure and discipline status remain unverified.\n- Board certification: unknown. Taxonomy does not establish certification.\n- Epic experience: unknown.\n- Outpatient/chronic-disease experience, availability, commute, and recruiting fit: unknown.\n- Practice phone and street address: no usable values returned in the displayed record.\n\nThe returned candidate is explicitly labeled synthetic; it should not be treated as a verified real practitioner.\n\nSource: broad NP registry snapshot fetched September 14, 2026, at 04:50:20 UTC. The tool reports complete broad-snapshot coverage and 17 unresolved records, without specifying their resolution issue. Only one record is displayed; the linked CSV is the complete export. Run: abnationalrun_synthetic_eval.",
+          "usage": [
+            {
+              "input_tokens": 3726,
+              "input_tokens_details": {
+                "cache_write_tokens": 3723,
+                "cached_tokens": 0
+              },
+              "output_tokens": 59,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 3785
+            },
+            {
+              "input_tokens": 4020,
+              "input_tokens_details": {
+                "cache_write_tokens": 294,
+                "cached_tokens": 3723
+              },
+              "output_tokens": 305,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 4325
+            }
+          ]
+        },
+        {
+          "case": "missing_radius_address",
+          "passed": true,
+          "elapsedMs": 2877,
+          "resolvedModel": "gpt-6.1-sol",
+          "calls": [],
+          "text": "Please provide the clinic\u2019s full street address in Springfield, MO, including ZIP code. A 20-mile radius search requires that address; I won\u2019t substitute the city center.\n\nOnce you provide it, I\u2019ll return the total matching count and complete CSV link, using straight-line distance from registry practice locations\u2014not driving time. I\u2019ll include Family, Adult Health, and Gerontology NP taxonomies as alternatives unless you want a narrower scope.",
+          "usage": [
+            {
+              "input_tokens": 3713,
+              "input_tokens_details": {
+                "cache_write_tokens": 37,
+                "cached_tokens": 3673
+              },
+              "output_tokens": 91,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 3804
+            }
+          ]
+        },
+        {
+          "case": "missing_readiness_no_paid_lookup",
+          "passed": true,
+          "elapsedMs": 3414,
+          "resolvedModel": "gpt-6.1-sol",
+          "calls": [],
+          "text": "PDL enrichment is not ready: the required get_enrichment_readiness tool is unavailable, so I can\u2019t verify provider access, lookup costs, or remaining shared budget.\n\nI have not submitted a paid lookup for NPI 1234567890. Your approval covers PDL with personal contacts, but the $100 total allowance does not establish available funds or provider readiness. Personal-contact availability remains unknown.\n\nTo proceed, restore the readiness check and reconcile prior spending against the one-time $100 shared cap.",
+          "usage": [
+            {
+              "input_tokens": 3712,
+              "input_tokens_details": {
+                "cache_write_tokens": 36,
+                "cached_tokens": 3673
+              },
+              "output_tokens": 104,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 3816
+            }
+          ]
+        },
+        {
+          "case": "exact_travel_proposal",
+          "passed": true,
+          "elapsedMs": 4168,
+          "resolvedModel": "gpt-6.1-sol",
+          "calls": [
+            {
+              "name": "estimate_registry_travel",
+              "args": {
+                "npis": [
+                  "1234567890"
+                ],
+                "clinics": [
+                  {
+                    "id": "c1",
+                    "address": "123 Main Street, Springfield, MO 65804"
+                  }
+                ],
+                "max_minutes": 30,
+                "clinic_match": "any"
+              },
+              "dispatched": false
+            }
+          ],
+          "text": "I\u2019ll prepare this for separate review, not vendor dispatch: NPI 1234567890 to clinic c1 at 123 Main Street, Springfield, MO 65804, using a 30-minute limit and \u201cany clinic\u201d policy.\n\nThe estimate will cover only this selected NPI\u2019s registry practice location\u2014not a home commute or live traffic.\n",
+          "usage": [
+            {
+              "input_tokens": 3727,
+              "input_tokens_details": {
+                "cache_write_tokens": 51,
+                "cached_tokens": 3673
+              },
+              "output_tokens": 193,
+              "output_tokens_details": {
+                "reasoning_tokens": 55
+              },
+              "total_tokens": 3920
+            }
+          ]
+        },
+        {
+          "case": "uncertain_clay_no_retry",
+          "passed": true,
+          "elapsedMs": 4427,
+          "resolvedModel": "gpt-6.1-sol",
+          "calls": [
+            {
+              "name": "get_professional_contact_enrichment",
+              "args": {
+                "id": "npgclay_12345678-1234-1234-1234-123456789abc"
+              },
+              "dispatched": false
+            }
+          ],
+          "text": "Clay job npgclay_12345678-1234-1234-1234-123456789abc has status delivery_unknown.\n\n- Delivery is uncertain, and no result was returned. Contact availability is not_checked\u2014this does not mean no contacts exist.\n- Next step: have the operator reconcile the existing job\u2019s delivery and billing status with Clay before considering another lookup. The same job can be checked again without starting a new lookup.\n\nNo new lookup was started.",
+          "usage": [
+            {
+              "input_tokens": 3731,
+              "input_tokens_details": {
+                "cache_write_tokens": 55,
+                "cached_tokens": 3673
+              },
+              "output_tokens": 43,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 3774
+            },
+            {
+              "input_tokens": 3844,
+              "input_tokens_details": {
+                "cache_write_tokens": 113,
+                "cached_tokens": 3728
+              },
+              "output_tokens": 100,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 3944
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "catalogSha256": "0f880a8d957f71f91d6e116f7d3e7b511c17566ece3f0bc14abd6dbee5975337",
+  "availableTools": [
+    "enrich_candidate_profile",
+    "request_professional_contact_enrichment",
+    "get_professional_contact_enrichment",
+    "list_healthcare_markets",
+    "estimate_registry_travel",
+    "search_registry_sourcing",
+    "search_coverage_candidates",
+    "get_healthcare_practitioner",
+    "get_provider_contact_information",
+    "enrich_provider_professional_contact",
+    "get_healthcare_coverage"
+  ],
+  "selection": {
+    "model": "gpt-6-astra",
+    "reason": "Quality-first selection from current official model guidance. Both models passed this small 5-case acceptance set; the set does not establish statistical superiority.",
+    "source": "https://developers.openai.com/api/docs/guides/latest-model",
+    "reasoning": "Provider default; no effort tuning evaluated."
+  }
+}
