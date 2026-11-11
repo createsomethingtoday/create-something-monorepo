@@ -71,7 +71,7 @@
 		<p class="auth-eyebrow">Your account</p>
 		<h1 id="auth-heading">Sign in to your workspace.</h1>
 		<p class="auth-summary">
-			Access your projects, tools, and account with your CREATE SOMETHING credentials.
+			Use your CREATE SOMETHING credentials to manage your profile and tool access.
 		</p>
 	</section>
 
@@ -102,10 +102,9 @@
 
 <style>
 	.auth-shell {
-		width: min(76rem, calc(100% - clamp(2rem, 12vw, 10rem)));
-		min-height: calc(100vh - 8rem);
+		width: min(1760px, 94%);
 		margin: 0 auto;
-		padding: clamp(2rem, 7vw, 6rem) 0;
+		padding: 0 0 clamp(3rem, 7vw, 6rem);
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) minmax(20rem, 28rem);
 		align-items: start;
@@ -114,21 +113,22 @@
 
 	.auth-context {
 		border-top: 1px solid var(--color-performance-line);
-		padding-top: var(--space-performance-md);
+		padding: var(--space-performance-md) 0 0;
 	}
 
 	.auth-status {
 		display: flex;
 		flex-wrap: wrap;
-		gap: var(--space-performance-sm) var(--space-performance-lg);
+		gap: var(--space-performance-sm);
 		font-family: var(--font-performance-mono);
-		font-size: var(--text-performance-caption);
-		letter-spacing: 0.06em;
+		font-size: 11px;
+		letter-spacing: 0.045em;
 		text-transform: uppercase;
 	}
 
 	.auth-status {
 		justify-content: space-between;
+		align-items: center;
 	}
 
 	.status-label,
@@ -138,10 +138,13 @@
 
 	.status-value {
 		color: var(--color-performance-muted);
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
 	}
 
 	.auth-eyebrow {
-		margin: clamp(3rem, 8vw, 7rem) 0 var(--space-performance-sm);
+		margin: clamp(2rem, 4vw, 4rem) 0 var(--space-performance-sm);
 		font-family: var(--font-performance-mono);
 		font-size: var(--text-performance-caption);
 		letter-spacing: 0.08em;
@@ -154,7 +157,7 @@
 		color: var(--color-performance-ink);
 		font-family: var(--font-performance-sans);
 		font-size: clamp(2.5rem, 5vw, 4.5rem);
-		font-weight: var(--font-performance-bold);
+		font-weight: 500;
 		letter-spacing: -0.055em;
 		line-height: 1.08;
 	}
@@ -211,11 +214,14 @@
 		.auth-summary { margin-block: var(--space-performance-md) 0; }
 
 		.auth-eyebrow {
-			margin-top: var(--space-performance-lg);
+			margin-top: var(--space-performance-md);
 		}
 
 		h1 {
 			font-size: clamp(2rem, 9vw, 3rem);
 		}
+	}
+	@media (max-width: 700px) {
+		.auth-shell { width: 88%; }
 	}
 </style>

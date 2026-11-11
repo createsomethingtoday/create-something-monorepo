@@ -36,7 +36,7 @@
   } from '$lib/atlas/surface-policy';
   import { marketingPagePortfolio } from '$lib/data/marketingPages';
 
-  import { usesAgencyMeasuredPublicSurface, usesAgencyOperatorPalette } from '$lib/data/publicSurfacePolicy';
+  import { usesAgencyMeasuredAccountSurface, usesAgencyMeasuredPublicSurface, usesAgencyOperatorPalette } from '$lib/data/publicSurfacePolicy';
 
   let { children, data } = $props();
   const usesOperatorPalette = $derived(
@@ -45,6 +45,7 @@
   const usesMeasuredPublicSurface = $derived(
     usesAgencyMeasuredPublicSurface($page.url.pathname)
   );
+  const usesMeasuredAccountSurface = $derived(usesAgencyMeasuredAccountSurface($page.url.pathname));
   let mobileNavigationOpen = $state(false);
   const pageFoundation = $derived($page.status < 400 ? getAgencyPageFoundation($page.url.pathname, $page.url.pathname === '/book' ? $page.url.searchParams.get('intent') : null) : null);
 
@@ -108,8 +109,8 @@
     const product = getPublicProduct(id);
     return { label: product.shortName, href: product.route };
   });
-  // Public pages share one navigation; workspace and identity routes retain their existing shell.
-  const usesPublicNavigation = $derived(!/^\/(account|admin|dashboard|login|logout|auth|mcp-access|delivery)(?:\/|$)/.test($page.url.pathname) && !/^\/map\/(workspace|subscribe|share)(?:\/|$)/.test($page.url.pathname));
+  // Public pages and approved account entries share Agency navigation; other workspaces retain their shell.
+  const usesPublicNavigation = $derived(usesMeasuredAccountSurface || (!/^\/(account|admin|dashboard|login|logout|auth|mcp-access|delivery)(?:\/|$)/.test($page.url.pathname) && !/^\/map\/(workspace|subscribe|share)(?:\/|$)/.test($page.url.pathname)));
   const filmNavLinks = [
     { label: 'The work', href: '/#built-work' },
     { label: 'Technical support', href: '/services' },
@@ -331,7 +332,7 @@
     showNewsletter={false}
     aboutText="AI-native technical support for your tools and workflows. We diagnose problems, engineer improvements, and help your team use what we deliver."
     quickLinkGroups={usesPublicNavigation ? filmFooterGroups : footerQuickLinkGroups}
-    footerCta={routeOwnsPerformanceEnding
+    footerCta={routeOwnsPerformanceEnding || usesMeasuredAccountSurface
       ? undefined
       : {
           title: 'Ready to put AI to work on a useful task?',
@@ -353,7 +354,7 @@
 <LayoutSEO property="agency" />
 <PageAnnotations pathname={$page.url.pathname} />
 
-<div class="agency-surface" data-canon-palette={usesOperatorPalette ? "operator" : undefined} data-agency-brand={usesMeasuredPublicSurface ? "measured" : undefined}>
+<div class="agency-surface" data-canon-palette={usesOperatorPalette ? "operator" : undefined} data-agency-brand={usesMeasuredPublicSurface || usesMeasuredAccountSurface ? "measured" : undefined} data-agency-account={usesMeasuredAccountSurface ? "true" : undefined}>
 <PrivacyAnalytics
   property="agency"
   userId={data.user?.id}
@@ -398,7 +399,7 @@
     {#if pageFoundation}
       {#key $page.url.pathname}<AgencyPageWayfinding foundation={pageFoundation} />{/key}
     {/if}
-    {#if usesPublicNavigation && $page.url.pathname !== '/' && $page.url.pathname !== '/openai-dots' && $page.url.pathname !== '/dental-ai-agents' && !isAgencyWebflowPortfolioPath($page.url.pathname)}
+    {#if usesPublicNavigation && !usesMeasuredAccountSurface && $page.url.pathname !== '/' && $page.url.pathname !== '/openai-dots' && $page.url.pathname !== '/dental-ai-agents' && !isAgencyWebflowPortfolioPath($page.url.pathname)}
       <AgencyPageTreatment />
     {/if}
     {@render children()}
@@ -414,7 +415,7 @@
     {@render agencyFooter()}
   {/if}
 
-  {#if !routeOwnsPerformanceEnding && $page.url.pathname !== '/basketball-systems-lab' && !isDifyArticleRoute}
+  {#if !usesMeasuredAccountSurface && !routeOwnsPerformanceEnding && $page.url.pathname !== '/basketball-systems-lab' && !isDifyArticleRoute}
     <ModeIndicator current="agency" />
   {/if}
 </div>
