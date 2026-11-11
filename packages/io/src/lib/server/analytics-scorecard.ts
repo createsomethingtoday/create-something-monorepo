@@ -75,7 +75,8 @@ function eventClassification(e: ReportEvent): 'external' | 'unknown' | 'excluded
     )
       return 'excluded';
     if (normalizeAnalyticsPath(url.pathname) === '/[redacted]') return 'excluded';
-    // A public page carrying credentials is private traffic too. All query strings are discarded.
+    // Defense for legacy/raw rows retaining a query. Current ingestion strips queries;
+    // known credential-backed pathnames must be excluded above using persisted evidence.
     if (
       [...url.searchParams.keys()].some((k) =>
         /token|secret|password|email|code|key|credential|session|signature|access|invite|recipient/i.test(
@@ -217,7 +218,7 @@ export async function readWeeklyScorecard(
     daily: [],
     limitations: [
       'Public first-party sessions are not unique people. External is a traffic classification, not proof of a human. Unknown remains unclassified; consent and instrumentation gaps remain.',
-      'Classification uses the most restrictive observed event per session across both windows. Private, tokenized, noncanonical, internal, test, preview and recognized automated traffic is excluded. Unmarked automation can remain.',
+      'Classification uses the most restrictive observed event per session across both windows. Known private/tokenized routes, visible credential-bearing URLs, noncanonical, internal, test, preview and recognized automated traffic are excluded. Ingestion strips queries, so historical credential contexts on otherwise public paths cannot be reconstructed. Unmarked automation can remain.',
       'Periods are complete UTC days with equal prior windows and exclusive ends. Source freshness is the latest read record, not proof that ingestion is healthy.',
       'No cross-property identity join, retention, causal attribution, or combined audience total. Cloudflare visits are a separate measurement and are not added.',
       'Newsletter requests and once-only confirmations are independently dated, not a cohort conversion rate. Opens, email click rates and replies are unavailable. Delivery ledger states are not fresh provider readback.',

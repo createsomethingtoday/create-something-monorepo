@@ -463,3 +463,93 @@ test('newsletter resource use honors each reviewed campaign landing in the same 
   assert.equal(metric(report, 'newsletter-landings').current, 1);
   assert.equal(metric(report, 'newsletter-resourceUse').current, 1);
 });
+
+test('persisted credential routes exclude the whole session after real ingestion strips query secrets', async () => {
+  const { processEventBatch } = await import('../../canon/src/lib/analytics/server');
+  const inserts: Array<{ sql: string; values: unknown[] }> = [];
+  const capture = {
+    prepare(sql: string) {
+      const statement = {
+        sql,
+        values: [] as unknown[],
+        bind(...values: unknown[]) {
+          this.values = values;
+          return this;
+        },
+        async run() {
+          return { success: true };
+        },
+        async all() {
+          return { success: true, results: [] };
+        },
+        async first() {
+          return null;
+        }
+      };
+      return statement;
+    },
+    async batch(statements: Array<{ sql: string; values: unknown[] }>) {
+      inserts.push(...statements.filter((s) => /INSERT INTO unified_events\s/.test(s.sql)));
+      return statements.map(() => ({ success: true }));
+    }
+  };
+  const campaign = '2026_09_01_the_interface_is_becoming_executable';
+  const events = [
+    {
+      eventId: 'landing',
+      sessionId: 'credential-reader',
+      url: 'https://createsomething.io/newsletters',
+      category: 'navigation',
+      action: 'page_view',
+      metadata: { newsletterCampaign: campaign, newsletterMeasurement: 'first-party-v1' }
+    },
+    {
+      eventId: 'checkin',
+      sessionId: 'credential-reader',
+      url: 'https://createsomething.io/check-in?token=private-access-credential',
+      category: 'navigation',
+      action: 'page_view'
+    },
+    {
+      eventId: 'copy',
+      sessionId: 'credential-reader',
+      url: 'https://createsomething.io/papers/proof',
+      category: 'content',
+      action: 'content_copy'
+    },
+    {
+      eventId: 'public',
+      sessionId: 'public-reader',
+      url: 'https://createsomething.io/papers/public',
+      category: 'navigation',
+      action: 'page_view'
+    }
+  ].map((e) => ({ ...e, property: 'io', timestamp: '2026-11-05T12:00:00.000Z' }));
+  const ingested = await processEventBatch(
+    capture as never,
+    { events, sentAt: '2026-11-05T12:00:00.000Z' } as never,
+    { userAgent: 'Mozilla/5.0', ipCountry: 'US' }
+  );
+  assert.equal(ingested.success, true);
+  assert.equal(inserts.length, 4);
+  assert.equal(
+    inserts.find((e) => e.values[0] === 'checkin')?.values[8],
+    'https://createsomething.io/check-in'
+  );
+  const f = fixture();
+  for (const { values: v } of inserts)
+    f.sql
+      .prepare('INSERT INTO unified_events VALUES(?,?,?,?,?,?,?,?,?,?,?)')
+      .run(...([v[0], v[1], v[3], v[4], v[5], v[8], v[10], v[12], v[13], v[9], v[11]] as never[]));
+  const report = await readWeeklyScorecard({ DB: f.db, LMS_DB: fixture().db }, null, now);
+  assert.equal(metric(report, 'io-sessions').current, 1);
+  assert.equal(metric(report, 'resource-use').current, 0);
+  assert.equal(metric(report, 'newsletter-landings').current, 0);
+  assert.equal(
+    report.acquisition.reduce((n, r) => n + r.current, 0),
+    1
+  );
+  assert.equal(report.properties.find((p) => p.property === 'io')?.excluded, 1);
+  assert.ok(!JSON.stringify(report).includes('check-in'));
+  assert.ok(!JSON.stringify(report).includes('private-access-credential'));
+});

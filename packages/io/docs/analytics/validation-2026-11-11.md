@@ -88,3 +88,8 @@ The independent reviewer found one P2 accuracy bug: two approved campaign landin
 The reviewer exercised the actual local route at 320 and 1440px, including loading, empty, partial, 503 and Retry recovery. No page overflow occurred. Native ArrowRight scrolled the acquisition comparison region to 80px after normal animation, with visible focus. No keyboard source change was required. The temporary loopback QA hook was restored byte-for-byte, and the owned server/tab were closed.
 
 Functional and perceptual gates passed for local output. Release readiness remains pending deployed bindings, production RPC and authenticated .io readback; no production pass is inferred from these tests. Worktree disposition: retained until production verification.
+
+
+## Automated review privacy correction
+
+The GitHub review found that query-key filtering cannot identify a credential after Canon ingestion has stripped the query. Parent reproduced the finding through the actual processEventBatch pipeline, captured its sanitized SQLite row, and demonstrated the report incorrectly counting two public sessions instead of one. The fix excludes the known subscriber /check-in pathname, which requires its credential, before session aggregation. The regression verifies the entire session is removed from discovery, acquisition, newsletter and resource-use counts after real sanitization. No ingestion payload, identifier, tracking behavior, migration or additional property deployment was introduced. Limits now explicitly say that credential context on otherwise public historical paths cannot be reconstructed. The prior independent review remains the UI/architecture evidence; this small privacy finding was repaired and re-tested directly by the parent.
