@@ -1,5 +1,7 @@
 # GiGi 0.3.6 qualification and delivery — CRE-2406
 
+**Superseded by the corrective 0.3.7 candidate.** GitHub review subsequently found non-ASCII Social search case matching failed. The parent reproduced and fixed it with a native/MCP regression. Existing 0.3.6 artifacts remain immutable; canonical pages were not promoted to this candidate. See `../../gigi-ui-037/REVIEW.md` for current qualification.
+
 Authority: user requested completion of the reviewed handoff and explicitly allowed Money filtering, Social search API and native Maps for 0.3.6. The user subsequently selected this Mac as installation target. Other API/data work and messages to other people are outside scope.
 
 The exact clean compiled runtime is `6c9fd1900464ab8dfa9a6436879f3a78f85b5add`. Both current compiler-marker files record dirty=false. The main app embeds the SHA; MCP provenance rests on current clean compiler output and the executable inventory. Subsequent release metadata, page documentation/tests and CI updates do not change the runtime.

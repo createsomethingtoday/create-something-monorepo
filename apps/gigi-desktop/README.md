@@ -318,3 +318,7 @@ The native source directory participates in compiler provenance invalidation.
 
 Run `pnpm test:refinement` for synthetic active-renderer coverage. Local source
 checks do not qualify signed MapKit execution, WebKit or a released installer.
+
+### 0.3.7 Social search correction
+
+Social draft search uses the same Unicode-aware normalization as workspace search. Accented and Cyrillic title/caption case matches are filtered across the active workspace before pagination; counts and page boundaries use the same match predicate. This corrects the pre-release 0.3.6 SQLite ASCII-only search. No schema or publishing-approval change is introduced.

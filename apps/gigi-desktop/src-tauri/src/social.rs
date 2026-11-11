@@ -102,10 +102,19 @@ pub(crate) fn dispatch_with<F>(root:&Path,operation:&str,input:Value,broker:F)->
             let offset=input["offset"].as_u64().unwrap_or(0).min(100000) as i64;
             let query=input.get("query").and_then(Value::as_str).unwrap_or("").trim();
             if query.chars().count()>160{return Err("Search must be 160 characters or fewer".into())}
-            let mut statement=db.prepare("SELECT id FROM instagram_drafts WHERE workspace_id=?1 AND instr(lower(COALESCE(json_extract(body_json,'$.title'),'') || ' ' || COALESCE(json_extract(body_json,'$.caption'),'')),lower(?3))>0 ORDER BY updated_at DESC,id LIMIT 50 OFFSET ?2").map_err(|e|e.to_string())?;
-            let ids=statement.query_map(params![workspace,offset,query],|r|r.get::<_,String>(0)).map_err(|e|e.to_string())?.collect::<Result<Vec<_>,_>>().map_err(|e|e.to_string())?;
+            // SQLite lower() is ASCII-only. Share the existing Unicode search fold,
+            // count every workspace match, and retain only this page's identifiers.
+            let folded=crate::domain::search_fold(query);
+            let mut statement=db.prepare("SELECT id,COALESCE(json_extract(body_json,'$.title'),'') || ' ' || COALESCE(json_extract(body_json,'$.caption'),'') FROM instagram_drafts WHERE workspace_id=?1 ORDER BY updated_at DESC,id").map_err(|e|e.to_string())?;
+            let rows=statement.query_map([&workspace],|r|Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?))).map_err(|e|e.to_string())?;
+            let mut ids=Vec::new();let mut count=0i64;
+            for row in rows {
+                let(id,searchable)=row.map_err(|e|e.to_string())?;
+                if !crate::domain::search_fold(&searchable).contains(&folded){continue}
+                if count>=offset&&ids.len()<50{ids.push(id);}
+                count+=1;
+            }
             let items=ids.iter().map(|id|get(&db,&workspace,id)).collect::<Result<Vec<_>,_>>()?;
-            let count:i64=db.query_row("SELECT COUNT(*) FROM instagram_drafts WHERE workspace_id=?1 AND instr(lower(COALESCE(json_extract(body_json,'$.title'),'') || ' ' || COALESCE(json_extract(body_json,'$.caption'),'')),lower(?2))>0",params![workspace,query],|r|r.get(0)).map_err(|e|e.to_string())?;
             Ok(json!({"items":items,"total":count,"nextOffset":if offset+50<count{Some(offset+50)}else{None}}))
         },
         "social.get"=>get(&db,&workspace,text(&input,"id")?),
@@ -217,6 +226,22 @@ fn store_receipt(db:&Connection,workspace:&str,id:&str,request:&str,receipt:Valu
 #[cfg(test)]mod tests{
     use super::*;
     fn setup()->(std::path::PathBuf,String){let root=std::env::temp_dir().join(format!("gigi-social-test-{}",Uuid::new_v4()));let workspace=crate::domain::dispatch(&root,"workspace.create",json!({"name":"Synthetic"})).unwrap();(root,workspace["workspaceId"].as_str().or(workspace["id"].as_str()).unwrap().into())}
+    #[test]fn unicode_search_matches_titles_and_captions_before_paging_for_native_and_mcp(){
+        let(root,w)=setup();
+        for n in 0..55{dispatch_with(&root,"social.save",json!({"workspaceId":w,"requestId":Uuid::new_v4().to_string(),"title":format!("ÉTÉ release {n}"),"caption":"Привет from Ångström"}),|_,_|panic!("Drafting must remain local")).unwrap();}
+        let other=Uuid::new_v4().to_string();crate::domain::open(&root).unwrap().execute("INSERT INTO workspaces(id,name) VALUES(?1,'Other')",[&other]).unwrap();
+        let before=crate::domain::dispatch(&root,"history.list",json!({"workspaceId":w})).unwrap();
+        for query in ["été","E\u{301}TE\u{301}","привет","ПРИВЕТ","ångström"]{
+            let first=dispatch_with(&root,"social.list",json!({"workspaceId":w,"query":query}),|_,_|panic!("Search must remain local")).unwrap();
+            assert_eq!(first["total"],55,"Unicode query: {query}");assert_eq!(first["items"].as_array().unwrap().len(),50);assert_eq!(first["nextOffset"],50);
+            let next=crate::social_mcp::dispatch(&root.join("absent-provider-resources"),&root,"gigi_instagram_drafts_list",json!({"workspaceId":w,"query":query,"offset":50})).unwrap();
+            assert_eq!(next["total"],55);assert_eq!(next["items"].as_array().unwrap().len(),5);assert!(next["nextOffset"].is_null());
+            let ids=first["items"].as_array().unwrap().iter().map(|d|d["id"].clone()).collect::<Vec<_>>();assert!(next["items"].as_array().unwrap().iter().all(|d|!ids.contains(&d["id"])));
+            assert_eq!(dispatch_with(&root,"social.list",json!({"workspaceId":other,"query":query}),|_,_|panic!()).unwrap()["total"],0);
+        }
+        assert_eq!(before,crate::domain::dispatch(&root,"history.list",json!({"workspaceId":w})).unwrap());
+        std::fs::remove_dir_all(root).unwrap();
+    }
     #[test]fn search_filters_all_drafts_before_paging_without_provider_calls(){
         let(root,w)=setup();
         for n in 0..55{dispatch_with(&root,"social.save",json!({"workspaceId":w,"requestId":Uuid::new_v4().to_string(),"title":format!("Draft {n}"),"caption":if n==0{"unique poster"}else{"generic"}}),|_,_|panic!()).unwrap();}
