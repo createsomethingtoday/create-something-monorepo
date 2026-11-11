@@ -1,0 +1,155 @@
+{
+  "macho": [
+    {
+      "path": "Contents/MacOS/gigi",
+      "signatureOnlyChange": true,
+      "normalizedNonSignatureSha256": "e57ee719d30290847cbf44017b162be03b9332f15eec6ccb72e1fa2dd275a85b",
+      "signatureOffset": 69673040,
+      "maskedSignatureEnvelopeSizeFields": [
+        [
+          1792,
+          8
+        ],
+        [
+          1808,
+          8
+        ],
+        [
+          3476,
+          4
+        ]
+      ]
+    },
+    {
+      "path": "Contents/MacOS/gigi-mcp",
+      "signatureOnlyChange": true,
+      "normalizedNonSignatureSha256": "c9f998c1d37991b3c25f57534df58eca65841883e0ee2fe6f5abd222f335fd4c",
+      "signatureOffset": 16982528,
+      "maskedSignatureEnvelopeSizeFields": [
+        [
+          1792,
+          8
+        ],
+        [
+          1808,
+          8
+        ],
+        [
+          3476,
+          4
+        ]
+      ]
+    },
+    {
+      "path": "Contents/Resources/gigi-codex",
+      "signatureOnlyChange": true,
+      "normalizedNonSignatureSha256": "63847ce67ffb09991b3e120018196f29d3e6c9e96637cf68ea1dc73a13fc5353",
+      "signatureOffset": 60613120,
+      "maskedSignatureEnvelopeSizeFields": [
+        [
+          2096,
+          8
+        ],
+        [
+          2112,
+          8
+        ],
+        [
+          2660,
+          4
+        ]
+      ]
+    },
+    {
+      "path": "Contents/Resources/gigi-integrations",
+      "signatureOnlyChange": true,
+      "normalizedNonSignatureSha256": "abdc9c1186f34eeef90b395ccc247e05c0d658062a91d44d1e2b433508f2bf44",
+      "signatureOffset": 60596736,
+      "maskedSignatureEnvelopeSizeFields": [
+        [
+          2096,
+          8
+        ],
+        [
+          2112,
+          8
+        ],
+        [
+          2660,
+          4
+        ]
+      ]
+    },
+    {
+      "path": "Contents/Resources/gigi-map-preview",
+      "signatureOnlyChange": true,
+      "normalizedNonSignatureSha256": "6b1755a2023132a310f4d6602cdd5611ca82f9eb78245fc547c9f04b7837d57f",
+      "signatureOffset": 70160,
+      "maskedSignatureEnvelopeSizeFields": [
+        [
+          2432,
+          8
+        ],
+        [
+          2448,
+          8
+        ],
+        [
+          4348,
+          4
+        ]
+      ]
+    },
+    {
+      "path": "Contents/Resources/gigi-mcp",
+      "signatureOnlyChange": true,
+      "normalizedNonSignatureSha256": "d90b0f21b2985c0593eadd21a2f9b33c81f7074d3297a036cd9b4d6526238b9d",
+      "signatureOffset": 16990048,
+      "maskedSignatureEnvelopeSizeFields": [
+        [
+          2032,
+          8
+        ],
+        [
+          2048,
+          8
+        ],
+        [
+          3732,
+          4
+        ]
+      ]
+    },
+    {
+      "path": "Contents/Resources/libgigi_notifications.dylib",
+      "signatureOnlyChange": true,
+      "normalizedNonSignatureSha256": "f56a25dd03efce5597e1b72097c47cbfbc2bef546487d7cb9ab48f3a720dc499",
+      "signatureOffset": 91936,
+      "maskedSignatureEnvelopeSizeFields": [
+        [
+          2520,
+          8
+        ],
+        [
+          2536,
+          8
+        ],
+        [
+          4292,
+          4
+        ]
+      ]
+    }
+  ],
+  "unchangedFiles": 11,
+  "signatureResources": [
+    "Contents/_CodeSignature/CodeResources"
+  ],
+  "added": [
+    "Contents/CodeResources"
+  ],
+  "removed": [],
+  "ctxBytesUnchanged": true,
+  "passed": true,
+  "originalUntouched": true
+}
