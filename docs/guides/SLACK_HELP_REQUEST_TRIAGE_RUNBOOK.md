@@ -386,17 +386,14 @@ in the session before execution.
 | 2026-09-28 | 0 (1 Slack-only; row #1697 created manually) | #1697 | New class: off-platform sales by a former creator using Webflow branding. Marketplace lever exhausted; routed as a brand question. Creator outreach sent 2026-10-01 with a 14-day deadline |
 | 2026-10-01 | 1 (+#1660, #1697 carryovers) | #1698 | #1698: Stripe onboarding never completed after a 2026-08-21 payout recreate; payout method still disabled, zero orders since 8/20. Root cause of the month-long silence: the 8/21 ticket message was posted as the requester and never emailed. In Progress pending a Stripe-side check and an approved reply. #1660: no review-team reply in 5 days, escalation to the review owner drafted. #1692 was resolved outside this pass (form update). Slack channel: 5 threads since 9/28, all marked done |
 | 2026-10-02 to 10-03 | 0 (carryovers) | #1660, #1698 | #1660 resolved: temporary delist, creator fixed in three rounds (recursive crawl caught CMS pages and hidden slides each time), relisted; two sibling templates cleaned under a deadline without delisting. #1698 resolved: creator finished onboarding, payout method enabled. Lost-sales compensation granted by operator decision (one renewal) |
-| 2026-11-11 | 7 (+#1697 carryover) | #1699 to #1705 | First pass in 39 days. Four new classes: dashboard login code blocked by email suppression (#1700, duplicate #1703), template archived from the dashboard but still for sale (#1699), Whalesync duplicate listing (#1705), profile website link (#1704). #1699 resolved: live item deleted, listing 404. #1705 fixed by slug swap; creator reply pending. #1704 resolved: self-serve answer on a new ticket. #1701 resolved (submission went through, live since 10/07). #1702 closed (template delisted at the creator's request). #1697 resolved (creator added the disclaimer and removed the badge). Slack channel: all threads since 10/01 answered; the one open thread got its outcome posted |
+| 2026-11-11 | 7 (+#1697 carryover) | #1699 to #1705 | First pass in 39 days. Four new classes: dashboard login code blocked by email suppression (#1700, duplicate #1703), template archived from the dashboard but still for sale (#1699), Whalesync duplicate listing (#1705), profile website link (#1704). #1699 resolved: live item deleted, listing 404. #1705 resolved: duplicate retired by slug swap, creator told. #1704 resolved: self-serve answer on a new ticket. #1701 resolved (submission went through, live since 10/07). #1702 closed (template delisted at the creator's request). #1697 resolved (creator added the disclaimer and removed the badge). Slack channel: all threads since 10/01 answered; the one open thread got its outcome posted |
 
 ### Open queue
 
 Per-item state (creator, ticket, account and record IDs) lives in the Airtable
-table and the owning Linear issue, not here. As of 2026-11-11 two rows are
-In Progress:
-
-- #1700: a Postmark admin removes the suppression, then send a reply asking
-  the creator for a fresh code and confirm delivery.
-- #1705: the duplicate listing is fixed; the creator reply awaits approval.
+table and the owning Linear issue, not here. As of 2026-11-11 one row is In
+Progress: #1700. A Postmark admin removes the suppression, then send a reply
+asking the creator for a fresh code and confirm delivery.
 
 ## Related
 
