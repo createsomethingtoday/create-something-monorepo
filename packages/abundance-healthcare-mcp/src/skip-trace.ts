@@ -22,6 +22,7 @@ export type SkipResult = {
   status: string;
   run_id?: string;
   dataset_id?: string;
+  owner_id?: string;
   charge_usd?: number;
   charge_reconciled?: boolean;
   billing_observed_at?: number;
@@ -63,6 +64,8 @@ const word = (v: unknown) =>
   typeof v === 'string' ? v.trim().toLowerCase().replace(/\s+/g, ' ') : '';
 const safeText = (v: unknown) =>
   typeof v === 'string' && /^[A-Za-z .'-]{1,80}$/.test(v) ? v : null;
+const providerId = (value: unknown): value is string =>
+  typeof value === 'string' && /^[A-Za-z0-9]{1,64}$/.test(value);
 export async function skipTrace(
   input: SkipIdentity,
   options: {
@@ -125,7 +128,14 @@ export async function skipTrace(
     await s.put(key, base);
     return undefined;
   });
-  if (existing && !existing.run_id && existing.status !== 'privacy_blocked') return existing;
+  if (
+    existing &&
+    existing.run_id === undefined &&
+    existing.dataset_id === undefined &&
+    existing.owner_id === undefined &&
+    existing.status === 'delivery_unknown'
+  )
+    return existing;
   if (existing?.status === 'privacy_blocked') existing = undefined;
   // Serialize network reconciliation with a durable lease. A stale poll cannot overwrite a newer receipt.
   const lease = crypto.randomUUID();
@@ -150,19 +160,57 @@ export async function skipTrace(
   let result = existing ?? base;
   let dispatched = Boolean(existing);
   try {
+    // Validate cached identifiers before interpolating any provider-owned path.
+    if (
+      existing &&
+      (!providerId(existing.run_id) ||
+        !providerId(existing.dataset_id) ||
+        !providerId(existing.owner_id))
+    ) {
+      result = { ...result, status: 'association_failure', charge_reconciled: false };
+      delete result.contacts;
+      throw new Error('Invalid cached receipt');
+    }
+    const { data: account } = await api('users/me');
+    if (!providerId(account?.id)) throw new Error('Invalid authenticated account');
+    if (existing && existing.owner_id !== account.id) {
+      result = { ...result, status: 'association_failure', charge_reconciled: false };
+      delete result.contacts;
+      throw new Error('Cached account mismatch');
+    }
     if (!existing) {
       // A harmless owner-created dataset inherits account permissions. Verify it exists
       // with the token and is inaccessible anonymously before creating any paid run.
-      if (!options.privacyDatasetId || !/^[A-Za-z0-9]+$/.test(options.privacyDatasetId))
-        throw new Error('Privacy preflight unavailable');
+      if (!providerId(options.privacyDatasetId)) throw new Error('Privacy preflight unavailable');
       const { data: sentinel } = await api(`datasets/${options.privacyDatasetId}`);
-      if (sentinel.generalAccess !== 'FOLLOW_USER_SETTING' || !sentinel.userId)
+      if (
+        !providerId(sentinel?.id) ||
+        sentinel.id !== options.privacyDatasetId ||
+        !providerId(sentinel.userId) ||
+        sentinel.userId !== account.id ||
+        sentinel.generalAccess !== 'FOLLOW_USER_SETTING' ||
+        sentinel.itemCount !== 0
+      )
         throw new Error('Privacy inheritance not established');
+      const emptyItems = await api(`datasets/${options.privacyDatasetId}/items?limit=0`);
+      if (!Array.isArray(emptyItems) || emptyItems.length !== 0)
+        throw new Error('Sentinel items not empty');
       const anonymous = await (options.fetchFn ?? fetch)(
-        `https://api.apify.com/v2/datasets/${options.privacyDatasetId}`,
+        `https://api.apify.com/v2/datasets/${options.privacyDatasetId}/items?limit=0`,
         { redirect: 'manual', signal: AbortSignal.timeout(15000) }
       );
-      if (![401, 403, 404].includes(anonymous.status)) throw new Error('Account is not restricted');
+      if (
+        anonymous.status !== 403 ||
+        !anonymous.headers.get('content-type')?.toLowerCase().includes('application/json')
+      )
+        throw new Error('Unrecognized anonymous response');
+      const denied = (await anonymous.json()) as { error?: { type?: unknown; message?: unknown } };
+      if (
+        denied?.error?.type !== 'insufficient-permissions' ||
+        denied.error.message !==
+          "Insufficient permissions for the dataset. Make sure you're passing a correct API token and that it has the required permissions."
+      )
+        throw new Error('Unrecognized dataset denial');
       dispatched = true;
       const { data } = await api(
         `acts/${ACTOR}/runs?build=0.0.192&maxTotalChargeUsd=0.1&timeout=120&restartOnError=false&forcePermissionLevel=LIMITED_PERMISSIONS`,
@@ -170,22 +218,33 @@ export async function skipTrace(
         { name: [query], max_results: 1 }
       );
       if (
-        data.userId !== sentinel.userId ||
-        !/^[A-Za-z0-9]+$/.test(data.id) ||
-        !/^[A-Za-z0-9]+$/.test(data.defaultDatasetId)
+        !providerId(data?.userId) ||
+        data.userId !== account.id ||
+        !providerId(data.id) ||
+        !providerId(data.defaultDatasetId)
       )
         throw new Error('Invalid receipt');
-      result = { ...base, status: 'pending', run_id: data.id, dataset_id: data.defaultDatasetId };
+      result = {
+        ...base,
+        status: 'pending',
+        run_id: data.id,
+        dataset_id: data.defaultDatasetId,
+        owner_id: account.id
+      };
       await options.store.put(key, result);
     }
     const { data: run } = await api(`actor-runs/${result.run_id}`);
     if (
+      !providerId(run?.id) ||
+      !providerId(run.userId) ||
+      run.userId !== account.id ||
+      !providerId(run.defaultDatasetId) ||
       run.id !== result.run_id ||
       run.actId !== ACTOR ||
       run.defaultDatasetId !== result.dataset_id ||
       run.buildNumber !== '0.0.192'
     ) {
-      result = { ...result, status: 'association_failure' };
+      result = { ...result, status: 'association_failure', charge_reconciled: false };
       delete result.contacts;
       throw new Error('Association failure');
     }
@@ -194,10 +253,20 @@ export async function skipTrace(
     const { data: privateRun } = await api(`actor-runs/${result.run_id}`);
     const { data: privateDataset } = await api(`datasets/${result.dataset_id}`);
     if (
+      !providerId(privateRun?.id) ||
+      privateRun.id !== result.run_id ||
+      !providerId(privateRun.userId) ||
+      privateRun.userId !== account.id ||
+      !providerId(privateRun.defaultDatasetId) ||
+      privateRun.defaultDatasetId !== result.dataset_id ||
+      !providerId(privateDataset?.id) ||
+      privateDataset.id !== result.dataset_id ||
+      !providerId(privateDataset.userId) ||
+      privateDataset.userId !== account.id ||
       privateRun.generalAccess !== 'RESTRICTED' ||
       privateDataset.generalAccess !== 'RESTRICTED'
     ) {
-      result = { ...result, status: 'privacy_blocked_review' };
+      result = { ...result, status: 'privacy_blocked_review', charge_reconciled: false };
       delete result.contacts;
       throw new Error('Privacy readback failed');
     }
@@ -275,11 +344,11 @@ export async function skipTrace(
             result.person_link = u.href;
         } catch {}
         if (
+          row['Search Option'] !== 'Name+CityStateZip Search' ||
           word(row['Input Given']) !== word(query) ||
           word(row['First Name']) !== word(p.first) ||
           word(row['Last Name']) !== word(p.last) ||
-          (row['Name Match'] !== undefined &&
-            word(String(row['Name Match'])) !== '')
+          (row['Name Match'] !== undefined && word(String(row['Name Match'])) !== '')
         )
           result.reason = 'Identity, fallback or response association requires review';
         else if (word(row['Address Region']) !== word(p.practice_state))
@@ -320,7 +389,7 @@ export async function skipTrace(
           ? 'pending'
           : result.status,
       reason: !dispatched
-        ? 'Private-at-creation preflight failed; no paid dispatch. Check restricted account and sentinel configuration.'
+        ? 'Account/sentinel access preflight failed; no paid dispatch. Check account ownership, empty sentinel and dataset denial semantics.'
         : 'Provider response uncertain; reconcile known run only. Never dispatch again automatically.'
     };
   }
@@ -328,6 +397,9 @@ export async function skipTrace(
     const held = await s.get<{ id: string }>('lease:' + key);
     const current = await s.get<SkipResult>(key);
     if (held?.id !== lease) return current ?? result;
+    // Do not re-persist malformed cached identifiers as a new receipt.
+    for (const field of ['run_id', 'dataset_id', 'owner_id'] as const)
+      if (!providerId(result[field])) delete result[field];
     result.revision = (current?.revision ?? 0) + 1;
     await s.put(key, result);
     await s.put('lease:' + key, { id: lease, until: 0 });
@@ -343,18 +415,18 @@ export async function skipTrace(
         (await s.get<{ at: number; cents: number; id: string; reconciled?: boolean }[]>(
           'skip:budget'
         )) ?? [];
-      await s.put(
-        'skip:budget',
-        reservations.map((r) =>
-          r.id === digest
-            ? {
-                ...r,
-                cents: result.charge_reconciled ? Math.ceil((result.charge_usd ?? 0.1) * 100) : 10,
-                reconciled: result.charge_reconciled === true
-              }
-            : r
-        )
-      );
+      const prior = reservations.find((r) => r.id === digest);
+      const chargeChanged =
+        result.charge_usd !== current?.charge_usd || result.charge_reconciled !== true;
+      await s.put('skip:budget', [
+        ...reservations.filter((r) => r.id !== digest),
+        {
+          id: digest,
+          at: !prior || chargeChanged ? now : prior.at,
+          cents: result.charge_reconciled ? Math.ceil((result.charge_usd ?? 0.1) * 100) : 10,
+          reconciled: result.charge_reconciled === true
+        }
+      ]);
     }
     return result;
   });

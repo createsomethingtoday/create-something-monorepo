@@ -162,7 +162,7 @@ async function review(
       scope:
         'One selected registry NPI; broker personal contact candidates and home city/state. Practice geography is not residence.',
       limits:
-        'One pinned run, ten-cent cap, shared daily reservations. Repeated identical input reconciles the same run. Private-at-creation preflight is enforced by the MCP before dispatch.',
+        'One pinned run, ten-cent cap, shared daily reservations. Repeated identical input reconciles the same run. Account ownership and empty-sentinel anonymous access are checked before dispatch; these checks cannot exclude explicit grants or Actor-creator sharing. Account restriction and sharing setup require operator review.',
       cost: 'Up to $0.10 reserved. Contacts, ownership and consent remain unverified; never recruiter-ready.'
     };
   const readiness = tools.find((t) => t.name === 'get_enrichment_readiness');

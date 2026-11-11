@@ -33,9 +33,30 @@ test('real workerd singleton DO: privacy preflight, duplicate dispatch, persiste
     },
     outboundService: async (request) => {
       const u = new URL(request.url);
+      if (u.pathname === '/v2/users/me') return Response.json({ data: { id: 'owner' } });
+      if (u.pathname === '/v2/datasets/sentinel/items')
+        return request.headers.has('Authorization')
+          ? Response.json([])
+          : Response.json(
+              {
+                error: {
+                  type: 'insufficient-permissions',
+                  message:
+                    "Insufficient permissions for the dataset. Make sure you're passing a correct API token and that it has the required permissions."
+                }
+              },
+              { status: 403 }
+            );
       if (u.pathname === '/v2/datasets/sentinel')
         return request.headers.has('Authorization')
-          ? Response.json({ data: { generalAccess: 'FOLLOW_USER_SETTING', userId: 'owner' } })
+          ? Response.json({
+              data: {
+                id: 'sentinel',
+                itemCount: 0,
+                generalAccess: 'FOLLOW_USER_SETTING',
+                userId: 'owner'
+              }
+            })
           : new Response(null, { status: 403 });
       if (request.method === 'POST') {
         posts++;
@@ -60,10 +81,13 @@ test('real workerd singleton DO: privacy preflight, duplicate dispatch, persiste
           }
         ]);
       if (u.pathname.includes('/datasets/'))
-        return Response.json({ data: { generalAccess: 'RESTRICTED' } });
+        return Response.json({
+          data: { id: 'dataset1', userId: 'owner', generalAccess: 'RESTRICTED' }
+        });
       return Response.json({
         data: {
           generalAccess: 'RESTRICTED',
+          userId: 'owner',
           id: 'run1',
           actId: 'vmf6h5lxPAkB1W2gT',
           defaultDatasetId: 'dataset1',
