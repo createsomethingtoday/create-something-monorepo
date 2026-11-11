@@ -108,6 +108,26 @@ Memo entries expire after five minutes for counts and thirty minutes
 for facets. Cache failures fall back to D1. Direct `searchTemplates` callers that
 omit a sync version bypass query memoization.
 
+## Search indexes
+
+Migration `0019` adds three indexes on expressions:
+
+- `idx_template_documents_sort_newest` and `idx_template_documents_sort_popular` repeat
+  the newest and popular `ORDER BY` in `sortClause` (`src/search.ts`) term for term. A
+  sorted page is an index walk that stops at `LIMIT`.
+- `idx_template_documents_creator_profile_url_key` indexes
+  `lower(rtrim(creator_profile_url, '/'))`, the second half of the creator filter. With
+  it, a creator query reads only that creator's rows.
+
+SQLite uses an expression index only when the query repeats the expression exactly. If
+you change `sortClause` or the creator filter, change the index in a new migration too.
+`test/search-indexes.test.ts` checks the query plans and fails when they drift apart.
+
+Before `0019`, every sorted page and every creator page scanned all rows. The other
+sorts (recommended, best selling, price) still do. Add an index for one when its traffic
+justifies one more index write for each synced template. Counts and facets for a
+category filter also still scan; the memo above covers them.
+
 ## CMS capability recovery (not activated)
 
 Production already records migration `0008_template_capabilities.sql` and has
