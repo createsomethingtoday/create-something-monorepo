@@ -291,7 +291,7 @@ Distribute the new token to the app review team and invalidate prior copies oper
 
 ### Reading rejection findings
 
-Version reads, version history, and review context expose `reviewFeedback` (📝Review Feedback) and `rejectionFeedback` (🚩Rejection Feedback) separately. An empty `reviewFeedback` does not mean no findings exist: rejected versions may store their findings only in `rejectionFeedback`. The field map advertises `rejection_feedback` as read-only; existing feedback writes continue to target 📝Review Feedback.
+Version reads, version history, and review context expose `reviewFeedback` (📝Review Feedback) and `rejectionFeedback` (🚩Rejection Feedback) separately. An empty `reviewFeedback` does not mean no findings exist: rejected versions may store their findings only in `rejectionFeedback`. The field map advertises `rejection_feedback` as read-only for general updates; draft and changes-requested feedback writes continue to target 📝Review Feedback. The one exception is `app_review_reject_version`: it writes its feedback to 🚩Rejection Feedback, because the developer-facing rejection email reads that field.
 
 
 ### Claude read-only acceptance prompt

@@ -1031,11 +1031,11 @@ export function registerTools(
 
   server.tool(
     'app_review_reject_version',
-    'Reject an app version with reason and feedback without reviewer-session scoping.',
+    'Reject an app version with reason and feedback without reviewer-session scoping. The feedback is written to 🚩Rejection Feedback, the field the developer-facing rejection email reads; 📝Review Feedback is left unchanged.',
     {
       version_id: z.string().min(1),
       rejection_reason: z.enum(REJECTION_REASON_OPTIONS),
-      review_feedback: z.string().min(1),
+      review_feedback: z.string().min(1).describe('Developer-facing rejection findings. Stored in 🚩Rejection Feedback and sent in the rejection email.'),
       review_type: z.enum(REVIEW_TYPE_OPTIONS).optional(),
     },
     async ({ version_id, rejection_reason, review_feedback, review_type }) => {
@@ -1045,7 +1045,7 @@ export function registerTools(
           review_status: '❌Rejected',
           review_type,
           rejection_reason,
-          review_feedback,
+          rejection_feedback: review_feedback,
         });
         return asSuccess({ updated_version: updated });
       } catch (error) {

@@ -245,6 +245,33 @@ describe('AirtableClient exception handling', () => {
     ]);
   });
 
+  it('writes rejection feedback to the field the rejection email reads, not to review feedback', async () => {
+    const fetchFn = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const payload = JSON.parse(String(init?.body)) as {
+        records: Array<{ id: string; fields: Record<string, unknown> }>;
+      };
+      return jsonResponse({
+        records: [{ id: payload.records[0]!.id, fields: payload.records[0]!.fields }],
+      });
+    });
+
+    const client = new AirtableClient({ apiKey: 'token', fetchFn });
+    await client.updateVersionReview('recVersion', {
+      review_status: '❌Rejected',
+      rejection_reason: 'Guideline Infringement',
+      rejection_feedback: 'Consolidate the overlapping Apps.',
+    });
+
+    const payload = JSON.parse(String(fetchFn.mock.calls[0]?.[1]?.body)) as {
+      records: Array<{ fields: Record<string, unknown> }>;
+    };
+    expect(payload.records[0]?.fields).toMatchObject({
+      [FIELD_IDS.versions.rejectionFeedback]: 'Consolidate the overlapping Apps.',
+      [FIELD_IDS.versions.rejectionReason]: 'Guideline Infringement',
+    });
+    expect(payload.records[0]?.fields).not.toHaveProperty(FIELD_IDS.versions.reviewFeedback);
+  });
+
   it('writes exception and hold fields via updateVersionReview', async () => {
     const fetchFn = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       const payload = JSON.parse(String(init?.body)) as {

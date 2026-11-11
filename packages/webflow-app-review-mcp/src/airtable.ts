@@ -196,7 +196,7 @@ export function findRawHtmlTag(text: string): string | null {
   return match ? match[0] : null;
 }
 
-function assertNoRawHtmlInCreatorFeedback(field: 'review_feedback', value: string | undefined): void {
+function assertNoRawHtmlInCreatorFeedback(field: 'review_feedback' | 'rejection_feedback', value: string | undefined): void {
   if (value === undefined) return;
   const tag = findRawHtmlTag(value);
   if (tag !== null) {
@@ -480,6 +480,8 @@ export interface VersionReviewUpdateInput {
   reviewer?: CollaboratorRef | null;
   rejection_reason?: string;
   review_feedback?: string;
+  /** 🚩Rejection Feedback: the field the rejection email reads. Written only by the reject verb. */
+  rejection_feedback?: string;
   submission_datetime_override?: string | null;
   exception_status?: string;
   exception_type?: string;
@@ -1821,6 +1823,7 @@ export class AirtableClient {
   async updateVersionReview(versionId: string, input: VersionReviewUpdateInput): Promise<AppReviewVersion> {
     assertReviewerAssignmentReadOnly(input.reviewer);
     assertNoRawHtmlInCreatorFeedback('review_feedback', input.review_feedback);
+    assertNoRawHtmlInCreatorFeedback('rejection_feedback', input.rejection_feedback);
 
     const fields: Record<string, unknown> = {};
 
@@ -1856,6 +1859,10 @@ export class AirtableClient {
 
     if (input.review_feedback !== undefined) {
       fields[FIELD_IDS.versions.reviewFeedback] = input.review_feedback;
+    }
+
+    if (input.rejection_feedback !== undefined) {
+      fields[FIELD_IDS.versions.rejectionFeedback] = input.rejection_feedback;
     }
 
     if (input.submission_datetime_override !== undefined) {

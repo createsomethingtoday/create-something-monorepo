@@ -468,6 +468,31 @@ describe('registerTools', () => {
     });
   });
 
+  it('reject_version sends its feedback as rejection feedback so the rejection email carries the findings', async () => {
+    const { server, handlers } = createServerHarness();
+    const client = {
+      getVersionById: vi.fn().mockResolvedValue({ versionId: 'recVersion', assetId: 'recAsset' }),
+      getAssetById: vi.fn().mockResolvedValue({ assetId: 'recAsset', appName: 'Example App' }),
+      updateVersionReview: vi.fn().mockResolvedValue({ versionId: 'recVersion', reviewStatus: '❌Rejected' }),
+    } as unknown as AirtableClient;
+
+    registerTools(server, () => client);
+
+    const result = await handlers.get('app_review_reject_version')?.({
+      version_id: 'recVersion',
+      rejection_reason: 'Guideline Infringement',
+      review_feedback: 'Consolidate the overlapping Apps.',
+    });
+
+    expect(client.updateVersionReview).toHaveBeenCalledExactlyOnceWith('recVersion', {
+      review_status: '❌Rejected',
+      review_type: undefined,
+      rejection_reason: 'Guideline Infringement',
+      rejection_feedback: 'Consolidate the overlapping Apps.',
+    });
+    expect(parsePayload(result!).ok).toBe(true);
+  });
+
   it('rejects request_changes status overrides outside the changes-requested allowlist', async () => {
     const { server, handlers } = createServerHarness();
     const client = {
