@@ -5,36 +5,36 @@ import test from 'node:test';
 const read = (relativePath: string) => readFileSync(new URL(relativePath, import.meta.url), 'utf8');
 
 const accountRoute = read('../src/routes/account/+page.svelte');
-const accountPage = read('../../canon/src/lib/auth/components/AccountPage.svelte');
+const accountPage = read('../src/lib/components/AgencyAccountPage.svelte');
 
-test('agency account opts into the shared Performance account surface', () => {
-  assert.match(accountRoute, /visualStyle="performance"/);
-  assert.match(accountPage, /visualStyle\?: 'default' \| 'performance'/);
-  assert.match(accountPage, /class:performance=\{visualStyle === 'performance'\}/);
+test('agency account keeps its own presentation and remains noindex', () => {
+  assert.match(accountRoute, /<AgencyAccountPage user=\{accountUser\}/);
+  assert.match(accountRoute, /noindex=\{true\}/);
 });
 
-test('Performance account presentation uses the current paper, panel, ink, and line contract', () => {
-  assert.match(accountPage, /\.account-container\.performance/);
-  assert.match(accountPage, /var\(--color-performance-paper/);
-  assert.match(accountPage, /var\(--color-performance-panel/);
-  assert.match(accountPage, /var\(--color-performance-ink/);
-  assert.match(accountPage, /var\(--color-performance-line/);
-  assert.match(accountPage, /var\(--font-performance-mono/);
-  assert.match(accountPage, /var\(--color-performance-ready/);
+test('each account wayfinding destination exists in the task surface', () => {
+  const destinations = [...accountRoute.matchAll(/id: '(account-[^']+)'/g)].map(match => match[1]);
+  assert.deepEqual(destinations, ['account-profile', 'account-mcp-access', 'account-properties', 'account-session']);
+  let previous = -1;
+  for (const id of destinations) {
+    const index = accountPage.indexOf(`id="${id}" tabindex="-1"`);
+    assert.ok(index > previous, `${id} must be a focusable heading in reading order`);
+    previous = index;
+  }
 });
 
 test('Performance account presentation preserves functional account controls', () => {
   for (const expected of [
-    'Account Details',
+    'Account details',
     'Connected Properties',
     'Session',
     'handleLogout',
-    'propertyUrls',
-    'currentProperty'
+    'https://createsomething.agency/login?redirect=/account',
+    "fetch('/api/auth/logout', { method: 'POST' })"
   ]) {
     assert.ok(accountPage.includes(expected), `account surface lost ${expected}`);
   }
 
-  assert.match(accountRoute, /MCP Access/);
-  assert.match(accountRoute, /href="\/mcp-access"/);
+  assert.match(accountPage, /MCP Access/);
+  assert.match(accountPage, /href="\/mcp-access"/);
 });

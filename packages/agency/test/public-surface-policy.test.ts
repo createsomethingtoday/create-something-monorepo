@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { marketingPagePortfolio } from '../src/lib/data/marketingPages';
 import { AGENCY_WEBFLOW_PORTFOLIO_PATHS, isAgencyWebflowPortfolioPath } from '../src/lib/atlas/surface-policy';
-import { usesAgencyMeasuredPublicSurface, usesAgencyOperatorPalette } from '../src/lib/data/publicSurfacePolicy';
+import { usesAgencyMeasuredAccountSurface, usesAgencyMeasuredPublicSurface, usesAgencyOperatorPalette } from '../src/lib/data/publicSurfacePolicy';
 
 test('every current portfolio page owns the operator palette, including workflow details', () => {
   for (const entry of marketingPagePortfolio) {
@@ -11,14 +11,30 @@ test('every current portfolio page owns the operator palette, including workflow
 });
 
 test('utility, private, archive and unknown paths fail closed', () => {
-  for (const path of ['/account', '/admin/security', '/dashboard', '/login/unknown', '/logout', '/auth/callback', '/mcp-access/tools', '/delivery/abundance', '/prospects', '/prospects/secret', '/map/workspace/123', '/map/workspace/123/handoff/456', '/map/share/123', '/map/subscribe', '/dify', '/dify/unknown', '/workflows/unknown', '/products/unknown', '/unknown']) {
+  for (const path of ['/account/unknown', '/admin/security', '/dashboard', '/login/unknown', '/logout', '/auth/callback', '/mcp-access/tools', '/delivery/abundance', '/prospects', '/prospects/secret', '/map/workspace/123', '/map/workspace/123/handoff/456', '/map/share/123', '/map/subscribe', '/dify', '/dify/unknown', '/workflows/unknown', '/products/unknown', '/unknown']) {
     assert.equal(usesAgencyOperatorPalette(path), false, path);
+  }
+});
+
+test('approved account entry owns the Agency palette without opening nested private surfaces', () => {
+  for (const path of ['/account', '/account/', '/account?source=nav', '/account/#account-profile']) {
+    assert.equal(usesAgencyOperatorPalette(path), true, path);
   }
 });
 
 test('customer sign-in explicitly owns the current Agency palette', () => {
   for (const path of ['/login', '/login/', '/login?redirect=/dashboard', '/login?error=expired']) {
     assert.equal(usesAgencyOperatorPalette(path), true, path);
+  }
+});
+
+test('account presentation ownership remains separate from public and protected-route policy', () => {
+  for (const path of ['/account', '/account/', '/account?source=nav#account-session', '/login', '/login/?redirect=/account']) {
+    assert.equal(usesAgencyMeasuredAccountSurface(path), true, path);
+    assert.equal(usesAgencyMeasuredPublicSurface(path), false, path);
+  }
+  for (const path of ['/', '/services', '/account/unknown', '/login/unknown', '/dashboard', '/mcp-access', '/auth/callback', '/api/auth/login']) {
+    assert.equal(usesAgencyMeasuredAccountSurface(path), false, path);
   }
 });
 

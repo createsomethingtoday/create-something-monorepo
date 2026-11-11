@@ -1,4 +1,4 @@
-/* Agency's approved public identity. The SSR route policy owns this opt-in;
+/* Agency's approved identity. The public and account SSR policies own this opt-in;
    the operator palette also serves private tools and is a separate contract.
    Keep Canon's shared components, semantic status colors and media intact. */
 html:has(.agency-surface[data-agency-brand='measured']),
@@ -148,4 +148,23 @@ body:has(.agency-surface[data-agency-brand='measured']) {
     top: 11px;
     right: calc(6vw + 56px);
   }
+}
+
+/* Identity entry points share the home field without the paper texture.
+   Keep this exact account opt-in separate from public page ownership. */
+.agency-surface[data-agency-account='true'] .property-performance {
+  background: var(--color-performance-paper);
+}
+
+.agency-surface[data-agency-account='true'] .film-shell main#main-content {
+  padding-top: 100px;
+}
+.agency-surface[data-agency-account='true'] .footer-links-grid > * { min-width: 0; }
+@media (min-width: 1024px) and (max-width: 1200px) {
+  .agency-surface[data-agency-account='true'] .footer-editorial .footer-links-grid {
+    grid-template-columns: minmax(0, .82fr) minmax(0, 1.12fr) minmax(0, .9fr);
+  }
+}
+@media (max-width: 700px) {
+  .agency-surface[data-agency-account='true'] .film-shell main#main-content { padding-top: 88px; }
 }
