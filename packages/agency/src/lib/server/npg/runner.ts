@@ -96,7 +96,13 @@ function fullClinicAddress(address: string) {
 function skipReceipt(
   value: unknown,
   npi: unknown
-): value is { status: string; id: string; run_id: string; npi: string } {
+): value is {
+  status: string;
+  id: string;
+  run_id: string;
+  npi: string;
+  charge_reconciled?: boolean;
+} {
   if (!value || typeof value !== 'object') return false;
   const r = value as Record<string, unknown>;
   return (
@@ -323,6 +329,9 @@ export async function executeCommand(
       providers = makeProviders();
       let result: unknown;
       try {
+        const tools = await providers.tools();
+        if (!tools.some((tool) => tool.name === approved.tool))
+          throw new Error('Reviewed reconciliation tool unavailable');
         result = await providers.call(approved.tool, {
           ...args,
           reconcile_receipt: { id: pending.id, run_id: pending.run_id }
@@ -372,10 +381,13 @@ export async function executeCommand(
       );
       state.sources.push({ tool: approved.tool, data: result });
       delete state.responseId;
-      if (result.status === 'pending')
+      if (result.status === 'pending' || result.charge_reconciled !== true)
         state.messages.push({
           role: 'assistant',
-          text: 'Skip Trace is still pending or access/billing could not be refreshed. Send “Refresh Skip Trace” to read the same run again. No new paid dispatch is authorized.'
+          text:
+            result.status === 'pending'
+              ? 'Skip Trace is still pending or access/billing could not be refreshed. Send “Refresh Skip Trace” to read the same run again. No new paid dispatch is authorized.'
+              : 'The run returned a result, but billing is not yet reconciled. Review the source below; contacts and consent remain unverified. Wait at least 60 seconds, then send “Refresh Skip Trace” to reconcile this same receipt without another paid dispatch.'
         });
       else {
         delete state.skipTracePending;
@@ -431,14 +443,26 @@ export async function executeCommand(
       if (
         tool.name === 'enrich_candidate_skip_trace' &&
         skipReceipt(result, args.npi) &&
-        result.status === 'pending'
+        (result.status === 'pending' ||
+          ([
+            'review_required',
+            'no_contact',
+            'blocked_review',
+            'provider_failed',
+            'provider_aborted',
+            'provider_timeout'
+          ].includes(result.status) &&
+            result.charge_reconciled !== true))
       ) {
         state.skipTracePending = { actionId: action.id, id: result.id, run_id: result.run_id };
         state.sources.push({ tool: tool.name, data: result });
         delete state.responseId;
         state.messages.push({
           role: 'assistant',
-          text: 'Skip Trace has a known pending run. Send “Refresh Skip Trace” to read this same receipt without another paid dispatch or approval. Other paid tools remain subject to their normal approval.'
+          text:
+            result.status === 'pending'
+              ? 'Skip Trace has a known pending run. Send “Refresh Skip Trace” to read this same receipt without another paid dispatch or approval. Other paid tools remain subject to their normal approval.'
+              : 'Skip Trace returned a result with unsettled billing. Review the source below; contacts and consent remain unverified. Wait at least 60 seconds, then send “Refresh Skip Trace” to reconcile the same receipt. No new paid dispatch or approval is needed.'
         });
         await store.finish(row, state, 'idle', toolCount, action.id);
         return store.view(owner, row.id);

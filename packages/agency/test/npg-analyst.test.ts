@@ -1131,3 +1131,37 @@ test('Skip Trace refresh survives full history and repeated pending reads withou
     assert.equal(calls, 5);
     assert.match(JSON.stringify(done.sources), /synthetic@example.test/);
   }));
+
+for (const initialStatus of ['pending', 'no_contact'])
+test(`real MCP refresh initializes transport and retains ${initialStatus} receipt until billing settles`, () => database(async store => {
+  const f = fixture('enrich_candidate_skip_trace', { npi: '1234567890', confirm_paid_enrichment: true });
+  const originalTools = await f.p.tools();
+  const skipTool = {name:'enrich_candidate_skip_trace',inputSchema:{type:'object',properties:{npi:{type:'string'},confirm_paid_enrichment:{const:true}},required:['npi','confirm_paid_enrichment'],additionalProperties:false}};
+  f.p.tools = async () => [...originalTools, skipTool];
+  f.p.call = async () => ({status:initialStatus,id:'a'.repeat(64),run_id:'run1',npi:'1234567890',charge_reconciled:false});
+  const c = await conversation(store);
+  const proposal = await executeCommand(store,'alice',message(c),()=>f.p);
+  let current = await executeCommand(store,'alice',approve(proposal),()=>f.p);
+  const methods: string[] = [];
+  let calls = 0;
+  const make = () => createProviders({NPG_HEALTHCARE_OPENAI_API_KEY:'fixture-openai-secret',NPG_HEALTHCARE_MODEL:NPG_SOURCE.model,ABUNDANCE_HEALTHCARE_MCP_API_KEY:'fixture-mcp-secret'},AbortSignal.timeout(10000),async (url,init) => {
+    assert.equal(String(url),'https://abundance-healthcare-mcp.createsomething.workers.dev/mcp');
+    if(init?.method==='GET'||init?.method==='DELETE') return new Response(null,{status:405});
+    const rpc=JSON.parse(String(init?.body)); methods.push(rpc.method);
+    if(rpc.method==='notifications/initialized') return new Response(null,{status:202});
+    let result;
+    if(rpc.method==='initialize') result={protocolVersion:'2025-03-26',capabilities:{tools:{}},serverInfo:{name:'fixture',version:'1'}};
+    else if(rpc.method==='tools/list') result={tools:[skipTool]};
+    else { assert.equal(rpc.method,'tools/call');assert.deepEqual(rpc.params.arguments.reconcile_receipt,{id:'a'.repeat(64),run_id:'run1'});calls++;result={content:[],structuredContent:{status:'no_contact',id:'a'.repeat(64),run_id:'run1',npi:'1234567890',charge_reconciled:calls===2}}; }
+    return Response.json({jsonrpc:'2.0',id:rpc.id,result});
+  });
+  for(let i=0;i<2;i++) {
+    current=await executeCommand(store,'alice',{type:'message',id:current.id,version:current.version,text:'Refresh Skip Trace'},make);
+    assert.equal(calls,i+1);
+    const state=JSON.parse((await store.read('alice',current.id)).state_json) as State;
+    assert.equal(Boolean(state.skipTracePending),i===0);
+    assert.equal(current.status,'idle');
+  }
+  assert.equal(methods.filter(m=>m==='initialize').length,2);
+  assert.equal(methods.filter(m=>m==='tools/list').length,2);
+}));
