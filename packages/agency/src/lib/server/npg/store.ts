@@ -7,7 +7,7 @@ export class NpgError extends Error {
     super(message);
   }
 }
-export type Message = { role: 'user' | 'assistant'; text: string };
+export type Message = { role: 'user' | 'assistant'; text: string; skipTraceReceipt?: string };
 export type Source = { tool: string; data: unknown };
 export type State = {
   messages: Message[];

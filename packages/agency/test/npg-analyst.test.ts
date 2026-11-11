@@ -1018,3 +1018,103 @@ test('known Skip Trace pending can reconcile through chat without another paid a
 test('Skip Trace unknown dispatch remains a manual global hold and refresh cannot bypass it',()=>database(async store=>{
  const f=fixture('enrich_candidate_skip_trace',{npi:'1234567890',confirm_paid_enrichment:true});const tools=await f.p.tools();f.p.tools=async()=>[...tools,{name:'enrich_candidate_skip_trace',inputSchema:{type:'object',properties:{npi:{type:'string'},confirm_paid_enrichment:{const:true}},required:['npi','confirm_paid_enrichment'],additionalProperties:false}}];let calls=0;f.p.call=async()=>{calls++;return {status:'delivery_unknown',id:'a'.repeat(64),npi:'1234567890'};};const c=await conversation(store);const proposed=await executeCommand(store,'alice',message(c),()=>f.p);const unknown=await executeCommand(store,'alice',approve(proposed),()=>f.p);assert.equal(unknown.status,'ambiguous');await assert.rejects(()=>store.acquirePaid('unrelated'),/reconciliation/);await assert.rejects(()=>executeCommand(store,'alice',{type:'message',id:unknown.id,version:unknown.version,text:'Refresh Skip Trace'},()=>f.p));assert.equal(calls,1);
 }));
+
+test('Skip Trace refresh survives full history and repeated pending reads without unbounded growth', () =>
+  database(async (store) => {
+    const f = fixture('enrich_candidate_skip_trace', {
+      npi: '1234567890',
+      confirm_paid_enrichment: true
+    });
+    const baseTools = await f.p.tools();
+    f.p.tools = async () => [
+      ...baseTools,
+      {
+        name: 'enrich_candidate_skip_trace',
+        inputSchema: {
+          type: 'object',
+          properties: { npi: { type: 'string' }, confirm_paid_enrichment: { const: true } },
+          required: ['npi', 'confirm_paid_enrichment'],
+          additionalProperties: false
+        }
+      }
+    ];
+    let calls = 0;
+    f.p.call = async (name, args) => {
+      calls++;
+      if (calls === 1)
+        return { status: 'pending', id: 'a'.repeat(64), run_id: 'run1', npi: '1234567890' };
+      assert.deepEqual(args, {
+        npi: '1234567890',
+        confirm_paid_enrichment: true,
+        reconcile_receipt: { id: 'a'.repeat(64), run_id: 'run1' }
+      });
+      return {
+        status: calls < 5 ? 'pending' : 'review_required',
+        id: 'a'.repeat(64),
+        run_id: 'run1',
+        npi: '1234567890',
+        contacts: { emails: ['synthetic@example.test'] }
+      };
+    };
+    const c = await conversation(store);
+    const proposal = await executeCommand(store, 'alice', message(c), () => f.p);
+    const pending = await executeCommand(store, 'alice', approve(proposal), () => f.p);
+    assert.equal(pending.status, 'idle');
+    assert.match(pending.messages.at(-1)!.text, /Refresh Skip Trace/);
+    await store.acquirePaid('unrelated');
+    await store.releasePaid('unrelated');
+    const other = fixture(
+      'enrich_candidate_profile',
+      { npi: '1234567890', confirm_paid_enrichment: true, include_personal_contact: false },
+      { readiness: ready }
+    );
+    const otherC = await conversation(store, 'carol');
+    const otherReview = await executeCommand(store, 'carol', message(otherC), () => other.p);
+    const otherDone = await executeCommand(store, 'carol', approve(otherReview), () => other.p);
+    assert.equal(otherDone.status, 'idle');
+    assert.equal(other.calls.filter((c) => c.name === 'enrich_candidate_profile').length, 1);
+    await assert.rejects(() =>
+      executeCommand(
+        store,
+        'bob',
+        { type: 'message', id: pending.id, version: pending.version, text: 'Refresh Skip Trace' },
+        () => f.p
+      )
+    );
+    assert.equal(calls, 1);
+    const stored = await store.read('alice', pending.id);
+    const full = JSON.parse(stored.state_json) as State;
+    full.messages = Array.from({ length: 60 }, () => ({
+      role: 'assistant',
+      text: 'x'.repeat(5000)
+    }));
+    await store.db
+      .prepare('UPDATE npg_analyst_conversations SET state_json=? WHERE id=?')
+      .bind(JSON.stringify(full), pending.id)
+      .run();
+    let current = pending;
+    for (let i = 0; i < 3; i++) {
+      current = await executeCommand(
+        store,
+        'alice',
+        { type: 'message', id: current.id, version: current.version, text: 'Refresh Skip Trace' },
+        () => f.p
+      );
+      assert.equal(current.status, 'idle');
+      assert.ok(current.messages.length <= 60);
+      assert.equal(
+        current.sources.filter((s) => s.tool === 'enrich_candidate_skip_trace').length,
+        1
+      );
+      assert.ok((await store.read('alice', current.id)).state_json.length < 280000);
+    }
+    const done = await executeCommand(
+      store,
+      'alice',
+      { type: 'message', id: current.id, version: current.version, text: 'Refresh Skip Trace' },
+      () => f.p
+    );
+    assert.equal(done.status, 'idle');
+    assert.equal(calls, 5);
+    assert.match(JSON.stringify(done.sources), /synthetic@example.test/);
+  }));

@@ -107,6 +107,27 @@ function skipReceipt(
     r.npi === npi
   );
 }
+// Refresh replaces this receipt's status rather than growing history on every poll.
+function boundSkipRefresh(state: State, receiptId: string) {
+  const latest = state.messages.pop()!;
+  state.messages = state.messages.filter((m) => m.skipTraceReceipt !== receiptId);
+  state.messages.push({ ...latest, skipTraceReceipt: receiptId });
+  let compacted = state.messages.length > 60;
+  while (state.messages.length > 60) state.messages.shift();
+  // Recovery remains available even when normal chat has filled its context budget.
+  // Retain the newest receipt and its status; historical action records remain in D1.
+  while (JSON.stringify(state).length > 260000 && state.messages.length > 1) {
+    state.messages.shift();
+    compacted = true;
+  }
+  while (JSON.stringify(state).length > 260000 && state.sources.length > 1) {
+    state.sources.shift();
+    compacted = true;
+  }
+  if (compacted)
+    state.messages[state.messages.length - 1].text +=
+      ' Older conversation context was trimmed to keep receipt recovery available.';
+}
 export function checkPaidScope(name: string, args: Record<string, unknown>, state: State) {
   if (name === 'enrich_candidate_skip_trace' && state.skipTracePending)
     throw new NpgError(
@@ -232,14 +253,15 @@ export async function executeCommand(
     if (before.version !== command.version)
       throw new NpgError(409, 'This conversation changed. Refresh its history.');
     state = JSON.parse(before.state_json) as State;
-    // Already-offered reviews must remain consumable when their notice fills the chat.
-    if (
-      (command.type === 'message' && state.messages.length >= 60) ||
-      before.state_json.length > 280000
-    )
-      throw new NpgError(409, 'Conversation is full. Start a new conversation.');
     const refreshing =
       command.type === 'message' && command.text.trim().toLowerCase() === 'refresh skip trace';
+    // Already-offered reviews must remain consumable when their notice fills the chat.
+    if (
+      !refreshing &&
+      ((command.type === 'message' && state.messages.length >= 60) ||
+        before.state_json.length > 280000)
+    )
+      throw new NpgError(409, 'Conversation is full. Start a new conversation.');
     let action: Action | undefined;
     if (command.type === 'message') {
       if (before.status !== 'idle')
@@ -315,9 +337,20 @@ export async function executeCommand(
           role: 'assistant',
           text: 'This receipt could not be safely reconciled. Ask your operator to review it before further paid work.'
         });
+        boundSkipRefresh(state, pending.id);
         await store.finish(row, state, 'ambiguous', toolCount);
         return store.view(owner, row.id);
       }
+      state.sources = state.sources.filter(
+        (source) =>
+          !(
+            source.tool === approved.tool &&
+            source.data &&
+            typeof source.data === 'object' &&
+            'id' in source.data &&
+            source.data.id === pending.id
+          )
+      );
       state.sources.push({ tool: approved.tool, data: result });
       delete state.responseId;
       if (result.status === 'pending')
@@ -332,6 +365,7 @@ export async function executeCommand(
           text: 'The existing Skip Trace run was refreshed. Review its source result below; identity, contact ownership and consent remain unverified. No new paid dispatch was authorized.'
         });
       }
+      boundSkipRefresh(state, pending.id);
       await store.finish(row, state, 'idle', toolCount);
       return store.view(owner, row.id);
     }
