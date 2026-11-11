@@ -34,8 +34,8 @@ No lookback horizon hides old unresolved failures within this scope.
 immediately; other checks wait until the most recent ledger update, verified-at,
 or lease expiry is older than grace. A valid active lease suppresses transient
 readiness alerts. Unknown age is explicitly reported, rather than called healthy.
-Page links fall back to ingestion page IDs, then a projection matching the ingestion version only when that version matches exactly one projection. Stale unresolved work uses its pending journal reservation timestamp, falling back to ledger first-seen; retries cannot reset this age.
-A stale superseded failed ledger row remains visible for operator investigation.
+Page links fall back to ingestion page IDs, then a projection matching the ingestion version only when that version matches exactly one projection. Stale unresolved work uses its pending journal reservation timestamp, falling back to the latest ledger activity/verification/lease expiry when no pending reservation exists. Retry updates cannot hide an old pending reservation; without one, the schema cannot distinguish a new refresh from repeated retries.
+Successful superseded renditions do not receive readiness alerts; the selected rendition owns publication readiness. A superseded failed ledger row remains visible for operator investigation.
 
 D1 consistency does **not** verify live Notion properties, blocks, source content,
 or permission changes. Direct Notion property drift after a successful write is

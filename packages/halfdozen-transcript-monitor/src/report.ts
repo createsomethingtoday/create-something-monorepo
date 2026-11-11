@@ -1,5 +1,5 @@
 export interface Row {
-  unresolved_at?: string | null; key: string; status: string | null; updated_at: string | null;
+  superseded_success?: number; unresolved_at?: string | null; key: string; status: string | null; updated_at: string | null;
   page_id: string | null; version: string | null; ready_version: string | null;
   phase: string | null; projection_version: string | null; index_block_id: string | null;
   verified_at: string | null; owner: string | null; expires_at: string | null;
@@ -10,6 +10,7 @@ export function assess(row: Row, now: number, graceSeconds: number): Alert[] {
   const page = row.page_id?.replaceAll('-', '');
   const add = (code: string) => alerts.push({ code, key: row.key, page_url: page && /^[a-f0-9]{32}$/i.test(page) ? `https://www.notion.so/${page}` : null });
   if (row.status === 'failed') add('failed_job');
+  if (row.status === 'synced' && row.superseded_success === 1) return alerts;
   if (row.owner && row.expires_at && Date.parse(row.expires_at) > now) return alerts;
   // Expiry is the last available activity signal for ledger-less failed attempts.
   const activity = row.unresolved_at && (!row.ready_version || row.phase === 'writing')
@@ -27,7 +28,8 @@ export function assess(row: Row, now: number, graceSeconds: number): Alert[] {
 // Explicit columns intentionally exclude download URLs, original URLs, manifests,
 // titles, and error strings (which can contain upstream credentials).
 export const SELECT_ROWS = `SELECT l.dedup_key AS key, l.status, l.updated_at,
- COALESCE(i.page_id,l.notion_page_id,p.page_id) AS page_id, COALESCE(j.reserved_at,l.first_seen_at) AS unresolved_at, i.version,i.ready_version,i.index_block_id,i.verified_at,i.owner,i.expires_at,
+ CASE WHEN l.status='synced' AND EXISTS(SELECT 1 FROM transcript_ingestion current WHERE current.meeting_key=json_array(l.canonical_meeting_key,l.meeting_date) AND current.selected_key<>l.dedup_key) THEN 1 ELSE 0 END AS superseded_success,
+ COALESCE(i.page_id,l.notion_page_id,p.page_id) AS page_id, j.reserved_at AS unresolved_at, i.version,i.ready_version,i.index_block_id,i.verified_at,i.owner,i.expires_at,
  p.phase,p.version AS projection_version
  FROM transcript_sync_ledger l
  LEFT JOIN transcript_ingestion i ON i.selected_key=l.dedup_key
@@ -36,7 +38,7 @@ export const SELECT_ROWS = `SELECT l.dedup_key AS key, l.status, l.updated_at,
  LEFT JOIN transcript_write_journal j ON j.operation_key=CASE WHEN json_valid(p.manifest) THEN json_extract(p.manifest,'$.pending.key') END
  WHERE julianday(l.first_seen_at)>=julianday(?) AND julianday(l.recording_start_time)>=julianday(?)
  UNION ALL
- SELECT i.meeting_key AS key,NULL AS status,NULL AS updated_at,COALESCE(i.page_id,p.page_id),j.reserved_at,i.version,i.ready_version,i.index_block_id,i.verified_at,i.owner,i.expires_at,p.phase,p.version AS projection_version
+ SELECT i.meeting_key AS key,NULL AS status,NULL AS updated_at,0 AS superseded_success,COALESCE(i.page_id,p.page_id),j.reserved_at,i.version,i.ready_version,i.index_block_id,i.verified_at,i.owner,i.expires_at,p.phase,p.version AS projection_version
  FROM transcript_ingestion i LEFT JOIN transcript_sync_ledger l ON l.dedup_key=i.selected_key
  LEFT JOIN transcript_inline_projection p ON p.page_id=COALESCE(i.page_id,
    (SELECT MIN(candidate.page_id) FROM transcript_inline_projection candidate WHERE candidate.version=i.version HAVING COUNT(*)=1))

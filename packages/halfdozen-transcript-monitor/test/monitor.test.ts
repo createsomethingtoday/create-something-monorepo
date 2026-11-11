@@ -38,11 +38,11 @@ test('authenticated status and scheduled alert log use same read-only report',as
 import { DatabaseSync } from 'node:sqlite';
 test('actual SQLite joins ingestion page when ledger page is null and excludes historical rows',()=>{
  const db=new DatabaseSync(':memory:');
- db.exec(`CREATE TABLE transcript_sync_ledger(dedup_key TEXT,status TEXT,updated_at TEXT,notion_page_id TEXT,first_seen_at TEXT,recording_start_time TEXT);
+ db.exec(`CREATE TABLE transcript_sync_ledger(dedup_key TEXT,status TEXT,updated_at TEXT,notion_page_id TEXT,first_seen_at TEXT,recording_start_time TEXT,canonical_meeting_key TEXT,meeting_date TEXT);
  CREATE TABLE transcript_ingestion(meeting_key TEXT,selected_key TEXT,page_id TEXT,version TEXT,ready_version TEXT,index_block_id TEXT,verified_at TEXT,owner TEXT,expires_at TEXT);
  CREATE TABLE transcript_inline_projection(page_id TEXT,phase TEXT,version TEXT,manifest TEXT);
  CREATE TABLE transcript_write_journal(operation_key TEXT,reserved_at TEXT);
- INSERT INTO transcript_sync_ledger VALUES('new','failed','2026-11-11T16:00:00Z',NULL,'2026-11-11T16:00:00Z','2026-11-11T15:00:00Z'),('old','failed','2026-11-11T16:00:00Z',NULL,'2026-10-01T16:00:00Z','2026-10-01T15:00:00Z');
+ INSERT INTO transcript_sync_ledger(dedup_key,status,updated_at,notion_page_id,first_seen_at,recording_start_time) VALUES('new','failed','2026-11-11T16:00:00Z',NULL,'2026-11-11T16:00:00Z','2026-11-11T15:00:00Z'),('old','failed','2026-11-11T16:00:00Z',NULL,'2026-10-01T16:00:00Z','2026-10-01T15:00:00Z');
  INSERT INTO transcript_ingestion VALUES('["meeting","2026-11-11"]','new','0123456789abcdef0123456789abcdef','v',NULL,NULL,NULL,NULL,NULL);
  INSERT INTO transcript_inline_projection VALUES('0123456789abcdef0123456789abcdef','writing','v',NULL);`);
  const rows=db.prepare(SELECT_ROWS).all(...Array(3).fill('2026-11-06T00:00:00Z'));
@@ -55,11 +55,11 @@ test('scope rejects absent and normalized invalid calendar dates',()=>{
 });
 test('actual-shaped missing page IDs resolve only unique version; old pending reservation defeats retry freshness',()=>{
  const db=new DatabaseSync(':memory:');
- db.exec(`CREATE TABLE transcript_sync_ledger(dedup_key TEXT,status TEXT,updated_at TEXT,notion_page_id TEXT,first_seen_at TEXT,recording_start_time TEXT);
+ db.exec(`CREATE TABLE transcript_sync_ledger(dedup_key TEXT,status TEXT,updated_at TEXT,notion_page_id TEXT,first_seen_at TEXT,recording_start_time TEXT,canonical_meeting_key TEXT,meeting_date TEXT);
  CREATE TABLE transcript_ingestion(meeting_key TEXT,selected_key TEXT,page_id TEXT,version TEXT,ready_version TEXT,index_block_id TEXT,verified_at TEXT,owner TEXT,expires_at TEXT);
  CREATE TABLE transcript_inline_projection(page_id TEXT,phase TEXT,version TEXT,manifest TEXT);
  CREATE TABLE transcript_write_journal(operation_key TEXT,reserved_at TEXT);
- INSERT INTO transcript_sync_ledger VALUES('weekly','failed','2026-11-11T17:59:00Z',NULL,'2026-11-10T16:00:00Z','2026-11-10T15:00:00Z');
+ INSERT INTO transcript_sync_ledger(dedup_key,status,updated_at,notion_page_id,first_seen_at,recording_start_time) VALUES('weekly','failed','2026-11-11T17:59:00Z',NULL,'2026-11-10T16:00:00Z','2026-11-10T15:00:00Z');
  INSERT INTO transcript_ingestion VALUES('["weekly","2026-11-10"]','weekly',NULL,'52f15',NULL,NULL,NULL,NULL,NULL);
  INSERT INTO transcript_inline_projection VALUES('413019187ac580009876543210abcdef','writing','52f15','{"pending":{"key":"append-key"}}');
  INSERT INTO transcript_write_journal VALUES('append-key','2026-11-10T16:05:00Z');`);
@@ -68,5 +68,23 @@ test('actual-shaped missing page IDs resolve only unique version; old pending re
  const alerts=assess(row as never,now,1800);assert.ok(alerts.some(a=>a.code==='stale_writing'));assert.ok(alerts.some(a=>a.page_url?.includes('41301918')));
  assert.equal(assess({...row,owner:'active',expires_at:'2026-11-11T18:05:00Z'} as never,now,1800).some(a=>a.code==='stale_writing'),false);
  db.exec(`INSERT INTO transcript_inline_projection VALUES('513019187ac580009876543210abcdef','writing','52f15',NULL)`);
- row=select()[0];assert.equal(row.page_id,null);assert.equal(row.phase,null);assert.equal(row.unresolved_at,'2026-11-10T16:00:00Z');db.close();
+ row=select()[0];assert.equal(row.page_id,null);assert.equal(row.phase,null);assert.equal(row.unresolved_at,null);db.close();
+});
+
+test('superseded successful rendition avoids readiness alerts but historical failures remain visible',()=>{
+ const db=new DatabaseSync(':memory:');
+ db.exec(`CREATE TABLE transcript_sync_ledger(dedup_key TEXT,status TEXT,updated_at TEXT,notion_page_id TEXT,first_seen_at TEXT,recording_start_time TEXT,canonical_meeting_key TEXT,meeting_date TEXT);
+ CREATE TABLE transcript_ingestion(meeting_key TEXT,selected_key TEXT,page_id TEXT,version TEXT,ready_version TEXT,index_block_id TEXT,verified_at TEXT,owner TEXT,expires_at TEXT);
+ CREATE TABLE transcript_inline_projection(page_id TEXT,phase TEXT,version TEXT,manifest TEXT);
+ CREATE TABLE transcript_write_journal(operation_key TEXT,reserved_at TEXT);
+ INSERT INTO transcript_sync_ledger VALUES('old','synced','2026-11-10T16:00:00Z','page','2026-11-10T16:00:00Z','2026-11-10T15:00:00Z','meeting','2026-11-10'),('new','synced','2026-11-11T16:00:00Z','page','2026-11-10T16:00:00Z','2026-11-10T15:00:00Z','meeting','2026-11-10');
+ INSERT INTO transcript_ingestion VALUES('["meeting","2026-11-10"]','new','page','v','v','index','2026-11-11T16:00:00Z',NULL,NULL);
+ INSERT INTO transcript_inline_projection VALUES('page','complete','v',NULL);`);
+ const rows=()=>db.prepare(SELECT_ROWS).all(...Array(3).fill('2026-11-06T00:00:00Z'));
+ assert.deepEqual(rows().flatMap(row=>assess(row as never,now,1800)),[]);
+ db.exec("UPDATE transcript_sync_ledger SET status='failed' WHERE dedup_key='old'");
+ assert.ok(rows().flatMap(row=>assess(row as never,now,1800)).some(a=>a.key==='old'&&a.code==='failed_job'));
+ db.exec("UPDATE transcript_sync_ledger SET status='queued',updated_at='2026-11-11T17:55:00Z' WHERE dedup_key='new'; UPDATE transcript_ingestion SET ready_version=NULL,index_block_id=NULL,verified_at=NULL");
+ assert.deepEqual(rows().filter(row=>row.key==='new').flatMap(row=>assess(row as never,now,1800)),[]);
+ db.close();
 });
