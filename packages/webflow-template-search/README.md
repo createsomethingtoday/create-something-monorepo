@@ -385,6 +385,40 @@ Before re-running older migrations against production, compare `PRAGMA table_inf
 `SELECT name FROM d1_migrations ORDER BY applied_at` so schema drift is reconciled in the
 ledger instead of replaying an already-applied `ALTER TABLE`.
 
+### Index drift found on 2026-11-10
+
+Production had none of the 17 indexes that migrations `0001`-`0011` define, although
+the ledger records those migrations as applied. The tables, triggers and data were
+intact. The cause is not known. The effect was that queries the tests showed as index
+lookups were full table scans in production.
+
+`0020_restore_creator_indexes.sql` restores the two that serve the heaviest queries.
+These 15 are still missing in production:
+
+- `template_documents`: `_popularity`, `_published_date`, `_price`, `_type`, `_flags`,
+  `_lmt`, `_creator_record_id`
+- `template_category_memberships`: `_group`, `_child`, `_group_child`
+- `idx_template_styles_slug`, `idx_template_child_categories_slug`,
+  `idx_slug_aliases_canonical`, `idx_sync_jobs_status`,
+  `idx_template_image_backfill_attempts_last_attempted`
+
+Restore one with a new migration that repeats its `CREATE INDEX IF NOT EXISTS`. Each
+index adds one write for each synced row, so restore the ones a query needs. The plain
+`_popularity` and `_published_date` indexes cannot serve the `COALESCE` sorts; `0019`
+replaced them.
+
+To check for drift, compare this list with the `CREATE INDEX` statements in
+`migrations/`:
+
+```sql
+SELECT name FROM sqlite_master
+WHERE type = 'index' AND name NOT LIKE 'sqlite_autoindex%' ORDER BY name;
+```
+
+A test database is built from the migrations, so tests cannot see this kind of drift.
+After a migration that adds an index, run `EXPLAIN QUERY PLAN` for the query on
+production too.
+
 ## Webflow webhooks
 
 Register Webflow API v2 `collection_item_created`, `collection_item_changed`, and
