@@ -68,3 +68,14 @@ Scheduler bookings and accepted map/workflow artifacts are unavailable pending s
 D1 has no per-binding SQL read-only grant. New LMS/telemetry bindings are server-only; the report exposes fixed read queries, never arbitrary SQL, records, credentials or database selection. Parent should review that runtime capability boundary before promotion. Sources exceeding 20,000 traffic events across the two periods are unavailable rather than sampled. Session contamination checks cover observed windows/source only.
 
 Rollback is a focused commit revert through review and redeployment of the previous .io artifact/config. Remove the added LMS/telemetry bindings if retained in target configuration. No data, consent, campaigns, tracking identifiers or scheduler state were mutated. CRE-2415 must remain open until parent release/live verification.
+
+
+## Parent integration checkpoint
+
+The initial builder handoff above is preserved as evidence of its scope. Parent integration subsequently restored safe acquisition categories and country context, added explicit booking-intent sessions, and integrated the scheduler's provider-free named service-binding receipt contract. Parent regression checks caught and fixed omitted delivery/prospects/mcp-access private routes. New tests retain first-view source attribution, referrer redaction, lookalike-host handling, scheduler result validation/unavailable behavior, and intent-versus-committed booking separation.
+
+The report reader was executed with read-only Cloudflare D1 adapters against the actual shared, Learn and operator telemetry production sources for both 7- and 30-day windows. All three source reads succeeded and all five properties appeared. Raw events/credentials were not logged or committed; the private aggregate snapshots remain in local review artifacts. This is live source-read evidence, not verification of the deployed .io report or scheduler RPC.
+
+Parent inspected the actual local Svelte route with captured aggregate responses at desktop and 390px, including source context, country disclosure, focus outline, no page overflow, failure and Retry recovery. Temporary loopback-only QA hooks blocked local analytics ingestion and were restored before checks. Horizontal keyboard scrolling needs independent re-test; a browser-driver ArrowRight attempt did not advance the new acquisition table. No production auth bypass or credentials were added. The live admin browser currently requires sign-in.
+
+Scheduler runtime regressions and the final combined artifact still require independent review and production promotion/readback. Production is not complete at this checkpoint. Worktree disposition: retained until review and release verification.

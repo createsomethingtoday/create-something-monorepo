@@ -23,6 +23,13 @@
 		}
 	],
 
+	"services": [
+		{
+			"binding": "SCHEDULER_REPORTS",
+			"service": "create-something-scheduler",
+			"entrypoint": "AudienceReports"
+		}
+	],
 	"kv_namespaces": [
 		{
 			"binding": "SESSIONS",

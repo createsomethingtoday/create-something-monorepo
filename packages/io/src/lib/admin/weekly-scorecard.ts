@@ -51,6 +51,8 @@ export interface WeeklyScorecard {
   audience: { eligible: number; active: number; total: number } | null;
   historicalDeliveries: number | null;
   topPages: Array<{ property: string; path: string; count: number }>;
+  acquisition: Array<{ property: string; channel: string; current: number; prior: number }>;
+  countries: Array<{ country: string; views: number }>;
   daily: Array<{ date: string; count: number }>;
   limitations: string[];
 }
@@ -95,6 +97,25 @@ export function formatWeeklyReport(report: WeeklyScorecard): string {
     lines.push('');
   }
   lines.push(
+    '',
+    '## Acquisition',
+    '',
+    'First observed public page-view referral per property session; missing source data is not zero.',
+    '',
+    '| Property | Channel | Current sessions | Prior sessions |',
+    '| --- | --- | ---: | ---: |'
+  );
+  for (const row of report.acquisition)
+    lines.push(`| ${row.property} | ${row.channel} | ${row.current} | ${row.prior} |`);
+  lines.push(
+    '',
+    '## Country context',
+    '',
+    'Public page views in available sources; country is not a persona.',
+    ''
+  );
+  for (const row of report.countries) lines.push(`- ${row.country}: ${row.views} page views`);
+  lines.push(
     '## Property coverage',
     '',
     '| Property | Current views | Prior views | Current sessions | Prior sessions |',
@@ -114,7 +135,7 @@ export function formatWeeklyReport(report: WeeklyScorecard): string {
   );
   for (const s of report.sources)
     lines.push(
-      `- ${s.label}: ${s.status}; checked ${s.observedAt}; latest contributing record ${s.latestAt ?? 'none available'}. ${s.detail}`
+      `- ${s.label}: ${s.status}; checked ${s.observedAt}; latest read record ${s.latestAt ?? 'none available'}. ${s.detail}`
     );
   lines.push('', '## Definitions', '');
   for (const m of report.metrics) lines.push(`- ${m.label}: ${m.definition}`);

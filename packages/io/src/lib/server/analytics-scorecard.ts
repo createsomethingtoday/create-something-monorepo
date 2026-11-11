@@ -13,6 +13,7 @@ import {
   type ReportWindows
 } from '../admin/weekly-scorecard';
 import { summarizeNewsletterSessions } from './newsletter-analytics';
+import { NEWSLETTER_CAMPAIGNS } from '../newsletter/measurement';
 
 /** Only SELECT is exposed to the reader; no client-supplied SQL, property or database selector. */
 export type AnalyticsReadDatabase = Pick<D1Database, 'prepare'>;
@@ -20,6 +21,14 @@ export interface ScorecardBindings {
   DB?: AnalyticsReadDatabase;
   LMS_DB?: AnalyticsReadDatabase;
   TELEMETRY_DB?: AnalyticsReadDatabase;
+  SCHEDULER_REPORTS?: {
+    getBookingSummary(windows: Pick<ReportWindows, 'current' | 'prior'>): Promise<{
+      source: 'scheduler-receipts';
+      current: { committed: number; rescheduled: number; cancelled: number };
+      prior: { committed: number; rescheduled: number; cancelled: number };
+      latestAt: string | null;
+    }>;
+  };
 }
 export const EVENT_LIMIT = 20000;
 export const PUBLIC_HOSTS: Record<AnalyticsProperty, string[]> = {
@@ -40,8 +49,10 @@ export interface ReportEvent {
   traffic_class: string | null;
   campaign: string | null;
   measurement: string | null;
+  referrer?: string | null;
+  ip_country?: string | null;
 }
-export const REPORT_EVENTS_SQL = `SELECT session_id, property, category, action, url, user_agent,
+export const REPORT_EVENTS_SQL = `SELECT session_id, property, category, action, url, user_agent, referrer, ip_country,
   strftime('%Y-%m-%dT%H:%M:%fZ', created_at) AS created_at,
   CASE WHEN json_valid(metadata) THEN COALESCE(json_extract(metadata, '$.trafficClass'), json_extract(metadata, '$.traffic_class')) END AS traffic_class,
   CASE WHEN json_valid(metadata) THEN json_extract(metadata, '$.newsletterCampaign') END AS campaign,
@@ -107,6 +118,55 @@ export function classifyReportEvents(events: ReportEvent[]) {
   return { classes, events: events.filter((e) => classes.get(e.session_id) !== 'excluded') };
 }
 
+/** Classify source without returning any raw referral host, path, query or identity. */
+function acquisitionChannel(event: ReportEvent): string {
+  if (
+    event.measurement === 'first-party-v1' &&
+    NEWSLETTER_CAMPAIGNS.some((id) => id === event.campaign?.replaceAll('_', '-'))
+  )
+    return 'tagged_newsletter';
+  if (!event.referrer) return 'unattributed';
+  try {
+    const ref = new URL(event.referrer);
+    if (!['http:', 'https:'].includes(ref.protocol) || ref.username || ref.password || ref.port)
+      return 'unattributed';
+    const host = ref.hostname.toLowerCase();
+    if (Object.values(PUBLIC_HOSTS).some((hosts) => hosts.includes(host))) return 'own_properties';
+    if (
+      [
+        'google.com',
+        'www.google.com',
+        'www.google.co.uk',
+        'www.google.ca',
+        'bing.com',
+        'www.bing.com',
+        'duckduckgo.com',
+        'www.duckduckgo.com',
+        'search.yahoo.com',
+        'search.brave.com'
+      ].includes(host)
+    )
+      return 'search_referral';
+    if (
+      [
+        'chatgpt.com',
+        'www.chatgpt.com',
+        'chat.openai.com',
+        'perplexity.ai',
+        'www.perplexity.ai',
+        'claude.ai',
+        'www.claude.ai',
+        'copilot.microsoft.com',
+        'gemini.google.com'
+      ].includes(host)
+    )
+      return 'ai_referral';
+    return 'other_referral';
+  } catch {
+    return 'unattributed';
+  }
+}
+
 const periods = ['current', 'prior'] as const;
 function inWindow(date: string, window: { start: string; end: string }) {
   return date >= window.start && date < window.end;
@@ -152,11 +212,13 @@ export async function readWeeklyScorecard(
     audience: null,
     historicalDeliveries: null,
     topPages: [],
+    acquisition: [],
+    countries: [],
     daily: [],
     limitations: [
       'Public first-party sessions are not unique people. External is a traffic classification, not proof of a human. Unknown remains unclassified; consent and instrumentation gaps remain.',
       'Classification uses the most restrictive observed event per session across both windows. Private, tokenized, noncanonical, internal, test, preview and recognized automated traffic is excluded. Unmarked automation can remain.',
-      'Periods are complete UTC days with equal prior windows and exclusive ends. Source freshness is the latest contributing record, not proof that ingestion is healthy.',
+      'Periods are complete UTC days with equal prior windows and exclusive ends. Source freshness is the latest read record, not proof that ingestion is healthy.',
       'No cross-property identity join, retention, causal attribution, or combined audience total. Cloudflare visits are a separate measurement and are not added.',
       'Newsletter requests and once-only confirmations are independently dated, not a cohort conversion rate. Opens, email click rates and replies are unavailable. Delivery ledger states are not fresh provider readback.',
       'Outcome records have no reliable traffic-class join. They can contain operator/test activity and do not prove external demand, delivered email or realized customer value.',
@@ -183,6 +245,8 @@ export async function readWeeklyScorecard(
   const allEvents: ReportEvent[] = [];
   const pageCounts = new Map<string, { property: string; path: string; count: number }>();
   const daily = new Map<string, number>();
+  const acquisition = new Map<string, WeeklyScorecard['acquisition'][number]>();
+  const countries = new Map<string, number>();
   for (const [index, result] of traffic.entries()) {
     const properties: AnalyticsProperty[] =
       index === 0 ? ['agency', 'io', 'space', 'ltd'] : ['lms'];
@@ -196,7 +260,10 @@ export async function readWeeklyScorecard(
           : 'Learn public traffic · lms-db',
         observedAt,
         raw !== null,
-        raw?.reduce<string | null>((latest, event) => !latest || event.created_at > latest ? event.created_at : latest, null) ?? null,
+        raw?.reduce<string | null>(
+          (latest, event) => (!latest || event.created_at > latest ? event.created_at : latest),
+          null
+        ) ?? null,
         raw
           ? `Complete bounded read (${raw.length} events across both windows).`
           : 'Binding, schema or read unavailable, or the 20,000-event safety limit was exceeded. Restore the source and retry; no zeros substituted.'
@@ -245,6 +312,22 @@ export async function readWeeklyScorecard(
             )
             .map((e) => e.session_id)
         ).size;
+        for (const [i, period] of periods.entries()) {
+          const landings = new Map<string, ReportEvent>();
+          for (const event of counts[i].events) {
+            if (event.category !== 'navigation' || event.action !== 'page_view') continue;
+            const first = landings.get(event.session_id);
+            if (!first || event.created_at < first.created_at)
+              landings.set(event.session_id, event);
+          }
+          for (const landing of landings.values()) {
+            const channel = acquisitionChannel(landing);
+            const key = property + ':' + channel;
+            const row = acquisition.get(key) ?? { property, channel, current: 0, prior: 0 };
+            row[period]++;
+            acquisition.set(key, row);
+          }
+        }
         for (const e of counts[0].events.filter(
           (e) => e.category === 'navigation' && e.action === 'page_view'
         )) {
@@ -252,6 +335,8 @@ export async function readWeeklyScorecard(
           const key = `${property}:${path}`;
           pageCounts.set(key, { property, path, count: (pageCounts.get(key)?.count ?? 0) + 1 });
           daily.set(e.created_at.slice(0, 10), (daily.get(e.created_at.slice(0, 10)) ?? 0) + 1);
+          if (/^[A-Z]{2}$/.test(e.ip_country ?? ''))
+            countries.set(e.ip_country!, (countries.get(e.ip_country!) ?? 0) + 1);
         }
       }
       report.properties.push(p);
@@ -273,6 +358,16 @@ export async function readWeeklyScorecard(
       SUPPORTED_ANALYTICS_PROPERTIES.indexOf(b.property)
   );
   report.topPages = [...pageCounts.values()].sort((a, b) => b.count - a.count).slice(0, 10);
+  report.acquisition = [...acquisition.values()].sort(
+    (a, b) =>
+      b.current - a.current ||
+      a.property.localeCompare(b.property) ||
+      a.channel.localeCompare(b.channel)
+  );
+  report.countries = [...countries]
+    .map(([country, views]) => ({ country, views }))
+    .sort((a, b) => b.views - a.views || a.country.localeCompare(b.country))
+    .slice(0, 10);
   // Daily series is withheld when either traffic source is missing, to avoid an apparent collapse.
   if (traffic.every((r) => r.status === 'fulfilled')) {
     for (
@@ -334,6 +429,29 @@ export async function readWeeklyScorecard(
     );
   }
   await readSupplemental(report, env, add);
+  const bookingClicks = periods.map(
+    (period) =>
+      new Set(
+        allEvents
+          .filter(
+            (event) =>
+              event.property === 'agency' &&
+              event.action === 'booking_cta_click' &&
+              inWindow(event.created_at, windows[period])
+          )
+          .map((event) => event.session_id)
+      ).size
+  );
+  add(
+    'booking-intent',
+    'Relationship',
+    'Booking CTA sessions',
+    'sessions',
+    'shared',
+    traffic[0].status === 'fulfilled' ? bookingClicks[0] : null,
+    traffic[0].status === 'fulfilled' ? bookingClicks[1] : null,
+    'Public Agency sessions with a booking CTA click after session-wide traffic filtering. An attempt to continue, not an authoritative booking or a qualified lead.'
+  );
   return report;
 }
 
@@ -346,9 +464,16 @@ async function readEvents(
   // Broad UTC date bounds use the existing property/created_at index for both ISO
   // and sqlite writers. One extra day on either side also covers ISO offsets;
   // julianday is still the exact inclusion boundary. No sorting before the cap.
-  const coarseStart = new Date(Date.parse(windows.prior.start) - 86400000).toISOString().slice(0,10);
-  const coarseEnd = new Date(Date.parse(windows.current.end) + 86400000).toISOString().slice(0,10);
-  const result = await rows<ReportEvent>(db, sql, [coarseStart, coarseEnd, windows.prior.start, windows.current.end]);
+  const coarseStart = new Date(Date.parse(windows.prior.start) - 86400000)
+    .toISOString()
+    .slice(0, 10);
+  const coarseEnd = new Date(Date.parse(windows.current.end) + 86400000).toISOString().slice(0, 10);
+  const result = await rows<ReportEvent>(db, sql, [
+    coarseStart,
+    coarseEnd,
+    windows.prior.start,
+    windows.current.end
+  ]);
   if (result.length > EVENT_LIMIT) throw new Error('Bounded read exceeded');
   return result;
 }
@@ -509,13 +634,9 @@ async function readSupplemental(report: WeeklyScorecard, env: ScorecardBindings,
     audience[2].status === 'fulfilled' ? (audience[2].value[0]?.count ?? 0) : null,
     'Distinct provider IDs in nonhistorical audience rows with sent/delivered/delayed state, dated by send row creation. This is stored evidence, not fresh provider delivery. Historical import timestamps are never send dates.'
   );
-  // The public browser event booking_completed is intentionally not a booking outcome.
+  // Only the fixed server-only scheduler receipt contract supplies booking outcomes.
+  await readSchedulerOutcomes(report, env, add);
   for (const [id, label, detail] of [
-    [
-      'bookings',
-      'Committed scheduler bookings',
-      'Authoritative receipts are in the scheduler host Durable Object. Existing operator API offers point reads only; no aggregate read contract is deployed. Browser booking_completed and schedule-mcp D1 are not booking counts.'
-    ],
     [
       'maps',
       'Accepted map / workflow evidence',
@@ -595,4 +716,75 @@ async function readSupplemental(report: WeeklyScorecard, env: ScorecardBindings,
       'Operator key only; client accounts and unknown keys excluded. Raw invocation layers are separate. A missing route table leaves routed attempts unavailable, not zero.'
     )
   );
+}
+
+async function readSchedulerOutcomes(
+  report: WeeklyScorecard,
+  env: ScorecardBindings,
+  add: AddMetric
+) {
+  type Summary = Awaited<
+    ReturnType<NonNullable<ScorecardBindings['SCHEDULER_REPORTS']>['getBookingSummary']>
+  >;
+  let summary: Summary | null = null;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    if (!env.SCHEDULER_REPORTS) throw new Error('Source unavailable');
+    const result = await Promise.race([
+      env.SCHEDULER_REPORTS.getBookingSummary({
+        current: report.windows.current,
+        prior: report.windows.prior
+      }),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error('Read timed out')), 5000);
+      })
+    ]);
+    if (
+      result.source !== 'scheduler-receipts' ||
+      periods.some((period) =>
+        ['committed', 'rescheduled', 'cancelled'].some((key) => {
+          const value = result[period]?.[key as keyof Summary['current']];
+          return !Number.isSafeInteger(value) || value < 0;
+        })
+      ) ||
+      (result.latestAt !== null &&
+        (!Number.isFinite(Date.parse(result.latestAt)) ||
+          Date.parse(result.latestAt) >= Date.parse(report.windows.current.end) ||
+          Date.parse(result.latestAt) < Date.parse(report.windows.prior.start)))
+    )
+      throw new Error('Invalid aggregate response');
+    summary = result;
+  } catch {
+    // Private upstream errors are never part of the report.
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+  report.sources.push(
+    status(
+      'bookings',
+      'Authoritative scheduler receipts',
+      report.observedAt,
+      summary !== null,
+      summary?.latestAt ?? null,
+      summary
+        ? 'Server-only read of first-party host lifecycle receipts. No Calendar provider call or booking mutation.'
+        : 'Scheduler report binding, deployed read contract, or receipt read unavailable. Restore the source and retry; no browser event is substituted.'
+    )
+  );
+  for (const [id, label, key, unit] of [
+    ['bookings', 'Committed scheduler bookings', 'committed', 'bookings'],
+    ['booking-reschedules', 'Scheduler reschedule events', 'rescheduled', 'lifecycle events'],
+    ['booking-cancellations', 'Scheduler cancellation events', 'cancelled', 'lifecycle events']
+  ] as const) {
+    add(
+      id,
+      'Verified outcomes',
+      label,
+      unit,
+      'bookings',
+      summary?.current[key] ?? null,
+      summary?.prior[key] ?? null,
+      'Authoritative first-party host receipts dated by occurred_at. Committed booking IDs are deduplicated; reschedule and cancellation events stay separate. Operator/test bookings may remain. No browser-event inference, personal details, or qualified-lead claim.'
+    );
+  }
 }

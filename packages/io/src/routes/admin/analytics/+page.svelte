@@ -127,16 +127,14 @@
             <caption>{group} · current and equal prior UTC periods</caption>
             <thead
               ><tr
-                ><th scope="col">Measure</th><th scope="col">Current</th><th
-                  scope="col">Prior</th
+                ><th scope="col">Measure</th><th scope="col">Current</th><th scope="col">Prior</th
                 ><th scope="col">Unit</th></tr
               ></thead
             >
             <tbody
               >{#each report.metrics.filter((m) => m.group === group) as metric}
                 <tr
-                  ><th scope="row"><span>{metric.label}</span></th
-                  >
+                  ><th scope="row"><span>{metric.label}</span></th>
                   <td class:unavailable={metric.current === null}>{number(metric.current)}</td>
                   <td class:unavailable={metric.prior === null}>{number(metric.prior)}</td><td
                     class="unit">{metric.unit}</td
@@ -147,12 +145,15 @@
           </table>
         </div>
         <details class="definitions">
-        <summary>{group} definitions and sources</summary>
-        <dl>{#each report.metrics.filter(m => m.group === group) as metric}
-          <dt>{metric.label} · {metric.source}</dt><dd>{metric.definition}</dd>
-        {/each}</dl>
-      </details>
-      {#if group === 'Relationship'}
+          <summary>{group} definitions and sources</summary>
+          <dl>
+            {#each report.metrics.filter((m) => m.group === group) as metric}
+              <dt>{metric.label} · {metric.source}</dt>
+              <dd>{metric.definition}</dd>
+            {/each}
+          </dl>
+        </details>
+        {#if group === 'Relationship'}
           <div class="snapshot">
             <h3>Audience eligibility · current snapshot</h3>
             <p>
@@ -248,13 +249,72 @@
       {:else}<p>No eligible page views in available sources.</p>{/if}
     </section>
 
+    <section class="measure-section" aria-labelledby="acquisition-title">
+      <div class="section-heading">
+        <p class="eyebrow">Discovery / Source context</p>
+        <h2 id="acquisition-title">How public sessions arrive</h2>
+        <p>
+          First observed page-view referral per property session. Available sources only;
+          unattributed does not mean direct traffic. These categories do not prove causal
+          acquisition.
+        </p>
+      </div>
+      {#if report.acquisition.length}
+        <!-- svelte-ignore a11y_no_noninteractive_tabindex (Scrollable comparison tables need keyboard access.) -->
+        <div
+          class="table-scroll"
+          tabindex="0"
+          role="region"
+          aria-label="Acquisition source comparisons"
+        >
+          <table>
+            <caption>Public landing sessions by source category; no raw referrer URLs</caption>
+            <thead
+              ><tr
+                ><th scope="col">Property / Channel</th><th scope="col">Current</th><th scope="col"
+                  >Prior</th
+                ></tr
+              ></thead
+            >
+            <tbody
+              >{#each report.acquisition as row}<tr>
+                  <th scope="row"
+                    >{row.property === 'lms' ? 'Learn' : `.${row.property}`} / {row.channel.replaceAll(
+                      '_',
+                      ' '
+                    )}</th
+                  >
+                  <td>{number(row.current)}</td><td>{number(row.prior)}</td>
+                </tr>{/each}</tbody
+            >
+          </table>
+        </div>
+      {:else}<p>
+          No eligible landing sessions in available sources. Check source status before interpreting
+          missing activity.
+        </p>{/if}
+      <details class="definitions">
+        <summary>Country context · public page views</summary>
+        <p>
+          Countries describe requests, not personas or verified people. Unknown and invalid country
+          codes are omitted. Available sources only; no cross-property identity join.
+        </p>
+        {#if report.countries.length}<ul>
+            {#each report.countries as row}<li>
+                {row.country}: {number(row.views)} page views
+              </li>{/each}
+          </ul>
+        {:else}<p>No country context available for eligible page views.</p>{/if}
+      </details>
+    </section>
+
     <section class="measure-section" aria-labelledby="sources-title">
       <div class="section-heading">
         <p class="eyebrow">Evidence / Recovery</p>
         <h2 id="sources-title">Source status and freshness</h2>
         <p>
-          Last contributing record is not a health check. A quiet source can be healthy; an old
-          source may need investigation.
+          Latest read record is not a health check. A quiet source can be healthy; an old source may
+          need investigation.
         </p>
       </div>
       <div class="sources">
@@ -423,8 +483,14 @@
     min-width: 19rem;
     max-width: 38rem;
   }
-  .definitions dt { font-weight:500; margin-top:var(--space-md); }
-  .definitions dd { color:var(--color-performance-fg-secondary); max-width:85ch; }
+  .definitions dt {
+    font-weight: 500;
+    margin-top: var(--space-md);
+  }
+  .definitions dd {
+    color: var(--color-performance-fg-secondary);
+    max-width: 85ch;
+  }
 
   td {
     font-family: var(--font-mono);

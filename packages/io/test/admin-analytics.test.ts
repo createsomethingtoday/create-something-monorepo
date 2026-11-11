@@ -17,7 +17,7 @@ import { readNewsletterDelivery } from '../src/lib/server/newsletter-analytics';
 const now = new Date('2026-11-11T19:55:00Z');
 function fixture() {
   const sql = new DatabaseSync(':memory:');
-  sql.exec(`CREATE TABLE unified_events(id TEXT PRIMARY KEY,session_id TEXT,property TEXT,category TEXT,action TEXT,url TEXT,user_agent TEXT,metadata TEXT,created_at TEXT);
+  sql.exec(`CREATE TABLE unified_events(id TEXT PRIMARY KEY,session_id TEXT,property TEXT,category TEXT,action TEXT,url TEXT,user_agent TEXT,metadata TEXT,created_at TEXT,referrer TEXT,ip_country TEXT);
     CREATE INDEX idx_report_property_time ON unified_events(property,created_at);
     CREATE TABLE newsletter_subscribers(id INTEGER,confirmed_at TEXT,consent_confirmed_at TEXT,consent_method TEXT,consent_evidence TEXT,audience_classification TEXT,unsubscribed_at TEXT,active INTEGER,status TEXT);
     CREATE TABLE newsletter_signup_attributions(subscriber_id INTEGER PRIMARY KEY,traffic_class TEXT,requested_at TEXT,confirmed_at TEXT);
@@ -51,11 +51,13 @@ function fixture() {
       property?: string;
       action?: string;
       ua?: string;
+      referrer?: string;
+      country?: string;
       metadata?: Record<string, string>;
     } = {}
   ) => {
     sql
-      .prepare('INSERT INTO unified_events VALUES(?,?,?,?,?,?,?,?,?)')
+      .prepare('INSERT INTO unified_events VALUES(?,?,?,?,?,?,?,?,?,?,?)')
       .run(
         String(++id),
         session,
@@ -65,7 +67,9 @@ function fixture() {
         url,
         opts.ua ?? 'Mozilla/5.0',
         JSON.stringify(opts.metadata ?? { trafficClass: 'external' }),
-        opts.date ?? '2026-11-05 12:00:00'
+        opts.date ?? '2026-11-05 12:00:00',
+        opts.referrer ?? null,
+        opts.country ?? null
       );
   };
   return { sql, db, queries, event };
@@ -92,6 +96,9 @@ test('paths strip query/fragment and redact encoded private and opaque paths', (
     '/%2561dmin/private',
     '/map/workspace/secret',
     '/map/subscribe',
+    '/delivery/client-name',
+    '/prospects/client-name',
+    '/mcp-access',
     '/progress',
     '/foo/private@example.com',
     '/papers/' + 'a'.repeat(40)
@@ -99,7 +106,10 @@ test('paths strip query/fragment and redact encoded private and opaque paths', (
     assert.equal(normalizeAnalyticsPath(path), '/[redacted]', path);
   assert.equal(normalizeAnalyticsPath('/papers/proof?utm_source=newsletter#top'), '/papers/proof');
   assert.equal(normalizeAnalyticsPath('services'), '/services');
-  assert.equal(normalizeAnalyticsPath('/papers/a-useful-public-paper-with-a-long-readable-slug'), '/papers/a-useful-public-paper-with-a-long-readable-slug');
+  assert.equal(
+    normalizeAnalyticsPath('/papers/a-useful-public-paper-with-a-long-readable-slug'),
+    '/papers/a-useful-public-paper-with-a-long-readable-slug'
+  );
 });
 
 test('Learn-only traffic comes from LMS_DB and missing sources never become zeros', async () => {
@@ -169,8 +179,12 @@ test('ISO and sqlite datetime boundaries use the same inclusive start and exclus
   assert.equal(report.daily[0].count, 2);
   assert.equal(report.daily.at(-1)?.count, 0);
   assert.ok(f.queries.every((q) => !q.sql.includes("datetime('now'")));
-  const query = f.queries.find(q => q.sql.includes('FROM unified_events'))!;
-  const plan = f.sql.prepare('EXPLAIN QUERY PLAN ' + query.sql).all(...query.values as never[]).map(row => String(row.detail)).join(' ');
+  const query = f.queries.find((q) => q.sql.includes('FROM unified_events'))!;
+  const plan = f.sql
+    .prepare('EXPLAIN QUERY PLAN ' + query.sql)
+    .all(...(query.values as never[]))
+    .map((row) => String(row.detail))
+    .join(' ');
   assert.match(plan, /idx_report_property_time/);
   assert.ok(!plan.includes('TEMP B-TREE FOR ORDER BY'));
 
@@ -241,7 +255,7 @@ test('hub, routed attempts and downstream counts stay separate; client and unkno
 test('source overflow and D1 failure are unavailable, never truncated successful data', async () => {
   const f = fixture();
   f.sql.exec(`WITH RECURSIVE n(x) AS (SELECT 1 UNION ALL SELECT x+1 FROM n WHERE x<20001)
-    INSERT INTO unified_events SELECT x,x,'io','navigation','page_view','https://createsomething.io/','Mozilla/5.0','{}','2026-11-05' FROM n`);
+    INSERT INTO unified_events SELECT x,x,'io','navigation','page_view','https://createsomething.io/','Mozilla/5.0','{}','2026-11-05',NULL,NULL FROM n`);
   const report = await readWeeklyScorecard({ DB: f.db }, null, now);
   assert.equal(metric(report, 'io-sessions').current, null);
   assert.equal(report.topPages.length, 0);
@@ -294,4 +308,134 @@ test('fresh provider failure stays null and does not become stored delivery succ
   );
   assert.equal(delivery.status, 'unavailable');
   assert.equal(delivery.delivered, null);
+});
+
+test('discovery preserves acquisition and country context without exposing referrer URLs or identifiers', async () => {
+  const f = fixture();
+  f.event('search', 'https://createsomething.io/papers/proof', {
+    referrer: 'https://www.google.com/search?q=private-query',
+    country: 'US'
+  });
+  f.event('search', 'https://createsomething.io/papers/next', {
+    date: '2026-11-05 12:01:00',
+    referrer: 'https://createsomething.io/papers/proof',
+    country: 'US'
+  });
+  f.event('ai', 'https://createsomething.io/', {
+    referrer: 'https://chatgpt.com/c/private-thread',
+    country: 'CA'
+  });
+  f.event('own', 'https://createsomething.io/', {
+    referrer: 'https://createsomething.ltd/standards',
+    country: 'US'
+  });
+  f.event('other', 'https://createsomething.io/', {
+    referrer: 'https://www.google.com.evil.example/token/private',
+    country: 'invalid-private'
+  });
+  f.event('prior', 'https://createsomething.io/', {
+    date: '2026-11-03 12:00:00',
+    referrer: 'https://www.google.com/search?private=value',
+    country: 'GB'
+  });
+  f.event('test', 'https://createsomething.io/', {
+    referrer: 'https://www.google.com/',
+    country: 'DE',
+    metadata: { trafficClass: 'test' }
+  });
+  const report = await readWeeklyScorecard({ DB: f.db, LMS_DB: fixture().db }, null, now);
+  assert.deepEqual(
+    report.acquisition.find((r) => r.property === 'io' && r.channel === 'search_referral'),
+    { property: 'io', channel: 'search_referral', current: 1, prior: 1 }
+  );
+  assert.equal(report.acquisition.find((r) => r.channel === 'ai_referral')?.current, 1);
+  assert.equal(report.acquisition.find((r) => r.channel === 'own_properties')?.current, 1);
+  assert.equal(report.acquisition.find((r) => r.channel === 'other_referral')?.current, 1);
+  assert.deepEqual(report.countries, [
+    { country: 'US', views: 3 },
+    { country: 'CA', views: 1 }
+  ]);
+  const output = JSON.stringify(report) + formatWeeklyReport(report);
+  for (const secret of [
+    'private-query',
+    'private-thread',
+    'evil.example',
+    'invalid-private',
+    '/search?'
+  ])
+    assert.ok(!output.includes(secret));
+  assert.match(formatWeeklyReport(report), /Acquisition/);
+});
+
+test('authoritative scheduler binding supplies aggregate outcomes and never returns its private payload', async () => {
+  const requests: unknown[] = [];
+  const report = await readWeeklyScorecard(
+    {
+      SCHEDULER_REPORTS: {
+        async getBookingSummary(windows) {
+          requests.push(windows);
+          return {
+            source: 'scheduler-receipts',
+            current: { committed: 2, rescheduled: 1, cancelled: 1 },
+            prior: { committed: 1, rescheduled: 0, cancelled: 0 },
+            latestAt: '2026-11-05T12:00:00.000Z',
+            email: 'never-return@example.com'
+          };
+        }
+      }
+    },
+    null,
+    now
+  );
+  assert.equal(metric(report, 'bookings').current, 2);
+  assert.equal(metric(report, 'bookings').prior, 1);
+  assert.equal(metric(report, 'booking-reschedules').current, 1);
+  assert.equal(metric(report, 'booking-cancellations').current, 1);
+  assert.equal(report.sources.find((s) => s.id === 'bookings')?.status, 'ready');
+  assert.deepEqual(requests, [{ current: report.windows.current, prior: report.windows.prior }]);
+  assert.ok(!JSON.stringify(report).includes('never-return'));
+  for (const response of [
+    new Error('private upstream detail'),
+    {
+      source: 'scheduler-receipts' as const,
+      current: { committed: -1, rescheduled: 0, cancelled: 0 },
+      prior: { committed: 0, rescheduled: 0, cancelled: 0 },
+      latestAt: null
+    }
+  ]) {
+    const broken = await readWeeklyScorecard(
+      {
+        SCHEDULER_REPORTS: {
+          async getBookingSummary() {
+            if (response instanceof Error) throw response;
+            return response;
+          }
+        }
+      },
+      null,
+      now
+    );
+    assert.equal(metric(broken, 'bookings').current, null);
+    assert.equal(broken.sources.find((s) => s.id === 'bookings')?.status, 'unavailable');
+    assert.ok(!JSON.stringify(broken).includes('private upstream detail'));
+  }
+});
+
+test('booking interest stays distinct from authoritative booking outcomes', async () => {
+  const f = fixture();
+  f.event('intent', 'https://createsomething.agency/book', {
+    property: 'agency',
+    action: 'booking_cta_click'
+  });
+  f.event('intent', 'https://createsomething.agency/book', {
+    property: 'agency',
+    action: 'booking_cta_click'
+  });
+  f.event('browser-only', 'https://createsomething.agency/book', {
+    property: 'agency',
+    action: 'booking_completed'
+  });
+  const report = await readWeeklyScorecard({ DB: f.db }, null, now);
+  assert.equal(metric(report, 'booking-intent').current, 1);
+  assert.equal(metric(report, 'bookings').current, null);
 });

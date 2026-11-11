@@ -20,7 +20,7 @@ export function normalizeAnalyticsPath(value: unknown): string {
     if (!path.startsWith('/')) path = `/${path}`;
     if (
       /%|[\\\\@]|[^a-zA-Z0-9/_ .-]/.test(path) ||
-      /(?:^|\/)(?:admin|api|auth|login|logout|account|dashboard|profile|progress|preferences|billing|settings|oauth|callback|confirm|unsubscribe|reset|verify|token|share|workspace|customer|portal|room|join|manage)(?:\/|$)/i.test(
+      /(?:^|\/)(?:admin|api|auth|login|logout|account|dashboard|profile|progress|preferences|billing|settings|oauth|callback|confirm|unsubscribe|reset|verify|token|share|workspace|customer|portal|room|join|manage|delivery|prospects|mcp-access)(?:\/|$)/i.test(
         path
       ) ||
       /(?:^|\/)map\/subscribe(?:\/|$)/i.test(path) ||
