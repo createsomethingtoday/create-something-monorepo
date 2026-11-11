@@ -1150,6 +1150,16 @@ export function startController({ renderUI, invoke, initialize } = {}) {
     state.records = [...records, ...details];
     state.nextCursor = result?.nextCursor || null;
     state.recordCount = result?.count ?? state.recordCount;
+    if (route.page === 'finances') {
+      state.financeCounts = result?.viewCounts ?? state.financeCounts;
+      state.financeSnapshot = {
+        workspace: route.workspace,
+        view: state.financeView,
+        items: state.records,
+        count: state.recordCount,
+        viewCounts: state.financeCounts,
+      };
+    }
   }
 
   function submitLink(data) {

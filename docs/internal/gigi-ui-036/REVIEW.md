@@ -81,3 +81,7 @@ parent’s previous immutable installer/artifact workflow.
 
 
 Worktree disposition: retained at the T3-created `t3/gigi-ui-036` checkout for parent integration.
+
+## Parent correction after independent review
+
+Independent Sol 6.1 source review reproduced a P2: a failed Money view switch retained only the first page after successful Load more. The parent added native-equivalent 20-row fixture pagination and a 25-row public-renderer regression; it failed with 20 != 25 before the fix and passes afterward. Successful finance pagination now refreshes the workspace/view-scoped retained snapshot and counts. The refinement suite now passes 15 checks; the full JS suite was rerun with 427 passes and 2 existing installed-artifact skips. Evidence: `money-pagination-red.txt`, `money-pagination-green.txt`, and `INDEPENDENT_SOURCE.md`. The initial 41485b6e candidate was superseded locally; no installer was published. Final signed/native independent qualification remains pending.
