@@ -758,15 +758,15 @@ export async function enrichCandidateProfile(input: z.input<typeof candidateProf
 }
 export function registerAbundanceHealthcareTools(server: McpServer, options: HealthcareClientOptions): void {
   server.registerTool('enrich_candidate_skip_trace', {
-    description: 'Explicit optional paid Apify broker lookup for an approved existing registry candidate NPI. Repeating the same input reads or reconciles its cached run, never broadens or dispatches a second lookup. Practice geography is not home. All contacts require identity review, ownership and consent remain unverified; never recruiter-ready. No outreach or registry writes.',
-    inputSchema: z.object({ npi: z.string().regex(/^\d{10}$/), confirm_paid_enrichment: z.literal(true) }).strict(),
+    description: 'Explicit optional paid Apify broker lookup for an approved existing registry candidate NPI. Repeating the same input reads or reconciles its cached run, never broadens or dispatches a second lookup. For strict read-only recovery, reconcile_receipt requires the existing receipt id and run_id; a missing or changed receipt fails without paid dispatch. Practice geography is not home. All contacts require identity review, ownership and consent remain unverified; never recruiter-ready. No outreach or registry writes.',
+    inputSchema: z.object({ npi: z.string().regex(/^\d{10}$/), confirm_paid_enrichment: z.literal(true), reconcile_receipt:z.object({id:z.string().regex(/^[a-f0-9]{64}$/),run_id:z.string().regex(/^[A-Za-z0-9]{1,64}$/)}).strict().optional() }).strict(),
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
   }, async input => {
     if (!options.skipTrace) throw new Error('Skip Trace is not configured.');
     const record = await getHealthcarePractitioner({ market_id: 'npg-family-np-nationwide', npi: input.npi }, options);
     const p = record.provider as Record<string,string>;
     if (p.npi !== input.npi) throw new Error('Registry identity association failed.');
-    return structuredJson(await options.skipTrace({ npi: input.npi, first: p.first_name, last: p.last_name, full_name: [p.first_name,p.middle_name,p.last_name].filter(Boolean).join(' '), practice_city: p.practice_city, practice_state: p.practice_state, confirm_paid_enrichment: true }));
+    return structuredJson(await options.skipTrace({ npi: input.npi, reconcile_receipt:input.reconcile_receipt, first: p.first_name, last: p.last_name, full_name: [p.first_name,p.middle_name,p.last_name].filter(Boolean).join(' '), practice_city: p.practice_city, practice_state: p.practice_state, confirm_paid_enrichment: true }));
   });
   server.registerTool('enrich_candidate_profile', {
     description: 'Use People Data Labs to enrich one candidate with a professional profile (LinkedIn, current title, employer, work email) and personal contact details (mobile phone, personal emails, home city/state). Identify the candidate by exactly one of: a registry NPI (name and practice city/state are taken from NPPES), an exact LinkedIn profile URL, or a name plus locality/region/company. Explicit paid confirmation required; a shared rolling daily cap and seven-day caching apply. Set require_contact to pay only for matches that include a contact value. Results are vendor-reported and unverified: confirm identity before use; personal contacts carry no consent record, so manual recruiter outreach only, no autodialer or SMS campaigns. Registry practice_phone stays labeled separately.',

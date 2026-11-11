@@ -93,7 +93,26 @@ function fullClinicAddress(address: string) {
     )
   );
 }
+function skipReceipt(
+  value: unknown,
+  npi: unknown
+): value is { status: string; id: string; run_id: string; npi: string } {
+  if (!value || typeof value !== 'object') return false;
+  const r = value as Record<string, unknown>;
+  return (
+    typeof r.id === 'string' &&
+    /^[a-f0-9]{64}$/.test(r.id) &&
+    typeof r.run_id === 'string' &&
+    /^[A-Za-z0-9]{1,64}$/.test(r.run_id) &&
+    r.npi === npi
+  );
+}
 export function checkPaidScope(name: string, args: Record<string, unknown>, state: State) {
+  if (name === 'enrich_candidate_skip_trace' && state.skipTracePending)
+    throw new NpgError(
+      409,
+      'Send Refresh Skip Trace to reconcile the existing run before another Skip Trace request.'
+    );
   const userText = state.messages
     .filter((m) => m.role === 'user')
     .map((m) => m.text)
@@ -219,6 +238,8 @@ export async function executeCommand(
       before.state_json.length > 280000
     )
       throw new NpgError(409, 'Conversation is full. Start a new conversation.');
+    const refreshing =
+      command.type === 'message' && command.text.trim().toLowerCase() === 'refresh skip trace';
     let action: Action | undefined;
     if (command.type === 'message') {
       if (before.status !== 'idle')
@@ -239,6 +260,81 @@ export async function executeCommand(
     }
     row = await store.start(owner, before.id, before.version, token);
     let input: unknown[];
+    if (refreshing) {
+      const pending = state.skipTracePending;
+      if (!pending)
+        throw new NpgError(
+          409,
+          'There is no known Skip Trace run to refresh. No paid action was sent.'
+        );
+      const approved = await store.action(owner, pending.actionId);
+      const args = JSON.parse(approved.arguments_json);
+      if (
+        approved.conversation_id !== row.id ||
+        approved.tool !== 'enrich_candidate_skip_trace' ||
+        approved.status !== 'completed' ||
+        args.confirm_paid_enrichment !== true
+      )
+        throw new NpgError(
+          409,
+          'The approved receipt is unavailable. Ask your operator to reconcile it.'
+        );
+      providers = makeProviders();
+      let result: unknown;
+      try {
+        result = await providers.call(approved.tool, {
+          ...args,
+          reconcile_receipt: { id: pending.id, run_id: pending.run_id }
+        });
+      } catch {
+        result = { status: 'pending', id: pending.id, run_id: pending.run_id, npi: args.npi };
+      }
+      toolCount++;
+      if (
+        !skipReceipt(result, args.npi) ||
+        result.id !== pending.id ||
+        result.run_id !== pending.run_id ||
+        ![
+          'pending',
+          'review_required',
+          'no_contact',
+          'blocked_review',
+          'provider_failed',
+          'provider_aborted',
+          'provider_timeout'
+        ].includes(result.status)
+      ) {
+        await store.db
+          .prepare(
+            "UPDATE npg_analyst_actions SET status='ambiguous' WHERE id=? AND owner_id=? AND status='completed'"
+          )
+          .bind(approved.id, owner)
+          .run();
+        delete state.skipTracePending;
+        state.messages.push({
+          role: 'assistant',
+          text: 'This receipt could not be safely reconciled. Ask your operator to review it before further paid work.'
+        });
+        await store.finish(row, state, 'ambiguous', toolCount);
+        return store.view(owner, row.id);
+      }
+      state.sources.push({ tool: approved.tool, data: result });
+      delete state.responseId;
+      if (result.status === 'pending')
+        state.messages.push({
+          role: 'assistant',
+          text: 'Skip Trace is still pending or access/billing could not be refreshed. Send “Refresh Skip Trace” to read the same run again. No new paid dispatch is authorized.'
+        });
+      else {
+        delete state.skipTracePending;
+        state.messages.push({
+          role: 'assistant',
+          text: 'The existing Skip Trace run was refreshed. Review its source result below; identity, contact ownership and consent remain unverified. No new paid dispatch was authorized.'
+        });
+      }
+      await store.finish(row, state, 'idle', toolCount);
+      return store.view(owner, row.id);
+    }
     if (action) {
       const status = await store.consume(
         row,
@@ -279,6 +375,21 @@ export async function executeCommand(
       dispatchedAction = action.id;
       const result = await providers.call(tool.name, args);
       toolCount++;
+      if (
+        tool.name === 'enrich_candidate_skip_trace' &&
+        skipReceipt(result, args.npi) &&
+        result.status === 'pending'
+      ) {
+        state.skipTracePending = { actionId: action.id, id: result.id, run_id: result.run_id };
+        state.sources.push({ tool: tool.name, data: result });
+        delete state.responseId;
+        state.messages.push({
+          role: 'assistant',
+          text: 'Skip Trace has a known pending run. Send “Refresh Skip Trace” to read this same receipt without another paid dispatch or approval. Other paid tools remain subject to their normal approval.'
+        });
+        await store.finish(row, state, 'idle', toolCount, action.id);
+        return store.view(owner, row.id);
+      }
       if (
         result &&
         typeof result === 'object' &&

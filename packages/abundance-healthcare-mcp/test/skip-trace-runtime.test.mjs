@@ -119,6 +119,17 @@ test('real workerd singleton DO: privacy preflight, duplicate dispatch, persiste
     assert.deepEqual(result.contacts.phones, ['+15125550100']);
     assert.ok(!JSON.stringify(result).includes('FORBIDDEN'));
     assert.equal(posts, 1);
+    const refreshed = await (
+      await invoke({ ...body, reconcile_receipt: { id: result.id, run_id: result.run_id } })
+    ).json();
+    assert.equal(refreshed.status, 'review_required');
+    assert.equal(posts, 1);
+    assert.equal(
+      (await invoke({ ...body, reconcile_receipt: { id: 'f'.repeat(64), run_id: result.run_id } }))
+        .status,
+      503
+    );
+    assert.equal(posts, 1);
     assert.equal((await invoke({ ...body, npi: '9999999999' })).status, 503);
   } finally {
     await mf.dispose();

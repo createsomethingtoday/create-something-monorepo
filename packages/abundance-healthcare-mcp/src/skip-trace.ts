@@ -12,7 +12,14 @@ export const skipIdentity = z
     last: z.string().regex(/^[A-Za-z '-]{1,60}$/),
     practice_city: z.string().regex(/^[A-Za-z .'-]{1,80}$/),
     practice_state: z.string().regex(/^[A-Z]{2}$/),
-    confirm_paid_enrichment: z.literal(true)
+    confirm_paid_enrichment: z.literal(true),
+    reconcile_receipt: z
+      .object({
+        id: z.string().regex(/^[a-f0-9]{64}$/),
+        run_id: z.string().regex(/^[A-Za-z0-9]{1,64}$/)
+      })
+      .strict()
+      .optional()
   })
   .strict();
 export type SkipIdentity = z.infer<typeof skipIdentity>;
@@ -79,11 +86,12 @@ export async function skipTrace(
 ): Promise<SkipResult> {
   const p = skipIdentity.parse(input);
   if (!options.token?.trim()) throw new Error('Skip Trace is not configured.');
+  const { reconcile_receipt, ...identity } = p;
   const now = options.now ?? Date.now();
   const query = `${p.full_name ?? `${p.first} ${p.last}`}; ${p.practice_city}, ${p.practice_state}`;
   const digest = [
     ...new Uint8Array(
-      await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(p)))
+      await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(identity)))
     )
   ]
     .map((n) => n.toString(16).padStart(2, '0'))
@@ -106,6 +114,14 @@ export async function skipTrace(
   };
   let existing = await options.store.transaction(async (s) => {
     const cached = await s.get<SkipResult>(key);
+    if (
+      reconcile_receipt &&
+      (reconcile_receipt.id !== digest ||
+        !cached ||
+        cached.run_id !== reconcile_receipt.run_id ||
+        !providerId(cached.owner_id))
+    )
+      throw new Error('Known receipt unavailable; no dispatch authorized.');
     if (cached && cached.status !== 'privacy_blocked') return cached;
     const reservations = (
       (await s.get<{ at: number; cents: number; id: string; reconciled?: boolean }[]>(
@@ -248,6 +264,18 @@ export async function skipTrace(
       delete result.contacts;
       throw new Error('Association failure');
     }
+    if (
+      run.usageTotalUsd !== undefined &&
+      (typeof run.usageTotalUsd !== 'number' ||
+        !Number.isFinite(run.usageTotalUsd) ||
+        run.usageTotalUsd < 0 ||
+        run.usageTotalUsd > 0.1 ||
+        (result.charge_usd !== undefined && run.usageTotalUsd < result.charge_usd))
+    ) {
+      result = { ...result, status: 'billing_review', charge_reconciled: false };
+      await options.store.put('skip:billing_block', true);
+      throw new Error('Billing anomaly');
+    }
     await api(`actor-runs/${result.run_id}`, 'PUT', { generalAccess: 'RESTRICTED' });
     await api(`datasets/${result.dataset_id}`, 'PUT', { generalAccess: 'RESTRICTED' });
     const { data: privateRun } = await api(`actor-runs/${result.run_id}`);
@@ -381,6 +409,16 @@ export async function skipTrace(
       }
     }
   } catch {
+    if (result.run_id) {
+      delete result.contacts;
+      delete result.person_link;
+      result.charge_reconciled = false;
+      delete result.billing_observed_at;
+      if (
+        !['association_failure', 'privacy_blocked_review', 'billing_review'].includes(result.status)
+      )
+        result.status = 'pending';
+    }
     result = {
       ...result,
       status: !dispatched
@@ -410,7 +448,7 @@ export async function skipTrace(
         reservations.filter((r) => r.id !== digest)
       );
     }
-    if (result.run_id) {
+    if (dispatched) {
       const reservations =
         (await s.get<{ at: number; cents: number; id: string; reconciled?: boolean }[]>(
           'skip:budget'

@@ -693,3 +693,104 @@ test('sentinel exact identity, empty items and account ownership required; speci
     assert.equal(p.posts(), 0, mode);
   }
 });
+test('cached zero-charge success is invalidated on every reconciliation failure boundary', async () => {
+  for (const boundary of ['account', 'run', 'put', 'readback', 'items']) {
+    const p = reviewedProvider();
+    const s = store();
+    let now = 1000,
+      fail = false;
+    let runReads = 0,
+      charge = 0;
+    const options = () => ({
+      token: 'synthetic',
+      store: s,
+      privacyDatasetId: 'sentinel',
+      now,
+      fetchFn: (async (u, i) => {
+        const path = new URL(String(u)).pathname;
+        if (
+          fail &&
+          ((boundary === 'account' && path.endsWith('/users/me')) ||
+            (boundary === 'run' && path.includes('/actor-runs/') && i?.method !== 'PUT') ||
+            (boundary === 'put' && i?.method === 'PUT') ||
+            (boundary === 'items' && path.endsWith('/dataset1/items')) ||
+            (boundary === 'readback' &&
+              path.includes('/actor-runs/') &&
+              i?.method !== 'PUT' &&
+              ++runReads > 1))
+        )
+          return new Response(null, { status: 403 });
+        const r = await p.fetchFn(u, i);
+        if (path.includes('/actor-runs/') && i?.method !== 'PUT') {
+          const b = (await r.json()) as any;
+          b.data.usageTotalUsd = charge;
+          return Response.json(b);
+        }
+        return r;
+      }) as typeof fetch
+    });
+    await skipTrace(input, options());
+    now += 61000;
+    assert.equal((await skipTrace(input, options())).charge_reconciled, true);
+    fail = true;
+    charge = 0.1;
+    now += 1000;
+    const result = await skipTrace(input, options());
+    assert.equal(result.status, 'pending');
+    assert.equal(result.contacts, undefined);
+    assert.equal(result.charge_reconciled, false);
+    assert.equal((await s.get<any[]>('skip:budget'))?.[0].cents, 10, boundary);
+    assert.equal(p.posts(), 1);
+    fail = false;
+    now += 1000;
+    const recovered = await skipTrace(input, options());
+    assert.equal(recovered.status, 'review_required');
+    assert.equal(recovered.charge_reconciled, false);
+    now += 61000;
+    assert.equal((await skipTrace(input, options())).charge_reconciled, true);
+    assert.equal(p.posts(), 1);
+  }
+});
+test('same-receipt reads cannot authorize creation on cache miss or changed identity', async () => {
+  const p = reviewedProvider();
+  const s = store();
+  const options = {
+    token: 'synthetic',
+    store: s,
+    privacyDatasetId: 'sentinel',
+    fetchFn: p.fetchFn
+  };
+  await assert.rejects(
+    () =>
+      skipTrace({ ...input, reconcile_receipt: { id: 'a'.repeat(64), run_id: 'run1' } }, options),
+    /receipt/
+  );
+  assert.equal(p.posts(), 0);
+  const receipt = await skipTrace(input, options);
+  await skipTrace(
+    { ...input, reconcile_receipt: { id: receipt.id, run_id: receipt.run_id! } },
+    options
+  );
+  assert.equal(p.posts(), 1);
+  await assert.rejects(() =>
+    skipTrace(
+      {
+        ...input,
+        practice_city: 'Other',
+        reconcile_receipt: { id: receipt.id, run_id: receipt.run_id! }
+      },
+      options
+    )
+  );
+  assert.equal(p.posts(), 1);
+  await assert.rejects(() =>
+    skipTrace(
+      {
+        ...input,
+        confirm_paid_enrichment: false,
+        reconcile_receipt: { id: receipt.id, run_id: receipt.run_id! }
+      } as never,
+      options
+    )
+  );
+});
