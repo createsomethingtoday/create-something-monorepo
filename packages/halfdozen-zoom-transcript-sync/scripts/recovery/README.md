@@ -60,5 +60,15 @@ source reconciliation. Continue with the native runtime and verify completed
 inline projection, retrieval index, source fields, and downstream outcomes
 separately. A verified pending batch alone does not prove whole-meeting recovery.
 
+If `apply` records an unknown result but the exact 80 blocks are present, use
+`controller.mjs settle` with the same arguments and `--execute-authorized`.
+Settlement requires an existing unknown or verified attempt with the exact
+fingerprint and forbids append entirely. It writes a separate
+`recovery/result-settled.json`; the original unknown result remains intact.
+Release accepts this positive settlement only after another full reconciliation.
+Notion's typed `last_edited_time` and `last_edited_by` generated payloads may
+advance after append. Their property names, IDs, and types remain frozen;
+all other source and human fields are checked against the original baseline.
+
 Current tests use offline fixtures. Live D1/Notion admission, append, release,
 and native completion require separate execution evidence.

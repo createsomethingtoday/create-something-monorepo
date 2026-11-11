@@ -7,7 +7,7 @@ import {WEEKLY,sha,inspectPending,validateEvidence,runPendingRecovery} from './p
 import {createLiveAdapter} from './live-adapter.mjs';
 
 const [mode,directory,plannerPath,evidencePath]=process.argv.slice(2);
-assert.ok(['prepare','inspect','admit','apply','release'].includes(mode),'prepare|inspect|admit|apply|release capture-directory planner-module terminal-evidence-json');
+assert.ok(['prepare','inspect','admit','apply','settle','release'].includes(mode),'prepare|inspect|admit|apply|settle|release capture-directory planner-module terminal-evidence-json');
 const dir=resolve(directory),read=name=>JSON.parse(readFileSync(`${dir}/${name}`,'utf8'));
 const save=(name,data)=>writeFileSync(`${dir}/${name}`,JSON.stringify(data,null,2),{flag:'wx',mode:0o600});
 const planner=await import(pathToFileURL(resolve(plannerPath)).href);
@@ -38,9 +38,17 @@ if(mode==='prepare') {
   if(mode==='inspect') {await adapter.preflight();const result=await inspectPending(input);await adapter.preflight(); console.log(JSON.stringify({status:result.status,ids:result.ids}));}
   if(mode==='admit') {assert.ok(process.argv.includes('--execute-authorized'),'Explicit execution flag required');await adapter.preflight();assert.equal((await inspectPending(input)).status,'absent');await adapter.admit();save('recovery/admitted.json',{owner:profile.owner,at:new Date().toISOString()});console.log('admitted');}
   if(mode==='apply') {assert.ok(process.argv.includes('--execute-authorized'),'Explicit execution flag required');const result=await runPendingRecovery(input);save('recovery/result.json',result);console.log(JSON.stringify(result));}
+  if(mode==='settle') {
+    assert.ok(process.argv.includes('--execute-authorized'),'Explicit execution flag required');
+    assert.equal(read('recovery/result.json').status,'unknown','Preserve original unknown receipt');
+    const result=await runPendingRecovery({...input,settleOnly:true,adapter:{...adapter,append:async()=>{throw Error('Settlement append forbidden');}}});
+    assert.equal(result.status,'verified');save('recovery/result-settled.json',result);console.log(JSON.stringify(result));
+  }
   if(mode==='release') {
     assert.ok(process.argv.includes('--execute-authorized'),'Explicit execution flag required');
-    const expected=read('recovery/result.json'); assert.equal(expected.status,'verified');
+    let expected=read('recovery/result.json');
+    if(expected.status==='unknown')expected=read('recovery/result-settled.json');
+    assert.equal(expected.status,'verified');
     await adapter.guard();const result=await inspectPending(input);assert.equal(result.status,'present-exact');assert.deepEqual(result.ids,expected.receipt.ids);
     const key=`${profile.archiveId}:${profile.version}:repair-inline:${sha(profile.oldKey)}`,attempt=await adapter.getAttempt(key);
     assert.equal(attempt.status,'verified');assert.deepEqual(JSON.parse(attempt.receipt).ids,result.ids);

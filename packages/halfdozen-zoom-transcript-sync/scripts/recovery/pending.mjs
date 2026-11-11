@@ -41,7 +41,15 @@ export function validateEvidence(profile,evidence) {
 }
 function sourceGate(page,p) {
   assert.equal(page.id,p.pageId); assert.ok(!page.archived&&!page.in_trash);
-  assert.equal(JSON.stringify(page.properties),p.properties,'Human/source fields changed');
+  // Notion updates these system-generated payloads when our append edits the page.
+  // Preserve names, property IDs, types, and every other field from the original baseline.
+  const stable=properties=>Object.fromEntries(Object.entries(properties).map(([name,value])=>{
+    const copy=structuredClone(value);
+    if(copy.type==='last_edited_time')copy.last_edited_time='[generated]';
+    if(copy.type==='last_edited_by')copy.last_edited_by='[generated]';
+    return [name,copy];
+  }));
+  assert.deepEqual(stable(page.properties),stable(JSON.parse(p.properties)),'Human/source fields changed');
   const props=page.properties, text=name=>(props[name]?.rich_text??[]).map(x=>x.plain_text??x.text?.content??'').join('');
   assert.equal(text('Transcript Version'),`${p.version}:1`);
   for(const name of ['Transcript Ready Version','Categorized Transcript Version']) assert.equal(text(name),'');
@@ -112,11 +120,16 @@ export async function runPendingRecovery(input) {
   const request={method:'PATCH',path:`/v1/blocks/${p.pageId}/children`,body:{children:observed.batch,after:observed.after}};
   const fingerprint=sha(JSON.stringify(request)), prior=await a.getAttempt(key);
   if(prior) assert.equal(prior.fingerprint,fingerprint);
+  if(input.settleOnly) {
+    assert.ok(prior&&['unknown','verified'].includes(prior.status),'Settlement requires an existing unknown or verified attempt');
+    assert.equal(observed.status,'present-exact','Settlement requires exact positive readback; append forbidden');
+  }
   if(prior&&observed.status==='absent') return {status:'held-existing-attempt',mayPublishReady:false};
   if(!prior) { await guard(); assert.equal(await a.reserveAttempt({key,fingerprint,request,proof:evidence,profile:p}),true,'Atomic reservation refused'); }
   const record=async(status,receipt)=>{await a.recordReceipt(key,status,receipt); return {status,receipt,oldJournalPreserved:true,checkpointMutationPerformed:false,mayPublishReady:false};};
   const verified=ids=>record('verified',{fingerprint,ids,provenance:'positive-readback',methodInference:true,historicalBodyFingerprintRecorded:false});
   if(observed.status==='present-exact') return verified(observed.ids);
+  assert.ok(!input.settleOnly,'Settlement cannot dispatch');
   observed=await inventory(); if(observed.status==='present-exact') return verified(observed.ids);
   await guard(); assert.equal(await a.markInFlight(key,fingerprint,p),true,'Atomic dispatch transition refused'); await guard();
   try { await a.append(p.pageId,structuredClone(request.body)); }
