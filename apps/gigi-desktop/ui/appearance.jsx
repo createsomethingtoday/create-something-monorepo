@@ -40,7 +40,7 @@ const preferences = [
     [
       ['overview', 'Today'],
       ['music', 'Music'],
-      ['social', 'Instagram drafts'],
+      ['social', 'Social'],
       ['gigs', 'Gigs & shifts'],
       ['schedule', 'Schedule'],
       ['tasks', 'Tasks'],
@@ -128,7 +128,7 @@ function ThemeChoice({ ctx, id, title, description, mode }) {
   );
 }
 
-export function Appearance({ ctx }) {
+export function Appearance({ ctx, embedded = false }) {
   const {
     preferences: prefs,
     preferencesDraft: draft,
@@ -138,12 +138,12 @@ export function Appearance({ ctx }) {
   } = ctx;
   return (
     <VStack gap={6}>
-      <PageHeading
+      {!embedded && <PageHeading
         title="Appearance & views"
         description="Choose a workspace that feels right for your day."
-        actions={<B data-page="settings">Setup & safety</B>}
-      />
-      <Panel id="workspace-preferences" title="Make GiGi yours">
+        actions={<B data-page="settings">Settings</B>}
+      />}
+      <Panel id="workspace-preferences" title="Appearance">
         <Text color="secondary">On this device</Text>
         <Text>
           Choose how your work looks and where your day starts. Changes save automatically for this
@@ -172,8 +172,9 @@ export function Appearance({ ctx }) {
             ))}
           </Grid>
         </fieldset>
+        <section id="workspace-customize"><VStack gap={4}><Heading level={2}>Customize</Heading><Text color="secondary">Choose how GiGi fits your day. Your profile holds daily defaults.</Text><B data-page="profile">Customize my profile</B>
         <Grid columns={2} gap={5}>
-          {preferences.map(([key, label, options, help]) => (
+          {preferences.filter(([key])=>!embedded||!['startPage','collectionView'].includes(key)).map(([key, label, options, help]) => (
             <Choice
               key={key}
               id={`preference-${key}`}
@@ -185,7 +186,7 @@ export function Appearance({ ctx }) {
               help={help}
             />
           ))}
-        </Grid>
+        </Grid></VStack></section>
         <Disclosure
           title="Share or edit a configuration"
           className="portable-preferences"

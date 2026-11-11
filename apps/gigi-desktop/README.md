@@ -292,3 +292,29 @@ wake. Quitting stops observation. This release does not add phone delivery,
 teammate messaging, unattended model runs or new mutation authority. Native
 notifications are packaged in a signed macOS 13/Apple Silicon Swift companion;
 release verification requires it alongside the existing companions.
+
+
+### 0.3.6 workspace refinement
+
+Settings now groups Appearance, Customize, record freshness and Safety. The
+attention count opens Needs your attention. Today keeps its last successful
+local-read time below the work; Gigs shows the week calendar above its filters.
+People and Companies use directories; Services and Profile expose saved details.
+History includes saved conversations separately from reviewed Memory. Ask GiGi’s
+three starters prepare unsent drafts.
+
+Money offers Overall, Payable, Receivable and Overdue across the complete active
+workspace before pagination. Payable/Receivable include Expected, Invoiced and
+Overdue, excluding Paid. Overdue also includes unpaid items due before today in
+this Mac’s timezone. Failed reads label the retained previous view. Social searches
+saved draft titles/captions locally, with the existing publication review intact.
+
+Places offers an explicit Load map preview action using only a saved address or
+name. It does not use current location. A search match is unverified; check the
+destination in Maps. Failed saved-detail reads disable lookup. The build compiles
+`src-tauri/native/MapPreview.swift` as `gigi-map-preview`; release verification
+requires its first-party signature, hardened runtime and executable permissions.
+The native source directory participates in compiler provenance invalidation.
+
+Run `pnpm test:refinement` for synthetic active-renderer coverage. Local source
+checks do not qualify signed MapKit execution, WebKit or a released installer.

@@ -1,6 +1,6 @@
 {
   "name": "@create-something/gigi-desktop",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "private": true,
   "type": "module",
   "scripts": {
@@ -27,7 +27,8 @@
     "prepare:motion": "node scripts/prepare-motion.mjs",
     "check:motion": "node scripts/prepare-motion.mjs --check",
     "test:reconciled-work": "node scripts/dev-astryx-work-browser.mjs",
-    "test:reconciled-quest": "node scripts/dev-astryx-quest-browser.mjs"
+    "test:reconciled-quest": "node scripts/dev-astryx-quest-browser.mjs",
+    "test:refinement": "node scripts/astryx-refinement-browser.mjs"
   },
   "devDependencies": {
     "@astryxdesign/cli": "0.7.11",

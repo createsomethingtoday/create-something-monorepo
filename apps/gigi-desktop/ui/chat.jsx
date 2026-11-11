@@ -10,10 +10,8 @@ import { Badge } from '@astryxdesign/core/Badge';
 import {
   B,
   Field,
-  Choice,
   Panel,
   Message,
-  Disclosure,
   Heading,
   Text,
   VStack,
@@ -101,7 +99,6 @@ function MessageBody({ item }) {
 }
 function Suggestions({ chat, ready, uncertain }) {
   if (
-    !ready ||
     chat.pending ||
     chat.reading ||
     uncertain ||
@@ -114,6 +111,7 @@ function Suggestions({ chat, ready, uncertain }) {
           'Summarize this record',
           'Summarize this record and its linked work. Point out missing information without inventing details.'
         ],
+        ['Review what is missing', 'Review this record for missing dates, people or details. Explain the gaps before proposing any changes.'],
         [
           'Find the next step',
           'What is the next useful step for this record? Explain what it is based on and ask before making changes.'
@@ -124,6 +122,7 @@ function Suggestions({ chat, ready, uncertain }) {
           'Help me plan today',
           'Review my saved tasks and upcoming work. Suggest what needs my attention today, with links to the source records.'
         ],
+        ['Think through an idea', 'Help me think through an idea. Ask one focused question, then suggest concrete next steps without changing records.'],
         [
           'Find unfinished work',
           'Find unfinished work in my workspace. Explain what is known, what is missing, and how you can help.'
@@ -137,7 +136,7 @@ function Suggestions({ chat, ready, uncertain }) {
         </Text>
         <HStack gap={2} className="gigi-wrap">
           {options.map(([label, prompt]) => (
-            <B key={label} data-chat-prompt={prompt}>
+            <B key={label} data-chat-prompt={prompt} disabled={!ready}>
               {label}
             </B>
           ))}
@@ -223,36 +222,13 @@ function ChatDrawer({ ctx }) {
       <VStack gap={3} className="chat-intro">
         <HStack gap={3} className="chat-head gigi-section-head">
           <VStack gap={1}>
-            <Text type="supporting">Codex · local session</Text>
             <Heading level={2}>Ask GiGi</Heading>
           </VStack>
           <B variant="ghost" data-chat-close="1" aria-label="Close Ask GiGi">
             Close
           </B>
         </HStack>
-        <HStack gap={2} className="chat-context-row gigi-wrap">
-          <Text weight="medium" className="chat-context">
-            {chat.record
-              ? `About ${chat.record.title || `${chat.record.entity} · ${chat.record.id}`}`
-              : 'Workspace'}
-          </Text>
-          <Text type="supporting">
-            {ready ? 'Codex signed in' : chat.status ? 'Unavailable' : 'Checking'}
-          </Text>
-        </HStack>
-        <Text as="p" type="supporting" className="chat-scope">
-          Ask about your local work. GiGi asks you to review changes before saving.
-        </Text>
-        <Disclosure title="What Ask GiGi can do" className="chat-capabilities">
-          <Text as="p">
-            Ask about your local workspace and approve edits to existing records. Select an imported
-            email or calendar event to propose a linked local task or gig; review it before saving.
-            Find and organize Your music, choose files to import, and prepare local Instagram
-            drafts. Publishing requires a separate review in Instagram drafts. Other records and
-            links use GiGi’s record controls. Selected record context is included when starting a
-            chat. Phone access is a separate setup step in Settings.
-          </Text>
-        </Disclosure>
+        {chat.record && <Text type="supporting" className="chat-context">About {chat.record.title || chat.record.entity}</Text>}
         {(unavailable || chat.error || chat.refreshRequired || uncertain) && (
           <section className="chat-recovery" aria-label="Chat status and recovery">
             <VStack gap={2}>
@@ -270,7 +246,7 @@ function ChatDrawer({ ctx }) {
             </VStack>
           </section>
         )}
-        <VStack
+        {(current && (messages.length || current.state !== 'idle' || uncertain)) ? <VStack
           gap={1}
           className="chat-observed-state"
           role="status"
@@ -280,7 +256,7 @@ function ChatDrawer({ ctx }) {
         >
           <Text weight="semibold">{observed.label}</Text>
           <Text type="supporting">{observed.detail}</Text>
-        </VStack>
+        </VStack> : null}
         {chat.error && (ready || uncertain) && (
           <Message error>{explain(chat.error, Boolean(current))}</Message>
         )}
@@ -288,72 +264,7 @@ function ChatDrawer({ ctx }) {
           <B variant="ghost" data-chat-new="1" disabled={!ready || chat.pending || chat.reading}>
             New chat
           </B>
-          <Disclosure
-            title={`Conversations (${chat.sessions.length})`}
-            className="chat-history"
-            data-view-key="chat-history"
-          >
-            <Text type="supporting">Saved on this Mac</Text>
-            {chat.sessions.length ? (
-              chat.sessions.map((item) => (
-                <B
-                  key={item.sessionId}
-                  className="chat-session"
-                  data-chat-session={item.sessionId}
-                  disabled={chat.pending}
-                  aria-current={item.sessionId === current?.sessionId ? 'true' : undefined}
-                  label={`${item.title || item.record?.title || 'Conversation'}${item.state ? ` · ${item.state}` : ''}`}
-                />
-              ))
-            ) : (
-              <Text as="p" color="secondary">
-                No saved conversations yet.
-              </Text>
-            )}
-          </Disclosure>
-          <Disclosure
-            title="Chat view"
-            className="chat-view-options"
-            data-view-key="chat-view-options"
-          >
-            <VStack gap={3}>
-              {[
-                [
-                  'chatWidth',
-                  'Width',
-                  [
-                    ['standard', 'Standard'],
-                    ['wide', 'Wide']
-                  ]
-                ],
-                [
-                  'chatTextSize',
-                  'Text size',
-                  [
-                    ['standard', 'Standard'],
-                    ['larger', 'Larger']
-                  ]
-                ],
-                [
-                  'chatDensity',
-                  'Spacing',
-                  [
-                    ['comfortable', 'Comfortable'],
-                    ['compact', 'Compact']
-                  ]
-                ]
-              ].map(([key, label, options]) => (
-                <Choice
-                  key={key}
-                  id={`chat-${key}`}
-                  label={label}
-                  data-preference={key}
-                  value={preferences[key]}
-                  options={options}
-                />
-              ))}
-            </VStack>
-          </Disclosure>
+          <B variant="ghost" data-chat-history="1">Saved chats</B>
         </HStack>
       </VStack>
       <ChatMessageList
@@ -391,11 +302,7 @@ function ChatDrawer({ ctx }) {
             </ChatMessage>
           ))
         ) : (
-          <Text as="p" color="secondary" className="chat-empty">
-            {ready
-              ? 'Choose New chat, or open a saved conversation.'
-              : 'Your local records remain available while chat is disconnected.'}
-          </Text>
+          <VStack gap={2} className="chat-empty"><Heading level={2}>How can I help?</Heading><Text color="secondary">Choose a starting point, or ask in your own words.</Text></VStack>
         )}
         <Suggestions chat={chat} ready={ready} uncertain={uncertain} />
         {current?.state === 'approval' &&

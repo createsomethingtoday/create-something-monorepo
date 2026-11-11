@@ -19,7 +19,7 @@ async function fixture(t) {
  await writeFile(join(appPath,'Contents','Info.plist'),'test fixture');
  await writeFile(join(appPath,'Contents','MacOS','gigi'),'main',{mode:0o755});
  await writeFile(join(appPath,'Contents','MacOS','gigi-mcp'),'extra MCP executable',{mode:0o755});
- for(const name of ['gigi-mcp','gigi-integrations','gigi-codex','libgigi_notifications.dylib','ctx'])await writeFile(join(appPath,'Contents','Resources',name),name,{mode:0o755});
+ for(const name of ['gigi-mcp','gigi-integrations','gigi-codex','gigi-map-preview','libgigi_notifications.dylib','ctx'])await writeFile(join(appPath,'Contents','Resources',name),name,{mode:0o755});
  await writeFile(dmgPath,'disk image fixture');
  return {root,appPath,dmgPath};
 }
@@ -37,7 +37,7 @@ function commands({appPath,adHoc=false,alterMount=false,unlaunchableMount=false,
    const mounted=join(mount,basename(appPath));
    await cp(appPath,mounted,{recursive:true});
    if(alterMount)await writeFile(join(mounted,'Contents','Resources','gigi-mcp'),'changed');
-   if(unlaunchableMount)await chmod(join(mounted,'Contents','Resources','gigi-mcp'),0o644);
+   if(unlaunchableMount)await chmod(join(mounted,'Contents','Resources',typeof unlaunchableMount==='string'?unlaunchableMount:'gigi-mcp'),0o644);
    return {exitCode:0,stdout:`${mount}\n`,stderr:''};
   }
   if(command==='hdiutil'&&args[0]==='detach'){
@@ -162,4 +162,41 @@ test('an ad-hoc extra MCP executable in MacOS cannot qualify',async(t)=>{
  const {appPath,dmgPath}=await fixture(t);
  const {run}=commands({appPath,override:(name,args)=>name==='codesign'&&args.includes('-dv')&&args.at(-1).endsWith('/MacOS/gigi-mcp')?{exitCode:0,stdout:'',stderr:'Signature=adhoc\nTeamIdentifier=not set\n'}:undefined});
  assert.equal((await verifyRelease({appPath,dmgPath,run})).qualified,false);
+});
+
+for (const [name, details] of [
+ ['ad-hoc', 'Signature=adhoc\nTeamIdentifier=not set\n'],
+ ['wrong team', signed.replaceAll(team, 'ABCDE12345')],
+ ['missing hardened runtime', signed.replace('(runtime)', '')]
+]) test(`map helper with ${name} cannot qualify`, async t => {
+ const f = await fixture(t);
+ const {run, calls} = commands({...f, override:(command,args)=>
+  command==='codesign' && args.includes('-dv') && args.at(-1).endsWith('/gigi-map-preview')
+   ? {exitCode:0,stdout:'',stderr:details} : null});
+ const result = await verifyRelease({...f,run});
+ assert.equal(result.qualified,false);
+ assert.equal(result.reason,'companion_identity');
+ assert.ok(!calls.some(call=>call[0]==='hdiutil'&&call[1]==='attach'));
+});
+
+for (const missing of [true,false]) test(`map helper must be ${missing?'present':'executable'}`, async t => {
+ const f = await fixture(t);
+ const path = join(f.appPath,'Contents/Resources/gigi-map-preview');
+ if(missing) await rm(path); else await chmod(path,0o644);
+ const {run} = commands(f);
+ assert.equal((await verifyRelease({...f,run})).qualified,false);
+});
+
+test('signed map helper is explicitly inspected', async t => {
+ const f = await fixture(t);
+ const {run,calls} = commands(f);
+ assert.equal((await verifyRelease({...f,run})).qualified,true);
+ assert.ok(calls.some(call=>call[0]==='codesign' && call.includes('-dv') && call.at(-1).endsWith('/gigi-map-preview')));
+});
+
+test('a mounted map helper without executable permission cannot qualify', async t => {
+ const f = await fixture(t);
+ const {run,calls} = commands({...f,unlaunchableMount:'gigi-map-preview'});
+ assert.equal((await verifyRelease({...f,run})).reason,'dmg_app_unlaunchable');
+ assert.ok(calls.some(call=>call[0]==='hdiutil'&&call[1]==='detach'));
 });

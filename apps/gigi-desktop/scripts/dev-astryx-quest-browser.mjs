@@ -4,9 +4,10 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 
-const app = resolve(new URL('../', import.meta.url).pathname);
+const app = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const out = resolve(process.env.GIGI_QUEST_EVIDENCE || '/tmp/gigi-dev-astryx-quest');
 mkdirSync(out, { recursive: true });
 const { chromium } = createRequire(new URL('../../../packages/agency/package.json', import.meta.url))('@playwright/test');

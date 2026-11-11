@@ -1,6 +1,8 @@
 pub mod memory;
 mod gig_list;
 mod task_list;
+mod finance_list;
+mod place_maps;
 mod workspace_search;
 pub mod artwork;
 pub mod artwork_mcp;
@@ -50,6 +52,7 @@ async fn dispatch(app: tauri::AppHandle, operation: String, input: serde_json::V
         if operation=="agent.status" {return agent_setup::status(&data_dir);}
         if operation=="agent.prepare" {return agent_setup::prepare(&resources,&data_dir);}
         if operation=="agent.preflight" {return Ok(agent_preflight::check(&resources,&data_dir));}
+        if operation=="places.mapPreview" || operation=="places.openMaps" {return place_maps::dispatch(&resources,&data_dir,&operation,input);}
         if operation=="help.open" {return navigation::open_help(input);}
         if operation=="connections.openConsent" {return navigation::open_consent(input);}
         if operation=="context.sync" {return integrations::sync_history(&resources,&data_dir);}

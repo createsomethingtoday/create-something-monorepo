@@ -1,3 +1,5 @@
+import { Directory, Services, Profile, Places } from './collection-details.jsx';
+import { Conversations } from './conversations.jsx';
 import React from "react";
 import {
   B,
@@ -40,7 +42,7 @@ import {
 } from "../web/record-polish.mjs";
 import { canUseSource } from "../web/source-proposal.mjs";
 import { ArtworkManager } from "./creators.jsx";
-import { DevToday, DevTasks, DevGigs } from "./dev-work.jsx";
+import { DevToday, DevTasks, DevGigs, WeekCalendar } from "./dev-work.jsx";
 import { finishedTask } from "../web/calm-work.mjs";
 
 export const entityName = (name) =>
@@ -60,7 +62,8 @@ export const pageName = (name) =>
     finances: "Money",
     locations: "Places",
     appearance: "Appearance & views",
-    social: "Instagram drafts",
+    social: "Social",
+    attention: "Needs your attention",
   })[name] || name.charAt(0).toUpperCase() + name.slice(1);
 const status = (record) =>
   statusLabel(record?.fields?.Status || record?.status || "");
@@ -97,9 +100,8 @@ function Rows({
         date ? displayField("Date", date) : "",
         event?.time,
         actualEntity === "gigs" ? record.type : "",
-        showFinancialDirection
-          ? record.fields?.Direction || "Direction not set"
-          : "",
+        showFinancialDirection ? record.fields?.Direction || "Direction not set" : "",
+        showFinancialDirection ? record.fields?.['Due Date'] ? `Due ${displayField('Due Date',record.fields['Due Date'])}` : 'Due date not recorded' : '',
         entity === "finances"
           ? formatMoney(record.moneyCents, ctx.state.currency)
           : "",
@@ -111,7 +113,7 @@ function Rows({
   return (
     <VStack
       gap={0}
-      className={`gigi-records ${ctx.preferences.collectionView === "cards" ? "gigi-card-collection" : ""}`}
+      className={`gigi-records ${!["notes","documents","tags"].includes(entity) && ctx.preferences.collectionView === "cards" ? "gigi-card-collection" : ""}`}
     >
       {items.map((record) => (
         <B
@@ -157,7 +159,7 @@ export function Attention({ ctx }) {
     <Panel
       id="attention-feed"
       title={
-        <Heading level={2} id="attention-title" tabIndex={-1}>
+        <Heading level={1} id="attention-title" tabIndex={-1}>
           Needs your attention
         </Heading>
       }
@@ -232,7 +234,7 @@ export function Attention({ ctx }) {
   );
 }
 export function Today({ ctx }) {
-  return <DevToday ctx={ctx} attention={<Attention ctx={ctx} />} />;
+  return <DevToday ctx={ctx} />;
 }
 function Schedule({ ctx }) {
   const agenda = scheduleAgenda(ctx.state.records, ctx.state.scheduleView);
@@ -308,7 +310,7 @@ export function Collection({ ctx }) {
               : name === "contacts"
                 ? "Find the people connected to your work."
                 : name === "finances"
-                  ? "Income and expenses are shown on each record; unknown balances remain incomplete."
+                  ? "Income, expenses and what is still outstanding."
                   : `Your private ${pageName(name).toLowerCase()} records.`
         }
         actions={
@@ -325,13 +327,18 @@ export function Collection({ ctx }) {
         }
       />
       {name === "gigs" ? (
-        <DevGigs ctx={ctx} />
+        <>
+          {s.overviewError && <Message error>{s.overviewError} {s.overviewCheckedAt ? "Showing the previous calendar read." : "Calendar unavailable."}</Message>}
+          <WeekCalendar data={s.overview || {}} today={s.overview?.today || localToday()} busy={s.busy} />
+          <DevGigs ctx={ctx} />
+        </>
       ) : name === "tasks" ? (
         <DevTasks ctx={ctx} />
       ) : name === "schedule" ? (
         <Schedule ctx={ctx} />
       ) : (
         <VStack gap={4}>
+          {name === 'finances' && <HStack gap={2} wrap="wrap" aria-label="Money views">{['overall','payable','receivable','overdue'].map(view=><B key={view} disabled={s.busy} data-finance-view={view} aria-pressed={s.financeView===view} variant={s.financeView===view?'secondary':'ghost'}>{view[0].toUpperCase()+view.slice(1)}{s.financeCounts[view]!=null?` (${s.financeCounts[view]})`:''}</B>)}</HStack>}
           {name === "contacts" && (
             <>
               <Field
@@ -355,7 +362,8 @@ export function Collection({ ctx }) {
                 : `Showing ${s.records.length} of ${s.recordCount}`}
             </Text>
           </HStack>
-          {s.contactSearchError ? (
+          {name==='finances'&&s.financeError&&<Message error>Could not load this money view. {s.financeError} {s.financeSnapshot?`Showing the previous ${s.financeSnapshot.view} read.`:'Financial records have not been read.'}<B data-finance-view={s.financeView}>Retry money view</B></Message>}
+          {name==='finances'&&s.financeError&&!s.records.length?<Text>Retry the read to see financial records.</Text>:s.contactSearchError ? (
             <>
               <Message error>
                 Couldn’t search people. Your contacts are unchanged. Retry or
@@ -367,7 +375,7 @@ export function Collection({ ctx }) {
             <Text role="status">Searching people…</Text>
           ) : s.contactQuery && name === "contacts" && !s.records.length ? (
             <Text>No people match your search.</Text>
-          ) : (
+          ) : name==='profile' ? <Profile ctx={ctx}/> : ['contacts','companies'].includes(name)&&s.records.length ? <Directory ctx={ctx} entity={name}/> : name==='services'&&s.records.length ? <Services ctx={ctx}/> : name==='locations'&&s.records.length ? <Places ctx={ctx}/> : (
             <Rows
               ctx={ctx}
               entity={name}
@@ -375,7 +383,7 @@ export function Collection({ ctx }) {
               showFinancialDirection={name === "finances"}
             />
           )}{" "}
-          {s.nextCursor && !s.contactSearching && !s.contactSearchError && (
+          {s.nextCursor && !s.contactSearching && !s.contactSearchError && !(name==='finances'&&s.financeError) && (
             <B data-more="1">Load more</B>
           )}
         </VStack>
@@ -750,6 +758,7 @@ export function RecordDetail({ ctx }) {
           </>
         }
       />
+      {['contacts','companies'].includes(s.page) && <Panel title="Action items">{links.filter(link=>link.entity==='tasks').length ? <VStack gap={2}>{links.filter(link=>link.entity==='tasks').map(link=><B key={link.id} data-related-entity="tasks" data-related-id={link.id}>{link.title||'Open task'}</B>)}</VStack>:<Text color="secondary">{r.relationsTruncated?'More links may contain action items. Load them in Linked work below.':'No linked tasks yet.'}</Text>}</Panel>}
       {s.page === "schedule" && (
         <ArtworkManager
           ctx={ctx}
@@ -1029,6 +1038,8 @@ export function History({ ctx }) {
         title="History"
         description="Recent changes in this private workspace."
       />
+      <Conversations ctx={ctx} />
+      <Heading level={2}>Workspace activity</Heading>
       {ctx.state.history.length ? (
         ctx.state.history.map((item, index) => {
           const receipt = historyPresentation(item);

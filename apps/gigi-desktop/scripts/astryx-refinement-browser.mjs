@@ -1,0 +1,58 @@
+// Active React UI acceptance against synthetic, in-memory records only.
+import {createServer} from 'vite';
+import {createRequire} from 'node:module';
+import {fileURLToPath} from 'node:url';
+import {resolve} from 'node:path';
+import {mkdirSync,writeFileSync} from 'node:fs';
+import assert from 'node:assert/strict';
+const app=fileURLToPath(new URL('../',import.meta.url));
+const out=process.env.GIGI_REFINEMENT_EVIDENCE||'/tmp/gigi-refinement-acceptance';mkdirSync(out,{recursive:true});
+const {chromium}=createRequire(new URL('../../../packages/agency/package.json',import.meta.url))('@playwright/test');
+const server=await createServer({root:app,configFile:resolve(app,'vite.config.mjs'),server:{host:'127.0.0.1',port:0}});await server.listen();
+const origin=`http://127.0.0.1:${server.httpServer.address().port}`;
+const browser=await chromium.launch({headless:true,channel:'chrome'});const results=[];
+try{
+ const page=await browser.newPage({viewport:{width:1280,height:900},reducedMotion:'reduce',timezoneId:'America/New_York'});page.setDefaultTimeout(10000);
+ const errors=[],external=[];page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(new URL(r.url()).origin!==origin)external.push(r.url());});
+ const open=async(route)=>{await page.goto(`${origin}/?fixture=${route}`);await page.waitForFunction(()=>globalThis.gigiTest&&!gigiTest.snapshot().state.busy);};
+ const nav=async(group,pageId)=>{const menu=page.locator(`[data-nav-menu="${group}"]`);if(!await menu.evaluate(n=>n.open))await menu.locator('summary').click();await menu.locator(`[data-page="${pageId}"]:not([data-nav-target])`).click();await page.waitForFunction(()=>!gigiTest.snapshot().state.busy);};
+ await open('overview');
+ assert.equal(await page.getByText('No gigs',{exact:true}).count(),0);
+ assert.equal(await page.getByRole('heading',{name:'Needs your attention',exact:true}).count(),0);
+ assert.equal(await page.getByRole('heading',{name:'Record freshness',exact:true}).count(),0);
+ assert.ok(await page.locator('.dev-read-status').evaluate(n=>!!(document.querySelector('#today-payable-title').compareDocumentPosition(n)&Node.DOCUMENT_POSITION_FOLLOWING)));
+ await page.locator('[data-attention-home]').click();await page.getByRole('heading',{name:'Needs your attention',exact:true}).waitFor();results.push('Today footer, blank days and separate attention page');
+ await page.locator('[data-nav-menu="Platform"] > summary').click();
+ assert.deepEqual(await page.locator('[data-nav-menu="Platform"] nav button').allTextContents(),['Profile','History','Memory','Safety','Settings']);
+ const menu=await page.locator('[data-nav-menu="Platform"] nav').boundingBox();assert.ok(menu.width<230);
+ await page.getByRole('button',{name:'Safety',exact:true}).click();await page.getByRole('heading',{name:'Settings',exact:true}).waitFor();
+ assert.equal(await page.locator('#workspace-safety').evaluate(n=>n===document.activeElement),true);
+ for(const title of ['Appearance','Customize','Record freshness','Safety'])assert.ok(await page.getByRole('heading',{name:title,exact:true}).count());
+ await page.locator('[data-nav-menu="Admin"] > summary').click();assert.deepEqual(await page.locator('[data-nav-menu="Admin"] nav button').allTextContents(),['Tasks','Schedule','Documents','Notes','Tags']);results.push('ordered compact navigation and consolidated Settings sections');
+ await open('gigs');assert.ok(await page.getByRole('region',{name:/Gig calendar/}).isVisible());assert.ok(await page.getByRole('list',{name:'Gigs',exact:true}).count());results.push('Gigs week and existing filtered list');
+ for(const route of ['notes','documents','tags']){await open(route);assert.ok(await page.locator('.gigi-record-row').count());assert.equal(await page.locator('.record-cards').count(),0);}results.push('matching simple list collections');
+ await open('finances');await page.evaluate(()=>{gigiTest.records.finances.push({id:'expense-1',workspaceId:gigiTest.records.finances[0].workspaceId,entity:'finances',title:'Synthetic overdue rental',status:'Expected',fields:{Direction:'Expense',Status:'Expected','Due Date':'2026-11-01'}});});
+ await page.locator('[data-finance-view="payable"]').click();await page.waitForFunction(()=>!gigiTest.snapshot().state.busy);assert.ok(await page.getByText('Synthetic overdue rental',{exact:true}).isVisible());assert.equal(await page.getByText('Showcase fee',{exact:true}).count(),0);
+ await page.evaluate(()=>gigiTest.failNext('records.list','Synthetic failed finance read'));await page.locator('[data-finance-view="receivable"]').click();await page.getByText(/Synthetic failed finance read/).waitFor();assert.ok(await page.getByText('Synthetic overdue rental',{exact:true}).isVisible());results.push('Money segments and failed-read retention');
+ for(const route of ['services','profile','locations']){
+  await open('overview');await page.evaluate(()=>gigiTest.failNext('records.get','Synthetic unavailable details'));await nav(route==='locations'?'Network':route==='profile'?'Platform':'Work',route);
+  await page.getByText(/details could not be read/).waitFor();
+  if(route==='locations'){assert.equal(await page.getByRole('button',{name:'Load map preview',exact:true}).count(),0);assert.equal(await page.getByRole('button',{name:'Open in Maps',exact:true}).isEnabled(),false);}
+ }results.push('unavailable detail reads stay explicit; no guessed maps');
+ await open('profile');await page.getByRole('button',{name:'Edit profile & defaults',exact:true}).click();await page.locator('#title').waitFor();assert.equal(await page.locator('#title').inputValue(),'Rehearsal owner');results.push('actionable Profile editor');
+ await open('overview');await page.getByRole('button',{name:'Ask GiGi',exact:true}).click();await page.getByRole('heading',{name:'How can I help?',exact:true}).waitFor();assert.equal(await page.locator('[data-chat-prompt]').count(),3);assert.equal(await page.locator('.chat-view-options').count(),0);await page.getByRole('button',{name:'Think through an idea',exact:true}).click();await page.locator('#chat-message').waitFor();assert.ok(await page.locator('#chat-message').inputValue());assert.equal(await page.evaluate(()=>gigiTest.calls.filter(c=>c.operation==='agent.chat.send').length),0);results.push('three chat starters prepare unsent drafts');
+ await page.getByRole('button',{name:'Saved chats',exact:true}).click();await page.getByRole('heading',{name:'History',exact:true}).waitFor();await page.locator('[data-chat-session]').first().click();await page.getByRole('complementary',{name:'Ask GiGi',exact:true}).waitFor();results.push('saved conversations reopen from History');
+ await open('locations');await page.getByRole('button',{name:'Load map preview',exact:true}).click();await page.getByText(/Map data © Apple/).waitFor();
+ await page.evaluate(()=>{const items=gigiTest.snapshot().state.records.map(r=>({...r,fields:{...r.fields,Address:'Changed synthetic address'}}));gigiTest.set({records:items});});
+ assert.equal(await page.locator('.place-map-image').count(),0);assert.ok(await page.getByRole('button',{name:'Load map preview',exact:true}).isVisible());results.push('map preview invalidates when saved address changes');
+ await open('overview');await page.evaluate(()=>{gigiTest.holdNext('social.list');void gigiTest.open('social');});await page.getByRole('heading',{name:'Social',exact:true}).waitFor();assert.equal(await page.locator('form').getByRole('button',{name:'Search',exact:true}).isEnabled(),false);await page.evaluate(()=>gigiTest.releaseHeld('social.list'));await page.getByText('Loading drafts…',{exact:true}).waitFor({state:'hidden'});assert.equal(await page.locator('form').getByRole('button',{name:'Search',exact:true}).isEnabled(),true);results.push('Social search waits for initial list');
+ await page.evaluate(()=>{gigiTest.records.social=Array.from({length:55},(_,i)=>({id:`draft-${i}`,body:{title:`Draft ${i}`,caption:'Saved synthetic caption'},state:'draft',revision:1}));});
+ await page.locator('form').getByRole('button',{name:'Search',exact:true}).click();await page.getByRole('heading',{name:'Saved drafts · 55',exact:true}).waitFor();
+ await page.evaluate(()=>gigiTest.failNext('social.list','Synthetic search failure'));await page.getByLabel('Search',{exact:true}).fill('unmatched');await page.locator('form').getByRole('button',{name:'Search',exact:true}).click();await page.getByText(/Synthetic search failure/).waitFor();
+ await page.getByText('Showing the previous local read: all drafts.',{exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'Load more drafts',exact:true}).isEnabled(),false);results.push('failed Social search labels retained data and blocks mixed-query pagination');
+ await open('finances');await page.evaluate(()=>gigiTest.set({workspace:{id:'other-synthetic-workspace',name:'Other synthetic workspace'}}));await page.evaluate(()=>{gigiTest.failNext('records.list','Synthetic other workspace read failed');return gigiTest.open('finances');});await page.getByText('Retry the read to see financial records.',{exact:true}).waitFor();assert.equal(await page.getByText('Showcase fee',{exact:true}).count(),0);assert.equal(await page.evaluate(()=>gigiTest.snapshot().state.financeSnapshot),null);results.push('Money retained snapshot cleared at workspace boundary');
+ await open('locations');await page.evaluate(()=>gigiTest.holdNext('places.mapPreview'));await page.getByRole('button',{name:'Load map preview',exact:true}).click();await page.getByRole('button',{name:'Loading map…',exact:true}).waitFor();await page.evaluate(()=>{gigiTest.set({workspace:{id:'other-synthetic-workspace',name:'Other synthetic workspace'},records:[]});gigiTest.releaseHeld('places.mapPreview');});assert.equal(await page.locator('.place-map-image').count(),0);results.push('late Maps response cannot render into another workspace');
+ assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
+ await open('gigs');await page.screenshot({path:resolve(out,'gigs.png'),fullPage:true});
+ writeFileSync(resolve(out,'result.json'),JSON.stringify({passed:true,checks:results,scope:'Actual React UI; synthetic records only. No provider/native acceptance.'},null,2));console.log(JSON.stringify({passed:true,checks:results}));
+}finally{await browser.close();await server.close();}

@@ -1,0 +1,5 @@
+
+> @create-something/gigi-desktop@0.3.6 test:refinement /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6/apps/gigi-desktop
+> node scripts/astryx-refinement-browser.mjs
+
+{"passed":true,"checks":["Today footer, blank days and separate attention page","ordered compact navigation and consolidated Settings sections","Gigs week and existing filtered list","matching simple list collections","Money segments and failed-read retention","unavailable detail reads stay explicit; no guessed maps","actionable Profile editor","three chat starters prepare unsent drafts","saved conversations reopen from History","map preview invalidates when saved address changes","Social search waits for initial list","failed Social search labels retained data and blocks mixed-query pagination","Money retained snapshot cleared at workspace boundary","late Maps response cannot render into another workspace"]}

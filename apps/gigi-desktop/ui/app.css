@@ -496,7 +496,7 @@ details[open]:not(.reference-dropdown) > summary {
 .gigi-dev-topbar .reference-dropdown > summary:focus-visible { outline: var(--focus-outline-width) solid var(--color-accent); outline-offset: var(--focus-outline-offset); }
 .gigi-dev-topbar .reference-dropdown > summary.selected,
 .gigi-dev-topbar .reference-today[aria-current='page'] { color: var(--color-text-accent); background: var(--color-accent-muted); }
-.gigi-dev-topbar .reference-menu { position: absolute; inset-block-start: calc(100% + var(--spacing-2)); inset-inline-end: 0; inline-size: min(calc(var(--spacing-12) * 6), calc(100vw - var(--spacing-6))); max-block-size: calc(100dvh - var(--spacing-12) * 2); background: var(--color-background-popover); border: var(--border-width) solid var(--color-border-emphasized); border-radius: var(--radius-container); box-shadow: var(--shadow-med); z-index: 30; }
+.gigi-dev-topbar .reference-menu { position: absolute; inset-block-start: calc(100% + var(--spacing-2)); inset-inline-end: 0; inline-size: max-content; min-inline-size: 10rem; max-inline-size: calc(100vw - var(--spacing-6)); max-block-size: calc(100dvh - var(--spacing-12) * 2); background: var(--color-background-popover); border: var(--border-width) solid var(--color-border-emphasized); border-radius: var(--radius-container); box-shadow: var(--shadow-med); z-index: 30; }
 .gigi-dev-topbar .reference-menu button[aria-current='page'] { color: var(--color-text-accent); background: var(--color-accent-muted); }
 .gigi-dev-topbar .reference-menu-current { color: var(--color-text-accent); }
 .gigi-dev-topbar .reference-menu-footer { border-block-start: var(--border-width) solid var(--color-border); overflow-wrap: anywhere; }
@@ -509,3 +509,11 @@ details[open]:not(.reference-dropdown) > summary {
 /* GIGI_RECONCILED_NAVIGATION_STATES_END */
 
 .memory-row { border-block-start: var(--border-width-1, 1px) solid var(--color-border-primary); overflow-wrap: anywhere; }
+
+/* Shared creator library rhythm; the editor follows the saved items. */
+.social-library{display:flex;flex-direction:column;gap:var(--spacing-6)}
+.creator-thumbnail{inline-size:5rem;min-inline-size:5rem;block-size:5rem;display:grid;place-items:center;overflow:hidden;border:var(--border-width) solid var(--color-border);border-radius:var(--radius-inner);background:var(--color-background-card)}
+.creator-thumbnail img{inline-size:100%;block-size:100%;object-fit:cover}
+
+.place-map-image{display:block;inline-size:100%;block-size:auto;max-block-size:none;object-fit:contain;border-radius:var(--radius-inner)}
+.directory-list .gigi-record-row{justify-content:start;text-align:start}

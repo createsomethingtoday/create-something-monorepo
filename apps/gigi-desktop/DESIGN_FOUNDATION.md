@@ -116,3 +116,15 @@ provider, signing/notarization and installer distribution acceptance.
 
 Rollback: revert the rewrite source commit and restore the previous Tauri
 frontendDist/build command. No database or preference migration is involved.
+
+
+## Curated 0.3.6 refinement
+
+CRE-2406 imports the selected runtime delta from Grantbot
+`3982c5b63d50fe9d63a1311bee27d893f50a1238` over
+`ee365ca5c71322ca2a4bd11734abc4866c454f56`, reconciled against canonical
+`574adfee269cecf4a17415dcde53f60a6fe06a88`. The parent explicitly authorized
+Money’s native filtering, Social’s API/MCP query and native Maps/Swift helper
+alongside the UI. Public identity, saved themes, curated memory ownership,
+consent, approval, import idempotency and receipt recovery remain canonical.
+See `docs/internal/gigi-ui-036/REVIEW.md` for the split, adaptations and evidence.

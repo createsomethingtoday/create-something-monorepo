@@ -100,10 +100,12 @@ pub(crate) fn dispatch_with<F>(root:&Path,operation:&str,input:Value,broker:F)->
     match operation{
         "social.list"=>{
             let offset=input["offset"].as_u64().unwrap_or(0).min(100000) as i64;
-            let mut statement=db.prepare("SELECT id FROM instagram_drafts WHERE workspace_id=?1 ORDER BY updated_at DESC,id LIMIT 50 OFFSET ?2").map_err(|e|e.to_string())?;
-            let ids=statement.query_map(params![workspace,offset],|r|r.get::<_,String>(0)).map_err(|e|e.to_string())?.collect::<Result<Vec<_>,_>>().map_err(|e|e.to_string())?;
+            let query=input.get("query").and_then(Value::as_str).unwrap_or("").trim();
+            if query.chars().count()>160{return Err("Search must be 160 characters or fewer".into())}
+            let mut statement=db.prepare("SELECT id FROM instagram_drafts WHERE workspace_id=?1 AND instr(lower(COALESCE(json_extract(body_json,'$.title'),'') || ' ' || COALESCE(json_extract(body_json,'$.caption'),'')),lower(?3))>0 ORDER BY updated_at DESC,id LIMIT 50 OFFSET ?2").map_err(|e|e.to_string())?;
+            let ids=statement.query_map(params![workspace,offset,query],|r|r.get::<_,String>(0)).map_err(|e|e.to_string())?.collect::<Result<Vec<_>,_>>().map_err(|e|e.to_string())?;
             let items=ids.iter().map(|id|get(&db,&workspace,id)).collect::<Result<Vec<_>,_>>()?;
-            let count:i64=db.query_row("SELECT COUNT(*) FROM instagram_drafts WHERE workspace_id=?1",[&workspace],|r|r.get(0)).map_err(|e|e.to_string())?;
+            let count:i64=db.query_row("SELECT COUNT(*) FROM instagram_drafts WHERE workspace_id=?1 AND instr(lower(COALESCE(json_extract(body_json,'$.title'),'') || ' ' || COALESCE(json_extract(body_json,'$.caption'),'')),lower(?2))>0",params![workspace,query],|r|r.get(0)).map_err(|e|e.to_string())?;
             Ok(json!({"items":items,"total":count,"nextOffset":if offset+50<count{Some(offset+50)}else{None}}))
         },
         "social.get"=>get(&db,&workspace,text(&input,"id")?),
@@ -215,6 +217,15 @@ fn store_receipt(db:&Connection,workspace:&str,id:&str,request:&str,receipt:Valu
 #[cfg(test)]mod tests{
     use super::*;
     fn setup()->(std::path::PathBuf,String){let root=std::env::temp_dir().join(format!("gigi-social-test-{}",Uuid::new_v4()));let workspace=crate::domain::dispatch(&root,"workspace.create",json!({"name":"Synthetic"})).unwrap();(root,workspace["workspaceId"].as_str().or(workspace["id"].as_str()).unwrap().into())}
+    #[test]fn search_filters_all_drafts_before_paging_without_provider_calls(){
+        let(root,w)=setup();
+        for n in 0..55{dispatch_with(&root,"social.save",json!({"workspaceId":w,"requestId":Uuid::new_v4().to_string(),"title":format!("Draft {n}"),"caption":if n==0{"unique poster"}else{"generic"}}),|_,_|panic!()).unwrap();}
+        let result=dispatch_with(&root,"social.list",json!({"workspaceId":w,"query":"UNIQUE"}),|_,_|panic!()).unwrap();
+        assert_eq!(result["total"],1);assert_eq!(result["items"][0]["body"]["title"],"Draft 0");assert!(result["nextOffset"].is_null());
+        assert_eq!(dispatch_with(&root,"social.list",json!({"workspaceId":w,"query":"missing"}),|_,_|panic!()).unwrap()["total"],0);
+        assert!(dispatch_with(&root,"social.list",json!({"workspaceId":w,"query":"x".repeat(161)}),|_,_|panic!()).is_err());
+        std::fs::remove_dir_all(root).unwrap();
+    }
     #[test]fn drafts_save_locally_and_reject_stale_revision(){let(root,w)=setup();let fail=|_:&str,_:Value|->Result<Value,String>{panic!("saving must not contact provider")};let draft=dispatch_with(&root,"social.save",json!({"workspaceId":w,"requestId":Uuid::new_v4().to_string(),"title":"Studio","caption":"First idea"}),fail).unwrap();assert_eq!(draft["state"],"draft");assert!(dispatch_with(&root,"social.save",json!({"workspaceId":w,"requestId":Uuid::new_v4().to_string(),"id":draft["id"],"expectedRevision":0,"title":"Change"}),fail).is_err());std::fs::remove_dir_all(root).unwrap();}
     #[test]fn confirmation_and_unknown_outcome_block_duplicate_publish(){let(root,w)=setup();let draft=dispatch_with(&root,"social.save",json!({"workspaceId":w,"requestId":Uuid::new_v4().to_string(),"title":"Release","caption":"New work","imageUrl":"https://example.com/cover.jpg","expectedImageSha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","connectedAccountId":"ca_test"}),|_,_|panic!()).unwrap();let base=json!({"workspaceId":w,"id":draft["id"],"expectedRevision":1});assert!(dispatch_with(&root,"social.publish",base.clone(),|_,_|panic!()).is_err());let mut confirmed=base;confirmed["confirmed"]=json!(true);confirmed["expectedInstagramAccountId"]=json!("ig_test");let result=dispatch_with(&root,"social.publish",confirmed.clone(),|op,_|if op=="instagram.account"{Ok(json!({"connectedAccountId":"ca_test","instagramAccountId":"ig_test","accountType":"BUSINESS"}))}else{Err("timeout".into())}).unwrap();assert_eq!(result["state"],"unknown");assert!(dispatch_with(&root,"social.publish",confirmed,|_,_|panic!("must not replay")).is_err());std::fs::remove_dir_all(root).unwrap();}
     #[test]fn save_retry_returns_same_draft_and_rejects_changed_payload(){

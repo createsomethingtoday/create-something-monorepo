@@ -1,0 +1,5 @@
+
+> @create-something/gigi-desktop@0.3.6 test:review-regressions /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6/apps/gigi-desktop
+> node scripts/astryx-review-regressions.mjs
+
+{"passed":true,"cases":[{"name":"navigation_alignment","passed":true},{"name":"music","passed":true},{"name":"social","passed":true},{"name":"record_artwork","passed":true},{"name":"page_scroll","passed":true},{"name":"gigs_back","passed":true},{"name":"link_entity","passed":true},{"name":"today_direction","passed":true},{"name":"event_identity","passed":true}],"replacedCoverage":{"cases":["create","native_controls","profile"],"suite":"scripts/dev-astryx-quest-browser.mjs","reason":"DEV preserves Danny’s name-only guided setup; stock mandatory currency/workspace-name form no longer ships."},"errors":[],"scope":"Actual React application with synthetic development backend; no native or provider acceptance."}

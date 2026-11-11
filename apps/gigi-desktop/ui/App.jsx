@@ -4,6 +4,7 @@ import { Dialog } from '@astryxdesign/core/Dialog';
 import { B, Panel, Message, Heading, Text, VStack, HStack } from './components.jsx';
 import {
   Today,
+  Attention,
   Collection,
   RecordDetail,
   RecordEditor,
@@ -12,7 +13,6 @@ import {
   pageName
 } from './records.jsx';
 import { Settings, Onboarding, SourceProposal } from './settings.jsx';
-import { Appearance } from './appearance.jsx';
 import { Music, Social } from './creators.jsx';
 import { Chat, WorkspaceSearch } from './chat.jsx';
 import { Memory } from './memory.jsx';
@@ -55,12 +55,14 @@ export function App({ ctx }) {
     <RecordDetail ctx={ctx} />
   ) : s.page === 'overview' ? (
     <Today ctx={ctx} />
+  ) : s.page === 'attention' ? (
+    <Attention ctx={ctx} />
   ) : s.page === 'memory' ? (
     <Memory ctx={ctx} />
   ) : s.page === 'settings' ? (
     <Settings ctx={ctx} />
   ) : s.page === 'appearance' ? (
-    <Appearance ctx={ctx} />
+    <Settings ctx={ctx} />
   ) : s.page === 'music' ? (
     <Music ctx={ctx} />
   ) : s.page === 'social' ? (

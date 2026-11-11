@@ -831,6 +831,7 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
             if entity == "contacts" && !query.is_empty() {
                 return search_contacts(&db, wid, &query, offset, limit);
             }
+            if entity == "finances" && input.get("finance").is_some() { return crate::finance_list::list(&db,wid,&input); }
             // Transaction Date governs the complete finance dataset before pagination.
             // Validate the literal calendar day before SQLite normalizes impossible dates.
             // Explicit offsets compare as instants; date-only/floating times get no local-time

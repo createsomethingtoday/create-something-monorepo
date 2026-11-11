@@ -1,3 +1,4 @@
+import { Appearance } from './appearance.jsx';
 import React from 'react';
 import { DevQuest } from './dev-quest.jsx';
 import {
@@ -1080,10 +1081,11 @@ export function Settings({ ctx }) {
   return (
     <VStack gap={6}>
       <PageHeading
-        title="Setup & safety"
-        description="Review what is ready, what still needs your consent, and how to protect your local data."
-        actions={<B data-page="appearance">Customize appearance & views</B>}
+        title="Settings"
+        description="Appearance, connections and workspace safety."
       />
+      <Appearance ctx={ctx} embedded />
+      <Panel id="record-freshness" title="Record freshness"><Text color="secondary">A local read does not sync Gmail or Calendar. Open a record for its source details. Tasks use Due Date, falling back to Do Date. Financials use Due Date and saved unpaid status. Failed reads keep the previous data and its read time visible.</Text></Panel>
       {state.justCreated && (
         <Panel title="Your private workspace is ready.">
           <Text>
@@ -1122,6 +1124,7 @@ export function Settings({ ctx }) {
         </ol>
       </Panel>
       <SourceConnections ctx={ctx} />
+      <section id="workspace-safety" tabIndex={-1}><Heading level={2}>Safety</Heading><Text color="secondary">Review permissions, diagnostic capture and backups before taking action.</Text></section>
       <Diagnostics state={state} />
       <AgentSetup state={state} />
       <PhoneAccess />

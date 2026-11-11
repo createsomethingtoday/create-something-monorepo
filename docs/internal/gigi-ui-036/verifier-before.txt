@@ -1,0 +1,130 @@
+✔ a complete signed and stapled pair qualifies only when the mounted app matches (15.943667ms)
+✔ ad-hoc app signature fails closed before Gatekeeper or mount (3.221583ms)
+✔ a valid Developer ID from another team cannot qualify a GiGi release (3.098542ms)
+✔ different app bytes inside the DMG fail and the owned mount is detached (8.681958ms)
+✔ a byte-identical mounted app with a nonexecutable companion is unqualified (5.864875ms)
+✔ wrong bundle identifier and unsigned first-party companion cannot qualify (3.24ms)
+✔ Gatekeeper and stapler failures remain distinct from signed identity (3.432042ms)
+✔ failed image attach does not detach another mount and removes only an empty owned directory (2.928375ms)
+✔ accepts Gatekeeper notarized output without optional origin and still verifies signatures (8.896541ms)
+✔ wrong Gatekeeper origin and an unsigned chat companion remain unqualified (3.640125ms)
+✔ a release missing the native notification companion cannot qualify (2.796ms)
+✔ an ad-hoc extra MCP executable in MacOS cannot qualify (2.837417ms)
+✖ map helper with ad-hoc cannot qualify (8.155542ms)
+✖ map helper with wrong team cannot qualify (8.407917ms)
+✖ map helper with missing hardened runtime cannot qualify (7.284959ms)
+✖ map helper must be present (7.750083ms)
+✖ map helper must be executable (7.818916ms)
+✖ signed map helper is explicitly inspected (11.313875ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 12
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 212.110917
+
+✖ failing tests:
+
+test at apps/gigi-desktop/scripts/verify-release.test.mjs:171:4
+✖ map helper with ad-hoc cannot qualify (8.155542ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  true !== false
+
+      at TestContext.<anonymous> (file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6/apps/gigi-desktop/scripts/verify-release.test.mjs:177:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps/gigi-desktop/scripts/verify-release.test.mjs:171:4
+✖ map helper with wrong team cannot qualify (8.407917ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  true !== false
+
+      at TestContext.<anonymous> (file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6/apps/gigi-desktop/scripts/verify-release.test.mjs:177:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps/gigi-desktop/scripts/verify-release.test.mjs:171:4
+✖ map helper with missing hardened runtime cannot qualify (7.284959ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  true !== false
+
+      at TestContext.<anonymous> (file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6/apps/gigi-desktop/scripts/verify-release.test.mjs:177:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps/gigi-desktop/scripts/verify-release.test.mjs:182:37
+✖ map helper must be present (7.750083ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  true !== false
+
+      at TestContext.<anonymous> (file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6/apps/gigi-desktop/scripts/verify-release.test.mjs:187:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps/gigi-desktop/scripts/verify-release.test.mjs:182:37
+✖ map helper must be executable (7.818916ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  true !== false
+
+      at TestContext.<anonymous> (file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6/apps/gigi-desktop/scripts/verify-release.test.mjs:187:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps/gigi-desktop/scripts/verify-release.test.mjs:190:1
+✖ signed map helper is explicitly inspected (11.313875ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+    assert.ok(calls.some(call=>call[0]==='codesign' && call.includes('-dv') && call.at(-1).endsWith('/gigi-map-preview')))
+
+      at TestContext.<anonymous> (file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6/apps/gigi-desktop/scripts/verify-release.test.mjs:194:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
