@@ -908,3 +908,35 @@ test('uncertain Clay webhook delivery preserves the global paid reconciliation h
     assert.equal((await store.action('alice', v.pending!.id)).status, 'ambiguous');
     await assert.rejects(() => store.acquirePaid('another-user-token'), { status: 409 });
   }));
+
+for (const decision of ['approve', 'reject', 'expire'] as const) {
+  test(`pending review can ${decision} at the conversation message limit`, () =>
+    database(async (store, advance) => {
+      const c = await conversation(store), f = fixture('estimate_registry_travel', travelArgs);
+      const history: State = {
+        messages: Array.from({ length: 58 }, (_, i) => ({
+          role: i % 2 ? 'assistant' as const : 'user' as const,
+          text: `Earlier message ${i}`
+        })),
+        sources: []
+      };
+      await store.db.prepare('UPDATE npg_analyst_conversations SET state_json=? WHERE id=?')
+        .bind(JSON.stringify(history), c.id).run();
+      const v = await executeCommand(store, 'alice', message(c), () => f.p);
+      assert.equal(v.status, 'review');
+      assert.equal(v.messages.length, 60);
+      assert.equal(f.calls.length, 0);
+      if (decision === 'expire') advance(11 * 60000);
+      const out = await executeCommand(store, 'alice', {
+        ...approve(v), type: decision === 'reject' ? 'reject' : 'approve'
+      }, () => f.p);
+      assert.equal(out.status, 'idle');
+      assert.equal(out.pending, null);
+      assert.equal(f.calls.length, decision === 'approve' ? 1 : 0);
+      assert.equal((await store.action('alice', v.pending!.id)).status,
+        decision === 'approve' ? 'completed' : decision === 'reject' ? 'rejected' : 'expired');
+      await assert.rejects(() => executeCommand(store, 'alice', message(out), () => f.p), {
+        status: 409, message: 'Conversation is full. Start a new conversation.'
+      });
+    }));
+}

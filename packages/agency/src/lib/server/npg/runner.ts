@@ -200,7 +200,11 @@ export async function executeCommand(
     if (before.version !== command.version)
       throw new NpgError(409, 'This conversation changed. Refresh its history.');
     state = JSON.parse(before.state_json) as State;
-    if (state.messages.length >= 60 || before.state_json.length > 280000)
+    // Already-offered reviews must remain consumable when their notice fills the chat.
+    if (
+      (command.type === 'message' && state.messages.length >= 60) ||
+      before.state_json.length > 280000
+    )
       throw new NpgError(409, 'Conversation is full. Start a new conversation.');
     let action: Action | undefined;
     if (command.type === 'message') {
