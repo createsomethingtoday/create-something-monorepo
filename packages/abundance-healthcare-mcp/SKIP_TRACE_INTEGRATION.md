@@ -28,7 +28,7 @@ The exact normal `Search Option: Name+CityStateZip Search` is accepted. It does 
 
 Hub authorization classifies the tool as a reviewed paid write, including read-only-mode denial. This branch stages additive Agency policy/paid allowlist, a distinct broker-scope approval preview, and unresolved-outcome handling. The captured V8 prompt/hash remain unchanged; Skip Trace instructions are a separate addendum. Existing candidate-evidence and explicit approval gates apply.
 
-CRE-2409 owner Micah Johnson owns the active migration checkout `t3/npg-custom-chat`. It was inspected read-only and never modified. Its dirty `packages/agency/test/npg-analyst.test.ts` overlaps the expected tool-count assertion. Apply `handoff/cre-2409-test-update.patch` during parent integration; it changes the count to 13 and asserts the new tool. The patch was applied in this implementation checkout for validation, all 36 Agency tests passed, then reversed to preserve owner integration. The unpatched legacy assertion still expects 12 tools. No other migration-owned files are changed.
+CRE-2409 owner Micah Johnson owns the active migration checkout `t3/npg-custom-chat`. It was inspected read-only and never modified. This branch updates its own copy of the tool-count regression to 13 with an explicit Skip Trace assertion. The migration checkout's uncommitted changes remain owner-controlled; merge-time conflicts must preserve both changes.
 
 Validation commands use `npx --yes --package=pnpm@9.15.0 -c 'pnpm …'` where pnpm is unavailable globally:
 
@@ -36,7 +36,7 @@ Validation commands use `npx --yes --package=pnpm@9.15.0 -c 'pnpm …'` where pn
 - Package `test:worker`: Wrangler dry-run bundles the actual Worker; Miniflare/workerd invokes the actual singleton Durable Object against a fake outbound service. It verifies preflight, real storage transactions, one POST under concurrency, persisted projection and budget enforcement. Installed workerd supports July 15, 2026, so this test uses that compatibility date. Production configuration remains September 2; Wrangler dry-run also validates that configuration. No live runtime or paid provider evidence is claimed.
 - MCP tests invoke the actual registered tool through SDK Client/InMemoryTransport using synthetic pilot-shaped fields and full registry middle name. Provider tests cover positive projection/provenance, no contact, identity/state/fallback/association conflicts, duplicates, unknown phone metadata, missing secret/confirmation, global budget, concurrent dispatch/polls, stale-lease fencing, late/anomalous billing, privacy refusal/readback and uncertain-run recovery.
 - mcp-authz tests verify reviewed write classification and denial in read-only mode.
-- Agency `test:npg-analyst` passes with the exact owner handoff patch applied.
+- Agency `test:npg-analyst` includes the updated additive tool-count regression.
 
 No paid requests, real pilot data, secret reads, deployment or merge were performed. Parent owns independent Sol review and promotion.
 
