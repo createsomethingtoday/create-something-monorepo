@@ -383,8 +383,6 @@
     "airtable:primary-tags:dry-run": "node --import tsx scripts/airtable-tag-agent.ts --dry-run",
     "airtable:primary-tags:run": "node --import tsx scripts/airtable-tag-agent.ts --live",
     "template-review:agent-feedback": "node --import tsx scripts/template-review-agent-feedback.ts",
-    "template-review:hub-agent-feedback": "node --import tsx scripts/template-review-hub-agent-feedback.ts",
-    "template-review:hub-agent-feedback:test": "node --import tsx --test scripts/test/template-review-hub-agent-feedback.test.ts",
     "specialist:template-review:dataset": "tsx scripts/template-review-specialist-dataset.ts",
     "specialist:template-review:corrections": "tsx scripts/template-review-specialist-corrections.ts",
     "specialist:template-review:telemetry": "tsx scripts/template-review-specialist-telemetry.ts",

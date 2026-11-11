@@ -113,16 +113,15 @@ Use repo-side controls in this order:
 
 This repo keeps expensive scheduled automations behind repository variables. Keep these variables set to `true` while the GitHub Actions budget is healthy. Set one to `false` or delete it to pause that scheduled run; manual `workflow_dispatch` remains available.
 
-| Repository variable                             | Scheduled workflow                   |
-| ----------------------------------------------- | ------------------------------------ |
-| `ENABLE_TEMPLATE_REVIEW_HUB_SCHEDULE=true`      | `Template Review Hub Agent Feedback` |
-| `ENABLE_TEMPLATE_DESCRIPTION_FIX_SCHEDULE=true` | `Fix Broken Template Descriptions`   |
-| `ENABLE_LANGFUSE_MCP_EVALS_SCHEDULE=true`       | `Langfuse MCP Evals`                 |
+| Repository variable                             | Scheduled workflow                 |
+| ----------------------------------------------- | ---------------------------------- |
+| `ENABLE_TEMPLATE_DESCRIPTION_FIX_SCHEDULE=true` | `Fix Broken Template Descriptions` |
+| `ENABLE_LANGFUSE_MCP_EVALS_SCHEDULE=true`       | `Langfuse MCP Evals`               |
 
 To re-enable one scheduled automation after budget review:
 
 ```bash
-gh variable set ENABLE_TEMPLATE_REVIEW_HUB_SCHEDULE --body true --repo createsomethingtoday/create-something-monorepo
+gh variable set ENABLE_LANGFUSE_MCP_EVALS_SCHEDULE --body true --repo createsomethingtoday/create-something-monorepo
 ```
 
 Manual runs are still the preferred escape hatch during a budget crunch because they preserve GitHub logs, secrets, and provenance without silently spending on background loops.

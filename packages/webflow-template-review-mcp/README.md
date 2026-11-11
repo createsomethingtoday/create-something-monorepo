@@ -891,49 +891,6 @@ Behavior:
 - skips rows that already have agent feedback unless `--overwrite` is set
 - does lightweight same-origin page discovery from the asset `Website URL` or preview URL when available, so the draft is not limited to a single page when no sitemap exists
 
-## Template Review Hub Agent Feedback Runner
-
-Run the standalone `TEMPLATE REVIEW HUB` Dify agent over the most recently submitted Ready for Review versions with blank `📝Agent Review Feedback`:
-
-```bash
-infisical run --env=prod --path=/ --include-imports=true -- \
-  pnpm template-review:hub-agent-feedback -- --dry-run --since-days 7 --limit 20
-```
-
-The default is list-only dry run. A no-write Dify probe for one candidate is available when validating prompt/tool behavior:
-
-```bash
-infisical run --env=prod --path=/ --include-imports=true -- \
-  pnpm template-review:hub-agent-feedback -- --run-dify-dry-run --since-days 7 --limit 1
-```
-
-To authorize the agent to save feedback:
-
-```bash
-infisical run --env=prod --path=/ --include-imports=true -- \
-  pnpm template-review:hub-agent-feedback -- --write --since-days 7 --limit 5 --concurrency 1
-```
-
-Ongoing operation should use small recurring batches, for example every 30-60 minutes:
-
-```bash
-infisical run --env=prod --path=/ --include-imports=true -- \
-  pnpm template-review:hub-agent-feedback -- --write --since-days 7 --limit 5 --concurrency 1 --timeout-ms 600000
-```
-
-The repo also includes `.github/workflows/template-review-hub-agent-feedback.yml` for ongoing hourly runs. Scheduled runs use `--write --since-days 7 --limit 5 --concurrency 1`; manual dispatch defaults to dry-run unless the `write` input is enabled. GitHub must have `AIRTABLE_API_KEY` and `DIFY_TEMPLATE_REVIEW_HUB_API_KEY` configured as repository secrets before the scheduled job can run.
-
-Behavior:
-
-- lists newest submitted rows first using `📅Submission Datetime`
-- scopes to `🆕Ready for Review` and blank `📝Agent Review Feedback` by default
-- re-reads each version immediately before calling Dify and skips rows that are no longer blank or no longer in scope
-- calls the Dify Service API using `DIFY_TEMPLATE_REVIEW_HUB_API_KEY`, stored at `prod:/dify/template-review-hub`
-- lets the Dify agent use Hub MCP and first-class E2B tools for comprehensive review
-- expects comprehensive reviews to take several minutes per item; keep scheduled concurrency at `1` until live timings are stable
-- authorizes only the narrow `template_review_save_agent_feedback` write path; the runner does not write review status, creator-facing feedback, owner, or publishing fields directly
-
-
 ### Handoff observation boundary
 
 `template_review_observe_handoff` accepts exact Airtable `assetId` and `versionId`
