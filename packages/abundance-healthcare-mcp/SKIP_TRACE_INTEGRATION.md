@@ -74,3 +74,5 @@ Comments 4542804933 and 4542804944 were read directly. Failing-before regression
 ### Conversation-limit recovery correction
 
 Owner-scoped Refresh Skip Trace bypasses ordinary chat length limits after conversation ownership/version checks. It replaces same-receipt source/status entries; when needed it trims oldest conversation context to keep the stored refresh view bounded, with an explicit notice. The original approved action remains in D1. A regression begins with 60 messages and over 280,000 state characters, performs repeated pending refreshes then a terminal refresh, and verifies one receipt source, bounded history and successful recovery. Agency tests: 39/39 pass; this establishes synthetic runner/store behavior, not rendered UI or live provider behavior.
+
+When the provider response chain is reset, the next ordinary message replays retained source evidence in a user-level data message explicitly labeled untrusted, alongside stored conversation text. Evidence never becomes a system/developer instruction or paid authorization. The refresh-follow-up regression verifies recovered contact evidence reaches the model without another tool dispatch.

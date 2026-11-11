@@ -1014,6 +1014,17 @@ test('known Skip Trace pending can reconcile through chat without another paid a
     assert.equal(done.status, 'idle');
     assert.equal(calls, 2);
     assert.match(JSON.stringify(done.sources), /synthetic@example.test/);
+    let replay: unknown;
+    f.p.respond = async (input, previous) => {
+      assert.equal(previous, undefined);
+      replay = input;
+      return { id: 'followup', text: 'Recovered evidence received.' };
+    };
+    await executeCommand(store, 'alice', { type: 'message', id: done.id, version: done.version, text: 'Which emails were returned?' }, () => f.p);
+    assert.match(JSON.stringify(replay), /synthetic@example.test/);
+    assert.match(JSON.stringify(replay), /untrusted source evidence/i);
+    assert.equal(calls, 2);
+
   }));
 test('Skip Trace unknown dispatch remains a manual global hold and refresh cannot bypass it',()=>database(async store=>{
  const f=fixture('enrich_candidate_skip_trace',{npi:'1234567890',confirm_paid_enrichment:true});const tools=await f.p.tools();f.p.tools=async()=>[...tools,{name:'enrich_candidate_skip_trace',inputSchema:{type:'object',properties:{npi:{type:'string'},confirm_paid_enrichment:{const:true}},required:['npi','confirm_paid_enrichment'],additionalProperties:false}}];let calls=0;f.p.call=async()=>{calls++;return {status:'delivery_unknown',id:'a'.repeat(64),npi:'1234567890'};};const c=await conversation(store);const proposed=await executeCommand(store,'alice',message(c),()=>f.p);const unknown=await executeCommand(store,'alice',approve(proposed),()=>f.p);assert.equal(unknown.status,'ambiguous');await assert.rejects(()=>store.acquirePaid('unrelated'),/reconciliation/);await assert.rejects(()=>executeCommand(store,'alice',{type:'message',id:unknown.id,version:unknown.version,text:'Refresh Skip Trace'},()=>f.p));assert.equal(calls,1);
