@@ -21,6 +21,9 @@ declare global {
 				CS_IDENTITY_JWKS_URL?: string;
 				CS_IDENTITY_AUDIENCE?: string;
 				DB: D1Database;
+				/** Private analytics SELECT readers; never exposed via public/user APIs. */
+				LMS_DB?: D1Database;
+				TELEMETRY_DB?: D1Database;
 				SESSIONS: KVNamespace;
 				CACHE: KVNamespace;
 				STORAGE: R2Bucket;

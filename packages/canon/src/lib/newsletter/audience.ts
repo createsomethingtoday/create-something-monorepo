@@ -16,17 +16,20 @@ export type NewsletterEligibilityReason =
   | 'audience_unreviewed'
   | 'suppressed';
 
-export const ELIGIBLE_SUBSCRIBERS_SQL = `
-  SELECT id, email, source, unsubscribe_token, consent_confirmed_at
-  FROM newsletter_subscribers
-  WHERE confirmed_at IS NOT NULL
+/** Shared by dispatch selection and private aggregate reporting. */
+export const ELIGIBLE_SUBSCRIBERS_PREDICATE = `confirmed_at IS NOT NULL
     AND consent_confirmed_at IS NOT NULL
     AND consent_method = 'double_opt_in'
     AND consent_evidence = 'confirmation_link'
     AND audience_classification = 'confirmed_subscriber'
     AND unsubscribed_at IS NULL
     AND active = 1
-    AND status = 'active'
+    AND status = 'active'`;
+
+export const ELIGIBLE_SUBSCRIBERS_SQL = `
+  SELECT id, email, source, unsubscribe_token, consent_confirmed_at
+  FROM newsletter_subscribers
+  WHERE ${ELIGIBLE_SUBSCRIBERS_PREDICATE}
   ORDER BY id ASC
 `;
 

@@ -1,323 +1,527 @@
 <script lang="ts">
-	/**
-	 * Analytics Dashboard
-	 *
-	 * Now powered by @create-something/tufte - agentic visualization components
-	 * that embody Edward Tufte's principles automatically.
-	 *
-	 * Before: 289 lines with manual sparkline generation, formatting, etc.
-	 * After: ~120 lines - components handle all visualization logic
-	 */
+  import { SEO } from '@create-something/canon';
+  import { Sparkline } from '@create-something/tufte';
+  import { onMount } from 'svelte';
+  import { fetchAdminJson, type AdminRequestError } from '$lib/admin/client';
+  import { normalizeAnalyticsDays, type AnalyticsDays } from '$lib/admin/analytics-dashboard';
+  import type { WeeklyScorecard } from '$lib/admin/weekly-scorecard';
 
-	import { SEO } from '@create-something/canon';
-	import { onMount } from 'svelte';
-	import { MetricCard, HighDensityTable, Sparkline, DailyGrid, FlowGrid } from '@create-something/tufte';
-	import { fetchAdminJson, type AdminRequestError } from '$lib/admin/client';
-	import {
-		createEmptyAnalyticsDashboard,
-		getAnalyticsPropertyStats,
-		normalizeAnalyticsDays,
-		settleAnalyticsRequest,
-		type AnalyticsDashboardData,
-		type AnalyticsDays
-	} from '$lib/admin/analytics-dashboard';
-
-	let loading = true;
-	let days: AnalyticsDays = 30;
-	let analytics: AnalyticsDashboardData = createEmptyAnalyticsDashboard();
-	let requestError: AdminRequestError | null = null;
-	let requestSequence = 0;
-
-	async function loadAnalytics() {
-		const sequence = ++requestSequence;
-		loading = true;
-		requestError = null;
-
-		const state = settleAnalyticsRequest(
-			await fetchAdminJson<AnalyticsDashboardData>(`/api/admin/analytics?days=${days}`)
-		);
-
-		if (sequence !== requestSequence) return;
-
-		if (state.status === 'ready') {
-			analytics = state.analytics;
-		} else {
-			requestError = state.error;
-		}
-
-		loading = false;
-	}
-
-	function changeAnalyticsRange(event: Event) {
-		days = normalizeAnalyticsDays((event.currentTarget as HTMLSelectElement).value);
-		void loadAnalytics();
-	}
-
-	onMount(() => {
-		loadAnalytics();
-	});
-
+  let days: AnalyticsDays = 7;
+  let loading = true;
+  let report: WeeklyScorecard | null = null;
+  let requestError: AdminRequestError | null = null;
+  let sequence = 0;
+  const groups = ['Discovery', 'Usefulness', 'Relationship', 'Verified outcomes'] as const;
+  const number = (value: number | null) =>
+    value === null ? 'Unavailable' : new Intl.NumberFormat('en-US').format(value);
+  const day = (value: string) => value.slice(0, 10);
+  async function loadAnalytics() {
+    const request = ++sequence;
+    loading = true;
+    requestError = null;
+    const result = await fetchAdminJson<WeeklyScorecard>(`/api/admin/analytics?days=${days}`, {
+      cache: 'no-store'
+    });
+    if (request !== sequence) return;
+    if (result.ok) report = result.data;
+    else {
+      requestError = result.error;
+      report = null;
+    }
+    loading = false;
+  }
+  function changeRange(event: Event) {
+    days = normalizeAnalyticsDays((event.currentTarget as HTMLSelectElement).value);
+    void loadAnalytics();
+  }
+  onMount(() => {
+    void loadAnalytics();
+  });
 </script>
 
 <SEO
-	title="Admin - Analytics"
-	description="Administrative dashboard"
-	propertyName="io"
-	noindex={true}
+  title="Admin — Audience scorecard"
+  description="Private weekly audience review"
+  propertyName="io"
+  noindex={true}
 />
 
-<div class="space-y-6">
-	<div class="flex items-center justify-between">
-		<div>
-			<h2 class="page-title mb-2">Analytics</h2>
-			<p class="page-description">First-party analytics across CREATE SOMETHING properties</p>
-		</div>
+<div class="scorecard" aria-busy={loading}>
+  <header>
+    <div>
+      <p class="eyebrow">Performance Lab / Audience evidence</p>
+      <h1>Audience scorecard</h1>
+      <p class="intro">
+        Discovery → usefulness → relationship → verified outcomes.<br />Each signal keeps its own
+        unit and source.
+      </p>
+    </div>
+    <div class="controls">
+      <label for="analytics-range">Review window</label>
+      <select id="analytics-range" value={days} onchange={changeRange}>
+        <option value={7}>7 complete UTC days</option><option value={30}
+          >30 complete UTC days</option
+        ><option value={90}>90 complete UTC days</option>
+      </select>
+      <button type="button" onclick={loadAnalytics} disabled={loading}>Refresh sources</button>
+    </div>
+  </header>
 
-		<select
-			value={days}
-			onchange={changeAnalyticsRange}
-			class="select-field px-4 py-2"
-		>
-			<option value={7}>Last 7 days</option>
-			<option value={30}>Last 30 days</option>
-			<option value={90}>Last 90 days</option>
-		</select>
-	</div>
+  {#if loading}
+    <p class="notice" role="status">Loading the scorecard and checking source coverage…</p>
+  {:else if requestError}
+    <section class="notice" role="alert">
+      <h2>Scorecard unavailable</h2>
+      <p>
+        {requestError.kind === 'unauthorized'
+          ? 'Your admin session has expired. Sign in again to continue.'
+          : requestError.kind === 'forbidden'
+            ? 'This account does not have analytics access.'
+            : 'The service could not be reached. No zero values have been substituted.'}
+      </p>
+      {#if requestError.kind === 'unauthorized'}<a href="/admin/login?next=%2Fadmin%2Fanalytics"
+          >Sign in again</a
+        >
+      {:else if requestError.kind !== 'forbidden'}<button type="button" onclick={loadAnalytics}
+          >Retry scorecard</button
+        >{/if}
+    </section>
+  {:else if report}
+    <section class="window-note" aria-label="Report dates">
+      <p>
+        <strong>Current</strong>
+        {day(report.windows.current.start)} → {day(report.windows.current.end)}
+        <span>(end excluded)</span><br />
+        <strong>Prior</strong>
+        {day(report.windows.prior.start)} → {day(report.windows.prior.end)}
+        <span>(end excluded)</span>
+      </p>
+      <div>
+        <p>Checked {report.observedAt.replace('T', ' ').slice(0, 19)} UTC</p>
+        <a href="/api/admin/analytics?days={days}&format=markdown" download>Download review (.md)</a
+        >
+      </div>
+    </section>
+    {#if report.sources.some((s) => s.status === 'unavailable')}
+      <p class="notice" role="status">
+        <strong>Partial source coverage.</strong> Available signals are shown below. Unavailable means
+        the source could not be read or has no safe aggregate contract. Check source details, then refresh.
+      </p>
+    {/if}
+    {#if report.properties.every((p) => p.sessions === 0)}
+      <p class="notice">
+        No eligible public session activity in the available traffic sources for this window. Check
+        source freshness before interpreting an empty period.
+      </p>
+    {/if}
 
-	{#if loading}
-		<div class="text-center py-12 loading-text">Loading analytics...</div>
-	{:else if requestError}
-		<div class="table-card p-6" role="alert">
-			<h3 class="table-title mb-2">Analytics unavailable</h3>
-			<p class="footer-text">
-				{requestError.kind === 'unauthorized'
-					? 'Your admin session has expired. Sign in again, then reload this page.'
-					: requestError.kind === 'forbidden'
-						? 'Your account does not have permission to view analytics.'
-						: 'The analytics service could not be reached. Existing data has not been replaced with zeros.'}
-			</p>
-			{#if requestError.kind !== 'forbidden'}
-				<button class="select-field mt-4 px-4 py-2" type="button" onclick={loadAnalytics}>Retry</button>
-			{/if}
-		</div>
-	{:else}
-		<!-- Overview Stats - Using Agentic MetricCard Components -->
-		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-			<MetricCard
-				label="Total Views"
-				value={analytics.total_views}
-				trend={analytics.daily_views}
-				context="{days} days"
-			/>
+    {#each groups as group, index}
+      <section class="measure-section" aria-labelledby="group-{index}">
+        <div class="section-heading">
+          <p class="eyebrow">0{index + 1} / Signal</p>
+          <h2 id="group-{index}">{group}</h2>
+        </div>
+        <!-- svelte-ignore a11y_no_noninteractive_tabindex (Scrollable comparison tables need keyboard access.) -->
+        <div class="table-scroll" tabindex="0" role="region" aria-label="{group} comparisons">
+          <table>
+            <caption>{group} · current and equal prior UTC periods</caption>
+            <thead
+              ><tr
+                ><th scope="col">Measure</th><th scope="col">Current</th><th
+                  scope="col">Prior</th
+                ><th scope="col">Unit</th></tr
+              ></thead
+            >
+            <tbody
+              >{#each report.metrics.filter((m) => m.group === group) as metric}
+                <tr
+                  ><th scope="row"><span>{metric.label}</span></th
+                  >
+                  <td class:unavailable={metric.current === null}>{number(metric.current)}</td>
+                  <td class:unavailable={metric.prior === null}>{number(metric.prior)}</td><td
+                    class="unit">{metric.unit}</td
+                  ></tr
+                >
+              {/each}</tbody
+            >
+          </table>
+        </div>
+        <details class="definitions">
+        <summary>{group} definitions and sources</summary>
+        <dl>{#each report.metrics.filter(m => m.group === group) as metric}
+          <dt>{metric.label} · {metric.source}</dt><dd>{metric.definition}</dd>
+        {/each}</dl>
+      </details>
+      {#if group === 'Relationship'}
+          <div class="snapshot">
+            <h3>Audience eligibility · current snapshot</h3>
+            <p>
+              {#if report.audience}<strong>{number(report.audience.eligible)}</strong> eligible · {number(
+                  report.audience.active
+                )} active · {number(report.audience.total)} total records{:else}Unavailable —
+                restore the audience read before comparing list size.{/if}
+            </p>
+            <p>
+              Eligible requires confirmed double opt-in, recorded consent evidence, reviewed
+              audience classification and no suppression. Active and total are not sendable audience
+              counts. No prior snapshot is available.
+            </p>
+            <p>
+              Historical delivery ledger: {number(report.historicalDeliveries)} provider IDs. Excluded
+              from period counts; stored history, not fresh provider evidence.
+              <a href="/admin/newsletter-analytics">Open newsletter evidence</a>.
+            </p>
+          </div>
+        {/if}
+      </section>
+    {/each}
 
-			{#each getAnalyticsPropertyStats(analytics) as prop}
-				<MetricCard
-					label=".{prop.property}"
-					value={prop.count}
-					context={prop.count > 0 ? `${prop.percentage}% of total` : 'no data'}
-					percentage={prop.percentage}
-				/>
-			{/each}
-		</div>
+    <section class="measure-section" aria-labelledby="coverage-title">
+      <div class="section-heading">
+        <p class="eyebrow">Coverage / Traffic quality</p>
+        <h2 id="coverage-title">Five properties, separate sessions</h2>
+        <p>Sessions can appear on more than one property. External does not guarantee human.</p>
+      </div>
+      <!-- svelte-ignore a11y_no_noninteractive_tabindex (Scrollable comparison tables need keyboard access.) -->
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Property traffic coverage">
+        <table>
+          <caption
+            >Current traffic after session-wide exclusions; missing sources remain unavailable</caption
+          >
+          <thead
+            ><tr
+              ><th scope="col">Property</th><th scope="col">Page views</th><th scope="col"
+                >Prior views</th
+              ><th scope="col">External sessions</th><th scope="col">Unclassified</th><th
+                scope="col">Excluded sessions</th
+              ></tr
+            ></thead
+          >
+          <tbody
+            >{#each report.properties as p}<tr
+                ><th scope="row">{p.property === 'lms' ? 'Learn' : `.${p.property}`}</th><td
+                  >{number(p.views)}</td
+                ><td>{number(p.priorViews)}</td><td>{number(p.external)}</td><td
+                  >{number(p.unclassified)}</td
+                ><td>{number(p.excluded)}</td></tr
+              >{/each}</tbody
+          >
+        </table>
+      </div>
+    </section>
 
-		<!-- High Density Tables - Using Agentic HighDensityTable Component -->
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-			<!-- Top Pages -->
-			<div class="table-card p-4">
-				<h3 class="table-title mb-3">Top Pages</h3>
-				<HighDensityTable
-					items={analytics.top_pages}
-					limit={10}
-					labelKey="path"
-					countKey="count"
-					badgeKey="property"
-					totalForPercentage={analytics.total_views}
-					hideRankOnMobile={true}
-					emptyMessage="No data yet"
-				/>
-			</div>
+    <section class="measure-section" aria-labelledby="daily-title">
+      <div class="section-heading">
+        <p class="eyebrow">Discovery / Context</p>
+        <h2 id="daily-title">Daily public page views</h2>
+        <p>
+          All five properties; current UTC period. Zero days are included only when both traffic
+          sources succeed.
+        </p>
+      </div>
+      {#if report.daily.length}
+        <div class="trend">
+          <Sparkline
+            data={report.daily}
+            width={600}
+            height={100}
+            showFill={false}
+            showReferenceLine={true}
+          />
+        </div>
+        <details>
+          <summary>Read daily counts</summary>
+          <ul>
+            {#each report.daily as d}<li>{d.date}: {number(d.count)} page views</li>{/each}
+          </ul>
+        </details>
+      {:else}<p class="notice">
+          Combined daily trend unavailable while a traffic source is missing.
+        </p>{/if}
+      <h3 class="top-heading">Top public pages · available sources</h3>
+      {#if report.topPages.length}<ol class="pages">
+          {#each report.topPages as p}<li>
+              <span>{p.property === 'lms' ? 'Learn' : `.${p.property}`} <code>{p.path}</code></span
+              ><strong>{number(p.count)} <small>views</small></strong>
+            </li>{/each}
+        </ol>
+      {:else}<p>No eligible page views in available sources.</p>{/if}
+    </section>
 
-			<!-- Top Experiments -->
-			<div class="table-card p-4">
-				<h3 class="table-title mb-3">Top Experiments</h3>
-				<HighDensityTable
-					items={analytics.top_experiments.map((exp) => ({
-						label: exp.title || exp.experiment_id,
-						count: exp.count
-					}))}
-					limit={10}
-					showPercentage={false}
-					hideRankOnMobile={true}
-					emptyMessage="No experiment views yet"
-				/>
-			</div>
-
-			<!-- Top Countries -->
-			<div class="table-card p-4">
-				<h3 class="table-title mb-3">Top Countries</h3>
-				<HighDensityTable
-					items={analytics.top_countries.map((c) => ({
-						label: c.country,
-						count: c.count
-					}))}
-					limit={10}
-					totalForPercentage={analytics.total_views}
-					hideRankOnMobile={true}
-					emptyMessage="No country data yet"
-				/>
-			</div>
-
-			<!-- Top Referrers -->
-			<div class="table-card p-4">
-				<h3 class="table-title mb-3">Top Referrers</h3>
-				<HighDensityTable
-					items={analytics.top_referrers.map((ref) => ({
-						label: ref.referrer,
-						count: ref.count
-					}))}
-					limit={10}
-					totalForPercentage={analytics.total_views}
-					hideRankOnMobile={true}
-					emptyMessage="No referrer data yet"
-				/>
-			</div>
-		</div>
-
-		<!-- Unified Behavioral Analytics -->
-		{#if analytics.unified}
-			<div class="section-header mt-8 mb-4">
-				<h3 class="section-title">Behavioral Analytics</h3>
-				<p class="section-subtitle">Session-based tracking from unified events</p>
-			</div>
-
-			<!-- Session Stats -->
-			<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-				<MetricCard
-					label="Sessions"
-					value={analytics.unified.sessionStats.total}
-					context="{days} days"
-				/>
-				<MetricCard
-					label="Avg Page Views"
-					value={Math.round((analytics.unified.sessionStats.avgPageViews ?? 0) * 10) / 10}
-					context="per session"
-				/>
-				<MetricCard
-					label="Avg Duration"
-					value={Math.round((analytics.unified.sessionStats.avgDuration ?? 0) / 60) || 0}
-					context="minutes per session"
-				/>
-			</div>
-
-			<!-- Category & Actions -->
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<div class="table-card p-4">
-					<h3 class="table-title mb-3">By Category</h3>
-					<HighDensityTable
-						items={analytics.unified.categoryBreakdown.map((c) => ({
-							label: c.category.charAt(0).toUpperCase() + c.category.slice(1),
-							count: c.count
-						}))}
-						limit={10}
-						showPercentage={false}
-						hideRankOnMobile={true}
-						emptyMessage="No category data yet"
-					/>
-				</div>
-
-				<div class="table-card p-4">
-					<h3 class="table-title mb-3">Top Actions</h3>
-					<HighDensityTable
-						items={analytics.unified.topActions.map((a) => ({
-							label: a.action,
-							count: a.count
-						}))}
-						limit={10}
-						showPercentage={false}
-						hideRankOnMobile={true}
-						emptyMessage="No action data yet"
-					/>
-				</div>
-			</div>
-		{/if}
-
-		<!-- Cross-Property Flow (Anti-Concierge Wayfinding) -->
-		{#if analytics.unified?.propertyTransitions?.length > 0}
-			<div class="section-header mt-8 mb-4">
-				<h3 class="section-title">Cross-Property Flow</h3>
-				<p class="section-subtitle">User journeys between CREATE SOMETHING properties</p>
-			</div>
-
-			<div class="table-card p-4">
-				<FlowGrid
-					items={analytics.unified.propertyTransitions}
-					labelPrefix="."
-					emptyMessage="No cross-property navigation yet"
-				/>
-			</div>
-		{/if}
-
-		<!-- Daily Trend - Using Agentic Sparkline and DailyGrid Components -->
-		<div class="chart-card p-6 mt-4">
-			<div class="flex items-end justify-between mb-6">
-				<div>
-					<h3 class="chart-title">Daily Page Views</h3>
-					<p class="chart-subtitle mt-1 font-mono">
-						{analytics.daily_views.length > 0 ?
-							`${analytics.daily_views[0]?.date} to ${analytics.daily_views[analytics.daily_views.length - 1]?.date}`
-							: 'No data'}
-					</p>
-				</div>
-				{#if analytics.daily_views.length > 0}
-					<div class="text-right">
-						<div class="chart-value">
-							{new Intl.NumberFormat().format(analytics.daily_views[analytics.daily_views.length - 1]?.count || 0)}
-						</div>
-						<div class="chart-label">today</div>
-					</div>
-				{/if}
-			</div>
-
-			{#if analytics.daily_views.length === 0}
-				<p class="empty-state">No daily data yet</p>
-			{:else}
-				<!-- Agentic Sparkline Component (replaces manual SVG generation) -->
-				<div class="w-full h-24">
-					<Sparkline
-						data={analytics.daily_views}
-						width={100}
-						height={30}
-						showFill={true}
-						showReferenceLine={true}
-					/>
-				</div>
-
-				<!-- Agentic DailyGrid Component (replaces manual grid generation) -->
-				<div class="mt-4">
-					<DailyGrid data={analytics.daily_views} days={7} />
-				</div>
-			{/if}
-		</div>
-
-		<!-- Info Footer -->
-		<div class="info-footer pt-6">
-			<p class="footer-text">
-				First-party analytics powered by D1. No third-party analytics cookies or advertising pixels.
-				We record session activity, page URLs, referrers, country-level location, and authenticated
-				user IDs when available. See the <a href="/privacy" class="footer-link">privacy policy</a>.
-			</p>
-			<p class="footer-note mt-2">
-				Visualizations powered by <a href="https://createsomething.ltd/masters/edward-tufte" class="footer-link">@create-something/tufte</a>
-				— agentic components embodying Tufte's principles
-			</p>
-		</div>
-	{/if}
+    <section class="measure-section" aria-labelledby="sources-title">
+      <div class="section-heading">
+        <p class="eyebrow">Evidence / Recovery</p>
+        <h2 id="sources-title">Source status and freshness</h2>
+        <p>
+          Last contributing record is not a health check. A quiet source can be healthy; an old
+          source may need investigation.
+        </p>
+      </div>
+      <div class="sources">
+        {#each report.sources as source}<article>
+            <h3>{source.label}</h3>
+            <p class="source-status">
+              {source.status === 'ready' ? 'Read succeeded' : 'Unavailable'} · Latest record: {source.latestAt ??
+                'none available'}
+            </p>
+            <p>{source.detail}</p>
+          </article>{/each}
+      </div>
+    </section>
+    <section class="measure-section" aria-labelledby="limits-title">
+      <p class="eyebrow">Judgment / Boundaries</p>
+      <h2 id="limits-title">Read the limits with the numbers</h2>
+      <ul class="limits">
+        {#each report.limitations as limit}<li>{limit}</li>{/each}
+      </ul>
+    </section>
+  {/if}
 </div>
 
-<!--
-  Styles for this dashboard are now shared via @create-something/canon/styles/components.css
-  Classes used: page-title, page-description, section-header, section-title, section-subtitle,
-                select-field, loading-text, table-card, table-title, chart-card, chart-title,
-                chart-subtitle, chart-value, chart-label, empty-state, info-footer, footer-text,
-                footer-note, footer-link
--->
+<style>
+  .scorecard {
+    color: var(--color-performance-fg-primary);
+    max-width: 80rem;
+    margin: 0 auto;
+  }
+  header,
+  .window-note {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-lg);
+    flex-wrap: wrap;
+  }
+  header {
+    padding-bottom: var(--space-xl);
+  }
+  h1 {
+    font-size: var(--text-h1);
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    font-weight: 600;
+    margin: var(--space-sm) 0;
+  }
+  h2 {
+    font-size: var(--text-h3);
+    font-weight: 500;
+    line-height: 1.25;
+  }
+  h3 {
+    font-size: var(--text-body);
+    font-weight: 500;
+  }
+  .eyebrow {
+    font: var(--text-caption) var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-performance-fg-tertiary);
+  }
+  p,
+  small,
+  li {
+    line-height: 1.6;
+  }
+  .intro,
+  .section-heading > p:last-child,
+  .snapshot p,
+  .sources p,
+  .limits,
+  .window-note {
+    color: var(--color-performance-fg-secondary);
+    font-size: var(--text-body-sm);
+  }
+  .controls {
+    display: flex;
+    flex-direction: column;
+    align-self: flex-start;
+    gap: var(--space-sm);
+    font-size: var(--text-body-sm);
+  }
+  select,
+  button {
+    background: var(--color-performance-bg-surface);
+    color: var(--color-performance-fg-primary);
+    border: 1px solid var(--color-performance-border-default);
+    border-radius: var(--radius-sm);
+    padding: var(--space-sm) var(--space-md);
+    min-height: 44px;
+  }
+  button:disabled {
+    color: var(--color-performance-fg-tertiary);
+    cursor: wait;
+  }
+  a {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+  :is(a, button, select, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-performance-fg-primary);
+    outline-offset: 4px;
+  }
+  .notice {
+    background: var(--color-performance-bg-surface);
+    border-left: 2px solid var(--color-performance-fg-secondary);
+    padding: var(--space-md);
+    margin: var(--space-lg) 0;
+    font-size: var(--text-body-sm);
+  }
+  .notice button,
+  .notice a {
+    display: inline-block;
+    margin-top: var(--space-md);
+  }
+  .window-note {
+    border-block: 1px solid var(--color-performance-border-default);
+    padding: var(--space-md) 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .window-note strong {
+    color: var(--color-performance-fg-primary);
+  }
+  .window-note span {
+    color: var(--color-performance-fg-tertiary);
+  }
+  .measure-section {
+    padding: var(--space-lg) 0;
+    border-bottom: 1px solid var(--color-performance-border-default);
+  }
+  .section-heading {
+    margin-bottom: var(--space-lg);
+    max-width: 48rem;
+  }
+  .table-scroll {
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: var(--text-body-sm);
+  }
+  caption {
+    text-align: left;
+    color: var(--color-performance-fg-tertiary);
+    font-size: var(--text-caption);
+    padding-bottom: var(--space-sm);
+  }
+  th,
+  td {
+    padding: var(--space-sm);
+    border-bottom: 1px solid var(--color-performance-border-default);
+    vertical-align: top;
+  }
+  thead th {
+    color: var(--color-performance-fg-tertiary);
+    font-size: var(--text-caption);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+  tbody th {
+    font-weight: 500;
+    min-width: 19rem;
+    max-width: 38rem;
+  }
+  .definitions dt { font-weight:500; margin-top:var(--space-md); }
+  .definitions dd { color:var(--color-performance-fg-secondary); max-width:85ch; }
+
+  td {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .unavailable,
+  .unit {
+    color: var(--color-performance-fg-tertiary);
+    font-size: var(--text-caption);
+  }
+  .snapshot {
+    padding: var(--space-md) 0;
+    max-width: 65ch;
+  }
+  .snapshot p {
+    margin-top: var(--space-sm);
+  }
+  .snapshot strong {
+    color: var(--color-performance-fg-primary);
+    font-size: var(--text-h3);
+  }
+  .sources {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-lg);
+  }
+  .sources article {
+    border-top: 1px solid var(--color-performance-border-default);
+    padding-top: var(--space-md);
+  }
+  .sources .source-status {
+    font: var(--text-caption) var(--font-mono);
+    color: var(--color-performance-fg-tertiary);
+    margin: var(--space-sm) 0;
+  }
+  .trend {
+    overflow: hidden;
+    margin: var(--space-lg) 0;
+  }
+  .trend :global(svg) {
+    width: 100%;
+    height: auto;
+    max-height: 160px;
+  }
+  details {
+    font-size: var(--text-body-sm);
+  }
+  summary {
+    cursor: pointer;
+    padding: var(--space-sm) 0;
+  }
+  .top-heading {
+    margin-top: var(--space-xl);
+  }
+  .pages {
+    padding: 0;
+    list-style: none;
+  }
+  .pages li {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-md);
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid var(--color-performance-border-default);
+    font-size: var(--text-body-sm);
+  }
+  code {
+    overflow-wrap: anywhere;
+    color: var(--color-performance-fg-secondary);
+  }
+  .pages strong {
+    white-space: nowrap;
+    font: var(--text-body-sm) var(--font-mono);
+  }
+  .pages small {
+    color: var(--color-performance-fg-tertiary);
+  }
+  .limits {
+    padding-left: var(--space-lg);
+    max-width: 85ch;
+  }
+  .limits li {
+    margin-top: var(--space-sm);
+  }
+  @media (max-width: 640px) {
+    .controls {
+      width: 100%;
+    }
+    .sources {
+      grid-template-columns: 1fr;
+    }
+    h1 {
+      font-size: var(--text-h2);
+    }
+    tbody th {
+      min-width: 15rem;
+    }
+  }
+</style>

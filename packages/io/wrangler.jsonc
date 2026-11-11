@@ -10,6 +10,16 @@
 			"binding": "DB",
 			"database_name": "create-something-db",
 			"database_id": "a74e70ae-6a94-43da-905e-b90719c8dfd2"
+		},
+		{
+			"binding": "LMS_DB",
+			"database_name": "lms-db",
+			"database_id": "2ec4ea2e-c25f-4832-b78f-a608ff9f8ad7"
+		},
+		{
+			"binding": "TELEMETRY_DB",
+			"database_name": "cs-telemetry",
+			"database_id": "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
 		}
 	],
 

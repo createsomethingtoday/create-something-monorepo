@@ -1,0 +1,52 @@
+
+> @create-something/monorepo@1.0.0 ground:review /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a3187418-307ce015c26a4c51
+> node scripts/ground-review.mjs "--" "--base" "origin/main"
+
+# Ground Review Receipt
+
+- Mode: advisory
+- Base: origin/main
+- Status: no_analyzable_files
+- Changed files: 24
+- Analyzable files: 0
+- Excluded files: 24
+- Findings: 0
+- Duplicate-check coverage: 0 file(s)
+- Duplicate-check status: failed
+- Orphan-check coverage: 2 new file(s)
+- Orphan-check status: completed
+
+## Targets
+
+- packages/canon (@create-something/canon): 0 analyzable, 0 finding(s)
+- packages/io (@create-something/io): 0 analyzable, 0 finding(s)
+
+## Coverage exclusions
+
+- packages/canon/src/lib/newsletter/audience.ts: duplicate_analysis_incomplete
+- packages/io/wrangler.jsonc: unsupported_extension
+- packages/io/docs/analytics/evidence/coverage-before.txt: unsupported_extension
+- packages/io/docs/analytics/evidence/fixture-daily.png: unsupported_extension
+- packages/io/docs/analytics/evidence/fixture-desktop.png: unsupported_extension
+- packages/io/docs/analytics/evidence/fixture-empty.png: unsupported_extension
+- packages/io/docs/analytics/evidence/fixture-error.png: unsupported_extension
+- packages/io/docs/analytics/evidence/fixture-loading.png: unsupported_extension
+- packages/io/docs/analytics/evidence/fixture-mobile.png: unsupported_extension
+- packages/io/docs/analytics/evidence/fixture-partial.png: unsupported_extension
+- packages/io/docs/analytics/evidence/fixture-relationship.png: unsupported_extension
+- packages/io/docs/analytics/evidence/fixture-sources.png: unsupported_extension
+- packages/io/docs/analytics/evidence/regression-before.txt: unsupported_extension
+- packages/io/docs/analytics/weekly-review.md: unsupported_extension
+- packages/io/src/app.d.ts: duplicate_analysis_incomplete
+- packages/io/src/hooks.server.ts: duplicate_analysis_incomplete
+- packages/io/src/lib/admin/analytics-dashboard.ts: duplicate_analysis_incomplete
+- packages/io/src/lib/server/newsletter-analytics.ts: duplicate_analysis_incomplete
+- packages/io/src/routes/admin/+layout.svelte: duplicate_analysis_incomplete
+- packages/io/src/routes/admin/analytics/+page.svelte: duplicate_analysis_incomplete
+- packages/io/src/routes/api/admin/analytics/+server.ts: duplicate_analysis_incomplete
+- packages/io/test/admin-analytics.test.ts: duplicate_analysis_incomplete
+- packages/io/src/lib/admin/weekly-scorecard.ts: duplicate_analysis_incomplete
+- packages/io/src/lib/server/analytics-scorecard.ts: duplicate_analysis_incomplete
+
+_Advisory evidence only; findings do not block promotion during calibration._
+
