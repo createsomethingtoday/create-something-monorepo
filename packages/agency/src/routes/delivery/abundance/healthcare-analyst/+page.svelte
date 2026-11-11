@@ -1,6 +1,12 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
-  import { linkParts, sourceLinks, type NpgView } from '$lib/npg/display';
+  import {
+    actionLabel,
+    linkParts,
+    reviewFields,
+    sourceLinks,
+    type NpgView
+  } from '$lib/npg/display';
   import type { PageData } from './$types';
   export let data: PageData;
   let conversations = data.conversations;
@@ -203,14 +209,25 @@
               Approval sends this one request as shown. Contact details do not establish permission
               to contact someone.
             </p>
-            <p><strong>Action:</strong> <code>{conversation.pending.tool}</code></p>
-            <pre aria-label="Provider, scope, and limits">{JSON.stringify(
-                conversation.pending.review,
-                null,
-                2
-              )}</pre>
-            <details open>
-              <summary>Exact request</summary>
+            <h3>{actionLabel(conversation.pending.tool)}</h3>
+            <dl class="review-fields" aria-label="Provider, scope, and limits">
+              {#each reviewFields(conversation.pending.review) as field}
+                <div>
+                  <dt>{field.label}</dt>
+                  <dd>{field.value}</dd>
+                </div>
+              {/each}
+            </dl>
+            <dl class="review-fields" aria-label="Request to approve">
+              {#each reviewFields(conversation.pending.arguments) as field}
+                <div>
+                  <dt>{field.label}</dt>
+                  <dd>{field.value}</dd>
+                </div>
+              {/each}
+            </dl>
+            <details>
+              <summary>Inspect exact request</summary>
               <pre>{JSON.stringify(conversation.pending.arguments, null, 2)}</pre>
             </details>
             <p class="muted">
@@ -262,7 +279,7 @@
                   >{href.startsWith('/delivery/') ? 'Download complete CSV' : href}</a
                 >{/each}
               <details>
-                <summary>Source {i + 1} · {source.tool}</summary>
+                <summary>Source {i + 1} · {actionLabel(source.tool)}</summary>
                 <pre>{JSON.stringify(source.data, null, 2)}</pre>
               </details>{/each}
           </section>{/if}
@@ -449,7 +466,22 @@
     background: var(--color-bg-subtle);
     padding: var(--space-md);
   }
-  code {
+  .review-fields {
+    margin: var(--space-md) 0;
+  }
+  .review-fields div {
+    display: grid;
+    grid-template-columns: minmax(8rem, 1fr) minmax(0, 2fr);
+    gap: var(--space-sm);
+    padding-block: var(--space-sm);
+    border-bottom: 1px solid var(--color-border-default);
+  }
+  .review-fields dt {
+    font-weight: 600;
+  }
+  .review-fields dd {
+    margin: 0;
+    white-space: pre-wrap;
     overflow-wrap: anywhere;
   }
   .source-link {
@@ -529,6 +561,9 @@
     margin-top: var(--space-sm);
   }
   @media (max-width: 768px) {
+    .review-fields div {
+      grid-template-columns: 1fr;
+    }
     .workspace {
       grid-template-columns: 1fr;
     }

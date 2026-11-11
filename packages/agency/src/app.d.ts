@@ -91,6 +91,7 @@ declare global {
 				NPG_HEALTHCARE_ANALYST_URL?: string;
 				NPG_HEALTHCARE_CHAT_ENABLED?: string;
 				NPG_HEALTHCARE_MODEL?: string;
+				NPG_HEALTHCARE_OPENAI_API_KEY?: string;
 				ABUNDANCE_HEALTHCARE_MCP_API_KEY?: string;
 				CANON_OPERATOR_ORIGINS?: string;
 				// Governance source monitors

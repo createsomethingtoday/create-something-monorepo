@@ -202,7 +202,12 @@ async function prepareQuery(db: D1Database, q: SourcingQuery, fetchFn: typeof fe
       args.push(center.x, center.y, center.z, Math.cos(q.radiusMiles! / EARTH_MILES));
     }
   }
-  return { run, center, where: filters.join(' AND '), args, baseWhere, baseArgs };
+  // NPI ordering otherwise makes SQLite prefer the snapshot-wide primary key,
+  // evaluating JSON for unrelated locations before reaching a city result.
+  const membershipTable = q.state
+    ? 'abundance_healthcare_nationwide_memberships m INDEXED BY idx_abundance_healthcare_nationwide_market'
+    : 'abundance_healthcare_nationwide_memberships m';
+  return { run, center, membershipTable, where: filters.join(' AND '), args, baseWhere, baseArgs };
 }
 type Row = {
   provider_snapshot_json: string;
@@ -238,19 +243,19 @@ export async function querySourcing(
   const [count, unresolved, rows] = await Promise.all([
     db
       .prepare(
-        `SELECT count(*) AS total FROM abundance_healthcare_nationwide_memberships m ${join} WHERE ${plan.where}`
+        `SELECT count(*) AS total FROM ${plan.membershipTable} ${join} WHERE ${plan.where}`
       )
       .bind(...plan.args)
       .first<{ total: number }>(),
     db
       .prepare(
-        `SELECT count(*) AS total FROM abundance_healthcare_nationwide_memberships m ${join} WHERE ${plan.baseWhere} AND (g.status IS NULL OR g.status!='matched')`
+        `SELECT count(*) AS total FROM ${plan.membershipTable} ${join} WHERE ${plan.baseWhere} AND (g.status IS NULL OR g.status!='matched')`
       )
       .bind(...plan.baseArgs)
       .first<{ total: number }>(),
     db
       .prepare(
-        `SELECT m.provider_snapshot_json,g.unit_x,g.unit_y,g.unit_z FROM abundance_healthcare_nationwide_memberships m ${join} WHERE ${plan.where} ORDER BY m.provider_npi LIMIT ? OFFSET ?`
+        `SELECT m.provider_snapshot_json,g.unit_x,g.unit_y,g.unit_z FROM ${plan.membershipTable} ${join} WHERE ${plan.where} ORDER BY m.provider_npi LIMIT ? OFFSET ?`
       )
       .bind(...plan.args, q.limit, q.offset)
       .all<Row>()
@@ -304,7 +309,7 @@ export async function exportSourcingCsv(
         }
         const rows = await db
           .prepare(
-            `SELECT m.provider_npi,m.provider_snapshot_json,g.unit_x,g.unit_y,g.unit_z FROM abundance_healthcare_nationwide_memberships m ${join} WHERE ${plan.where} AND m.provider_npi>? ORDER BY m.provider_npi LIMIT 1000`
+            `SELECT m.provider_npi,m.provider_snapshot_json,g.unit_x,g.unit_y,g.unit_z FROM ${plan.membershipTable} ${join} WHERE ${plan.where} AND m.provider_npi>? ORDER BY m.provider_npi LIMIT 1000`
           )
           .bind(...plan.args, cursor)
           .all<Row & { provider_npi: string }>();

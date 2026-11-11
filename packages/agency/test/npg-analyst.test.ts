@@ -8,6 +8,7 @@ import {
   executeCommand,
   parseCommand,
   enrichmentReview,
+  checkPaidScope,
   type Command
 } from '../src/lib/server/npg/runner.ts';
 import {
@@ -141,7 +142,7 @@ async function database(fn: (store: NpgStore, advance: (ms: number) => void) => 
   try {
     const db: D1Database = await mf.getD1Database('DB');
     for (const sql of readFileSync(
-      new URL('../migrations/0060_npg_private_analyst.sql', import.meta.url),
+      new URL('../migrations/0062_npg_private_analyst.sql', import.meta.url),
       'utf8'
     ).match(/CREATE TRIGGER[\s\S]*?END;|CREATE (?:TABLE|INDEX)[\s\S]*?;/g) ?? [])
       await db.prepare(sql).run();
@@ -613,12 +614,39 @@ test('browser modules carry no MCP endpoint, credentials or model configuration'
       assert.ok(!source.includes(forbidden), forbidden);
   }
 });
+test('NPG cannot silently use a shared Agency credential or an unselected model', () => {
+  const signal = AbortSignal.timeout(2000);
+  assert.throws(
+    () =>
+      createProviders(
+        {
+          OPENAI_API_KEY: 'unrelated-agency-key',
+          ABUNDANCE_HEALTHCARE_MCP_API_KEY: 'fixture-mcp-secret',
+          NPG_HEALTHCARE_MODEL: NPG_SOURCE.model
+        } as never,
+        signal
+      ),
+    { status: 503 }
+  );
+  assert.throws(
+    () =>
+      createProviders(
+        {
+          NPG_HEALTHCARE_OPENAI_API_KEY: 'fixture-openai-secret',
+          ABUNDANCE_HEALTHCARE_MCP_API_KEY: 'fixture-mcp-secret'
+        },
+        signal
+      ),
+    { status: 503 }
+  );
+});
 test('Responses HTTP uses only server-selected model, bounded tokens, prior ID and no automatic retry', async () => {
   let request: any,
     attempts = 0;
   const p = createProviders(
     {
-      OPENAI_API_KEY: 'fixture-openai-secret',
+      NPG_HEALTHCARE_OPENAI_API_KEY: 'fixture-openai-secret',
+      NPG_HEALTHCARE_MODEL: NPG_SOURCE.model,
       ABUNDANCE_HEALTHCARE_MCP_API_KEY: 'fixture-mcp-secret'
     },
     AbortSignal.timeout(2000),
@@ -706,7 +734,8 @@ test('MCP transport uses fixed bearer endpoint, bounded allowlist and advertised
   };
   const p = createProviders(
     {
-      OPENAI_API_KEY: 'fixture-openai-secret',
+      NPG_HEALTHCARE_OPENAI_API_KEY: 'fixture-openai-secret',
+      NPG_HEALTHCARE_MODEL: NPG_SOURCE.model,
       ABUNDANCE_HEALTHCARE_MCP_API_KEY: 'fixture-mcp-secret'
     },
     AbortSignal.timeout(2000),
@@ -831,4 +860,51 @@ test('personal-contact scope cannot default silently into an enrichment approval
     assert.equal(out.pending, null);
     assert.equal(f.calls.length, 0);
     assert.match(out.messages.at(-1)!.text, /scope must be explicitly/);
+  }));
+
+
+test('read-only evidence is durable before the next model response', () =>
+  database(async (store) => {
+    const c = await conversation(store), f = fixture('search_registry_sourcing', {});
+    const respond = f.p.respond;
+    let responses = 0;
+    f.p.respond = async (...args) => {
+      if (++responses === 2) {
+        const saved: State = JSON.parse((await store.read('alice', c.id)).state_json);
+        assert.equal(saved.sources.length, 1);
+        assert.equal((saved.sources[0].data as any).total, 231);
+      }
+      return respond(...args);
+    };
+    const out = await executeCommand(store, 'alice', message(c), () => f.p);
+    assert.equal(out.status, 'idle');
+  }));
+
+test('travel cannot review incomplete clinic locations even when supplied by the operator', () => {
+  for (const address of ['123 Main', '123 Main Street', '123 Main Street, Springfield', '123 Main Street, MO']) {
+    const args = { ...travelArgs, clinics: [{ id: 'clinic1', address }] };
+    assert.throws(() => checkPaidScope('estimate_registry_travel', args, {
+      messages: [{ role: 'user', text: `NPI 1234567890 clinic ${address}` }], sources: []
+    }), /street addresses/);
+  }
+  checkPaidScope('estimate_registry_travel', travelArgs, {
+    messages: [{ role: 'user', text: `NPI 1234567890 clinic ${travelArgs.clinics[0].address}` }], sources: []
+  });
+});
+
+test('uncertain Clay webhook delivery preserves the global paid reconciliation hold', () =>
+  database(async (store) => {
+    const c = await conversation(store), f = fixture('enrich_candidate_profile',
+      { npi: '1234567890', confirm_paid_enrichment: true, include_personal_contact: false },
+      { readiness: ready });
+    const v = await executeCommand(store, 'alice', message(c), () => f.p);
+    const call = f.p.call;
+    f.p.call = async (name, args) => name === 'get_enrichment_readiness' ? call(name, args) : ({
+      id: 'npgclay_fixture', npi: '1234567890', status: 'delivery_unknown', result: null, cache_hit: false
+    });
+    const out = await executeCommand(store, 'alice', approve(v), () => f.p);
+    assert.equal(out.status, 'ambiguous');
+    assert.equal((out.sources[0].data as any).status, 'delivery_unknown');
+    assert.equal((await store.action('alice', v.pending!.id)).status, 'ambiguous');
+    await assert.rejects(() => store.acquirePaid('another-user-token'), { status: 409 });
   }));

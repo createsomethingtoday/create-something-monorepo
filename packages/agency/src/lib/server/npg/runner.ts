@@ -79,6 +79,16 @@ export function enrichmentReview(data: unknown, provider: string) {
     scope: 'One candidate only; no outreach. No automatic reset or top-up.'
   };
 }
+function fullClinicAddress(address: string) {
+  const parts = address.trim().split(/\s*,\s*/);
+  if (/^(?:US|USA|United States)$/i.test(parts.at(-1) ?? '')) parts.pop();
+  return (
+    parts.length >= 3 &&
+    /^\d+[A-Za-z]?(?:-\d+)?\s+\S/.test(parts[0]) &&
+    /[A-Za-z]{2}/.test(parts.at(-2) ?? '') &&
+    /^(?:AL|AK|AZ|AR|CA|CO|CT|DE|DC|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|AS|GU|MP|PR|VI)(?:\s+\d{5}(?:-\d{4})?)?$/i.test(parts.at(-1) ?? '')
+  );
+}
 export function checkPaidScope(name: string, args: Record<string, unknown>, state: State) {
   const userText = state.messages
     .filter((m) => m.role === 'user')
@@ -117,7 +127,7 @@ export function checkPaidScope(name: string, args: Record<string, unknown>, stat
     !clinics.every(
       (c) =>
         typeof c.address === 'string' &&
-        /^\d+[A-Za-z]?(?:-\d+)?\s+\S/.test(c.address) &&
+        fullClinicAddress(c.address) &&
         userText.includes(c.address.toLowerCase().replace(/\s+/g, ' '))
     ) ||
     ![30, 45].includes(Number(args.max_minutes)) ||
@@ -125,7 +135,7 @@ export function checkPaidScope(name: string, args: Record<string, unknown>, stat
   )
     throw new NpgError(
       409,
-      'Travel needs 1–50 exact selected NPIs from you or this sourcing history, and 1–3 clinic street addresses supplied by you. Choose 30 or 45 minutes and any or all clinics.'
+      'Travel needs 1–50 exact selected NPIs from you or this sourcing history, and 1–3 clinic street addresses supplied by you in street, city, two-letter state format (ZIP optional). Choose 30 or 45 minutes and any or all clinics.'
     );
 }
 async function review(
@@ -256,7 +266,7 @@ export async function executeCommand(
         result &&
         typeof result === 'object' &&
         'status' in result &&
-        ['ambiguous', 'unavailable'].includes(String(result.status))
+        ['ambiguous', 'unavailable', 'delivery_unknown'].includes(String(result.status))
       ) {
         state.sources.push({ tool: tool.name, data: result });
         await store.checkpoint(row, state);
@@ -358,6 +368,7 @@ export async function executeCommand(
         const result = await p.call(tool.name, args);
         toolCount++;
         s.sources.push({ tool: tool.name, data: result });
+        await store.checkpoint(c, s);
         input = [
           { type: 'function_call_output', call_id: call.call_id, output: JSON.stringify(result) }
         ];

@@ -1069,7 +1069,8 @@ test('refresh ledger accounts for records removed by canonical taxonomy filterin
 	}
 });
 
-test('refresh reports include persisted recruiting evidence', async () => {
+test('refresh reports include persisted recruiting evidence', async (context) => {
+	context.mock.timers.enable({ apis: ['Date'], now: Date.parse(fetchedAt) });
 	const originalFetch = globalThis.fetch;
 	globalThis.fetch = (async () => jsonResponse({
 		results: [{
