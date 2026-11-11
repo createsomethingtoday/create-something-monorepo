@@ -81,6 +81,13 @@ const FREE_TEMPLATE_CLAUSE = '(d.price = 0 OR (d.price IS NULL AND d.is_free = 1
 const HAS_CATEGORY_MEMBERSHIPS_CLAUSE =
   'EXISTS (SELECT 1 FROM template_category_memberships tcm_existing WHERE tcm_existing.template_document_id = d.id)';
 const HAS_NO_CATEGORY_MEMBERSHIPS_CLAUSE = `NOT ${HAS_CATEGORY_MEMBERSHIPS_CLAUSE}`;
+// A template with no membership rows falls back to its own category list. The list is read
+// through a second lookup by id, not from `d`. The category filter then needs only `d.id`
+// from the outer table, so a count or a facet runs on an index and opens a template's wide
+// row only for the few templates that have no membership rows. Reading the list from `d`
+// forced every category count to scan the whole table.
+const CATEGORY_GROUP_LIST_FALLBACK_CLAUSE =
+  'EXISTS (SELECT 1 FROM template_documents fallback_doc, json_each(fallback_doc.category_group_slugs_json) WHERE fallback_doc.id = d.id AND json_each.value = ?)';
 const PUBLIC_CHILD_SLUGS_CTE = `
   public_child_slugs AS (
     SELECT canonical_slug, MIN(alias_slug) AS alias_slug
@@ -247,7 +254,7 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
         )
         OR (
           ${HAS_NO_CATEGORY_MEMBERSHIPS_CLAUSE}
-          AND EXISTS (SELECT 1 FROM json_each(d.category_group_slugs_json) WHERE json_each.value = ?)
+          AND ${CATEGORY_GROUP_LIST_FALLBACK_CLAUSE}
           AND EXISTS (
             SELECT 1
             FROM template_child_categories tcc
@@ -269,7 +276,7 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
         )
         OR (
           ${HAS_NO_CATEGORY_MEMBERSHIPS_CLAUSE}
-          AND EXISTS (SELECT 1 FROM json_each(d.category_group_slugs_json) WHERE json_each.value = ?)
+          AND ${CATEGORY_GROUP_LIST_FALLBACK_CLAUSE}
         )
       )
     `);
