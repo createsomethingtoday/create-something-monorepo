@@ -65,11 +65,21 @@ Useful regressions demonstrated red before correction: pending-review heading sc
 
 Doctor remains a heuristic and its warnings are retained: required font/framework setup imports and utility/test classes still trigger its source audit. They do not exempt custom component CSS from the scoped contract. The review follow-up removes that stylesheet, enforces font-face-only local CSS with a PostCSS AST regression, and verifies that compiled output has no custom NPG selectors. Actual browser/render review remains a separate gate.
 
-## Current local receipts — PR review follow-up
+## Current local receipts — cold CI repair
+
+The c3fb751 CI jobs exposed a cold-start regression. React typechecking inherited generated `.svelte-kit/tsconfig.json`; the new NPG-first install preparation also invoked Vite before that config existed. Its failure skipped `prepare:local-deps`, and the existing permissive prepare fallback masked the error. Downstream Atlas and IO jobs then lacked Canon token CSS and auth-platform runtime output. These were consequences of this change, not unrelated baseline failures.
+
+The React typecheck now has a standalone strict ES2022/ESNext configuration, retaining `verbatimModuleSyntax` and `isolatedModules`. A real TypeScript compiler-host regression hides all generated SvelteKit files while checking the actual client. Agency preparation again runs dependency preparation and Kit synchronization before compiling NPG. Other package/workflow files are unchanged.
+
+The regression failed before correction; **62 focused tests** and full Agency `check` passed afterward. An actual prepare run with the owning Kit config absent regenerated it, reached the NPG build completion marker, and verified Canon tokens and auth-platform output. Dependency outputs were otherwise warm, so fresh-install CI recovery remains pending. [Cold-CI evidence](./evidence/npg-astryx-2026-11-11/review-cold-ci/).
+
+Rebuilt JavaScript and CSS are byte-identical to the final reviewed `main-qaMUh4q_.js` / `main-Cn_sAb1H.css` artifact. The previous 27 browser scenarios and 22 supplemental checks still describe those exact bytes; this build-only correction introduces no rendered UI change. Functional checks pass locally, product acceptance carries the exact prior rendered artifact, and release readiness remains untested in production. No Dify, provider, secret or deployment change occurred.
+
+## CSS-contract review receipts
 
 PR2252 review [4543151736](https://github.com/createsomethingtoday/create-something-monorepo/pull/2252#discussion_r4543151736) correctly identified the custom workspace stylesheet as a scoped Astryx-contract violation. `workspace.css` and its import are removed. Actual stack sizing, Section dividers, Divider separators and Text code roles own their component behavior; a dedicated Tailwind utility build provides wrapping and framework layout tokens. Only required local `@font-face` setup remains. The Agency Tailwind configuration, backend and provider policy are unchanged.
 
-Current client is `/npg-chat/assets/main-qaMUh4q_.js`, stylesheet `/npg-chat/assets/main-Cn_sAb1H.css`. Current evidence is in [review-css-contract](./evidence/npg-astryx-2026-11-11/review-css-contract/); the earlier receipts below are historical. The CSS-contract test failed before repair. A short-screen regression exposed competing composer focus; pending decisions now receive the focus. A throttled-render regression then demonstrated that a frame callback could precede React's commit for large saved evidence; focus intent is now consumed in a post-commit layout effect, without an arbitrary delay.
+The reviewed client is `/npg-chat/assets/main-qaMUh4q_.js`, stylesheet `/npg-chat/assets/main-Cn_sAb1H.css`. CSS-contract evidence is in [review-css-contract](./evidence/npg-astryx-2026-11-11/review-css-contract/); the initial candidate receipts below are historical. The CSS-contract test failed before repair. A short-screen regression exposed competing composer focus; pending decisions now receive the focus. A throttled-render regression then demonstrated that a frame callback could precede React's commit for large saved evidence; focus intent is now consumed in a post-commit layout effect, without an arbitrary delay.
 
 - **61 focused tests** and explicit TSX checks passed.
 - **27 exact-built browser scenarios** passed, including the CPU-throttled saved-evidence focus regression, six widths, both short phones, source disclosures, drafts, no-JS and reduced-motion states.

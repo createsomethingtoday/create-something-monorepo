@@ -1,13 +1,39 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync, readdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { parse } from 'postcss';
+import ts from 'typescript';
 import { renderNpgDocument } from '../src/lib/server/npg/document.ts';
 import { GET } from '../src/routes/delivery/abundance/healthcare-analyst/+server.ts';
 const assets = {
   script: '/npg-chat/assets/main-safe.js',
   styles: ['/npg-chat/assets/main-safe.css']
 };
+test('React typecheck works without generated SvelteKit files', () => {
+  const path = fileURLToPath(new URL('../tsconfig.npg.json', import.meta.url));
+  const generated = (name: string) => /[/\\]\.svelte-kit[/\\]/.test(name);
+  const readFile = (name: string) => (generated(name) ? undefined : ts.sys.readFile(name));
+  const config = ts.getParsedCommandLineOfConfigFile(path, {}, {
+    ...ts.sys,
+    readFile,
+    fileExists: (name) => !generated(name) && ts.sys.fileExists(name),
+    onUnRecoverableConfigFileDiagnostic: (diagnostic) => {
+      assert.fail(ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'));
+    }
+  });
+  assert.ok(config);
+  const host = ts.createCompilerHost(config.options);
+  host.readFile = readFile;
+  host.fileExists = (name) => !generated(name) && ts.sys.fileExists(name);
+  const program = ts.createProgram(config.fileNames, config.options, host);
+  const diagnostics = [...config.errors, ...ts.getPreEmitDiagnostics(program)];
+  assert.deepEqual(
+    diagnostics.map((item) => ts.flattenDiagnosticMessageText(item.messageText, '\n')),
+    []
+  );
+  assert.ok(config.fileNames.some((name) => name.endsWith('/astryx/Workspace.tsx')));
+});
 test('Astryx workspace uses component props and framework utilities without custom selector CSS', () => {
   const folder = new URL('../src/lib/npg/astryx/', import.meta.url);
   const entry = readFileSync(new URL('main.tsx', folder), 'utf8');
