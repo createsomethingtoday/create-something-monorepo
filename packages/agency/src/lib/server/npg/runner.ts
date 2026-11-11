@@ -113,14 +113,33 @@ function boundSkipRefresh(state: State, receiptId: string) {
   state.messages = state.messages.filter((m) => m.skipTraceReceipt !== receiptId);
   state.messages.push({ ...latest, skipTraceReceipt: receiptId });
   let compacted = state.messages.length > 60;
+  state.sources = state.sources.map((source) => {
+    if (JSON.stringify(source).length <= 120000) return source;
+    compacted = true;
+    return {
+      tool: source.tool.slice(0, 200),
+      data: {
+        ...(source.data &&
+        typeof source.data === 'object' &&
+        'id' in source.data &&
+        typeof source.data.id === 'string' &&
+        /^[a-f0-9]{64}$/.test(source.data.id)
+          ? { id: source.data.id }
+          : {}),
+        status: 'evidence_omitted',
+        reason:
+          'Oversized source evidence was omitted from conversation context. Do not infer contacts or success from this placeholder.'
+      }
+    };
+  });
   while (state.messages.length > 60) state.messages.shift();
   // Recovery remains available even when normal chat has filled its context budget.
   // Retain the newest receipt and its status; historical action records remain in D1.
-  while (JSON.stringify(state).length > 260000 && state.messages.length > 1) {
+  while (JSON.stringify(state).length > 259000 && state.messages.length > 1) {
     state.messages.shift();
     compacted = true;
   }
-  while (JSON.stringify(state).length > 260000 && state.sources.length > 1) {
+  while (JSON.stringify(state).length > 259000 && state.sources.length > 1) {
     state.sources.shift();
     compacted = true;
   }

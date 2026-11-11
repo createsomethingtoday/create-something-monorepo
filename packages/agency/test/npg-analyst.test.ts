@@ -1060,6 +1060,7 @@ test('Skip Trace refresh survives full history and repeated pending reads withou
         reconcile_receipt: { id: 'a'.repeat(64), run_id: 'run1' }
       });
       return {
+        ...(calls === 2 ? { oversized: 'x'.repeat(300000) } : {}),
         status: calls < 5 ? 'pending' : 'review_required',
         id: 'a'.repeat(64),
         run_id: 'run1',
@@ -1095,6 +1096,7 @@ test('Skip Trace refresh survives full history and repeated pending reads withou
     assert.equal(calls, 1);
     const stored = await store.read('alice', pending.id);
     const full = JSON.parse(stored.state_json) as State;
+    full.sources.push({ tool: 'old_source', data: 'x'.repeat(300000) });
     full.messages = Array.from({ length: 60 }, () => ({
       role: 'assistant',
       text: 'x'.repeat(5000)
@@ -1117,7 +1119,7 @@ test('Skip Trace refresh survives full history and repeated pending reads withou
         current.sources.filter((s) => s.tool === 'enrich_candidate_skip_trace').length,
         1
       );
-      assert.ok((await store.read('alice', current.id)).state_json.length < 280000);
+      assert.ok((await store.read('alice', current.id)).state_json.length <= 260000);
     }
     const done = await executeCommand(
       store,
