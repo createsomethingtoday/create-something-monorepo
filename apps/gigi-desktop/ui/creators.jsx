@@ -680,7 +680,7 @@ export function Music({ ctx }) {
       <VStack gap={5}>
         <PageHeading
           title="Your music"
-          description="Works in progress, reference tracks, and music videos."
+          description="Tracks, projects and music videos."
           actions={
             <>
               <B
@@ -699,11 +699,8 @@ export function Music({ ctx }) {
             </>
           }
         />
-        <Text color="secondary">
-          Originals stay in place. Media and organization are not uploaded. This workspace saves
-          local file references; moved files need reconnection. Backups include this index and
-          artwork, but not the original audio, video or project files.
-        </Text>
+        <Text color="secondary">Local files. Nothing uploaded.</Text>
+        <Disclosure title="Storage & backups"><Text color="secondary">Originals stay in place; moved files need reconnection. Backups include the index and artwork, not original audio, video or project files.</Text></Disclosure>
         {state.preview && (
           <Panel
             title={state.preview.title}
@@ -921,7 +918,7 @@ export function Music({ ctx }) {
                 <ListItem key={item.id}>
                   <article>
                     <VStack gap={3}>
-                      <Heading level={3}>{item.title}</Heading>
+                      <HStack gap={4} vAlign="center"><VStack className="creator-thumbnail">{item.cover?<ArtworkImage asset={item.cover}/>:<Text color="secondary">{item.kind==='video'?'Video':'Audio'}</Text>}</VStack><Heading level={3}>{item.title}</Heading></HStack>
                       <Text>
                         {[
                           kinds[item.kind] || kinds.other,
@@ -1008,13 +1005,15 @@ export function Music({ ctx }) {
                           Remove entry
                         </B>
                       </HStack>
-                      <ArtworkManager
-                        ctx={ctx}
-                        entity="music"
-                        item={item}
-                        disabled={disabled}
-                        onChanged={() => load()}
-                      />
+                      <Disclosure title="Artwork" data-view-key={`music-artwork-${item.id}`}>
+                        <ArtworkManager
+                          ctx={ctx}
+                          entity="music"
+                          item={item}
+                          disabled={disabled}
+                          onChanged={() => load()}
+                        />
+                      </Disclosure>
                     </VStack>
                   </article>
                 </ListItem>
@@ -1080,12 +1079,14 @@ const instagramLink = (value) => {
 export function Social({ ctx }) {
   const state = useRef({
     items: [],
+    query: '',
+    loadedQuery: null,
     selected: null,
     editor: null,
     total: 0,
     nextOffset: null,
     account: null,
-    loading: false,
+    loading: true,
     busy: false,
     dirty: false,
     message: null,
@@ -1099,6 +1100,7 @@ export function Social({ ctx }) {
     fieldIssue: null,
     pendingSave: null
   }).current;
+  const [queryDraft,setQueryDraft]=useState('');
   const [, paint] = useState(0),
     alive = useRef(true),
     host = useRef(null);
@@ -1122,11 +1124,12 @@ export function Social({ ctx }) {
     state.fieldIssue = null;
   };
   const list = async (offset = 0) => {
-    const page = await invoke('social.list', { offset });
+    const page = await invoke('social.list', { offset, query:state.query });
     if (!alive.current) return;
     state.items = offset ? [...state.items, ...page.items] : page.items;
     state.total = page.total;
     state.nextOffset = page.nextOffset;
+    state.loadedQuery = state.query;
   };
   const refresh = async () => {
     await list();
@@ -1378,8 +1381,8 @@ export function Social({ ctx }) {
     >
       <VStack gap={5}>
         <PageHeading
-          title="Instagram drafts"
-          description="Shape a post here. Saving stays on this Mac; publishing is a separate decision."
+          title="Social"
+          description="Images, captions and visual drafts."
           actions={
             <>
               <B
@@ -1567,15 +1570,17 @@ export function Social({ ctx }) {
           </Panel>
         )}
         {state.message && <Message>{state.message}</Message>}
-        <section className="gigi-creator-grid">
+        <form onSubmit={event=>{event.preventDefault();event.stopPropagation();if(!state.loading&&!state.busy&&!state.dirty&&!state.confirming)void act(async()=>{state.query=queryDraft.trim();await list();});}}><HStack gap={3} wrap="wrap"><Field label="Search" id="social-search" type="search" value={queryDraft} onChange={setQueryDraft} maxLength={160} placeholder="Title or caption"/><B type="submit" disabled={state.loading||state.busy||state.dirty||state.confirming}>Search</B></HStack></form>
+        <section className="gigi-creator-grid social-library">
           <aside aria-label="Saved Instagram drafts">
             <VStack gap={3}>
               <Heading level={2}>Saved drafts · {state.total ?? state.items.length}</Heading>
+              {state.loadedQuery !== null && state.loadedQuery !== state.query && <Text role="status">Showing the previous local read: {state.loadedQuery ? `search “${state.loadedQuery}”` : 'all drafts'}.</Text>}
               {state.loading && <Text role="status">Loading drafts…</Text>}
               <List hasDividers edge="flush">
                 {state.items.map((item) => (
                   <ListItem key={item.id}>
-                    <VStack gap={2}>
+                    <HStack gap={4} vAlign="start"><VStack className="creator-thumbnail">{item.imageSnapshot || item.body.imageSnapshot ? <ArtworkImage asset={item.imageSnapshot || item.body.imageSnapshot} alt={item.body.imageAlt} /> : <Text color="secondary">No image</Text>}</VStack><VStack gap={2}>
                       <Heading level={3}>{item.body.title}</Heading>
                       <Text color="secondary">{item.body.caption || 'Caption still open'}</Text>
                       <Text type="supporting">
@@ -1597,18 +1602,17 @@ export function Social({ ctx }) {
                       >
                         {saved?.id === item.id ? 'Selected draft' : 'Open draft'}
                       </B>
-                    </VStack>
+                    </VStack></HStack>
                   </ListItem>
                 ))}
               </List>
               {!state.loading && !state.items.length && (
                 <Text color="secondary">
-                  Your next release, a studio moment, or a show announcement. Start a draft and come
-                  back when it is ready.
+                  {state.query ? 'No matching visual drafts. Try another search.' : 'Add an image and caption to start a draft.'}
                 </Text>
               )}
               {state.nextOffset != null && (
-                <B disabled={state.busy} onClick={owned(() => act(() => list(state.nextOffset)))}>
+                <B disabled={state.busy || state.loadedQuery !== state.query} onClick={owned(() => act(() => list(state.nextOffset)))}>
                   Load more drafts
                 </B>
               )}

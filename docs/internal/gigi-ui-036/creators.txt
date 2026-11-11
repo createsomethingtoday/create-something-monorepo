@@ -1,0 +1,14 @@
+
+> @create-something/gigi-desktop@0.3.6 test:creators /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6/apps/gigi-desktop
+> node scripts/astryx-creators-browser.mjs
+
+music loaded
+music Clear and repeated Search passed
+music media-only Clear passed
+music applied-query refresh preserves unsent replacement passed
+music guard passed
+music edit passed
+music import passed
+music lost reply recovery passed
+social unverified save exact retry passed
+{"passed":true,"out":"/tmp/gigi-creators-evidence","checks":["Music no-results query filters the returned library","Clear resets visible search and repeated Search keeps the full library","Media-only Clear discards unsent search text and clears the media filter","Background refresh preserves unsent text while using the applied query","Submitting preserved replacement text applies it to the library","Music organization expectedRevision","Unsaved music leave guard","Stable import request UUID","Lost import response clears prior success and locks import","Read-only recovery uses original import UUID","Instagram image SHA binding and local save","Account review with explicit exact-post confirmation","Cancel review makes zero publish calls","Confirmed publish includes exact Instagram account","Unverified save rejects changed payload","Exact save retry retains original request UUID"],"scope":"Synthetic Chromium component fixture with mocked bridge. Native pickers, WebKit, media codecs, live consent/providers and released installer are untested."}

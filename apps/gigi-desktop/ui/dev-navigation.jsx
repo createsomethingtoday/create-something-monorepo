@@ -11,9 +11,9 @@ import { useMediaQuery } from '@astryxdesign/core/hooks';
 // disclosures use installReferenceMenu's tested keyboard and dismissal contract.
 const groups = [
   ['Work', [['gigs', 'Gigs'], ['music', 'Music'], ['finances', 'Money'], ['services', 'Services']]],
-  ['Admin', [['tasks', 'Tasks'], ['schedule', 'Schedule'], ['notes', 'Notes'], ['documents', 'Documents'], ['tags', 'Tags']]],
+  ['Admin', [['tasks', 'Tasks'], ['schedule', 'Schedule'], ['documents', 'Documents'], ['notes', 'Notes'], ['tags', 'Tags']]],
   ['Network', [['contacts', 'People'], ['companies', 'Companies'], ['locations', 'Places'], ['interactions', 'Interactions']]],
-  ['Platform', [['memory', 'Memory'], ['profile', 'Profile'], ['history', 'History'], ['appearance', 'Appearance'], ['settings', 'Settings'], ['appearance', 'Customize', 'preference-startPage'], ['settings', 'Safety', 'workspace-safety']]]
+  ['Platform', [['profile', 'Profile'], ['history', 'History'], ['memory', 'Memory'], ['settings', 'Safety', 'workspace-safety'], ['settings', 'Settings']]]
 ];
 const icons = {
   memory: 'sticky-note', gigs: 'calendar-days', music: 'music', finances: 'wallet', services: 'briefcase',
@@ -40,8 +40,8 @@ export function DevNavigation({ ctx }) {
   const shortSearch = useMediaQuery('(max-width: 58rem)');
   const tiny = useMediaQuery('(max-width: 23rem)');
   const known = new Set([...sections.map(({ id }) => id), 'appearance']);
-  const grouped = new Set(['overview', ...groups.flatMap(([, items]) => items.map(([id]) => id))]);
-  const additional = sections.filter(({ id }) => !grouped.has(id)).map(({ id, label }) => [id, label]);
+  const grouped = new Set(['overview', 'appearance', ...groups.flatMap(([, items]) => items.map(([id]) => id))]);
+  const additional = sections.filter(({ id }) => !grouped.has(id)).map(({ id, label }) => [id, id === 'social' ? 'Social' : label]);
   const unread = ctx.attention?.unreadCount || 0;
   const history = <HStack gap={0} className="reference-history">
     <B size="md" variant="ghost" data-workspace-history="-1" disabled={!ctx.workspaceHistory.target(-1)} label="Previous page" title="Previous page (Command-[)" isIconOnly icon={<Text color="inherit" aria-hidden="true">‹</Text>} />
@@ -60,9 +60,9 @@ export function DevNavigation({ ctx }) {
         <HStack as="summary" gap={narrow ? 1 : 2} height="var(--size-element-md)" paddingBlock={2} paddingInline={narrow ? 1 : compact ? 2 : 3} vAlign="center" data-nav-overflow={name} className={selected ? 'selected' : undefined}>
           <Text type="label" size={narrow ? 'xsm' : undefined} color="inherit">{name}</Text>{!tiny && <AstryxIcon icon="chevronDown" size="xsm" />}
         </HStack>
-        <VStack as="nav" gap={1} padding={2} isScrollable className="reference-menu reference-menu-group" aria-label={name}>
-          {entries.map(([id, label, target]) => <B key={`${id}:${target || ''}`} width="100%" size="md" variant="ghost" data-page={id} data-nav-target={target} aria-current={s.page === id && !target ? 'page' : undefined} icon={<Icon name={target === 'workspace-safety' ? 'shield-check' : icons[id]} />} endContent={s.page === id && !target ? <Text color="inherit" className="reference-menu-current" aria-hidden="true">✓</Text> : null}>{label}</B>)}
-          {name === 'Platform' && <VStack gap={0} paddingBlockStart={3} paddingBlockEnd={1} paddingInline={2} className="reference-menu-footer"><Text type="supporting" color="secondary">{s.workspace.name || 'Local workspace'} · On this Mac</Text></VStack>}
+        <VStack as="nav" gap={1} padding={2} hAlign="stretch" isScrollable className="reference-menu reference-menu-group" aria-label={name}>
+          {entries.map(([id, label, target]) => <B key={`${id}:${target || ''}`} width="100%" style={{justifyContent: 'start',textAlign: 'start'}} size="md" variant="ghost" data-page={id} data-nav-target={target} aria-current={s.page === id && !target ? 'page' : undefined} icon={<Icon name={target === 'workspace-safety' ? 'shield-check' : icons[id]} />} endContent={s.page === id && !target ? <Text color="inherit" className="reference-menu-current" aria-hidden="true">✓</Text> : null}>{label}</B>)}
+          {name === 'Platform' && <VStack gap={0} paddingBlockStart={3} paddingBlockEnd={1} paddingInline={2} style={{maxWidth:'10rem'}} className="reference-menu-footer"><Text type="supporting" color="secondary">{s.workspace.name || 'Local workspace'} · On this Mac</Text></VStack>}
         </VStack>
       </details>;
     })}

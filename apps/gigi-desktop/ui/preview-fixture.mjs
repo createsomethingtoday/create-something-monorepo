@@ -32,7 +32,7 @@ export function startFixture({ startController, renderUI }) {
       })
     ],
     contacts: [
-      make('person-1', 'Rehearsal contact', 'contacts', { Email: 'rehearsal@example.invalid' })
+      make('person-1', 'Rehearsal contact', 'contacts', { Email: 'rehearsal@example.invalid', Role:'Production coordinator',Status:'Active' })
     ],
     finances: [
       make('money-1', 'Showcase fee', 'finances', {
@@ -41,12 +41,15 @@ export function startFixture({ startController, renderUI }) {
         Status: 'Expected'
       })
     ],
-    locations: [make('place-1', 'Rehearsal room', 'locations')],
+    companies:[make('company-1','Rehearsal company','companies',{Type:'Studio',Status:'Active',Website:'https://example.invalid'})],
+    services:[make('service-1','Live performance','services',{Type:'Performance',Description:'A synthetic service example.',Rate:25000,'Rate Type':'Flat fee','Default Hours':2,Active:true})],
+    notes:[make('note-1','Production notes','notes',{Type:'General'})],documents:[make('document-1','Stage plan','documents',{Type:'Plan'})],tags:[make('tag-1','Rehearsal','tags',{Category:'Work'})],
+    locations: [make('place-1', 'Synthetic public map sample', 'locations',{Address:'Madison Square Park',City:'New York',Region:'NY'})],
     schedule: []
   };
   const calls = [],
     sessions = new Map();
-  const faults = new Map();
+  const faults = new Map(), delays = new Map(), held = new Map();
   let id = 0,
     ctx;
   const attention = {
@@ -62,6 +65,8 @@ export function startFixture({ startController, renderUI }) {
   };
   const invoke = async (_, { operation, input = {} }) => {
     calls.push({ operation, input: structuredClone(input) });
+    if(held.has(operation))await held.get(operation).promise;
+    if(delays.has(operation)){const delay=delays.get(operation);delays.delete(operation);await new Promise(resolve=>setTimeout(resolve,delay));}
     const faultKey = faults.has(`${operation}:${input.entity}`)
       ? `${operation}:${input.entity}`
       : operation;
@@ -74,6 +79,7 @@ export function startFixture({ startController, renderUI }) {
       const response = await fetch('/__synthetic_memory', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({operation,input})});
       const result = await response.json(); if (result.error) throw Error(result.error); return result.value;
     }
+    if(operation==='places.mapPreview')return{dataUrl:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jYboAAAAASUVORK5CYII=',matchedName:records.locations.find(r=>r.id===input.id)?.fields.Address||'Synthetic place',verified:false};
     if (operation === 'workspace.get') return workspace;
     if (operation === 'workspace.create') return { ...workspace, name: input.name };
     if (operation === 'today.read') {
@@ -111,6 +117,7 @@ export function startFixture({ startController, renderUI }) {
       };
     if (operation === 'records.list') {
       const all = records[input.entity] || [];
+      if(input.entity==='finances'&&input.finance){const unpaid=r=>['expected','invoiced','overdue'].includes(String(r.status||r.fields.Status).toLowerCase());const predicates={overall:()=>true,payable:r=>unpaid(r)&&r.fields.Direction==='Expense',receivable:r=>unpaid(r)&&r.fields.Direction==='Income',overdue:r=>unpaid(r)&&((r.fields['Due Date']&&r.fields['Due Date']<input.finance.today)||r.fields.Status==='Overdue')};const items=all.filter(predicates[input.finance.view]);const offset=Number(input.cursor||0),limit=input.limit||20;return{items:structuredClone(items.slice(offset,offset+limit)),count:items.length,total:all.length,nextCursor:offset+limit<items.length?String(offset+limit):null,viewCounts:Object.fromEntries(Object.entries(predicates).map(([key,fn])=>[key,all.filter(fn).length]))};}
       if (input.entity === 'tasks' && input.tasks) {
         const criteria = input.tasks, today = criteria.today || '2026-11-09';
         const tomorrow = new Date(`${today}T12:00:00Z`); tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
@@ -246,7 +253,12 @@ export function startFixture({ startController, renderUI }) {
     }
     if (operation === 'music.edit' && query.get('review') === '1')
       return { ...input, organizationRevision: input.expectedRevision + 1 };
-    if (operation === 'social.list') return { items: [], count: 0 };
+    if (operation === 'social.list') {
+      const query=String(input.query||'').trim().toLowerCase();
+      const items=(records.social||[]).filter(item=>`${item.body.title} ${item.body.caption||''}`.toLowerCase().includes(query));
+      const offset=input.offset||0;
+      return {items:structuredClone(items.slice(offset,offset+50)),total:items.length,nextOffset:offset+50<items.length?offset+50:null};
+    }
     if (operation === 'social.connection.status')
       return { configured: false, state: 'disconnected' };
     if (operation === 'artwork.list') return { items: [], count: 0 };
@@ -276,6 +288,9 @@ export function startFixture({ startController, renderUI }) {
     calls,
     records,
     sessions,
+    holdNext(operation){let release;const promise=new Promise(resolve=>release=resolve);held.set(operation,{promise,release});},
+    releaseHeld(operation){const value=held.get(operation);held.delete(operation);value?.release();},
+    delayNext(operation, milliseconds){delays.set(operation,milliseconds);},
     failNext(operation, message) {
       faults.set(operation, message);
     },

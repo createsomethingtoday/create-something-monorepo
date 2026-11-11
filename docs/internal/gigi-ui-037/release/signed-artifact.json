@@ -1,0 +1,11 @@
+{
+  "sourceSha": "2c43119370898042816182522537698a2c279ca0",
+  "app": "/Users/createsomething/Documents/GiGi 0.3.7/2026-11-10/final/GiGi.app",
+  "dmg": "/Users/createsomething/Documents/GiGi 0.3.7/2026-11-10/final/GiGi-0.3.7-arm64-private-beta.dmg",
+  "bytes": 105457594,
+  "sha256": "a3d811b479fb36edbc2f0ed307a53d549cb45273334aca138b6f66a254c56bc4",
+  "appNotaryId": "325a5f4b-dc8b-4a19-8c97-732d81277ed7",
+  "dmgNotaryId": "df019128-dc64-4b17-90d2-bcde3f7199c0",
+  "ctxSignaturePreserved": true,
+  "completedAt": "2026-11-11T03:34:08.469128+00:00"
+}

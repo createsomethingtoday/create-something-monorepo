@@ -10,7 +10,7 @@ fn main() {
     println!("cargo:rustc-env=GIGI_BUILD_SOURCE_SHA={sha}");
     println!("cargo:rustc-env=GIGI_BUILD_SOURCE_DIRTY={dirty}");
     // Watch source surfaces explicitly, without watching generated target/resources.
-    for path in ["src", "build.rs", "Cargo.toml", "Cargo.lock", "tauri.conf.json", "../ui", "../index.html", "../astryx-themes.js", "../vite.config.mjs", "../package.json", "../public", "../dist", "../web", "../scripts", "../agent", "../canon-overlay", "../../../packages/gigi-integrations/src", "../../../packages/gigi-integrations/worker", "../../../packages/gigi-integrations/package.json"] {
+    for path in ["src", "native", "build.rs", "Cargo.toml", "Cargo.lock", "tauri.conf.json", "../ui", "../index.html", "../astryx-themes.js", "../vite.config.mjs", "../package.json", "../public", "../dist", "../web", "../scripts", "../agent", "../canon-overlay", "../../../packages/gigi-integrations/src", "../../../packages/gigi-integrations/worker", "../../../packages/gigi-integrations/package.json"] {
         println!("cargo:rerun-if-changed={path}");
     }
     for name in ["HEAD", "index", "packed-refs"] {

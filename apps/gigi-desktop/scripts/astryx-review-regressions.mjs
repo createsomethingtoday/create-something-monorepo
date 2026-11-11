@@ -4,9 +4,10 @@ import { createServer } from 'vite';
 import { createRequire } from 'node:module';
 import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 
-const app = resolve(new URL('../', import.meta.url).pathname);
+const app = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const out = resolve(process.env.GIGI_REVIEW_EVIDENCE || '/tmp/gigi-review-regressions');
 mkdirSync(out, { recursive: true });
 const { chromium } = createRequire(
@@ -50,7 +51,7 @@ try {
   };
   const navigation = {
     Music: ['Work', 'music'], People: ['Network', 'contacts'],
-    'Instagram drafts': ['Work', 'social'], 'Gigs & shifts': ['Work', 'gigs'], Money: ['Work', 'finances']
+    'Social': ['Work', 'social'], 'Gigs & shifts': ['Work', 'gigs'], Money: ['Work', 'finances']
   };
   const nav = (name) => ({ click: async () => {
     if (name === 'Today') return page.locator('.reference-today').click();
@@ -172,10 +173,10 @@ try {
     },
     social: async () => {
       await open('social');
-      await nav('Instagram drafts').click();
+      await nav('Social').click();
       await page.getByRole('button', { name: 'New draft', exact: true }).click();
       await page.getByLabel('Title', { exact: true }).fill('Keep this Instagram draft');
-      await nav('Instagram drafts').click();
+      await nav('Social').click();
       assert.equal(
         await page.getByRole('dialog').count(),
         0,
@@ -260,7 +261,7 @@ try {
       });
       const before = await page.getByRole('main').evaluate((node) => node.scrollTop);
       assert.ok(before > 0, 'expanded filters make this minimum-window view scroll');
-      await page.getByRole('button', { name: 'Autumn showcase', exact: true }).click();
+      await page.getByRole('list',{name:'Gigs',exact:true}).getByRole('button', { name: 'Autumn showcase', exact: true }).click();
       await page
         .getByRole('main')
         .getByRole('button', { name: 'Gigs', exact: true })
@@ -282,7 +283,7 @@ try {
     },
     link_entity: async () => {
       await open('gigs');
-      await page.getByRole('button', { name: 'Autumn showcase', exact: true }).click();
+      await page.getByRole('list',{name:'Gigs',exact:true}).getByRole('button', { name: 'Autumn showcase', exact: true }).click();
       await page.locator('[data-view-key="work-related"] > summary').click();
       await page.getByRole('button', { name: 'Add related work', exact: true }).click();
       await page.locator('#link-record-display').click();
@@ -431,7 +432,7 @@ try {
       });
       await nav('Gigs & shifts').click();
       const gig = await page
-        .getByRole('button', { name: 'Autumn showcase', exact: true })
+        .getByRole('list',{name:'Gigs',exact:true}).getByRole('button', { name: 'Autumn showcase', exact: true })
         .innerText();
       assert.ok(
         gig.includes('Performance') && gig.includes('Time not set') && gig.includes('Festival'),

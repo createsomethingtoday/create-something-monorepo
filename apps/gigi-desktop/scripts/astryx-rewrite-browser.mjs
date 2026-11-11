@@ -4,8 +4,9 @@ import { createServer } from 'vite';
 import { createRequire } from 'node:module';
 import { mkdirSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
-const app = resolve(new URL('../', import.meta.url).pathname);
+const app = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const out = resolve(process.env.GIGI_REWRITE_EVIDENCE || '/tmp/gigi-astryx-rewrite');
 mkdirSync(out, { recursive: true });
 const { chromium } = createRequire(
@@ -66,6 +67,7 @@ try {
     'tags',
     'profile',
     'history',
+    'attention',
     'settings',
     'appearance',
     'music',
@@ -114,9 +116,9 @@ try {
   await page.locator('.gigi-main h1').click();
   assert.equal(await page.locator('.reference-dropdown[open]').count(), 0, 'outside click closes grouped navigation');
   await page.locator('[data-nav-menu="Platform"] > summary').click();
-  await page.locator('[data-nav-target="preference-startPage"]').click();
-  await page.locator('#preference-startPage-display').waitFor();
-  assert.equal(await page.evaluate(() => document.activeElement?.id), 'preference-startPage-display', 'Customize routes and focuses its preference');
+  await page.locator('[data-nav-menu="Platform"] [data-page="settings"]:not([data-nav-target])').click();
+  await page.getByRole('heading',{name:'Settings',exact:true}).waitFor();
+  assert.ok(await page.getByRole('heading',{name:'Customize',exact:true}).isVisible(),'Customize is a section in Settings');
   await open('overview');
   await page.getByRole('button', { name: 'Autumn showcase', exact: true }).click();
   await page.waitForFunction(() =>
@@ -173,7 +175,7 @@ try {
     true
   );
   await page.keyboard.press('Escape');
-  await navigate('Platform', 'appearance');
+  await navigate('Platform', 'settings');
   await page.locator('[data-preferences-theme=paper]').click();
   assert.equal(await page.evaluate(() => gigiTest.snapshot().preferences.theme), 'paper');
   await page.getByRole('button', { name: 'Ask GiGi', exact: true }).first().click();
@@ -192,9 +194,13 @@ try {
     .locator('.chat-answer p')
     .first()
     .evaluate((node) => parseFloat(getComputedStyle(node).fontSize));
-  await page.locator('.chat-view-options>summary').click();
-  await page.locator('#chat-chatTextSize-display').click();
+  await page.getByRole('button',{name:'Close Ask GiGi',exact:true}).click();
+  await navigate('Platform', 'settings');
+  await page.locator('#preference-chatTextSize-display').click();
   await page.getByRole('option', { name: 'Larger', exact: true }).click();
+  await navigate('Platform','history');
+  await page.locator('[data-chat-session]').first().click();
+  await page.locator('.chat-answer p').first().waitFor();
   assert.ok(
     (await page
       .locator('.chat-answer p')

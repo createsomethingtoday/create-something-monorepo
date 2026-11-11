@@ -146,6 +146,10 @@ export function startController({ renderUI, invoke, initialize } = {}) {
     currency: null,
     currencyKnown: false,
     page: 'overview',
+    financeView: 'overall',
+    financeSnapshot: null,
+    financeError: null,
+    financeCounts: {},
     contactQuery: '',
     contactSearching: false,
     contactSearchError: false,
@@ -574,7 +578,22 @@ export function startController({ renderUI, invoke, initialize } = {}) {
     render();
     root.querySelector?.(`#${editorReturnFocus || 'title'}`)?.focus?.();
   }
+  async function collectionDetails(items,route) {
+    if(!['contacts','companies','services','profile','locations'].includes(route.page))return items;
+    const result=[];
+    for(let start=0;start<items.length;start+=4){
+      if(!currentRoute(route))return [];
+      const group=items.slice(start,start+4);
+      const reads=await Promise.allSettled(group.map(item=>new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('Record details timed out')),2500);Promise.resolve().then(()=>bridge.getRecord(route.workspace,route.page,item.id)).then(resolve,reject).finally(()=>clearTimeout(timer));})));
+      reads.forEach((read,index)=>result.push(read.status==='fulfilled'?{...group[index],...read.value}:{...group[index],detailsUnavailable:true}));
+    }
+    return result;
+  }
+  function collectionRead(route,cursor) {
+    return route.page==='finances'?bridge.call('records.list',{workspaceId:route.workspace,entity:'finances',cursor,finance:{view:state.financeView,today:localToday(),timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone}}):bridge.listRecords(route.workspace,route.page,cursor,route.page==='contacts'?state.contactQuery:undefined);
+  }
   async function openPage(page, resetScroll = false, historyIndex = null, focusTarget = null) {
+    if(page==='appearance'){page='settings';focusTarget||='workspace-preferences';}
     // A repeated navigation click is not leaving the creator. React retains
     // this component's route key, so disposing here would permanently disable
     // its actions and drop the unsaved-change guard without remounting it.
@@ -625,6 +644,8 @@ export function startController({ renderUI, invoke, initialize } = {}) {
         if (!currentRoute(route)) return false;
         state.overview = value; state.overviewCheckedAt = new Date().toISOString(); state.overviewError = ''; overviewWorkspace = route.workspace;
       } catch(error) { if (currentRoute(route)) state.overviewError = explain(error); }
+    } else if (page === 'attention') {
+      await attention?.refresh();
     } else if (page === 'history') {
       const value = await bridge.listHistory(route.workspace, 40);
       if (!currentRoute(route)) return false;
@@ -662,12 +683,27 @@ export function startController({ renderUI, invoke, initialize } = {}) {
     observe(() => bridge.call('diagnostics.status'), value => { state.diagnostics = { status:value, review:null, exported:null }; }, () => { state.diagnostics = {status:null,review:null,exported:null}; }, () => state.diagnostics === initialDiagnostics);
     observe(() => bridge.chatStatus(route.workspace), value => { state.setupChatStatus = value; }, () => { state.setupChatFailed = true; });
 
+    } else if(page==='finances') {
+      const saved=state.financeSnapshot?.workspace===route.workspace?state.financeSnapshot:null;
+      state.financeSnapshot=saved;
+      state.records=saved?.items||[];state.recordCount=saved?.count||0;state.nextCursor=null;state.financeCounts=saved?.viewCounts||{};state.financeError=null;
+      try {
+        const result=await collectionRead(route,null);if(!currentRoute(route))return false;
+        state.records=listFrom(result);state.recordCount=result.count;state.nextCursor=result.nextCursor||null;state.financeCounts=result.viewCounts||{};
+        state.financeSnapshot={workspace:route.workspace,view:state.financeView,items:state.records,count:state.recordCount,viewCounts:state.financeCounts};
+      } catch(error) {if(currentRoute(route))state.financeError=explain(error);}
     } else if (page === 'tasks') {
       await tasks.open(route.workspace);
       if (!currentRoute(route)) return false;
     } else if (page === 'gigs') {
       await gigs.open(route.workspace);
       if (!currentRoute(route)) return false;
+      if (overviewWorkspace !== route.workspace) { state.overview = null; state.overviewCheckedAt = null; state.overviewError = ''; }
+      try {
+        const value = await bridge.today(route.workspace, localToday(), todayWeekStart);
+        if (!currentRoute(route)) return false;
+        state.overview=value;state.overviewCheckedAt=new Date().toISOString();state.overviewError='';overviewWorkspace=route.workspace;
+      } catch(error) { if(currentRoute(route))state.overviewError=explain(error); }
     } else if (fields[page]) {
       state.records = [];
       state.recordCount = 0;
@@ -685,14 +721,12 @@ export function startController({ renderUI, invoke, initialize } = {}) {
               (entity, cursor) => bridge.listRecords(route.workspace, entity, cursor),
               () => currentRoute(route)
             ).then((items) => items && { items, count: items.length })
-          : await bridge.listRecords(
-              route.workspace,
-              page,
-              null,
-              page === 'contacts' ? state.contactQuery : undefined
-            );
+          : await collectionRead(route,null);
       if (!currentRoute(route)) return false;
-      state.records = listFrom(result);
+      const details=await collectionDetails(listFrom(result),route);
+      if(!currentRoute(route))return false;
+      state.records = details;
+      if(page==='finances')state.financeCounts=result.viewCounts||{};
       state.recordCount = result?.count ?? state.records.length;
       state.nextCursor = result?.nextCursor || null;
     }
@@ -856,7 +890,9 @@ export function startController({ renderUI, invoke, initialize } = {}) {
           state.editing
         )
           return;
-        state.records = listFrom(result);
+        const details=await collectionDetails(listFrom(result),route);
+        if(version!==contactSearchVersion||!currentRoute(route)||state.selected||state.editing)return;
+        state.records = details;
         state.recordCount = result?.count ?? state.records.length;
         state.nextCursor = result?.nextCursor || null;
       } catch (error) {
@@ -1081,7 +1117,9 @@ export function startController({ renderUI, invoke, initialize } = {}) {
           bridge.listRecords(route.workspace, 'contacts', cursor, query)
         );
         if (!currentRoute(route) || version !== contactSearchVersion) return;
-        state.records = [...records, ...listFrom(result)];
+        const details=await collectionDetails(listFrom(result),route);
+        if(!currentRoute(route)||version!==contactSearchVersion)return;
+        state.records = [...records, ...details];
         state.nextCursor = result?.nextCursor || null;
         state.recordCount = result?.count ?? state.recordCount;
       } catch (error) {
@@ -1104,17 +1142,24 @@ export function startController({ renderUI, invoke, initialize } = {}) {
       cursor = state.nextCursor,
       records = state.records,
       searchVersion = contactSearchVersion;
-    const result = await bridge.listRecords(
-      route.workspace,
-      route.page,
-      cursor,
-      route.page === 'contacts' ? state.contactQuery : undefined
-    );
+    const result = await collectionRead(route,cursor);
     if (!currentRoute(route)) return;
     if (route.page === 'contacts' && searchVersion !== contactSearchVersion) return;
-    state.records = [...records, ...listFrom(result)];
+    const details=await collectionDetails(listFrom(result),route);
+    if(!currentRoute(route))return;
+    state.records = [...records, ...details];
     state.nextCursor = result?.nextCursor || null;
     state.recordCount = result?.count ?? state.recordCount;
+    if (route.page === 'finances') {
+      state.financeCounts = result?.viewCounts ?? state.financeCounts;
+      state.financeSnapshot = {
+        workspace: route.workspace,
+        view: state.financeView,
+        items: state.records,
+        count: state.recordCount,
+        viewCounts: state.financeCounts,
+      };
+    }
   }
 
   function submitLink(data) {
@@ -1224,22 +1269,24 @@ async function finishTask(id) {
       )?.focus?.({ preventScroll: true });
       return;
     }
+    if(button.dataset.profileEdit){const id=button.dataset.profileEdit;void run(()=>navigateRecord('profile',id)).then(()=>{if(state.page==='profile'&&state.selected?.id===id)void enterEditor();});return;}
+    if(button.dataset.financeView){if(!state.busy){state.financeView=button.dataset.financeView;void run(()=>openPage('finances'));}return;}
     if (button.dataset.todayWeek) {
       if (state.busy) return;
       const start = state.overview?.calendar?.weekStart;
       if (button.dataset.todayWeek === 'current') todayWeekStart = null;
       else if (start) { const day = new Date(`${start}T12:00:00`); day.setDate(day.getDate() + (button.dataset.todayWeek === 'next' ? 7 : -7)); todayWeekStart = localToday(day); }
-      void run(() => openPage('overview')).then(opened => { if (opened && state.page === 'overview') root.querySelector?.(`[data-today-week="${button.dataset.todayWeek}"]`)?.focus?.({preventScroll:true}); });
+      void run(() => openPage(state.page==='gigs'?'gigs':'overview')).then(opened => { if (opened && ['overview','gigs'].includes(state.page)) root.querySelector?.(`[data-today-week="${button.dataset.todayWeek}"]`)?.focus?.({preventScroll:true}); });
       return;
     }
-    if (button.dataset.todayRefresh) { void run(() => openPage('overview')); return; }
+    if (button.dataset.todayRefresh) { void run(() => openPage(state.page==='gigs'?'gigs':'overview')); return; }
     if (button.dataset.taskDone) { void finishTask(button.dataset.taskDone); return; }
     if (button.dataset.tasksView) { tasks.update({view:button.dataset.tasksView},false); return; }
     if (button.dataset.tasksRefresh) { void tasks.refresh(); return; }
     if (button.dataset.tasksMore) { void tasks.more(); return; }
     if (button.dataset.attentionHome) {
       void run(async () => {
-        if (await openPage('overview', true)) {
+        if (await openPage('attention', true)) {
           root.querySelector?.('#attention-title')?.setAttribute?.('tabindex', '-1');
           root.querySelector?.('#attention-title')?.focus?.();
         }
@@ -1552,7 +1599,15 @@ async function finishTask(id) {
       chat?.close();
       focusChatTrigger();
     } else if (button.dataset.chatNew) void chat?.start();
-    else if (button.dataset.chatSession) void chat?.read(button.dataset.chatSession);
+    else if (button.dataset.chatHistory) { chat?.close();void run(()=>openPage('history',true)); }
+    else if (button.dataset.chatSession) {
+      const target=chat,workspace=workspaceId(),version=routeVersion,id=button.dataset.chatSession;
+      if(!target||target.pending||target.reading)return;
+      void (async()=>{
+        if(!target.visible)await target.open();
+        if(chat===target&&workspaceId()===workspace&&routeVersion===version&&target.visible&&!target.pending)await target.read(id);
+      })();
+    }
     else if (button.dataset.chatStop) void chat?.cancel();
     else if (button.dataset.chatApproval)
       void chat?.decide(button.dataset.chatApproval, button.dataset.chatDecision);

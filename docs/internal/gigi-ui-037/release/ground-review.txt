@@ -1,0 +1,115 @@
+
+> @create-something/monorepo@1.0.0 ground:review /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6
+> node scripts/ground-review.mjs "--" "--base" "origin/main"
+
+# Ground Review Receipt
+
+- Mode: advisory
+- Base: origin/main
+- Status: no_analyzable_files
+- Changed files: 87
+- Analyzable files: 0
+- Excluded files: 87
+- Findings: 0
+- Duplicate-check coverage: 0 file(s)
+- Duplicate-check status: failed
+- Orphan-check coverage: 5 new file(s)
+- Orphan-check status: partial
+
+## Targets
+
+- apps/gigi-desktop (@create-something/gigi-desktop): 0 analyzable, 0 finding(s)
+- packages/agency (@create-something/agency): 0 analyzable, 0 finding(s)
+
+## Coverage exclusions
+
+- apps/gigi-desktop/DESIGN_FOUNDATION.md: unsupported_extension
+- apps/gigi-desktop/README.md: unsupported_extension
+- apps/gigi-desktop/agent/gigi/.codex-plugin/plugin.json: unsupported_extension
+- apps/gigi-desktop/package.json: unsupported_extension
+- apps/gigi-desktop/src-tauri/Cargo.lock: unsupported_extension
+- apps/gigi-desktop/src-tauri/Cargo.toml: unsupported_extension
+- apps/gigi-desktop/src-tauri/build.rs: unsupported_by_requested_checks
+- apps/gigi-desktop/src-tauri/examples/seed_workspace_refinement.rs: unsupported_by_requested_checks
+- apps/gigi-desktop/src-tauri/native/MapPreview.swift: unsupported_extension
+- apps/gigi-desktop/src-tauri/src/domain.rs: unsupported_by_requested_checks
+- apps/gigi-desktop/src-tauri/src/finance_list.rs: unsupported_by_requested_checks
+- apps/gigi-desktop/src-tauri/src/lib.rs: unsupported_by_requested_checks
+- apps/gigi-desktop/src-tauri/src/place_maps.rs: unsupported_by_requested_checks
+- apps/gigi-desktop/src-tauri/src/social.rs: unsupported_by_requested_checks
+- apps/gigi-desktop/src-tauri/src/social_mcp.rs: unsupported_by_requested_checks
+- apps/gigi-desktop/src-tauri/tauri.conf.json: unsupported_extension
+- apps/gigi-desktop/ui/app.css: unsupported_extension
+- apps/gigi-desktop/scripts/astryx-refinement-browser.mjs: duplicate_analysis_incomplete
+- apps/gigi-desktop/scripts/astryx-review-regressions.mjs: duplicate_analysis_incomplete
+- apps/gigi-desktop/scripts/astryx-rewrite-browser.mjs: duplicate_analysis_incomplete
+- apps/gigi-desktop/scripts/dev-astryx-quest-browser.mjs: duplicate_analysis_incomplete
+- apps/gigi-desktop/scripts/prepare-companions.mjs: duplicate_analysis_incomplete
+- apps/gigi-desktop/scripts/prepare-map-preview.mjs: duplicate_analysis_incomplete
+- apps/gigi-desktop/scripts/prepare-map-preview.test.mjs: duplicate_analysis_incomplete
+- apps/gigi-desktop/scripts/verify-release.mjs: duplicate_analysis_incomplete
+- apps/gigi-desktop/scripts/verify-release.test.mjs: duplicate_analysis_incomplete
+- apps/gigi-desktop/ui/App.jsx: duplicate_analysis_incomplete
+- apps/gigi-desktop/ui/appearance.jsx: duplicate_analysis_incomplete
+- apps/gigi-desktop/ui/chat.jsx: duplicate_analysis_incomplete
+- apps/gigi-desktop/ui/collection-details.jsx: duplicate_analysis_incomplete
+- apps/gigi-desktop/ui/controller.mjs: duplicate_analysis_incomplete
+- apps/gigi-desktop/ui/conversations.jsx: duplicate_analysis_incomplete
+- apps/gigi-desktop/ui/creators.jsx: duplicate_analysis_incomplete
+- apps/gigi-desktop/ui/dev-navigation.jsx: duplicate_analysis_incomplete
+- apps/gigi-desktop/ui/dev-work.jsx: duplicate_analysis_incomplete
+- apps/gigi-desktop/ui/preview-fixture.mjs: duplicate_analysis_incomplete
+- apps/gigi-desktop/ui/records.jsx: duplicate_analysis_incomplete
+- apps/gigi-desktop/ui/settings.jsx: duplicate_analysis_incomplete
+- packages/agency/src/lib/data/gigiBeta.ts: duplicate_analysis_incomplete
+- packages/agency/src/lib/server/gigi-beta-page.ts: duplicate_analysis_incomplete
+- packages/agency/test/gigi-beta-page.test.ts: duplicate_analysis_incomplete
+- .github/workflows/gigi-regression.yml: unsupported_extension
+- docs/internal/gigi-ui-036/CONSTRAINTS.json: unsupported_extension
+- docs/internal/gigi-ui-036/INDEPENDENT_SOURCE.md: unsupported_extension
+- docs/internal/gigi-ui-036/REVIEW.md: unsupported_extension
+- docs/internal/gigi-ui-036/SOURCE.json: unsupported_extension
+- docs/internal/gigi-ui-036/build.txt: unsupported_extension
+- docs/internal/gigi-ui-036/chatSnapshot.png: unsupported_extension
+- docs/internal/gigi-ui-036/creators.txt: unsupported_extension
+- docs/internal/gigi-ui-036/doctor-source.txt: unsupported_extension
+- docs/internal/gigi-ui-036/doctor.txt: unsupported_extension
+- docs/internal/gigi-ui-036/gigs.png: unsupported_extension
+- docs/internal/gigi-ui-036/js.txt: unsupported_extension
+- docs/internal/gigi-ui-036/lastSnapshot.png: unsupported_extension
+- docs/internal/gigi-ui-036/map-build.txt: unsupported_extension
+- docs/internal/gigi-ui-036/mapErrorSnapshot.png: unsupported_extension
+- docs/internal/gigi-ui-036/mapLoadingSnapshot.png: unsupported_extension
+- docs/internal/gigi-ui-036/money-pagination-green.txt: unsupported_extension
+- docs/internal/gigi-ui-036/money-pagination-red.txt: unsupported_extension
+- docs/internal/gigi-ui-036/money-snapshot-before.txt: unsupported_extension
+- docs/internal/gigi-ui-036/money.txt: unsupported_extension
+- docs/internal/gigi-ui-036/placesSnapshot.png: unsupported_extension
+- docs/internal/gigi-ui-036/profileSnapshot.png: unsupported_extension
+- docs/internal/gigi-ui-036/quest.txt: unsupported_extension
+- docs/internal/gigi-ui-036/refinement.txt: unsupported_extension
+- docs/internal/gigi-ui-036/release/INDEPENDENT_FINAL.md: unsupported_extension
+- docs/internal/gigi-ui-036/release/RELEASE.md: unsupported_extension
+- docs/internal/gigi-ui-036/release/build-source.json: unsupported_extension
+- docs/internal/gigi-ui-036/release/download-receipt.json: unsupported_extension
+- docs/internal/gigi-ui-036/release/downloaded-verifier.json: unsupported_extension
+- docs/internal/gigi-ui-036/release/independent-verifier.json: unsupported_extension
+- docs/internal/gigi-ui-036/release/native-maps.png: unsupported_extension
+- docs/internal/gigi-ui-036/release/native-money.png: unsupported_extension
+- docs/internal/gigi-ui-036/release/native-social.png: unsupported_extension
+- docs/internal/gigi-ui-036/release/page-review.json: unsupported_extension
+- docs/internal/gigi-ui-036/release/signature-payload-equivalence.json: unsupported_extension
+- docs/internal/gigi-ui-036/release/signed-artifact.json: unsupported_extension
+- docs/internal/gigi-ui-036/review-regressions.txt: unsupported_extension
+- docs/internal/gigi-ui-036/rewrite.txt: unsupported_extension
+- docs/internal/gigi-ui-036/rust.txt: unsupported_extension
+- docs/internal/gigi-ui-036/social-before.txt: unsupported_extension
+- docs/internal/gigi-ui-036/verifier-after.txt: unsupported_extension
+- docs/internal/gigi-ui-036/verifier-before.txt: unsupported_extension
+- docs/internal/gigi-ui-036/work.txt: unsupported_extension
+- docs/internal/gigi-ui-037/REVIEW.md: unsupported_extension
+- docs/internal/gigi-ui-037/rust-green.txt: unsupported_extension
+- docs/internal/gigi-ui-037/unicode-red.txt: unsupported_extension
+
+_Advisory evidence only; findings do not block promotion during calibration._
+

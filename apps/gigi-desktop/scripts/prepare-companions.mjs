@@ -1,3 +1,4 @@
+import {prepareMapPreview} from './prepare-map-preview.mjs';
 import {prepareNotifications} from './prepare-notifications.mjs';
 import {prepareCtx} from './ctx-companion.mjs';
 import { spawnSync } from 'node:child_process';
@@ -23,4 +24,5 @@ cpSync(join(app,'agent'),join(resources,'agent'),{recursive:true});
 
 await prepareCtx(resources);
 await prepareNotifications(resources);
+await prepareMapPreview(resources);
 cpSync(join(app,'third-party'),join(resources,'third-party'),{recursive:true});

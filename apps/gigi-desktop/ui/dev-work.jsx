@@ -156,7 +156,7 @@ function CalendarSource({ record, day }) {
     </Disclosure>
   );
 }
-function WeekCalendar({ data, today, busy }) {
+export function WeekCalendar({ data, today, busy }) {
   const calendar = data.calendar,
     start = calendar?.weekStart || mondayOf(today),
     end = shiftDay(start, 6),
@@ -292,13 +292,6 @@ function WeekCalendar({ data, today, busy }) {
                         </Section>
                       );
                     })}
-                    {!entries.length && (
-                      <VStack paddingBlock={3} paddingInline={1}>
-                        <Text type="supporting" color="secondary">
-                          No gigs
-                        </Text>
-                      </VStack>
-                    )}
                   </VStack>
                 </Section>
               );
@@ -490,20 +483,6 @@ export function DevToday({ ctx, attention }) {
           </>
         }
       />
-      <HStack gap={3} hAlign="between" wrap="wrap" className="dev-read-status">
-        <Text type="supporting" color="secondary">
-          {s.overviewCheckedAt ? (
-            <>
-              Last successful local read · <ReadTime value={s.overviewCheckedAt} />
-            </>
-          ) : (
-            'Local records have not been checked in this view yet.'
-          )}
-        </Text>
-        <B variant="ghost" data-today-refresh="1" disabled={s.busy}>
-          Read local records again
-        </B>
-      </HStack>
       {s.overviewError && (
         <Message error>
           <VStack gap={2}>
@@ -515,12 +494,6 @@ export function DevToday({ ctx, attention }) {
           </VStack>
         </Message>
       )}
-      <Disclosure title="About record freshness" data-view-key="today-freshness">
-        <Text color="secondary">
-          A local read does not sync Gmail or Calendar. Open a record for its source details. Tasks
-          use Due Date, falling back to Do Date. Financials use Due Date and saved unpaid status.
-        </Text>
-      </Disclosure>
       <DevQuestResume ctx={ctx} />
       <WeekCalendar data={data} today={today} busy={s.busy} />
       <TodayTasks data={data} today={today} />
@@ -556,7 +529,20 @@ export function DevToday({ ctx, attention }) {
           />
         </Grid>
       </WorkSection>
-      {attention}
+      <HStack gap={3} hAlign="between" wrap="wrap" className="dev-read-status">
+        <Text type="supporting" color="secondary">
+          {s.overviewCheckedAt ? (
+            <>
+              Last successful local read · <ReadTime value={s.overviewCheckedAt} />
+            </>
+          ) : (
+            'Local records have not been checked in this view yet.'
+          )}
+        </Text>
+        <B variant="ghost" data-today-refresh="1" disabled={s.busy}>
+          Read local records again
+        </B>
+      </HStack>
     </VStack>
   );
 }
