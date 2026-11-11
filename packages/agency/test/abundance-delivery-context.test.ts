@@ -8,12 +8,12 @@ import test from 'node:test';
 import { abundanceWorkflowContext } from '../src/lib/delivery/abundance-context.ts';
 import { canAccessNpgHealthcareAnalyst } from '../src/lib/server/abundance-client-access.ts';
 import { isAgencyProtectedPath } from '../src/lib/server/protected-routes.ts';
-import { GET as openHealthcareAnalyst } from '../src/routes/delivery/abundance/healthcare-analyst/+server.ts';
+import { load as openHealthcareAnalyst } from '../src/routes/delivery/abundance/healthcare-analyst/+page.server.ts';
 
 const HEALTHCARE_ANALYST_URL = 'https://udify.app/agent/test-private-target';
 const HEALTHCARE_ANALYST_ACCESS_PATH = '/delivery/abundance/healthcare-analyst';
 
-test('the NPG client delivery exposes the enabled healthcare coverage analyst', () => {
+test('the NPG client delivery exposes the enabled healthcare coverage analyst', async () => {
 	const analyst = abundanceWorkflowContext.artifacts.find(
 		(artifact) => artifact.title === 'NPG Healthcare Coverage Analyst'
 	);
@@ -29,12 +29,13 @@ test('the NPG client delivery exposes the enabled healthcare coverage analyst', 
 	assert.equal(canAccessNpgHealthcareAnalyst('owner@createsomething.io', 'owner@createsomething.io'), true);
 	assert.equal(canAccessNpgHealthcareAnalyst('operator@sub.thenpgroup.com', undefined), false);
 	assert.equal(canAccessNpgHealthcareAnalyst('unrelated@example.com', 'owner@createsomething.io'), false);
-	assert.throws(
-		() =>
+	await assert.rejects(
+		async () =>
 			openHealthcareAnalyst({
-				locals: { user: { email: 'operator@thenursepractitionergroup.com' } },
+				setHeaders() {},
+				locals: { user: { id: 'verified-user', email: 'operator@thenursepractitionergroup.com' } },
 				platform: { env: { NPG_HEALTHCARE_ANALYST_URL: HEALTHCARE_ANALYST_URL } }
-			} as Parameters<typeof openHealthcareAnalyst>[0]),
+			} as unknown as Parameters<typeof openHealthcareAnalyst>[0]),
 		(error: unknown) =>
 			typeof error === 'object' &&
 			error !== null &&
