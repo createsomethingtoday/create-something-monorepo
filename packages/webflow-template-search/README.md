@@ -125,8 +125,13 @@ you change `sortClause` or the creator filter, change the index in a new migrati
 
 Before `0019`, every sorted page and every creator page scanned all rows. The other
 sorts (recommended, best selling, price) still do. Add an index for one when its traffic
-justifies one more index write for each synced template. Counts and facets for a
-category filter also still scan; the memo above covers them.
+justifies one more index write for each synced template.
+
+Counts and facets for a category filter still visit every template once, but on an
+index: the filter needs only the template id (see `CATEGORY_GROUP_LIST_FALLBACK_CLAUSE`
+in `src/search.ts`). Reading about as many rows as the category has needs a data change:
+the fallback for templates with no membership rows forces one check for each template.
+The type facet for a category still reads the table, because it needs `template_type`.
 
 ## CMS capability recovery (not activated)
 
@@ -392,20 +397,27 @@ the ledger records those migrations as applied. The tables, triggers and data we
 intact. The cause is not known. The effect was that queries the tests showed as index
 lookups were full table scans in production.
 
-`0020_restore_creator_indexes.sql` restores the two that serve the heaviest queries.
-These 15 are still missing in production:
+`0020_restore_creator_indexes.sql` and `0021_restore_filter_indexes.sql` restore the
+seven that a query in the top 70 by database time needed:
 
-- `template_documents`: `_popularity`, `_published_date`, `_price`, `_type`, `_flags`,
-  `_lmt`, `_creator_record_id`
-- `template_category_memberships`: `_group`, `_child`, `_group_child`
-- `idx_template_styles_slug`, `idx_template_child_categories_slug`,
-  `idx_slug_aliases_canonical`, `idx_sync_jobs_status`,
-  `idx_template_image_backfill_attempts_last_attempted`
+- `template_documents`: `_creator_slug`, `_creator_name_nocase`, `_creator_record_id`,
+  `_price`, `_flags`
+- `template_category_memberships`: `_child`, `_group_child`
 
-Restore one with a new migration that repeats its `CREATE INDEX IF NOT EXISTS`. Each
-index adds one write for each synced row, so restore the ones a query needs. The plain
-`_popularity` and `_published_date` indexes cannot serve the `COALESCE` sorts; `0019`
-replaced them.
+Two are left out on purpose. Do not restore them without a new measurement:
+
+- `idx_template_documents_type`. With it, SQLite filters a type-filtered page through
+  this index and sorts every match, in place of a sort-index walk that stops at `LIMIT`.
+  On a 12,000-row replica that page went from 0.03 ms to 11 ms.
+- `idx_template_category_memberships_group`. It is a prefix of `_group_child`.
+
+`_popularity` and `_published_date` cannot serve the `COALESCE` sorts; `0019` replaced
+them. Six more are still missing and no measured query needs them: `_lmt`,
+`idx_template_styles_slug`, `idx_template_child_categories_slug`,
+`idx_slug_aliases_canonical`, `idx_sync_jobs_status` and
+`idx_template_image_backfill_attempts_last_attempted`. Restore one with a new migration
+that repeats its `CREATE INDEX IF NOT EXISTS`, and measure first: each index adds one
+write for each synced row, and an index can make a query slower, as `_type` shows.
 
 To check for drift, compare this list with the `CREATE INDEX` statements in
 `migrations/`:
