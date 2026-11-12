@@ -478,7 +478,9 @@ const MAX_DIMENSION_DETAILS_PER_PAGE = 10;
  * Images without a positive width and height attribute. Webflow writes the
  * attributes only when they are set in the image settings, and reviewers ask
  * for both (same rule as the template-preflight skill). Background video
- * fallback and poster images are platform markup, so they are skipped.
+ * fallback and poster images are platform markup, so they are skipped. So are
+ * Ecommerce cart item images: Webflow renders them and their image settings
+ * have no width and height.
  */
 export function analyzeImageDimensions(parsedHTML: ParsedHTML): {
 	missing: number;
@@ -489,6 +491,7 @@ export function analyzeImageDimensions(parsedHTML: ParsedHTML): {
 
 	renderedImages(parsedHTML).forEach((img, index) => {
 		if (isLikelyPlatformVideoFallbackImage(img)) return;
+		if (isPlatformCartItemImage(img)) return;
 		if (hasPositiveDimension(img, 'width') && hasPositiveDimension(img, 'height')) return;
 
 		missing++;
@@ -545,6 +548,11 @@ function shouldIgnoreImageForAltAudit(img: HTMLImageElement | any): boolean {
 	if ((img.getAttribute?.('aria-hidden') || '').toLowerCase() === 'true') return true;
 
 	return isLikelyPlatformVideoFallbackImage(img);
+}
+
+function isPlatformCartItemImage(img: HTMLImageElement | any): boolean {
+	const className = String(img.getAttribute?.('class') || img.className || '');
+	return className.split(/\s+/).includes('w-commerce-commercecartitemimage');
 }
 
 function isLikelyPlatformVideoFallbackImage(img: HTMLImageElement | any): boolean {
