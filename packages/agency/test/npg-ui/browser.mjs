@@ -70,6 +70,121 @@ async function disclosureHasClearBody(page, button) {
     .toBeGreaterThanOrEqual(0);
 }
 try {
+  for (const [width, height] of [
+    [320, 568],
+    [390, 844],
+    [1440, 900]
+  ]) {
+    await scenario(
+      `composer writing and action regions remain readable at ${width}`,
+      async (page) => {
+        await gotoState(page, 'new');
+        const input = page.getByRole('textbox', { name: 'Your question' });
+        const surface = await page.locator('.npg-composer-surface').boundingBox();
+        const threadBox = await page.locator('.npg-thread').boundingBox();
+        assert.ok(
+          surface.y >= threadBox.y - 1,
+          'The empty composer label and top must not start behind the header'
+        );
+        const type = await input.evaluate((element) => {
+          const style = getComputedStyle(element);
+          return { size: parseFloat(style.fontSize), line: parseFloat(style.lineHeight) };
+        });
+        assert.ok(type.size >= 16, 'The primary writing text must be comfortable on a phone');
+        assert.ok(type.line >= type.size * 1.25, 'Writing lines must retain readable leading');
+        const draft =
+          'Family nurse practitioners near Springfield, Missouri.\nKeep the complete sourcing CSV.\nExplain coverage limits before any paid lookup.';
+        const lines = draft.split('\n');
+        await input.fill(lines[0]);
+        for (const line of lines.slice(1)) {
+          await input.press('Enter');
+          await page.keyboard.insertText(line);
+        }
+        await expect(input).toBeFocused();
+        if (width === 390) {
+          assert.ok(
+            await input.evaluate((element) => element.scrollHeight <= element.clientHeight + 1),
+            'A taller phone should show this complete initial draft without internal scrolling'
+          );
+        }
+        const send = page.getByRole('button', { name: 'Send question', exact: true });
+        const inputBox = await input.boundingBox();
+        const sendBox = await send.boundingBox();
+        assert.ok(sendBox.height >= 44, 'The send control must remain comfortably tappable');
+        assert.ok(
+          inputBox.y + inputBox.height <= sendBox.y + 1,
+          'The send action must not overlap writing'
+        );
+        await send.scrollIntoViewIfNeeded();
+        await expect(send).toBeInViewport();
+        assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+        assert.deepEqual(await commands(page), []);
+        await page.screenshot({
+          path: `${evidence}/composer-${width}.png`,
+          animations: 'disabled'
+        });
+        await page.reload();
+        await expect(input).toHaveText(draft, { useInnerText: true });
+        const overflows = await input.evaluate(
+          (element) => element.scrollHeight > element.clientHeight + 1
+        );
+        const hint = page.locator('#npg-draft-scroll-hint');
+        if (overflows) {
+          await expect(hint).toBeVisible();
+          await expect(input).toHaveAttribute('aria-describedby', 'npg-draft-scroll-hint');
+        } else await expect(hint).toHaveCount(0);
+        await input.fill('Brief question.');
+        await expect(hint).toHaveCount(0);
+        assert.deepEqual(await commands(page), []);
+      },
+      { width, height }
+    );
+  }
+
+  await scenario(
+    'long draft scroll cue follows the editor across history and resize',
+    async (page) => {
+      await page.goto(base + '/?state=canonical');
+      const input = page.getByRole('textbox', { name: 'Your question' });
+      await input.waitFor();
+      const draft =
+        'Find family nurse practitioners near Springfield Missouri and keep a complete sourcing list. '.repeat(
+          4
+        );
+      await page.evaluate((text) => {
+        const bootstrap = JSON.parse(document.getElementById('npg-bootstrap').textContent);
+        sessionStorage.setItem(
+          'npg-drafts:' + bootstrap.owner,
+          JSON.stringify({ new: text, [bootstrap.conversations[0].id]: text })
+        );
+      }, draft);
+      await page.reload();
+      const hint = page.locator('#npg-draft-scroll-hint');
+      await expect(hint).toBeVisible();
+      await page.getByTestId('mobile-nav-toggle').click();
+      await page.locator('.history-item').first().click();
+      await expect(input).toBeFocused();
+      await expect(input).toHaveText(draft);
+      await expect
+        .poll(() => input.evaluate((element) => element.scrollHeight > element.clientHeight + 1))
+        .toBe(true);
+      await expect(hint).toBeVisible();
+      await expect(input).toHaveAttribute('aria-describedby', 'npg-draft-scroll-hint');
+      await input.evaluate((element) => element.scrollTo({ top: element.scrollHeight }));
+      await expect(hint).toHaveText('Scroll up to review');
+      await input.evaluate((element) => element.scrollTo({ top: 0 }));
+      await expect(hint).toHaveText('Scroll down to review');
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await expect
+        .poll(() => input.evaluate((element) => element.scrollHeight <= element.clientHeight + 1))
+        .toBe(true);
+      await expect(hint).toHaveCount(0);
+      await expect(input).toHaveText(draft);
+      assert.deepEqual(await commands(page), []);
+    },
+    { width: 390, height: 844 }
+  );
+
   await scenario(
     'mobile evidence returns to exact review with context beside decisions',
     async (page) => {
@@ -133,7 +248,8 @@ try {
       await expect(summary).toContainText('(unverified)');
       await expect(summary).toContainText('$0.10');
       const bounds = await summary.boundingBox();
-      const pane = await page.locator('.npg-thread').boundingBox();
+      const pane = await page.locator('.npg-review-surface').boundingBox();
+      assert.ok(pane.y >= 0 && pane.y + pane.height <= page.viewportSize().height + 1);
       assert.ok(
         bounds.y >= pane.y && bounds.y + bounds.height <= pane.y + pane.height,
         'Full decision summary must be visible with decision controls'
@@ -168,6 +284,37 @@ try {
       ).toBeVisible();
     },
     { width: 320, height: 568 }
+  );
+
+  await scenario(
+    'multiline paste remains literal through draft recovery and submit',
+    async (page) => {
+      await gotoState(page, 'new');
+      const input = page.getByRole('textbox', { name: 'Your question' });
+      const draft =
+        'Family NPs in Springfield, MO.\n\nKeep <example> as literal text.\nInclude source limits.';
+      await input.focus();
+      await input.evaluate((element, text) => {
+        const clipboardData = new DataTransfer();
+        clipboardData.setData('text/plain', text);
+        element.dispatchEvent(
+          new ClipboardEvent('paste', { clipboardData, bubbles: true, cancelable: true })
+        );
+      }, draft);
+      assert.equal((await input.innerText()).trimEnd(), draft);
+      await expect(input.locator('[data-astryx-token], example')).toHaveCount(0);
+      await page.reload();
+      assert.equal((await input.innerText()).trimEnd(), draft);
+      assert.deepEqual(await commands(page), []);
+      await page.getByRole('button', { name: 'Send question', exact: true }).click();
+      await expect
+        .poll(async () => (await commands(page)).some((command) => command.type === 'message'))
+        .toBe(true);
+      assert.equal(
+        (await commands(page)).find((command) => command.type === 'message').text.trimEnd(),
+        draft
+      );
+    }
   );
 
   await scenario('exact review conditions remain inside their metadata row', async (page) => {
@@ -514,7 +661,9 @@ try {
     await input.press('Control+Enter');
     await input.press('Control+Enter');
     await expect(page.getByRole('button', { name: 'Working…' })).toBeDisabled();
-    await expect(page.getByText(/The response arrives together/)).toBeVisible();
+    await expect(
+      page.getByText('Your answer will appear here when it is ready.', { exact: true })
+    ).toBeVisible();
     await page.screenshot({ path: `${evidence}/working.png` });
     await input.fill('My next question');
     await expect(page.getByText('231 records', { exact: true })).toBeVisible();
@@ -541,6 +690,11 @@ try {
       await expect(page.getByRole('alert')).toBeVisible();
       await expect(input).toHaveText('Question before interruption');
       await expect(page.getByRole('button', { name: 'Send question', exact: true })).toBeDisabled();
+      assert.ok(
+        (await page.getByRole('button', { name: 'Refresh history', exact: true }).boundingBox())
+          .height >= 44,
+        'The recovery action must remain comfortably tappable'
+      );
       await page.getByRole('button', { name: 'Refresh history', exact: true }).click();
       await expect(page.getByRole('button', { name: 'Send question', exact: true })).toBeEnabled();
       await page.screenshot({ path: `${evidence}/error.png` });

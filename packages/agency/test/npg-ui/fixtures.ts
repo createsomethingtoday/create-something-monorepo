@@ -232,7 +232,9 @@ export function fixture(mode: string | null) {
         if (mode === 'error')
           return {
             status: 503,
-            data: { error: 'Fixture interruption. Refresh the history before trying again.' }
+            data: {
+              error: 'This conversation changed or stopped. Refresh its history before continuing.'
+            }
           };
         view = {
           ...view,

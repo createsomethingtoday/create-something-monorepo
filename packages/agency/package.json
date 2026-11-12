@@ -94,7 +94,7 @@
     "astryx": "node node_modules/@astryxdesign/cli/clients/cli/bin/astryx.mjs",
     "npg:build": "node scripts/build-npg-chat.mjs",
     "npg:preview": "pnpm npg:build && node --import tsx test/npg-ui/serve.mjs",
-    "npg:typecheck": "tsc --project tsconfig.npg.json"
+    "npg:typecheck": "node scripts/build-npg-themes.mjs && tsc --project tsconfig.npg.json"
   },
   "dependencies": {
     "@astryxdesign/core": "0.7.14",

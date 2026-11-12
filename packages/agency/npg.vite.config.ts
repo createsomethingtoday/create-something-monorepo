@@ -17,6 +17,12 @@ export default defineConfig({
               spacing: { 3: 'var(--spacing-3)', 4: 'var(--spacing-4)' },
               maxWidth: { reading: 'calc(var(--spacing-10) * 18)' },
               width: { evidence: 'calc(var(--spacing-10) * 9)' },
+              colors: {
+                'state-info': 'var(--color-text-info)',
+                'state-review': 'var(--color-text-warning)',
+                'state-error': 'var(--color-text-error)',
+                'state-ready': 'var(--color-text-success)'
+              },
               minHeight: { control: 'calc(var(--spacing-10) + var(--spacing-1))' }
             }
           }

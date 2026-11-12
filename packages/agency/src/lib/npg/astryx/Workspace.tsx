@@ -1,5 +1,8 @@
 // Frame adapted from Astryx's MIT ai-chat template; content and policy remain NPG-owned.
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Theme } from '@astryxdesign/core/theme';
+import { npgComposerTheme } from './npg-composer.js';
+import './npg-composer.css';
 import { AppShell } from '@astryxdesign/core/AppShell';
 import { TopNav, TopNavHeading } from '@astryxdesign/core/TopNav';
 import { SideNav, SideNavHeading, SideNavItem } from '@astryxdesign/core/SideNav';
@@ -93,15 +96,15 @@ function writeStorage(key: string, value: string, session = false) {
     /* Keep this tab's state. */
   }
 }
-function useNarrow() {
-  const [narrow, setNarrow] = useState(() => matchMedia('(max-width: 1024px)').matches);
+function useMediaQuery(media: string) {
+  const [matches, setMatches] = useState(() => matchMedia(media).matches);
   useEffect(() => {
-    const query = matchMedia('(max-width: 1024px)');
-    const update = () => setNarrow(query.matches);
+    const query = matchMedia(media);
+    const update = () => setMatches(query.matches);
     query.addEventListener('change', update);
     return () => query.removeEventListener('change', update);
-  }, []);
-  return narrow;
+  }, [media]);
+  return matches;
 }
 async function api<T>(body?: unknown, id?: string): Promise<T> {
   const response = await fetch(
@@ -561,6 +564,55 @@ function Evidence({ sources }: { sources: NpgView['sources'] }) {
     </VStack>
   );
 }
+// A welcome is a form with examples, not an existing transcript to follow.
+// ChatLayout intentionally follows the newest message, so keep its automatic
+// scrolling for conversations and use ordinary scrolling for the first task.
+function ThreadSurface({
+  welcome,
+  reviewing,
+  thread,
+  composer,
+  children
+}: {
+  welcome: boolean;
+  reviewing: boolean;
+  thread: React.RefObject<HTMLDivElement | null>;
+  composer: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  const scrollable = (
+    <VStack
+      ref={thread}
+      gap={0}
+      minHeight={0}
+      className="npg-thread min-w-0 flex-1 overflow-y-auto overflow-x-hidden"
+    >
+      {children}
+    </VStack>
+  );
+  if (reviewing)
+    return (
+      <VStack gap={0} minHeight={0} className="npg-review-surface flex-1 min-w-0">
+        {scrollable}
+        <VStack gap={0} paddingInline={2} paddingBlockEnd={2} className="shrink-0">
+          {composer}
+        </VStack>
+      </VStack>
+    );
+  return welcome ? (
+    scrollable
+  ) : (
+    <ChatLayout
+      ref={thread}
+      className="npg-thread min-w-0 min-h-0"
+      density="compact"
+      scrollButton={null}
+      composer={composer}
+    >
+      {children}
+    </ChatLayout>
+  );
+}
 export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
   const storageKey = 'npg-drafts:' + bootstrap.owner;
   const currentKey = 'npg-current-conversation:' + bootstrap.owner;
@@ -580,8 +632,12 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
   const [resultsOpen, setResultsOpen] = useState(false);
   const [clock, setClock] = useState(Date.now());
   const [reveal, setReveal] = useState(0);
-  const narrow = useNarrow();
+  const narrow = useMediaQuery('(max-width: 1024px)');
+  const shortViewport = useMediaQuery('(max-height: 700px)');
   const input = useRef<ChatComposerInputHandle | null>(null);
+  const [inputRoot, setInputRoot] = useState<HTMLDivElement | null>(null);
+  const [draftOverflows, setDraftOverflows] = useState(false);
+  const [draftScrolledDown, setDraftScrolledDown] = useState(false);
   const thread = useRef<HTMLDivElement | null>(null);
   const review = useRef<HTMLElement | null>(null);
   const inlineResults = useRef<HTMLElement | null>(null);
@@ -757,6 +813,26 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
     return () => clearInterval(timer);
   }, []);
   useLayoutEffect(() => {
+    const editor = inputRoot?.querySelector<HTMLElement>('[contenteditable]');
+    if (!editor) {
+      setDraftOverflows(false);
+      setDraftScrolledDown(false);
+      return;
+    }
+    const measure = () => {
+      setDraftOverflows(editor.scrollHeight > editor.clientHeight + 1);
+      setDraftScrolledDown(editor.scrollTop > 1);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(editor);
+    editor.addEventListener('scroll', measure, { passive: true });
+    return () => {
+      observer.disconnect();
+      editor.removeEventListener('scroll', measure);
+    };
+  }, [inputRoot, draft, narrow]);
+  useLayoutEffect(() => {
     if (!reveal || !thread.current) return;
     if (focusIntent.current === 'review') {
       const heading = document.getElementById('npg-review-title');
@@ -780,7 +856,13 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
               region.scrollTop,
             behavior: 'instant'
           });
-        else region.scrollTo({ top: region.scrollHeight, behavior: 'instant' });
+        else {
+          const isWelcome =
+            !conversationRef.current?.messages.length &&
+            !submitted &&
+            !conversationRef.current?.pending;
+          region.scrollTo({ top: isWelcome ? 0 : region.scrollHeight, behavior: 'instant' });
+        }
       });
     });
     return () => {
@@ -809,7 +891,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
   const status = busy
     ? operation
     : needsRefresh
-      ? 'Readback required'
+      ? 'Check saved conversation'
       : conversation
         ? conversationStatus(conversation.status)
         : 'Ready';
@@ -821,7 +903,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
   const instruction = conversation?.pending
     ? 'Review or reject the action above before sending another question.'
     : blocked
-      ? 'Check the saved conversation before another request. Uncertain outcomes need reconciliation.'
+      ? 'Refresh the conversation to check what was saved before sending again.'
       : 'Registry evidence first. Paid actions need your review.';
   const titleHeading = (
     <Heading
@@ -837,7 +919,20 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
     </Heading>
   );
   const statusContent = (
-    <HStack gap={1} className="npg-state shrink-0" role="status">
+    <HStack
+      gap={1}
+      className={
+        'npg-state shrink-0 ' +
+        (busy
+          ? 'text-state-info'
+          : conversation?.pending
+            ? 'text-state-review'
+            : blocked
+              ? 'text-state-error'
+              : 'text-state-ready')
+      }
+      role="status"
+    >
       <Icon
         icon={
           busy
@@ -850,7 +945,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
         }
         size="sm"
       />
-      <Text type="supporting" color="secondary" textWrap="nowrap">
+      <Text type="supporting" color="inherit" textWrap="nowrap">
         {status}
       </Text>
     </HStack>
@@ -970,69 +1065,81 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
         <Text color={empty ? 'primary' : 'secondary'} weight={empty ? 'medium' : 'normal'}>
           {empty ? 'Your question' : instruction}
         </Text>
-        <ChatComposer
-          value={draft}
-          onChange={changeDraft}
-          onSubmit={(value) => void send(value)}
-          elevation="none"
-          density="compact"
-          input={
-            <ChatComposerInput
-              label="Your question"
-              value={draft}
-              onChange={changeDraft}
-              hasHistory={false}
-              pasteAsToken={false}
-              maxRows={3}
-              enterKeyHint="enter"
-              placeholder={
-                empty
-                  ? 'Example: family NPs near Springfield, MO'
-                  : 'Ask a follow-up about these results…'
-              }
-              handleRef={input}
-              onFocus={(event) => {
-                // Astryx 0.7.14 can remount an empty editable without a line box
-                // when a mobile history dialog closes. Preserve an empty line,
-                // not a draft character, so pointer and keyboard editing agree.
-                const editor = event.target;
-                if (
-                  editor instanceof HTMLElement &&
-                  editor.isContentEditable &&
-                  !editor.hasChildNodes()
-                )
-                  editor.append(document.createElement('br'));
-              }}
-              onKeyDown={(event) => {
-                if (
-                  event.key !== 'Enter' ||
-                  event.nativeEvent.isComposing ||
-                  event.nativeEvent.keyCode === 229
-                )
-                  return;
-                event.preventDefault();
-                if (event.metaKey || event.ctrlKey) void send();
-                else document.execCommand('insertLineBreak');
-              }}
-            />
-          }
-          footerActions={
-            <Text type="supporting" color="secondary">
-              {!narrow && 'Ctrl / ⌘ + Enter'}
-              {draft.length > 0 && (!narrow ? ' · ' : '') + draft.length + '/6,000'}
-            </Text>
-          }
-          sendButton={
-            <Button
-              icon={<Icon icon={ArrowUp} />}
-              label={busy && submitted ? 'Working…' : 'Send question'}
-              className="min-h-control"
-              variant="primary"
-              isDisabled={!canSend}
-              onClick={() => void send()}
-            />
-          }
-        />
+        <Theme theme={npgComposerTheme} mode="light">
+          <ChatComposer
+            value={draft}
+            onChange={changeDraft}
+            onSubmit={(value) => void send(value)}
+            elevation="none"
+            density="balanced"
+            input={
+              <ChatComposerInput
+                label="Your question"
+                ref={setInputRoot}
+                aria-describedby={draftOverflows ? 'npg-draft-scroll-hint' : undefined}
+                value={draft}
+                onChange={changeDraft}
+                hasHistory={false}
+                pasteAsToken={false}
+                maxRows={narrow ? (empty && !shortViewport ? 6 : 3) : 5}
+                className="min-h-control"
+                enterKeyHint="enter"
+                placeholder={
+                  empty
+                    ? 'Describe the specialty and location…'
+                    : 'Ask a follow-up about these results…'
+                }
+                handleRef={input}
+                onFocus={(event) => {
+                  // Astryx 0.7.14 can remount an empty editable without a line box
+                  // when a mobile history dialog closes. Preserve an empty line,
+                  // not a draft character, so pointer and keyboard editing agree.
+                  const editor = event.target;
+                  if (
+                    editor instanceof HTMLElement &&
+                    editor.isContentEditable &&
+                    !editor.hasChildNodes()
+                  )
+                    editor.append(document.createElement('br'));
+                }}
+                onKeyDown={(event) => {
+                  if (
+                    event.key !== 'Enter' ||
+                    event.nativeEvent.isComposing ||
+                    event.nativeEvent.keyCode === 229
+                  )
+                    return;
+                  event.preventDefault();
+                  if (event.metaKey || event.ctrlKey) void send();
+                  else document.execCommand('insertLineBreak');
+                }}
+              />
+            }
+            footerActions={
+              <VStack gap={0}>
+                <Text type="supporting" color="secondary" hasTabularNumbers>
+                  {!narrow && 'Ctrl / ⌘ + Enter'}
+                  {draft.length > 0 && (!narrow ? ' · ' : '') + draft.length + '/6,000'}
+                </Text>
+                {draftOverflows && (
+                  <Text id="npg-draft-scroll-hint" type="supporting" color="secondary">
+                    {draftScrolledDown ? 'Scroll up to review' : 'Scroll down to review'}
+                  </Text>
+                )}
+              </VStack>
+            }
+            sendButton={
+              <Button
+                icon={<Icon icon={ArrowUp} />}
+                label={busy && submitted ? 'Working…' : 'Send question'}
+                className="min-h-control"
+                variant={canSend ? 'primary' : 'secondary'}
+                isDisabled={!canSend}
+                onClick={() => void send()}
+              />
+            }
+          />
+        </Theme>
       </VStack>
     </Section>
   );
@@ -1145,12 +1252,11 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
             minHeight={0}
             className={narrow && resultsOpen ? 'hidden' : 'flex flex-col flex-1 min-h-0'}
           >
-            <ChatLayout
-              className="npg-thread min-w-0 min-h-0"
-              ref={thread}
-              density="compact"
-              scrollButton={null}
-              composer={empty ? null : composer}
+            <ThreadSurface
+              welcome={empty}
+              reviewing={Boolean(conversation?.pending)}
+              thread={thread}
+              composer={composer}
             >
               <ChatMessageList
                 align="top"
@@ -1214,7 +1320,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                       <Banner
                         status="info"
                         title="Working on your question"
-                        description="The response arrives together after the model and permitted tools finish."
+                        description="Your answer will appear here when it is ready."
                       />
                     )}
                     {conversation?.pending && (
@@ -1299,7 +1405,8 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                       <Button
                         icon={<Icon icon={RefreshCw} />}
                         label="Refresh history"
-                        variant="secondary"
+                        className="min-h-control"
+                        variant={needsRefresh ? 'primary' : 'secondary'}
                         isDisabled={busy}
                         onClick={() => void refresh()}
                       />
@@ -1307,7 +1414,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                   </VStack>
                 </Section>
               </ChatMessageList>
-            </ChatLayout>
+            </ThreadSurface>
           </VStack>
           {narrow && resultsOpen && (
             <VStack gap={0} minHeight={0} className="flex-1 min-w-0">

@@ -27,3 +27,15 @@ vite.config.ts.timestamp-*
 # Generated, content-addressed private-chat client (built before check/build).
 /static/npg-chat/
 /src/lib/server/npg/astryx-assets.generated.json
+
+# Compiled scoped Astryx themes; regenerated before NPG typecheck and build.
+/src/lib/npg/astryx/npg.css
+/src/lib/npg/astryx/npg.js
+/src/lib/npg/astryx/npg.d.ts
+/src/lib/npg/astryx/npg-composer.css
+/src/lib/npg/astryx/npg-composer.js
+/src/lib/npg/astryx/npg-composer.d.ts
+/src/lib/npg/astryx/npg.css.d.ts
+/src/lib/npg/astryx/npg.variants.d.ts
+/src/lib/npg/astryx/npg-composer.css.d.ts
+/src/lib/npg/astryx/npg-composer.variants.d.ts
