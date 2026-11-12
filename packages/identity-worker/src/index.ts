@@ -901,9 +901,7 @@ const POLICY_MCP_SESSION_SELF_SERVICE_ID = 'policy.mcp-session-self-service.v1';
 const POLICY_USER_BEARER_TOKEN_GOVERNANCE_ID = 'policy.user-bearer-token-governance.v1';
 const WEBFLOW_TEMPLATE_REVIEW_REVIEWER_ACCOUNT_IDS = new Set([
 	'acct_wf_template_review',
-	'acct_wf_natalia',
 	'acct_wf_eric',
-	'acct_wf_vicki',
 	'acct_wf_mariana',
 	'acct_wf_micah',
 ]);
