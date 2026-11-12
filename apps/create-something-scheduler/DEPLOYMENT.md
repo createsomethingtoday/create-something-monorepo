@@ -49,6 +49,35 @@ Google OAuth scopes are limited to:
 - `https://www.googleapis.com/auth/calendar.freebusy`
 - `https://www.googleapis.com/auth/calendar.calendarlist.readonly`
 
+## Required host conflict calendars
+
+The scheduling policy requires `micah@createsomething.io` and `mj@halfdozen.co`,
+regardless of Google Calendar UI selection. Every availability query and booking
+commit unions these IDs with configured and persisted discovered calendars.
+Existing Durable Object discovery records do not need to be cleared or migrated.
+The separate required Webflow projection remains unchanged.
+
+Share `mj@halfdozen.co` with the scheduler identity `micah@createsomething.io`
+using **See only free/busy (hide details)**. Event details and another OAuth
+credential are not required. Calendar-list membership is not proof of access;
+verify a direct free/busy read before enabling the requirement in production.
+
+Authenticated `/api/v1/operator/status` reports `requiredCalendarCoverage`,
+including required IDs, provider failure reason, and next action, plus the
+`effectiveConflictCalendarCount`. Readiness performs a live bounded free/busy
+probe and returns false when required coverage cannot be verified. Availability
+and booking commit independently fail closed if a required calendar is missing
+or returns a provider error. No event details or busy intervals are exposed by
+status. `selectedCalendarCount` retains its persisted-discovery meaning.
+
+CRE-2419 acceptance: verify known Half Dozen busy time disappears from both 30-
+and 60-minute availability, adjacent open slots remain, and preparation rejects
+the busy time. Worker fixtures also prove a new conflict between preparation
+and commit is rejected without creating an event. Never send a real invitation
+just to test this correction. Revoking the share is a configuration rollback
+that deliberately makes readiness and booking unavailable; do not remove the
+required source to mask an access failure.
+
 ## Webflow conflict-projection activation
 
 The scheduler OAuth identity remains `micah@createsomething.io`. On October 27, 2026, Google Calendar allowed `micah@webflow.com` to share **See only free/busy (hide details)** with that identity. A direct free/busy read verified access. No Webflow event details or additional OAuth credentials are required.

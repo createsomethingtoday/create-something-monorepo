@@ -1,3 +1,4 @@
+import { conflictCalendarIds } from './conflict-calendars.js';
 import { z } from 'zod';
 import { Temporal } from '@js-temporal/polyfill';
 import type {
@@ -174,9 +175,9 @@ export class GoogleCalendarPort implements CalendarPort {
       }
       return {
         status: 'available',
-        selectedCalendarIds: calendars
+        selectedCalendarIds: conflictCalendarIds(this.config.selectedCalendarIds, calendars
           .filter((calendar) => calendar.selected === true)
-          .map((calendar) => calendar.id),
+          .map((calendar) => calendar.id)),
         eventCalendarId: eventCalendar.id
       };
     } catch {
