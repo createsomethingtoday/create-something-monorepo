@@ -1,5 +1,8 @@
 // Frame adapted from Astryx's MIT ai-chat template; content and policy remain NPG-owned.
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Theme } from '@astryxdesign/core/theme';
+import { npgComposerTheme } from './npg-composer.js';
+import './npg-composer.css';
 import { AppShell } from '@astryxdesign/core/AppShell';
 import { TopNav, TopNavHeading } from '@astryxdesign/core/TopNav';
 import { SideNav, SideNavHeading, SideNavItem } from '@astryxdesign/core/SideNav';
@@ -12,6 +15,7 @@ import {
   ChatComposerInput,
   type ChatComposerInputHandle
 } from '@astryxdesign/core/Chat';
+import { List, ListItem } from '@astryxdesign/core/List';
 import { Heading } from '@astryxdesign/core/Heading';
 import { Text } from '@astryxdesign/core/Text';
 import { HStack } from '@astryxdesign/core/HStack';
@@ -20,6 +24,7 @@ import { Divider } from '@astryxdesign/core/Divider';
 import { Section } from '@astryxdesign/core/Section';
 import { Button } from '@astryxdesign/core/Button';
 import { Banner } from '@astryxdesign/core/Banner';
+import { Blockquote } from '@astryxdesign/core/Blockquote';
 import { Link } from '@astryxdesign/core/Link';
 import { Icon } from '@astryxdesign/core/Icon';
 import {
@@ -32,7 +37,13 @@ import {
   ClipboardCheck,
   Clock,
   CircleCheck,
-  TriangleAlert
+  TriangleAlert,
+  MapPin,
+  UsersRound,
+  Database,
+  ArrowRight,
+  ArrowLeft,
+  FileCheck2
 } from 'lucide-react';
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList';
 import { Collapsible } from '@astryxdesign/core/Collapsible';
@@ -45,13 +56,31 @@ import {
   sourceArtifact,
   type NpgView
 } from '../display';
+import { decisionSummary } from './presentation';
 import type { HistoryItem, NpgBootstrap } from './types';
 
 const endpoint = '/delivery/abundance/healthcare-analyst/api';
 const examples = [
-  'Find FNP and adult-gerontology NP candidates in Springfield, MO, with a complete sourcing CSV.',
-  'Find NPs within 25 miles of a clinic street address. Ask me for the address first.',
-  'Show coverage freshness, taxonomy scope, and unresolved records for the nationwide snapshot.'
+  {
+    label: 'Find candidates by city',
+    detail: 'Family and adult-gerontology NPs in Springfield, MO',
+    icon: UsersRound,
+    prompt:
+      'Find FNP and adult-gerontology NP candidates in Springfield, MO, with a complete sourcing CSV.'
+  },
+  {
+    label: 'Search around a clinic',
+    detail: 'NPs within 25 miles of your clinic',
+    icon: MapPin,
+    prompt: 'Find NPs within 25 miles of a clinic street address. Ask me for the address first.'
+  },
+  {
+    label: 'Check registry coverage',
+    detail: 'Freshness, scope, and unresolved records',
+    icon: Database,
+    prompt:
+      'Show coverage freshness, taxonomy scope, and unresolved records for the nationwide snapshot.'
+  }
 ];
 function readStorage(key: string, session = false) {
   try {
@@ -67,15 +96,15 @@ function writeStorage(key: string, value: string, session = false) {
     /* Keep this tab's state. */
   }
 }
-function useNarrow() {
-  const [narrow, setNarrow] = useState(() => matchMedia('(max-width: 1024px)').matches);
+function useMediaQuery(media: string) {
+  const [matches, setMatches] = useState(() => matchMedia(media).matches);
   useEffect(() => {
-    const query = matchMedia('(max-width: 1024px)');
-    const update = () => setNarrow(query.matches);
+    const query = matchMedia(media);
+    const update = () => setMatches(query.matches);
     query.addEventListener('change', update);
     return () => query.removeEventListener('change', update);
-  }, []);
-  return narrow;
+  }, [media]);
+  return matches;
 }
 async function api<T>(body?: unknown, id?: string): Promise<T> {
   const response = await fetch(
@@ -99,29 +128,217 @@ async function api<T>(body?: unknown, id?: string): Promise<T> {
   }
   return response.json() as Promise<T>;
 }
-function Prose({ text }: { text: string }) {
+// Present plain-text paragraphs and supplied bullet lines without interpreting HTML or Markdown.
+function Prose({ text, assistant = false }: { text: string; assistant?: boolean }) {
+  function literal(value: string) {
+    return linkParts(value).map((part, index) =>
+      part.href ? (
+        <Link key={index} href={part.href} isExternalLink hasUnderline>
+          {part.text}
+        </Link>
+      ) : (
+        <React.Fragment key={index}>{part.text}</React.Fragment>
+      )
+    );
+  }
   return (
-    <Text as="p" size="lg" wordBreak="break-word" className="npg-prose whitespace-pre-wrap">
-      {linkParts(text).map((part, index) =>
-        part.href ? (
-          <Link key={index} href={part.href} isExternalLink hasUnderline>
-            {part.text}
-          </Link>
-        ) : (
-          <React.Fragment key={index}>{part.text}</React.Fragment>
-        )
-      )}
-    </Text>
+    <VStack gap={4} className="npg-prose min-w-0">
+      {text.split(/\n\s*\n/).map((paragraph, paragraphIndex) => {
+        const lines = paragraph.split('\n');
+        const hasHeading =
+          assistant &&
+          lines.length > 1 &&
+          lines[0].trim().length > 0 &&
+          lines[0].length <= 64 &&
+          !/^[-*•\d]/.test(lines[0]) &&
+          !/[.!?]$/.test(lines[0].trim());
+        return (
+          <VStack key={paragraphIndex} gap={2}>
+            {hasHeading && (
+              <Text as="p" weight="semibold" size="lg" wordBreak="break-word">
+                {literal(lines[0])}
+              </Text>
+            )}
+            <Text
+              as="p"
+              type="body"
+              weight={
+                assistant && paragraphIndex === 0 && paragraph.length <= 240 ? 'medium' : 'normal'
+              }
+              size="lg"
+              wordBreak="break-word"
+              className="whitespace-pre-wrap"
+            >
+              {literal(hasHeading ? lines.slice(1).join('\n') : paragraph)}
+            </Text>
+          </VStack>
+        );
+      })}
+    </VStack>
   );
 }
-function Fields({ fields }: { fields: Array<{ label: string; value: string }> }) {
+function readableFieldValue(field: { label: string; value: string }, currency?: string) {
+  if (field.label.toLowerCase() === 'completeness' && field.value === 'incomplete_geocoding')
+    return 'Location coverage incomplete';
+  if (
+    currency &&
+    /^[A-Z]{3}$/.test(currency) &&
+    [
+      'Maximum cost',
+      'One-time shared allowance',
+      'Recorded spending',
+      'Remaining allowance'
+    ].includes(field.label) &&
+    /^\d+(?:\.\d+)?$/.test(field.value) &&
+    Number.isFinite(Number(field.value))
+  ) {
+    try {
+      return (
+        new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency,
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 20
+        }).format(Number(field.value)) +
+        ' ' +
+        currency
+      );
+    } catch {
+      /* Preserve the supplied value for unsupported currencies. */
+    }
+  }
+  const normalizedLabel = field.label.toLowerCase().replaceAll('_', ' ').trim();
+  const finalLabel = normalizedLabel.split(' · ').at(-1) ?? normalizedLabel;
+  if (
+    ([
+      'status',
+      'completeness',
+      'clinical verification status',
+      'direct outreach status',
+      'outreach authority status',
+      'personal contact access',
+      'contact availability',
+      'contact route status',
+      'failure kind',
+      'snapshot status'
+    ].includes(normalizedLabel) ||
+      ['stage', 'consent basis', 'geography'].includes(finalLabel)) &&
+    /^[a-z]+(?:_[a-z]+)+$/.test(field.value)
+  ) {
+    const words = field.value.replaceAll('_', ' ');
+    return words.charAt(0).toUpperCase() + words.slice(1);
+  }
+  return field.value;
+}
+function knownLimitGroups(text: string) {
+  const repeated = text.indexOf(' Repeated identical input ');
+  const ownership = text.indexOf(' Account ownership ');
+  const restriction = text.indexOf(' Account restriction ');
+  const known =
+    text.startsWith('One pinned run, ten-cent cap, shared daily reservations.') &&
+    text.includes('Repeated identical input reconciles the same run.') &&
+    repeated > 0 &&
+    ownership > repeated &&
+    restriction > ownership &&
+    [repeated, ownership, restriction].every((index) => text[index - 1] === '.') &&
+    text.includes('these checks cannot exclude explicit grants or Actor-creator sharing.') &&
+    text.endsWith('Account restriction and sharing setup require operator review.');
+  return known
+    ? [
+        {
+          label: 'Run limits',
+          value: text.slice(0, ownership + 1),
+          explanation:
+            'In practice: identical requests check the saved run. Reservations share the daily budget.'
+        },
+        {
+          label: 'Access and sharing',
+          value: text.slice(ownership + 1),
+          warning: 'These checks cannot confirm that access is limited to your account.'
+        }
+      ]
+    : null;
+}
+function ReviewLimits({
+  text,
+  warning,
+  explanation
+}: {
+  text: string;
+  warning?: string;
+  explanation?: string;
+}) {
+  const original = (
+    <VStack gap={2}>
+      {text.split(/(?<=\.) (?=[A-Z])/).map((sentence, i, sentences) => (
+        <Text
+          key={i}
+          as="p"
+          color={warning || explanation ? 'secondary' : 'primary'}
+          wordBreak="break-word"
+        >
+          {sentence}
+          {i < sentences.length - 1 ? ' ' : ''}
+        </Text>
+      ))}
+    </VStack>
+  );
   return (
-    <MetadataList label={{ position: 'top' }} columns="single">
-      {fields.map((field, index) => (
-        <MetadataListItem key={index} label={field.label}>
-          <Text wordBreak="break-word" className="whitespace-pre-wrap">
-            {field.value}
-          </Text>
+    <VStack gap={3}>
+      {warning && <Text weight="semibold">{warning}</Text>}
+      {explanation && <Text weight="medium">{explanation}</Text>}
+      {warning || explanation ? (
+        <Blockquote aria-label="Exact conditions">{original}</Blockquote>
+      ) : (
+        original
+      )}
+    </VStack>
+  );
+}
+function Fields({
+  fields,
+  compact = false,
+  review = false,
+  evidence = false
+}: {
+  fields: Array<{ label: string; value: string }>;
+  compact?: boolean;
+  review?: boolean;
+  evidence?: boolean;
+}) {
+  const currency = fields.find((field) => field.label === 'Currency')?.value;
+  const rows = fields.flatMap((field) =>
+    review && field.label === 'Limits' ? (knownLimitGroups(field.value) ?? [field]) : [field]
+  );
+
+  return (
+    <MetadataList
+      label={{
+        position: compact ? 'start' : 'top',
+        width: compact ? 'calc(var(--spacing-10) * 3)' : undefined
+      }}
+      columns="single"
+    >
+      {rows.map((field, index) => (
+        <MetadataListItem
+          key={index}
+          label={field.label.charAt(0).toUpperCase() + field.label.slice(1)}
+        >
+          {review && ['Limits', 'Run limits', 'Access and sharing'].includes(field.label) ? (
+            <ReviewLimits
+              text={field.value}
+              warning={'warning' in field ? String(field.warning) : undefined}
+              explanation={'explanation' in field ? String(field.explanation) : undefined}
+            />
+          ) : (
+            <Text
+              size={evidence ? 'lg' : undefined}
+              wordBreak="break-word"
+              className="whitespace-pre-wrap"
+            >
+              {readableFieldValue(field, currency)}
+            </Text>
+          )}
         </MetadataListItem>
       ))}
     </MetadataList>
@@ -131,14 +348,27 @@ function Evidence({ sources }: { sources: NpgView['sources'] }) {
   return (
     <VStack gap={6} className="npg-evidence-content min-w-0">
       <VStack gap={2}>
-        <Heading level={2}>Results &amp; exports</Heading>
-        <Text type="supporting" color="secondary">
+        <HStack gap={2}>
+          <Icon icon={FileCheck2} />
+          <Heading id="npg-evidence-title" level={2} tabIndex={-1}>
+            Results &amp; evidence
+          </Heading>
+        </HStack>
+        <Text color="secondary">
           Saved with this conversation. CSV downloads require NPG sign-in.
         </Text>
       </VStack>
       {sources.length ? (
         sources.map((source, index) => {
           const artifact = sourceArtifact(source.data);
+          const incomplete = artifact.fields.some(
+            (field) => field.value === 'incomplete_geocoding'
+          );
+          const unresolved = artifact.fields.find(
+            (field) =>
+              ['Unresolved records', 'Unresolved addresses'].includes(field.label) &&
+              /^\d+$/.test(field.value)
+          );
           return (
             <React.Fragment key={index}>
               {index > 0 && <Divider />}
@@ -158,46 +388,59 @@ function Evidence({ sources }: { sources: NpgView['sources'] }) {
                 </VStack>
                 {(artifact.total !== null || artifact.shown !== null) && (
                   <VStack gap={1}>
-                    <Text type="large" weight="semibold">
+                    <Text type="large" size="2xl" weight="semibold" hasTabularNumbers>
                       {artifact.total === null
                         ? 'Total not supplied'
-                        : artifact.total.toLocaleString() + ' total'}
+                        : artifact.total.toLocaleString() +
+                          (source.tool === 'search_registry_sourcing' ? ' records' : ' total')}
                     </Text>
-                    <Text type="supporting" color="secondary">
+                    <Text type="supporting" size="base" color="secondary">
                       {artifact.shown === null
                         ? 'Shown count not supplied'
-                        : artifact.shown.toLocaleString() + ' shown in response'}
+                        : artifact.shown.toLocaleString() +
+                          (artifact.shown === 1 ? ' preview record' : ' preview records') +
+                          (artifact.links.some((href) => href.startsWith('/delivery/'))
+                            ? '; full CSV available'
+                            : ' shown in response')}
                     </Text>
                   </VStack>
                 )}
+                {incomplete && (
+                  <Banner
+                    status="warning"
+                    title={
+                      unresolved
+                        ? Number(unresolved.value).toLocaleString() + ' unresolved locations'
+                        : 'Location coverage is incomplete'
+                    }
+                    description={
+                      <Text size="base">
+                        Some addresses could not be located. Review the source limits before using
+                        geographic results.
+                      </Text>
+                    }
+                  />
+                )}
                 {artifact.links.map((href) => (
                   <VStack key={href} gap={1}>
-                    <Link className="source-link" href={href} hasUnderline isExternalLink>
-                      <HStack as="span" gap={2}>
-                        {href.startsWith('/delivery/') && <Icon icon={Download} size="sm" />}
-                        {href.startsWith('/delivery/') ? 'Download complete CSV' : 'Open source'}
-                      </HStack>
-                    </Link>
-                    <Text type="supporting" color="secondary" wordBreak="break-all">
-                      {href}
-                    </Text>
+                    <Button
+                      className="source-link min-h-control"
+                      href={href}
+                      target="_blank"
+                      variant="primary"
+                      icon={<Icon icon={Download} />}
+                      label={
+                        href.startsWith('/delivery/') ? 'Download complete CSV' : 'Open source'
+                      }
+                    />
                   </VStack>
-                ))}
-                {artifact.fields.length > 0 && <Fields fields={artifact.fields} />}
-                {artifact.sections.map((section, i) => (
-                  <Collapsible key={i} trigger={section.title} defaultIsOpen={false}>
-                    <VStack paddingBlock={3}>
-                      <Fields fields={section.fields} />
-                    </VStack>
-                  </Collapsible>
                 ))}
                 {artifact.records.length > 0 && (
                   <Collapsible
                     trigger={
-                      'Returned records · preview ' +
+                      'Preview ' +
                       artifact.previewCount +
-                      ' of ' +
-                      (artifact.shown ?? 'unknown')
+                      (artifact.previewCount === 1 ? ' returned record' : ' returned records')
                     }
                     defaultIsOpen={false}
                   >
@@ -205,7 +448,7 @@ function Evidence({ sources }: { sources: NpgView['sources'] }) {
                       {artifact.records.map((fields, i) => (
                         <VStack key={i} gap={2}>
                           <Heading level={4}>Record {i + 1}</Heading>
-                          <Fields fields={fields} />
+                          <Fields evidence fields={fields} />
                         </VStack>
                       ))}
                       <Text type="supporting" color="secondary">
@@ -214,6 +457,90 @@ function Evidence({ sources }: { sources: NpgView['sources'] }) {
                     </VStack>
                   </Collapsible>
                 )}
+                {(artifact.fields.length > 0 || artifact.links.length > 0) && (
+                  <VStack gap={4}>
+                    {artifact.records.length > 0 && <Divider />}
+                    {[
+                      {
+                        title: 'Source facts',
+                        fields: artifact.fields.filter((field) =>
+                          [
+                            'Source published',
+                            'Source fetched',
+                            'Taxonomy scope',
+                            'source',
+                            'retrieved at',
+                            'Snapshot',
+                            'Snapshot ID',
+                            'Snapshot taxonomy scope',
+                            'Snapshot published'
+                          ].includes(field.label)
+                        )
+                      },
+                      {
+                        title: 'Coverage & limitations',
+                        fields: artifact.fields.filter(
+                          (field) =>
+                            ![
+                              'Source run',
+                              'limit',
+                              'offset',
+                              'Source published',
+                              'Source fetched',
+                              'Taxonomy scope',
+                              'source',
+                              'retrieved at',
+                              'Snapshot',
+                              'Snapshot ID',
+                              'Snapshot taxonomy scope',
+                              'Snapshot published'
+                            ].includes(field.label)
+                        )
+                      }
+                    ]
+                      .filter((group) => group.fields.length)
+                      .map((group) => (
+                        <VStack gap={3} key={group.title}>
+                          <Heading level={4}>{group.title}</Heading>
+                          <Fields evidence fields={group.fields} />
+                        </VStack>
+                      ))}
+                    {(artifact.links.length > 0 ||
+                      artifact.fields.some((field) =>
+                        ['Source run', 'limit', 'offset'].includes(field.label)
+                      )) && (
+                      <Collapsible trigger="Source details & provenance" defaultIsOpen={false}>
+                        <VStack paddingBlock={3} gap={3}>
+                          {artifact.links.map((href) => (
+                            <VStack key={href} gap={1}>
+                              <Text type="supporting">Download address</Text>
+                              <Text size="sm" wordBreak="break-all">
+                                {href}
+                              </Text>
+                            </VStack>
+                          ))}
+                          <Fields
+                            evidence
+                            fields={artifact.fields.filter((field) =>
+                              ['Source run', 'limit', 'offset'].includes(field.label)
+                            )}
+                          />
+                        </VStack>
+                      </Collapsible>
+                    )}
+                  </VStack>
+                )}
+                {artifact.sections.map((section, i) => (
+                  <Collapsible
+                    key={i}
+                    trigger={section.title}
+                    defaultIsOpen={section.title === 'Recruiting readiness and unknowns'}
+                  >
+                    <VStack paddingBlock={3}>
+                      <Fields evidence fields={section.fields} />
+                    </VStack>
+                  </Collapsible>
+                ))}
                 <Collapsible trigger="Inspect original source data" defaultIsOpen={false}>
                   <Text
                     as="p"
@@ -237,6 +564,55 @@ function Evidence({ sources }: { sources: NpgView['sources'] }) {
     </VStack>
   );
 }
+// A welcome is a form with examples, not an existing transcript to follow.
+// ChatLayout intentionally follows the newest message, so keep its automatic
+// scrolling for conversations and use ordinary scrolling for the first task.
+function ThreadSurface({
+  welcome,
+  reviewing,
+  thread,
+  composer,
+  children
+}: {
+  welcome: boolean;
+  reviewing: boolean;
+  thread: React.RefObject<HTMLDivElement | null>;
+  composer: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  const scrollable = (
+    <VStack
+      ref={thread}
+      gap={0}
+      minHeight={0}
+      className="npg-thread min-w-0 flex-1 overflow-y-auto overflow-x-hidden"
+    >
+      {children}
+    </VStack>
+  );
+  if (reviewing)
+    return (
+      <VStack gap={0} minHeight={0} className="npg-review-surface flex-1 min-w-0">
+        {scrollable}
+        <VStack gap={0} paddingInline={2} paddingBlockEnd={2} className="shrink-0">
+          {composer}
+        </VStack>
+      </VStack>
+    );
+  return welcome ? (
+    scrollable
+  ) : (
+    <ChatLayout
+      ref={thread}
+      className="npg-thread min-w-0 min-h-0"
+      density="compact"
+      scrollButton={null}
+      composer={composer}
+    >
+      {children}
+    </ChatLayout>
+  );
+}
 export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
   const storageKey = 'npg-drafts:' + bootstrap.owner;
   const currentKey = 'npg-current-conversation:' + bootstrap.owner;
@@ -256,8 +632,12 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
   const [resultsOpen, setResultsOpen] = useState(false);
   const [clock, setClock] = useState(Date.now());
   const [reveal, setReveal] = useState(0);
-  const narrow = useNarrow();
+  const narrow = useMediaQuery('(max-width: 1024px)');
+  const shortViewport = useMediaQuery('(max-height: 700px)');
   const input = useRef<ChatComposerInputHandle | null>(null);
+  const [inputRoot, setInputRoot] = useState<HTMLDivElement | null>(null);
+  const [draftOverflows, setDraftOverflows] = useState(false);
+  const [draftScrolledDown, setDraftScrolledDown] = useState(false);
   const thread = useRef<HTMLDivElement | null>(null);
   const review = useRef<HTMLElement | null>(null);
   const inlineResults = useRef<HTMLElement | null>(null);
@@ -312,6 +692,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
       setView(view);
       changeDraft(drafts.current[id] ?? '');
       setNeedsRefresh(view.status === 'running');
+      if (moveFocus) setResultsOpen(false);
       if (moveFocus) focusAfterNavigation(Boolean(view.pending));
       setNavOpen(false);
       rememberCurrent(id);
@@ -329,6 +710,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
       setView(view);
       changeDraft(drafts.current[view.id] ?? '');
       setNeedsRefresh(false);
+      setResultsOpen(false);
       focusAfterNavigation();
       setNavOpen(false);
       rememberCurrent(view.id);
@@ -431,6 +813,26 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
     return () => clearInterval(timer);
   }, []);
   useLayoutEffect(() => {
+    const editor = inputRoot?.querySelector<HTMLElement>('[contenteditable]');
+    if (!editor) {
+      setDraftOverflows(false);
+      setDraftScrolledDown(false);
+      return;
+    }
+    const measure = () => {
+      setDraftOverflows(editor.scrollHeight > editor.clientHeight + 1);
+      setDraftScrolledDown(editor.scrollTop > 1);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(editor);
+    editor.addEventListener('scroll', measure, { passive: true });
+    return () => {
+      observer.disconnect();
+      editor.removeEventListener('scroll', measure);
+    };
+  }, [inputRoot, draft, narrow]);
+  useLayoutEffect(() => {
     if (!reveal || !thread.current) return;
     if (focusIntent.current === 'review') {
       const heading = document.getElementById('npg-review-title');
@@ -454,7 +856,13 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
               region.scrollTop,
             behavior: 'instant'
           });
-        else region.scrollTo({ top: region.scrollHeight, behavior: 'instant' });
+        else {
+          const isWelcome =
+            !conversationRef.current?.messages.length &&
+            !submitted &&
+            !conversationRef.current?.pending;
+          region.scrollTo({ top: isWelcome ? 0 : region.scrollHeight, behavior: 'instant' });
+        }
       });
     });
     return () => {
@@ -463,9 +871,15 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
     };
   }, [reveal, conversation?.pending?.id]);
   useLayoutEffect(() => {
-    if (resultsOpen && narrow)
-      inlineResults.current?.scrollIntoView({ block: 'start', behavior: 'instant' });
+    if (resultsOpen && narrow) {
+      document.getElementById('npg-evidence-title')?.focus({ preventScroll: true });
+      inlineResults.current?.scrollTo({ top: 0, behavior: 'instant' });
+    }
   }, [resultsOpen, narrow]);
+  function closeResults() {
+    setResultsOpen(false);
+    focusAfterNavigation(Boolean(conversationRef.current?.pending));
+  }
   const expired = Boolean(conversation?.pending && conversation.pending.expiresAt <= clock);
   const canSend =
     !busy &&
@@ -473,11 +887,11 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
     Boolean(draft.trim()) &&
     (!conversation || conversation.status === 'idle');
   const title =
-    conversations.find((item) => item.id === conversation?.id)?.title ?? 'New conversation';
+    conversations.find((item) => item.id === conversation?.id)?.title ?? 'Candidate research';
   const status = busy
     ? operation
     : needsRefresh
-      ? 'Readback required'
+      ? 'Check saved conversation'
       : conversation
         ? conversationStatus(conversation.status)
         : 'Ready';
@@ -489,21 +903,36 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
   const instruction = conversation?.pending
     ? 'Review or reject the action above before sending another question.'
     : blocked
-      ? 'Check the saved conversation before another request. Uncertain outcomes need reconciliation.'
+      ? 'Refresh the conversation to check what was saved before sending again.'
       : 'Registry evidence first. Paid actions need your review.';
   const titleHeading = (
     <Heading
       level={3}
       accessibilityLevel={1}
-      maxLines={2}
+      maxLines={narrow ? 1 : 2}
       wordBreak="break-word"
-      className="npg-thread-title min-w-0"
+      className={
+        narrow && conversation?.pending ? 'npg-thread-title sr-only' : 'npg-thread-title min-w-0'
+      }
     >
       {title}
     </Heading>
   );
   const statusContent = (
-    <HStack gap={1} className="npg-state shrink-0" role="status">
+    <HStack
+      gap={1}
+      className={
+        'npg-state shrink-0 ' +
+        (busy
+          ? 'text-state-info'
+          : conversation?.pending
+            ? 'text-state-review'
+            : blocked
+              ? 'text-state-error'
+              : 'text-state-ready')
+      }
+      role="status"
+    >
       <Icon
         icon={
           busy
@@ -516,74 +945,215 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
         }
         size="sm"
       />
-      <Text type="supporting" color="secondary" textWrap="nowrap">
+      <Text type="supporting" color="inherit" textWrap="nowrap">
         {status}
       </Text>
     </HStack>
   );
   const evidenceToggle = (
     <Button
-      label={'Results & evidence (' + (conversation?.sources.length ?? 0) + ')'}
+      label={
+        'Results & evidence · ' +
+        (conversation?.sources.length ?? 0) +
+        ((conversation?.sources.length ?? 0) === 1 ? ' source' : ' sources')
+      }
       variant="secondary"
+      size="sm"
       className="npg-results-toggle"
       aria-expanded={resultsOpen}
-      aria-controls="npg-inline-results"
-      onClick={() => setResultsOpen(!resultsOpen)}
-    />
+      aria-controls={narrow ? 'npg-inline-results' : 'npg-desktop-results'}
+      onClick={() => (resultsOpen ? closeResults() : setResultsOpen(true))}
+    >
+      Evidence · {conversation?.sources.length ?? 0}{' '}
+      {(conversation?.sources.length ?? 0) === 1 ? 'source' : 'sources'}
+    </Button>
   );
-  const composer = (
-    <Section className="npg-composer-surface" variant="section" padding={2}>
-      <VStack gap={2}>
-        <Text type="supporting" color="secondary">
-          {instruction}
-        </Text>
-        <ChatComposer
-          value={draft}
-          onChange={changeDraft}
-          onSubmit={(value) => void send(value)}
-          elevation="none"
-          density="compact"
-          input={
-            <ChatComposerInput
-              label="Your question"
-              value={draft}
-              onChange={changeDraft}
-              hasHistory={false}
-              pasteAsToken={false}
-              maxRows={3}
-              enterKeyHint="enter"
-              placeholder="Ask the NPG analyst…"
-              handleRef={input}
-              onKeyDown={(event) => {
-                if (
-                  event.key !== 'Enter' ||
-                  event.nativeEvent.isComposing ||
-                  event.nativeEvent.keyCode === 229
-                )
-                  return;
-                event.preventDefault();
-                if (event.metaKey || event.ctrlKey) void send();
-                else document.execCommand('insertLineBreak');
-              }}
-            />
-          }
-          footerActions={
-            <Text type="supporting" color="secondary">
-              Ctrl / ⌘ + Enter · {draft.length}/6,000
+  const empty = !conversation?.messages.length && !submitted && !conversation?.pending;
+  const summary = conversation?.pending
+    ? decisionSummary(conversation.pending, conversation.sources)
+    : null;
+  const terms = conversation?.pending ? reviewFields(conversation.pending.review) : [];
+  const argumentFields = conversation?.pending ? reviewFields(conversation.pending.arguments) : [];
+  const duplicateTargetOnly =
+    argumentFields.length === 1 &&
+    argumentFields[0].label === 'Candidate NPI' &&
+    summary?.target === 'NPI ' + argumentFields[0].value;
+  const composer = conversation?.pending ? (
+    <Section
+      padding={1}
+      paddingInline={2}
+      variant="section"
+      dividers={['top']}
+      className="npg-review-decision-bar max-w-reading mx-auto w-full"
+    >
+      <VStack gap={1}>
+        <VStack gap={0.5} className="npg-review-summary" id="npg-decision-context">
+          <HStack gap={2} justify="between" wrap="wrap">
+            <Text weight="semibold">{summary?.title}</Text>
+            <Text>
+              <Text type="supporting">
+                {summary?.priceLabel === 'Maximum' ? 'Max' : summary?.priceLabel}{' '}
+              </Text>
+              <Text weight="semibold">{summary?.price}</Text>
             </Text>
-          }
-          sendButton={
-            <Button
-              icon={<Icon icon={ArrowUp} />}
-              label={busy && submitted ? 'Working…' : 'Send question'}
-              isDisabled={!canSend}
-              onClick={() => void send()}
-            />
-          }
-        />
+          </HStack>
+          {summary?.name && (
+            <HStack gap={1} className="min-w-0">
+              <Text type="supporting" size="base" maxLines={1} className="min-w-0">
+                {summary.name}
+              </Text>
+              <Text type="supporting" size="base" color="secondary" className="shrink-0">
+                (unverified)
+              </Text>
+            </HStack>
+          )}
+          <HStack gap={2} justify="between" wrap="wrap">
+            <Text wordBreak="break-word" className="min-w-0">
+              {summary?.target}
+            </Text>
+            <Text type="body" color="primary" weight="semibold" role="status">
+              {expired
+                ? 'Review expired'
+                : 'Expires ' +
+                  new Date(conversation!.pending!.expiresAt).toLocaleTimeString([], {
+                    hour: 'numeric',
+                    minute: '2-digit'
+                  })}
+            </Text>
+          </HStack>
+        </VStack>
+        <HStack gap={2} wrap="wrap">
+          <Button
+            variant="primary"
+            icon={narrow ? undefined : <Icon icon={ClipboardCheck} />}
+            label="Approve this action"
+            className="min-h-control"
+            aria-describedby="npg-decision-context"
+            isDisabled={busy || needsRefresh || expired}
+            onClick={() => void decide('approve')}
+          >
+            Approve
+          </Button>
+          <Button
+            label="Reject action"
+            className="min-h-control"
+            variant="secondary"
+            isDisabled={busy || needsRefresh}
+            onClick={() => void decide('reject')}
+          >
+            Reject
+          </Button>
+          <Button
+            variant="ghost"
+            label="Read terms"
+            tooltip="Back to request"
+            className="min-h-control"
+            onClick={() => focusAfterNavigation(true)}
+          >
+            Read terms
+          </Button>
+        </HStack>
+      </VStack>
+    </Section>
+  ) : (
+    <Section
+      className="npg-composer-surface max-w-reading mx-auto w-full"
+      variant="section"
+      padding={empty ? 0 : 3}
+    >
+      <VStack gap={2}>
+        <Text color={empty ? 'primary' : 'secondary'} weight={empty ? 'medium' : 'normal'}>
+          {empty ? 'Your question' : instruction}
+        </Text>
+        <Theme theme={npgComposerTheme} mode="light">
+          <ChatComposer
+            value={draft}
+            onChange={changeDraft}
+            onSubmit={(value) => void send(value)}
+            elevation="none"
+            density="balanced"
+            input={
+              <ChatComposerInput
+                label="Your question"
+                ref={setInputRoot}
+                aria-describedby={draftOverflows ? 'npg-draft-scroll-hint' : undefined}
+                value={draft}
+                onChange={changeDraft}
+                hasHistory={false}
+                pasteAsToken={false}
+                maxRows={narrow ? (empty && !shortViewport ? 6 : 3) : 5}
+                className="min-h-control"
+                enterKeyHint="enter"
+                placeholder={
+                  empty
+                    ? 'Describe the specialty and location…'
+                    : 'Ask a follow-up about these results…'
+                }
+                handleRef={input}
+                onFocus={(event) => {
+                  // Astryx 0.7.14 can remount an empty editable without a line box
+                  // when a mobile history dialog closes. Preserve an empty line,
+                  // not a draft character, so pointer and keyboard editing agree.
+                  const editor = event.target;
+                  if (
+                    editor instanceof HTMLElement &&
+                    editor.isContentEditable &&
+                    !editor.hasChildNodes()
+                  )
+                    editor.append(document.createElement('br'));
+                }}
+                onKeyDown={(event) => {
+                  if (
+                    event.key !== 'Enter' ||
+                    event.nativeEvent.isComposing ||
+                    event.nativeEvent.keyCode === 229
+                  )
+                    return;
+                  event.preventDefault();
+                  if (event.metaKey || event.ctrlKey) void send();
+                  else document.execCommand('insertLineBreak');
+                }}
+              />
+            }
+            footerActions={
+              <VStack gap={0}>
+                <Text type="supporting" color="secondary" hasTabularNumbers>
+                  {!narrow && 'Ctrl / ⌘ + Enter'}
+                  {draft.length > 0 && (!narrow ? ' · ' : '') + draft.length + '/6,000'}
+                </Text>
+                {draftOverflows && (
+                  <Text id="npg-draft-scroll-hint" type="supporting" color="secondary">
+                    {draftScrolledDown ? 'Scroll up to review' : 'Scroll down to review'}
+                  </Text>
+                )}
+              </VStack>
+            }
+            sendButton={
+              <Button
+                icon={<Icon icon={ArrowUp} />}
+                label={busy && submitted ? 'Working…' : 'Send question'}
+                className="min-h-control"
+                variant={canSend ? 'primary' : 'secondary'}
+                isDisabled={!canSend}
+                onClick={() => void send()}
+              />
+            }
+          />
+        </Theme>
       </VStack>
     </Section>
   );
+  const savedMessages = conversation?.messages.map((message, index) => (
+    <ChatMessage key={index} sender={message.role}>
+      <ChatMessageBubble
+        name={message.role === 'user' ? 'You' : 'NPG analyst'}
+        variant={message.role === 'user' ? 'filled' : 'ghost'}
+        width="100%"
+      >
+        <Prose text={message.text} assistant={message.role === 'assistant'} />
+      </ChatMessageBubble>
+    </ChatMessage>
+  ));
   return (
     <AppShell
       className="npg-shell"
@@ -621,9 +1191,11 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
             />
           }
           footer={
-            <Text type="supporting" color="secondary">
-              Your account only. Registry evidence first.
-            </Text>
+            conversations.length ? (
+              <Text type="supporting" color="secondary">
+                Only your account can open these conversations.
+              </Text>
+            ) : null
           }
         >
           {conversations.length ? (
@@ -649,179 +1221,237 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
     >
       <HStack gap={0} height="100%" minHeight={0} className="npg-workspace min-w-0" align="stretch">
         <VStack gap={0} minHeight={0} className="npg-chat-column flex-1 min-w-0">
-          <Section padding={4} dividers={['bottom']}>
+          <Section padding={narrow ? 2 : 4} dividers={['bottom']}>
             {narrow ? (
-              <VStack gap={3}>
-                {titleHeading}
-                <HStack gap={3} justify="between" wrap="wrap">
+              empty ? (
+                <HStack gap={2} justify="between">
+                  {titleHeading}
                   {statusContent}
-                  {evidenceToggle}
                 </HStack>
-              </VStack>
+              ) : (
+                <VStack gap={conversation?.pending ? 0 : 1}>
+                  {titleHeading}
+                  <HStack gap={3} justify="between" wrap="wrap">
+                    {statusContent}
+                    {evidenceToggle}
+                  </HStack>
+                </VStack>
+              )
             ) : (
               <HStack gap={3} justify="between" wrap="wrap">
                 {titleHeading}
-                {statusContent}
+                <HStack gap={3}>
+                  {statusContent}
+                  {conversation?.pending && evidenceToggle}
+                </HStack>
               </HStack>
             )}
           </Section>
-          <ChatLayout
-            className="npg-thread min-w-0 min-h-0"
-            ref={thread}
-            density="compact"
-            scrollButton={null}
-            composer={composer}
+          <VStack
+            gap={0}
+            minHeight={0}
+            className={narrow && resultsOpen ? 'hidden' : 'flex flex-col flex-1 min-h-0'}
           >
-            <ChatMessageList
-              align="top"
-              density="compact"
-              className="npg-messages"
-              isStreaming={false}
+            <ThreadSurface
+              welcome={empty}
+              reviewing={Boolean(conversation?.pending)}
+              thread={thread}
+              composer={composer}
             >
-              {!conversation?.messages.length && !submitted && (
-                <VStack gap={4} width="100%" className="npg-welcome max-w-screen-sm mx-auto">
-                  <Heading level={2}>Start with the people you need to find.</Heading>
-                  <Text color="secondary">
-                    Ask about a location, taxonomy, or candidate. Keep the complete sourcing list
-                    and inspect what the registry can—and cannot—tell you.
-                  </Text>
-                  <VStack gap={2}>
-                    {examples.map((text) => (
-                      <Button
-                        key={text}
-                        variant="secondary"
-                        label={text}
-                        onClick={() => {
-                          changeDraft(text);
-                          input.current?.focus();
-                        }}
-                      />
-                    ))}
-                  </VStack>
-                </VStack>
-              )}
-              {conversation?.messages.map((message, index) => (
-                <ChatMessage key={index} sender={message.role}>
-                  <ChatMessageBubble
-                    name={message.role === 'user' ? 'You' : 'NPG analyst'}
-                    variant={message.role === 'user' ? 'filled' : 'ghost'}
-                    width="100%"
-                  >
-                    <Prose text={message.text} />
-                  </ChatMessageBubble>
-                </ChatMessage>
-              ))}
-              {submitted && (
-                <ChatMessage sender="user">
-                  <ChatMessageBubble name="You" width="100%">
-                    <Prose text={submitted} />
-                  </ChatMessageBubble>
-                </ChatMessage>
-              )}
-              {busy && submitted && (
-                <Banner
-                  status="info"
-                  title="Working on your question"
-                  description="The response arrives together after the model and permitted tools finish."
-                />
-              )}
-              {conversation?.pending && (
-                <Section
-                  ref={review}
-                  className="npg-review scroll-mt-4"
-                  padding={4}
-                  dividers={['top', 'bottom', 'start', 'end']}
-                  aria-labelledby="npg-review-title"
-                >
-                  <VStack gap={4}>
-                    <Heading id="npg-review-title" level={2} tabIndex={-1}>
-                      Review the exact action
-                    </Heading>
-                    <Text>
-                      Approval sends this one request as shown. Contact details do not establish
-                      permission to contact someone.
-                    </Text>
-                    <Heading level={3}>{actionLabel(conversation.pending.tool)}</Heading>
-                    <Fields fields={reviewFields(conversation.pending.review)} />
-                    <Heading level={3}>Request to approve</Heading>
-                    <Fields fields={reviewFields(conversation.pending.arguments)} />
-                    <Collapsible trigger="Inspect exact request" defaultIsOpen={false}>
-                      <Text
-                        as="p"
-                        type="code"
-                        display="block"
-                        wordBreak="break-word"
-                        className="npg-json whitespace-pre-wrap max-w-full overflow-auto"
+              <ChatMessageList
+                align="top"
+                density="balanced"
+                className="npg-messages max-w-reading mx-auto w-full"
+                isStreaming={false}
+              >
+                <Section hidden={narrow && resultsOpen} padding={0} variant="transparent">
+                  <VStack gap={6}>
+                    {empty && (
+                      <VStack
+                        gap={4}
+                        paddingBlock={narrow ? 3 : 6}
+                        width="100%"
+                        className="npg-welcome max-w-screen-sm mx-auto"
                       >
-                        {JSON.stringify(conversation.pending.arguments, null, 2)}
-                      </Text>
-                    </Collapsible>
-                    <Text role="status" type="supporting" color="secondary">
-                      {expired
-                        ? 'This review has expired. Approval is unavailable.'
-                        : 'Review expires ' +
-                          new Date(conversation.pending.expiresAt).toLocaleTimeString() +
-                          '. A later change needs a new review.'}
-                    </Text>
-                    <HStack gap={3} wrap="wrap">
-                      <Button
-                        icon={<Icon icon={ClipboardCheck} />}
-                        label="Approve this action"
-                        isDisabled={busy || needsRefresh || expired}
-                        onClick={() => void decide('approve')}
+                        <VStack gap={3}>
+                          <Heading level={1} accessibilityLevel={2}>
+                            Who are you looking for?
+                          </Heading>
+                          <Text type="body" size="lg" color="secondary">
+                            Start with a specialty and location. Find candidates, keep the complete
+                            sourcing list, and check the evidence behind it.
+                          </Text>
+                        </VStack>
+                        {composer}
+                        <List
+                          density="spacious"
+                          hasDividers
+                          edge="flush"
+                          header={
+                            <Text color="secondary">Try a preset, then edit before sending.</Text>
+                          }
+                        >
+                          {examples.map((example) => (
+                            <ListItem
+                              key={example.label}
+                              label={<Text weight="semibold">{example.label}</Text>}
+                              description={<Text color="secondary">{example.detail}</Text>}
+                              startContent={<Icon icon={example.icon} />}
+                              endContent={<Icon icon={ArrowRight} size="sm" />}
+                              align="first-line"
+                              onClick={() => {
+                                changeDraft(example.prompt);
+                                input.current?.focus();
+                              }}
+                            />
+                          ))}
+                        </List>
+                      </VStack>
+                    )}
+                    {!conversation?.pending && savedMessages}
+                    {submitted && (
+                      <ChatMessage sender="user">
+                        <ChatMessageBubble name="You" width="100%">
+                          <Prose text={submitted} />
+                        </ChatMessageBubble>
+                      </ChatMessage>
+                    )}
+                    {busy && submitted && (
+                      <Banner
+                        status="info"
+                        title="Working on your question"
+                        description="Your answer will appear here when it is ready."
                       />
-                      <Button
-                        label="Reject action"
-                        variant="secondary"
-                        isDisabled={busy || needsRefresh}
-                        onClick={() => void decide('reject')}
+                    )}
+                    {conversation?.pending && (
+                      <Section
+                        ref={review}
+                        className="npg-review scroll-mt-4"
+                        padding={narrow ? 0 : 4}
+                        dividers={narrow ? [] : ['top', 'bottom', 'start', 'end']}
+                        aria-labelledby="npg-review-title"
+                      >
+                        <VStack gap={3}>
+                          <Heading id="npg-review-title" level={2} tabIndex={-1}>
+                            Review: {summary?.title}
+                          </Heading>
+                          <VStack gap={1}>
+                            {summary?.name && (
+                              <Text weight="semibold" wordBreak="break-word">
+                                {summary.name}{' '}
+                                <Text weight="normal" color="secondary">
+                                  (registry, unverified)
+                                </Text>
+                              </Text>
+                            )}
+                            <Text wordBreak="break-word">{summary?.target}</Text>
+                          </VStack>
+                          <Fields
+                            compact={!narrow}
+                            fields={terms.filter((field) => field.label === 'Scope')}
+                          />
+                          <Text>
+                            Approve only this request. Contact consent remains unverified.
+                          </Text>
+                          <Divider />
+                          <Fields
+                            review
+                            compact={!narrow}
+                            fields={terms.filter((field) => field.label !== 'Scope')}
+                          />
+                          {!duplicateTargetOnly && (
+                            <>
+                              <Divider />
+                              <Heading level={3}>Request details</Heading>
+                              <Fields compact={!narrow} fields={argumentFields} />
+                            </>
+                          )}
+                          <Collapsible trigger="Exact request data" defaultIsOpen={false}>
+                            <Text
+                              as="p"
+                              type="code"
+                              display="block"
+                              wordBreak="break-word"
+                              className="npg-json whitespace-pre-wrap max-w-full overflow-auto"
+                            >
+                              {JSON.stringify(conversation.pending.arguments, null, 2)}
+                            </Text>
+                          </Collapsible>
+                          <Divider />
+                          {expired && (
+                            <Text role="status" color="secondary">
+                              This review has expired. Approval is unavailable.
+                            </Text>
+                          )}
+                        </VStack>
+                      </Section>
+                    )}
+                    {conversation?.pending && Boolean(conversation.messages.length) && (
+                      <Collapsible trigger="Conversation context" defaultIsOpen={false}>
+                        <VStack gap={6} paddingBlock={3}>
+                          {savedMessages}
+                        </VStack>
+                      </Collapsible>
+                    )}
+                    {notice && (
+                      <Banner
+                        status="error"
+                        title="Could not complete the request"
+                        description={notice}
+                        role="alert"
                       />
-                    </HStack>
+                    )}
+                    {(notice || blocked) && (
+                      <Button
+                        icon={<Icon icon={RefreshCw} />}
+                        label="Refresh history"
+                        className="min-h-control"
+                        variant={needsRefresh ? 'primary' : 'secondary'}
+                        isDisabled={busy}
+                        onClick={() => void refresh()}
+                      />
+                    )}
                   </VStack>
                 </Section>
-              )}
-              {notice && (
-                <Banner
-                  status="error"
-                  title="Could not complete the request"
-                  description={notice}
-                  role="alert"
-                />
-              )}
-              {(notice || blocked) && (
+              </ChatMessageList>
+            </ThreadSurface>
+          </VStack>
+          {narrow && resultsOpen && (
+            <VStack gap={0} minHeight={0} className="flex-1 min-w-0">
+              <VStack
+                ref={inlineResults}
+                id="npg-inline-results"
+                isScrollable
+                minHeight={0}
+                padding={4}
+                className="npg-inline-results flex-1 min-w-0"
+              >
+                <Evidence sources={conversation?.sources ?? []} />
+              </VStack>
+              <Section padding={2} dividers={['top']} variant="section">
                 <Button
-                  icon={<Icon icon={RefreshCw} />}
-                  label="Refresh history"
-                  variant="secondary"
-                  isDisabled={busy}
-                  onClick={() => void refresh()}
+                  icon={<Icon icon={ArrowLeft} />}
+                  label="Back to conversation"
+                  className="min-h-control"
+                  onClick={closeResults}
                 />
-              )}
-              {narrow && (
-                <Section
-                  ref={inlineResults}
-                  id="npg-inline-results"
-                  hidden={!resultsOpen}
-                  padding={4}
-                  className="npg-inline-results max-md:px-0"
-                >
-                  <Evidence sources={conversation?.sources ?? []} />
-                </Section>
-              )}
-            </ChatMessageList>
-          </ChatLayout>
+              </Section>
+            </VStack>
+          )}
         </VStack>
-        {!narrow && (
-          <Section
-            className="npg-evidence w-80 shrink-0 overflow-auto min-w-0"
-            height="100%"
-            padding={6}
-            dividers={['start']}
-            aria-label="Results and evidence"
-          >
-            <Evidence sources={conversation?.sources ?? []} />
-          </Section>
-        )}
+        {!narrow &&
+          (conversation?.pending ? resultsOpen : Boolean(conversation?.sources.length)) && (
+            <Section
+              id="npg-desktop-results"
+              className="npg-evidence w-80 xl:w-evidence shrink-0 overflow-auto min-w-0"
+              height="100%"
+              padding={6}
+              dividers={['start']}
+              aria-label="Results and evidence"
+            >
+              <Evidence sources={conversation?.sources ?? []} />
+            </Section>
+          )}
       </HStack>
     </AppShell>
   );

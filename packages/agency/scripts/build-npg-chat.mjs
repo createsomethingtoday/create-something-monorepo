@@ -3,6 +3,7 @@ import { build } from 'vite';
 import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('../', import.meta.url));
+await import('./build-npg-themes.mjs');
 await build({ root, configFile: fileURLToPath(new URL('../npg.vite.config.ts', import.meta.url)) });
 const manifest = JSON.parse(
   await readFile(new URL('../static/npg-chat/.vite/manifest.json', import.meta.url), 'utf8')

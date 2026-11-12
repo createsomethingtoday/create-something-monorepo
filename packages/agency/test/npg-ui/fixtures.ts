@@ -33,7 +33,7 @@ export function fixture(mode: string | null) {
   if (mode && mode !== 'new')
     view = {
       ...view,
-      status: ['review', 'expired', 'enrichment'].includes(mode)
+      status: ['review', 'expired', 'enrichment', 'skip-review'].includes(mode)
         ? 'review'
         : ['ambiguous', 'running', 'interrupted'].includes(mode)
           ? mode
@@ -65,6 +65,23 @@ export function fixture(mode: string | null) {
         cost: 'Exact cost unavailable. May reserve routing credits.'
       },
       expiresAt: Date.now() + (mode === 'expired' ? -1000 : 600000)
+    };
+  // Synthetic selected NPI with the production Skip Trace review shape: cost is prose,
+  // not a maximumCost/currency pair. The UI must preserve its complete conditions.
+  if (mode === 'skip-review')
+    view.pending = {
+      id: '1d0822cf-c2ac-4713-a6ba-fef887b7bccc',
+      tool: 'enrich_candidate_skip_trace',
+      arguments: { npi: '1234567890', confirm_paid_enrichment: true },
+      review: {
+        provider: 'Apify one-api/skip-trace',
+        scope:
+          'One selected registry NPI; broker personal contact candidates and home city/state. Practice geography is not residence.',
+        limits:
+          'One pinned run, ten-cent cap, shared daily reservations. Repeated identical input reconciles the same run. Account ownership and empty-sentinel anonymous access are checked before dispatch; these checks cannot exclude explicit grants or Actor-creator sharing. Account restriction and sharing setup require operator review.',
+        cost: 'Up to $0.10 reserved. Contacts, ownership and consent remain unverified; never recruiter-ready.'
+      },
+      expiresAt: Date.now() + 600000
     };
   if (mode === 'enrichment')
     view.pending = {
@@ -215,7 +232,9 @@ export function fixture(mode: string | null) {
         if (mode === 'error')
           return {
             status: 503,
-            data: { error: 'Fixture interruption. Refresh the history before trying again.' }
+            data: {
+              error: 'This conversation changed or stopped. Refresh its history before continuing.'
+            }
           };
         view = {
           ...view,
