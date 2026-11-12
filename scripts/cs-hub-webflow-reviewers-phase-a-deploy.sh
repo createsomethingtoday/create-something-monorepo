@@ -29,9 +29,7 @@ SKIP_NORMALIZE="${SKIP_NORMALIZE:-0}"
 SKIP_VERIFY="${SKIP_VERIFY:-0}"
 
 REVIEWERS=(
-  "wf-template-review-natalia|acct_wf_natalia"
   "wf-template-review-eric|acct_wf_eric"
-  "wf-template-review-vicki|acct_wf_vicki"
   "wf-template-review-mariana|acct_wf_mariana"
   "wf-template-review-micah|acct_wf_micah"
 )

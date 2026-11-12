@@ -18,7 +18,7 @@ enabled = true
 AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"
 CS_IDENTITY_ISSUER = "https://id.createsomething.space"
 OAUTH_ALLOWED_EMAIL_DOMAIN = "webflow.com"
-OAUTH_ALLOWED_EMAILS = "natalia.ledford@webflow.com,eric.unger@webflow.com,vicki.chen@webflow.com,mariana.segura@webflow.com,micah@webflow.com,micah@createsomething.io"
+OAUTH_ALLOWED_EMAILS = "eric.unger@webflow.com,mariana.segura@webflow.com,micah@webflow.com,micah@createsomething.io"
 REVIEWER_AUTH_EMAIL_ALIASES_JSON = '{"acct_wf_micah":["micah@createsomething.io"]}'
 # Featured-batch finalization grant (template_review_set_featured_flag), merged over the directory.
 FEATURED_COORDINATOR_ACCOUNT_IDS = "acct_wf_micah"
