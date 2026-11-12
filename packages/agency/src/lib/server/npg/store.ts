@@ -7,13 +7,14 @@ export class NpgError extends Error {
     super(message);
   }
 }
-export type Message = { role: 'user' | 'assistant'; text: string };
+export type Message = { role: 'user' | 'assistant'; text: string; skipTraceReceipt?: string };
 export type Source = { tool: string; data: unknown };
 export type State = {
   messages: Message[];
   sources: Source[];
   responseId?: string;
   pendingId?: string;
+  skipTracePending?: { actionId: string; id: string; run_id: string };
 };
 export type Conversation = {
   id: string;
@@ -276,12 +277,27 @@ export class NpgStore {
       .bind(JSON.stringify(state), row.id, row.owner_id, row.lease_token)
       .run();
   }
-  async finish(row: Conversation, state: State, status: Conversation['status'], toolCount: number) {
+  async finish(
+    row: Conversation,
+    state: State,
+    status: Conversation['status'],
+    toolCount: number,
+    completedActionId?: string
+  ) {
     const json = JSON.stringify(state);
     if (json.length > 450000)
       throw new NpgError(409, 'Conversation is full. Start a new conversation.');
     await this.assertLease(row);
     await this.db.batch([
+      ...(completedActionId
+        ? [
+            this.db
+              .prepare(
+                "UPDATE npg_analyst_actions SET status='completed' WHERE id=? AND owner_id=? AND conversation_id=? AND status='dispatching'"
+              )
+              .bind(completedActionId, row.owner_id, row.id)
+          ]
+        : []),
       this.db
         .prepare(
           "UPDATE npg_analyst_conversations SET state_json=?,status=?,updated_at=?,lease_until=0 WHERE id=? AND owner_id=? AND lease_token=? AND status='running'"

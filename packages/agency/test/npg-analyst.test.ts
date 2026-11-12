@@ -199,12 +199,13 @@ const approve = (v: any): Extract<Command, { type: 'approve' | 'reject' }> => ({
   actionId: v.pending.id
 });
 
-test('captured V8 judgment and 12 names retained exactly; no public runtime definition', () => {
+test('captured V8 judgment retained with additive Skip Trace allowlist; no public runtime definition', () => {
   assert.equal(NPG_SOURCE.snapshot_version, 8);
   assert.equal(NPG_SOURCE.model, 'gpt-5.6-luna');
   assert.equal(NPG_SYSTEM_PROMPT.length, 8052);
   assert.equal(createHash('sha256').update(NPG_SYSTEM_PROMPT).digest('hex'), NPG_PROMPT_SHA256);
-  assert.equal(NPG_TOOL_NAMES.length, 12);
+  assert.equal(NPG_TOOL_NAMES.length, 13);
+  assert.ok(NPG_TOOL_NAMES.includes('enrich_candidate_skip_trace'));
   for (const phrase of [
     'get_enrichment_readiness',
     'USD100 TOTAL',
@@ -969,3 +970,246 @@ for (const decision of ['approve', 'reject', 'expire'] as const) {
       });
     }));
 }
+
+test('known Skip Trace pending can reconcile through chat without another paid approval or global lock', () =>
+  database(async (store) => {
+    const f = fixture('enrich_candidate_skip_trace', {
+      npi: '1234567890',
+      confirm_paid_enrichment: true
+    });
+    const baseTools = await f.p.tools();
+    f.p.tools = async () => [
+      ...baseTools,
+      {
+        name: 'enrich_candidate_skip_trace',
+        inputSchema: {
+          type: 'object',
+          properties: { npi: { type: 'string' }, confirm_paid_enrichment: { const: true } },
+          required: ['npi', 'confirm_paid_enrichment'],
+          additionalProperties: false
+        }
+      }
+    ];
+    let calls = 0;
+    f.p.call = async (name, args) => {
+      calls++;
+      if (calls === 1)
+        return { status: 'pending', id: 'a'.repeat(64), run_id: 'run1', npi: '1234567890' };
+      assert.deepEqual(args, {
+        npi: '1234567890',
+        confirm_paid_enrichment: true,
+        reconcile_receipt: { id: 'a'.repeat(64), run_id: 'run1' }
+      });
+      return {
+        status: 'review_required',
+        id: 'a'.repeat(64),
+        run_id: 'run1',
+        npi: '1234567890',
+        contacts: { emails: ['synthetic@example.test'] }
+      };
+    };
+    const c = await conversation(store);
+    const proposal = await executeCommand(store, 'alice', message(c), () => f.p);
+    const pending = await executeCommand(store, 'alice', approve(proposal), () => f.p);
+    assert.equal(pending.status, 'idle');
+    assert.match(pending.messages.at(-1)!.text, /Refresh Skip Trace/);
+    await store.acquirePaid('unrelated');
+    await store.releasePaid('unrelated');
+    const other = fixture(
+      'enrich_candidate_profile',
+      { npi: '1234567890', confirm_paid_enrichment: true, include_personal_contact: false },
+      { readiness: ready }
+    );
+    const otherC = await conversation(store, 'carol');
+    const otherReview = await executeCommand(store, 'carol', message(otherC), () => other.p);
+    const otherDone = await executeCommand(store, 'carol', approve(otherReview), () => other.p);
+    assert.equal(otherDone.status, 'idle');
+    assert.equal(other.calls.filter((c) => c.name === 'enrich_candidate_profile').length, 1);
+    await assert.rejects(() =>
+      executeCommand(
+        store,
+        'bob',
+        { type: 'message', id: pending.id, version: pending.version, text: 'Refresh Skip Trace' },
+        () => f.p
+      )
+    );
+    assert.equal(calls, 1);
+    const done = await executeCommand(
+      store,
+      'alice',
+      { type: 'message', id: pending.id, version: pending.version, text: 'Refresh Skip Trace' },
+      () => f.p
+    );
+    assert.equal(done.status, 'idle');
+    assert.equal(calls, 2);
+    assert.match(JSON.stringify(done.sources), /synthetic@example.test/);
+    let replay: unknown;
+    f.p.respond = async (input, previous) => {
+      assert.equal(previous, undefined);
+      replay = input;
+      return { id: 'followup', text: 'Recovered evidence received.' };
+    };
+    await executeCommand(store, 'alice', { type: 'message', id: done.id, version: done.version, text: 'Which emails were returned?' }, () => f.p);
+    assert.match(JSON.stringify(replay), /synthetic@example.test/);
+    assert.match(JSON.stringify(replay), /untrusted source evidence/i);
+    assert.equal(calls, 2);
+
+  }));
+test('Skip Trace unknown dispatch remains a manual global hold and refresh cannot bypass it',()=>database(async store=>{
+ const f=fixture('enrich_candidate_skip_trace',{npi:'1234567890',confirm_paid_enrichment:true});const tools=await f.p.tools();f.p.tools=async()=>[...tools,{name:'enrich_candidate_skip_trace',inputSchema:{type:'object',properties:{npi:{type:'string'},confirm_paid_enrichment:{const:true}},required:['npi','confirm_paid_enrichment'],additionalProperties:false}}];let calls=0;f.p.call=async()=>{calls++;return {status:'delivery_unknown',id:'a'.repeat(64),npi:'1234567890'};};const c=await conversation(store);const proposed=await executeCommand(store,'alice',message(c),()=>f.p);const unknown=await executeCommand(store,'alice',approve(proposed),()=>f.p);assert.equal(unknown.status,'ambiguous');await assert.rejects(()=>store.acquirePaid('unrelated'),/reconciliation/);await assert.rejects(()=>executeCommand(store,'alice',{type:'message',id:unknown.id,version:unknown.version,text:'Refresh Skip Trace'},()=>f.p));assert.equal(calls,1);
+}));
+
+test('Skip Trace refresh survives full history and repeated pending reads without unbounded growth', () =>
+  database(async (store) => {
+    const f = fixture('enrich_candidate_skip_trace', {
+      npi: '1234567890',
+      confirm_paid_enrichment: true
+    });
+    const baseTools = await f.p.tools();
+    f.p.tools = async () => [
+      ...baseTools,
+      {
+        name: 'enrich_candidate_skip_trace',
+        inputSchema: {
+          type: 'object',
+          properties: { npi: { type: 'string' }, confirm_paid_enrichment: { const: true } },
+          required: ['npi', 'confirm_paid_enrichment'],
+          additionalProperties: false
+        }
+      }
+    ];
+    let calls = 0;
+    f.p.call = async (name, args) => {
+      calls++;
+      if (calls === 1)
+        return { status: 'pending', id: 'a'.repeat(64), run_id: 'run1', npi: '1234567890' };
+      assert.deepEqual(args, {
+        npi: '1234567890',
+        confirm_paid_enrichment: true,
+        reconcile_receipt: { id: 'a'.repeat(64), run_id: 'run1' }
+      });
+      return {
+        ...(calls === 2 ? { oversized: 'x'.repeat(300000) } : {}),
+        status: calls < 5 ? 'pending' : 'review_required',
+        id: 'a'.repeat(64),
+        run_id: 'run1',
+        npi: '1234567890',
+        contacts: { emails: ['synthetic@example.test'] }
+      };
+    };
+    const c = await conversation(store);
+    const proposal = await executeCommand(store, 'alice', message(c), () => f.p);
+    const pending = await executeCommand(store, 'alice', approve(proposal), () => f.p);
+    assert.equal(pending.status, 'idle');
+    assert.match(pending.messages.at(-1)!.text, /Refresh Skip Trace/);
+    await store.acquirePaid('unrelated');
+    await store.releasePaid('unrelated');
+    const other = fixture(
+      'enrich_candidate_profile',
+      { npi: '1234567890', confirm_paid_enrichment: true, include_personal_contact: false },
+      { readiness: ready }
+    );
+    const otherC = await conversation(store, 'carol');
+    const otherReview = await executeCommand(store, 'carol', message(otherC), () => other.p);
+    const otherDone = await executeCommand(store, 'carol', approve(otherReview), () => other.p);
+    assert.equal(otherDone.status, 'idle');
+    assert.equal(other.calls.filter((c) => c.name === 'enrich_candidate_profile').length, 1);
+    await assert.rejects(() =>
+      executeCommand(
+        store,
+        'bob',
+        { type: 'message', id: pending.id, version: pending.version, text: 'Refresh Skip Trace' },
+        () => f.p
+      )
+    );
+    assert.equal(calls, 1);
+    const stored = await store.read('alice', pending.id);
+    const full = JSON.parse(stored.state_json) as State;
+    full.sources.push({ tool: 'old_source', data: 'x'.repeat(300000) });
+    full.messages = Array.from({ length: 60 }, () => ({
+      role: 'assistant',
+      text: 'x'.repeat(5000)
+    }));
+    await store.db
+      .prepare('UPDATE npg_analyst_conversations SET state_json=? WHERE id=?')
+      .bind(JSON.stringify(full), pending.id)
+      .run();
+    let current = pending;
+    for (let i = 0; i < 3; i++) {
+      current = await executeCommand(
+        store,
+        'alice',
+        { type: 'message', id: current.id, version: current.version, text: 'Refresh Skip Trace' },
+        () => f.p
+      );
+      assert.equal(current.status, 'idle');
+      assert.ok(current.messages.length <= 60);
+      assert.equal(
+        current.sources.filter((s) => s.tool === 'enrich_candidate_skip_trace').length,
+        1
+      );
+      assert.ok((await store.read('alice', current.id)).state_json.length <= 260000);
+    }
+    const done = await executeCommand(
+      store,
+      'alice',
+      { type: 'message', id: current.id, version: current.version, text: 'Refresh Skip Trace' },
+      () => f.p
+    );
+    assert.equal(done.status, 'idle');
+    assert.equal(calls, 5);
+    assert.match(JSON.stringify(done.sources), /synthetic@example.test/);
+  }));
+
+for (const initialStatus of ['pending', 'no_contact'])
+test(`real MCP refresh initializes transport and retains ${initialStatus} receipt until billing settles`, () => database(async store => {
+  const f = fixture('enrich_candidate_skip_trace', { npi: '1234567890', confirm_paid_enrichment: true });
+  const originalTools = await f.p.tools();
+  const skipTool = {name:'enrich_candidate_skip_trace',inputSchema:{type:'object',properties:{npi:{type:'string'},confirm_paid_enrichment:{const:true}},required:['npi','confirm_paid_enrichment'],additionalProperties:false}};
+  f.p.tools = async () => [...originalTools, skipTool];
+  f.p.call = async () => ({status:initialStatus,id:'a'.repeat(64),run_id:'run1',npi:'1234567890',charge_reconciled:false});
+  const c = await conversation(store);
+  const proposal = await executeCommand(store,'alice',message(c),()=>f.p);
+  let current = await executeCommand(store,'alice',approve(proposal),()=>f.p);
+  const methods: string[] = [];
+  let calls = 0;
+  const make = () => createProviders({NPG_HEALTHCARE_OPENAI_API_KEY:'fixture-openai-secret',NPG_HEALTHCARE_MODEL:NPG_SOURCE.model,ABUNDANCE_HEALTHCARE_MCP_API_KEY:'fixture-mcp-secret'},AbortSignal.timeout(10000),async (url,init) => {
+    assert.equal(String(url),'https://abundance-healthcare-mcp.createsomething.workers.dev/mcp');
+    if(init?.method==='GET'||init?.method==='DELETE') return new Response(null,{status:405});
+    const rpc=JSON.parse(String(init?.body)); methods.push(rpc.method);
+    if(rpc.method==='notifications/initialized') return new Response(null,{status:202});
+    let result;
+    if(rpc.method==='initialize') result={protocolVersion:'2025-03-26',capabilities:{tools:{}},serverInfo:{name:'fixture',version:'1'}};
+    else if(rpc.method==='tools/list') result={tools:[skipTool]};
+    else { assert.equal(rpc.method,'tools/call');assert.deepEqual(rpc.params.arguments.reconcile_receipt,{id:'a'.repeat(64),run_id:'run1'});calls++;result={content:[],structuredContent:{status:'no_contact',id:'a'.repeat(64),run_id:'run1',npi:'1234567890',charge_reconciled:calls===2}}; }
+    return Response.json({jsonrpc:'2.0',id:rpc.id,result});
+  });
+  for(let i=0;i<2;i++) {
+    current=await executeCommand(store,'alice',{type:'message',id:current.id,version:current.version,text:'Refresh Skip Trace'},make);
+    assert.equal(calls,i+1);
+    const state=JSON.parse((await store.read('alice',current.id)).state_json) as State;
+    assert.equal(Boolean(state.skipTracePending),i===0);
+    assert.equal(current.status,'idle');
+  }
+  const settledVersion=current.version;
+  await assert.rejects(()=>executeCommand(store,'alice',{type:'message',id:current.id,version:current.version,text:'Refresh Skip Trace'},make),/no known Skip Trace/i);
+  const after=await store.view('alice',current.id);assert.equal(after.status,'idle');assert.equal(after.version,settledVersion);assert.equal(calls,2);
+  assert.equal(methods.filter(m=>m==='initialize').length,2);
+  assert.equal(methods.filter(m=>m==='tools/list').length,2);
+}));
+
+test('refresh without a receipt leaves an idle conversation usable',()=>database(async store=>{
+ const c=await conversation(store);let made=false;
+ await assert.rejects(()=>executeCommand(store,'alice',{type:'message',id:c.id,version:c.version,text:'Refresh Skip Trace'},()=>{made=true;throw new Error('unexpected provider');}),/no known Skip Trace/i);
+ const after=await store.view('alice',c.id);assert.equal(after.status,'idle');assert.equal(after.version,c.version);assert.equal(made,false);
+ const f=fixture('search_registry_sourcing',{});const done=await executeCommand(store,'alice',message(after),()=>f.p);assert.notEqual(done.status,'interrupted');
+}));
+for(const failure of ['privacy_blocked_review','association_failure','billing_review'])
+test(`failed refresh replaces stale contact evidence: ${failure}`,()=>database(async store=>{
+ const f=fixture('enrich_candidate_skip_trace',{npi:'1234567890',confirm_paid_enrichment:true});const base=await f.p.tools();f.p.tools=async()=>[...base,{name:'enrich_candidate_skip_trace',inputSchema:{type:'object',properties:{npi:{type:'string'},confirm_paid_enrichment:{const:true}},required:['npi','confirm_paid_enrichment'],additionalProperties:false}}];let calls=0;
+ f.p.call=async()=>({status:++calls===1?'review_required':failure,id:'a'.repeat(64),run_id:'run1',npi:'1234567890',charge_reconciled:false,...(calls===1?{contacts:{emails:['stale@example.test']}}:{})});
+ const c=await conversation(store);const proposal=await executeCommand(store,'alice',message(c),()=>f.p);const pending=await executeCommand(store,'alice',approve(proposal),()=>f.p);
+ const failed=await executeCommand(store,'alice',{type:'message',id:pending.id,version:pending.version,text:'Refresh Skip Trace'},()=>f.p);
+ assert.equal(failed.status,'ambiguous');assert.doesNotMatch(JSON.stringify(failed.sources),/stale@example.test/);assert.match(JSON.stringify(failed.sources),new RegExp(failure));
+ await assert.rejects(()=>store.acquirePaid('unrelated'),/reconciliation/);
+}));

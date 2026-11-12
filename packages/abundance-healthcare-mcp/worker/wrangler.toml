@@ -34,3 +34,12 @@ class_name = "PdlProfiles"
 [[migrations]]
 tag = "v2"
 new_sqlite_classes = ["PdlProfiles"]
+
+# APIFY_API_TOKEN is a server secret; provision only after parent release approval.
+[[durable_objects.bindings]]
+name = "SKIP_TRACE"
+class_name = "SkipTraceProfiles"
+
+[[migrations]]
+tag = "v3"
+new_sqlite_classes = ["SkipTraceProfiles"]
