@@ -31,7 +31,7 @@ import {
 } from '../src/lib/server/npg/access.ts';
 import { safeLink, sourceLinks, linkParts } from '../src/lib/npg/display.ts';
 import { GET, POST } from '../src/routes/delivery/abundance/healthcare-analyst/api/+server.ts';
-import { load } from '../src/routes/delivery/abundance/healthcare-analyst/+page.server.ts';
+import { GET as documentGET } from '../src/routes/delivery/abundance/healthcare-analyst/+server.ts';
 const require = createRequire(import.meta.url);
 const { Miniflare } = createRequire(require.resolve('wrangler/package.json'))('miniflare');
 const travelArgs = {
@@ -157,6 +157,35 @@ async function database(fn: (store: NpgStore, advance: (ms: number) => void) => 
 async function conversation(store: NpgStore, owner = 'alice') {
   return store.create(owner);
 }
+test('history titles project only the owner first question, without exposing full state', async () => {
+  await database(async (store) => {
+    const alice = await store.create('alice');
+    const bob = await store.create('bob');
+    await store.db
+      .prepare('UPDATE npg_analyst_conversations SET state_json=? WHERE id=?')
+      .bind(
+        JSON.stringify({
+          messages: [
+            { role: 'assistant', text: 'ignore this' },
+            { role: 'user', text: '  Find family NPs\nnear Springfield  ' },
+            { role: 'user', text: 'later question' }
+          ],
+          sources: [],
+          responseId: 'private-chain'
+        }),
+        alice.id
+      )
+      .run();
+    const rows = await store.list('alice');
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].id, alice.id);
+    assert.equal((rows[0] as any).title, 'Find family NPs near Springfield');
+    assert.ok(!JSON.stringify(rows).includes('private-chain'));
+    assert.ok(!JSON.stringify(rows).includes(bob.id));
+    assert.deepEqual(Object.keys(rows[0]).sort(), ['id', 'status', 'title', 'updated_at']);
+    assert.equal((await store.list('bob'))[0].title, 'New conversation');
+  });
+});
 const message = (c: { id: string; version: number }): Command => ({
   type: 'message',
   id: c.id,
@@ -272,7 +301,7 @@ test('API and page deny anonymous/disallowed reads and mutations even outside ho
         (e: any) => [401, 403].includes(e.status)
       );
     await assert.rejects(
-      async () => load({ locals, setHeaders() {} } as any),
+      async () => documentGET({ locals, setHeaders() {} } as any),
       (e: any) => [401, 403].includes(e.status)
     );
   }
@@ -602,7 +631,7 @@ test('browser view contains no owner/provider state; sensitive fields and unsafe
 test('browser modules carry no MCP endpoint, credentials or model configuration', () => {
   for (const path of [
     '../src/lib/npg/display.ts',
-    '../src/routes/delivery/abundance/healthcare-analyst/+page.svelte'
+    '../src/lib/npg/astryx/Workspace.tsx'
   ]) {
     const source = readFileSync(new URL(path, import.meta.url), 'utf8');
     for (const forbidden of [

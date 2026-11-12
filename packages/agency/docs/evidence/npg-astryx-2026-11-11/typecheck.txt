@@ -1,0 +1,3 @@
+
+> @create-something/agency@1.0.0 npg:typecheck /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> tsc --project tsconfig.npg.json

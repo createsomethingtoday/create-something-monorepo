@@ -1,0 +1,62 @@
+[
+  {
+    "name": "corrupt draft not valid json",
+    "passed": true
+  },
+  {
+    "name": "corrupt draft 42",
+    "passed": true
+  },
+  {
+    "name": "corrupt draft \"value\"",
+    "passed": true
+  },
+  {
+    "name": "corrupt draft {\"new\":null}",
+    "passed": true
+  },
+  {
+    "name": "drawer keyboard and return 320",
+    "passed": true
+  },
+  {
+    "name": "drawer keyboard and return 390",
+    "passed": true
+  },
+  {
+    "name": "drawer keyboard and return 768",
+    "passed": true
+  },
+  {
+    "name": "drawer keyboard and return 1024",
+    "passed": true
+  },
+  {
+    "name": "state icon new",
+    "passed": true
+  },
+  {
+    "name": "state icon review",
+    "passed": true
+  },
+  {
+    "name": "state icon ambiguous",
+    "passed": true
+  },
+  {
+    "name": "state icon interrupted",
+    "passed": true
+  },
+  {
+    "name": "state icon running",
+    "passed": true
+  },
+  {
+    "name": "actual newline and IME guard",
+    "passed": true
+  },
+  {
+    "name": "busy icon and readable composer",
+    "passed": true
+  }
+]

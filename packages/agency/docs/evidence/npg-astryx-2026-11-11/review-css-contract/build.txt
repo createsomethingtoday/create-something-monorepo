@@ -1,0 +1,45 @@
+Receipt excerpt. Full command completed with exit 0; unrelated routine output omitted.
+...
+
+> @create-something/agency@1.0.0 build /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> pnpm npg:typecheck && pnpm npg:build && pnpm test:support-brief && pnpm test:gigi-beta && pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs vite vite build
+
+
+> @create-something/agency@1.0.0 npg:typecheck /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> tsc --project tsconfig.npg.json
+...
+.svelte-kit/output/server/chunks/customer-map-workspace.js                                                                                                30.84 kB
+.svelte-kit/output/server/entries/endpoints/api/stripe/webhook/_server.ts.js                                                                              31.40 kB
+.svelte-kit/output/server/chunks/abundance-healthcare-providers.js                                                                                        32.06 kB
+.svelte-kit/output/server/entries/pages/contact/_page.svelte.js                                                                                           33.05 kB
+.svelte-kit/output/server/entries/pages/_page.svelte.js                                                                                                   33.65 kB
+.svelte-kit/output/server/chunks/workflow-context.js                                                                                                      34.82 kB
+.svelte-kit/output/server/entries/pages/practice/_page.svelte.js                                                                                          36.75 kB
+.svelte-kit/output/server/remote-entry.js                                                                                                                 36.83 kB
+.svelte-kit/output/server/chunks/mcp-entitlements.js                                                                                                      39.87 kB
+.svelte-kit/output/server/entries/endpoints/api/control/activations/_server.ts.js                                                                         43.79 kB
+.svelte-kit/output/server/entries/pages/services/_page.svelte.js                                                                                          44.57 kB
+.svelte-kit/output/server/entries/pages/admin/governance/_page.svelte.js                                                                                  48.07 kB
+.svelte-kit/output/server/chunks/gigi-beta-page.js                                                                                                        50.67 kB
+.svelte-kit/output/server/chunks/index4.js                                                                                                                52.80 kB
+.svelte-kit/output/server/chunks/agencyPageFoundations.js                                                                                                 55.62 kB
+.svelte-kit/output/server/chunks/workflowPages.js                                                                                                         59.52 kB
+.svelte-kit/output/server/chunks/AgencyHeroFrame.js                                                                                                       67.68 kB
+.svelte-kit/output/server/chunks/utils.js                                                                                                                 75.70 kB
+.svelte-kit/output/server/entries/pages/_layout.svelte.js                                                                                                 95.61 kB
+.svelte-kit/output/server/chunks/index.js                                                                                                                120.53 kB
+.svelte-kit/output/server/chunks/arc-catalog.js                                                                                                          124.29 kB
+.svelte-kit/output/server/entries/pages/partners/_page.svelte.js                                                                                         133.56 kB
+.svelte-kit/output/server/index.js                                                                                                                       135.02 kB
+.svelte-kit/output/server/entries/pages/basketball-systems-lab/_page.svelte.js                                                                           170.17 kB
+.svelte-kit/output/server/chunks/PublicAtlasStoryCanvas.js                                                                                               237.90 kB
+.svelte-kit/output/server/chunks/pusher.js                                                                                                               341.67 kB
+.svelte-kit/output/server/chunks/mcp-tools.js                                                                                                            519.17 kB
+.svelte-kit/output/server/chunks/oso-primary.js                                                                                                          532.76 kB
+.svelte-kit/output/server/chunks/partner-auth.js                                                                                                         585.66 kB
+✓ built in 18.48s
+
+Run npm run preview to preview your production build locally.
+
+> Using @sveltejs/adapter-cloudflare
+  ✔ done

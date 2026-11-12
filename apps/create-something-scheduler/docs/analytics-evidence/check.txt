@@ -1,0 +1,4 @@
+
+> @create-something/create-something-scheduler@0.1.0 check /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a3187418-307ce015c26a4c51/apps/create-something-scheduler
+> tsc --noEmit
+

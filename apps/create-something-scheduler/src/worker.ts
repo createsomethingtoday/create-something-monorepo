@@ -1,4 +1,4 @@
-import { DurableObject } from 'cloudflare:workers';
+import { DurableObject, WorkerEntrypoint } from 'cloudflare:workers';
 import { Temporal } from '@js-temporal/polyfill';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { z } from 'zod';
@@ -37,6 +37,8 @@ import {
 } from './notifications/manage-link.js';
 import { RealtimeKitProvider } from './providers/realtimekit.js';
 import { DurableObjectBookingStore } from './storage/durable-booking-store.js';
+import { BookingReports, parseBookingReportWindows, type BookingSummary } from './application/booking-reports.js';
+import { DurableBookingReportStore } from './storage/durable-booking-reports.js';
 import { DurableAvailabilityOverrideStore } from './storage/durable-availability-overrides.js';
 import { DurableBusyProjectionStore } from './storage/durable-busy-projection.js';
 import { DurableRoomStore } from './storage/durable-room-store.js';
@@ -119,6 +121,11 @@ const busyProjectionInputSchema = z.object({
 }).strict();
 
 export class SchedulerDurableObject extends DurableObject<Env> {
+  getBookingSummary(input: unknown): BookingSummary {
+    return new BookingReports(new DurableBookingReportStore(this.ctx.storage.sql))
+      .getBookingSummary(input);
+  }
+
   private bookingService(): BookingService {
     const oauthStore = new DurableOAuthStore(
       this.ctx,
@@ -988,6 +995,19 @@ function configurationUnavailable(): Response {
     },
     nextActions: ['contact_operator']
   }, 503);
+}
+
+/** Named service-binding capability only; no aggregate HTTP endpoint is registered. */
+export class AudienceReports extends WorkerEntrypoint<Env> {
+  fetch(): Response {
+    return new Response(null, { status: 404 });
+  }
+
+  async getBookingSummary(input: unknown): Promise<BookingSummary> {
+    // Reject invalid/unbounded requests before resolving or waking the host object.
+    const windows = parseBookingReportWindows(input);
+    return await this.env.SCHEDULER.getByName(HOST_OBJECT_NAME).getBookingSummary(windows);
+  }
 }
 
 function unauthorized(code: string): Response {

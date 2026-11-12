@@ -106,11 +106,22 @@ export class NpgStore {
   async list(owner: string) {
     const rows = await this.db
       .prepare(
-        "SELECT id,status,updated_at FROM npg_analyst_conversations WHERE owner_id=? AND scope='npg' ORDER BY updated_at DESC LIMIT 100"
+        `SELECT id,status,updated_at,
+          (SELECT json_extract(message.value,'$.text') FROM json_each(state_json,'$.messages') AS message
+           WHERE json_extract(message.value,'$.role')='user' ORDER BY CAST(message.key AS INTEGER) LIMIT 1) AS first_question
+         FROM npg_analyst_conversations WHERE owner_id=? AND scope='npg' ORDER BY updated_at DESC LIMIT 100`
       )
       .bind(owner)
-      .all<{ id: string; status: string; updated_at: number }>();
-    return rows.results;
+      .all<{ id: string; status: string; updated_at: number; first_question: string | null }>();
+    return rows.results.map(({ first_question, ...row }) => {
+      const question = (first_question ?? '').replace(/\s+/g, ' ').trim();
+      return {
+        ...row,
+        title: question
+          ? question.slice(0, 96) + (question.length > 96 ? '…' : '')
+          : 'New conversation'
+      };
+    });
   }
   async read(owner: string, id: string): Promise<Conversation> {
     let row = await this.db

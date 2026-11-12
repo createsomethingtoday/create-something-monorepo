@@ -8,7 +8,7 @@ import test from 'node:test';
 import { abundanceWorkflowContext } from '../src/lib/delivery/abundance-context.ts';
 import { canAccessNpgHealthcareAnalyst } from '../src/lib/server/abundance-client-access.ts';
 import { isAgencyProtectedPath } from '../src/lib/server/protected-routes.ts';
-import { load as openHealthcareAnalyst } from '../src/routes/delivery/abundance/healthcare-analyst/+page.server.ts';
+import { GET as openHealthcareAnalyst } from '../src/routes/delivery/abundance/healthcare-analyst/+server.ts';
 
 const HEALTHCARE_ANALYST_URL = 'https://udify.app/agent/test-private-target';
 const HEALTHCARE_ANALYST_ACCESS_PATH = '/delivery/abundance/healthcare-analyst';

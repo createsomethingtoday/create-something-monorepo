@@ -1,0 +1,37 @@
+
+> @create-something/create-something-scheduler@0.1.0 build /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a3187418-307ce015c26a4c51/apps/create-something-scheduler
+> pnpm build:room-client && wrangler deploy --dry-run --outdir dist
+
+
+> @create-something/create-something-scheduler@0.1.0 build:room-client /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a3187418-307ce015c26a4c51/apps/create-something-scheduler
+> esbuild src/ui/room-client.ts --bundle --format=esm --platform=browser --target=es2022 --minify --outfile=public/assets/room-client.js
+
+
+  public/assets/room-client.js  3.5mb ⚠️
+
+⚡ Done in 113ms
+
+ ⛅️ wrangler 4.110.0
+────────────────────
+
+Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
+✨ Read 2 files from the assets directory /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a3187418-307ce015c26a4c51/apps/create-something-scheduler/public
+Total Upload: 1986.59 KiB / gzip: 329.29 KiB
+Your Worker has access to the following bindings:
+Binding                                                                                Resource                  
+env.SCHEDULER (SchedulerDurableObject)                                                 Durable Object            
+env.ASSETS                                                                             Assets                    
+env.GOOGLE_EVENT_CALENDAR_ID ("micah@createsomething.io")                              Environment Variable      
+env.GOOGLE_SELECTED_CALENDAR_IDS ("micah@createsomething.io")                          Environment Variable      
+env.WEBFLOW_BUSY_PROJECTION_REQUIRED ("true")                                          Environment Variable      
+env.GOOGLE_REDIRECT_URI ("https://create-something-scheduler.cr...")                   Environment Variable      
+env.RESEND_FROM ("CREATE SOMETHING <noreply@createsomet...")                           Environment Variable      
+env.TURNSTILE_SITE_KEY ("0x4AAAAAADz8zw7ebYd-V5eU")                                    Environment Variable      
+env.TURNSTILE_EXPECTED_HOSTNAME ("schedule.createsomething.agency")                    Environment Variable      
+env.REALTIMEKIT_APP_ID ("8011e22d-a0e9-40f8-8a7a-27d3e5982744")                        Environment Variable      
+env.REALTIMEKIT_HOST_PRESET_ID ("5015ba09-150e-40d2-9724-54bc6350d547")                Environment Variable      
+env.REALTIMEKIT_GUEST_PRESET_ID ("9227fe9f-0586-4c49-aa45-87780f4867e0")               Environment Variable      
+env.SCHEDULER_PUBLIC_ORIGIN ("https://schedule.createsomething.agency")                Environment Variable      
+env.CONFERENCING_PROVIDER ("google_meet")                                              Environment Variable      
+
+--dry-run: exiting now.

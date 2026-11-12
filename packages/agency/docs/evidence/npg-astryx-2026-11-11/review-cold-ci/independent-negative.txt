@@ -1,0 +1,17 @@
+PASS actual included/compiled and strict probes: src/lib/npg/astryx/Workspace.tsx [ 2322, 7006 ]
+PASS actual included/compiled and strict probes: src/lib/npg/astryx/main.tsx [ 2322, 7006 ]
+PASS actual included/compiled and strict probes: src/lib/npg/display.ts [ 2322, 7006 ]
+PASS preserved type-only import validation: [
+  {
+    code: 1484,
+    message: "'NpgBootstrap' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled."
+  }
+]
+PASS cold positive compile roots: [
+  'src/lib/npg/display.ts',
+  'src/lib/npg/astryx/types.ts',
+  'src/lib/npg/astryx/Workspace.tsx',
+  'src/lib/npg/astryx/main.tsx'
+]
+PASS final prepare ordering and independently read parent cold-prepare completion marker. Dependencies otherwise warm.
+Read-only in-memory checks; no source, fixture, browser, build, Git or external changes performed.

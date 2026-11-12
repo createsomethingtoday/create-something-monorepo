@@ -29,8 +29,8 @@
 		<!-- Admin Navigation -->
 		<nav class="admin-nav">
 			<div class="max-w-7xl mx-auto px-6">
-				<div class="flex items-center justify-between">
-					<div class="flex gap-6">
+				<div class="nav-toolbar flex items-center justify-between">
+					<div class="nav-items flex gap-6">
 						{#each navItems as item}
 							<a
 								href={item.href}
@@ -102,6 +102,13 @@
 
 	.utility-link:hover {
 		color: var(--color-performance-fg-primary);
+	}
+
+	@media (max-width: 1024px) {
+		.nav-toolbar { flex-wrap: wrap; gap: var(--space-performance-sm); padding-block: var(--space-performance-sm); }
+		.nav-items { flex-wrap: wrap; gap: var(--space-performance-sm) var(--space-performance-md); }
+		.nav-link { min-height: 44px; display: inline-flex; align-items: center; padding: 0; font-size: var(--text-performance-body-sm); }
+		.utility-link { min-height: 44px; display: inline-flex; align-items: center; }
 	}
 
 	.admin-content {

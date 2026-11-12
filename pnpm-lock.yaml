@@ -748,6 +748,21 @@ importers:
       three:
         specifier: ^0.170.0
         version: 0.170.0
+      '@astryxdesign/core':
+        specifier: 0.7.14
+        version: 0.7.14(@stylexjs/stylex@0.19.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@astryxdesign/theme-neutral':
+        specifier: 0.7.14
+        version: 0.7.14(@astryxdesign/core@0.7.14(@stylexjs/stylex@0.19.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@types/react@19.2.14)(react@19.2.4)
+      '@stylexjs/stylex':
+        specifier: 0.19.1
+        version: 0.19.1
+      '@fontsource-variable/figtree':
+        specifier: 5.3.0
+        version: 5.3.0
+      lucide-react:
+        specifier: 1.72.0
+        version: 1.72.0(@types/react@19.2.14)(react@19.2.4)
     devDependencies:
       '@cloudflare/workers-types':
         specifier: 4.20260621.1
@@ -815,6 +830,9 @@ importers:
       wrangler:
         specifier: 4.103.0
         version: 4.103.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      '@astryxdesign/cli':
+        specifier: 0.7.14
+        version: 0.7.14(@astryxdesign/core@0.7.14(@stylexjs/stylex@0.19.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@babel/preset-env@7.29.7(@babel/core@7.29.7))
 
   packages/agency/clients/cato-supply-insights-cms: {}
 
@@ -19030,6 +19048,128 @@ packages:
     resolution: {integrity: sha512-Ag3wB2o37wslZS19hZqorUnrnzSkpOVy+IiiDEiTqNubEYpYuHWIf6K4psgN2ZWKExS4xhVCrRVfb/wfW8fWJA==}
     engines: {node: '>= 10'}
 
+  '@astryxdesign/cli@0.7.14':
+    resolution:
+      integrity: sha512-gOTskkep8h0IyeFKCl/vSs/H8CGF8zusiK3hEPWu2naxUzt4fU50OCEhsNpkyJi/0QcOMp9PjfRHlT7wn17mrA==
+    engines:
+      node: '>=22.13.0'
+    hasBin: true
+    peerDependencies:
+      '@astryxdesign/core': '*'
+    peerDependenciesMeta:
+      '@astryxdesign/core':
+        optional: true
+
+  '@astryxdesign/core@0.7.14':
+    resolution:
+      integrity: sha512-MSRNyl8/t+0Uo3dmdPZfQi7WNktRZS1UBTicHbQdVIXX3DuCmQ5pPTOHi0OW4jPKszcifV5b6v/mFArjs9oVbA==
+    peerDependencies:
+      '@stylexjs/stylex': ^0.19.0
+      react: '>=19.0.0'
+      react-dom: '>=19.0.0'
+
+  '@astryxdesign/theme-neutral@0.7.14':
+    resolution:
+      integrity: sha512-YK5y5KgaHdnl13oxBuCinxADgXDvfcCC7q3jn57Igw5Uw54SauFKGN1OUM3JslKsUGFJmofyCBOslqVbWMSgKg==
+    peerDependencies:
+      '@astryxdesign/core': 0.7.14
+      react: '>=19'
+
+  boolbase@2.0.0:
+    resolution:
+      integrity: sha512-DkVaaQHymRhpYEYo9x1oo7Q7B0Y6KJUsjm3c9eTyFDby4MHLBTwZ6ZDWBel5zrYxj1WsZgC5oLpiz+93MluXeA==
+    engines:
+      node: '>=20.19.0'
+
+  css-select@7.0.0:
+    resolution:
+      integrity: sha512-snmjEVXy+1LnwXdxhYvTMj1d9tOh4HxkA1YmoayVBeeyR2C14Pum7fcxJIm4SswYspVy866eYNwlH6xC3/VH5g==
+    engines:
+      node: '>=20.19.0'
+
+  css-what@8.0.0:
+    resolution:
+      integrity: sha512-DH0Bqq3DNp5tdOReuNyAA+Ev4Y2GS5FMbZpeTLP6C4CDi0h5nL0BmUPChXw3o/qbHLDWHl49sbNqQVY7bMSDdw==
+    engines:
+      node: '>=20.19.0'
+
+  cssomnom@0.1.11:
+    resolution:
+      integrity: sha512-P4RkO1Sq2Ual77xypEmAc4MkM5k2Ha4UwtBPCOpJmXculGCYPgzsU/xnOCy084esZaPePgGkkJg4Il/HE7GS5A==
+    engines:
+      node: '>=20.0.0'
+
+  dom-serializer@3.1.1:
+    resolution:
+      integrity: sha512-4MEa38/QexBob6gFNwu+EGdWvhJ1OKuNwdYY3Y3NyeWDQfnGeDYQUDfIRzWu5B5gsv03so2Uxd28YC6zrsx3Lw==
+    engines:
+      node: '>=20.19.0'
+
+  domelementtype@3.0.0:
+    resolution:
+      integrity: sha512-umCQid3jKbDmVjx8jGaW7uUykm4DEUeyV21hPxNMo2nV955DhUThwqyOIDtreepP31hl84X7G5U9ZfsWvIB3Pg==
+    engines:
+      node: '>=20.19.0'
+
+  domhandler@6.0.1:
+    resolution:
+      integrity: sha512-gYzvtM72ZtxQO0T048kd6HWSbbGCNOUwcnfQ01cqIJ4X2IYKFFHZ5mKvrQETcFXxsRObZulDaKmy//R7TPtsBg==
+    engines:
+      node: '>=20.19.0'
+
+  domutils@4.0.2:
+    resolution:
+      integrity: sha512-qI4JLRKnSzqFqr7hAlS5xQDusBCjKSEG4t4+7aNrIQMHBcsC2TGEhuyABJdYkgSewL57PNLYEiibY2iPKhKpaA==
+    engines:
+      node: '>=20.19.0'
+
+  entities@8.1.0:
+    resolution:
+      integrity: sha512-kxL7msIffSuh9aaFAMD7rxAIuTRMAHMeBtgHW2yUdWw732ZNh4MehkF2gdjvtdmikkaIP9bFDDJOPlsvm7avrA==
+    engines:
+      node: '>=20.19.0'
+
+  html-escaper@3.0.3:
+    resolution:
+      integrity: sha512-RuMffC89BOWQoY0WKGpIhn5gX3iI54O6nRA0yC124NYVtzjmFWBIiFd8M0x+ZdX0P9R4lADg1mgP8C7PxGOWuQ==
+
+  ignore@7.0.14:
+    resolution:
+      integrity: sha512-wCBiZ77u1tuWde6G/nfOtLaCTYcFDU5yCzARzK10y+rLhzYoL7a7yEemcopcc2Mzow7gZOIjnV2ym1NYmdiJOQ==
+    engines:
+      node: '>= 4'
+
+  linkedom@0.18.15:
+    resolution:
+      integrity: sha512-o0w7eD/SvoCao+pUi6dzocCLuMR11g4Tv/et0W2OUzwWmUcewntSzyl+Ua/K+0yKym0Y/Mav3nFAaI5Av5jvZg==
+    engines:
+      node: '>=16'
+    peerDependencies:
+      canvas: '>= 2'
+    peerDependenciesMeta:
+      canvas:
+        optional: true
+
+  lucide-react@1.72.0:
+    resolution:
+      integrity: sha512-fbF5i1GU8GODETa3Q7rXqrJrcx3iPYrQtxthom103zGx+Z0BGwKYAW9s+9435ohYJ7hQm0av0PoZcqI1CRwNrg==
+    peerDependencies:
+      '@types/react': '*'
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+
+  nth-check@3.0.1:
+    resolution:
+      integrity: sha512-GX0gsdbGVCgnRgbeGaubfjpBXyYRWOOCVeYh08bSQvDZqxz5ndXs1OTfAt/h36G1xvI94YIspsI0sVFqAV9+RQ==
+    engines:
+      node: '>=20.19.0'
+
+  uhyphen@0.2.0:
+    resolution:
+      integrity: sha512-qz3o9CHXmJJPGBdqzab7qAYuW8kQGKNEuoHFYrBwV6hWIMcpAmxDLXojcHfFr9US1Pe6zUswEIJIbLI610fuqA==
+
 snapshots:
 
   '@acemir/cssom@0.9.31': {}
@@ -36000,3 +36140,101 @@ snapshots:
       yaml: 2.9.0
 
   ipaddr.js@2.2.0: {}
+
+  '@astryxdesign/cli@0.7.14(@astryxdesign/core@0.7.14(@stylexjs/stylex@0.19.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@babel/preset-env@7.29.7(@babel/core@7.29.7))':
+    dependencies:
+      '@babel/core': 7.29.7
+      '@babel/parser': 7.29.8
+      '@babel/plugin-transform-typescript': 7.29.7(@babel/core@7.29.7)
+      '@babel/types': 7.29.8
+      '@stylexjs/babel-plugin': 0.19.1
+      ast-types: 0.16.3
+      commander: 12.1.0
+      ignore: 7.0.14
+      jiti: 2.7.0
+      jscodeshift: 17.4.0(@babel/preset-env@7.29.7(@babel/core@7.29.7))
+      linkedom: 0.18.15
+      node-diff3: 3.2.1
+      postcss: 8.5.32
+      postcss-selector-parser: 7.2.0
+      recast: 0.23.21
+      zod: 4.6.7
+    optionalDependencies:
+      '@astryxdesign/core': 0.7.14(@stylexjs/stylex@0.19.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+    transitivePeerDependencies:
+      - '@babel/preset-env'
+      - canvas
+      - supports-color
+
+  '@astryxdesign/core@0.7.14(@stylexjs/stylex@0.19.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@stylexjs/stylex': 0.19.1
+      intl-messageformat: 11.2.15
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+
+  '@astryxdesign/theme-neutral@0.7.14(@astryxdesign/core@0.7.14(@stylexjs/stylex@0.19.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@types/react@19.2.14)(react@19.2.4)':
+    dependencies:
+      '@astryxdesign/core': 0.7.14(@stylexjs/stylex@0.19.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      lucide-react: 1.72.0(@types/react@19.2.14)(react@19.2.4)
+      react: 19.2.4
+    transitivePeerDependencies:
+      - '@types/react'
+
+  boolbase@2.0.0: {}
+
+  css-select@7.0.0:
+    dependencies:
+      boolbase: 2.0.0
+      css-what: 8.0.0
+      domhandler: 6.0.1
+      domutils: 4.0.2
+      nth-check: 3.0.1
+
+  css-what@8.0.0: {}
+
+  cssomnom@0.1.11: {}
+
+  dom-serializer@3.1.1:
+    dependencies:
+      domelementtype: 3.0.0
+      domhandler: 6.0.1
+      entities: 8.1.0
+
+  domelementtype@3.0.0: {}
+
+  domhandler@6.0.1:
+    dependencies:
+      domelementtype: 3.0.0
+
+  domutils@4.0.2:
+    dependencies:
+      dom-serializer: 3.1.1
+      domelementtype: 3.0.0
+      domhandler: 6.0.1
+
+  entities@8.1.0: {}
+
+  html-escaper@3.0.3: {}
+
+  ignore@7.0.14: {}
+
+  linkedom@0.18.15:
+    dependencies:
+      css-select: 7.0.0
+      cssomnom: 0.1.11
+      html-escaper: 3.0.3
+      htmlparser2: 10.1.0
+      uhyphen: 0.2.0
+
+  lucide-react@1.72.0(@types/react@19.2.14)(react@19.2.4):
+    dependencies:
+      react: 19.2.4
+    optionalDependencies:
+      '@types/react': 19.2.14
+
+  nth-check@3.0.1:
+    dependencies:
+      boolbase: 2.0.0
+
+  uhyphen@0.2.0: {}

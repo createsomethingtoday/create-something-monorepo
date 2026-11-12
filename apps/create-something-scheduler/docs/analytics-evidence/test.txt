@@ -1,0 +1,33 @@
+
+> @create-something/create-something-scheduler@0.1.0 test /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a3187418-307ce015c26a4c51/apps/create-something-scheduler
+> vitest run && vitest run --config vitest.worker.config.ts && vitest run --config vitest.monitor.config.ts
+
+
+ RUN  v4.1.8 /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a3187418-307ce015c26a4c51/apps/create-something-scheduler
+
+
+ Test Files  19 passed (19)
+      Tests  91 passed (91)
+   Start at  17:09:58
+   Duration  382ms (transform 654ms, setup 0ms, import 1.33s, tests 329ms, environment 1ms)
+
+
+ RUN  v4.1.8 /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a3187418-307ce015c26a4c51/apps/create-something-scheduler
+
+Sourcemap for "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a3187418-307ce015c26a4c51/node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.0_patch_hash=eqmfpdz7mb5ppaupnqa3b426ga_@cfworker+json-schema@4.1.1_zod@3.25.76/node_modules/@modelcontextprotocol/sdk/dist/cjs/server/webStandardStreamableHttp.js" points to missing source files
+Sourcemap for "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a3187418-307ce015c26a4c51/node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.0_patch_hash=eqmfpdz7mb5ppaupnqa3b426ga_@cfworker+json-schema@4.1.1_zod@3.25.76/node_modules/@modelcontextprotocol/sdk/dist/cjs/server/mcp.js" points to missing source files
+
+ Test Files  6 passed (6)
+      Tests  33 passed (33)
+   Start at  17:09:59
+   Duration  1.22s (transform 1.04s, setup 0ms, import 3.51s, tests 223ms, environment 0ms)
+
+
+ RUN  v4.1.8 /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a3187418-307ce015c26a4c51/apps/create-something-scheduler
+
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  17:10:00
+   Duration  339ms (transform 51ms, setup 0ms, import 110ms, tests 36ms, environment 0ms)
+

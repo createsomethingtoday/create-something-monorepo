@@ -1,4 +1,5 @@
 /// <reference types="@cloudflare/workers-types" />
+import type { ScorecardBindings } from './lib/server/analytics-scorecard';
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
 declare global {
@@ -21,6 +22,10 @@ declare global {
 				CS_IDENTITY_JWKS_URL?: string;
 				CS_IDENTITY_AUDIENCE?: string;
 				DB: D1Database;
+				/** Private analytics SELECT readers; never exposed via public/user APIs. */
+				LMS_DB?: D1Database;
+				TELEMETRY_DB?: D1Database;
+				SCHEDULER_REPORTS?: ScorecardBindings['SCHEDULER_REPORTS'];
 				SESSIONS: KVNamespace;
 				CACHE: KVNamespace;
 				STORAGE: R2Bucket;

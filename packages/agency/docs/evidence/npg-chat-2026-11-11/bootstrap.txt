@@ -1,0 +1,131 @@
+
+> @create-something/monorepo@1.0.0 bootstrap:worktree /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144
+> bash ./scripts/bootstrap-worktree.sh
+
+Optional development/deploy commands not found: wrangler
+Bootstrap will continue. Manual tasks that rely on those commands will stay unavailable until they are installed.
+Installing workspace dependencies (pnpm-lock.yaml changed)...
+Scope: all 232 workspace projects
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +65
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 65, reused 65, downloaded 0, added 63
+Progress: resolved 65, reused 65, downloaded 0, added 65, done
+The following dependencies have build scripts that were ignored: @astryxdesign/cli, @astryxdesign/core, @modelcontextprotocol/sdk, workerd
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/interaction-atlas-mcp/node_modules/.bin/workflow-compiler. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-compiler/dist/cli.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/offer-savings-app/node_modules/.bin/offer-resolution. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/offer-resolution/dist/cli.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/offer-savings-app/worker/node_modules/.bin/offer-resolution. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/offer-resolution/dist/cli.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/offer-savings-app/worker/node_modules/.bin/offer-savings-run-watches. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/offer-savings-app/dist/run-watches.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/offer-savings-app/worker/node_modules/.bin/offer-savings-app. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/offer-savings-app/dist/start.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/orchestration/node_modules/.bin/harness. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/harness/dist/cli.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/orchestration/node_modules/.bin/gt-status. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/harness/dist/bin/gt-status.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/orchestration/node_modules/.bin/gt-prime. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/harness/dist/bin/gt-prime.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/orchestration/node_modules/.bin/gt-rig. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/harness/dist/bin/gt-rig.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/orchestration/node_modules/.bin/gt-smart-sling. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/harness/dist/bin/gt-smart-sling.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/orchestration/node_modules/.bin/gt-completion. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/harness/dist/bin/gt-completion.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/orchestration/node_modules/.bin/routing-report. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/harness/dist/bin/routing-report.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/orchestration/node_modules/.bin/ralph-escalate. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/harness/dist/bin/ralph-escalate.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/owned-agent-runtime/node_modules/.bin/workflow-compiler. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-compiler/dist/cli.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/webflow-mcp/worker/node_modules/.bin/webflow-mcp. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/webflow-mcp/dist/index.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/webflow-site-analyzer-mcp/worker/node_modules/.bin/webflow-site-analyzer. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/webflow-site-analyzer-mcp/dist/index.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-receipt-reconciler/node_modules/.bin/workflow-evidence-extractor. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-evidence-extractor/dist/cli.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-receipt-reconciler/node_modules/.bin/workflow-compiler. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-compiler/dist/cli.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-shadow-pilot/node_modules/.bin/workflow-historical-context-reconciler. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-historical-context-reconciler/dist/cli.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-shadow-pilot/node_modules/.bin/workflow-receipt-reconciler. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-receipt-reconciler/dist/cli.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-shadow-pilot/node_modules/.bin/workflow-compiler. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-compiler/dist/cli.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-evidence-extractor/node_modules/.bin/workflow-compiler. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-compiler/dist/cli.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-observation-reconciler/node_modules/.bin/workflow-evidence-extractor. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-evidence-extractor/dist/cli.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-observation-reconciler/node_modules/.bin/workflow-compiler. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-compiler/dist/cli.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-historical-context-reconciler/node_modules/.bin/workflow-evidence-extractor. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-evidence-extractor/dist/cli.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-historical-context-reconciler/node_modules/.bin/workflow-compiler. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-compiler/dist/cli.js'
+
+packages/ground/npm postinstall$ node install.js
+packages/ground/npm postinstall: Ground MCP: Skipping binary install because GROUND_MCP_SKIP_BINARY_INSTALL=1
+packages/ground/npm postinstall: Done
+packages/policy-os-engine prepare$ pnpm build
+packages/tufte prepare$ svelte-kit sync || echo ''
+packages/policy-os-engine prepare: > @create-something/policy-os-engine@0.1.0 build /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/policy-os-engine
+packages/policy-os-engine prepare: > tsc
+packages/tufte prepare: Done
+packages/policy-os-engine prepare: Done
+packages/canon prepare$ svelte-kit sync || echo ''
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/offer-savings-app/node_modules/.bin/offer-resolution. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/offer-savings-app/node_modules/@create-something/offer-resolution/dist/cli.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/owned-agent-runtime/node_modules/.bin/workflow-compiler. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/owned-agent-runtime/node_modules/@createsomething/workflow-compiler/dist/cli.js'
+packages/mcp-authz prepare$ pnpm build
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-evidence-extractor/node_modules/.bin/workflow-compiler. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-evidence-extractor/node_modules/@createsomething/workflow-compiler/dist/cli.js'
+packages/mcp-authz prepare: > @create-something/mcp-authz@0.1.0 build /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/mcp-authz
+packages/mcp-authz prepare: > tsc
+packages/canon prepare: Done
+packages/mcp-authz prepare: Done
+apps/guard-performance-lab prepare$ svelte-kit sync || echo ''
+packages/app-governance-db/dashboard prepare$ svelte-kit sync || echo ''
+packages/arc prepare$ svelte-kit sync || echo ''
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/interaction-atlas-mcp/node_modules/.bin/workflow-compiler. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/interaction-atlas-mcp/node_modules/@createsomething/workflow-compiler/dist/cli.js'
+packages/mapping-canvas prepare$ svelte-kit sync || echo ''
+packages/maverick prepare$ svelte-kit sync || echo ''
+packages/arc prepare: Done
+packages/notion-agent prepare$ svelte-kit sync || echo ''
+apps/guard-performance-lab prepare: Done
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/offer-savings-app/worker/node_modules/.bin/offer-resolution. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/offer-savings-app/worker/node_modules/@create-something/offer-resolution/dist/cli.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/offer-savings-app/worker/node_modules/.bin/offer-savings-app. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/offer-savings-app/worker/node_modules/@create-something/offer-savings-app/dist/start.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/offer-savings-app/worker/node_modules/.bin/offer-savings-run-watches. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/offer-savings-app/worker/node_modules/@create-something/offer-savings-app/dist/run-watches.js'
+packages/spritz prepare$ svelte-kit sync || echo ''
+packages/mapping-canvas prepare: Done
+packages/tend prepare$ svelte-kit sync || echo ''
+packages/app-governance-db/dashboard prepare: Done
+packages/webflow-apps-admin/dashboard prepare$ svelte-kit sync || echo ''
+packages/maverick prepare: Done
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/webflow-mcp/worker/node_modules/.bin/webflow-mcp. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/webflow-mcp/worker/node_modules/@create-something/webflow-mcp/dist/index.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/webflow-site-analyzer-mcp/worker/node_modules/.bin/webflow-site-analyzer. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/webflow-site-analyzer-mcp/worker/node_modules/@create-something/webflow-site-analyzer-mcp/dist/index.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-historical-context-reconciler/node_modules/.bin/workflow-evidence-extractor. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-historical-context-reconciler/node_modules/@create-something/workflow-evidence-extractor/dist/cli.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-historical-context-reconciler/node_modules/.bin/workflow-compiler. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-historical-context-reconciler/node_modules/@createsomething/workflow-compiler/dist/cli.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-receipt-reconciler/node_modules/.bin/workflow-compiler. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-receipt-reconciler/node_modules/@createsomething/workflow-compiler/dist/cli.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-receipt-reconciler/node_modules/.bin/workflow-evidence-extractor. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-receipt-reconciler/node_modules/@create-something/workflow-evidence-extractor/dist/cli.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-observation-reconciler/node_modules/.bin/workflow-compiler. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-observation-reconciler/node_modules/@createsomething/workflow-compiler/dist/cli.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-observation-reconciler/node_modules/.bin/workflow-evidence-extractor. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-observation-reconciler/node_modules/@create-something/workflow-evidence-extractor/dist/cli.js'
+packages/space prepare$ svelte-kit sync || echo ''
+packages/spritz prepare: Done
+packages/ltd prepare$ svelte-kit sync || echo ''
+packages/notion-agent prepare: Done
+packages/webflow-apps-admin/dashboard prepare: Done
+packages/tend prepare: Done
+packages/space prepare: Done
+packages/ltd prepare: Done
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/orchestration/node_modules/.bin/harness. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/orchestration/node_modules/@create-something/harness/dist/cli.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/orchestration/node_modules/.bin/gt-smart-sling. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/orchestration/node_modules/@create-something/harness/dist/bin/gt-smart-sling.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/orchestration/node_modules/.bin/gt-prime. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/orchestration/node_modules/@create-something/harness/dist/bin/gt-prime.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/orchestration/node_modules/.bin/gt-status. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/orchestration/node_modules/@create-something/harness/dist/bin/gt-status.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/orchestration/node_modules/.bin/gt-rig. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/orchestration/node_modules/@create-something/harness/dist/bin/gt-rig.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/orchestration/node_modules/.bin/gt-completion. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/orchestration/node_modules/@create-something/harness/dist/bin/gt-completion.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/orchestration/node_modules/.bin/routing-report. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/orchestration/node_modules/@create-something/harness/dist/bin/routing-report.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/orchestration/node_modules/.bin/ralph-escalate. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/orchestration/node_modules/@create-something/harness/dist/bin/ralph-escalate.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-shadow-pilot/node_modules/.bin/workflow-historical-context-reconciler. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-shadow-pilot/node_modules/@create-something/workflow-historical-context-reconciler/dist/cli.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-shadow-pilot/node_modules/.bin/workflow-compiler. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-shadow-pilot/node_modules/@createsomething/workflow-compiler/dist/cli.js'
+ WARN  Failed to create bin at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-shadow-pilot/node_modules/.bin/workflow-receipt-reconciler. ENOENT: no such file or directory, open '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/workflow-shadow-pilot/node_modules/@create-something/workflow-receipt-reconciler/dist/cli.js'
+packages/io prepare$ svelte-kit sync || echo ''
+packages/agency prepare$ pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync || echo ''
+packages/agency prepare: > @create-something/agency@1.0.0 prepare:build-dir /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+packages/agency prepare: > node ./scripts/prepare-build-dir.mjs
+packages/agency prepare: > @create-something/agency@1.0.0 prepare:local-deps /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+packages/agency prepare: > node ./scripts/prepare-local-deps.mjs
+packages/agency prepare: > @create-something/tufte@1.0.0 package /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/tufte
+packages/agency prepare: > svelte-kit sync && svelte-package && publint
+packages/io prepare: Done
+packages/agency prepare: src/lib -> dist
+packages/agency prepare: Running publint v0.3.17 for @create-something/tufte...
+packages/agency prepare: Packing files with `pnpm pack`...
+packages/agency prepare: Linting...
+packages/agency prepare: All good!
+packages/agency prepare: > @create-something/canon@0.1.0 package /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/canon
+packages/agency prepare: > pnpm clean:package-tmp && svelte-kit sync && svelte-package && publint
+packages/agency prepare: > @create-something/canon@0.1.0 clean:package-tmp /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/canon
+packages/agency prepare: > node -e "const fs=require('fs'); fs.rmSync('.svelte-kit/__package__',{recursive:true,force:true}); fs.rmSync('.svelte-kit/__package_types_tmp__',{recursive:true,force:true});"
+packages/agency prepare: src/lib -> dist
+packages/agency prepare: Running publint v0.3.17 for @create-something/canon...
+packages/agency prepare: Packing files with `pnpm pack`...
+packages/agency prepare: Linting...
+packages/agency prepare: All good!
+packages/agency prepare: Done
+Done in 22.9s
+Bootstrap complete for CREATE SOMETHING monorepo.

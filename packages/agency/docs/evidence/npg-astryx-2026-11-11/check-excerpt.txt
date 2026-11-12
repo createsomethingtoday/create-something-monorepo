@@ -1,0 +1,21 @@
+
+> @create-something/agency@1.0.0 check /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> pnpm npg:typecheck && pnpm npg:build && pnpm test:page-foundations && pnpm test:workshop-tour && pnpm test:handoff-scene-motion && pnpm test:paper-dashboard && pnpm test:image-entrance && pnpm test:scene-reveal && pnpm test:chapter-entrance && pnpm test:public-contact && pnpm test:support-brief && pnpm test:agent-inquiry && pnpm prepare:build-dir && pnpm prepare:local-deps && pnpm integrations:check && pnpm search:campaign:check && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs svelte-check svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm canon:check && pnpm copy:check && node --import tsx --test test/community-api-auth.test.ts test/identity-provider-retirement.test.ts test/public-html-cache.test.ts test/gigi-beta-page.test.ts test/scopefield-page.test.ts test/film-motion-preference.test.ts test/route-entrance.test.ts test/native-disclosure.test.ts test/usage-evidence-motion.test.ts test/contract-xray.test.ts && pnpm test:mcp-entitlement-authority && pnpm test:map-commercial-lifecycle && pnpm test:control-activation && pnpm test:inspection && pnpm test:meta-marketing && pnpm test:contact && pnpm test:interaction-pilot
+
+
+> @create-something/agency@1.0.0 npg:typecheck /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency
+> tsc --project tsconfig.npg.json
+
+svelte-check found 0 errors and 0 warnings
+  duration_ms: 0.389666
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 131.052625

@@ -1,0 +1,42 @@
+Job 130784285645; https://github.com/createsomethingtoday/create-something-monorepo/actions/runs/43098998978/job/130784285645
+Historical c3fb751 CI failure excerpt; routine output omitted.
+2026-11-11T20:58:42.9282718Z packages/io prepare$ svelte-kit sync || echo ''
+2026-11-11T20:58:42.9286254Z packages/agency prepare$ pnpm npg:build && pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync || echo ''
+2026-11-11T20:58:43.3124237Z packages/agency prepare: > @create-something/agency@1.0.0 npg:build /home/runner/work/create-something-monorepo/create-something-monorepo/packages/agency
+2026-11-11T20:58:43.3125671Z packages/agency prepare: > node scripts/build-npg-chat.mjs
+2026-11-11T20:58:43.4412695Z packages/agency prepare: ▲ [WARNING] Cannot find base config file "./.svelte-kit/tsconfig.json" [tsconfig.json]
+2026-11-11T20:58:43.4423005Z packages/agency prepare:     tsconfig.json:2:12:
+2026-11-11T20:58:43.4424671Z packages/agency prepare:       2 │   "extends": "./.svelte-kit/tsconfig.json",
+2026-11-11T20:58:43.4425688Z packages/agency prepare:         ╵              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2026-11-11T20:58:43.4813299Z packages/agency prepare: vite v7.3.6 building client environment for production...
+2026-11-11T20:58:43.5203769Z packages/agency prepare: ✓ 0 modules transformed.
+2026-11-11T20:58:43.5238428Z packages/agency prepare: ✗ Build failed in 17ms
+2026-11-11T20:58:43.5246418Z packages/agency prepare: node:internal/modules/run_main:107
+2026-11-11T20:58:43.5248405Z packages/agency prepare:     triggerUncaughtException(
+2026-11-11T20:58:43.5249129Z packages/agency prepare:     ^
+2026-11-11T20:58:43.5251831Z packages/agency prepare: [vite:esbuild] failed to resolve "extends":"./.svelte-kit/tsconfig.json" in /home/runner/work/create-something-monorepo/create-something-monorepo/packages/agency/tsconfig.json
+2026-11-11T20:58:43.5254152Z packages/agency prepare: file: /home/runner/work/create-something-monorepo/create-something-monorepo/packages/agency/src/lib/npg/astryx/main.tsx
+2026-11-11T20:58:43.5256416Z packages/agency prepare:     at resolveExtends (file:///home/runner/work/create-something-monorepo/create-something-monorepo/node_modules/.pnpm/vite@7.3.6_@types+node@24.10.9_jiti@2.7.0_terser@5.46.0_tsx@4.21.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:5809:8)
+2026-11-11T20:58:43.5270232Z packages/agency prepare:   code: 'PLUGIN_ERROR',
+2026-11-11T20:58:43.5271200Z packages/agency prepare:   cause: Error: Cannot find module './.svelte-kit/tsconfig.json'
+2026-11-11T20:58:43.5272054Z packages/agency prepare:   Require stack:
+2026-11-11T20:58:43.5273766Z packages/agency prepare:   - /home/runner/work/create-something-monorepo/create-something-monorepo/packages/agency/tsconfig.json
+2026-11-11T20:58:43.5275155Z packages/agency prepare:       at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+2026-11-11T20:58:43.5276414Z packages/agency prepare:       at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+2026-11-11T20:58:43.5298866Z packages/agency prepare:     requireStack: [
+2026-11-11T20:58:43.5299984Z packages/agency prepare:       '/home/runner/work/create-something-monorepo/create-something-monorepo/packages/agency/tsconfig.json'
+2026-11-11T20:58:43.5301016Z packages/agency prepare:     ]
+2026-11-11T20:58:43.5301649Z packages/agency prepare:   },
+2026-11-11T20:58:43.5303358Z packages/agency prepare:   tsconfigFile: '/home/runner/work/create-something-monorepo/create-something-monorepo/packages/agency/tsconfig.json',
+2026-11-11T20:58:43.5304529Z packages/agency prepare:   name: 'TSConfckParseError',
+2026-11-11T20:58:43.5305233Z packages/agency prepare:   pluginCode: 'EXTENDS_RESOLVE',
+2026-11-11T20:58:43.5311674Z packages/agency prepare: Node.js v24.22.2
+2026-11-11T20:58:43.5388272Z packages/agency prepare:  ELIFECYCLE  Command failed with exit code 1.
+2026-11-11T20:58:43.5779068Z packages/agency prepare: Done
+2026-11-11T20:58:44.6026045Z packages/io prepare: Done
+2026-11-11T20:58:44.6073543Z Done in 57.2s
+2026-11-11T20:59:51.6193803Z
+2026-11-11T20:59:52.3051277Z error TS5083: Cannot read file '/home/runner/work/create-something-monorepo/create-something-monorepo/packages/agency/.svelte-kit/tsconfig.json'.
+2026-11-11T20:59:52.3070527Z ##[error]tsconfig.npg.json(3,3): error TS5095: Option 'bundler' can only be used when 'module' is set to 'preserve' or to 'es2015' or later.
+2026-11-11T20:59:52.3302888Z  ELIFECYCLE  Command failed with exit code 2.
+2026-11-11T20:59:52.3505290Z /home/runner/work/create-something-monorepo/create-something-monorepo/packages/agency:

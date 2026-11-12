@@ -1,0 +1,95 @@
+TAP version 13
+# Subtest: Astryx workspace uses component props and framework utilities without custom selector CSS
+not ok 1 - Astryx workspace uses component props and framework utilities without custom selector CSS
+  ---
+  duration_ms: 0.961583
+  type: 'test'
+  location: '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency/test/npg-document.test.ts:1:469'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input was expected to not match the regular expression /import\s+['"]\.\/workspace\.css['"]/. Input:
+
+    "import React from 'react';\n" +
+      "import { createRoot } from 'react-dom/client';\n" +
+      "import { Theme } from '@astryxdesign/core/theme';\n" +
+      "import { neutralTheme } from '@astryxdesign/theme-neutral/built';\n" +
+      "import '@astryxdesign/core/reset.css';\n" +
+      "import '@astryxdesign/core/astryx.css';\n" +
+      "import '@astryxdesign/theme-neutral/theme.css';\n" +
+      "import './fonts.css';\n" +
+      "import './workspace.css';\n" +
+      "import { Workspace } from './Workspace';\n" +
+      "import type { NpgBootstrap } from './types';\n" +
+      "const target = document.getElementById('npg-app');\n" +
+      "const raw = document.getElementById('npg-bootstrap')?.textContent;\n" +
+      "if (!target || !raw) throw new Error('Private workspace could not start. Refresh this page.');\n" +
+      'const bootstrap = JSON.parse(raw) as NpgBootstrap;\n' +
+      'createRoot(target).render(\n' +
+      '  <Theme theme={neutralTheme} mode="light">\n' +
+      '    <Workspace bootstrap={bootstrap} />\n' +
+      '  </Theme>\n' +
+      ');\n'
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    import React from 'react';
+    import { createRoot } from 'react-dom/client';
+    import { Theme } from '@astryxdesign/core/theme';
+    import { neutralTheme } from '@astryxdesign/theme-neutral/built';
+    import '@astryxdesign/core/reset.css';
+    import '@astryxdesign/core/astryx.css';
+    import '@astryxdesign/theme-neutral/theme.css';
+    import './fonts.css';
+    import './workspace.css';
+    import { Workspace } from './Workspace';
+    import type { NpgBootstrap } from './types';
+    const target = document.getElementById('npg-app');
+    const raw = document.getElementById('npg-bootstrap')?.textContent;
+    if (!target || !raw) throw new Error('Private workspace could not start. Refresh this page.');
+    const bootstrap = JSON.parse(raw) as NpgBootstrap;
+    createRoot(target).render(
+      <Theme theme={neutralTheme} mode="light">
+        <Workspace bootstrap={bootstrap} />
+      </Theme>
+    );
+
+  operator: 'doesNotMatch'
+  stack: |-
+    TestContext.<anonymous> (/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency/test/npg-document.test.ts:13:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: private document serializes untrusted titles as data, with one truthful no-JS main
+ok 2 - private document serializes untrusted titles as data, with one truthful no-JS main
+  ---
+  duration_ms: 0.414042
+  type: 'test'
+  ...
+# Subtest: document retains owner-scoped history and private headers without exposing runtime configuration
+ok 3 - document retains owner-scoped history and private headers without exposing runtime configuration
+  ---
+  duration_ms: 6.705667
+  type: 'test'
+  ...
+# Subtest: disabled and unauthorized documents establish private response headers before redirect or rejection
+ok 4 - disabled and unauthorized documents establish private response headers before redirect or rejection
+  ---
+  duration_ms: 0.259625
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 3
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 136.164458
+undefined
+/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: node --import ./test/register-sveltekit-test-loader.mjs --import tsx --test test/npg-document.test.ts
