@@ -1,0 +1,1713 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Connected work · CREATE SOMETHING Agency</title>
+    <meta
+      name="description"
+      content="Explore how a meeting becomes a reviewed follow-up: connected tools, a named owner, and a clear boundary before action."
+    />
+    <meta name="robots" content="noindex, follow" />
+    <meta name="theme-color" content="#1c2420" />
+    <link rel="canonical" href="https://createsomething.agency/labs/connected-work/" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Connected work · CREATE SOMETHING Agency" />
+    <meta
+      property="og:description"
+      content="A hands-on illustration of connected tools, human review, and a clear boundary before action."
+    />
+    <meta property="og:url" content="https://createsomething.agency/labs/connected-work/" />
+    <meta property="og:image" content="https://createsomething.agency/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      :root {
+        --background: #fff;
+        --foreground: #171b1a;
+        --secondary: #f2f4f3;
+        --card: #fff;
+        --muted-foreground: #59625e;
+        --border: #d5dbd7;
+        --ring: #8b5a00;
+        --radius: 12px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--background);
+        color: var(--foreground);
+        font-family: Arial, Helvetica, sans-serif;
+      }
+      button,
+      a,
+      select {
+        font: inherit;
+        -webkit-tap-highlight-color: transparent;
+      }
+      button {
+        cursor: pointer;
+      }
+      a {
+        color: inherit;
+      }
+      p,
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+      }
+      p {
+        line-height: 1.6;
+      }
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      button:focus-visible,
+      a:focus-visible,
+      select:focus-visible {
+        outline: 3px solid var(--ring);
+        outline-offset: 4px;
+      }
+      h1:focus {
+        outline: none;
+      }
+      button,
+      a,
+      select {
+        touch-action: manipulation;
+      }
+      button,
+      select,
+      a.cta,
+      .footer a,
+      .sidebar-bottom a {
+        min-height: 44px;
+      }
+      .inline-link {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        border: 0;
+        background: none;
+        color: inherit;
+        padding: 0;
+        text-align: left;
+        text-decoration: underline;
+        text-underline-offset: 5px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .shell {
+        max-width: 1600px;
+        margin: auto;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .sidebar {
+        padding: 28px 5%;
+        display: flex;
+        align-items: center;
+        gap: 38px;
+        border-bottom: 1px solid var(--border);
+      }
+      .brand {
+        font-size: 14px;
+        font-weight: 800;
+        letter-spacing: -0.6px;
+        line-height: 1.3;
+        white-space: nowrap;
+      }
+      .brand span {
+        display: block;
+        color: var(--muted-foreground);
+        font-weight: 400;
+        letter-spacing: 0;
+        font-size: 13px;
+        margin-top: 3px;
+      }
+      .sidebar > div:nth-child(2) {
+        flex: 1;
+      }
+      .sidebar > div:nth-child(2) > p {
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        justify-content: flex-end;
+        gap: 5px;
+      }
+      .sidebar nav button {
+        font-size: 14px;
+        font-weight: 500;
+        border: 0;
+        background: transparent;
+        color: var(--muted-foreground);
+        padding: 10px 14px;
+        border-radius: 7px;
+        white-space: nowrap;
+      }
+      .sidebar nav button[aria-current='page'] {
+        color: var(--foreground);
+        background: var(--secondary);
+      }
+      .sidebar nav button:hover {
+        background: var(--secondary);
+      }
+      .nav-icon {
+        display: none;
+      }
+      .sidebar-bottom {
+        display: none;
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 5%;
+        gap: 14px;
+      }
+      .breadcrumb {
+        font-size: 13px;
+        color: var(--muted-foreground);
+      }
+      .breadcrumb strong {
+        color: var(--foreground);
+        font-weight: 500;
+      }
+      .cta {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        min-height: 46px;
+        border: 1px solid var(--foreground);
+        border-radius: 7px;
+        padding: 12px 18px;
+        background: var(--foreground);
+        color: var(--background);
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 1.4;
+        text-decoration: none;
+      }
+      .cta.secondary {
+        background: transparent;
+        color: var(--foreground);
+        border-color: var(--border);
+      }
+      .cta:hover {
+        filter: brightness(0.87);
+      }
+      .body {
+        padding: 42px 5% 22px;
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+      .eyebrow {
+        font-family: inherit;
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--muted-foreground);
+        text-transform: none;
+        letter-spacing: 0;
+      }
+      .hero h1 {
+        font-size: clamp(36px, 4.2vw, 62px);
+        font-weight: 500;
+        line-height: 1.04;
+        letter-spacing: -2.7px;
+        margin: 24px 0;
+      }
+      .hero p:not(.eyebrow) {
+        font-size: 18px;
+        line-height: 1.6;
+        color: var(--muted-foreground);
+        max-width: 540px;
+      }
+      .hero .cta {
+        margin-top: 28px;
+      }
+      .overview-layout {
+        display: grid;
+        grid-template-columns: 1.05fr 1fr;
+        gap: 55px;
+        align-items: center;
+        padding: 12px 0 40px;
+      }
+      .workspace {
+        margin-top: 34px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--card);
+      }
+      .overview-layout > .workspace {
+        margin: 0;
+      }
+      .workspace-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 22px 26px;
+        border-bottom: 1px solid var(--border);
+      }
+      .workspace-head h2 {
+        font-size: 18px;
+        font-weight: 600;
+        line-height: 1.35;
+        letter-spacing: -0.3px;
+      }
+      .status {
+        font-size: 12px;
+        color: var(--muted-foreground);
+        line-height: 1.5;
+      }
+      .workspace-head > .status {
+        max-width: 180px;
+      }
+      .workspace-body {
+        padding: 26px;
+      }
+      .flow {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0;
+      }
+      .node {
+        border-left: 2px solid var(--border);
+        padding: 5px 20px;
+        position: relative;
+      }
+      .node:before {
+        content: '';
+        position: absolute;
+        left: -5px;
+        top: 14px;
+        width: 8px;
+        height: 8px;
+        border-radius: 100%;
+        background: var(--muted-foreground);
+      }
+      .node b {
+        display: block;
+        font-size: 20px;
+        font-weight: 500;
+        margin: 4px 0;
+        letter-spacing: -0.4px;
+      }
+      .node small {
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--muted-foreground);
+        display: block;
+      }
+      .node small:first-child {
+        font-size: 12px;
+      }
+      .arrow {
+        display: block;
+        padding: 8px 20px;
+        color: var(--muted-foreground);
+        font-size: 18px;
+        transform: none;
+      }
+      .node.highlight {
+        border-color: #71817a;
+      }
+      .flow .node:last-child {
+        border-color: #c49348;
+      }
+      .flow .node:last-child:before {
+        background: #e8bb74;
+      }
+      .taskline {
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        margin-top: 24px;
+        font-size: 15px;
+        line-height: 1.55;
+      }
+      .taskline span {
+        display: block;
+        color: var(--muted-foreground);
+        font-size: 13px;
+        margin-top: 6px;
+      }
+      .review-row {
+        padding-top: 14px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 4px 14px;
+      }
+      .review-row > .status {
+        color: #e8bb74;
+      }
+      .overview-layout .workspace {
+        --foreground: #f8faf9;
+        --background: #1c2420;
+        --card: #1c2420;
+        --muted-foreground: #b7c2bc;
+        --border: #445048;
+        color: var(--foreground);
+        background: var(--card);
+        border: 0;
+      }
+      .proof-link {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 26px 0;
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        font-size: 17px;
+      }
+      .proof-link strong {
+        font-weight: 500;
+      }
+      .proof-link p {
+        font-size: 14px;
+        color: var(--muted-foreground);
+        margin-top: 6px;
+      }
+      .section-title {
+        font-size: clamp(32px, 4.2vw, 54px);
+        font-weight: 500;
+        letter-spacing: -2px;
+        line-height: 1.1;
+        margin: 18px 0;
+      }
+      .intro {
+        font-size: 17px;
+        line-height: 1.65;
+        color: var(--muted-foreground);
+        max-width: 760px;
+      }
+      .record {
+        padding: 22px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .record:first-child {
+        padding-top: 0;
+      }
+      .record:last-child {
+        border: 0;
+        padding-bottom: 0;
+      }
+      .record h3 {
+        font-size: 22px;
+        font-weight: 500;
+        letter-spacing: -0.5px;
+        margin: 8px 0;
+      }
+      .record p {
+        font-size: 16px;
+        color: var(--muted-foreground);
+        max-width: 850px;
+      }
+      .record .label {
+        font-size: 13px;
+        color: var(--muted-foreground);
+      }
+      .actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 24px;
+      }
+      .small-note {
+        font-size: 12px !important;
+        line-height: 1.65;
+        color: var(--muted-foreground);
+        margin-top: 16px;
+      }
+      .service-row {
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 18px;
+      }
+      .service-row strong {
+        font-size: 20px;
+        font-weight: 500;
+      }
+      .split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 36px;
+      }
+      .split h3 {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--muted-foreground);
+        margin-bottom: 14px;
+      }
+      .split p {
+        font-size: 19px;
+        line-height: 1.6;
+      }
+      .split ul {
+        padding-left: 18px;
+        font-size: 14px;
+        line-height: 1.8;
+        margin: 16px 0 0;
+      }
+      .split > div.source {
+        padding: 22px;
+        background: var(--secondary);
+        border-radius: 7px;
+      }
+      .split > div.source p {
+        font-size: 17px;
+      }
+      .checks {
+        font-size: 14px;
+        line-height: 1.65;
+        display: grid;
+        gap: 10px;
+      }
+      .checks strong {
+        font-weight: 600;
+      }
+      .decision {
+        padding: 25px;
+        background: #1c2420;
+        --foreground: #f8faf9;
+        --background: #1c2420;
+        --muted-foreground: #b7c2bc;
+        --border: #607168;
+        color: var(--foreground);
+        border-radius: 9px;
+      }
+      .decision .checks > div:nth-child(2) {
+        padding-left: 13px;
+        border-left: 2px solid #e8bb74;
+      }
+      .review-layout {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 30px;
+        align-items: start;
+      }
+      .review-layout > .split {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+      .review-controls {
+        display: grid;
+        gap: 16px;
+        border-top: 1px solid var(--border);
+        padding-top: 20px;
+        margin-top: 22px;
+      }
+      .review-controls label {
+        font-size: 14px;
+      }
+      .review-controls select {
+        display: block;
+        width: 100%;
+        font-size: 16px;
+        padding: 12px;
+        background: var(--background);
+        color: var(--foreground);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        margin-top: 9px;
+      }
+      .review-controls .cta {
+        background: #f8faf9;
+        color: #171b1a;
+        justify-self: start;
+      }
+      .receipt {
+        padding: 16px;
+        margin-top: 18px;
+        background: #33453b;
+        border-radius: 6px;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      .canon-guide {
+        display: grid;
+        grid-template-columns: 60px 1fr;
+        gap: 12px;
+        align-items: center;
+        max-width: 460px;
+        margin: 24px 5% 32px auto;
+      }
+      .canon-guide img {
+        width: 60px;
+        height: 74px;
+        object-fit: contain;
+      }
+      .canon-speech {
+        font-size: 13px;
+        padding: 0 0 0 18px;
+        border-left: 1px solid var(--border);
+      }
+      .canon-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+      }
+      .canon-heading strong {
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .canon-heading button {
+        border: 0;
+        padding: 0 10px;
+        background: transparent;
+        color: var(--muted-foreground);
+        font-size: 12px;
+      }
+      .canon-speech p {
+        margin: 2px 0 0;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      .canon-speech .inline-link {
+        font-size: 13px;
+      }
+      .canon-reopen {
+        margin: 24px 5% 32px auto;
+        display: block;
+        border: 0;
+        background: none;
+        color: var(--foreground);
+        padding: 10px;
+        text-decoration: underline;
+        min-height: 44px;
+      }
+      .footer {
+        padding: 20px 5%;
+        margin-top: auto;
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        font-size: 12px;
+        color: var(--muted-foreground);
+      }
+      .footer a {
+        display: inline-flex;
+        align-items: center;
+        text-underline-offset: 4px;
+      }
+      .mobile-note {
+        display: none;
+      }
+      @media (min-width: 1500px) {
+        .body {
+          padding-inline: 70px;
+        }
+      }
+      @media (max-width: 1100px) {
+        .sidebar {
+          gap: 20px;
+          padding-inline: 4%;
+        }
+        .sidebar nav {
+          gap: 0;
+        }
+        .sidebar nav button {
+          font-size: 13px;
+          padding-inline: 10px;
+        }
+        .overview-layout {
+          gap: 30px;
+        }
+        .hero h1 {
+          font-size: 48px;
+        }
+        .hero p:not(.eyebrow) {
+          font-size: 16px;
+        }
+        .body {
+          padding-top: 30px;
+        }
+        .review-layout {
+          grid-template-columns: 1fr 1fr;
+          gap: 22px;
+        }
+        .workspace-body {
+          padding: 22px;
+        }
+        .workspace-head {
+          padding: 20px 22px;
+        }
+      }
+      @media (max-width: 800px) {
+        .sidebar {
+          display: block;
+          padding: 20px 5% 12px;
+        }
+        .brand span {
+          display: inline;
+          margin-left: 7px;
+        }
+        .sidebar nav {
+          justify-content: flex-start;
+          flex-wrap: wrap;
+          margin-top: 15px;
+          gap: 3px;
+        }
+        .sidebar nav button {
+          padding: 10px 12px;
+        }
+        .topbar {
+          padding-block: 12px;
+        }
+        .overview-layout {
+          grid-template-columns: 1fr;
+          gap: 30px;
+          padding-bottom: 26px;
+        }
+        .hero h1 {
+          font-size: 50px;
+          max-width: 650px;
+        }
+        .hero p:not(.eyebrow) {
+          font-size: 17px;
+          max-width: 600px;
+        }
+        .flow {
+          grid-template-columns: 1fr 22px 1fr 22px 1fr;
+          align-items: center;
+        }
+        .arrow {
+          padding: 0;
+          transform: rotate(-90deg);
+        }
+        .node {
+          padding: 4px 12px;
+          align-self: stretch;
+        }
+        .node b {
+          font-size: 17px;
+        }
+        .node small {
+          font-size: 12px;
+        }
+        .node small:first-child {
+          font-size: 11px;
+        }
+        .review-layout {
+          grid-template-columns: 1fr;
+        }
+        .review-layout > .split {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+        }
+        .decision {
+          padding: 24px;
+        }
+        .canon-guide {
+          margin-top: 20px;
+        }
+        .workspace {
+          margin-top: 26px;
+        }
+        .section-title {
+          font-size: 40px;
+        }
+      }
+      @media (max-width: 590px) {
+        .sidebar {
+          padding: 18px 20px 12px;
+        }
+        .brand {
+          font-size: 13px;
+        }
+        .sidebar nav {
+          margin-top: 12px;
+          gap: 0;
+        }
+        .sidebar nav button {
+          font-size: 12px;
+          padding: 9px 10px;
+        }
+        .topbar {
+          padding: 10px 20px;
+          border-bottom: 1px solid var(--border);
+        }
+        .breadcrumb {
+          font-size: 11px;
+        }
+        .topbar .cta {
+          font-size: 12px;
+          padding: 10px 12px;
+          min-height: 44px;
+        }
+        .body {
+          padding: 30px 20px 18px;
+        }
+        .eyebrow {
+          font-size: 13px;
+          max-width: 300px;
+        }
+        .hero h1 {
+          font-size: 40px;
+          letter-spacing: -1.8px;
+          margin: 19px 0;
+        }
+        .hero p:not(.eyebrow) {
+          font-size: 16px;
+          line-height: 1.6;
+        }
+        .hero .cta {
+          margin-top: 22px;
+        }
+        .overview-layout {
+          gap: 28px;
+        }
+        .workspace-head {
+          padding: 18px;
+          gap: 12px;
+          align-items: start;
+        }
+        .workspace-head h2 {
+          font-size: 17px;
+        }
+        .workspace-head > .status {
+          font-size: 11px;
+          max-width: 115px;
+        }
+        .workspace-body {
+          padding: 20px 18px;
+        }
+        .flow {
+          grid-template-columns: 1fr;
+          gap: 0;
+        }
+        .node {
+          padding: 3px 18px;
+        }
+        .node b {
+          font-size: 20px;
+        }
+        .node small,
+        .node small:first-child {
+          font-size: 12px;
+        }
+        .arrow {
+          padding: 5px 18px;
+          transform: none;
+        }
+        .taskline {
+          font-size: 14px;
+          margin-top: 20px;
+          padding-top: 18px;
+        }
+        .taskline span {
+          font-size: 12px;
+        }
+        .review-row {
+          padding-top: 10px;
+        }
+        .review-row > .status {
+          font-size: 12px;
+        }
+        .proof-link {
+          display: block;
+          padding: 22px 0;
+          font-size: 16px;
+        }
+        .proof-link p {
+          font-size: 13px;
+        }
+        .proof-link .inline-link {
+          margin-top: 8px;
+        }
+        .section-title {
+          font-size: 35px;
+          letter-spacing: -1.3px;
+          margin: 15px 0;
+        }
+        .intro {
+          font-size: 15px;
+        }
+        .review-layout > .split {
+          display: flex;
+          gap: 22px;
+        }
+        .review-layout {
+          gap: 24px;
+        }
+        .split p {
+          font-size: 19px;
+        }
+        .split ul {
+          font-size: 14px;
+        }
+        .split > div.source {
+          padding: 17px;
+        }
+        .split > div.source p {
+          font-size: 16px;
+        }
+        .decision {
+          padding: 19px 17px;
+        }
+        .checks {
+          font-size: 13px;
+          gap: 12px;
+        }
+        .review-controls .cta {
+          width: 100%;
+        }
+        .small-note {
+          font-size: 12px !important;
+        }
+        .record {
+          padding-block: 20px;
+        }
+        .record h3 {
+          font-size: 20px;
+        }
+        .record p {
+          font-size: 15px;
+        }
+        .service-row {
+          grid-template-columns: 1fr;
+          gap: 8px;
+        }
+        .service-row strong {
+          font-size: 18px;
+        }
+        .actions .cta {
+          width: 100%;
+        }
+        .canon-guide {
+          margin: 14px 20px 28px;
+          max-width: none;
+          grid-template-columns: 48px 1fr;
+          gap: 10px;
+        }
+        .canon-guide img {
+          width: 48px;
+          height: 60px;
+        }
+        .canon-speech {
+          padding-left: 13px;
+        }
+        .canon-heading strong span {
+          font-size: 11px;
+        }
+        .canon-heading {
+          gap: 6px;
+        }
+        .footer {
+          padding: 15px 20px;
+          display: block;
+          font-size: 11px;
+        }
+        .footer > span {
+          display: block;
+        }
+        .footer > span + span {
+          margin-top: 4px;
+        }
+        .canon-reopen {
+          margin-right: 20px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          scroll-behavior: auto !important;
+        }
+      }
+
+      .credentials {
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--muted-foreground);
+        margin-top: 20px;
+      }
+      .credentials strong {
+        color: var(--foreground);
+        font-weight: 600;
+      }
+      .credentials br {
+        display: none;
+      }
+      .credentials strong:after {
+        content: ' · ';
+      }
+      .credentials a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        margin-left: 10px;
+        text-underline-offset: 4px;
+      }
+
+      /* Round 2: preserve dashboard identity and shorten the mobile decision path. */
+      @media (min-width: 1101px) {
+        .shell {
+          display: grid;
+          grid-template-columns: 190px minmax(0, 1fr);
+        }
+        .sidebar {
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          justify-content: flex-start;
+          padding: 32px 18px;
+          gap: 38px;
+          border-bottom: 0;
+          border-right: 1px solid var(--border);
+          background: #f5f7f6;
+        }
+        .sidebar > div:nth-child(2) {
+          flex: 0;
+        }
+        .sidebar nav {
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 6px;
+        }
+        .sidebar nav button {
+          text-align: left;
+          padding: 12px;
+          font-size: 14px;
+          white-space: normal;
+        }
+        .sidebar nav button[aria-current='page'] {
+          background: #e3e9e5;
+          color: #171b1a;
+        }
+        .topbar {
+          border-bottom: 1px solid var(--border);
+          padding-block: 16px;
+        }
+        .body {
+          padding-top: 34px;
+        }
+        .overview-layout {
+          gap: 30px;
+          align-items: start;
+        }
+        .hero {
+          padding-top: 26px;
+        }
+        .hero h1 {
+          font-size: 48px;
+          letter-spacing: -2px;
+        }
+        .hero p:not(.eyebrow) {
+          font-size: 17px;
+        }
+        .review-layout {
+          gap: 24px;
+        }
+        .workspace-body {
+          padding: 22px;
+        }
+        .workspace-head {
+          padding: 20px 22px;
+        }
+      }
+      @media (max-width: 590px) {
+        .body {
+          padding-top: 22px;
+        }
+        .overview-layout {
+          gap: 22px;
+          padding-top: 0;
+        }
+        .hero h1 {
+          font-size: 32px;
+          line-height: 1.12;
+          letter-spacing: -1.35px;
+          margin: 14px 0;
+        }
+        .hero p:not(.eyebrow) {
+          font-size: 16px;
+          line-height: 1.5;
+        }
+        .hero .cta {
+          margin-top: 18px;
+        }
+        .overview-layout .workspace-body {
+          padding: 16px;
+        }
+        .node {
+          padding-top: 1px;
+          padding-bottom: 1px;
+        }
+        .node b {
+          font-size: 18px;
+          margin: 3px 0;
+        }
+        .arrow {
+          padding-block: 2px;
+        }
+        .taskline {
+          margin-top: 14px;
+          padding-top: 14px;
+        }
+        .overview-layout .workspace-head {
+          padding: 16px;
+        }
+        .proof-link {
+          padding: 16px 0;
+        }
+        [data-panel='review'] .section-title {
+          font-size: 31px;
+          line-height: 1.12;
+          margin: 12px 0;
+        }
+        [data-panel='review'] .intro {
+          font-size: 14px;
+          line-height: 1.5;
+        }
+        [data-panel='review'] .workspace {
+          margin-top: 18px;
+        }
+        [data-panel='review'] .workspace-head {
+          display: block;
+          padding: 14px 16px;
+        }
+        [data-panel='review'] .workspace-head h2 {
+          font-size: 16px;
+        }
+        [data-panel='review'] .workspace-head > .status {
+          display: block;
+          max-width: none;
+          margin-top: 5px;
+          font-size: 12px;
+        }
+        [data-panel='review'] .workspace-body {
+          padding: 16px;
+        }
+        .review-layout {
+          gap: 14px;
+        }
+        .review-layout > .split {
+          gap: 12px;
+        }
+        .split h3 {
+          margin-bottom: 7px;
+        }
+        .split p {
+          font-size: 17px;
+          line-height: 1.45;
+        }
+        .split ul {
+          margin-top: 8px;
+          line-height: 1.55;
+        }
+        .split > div.source {
+          padding: 12px;
+        }
+        .split > div.source p {
+          font-size: 15px;
+          line-height: 1.5;
+        }
+        .split > div.source .small-note {
+          margin-top: 8px;
+        }
+        .decision {
+          padding: 16px;
+        }
+        .checks {
+          gap: 6px;
+          font-size: 13px;
+          line-height: 1.45;
+        }
+        .review-controls {
+          margin-top: 12px;
+          padding-top: 12px;
+          gap: 10px;
+        }
+        .review-controls select {
+          margin-top: 6px;
+        }
+        .decision > .small-note {
+          margin-top: 10px;
+          font-size: 12px !important;
+          line-height: 1.5;
+        }
+      }
+
+      /* Production navigation: visible return path and a compact, wrapping mobile menu. */
+      .brand {
+        display: inline-flex;
+        flex-direction: column;
+        justify-content: center;
+        text-decoration: none;
+        min-height: 44px;
+      }
+      .skip-link {
+        position: absolute;
+        z-index: 10;
+        left: 16px;
+        top: 12px;
+        padding: 12px 18px;
+        background: #171b1a;
+        color: white;
+        border-radius: 6px;
+        transform: translateY(-160%);
+      }
+      .skip-link:focus {
+        transform: none;
+      }
+      #main-content:focus {
+        outline: none;
+      }
+      @media (max-width: 800px) {
+        .brand {
+          flex-direction: row;
+          align-items: center;
+          justify-content: flex-start;
+        }
+        .brand span {
+          margin-top: 0;
+        }
+      }
+      @media (max-width: 590px) {
+        .sidebar {
+          padding-block: 10px 8px;
+        }
+        .sidebar nav {
+          margin-top: 4px;
+          gap: 2px;
+        }
+        .sidebar nav button {
+          font-size: 12px;
+          padding-inline: 9px;
+        }
+        .body {
+          padding-top: 18px;
+        }
+      }
+    </style>
+    <noscript
+      ><style>
+        [data-go] {
+          display: none !important;
+        }
+        [data-panel][hidden] {
+          display: block !important;
+        }
+        [data-panel] {
+          margin-bottom: 60px;
+        }
+        .sidebar nav,
+        .hero button,
+        .review-row button,
+        .proof-link button,
+        .canon-guide,
+        .review-controls {
+          display: none !important;
+        }
+      </style></noscript
+    >
+  </head>
+  <body data-release="connected-work-20261112">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <div class="shell">
+      <aside class="sidebar" aria-label="Agency navigation">
+        <a class="brand" href="/" aria-label="CREATE SOMETHING Agency home"
+          >CREATE SOMETHING<span>.agency</span></a
+        >
+        <div>
+          <p class="eyebrow">Explore the service</p>
+          <nav aria-label="Explore the service">
+            <button type="button" data-view="overview" aria-current="page">
+              <span class="nav-icon" aria-hidden="true">◫</span>Overview
+            </button>
+            <button type="button" data-view="workflow">
+              <span class="nav-icon" aria-hidden="true">↳</span>Workflow
+            </button>
+            <button type="button" data-view="review">
+              <span class="nav-icon" aria-hidden="true">□</span>Review
+            </button>
+            <button type="button" data-view="evidence">
+              <span class="nav-icon" aria-hidden="true">≡</span>Evidence
+            </button>
+            <button type="button" data-view="service">
+              <span class="nav-icon" aria-hidden="true">↗</span>Service
+            </button>
+          </nav>
+        </div>
+      </aside>
+      <div class="main">
+        <header class="topbar">
+          <span class="breadcrumb">Labs / <strong id="location">Overview</strong></span
+          ><a
+            class="cta"
+            href="/book?source=connected-work-lab&amp;intent=workflow-mapping&amp;lane=workflow_infrastructure"
+            >Map your workflow ↗</a
+          >
+        </header>
+        <main id="main-content" class="body" tabindex="-1">
+          <noscript
+            ><p class="small-note">
+              All five service sections are shown below. Enable JavaScript to explore the local
+              owner and approval illustration.
+            </p></noscript
+          >
+          <section id="overview" data-panel="overview" aria-labelledby="overview-title">
+            <div class="overview-layout">
+              <div class="hero">
+                <p class="eyebrow">OpenAI Select Partner · Engineering for small teams</p>
+                <h1 id="overview-title">Fewer places to work.<br />More work connected.</h1>
+                <p>
+                  We help your team work from OpenAI, connect the tools you need, and check the
+                  result before important actions happen.
+                </p>
+                <button class="cta secondary" type="button" data-go="workflow">
+                  Explore one workflow →
+                </button>
+              </div>
+              <div class="workspace">
+                <div class="workspace-head">
+                  <h2>Client follow-up</h2>
+                  <span class="status">Illustrative example<br />No accounts connected</span>
+                </div>
+                <div class="workspace-body">
+                  <div
+                    class="flow"
+                    aria-label="Meeting notes go to ChatGPT for drafting, then a person reviews before tasks and a message are saved or sent"
+                  >
+                    <div class="node">
+                      <small>The source</small><b>Meeting notes</b
+                      ><small>In your existing tools</small>
+                    </div>
+                    <span class="arrow" aria-hidden="true">↓</span>
+                    <div class="node highlight">
+                      <small>Where you work</small><b>ChatGPT</b
+                      ><small>Prepare the follow-up</small>
+                    </div>
+                    <span class="arrow" aria-hidden="true">↓</span>
+                    <div class="node">
+                      <small>Human decision</small><b>Review, then act</b
+                      ><small>Tasks + client update</small>
+                    </div>
+                  </div>
+                  <p class="taskline">
+                    “Prepare the follow-up from this meeting.”<br /><span
+                      >The team starts in OpenAI. The connections do the handoff.</span
+                    >
+                  </p>
+                  <div class="review-row">
+                    <span class="status">One owner needs confirmation · Sending waits</span
+                    ><button type="button" class="inline-link" data-go="review">
+                      Inspect the review →
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="proof-link">
+              <div>
+                <strong>See what we have actually built.</strong>
+                <p>Webflow Marketplace · recordings and labeled test replays</p>
+              </div>
+              <button class="inline-link" type="button" data-go="evidence">
+                Inspect the work ↗
+              </button>
+            </div>
+            <div class="credentials">
+              <strong>OpenAI Select Partner</strong>OpenAI is our starting point.<br />Your team
+              keeps control.<br /><a href="/stack#openai-qualifications">Qualifications ↗</a>
+            </div>
+          </section>
+          <section id="workflow" data-panel="workflow" aria-labelledby="workflow-title" hidden>
+            <p class="eyebrow">Illustrative workflow · No live execution</p>
+            <h1 class="section-title" id="workflow-title">
+              The work stays connected.<br />Your team gets a simpler path.
+            </h1>
+            <p class="intro">
+              Start in the OpenAI product that fits the job. Keep the tools that hold your business
+              records. Add custom engineering where the handoff needs it.
+            </p>
+            <div class="workspace">
+              <div class="workspace-head">
+                <h2>Meeting → follow-up</h2>
+                <span class="status">Proposed delivery pattern</span>
+              </div>
+              <div class="workspace-body">
+                <div class="record">
+                  <span class="label">OpenAI · Your daily surface</span>
+                  <h3>Ask for the client follow-up.</h3>
+                  <p>
+                    Use a reusable Skill with the team's instructions. The example starts in
+                    ChatGPT; exact capabilities and access are checked during setup.
+                  </p>
+                </div>
+                <div class="record">
+                  <span class="label">Connected tools · The source of record</span>
+                  <h3>Read the notes. Check existing tasks.</h3>
+                  <p>
+                    The connection retrieves the agreed sources and looks for existing work. Your
+                    records stay in their owning systems.
+                  </p>
+                </div>
+                <div class="record">
+                  <span class="label">Your team · The decision</span>
+                  <h3>Resolve the unknowns before writing.</h3>
+                  <p>
+                    Check proposed tasks, owners, dates, and the client message. Missing context
+                    stays visible.
+                  </p>
+                </div>
+                <div class="record">
+                  <span class="label">CREATE SOMETHING · The engineering</span>
+                  <h3>Connect, test, and hand it over.</h3>
+                  <p>
+                    We configure native capabilities first, build the missing integration where
+                    needed, and document what works, what stops, and how to recover.
+                  </p>
+                </div>
+                <div class="actions">
+                  <button type="button" class="cta secondary" data-go="review">
+                    Inspect the review →
+                  </button>
+                </div>
+              </div>
+            </div>
+            <p class="small-note">
+              This site explains the service. It is not a replacement for ChatGPT or a client
+              operations portal.
+            </p>
+          </section>
+          <section id="review" data-panel="review" aria-labelledby="review-title" hidden>
+            <p class="eyebrow">Interactive illustration · Changes stay in this page</p>
+            <h1 class="section-title" id="review-title">Know what you are approving.</h1>
+            <p class="intro">
+              Review the task against its source, then choose an owner. This illustration never
+              writes to a connected tool.
+            </p>
+            <div class="workspace">
+              <div class="workspace-head">
+                <h2>Client follow-up · review example</h2>
+                <span id="review-status" class="status">Waiting for a decision</span>
+              </div>
+              <div class="workspace-body">
+                <div class="review-layout">
+                  <div class="split">
+                    <div>
+                      <h3>Proposed work</h3>
+                      <p>Prepare the revised proposal.</p>
+                      <ul>
+                        <li id="proposed-owner">Owner: needs confirmation</li>
+                        <li>Due: Friday</li>
+                        <li>Destination: client task database</li>
+                      </ul>
+                    </div>
+                    <div class="source">
+                      <h3>Source passage</h3>
+                      <p>
+                        “Please have the revised proposal ready by Friday. We still need to decide
+                        who will own it.”
+                      </p>
+                      <p class="small-note">
+                        Synthetic meeting note, created for this illustration.
+                      </p>
+                    </div>
+                  </div>
+                  <div class="decision">
+                    <div class="checks">
+                      <div>
+                        <strong>Supported:</strong> task and due date match the example source.
+                      </div>
+                      <div id="owner-check">
+                        <strong>Unresolved:</strong> the source does not name an owner.
+                      </div>
+                      <div>
+                        <strong>Not tested here:</strong> live duplicate detection and destination
+                        access.
+                      </div>
+                      <div>
+                        <strong>Held:</strong> writing tasks and sending the client message.
+                      </div>
+                    </div>
+                    <div class="review-controls">
+                      <label for="owner"
+                        >Who owns the proposal?<select id="owner">
+                          <option value="">Choose an owner</option>
+                          <option value="You">I do</option>
+                          <option value="The account lead">The account lead</option>
+                        </select></label
+                      ><button id="approve" class="cta" type="button" disabled>
+                        Preview the approved state
+                      </button>
+                    </div>
+                    <div id="receipt" class="receipt" role="status" hidden></div>
+                    <p class="small-note">
+                      Approval is separate from execution and verification. Nothing is sent, saved,
+                      or connected by this demonstration.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section id="evidence" data-panel="evidence" aria-labelledby="evidence-title" hidden>
+            <p class="eyebrow">Actual work · Provenance included</p>
+            <h1 class="section-title" id="evidence-title">Inspect the work behind the claim.</h1>
+            <p class="intro">
+              Examples explain a possible workflow. Delivered artifacts and recordings show the
+              engineering we can point to.
+            </p>
+            <div class="workspace">
+              <div class="workspace-head">
+                <h2>Webflow Marketplace</h2>
+                <span class="status">Historical work</span>
+              </div>
+              <div class="workspace-body">
+                <div class="record">
+                  <h3>Forms, reviews, and handoffs.</h3>
+                  <p>
+                    Recorded interfaces, source artifacts, and labeled offline replays across a
+                    marketplace lifecycle. Individual work by Micah Johnson for Webflow,
+                    independently of CREATE SOMETHING.
+                  </p>
+                </div>
+                <div class="record">
+                  <h3>What this establishes</h3>
+                  <p>
+                    Inspectable interface and workflow engineering. It does not establish an OpenAI
+                    consolidation deployment or a measured time-saving claim.
+                  </p>
+                </div>
+                <div class="actions">
+                  <a class="cta secondary" href="/case-studies/webflow-marketplace"
+                    >Open the case study ↗</a
+                  >
+                </div>
+              </div>
+            </div>
+            <p class="small-note">
+              The case study includes the recordings, their captions, and the limits of what they
+              establish.
+            </p>
+          </section>
+          <section id="service" data-panel="service" aria-labelledby="service-title" hidden>
+            <p class="eyebrow">A service for your team</p>
+            <h1 class="section-title" id="service-title">
+              Start with one handoff.<br />Leave with a working path.
+            </h1>
+            <p class="intro">
+              Bring a workflow that makes your team jump between tools. We agree on the useful
+              change, implement it, and help your team use the result.
+            </p>
+            <div class="workspace">
+              <div class="workspace-body">
+                <div class="record service-row">
+                  <strong>Map</strong>
+                  <p>
+                    Identify the task, systems, owners, and what a correct result looks like. Choose
+                    the simplest suitable OpenAI pathway.
+                  </p>
+                </div>
+                <div class="record service-row">
+                  <strong>Build</strong>
+                  <p>
+                    Configure native capabilities, connect the missing pieces, and test
+                    representative work and failure cases.
+                  </p>
+                </div>
+                <div class="record service-row">
+                  <strong>Handoff</strong>
+                  <p>
+                    Your team keeps the agreed deliverables, instructions, check results, and
+                    recovery guidance under the engagement agreement.
+                  </p>
+                </div>
+                <div class="record service-row">
+                  <strong>Support</strong>
+                  <p>Agree ongoing improvements or managed operations separately when needed.</p>
+                </div>
+                <div class="actions">
+                  <a
+                    class="cta"
+                    href="/book?source=connected-work-lab&amp;intent=workflow-mapping&amp;lane=workflow_infrastructure"
+                    >Map your workflow ↗</a
+                  ><a class="cta secondary" href="/services">Scope, support, and pricing ↗</a>
+                </div>
+                <p class="small-note">
+                  This demonstration is part of our engineering service, not a software
+                  subscription. OpenAI plans, project usage, hosting, and third-party costs depend
+                  on the agreed delivery.
+                </p>
+              </div>
+            </div>
+          </section>
+        </main>
+        <aside id="canon-guide" class="canon-guide" aria-label="Canon, your website guide">
+          <img
+            src="/images/labs/connected-work-canon.png"
+            width="60"
+            height="74"
+            loading="lazy"
+            alt="Canon, a friendly graphite workshop companion"
+          />
+          <div class="canon-speech">
+            <div class="canon-heading">
+              <strong>Canon <span class="status">· Your guide</span></strong
+              ><button type="button" id="hide-canon" aria-label="Hide Canon's guidance">
+                Hide
+              </button>
+            </div>
+            <p id="canon-message" aria-live="polite">
+              You won't need another dashboard to get started. This one shows how we connect your
+              work around OpenAI.
+            </p>
+            <button type="button" id="canon-next" class="inline-link">
+              Show me the workflow →
+            </button>
+          </div>
+        </aside>
+        <button type="button" id="show-canon" class="canon-reopen" hidden>
+          Ask Canon for a pointer
+        </button>
+        <footer class="footer">
+          <span>Agency Labs · Interactive demonstration</span
+          ><span><a href="/security">Security</a> · <a href="/privacy">Privacy</a></span>
+        </footer>
+      </div>
+    </div>
+    <script>
+      const names = {
+        overview: 'Overview',
+        workflow: 'The workflow',
+        review: 'Human review',
+        evidence: 'Actual work',
+        service: 'Working together'
+      };
+      const guidance = {
+        overview: [
+          "You won't need another dashboard to get started. This one shows how we connect your work around OpenAI.",
+          'Show me the workflow →',
+          'workflow'
+        ],
+        workflow: [
+          'Your tools can stay where they are. We help the handoffs work, so your team has fewer places to check.',
+          'Where do I review the work? →',
+          'review'
+        ],
+        review: [
+          'Notice the missing owner? A check should expose that uncertainty before a person approves a change.',
+          'Show me actual work →',
+          'evidence'
+        ],
+        evidence: [
+          'This is historical engineering evidence. The follow-up workflow elsewhere in this tour is an illustration.',
+          'How would we work together? →',
+          'service'
+        ],
+        service: [
+          'Bring one task and the tools involved. A mapping session helps us choose the simplest useful change.',
+          'Return to the overview →',
+          'overview'
+        ]
+      };
+      const guide = document.getElementById('canon-guide'),
+        guideNext = document.getElementById('canon-next');
+      let currentView = 'overview';
+      function show(view, { focus = true, updateHistory = true } = {}) {
+        if (!Object.hasOwn(names, view)) return;
+        currentView = view;
+        document
+          .querySelectorAll('[data-panel]')
+          .forEach((p) => (p.hidden = p.dataset.panel !== view));
+        document.querySelectorAll('[data-view]').forEach((b) => {
+          if (b.dataset.view === view) b.setAttribute('aria-current', 'page');
+          else b.removeAttribute('aria-current');
+        });
+        document.getElementById('location').textContent = names[view];
+        document.getElementById('canon-message').textContent = guidance[view][0];
+        guideNext.textContent = guidance[view][1];
+        const title = document.querySelector('[data-panel="' + view + '"] h1');
+        title.setAttribute('tabindex', '-1');
+        if (updateHistory && location.hash !== '#' + view) history.pushState(null, '', '#' + view);
+        if (focus) {
+          title.focus({ preventScroll: true });
+          window.scrollTo({ top: 0, behavior: 'instant' });
+        }
+      }
+      guideNext.addEventListener('click', () => show(guidance[currentView][2]));
+      document.getElementById('hide-canon').addEventListener('click', () => {
+        guide.hidden = true;
+        document.getElementById('show-canon').hidden = false;
+        document.getElementById('show-canon').focus();
+      });
+      document.getElementById('show-canon').addEventListener('click', () => {
+        guide.hidden = false;
+        document.getElementById('show-canon').hidden = true;
+        document.getElementById('hide-canon').focus();
+      });
+      document
+        .querySelectorAll('[data-view],[data-go]')
+        .forEach((b) => b.addEventListener('click', () => show(b.dataset.view || b.dataset.go)));
+      function restoreView(focus = false) {
+        if (location.hash === '#main-content') return;
+        const view = location.hash.slice(1);
+        show(Object.hasOwn(names, view) ? view : 'overview', {
+          focus,
+          updateHistory: false
+        });
+      }
+      window.addEventListener('popstate', () => restoreView(true));
+      window.addEventListener('hashchange', () => restoreView(true));
+      restoreView();
+      const owner = document.getElementById('owner'),
+        approve = document.getElementById('approve'),
+        receipt = document.getElementById('receipt'),
+        status = document.getElementById('review-status');
+      owner.addEventListener('change', () => {
+        approve.disabled = !owner.value;
+        receipt.hidden = true;
+        status.textContent = 'Waiting for a decision';
+        approve.textContent = 'Preview the approved state';
+        document.getElementById('proposed-owner').textContent = owner.value
+          ? 'Owner: ' + owner.value + ' (chosen by you)'
+          : 'Owner: needs confirmation';
+        document.getElementById('owner-check').textContent = owner.value
+          ? 'Resolved by you: owner set to ' + owner.value + '. The source did not supply an owner.'
+          : 'Unresolved: the source does not name an owner.';
+        guidance.review[0] = owner.value
+          ? 'You supplied the missing owner. The task can now be reviewed; approving it still does not mean it has been saved.'
+          : 'Notice the missing owner? A check should expose that uncertainty before a person approves a change.';
+        if (currentView === 'review')
+          document.getElementById('canon-message').textContent = guidance.review[0];
+      });
+      approve.addEventListener('click', () => {
+        if (!owner.value) return;
+        status.textContent = 'Illustrated approval recorded';
+        receipt.textContent =
+          'Owner confirmed: ' +
+          owner.value +
+          '. The proposed task is approved in this illustration. Execution has not run; the destination has not been verified.';
+        receipt.hidden = false;
+        approve.textContent = 'Approved in this illustration';
+        approve.disabled = true;
+      });
+    </script>
+  </body>
+</html>
