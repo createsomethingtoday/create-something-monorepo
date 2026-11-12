@@ -30,6 +30,9 @@ async function scenario(name, fn, viewport = { width: 1440, height: 900 }, optio
     assert.deepEqual(errors, []);
     assert.deepEqual(external, []);
     report.push({ name, passed: true });
+  } catch (error) {
+    await page.screenshot({ path: `${evidence}/failed.png` });
+    throw error;
   } finally {
     await context.close();
   }
@@ -43,10 +46,8 @@ async function gotoState(page, state) {
     const history = page.locator('.history-item').first();
     if (!(await history.isVisible())) await page.getByTestId('mobile-nav-toggle').click();
     await history.click();
-    if (['review', 'expired', 'enrichment'].includes(state))
-      await expect(
-        page.getByRole('heading', { name: 'Review the exact action', exact: true })
-      ).toBeFocused();
+    if (['review', 'expired', 'enrichment', 'skip-review'].includes(state))
+      await expect(page.getByRole('heading', { name: /^Review: / })).toBeFocused();
     else await expect(page.getByRole('textbox', { name: 'Your question' })).toBeFocused();
     await expect(page.locator('.npg-thread-title')).toHaveText(
       'Find NPs near Springfield, MO, and keep the complete CSV.'
@@ -70,6 +71,233 @@ async function disclosureHasClearBody(page, button) {
 }
 try {
   await scenario(
+    'mobile evidence returns to exact review with context beside decisions',
+    async (page) => {
+      await gotoState(page, 'skip-review');
+      await expect(page.getByRole('textbox', { name: 'Your question' })).toHaveCount(0);
+      for (const control of await page.locator('.npg-review-decision-bar button').all()) {
+        const visible = (await control.innerText()).trim().toLowerCase();
+        const accessible = ((await control.getAttribute('aria-label')) || visible).toLowerCase();
+        assert.ok(
+          accessible.includes(visible),
+          'Spoken control name must include its visible label'
+        );
+      }
+      const pending = await page.evaluate(async () => {
+        const id = JSON.parse(document.getElementById('npg-bootstrap').textContent).conversations[0]
+          .id;
+        return (await (await fetch('/delivery/abundance/healthcare-analyst/api?id=' + id)).json())
+          .pending;
+      });
+      const reviewText = (await page.locator('.npg-review').innerText()).replace(/\s+/g, ' ');
+      for (const value of Object.values(pending.review)) {
+        if (typeof value !== 'string') continue;
+        // Supplemental group labels may sit between supplied sentences. Each
+        // original sentence, including punctuation, must remain in order.
+        let cursor = 0;
+        for (const sentence of value.replace(/\s+/g, ' ').split(/(?<=\.) (?=[A-Z])/)) {
+          const position = reviewText.indexOf(sentence, cursor);
+          assert.ok(position >= 0, 'A supplied review term was omitted or reordered');
+          cursor = position + sentence.length;
+        }
+      }
+      const exact = page.getByRole('button', { name: 'Exact request data', exact: true });
+      await exact.click();
+      assert.deepEqual(
+        JSON.parse(await page.locator('.npg-review .npg-json').innerText()),
+        pending.arguments
+      );
+      assert.ok(
+        await page
+          .locator('.npg-review .npg-json')
+          .evaluate((element) => element.scrollWidth <= element.clientWidth),
+        'Exact paid request must remain readable without horizontal scrolling'
+      );
+      await exact.click();
+      await page.getByRole('button', { name: 'Read terms', exact: true }).click();
+      await expect(page.locator('#npg-review-title')).toBeFocused();
+
+      await page.getByRole('button', { name: /Results & evidence/ }).click();
+      await expect(
+        page.getByRole('heading', { name: 'Results & evidence', exact: true })
+      ).toBeFocused();
+      await expect(page.getByText('231 records', { exact: true })).toBeVisible();
+      await expect(page.getByRole('textbox', { name: 'Your question' })).toHaveCount(0);
+      await page.getByRole('button', { name: 'Back to conversation', exact: true }).click();
+      await expect(page.locator('#npg-review-title')).toBeFocused();
+      const reject = page.getByRole('button', { name: 'Reject action', exact: true });
+      await reject.scrollIntoViewIfNeeded();
+      const summary = page.locator('.npg-review-summary');
+      await expect(summary).toContainText('1234567890');
+      await expect(summary).toContainText('Jamie Example');
+      await expect(summary).toContainText('(unverified)');
+      await expect(summary).toContainText('$0.10');
+      const bounds = await summary.boundingBox();
+      const pane = await page.locator('.npg-thread').boundingBox();
+      assert.ok(
+        bounds.y >= pane.y && bounds.y + bounds.height <= pane.y + pane.height,
+        'Full decision summary must be visible with decision controls'
+      );
+      await expect(
+        page.getByRole('button', { name: 'Approve this action', exact: true })
+      ).toBeInViewport();
+      await expect(reject).toBeInViewport();
+      const rejectBox = await reject.boundingBox();
+      const detailsBox = await page
+        .getByRole('button', { name: 'Read terms', exact: true })
+        .boundingBox();
+      assert.ok(
+        Math.abs(rejectBox.y - detailsBox.y) < 1,
+        'Short-phone decision controls must share one row'
+      );
+      assert.ok(
+        rejectBox.height >= 44 && detailsBox.height >= 44,
+        'Decision targets must remain comfortably tappable'
+      );
+      assert.deepEqual(await commands(page), []);
+      await reject.focus();
+      await page.keyboard.press('Enter');
+      await expect(page.getByRole('textbox', { name: 'Your question' })).toBeVisible();
+      assert.deepEqual(
+        (await commands(page)).map((command) => command.type),
+        ['reject']
+      );
+      await page.reload();
+      await expect(
+        page.getByText('Action rejected. No action was sent.', { exact: true })
+      ).toBeVisible();
+    },
+    { width: 320, height: 568 }
+  );
+
+  await scenario('exact review conditions remain inside their metadata row', async (page) => {
+    await gotoState(page, 'skip-review');
+    const escaped = await page.locator('.npg-review dd').evaluateAll((rows) =>
+      rows.flatMap((row) => {
+        const box = row.getBoundingClientRect();
+        return Array.from(row.querySelectorAll('p'))
+          .filter((paragraph) => {
+            const bounds = paragraph.getBoundingClientRect();
+            return bounds.bottom > box.bottom + 1 || bounds.top < box.top - 1;
+          })
+          .map((paragraph) => paragraph.textContent);
+      })
+    );
+    assert.deepEqual(escaped, [], 'Exact conditions must not overlap the following review row');
+    assert.deepEqual(await commands(page), []);
+  });
+
+  await scenario(
+    'pending review keeps its conversation context available without a command',
+    async (page) => {
+      await gotoState(page, 'skip-review');
+      const context = page.getByRole('button', { name: 'Conversation context', exact: true });
+      await expect(context).toHaveAttribute('aria-expanded', 'false');
+      await expect(
+        page.getByRole('article', { name: 'Message from user', exact: true })
+      ).toBeHidden();
+      await context.click();
+      await expect(context).toHaveAttribute('aria-expanded', 'true');
+      await expect(
+        page.getByRole('article', { name: 'Message from user', exact: true })
+      ).toContainText('Find NPs near Springfield, MO');
+      await expect(
+        page.getByRole('article', { name: 'Message from assistant', exact: true })
+      ).toContainText('Board certification and active licensure remain unknown');
+      await page.screenshot({ path: `${evidence}/review-context.png`, animations: 'disabled' });
+      await context.click();
+      await page.getByRole('button', { name: 'Read terms', exact: true }).click();
+      await expect(page.locator('#npg-review-title')).toBeFocused();
+      await expect(page.locator('#npg-review-title')).toBeInViewport();
+      await expect(page.locator('.npg-review-summary')).toContainText('Jamie Example');
+      assert.deepEqual(await commands(page), []);
+    },
+    { width: 320, height: 568 }
+  );
+
+  await scenario(
+    'unknown review terms and long identity remain complete and bounded',
+    async (page) => {
+      const limits =
+        'One pinned run, using the current operator limit. Repeated identical input requires a fresh review. Account ownership and empty-sentinel anonymous access are checked before dispatch; these checks cannot exclude explicit grants or Actor-creator sharing. Account restriction and sharing setup require operator review.';
+      const args = {
+        npi: '1234567890',
+        clinics: [{ address: '100 Example Street, Springfield, Missouri 65801' }],
+        max_minutes: 35,
+        request_reference: 'synthetic-' + 'a'.repeat(120),
+        confirm_paid_enrichment: true
+      };
+      await page.route('**/healthcare-analyst/api?id=*', async (route) => {
+        const response = await route.fetch();
+        const view = await response.json();
+        view.pending.review = {
+          scope: 'One selected NPI with the supplied clinic and time limit.',
+          limits,
+          maximumCost: 0.007,
+          currency: 'USD'
+        };
+        view.pending.arguments = args;
+        view.sources[0].data.results = [
+          {
+            npi: '1234567890',
+            name: 'Synthetic Candidate With A Deliberately Long Registry Display Name For Narrow Screen Verification'
+          }
+        ];
+        await route.fulfill({ response, json: view });
+      });
+      await gotoState(page, 'skip-review');
+      const review = page.locator('.npg-review');
+      await expect(review).toContainText(limits);
+      await expect(review.getByText('Run limits', { exact: true })).toHaveCount(0);
+      await expect(review).toContainText('100 Example Street, Springfield, Missouri 65801');
+      await expect(review).toContainText('35 minutes');
+      await expect(page.locator('.npg-review-summary')).toContainText('$0.007 USD');
+      await page.getByRole('button', { name: 'Exact request data', exact: true }).click();
+      assert.deepEqual(JSON.parse(await review.locator('.npg-json').innerText()), args);
+      assert.ok(
+        await review
+          .locator('.npg-json')
+          .evaluate((element) => element.scrollWidth <= element.clientWidth),
+        'Long exact request values must wrap without losing their original data'
+      );
+      const approve = page.getByRole('button', { name: 'Approve this action', exact: true });
+      await expect(approve).toBeInViewport();
+      await expect(
+        page.getByRole('button', { name: 'Reject action', exact: true })
+      ).toBeInViewport();
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+      assert.deepEqual(await commands(page), []);
+      await page.screenshot({ path: `${evidence}/long-review.png` });
+    },
+    { width: 320, height: 568 }
+  );
+
+  await scenario(
+    'starter fills an editable draft without submitting and survives reload',
+    async (page) => {
+      await gotoState(page, 'new');
+      assert.ok(
+        (await page.getByRole('button', { name: 'Send question', exact: true }).boundingBox())
+          .height >= 44
+      );
+      const starter = page.getByRole('button', { name: /Find candidates by city/ });
+      await starter.click();
+      const input = page.getByRole('textbox', { name: 'Your question' });
+      await expect(input).toBeFocused();
+      await expect(input).toHaveText(
+        'Find FNP and adult-gerontology NP candidates in Springfield, MO, with a complete sourcing CSV.'
+      );
+      assert.deepEqual(await commands(page), []);
+      await page.reload();
+      await expect(input).toHaveText(
+        'Find FNP and adult-gerontology NP candidates in Springfield, MO, with a complete sourcing CSV.'
+      );
+      assert.deepEqual(await commands(page), []);
+    },
+    { width: 390, height: 844 }
+  );
+
+  await scenario(
     'large saved evidence retains review focus after the render commits',
     async (page) => {
       const session = await page.context().newCDPSession(page);
@@ -84,9 +312,7 @@ try {
         await route.fulfill({ response, json: view });
       });
       await gotoState(page, 'review');
-      await expect(
-        page.getByRole('heading', { name: 'Review the exact action', exact: true })
-      ).toBeInViewport();
+      await expect(page.getByRole('heading', { name: /^Review: / })).toBeInViewport();
       assert.deepEqual(await commands(page), []);
       await session.detach();
     }
@@ -106,10 +332,12 @@ try {
           (element) => element.scrollWidth <= element.clientWidth + 1
         );
         assert.ok(fits, 'Product identity is truncated');
-        const helper = page.getByText(
-          'Review or reject the action above before sending another question.',
-          { exact: true }
+        const threadBox = await page.locator('.npg-thread').boundingBox();
+        assert.ok(
+          threadBox && threadBox.y + threadBox.height <= viewport.height + 1,
+          'Review must scroll inside the workspace, not extend the whole page'
         );
+        const helper = page.locator('.npg-review-summary');
         const hasSurface = await helper.evaluate((element) => {
           for (
             let parent = element;
@@ -122,20 +350,8 @@ try {
           return false;
         });
         assert.ok(hasSurface, 'Composer helper has no opaque surface above the transcript');
-        const placeholderBottom = await page
-          .getByRole('textbox', { name: 'Your question' })
-          .evaluate(
-            (element) =>
-              element.parentElement.querySelector('[aria-hidden="true"]').getBoundingClientRect()
-                .bottom
-          );
-        const footerTop = await page
-          .getByText(/Ctrl \/ ⌘ \+ Enter/)
-          .evaluate((element) => element.getBoundingClientRect().top);
-        assert.ok(
-          placeholderBottom <= footerTop,
-          'Composer placeholder overlaps its keyboard hint'
-        );
+        await expect(page.getByRole('textbox', { name: 'Your question' })).toHaveCount(0);
+        // The saved draft remains in state while review replaces the inactive composer.
 
         await page
           .getByRole('button', { name: 'Reject action', exact: true })
@@ -153,19 +369,27 @@ try {
       'exact review and evidence at ' + width,
       async (page) => {
         await gotoState(page, 'review');
-        const heading = page.getByRole('heading', { name: 'Review the exact action', exact: true });
+        const heading = page.getByRole('heading', { name: /^Review: / });
         await expect(heading).toBeInViewport();
         assert.equal(await page.getByRole('main').count(), 1);
-        if (width <= 1024) {
-          await page.getByRole('button', { name: /Results & evidence/ }).click();
-          await expect(page.getByText('231 total', { exact: true })).toBeVisible();
-        }
+        await page.getByRole('button', { name: /Results & evidence/ }).click();
+        await expect(page.getByText('231 records', { exact: true })).toBeVisible();
         const csv = page.locator('.source-link');
+        assert.ok(
+          (await csv.boundingBox()).height >= 44,
+          'CSV action must remain comfortably tappable'
+        );
         await expect(csv).toHaveAttribute(
           'href',
           '/delivery/abundance/sourcing.csv?run_id=abnationalrun_fixture&taxonomy_code=363LF0000X%2C363LA2200X'
         );
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+        if (width <= 1024)
+          await page.getByRole('button', { name: 'Back to conversation', exact: true }).click();
+        else {
+          await page.getByRole('button', { name: /Results & evidence/ }).click();
+          await expect(page.locator('#npg-review-title')).toBeFocused();
+        }
         const reject = page.getByRole('button', { name: 'Reject action', exact: true });
         await reject.scrollIntoViewIfNeeded();
         await expect(reject).toBeInViewport();
@@ -180,7 +404,12 @@ try {
             (await commands(page)).map((command) => command.type),
             ['reject']
           );
+          await page.getByRole('button', { name: /Results & evidence/ }).click();
           await expect(page.locator('.source-link')).toHaveCount(1);
+          await expect(page.locator('.source-link')).toHaveAttribute(
+            'href',
+            '/delivery/abundance/sourcing.csv?run_id=abnationalrun_fixture&taxonomy_code=363LF0000X%2C363LA2200X'
+          );
         } else assert.deepEqual(await commands(page), []);
       },
       { width, height: 900 }
@@ -193,14 +422,13 @@ try {
       'short phone keeps review reachable ' + viewport.width + '×' + viewport.height,
       async (page) => {
         await gotoState(page, 'review');
-        await expect(
-          page.getByRole('heading', { name: 'Review the exact action', exact: true })
-        ).toBeInViewport();
+        await expect(page.getByRole('heading', { name: /^Review: / })).toBeInViewport();
         await page.getByRole('button', { name: /Results & evidence/ }).click();
         const csv = page.locator('.source-link');
         await csv.scrollIntoViewIfNeeded();
         await expect(csv).toBeInViewport();
-        const heading = page.getByRole('heading', { name: 'Review the exact action', exact: true });
+        await page.getByRole('button', { name: 'Back to conversation', exact: true }).click();
+        const heading = page.getByRole('heading', { name: /^Review: / });
         await heading.scrollIntoViewIfNeeded();
         await expect(heading).toBeInViewport();
         const usable = await page
@@ -242,7 +470,7 @@ try {
       await input.press('Control+Enter');
       await input.press('Control+Enter');
       await input.fill('Draft typed during conversation creation');
-      await expect(page.getByText('231 total', { exact: true })).toBeVisible();
+      await expect(page.getByText('231 records', { exact: true })).toBeVisible();
       await expect(input).toHaveText('Draft typed during conversation creation');
       assert.deepEqual(
         (await commands(page)).map((command) => command.type),
@@ -252,6 +480,32 @@ try {
       await expect(input).toHaveText('Draft typed during conversation creation');
       await expect(page.locator('.npg-thread-title')).toHaveText('Find family NPs near my clinic');
     }
+  );
+  await scenario(
+    'new chat leaves mobile evidence and focuses its empty draft',
+    async (page) => {
+      await gotoState(page, 'result');
+      await page
+        .getByRole('textbox', { name: 'Your question' })
+        .fill('Keep this draft with the old conversation');
+      await page.getByRole('button', { name: /Results & evidence/ }).click();
+      await page.getByTestId('mobile-nav-toggle').click();
+      await page.getByRole('button', { name: 'New chat', exact: true }).click();
+      const input = page.getByRole('textbox', { name: 'Your question' });
+      await expect(input).toBeVisible();
+      await expect(input).toBeFocused();
+      await expect(input).toHaveText('');
+      await expect(page.getByRole('heading', { name: 'Who are you looking for?' })).toBeVisible();
+      assert.deepEqual(
+        (await commands(page)).map((command) => command.type),
+        ['create']
+      );
+      const drafts = await page.evaluate(() =>
+        JSON.parse(sessionStorage.getItem('npg-drafts:fixture'))
+      );
+      assert.ok(Object.values(drafts).includes('Keep this draft with the old conversation'));
+    },
+    { width: 390, height: 844 }
   );
   await scenario('working state is honest and output is escaped', async (page) => {
     await gotoState(page);
@@ -263,7 +517,7 @@ try {
     await expect(page.getByText(/The response arrives together/)).toBeVisible();
     await page.screenshot({ path: `${evidence}/working.png` });
     await input.fill('My next question');
-    await expect(page.getByText('231 total', { exact: true })).toBeVisible();
+    await expect(page.getByText('231 records', { exact: true })).toBeVisible();
     await expect(input).toHaveText('My next question');
     assert.equal((await commands(page)).filter((command) => command.type === 'message').length, 1);
     await expect(page.locator('.npg-messages')).toContainText(
@@ -277,6 +531,11 @@ try {
     async (page) => {
       await gotoState(page, 'error');
       const input = page.getByRole('textbox', { name: 'Your question' });
+      // Opening history remounts the empty editor after the mobile dialog closes.
+      // It must keep a real line box without introducing a draft or a command.
+      await expect(input).toHaveText('');
+      await expect.poll(async () => (await input.boundingBox())?.height ?? 0).toBeGreaterThan(0);
+      assert.deepEqual(await commands(page), []);
       await input.fill('Question before interruption');
       await input.press('Control+Enter');
       await expect(page.getByRole('alert')).toBeVisible();
@@ -331,7 +590,7 @@ try {
       '363LF0000X',
       '2026-09-14',
       'Certification unknown',
-      'not_recorded'
+      'Not recorded'
     ])
       await expect(evidencePanel).toContainText(text);
     await expect(page.getByText('200 total', { exact: true })).toBeVisible();
@@ -369,6 +628,9 @@ try {
       await expect(panel).toContainText('Charge reconciled');
       await expect(panel).toContainText('Apify one-api/skip-trace');
       const first = panel.locator('.npg-source').first();
+      // Decision-relevant outcome and billing evidence stay visible without opening technical details.
+      await expect(first.getByText('Review required', { exact: true })).toBeVisible();
+      await expect(first.getByText('0.05', { exact: true })).toBeVisible();
       await first
         .getByRole('button', {
           name: 'Skip Trace vendor contacts · ownership and consent unverified; recruiting readiness blocked'
@@ -380,7 +642,8 @@ try {
         first.getByRole('button', { name: /Skip Trace vendor contacts/ })
       );
       const blocked = panel.locator('.npg-source').nth(1);
-      await expect(blocked).toContainText('privacy_blocked');
+      await expect(blocked).toContainText('Privacy blocked');
+      await expect(blocked.getByText('Privacy blocked', { exact: true })).toBeVisible();
       assert.equal(
         await blocked.getByRole('button', { name: /Skip Trace vendor contacts/ }).count(),
         0
@@ -423,9 +686,7 @@ try {
   await scenario('reduced motion keeps an honest empty state', async (page) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await gotoState(page, 'new');
-    await expect(
-      page.getByRole('heading', { name: 'Start with the people you need to find.' })
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Who are you looking for?' })).toBeVisible();
     await page.screenshot({ path: `${evidence}/empty.png` });
   });
   await scenario(

@@ -12,7 +12,14 @@ export default defineConfig({
         tailwindcss({
           content: [fileURLToPath(new URL('./src/lib/npg/astryx/**/*.{ts,tsx}', import.meta.url))],
           corePlugins: { preflight: false },
-          theme: { extend: { spacing: { 4: 'var(--spacing-4)' } } }
+          theme: {
+            extend: {
+              spacing: { 3: 'var(--spacing-3)', 4: 'var(--spacing-4)' },
+              maxWidth: { reading: 'calc(var(--spacing-10) * 18)' },
+              width: { evidence: 'calc(var(--spacing-10) * 9)' },
+              minHeight: { control: 'calc(var(--spacing-10) + var(--spacing-1))' }
+            }
+          }
         })
       ]
     }
