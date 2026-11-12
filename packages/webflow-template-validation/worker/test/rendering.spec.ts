@@ -131,6 +131,13 @@ describe('page error helpers', () => {
 		expect(isIgnoredPageError('gsap is not defined')).toBe(false);
 	});
 
+	it('ignores the Webflow PayPal checkout error for a page opened without an order', () => {
+		expect(
+			isIgnoredPageError('CombinedGraphQLErrors: Our servers encountered an unexpected error: no paypal order ID')
+		).toBe(true);
+		expect(isIgnoredPageError('paypal is not defined')).toBe(false);
+	});
+
 	it('reads the throwing script from a V8 stack', () => {
 		const stack = `TypeError: Cannot read properties of null (reading 'style')\n    at HTMLDocument.<anonymous> (${SITE}/js/custom.js:12:9)\n    at https://cdn.prod.website-files.com/js/webflow.js:1:200`;
 		expect(scriptSourceFromStack(stack)).toBe(`${SITE}/js/custom.js`);

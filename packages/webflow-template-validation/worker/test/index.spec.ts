@@ -1597,6 +1597,17 @@ describe('Content Validator', () => {
 		expect(audit.details.map(detail => detail.src)).toEqual(['/pause-icon.svg']);
 	});
 
+	it('skips Webflow cart item images, which have no width and height settings', async () => {
+		const actual = await vi.importActual<typeof import('../src/utils/fetch-utils')>('../src/utils/fetch-utils');
+		const parsed = actual.parseHTMLWorker(`<!doctype html><html><body>
+			<div class="w-commerce-commercecartitem"><img src="" alt="" class="w-commerce-commercecartitemimage cart-thumb"></div>
+			<img src="/product.webp" alt="" class="cart-banner">
+		</body></html>`);
+
+		const audit = analyzeImageDimensions(parsed);
+		expect(audit.details.map(detail => detail.src)).toEqual(['/product.webp']);
+	});
+
 	it('reports missing image dimensions as a blocking error, even when every toggled content check is off', () => {
 		const allTogglesOff = { lorem: false, headings: false, altText: false, seo: false, links: false, contentQuality: false };
 		const pages = [

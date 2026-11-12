@@ -221,9 +221,11 @@ export async function scrollSweepInPage(stepPx: number, delayMs: number, maxPx: 
 
 /**
  * Browser noise that is not a template defect. ResizeObserver loop notices are
- * reported through window.onerror but break nothing.
+ * reported through window.onerror but break nothing. Webflow's own checkout script
+ * throws "no paypal order ID" when /paypal-checkout loads without an order,
+ * which is every load on a template.
  */
-const IGNORED_PAGE_ERRORS = [/ResizeObserver loop/i];
+const IGNORED_PAGE_ERRORS = [/ResizeObserver loop/i, /no paypal order ID/i];
 
 export function isIgnoredPageError(message: string): boolean {
 	return IGNORED_PAGE_ERRORS.some((pattern) => pattern.test(message));
