@@ -1,4 +1,5 @@
 import { DurableObject, WorkerEntrypoint } from 'cloudflare:workers';
+import { conflictCalendarIds, requiredConflictCalendarIds } from './providers/conflict-calendars.js';
 import { Temporal } from '@js-temporal/polyfill';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { z } from 'zod';
@@ -537,9 +538,22 @@ export class SchedulerDurableObject extends DurableObject<Env> {
         now.add({ hours: projectionReadinessHorizonDays * 24 })
       ) >= 0
     );
+    let requiredCalendarCoverage: { status: 'available' | 'unavailable'; nextAction: string | null } = {
+      status: 'unavailable',
+      nextAction: 'Connect Google Calendar and grant free/busy access to both required host calendars.'
+    };
+    if (oauthConnected) {
+      const coverage = await new GoogleCalendarPort({
+        selectedCalendarIds: [...requiredConflictCalendarIds],
+        eventCalendarId,
+        accessTokens: this.oauthClient()
+      }).listBusyIntervals({ from: now.toString(), to: now.add({ hours: 24 }).toString() });
+      if (coverage.status === 'available') requiredCalendarCoverage = { status: 'available', nextAction: null };
+    }
     const configured = Object.values(configuration).every(Boolean);
     return {
-      ready: configured && oauthConnected && calendarDiscovered &&
+      requiredCalendarCoverage,
+      ready: requiredCalendarCoverage.status === 'available' && configured && oauthConnected && calendarDiscovered &&
         projectionFresh && projectionHorizonCovered,
       configuration,
       oauthConnected,
@@ -576,9 +590,9 @@ export class SchedulerDurableObject extends DurableObject<Env> {
     const discovered = this.ctx.storage.kv.get<CalendarConfiguration>(
       'google:calendar-configuration'
     );
-    const selectedCalendarIds = discovered?.selectedCalendarIds ?? (
-      this.env.GOOGLE_SELECTED_CALENDAR_IDS
-        ?.split(',').map((value) => value.trim()).filter(Boolean) ?? [eventCalendarId]
+    const selectedCalendarIds = conflictCalendarIds(
+      this.env.GOOGLE_SELECTED_CALENDAR_IDS?.split(',').map(value => value.trim()).filter(Boolean) ?? [eventCalendarId],
+      discovered?.selectedCalendarIds ?? []
     );
     return { selectedCalendarIds, eventCalendarId };
   }
