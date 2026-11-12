@@ -52,7 +52,16 @@ export function cleanResult(value: unknown, secrets: string[] = []): unknown {
     );
   return value;
 }
+async function rejectRedirect(response: Response): Promise<void> {
+  // Workers does not support redirect: 'error'. Refuse every 3xx before the
+  // SDK can consume a body or session metadata; never follow Location with credentials.
+  if (response.status >= 300 && response.status < 400) {
+    await response.body?.cancel().catch(() => {});
+    throw new NpgError(503, 'The analyst service returned a redirect. No automatic retry was made.');
+  }
+}
 async function boundedJson(response: Response, limit = 180000): Promise<any> {
+  await rejectRedirect(response);
   if (!response.ok) {
     await response.body?.cancel();
     throw new NpgError(503, 'The analyst service is unavailable. No automatic retry was made.');
@@ -119,9 +128,10 @@ export function createProviders(
           if (String(url) !== HEALTHCARE_MCP_URL) throw new Error('Unexpected service URL');
           const response = await fetchFn(url, {
             ...init,
-            redirect: 'error',
+            redirect: 'manual',
             signal: AbortSignal.any([signal, AbortSignal.timeout(90000)])
           });
+          await rejectRedirect(response);
           // Bound SSE as well as JSON without buffering or automatically resuming it.
           if (!response.body) return response;
           let bytes = 0;
@@ -190,7 +200,7 @@ export function createProviders(
       const result = await boundedJson(
         await fetchFn('https://api.openai.com/v1/responses', {
           method: 'POST',
-          redirect: 'error',
+          redirect: 'manual',
           signal,
           headers: { Authorization: `Bearer ${openai}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({

@@ -722,7 +722,7 @@ test('MCP transport uses fixed bearer endpoint, bounded allowlist and advertised
   const mock: typeof fetch = async (url, init) => {
     assert.equal(String(url), 'https://abundance-healthcare-mcp.createsomething.workers.dev/mcp');
     assert.equal(new Headers(init?.headers).get('authorization'), 'Bearer fixture-mcp-secret');
-    assert.equal(init?.redirect, 'error');
+    assert.equal(init?.redirect, 'manual');
     if (init?.method === 'GET' || init?.method === 'DELETE')
       return new Response(null, { status: 405 });
     const rpc = JSON.parse(String(init?.body));

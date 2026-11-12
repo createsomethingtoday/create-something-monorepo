@@ -96,3 +96,50 @@ PR review follow-up: the message-count ceiling previously blocked approval/rejec
 The operator-selected follow-up fully replaces the NPG frontend with actual React/Astryx components in an isolated same-origin document, owner-derived history titles, readable persistent evidence/complete exports, and accessible exact reviews. Backend/provider/prompt/access/approval policy is unchanged except for the owner-scoped history-title read projection. See [NPG_CUSTOM_CHAT_EXPERIENCE.md](./NPG_CUSTOM_CHAT_EXPERIENCE.md) for research provenance, acceptance mapping, fixture receipts, and parent-owned remaining checks. The rollout flag remains parent-owned; Dify is retained for rollback.
 
 Current follow-up worktree disposition: preserved at `/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144`, branch `t3/npg-custom-chat`, for parent integration and independent final re-test. This supersedes the older implementation-worktree disposition above for the custom-chat follow-up only.
+
+## Workers redirect runtime repair — 2026-11-11
+
+The reported private-chat interruption before the first model/source result has a
+reproduced runtime cause in `src/lib/server/npg/providers.ts`: both MCP and Responses
+fetches used `redirect: 'error'`. [Cloudflare's Request documentation](https://developers.cloudflare.com/workers/runtime-apis/request/)
+states that Workers supports `follow` and `manual`; `error` throws `TypeError` at
+request construction, before any network request. The Node fetch fixtures accepted
+that option and did not expose the Worker incompatibility.
+
+Before the repair, `test/npg-providers-workerd.test.ts` bundled the production
+`createProviders` interface into Agency's pinned Wrangler/Miniflare workerd, using
+the unchanged Agency compatibility date/flags and local-only outbound fixtures.
+The normal MCP and Responses 200 cases both failed with `Invalid redirect value,
+must be one of "follow" or "manual"`; the separate legacy-mode probe confirmed
+`TypeError` with zero outbound requests. No provider credentials or live calls
+were used.
+
+Both fetches now use `manual`. A shared guard cancels and rejects every status
+300–399 before MCP SDK body/session-header access or model JSON consumption.
+It does not read Location, follow a redirect, forward credentials, or retry.
+Fixed endpoints, response byte caps, caller/transport abort bounds, MCP request
+timeouts, model selection, instructions, access/approval policy and UI are unchanged.
+
+Run from the repository root after bootstrap:
+
+```bash
+bash scripts/ona-bootstrap-local.sh pnpm --filter @create-something/agency exec node --import tsx --test test/npg-providers-workerd.test.ts
+bash scripts/ona-bootstrap-local.sh pnpm --filter @create-something/agency test:npg-analyst
+bash scripts/ona-bootstrap-local.sh pnpm --filter @create-something/agency check
+bash scripts/ona-bootstrap-local.sh pnpm --filter @create-something/agency build
+```
+
+The repaired runtime regression passes 11/11 tests, including all 100 statuses
+in each of MCP initialize/list/call and Responses (400 redirect cases), no body
+or metadata reads on redirects, body cancellation (including bodyless 304),
+no follow/retry, normal 200 results, bodyless MCP initialized notification 202,
+fail-closed model 202/204, 180,000-byte caps and pre-aborted caller signals.
+The focused NPG suite passed 58/58; the full Agency check passed with zero Svelte
+errors/warnings, and the Agency production build passed. Ground's advisory
+reported `no_analyzable_files` with incomplete duplicate analysis; it supplies
+no clean duplicate-coverage claim.
+These are local runtime fixtures, not authenticated production acceptance.
+Parent owns independent final review/re-test, merge, deployment and live read-only
+chat acceptance. No configuration change, paid action, Dify archival or deployment
+is included. Rollback is a revert of this narrow repair through the owning release
+workflow; keep Dify available under the existing rollback policy.
