@@ -538,9 +538,10 @@ export class SchedulerDurableObject extends DurableObject<Env> {
         now.add({ hours: projectionReadinessHorizonDays * 24 })
       ) >= 0
     );
-    let requiredCalendarCoverage: { status: 'available' | 'unavailable'; nextAction: string | null } = {
+    let requiredCalendarCoverage: { status: 'available' | 'unavailable'; reason: string | null; nextAction: string | null } = {
       status: 'unavailable',
-      nextAction: 'Connect Google Calendar and grant free/busy access to both required host calendars.'
+      reason: 'oauth_not_connected',
+      nextAction: 'Connect Google Calendar and grant micah@createsomething.io free/busy access to mj@halfdozen.co.'
     };
     if (oauthConnected) {
       const coverage = await new GoogleCalendarPort({
@@ -548,11 +549,14 @@ export class SchedulerDurableObject extends DurableObject<Env> {
         eventCalendarId,
         accessTokens: this.oauthClient()
       }).listBusyIntervals({ from: now.toString(), to: now.add({ hours: 24 }).toString() });
-      if (coverage.status === 'available') requiredCalendarCoverage = { status: 'available', nextAction: null };
+      requiredCalendarCoverage = coverage.status === 'available'
+        ? { status: 'available', reason: null, nextAction: null }
+        : { ...requiredCalendarCoverage, reason: coverage.reason };
     }
     const configured = Object.values(configuration).every(Boolean);
     return {
-      requiredCalendarCoverage,
+      requiredCalendarCoverage: { ...requiredCalendarCoverage, calendarIds: requiredConflictCalendarIds },
+      effectiveConflictCalendarCount: this.calendarConfiguration().selectedCalendarIds.length,
       ready: requiredCalendarCoverage.status === 'available' && configured && oauthConnected && calendarDiscovered &&
         projectionFresh && projectionHorizonCovered,
       configuration,

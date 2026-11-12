@@ -144,7 +144,7 @@ describe('scheduler Worker transport', () => {
         eventCalendarId: 'micah@createsomething.io'
       });
     });
-    const provider = vi.spyOn(globalThis, 'fetch');
+    const provider = vi.spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({ calendars: {} }));
 
     const readiness = await SELF.fetch('https://scheduler.local/ready');
     expect(readiness.status).toBe(503);
