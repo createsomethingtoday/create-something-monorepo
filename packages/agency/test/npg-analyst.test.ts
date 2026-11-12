@@ -702,6 +702,9 @@ test('Responses HTTP uses only server-selected model, bounded tokens, prior ID a
   assert.equal(request.model, 'gpt-5.6-luna');
   assert.equal(request.max_output_tokens, 3000);
   assert.equal(request.parallel_tool_calls, false);
+  assert.match(request.instructions, /get_enrichment_readiness prerequisite above applies to PDL, Clay and Exa, not Skip Trace/);
+  assert.match(request.instructions, /prepare a Skip Trace review.*emit.*enrich_candidate_skip_trace/s);
+  assert.match(request.instructions, /confirm_paid_enrichment=true.*proposal.*not.*approval/s);
   assert.equal(result.text, 'Safe [redacted]');
   assert.equal(attempts, 1);
   await p.close();
@@ -970,6 +973,35 @@ for (const decision of ['approve', 'reject', 'expire'] as const) {
       });
     }));
 }
+
+test('Skip Trace review without generic readiness is rejectable without provider dispatch', () =>
+  database(async (store) => {
+    const args = { npi: '1234567890', confirm_paid_enrichment: true };
+    const f = fixture('enrich_candidate_skip_trace', args);
+    f.p.tools = async () => [{
+      name: 'enrich_candidate_skip_trace',
+      inputSchema: {
+        type: 'object',
+        properties: { npi: { type: 'string' }, confirm_paid_enrichment: { const: true } },
+        required: ['npi', 'confirm_paid_enrichment'],
+        additionalProperties: false
+      }
+    }];
+    const c = await conversation(store);
+    const proposed = await executeCommand(store, 'alice', message(c), () => f.p);
+    assert.equal(proposed.status, 'review');
+    assert.deepEqual(proposed.pending!.arguments, args);
+    assert.match(JSON.stringify(proposed.pending!.review), /\$0\.10/);
+    assert.equal(f.calls.length, 0);
+    const rejected = await executeCommand(store, 'alice', {
+      ...approve(proposed), type: 'reject'
+    }, () => { throw new Error('Rejection must not initialize providers'); });
+    assert.equal(rejected.status, 'idle');
+    assert.equal(rejected.pending, null);
+    assert.match(rejected.messages.at(-1)!.text, /Action rejected/);
+    assert.equal((await store.action('alice', proposed.pending!.id)).status, 'rejected');
+    assert.equal(f.calls.length, 0);
+  }));
 
 test('known Skip Trace pending can reconcile through chat without another paid approval or global lock', () =>
   database(async (store) => {

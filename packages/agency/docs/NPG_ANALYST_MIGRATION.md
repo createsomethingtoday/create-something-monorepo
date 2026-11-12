@@ -143,3 +143,30 @@ Parent owns independent final review/re-test, merge, deployment and live read-on
 chat acceptance. No configuration change, paid action, Dify archival or deployment
 is included. Rollback is a revert of this narrow repair through the owning release
 workflow; keep Dify available under the existing rollback policy.
+
+## Skip Trace review instruction repair — 2026-11-11
+
+Authenticated acceptance after the redirect repair completed free registry
+sourcing: 271 Arlington matches, the complete authenticated CSV with 271 data
+rows, the September 14 snapshot and saved source/history survived reload. The
+deployed model then refused to prepare a Skip Trace review because the published
+V8 general enrichment instruction required the unavailable
+`get_enrichment_readiness` tool. The host already has a separate Skip Trace
+review path and source-enforced checks; the appended instruction did not clearly
+explain that boundary. No paid lookup was sent.
+
+The additive Skip Trace instruction now explicitly scopes the older readiness
+prerequisite to PDL, Clay and Exa. A selected-NPI function proposal prepares the
+host's exact expiring review; `confirm_paid_enrichment=true` is not approval or
+execution. The source still enforces registry identity, provider access, privacy,
+maximum charge and shared reservations before billable dispatch. Preparing the
+review does not claim those checks have passed. Existing approval/rejection,
+unknown-outcome, no-retry and unverified-contact rules remain unchanged. The
+published V8 prompt bytes and provenance fingerprint are retained.
+
+The Responses request contract regression failed before this change. A local
+D1/public-runner regression verifies that Skip Trace can prepare and reject an
+exact ten-cent review without the generic readiness tool and without initializing
+providers on rejection or dispatching a vendor call. These fixtures establish the
+instruction contract and host boundary; they do not establish model behavior.
+Authenticated live proposal/rejection remains the parent release acceptance check.
