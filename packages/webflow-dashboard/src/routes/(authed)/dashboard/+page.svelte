@@ -666,6 +666,8 @@
     .overview-top {
       display: flex;
       flex-direction: column;
+      /* In a column the cross axis is horizontal: every block fills the row. */
+      align-items: stretch;
       gap: var(--space-md);
     }
 
