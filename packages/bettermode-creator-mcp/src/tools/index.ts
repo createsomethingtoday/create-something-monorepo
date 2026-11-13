@@ -53,7 +53,9 @@ export type McpEnv = {
   AIRTABLE_ASSETS_TABLE?: string;
   AIRTABLE_CREATORS_EMAIL_FIELD?: string;
   AIRTABLE_CREATORS_ASSETS_LINK_FIELD?: string;
-  // Email domains that count as staff in a thread view, comma-separated.
+  // Who counts as staff in a thread view. Keep both equal to the agent
+  // Worker's vars of the same names: member IDs and email domains, comma-separated.
+  BETTERMODE_ADMIN_USER_IDS?: string;
   BETTERMODE_STAFF_AUTHOR_DOMAINS?: string;
 };
 
@@ -80,14 +82,19 @@ export async function loadQueueThread(env: McpEnv, postId: string): Promise<Queu
   const post = await fetchPostThread(postId, token, auth);
   if (!post) return { found: false };
 
-  const domains = (env.BETTERMODE_STAFF_AUTHOR_DOMAINS || '')
-    .split(',')
-    .map((domain) => domain.trim().toLowerCase())
-    .filter(Boolean);
+  const list = (value: string | undefined) =>
+    (value || '')
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+  const adminIds = list(env.BETTERMODE_ADMIN_USER_IDS);
+  const domains = list(env.BETTERMODE_STAFF_AUTHOR_DOMAINS).map((domain) => domain.toLowerCase());
+  // Same rule as the agent Worker's isStaff, so the thread view and the
+  // queue agree on who answered.
   const isStaff = (member: BettermodePost['owner']): boolean => {
     if (!member) return false;
     // A reply sent through the queue is owned by the app identity.
-    if (member.id.startsWith('APP::')) return true;
+    if (member.id.startsWith('APP::') || adminIds.includes(member.id)) return true;
     const email = member.email?.trim().toLowerCase() || '';
     return domains.some((domain) => email.endsWith(`@${domain}`));
   };

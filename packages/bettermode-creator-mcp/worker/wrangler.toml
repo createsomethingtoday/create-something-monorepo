@@ -46,6 +46,8 @@ LANGFUSE_PROJECT_NAME = "bettermode-creator-mcp"
 BETTERMODE_GRAPHQL_ENDPOINT = "https://api.bettermode.com"
 BETTERMODE_DEFAULT_NETWORK_ID = "BuRv7sR1po"
 BETTERMODE_MARKETPLACE_SPACE_ID = "ROtfBgdQyiAB"
+# Who counts as staff in a thread view. Keep equal to the agent Worker's vars.
+BETTERMODE_ADMIN_USER_IDS = "lgjO9fjLNn"
 BETTERMODE_STAFF_AUTHOR_DOMAINS = "webflow.com"
 AIRTABLE_API_BASE = "https://api.airtable.com"
 AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"
