@@ -93,3 +93,18 @@ Latest checks after these corrections: A2A **166/166**, TypeScript and acceptanc
 TypeScript passed; actual local workerd/native D1 **23/23** scenarios passed,
 including repeated leave with no writes and owner/agent reconciliation after the
 original assignee leaves. Outgoing effects remain disabled.
+
+The replay-watermark review reproduced a request committing between the blocker
+and latest-position reads: the cursor skipped work that the host had never
+accepted. Advancement now captures the latest position first and caps the update
+at that bound. The SQLite regression injects new requests after either read,
+including an intervening event for another assignee, then exercises scheduled
+recovery and delivery. It verifies the cursor stays bounded, the new request is
+accepted, and already accepted work is not sent again. The original ordering
+failed this check before the fix.
+
+Latest replay correction checks: A2A **169/169** and TypeScript passed; the existing
+local workerd/native D1 lab remains **23/23**. The deterministic race injection runs
+in the SQLite suite; the native lab does not inject that interleaving. This is local
+validation, not deployed or real-host acceptance. No UI or migration changes were
+needed for this correction.

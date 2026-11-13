@@ -570,22 +570,24 @@ export async function deliverShared(env: RuntimeEnv, id: string) {
   }
 }
 async function advance(env: RuntimeEnv, s: Sub) {
-  // Missing, failed, and unaccepted deliveries block the replay watermark.
-  const pending = await env.DB.prepare(
-    `SELECT MIN(ep.cursor) AS n FROM shared_outbox e JOIN shared_event_positions ep ON ep.event_id=e.id JOIN shared_messages m ON m.id=e.message_id AND e.assignment_version=m.assignment_version LEFT JOIN shared_deliveries d ON d.event_id=e.id AND d.subscription_id=? AND d.assignment_version=m.assignment_version WHERE m.inbox_id=? AND m.assignee_agent_id=? AND m.cursor>(SELECT admission_cursor FROM shared_memberships WHERE inbox_id=m.inbox_id AND agent_id=m.assignee_agent_id AND state='active') AND m.kind='request' AND ep.cursor>? AND m.expires_at>? AND e.created_at>=? AND m.state IN('pending','claimed') AND (d.id IS NULL OR d.state<>'accepted')`
-  )
-    .bind(s.id, s.inbox_id, s.agent_id, s.cursor, Date.now(), s.replay_floor_at)
-    .first<number>('n');
+  // Capture the upper bound before checking blockers. A request committed after
+  // this read must remain ahead of the watermark, even if pending does not see it.
   const latest =
     (await env.DB.prepare(
       'SELECT COALESCE(MAX(ep.cursor),0) AS n FROM shared_event_positions ep JOIN shared_outbox e ON e.id=ep.event_id WHERE e.inbox_id=?'
     )
       .bind(s.inbox_id)
       .first<number>('n')) ?? s.cursor;
+  // Missing, failed, and unaccepted deliveries block the replay watermark.
+  const pending = await env.DB.prepare(
+    `SELECT MIN(ep.cursor) AS n FROM shared_outbox e JOIN shared_event_positions ep ON ep.event_id=e.id JOIN shared_messages m ON m.id=e.message_id AND e.assignment_version=m.assignment_version LEFT JOIN shared_deliveries d ON d.event_id=e.id AND d.subscription_id=? AND d.assignment_version=m.assignment_version WHERE m.inbox_id=? AND m.assignee_agent_id=? AND m.cursor>(SELECT admission_cursor FROM shared_memberships WHERE inbox_id=m.inbox_id AND agent_id=m.assignee_agent_id AND state='active') AND m.kind='request' AND ep.cursor>? AND m.expires_at>? AND e.created_at>=? AND m.state IN('pending','claimed') AND (d.id IS NULL OR d.state<>'accepted')`
+  )
+    .bind(s.id, s.inbox_id, s.agent_id, s.cursor, Date.now(), s.replay_floor_at)
+    .first<number>('n');
   await env.DB.prepare(
     "UPDATE shared_subscriptions SET cursor=MAX(cursor,?) WHERE id=? AND revision=? AND status='active'"
   )
-    .bind(pending !== null ? pending - 1 : latest, s.id, s.revision)
+    .bind(pending !== null ? Math.min(pending - 1, latest) : latest, s.id, s.revision)
     .run();
 }
 export async function recoverSharedDelivery(env: RuntimeEnv) {

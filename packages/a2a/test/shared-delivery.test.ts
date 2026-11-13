@@ -465,3 +465,77 @@ test('event replay watermark waits for failed earlier work across other-assignee
     f.storage.close();
   }
 });
+
+test('work committed during replay advancement stays deliverable', async (t) => {
+  for (const boundary of ['pending', 'latest'] as const)
+    await t.test(`request commits after the ${boundary} query`, async (context) => {
+      const f = await fixture();
+      try {
+        const sub = await f.subscribe();
+        const acceptedEvent = await f.send();
+        const acceptedDelivery = (await f.delivery(acceptedEvent))!;
+        const prepare = f.storage.db.prepare.bind(f.storage.db);
+        let concurrentEvent: string | undefined;
+        let injected = false;
+        context.mock.method(f.storage.db, 'prepare', (sql: string) => {
+          const statement = prepare(sql);
+          const matches =
+            boundary === 'pending'
+              ? sql.startsWith('SELECT MIN(ep.cursor)')
+              : sql.startsWith('SELECT COALESCE(MAX(ep.cursor),0)');
+          if (!matches) return statement;
+          const intercept = (bound: D1PreparedStatement): D1PreparedStatement =>
+            new Proxy(bound, {
+              get(target, property) {
+                if (property === 'bind')
+                  return (...values: unknown[]) => intercept(target.bind(...values));
+                if (property === 'first')
+                  return async (column?: string) => {
+                    const result =
+                      column === undefined ? await target.first() : await target.first(column);
+                    if (!injected) {
+                      injected = true;
+                      await f.send(f.other.id);
+                      concurrentEvent = await f.send();
+                    }
+                    return result;
+                  };
+                return Reflect.get(target, property);
+              }
+            });
+          return intercept(statement);
+        });
+        await deliverShared(f.env, acceptedDelivery);
+        assert.ok(concurrentEvent, 'The request must commit inside the advancement window.');
+        const cursor = () =>
+          prepare('SELECT cursor FROM shared_subscriptions WHERE id=?')
+            .bind(sub.id)
+            .first<number>('cursor');
+        const position = (id: string) =>
+          prepare('SELECT cursor FROM shared_event_positions WHERE event_id=?')
+            .bind(id)
+            .first<number>('cursor');
+        assert.equal(await cursor(), await position(acceptedEvent));
+        assert.ok(
+          (await cursor())! < (await position(concurrentEvent))!,
+          'The watermark must not skip work that the host has not accepted.'
+        );
+        await recoverSharedDelivery(f.env);
+        const nextDelivery = await prepare('SELECT id FROM shared_deliveries WHERE event_id=?')
+          .bind(concurrentEvent)
+          .first<string>('id');
+        assert.ok(nextDelivery, 'Scheduled recovery must materialize the concurrent event.');
+        assert.ok(f.jobs.some((job) => job.sharedDeliveryId === nextDelivery));
+        await deliverShared(f.env, nextDelivery);
+        await deliverShared(f.env, acceptedDelivery);
+        assert.deepEqual(
+          f.received.map((event) => event.eventId),
+          [acceptedEvent, concurrentEvent]
+        );
+        assert.equal(await cursor(), await position(concurrentEvent));
+      } finally {
+        context.mock.restoreAll();
+        f.storage.close();
+      }
+    });
+});
