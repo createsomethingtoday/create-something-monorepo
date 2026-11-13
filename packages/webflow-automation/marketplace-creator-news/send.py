@@ -11,6 +11,15 @@ trigger production. A human must approve the post text before --send.
 
   infisical run --env=prod --path=/ -- python3 send.py --title "..." --body "..." [--link URL] [--send]
 
+Options for a narrower audience or another workflow:
+
+  --audience templates   only creators with a published template
+  --workflow KEY         run another Knock workflow for the same list, for
+                         example a one-time announcement email whose copy is
+                         in its template. Such a workflow takes no post data,
+                         so --title and --body are not used, and the
+                         `marketplace-creators` audience is not changed.
+
 Reads AIRTABLE_API_KEY and KNOCK_SECRET_API_KEY (Infisical prod).
 """
 
@@ -24,17 +33,20 @@ import urllib.request
 BASE_ID = 'appMoIgXMTTTNIc3p'
 CREATORS_TABLE = '🎨Creators'
 WF_USER_ID_FIELD = 'fldpwkyHcmErSNkzX'  # 🔑WF User ID
-RECIPIENT_FORMULA = "AND({#️⃣👛Published}>0, {🔑WF User ID}!='')"
+RECIPIENT_FORMULAS = {
+    'all': "AND({#️⃣👛Published}>0, {🔑WF User ID}!='')",
+    'templates': "AND({#️⃣👛Templates Published}>0, {🔑WF User ID}!='')",
+}
 WORKFLOW = 'marketplace-creator-news'
 AUDIENCE = 'marketplace-creators'
 BATCH_SIZE = 5  # knock workflow run --recipients: documented maximum is 5
 
 
-def creator_user_ids(api_key: str) -> list[str]:
+def creator_user_ids(api_key: str, audience: str = 'all') -> list[str]:
     ids, offset = set(), None
     while True:
         query = {
-            'filterByFormula': RECIPIENT_FORMULA,
+            'filterByFormula': RECIPIENT_FORMULAS[audience],
             'returnFieldsByFieldId': 'true',
             'fields[]': WF_USER_ID_FIELD,
             'pageSize': 100,
@@ -72,24 +84,37 @@ def sync_audience(secret: str, user_ids: list[str]) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument('--title', required=True)
-    parser.add_argument('--body', required=True, help='Markdown')
+    parser.add_argument('--title')
+    parser.add_argument('--body', help='Markdown')
     parser.add_argument('--link', help='Optional URL the post opens')
+    parser.add_argument('--audience', choices=sorted(RECIPIENT_FORMULAS), default='all')
+    parser.add_argument('--workflow', default=WORKFLOW, help='Knock workflow key')
     parser.add_argument('--send', action='store_true', help='Trigger production')
     args = parser.parse_args()
 
-    recipients = creator_user_ids(os.environ['AIRTABLE_API_KEY'])
-    data = {'title': args.title, 'body': args.body}
-    if args.link:
-        data['link_url'] = args.link
+    is_news = args.workflow == WORKFLOW
+    if is_news and not (args.title and args.body):
+        parser.error('--title and --body are required for the news post')
+    if not is_news and (args.title or args.body or args.link):
+        parser.error('--title, --body and --link belong to the news post; another workflow takes no post data')
 
-    print(f'Post: {json.dumps(data, ensure_ascii=False)}')
-    print(f'Recipients: {len(recipients)} creators')
+    recipients = creator_user_ids(os.environ['AIRTABLE_API_KEY'], args.audience)
+    data = {}
+    if is_news:
+        data = {'title': args.title, 'body': args.body}
+        if args.link:
+            data['link_url'] = args.link
+
+    print(f'Workflow: {args.workflow}')
+    if is_news:
+        print(f'Post: {json.dumps(data, ensure_ascii=False)}')
+    print(f'Recipients: {len(recipients)} creators (audience: {args.audience})')
     if not args.send:
         print('Dry run. Add --send to post.')
         return
 
-    if os.environ.get('KNOCK_SECRET_API_KEY'):
+    # The shared audience lists every creator with a published asset. Only a full news send adds to it.
+    if is_news and args.audience == 'all' and os.environ.get('KNOCK_SECRET_API_KEY'):
         sync_audience(os.environ['KNOCK_SECRET_API_KEY'], recipients)
         print(f'Synced audience {AUDIENCE}')
 
@@ -97,7 +122,7 @@ def main() -> None:
         batch = recipients[start : start + BATCH_SIZE]
         subprocess.run(
             [
-                'knock', 'workflow', 'run', WORKFLOW,
+                'knock', 'workflow', 'run', args.workflow,
                 '--environment', 'production',
                 '--recipients', ','.join(batch),
                 '--data', json.dumps(data),
