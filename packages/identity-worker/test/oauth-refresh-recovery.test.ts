@@ -142,3 +142,47 @@ test('standard refresh audit failure rolls back consumption and permits one safe
   assert.equal((await f.exchange(f.token,'')).status,400,'Committed standard grants remain single use.');
  }finally{f.storage.close();}
 });
+
+test('A2A connection binding survives rotation and userinfo rejects revoked or mismatched families',async()=>{
+ const f=await fixture();try{
+  const first:any=await(await f.exchange()).json();
+  const claims=(token:string)=>JSON.parse(Buffer.from(token.split('.')[1],'base64url').toString());
+  assert.equal(claims(first.access_token).connection_id,'family');
+  const second:any=await(await f.exchange(first.refresh_token,'b'.repeat(43))).json();
+  assert.equal(claims(second.access_token).connection_id,'family');
+  const info=(token:string)=>worker.fetch(new Request(f.env.OAUTH_ISSUER+'/oauth/userinfo',{headers:{authorization:`Bearer ${token}`}}),f.env);
+  assert.equal((await(await info(second.access_token)).json() as any).connection_id,'family');
+  for(const connection_id of ['missing','']){
+   const forged=await createSignedToken(f.env.DB,{...claims(second.access_token),connection_id});
+   assert.equal((await info(forged)).status,401);
+  }
+  for(const column of ['client_id','user_id']){
+   await f.env.DB.prepare(`UPDATE oauth_refresh_families SET ${column}='wrong' WHERE family_id='family'`).run();
+   assert.equal((await info(second.access_token)).status,401);
+   await f.env.DB.prepare(`UPDATE oauth_refresh_families SET ${column}=? WHERE family_id='family'`).bind(column==='client_id'?'client':'alice').run();
+  }
+  await f.env.DB.prepare("UPDATE oauth_refresh_families SET revoked_at=datetime('now')").run();
+  assert.equal((await info(second.access_token)).status,401);
+ }finally{f.storage.close();}
+});
+
+test('initial A2A authorization exchange mints one family binding; access-only grants remain legacy',async()=>{
+ for(const renewable of [true,false]){
+  const f=await fixture();try{
+   const redirect='https://client.example/callback',verifier='v'.repeat(43);
+   await f.env.DB.prepare('UPDATE oauth_clients SET redirect_uris_json=?').bind(JSON.stringify([redirect])).run();
+   const challenge=Buffer.from(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier))).toString('base64url');
+   const now=Math.floor(Date.now()/1000);
+   const code=await createSignedToken(f.env.DB,{sub:'alice',iss:f.env.OAUTH_ISSUER,aud:['oauth'],iat:now,exp:now+300,kind:'oauth_authorization_code',jti:'initial-code',client_id:'client',redirect_uri:redirect,code_challenge:challenge,code_challenge_method:'S256',scope:'openid a2a:read'+(renewable?' offline_access':''),resource});
+   const response=await worker.fetch(new Request(f.env.OAUTH_ISSUER+'/oauth/token',{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'authorization_code',client_id:'client',code,redirect_uri:redirect,code_verifier:verifier,resource})}),f.env);
+   assert.equal(response.status,200);const body:any=await response.json();
+   const claims=JSON.parse(Buffer.from(body.access_token.split('.')[1],'base64url').toString());
+   if(renewable){
+    const refresh=JSON.parse(Buffer.from(body.refresh_token.split('.')[1],'base64url').toString());
+    assert.equal(claims.connection_id,refresh.family_id);assert.ok(claims.connection_id);
+   }else{assert.equal(claims.connection_id,undefined);assert.equal(body.refresh_token,undefined);}
+   const info=await worker.fetch(new Request(f.env.OAUTH_ISSUER+'/oauth/userinfo',{headers:{authorization:`Bearer ${body.access_token}`}}),f.env);
+   assert.equal(info.status,200);assert.equal((await info.json() as any).connection_id,claims.connection_id);
+  }finally{f.storage.close();}
+ }
+});

@@ -1,3 +1,4 @@
+import { sharedAcceptance } from './shared';
 /** Disposable lab only. This entrypoint is never referenced by production config. */
 import identity from '../../identity-worker/src/index';
 import {createSignedToken,getJWKS} from '../../identity-worker/src/services/tokens';
@@ -70,6 +71,7 @@ export default {async fetch(request:Request,env:LabEnv):Promise<Response>{
   const registeredBody:any=await registered.json();
   const inbox=await context.run({identityEnv},()=>a2a.fetch(new Request(env.LAB_URL+'/mcp',{method:'POST',headers:{cookie:'__Host-a2a_session='+raw,origin:env.LAB_URL,'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name:'a2a_read_inbox',arguments:{agent_id:registeredBody.agent.id}}})}),inboxEnv));
   const inboxBody:any=await inbox.json();check(inboxBody.result?.structuredContent?.messages?.length===0&&inboxBody.result?._meta?.receipt?.outcome==='confirmed','synthetic_inbox_read');passed.push('synthetic_inbox_read_receipt');
+  passed.push(...await sharedAcceptance(inboxEnv,identityEnv));
   await env.INBOX_DB.prepare('UPDATE auth_sessions SET access_expires_at=0 WHERE id_hash=?').bind(id).run();
   let failSave=true;
   const failingInbox=new Proxy(env.INBOX_DB,{get(target,key){if(key==='prepare')return (sql:string)=>{const statement=target.prepare(sql);if(!sql.startsWith('UPDATE auth_sessions SET token_ciphertext='))return statement;return {bind(...args:unknown[]){const bound=statement.bind(...args);return {async run(){if(failSave){failSave=false;throw new Error('Injected cookie persistence failure');}return bound.run();}};}};};const value=Reflect.get(target,key);return typeof value==='function'?value.bind(target):value;}});

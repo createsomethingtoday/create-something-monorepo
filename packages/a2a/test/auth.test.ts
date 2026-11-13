@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { exportJWK, generateKeyPair, SignJWT } from 'jose';
-import { authenticate, verifyIdentityToken } from '../src/auth';
+import { authRoute, authenticate, verifyIdentityToken } from '../src/auth';
 import { hash, randomToken, seal } from '../src/crypto';
 import type { RuntimeEnv } from '../src/env';
 import { createTestDatabase } from './sqlite';
@@ -144,5 +144,44 @@ test('userinfo availability failures are 503 rather than invalid credentials',as
    globalThis.fetch=async url=>String(url).endsWith('/.well-known/jwks.json')?Response.json(jwks):Response.json({error:'synthetic_unavailable'},{status});
    await assert.rejects(verifyIdentityToken(f.env,await f.token()),{status:503});
   }
+ }finally{globalThis.fetch=original;f.storage.close();}
+});
+
+test('self-service admission is explicit and connection bindings require both signed fields',async()=>{
+ const f=await fixture();try{
+  const token=await f.token({email:'new@example.com',connection_id:'family',client_id:'client'});
+  await assert.rejects(verifyIdentityToken(f.env,token),{code:'invite_required'});
+  f.env.SELF_SERVICE_ENABLED='true';
+  const principal=await verifyIdentityToken(f.env,token);
+  assert.equal(principal.connectionId,'family');assert.equal(principal.clientId,'client');
+  for(const override of [{client_id:undefined},{connection_id:''},{connection_id:123}])await assert.rejects(verifyIdentityToken(f.env,await f.token({connection_id:'family',client_id:'client',...override})),{code:'invalid_token'});
+  assert.equal((await verifyIdentityToken(f.env,await f.token())).connectionId,undefined);
+  await assert.rejects(verifyIdentityToken(f.env,await f.token({email_verified:false})),{code:'invalid_token'});
+ }finally{f.storage.close();}
+});
+
+
+test('OAuth login persists only allowlisted return destinations',async()=>{
+ const f=await fixture();try{
+  f.env.AUTH_CLIENT_ID='client';f.env.BASE_URL='https://a2a.createsomething.agency';
+  for(const [target,expected] of [['/inboxes','/inboxes'],['/app','/app'],['https://evil.example','/app'],['//evil.example','/app']]){
+   const response=await authRoute(new Request(f.env.BASE_URL+'/auth/login?returnTo='+encodeURIComponent(target)),f.env);
+   assert.equal(response?.status,302);
+   const rows=await f.storage.db.prepare('SELECT return_to FROM oauth_states').all<{return_to:string}>();
+   assert.ok(rows.results.every(row=>row.return_to===expected));
+   await f.storage.db.prepare('DELETE FROM oauth_states').run();
+  }
+ }finally{f.storage.close();}
+});
+
+test('self-service renewal admits verified non-pilot owners and preserves owner subject',async()=>{
+ const f=await sessionFixture();const original=globalThis.fetch;
+ try{
+  f.env.SELF_SERVICE_ENABLED='true';
+  globalThis.fetch=async()=>Response.json({access_token:await f.token({email:'new@example.com',connection_id:'family',client_id:'client'}),refresh_token:'successor',expires_in:300});
+  const principal=await authenticate(f.request(),f.env);
+  assert.equal(principal.authentication,'owner_session');assert.equal(principal.connectionId,'family');assert.ok(principal.accessExpiresAt!>Date.now());
+  f.env.SELF_SERVICE_ENABLED='false';
+  await assert.rejects(authenticate(f.request(),f.env),{code:'invite_required'});
  }finally{globalThis.fetch=original;f.storage.close();}
 });

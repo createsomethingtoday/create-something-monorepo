@@ -9,6 +9,7 @@ const invalid = () =>
 export const enrollmentOpen = (env: Env) =>
   env.PUBLIC_ENROLLMENT_ENABLED === 'true' ||
   env.GIGI_ENROLLMENT_ENABLED === 'true' ||
+  env.A2A_ENROLLMENT_ENABLED === 'true' ||
   env.ENROLLMENT_INVITATIONS_ENABLED === 'true' ||
   !!env.ENROLLMENT_ALLOWED_EMAILS?.trim() ||
   ((env.PCN_ENROLLMENT_ENABLED === 'true' || !!env.PCN_ENROLLMENT_CANARY_EMAILS?.trim()) &&
@@ -54,9 +55,13 @@ async function eligibility(
   now: number,
   purpose: string,
   boundInvitation?: string | null,
-  application?: 'gigi' | null
+  application?: 'gigi' | 'a2a' | null
 ): Promise<{ allowed: boolean; invitationId: string | null }> {
   // Stored challenge provenance controls admission at completion; caller fields cannot relabel it.
+  if (application === 'a2a') {
+    if(env.A2A_ENROLLMENT_ENABLED !== 'true')return {allowed:false,invitationId:null};
+    return {allowed:purpose==='signup'||(purpose==='recovery'&&!!await env.DB.prepare('SELECT 1 FROM users WHERE email=? AND deleted_at IS NULL AND email_verified=1').bind(email).first()),invitationId:null};
+  }
   if (application === 'gigi')
     return {
       allowed: purpose === 'signup' && env.GIGI_ENROLLMENT_ENABLED === 'true',
@@ -157,7 +162,7 @@ export async function startEnrollment(request: Request, env: Env): Promise<Respo
   }
   const email = typeof input.email === 'string' ? input.email.trim().toLowerCase() : '';
   const purpose = input.purpose;
-  const application = purpose === 'signup' && input.app === 'gigi' ? 'gigi' : null;
+  const application = input.app === 'a2a' ? 'a2a' : purpose === 'signup' && input.app === 'gigi' ? 'gigi' : null;
   if (
     email.length > 254 ||
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
@@ -204,9 +209,9 @@ export async function startEnrollment(request: Request, env: Env): Promise<Respo
   // GiGi signup stays on Identity; legacy recovery retains its explicit UI choice.
   // Fixed presentation links never grant application access or accept return URLs.
   const identityExperience =
-    application === 'gigi' || (input.experience === 'identity' && purpose === 'recovery');
+    application === 'gigi' || application === 'a2a' || (input.experience === 'identity' && purpose === 'recovery');
   const link = identityExperience
-    ? `https://id.createsomething.space/verify?mode=${purpose}${input.app === 'gigi' ? '&app=gigi' : ''}#token=${encodeURIComponent(token)}`
+    ? `https://id.createsomething.space/verify?mode=${purpose}${application === 'a2a' ? '&app=a2a' : input.app === 'gigi' ? '&app=gigi' : ''}#token=${encodeURIComponent(token)}`
     : `${origin}/verify?mode=${purpose}&next=${encodeURIComponent(next)}#token=${encodeURIComponent(token)}`;
   const action = purpose === 'recovery' ? 'reset your password' : 'create your account';
   try {
@@ -228,7 +233,7 @@ export async function startEnrollment(request: Request, env: Env): Promise<Respo
     if (!response.ok) throw new Error('Mail delivery rejected');
   } catch {
     await env.DB.prepare('DELETE FROM enrollment_challenges WHERE token_hash=?').bind(digest).run();
-    return purpose === 'recovery' && env.VERIFIED_RECOVERY_ENABLED === 'true'
+    return purpose === 'recovery' && (env.VERIFIED_RECOVERY_ENABLED === 'true' || application === 'a2a')
       ? accepted()
       : unavailable();
   }
@@ -265,7 +270,7 @@ export async function completeEnrollment(request: Request, env: Env): Promise<Re
       email: string;
       purpose: 'signup' | 'recovery';
       invitation_id: string | null;
-      application: 'gigi' | null;
+      application: 'gigi' | 'a2a' | null;
     }>();
   if (!proof) return invalid();
   try {
@@ -276,6 +281,7 @@ export async function completeEnrollment(request: Request, env: Env): Promise<Re
   } catch {
     return unavailable();
   }
+  const verifiedRecovery = env.VERIFIED_RECOVERY_ENABLED === 'true' || proof.application === 'a2a';
   const password = await hashPassword(input.password);
   // Compare-and-set is the replay boundary, including concurrent completions.
   const claimed = await env.DB.prepare(
@@ -333,14 +339,14 @@ export async function completeEnrollment(request: Request, env: Env): Promise<Re
     if (
       !existing ||
       existing.deleted_at ||
-      (env.VERIFIED_RECOVERY_ENABLED === 'true' && existing.email_verified !== 1)
+      (verifiedRecovery && existing.email_verified !== 1)
     )
       return reply(
         { error: 'This account cannot be recovered. Contact CREATE SOMETHING for help.' },
         409
       );
     const additionalRevocations =
-      env.VERIFIED_RECOVERY_ENABLED === 'true'
+      verifiedRecovery
         ? [
             ['oauth_refresh_families', 'user_id', false],
             ['mcp_sessions', 'user_id', true],
@@ -355,7 +361,7 @@ export async function completeEnrollment(request: Request, env: Env): Promise<Re
     const changed = await env.DB.batch([
       env.DB.prepare(
         'UPDATE users SET password_hash=?,email_verified=1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND deleted_at IS NULL AND (?=0 OR email_verified=1)'
-      ).bind(password, existing.id, env.VERIFIED_RECOVERY_ENABLED === 'true' ? 1 : 0),
+      ).bind(password, existing.id, verifiedRecovery ? 1 : 0),
       env.DB.prepare(
         'UPDATE refresh_tokens SET revoked_at=CURRENT_TIMESTAMP WHERE user_id=? AND revoked_at IS NULL AND EXISTS (SELECT 1 FROM users WHERE id=? AND password_hash=?)'
       ).bind(existing.id, existing.id, password),
