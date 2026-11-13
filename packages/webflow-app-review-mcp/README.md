@@ -106,6 +106,12 @@ Write posture:
 - “start / kick off a new MCP review cycle” means read `app_review_get_review_context`,
   preserve owner/status, and wait for the bundle if needed. It does not authorize
   setting In Review. Never infer ownership from shared credentials or remembered IDs.
+- `app_review_get_review_context` returns `context.assetExceptions`: the app's
+  ⚖️Exceptions rows from every version with their decision notes. An approved row
+  can set conditions for every later version, so check a new version against them.
+  The rationale is left out; `app_review_list_asset_exceptions` returns it. When the
+  notes together pass 8,000 characters, the rows come without notes and
+  `context.assetExceptionNotesOmitted` is true: call that tool for the full text.
 - `app_review_set_review_status`, `app_review_update_version_review.review_status`,
   and `app_review_update_asset_metadata.latest_review_status` require
   `status_change: { confirmed: true, expected_status: "<current reviewStatus>" }`.

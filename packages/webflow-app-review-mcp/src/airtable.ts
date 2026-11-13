@@ -410,8 +410,44 @@ export interface AppReviewContext {
   isAssigned: boolean;
   /** Version preflight when present, else the asset's latest preflight; `source` says which. */
   preflight: (AppReviewPreflight & { source: 'version' | 'asset' }) | null;
+  /**
+   * The app's ⚖️Exceptions rows from every version: pending first, then approved,
+   * denied, withdrawn. An approved row can set conditions for every later version.
+   */
+  assetExceptions: AppReviewContextException[];
+  /** True when the rows' notes pass the inline budget; `app_review_list_asset_exceptions` returns them. */
+  assetExceptionNotesOmitted: boolean;
   asset?: AppReviewAsset | null;
   version: AppReviewVersion;
+}
+
+/** Combined length of decision and resolution notes that review context inlines. */
+const CONTEXT_EXCEPTION_NOTES_BUDGET = 8000;
+
+/** One exception row in review-context form. `app_review_list_asset_exceptions` returns the rationale. */
+export interface AppReviewContextException {
+  exceptionItemId: string;
+  item?: string;
+  exceptionStatus?: string;
+  exceptionType?: string;
+  decisionNotes?: string;
+  decisionDatetime?: string;
+  assetVersionId?: string;
+  /** True when the row was filed on the version under review. */
+  onThisVersion: boolean;
+  isResolved?: boolean;
+  resolutionNotes?: string;
+}
+
+/** ⚖️Status order (pending, approved, denied, withdrawn), then oldest first. */
+export function compareExceptionItems(a: AppReviewExceptionItem, b: AppReviewExceptionItem): number {
+  const statusOrder = (item: AppReviewExceptionItem) => {
+    const index = (EXCEPTION_STATUS_OPTIONS as readonly string[]).indexOf(item.exceptionStatus ?? '');
+    return index === -1 ? 99 : index;
+  };
+  const date = (item: AppReviewExceptionItem) =>
+    item.decisionDatetime ?? item.requestedDatetime ?? item.createdTime ?? '';
+  return statusOrder(a) - statusOrder(b) || date(a).localeCompare(date(b));
 }
 
 export interface AppReviewGovernanceFinding {
@@ -1769,6 +1805,16 @@ export class AirtableClient {
 
   async getReviewContext(versionId: string): Promise<AppReviewContext> {
     const { version, asset } = await this.getScopedVersion(versionId);
+    // The history lookup covers earlier versions; the direct link covers rows filed on this one.
+    const exceptionItems = await this.listExceptionItemsByIds([
+      ...(version.assetExceptionHistoryIds ?? []),
+      ...(version.exceptionItemIds ?? []),
+    ]);
+    const notesLength = exceptionItems.reduce(
+      (sum, item) => sum + (item.decisionNotes?.length ?? 0) + (item.resolutionNotes?.length ?? 0),
+      0,
+    );
+    const notesOmitted = notesLength > CONTEXT_EXCEPTION_NOTES_BUDGET;
 
     return {
       versionId: version.versionId,
@@ -1786,6 +1832,18 @@ export class AirtableClient {
         : asset?.preflight
           ? { ...asset.preflight, source: 'asset' }
           : null,
+      assetExceptions: exceptionItems.sort(compareExceptionItems).map((item) => ({
+        exceptionItemId: item.exceptionItemId,
+        item: item.item,
+        exceptionStatus: item.exceptionStatus,
+        exceptionType: item.exceptionType,
+        decisionDatetime: item.decisionDatetime,
+        assetVersionId: item.assetVersionId,
+        onThisVersion: item.assetVersionId === version.versionId,
+        isResolved: item.isResolved,
+        ...(notesOmitted ? {} : { decisionNotes: item.decisionNotes, resolutionNotes: item.resolutionNotes }),
+      })),
+      assetExceptionNotesOmitted: notesOmitted,
       asset,
       version,
     };

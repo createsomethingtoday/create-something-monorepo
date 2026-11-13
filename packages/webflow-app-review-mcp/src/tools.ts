@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { createHash } from 'node:crypto';
 
 import type { AirtableClient, AppReviewVersion, CollaboratorRef } from './airtable.js';
-import { AirtableClientError, assertReviewerAssignmentReadOnly } from './airtable.js';
+import { AirtableClientError, assertReviewerAssignmentReadOnly, compareExceptionItems } from './airtable.js';
 import type { ZendeskClient } from './zendesk.js';
 import { ZENDESK_WRITABLE_STATUSES, ZendeskClientError, renderCreatorFacingHtml } from './zendesk.js';
 import {
@@ -633,7 +633,7 @@ export function registerTools(
 
   server.tool(
     'app_review_get_review_context',
-    'Read-only starting point to prepare, start, or kick off a new MCP review cycle, including asset updates. Reads the existing reviewer and status without changing either. Wait for the bundle if it has not been uploaded. Never assign a reviewer or set In Review merely to prepare a review. Returns separate reviewFeedback and rejectionFeedback at both context and context.version. Check both fields for findings; reviewFeedback may be absent or empty even when rejectionFeedback contains rejection findings.',
+    'Read-only starting point to prepare, start, or kick off a new MCP review cycle, including asset updates. Reads the existing reviewer and status without changing either. Wait for the bundle if it has not been uploaded. Never assign a reviewer or set In Review merely to prepare a review. Returns separate reviewFeedback and rejectionFeedback at both context and context.version. Check both fields for findings; reviewFeedback may be absent or empty even when rejectionFeedback contains rejection findings. context.assetExceptions lists the app\'s ⚖️Exceptions rows from every version with their decision notes. Read them before the review: a ✅Approved row can set conditions that apply to every later version, so check this version against each one and report any condition it does not meet. When context.assetExceptionNotesOmitted is true, the notes were too long to include: call app_review_list_asset_exceptions with the same version_id for them before the review.',
     {
       version_id: z.string().min(1),
     },
@@ -1295,17 +1295,7 @@ export function registerTools(
           ? allItems.filter((item) => item.exceptionStatus === params.status)
           : allItems;
 
-        const statusOrder = new Map<string, number>(
-          (EXCEPTION_STATUS_OPTIONS as readonly string[]).map((s, i) => [s, i]),
-        );
-        const sortKey = (item: (typeof items)[number]) =>
-          item.decisionDatetime ?? item.requestedDatetime ?? item.createdTime ?? '';
-        items.sort((a, b) => {
-          const orderA = statusOrder.get(a.exceptionStatus ?? '') ?? 99;
-          const orderB = statusOrder.get(b.exceptionStatus ?? '') ?? 99;
-          if (orderA !== orderB) return orderA - orderB;
-          return sortKey(a).localeCompare(sortKey(b));
-        });
+        items.sort(compareExceptionItems);
 
         const counts: Record<string, number> = {};
         for (const item of allItems) {
