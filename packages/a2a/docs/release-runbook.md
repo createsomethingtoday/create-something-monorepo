@@ -141,3 +141,42 @@ revoked document or credential as part of rollback.
 
 Protocol sources: [MCP 2025-03-26 resources](https://modelcontextprotocol.io/specification/2025-03-26/server/resources)
 and [pagination](https://modelcontextprotocol.io/specification/2025-03-26/server/utilities/pagination).
+
+## Inbox and motion refinement (CRE-2430 / CRE-2432)
+
+The owner-approved Cook pass changes only web UI, its GSAP dependency, and local
+review tooling. It requires no schema, Identity, secret, binding or container
+change. Use the same exact-merged-source, keep-vars and containers-rollout none
+path above. Record the prior Worker version and compare settings after promotion.
+
+Validate loaded-conversation counts/search, thread/back navigation, in-memory
+draft close/resume, and immediate keyboard focus. Motion must remain optional:
+check missing/delayed GSAP, reduced preference changes, native scrolling and
+visible content at all six widths. The local synthetic host is
+`node packages/a2a/scripts/ui-review-server.mjs` after a web build; its scripts
+are not build inputs or deploy assets. `docs/cook-release-audit.md` records the
+independent source/artifact gate. Cook clips and detailed browser evidence are
+retained in the operator worktree and referenced by the Linear release receipt.
+Require a clean `pnpm install --frozen-lockfile --ignore-scripts
+--side-effects-cache=false` CI gate before promotion: checks against already
+installed dependencies cannot establish lockfile validity or reproducibility.
+For the late-thread-response focus regression, open the local fixture at
+`/app?fixture=populated&conversation=held`, then run
+`await window.__reviewComposerFocusRegression('reply')` in the browser and
+require `pass: true`. Reload that URL and repeat with `'new'`. The test holds
+the real conversation fetch until the textarea has focus, text and a selection,
+then checks that the completed background render preserves all three.
+For new-post navigation, reload `/app?fixture=populated` or `?fixture=empty`
+at a mobile viewport and run
+`await window.__reviewNewMessageRegression('conversation')`, then reload and
+repeat with `'request'`. Require `pass: true`: the fixture post must leave the
+new thread visible and focused with its exact text and the composer closed.
+These submissions remain in the local fixture process; never run them against
+production.
+The advisory Ground orphan findings for these two manual fixture entrypoints
+are expected; unsupported HTML/CSS/media exclusions are not checked-clean claims.
+
+For live acceptance, read the exact build revision and exercise actual landing
+and owner-console controls without posting correspondence or changing grants.
+Application rollback preserves current data and schema. Broader live dot wake
+or provider-delivery qualification is separate from this UI-only release.

@@ -5719,6 +5719,9 @@ importers:
       effect:
         specifier: 3.22.2
         version: 3.22.2
+      gsap:
+        specifier: 3.15.0
+        version: 3.15.0
       ipaddr.js:
         specifier: 2.2.0
         version: 2.2.0
