@@ -1380,14 +1380,16 @@ export function registerTools(
 
   server.tool(
     'app_review_update_exception_item',
-    'Update a per-item exception row (⚖️Exceptions table). Setting exception_status triggers the #app-review-exceptions automation and auto-stamps the request/decision datetime — fill text fields before or together with the status flip. Decisions (✅Approved / ❌Denied) belong to the decision-maker; include decision_notes with any decision.',
+    'Update a per-item exception row (⚖️Exceptions table). Setting exception_status triggers the #app-review-exceptions automation and auto-stamps the request/decision datetime — fill text fields before or together with the status flip. The app review team decides exceptions (✅Approved / ❌Denied); include notes with any decision. decision_notes REPLACES the whole field, so new text alone deletes the earlier decision and its conditions. To add to a row (a check against a condition, a build hash, a follow-up), use append_decision_note: it adds a dated line and keeps the earlier notes.',
     {
       exception_item_id: z.string().min(1),
       item: z.string().optional(),
       exception_status: z.enum(EXCEPTION_STATUS_OPTIONS).optional(),
       exception_type: z.enum(EXCEPTION_TYPE_OPTIONS).optional(),
       rationale: z.string().optional(),
-      decision_notes: z.string().optional(),
+      decision_notes: z.string().optional().describe('REPLACES the whole decision-notes field. Do not send it with append_decision_note.'),
+      append_decision_note: z.string().min(1).optional().describe('Adds a line with the UTC date after the existing decision notes. The earlier notes stay.'),
+      noted_by: z.string().optional().describe('Your display name for the appended line (e.g. "Shea Sisco")'),
     },
     async (params) => {
       try {
@@ -1398,6 +1400,8 @@ export function registerTools(
           exception_type: params.exception_type,
           rationale: params.rationale,
           decision_notes: params.decision_notes,
+          append_decision_note: params.append_decision_note,
+          noted_by: params.noted_by,
         }));
         return asSuccess({ exception_item: updated });
       } catch (error) {
