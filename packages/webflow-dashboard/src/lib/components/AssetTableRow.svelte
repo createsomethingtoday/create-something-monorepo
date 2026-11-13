@@ -15,6 +15,8 @@
 	interface Props {
 		asset: Asset;
 		showPerformance?: boolean;
+		showCategory?: boolean;
+		showPrice?: boolean;
 		isViewDisabled?: boolean;
 		isEditDisabled?: boolean;
 		isEditLoading?: boolean;
@@ -27,6 +29,8 @@
 	let {
 		asset,
 		showPerformance = false,
+		showCategory = true,
+		showPrice = true,
 		isViewDisabled = false,
 		isEditDisabled = false,
 		isEditLoading = false,
@@ -127,19 +131,23 @@
 	<TableCell class="status-cell">
 		<StatusBadge status={asset.status} size="sm" variant="dot" />
 	</TableCell>
-	<TableCell class="category-cell">
-		<span class="category" title={[asset.category, asset.subcategory].filter(Boolean).join(' / ')}>
-			{asset.category || 'Uncategorized'}{#if asset.subcategory}<span class="category-sub"
-					>{' · '}{asset.subcategory}</span
-				>{/if}
-		</span>
-	</TableCell>
+	{#if showCategory}
+		<TableCell class="category-cell">
+			<span class="category" title={[asset.category, asset.subcategory].filter(Boolean).join(' / ')}>
+				{asset.category || 'Uncategorized'}{#if asset.subcategory}<span class="category-sub"
+						>{' · '}{asset.subcategory}</span
+					>{/if}
+			</span>
+		</TableCell>
+	{/if}
 	<TableCell class="date-cell">
 		<span class="date">{formatLongDate(asset.submittedDate) || '—'}</span>
 	</TableCell>
-	<TableCell class="price-cell">
-		<span class="price">{asset.priceString || '—'}</span>
-	</TableCell>
+	{#if showPrice}
+		<TableCell class="price-cell">
+			<span class="price">{asset.priceString || '—'}</span>
+		</TableCell>
+	{/if}
 	{#if showPerformance}
 		{@const cr = conversionRate()}
 		{@const aov = avgOrderValue()}

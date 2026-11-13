@@ -150,7 +150,16 @@
     return `${type}::${status}`;
   }
 
-  const columnCount = $derived(7 + (showPerformance ? (VIEWER_DATA_AVAILABLE ? 3 : 2) : 0));
+  // With the performance columns on, a narrower window cannot hold every
+  // column. Price gives way first, then Category, so Name always has room.
+  let innerWidth = $state(1440);
+  const showPrice = $derived(!(showPerformance && innerWidth < 1200));
+  const showCategory = $derived(!(showPerformance && innerWidth < 1080));
+  // Thumbnail, name, status and submitted are always present.
+  const leadingColumns = $derived(4 + (showCategory ? 1 : 0) + (showPrice ? 1 : 0));
+  const columnCount = $derived(
+    leadingColumns + 1 + (showPerformance ? (VIEWER_DATA_AVAILABLE ? 3 : 2) : 0)
+  );
 
   /* ------------------------------ Motion ------------------------------ */
 
@@ -519,6 +528,8 @@
   }
 </script>
 
+<svelte:window bind:innerWidth />
+
 <div class="assets-display" bind:this={displayEl}>
   <div class="section-header" bind:this={toolbarEl}>
     <div class="section-heading">
@@ -631,9 +642,13 @@
               <col class="thumb-col" />
               <col class="name-col" />
               <col class="status-col" />
-              <col class="category-col" />
+              {#if showCategory}
+                <col class="category-col" />
+              {/if}
               <col class="submitted-col" />
-              <col class="price-col" />
+              {#if showPrice}
+                <col class="price-col" />
+              {/if}
               {#if showPerformance}
                 {#if VIEWER_DATA_AVAILABLE}
                   <col class="metric-col" />
@@ -658,7 +673,9 @@
                   </button>
                 </TableHead>
                 <TableHead class="status-head">Status</TableHead>
-                <TableHead class="category-head">Category</TableHead>
+                {#if showCategory}
+                  <TableHead class="category-head">Category</TableHead>
+                {/if}
                 <TableHead class="submitted-head" aria-sort={getAriaSort('submittedDate')}>
                   <button
                     type="button"
@@ -670,7 +687,9 @@
                     Submitted{getSortIndicator('submittedDate')}
                   </button>
                 </TableHead>
-                <TableHead class="price-head">Price</TableHead>
+                {#if showPrice}
+                  <TableHead class="price-head">Price</TableHead>
+                {/if}
                 {#if showPerformance}
                   {#if VIEWER_DATA_AVAILABLE}
                     <TableHead
@@ -758,6 +777,8 @@
                       <AssetTableRow
                         {asset}
                         {showPerformance}
+                        {showCategory}
+                        {showPrice}
                         isViewDisabled={openingEditAssetId !== null}
                         isEditDisabled={openingEditAssetId !== null}
                         isEditLoading={openingEditAssetId === asset.id}
@@ -774,7 +795,7 @@
                             <TrendingUp size={16} />
                           </div>
                         </TableCell>
-                        <TableCell class="totals-label-cell" colspan={5}>
+                        <TableCell class="totals-label-cell" colspan={leadingColumns - 1}>
                           <strong>{normalizedStatus} total</strong>
                           <span>{statusAssets.length} assets</span>
                         </TableCell>
@@ -1071,7 +1092,9 @@
   }
 
   .section-search {
-    width: clamp(15rem, 23vw, 21rem);
+    flex: 1 1 18.5rem;
+    min-width: 15rem;
+    max-width: 21rem;
   }
 
   .type-list {

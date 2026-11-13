@@ -16,7 +16,12 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin, type PluginOption } from 'vite';
-import { FIXTURE_EMAIL, FIXTURE_SUBMISSION_STATUS, fixtureThumbnailSvg } from './data';
+import {
+	FIXTURE_CREATOR,
+	FIXTURE_EMAIL,
+	FIXTURE_SUBMISSION_STATUS,
+	fixtureThumbnailSvg
+} from './data';
 
 const here = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 const REAL_AIRTABLE = here('../../src/lib/server/airtable.ts');
@@ -48,6 +53,8 @@ function fixtureDashboard(): Plugin {
 				json(res, FIXTURE_SUBMISSION_STATUS)
 			);
 			server.middlewares.use('/api/analytics/track', (_req, res) => json(res, { success: true }));
+			// The profile route builds its own Airtable client, so it is answered here.
+			server.middlewares.use('/api/profile', (_req, res) => json(res, FIXTURE_CREATOR));
 		}
 	};
 }
