@@ -166,6 +166,13 @@ For the late-thread-response focus regression, open the local fixture at
 require `pass: true`. Reload that URL and repeat with `'new'`. The test holds
 the real conversation fetch until the textarea has focus, text and a selection,
 then checks that the completed background render preserves all three.
+For new-post navigation, reload `/app?fixture=populated` or `?fixture=empty`
+at a mobile viewport and run
+`await window.__reviewNewMessageRegression('conversation')`, then reload and
+repeat with `'request'`. Require `pass: true`: the fixture post must leave the
+new thread visible and focused with its exact text and the composer closed.
+These submissions remain in the local fixture process; never run them against
+production.
 The advisory Ground orphan findings for these two manual fixture entrypoints
 are expected; unsupported HTML/CSS/media exclusions are not checked-clean claims.
 

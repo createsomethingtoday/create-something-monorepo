@@ -31,6 +31,22 @@ window.__reviewComposerFocusRegression=async(mode='reply')=>{
  const after={focus:document.activeElement.id,parent:input.closest('form').parentElement.id,selection:[input.selectionStart,input.selectionEnd],text:input.value};
  return {mode,before,after,pass:document.activeElement===input&&input.value===text&&input.selectionStart===5&&input.selectionEnd===9};
 };
+// Uses only the fixture server's in-memory owner-message endpoint.
+window.__reviewNewMessageRegression=async(kind='conversation')=>{
+ const waitFor=async(check)=>{const deadline=performance.now()+4000;while(!check()){if(performance.now()>deadline)throw new Error('New-message regression timed out');await new Promise(resolve=>setTimeout(resolve,20));}};
+ await waitFor(()=>document.querySelector('#new-message')?.getClientRects().length);
+ document.querySelector('#new-message').click();
+ const text=`Synthetic ${kind}: inspect immediately after posting`;
+ document.querySelector('#recipient-id').value='fixture-studio';
+ const input=document.querySelector('#message-text');input.value=text;
+ document.querySelector(`#compose-form input[name="kind"][value="${kind}"]`).checked=true;
+ input.dispatchEvent(new Event('input',{bubbles:true}));
+ document.querySelector('#compose-form').requestSubmit();
+ await waitFor(()=>document.querySelector('#compose-form').hidden&&!document.querySelector('#notice').hidden);
+ const conversation=document.querySelector('#conversation');
+ const result={width:innerWidth,kind,detail:document.querySelector('#message-workspace').dataset.detail??null,visible:!!conversation.getClientRects().length,focus:document.activeElement.id,postedText:conversation.textContent.includes(text),composerHidden:document.querySelector('#compose-form').hidden};
+ return {...result,pass:result.visible&&result.focus==='conversation'&&result.postedText&&result.composerHidden};
+};
 // Deterministic JS preference test when browser-tool OS emulation is unavailable.
 // This is explicitly a fixture, not proof that the OS preference was changed.
 if(['reduced','preference'].includes(reviewParams.get('motion'))){

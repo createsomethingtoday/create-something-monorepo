@@ -385,7 +385,10 @@ $('#compose-form').addEventListener('submit',event=>{
     const fingerprint=JSON.stringify(payload);if(!state.idempotencyKey||state.sendPayload!==fingerprint){state.idempotencyKey=crypto.randomUUID();state.sendPayload=fingerprint;}
     const result=await api<{message:Message}>('/api/v1/owner-messages',{method:'POST',body:JSON.stringify({...payload,idempotencyKey:state.idempotencyKey})});
     state.threadId=result.message.threadId;resetCompose();await refreshDetails();
-    notice(kind==='conversation'?'Conversation posted. No Dot work or agent notification was requested.':'Work request stored. Check event delivery and processing separately.');$('#conversation').focus({preventScroll:true});
+    $('#message-workspace').dataset.detail='true';
+    notice(kind==='conversation'?'Conversation posted. No Dot work or agent notification was requested.':'Work request stored. Check event delivery and processing separately.');
+    motionEnter($('#conversation'));$('#conversation').focus({preventScroll:true});
+    if(window.matchMedia('(max-width:767px)').matches)$('#back-conversations').scrollIntoView({block:'start',behavior:'instant'});
   });
 });
 $('#copy-agent-id').addEventListener('click',()=>void copy(state.agentId,'Inbox ID'));$('#copy-endpoint').addEventListener('click',()=>void copy(endpoint,'MCP endpoint'));$('#copy-instructions').addEventListener('click',()=>void copy(instructions(),'Agent instructions'));
