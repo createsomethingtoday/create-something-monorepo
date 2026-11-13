@@ -37,6 +37,7 @@
   } from '$lib/components';
   import EditAssetModal from '$lib/components/EditAssetModal.svelte';
   import { toast } from '$lib/stores/toast';
+  import { pan, reveal } from '$lib/motion/actions';
   import { trackEvent } from '$lib/utils/analytics';
   import { computeTemplateHealth, isTemplateSearchSuppressed } from '$lib/utils/template-health';
   import { isReviewFeedbackReleased } from '$lib/utils/review-status';
@@ -44,7 +45,6 @@
     formatCompactCurrency,
     formatCompactNumber,
     formatLongDate,
-    formatNumericDate,
     formatWholeNumber
   } from '$lib/utils/format';
 
@@ -310,12 +310,11 @@
       <div class="detail-header page-intro">
         <div class="header-info">
           <div class="header-copy">
-            <p class="detail-kicker">Asset detail</p>
-            <div class="title-row">
+            <div class="title-row" data-reveal use:reveal>
               <h1 class="asset-title">{asset.name}</h1>
               <StatusBadge status={asset.status} size="lg" />
             </div>
-            <p class="detail-subtitle">
+            <p class="detail-subtitle" data-reveal use:reveal>
               {asset.type}
               {#if asset.category}
                 · {asset.category}
@@ -324,10 +323,10 @@
                 · {asset.subcategory}
               {/if}
             </p>
-            <div class="detail-evidence" aria-label="Asset summary">
-              <span><strong>{formatNumericDate(asset.submittedDate)}</strong> submitted</span>
+            <div class="detail-evidence" aria-label="Asset summary" data-reveal use:reveal>
+              <span><strong>{formatLongDate(asset.submittedDate)}</strong> submitted</span>
               {#if asset.publishedDate}
-                <span><strong>{formatNumericDate(asset.publishedDate)}</strong> published</span>
+                <span><strong>{formatLongDate(asset.publishedDate)}</strong> published</span>
               {/if}
               {#if asset.priceString}
                 <span><strong>{asset.priceString}</strong> price</span>
@@ -361,7 +360,9 @@
             </div>
           </div>
         </div>
-        <div class="header-actions">
+        <div class="header-actions" data-reveal use:reveal>
+          <!-- The three ways to look at the asset read as one control. -->
+          <div class="action-group" role="group" aria-label="Open this asset">
           {#if asset.previewUrl}
             <Button
               variant="outline"
@@ -393,6 +394,7 @@
               Marketplace
             </Button>
           {/if}
+          </div>
           {#if canEdit}
             <Button variant="default" size="sm" onclick={handleEditClick}>
               <Pencil size={16} />
@@ -470,7 +472,7 @@
         >
           <div class="overview-grid">
             <!-- Left Column -->
-            <div class="left-column">
+            <div class="left-column" data-reveal use:reveal>
               <!-- Template Details Card -->
               <Card>
                 <CardHeader>
@@ -605,7 +607,7 @@
             </div>
 
             <!-- Right Column -->
-            <div class="right-column">
+            <div class="right-column" data-reveal use:reveal>
               <!-- Thumbnail Card -->
               <Card>
                 <CardHeader>
@@ -617,6 +619,7 @@
                       src={asset.thumbnailUrl}
                       alt={asset.name}
                       class="thumbnail-image"
+                      use:pan
                       decoding="async"
                       onerror={() => (imageError = true)}
                     />
@@ -837,13 +840,6 @@
     font-variant-numeric: tabular-nums;
   }
 
-  .detail-kicker {
-    margin: 0;
-    font-size: var(--text-caption);
-    letter-spacing: 0;
-    text-transform: uppercase;
-    color: var(--color-fg-muted);
-  }
 
   .title-row {
     display: flex;
@@ -873,23 +869,55 @@
     justify-content: flex-end;
   }
 
+  .action-group {
+    display: inline-flex;
+  }
+
+  .action-group:empty {
+    display: none;
+  }
+
+  .action-group :global(.btn) {
+    position: relative;
+    margin-left: -1px;
+    border-radius: 0;
+  }
+
+  .action-group :global(.btn:first-child) {
+    margin-left: 0;
+    border-radius: 0.75rem 0 0 0.75rem;
+  }
+
+  .action-group :global(.btn:last-child) {
+    border-radius: 0 0.75rem 0.75rem 0;
+  }
+
+  .action-group :global(.btn:only-child) {
+    border-radius: 0.75rem;
+  }
+
+  .action-group :global(.btn:hover),
+  .action-group :global(.btn:focus-visible) {
+    z-index: 1;
+  }
+
+  /* Archive is rare and cannot be undone here, so it should not be the
+     loudest control in the row. It turns solid only on hover or focus. */
+  .header-actions :global(.btn-destructive) {
+    background: transparent;
+    color: var(--color-error-ink);
+    border-color: var(--color-error-border);
+  }
+
+  .header-actions :global(.btn-destructive:hover:not(:disabled)),
+  .header-actions :global(.btn-destructive:focus-visible) {
+    background: var(--color-error);
+    color: #ffffff;
+    border-color: var(--color-error);
+  }
+
   :global(.tabs-container) {
     margin-bottom: var(--space-lg);
-  }
-
-  :global(.asset-tabs-list) {
-    display: flex;
-    gap: var(--space-xs);
-    background: transparent;
-    border-bottom: 1px solid color-mix(in srgb, var(--color-border-default) 72%, transparent);
-    border-radius: 0;
-    padding: 0 0 0.4rem;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-
-  :global(.asset-tabs-list::-webkit-scrollbar) {
-    display: none;
   }
 
   :global(.asset-tabs-list button) {
@@ -1090,11 +1118,15 @@
     white-space: pre-line;
   }
 
+  /* Cropped to the top of the page; $lib/motion `pan` scrolls it with the pointer. */
   .thumbnail-image {
+    display: block;
     width: 100%;
     aspect-ratio: 7/9;
     object-fit: cover;
+    object-position: 50% 0%;
     border-radius: var(--radius-sm);
+    box-shadow: 0 0 0 1px var(--color-shell-border-default);
   }
 
   .thumbnail-placeholder {

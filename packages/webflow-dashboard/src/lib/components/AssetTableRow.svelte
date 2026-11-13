@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Badge, TableCell, TableRow } from './ui';
 	import ActionsDropdown from './ActionsDropdown.svelte';
+	import StatusBadge from './StatusBadge.svelte';
 	import type { Asset } from '$lib/server/airtable';
 	import { CONVERSION_DATA_AVAILABLE, VIEWER_DATA_AVAILABLE } from '$lib/config/viewer-data';
 	import { getAssetActionConfig, normalizeAssetStatus } from '$lib/utils/asset-actions';
@@ -8,8 +9,7 @@
 	import {
 		formatCompactCurrency,
 		formatCompactNumber,
-		formatNumericDate,
-		formatShortDate
+		formatLongDate
 	} from '$lib/utils/format';
 
 	interface Props {
@@ -72,7 +72,11 @@
 
 </script>
 
-<TableRow class="asset-table-row">
+<TableRow
+	class="asset-table-row"
+	data-asset-id={asset.id}
+	data-preview={asset.thumbnailUrl && !imageError ? asset.thumbnailUrl : undefined}
+>
 	<TableCell class="thumbnail-cell">
 		<a
 			href={assetHref}
@@ -91,8 +95,8 @@
 					class="thumbnail"
 					loading="lazy"
 					decoding="async"
-					width="30"
-					height="38"
+					width="32"
+					height="40"
 					onerror={() => (imageError = true)}
 				/>
 			{:else}
@@ -114,29 +118,27 @@
 		>
 			<span class="asset-name-row">
 				<span class="asset-name">{asset.name}</span>
-			</span>
-			{#if isSearchSuppressed}
-				<span class="visibility-badge-row">
+				{#if isSearchSuppressed}
 					<Badge variant="warning">Detail only</Badge>
-				</span>
-			{/if}
+				{/if}
+			</span>
 		</a>
 	</TableCell>
-	<TableCell class="date-cell">
-		<div class="date-stack">
-			<span class="date">{formatShortDate(asset.submittedDate)}</span>
-			{#if asset.submittedDate}
-				<span class="date-sub">{formatNumericDate(asset.submittedDate)}</span>
-			{/if}
-		</div>
+	<TableCell class="status-cell">
+		<StatusBadge status={asset.status} size="sm" variant="dot" />
 	</TableCell>
 	<TableCell class="category-cell">
-		<div class="category-stack" title={[asset.category, asset.subcategory].filter(Boolean).join(' / ')}>
-			<span class="category">{asset.category || 'Uncategorized'}</span>
-			{#if asset.subcategory}
-				<span class="category-sub">{asset.subcategory}</span>
-			{/if}
-		</div>
+		<span class="category" title={[asset.category, asset.subcategory].filter(Boolean).join(' / ')}>
+			{asset.category || 'Uncategorized'}{#if asset.subcategory}<span class="category-sub"
+					>{' · '}{asset.subcategory}</span
+				>{/if}
+		</span>
+	</TableCell>
+	<TableCell class="date-cell">
+		<span class="date">{formatLongDate(asset.submittedDate) || '—'}</span>
+	</TableCell>
+	<TableCell class="price-cell">
+		<span class="price">{asset.priceString || '—'}</span>
 	</TableCell>
 	{#if showPerformance}
 		{@const cr = conversionRate()}
@@ -188,7 +190,7 @@
 		flex-direction: column;
 		align-items: flex-start;
 		gap: 0.02rem;
-		max-width: 20rem;
+		max-width: 100%;
 	}
 
 	.asset-name-link {
@@ -221,17 +223,28 @@
 		opacity: 0.65;
 	}
 
+	.asset-thumbnail-link {
+		overflow: hidden;
+		box-shadow: 0 0 0 1px var(--color-shell-border-default);
+	}
+
 	.thumbnail {
-		width: 30px;
-		height: 38px;
+		display: block;
+		width: 32px;
+		height: 40px;
 		object-fit: cover;
-		border-radius: var(--radius-sm);
-		aspect-ratio: 7/9;
+		object-position: top center;
+		transition: transform var(--duration-standard) var(--ease-standard);
+	}
+
+	/* Hover: the thumbnail leans in toward the larger pointer preview. */
+	:global(.asset-table-row:hover) .thumbnail {
+		transform: scale(1.08);
 	}
 
 	.thumbnail-placeholder {
-		width: 30px;
-		height: 38px;
+		width: 32px;
+		height: 40px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -243,7 +256,7 @@
 	}
 
 	.asset-name {
-		font-size: 0.93rem;
+		font-size: 0.9rem;
 		font-weight: var(--font-semibold);
 		letter-spacing: 0;
 		color: var(--color-fg-primary);
@@ -253,14 +266,9 @@
 	.asset-name-row {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.35rem;
+		flex-wrap: wrap;
+		gap: 0.3rem 0.6rem;
 		min-width: 0;
-	}
-
-	.visibility-badge-row {
-		display: inline-flex;
-		margin-top: 0.22rem;
-		max-width: 100%;
 	}
 
 	.asset-name-link:hover .asset-name {
@@ -271,52 +279,30 @@
 	}
 
 	.date,
-	.category {
-		color: var(--color-fg-tertiary);
-		font-size: 0.82rem;
-	}
-
-	.date-stack {
-		display: flex;
-		flex-direction: column;
-		gap: 0.04rem;
+	.category,
+	.price {
+		display: block;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		color: var(--color-fg-secondary);
+		font-size: 0.84rem;
+		letter-spacing: 0;
 	}
 
 	.date,
-	.date-sub,
+	.price,
 	.metric,
 	.metric-sub {
 		font-variant-numeric: tabular-nums;
 	}
 
-	.date-sub {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		letter-spacing: 0;
-	}
-
-	.category-stack {
-		display: flex;
-		flex-direction: column;
-		gap: 0.04rem;
-		min-width: 0;
-	}
-
-	.category {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		font-size: var(--text-caption);
-		letter-spacing: 0;
+	.price {
+		text-align: right;
 	}
 
 	.category-sub {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
-		line-height: 1;
 	}
 
 	.metric {

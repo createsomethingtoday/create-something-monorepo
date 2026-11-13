@@ -17,6 +17,18 @@
 				if (dark) document.documentElement.setAttribute('data-theme', 'dark');
 			} catch (e) {}
 		})();
+		// Motion bootstrap: lets app.css hide entrance targets before first paint.
+		// If $lib/motion never boots, the timer shows everything, unanimated.
+		(function () {
+			try {
+				if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+				var root = document.documentElement;
+				root.classList.add('js-motion');
+				setTimeout(function () {
+					if (!window.__motionBooted) root.classList.remove('js-motion');
+				}, 1500);
+			} catch (e) {}
+		})();
 	</script>
 	%sveltekit.head%
 		<script>
