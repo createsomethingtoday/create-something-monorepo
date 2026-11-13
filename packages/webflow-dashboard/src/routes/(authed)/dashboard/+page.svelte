@@ -317,7 +317,7 @@
               </div>
             </div>
 
-            <!-- Two columns, each a stack. The last card in each grows, so both end level. -->
+            <!-- Two columns, each a stack at its natural height. -->
             <OverviewStats assets={data.assets || []} panel="performance" />
           </div>
           <div class="submission-column">
@@ -591,7 +591,8 @@
     display: grid;
     grid-template-columns: minmax(0, 1.2fr) minmax(24rem, 0.9fr);
     gap: var(--space-md) var(--space-lg);
-    align-items: stretch;
+    /* No stretching: a short column ends early instead of padding a card with empty space. */
+    align-items: start;
   }
 
   .quick-actions {
@@ -642,6 +643,21 @@
 
   .assets-section {
     margin-bottom: var(--space-xl);
+  }
+
+  /* Narrower desktop: tighter cells, so six counts still fit on one line. */
+  @media (max-width: 1280px) {
+    .evidence-item {
+      padding-inline: 0.9rem;
+    }
+
+    .evidence-item--total {
+      padding-right: 1.15rem;
+    }
+
+    .evidence-item--total + .evidence-item {
+      padding-left: 1.15rem;
+    }
   }
 
   /* One column: summary, then submission status (can I submit?), then the

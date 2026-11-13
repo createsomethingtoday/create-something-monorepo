@@ -982,7 +982,7 @@
   }
 
   .active-submissions {
-    margin: 1.25rem 0 var(--space-md);
+    margin: 1.25rem 0 0;
   }
 
   .active-submissions h4 {
@@ -1090,6 +1090,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    /* Its own top margin: with no active submission it follows the meter directly. */
+    margin-top: 1.25rem;
     padding-top: 0.85rem;
     border-top: 1px solid var(--color-border-default);
   }
