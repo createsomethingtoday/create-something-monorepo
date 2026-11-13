@@ -157,6 +157,9 @@ visible content at all six widths. The local synthetic host is
 are not build inputs or deploy assets. `docs/cook-release-audit.md` records the
 independent source/artifact gate. Cook clips and detailed browser evidence are
 retained in the operator worktree and referenced by the Linear release receipt.
+Require a clean `pnpm install --frozen-lockfile --ignore-scripts
+--side-effects-cache=false` CI gate before promotion: checks against already
+installed dependencies cannot establish lockfile validity or reproducibility.
 The advisory Ground orphan findings for these two manual fixture entrypoints
 are expected; unsupported HTML/CSS/media exclusions are not checked-clean claims.
 
