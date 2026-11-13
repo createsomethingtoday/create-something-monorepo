@@ -21,9 +21,11 @@ export default defineConfig({
                 'state-info': 'var(--color-text-info)',
                 'state-review': 'var(--color-text-warning)',
                 'state-error': 'var(--color-text-error)',
-                'state-ready': 'var(--color-text-success)'
+                'state-ready': 'var(--color-text-success)',
+                'state-neutral': 'var(--color-text-secondary)'
               },
-              minHeight: { control: 'calc(var(--spacing-10) + var(--spacing-1))' }
+              minHeight: { control: 'calc(var(--spacing-10) + var(--spacing-1))' },
+              minWidth: { control: 'calc(var(--spacing-10) + var(--spacing-1))' }
             }
           }
         })

@@ -99,3 +99,64 @@ export function decisionSummary(pending: Pending, sources: NpgView['sources']) {
   }
   return { title, target, name, price, priceLabel };
 }
+
+// Only known projection labels get friendlier names; unknown fields and every
+// supplied value remain literal. Original source data is always available.
+export function evidenceFieldLabel(label: string): string {
+  const labels: Record<string, string> = {
+    'Coverage · persona · taxonomy code': 'Taxonomy',
+    'Coverage · market coverage status': 'Coverage status',
+    'Coverage · direct outreach status': 'Outreach status',
+    'Coverage · completeness · practice phone count': 'Practice phones',
+    'Coverage · source · latest fetched at': 'Fetched',
+    'Coverage · source · coverage limit reached': 'Limit reached',
+    'Snapshot published': 'Published',
+    'Source fetched': 'Fetched',
+    'Coverage · limitations · 1': 'Qualifications'
+  };
+  return labels[label] ?? label.charAt(0).toUpperCase() + label.slice(1);
+}
+export function evidenceGroups(fields: Array<{ label: string; value: string }>) {
+  const detailLabels = [
+    'Source run',
+    'limit',
+    'offset',
+    'Taxonomy scope',
+    'source',
+    'Snapshot',
+    'Snapshot ID',
+    'Snapshot taxonomy scope',
+    'Coverage · persona · taxonomy code',
+    'Coverage · completeness · practice phone count'
+  ];
+  const dateLabels = [
+    'Source published',
+    'Source fetched',
+    'retrieved at',
+    'Snapshot published',
+    'Coverage · source · latest fetched at'
+  ];
+  const dates = fields.filter((field) => dateLabels.includes(field.label));
+  const details = fields.filter((field) => detailLabels.includes(field.label));
+  const priority = [
+    'Coverage · limitations · 1',
+    'Coverage · direct outreach status',
+    'Coverage · market coverage status',
+    'Coverage · source · coverage limit reached'
+  ];
+  const summary = fields
+    .filter((field) => !details.includes(field) && !dates.includes(field))
+    .sort(
+      (a, b) =>
+        (priority.includes(a.label) ? priority.indexOf(a.label) : priority.length) -
+        (priority.includes(b.label) ? priority.indexOf(b.label) : priority.length)
+    );
+  const warnings = fields.flatMap((field) =>
+    field.label === 'Coverage · market coverage status' && field.value === 'degraded'
+      ? ['Source reports degraded coverage']
+      : field.label === 'Coverage · direct outreach status' && field.value === 'blocked'
+        ? ['Source reports blocked direct outreach']
+        : []
+  );
+  return { summary, dates, details, warnings };
+}

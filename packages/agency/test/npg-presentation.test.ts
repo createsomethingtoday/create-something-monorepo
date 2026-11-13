@@ -71,3 +71,44 @@ test('multi-target review stays bounded and never presents one record as the who
   assert.equal(summary.target, '2 selected NPIs');
   assert.equal(summary.name, null);
 });
+
+test('evidence summary prioritizes literal limitations and source-declared warnings', async () => {
+  const { evidenceFieldLabel, evidenceGroups } = await import('../src/lib/npg/astryx/presentation');
+  const fields = [
+    { label: 'Coverage · persona · taxonomy code', value: '363LF0000X' },
+    { label: 'Coverage · market coverage status', value: 'degraded' },
+    { label: 'Coverage · direct outreach status', value: 'blocked' },
+    { label: 'Coverage · limitations · 1', value: 'Certification unknown' },
+    { label: 'Coverage · source · latest fetched at', value: '2026-09-14' },
+    { label: 'Unknown · future field', value: 'not_supplied' }
+  ];
+  const before = JSON.stringify(fields);
+  const groups = evidenceGroups(fields);
+  assert.equal(groups.summary[0].value, 'Certification unknown');
+  assert.deepEqual(groups.warnings, [
+    'Source reports degraded coverage',
+    'Source reports blocked direct outreach'
+  ]);
+  assert.equal(groups.details[0].value, '363LF0000X');
+  assert.equal(groups.dates[0].value, '2026-09-14');
+  assert.equal(evidenceFieldLabel(fields[1].label), 'Coverage status');
+  assert.equal(evidenceFieldLabel('Unknown · future field'), 'Unknown · future field');
+  assert.equal(groups.summary.at(-1)?.value, 'not_supplied');
+  assert.deepEqual(
+    [...groups.summary, ...groups.dates, ...groups.details].sort((a, b) =>
+      a.label.localeCompare(b.label)
+    ),
+    [...fields].sort((a, b) => a.label.localeCompare(b.label)),
+    'Every field survives exactly once across groups'
+  );
+  assert.deepEqual(
+    evidenceGroups([
+      { label: 'Unknown · market coverage status', value: 'degraded' },
+      { label: 'Coverage · direct outreach status', value: 'unknown' },
+      { label: 'Coverage · market coverage status', value: 'Degraded' }
+    ]).warnings,
+    [],
+    'Warnings require exact known source fields and supplied states'
+  );
+  assert.equal(JSON.stringify(fields), before, 'Presentation must not mutate source facts');
+});
