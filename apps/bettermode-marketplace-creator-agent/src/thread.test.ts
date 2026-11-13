@@ -146,3 +146,14 @@ test('punctuation after a URL stays outside the link, and markup is escaped', ()
     '<p>Quote &quot;<a href="https://example.com/a">https://example.com/a</a>&quot; ends.</p>',
   );
 });
+
+test('a URL in angle brackets or with its own brackets links cleanly', () => {
+  assert.equal(
+    draftToHtml('See <https://example.com/help> first.'),
+    '<p>See &lt;<a href="https://example.com/help">https://example.com/help</a>&gt; first.</p>',
+  );
+  assert.equal(
+    draftToHtml('Read https://example.com/wiki/Name_(band).'),
+    '<p>Read <a href="https://example.com/wiki/Name_(band)">https://example.com/wiki/Name_(band)</a>.</p>',
+  );
+});
