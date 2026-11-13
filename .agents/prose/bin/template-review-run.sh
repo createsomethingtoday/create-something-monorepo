@@ -84,5 +84,8 @@ Finish by printing the digest path and the count per lean."
     --model opus \
     --permission-mode bypassPermissions \
     --disallowedTools "${BLOCKED[@]}" </dev/null
-  echo "===== exit $? at $(date -u +%Y-%m-%dT%H:%M:%SZ) ====="
+  STATUS=$?
+  echo "===== exit $STATUS at $(date -u +%Y-%m-%dT%H:%M:%SZ) ====="
 } >>"$LOG" 2>&1
+# Pass the Claude exit status on, so launchd and callers can tell a failed run from a finished one.
+exit "$STATUS"
