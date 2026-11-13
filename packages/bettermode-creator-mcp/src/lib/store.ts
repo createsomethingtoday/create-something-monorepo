@@ -253,6 +253,7 @@ export async function saveAgentDraft(
            metadata = json_set(
              COALESCE(metadata, '{}'),
              '$.drafted_for_post_id', json_extract(metadata, '$.latest_creator_post_id'),
+             '$.drafted_for_text_hash', json_extract(metadata, '$.latest_creator_text_hash'),
              '$.last_error', NULL
            )
        WHERE id = ?1 AND status IN ('new','queued')`,

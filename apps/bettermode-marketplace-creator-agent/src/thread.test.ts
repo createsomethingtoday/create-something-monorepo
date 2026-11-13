@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import type { BettermodeMember, BettermodePost } from './bettermode';
-import { isStaff, threadState } from './thread.ts';
+import { isStaff, textFingerprint, threadState } from './thread.ts';
 
 const creator: BettermodeMember = { id: 'm-creator', name: 'Creator', email: 'creator@example.com' };
 const other: BettermodeMember = { id: 'm-other', name: 'Other', email: 'other@example.com' };
@@ -115,4 +115,11 @@ test('staff are admin IDs, staff email domains, and the app identity', () => {
   assert.equal(isStaff({ id: 'm-2', email: 'person@example.com' }, config), false);
   assert.equal(isStaff({ id: 'm-3', email: 'person@notexample.org' }, config), false);
   assert.equal(isStaff(null, config), false);
+});
+
+test('an edit changes the text fingerprint, a repeat of the same text does not', () => {
+  const original = textFingerprint('How do I update my template?');
+  assert.equal(textFingerprint('  How do I update\n my template? '), original);
+  assert.notEqual(textFingerprint('How do I delete my template?'), original);
+  assert.notEqual(textFingerprint(''), original);
 });

@@ -35,7 +35,13 @@ import {
   upsertSignal,
   type BettermodeMeta,
 } from './store';
-import { isStaff, threadState, type StaffConfig, type ThreadState } from './thread';
+import {
+  isStaff,
+  textFingerprint,
+  threadState,
+  type StaffConfig,
+  type ThreadState,
+} from './thread';
 
 export type QueueMessage =
   | { kind: 'thread.sync'; postId: string; reason: string; regenerate?: boolean }
@@ -147,6 +153,7 @@ export async function syncThread(
   const state = threadState(root, (member) => isStaff(member, staff));
   const existing = await getSignalByPostId(env.DB, root.id);
   const target = state.latestCreatorMessage;
+  const targetHash = target ? textFingerprint(target.text) : null;
   const rootAuthor = root.owner || root.createdBy || null;
 
   const signal = {
@@ -169,6 +176,7 @@ export async function syncThread(
     last_staff_reply_at: state.lastStaffReplyAt,
     latest_creator_post_id: target?.id ?? null,
     latest_creator_name: target?.author?.name ?? null,
+    latest_creator_text_hash: targetHash,
     last_activity_at: root.lastActivityAt ?? null,
     message_count: state.messages.length,
     synced_at: new Date().toISOString(),
@@ -218,12 +226,21 @@ export async function syncThread(
     return 'responded';
   }
 
+  // The draft is current when it answers this message as it now reads. An
+  // edit changes the fingerprint, so the draft is written again. A draft with
+  // no fingerprint yet (saved before this field existed) gets one here.
+  const draftedHash = existing?.metadata.drafted_for_text_hash ?? null;
   const draftIsCurrent =
     !!existing &&
     existing.metadata.drafted_for_post_id === target.id &&
+    (draftedHash === null || draftedHash === targetHash) &&
     (await hasOpenDraft(env.DB, existing.id));
   if (draftIsCurrent && !opts.regenerate) {
-    await upsertSignal(env.DB, { ...signal, status: 'queued', metadata });
+    await upsertSignal(env.DB, {
+      ...signal,
+      status: 'queued',
+      metadata: { ...metadata, drafted_for_text_hash: targetHash },
+    });
     return 'queued';
   }
 
@@ -252,6 +269,7 @@ export async function syncThread(
   if (!draftId) return 'new';
   await patchSignal(env.DB, signalId, 'queued', {
     drafted_for_post_id: target.id,
+    drafted_for_text_hash: targetHash,
     last_error: null,
   });
   return 'queued';

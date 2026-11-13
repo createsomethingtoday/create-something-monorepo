@@ -55,8 +55,11 @@ export type BettermodeMeta = {
   last_activity_at?: string | null;
   message_count?: number;
   synced_at?: string;
-  // The creator message the open draft answers.
+  latest_creator_text_hash?: string | null;
+  // The creator message the open draft answers, and its text fingerprint.
+  // An edit to that message makes the draft stale.
   drafted_for_post_id?: string | null;
+  drafted_for_text_hash?: string | null;
   // When an admin dismissed the item. A later creator message reopens it.
   dismissed_at?: string | null;
   // Set when the thread was removed or unpublished, not dismissed by an admin.

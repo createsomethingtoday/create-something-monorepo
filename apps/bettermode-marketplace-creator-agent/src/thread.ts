@@ -87,6 +87,18 @@ export function isStaff(member: BettermodeMember | null, config: StaffConfig): b
   return config.domains.some((domain) => email.endsWith(`@${domain}`));
 }
 
+// Short fingerprint of a message body. An edit changes it. A repeat event
+// for the same text does not, so it never triggers a new draft.
+export function textFingerprint(text: string): string {
+  const normalized = text.replace(/\s+/g, ' ').trim();
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < normalized.length; index += 1) {
+    hash ^= normalized.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return `${normalized.length}:${(hash >>> 0).toString(16)}`;
+}
+
 export function postText(post: BettermodePost): string {
   const full = post.textContent?.trim();
   if (full) return full;
