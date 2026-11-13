@@ -22,6 +22,7 @@ const TABLES = {
   CREATORS: 'tbljt0plqxdMARZXb',
   ASSETS: 'tblRwzpWoLgE9MrUm',
   ASSET_VERSIONS: 'tblHxZ2hgSFLZxsZu',
+  API_KEYS: 'tblU5rI3WiQerozvX',
   CATEGORY_PERFORMANCE: 'tblDU1oUiobNfMQP9',
   LEADERBOARD: 'tblcXLVLYobhNmrg6'
 } as const;
@@ -199,6 +200,16 @@ export interface TemplateSubmissionReceiptCandidate {
   assetType?: string;
   creatorMatched: boolean;
   reviewStatus?: string;
+}
+
+export interface ApiKey {
+  id: string;
+  name: string;
+  createdAt: string;
+  expiresAt?: string;
+  lastUsedAt?: string;
+  scopes: string[];
+  status: 'Active' | 'Revoked' | 'Expired';
 }
 
 function parseTimestampCandidate(value: unknown): Date | null {
@@ -1276,6 +1287,145 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
         asset: mapAssetRecord(assetRecord),
         versionId,
         warning
+      };
+    },
+
+    async generateApiKey(
+      creatorEmail: string,
+      name: string,
+      scopes: string[]
+    ): Promise<{ key: string; apiKey: ApiKey }> {
+      const rawKey = randomBytes(32).toString('hex');
+      const fullKey = `wfd_${rawKey}`;
+      const keyHash = createHash('sha256').update(fullKey).digest('hex');
+
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+
+      const records = await base(TABLES.API_KEYS).create([
+        {
+          fields: {
+            Name: name,
+            'Key Hash': keyHash,
+            'Key Prefix': fullKey.substring(0, 12),
+            'Creator Email': creatorEmail,
+            Scopes: scopes.join(','),
+            Status: 'Active',
+            'Created At': now.toISOString(),
+            'Expires At': expiresAt.toISOString()
+          }
+        }
+      ]);
+
+      const record = records[0];
+      return {
+        key: fullKey,
+        apiKey: {
+          id: record.id,
+          name: record.fields['Name'] as string,
+          createdAt: record.fields['Created At'] as string,
+          expiresAt: record.fields['Expires At'] as string,
+          scopes,
+          status: 'Active'
+        }
+      };
+    },
+
+    async listApiKeys(creatorEmail: string): Promise<ApiKey[]> {
+      const emailLiteral = airtableFormulaValue(creatorEmail.trim().toLowerCase());
+      const records = await base(TABLES.API_KEYS)
+        .select({
+          filterByFormula: `LOWER({Creator Email}) = ${emailLiteral}`,
+          sort: [{ field: 'Created At', direction: 'desc' }]
+        })
+        .all();
+
+      return records.map((record) => {
+        const expiresAt = record.fields['Expires At'] as string | undefined;
+        const status = (record.fields['Status'] as string) || 'Active';
+
+        let finalStatus: ApiKey['status'] = status as ApiKey['status'];
+        if (status === 'Active' && expiresAt && new Date(expiresAt) < new Date()) {
+          finalStatus = 'Expired';
+        }
+
+        return {
+          id: record.id,
+          name: (record.fields['Name'] as string) || 'Unnamed Key',
+          createdAt: record.fields['Created At'] as string,
+          expiresAt,
+          lastUsedAt: record.fields['Last Used At'] as string | undefined,
+          scopes: ((record.fields['Scopes'] as string) || '').split(',').filter(Boolean),
+          status: finalStatus
+        };
+      });
+    },
+
+    async revokeApiKey(keyId: string, creatorEmail: string): Promise<boolean> {
+      try {
+        const record = await base(TABLES.API_KEYS).find(keyId);
+        const recordEmail = record.fields['Creator Email'] as string;
+
+        if (recordEmail.toLowerCase() !== creatorEmail.toLowerCase()) {
+          return false;
+        }
+
+        await base(TABLES.API_KEYS).update([
+          {
+            id: keyId,
+            fields: {
+              Status: 'Revoked',
+              'Revoked At': new Date().toISOString()
+            }
+          }
+        ]);
+
+        return true;
+      } catch {
+        return false;
+      }
+    },
+
+    async validateApiKey(
+      key: string
+    ): Promise<{ valid: boolean; email?: string; scopes?: string[] }> {
+      if (!key.startsWith('wfd_')) {
+        return { valid: false };
+      }
+
+      const keyHash = createHash('sha256').update(key).digest('hex');
+      const keyHashLiteral = airtableFormulaValue(keyHash);
+
+      const records = await base(TABLES.API_KEYS)
+        .select({
+          filterByFormula: `AND({Key Hash} = ${keyHashLiteral}, {Status} = 'Active')`,
+          maxRecords: 1
+        })
+        .firstPage();
+
+      if (records.length === 0) {
+        return { valid: false };
+      }
+
+      const record = records[0];
+      const expiresAt = record.fields['Expires At'] as string | undefined;
+      if (expiresAt && new Date(expiresAt) < new Date()) {
+        return { valid: false };
+      }
+
+      void base(TABLES.API_KEYS)
+        .update([
+          {
+            id: record.id,
+            fields: { 'Last Used At': new Date().toISOString() }
+          }
+        ])
+        .catch(() => {});
+
+      return {
+        valid: true,
+        email: record.fields['Creator Email'] as string,
+        scopes: ((record.fields['Scopes'] as string) || '').split(',').filter(Boolean)
       };
     },
 
