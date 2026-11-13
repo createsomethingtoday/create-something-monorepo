@@ -79,6 +79,11 @@ export const GET: RequestHandler = async ({ params, url, locals, platform }) => 
 		throw error(400, 'Versions do not belong to this asset');
 	}
 
+	// A listing-edit version records what changed, not a full snapshot.
+	if (!fromVersion.snapshot || !toVersion.snapshot) {
+		throw error(409, 'These versions have no stored snapshot to compare');
+	}
+
 	const differences = compareVersions(fromVersion.snapshot, toVersion.snapshot);
 
 	return json({
