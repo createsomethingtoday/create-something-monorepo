@@ -7,6 +7,15 @@ import { AirtableClientError, assertReviewerAssignmentReadOnly } from './airtabl
 import type { ZendeskClient } from './zendesk.js';
 import { ZENDESK_WRITABLE_STATUSES, ZendeskClientError, renderCreatorFacingHtml } from './zendesk.js';
 import {
+  buildReleaseNotice,
+  ReviewCommentsClientError,
+  type ReleaseNotice,
+  type ReleaseNotification,
+  type ReviewComment,
+  type ReviewCommentsClient,
+  type ReviewOutcome,
+} from './review-comments.js';
+import {
   APP_REVIEW_FIELD_MAP,
   CAPABILITIES_OPTIONS,
   EXCEPTION_STATUS_OPTIONS,
@@ -26,8 +35,10 @@ import {
 } from './schema.js';
 
 type ClientFactory = () => AirtableClient;
-type ReviewerFactory = () => unknown;
+/** The signed-in reviewer. Only the Cloudflare Access route carries one; the legacy bearer route does not. */
+type ReviewerFactory = () => { email?: string | null } | null;
 type ZendeskFactory = () => ZendeskClient | null;
+type ReviewCommentsFactory = () => ReviewCommentsClient | null;
 
 const collaboratorRefSchema = z.object({
   id: z.string().min(1),
@@ -106,7 +117,7 @@ function asSuccess(data: unknown) {
 }
 
 function asError(error: unknown) {
-  if (error instanceof AirtableClientError || error instanceof ZendeskClientError) {
+  if (error instanceof AirtableClientError || error instanceof ZendeskClientError || error instanceof ReviewCommentsClientError) {
     return jsonContent({
       ok: false,
       error: {
@@ -150,7 +161,7 @@ async function requireAppAsset(client: AirtableClient, assetId: string) {
   return asset;
 }
 
-async function requireAppVersion(client: AirtableClient, versionId: string): Promise<AppReviewVersion> {
+async function requireAppVersionWithAsset(client: AirtableClient, versionId: string) {
   const version = await client.getVersionById(versionId);
   if (!version) {
     throw new AirtableClientError('VERSION_NOT_FOUND', 'Version not found.', 404, { versionId });
@@ -158,9 +169,117 @@ async function requireAppVersion(client: AirtableClient, versionId: string): Pro
   if (!version.assetId) {
     throw new AirtableClientError('VERSION_SCOPE_ERROR', 'Version is missing linked asset ID.', 400, { versionId });
   }
-  await requireAppAsset(client, version.assetId);
-  return version;
+  return { version, asset: await requireAppAsset(client, version.assetId) };
 }
+
+async function requireAppVersion(client: AirtableClient, versionId: string): Promise<AppReviewVersion> {
+  return (await requireAppVersionWithAsset(client, versionId)).version;
+}
+
+/** Review comments are attributed by email, so the session must carry the reviewer's. */
+function requireReviewerEmail(getReviewer: ReviewerFactory): string {
+  const email = getReviewer()?.email?.trim();
+  if (!email) {
+    throw new AirtableClientError(
+      'REVIEWER_EMAIL_UNAVAILABLE',
+      'Review comments need a signed-in reviewer. Connect through the Cloudflare Access endpoint (/access/mcp); the shared bearer route carries no reviewer identity.',
+      503,
+    );
+  }
+  return email;
+}
+
+function requireVersionAssetId(version: AppReviewVersion): string {
+  if (!version.assetId) {
+    throw new AirtableClientError('VERSION_SCOPE_ERROR', 'Version is missing linked asset ID.', 400, { versionId: version.versionId });
+  }
+  return version.assetId;
+}
+
+/**
+ * The "send feedback" step after a decision. Posts the decision's feedback as
+ * a reviewer comment (once; a retried decision does not repeat it) and
+ * releases every draft on the version to the developer. Airtable is already
+ * updated when this runs, so a comments failure is reported in the result,
+ * never thrown.
+ */
+async function releaseFeedbackAfterDecision(
+  decisionTool: string,
+  comments: ReviewCommentsClient,
+  versionId: string,
+  assetId: string,
+  actorEmail: string,
+  feedback?: string,
+  notice?: ReleaseNotice,
+): Promise<Record<string, unknown>> {
+  try {
+    let added = false;
+    const body = feedback?.trim();
+    if (body) {
+      const existing = await comments.listVersion(versionId, actorEmail);
+      const author = actorEmail.toLowerCase();
+      if (!existing.some((comment) => comment.authorEmail === author && comment.body === body)) {
+        await comments.add(versionId, actorEmail, { assetRef: assetId, body, visibility: 'draft' });
+        added = true;
+      }
+    }
+    const { released, notification } = await comments.release(versionId, actorEmail, ...(notice ? [notice] : []));
+    return { ok: true, feedback_comment_added: added, released, ...emailResult(notification) };
+  } catch (error) {
+    const known = error instanceof ReviewCommentsClientError || error instanceof AirtableClientError;
+    return {
+      ok: false,
+      error: {
+        code: known ? error.code : 'UNEXPECTED_ERROR',
+        message: error instanceof Error ? error.message : String(error),
+        status: known ? (error.status ?? 500) : 500,
+      },
+      next_step: `The review status is saved. To retry, re-run ${decisionTool} with the same input; the feedback is posted only once.`,
+    };
+  }
+}
+
+/**
+ * The developer address is the one review tickets go to today: the override on
+ * the asset when set, else the creator's. No usable address means no email.
+ */
+function appReleaseNotice(
+  asset: { appName?: string; creatorEmail?: string; creatorName?: string },
+  version: AppReviewVersion,
+  outcome?: ReviewOutcome,
+): ReleaseNotice | undefined {
+  return buildReleaseNotice({
+    email: asset.creatorEmail,
+    name: asset.creatorName,
+    assetName: asset.appName,
+    assetType: 'App',
+    versionNumber: version.versionNumber,
+    outcome,
+  });
+}
+
+/** How the "feedback is ready" email went, in the shape every release result carries. */
+function emailResult(notification: ReleaseNotification | undefined): Record<string, unknown> {
+  return {
+    developer_email_sent: notification?.status === 'sent',
+    ...(notification ? { notification } : {}),
+    ...(notification?.status === 'none' && notification.reason === 'no_recipient'
+      ? { email_note: 'No email was sent: the asset record has no usable creator email address.' }
+      : {}),
+    ...(notification?.status === 'failed'
+      ? { email_next_step: 'The feedback is released, but the email did not send. To retry the email, run app_review_release_feedback for this version.' }
+      : {}),
+  };
+}
+
+/** A "(No Notification)" status is deliberately silent: nothing may reach the developer. */
+const SILENT_DECISION_RESULT = {
+  ok: true,
+  skipped: 'no_notification_status',
+  feedback_comment_added: false,
+  released: 0,
+  developer_email_sent: false,
+} as const;
 
 function cleanObject<T extends Record<string, unknown>>(value: T): T {
   const entries = Object.entries(value).filter(([, v]) => v !== undefined);
@@ -302,9 +421,13 @@ function requireZendesk(getZendesk: ZendeskFactory, verb: 'reads' | 'writes'): Z
 export function registerTools(
   server: McpServer,
   getClient: ClientFactory,
-  _getReviewer: ReviewerFactory = () => null,
+  getReviewer: ReviewerFactory = () => null,
   getZendesk: ZendeskFactory = () => null,
+  getReviewComments: ReviewCommentsFactory = () => null,
 ): void {
+  // Null until the comments Worker URL and key are set; every comment behaviour below is then off.
+  const reviewComments = getReviewComments();
+
   server.tool(
     'app_review_health',
     'Runtime health check for Webflow App Review MCP and Airtable connectivity.',
@@ -702,22 +825,186 @@ export function registerTools(
     async ({ version_id, review_feedback, rejection_reason, review_status }) => {
       try {
         ensureRequestChangesStatus(review_status);
-        await requireAppVersion(getClient(), version_id);
+        const status = review_status ?? '📤Changes Requested';
+        const silent = status.endsWith('(No Notification)');
+        // Checked before the write: a status change must not land without its feedback.
+        const actorEmail = reviewComments && !silent ? requireReviewerEmail(getReviewer) : null;
+        const { version, asset } = await requireAppVersionWithAsset(getClient(), version_id);
+        const assetId = requireVersionAssetId(version);
         const updated = await getClient().updateVersionReview(version_id, {
-          review_status: review_status ?? '📤Changes Requested',
+          review_status: status,
           rejection_reason,
           review_feedback,
         });
-        return asSuccess({ updated_version: updated });
+        return asSuccess({
+          updated_version: updated,
+          ...(reviewComments
+            ? {
+                review_comments: actorEmail
+                  ? await releaseFeedbackAfterDecision('app_review_request_changes', reviewComments, version_id, assetId, actorEmail, review_feedback, appReleaseNotice(asset, version, 'changes_requested'))
+                  : SILENT_DECISION_RESULT,
+              }
+            : {}),
+        });
       } catch (error) {
         return asError(error);
       }
     },
   );
 
+  /** Zendesk thread (when the version has one) plus the version's review comments. */
+  async function readThreadWithComments(
+    comments: ReviewCommentsClient,
+    versionId: string,
+    includeInternal: boolean,
+    limit: number,
+  ): Promise<Record<string, unknown>> {
+    const version = await requireAppVersion(getClient(), versionId);
+    const zendesk = getZendesk();
+    const ticketId = version.zendeskTicketId;
+    const thread = zendesk && ticketId ? await zendesk.getTicketThread(ticketId, { includeInternalNotes: includeInternal, limit }) : null;
+
+    const reviewerEmail = getReviewer()?.email?.trim();
+    let reviewComments: ReviewComment[] | null = null;
+    let reviewCommentsError: Record<string, unknown> | null = null;
+    if (reviewerEmail) {
+      try {
+        const all = await comments.listVersion(versionId, reviewerEmail);
+        reviewComments = includeInternal ? all : all.filter((comment) => comment.visibility === 'released');
+      } catch (error) {
+        // Keep the Zendesk thread already read; report the comments failure beside it.
+        if (!(error instanceof ReviewCommentsClientError)) throw error;
+        reviewCommentsError = { code: error.code, message: error.message, status: error.status ?? 500 };
+      }
+    }
+
+    return {
+      version_id: versionId,
+      asset_id: version.assetId,
+      version_number: version.versionNumber,
+      ticket_url: zendesk && ticketId ? `https://webflow2579.zendesk.com/agent/tickets/${ticketId}` : null,
+      thread,
+      ...(thread === null
+        ? { thread_note: ticketId ? 'Zendesk reads are not configured on this deployment.' : 'This version has no linked Zendesk ticket.' }
+        : {}),
+      review_comments: reviewComments,
+      ...(reviewCommentsError ? { review_comments_error: reviewCommentsError } : {}),
+      ...(reviewComments === null && !reviewCommentsError
+        ? { review_comments_note: 'Review comments need a signed-in reviewer (Cloudflare Access endpoint).' }
+        : {}),
+    };
+  }
+
+  if (reviewComments) {
+    const commentIdSchema = z.string().min(1).max(64);
+
+    server.tool(
+      'app_review_list_comments',
+      'Read-only: every review comment on an app version (drafts, internal notes, released feedback, and developer replies), oldest first. Needs a signed-in reviewer.',
+      { version_id: z.string().min(1) },
+      async ({ version_id }) => {
+        try {
+          const actorEmail = requireReviewerEmail(getReviewer);
+          const version = await requireAppVersion(getClient(), version_id);
+          return asSuccess({
+            version_id,
+            asset_id: version.assetId,
+            comments: await reviewComments.listVersion(version_id, actorEmail),
+          });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+
+    server.tool(
+      'app_review_add_comment',
+      'Reviewer write: add a review comment to an app version. "draft" (default) is feedback for the developer; it stays hidden until app_review_release_feedback, request_changes, approve, or reject releases it. "internal" is a reviewer-only note; it is never shown to the developer. The asset comes from the version record, not from input.',
+      {
+        version_id: z.string().min(1),
+        body: z.string().min(1).max(20_000),
+        visibility: z.enum(['draft', 'internal']).default('draft'),
+        parent_id: commentIdSchema.optional().describe('Reply to this comment on the same version.'),
+        rubric_ref: commentIdSchema.optional().describe('Guideline or checklist item this comment is about.'),
+      },
+      async ({ version_id, body, visibility, parent_id, rubric_ref }) => {
+        try {
+          const actorEmail = requireReviewerEmail(getReviewer);
+          const version = await requireAppVersion(getClient(), version_id);
+          const comment = await reviewComments.add(version_id, actorEmail, {
+            assetRef: requireVersionAssetId(version),
+            body: body.trim(),
+            visibility,
+            ...(parent_id ? { parentId: parent_id } : {}),
+            ...(rubric_ref ? { rubricRef: rubric_ref } : {}),
+          });
+          return asSuccess({ comment });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+
+    server.tool(
+      'app_review_edit_comment',
+      'Reviewer write: replace the text of your own draft or internal comment. Released comments cannot be edited.',
+      { comment_id: commentIdSchema, body: z.string().min(1).max(20_000) },
+      async ({ comment_id, body }) => {
+        try {
+          return asSuccess({ comment: await reviewComments.edit(comment_id, requireReviewerEmail(getReviewer), body.trim()) });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+
+    server.tool(
+      'app_review_delete_comment',
+      'Reviewer write: delete your own draft or internal comment. Released comments and comments with replies cannot be deleted.',
+      { comment_id: commentIdSchema },
+      async ({ comment_id }) => {
+        try {
+          return asSuccess(await reviewComments.remove(comment_id, requireReviewerEmail(getReviewer)));
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+
+    server.tool(
+      'app_review_release_feedback',
+      'Reviewer write (developer-facing): release every draft comment on an app version to the developer, and email the developer when the release makes new feedback visible and the email is configured. request_changes, approve, and reject already do this, except with a "(No Notification)" status, which stays silent. Use this tool only when the operator explicitly asks to send feedback without a status change, or to retry a failed release or a failed email. Does not change the review status.',
+      { version_id: z.string().min(1) },
+      async ({ version_id }) => {
+        try {
+          const actorEmail = requireReviewerEmail(getReviewer);
+          const { version, asset } = await requireAppVersionWithAsset(getClient(), version_id);
+          const notice = appReleaseNotice(asset, version);
+          const { released, notification } = await reviewComments.release(version_id, actorEmail, ...(notice ? [notice] : []));
+          return asSuccess({ version_id, released, ...emailResult(notification) });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+
+    server.tool(
+      'app_review_resolve_comment',
+      'Reviewer write: mark a review comment open, resolved, or carried_forward (still open on the next version).',
+      { comment_id: commentIdSchema, resolution: z.enum(['open', 'resolved', 'carried_forward']) },
+      async ({ comment_id, resolution }) => {
+        try {
+          return asSuccess({ comment: await reviewComments.resolve(comment_id, requireReviewerEmail(getReviewer), resolution) });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+  }
+
   server.tool(
     'app_review_get_ticket_thread',
-    'Read the Zendesk ticket linked to an app version: subject, status, requester, and the conversation (developer replies and review-team messages), oldest to newest. Read-only; resolves the ticket from the version record, never from an arbitrary ticket ID. Public comments only by default — set include_internal_notes=true to also return private agent notes. Use this to answer "what did the developer say / were they notified / what did we send" before drafting any follow-up.',
+    'Read the conversation on an app version: the linked Zendesk ticket (subject, status, requester, developer replies and review-team messages, oldest to newest) and, when review comments are enabled on this deployment, the version\'s review comments in review_comments. Read-only; resolves the ticket from the version record, never from an arbitrary ticket ID. Public and released comments only by default — set include_internal_notes=true to also return private agent notes, drafts and internal review comments. Use this to answer "what did the developer say / were they notified / what did we send" before drafting any follow-up.',
     {
       version_id: z.string().min(1),
       include_internal_notes: z.boolean().default(false),
@@ -725,6 +1012,9 @@ export function registerTools(
     },
     async ({ version_id, include_internal_notes, limit }) => {
       try {
+        if (reviewComments) {
+          return asSuccess(await readThreadWithComments(reviewComments, version_id, include_internal_notes, limit));
+        }
         const zendesk = getZendesk();
         if (!zendesk) {
           throw new ZendeskClientError(
@@ -1016,13 +1306,20 @@ export function registerTools(
     },
     async ({ version_id, review_feedback, review_type }) => {
       try {
-        await requireAppVersion(getClient(), version_id);
+        const actorEmail = reviewComments ? requireReviewerEmail(getReviewer) : null;
+        const { version, asset } = await requireAppVersionWithAsset(getClient(), version_id);
+        const assetId = requireVersionAssetId(version);
         const updated = await getClient().updateVersionReview(version_id, {
           review_status: '✅Approved',
           review_type,
           review_feedback,
         });
-        return asSuccess({ updated_version: updated });
+        return asSuccess({
+          updated_version: updated,
+          ...(reviewComments && actorEmail
+            ? { review_comments: await releaseFeedbackAfterDecision('app_review_approve_version', reviewComments, version_id, assetId, actorEmail, review_feedback, appReleaseNotice(asset, version, 'approved')) }
+            : {}),
+        });
       } catch (error) {
         return asError(error);
       }
@@ -1040,14 +1337,21 @@ export function registerTools(
     },
     async ({ version_id, rejection_reason, review_feedback, review_type }) => {
       try {
-        await requireAppVersion(getClient(), version_id);
+        const actorEmail = reviewComments ? requireReviewerEmail(getReviewer) : null;
+        const { version, asset } = await requireAppVersionWithAsset(getClient(), version_id);
+        const assetId = requireVersionAssetId(version);
         const updated = await getClient().updateVersionReview(version_id, {
           review_status: '❌Rejected',
           review_type,
           rejection_reason,
           rejection_feedback: review_feedback,
         });
-        return asSuccess({ updated_version: updated });
+        return asSuccess({
+          updated_version: updated,
+          ...(reviewComments && actorEmail
+            ? { review_comments: await releaseFeedbackAfterDecision('app_review_reject_version', reviewComments, version_id, assetId, actorEmail, review_feedback, appReleaseNotice(asset, version, 'rejected')) }
+            : {}),
+        });
       } catch (error) {
         return asError(error);
       }

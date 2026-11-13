@@ -30,6 +30,7 @@ import { registerPrompts } from '../src/prompts.js';
 import { attachRequestProps } from '../src/request-context.js';
 import { registerResources } from '../src/resources.js';
 import { registerTools } from '../src/tools.js';
+import { buildReviewCommentsClient } from '../src/review-comments.js';
 import { parseZendeskGroupId, ZendeskClient } from '../src/zendesk.js';
 
 interface Env {
@@ -65,6 +66,10 @@ interface Env {
   MARKETPLACE_ZENDESK_GROUP_ID?: string;
   /** Kill switch for developer-facing hold notices + 7-day reminders ("1" disables). */
   HOLD_NOTICES_DISABLED?: string;
+  /** webflow-review-comments Worker. Both unset = the comment tools are not registered. */
+  REVIEW_COMMENTS_URL?: string;
+  /** This MCP's reviewer key for that Worker, scope "app" (secret via `wrangler secret put`). */
+  REVIEW_COMMENTS_API_KEY?: string;
 }
 
 type RequestProps = {
@@ -113,7 +118,11 @@ export class WebflowAppReviewMCP extends McpAgent<Env, unknown, RequestProps> {
     const getZendesk = () => buildZendesk(this.env);
 
     registerResources(this.server, getClient);
-    registerTools(this.server, getClient, () => null, getZendesk);
+    const reviewComments = buildReviewCommentsClient(this.env.REVIEW_COMMENTS_URL, this.env.REVIEW_COMMENTS_API_KEY);
+    // Read per call: props belong to the session, and only Cloudflare Access sets an email.
+    const getReviewer = () => (this.props?.email ? { email: this.props.email } : null);
+
+    registerTools(this.server, getClient, getReviewer, getZendesk, () => reviewComments);
     registerPrompts(this.server);
   }
 }
