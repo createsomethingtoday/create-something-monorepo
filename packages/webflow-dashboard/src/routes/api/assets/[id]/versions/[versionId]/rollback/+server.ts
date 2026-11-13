@@ -32,6 +32,16 @@ export const POST: RequestHandler = async ({ params, locals, platform }) => {
 		throw error(409, APP_UPDATE_GUIDANCE);
 	}
 
+	// A listing-edit version records what changed, not a full snapshot, so it
+	// cannot be restored. Say so instead of failing as a server error.
+	const version = await airtable.getAssetVersion(params.versionId);
+	if (!version || version.assetId !== params.id) {
+		throw error(404, 'Version not found for this asset');
+	}
+	if (!version.snapshot) {
+		throw error(409, 'This version has no stored snapshot to roll back to');
+	}
+
 	const asset = await airtable.rollbackAssetToVersion(
 		params.id,
 		params.versionId,
