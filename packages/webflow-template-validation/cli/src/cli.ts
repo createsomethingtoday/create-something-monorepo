@@ -51,7 +51,7 @@ import {
 const GATE_NOTE =
 	'This run was not recorded, so the Marketplace submission form cannot use it. Run `wf-template-validate login`, then validate with --site <siteId> to record the result, or run the Template Validator app in the Designer.';
 const RECORDED_NOTE =
-	'This run was recorded with the worker. The Marketplace submission form decides whether it satisfies the submission gate.';
+	'This run was recorded. The worker stored its own result for the run, and the Marketplace submission form decides whether it satisfies the submission gate.';
 const NO_RECORD_NOTE =
 	'This run was not recorded because --no-record was set, so the Marketplace submission form cannot use it.';
 const GSAP_CATEGORY = 'Published-site crawl (GSAP worker)';
@@ -293,6 +293,7 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 			workerBase,
 			timeoutMs,
 			designerData: collected?.designerData,
+			canvasResult: collected?.canvas?.result,
 			onProgress: log
 		});
 	} catch (error) {
@@ -393,6 +394,7 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 					siteId: values.site!,
 					siteName: collected.designerData.siteInfo?.name,
 					siteUrl,
+					jobId: outcome.jobId ?? '',
 					validationResults: buildSubmitPayload({ result: outcome.result, siteUrl, checks, pageSlugsCount: discovery.slugs.length }),
 					accessToken: token.access_token
 				});

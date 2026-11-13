@@ -93,7 +93,7 @@ It does not prove:
 ## Open policy items
 
 - **Self-registered OAuth client.** `login` uses dynamic client registration on Webflow's production auth server, under the name "Webflow Template Validate CLI". There is no documented way to delete a registered client and no documented DCR policy. Before creators use this, the MCP owners should decide between a Webflow-issued client id (`WEBFLOW_MCP_CLIENT_ID`) and per-install registration.
-- **Shared production workers.** `validate` calls the production validation worker and the GSAP crawl worker with no authentication and no rate limit for anonymous callers. Shipping to creators needs a decision on auth, quotas, and ownership of that load.
+- **Shared production workers.** `validate` calls the production validation worker and the GSAP crawl worker with no authentication. The validation worker limits one network address to 10 validation starts per minute (a strict count in a Durable Object). The GSAP crawl worker has no such limit.
 - **Token as evidence.** The record step sends the creator's access token to the validation worker so it can verify site access. That needs Security review before external use.
 - **Consent scope.** The consent screen is the "Webflow MCP Bridge App" with a fixed scope list that includes write scopes. The CLI only reads, but the token can write.
 
@@ -108,6 +108,12 @@ It does not prove:
 - `src/mcp/call.ts`, `src/mcp/discover.ts`: diagnostic scripts from the spike. Not part of the bundle.
 - Designer data comes from `spike/headless-collector/collect.ts` (canvas element tree: `canvas.ts`), and the extension's client-side enhancements (Style System, canvas checks, Page Structure, Variable Modes, summary totals) from `spike/headless-collector/enhance.ts`. Both are imported by relative path until they move into this package.
 
+
+## What the worker records
+
+The record request names the validation run (`jobId`). The worker does not store the result in the request. It takes the result of its own run, applies the same Designer enhancements the clients apply (Style System, canvas checks, Page Structure, Variable Modes, totals), and stores that. It refuses the record (HTTP 409) when the run is unknown, not complete, older than 30 minutes, not full in scope (every check, no limiting option, canvas data present), or for a host that is not a published address of the site the token can read. It also reads the site's page list from Webflow itself, with the same token, and refuses a run that did not check every published page. A page counts as checked only when the crawl loaded and analyzed it at the site's own address, and the run must start at the home page. The style guide and Webflow's utility pages without content (password, search, and the ecommerce flow pages) must be named but need not load. It also refuses a CLI below its minimum version (HTTP 426).
+
+What stays under the client's control is the Designer data (styles, variables, components, page settings) and the canvas data that the CLI sends at the start of the run. The published-site checks, the browser check, and the list of pages to cover are the worker's own observations.
 
 ## Custom workers and the access token
 

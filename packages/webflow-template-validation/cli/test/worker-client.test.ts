@@ -63,6 +63,7 @@ describe('recordValidationResult', () => {
 		siteId: 'site 1',
 		siteName: 'Fixture Site',
 		siteUrl: 'https://my-template.webflow.io/',
+		jobId: 'job-1',
 		validationResults: { summary: {} },
 		accessToken: TOKEN
 	};
@@ -85,6 +86,8 @@ describe('recordValidationResult', () => {
 		expect(submitUrl).toBe('https://worker.test/app-validator/submit');
 		expect(submitInit?.method).toBe('POST');
 		expect(JSON.parse(String(submitInit?.body)).evidence).toEqual({ type: 'oauth_site_access', accessToken: TOKEN });
+		// The worker records its own result for this run, so the record must name it.
+		expect(JSON.parse(String(submitInit?.body)).jobId).toBe('job-1');
 		expect(JSON.stringify(submitInit?.headers)).not.toContain(TOKEN);
 		// The worker refuses a record that names no CLI version.
 		expect((submitInit?.headers as Record<string, string>)['X-Template-Cli-Version']).toMatch(/^\d+\.\d+\.\d+$/);

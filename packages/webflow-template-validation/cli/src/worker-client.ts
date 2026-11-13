@@ -270,6 +270,8 @@ export async function runValidation(params: {
 	timeoutMs: number;
 	/** Real DesignerData (from the MCP collector). Defaults to the slug-only stub. */
 	designerData?: unknown;
+	/** Canvas check data for the run. The worker needs it to build the result it records. */
+	canvasResult?: unknown;
 	onProgress?: (message: string) => void;
 }): Promise<RunOutcome> {
 	const { siteUrl, pageSlugs, checks, workerBase, timeoutMs, onProgress } = params;
@@ -287,7 +289,7 @@ export async function runValidation(params: {
 			{
 				method: 'POST',
 				headers,
-				body: JSON.stringify({ siteUrl, pageSlugs, designerData, checks, options, correlationId })
+				body: JSON.stringify({ siteUrl, pageSlugs, designerData, checks, options, correlationId, canvasResult: params.canvasResult })
 			},
 			NETWORK_TIMEOUT_MS
 		);
@@ -455,10 +457,12 @@ export async function recordValidationResult(params: {
 	siteId: string;
 	siteName?: string;
 	siteUrl: string;
+	/** The validation run to record. The worker records its own result for this run. */
+	jobId: string;
 	validationResults: Record<string, unknown>;
 	accessToken: string;
 }): Promise<RecordOutcome> {
-	const { workerBase, siteId, siteName, siteUrl, validationResults, accessToken } = params;
+	const { workerBase, siteId, siteName, siteUrl, jobId, validationResults, accessToken } = params;
 	const correlationId = `cli-record-${crypto.randomUUID()}`;
 	const headers = { 'Content-Type': 'application/json', 'X-Correlation-Id': correlationId, ...CLI_VERSION_HEADERS };
 	let response: Response;
@@ -472,6 +476,7 @@ export async function recordValidationResult(params: {
 					siteId,
 					siteName,
 					siteUrl,
+					jobId,
 					validationResults,
 					evidence: { type: 'oauth_site_access', accessToken }
 				}),
