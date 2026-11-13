@@ -5,6 +5,20 @@ export type AssetActionKey = 'view' | 'edit' | 'review-feedback' | 'archive';
 export type AssetActionHandler = 'view' | 'edit' | 'archive';
 export type AssetTypeSortDirection = 'asc' | 'desc';
 
+/**
+ * App listings change through the Marketplace submission form. There the
+ * developer signs in with Webflow, the form checks that they own the app, and
+ * the update reaches the review team as one version. The dashboard shows the
+ * review progress and the conversation; it does not write app listings itself.
+ */
+export const APP_SUBMISSION_FORM_URL = 'https://developers.webflow.com/submit';
+export const APP_UPDATE_GUIDANCE =
+  'App updates go through the Marketplace submission form. Choose Update, sign in with Webflow, and enter your Client ID.';
+
+export function isAppAssetType(type: string | undefined | null): boolean {
+  return type === 'App';
+}
+
 export interface AssetActionDescriptor {
   key: AssetActionKey;
   label: string;
@@ -94,7 +108,22 @@ export function groupAssetsByTypeAndStatus(
   return groups;
 }
 
-export function getAssetActionConfig(status: string): {
+/** Actions for an asset. For an app, "Edit" becomes "Update app": it opens the submission form. */
+export function getAssetActionConfig(
+  status: string,
+  type?: string | null
+): {
+  primary: AssetActionDescriptor;
+  secondary: AssetActionDescriptor[];
+} {
+  const config = actionConfigForStatus(status);
+  if (!isAppAssetType(type)) return config;
+  const forApp = (action: AssetActionDescriptor): AssetActionDescriptor =>
+    action.key === 'edit' ? { ...action, label: 'Update app' } : action;
+  return { primary: forApp(config.primary), secondary: config.secondary.map(forApp) };
+}
+
+function actionConfigForStatus(status: string): {
   primary: AssetActionDescriptor;
   secondary: AssetActionDescriptor[];
 } {
@@ -197,7 +226,7 @@ export function getActionableAssetWorkQueue(assets: Asset[]): AssetWorkQueueItem
 
       if (!reason) return [];
 
-      return [{ asset, action: getAssetActionConfig(normalizedStatus).primary, reason }];
+      return [{ asset, action: getAssetActionConfig(normalizedStatus, asset.type).primary, reason }];
     })
     .sort((left, right) => {
       const leftPriority = statusPriority.indexOf(normalizeAssetStatus(left.asset.status));

@@ -15,7 +15,12 @@
   import { toast } from '$lib/stores/toast';
   import { trackEvent } from '$lib/utils/analytics';
   import { getPortfolioTitle } from '$lib/utils/portfolio-title';
-  import { getActionableAssetWorkQueue } from '$lib/utils/asset-actions';
+  import {
+    APP_SUBMISSION_FORM_URL,
+    APP_UPDATE_GUIDANCE,
+    getActionableAssetWorkQueue,
+    isAppAssetType
+  } from '$lib/utils/asset-actions';
   import { LoaderCircle } from 'lucide-svelte';
 
   let { data }: { data: PageData } = $props();
@@ -118,6 +123,13 @@
       asset_category: selectedAsset?.category,
       asset_subcategory: selectedAsset?.subcategory
     });
+
+    // Apps are updated in the submission form, not here.
+    if (isAppAssetType(selectedAsset?.type)) {
+      window.open(APP_SUBMISSION_FORM_URL, '_blank', 'noopener,noreferrer');
+      toast.info(APP_UPDATE_GUIDANCE);
+      return;
+    }
 
     openingEditAssetId = id;
     currentEditingAsset = null;

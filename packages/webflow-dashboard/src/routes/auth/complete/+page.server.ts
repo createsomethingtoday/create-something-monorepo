@@ -6,6 +6,7 @@ import {
 	consumeSessionHandoff,
 	getSession
 } from '$lib/server/kv';
+import { POST_LOGIN_COOKIE, postLoginPath } from '$lib/server/post-login';
 
 /**
  * Completes authentication in a top-level browsing context using a short-lived,
@@ -31,5 +32,9 @@ export const load: PageServerLoad = async ({ url, platform, cookies }) => {
 
 	cookies.set(SESSION_COOKIE_NAME, handoff.sessionToken, SESSION_COOKIE_OPTIONS);
 
-	throw redirect(302, '/dashboard');
+	// Back to the asset the reader opened before signing in, when there was one.
+	const returnTo = postLoginPath(cookies.get(POST_LOGIN_COOKIE));
+	cookies.delete(POST_LOGIN_COOKIE, { path: '/' });
+
+	throw redirect(302, returnTo ?? '/dashboard');
 };

@@ -572,7 +572,7 @@
 
                 <div class="mobile-cards">
                   {#each visibleAssets as asset (asset.id)}
-                    {@const actionConfig = getAssetActionConfig(asset.status)}
+                    {@const actionConfig = getAssetActionConfig(asset.status, asset.type)}
                     <article class="asset-card-mobile">
                       <div class="mobile-header-row">
                         <div class="mobile-asset-meta">

@@ -9,6 +9,7 @@ import {
   shouldRefreshSession
 } from '$lib/server/kv';
 import { isTrustedRequestOrigin } from '$lib/server/security';
+import { POST_LOGIN_COOKIE, POST_LOGIN_COOKIE_OPTIONS, postLoginPath } from '$lib/server/post-login';
 
 // No-cache headers for API responses to prevent browser caching issues
 const noCacheHeaders = {
@@ -117,10 +118,13 @@ export const handle: Handle = async ({ event, resolve }) => {
   if (isProtectedRoute && !event.locals.user) {
     // Redirect to login for protected pages
     if (!event.url.pathname.startsWith('/api/')) {
-      return new Response(null, {
-        status: 302,
-        headers: { Location: '/login' }
-      });
+      const headers = new Headers({ Location: '/login' });
+      // A link to one asset (the review feedback email) comes back here after sign-in.
+      const returnTo = event.request.method === 'GET' ? postLoginPath(event.url.pathname + event.url.search) : null;
+      if (returnTo) {
+        headers.append('Set-Cookie', event.cookies.serialize(POST_LOGIN_COOKIE, returnTo, POST_LOGIN_COOKIE_OPTIONS));
+      }
+      return new Response(null, { status: 302, headers });
     }
     // Return 401 for API routes with no-cache headers
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {

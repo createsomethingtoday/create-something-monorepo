@@ -29,6 +29,7 @@
     StatusBadge,
     TimelineCard,
     RequiredFixesCard,
+    ReviewThreadCard,
     AnalyticsCard,
     TemplateHealthCard,
     DataFreshnessIndicator,
@@ -40,6 +41,11 @@
   import { trackEvent } from '$lib/utils/analytics';
   import { computeTemplateHealth, isTemplateSearchSuppressed } from '$lib/utils/template-health';
   import { isReviewFeedbackReleased } from '$lib/utils/review-status';
+  import {
+    APP_SUBMISSION_FORM_URL,
+    APP_UPDATE_GUIDANCE,
+    isAppAssetType
+  } from '$lib/utils/asset-actions';
   import {
     formatCompactCurrency,
     formatCompactNumber,
@@ -83,7 +89,9 @@
     return 'overview';
   }
 
-  let activeTab = $state<TabValue>(getDefaultTab(getInitialAsset().status) as TabValue);
+  // A link can name the tab (?tab=timeline, from the review feedback email).
+  const getLinkedTab = () => data.initialTab;
+  let activeTab = $state<TabValue>(getLinkedTab() ?? (getDefaultTab(getInitialAsset().status) as TabValue));
   let showPerformance = $state(false);
   let imageError = $state(false);
   let secondaryImageError = $state(false);
@@ -134,8 +142,11 @@
   const canShowHealth = $derived(asset.type === 'Template');
   const isSearchSuppressed = $derived(isTemplateSearchSuppressed(asset.searchVisibility));
 
+  // Apps are updated in the submission form, so the edit dialog is for other assets only.
+  const isApp = $derived(isAppAssetType(asset.type));
   // Can only edit Published templates
-  const canEdit = $derived(asset.status === 'Published');
+  const canEdit = $derived(!isApp && asset.status === 'Published');
+  const canUpdateApp = $derived(isApp && !asset.status.includes('Delisted'));
 
   // Can archive if not already delisted
   const canArchive = $derived(!asset.status.includes('Delisted'));
@@ -276,7 +287,10 @@
     }
   }
 
-  function openExternalLink(url: string, source: 'preview' | 'live' | 'marketplace'): void {
+  function openExternalLink(
+    url: string,
+    source: 'preview' | 'live' | 'marketplace' | 'app_update_form'
+  ): void {
     trackEvent('asset_external_link_opened', {
       asset_id: asset.id,
       source,
@@ -391,6 +405,17 @@
             >
               <Store size={16} />
               Marketplace
+            </Button>
+          {/if}
+          {#if canUpdateApp}
+            <Button
+              variant="default"
+              size="sm"
+              title={APP_UPDATE_GUIDANCE}
+              onclick={() => openExternalLink(APP_SUBMISSION_FORM_URL, 'app_update_form')}
+            >
+              <ExternalLink size={16} />
+              Update app
             </Button>
           {/if}
           {#if canEdit}
@@ -719,6 +744,9 @@
         >
           <div class="timeline-tab-stack">
             <TimelineCard {asset} releasedFeedback={data.releasedFeedbackSnapshot} />
+            {#if data.reviewCommentsEnabled}
+              <ReviewThreadCard assetId={asset.id} />
+            {/if}
             {#if data.requiredFixes && data.requiredFixes.length > 0}
               <RequiredFixesCard items={data.requiredFixes} />
             {/if}

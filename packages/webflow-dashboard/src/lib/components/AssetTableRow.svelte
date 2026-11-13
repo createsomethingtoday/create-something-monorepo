@@ -38,7 +38,7 @@
 
 	let imageError = $state(false);
 
-	const actionConfig = $derived(getAssetActionConfig(asset.status));
+	const actionConfig = $derived(getAssetActionConfig(asset.status, asset.type));
 	const assetHref = $derived(`/assets/${asset.id}`);
 	const cleanedStatus = $derived(normalizeAssetStatus(asset.status));
 	const showMetrics = $derived(!['Upcoming', 'Rejected'].includes(cleanedStatus));

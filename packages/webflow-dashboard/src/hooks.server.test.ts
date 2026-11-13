@@ -25,7 +25,11 @@ function callHandle(
       method: init.method ?? 'POST',
       headers: init.headers ?? {}
     }),
-    cookies: { get: () => init.cookie, set: vi.fn() },
+    cookies: {
+      get: () => init.cookie,
+      set: vi.fn(),
+      serialize: (name: string, value: string) => `${name}=${encodeURIComponent(value)}; Path=/; HttpOnly`
+    },
     locals: {},
     platform: { env: { ENVIRONMENT: 'production' } }
   };
@@ -149,5 +153,36 @@ describe('trusted embed origins', () => {
     });
 
     expect((await result).status).toBe(403);
+  });
+});
+
+describe('sign-in return path', () => {
+  const ASSET = '/assets/recABCDEFGHIJKLMN';
+
+  it('remembers a linked asset page while the reader signs in', async () => {
+    const { result, resolve } = callHandle(`${ASSET}?tab=timeline`, { method: 'GET' });
+    const response = await result;
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get('Location')).toBe('/login');
+    expect(response.headers.get('Set-Cookie')).toBe(
+      `wf_post_login_path=${encodeURIComponent(`${ASSET}?tab=timeline`)}; Path=/; HttpOnly`
+    );
+    expect(resolve).not.toHaveBeenCalled();
+  });
+
+  it('remembers nothing for other pages or for unexpected query strings', async () => {
+    for (const path of [
+      '/dashboard',
+      '/assets',
+      `${ASSET}?tab=timeline&next=https://evil.example`,
+      `${ASSET}?next=//evil.example`,
+      '/assets/not-a-record',
+      `${ASSET}/extra`
+    ]) {
+      const response = await callHandle(path, { method: 'GET' }).result;
+      expect(response.status).toBe(302);
+      expect(response.headers.get('Set-Cookie')).toBeNull();
+    }
   });
 });
