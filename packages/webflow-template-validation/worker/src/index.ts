@@ -3789,13 +3789,20 @@ async function serverResultForCliRecord(
 	}
 
 	let host = '';
+	let startsAtHome = false;
 	try {
-		host = new URL(job.request.siteUrl).hostname.toLowerCase();
+		const runUrl = new URL(job.request.siteUrl);
+		host = runUrl.hostname.toLowerCase();
+		// The run's first page is the site URL. It must be the home page, or the real home page is never checked.
+		startsAtHome = runUrl.protocol === 'https:' && runUrl.pathname === '/' && runUrl.search === '';
 	} catch {
 		// handled below
 	}
 	if (!host || !publishedHosts.includes(host)) {
 		return { ok: false, error: 'The validation run was for a URL that is not a published address of this site. Validate the site at its own address.' };
+	}
+	if (!startsAtHome) {
+		return { ok: false, error: `The validation run did not start at the site's home page. Validate the home URL, for example https://${host}/.` };
 	}
 
 	const checks = Array.isArray(job.request.checks) ? job.request.checks.map(String) : [];
@@ -3824,7 +3831,24 @@ async function serverResultForCliRecord(
 	if (!pagePaths) {
 		return { ok: false, error: `The worker could not read the site's page list from Webflow. ${again}` };
 	}
-	const checked = new Set((Array.isArray(job.request.pageSlugs) ? job.request.pageSlugs : []).map((slug) => normalizePagePath(String(slug))));
+	// Resolve each page the way the crawl does (content-validator discoverAdditionalPages), so the
+	// comparison is about the URLs that were fetched. A page on another host makes the run unusable.
+	const siteOrigin = new URL(job.request.siteUrl).origin;
+	const checked = new Set<string>();
+	for (const slug of Array.isArray(job.request.pageSlugs) ? job.request.pageSlugs : []) {
+		const text = String(slug);
+		let resolved: URL;
+		try {
+			resolved = new URL(text.startsWith('/') ? text : `/${text}`, job.request.siteUrl);
+		} catch {
+			continue;
+		}
+		if (resolved.origin !== siteOrigin) {
+			return { ok: false, error: `The validation run named a page that is not on this site. ${again}` };
+		}
+		// A path with a query does not count: only the plain page URL is the page.
+		if (resolved.search === '') checked.add(normalizePagePath(resolved.pathname));
+	}
 	const missing = pagePaths.filter((path) => !checked.has(path));
 	if (missing.length > 0) {
 		return {

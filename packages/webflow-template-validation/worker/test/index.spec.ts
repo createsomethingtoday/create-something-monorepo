@@ -3396,6 +3396,7 @@ describe('OAuth site-access evidence', () => {
 			await submit(await completedRun('run-binding.webflow.io', { checks: ['designer', 'assets'] })),
 			await submit(await completedRun('run-binding.webflow.io', { checks: ['designer', 'assets', 'content'] })),
 			await submit(await completedRun('run-binding.webflow.io', { options: { maxPages: 1 } })),
+			await submit(await completedRun('run-binding.webflow.io', { siteUrl: 'https://run-binding.webflow.io/one-clean-page' })),
 			await submit(await completedRun('run-binding.webflow.io', { options: { someFutureLimit: true } })),
 			await submit(await completedRun('run-binding.webflow.io', { options: { skipContent: true } })),
 			await submit(await completedRun('run-binding.webflow.io', { options: { contentChecks: { altText: false } } })),
@@ -3442,6 +3443,17 @@ describe('OAuth site-access evidence', () => {
 			expect(payload.reason).toBe('run_not_usable');
 			expect(payload.error).toContain('did not check every published page');
 		}
+		// A path that points at another host does not count as the site's page, alone or next to the real list.
+		for (const slugs of [
+			['//clean.example/about', '/company/pricing'],
+			['/about', '/company/pricing', '//clean.example/extra']
+		]) {
+			const response = await submit(slugs);
+			expect(response.status).toBe(409);
+			expect(((await response.json()) as { error: string }).error).toContain('not on this site');
+		}
+		// A path with a query is not the page itself.
+		expect((await submit(['/about?clean=1', '/company/pricing'])).status).toBe(409);
 		// When the worker cannot read the page list, it does not record.
 		expect((await submit(['/about', '/company/pricing'], 'error')).status).toBe(409);
 		expect(putMock).not.toHaveBeenCalled();
