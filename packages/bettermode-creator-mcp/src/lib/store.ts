@@ -319,3 +319,283 @@ function parseMeta(value: string | null): QueueMeta {
     return {};
   }
 }
+
+// ---------------------------------------------------------------------------
+// Health and history, for the dashboard.
+
+export type QueueHealth = {
+  generated_at: string;
+  sweep: {
+    last_run_at: string | null;
+    status: string | null;
+    error: string | null;
+    checked: number | null;
+    missed: number | null;
+    stale: number | null;
+    reverified: number | null;
+    minutes_since: number | null;
+    // The sweep runs every 30 minutes. Late or failed means not healthy.
+    healthy: boolean;
+  };
+  webhook: {
+    last_event_at: string | null;
+    last_event: string | null;
+    events_recorded: number;
+    hours_since: number | null;
+  };
+  counts: { open: number; new: number; queued: number; responded: number; dismissed: number };
+  drafts: { pending: number; sending: number };
+  oldest_wait_hours: number | null;
+  sends: { last_7_days: number; not_published: number };
+  errors: Array<{ post_id: string; title: string | null; url: string | null; error: string }>;
+};
+
+const SWEEP_LATE_MINUTES = 45;
+
+function countOf(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (Array.isArray(value)) return value.length;
+  return null;
+}
+
+function parseJsonObject(value: string | null): Record<string, unknown> {
+  if (!value) return {};
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function hoursSince(iso: string | null, now: number): number | null {
+  const then = iso ? Date.parse(iso) : NaN;
+  return Number.isFinite(then) ? Math.round((now - then) / 360_000) / 10 : null;
+}
+
+export async function getQueueHealth(db: D1Database): Promise<QueueHealth> {
+  const now = Date.now();
+  const weekAgo = new Date(now - 7 * 24 * 3_600_000).toISOString();
+
+  const [runs, signals, drafts, oldest, sends, errors] = await db.batch([
+    db.prepare(
+      `SELECT id, started_at, status, error, signals_found, metadata
+       FROM community_monitor_runs
+       WHERE id IN ('bettermode-reconcile', 'bettermode-webhook')`,
+    ),
+    db
+      .prepare(`SELECT status, COUNT(*) AS n FROM community_signals WHERE platform = ?1 GROUP BY status`)
+      .bind(PLATFORM),
+    db
+      .prepare(
+        `SELECT q.status AS status, COUNT(*) AS n
+         FROM community_queue q
+         JOIN community_signals s ON s.id = q.signal_id
+         WHERE q.platform = ?1 AND s.status IN ('new','queued') AND q.status IN ('pending','approved','sending')
+         GROUP BY q.status`,
+      )
+      .bind(PLATFORM),
+    db
+      .prepare(
+        `SELECT MIN(COALESCE(json_extract(metadata, '$.waiting_since'), detected_at)) AS oldest
+         FROM community_signals
+         WHERE platform = ?1 AND status IN ('new','queued')`,
+      )
+      .bind(PLATFORM),
+    db
+      .prepare(
+        `SELECT COUNT(*) AS n,
+                SUM(CASE WHEN COALESCE(json_extract(result, '$.reply_status'), '') != 'PUBLISHED' THEN 1 ELSE 0 END) AS held
+         FROM community_queue
+         WHERE platform = ?1 AND status = 'sent' AND sent_at >= ?2
+           AND json_extract(result, '$.bettermode_reply_id') IS NOT NULL`,
+      )
+      .bind(PLATFORM, weekAgo),
+    db
+      .prepare(
+        `SELECT source_id AS post_id, source_url AS url,
+                json_extract(metadata, '$.title') AS title,
+                json_extract(metadata, '$.last_error') AS error
+         FROM community_signals
+         WHERE platform = ?1 AND status IN ('new','queued')
+           AND json_extract(metadata, '$.last_error') IS NOT NULL
+         LIMIT 20`,
+      )
+      .bind(PLATFORM),
+  ]);
+
+  type RunRow = { id: string; started_at: string | null; status: string | null; error: string | null; signals_found: number | null; metadata: string | null };
+  const runRows = (runs.results || []) as RunRow[];
+  const sweepRow = runRows.find((row) => row.id === 'bettermode-reconcile') || null;
+  const hookRow = runRows.find((row) => row.id === 'bettermode-webhook') || null;
+  const sweepMeta = parseJsonObject(sweepRow?.metadata ?? null);
+  const hookMeta = parseJsonObject(hookRow?.metadata ?? null);
+  const sweepAgeHours = hoursSince(sweepRow?.started_at ?? null, now);
+  const minutesSince = sweepAgeHours === null ? null : Math.round(sweepAgeHours * 60);
+
+  const byStatus: Record<string, number> = {};
+  for (const row of (signals.results || []) as Array<{ status: string; n: number }>) byStatus[row.status] = row.n;
+  const draftCounts: Record<string, number> = {};
+  for (const row of (drafts.results || []) as Array<{ status: string; n: number }>) draftCounts[row.status] = row.n;
+  const sendRow = ((sends.results || []) as Array<{ n: number | null; held: number | null }>)[0];
+  const oldestRow = ((oldest.results || []) as Array<{ oldest: string | null }>)[0];
+
+  return {
+    generated_at: new Date(now).toISOString(),
+    sweep: {
+      last_run_at: sweepRow?.started_at ?? null,
+      status: sweepRow?.status ?? null,
+      error: sweepRow?.error ?? null,
+      checked: countOf(sweepMeta.checked),
+      missed: countOf(sweepMeta.missed) ?? sweepRow?.signals_found ?? null,
+      stale: countOf(sweepMeta.stale),
+      reverified: countOf(sweepMeta.reverified),
+      minutes_since: minutesSince,
+      healthy: sweepRow?.status === 'completed' && minutesSince !== null && minutesSince <= SWEEP_LATE_MINUTES,
+    },
+    webhook: {
+      last_event_at: hookRow?.started_at ?? null,
+      last_event: typeof hookMeta.last_event === 'string' ? hookMeta.last_event : null,
+      events_recorded: hookRow?.signals_found ?? 0,
+      hours_since: hoursSince(hookRow?.started_at ?? null, now),
+    },
+    counts: {
+      open: (byStatus.new ?? 0) + (byStatus.queued ?? 0),
+      new: byStatus.new ?? 0,
+      queued: byStatus.queued ?? 0,
+      responded: byStatus.responded ?? 0,
+      dismissed: byStatus.dismissed ?? 0,
+    },
+    drafts: {
+      pending: (draftCounts.pending ?? 0) + (draftCounts.approved ?? 0),
+      sending: draftCounts.sending ?? 0,
+    },
+    oldest_wait_hours: hoursSince(oldestRow?.oldest ?? null, now),
+    sends: { last_7_days: sendRow?.n ?? 0, not_published: sendRow?.held ?? 0 },
+    errors: ((errors.results || []) as Array<{ post_id: string; title: string | null; url: string | null; error: string }>).map(
+      (row) => ({ post_id: row.post_id, title: row.title, url: row.url, error: String(row.error) }),
+    ),
+  };
+}
+
+export type QueueHistoryItem = {
+  post_id: string;
+  url: string | null;
+  title: string | null;
+  // sent = a reply went out through the queue; answered = staff replied in
+  // Bettermode; dismissed = closed with a reason; removed = post unavailable.
+  outcome: 'sent' | 'answered' | 'dismissed' | 'removed';
+  closed_at: string | null;
+  detail: string | null;
+  reply_id: string | null;
+  reply_status: string | null;
+  requested_by: string | null;
+};
+
+// SQL for the time an item reached its current closed outcome. It must not
+// move when a later sweep reads the thread again, and it must not come from
+// an earlier answer of a thread that opened again.
+//   removed   -> the sync that found the post gone
+//   dismissed -> this dismissal
+//   answered  -> the last staff message, or the reply the queue sent if later
+const CLOSED_AT_SQL = `CASE
+  WHEN s.status = 'dismissed' AND json_extract(s.metadata, '$.closed_reason') = 'post_unavailable'
+    THEN COALESCE(json_extract(s.metadata, '$.synced_at'), s.reviewed_at, s.detected_at)
+  WHEN s.status = 'dismissed'
+    THEN COALESCE(json_extract(s.metadata, '$.dismissed_at'), s.reviewed_at, json_extract(s.metadata, '$.synced_at'), s.detected_at)
+  ELSE COALESCE(
+    NULLIF(MAX(COALESCE(json_extract(s.metadata, '$.last_staff_reply_at'), ''), COALESCE(q.sent_at, '')), ''),
+    s.reviewed_at,
+    json_extract(s.metadata, '$.synced_at'),
+    s.detected_at
+  )
+END`;
+
+// A reply the queue sent counts as the answer when no later staff message
+// exists. The stored staff time can trail the send by a moment.
+const SENT_MATCH_MS = 5 * 60_000;
+
+function toMs(value: string | null): number {
+  if (!value) return NaN;
+  // Older rows hold "YYYY-MM-DD HH:MM:SS" in UTC.
+  return Date.parse(/^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$/.test(value) ? value.replace(' ', 'T') + 'Z' : value);
+}
+
+export function historyOutcome(row: {
+  status: string;
+  closed_reason: string | null;
+  sent_at: string | null;
+  last_staff_reply_at: string | null;
+}): QueueHistoryItem['outcome'] {
+  if (row.status === 'dismissed') return row.closed_reason === 'post_unavailable' ? 'removed' : 'dismissed';
+  const sentMs = toMs(row.sent_at);
+  if (!Number.isFinite(sentMs)) return 'answered';
+  const staffMs = toMs(row.last_staff_reply_at);
+  return !Number.isFinite(staffMs) || sentMs >= staffMs - SENT_MATCH_MS ? 'sent' : 'answered';
+}
+
+// Closed items, newest first.
+export async function listQueueHistory(db: D1Database, limit: number): Promise<QueueHistoryItem[]> {
+  const result = await db
+    .prepare(
+      `SELECT
+         s.source_id AS post_id,
+         s.source_url AS url,
+         s.status AS status,
+         substr(s.content, 1, 80) AS excerpt,
+         json_extract(s.metadata, '$.title') AS title,
+         json_extract(s.metadata, '$.dismiss_reason') AS dismiss_reason,
+         json_extract(s.metadata, '$.closed_reason') AS closed_reason,
+         json_extract(s.metadata, '$.last_staff_reply_at') AS last_staff_reply_at,
+         q.sent_at AS sent_at,
+         json_extract(q.result, '$.bettermode_reply_id') AS reply_id,
+         json_extract(q.result, '$.reply_status') AS reply_status,
+         json_extract(q.result, '$.requested_by') AS requested_by,
+         ${CLOSED_AT_SQL} AS closed_at
+       FROM community_signals s
+       LEFT JOIN community_queue q ON q.id = (
+         SELECT id FROM community_queue
+         WHERE signal_id = s.id AND status = 'sent'
+         ORDER BY sent_at DESC
+         LIMIT 1
+       )
+       WHERE s.platform = ?1 AND s.status IN ('responded','dismissed')
+       ORDER BY closed_at DESC
+       LIMIT ?2`,
+    )
+    .bind(PLATFORM, limit)
+    .all<{
+      post_id: string;
+      url: string | null;
+      status: string;
+      excerpt: string | null;
+      title: string | null;
+      dismiss_reason: string | null;
+      closed_reason: string | null;
+      last_staff_reply_at: string | null;
+      sent_at: string | null;
+      reply_id: string | null;
+      reply_status: string | null;
+      requested_by: string | null;
+      closed_at: string | null;
+    }>();
+
+  return (result.results || []).map((row) => {
+    const outcome = historyOutcome(row);
+    const sent = outcome === 'sent';
+    const closedMs = toMs(row.closed_at);
+    return {
+      post_id: row.post_id,
+      url: row.url,
+      title: row.title || row.excerpt || null,
+      outcome,
+      closed_at: Number.isFinite(closedMs) ? new Date(closedMs).toISOString() : null,
+      detail: outcome === 'dismissed' ? row.dismiss_reason : outcome === 'removed' ? 'Post removed or unpublished' : null,
+      reply_id: sent ? row.reply_id : null,
+      reply_status: sent ? row.reply_status : null,
+      requested_by: sent ? row.requested_by : null,
+    };
+  });
+}

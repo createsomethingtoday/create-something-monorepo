@@ -19,6 +19,7 @@ import { registerPrompts, SERVER_INSTRUCTIONS } from '../src/prompts.js';
 import { registerResources } from '../src/resources.js';
 import { parseBooleanFlag, resolveRuntimePolicy } from '../src/runtime-policy.js';
 import {
+  applyCommunityQueueAdmins,
   applyFeaturedCoordinators,
   applyReviewerAuthEmailAliases,
   parseReviewerDirectory,
@@ -40,6 +41,7 @@ import {
   SCREENSHOT_GALLERY_PATH,
   type ScreenshotGalleryManifest,
 } from '../src/screenshot-gallery.js';
+import type { CommunityQueueBinding } from '../src/community-queue.js';
 import type { CapturedScreenshot, PublishedScreenshotRef } from '../src/published-site-screenshots.js';
 import { createBrowserRenderingScreenshotExecutor } from './screenshot-capture.js';
 
@@ -55,6 +57,10 @@ interface Env {
   REVIEWER_DIRECTORY_JSON?: string;
   REVIEWER_AUTH_EMAIL_ALIASES_JSON?: string;
   FEATURED_COORDINATOR_ACCOUNT_IDS?: string;
+  /** Directory account IDs that may write to the community response queue. */
+  COMMUNITY_QUEUE_ADMIN_ACCOUNT_IDS?: string;
+  /** Service binding to the creator MCP's private QueueApi entrypoint. */
+  COMMUNITY_QUEUE?: CommunityQueueBinding;
   CS_IDENTITY_ISSUER?: string;
   CF_ACCESS_TEAM_DOMAIN?: string;
   CF_ACCESS_AUD?: string;
@@ -156,6 +162,7 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
         },
         getZendeskClient: () => zendesk,
         marketplaceCms: { siteToken: this.env.MARKETPLACE_CMS_TOKEN },
+        communityQueue: { getBinding: () => this.env.COMMUNITY_QUEUE ?? null },
         ...(this.env.BROWSER
           ? {
               screenshotCapture: {
@@ -213,14 +220,23 @@ function allowedDomain(env: Env): string {
 }
 
 function resolveReviewerDirectory(
-  env: Pick<Env, 'REVIEWER_DIRECTORY_JSON' | 'REVIEWER_AUTH_EMAIL_ALIASES_JSON' | 'FEATURED_COORDINATOR_ACCOUNT_IDS'>,
+  env: Pick<
+    Env,
+    | 'REVIEWER_DIRECTORY_JSON'
+    | 'REVIEWER_AUTH_EMAIL_ALIASES_JSON'
+    | 'FEATURED_COORDINATOR_ACCOUNT_IDS'
+    | 'COMMUNITY_QUEUE_ADMIN_ACCOUNT_IDS'
+  >,
 ) {
-  return applyFeaturedCoordinators(
-    applyReviewerAuthEmailAliases(
-      parseReviewerDirectory(env.REVIEWER_DIRECTORY_JSON),
-      env.REVIEWER_AUTH_EMAIL_ALIASES_JSON,
+  return applyCommunityQueueAdmins(
+    applyFeaturedCoordinators(
+      applyReviewerAuthEmailAliases(
+        parseReviewerDirectory(env.REVIEWER_DIRECTORY_JSON),
+        env.REVIEWER_AUTH_EMAIL_ALIASES_JSON,
+      ),
+      env.FEATURED_COORDINATOR_ACCOUNT_IDS,
     ),
-    env.FEATURED_COORDINATOR_ACCOUNT_IDS,
+    env.COMMUNITY_QUEUE_ADMIN_ACCOUNT_IDS,
   );
 }
 

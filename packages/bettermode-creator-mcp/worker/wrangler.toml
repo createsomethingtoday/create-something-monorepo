@@ -34,12 +34,21 @@ binding = "TELEMETRY_DB"
 database_name = "cs-telemetry"
 database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
 
+# Private send path: the agent Worker's QueueAdmin entrypoint. No public URL.
+[[services]]
+binding = "CREATOR_AGENT"
+service = "bettermode-marketplace-creator-agent"
+entrypoint = "QueueAdmin"
+
 [vars]
 ENVIRONMENT = "production"
 LANGFUSE_PROJECT_NAME = "bettermode-creator-mcp"
 BETTERMODE_GRAPHQL_ENDPOINT = "https://api.bettermode.com"
 BETTERMODE_DEFAULT_NETWORK_ID = "BuRv7sR1po"
 BETTERMODE_MARKETPLACE_SPACE_ID = "ROtfBgdQyiAB"
+# Who counts as staff in a thread view. Keep equal to the agent Worker's vars.
+BETTERMODE_ADMIN_USER_IDS = "lgjO9fjLNn"
+BETTERMODE_STAFF_AUTHOR_DOMAINS = "webflow.com"
 AIRTABLE_API_BASE = "https://api.airtable.com"
 AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"
 AIRTABLE_CREATORS_TABLE = "tbljt0plqxdMARZXb"

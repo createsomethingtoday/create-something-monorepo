@@ -11,7 +11,9 @@
 // Post and reply events go to a Cloudflare Queue. The consumer and the
 // scheduled sweep live in ./queue.
 
-import { bettermodeAuth, BettermodeError, createReply, memberAccessToken } from './bettermode';
+import { WorkerEntrypoint } from 'cloudflare:workers';
+
+import { BettermodeError } from './bettermode';
 import { isThreadEvent, webhookEventName, webhookPostId } from './events';
 import {
   adminUserIds,
@@ -21,6 +23,7 @@ import {
   shouldHandleSpace,
   type QueueMessage,
 } from './queue';
+import { sendApprovedDraft } from './send';
 import { verifySignature } from './signature';
 import {
   adminDraftSlate,
@@ -29,15 +32,12 @@ import {
   type DraftBlockState,
 } from './slate';
 import {
-  claimDraftForSend,
   expireOpenDrafts,
   getLatestDraftByPostId,
   markRejected,
-  markSent,
   patchSignal,
-  releaseSendClaim,
+  recordWebhookEvent,
 } from './store';
-import { draftToHtml } from './thread';
 
 type WebhookPayload = {
   networkId?: string;
@@ -62,6 +62,32 @@ type WebhookPayload = {
     target?: { id?: string; type?: string; spaceId?: string; postId?: string } | null;
   };
 };
+
+// Private API for the dashboard. A named entrypoint has no public URL: only
+// a Worker in this account with a service binding to it can call it. The
+// caller (the creator MCP, behind the Template Review connector) checks who
+// the person is before it calls.
+export class QueueAdmin extends WorkerEntrypoint<Env> {
+  async sendDraft(input: {
+    postId: string;
+    draftText: string;
+    requestedBy?: string | null;
+  }): Promise<{ ok: true; reply_id: string | null } | { ok: false; error: string }> {
+    try {
+      const actorId = adminUserIds(this.env)[0];
+      if (!actorId) throw new Error('No Bettermode admin is configured on the Worker.');
+      const { replyId } = await sendApprovedDraft(this.env, {
+        postId: String(input?.postId || ''),
+        draftText: String(input?.draftText || ''),
+        actorId,
+        requestedBy: input?.requestedBy ?? null,
+      });
+      return { ok: true, reply_id: replyId };
+    } catch (error) {
+      return { ok: false, error: errorMessage(error) };
+    }
+  }
+}
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -174,6 +200,12 @@ async function handleWebhook(
     if (postId && (!spaceId || shouldHandleSpace(spaceId, env))) {
       // Awaited so a failed enqueue returns a non-2xx, not a false success.
       await enqueue(env, { kind: 'thread.sync', postId, reason: eventName || 'webhook' });
+      // Heartbeat for the dashboard. It must not fail or slow the webhook.
+      ctx.waitUntil(
+        recordWebhookEvent(env.DB, eventName || 'unnamed').catch((error) => {
+          console.error('could not record webhook event', { error: errorMessage(error) });
+        }),
+      );
     } else {
       console.warn('event matched type but filtered out', {
         type: webhook.type,
@@ -258,85 +290,12 @@ async function handleSend(
   env: Env,
 ): Promise<Record<string, unknown>> {
   try {
-    const postId = stringInput(webhook, 'postId') || resolvePostId(webhook);
-    const draftText = stringInput(webhook, 'draft');
-    if (!postId) throw new Error('Missing post ID.');
-    if (!draftText) throw new Error('Drafted reply is empty.');
-
-    const state = await loadDraftState(postId, env);
-    if (!state.draft) {
-      throw new Error('No drafted reply found for this post.');
-    }
-
-    const auth = bettermodeAuth(env);
-    const networkId = state.signal.metadata?.network_id || env.BETTERMODE_DEFAULT_NETWORK_ID;
-    if (!networkId) throw new Error('Missing Bettermode network ID.');
-    if (!webhook.data?.actorId) throw new Error('Missing admin actor ID.');
-
-    const postTypeId = env.BETTERMODE_REPLY_POST_TYPE_ID?.trim();
-    if (!postTypeId) {
-      throw new Error('Send is off: BETTERMODE_REPLY_POST_TYPE_ID is not set on the Worker.');
-    }
-
-    // A second submit must not post a second public reply.
-    if (!(await claimDraftForSend(env.DB, state.draft.id))) {
-      throw new Error('This draft is not open for sending. Reload the post to see its status.');
-    }
-
-    const actorId = webhook.data.actorId;
-    let reply: Awaited<ReturnType<typeof createReply>>;
-    try {
-      const memberToken = await memberAccessToken(networkId, actorId, auth);
-      reply = await createReply(postId, postTypeId, draftToHtml(draftText), memberToken, auth);
-    } catch (error) {
-      await releaseSendClaim(env.DB, state.draft.id);
-      throw error;
-    }
-
-    // The reply is public from here. A bookkeeping failure must not show
-    // "Could not send", or the admin sends it again. Each step runs on its
-    // own, so one failure does not skip the others.
-    const draftId = state.draft.id;
-    const signalId = state.signal.id;
-    const spaceId = state.signal.metadata?.space_id ?? env.BETTERMODE_MARKETPLACE_SPACE_ID ?? null;
-    const afterSend = async (step: string, run: () => Promise<void>) => {
-      for (let attempt = 1; attempt <= 2; attempt += 1) {
-        try {
-          await run();
-          return;
-        } catch (error) {
-          console.error('reply sent but a follow-up step failed', {
-            step,
-            attempt,
-            postId,
-            replyId: reply.id,
-            error: errorMessage(error),
-          });
-        }
-      }
-    };
-    // Moderation decides a few seconds after the post. Check then, and
-    // release the reply if it was held.
-    await afterSend('verify', () =>
-      enqueue(
-        env,
-        { kind: 'reply.verify', replyId: reply.id, threadId: postId, draftId, actorId, spaceId },
-        { delaySeconds: 15 },
-      ),
-    );
-    // Records the reply ID and sender. If the verify message above was lost,
-    // the sweep finds this row and verifies the reply again.
-    await afterSend('mark-sent', () =>
-      markSent(env.DB, draftId, draftText, reply.id ?? null, actorId),
-    );
-    await afterSend('thread-state', () =>
-      patchSignal(env.DB, signalId, 'responded', {
-        sent_reply_at: new Date().toISOString(),
-        last_error: null,
-      }),
-    );
-    // The thread is answered. Close any other draft so it cannot be sent too.
-    await afterSend('expire-drafts', () => expireOpenDrafts(env.DB, signalId));
+    const postId = stringInput(webhook, 'postId') || resolvePostId(webhook) || '';
+    await sendApprovedDraft(env, {
+      postId,
+      draftText: stringInput(webhook, 'draft'),
+      actorId: webhook.data?.actorId || '',
+    });
 
     const refreshed = await loadDraftState(postId, env);
     refreshed.notice = { kind: 'success', title: 'Reply sent.' };
