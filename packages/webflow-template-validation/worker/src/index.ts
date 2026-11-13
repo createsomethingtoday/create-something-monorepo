@@ -407,6 +407,21 @@ export class ReviewJobsDurableObject {
 			});
 		}
 
+		if (url.pathname === '/start-limit' && request.method === 'POST') {
+			// Count and decide in one place. This object handles one storage step at a time, so
+			// two starts at the same moment cannot both read the old count.
+			const { limit, windowMs } = (await request.json()) as { limit: number; windowMs: number };
+			const now = Date.now();
+			const starts = ((await this.state.storage.get<number[]>('starts')) ?? []).filter((at) => now - at < windowMs);
+			const limited = starts.length >= limit;
+			if (!limited) starts.push(now);
+			await this.state.storage.put('starts', starts);
+			return new Response(JSON.stringify({ limited }), {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' }
+			});
+		}
+
 		if (url.pathname === '/state' && request.method === 'PUT') {
 			await writeStoredState(this.state.storage, await request.text());
 			return new Response(JSON.stringify({ ok: true }), {
@@ -3712,19 +3727,20 @@ function outdatedCliResponse(request: Request, correlationId: string, options: {
  */
 async function validationStartRateLimited(request: Request, env: unknown): Promise<boolean> {
 	const address = request.headers.get('CF-Connecting-IP');
-	if (!address || !getDurableNamespace(env)) return false;
+	const ns = getDurableNamespace(env);
+	if (!address || !ns) return false;
 	try {
-		// The count lives in a Durable Object, so every isolate sees the same number.
+		// One Durable Object per address counts and decides in a single step, so every isolate
+		// sees the same number and starts at the same moment cannot slip past the limit.
 		// (The Cloudflare rate limit binding let about 45 starts through against a limit of 10.)
-		const name = `start-limit:${await sha256Hex(address)}`;
-		const now = Date.now();
-		const stored = (await readDurableState(env, name)) as { starts?: unknown } | null;
-		const recent = (Array.isArray(stored?.starts) ? stored.starts : []).filter(
-			(at): at is number => typeof at === 'number' && now - at < VALIDATION_START_WINDOW_MS
-		);
-		if (recent.length >= VALIDATION_START_LIMIT) return true;
-		await writeDurableState(env, name, { starts: [...recent, now] });
-		return false;
+		const stub = ns.get(ns.idFromName(`start-limit:${await sha256Hex(address)}`));
+		const response = await stub.fetch('https://internal/start-limit', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ limit: VALIDATION_START_LIMIT, windowMs: VALIDATION_START_WINDOW_MS })
+		});
+		if (!response.ok) return false;
+		return ((await response.json()) as { limited?: boolean }).limited === true;
 	} catch {
 		return false;
 	}
@@ -3782,11 +3798,16 @@ async function serverResultForCliRecord(
 	const options = (job.request.options ?? {}) as Record<string, unknown>;
 	const contentChecks = (options.contentChecks ?? {}) as Record<string, unknown>;
 	const excluded = Array.isArray(options.excludePageSlugs) ? options.excludePageSlugs : [];
+	// Only these options may be present, each at its full-run value. An option that limits the
+	// run (maxPages today, or one added later) makes the run not recordable.
+	const knownOptions = ['skipAssets', 'skipContent', 'skipAccessibility', 'skipPerformance', 'excludePageSlugs', 'pageScope', 'currentPageSlug', 'contentChecks'];
 	const fullScope =
-		['designer', 'assets', 'content'].every((check) => checks.includes(check)) &&
+		['designer', 'assets', 'content', 'accessibility'].every((check) => checks.includes(check)) &&
+		Object.keys(options).every((key) => knownOptions.includes(key)) &&
 		!options.skipAssets &&
 		!options.skipContent &&
 		!options.skipAccessibility &&
+		!options.skipPerformance &&
 		(options.pageScope ?? 'all') === 'all' &&
 		Object.values(contentChecks).every((value) => value !== false) &&
 		excluded.every((slug) => STYLE_GUIDE_EXCLUDED_SLUGS.includes(String(slug)));

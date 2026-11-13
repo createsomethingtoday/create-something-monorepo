@@ -210,6 +210,13 @@ describe('validation start limit (strict, per network address)', () => {
 		expect((await start()).status).toBe(400);
 	});
 
+	it('holds the limit when 20 starts arrive at the same moment', async () => {
+		const responses = await Promise.all(Array.from({ length: 20 }, () => start('203.0.113.70')));
+		const statuses = responses.map((response) => response.status);
+		expect(statuses.filter((status) => status === 400)).toHaveLength(10);
+		expect(statuses.filter((status) => status === 429)).toHaveLength(10);
+	});
+
 	it('applies the same count to the legacy /validate route', async () => {
 		for (let i = 0; i < 10; i += 1) await start('203.0.113.60');
 		const legacy = await worker.fetch(
