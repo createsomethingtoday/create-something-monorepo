@@ -1,3 +1,6 @@
+import { fanoutSharedEvent, deliverShared, recoverSharedDelivery } from './shared-delivery';
+import { SharedInboxService } from './shared-domain';
+import { sharedHttp } from './shared-http';
 import { connectionStatus, executionReceipt, recoveryAction } from './connection';
 import { InboxService, DomainError } from './domain';
 import { authenticate, authRoute, limitAdmission, requireScope } from './auth';
@@ -29,7 +32,7 @@ async function route(request:Request,env:RuntimeEnv,requestId:string):Promise<Re
   if(path==='/.well-known/a2a-connection'&&request.method==='GET')return json(connectionStatus(env),200,{'cache-control':'no-store'});
   if(path==='/health')return json({service:'a2a',version:VERSION,revision:env.BUILD_REVISION,environment:env.ENVIRONMENT});
   if(path==='/.well-known/oauth-protected-resource'||path==='/.well-known/oauth-protected-resource/mcp')return json({resource:env.AUTH_RESOURCE,authorization_servers:[env.IDENTITY_ISSUER],scopes_supported:[READ_SCOPE,WRITE_SCOPE,'offline_access'],bearer_methods_supported:['header'],resource_name:'CREATE SOMETHING A2A inbox'});
-  if(path==='/api/v1/config')return json({issuer:env.IDENTITY_ISSUER,resource:env.AUTH_RESOURCE,clientId:env.AUTH_CLIENT_ID,cliRedirectUri:'http://127.0.0.1:42678/callback'});
+  if(path==='/api/v1/config')return json({issuer:env.IDENTITY_ISSUER,resource:env.AUTH_RESOURCE,clientId:env.AUTH_CLIENT_ID,cliRedirectUri:'http://127.0.0.1:42678/callback',sharedSelfService:env.SHARED_INBOXES_ENABLED==='true'&&env.SELF_SERVICE_ENABLED==='true'});
   if(path==='/api/v1/status')return json({version:VERSION,environment:env.ENVIRONMENT,eventDelivery:env.CALLBACK_SENDER_TOKEN?'available':'not_configured',retention:{contentDays:30,auditDays:90,actionableDays:7}});
   if(path.startsWith('/auth/'))return await authRoute(request,env)??new Response('Not found',{status:404});
   if(path==='/mcp'){
@@ -39,6 +42,7 @@ async function route(request:Request,env:RuntimeEnv,requestId:string):Promise<Re
     await limitAdmission(env,`mcp:${principal.subject}`,120,60000);
     return mcpRoute(request,env,principal,requestId);
   }
+  if(path.startsWith('/api/v2/'))return sharedHttp(request,env);
   if(path.startsWith('/api/v1/')){
     const p=await authenticate(request,env);requireScope(p,READ_SCOPE);
     const write=!['GET','HEAD'].includes(request.method);
@@ -157,10 +161,11 @@ async function route(request:Request,env:RuntimeEnv,requestId:string):Promise<Re
   // Rewriting back to app.html would redirect /app to itself indefinitely.
   const response=await env.ASSETS.fetch(new Request(url,request));
   const headers=new Headers(response.headers);
-  if(path.startsWith('/app'))headers.set('cache-control','private, no-store');
+  if(path.startsWith('/app')||path.startsWith('/inboxes'))headers.set('cache-control','private, no-store');
   return new Response(response.body,{status:response.status,headers});
 }
 async function retention(env:RuntimeEnv){
+  if(env.SHARED_INBOXES_ENABLED==='true')await new SharedInboxService(env.DB).pruneRetention();
   const now=Date.now();const cutoff=now-90*86400000;await new ContextService(env.DB).pruneRetention(now);await new InboxService(env.DB).pruneRetention();
   await env.DB.batch([
     env.DB.prepare('DELETE FROM deliveries WHERE event_id IN(SELECT e.id FROM outbox_events e JOIN messages m ON m.id=e.message_id WHERE m.created_at<?)').bind(cutoff),
@@ -191,12 +196,14 @@ export default {
   async queue(batch:MessageBatch<DeliveryJob>,env:RuntimeEnv):Promise<void>{
     for(const message of batch.messages){
       try{
-        if('eventId'in message.body&&typeof message.body.eventId==='string')await fanoutEvent(env,message.body.eventId);
+        if('sharedEventId'in message.body&&typeof message.body.sharedEventId==='string'){if(env.SHARED_INBOXES_ENABLED==='true')await fanoutSharedEvent(env,message.body.sharedEventId);}
+        else if('sharedDeliveryId'in message.body&&typeof message.body.sharedDeliveryId==='string'){if(env.SHARED_INBOXES_ENABLED==='true')await deliverShared(env,message.body.sharedDeliveryId);}
+        else if('eventId'in message.body&&typeof message.body.eventId==='string')await fanoutEvent(env,message.body.eventId);
         else if('deliveryId'in message.body&&typeof message.body.deliveryId==='string')await deliver(env,message.body.deliveryId);
         else{console.error(JSON.stringify({event:'invalid_delivery_job'}));message.ack();continue;}
         message.ack();
       }catch{console.error(JSON.stringify({event:'delivery_job_deferred'}));message.retry({delaySeconds:30});}
     }
   },
-  async scheduled(_controller:ScheduledController,env:RuntimeEnv):Promise<void>{await recoverDelivery(env);await retention(env);}
+  async scheduled(_controller:ScheduledController,env:RuntimeEnv):Promise<void>{await recoverDelivery(env);if(env.SHARED_INBOXES_ENABLED==='true')await recoverSharedDelivery(env);await retention(env);}
 } satisfies ExportedHandler<RuntimeEnv,DeliveryJob>;
