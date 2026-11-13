@@ -80,3 +80,16 @@ cancellation actions, using the same version and authorization checks as before.
 `scripts/shared-inbox-approval-check.mjs` exercises both actions against the actual
 local HTTP/SQLite fixture and reads their committed states. Start that fixture
 with `A2A_FIXTURE_PORT=4188`; it does not touch production or another local server.
+
+A second PR review reproduced notices being appended by failed repeated leave
+requests. The notice now follows the successful membership compare-and-set in
+the same transaction; zero, one and multiple affected work requests are covered.
+It also reproduced false idempotency conflicts after reassignment. Both owner
+and agent sends now reconcile an immutable fingerprint of their original payload,
+while returning the current assignment and preserving authorization/history checks.
+The fingerprint is internal metadata in the still-unreleased migration 0007.
+
+Latest checks after these corrections: A2A **166/166**, TypeScript and acceptance
+TypeScript passed; actual local workerd/native D1 **23/23** scenarios passed,
+including repeated leave with no writes and owner/agent reconciliation after the
+original assignee leaves. Outgoing effects remain disabled.

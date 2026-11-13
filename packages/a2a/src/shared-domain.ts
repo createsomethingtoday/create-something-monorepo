@@ -1,4 +1,5 @@
 import { DomainError } from './domain';
+import { hash } from './crypto';
 import { SHARED_POLICY as P } from './shared-types';
 import type {
   SharedPrincipal,
@@ -468,15 +469,18 @@ export class SharedInboxService {
         agentId,
         ...v
       ),
-      this.invalidation(`inbox_id=? AND assignee_agent_id=? AND changes()=1`, inboxId, agentId),
+      // Keep the notice immediately after membership CAS: changes() is that
+      // update's result, independent of how many work requests need fencing.
       this.st(
-        `INSERT INTO shared_messages(id,inbox_id,kind,text,state,created_at,expires_at) SELECT ?,?,'notice','A member left or was removed.','posted',?,? WHERE ${permitted}`,
+        `INSERT INTO shared_messages(id,inbox_id,kind,text,state,created_at,expires_at) SELECT ?,?,'notice','A member left or was removed.','posted',?,? WHERE changes()=1 AND ${permitted}`,
         id(),
         inboxId,
         now,
         now + P.retentionMs,
         ...v
-      )
+      ),
+      // Exactly one notice also fences all applicable requests, including zero.
+      this.invalidation(`inbox_id=? AND assignee_agent_id=? AND changes()=1`, inboxId, agentId)
     ]);
     if (!r[1].meta.changes) fail();
     return { ok: true };
@@ -559,9 +563,10 @@ export class SharedInboxService {
       throw new DomainError('invalid_input', 400);
     const body = text(input.text);
     const assignee = kind === 'request' ? input.assigneeAgentId! : null;
+    const fingerprint = await hash(JSON.stringify([kind, body, assignee]));
     await this.db.batch([
       this.st(
-        `INSERT OR IGNORE INTO shared_messages(id,inbox_id,author_agent_id,kind,text,assignee_agent_id,state,created_at,expires_at,idempotency_key) SELECT ?,?,?,?,?,?,?,?, ?,? WHERE ${a.sql} AND (SELECT count(*) FROM shared_messages WHERE inbox_id=? AND created_at>?)<? AND (? IS NULL OR EXISTS(SELECT 1 FROM shared_memberships mb JOIN shared_agents ag ON ag.id=mb.agent_id WHERE mb.inbox_id=? AND mb.agent_id=? AND mb.state='active' AND instr(','||mb.capabilities||',',',work,')>0 AND ag.paused=0 AND ag.deleted_at IS NULL))`,
+        `INSERT OR IGNORE INTO shared_messages(id,inbox_id,author_agent_id,kind,text,assignee_agent_id,state,created_at,expires_at,idempotency_key,request_fingerprint) SELECT ?,?,?,?,?,?,?,?, ?,?,? WHERE ${a.sql} AND (SELECT count(*) FROM shared_messages WHERE inbox_id=? AND created_at>?)<? AND (? IS NULL OR EXISTS(SELECT 1 FROM shared_memberships mb JOIN shared_agents ag ON ag.id=mb.agent_id WHERE mb.inbox_id=? AND mb.agent_id=? AND mb.state='active' AND instr(','||mb.capabilities||',',',work,')>0 AND ag.paused=0 AND ag.deleted_at IS NULL))`,
         i,
         inboxId,
         ag.id,
@@ -572,6 +577,7 @@ export class SharedInboxService {
         now,
         now + P.retentionMs,
         input.idempotencyKey,
+        fingerprint,
         ...a.v,
         inboxId,
         now - 86400000,
@@ -587,8 +593,8 @@ export class SharedInboxService {
       )
     ]);
     const boundary = this.boundary(p, inboxId);
-    const r = await this.one<SharedMessage>(
-      `SELECT cursor,id,inbox_id,author_agent_id,author_kind,author_name,kind,text,assignee_agent_id,assignment_version,state,created_at,expires_at,CASE WHEN kind='request' THEN created_at+604800000 ELSE NULL END AS actionable_until FROM shared_messages WHERE inbox_id=? AND author_agent_id=? AND idempotency_key=? AND cursor>=(${boundary.sql}) AND expires_at>? AND ${a.sql}`,
+    const r = await this.one<SharedMessage & { request_fingerprint: string }>(
+      `SELECT request_fingerprint,cursor,id,inbox_id,author_agent_id,author_kind,author_name,kind,text,assignee_agent_id,assignment_version,state,created_at,expires_at,CASE WHEN kind='request' THEN created_at+604800000 ELSE NULL END AS actionable_until FROM shared_messages WHERE inbox_id=? AND author_agent_id=? AND idempotency_key=? AND cursor>=(${boundary.sql}) AND expires_at>? AND ${a.sql}`,
       inboxId,
       ag.id,
       input.idempotencyKey,
@@ -597,9 +603,9 @@ export class SharedInboxService {
       ...a.v
     );
     if (!r) return fail();
-    if (r.text !== body || r.kind !== kind || r.assignee_agent_id !== assignee)
-      throw new DomainError('idempotency_conflict', 409);
-    return r;
+    if (r.request_fingerprint !== fingerprint) throw new DomainError('idempotency_conflict', 409);
+    const { request_fingerprint: _fingerprint, ...message } = r;
+    return message;
   }
   async sendOwnerMessage(
     p: SharedPrincipal,
@@ -621,9 +627,10 @@ export class SharedInboxService {
       (kind === 'request' && !assignee)
     )
       throw new DomainError('invalid_input', 400);
+    const fingerprint = await hash(JSON.stringify([kind, body, assignee]));
     await this.db.batch([
       this.st(
-        `INSERT OR IGNORE INTO shared_messages(id,inbox_id,author_kind,author_name,actor_key,kind,text,assignee_agent_id,state,created_at,expires_at,idempotency_key) SELECT ?,?,'owner',?,?,?,?,?,?,?, ?,? WHERE ${a.sql} AND EXISTS(SELECT 1 FROM shared_inboxes WHERE id=? AND state='active') AND (SELECT count(*) FROM shared_messages WHERE inbox_id=? AND created_at>?)<? AND (? IS NULL OR EXISTS(SELECT 1 FROM shared_memberships mb JOIN shared_agents ag ON ag.id=mb.agent_id WHERE mb.inbox_id=? AND mb.agent_id=? AND mb.state='active' AND instr(','||mb.capabilities||',',',work,')>0 AND ag.paused=0 AND ag.deleted_at IS NULL))`,
+        `INSERT OR IGNORE INTO shared_messages(id,inbox_id,author_kind,author_name,actor_key,kind,text,assignee_agent_id,state,created_at,expires_at,idempotency_key,request_fingerprint) SELECT ?,?,'owner',?,?,?,?,?,?,?, ?,?,? WHERE ${a.sql} AND EXISTS(SELECT 1 FROM shared_inboxes WHERE id=? AND state='active') AND (SELECT count(*) FROM shared_messages WHERE inbox_id=? AND created_at>?)<? AND (? IS NULL OR EXISTS(SELECT 1 FROM shared_memberships mb JOIN shared_agents ag ON ag.id=mb.agent_id WHERE mb.inbox_id=? AND mb.agent_id=? AND mb.state='active' AND instr(','||mb.capabilities||',',',work,')>0 AND ag.paused=0 AND ag.deleted_at IS NULL))`,
         i,
         inboxId,
         p.displayName ?? 'Owner',
@@ -635,6 +642,7 @@ export class SharedInboxService {
         now,
         now + P.retentionMs,
         input.idempotencyKey,
+        fingerprint,
         ...a.v,
         inboxId,
         inboxId,
@@ -651,8 +659,8 @@ export class SharedInboxService {
       )
     ]);
     const boundary = this.boundary(p, inboxId, viewAgentId);
-    const r = await this.one<SharedMessage>(
-      `SELECT cursor,id,inbox_id,author_agent_id,author_kind,author_name,kind,text,assignee_agent_id,assignment_version,state,created_at,expires_at,CASE WHEN kind='request' THEN created_at+604800000 ELSE NULL END AS actionable_until FROM shared_messages WHERE inbox_id=? AND actor_key=? AND idempotency_key=? AND cursor>=(${boundary.sql}) AND expires_at>? AND ${a.sql}`,
+    const r = await this.one<SharedMessage & { request_fingerprint: string }>(
+      `SELECT request_fingerprint,cursor,id,inbox_id,author_agent_id,author_kind,author_name,kind,text,assignee_agent_id,assignment_version,state,created_at,expires_at,CASE WHEN kind='request' THEN created_at+604800000 ELSE NULL END AS actionable_until FROM shared_messages WHERE inbox_id=? AND actor_key=? AND idempotency_key=? AND cursor>=(${boundary.sql}) AND expires_at>? AND ${a.sql}`,
       inboxId,
       p.subject,
       input.idempotencyKey,
@@ -661,9 +669,9 @@ export class SharedInboxService {
       ...a.v
     );
     if (!r) return fail();
-    if (r.text !== body || r.kind !== kind || r.assignee_agent_id !== assignee)
-      throw new DomainError('idempotency_conflict', 409);
-    return r;
+    if (r.request_fingerprint !== fingerprint) throw new DomainError('idempotency_conflict', 409);
+    const { request_fingerprint: _fingerprint, ...message } = r;
+    return message;
   }
   async claimMessage(
     p: SharedPrincipal,

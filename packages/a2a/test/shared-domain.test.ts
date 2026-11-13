@@ -83,6 +83,89 @@ test('a valid claim cannot complete work after its seven-day action window', asy
     t.close();
   }
 });
+test('failed repeated leave or removal cannot append notices or change work', async () => {
+  for (const workCount of [0, 1, 2]) {
+    const { t, s, o, box } = await setup();
+    try {
+      const guest = owner('guest'),
+        agent = await s.createAgent(guest, 'Guest');
+      await s.acceptInvitation(guest, (await s.invite(o, box.id, agent.id)).id);
+      for (let n = 0; n < workCount; n++)
+        await s.sendOwnerMessage(o, box.id, {
+          text: 'Work',
+          kind: 'request',
+          assigneeAgentId: agent.id,
+          idempotencyKey: `work-${n}`
+        });
+      const count = () =>
+        Number(
+          t.sqlite
+            .prepare('SELECT count(*) AS n FROM shared_messages WHERE inbox_id=?')
+            .get(box.id)!.n
+        );
+      const before = count();
+      await s.leave(guest, box.id, agent.id);
+      assert.equal(count(), before + 1, 'Successful removal creates exactly one notice.');
+      assert.equal(
+        t.sqlite
+          .prepare(
+            "SELECT count(*) AS n FROM shared_messages WHERE kind='request' AND state='awaiting_assignment' AND assignment_version=2"
+          )
+          .get()!.n,
+        workCount
+      );
+      const snapshot = JSON.stringify(
+        t.sqlite.prepare('SELECT * FROM shared_messages ORDER BY cursor').all()
+      );
+      for (let n = 0; n < 3; n++) await assert.rejects(() => s.leave(guest, box.id, agent.id));
+      await assert.rejects(() => s.removeMember(o, box.id, agent.id));
+      const stranger = await s.createAgent(guest, 'Never joined');
+      await assert.rejects(() => s.leave(guest, box.id, stranger.id));
+      assert.equal(
+        JSON.stringify(t.sqlite.prepare('SELECT * FROM shared_messages ORDER BY cursor').all()),
+        snapshot
+      );
+    } finally {
+      t.close();
+    }
+  }
+});
+test('owner and agent send reconciliation uses the original payload after reassignment', async () => {
+  for (const human of [false, true]) {
+    const { t, s, o, ag, box, p } = await setup();
+    try {
+      const target = await s.createAgent(o, 'Original target'),
+        next = await s.createAgent(o, 'New target');
+      await s.addOwnMembership(o, box.id, target.id);
+      await s.addOwnMembership(o, box.id, next.id);
+      const input = {
+        text: 'Original request',
+        kind: 'request' as const,
+        assigneeAgentId: target.id,
+        idempotencyKey: 'uncertain'
+      };
+      const send = (value = input) =>
+        human ? s.sendOwnerMessage(o, box.id, value) : s.sendMessage(p, box.id, value);
+      const first = await send();
+      await s.reassignMessage(o, box.id, first.id, next.id, first.assignment_version);
+      await s.removeMember(o, box.id, target.id);
+      const before = t.sqlite.prepare('SELECT count(*) AS n FROM shared_outbox').get()!.n;
+      const replay = await send();
+      assert.equal(replay.id, first.id);
+      assert.equal(replay.assignee_agent_id, next.id);
+      assert.equal(replay.assignment_version, 2);
+      assert.equal(t.sqlite.prepare('SELECT count(*) AS n FROM shared_outbox').get()!.n, before);
+      for (const value of [
+        { ...input, assigneeAgentId: next.id },
+        { ...input, text: 'Changed' }
+      ])
+        await assert.rejects(() => send(value), { code: 'idempotency_conflict' });
+      assert.equal((await s.readMessage(p, box.id, first.id)).assignee_agent_id, next.id);
+    } finally {
+      t.close();
+    }
+  }
+});
 test('work fencing, owner attribution, rejoin boundary and immutable context', async () => {
   const { t, s, o, ag, box, p, c } = await setup();
   try {

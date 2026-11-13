@@ -190,7 +190,57 @@ export async function sharedAcceptance(original: any, identityEnv: any) {
     state: 'completed'
   });
   check(done.message.state === 'completed', 'shared_finish');
+  await good(`/api/v2/inboxes/${box.id}/members`, alice.cookie, 'POST', { agentId: a2.id });
+  const retries = [];
+  for (const [label, headers] of [
+    ['owner', alice.cookie],
+    ['agent', alice.bearer]
+  ] as const) {
+    const input = {
+      text: 'Uncertain send',
+      kind: 'request',
+      assigneeAgentId: b.id,
+      idempotencyKey: `reassigned-${label}`
+    };
+    const sent = await good(`/api/v2/inboxes/${box.id}/messages`, headers, 'POST', input);
+    await good(`/api/v2/inboxes/${box.id}/messages/${sent.id}/reassign`, alice.cookie, 'POST', {
+      agentId: a2.id,
+      assignmentVersion: sent.assignment_version
+    });
+    retries.push({ headers, input, id: sent.id });
+  }
   await good(`/api/v2/inboxes/${box.id}/members/${b.id}`, alice.cookie, 'DELETE');
+  const count = await env.DB.prepare('SELECT count(*) AS n FROM shared_messages WHERE inbox_id=?')
+    .bind(box.id)
+    .first('n');
+  for (let n = 0; n < 3; n++)
+    check(
+      (await api(`/api/v2/inboxes/${box.id}/members/${b.id}/leave`, bob.cookie, 'POST', {}))
+        .response.status === 404,
+      'shared_repeated_leave_denied'
+    );
+  check(
+    (await env.DB.prepare('SELECT count(*) AS n FROM shared_messages WHERE inbox_id=?')
+      .bind(box.id)
+      .first('n')) === count,
+    'shared_denied_leave_did_not_write'
+  );
+  for (const { headers, input, id } of retries) {
+    const retried = await good(`/api/v2/inboxes/${box.id}/messages`, headers, 'POST', input);
+    check(
+      retried.id === id && retried.assignee_agent_id === a2.id && retried.assignment_version === 2,
+      'shared_original_send_reconciled'
+    );
+    check(
+      (
+        await api(`/api/v2/inboxes/${box.id}/messages`, headers, 'POST', {
+          ...input,
+          assigneeAgentId: a2.id
+        })
+      ).response.status === 409,
+      'shared_changed_send_conflicts'
+    );
+  }
   const denied = await api('/mcp', bob.bearer, 'POST', {
     jsonrpc: '2.0',
     id: 3,
@@ -213,6 +263,8 @@ export async function sharedAcceptance(original: any, identityEnv: any) {
     'shared_idempotent_send',
     'shared_claim_atomicity',
     'shared_revocation',
-    'shared_identity_family_revocation'
+    'shared_identity_family_revocation',
+    'shared_repeated_leave_no_writes',
+    'shared_reassigned_send_reconciliation'
   ];
 }
