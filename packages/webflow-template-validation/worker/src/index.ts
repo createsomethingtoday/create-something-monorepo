@@ -45,7 +45,16 @@ import {
 import { normalizePublishedHost, verifyOauthSiteAccess } from './utils/oauth-site-evidence';
 
 const REVIEW_SNIPPET_VERSION = '0.3.0';
-const WORKER_VERSION = '2.11.1';
+const WORKER_VERSION = '2.12.0';
+
+/**
+ * Oldest Template CLI that may record a result. Part of the rules run inside
+ * the CLI, so an old install must update before its result counts. Raise this
+ * when a CLI release changes what a pass means.
+ */
+const MIN_TEMPLATE_CLI_VERSION = '0.2.0';
+const TEMPLATE_CLI_VERSION_HEADER = 'X-Template-Cli-Version';
+const TEMPLATE_CLI_PACKAGE_PATH = '/cli/wf-template-validate.tgz';
 const REVIEW_SNIPPET_MARKER = '__wf_review_snippet_v1';
 const REVIEW_SNIPPET_ASSET_PATH = '/app-validator/snippet/review.js';
 const REVIEW_JOB_RETENTION_MS = 30 * 60 * 1000;
@@ -473,6 +482,9 @@ export default {
 
 			if (url.pathname === '/app-validator/review/start') {
 				if (request.method !== 'POST') return methodNotAllowed(request);
+				const outdatedCli = outdatedCliResponse(request, correlationId, { required: false });
+				if (outdatedCli) return outdatedCli;
+				if (await validationStartRateLimited(request, env)) return rateLimitedStartResponse(request, correlationId);
 				return await handleReviewStart(request, env, ctx, correlationId);
 			}
 
@@ -534,6 +546,7 @@ export default {
 				case '/':
 				case '/validate':
 					if (request.method !== 'POST') return methodNotAllowed(request);
+					if (await validationStartRateLimited(request, env)) return rateLimitedStartResponse(request, correlationId);
 					return await handleEnhancedValidation(request);
 
 				case '/validate/assets':
@@ -1045,6 +1058,11 @@ async function handleValidationSubmit(
 		);
 	}
 	const evidenceAccessToken = evidenceInput?.accessToken?.trim();
+	if (evidenceAccessToken) {
+		// Only the Template CLI sends this evidence, so it must name a current version.
+		const outdatedCli = outdatedCliResponse(request, correlationId, { required: true });
+		if (outdatedCli) return outdatedCli;
+	}
 
 	const submittedAt = new Date().toISOString();
 	const siteName =
@@ -3622,6 +3640,75 @@ function jsonResponse(
 		status,
 		headers: getCORSHeaders(request, extraHeaders)
 	});
+}
+
+/** -1, 0 or 1 for two x.y.z versions. Null when either is not x.y.z. */
+function compareVersions(a: string, b: string): number | null {
+	const parse = (value: string) => {
+		const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(value);
+		return match ? match.slice(1).map(Number) : null;
+	};
+	const left = parse(a);
+	const right = parse(b);
+	if (!left || !right) return null;
+	for (let i = 0; i < 3; i += 1) {
+		if (left[i] !== right[i]) return left[i] < right[i] ? -1 : 1;
+	}
+	return 0;
+}
+
+/**
+ * A 426 response when the request names a Template CLI version below the
+ * minimum. With `required`, a request that names no version (or a malformed
+ * one) gets it too. Null when the request may continue.
+ */
+function outdatedCliResponse(request: Request, correlationId: string, options: { required: boolean }): Response | null {
+	const sent = request.headers.get(TEMPLATE_CLI_VERSION_HEADER)?.trim();
+	if (!sent && !options.required) return null;
+	const order = sent ? compareVersions(sent, MIN_TEMPLATE_CLI_VERSION) : null;
+	if (order !== null && order >= 0) return null;
+	const installUrl = `${new URL(request.url).origin}${TEMPLATE_CLI_PACKAGE_PATH}`;
+	return jsonResponse(
+		{
+			error: `This Template CLI version is too old. Update it, then run again: npm install -g ${installUrl}`,
+			reason: 'cli_outdated',
+			minimumVersion: MIN_TEMPLATE_CLI_VERSION,
+			correlationId
+		},
+		426,
+		request
+	);
+}
+
+/**
+ * True when this network address started too many validation runs in the last
+ * minute. Each run can start a browser session, and these routes need no
+ * login. Requests with no client address (a service binding) and workers with
+ * no limiter binding are not limited, and a limiter failure never blocks a run.
+ */
+async function validationStartRateLimited(request: Request, env: unknown): Promise<boolean> {
+	const limiter = (env as { VALIDATION_START_LIMITER?: { limit(options: { key: string }): Promise<{ success: boolean }> } } | null)
+		?.VALIDATION_START_LIMITER;
+	const address = request.headers.get('CF-Connecting-IP');
+	if (!limiter || !address) return false;
+	try {
+		return !(await limiter.limit({ key: address })).success;
+	} catch {
+		return false;
+	}
+}
+
+function rateLimitedStartResponse(request: Request, correlationId: string): Response {
+	return jsonResponse(
+		{
+			error: 'Too many validation runs from this network in one minute. Wait one minute, then run again.',
+			reason: 'rate_limited',
+			correlationId
+		},
+		429,
+		request,
+		{ 'Retry-After': '60' }
+	);
 }
 
 function methodNotAllowed(request: Request): Response {

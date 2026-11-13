@@ -22,7 +22,10 @@ const cliDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const outFile = resolve(process.argv[2] ?? join(cliDir, '../worker/public/cli/wf-template-validate.tgz'));
 const pkg = JSON.parse(readFileSync(join(cliDir, 'package.json'), 'utf8'));
 
-execFileSync('pnpm', ['run', 'build'], { cwd: cliDir, stdio: 'inherit' });
+// On Windows, pnpm and npm are .cmd files, which need a shell.
+const shell = process.platform === 'win32';
+
+execFileSync('pnpm', ['run', 'build'], { cwd: cliDir, stdio: 'inherit', shell });
 
 const stage = mkdtempSync(join(tmpdir(), 'wf-template-validate-'));
 try {
@@ -45,7 +48,7 @@ try {
 		)}\n`
 	);
 	const [{ filename }] = JSON.parse(
-		execFileSync('npm', ['pack', '--json', '--pack-destination', stage], { cwd: stage, encoding: 'utf8' })
+		execFileSync('npm', ['pack', '--json', '--pack-destination', stage], { cwd: stage, encoding: 'utf8', shell })
 	);
 	mkdirSync(dirname(outFile), { recursive: true });
 	copyFileSync(join(stage, filename), outFile);

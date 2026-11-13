@@ -5,6 +5,8 @@
  * waitForReviewCompletion, runLegacyValidation), minus Designer data.
  */
 
+import pkg from '../package.json' with { type: 'json' };
+
 export const DEFAULT_WORKER_BASE = 'https://validation-worker.createsomething.workers.dev';
 
 // Checks the worker can run from the published site alone. 'designer' needs
@@ -59,6 +61,9 @@ export interface PageDiscovery {
 }
 
 export class WorkerError extends Error {}
+
+/** The worker refuses a record from a CLI below its minimum version, so every request names this one. */
+export const CLI_VERSION_HEADERS = { 'X-Template-Cli-Version': pkg.version };
 class TerminalJobError extends Error {}
 
 /** Mirrors normalizePublishedUrl in webflow-template-submission-form/lib/intake/published-url.ts. */
@@ -102,7 +107,8 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: numbe
 
 function isRetryable(error: unknown): boolean {
 	const status = (error as { status?: number }).status;
-	if (typeof status === 'number') return status === 408 || status === 429 || status >= 500;
+	// 429 is the worker's one-minute rate limit: a retry after a second cannot pass.
+	if (typeof status === 'number') return status === 408 || status >= 500;
 	return true; // network error or timeout
 }
 
@@ -114,8 +120,15 @@ async function fetchJsonWithRetry<T>(url: string, init: RequestInit, timeoutMs: 
 			const response = await fetchWithTimeout(url, init, timeoutMs);
 			if (!response.ok) {
 				const text = await response.text().catch(() => '');
-				// An error page from a proxy can be a full HTML document. Keep the message short.
-				const error = new Error(text.slice(0, 300) || `Request failed with status ${response.status}`) as Error & { status?: number };
+				// Prefer the worker's own message. An error page from a proxy can be a full HTML document, so keep it short.
+				let message = text;
+				try {
+					const parsed = JSON.parse(text) as { error?: unknown };
+					if (typeof parsed?.error === 'string') message = parsed.error;
+				} catch {
+					// not JSON
+				}
+				const error = new Error(message.slice(0, 300) || `Request failed with status ${response.status}`) as Error & { status?: number };
 				error.status = response.status;
 				throw error;
 			}
@@ -135,7 +148,7 @@ function sleep(ms: number) {
 
 async function fetchText(url: string): Promise<string | null> {
 	try {
-		const response = await fetchWithTimeout(url, { headers: { 'User-Agent': 'webflow-template-validate-cli/0.1' } }, 15_000);
+		const response = await fetchWithTimeout(url, { headers: { 'User-Agent': `webflow-template-validate-cli/${pkg.version}` } }, 15_000);
 		return response.ok ? await response.text() : null;
 	} catch {
 		return null;
@@ -265,7 +278,7 @@ export async function runValidation(params: {
 	const deadline = Date.now() + timeoutMs;
 	const designerData = params.designerData ?? buildDesignerStub(pageSlugs);
 	const options = buildOptions(checks);
-	const headers = { 'Content-Type': 'application/json', 'X-Correlation-Id': correlationId };
+	const headers = { 'Content-Type': 'application/json', 'X-Correlation-Id': correlationId, ...CLI_VERSION_HEADERS };
 
 	let jobId: string | null = null;
 	try {
@@ -289,6 +302,9 @@ export async function runValidation(params: {
 		// Same as the extension: any async failure falls back to POST /validate.
 		// /validate never runs the Designer checks, so Designer categories are absent there.
 		const asyncMessage = asyncError instanceof Error ? asyncError.message : String(asyncError);
+		// The worker asked for a CLI update (426) or a pause (429). The fallback would get the same answer.
+		const asyncStatus = (asyncError as { status?: number }).status;
+		if (asyncStatus === 426 || asyncStatus === 429) throw new WorkerError(asyncMessage);
 		onProgress?.(`Async review failed (${asyncMessage}). Falling back to POST /validate.`);
 		try {
 			const raw = await fetchJsonWithRetry<any>(
@@ -444,7 +460,7 @@ export async function recordValidationResult(params: {
 }): Promise<RecordOutcome> {
 	const { workerBase, siteId, siteName, siteUrl, validationResults, accessToken } = params;
 	const correlationId = `cli-record-${crypto.randomUUID()}`;
-	const headers = { 'Content-Type': 'application/json', 'X-Correlation-Id': correlationId };
+	const headers = { 'Content-Type': 'application/json', 'X-Correlation-Id': correlationId, ...CLI_VERSION_HEADERS };
 	let response: Response;
 	try {
 		response = await fetchWithTimeout(

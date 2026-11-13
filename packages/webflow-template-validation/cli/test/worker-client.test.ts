@@ -86,6 +86,8 @@ describe('recordValidationResult', () => {
 		expect(submitInit?.method).toBe('POST');
 		expect(JSON.parse(String(submitInit?.body)).evidence).toEqual({ type: 'oauth_site_access', accessToken: TOKEN });
 		expect(JSON.stringify(submitInit?.headers)).not.toContain(TOKEN);
+		// The worker refuses a record that names no CLI version.
+		expect((submitInit?.headers as Record<string, string>)['X-Template-Cli-Version']).toMatch(/^\d+\.\d+\.\d+$/);
 
 		const [latestUrl, latestInit] = fetchMock.mock.calls[1];
 		expect(latestUrl).toBe('https://worker.test/app-validator/submission/latest?siteId=site%201');
