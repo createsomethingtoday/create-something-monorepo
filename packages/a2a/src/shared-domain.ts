@@ -328,18 +328,30 @@ export class SharedInboxService {
     );
   }
   async previewInvitation(p: SharedPrincipal, invitationId: string) {
-    const invitation = await this.one<
-      SharedInvitation & { inbox_name: string; agent_name: string }
-    >(
-      `SELECT iv.id,iv.inbox_id,iv.agent_id,iv.capabilities,iv.state,iv.expires_at,iv.created_at,iv.admission_cursor,ib.name AS inbox_name,ag.name AS agent_name FROM shared_invitations iv JOIN shared_inboxes ib ON ib.id=iv.inbox_id JOIN shared_agents ag ON ag.id=iv.agent_id WHERE iv.id=? AND iv.owner_subject=?`,
-      invitationId,
-      admin(p)
-    );
+    const owner = admin(p),
+      now = Date.now();
+    const available = `iv.id=? AND iv.owner_subject=? AND iv.state='pending' AND iv.expires_at>? AND ib.state='active' AND ag.owner_subject=iv.owner_subject AND ag.paused=0 AND ag.deleted_at IS NULL`;
+    // Preview is only pre-acceptance disclosure. Read authority and the roster in
+    // one snapshot so a historical invitation cannot outlive its access grant.
+    const [details, members] = await this.db.batch([
+      this.st(
+        `SELECT iv.id,iv.inbox_id,iv.agent_id,iv.capabilities,iv.state,iv.expires_at,iv.created_at,iv.admission_cursor,ib.name AS inbox_name,ag.name AS agent_name FROM shared_invitations iv JOIN shared_inboxes ib ON ib.id=iv.inbox_id JOIN shared_agents ag ON ag.id=iv.agent_id WHERE ${available}`,
+        invitationId,
+        owner,
+        now
+      ),
+      this.st(
+        `SELECT mb.agent_id,member.name FROM shared_invitations iv JOIN shared_inboxes ib ON ib.id=iv.inbox_id JOIN shared_agents ag ON ag.id=iv.agent_id JOIN shared_memberships mb ON mb.inbox_id=ib.id JOIN shared_agents member ON member.id=mb.agent_id WHERE ${available} AND mb.state='active'`,
+        invitationId,
+        owner,
+        now
+      )
+    ]);
+    const invitation = details.results[0] as
+      | (SharedInvitation & { inbox_name: string; agent_name: string })
+      | undefined;
     if (!invitation) return fail();
-    const roster = await this.rows<{ agent_id: string; name: string }>(
-      `SELECT mb.agent_id,ag.name FROM shared_memberships mb JOIN shared_agents ag ON ag.id=mb.agent_id WHERE mb.inbox_id=? AND mb.state='active'`,
-      invitation.inbox_id
-    );
+    const roster = members.results as { agent_id: string; name: string }[];
     return {
       invitation,
       roster,

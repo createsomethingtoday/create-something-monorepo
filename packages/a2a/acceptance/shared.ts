@@ -134,6 +134,11 @@ export async function sharedAcceptance(original: any, identityEnv: any) {
   const iv = (
     await good(`/api/v2/inboxes/${box.id}/invitations`, alice.cookie, 'POST', { agentId: b.id })
   ).invitation;
+  const preview = await good(`/api/v2/invitations/${iv.id}`, bob.cookie);
+  check(
+    preview.roster.some((member: any) => member.agent_id === a.id),
+    'shared_pending_preview'
+  );
   check(
     (await api(`/api/v2/invitations/${iv.id}/accept`, alice.cookie, 'POST', {})).response.status ===
       404,
@@ -210,6 +215,12 @@ export async function sharedAcceptance(original: any, identityEnv: any) {
     retries.push({ headers, input, id: sent.id });
   }
   await good(`/api/v2/inboxes/${box.id}/members/${b.id}`, alice.cookie, 'DELETE');
+  const later = (await good('/api/v2/agents', alice.cookie, 'POST', { name: 'Later member' }))
+    .agent;
+  await good(`/api/v2/inboxes/${box.id}/members`, alice.cookie, 'POST', { agentId: later.id });
+  const stalePreview = await api(`/api/v2/invitations/${iv.id}`, bob.cookie);
+  check(stalePreview.response.status === 404, 'shared_old_preview_denied');
+  check(!JSON.stringify(stalePreview.value).includes(later.id), 'shared_new_roster_private');
   const count = await env.DB.prepare('SELECT count(*) AS n FROM shared_messages WHERE inbox_id=?')
     .bind(box.id)
     .first('n');
@@ -265,6 +276,7 @@ export async function sharedAcceptance(original: any, identityEnv: any) {
     'shared_revocation',
     'shared_identity_family_revocation',
     'shared_repeated_leave_no_writes',
-    'shared_reassigned_send_reconciliation'
+    'shared_reassigned_send_reconciliation',
+    'shared_invitation_preview_revocation'
   ];
 }

@@ -262,6 +262,10 @@ test('shared HTTP/MCP: two owners approve agents, exchange work and revoke acces
       'Only shared context'
     );
     await api(`/inboxes/${box.id}/members/${b.id}`, alice, 'DELETE');
+    await api(`/inboxes/${box.id}/members`, alice, 'POST', { agentId: a2.id });
+    const stalePreview = await f.call(`/api/v2/invitations/${iv.id}`, bob);
+    assert.equal(stalePreview.status, 404);
+    assert.ok(!(await stalePreview.text()).includes(a2.id));
     assert.equal(
       (await rpc(pb, 'a2a_shared_read_context', { inbox_id: box.id, resource_id: doc.id })).isError,
       true

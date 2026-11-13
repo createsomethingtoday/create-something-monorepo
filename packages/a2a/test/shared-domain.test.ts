@@ -273,6 +273,70 @@ test('invitation single use, wrong owner, expiry and concurrent acceptance', asy
     t.close();
   }
 });
+test('historical invitations cannot bypass current roster authorization', async () => {
+  const { t, s, o, ag, box } = await setup();
+  try {
+    const guest = owner('guest');
+    const invited = await s.createAgent(guest, 'Invited');
+    const invitation = await s.invite(o, box.id, invited.id);
+    const preview = await s.previewInvitation(guest, invitation.id);
+    assert.deepEqual(
+      preview.roster.map((member) => member.agent_id),
+      [ag.id]
+    );
+    await assert.rejects(() => s.previewInvitation(o, invitation.id), { code: 'not_found' });
+    await s.acceptInvitation(guest, invitation.id);
+    assert.equal((await s.roster(guest, box.id, invited.id)).length, 2);
+    await s.removeMember(o, box.id, invited.id);
+    const later = await s.createAgent(o, 'Joined after removal');
+    await s.addOwnMembership(o, box.id, later.id);
+    await assert.rejects(() => s.roster(guest, box.id, invited.id), { code: 'not_found' });
+    await assert.rejects(() => s.previewInvitation(guest, invitation.id), { code: 'not_found' });
+  } finally {
+    t.close();
+  }
+});
+test('invitation previews require a live pending invitation at the roster read', async (context) => {
+  for (const state of [
+    'expired',
+    'rejected',
+    'revoked',
+    'accepted',
+    'paused',
+    'deleted',
+    'archived',
+    'revoked at read'
+  ])
+    await context.test(state, async () => {
+      const { t, s, o, box } = await setup();
+      try {
+        const guest = owner('guest');
+        const agent = await s.createAgent(guest, 'Guest');
+        const invitation = await s.invite(o, box.id, agent.id);
+        if (state === 'expired')
+          t.sqlite
+            .prepare('UPDATE shared_invitations SET expires_at=0 WHERE id=?')
+            .run(invitation.id);
+        if (state === 'rejected') await s.rejectInvitation(guest, invitation.id);
+        if (state === 'revoked') await s.revokeInvitation(o, invitation.id);
+        if (state === 'accepted') await s.acceptInvitation(guest, invitation.id);
+        if (state === 'paused') await s.setAgentPaused(guest, agent.id, true);
+        if (state === 'deleted') await s.deleteAgent(guest, agent.id);
+        if (state === 'archived') await s.setInboxState(o, box.id, 'archived');
+        if (state === 'revoked at read')
+          t.beforeNextBatch(() =>
+            t.sqlite
+              .prepare("UPDATE shared_invitations SET state='revoked' WHERE id=?")
+              .run(invitation.id)
+          );
+        await assert.rejects(() => s.previewInvitation(guest, invitation.id), {
+          code: 'not_found'
+        });
+      } finally {
+        t.close();
+      }
+    });
+});
 test('retention gap is explicit and quotas preserve v1 tables', async () => {
   const { t, s, o, box, p } = await setup();
   try {

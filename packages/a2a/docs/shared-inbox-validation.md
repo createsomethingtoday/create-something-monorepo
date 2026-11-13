@@ -45,10 +45,10 @@ pages were directly viewed locally; actual mailbox delivery is separate.
 
 ## Quality gates
 
-- **Functional: passed locally.** Independent final Sol re-test: A2A **160/160**,
-  Identity **147/147**, A2A TypeScript checks passed. Subsequent PR review regression
-  pass: A2A **164/164**, TypeScript and web build passed. Parent native workerd/D1 lab:
-  **21/21** scenarios passed with outgoing effects disabled. Web build and both
+- **Functional: passed locally.** Latest A2A regression pass: **179/179**,
+  A2A and acceptance TypeScript checks passed. Identity **147/147** and the web
+  build passed in the preceding unchanged Identity/UI passes. Parent native workerd/D1 lab:
+  **24/24** scenarios passed with outgoing effects disabled. Web build and both
   Worker dry-run bundles passed; retired identity-provider scan passed.
   Node/SQLite fixtures and the native workerd/D1
   lab exercise the actual implementation. They do not establish deployed behavior
@@ -108,3 +108,14 @@ local workerd/native D1 lab remains **23/23**. The deterministic race injection 
 in the SQLite suite; the native lab does not inject that interleaving. This is local
 validation, not deployed or real-host acceptance. No UI or migration changes were
 needed for this correction.
+
+Invitation preview now reads authorization and roster in one transaction, limited
+to the exact recipient's valid pending invitation, active inbox and available
+agent. Historical invitations cannot retain access to a live roster. RED-to-GREEN
+tests cover removal followed by a new member joining, expired/rejected/revoked/
+accepted invitations, paused/deleted agents, archived inboxes, and revocation at
+the read boundary. Pending previews and the normal current-member roster continue
+to work. Actual HTTP checks and the native D1 lab confirm an old invitation returns
+404 without exposing later members. Latest checks: **179/179** A2A tests,
+TypeScript, and **24/24** local native workerd/D1 scenarios; no UI or migration
+change, deployment, or actual-host acceptance is implied.
