@@ -2,11 +2,22 @@
 
 Creator CLI for the Webflow Way template validator. It signs in to Webflow's remote MCP server, reads a template site's Designer data without the Designer open, runs the same validation worker the Template Validator app uses, and can record the result for the Marketplace submission form.
 
-Status: private, internal. Not published to npm.
+Status: not published to npm. Creators install the package that the validation worker serves.
 
-## Install (from the monorepo)
+## Install
 
 Node 20 or later.
+
+```sh
+npm install -g https://validation-worker.createsomething.workers.dev/cli/wf-template-validate.tgz
+wf-template-validate --version
+```
+
+Run the same command again to update. To remove the CLI: `npm uninstall -g @create-something/webflow-template-validation-cli`.
+
+`scripts/pack.mjs` builds that package (`dist/cli.js` and a `package.json` with no scripts and no dependencies) into `../worker/public/cli/`, which the worker serves as a static asset. Wrangler runs the script before `dev` and `deploy` (`build.command` in `worker/wrangler.jsonc`), so each worker deploy ships the CLI built from the same commit. The Asset Dashboard Validation page, the template submission form, and the submission guidelines show this install command.
+
+## Run from the monorepo
 
 ```sh
 pnpm --filter @create-something/webflow-template-validation-cli build
@@ -56,12 +67,12 @@ Lists the sites the stored token can read, with id and name. Use the id as `--si
 | `--timeout <seconds>` | Worker job timeout. Default 480. |
 | `--json` | Machine-readable output. |
 
-Exit codes: `0` no blockers, `1` one or more blockers, `2` network, worker, login, or argument failure. A blocker is any `error` issue or any issue with `details.policy` (for example `ix2-rejected`), the same rule as the extension. Exit 2 also covers an incomplete run: the GSAP crawl came back unavailable or the recording step failed, so a clean worker result is not reported as a pass.
+Exit codes: `0` no blockers, `1` one or more blockers, `2` network, worker, login, or argument failure. A blocker is any `error` issue or any issue with `details.policy` (for example `ix2-rejected`), the same rule as the extension. A category that the worker marks as failed without an error (the canvas checks fail on warnings) also gives exit 1, because the submission form needs every category to pass. Exit 2 also covers a worker result with no categories, and a record that the worker did not confirm (stored, site access verified, and read back). Exit 2 also covers an incomplete run: the GSAP crawl came back unavailable or the recording step failed, so a clean worker result is not reported as a pass.
 
 What runs:
 
 - Without `--site`: the worker's published-site checks (assets, content, accessibility, interactions and IX2 policy, custom code) on the homepage plus up to 50 discovered pages, and the GSAP crawl worker. Nothing is recorded.
-- With `--site`: the same, plus the worker's Designer checks (variables, modes, components, styles, required pages, page structure, SEO metadata) on data collected through MCP, and the Validator app's canvas checks on one page (`--page`, default the home page). The canvas checks read that page's element tree with `data_element_tool` (saved Designer state, including unpublished changes; no Designer needed) and apply the app's rules: the first heading is H1, no heading level is skipped, every image has alt text. Like the app, they do not look inside component instances. If the tree cannot be read in full, the run is incomplete (exit 2) and is not recorded. After a completed async run, the CLI posts the result to `POST /app-validator/submit` with `oauth_site_access` evidence (the access token) unless `--no-record` is set. The worker verifies the token can read `--site` and stores a SHA-256 of the token, not the token.
+- With `--site`: the published-site checks run on the home page and every published page in the Designer page list (no drafts, no CMS template pages), the same list the Validator app sends. Page discovery is not used, because it finds only pages that the home page links to. The run also includes the worker's Designer checks (variables, modes, components, styles, required pages, page structure, SEO metadata) on data collected through MCP, and the Validator app's canvas checks on one page (`--page`, default the home page). The canvas checks read that page's element tree with `data_element_tool` (saved Designer state, including unpublished changes; no Designer needed) and apply the app's rules: the first heading is H1, no heading level is skipped, every image has alt text. Like the app, they do not look inside component instances. If the tree cannot be read in full, the run is incomplete (exit 2) and is not recorded. After a completed async run, the CLI posts the result to `POST /app-validator/submit` with `oauth_site_access` evidence (the access token) unless `--no-record` is set. The worker verifies the token can read `--site` and stores a SHA-256 of the token, not the token.
 
 ## What `validate` proves, and what it does not
 
@@ -81,7 +92,7 @@ It does not prove:
 
 ## Open policy items
 
-- **Self-registered OAuth client.** `login` uses dynamic client registration on Webflow's production auth server, under the name "Webflow Template Validate CLI (spike)". There is no documented way to delete a registered client and no documented DCR policy. Before creators use this, the MCP owners should decide between a Webflow-issued client id (`WEBFLOW_MCP_CLIENT_ID`) and per-install registration.
+- **Self-registered OAuth client.** `login` uses dynamic client registration on Webflow's production auth server, under the name "Webflow Template Validate CLI". There is no documented way to delete a registered client and no documented DCR policy. Before creators use this, the MCP owners should decide between a Webflow-issued client id (`WEBFLOW_MCP_CLIENT_ID`) and per-install registration.
 - **Shared production workers.** `validate` calls the production validation worker and the GSAP crawl worker with no authentication and no rate limit for anonymous callers. Shipping to creators needs a decision on auth, quotas, and ownership of that load.
 - **Token as evidence.** The record step sends the creator's access token to the validation worker so it can verify site access. That needs Security review before external use.
 - **Consent scope.** The consent screen is the "Webflow MCP Bridge App" with a fixed scope list that includes write scopes. The CLI only reads, but the token can write.

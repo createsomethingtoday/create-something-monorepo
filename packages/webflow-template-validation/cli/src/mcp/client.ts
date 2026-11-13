@@ -28,7 +28,13 @@ export class McpClient {
 	}
 
 	private async post(body: Record<string, unknown>): Promise<Response> {
-		const res = await fetch(this.url, { method: "POST", headers: this.headers(), body: JSON.stringify(body) });
+		// The limit covers the whole response, so a stream that never ends cannot hang the CLI.
+		const res = await fetch(this.url, {
+			method: "POST",
+			headers: this.headers(),
+			body: JSON.stringify(body),
+			signal: AbortSignal.timeout(120_000),
+		});
 		const sid = res.headers.get("mcp-session-id");
 		if (sid) this.sessionId = sid;
 		if (res.status === 401) throw new Error(`401 from server: ${res.headers.get("www-authenticate") ?? ""}; run 'wf-template-validate login' again`);

@@ -5,7 +5,7 @@
 
 import { createHash, randomBytes } from "node:crypto";
 import { createServer } from "node:http";
-import { access, chmod, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -41,10 +41,33 @@ export type StoredToken = {
 
 const b64url = (buf: Buffer) => buf.toString("base64url");
 
+const REQUEST_TIMEOUT_MS = 30_000;
+/** fetch with a time limit, so a stalled sign-in server cannot hang the CLI. */
+const request = (url: string | URL, init: RequestInit = {}) => fetch(url, { ...init, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+
+/** The access token goes to these URLs. Allow https only (http for a local test server). */
+function assertHttps(url: string, what: string): void {
+	let parsed: URL;
+	try {
+		parsed = new URL(url);
+	} catch {
+		throw new Error(`${what} is not a valid URL`);
+	}
+	const local = parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
+	if (parsed.protocol !== "https:" && !(local && parsed.protocol === "http:")) throw new Error(`${what} must use https`);
+}
+
+/**
+ * Writes a new private file, then swaps it in. The token never sits in a file
+ * with wider permissions, is never written through a symlink, and an
+ * interrupted write cannot leave half a token.
+ */
 async function writePrivate(path: string, data: unknown): Promise<void> {
 	await mkdir(CONFIG_DIR, { recursive: true, mode: 0o700 });
-	await writeFile(path, JSON.stringify(data, null, "\t"), { mode: 0o600 });
-	await chmod(path, 0o600);
+	const tmp = `${path}.${process.pid}.tmp`;
+	await rm(tmp, { force: true });
+	await writeFile(tmp, JSON.stringify(data, null, "\t"), { mode: 0o600, flag: "wx" });
+	await rename(tmp, path);
 }
 
 async function readJson<T>(path: string): Promise<T | undefined> {
@@ -58,7 +81,7 @@ async function readJson<T>(path: string): Promise<T | undefined> {
 // RFC 9728: protected resource metadata names the authorization server(s).
 export async function discover(serverUrl: string): Promise<AuthServerMeta> {
 	const u = new URL(serverUrl);
-	const prm = await fetch(`${u.origin}/.well-known/oauth-protected-resource${u.pathname}`);
+	const prm = await request(`${u.origin}/.well-known/oauth-protected-resource${u.pathname}`);
 	if (!prm.ok) throw new Error(`protected resource metadata: HTTP ${prm.status}`);
 	const { authorization_servers } = (await prm.json()) as { authorization_servers?: string[] };
 	const issuer = authorization_servers?.[0];
@@ -68,7 +91,7 @@ export async function discover(serverUrl: string): Promise<AuthServerMeta> {
 	const iu = new URL(issuer);
 	const path = iu.pathname === "/" ? "" : iu.pathname;
 	for (const url of [`${iu.origin}/.well-known/oauth-authorization-server${path}`, `${iu.origin}/.well-known/oauth-authorization-server`]) {
-		const res = await fetch(url);
+		const res = await request(url);
 		if (res.ok) return (await res.json()) as AuthServerMeta;
 	}
 	throw new Error(`no authorization server metadata for ${issuer}`);
@@ -86,11 +109,11 @@ async function getClientId(meta: AuthServerMeta): Promise<string> {
 			"No registration_endpoint advertised and WEBFLOW_MCP_CLIENT_ID is unset. A client id must be issued by Webflow.",
 		);
 	}
-	const res = await fetch(meta.registration_endpoint, {
+	const res = await request(meta.registration_endpoint, {
 		method: "POST",
 		headers: { "Content-Type": "application/json", Accept: "application/json" },
 		body: JSON.stringify({
-			client_name: "Webflow Template Validate CLI (spike)",
+			client_name: "Webflow Template Validate CLI",
 			redirect_uris: [REDIRECT_URI],
 			grant_types: ["authorization_code", "refresh_token"],
 			response_types: ["code"],
@@ -120,14 +143,24 @@ function waitForCallback(expectedState: string): Promise<string> {
 				if (err) reject(err);
 				else resolve(code as string);
 			};
+			if (url.searchParams.get("state") !== expectedState) {
+				// Not the redirect for this login (a stray or forged request). Keep waiting for the real one.
+				res.writeHead(400, { "Content-Type": "text/plain" }).end("State mismatch");
+				return;
+			}
 			const error = url.searchParams.get("error");
 			if (error) return done(400, `Authorization failed: ${error}`, new Error(`authorization error: ${error} ${url.searchParams.get("error_description") ?? ""}`));
-			if (url.searchParams.get("state") !== expectedState) return done(400, "State mismatch", new Error("state mismatch"));
 			const code = url.searchParams.get("code");
 			if (!code) return done(400, "Missing code", new Error("callback had no code"));
 			done(200, "Webflow authorization complete. You can close this tab.", undefined, code);
 		});
-		server.on("error", reject);
+		server.on("error", (error: NodeJS.ErrnoException) =>
+			reject(
+				error.code === "EADDRINUSE"
+					? new Error(`port ${PORT} is in use; close the other program or set WEBFLOW_MCP_CALLBACK_PORT to a free port`)
+					: error,
+			),
+		);
 		server.listen(PORT, "127.0.0.1");
 		setTimeout(() => {
 			server.close();
@@ -137,7 +170,7 @@ function waitForCallback(expectedState: string): Promise<string> {
 }
 
 async function tokenRequest(endpoint: string, body: Record<string, string>): Promise<Record<string, unknown>> {
-	const res = await fetch(endpoint, {
+	const res = await request(endpoint, {
 		method: "POST",
 		headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
 		body: new URLSearchParams(body),
@@ -183,18 +216,28 @@ export async function loadToken(): Promise<StoredToken> {
 	if (!tok) throw new Error(`no token at ${TOKEN_PATH}; run 'wf-template-validate login' first`);
 	if (!tok.expires_at || tok.expires_at - 60_000 > Date.now()) return tok;
 	if (!tok.refresh_token) throw new Error("token expired and no refresh_token; run `wf-template-validate login` again");
-	const json = await tokenRequest(tok.token_endpoint, {
-		grant_type: "refresh_token",
-		refresh_token: tok.refresh_token,
-		client_id: tok.client_id,
-		resource: tok.server,
-	});
+	assertHttps(tok.server, "the stored MCP server URL");
+	assertHttps(tok.token_endpoint, "the stored token endpoint");
+	let json: Record<string, unknown>;
+	try {
+		json = await tokenRequest(tok.token_endpoint, {
+			grant_type: "refresh_token",
+			refresh_token: tok.refresh_token,
+			client_id: tok.client_id,
+			resource: tok.server,
+		});
+	} catch (error) {
+		throw new Error(
+			`your Webflow login could not be refreshed (${error instanceof Error ? error.message : String(error)}); run \`wf-template-validate login\` again`,
+		);
+	}
 	const next = toStored(tok, json, tok.refresh_token);
 	await writePrivate(TOKEN_PATH, next);
 	return next;
 }
 
 export async function login(): Promise<void> {
+	assertHttps(SERVER_URL, "WEBFLOW_MCP_URL");
 	const meta = await discover(SERVER_URL);
 	console.log(`authorization server: ${meta.issuer}`);
 	if (!meta.code_challenge_methods_supported?.includes("S256")) throw new Error("server does not advertise PKCE S256");
@@ -234,7 +277,7 @@ export async function login(): Promise<void> {
 	});
 	const stored = toStored({ server: SERVER_URL, issuer: meta.issuer, token_endpoint: meta.token_endpoint, client_id: clientId }, json);
 	await writePrivate(TOKEN_PATH, stored);
-	console.log(`\ntoken stored at ${TOKEN_PATH} (mode 0600)`);
+	console.log(`\ntoken stored at ${TOKEN_PATH}${process.platform === "win32" ? "" : " (mode 0600)"}`);
 	console.log(`  scope: ${stored.scope ?? "(none returned)"}`);
 	console.log(`  refresh token: ${stored.refresh_token ? "yes" : "no"}`);
 	console.log(`  expires: ${stored.expires_at ? new Date(stored.expires_at).toISOString() : "(not stated)"} (refreshed automatically when a refresh token exists)`);
