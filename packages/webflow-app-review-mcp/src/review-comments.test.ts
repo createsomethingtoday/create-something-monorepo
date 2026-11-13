@@ -230,6 +230,15 @@ describe('decisions release feedback', () => {
     expect(result.data.review_comments.feedback_comment_added).toBe(false);
   });
 
+  it('still posts the feedback when only an internal note has the same words', async () => {
+    const { run, comments } = setup();
+    comments!.listVersion.mockResolvedValue([comment({ body: 'Fix the install URL', visibility: 'internal' })]);
+
+    const result = await run('app_review_request_changes', { version_id: VERSION, review_feedback: 'Fix the install URL' });
+    expect(comments!.add).toHaveBeenCalledWith(VERSION, REVIEWER_EMAIL, expect.objectContaining({ visibility: 'draft' }));
+    expect(result.data.review_comments.feedback_comment_added).toBe(true);
+  });
+
   it('stays silent on a "(No Notification)" status, with or without a reviewer email', async () => {
     for (const email of [REVIEWER_EMAIL, null]) {
       const { run, comments, airtable } = setup({ email });
@@ -364,7 +373,7 @@ describe('feedback email', () => {
   });
 
   it('releases with no email when the asset record has no usable address', async () => {
-    for (const creatorEmail of [undefined, '', 'n/a', 'two@example.com, three@example.com']) {
+    for (const creatorEmail of [undefined, '', 'n/a', 'not-an-address; also not']) {
       const airtable = createAirtable();
       airtable.getAssetById.mockResolvedValue({ assetId: ASSET, appName: 'Example App', creatorEmail });
       const { run, comments } = setup({ airtable });
@@ -373,6 +382,19 @@ describe('feedback email', () => {
       expect(comments!.release).toHaveBeenCalledWith(VERSION, REVIEWER_EMAIL);
       expect(result.data.developer_email_sent).toBe(false);
     }
+  });
+
+  it('emails the first valid address when the record lists several creators', async () => {
+    const airtable = createAirtable();
+    airtable.getAssetById.mockResolvedValue({
+      assetId: ASSET,
+      appName: 'Example App',
+      creatorEmail: 'n/a, first@example.com; second@example.com',
+    });
+    const { run, comments } = setup({ airtable });
+
+    await run('app_review_release_feedback', { version_id: VERSION });
+    expect(comments!.release.mock.calls[0][2]).toMatchObject({ recipientEmail: 'first@example.com' });
   });
 
   it('builds a notice only from a usable address and name, cut to the service limits', () => {

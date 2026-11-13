@@ -6,7 +6,7 @@ import {
 	isReviewCommentsEnabled,
 	ReviewCommentsError
 } from '$lib/server/review-comments';
-import { creatorReviewStatusLabel } from '$lib/utils/review-status';
+import { creatorReviewStatusLabel, isSilencedReviewStatus } from '$lib/utils/review-status';
 
 const MAX_BODY_CHARS = 20_000;
 const CHANGES_REQUESTED = '📤Changes Requested';
@@ -71,8 +71,17 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
 			comments.listForAsset(params.id, email),
 			airtable.getReviewRounds(params.id)
 		]);
+		// A round in a "(No Notification)" status is deliberately silent, even if
+		// feedback on it was released before the status changed. Its comments stay
+		// hidden for as long as the round is silent.
+		const silent = new Set(
+			rounds.filter((round) => isSilencedReviewStatus(round.rawStatus)).map((round) => round.id)
+		);
 		// Newest round first.
-		return json({ comments: thread, versions: rounds.map((round) => toCreatorRound(round)) });
+		return json({
+			comments: thread.filter((comment) => !silent.has(comment.versionRef)),
+			versions: rounds.map((round) => toCreatorRound(round))
+		});
 	} catch (err) {
 		rethrow(err);
 	}
@@ -103,6 +112,8 @@ export const POST: RequestHandler = async ({ params, request, locals, platform }
 	const rounds = await airtable.getReviewRounds(params.id);
 	const round = rounds.find((entry) => entry.id === body.versionId);
 	if (!round) throw error(404, 'Version not found for this asset');
+	// A silent round has no thread the creator can see, so there is nothing to reply to.
+	if (isSilencedReviewStatus(round.rawStatus)) throw error(404, 'no review thread on this version');
 
 	try {
 		const comment = await comments.reply(params.id, round.id, email, {

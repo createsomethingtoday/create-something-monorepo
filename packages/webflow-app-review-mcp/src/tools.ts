@@ -218,7 +218,11 @@ async function releaseFeedbackAfterDecision(
     if (body) {
       const existing = await comments.listVersion(versionId, actorEmail);
       const author = actorEmail.toLowerCase();
-      if (!existing.some((comment) => comment.authorEmail === author && comment.body === body)) {
+      // An internal note with the same words is not feedback: it never reaches the creator.
+      const alreadyPosted = existing.some(
+        (comment) => comment.visibility !== 'internal' && comment.authorEmail === author && comment.body === body,
+      );
+      if (!alreadyPosted) {
         await comments.add(versionId, actorEmail, { assetRef: assetId, body, visibility: 'draft' });
         added = true;
       }

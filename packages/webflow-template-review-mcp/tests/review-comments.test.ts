@@ -235,6 +235,23 @@ test('a retried decision does not post the same feedback twice', async () => {
   );
 });
 
+test('an internal note with the same words does not count as posted feedback', async () => {
+  const { client, calls } = fakeComments({
+    existing: [comment({ body: 'Fix the 404 page', visibility: 'internal', authorEmail: 'reviewer@example.com' })],
+  });
+  const { server, handlers } = harness();
+  registerTools(server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => client });
+
+  const result = payload(
+    await handlers.get('template_review_request_changes')?.({ version_id: VERSION_ID, review_feedback: 'Fix the 404 page' }),
+  );
+  assert.equal(result.data.review_comments.feedback_comment_added, true);
+  assert.deepEqual(
+    calls.map(([name]) => name),
+    ['listVersion', 'add', 'release'],
+  );
+});
+
 test('approve releases drafts without adding a comment', async () => {
   const { client, calls } = fakeComments();
   const { server, handlers } = harness();

@@ -745,7 +745,10 @@
           <div class="timeline-tab-stack">
             <TimelineCard {asset} releasedFeedback={data.releasedFeedbackSnapshot} />
             {#if data.reviewCommentsEnabled}
-              <ReviewThreadCard assetId={asset.id} />
+              <!-- Keyed: client-side navigation reuses this page, and the card must not keep another asset's thread or draft. -->
+              {#key asset.id}
+                <ReviewThreadCard assetId={asset.id} />
+              {/key}
             {/if}
             {#if data.requiredFixes && data.requiredFixes.length > 0}
               <RequiredFixesCard items={data.requiredFixes} />

@@ -71,8 +71,9 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * A notice when the record holds a usable address and asset name; otherwise
- * undefined, and the release goes out with no email. Values are cut to the
- * Worker's limits so a long name cannot fail the release.
+ * undefined, and the release goes out with no email. A record can list several
+ * creator addresses, joined by commas; the email goes to the first valid one.
+ * Values are cut to the Worker's limits so a long name cannot fail the release.
  */
 export function buildReleaseNotice(input: {
   email?: string | null;
@@ -82,9 +83,11 @@ export function buildReleaseNotice(input: {
   versionNumber?: number | null;
   outcome?: ReviewOutcome;
 }): ReleaseNotice | undefined {
-  const recipientEmail = input.email?.trim() ?? '';
+  const recipientEmail = (input.email ?? '')
+    .split(/[,;\s]+/)
+    .find((address) => address.length <= 254 && EMAIL_PATTERN.test(address));
   const assetName = input.assetName?.trim() ?? '';
-  if (!assetName || recipientEmail.length > 254 || !EMAIL_PATTERN.test(recipientEmail)) return undefined;
+  if (!assetName || !recipientEmail) return undefined;
   const recipientName = input.name?.trim();
   return {
     recipientEmail,

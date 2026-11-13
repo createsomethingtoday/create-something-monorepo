@@ -100,6 +100,31 @@ describe('GET /api/assets/[id]/comments', () => {
     });
   });
 
+  it('hides the comments of a round moved to a "(No Notification)" status, and takes no reply on it', async () => {
+    getReviewRounds.mockResolvedValue([
+      { id: 'recVer2', versionNumber: 2, reviewType: 'Meta Update', rawStatus: '📤Changes Requested (No Notification)' },
+      { id: 'recVer1', versionNumber: 1, reviewType: 'New Asset', rawStatus: '✅Approved' }
+    ]);
+    workerFetch.mockResolvedValue(
+      workerReply([
+        { id: 'c2', versionRef: 'recVer2', body: 'Released before the shield', visibility: 'released' },
+        { id: 'c1', versionRef: 'recVer1', body: 'Earlier round', visibility: 'released' }
+      ])
+    );
+
+    const body = (await (await GET(event('GET'))).json()) as {
+      comments: Array<{ id: string }>;
+      versions: Array<{ id: string; status: string }>;
+    };
+    expect(body.comments.map((comment) => comment.id)).toEqual(['c1']);
+    expect(body.versions[0]).toMatchObject({ id: 'recVer2', status: 'In Review' });
+
+    workerFetch.mockClear();
+    await expect(POST(event('POST', { versionId: 'recVer2', body: 'hello?' }))).rejects.toMatchObject({ status: 404 });
+    expect(workerFetch).not.toHaveBeenCalled();
+    expect(markRoundResponded).not.toHaveBeenCalled();
+  });
+
   it('is off when the Worker is not configured', async () => {
     await expect(GET(event('GET', undefined, { SESSIONS: {} }))).rejects.toMatchObject({ status: 404 });
     expect(getAssetForOwner).not.toHaveBeenCalled();
