@@ -432,3 +432,14 @@ test('offline retention: unavailable message history is expired explicitly and r
     assert.equal(f.storage.sqlite.prepare('SELECT state FROM deliveries').get()!.state,'expired');
   }finally{f.storage.close();}
 });
+
+test('renewable discovery and initial challenge request lifecycle consent without requiring it for tool access',async()=>{
+ const f=await fixture();try{
+  const metadata=await app.fetch(new Request(`${origin}/.well-known/oauth-protected-resource/mcp`),f.env);
+  assert.ok((await metadata.json() as any).scopes_supported.includes('offline_access'));
+  const response=await app.fetch(new Request(`${origin}/mcp`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/list'})}),f.env);
+  assert.equal(response.status,401);assert.match(response.headers.get('www-authenticate')??'',/scope="[^"]*offline_access/);
+  const accessOnly=await f.token('alice',['a2a:read','a2a:write']);
+  assert.ok((await f.rpc(accessOnly,'tools/list')).result.tools.length>0);
+ }finally{f.storage.close();}
+});

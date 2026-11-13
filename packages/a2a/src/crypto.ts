@@ -26,3 +26,8 @@ export async function unseal(secret:string,value:string,context:string):Promise<
   const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:decode64(iv),additionalData:encoder.encode(context)},await key(secret),decode64(ciphertext));
   return new TextDecoder().decode(plain);
 }
+/** Stable per-generation id, secret even if the session id or JWT is observed. */
+export async function refreshRequestId(secret:string,sessionId:string,refreshToken:string):Promise<string>{
+  const signingKey=await crypto.subtle.importKey('raw',decode64(secret),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+  return encode64(new Uint8Array(await crypto.subtle.sign('HMAC',signingKey,encoder.encode(JSON.stringify(['a2a:refresh:v1',sessionId,refreshToken])))));
+}
