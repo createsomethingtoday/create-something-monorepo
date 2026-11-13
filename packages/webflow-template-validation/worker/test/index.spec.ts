@@ -3209,7 +3209,45 @@ describe('OAuth site-access evidence', () => {
 		return calls;
 	}
 
-	function submitRequest(siteId: string, accessToken: string, cliVersion: string | null = '0.2.0') {
+	const AVAILABLE_CANVAS = {
+		available: true,
+		pageName: 'Home',
+		headingsChecked: 1,
+		headingIssues: [],
+		imagesChecked: 0,
+		imagesMissingAlt: 0,
+		missingAltElementKeys: []
+	};
+
+	/** Starts a validation run for the host and waits until it is complete. Returns its job id. */
+	async function completedRun(host: string, overrides: Record<string, unknown> = {}) {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => new Response('<html><head><title>Home</title></head><body><h1>Home</h1></body></html>', { headers: { 'content-type': 'text/html' } }))
+		);
+		const ctx = createExecutionContext();
+		const started = await worker.fetch(
+			new Request(`${WORKER_BASE}/app-validator/review/start`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					siteUrl: `https://${host}`,
+					pageSlugs: [],
+					designerData: { variables: { collections: [] }, styles: [], components: [], pages: [], assets: [] },
+					checks: ['designer', 'assets', 'content', 'accessibility'],
+					canvasResult: AVAILABLE_CANVAS,
+					...overrides
+				})
+			}),
+			{} as any,
+			ctx
+		);
+		const { jobId } = (await started.json()) as { jobId: string };
+		await Promise.all((ctx.waitUntil as unknown as { mock: { calls: [Promise<unknown>][] } }).mock.calls.map(([work]) => work));
+		return jobId;
+	}
+
+	function submitRequest(siteId: string, accessToken: string, cliVersion: string | null = '0.3.0', jobId?: string) {
 		return new Request(`${WORKER_BASE}/app-validator/submit`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json', ...(cliVersion ? { 'X-Template-Cli-Version': cliVersion } : {}) },
@@ -3217,6 +3255,7 @@ describe('OAuth site-access evidence', () => {
 				siteId,
 				siteName: 'Evidence Site',
 				siteUrl: 'https://evidence-site.webflow.io',
+				...(jobId ? { jobId } : {}),
 				evidence: { type: 'oauth_site_access', accessToken },
 				validationResults: {
 					url: 'https://evidence-site.webflow.io',
@@ -3238,6 +3277,7 @@ describe('OAuth site-access evidence', () => {
 
 	it('verifies oauth_site_access evidence through the MCP server and records it', async () => {
 		const accessToken = 'mcp-test-token-valid-0001';
+		const jobId = await completedRun('evidence-site.webflow.io');
 		const calls = mockMcpServer(
 			{
 				id: 'site_oauth_evidence',
@@ -3250,7 +3290,7 @@ describe('OAuth site-access evidence', () => {
 		const putMock = vi.fn(async () => undefined);
 
 		const response = await worker.fetch(
-			submitRequest('site_oauth_evidence', accessToken),
+			submitRequest('site_oauth_evidence', accessToken, '0.3.0', jobId),
 			{ VALIDATOR_MCP_SERVER_URL: MCP_URL, VALIDATOR_RESULT_ARTIFACTS: { put: putMock } } as any,
 			createExecutionContext()
 		);
@@ -3300,7 +3340,7 @@ describe('OAuth site-access evidence', () => {
 	it('refuses a record from a Template CLI that is too old or names no version, before it reads the token', async () => {
 		const calls = mockMcpServer({ id: 'site_old_cli', workspaceId: 'ws_evidence', shortName: 'old-cli' });
 		const putMock = vi.fn(async () => undefined);
-		for (const version of ['0.1.0', null, 'latest']) {
+		for (const version of ['0.1.0', '0.2.0', null, 'latest']) {
 			const response = await worker.fetch(
 				submitRequest('site_old_cli', 'mcp-test-token-valid-0002', version),
 				{ VALIDATOR_MCP_SERVER_URL: MCP_URL, VALIDATOR_RESULT_ARTIFACTS: { put: putMock } } as any,
@@ -3309,11 +3349,44 @@ describe('OAuth site-access evidence', () => {
 			expect(response.status).toBe(426);
 			const payload = (await response.json()) as { reason: string; minimumVersion: string; error: string };
 			expect(payload.reason).toBe('cli_outdated');
-			expect(payload.minimumVersion).toBe('0.2.0');
+			expect(payload.minimumVersion).toBe('0.3.0');
 			expect(payload.error).toContain(`npm install -g ${WORKER_BASE}/cli/wf-template-validate.tgz`);
 		}
 		expect(calls).toHaveLength(0);
 		expect(putMock).not.toHaveBeenCalled();
+	});
+
+	it('refuses a Template CLI record that is not tied to a complete, full run for this site', async () => {
+		const accessToken = 'mcp-test-token-valid-0006';
+		const site = { id: 'site_run_binding', workspaceId: 'ws_evidence', shortName: 'run-binding', customDomains: [] };
+		const putMock = vi.fn(async () => undefined);
+		const submit = async (jobId?: string) => {
+			mockMcpServer(site);
+			return worker.fetch(
+				submitRequest('site_run_binding', accessToken, '0.3.0', jobId),
+				{ VALIDATOR_MCP_SERVER_URL: MCP_URL, VALIDATOR_RESULT_ARTIFACTS: { put: putMock } } as any,
+				createExecutionContext()
+			);
+		};
+		const refused = [
+			await submit(),
+			await submit('00000000-0000-4000-8000-000000000000'),
+			await submit(await completedRun('some-other-site.webflow.io')),
+			await submit(await completedRun('run-binding.webflow.io', { checks: ['designer', 'assets'] })),
+			await submit(await completedRun('run-binding.webflow.io', { options: { skipContent: true } })),
+			await submit(await completedRun('run-binding.webflow.io', { options: { contentChecks: { altText: false } } })),
+			await submit(await completedRun('run-binding.webflow.io', { options: { pageScope: 'current' } })),
+			await submit(await completedRun('run-binding.webflow.io', { canvasResult: undefined })),
+			await submit(await completedRun('run-binding.webflow.io', { canvasResult: { available: false, reason: 'not read' } }))
+		];
+		for (const response of refused) {
+			expect(response.status).toBe(409);
+			expect(((await response.json()) as { reason: string }).reason).toBe('run_not_usable');
+		}
+		expect(putMock).not.toHaveBeenCalled();
+
+		const accepted = await submit(await completedRun('run-binding.webflow.io'));
+		expect(accepted.status).toBe(200);
 	});
 
 	it('rejects evidence when the token reads a different site and stores nothing', async () => {
@@ -3344,6 +3417,7 @@ describe('OAuth site-access evidence', () => {
 
 	it('returns the latest result with evidence when looked up by published URL', async () => {
 		const accessToken = 'mcp-test-token-lookup-0003';
+		const jobId = await completedRun('oauth-lookup.webflow.io');
 		mockMcpServer({
 			id: 'site_oauth_lookup',
 			workspaceId: 'ws_lookup',
@@ -3351,7 +3425,7 @@ describe('OAuth site-access evidence', () => {
 			customDomains: [{ url: 'lookup.example' }]
 		});
 		const submit = await worker.fetch(
-			submitRequest('site_oauth_lookup', accessToken),
+			submitRequest('site_oauth_lookup', accessToken, '0.3.0', jobId),
 			{ VALIDATOR_MCP_SERVER_URL: MCP_URL } as any,
 			createExecutionContext()
 		);
@@ -3372,12 +3446,13 @@ describe('OAuth site-access evidence', () => {
 			const payload = JSON.parse(responseText);
 			expect(payload.status).toBe('available');
 			expect(payload.siteId).toBe('site_oauth_lookup');
-			expect(payload.passed).toBe(true);
+			// The request claimed a 100% pass and 4 pages. The record holds the worker's own result for the run.
+			expect(payload.passed).toBe(false);
 			expect(payload.scope).toEqual({
 				selectedChecks: ['designer', 'assets', 'content', 'accessibility'],
 				pageScope: 'all',
 				publishedChecks: 'full',
-				pageSlugsCount: 4
+				pageSlugsCount: 0
 			});
 			expect(payload.evidence).toEqual(
 				expect.objectContaining({
@@ -3393,6 +3468,7 @@ describe('OAuth site-access evidence', () => {
 
 	it('retires published-host mappings that the latest verification no longer returns', async () => {
 		const accessToken = 'mcp-test-token-retire-0004';
+		const jobId = await completedRun('oauth-retire.webflow.io');
 		mockMcpServer({
 			id: 'site_oauth_retire',
 			workspaceId: 'ws_retire',
@@ -3400,7 +3476,7 @@ describe('OAuth site-access evidence', () => {
 			customDomains: [{ url: 'old-domain.example' }]
 		});
 		const first = await worker.fetch(
-			submitRequest('site_oauth_retire', accessToken),
+			submitRequest('site_oauth_retire', accessToken, '0.3.0', jobId),
 			{ VALIDATOR_MCP_SERVER_URL: MCP_URL } as any,
 			createExecutionContext()
 		);
@@ -3409,7 +3485,7 @@ describe('OAuth site-access evidence', () => {
 		// The site drops its custom domain; the next verification returns only the webflow.io host.
 		mockMcpServer({ id: 'site_oauth_retire', workspaceId: 'ws_retire', shortName: 'oauth-retire', customDomains: [] });
 		const second = await worker.fetch(
-			submitRequest('site_oauth_retire', accessToken),
+			submitRequest('site_oauth_retire', accessToken, '0.3.0', jobId),
 			{ VALIDATOR_MCP_SERVER_URL: MCP_URL } as any,
 			createExecutionContext()
 		);
@@ -3440,12 +3516,13 @@ describe('OAuth site-access evidence', () => {
 
 	it('uses the protocol version the MCP server returns from initialize', async () => {
 		const accessToken = 'mcp-test-token-protocol-0005';
+		const jobId = await completedRun('oauth-protocol.webflow.io');
 		const calls = mockMcpServer(
 			{ id: 'site_oauth_protocol', workspaceId: 'ws_protocol', shortName: 'oauth-protocol', customDomains: [] },
 			{ protocolVersion: '2025-03-26' }
 		);
 		const response = await worker.fetch(
-			submitRequest('site_oauth_protocol', accessToken),
+			submitRequest('site_oauth_protocol', accessToken, '0.3.0', jobId),
 			{ VALIDATOR_MCP_SERVER_URL: MCP_URL } as any,
 			createExecutionContext()
 		);
@@ -3503,55 +3580,24 @@ describe('validation start: Template CLI version and rate limit', () => {
 			headers: { 'Content-Type': 'application/json', ...headers },
 			body: JSON.stringify({ siteUrl: 'https://example.webflow.io' })
 		});
-	const limiter = (success: boolean) => ({ limit: vi.fn(async () => ({ success })) });
 
 	it('tells an old Template CLI to update, and lets a current one and the Validator app through', async () => {
-		const old = await worker.fetch(start({ 'X-Template-Cli-Version': '0.1.0' }), {} as any, createExecutionContext());
-		expect(old.status).toBe(426);
-		expect(((await old.json()) as { reason: string }).reason).toBe('cli_outdated');
+		for (const version of ['0.1.0', '0.2.0']) {
+			const old = await worker.fetch(start({ 'X-Template-Cli-Version': version }), {} as any, createExecutionContext());
+			expect(old.status).toBe(426);
+			expect(((await old.json()) as { reason: string }).reason).toBe('cli_outdated');
+		}
 
-		const current = await worker.fetch(start({ 'X-Template-Cli-Version': '0.2.0' }), {} as any, createExecutionContext());
+		const current = await worker.fetch(start({ 'X-Template-Cli-Version': '0.3.0' }), {} as any, createExecutionContext());
 		expect(current.status).toBe(400);
 		const app = await worker.fetch(start({}), {} as any, createExecutionContext());
 		expect(app.status).toBe(400);
 	});
 
-	it('answers 429 when one network address starts too many runs, keyed by that address', async () => {
-		const blocked = limiter(false);
-		const response = await worker.fetch(
-			start({ 'CF-Connecting-IP': '203.0.113.7' }),
-			{ VALIDATION_START_LIMITER: blocked } as any,
-			createExecutionContext()
-		);
-		expect(response.status).toBe(429);
-		expect(response.headers.get('Retry-After')).toBe('60');
-		expect(((await response.json()) as { reason: string }).reason).toBe('rate_limited');
-		expect(blocked.limit).toHaveBeenCalledWith({ key: '203.0.113.7' });
-
-		const legacy = await worker.fetch(
-			new Request('https://validation-worker.createsomething.workers.dev/validate', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': '203.0.113.7' },
-				body: '{}'
-			}),
-			{ VALIDATION_START_LIMITER: blocked } as any,
-			createExecutionContext()
-		);
-		expect(legacy.status).toBe(429);
-	});
-
-	it('does not limit a request under the limit, a request with no client address, or a failing limiter', async () => {
-		const allowed = limiter(true);
-		const under = await worker.fetch(start({ 'CF-Connecting-IP': '203.0.113.7' }), { VALIDATION_START_LIMITER: allowed } as any, createExecutionContext());
-		expect(under.status).toBe(400);
-
-		const blocked = limiter(false);
-		const noAddress = await worker.fetch(start({}), { VALIDATION_START_LIMITER: blocked } as any, createExecutionContext());
-		expect(noAddress.status).toBe(400);
-		expect(blocked.limit).not.toHaveBeenCalled();
-
-		const broken = { limit: vi.fn(async () => { throw new Error('limiter down'); }) };
-		const failOpen = await worker.fetch(start({ 'CF-Connecting-IP': '203.0.113.7' }), { VALIDATION_START_LIMITER: broken } as any, createExecutionContext());
-		expect(failOpen.status).toBe(400);
+	it('does not limit starts when the counter store is missing, so a storage problem never blocks a run', async () => {
+		for (let i = 0; i < 12; i += 1) {
+			const response = await worker.fetch(start({ 'CF-Connecting-IP': '203.0.113.7' }), {} as any, createExecutionContext());
+			expect(response.status).toBe(400);
+		}
 	});
 });

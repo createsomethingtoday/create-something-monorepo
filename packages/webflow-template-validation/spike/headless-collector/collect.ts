@@ -65,7 +65,8 @@ export async function collectDesignerData(params: {
 	)) as McpSite;
 
 	const pages: DataApiPage[] = [];
-	for (let offset = 0; ; offset += PAGE_LIMIT) {
+	// The upper bound stops a server that reports a wrong total from keeping the loop alive.
+	for (let offset = 0; offset < 10_000; offset += PAGE_LIMIT) {
 		onProgress?.(`MCP list_pages offset ${offset}`);
 		const page = (await call(
 			'data_pages_tool',

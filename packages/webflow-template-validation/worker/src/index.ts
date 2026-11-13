@@ -10,6 +10,12 @@
  */
 
 import { validateAssets, validateAssetBatch } from './validators/asset-validator';
+import {
+	deriveCollectionMetadata,
+	deriveEnhancedValidation,
+	enhanceValidationResults,
+	type CanvasAccessibilityResult
+} from '../../shared/designer-enhancements';
 import { validateContent } from './validators/content-validator';
 import { validateAccessibility } from './validators/accessibility-validator';
 import { validateDesignerData } from './validators/designer-validator';
@@ -45,16 +51,24 @@ import {
 import { normalizePublishedHost, verifyOauthSiteAccess } from './utils/oauth-site-evidence';
 
 const REVIEW_SNIPPET_VERSION = '0.3.0';
-const WORKER_VERSION = '2.12.0';
+const WORKER_VERSION = '2.13.0';
 
 /**
  * Oldest Template CLI that may record a result. Part of the rules run inside
  * the CLI, so an old install must update before its result counts. Raise this
  * when a CLI release changes what a pass means.
  */
-const MIN_TEMPLATE_CLI_VERSION = '0.2.0';
+const MIN_TEMPLATE_CLI_VERSION = '0.3.0';
 const TEMPLATE_CLI_VERSION_HEADER = 'X-Template-Cli-Version';
 const TEMPLATE_CLI_PACKAGE_PATH = '/cli/wf-template-validate.tgz';
+
+/** Validation runs one network address may start in one window. */
+const VALIDATION_START_LIMIT = 10;
+const VALIDATION_START_WINDOW_MS = 60_000;
+
+/** A Template CLI record must name a validation run that finished at most this long ago. */
+const CLI_RECORD_MAX_JOB_AGE_MS = 30 * 60_000;
+const STYLE_GUIDE_EXCLUDED_SLUGS = ['/style-guide', '/styleguide'];
 const REVIEW_SNIPPET_MARKER = '__wf_review_snippet_v1';
 const REVIEW_SNIPPET_ASSET_PATH = '/app-validator/snippet/review.js';
 const REVIEW_JOB_RETENTION_MS = 30 * 60 * 1000;
@@ -1170,6 +1184,16 @@ async function handleValidationSubmit(
 		};
 	}
 
+	// A Template CLI record holds the worker's own result for the named run, not the result the client sent.
+	let resultsToRecord = sanitizedResults;
+	if (evidence) {
+		const bound = await serverResultForCliRecord(env, body as { jobId?: unknown }, evidence.publishedHosts);
+		if (!bound.ok) {
+			return jsonResponse({ error: bound.error, reason: 'run_not_usable', correlationId }, 409, request);
+		}
+		resultsToRecord = sanitizeValidationResults(bound.results);
+	}
+
 	const nextAttempt: SubmissionAttemptRecord = {
 		at: submittedAt,
 		origin: request.headers.get('Origin'),
@@ -1209,7 +1233,7 @@ async function handleValidationSubmit(
 		siteId,
 		siteName,
 		siteUrl,
-		validationResults: sanitizedResults
+		validationResults: resultsToRecord
 	});
 	const artifactResult = await persistValidationResultArtifact(env, {
 		siteId,
@@ -1219,7 +1243,7 @@ async function handleValidationSubmit(
 		correlationId,
 		payloadHash,
 		evidence,
-		validationResults: sanitizedResults
+		validationResults: resultsToRecord
 	});
 	const latestResult: ValidationResultRecord = {
 		schemaVersion: 'validator_app_submission_latest.v0.1',
@@ -1230,10 +1254,10 @@ async function handleValidationSubmit(
 		correlationId,
 		payloadHash,
 		rawBridgeTokenStored: false,
-		summary: summarizeValidationSubmission(sanitizedResults),
-		failedCategoryDetails: getFailedCategoryDetails(sanitizedResults),
-		warningCategoryDetails: getWarningCategoryDetails(sanitizedResults),
-		scope: sanitizeValidationScope(sanitizedResults.scope),
+		summary: summarizeValidationSubmission(resultsToRecord),
+		failedCategoryDetails: getFailedCategoryDetails(resultsToRecord),
+		warningCategoryDetails: getWarningCategoryDetails(resultsToRecord),
+		scope: sanitizeValidationScope(resultsToRecord.scope),
 		evidence,
 		artifact: artifactResult
 	};
@@ -3683,16 +3707,24 @@ function outdatedCliResponse(request: Request, correlationId: string, options: {
 /**
  * True when this network address started too many validation runs in the last
  * minute. Each run can start a browser session, and these routes need no
- * login. Requests with no client address (a service binding) and workers with
- * no limiter binding are not limited, and a limiter failure never blocks a run.
+ * login. Requests with no client address (a service binding) are not limited,
+ * and a failure of the counter never blocks a run.
  */
 async function validationStartRateLimited(request: Request, env: unknown): Promise<boolean> {
-	const limiter = (env as { VALIDATION_START_LIMITER?: { limit(options: { key: string }): Promise<{ success: boolean }> } } | null)
-		?.VALIDATION_START_LIMITER;
 	const address = request.headers.get('CF-Connecting-IP');
-	if (!limiter || !address) return false;
+	if (!address || !getDurableNamespace(env)) return false;
 	try {
-		return !(await limiter.limit({ key: address })).success;
+		// The count lives in a Durable Object, so every isolate sees the same number.
+		// (The Cloudflare rate limit binding let about 45 starts through against a limit of 10.)
+		const name = `start-limit:${await sha256Hex(address)}`;
+		const now = Date.now();
+		const stored = (await readDurableState(env, name)) as { starts?: unknown } | null;
+		const recent = (Array.isArray(stored?.starts) ? stored.starts : []).filter(
+			(at): at is number => typeof at === 'number' && now - at < VALIDATION_START_WINDOW_MS
+		);
+		if (recent.length >= VALIDATION_START_LIMIT) return true;
+		await writeDurableState(env, name, { starts: [...recent, now] });
+		return false;
 	} catch {
 		return false;
 	}
@@ -3709,6 +3741,87 @@ function rateLimitedStartResponse(request: Request, correlationId: string): Resp
 		request,
 		{ 'Retry-After': '60' }
 	);
+}
+
+/**
+ * The result to record for a Template CLI submission. The worker does not
+ * trust the result the CLI sends. It takes the result of its own validation
+ * run, applies the Designer enhancements that the clients apply, and records
+ * that. The run must be complete, recent, full in scope, and for a published
+ * address of the site that the token can read.
+ */
+async function serverResultForCliRecord(
+	env: unknown,
+	body: { jobId?: unknown },
+	publishedHosts: string[]
+): Promise<{ ok: true; results: ValidationSubmitRequest['validationResults'] } | { ok: false; error: string }> {
+	const again = 'Run `wf-template-validate validate` again.';
+	const jobId = typeof body.jobId === 'string' ? body.jobId.trim() : '';
+	if (!jobId) return { ok: false, error: `This record names no validation run. ${again}` };
+
+	const job = await getReviewJobState(env, jobId);
+	if (!job || job.status !== 'completed' || !job.result) {
+		return { ok: false, error: `The validation run for this record was not found or did not finish. ${again}` };
+	}
+	const completedAt = job.completedAt ? Date.parse(job.completedAt) : Number.NaN;
+	if (!Number.isFinite(completedAt) || Date.now() - completedAt > CLI_RECORD_MAX_JOB_AGE_MS) {
+		return { ok: false, error: `The validation run for this record is too old. ${again}` };
+	}
+
+	let host = '';
+	try {
+		host = new URL(job.request.siteUrl).hostname.toLowerCase();
+	} catch {
+		// handled below
+	}
+	if (!host || !publishedHosts.includes(host)) {
+		return { ok: false, error: 'The validation run was for a URL that is not a published address of this site. Validate the site at its own address.' };
+	}
+
+	const checks = Array.isArray(job.request.checks) ? job.request.checks.map(String) : [];
+	const options = (job.request.options ?? {}) as Record<string, unknown>;
+	const contentChecks = (options.contentChecks ?? {}) as Record<string, unknown>;
+	const excluded = Array.isArray(options.excludePageSlugs) ? options.excludePageSlugs : [];
+	const fullScope =
+		['designer', 'assets', 'content'].every((check) => checks.includes(check)) &&
+		!options.skipAssets &&
+		!options.skipContent &&
+		!options.skipAccessibility &&
+		(options.pageScope ?? 'all') === 'all' &&
+		Object.values(contentChecks).every((value) => value !== false) &&
+		excluded.every((slug) => STYLE_GUIDE_EXCLUDED_SLUGS.includes(String(slug)));
+	if (!fullScope) {
+		return { ok: false, error: `The validation run did not include every check on every page. ${again}` };
+	}
+
+	const canvas = (job.request as { canvasResult?: CanvasAccessibilityResult }).canvasResult;
+	if (!canvas || typeof canvas !== 'object' || canvas.available !== true) {
+		return { ok: false, error: `The validation run has no canvas check data. ${again}` };
+	}
+
+	try {
+		const results = structuredClone(job.result);
+		const designerData = job.request.designerData as Parameters<typeof deriveEnhancedValidation>[0] & {
+			enhancedValidation?: unknown;
+		};
+		const data = designerData.enhancedValidation
+			? designerData
+			: {
+					...designerData,
+					collectionMetadata: deriveCollectionMetadata(designerData),
+					enhancedValidation: deriveEnhancedValidation(designerData)
+				};
+		enhanceValidationResults(results, data as Parameters<typeof enhanceValidationResults>[1], canvas);
+		results.scope = {
+			selectedChecks: checks,
+			pageScope: 'all',
+			publishedChecks: 'full',
+			pageSlugsCount: Array.isArray(job.request.pageSlugs) ? job.request.pageSlugs.length : 0
+		};
+		return { ok: true, results };
+	} catch {
+		return { ok: false, error: `The validation run holds Designer data that could not be checked. ${again}` };
+	}
 }
 
 function methodNotAllowed(request: Request): Response {

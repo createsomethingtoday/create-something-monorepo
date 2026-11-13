@@ -182,3 +182,45 @@ describe('Durable Object state storage', () => {
 		expect(await get('state-legacy')).toBeNull();
 	});
 });
+
+describe('validation start limit (strict, per network address)', () => {
+	const START_URL = 'https://validation-worker.createsomething.workers.dev/app-validator/review/start';
+	// No designerData: a request that passes the limit stops at 400 and starts no job.
+	const start = (address?: string) =>
+		worker.fetch(
+			new Request(START_URL, {
+				method: 'POST',
+				headers: { 'content-type': 'application/json', ...(address ? { 'CF-Connecting-IP': address } : {}) },
+				body: JSON.stringify({ siteUrl: 'https://example.webflow.io' })
+			}),
+			env,
+			createExecutionContext()
+		);
+
+	it('lets exactly 10 starts through in one minute, then answers 429, for that address only', async () => {
+		const statuses: number[] = [];
+		for (let i = 0; i < 12; i += 1) statuses.push((await start('203.0.113.50')).status);
+		expect(statuses).toEqual([...Array(10).fill(400), 429, 429]);
+
+		const refused = await start('203.0.113.50');
+		expect(refused.headers.get('Retry-After')).toBe('60');
+		expect(((await refused.json()) as { reason: string }).reason).toBe('rate_limited');
+
+		expect((await start('203.0.113.51')).status).toBe(400);
+		expect((await start()).status).toBe(400);
+	});
+
+	it('applies the same count to the legacy /validate route', async () => {
+		for (let i = 0; i < 10; i += 1) await start('203.0.113.60');
+		const legacy = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/validate', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json', 'CF-Connecting-IP': '203.0.113.60' },
+				body: '{}'
+			}),
+			env,
+			createExecutionContext()
+		);
+		expect(legacy.status).toBe(429);
+	});
+});
