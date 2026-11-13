@@ -21,7 +21,7 @@ jobs:
   tooling-contracts:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: bash -n .claude/hooks/typecheck-stop.sh packages/dotfiles/scripts/install.sh packages/dotfiles/scripts/install-zellij-config.sh
       - run: python3 scripts/test/typecheck-stop.test.py
       - run: python3 scripts/test/zellij-config-install.test.py
