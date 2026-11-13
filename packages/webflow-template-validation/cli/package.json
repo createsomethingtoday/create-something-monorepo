@@ -15,6 +15,7 @@
 	},
 	"scripts": {
 		"build": "esbuild src/cli.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/cli.js --banner:js=\"#!/usr/bin/env node\"",
+		"pack:download": "node scripts/pack.mjs",
 		"check": "tsc --noEmit",
 		"test": "vitest run"
 	},

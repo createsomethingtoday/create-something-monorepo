@@ -2,11 +2,22 @@
 
 Creator CLI for the Webflow Way template validator. It signs in to Webflow's remote MCP server, reads a template site's Designer data without the Designer open, runs the same validation worker the Template Validator app uses, and can record the result for the Marketplace submission form.
 
-Status: private, internal. Not published to npm.
+Status: not published to npm. Creators install the package that the validation worker serves.
 
-## Install (from the monorepo)
+## Install
 
 Node 20 or later.
+
+```sh
+npm install -g https://validation-worker.createsomething.workers.dev/cli/wf-template-validate.tgz
+wf-template-validate --version
+```
+
+Run the same command again to update. To remove the CLI: `npm uninstall -g @create-something/webflow-template-validation-cli`.
+
+`scripts/pack.mjs` builds that package (`dist/cli.js` and a `package.json` with no scripts and no dependencies) into `../worker/public/cli/`, which the worker serves as a static asset. Wrangler runs the script before `dev` and `deploy` (`build.command` in `worker/wrangler.jsonc`), so each worker deploy ships the CLI built from the same commit. The Asset Dashboard Validation page, the template submission form, and the submission guidelines show this install command.
+
+## Run from the monorepo
 
 ```sh
 pnpm --filter @create-something/webflow-template-validation-cli build
@@ -81,7 +92,7 @@ It does not prove:
 
 ## Open policy items
 
-- **Self-registered OAuth client.** `login` uses dynamic client registration on Webflow's production auth server, under the name "Webflow Template Validate CLI (spike)". There is no documented way to delete a registered client and no documented DCR policy. Before creators use this, the MCP owners should decide between a Webflow-issued client id (`WEBFLOW_MCP_CLIENT_ID`) and per-install registration.
+- **Self-registered OAuth client.** `login` uses dynamic client registration on Webflow's production auth server, under the name "Webflow Template Validate CLI". There is no documented way to delete a registered client and no documented DCR policy. Before creators use this, the MCP owners should decide between a Webflow-issued client id (`WEBFLOW_MCP_CLIENT_ID`) and per-install registration.
 - **Shared production workers.** `validate` calls the production validation worker and the GSAP crawl worker with no authentication and no rate limit for anonymous callers. Shipping to creators needs a decision on auth, quotas, and ownership of that load.
 - **Token as evidence.** The record step sends the creator's access token to the validation worker so it can verify site access. That needs Security review before external use.
 - **Consent scope.** The consent screen is the "Webflow MCP Bridge App" with a fixed scope list that includes write scopes. The CLI only reads, but the token can write.

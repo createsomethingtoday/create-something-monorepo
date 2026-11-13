@@ -43,6 +43,7 @@ export { default as DataFreshnessIndicator } from './DataFreshnessIndicator.svel
 // Validation components
 export { default as GsapValidationModal } from './GsapValidationModal.svelte';
 export { default as WebflowWayCard } from './WebflowWayCard.svelte';
+export { default as TemplateCliCard } from './TemplateCliCard.svelte';
 
 // Feedback
 export { default as FeedbackButton } from './FeedbackButton.svelte';

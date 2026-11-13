@@ -90,7 +90,7 @@ async function getClientId(meta: AuthServerMeta): Promise<string> {
 		method: "POST",
 		headers: { "Content-Type": "application/json", Accept: "application/json" },
 		body: JSON.stringify({
-			client_name: "Webflow Template Validate CLI (spike)",
+			client_name: "Webflow Template Validate CLI",
 			redirect_uris: [REDIRECT_URI],
 			grant_types: ["authorization_code", "refresh_token"],
 			response_types: ["code"],

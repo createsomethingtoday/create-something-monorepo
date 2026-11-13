@@ -14,6 +14,7 @@
 
 import { randomBytes } from 'node:crypto';
 import { parseArgs } from 'node:util';
+import pkg from '../package.json' with { type: 'json' };
 import { collectDesignerData, type CollectResult } from '../../spike/headless-collector/collect.ts';
 import { applyDesignerEnhancements } from '../../spike/headless-collector/enhance.ts';
 import { CANVAS_CHECKS_CATEGORY, type EnhanceableResults } from '../../shared/designer-enhancements.ts';
@@ -75,6 +76,10 @@ Validate options:
   --timeout <seconds>          Worker job timeout (default 480).
   --json                       Print machine-readable JSON.
 
+Other options:
+  --version, -v                Print the CLI version.
+  --help, -h                   Print this help.
+
 Exit codes: 0 no blockers, 1 blockers found, 2 incomplete run (network, worker, login, or argument failure,
             GSAP crawl unavailable, or the recording step failed).`;
 
@@ -90,6 +95,7 @@ const OPTIONS = {
 	site: { type: 'string' },
 	page: { type: 'string' },
 	'no-record': { type: 'boolean', default: false },
+	version: { type: 'boolean', short: 'v', default: false },
 	help: { type: 'boolean', short: 'h', default: false }
 } as const;
 
@@ -107,6 +113,10 @@ async function main(argv: string[]): Promise<number> {
 	}
 	const { values, positionals } = parsed;
 	const [command, ...rest] = positionals;
+	if (values.version) {
+		console.log(pkg.version);
+		return 0;
+	}
 	if (values.help || !command) {
 		if (values.help) console.log(USAGE);
 		else console.error(USAGE);
