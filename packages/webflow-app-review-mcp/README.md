@@ -112,6 +112,10 @@ Write posture:
   The rationale is left out; `app_review_list_asset_exceptions` returns it. When the
   notes together pass 8,000 characters, the rows come without notes and
   `context.assetExceptionNotesOmitted` is true: call that tool for the full text.
+- Any authenticated reviewer can edit an exception row with
+  `app_review_update_exception_item`. `decision_notes` replaces the whole field.
+  `append_decision_note` adds a dated line and keeps the earlier notes: use it to
+  record a check against a condition, a build hash, or a follow-up.
 - `app_review_set_review_status`, `app_review_update_version_review.review_status`,
   and `app_review_update_asset_metadata.latest_review_status` require
   `status_change: { confirmed: true, expected_status: "<current reviewStatus>" }`.

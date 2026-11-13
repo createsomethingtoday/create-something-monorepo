@@ -362,6 +362,79 @@ describe('AirtableClient exception handling', () => {
     expect(fetchFn).not.toHaveBeenCalled();
   });
 
+  it('appends a dated decision note and keeps the earlier notes', async () => {
+    const E = FIELD_IDS.exceptions;
+    const existing = 'Granted with conditions: scoped allow list.';
+    const writes: Array<Record<string, unknown>> = [];
+    const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = new URL(String(input));
+      if (init?.method === 'PATCH') {
+        const body = JSON.parse(String(init.body)) as { records: Array<{ id: string; fields: Record<string, unknown> }> };
+        writes.push(body.records[0]!.fields);
+        return jsonResponse({ records: [{ id: body.records[0]!.id, fields: body.records[0]!.fields }] });
+      }
+      if (url.pathname.includes(`/${TABLE_IDS.exceptions}/recItem1`)) {
+        return jsonResponse({ id: 'recItem1', fields: { [E.status]: '✅Approved', [E.decisionNotes]: existing } });
+      }
+      if (url.pathname.includes(`/${TABLE_IDS.exceptions}/recItemEmpty`)) {
+        return jsonResponse({ id: 'recItemEmpty', fields: { [E.status]: '🆕Requested' } });
+      }
+      return jsonResponse({ error: { type: 'NOT_FOUND' } }, 404);
+    });
+    const client = new AirtableClient({ apiKey: 'token', fetchFn });
+    const now = new Date('2026-11-13T21:00:00.000Z');
+
+    const updated = await client.updateExceptionItem('recItem1', {
+      append_decision_note: '  New build checked: the allow list is scoped.  ',
+      noted_by: 'Shea Sisco',
+      now,
+    });
+
+    expect(writes[0]).toEqual({
+      [E.decisionNotes]: `${existing}\n\nNote (2026-11-13, Shea Sisco): New build checked: the allow list is scoped.`,
+    });
+    expect(updated.decisionNotes).toContain(existing);
+
+    // A row with no notes gets the line alone, and the note can go with a status change in one write.
+    // A name that is blank or holds a line break cannot add a second line.
+    await client.updateExceptionItem('recItemEmpty', {
+      exception_status: '👀Under Review',
+      append_decision_note: 'First note.',
+      noted_by: ' \n ',
+      now,
+    });
+    expect(writes[1]).toEqual({
+      [E.status]: '👀Under Review',
+      [E.decisionNotes]: 'Note (2026-11-13): First note.',
+    });
+
+    // Refused before any read or write: replace and append together, and an empty note.
+    const callsBefore = fetchFn.mock.calls.length;
+    await expect(
+      client.updateExceptionItem('recItem1', { decision_notes: 'Replace.', append_decision_note: 'Add.' }),
+    ).rejects.toMatchObject({ code: 'DECISION_NOTES_CONFLICT' });
+    await expect(
+      client.updateExceptionItem('recItem1', { append_decision_note: '   ' }),
+    ).rejects.toMatchObject({ code: 'DECISION_NOTE_REQUIRED' });
+    expect(fetchFn.mock.calls).toHaveLength(callsBefore);
+
+    await client.updateExceptionItem('recItemEmpty', { append_decision_note: 'x', noted_by: 'A\n\nNote (2026-01-01, B', now });
+    expect(writes[2]).toEqual({ [E.decisionNotes]: 'Note (2026-11-13, A Note (2026-01-01, B): x' });
+
+    // An invalid status with a note fails before the read.
+    const callsBeforeInvalid = fetchFn.mock.calls.length;
+    await expect(
+      client.updateExceptionItem('recItem1', { exception_status: 'Denied', append_decision_note: 'Add.' }),
+    ).rejects.toMatchObject({ code: 'INVALID_EXCEPTION_STATUS' });
+    expect(fetchFn.mock.calls).toHaveLength(callsBeforeInvalid);
+
+    // An unknown row is reported, and nothing is written.
+    await expect(
+      client.updateExceptionItem('recItemMissing', { append_decision_note: 'Add.' }),
+    ).rejects.toMatchObject({ code: 'EXCEPTION_ITEM_NOT_FOUND' });
+    expect(writes).toHaveLength(3);
+  });
+
   describe('resolveExceptionItem (resolved in resubmission)', () => {
     const E = FIELD_IDS.exceptions;
     const V = FIELD_IDS.versions;

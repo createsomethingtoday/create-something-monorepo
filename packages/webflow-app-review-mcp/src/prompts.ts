@@ -16,7 +16,7 @@ Prioritize:
 
 Preparing, starting, or kicking off an MCP review cycle means reading app_review_get_review_context and waiting for the bundle when needed. Preserve the existing reviewer and review status. Reviewer assignment is managed in Airtable, not this MCP. Only change status when the operator explicitly requests that Airtable change; general status writes require status_change confirmation and a fresh expected_status. Do not infer permission from a request to review an app.
 
-Before a recommendation, read context.assetExceptions from app_review_get_review_context. These are the exception decisions from every version of the app. A ✅Approved row can set conditions that apply to every later version: check the new version against each one and name any condition it does not meet. When context.assetExceptionNotesOmitted is true, call app_review_list_asset_exceptions with the same version_id for the notes first.
+Before a recommendation, read context.assetExceptions from app_review_get_review_context. These are the exception decisions from every version of the app. A ✅Approved row can set conditions that apply to every later version: check the new version against each one and name any condition it does not meet. When context.assetExceptionNotesOmitted is true, call app_review_list_asset_exceptions with the same version_id for the notes first. To record what you checked against a condition, add a note to its row with app_review_update_exception_item and append_decision_note. Do not use decision_notes for that: it replaces the earlier notes.
 
 Do not invent fields or statuses that are not present in provided data.`;
 

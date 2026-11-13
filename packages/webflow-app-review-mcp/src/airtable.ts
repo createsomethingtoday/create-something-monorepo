@@ -541,7 +541,14 @@ export interface ExceptionItemUpdateInput {
   exception_status?: string;
   exception_type?: string;
   rationale?: string;
+  /** Replaces the whole decision-notes field. */
   decision_notes?: string;
+  /** Adds a line with the UTC date after the existing decision notes; the earlier notes stay. */
+  append_decision_note?: string;
+  /** Display name for the appended line. */
+  noted_by?: string;
+  /** Injectable clock for the appended line's date (tests). */
+  now?: Date;
 }
 
 export interface ExceptionItemResolveInput {
@@ -2040,6 +2047,20 @@ export class AirtableClient {
 
   async updateExceptionItem(exceptionItemId: string, input: ExceptionItemUpdateInput): Promise<AppReviewExceptionItem> {
     const fields: Record<string, unknown> = {};
+    const appendNote = input.append_decision_note?.trim();
+
+    if (input.append_decision_note !== undefined) {
+      if (input.decision_notes !== undefined) {
+        throw new AirtableClientError(
+          'DECISION_NOTES_CONFLICT',
+          'Send decision_notes (replaces the field) or append_decision_note (adds to it), not both.',
+          400,
+        );
+      }
+      if (!appendNote) {
+        throw new AirtableClientError('DECISION_NOTE_REQUIRED', 'append_decision_note must not be empty.', 400);
+      }
+    }
 
     if (input.item !== undefined) fields[FIELD_IDS.exceptions.item] = input.item;
 
@@ -2065,6 +2086,21 @@ export class AirtableClient {
 
     if (input.rationale !== undefined) fields[FIELD_IDS.exceptions.rationale] = input.rationale;
     if (input.decision_notes !== undefined) fields[FIELD_IDS.exceptions.decisionNotes] = input.decision_notes;
+
+    if (appendNote) {
+      // The field overwrites in Airtable, so read the current notes and resend them with the new line.
+      // Edge whitespace of the old notes is trimmed, as in resolveExceptionItem; the text is unchanged.
+      const record = await this.getRecord(TABLE_IDS.exceptions, exceptionItemId, [...EXCEPTION_ITEM_FIELD_IDS]);
+      if (!record) {
+        throw new AirtableClientError('EXCEPTION_ITEM_NOT_FOUND', `Exception item ${exceptionItemId} was not found.`, 404);
+      }
+      const existing = firstString(record.fields[FIELD_IDS.exceptions.decisionNotes]);
+      const stamp = (input.now ?? new Date()).toISOString().slice(0, 10);
+      // One line only: a name with a line break could pass as a separate note.
+      const notedBy = input.noted_by?.replace(/\s+/g, ' ').trim();
+      const line = `Note (${stamp}${notedBy ? `, ${notedBy}` : ''}): ${appendNote}`;
+      fields[FIELD_IDS.exceptions.decisionNotes] = existing ? `${existing}\n\n${line}` : line;
+    }
 
     if (Object.keys(fields).length === 0) {
       throw new AirtableClientError('NO_MUTATION_FIELDS', 'No exception item fields were provided.', 400);
