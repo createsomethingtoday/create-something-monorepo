@@ -70,6 +70,14 @@ const VALIDATION_START_WINDOW_MS = 60_000;
 /** A Template CLI record must name a validation run that finished at most this long ago. */
 const CLI_RECORD_MAX_JOB_AGE_MS = 30 * 60_000;
 const STYLE_GUIDE_EXCLUDED_SLUGS = ['/style-guide', '/styleguide'];
+/**
+ * Webflow utility pages at fixed paths that do not serve normal content on a
+ * staging site: the password page, site search, and the ecommerce flow pages.
+ * Measured on a published template: the content crawl analyzes /404 but none
+ * of these. A run must still name them, but they need not be in its list of
+ * analyzed pages.
+ */
+const UTILITY_PAGES_WITHOUT_CONTENT = ['/401', '/search', '/checkout', '/paypal-checkout', '/order-confirmation'];
 const REVIEW_SNIPPET_MARKER = '__wf_review_snippet_v1';
 const REVIEW_SNIPPET_ASSET_PATH = '/app-validator/snippet/review.js';
 const REVIEW_JOB_RETENTION_MS = 30 * 60 * 1000;
@@ -138,6 +146,8 @@ interface ReviewJobState {
 	cancelRequested: boolean;
 	/** Set while the browser check runs in the job's Durable Object alarm (stage 2). */
 	pendingRendering?: { urls: string[]; result: any } | null;
+	/** URLs the content crawl fetched and analyzed. A page that failed to load is not in this list. */
+	analyzedUrls?: string[];
 }
 
 interface SnippetTokenRecord {
@@ -1666,6 +1676,7 @@ async function runReviewJob(jobId: string, env: unknown): Promise<void> {
 		// than waitUntil allows, so the job's Durable Object finishes the job.
 		if (runContent) {
 			const crawledUrls = enhancedResult?.analysis?.content?.pages?.map((page) => page.url) ?? [];
+			job.analyzedUrls = crawledUrls;
 			if (await reviewJobCancelled(env, job)) throw new Error('Job cancelled');
 			job.pendingRendering = { urls: crawledUrls.length > 0 ? crawledUrls : [job.request.siteUrl], result: merged };
 			updateJobProgress(job, 70, 'running', 'Loading pages in a browser');
@@ -3857,6 +3868,29 @@ async function serverResultForCliRecord(
 		};
 	}
 
+	// Naming a page is not enough: the crawl leaves out a page that fails to load. Every required
+	// page (and the home page) must be in the list of pages the crawl analyzed. The exceptions are
+	// the style guide, which the content crawl may skip, and the utility pages without content.
+	const analyzed = new Set<string>();
+	for (const url of Array.isArray(job.analyzedUrls) ? job.analyzedUrls : []) {
+		try {
+			const parsed = new URL(url);
+			if (parsed.origin === siteOrigin) analyzed.add(normalizePagePath(parsed.pathname));
+		} catch {
+			// not a URL: it does not count
+		}
+	}
+	const skippable = excluded.map((slug) => normalizePagePath(String(slug)));
+	const notAnalyzed = ['/', ...pagePaths].filter(
+		(path) => !skippable.includes(path) && !UTILITY_PAGES_WITHOUT_CONTENT.includes(path) && !analyzed.has(path)
+	);
+	if (notAnalyzed.length > 0) {
+		return {
+			ok: false,
+			error: `The validation run could not load every published page (${notAnalyzed.length} not loaded, for example ${notAnalyzed[0]}). Check that the page loads, then run \`wf-template-validate validate\` again.`
+		};
+	}
+
 	const canvas = (job.request as { canvasResult?: CanvasAccessibilityResult }).canvasResult;
 	if (!canvas || typeof canvas !== 'object' || canvas.available !== true) {
 		return { ok: false, error: `The validation run has no canvas check data. ${again}` };
@@ -3875,6 +3909,14 @@ async function serverResultForCliRecord(
 					enhancedValidation: deriveEnhancedValidation(designerData)
 				};
 		enhanceValidationResults(results, data as Parameters<typeof enhanceValidationResults>[1], canvas);
+		// Some findings keep the fix and the location inside `details`. The stored record reads the
+		// top-level fields, so lift them, as the CLI did when it built the record itself.
+		for (const category of Array.isArray(results.categories) ? results.categories : []) {
+			for (const issue of Array.isArray(category.issues) ? category.issues : []) {
+				issue.howToFix = issue.howToFix || issue.details?.howToFix;
+				issue.location = issue.location || issue.details?.location;
+			}
+		}
 		results.scope = {
 			selectedChecks: checks,
 			pageScope: 'all',

@@ -3423,8 +3423,10 @@ describe('OAuth site-access evidence', () => {
 			{ id: 'p3', slug: 'pricing', publishedPath: '/company/pricing' },
 			{ id: 'p4', slug: 'blog', publishedPath: '/blog', collectionId: 'c1' },
 			{ id: 'p5', slug: 'draft-page', publishedPath: '/draft-page', draft: true },
-			{ id: 'p6', slug: 'old', publishedPath: '/old', archived: true }
+			{ id: 'p6', slug: 'old', publishedPath: '/old', archived: true },
+			{ id: 'p7', slug: '401', publishedPath: '/401' }
 		];
+		const full = ['/about', '/company/pricing', '/401'];
 		const putMock = vi.fn(async () => undefined);
 		const submit = async (pageSlugs: string[], listed: typeof pages | 'error' = pages) => {
 			const jobId = await completedRun('page-cover.webflow.io', { pageSlugs });
@@ -3435,31 +3437,62 @@ describe('OAuth site-access evidence', () => {
 				createExecutionContext()
 			);
 		};
+		// The password page never loads as a normal page. Other pages load unless a case says otherwise.
+		const working = vi.mocked(fetchHTML).getMockImplementation() as (...args: unknown[]) => ReturnType<typeof fetchHTML>;
+		const failFor = (...paths: string[]) =>
+			vi.mocked(fetchHTML).mockImplementation(async (url: string, ...rest: unknown[]) => {
+				if (paths.some((path) => url.endsWith(path))) throw new Error('did not load');
+				return working(url, ...rest);
+			});
+		failFor('/401');
 
-		// A run on the home page only, or with one page left out, is not a full run.
-		for (const response of [await submit([]), await submit(['/']), await submit(['/about'])]) {
-			expect(response.status).toBe(409);
-			const payload = (await response.json()) as { reason: string; error: string };
-			expect(payload.reason).toBe('run_not_usable');
-			expect(payload.error).toContain('did not check every published page');
-		}
-		// A path that points at another host does not count as the site's page, alone or next to the real list.
-		for (const slugs of [
-			['//clean.example/about', '/company/pricing'],
-			['/about', '/company/pricing', '//clean.example/extra']
-		]) {
-			const response = await submit(slugs);
-			expect(response.status).toBe(409);
-			expect(((await response.json()) as { error: string }).error).toContain('not on this site');
-		}
-		// A path with a query is not the page itself.
-		expect((await submit(['/about?clean=1', '/company/pricing'])).status).toBe(409);
-		// When the worker cannot read the page list, it does not record.
-		expect((await submit(['/about', '/company/pricing'], 'error')).status).toBe(409);
-		expect(putMock).not.toHaveBeenCalled();
+		try {
+			// A run on the home page only, or with one page left out, is not a full run.
+			for (const response of [await submit([]), await submit(['/']), await submit(['/about', '/401'])]) {
+				expect(response.status).toBe(409);
+				const payload = (await response.json()) as { reason: string; error: string };
+				expect(payload.reason).toBe('run_not_usable');
+				expect(payload.error).toContain('did not check every published page');
+			}
+			// A path that points at another host does not count as the site's page, alone or next to the real list.
+			for (const slugs of [
+				['//clean.example/about', '/company/pricing', '/401'],
+				[...full, '//clean.example/extra']
+			]) {
+				const response = await submit(slugs);
+				expect(response.status).toBe(409);
+				expect(((await response.json()) as { error: string }).error).toContain('not on this site');
+			}
+			// A path with a query is not the page itself.
+			expect((await submit(['/about?clean=1', '/company/pricing', '/401'])).status).toBe(409);
+			// When the worker cannot read the page list, it does not record.
+			expect((await submit(full, 'error')).status).toBe(409);
 
-		// Drafts, archived pages, and CMS template pages are not required.
-		expect((await submit(['/about', '/company/pricing'])).status).toBe(200);
+			// A page that is named but does not load during the run was not checked.
+			failFor('/401', '/company/pricing');
+			const notLoaded = await submit(full);
+			expect(notLoaded.status).toBe(409);
+			expect(((await notLoaded.json()) as { error: string }).error).toContain('could not load every published page');
+			expect(putMock).not.toHaveBeenCalled();
+
+			// Drafts, archived pages, and CMS template pages are not required, and the password page need not load.
+			failFor('/401');
+			const accepted = await submit(full);
+			expect(accepted.status).toBe(200);
+		} finally {
+			vi.mocked(fetchHTML).mockImplementation(working as never);
+		}
+
+		// The stored record keeps the fix instructions of findings that hold them in `details`.
+		const latest = (await (
+			await worker.fetch(
+				new Request(`${WORKER_BASE}/app-validator/submission/latest?siteId=site_page_cover`, { method: 'GET' }),
+				{} as any,
+				createExecutionContext()
+			)
+		).json()) as { failedCategoryDetails: Array<{ category: string; issues: Array<{ howToFix?: string }> }> };
+		const styleSystem = latest.failedCategoryDetails.find((detail) => detail.category === 'Style System');
+		expect(styleSystem?.issues.some((issue) => typeof issue.howToFix === 'string' && issue.howToFix.length > 0)).toBe(true);
 	});
 
 	it('rejects evidence when the token reads a different site and stores nothing', async () => {
