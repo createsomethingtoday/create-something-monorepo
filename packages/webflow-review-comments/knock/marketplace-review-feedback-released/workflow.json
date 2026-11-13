@@ -1,0 +1,76 @@
+{
+  "name": "Marketplace review feedback released",
+  "description": "Tells a creator or app developer that the review team sent feedback, with a link to the Asset Dashboard thread. Email only. Triggered by the webflow-review-comments Worker on release. Data contract: packages/webflow-review-comments/src/notify.ts. Owner: Micah.",
+  "steps": [
+    {
+      "type": "channel",
+      "template": {
+        "subject": "New review feedback on {{ asset_name }}",
+        "settings": {
+          "layout_key": "default",
+          "attachment_key": "attachments"
+        },
+        "is_mjml": false,
+        "preview_text": "Read it and reply in the Asset Dashboard.",
+        "html_body@": "email_1/html_body.html"
+      },
+      "ref": "email_1",
+      "channel_type": "email",
+      "channel_key": "postmark",
+      "channel_overrides": {
+        "from_address": "support@webflow.com"
+      }
+    }
+  ],
+  "categories": [
+    "Marketplace"
+  ],
+  "trigger_data_json_schema": {
+    "properties": {
+      "asset_name": {
+        "type": "string"
+      },
+      "asset_type": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "creator_name": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "outcome": {
+        "enum": [
+          "changes_requested",
+          "approved",
+          "rejected",
+          null
+        ]
+      },
+      "thread_url": {
+        "type": "string"
+      },
+      "version_number": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      }
+    },
+    "required": [
+      "asset_name",
+      "thread_url"
+    ],
+    "type": "object"
+  },
+  "trigger_frequency": "every_trigger",
+  "__readonly": {
+    "key": "marketplace-review-feedback-released",
+    "active": true,
+    "valid": true
+  },
+  "$schema": "https://schemas.knock.app/cli/workflow.json"
+}
