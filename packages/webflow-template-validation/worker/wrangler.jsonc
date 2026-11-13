@@ -15,6 +15,15 @@
 		"binding": "ASSETS",
 		"directory": "./public"
 	},
+	/**
+	 * Packs the creator CLI into public/cli/ before `dev` and `deploy`, so the
+	 * download at /cli/wf-template-validate.tgz always matches this commit.
+	 * watch_dir lists the sources; it must not include public/ (the output).
+	 */
+	"build": {
+		"command": "node ../cli/scripts/pack.mjs",
+		"watch_dir": ["src", "../cli/src", "../shared", "../spike"]
+	},
 	"durable_objects": {
 		"bindings": [
 			{
@@ -26,6 +35,20 @@
 	"browser": {
 		"binding": "BROWSER"
 	},
+	/**
+	 * Validation runs need no login and can start a browser session. Limit the
+	 * runs one network address can start: 10 per minute.
+	 */
+	"ratelimits": [
+		{
+			"name": "VALIDATION_START_LIMITER",
+			"namespace_id": "244401",
+			"simple": {
+				"limit": 10,
+				"period": 60
+			}
+		}
+	],
 	"r2_buckets": [
 		{
 			"binding": "VALIDATOR_RESULT_ARTIFACTS",

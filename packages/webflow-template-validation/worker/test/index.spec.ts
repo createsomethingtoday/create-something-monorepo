@@ -3209,10 +3209,10 @@ describe('OAuth site-access evidence', () => {
 		return calls;
 	}
 
-	function submitRequest(siteId: string, accessToken: string) {
+	function submitRequest(siteId: string, accessToken: string, cliVersion: string | null = '0.2.0') {
 		return new Request(`${WORKER_BASE}/app-validator/submit`, {
 			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+			headers: { 'Content-Type': 'application/json', ...(cliVersion ? { 'X-Template-Cli-Version': cliVersion } : {}) },
 			body: JSON.stringify({
 				siteId,
 				siteName: 'Evidence Site',
@@ -3295,6 +3295,25 @@ describe('OAuth site-access evidence', () => {
 		expect(artifact.schema_version).toBe('validator_app_results_submission.v0.2');
 		expect(artifact.evidence.verified).toBe(true);
 		expect(artifact.evidence.rawAccessTokenStored).toBe(false);
+	});
+
+	it('refuses a record from a Template CLI that is too old or names no version, before it reads the token', async () => {
+		const calls = mockMcpServer({ id: 'site_old_cli', workspaceId: 'ws_evidence', shortName: 'old-cli' });
+		const putMock = vi.fn(async () => undefined);
+		for (const version of ['0.1.0', null, 'latest']) {
+			const response = await worker.fetch(
+				submitRequest('site_old_cli', 'mcp-test-token-valid-0002', version),
+				{ VALIDATOR_MCP_SERVER_URL: MCP_URL, VALIDATOR_RESULT_ARTIFACTS: { put: putMock } } as any,
+				createExecutionContext()
+			);
+			expect(response.status).toBe(426);
+			const payload = (await response.json()) as { reason: string; minimumVersion: string; error: string };
+			expect(payload.reason).toBe('cli_outdated');
+			expect(payload.minimumVersion).toBe('0.2.0');
+			expect(payload.error).toContain(`npm install -g ${WORKER_BASE}/cli/wf-template-validate.tgz`);
+		}
+		expect(calls).toHaveLength(0);
+		expect(putMock).not.toHaveBeenCalled();
 	});
 
 	it('rejects evidence when the token reads a different site and stores nothing', async () => {
@@ -3472,5 +3491,67 @@ describe('OAuth site-access evidence', () => {
 			createExecutionContext()
 		);
 		expect(response.status).toBe(400);
+	});
+});
+
+describe('validation start: Template CLI version and rate limit', () => {
+	const START_URL = 'https://validation-worker.createsomething.workers.dev/app-validator/review/start';
+	// No designerData: a request that passes the checks stops at 400 and starts no job.
+	const start = (headers: Record<string, string>) =>
+		new Request(START_URL, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json', ...headers },
+			body: JSON.stringify({ siteUrl: 'https://example.webflow.io' })
+		});
+	const limiter = (success: boolean) => ({ limit: vi.fn(async () => ({ success })) });
+
+	it('tells an old Template CLI to update, and lets a current one and the Validator app through', async () => {
+		const old = await worker.fetch(start({ 'X-Template-Cli-Version': '0.1.0' }), {} as any, createExecutionContext());
+		expect(old.status).toBe(426);
+		expect(((await old.json()) as { reason: string }).reason).toBe('cli_outdated');
+
+		const current = await worker.fetch(start({ 'X-Template-Cli-Version': '0.2.0' }), {} as any, createExecutionContext());
+		expect(current.status).toBe(400);
+		const app = await worker.fetch(start({}), {} as any, createExecutionContext());
+		expect(app.status).toBe(400);
+	});
+
+	it('answers 429 when one network address starts too many runs, keyed by that address', async () => {
+		const blocked = limiter(false);
+		const response = await worker.fetch(
+			start({ 'CF-Connecting-IP': '203.0.113.7' }),
+			{ VALIDATION_START_LIMITER: blocked } as any,
+			createExecutionContext()
+		);
+		expect(response.status).toBe(429);
+		expect(response.headers.get('Retry-After')).toBe('60');
+		expect(((await response.json()) as { reason: string }).reason).toBe('rate_limited');
+		expect(blocked.limit).toHaveBeenCalledWith({ key: '203.0.113.7' });
+
+		const legacy = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/validate', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': '203.0.113.7' },
+				body: '{}'
+			}),
+			{ VALIDATION_START_LIMITER: blocked } as any,
+			createExecutionContext()
+		);
+		expect(legacy.status).toBe(429);
+	});
+
+	it('does not limit a request under the limit, a request with no client address, or a failing limiter', async () => {
+		const allowed = limiter(true);
+		const under = await worker.fetch(start({ 'CF-Connecting-IP': '203.0.113.7' }), { VALIDATION_START_LIMITER: allowed } as any, createExecutionContext());
+		expect(under.status).toBe(400);
+
+		const blocked = limiter(false);
+		const noAddress = await worker.fetch(start({}), { VALIDATION_START_LIMITER: blocked } as any, createExecutionContext());
+		expect(noAddress.status).toBe(400);
+		expect(blocked.limit).not.toHaveBeenCalled();
+
+		const broken = { limit: vi.fn(async () => { throw new Error('limiter down'); }) };
+		const failOpen = await worker.fetch(start({ 'CF-Connecting-IP': '203.0.113.7' }), { VALIDATION_START_LIMITER: broken } as any, createExecutionContext());
+		expect(failOpen.status).toBe(400);
 	});
 });

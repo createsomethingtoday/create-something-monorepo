@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Card, WebflowWayCard, BackNavigation } from '$lib/components';
+  import { Card, WebflowWayCard, TemplateCliCard, BackNavigation } from '$lib/components';
   import { trackEvent } from '$lib/utils/analytics';
   import { ArrowRight, CheckCircle2, FlaskConical, Route } from 'lucide-svelte';
   import type { PageData } from './$types';
@@ -91,6 +91,16 @@
             </p>
           </div>
           <WebflowWayCard userEmail={data.user?.email} featured />
+
+          <div class="required-tool-heading">
+            <span class="tool-kicker">Second way to get the pass</span>
+            <h2 class="section-title" id="template-cli-title">Command line access</h2>
+            <p class="tool-description">
+              Use the Template CLI in place of the Designer app. It runs the same checks and
+              records the same pass for the submission flow.
+            </p>
+          </div>
+          <TemplateCliCard />
         </section>
 
         <div class="support-stack">
