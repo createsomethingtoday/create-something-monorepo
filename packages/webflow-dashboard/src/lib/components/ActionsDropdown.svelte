@@ -3,6 +3,7 @@
 	import { Archive, Eye, LoaderCircle, MoreVertical, Pencil } from 'lucide-svelte';
 	import { trackEvent } from '$lib/utils/analytics';
 	import type { AssetActionDescriptor } from '$lib/utils/asset-actions';
+	import { popIn, popOut } from '$lib/motion/actions';
 
 	interface Props {
 		assetId: string;
@@ -217,6 +218,8 @@
 {#if isOpen}
 	<div
 		class="dropdown-portal"
+		in:popIn={{ y: -6, scale: 0.94, origin: 'top right' }}
+		out:popOut={{ y: -4 }}
 		bind:this={dropdownRef}
 		style="top: {dropdownPosition.top}px; right: {dropdownPosition.right}px;"
 		role="menu"

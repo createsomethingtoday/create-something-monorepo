@@ -121,6 +121,8 @@
   --shadow-md: 0 8px 18px rgba(8, 8, 8, 0.05);
   --shadow-lg: 0 16px 32px rgba(8, 8, 8, 0.08);
 
+  --card-shadow: 0 1px 2px rgba(8, 8, 8, 0.04);
+
   --layout-content-max-width: 81rem;
   --layout-header-max-width: 83rem;
 }
@@ -175,6 +177,9 @@
   --glass-border-light: rgba(255, 255, 255, 0.12);
   --glass-border-medium: rgba(255, 255, 255, 0.16);
   --glass-border-strong: rgba(255, 255, 255, 0.22);
+
+  /* On a near-black page a lit top edge separates a surface better than a drop shadow. */
+  --card-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 /* Base styles */
@@ -258,9 +263,8 @@ a:hover {
 }
 
 .page-intro--dashboard .page-intro__title {
-  font-size: clamp(2rem, 2.1vw + 1rem, 2.7rem);
-  line-height: 1.08;
-  max-width: 16ch;
+  font-size: clamp(1.75rem, 1vw + 1.2rem, 2.1rem);
+  line-height: 1.12;
 }
 
 .page-intro--dashboard .page-intro__subtitle {
@@ -287,6 +291,14 @@ a:hover {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Motion: entrance targets stay transparent until $lib/motion plays them.
+   `js-motion` is set in app.html only when motion is allowed and JS runs.
+   Opacity only: waiting content keeps its place in the tab order and the
+   accessibility tree. */
+html.js-motion [data-reveal]:not([data-revealed]) {
+  opacity: 0;
 }
 
 /* Utility classes */

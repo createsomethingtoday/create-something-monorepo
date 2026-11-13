@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import type { HTMLButtonAttributes } from 'svelte/elements';
+	import { press } from '$lib/motion/actions';
 
 	type Variant = 'default' | 'secondary' | 'destructive' | 'outline' | 'ghost' | 'link';
 	type Size = 'default' | 'sm' | 'lg' | 'icon';
@@ -22,6 +23,7 @@
 
 <button
 	class="btn btn-{variant} btn-{size} {className}"
+	use:press
 	{...restProps}
 >
 	{#if children}

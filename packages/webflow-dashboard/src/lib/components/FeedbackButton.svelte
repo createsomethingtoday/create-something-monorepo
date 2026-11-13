@@ -2,6 +2,25 @@
   import { MessageSquarePlus, Bug, Lightbulb, MessageCircle, Send } from 'lucide-svelte';
   import { page } from '$app/stores';
   import { Dialog } from './ui';
+  import { press } from '$lib/motion/actions';
+  import { EASE, gsap, motionOK } from '$lib/motion/core';
+
+  // The trigger rests as a small round button so it does not cover page
+  // content, and opens its label when the pointer or keyboard focus reaches it.
+  let labelEl = $state<HTMLElement | null>(null);
+
+  function setLabel(open: boolean) {
+    if (!labelEl) return;
+    const duration = motionOK() ? 0.32 : 0;
+    gsap.to(labelEl, {
+      width: open ? 'auto' : 0,
+      marginLeft: open ? '0.5rem' : 0,
+      autoAlpha: open ? 1 : 0,
+      duration,
+      ease: EASE.out,
+      overwrite: 'auto'
+    });
+  }
 
   let isOpen = $state(false);
   let feedbackType = $state<'bug' | 'feature' | 'general'>('general');
@@ -71,12 +90,18 @@
 <!-- Floating button -->
 <button
   class="feedback-trigger"
+  use:press
   onclick={() => (isOpen = true)}
+  onpointerenter={() => setLabel(true)}
+  onpointerleave={() => setLabel(false)}
+  onfocus={() => setLabel(true)}
+  onblur={() => setLabel(false)}
   aria-label="Send feedback"
-  title="Send feedback"
 >
-  <MessageSquarePlus size={20} />
-  <span class="beta-badge">Beta</span>
+  <MessageSquarePlus size={18} />
+  <span class="feedback-label" bind:this={labelEl}>
+    Feedback <span class="beta-badge">Beta</span>
+  </span>
 </button>
 
 <Dialog
@@ -143,26 +168,45 @@
 <style>
   .feedback-trigger {
     position: fixed;
-    bottom: 1.5rem;
-    right: 1.5rem;
+    bottom: 1.25rem;
+    right: 1.25rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
+    min-width: 2.75rem;
+    height: 2.75rem;
+    padding: 0 0.78rem;
     background: var(--color-bg-surface);
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-full);
-    color: var(--color-fg-primary);
+    color: var(--color-fg-secondary);
+    font: inherit;
+    font-size: var(--text-body-sm);
+    font-weight: var(--font-medium);
     cursor: pointer;
     box-shadow: var(--shadow-md);
-    transition: all var(--duration-micro) var(--ease-standard);
-    z-index: 1000;
+    transition:
+      border-color var(--duration-micro) var(--ease-standard),
+      color var(--duration-micro) var(--ease-standard),
+      box-shadow var(--duration-micro) var(--ease-standard);
+    /* Above page content, below menus and dialogs. */
+    z-index: 90;
   }
 
   .feedback-trigger:hover {
     border-color: var(--color-border-emphasis);
-    transform: translateY(-2px);
+    color: var(--color-fg-primary);
     box-shadow: var(--shadow-lg);
+  }
+
+  /* Width, margin and visibility are tweened by GSAP (see setLabel). */
+  .feedback-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: 0;
+    overflow: hidden;
+    visibility: hidden;
+    white-space: nowrap;
   }
 
   .feedback-trigger:focus-visible {
