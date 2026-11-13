@@ -9,6 +9,7 @@ import { registerPrompts } from './prompts.js';
 import { registerResources } from './resources.js';
 import { registerTools } from './tools.js';
 import { parseZendeskGroupId, ZendeskClient } from './zendesk.js';
+import { buildReviewCommentsClient } from './review-comments.js';
 
 function requireEnv(name: string): string {
   const value = process.env[name];
@@ -37,6 +38,8 @@ async function main() {
         })
       : null;
 
+  const reviewComments = buildReviewCommentsClient(process.env.REVIEW_COMMENTS_URL, process.env.REVIEW_COMMENTS_API_KEY);
+
   const server = new McpServer({
     name: 'webflow-template-review-mcp',
     version: '1.0.0',
@@ -56,6 +59,7 @@ async function main() {
         template: process.env.E2B_BROWSER_TEMPLATE,
       },
       getZendeskClient: () => zendesk,
+      getReviewCommentsClient: () => reviewComments,
     },
   );
   registerPrompts(server);
