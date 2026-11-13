@@ -46,8 +46,9 @@ pages were directly viewed locally; actual mailbox delivery is separate.
 ## Quality gates
 
 - **Functional: passed locally.** Latest A2A regression pass: **179/179**,
-  A2A and acceptance TypeScript checks passed. Identity **147/147** and the web
-  build passed in the preceding unchanged Identity/UI passes. Parent native workerd/D1 lab:
+  A2A and acceptance TypeScript checks passed. Identity **149/149**, including
+  native D1 recovery with A2A signup disabled, and Identity TypeScript passed.
+  The web build passed in the preceding unchanged UI pass. Parent native workerd/D1 lab:
   **24/24** scenarios passed with outgoing effects disabled. Web build and both
   Worker dry-run bundles passed; retired identity-provider scan passed.
   Node/SQLite fixtures and the native workerd/D1
@@ -119,3 +120,12 @@ to work. Actual HTTP checks and the native D1 lab confirm an old invitation retu
 404 without exposing later members. Latest checks: **179/179** A2A tests,
 TypeScript, and **24/24** local native workerd/D1 scenarios; no UI or migration
 change, deployment, or actual-host acceptance is implied.
+
+A2A-tagged recovery now honors `VERIFIED_RECOVERY_ENABLED` independently of the
+signup flag, at both proof issuance and completion. The RED regression showed no
+mail request for a verified owner with A2A signup disabled; the corrected path
+resets the password and revokes credential families. Tests retain closed signup,
+both switches disabled, proof revalidation, and identical responses for unknown,
+unverified and deleted accounts. Identity **149/149**, including the new native
+D1 scenario, Identity TypeScript and the retired-provider scan passed; the shared
+native lab remains **24/24**. Mail transport is a fixture, not a mailbox receipt.

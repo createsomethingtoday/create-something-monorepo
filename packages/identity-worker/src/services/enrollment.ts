@@ -59,8 +59,16 @@ async function eligibility(
 ): Promise<{ allowed: boolean; invitationId: string | null }> {
   // Stored challenge provenance controls admission at completion; caller fields cannot relabel it.
   if (application === 'a2a') {
-    if(env.A2A_ENROLLMENT_ENABLED !== 'true')return {allowed:false,invitationId:null};
-    return {allowed:purpose==='signup'||(purpose==='recovery'&&!!await env.DB.prepare('SELECT 1 FROM users WHERE email=? AND deleted_at IS NULL AND email_verified=1').bind(email).first()),invitationId:null};
+    if (
+      env.A2A_ENROLLMENT_ENABLED !== 'true' &&
+      !(purpose === 'recovery' && env.VERIFIED_RECOVERY_ENABLED === 'true')
+    ) return { allowed: false, invitationId: null };
+    return {
+      allowed: purpose === 'signup' || (purpose === 'recovery' && !!(await env.DB.prepare(
+        'SELECT 1 FROM users WHERE email=? AND deleted_at IS NULL AND email_verified=1'
+      ).bind(email).first())),
+      invitationId: null
+    };
   }
   if (application === 'gigi')
     return {

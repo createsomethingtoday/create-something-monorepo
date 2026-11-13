@@ -109,6 +109,86 @@ test('A2A recovery requires verified existing identity and revokes its renewable
     (await f.db.prepare('SELECT revoked_at FROM oauth_refresh_families').first<any>()).revoked_at
   );
 });
+test('verified A2A recovery stays available when signup is disabled', async (t) => {
+  const f = createTestDatabase();
+  t.after(() => f.close());
+  const mails: any[] = [];
+  t.mock.method(globalThis, 'fetch', async (_url, options) => {
+    mails.push(JSON.parse(options!.body as string));
+    return Response.json({ id: 'fixture' });
+  });
+  const env: any = {
+    DB: f.db,
+    A2A_ENROLLMENT_ENABLED: 'false',
+    VERIFIED_RECOVERY_ENABLED: 'true',
+    GIGI_ENROLLMENT_ENABLED: 'true',
+    RESEND_API_KEY: 'fixture'
+  };
+  const req = (input: unknown) =>
+    new Request('https://id.createsomething.space/v1/auth/enrollment/start', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'cf-connecting-ip': '192.0.2.17' },
+      body: JSON.stringify(input)
+    });
+  for (const [id, verified, deleted] of [
+    ['verified', 1, null],
+    ['unverified', 0, null],
+    ['deleted', 1, '2026-01-01']
+  ] as const)
+    await f.db
+      .prepare(
+        "INSERT INTO users(id,email,password_hash,source,email_verified,deleted_at) VALUES(?,?,?,'io',?,?)"
+      )
+      .bind(id, id + '@example.com', 'original', verified, deleted)
+      .run();
+  await f.db
+    .prepare(
+      "INSERT INTO oauth_refresh_families(family_id,client_id,user_id) VALUES('family','client','verified')"
+    )
+    .run();
+  const responses = [];
+  for (const email of [
+    'missing@example.com',
+    'unverified@example.com',
+    'deleted@example.com',
+    'verified@example.com'
+  ]) {
+    const response = await startEnrollment(req({ email, purpose: 'recovery', app: 'a2a' }), env);
+    responses.push({ status: response.status, body: await response.json() });
+  }
+  assert.equal(mails.length, 1, 'Verified recovery must send proof with A2A signup off.');
+  for (const response of responses) assert.deepEqual(response, responses[0]);
+  assert.equal(responses[0].status, 200);
+  assert.match(mails[0].text, /mode=recovery&app=a2a/);
+  const token = decodeURIComponent(mails[0].text.match(/#token=([^\s]+)/)[1]);
+  await startEnrollment(req({ email: 'new@example.com', purpose: 'signup', app: 'a2a' }), env);
+  assert.equal(mails.length, 1, 'Recovery does not enable A2A signup.');
+  env.VERIFIED_RECOVERY_ENABLED = 'false';
+  await startEnrollment(
+    req({ email: 'verified@example.com', purpose: 'recovery', app: 'a2a' }),
+    env
+  );
+  assert.equal(mails.length, 1, 'Both A2A/recovery switches off must suppress proof.');
+  assert.equal(
+    (await completeEnrollment(req({ token, password: 'Verified recovery fixture password' }), env))
+      .status,
+    503
+  );
+  env.VERIFIED_RECOVERY_ENABLED = 'true';
+  const completed = await completeEnrollment(
+    req({ token, password: 'Verified recovery fixture password' }),
+    env
+  );
+  assert.equal(completed.status, 200);
+  assert.equal(completed.headers.has('Set-Cookie'), false);
+  assert.ok(
+    (await f.db.prepare('SELECT revoked_at FROM oauth_refresh_families').first<any>()).revoked_at
+  );
+  assert.equal(
+    await f.db.prepare("SELECT id FROM users WHERE email='new@example.com'").first(),
+    null
+  );
+});
 test('discovery advertises gated A2A signup with fixed return without public enrollment', async () => {
   const response = await worker.fetch(
     new Request('https://id.createsomething.space/.well-known/create-something-auth'),
