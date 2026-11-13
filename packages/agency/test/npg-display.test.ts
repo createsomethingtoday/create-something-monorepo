@@ -205,7 +205,8 @@ test('NPG uses a dedicated Astryx document without injecting its reset into Agen
   );
   assert.doesNotMatch(layout, /isNpgChatRoute|@astryxdesign/);
   assert.match(workspace, /<AppShell/);
-  assert.match(workspace, /<ChatLayout/);
+  assert.match(workspace, /<ThreadSurface/);
+  assert.doesNotMatch(workspace, /<ChatLayout/);
   assert.match(workspace, /<ChatComposerInput/);
   assert.doesNotMatch(workspace, /<main\b|isStopShown=|isStreaming=\{true\}/);
 });
