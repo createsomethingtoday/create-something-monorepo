@@ -259,7 +259,7 @@
 			<li>We do not remove or rename v1 fields, and we do not change what they mean.</li>
 			<li>
 				A change that breaks these rules gets a new version in the path. We tell key owners by
-				email, and v1 continues to work for 90 days or more after that message.
+				email, and v1 continues to work for 15 days or more after that message.
 			</li>
 		</ul>
 	</section>
