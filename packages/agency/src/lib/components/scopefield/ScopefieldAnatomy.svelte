@@ -30,8 +30,8 @@
   .screw-core { fill: var(--iso-line); }
   .drawer { transform: var(--travel); }
   .control { opacity: 1; }
-  .anatomy:not(.still) .drawer { transition: transform var(--duration-complex) var(--ease-standard); }
-  .anatomy:not(.still) .control { transition: opacity var(--duration-slow) var(--ease-standard); }
+  .anatomy:not(.still) .drawer { transition: transform var(--duration-performance-complex) var(--ease-performance-standard); }
+  .anatomy:not(.still) .control { transition: opacity var(--duration-performance-slow) var(--ease-performance-standard); }
   .anatomy[data-stage='0'] .drawer { transform: translate(0,0); }
   .anatomy[data-stage='0'] .control, .anatomy[data-stage='1'] .control { opacity: 0.3; }
   @media (prefers-reduced-motion: reduce) { .drawer, .control { transition: none !important; } }

@@ -86,6 +86,11 @@ test('Agency serves the approved V3 logo files byte-for-byte at its public asset
   }
 });
 
+test('the reversed Agency footer identity owns a black scope on light utility pages', () => {
+  const layout = read('src/routes/+layout.svelte');
+  assert.match(layout, /<div data-theme="dark" class="agency-footer-scope">\s*<Footer[\s\S]*?create-something-agency-white\.svg[\s\S]*?\/>\s*<\/div>/);
+});
+
 test('the Agency footer uses one linked lockup instead of repeating the brand inside its link panel', () => {
   const footer = read('../canon/src/lib/components/Footer.svelte');
 
@@ -186,6 +191,8 @@ test('the Agency footer handoff uses its own macro-real decision-gate image with
   const layout = read('src/routes/+layout.svelte');
   const footer = read('../canon/src/lib/components/Footer.svelte');
   const offerPanel = read('../canon/src/lib/components/meridian/MeridianOfferPanel.svelte');
+  const sceneLead = read('../canon/src/lib/components/background/SceneLead.svelte');
+  const backgroundScene = read('../canon/src/lib/components/background/BackgroundScene.svelte');
   const image = resolve(
     agencyRoot,
     'static/images/performance-lab/playbook-footer-decision-gate-macro.webp'
@@ -199,11 +206,14 @@ test('the Agency footer handoff uses its own macro-real decision-gate image with
   assert.match(footer, /media\?: \{[\s\S]*?src: string;[\s\S]*?alt: string;/);
   assert.match(footer, /media=\{footerCta\.media\}/);
   assert.match(offerPanel, /media\?: MeridianOfferMedia/);
-  assert.match(offerPanel, /\{#if media\}[\s\S]*?<img[\s\S]*?alt=\{media\.alt\}/);
-  assert.match(
-    offerPanel,
-    /@media \(max-width: 760px\)[\s\S]*?\.meridian-offer-panel__visual\.has-media\s*\{[\s\S]*?aspect-ratio:\s*2 \/ 3;/
-  );
+  // CTA artwork is a CSS background; the legacy asset and description still reach
+  // the shared scene. Canon's rendered composition tests cover its semantics.
+  assert.match(offerPanel, /src:\s*media\.src,\s*description:\s*media\.alt/);
+  assert.match(offerPanel, /<SceneLead\s+\{scene\}/);
+  assert.match(sceneLead, /<BackgroundScene\s+\{scene\}/);
+  assert.match(backgroundScene, /background-image:\s*var\(--scene-image\)/);
+  assert.match(backgroundScene, /aria-label=\{scene\.description\|\|undefined\}/);
+  assert.doesNotMatch(offerPanel, /<img\b/);
   assert.ok(existsSync(image));
   assert.ok(statSync(image).size > 100_000, 'footer media must be a substantive raster asset');
   assert.match(metadata, /campaign material only/i);

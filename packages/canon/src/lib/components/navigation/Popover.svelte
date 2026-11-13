@@ -12,6 +12,8 @@
 	import { focusTrap } from '../../actions/a11y.js';
 
 	interface Props {
+		/** Accessible name for the content overlay. */
+		label?:string;
 		/** Whether popover is open (bindable) */
 		open?: boolean;
 		/** Position relative to trigger */
@@ -32,6 +34,7 @@
 
 	let {
 		open = $bindable(false),
+		label = 'More information',
 		position = 'bottom',
 		align = 'start',
 		closeOnClickOutside = true,
@@ -42,6 +45,7 @@
 	}: Props = $props();
 
 	let wrapperRef: HTMLDivElement;
+	const popoverId=$props.id();
 
 	function toggle() {
 		open = !open;
@@ -85,15 +89,17 @@
 </script>
 
 <div class="popover-wrapper" bind:this={wrapperRef}>
-	<div class="popover-trigger" role="button" tabindex={0} onclick={toggle} onkeydown={handleTriggerKeyDown}>
+	<div class="popover-trigger" role="button" tabindex={0} aria-expanded={open} aria-controls={open ? popoverId : undefined} aria-haspopup="dialog" onclick={toggle} onkeydown={handleTriggerKeyDown}>
 		{@render trigger()}
 	</div>
 
 	{#if open}
 		<div
+			id={popoverId}
 			class="popover popover-{position} popover-align-{align}"
 			role="dialog"
 			aria-modal="false"
+			aria-label={label}
 			use:focusTrap={{ active: open, onEscape: handleEscape }}
 		>
 			{@render children()}
@@ -108,10 +114,12 @@
 	}
 
 	.popover-trigger {
+		min-height:44px;align-items:center;border-radius:var(--radius-performance-sm);
 		display: inline-flex;
 	}
 
 	.popover {
+		background:var(--color-performance-panel);color:var(--color-performance-ink);border:1px solid var(--color-performance-line);
 		position: absolute;
 		z-index: var(--z-performance-popover, 30);
 		min-width: 200px;

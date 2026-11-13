@@ -1,0 +1,13 @@
+Local Cook build complete after user approval “Approved the recommended”. The eight-hour floor was met at 2026-11-13T23:05:37Z (8h00m05s from start). Approval recorded at 23:30:53Z; final independent acceptance and archive verification are complete.
+
+Delivered: approved r41 squat felt body, r42 oval digitized head and r45 six editorial gestures; whole black-foundation design system; seven immutable PNG originals plus seven optimized WebPs and an offline source/export comparison. Web files total 2,034,742 bytes, 85.14% below their combined source PNG sizes. Four approved scenes remain unchanged; scene characters were not redrawn.
+
+Functional gate: passed within local scope. Latest export retest: 42 focused tests; Canon and LTD check/build pass; seven original PNG hashes and nine static WebP copies verified; all files decode; 30 actual Ego browser cases across five routes and six widths pass. Prior full-suite acceptance remains 824 tests at R34, before the bounded final image-reference update.
+Perceptual gate: passed at documented sizes. Fresh independent Sol 6.1 directly viewed all seven source/export comparisons, 96px head on black/light at 1×/2× density, 370/200px body, all six 200px gestures, four scenes and actual hero/CTA/runtime output. No corrective findings.
+Release readiness: passed for local artifacts; production not applicable. No commit, push, merge, deployment or publication. No shipping destination inferred.
+
+Artifacts: root output/canon-approved/canon-approved-2026-11-13.zip (21 entries, 15,147,768 bytes), CRC and every entry independently read back against disk; SHA256 6d97714b56a2aa27b6f9b740e2eb8971c8fc691eb32351de8a90b385c622f2f0. Source/export provenance and acceptance are in output/canon-approved/2026-11-13. System guide: packages/canon/APPROACHABLE-SYSTEM.md; evidence: packages/canon/LOCAL-REVIEW.md and evidence/approved-export-independent-r40/REPORT.md. Root cook/review/DESIGN-HANDBOOK.md records the accepted direction.
+
+Limits: 96px-only compact head; below that use text. Body and gestures retain black. No larger transparent master, motion rig, production/CDN performance or new scene-character revision. Rollback: original PNGs retained; restore only the affected URL from evidence/approved-export-r39/adoption.diff if needed.
+
+Worktree disposition: preserved at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a01044d6-2f560e0ec9e58190, branch t3/canon-design-system-redesign, HEAD 5f9bfab3f6a9069332d650f42a09f5bd18d806a7. Broader source inventory: 4764 files, SHA256 b486a93220c074bde865f84ca348449574767d2109963c81b79cbcbb40304be4 (integrity scope, not extra test coverage). Root application work is protected. All check/build jobs ended; review browser spaces closed.

@@ -1,0 +1,3 @@
+# LTD inline code containment
+
+Long package and token names must wrap within ordinary prose at 320px without changing their text or inserting characters. The four independently failing guides are colors, typography, theming and get-started. Verify all six supported widths after repair. Preformatted examples must retain whitespace, content and internal horizontal scrolling; do not hide document overflow or truncate strings. Scope is the existing LTD Markdown layout. Preserve all content and unrelated source changes. Actual before/after browser evidence and fresh independent readback are required; a compiled build alone does not establish visual acceptance.

@@ -221,13 +221,7 @@ const ROOT_COMPONENT_EXPORT_POLICIES: CanonPublicExportClassificationRule[] = [
 ];
 
 const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
-  {
-    exportPath: '.',
-    exportName: 'InspectableJourney',
-    classification: 'experiment',
-    registryPolicy: 'classified-out',
-    rationale: 'Root-barrel alias of the bounded Agency journey pilot (CRE-2259); same experimental boundary as ./patterns. See patterns/InspectableJourney.md.'
-  },
+  {exportPath:'./newsletter/attribution',classification:'content-utility',registryPolicy:'classified-out',rationale:'Newsletter attribution parsing is a narrow content utility, not a visual foundation primitive.'},
   {
     exportPath: '.',
     classification: 'supporting-api',

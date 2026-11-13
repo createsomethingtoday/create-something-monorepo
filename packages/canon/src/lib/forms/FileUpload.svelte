@@ -473,8 +473,9 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 28px;
-		height: 28px;
+		width: 44px;
+		flex-shrink: 0;
+		height: 44px;
 		background: transparent;
 		border: none;
 		color: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.46));

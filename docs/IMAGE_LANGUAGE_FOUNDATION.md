@@ -88,10 +88,10 @@ marketing.
 <!-- prettier-ignore -->
 | Element | Rule |
 | --- | --- |
-| Surface | Campaign: optic white or near-black with field/material imagery. Product: porcelain, white, or quiet near-black proof surfaces. |
+| Surface | Websites retain the black Canon foundation. Explicit light work surfaces are supported. Felt, paper, wood and ceramic colors belong inside original illustrations, without recoloring the owning website palette. |
 | Composition | Campaign: one kinetic field or material study integrated with proof. Product: one proof object first, then labels, gates, or receipts. |
 | Structure | Maps, lanes, cards, state rows, policy gates, receipt panels, and handoff arrows. |
-| Color | Canon clear tokens first: onyx, porcelain, cobalt, moss, and stop red. |
+| Color | Use current `--color-performance-*` semantic roles for the interface and text-labeled states. Illustration colors serve the scene; they do not redefine approval, error or other authority signals. `--color-clear-*` names are compatibility aliases. |
 | Type | Short workflow nouns and state labels. Avoid category jargon. |
 | Brand signature | Use the isometric cube as a small system mark, not as decoration. |
 | Motion | Campaign motion may express load, sequence, intervention, and recovery. Product motion moves selection, state, progression, handoff, or proof reveal. |
@@ -204,28 +204,28 @@ TASTE packet: <3 to 7 approved references by title/source and the specific
 communication pattern to borrow>. Use the references for judgment only. Do not
 copy source assets, brand marks, fonts, layouts, campaign language, or images.
 
-Style: CREATE SOMETHING Performance Lab image language on its Readable Control
-substrate. The
-visual should make delegated work feel trained, tested, governed, and proven
-before it runs. CREATE SOMETHING owns the artifact language. Choose the surface
-mode deliberately. Campaign images may use original human motion, temporal
-composites, hard crops, material texture, asymmetric editorial layout, and
-technical annotation. Product images use a calm proof surface with a plain claim,
-compact evidence, governed action states, readiness cues, and a visible handoff. Prefer
-porcelain `#f9f9f9`, white panels, onyx `#0a0e19`, quiet grey `#636363`, thin
-`#e1e1e1` borders, 4-8px radii, and restrained semantic accents: ocean
-`#0048ff`, moss `#1e3c2c`, stop `#c41e3a`, and performance pressure only when
-it marks readiness, stress, or a decision point. Build the composition from
-Clear-style receipts, state rows, decision panels, artifact cards, policy gates,
-owners, tests, and proof rails. Use the isometric cube as a small system
-signature only when useful. The image should feel mapped, tested, governed,
-validated, and handed off.
-For `.agency` article and internal marketing visuals, push this into a polished
-operating workspace rather than a teaching diagram: layered white panels,
-small icons, status rows, owner panels, evidence tables, proof summaries,
-timestamp-like receipts, dotted connectors, subtle shadows, and isometric
-system objects. The visual should feel like a client-safe product proof surface,
-not a flat explanatory slide.
+Style: CREATE SOMETHING's measured and whimsical Canon direction. The website
+foundation is black, with readable Geist type, fine rules and square artwork
+frames. Tactile felt, paper, pale wood and matte ceramic can bring warmth inside
+an original scene. Use the current Canon semantic palette and soft-square
+geometry when representing an interface. Declare an explicit light work surface
+when one serves the illustration; that choice does not change the website theme.
+
+Campaign images may use original material studies, purposeful character gestures,
+human motion and measured annotations tied to the claim. For a hero or CTA
+background, reserve a quiet region for live HTML copy and actions and keep the
+complete face and task objects clear at the intended responsive framing. Inline
+editorial images may be composed for their own section below the hero.
+
+Product images use a calm proof surface with a plain claim, relevant records,
+governed action states, owners and a visible handoff. Keep dense evidence and
+authority records separate from the scene subject. Use labels and supplied facts
+to explain states; illustration colors never confer approval or success. For an
+article or internal marketing visual, show the specific operating object and its
+relationships instead of filling the frame with generic dashboard furniture.
+Generated records remain explicitly conceptual. Only a real captured surface
+can be presented as screenshot evidence. Use the isometric cube as a small
+system signature when useful, separate from the original Canon character.
 
 Avoid: glowing robots, circuit faces, blue AI gradients, generic brains, stock
 photography, celebrity or athlete likenesses, sportswear marks or silhouettes,

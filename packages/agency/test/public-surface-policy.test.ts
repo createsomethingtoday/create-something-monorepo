@@ -95,3 +95,10 @@ test('all Webflow portfolio compositions retain their independent visual ownersh
     assert.equal(usesAgencyOperatorPalette(path), true, path);
   }
 });
+
+test('local Canon consumer review owns dark appearance without opening child utility routes', () => {
+  for (const path of ['/canon-preview', '/canon-preview/?surface=services&variant=proposed']) {
+    assert.equal(usesAgencyOperatorPalette(path), true, path);
+  }
+  assert.equal(usesAgencyOperatorPalette('/canon-preview/unknown'), false);
+});

@@ -38,12 +38,7 @@
 
 :root {
   --duration-performance-view-transition: 200ms;
-  
-  /* Canon owns the local/system display, body, and operational mono stacks. */
-  --font-performance-heading: var(--font-performance-sans);
-  --font-performance-display: var(--font-performance-sans);
-  --font-performance-serif: Georgia, "Times New Roman", serif;
-  --color-performance-focus: rgba(167, 184, 255, 0.72);
+
 }
 
 /* ==========================================================================
@@ -64,7 +59,7 @@ a:not([class*="button"]):not(.btn) {
 }
 
 a:not([class*="button"]):not(.btn):hover {
-  opacity: 0.7;
+  opacity: 1;
 }
 
 /* Custom focus styles for accessibility */

@@ -78,7 +78,7 @@
   .meridian-split {
     padding: clamp(3.5rem, 9vw, 8rem) 1rem;
     background: var(--color-performance-panel, #fff);
-    color: var(--color-performance-editorial-dark, #181312);
+    color: var(--color-performance-ink, #181312);
   }
   .meridian-split__inner {
     display: grid;
@@ -95,14 +95,14 @@
     overflow: hidden;
     align-content: end;
     padding: 1rem;
-    background: var(--color-performance-editorial-dark, #181312);
-    color: var(--color-performance-editorial-light, #f3ebe4);
+    background: var(--color-performance-ink, #181312);
+    color: var(--color-performance-panel, #f3ebe4);
   }
   .meridian-split__visual::before {
     position: absolute;
     inset: 1.1rem;
     border: 1px solid
-      color-mix(in srgb, var(--color-performance-editorial-light, #f3ebe4) 25%, transparent);
+      color-mix(in srgb, var(--color-performance-panel, #f3ebe4) 25%, transparent);
     content: '';
   }
   .meridian-split__visual--custom {
@@ -116,10 +116,10 @@
     position: relative;
     z-index: 1;
     font-family: var(--font-performance-mono);
-    font-size: 0.67rem;
+    font-size: 0.875rem;
     font-weight: var(--font-performance-semibold);
     letter-spacing: 0.08em;
-    text-transform: uppercase;
+    text-transform: none;
   }
   .meridian-split__court {
     position: absolute;
@@ -133,7 +133,7 @@
     width: 75%;
     aspect-ratio: 1;
     border: 1px solid
-      color-mix(in srgb, var(--color-performance-editorial-light, #f3ebe4) 35%, transparent);
+      color-mix(in srgb, var(--color-performance-panel, #f3ebe4) 35%, transparent);
     border-radius: 50%;
   }
   .meridian-split__lane {
@@ -143,7 +143,7 @@
     width: 43%;
     height: 54%;
     border: 1px solid
-      color-mix(in srgb, var(--color-performance-editorial-light, #f3ebe4) 35%, transparent);
+      color-mix(in srgb, var(--color-performance-panel, #f3ebe4) 35%, transparent);
     border-bottom: 0;
   }
   .meridian-split__line {
@@ -152,7 +152,7 @@
     height: 1px;
     background: color-mix(
       in srgb,
-      var(--color-performance-editorial-light, #f3ebe4) 35%,
+      var(--color-performance-panel, #f3ebe4) 35%,
       transparent
     );
     transform-origin: right;
@@ -174,10 +174,10 @@
     width: 1.25rem;
     aspect-ratio: 1;
     border-radius: 50%;
-    background: var(--color-performance-editorial-brand, #fcaa2d);
+    background: var(--color-performance-brand-primary, #fcaa2d);
     box-shadow:
-      0 0 0 0.35rem var(--color-performance-editorial-dark, #181312),
-      0 0 0 0.42rem var(--color-performance-editorial-brand, #fcaa2d);
+      0 0 0 0.35rem var(--color-performance-ink, #181312),
+      0 0 0 0.42rem var(--color-performance-brand-primary, #fcaa2d);
   }
   .meridian-split__content {
     display: grid;
@@ -187,10 +187,10 @@
   .meridian-split__eyebrow {
     margin: 0;
     font-family: var(--font-performance-mono);
-    font-size: 0.7rem;
+    font-size: 0.875rem;
     font-weight: var(--font-performance-semibold);
     letter-spacing: 0.08em;
-    text-transform: uppercase;
+    text-transform: none;
   }
   h2 {
     max-width: 11ch;
@@ -218,11 +218,11 @@
   li {
     padding: 0.45rem 0.6rem;
     border: 1px solid
-      color-mix(in srgb, var(--color-performance-editorial-dark, #181312) 22%, transparent);
+      color-mix(in srgb, var(--color-performance-ink, #181312) 22%, transparent);
     font-family: var(--font-performance-mono);
-    font-size: 0.68rem;
+    font-size: 0.875rem;
     letter-spacing: 0.04em;
-    text-transform: uppercase;
+    text-transform: none;
   }
   .meridian-split__actions {
     display: flex;
@@ -236,21 +236,22 @@
     align-items: center;
     gap: 0.85rem;
     padding: 0.75rem 1rem;
-    background: var(--color-performance-editorial-brand, #fcaa2d);
-    border: 1px solid var(--color-performance-editorial-brand, #fcaa2d);
-    color: var(--color-performance-editorial-dark, #181312);
+    background: var(--color-performance-brand-primary, #fcaa2d);
+    border: 1px solid var(--color-performance-brand-primary, #fcaa2d);
+    color: var(--color-performance-panel);
     font-family: var(--font-performance-mono);
-    font-size: 0.72rem;
+    font-size: 0.875rem;
     font-weight: var(--font-performance-semibold);
     letter-spacing: 0.055em;
     text-decoration: none;
-    text-transform: uppercase;
+    text-transform: none;
   }
   .meridian-button--quiet {
+    color: var(--color-performance-ink);
     background: transparent;
     border-color: color-mix(
       in srgb,
-      var(--color-performance-editorial-dark, #181312) 30%,
+      var(--color-performance-ink, #181312) 30%,
       transparent
     );
   }

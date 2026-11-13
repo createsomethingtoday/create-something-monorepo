@@ -1,7 +1,6 @@
 <script lang="ts">
   import { SkipToContent } from '@create-something/canon/components';
   import '../app.css';
-  import '@create-something/canon/styles/operator.css';
   import '$lib/styles/research.css';
   import '$lib/styles/operator.css';
   import { onMount } from 'svelte';
@@ -197,7 +196,7 @@
   <div
     class="layout-root property-performance"
     class:io-research-shell={isResearchSurface}
-    data-canon-palette={isResearchSurface ? 'operator' : undefined}
+    data-theme={isResearchSurface ? 'dark' : undefined}
   >
     <!-- Unified Search - Cmd/Ctrl+K to open -->
     <UnifiedSearch

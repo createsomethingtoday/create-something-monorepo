@@ -30,6 +30,8 @@
 	let open = $state(false);
 	let copyFeedback = $state(false);
 	let wrapperRef: HTMLDivElement;
+	let triggerRef: HTMLButtonElement;
+	const menuId = $props.id();
 
 	const formattedMarkdown = $derived(formatPageMarkdown(title, content, metadata));
 
@@ -45,8 +47,8 @@
 	}
 
 	function handlePreview() {
+		close(true);
 		onpreview?.(formattedMarkdown);
-		close();
 	}
 
 	function handleClaude() {
@@ -59,7 +61,8 @@
 		open = !open;
 	}
 
-	function close() {
+	function close(restoreFocus = false) {
+		if (restoreFocus) triggerRef?.focus();
 		open = false;
 	}
 
@@ -72,12 +75,23 @@
 	function handleKeyDown(event: KeyboardEvent) {
 		if (event.key === 'Escape' && open) {
 			event.preventDefault();
-			close();
+			close(true);
 		}
+	}
+
+	function handleMenuKeydown(event: KeyboardEvent) {
+		const items = [...wrapperRef.querySelectorAll<HTMLElement>('[role=menuitem]')];
+		const index = items.indexOf(document.activeElement as HTMLElement);
+		if (['ArrowDown','ArrowUp','Home','End'].includes(event.key)) {
+			event.preventDefault();
+			const next = event.key === 'Home' ? 0 : event.key === 'End' ? items.length-1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+			items[next]?.focus();
+		} else if (event.key === 'Tab') close();
 	}
 
 	$effect(() => {
 		if (open) {
+			wrapperRef.querySelector<HTMLElement>('[role=menuitem]')?.focus();
 			document.addEventListener('click', handleClickOutside, true);
 			document.addEventListener('keydown', handleKeyDown);
 			return () => {
@@ -92,6 +106,8 @@
 	<button
 		type="button"
 		class="trigger"
+		bind:this={triggerRef}
+		aria-controls={open ? menuId : undefined}
 		class:active={open}
 		aria-label="Page actions"
 		aria-haspopup="menu"
@@ -107,8 +123,8 @@
 	</button>
 
 	{#if open}
-		<div class="menu" role="menu">
-			<button type="button" class="menu-item" role="menuitem" onclick={handleCopy}>
+		<div class="menu" role="menu" id={menuId} tabindex="-1" onkeydown={handleMenuKeydown}>
+			<button type="button" class="menu-item" role="menuitem" tabindex="-1" onclick={handleCopy}>
 				<svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
 					<rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
 					<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
@@ -116,7 +132,7 @@
 				<span>{copyFeedback ? 'Copied!' : 'Copy as Markdown'}</span>
 			</button>
 
-			<button type="button" class="menu-item" role="menuitem" onclick={handlePreview}>
+			<button type="button" class="menu-item" role="menuitem" tabindex="-1" onclick={handlePreview}>
 				<svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
 					<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
 					<circle cx="12" cy="12" r="3" />
@@ -126,7 +142,7 @@
 
 			<div class="divider" role="separator"></div>
 
-			<button type="button" class="menu-item" role="menuitem" onclick={handleClaude}>
+			<button type="button" class="menu-item" role="menuitem" tabindex="-1" onclick={handleClaude}>
 				<svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
 					<path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
 				</svg>
@@ -143,11 +159,12 @@
 	}
 
 	.trigger {
+		border: 1px solid var(--color-performance-border-default);
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		width: 32px;
-		height: 32px;
+		width: 44px;
+		height: 44px;
 		padding: 0;
 		background: var(--color-performance-bg-surface);
 		border-radius: var(--radius-performance-scale-md);
@@ -179,6 +196,9 @@
 		right: 0;
 		z-index: var(--z-performance-dropdown, 20);
 		min-width: 200px;
+		max-width: calc(100vw - 2rem);
+		background: var(--color-performance-bg-elevated);
+		border: 1px solid var(--color-performance-border-default);
 		padding: var(--space-performance-xs);
 		border-radius: var(--radius-performance-scale-lg);
 		box-shadow: var(--shadow-performance-scale-lg);
@@ -201,6 +221,7 @@
 		align-items: center;
 		gap: var(--space-performance-sm);
 		width: 100%;
+		min-height: 44px;
 		padding: var(--space-performance-sm) var(--space-performance-md);
 		background: none;
 		border: none;

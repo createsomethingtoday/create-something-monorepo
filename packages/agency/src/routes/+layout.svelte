@@ -126,6 +126,8 @@
   const primaryCtaHref = agencyCoreMessaging.membershipHref;
   const agencyFooterMacroMedia = {
     src: '/images/performance-lab/playbook-footer-decision-gate-macro.webp',
+    width: 1024,
+    height: 1536,
     alt: 'Macro-real Playbook decision gate: an ivory AI-agent marker held inside a black steel ring as amber and proof-green routes cross a physical court surface.'
   };
   const globalAnalyticsMetadata = $derived(getAgencyGlobalAnalyticsMetadata($page.url.pathname));
@@ -354,7 +356,7 @@
 <LayoutSEO property="agency" />
 <PageAnnotations pathname={$page.url.pathname} />
 
-<div class="agency-surface" data-canon-palette={usesOperatorPalette ? "operator" : undefined} data-agency-brand={usesMeasuredPublicSurface || usesMeasuredAccountSurface ? "measured" : undefined} data-agency-account={usesMeasuredAccountSurface ? "true" : undefined}>
+<div class="agency-surface" data-theme={usesOperatorPalette ? "dark" : "light"} data-canon-palette={usesOperatorPalette ? "operator" : undefined} data-agency-brand={usesMeasuredPublicSurface || usesMeasuredAccountSurface ? "measured" : undefined} data-agency-account={usesMeasuredAccountSurface ? "true" : undefined}>
 <PrivacyAnalytics
   property="agency"
   userId={data.user?.id}
@@ -409,11 +411,13 @@
     <AgencyPerformanceHandoff />
   {/if}
 
+  <div data-theme="dark" class="agency-footer-scope">
   {#if pageFoundation}
     <div id="agency-directory" tabindex="-1" aria-label="Agency directory">{@render agencyFooter()}</div>
   {:else}
     {@render agencyFooter()}
   {/if}
+  </div>
 
   {#if !usesMeasuredAccountSurface && !routeOwnsPerformanceEnding && $page.url.pathname !== '/basketball-systems-lab' && !isDifyArticleRoute}
     <ModeIndicator current="agency" />
@@ -456,8 +460,7 @@
   }
 
   /* Homepage campaign preview: preserve the shared navigation behavior and logo. */
-  .film-home { --agency-nav-surface-rgb: 8,8,8; }
-  .film-home :global(.nav-editorial.nav-fixed) { top: 0; left: 0; right: 0; border: 0; border-radius: 0; background: rgba(var(--agency-nav-surface-rgb),.88); backdrop-filter: blur(16px); }
+  .film-home :global(.nav-editorial.nav-fixed) { top: 0; left: 0; right: 0; border: 0; border-radius: 0; background: var(--color-performance-paper); backdrop-filter: none; }
   .film-home :global(.nav-editorial .nav-inner) { padding-inline: 3vw; }
   .film-home :global(main#main-content) { padding-top: 0; }
   .film-home :global(.nav-editorial .nav-link-list) { font-size: 12px; }

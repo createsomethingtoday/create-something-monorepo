@@ -1,6 +1,5 @@
 <script lang="ts">
-	import LibraryScene from '$lib/components/LibraryScene.svelte';
-	import { SEO } from '@create-something/canon';
+	import { PerformanceCampaignOpening, SEO } from '@create-something/canon';
 </script>
 
 <SEO
@@ -13,17 +12,20 @@
 	]}
 />
 
-<!-- Hero Section -->
-<header class="hero">
-	<p class="eyebrow">Design System</p>
-	<h1 class="hero-title">Canon</h1>
-	<p class="hero-subtitle">
-		Everything you need to build interfaces that feel right. Colors, typography, 
-		components, and the thinking behind each decision.
-	</p>
-
-	<LibraryScene scene="tool-fit-without-forcing" caption="A shared standard makes the parts fit together." />
-</header>
+<!-- Decorative workshop scene; all essential content remains HTML. -->
+<div class="docs-opening">
+ <PerformanceCampaignOpening
+  eyebrow="Design System"
+  title="Canon"
+  lede="Everything you need to build interfaces that feel right. Colors, typography, components, and the thinking behind each decision."
+  background={{
+   src: '/canon-next/approved-v1/welcome-bench.webp',
+   mobileSrc: '/canon-next/approved-v1/review-nook.webp',
+   aspectRatio: 1672 / 941,
+   mobileAspectRatio: 1122 / 1402
+  }}
+ />
+</div>
 
 <!-- Philosophy Quote -->
 <section class="philosophy-quote">
@@ -156,36 +158,19 @@
 </section>
 
 <style>
-	/* Hero */
-	.hero {
-		text-align: center;
-		padding-block: var(--space-performance-md);
-		margin-bottom: var(--space-performance-md);
-	}
+	.docs-opening {
+  margin-bottom: var(--space-performance-lg);
+  border: 1px solid var(--color-performance-line);
+ }
 
-	.eyebrow {
-		font-size: var(--text-performance-caption);
-		text-transform: uppercase;
-		letter-spacing: var(--tracking-performance-widest);
-		color: var(--color-performance-fg-muted);
-		margin-bottom: var(--space-performance-sm);
-	}
-
-	.hero-title {
-		font-size: var(--text-performance-display);
-		font-weight: var(--font-performance-bold);
-		color: var(--color-performance-fg-primary);
-		margin-bottom: var(--space-performance-md);
-		letter-spacing: var(--tracking-performance-tight);
-	}
-
-	.hero-subtitle {
-		font-size: var(--text-performance-body-lg);
-		color: var(--color-performance-fg-secondary);
-		max-width: 600px;
-		margin: 0 auto;
-		line-height: var(--leading-performance-relaxed);
-	}
+ /* The portrait has no quiet copy wall above its face. Preserve the entire
+    authored task below the HTML within the same background opening. */
+ @media (max-width: 47.99rem) {
+  .docs-opening :global(.canon-scene-lead__art) { grid-area: 2 / 1; z-index: 0; }
+  .docs-opening :global(.canon-scene-lead__art::after) { background: none; }
+  .docs-opening :global(.canon-scene-lead__copy) { min-height: 0; }
+  .docs-opening :global(.canon-scene-lead__reserved) { display: none; }
+ }
 
 	/* Philosophy Quote */
 	.philosophy-quote {
@@ -233,23 +218,28 @@
 
 	.card-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
 		gap: var(--space-performance-md);
 	}
 
 	.feature-card {
 		display: block;
-		padding: var(--space-performance-lg);
+		padding: clamp(1.25rem, 3vw, var(--space-performance-lg));
 		background: var(--color-performance-bg-surface);
 		border-radius: var(--radius-performance-scale-lg);
 		text-decoration: none;
-		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
+		border: 1px solid var(--color-performance-line);
+		transition: border-color var(--duration-performance-micro) var(--ease-performance-standard);
 		position: relative;
 	}
 
+	.feature-card:focus-visible {
+  outline: 2px solid var(--color-performance-fg-primary);
+  outline-offset: 4px;
+ }
+
 	.feature-card:hover {
 		border-color: var(--color-performance-border-emphasis);
-		transform: translateY(-2px);
 	}
 
 	.card-icon {
@@ -281,14 +271,14 @@
 	/* Principles */
 	.principles {
 		margin-bottom: var(--space-performance-xl);
-		padding: var(--space-performance-xl);
+		padding: clamp(1.25rem, 4vw, var(--space-performance-xl));
 		background: var(--color-performance-bg-surface);
 		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.triad-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
 		gap: var(--space-performance-md);
 	}
 

@@ -74,14 +74,14 @@
 	}: Props = $props();
 
 	// Generate unique ID if not provided
-	const fallbackFieldId = `textfield-${crypto.randomUUID().slice(0, 8)}`;
+	const fallbackFieldId = $props.id();
 	const fieldId = $derived(id || fallbackFieldId);
 	const descriptionId = $derived(`${fieldId}-description`);
 	const errorId = $derived(`${fieldId}-error`);
 
 	// Determine aria-describedby based on what's shown
 	const ariaDescribedBy = $derived(
-		[error ? errorId : null, description ? descriptionId : null].filter(Boolean).join(' ') || undefined
+		[error ? errorId : null, description && !error ? descriptionId : null].filter(Boolean).join(' ') || undefined
 	);
 </script>
 
@@ -149,6 +149,8 @@
 
 	/* Input */
 	.textfield-input {
+		background: var(--color-performance-panel);
+		border: 1px solid var(--color-performance-line-strong);
 		box-sizing: border-box;
 		width: 100%;
 		padding: var(--space-performance-sm) var(--space-performance-md);
@@ -170,9 +172,10 @@
 	}
 
 	.textfield-input:focus {
-		outline: none;
+		outline: 3px solid var(--color-performance-focus);
+		outline-offset:2px;
 		border-color: var(--color-performance-border-emphasis);
-		box-shadow: 0 0 0 3px var(--color-performance-focus);
+		box-shadow:none;
 	}
 
 	.textfield-input:disabled {
@@ -192,14 +195,14 @@
 	}
 
 	.has-error .textfield-input:focus {
-		box-shadow: 0 0 0 3px var(--color-performance-error-muted);
+		box-shadow:none;
 	}
 
 	/* Size variants */
 	.textfield-sm .textfield-input {
 		padding: var(--space-performance-xs) var(--space-performance-sm);
 		font-size: var(--text-performance-body-sm);
-		min-height: 36px;
+		min-height: 44px;
 	}
 
 	.textfield-sm .textfield-label {
@@ -228,5 +231,9 @@
 		font-size: var(--text-performance-caption);
 		color: var(--color-performance-error);
 		margin: 0;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.textfield-input { transition:none; }
 	}
 </style>

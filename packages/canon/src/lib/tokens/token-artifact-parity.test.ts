@@ -136,3 +136,8 @@ describe('Canon token artifact parity', () => {
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
+
+describe('public typography generators match canonical source',()=>{
+ it('keeps the locally loaded house font in the TS generator',()=>expect(normalizeCssValue(typographyVars['--font-performance-sans'])).toBe(normalizeCssValue(readRootToken('--font-performance-sans'))));
+ it('keeps comfortable prose leading identical across imports',()=>expect(typographyVars['--leading-performance-relaxed']).toBe(readRootToken('--leading-performance-relaxed')));
+});

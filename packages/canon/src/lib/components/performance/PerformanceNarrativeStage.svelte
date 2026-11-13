@@ -552,6 +552,15 @@
 </section>
 
 <style>
+  .performance-narrative-stage,
+  .performance-narrative-stage__inner,
+  .performance-narrative-stage__composition,
+  .performance-narrative-stage__panels,
+  .performance-narrative-stage__panel,
+  .performance-narrative-stage__controls,
+  .performance-narrative-stage__speaker-notes {
+    box-sizing: border-box;
+  }
   .performance-narrative-stage {
     scroll-margin-top: var(
       --distance-performance-stage-anchor-offset,
@@ -598,9 +607,9 @@
     background: var(--color-performance-ink, #090909);
     color: var(--color-performance-panel, #fff);
     font-family: var(--font-performance-mono);
-    font-size: 0.72rem;
+    font-size:0.875rem;
     font-weight: var(--font-performance-semibold);
-    text-transform: uppercase;
+    text-transform:none;
     cursor: pointer;
   }
 
@@ -620,10 +629,10 @@
   .performance-narrative-stage__proof span {
     color: var(--color-performance-muted, #5e6268);
     font-family: var(--font-performance-mono);
-    font-size: 0.72rem;
+    font-size:0.875rem;
     font-weight: var(--font-performance-semibold);
     line-height: 1.2;
-    text-transform: uppercase;
+    text-transform:none;
   }
 
   .performance-narrative-stage h2,
@@ -725,7 +734,7 @@
     padding-top: 0.12rem;
     color: var(--color-performance-muted, #5e6268);
     font-family: var(--font-performance-mono);
-    font-size: 0.7rem;
+    font-size:0.875rem;
   }
 
   .performance-narrative-stage__index-copy {
@@ -742,15 +751,15 @@
   .performance-narrative-stage__index-copy small,
   .performance-narrative-stage__index-copy em {
     color: var(--color-performance-muted, #5e6268);
-    font-size: 0.79rem;
+    font-size:0.875rem;
     font-style: normal;
     line-height: 1.35;
   }
 
   .performance-narrative-stage__index-copy em {
     font-family: var(--font-performance-mono);
-    font-size: 0.65rem;
-    text-transform: uppercase;
+    font-size:0.875rem;
+    text-transform:none;
   }
 
   .performance-narrative-stage__panels {
@@ -780,9 +789,9 @@
     border: 1px solid var(--color-performance-line, #d7d7d2);
     color: var(--color-performance-muted, #5e6268);
     font-family: var(--font-performance-mono);
-    font-size: 0.68rem;
+    font-size:0.875rem;
     font-weight: var(--font-performance-semibold);
-    text-transform: uppercase;
+    text-transform:none;
   }
 
   .performance-narrative-stage__scene-head h3 {
@@ -815,8 +824,8 @@
   .performance-narrative-stage__stakeholders p strong {
     color: var(--color-performance-ink, #090909);
     font-family: var(--font-performance-mono);
-    font-size: 0.66rem;
-    text-transform: uppercase;
+    font-size:0.875rem;
+    text-transform:none;
   }
 
   .performance-narrative-stage__stakeholders p span {
@@ -865,7 +874,7 @@
     padding: 0.35rem 0.5rem;
     border: 1px solid var(--color-performance-line, #d7d7d2);
     font-family: var(--font-performance-mono);
-    font-size: 0.68rem;
+    font-size:0.875rem;
     font-weight: var(--font-performance-medium);
   }
 
@@ -886,10 +895,10 @@
     background: var(--color-performance-panel, #ffffff);
     color: var(--color-performance-ink, #090909);
     font-family: var(--font-performance-mono);
-    font-size: 0.72rem;
+    font-size:0.875rem;
     font-weight: var(--font-performance-semibold);
     text-decoration: none;
-    text-transform: uppercase;
+    text-transform:none;
   }
 
   .performance-narrative-stage__controls {
@@ -905,9 +914,9 @@
   .performance-narrative-stage__controls span {
     color: var(--color-performance-muted, #5e6268);
     font-family: var(--font-performance-mono);
-    font-size: 0.68rem;
+    font-size:0.875rem;
     text-align: center;
-    text-transform: uppercase;
+    text-transform:none;
   }
 
   .performance-narrative-stage__controls button:disabled {
@@ -1220,7 +1229,7 @@
     grid-column: 2;
     grid-row: 1;
     justify-self: end;
-    min-height: 2.4rem;
+    min-height: var(--control-min-size, 44px);
   }
 
   .performance-narrative-stage[data-presenting='true']
@@ -1326,6 +1335,8 @@
   }
 
   .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__controls {
+    grid-row: 3;
+    align-self: end;
     z-index: 4;
     grid-template-columns: auto 1fr auto auto;
     margin: 0;
@@ -1350,14 +1361,15 @@
     width: min(28rem, calc(100% - 2rem));
     padding: 1rem;
     border: 1px solid var(--color-performance-line-strong, #9c9c96);
-    background: rgb(255 255 255 / .96);
+    background: var(--color-performance-panel);
+    color: var(--color-performance-ink);
     box-shadow: 0 .75rem 2rem rgb(9 9 9 / .14);
   }
 
   .performance-narrative-stage__speaker-notes span {
     color: var(--color-performance-muted, #5e6268);
-    font: 650 .68rem/1.2 var(--font-performance-mono, ui-monospace, monospace);
-    text-transform: uppercase;
+    font: 650 .875rem/1.2 var(--font-performance-mono, ui-monospace, monospace);
+    text-transform:none;
   }
 
   .performance-narrative-stage__speaker-notes p {
@@ -1463,4 +1475,10 @@
       animation-duration: 0.01ms !important;
     }
   }
+
+ .performance-narrative-stage { overflow-wrap: anywhere; }
+ .performance-narrative-stage__inner, .performance-narrative-stage__header > *, .performance-narrative-stage__index-copy { min-width: 0; }
+ .performance-narrative-stage__index button { min-width: 0; }
+
+ @media (max-width: 25rem) { .performance-narrative-stage__index button { grid-template-columns: minmax(0, 1fr); } }
 </style>

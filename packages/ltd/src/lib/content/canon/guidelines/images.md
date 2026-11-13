@@ -3,157 +3,37 @@ category: "Canon"
 section: "Guidelines"
 title: "Images"
 description: "CREATE SOMETHING image guidelines for marketing, articles, social previews, decks, and client proof artifacts."
-lead: "Images should make the operating system visible. Use Performance Lab as the communication foundation, then translate that discipline into CREATE SOMETHING maps, receipts, gates, and proof."
+lead: "Original workshop scenes make a beginning welcoming. Clear composition keeps copy readable, tasks visible and evidence truthful."
 publishedAt: "2026-06-22"
 published: true
 ---
 
-## Decision
+## Measured structure, tactile whimsy
 
-Use Performance Lab as the design and communication foundation for CREATE SOMETHING images:
-calm hierarchy, decisive contrast, plain claims, compact proof, governed execution, visible
-customer evidence, readiness states, and restrained action states.
+Canon begins with a black website foundation and clear HTML copy. Original felt characters, paper objects, pale wood and matte ceramic can make a beginning welcoming. Fine rules, meaningful labels and square artwork frames keep the composition measured. Solid controls remain distinct from the artwork.
 
-CREATE SOMETHING owns the implementation language. Our images should show how AI
-work gets mapped, integrated, governed, validated, shipped, and handed off.
-For external education, marketing, social, deck, and client-proof surfaces, the
-approved OpenAI generated export is the first-class visual when it communicates
-better than a raw SVG or Atlas render.
+An illustration can explain a task or invite participation. It cannot prove that a workflow ran, a reviewer approved it or an external action succeeded. Maps, screenshots and receipts retain their own source, date, owner and limitations. Never present generated UI as a real screenshot.
 
-Use `docs/IMAGE_LANGUAGE_FOUNDATION.md` when a generated, designed, captured, or
-rendered image needs TASTE-backed judgment context. TASTE references are inputs
-for review and prompting; they are not source assets to copy.
+## Hero and CTA backgrounds
 
-## What images should prove
+Hero and CTA scenes use CSS background images with headings, supporting copy and actions in HTML. This is a section composition rule, not a requirement to put an image in each button. Inline images belong in subsequent editorial sections.
 
-Every generated or designed image must answer at least one operational question:
+Select a scene around the intended copy. Keep faces, gestures and task objects visible; do not cover them with dense proof panels. Use a separately composed portrait scene when mobile needs it, and inspect intermediate widths as well as endpoints. A crop or overlay alone does not establish good composition.
 
-1. What object, workflow, or system is being mapped?
-2. What can run, needs review, or must stop?
-3. What policy, contract, receipt, trace, eval, or screenshot proves the claim?
-4. Who owns the next step?
+Preload the actual above-fold hero source with matching responsive conditions. Do not preload every CTA. Missing images must leave readable copy and usable actions on the owning palette. Decorative scenes need no redundant accessible name; meaningful imagery needs a concise description available in the document.
 
-If the image cannot answer one of those questions, it is decoration. Do not use it.
+Shared compositions expose their own optional `background` contract. Follow each component's actual props rather than assuming every component accepts identical media options. Evidence and authority records belong in a readable region outside the scene subject.
 
-## Visual grammar
+## Identity and study boundaries
 
-Use this foundation for marketing materials, article visuals, social cards, pitch
-decks, and client updates:
+Use original, reviewed CREATE SOMETHING assets. Current local character studies are not approved production masters or permission to publish derivatives. The static head study is supported at 96px in its local fixture; smaller interface placements use plain Canon text. Body-pose studies remain provisional. Do not imply live activity, approval or emotion from a decorative character.
 
-| Layer | Rule |
-|-------|------|
-| **Canvas** | Prefer porcelain, white, or quiet near-black surfaces. Avoid noisy gradients. |
-| **Hierarchy** | One plain claim, then proof beside or below it. |
-| **Structure** | Use maps, lanes, cards, state rows, gates, receipts, and arrows. |
-| **Brand mark** | Use the isometric cube as the persistent system signature. |
-| **Color** | Use Canon clear tokens first: onyx, porcelain, cobalt, moss, and stop red. |
-| **Type** | Use direct labels. Prefer workflow nouns over category language. |
-| **Motion** | For video or animated exports, move only state, selection, progression, or handoff. |
-| **Proof** | Make validation visible through receipts, tests, links, dates, owners, and status. |
+OpenAI design alignment is Select Partner context, not permission to copy third-party branding, product shells or font assets. TASTE references are research inputs, not reusable source assets. Private research inputs must stay private.
 
-Raw SVGs, Atlas renders, and graph exports are useful control artifacts. Publish
-them only when they meet the same quality bar as a generated export; otherwise
-use them as source briefs for OpenAI generation or edits.
+## Evidence and review
 
-## Image families
+Keep the source brief, prompt when generated, model when known, original output, hash, owner, target surface and review status with an asset. Asset approval and final page composition approval are separate decisions. Use exact diagrams where precision matters and expressive imagery where it helps comprehension.
 
-Create reusable image families instead of one-off illustrations:
+Before reuse, directly inspect the intended display size, both owning palettes where relevant, narrow and intermediate widths, reduced motion, missing images and no-JavaScript behavior. Confirm legible copy, useful actions, truthful claims, accessibility and provenance. Deterministic checks support this review; they do not accept the artwork or authorize publication.
 
-- **System map hero**: the full operating path from input to governed outcome.
-- **Database / Automation / Judgment diagram**: the three-tier framework as lanes or columns.
-- **Policy gate chart**: allowed, ask, blocked, escalated, complete.
-- **Evidence map**: artifact cards connected to the claim they prove.
-- **Handoff receipt**: owner, state, validation, rollback, and next action.
-- **Screenshot annotation**: real product evidence with restrained callouts.
-- **CTA visual**: the specific next action, not generic AI promise.
-
-## GPT Image 2 prompt contract
-
-Use OpenAI `gpt-image-2` for production image generation when access is
-available. Keep prompts structured and repeatable:
-
-```text
-Model: gpt-image-2
-Quality: high
-Size: <target size>
-
-Create a CREATE SOMETHING <image family> for <surface>.
-Purpose: <what the image must prove>.
-Audience: <operator, buyer, builder, reviewer, client>.
-Show: <workflow objects, states, proof artifacts, owners, gates>.
-Style: CREATE SOMETHING Performance Lab image language:
-plain claim, decisive hierarchy, compact proof, governed execution, visible
-evidence, readiness states, and restrained action states. Translate that into CREATE SOMETHING
-artifacts: porcelain `#f9f9f9`, white panels, onyx `#0a0e19`, quiet grey
-`#636363`, thin `#e1e1e1` borders, 4-8px radii, compact receipts, state rows,
-decision panels, artifact cards, policy gates, owners, proof rails, and a small
-isometric cube signature only when useful. Use ocean `#0048ff`, moss `#1e3c2c`,
-and stop `#c41e3a` only as semantic state accents.
-Avoid: glowing robots, circuit faces, blue AI gradients, generic brains,
-fake dashboards, stock photography, generic premium desk scenes, unreadable file
-paths, private data, client secrets, vendor endorsement, watermarks.
-```
-
-The prompt should name the artifact family and proof requirement before style.
-Style cannot rescue a vague visual brief.
-
-For article, social, deck, sales, or client-update images, start from
-`packages/agency/content/templates/marketing/image-prompt.md` and store the
-completed prompt beside the generated export.
-
-Use the Image API for a single completed generation or edit. Use the Responses
-API image generation tool for conversational, multi-turn image refinement.
-Prefer editing from an approved export for revisions instead of regenerating
-from scratch when layout continuity matters.
-
-## Review gate
-
-Before publishing or reusing an image:
-
-- Text is legible at 50% size.
-- The image still works without animation.
-- The claim is supported by visible proof or a real screenshot.
-- No fake UI is presented as a screenshot.
-- No secrets, private data, private prompts, client records, or tokens appear.
-- The asset has source prompt, source brief, model, date, output hash, owner,
-  target surface, and refresh date.
-- The result feels like governed operations, not generic AI atmosphere.
-
-Use deterministic repo checks as the required gate for this workflow. Langfuse
-is not required to generate, store, or approve image assets. Add Langfuse later
-only if CREATE SOMETHING needs a scored rubric across many generated images,
-prompt variants, or approval outcomes.
-
-## File metadata
-
-Every generated image should keep a source prompt beside the export:
-
-```text
-<asset-slug>--prompt--vYYYYMMDD.txt
-<asset-slug>--brief--vYYYYMMDD.md
-<asset-slug>--export--1200x630--vYYYYMMDD.png
-```
-
-Include the model, snapshot if known, quality, size, source inputs, output hash,
-and review status in the prompt file. This makes the visual system auditable and
-repeatable.
-For article image sets, copy
-`packages/agency/content/templates/marketing/image-metadata.md` into the asset
-folder and fill it before publish.
-
-Run the metadata/template check before publishing reusable article assets:
-
-```bash
-node scripts/marketing-image-assets-check.mjs
-```
-
-## Boundary
-
-Do not copy third-party identity, campaign language, page layouts, or category framing.
-Use CREATE SOMETHING Performance Lab as the standard for how governed autonomy should
-communicate through real systems, policy, evidence, and delivery.
-
-Do not route Canon image generation through Google Gemini, Omni, or Vertex. This
-is an intentional stack-limit decision, not a temporary account-availability
-fallback. If OpenAI image access is blocked, keep the prompt and source brief
-ready rather than silently downgrading to another provider.
+See [Colors](/canon/foundations/colors), [Typography](/canon/foundations/typography) and [Accessibility](/canon/guidelines/accessibility).

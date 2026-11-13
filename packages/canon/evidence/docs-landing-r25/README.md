@@ -1,0 +1,17 @@
+# Local Canon docs landing adoption — r25
+
+Acceptance: preserve headings, semantic teaching content, four navigation destinations and SEO; replace the old inline metal hero with approved felt scenes via the shared CSS background API; retain black/Geist, whole face/task, responsive readability, keyboard access, reduced motion, no JS and readable missing imagery. Local only; no publication.
+
+Implementation: only `packages/ltd/src/routes/canon/+page.svelte`, two new PNG copies under `packages/ltd/static/canon-next/docs-landing-r25/`, and this evidence directory. Original assets untouched; `assets.json` records source, exact SHA256 and dimensions. Approved 01 welcome is desktop; 03 portrait is mobile. The opening uses the existing root-exported PerformanceCampaignOpening background API. An initial /performance import caused a local 500; corrected to the existing root export (no API changes). All existing body headings and destinations remain. Decorative art has no redundant accessible name. Shared opening preloads only the responsive hero sources.
+
+Before: `before-320/390/1440.png`; inline LibraryScene confirmed, old metal source directly viewed. Initial image capture had the old lazy hero unloaded; it is evidence of layout/inline structure rather than a claim of loaded artwork. No initial overflow was observed.
+
+Actual visual correction: shared portrait scrim obscured the face. Page-owned mobile CSS now reserves the full portrait beneath the HTML copy within the same CSS-background opening; zero hero img elements. Desktop retains copy on the dark wall. No shared styles/layout were changed by this owner. Responsive grids use bounded minimums and narrower local panel padding; four cards retain comfortable targets and visible focus.
+
+Functional correctness: PASSED for bounded local behavior. `final-responsive.json` verifies 320/390/768/1024/1025/1440 with scroll width equal to viewport, zero inline hero images, four unchanged destinations, all card targets exceeding 44px. `compile.json`: focused Svelte server compile, zero warnings. `final-checks.json`: keyboard Tab advances Foundations→Components with visible outline; reduced-motion media active, heading retained; scripting disabled through CDP before reload retains heading/four cards; blocked hero URLs retain HTML copy/four cards. Special-state checks were desktop at native 1253px, not the full six-width matrix. Package check/build/sync deliberately not run without parent exclusive grant.
+
+Perceptual/product quality: PASSED for builder local review only. All six final full-page screenshots directly viewed, plus keyboard, no-JS, missing-image and original 01/03/04 scenes. Black canvas/Geist, fine artwork frame, complete face and paper task, editorial lower content and readable fallback confirmed. Final screenshots: `after-{width}.png`; `mobile-composition.png` is a readable portrait viewport. Parent independent Sol retest and human acceptance remain separate. No subjective score claimed.
+
+Release readiness: NOT APPLICABLE for shipping; local review artifact only. Original PNGs intentionally unoptimized under authorization. No deploy, publication, commit, push, Linear mutation, or production asset replacement. Parent owns duplicate-head layout correction and all package-wide gates. Worktree disposition: preserved at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a01044d6-2f560e0ec9e58190.
+
+Browser space 57 finished, pages closed. Ego reported an available update; no upgrade performed.

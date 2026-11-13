@@ -6,6 +6,10 @@ publishedAt: "2026-01-08"
 published: true
 ---
 
+Canon joins measured structure with tactile whimsy: a black foundation, locally loaded Geist, meaningful mono, solid surfaces and comfortable soft-square controls. Explicit light scopes support focused work. Original workshop imagery invites participation while words and evidence retain authority.
+
+Start with [Colors](/canon/foundations/colors), [Typography](/canon/foundations/typography), [Images](/canon/guidelines/images) and [Get Started](/canon/resources/get-started).
+
 <section class="philosophy-quote">
 <blockquote>
 <p>"Weniger, aber besser"</p>

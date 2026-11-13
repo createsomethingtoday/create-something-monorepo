@@ -40,7 +40,7 @@
 		children
 	}: Props = $props();
 
-	const groupId = `checkboxgroup-${crypto.randomUUID().slice(0, 8)}`;
+	const groupId = $props.id();
 	const descriptionId = `${groupId}-description`;
 	const errorId = `${groupId}-error`;
 </script>

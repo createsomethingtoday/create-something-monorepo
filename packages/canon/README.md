@@ -4,6 +4,18 @@
 
 > "Weniger, aber besser" — Dieter Rams
 
+## Current foundation
+
+Canon keeps a black website foundation: black canvas, neutral gray surfaces, clear white actions, locally loaded Geist, readable state colors and comfortable controls. Tactile characters and workshop scenes bring the whimsy; measured rules, precise labels and square artwork frames hold the composition. Existing token names, root components and family imports carry this direction; no `data-canon-next` boundary is required. Use `data-theme="light"` for an explicit light work surface or comparison, and `data-theme="dark"` to restore the black foundation inside it. `.cs-workspace` retains dark chrome; the separate namespaced operator palette remains opt-in. State and compatibility aliases rebind at palette boundaries.
+
+The complete `canon.css` import owns base styles and local font loading. `tokens.css` is framework-neutral and contains only token definitions; token-only consumers own font assets and base resets. Glass-named compatibility tokens now provide solid surfaces by default. Explicit decorative modules remain opt-in; they do not define standard controls or dialogs.
+
+Use the existing Button/Card/form/feedback/navigation/data families. Canonical controls own their sizing and padding without requiring Tailwind utility CSS. `Performance*` compositions retain evidence, authority and receipt semantics; `Clear*` names remain compatibility exports. The guided `/next`, component `/next/components`, and pattern `/next/patterns` routes are local review examples, not deployed product acceptance.
+
+Start with the [current system guide](APPROACHABLE-SYSTEM.md) and [local review index](LOCAL-REVIEW.md). The [foundation adoption](FOUNDATION-MIGRATION.md), [family contracts](FAMILY-MIGRATION.md), and [shared patterns convergence](PATTERNS-MIGRATION.md) reports preserve checkpoint history and evidence; superseded defaults in those reports are not the current specification.
+
+Generate portable CSS/SCSS/JSON with `node scripts/generate-foundation-artifacts.mjs` from this package. The TS generator covers its documented public subset; it is not a complete replacement for canonical CSS modes.
+
 ## Philosophy
 
 Canon is the unified design system for all CREATE SOMETHING properties and client surfaces.
@@ -198,17 +210,20 @@ Atlas Studio, and Substrate views keep the same typography contract.
 
 ## Performance Lab Surfaces
 
-Canon uses Performance Lab as the CREATE SOMETHING design-language direction:
-delegated work should feel trained, tested, governed, and proven before it
-runs. The operative definition is intelligent systems trained for pressure:
-engineered in the lab, tested under load, and proven in the field. The house
-language is Performance Lab: plain claims, readable type,
-porcelain and near-black proof surfaces, visible artifacts, compact navigation,
-readiness rails, and restrained action states. The micro-interaction rule is
-performance first: use motion or selection only when it clarifies state,
-evidence, pressure, or the next action. `.agency` is the first verified rollout
-surface; the shared primitives are the path for the rest of CREATE SOMETHING as
-surfaces are migrated.
+Canon's shared expression is a capable workshop companion: an approachable beginning,
+precise review, visible authority and a useful handback. Performance Lab names the
+shared evidence and composition layer. A black website foundation, neutral gray
+surfaces, locally loaded Geist, deliberate state colors and soft-square controls
+support readable work. Explicit light surfaces remain available for work and
+comparison. Motion clarifies a state or handoff and never supplies
+proof that an action ran. Properties provide content and policy while Canon owns
+the reusable roles and behavior contracts.
+
+The current [approachable system guide](APPROACHABLE-SYSTEM.md) joins measured
+structure with tactile Canon and the original workshop scenes. Hero and CTA
+imagery forms a CSS background behind HTML copy. Inline imagery belongs in
+subsequent editorial sections. Dense proof, control states and authority records
+must not obscure a character's face or the task depicted in a scene.
 
 Performance Lab has three coordinated surface modes:
 
@@ -701,16 +716,16 @@ progress should use the sticky layer below fixed navigation.
 
 ## Glass Design System
 
-Glass conveys "The Automation Layer" — the transparent interface between user and outcome.
+Glass-named classes remain compatibility presentation APIs. Their default tokens
+now resolve to solid surfaces and zero blur. New Canon surfaces should use the
+normal Card, navigation and panel contracts. Historical names do not establish
+glass as the current material direction.
 
 ```html
-<!-- Frosted glass -->
+<!-- Existing navigation consumer; current tokens provide a solid surface -->
 <nav class="glass-lg">Navigation</nav>
 
-<!-- Liquid glass with tint -->
-<div class="liquid-glass liquid-glass-tint-purple">Premium feature</div>
-
-<!-- Glass card -->
+<!-- Existing compatibility card -->
 <article class="glass-card">Workflow content</article>
 ```
 
@@ -727,7 +742,7 @@ Canon is shared between CREATE SOMETHING properties and [WORKWAY](https://workwa
 
 **Reference file**: `WORKWAY/workway-platform/apps/web/src/styles.css`
 
-New Canon features are first implemented in WORKWAY, then backported to the shared Canon package. This ensures the design system evolves through production use rather than theoretical additions.
+WORKWAY remains a historical reference consumer. Current shared foundation values and component contracts are owned by this Canon package and validated here before consumer adoption.
 
 ### Shared Utilities (v1.1.0+)
 
@@ -741,7 +756,7 @@ These utilities are now synchronized between Canon and WORKWAY:
 
 ## Accessibility
 
-All components and styles include fallbacks for:
+Shared tokens, controls and motion patterns support these preferences; verify the consuming surface as part of its rendered acceptance:
 - `prefers-reduced-motion`
 - `prefers-reduced-transparency`
 - `prefers-contrast: more`
@@ -854,3 +869,5 @@ measurement boundaries.
 Receipt and attribution writes require the request's current confirmation token.
 Out-of-order provider responses cannot attach an older campaign to a newer link.
 The token is used only as a write condition; attribution does not retain it.
+
+Hero and CTA scene composition now uses the optional shared `background` prop on CampaignOpening, ClearPlatformHero, ClearCtaBand, ConversionHandoff and MeridianOfferPanel. Static scenes render as CSS backgrounds; editorial inline media remains below. See [background composition migration](./BACKGROUND-COMPOSITION-MIGRATION.md) for semantics, compatibility, preload ownership and consumer gaps. The local `/next/compositions` fixture demonstrates the actual families.

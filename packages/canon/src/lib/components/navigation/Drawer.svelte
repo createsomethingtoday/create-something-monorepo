@@ -64,9 +64,10 @@
 	// Prevent body scroll when drawer is open
 	$effect(() => {
 		if (open) {
+			const previousOverflow = document.body.style.overflow;
 			document.body.style.overflow = 'hidden';
 			return () => {
-				document.body.style.overflow = '';
+				document.body.style.overflow = previousOverflow;
 			};
 		}
 	});
@@ -129,6 +130,9 @@
 	}
 
 	.drawer {
+		background:var(--color-performance-panel);
+		color:var(--color-performance-ink);
+		border:1px solid var(--color-performance-line);
 		position: fixed;
 		top: 0;
 		bottom: 0;
@@ -198,12 +202,12 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: var(--space-performance-sm);
-		padding: var(--space-performance-md) var(--space-performance-lg);
+		padding:var(--space-performance-md);
 		flex-shrink: 0;
 	}
 
 	.drawer-title {
-		font-size: var(--text-performance-h3);
+		font-size:var(--text-performance-body-lg);
 		font-weight: var(--font-performance-semibold);
 		color: var(--color-performance-fg-primary);
 		margin: 0;
@@ -212,8 +216,8 @@
 	/* Close button */
 	.drawer-close {
 		flex-shrink: 0;
-		width: 32px;
-		height: 32px;
+		width: 44px;
+		height: 44px;
 		padding: 6px;
 		background: none;
 		border: none;
@@ -242,7 +246,7 @@
 	.drawer-body {
 		flex: 1;
 		overflow-y: auto;
-		padding: var(--space-performance-lg);
+		padding:var(--space-performance-md);
 	}
 
 	/* Footer */
@@ -251,7 +255,7 @@
 		align-items: center;
 		justify-content: flex-end;
 		gap: var(--space-performance-sm);
-		padding: var(--space-performance-md) var(--space-performance-lg);
+		padding:var(--space-performance-md);
 		flex-shrink: 0;
 	}
 

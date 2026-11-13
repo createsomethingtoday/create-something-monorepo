@@ -16,66 +16,66 @@
  */
 
 const performanceColors = {
-	paper: '#f3f3f0',
-	paperFiber: 'rgb(9 9 9 / 0.035)',
-	paperEdge: '#b6b6ae',
-	paperFold: '#deded7',
-	paperShadow: 'rgb(9 9 9 / 0.16)',
-	court: '#e6e6e0',
-	panel: '#ffffff',
-	ink: '#090909',
-	inkSoft: '#262626',
-	muted: '#5e6268',
-	line: '#d7d7d2',
-	lineStrong: '#9c9c96',
-	grid: 'rgb(9 9 9 / 0.055)',
-	growth: '#007a4d',
-	growthSoft: '#dcece5',
-	signal: '#0057b8',
-	signalSoft: '#dce8f5',
-	pressure: '#e54800',
-	pressureSoft: '#f7e2d7',
-	risk: '#c62026',
-	riskSoft: '#f3dadd',
-	gold: '#8b6b00',
-	goldSoft: '#eee6cc'
+	paper: '#000000',
+	paperFiber: 'transparent',
+	paperEdge: '#3b3b3b',
+	paperFold: '#1a1a1a',
+	paperShadow: 'rgb(0 0 0 / 0.18)',
+	court: '#1a1a1a',
+	panel: '#111111',
+	ink: '#f2f2f2',
+	inkSoft: '#c7c7c7',
+	muted: '#aaaaaa',
+	line: '#3b3b3b',
+	lineStrong: '#777777',
+	grid: 'rgb(255 255 255 / 0.06)',
+	growth: '#9cdbb6',
+	growthSoft: '#203b2b',
+	signal: '#aad7f1',
+	signalSoft: '#243a48',
+	pressure: '#f6bb94',
+	pressureSoft: '#452f23',
+	risk: '#ffb3b8',
+	riskSoft: '#49292c',
+	gold: '#ebce86',
+	goldSoft: '#3e3520'
 } as const;
 
 export const colors = {
-	// Backgrounds - Pure to near-black
+	// Backgrounds - black website foundation; explicit light scopes remain available.
 	background: {
 		pure: '#000000',
-		elevated: '#0a0a0a',
+		elevated: '#111111',
 		surface: '#111111',
 		subtle: '#1a1a1a'
 	},
 
-	// Foreground - White with semantic opacity
+	// Foreground - readable neutral roles.
 	foreground: {
-		primary: '#ffffff',
-		secondary: 'rgba(255, 255, 255, 0.8)',
-		tertiary: 'rgba(255, 255, 255, 0.6)',
-		muted: 'rgba(255, 255, 255, 0.46)',
-		subtle: 'rgba(255, 255, 255, 0.2)'
+		primary: '#f2f2f2',
+		secondary: '#c7c7c7',
+		tertiary: '#aaaaaa',
+		muted: '#aaaaaa',
+		subtle: '#777777'
 	},
 
 	// Borders - Subtle separation
 	border: {
-		default: 'rgba(255, 255, 255, 0.1)',
-		emphasis: 'rgba(255, 255, 255, 0.2)',
-		strong: 'rgba(255, 255, 255, 0.3)'
+		default: '#3b3b3b',
+		emphasis: '#777777',
+		strong: '#aaaaaa'
 	},
 
 	// Functional accents - Muted, purposeful
 	accent: {
-		success: '#44aa44',
-		successMuted: 'rgba(68, 170, 68, 0.2)',
-		error: '#cc4444',
-		errorMuted: 'rgba(204, 68, 68, 0.2)',
-		warning: '#aa8844',
-		warningMuted: 'rgba(170, 136, 68, 0.2)',
-		info: '#4477aa',
-		infoMuted: 'rgba(68, 119, 170, 0.2)'
+		success: '#9cdbb6',
+		successMuted: '#203b2b',
+		error: '#ffb3b8',
+		errorMuted: '#49292c',
+		warning: '#ebce86',
+		warningMuted: '#3e3520',
+		info: '#aad7f1',
+		infoMuted: '#243a48'
 	},
 
 	performance: performanceColors,
@@ -84,9 +84,9 @@ export const colors = {
 
 	// Interactive states
 	interactive: {
-		hover: 'rgba(255, 255, 255, 0.05)',
-		active: 'rgba(255, 255, 255, 0.1)',
-		focus: 'rgba(255, 255, 255, 0.2)'
+		hover: 'rgb(255 255 255 / 0.07)',
+		active: 'rgb(255 255 255 / 0.12)',
+		focus: '#e8e8e8'
 	}
 } as const;
 

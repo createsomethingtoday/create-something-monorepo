@@ -1,0 +1,26 @@
+[
+  {
+    "original": "/Users/createsomething/Code/create-something-monorepo/output/canon-environment/2026-11-13/scenes/01-welcome-bench.png",
+    "copy": "packages/agency/static/images/canon-study/01-welcome-bench.png",
+    "sha256": "ba4507491e1269ef5257d2d1747bd63bde214d4bd585523f074335e1f2dcc8a3",
+    "status": "approved environment original"
+  },
+  {
+    "original": "/Users/createsomething/Code/create-something-monorepo/output/canon-environment/2026-11-13/scenes/04-welcome-clean-plate.png",
+    "copy": "packages/agency/static/images/canon-study/04-welcome-clean-plate.png",
+    "sha256": "d8737e0fc5f6121a9c92451de111b5a6468986a4a3bdc7a1e9885bdf8f5d9394",
+    "status": "approved environment original"
+  },
+  {
+    "original": "/Users/createsomething/Code/create-something-monorepo/cook/stills/ui-r06/welcome-bench-portrait.png",
+    "copy": "packages/agency/static/images/canon-study/welcome-bench-portrait.png",
+    "sha256": "3a3df7b342bc73c3c88bc2d0e4d1576463119e32e09c0f0e6736c9d238ebbe7a",
+    "status": "unapproved portrait study"
+  },
+  {
+    "original": "/Users/createsomething/Code/create-something-monorepo/cook/stills/ui-r06/welcome-cta-portrait.png",
+    "copy": "packages/agency/static/images/canon-study/welcome-cta-portrait.png",
+    "sha256": "85006cc75521a3278a0d928ac3b3d1d558c4eeb36d2b716c6ac9d37252a45fe1",
+    "status": "unapproved portrait study"
+  }
+]

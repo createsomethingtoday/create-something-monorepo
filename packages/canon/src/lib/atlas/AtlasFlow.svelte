@@ -122,7 +122,7 @@
 		const nodeFocused = focusedNodeSet.has(edge.source) || focusedNodeSet.has(edge.target);
 		const edgeFocused = focusedEdgeSet.has(edge.id) || nodeFocused;
 		const opacity = hasFocus && !edgeFocused ? 0.18 : 1;
-		const color = hasFocus && edgeFocused ? '#0a0e19' : '#9f9b90';
+		const color = hasFocus && edgeFocused ? 'var(--color-performance-fg-primary)' : 'var(--color-performance-fg-muted)';
 		return {
 			id: edge.id,
 			source: edge.source,
@@ -138,7 +138,7 @@
 				color
 			},
 			style: `stroke: ${color}; stroke-width: ${edgeFocused ? 1.8 : 1.35}; opacity: ${opacity};`,
-			labelStyle: `fill: #6f6f67; font-family: var(--font-performance-topology-label, var(--font-performance-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace)); font-size: var(--text-performance-topology-label, 0.72rem); font-variant-numeric: tabular-nums; font-weight: 600; letter-spacing: var(--tracking-performance-topology-label, 0); line-height: var(--leading-performance-topology-label, 1.2); paint-order: stroke; stroke: #fbfbf8; stroke-width: 7px; opacity: ${opacity};`
+			labelStyle: `color: var(--color-performance-fg-secondary); background-color: var(--color-performance-bg-pure); fill: var(--color-performance-fg-secondary); font-family: var(--font-performance-topology-label, var(--font-performance-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace)); font-size: max(0.875rem, var(--text-performance-topology-label, 0.875rem)); font-variant-numeric: tabular-nums; font-weight: 600; letter-spacing: var(--tracking-performance-topology-label, 0); line-height: var(--leading-performance-topology-label, 1.2); paint-order: stroke; stroke: var(--color-performance-bg-pure); stroke-width: 7px; opacity: 1;`
 		};
 	}) satisfies Edge[];
 
@@ -207,6 +207,6 @@
 		{#if showControls}
 			<Controls showLock={false} {fitViewOptions} />
 		{/if}
-		<Background gap={32} patternColor="#eeeee8" />
+		<Background gap={32} patternColor="var(--color-performance-border-default)" />
 	</SvelteFlow>
 </div>

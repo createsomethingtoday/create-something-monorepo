@@ -453,7 +453,7 @@
     min-width: 44px;
     min-height: 44px;
     border: 1px solid var(--color-performance-shell-border-strong);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-performance-sm);
     background: var(--color-performance-shell-surface);
     color: inherit;
     font: 0.75rem var(--font-performance-interface);
