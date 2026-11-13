@@ -1,5 +1,5 @@
 import { mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve, sep } from 'node:path';
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // login.ts builds its token path from homedir() at import time. Point it at a
@@ -11,7 +11,8 @@ vi.mock('node:os', async (importOriginal) => ({ ...(await importOriginal<typeof 
 
 const { CONFIG_DIR, TOKEN_PATH, hasToken, loadToken, logout } = await import('../src/mcp/login.ts');
 // Hard stop before any test writes or deletes: never run against a real home directory.
-if (!TOKEN_PATH.startsWith(`${home}/`)) throw new Error(`refusing to run: token path ${TOKEN_PATH} is outside the test home ${home}`);
+// Compare resolved paths, so the check also holds with Windows path separators.
+if (!resolve(TOKEN_PATH).startsWith(resolve(home) + sep)) throw new Error(`refusing to run: token path ${TOKEN_PATH} is outside the test home ${home}`);
 
 const CLIENT_PATH = join(CONFIG_DIR, 'mcp-client.json');
 const base = {
@@ -74,7 +75,8 @@ describe('token storage', () => {
 		});
 
 		expect(JSON.parse(await readFile(TOKEN_PATH, 'utf8')).access_token).toBe('access-2');
-		expect((await stat(TOKEN_PATH)).mode & 0o777).toBe(0o600);
+		// Windows has no POSIX file modes; the user profile's access rules protect the file there.
+		if (process.platform !== 'win32') expect((await stat(TOKEN_PATH)).mode & 0o777).toBe(0o600);
 	});
 
 	it('refreshes inside the last minute before expiry', async () => {

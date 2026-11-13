@@ -14,6 +14,7 @@
 
 import { randomBytes } from 'node:crypto';
 import { parseArgs } from 'node:util';
+import pkg from '../package.json' with { type: 'json' };
 import { collectDesignerData, type CollectResult } from '../../spike/headless-collector/collect.ts';
 import { applyDesignerEnhancements } from '../../spike/headless-collector/enhance.ts';
 import { CANVAS_CHECKS_CATEGORY, type EnhanceableResults } from '../../shared/designer-enhancements.ts';
@@ -23,8 +24,11 @@ import { runGsapCrawl, type GsapOutcome } from './gsap-client.ts';
 import {
 	bucketOf,
 	exitCodeFor,
+	failedWithoutBlocker,
 	howToFix,
 	incompleteReasons,
+	missingResults,
+	pageSlugsFromDesigner,
 	parseChecks,
 	recordSkipReason,
 	type Bucket
@@ -39,6 +43,7 @@ import {
 	recordValidationResult,
 	runValidation,
 	type CategoryResult,
+	type PageDiscovery,
 	type RecordOutcome,
 	type ValidationIssue
 } from './worker-client.ts';
@@ -75,6 +80,10 @@ Validate options:
   --timeout <seconds>          Worker job timeout (default 480).
   --json                       Print machine-readable JSON.
 
+Other options:
+  --version, -v                Print the CLI version.
+  --help, -h                   Print this help.
+
 Exit codes: 0 no blockers, 1 blockers found, 2 incomplete run (network, worker, login, or argument failure,
             GSAP crawl unavailable, or the recording step failed).`;
 
@@ -90,6 +99,7 @@ const OPTIONS = {
 	site: { type: 'string' },
 	page: { type: 'string' },
 	'no-record': { type: 'boolean', default: false },
+	version: { type: 'boolean', short: 'v', default: false },
 	help: { type: 'boolean', short: 'h', default: false }
 } as const;
 
@@ -97,19 +107,32 @@ type Values = ReturnType<typeof parseArgs<{ args: string[]; allowPositionals: tr
 
 const errorText = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
+/**
+ * Text from the worker, the MCP server, and the scanned site goes to the
+ * terminal. Remove control characters (escape sequences can hide or rewrite
+ * lines); keep tabs and line breaks.
+ */
+const clean = (text: string) => text.replace(/[\u0000-\u0008\u000b-\u001f\u007f-\u009f]/g, '');
+const print = (text: string) => console.log(clean(text));
+const printError = (text: string) => console.error(clean(text));
+
 async function main(argv: string[]): Promise<number> {
 	let parsed;
 	try {
 		parsed = parseArgs({ args: argv, allowPositionals: true, options: OPTIONS });
 	} catch (error) {
-		console.error(`${errorText(error)}\n\n${USAGE}`);
+		printError(`${errorText(error)}\n\n${USAGE}`);
 		return 2;
 	}
 	const { values, positionals } = parsed;
 	const [command, ...rest] = positionals;
+	if (values.version) {
+		print(pkg.version);
+		return 0;
+	}
 	if (values.help || !command) {
-		if (values.help) console.log(USAGE);
-		else console.error(USAGE);
+		if (values.help) print(USAGE);
+		else printError(USAGE);
 		return values.help ? 0 : 2;
 	}
 	switch (command) {
@@ -121,12 +144,12 @@ async function main(argv: string[]): Promise<number> {
 			return runSites(values.json);
 		case 'validate':
 			if (!rest[0]) {
-				console.error(`validate needs a published URL.\n\n${USAGE}`);
+				printError(`validate needs a published URL.\n\n${USAGE}`);
 				return 2;
 			}
 			return runValidate(values, rest[0]);
 		default:
-			console.error(`Unknown command '${command}'.\n\n${USAGE}`);
+			printError(`Unknown command '${command}'.\n\n${USAGE}`);
 			return 2;
 	}
 }
@@ -136,14 +159,14 @@ async function runLogin(): Promise<number> {
 		await login();
 		return 0;
 	} catch (error) {
-		console.error(`Login failed: ${errorText(error)}`);
+		printError(`Login failed: ${errorText(error)}`);
 		return 2;
 	}
 }
 
 async function runLogout(): Promise<number> {
 	const removed = await logout();
-	console.log(removed ? `Deleted ${TOKEN_PATH}.` : `No token at ${TOKEN_PATH}; nothing to delete.`);
+	print(removed ? `Deleted ${TOKEN_PATH}.` : `No token at ${TOKEN_PATH}; nothing to delete.`);
 	return 0;
 }
 
@@ -160,7 +183,7 @@ const newAgentId = () => `cli|webflow-template-validate|${randomBytes(3).toStrin
 
 async function runSites(json: boolean): Promise<number> {
 	if (!(await hasToken())) {
-		console.error(MISSING_LOGIN);
+		printError(MISSING_LOGIN);
 		return 2;
 	}
 	try {
@@ -179,19 +202,19 @@ async function runSites(json: boolean): Promise<number> {
 			shortName: typeof site.shortName === 'string' ? site.shortName : undefined
 		}));
 		if (json) {
-			console.log(JSON.stringify(sites, null, 2));
+			print(JSON.stringify(sites, null, 2));
 			return 0;
 		}
 		if (sites.length === 0) {
-			console.log('No sites are authorized for this token. Run `wf-template-validate logout`, then `login`, and select your template site.');
+			print('No sites are authorized for this token. Run `wf-template-validate logout`, then `login`, and select your template site.');
 			return 0;
 		}
-		console.log(`${sites.length} authorized site(s):`);
-		for (const site of sites) console.log(`  ${site.id}  ${site.name}${site.shortName ? `  (${site.shortName}.webflow.io)` : ''}`);
-		console.log('\nUse the id with: wf-template-validate validate https://<site>.webflow.io --site <id>');
+		print(`${sites.length} authorized site(s):`);
+		for (const site of sites) print(`  ${site.id}  ${site.name}${site.shortName ? `  (${site.shortName}.webflow.io)` : ''}`);
+		print('\nUse the id with: wf-template-validate validate https://<site>.webflow.io --site <id>');
 		return 0;
 	} catch (error) {
-		console.error(`Listing sites failed: ${errorText(error)}`);
+		printError(`Listing sites failed: ${errorText(error)}`);
 		return 2;
 	}
 }
@@ -204,7 +227,12 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 	try {
 		siteUrl = normalizePublishedUrl(rawUrl);
 		checks = parseChecks(values.checks);
-		if (!Number.isFinite(timeoutSeconds) || timeoutSeconds <= 0) throw new Error('--timeout must be a positive number of seconds.');
+		if (!Number.isFinite(timeoutSeconds) || timeoutSeconds <= 0 || timeoutSeconds > 3600) {
+			throw new Error('--timeout must be a number of seconds from 1 to 3600.');
+		}
+		if (values.site !== undefined && values.site.trim() === '') {
+			throw new Error('--site needs a site ID. Run `wf-template-validate sites` to find it.');
+		}
 		if (designerSource !== undefined && designerSource !== 'mcp') throw new Error(`--designer-source must be 'mcp' (got '${designerSource}').`);
 		if (designerSource === 'mcp' && !values.site) throw new Error('--designer-source mcp needs --site <siteId>. Run `wf-template-validate sites` to find it.');
 		if (values.site && !(await hasToken())) {
@@ -215,12 +243,20 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 		if (designerSource !== 'mcp' && values.page) throw new Error('--page needs --site.');
 		if (designerSource !== 'mcp' && values['no-record']) throw new Error('--no-record needs --site (nothing is recorded without it).');
 	} catch (error) {
-		console.error(`Error: ${errorText(error)}`);
+		printError(`Error: ${errorText(error)}`);
 		return 2;
 	}
 	const workerBase = values.worker!.replace(/\/+$/, '');
+	try {
+		const worker = new URL(workerBase);
+		const local = worker.hostname === 'localhost' || worker.hostname === '127.0.0.1';
+		if (worker.protocol !== 'https:' && !(local && worker.protocol === 'http:')) throw new Error('not https');
+	} catch {
+		printError('Error: --worker must be an https:// URL (http:// is allowed for localhost only).');
+		return 2;
+	}
 	const timeoutMs = timeoutSeconds * 1000;
-	const log = (message: string) => console.error(`  ... ${message}`);
+	const log = (message: string) => printError(`  ... ${message}`);
 
 	let collected: CollectResult | undefined;
 	if (designerSource === 'mcp') {
@@ -228,17 +264,24 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 			collected = await collectFromMcp(values.site!, values.page, log);
 		} catch (error) {
 			const message = `MCP Designer data collection failed: ${error instanceof Error ? error.message : String(error)}`;
-			if (values.json) console.log(JSON.stringify({ error: message, siteUrl }, null, 2));
-			else console.error(`\n${message}`);
+			if (values.json) print(JSON.stringify({ error: message, siteUrl }, null, 2));
+			else printError(`\n${message}`);
 			return 2;
 		}
 		// Mirrors the extension's getSelectedChecks: 'designer' first, then the published-site checks.
 		checks = ['designer', ...checks];
 	}
 
-	log(`Discovering pages on ${siteUrl}`);
-	const discovery = await discoverPageSlugs(siteUrl);
-	log(`Found ${discovery.slugs.length} page(s) via ${discovery.source}${discovery.truncated ? ' (truncated)' : ''}`);
+	let discovery: PageDiscovery;
+	if (collected) {
+		// Same page list as the Validator app: every published page in the Designer, not only the linked ones.
+		discovery = { source: 'designer', slugs: pageSlugsFromDesigner(collected.designerData.pages ?? []), truncated: false };
+		log(`Using the home page and ${discovery.slugs.length} more page(s) from the Designer page list`);
+	} else {
+		log(`Discovering pages on ${siteUrl}`);
+		discovery = await discoverPageSlugs(siteUrl);
+		log(`Found ${discovery.slugs.length} page(s) via ${discovery.source}${discovery.truncated ? ' (truncated)' : ''}`);
+	}
 
 	const gsapPromise = runGsapCrawl(siteUrl, timeoutMs);
 	let outcome;
@@ -255,9 +298,9 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 	} catch (error) {
 		const message = error instanceof WorkerError || error instanceof Error ? error.message : String(error);
 		if (values.json) {
-			console.log(JSON.stringify({ error: message, siteUrl }, null, 2));
+			print(JSON.stringify({ error: message, siteUrl }, null, 2));
 		} else {
-			console.error(`\nValidation worker failed: ${message}`);
+			printError(`\nValidation worker failed: ${message}`);
 		}
 		return 2;
 	}
@@ -267,6 +310,8 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 	if (collected) applyDesignerEnhancements(outcome.result as unknown as EnhanceableResults, collected.designerData, collected.canvas?.result);
 
 	const categories = outcome.result.categories ?? [];
+	const resultIncomplete = missingResults(checks, categories);
+	const failedNoBlocker = failedWithoutBlocker(categories);
 	const rows: Row[] = categories.flatMap((cat) =>
 		(cat.issues ?? []).map((issue) => ({ category: cat.category, issue, bucket: bucketOf(issue) }))
 	);
@@ -309,6 +354,7 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 		score,
 		passedCategories: passed,
 		failedCategories: categories.length - passed,
+		failedCategoriesWithoutBlocker: failedNoBlocker,
 		blockers: count('blocker'),
 		warnings: count('warning'),
 		info: count('info'),
@@ -333,7 +379,8 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 			mode: outcome.mode,
 			collectionIncomplete: collected.incomplete,
 			workerBase,
-			trustWorker: Boolean(values['trust-worker'])
+			trustWorker: Boolean(values['trust-worker']),
+			resultIncomplete
 		});
 		if (skipped) {
 			record = { skipped };
@@ -354,16 +401,19 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 			}
 		}
 	}
-	const recorded = Boolean(record && 'ok' in record && record.ok);
-	const recordFailed = Boolean(record && 'ok' in record && !record.ok);
+	// Recorded means the worker stored the result, verified the site access, and reads it back.
+	// Anything less would fail at the submission form, so it counts as a failed record.
+	const recorded = Boolean(record && 'ok' in record && record.ok && record.evidenceVerified && record.status === 'available');
+	const recordFailed = Boolean(record && 'ok' in record && !recorded);
 	const incomplete = incompleteReasons({
 		gsap: { status: gsap.status, reason: 'reason' in gsap ? gsap.reason : undefined },
 		designerCollected: Boolean(collected),
 		mode: outcome.mode,
 		collectionIncomplete: collected?.incomplete ?? [],
-		recordFailed
+		recordFailed,
+		resultIncomplete
 	});
-	const exitCode = exitCodeFor(incomplete, summary.blockers);
+	const exitCode = exitCodeFor(incomplete, summary.blockers + failedNoBlocker.length);
 	const fullSummary = {
 		...summary,
 		record,
@@ -373,13 +423,16 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 	};
 
 	if (values.json) {
-		console.log(JSON.stringify({ result: outcome.raw, gsapCrawl: gsap.status === 'complete' ? gsap.raw : null, summary: fullSummary }, null, 2));
+		print(JSON.stringify({ result: outcome.raw, gsapCrawl: gsap.status === 'complete' ? gsap.raw : null, summary: fullSummary }, null, 2));
 		return exitCode;
 	}
 
 	printHuman({ siteUrl, outcome, discovery, checks, categories, gsap, rows, score, collected, note: fullSummary.note });
-	if (record) console.log(formatRecordLine(record));
-	if (fullSummary.incomplete.length > 0) console.log(`Incomplete (exit 2): ${fullSummary.incomplete.join('; ')}`);
+	if (failedNoBlocker.length > 0) {
+		print(`Failed without an error (exit 1): ${failedNoBlocker.join(', ')}. The submission form needs every category to pass, so fix the warnings there.`);
+	}
+	if (record) print(formatRecordLine(record));
+	if (fullSummary.incomplete.length > 0) print(`Incomplete (exit 2): ${fullSummary.incomplete.join('; ')}`);
 	return exitCode;
 }
 
@@ -425,7 +478,11 @@ function printHuman(ctx: {
 	out.push('');
 	out.push(`Webflow template validation: ${siteUrl}`);
 	out.push(`Job: ${outcome.jobId ?? '(none)'}  mode: ${outcome.mode}${outcome.asyncError ? ` (async failed: ${outcome.asyncError})` : ''}`);
-	out.push(`Pages: homepage + ${discovery.slugs.length} from ${discovery.source}${discovery.truncated ? ' (truncated to 50)' : ''}`);
+	out.push(
+		discovery.source === 'designer'
+			? `Pages: homepage + ${discovery.slugs.length} from the Designer page list, the same list the Validator app checks`
+			: `Pages: homepage + ${discovery.slugs.length} from ${discovery.source}${discovery.truncated ? ' (truncated to 50)' : ''}`
+	);
 	if (collected) {
 		const c = collected.counts;
 		out.push(
@@ -496,13 +553,16 @@ function printHuman(ctx: {
 	out.push('');
 	out.push(`Score: ${score}% of worker categories passed (GSAP crawl not included in the score)`);
 	out.push(note);
-	console.log(out.join('\n'));
+	print(out.join('\n'));
 }
 
-main(process.argv.slice(2)).then(
-	(code) => process.exit(code),
-	(error) => {
-		console.error(`Unexpected error: ${error instanceof Error ? error.stack : String(error)}`);
-		process.exit(2);
-	}
-);
+/** Exit after stdout and stderr are flushed. On a pipe, process.exit alone can cut long --json output short. */
+const exitWhenFlushed = (code: number) => {
+	process.exitCode = code; // keeps the code if a closed pipe stops the callbacks below
+	process.stdout.write('', () => process.stderr.write('', () => process.exit(code)));
+};
+
+main(process.argv.slice(2)).then(exitWhenFlushed, (error) => {
+	printError(`Unexpected error: ${error instanceof Error ? error.stack : String(error)}`);
+	exitWhenFlushed(2);
+});
