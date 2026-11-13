@@ -11,7 +11,8 @@
     Dialog
   } from './ui';
   import { Plus, CheckCircle, Key, Trash2, BookOpen, Upload } from 'lucide-svelte';
-  import { formatLongDate } from '$lib/utils/format';
+  import { page } from '$app/stores';
+  import { formatCalendarDate, formatLongDate } from '$lib/utils/format';
 
   interface ApiKey {
     keyId: string;
@@ -25,7 +26,16 @@
     requestCount?: number;
   }
 
+  /** Limits come from the server with the key list, so this text cannot drift from them. */
+  interface ApiLimits {
+    requestsPerHour: number;
+    maxActiveKeys: number;
+  }
+
   let apiKeys = $state<ApiKey[]>([]);
+  let limits = $state<ApiLimits | null>(null);
+  // The API is served by the dashboard itself, so examples show this page's host.
+  const apiBase = $derived(`${$page.url.origin}/api/v1/creator`);
   let isLoading = $state(true);
   let isGenerating = $state(false);
   let showGenerateForm = $state(false);
@@ -48,8 +58,9 @@
     try {
       const response = await fetch('/api/keys');
       if (!response.ok) throw new Error('Failed to load API keys');
-      const data = (await response.json()) as { keys: ApiKey[] };
+      const data = (await response.json()) as { keys: ApiKey[]; limits?: ApiLimits };
       apiKeys = data.keys || [];
+      limits = data.limits ?? null;
     } catch (err) {
       error = err instanceof Error ? err.message : 'Failed to load API keys';
     } finally {
@@ -151,7 +162,6 @@
     <div class="header-info">
       <div class="header-title">
         <h3>API Keys</h3>
-        <Badge variant="info">Beta</Badge>
       </div>
       <p class="header-description">
         Manage your API keys to access your templates programmatically
@@ -197,7 +207,7 @@
           </div>
           <div>
             <span class="info-label">Expires:</span>
-            <span class="info-value">{formatLongDate(generatedKey.expiresAt)}</span>
+            <span class="info-value">{formatCalendarDate(generatedKey.expiresAt)}</span>
           </div>
         </div>
         <Button variant="secondary" onclick={() => (generatedKey = null)} class="dismiss-btn">
@@ -304,7 +314,7 @@
                     </div>
                     <div class="key-name">
                       <h4>{key.keyName}</h4>
-                      <code class="key-prefix">{key.keyPrefix}••••••••</code>
+                      <code class="key-prefix">{key.keyPrefix}…</code>
                     </div>
                   </div>
 
@@ -323,6 +333,12 @@
                       <span class="meta-label">Requests</span>
                       <span class="meta-value">{key.requestCount || 0}</span>
                     </div>
+                    {#if key.expiresAt}
+                      <div class="meta-item">
+                        <span class="meta-label">Expires</span>
+                        <span class="meta-value">{formatCalendarDate(key.expiresAt)}</span>
+                      </div>
+                    {/if}
                   </div>
 
                   <div class="key-scopes">
@@ -332,7 +348,13 @@
                   </div>
                 </div>
 
-                <Button variant="ghost" onclick={() => (keyPendingRevoke = key)} class="revoke-btn">
+                <Button
+                  variant="ghost"
+                  onclick={() => (keyPendingRevoke = key)}
+                  class="revoke-btn"
+                  aria-label={`Revoke ${key.keyName}`}
+                  title="Revoke key"
+                >
                   <Trash2 size={16} />
                 </Button>
               </div>
@@ -353,17 +375,12 @@
     </CardHeader>
     <CardContent>
       <div class="docs-content">
-        <div class="beta-notice">
-          <Badge variant="info">Beta</Badge>
-          <p>
-            The Creator API is currently in beta. Features and endpoints may change based on
-            feedback.
-          </p>
-        </div>
-
         <div class="docs-section">
           <h4>Using Your API Key</h4>
-          <p>Include your API key in the Authorization header of your requests:</p>
+          <p>
+            Send the key in the Authorization header. Call the API from a server, not from page
+            code in a browser, so the key stays secret.
+          </p>
         </div>
 
         <div class="code-example">
@@ -371,9 +388,8 @@
             <span>GET /api/v1/creator/profile</span>
           </div>
           <pre><code
-              >curl -X GET "https://wf.createsomething.io/api/v1/creator/profile" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json"</code
+              >curl "{apiBase}/profile" \
+  -H "Authorization: Bearer YOUR_API_KEY"</code
             ></pre>
         </div>
 
@@ -382,11 +398,25 @@
             <span>GET /api/v1/creator/assets</span>
           </div>
           <pre><code
-              >curl -X GET "https://wf.createsomething.io/api/v1/creator/assets" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json"</code
+              >curl "{apiBase}/assets?status=Published" \
+  -H "Authorization: Bearer YOUR_API_KEY"</code
             ></pre>
         </div>
+
+        <ul class="docs-facts">
+          <li>Keys are read-only. A key reads your own profile and assets.</li>
+          {#if limits}
+            <li>
+              You can make {limits.requestsPerHour} requests per hour, shared by all your keys.
+            </li>
+            <li>You can have {limits.maxActiveKeys} active keys.</li>
+          {/if}
+          <li>A key expires after one year. A revoked key stops working at once.</li>
+        </ul>
+
+        <a class="docs-link" href="/docs/api" target="_blank" rel="noopener">
+          Read the full API reference
+        </a>
       </div>
     </CardContent>
   </Card>
@@ -423,6 +453,7 @@
 
   .header {
     display: flex;
+    flex-wrap: wrap;
     align-items: flex-start;
     justify-content: space-between;
     gap: var(--space-md);
@@ -642,6 +673,7 @@
 
   .key-info {
     flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
@@ -654,6 +686,7 @@
   }
 
   .key-icon {
+    flex-shrink: 0;
     width: 2.5rem;
     height: 2.5rem;
     display: flex;
@@ -664,6 +697,10 @@
     color: var(--color-info-ink);
   }
 
+  .key-name {
+    min-width: 0;
+  }
+
   .key-name h4 {
     font-size: var(--text-body);
     font-weight: var(--font-semibold);
@@ -672,6 +709,9 @@
   }
 
   .key-prefix {
+    display: inline-block;
+    max-width: 100%;
+    overflow-wrap: anywhere;
     font-size: var(--text-caption);
     font-family: monospace;
     background: var(--color-bg-subtle);
@@ -682,7 +722,7 @@
 
   .key-meta {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr));
     gap: var(--space-md);
   }
 
@@ -713,6 +753,28 @@
     color: var(--color-error-ink);
   }
 
+  /* On a narrow screen the revoke button floats over the card's top corner,
+     so the key details keep the full card width. */
+  @media (max-width: 480px) {
+    .key-item {
+      position: relative;
+    }
+
+    .key-header {
+      gap: var(--space-sm);
+    }
+
+    .key-name h4 {
+      padding-right: 2.5rem;
+    }
+
+    :global(.revoke-btn) {
+      position: absolute;
+      top: 0;
+      right: 0;
+    }
+  }
+
   :global(.revoke-btn:hover) {
     background: var(--color-error-muted);
   }
@@ -735,20 +797,28 @@
     gap: var(--space-md);
   }
 
-  .beta-notice {
+  .docs-facts {
     display: flex;
-    align-items: flex-start;
-    gap: var(--space-sm);
-    padding: var(--space-sm);
-    background: var(--color-info-muted);
-    border: 1px solid var(--color-info-border);
-    border-radius: var(--radius-md);
-  }
-
-  .beta-notice p {
+    flex-direction: column;
+    gap: var(--space-xs);
+    margin: 0;
+    padding-left: var(--space-md);
     font-size: var(--text-body-sm);
     color: var(--color-fg-secondary);
-    margin: 0;
+  }
+
+  .docs-link {
+    align-self: flex-start;
+    font-size: var(--text-body-sm);
+    font-weight: var(--font-semibold);
+    color: var(--color-info-ink);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .docs-link:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
   }
 
   .docs-section h4 {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	formatDateTime,
+	formatCalendarDate,
 	formatLongDate,
 	formatRelativeAge,
 	formatRelativeFutureDate,
@@ -71,5 +72,18 @@ describe('format utilities', () => {
 		expect(formatRelativePastDate('not-a-date', now)).toBe('');
 		expect(formatRelativeFutureDate(undefined, now)).toBe('');
 		expect(formatRelativeScheduleDate(null, now)).toBe('');
+	});
+});
+
+describe('formatCalendarDate', () => {
+	it('shows a date-only value as written, in every time zone', () => {
+		// A key that expires on 2027-11-13 must not read "Nov 12" west of UTC.
+		expect(formatCalendarDate('2027-11-13')).toBe('Nov 13, 2027');
+		expect(formatCalendarDate('2027-01-01')).toBe('Jan 1, 2027');
+	});
+
+	it('returns an empty string for a missing or unreadable date', () => {
+		expect(formatCalendarDate(undefined)).toBe('');
+		expect(formatCalendarDate('not-a-date')).toBe('');
 	});
 });

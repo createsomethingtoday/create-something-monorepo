@@ -49,6 +49,23 @@ export function formatNumericDate(dateStr?: string): string {
   }
 }
 
+/**
+ * Formats a calendar date (YYYY-MM-DD) as written, with no time-zone shift.
+ * A date-only string parses as UTC midnight, so formatting it in local time
+ * shows the day before for anyone west of UTC.
+ */
+export function formatCalendarDate(date: string | null | undefined): string {
+  const resolvedDate = resolveDate(date);
+  if (!resolvedDate) return '';
+
+  return resolvedDate.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC'
+  });
+}
+
 export function formatLongDate(date: Date | string | null | undefined): string {
   if (!date) return '';
 

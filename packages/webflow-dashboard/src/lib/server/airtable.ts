@@ -8,9 +8,17 @@ import {
 	isReviewRoundClosed,
 	isSilencedReviewStatus
 } from '../utils/review-status';
+import {
+	MAX_ACTIVE_API_KEYS,
+	apiKeyExpirationDate,
+	generateApiKeySecret,
+	isApiKeyExpired,
+	isApiKeyScope,
+	type ApiKeyScope
+} from './api-keys';
 
 // Airtable table IDs
-const TABLES = {
+export const TABLES = {
 	USERS: 'tbldQNGszIyOjt9a1',
 	CREATORS: 'tbljt0plqxdMARZXb',
 	ASSETS: 'tblRwzpWoLgE9MrUm',
@@ -53,6 +61,27 @@ const ASSET_VERSIONS_RELEASED_FEEDBACK_FIELD_ID = 'fldd1FbAW3sVFw0UU';
 
 // Asset-record-ID rollup on 🖌️Asset Versions (filterable by {fldId} formula).
 const ASSET_VERSIONS_ASSET_RECORD_ID_FIELD_ID = 'fldknoYakli2sqznT';
+
+// API Keys table columns. The original Next.js dashboard wrote the same columns,
+// and it still verifies keys against them.
+const API_KEY_FIELDS = {
+	hash: 'API Key Hash',
+	creator: 'Creator',
+	status: 'Status',
+	scopes: 'Scopes',
+	name: 'Key Name',
+	prefix: 'Key Prefix',
+	expirationDate: 'Expiration Date',
+	requestCount: 'Request Count',
+	lastUsed: 'Last Used',
+	createdDate: 'Created Date'
+} as const;
+
+// Creators → API Keys back-link, and the Assets lookup of the creator record ID.
+const CREATOR_API_KEYS_FIELD = 'API Keys';
+const ASSETS_CREATOR_RECORD_ID_FIELD = '⚙️🎨Creator Record ID';
+
+const AIRTABLE_RECORD_ID_PATTERN = /^rec[A-Za-z0-9]{14}$/;
 
 // Airtable field IDs for authentication
 const FIELDS = {
@@ -760,11 +789,40 @@ export interface ApiKey {
 	name: string;
 	keyPrefix?: string;
 	createdAt: string;
+	/** Calendar date (YYYY-MM-DD); the key stops working at 00:00 UTC that day. */
 	expiresAt?: string;
 	lastUsedAt?: string;
-	scopes: string[];
+	scopes: ApiKeyScope[];
 	status: 'Active' | 'Revoked' | 'Expired';
 	requestCount?: number;
+}
+
+/** An API key row with the server-only fields needed to verify and own it. */
+export interface ApiKeyRecord extends ApiKey {
+	keyHash: string;
+	/**
+	 * Creator records the key reads. One email can sit on several creator
+	 * records; a key is linked to all of them, so it reads the same assets its
+	 * owner sees in the dashboard. The first is the profile the dashboard shows.
+	 */
+	creatorIds: string[];
+}
+
+/** The part of a creator profile the Marketplace already shows publicly. */
+export interface CreatorPublicProfile {
+	id: string;
+	name: string;
+	slug: string | null;
+	avatarUrl: string | null;
+	biography: string | null;
+	websiteUrl: string | null;
+}
+
+export class ApiKeyError extends Error {
+	constructor(public readonly code: 'CREATOR_NOT_FOUND' | 'MAX_KEYS_REACHED') {
+		super(code);
+		this.name = 'ApiKeyError';
+	}
 }
 
 export interface CreatorCategorySplit {
@@ -1381,6 +1439,92 @@ export function buildAssetUpdateFields(
 	return fields;
 }
 
+// ==================== API KEY HELPERS ====================
+
+function linkedRecordIds(value: unknown): string[] {
+	if (!Array.isArray(value)) return [];
+	return value.filter(
+		(entry): entry is string => typeof entry === 'string' && AIRTABLE_RECORD_ID_PATTERN.test(entry)
+	);
+}
+
+/** Matches a fixed set of records. Malformed IDs are dropped, never embedded. */
+export function buildRecordIdsFormula(recordIds: readonly string[]): string {
+	const clauses = recordIds
+		.filter((id) => AIRTABLE_RECORD_ID_PATTERN.test(id))
+		.map((id) => `RECORD_ID() = '${id}'`);
+	return clauses.length > 0 ? `OR(${clauses.join(', ')})` : 'FALSE()';
+}
+
+/**
+ * Matches assets linked to one creator record. Both sides are comma-wrapped so
+ * the ID matches as a whole value inside the lookup.
+ */
+export function buildCreatorRecordIdMatchFormula(creatorIds: readonly string[]): string {
+	if (creatorIds.length === 0 || creatorIds.some((id) => !AIRTABLE_RECORD_ID_PATTERN.test(id))) {
+		throw new Error('Invalid creator record ID');
+	}
+	const haystack = `',' & ARRAYJOIN({${ASSETS_CREATOR_RECORD_ID_FIELD}}, ',') & ','`;
+	const clauses = creatorIds.map((id) => `FIND(',${id},', ${haystack}) > 0`);
+	return clauses.length === 1 ? clauses[0] : `OR(${clauses.join(', ')})`;
+}
+
+export function mapApiKeyRecord(
+	record: { id: string; fields: Record<string, unknown> },
+	now: Date = new Date()
+): ApiKeyRecord {
+	const fields = record.fields;
+	const expiresAt = firstString(fields[API_KEY_FIELDS.expirationDate]);
+	const storedStatus = firstString(fields[API_KEY_FIELDS.status]);
+	const requestCount = Number(fields[API_KEY_FIELDS.requestCount]);
+
+	let status: ApiKey['status'] =
+		storedStatus === 'Revoked' || storedStatus === 'Expired' ? storedStatus : 'Active';
+	if (status === 'Active' && isApiKeyExpired(expiresAt, now)) status = 'Expired';
+
+	return {
+		id: record.id,
+		name: firstString(fields[API_KEY_FIELDS.name]) || 'Unnamed key',
+		keyPrefix: firstString(fields[API_KEY_FIELDS.prefix]),
+		createdAt: firstString(fields[API_KEY_FIELDS.createdDate]) || '',
+		expiresAt,
+		lastUsedAt: firstString(fields[API_KEY_FIELDS.lastUsed]),
+		scopes: Array.isArray(fields[API_KEY_FIELDS.scopes])
+			? (fields[API_KEY_FIELDS.scopes] as unknown[]).filter(isApiKeyScope)
+			: [],
+		status,
+		requestCount: Number.isFinite(requestCount) ? requestCount : 0,
+		keyHash: firstString(fields[API_KEY_FIELDS.hash]) || '',
+		creatorIds: linkedRecordIds(fields[API_KEY_FIELDS.creator])
+	};
+}
+
+/** Drops the server-only fields before a key leaves the server. */
+function toApiKey(record: ApiKeyRecord): ApiKey {
+	const { keyHash: _keyHash, creatorIds: _creatorIds, ...apiKey } = record;
+	return apiKey;
+}
+
+function mapAssetRecordsForList(
+	records: readonly Airtable.Record<Airtable.FieldSet>[],
+	context: Record<string, unknown>
+): Asset[] {
+	return records.flatMap((record) => {
+		try {
+			return [mapAssetRecord(record)];
+		} catch (error) {
+			console.error('[Airtable] Failed to map asset record for dashboard', {
+				...context,
+				recordId: record.id,
+				marketplaceStatus: record.fields['🚀Marketplace Status'],
+				assetType: record.fields['⚙️🆎Type (Text)'] ?? record.fields['🆎Type'],
+				error: error instanceof Error ? error.message : String(error)
+			});
+			return [];
+		}
+	});
+}
+
 // ==================== AIRTABLE CLIENT ====================
 
 /**
@@ -1399,6 +1543,51 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		if (debugEnabled) {
 			console.log(...args);
 		}
+	};
+
+	/**
+	 * Every creator record the email is on, in the order the dashboard reads
+	 * them (the first is the one the Profile tab shows).
+	 */
+	const selectCreatorRecordsByEmail = async (email: string) =>
+		base(TABLES.CREATORS)
+			.select({ filterByFormula: buildCreatorRecordEmailMatchFormula(email) })
+			.firstPage();
+
+	/**
+	 * Reads one record, or null when it does not exist. Airtable answers 403,
+	 * not 404, for a record ID it has never issued, so both mean "not found".
+	 */
+	const findRecordOrNull = async (table: string, recordId: string) => {
+		try {
+			return await base(table).find(recordId);
+		} catch (err) {
+			const status = (err as { statusCode?: number }).statusCode;
+			if (status === 404 || status === 403) return null;
+			throw err;
+		}
+	};
+
+	/**
+	 * Keys reached through the creator records' back-links, each confirmed
+	 * against its own Creator link so a stale back-link cannot leak a key.
+	 */
+	const selectApiKeysForCreators = async (
+		creators: readonly Airtable.Record<Airtable.FieldSet>[]
+	): Promise<ApiKeyRecord[]> => {
+		const creatorIds = new Set(creators.map((creator) => creator.id));
+		const keyIds = [
+			...new Set(creators.flatMap((creator) => linkedRecordIds(creator.fields[CREATOR_API_KEYS_FIELD])))
+		];
+		if (keyIds.length === 0) return [];
+
+		const records = await base(TABLES.API_KEYS)
+			.select({ filterByFormula: buildRecordIdsFormula(keyIds) })
+			.all();
+
+		return records
+			.map((record) => mapApiKeyRecord(record))
+			.filter((key) => key.creatorIds.some((id) => creatorIds.has(id)));
 	};
 
 	return {
@@ -1543,20 +1732,22 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				})
 				.all();
 
-			return records.flatMap((record) => {
-				try {
-					return [mapAssetRecord(record)];
-				} catch (error) {
-					console.error('[Airtable] Failed to map asset record for dashboard', {
-						email,
-						recordId: record.id,
-						marketplaceStatus: record.fields['🚀Marketplace Status'],
-						assetType: record.fields['⚙️🆎Type (Text)'] ?? record.fields['🆎Type'],
-						error: error instanceof Error ? error.message : String(error)
-					});
-					return [];
-				}
-			});
+			return mapAssetRecordsForList(records, { email });
+		},
+
+		/**
+		 * Get all assets linked to the given creator records (Creator API).
+		 * Scoped by record ID: the key decides the creators, nothing in the request can.
+		 */
+		async getAssetsByCreatorIds(creatorIds: readonly string[]): Promise<Asset[]> {
+			const records = await base(TABLES.ASSETS)
+				.select({
+					view: VIEWS.ASSETS,
+					filterByFormula: buildCreatorRecordIdMatchFormula(creatorIds)
+				})
+				.all();
+
+			return mapAssetRecordsForList(records, { creatorIds: creatorIds.join(',') });
 		},
 
 		/**
@@ -2244,145 +2435,115 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		// ==================== API KEYS ====================
 
 		/**
-		 * Generate a new API key.
+		 * Create an API key for the creator records the email is on.
+		 * The full key is returned once; only its hash is stored.
 		 */
-		async generateApiKey(creatorEmail: string, name: string, scopes: string[]): Promise<{ key: string; apiKey: ApiKey }> {
-			const rawKey = randomBytes(32).toString('hex');
-			const keyPrefix = 'wfd_';
-			const fullKey = `${keyPrefix}${rawKey}`;
-			const keyHash = createHash('sha256').update(fullKey).digest('hex');
+		async generateApiKey(
+			creatorEmail: string,
+			name: string,
+			scopes: ApiKeyScope[]
+		): Promise<{ key: string; apiKey: ApiKey }> {
+			const creators = await selectCreatorRecordsByEmail(creatorEmail);
+			if (creators.length === 0) throw new ApiKeyError('CREATOR_NOT_FOUND');
 
-			const now = new Date();
-			const expiresAt = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+			const existing = await selectApiKeysForCreators(creators);
+			if (existing.filter((key) => key.status === 'Active').length >= MAX_ACTIVE_API_KEYS) {
+				throw new ApiKeyError('MAX_KEYS_REACHED');
+			}
 
-			const records = await base(TABLES.API_KEYS).create([{
-				fields: {
-					'Name': name,
-					'Key Hash': keyHash,
-					'Key Prefix': fullKey.substring(0, 12),
-					'Creator Email': creatorEmail,
-					'Scopes': scopes.join(','),
-					'Status': 'Active',
-					'Created At': now.toISOString(),
-					'Expires At': expiresAt.toISOString()
+			const secret = generateApiKeySecret();
+			const records = await base(TABLES.API_KEYS).create([
+				{
+					fields: {
+						[API_KEY_FIELDS.hash]: secret.hash,
+						[API_KEY_FIELDS.creator]: creators.map((creator) => creator.id),
+						[API_KEY_FIELDS.status]: 'Active',
+						[API_KEY_FIELDS.scopes]: [...scopes],
+						[API_KEY_FIELDS.name]: name,
+						[API_KEY_FIELDS.prefix]: secret.prefix,
+						[API_KEY_FIELDS.expirationDate]: apiKeyExpirationDate(),
+						[API_KEY_FIELDS.requestCount]: 0
+					}
 				}
-			}]);
+			]);
 
-			const record = records[0];
-			return {
-				key: fullKey,
-				apiKey: {
-					id: record.id,
-					name: record.fields['Name'] as string,
-					keyPrefix: record.fields['Key Prefix'] as string,
-					createdAt: record.fields['Created At'] as string,
-					expiresAt: record.fields['Expires At'] as string,
-					scopes: scopes,
-					status: 'Active'
-				}
-			};
+			return { key: secret.key, apiKey: toApiKey(mapApiKeyRecord(records[0])) };
 		},
 
 		/**
-		 * List API keys for a creator.
+		 * List the creator's API keys, newest first.
 		 */
 		async listApiKeys(creatorEmail: string): Promise<ApiKey[]> {
-			const emailLiteral = airtableFormulaValue(creatorEmail.trim().toLowerCase());
-			const records = await base(TABLES.API_KEYS)
-				.select({
-					filterByFormula: `LOWER({Creator Email}) = ${emailLiteral}`,
-					sort: [{ field: 'Created At', direction: 'desc' }]
-				})
-				.all();
+			const creators = await selectCreatorRecordsByEmail(creatorEmail);
+			if (creators.length === 0) return [];
 
-			return records.map(r => {
-				const expiresAt = r.fields['Expires At'] as string | undefined;
-				const status = r.fields['Status'] as string || 'Active';
-
-				let finalStatus: ApiKey['status'] = status as ApiKey['status'];
-				if (status === 'Active' && expiresAt && new Date(expiresAt) < new Date()) {
-					finalStatus = 'Expired';
-				}
-
-				return {
-					id: r.id,
-					name: r.fields['Name'] as string || 'Unnamed Key',
-					keyPrefix: r.fields['Key Prefix'] as string | undefined,
-					createdAt: r.fields['Created At'] as string,
-					expiresAt: expiresAt,
-					lastUsedAt: r.fields['Last Used At'] as string | undefined,
-					scopes: (r.fields['Scopes'] as string || '').split(',').filter(Boolean),
-					status: finalStatus,
-					requestCount: r.fields['Request Count'] as number | undefined
-				};
-			});
+			const keys = await selectApiKeysForCreators(creators);
+			return keys
+				.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+				.map(toApiKey);
 		},
 
 		/**
-		 * Revoke an API key.
+		 * Revoke one of the creator's API keys.
+		 *
+		 * Returns the key hash so the caller can drop cached verifications, or
+		 * null when the key does not exist or belongs to other creators.
 		 */
-		async revokeApiKey(keyId: string, creatorEmail: string): Promise<boolean> {
-			try {
-				const record = await base(TABLES.API_KEYS).find(keyId);
-				const recordEmail = record.fields['Creator Email'] as string;
+		async revokeApiKey(keyId: string, creatorEmail: string): Promise<{ keyHash: string } | null> {
+			if (!AIRTABLE_RECORD_ID_PATTERN.test(keyId)) return null;
 
-				if (recordEmail.toLowerCase() !== creatorEmail.toLowerCase()) {
-					return false;
-				}
+			const creators = await selectCreatorRecordsByEmail(creatorEmail);
+			if (creators.length === 0) return null;
 
-				await base(TABLES.API_KEYS).update([{
-					id: keyId,
-					fields: {
-						'Status': 'Revoked',
-						'Revoked At': new Date().toISOString()
-					}
-				}]);
+			const record = await findRecordOrNull(TABLES.API_KEYS, keyId);
+			if (!record) return null;
 
-				return true;
-			} catch {
-				return false;
+			const key = mapApiKeyRecord(record);
+			const ownIds = new Set(creators.map((creator) => creator.id));
+			if (!key.creatorIds.some((id) => ownIds.has(id))) return null;
+
+			if (record.fields[API_KEY_FIELDS.status] !== 'Revoked') {
+				await base(TABLES.API_KEYS).update([
+					{ id: keyId, fields: { [API_KEY_FIELDS.status]: 'Revoked' } }
+				]);
 			}
+
+			return { keyHash: key.keyHash };
 		},
 
 		/**
-		 * Validate an API key.
+		 * Look up an API key by the SHA-256 hash of the full key.
+		 * Returns revoked and expired keys too, so the caller can say why a key failed.
 		 */
-		async validateApiKey(key: string): Promise<{ valid: boolean; email?: string; scopes?: string[] }> {
-			if (!key.startsWith('wfd_')) {
-				return { valid: false };
-			}
-
-			const keyHash = createHash('sha256').update(key).digest('hex');
-			const keyHashLiteral = airtableFormulaValue(keyHash);
+		async findApiKeyByHash(keyHash: string): Promise<ApiKeyRecord | null> {
+			if (!/^[0-9a-f]{64}$/.test(keyHash)) return null;
 
 			const records = await base(TABLES.API_KEYS)
 				.select({
-					filterByFormula: `AND({Key Hash} = ${keyHashLiteral}, {Status} = 'Active')`,
+					filterByFormula: `{${API_KEY_FIELDS.hash}} = ${airtableFormulaValue(keyHash)}`,
 					maxRecords: 1
 				})
 				.firstPage();
 
-			if (records.length === 0) {
-				return { valid: false };
-			}
+			return records.length > 0 ? mapApiKeyRecord(records[0]) : null;
+		},
 
-			const record = records[0];
-			const expiresAt = record.fields['Expires At'] as string | undefined;
+		/**
+		 * Public profile of one creator, read by record ID (Creator API).
+		 */
+		async getCreatorProfileById(creatorId: string): Promise<CreatorPublicProfile | null> {
+			if (!AIRTABLE_RECORD_ID_PATTERN.test(creatorId)) return null;
 
-			if (expiresAt && new Date(expiresAt) < new Date()) {
-				return { valid: false };
-			}
-
-			// Update last used timestamp (fire and forget)
-			base(TABLES.API_KEYS).update([{
-				id: record.id,
-				fields: { 'Last Used At': new Date().toISOString() }
-			}]).catch(() => { /* ignore errors */ });
+			const record = await findRecordOrNull(TABLES.CREATORS, creatorId);
+			if (!record) return null;
 
 			return {
-				valid: true,
-				email: record.fields['Creator Email'] as string,
-				scopes: (record.fields['Scopes'] as string || '').split(',').filter(Boolean)
+				id: record.id,
+				name: firstString(record.fields['Name']) || '',
+				slug: firstString(record.fields['🥞CMS Slug']) || null,
+				avatarUrl: extractAttachmentUrls(record.fields['🖼️Avatar (Primary)'])[0] ?? null,
+				biography: firstString(record.fields['ℹ️Biography']) || null,
+				websiteUrl: firstString(record.fields['🔗Personal Site']) || null
 			};
 		},
 
