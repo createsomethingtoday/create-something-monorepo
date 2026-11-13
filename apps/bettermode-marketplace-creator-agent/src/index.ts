@@ -292,34 +292,47 @@ async function handleSend(
     }
 
     // The reply is public from here. A bookkeeping failure must not show
-    // "Could not send", or the admin sends it again.
-    try {
-      await markSent(env.DB, state.draft.id, draftText, reply.id ?? null);
-      await patchSignal(env.DB, state.signal.id, 'responded', {
+    // "Could not send", or the admin sends it again. Each step runs on its
+    // own, so one failure does not skip the others.
+    const draftId = state.draft.id;
+    const signalId = state.signal.id;
+    const spaceId = state.signal.metadata?.space_id ?? env.BETTERMODE_MARKETPLACE_SPACE_ID ?? null;
+    const afterSend = async (step: string, run: () => Promise<void>) => {
+      for (let attempt = 1; attempt <= 2; attempt += 1) {
+        try {
+          await run();
+          return;
+        } catch (error) {
+          console.error('reply sent but a follow-up step failed', {
+            step,
+            attempt,
+            postId,
+            replyId: reply.id,
+            error: errorMessage(error),
+          });
+        }
+      }
+    };
+    // Moderation decides a few seconds after the post. Check then, and
+    // release the reply if it was held.
+    await afterSend('verify', () =>
+      enqueue(
+        env,
+        { kind: 'reply.verify', replyId: reply.id, threadId: postId, draftId, actorId, spaceId },
+        { delaySeconds: 15 },
+      ),
+    );
+    // Records the reply ID and sender. If the verify message above was lost,
+    // the sweep finds this row and verifies the reply again.
+    await afterSend('mark-sent', () =>
+      markSent(env.DB, draftId, draftText, reply.id ?? null, actorId),
+    );
+    await afterSend('thread-state', () =>
+      patchSignal(env.DB, signalId, 'responded', {
         sent_reply_at: new Date().toISOString(),
         last_error: null,
-      });
-      // Moderation decides a few seconds after the post. Check then, and
-      // release the reply if it was held.
-      await enqueue(
-        env,
-        {
-          kind: 'reply.verify',
-          replyId: reply.id,
-          threadId: postId,
-          draftId: state.draft.id,
-          actorId,
-          spaceId: state.signal.metadata?.space_id ?? env.BETTERMODE_MARKETPLACE_SPACE_ID ?? null,
-        },
-        { delaySeconds: 15 },
-      );
-    } catch (error) {
-      console.error('reply sent but bookkeeping failed', {
-        postId,
-        replyId: reply.id,
-        error: errorMessage(error),
-      });
-    }
+      }),
+    );
 
     const refreshed = await loadDraftState(postId, env);
     refreshed.notice = { kind: 'success', title: 'Reply sent.' };

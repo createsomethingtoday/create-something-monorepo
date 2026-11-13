@@ -203,15 +203,23 @@ export async function saveAgentDraft(
 
   let queueId = existing?.id;
   if (queueId) {
-    await db
+    // Conditional: an admin may have pressed Send since the read above. A row
+    // that is sending or sent must not return to pending.
+    const updated = await db
       .prepare(
         `UPDATE community_queue
          SET draft_content = ?1, draft_reasoning = ?2, status = 'pending',
              approved_content = NULL, approved_at = NULL
-         WHERE id = ?3`,
+         WHERE id = ?3 AND status IN ('pending','approved')`,
       )
       .bind(draft, reasoning, queueId)
       .run();
+    if ((updated.meta.changes ?? 0) === 0) {
+      return {
+        ok: false,
+        reason: 'The draft for this post is being sent or is closed. List the queue again.',
+      };
+    }
   } else {
     queueId = `q_${crypto.randomUUID()}`;
     await db

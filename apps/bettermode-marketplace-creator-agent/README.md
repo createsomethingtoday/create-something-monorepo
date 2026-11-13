@@ -8,7 +8,7 @@ Cloudflare Worker for the **Marketplace Creator Agent** Bettermode app. Drafts a
 |---|---|
 | Webhook (`post.published` / `reply.published` / `*.updated`) | Verify Bettermode signature → send a `thread.sync` message to the `bettermode-creator-events` queue |
 | Thread sync (queue consumer) | Read the whole thread from Bettermode (root, replies, nested replies) → derive the state → write the thread row → draft a reply when a creator is waiting and no current draft exists |
-| Scheduled sweep (every 30 min) | List the 30 most recently active threads in the space → enqueue each one whose stored state is behind, plus open items nothing refreshed in a day. Covers webhooks that never arrive. |
+| Scheduled sweep (every 30 min) | List the 30 most recently active threads in the space → enqueue each one whose stored state is behind, plus open items nothing refreshed in a day. Covers webhooks that never arrive. Also re-enqueues `reply.verify` for a reply sent 15 minutes to 24 hours ago that has no recorded moderation outcome. |
 | Dynamic block render | On admin view of a post, return a Slate UI: post excerpt, editable draft textarea, [Send / Regenerate / Dismiss]. Non-admins see a small hint block. |
 | Send | Claim the draft (`sending`) so a second submit cannot post twice → mint a member-context Bettermode token using the admin's `actorId` → `createReply` → mark queue row `sent` and the thread `responded` → enqueue a `reply.verify` message |
 | Reply verify (queue consumer, 15 s later) | Check the reply status. If moderation holds it, release that one reply. Record the outcome on the queue row. |

@@ -304,10 +304,12 @@ export async function recordReconcileRun(
     .run();
 }
 
+// Returns null when an admin claimed the open draft for sending since the
+// read, so the caller leaves that row alone.
 export async function upsertPendingDraft(
   db: D1Database,
   input: DraftUpsert,
-): Promise<string> {
+): Promise<string | null> {
   const existing = await db
     .prepare(
       `SELECT id FROM community_queue
@@ -319,15 +321,15 @@ export async function upsertPendingDraft(
     .first<{ id: string }>();
 
   if (existing?.id) {
-    await db
+    const updated = await db
       .prepare(
         `UPDATE community_queue
          SET draft_content = ?1, status = 'pending', approved_content = NULL, approved_at = NULL
-         WHERE id = ?2`,
+         WHERE id = ?2 AND status IN ('pending','approved')`,
       )
       .bind(input.draftContent, existing.id)
       .run();
-    return existing.id;
+    return (updated.meta.changes ?? 0) > 0 ? existing.id : null;
   }
 
   const id = newId('q');
@@ -431,11 +433,15 @@ export async function markSent(
   draftId: string,
   approvedContent: string,
   bettermodeReplyId: string | null,
+  sentBy: string | null = null,
 ): Promise<void> {
   const now = nowIso();
-  const result = bettermodeReplyId
-    ? JSON.stringify({ ok: true, bettermode_reply_id: bettermodeReplyId })
-    : JSON.stringify({ ok: true });
+  // The reply ID and sender let the sweep re-run a lost verify step.
+  const result = JSON.stringify({
+    ok: true,
+    ...(bettermodeReplyId ? { bettermode_reply_id: bettermodeReplyId } : {}),
+    ...(sentBy ? { sent_by: sentBy } : {}),
+  });
   await db
     .prepare(
       `UPDATE community_queue
@@ -448,6 +454,56 @@ export async function markSent(
     )
     .bind(approvedContent, now, result, draftId)
     .run();
+}
+
+export type UnverifiedReply = {
+  draftId: string;
+  replyId: string;
+  threadId: string;
+  sentBy: string | null;
+  spaceId: string | null;
+};
+
+// Sent replies with no recorded moderation outcome in the window. The verify
+// message for these was lost or never published.
+export async function listUnverifiedSentDrafts(
+  db: D1Database,
+  sentAfter: string,
+  sentBefore: string,
+  limit: number,
+): Promise<UnverifiedReply[]> {
+  const result = await db
+    .prepare(
+      `SELECT q.id AS draft_id,
+              json_extract(q.result, '$.bettermode_reply_id') AS reply_id,
+              json_extract(q.result, '$.sent_by') AS sent_by,
+              s.source_id AS thread_id,
+              json_extract(s.metadata, '$.space_id') AS space_id
+       FROM community_queue q
+       JOIN community_signals s ON s.id = q.signal_id
+       WHERE q.platform = ?1 AND q.status = 'sent'
+         AND q.sent_at >= ?2 AND q.sent_at <= ?3
+         AND json_extract(q.result, '$.bettermode_reply_id') IS NOT NULL
+         AND json_extract(q.result, '$.moderation') IS NULL
+         AND s.source_id IS NOT NULL
+       ORDER BY q.sent_at ASC
+       LIMIT ?4`,
+    )
+    .bind(PLATFORM, sentAfter, sentBefore, limit)
+    .all<{
+      draft_id: string;
+      reply_id: string;
+      sent_by: string | null;
+      thread_id: string;
+      space_id: string | null;
+    }>();
+  return (result.results || []).map((row) => ({
+    draftId: row.draft_id,
+    replyId: row.reply_id,
+    threadId: row.thread_id,
+    sentBy: row.sent_by,
+    spaceId: row.space_id,
+  }));
 }
 
 // Merges fields into the JSON result of a queue row (send and moderation outcome).

@@ -28,6 +28,7 @@ import {
   hasOpenDraft,
   listRecentApprovedDrafts,
   listStaleOpenPostIds,
+  listUnverifiedSentDrafts,
   patchSignal,
   recordReconcileRun,
   upsertPendingDraft,
@@ -56,6 +57,9 @@ const RECONCILE_STALE_LIMIT = 10;
 const DAY_MS = 86_400_000;
 // How long after Send a held reply may still be waiting for the verify step.
 const SEND_SETTLE_MS = 5 * 60_000;
+// The verify message retries for about 8 minutes. After this, a sent reply
+// with no moderation outcome has lost its verify message.
+const VERIFY_RECOVER_AFTER_MS = 15 * 60_000;
 
 export async function enqueue(
   env: Env,
@@ -243,7 +247,9 @@ export async function syncThread(
     return current?.status === 'queued' ? 'queued' : 'dismissed';
   }
 
-  await upsertPendingDraft(env.DB, { signalId, draftContent: draft });
+  const draftId = await upsertPendingDraft(env.DB, { signalId, draftContent: draft });
+  // An admin claimed the open draft for sending. Send sets the thread state.
+  if (!draftId) return 'new';
   await patchSignal(env.DB, signalId, 'queued', {
     drafted_for_post_id: target.id,
     last_error: null,
@@ -366,16 +372,48 @@ export async function reconcile(env: Env): Promise<void> {
       );
     }
 
+    // A sent reply with no moderation outcome lost its verify message (the
+    // publish failed after Send). Verify it again so a held reply is released.
+    const fallbackActor = adminUserIds(env)[0] ?? null;
+    const unverified = (
+      await listUnverifiedSentDrafts(
+        env.DB,
+        new Date(Date.now() - DAY_MS).toISOString(),
+        new Date(Date.now() - VERIFY_RECOVER_AFTER_MS).toISOString(),
+        RECONCILE_STALE_LIMIT,
+      )
+    ).filter((reply) => reply.sentBy || fallbackActor);
+    if (unverified.length > 0) {
+      await env.EVENTS.sendBatch(
+        unverified.map((reply) => ({
+          body: {
+            kind: 'reply.verify',
+            replyId: reply.replyId,
+            threadId: reply.threadId,
+            draftId: reply.draftId,
+            actorId: (reply.sentBy || fallbackActor) as string,
+            spaceId: reply.spaceId ?? spaceId,
+          } satisfies QueueMessage,
+        })),
+      );
+    }
+
     await recordReconcileRun(env.DB, {
       startedAt,
       status: 'completed',
       missed: missed.length,
-      metadata: { checked: recent.length, missed, stale: stale.length },
+      metadata: {
+        checked: recent.length,
+        missed,
+        stale: stale.length,
+        reverified: unverified.length,
+      },
     });
     console.log('reconcile complete', {
       checked: recent.length,
       missed: missed.length,
       stale: stale.length,
+      reverified: unverified.length,
     });
   } catch (error) {
     await recordReconcileRun(env.DB, {
