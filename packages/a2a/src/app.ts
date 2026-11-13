@@ -26,7 +26,7 @@ function decorate(response:Response,env:RuntimeEnv,request:Request):Response{
 async function route(request:Request,env:RuntimeEnv):Promise<Response>{
   const url=new URL(request.url);const path=url.pathname;
   if(path==='/health')return json({service:'a2a',version:VERSION,revision:env.BUILD_REVISION,environment:env.ENVIRONMENT});
-  if(path==='/.well-known/oauth-protected-resource'||path==='/.well-known/oauth-protected-resource/mcp')return json({resource:env.AUTH_RESOURCE,authorization_servers:[env.IDENTITY_ISSUER],scopes_supported:[READ_SCOPE,WRITE_SCOPE],bearer_methods_supported:['header'],resource_name:'CREATE SOMETHING A2A inbox'});
+  if(path==='/.well-known/oauth-protected-resource'||path==='/.well-known/oauth-protected-resource/mcp')return json({resource:env.AUTH_RESOURCE,authorization_servers:[env.IDENTITY_ISSUER],scopes_supported:[READ_SCOPE,WRITE_SCOPE,'offline_access'],bearer_methods_supported:['header'],resource_name:'CREATE SOMETHING A2A inbox'});
   if(path==='/api/v1/config')return json({issuer:env.IDENTITY_ISSUER,resource:env.AUTH_RESOURCE,clientId:env.AUTH_CLIENT_ID,cliRedirectUri:'http://127.0.0.1:42678/callback'});
   if(path==='/api/v1/status')return json({version:VERSION,environment:env.ENVIRONMENT,eventDelivery:env.CALLBACK_SENDER_TOKEN?'available':'not_configured',retention:{contentDays:30,auditDays:90,actionableDays:7}});
   if(path.startsWith('/auth/'))return await authRoute(request,env)??new Response('Not found',{status:404});
@@ -176,7 +176,7 @@ export default {
     try{return decorate(await route(request,env),env,request);}catch(error){
       const known=error instanceof HttpError||error instanceof DomainError;const status=known?error.status:503;const code=known?error.code:'service_unavailable';
       if(status>=500)console.error(JSON.stringify({event:'request_failed',code,path:new URL(request.url).pathname}));
-      const headers:Record<string,string>={};if(status===401)headers['www-authenticate']=`Bearer resource_metadata="${env.BASE_URL}/.well-known/oauth-protected-resource/mcp", scope="${READ_SCOPE} ${WRITE_SCOPE}"`;
+      const headers:Record<string,string>={};if(status===401)headers['www-authenticate']=`Bearer resource_metadata="${env.BASE_URL}/.well-known/oauth-protected-resource/mcp", scope="${READ_SCOPE} ${WRITE_SCOPE} offline_access"`;
       if(status===429||status===503)headers['retry-after']='60';
       return decorate(json({error:{code,message:known&&status<500?error.message:'This operation is temporarily unavailable.'}},status,headers),env,request);
     }

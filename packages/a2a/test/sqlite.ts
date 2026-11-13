@@ -9,7 +9,7 @@ export function createTestDatabase(options: {legacy?:boolean} = {}) {
 	sqlite.exec(readFileSync(new URL('../migrations/0001_inbox.sql', import.meta.url), 'utf8'));
 	if(!options.legacy) {
 		sqlite.exec('BEGIN IMMEDIATE');
-		try { for(const name of ['0002_delivery_auth.sql','0003_subscription_replay.sql','0004_owner_conversations.sql','0005_shared_context.sql'])sqlite.exec(readFileSync(new URL(`../migrations/${name}`, import.meta.url),'utf8'));sqlite.exec('COMMIT'); }
+		try { for(const name of ['0002_delivery_auth.sql','0003_subscription_replay.sql','0004_owner_conversations.sql','0005_shared_context.sql','0006_refresh_fencing.sql'])sqlite.exec(readFileSync(new URL(`../migrations/${name}`, import.meta.url),'utf8'));sqlite.exec('COMMIT'); }
 		catch(error) { sqlite.exec('ROLLBACK');throw error; }
 	}
 	let beforeBatch: (() => void) | undefined;

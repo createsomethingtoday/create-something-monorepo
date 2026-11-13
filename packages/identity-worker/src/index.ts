@@ -1,3 +1,4 @@
+import { commitRecovery, encryptRecovery, readRecovery, recoverySuccessorConsumed } from './services/oauth-refresh-recovery';
 /**
  * Identity Worker
  *
@@ -108,7 +109,7 @@ export default {
 			if (path === '/v1/auth/magic-exchange' || path === '/v1/auth/cross-domain/exchange') return response;
 			return cors(response, request, env);
 		} catch (err) {
-			console.error('Identity Worker Error:', err);
+			console.error('Identity Worker Error:', path === '/oauth/token' ? 'token_exchange_failed' : err);
 			const response = json({ error: 'internal_error', message: 'An unexpected error occurred', status: 500 }, 500);
 			return path === '/v1/auth/cross-domain/exchange' ? response : cors(response, request, env);
 		}
@@ -805,6 +806,8 @@ interface AdminMcpAuditFeedBody {
 }
 
 interface OAuthTokenBody {
+	refresh_request_id?: string;
+	scope?: string;
 	grant_type?: string;
 	code?: string;
 	refresh_token?: string;
@@ -1508,13 +1511,30 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 	} else {
 		return oauthErrorResponse('unsupported_grant_type', 400, 'Supported grant_types are authorization_code and refresh_token.');
 	}
-	if (!grantKind || !(await consumeOAuthGrant(env.DB, {
+	if (resolveOAuthTokenAccessMode(claims.resource,env.MCP_HUB_URL,env.CONTROL_RUNTIME_RESOURCES).type === 'invalid') return oauthErrorResponse('invalid_target',400,'OAuth resource is not configured.');
+	if (body.resource && body.resource !== claims.resource) return oauthErrorResponse('invalid_target',400,'Resource does not match the grant.');
+	if (body.scope && body.scope !== claims.scope) return oauthErrorResponse('invalid_scope',400,'Scope must match the grant.');
+	const recoveryEnabled = grantKind === 'oauth_refresh_token' && claims.resource === 'https://a2a.createsomething.agency/mcp' && body.refresh_request_id !== undefined;
+	if (recoveryEnabled && !/^[A-Za-z0-9_-]{43,128}$/.test(body.refresh_request_id!)) return oauthErrorResponse('invalid_request',400,'A high-entropy refresh_request_id is required.');
+	const recoveryBinding = JSON.stringify([claims.jti,claims.client_id,claims.sub,'family_id' in claims ? claims.family_id : null,claims.resource,claims.scope]);
+	const activeRecoveryIdentity = async () => {
+		const current = await findUserById(env.DB,claims.sub);
+		return Boolean(current && isActiveVerifiedIdentity(current) && 'family_id' in claims && typeof claims.family_id === 'string' && await isOAuthRefreshFamilyActive(env.DB,claims.family_id,claims.client_id,claims.sub));
+	};
+	if (recoveryEnabled) {
+		const previous = await readRecovery(env.DB,claims.jti,body.refresh_token!,body.refresh_request_id!,recoveryBinding);
+		if (previous) {
+			if (!(await activeRecoveryIdentity()) || await recoverySuccessorConsumed(env.DB,previous)) return oauthErrorResponse('invalid_grant',400,'Recovery is no longer active.');
+			return json(previous,200,{'Cache-Control':'no-store',Pragma:'no-cache'});
+		}
+	}
+	if (!recoveryEnabled && (!grantKind || !(await consumeOAuthGrant(env.DB, {
 		grantId: claims.jti,
 		grantKind,
 		clientId: claims.client_id,
 		expiresAt: claims.exp,
 		nowSeconds: Math.floor(Date.now() / 1000),
-	}))) {
+	})))) {
 		if (grantKind === 'oauth_refresh_token' && 'family_id' in claims && typeof claims.family_id === 'string') {
 			await revokeOAuthRefreshFamily(env.DB, claims.family_id);
 		}
@@ -1680,12 +1700,23 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 			responseBody.refresh_token = refreshToken;
 		}
 
+		if (recoveryEnabled) {
+			if (!(await activeRecoveryIdentity())) return oauthErrorResponse('invalid_grant',400,'Identity is no longer active.');
+			await commitRecovery(env.DB,claims,body.refresh_request_id!,recoveryBinding,await encryptRecovery(body.refresh_token!,body.refresh_request_id!,recoveryBinding,responseBody));
+			const committed = await readRecovery(env.DB,claims.jti,body.refresh_token!,body.refresh_request_id!,recoveryBinding);
+			if (!committed) {
+				if ('family_id' in claims && typeof claims.family_id === 'string') await revokeOAuthRefreshFamily(env.DB,claims.family_id);
+				return oauthErrorResponse('invalid_grant',400,'Grant has already been used.');
+			}
+			if (!(await activeRecoveryIdentity()) || await recoverySuccessorConsumed(env.DB,committed)) return oauthErrorResponse('invalid_grant',400,'Recovery is no longer active.');
+			return json(committed,200,{'Cache-Control':'no-store',Pragma:'no-cache'});
+		}
 		return json(responseBody, 200, {
 			'Cache-Control': 'no-store',
 			Pragma: 'no-cache',
 		});
 	} catch (error) {
-		const description = error instanceof Error ? error.message : 'token_exchange_failed';
+		const description = 'token_exchange_failed';
 		console.error('OAuth token exchange failed:', {
 			error: description,
 			user_id: user.id,
@@ -4769,6 +4800,8 @@ async function parseOAuthTokenBody(request: Request): Promise<OAuthTokenBody | n
 		const params = new URLSearchParams(text);
 		return {
 			grant_type: params.get('grant_type') ?? undefined,
+			refresh_request_id: params.get('refresh_request_id') ?? undefined,
+			scope: params.get('scope') ?? undefined,
 			code: params.get('code') ?? undefined,
 			refresh_token: params.get('refresh_token') ?? undefined,
 			redirect_uri: params.get('redirect_uri') ?? undefined,
