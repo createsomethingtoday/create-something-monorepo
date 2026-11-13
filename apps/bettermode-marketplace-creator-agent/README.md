@@ -6,7 +6,7 @@ Cloudflare Worker for the **Marketplace Creator Agent** Bettermode app. Drafts a
 
 | Phase | What happens |
 |---|---|
-| Webhook (`post.published` / `reply.published` / `*.updated`) | Verify Bettermode signature → send a `thread.sync` message to the `bettermode-creator-events` queue |
+| Webhook (any `post.*` or `reply.*` event) | Verify Bettermode signature → send a `thread.sync` message to the `bettermode-creator-events` queue. Bettermode sends content events with `type: "SUBSCRIPTION"`; the event is in `data.name` (see `src/events.ts`). |
 | Thread sync (queue consumer) | Read the whole thread from Bettermode (root, replies, nested replies) → derive the state → write the thread row → draft a reply when a creator is waiting and no current draft exists |
 | Scheduled sweep (every 30 min) | List the 30 most recently active threads in the space → enqueue each one whose stored state is behind, plus open items nothing refreshed in a day. Covers webhooks that never arrive. Also re-enqueues `reply.verify` for a reply sent 15 minutes to 24 hours ago that has no recorded moderation outcome. |
 | Dynamic block render | On admin view of a post, return a Slate UI: post excerpt, editable draft textarea, [Send / Regenerate / Dismiss]. Non-admins see a small hint block. |
@@ -135,7 +135,7 @@ In the Bettermode app admin (https://app.bettermode.com → Apps → Marketplace
 
 1. **Webhook URL** → `https://bettermode-marketplace-creator-agent.<account-subdomain>.workers.dev/webhook`
 2. **Interaction URL** → `https://bettermode-marketplace-creator-agent.<account-subdomain>.workers.dev/webhook/interaction`
-3. **Webhook events** — enable: `post.published`, `post.updated`, `reply.published`, `reply.updated`, plus `TEST` (for the challenge handshake).
+3. **Webhook events** — enable: `post.published`, `post.updated`, `reply.published`, `reply.updated`, plus `TEST` (for the challenge handshake). The Worker logs `name` for every webhook it receives, so `wrangler tail` shows which events arrive.
 4. **Dynamic block** — register a block that mounts on post detail pages. Bettermode will call `/webhook/interaction` with `dynamicBlockKey` and the post ID in `target.id`.
 5. **Scopes** — at minimum: read posts/replies/members/spaces, and create replies on behalf of users (member-context tokens). Without the latter the **Send** button cannot post as the admin.
 

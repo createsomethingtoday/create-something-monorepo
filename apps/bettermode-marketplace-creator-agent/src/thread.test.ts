@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import type { BettermodeMember, BettermodePost } from './bettermode';
-import { isStaff, textFingerprint, threadState } from './thread.ts';
+import { draftToHtml, isStaff, textFingerprint, threadState } from './thread.ts';
 
 const creator: BettermodeMember = { id: 'm-creator', name: 'Creator', email: 'creator@example.com' };
 const other: BettermodeMember = { id: 'm-other', name: 'Other', email: 'other@example.com' };
@@ -122,4 +122,38 @@ test('an edit changes the text fingerprint, a repeat of the same text does not',
   assert.equal(textFingerprint('  How do I update\n my template? '), original);
   assert.notEqual(textFingerprint('How do I delete my template?'), original);
   assert.notEqual(textFingerprint(''), original);
+});
+
+test('a draft becomes paragraphs, and a URL becomes a link', () => {
+  const url = 'https://example.com/post/abc?highlight=xyz';
+  assert.equal(
+    draftToHtml(`First line.\n\nSee:\n\n${url}\n\nLast line.`),
+    `<p>First line.</p><p>See:</p><p><a href="${url}">${url}</a></p><p>Last line.</p>`,
+  );
+});
+
+test('punctuation after a URL stays outside the link, and markup is escaped', () => {
+  assert.equal(
+    draftToHtml('Read https://example.com/a?x=1&y=2. Then <b>reply</b> "here".'),
+    '<p>Read <a href="https://example.com/a?x=1&amp;y=2">https://example.com/a?x=1&amp;y=2</a>. Then &lt;b&gt;reply&lt;/b&gt; &quot;here&quot;.</p>',
+  );
+  assert.equal(
+    draftToHtml('(see https://example.com/a)\nnext'),
+    '<p>(see <a href="https://example.com/a">https://example.com/a</a>)<br>next</p>',
+  );
+  assert.equal(
+    draftToHtml('Quote "https://example.com/a" ends.'),
+    '<p>Quote &quot;<a href="https://example.com/a">https://example.com/a</a>&quot; ends.</p>',
+  );
+});
+
+test('a URL in angle brackets or with its own brackets links cleanly', () => {
+  assert.equal(
+    draftToHtml('See <https://example.com/help> first.'),
+    '<p>See &lt;<a href="https://example.com/help">https://example.com/help</a>&gt; first.</p>',
+  );
+  assert.equal(
+    draftToHtml('Read https://example.com/wiki/Name_(band).'),
+    '<p>Read <a href="https://example.com/wiki/Name_(band)">https://example.com/wiki/Name_(band)</a>.</p>',
+  );
 });
