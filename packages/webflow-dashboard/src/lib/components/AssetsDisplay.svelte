@@ -236,13 +236,14 @@
     if (!showPerformance || !motionOK()) return;
     await tick();
     if (!listEl) return;
+    // Opacity only: the new header cells hold sort buttons that must stay focusable.
     gsap.from(listEl.querySelectorAll('.metric-head, td.metric-cell'), {
-      autoAlpha: 0,
+      opacity: 0,
       x: 14,
       duration: 0.4,
       ease: EASE.out,
       stagger: { amount: 0.22 },
-      clearProps: 'transform,opacity,visibility'
+      clearProps: 'transform,opacity'
     });
   }
 
@@ -1092,9 +1093,9 @@
   }
 
   .section-search {
-    flex: 1 1 18.5rem;
-    min-width: 15rem;
-    max-width: 21rem;
+    flex: 0 1 auto;
+    width: 18.5rem;
+    max-width: 100%;
   }
 
   .type-list {

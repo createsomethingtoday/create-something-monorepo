@@ -351,6 +351,13 @@ export function collapseOut(node: HTMLElement): TransitionConfig {
 	return hold(duration);
 }
 
+/*
+ * Floating surfaces (menu, dialog, toast) fade with opacity only, never
+ * `visibility`. Dialog and the row menu move keyboard focus into themselves as
+ * they open; an element that is `visibility: hidden`, even for one frame,
+ * cannot take focus, and the attempt is not retried.
+ */
+
 /** `in:` transition for a floating surface (menu, dialog panel, toast). */
 export function popIn(
 	node: HTMLElement,
@@ -360,8 +367,8 @@ export function popIn(
 	const duration = 0.32;
 	gsap.fromTo(
 		node,
-		{ autoAlpha: 0, y, scale, transformOrigin: origin },
-		{ autoAlpha: 1, y: 0, scale: 1, duration, ease: EASE.out, clearProps: 'transform' }
+		{ opacity: 0, y, scale, transformOrigin: origin },
+		{ opacity: 1, y: 0, scale: 1, duration, ease: EASE.out, clearProps: 'transform,opacity' }
 	);
 	return hold(duration);
 }
@@ -369,19 +376,23 @@ export function popIn(
 export function popOut(node: HTMLElement, { y = 6 }: { y?: number } = {}): TransitionConfig {
 	if (!motionOK()) return { duration: 0 };
 	const duration = 0.18;
-	gsap.to(node, { autoAlpha: 0, y, scale: 0.98, duration, ease: 'power2.in' });
+	gsap.to(node, { opacity: 0, y, scale: 0.98, duration, ease: 'power2.in' });
 	return hold(duration);
 }
 
 export function fadeIn(node: HTMLElement): TransitionConfig {
 	if (!motionOK()) return { duration: 0 };
-	gsap.fromTo(node, { autoAlpha: 0 }, { autoAlpha: 1, duration: DUR.fast, ease: 'none' });
+	gsap.fromTo(
+		node,
+		{ opacity: 0 },
+		{ opacity: 1, duration: DUR.fast, ease: 'none', clearProps: 'opacity' }
+	);
 	return hold(DUR.fast);
 }
 
 export function fadeOut(node: HTMLElement): TransitionConfig {
 	if (!motionOK()) return { duration: 0 };
-	gsap.to(node, { autoAlpha: 0, duration: 0.2, ease: 'none' });
+	gsap.to(node, { opacity: 0, duration: 0.2, ease: 'none' });
 	return hold(0.2);
 }
 

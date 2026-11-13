@@ -132,6 +132,23 @@ export const FIXTURE_ASSETS: Asset[] = [
 		latestReviewStatus: 'Approved',
 		qualityScore: 'Good'
 	}),
+	// Enough published templates (more than 10) to exercise the "Show more" row.
+	...[
+		['Brightwork', 'Design', 'Studio', '2026-01-20', 2210, 44, 3476],
+		['Cinder', 'Technology', 'Developer tools', '2026-01-06', 1984, 31, 3069],
+		['Driftwood', 'Travel', 'Outdoors', '2025-12-09', 1502, 27, 2133],
+		['Evergreen', 'Non-profit', 'Environment', '2025-11-18', 1120, 19, 1501],
+		['Foundry', 'Portfolio & Agency', 'Agency with a deliberately long subcategory name', '2025-10-28', 964, 12, 948]
+	].map(([name, category, subcategory, submitted, viewers, purchases, revenue], index) =>
+		template(30 + index, name as string, 'Published', category as string, subcategory as string, {
+			submittedDate: submitted as string,
+			publishedDate: submitted as string,
+			uniqueViewers: viewers as number,
+			cumulativePurchases: purchases as number,
+			cumulativeRevenue: revenue as number,
+			latestReviewStatus: 'Approved'
+		})
+	),
 	template(9, 'Quarry', 'Scheduled', 'Architecture', 'Studio', {
 		submittedDate: '2026-10-21',
 		decisionDate: '2026-11-06',
