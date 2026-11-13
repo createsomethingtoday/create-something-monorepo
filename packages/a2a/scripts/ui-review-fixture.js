@@ -1,13 +1,35 @@
 // Test host only. This file is injected by ui-review-server.mjs, never built/shipped.
 const reviewParams=new URL(location.href).searchParams;
 const originalFetch=window.fetch.bind(window);
+let releaseConversation;
+const conversationGate=new Promise(resolve=>{releaseConversation=resolve;});
+window.__reviewReleaseConversation=()=>releaseConversation();
 window.fetch=(input,options)=>{
  if(typeof input==='string'&&input.startsWith('/api/')){
   const url=new URL(input,location.origin);
   url.searchParams.set('__fixture',reviewParams.get('fixture')||'populated');
+  if(reviewParams.get('conversation')==='held'&&url.pathname.startsWith('/api/v1/conversations/')){
+   return conversationGate.then(()=>originalFetch(url,options));
+  }
   return originalFetch(url,options);
  }
  return originalFetch(input,options);
+};
+// Real browser regression: a late thread response must not interrupt an open draft.
+// Reload /app?fixture=populated&conversation=held before each reply/new case.
+window.__reviewComposerFocusRegression=async(mode='reply')=>{
+ if(reviewParams.get('conversation')!=='held')throw new Error('Use conversation=held for this regression');
+ const waitFor=async(check)=>{const deadline=performance.now()+4000;while(!check()){if(performance.now()>deadline)throw new Error('Composer regression timed out');await new Promise(resolve=>setTimeout(resolve,20));}};
+ await waitFor(()=>document.querySelector('[data-thread-id="review"]'));
+ document.querySelector('[data-thread-id="review"]').click();
+ document.querySelector(mode==='new'?'#new-message':'.reply-button').click();
+ const input=document.querySelector('#message-text'),text=`Keep this ${mode} draft while the thread loads`;
+ input.focus();input.value=text;input.dispatchEvent(new Event('input',{bubbles:true}));input.setSelectionRange(5,9);
+ const before={focus:document.activeElement.id,parent:input.closest('form').parentElement.id,selection:[input.selectionStart,input.selectionEnd]};
+ window.__reviewReleaseConversation();
+ await waitFor(()=>document.querySelector('.conversation-heading h3')?.textContent==='Canon + Studio');
+ const after={focus:document.activeElement.id,parent:input.closest('form').parentElement.id,selection:[input.selectionStart,input.selectionEnd],text:input.value};
+ return {mode,before,after,pass:document.activeElement===input&&input.value===text&&input.selectionStart===5&&input.selectionEnd===9};
 };
 // Deterministic JS preference test when browser-tool OS emulation is unavailable.
 // This is explicitly a fixture, not proof that the OS preference was changed.

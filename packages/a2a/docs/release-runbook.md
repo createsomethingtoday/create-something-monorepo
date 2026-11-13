@@ -160,6 +160,12 @@ retained in the operator worktree and referenced by the Linear release receipt.
 Require a clean `pnpm install --frozen-lockfile --ignore-scripts
 --side-effects-cache=false` CI gate before promotion: checks against already
 installed dependencies cannot establish lockfile validity or reproducibility.
+For the late-thread-response focus regression, open the local fixture at
+`/app?fixture=populated&conversation=held`, then run
+`await window.__reviewComposerFocusRegression('reply')` in the browser and
+require `pass: true`. Reload that URL and repeat with `'new'`. The test holds
+the real conversation fetch until the textarea has focus, text and a selection,
+then checks that the completed background render preserves all three.
 The advisory Ground orphan findings for these two manual fixture entrypoints
 are expected; unsupported HTML/CSS/media exclusions are not checked-clean claims.
 

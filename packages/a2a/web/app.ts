@@ -283,7 +283,16 @@ function draftKey(threadId:string){return `${state.agentId}:${threadId||'new'}`;
 function replyLabel(){return drafts.get(draftKey(state.threadId))?.text.trim()?'Resume draft →':'Reply as owner →';}
 function updateDraftActions(){const reply=document.querySelector<HTMLButtonElement>('.reply-button');if(reply)reply.textContent=replyLabel();$('#new-message').firstChild!.textContent=drafts.get(draftKey(''))?.text.trim()?'Resume new draft ':'New message ';}
 function saveDraft(){const form=$<HTMLFormElement>('#compose-form');if(form.hidden)return;drafts.set(draftKey(state.replyThreadId),{recipient:$<HTMLInputElement>('#recipient-id').value,text:$<HTMLTextAreaElement>('#message-text').value,kind:composeKind(),idempotencyKey:state.idempotencyKey,sendPayload:state.sendPayload});updateDraftActions();}
-function placeCompose(){const form=$('#compose-form');if(!form.hidden&&state.replyThreadId&&state.replyThreadId===state.threadId){$('#conversation-detail').append(form);}else $('[data-panel="inbox"]').insertBefore(form,$('#delivery-section'));}
+function placeCompose(){
+  const form=$('#compose-form');
+  if(!form.hidden&&state.replyThreadId&&state.replyThreadId===state.threadId){
+    const detail=$('#conversation-detail');
+    if(form.parentElement!==detail||detail.lastElementChild!==form)detail.append(form);
+  }else{
+    const pane=$('[data-panel="inbox"]'),delivery=$('#delivery-section');
+    if(form.parentElement!==pane||form.nextElementSibling!==delivery)pane.insertBefore(form,delivery);
+  }
+}
 function resetCompose() { drafts.delete(draftKey(state.replyThreadId));$('#compose-form').hidden=true; $<HTMLFormElement>('#compose-form').reset();state.replyThreadId='';state.idempotencyKey='';state.sendPayload='';updateDraftActions(); }
 function showCompose(recipient='',threadId='') {
   saveDraft();composeReturnFocus=document.activeElement as HTMLElement;
