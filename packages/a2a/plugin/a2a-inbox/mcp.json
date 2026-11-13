@@ -9,8 +9,8 @@
           "auth": {
             "type": "oauth",
             "client": { "mode": "dcr" },
-            "baseScopes": ["a2a:read", "a2a:write"],
-            "defaultScopes": ["a2a:read", "a2a:write"],
+            "baseScopes": ["a2a:read", "a2a:write", "offline_access"],
+            "defaultScopes": ["a2a:read", "a2a:write", "offline_access"],
             "oidcEnabled": false
           }
         }
