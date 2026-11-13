@@ -122,3 +122,52 @@ export function stripHtml(html: string): string {
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
+
+// A URL runs to the next space, quote or angle bracket.
+const URL_PATTERN = /https?:\/\/[^\s<>"]+/g;
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// Sentence punctuation after a URL is not part of it. A closing bracket
+// stays when the URL holds its opening bracket.
+function trimUrl(url: string): string {
+  let end = url.length;
+  while (end > 0) {
+    const char = url[end - 1];
+    if (".,;:!?'".includes(char)) end -= 1;
+    else if (char === ')' && !url.slice(0, end - 1).includes('(')) end -= 1;
+    else if (char === ']' && !url.slice(0, end - 1).includes('[')) end -= 1;
+    else break;
+  }
+  return url.slice(0, end);
+}
+
+// URLs are found in the raw text, before escaping, so an escaped character
+// next to a URL cannot become part of the link.
+function linkText(text: string): string {
+  let html = '';
+  let last = 0;
+  for (const match of text.matchAll(URL_PATTERN)) {
+    const url = trimUrl(match[0]);
+    const start = match.index ?? 0;
+    html += escapeHtml(text.slice(last, start));
+    html += `<a href="${escapeHtml(url)}">${escapeHtml(url)}</a>`;
+    last = start + url.length;
+  }
+  return html + escapeHtml(text.slice(last));
+}
+
+// Turns an admin's plain-text draft into the HTML that Bettermode stores.
+// Blank lines separate paragraphs, and a URL becomes a link.
+export function draftToHtml(text: string): string {
+  return text
+    .split(/\n{2,}/)
+    .map((para) => `<p>${linkText(para).replace(/\n/g, '<br>')}</p>`)
+    .join('');
+}

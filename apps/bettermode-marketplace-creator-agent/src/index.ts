@@ -5,13 +5,14 @@
 // Endpoints:
 //   GET  /                   status page
 //   GET  /health             smoke check
-//   POST /webhook            Bettermode events (TEST + post/reply lifecycle)
+//   POST /webhook            Bettermode events (TEST + SUBSCRIPTION content events)
 //   POST /webhook/interaction  dynamic block render + button callbacks
 //
 // Post and reply events go to a Cloudflare Queue. The consumer and the
 // scheduled sweep live in ./queue.
 
 import { bettermodeAuth, BettermodeError, createReply, memberAccessToken } from './bettermode';
+import { isThreadEvent, webhookEventName, webhookPostId } from './events';
 import {
   adminUserIds,
   enqueue,
@@ -36,6 +37,7 @@ import {
   patchSignal,
   releaseSendClaim,
 } from './store';
+import { draftToHtml } from './thread';
 
 type WebhookPayload = {
   networkId?: string;
@@ -52,19 +54,14 @@ type WebhookPayload = {
     preview?: boolean;
     inputs?: Record<string, unknown> | null;
     challenge?: string;
+    // Content events (type SUBSCRIPTION) name the event here.
+    name?: string | null;
+    noun?: string | null;
+    verb?: string | null;
     object?: { id?: string; type?: string; spaceId?: string } | null;
-    target?: { id?: string; type?: string; spaceId?: string } | null;
+    target?: { id?: string; type?: string; spaceId?: string; postId?: string } | null;
   };
 };
-
-const POST_EVENT_TYPES = new Set([
-  'post.published',
-  'post.created',
-  'post.updated',
-  'reply.published',
-  'reply.created',
-  'reply.updated',
-]);
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -136,12 +133,15 @@ async function handleWebhook(
 
   const webhook = parseJson<WebhookPayload>(rawBody);
 
-  // Diagnostic logging — surfaces the exact event type Bettermode sends so we
-  // can verify our POST_EVENT_TYPES filter matches reality. Cheap and safe:
-  // single structured line per inbound webhook, no payload contents.
+  // One structured line per webhook, with the event but no payload contents.
+  // `name` is what the thread filter reads.
+  const eventName = webhookEventName(webhook);
   console.log('webhook received', {
     pathname,
     type: webhook.type,
+    name: eventName,
+    noun: webhook.data?.noun,
+    verb: webhook.data?.verb,
     entityId: webhook.entityId,
     context: webhook.context,
     objectId: webhook.data?.object?.id,
@@ -165,25 +165,26 @@ async function handleWebhook(
     return jsonResponse(await handleInteraction(webhook, env, ctx), request, env);
   }
 
-  if (pathname === '/webhook' && webhook.type && POST_EVENT_TYPES.has(webhook.type)) {
-    const postId = webhook.data?.object?.id || webhook.entityId;
-    const spaceId = webhook.data?.object?.spaceId;
-    console.log('matched post event', { type: webhook.type, postId, spaceId });
+  if (pathname === '/webhook' && isThreadEvent(webhook, env.BETTERMODE_MARKETPLACE_SPACE_ID)) {
+    const postId = webhookPostId(webhook);
+    const spaceId = webhook.data?.object?.spaceId || webhook.data?.target?.spaceId;
+    console.log('matched post event', { type: webhook.type, name: eventName, postId, spaceId });
     // The consumer checks the space against the live thread, so an event
     // without a spaceId passes. Only a known foreign space is dropped here.
     if (postId && (!spaceId || shouldHandleSpace(spaceId, env))) {
       // Awaited so a failed enqueue returns a non-2xx, not a false success.
-      await enqueue(env, { kind: 'thread.sync', postId, reason: webhook.type });
+      await enqueue(env, { kind: 'thread.sync', postId, reason: eventName || 'webhook' });
     } else {
       console.warn('event matched type but filtered out', {
         type: webhook.type,
+        name: eventName,
         postId,
         spaceId,
         marketplace_space: env.BETTERMODE_MARKETPLACE_SPACE_ID,
       });
     }
   } else if (pathname === '/webhook' && webhook.type) {
-    console.warn('unhandled webhook type', { type: webhook.type });
+    console.warn('unhandled webhook event', { type: webhook.type, name: eventName });
   }
 
   // Federated search and unknown types: ack with success.
@@ -480,17 +481,6 @@ function resolvePostId(webhook: WebhookPayload): string | undefined {
 function stringInput(webhook: WebhookPayload, key: string): string {
   const value = webhook.data?.inputs?.[key];
   return typeof value === 'string' ? value : '';
-}
-
-function draftToHtml(text: string): string {
-  const escaped = text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-  return escaped
-    .split(/\n{2,}/)
-    .map((para) => `<p>${para.replace(/\n/g, '<br>')}</p>`)
-    .join('');
 }
 
 function clip(value: string, max: number): string {
