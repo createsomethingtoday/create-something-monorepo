@@ -153,8 +153,8 @@
   // With the performance columns on, a narrower window cannot hold every
   // column. Price gives way first, then Category, so Name always has room.
   let innerWidth = $state(1440);
-  const showPrice = $derived(!(showPerformance && innerWidth < 1200));
-  const showCategory = $derived(!(showPerformance && innerWidth < 1080));
+  const showPrice = $derived(!(showPerformance && innerWidth < 1360));
+  const showCategory = $derived(!(showPerformance && innerWidth < 1180));
   // Thumbnail, name, status and submitted are always present.
   const leadingColumns = $derived(4 + (showCategory ? 1 : 0) + (showPrice ? 1 : 0));
   const columnCount = $derived(
