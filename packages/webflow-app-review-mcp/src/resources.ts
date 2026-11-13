@@ -149,7 +149,7 @@ export function registerResources(server: McpServer, getClient: ClientFactory): 
           'Use app_review_list_queue.assigned to inspect assigned, unassigned, or all records without binding to a reviewer session.',
           'Call app_review_get_asset to inspect one app asset and its version history.',
           'Call app_review_get_version when a specific version record needs confirmation.',
-          'To prepare, start, or kick off a new MCP review cycle, call app_review_get_review_context. This is read-only: preserve the reviewer and status, and wait for the bundle if needed.',
+          'To prepare, start, or kick off a new MCP review cycle, call app_review_get_review_context. This is read-only: preserve the reviewer and status, and wait for the bundle if needed. Read context.assetExceptions first: the exception decisions and standing conditions from every version of the app. If context.assetExceptionNotesOmitted is true, call app_review_list_asset_exceptions with the same version_id for the notes.',
           'Use app_review_decision_support and app_review_feedback_refiner for recommendation drafting only.',
           'Use app_review_list_governance_findings and app_review_get_governance_finding to inspect cross-app policy, docs, platform, and transparency findings.',
           'Use app_review_governance_finding_capture, then app_review_create_governance_finding or app_review_update_governance_finding, to capture Slack/Zendesk/docs findings into the tracking hub.',

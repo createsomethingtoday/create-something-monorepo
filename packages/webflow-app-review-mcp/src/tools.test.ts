@@ -1134,6 +1134,20 @@ describe('review preparation mutation boundary', () => {
     expect(client.updateVersionReview).toHaveBeenCalledExactlyOnceWith('recVersion', { review_feedback: 'Draft review' });
   });
 
+  it('passes an appended exception note and its author to the client', async () => {
+    const { handlers, client } = setup();
+    client.updateExceptionItem = vi.fn().mockResolvedValue({ exceptionItemId: 'recItem1' });
+    await handlers.get('app_review_update_exception_item')!({
+      exception_item_id: 'recItem1',
+      append_decision_note: 'New build checked.',
+      noted_by: 'Shea Sisco',
+    });
+    expect(client.updateExceptionItem).toHaveBeenCalledExactlyOnceWith('recItem1', {
+      append_decision_note: 'New build checked.',
+      noted_by: 'Shea Sisco',
+    });
+  });
+
   it('rejects a legacy reassignment at the real Airtable boundary and preserves fields in a draft PATCH', async () => {
     const { server, handlers } = createServerHarness();
     const fields: Record<string, unknown> = {

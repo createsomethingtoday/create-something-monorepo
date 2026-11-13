@@ -91,7 +91,7 @@ function flush() {
 		{
 			start: 'top 97%',
 			once: true,
-			interval: 0.08,
+			interval: 0.03,
 			batchMax: 12,
 			onEnter: (elements) =>
 				elements.forEach((element, index) => {
