@@ -122,3 +122,25 @@ export function stripHtml(html: string): string {
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
+
+// A URL up to the next space. Trailing punctuation stays outside the link.
+const URL_PATTERN = /https?:\/\/[^\s<]+/g;
+const TRAILING_PUNCTUATION = /(?:[.,;:!?)\]]|&quot;|&#39;)+$/;
+
+// Turns an admin's plain-text draft into the HTML that Bettermode stores.
+// Blank lines separate paragraphs, and a URL becomes a link.
+export function draftToHtml(text: string): string {
+  const escaped = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+  const linked = escaped.replace(URL_PATTERN, (match) => {
+    const url = match.replace(TRAILING_PUNCTUATION, '');
+    return `<a href="${url}">${url}</a>${match.slice(url.length)}`;
+  });
+  return linked
+    .split(/\n{2,}/)
+    .map((para) => `<p>${para.replace(/\n/g, '<br>')}</p>`)
+    .join('');
+}
