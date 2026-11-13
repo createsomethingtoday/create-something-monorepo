@@ -1917,8 +1917,7 @@ var ALLOWED_ORIGINS = [
   "https://wf-form-validation-with-airtable-databa.webflow.io",
   "https://webflow.com",
   "https://www.webflow.com",
-  "https://gsap-validator.vercel.app",
-  "https://wf.createsomething.io"
+  "https://gsap-validator.vercel.app"
 ];
 var ALLOWED_ORIGIN_PATTERNS = [
   /^https:\/\/([a-z0-9-]+\.)*webflow\.com$/i,

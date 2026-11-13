@@ -18,7 +18,7 @@ workers_dev = true
 [vars]
 ENVIRONMENT = "production"
 # Allowed origins for CORS
-ALLOWED_ORIGINS = "https://wf.createsomething.io,https://wf-asset-dashboard.vercel.app,https://webflow.com"
+ALLOWED_ORIGINS = "https://webflow.com"
 
 # Secrets — set before deploying (see .dev.vars.example for local dev):
 #   wrangler secret put SCAN_WEBHOOK_SECRET   # required; POST /scan fails closed without it in production
