@@ -304,8 +304,25 @@ export async function recordReconcileRun(
     .run();
 }
 
-// Returns null when an admin claimed the open draft for sending since the
-// read, so the caller leaves that row alone.
+// A send holds its claim for a few seconds. An older claim is a dead row (the
+// Worker stopped mid-send) and must not block the thread forever.
+const SEND_CLAIM_MS = 2 * 60_000;
+
+function sendClaimCutoff(): string {
+  return new Date(Date.now() - SEND_CLAIM_MS).toISOString();
+}
+
+// True when the thread (?3) is open and no send is in flight for it (claimed
+// after ?4). One statement, so a draft write cannot interleave with a send.
+const DRAFT_WRITE_ALLOWED = `
+  EXISTS (SELECT 1 FROM community_signals s WHERE s.id = ?3 AND s.status IN ('new','queued'))
+  AND NOT EXISTS (
+    SELECT 1 FROM community_queue f
+    WHERE f.signal_id = ?3 AND f.status = 'sending' AND f.approved_at > ?4
+  )`;
+
+// Returns null when the thread closed or an admin started a send since the
+// caller's read, so no second sendable draft appears for the thread.
 export async function upsertPendingDraft(
   db: D1Database,
   input: DraftUpsert,
@@ -325,23 +342,24 @@ export async function upsertPendingDraft(
       .prepare(
         `UPDATE community_queue
          SET draft_content = ?1, status = 'pending', approved_content = NULL, approved_at = NULL
-         WHERE id = ?2 AND status IN ('pending','approved')`,
+         WHERE id = ?2 AND status IN ('pending','approved') AND ${DRAFT_WRITE_ALLOWED}`,
       )
-      .bind(input.draftContent, existing.id)
+      .bind(input.draftContent, existing.id, input.signalId, sendClaimCutoff())
       .run();
     return (updated.meta.changes ?? 0) > 0 ? existing.id : null;
   }
 
   const id = newId('q');
-  await db
+  const inserted = await db
     .prepare(
       `INSERT INTO community_queue
         (id, signal_id, draft_content, draft_reasoning, tone, action_type, platform, target_url, priority, status)
-       VALUES (?1, ?2, ?3, NULL, 'helpful', 'reply', ?4, NULL, 5, 'pending')`,
+       SELECT ?1, ?3, ?2, NULL, 'helpful', 'reply', ?5, NULL, 5, 'pending'
+       WHERE ${DRAFT_WRITE_ALLOWED}`,
     )
-    .bind(id, input.signalId, input.draftContent, PLATFORM)
+    .bind(id, input.draftContent, input.signalId, sendClaimCutoff(), PLATFORM)
     .run();
-  return id;
+  return (inserted.meta.changes ?? 0) > 0 ? id : null;
 }
 
 export async function getLatestDraftByPostId(
@@ -545,14 +563,21 @@ export async function markRejected(db: D1Database, draftId: string): Promise<boo
 
 // Claims an open draft for sending. Only one caller wins, so two submits
 // cannot both post a public reply.
+// The claim also fails while another draft of the same thread is being sent.
+// `approved_at` holds the claim time.
 export async function claimDraftForSend(db: D1Database, draftId: string): Promise<boolean> {
   const result = await db
     .prepare(
       `UPDATE community_queue
-       SET status = 'sending'
-       WHERE id = ?1 AND status IN ('pending','approved')`,
+       SET status = 'sending', approved_at = ?2
+       WHERE id = ?1 AND status IN ('pending','approved')
+         AND NOT EXISTS (
+           SELECT 1 FROM community_queue f
+           WHERE f.signal_id = community_queue.signal_id
+             AND f.status = 'sending' AND f.approved_at > ?3
+         )`,
     )
-    .bind(draftId)
+    .bind(draftId, nowIso(), sendClaimCutoff())
     .run();
   return (result.meta.changes ?? 0) > 0;
 }
@@ -560,7 +585,10 @@ export async function claimDraftForSend(db: D1Database, draftId: string): Promis
 // Returns a claimed draft to the queue after a failed send.
 export async function releaseSendClaim(db: D1Database, draftId: string): Promise<void> {
   await db
-    .prepare(`UPDATE community_queue SET status = 'pending' WHERE id = ?1 AND status = 'sending'`)
+    .prepare(
+      `UPDATE community_queue SET status = 'pending', approved_at = NULL
+       WHERE id = ?1 AND status = 'sending'`,
+    )
     .bind(draftId)
     .run();
 }

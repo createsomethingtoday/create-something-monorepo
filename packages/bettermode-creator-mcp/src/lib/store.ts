@@ -181,6 +181,20 @@ export async function listResponseQueue(db: D1Database, limit: number): Promise<
 
 export type QueueWriteResult = { ok: true; queue_id?: string } | { ok: false; reason: string };
 
+// Keep equal to SEND_CLAIM_MS in the agent Worker's store.ts.
+const SEND_CLAIM_MS = 2 * 60_000;
+const SEND_IN_PROGRESS =
+  'The reply for this post is being sent or the item is closed. List the queue again.';
+
+// True when the thread (?4) is open and no send is in flight for it (claimed
+// after ?5). One statement, so a draft write cannot interleave with a send.
+const DRAFT_WRITE_ALLOWED = `
+  EXISTS (SELECT 1 FROM community_signals s WHERE s.id = ?4 AND s.status IN ('new','queued'))
+  AND NOT EXISTS (
+    SELECT 1 FROM community_queue f
+    WHERE f.signal_id = ?4 AND f.status = 'sending' AND f.approved_at > ?5
+  )`;
+
 // Stores an agent-written draft for the admin to review and send.
 export async function saveAgentDraft(
   db: D1Database,
@@ -190,6 +204,7 @@ export async function saveAgentDraft(
 ): Promise<QueueWriteResult> {
   const signal = await openSignal(db, postId);
   if (!signal) return { ok: false, reason: 'No open queue item for this post ID.' };
+  const cutoff = new Date(Date.now() - SEND_CLAIM_MS).toISOString();
 
   const existing = await db
     .prepare(
@@ -210,26 +225,23 @@ export async function saveAgentDraft(
         `UPDATE community_queue
          SET draft_content = ?1, draft_reasoning = ?2, status = 'pending',
              approved_content = NULL, approved_at = NULL
-         WHERE id = ?3 AND status IN ('pending','approved')`,
+         WHERE id = ?3 AND status IN ('pending','approved') AND ${DRAFT_WRITE_ALLOWED}`,
       )
-      .bind(draft, reasoning, queueId)
+      .bind(draft, reasoning, queueId, signal.id, cutoff)
       .run();
-    if ((updated.meta.changes ?? 0) === 0) {
-      return {
-        ok: false,
-        reason: 'The draft for this post is being sent or is closed. List the queue again.',
-      };
-    }
+    if ((updated.meta.changes ?? 0) === 0) return { ok: false, reason: SEND_IN_PROGRESS };
   } else {
     queueId = `q_${crypto.randomUUID()}`;
-    await db
+    const inserted = await db
       .prepare(
         `INSERT INTO community_queue
           (id, signal_id, draft_content, draft_reasoning, tone, action_type, platform, target_url, priority, status)
-         VALUES (?1, ?2, ?3, ?4, 'helpful', 'reply', ?5, NULL, 5, 'pending')`,
+         SELECT ?1, ?4, ?2, ?3, 'helpful', 'reply', ?6, NULL, 5, 'pending'
+         WHERE ${DRAFT_WRITE_ALLOWED}`,
       )
-      .bind(queueId, signal.id, draft, reasoning, PLATFORM)
+      .bind(queueId, draft, reasoning, signal.id, cutoff, PLATFORM)
       .run();
+    if ((inserted.meta.changes ?? 0) === 0) return { ok: false, reason: SEND_IN_PROGRESS };
   }
 
   // Mark the draft as current for the latest creator message, so the worker
@@ -243,7 +255,7 @@ export async function saveAgentDraft(
              '$.drafted_for_post_id', json_extract(metadata, '$.latest_creator_post_id'),
              '$.last_error', NULL
            )
-       WHERE id = ?1`,
+       WHERE id = ?1 AND status IN ('new','queued')`,
     )
     .bind(signal.id)
     .run();

@@ -68,8 +68,14 @@ type RawBettermodePost = Omit<
   createdBy?: BettermodeSpaceMember | null;
   repliedToId?: string | null;
   repliedToIds?: string[] | null;
-  replies?: { nodes?: RawBettermodePost[] } | null;
+  replies?: { nodes?: RawBettermodePost[]; pageInfo?: RawPageInfo | null } | null;
 };
+
+type RawPageInfo = { endCursor?: string | null; hasNextPage?: boolean | null };
+
+function nextCursor(pageInfo: RawPageInfo | null | undefined): string | null {
+  return pageInfo?.hasNextPage && pageInfo.endCursor ? pageInfo.endCursor : null;
+}
 
 export class BettermodeError extends Error {
   constructor(message: string, readonly status: number = 502) {
@@ -134,9 +140,9 @@ export async function memberAccessToken(
 // connections multiply: two levels of replies(limit: 50) cost about 20,500 in
 // one query. Field aliases are not allowed either. So a thread is read as one
 // post with its direct replies (cost about 150), then one small query for each
-// direct reply that has replies of its own. `reverse: true` returns the newest
-// replies first, so a very long thread loses its oldest messages, not the
-// latest one that decides the state.
+// direct reply that has replies of its own. Direct replies are read in pages
+// of 50, newest first, up to 250. `reverse: true` means a longer thread loses
+// its oldest direct replies, not the latest ones that decide the state.
 const POST_FIELDS = `
   fragment PostFields on Post {
     id
@@ -155,12 +161,17 @@ const POST_FIELDS = `
     }
   }`;
 
-// One post with its direct replies.
-export async function fetchPostThread(
+const DIRECT_REPLY_PAGE = 50;
+const NESTED_REPLY_PAGE = 30;
+// Direct replies read after the first page: 4 more pages, 250 in total.
+const MAX_EXTRA_REPLY_PAGES = 4;
+
+// One post with its newest direct replies, and the cursor for older ones.
+async function fetchPostThread(
   postId: string,
   appToken: string,
   auth: BettermodeAuth,
-): Promise<BettermodePost | null> {
+): Promise<{ post: BettermodePost; olderReplies: string | null } | null> {
   let data: { post: RawBettermodePost | null };
   try {
     data = await graphQl<{ post: RawBettermodePost | null }>(
@@ -173,7 +184,8 @@ export async function fetchPostThread(
           spaceId
           space { id name slug }
           ...PostFields
-          replies(limit: 50, reverse: true) {
+          replies(limit: ${DIRECT_REPLY_PAGE}, reverse: true) {
+            pageInfo { endCursor hasNextPage }
             nodes { ...PostFields }
           }
         }
@@ -185,26 +197,38 @@ export async function fetchPostThread(
     if (error instanceof BettermodeError && error.status === 404) return null;
     throw error;
   }
-  return data.post ? normalizePost(data.post) : null;
+  if (!data.post) return null;
+  return {
+    post: normalizePost(data.post),
+    olderReplies: nextCursor(data.post.replies?.pageInfo),
+  };
 }
 
+// One page of replies to a post, newest first.
 async function fetchReplies(
   postId: string,
   appToken: string,
   auth: BettermodeAuth,
-): Promise<BettermodePost[]> {
-  const data = await graphQl<{ replies: { nodes?: RawBettermodePost[] } }>(
+  page: { limit: number; after?: string | null },
+): Promise<{ nodes: BettermodePost[]; older: string | null }> {
+  const data = await graphQl<{
+    replies: { nodes?: RawBettermodePost[]; pageInfo?: RawPageInfo | null };
+  }>(
     auth.endpoint,
     bearer(appToken),
-    `query Replies($postId: ID!) {
-      replies(postId: $postId, limit: 30, reverse: true) {
+    `query Replies($postId: ID!, $limit: Int!, $after: String) {
+      replies(postId: $postId, limit: $limit, reverse: true, after: $after) {
+        pageInfo { endCursor hasNextPage }
         nodes { ...PostFields }
       }
     }
     ${POST_FIELDS}`,
-    { postId },
+    { postId, limit: page.limit, after: page.after ?? null },
   );
-  return (data.replies.nodes ?? []).map(normalizePost);
+  return {
+    nodes: (data.replies.nodes ?? []).map(normalizePost),
+    older: nextCursor(data.replies.pageInfo),
+  };
 }
 
 // Returns the whole thread for any post in it: the root, its direct replies,
@@ -230,14 +254,36 @@ export async function fetchThread(
     throw error;
   }
 
-  const root = await fetchPostThread(rootId, appToken, auth);
-  if (!root) return null;
+  const first = await fetchPostThread(rootId, appToken, auth);
+  if (!first) return null;
+  const root = first.post;
+  const direct = root.replies?.nodes ?? [];
+
+  // A long thread has more direct replies than one page. Read the older pages
+  // too: a new nested reply under an old direct reply still decides the state.
+  let older = first.olderReplies;
+  for (let page = 0; older && page < MAX_EXTRA_REPLY_PAGES; page += 1) {
+    const next = await fetchReplies(rootId, appToken, auth, {
+      limit: DIRECT_REPLY_PAGE,
+      after: older,
+    });
+    direct.push(...next.nodes);
+    older = next.older;
+  }
+  if (older) {
+    console.warn('thread is longer than the read limit; oldest direct replies skipped', {
+      rootId,
+      read: direct.length,
+    });
+  }
+  root.replies = { nodes: direct };
 
   // Sequential on purpose: threads rarely have more than a few reply chains,
   // and this keeps the request rate flat.
-  for (const reply of root.replies?.nodes ?? []) {
+  for (const reply of direct) {
     if ((reply.repliesCount ?? 0) > 0) {
-      reply.replies = { nodes: await fetchReplies(reply.id, appToken, auth) };
+      const nested = await fetchReplies(reply.id, appToken, auth, { limit: NESTED_REPLY_PAGE });
+      reply.replies = { nodes: nested.nodes };
     }
   }
   return root;

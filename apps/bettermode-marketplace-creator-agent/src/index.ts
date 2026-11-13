@@ -29,6 +29,7 @@ import {
 } from './slate';
 import {
   claimDraftForSend,
+  expireOpenDrafts,
   getLatestDraftByPostId,
   markRejected,
   markSent,
@@ -333,6 +334,8 @@ async function handleSend(
         last_error: null,
       }),
     );
+    // The thread is answered. Close any other draft so it cannot be sent too.
+    await afterSend('expire-drafts', () => expireOpenDrafts(env.DB, signalId));
 
     const refreshed = await loadDraftState(postId, env);
     refreshed.notice = { kind: 'success', title: 'Reply sent.' };
