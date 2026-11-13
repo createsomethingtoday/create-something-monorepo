@@ -76,7 +76,7 @@
   title="Send feedback"
 >
   <MessageSquarePlus size={20} />
-  <span class="beta-badge">Beta</span>
+  <span class="feedback-label">Feedback</span>
 </button>
 
 <Dialog
@@ -170,15 +170,9 @@
     outline-offset: 2px;
   }
 
-  .beta-badge {
-    font-size: 0.625rem;
+  .feedback-label {
+    font-size: var(--text-body-sm);
     font-weight: var(--font-semibold);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 0.125rem 0.375rem;
-    background: var(--color-info-muted);
-    color: var(--color-info-ink);
-    border-radius: var(--radius-sm);
   }
 
   form {

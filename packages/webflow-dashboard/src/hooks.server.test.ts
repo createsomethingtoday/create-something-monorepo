@@ -151,3 +151,24 @@ describe('trusted embed origins', () => {
     expect((await result).status).toBe(403);
   });
 });
+
+describe('Creator API paths', () => {
+  it('lets a key-authenticated API request through without a session', async () => {
+    // /api/v1 authenticates with its own Bearer key; the session gate must not
+    // answer first, or every API call would be a 401 from the wrong layer.
+    const { result, resolve } = callHandle('/api/v1/creator/assets', {
+      method: 'GET',
+      headers: { authorization: 'Bearer wf_live_0123456789abcdef0123456789abcdef' }
+    });
+
+    expect((await result).status).toBe(200);
+    expect(resolve).toHaveBeenCalled();
+  });
+
+  it('still requires a session to manage keys', async () => {
+    const { result, resolve } = callHandle('/api/keys', { method: 'GET' });
+
+    expect((await result).status).toBe(401);
+    expect(resolve).not.toHaveBeenCalled();
+  });
+});
