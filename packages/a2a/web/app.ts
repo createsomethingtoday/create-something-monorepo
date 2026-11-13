@@ -1,5 +1,8 @@
 import './styles.css';
+import {startMotion,motionEnter} from './motion';
+startMotion();
 import {createSharedContext} from './shared-context';
+import {conversationCount,conversationGroups} from './inbox-view';
 
 document.documentElement.classList.add('js');
 
@@ -48,11 +51,12 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, className = '', text 
   const node = document.createElement(tag); if (className) node.className = className; if (text) node.textContent = text; return node;
 }
 function notice(message: string, tone: 'error'|'success'|'warning' = 'success') {
-  const node = $('#notice'); node.textContent = message; node.dataset.tone = tone; node.hidden = false;
+  const node = $('#notice'); node.textContent = message; node.dataset.tone = tone; node.hidden = false;motionEnter(node);
 }
 function clearNotice() { $('#notice').hidden = true; }
 function sessionScreen(name: 'loading'|'signin'|'denied'|'error'|'console') {
   for (const id of ['session-loading','session-signin','session-denied','session-error','console']) $(`#${id}`).hidden = id !== (name === 'console' ? 'console' : `session-${name}`);
+  motionEnter($(`#${name==='console'?'console':`session-${name}`}`),`session:${name}`);
 }
 function handleError(error: unknown) {
   if (error instanceof ApiError && error.status === 401) { sessionScreen('signin'); return; }
@@ -83,11 +87,13 @@ async function copy(text: string, label: string) {
   catch { notice(`Clipboard unavailable. Select and copy the ${label.toLowerCase()} text shown on this page.`, 'warning'); }
 }
 function openPane(pane: Pane, focus = true) {
+  const changed=state.pane!==pane;
   state.pane = pane;if(pane==='access')void sharedContext.refreshOwned();
   for (const panel of document.querySelectorAll<HTMLElement>('[data-panel]')) panel.hidden = panel.dataset.panel !== pane;
   for (const button of document.querySelectorAll<HTMLButtonElement>('[data-pane]')) {
     if (button.dataset.pane === pane) button.setAttribute('aria-current','page'); else button.removeAttribute('aria-current');
   }
+  if(changed)motionEnter($(`[data-panel="${pane}"]`));
   if (focus) $(`[data-panel="${pane}"] h2`).focus({preventScroll:true});
 }
 function renderAgents() {
@@ -97,7 +103,7 @@ function renderAgents() {
   select.value = state.agentId; select.disabled = !state.agents.length;
   for (const button of document.querySelectorAll<HTMLButtonElement>('[data-pane]')) {
     button.disabled = (!state.agents.length && button.dataset.pane !== 'create') || (!!state.agents.length && button.dataset.pane === 'create');
-    if (button.dataset.pane === 'create') { button.title = state.agents.length ? 'The pilot supports one inbox per owner.' : 'Create your first inbox'; button.querySelector('span')!.textContent = state.agents.length ? 'One inbox per owner' : 'New inbox'; }
+    if (button.dataset.pane === 'create') { button.hidden=!!state.agents.length;button.title = state.agents.length ? 'The pilot supports one inbox per owner.' : 'Create your first inbox'; button.querySelector('span')!.textContent = state.agents.length ? 'One inbox per owner' : 'New inbox'; }
   }
   $('#new-message').hidden = !state.agentId;$<HTMLButtonElement>('#new-message').disabled=!!selectedAgent()?.paused;
 }
@@ -108,7 +114,8 @@ function renderInbox() {
     const subscriptionState = state.failedSections.has('subscriptions') ? 'unavailable' : state.subscriptions.some(sub=>sub.status==='active' && !!sub.expiresAt && sub.expiresAt>Date.now()) ? 'active' : 'none';
     status.append(statusTag(agent.paused ? 'paused' : 'open', 'Inbox: '), statusTag(subscriptionState, 'Event subscriptions: '));
   }
-  $('#inbox-count').textContent = String(state.messages.filter(message => message.toAgentId === state.agentId).length).padStart(2,'0');
+  $('#inbox-count').textContent = String(conversationCount(state.messages));
+  $('#inbox-count').setAttribute('aria-label',`${conversationCount(state.messages)} loaded conversations`);
   $('#load-older').hidden=!state.historyHasMore||state.failedSections.has('messages');
   $('#history-summary').textContent=state.messages.length?`${state.messages.length} messages loaded${state.historyHasMore?' · older messages available':''}. Refresh shows the latest 100.`:'';
   const messagesUnavailable=state.failedSections.has('messages');
@@ -117,24 +124,31 @@ function renderInbox() {
   $('#inbox-empty p').textContent=messagesUnavailable?'Use Refresh to try again. This view does not confirm whether the inbox is empty.':'Allow a sender in Access & control, then share your inbox ID. The first message will appear here.';
   $('#inbox-empty [data-open-pane]').hidden=messagesUnavailable;
   $('#message-workspace').hidden = !state.messages.length;
-  const groups = new Map<string, Message[]>();
-  for (const message of [...state.messages].sort((a,b)=>a.createdAt-b.createdAt || a.sequence-b.sequence)) { const group=groups.get(message.threadId)??[]; group.push(message); groups.set(message.threadId,group); }
-  const sorted = [...groups.entries()].sort((a,b)=>(b[1].at(-1)?.createdAt??0)-(a[1].at(-1)?.createdAt??0));
+  const groups = new Map(conversationGroups(state.messages));
+  const query=$<HTMLInputElement>('#conversation-search').value;
+  const sorted=conversationGroups(state.messages,query);
+  $('#search-results').textContent=query.trim()?`${sorted.length} matching conversation${sorted.length===1?'':'s'}`:`${groups.size} loaded conversation${groups.size===1?'':'s'}`;
   if (state.threadId && !groups.has(state.threadId)) state.threadId = '';
   const list = $('#thread-list'); list.replaceChildren();
   for (const [id,messages] of sorted) {
     const latest = messages.at(-1)!;
     const peer = latest.fromAgentId === state.agentId ? latest.toAgentId : latest.fromAgentId;
     const button = el('button','thread-button'); button.type='button';button.dataset.threadId=id; button.setAttribute('aria-pressed',String(state.threadId === id));
-    button.append(el('strong','',latest.fromAgentId===state.agentId ? (latest.toAgentName||peer) : (latest.fromAgentName||peer)),el('p','',latest.text),timeNode(latest.createdAt),statusTag(latest.state));
-    button.addEventListener('click',()=>{state.threadId=id; renderInbox(); $('#conversation').focus({preventScroll:true});void loadConversation(id);}); list.append(button);
+    const rowHeading=el('span','thread-row-heading');rowHeading.append(el('strong','',latest.fromAgentId===state.agentId ? (latest.toAgentName||peer) : (latest.fromAgentName||peer)),timeNode(latest.createdAt));
+    const preview=el('p','thread-preview',latest.text||'Message text unavailable');
+    const footer=el('span','thread-row-footer');footer.append(el('span','thread-kind',latest.kind==='conversation'?'Conversation':'Work request'),el('span','thread-total',`${messages.length} message${messages.length===1?'':'s'}`));
+    if(latest.kind!=='conversation')footer.append(statusTag(latest.state,'Work: '));
+    button.append(rowHeading,preview,footer);
+    button.addEventListener('click',()=>{state.threadId=id; $('#message-workspace').dataset.detail='true';renderInbox(); motionEnter($('#conversation')); $('#conversation').focus({preventScroll:true});if(window.matchMedia('(max-width:767px)').matches)$('#back-conversations').scrollIntoView({block:'start',behavior:'instant'});void loadConversation(id);}); list.append(button);
   }
+  if(!sorted.length&&query.trim()){const noResults=el('div','search-empty');noResults.append(el('h3','','No matching conversations'),el('p','small','Try another name or phrase, or clear your search.'),actionButton('Clear search',()=>{$<HTMLInputElement>('#conversation-search').value='';renderInbox();$('#conversation-search').focus();}));list.append(noResults);}
   renderConversation(groups.get(state.threadId));
+  placeCompose();
   renderDeliveries();
 }
 function renderConversation(fallback:Message[]|undefined) {
   const container=$('#conversation');container.tabIndex=-1;container.replaceChildren();
-  if(!fallback){sharedContext.hide();container.append(el('p','conversation-placeholder','Select a conversation to read its messages and receipts.'));return;}
+  if(!fallback){sharedContext.hide();container.append(el('p','conversation-placeholder','Select a conversation to read its messages and receipts. Manage who can send in Access & control.'));return;}
   const view=state.conversations.get(state.threadId), page=view?.page;
   const peerId=fallback.find(m=>m.fromAgentId!==state.agentId)?.fromAgentId??fallback[0].toAgentId;
   const peer=page?.participants.find(p=>p.agentId===peerId);
@@ -171,7 +185,7 @@ function renderConversation(fallback:Message[]|undefined) {
     container.append(record);
   }
   if(page?.hasMore){const earlier=actionButton(view?.loading?'Loading…':'Load earlier in this thread',()=>void loadConversation(state.threadId,true));earlier.dataset.loadEarlier='true';if(view?.loading)earlier.setAttribute('aria-disabled','true');container.append(earlier);}
-  const reply=actionButton('Reply as owner →',()=>showCompose(peerId,state.threadId));reply.classList.add('reply-button');reply.disabled=!!peer?.paused||!!selectedAgent()?.paused;container.append(reply);
+  const reply=actionButton(replyLabel(),()=>showCompose(peerId,state.threadId));reply.classList.add('reply-button');reply.disabled=!!peer?.paused||!!selectedAgent()?.paused;container.append(reply);
 }
 async function loadConversation(threadId:string,more=false){
   const agentId=state.agentId,generation=state.contextGeneration;
@@ -263,12 +277,21 @@ function confirmAction(container: HTMLElement, prompt: string, callback:()=>Prom
   const cancel=actionButton('Keep',()=>{renderGrants();renderConnect();}); container.append(confirm,cancel);confirm.focus();
 }
 let composeReturnFocus:HTMLElement|null=null;
-function resetCompose() { $('#compose-form').hidden=true; $<HTMLFormElement>('#compose-form').reset();state.replyThreadId='';state.idempotencyKey='';state.sendPayload=''; }
+type Draft={recipient:string;text:string;kind:'conversation'|'request';idempotencyKey:string;sendPayload:string};
+const drafts=new Map<string,Draft>();
+function draftKey(threadId:string){return `${state.agentId}:${threadId||'new'}`;}
+function replyLabel(){return drafts.get(draftKey(state.threadId))?.text.trim()?'Resume draft →':'Reply as owner →';}
+function updateDraftActions(){const reply=document.querySelector<HTMLButtonElement>('.reply-button');if(reply)reply.textContent=replyLabel();$('#new-message').firstChild!.textContent=drafts.get(draftKey(''))?.text.trim()?'Resume new draft ':'New message ';}
+function saveDraft(){const form=$<HTMLFormElement>('#compose-form');if(form.hidden)return;drafts.set(draftKey(state.replyThreadId),{recipient:$<HTMLInputElement>('#recipient-id').value,text:$<HTMLTextAreaElement>('#message-text').value,kind:composeKind(),idempotencyKey:state.idempotencyKey,sendPayload:state.sendPayload});updateDraftActions();}
+function placeCompose(){const form=$('#compose-form');if(!form.hidden&&state.replyThreadId&&state.replyThreadId===state.threadId){$('#conversation-detail').append(form);}else $('[data-panel="inbox"]').insertBefore(form,$('#delivery-section'));}
+function resetCompose() { drafts.delete(draftKey(state.replyThreadId));$('#compose-form').hidden=true; $<HTMLFormElement>('#compose-form').reset();state.replyThreadId='';state.idempotencyKey='';state.sendPayload='';updateDraftActions(); }
 function showCompose(recipient='',threadId='') {
-  composeReturnFocus=document.activeElement as HTMLElement;
+  saveDraft();composeReturnFocus=document.activeElement as HTMLElement;
   openPane('inbox',false);const form=$<HTMLFormElement>('#compose-form');form.reset();form.hidden=false; state.replyThreadId=threadId;state.idempotencyKey=crypto.randomUUID();
   $('#compose-title').textContent=threadId?'Reply as owner':'New conversation';$<HTMLInputElement>('#recipient-id').value=recipient;$<HTMLInputElement>('#recipient-id').readOnly=!!threadId;
-  renderCompose();
+  const draft=drafts.get(draftKey(threadId));if(draft){$<HTMLInputElement>('#recipient-id').value=draft.recipient;$<HTMLTextAreaElement>('#message-text').value=draft.text;$<HTMLInputElement>(`#compose-form input[value="${draft.kind}"]`).checked=true;state.idempotencyKey=draft.idempotencyKey;state.sendPayload=draft.sendPayload;}
+  if(threadId)$('#message-workspace').dataset.detail='true';
+  placeCompose();renderCompose();motionEnter(form);
   (recipient?$('#message-text'):$('#recipient-id')).focus();form.scrollIntoView({block:'nearest',behavior:'auto'});
 }
 async function refreshDetails() {
@@ -340,7 +363,9 @@ $('#refresh').addEventListener('click',async()=>{const button=$<HTMLButtonElemen
 $('#agent-select').addEventListener('change',async(event)=>{state.agentId=(event.target as HTMLSelectElement).value;state.contextGeneration++;state.conversations.clear();state.threadId='';state.messages=[];state.deliveries=[];state.subscriptions=[];state.grants=[];state.failedSections.clear();resetCompose();clearNotice();renderInbox();renderConnect();renderGrants();try{await refreshDetails();}catch(error){handleError(error);}});
 $('#create-form').addEventListener('submit',event=>{event.preventDefault();const form=event.currentTarget as HTMLFormElement;void submit(form,async()=>{const name=$<HTMLInputElement>('#agent-name').value.trim();if(!name){notice('Enter an agent name.','error');return;}const result=await api<{agent:Agent}>('/api/v1/agents',{method:'POST',body:JSON.stringify({name})});form.reset();await refreshAgents(result.agent.id);openPane('connect');notice('Inbox created. Connect your agent and allow a sender when you are ready.');});});
 $('#grant-form').addEventListener('submit',event=>{event.preventDefault();const form=event.currentTarget as HTMLFormElement;void submit(form,async()=>{const senderAgentId=$<HTMLInputElement>('#sender-id').value.trim();if(!senderAgentId)return;await api('/api/v1/grants',{method:'POST',body:JSON.stringify({agentId:state.agentId,senderAgentId})});form.reset();await refreshDetails();notice('Sender allowed for this inbox. The other owner controls permission for replies.');});});
-$('#new-message').addEventListener('click',()=>showCompose());$('#cancel-compose').addEventListener('click',()=>{resetCompose();if(composeReturnFocus?.isConnected)composeReturnFocus.focus();else $('#new-message').focus();});
+$('#new-message').addEventListener('click',()=>showCompose());$('#cancel-compose').addEventListener('click',()=>{saveDraft();$('#compose-form').hidden=true;if(composeReturnFocus?.isConnected)composeReturnFocus.focus();else if(state.replyThreadId===state.threadId){const reply=$('#conversation').querySelector<HTMLButtonElement>('.reply-button');(reply??$('#new-message')).focus();}else $('#new-message').focus();});
+$('#conversation-search').addEventListener('input',renderInbox);
+$('#back-conversations').addEventListener('click',()=>{$('#message-workspace').dataset.detail='false';const selected=$('#thread-list').querySelector<HTMLButtonElement>('[aria-pressed=true]');const target=selected??$('#conversation-search');target.focus({preventScroll:true});if(window.matchMedia('(max-width:767px)').matches)target.scrollIntoView({block:'nearest',behavior:'instant'});});
 $('#compose-form').addEventListener('input',()=>{state.idempotencyKey='';state.sendPayload='';renderCompose();});
 $('#compose-form').addEventListener('change',renderCompose);
 $('#compose-form').addEventListener('submit',event=>{

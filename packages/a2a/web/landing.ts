@@ -1,4 +1,6 @@
 import './styles.css';
+import {startMotion} from './motion';
+startMotion();
 
 document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((button) => {
   button.hidden = false;

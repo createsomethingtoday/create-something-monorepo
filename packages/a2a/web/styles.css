@@ -39,3 +39,34 @@ html:not(.js) #session-loading{display:none}
 .owned-context>summary{min-height:44px;align-content:center;cursor:pointer;font-size:1rem;font-weight:500}.owned-context>p{margin:.75rem 0}.owned-context>.button{margin:.5rem 0}.owned-context .small{font-size:.75rem;line-height:1.65;color:var(--color-performance-muted)}.context-version{font-family:var(--font-performance-mono);overflow-wrap:anywhere}
 
 .context-copy-reference>summary{min-height:44px;align-content:center;cursor:pointer;font-size:.75rem}.context-copy-reference>p{margin:.5rem 0;overflow-wrap:anywhere}
+
+/* Conversation navigation is a loaded-history view, never an unread counter. */
+.console-heading h1{margin-top:0;font-size:2rem}.console-heading{align-items:center;margin-bottom:1.25rem}.console-heading p.small{margin-top:.4rem}.conversation-index,.conversation-detail{min-width:0}.conversation-index{border-right:1px solid var(--color-performance-line)}.conversation-search{padding:1rem;border-bottom:1px solid var(--color-performance-line)}.conversation-search label{display:block;font-size:.78rem;font-weight:500;margin-bottom:.5rem}.conversation-search input{width:100%;min-width:0;min-height:44px;padding:.6rem .65rem;border:1px solid var(--color-performance-line-strong);background:var(--color-performance-panel);border-radius:0;font-size:.8rem}.conversation-search .small{font-size:.7rem;margin-top:.45rem}.thread-list{border-right:0;max-height:700px}.thread-button{padding:1.05rem 1rem}.thread-row-heading{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:.3rem .75rem}.thread-button strong{font-size:.88rem;line-height:1.4}.thread-button time{font-size:.69rem;white-space:nowrap}.thread-button .thread-preview{font-size:.85rem;line-height:1.55;margin-top:.55rem;overflow-wrap:anywhere;-webkit-line-clamp:2}.thread-row-footer{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .65rem;margin-top:.75rem;font-size:.7rem}.thread-kind{font-weight:500}.thread-total{color:var(--color-performance-muted)}.thread-button .tag{margin:0;font-size:.63rem}.thread-button:focus-visible{outline-offset:-4px;position:relative;z-index:1}.search-empty{padding:1.5rem 1rem}.search-empty h3{font-size:.95rem;font-weight:500;line-height:1.4}.search-empty p{margin-top:.5rem}.search-empty .button{margin-top:1rem}.back-conversations{display:none}.conversation-detail>.compose-panel{margin:0 1.25rem 1.25rem;padding-top:1.25rem}.message-workspace{grid-template-columns:minmax(240px,.85fr) minmax(0,1.5fr)}.compose-panel{min-width:0}.compose-panel input,.compose-panel textarea{max-width:100%}.conversation-detail:has(>.compose-panel:not([hidden])) .reply-button{display:none}
+@media(min-width:1025px) and (max-width:1200px){.console-layout{grid-template-columns:200px minmax(0,1fr)}.workspace-pane{padding:1.25rem}.message-workspace{grid-template-columns:minmax(220px,.8fr) minmax(0,1.25fr)}}
+@media(max-width:1024px){.message-workspace{grid-template-columns:minmax(240px,.8fr) minmax(0,1.4fr)}}
+@media(max-width:767px){.message-workspace{grid-template-columns:1fr}.conversation-index{border-right:0}.thread-list{max-height:none;border-bottom:0}.message-workspace:not([data-detail=true])>.conversation-detail{display:none}.message-workspace[data-detail=true]>.conversation-index{display:none}.back-conversations{display:inline-flex;margin:1rem 1rem 0}.conversation{padding:1rem}.conversation-detail>.compose-panel{margin:0 1rem 1rem}.thread-button strong{font-size:.9rem}.thread-button .thread-preview{font-size:.85rem;-webkit-line-clamp:2}.console-heading h1{font-size:1.8rem}.console-heading>div{width:auto;flex:1 1 180px}.console-heading>.button{flex:none}.pane-heading>div{min-width:0}.conversation-search input{font-size:16px}}
+@media(max-width:767px){.console-main{padding-top:1rem}.console-heading{margin-bottom:.85rem;gap:.5rem}.console-heading h1{font-size:1.6rem}.console-heading p.small{font-size:.72rem;line-height:1.4;max-width:29rem}.console-heading>div{flex-basis:160px}.console-sidebar{padding:.75rem;gap:.5rem}.sidebar-nav{flex-wrap:nowrap;gap:.2rem}.sidebar-nav button{padding:.5rem .4rem;font-size:.73rem;flex:1 1 auto;white-space:nowrap}.sidebar-nav button span:last-child{display:none}.workspace-pane{padding:.85rem}.pane-heading{gap:.6rem;flex-wrap:nowrap;align-items:center;margin-bottom:.75rem}.pane-heading>div{flex:1}.pane-heading h2{font-size:1.15rem}.pane-heading p{font-size:.72rem;line-height:1.4;margin-top:.3rem}.pane-heading>.button{flex:none;gap:.4rem;padding:.5rem .6rem;font-size:.72rem}.inbox-status-bar{gap:.35rem;margin-bottom:.7rem}.conversation-search{padding:.75rem}.conversation-search label{margin-bottom:.35rem}.conversation-search #search-scope{line-height:1.4;margin-top:.35rem}.conversation-search #search-results{line-height:1.4;margin-top:.1rem}.thread-button{padding:.85rem}.form-actions .draft-retention{flex-basis:100%;font-size:.72rem}}
+
+/* Reading and composing take priority over repeated setup context. */
+.console-sidebar, .console-sidebar > div, .sidebar-nav { min-width: 0; }
+.console .thread-preview { color: var(--color-performance-ink); font-weight: 500; }
+.console .thread-row-heading strong { color: var(--color-performance-ink-soft); font-weight: 400; }
+.console .thread-row-heading time, .console .thread-total { color: var(--color-performance-ink-soft); }
+.console .conversation-search .small { color: var(--color-performance-ink-soft); }
+.console .conversation-placeholder { max-width: 29rem; margin-inline: auto; line-height: 1.7; }
+.console #logout { border-color: transparent; background: transparent; }
+@media (max-width: 767px) {
+  .console .sidebar-nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .console .sidebar-nav button { min-width: 0; overflow-wrap: anywhere; padding-inline: .35rem; }
+  .console .console-heading .small { display: none; }
+  .console .conversation-search { padding-block: .65rem; }
+  .console .conversation-search .small { display: inline; font-size: .68rem; }
+  .console #search-results::before { content: " · "; }
+  .console .pane-heading p { font-size: .75rem; }
+}
+
+/* Motion is optional; required content is never pre-hidden. */
+.connection-sheet{align-self:start}
+.motion-progress{position:fixed;z-index:30;inset:0 0 auto;height:2px;background:var(--color-performance-ink);transform:scaleX(0);transform-origin:left;pointer-events:none}
+:is(#thread-list,#conversation,.context-content)[data-scroll-edge]{--nested-progress:0;border-image:linear-gradient(to right,var(--color-performance-ink) calc(var(--nested-progress)*100%),var(--color-performance-line) 0) 1;border-bottom-width:2px;border-bottom-style:solid}
+:is(#thread-list,#conversation,.context-content)[data-scroll-edge=none]{border-image:none}
