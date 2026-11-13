@@ -1514,7 +1514,8 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 	if (resolveOAuthTokenAccessMode(claims.resource,env.MCP_HUB_URL,env.CONTROL_RUNTIME_RESOURCES).type === 'invalid') return oauthErrorResponse('invalid_target',400,'OAuth resource is not configured.');
 	if (body.resource && body.resource !== claims.resource) return oauthErrorResponse('invalid_target',400,'Resource does not match the grant.');
 	if (body.scope && body.scope !== claims.scope) return oauthErrorResponse('invalid_scope',400,'Scope must match the grant.');
-	const recoveryEnabled = grantKind === 'oauth_refresh_token' && claims.resource === 'https://a2a.createsomething.agency/mcp' && body.refresh_request_id !== undefined;
+	const auditedRefresh = grantKind === 'oauth_refresh_token' && claims.resource === 'https://a2a.createsomething.agency/mcp';
+	const recoveryEnabled = auditedRefresh && body.refresh_request_id !== undefined;
 	if (recoveryEnabled && !/^[A-Za-z0-9_-]{43,128}$/.test(body.refresh_request_id!)) return oauthErrorResponse('invalid_request',400,'A high-entropy refresh_request_id is required.');
 	const recoveryBinding = JSON.stringify([claims.jti,claims.client_id,claims.sub,'family_id' in claims ? claims.family_id : null,claims.resource,claims.scope]);
 	const activeRecoveryIdentity = async () => {
@@ -1525,10 +1526,11 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 		const previous = await readRecovery(env.DB,claims.jti,body.refresh_token!,body.refresh_request_id!,recoveryBinding);
 		if (previous) {
 			if (!(await activeRecoveryIdentity()) || await recoverySuccessorConsumed(env.DB,previous)) return oauthErrorResponse('invalid_grant',400,'Recovery is no longer active.');
+			await env.DB.prepare('UPDATE connection_renewal_audit SET replay_count=replay_count+1,last_recovered_at=? WHERE grant_id=? AND owner_subject=? AND client_id=? AND resource=?').bind(Math.floor(Date.now()/1000),claims.jti,claims.sub,claims.client_id,claims.resource).run();
 			return json(previous,200,{'Cache-Control':'no-store',Pragma:'no-cache'});
 		}
 	}
-	if (!recoveryEnabled && (!grantKind || !(await consumeOAuthGrant(env.DB, {
+	if (!auditedRefresh && (!grantKind || !(await consumeOAuthGrant(env.DB, {
 		grantId: claims.jti,
 		grantKind,
 		clientId: claims.client_id,
@@ -1711,6 +1713,24 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 			if (!(await activeRecoveryIdentity()) || await recoverySuccessorConsumed(env.DB,committed)) return oauthErrorResponse('invalid_grant',400,'Recovery is no longer active.');
 			return json(committed,200,{'Cache-Control':'no-store',Pragma:'no-cache'});
 		}
+		if (auditedRefresh) {
+			// Prepare the standard response before atomically consuming and auditing.
+			// An audit failure must not burn a host's single-use predecessor. No
+			// encrypted response/replay is added to this non-opt-in exchange.
+			if (!(await activeRecoveryIdentity())) return oauthErrorResponse('invalid_grant',400,'Identity is no longer active.');
+			const now = Math.floor(Date.now()/1000);
+			const committed = await env.DB.batch([
+				env.DB.prepare('DELETE FROM connection_renewal_audit WHERE committed_at<?').bind(now-90*86400),
+				env.DB.prepare('DELETE FROM oauth_grant_consumptions WHERE expires_at<=?').bind(now),
+				env.DB.prepare('INSERT OR IGNORE INTO oauth_grant_consumptions(grant_id,grant_kind,client_id,expires_at) VALUES(?,?,?,?)').bind(claims.jti,'oauth_refresh_token',claims.client_id,claims.exp),
+				env.DB.prepare("INSERT INTO connection_renewal_audit(grant_id,owner_subject,client_id,resource,commit_mode,committed_at) SELECT ?,?,?,?,'response_prepared',? WHERE changes()=1").bind(claims.jti,claims.sub,claims.client_id,claims.resource,now)
+			]);
+			if (committed[2].meta.changes !== 1) {
+				if ('family_id' in claims && typeof claims.family_id === 'string') await revokeOAuthRefreshFamily(env.DB,claims.family_id);
+				return oauthErrorResponse('invalid_grant',400,'Grant has already been used.');
+			}
+			if (!(await activeRecoveryIdentity())) return oauthErrorResponse('invalid_grant',400,'Identity is no longer active.');
+		}
 		return json(responseBody, 200, {
 			'Cache-Control': 'no-store',
 			Pragma: 'no-cache',
@@ -1745,7 +1765,9 @@ async function handleOAuthUserInfo(request: Request, env: Env): Promise<Response
 		if (!isOAuthUserInfoIdentityActive(user)) {
 			return oauthErrorResponse('invalid_token', 401, 'OAuth identity is no longer available.');
 		}
+		const renewal = oauthToken.resource === 'https://a2a.createsomething.agency/mcp' ? await env.DB.prepare('SELECT MAX(committed_at) AS lastCommittedAt,MAX(last_recovered_at) AS lastRecoveredAt,COALESCE(SUM(replay_count),0) AS recoveryResponsesPrepared FROM connection_renewal_audit WHERE owner_subject=? AND client_id=? AND resource=?').bind(user.id,oauthToken.client_id,oauthToken.resource).first() : null;
 		return json({
+			...(renewal ? { renewal } : {}),
 			sub: user.id,
 			email: user.email,
 			email_verified: Boolean(user.email_verified),

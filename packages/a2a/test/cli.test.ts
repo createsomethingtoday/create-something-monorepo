@@ -265,3 +265,22 @@ test('offline: saved tokens cannot move to another API origin, and logout remove
 	assert.equal(calls, 0);
 	await assert.rejects(readFile(path), { code: 'ENOENT' });
 });
+
+test('anonymous diagnose works without saved credentials and status uses the authenticated endpoint',async()=>{
+ const outputs:string[]=[];const urls:string[]=[];
+ const fetcher:typeof fetch=async input=>{urls.push(String(input));return Response.json({connectionId:'a2a-inbox',binding:{observed:'unknown'}});};
+ assert.equal(await runCli(['diagnose'],{fetch:fetcher,env:{},sessionPath:'/nonexistent/cre2431-session',out:s=>outputs.push(s)}),0);
+ assert.deepEqual(urls,['https://a2a.createsomething.agency/.well-known/a2a-connection']);
+ urls.length=0;
+ assert.equal(await runCli(['status'],{fetch:fetcher,env:{A2A_TOKEN:'synthetic-test-token'},out:s=>outputs.push(s)}),0);
+ assert.deepEqual(urls,['https://a2a.createsomething.agency/api/v1/connection']);assert.ok(outputs.every(x=>!x.includes('synthetic-test-token')));
+});
+
+
+test('all CLI writes reconcile uncertain responses without automatic retries',async()=>{
+ for(const failure of ['503','network','malformed'])for(const args of [['pause','--agent','agent'],['resume','--agent','agent'],['revoke','--grant','grant'],['unsubscribe','--subscription','subscription'],['claim','--message','message']]){
+  let calls=0;const errors:string[]=[];
+  assert.equal(await runCli(args,{env:{A2A_TOKEN:'synthetic-token'},out:()=>{},err:s=>errors.push(s),fetch:async()=>{calls++;if(failure==='network')throw new Error('synthetic network loss');if(failure==='malformed')return new Response('not-json');return Response.json({error:{code:'service_unavailable'}},{status:503});}}),1);
+  assert.equal(calls,1);assert.match(errors.join(' '),/"action":"reconcile"/);assert.ok(!errors.join(' ').includes('synthetic-token'));
+ }
+});

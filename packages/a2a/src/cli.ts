@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { recoveryAction } from './connection';
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { createServer, type Server } from 'node:http';
 import { constants } from 'node:fs';
@@ -19,6 +20,8 @@ Usage: pnpm --filter @create-something/a2a cli <command> [options]
 
   login                                      Open Identity sign-in with owner consent
   logout                                     Remove this device's saved session
+  status                                     Show authenticated connection facts
+  diagnose                                   Show anonymous transport facts
   whoami                                     Show the authenticated owner
   agents                                     List your inbox identities
   register --name NAME                       Register your pilot inbox
@@ -226,17 +229,19 @@ export async function runCli(argv: string[], options: CliOptions = {}): Promise<
 		if (parsed.help || command === 'help') { out(HELP); return 0; }
 		const base = baseUrl(flags.get('base-url') ?? DEFAULT_BASE_URL, flags.has('base-url'));
 		async function fetchJson(url: string, init?: RequestInit): Promise<unknown> {
+			const write = !['GET','HEAD','OPTIONS'].includes((init?.method??'GET').toUpperCase());
 			let response: Response;
 			try { response = await request(url, { ...init, redirect: 'manual', signal: AbortSignal.timeout(15000) }); }
-			catch { throw new CliError('Network request failed. Check connectivity before reconciling or retrying.'); }
+			catch { throw new CliError(`Network request failed. Recovery: ${JSON.stringify(recoveryAction({write,uncertain:true}))}`); }
 			if (!response.ok) {
 				let code = '';
 				try { const data = await response.json() as { error?: { code?: unknown } | string; code?: unknown }; const value = typeof data.error === 'object' ? data.error?.code : data.error ?? data.code; if (typeof value === 'string' && /^[a-z_]{1,64}$/.test(value)) code = `, ${value}`; } catch { /* No response bodies or credentials in errors. */ }
-				throw new CliError(`Request failed (${response.status}${code}).`);
+				throw new CliError(`Request failed (${response.status}${code}). Recovery: ${JSON.stringify(recoveryAction({status:response.status,code:code.slice(2)||undefined,write,uncertain:response.status>=500,retryAfter:response.headers.get('retry-after')}))}`);
 			}
 			if (response.status === 204) return { ok: true };
-			try { return await response.json(); } catch { throw new CliError('Service returned an invalid JSON response.'); }
+			try { return await response.json(); } catch { throw new CliError(`Service returned an invalid JSON response. Recovery: ${JSON.stringify(recoveryAction({write,uncertain:true}))}`); }
 		}
+		if(command==='diagnose'){allowFlags(flags,[]);out(JSON.stringify(await fetchJson(`${base}/.well-known/a2a-connection`),null,2));return 0;}
 		async function exchange(fields: Record<string, string>): Promise<TokenResponse> {
 			const raw = await fetchJson(`${ISSUER}/oauth/token`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(fields) }) as Partial<TokenResponse>;
 			if (!raw || typeof raw.access_token !== 'string' || !raw.access_token || typeof raw.expires_in !== 'number' || !Number.isFinite(raw.expires_in) || raw.expires_in <= 0 || (raw.refresh_token !== undefined && typeof raw.refresh_token !== 'string')) throw new CliError('Identity returned an invalid token response. Run login again.');
@@ -268,6 +273,7 @@ export async function runCli(argv: string[], options: CliOptions = {}): Promise<
 		let route = '', method = 'GET';
 		let body: unknown;
 		switch (command) {
+			case 'status': allowFlags(flags, []); route = '/connection'; break;
 			case 'whoami': allowFlags(flags, []); route = '/me'; break;
 			case 'agents': allowFlags(flags, []); route = '/agents'; break;
 			case 'register': allowFlags(flags, ['name']); route = '/agents'; method = 'POST'; body = { name: requireFlag(flags, 'name') }; break;

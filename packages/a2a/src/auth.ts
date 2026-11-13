@@ -35,6 +35,7 @@ export async function verifyIdentityToken(env:RuntimeEnv,token:string):Promise<P
     ({payload}=await jwtVerify(token,resolver,{issuer:env.IDENTITY_ISSUER,audience:env.AUTH_RESOURCE,algorithms:['ES256'],requiredClaims:['sub','exp','iat']}));
   } catch {throw new HttpError('invalid_token',401,'Sign in with CREATE SOMETHING Identity.');}
   if(payload.kind!=='oauth_access_token'||payload.resource!==env.AUTH_RESOURCE||typeof payload.scope!=='string')throw new HttpError('invalid_token',401,'An access token for this service is required.');
+  let renewal:Principal['renewal'];
   let email:string|undefined;let displayName:string|undefined;
   const name=(value:unknown)=>typeof value==='string'&&value.trim().length>0&&value.trim().length<=80&&!/[\u0000-\u001f\u007f]/.test(value)?value.trim():undefined;
   if(env.ENVIRONMENT==='test'&&env.LOCAL_TEST_JWKS){
@@ -51,8 +52,10 @@ export async function verifyIdentityToken(env:RuntimeEnv,token:string):Promise<P
     if(info.sub!==payload.sub||info.resource!==env.AUTH_RESOURCE||info.email_verified!==true)throw new HttpError('invalid_token',401,'Verified resource identity required.');
     email=typeof info.email==='string'?info.email:undefined;
     displayName=name(info.name);
+    const facts=info.renewal as Record<string,unknown>|undefined;
+    if(facts&&[facts.lastCommittedAt,facts.lastRecoveredAt].every(x=>x===null||typeof x==='number'&&Number.isSafeInteger(x)&&x>=0)&&typeof facts.recoveryResponsesPrepared==='number'&&Number.isSafeInteger(facts.recoveryResponsesPrepared)&&facts.recoveryResponsesPrepared>=0)renewal={lastCommittedAt:facts.lastCommittedAt as number|null,lastRecoveredAt:facts.lastRecoveredAt as number|null,recoveryResponsesPrepared:facts.recoveryResponsesPrepared};
   }
-  const principal={subject:payload.sub!,email,displayName,scopes:payload.scope.split(/\s+/),admin:payload.scope.split(/\s+/).includes(ADMIN_SCOPE)};
+  const principal={renewal,subject:payload.sub!,email,displayName,scopes:payload.scope.split(/\s+/),admin:payload.scope.split(/\s+/).includes(ADMIN_SCOPE)};
   admission(env,principal);return principal;
 }
 export async function authenticate(request:Request,env:RuntimeEnv):Promise<Principal> {

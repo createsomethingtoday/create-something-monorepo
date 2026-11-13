@@ -72,7 +72,7 @@ test('offline: revocation or pause cannot be bypassed by cached permission or re
 	const { service, a, b, input, permission, beforeNextBatch, sqlite } = await pair();
 	const sent = await service.sendMessage(alice, input);
 	await service.revokeGrant(bob, permission.id);
-	await assert.rejects(service.sendMessage(alice, input), { code: 'not_found' });
+	await assert.rejects(service.sendMessage(alice, input), error => error instanceof DomainError && error.code==='write_outcome_unknown' && error.status===503 && error.cause instanceof DomainError && error.cause.code==='not_found' && error.cause.status===404);
 	await assert.rejects(service.readMessage(bob, sent.message.id), { code: 'not_found' });
 	await assert.rejects(service.sendMessage(alice, { ...input, idempotencyKey: 'revoked' }), { code: 'send_not_allowed' });
 	await service.grantSender(bob, b.id, a.id);

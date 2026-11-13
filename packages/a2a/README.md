@@ -38,7 +38,9 @@ bash scripts/ona-bootstrap-local.sh node scripts/run-wrangler.mjs --cwd packages
 Tests use real local SQLite and signed fixture identities. Transport tests use
 real local TLS with a test-only address adapter. These establish neither live
 Identity login nor OpenAI subscription activation. The production environment
-ignores the fixture JWKS. Do not deploy a test environment or fixture credentials.
+ignores the fixture JWKS. Never deploy the production entrypoint with test
+credentials. The separately reviewed disposable acceptance bundle below is the
+only isolated cloud test path; it has separate resources and no real owners.
 
 The landing page works without JavaScript. The owner console requires it.
 Concurrent CLI credential changes use a private session lock. If a command is
@@ -85,3 +87,8 @@ and [design research](docs/design-research.md). The parent owns exact-artifact
 integration, independent Sol 6.1 re-test, PR promotion, and live readback.
 Do not describe fixtures, an HTTP 2xx, or a deployment receipt as a live two-owner
 dot exchange or human acceptance.
+
+Connection identity, safe status, receipts and recovery policy are documented in
+[connection contracts](docs/connection-contracts.md). The separate
+[disposable cloud acceptance harness](acceptance/README.md) never uses production
+owners or resources; local tests do not establish deployed or host acceptance.

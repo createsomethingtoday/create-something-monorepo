@@ -443,3 +443,65 @@ test('renewable discovery and initial challenge request lifecycle consent withou
   assert.ok((await f.rpc(accessOnly,'tools/list')).result.tools.length>0);
  }finally{f.storage.close();}
 });
+
+test('MCP post-commit delivery failure reports unknown and identical send reconciles once',async()=>{
+ const f=await fixture();try{
+  const a=(await f.value('/api/v1/agents',f.alice,'POST',{name:'A'})).agent;
+  const b=(await f.value('/api/v1/agents',f.bob,'POST',{name:'B'})).agent;
+  await f.value('/api/v1/grants',f.bob,'POST',{agentId:b.id,senderAgentId:a.id});
+  f.failEnqueue(true);
+  const args={from_agent_id:a.id,to_agent_id:b.id,text:'Synthetic private content',idempotency_key:'receipt-reconcile'};
+  const first=await f.rpc(f.alice,'tools/call',{name:'a2a_send_message',arguments:args});
+  assert.equal(first.result.isError,true);assert.equal(first.result._meta.receipt.outcome,'unknown');assert.equal(first.result._meta.recovery.action,'reconcile');assert.ok(!JSON.stringify(first.result._meta).includes(args.text));
+  f.failEnqueue(false);const second=await f.rpc(f.alice,'tools/call',{name:'a2a_send_message',arguments:args});assert.equal(second.result._meta.receipt.outcome,'confirmed');assert.equal(second.result.structuredContent.duplicate,true);
+  assert.equal(f.storage.sqlite.prepare('SELECT count(*) AS n FROM messages').get()!.n,1);
+ }finally{f.storage.close();}
+});
+
+
+test('HTTP and MCP receipts agree on denied, unknown and confirmed operations',async()=>{
+ const f=await fixture();try{
+  const a=(await f.value('/api/v1/agents',f.alice,'POST',{name:'A'})).agent;
+  const b=(await f.value('/api/v1/agents',f.bob,'POST',{name:'B'})).agent;
+  await f.value('/api/v1/grants',f.bob,'POST',{agentId:b.id,senderAgentId:a.id});
+  const request={jsonrpc:'2.0',id:1,method:'tools/call',params:{name:'a2a_send_message',arguments:{from_agent_id:a.id,to_agent_id:b.id,text:'Synthetic receipt probe',idempotency_key:'matching-receipts'}}};
+  const denied=await f.api('/mcp',await f.token('alice',['a2a:read']),'POST',request);
+  f.failEnqueue(true);const unknown=await f.api('/mcp',f.alice,'POST',request);
+  f.failEnqueue(false);const confirmed=await f.api('/mcp',f.alice,'POST',request);
+  for(const [response,outcome] of [[denied,'denied'],[unknown,'unknown'],[confirmed,'confirmed']] as const){
+   const body:any=await response.json(),receipt=body.result._meta.receipt;
+   assert.equal(receipt.outcome,outcome);assert.deepEqual(JSON.parse(body.result.content.at(-1).text).receipt,receipt);assert.deepEqual(JSON.parse(response.headers.get('x-a2a-receipt')!),receipt);assert.equal(response.headers.get('x-a2a-request-id'),receipt.requestId);
+  }
+ }finally{f.storage.close();}
+});
+
+test('post-commit access loss remains uncertain through HTTP and MCP without revealing content',async()=>{
+ for(const mode of ['revoke','pause'])for(const transport of ['http','mcp']){
+  const f=await fixture();try{
+   const a=(await f.value('/api/v1/agents',f.alice,'POST',{name:'A'})).agent;
+   const b=(await f.value('/api/v1/agents',f.bob,'POST',{name:'B'})).agent;
+   await f.value('/api/v1/grants',f.bob,'POST',{agentId:b.id,senderAgentId:a.id});
+   const original=f.env.DB;let change=true;
+   const batch=async<T=unknown>(statements:D1PreparedStatement[])=>{
+    const result=await original.batch<T>(statements);
+    if(change){change=false;f.storage.sqlite.exec(mode==='revoke'?'UPDATE grants SET revoked_at=1':'UPDATE agents SET paused=1');}
+    return result;
+   };
+   f.env.DB=new Proxy(original,{get(target,key){if(key==='batch')return batch;const value=Reflect.get(target,key);return typeof value==='function'?value.bind(target):value;}});
+   const input={fromAgentId:a.id,toAgentId:b.id,text:'Private synthetic race content',idempotencyKey:'post-commit-access-loss'};
+   const send=()=>transport==='http'?f.api('/api/v1/messages',f.alice,'POST',input):f.api('/mcp',f.alice,'POST',{jsonrpc:'2.0',id:1,method:'tools/call',params:{name:'a2a_send_message',arguments:{from_agent_id:a.id,to_agent_id:b.id,text:input.text,idempotency_key:input.idempotencyKey}}});
+   const response=await send(),body:any=await response.json();
+   const receipt=transport==='http'?body.receipt:body.result._meta.receipt;
+   const recovery=transport==='http'?body.recovery:body.result._meta.recovery;
+   assert.equal(receipt.outcome,'unknown',`${transport} ${mode}`);assert.equal(recovery.action,'reconcile');
+   assert.equal(response.status,transport==='http'?503:200);assert.equal(JSON.parse(response.headers.get('x-a2a-receipt')!).outcome,'unknown');
+   assert.ok(!JSON.stringify(body).includes(input.text));
+   for(const table of ['messages','outbox_events'])assert.equal(f.storage.sqlite.prepare(`SELECT count(*) AS n FROM ${table}`).get()!.n,1);
+   const id=f.storage.sqlite.prepare('SELECT id FROM messages').get()!.id;
+   assert.equal((await f.api(`/api/v1/messages/${id}`,f.alice)).status,404,'Current access still gates content.');
+   f.storage.sqlite.exec('UPDATE grants SET revoked_at=NULL; UPDATE agents SET paused=0');
+   const reconciled:any=await(await send()).json();const value=transport==='http'?reconciled:reconciled.result.structuredContent;
+   assert.equal(value.duplicate,true);assert.equal(f.storage.sqlite.prepare('SELECT count(*) AS n FROM messages').get()!.n,1);
+  }finally{f.storage.close();}
+ }
+});
