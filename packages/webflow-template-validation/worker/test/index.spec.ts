@@ -3175,7 +3175,10 @@ describe('OAuth site-access evidence', () => {
 	const MCP_URL = 'https://mcp.test.invalid/mcp';
 	const WORKER_BASE = 'https://validation-worker.createsomething.workers.dev';
 
-	function mockMcpServer(site: Record<string, unknown>, options: { sse?: boolean; protocolVersion?: string } = {}) {
+	function mockMcpServer(
+		site: Record<string, unknown>,
+		options: { sse?: boolean; protocolVersion?: string; pages?: Array<Record<string, unknown>> | 'error' } = {}
+	) {
 		const calls: Array<{ headers: Headers; body: any }> = [];
 		const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
 			const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
@@ -3186,14 +3189,29 @@ describe('OAuth site-access evidence', () => {
 			const result =
 				body.method === 'initialize'
 					? { protocolVersion: options.protocolVersion ?? '2025-06-18', capabilities: {}, serverInfo: { name: 'mock', version: '0' } }
-					: {
-							content: [
-								{
-									type: 'text',
-									text: JSON.stringify({ label: 'site', action: 'get_site', result: site })
+					: body.params?.name === 'data_pages_tool'
+						? options.pages === 'error'
+							? { isError: true, content: [{ type: 'text', text: 'pages unavailable' }] }
+							: {
+									content: [
+										{
+											type: 'text',
+											text: JSON.stringify({
+												label: 'pages',
+												action: 'list_pages',
+												result: { pages: options.pages ?? [], pagination: { total: (options.pages ?? []).length } }
+											})
+										}
+									]
 								}
-							]
-						};
+						: {
+								content: [
+									{
+										type: 'text',
+										text: JSON.stringify({ label: 'site', action: 'get_site', result: site })
+									}
+								]
+							};
 			const message = JSON.stringify({ jsonrpc: '2.0', id: body.id, result });
 			return options.sse
 				? new Response(`event: message\ndata: ${message}\n\n`, {
@@ -3313,8 +3331,11 @@ describe('OAuth site-access evidence', () => {
 		expect(calls.map((call) => call.body.method)).toEqual([
 			'initialize',
 			'notifications/initialized',
+			'tools/call',
 			'tools/call'
 		]);
+		// The worker reads the page list itself, to check that the run covered every page.
+		expect(calls[3].body.params.name).toBe('data_pages_tool');
 		expect(calls[0].headers.get('Authorization')).toBe(`Bearer ${accessToken}`);
 		expect(calls[0].headers.get('MCP-Protocol-Version')).toBe('2025-06-18');
 		expect(calls[0].headers.get('Accept')).toBe('application/json, text/event-stream');
@@ -3390,6 +3411,43 @@ describe('OAuth site-access evidence', () => {
 
 		const accepted = await submit(await completedRun('run-binding.webflow.io'));
 		expect(accepted.status).toBe(200);
+	});
+
+	it('records a run only when it checked every published page that the worker reads from the site', async () => {
+		const accessToken = 'mcp-test-token-valid-0007';
+		const site = { id: 'site_page_cover', workspaceId: 'ws_evidence', shortName: 'page-cover', customDomains: [] };
+		const pages = [
+			{ id: 'p1', slug: '', publishedPath: '/' },
+			{ id: 'p2', slug: 'about', publishedPath: '/about' },
+			{ id: 'p3', slug: 'pricing', publishedPath: '/company/pricing' },
+			{ id: 'p4', slug: 'blog', publishedPath: '/blog', collectionId: 'c1' },
+			{ id: 'p5', slug: 'draft-page', publishedPath: '/draft-page', draft: true },
+			{ id: 'p6', slug: 'old', publishedPath: '/old', archived: true }
+		];
+		const putMock = vi.fn(async () => undefined);
+		const submit = async (pageSlugs: string[], listed: typeof pages | 'error' = pages) => {
+			const jobId = await completedRun('page-cover.webflow.io', { pageSlugs });
+			mockMcpServer(site, { pages: listed });
+			return worker.fetch(
+				submitRequest('site_page_cover', accessToken, '0.3.0', jobId),
+				{ VALIDATOR_MCP_SERVER_URL: MCP_URL, VALIDATOR_RESULT_ARTIFACTS: { put: putMock } } as any,
+				createExecutionContext()
+			);
+		};
+
+		// A run on the home page only, or with one page left out, is not a full run.
+		for (const response of [await submit([]), await submit(['/']), await submit(['/about'])]) {
+			expect(response.status).toBe(409);
+			const payload = (await response.json()) as { reason: string; error: string };
+			expect(payload.reason).toBe('run_not_usable');
+			expect(payload.error).toContain('did not check every published page');
+		}
+		// When the worker cannot read the page list, it does not record.
+		expect((await submit(['/about', '/company/pricing'], 'error')).status).toBe(409);
+		expect(putMock).not.toHaveBeenCalled();
+
+		// Drafts, archived pages, and CMS template pages are not required.
+		expect((await submit(['/about', '/company/pricing'])).status).toBe(200);
 	});
 
 	it('rejects evidence when the token reads a different site and stores nothing', async () => {

@@ -111,9 +111,9 @@ It does not prove:
 
 ## What the worker records
 
-The record request names the validation run (`jobId`). The worker does not store the result in the request. It takes the result of its own run, applies the same Designer enhancements the clients apply (Style System, canvas checks, Page Structure, Variable Modes, totals), and stores that. It refuses the record (HTTP 409) when the run is unknown, not complete, older than 30 minutes, not full in scope (every check, every page, canvas data present), or for a host that is not a published address of the site the token can read. It also refuses a CLI below its minimum version (HTTP 426).
+The record request names the validation run (`jobId`). The worker does not store the result in the request. It takes the result of its own run, applies the same Designer enhancements the clients apply (Style System, canvas checks, Page Structure, Variable Modes, totals), and stores that. It refuses the record (HTTP 409) when the run is unknown, not complete, older than 30 minutes, not full in scope (every check, no limiting option, canvas data present), or for a host that is not a published address of the site the token can read. It also reads the site's page list from Webflow itself, with the same token, and refuses a run that did not check every published page. It also refuses a CLI below its minimum version (HTTP 426).
 
-What stays under the client's control is the Designer data and the canvas data that the CLI sends at the start of the run. The published-site checks and the browser check are the worker's own observations.
+What stays under the client's control is the Designer data (styles, variables, components, page settings) and the canvas data that the CLI sends at the start of the run. The published-site checks, the browser check, and the list of pages to cover are the worker's own observations.
 
 ## Custom workers and the access token
 

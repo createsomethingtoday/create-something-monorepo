@@ -16,6 +16,7 @@ import {
 	enhanceValidationResults,
 	type CanvasAccessibilityResult
 } from '../../shared/designer-enhancements';
+import { normalizePagePath } from '../../shared/page-slugs';
 import { validateContent } from './validators/content-validator';
 import { validateAccessibility } from './validators/accessibility-validator';
 import { validateDesignerData } from './validators/designer-validator';
@@ -1166,6 +1167,7 @@ async function handleValidationSubmit(
 	}
 
 	let evidence: OauthSiteAccessEvidence | null = null;
+	let verifiedPagePaths: string[] | null = null;
 	if (evidenceAccessToken) {
 		const verification = await verifyOauthSiteAccess(env, siteId, evidenceAccessToken);
 		if (!verification.ok) {
@@ -1188,6 +1190,7 @@ async function handleValidationSubmit(
 				request
 			);
 		}
+		verifiedPagePaths = verification.pagePaths;
 		evidence = {
 			type: 'oauth_site_access',
 			verified: true,
@@ -1202,7 +1205,7 @@ async function handleValidationSubmit(
 	// A Template CLI record holds the worker's own result for the named run, not the result the client sent.
 	let resultsToRecord = sanitizedResults;
 	if (evidence) {
-		const bound = await serverResultForCliRecord(env, body as { jobId?: unknown }, evidence.publishedHosts);
+		const bound = await serverResultForCliRecord(env, body as { jobId?: unknown }, evidence.publishedHosts, verifiedPagePaths);
 		if (!bound.ok) {
 			return jsonResponse({ error: bound.error, reason: 'run_not_usable', correlationId }, 409, request);
 		}
@@ -3769,7 +3772,8 @@ function rateLimitedStartResponse(request: Request, correlationId: string): Resp
 async function serverResultForCliRecord(
 	env: unknown,
 	body: { jobId?: unknown },
-	publishedHosts: string[]
+	publishedHosts: string[],
+	pagePaths: string[] | null
 ): Promise<{ ok: true; results: ValidationSubmitRequest['validationResults'] } | { ok: false; error: string }> {
 	const again = 'Run `wf-template-validate validate` again.';
 	const jobId = typeof body.jobId === 'string' ? body.jobId.trim() : '';
@@ -3813,6 +3817,20 @@ async function serverResultForCliRecord(
 		excluded.every((slug) => STYLE_GUIDE_EXCLUDED_SLUGS.includes(String(slug)));
 	if (!fullScope) {
 		return { ok: false, error: `The validation run did not include every check on every page. ${again}` };
+	}
+
+	// The run must have checked every published page. The list comes from the worker's own
+	// read of the site, so a client cannot pass a shorter page list and still get a full record.
+	if (!pagePaths) {
+		return { ok: false, error: `The worker could not read the site's page list from Webflow. ${again}` };
+	}
+	const checked = new Set((Array.isArray(job.request.pageSlugs) ? job.request.pageSlugs : []).map((slug) => normalizePagePath(String(slug))));
+	const missing = pagePaths.filter((path) => !checked.has(path));
+	if (missing.length > 0) {
+		return {
+			ok: false,
+			error: `The validation run did not check every published page (${missing.length} missing, for example ${missing[0]}). ${again}`
+		};
 	}
 
 	const canvas = (job.request as { canvasResult?: CanvasAccessibilityResult }).canvasResult;
