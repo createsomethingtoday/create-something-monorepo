@@ -790,7 +790,8 @@ export interface AssetVersion {
 	createdAt: string;
 	createdBy: string;
 	changes: string;
-	snapshot: AssetVersionSnapshot;
+	/** Null for a listing-edit version: only a manual version note stores a snapshot. */
+	snapshot: AssetVersionSnapshot | null;
 }
 
 export interface AssetVersionSnapshot extends AssetUpdateData {
@@ -841,6 +842,27 @@ type AirtableWritableValue =
 	| null
 	| undefined;
 
+/**
+ * Fields on 🖌️Asset Versions that a listing edit writes, by field id. The
+ * legacy template editor writes the same five and nothing else; keep the two
+ * in step. Airtable rejects the whole record when one name or id is unknown,
+ * so this set must match the live table exactly. Field names are not used
+ * anywhere in the version code: the table has none of the plain names
+ * (Snapshot, Changes, Asset ID, Version Number, Created At, Created By).
+ */
+export const ASSET_VERSION_WRITE_FIELDS = {
+	/** 👛Asset: link to the asset record. */
+	asset: 'fldemWilqCQcOCh5s',
+	/** ℹ️Version #. */
+	versionNumber: ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID,
+	/** 📝Review Type. */
+	reviewType: 'fldjYFJMGTerFYlol',
+	/** ⚙️Asset Update Payload Body: the change record as JSON. */
+	changes: 'fldc999gbJ8LWWoTC',
+	/** 👀🔔Suppress Notifications? A listing edit opens no review ticket. */
+	suppressNotifications: 'fldLEIZMEjZvH5n23'
+} as const;
+
 export function buildAssetVersionCreateFields(
 	assetId: string,
 	versionNumber: number,
@@ -848,58 +870,71 @@ export function buildAssetVersionCreateFields(
 	snapshot: AssetVersionSnapshot,
 	createdBy: string
 ): Record<string, AirtableWritableValue> {
+	// A structured change record is stored as the legacy editor stores it, so
+	// reviewers read one format. Only a manual note (a string) carries the
+	// snapshot, inside the same field; the table has no snapshot field.
 	const changesJson =
 		typeof changes === 'string'
 			? JSON.stringify({ changes, snapshot, createdBy })
 			: JSON.stringify(changes);
 
 	return {
-		'fldemWilqCQcOCh5s': [assetId],
-		'fldn2ImbgwKfCdWWA': versionNumber,
-		'fldjYFJMGTerFYlol': 'Meta Update',
-		'fldc999gbJ8LWWoTC': changesJson,
-		'fldLEIZMEjZvH5n23': ['zendesk'],
-		Snapshot: JSON.stringify(snapshot)
+		[ASSET_VERSION_WRITE_FIELDS.asset]: [assetId],
+		[ASSET_VERSION_WRITE_FIELDS.versionNumber]: versionNumber,
+		[ASSET_VERSION_WRITE_FIELDS.reviewType]: 'Meta Update',
+		[ASSET_VERSION_WRITE_FIELDS.changes]: changesJson,
+		[ASSET_VERSION_WRITE_FIELDS.suppressNotifications]: ['zendesk']
 	};
 }
 
-function parseAssetVersionSnapshot(record: Airtable.Record<Airtable.FieldSet>): AssetVersionSnapshot | null {
-	const snapshotField = record.fields['Snapshot'];
-	if (typeof snapshotField === 'string' && snapshotField.trim()) {
-		try {
-			return JSON.parse(snapshotField) as AssetVersionSnapshot;
-		} catch {
+/** Fields a version read asks for. Records are read by field id (returnFieldsByFieldId). */
+const ASSET_VERSION_READ_FIELDS = [
+	ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID,
+	ASSET_VERSIONS_ASSET_RECORD_ID_FIELD_ID,
+	ASSET_VERSION_WRITE_FIELDS.changes
+];
+
+/** The `{changes, snapshot, createdBy}` wrapper of a manual version note, when the payload is one. */
+function parseVersionNote(payload: string): { snapshot?: AssetVersionSnapshot; createdBy?: string } | null {
+	try {
+		const parsed = JSON.parse(payload) as { snapshot?: unknown; createdBy?: unknown } | null;
+		if (!parsed || typeof parsed !== 'object' || !parsed.snapshot || typeof parsed.snapshot !== 'object') {
 			return null;
 		}
+		return {
+			snapshot: parsed.snapshot as AssetVersionSnapshot,
+			createdBy: typeof parsed.createdBy === 'string' ? parsed.createdBy : undefined
+		};
+	} catch {
+		return null;
 	}
-
-	const changesField = record.fields['Changes'];
-	if (typeof changesField === 'string' && changesField.trim()) {
-		try {
-			const parsed = JSON.parse(changesField) as { snapshot?: AssetVersionSnapshot };
-			if (parsed && typeof parsed === 'object' && parsed.snapshot) {
-				return parsed.snapshot;
-			}
-		} catch {
-			return null;
-		}
-	}
-
-	return null;
 }
 
-function mapAssetVersionRecord(record: Airtable.Record<Airtable.FieldSet>): AssetVersion | null {
-	const snapshot = parseAssetVersionSnapshot(record);
-	if (!snapshot) return null;
+/**
+ * One version record, read by field id. A listing-edit version has no
+ * snapshot, so it is listed with `snapshot: null`; it cannot be compared or
+ * rolled back to. Null only when the record is not a version of an asset.
+ */
+export function mapAssetVersionRecord(record: {
+	id: string;
+	fields: Airtable.FieldSet;
+	_rawJson?: { createdTime?: string };
+}): AssetVersion | null {
+	const assetId = firstString(record.fields[ASSET_VERSIONS_ASSET_RECORD_ID_FIELD_ID]);
+	const versionNumber = Number(record.fields[ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID]);
+	if (!assetId || !Number.isFinite(versionNumber)) return null;
+
+	const changes = firstString(record.fields[ASSET_VERSION_WRITE_FIELDS.changes]) ?? '';
+	const note = changes ? parseVersionNote(changes) : null;
 
 	return {
 		id: record.id,
-		assetId: record.fields['Asset ID'] as string,
-		versionNumber: record.fields['Version Number'] as number,
-		createdAt: record.fields['Created At'] as string,
-		createdBy: record.fields['Created By'] as string,
-		changes: record.fields['Changes'] as string,
-		snapshot
+		assetId,
+		versionNumber,
+		createdAt: record._rawJson?.createdTime ?? '',
+		createdBy: note?.createdBy ?? '',
+		changes,
+		snapshot: note?.snapshot ?? null
 	};
 }
 
@@ -2534,15 +2569,10 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		// ==================== ASSET VERSIONS ====================
 
 		/**
-		 * Create a new version of an asset.
-		 * Captures current state as a snapshot before any changes are made.
-		 * 
-		 * Field IDs from old dashboard:
-		 * - fldemWilqCQcOCh5s: Asset link (linked record to assets table)
-		 * - fldn2ImbgwKfCdWWA: Version Number
-		 * - fldjYFJMGTerFYlol: Type (e.g., 'Meta Update')
-		 * - fldc999gbJ8LWWoTC: Changes JSON
-		 * - fldknoYakli2sqznT: Asset ID (for filtering)
+		 * Create a new version of an asset: the record the review team reads
+		 * when a creator edits a listing. The fields written are
+		 * ASSET_VERSION_WRITE_FIELDS; versions are found by the
+		 * ⚙️👛Asset Record ID rollup (ASSET_VERSIONS_ASSET_RECORD_ID_FIELD_ID).
 		 */
 			async createAssetVersion(
 				assetId: string,
@@ -2589,8 +2619,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					debugLog('[Airtable] Querying existing versions...');
 					const existingVersions = await base(TABLES.ASSET_VERSIONS)
 						.select({
-							filterByFormula: `{fldknoYakli2sqznT} = ${airtableFormulaValue(asset.id)}`,
-							fields: ['fldknoYakli2sqznT']
+							filterByFormula: `{${ASSET_VERSIONS_ASSET_RECORD_ID_FIELD_ID}} = ${airtableFormulaValue(asset.id)}`,
+							fields: [ASSET_VERSIONS_ASSET_RECORD_ID_FIELD_ID]
 						})
 						.all();
 
@@ -2623,8 +2653,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 
 					debugLog('[Airtable] Creating version record with fields:', {
 						...fields,
-						fldc999gbJ8LWWoTC: String(fields.fldc999gbJ8LWWoTC).substring(0, 100) + '...',
-						Snapshot: String(fields.Snapshot).substring(0, 100) + '...'
+						[ASSET_VERSION_WRITE_FIELDS.changes]:
+							String(fields[ASSET_VERSION_WRITE_FIELDS.changes]).substring(0, 100) + '...'
 					});
 					const records = await base(TABLES.ASSET_VERSIONS).create(
 						fields as Partial<Airtable.FieldSet>
@@ -2655,8 +2685,10 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			try {
 				const records = await base(TABLES.ASSET_VERSIONS)
 					.select({
-						filterByFormula: `{Asset ID} = ${airtableFormulaValue(assetId)}`,
-						sort: [{ field: 'Version Number', direction: 'desc' }]
+						filterByFormula: `{${ASSET_VERSIONS_ASSET_RECORD_ID_FIELD_ID}} = ${airtableFormulaValue(assetId)}`,
+						fields: ASSET_VERSION_READ_FIELDS,
+						returnFieldsByFieldId: true,
+						sort: [{ field: ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID, direction: 'desc' }]
 					})
 					.all();
 
@@ -2673,10 +2705,23 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		 * Get a specific version by ID.
 		 */
 		async getAssetVersion(versionId: string): Promise<AssetVersion | null> {
+			if (!/^rec[A-Za-z0-9]{14}$/.test(versionId)) return null;
 			try {
-				const record = await base(TABLES.ASSET_VERSIONS).find(versionId);
-				return mapAssetVersionRecord(record);
-			} catch {
+				// A select, not find(): find() cannot return fields by id.
+				const [record] = await base(TABLES.ASSET_VERSIONS)
+					.select({
+						filterByFormula: `RECORD_ID() = ${airtableFormulaValue(versionId)}`,
+						fields: ASSET_VERSION_READ_FIELDS,
+						returnFieldsByFieldId: true,
+						maxRecords: 1
+					})
+					.firstPage();
+				return record ? mapAssetVersionRecord(record) : null;
+			} catch (err) {
+				console.error('Error getting asset version:', {
+					versionId,
+					statusCode: (err as { statusCode?: number })?.statusCode
+				});
 				return null;
 			}
 		},
@@ -2697,6 +2742,10 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 
 				// Verify it's for the correct asset
 				if (version.assetId !== assetId) return null;
+
+				// A listing-edit version stores no snapshot, so there is nothing to
+				// restore. Checked before the rollback note is written.
+				if (!version.snapshot) return null;
 
 				// Create a version of the current state before rollback
 				await this.createAssetVersion(
