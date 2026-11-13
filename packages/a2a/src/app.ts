@@ -1,3 +1,4 @@
+import { connectionStatus, executionReceipt, recoveryAction } from './connection';
 import { InboxService, DomainError } from './domain';
 import { authenticate, authRoute, limitAdmission, requireScope } from './auth';
 import { ADMIN_SCOPE, READ_SCOPE, VERSION, WRITE_SCOPE, type RuntimeEnv } from './env';
@@ -19,12 +20,13 @@ function decorate(response:Response,env:RuntimeEnv,request:Request):Response{
   if(origin&&[env.BASE_URL,'https://chatgpt.com'].includes(origin)){
     headers.set('access-control-allow-origin',origin);headers.set('vary','Origin');
     headers.set('access-control-allow-methods','GET, POST, OPTIONS');headers.set('access-control-allow-headers','Authorization, Content-Type, MCP-Protocol-Version, MCP-Session-Id, Last-Event-ID');
-    headers.set('access-control-expose-headers','WWW-Authenticate');
+    headers.set('access-control-expose-headers','WWW-Authenticate, Retry-After, X-A2A-Request-Id, X-A2A-Receipt');
   }
   return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
 }
 async function route(request:Request,env:RuntimeEnv):Promise<Response>{
   const url=new URL(request.url);const path=url.pathname;
+  if(path==='/.well-known/a2a-connection'&&request.method==='GET')return json(connectionStatus(env),200,{'cache-control':'no-store'});
   if(path==='/health')return json({service:'a2a',version:VERSION,revision:env.BUILD_REVISION,environment:env.ENVIRONMENT});
   if(path==='/.well-known/oauth-protected-resource'||path==='/.well-known/oauth-protected-resource/mcp')return json({resource:env.AUTH_RESOURCE,authorization_servers:[env.IDENTITY_ISSUER],scopes_supported:[READ_SCOPE,WRITE_SCOPE,'offline_access'],bearer_methods_supported:['header'],resource_name:'CREATE SOMETHING A2A inbox'});
   if(path==='/api/v1/config')return json({issuer:env.IDENTITY_ISSUER,resource:env.AUTH_RESOURCE,clientId:env.AUTH_CLIENT_ID,cliRedirectUri:'http://127.0.0.1:42678/callback'});
@@ -78,6 +80,7 @@ async function route(request:Request,env:RuntimeEnv):Promise<Response>{
         sameOrigin(request,env.BASE_URL);requireScope(p,ADMIN_SCOPE);return json(await contexts.revoke(p,contextMatch[1]));
       }
     }
+    if(path==='/api/v1/connection'&&request.method==='GET')return json(connectionStatus(env,p),200,{'cache-control':'private, no-store'});
     if(path==='/api/v1/me'&&request.method==='GET')return json({subject:p.subject,email:p.email,displayName:p.displayName});
     if(path==='/api/v1/agents'){
       if(request.method==='GET')return json({agents:await service.listAgents(p)});
@@ -173,12 +176,16 @@ async function retention(env:RuntimeEnv){
 }
 export default {
   async fetch(request:Request,env:RuntimeEnv):Promise<Response>{
-    try{return decorate(await route(request,env),env,request);}catch(error){
+    const requestId=crypto.randomUUID();
+    const path=new URL(request.url).pathname;
+    const operation=request.method.toLowerCase()+':'+(path==='/mcp'?'mcp':path.startsWith('/api/v1/')&&['connection','me','agents','grants','messages','owner-messages','context','owned-context','subscriptions','deliveries','status','config'].includes(path.split('/')[3])?path.split('/')[3]:'transport');
+    try{const response=await route(request,env);const headers=new Headers(response.headers);headers.set('x-a2a-request-id',requestId);headers.set('x-a2a-receipt',JSON.stringify(executionReceipt(operation,response.status>=500?'unknown':response.status>=400?'denied':'confirmed',requestId)));return decorate(new Response(response.body,{status:response.status,headers}),env,request);}catch(error){
       const known=error instanceof HttpError||error instanceof DomainError;const status=known?error.status:503;const code=known?error.code:'service_unavailable';
       if(status>=500)console.error(JSON.stringify({event:'request_failed',code,path:new URL(request.url).pathname}));
-      const headers:Record<string,string>={};if(status===401)headers['www-authenticate']=`Bearer resource_metadata="${env.BASE_URL}/.well-known/oauth-protected-resource/mcp", scope="${READ_SCOPE} ${WRITE_SCOPE} offline_access"`;
+      const receipt=executionReceipt(operation,status<500?'denied':'unknown',requestId);
+      const headers:Record<string,string>={'x-a2a-request-id':requestId,'x-a2a-receipt':JSON.stringify(receipt)};if(status===401)headers['www-authenticate']=`Bearer resource_metadata="${env.BASE_URL}/.well-known/oauth-protected-resource/mcp", scope="${READ_SCOPE} ${WRITE_SCOPE} offline_access"`;
       if(status===429||status===503)headers['retry-after']='60';
-      return decorate(json({error:{code,message:known&&status<500?error.message:'This operation is temporarily unavailable.'}},status,headers),env,request);
+      return decorate(json({receipt,recovery:recoveryAction({status,write:!['GET','HEAD'].includes(request.method),uncertain:status>=500}),error:{code,message:known&&status<500?error.message:'This operation is temporarily unavailable.'}},status,headers),env,request);
     }
   },
   async queue(batch:MessageBatch<DeliveryJob>,env:RuntimeEnv):Promise<void>{

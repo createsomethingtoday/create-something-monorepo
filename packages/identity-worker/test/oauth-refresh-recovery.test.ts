@@ -86,3 +86,56 @@ test('bundled Worker HTTP runtime and native D1 atomically recover concurrent ex
  assert.deepEqual(await responses[0].json(),await responses[1].json());
  assert.equal(await db.prepare('SELECT COUNT(*) AS n FROM oauth_grant_consumptions').first('n'),1);
 });
+
+test('renewal audit records only committed scoped rotations, survives recovery expiry and deduplicates replay',async()=>{
+ const f=await fixture();try{
+  assert.equal((await f.exchange()).status,200);assert.equal((await f.exchange()).status,200);
+  const rows=await f.env.DB.prepare('SELECT owner_subject,client_id,resource,connection_id FROM connection_renewal_audit').all();
+  assert.deepEqual(JSON.parse(JSON.stringify(rows.results)),[{owner_subject:'alice',client_id:'client',resource,connection_id:'a2a-inbox'}]);
+  await f.env.DB.prepare('DELETE FROM oauth_refresh_recoveries').run();
+  assert.equal((await f.env.DB.prepare('SELECT count(*) AS n FROM connection_renewal_audit').first()).n,1);
+ }finally{f.storage.close();}
+});
+
+test('audit persistence failure rolls back grant consumption and permits exact recovery',async()=>{
+ const f=await fixture();try{
+  f.storage.sqlite.exec("CREATE TRIGGER fail_renewal_audit BEFORE INSERT ON connection_renewal_audit BEGIN SELECT RAISE(ABORT,'injected audit persistence failure'); END");
+  assert.equal((await f.exchange()).status,500);
+  assert.equal((await f.env.DB.prepare('SELECT count(*) AS n FROM oauth_grant_consumptions').first()).n,0);
+  assert.equal((await f.env.DB.prepare('SELECT count(*) AS n FROM connection_renewal_audit').first()).n,0);
+  f.storage.sqlite.exec('DROP TRIGGER fail_renewal_audit');assert.equal((await f.exchange()).status,200);
+  assert.equal((await f.env.DB.prepare('SELECT count(*) AS n FROM connection_renewal_audit').first()).n,1);
+ }finally{f.storage.close();}
+});
+
+test('userinfo renewal facts are scoped, aggregate-only, and do not expose private audit material',async()=>{
+ const f=await fixture();try{
+  const tokens:any=await(await f.exchange()).json();
+  await f.env.DB.prepare("INSERT INTO connection_renewal_audit(grant_id,owner_subject,client_id,resource,committed_at) VALUES('unrelated','bob','other-client','other-resource',9999999999)").run();
+  const response=await worker.fetch(new Request(f.env.OAUTH_ISSUER+'/oauth/userinfo',{headers:{authorization:'Bearer '+tokens.access_token}}),f.env);
+  assert.equal(response.status,200);const info:any=await response.json();assert.ok(info.renewal.lastCommittedAt<9999999999);assert.equal(info.renewal.recoveryResponsesPrepared,0);
+  assert.deepEqual(Object.keys(info.renewal).sort(),['lastCommittedAt','lastRecoveredAt','recoveryResponsesPrepared']);
+  const audit=JSON.stringify((await f.env.DB.prepare('SELECT * FROM connection_renewal_audit').all()).results);
+  for(const secret of [f.token,tokens.access_token,tokens.refresh_token,'a'.repeat(43)])assert.ok(!audit.includes(secret));
+  const anonymous=await worker.fetch(new Request(f.env.OAUTH_ISSUER+'/oauth/userinfo'),f.env);assert.equal(anonymous.status,401);assert.ok(!JSON.stringify(await anonymous.json()).includes('lastCommittedAt'));
+ }finally{f.storage.close();}
+});
+
+test('standard host refresh audits response preparation without opting into recovery',async()=>{
+ const f=await fixture();try{
+  assert.equal((await f.exchange(f.token,'')).status,200);
+  const row:any=await f.env.DB.prepare('SELECT commit_mode,replay_count FROM connection_renewal_audit').first();assert.equal(row.commit_mode,'response_prepared');assert.equal(row.replay_count,0);
+  assert.equal((await f.env.DB.prepare('SELECT count(*) AS n FROM oauth_refresh_recoveries').first()).n,0);
+  assert.equal((await f.exchange(f.token,'')).status,400);
+  assert.equal((await f.env.DB.prepare('SELECT count(*) AS n FROM connection_renewal_audit').first()).n,1);
+ }finally{f.storage.close();}
+});
+
+test('standard issuance attempt followed by audit failure is not reported as committed renewal',async()=>{
+ const f=await fixture();try{
+  f.storage.sqlite.exec("CREATE TRIGGER fail_standard_audit BEFORE INSERT ON connection_renewal_audit BEGIN SELECT RAISE(ABORT,'injected final audit failure'); END");
+  assert.equal((await f.exchange(f.token,'')).status,500);
+  assert.equal((await f.env.DB.prepare('SELECT count(*) AS n FROM connection_renewal_audit').first()).n,0);
+  assert.equal((await f.env.DB.prepare('SELECT count(*) AS n FROM oauth_grant_consumptions').first()).n,1,'Legacy grant consumption already committed; never claim failure had no effect.');
+ }finally{f.storage.close();}
+});

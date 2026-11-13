@@ -443,3 +443,17 @@ test('renewable discovery and initial challenge request lifecycle consent withou
   assert.ok((await f.rpc(accessOnly,'tools/list')).result.tools.length>0);
  }finally{f.storage.close();}
 });
+
+test('MCP post-commit delivery failure reports unknown and identical send reconciles once',async()=>{
+ const f=await fixture();try{
+  const a=(await f.value('/api/v1/agents',f.alice,'POST',{name:'A'})).agent;
+  const b=(await f.value('/api/v1/agents',f.bob,'POST',{name:'B'})).agent;
+  await f.value('/api/v1/grants',f.bob,'POST',{agentId:b.id,senderAgentId:a.id});
+  f.failEnqueue(true);
+  const args={from_agent_id:a.id,to_agent_id:b.id,text:'Synthetic private content',idempotency_key:'receipt-reconcile'};
+  const first=await f.rpc(f.alice,'tools/call',{name:'a2a_send_message',arguments:args});
+  assert.equal(first.result.isError,true);assert.equal(first.result._meta.receipt.outcome,'unknown');assert.equal(first.result._meta.recovery.action,'reconcile');assert.ok(!JSON.stringify(first.result._meta).includes(args.text));
+  f.failEnqueue(false);const second=await f.rpc(f.alice,'tools/call',{name:'a2a_send_message',arguments:args});assert.equal(second.result._meta.receipt.outcome,'confirmed');assert.equal(second.result.structuredContent.duplicate,true);
+  assert.equal(f.storage.sqlite.prepare('SELECT count(*) AS n FROM messages').get()!.n,1);
+ }finally{f.storage.close();}
+});

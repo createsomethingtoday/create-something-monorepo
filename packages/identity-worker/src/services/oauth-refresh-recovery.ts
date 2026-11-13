@@ -24,12 +24,16 @@ export async function readRecovery(db:D1Database,grantId:string,token:string,req
 }
 export async function commitRecovery(db:D1Database,grant:{jti:string;client_id:string;exp:number},requestId:string,binding:string,ciphertext:string):Promise<void>{
  const now=Math.floor(Date.now()/1000);
+ const parts=JSON.parse(binding) as unknown[];
+ if(parts.length!==6||parts[0]!==grant.jti||parts[1]!==grant.client_id||typeof parts[2]!=='string'||typeof parts[4]!=='string')throw new Error('Invalid recovery binding');
  // D1 batch is transactional. changes() belongs to the immediately preceding
  // INSERT: a losing contender cannot attach its response to the winner's grant.
  await db.batch([
+  db.prepare('DELETE FROM connection_renewal_audit WHERE committed_at<?').bind(now-90*86400),
   db.prepare('DELETE FROM oauth_refresh_recoveries WHERE recover_until<=?').bind(now),
   db.prepare('INSERT OR IGNORE INTO oauth_grant_consumptions(grant_id,grant_kind,client_id,expires_at) VALUES(?,?,?,?)').bind(grant.jti,'oauth_refresh_token',grant.client_id,grant.exp),
   db.prepare('INSERT INTO oauth_refresh_recoveries(grant_id,request_hash,binding,response_ciphertext,recover_until) SELECT ?,?,?,?,? WHERE changes()=1').bind(grant.jti,await recoveryHash(requestId),binding,ciphertext,Math.min(now+300,grant.exp)),
+  db.prepare('INSERT OR IGNORE INTO connection_renewal_audit(grant_id,owner_subject,client_id,resource,committed_at) SELECT ?,?,?,?,? WHERE changes()=1').bind(grant.jti,parts[2],grant.client_id,parts[4],now),
  ]);
 }
 

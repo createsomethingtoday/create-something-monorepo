@@ -1525,6 +1525,7 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 		const previous = await readRecovery(env.DB,claims.jti,body.refresh_token!,body.refresh_request_id!,recoveryBinding);
 		if (previous) {
 			if (!(await activeRecoveryIdentity()) || await recoverySuccessorConsumed(env.DB,previous)) return oauthErrorResponse('invalid_grant',400,'Recovery is no longer active.');
+			await env.DB.prepare('UPDATE connection_renewal_audit SET replay_count=replay_count+1,last_recovered_at=? WHERE grant_id=? AND owner_subject=? AND client_id=? AND resource=?').bind(Math.floor(Date.now()/1000),claims.jti,claims.sub,claims.client_id,claims.resource).run();
 			return json(previous,200,{'Cache-Control':'no-store',Pragma:'no-cache'});
 		}
 	}
@@ -1711,6 +1712,15 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 			if (!(await activeRecoveryIdentity()) || await recoverySuccessorConsumed(env.DB,committed)) return oauthErrorResponse('invalid_grant',400,'Recovery is no longer active.');
 			return json(committed,200,{'Cache-Control':'no-store',Pragma:'no-cache'});
 		}
+		if (grantKind === 'oauth_refresh_token' && claims.resource === 'https://a2a.createsomething.agency/mcp') {
+			// Legacy single-use exchange: issuance is complete only here. This audit
+			// records response preparation, never delivery or encrypted recovery.
+			const now = Math.floor(Date.now()/1000);
+			await env.DB.batch([
+				env.DB.prepare('DELETE FROM connection_renewal_audit WHERE committed_at<?').bind(now-90*86400),
+				env.DB.prepare("INSERT INTO connection_renewal_audit(grant_id,owner_subject,client_id,resource,commit_mode,committed_at) VALUES(?,?,?,?,'response_prepared',?)").bind(claims.jti,claims.sub,claims.client_id,claims.resource,now)
+			]);
+		}
 		return json(responseBody, 200, {
 			'Cache-Control': 'no-store',
 			Pragma: 'no-cache',
@@ -1745,7 +1755,9 @@ async function handleOAuthUserInfo(request: Request, env: Env): Promise<Response
 		if (!isOAuthUserInfoIdentityActive(user)) {
 			return oauthErrorResponse('invalid_token', 401, 'OAuth identity is no longer available.');
 		}
+		const renewal = await env.DB.prepare('SELECT MAX(committed_at) AS lastCommittedAt,MAX(last_recovered_at) AS lastRecoveredAt,COALESCE(SUM(replay_count),0) AS recoveryResponsesPrepared FROM connection_renewal_audit WHERE owner_subject=? AND client_id=? AND resource=?').bind(user.id,oauthToken.client_id,oauthToken.resource).first();
 		return json({
+			renewal,
 			sub: user.id,
 			email: user.email,
 			email_verified: Boolean(user.email_verified),
