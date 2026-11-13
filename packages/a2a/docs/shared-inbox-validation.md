@@ -46,7 +46,8 @@ pages were directly viewed locally; actual mailbox delivery is separate.
 ## Quality gates
 
 - **Functional: passed locally.** Independent final Sol re-test: A2A **160/160**,
-  Identity **147/147**, A2A TypeScript checks passed. Parent native workerd/D1 lab:
+  Identity **147/147**, A2A TypeScript checks passed. Subsequent PR review regression
+  pass: A2A **164/164**, TypeScript and web build passed. Parent native workerd/D1 lab:
   **21/21** scenarios passed with outgoing effects disabled. Web build and both
   Worker dry-run bundles passed; retired identity-provider scan passed.
   Node/SQLite fixtures and the native workerd/D1
@@ -64,3 +65,18 @@ Use [shared-inboxes.md](shared-inboxes.md) for commands, migration ordering,
 remaining host qualification and rollback. Keep the Linear issue open through
 that checkpoint. `Worktree disposition: preserved at
 /private/tmp/cre-2448-a2a-shared-inboxes / codex/cre-2448-a2a-shared-inboxes`.
+
+## PR review corrections
+
+The renewal race regression first demonstrated that renewing during credential
+verification permanently suspended an otherwise authorized event. The corrected
+path retries and reloads the renewed credentials before egress. Tests cover the
+same event being accepted after retry, a stale credential being rejected during
+renewal, and revocation still suspending delivery.
+
+The browser regression first demonstrated missing owner controls on
+`approval_required` requests. Custodians now get the existing reassignment and
+cancellation actions, using the same version and authorization checks as before.
+`scripts/shared-inbox-approval-check.mjs` exercises both actions against the actual
+local HTTP/SQLite fixture and reads their committed states. Start that fixture
+with `A2A_FIXTURE_PORT=4188`; it does not touch production or another local server.

@@ -488,10 +488,8 @@ export async function deliverShared(env: RuntimeEnv, id: string) {
       s.previous_secret_ciphertext && s.previous_secret_until! > Date.now()
         ? await unseal(env.SESSION_KEY, s.previous_secret_ciphertext, `shared-secret:${s.id}`)
         : undefined;
-    const current = await env.DB.prepare(
-      'SELECT * FROM shared_subscriptions WHERE id=? AND revision=?'
-    )
-      .bind(s.id, s.revision)
+    const current = await env.DB.prepare('SELECT * FROM shared_subscriptions WHERE id=?')
+      .bind(s.id)
       .first<Sub>();
     const latest = await event(env, e.id);
     if (
@@ -501,6 +499,12 @@ export async function deliverShared(env: RuntimeEnv, id: string) {
       !(await eligible(env, current, latest))
     ) {
       await outcome(env, d, 'suspended', 'access_or_assignment_changed');
+      return;
+    }
+    if (current.revision !== s.revision) {
+      // Renewal replaces credentials, not the work assignment. Reload and verify
+      // the new snapshot on the next bounded attempt before any egress.
+      await retry(env, d, 'subscription_renewed');
       return;
     }
     const lease = await env.DB.prepare(
@@ -542,6 +546,24 @@ export async function deliverShared(env: RuntimeEnv, id: string) {
       error.status >= 400 &&
       error.status < 500
     ) {
+      // A stale credential may fail while a live renewal is replacing it.
+      // Only defer if current membership and the exact assignment still hold.
+      if (s) {
+        const current = await env.DB.prepare('SELECT * FROM shared_subscriptions WHERE id=?')
+          .bind(s.id)
+          .first<Sub>();
+        const latest = await event(env, d.event_id);
+        if (
+          current &&
+          current.revision !== s.revision &&
+          latest &&
+          latest.assignment_version === d.assignment_version &&
+          (await eligible(env, current, latest))
+        ) {
+          await retry(env, d, 'subscription_renewed');
+          return;
+        }
+      }
       if (s) await terminate(env, s.id, 'revoked', s.revision);
       await outcome(env, d, 'suspended', 'identity_revoked');
     } else await retry(env, d, 'verification_or_transport_unavailable');

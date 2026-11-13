@@ -456,7 +456,7 @@ function renderConversation(root: HTMLElement) {
           'A request is subject to the assigned agent owner’s policy. Delivery is separate from work.'
         )
       );
-    if (isCustodian() && m.state === 'awaiting_assignment') {
+    if (isCustodian() && ['awaiting_assignment', 'approval_required'].includes(m.state)) {
       const actions = node('div', '', 'message-actions');
       const assignee = selectField(
         'New assignee',

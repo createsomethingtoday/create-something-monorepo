@@ -111,6 +111,34 @@ const agent = (await api('/agents', 'POST', { name: 'Fixture research' })).agent
 await api('/agents', 'POST', { name: 'Fixture delivery' });
 const inbox = (await api('/inboxes', 'POST', { name: 'Long history fixture' })).inbox;
 const second = (await api('/inboxes', 'POST', { name: 'Second fixture inbox' })).inbox;
+await api(`/inboxes/${second.id}/members`, 'POST', { agentId: agent.id });
+const runtime = { authorization: `Bearer ${await f.token('fixture-owner', 'approval-runtime')}` };
+const pending = (await (
+  await f.call('/api/v2/connections', runtime, 'POST', { label: 'Fixture runtime' })
+).json()) as any;
+await api(`/connections/${pending.connection.id}/approve`, 'POST', { agentId: agent.id });
+const approvalMessageIds: string[] = [];
+for (const key of ['reassign', 'cancel']) {
+  const message = await api(`/inboxes/${second.id}/messages`, 'POST', {
+    text: `Approval fixture ${key}`,
+    kind: 'request',
+    assigneeAgentId: agent.id,
+    idempotencyKey: `approval-${key}`
+  });
+  const endpoint = `/api/v2/inboxes/${second.id}/messages/${message.id}`;
+  const claim = (await (
+    await f.call(endpoint + '/claim', runtime, 'POST', {
+      assignmentVersion: message.assignment_version
+    })
+  ).json()) as any;
+  const finished = await f.call(endpoint + '/finish', runtime, 'POST', {
+    claimToken: claim.claimToken,
+    assignmentVersion: claim.assignmentVersion,
+    state: 'approval_required'
+  });
+  if (!finished.ok) throw new Error(await finished.text());
+  approvalMessageIds.push(message.id);
+}
 await api(`/inboxes/${inbox.id}/members`, 'POST', { agentId: agent.id });
 for (let n = 1; n <= 55; n++)
   await api(`/inboxes/${inbox.id}/messages`, 'POST', {
@@ -121,10 +149,13 @@ await api(`/inboxes/${inbox.id}/context`, 'POST', {
   title: 'Long context fixture',
   text: 'A'.repeat(4100) + 'END VERIFIED'
 });
+const fixturePort = Number(process.env.A2A_FIXTURE_PORT ?? 4176);
+if (!Number.isInteger(fixturePort) || fixturePort < 1024 || fixturePort > 65535)
+  throw new Error('Invalid A2A_FIXTURE_PORT');
 const v = await createServer({
   configFile: false,
   root: fileURLToPath(new URL('../web', import.meta.url)),
-  server: { host: '127.0.0.1', port: 4176, strictPort: true },
+  server: { host: '127.0.0.1', port: fixturePort, strictPort: true },
   plugins: [
     {
       name: 'local-actual-shared-http',
@@ -155,7 +186,12 @@ const v = await createServer({
           if (u.pathname === '/fixture/state') {
             res.setHeader('content-type', 'application/json');
             res.end(
-              JSON.stringify({ inboxId: inbox.id, secondInboxId: second.id, agentId: agent.id })
+              JSON.stringify({
+                inboxId: inbox.id,
+                secondInboxId: second.id,
+                agentId: agent.id,
+                approvalMessageIds
+              })
             );
             return;
           }
@@ -204,7 +240,7 @@ const v = await createServer({
 });
 await v.listen();
 console.log(
-  'LOCAL ONLY http://127.0.0.1:4176/inboxes.html (actual app.fetch; synthetic owner cookies; restart resets data)'
+  `LOCAL ONLY http://127.0.0.1:${fixturePort}/inboxes.html (actual app.fetch; synthetic owner cookies; restart resets data)`
 );
 async function close() {
   await v.close();

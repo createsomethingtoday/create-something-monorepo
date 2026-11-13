@@ -152,6 +152,68 @@ async function fixture() {
     }
   };
 }
+test('renewal during credential verification retries the same work event; revocation still suspends it', async (t) => {
+  for (const scenario of [
+    'authorized renewal',
+    'revoked after renewal',
+    'stale credential rejected'
+  ])
+    await t.test(scenario, async (context) => {
+      const revoke = scenario === 'revoked after renewal';
+      const f = await fixture();
+      try {
+        await f.subscribe();
+        const eventId = await f.send();
+        const deliveryId = (await f.delivery(eventId))!;
+        const decrypt = crypto.subtle.decrypt.bind(crypto.subtle);
+        let renew = true;
+        context.mock.method(
+          crypto.subtle,
+          'decrypt',
+          async (...args: Parameters<SubtleCrypto['decrypt']>) => {
+            const result = await decrypt(...args);
+            if (renew) {
+              renew = false;
+              await f.subscribe();
+              if (revoke) await unsubscribeShared(f.env, f.bearer, f.params);
+              if (scenario === 'stale credential rejected')
+                return new TextEncoder().encode('invalidated-old-token').buffer;
+            }
+            return result;
+          }
+        );
+        await deliverShared(f.env, deliveryId);
+        assert.equal(
+          f.received.length,
+          0,
+          'Do not dispatch using the stale subscription snapshot.'
+        );
+        const row = f.storage.sqlite
+          .prepare('SELECT state FROM shared_deliveries WHERE id=?')
+          .get(deliveryId);
+        assert.equal(row!.state, revoke ? 'suspended' : 'retrying');
+        if (!revoke) {
+          f.storage.sqlite
+            .prepare('UPDATE shared_deliveries SET next_attempt_at=0 WHERE id=?')
+            .run(deliveryId);
+          await recoverSharedDelivery(f.env);
+          assert.ok(f.jobs.some((j) => j.sharedDeliveryId === deliveryId));
+          await deliverShared(f.env, deliveryId);
+          assert.equal(f.received.length, 1);
+          assert.equal(f.received[0].eventId, eventId);
+          assert.equal(
+            f.storage.sqlite
+              .prepare('SELECT state FROM shared_deliveries WHERE id=?')
+              .get(deliveryId)!.state,
+            'accepted'
+          );
+        }
+      } finally {
+        context.mock.restoreAll();
+        f.storage.close();
+      }
+    });
+});
 test('event replay retains its high-water mark and reports pruned history after ninety days', async () => {
   const f = await fixture();
   try {
