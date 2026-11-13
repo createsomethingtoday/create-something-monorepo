@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import type { HTMLAnchorAttributes } from 'svelte/elements';
+	import { press } from '$lib/motion/actions';
 
 	type Variant = 'default' | 'secondary' | 'destructive' | 'outline' | 'ghost' | 'link';
 	type Size = 'default' | 'sm' | 'lg' | 'icon';
@@ -20,7 +21,7 @@
 	}: Props = $props();
 </script>
 
-<a class="btn btn-{variant} btn-{size} {className}" {...restProps}>
+<a class="btn btn-{variant} btn-{size} {className}" use:press {...restProps}>
 	{#if children}
 		{@render children()}
 	{/if}
