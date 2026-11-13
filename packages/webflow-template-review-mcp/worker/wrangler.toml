@@ -22,6 +22,9 @@ OAUTH_ALLOWED_EMAILS = "eric.unger@webflow.com,mariana.segura@webflow.com,micah@
 REVIEWER_AUTH_EMAIL_ALIASES_JSON = '{"acct_wf_micah":["micah@createsomething.io"]}'
 # Featured-batch finalization grant (template_review_set_featured_flag), merged over the directory.
 FEATURED_COORDINATOR_ACCOUNT_IDS = "acct_wf_micah"
+# Community response queue writes (template_review_community_save_draft /
+# _dismiss / _send). Send posts a public reply in the Marketplace Creators space.
+COMMUNITY_QUEUE_ADMIN_ACCOUNT_IDS = "acct_wf_micah"
 CF_ACCESS_TEAM_DOMAIN = "https://webflow.cloudflareaccess.com"
 CF_ACCESS_AUD = "3b4a38c7c99ec7127bcbb99d9c8aae7b0011a51370bff31b7085385e1a2807ba"
 WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL = "https://validation-worker.createsomething.workers.dev/validate"
@@ -39,6 +42,13 @@ ZENDESK_SUBDOMAIN = "webflow2579"
 # Marketplace Review Team group. Ticket search defaults to it; status writes
 # refuse tickets outside it. Programs Support (46157931219347) is out of scope.
 MARKETPLACE_ZENDESK_GROUP_ID = "1500002744702"
+
+# Marketplace Creators community response queue: the creator MCP's private
+# QueueApi entrypoint. A service binding, so the call has no public URL.
+[[services]]
+binding = "COMMUNITY_QUEUE"
+service = "bettermode-creator-mcp"
+entrypoint = "QueueApi"
 
 [browser]
 binding = "BROWSER"

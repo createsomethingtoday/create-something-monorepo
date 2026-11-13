@@ -640,6 +640,20 @@ creator-facing feedback.
 - `template_review_create_ticket` (opens a NEW outbound ticket to a template creator and emails them; requires `confirm_send: true`)
 - `template_review_link_version_ticket` (make a ticket the version's 🧘ZD ID; fresh-read precondition + `confirm_replace: true`)
 
+### Community response queue
+
+The Marketplace Creators community (Bettermode) has a response queue in another system: one item for each thread where a creator is waiting for staff. These tools reach it through the `COMMUNITY_QUEUE` service binding (the creator MCP's private `QueueApi` entrypoint) and fail closed with `COMMUNITY_QUEUE_NOT_CONFIGURED` without it.
+
+- `template_review_community_queue` (open items as flat rows, longest wait first, with the reply draft)
+- `template_review_community_thread` (one thread: messages, authors, staff or creator)
+- `template_review_community_health` (sweep, webhook, counts, sends; `viewer_can_write`)
+- `template_review_community_history` (closed items: sent, answered, dismissed, removed)
+- `template_review_community_save_draft` (internal; replaces the draft)
+- `template_review_community_dismiss` (internal; closes an item with a reason)
+- `template_review_community_send` (CREATOR-FACING: posts a public reply; requires `confirm_public_reply: true`)
+
+The three write tools need the `template-review:write` scope and a directory account listed in `COMMUNITY_QUEUE_ADMIN_ACCOUNT_IDS`. Other reviewers can read.
+
 ## Zendesk ticket leg
 
 Template submissions open a Zendesk ticket in the Marketplace Review Team group

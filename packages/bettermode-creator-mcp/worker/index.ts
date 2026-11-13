@@ -15,11 +15,28 @@
  *       If MCP_BEARER_TOKEN is unset the server is open (dev only).
  */
 
+import { WorkerEntrypoint } from 'cloudflare:workers';
 import { enableTelemetry } from '@create-something/mcp-core';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 
-import { registerCreatorTools, type McpEnv } from '../src/tools/index.js';
+import {
+  dismissQueueItem,
+  getQueueHealth,
+  listQueueHistory,
+  listResponseQueue,
+  saveAgentDraft,
+} from '../src/lib/store.js';
+import { loadQueueThread, registerCreatorTools, type McpEnv } from '../src/tools/index.js';
+
+// The agent Worker's private send entrypoint (QueueAdmin).
+type CreatorAgentBinding = {
+  sendDraft(input: {
+    postId: string;
+    draftText: string;
+    requestedBy?: string | null;
+  }): Promise<{ ok: true; reply_id: string | null } | { ok: false; error: string }>;
+};
 
 interface Env extends McpEnv {
   MCP_OBJECT: DurableObjectNamespace;
@@ -31,10 +48,11 @@ interface Env extends McpEnv {
   LANGFUSE_SECRET_KEY?: string;
   LANGFUSE_PROJECT_NAME?: string;
   LANGFUSE_HOST?: string;
+  CREATOR_AGENT?: CreatorAgentBinding;
 }
 
 const SERVER_NAME = 'bettermode-marketplace-creator';
-const SERVER_VERSION = '0.2.0';
+const SERVER_VERSION = '0.3.0';
 
 const TOOL_NAMES = [
   'fetch_post_thread',
@@ -44,6 +62,8 @@ const TOOL_NAMES = [
   'list_response_queue',
   'save_draft',
   'dismiss_queue_item',
+  'get_queue_health',
+  'list_queue_history',
 ];
 
 export class BettermodeCreatorMcp extends McpAgent<Env> {
@@ -68,6 +88,53 @@ export class BettermodeCreatorMcp extends McpAgent<Env> {
       );
     }
     registerCreatorTools(this.server, this.env);
+  }
+}
+
+// Private API for the response-queue dashboard. A named entrypoint has no
+// public URL: only a Worker in this account with a service binding to it can
+// call it. The caller (the Template Review MCP) signs the person in and
+// decides who may write. This class does no access check of its own.
+export class QueueApi extends WorkerEntrypoint<Env> {
+  async listQueue(input?: { limit?: number }) {
+    const limit = Math.min(Math.max(Math.trunc(input?.limit ?? 50), 1), 100);
+    const items = await listResponseQueue(this.env.DB, limit);
+    return { count: items.length, items };
+  }
+
+  async getThread(input: { postId: string }) {
+    return loadQueueThread(this.env, String(input?.postId || ''));
+  }
+
+  async health() {
+    return getQueueHealth(this.env.DB);
+  }
+
+  async history(input?: { limit?: number }) {
+    const limit = Math.min(Math.max(Math.trunc(input?.limit ?? 30), 1), 100);
+    const items = await listQueueHistory(this.env.DB, limit);
+    return { count: items.length, items };
+  }
+
+  async saveDraft(input: { postId: string; draft: string; note?: string | null }) {
+    return saveAgentDraft(this.env.DB, String(input?.postId || ''), String(input?.draft || ''), input?.note ?? null);
+  }
+
+  async dismiss(input: { postId: string; reason: string }) {
+    return dismissQueueItem(this.env.DB, String(input?.postId || ''), String(input?.reason || ''));
+  }
+
+  // Posts the reply in the community. The text sent is the text given here,
+  // so the caller passes what the person saw when they pressed Send.
+  async sendDraft(input: { postId: string; draft: string; requestedBy?: string | null }) {
+    if (!this.env.CREATOR_AGENT) {
+      return { ok: false as const, error: 'Send is not connected: the CREATOR_AGENT binding is missing.' };
+    }
+    return this.env.CREATOR_AGENT.sendDraft({
+      postId: String(input?.postId || ''),
+      draftText: String(input?.draft || ''),
+      requestedBy: input?.requestedBy ?? null,
+    });
   }
 }
 
