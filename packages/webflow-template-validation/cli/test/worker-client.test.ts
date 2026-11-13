@@ -7,6 +7,11 @@ describe('normalizePublishedUrl (mirrors the submission form)', () => {
 		expect(normalizePublishedUrl('  https://my-template.webflow.io/about#team ')).toBe('https://my-template.webflow.io/about');
 	});
 
+	it('rejects a URL with a user name or a password, and never keeps a port', () => {
+		expect(() => normalizePublishedUrl('https://user:pw@my-template.webflow.io/')).toThrow(/user name/);
+		expect(normalizePublishedUrl('https://my-template.webflow.io:8443/')).toBe('https://my-template.webflow.io/');
+	});
+
 	it('pulls the URL out of pasted text', () => {
 		expect(normalizePublishedUrl('Published at https://my-template.webflow.io/ yesterday')).toBe('https://my-template.webflow.io/');
 	});

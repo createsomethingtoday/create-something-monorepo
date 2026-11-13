@@ -53,7 +53,7 @@ export interface RunOutcome {
 }
 
 export interface PageDiscovery {
-	source: 'sitemap' | 'homepage-links' | 'none';
+	source: 'designer' | 'sitemap' | 'homepage-links' | 'none';
 	slugs: string[];
 	truncated: boolean;
 }
@@ -82,6 +82,9 @@ export function normalizePublishedUrl(rawValue: string): string {
 	if (!parsed.hostname.toLowerCase().endsWith('.webflow.io')) {
 		throw new Error("URL must use a '.webflow.io' hostname.");
 	}
+	if (parsed.username || parsed.password || parsed.port) {
+		throw new Error('URL must not contain a user name, a password, or a port.');
+	}
 	parsed.hash = '';
 	if (!parsed.pathname) parsed.pathname = '/';
 	return parsed.toString();
@@ -104,21 +107,22 @@ function isRetryable(error: unknown): boolean {
 }
 
 /** Same retry shape as the extension's fetchJsonWithRetry: 3 attempts, linear backoff. */
-async function fetchJsonWithRetry<T>(url: string, init: RequestInit, timeoutMs: number): Promise<T> {
+async function fetchJsonWithRetry<T>(url: string, init: RequestInit, timeoutMs: number, maxAttempts = MAX_NETWORK_RETRIES): Promise<T> {
 	let lastError: unknown;
-	for (let attempt = 1; attempt <= MAX_NETWORK_RETRIES; attempt += 1) {
+	for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
 		try {
 			const response = await fetchWithTimeout(url, init, timeoutMs);
 			if (!response.ok) {
 				const text = await response.text().catch(() => '');
-				const error = new Error(text || `Request failed with status ${response.status}`) as Error & { status?: number };
+				// An error page from a proxy can be a full HTML document. Keep the message short.
+				const error = new Error(text.slice(0, 300) || `Request failed with status ${response.status}`) as Error & { status?: number };
 				error.status = response.status;
 				throw error;
 			}
 			return (await response.json()) as T;
 		} catch (error) {
 			lastError = error;
-			if (attempt === MAX_NETWORK_RETRIES || !isRetryable(error)) throw error;
+			if (attempt === maxAttempts || !isRetryable(error)) throw error;
 			await sleep(attempt * 1000);
 		}
 	}
@@ -164,7 +168,16 @@ export async function discoverPageSlugs(siteUrl: string): Promise<PageDiscovery>
 		const isIndex = /<sitemapindex[\s>]/i.test(sitemap);
 		const pageLocs: string[] = [];
 		if (isIndex) {
-			for (const nested of locs.slice(0, 5)) {
+			// Only this site's own sitemaps: a sitemap index must not send requests to other hosts.
+			const ownSitemaps = locs.filter((loc) => {
+				try {
+					const url = new URL(loc);
+					return url.protocol === 'https:' && url.hostname === new URL(siteUrl).hostname;
+				} catch {
+					return false;
+				}
+			});
+			for (const nested of ownSitemaps.slice(0, 5)) {
 				const body = await fetchText(nested);
 				if (body) pageLocs.push(...[...body.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)].map((m) => m[1]));
 			}
@@ -248,6 +261,8 @@ export async function runValidation(params: {
 }): Promise<RunOutcome> {
 	const { siteUrl, pageSlugs, checks, workerBase, timeoutMs, onProgress } = params;
 	const correlationId = `cli-${crypto.randomUUID()}`;
+	// One time budget for the async job and the fallback, so --timeout stays close to the real limit.
+	const deadline = Date.now() + timeoutMs;
 	const designerData = params.designerData ?? buildDesignerStub(pageSlugs);
 	const options = buildOptions(checks);
 	const headers = { 'Content-Type': 'application/json', 'X-Correlation-Id': correlationId };
@@ -279,7 +294,8 @@ export async function runValidation(params: {
 			const raw = await fetchJsonWithRetry<any>(
 				`${workerBase}/validate`,
 				{ method: 'POST', headers, body: JSON.stringify({ siteUrl, designerData, pageSlugs, options }) },
-				Math.max(NETWORK_TIMEOUT_MS, timeoutMs)
+				Math.max(NETWORK_TIMEOUT_MS, deadline - Date.now()),
+				1
 			);
 			return {
 				mode: 'legacy',
@@ -442,7 +458,9 @@ export async function recordValidationResult(params: {
 					siteUrl,
 					validationResults,
 					evidence: { type: 'oauth_site_access', accessToken }
-				})
+				}),
+				// The body holds the access token. Never replay it to a redirect target.
+				redirect: 'error'
 			},
 			NETWORK_TIMEOUT_MS
 		);
