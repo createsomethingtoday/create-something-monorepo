@@ -7,22 +7,19 @@
 //   GET  /health             smoke check
 //   POST /webhook            Bettermode events (TEST + post/reply lifecycle)
 //   POST /webhook/interaction  dynamic block render + button callbacks
+//
+// Post and reply events go to a Cloudflare Queue. The consumer and the
+// scheduled sweep live in ./queue.
 
+import { bettermodeAuth, BettermodeError, createReply, memberAccessToken } from './bettermode';
 import {
-  airtableConfig,
-  fetchCreatorContext,
-  type CreatorContext,
-} from './airtable';
-import {
-  appAccessToken,
-  bettermodeAuth,
-  BettermodeError,
-  createReply,
-  fetchPostThread,
-  memberAccessToken,
-  type BettermodePost,
-} from './bettermode';
-import { generateDraft, openaiConfig } from './openai';
+  adminUserIds,
+  enqueue,
+  handleQueueBatch,
+  reconcile,
+  shouldHandleSpace,
+  type QueueMessage,
+} from './queue';
 import { verifySignature } from './signature';
 import {
   adminDraftSlate,
@@ -31,12 +28,13 @@ import {
   type DraftBlockState,
 } from './slate';
 import {
+  claimDraftForSend,
+  expireOpenDrafts,
   getLatestDraftByPostId,
-  listRecentApprovedDrafts,
   markRejected,
   markSent,
-  upsertPendingDraft,
-  upsertSignal,
+  patchSignal,
+  releaseSendClaim,
 } from './store';
 
 type WebhookPayload = {
@@ -111,7 +109,15 @@ export default {
       );
     }
   },
-} satisfies ExportedHandler<Env>;
+
+  async queue(batch: MessageBatch<QueueMessage>, env: Env): Promise<void> {
+    await handleQueueBatch(batch, env);
+  },
+
+  async scheduled(_controller: ScheduledController, env: Env): Promise<void> {
+    await reconcile(env);
+  },
+} satisfies ExportedHandler<Env, QueueMessage>;
 
 async function handleWebhook(
   request: Request,
@@ -163,10 +169,11 @@ async function handleWebhook(
     const postId = webhook.data?.object?.id || webhook.entityId;
     const spaceId = webhook.data?.object?.spaceId;
     console.log('matched post event', { type: webhook.type, postId, spaceId });
-    if (postId && shouldHandleSpace(spaceId, env)) {
-      ctx.waitUntil(generateDraftForPost(postId, env).catch((err) => {
-        console.error('draft generation failed', { postId, error: errorMessage(err) });
-      }));
+    // The consumer checks the space against the live thread, so an event
+    // without a spaceId passes. Only a known foreign space is dropped here.
+    if (postId && (!spaceId || shouldHandleSpace(spaceId, env))) {
+      // Awaited so a failed enqueue returns a non-2xx, not a false success.
+      await enqueue(env, { kind: 'thread.sync', postId, reason: webhook.type });
     } else {
       console.warn('event matched type but filtered out', {
         type: webhook.type,
@@ -265,16 +272,70 @@ async function handleSend(
     if (!networkId) throw new Error('Missing Bettermode network ID.');
     if (!webhook.data?.actorId) throw new Error('Missing admin actor ID.');
 
-    const memberToken = await memberAccessToken(networkId, webhook.data.actorId, auth);
-    const reply = await createReply(
-      postId,
-      state.signal.metadata?.space_id ?? null,
-      draftToHtml(draftText),
-      memberToken,
-      auth,
-    );
+    const postTypeId = env.BETTERMODE_REPLY_POST_TYPE_ID?.trim();
+    if (!postTypeId) {
+      throw new Error('Send is off: BETTERMODE_REPLY_POST_TYPE_ID is not set on the Worker.');
+    }
 
-    await markSent(env.DB, state.draft.id, draftText, reply.id ?? null);
+    // A second submit must not post a second public reply.
+    if (!(await claimDraftForSend(env.DB, state.draft.id))) {
+      throw new Error('This draft is not open for sending. Reload the post to see its status.');
+    }
+
+    const actorId = webhook.data.actorId;
+    let reply: Awaited<ReturnType<typeof createReply>>;
+    try {
+      const memberToken = await memberAccessToken(networkId, actorId, auth);
+      reply = await createReply(postId, postTypeId, draftToHtml(draftText), memberToken, auth);
+    } catch (error) {
+      await releaseSendClaim(env.DB, state.draft.id);
+      throw error;
+    }
+
+    // The reply is public from here. A bookkeeping failure must not show
+    // "Could not send", or the admin sends it again. Each step runs on its
+    // own, so one failure does not skip the others.
+    const draftId = state.draft.id;
+    const signalId = state.signal.id;
+    const spaceId = state.signal.metadata?.space_id ?? env.BETTERMODE_MARKETPLACE_SPACE_ID ?? null;
+    const afterSend = async (step: string, run: () => Promise<void>) => {
+      for (let attempt = 1; attempt <= 2; attempt += 1) {
+        try {
+          await run();
+          return;
+        } catch (error) {
+          console.error('reply sent but a follow-up step failed', {
+            step,
+            attempt,
+            postId,
+            replyId: reply.id,
+            error: errorMessage(error),
+          });
+        }
+      }
+    };
+    // Moderation decides a few seconds after the post. Check then, and
+    // release the reply if it was held.
+    await afterSend('verify', () =>
+      enqueue(
+        env,
+        { kind: 'reply.verify', replyId: reply.id, threadId: postId, draftId, actorId, spaceId },
+        { delaySeconds: 15 },
+      ),
+    );
+    // Records the reply ID and sender. If the verify message above was lost,
+    // the sweep finds this row and verifies the reply again.
+    await afterSend('mark-sent', () =>
+      markSent(env.DB, draftId, draftText, reply.id ?? null, actorId),
+    );
+    await afterSend('thread-state', () =>
+      patchSignal(env.DB, signalId, 'responded', {
+        sent_reply_at: new Date().toISOString(),
+        last_error: null,
+      }),
+    );
+    // The thread is answered. Close any other draft so it cannot be sent too.
+    await afterSend('expire-drafts', () => expireOpenDrafts(env.DB, signalId));
 
     const refreshed = await loadDraftState(postId, env);
     refreshed.notice = { kind: 'success', title: 'Reply sent.' };
@@ -320,11 +381,7 @@ async function handleRegenerate(
       },
     ]);
   }
-  ctx.waitUntil(
-    generateDraftForPost(postId, env, { regenerate: true }).catch((err) => {
-      console.error('regenerate failed', { postId, error: errorMessage(err) });
-    }),
-  );
+  await enqueue(env, { kind: 'thread.sync', postId, reason: 'regenerate', regenerate: true });
   const state = await loadDraftState(postId, env);
   state.notice = { kind: 'info', title: 'Regenerating draft...' };
   return interactionResponse(webhook, [
@@ -345,8 +402,13 @@ async function handleDismiss(
     return interactionResponse(webhook, []);
   }
   const state = await loadDraftState(postId, env);
-  if (state.draft) {
-    await markRejected(env.DB, state.draft.id);
+  // Close the queue item only when an open draft was rejected. A creator
+  // message after this time reopens it.
+  if (state.draft && (await markRejected(env.DB, state.draft.id))) {
+    await patchSignal(env.DB, state.signal.id, 'dismissed', {
+      dismissed_at: new Date().toISOString(),
+      closed_reason: null,
+    });
   }
   const refreshed = await loadDraftState(postId, env);
   refreshed.notice = { kind: 'info', title: 'Draft dismissed.' };
@@ -401,130 +463,9 @@ async function loadDraftState(postId: string | undefined, env: Env): Promise<Loa
   };
 }
 
-async function generateDraftForPost(
-  postId: string,
-  env: Env,
-  opts: { regenerate?: boolean } = {},
-): Promise<void> {
-  const auth = bettermodeAuth(env);
-  const networkId = env.BETTERMODE_DEFAULT_NETWORK_ID;
-  if (!networkId) throw new Error('Missing BETTERMODE_DEFAULT_NETWORK_ID.');
-
-  const token = await appAccessToken(networkId, auth);
-  const post = await fetchPostThread(postId, token, auth);
-  if (!post) {
-    console.warn('post not found for draft', { postId });
-    return;
-  }
-
-  if (!shouldHandleSpace(post.spaceId || post.space?.id, env)) {
-    return;
-  }
-
-  const author = post.owner || post.createdBy;
-  const email = author?.email || '';
-  const isTopLevel = !post.parentId;
-
-  // Skip drafting when the author is internal Webflow staff (e.g. team
-  // announcements like "Interactions with GSAP training"). The agent's
-  // job is to draft admin replies to creator questions, not to reply
-  // to its own team's announcements.
-  if (isStaffAuthorEmail(email, env)) {
-    console.log('skipping draft for staff author', {
-      postId,
-      authorEmail: email,
-      reason: 'matches staff domain allowlist',
-    });
-    return;
-  }
-
-  let creator: CreatorContext | null = null;
-  const aConfig = airtableConfig(env);
-  if (aConfig && email) {
-    try {
-      creator = await fetchCreatorContext(email, aConfig);
-    } catch (err) {
-      console.error('airtable lookup failed', { email, error: errorMessage(err) });
-    }
-  }
-
-  const oConfig = openaiConfig(env);
-  if (!oConfig) {
-    console.warn('OpenAI is not configured; skipping draft', { postId });
-    return;
-  }
-
-  const fewShot = await listRecentApprovedDrafts(env.DB, 5);
-  const draft = await generateDraft(
-    {
-      post,
-      isTopLevel,
-      creator,
-      fewShotApprovedDrafts: fewShot,
-      regenerate: opts.regenerate === true,
-    },
-    oConfig,
-  );
-
-  const signalId = await upsertSignal(env.DB, {
-    postId: post.id,
-    postUrl: post.url,
-    postContent: stripBettermodeContent(post),
-    metadata: {
-      network_id: networkId,
-      space_id: post.spaceId || post.space?.id || null,
-      parent_post_id: post.parentId || null,
-      is_top_level: isTopLevel,
-      author_member_id: author?.id || null,
-      author_email: email || null,
-      author_name: author?.name || null,
-    },
-  });
-
-  await upsertPendingDraft(env.DB, { signalId, draftContent: draft });
-}
-
 function isAdminUser(actorId: string | undefined, env: Env): boolean {
-  if (!actorId) return false;
-  const allow = (env.BETTERMODE_ADMIN_USER_IDS || '')
-    .split(',')
-    .map((id) => id.trim())
-    .filter(Boolean);
-  if (allow.length === 0) {
-    // No allowlist configured → fail closed.
-    return false;
-  }
-  return allow.includes(actorId);
-}
-
-function shouldHandleSpace(spaceId: string | null | undefined, env: Env): boolean {
-  const required = env.BETTERMODE_MARKETPLACE_SPACE_ID?.trim();
-  if (!required) {
-    // Not yet configured: handle everything so the operator can capture a
-    // real space ID from the first webhook payload via logs.
-    return true;
-  }
-  return !!spaceId && spaceId === required;
-}
-
-// Returns true when the post author's email matches a configured staff
-// domain (comma-separated in BETTERMODE_STAFF_AUTHOR_DOMAINS, defaulting
-// to `webflow.com`). Staff-authored posts are typically announcements
-// from the Marketplace team itself, not creator questions the agent
-// should draft replies to.
-function isStaffAuthorEmail(
-  email: string | undefined | null,
-  env: Env,
-): boolean {
-  if (!email) return false;
-  const lower = email.trim().toLowerCase();
-  if (!lower.includes('@')) return false;
-  const configured = env.BETTERMODE_STAFF_AUTHOR_DOMAINS;
-  const domains = (configured && configured.trim() ? configured : 'webflow.com')
-    .split(',')
-    .map((d) => d.trim().toLowerCase())
-    .filter(Boolean);
-  return domains.some((d) => lower.endsWith(`@${d}`));
+  // An empty allowlist fails closed.
+  return !!actorId && adminUserIds(env).includes(actorId);
 }
 
 function resolvePostId(webhook: WebhookPayload): string | undefined {
@@ -539,11 +480,6 @@ function resolvePostId(webhook: WebhookPayload): string | undefined {
 function stringInput(webhook: WebhookPayload, key: string): string {
   const value = webhook.data?.inputs?.[key];
   return typeof value === 'string' ? value : '';
-}
-
-function stripBettermodeContent(post: BettermodePost): string {
-  const raw = post.shortContent || post.description || post.title || '';
-  return raw.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
 }
 
 function draftToHtml(text: string): string {

@@ -1,9 +1,10 @@
 /**
  * Bettermode Marketplace Creator MCP — Cloudflare Worker
  *
- * Read-only MCP exposing Bettermode + Airtable + community_queue helpers
- * to a Dify agent (or any MCP client) drafting admin replies for the
- * Webflow Community Marketplace Creators space.
+ * MCP exposing Bettermode + Airtable + response-queue helpers to an agent
+ * (any MCP client) drafting admin replies for the Webflow Community
+ * Marketplace Creators space. Bettermode and Airtable are read-only. Queue
+ * writes are internal (drafts, dismissals); no tool posts to the community.
  *
  * Endpoints:
  *   /mcp        Streamable HTTP transport (Dify, Claude Code, Codex)
@@ -33,13 +34,16 @@ interface Env extends McpEnv {
 }
 
 const SERVER_NAME = 'bettermode-marketplace-creator';
-const SERVER_VERSION = '0.1.0';
+const SERVER_VERSION = '0.2.0';
 
 const TOOL_NAMES = [
   'fetch_post_thread',
   'get_creator_context',
   'list_recent_approved_drafts',
   'get_draft_status',
+  'list_response_queue',
+  'save_draft',
+  'dismiss_queue_item',
 ];
 
 export class BettermodeCreatorMcp extends McpAgent<Env> {
@@ -119,7 +123,7 @@ export default {
           {
             name: SERVER_NAME,
             version: SERVER_VERSION,
-            description: 'Read-only Bettermode + Airtable + community queue helpers for Marketplace Creator drafting',
+            description: 'Bettermode + Airtable reads and response-queue drafting for the Marketplace Creators space',
             tools: TOOL_NAMES,
             endpoints: { mcp: '/mcp', sse: '/sse' },
             environment: env.ENVIRONMENT || 'development',
