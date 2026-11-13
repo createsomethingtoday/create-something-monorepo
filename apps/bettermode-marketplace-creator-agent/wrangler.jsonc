@@ -9,6 +9,22 @@
   "observability": {
     "enabled": true
   },
+  "queues": {
+    "producers": [{ "binding": "EVENTS", "queue": "bettermode-creator-events" }],
+    "consumers": [
+      {
+        "queue": "bettermode-creator-events",
+        "max_batch_size": 5,
+        "max_batch_timeout": 5,
+        "max_retries": 5,
+        "max_concurrency": 1,
+        "dead_letter_queue": "bettermode-creator-events-dlq"
+      }
+    ]
+  },
+  "triggers": {
+    "crons": ["*/30 * * * *"]
+  },
   "d1_databases": [
     {
       "binding": "DB",
@@ -24,6 +40,7 @@
     "BETTERMODE_MARKETPLACE_SPACE_ID": "ROtfBgdQyiAB",
     "BETTERMODE_ADMIN_USER_IDS": "lgjO9fjLNn",
     "BETTERMODE_STAFF_AUTHOR_DOMAINS": "webflow.com",
+    "BETTERMODE_RECONCILE_LOOKBACK_DAYS": "30",
     "AIRTABLE_API_BASE": "https://api.airtable.com",
     "AIRTABLE_BASE_ID": "appMoIgXMTTTNIc3p",
     "AIRTABLE_CREATORS_TABLE": "tbljt0plqxdMARZXb",

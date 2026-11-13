@@ -5,6 +5,11 @@
 //   get_creator_context        (Airtable → Creator + linked Assets/templates)
 //   list_recent_approved_drafts (D1 → few-shot examples for Dify)
 //   get_draft_status           (D1 → audit lookup by post ID)
+//   list_response_queue        (D1 → threads where a creator is waiting)
+//   save_draft                 (D1 write → agent draft for admin review)
+//   dismiss_queue_item         (D1 write → close an item that needs no reply)
+//
+// No tool posts to Bettermode. An admin sends the draft from the post page.
 //
 // Each tool returns a single text content block with JSON. The Dify agent
 // (or any MCP client) parses JSON for downstream use.
@@ -22,8 +27,11 @@ import {
   type BettermodePost,
 } from '../lib/bettermode.js';
 import {
+  dismissQueueItem,
   getDraftStatusByPostId,
   listRecentApprovedDrafts,
+  listResponseQueue,
+  saveAgentDraft,
 } from '../lib/store.js';
 
 export type McpEnv = {
@@ -46,8 +54,9 @@ export function registerCreatorTools(server: McpServer, env: McpEnv): void {
   server.tool(
     'fetch_post_thread',
     [
-      'Fetch a Marketplace Creator post by Bettermode post ID and return the post body,',
-      'reply thread, post author (member), space ID, and parent post (for replies).',
+      'Fetch a Marketplace Creator post by Bettermode post ID and return the full post body,',
+      'reply thread with nested replies (oldest first), post author (member), space ID,',
+      'and parent post (for replies).',
       'Use this to ground the drafted admin reply in what the creator and prior',
       'replies have actually said. The marketplace_space_id field is the Bettermode',
       'space for /marketplace-creators; if the post is in a different space,',
@@ -149,6 +158,80 @@ export function registerCreatorTools(server: McpServer, env: McpEnv): void {
       };
     },
   );
+
+  server.tool(
+    'list_response_queue',
+    [
+      'List Marketplace Creator threads where a creator spoke last and no staff',
+      'reply followed, longest wait first. Each item has the thread post_id, URL,',
+      'title, hours_waiting, who is waiting, the current draft if one exists, and',
+      'last_error when automatic drafting failed. status is "new" (no current',
+      'draft) or "queued" (draft ready for admin review). Call fetch_post_thread',
+      'with post_id for the full thread before you write or change a draft.',
+    ].join(' '),
+    {
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(50)
+        .default(20)
+        .describe('How many items to return; default 20, max 50'),
+    },
+    async ({ limit }) => {
+      const items = await listResponseQueue(env.DB, limit);
+      return {
+        content: [
+          { type: 'text' as const, text: JSON.stringify({ count: items.length, items }, null, 2) },
+        ],
+      };
+    },
+  );
+
+  server.tool(
+    'save_draft',
+    [
+      'Save a reply draft for an open queue item. It replaces the current draft.',
+      'The draft is internal: an admin reviews, edits, and sends it from the post',
+      'page in Bettermode. This tool does not post to the community. Use plain',
+      'text with blank lines between paragraphs. post_id is the thread post_id',
+      'from list_response_queue.',
+    ].join(' '),
+    {
+      post_id: z.string().min(1).describe('Thread post ID from list_response_queue'),
+      draft: z.string().min(1).max(6000).describe('Reply text for the admin to review'),
+      reasoning: z
+        .string()
+        .max(2000)
+        .optional()
+        .describe('Short note for the admin: sources used and what to verify before sending'),
+    },
+    async ({ post_id, draft, reasoning }) => {
+      const result = await saveAgentDraft(env.DB, post_id, draft, reasoning ?? null);
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }],
+      };
+    },
+  );
+
+  server.tool(
+    'dismiss_queue_item',
+    [
+      'Close an open queue item that needs no staff reply, for example a creator',
+      'who only said thanks. It rejects the open draft. A creator message after',
+      'the dismissal reopens the item. Give the reason in one sentence.',
+    ].join(' '),
+    {
+      post_id: z.string().min(1).describe('Thread post ID from list_response_queue'),
+      reason: z.string().min(1).max(500).describe('Why no reply is needed'),
+    },
+    async ({ post_id, reason }) => {
+      const result = await dismissQueueItem(env.DB, post_id, reason);
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }],
+      };
+    },
+  );
 }
 
 function shapePost(
@@ -169,7 +252,7 @@ function shapePost(
       : null,
     in_marketplace_space:
       !!marketplaceSpaceId && (post.spaceId === marketplaceSpaceId || post.space?.id === marketplaceSpaceId),
-    body_text: stripHtml(post.shortContent || post.description || ''),
+    body_text: bodyText(post),
     author: author
       ? {
           id: author.id,
@@ -179,8 +262,10 @@ function shapePost(
           role: author.role?.name ?? null,
         }
       : null,
-    replies: (post.replies?.nodes ?? []).map((reply) => ({
+    replies: flattenReplies(post).map((reply) => ({
       id: reply.id,
+      parent_post_id: reply.parentId ?? null,
+      status: reply.status ?? null,
       url: reply.url ?? null,
       published_at: reply.publishedAt ?? null,
       author: {
@@ -188,9 +273,25 @@ function shapePost(
         name: reply.createdBy?.name ?? null,
         username: reply.createdBy?.username ?? null,
       },
-      body_text: stripHtml(reply.shortContent || reply.description || ''),
+      body_text: bodyText(reply),
     })),
   };
+}
+
+// Direct replies and their nested replies, oldest first.
+function flattenReplies(post: BettermodePost): BettermodePost[] {
+  const flat: BettermodePost[] = [];
+  for (const reply of post.replies?.nodes ?? []) {
+    flat.push(reply, ...(reply.replies?.nodes ?? []));
+  }
+  return flat.sort((a, b) =>
+    (a.createdAt || a.publishedAt || '').localeCompare(b.createdAt || b.publishedAt || ''),
+  );
+}
+
+// shortContent and description are truncated previews; textContent is the full body.
+function bodyText(post: BettermodePost): string {
+  return post.textContent?.trim() || stripHtml(post.shortContent || post.description || '');
 }
 
 function stripHtml(html: string): string {
