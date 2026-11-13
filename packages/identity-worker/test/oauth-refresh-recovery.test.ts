@@ -131,11 +131,14 @@ test('standard host refresh audits response preparation without opting into reco
  }finally{f.storage.close();}
 });
 
-test('standard issuance attempt followed by audit failure is not reported as committed renewal',async()=>{
+test('standard refresh audit failure rolls back consumption and permits one safe retry',async()=>{
  const f=await fixture();try{
   f.storage.sqlite.exec("CREATE TRIGGER fail_standard_audit BEFORE INSERT ON connection_renewal_audit BEGIN SELECT RAISE(ABORT,'injected final audit failure'); END");
   assert.equal((await f.exchange(f.token,'')).status,500);
   assert.equal((await f.env.DB.prepare('SELECT count(*) AS n FROM connection_renewal_audit').first()).n,0);
-  assert.equal((await f.env.DB.prepare('SELECT count(*) AS n FROM oauth_grant_consumptions').first()).n,1,'Legacy grant consumption already committed; never claim failure had no effect.');
+  assert.equal((await f.env.DB.prepare('SELECT count(*) AS n FROM oauth_grant_consumptions').first()).n,0,'Audit failure must not burn the standard host grant.');
+  f.storage.sqlite.exec('DROP TRIGGER fail_standard_audit');
+  assert.equal((await f.exchange(f.token,'')).status,200);
+  assert.equal((await f.exchange(f.token,'')).status,400,'Committed standard grants remain single use.');
  }finally{f.storage.close();}
 });

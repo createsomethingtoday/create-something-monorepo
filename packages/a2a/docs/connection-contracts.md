@@ -23,9 +23,13 @@ status. Unknown/missing facts stay `unknown`; null timestamps mean no matching
 retained audit, not proof of no historical renewal. Consent and host refresh stay
 unknown even when a committed server rotation is visible.
 
-MCP tool results keep existing `content` and `structuredContent`. Additive
-`_meta.receipt` contains server-generated request ID, operation, canonical
+MCP tool results keep existing `structuredContent` and the original content block.
+An appended public JSON content block exposes receipt/recovery facts to the agent,
+alongside `_meta.receipt` for clients. ChatGPT hides `_meta` from its model
+([tool result reference](https://developers.openai.com/plugins/reference#tool-results)).
+The receipt contains server-generated request ID, operation, canonical
 connection, contract/binding revisions, timestamp, and confirmed/denied/unknown.
+HTTP and MCP receipts share the same request ID and operation outcome.
 HTTP responses provide `X-A2A-Request-Id` and JSON `X-A2A-Receipt`; HTTP errors
 also include receipt and recovery advice. Client IDs never select receipt IDs.
 A confirmed operation does not attest delivery or task completion. A failure
@@ -59,8 +63,10 @@ retries cannot duplicate a rotation row. A recovery response increments
 return preparation; `last_recovered_at` is response preparation, not proof of
 network delivery. The normal commit readback is not counted as a replay. Standard single-use host
 refreshes also create an audit row at final response preparation, with
-`commit_mode: response_prepared`; these do not acquire encrypted recovery or
-change their existing consumption semantics. `recovery_committed` identifies
+`commit_mode: response_prepared`; consumption and audit commit atomically after response preparation, so audit
+failure rolls both back. These do not acquire encrypted recovery; committed
+standard grants remain single use with replay revocation. An uncertain commit
+or lost standard response still cannot be recovered by this audit. `recovery_committed` identifies
 the atomic encrypted successor path. Audit timestamps record committed server
 facts and do not prove the host received or persisted credentials.
 

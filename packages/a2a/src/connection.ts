@@ -29,6 +29,6 @@ export function recoveryAction(input:RecoveryInput){
  }
  return {action:'stop' as const};
 }
-export function executionReceipt(operation:string,outcome:'confirmed'|'denied'|'unknown',requestId=crypto.randomUUID()){
+export function executionReceipt(operation:string,outcome:'confirmed'|'denied'|'unknown',requestId:string=crypto.randomUUID()){
  return {requestId,operation,connectionId:CONNECTION.id,contractRevision:CONNECTION.revision,bindingRevision:CONNECTION.bindingRevision,timestamp:new Date().toISOString(),outcome};
 }

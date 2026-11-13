@@ -457,3 +457,20 @@ test('MCP post-commit delivery failure reports unknown and identical send reconc
   assert.equal(f.storage.sqlite.prepare('SELECT count(*) AS n FROM messages').get()!.n,1);
  }finally{f.storage.close();}
 });
+
+
+test('HTTP and MCP receipts agree on denied, unknown and confirmed operations',async()=>{
+ const f=await fixture();try{
+  const a=(await f.value('/api/v1/agents',f.alice,'POST',{name:'A'})).agent;
+  const b=(await f.value('/api/v1/agents',f.bob,'POST',{name:'B'})).agent;
+  await f.value('/api/v1/grants',f.bob,'POST',{agentId:b.id,senderAgentId:a.id});
+  const request={jsonrpc:'2.0',id:1,method:'tools/call',params:{name:'a2a_send_message',arguments:{from_agent_id:a.id,to_agent_id:b.id,text:'Synthetic receipt probe',idempotency_key:'matching-receipts'}}};
+  const denied=await f.api('/mcp',await f.token('alice',['a2a:read']),'POST',request);
+  f.failEnqueue(true);const unknown=await f.api('/mcp',f.alice,'POST',request);
+  f.failEnqueue(false);const confirmed=await f.api('/mcp',f.alice,'POST',request);
+  for(const [response,outcome] of [[denied,'denied'],[unknown,'unknown'],[confirmed,'confirmed']] as const){
+   const body:any=await response.json(),receipt=body.result._meta.receipt;
+   assert.equal(receipt.outcome,outcome);assert.deepEqual(JSON.parse(body.result.content.at(-1).text).receipt,receipt);assert.deepEqual(JSON.parse(response.headers.get('x-a2a-receipt')!),receipt);assert.equal(response.headers.get('x-a2a-request-id'),receipt.requestId);
+  }
+ }finally{f.storage.close();}
+});

@@ -29,3 +29,10 @@ test('descriptors never widen status privileges; receipt IDs are generated per i
  assert.equal(descriptor.annotations.readOnlyHint,true);assert.deepEqual(descriptor.securitySchemes,[{type:'oauth2',scopes:['a2a:read']}]);assert.ok(!list.result.tools.some((t:any)=>t.name==='a2a_send_message'));
  const a=await rpc('tools/call',{name:'a2a_connection_status'}),b=await rpc('tools/call',{name:'a2a_connection_status'});assert.notEqual(a.result._meta.receipt.requestId,b.result._meta.receipt.requestId);
 });
+
+
+test('HTTP recovery advice honors the returned Retry-After',async()=>{
+ const response=await app.fetch(new Request(env.BASE_URL+'/'),{...env,ASSETS:{fetch(){throw new Error('synthetic unavailable');}}} as unknown as RuntimeEnv);
+ assert.equal(response.status,503);const body:any=await response.json();
+ assert.equal(body.recovery.delayMs,Number(response.headers.get('retry-after'))*1000);
+});

@@ -43,6 +43,17 @@ export default {async fetch(request:Request,env:LabEnv):Promise<Response>{
   const thirdNonce=randomToken();check((await exchange(recovered.refresh_token,thirdNonce,{...identityEnv,DB:failingDB})).status===500,'persistence_failure');
   const third:any=await(await exchange(recovered.refresh_token,thirdNonce)).json();check(typeof third.refresh_token==='string','persistence_recovery');passed.push('persistence_failure_recovery');
   const fourth:any=await(await exchange(third.refresh_token,randomToken())).json();check(typeof fourth.refresh_token==='string','successive_rotation');passed.push('successive_rotation');
+  const standardFamily='lab-'+crypto.randomUUID();
+  await db.prepare('INSERT INTO oauth_refresh_families(family_id,client_id,user_id) VALUES(?,?,?)').bind(standardFamily,client,subject).run();
+  const standardGrantId=crypto.randomUUID();
+  const standardToken=await createSignedToken(db,{sub:subject,iss:env.LAB_URL,aud:['oauth'],iat:now,exp:now+3600,kind:'oauth_refresh_token',jti:standardGrantId,family_id:standardFamily,client_id:client,scope:'offline_access a2a:read',resource});
+  const standardExchange=(override=identityEnv)=>identity.fetch(new Request(env.LAB_URL+'/oauth/token',{method:'POST',body:new URLSearchParams({grant_type:'refresh_token',client_id:client,refresh_token:standardToken,resource})}),override);
+  fail=true;
+  check((await standardExchange({...identityEnv,DB:failingDB})).status===500,'standard_audit_failure');
+  check(!await db.prepare('SELECT grant_id FROM oauth_grant_consumptions WHERE grant_id=?').bind(standardGrantId).first(),'standard_predecessor_preserved');
+  check((await standardExchange()).status===200,'standard_audit_recovery');passed.push('standard_audit_failure_recovery');
+  check((await standardExchange()).status===400,'standard_replay_denied');
+  check((await db.prepare('SELECT count(*) AS n FROM connection_renewal_audit WHERE grant_id=?').bind(standardGrantId).first<{n:number}>())?.n===1,'standard_audit_once');passed.push('standard_single_use_replay_denial');
   const sessionKey=randomToken(),raw=randomToken(),id=await hash(raw);
   const inboxEnv:any={DB:env.INBOX_DB,ENVIRONMENT:'test',BASE_URL:env.LAB_URL,AUTH_RESOURCE:resource,IDENTITY_ISSUER:env.LAB_URL,AUTH_CLIENT_ID:client,ALLOWED_EMAILS:subject+'@example.invalid',SESSION_KEY:sessionKey,LOCAL_TEST_JWKS:JSON.stringify(await getJWKS(db)),BUILD_REVISION:'cre2431-disposable',ASSETS:{fetch(){throw new Error('Assets disabled');}},DELIVERIES:{send(){throw new Error('Outgoing delivery disabled');}}};
   const sessionTokens={access_token:fourth.access_token,refresh_token:fourth.refresh_token,expires_in:900};

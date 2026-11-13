@@ -58,12 +58,13 @@ w secret bulk acceptance/dist/secrets.json --config acceptance/wrangler.lab.json
 bash scripts/ona-bootstrap-local.sh node packages/a2a/acceptance/run.mjs
 ```
 
-Expected HTTP 200, all thirteen named checks, `hostFaultHandling: unproven`:
+Expected HTTP 200, all fifteen named checks, `hostFaultHandling: unproven`:
 simultaneous refresh, lost response, persistence failure recovery, successive
 rotation, temporary provider failure, cookie-session response-loss recovery,
 cookie-origin protection, authenticated status, synthetic inbox read receipt,
 cookie persistence failure recovery, revoked grant denial, cookie terminal
-denial, and durable renewal audit. Temporary provider failure is an injected
+denial, durable renewal audit, standard audit failure recovery, and standard single-use
+replay denial. Temporary provider failure is an injected
 503 at the adapter boundary, not a real provider outage. Persistence failure is
 injected before the Identity D1 batch and after refresh before the cookie save;
 response loss is injected after Identity commits. Revocation targets the current
@@ -113,7 +114,9 @@ trigger real owner revocation, forced expiry, re-consent or private App changes.
 1. Review exact commit and all local results; run independent final acceptance.
 2. Apply Identity migration 0020 remotely using the **production Identity** config
    before deploying its userinfo/audit code. Capture current version for rollback.
-3. Deploy Identity, then A2A with the reviewed commit as BUILD_REVISION. Use normal
+3. Freshly read and preserve every live Identity setting and binding, including
+   the enabled enrollment/recovery flags. Deploy Identity, then A2A with
+   `--keep-vars --containers-rollout none` and the reviewed commit as BUILD_REVISION. Use normal
    PR/review gates. No installed plugin/App release is part of these commands.
 4. Verify anonymous diagnostics has no principal/audit, authenticated HTTP/MCP
    status and receipts have the reviewed revisions, scopes remain unchanged,
@@ -126,9 +129,12 @@ Example commands from the repo root (parent fills reviewed SHA and receipts):
 
 ```sh
 bash scripts/ona-bootstrap-local.sh node scripts/run-wrangler.mjs --cwd packages/identity-worker d1 migrations apply identity-db --remote
-bash scripts/ona-bootstrap-local.sh pnpm --filter @create-something/identity-worker deploy
+# Values below match the captured baseline; freshly compare settings first.
+# Do not use the package deploy script: checked-in defaults differ from production.
+bash scripts/ona-bootstrap-local.sh pnpm --filter @create-something/auth-platform build
+bash scripts/ona-bootstrap-local.sh node scripts/run-wrangler.mjs --cwd packages/identity-worker deploy --keep-vars --var GIGI_ENROLLMENT_ENABLED:true --var ENROLLMENT_INVITATIONS_ENABLED:true --var VERIFIED_RECOVERY_ENABLED:true --var OAUTH_ISSUER:https://id.createsomething.space --var CONTROL_RUNTIME_RESOURCES:https://create-something-agent-runtime.createsomething.workers.dev/mcp
 bash scripts/ona-bootstrap-local.sh pnpm --filter @create-something/a2a build
-bash scripts/ona-bootstrap-local.sh node scripts/run-wrangler.mjs --cwd packages/a2a deploy --var BUILD_REVISION:REVIEWED_SHA
+bash scripts/ona-bootstrap-local.sh node scripts/run-wrangler.mjs --cwd packages/a2a deploy --keep-vars --containers-rollout none --var BUILD_REVISION:REVIEWED_SHA
 # Rollback, only if needed, with the captured respective version IDs:
 bash scripts/ona-bootstrap-local.sh node scripts/run-wrangler.mjs --cwd packages/a2a rollback PREVIOUS_A2A_VERSION
 bash scripts/ona-bootstrap-local.sh node scripts/run-wrangler.mjs --cwd packages/identity-worker rollback PREVIOUS_IDENTITY_VERSION
