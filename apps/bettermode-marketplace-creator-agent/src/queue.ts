@@ -248,6 +248,11 @@ export async function syncThread(
   // visible queue item with the error instead of nothing.
   const signalId = await upsertSignal(env.DB, { ...signal, status: 'new', metadata });
 
+  // An open draft that answers an older message or older text is closed now.
+  // If the draft step below fails, the outdated reply is not left sendable.
+  // A current draft stays until its replacement is ready (Regenerate).
+  if (!draftIsCurrent) await expireOpenDrafts(env.DB, signalId);
+
   let draft: string | null;
   try {
     draft = await draftReply(env, root, state, opts.regenerate === true);
