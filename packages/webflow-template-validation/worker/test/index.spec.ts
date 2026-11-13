@@ -3424,9 +3424,10 @@ describe('OAuth site-access evidence', () => {
 			{ id: 'p4', slug: 'blog', publishedPath: '/blog', collectionId: 'c1' },
 			{ id: 'p5', slug: 'draft-page', publishedPath: '/draft-page', draft: true },
 			{ id: 'p6', slug: 'old', publishedPath: '/old', archived: true },
-			{ id: 'p7', slug: '401', publishedPath: '/401' }
+			{ id: 'p7', slug: '401', publishedPath: '/401' },
+			{ id: 'p8', slug: '404', publishedPath: '/404' }
 		];
-		const full = ['/about', '/company/pricing', '/401'];
+		const full = ['/about', '/company/pricing', '/401', '/404'];
 		const putMock = vi.fn(async () => undefined);
 		const submit = async (pageSlugs: string[], listed: typeof pages | 'error' = pages) => {
 			const jobId = await completedRun('page-cover.webflow.io', { pageSlugs });
@@ -3437,18 +3438,19 @@ describe('OAuth site-access evidence', () => {
 				createExecutionContext()
 			);
 		};
-		// The password page never loads as a normal page. Other pages load unless a case says otherwise.
+		// The password page never loads as a normal page, and a 404 page can answer with status 404.
+		// Other pages load unless a case says otherwise.
 		const working = vi.mocked(fetchHTML).getMockImplementation() as (...args: unknown[]) => ReturnType<typeof fetchHTML>;
 		const failFor = (...paths: string[]) =>
 			vi.mocked(fetchHTML).mockImplementation(async (url: string, ...rest: unknown[]) => {
 				if (paths.some((path) => url.endsWith(path))) throw new Error('did not load');
 				return working(url, ...rest);
 			});
-		failFor('/401');
+		failFor('/401', '/404');
 
 		try {
 			// A run on the home page only, or with one page left out, is not a full run.
-			for (const response of [await submit([]), await submit(['/']), await submit(['/about', '/401'])]) {
+			for (const response of [await submit([]), await submit(['/']), await submit(['/about', '/401', '/404'])]) {
 				expect(response.status).toBe(409);
 				const payload = (await response.json()) as { reason: string; error: string };
 				expect(payload.reason).toBe('run_not_usable');
@@ -3456,7 +3458,7 @@ describe('OAuth site-access evidence', () => {
 			}
 			// A path that points at another host does not count as the site's page, alone or next to the real list.
 			for (const slugs of [
-				['//clean.example/about', '/company/pricing', '/401'],
+				['//clean.example/about', '/company/pricing', '/401', '/404'],
 				[...full, '//clean.example/extra']
 			]) {
 				const response = await submit(slugs);
@@ -3464,19 +3466,19 @@ describe('OAuth site-access evidence', () => {
 				expect(((await response.json()) as { error: string }).error).toContain('not on this site');
 			}
 			// A path with a query is not the page itself.
-			expect((await submit(['/about?clean=1', '/company/pricing', '/401'])).status).toBe(409);
+			expect((await submit(['/about?clean=1', '/company/pricing', '/401', '/404'])).status).toBe(409);
 			// When the worker cannot read the page list, it does not record.
 			expect((await submit(full, 'error')).status).toBe(409);
 
 			// A page that is named but does not load during the run was not checked.
-			failFor('/401', '/company/pricing');
+			failFor('/401', '/404', '/company/pricing');
 			const notLoaded = await submit(full);
 			expect(notLoaded.status).toBe(409);
 			expect(((await notLoaded.json()) as { error: string }).error).toContain('could not load every published page');
 			expect(putMock).not.toHaveBeenCalled();
 
-			// Drafts, archived pages, and CMS template pages are not required, and the password page need not load.
-			failFor('/401');
+			// Drafts, archived pages, and CMS template pages are not required, and the 404 and password pages need not load.
+			failFor('/401', '/404');
 			const accepted = await submit(full);
 			expect(accepted.status).toBe(200);
 		} finally {

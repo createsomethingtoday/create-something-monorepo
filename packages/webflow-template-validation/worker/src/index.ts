@@ -71,13 +71,15 @@ const VALIDATION_START_WINDOW_MS = 60_000;
 const CLI_RECORD_MAX_JOB_AGE_MS = 30 * 60_000;
 const STYLE_GUIDE_EXCLUDED_SLUGS = ['/style-guide', '/styleguide'];
 /**
- * Webflow utility pages at fixed paths that do not serve normal content on a
- * staging site: the password page, site search, and the ecommerce flow pages.
- * Measured on a published template: the content crawl analyzes /404 but none
- * of these. A run must still name them, but they need not be in its list of
- * analyzed pages.
+ * Webflow utility pages at fixed paths that the main content crawl may not
+ * analyze: the 404 page, the password page, site search, and the ecommerce
+ * flow pages. Measured on published templates: /404 answers 200 on some sites
+ * and 404 on others, and the other pages never load as normal pages. The
+ * worker audits /404 and /401 itself in its utility-page audit, which accepts
+ * their error status. A run must still name these pages, but they need not be
+ * in its list of analyzed pages.
  */
-const UTILITY_PAGES_WITHOUT_CONTENT = ['/401', '/search', '/checkout', '/paypal-checkout', '/order-confirmation'];
+const UTILITY_PAGES_WITHOUT_CONTENT = ['/404', '/401', '/search', '/checkout', '/paypal-checkout', '/order-confirmation'];
 const REVIEW_SNIPPET_MARKER = '__wf_review_snippet_v1';
 const REVIEW_SNIPPET_ASSET_PATH = '/app-validator/snippet/review.js';
 const REVIEW_JOB_RETENTION_MS = 30 * 60 * 1000;
