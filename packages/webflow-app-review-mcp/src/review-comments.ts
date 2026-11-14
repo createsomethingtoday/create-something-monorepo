@@ -158,7 +158,8 @@ export class ReviewCommentsClient {
 
   constructor(private readonly config: ReviewCommentsConfig) {
     this.baseUrl = config.baseUrl.replace(/\/+$/, '');
-    this.fetchImpl = config.fetch ?? fetch;
+    // A bare `fetch` stored on an object loses its `this` on Cloudflare Workers ("Illegal invocation").
+    this.fetchImpl = config.fetch ?? ((input, init) => fetch(input, init));
   }
 
   listVersion(versionRef: string, actorEmail: string): Promise<ReviewComment[]> {
