@@ -97,10 +97,23 @@ export function sourceLinks(data: unknown): string[] {
   walk(data);
   return [...found].slice(0, 50);
 }
+export function formatUsd(value: unknown): string {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return 'Unknown';
+  if (value > 0 && value < 0.000001) return '<$0.000001 USD';
+  return (
+    new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 6
+    }).format(value) + ' USD'
+  );
+}
 const actionLabels: Record<string, string> = {
   estimate_registry_travel: 'Estimate practice-to-clinic driving times',
   enrich_candidate_profile: 'Look up one candidate with People Data Labs',
   enrich_candidate_skip_trace: 'Look up one candidate with Skip Trace',
+  enrich_candidate_complete_profile: 'Enrich one candidate with all four providers',
   request_professional_contact_enrichment: 'Request public professional contacts from Clay',
   enrich_provider_professional_contact: 'Research public professional contacts with Exa',
   search_registry_sourcing: 'Registry sourcing',
@@ -115,7 +128,7 @@ export const actionLabel = (name: string) => actionLabels[name] ?? name;
 
 export const conversationStatus = (status: string) =>
   ({
-    idle: 'Ready',
+    idle: 'Chat ready',
     running: 'Working',
     review: 'Needs review',
     interrupted: 'Interrupted',
@@ -152,6 +165,9 @@ export function sourceArtifact(data: unknown) {
     'npi',
     'charge_usd',
     'charge_reconciled',
+    'uncertain_dispatch',
+    'billing_reconciliation_required',
+    'unstarted',
     'reason',
     'run_id',
     'snapshot',
@@ -195,6 +211,8 @@ export function sourceArtifact(data: unknown) {
     csv_access: 'Export scope',
     limitation: 'Limits and unknowns'
   };
+  if (record.cached === true || record.cache_hit === true)
+    labels.charge_usd = 'Original run charge (USD)';
   const run =
     record.run && typeof record.run === 'object' ? (record.run as Record<string, unknown>) : {};
   const fields = keys.flatMap((key) =>
@@ -224,10 +242,72 @@ export function sourceArtifact(data: unknown) {
     'limitations'
   ])
     fields.push(...evidenceFields(report[key], 'Coverage · ' + key.replaceAll('_', ' ')));
+  const professional =
+    record.professional_contact && typeof record.professional_contact === 'object'
+      ? (record.professional_contact as Record<string, unknown>)
+      : {};
+  const citations = Array.isArray(record.source_citations)
+    ? record.source_citations.filter(
+        (item: any) => typeof item?.url === 'string' && safeLink(item.url)
+      )
+    : [];
+  const exaAccepted =
+    ['verified_match', 'plausible_match'].includes(String(record.match_status)) &&
+    record.contact_route_status === 'unverified_enrichment_candidate' &&
+    citations.length > 0;
+  const clay =
+    record.result && typeof record.result === 'object'
+      ? (record.result as Record<string, unknown>)
+      : {};
+  const clayContacts =
+    record.status === 'review_required' &&
+    record.contact_status === 'public_professional_candidate_unverified' &&
+    clay.outcome === 'candidate' &&
+    Array.isArray(clay.contacts)
+      ? clay.contacts.filter(
+          (item: any) =>
+            ['email', 'phone'].includes(item?.type) &&
+            typeof item?.value === 'string' &&
+            item.publication_context === 'professional_contact' &&
+            typeof item.source_url === 'string' &&
+            safeLink(item.source_url) &&
+            typeof item.evidence_quote === 'string'
+        )
+      : [];
   const sections = [
     { title: 'Public registry record · unverified', value: record.provider ?? record.registry },
     { title: 'Registry contact · outreach authority not established', value: record.contact },
     { title: 'Recruiting readiness and unknowns', value: record.readiness },
+    {
+      title:
+        'Exa public professional contact candidates · identity review required; ownership and consent unverified',
+      value: exaAccepted
+        ? {
+            review_status: 'Identity review required; ownership and consent unverified.',
+            email: professional.email,
+            phone: professional.phone,
+            profile_url: professional.profile_url,
+            match_status: record.match_status,
+            identity_reason: record.identity_reason,
+            source_citations: citations,
+            outreach_authority: record.outreach_authority_status
+          }
+        : undefined
+    },
+    {
+      title:
+        'Clay public professional contact candidates · identity review required; ownership and consent unverified',
+      value: clayContacts.length
+        ? {
+            review_status: 'Identity review required; ownership and consent unverified.',
+            identity_evidence: clay.identity_evidence,
+            ...Object.fromEntries(
+              clayContacts.map((contact: any, index: number) => ['contact_' + (index + 1), contact])
+            ),
+            outreach_authority: record.outreach_authority
+          }
+        : undefined
+    },
     // An ambiguous vendor match must not be presented as this candidate's profile.
     {
       title: 'Vendor-reported professional profile · unverified',
@@ -250,6 +330,99 @@ export function sourceArtifact(data: unknown) {
   ]
     .map(({ title, value }) => ({ title, fields: evidenceFields(value) }))
     .filter((section) => section.fields.length);
+  if (
+    record.providers &&
+    typeof record.providers === 'object' &&
+    !Array.isArray(record.providers)
+  ) {
+    const results = record.providers as Record<string, unknown>;
+    for (const [provider, label] of Object.entries({
+      pdl: 'PDL',
+      clay: 'Clay',
+      exa: 'Exa',
+      apify: 'Skip Trace'
+    })) {
+      if (!(provider in results)) {
+        sections.push({ title: label + ' · not started or no result supplied', fields: [] });
+        continue;
+      }
+      const result = results[provider];
+      // Recursively project only known evidence shapes. Ambiguous matches never acquire contact sections.
+      const artifact = sourceArtifact(result);
+      const receipt =
+        result && typeof result === 'object' ? (result as Record<string, unknown>) : {};
+      const spend =
+        receipt.spend_tracking && typeof receipt.spend_tracking === 'object'
+          ? (receipt.spend_tracking as Record<string, unknown>)
+          : {};
+      const cached =
+        receipt.operation_cache_hit === true ||
+        ((receipt.cached === true || receipt.cache_hit === true) &&
+          receipt.operation_cache_hit !== false &&
+          receipt.operation_charge_usd === undefined);
+      const actual =
+        spend.actual_usd ??
+        receipt.operation_charge_usd ??
+        (cached ? 0 : (receipt.actual_cost_usd ?? receipt.charge_usd));
+      const usd = (value: unknown) =>
+        typeof value === 'number' && Number.isFinite(value) && value >= 0
+          ? formatUsd(value)
+          : 'Unknown';
+      artifact.fields.push(
+        {
+          label: cached ? 'Confirmed USD · no new charge (cached)' : 'Confirmed USD',
+          value:
+            cached ||
+            receipt.charge_reconciled === true ||
+            spend.actual_usd !== undefined ||
+            typeof receipt.operation_charge_usd === 'number' ||
+            typeof receipt.actual_cost_usd === 'number'
+              ? usd(actual)
+              : 'Unknown'
+        },
+        { label: 'Estimate', value: usd(spend.estimated_usd) }
+      );
+      const billing =
+        receipt.billing && typeof receipt.billing === 'object'
+          ? (receipt.billing as Record<string, unknown>)
+          : {};
+      if (typeof billing.credits_used === 'number' && Number.isFinite(billing.credits_used))
+        artifact.fields.push({
+          label: 'PDL credits used · USD receipt pending',
+          value: String(billing.credits_used)
+        });
+      sections.push({
+        title: label + ' · provider outcome; identity and consent unverified',
+        fields: artifact.fields
+      });
+      for (const section of artifact.sections)
+        sections.push({ title: label + ' · ' + section.title, fields: section.fields });
+    }
+  }
+  const tracking =
+    record.spend_tracking && typeof record.spend_tracking === 'object'
+      ? (record.spend_tracking as Record<string, unknown>)
+      : null;
+  if (tracking) {
+    const money = (value: unknown) =>
+      typeof value === 'number' && Number.isFinite(value) && value >= 0
+        ? formatUsd(value)
+        : 'Unknown';
+    sections.unshift({
+      title: 'Spend tracking · this operation',
+      fields: [
+        { label: 'Confirmed recorded subtotal (USD)', value: money(tracking.actual_usd) },
+        { label: 'Estimate · separate from confirmed USD', value: money(tracking.estimated_usd) },
+        {
+          label: 'Pending receipts',
+          value: Number.isSafeInteger(tracking.pending_receipts)
+            ? String(tracking.pending_receipts)
+            : 'Unknown'
+        },
+        { label: 'Historical spend', value: 'Unknown; tracked receipts are not a lifetime total.' }
+      ]
+    });
+  }
   return {
     total: count(record.total),
     shown,
@@ -266,7 +439,20 @@ const fieldLabels: Record<string, string> = {
   limits: 'Limits',
   cost: 'Credits and cost',
   currency: 'Currency',
-  maximumCost: 'Maximum cost',
+  maximumCost: 'Legacy cost ceiling',
+  confirmedTrackedUsd: 'Confirmed tracked subtotal (USD)',
+  estimatedUsd: 'Estimate (USD)',
+  pendingReceipts: 'Pending receipts',
+  historicalSpend: 'Historical spend',
+  providerEstimates: 'Provider estimates',
+  spendPolicy: 'Spend tracking',
+  execution: 'Execution',
+  operation_id: 'Operation',
+  maximumSharedCost: 'Shared lookup maximum',
+  skipTraceMaximumCost: 'Skip Trace maximum',
+  maximum_shared_usd: 'Approved shared maximum',
+  reserved: 'Reserved allowance',
+  providers: 'Provider maximums',
   totalAllowance: 'One-time shared allowance',
   recordedSpend: 'Recorded spending',
   remaining: 'Remaining allowance',
@@ -294,10 +480,47 @@ export function reviewFields(value: unknown): Array<{ label: string; value: stri
   return (
     Object.entries(value)
       // This model-supplied flag is not the human's approval; the exact request remains inspectable.
-      .filter(([key, v]) => key !== 'confirm_paid_enrichment' && v !== null && v !== undefined)
+      .filter(
+        ([key]) =>
+          ![
+            'confirm_paid_enrichment',
+            'maximumCost',
+            'maximumSharedCost',
+            'skipTraceMaximumCost',
+            'maximum_shared_usd',
+            'reserved',
+            'remaining',
+            'totalAllowance'
+          ].includes(key)
+      )
       .map(([key, v]) => {
         let text: string;
-        if (key === 'clinics' && Array.isArray(v))
+        if (v === null || v === undefined) text = 'Unknown';
+        else if (
+          ['confirmedTrackedUsd', 'estimatedUsd'].includes(key) &&
+          typeof v === 'number' &&
+          Number.isFinite(v)
+        )
+          text = formatUsd(v);
+        else if (key === 'providerEstimates' && Array.isArray(v))
+          text = v
+            .map((p) => {
+              const names: Record<string, string> = {
+                pdl: 'PDL',
+                clay: 'Clay',
+                exa: 'Exa',
+                apify: 'Skip Trace'
+              };
+              return (
+                (names[p?.provider] ?? 'Provider') +
+                ': ' +
+                (typeof p?.estimated_usd === 'number' && Number.isFinite(p.estimated_usd)
+                  ? formatUsd(p.estimated_usd) + ' estimate'
+                  : 'Estimate unknown')
+              );
+            })
+            .join('\n');
+        else if (key === 'clinics' && Array.isArray(v))
           text = v
             .map((clinic) =>
               typeof clinic?.address === 'string' ? clinic.address : JSON.stringify(clinic)
@@ -330,3 +553,41 @@ export type NpgView = {
     expiresAt: number;
   };
 };
+
+// Eligibility only; the host revalidates owner, original action and exact receipt before reading.
+export function canRefreshSkipTrace(view: NpgView | null): boolean {
+  if (!view || !['idle', 'ambiguous'].includes(view.status) || view.pending) return false;
+  return view.sources.some((source) => {
+    const data = source.data as any;
+    const receipt =
+      source.tool === 'enrich_candidate_complete_profile'
+        ? data?.providers?.apify
+        : source.tool === 'enrich_candidate_skip_trace'
+          ? data
+          : null;
+    return (
+      receipt &&
+      /^\d{10}$/.test(receipt.npi ?? '') &&
+      (source.tool !== 'enrich_candidate_complete_profile' || data.npi === receipt.npi) &&
+      /^[a-f0-9]{64}$/.test(receipt.id ?? '') &&
+      /^[A-Za-z0-9]{1,64}$/.test(receipt.run_id ?? '') &&
+      (receipt.status === 'pending' ||
+        ([
+          'review_required',
+          'no_contact',
+          'blocked_review',
+          'provider_failed',
+          'provider_aborted',
+          'provider_timeout'
+        ].includes(receipt.status) &&
+          receipt.charge_reconciled !== true))
+    );
+  });
+}
+export function canSendNpgMessage(view: NpgView | null, value: string): boolean {
+  return (
+    !view ||
+    view.status === 'idle' ||
+    (value.trim().toLowerCase() === 'refresh skip trace' && canRefreshSkipTrace(view))
+  );
+}

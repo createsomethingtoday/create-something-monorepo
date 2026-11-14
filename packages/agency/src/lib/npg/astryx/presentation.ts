@@ -1,4 +1,4 @@
-import { actionLabel, sourceArtifact, type NpgView } from '../display';
+import { actionLabel, sourceArtifact, formatUsd, type NpgView } from '../display';
 
 type Pending = NonNullable<NpgView['pending']>;
 function record(value: unknown): Record<string, unknown> {
@@ -56,6 +56,7 @@ export function decisionSummary(pending: Pending, sources: NpgView['sources']) {
     (
       {
         enrich_candidate_skip_trace: 'Skip Trace lookup',
+        enrich_candidate_complete_profile: 'Complete profile · four providers',
         estimate_registry_travel: 'Travel estimate',
         enrich_candidate_profile: 'Profile lookup',
         request_professional_contact_enrichment: 'Professional contact lookup',
@@ -67,36 +68,14 @@ export function decisionSummary(pending: Pending, sources: NpgView['sources']) {
     : npis.length
       ? npis.length + ' selected NPIs'
       : 'Exact request in review';
-  let price = 'See terms';
-  let priceLabel = 'Cost';
-  if (
-    typeof review.maximumCost === 'number' &&
-    Number.isFinite(review.maximumCost) &&
-    review.maximumCost >= 0 &&
-    typeof review.currency === 'string' &&
-    /^[A-Z]{3}$/.test(review.currency)
-  ) {
-    try {
-      price =
-        new Intl.NumberFormat('en-US', {
-          style: 'currency',
-          currency: review.currency,
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 20
-        }).format(review.maximumCost) +
-        ' ' +
-        review.currency;
-      priceLabel = 'Maximum';
-    } catch {
-      /* Preserve the original cost terms in the review. */
-    }
-  } else if (typeof review.cost === 'string') {
-    const cap = review.cost.match(/^Up to (\$\d+(?:\.\d+)?) reserved\./);
-    if (cap) {
-      price = cap[1];
-      priceLabel = 'Maximum';
-    } else if (review.cost.startsWith('Exact cost unavailable.')) price = 'Not quoted';
-  }
+  const estimate =
+    typeof review.estimatedUsd === 'number' &&
+    Number.isFinite(review.estimatedUsd) &&
+    review.estimatedUsd >= 0
+      ? review.estimatedUsd
+      : null;
+  const price = estimate === null ? 'Unknown' : formatUsd(estimate);
+  const priceLabel = 'Estimate';
   return { title, target, name, price, priceLabel };
 }
 

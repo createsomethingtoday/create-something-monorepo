@@ -11,6 +11,7 @@ const server = createServer(async (req, res) => {
     const url = new URL(req.url, 'http://127.0.0.1');
     const cookie = req.headers.cookie?.match(/npgfixture=([a-f0-9-]+)/)?.[1];
     let state = cookie ? sessions.get(cookie) : null;
+    if (url.searchParams.get('__reset') === '1') state = null; // local synthetic fixture only
     if (url.pathname.startsWith('/npg-chat/assets/') && !url.pathname.includes('..')) {
       const file = new URL('../../static' + url.pathname, import.meta.url);
       res.setHeader(
