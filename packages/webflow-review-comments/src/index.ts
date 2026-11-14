@@ -23,7 +23,8 @@
  * Endpoints:
  *   GET    /v1/versions/:versionRef/comments        thread for one version (creators add ?assetRef=)
  *   POST   /v1/versions/:versionRef/comments        add a comment
- *   POST   /v1/versions/:versionRef/release         release drafts and email the creator (reviewer)
+ *   POST   /v1/versions/:versionRef/release         release drafts and email the creator (reviewer);
+ *                                                   with `expected`, only when the drafts are still the ones the reviewer read
  *   GET    /v1/assets/:assetRef/comments            all versions of an asset
  *   PATCH  /v1/comments/:id                         edit own unreleased comment (reviewer)
  *   DELETE /v1/comments/:id                         delete own unreleased comment (reviewer)
@@ -46,6 +47,8 @@ import {
 	parseNewComment,
 	parseResolution,
 	releaseVersion,
+	expectedDraftsGuard,
+	parseExpectedDrafts,
 	requireCreatorVersionAccess,
 	setResolution
 } from './comments';
@@ -146,11 +149,14 @@ function requireReviewer(actor: Actor): void {
  */
 async function release(request: Request, env: Env, versionRef: string, actor: Actor) {
 	const config = notifyConfig(env);
-	const notice = parseNotice(await readJson(request));
+	const input = await readJson(request);
+	const notice = parseNotice(input);
+	const expected = parseExpectedDrafts(input);
 	const now = new Date();
 
-	const queued = config && notice ? queueStatement(env.DB, versionRef, notice, actor, now.toISOString()) : undefined;
-	const { released } = await releaseVersion(env.DB, versionRef, actor, now.toISOString(), queued);
+	const guard = expected ? expectedDraftsGuard(versionRef, actor, expected) : undefined;
+	const queued = config && notice ? queueStatement(env.DB, versionRef, notice, actor, now.toISOString(), guard) : undefined;
+	const { released } = await releaseVersion(env.DB, versionRef, actor, now.toISOString(), queued, expected);
 
 	let notification: NotificationResult;
 	if (!config) {

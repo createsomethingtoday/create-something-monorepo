@@ -271,7 +271,7 @@ function emailResult(notification: ReleaseNotification | undefined): Record<stri
       ? { email_note: 'No email was sent: the asset record has no usable creator email address.' }
       : {}),
     ...(notification?.status === 'failed'
-      ? { email_next_step: 'The feedback is released, but the email did not send. To retry the email, run app_review_release_feedback for this version.' }
+      ? { email_next_step: 'The feedback is released, but the email did not send. To retry the email, run app_review_release_feedback for this version with expected_drafts set to [].' }
       : {}),
   };
 }
@@ -930,8 +930,9 @@ export function registerTools(
         visibility: z.enum(['draft', 'internal']).default('draft'),
         parent_id: commentIdSchema.optional().describe('Reply to this comment on the same version.'),
         rubric_ref: commentIdSchema.optional().describe('Guideline or checklist item this comment is about.'),
+        request_key: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/).optional().describe('One key for one save (8 to 64 letters, digits, hyphens or underscores). Send the same key when you repeat a save whose answer was lost: the first comment comes back and nothing is written twice.'),
       },
-      async ({ version_id, body, visibility, parent_id, rubric_ref }) => {
+      async ({ version_id, body, visibility, parent_id, rubric_ref, request_key }) => {
         try {
           const actorEmail = requireReviewerEmail(getReviewer);
           const version = await requireAppVersion(getClient(), version_id);
@@ -941,6 +942,7 @@ export function registerTools(
             visibility,
             ...(parent_id ? { parentId: parent_id } : {}),
             ...(rubric_ref ? { rubricRef: rubric_ref } : {}),
+            ...(request_key ? { requestKey: request_key } : {}),
           });
           return asSuccess({ comment });
         } catch (error) {
@@ -977,14 +979,21 @@ export function registerTools(
 
     server.tool(
       'app_review_release_feedback',
-      'Reviewer write (developer-facing): release every draft comment on an app version to the developer, and email the developer when the release makes new feedback visible and the email is configured. request_changes, approve, and reject already do this, except with a "(No Notification)" status, which stays silent. Use this tool only when the operator explicitly asks to send feedback without a status change, or to retry a failed release or a failed email. Does not change the review status.',
-      { version_id: z.string().min(1) },
-      async ({ version_id }) => {
+      'Reviewer write (developer-facing): release every draft comment on an app version to the developer, and email the developer when the release makes new feedback visible and the email is configured. request_changes, approve, and reject already do this, except with a "(No Notification)" status, which stays silent. Use this tool only when the operator explicitly asks to send feedback without a status change, or to retry a failed release or a failed email. Does not change the review status. An agent calls this only when the reviewer asked for this exact send in this conversation, after it showed the reviewer the text of every draft that app_review_list_comments returned. A save of a draft or of an internal note is not an approval to send.',
+      {
+        version_id: z.string().min(1),
+        expected_drafts: z
+          .array(z.object({ id: commentIdSchema, edited_at: z.string().max(40).nullable() }))
+          .max(200)
+          .describe('Every draft on the version, as app_review_list_comments returned it just now: id and editedAt (null when never edited). Nothing is released when the drafts on the version are not exactly these. Send [] only to retry a failed email after a release.'),
+      },
+      async ({ version_id, expected_drafts }) => {
         try {
           const actorEmail = requireReviewerEmail(getReviewer);
           const { version, asset } = await requireAppVersionWithAsset(getClient(), version_id);
           const notice = appReleaseNotice(asset, version);
-          const { released, notification } = await reviewComments.release(version_id, actorEmail, ...(notice ? [notice] : []));
+          const expected = expected_drafts.map((draft) => ({ id: draft.id, editedAt: draft.edited_at }));
+          const { released, notification } = await reviewComments.release(version_id, actorEmail, notice, expected);
           return asSuccess({ version_id, released, ...emailResult(notification) });
         } catch (error) {
           return asError(error);

@@ -62,6 +62,16 @@ const outbox = async () =>
 	(await env.DB.prepare('SELECT * FROM review_notifications ORDER BY created_at, id').all<any>()).results;
 
 describe('release email', () => {
+	it('queues no email when the drafts are not the ones the reviewer read', async () => {
+		const first = await draft();
+		const read = [{ id: first.json.data.id, editedAt: first.json.data.editedAt }];
+		await draft('A draft added after the read');
+		const refused = await call('POST', `/v1/versions/${VERSION}/release`, { notify: NOTICE, expected: read });
+		expect(refused.status).toBe(409);
+		expect(await outbox()).toHaveLength(0);
+		expect(knock).not.toHaveBeenCalled();
+	});
+
 	it('sends one email when drafts are released, with the link built from the pinned asset', async () => {
 		await draft();
 		const result = await release();

@@ -345,3 +345,89 @@ describe('validation', () => {
 		expect(response.status).toBe(400);
 	});
 });
+
+describe('release with the drafts the reviewer read', () => {
+	const release = (expected: unknown) => call('POST', `/v1/versions/${VERSION}/release`, REVIEWER, { expected });
+	const drafts = async () =>
+		((await call('GET', `/v1/versions/${VERSION}/comments`, REVIEWER)).json.data as any[])
+			.filter((comment) => comment.visibility === 'draft')
+			.map((comment) => ({ id: comment.id, editedAt: comment.editedAt }));
+
+	it('releases when the drafts are the expected ones', async () => {
+		await post(REVIEWER, { body: 'Fix the 404 page' });
+		await post(OTHER_REVIEWER, { body: 'Add alt text' });
+		await post(REVIEWER, { body: 'ask the lead', visibility: 'internal' });
+		const result = await release(await drafts());
+		expect(result.status).toBe(200);
+		expect(result.json.data.released).toBe(2);
+	});
+
+	it('releases nothing when a draft was added after the read', async () => {
+		await post(REVIEWER, { body: 'Fix the 404 page' });
+		const read = await drafts();
+		await post(OTHER_REVIEWER, { body: 'A draft the reviewer did not read' });
+		expect((await release(read)).status).toBe(409);
+		expect(await drafts()).toHaveLength(2);
+	});
+
+	it('releases nothing when a draft was edited or deleted after the read', async () => {
+		const first = await post(REVIEWER, { body: 'Fix the 404 page' });
+		const second = await post(REVIEWER, { body: 'Add alt text' });
+		const read = await drafts();
+		await call('PATCH', `/v1/comments/${first.json.data.id}`, REVIEWER, { body: 'Fix the 404 page and the footer' });
+		expect((await release(read)).status).toBe(409);
+		const afterEdit = await drafts();
+		await call('DELETE', `/v1/comments/${second.json.data.id}`, REVIEWER);
+		expect((await release(afterEdit)).status).toBe(409);
+		expect(await drafts()).toHaveLength(1);
+		expect((await release(await drafts())).json.data.released).toBe(1);
+	});
+
+	it('accepts an empty list only when no draft waits', async () => {
+		expect((await release([])).json.data.released).toBe(0);
+		await post(REVIEWER, { body: 'Fix the 404 page' });
+		expect((await release([])).status).toBe(409);
+	});
+
+	it('rejects a list that is not valid', async () => {
+		expect((await release('all')).status).toBe(400);
+		expect((await release([{ id: 'not a ref!' }])).status).toBe(400);
+		expect((await release([{ id: 'abc' }, { id: 'abc' }])).status).toBe(400);
+	});
+
+	it('still releases every draft when no list is sent', async () => {
+		await post(REVIEWER, { body: 'Fix the 404 page' });
+		expect((await call('POST', `/v1/versions/${VERSION}/release`, REVIEWER)).json.data.released).toBe(1);
+	});
+});
+
+describe('one save, one comment', () => {
+	const KEY = 'save-0123456789abcdef';
+
+	it('returns the first comment when a save is repeated with the same key', async () => {
+		const first = await post(REVIEWER, { body: 'Fix the 404 page', requestKey: KEY });
+		const again = await post(REVIEWER, { body: 'Fix the 404 page', requestKey: KEY });
+		expect(first.status).toBe(201);
+		expect(again.json.data.id).toBe(first.json.data.id);
+		expect((await call('GET', `/v1/versions/${VERSION}/comments`, REVIEWER)).json.data).toHaveLength(1);
+	});
+
+	it('refuses the key for a different comment and keeps keys apart by author', async () => {
+		await post(REVIEWER, { body: 'Fix the 404 page', requestKey: KEY });
+		expect((await post(REVIEWER, { body: 'Another text', requestKey: KEY })).status).toBe(409);
+		expect((await post(OTHER_REVIEWER, { body: 'Fix the 404 page', requestKey: KEY })).status).toBe(201);
+		expect((await call('GET', `/v1/versions/${VERSION}/comments`, REVIEWER)).json.data).toHaveLength(2);
+	});
+
+	it('writes each save without a key, and rejects a key that is not valid', async () => {
+		await post(REVIEWER, { body: 'Same text' });
+		await post(REVIEWER, { body: 'Same text' });
+		expect((await call('GET', `/v1/versions/${VERSION}/comments`, REVIEWER)).json.data).toHaveLength(2);
+		expect((await post(REVIEWER, { body: 'x', requestKey: 'short' })).status).toBe(400);
+	});
+
+	it('does not show the key in a comment', async () => {
+		const saved = await post(REVIEWER, { body: 'Fix the 404 page', requestKey: KEY });
+		expect(JSON.stringify(saved.json.data)).not.toContain(KEY);
+	});
+});

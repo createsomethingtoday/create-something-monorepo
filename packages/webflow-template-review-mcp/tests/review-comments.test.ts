@@ -187,7 +187,7 @@ test('edit, delete, resolve, and release pass through with the reviewer email', 
   assert.equal(payload(await handlers.get('template_review_edit_comment')?.({ comment_id: 'c-1', body: 'Alt text missing' })).ok, true);
   assert.equal(payload(await handlers.get('template_review_delete_comment')?.({ comment_id: 'c-2' })).ok, true);
   assert.equal(payload(await handlers.get('template_review_resolve_comment')?.({ comment_id: 'c-1', resolution: 'resolved' })).ok, true);
-  const released = payload(await handlers.get('template_review_release_feedback')?.({ version_id: VERSION_ID }));
+  const released = payload(await handlers.get('template_review_release_feedback')?.({ version_id: VERSION_ID, expected_drafts: [] }));
   assert.equal(released.data.released, 2);
   assert.equal(released.data.creator_email_sent, false);
 
@@ -195,7 +195,7 @@ test('edit, delete, resolve, and release pass through with the reviewer email', 
     ['edit', 'c-1', 'Reviewer@Example.com', 'Alt text missing'],
     ['remove', 'c-2', 'Reviewer@Example.com'],
     ['resolve', 'c-1', 'Reviewer@Example.com', 'resolved'],
-    ['release', VERSION_ID, 'Reviewer@Example.com'],
+    ['release', VERSION_ID, 'Reviewer@Example.com', undefined, []],
   ]);
 });
 
@@ -300,7 +300,7 @@ test('decisions and release_feedback name the creator from the asset record for 
   assert.equal(decision.data.review_comments.creator_email_sent, true);
   assert.deepEqual(decision.data.review_comments.notification, { status: 'sent', sent: 1 });
 
-  const released = payload(await handlers.get('template_review_release_feedback')?.({ version_id: VERSION_ID }));
+  const released = payload(await handlers.get('template_review_release_feedback')?.({ version_id: VERSION_ID, expected_drafts: [] }));
   assert.equal((calls[1][2] as { outcome?: string }).outcome, undefined);
   assert.equal((calls[1][2] as { recipientEmail: string }).recipientEmail, 'creator@example.com');
   assert.equal(released.data.creator_email_sent, true);
@@ -313,7 +313,7 @@ test('a failed email is reported with the way to retry it', async () => {
   const { server, handlers } = harness();
   registerTools(server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => client });
 
-  const result = payload(await handlers.get('template_review_release_feedback')?.({ version_id: VERSION_ID }));
+  const result = payload(await handlers.get('template_review_release_feedback')?.({ version_id: VERSION_ID, expected_drafts: [] }));
   assert.equal(result.data.creator_email_sent, false);
   assert.match(result.data.email_next_step, /template_review_release_feedback/);
 });
@@ -451,4 +451,25 @@ test('the HTTP client maps service and network failures to typed errors', async 
     assert.equal(error.code, 'REVIEW_COMMENTS_UNREACHABLE');
     return true;
   });
+});
+
+test('release_feedback passes the drafts the reviewer read, and add_comment passes the request key', async () => {
+  const { calls, client } = fakeComments();
+  const { server, handlers } = harness();
+  registerTools(server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => client });
+
+  await handlers.get('template_review_release_feedback')?.({
+    version_id: VERSION_ID,
+    expected_drafts: [{ id: 'c-1', edited_at: null }, { id: 'c-2', edited_at: '2026-01-02T03:04:05.000Z' }],
+  });
+  assert.deepEqual(calls.at(-1), [
+    'release',
+    VERSION_ID,
+    'Reviewer@Example.com',
+    undefined,
+    [{ id: 'c-1', editedAt: null }, { id: 'c-2', editedAt: '2026-01-02T03:04:05.000Z' }],
+  ]);
+
+  await handlers.get('template_review_add_comment')?.({ version_id: VERSION_ID, body: 'Fix the 404 page', visibility: 'draft', request_key: 'save-0123456789' });
+  assert.equal((calls.at(-1)?.[3] as { requestKey?: string }).requestKey, 'save-0123456789');
 });

@@ -36,6 +36,14 @@ export interface NewReviewComment {
   visibility: 'internal' | 'draft';
   parentId?: string;
   rubricRef?: string;
+  /** One key for one save. A repeat with the same key returns the first comment and writes nothing. */
+  requestKey?: string;
+}
+
+/** One draft as the reviewer read it: its id and its last edit time (null when never edited). */
+export interface ExpectedDraft {
+  id: string;
+  editedAt: string | null;
 }
 
 export type ReviewOutcome = 'changes_requested' | 'approved' | 'rejected';
@@ -147,13 +155,17 @@ export class ReviewCommentsClient {
     return this.request('DELETE', `/v1/comments/${encodeURIComponent(commentId)}`, actorEmail);
   }
 
-  /** Releases the drafts. With a notice, the Worker also emails the creator when it released something new. */
-  release(versionRef: string, actorEmail: string, notice?: ReleaseNotice): Promise<ReleaseResult> {
+  /**
+   * Releases the drafts. With a notice, the Worker also emails the creator when it released something new.
+   * With `expected`, the Worker releases only when the drafts on the version are exactly those, unchanged;
+   * otherwise it releases nothing and answers 409.
+   */
+  release(versionRef: string, actorEmail: string, notice?: ReleaseNotice, expected?: ExpectedDraft[]): Promise<ReleaseResult> {
     return this.request(
       'POST',
       `/v1/versions/${encodeURIComponent(versionRef)}/release`,
       actorEmail,
-      notice ? { notify: notice } : undefined,
+      notice || expected ? { ...(notice ? { notify: notice } : {}), ...(expected ? { expected } : {}) } : undefined,
     );
   }
 

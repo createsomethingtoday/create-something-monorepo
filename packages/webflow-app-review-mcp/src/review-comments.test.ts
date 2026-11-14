@@ -148,7 +148,7 @@ describe('comment tools', () => {
     expect(result.error.code).toBe('ASSET_NOT_FOUND_OR_OUT_OF_SCOPE');
     expect(comments!.add).not.toHaveBeenCalled();
 
-    const release = await run('app_review_release_feedback', { version_id: VERSION });
+    const release = await run('app_review_release_feedback', { version_id: VERSION, expected_drafts: [] });
     expect(release.error.code).toBe('ASSET_NOT_FOUND_OR_OUT_OF_SCOPE');
     expect(comments!.release).not.toHaveBeenCalled();
   });
@@ -160,7 +160,7 @@ describe('comment tools', () => {
       ['app_review_add_comment', { version_id: VERSION, body: 'note', visibility: 'draft' }],
       ['app_review_edit_comment', { comment_id: 'comment-1', body: 'x' }],
       ['app_review_delete_comment', { comment_id: 'comment-1' }],
-      ['app_review_release_feedback', { version_id: VERSION }],
+      ['app_review_release_feedback', { version_id: VERSION, expected_drafts: [] }],
       ['app_review_resolve_comment', { comment_id: 'comment-1', resolution: 'resolved' }],
     ] as const) {
       expect((await run(tool, args)).error.code).toBe('REVIEWER_EMAIL_UNAVAILABLE');
@@ -175,12 +175,12 @@ describe('comment tools', () => {
     expect((await run('app_review_list_comments', { version_id: VERSION })).data.comments).toHaveLength(1);
     await run('app_review_edit_comment', { comment_id: 'comment-1', body: ' edited ' });
     await run('app_review_delete_comment', { comment_id: 'comment-1' });
-    const released = await run('app_review_release_feedback', { version_id: VERSION });
+    const released = await run('app_review_release_feedback', { version_id: VERSION, expected_drafts: [] });
     await run('app_review_resolve_comment', { comment_id: 'comment-1', resolution: 'carried_forward' });
 
     expect(comments!.edit).toHaveBeenCalledWith('comment-1', REVIEWER_EMAIL, 'edited');
     expect(comments!.remove).toHaveBeenCalledWith('comment-1', REVIEWER_EMAIL);
-    expect(comments!.release).toHaveBeenCalledWith(VERSION, REVIEWER_EMAIL);
+    expect(comments!.release).toHaveBeenCalledWith(VERSION, REVIEWER_EMAIL, undefined, []);
     expect(released.data).toEqual({ version_id: VERSION, released: 2, developer_email_sent: false });
     expect(comments!.resolve).toHaveBeenCalledWith('comment-1', REVIEWER_EMAIL, 'carried_forward');
   });
@@ -360,7 +360,7 @@ describe('feedback email', () => {
       notification: { status: 'failed', sent: 0, pending: 1, error: 'Knock returned HTTP 503' },
     });
 
-    const result = await run('app_review_release_feedback', { version_id: VERSION });
+    const result = await run('app_review_release_feedback', { version_id: VERSION, expected_drafts: [] });
     const notice = comments!.release.mock.calls[0][2];
     expect(notice).toMatchObject({ recipientEmail: 'developer@example.com', assetName: 'Example App' });
     expect(notice).not.toHaveProperty('outcome');
@@ -378,8 +378,8 @@ describe('feedback email', () => {
       airtable.getAssetById.mockResolvedValue({ assetId: ASSET, appName: 'Example App', creatorEmail });
       const { run, comments } = setup({ airtable });
 
-      const result = await run('app_review_release_feedback', { version_id: VERSION });
-      expect(comments!.release).toHaveBeenCalledWith(VERSION, REVIEWER_EMAIL);
+      const result = await run('app_review_release_feedback', { version_id: VERSION, expected_drafts: [] });
+      expect(comments!.release).toHaveBeenCalledWith(VERSION, REVIEWER_EMAIL, undefined, []);
       expect(result.data.developer_email_sent).toBe(false);
     }
   });
@@ -393,7 +393,7 @@ describe('feedback email', () => {
     });
     const { run, comments } = setup({ airtable });
 
-    await run('app_review_release_feedback', { version_id: VERSION });
+    await run('app_review_release_feedback', { version_id: VERSION, expected_drafts: [] });
     expect(comments!.release.mock.calls[0][2]).toMatchObject({ recipientEmail: 'first@example.com' });
   });
 

@@ -38,6 +38,14 @@ export interface NewComment {
 	rubricRef: string | null;
 	mongoResourceId: string | null;
 	visibility: Visibility;
+	/** Set by the caller for one save. A repeat with the same key returns the first comment and writes nothing. */
+	requestKey: string | null;
+}
+
+/** One draft as the reviewer read it before a release: its id and its last edit time (null when never edited). */
+export interface ExpectedDraft {
+	id: string;
+	editedAt: string | null;
 }
 
 /** Thrown for caller mistakes; the router maps `status` onto the response. */
@@ -54,6 +62,8 @@ const REF_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_BODY_CHARS = 20_000;
 const SCOPE_PATTERN = /^[a-z0-9-]{1,32}$/;
+const REQUEST_KEY_PATTERN = /^[A-Za-z0-9_-]{8,64}$/;
+const MAX_EXPECTED_DRAFTS = 200;
 const RESOLUTIONS: readonly Resolution[] = ['open', 'resolved', 'carried_forward'];
 const REVIEWER_VISIBILITIES: readonly Visibility[] = ['internal', 'draft', 'released'];
 
@@ -116,8 +126,40 @@ export function parseNewComment(input: unknown, actor: Actor): NewComment {
 		parentId: optionalRef(raw.parentId, 'parentId'),
 		rubricRef: optionalRef(raw.rubricRef, 'rubricRef'),
 		mongoResourceId: optionalRef(raw.mongoResourceId, 'mongoResourceId'),
-		visibility
+		visibility,
+		requestKey: parseRequestKey(raw.requestKey)
 	};
+}
+
+function parseRequestKey(value: unknown): string | null {
+	if (value === undefined || value === null) return null;
+	if (typeof value !== 'string' || !REQUEST_KEY_PATTERN.test(value)) {
+		throw new CommentError(400, 'requestKey must be 8 to 64 letters, digits, hyphens or underscores');
+	}
+	return value;
+}
+
+/**
+ * The drafts the reviewer read before the release. Absent means the caller
+ * sends no list (a decision tool that releases as part of its own step).
+ */
+export function parseExpectedDrafts(input: unknown): ExpectedDraft[] | null {
+	const raw = (input as { expected?: unknown } | null)?.expected;
+	if (raw === undefined || raw === null) return null;
+	if (!Array.isArray(raw) || raw.length > MAX_EXPECTED_DRAFTS) {
+		throw new CommentError(400, `expected must be a list of at most ${MAX_EXPECTED_DRAFTS} drafts`);
+	}
+	const seen = new Set<string>();
+	return raw.map((entry) => {
+		const item = entry as { id?: unknown; editedAt?: unknown } | null;
+		if (!item || !isRef(item.id) || seen.has(item.id)) throw new CommentError(400, 'expected holds a draft id that is not valid');
+		seen.add(item.id);
+		const editedAt = item.editedAt ?? null;
+		if (editedAt !== null && (typeof editedAt !== 'string' || editedAt.length > 40)) {
+			throw new CommentError(400, 'expected holds an editedAt that is not valid');
+		}
+		return { id: item.id, editedAt };
+	});
 }
 
 export function parseEdit(input: unknown): string {
@@ -148,6 +190,7 @@ interface CommentRow {
 	rubric_ref: string | null;
 	created_at: string;
 	edited_at: string | null;
+	request_key?: string | null;
 }
 
 function toComment(row: CommentRow): ReviewComment {
@@ -297,13 +340,29 @@ export async function createComment(
 	// After input checks, so a rejected request never leaves a pin behind.
 	await requireVersionAsset(db, versionRef, input.assetRef, actor);
 
+	// A repeat of one save (a second click, a retry after a lost answer) returns the first comment.
+	const repeated = async (): Promise<ReviewComment | null> => {
+		if (!input.requestKey) return null;
+		const first = await db
+			.prepare('SELECT * FROM review_comments WHERE author_email = ? AND request_key = ?')
+			.bind(actor.email, input.requestKey)
+			.first<CommentRow>();
+		if (!first) return null;
+		if (first.version_ref !== versionRef || first.body !== input.body) {
+			throw new CommentError(409, 'requestKey was used for a different comment');
+		}
+		return toComment(first);
+	};
+	const earlier = await repeated();
+	if (earlier) return earlier;
+
 	const id = crypto.randomUUID();
-	await db
+	const insert = db
 		.prepare(
 			`INSERT INTO review_comments
 			   (id, asset_ref, version_ref, mongo_resource_id, parent_id, author_email, author_role,
-			    body, visibility, released_at, rubric_ref, created_at)
-			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+			    body, visibility, released_at, rubric_ref, created_at, request_key)
+			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 		)
 		.bind(
 			id,
@@ -317,11 +376,50 @@ export async function createComment(
 			input.visibility,
 			input.visibility === 'released' ? now : null,
 			input.rubricRef,
-			now
-		)
-		.run();
+			now,
+			input.requestKey
+		);
+	try {
+		await insert.run();
+	} catch (cause) {
+		// Two requests with one key at the same moment: the unique index lets one in, the other reads it.
+		const winner = input.requestKey ? await repeated() : null;
+		if (winner) return winner;
+		throw cause;
+	}
 
 	return toComment((await getRow(db, id)) as CommentRow);
+}
+
+/**
+ * A condition that is true only while the drafts on the version are exactly
+ * the expected ones, each with the same last edit. It is part of the release
+ * statement itself, so a draft that is added or edited at the last moment
+ * stops the whole release.
+ */
+export function expectedDraftsGuard(
+	versionRef: string,
+	actor: Actor,
+	expected: ExpectedDraft[]
+): { sql: string; params: Array<string | number | null> } {
+	const scope = actor.scope ? ' AND d.version_ref IN (SELECT version_ref FROM review_versions WHERE scope = ?)' : '';
+	const scopeParams = actor.scope ? [actor.scope] : [];
+	const all = `(SELECT COUNT(*) FROM review_comments d WHERE d.version_ref = ? AND d.visibility = 'draft'${scope}) = ?`;
+	if (!expected.length) return { sql: ` AND ${all}`, params: [versionRef, ...scopeParams, 0] };
+	const each = expected.map(() => '(d.id = ? AND d.edited_at IS ?)').join(' OR ');
+	const same = `(SELECT COUNT(*) FROM review_comments d WHERE d.version_ref = ? AND d.visibility = 'draft'${scope} AND (${each})) = ?`;
+	return {
+		sql: ` AND ${all} AND ${same}`,
+		params: [
+			versionRef,
+			...scopeParams,
+			expected.length,
+			versionRef,
+			...scopeParams,
+			...expected.flatMap((draft) => [draft.id, draft.editedAt]),
+			expected.length
+		]
+	};
 }
 
 /**
@@ -335,18 +433,32 @@ export async function releaseVersion(
 	actor: Actor,
 	now: string = new Date().toISOString(),
 	/** Runs in the same transaction, before the release, while the drafts still exist. */
-	before?: D1PreparedStatement
+	before?: D1PreparedStatement,
+	/** The drafts the reviewer read. When they are not the drafts on the version now, nothing is released. */
+	expected?: ExpectedDraft[] | null
 ): Promise<{ released: number }> {
 	const scope = scopeClause(actor);
+	const guard = expected ? expectedDraftsGuard(versionRef, actor, expected) : { sql: '', params: [] };
+	const changed = () => new CommentError(409, 'the drafts on this version changed; read the thread again, then release');
+	if (expected) {
+		// A clear answer for the usual case. The guard in the statement covers a change after this read.
+		const holds = await db
+			.prepare(`SELECT 1 AS ok WHERE 1 = 1${guard.sql}`)
+			.bind(...guard.params)
+			.first<{ ok: number }>();
+		if (!holds) throw changed();
+	}
 	const release = db
 		.prepare(
 			`UPDATE review_comments SET visibility = 'released', released_at = ?
-			 WHERE version_ref = ? AND visibility = 'draft'${scope.sql}`
+			 WHERE version_ref = ? AND visibility = 'draft'${scope.sql}${guard.sql}`
 		)
-		.bind(now, versionRef, ...scope.params);
-	if (!before) return { released: (await release.run()).meta.changes ?? 0 };
-	const [, released] = await db.batch([before, release]);
-	return { released: released.meta.changes ?? 0 };
+		.bind(now, versionRef, ...scope.params, ...guard.params);
+	const released = before
+		? ((await db.batch([before, release]))[1].meta.changes ?? 0)
+		: ((await release.run()).meta.changes ?? 0);
+	if (expected && released !== expected.length) throw changed();
+	return { released };
 }
 
 /**

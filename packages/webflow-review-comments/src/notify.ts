@@ -103,7 +103,9 @@ export function queueStatement(
 	versionRef: string,
 	notice: ReleaseNotice,
 	actor: Actor,
-	now: string
+	now: string,
+	/** The same condition as the release it is queued with: no release, no email. */
+	guard: { sql: string; params: Array<string | number | null> } = { sql: '', params: [] }
 ): D1PreparedStatement {
 	const scoped = actor.scope ? ' AND rv.scope = ?' : '';
 	return db
@@ -112,9 +114,9 @@ export function queueStatement(
 			 SELECT ?, rv.version_ref, rv.asset_ref, ?, ?
 			 FROM review_versions rv
 			 WHERE rv.version_ref = ?${scoped}
-			   AND EXISTS (SELECT 1 FROM review_comments c WHERE c.version_ref = rv.version_ref AND c.visibility = 'draft')`
+			   AND EXISTS (SELECT 1 FROM review_comments c WHERE c.version_ref = rv.version_ref AND c.visibility = 'draft')${guard.sql}`
 		)
-		.bind(crypto.randomUUID(), JSON.stringify(notice), now, versionRef, ...(actor.scope ? [actor.scope] : []));
+		.bind(crypto.randomUUID(), JSON.stringify(notice), now, versionRef, ...(actor.scope ? [actor.scope] : []), ...guard.params);
 }
 
 interface PendingRow {

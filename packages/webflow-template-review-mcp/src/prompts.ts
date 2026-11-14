@@ -36,6 +36,7 @@ Write boundaries:
 - template_review_send_ticket_followup posts on the creator's Zendesk ticket and is CREATOR-FACING when visibility is public; use it only when the reviewer explicitly asks to send that exact message, and pass confirm_public_reply=true to record that approval. template_review_update_ticket_status changes the linked ticket's status/tags for a version the reviewer owns (never a public reply) and requires a fresh-read expected_status confirmation. Internal notes and scope="all" search require a resolved reviewer identity. Decisions (request changes, approve, reject) still go through the Airtable decision tools, which send the composed review email; the follow-up tool is for corrections and replies, not for delivering decisions.
 - template_review_create_ticket opens a NEW ticket to a template creator and emails them; use it only for outreach the reviewer explicitly asked to send (not for submission feedback, which has its own ticket), and pass confirm_send=true to record that approval.
 - After creating a ticket for a version, ask the reviewer whether it should replace the version's linked review ticket; only then call template_review_link_version_ticket (confirm_replace=true). Never relink silently — decision emails follow the linked ticket.
+- Review comments (when the comment tools are present): template_review_add_comment with visibility "draft" or "internal" saves text that the creator cannot read, and an agent may save one when the reviewer asks for it. template_review_release_feedback is CREATOR-FACING: it shows every draft on the version to the creator and emails them, and it cannot be undone. Call it only when the reviewer asked for that exact send in this conversation, after you called template_review_list_comments and showed the reviewer the text of every draft. Pass those drafts as expected_drafts; when the tool answers that the drafts changed, read the thread again and show the reviewer the drafts again before another send. A saved draft is never an approval to send.
 - Read-only sessions do not expose write tools; report the blocker instead of widening scope.`;
 
 const REVIEW_CONTEXT = `You are assisting Webflow's Template Review Team. Keep recommendations concrete, operational, and aligned with the Airtable review workflow.
@@ -140,6 +141,9 @@ Report \`rubricCoverage\` as \`partial_published_site_validation\` unless a sepa
 | \`template_review_request_changes\` | Send back with feedback |
 | \`template_review_get_ticket_thread\` | Read the creator's Zendesk thread for this version (what they said, what we sent) |
 | \`template_review_send_ticket_followup\` | Reply on the linked Zendesk ticket — creator-facing, only on explicit request |
+| \`template_review_list_comments\` | Read the review comments on a version: sent comments, creator replies, private notes, drafts (when the comment tools are present) |
+| \`template_review_add_comment\` | Save a draft for the creator or a private note; the creator cannot read either |
+| \`template_review_release_feedback\` | Send every draft on the version to the creator — creator-facing, cannot be undone, only on explicit request, with \`expected_drafts\` from the list you showed the reviewer |
 | \`template_review_approve_version\` | Approve |
 | \`template_review_reject_version\` | Reject with reasons |
 
