@@ -69,3 +69,16 @@ The acknowledgment-order case also protects a newer identical draft after a
 restored retry has already completed; stale replies must still own their attempt
 before changing the draft cache. Red and green receipts
 are retained with the independent release evidence in the Cook worktree.
+
+
+Shared-context uploads have no server idempotency contract. A separate retained
+browser regression, `scripts/shared-context-upload-navigation-regression.js`,
+reproduces the late-success navigation duplicate using held/fake responses on
+the same GET-only preview. Per-draft pending-upload state now blocks a restored
+form from posting again while the original upload is pending. Success reconciles
+the current same-scope form, clears the acknowledged title/text/original file,
+and retains newer edits or a newly selected file. Session and attempt fences
+prevent stale replies from mutating a newer session. Pending/error feedback and
+button recovery are explicit. The common form helper's busy predicate is optional;
+message and other forms retain their existing behavior. This is UI concurrency
+protection, not a claim of server deduplication after an unknown network outcome.

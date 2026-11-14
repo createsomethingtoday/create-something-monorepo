@@ -62,10 +62,20 @@ const state = {
 const caps = ['read', 'post', 'work'];
 // In-memory only: no message content is written to browser storage.
 const drafts = new Map<string, { text: string; kind: string; assignee: string }>();
-const contextDrafts = new Map<string, { title: string; text: string }>();
+type ContextDraft = { title: string; text: string };
+type ContextUploadResult =
+  | { state: 'shared'; payload: ContextDraft; file?: File }
+  | { state: 'failed'; error: unknown };
+const contextDrafts = new Map<string, ContextDraft>();
+const contextUploads = new Map<string, { payload: ContextDraft; file?: File }>();
+let contextUploadChanged:
+  | ((key: string, result?: ContextUploadResult) => boolean)
+  | undefined;
 let authSessionGeneration = 0;
 function clearContextDrafts() {
   contextDrafts.clear();
+  contextUploads.clear();
+  contextUploadChanged = undefined;
   authSessionGeneration++;
 }
 const sendAttempts = new Map<string, { key: string; payload: string }>();
@@ -322,14 +332,15 @@ function agentSelectField(
   }
   return field;
 }
-function formAction(form: HTMLFormElement, fn: () => Promise<void>) {
+function formAction(form: HTMLFormElement, fn: () => Promise<void>, busy?: () => boolean) {
   form.addEventListener('submit', (e) => {
     e.preventDefault();
+    if (busy?.()) return;
     const controls = [...form.querySelectorAll<HTMLButtonElement>('button')];
     controls.forEach((b) => (b.disabled = true));
     void fn()
       .catch(fail)
-      .finally(() => controls.forEach((b) => (b.disabled = false)));
+      .finally(() => controls.forEach((b) => (b.disabled = busy?.() ?? false)));
   });
 }
 async function mutate(path: string, body?: unknown, method = 'POST', success = 'Saved.') {
@@ -514,6 +525,7 @@ async function loadInbox() {
 }
 function render() {
   rememberNoticeGroups();
+  contextUploadChanged = undefined;
   const root = $('workspace-content');
   root.replaceChildren();
   if (state.pane === 'agents') {
@@ -1605,6 +1617,9 @@ async function renderContext(root: HTMLElement) {
   );
   const b = node('button', 'Share text context →', 'button button-primary');
   b.type = 'submit';
+  const uploadStatus = para('Sharing context…');
+  uploadStatus.setAttribute('role', 'status');
+  uploadStatus.hidden = true;
   form.append(
     node('h3', 'Share a text document'),
     title.wrap,
@@ -1616,6 +1631,7 @@ async function renderContext(root: HTMLElement) {
     para(
       'Your draft stays in this tab for this inbox and reading view while you switch panes or use Refresh. Reloading this page, signing out or changing accounts clears it.'
     ),
+    uploadStatus,
     b
   );
   formAction(form, async () => {
@@ -1624,22 +1640,51 @@ async function renderContext(root: HTMLElement) {
     const payload = { title: title.input.value, text: text.input.value };
     if (new TextEncoder().encode(text.input.value).length > 65536)
       throw new Error('Shorten context to 64 KiB of UTF-8 text.');
+    const attempt = { payload, file: (upload.input as HTMLInputElement).files?.[0] };
+    contextUploads.set(draftKey, attempt);
+    contextUploadChanged?.(draftKey);
     try {
       await api(contextPath, 'POST', payload);
     } catch (error) {
-      if (sameSession() && (current() || (error instanceof ApiError && error.status === 401)))
-        fail(error);
+      if (!sameSession() || contextUploads.get(draftKey) !== attempt) return;
+      contextUploads.delete(draftKey);
+      const handled = contextUploadChanged?.(draftKey, { state: 'failed', error });
+      if (!handled && error instanceof ApiError && error.status === 401) fail(error);
       return;
     }
-    if (!sameSession()) return;
+    if (!sameSession() || contextUploads.get(draftKey) !== attempt) return;
+    contextUploads.delete(draftKey);
     const latest = contextDrafts.get(draftKey);
     if (latest?.title === payload.title && latest.text === payload.text)
       contextDrafts.delete(draftKey);
-    if (!current()) return;
-    notice('Context shared.');
-    await refresh();
-  });
+    contextUploadChanged?.(draftKey, { state: 'shared', payload, file: attempt.file });
+  }, () => contextUploads.has(draftKey));
   root.append(form);
+  contextUploadChanged = (key, result) => {
+    if (key !== draftKey || !current() || !form.isConnected) return false;
+    const pending = contextUploads.has(draftKey);
+    b.disabled = pending;
+    uploadStatus.hidden = !pending;
+    if (result?.state === 'failed') fail(result.error);
+    if (result?.state === 'shared') {
+      const selectedFile = (upload.input as HTMLInputElement).files?.[0];
+      const unchanged = title.input.value === result.payload.title &&
+        text.input.value === result.payload.text &&
+        (!selectedFile || selectedFile === result.file);
+      if (unchanged) {
+        title.input.value = '';
+        text.input.value = '';
+        upload.input.value = '';
+        draftRevision++;
+        notice('Context shared.');
+        void refresh();
+      } else {
+        notice('Context shared. Your newer draft is retained. Refresh to see the document.');
+      }
+    }
+    return true;
+  };
+  contextUploadChanged(draftKey);
 }
 async function renderStatus(root: HTMLElement) {
   const generation = state.generation;
