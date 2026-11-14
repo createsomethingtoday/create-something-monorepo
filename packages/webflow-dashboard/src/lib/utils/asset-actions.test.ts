@@ -19,6 +19,15 @@ describe('getAssetActionConfig', () => {
     });
   });
 
+  it('labels the edit action "Update app" for apps, and leaves other actions alone', () => {
+    expect(getAssetActionConfig('Published', 'App').secondary).toEqual([
+      { key: 'edit', label: 'Update app', handler: 'edit' },
+      { key: 'archive', label: 'Archive', handler: 'archive' }
+    ]);
+    expect(getAssetActionConfig('Draft', 'App').primary).toEqual({ key: 'edit', label: 'Update app', handler: 'edit' });
+    expect(getAssetActionConfig('Published', 'Template')).toEqual(getAssetActionConfig('Published'));
+  });
+
   it('maps scheduled assets to edit-first actions', () => {
     expect(getAssetActionConfig('Scheduled')).toEqual({
       primary: { key: 'edit', label: 'Edit', handler: 'edit' },

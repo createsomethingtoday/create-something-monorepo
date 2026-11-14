@@ -1,0 +1,37 @@
+# Review comments for Marketplace asset reviews. Runs on Webflow's Cloudflare
+# account (Webflow Hosting), because comments are creator data. The account id
+# is not stored here (public repo): export CLOUDFLARE_ACCOUNT_ID before any
+# wrangler command, with the Webflow Hosting deploy token as CLOUDFLARE_API_TOKEN.
+#
+# Deployed 2026-11-13. The one-time setup was:
+#   1. pnpm --filter=@create-something/webflow-review-comments exec wrangler d1 create webflow-review-comments
+#   2. Put the returned database_id below.
+#   3. pnpm --filter=@create-something/webflow-review-comments exec wrangler d1 migrations apply webflow-review-comments --remote
+#   4. pnpm --filter=@create-something/webflow-review-comments exec wrangler secret put CALLER_KEYS
+#   5. pnpm --filter=@create-something/webflow-review-comments deploy
+
+name = "webflow-review-comments"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[observability]
+enabled = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "webflow-review-comments"
+database_id = "f4d3af14-3826-44b8-ae17-33002960ce3e"
+
+# The "feedback is ready" email needs both ASSET_DASHBOARD_URL (below) and the
+# KNOCK_API_KEY secret. It stays off until the secret is set. The Knock workflow
+# is marketplace-review-feedback-released (files in ./knock); set
+# KNOCK_FEEDBACK_WORKFLOW_KEY only to use another one.
+[vars]
+ASSET_DASHBOARD_URL = "https://webflowassets.createsomething.io"
+
+# Secrets:
+# - CALLER_KEYS    JSON array of { name, role: "creator" | "reviewer", scope?, key }.
+#                  One entry per caller; keys are at least 32 characters.
+# - KNOCK_API_KEY  Knock secret key for the environment this Worker serves.

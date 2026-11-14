@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { invalidateAssetsCache } from '$lib/server/assets-cache';
 import { getAirtableClient, type AssetUpdateData } from '$lib/server/airtable';
 import { shouldCreateAssetVersionForChanges } from '$lib/utils/asset-version-changes';
+import { APP_UPDATE_GUIDANCE, isAppAssetType } from '$lib/utils/asset-actions';
 import { sanitizeLongDescriptionHtml } from '@create-something/webflow-dashboard-core/long-description';
 import { isAllowedAssetImageUrl } from '@create-something/webflow-dashboard-core/uploads-url';
 
@@ -132,6 +133,15 @@ function normalizeAssetUpdateBody(body: AssetUpdateData): AssetUpdateData {
   };
 }
 
+/**
+ * An app listing changes only through the submission form, where the developer
+ * signs in with Webflow and the update becomes a review version. A direct
+ * write here would change the review record with no review.
+ */
+function assertNotApp(asset: { type?: string | null }): void {
+  if (isAppAssetType(asset.type)) throw error(409, APP_UPDATE_GUIDANCE);
+}
+
 // GET - Fetch single asset
 export const GET: RequestHandler = async ({ params, locals, platform }) => {
   if (!locals.user?.email) {
@@ -169,10 +179,17 @@ export const PATCH: RequestHandler = async ({ params, request, locals, platform 
   const airtable = getAirtableClient(platform.env);
 
   // Verify ownership
-  const isOwner = await airtable.verifyAssetOwnership(params.id, locals.user.email);
+  const { asset: existingAsset, isOwner } = await airtable.getAssetForOwner(
+    params.id,
+    locals.user.email
+  );
+  if (!existingAsset) {
+    throw error(404, 'Asset not found');
+  }
   if (!isOwner) {
     throw error(403, 'You do not have permission to edit this asset');
   }
+  assertNotApp(existingAsset);
 
   const body = normalizeAssetUpdateBody((await request.json()) as AssetUpdateData);
   validateAssetUpdateBody(body);
@@ -219,6 +236,7 @@ export const PUT: RequestHandler = async ({ params, request, locals, platform, u
   if (!isOwner) {
     throw error(403, 'You do not have permission to edit this asset');
   }
+  assertNotApp(originalAsset);
 
   const body = normalizeAssetUpdateBody((await request.json()) as AssetUpdateData);
   validateAssetUpdateBody(body);

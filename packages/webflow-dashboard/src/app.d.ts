@@ -30,6 +30,12 @@ declare global {
 				CREATOR_STOREFRONT_SERVICE_URL?: string;
 				CREATOR_STOREFRONT_OWNER_KEY?: string;
 				CREATOR_STOREFRONT_ALLOWED_EMAILS?: string;
+				/** Review comments Worker (packages/webflow-review-comments). URL or key unset = feature off. */
+				REVIEW_COMMENTS_URL?: string;
+				/** This dashboard's creator-role key for that Worker. */
+				REVIEW_COMMENTS_API_KEY?: string;
+				/** Asset types whose reviews use comments, comma-separated ("App"). Unset = every type. */
+				REVIEW_COMMENTS_ASSET_TYPES?: string;
 			};
 			context: {
 				waitUntil(promise: Promise<unknown>): void;

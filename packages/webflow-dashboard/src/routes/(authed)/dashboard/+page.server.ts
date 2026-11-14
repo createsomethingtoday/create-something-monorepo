@@ -1,9 +1,20 @@
+import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
+import { POST_LOGIN_COOKIE, postLoginPath } from '$lib/server/post-login';
 import { getAirtableClient, type Asset } from '$lib/server/airtable';
 import { getCachedAssets, setCachedAssets } from '$lib/server/assets-cache';
 import { applyTemplateViews } from '$lib/server/template-views';
 
-export const load: PageServerLoad = async ({ locals, platform, depends }) => {
+export const load: PageServerLoad = async ({ locals, platform, depends, cookies }) => {
+	// The usual sign-in ends here. A reader who came from a link to one asset
+	// (the review feedback email) goes on to that asset, once.
+	const remembered = cookies.get(POST_LOGIN_COOKIE);
+	if (remembered !== undefined) {
+		cookies.delete(POST_LOGIN_COOKIE, { path: '/' });
+		const returnTo = locals.user ? postLoginPath(remembered) : null;
+		if (returnTo) throw redirect(302, returnTo);
+	}
+
 	// Mark this load function as dependent on 'app:assets'
 	// so invalidate('app:assets') will trigger a reload
 	depends('app:assets');

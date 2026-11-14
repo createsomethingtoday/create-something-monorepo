@@ -15,6 +15,7 @@ export { default as EditAssetModal } from './EditAssetModal.svelte';
 export { default as OverviewStats } from './OverviewStats.svelte';
 export { default as AssetVersionHistory } from './AssetVersionHistory.svelte';
 export { default as RequiredFixesCard } from './RequiredFixesCard.svelte';
+export { default as ReviewThreadCard } from './ReviewThreadCard.svelte';
 export { default as VersionComparisonModal } from './VersionComparisonModal.svelte';
 
 // Profile components

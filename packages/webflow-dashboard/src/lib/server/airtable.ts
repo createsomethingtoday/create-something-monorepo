@@ -44,6 +44,8 @@ const ASSETS_PARTNERSHIP_APP_FIELD_ID = 'fldzZ2Zo8a7vtIMT3';
 // Version Number and 📝Review Status on 🖌️Asset Versions.
 const ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID = 'fldn2ImbgwKfCdWWA';
 const ASSET_VERSIONS_REVIEW_STATUS_FIELD_ID = 'flde8Huk5NRIdm2wZ';
+const ASSET_VERSIONS_REVIEW_TYPE_FIELD_ID = 'fldjYFJMGTerFYlol';
+const ASSET_VERSIONS_SUBMITTED_AT_FIELD_ID = 'fldWTKKh989L4lTTB';
 
 // Durable release evidence on 🖌️Asset Versions, written by the
 // "🌐Release evidence — stamp released feedback" automation (CRE-1874):
@@ -936,6 +938,19 @@ export function mapAssetVersionRecord(record: {
 		changes,
 		snapshot: note?.snapshot ?? null
 	};
+}
+
+/**
+ * One submitted version of an asset as the review team tracks it. `rawStatus`
+ * is the internal 📝Review Status and must stay server-side: map it with
+ * creatorReviewStatusLabel before it reaches a creator.
+ */
+export interface ReviewRound {
+	id: string;
+	versionNumber: number;
+	reviewType?: string;
+	submittedAt?: string;
+	rawStatus: string;
 }
 
 /**
@@ -1914,6 +1929,79 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					statusCode: (err as { statusCode?: number })?.statusCode
 				});
 				return null;
+			}
+		},
+
+		/**
+		 * Every version of the asset that entered review, newest first. Versions
+		 * with no review status (dashboard snapshots) are not review rounds.
+		 */
+		async getReviewRounds(assetId: string): Promise<ReviewRound[]> {
+			if (!/^rec[A-Za-z0-9]{14}$/.test(assetId)) return [];
+
+			const rows = await base(TABLES.ASSET_VERSIONS)
+				.select({
+					filterByFormula: `AND({${ASSET_VERSIONS_ASSET_RECORD_ID_FIELD_ID}} = ${airtableFormulaValue(
+						assetId
+					)}, {${ASSET_VERSIONS_REVIEW_STATUS_FIELD_ID}} != '')`,
+					fields: [
+						ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID,
+						ASSET_VERSIONS_REVIEW_STATUS_FIELD_ID,
+						ASSET_VERSIONS_REVIEW_TYPE_FIELD_ID,
+						ASSET_VERSIONS_SUBMITTED_AT_FIELD_ID
+					],
+					returnFieldsByFieldId: true,
+					sort: [{ field: ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID, direction: 'desc' }]
+				})
+				.all();
+
+			return rows.flatMap((row) => {
+				const rawStatus = firstString(row.fields[ASSET_VERSIONS_REVIEW_STATUS_FIELD_ID]);
+				const versionNumber = Number(row.fields[ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID]);
+				if (!rawStatus || !Number.isFinite(versionNumber)) return [];
+				return [
+					{
+						id: row.id,
+						versionNumber,
+						reviewType: firstString(row.fields[ASSET_VERSIONS_REVIEW_TYPE_FIELD_ID]),
+						submittedAt: firstString(row.fields[ASSET_VERSIONS_SUBMITTED_AT_FIELD_ID]),
+						rawStatus
+					}
+				];
+			});
+		},
+
+		/**
+		 * The creator answered released feedback, so the round goes back to the
+		 * reviewer's queue. This is the status a creator reply on the Zendesk
+		 * ticket produces today. The status is read again here, immediately
+		 * before the write, so a decision made since the page loaded is kept.
+		 * Airtable has no conditional write; this narrows the window, it does
+		 * not close it.
+		 */
+		async markRoundResponded(versionId: string): Promise<boolean> {
+			try {
+				const current = await base(TABLES.ASSET_VERSIONS)
+					.select({
+						filterByFormula: `RECORD_ID() = ${airtableFormulaValue(versionId)}`,
+						fields: [ASSET_VERSIONS_REVIEW_STATUS_FIELD_ID],
+						returnFieldsByFieldId: true,
+						maxRecords: 1
+					})
+					.firstPage();
+				const rawStatus = firstString(current[0]?.fields[ASSET_VERSIONS_REVIEW_STATUS_FIELD_ID]);
+				if (rawStatus?.trim() !== '📤Changes Requested') return false;
+
+				await base(TABLES.ASSET_VERSIONS).update(versionId, {
+					[ASSET_VERSIONS_REVIEW_STATUS_FIELD_ID]: '🔁Response to Review'
+				} as Partial<Airtable.FieldSet>);
+				return true;
+			} catch (err) {
+				console.error('[Airtable] markRoundResponded failed:', {
+					versionId,
+					statusCode: (err as { statusCode?: number })?.statusCode
+				});
+				return false;
 			}
 		},
 
