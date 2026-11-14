@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-readiness:internal",
-  "generatedAt": "2026-11-10T15:39:05.136Z",
+  "generatedAt": "2026-11-14T01:59:17.122Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceReviewId": "substrate:create-something:operating-slice-review:internal",
@@ -13,20 +13,20 @@
       "tier": "Automation",
       "surface": "worker",
       "owner": "CREATE SOMETHING",
-      "recordCount": 150,
-      "mappedRecordCount": 150,
+      "recordCount": 153,
+      "mappedRecordCount": 153,
       "missingRecordIds": [],
       "gates": [
         {
           "id": "topology_records_exist",
           "status": "pass",
-          "summary": "150/150 slice records exist in the internal topology.",
+          "summary": "153/153 slice records exist in the internal topology.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
           "id": "topology_records_mapped",
           "status": "pass",
-          "summary": "150/150 slice records are mapped.",
+          "summary": "153/153 slice records are mapped.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
@@ -50,7 +50,7 @@
         {
           "id": "cloudflare_runtime_configs_joined",
           "status": "pass",
-          "summary": "121/121 Wrangler config node(s) join to runtime binding coverage.",
+          "summary": "123/123 Wrangler config node(s) join to runtime binding coverage.",
           "evidence": "packages/database-layer/data/create-something-runtime-binding-coverage.json"
         },
         {
@@ -69,22 +69,22 @@
       "nextAction": "Review runtime ownership and bind approved worker slices to production workflow checks before Cloudflare mutation.",
       "workerRuntime": {
         "runtime": "cloudflare",
-        "runtimeConfigRecords": 121,
-        "workerPackageRecords": 29,
-        "bindingRefs": 657,
+        "runtimeConfigRecords": 123,
+        "workerPackageRecords": 30,
+        "bindingRefs": 672,
         "routeRefs": 26,
         "bindingKinds": {
           "assets": 10,
-          "d1": 96,
-          "durable_object": 48,
+          "d1": 99,
+          "durable_object": 49,
           "kv": 39,
           "queue": 16,
           "r2": 23,
           "route": 26,
-          "var": 397,
+          "var": 408,
           "vectorize": 2
         },
-        "workersWithD1": 81,
+        "workersWithD1": 82,
         "workersWithDurableObjects": 43,
         "workersWithQueues": 10,
         "workersWithR2": 23,
@@ -808,20 +808,20 @@
       "tier": "Mixed",
       "surface": "worker",
       "owner": "CREATE SOMETHING",
-      "recordCount": 8,
-      "mappedRecordCount": 8,
+      "recordCount": 9,
+      "mappedRecordCount": 9,
       "missingRecordIds": [],
       "gates": [
         {
           "id": "topology_records_exist",
           "status": "pass",
-          "summary": "8/8 slice records exist in the internal topology.",
+          "summary": "9/9 slice records exist in the internal topology.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
           "id": "topology_records_mapped",
           "status": "pass",
-          "summary": "8/8 slice records are mapped.",
+          "summary": "9/9 slice records are mapped.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
@@ -833,7 +833,7 @@
         {
           "id": "evidence_paths_declared",
           "status": "pass",
-          "summary": "8 evidence path(s) are attached to the slice.",
+          "summary": "9 evidence path(s) are attached to the slice.",
           "evidence": "packages/database-layer/data/create-something-operating-slice-review.json"
         },
         {
@@ -865,7 +865,7 @@
       "workerRuntime": {
         "runtime": "cloudflare",
         "runtimeConfigRecords": 0,
-        "workerPackageRecords": 8,
+        "workerPackageRecords": 9,
         "bindingRefs": 0,
         "routeRefs": 0,
         "bindingKinds": {},
