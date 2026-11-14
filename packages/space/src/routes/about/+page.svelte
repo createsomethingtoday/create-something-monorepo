@@ -1,5 +1,6 @@
 <script lang="ts">
-  import WorkshopScene from '$lib/workshop/WorkshopScene.svelte';
+  import { canonTaskScenes } from '$lib/canon-task-scenes';
+  import TaskOpening from '$lib/components/TaskOpening.svelte';
   import { SEO } from '@create-something/canon';
   import '$lib/workshop/workshop.css';
 </script>
@@ -8,16 +9,18 @@
   title="About the Workshop | CREATE SOMETHING .space"
   description="Why CREATE SOMETHING shares tools, workflows, skills, and reusable code."
   propertyName="space"
-  ogImage="/images/workshop/stories/about-careful-working-notes.webp"
+  ogImage={canonTaskScenes['review-nook'].src}
 />
 <article class="workshop">
-  <header class="wrap section story-opening">
+  <TaskOpening scene="review-nook" caption="Keep the notes that make the next attempt useful.">
+<div class="wrap section story-opening">
     <div>
       <p class="eyebrow">About the workshop</p>
       <h1>Made through use.<br />Shared for reuse.</h1>
     </div>
-    <WorkshopScene scene="notes" eager />
-  </header>
+
+  </div>
+</TaskOpening>
   <section class="wrap body">
     <p class="lead">
       CREATE SOMETHING builds systems that connect tools and AI. This workshop is where we share the
@@ -59,7 +62,7 @@
   .body {
     max-width: 850px;
   }
-  header h1 {
+  .story-opening h1 {
     margin-top: 1.5rem;
   }
   .body p {

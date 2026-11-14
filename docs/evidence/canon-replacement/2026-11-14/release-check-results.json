@@ -1,0 +1,113 @@
+[
+  {
+    "package": "canon",
+    "command": [
+      "exec",
+      "vitest",
+      "run",
+      "--maxWorkers=2"
+    ],
+    "exit": 0,
+    "seconds": 23.88,
+    "log": "cook/evidence/replacement/canon-tests-release.log"
+  },
+  {
+    "package": "agency",
+    "command": [
+      "check"
+    ],
+    "exit": 0,
+    "seconds": 59.22,
+    "log": "cook/evidence/replacement/agency-check-release.log"
+  },
+  {
+    "package": "agency",
+    "command": [
+      "build"
+    ],
+    "exit": 0,
+    "seconds": 38.35,
+    "log": "cook/evidence/replacement/agency-build-release.log"
+  },
+  {
+    "package": "io",
+    "command": [
+      "check"
+    ],
+    "exit": 0,
+    "seconds": 62.62,
+    "log": "cook/evidence/replacement/io-check-release.log"
+  },
+  {
+    "package": "io",
+    "command": [
+      "build"
+    ],
+    "exit": 1,
+    "seconds": 45.97,
+    "log": "cook/evidence/replacement/io-build-release.log"
+  },
+  {
+    "package": "io",
+    "command": [
+      "build"
+    ],
+    "exit": 0,
+    "seconds": 50.71,
+    "log": "cook/evidence/replacement/io-build-release-repaired.log"
+  },
+  {
+    "package": "ltd",
+    "command": [
+      "check"
+    ],
+    "exit": 0,
+    "seconds": 12.74,
+    "log": "cook/evidence/replacement/ltd-check-release-repaired.log"
+  },
+  {
+    "package": "ltd",
+    "command": [
+      "build"
+    ],
+    "exit": 0,
+    "seconds": 23.42,
+    "log": "cook/evidence/replacement/ltd-build-release-repaired.log"
+  },
+  {
+    "package": "space",
+    "command": [
+      "check"
+    ],
+    "exit": 0,
+    "seconds": 10.25,
+    "log": "cook/evidence/replacement/space-check-release-repaired.log"
+  },
+  {
+    "package": "space",
+    "command": [
+      "build"
+    ],
+    "exit": 0,
+    "seconds": 26.72,
+    "log": "cook/evidence/replacement/space-build-release-repaired.log"
+  },
+  {
+    "package": "lms",
+    "command": [
+      "check"
+    ],
+    "exit": 0,
+    "seconds": 11.28,
+    "log": "cook/evidence/replacement/lms-check-release-repaired.log"
+  },
+  {
+    "package": "lms",
+    "command": [
+      "build"
+    ],
+    "exit": 0,
+    "seconds": 15.92,
+    "log": "cook/evidence/replacement/lms-build-release-repaired.log"
+  }
+]

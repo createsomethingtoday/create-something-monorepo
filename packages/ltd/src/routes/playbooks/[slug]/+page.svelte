@@ -1,5 +1,5 @@
 <script lang="ts">
-	import LibraryScene from '$lib/components/LibraryScene.svelte';
+  import TaskOpening from '$lib/components/TaskOpening.svelte';
 	import { Button, SEO } from '@create-something/canon';
 
 	let { data } = $props();
@@ -19,7 +19,8 @@
 />
 
 <article class="playbook-detail">
-	<header class="playbook-detail__hero">
+	<TaskOpening scene="preserve-sequence" caption="A runbook keeps the steps, exceptions, and receipt in one sequence.">
+<div class="playbook-detail__hero">
 		<a class="playbook-detail__back" href="/playbooks">← All playbooks</a>
 		<p>{playbook.label}</p>
 		<h1>{playbook.title}</h1>
@@ -28,8 +29,9 @@
 			<Button href="/readiness">Assess this workflow</Button>
 			<Button href="/canon" variant="secondary">Read the Canon</Button>
 		</div>
-		<LibraryScene scene="proof-preserve-the-sequence" caption="A runbook keeps the steps, exceptions, and receipt in one sequence." />
-	</header>
+
+	</div>
+</TaskOpening>
 
 	<section class="playbook-detail__instruction" aria-labelledby="when-to-use-title">
 		<p class="playbook-detail__eyebrow">When to use it</p>
@@ -114,8 +116,9 @@
 	}
 
 	.playbook-detail__back {
-		position: absolute;
-		top: clamp(6rem, 10vw, 8rem);
+		position: static;
+		display: inline-flex;
+		margin-bottom: 1.5rem;
 		color: var(--color-performance-muted, #5e6268);
 		font-family: var(--font-performance-mono);
 		font-size: 0.78rem;

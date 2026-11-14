@@ -1,5 +1,5 @@
 <script lang="ts">
-	import LibraryScene from '$lib/components/LibraryScene.svelte';
+  import TaskOpening from '$lib/components/TaskOpening.svelte';
 	import { SEO } from '@create-something/canon';
 </script>
 
@@ -14,7 +14,8 @@
 />
 
 <!-- Header -->
-<section class="pt-24 pb-16 px-6 border-b border-canon">
+<TaskOpening scene="tool-fit" caption="Choose the pattern that fits the constraint.">
+<div class="pt-24 pb-16 px-6 border-b border-canon">
 	<div class="max-w-4xl mx-auto text-center">
 		<p class="text-sm-canon tracking-widest uppercase opacity-60-canon mb-4">The Canon</p>
 		<h1 class="mb-6">Pick the pattern first.</h1>
@@ -22,9 +23,10 @@
 			A pattern should name the constraint, the repair, or the reduction before a team adds
 			more surface area.
 		</p>
-		<LibraryScene scene="tool-fit-without-forcing" caption="Choose the pattern that fits the constraint." />
+
 	</div>
-</section>
+</div>
+</TaskOpening>
 
 <!-- Quick Start -->
 <section class="py-16 px-6">

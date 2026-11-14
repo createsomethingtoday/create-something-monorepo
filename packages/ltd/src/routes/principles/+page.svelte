@@ -1,5 +1,5 @@
 <script lang="ts">
-	import LibraryScene from '$lib/components/LibraryScene.svelte';
+  import TaskOpening from '$lib/components/TaskOpening.svelte';
 	import { PrincipleCard } from '$lib/components';
 	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
@@ -36,7 +36,8 @@
 />
 
 <!-- Header -->
-<section class="pt-24 pb-16 px-6 border-b border-canon">
+<TaskOpening scene="subtract-route" caption="Remove the extra route when it no longer serves the whole.">
+<div class="pt-24 pb-16 px-6 border-b border-canon">
 	<div class="max-w-7xl mx-auto">
 		<p class="type-sm tracking-widest uppercase opacity-60-canon mb-4">The Canon</p>
 		<h1 class="mb-6">Make judgment reusable.</h1>
@@ -44,9 +45,10 @@
 			Principles should help a team decide what to keep, remove, prove, or ship. Each one is a
 			reusable rule for making better work easier to recognize.
 		</p>
-		<LibraryScene scene="subtract-the-extra-route" caption="Remove the extra route when it no longer serves the whole." />
+
 	</div>
-</section>
+</div>
+</TaskOpening>
 
 <!-- Principles by Master -->
 <section class="py-16 px-6">

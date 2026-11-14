@@ -1,0 +1,172 @@
+{
+  "issue": "CRE-2455",
+  "tool": "built-in imagegen; format-only cwebp q88 m6, no compositional edits",
+  "artAcceptance": "User approved the 12 selected task scenes and transparent cutout for production on 2026-11-14; exact PNG approval hashes are recorded below. Existing welcome/review masters were previously approved.",
+  "scenes": {
+    "operating-library": {
+      "src": "/images/canon-tasks-v1/operating-library-r17.webp",
+      "mobileSrc": "/images/canon-tasks-v1/operating-library-r17-640.webp",
+      "mediumSrc": "/images/canon-tasks-v1/operating-library-r17-960.webp",
+      "width": 1536,
+      "height": 1024,
+      "srcset": "/images/canon-tasks-v1/operating-library-r17-640.webp 640w, /images/canon-tasks-v1/operating-library-r17-960.webp 960w, /images/canon-tasks-v1/operating-library-r17.webp 1536w"
+    },
+    "review-nook": {
+      "src": "/images/canon-tasks-v1/review-nook.webp",
+      "mobileSrc": "/images/canon-tasks-v1/review-nook-640.webp",
+      "mediumSrc": "/images/canon-tasks-v1/review-nook-960.webp",
+      "width": 1122,
+      "height": 1402,
+      "srcset": "/images/canon-tasks-v1/review-nook-640.webp 640w, /images/canon-tasks-v1/review-nook-960.webp 960w, /images/canon-tasks-v1/review-nook.webp 1122w"
+    },
+    "preserve-sequence": {
+      "src": "/images/canon-tasks-v1/preserve-sequence-r21.webp",
+      "mobileSrc": "/images/canon-tasks-v1/preserve-sequence-r21-640.webp",
+      "mediumSrc": "/images/canon-tasks-v1/preserve-sequence-r21-960.webp",
+      "width": 1254,
+      "height": 1254,
+      "srcset": "/images/canon-tasks-v1/preserve-sequence-r21-640.webp 640w, /images/canon-tasks-v1/preserve-sequence-r21-960.webp 960w, /images/canon-tasks-v1/preserve-sequence-r21.webp 1254w"
+    },
+    "separate-gates": {
+      "src": "/images/canon-tasks-v1/separate-gates-r19.webp",
+      "mobileSrc": "/images/canon-tasks-v1/separate-gates-r19-640.webp",
+      "mediumSrc": "/images/canon-tasks-v1/separate-gates-r19-960.webp",
+      "width": 1536,
+      "height": 1024,
+      "srcset": "/images/canon-tasks-v1/separate-gates-r19-640.webp 640w, /images/canon-tasks-v1/separate-gates-r19-960.webp 960w, /images/canon-tasks-v1/separate-gates-r19.webp 1536w"
+    },
+    "subtract-route": {
+      "src": "/images/canon-tasks-v1/subtract-route-r19.webp",
+      "mobileSrc": "/images/canon-tasks-v1/subtract-route-r19-640.webp",
+      "mediumSrc": "/images/canon-tasks-v1/subtract-route-r19-960.webp",
+      "width": 1254,
+      "height": 1254,
+      "srcset": "/images/canon-tasks-v1/subtract-route-r19-640.webp 640w, /images/canon-tasks-v1/subtract-route-r19-960.webp 960w, /images/canon-tasks-v1/subtract-route-r19.webp 1254w"
+    },
+    "tool-fit": {
+      "src": "/images/canon-tasks-v1/tool-fit-r19.webp",
+      "mobileSrc": "/images/canon-tasks-v1/tool-fit-r19-640.webp",
+      "mediumSrc": "/images/canon-tasks-v1/tool-fit-r19-960.webp",
+      "width": 1536,
+      "height": 1024,
+      "srcset": "/images/canon-tasks-v1/tool-fit-r19-640.webp 640w, /images/canon-tasks-v1/tool-fit-r19-960.webp 960w, /images/canon-tasks-v1/tool-fit-r19.webp 1536w"
+    }
+  },
+  "masters": {
+    "operating-library": {
+      "source": "output/canon-replacement-art/property/operating-library-r17.png",
+      "sha256": "44d3007feaf9a7cb803b06453b61d103fabbb3096881dfd6e60c4ecc4d406b7d",
+      "prompt": "Use case: precise-object-edit. Edit target: reference image 1, the existing r15 CREATE SOMETHING Canon workshop still. Make a narrowly targeted edit of only the task artifacts described below. Preserve the exact existing composition, camera, aspect ratio, framing, scale, character silhouette, pose, face, felt fibers, woven vertical cream oval eyes with contained dark pupils, tiny pixel-stitch smile, antenna, hands, stitched coat and notebook, lighting, pale wood, cream paper, matte ceramic, charcoal felt wall, and every background element. Keep one approved squat felt Canon only. Do not redesign the character, change the camera, crop, introduce a second body, stone, hard metal, round eyes, glass, glow or flat face. Preserve the warm photographic tactile miniature craft and measured useful whimsy. No words, numbers, logos, watermarks, fake checkmarks or approval stamps. Task-artifact correction only: make the held folder unmistakably an operating-rule reference, rather than ordinary filing. On the broad visible face of the cream card/folder in Canon's hands, add one large clear branching rule diagram in bold dark graphite pencil: one outlined diamond decision node, two strong branches, and two outlined square terminal nodes, connected cleanly, without any text. The diagram occupies most of the visible card face and must read at normal website size, with very few large marks and no tiny labels. On the nearest visible divider tab within the open drawer, put a smaller matching branching-diamond symbol so the held rule clearly corresponds to that drawer position. Keep all other drawer fronts and tabs unlettered. Preserve the existing curling paper bookmark rising from the folder as a small useful whimsical detail. Change only the held card face and one matching drawer tab; keep the approved felt Canon and the full rest of the image exactly.\n",
+      "approvedPNG": "44d3007feaf9a7cb803b06453b61d103fabbb3096881dfd6e60c4ecc4d406b7d"
+    },
+    "review-nook": {
+      "source": "packages/agency/static/images/canon-agency-v1/review-nook.webp",
+      "sha256": "4aa27175fa7e834d4f3805bd898902a79a2a560f1c568b6b94310a887b49d974",
+      "prompt": "Existing owned approved master; original prompt in canon-agency-v1/ARTWORK.md."
+    },
+    "preserve-sequence": {
+      "source": "output/canon-replacement-art/property/preserve-sequence-r21.png",
+      "sha256": "77f6e21fc41d420600dbe561baaf802caa4caff5a9069ee404924b976d6c04de",
+      "prompt": "Use case: precise-object-edit. Edit image1. Change ONLY the dark pencil diagram on the accordion paper. Preserve EXACT Canon head, oval woven eyes, pose, mitts, notebook, materials, lighting, camera, paper folds and separate narrow three-line receipt at far right. Diagram must be a clean SINGLE LINEAR SEQUENCE with three large stages: left square -> center diamond -> right document-with-three-lines. Each connecting arrow ends at the next shape. Remove the dangling upper branch and the lower fork entirely; the center diamond has ONE outgoing straight arrow from its RIGHT corner into the LEFT edge of the final document. No branch goes to empty space, no second outgoing arrow. Keep the final document's three horizontal marks and terminal narrow folded receipt intact. Bold simple dark pencil strokes readable at360px; no words, digits, checkmarks, added shapes or other scene changes. Same square dimensions/framing.\n",
+      "approvedPNG": "77f6e21fc41d420600dbe561baaf802caa4caff5a9069ee404924b976d6c04de"
+    },
+    "separate-gates": {
+      "source": "output/canon-replacement-art/property/separate-gates-r19.png",
+      "sha256": "669888385165a6066c4b66422dfc9084fd1e5dec5c454cb5137b2ceee0c5e7b9",
+      "prompt": "Use case: precise-object-edit. Image1 is target; image2 CanonidentityreferenceONLY. Clarify the two different gates in this same warm tactile workshop, same camera/materials/lamp. A continuous cream paper path passes sequentially through two clearly visible wooden gates. The NEAR access gate on the left is visibly OPEN with its horizontal barrier raised; a large simple cream wooden KEY sits turned in its keyhole/latch, clearly showing access. The FAR review gate remains CLOSED across the same path, with a broad MANUAL lever on its far side OUTSIDE Canon's reach. A simple large open-palm review symbol engraved into its cream lever plaque distinguishes human judgment (no words). Make both mechanisms large enough to read at360px, equal visualweight rather than a tiny distant gate. Canon waits BETWEEN the open accessgate and closed reviewgate, holding the small cream request card for a person; he does NOT pull the approvallever. Preserve Canon's squat charcoalfelt compact body, broad low softcuboidhead, oval woveneyes withcenteredcontainedpupils, pixelsmile, antenna, notebook, gentlehands. Paper path makes one small eager curled loop between gates for restrained whimsy. No completedcheckmark, approvalstamp, fake readings, text, numbers, othercharacter or blackbackgroundfromidentityref. Keep native dimensions/framing as close as task permits.\n",
+      "approvedPNG": "669888385165a6066c4b66422dfc9084fd1e5dec5c454cb5137b2ceee0c5e7b9"
+    },
+    "subtract-route": {
+      "source": "output/canon-replacement-art/property/subtract-route-r19.png",
+      "sha256": "d7512b310c3bce141b351e219819f50006a5f75c45032d8c103a9b4504396f6d",
+      "prompt": "Use case: precise-object-edit. INPUT ROLES: Image 1 is the ONLY edit target, an existing Canon workshop task scene. Image 2 is the authoritative approved r41 Canon identity reference ONLY for head proportions/material/face, NOT for background, camera or pose. Make one localized HEAD-ONLY refinement in Image 1. The head must become lower and broader like Image 2: a squat wide soft cuboid with approximately 1.4:1 visible width-to-height excluding the antenna, a flatter roof, shallow crown, softly squared corners and a clear dimensional side plane. Reduce excess felt mass above the face and remove the tall/domed cranium impression. It should be whimsical and squat, not a near-square head, rounded dome or tall block. Rebuild the head volume naturally in the existing perspective; NEVER vertically squash the whole face, rescale the body, or warp the image. Preserve tall cream VERTICAL OVAL woven pixel eyes, contained centered dark oval pupils, gentle small pixel-stitch smile, dimensional felt fiber texture, and the single short felt antenna with cream wool ball. Keep eyes upright and tall with no squashing, no circular eyes, no screen glass or glow. Maintain the current character's head orientation/gaze and facial expression, with the neck/head attachment natural and body/coat/limbs/hands/feet/pocket/notebook exactly as Image 1. Preserve every other pixel intent: exact task objects and their marks, pose, camera angle and distance, composition, native square aspect ratio, full framing, workshop background, tabletop, wood/paper/ceramic materials, warm lighting, shadows and existing task-connected whimsy. Do NOT import Image 2's black background or standing pose. Do NOT add any character/body, stone, metal, shiny plastic, text, logo or watermark. TASK LOCK: Keep the exact arch-shaped lifted paper strip in both hands, straight paper route between two round cream anchors on its wooden board, loose curl on the right, and all pencils and trays unchanged.\n",
+      "approvedPNG": "d7512b310c3bce141b351e219819f50006a5f75c45032d8c103a9b4504396f6d"
+    },
+    "tool-fit": {
+      "source": "output/canon-replacement-art/property/tool-fit-r19.png",
+      "sha256": "1b6098d69fcfd39c4701a9cbd9607157d1e6763f07a645833b805e38c5cc9380",
+      "prompt": "Use case: precise-object-edit, identity preservation.\nInput image 1 is the EDIT TARGET. Input image 2 is an IDENTITY REFERENCE ONLY for Canon's approved r41 HEAD SHAPE; do not copy its black background, body pose, hand, notebook position, lighting or studio setting into the target.\nMake one local change ONLY to Canon's outer felt head silhouette in image 1: make it visibly SQUATTIER, LOWER and BROADER, a broad soft RECTANGULAR CUBOID like r41. Target the outer head excluding antenna at approximately 1.4 units wide to 1 unit high. Flatten the roof into a shallow crown with softly rounded corners and a visible side plane; remove the excess tall felt cap above the face. It must not read as a sphere, round dome, tall cube, or bulbous cap. Achieve the lower broader silhouette by reducing excess felt above the face and modestly broadening the outer shell, not by stretching or squashing the eyes or the whole picture.\nKeep the exact oval woven digital eyes, their tall vertical oval shape and normal proportions, dark pupils contained and centered within each ivory eye, pixel smile, woven face texture and expression. Keep the antenna and cream antenna tip, correctly attached to the lowered roof.\nLock every other part of image 1: exact body, limbs, hands, posture, task, task geometry, props and their occlusions, composition, camera, perspective, warm workshop, light, shadows, materials, color and frame edges. Do not move, resize or warp the body or objects. Identity-reference guidance applies ONLY to the head silhouette. No new objects, text, logos, lights, glass or metal. Preserve the same landscape framing and exact 1536 by 1024 dimensions.\nTask-specific invariants: Canon holds the wooden round peg beside the matching round receiving tool with a visible gap. Preserve exact peg/socket geometry, gap, hand grip, measuring ribbon, wooden base and other props.\n",
+      "approvedPNG": "1b6098d69fcfd39c4701a9cbd9607157d1e6763f07a645833b805e38c5cc9380"
+    }
+  },
+  "files": {
+    "operating-library-r17-640.webp": {
+      "bytes": 47160,
+      "sha256": "bc62240d70a9dfa9405b562de09478c23765a1c398b2d6c2007fd04f9da4a1e7"
+    },
+    "operating-library-r17-960.webp": {
+      "bytes": 93024,
+      "sha256": "9b00b3a82e456fb9204ff1e77cc316ee9372f28f8fff4a61efcb3d7cc2ea9949"
+    },
+    "operating-library-r17.webp": {
+      "bytes": 216718,
+      "sha256": "5894a5d64fce7b4b79ed979de7b45c367db7334303541100c13cd277e8de72b0"
+    },
+    "preserve-sequence-r21-640.webp": {
+      "bytes": 43446,
+      "sha256": "568cbad0275b63fe222effe9f6fed12e73b457799b6e0eafdde3aaa7c9639f7c"
+    },
+    "preserve-sequence-r21-960.webp": {
+      "bytes": 81848,
+      "sha256": "afd2fcb6086587a99dec0dec1d673c73decb3a7c8af36afee4f2692fbcfc81d5"
+    },
+    "preserve-sequence-r21.webp": {
+      "bytes": 145612,
+      "sha256": "dcfe6dbf97cf4759c2ccfaac325433918892a88cd60dd8e50affa0e32a173f73"
+    },
+    "review-nook-640.webp": {
+      "bytes": 55288,
+      "sha256": "04cee08aba135f58905a2cf21a87f9559b85b688dfd7846c1a8804eb4e4e4504"
+    },
+    "review-nook-960.webp": {
+      "bytes": 113698,
+      "sha256": "f21df08d0d8b06d381749e9cac6026c30344d675143da185ed6c4d126f60933a"
+    },
+    "review-nook.webp": {
+      "bytes": 186690,
+      "sha256": "5f7fbb8390f2291bdd36c7ba210614c1e955ede7cfa99649075d9f100d4597c8"
+    },
+    "separate-gates-r19-640.webp": {
+      "bytes": 34142,
+      "sha256": "fe6bd57ce3cd65154b7cdb20aa05bc0436cfe4cb43f81eb2bbc653057c39bb36"
+    },
+    "separate-gates-r19-960.webp": {
+      "bytes": 67710,
+      "sha256": "6b835b3ab8ab1ad0d2ee9fdf193a58eb2d2f1abcf473df99da6d49152e3fc293"
+    },
+    "separate-gates-r19.webp": {
+      "bytes": 174304,
+      "sha256": "a15eb5729c82c1a9d80f15a024b0c601896d7ee5fade259baccaa495b949ffaf"
+    },
+    "subtract-route-r19-640.webp": {
+      "bytes": 44956,
+      "sha256": "589c96b678727dbb96261585e6f6360f342da3f19336bda70a701f6617d46b24"
+    },
+    "subtract-route-r19-960.webp": {
+      "bytes": 87578,
+      "sha256": "fbbe4dce9a0553b5aad2f52e5eb7cb45d83a66f926660a8dc7a1c57b40f597a1"
+    },
+    "subtract-route-r19.webp": {
+      "bytes": 156450,
+      "sha256": "60b477ebc5da85a7558c966f781c137778108905faf8aac807bdedefc143e621"
+    },
+    "tool-fit-r19-640.webp": {
+      "bytes": 33068,
+      "sha256": "33082969bfadc8d53daca65af543905f08a9f99206dd538179e6386ebf816583"
+    },
+    "tool-fit-r19-960.webp": {
+      "bytes": 69908,
+      "sha256": "bfc0ef4bf971a9d6efcd7a163c2b5e2cdf54df7626255e77ef84c13089e7e74d"
+    },
+    "tool-fit-r19.webp": {
+      "bytes": 180626,
+      "sha256": "08cd3d680352b22e80b948145ec5eefe9ae07c8d1b04c47bebfe42eb65184238"
+    }
+  },
+  "approval": {
+    "state": "approved_for_production",
+    "userWords": "Approve the artwork for production",
+    "observedAt": "2026-11-14T05:43:58.353590+00:00",
+    "scope": "The 12 selected Canon scenes and transparent body in the 2026-11-14 complete-replacement review set; selected PNG hashes define the approval scope."
+  }
+}

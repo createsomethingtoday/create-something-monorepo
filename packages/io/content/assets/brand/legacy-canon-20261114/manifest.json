@@ -1,0 +1,222 @@
+{
+  "purpose": "Historical originals preserved outside shipping static trees; not current Canon identity",
+  "issue": "CRE-2455",
+  "assets": [
+    {
+      "property": "io",
+      "path": "packages/io/static/images/research/about-careful-working-notes-1440.webp",
+      "url": "https://createsomething.io/images/research/about-careful-working-notes-1440.webp",
+      "dimensions": [
+        1440,
+        960
+      ],
+      "sha256": "299db8b677a13d73f627127b0f16ece2085b8a27a1a43a7a1a4c422cb3bf3922",
+      "preservedAt": "packages/io/content/assets/brand/legacy-canon-20261114/images/research/about-careful-working-notes-1440.webp",
+      "redirectTo": "/images/canon-tasks-v1/review-nook.webp"
+    },
+    {
+      "property": "io",
+      "path": "packages/io/static/images/research/about-careful-working-notes-640.webp",
+      "url": "https://createsomething.io/images/research/about-careful-working-notes-640.webp",
+      "dimensions": [
+        640,
+        427
+      ],
+      "sha256": "92164134e27dca6a2bd3a9dd8274602a7dc1ed5b06d6f5011b46ae592b3127e1",
+      "preservedAt": "packages/io/content/assets/brand/legacy-canon-20261114/images/research/about-careful-working-notes-640.webp",
+      "redirectTo": "/images/canon-tasks-v1/review-nook-640.webp"
+    },
+    {
+      "property": "io",
+      "path": "packages/io/static/images/research/about-careful-working-notes-960.webp",
+      "url": "https://createsomething.io/images/research/about-careful-working-notes-960.webp",
+      "dimensions": [
+        960,
+        640
+      ],
+      "sha256": "d788902a25b375f649a7dde4865c2d4262f73ffb04216d68404e16fa4557605c",
+      "preservedAt": "packages/io/content/assets/brand/legacy-canon-20261114/images/research/about-careful-working-notes-960.webp",
+      "redirectTo": "/images/canon-tasks-v1/review-nook-960.webp"
+    },
+    {
+      "property": "io",
+      "path": "packages/io/static/images/research/brief-evidence-and-unknowns-1440.webp",
+      "url": "https://createsomething.io/images/research/brief-evidence-and-unknowns-1440.webp",
+      "dimensions": [
+        1440,
+        960
+      ],
+      "sha256": "d663eed2e0c8c747a984735700b466f4470ea0a8435632ee210dfcc5a0bc2998",
+      "preservedAt": "packages/io/content/assets/brand/legacy-canon-20261114/images/research/brief-evidence-and-unknowns-1440.webp",
+      "redirectTo": "/images/canon-tasks-v1/evidence-unknowns-r15.webp"
+    },
+    {
+      "property": "io",
+      "path": "packages/io/static/images/research/brief-evidence-and-unknowns-640.webp",
+      "url": "https://createsomething.io/images/research/brief-evidence-and-unknowns-640.webp",
+      "dimensions": [
+        640,
+        427
+      ],
+      "sha256": "3538d0a06b9449d08cdd85b8d58e0b7c38c5aa10641469fdcc0737a72b7b8442",
+      "preservedAt": "packages/io/content/assets/brand/legacy-canon-20261114/images/research/brief-evidence-and-unknowns-640.webp",
+      "redirectTo": "/images/canon-tasks-v1/evidence-unknowns-r15-640.webp"
+    },
+    {
+      "property": "io",
+      "path": "packages/io/static/images/research/brief-evidence-and-unknowns-960.webp",
+      "url": "https://createsomething.io/images/research/brief-evidence-and-unknowns-960.webp",
+      "dimensions": [
+        960,
+        640
+      ],
+      "sha256": "4b5a4a26512de4bd99deb0191da1793362150ef381480e4eaf629763b21a908d",
+      "preservedAt": "packages/io/content/assets/brand/legacy-canon-20261114/images/research/brief-evidence-and-unknowns-960.webp",
+      "redirectTo": "/images/canon-tasks-v1/evidence-unknowns-r15-960.webp"
+    },
+    {
+      "property": "io",
+      "path": "packages/io/static/images/research/editorial-experiments-isolated-sandbox-1440.webp",
+      "url": "https://createsomething.io/images/research/editorial-experiments-isolated-sandbox-1440.webp",
+      "dimensions": [
+        1440,
+        960
+      ],
+      "sha256": "48231ee4a2d65e31f79835578c488c08b2cf37f12324fd7d48442b663a42dd91",
+      "preservedAt": "packages/io/content/assets/brand/legacy-canon-20261114/images/research/editorial-experiments-isolated-sandbox-1440.webp",
+      "redirectTo": "/images/canon-tasks-v1/bounded-sandbox-r16.webp"
+    },
+    {
+      "property": "io",
+      "path": "packages/io/static/images/research/editorial-experiments-isolated-sandbox-640.webp",
+      "url": "https://createsomething.io/images/research/editorial-experiments-isolated-sandbox-640.webp",
+      "dimensions": [
+        640,
+        427
+      ],
+      "sha256": "6ee6b01c247efd50ac2946ea6bddb4004b029d66263d225bc4ae128d6bc46713",
+      "preservedAt": "packages/io/content/assets/brand/legacy-canon-20261114/images/research/editorial-experiments-isolated-sandbox-640.webp",
+      "redirectTo": "/images/canon-tasks-v1/bounded-sandbox-r16-640.webp"
+    },
+    {
+      "property": "io",
+      "path": "packages/io/static/images/research/editorial-experiments-isolated-sandbox-960.webp",
+      "url": "https://createsomething.io/images/research/editorial-experiments-isolated-sandbox-960.webp",
+      "dimensions": [
+        960,
+        640
+      ],
+      "sha256": "ee4bf1f56ce7f34c89f78ecaab126500c5122508b2e92bbec4a273aa911722ea",
+      "preservedAt": "packages/io/content/assets/brand/legacy-canon-20261114/images/research/editorial-experiments-isolated-sandbox-960.webp",
+      "redirectTo": "/images/canon-tasks-v1/bounded-sandbox-r16-960.webp"
+    },
+    {
+      "property": "io",
+      "path": "packages/io/static/images/research/editorial-field-reports-load-rig-1440.webp",
+      "url": "https://createsomething.io/images/research/editorial-field-reports-load-rig-1440.webp",
+      "dimensions": [
+        1440,
+        960
+      ],
+      "sha256": "0bc69fcbcb022f1ebde62625b1403e9e2bfd67efcff9ab3b628070f5e0aa5e98",
+      "preservedAt": "packages/io/content/assets/brand/legacy-canon-20261114/images/research/editorial-field-reports-load-rig-1440.webp",
+      "redirectTo": "/images/canon-tasks-v1/controlled-load-r15.webp"
+    },
+    {
+      "property": "io",
+      "path": "packages/io/static/images/research/editorial-field-reports-load-rig-640.webp",
+      "url": "https://createsomething.io/images/research/editorial-field-reports-load-rig-640.webp",
+      "dimensions": [
+        640,
+        427
+      ],
+      "sha256": "3d2c3d984bc8f701628f64ca1b2d2dcbd3f9b5d2f2e9773ab45933c5ce75c993",
+      "preservedAt": "packages/io/content/assets/brand/legacy-canon-20261114/images/research/editorial-field-reports-load-rig-640.webp",
+      "redirectTo": "/images/canon-tasks-v1/controlled-load-r15-640.webp"
+    },
+    {
+      "property": "io",
+      "path": "packages/io/static/images/research/editorial-field-reports-load-rig-960.webp",
+      "url": "https://createsomething.io/images/research/editorial-field-reports-load-rig-960.webp",
+      "dimensions": [
+        960,
+        640
+      ],
+      "sha256": "7e71dafb1de678298ef0b26324b7f85e6d1638e837a8e356b72f5940be074617",
+      "preservedAt": "packages/io/content/assets/brand/legacy-canon-20261114/images/research/editorial-field-reports-load-rig-960.webp",
+      "redirectTo": "/images/canon-tasks-v1/controlled-load-r15-960.webp"
+    },
+    {
+      "property": "io",
+      "path": "packages/io/static/images/research/editorial-mcp-modular-port-1440.webp",
+      "url": "https://createsomething.io/images/research/editorial-mcp-modular-port-1440.webp",
+      "dimensions": [
+        1440,
+        960
+      ],
+      "sha256": "f66ccc1beb48ec9b4b660023025ec2750c86ab7fc910a44ea0c538766f046d19",
+      "preservedAt": "packages/io/content/assets/brand/legacy-canon-20261114/images/research/editorial-mcp-modular-port-1440.webp",
+      "redirectTo": "/images/canon-tasks-v1/modular-port-r15.webp"
+    },
+    {
+      "property": "io",
+      "path": "packages/io/static/images/research/editorial-mcp-modular-port-640.webp",
+      "url": "https://createsomething.io/images/research/editorial-mcp-modular-port-640.webp",
+      "dimensions": [
+        640,
+        427
+      ],
+      "sha256": "ddb0a173c106a5891bd9d73999a47f1adf1fad09d2eb4958f2f02a96153d5447",
+      "preservedAt": "packages/io/content/assets/brand/legacy-canon-20261114/images/research/editorial-mcp-modular-port-640.webp",
+      "redirectTo": "/images/canon-tasks-v1/modular-port-r15-640.webp"
+    },
+    {
+      "property": "io",
+      "path": "packages/io/static/images/research/editorial-mcp-modular-port-960.webp",
+      "url": "https://createsomething.io/images/research/editorial-mcp-modular-port-960.webp",
+      "dimensions": [
+        960,
+        640
+      ],
+      "sha256": "a3e14d40fb459445a9e6d230c4a3d13ae9a6abb090c4287ed02327dbdaa4a8b6",
+      "preservedAt": "packages/io/content/assets/brand/legacy-canon-20261114/images/research/editorial-mcp-modular-port-960.webp",
+      "redirectTo": "/images/canon-tasks-v1/modular-port-r15-960.webp"
+    },
+    {
+      "property": "io",
+      "path": "packages/io/static/images/research/ground-compare-before-claim-1440.webp",
+      "url": "https://createsomething.io/images/research/ground-compare-before-claim-1440.webp",
+      "dimensions": [
+        1440,
+        1152
+      ],
+      "sha256": "9afa0b40e80f7d653150f070ef53b394a9f44ed754b72b096353fb395dc759db",
+      "preservedAt": "packages/io/content/assets/brand/legacy-canon-20261114/images/research/ground-compare-before-claim-1440.webp",
+      "redirectTo": "/images/canon-tasks-v1/evidence-comparison-r16.webp"
+    },
+    {
+      "property": "io",
+      "path": "packages/io/static/images/research/ground-compare-before-claim-640.webp",
+      "url": "https://createsomething.io/images/research/ground-compare-before-claim-640.webp",
+      "dimensions": [
+        640,
+        512
+      ],
+      "sha256": "9194be373c3f70294956d26bcdeaae4b80125afe836376a6eeca0b9758b5b22d",
+      "preservedAt": "packages/io/content/assets/brand/legacy-canon-20261114/images/research/ground-compare-before-claim-640.webp",
+      "redirectTo": "/images/canon-tasks-v1/evidence-comparison-r16-640.webp"
+    },
+    {
+      "property": "io",
+      "path": "packages/io/static/images/research/ground-compare-before-claim-960.webp",
+      "url": "https://createsomething.io/images/research/ground-compare-before-claim-960.webp",
+      "dimensions": [
+        960,
+        768
+      ],
+      "sha256": "305a6cab6e1eda4cd0cf410af3872e3aeaacf8793ae85cd1870bac92de1d20d6",
+      "preservedAt": "packages/io/content/assets/brand/legacy-canon-20261114/images/research/ground-compare-before-claim-960.webp",
+      "redirectTo": "/images/canon-tasks-v1/evidence-comparison-r16-960.webp"
+    }
+  ]
+}

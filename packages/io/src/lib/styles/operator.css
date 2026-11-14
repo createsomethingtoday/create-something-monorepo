@@ -202,8 +202,8 @@
 }
 .io-research-home .research-metrics div {
   display: flex;
-  flex-direction: column-reverse;
-  justify-content: end;
+  flex-direction: column;
+  justify-content: flex-start;
   gap: 4px;
 }
 .io-research-home .research-metrics dt {
@@ -211,6 +211,7 @@
   font-size: 0.75rem;
 }
 .io-research-home .research-metrics dd {
+  order: -1;
   font-size: 1.5rem;
   font-weight: 600;
 }

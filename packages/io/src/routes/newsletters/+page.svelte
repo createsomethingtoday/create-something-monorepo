@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ResearchScene from '$lib/components/ResearchScene.svelte';
+  import TaskOpening from '$lib/components/TaskOpening.svelte';
   import { NewsletterSignup, SEO } from '@create-something/canon';
 
   let { data } = $props();
@@ -23,7 +23,8 @@
   ]}
 />
 
-<header class="archive-hero">
+<TaskOpening scene="review-nook" caption="Canon keeps the working sheet ready for the next review.">
+<div class="archive-hero">
   <div class="archive-shell">
     <p class="eyebrow">Newsletter archive / Field notes</p>
     <div class="hero-grid">
@@ -36,14 +37,15 @@
         <a href="#subscribe">Get the operator edition <span aria-hidden="true">→</span></a>
       </div>
     </div>
-    <ResearchScene sizes="(min-width: 960px) 720px, 94vw" scene="about-careful-working-notes" caption="An agent opens the notebook so the next attempt can build on the record." />
+
     <div class="signal-rail" aria-label="Publication contract">
       <span><strong>Signal</strong> field evidence</span>
       <span><strong>Decision</strong> operator judgment</span>
       <span><strong>Proof</strong> public archive</span>
     </div>
   </div>
-</header>
+</div>
+</TaskOpening>
 
 <div class="archive-main">
   <section class="archive-shell" aria-labelledby="archive-heading">

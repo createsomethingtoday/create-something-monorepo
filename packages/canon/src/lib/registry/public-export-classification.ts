@@ -860,6 +860,13 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
 
 const SUBPATH_EXPORT_POLICIES: CanonPublicExportClassificationRule[] = [
   {
+    exportPath: './character',
+    classification: 'brand-surface',
+    registryPolicy: 'classified-out',
+    rationale:
+      'Approved decorative character and asset metadata with caller-owned URLs; not a workflow state or execution primitive. See character/README.md.'
+  },
+  {
     exportPath: './components/docs',
     classification: 'docs-only',
     registryPolicy: 'classified-out',

@@ -1,0 +1,150 @@
+{
+  "purpose": "Historical originals preserved outside shipping static trees; not current Canon identity",
+  "issue": "CRE-2455",
+  "assets": [
+    {
+      "property": "ltd",
+      "path": "packages/ltd/static/images/library/about-careful-working-notes-1536.webp",
+      "url": "https://createsomething.ltd/images/library/about-careful-working-notes-1536.webp",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sha256": "c7300edad68df85565c36def6cf41fa0c8d2c2e59f75143b0bc047a133cdfe9f",
+      "preservedAt": "packages/ltd/content/assets/brand/legacy-canon-20261114/images/library/about-careful-working-notes-1536.webp",
+      "redirectTo": "/images/canon-tasks-v1/review-nook.webp"
+    },
+    {
+      "property": "ltd",
+      "path": "packages/ltd/static/images/library/about-careful-working-notes-768.webp",
+      "url": "https://createsomething.ltd/images/library/about-careful-working-notes-768.webp",
+      "dimensions": [
+        768,
+        512
+      ],
+      "sha256": "3bba4412636c1442dcfd232f366d7d3903c8285b535eaf4ae1439851741e6c75",
+      "preservedAt": "packages/ltd/content/assets/brand/legacy-canon-20261114/images/library/about-careful-working-notes-768.webp",
+      "redirectTo": "/images/canon-tasks-v1/review-nook-960.webp"
+    },
+    {
+      "property": "ltd",
+      "path": "packages/ltd/static/images/library/editorial-workflow-library-tool-drawers-continuity-v2-1536.webp",
+      "url": "https://createsomething.ltd/images/library/editorial-workflow-library-tool-drawers-continuity-v2-1536.webp",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sha256": "5f2a678e3afbfe71066b9653b9dadf72698a18e7c8e960b5591f90ec489386b2",
+      "preservedAt": "packages/ltd/content/assets/brand/legacy-canon-20261114/images/library/editorial-workflow-library-tool-drawers-continuity-v2-1536.webp",
+      "redirectTo": "/images/canon-tasks-v1/operating-library-r15.webp"
+    },
+    {
+      "property": "ltd",
+      "path": "packages/ltd/static/images/library/editorial-workflow-library-tool-drawers-continuity-v2-768.webp",
+      "url": "https://createsomething.ltd/images/library/editorial-workflow-library-tool-drawers-continuity-v2-768.webp",
+      "dimensions": [
+        768,
+        512
+      ],
+      "sha256": "7f63d0992e6b2f99c09a5d35a5454202d377c6d2bdaf70fb528ffbb1b9320d63",
+      "preservedAt": "packages/ltd/content/assets/brand/legacy-canon-20261114/images/library/editorial-workflow-library-tool-drawers-continuity-v2-768.webp",
+      "redirectTo": "/images/canon-tasks-v1/operating-library-r15-960.webp"
+    },
+    {
+      "property": "ltd",
+      "path": "packages/ltd/static/images/library/permission-two-separate-gates-1536.webp",
+      "url": "https://createsomething.ltd/images/library/permission-two-separate-gates-1536.webp",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sha256": "f945f6b7bea4087910987e1df5f02937e8f3d5587b19bfdba29353f559f76217",
+      "preservedAt": "packages/ltd/content/assets/brand/legacy-canon-20261114/images/library/permission-two-separate-gates-1536.webp",
+      "redirectTo": "/images/canon-tasks-v1/separate-gates-r15.webp"
+    },
+    {
+      "property": "ltd",
+      "path": "packages/ltd/static/images/library/permission-two-separate-gates-768.webp",
+      "url": "https://createsomething.ltd/images/library/permission-two-separate-gates-768.webp",
+      "dimensions": [
+        768,
+        512
+      ],
+      "sha256": "7bc14dbcab8e8155e64f1fcca3ed9b76319e2f09fcaf6d673b46ca442f670771",
+      "preservedAt": "packages/ltd/content/assets/brand/legacy-canon-20261114/images/library/permission-two-separate-gates-768.webp",
+      "redirectTo": "/images/canon-tasks-v1/separate-gates-r15-960.webp"
+    },
+    {
+      "property": "ltd",
+      "path": "packages/ltd/static/images/library/proof-preserve-the-sequence-1536.webp",
+      "url": "https://createsomething.ltd/images/library/proof-preserve-the-sequence-1536.webp",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sha256": "704bf6a36c2991f75e43099a67a364b407d1cfef963ac56cb34bc426a24c05ea",
+      "preservedAt": "packages/ltd/content/assets/brand/legacy-canon-20261114/images/library/proof-preserve-the-sequence-1536.webp",
+      "redirectTo": "/images/canon-tasks-v1/preserve-sequence-r15.webp"
+    },
+    {
+      "property": "ltd",
+      "path": "packages/ltd/static/images/library/proof-preserve-the-sequence-768.webp",
+      "url": "https://createsomething.ltd/images/library/proof-preserve-the-sequence-768.webp",
+      "dimensions": [
+        768,
+        512
+      ],
+      "sha256": "fb55f6d36c9ceef3225a351b2753e8448455f3467e71a032d9507bc00df66546",
+      "preservedAt": "packages/ltd/content/assets/brand/legacy-canon-20261114/images/library/proof-preserve-the-sequence-768.webp",
+      "redirectTo": "/images/canon-tasks-v1/preserve-sequence-r15-960.webp"
+    },
+    {
+      "property": "ltd",
+      "path": "packages/ltd/static/images/library/subtract-the-extra-route-1536.webp",
+      "url": "https://createsomething.ltd/images/library/subtract-the-extra-route-1536.webp",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sha256": "6a2ba665cc710d7debb6a96057fa2fc3f34b243069f8e37ffac8d27be077619a",
+      "preservedAt": "packages/ltd/content/assets/brand/legacy-canon-20261114/images/library/subtract-the-extra-route-1536.webp",
+      "redirectTo": "/images/canon-tasks-v1/subtract-route-r15.webp"
+    },
+    {
+      "property": "ltd",
+      "path": "packages/ltd/static/images/library/subtract-the-extra-route-768.webp",
+      "url": "https://createsomething.ltd/images/library/subtract-the-extra-route-768.webp",
+      "dimensions": [
+        768,
+        512
+      ],
+      "sha256": "45a2fa74cacbfc83f019675e18f872b54d940dc08e226048baff01c525833d17",
+      "preservedAt": "packages/ltd/content/assets/brand/legacy-canon-20261114/images/library/subtract-the-extra-route-768.webp",
+      "redirectTo": "/images/canon-tasks-v1/subtract-route-r15-960.webp"
+    },
+    {
+      "property": "ltd",
+      "path": "packages/ltd/static/images/library/tool-fit-without-forcing-1536.webp",
+      "url": "https://createsomething.ltd/images/library/tool-fit-without-forcing-1536.webp",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sha256": "ae245a822554719aa7f9224b6bfe4b473dd14575463d91c47a6c8c58df399aa6",
+      "preservedAt": "packages/ltd/content/assets/brand/legacy-canon-20261114/images/library/tool-fit-without-forcing-1536.webp",
+      "redirectTo": "/images/canon-tasks-v1/tool-fit-r15.webp"
+    },
+    {
+      "property": "ltd",
+      "path": "packages/ltd/static/images/library/tool-fit-without-forcing-768.webp",
+      "url": "https://createsomething.ltd/images/library/tool-fit-without-forcing-768.webp",
+      "dimensions": [
+        768,
+        512
+      ],
+      "sha256": "d187a1e1a6159542d94d13d356944afa1ca739cfd003e481f4860f67c058efa3",
+      "preservedAt": "packages/ltd/content/assets/brand/legacy-canon-20261114/images/library/tool-fit-without-forcing-768.webp",
+      "redirectTo": "/images/canon-tasks-v1/tool-fit-r15-960.webp"
+    }
+  ]
+}

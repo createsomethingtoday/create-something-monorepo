@@ -2,9 +2,8 @@
   import { tick } from 'svelte';
   import { usesAgentReadinessStudyCopy } from '$lib/data/agentReadinessStudyVariants';
   import { mountPreviewTrace } from '$lib/motion/previewWorkflowTrace';
-  import { enhanceImageEntrance } from '$lib/motion/imageEntrance';
   import { page } from '$app/stores';
-  import { agencyPageComposition, usesCampaignFigure } from '$lib/data/agencyPageComposition';
+  import { agencyPageComposition } from '$lib/data/agencyPageComposition';
   import { getAgencyHeroTreatment } from '$lib/data/agencyHeroTreatment';
   type CopyEdit = { selector: string; text: string };
   type PreviewCopy = { title?: string; lede?: string; titleSelector?: string; ledeSelector?: string; copyEdits?: readonly CopyEdit[] };
@@ -16,7 +15,7 @@
     const study = $page.url.searchParams.get('study');
     const useBaselineCopy = !usesAgentReadinessStudyCopy(route, study);
     let compositionTarget:HTMLElement|undefined; let priorComposition:string|undefined;
-    let alive=true; let figure:HTMLElement|undefined; let closing:HTMLElement|undefined; let stopTrace:(()=>void)|undefined; let stopImageEntrance:(()=>void)|undefined;
+    let alive=true; let closing:HTMLElement|undefined; let stopTrace:(()=>void)|undefined;
     const originals: Array<{element:HTMLElement; clone:Element; hidden:boolean; id:string}> = [];
     const resolve = (selector:string) => document.querySelector(selector) ?? document.querySelector(selector.replace(/>/g,' '));
     const replaceCopy = (element:Element|null, text:string|undefined, selector:string) => {
@@ -42,20 +41,9 @@
       if(target.closest('[data-measured-opening]'))return;
       compositionTarget=target;priorComposition=target.dataset.agencyComposition;
       target.dataset.agencyComposition=agencyPageComposition(route,f,(item as typeof item & {shot?:string}).shot);
-      if(!item.image || !usesCampaignFigure(route))return;
-      // Keep literal arrows together and prefer compound-name breaks at slashes.
       if(target.classList.contains('registry-arc__hero')){const title=target.querySelector('h1');if(title?.textContent&&/\/|->/.test(title.textContent)){replaceCopy(title,title.textContent,'registry compound title');const clone=originals.at(-1)?.clone;if(clone){const parts=(clone.textContent??'').split(/(->|\/)/);clone.replaceChildren();for(const part of parts){if(part==='->'){const arrow=document.createElement('span');arrow.style.whiteSpace='nowrap';arrow.textContent=part;clone.appendChild(arrow);}else{clone.appendChild(document.createTextNode(part));if(part==='/')clone.appendChild(document.createElement('wbr'));}}}}}
-      figure=document.createElement('figure');figure.className='agency-preview-media';const framing=item as typeof item & {shot?:string;focus?:string;preserveFrame?:boolean;width?:number;height?:number};figure.dataset.shot=framing.shot??item.image;figure.dataset.asset=item.image;figure.dataset.composition=target.dataset.agencyComposition;if(framing.preserveFrame)figure.dataset.frame='whole';if(framing.focus)figure.style.setProperty('--preview-image-focus',framing.focus);
-      const image=document.createElement('img');image.src=item.image.startsWith('original-stories/')?'/images/agency-stories/'+item.image.slice('original-stories/'.length)+'.webp':'/images/agency-sales/'+item.image+'.webp';image.alt=item.caption;image.width=framing.width??1536;image.height=framing.height??1024;image.loading='eager';image.fetchPriority='high';
-      const caption=document.createElement('figcaption');caption.textContent=item.caption;
-      figure.appendChild(image);figure.appendChild(caption);target.appendChild(figure);target.classList.add('agency-preview-hero');
-      // Keep the proposed hero treatment bounded to one explicit review URL.
-      if(route === '/agent-foundation' && study === 'image-reveal'){
-        image.dataset.imageEntrance='hero-study';
-        stopImageEntrance=enhanceImageEntrance(image,{mode:'hero'}).destroy;
-      }
     });
-    return()=>{alive=false;stopImageEntrance?.();figure?.parentElement?.classList.remove('agency-preview-hero');figure?.remove();if(compositionTarget){if(priorComposition)compositionTarget.dataset.agencyComposition=priorComposition;else delete compositionTarget.dataset.agencyComposition;}stopTrace?.();closing?.remove();for(const {element,clone,hidden,id}of originals){clone.remove();if(id&&!element.id)element.id=id;element.hidden=hidden;delete element.dataset.agencyOriginal;}document.body.classList.remove('design-preview');delete document.body.dataset.previewFamily;delete document.body.dataset.previewRoute;};
+    return()=>{alive=false;if(compositionTarget){if(priorComposition)compositionTarget.dataset.agencyComposition=priorComposition;else delete compositionTarget.dataset.agencyComposition;}stopTrace?.();closing?.remove();for(const {element,clone,hidden,id}of originals){clone.remove();if(id&&!element.id)element.id=id;element.hidden=hidden;delete element.dataset.agencyOriginal;}document.body.classList.remove('design-preview');delete document.body.dataset.previewFamily;delete document.body.dataset.previewRoute;};
   });
 </script>
 <svelte:head>

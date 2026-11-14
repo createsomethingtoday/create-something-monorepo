@@ -439,7 +439,8 @@
     "workflow:discover:test": "pnpm --filter @createsomething/workflow-compiler build && node --test scripts/workflow-discovery/*.test.mjs",
     "graph:evidence": "node scripts/graph-engineering/cli.mjs",
     "graph:evidence:build": "pnpm --filter @createsomething/workflow-compiler build && pnpm --filter @createsomething/workflow-runtime build",
-    "graph:evidence:test": "pnpm graph:evidence:build && node --test scripts/graph-engineering/*.test.mjs"
+    "graph:evidence:test": "pnpm graph:evidence:build && node --test scripts/graph-engineering/*.test.mjs",
+    "canon:character:check": "node scripts/check-canon-character-retirement.mjs"
   },
   "devDependencies": {
     "@create-something/observability": "workspace:*",

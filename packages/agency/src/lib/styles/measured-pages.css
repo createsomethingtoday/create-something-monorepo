@@ -236,3 +236,5 @@
 
 /* The filled action leads; the secondary action keeps the lighter house treatment. */
 .agency-surface[data-agency-brand=measured] .agency-hero-frame[data-agency-scene=true] .performance-campaign-opening__actions .btn-secondary{background:transparent!important;border-color:transparent!important;font-weight:500;text-decoration:underline;text-underline-offset:.25em;}
+
+.agency-surface[data-agency-brand=measured] .agency-hero-frame--compact[data-agency-scene=true] { display:block; }

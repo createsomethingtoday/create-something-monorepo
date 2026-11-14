@@ -98,7 +98,7 @@
       {/if}
     </div>
     {#if workflow.step === 'welcome'}
-      <div class="cn-welcome-character"><CanonCompanion size={96} /></div>
+      <div class="cn-welcome-character"><CanonCompanion size={96} headSrc="/canon-next/approved-v1/head-r42.webp" /></div>
     {/if}
   </div>
 

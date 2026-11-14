@@ -812,6 +812,12 @@ export const CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES: CanonPublicExportClassifi
     "rationale": "Search discovery helpers serialize route-owned data without becoming registry UI artifacts."
   },
   {
+    "exportPath": "./character",
+    "classification": "brand-surface",
+    "registryPolicy": "classified-out",
+    "rationale": "Approved decorative character and asset metadata with caller-owned URLs; not a workflow state or execution primitive. See character/README.md."
+  },
+  {
     "exportPath": "./components/docs",
     "classification": "docs-only",
     "registryPolicy": "classified-out",

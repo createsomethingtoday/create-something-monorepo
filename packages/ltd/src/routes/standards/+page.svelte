@@ -1,5 +1,5 @@
 <script lang="ts">
-	import LibraryScene from '$lib/components/LibraryScene.svelte';
+  import TaskOpening from '$lib/components/TaskOpening.svelte';
 	import {
 		PerformancePageSection,
 		PerformanceNarrativeStage,
@@ -80,6 +80,7 @@
 	]}
 />
 
+<TaskOpening scene="preserve-sequence" caption="Keep the rule and its evidence together.">
 <div class="library-standard-opening">
 <PerformancePageSection
 	variant="hero"
@@ -90,8 +91,9 @@
 	ariaLabel="The Canon standards opening"
 />
 
-	<LibraryScene paired scene="proof-preserve-the-sequence" caption="Keep the rule and its evidence together." />
+
 </div>
+</TaskOpening>
 
 <PerformanceNarrativeStage
 	id="standards-operating-story"

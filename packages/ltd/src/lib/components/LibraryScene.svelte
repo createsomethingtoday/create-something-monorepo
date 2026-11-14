@@ -1,18 +1,14 @@
 <script lang="ts">
-  let { scene, caption, priority = true, paired = false }: { scene: string; caption: string; priority?: boolean; paired?: boolean } = $props();
+  import { canonTaskScenes, type CanonTaskSceneKey } from '$lib/canon-task-scenes';
+  let { scene, caption, eager = true, sizes = '94vw' }: { scene: CanonTaskSceneKey; caption: string; eager?: boolean; sizes?: string } = $props();
+  const art = $derived(canonTaskScenes[scene]);
 </script>
-
-<figure class="library-scene">
-  <img src={`/images/library/${scene}-1536.webp`}
-    srcset={`/images/library/${scene}-768.webp 768w, /images/library/${scene}-1536.webp 1536w`}
-    sizes={paired ? '(max-width: 1023px) calc(100vw - 48px), 50vw' : '(max-width: 767px) calc(100vw - 32px), (max-width: 1100px) calc(100vw - 48px), 1200px'}
-    width="1536" height="1024" alt={caption}
-    loading={priority ? 'eager' : 'lazy'} fetchpriority={priority ? 'high' : 'auto'} decoding="async" />
+<figure>
+  <img src={art.src} srcset={art.srcset} {sizes} width={art.width} height={art.height} alt={caption} loading={eager ? 'eager' : 'lazy'} fetchpriority={eager ? 'high' : 'auto'} decoding="async" />
   <figcaption>Concept illustration · {caption}</figcaption>
 </figure>
-
 <style>
-  .library-scene { margin: clamp(1.75rem, 4vw, 3rem) 0 0; width: 100%; text-align: left; }
-  img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: contain; background: var(--color-performance-bg-elevated); }
-  figcaption { margin-top: .65rem; color: var(--color-performance-muted); font-family: var(--font-performance-mono, monospace); font-size: .75rem; line-height: 1.6; }
+  figure { margin: 1.5rem 0 0; min-width: 0; }
+  img { display: block; width: 100%; height: auto; border: 1px solid var(--color-performance-line); }
+  figcaption { padding-block: .75rem; font: .75rem/1.6 var(--font-performance-mono); color: var(--color-performance-fg-secondary); }
 </style>

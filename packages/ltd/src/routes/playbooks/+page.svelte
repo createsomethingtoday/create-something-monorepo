@@ -1,5 +1,5 @@
 <script lang="ts">
-	import LibraryScene from '$lib/components/LibraryScene.svelte';
+  import TaskOpening from '$lib/components/TaskOpening.svelte';
 	import {
 		Button,
 		PerformanceCardGrid,
@@ -29,7 +29,8 @@
 	]}
 />
 
-<header class="ltd-operator-hero" aria-labelledby="playbooks-title">
+<TaskOpening scene="review-nook" caption="A playbook gives people and agents the same working picture.">
+<div class="ltd-operator-hero" aria-labelledby="playbooks-title">
 	<div class="ltd-operator-hero__intro">
 		<p class="ltd-operator-hero__eyebrow">CREATE SOMETHING .ltd / Operator playbooks</p>
 		<h1 id="playbooks-title">Start with the work that has to move.</h1>
@@ -39,7 +40,7 @@
 			<Button href="/canon" variant="secondary">Why this works</Button>
 		</div>
 	</div>
-	<LibraryScene paired scene="about-careful-working-notes" caption="A playbook gives people and agents the same working picture." />
+
 
 	<ul class="ltd-operator-hero__proof" aria-label="The operating sequence">
 		<li><span>01 / Start</span><strong>One workflow</strong></li>
@@ -47,7 +48,8 @@
 		<li><span>03 / Set</span><strong>One boundary</strong></li>
 		<li><span>04 / Keep</span><strong>One receipt</strong></li>
 	</ul>
-</header>
+</div>
+</TaskOpening>
 
 <section class="playbook-index" aria-labelledby="playbook-library-title">
 	<div class="playbook-index__heading">
