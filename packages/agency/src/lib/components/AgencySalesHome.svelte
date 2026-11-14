@@ -124,7 +124,7 @@
   });
 </script>
 
-<svelte:head><link rel="stylesheet" href="/styles/agency/paper-example.css?v=canon-replacement-20261114" /><link rel="stylesheet" href="/styles/agency/story-home.css?v=canon-agency-20261114" /><link rel="preload" as="image" href="/images/canon-agency-v1/hero-wide-v1.webp" media="(min-width:601px)" fetchpriority="high" /><link rel="stylesheet" href="/styles/agency/image-treatment.css?v=graphite-frames-20261105" /><link rel="stylesheet" href="/styles/agency/measured-foundation.css?v=canon-replacement-20261114" /><link rel="preload" as="image" href="/images/canon-agency-v1/hero-portrait-v1.webp" media="(max-width:600px)" fetchpriority="high" /></svelte:head>
+<svelte:head><link rel="stylesheet" href="/styles/agency/paper-example.css?v=canon-replacement-20261114" /><link rel="stylesheet" href="/styles/agency/story-home.css?v=canon-agency-20261114" /><link rel="preload" as="image" href="/images/canon-agency-v1/hero-wide-v2.webp" media="(min-width:601px)" fetchpriority="high" /><link rel="stylesheet" href="/styles/agency/image-treatment.css?v=graphite-frames-20261105" /><link rel="stylesheet" href="/styles/agency/measured-foundation.css?v=canon-hand-repair-20261114" /><link rel="preload" as="image" href="/images/canon-agency-v1/hero-portrait-v1.webp" media="(max-width:600px)" fetchpriority="high" /></svelte:head>
 <div class="agency-home measured-foundation" bind:this={root}>
   <div class="page-progress" aria-hidden="true"></div>
   <AgencyChapterDial />

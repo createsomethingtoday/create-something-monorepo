@@ -3,7 +3,7 @@ const base = '/images/canon-agency-v1/';
 const portrait = { mobileSrc: base + 'review-nook.webp', mobileAspectRatio: 1122 / 1402, mobilePosition: 'center' };
 
 export const agencyWelcomeScene = {
-  src: base + 'hero-wide-v1.webp', aspectRatio: 1672 / 941, position: 'center', mobileSrc: base + 'hero-portrait-v1.webp', mobileAspectRatio: 1122 / 1402, mobilePosition: 'center',
+  src: base + 'hero-wide-v2.webp', aspectRatio: 1672 / 941, position: 'center', mobileSrc: base + 'hero-portrait-v1.webp', mobileAspectRatio: 1122 / 1402, mobilePosition: 'center',
   description: 'Concept illustration: the soft felt Canon makes room for a useful task at a warm workshop bench.'
 } as const;
 
