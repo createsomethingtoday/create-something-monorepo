@@ -1,3 +1,10 @@
+import {
+  claimEnrichment,
+  reserveEnrichment,
+  recordEnrichment,
+  recordClayCompletion,
+  type BudgetGrant
+} from './enrichment-budget';
 import { clayRequestSchema, clayResultSchema } from './abundance-clay-contract';
 import { latestSuccessfulNationwideRun } from './abundance-healthcare-nationwide';
 export class ClayQuotaError extends Error {}
@@ -44,7 +51,7 @@ export async function readClayJob(db: D1Database, id: string) {
 export async function requestClayJob(
   db: D1Database,
   input: unknown,
-  config: { webhookUrl: string; webhookToken: string },
+  config: { webhookUrl: string; webhookToken: string; budgetGrant?: BudgetGrant },
   fetchFn: typeof fetch = fetch
 ) {
   const parsed = clayRequestSchema.parse(input);
@@ -69,7 +76,20 @@ export async function requestClayJob(
     .prepare('SELECT * FROM abundance_clay_jobs WHERE cache_key=?')
     .bind(cacheKey)
     .first<Job>();
-  if (existing) return { ...publicJob(existing), cache_hit: true };
+  if (existing) {
+    if (config.budgetGrant) {
+      if (config.budgetGrant.provider !== 'clay' || config.budgetGrant.npi !== parsed.npi)
+        throw new TypeError('Mismatched Clay tracking grant');
+      await claimEnrichment(db, config.budgetGrant);
+      await recordEnrichment(db, config.budgetGrant, {
+        event_id: 'clay:cached:' + existing.id,
+        status: 'complete',
+        actual_usd: 0,
+        receipt_ref: existing.id
+      });
+    }
+    return { ...publicJob(existing), cache_hit: true };
+  }
   const url = new URL(config.webhookUrl);
   if (
     url.protocol !== 'https:' ||
@@ -80,36 +100,44 @@ export async function requestClayJob(
     !url.pathname.startsWith('/v3/sources/webhook/')
   )
     throw new TypeError('Invalid Clay endpoint');
+  const grant =
+    config.budgetGrant ?? (await reserveEnrichment(db, 'clay', cacheKey, parsed.npi)).grants.clay;
+  if (!grant || grant.npi !== parsed.npi || grant.provider !== 'clay')
+    throw new TypeError('Mismatched Clay tracking grant');
+  await claimEnrichment(db, grant);
   const id = `npgclay_${crypto.randomUUID()}`;
   const token = crypto.randomUUID() + crypto.randomUUID();
   const tokenHash = await digest(token);
-  // Single write statement serializes concurrent reservations, including quota.
+  // Atomic job insertion preserves deduplication without a daily spend quota.
   const inserted = await db
     .prepare(
       `INSERT OR IGNORE INTO abundance_clay_jobs
  (id,cache_key,npi,status,callback_hash,source_run_id,source_payload_hash,created_at)
- SELECT ?,?,?,'pending',?,?,?,? WHERE
- (SELECT count(*) FROM abundance_clay_jobs WHERE created_at>=?)<5`
+ VALUES(?,?,?,'pending',?,?,?,?)`
     )
-    .bind(
-      id,
-      cacheKey,
-      parsed.npi,
-      tokenHash,
-      run.id,
-      provider.source_payload_hash,
-      now,
-      new Date(Date.now() - 86400000).toISOString()
-    )
+    .bind(id, cacheKey, parsed.npi, tokenHash, run.id, provider.source_payload_hash, now)
     .run();
   if (!inserted.meta.changes) {
     const concurrent = await db
       .prepare('SELECT * FROM abundance_clay_jobs WHERE cache_key=?')
       .bind(cacheKey)
       .first<Job>();
-    if (concurrent) return { ...publicJob(concurrent), cache_hit: true };
-    throw new ClayQuotaError('Daily request allowance exhausted');
+    if (concurrent) {
+      await recordEnrichment(db, grant, {
+        event_id: 'clay:cached:' + concurrent.id,
+        status: 'complete',
+        actual_usd: 0,
+        receipt_ref: concurrent.id
+      });
+      return { ...publicJob(concurrent), cache_hit: true };
+    }
+    throw new ClayQuotaError('Clay dispatch tracking unavailable');
   }
+  await recordEnrichment(db, grant, {
+    event_id: 'clay:dispatch:' + id,
+    status: 'pending',
+    receipt_ref: id
+  });
   const payload = {
     request_id: id,
     npi: parsed.npi,
@@ -125,6 +153,7 @@ export async function requestClayJob(
   try {
     const response = await fetchFn(url, {
       method: 'POST',
+      redirect: 'manual',
       headers: { 'Content-Type': 'application/json', 'x-clay-webhook-auth': config.webhookToken },
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(15000)
@@ -137,6 +166,11 @@ export async function requestClayJob(
       )
       .bind(id)
       .run();
+    await recordEnrichment(db, grant, {
+      event_id: 'clay:uncertain:' + id,
+      status: 'uncertain',
+      receipt_ref: id
+    });
   }
   return { ...(await readClayJob(db, id)), cache_hit: false };
 }
@@ -162,6 +196,7 @@ export async function completeClayJob(db: D1Database, input: unknown) {
   const serialized = JSON.stringify(result);
   if (job.result_json) {
     if (job.result_json !== serialized) throw new ClayCallbackError();
+    await recordClayCompletion(db, job.id);
     return { accepted: true, repeated: true };
   }
   if (Date.now() - Date.parse(job.created_at) > 86400000) throw new ClayCallbackError();
@@ -179,5 +214,6 @@ export async function completeClayJob(db: D1Database, input: unknown) {
       .first<{ result_json: string }>();
     if (current?.result_json !== serialized) throw new ClayCallbackError();
   }
+  await recordClayCompletion(db, job.id);
   return { accepted: true };
 }

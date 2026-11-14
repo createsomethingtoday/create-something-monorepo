@@ -1,11 +1,19 @@
-import { type SkipIdentity, type SkipResult } from './skip-trace.js';
+import { readEnrichmentReadiness, reserveBudget, claimBudget, recordSpend, finiteAmount, type BudgetGrant } from './enrichment-budget.js';
+import { skipIdentity, type SkipIdentity, type SkipResult } from './skip-trace.js';
 import { type PdlInput, type PdlResult } from './pdl.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 
+async function retainSpend(options:HealthcareClientOptions,grant:BudgetGrant,receipt:Parameters<typeof recordSpend>[2]){
+ try{await recordSpend(options,grant,receipt);return true;}catch{return false;}
+}
+class KnownEnrichmentChargeError extends Error{
+ constructor(message:string,readonly actualCostUsd:number|null,readonly receiptId:string){super(message)}
+}
+
 export const SERVER_NAME = 'abundance-healthcare-mcp';
-export const SERVER_VERSION = '1.7.0';
+export const SERVER_VERSION = '1.8.0';
 export const DEFAULT_AGENCY_BASE_URL = 'https://createsomething.agency';
 export const DEFAULT_EXA_AGENT_BASE_URL = 'https://api.exa.ai';
 
@@ -33,7 +41,9 @@ export interface HealthcareApiResponse {
   data: { report: HealthcareCoverageReport; providers: HealthcareProvider[]; readiness: HealthcareReadiness[]; total: number; limit: number; offset: number; run?: Record<string, unknown> };
 }
 export interface HealthcareClientOptions {
-  skipTrace?: (input: SkipIdentity) => Promise<SkipResult>;
+  skipTraceReadiness?:()=>Promise<{ready:boolean;reason?:string}>;
+  budgetGrant?: BudgetGrant;
+  skipTrace?: (input: SkipIdentity, trackingGrant?: BudgetGrant) => Promise<SkipResult>;
   pdlEnrich?: (input: PdlInput) => Promise<PdlResult>;
   agencyApiKey?: string;
   agencyBaseUrl?: string;
@@ -185,7 +195,8 @@ const providerEnrichmentOutputSchema = z.object({
   outreach_authority_status: z.literal('not_established'),
   advertising_eligibility_status: z.literal('not_established'),
   recruiting_readiness_impact: z.literal('none'),
-  estimated_max_cost_usd: z.number(), actual_cost_usd: z.number().optional(),
+  estimated_cost_usd: z.number().nullable(), actual_cost_usd: z.number().nullable(),
+  cost_estimate_status:z.string(),spend_tracking:z.object({recorded:z.boolean(),warning:z.string().optional()}),
   usage: z.record(z.unknown()).optional(),
   enrichment_limitation: z.string(),
 });
@@ -362,13 +373,19 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
     }] },
     outputSchema,
   };
-  const run = await createAndAwaitExaRun(createBody, exaApiKey, options);
+  const spendGrant = await claimBudget('exa', { ...parsed, operation_id: options.budgetGrant ? undefined : crypto.randomUUID() }, parsed.npi, options, options.budgetGrant);
+  let run:ExaAgentRun;
+  try{run=await createAndAwaitExaRun(createBody,exaApiKey,options);}catch(error){
+    await retainSpend(options,spendGrant,{event_id:`${spendGrant.id}:exa:uncertain`,status:'uncertain',actual_usd:error instanceof KnownEnrichmentChargeError?error.actualCostUsd:null,estimated_usd:null,credits:null,credit_unit:null,receipt_ref:error instanceof KnownEnrichmentChargeError?error.receiptId:null});
+    throw error;
+  }
+  const spendRecorded=await retainSpend(options,spendGrant,{event_id:`${spendGrant.id}:exa:complete`,status:'complete',actual_usd:finiteAmount(run.costDollars?.total),estimated_usd:null,credits:null,credit_unit:null,receipt_ref:run.id??null});
   const structuredResult = exaStructuredOutputSchema.safeParse(run.output?.structured);
   if (!structuredResult.success) {
     const reportedCost = typeof run.costDollars?.total === 'number'
       ? ` Reported cost: $${run.costDollars.total.toFixed(3)}.`
       : '';
-    throw new Error(`Exa Agent completed but returned unusable structured output.${reportedCost} No contact result was accepted; do not retry until the completed run is reviewed in Exa.`);
+    throw new KnownEnrichmentChargeError(`Exa Agent completed but returned unusable structured output.${reportedCost} No contact result was accepted; do not retry until the completed run is reviewed in Exa.`,finiteAmount(run.costDollars?.total),run.id);
   }
   const structured = structuredResult.data;
   const normalizedCitations = Array.isArray(run.output?.grounding)
@@ -387,7 +404,6 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
     ? cleanProfessionalPhone(structured.professional_phone, provider.npi)
     : undefined;
   const hasCandidate = Boolean(acceptedEmail || acceptedPhone);
-  const estimatedMaxCostUsd = 0.012 + (requestedEmail ? 0.02 : 0) + (requestedPhone ? 0.07 : 0);
   return {
     provider: compactObject({ npi: provider.npi, name: provider.name, taxonomy: cleanString(provider.primary_taxonomy_description) }),
     requested_purpose: parsed.purpose,
@@ -406,8 +422,10 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
     outreach_authority_status: 'not_established',
     advertising_eligibility_status: 'not_established',
     recruiting_readiness_impact: 'none',
-    estimated_max_cost_usd: Number(estimatedMaxCostUsd.toFixed(3)),
-    actual_cost_usd: typeof run.costDollars?.total === 'number' ? run.costDollars.total : undefined,
+    estimated_cost_usd: null,
+    cost_estimate_status: 'Account-specific pricing is unknown; use the provider receipt for actual USD.',
+    actual_cost_usd: finiteAmount(run.costDollars?.total),
+    spend_tracking: {recorded:spendRecorded,...(!spendRecorded?{warning:'Provider receipt is available; ledger update is pending.'}:{})},
     usage: sanitizeExaUsage(run.usage),
     enrichment_limitation: 'Exa enrichment returns source-backed professional contact candidates, not verified ownership, current employment, availability, consent, advertising eligibility, or recruiting readiness. An operator must resolve identity and validate the route before any use.',
   };
@@ -572,7 +590,7 @@ async function createAndAwaitExaRun(body: Record<string, unknown>, apiKey: strin
   }
   if (run.status === 'completed') return run;
   if (run.status === 'failed' || run.status === 'cancelled') {
-    throw new Error(formatTerminalExaRunError(run));
+    throw new KnownEnrichmentChargeError(formatTerminalExaRunError(run),finiteAmount(run.costDollars?.total),run.id);
   }
   const runId = run.id;
   const pollIntervalMs = Math.min(Math.max(options.exaPollIntervalMs ?? 1_000, 100), 5_000);
@@ -600,12 +618,12 @@ async function createAndAwaitExaRun(body: Record<string, unknown>, apiKey: strin
     }
     if (run.status === 'completed') return run;
     if (run.status === 'failed' || run.status === 'cancelled') {
-      throw new Error(formatTerminalExaRunError(run));
+      throw new KnownEnrichmentChargeError(formatTerminalExaRunError(run),finiteAmount(run.costDollars?.total),run.id);
     }
   }
   const cancellationConfirmed = await cancelExaRun(fetchFn, baseUrl, runId, apiKey, overallDeadline - Date.now());
   if (cancellationConfirmed) {
-    throw new Error(`Exa Agent enrichment did not complete within ${timeoutMs}ms and was cancelled. Retry later or use the no-cost registry contact tool.`);
+    throw new Error(`Exa Agent enrichment did not complete within ${timeoutMs}ms and was cancelled. Reconcile the existing run before another paid request; registry contacts remain available.`);
   }
   throw new Error(`Exa Agent enrichment did not complete within ${timeoutMs}ms, and cancellation could not be confirmed. The paid run may still be active; do not retry until its Exa run status is reviewed.`);
 }
@@ -714,7 +732,7 @@ export async function callClayEnrichment(input: {npi:string;confirm_paid_enrichm
   const url=new URL('/api/abundance/healthcare-providers/enrichment',options.agencyBaseUrl||DEFAULT_AGENCY_BASE_URL);
   const isRead='id' in input;
   if(isRead)url.searchParams.set('id',input.id);
-  const response=await (options.fetchFn??fetch)(url,{method:isRead?'GET':'POST',headers:{Authorization:`Bearer ${options.agencyApiKey}`,'Content-Type':'application/json'},...(isRead?{}:{body:JSON.stringify(input)}),signal:AbortSignal.timeout(25000)});
+  const response=await (options.fetchFn??fetch)(url,{method:isRead?'GET':'POST',redirect:'manual',headers:{Authorization:`Bearer ${options.agencyApiKey}`,'Content-Type':'application/json'},...(isRead?{}:{body:JSON.stringify(options.budgetGrant && !('id' in input)?{...input,budget_grant:options.budgetGrant}:input)}),signal:AbortSignal.timeout(25000)});
   if(!response.ok)throw new Error(response.status===429?'Enrichment allowance exhausted.':'Enrichment request unavailable; check an existing job before retrying.');
   const result=await response.json() as {success:boolean;data:Record<string,unknown>};
   if(!result.success||!result.data)throw new Error('Invalid enrichment response.');
@@ -753,10 +771,81 @@ export async function enrichCandidateProfile(input: z.input<typeof candidateProf
   } else {
     pdlInput = { name: parsed.name!, locality: parsed.locality, region: parsed.region, company: parsed.company, ...common };
   }
+  const spendGrant = await claimBudget('pdl',{...pdlInput,operation_id:options.budgetGrant?undefined:crypto.randomUUID()},parsed.npi??'',options,options.budgetGrant);
   const result = await options.pdlEnrich(pdlInput);
-  return compactObject({ ...result, registry, match_input: 'profile_url' in pdlInput ? { profile_url: pdlInput.profile_url } : compactObject({ name: pdlInput.name, locality: pdlInput.locality, region: pdlInput.region, company: pdlInput.company }) });
+  const spendRecorded=await retainSpend(options,spendGrant,{event_id:`${spendGrant.id}:pdl:result`,status:result.status==='unavailable'?'uncertain':result.status==='pending'?'pending':'complete',actual_usd:result.cached?0:null,estimated_usd:null,credits:result.cached?0:finiteAmount(result.billing?.credits_used),credit_unit:'pdl_credit',receipt_ref:result.billing?.request_id??null});
+  return compactObject({ ...result, spend_tracking:{recorded:spendRecorded,...(!spendRecorded?{warning:'Provider receipt is available; ledger update is pending.'}:{})},registry, match_input: 'profile_url' in pdlInput ? { profile_url: pdlInput.profile_url } : compactObject({ name: pdlInput.name, locality: pdlInput.locality, region: pdlInput.region, company: pdlInput.company }) });
+}
+/** Each approved operation attempts all four sources independently, retaining provenance and spend uncertainty. */
+export async function enrichCompleteProfile(input:{npi:string;confirm_paid_enrichment:true;operation_id?:string},options:HealthcareClientOptions){
+ const parsed=z.object({npi:z.string().regex(/^\d{10}$/),confirm_paid_enrichment:z.literal(true),operation_id:z.string().uuid().optional()}).strict().parse(input);
+ if(!parsed.operation_id)throw new Error('An approved operation identifier is required before dispatch.');
+ const providerInput={npi:parsed.npi,confirm_paid_enrichment:true as const};
+ const record=await getHealthcarePractitioner({market_id:'npg-family-np-nationwide',npi:parsed.npi},options);
+ const p=record.provider as Record<string,string>;
+ if(p.npi!==parsed.npi)throw new Error('Registry identity association failed.');
+ const reservation=await reserveBudget('complete',{operation_id:parsed.operation_id,npi:parsed.npi},parsed.npi,options);
+ const providers:Record<string,any>={};
+ const charges:Record<string,number|null>={};
+ let uncertain=false;
+ for(const provider of ['pdl','clay','exa','apify'] as const){
+  const grant=reservation.grants[provider];
+  if(!grant)throw new Error('Tracking grant unavailable; no dispatch authorized.');
+  try{
+   let result:any;
+   if((provider==='pdl'&&!options.pdlEnrich)||(provider==='exa'&&!options.exaApiKey)||(provider==='apify'&&!options.skipTrace)){
+    await claimBudget(provider,parsed.operation_id,parsed.npi,options,grant);
+    await retainSpend(options,grant,{event_id:`${grant.id}:${provider}:unconfigured`,status:'failed',actual_usd:0,estimated_usd:null,credits:null,credit_unit:null,receipt_ref:null});
+    providers[provider]={status:'unavailable',reason:'Provider is not configured; no dispatch was made.'};charges[provider]=0;continue;
+   }
+   if(provider==='pdl') result=await enrichCandidateProfile({...providerInput,include_personal_contact:true,require_contact:false}, {...options,budgetGrant:grant});
+   else if(provider==='clay') result=await callClayEnrichment(providerInput,{...options,budgetGrant:grant});
+   else if(provider==='exa') result=await enrichProviderProfessionalContact({...providerInput,purpose:'recruiting_outreach',contact_types:['email','phone']},{...options,budgetGrant:grant});
+   else {
+    const skipInput=skipIdentity.parse({npi:parsed.npi,first:p.first_name,last:p.last_name,full_name:[p.first_name,p.middle_name,p.last_name].filter(Boolean).join(' '),practice_city:p.practice_city,practice_state:p.practice_state,confirm_paid_enrichment:true});
+    await claimBudget('apify',parsed.operation_id,parsed.npi,options,grant);
+    const ready=await options.skipTraceReadiness?.();
+    if(ready?.ready!==true){
+     await retainSpend(options,grant,{event_id:`${grant.id}:apify:privacy-unavailable`,status:'failed',actual_usd:0,estimated_usd:null,credits:null,credit_unit:null,receipt_ref:null});
+     providers.apify={status:'unavailable',reason:ready?.reason??'Skip Trace privacy preflight unavailable.'};charges.apify=0;continue;
+    }
+    result=await options.skipTrace!(skipInput,grant);
+    const actual=result.cached?0:finiteAmount(result.charge_usd);
+    const spendRecorded=await retainSpend(options,grant,{event_id:`${grant.id}:apify:${result.revision??0}`,status:result.status==='pending'?'pending':result.run_id?'complete':'failed',actual_usd:actual,estimated_usd:null,credits:null,credit_unit:null,receipt_ref:result.run_id??null});
+    result={...result,operation_cache_hit:result.cached===true,operation_charge_usd:actual,spend_tracking:{recorded:spendRecorded,...(!spendRecorded?{warning:'Provider receipt is available; ledger update is pending.'}:{})}};
+   }
+   providers[provider]=result;
+   charges[provider]=result.cached||result.cache_hit?0:finiteAmount(result.actual_cost_usd??result.charge_usd);
+   if(['delivery_unknown','unavailable','unresolved','association_failure','privacy_blocked_review','billing_review'].includes(result.status)||(provider==='pdl'&&result.status==='pending'))uncertain=true;
+  }catch(error){
+   const knownCharge=error instanceof KnownEnrichmentChargeError?error.actualCostUsd:null;
+   providers[provider]={status:'unresolved',reason:'The provider outcome could not be confirmed. Recover its existing receipt; do not automatically repeat this operation.',actual_cost_usd:knownCharge,...(error instanceof KnownEnrichmentChargeError?{receipt_id:error.receiptId}:{})};
+   charges[provider]=knownCharge;uncertain=true;
+   try{await retainSpend(options,grant,{event_id:`${grant.id}:${provider}:uncertain`,status:'uncertain',actual_usd:knownCharge,estimated_usd:null,credits:null,credit_unit:null,receipt_ref:error instanceof KnownEnrichmentChargeError?error.receiptId:null})}catch{/* Original durable dispatch record remains pending. */}
+  }
+ }
+ const pending=Object.values(providers).some(r=>['pending','unavailable','unresolved','delivery_unknown','privacy_blocked'].includes(r.status));
+ const known=Object.values(charges).filter((n):n is number=>n!==null);
+ const pendingReceipts=Object.values(charges).filter(n=>n===null).length;
+ return {status:uncertain||pending?'partial':'complete',npi:parsed.npi,
+  profile:{registry:record.provider,provider_results:providers,verification:'unverified',conflict_policy:'Retain differing provider values with their sources. No source establishes contact permission or identity by itself.'},
+  providers,unstarted:[],uncertain_dispatch:uncertain,billing_reconciliation_required:pendingReceipts>0,
+  spend_tracking:{operation_id:parsed.operation_id,receipt_id:reservation.id,actual_usd:known.length?Math.round(known.reduce((a,b)=>a+b,0)*1e6)/1e6:null,estimated_usd:null,pending_receipts:pendingReceipts,historical_status:'unknown',scope:'Confirmed charges for this operation only; missing receipts and historical spending are excluded.'},
+  recovery:'Read existing provider receipts. Do not repeat this operation to recover a run. Refresh an existing Clay job by ID or Skip Trace run with its exact receipt.',
+  limitation:'Complete means every provider returned, not that every requested field exists or is verified. Confirmed spend excludes unknown or pending charges; it is not an account total.'};
 }
 export function registerAbundanceHealthcareTools(server: McpServer, options: HealthcareClientOptions): void {
+  server.registerTool('enrich_candidate_complete_profile', {
+    description:'After exact paid approval, request one consolidated profile for one registry NPI from PDL, Clay, Exa and Apify Skip Trace. Attempts all four independently, includes professional and personal contacts, retains separate sources and tracks spend. Unknown prices or historical spending do not block. No bulk lookup, automatic retry or outreach.',
+    inputSchema:z.object({npi:z.string().regex(/^\d{10}$/),confirm_paid_enrichment:z.literal(true),operation_id:z.string().uuid().optional().describe('Immutable server-derived approved operation ID, required for dispatch and duplicate prevention.')}).strict(),
+    annotations:{readOnlyHint:false,destructiveHint:false,idempotentHint:false,openWorldHint:true},
+  },async input=>structuredJson(await enrichCompleteProfile(input,options)));
+  server.registerTool('get_enrichment_readiness', {
+    description: 'Read enrichment spend tracking and provider accounting status. Confirmed USD, estimates, credit units and missing receipts remain distinct. Unknown historical spend does not block enrichment. Does not make a paid vendor call.',
+    inputSchema: z.object({ provider: z.enum(['pdl', 'clay', 'exa', 'apify']) }).strict(),
+    annotations: readOnlyAnnotations(),
+  }, async ({ provider }) => structuredJson(await readEnrichmentReadiness(provider,options)));
+
   server.registerTool('enrich_candidate_skip_trace', {
     description: 'Explicit optional paid Apify broker lookup for an approved existing registry candidate NPI. Repeating the same input reads or reconciles its cached run, never broadens or dispatches a second lookup. For strict read-only recovery, reconcile_receipt requires the existing receipt id and run_id; a missing or changed receipt fails without paid dispatch. Practice geography is not home. All contacts require identity review, ownership and consent remain unverified; never recruiter-ready. No outreach or registry writes.',
     inputSchema: z.object({ npi: z.string().regex(/^\d{10}$/), confirm_paid_enrichment: z.literal(true), reconcile_receipt:z.object({id:z.string().regex(/^[a-f0-9]{64}$/),run_id:z.string().regex(/^[A-Za-z0-9]{1,64}$/)}).strict().optional() }).strict(),
@@ -766,17 +855,22 @@ export function registerAbundanceHealthcareTools(server: McpServer, options: Hea
     const record = await getHealthcarePractitioner({ market_id: 'npg-family-np-nationwide', npi: input.npi }, options);
     const p = record.provider as Record<string,string>;
     if (p.npi !== input.npi) throw new Error('Registry identity association failed.');
-    return structuredJson(await options.skipTrace({ npi: input.npi, reconcile_receipt:input.reconcile_receipt, first: p.first_name, last: p.last_name, full_name: [p.first_name,p.middle_name,p.last_name].filter(Boolean).join(' '), practice_city: p.practice_city, practice_state: p.practice_state, confirm_paid_enrichment: true }));
+    const grant=input.reconcile_receipt?undefined:await claimBudget('apify',{npi:input.npi,operation_id:crypto.randomUUID()},input.npi,options);
+    const result=await options.skipTrace({ npi: input.npi, reconcile_receipt:input.reconcile_receipt, first: p.first_name, last: p.last_name, full_name: [p.first_name,p.middle_name,p.last_name].filter(Boolean).join(' '), practice_city: p.practice_city, practice_state: p.practice_state, confirm_paid_enrichment: true },grant);
+    if(grant){const recorded=await retainSpend(options,grant,{event_id:`${grant.id}:apify:${result.revision??0}`,status:result.status==='pending'?'pending':result.run_id?'complete':'failed',actual_usd:result.cached?0:finiteAmount(result.charge_usd),estimated_usd:null,credits:null,credit_unit:null,receipt_ref:result.run_id??null});
+     return structuredJson({...result,spend_tracking:{recorded,...(!recorded?{warning:'Provider receipt is available; ledger update is pending.'}:{})}});
+    }
+    return structuredJson(result);
   });
   server.registerTool('enrich_candidate_profile', {
-    description: 'Use People Data Labs to enrich one candidate with a professional profile (LinkedIn, current title, employer, work email) and personal contact details (mobile phone, personal emails, home city/state). Identify the candidate by exactly one of: a registry NPI (name and practice city/state are taken from NPPES), an exact LinkedIn profile URL, or a name plus locality/region/company. Explicit paid confirmation required; a shared rolling daily cap and seven-day caching apply. Set require_contact to pay only for matches that include a contact value. Results are vendor-reported and unverified: confirm identity before use; personal contacts carry no consent record, so manual recruiter outreach only, no autodialer or SMS campaigns. Registry practice_phone stays labeled separately.',
+    description: 'Use People Data Labs to enrich one candidate with a professional profile (LinkedIn, current title, employer, work email) and personal contact details (mobile phone, personal emails, home city/state). Identify the candidate by exactly one of: a registry NPI (name and practice city/state are taken from NPPES), an exact LinkedIn profile URL, or a name plus locality/region/company. Explicit paid confirmation required; seven-day caching and spend tracking apply. Set require_contact to pay only for matches that include a contact value. Results are vendor-reported and unverified: confirm identity before use; personal contacts carry no consent record, so manual recruiter outreach only, no autodialer or SMS campaigns. Registry practice_phone stays labeled separately.',
     inputSchema: candidateProfileSchema,
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
   }, async input => structuredJson(await enrichCandidateProfile(input, options)));
   server.registerTool('request_professional_contact_enrichment',{description:'Request one asynchronous Clay lookup of contacts explicitly published for professional use for one exact registry NPI. Requires explicit paid confirmation. Never seek private personal contacts. Returns a cached or pending job; at most five new requests per rolling day. Results require source and identity review; never overwrite registry contacts.',inputSchema:z.object({npi:z.string().regex(/^\d{10}$/),confirm_paid_enrichment:z.literal(true)}).strict(),annotations:{readOnlyHint:false,destructiveHint:false,idempotentHint:false,openWorldHint:true}},async(input)=>structuredJson(await callClayEnrichment(input,options)));
   server.registerTool('get_professional_contact_enrichment',{description:'Read a Clay enrichment job by its returned ID without starting another paid lookup. Preserve pending, delivery_unknown, no_match, ambiguous or review_required states. Contacts are unverified public professional candidates, not personal ownership or outreach permission.',inputSchema:z.object({id:z.string().regex(/^npgclay_[a-f0-9-]{36}$/)}).strict(),annotations:readOnlyAnnotations()},async(input)=>structuredJson(await callClayEnrichment(input,options)));
 
-  server.resource('abundance-healthcare-status', 'abundance-healthcare://status', { description: 'Healthcare MCP status and approved NPG market IDs. Contains no secret values.', mimeType: 'application/json' }, async () => ({ contents: [{ uri: 'abundance-healthcare://status', mimeType: 'application/json', text: JSON.stringify({ name: SERVER_NAME, version: SERVER_VERSION, tools: ['enrich_candidate_skip_trace', 'enrich_candidate_profile', 'request_professional_contact_enrichment', 'get_professional_contact_enrichment', 'estimate_registry_travel', 'search_registry_sourcing', 'list_healthcare_markets', 'get_healthcare_coverage', 'search_coverage_candidates', 'get_healthcare_practitioner', 'get_provider_contact_information', 'enrich_provider_professional_contact'], market_ids: NPG_HEALTHCARE_MARKETS.map((market) => market.id), coverage_model: 'monthly_full_plus_weekly_incremental', refresh_policy: 'weekly_default_daily_locale_opt_in', contact_enrichment_policy: 'registry_first_explicit_paid_public_professional_enrichment_operator_review' }, null, 2) }] }));
+  server.resource('abundance-healthcare-status', 'abundance-healthcare://status', { description: 'Healthcare MCP status and approved NPG market IDs. Contains no secret values.', mimeType: 'application/json' }, async () => ({ contents: [{ uri: 'abundance-healthcare://status', mimeType: 'application/json', text: JSON.stringify({ name: SERVER_NAME, version: SERVER_VERSION, tools: ['get_enrichment_readiness', 'enrich_candidate_complete_profile', 'enrich_candidate_skip_trace', 'enrich_candidate_profile', 'request_professional_contact_enrichment', 'get_professional_contact_enrichment', 'estimate_registry_travel', 'search_registry_sourcing', 'list_healthcare_markets', 'get_healthcare_coverage', 'search_coverage_candidates', 'get_healthcare_practitioner', 'get_provider_contact_information', 'enrich_provider_professional_contact'], market_ids: NPG_HEALTHCARE_MARKETS.map((market) => market.id), coverage_model: 'monthly_full_plus_weekly_incremental', refresh_policy: 'weekly_default_daily_locale_opt_in', contact_enrichment_policy: 'registry_first_explicit_paid_public_professional_enrichment_operator_review' }, null, 2) }] }));
   server.registerTool('list_healthcare_markets', { description: 'List nationwide and approved derived NPG healthcare views with source freshness and outreach status. Read-only.', inputSchema: z.object({}).strict(), annotations: readOnlyAnnotations() }, async () => structuredJson(await listHealthcareMarkets(options)));
   server.registerTool('estimate_registry_travel', { description: 'Estimate typical one-way driving time from selected NPPES practice locations to 1–3 operator-supplied clinic street addresses. Choose any or all clinics and 30 or 45 minutes. Uses cached geocodes; missing locations and routes remain unresolved. Reserves bounded Geocodio credits and stores a report. Processes at most 50 selected NPIs; this is not a complete population search or candidate home commute. Return the complete report CSV link.', inputSchema: travelSchema, annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true } }, async (input) => structuredJson(await estimateRegistryTravel(input, options)));
   server.registerTool('search_registry_sourcing', { description: 'Build a paginated NPG registry sourcing list with full unverified practice addresses and phones and a complete CSV download. For radius search provide a full center street address and radius_miles; omit state/city so borders do not hide matches. Unresolved addresses are separate, never assumed inside the radius. Distance is straight-line practice-location distance, not commute time. Taxonomy does not establish board certification or clinical experience.', inputSchema: sourcingSchema, annotations: { ...readOnlyAnnotations(), openWorldHint: true } }, async (input) => structuredJson(await searchRegistrySourcing(input, options)));

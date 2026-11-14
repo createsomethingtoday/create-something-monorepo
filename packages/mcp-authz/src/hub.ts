@@ -61,6 +61,8 @@ const HEALTHCARE_ROUTE_EFFECTS = new Map<string, AuthorizationAccessType>([
   ['estimate_registry_travel', 'write'],
   ['enrich_candidate_profile', 'write'],
   ['enrich_candidate_skip_trace', 'write'],
+  ['enrich_candidate_complete_profile', 'write'],
+  ['get_enrichment_readiness', 'read'],
   ['request_professional_contact_enrichment', 'write'],
   ['get_professional_contact_enrichment', 'read'],
 ]);

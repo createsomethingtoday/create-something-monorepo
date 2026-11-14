@@ -74,12 +74,12 @@ export function fixture(mode: string | null) {
       tool: 'enrich_candidate_skip_trace',
       arguments: { npi: '1234567890', confirm_paid_enrichment: true },
       review: {
-        provider: 'Apify one-api/skip-trace',
-        scope:
-          'One selected registry NPI; broker personal contact candidates and home city/state. Practice geography is not residence.',
-        limits:
-          'One pinned run, ten-cent cap, shared daily reservations. Repeated identical input reconciles the same run. Account ownership and empty-sentinel anonymous access are checked before dispatch; these checks cannot exclude explicit grants or Actor-creator sharing. Account restriction and sharing setup require operator review.',
-        cost: 'Up to $0.10 reserved. Contacts, ownership and consent remain unverified; never recruiter-ready.'
+        provider: 'Apify Skip Trace',
+        scope: 'One selected NPI; personal-contact candidates, unverified identity and consent.',
+        spendPolicy:
+          'Spend tracking only. Actual USD and estimates are separate. No application spending limit.',
+        execution:
+          'One approved run. Reconcile its exact existing receipt; never duplicate an uncertain lookup.'
       },
       expiresAt: Date.now() + 600000
     };
@@ -95,11 +95,11 @@ export function fixture(mode: string | null) {
       review: {
         provider: 'pdl',
         currency: 'USD',
-        maximumCost: 0.15,
-        totalAllowance: 100,
-        recordedSpend: 10,
-        remaining: 90,
-        scope: 'One candidate only; no outreach. No automatic reset or top-up.',
+        confirmedTrackedUsd: 0.2,
+        estimatedUsd: null,
+        pendingReceipts: 2,
+        historicalSpend: 'Unknown; tracked receipts only.',
+        spendPolicy: 'No application spending limit.',
         contactScope: 'Professional profile only; personal contacts excluded.'
       },
       expiresAt: Date.now() + 600000
@@ -194,6 +194,198 @@ export function fixture(mode: string | null) {
       }
     ];
   }
+  // Synthetic complete-profile states only: no live credentials, provider client or dispatch path.
+  if (mode?.startsWith('complete-')) {
+    const npi = '1234567890';
+    const registry = {
+      npi,
+      name: 'Jamie Example',
+      practice_city: 'Springfield',
+      practice_state: 'MO',
+      contact_route_status: 'public_registry_unverified'
+    };
+    view.messages = [
+      {
+        role: 'user',
+        text: 'Enrich Jamie Example with all four providers, including personal-contact candidates. NPI 1234567890.'
+      }
+    ];
+    view.sources = [source];
+    view.pending = null;
+    if (mode === 'complete-review') {
+      view.status = 'review';
+      view.messages.push({
+        role: 'assistant',
+        text: 'Review this action before any paid lookup or routing credit reservation is sent.'
+      });
+      view.pending = {
+        id: '1d0822cf-c2ac-4713-a6ba-fef887b7bccc',
+        tool: 'enrich_candidate_complete_profile',
+        arguments: {
+          npi,
+          confirm_paid_enrichment: true,
+          operation_id: '1d0822cf-c2ac-4713-a6ba-fef887b7bccc'
+        },
+        review: {
+          provider: 'PDL + Clay + Exa + Skip Trace',
+          currency: 'USD',
+          confirmedTrackedUsd: 0.2,
+          pendingReceipts: 2,
+          historicalSpend: 'Unknown; tracked receipts are not a lifetime total.',
+          providerEstimates: [
+            { provider: 'pdl', estimated_usd: null },
+            { provider: 'clay', estimated_usd: 0.25 },
+            { provider: 'exa', estimated_usd: null },
+            { provider: 'apify', estimated_usd: null }
+          ],
+          spendPolicy:
+            'Spend tracking only. Estimates are separate from confirmed USD; unknown estimates do not block this request. No application spend limit.',
+          contactScope:
+            'One selected NPI. Professional and personal-contact candidates from PDL, public professional contacts from Clay and Exa, and broker personal-contact candidates from Skip Trace. Identity, ownership and consent are unverified.',
+          execution:
+            'All four providers are attempted independently. Failures stay visible. Do not repeat uncertain operations; recover exact existing receipts.'
+        },
+        expiresAt: Date.now() + 600000
+      };
+    } else if (mode === 'complete-blocked') {
+      view.status = 'interrupted';
+      view.messages.push({
+        role: 'assistant',
+        text: 'This operation needs identity review before dispatch. No provider lookup was made. Unknown estimates and historical spend do not block a candidate review.'
+      });
+      view.sources.push({
+        tool: 'get_enrichment_readiness',
+        data: {
+          ready: false,
+          provider: 'pdl',
+          reason:
+            'Provider availability is reported per provider; unknown estimates do not block review.',
+          blocking_reasons: ['access_not_verified'],
+          spend: {
+            currency: 'USD',
+            confirmed_usd: 0.2,
+            estimated_usd: null,
+            pending_count: 2,
+            history_complete: false,
+            historical_usd: null
+          },
+          cost: { estimated_usd: null }
+        }
+      });
+    } else {
+      const uncertain = mode === 'complete-uncertain';
+      view.status = uncertain ? 'ambiguous' : 'idle';
+      const providers: Record<string, unknown> = {
+        pdl: {
+          status: 'matched',
+          source: 'People Data Labs',
+          retrieved_at: '2026-11-13T12:00:00Z',
+          registry,
+          professional: { job_title: 'Nurse practitioner' },
+          personal_contact: { emails: ['synthetic-jamie@example.invalid'] },
+          provenance: { verification: 'unverified', consent_basis: 'not_recorded' }
+        },
+        clay: uncertain
+          ? {
+              status: 'delivery_unknown',
+              id: 'npgclay_0d0822cf-c2ac-4713-a6ba-fef887b7bccc',
+              reason: 'Delivery outcome unknown. Do not retry.'
+            }
+          : {
+              status: 'pending',
+              id: 'npgclay_0d0822cf-c2ac-4713-a6ba-fef887b7bccc',
+              reason: 'Existing job is awaiting provider results.'
+            }
+      };
+      {
+        providers.exa = {
+          status: 'no_match',
+          source: 'Exa',
+          reason:
+            'No confirmed professional contact match; no inference that contacts do not exist.'
+        };
+        providers.apify = {
+          status: 'pending',
+          id: 'a'.repeat(64),
+          run_id: 'SyntheticSkipRun',
+          npi,
+          charge_reconciled: false,
+          reason: 'Known existing run; no new dispatch for reconciliation.'
+        };
+      }
+      if (mode === 'complete-contacts') {
+        providers.exa = {
+          match_status: 'verified_match',
+          identity_reason: 'Exact NPI is associated with the clinic profile.',
+          professional_contact: {
+            email: 'synthetic-exa@example.com',
+            phone: '+15125550101',
+            profile_url: 'https://clinic.example.com/team'
+          },
+          source_citations: [{ url: 'https://clinic.example.com/team' }],
+          contact_route_status: 'unverified_enrichment_candidate',
+          identity_verification_status: 'source_grounded',
+          outreach_authority_status: 'not_established',
+          actual_cost_usd: 0.007
+        };
+        providers.clay = {
+          status: 'review_required',
+          contact_status: 'public_professional_candidate_unverified',
+          outreach_authority: 'not_established',
+          cache_hit: true,
+          result: {
+            outcome: 'candidate',
+            identity_evidence: 'Exact NPI is linked to this public professional clinic record.',
+            contacts: [
+              {
+                type: 'email',
+                value: 'synthetic-clay@example.com',
+                source_url: 'https://clinic.example.com/contact',
+                publication_context: 'professional_contact',
+                evidence_quote:
+                  'The clinic lists this email as the practitioner professional contact.'
+              }
+            ]
+          }
+        };
+      }
+      view.sources.push({
+        tool: 'enrich_candidate_complete_profile',
+        data: {
+          status: 'partial',
+          npi,
+          profile: {
+            registry,
+            provider_results: providers,
+            verification: 'unverified',
+            conflict_policy:
+              'Retain differing provider values with their sources. No source establishes contact permission or identity by itself.'
+          },
+          providers,
+          unstarted: [],
+          uncertain_dispatch: uncertain,
+          billing_reconciliation_required: true,
+          spend_tracking: {
+            operation_id: '1d0822cf-c2ac-4713-a6ba-fef887b7bccc',
+            actual_usd: 0.2,
+            estimated_usd: null,
+            pending_receipts: 2,
+            historical_status: 'unknown'
+          },
+          recovery:
+            'Do not repeat the combined lookup. Reconcile each existing provider receipt. Read the Clay job by ID and refresh Skip Trace using its exact receipt.',
+          limitation:
+            'Complete means every provider returned, not that every requested field exists or is verified. Pending, missing and conflicting fields remain explicit.'
+        }
+      });
+      view.messages.push({
+        role: 'assistant',
+        text: uncertain
+          ? 'This request stopped after a paid action may have been sent. Do not repeat it. Ask your operator to reconcile the source result. Existing returned evidence is below.'
+          : 'The complete profile is incomplete. Review each provider’s result and any unstarted providers below. Billing and pending results need reconciliation. Preserve returned Clay job and Skip Trace run IDs for source reconciliation; do not repeat the complete-profile request to refresh pending results.'
+      });
+    }
+  }
   function listing(): HistoryItem[] {
     return created
       ? [
@@ -214,6 +406,38 @@ export function fixture(mode: string | null) {
     async command(command: Record<string, unknown>) {
       commands.push(command);
       if (command.type === 'approve') throw new Error('Fixture never approves paid actions.');
+      if (
+        command.type === 'message' &&
+        String(command.text).trim().toLowerCase() === 'refresh skip trace'
+      ) {
+        const source = view.sources.find(
+          (source) => source.tool === 'enrich_candidate_complete_profile'
+        );
+        const data = source?.data as any;
+        if (data?.providers?.apify) {
+          const receipt = {
+            ...data.providers.apify,
+            status: 'no_contact',
+            charge_usd: 0.007,
+            charge_reconciled: true
+          };
+          data.providers.apify = receipt;
+          if (data.profile?.provider_results) data.profile.provider_results.apify = receipt;
+          view = {
+            ...view,
+            version: view.version + 1,
+            messages: [
+              ...view.messages,
+              {
+                role: 'assistant',
+                text: 'The existing Skip Trace receipt was refreshed without a new paid approval or lookup. Other provider uncertainty remains. Do not repeat the combined operation.'
+              }
+            ]
+          };
+          return { status: 200, data: view };
+        }
+      }
+
       if (command.type === 'create') {
         await new Promise((resolve) => setTimeout(resolve, 350));
         created = true;
