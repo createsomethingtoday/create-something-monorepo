@@ -22,7 +22,12 @@ The reviewed source manifest has SHA-256
 `13e8cb969d31aa626e2aea5f01d1440e0a1a8c86710dcbc26af4cae09ae2a3b8`;
 the 15-file client manifest has SHA-256
 `d7d2e24fe82854adf5a9ac01a57585f1368119f280a15bd5cc27641a6838bb37`.
-The release branch copies only those 14 design/test files onto current main.
+The release branch starts with those 14 design/test files on current main.
+Integration review then found a contrast regression in the inverted public
+process section under newer Canon tokens. A section-local inverse secondary-ink
+repair in landing-motion.css preserves legibility without changing global Canon
+styles or other applications. The original 14-file identity is historical after
+that bounded release repair.
 Newer Canon styles on main change the emitted common CSS and dependent import
 hashes. The manifest above identifies the historical local review, not the
 new release bundle; the integrated artifact is separately checked and pinned

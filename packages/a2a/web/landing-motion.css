@@ -144,6 +144,14 @@
   background: var(--color-performance-ink);
   color: var(--color-performance-panel);
 }
+
+/* This section inverts the page surface; its secondary ink must invert with it. */
+.landing .process-section {
+  --color-performance-ink-soft: color-mix(in srgb, var(--color-performance-panel) 85%, transparent);
+  --color-performance-fg-secondary: color-mix(in srgb, var(--color-performance-panel) 85%, transparent);
+  --color-performance-fg-tertiary: color-mix(in srgb, var(--color-performance-panel) 75%, transparent);
+  --color-performance-muted: color-mix(in srgb, var(--color-performance-panel) 75%, transparent);
+}
 .landing .handoff-figure[data-handoff-stage='0'] .gate-drawing,
 .landing .handoff-figure[data-handoff-stage='1'] .inbox-drawing,
 .landing .handoff-figure[data-handoff-stage='1'] .diagram-line > path:first-child,
