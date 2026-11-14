@@ -25,6 +25,7 @@
   import { getAgencyContentAssetAnalyticsMetadata } from '$lib/analytics/content-assets';
   import { getAgencyMarketingExperimentMetadata } from '$lib/analytics/marketing-experiment';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
+  import { agencyInvitationScene } from '$lib/data/canonAgencyScenes';
   import { PUBLIC_PRODUCT_SEQUENCE, getPublicProduct } from '$lib/data/productFamily';
   import { page } from '$app/stores';
   import { onMount } from 'svelte';
@@ -129,6 +130,12 @@
     width: 1024,
     height: 1536,
     alt: 'Macro-real Playbook decision gate: an ivory AI-agent marker held inside a black steel ring as amber and proof-green routes cross a physical court surface.'
+  };
+  const agencyFooterSceneMedia = {
+    src: agencyInvitationScene.src,
+    width: 1672,
+    height: 941,
+    alt: agencyInvitationScene.description
   };
   const globalAnalyticsMetadata = $derived(getAgencyGlobalAnalyticsMetadata($page.url.pathname));
   const isDifyArticleRoute = $derived(isAgencyDifyArticlePath($page.url.pathname));
@@ -342,7 +349,7 @@
           label: agencyCoreMessaging.membershipLabel,
           href: primaryCtaHref,
           description: 'Bring an idea or a project and one task you want help with.',
-          media: agencyFooterMacroMedia
+          media: usesMeasuredPublicSurface ? agencyFooterSceneMedia : agencyFooterMacroMedia
         }}
     showSocial={true}
     isAuthenticated={!!data.user}

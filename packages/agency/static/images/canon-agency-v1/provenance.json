@@ -1,0 +1,123 @@
+{
+  "scope": "User-approved owned Canon illustrations for Agency. PNG masters remain unchanged; no third-party research media.",
+  "assets": [
+    {
+      "file": "body-r41.webp",
+      "source": "cook/stills/r41/canon-black-studio-study.png",
+      "sourceSha256": "9fe997a8f70ffd35216e33d6c868dcc9f77ccf5d49065968398469751e93b4f7",
+      "webSha256": "6c61d2152ecfc20d27a4c14da2ae5f3d13a2ede3765f5adf7254bab247106157",
+      "width": 783,
+      "height": 856,
+      "bytes": 106126
+    },
+    {
+      "file": "head-r42.webp",
+      "source": "cook/stills/r42/canon-cuboid-head-study.png",
+      "sourceSha256": "128f8a2d57009f10e06947b8e8cbdf64a58e3c690d052f90d7dfb6ff8ae2f33c",
+      "webSha256": "62a11e937cbb3893501d7f3db54cd440ded7e0c9eff1d379489dc2f5b84283e2",
+      "width": 264,
+      "height": 264,
+      "bytes": 18576
+    },
+    {
+      "file": "gestures-r45.webp",
+      "source": "cook/stills/r45/canon-offered-handback-sheet.png",
+      "sourceSha256": "aa55d00a2378cfb0d7b0e0dfe3036d7ca4c3faeefadd27e9e1d873b689561fc1",
+      "webSha256": "9130d87b615ffa3f247c9424f217e9152252035ff28f2848811220f06b5d3246",
+      "width": 1200,
+      "height": 800,
+      "bytes": 90694
+    },
+    {
+      "file": "welcome-bench.webp",
+      "source": "output/canon-environment/2026-11-13/scenes/01-welcome-bench.png",
+      "sourceSha256": "ba4507491e1269ef5257d2d1747bd63bde214d4bd585523f074335e1f2dcc8a3",
+      "webSha256": "b784b84d530608a98e14da09888d1f7e9b7e4556df09cad21158bf180f3a2b77",
+      "width": 1672,
+      "height": 941,
+      "bytes": 492674
+    },
+    {
+      "file": "connection-loom.webp",
+      "source": "output/canon-environment/2026-11-13/scenes/02-connection-loom-whimsy-v2.png",
+      "sourceSha256": "ed953bc712260cfe6d61b79d028e62b250b3544dada4f674ea9feaf48488ad55",
+      "webSha256": "1ab68596438bd053dba3bfc7089e68c4ff2310e7d552cab8a7ba3d042818e6be",
+      "width": 1672,
+      "height": 941,
+      "bytes": 426250
+    },
+    {
+      "file": "review-nook.webp",
+      "source": "output/canon-environment/2026-11-13/scenes/03-review-nook-whimsy-v2.png",
+      "sourceSha256": "9b96dc4574a38dc6c46f2157cd68c2ce28d263732eed465f4dca5366adfc812d",
+      "webSha256": "4aa27175fa7e834d4f3805bd898902a79a2a560f1c568b6b94310a887b49d974",
+      "width": 1122,
+      "height": 1402,
+      "bytes": 454448
+    },
+    {
+      "file": "welcome-clean-plate.webp",
+      "source": "output/canon-environment/2026-11-13/scenes/04-welcome-clean-plate.png",
+      "sourceSha256": "d8737e0fc5f6121a9c92451de111b5a6468986a4a3bdc7a1e9885bdf8f5d9394",
+      "webSha256": "f862beeaa23d0ca73121da86dcef0725c7c2c6f840fd45f5e88a8fd824ecfc13",
+      "width": 1671,
+      "height": 941,
+      "bytes": 445974
+    },
+    {
+      "file": "hero-wide-v1.webp",
+      "source": "cook/stills/r01/hero-wide-study.png",
+      "sourceSha256": "87f8583f3025c1e8b5d5c8508449b41db4bbefef50938ae9d054fdcf2e1e3c7c",
+      "webSha256": "5e8753abcf633af0e7aaab9e4f736a99002755cbf0608c030d96a6d6af226e1a",
+      "width": 1672,
+      "height": 941,
+      "bytes": 96350,
+      "tool": "built-in image_gen; cwebp q88 m6 format optimization",
+      "status": "approved by user in chat; 2026-11-14"
+    },
+    {
+      "file": "hero-portrait-v1.webp",
+      "source": "cook/stills/r01/hero-portrait-study.png",
+      "sourceSha256": "d6b96892b5a95d87d3f86b4702ca7914c2a81449a56f8d9a87e0cafa558fc842",
+      "webSha256": "5c757719910287ef3d2c9ecb7bdf73bd95804be2164fa1ecd52a497f913dcd88",
+      "width": 1122,
+      "height": 1402,
+      "bytes": 161188,
+      "tool": "built-in image_gen; cwebp q88 m6 format optimization",
+      "status": "approved by user in chat; 2026-11-14"
+    },
+    {
+      "file": "cta-wide-v1.webp",
+      "source": "cook/stills/r02/cta-wide-study.png",
+      "sourceSha256": "a9dfaab3a8584f35bd4d9e3cfca34027ea040a7729deaa2e731422e2834438d6",
+      "webSha256": "37c32012c70ba706d2b2954817ec87baadd6585ee8f4abfc4eff2345372da1f4",
+      "width": 1672,
+      "height": 941,
+      "bytes": 95636,
+      "tool": "built-in image_gen; cwebp q88 m6 format optimization",
+      "status": "approved by user in chat; 2026-11-14"
+    },
+    {
+      "file": "cta-portrait-v1.webp",
+      "source": "cook/stills/r02/cta-portrait-study.png",
+      "sourceSha256": "d2436e4cb578e2960a6cb1b18e4babcd4e30dccb1a0df246d950c88bacdaadf9",
+      "webSha256": "c9df42a6f9f1510708bd5912b05f1cbffaadd6d29d94f9aa7ae0ace66a3b2caf",
+      "width": 1122,
+      "height": 1402,
+      "bytes": 160718,
+      "tool": "built-in image_gen; cwebp q88 m6 format optimization",
+      "status": "approved by user in chat; 2026-11-14"
+    }
+  ],
+  "newArtReview": "Approved by the user in chat: \"Approved.\" Observed 2026-11-14T03:14:27Z. The four original PNGs and reviewed WebP bytes are unchanged.",
+  "approval": {
+    "quote": "Approved.",
+    "observedAt": "2026-11-14T03:14:27Z",
+    "scope": [
+      "hero-wide-v1.webp",
+      "hero-portrait-v1.webp",
+      "cta-wide-v1.webp",
+      "cta-portrait-v1.webp"
+    ]
+  }
+}
