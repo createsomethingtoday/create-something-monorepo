@@ -82,7 +82,7 @@ interface Env {
   ZENDESK_SUBDOMAIN?: string;
   /** Zendesk group that owns Marketplace review tickets; search default + status-write boundary. */
   MARKETPLACE_ZENDESK_GROUP_ID?: string;
-  /** webflow-review-comments Worker origin (Webflow Hosting). With REVIEW_COMMENTS_API_KEY, enables the review comment tools. */
+  /** Review comments service origin (repo webflow/marketplace-review-comments, Webflow Cloud). With REVIEW_COMMENTS_API_KEY, enables the review comment tools. */
   REVIEW_COMMENTS_URL?: string;
   /** This MCP's reviewer-scoped key from the comments Worker's CALLER_KEYS (secret). */
   REVIEW_COMMENTS_API_KEY?: string;
