@@ -407,6 +407,12 @@ export interface ToolRuntimeConfig extends ValidationToolConfig {
    * set; the comment tools then stay unregistered and decisions are unchanged.
    */
   getReviewCommentsClient?: () => ReviewCommentsClient | null;
+  /**
+   * True when the Airtable automation "Review Status Trigger" posts and
+   * releases decision feedback for templates (REVIEW_COMMENTS_DECISIONS=airtable).
+   * The decision tools then only write Airtable, so the creator gets one email.
+   */
+  decisionFeedbackByAutomation?: boolean;
   /** Marketplace Templates CMS access for delist/relist; fails closed without a site token. */
   marketplaceCms?: MarketplaceCmsConfig;
   /** Submission guidelines endpoint (template-search Worker); defaults to production. */
@@ -533,6 +539,15 @@ export function registerTools(
 ): void {
   const registerOnServer = mcpServer.tool.bind(mcpServer) as (...args: unknown[]) => unknown;
   const reviewComments = runtimeConfig.getReviewCommentsClient?.() ?? null;
+  /** One sender per decision: this MCP, or the Airtable automation when it is switched on. */
+  const sendDecisionFeedback: typeof releaseFeedbackAfterDecision = (...args) =>
+    runtimeConfig.decisionFeedbackByAutomation
+      ? Promise.resolve({
+          ok: true,
+          handled_by: 'airtable_automation',
+          note: 'The review status is saved. The Airtable automation posts the feedback to the review thread, releases the drafts, and emails the creator.',
+        })
+      : releaseFeedbackAfterDecision(...args);
   const server = {
     registerTool: ((name: string, ...rest: unknown[]) => {
       if (access.allowedToolNames && !access.allowedToolNames.has(name)) return undefined;
@@ -2041,7 +2056,7 @@ export function registerTools(
           acting_reviewer: actingReviewer,
           updated_version: updatedVersion,
           ...(reviewComments && actorEmail
-            ? { review_comments: await releaseFeedbackAfterDecision('template_review_request_changes', reviewComments, version_id, assignedVersion.assetId, actorEmail, review_feedback, templateReleaseNotice(noticeAsset, assignedVersion.versionNumber, 'changes_requested')) }
+            ? { review_comments: await sendDecisionFeedback('template_review_request_changes', reviewComments, version_id, assignedVersion.assetId, actorEmail, review_feedback, templateReleaseNotice(noticeAsset, assignedVersion.versionNumber, 'changes_requested')) }
             : {}),
         });
       } catch (error) {
@@ -2900,7 +2915,7 @@ export function registerTools(
           warnings: reviewChecklistWarnings(assignedVersion),
           updated_version: updatedVersion,
           ...(reviewComments && actorEmail
-            ? { review_comments: await releaseFeedbackAfterDecision('template_review_approve_version', reviewComments, version_id, assignedVersion.assetId, actorEmail, undefined, templateReleaseNotice(noticeAsset, assignedVersion.versionNumber, 'approved')) }
+            ? { review_comments: await sendDecisionFeedback('template_review_approve_version', reviewComments, version_id, assignedVersion.assetId, actorEmail, undefined, templateReleaseNotice(noticeAsset, assignedVersion.versionNumber, 'approved')) }
             : {}),
         });
       } catch (error) {
@@ -2936,7 +2951,7 @@ export function registerTools(
           acting_reviewer: actingReviewer,
           updated_version: updatedVersion,
           ...(reviewComments && actorEmail
-            ? { review_comments: await releaseFeedbackAfterDecision('template_review_reject_version', reviewComments, version_id, assignedVersion.assetId, actorEmail, rejection_feedback, templateReleaseNotice(noticeAsset, assignedVersion.versionNumber, 'rejected')) }
+            ? { review_comments: await sendDecisionFeedback('template_review_reject_version', reviewComments, version_id, assignedVersion.assetId, actorEmail, rejection_feedback, templateReleaseNotice(noticeAsset, assignedVersion.versionNumber, 'rejected')) }
             : {}),
         });
       } catch (error) {

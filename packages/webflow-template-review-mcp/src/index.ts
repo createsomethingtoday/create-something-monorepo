@@ -60,6 +60,7 @@ async function main() {
       },
       getZendeskClient: () => zendesk,
       getReviewCommentsClient: () => reviewComments,
+      decisionFeedbackByAutomation: process.env.REVIEW_COMMENTS_DECISIONS === 'airtable',
     },
   );
   registerPrompts(server);
