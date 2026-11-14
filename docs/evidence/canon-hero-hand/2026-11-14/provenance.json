@@ -1,0 +1,23 @@
+{
+  "issue": "CRE-2457",
+  "original": "hero-wide-v1.webp",
+  "replacement": "hero-wide-v2.webp",
+  "master": "output/canon-hero-hand-repair/2026-11-14/hero-wide-hand-repair.png",
+  "sourceSha256": "e6bd0ae5c7379865d6c9c478fadb4cedc0937f0143cfbf8aa543dee0c6d4a796",
+  "webSha256": "d54e314368191928e0a2e45cb13fcb36dc7571479474814f8469049415760346",
+  "width": 1672,
+  "height": 941,
+  "bytes": 90356,
+  "tool": "built-in image_gen targeted edit; cwebp q88/m6 format-only delivery",
+  "userRequest": "It looks that Canon's left had is disconnected",
+  "authorization": "Requested anatomical correction to the previously approved production hero; existing production authorization persists. Original approval is not relabeled as explicit approval of these new bytes.",
+  "change": "Connect the lower paper-holding hand through a short felt sleeve and stitched cuff to the same shoulder.",
+  "portrait": "hero-portrait-v1.webp unchanged; already has a continuous sleeve/cuff.",
+  "portraitSha256": "5c757719910287ef3d2c9ecb7bdf73bd95804be2164fa1ecd52a497f913dcd88",
+  "prompt": "Use case: precise-object-edit. Input image1 is the ONLY EDIT TARGET: the approved wide Canon website hero. Input image2 is an ANATOMY REFERENCE ONLY: observe how the paper-holding felt hand is naturally attached through a stitched cuff and short sleeve in the portrait; do not copy the portrait's pose, body position, camera, scene or crop.\nRepair ONE LOCAL DEFECT in image1: Canon's anatomical LEFT hand, the lower hand on the VIEWER'S RIGHT holding the raised cream paper strip, currently appears to float in front of the coat with no arm. Keep this exact hand and its paper contact position, and connect it visibly and naturally to Canon's own LEFT shoulder using a short curved CHARCOAL FELT SLEEVE AND FOREARM with a clear stitched cuff snugly meeting the wrist. The upper sleeve starts under the head at the outer viewer-right shoulder, descends along the outer right side of the smock, bends gently at an elbow to the right of the notebook pocket, and curves inward UNDER the pocket to meet the existing hand. Keep the notebook and pocket uncovered. Make a continuous readable anatomical path from shoulder to elbow to cuff to wrist, with realistic attached cloth, coherent lighting, subtle cream stitching and natural soft contact shadows. No air gap, floating mitten, detached wrist or disconnected fabric. No extra arm or hand; exactly two arms and two hands in the scene.\nLOCK EVERYTHING ELSE: exact 1672x941 wide frame and camera; nearly pure black negative space on the left; exact head shape, face, oval woven eyes, smile, antenna, squat body proportions, feet, pocket and cream cube-mark notebook; the other waving arm/hand remains unchanged; exact existing paper strips and their curves, grip, two trays, workbench, lamp, pencils, stacks, background, warm light and all materials. Change only the smallest sleeve/forearm region needed for a convincing attached paper-holding hand. Do not stretch anatomy, alter the expression, move or resize any subject/prop, import portrait composition, add text/logos, or redesign the illustration. The final should look like the same original image with that one anatomical join corrected.\n",
+  "measurements": {
+    "dimensionsMatchOriginal": true,
+    "negativeSpaceColourDifference": "not measured"
+  },
+  "generatedAt": "2026-11-14T14:57:19.761165+00:00"
+}

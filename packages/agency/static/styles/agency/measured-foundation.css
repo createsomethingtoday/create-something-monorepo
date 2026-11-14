@@ -168,7 +168,7 @@ html:has(.measured-foundation),body:has(.measured-foundation),
 .agency-home.measured-foundation .hero.canon-scene-hero {
   display:flex;flex-direction:column;justify-content:flex-start;
   min-height:clamp(520px,43vw,700px);padding:56px 0;
-  background:url('/images/canon-agency-v1/hero-wide-v1.webp') right center/auto 100% no-repeat;
+  background:url('/images/canon-agency-v1/hero-wide-v2.webp') right center/auto 100% no-repeat;
 }
 .measured-foundation .canon-scene-hero .label-row {max-width:47%;margin-bottom:24px;}
 .measured-foundation .canon-scene-hero .hero-copy {display:block;width:47%;max-width:620px;}
@@ -237,7 +237,7 @@ html:has(.measured-foundation),body:has(.measured-foundation),
 @media(min-width:601px) and (max-width:900px){
   .agency-home.measured-foundation .hero.canon-scene-hero{
     padding-bottom:calc(56.28% + 8px);
-    background-image:url('/images/canon-agency-v1/hero-wide-v1.webp');
+    background-image:url('/images/canon-agency-v1/hero-wide-v2.webp');
   }
   .measured-foundation .canon-scene-hero .hero-copy h1{font-size:clamp(48px,7.4vw,66px);}
   .measured-foundation .canon-scene-cta .next-layout>div:first-child{

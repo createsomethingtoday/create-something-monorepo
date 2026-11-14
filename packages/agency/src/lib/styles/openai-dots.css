@@ -1147,7 +1147,7 @@
 }
 
 /* The opening owns a background. Character detail belongs with the explanation below. */
-.openai-dots .hero-grid { grid-template-columns:minmax(0,1fr); background:url('/images/canon-agency-v1/hero-wide-v1.webp') center bottom / 100% auto no-repeat; }
+.openai-dots .hero-grid { grid-template-columns:minmax(0,1fr); background:url('/images/canon-agency-v1/hero-wide-v2.webp') center bottom / 100% auto no-repeat; }
 .openai-dots .hero-copy { max-width:44%; }
 .openai-dots .possibilities .canon-portrait { max-width:540px; margin:2rem auto; }
 .openai-dots .canon-desk { width:96px; height:96px; }
