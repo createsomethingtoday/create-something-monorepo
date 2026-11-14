@@ -1,24 +1,24 @@
 {
   "id": "substrate:create-something:organization-review:internal",
-  "generatedAt": "2026-11-14T01:59:17.863Z",
+  "generatedAt": "2026-11-14T15:04:49.618Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "valueState": "valuable_with_review_signals",
   "answer": "Atlas is showing value for CREATE SOMETHING: the business is mapped enough to reveal review signals, especially automation/database imbalance and worker/MCP concentration.",
   "summary": {
-    "nodes": 574,
-    "edges": 1198,
-    "mapped": 574,
+    "nodes": 577,
+    "edges": 1204,
+    "mapped": 577,
     "hardGaps": 0,
     "reviewSignals": 6,
     "operatingSlices": 23,
     "clientOverlays": 5,
-    "automationRecords": 293,
+    "automationRecords": 295,
     "databaseRecords": 29,
-    "workerRecords": 184,
+    "workerRecords": 186,
     "mcpRecords": 77,
     "policyRecords": 64,
-    "guideRecords": 86
+    "guideRecords": 87
   },
   "findings": [
     {
@@ -28,7 +28,7 @@
       "title": "Atlas is showing operating value",
       "summary": "CREATE SOMETHING now has a connected internal map with all current topology records mapped and no hard gaps.",
       "evidence": [
-        "574/574 topology records mapped",
+        "577/577 topology records mapped",
         "0 local Atlas/Substrate gaps",
         "0 exact duplicate paths",
         "0 isolated nodes"
@@ -42,7 +42,7 @@
       "title": "Automation is heavier than Database",
       "summary": "Automation records substantially outnumber Database records. This is the clearest business-shape disconnect: execution has outrun the shared substrate.",
       "evidence": [
-        "Automation=293",
+        "Automation=295",
         "Database=29",
         "Review signal count=6"
       ],
@@ -55,8 +55,8 @@
       "title": "Worker surface concentration needs runtime ownership",
       "summary": "Worker records are the largest runtime surface. This is not inherently bad, but it is where duplicated routes, configs, and deployment claims can hide.",
       "evidence": [
-        "Worker records=184",
-        "Automation worker Atlas coverage: 153 records",
+        "Worker records=186",
+        "Automation worker Atlas coverage: 155 records",
         "Runtime binding coverage exists before production mutation"
       ],
       "nextAction": "Review worker slices through runtime binding coverage and attach ownership, route, storage, and rollback proof before promotion."
@@ -82,9 +82,9 @@
       "summary": "Policy and guide records are well represented, but Atlas should keep pushing them onto the workflows they govern so docs do not become detached instructions.",
       "evidence": [
         "Policy records=64",
-        "Guide records=86",
+        "Guide records=87",
         "Judgment policy Atlas coverage: 64 records",
-        "Mixed guide Atlas coverage: 86 records"
+        "Mixed guide Atlas coverage: 87 records"
       ],
       "nextAction": "Attach policy and guide nodes to the operating slices they govern, then treat missing attachment as a review signal."
     }
@@ -96,7 +96,7 @@
       "tier": "Database",
       "summary": "The healthiest next move is to make the database layer a first-class product surface rather than a hidden app-governance implementation detail.",
       "evidence": [
-        "29 Database records currently support 293 Automation records",
+        "29 Database records currently support 295 Automation records",
         "Management surface exposes stable API/MCP/agent access",
         "Atlas UI projects the same records instead of becoming a separate source of truth"
       ],
@@ -109,8 +109,8 @@
       "tier": "Automation",
       "summary": "The worker surface is the largest concentration of operational risk and should be the first ongoing review lane.",
       "evidence": [
-        "Worker records=184",
-        "153 records in the primary worker slice"
+        "Worker records=186",
+        "155 records in the primary worker slice"
       ],
       "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-worker",
       "agentCommand": "databaseLayer.operatingSlices.get"
@@ -134,7 +134,7 @@
       "summary": "Policy is already present; the improvement is to make every critical workflow show its policy, guide, approval boundary, and receipt path in context.",
       "evidence": [
         "Policy records=64",
-        "Guide records=86",
+        "Guide records=87",
         "23 operating slices are review-ready"
       ],
       "apiPath": "/api/substrate/operating-slices",

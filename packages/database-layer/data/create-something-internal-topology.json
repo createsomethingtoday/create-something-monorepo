@@ -4,14 +4,14 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-11-14T01:59:16.833Z",
+    "generatedAt": "2026-11-14T15:04:48.602Z",
     "rootPath": ".",
-    "packageCount": 254,
+    "packageCount": 255,
     "appCount": 15,
-    "workerCount": 123,
+    "workerCount": 124,
     "clientOverlayCount": 8,
     "policyCount": 64,
-    "guideCount": 86,
+    "guideCount": 87,
     "configCount": 40
   },
   "nodes": [
@@ -4279,6 +4279,23 @@
       "runtime": "cloudflare, node"
     },
     {
+      "id": "substrate:create-something:package:create-something-webflow-review-comments-packages-webflow-review-comments",
+      "atlasNodeId": "atlas_create-something_package_create-something-webflow-review-comments-packages-webflow-review-comments",
+      "title": "@create-something/webflow-review-comments",
+      "path": "packages/webflow-review-comments",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Review feedback threads per Marketplace asset version (replaces Zendesk tickets for asset reviews)",
+      "tags": [
+        "package",
+        "worker"
+      ],
+      "packageName": "@create-something/webflow-review-comments",
+      "runtime": "cloudflare, node"
+    },
+    {
       "id": "substrate:create-something:package:create-something-webflow-review-extension-packages-webflow-review-extension",
       "atlasNodeId": "atlas_create-something_package_create-something-webflow-review-extension-packages-webflow-review-extension",
       "title": "@create-something/webflow-review-extension",
@@ -6724,6 +6741,23 @@
       "runtime": "cloudflare"
     },
     {
+      "id": "substrate:create-something:worker:packages-webflow-review-comments-wrangler-toml",
+      "atlasNodeId": "atlas_create-something_worker_packages-webflow-review-comments-wrangler-toml",
+      "title": "packages/webflow-review-comments/wrangler.toml",
+      "path": "packages/webflow-review-comments/wrangler.toml",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/webflow-review-comments/wrangler.toml.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
       "id": "substrate:create-something:worker:packages-webflow-review-workers-orchestrator-wrangler-toml",
       "atlasNodeId": "atlas_create-something_worker_packages-webflow-review-workers-orchestrator-wrangler-toml",
       "title": "packages/webflow-review/workers/orchestrator/wrangler.toml",
@@ -8243,6 +8277,21 @@
       "atlasNodeId": "atlas_create-something_guide_docs-guides-browser-proof-and-closeout-runbook-md",
       "title": "BROWSER_PROOF_AND_CLOSEOUT_RUNBOOK.md",
       "path": "docs/guides/BROWSER_PROOF_AND_CLOSEOUT_RUNBOOK.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
+      "id": "substrate:create-something:guide:docs-guides-canon-character-migration-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-canon-character-migration-md",
+      "title": "CANON_CHARACTER_MIGRATION.md",
+      "path": "docs/guides/CANON_CHARACTER_MIGRATION.md",
       "tier": "Mixed",
       "surface": "guide",
       "owner": "CREATE SOMETHING",
@@ -11508,6 +11557,13 @@
       "evidence": "packages/webflow-mcp/worker is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-review-comments-packages-webflow-review-comments",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-webflow-review-comments-packages-webflow-review-comments",
+      "relation": "contains",
+      "evidence": "packages/webflow-review-comments is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-review-extension-packages-webflow-review-extension",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-webflow-review-extension-packages-webflow-review-extension",
@@ -12495,6 +12551,13 @@
       "evidence": "packages/webflow-mcp/worker/wrangler.toml is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-webflow-review-comments-wrangler-toml",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-webflow-review-comments-wrangler-toml",
+      "relation": "contains",
+      "evidence": "packages/webflow-review-comments/wrangler.toml is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-webflow-review-workers-orchestrator-wrangler-toml",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:worker:packages-webflow-review-workers-orchestrator-wrangler-toml",
@@ -13193,6 +13256,13 @@
       "target": "substrate:create-something:guide:docs-guides-browser-proof-and-closeout-runbook-md",
       "relation": "contains",
       "evidence": "docs/guides/BROWSER_PROOF_AND_CLOSEOUT_RUNBOOK.md is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-canon-character-migration-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-canon-character-migration-md",
+      "relation": "contains",
+      "evidence": "docs/guides/CANON_CHARACTER_MIGRATION.md is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-chatgpt-mcp-oauth-managed-bearer-md",
@@ -15995,6 +16065,13 @@
       "evidence": "wrangler.toml configures runtime for packages/webflow-mcp/worker."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-review-comments-packages-webflow-review-comments-runs-substrate-create-something-worker-packages-webflow-review-comments-wrangler-toml",
+      "source": "substrate:create-something:package:create-something-webflow-review-comments-packages-webflow-review-comments",
+      "target": "substrate:create-something:worker:packages-webflow-review-comments-wrangler-toml",
+      "relation": "runs",
+      "evidence": "wrangler.toml configures runtime for packages/webflow-review-comments."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-review-orchestrator-packages-webflow-review-workers-orchestrator-runs-substrate-create-something-worker-packages-webflow-review-workers-orchestrator-wrangler-toml",
       "source": "substrate:create-something:package:create-something-webflow-review-orchestrator-packages-webflow-review-workers-orchestrator",
       "target": "substrate:create-something:worker:packages-webflow-review-workers-orchestrator-wrangler-toml",
@@ -16798,6 +16875,13 @@
       "target": "substrate:create-something:root",
       "relation": "documents",
       "evidence": "docs/guides/BROWSER_PROOF_AND_CLOSEOUT_RUNBOOK.md is an operating guide."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-canon-character-migration-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-canon-character-migration-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/CANON_CHARACTER_MIGRATION.md is an operating guide."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-chatgpt-mcp-oauth-managed-bearer-md-documents-substrate-create-something-root",
@@ -17890,6 +17974,13 @@
       "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "documents",
       "evidence": "docs/guides/BROWSER_PROOF_AND_CLOSEOUT_RUNBOOK.md documents packages/arc through matching topology terms."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-canon-character-migration-md-documents-substrate-create-something-package-create-something-agency-packages-agency",
+      "source": "substrate:create-something:guide:docs-guides-canon-character-migration-md",
+      "target": "substrate:create-something:package:create-something-agency-packages-agency",
+      "relation": "documents",
+      "evidence": "docs/guides/CANON_CHARACTER_MIGRATION.md documents packages/agency through an explicit repository link."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-chatgpt-mcp-oauth-managed-bearer-md-documents-substrate-create-something-package-create-something-community-mcp-packages-community-mcp",

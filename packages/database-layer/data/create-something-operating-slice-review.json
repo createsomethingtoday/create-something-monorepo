@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-review:internal",
-  "generatedAt": "2026-11-14T01:59:17.073Z",
+  "generatedAt": "2026-11-14T15:04:48.864Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceCoverageId": "substrate:create-something:atlas-coverage:internal",
@@ -149,6 +149,8 @@
         "substrate:create-something:package:create-something-webflow-marketplace-sync-packages-webflow-marketplace-sync",
         "substrate:create-something:worker:packages-webflow-marketplace-sync-wrangler-toml",
         "substrate:create-something:worker:packages-webflow-mcp-worker-wrangler-toml",
+        "substrate:create-something:package:create-something-webflow-review-comments-packages-webflow-review-comments",
+        "substrate:create-something:worker:packages-webflow-review-comments-wrangler-toml",
         "substrate:create-something:package:create-something-webflow-review-orchestrator-packages-webflow-review-workers-orchestrator",
         "substrate:create-something:worker:packages-webflow-review-workers-orchestrator-wrangler-toml",
         "substrate:create-something:package:create-something-webflow-review-queue-consumer-packages-webflow-review-workers-queue-consumer",
@@ -170,7 +172,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Automation",
       "surface": "worker",
-      "nodeCount": 153,
+      "nodeCount": 155,
       "evidence": [
         "apps/agency-meta-maintenance/wrangler.jsonc",
         "apps/bettermode-marketplace-creator-agent/wrangler.jsonc",
@@ -216,6 +218,7 @@
         "substrate:create-something:guide:docs-guides-atlas-substrate-agent-context-md",
         "substrate:create-something:guide:docs-guides-bounded-research-interrupt-runbook-md",
         "substrate:create-something:guide:docs-guides-browser-proof-and-closeout-runbook-md",
+        "substrate:create-something:guide:docs-guides-canon-character-migration-md",
         "substrate:create-something:guide:docs-guides-chatgpt-mcp-oauth-managed-bearer-md",
         "substrate:create-something:guide:docs-guides-client-agent-codex-pilot-md",
         "substrate:create-something:guide:docs-guides-cloudflare-bot-access-hardening-md",
@@ -291,7 +294,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Mixed",
       "surface": "guide",
-      "nodeCount": 86,
+      "nodeCount": 87,
       "evidence": [
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",

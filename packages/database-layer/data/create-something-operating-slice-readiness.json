@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-readiness:internal",
-  "generatedAt": "2026-11-14T01:59:17.122Z",
+  "generatedAt": "2026-11-14T15:04:48.910Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceReviewId": "substrate:create-something:operating-slice-review:internal",
@@ -13,20 +13,20 @@
       "tier": "Automation",
       "surface": "worker",
       "owner": "CREATE SOMETHING",
-      "recordCount": 153,
-      "mappedRecordCount": 153,
+      "recordCount": 155,
+      "mappedRecordCount": 155,
       "missingRecordIds": [],
       "gates": [
         {
           "id": "topology_records_exist",
           "status": "pass",
-          "summary": "153/153 slice records exist in the internal topology.",
+          "summary": "155/155 slice records exist in the internal topology.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
           "id": "topology_records_mapped",
           "status": "pass",
-          "summary": "153/153 slice records are mapped.",
+          "summary": "155/155 slice records are mapped.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
@@ -50,7 +50,7 @@
         {
           "id": "cloudflare_runtime_configs_joined",
           "status": "pass",
-          "summary": "123/123 Wrangler config node(s) join to runtime binding coverage.",
+          "summary": "124/124 Wrangler config node(s) join to runtime binding coverage.",
           "evidence": "packages/database-layer/data/create-something-runtime-binding-coverage.json"
         },
         {
@@ -69,13 +69,13 @@
       "nextAction": "Review runtime ownership and bind approved worker slices to production workflow checks before Cloudflare mutation.",
       "workerRuntime": {
         "runtime": "cloudflare",
-        "runtimeConfigRecords": 123,
-        "workerPackageRecords": 30,
-        "bindingRefs": 672,
+        "runtimeConfigRecords": 124,
+        "workerPackageRecords": 31,
+        "bindingRefs": 673,
         "routeRefs": 26,
         "bindingKinds": {
           "assets": 10,
-          "d1": 99,
+          "d1": 100,
           "durable_object": 49,
           "kv": 39,
           "queue": 16,
@@ -84,7 +84,7 @@
           "var": 408,
           "vectorize": 2
         },
-        "workersWithD1": 82,
+        "workersWithD1": 83,
         "workersWithDurableObjects": 43,
         "workersWithQueues": 10,
         "workersWithR2": 23,
@@ -99,20 +99,20 @@
       "tier": "Mixed",
       "surface": "guide",
       "owner": "CREATE SOMETHING",
-      "recordCount": 86,
-      "mappedRecordCount": 86,
+      "recordCount": 87,
+      "mappedRecordCount": 87,
       "missingRecordIds": [],
       "gates": [
         {
           "id": "topology_records_exist",
           "status": "pass",
-          "summary": "86/86 slice records exist in the internal topology.",
+          "summary": "87/87 slice records exist in the internal topology.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
           "id": "topology_records_mapped",
           "status": "pass",
-          "summary": "86/86 slice records are mapped.",
+          "summary": "87/87 slice records are mapped.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
