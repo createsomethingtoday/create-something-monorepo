@@ -391,3 +391,30 @@ it('does not advertise brief-only page filters to legacy grids',()=>{
  expect(legacy.input_schema.properties).not.toHaveProperty('has_cms');
  expect(current.input_schema.properties).toHaveProperty('max_price');
 });
+
+// Strict tool schemas reject these JSON Schema keywords, and the Messages API
+// then fails the whole request. Ranges belong in the description and in code.
+const STRICT_UNSUPPORTED_KEYWORDS = ['minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum', 'multipleOf', 'minLength', 'maxLength'];
+
+function unsupportedStrictKeywords(schema: unknown, path: string): string[] {
+  if (!schema || typeof schema !== 'object') return [];
+  const node = schema as Record<string, unknown>;
+  const found = STRICT_UNSUPPORTED_KEYWORDS.filter((keyword) => keyword in node).map((keyword) => `${path}.${keyword}`);
+  for (const [name, child] of Object.entries((node.properties ?? {}) as Record<string, unknown>)) {
+    found.push(...unsupportedStrictKeywords(child, `${path}.${name}`));
+  }
+  found.push(...unsupportedStrictKeywords(node.items, `${path}[]`));
+  for (const key of ['anyOf', 'allOf'] as const) {
+    for (const child of (node[key] ?? []) as unknown[]) found.push(...unsupportedStrictKeywords(child, `${path}.${key}`));
+  }
+  return found;
+}
+
+it('keeps strict tool schemas free of keywords the Messages API rejects', () => {
+  for (const tools of [toolsForBrief(true), toolsForBrief(false)]) {
+    for (const tool of tools as any[]) {
+      if (!tool.strict) continue;
+      expect(unsupportedStrictKeywords(tool.input_schema, tool.name)).toEqual([]);
+    }
+  }
+});
