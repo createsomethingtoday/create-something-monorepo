@@ -1,0 +1,50 @@
+[
+  {
+    "property": "io",
+    "command": "check",
+    "exit": 0,
+    "seconds": 65.19
+  },
+  {
+    "property": "io",
+    "command": "build",
+    "exit": 0,
+    "seconds": 48.24
+  },
+  {
+    "property": "ltd",
+    "command": "check",
+    "exit": 0,
+    "seconds": 13.24
+  },
+  {
+    "property": "ltd",
+    "command": "build",
+    "exit": 0,
+    "seconds": 23.99
+  },
+  {
+    "property": "space",
+    "command": "check",
+    "exit": 0,
+    "seconds": 10.82
+  },
+  {
+    "property": "space",
+    "command": "build",
+    "exit": 0,
+    "seconds": 26.59
+  },
+  {
+    "property": "lms",
+    "command": "check",
+    "exit": 0,
+    "seconds": 11.67
+  },
+  {
+    "property": "lms",
+    "command": "build",
+    "exit": 0,
+    "seconds": 16.62
+  }
+]
