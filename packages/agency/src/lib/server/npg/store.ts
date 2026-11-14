@@ -8,7 +8,7 @@ export class NpgError extends Error {
   }
 }
 export type Message = { role: 'user' | 'assistant'; text: string; skipTraceReceipt?: string };
-export type Source = { tool: string; data: unknown };
+export type Source = { tool: string; data: unknown; actionId?: string };
 export type State = {
   messages: Message[];
   sources: Source[];
@@ -155,15 +155,24 @@ export class NpgStore {
     }
     return row;
   }
-  async start(owner: string, id: string, version: number, token: string) {
+  async start(owner: string, id: string, version: number, token: string, recoverAmbiguous = false) {
     const run = crypto.randomUUID();
     const row = await this.db
       .prepare(
         `UPDATE npg_analyst_conversations SET status='running',version=version+1,
    run_id=?,lease_token=?,lease_until=?,paid_dispatched=0,updated_at=?
-   WHERE id=? AND owner_id=? AND scope='npg' AND version=? AND status IN ('idle','review') RETURNING *`
+   WHERE id=? AND owner_id=? AND scope='npg' AND version=? AND (status IN ('idle','review') OR (?=1 AND status='ambiguous')) RETURNING *`
       )
-      .bind(run, token, this.now() + 145000, this.now(), id, owner, version)
+      .bind(
+        run,
+        token,
+        this.now() + 145000,
+        this.now(),
+        id,
+        owner,
+        version,
+        recoverAmbiguous ? 1 : 0
+      )
       .first<Conversation>();
     if (!row)
       throw new NpgError(
@@ -171,6 +180,23 @@ export class NpgStore {
         'This conversation changed or stopped. Refresh its history before continuing.'
       );
     return row;
+  }
+  async extendCompleteProfileLease(row: Conversation) {
+    await this.assertLease(row);
+    const until = this.now() + 450000;
+    await this.db.batch([
+      this.db
+        .prepare(
+          "UPDATE npg_analyst_conversations SET lease_until=? WHERE id=? AND owner_id=? AND lease_token=? AND status='running' AND lease_until>?"
+        )
+        .bind(until, row.id, row.owner_id, row.lease_token, this.now()),
+      this.db
+        .prepare(
+          'UPDATE npg_analyst_admission SET lease_until=? WHERE owner_id=? AND lease_token=? AND lease_until>?'
+        )
+        .bind(until, row.owner_id, row.lease_token, this.now())
+    ]);
+    row.lease_until = until;
   }
   async assertLease(row: Conversation) {
     const found = await this.db
@@ -227,24 +253,28 @@ export class NpgStore {
     if (!taken) throw new NpgError(409, 'This review was already used or changed.');
     return status;
   }
-  async acquirePaid(token: string, actionId = '') {
-    const uncertain = await this.db
-      .prepare(
-        "SELECT id FROM npg_analyst_actions WHERE status='ambiguous' OR (status='dispatching' AND id<>?) LIMIT 1"
-      )
-      .bind(actionId)
-      .first();
+  async acquirePaid(token: string, actionId = '', leaseMs = 150000) {
+    const uncertain = actionId
+      ? await this.db
+          .prepare(
+            `SELECT prior.id FROM npg_analyst_actions prior JOIN npg_analyst_actions current ON current.id=?
+      WHERE (prior.status='ambiguous' OR (prior.status='dispatching' AND prior.id<>current.id))
+      AND (prior.id=current.id OR (json_extract(prior.arguments_json,'$.npi') IS NOT NULL AND json_extract(prior.arguments_json,'$.npi')=json_extract(current.arguments_json,'$.npi'))) LIMIT 1`
+          )
+          .bind(actionId)
+          .first()
+      : undefined;
     if (uncertain)
       throw new NpgError(
         409,
-        'A previous paid action needs operator reconciliation before more credits can be spent.'
+        'This candidate has an uncertain operation. Reconcile its existing receipts before another request for the same candidate.'
       );
     const now = this.now();
     const row = await this.db
       .prepare(
         "INSERT INTO npg_analyst_paid_lease(scope,token,lease_until) VALUES('npg',?,?) ON CONFLICT(scope) DO UPDATE SET token=excluded.token,lease_until=excluded.lease_until WHERE lease_until<=? RETURNING token"
       )
-      .bind(token, now + 150000, now)
+      .bind(token, now + leaseMs, now)
       .first();
     if (!row)
       throw new NpgError(

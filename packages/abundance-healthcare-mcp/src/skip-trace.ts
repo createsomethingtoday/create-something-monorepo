@@ -36,6 +36,7 @@ export type SkipResult = {
   terminal_at?: number;
   person_link?: string;
   revision?: number;
+  cached?: boolean;
   contacts?: {
     emails: string[];
     phones: string[];
@@ -73,6 +74,29 @@ const safeText = (v: unknown) =>
   typeof v === 'string' && /^[A-Za-z .'-]{1,80}$/.test(v) ? v : null;
 const providerId = (value: unknown): value is string =>
   typeof value === 'string' && /^[A-Za-z0-9]{1,64}$/.test(value);
+/** Read-only access/privacy preflight. Financial history never gates dispatch. */
+export async function skipTraceReadiness(options:{token?:string;privacyDatasetId?:string;store:PdlStore;fetchFn?:typeof fetch}){
+ try{
+  if(!options.token?.trim()||!providerId(options.privacyDatasetId))throw Error('configuration');
+  const api=async(path:string,anonymous=false)=>{
+   const r=await(options.fetchFn??fetch)(`https://api.apify.com/v2/${path}`,{redirect:'manual',...(anonymous?{}:{headers:{Authorization:`Bearer ${options.token}`}}),signal:AbortSignal.timeout(15000)});
+   if(anonymous){
+    if(r.status!==403||!r.headers.get('content-type')?.toLowerCase().includes('application/json'))throw Error('privacy');
+    const denied=await r.json() as any;
+    if(denied?.error?.type!=='insufficient-permissions'||denied.error.message!=="Insufficient permissions for the dataset. Make sure you're passing a correct API token and that it has the required permissions.")throw Error('privacy');
+    return null;
+   }
+   if(!r.ok)throw Error('access');return r.json() as Promise<any>;
+  };
+  const {data:account}=await api('users/me');
+  const {data:sentinel}=await api(`datasets/${options.privacyDatasetId}`);
+  if(!providerId(account?.id)||sentinel?.id!==options.privacyDatasetId||sentinel.userId!==account.id||sentinel.generalAccess!=='FOLLOW_USER_SETTING'||sentinel.itemCount!==0)throw Error('privacy');
+  const items=await api(`datasets/${options.privacyDatasetId}/items?limit=0`);
+  if(!Array.isArray(items)||items.length)throw Error('privacy');
+  await api(`datasets/${options.privacyDatasetId}/items?limit=0`,true);
+  return {ready:true,provider:'apify',estimated_usd:null,reason:'Read-only checks passed; dispatch repeats privacy checks. Identity and contact permission remain unverified.'};
+ }catch{return {ready:false,provider:'apify',estimated_usd:null,reason:'Skip Trace access or privacy preflight is blocked. No Skip Trace dispatch was started.'}}
+}
 export async function skipTrace(
   input: SkipIdentity,
   options: {
@@ -80,7 +104,6 @@ export async function skipTrace(
     store: PdlStore;
     fetchFn?: typeof fetch;
     now?: number;
-    dailyBudgetUsd?: number;
     privacyDatasetId?: string;
   }
 ): Promise<SkipResult> {
@@ -123,24 +146,6 @@ export async function skipTrace(
     )
       throw new Error('Known receipt unavailable; no dispatch authorized.');
     if (cached && cached.status !== 'privacy_blocked') return cached;
-    const reservations = (
-      (await s.get<{ at: number; cents: number; id: string; reconciled?: boolean }[]>(
-        'skip:budget'
-      )) ?? []
-    ).filter((r) => !r.reconciled || r.at > now - 86400000);
-    if (await s.get('skip:billing_block'))
-      throw new Error('Skip Trace billing requires operator reconciliation.');
-    const budget = options.dailyBudgetUsd ?? 1;
-    if (
-      !Number.isFinite(budget) ||
-      budget <= 0 ||
-      reservations.reduce((n, r) => n + r.cents, 0) + 10 > Math.floor(budget * 100)
-    )
-      throw new Error('Skip Trace daily budget exhausted.');
-    await s.put('skip:budget', [
-      ...reservations.filter((r) => r.id !== digest),
-      { at: now, cents: 10, id: digest }
-    ]);
     await s.put(key, base);
     return undefined;
   });
@@ -229,7 +234,7 @@ export async function skipTrace(
         throw new Error('Unrecognized dataset denial');
       dispatched = true;
       const { data } = await api(
-        `acts/${ACTOR}/runs?build=0.0.192&maxTotalChargeUsd=0.1&timeout=120&restartOnError=false&forcePermissionLevel=LIMITED_PERMISSIONS`,
+        `acts/${ACTOR}/runs?build=0.0.192&timeout=120&restartOnError=false&forcePermissionLevel=LIMITED_PERMISSIONS`,
         'POST',
         { name: [query], max_results: 1 }
       );
@@ -269,11 +274,9 @@ export async function skipTrace(
       (typeof run.usageTotalUsd !== 'number' ||
         !Number.isFinite(run.usageTotalUsd) ||
         run.usageTotalUsd < 0 ||
-        run.usageTotalUsd > 0.1 ||
         (result.charge_usd !== undefined && run.usageTotalUsd < result.charge_usd))
     ) {
       result = { ...result, status: 'billing_review', charge_reconciled: false };
-      await options.store.put('skip:billing_block', true);
       throw new Error('Billing anomaly');
     }
     await api(`actor-runs/${result.run_id}`, 'PUT', { generalAccess: 'RESTRICTED' });
@@ -305,7 +308,6 @@ export async function skipTrace(
       typeof charge === 'number' &&
       Number.isFinite(charge) &&
       charge >= 0 &&
-      charge <= 0.1 &&
       (result.charge_usd === undefined || charge >= result.charge_usd);
     const charged = run.chargedEventCounts;
     const accounted = run.accountedChargedEventCounts;
@@ -323,7 +325,6 @@ export async function skipTrace(
       result.charge_usd === charge &&
       result.billing_observed_at !== undefined &&
       now - result.billing_observed_at >= 60000;
-    if (!valid) await options.store.put('skip:billing_block', true);
     result = {
       ...result,
       status:
@@ -441,31 +442,6 @@ export async function skipTrace(
     result.revision = (current?.revision ?? 0) + 1;
     await s.put(key, result);
     await s.put('lease:' + key, { id: lease, until: 0 });
-    if (!dispatched) {
-      const reservations = (await s.get<{ id: string }[]>('skip:budget')) ?? [];
-      await s.put(
-        'skip:budget',
-        reservations.filter((r) => r.id !== digest)
-      );
-    }
-    if (dispatched) {
-      const reservations =
-        (await s.get<{ at: number; cents: number; id: string; reconciled?: boolean }[]>(
-          'skip:budget'
-        )) ?? [];
-      const prior = reservations.find((r) => r.id === digest);
-      const chargeChanged =
-        result.charge_usd !== current?.charge_usd || result.charge_reconciled !== true;
-      await s.put('skip:budget', [
-        ...reservations.filter((r) => r.id !== digest),
-        {
-          id: digest,
-          at: !prior || chargeChanged ? now : prior.at,
-          cents: result.charge_reconciled ? Math.ceil((result.charge_usd ?? 0.1) * 100) : 10,
-          reconciled: result.charge_reconciled === true
-        }
-      ]);
-    }
-    return result;
+    return {...result,cached:Boolean(existing)};
   });
 }

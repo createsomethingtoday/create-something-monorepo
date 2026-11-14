@@ -8,7 +8,7 @@ import { join } from 'node:path';
 const require = createRequire(new URL('../worker/package.json', import.meta.url));
 const wrangler = require.resolve('wrangler');
 const { Miniflare } = createRequire(wrangler)('miniflare');
-test('real workerd singleton DO: privacy preflight, duplicate dispatch, persisted projection and budget', async () => {
+test('real workerd singleton DO: privacy preflight, duplicate dispatch, persisted projection and receipt spend tracking', async () => {
   const bundle = mkdtempSync(join(tmpdir(), 'skip-runtime-'));
   execFileSync(process.execPath, [wrangler, 'deploy', '--dry-run', '--outdir', bundle], {
     cwd: new URL('../worker', import.meta.url),
@@ -16,6 +16,7 @@ test('real workerd singleton DO: privacy preflight, duplicate dispatch, persiste
     env: { ...process.env, WRANGLER_SEND_METRICS: 'false' }
   });
   let posts = 0;
+  const receipts=[];
   const mf = new Miniflare({
     modules: [{ type: 'ESModule', path: join(bundle, 'index.js') }],
     modulesRoot: bundle,
@@ -29,10 +30,12 @@ test('real workerd singleton DO: privacy preflight, duplicate dispatch, persiste
     bindings: {
       APIFY_API_TOKEN: 'synthetic',
       APIFY_PRIVACY_DATASET_ID: 'sentinel',
-      APIFY_DAILY_BUDGET_USD: '0.1'
+      AGENCY_INTERNAL_API_KEY:'synthetic-ledger',
+      AGENCY_BASE_URL:'https://ledger.test'
     },
     outboundService: async (request) => {
       const u = new URL(request.url);
+      if(u.pathname==='/api/abundance/enrichment-budget'){const body=await request.json();assert.equal(body.action,'record');receipts.push(body);return Response.json({success:true,data:{recorded:true}})}
       if (u.pathname === '/v2/users/me') return Response.json({ data: { id: 'owner' } });
       if (u.pathname === '/v2/datasets/sentinel/items')
         return request.headers.has('Authorization')
@@ -61,6 +64,7 @@ test('real workerd singleton DO: privacy preflight, duplicate dispatch, persiste
       if (request.method === 'POST') {
         posts++;
         assert.equal(u.searchParams.get('forcePermissionLevel'), 'LIMITED_PERMISSIONS');
+        assert.equal(u.searchParams.has('maxTotalChargeUsd'),false);
         return Response.json({
           data: { id: 'run1', defaultDatasetId: 'dataset1', userId: 'owner' }
         });
@@ -112,13 +116,17 @@ test('real workerd singleton DO: privacy preflight, duplicate dispatch, persiste
     };
     const invoke = (b) =>
       stub.fetch('https://skip.internal/enrich', { method: 'POST', body: JSON.stringify(b) });
-    const responses = await Promise.all([invoke(body), invoke(body)]);
+    const grant={id:'a'.repeat(64),provider:'apify',token:'synthetic-private-grant',npi:body.npi};
+    const cachedGrant={...grant,id:'b'.repeat(64)};
+    const responses = await Promise.all([invoke({input:body,tracking_grant:grant}), invoke({input:body,tracking_grant:cachedGrant}), invoke({input:body,tracking_grant:grant})]);
     assert.ok(responses.every((r) => r.ok));
     const result = await (await invoke(body)).json();
     assert.equal(result.status, 'review_required');
     assert.deepEqual(result.contacts.phones, ['+15125550100']);
     assert.ok(!JSON.stringify(result).includes('FORBIDDEN'));
     assert.equal(posts, 1);
+    const cacheRead=await(await invoke({input:body,tracking_grant:cachedGrant})).json();
+    assert.equal(cacheRead.cached,true);
     const refreshed = await (
       await invoke({ ...body, reconcile_receipt: { id: result.id, run_id: result.run_id } })
     ).json();
@@ -130,7 +138,15 @@ test('real workerd singleton DO: privacy preflight, duplicate dispatch, persiste
       503
     );
     assert.equal(posts, 1);
-    assert.equal((await invoke({ ...body, npi: '9999999999' })).status, 503);
+    assert.equal((await invoke({ ...body, npi: '9999999999' })).status, 200);
+    assert.equal(posts,2);
+    const originalReceipts=receipts.filter(r=>r.grant.id===grant.id);
+    const cachedReceipts=receipts.filter(r=>r.grant.id===cachedGrant.id);
+    assert.ok(originalReceipts.length>=2);assert.ok(cachedReceipts.length>=2);
+    assert.equal(originalReceipts.at(-1).actual_usd,0.07);
+    assert.equal(cachedReceipts.at(-1).actual_usd,0);
+    assert.equal(originalReceipts.at(-1).receipt_ref,'run1');
+    assert.equal(JSON.stringify(refreshed).includes('synthetic-private-grant'),false);
   } finally {
     await mf.dispose();
     rmSync(bundle, { recursive: true, force: true });
