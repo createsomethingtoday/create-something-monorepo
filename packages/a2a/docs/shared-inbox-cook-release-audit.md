@@ -27,7 +27,12 @@ Integration review then found a contrast regression in the inverted public
 process section under newer Canon tokens. A section-local inverse secondary-ink
 repair in landing-motion.css preserves legibility without changing global Canon
 styles or other applications. The original 14-file identity is historical after
-that bounded release repair.
+that bounded release repair. PR review additionally identified quadratic URL
+suffix trimming for maximum-length untrusted messages. A failing time-bounded
+regression reproduced the delay; delimiter/query counts and a single final slice
+now keep trimming linear while preserving literal text and conservative links.
+Both type checks, all 206 package tests and the corrected build pass locally;
+final independent verification and CI identify the deployed artifact separately.
 Newer Canon styles on main change the emitted common CSS and dependent import
 hashes. The manifest above identifies the historical local review, not the
 new release bundle; the integrated artifact is separately checked and pinned

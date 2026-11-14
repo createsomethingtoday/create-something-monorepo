@@ -4,24 +4,31 @@ export type MessagePart = { text: string; href?: string };
 // Leave stripped sentence punctuation as text; retain balanced path parentheses.
 export function messageParts(text: string): MessagePart[] {
   const parts: MessagePart[] = [];
+  const openings: Record<string, string> = { ')': '(', ']': '[', '}': '{' };
   let cursor = 0;
   for (const match of text.matchAll(/https?:\/\/[^\s<>"`]+/giu)) {
     const start = match.index;
     if (start > 0 && !/[\s([{"'<`]/u.test(text[start - 1])) continue;
     let candidate = match[0];
-    while (candidate) {
-      const last = candidate.at(-1)!;
-      const opening = ({ ')': '(', ']': '[', '}': '{' } as Record<string, string>)[last];
+    const counts: Record<string, number> = { '(': 0, ')': 0, '[': 0, ']': 0, '{': 0, '}': 0, '?': 0 };
+    for (const character of candidate) {
+      if (character in counts) counts[character]++;
+    }
+    let end = candidate.length;
+    while (end) {
+      const last = candidate[end - 1];
+      const opening = openings[last];
       if (
         (last === "'" && text[start - 1] === "'") ||
         /[.,:!?]/u.test(last) ||
-        (last === ';' && !candidate.includes('?'))
+        (last === ';' && counts['?'] === 0) ||
+        (opening && counts[last] > counts[opening])
       ) {
-        candidate = candidate.slice(0, -1);
-      } else if (opening && candidate.split(last).length > candidate.split(opening).length) {
-        candidate = candidate.slice(0, -1);
+        if (last in counts) counts[last]--;
+        end--;
       } else break;
     }
+    candidate = candidate.slice(0, end);
     if (
       !candidate ||
       /[\\\u0000-\u001f\u007f\p{Cf}]/u.test(candidate) ||

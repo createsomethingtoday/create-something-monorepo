@@ -8,6 +8,22 @@ function links(text: string) {
   return parts.filter((part) => part.href).map((part) => ({ text: part.text, href: part.href }));
 }
 
+test('bounded hostile URL punctuation preserves text without blocking the reader', () => {
+  const text = 'https://example.com/' + ')'.repeat(16_000);
+  const started = performance.now();
+  assert.deepEqual(links(text), [{ text: 'https://example.com/', href: 'https://example.com/' }]);
+  const elapsed = performance.now() - started;
+  assert.ok(elapsed < 250, `one bounded message blocked parsing for ${elapsed.toFixed(1)}ms`);
+  for (const suffix of [']', '}', ';']) {
+    assert.deepEqual(links('https://example.com/' + suffix.repeat(16_000)), [
+      { text: 'https://example.com/', href: 'https://example.com/' }
+    ]);
+  }
+  assert.deepEqual(links('https://example.com/a;?'), [
+    { text: 'https://example.com/a', href: 'https://example.com/a' }
+  ]);
+});
+
 test('preserves exact text and links only explicit absolute HTTP(S)', () => {
   const text = 'First HTTPS://example.com/a?q=one&two=2#part\r\nSecond http://[::1]:4195/a%20b';
   assert.deepEqual(links(text), [
