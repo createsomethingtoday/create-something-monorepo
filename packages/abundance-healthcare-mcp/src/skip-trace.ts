@@ -342,7 +342,7 @@ export async function skipTrace(
       ...(valid ? { charge_usd: charge } : {}),
       reason: reconciled
         ? 'Terminal billing reconciled against repeated stable run readback and accounted event counts; not invoice finality.'
-        : 'Provider terminal receipt; charges may settle later. Full cap remains reserved.'
+        : 'Provider terminal receipt; charges may settle later. Preserve the existing receipt for reconciliation.'
     };
     delete result.contacts;
     delete result.person_link;
@@ -350,7 +350,7 @@ export async function skipTrace(
       result.status = 'billing_review';
       delete result.contacts;
       result.reason =
-        'Anomalous billing; paid dispatch globally blocked pending operator reconciliation.';
+        'Anomalous billing; reconcile this receipt before repeating this candidate lookup.';
     }
     if (run.status === 'SUCCEEDED' && valid) {
       const rows = await api(

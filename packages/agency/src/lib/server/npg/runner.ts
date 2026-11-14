@@ -612,7 +612,8 @@ export async function executeCommand(
         if (
           receipt?.npi !== args.npi ||
           !['complete', 'partial', 'blocked'].includes(receipt?.status) ||
-          receipt.uncertain_dispatch !== false
+          receipt.uncertain_dispatch !== false ||
+          ['association_failure', 'privacy_blocked_review', 'billing_review'].includes(skip?.status)
         )
           throw new NpgError(
             409,

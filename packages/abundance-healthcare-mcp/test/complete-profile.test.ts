@@ -307,3 +307,20 @@ test('Skip Trace preserves original operation charge attribution for later recei
     assert.equal(result.providers.apify.operation_charge_usd, cached ? 0 : 0.007);
   }
 });
+
+for (const status of ['association_failure', 'privacy_blocked_review', 'billing_review']) {
+  test(`combined Skip Trace ${status} requires reconciliation`, async () => {
+    const f = fixture();
+    const original = f.options.fetchFn;
+    f.options.fetchFn = async (input: any, init: any) =>
+      new URL(String(input)).pathname === '/api/abundance/healthcare-providers/enrichment'
+        ? Response.json({success:true,data:{id:'npgclay_fixture',status:'complete',cache_hit:true}})
+        : original(input,init);
+    f.options.skipTrace = async () => ({status,charge_reconciled:false,charge_usd:0.007});
+    const result = await enrichCompleteProfile({npi:f.npi,confirm_paid_enrichment:true,operation_id:crypto.randomUUID()},f.options);
+    assert.equal(result.status, 'partial');
+    assert.equal(result.uncertain_dispatch, true);
+    assert.equal(result.providers.apify.status,status);
+    assert.deepEqual(Object.keys(result.providers),['pdl','clay','exa','apify']);
+  });
+}

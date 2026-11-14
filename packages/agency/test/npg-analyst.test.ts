@@ -1994,3 +1994,45 @@ test('Skip refresh uses increased actual receipt while keeping original cache-on
       assert.equal(result.providers.apify.operation_cache_hit, cacheOnly);
     }
   }));
+
+test('combined approval route leaves time for the source deadline and receipt persistence', () =>
+  database(async (store) => {
+    const f = completeFixture();
+    const c = await conversation(store);
+    const proposed = await executeCommand(store, 'alice', message(c), () => f.p);
+    const url = new URL('https://createsomething.agency/delivery/abundance/healthcare-analyst/api');
+    const originalTimer = globalThis.setTimeout;
+    const deadlines: number[] = [];
+    globalThis.setTimeout = ((callback: any, ms: number, ...args: any[]) => {
+      if (ms >= 110000) deadlines.push(ms);
+      return originalTimer(callback, ms, ...args);
+    }) as typeof setTimeout;
+    try {
+      // No provider credentials: execute stops before network, after the real route selects its timer.
+      await POST({
+        locals: { user: { id: 'alice', email: 'alice@thenpgroup.com' } },
+        platform: { env: { DB: store.db, NPG_HEALTHCARE_CHAT_ENABLED: 'true' } }, url,
+        request: new Request(url, {method:'POST',headers:{origin:url.origin,'content-type':'application/json'},body:JSON.stringify(approve(proposed))})
+      } as any);
+    } finally { globalThis.setTimeout = originalTimer; }
+    assert.ok(deadlines.some(ms => ms > 300000 && ms < 450000), JSON.stringify(deadlines));
+    assert.equal(deadlines.includes(110000), false);
+  }));
+
+for (const status of ['association_failure', 'privacy_blocked_review', 'billing_review']) {
+  test(`combined ${status} retains same-candidate reconciliation even with stale source flags`, () =>
+    database(async store => {
+      const f = completeFixture({status:'complete',npi:completeArgs.npi,uncertain_dispatch:false,providers:{pdl:{status:'matched'},clay:{status:'complete'},exa:{status:'matched'},apify:{status}}});
+      const c = await conversation(store);
+      const proposed = await executeCommand(store,'alice',message(c),()=>f.p);
+      const out = await executeCommand(store,'alice',approve(proposed),()=>f.p);
+      assert.equal(out.status,'ambiguous');
+      assert.equal((await store.action('alice',proposed.pending!.id)).status,'ambiguous');
+      assert.equal((out.sources.at(-1)!.data as any).providers.apify.status,status);
+      const next = completeFixture();
+      const candidate = await conversation(store);
+      const duplicate = await executeCommand(store,'alice',message(candidate),()=>next.p);
+      await assert.rejects(()=>store.acquirePaid('duplicate',duplicate.pending!.id),{status:409});
+      assert.equal(next.calls.some(c=>c.name==='enrich_candidate_complete_profile'),false);
+    }));
+}

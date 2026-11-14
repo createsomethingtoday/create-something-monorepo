@@ -816,7 +816,7 @@ export async function enrichCompleteProfile(input:{npi:string;confirm_paid_enric
    }
    providers[provider]=result;
    charges[provider]=result.cached||result.cache_hit?0:finiteAmount(result.actual_cost_usd??result.charge_usd);
-   if(['delivery_unknown','unavailable','unresolved'].includes(result.status)||(provider==='pdl'&&result.status==='pending'))uncertain=true;
+   if(['delivery_unknown','unavailable','unresolved','association_failure','privacy_blocked_review','billing_review'].includes(result.status)||(provider==='pdl'&&result.status==='pending'))uncertain=true;
   }catch(error){
    const knownCharge=error instanceof KnownEnrichmentChargeError?error.actualCostUsd:null;
    providers[provider]={status:'unresolved',reason:'The provider outcome could not be confirmed. Recover its existing receipt; do not automatically repeat this operation.',actual_cost_usd:knownCharge,...(error instanceof KnownEnrichmentChargeError?{receipt_id:error.receiptId}:{})};
