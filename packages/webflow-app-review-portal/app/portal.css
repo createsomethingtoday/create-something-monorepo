@@ -529,6 +529,10 @@ main.main-shell {
   border-color: var(--actionPrimaryBackground);
   color: white;
 }
+.button.portal-choice-approve:hover:not(:disabled) {
+  background: var(--actionPrimaryBackgroundHover);
+  border-color: var(--actionPrimaryBackgroundHover);
+}
 .button.portal-choice-reject {
   color: #b12932;
   border-color: #e9bec2;
