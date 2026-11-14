@@ -53,3 +53,16 @@ existing D1 schema and data, Identity, grants, secrets and the sender container.
 No migration or data rollback is part of this release. Record the merged SHA,
 Worker version, deployment ID, live asset comparison, remaining limits and
 worktree disposition in the Linear release receipt after promotion.
+
+
+PR review also reproduced a late-send navigation race. A restored composer could
+retry an already successful POST with a new idempotency key. The UI now keeps
+the attempt key across navigation until an active composer acknowledges it;
+late responses from an older authenticated session cannot erase current drafts.
+The browser regression is retained in
+`scripts/shared-inbox-send-navigation-regression.js`. Run it only through page
+evaluation on the owned GET-only `http://127.0.0.1:4201` fixture. It adds an inbox
+in GET responses and intercepts every POST with a held/fake acknowledgment;
+it never sends correspondence or bypasses the production feature gate. Require
+`pass: true` for both conversation and request cases. Red and green receipts
+are retained with the independent release evidence in the Cook worktree.

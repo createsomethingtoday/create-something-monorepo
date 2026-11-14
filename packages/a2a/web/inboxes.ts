@@ -996,6 +996,8 @@ function renderConversation(root: HTMLElement) {
       sendAttempts.set(draftKey, attempt);
     }
     const generation = state.generation;
+    const authGeneration = authSessionGeneration;
+    const subject = state.me?.subject;
     const posted = await api<SharedMessage>(path('/messages'), 'POST', {
       text: text.input.value,
       kind: mode.input.value,
@@ -1003,6 +1005,7 @@ function renderConversation(root: HTMLElement) {
       idempotencyKey: attempt.key,
       ...(state.viewAgentId ? { viewAgentId: state.viewAgentId } : {})
     });
+    if (authGeneration !== authSessionGeneration || subject !== state.me?.subject) return;
     const currentDraft = drafts.get(draftKey);
     if (
       !currentDraft ||
@@ -1010,8 +1013,10 @@ function renderConversation(root: HTMLElement) {
     ) {
       drafts.delete(draftKey);
     }
-    if (sendAttempts.get(draftKey) === attempt) sendAttempts.delete(draftKey);
+    // A restored composer can still show this payload. Keep its successful key until
+    // that composer acknowledges the result, so a retry cannot create another message.
     if (generation !== state.generation) return;
+    if (sendAttempts.get(draftKey) === attempt) sendAttempts.delete(draftKey);
     notice('Message posted. Delivery and work status are separate.');
     state.messages = [...state.messages.filter((m) => m.id !== posted.id), posted].sort(
       (a, b) => a.cursor - b.cursor
