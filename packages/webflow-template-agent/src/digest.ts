@@ -1,3 +1,4 @@
+import { preflightModelRequest } from './agent.js';
 import type { Env } from './types.js';
 
 // ── Telemetry digest + alerts (spec: docs/TEMPLATE_AGENT_TELEMETRY_SPEC.md) ──
@@ -29,7 +30,10 @@ interface WindowStats {
 
 export interface AlertFinding {
   rule: string;
+  /** Counts and status codes only: this text is published in the snapshot. */
   message: string;
+  /** `outage` = visitors cannot complete a turn. Readers page a person for it. */
+  severity: 'outage' | 'warning';
   /** KV cooldown key suffix; one post per key per cooldown window. */
   dedupeKey: string;
   cooldownSeconds: number;
@@ -84,6 +88,7 @@ export function evaluateAlerts(last24h: WindowStats, last6h: WindowStats, last1h
     findings.push({
       rule: 'A1 zero-traffic',
       message: 'No agent turns in the trailing 24h — chat down, removed from page, or session mint broken.',
+      severity: 'outage',
       dedupeKey: 'a1',
       cooldownSeconds: 24 * 3600,
     });
@@ -96,6 +101,7 @@ export function evaluateAlerts(last24h: WindowStats, last6h: WindowStats, last1h
     findings.push({
       rule: 'A2 error-rate',
       message: `Turn failure rate ${Math.round((failed6 / total6) * 100)}% over 6h (${failed6}/${total6}).`,
+      severity: 'warning',
       dedupeKey: 'a2',
       cooldownSeconds: 6 * 3600,
     });
@@ -106,6 +112,7 @@ export function evaluateAlerts(last24h: WindowStats, last6h: WindowStats, last1h
       findings.push({
         rule: 'A3 turn-denials',
         message: `${count} turn(s) denied in the last hour (reason: ${reason}) — users are being refused.`,
+        severity: 'warning',
         dedupeKey: `a3:${reason}`,
         cooldownSeconds: 6 * 3600,
       });
@@ -116,6 +123,7 @@ export function evaluateAlerts(last24h: WindowStats, last6h: WindowStats, last1h
     findings.push({
       rule: 'A4 spend',
       message: `Trailing-24h spend $${last24h.settledUsd.toFixed(2)} exceeds 80% of the $${dailyBudgetUsd.toFixed(0)}/day budget.`,
+      severity: 'warning',
       dedupeKey: 'a4',
       cooldownSeconds: 24 * 3600,
     });
@@ -126,12 +134,44 @@ export function evaluateAlerts(last24h: WindowStats, last6h: WindowStats, last1h
     findings.push({
       rule: 'A5 session-rejections',
       message: `${rejected1h} session rejections in the last hour — bot pressure or Turnstile misconfiguration.`,
+      severity: 'warning',
       dedupeKey: 'a5',
       cooldownSeconds: 6 * 3600,
     });
   }
 
+  // The 2026-10-30 outage: every turn failed or was denied for two weeks while
+  // visitors kept arriving. A2 can miss that in a quiet 6h window.
+  const settled24 = last24h.counts.turn_settled ?? 0;
+  const failed24 = last24h.counts.turn_failed ?? 0;
+  const denied24 = Object.values(last24h.denialReasons).reduce((a, b) => a + b, 0);
+  if (settled24 === 0 && failed24 + denied24 >= 3) {
+    findings.push({
+      rule: 'A7 no-completed-turns',
+      message: `No turn completed in the trailing 24h, but ${failed24} failed and ${denied24} were denied. The finder is down for visitors.`,
+      severity: 'outage',
+      dedupeKey: 'a7',
+      cooldownSeconds: 6 * 3600,
+    });
+  }
+
   return findings;
+}
+
+// A8: the model API rejects the Worker's own request shape, so no turn can
+// start. Found with a free token-count call, without waiting for a visitor.
+// The API's reason goes to the log only.
+export async function preflightFinding(env: Env, fetcher: typeof fetch): Promise<AlertFinding | null> {
+  const preflight = await preflightModelRequest(env, fetcher);
+  if (preflight.state !== 'rejected') return null;
+  console.log(`[telemetry] request preflight rejected: ${preflight.status} ${preflight.detail ?? ''}`);
+  return {
+    rule: 'A8 request-preflight',
+    message: `The model API rejects the finder's request (HTTP ${preflight.status}). No turn can start until this is fixed.`,
+    severity: 'outage',
+    dedupeKey: 'a8',
+    cooldownSeconds: 6 * 3600,
+  };
 }
 
 // ── Digest ────────────────────────────────────────────────────────────────────
@@ -201,17 +241,29 @@ export interface TelemetrySummary {
     spend_usd: number;
   };
   daily_budget_usd: number;
+  /** Findings active when the summary was built. Empty = nothing to report. */
+  alerts: Array<Pick<AlertFinding, 'rule' | 'message' | 'severity'>>;
 }
 
 export async function buildSummary(env: Env, now: Date, fetcher: typeof fetch): Promise<TelemetrySummary> {
-  const [last24h, last7d] = await Promise.all([
+  const [last24h, last7d, last6h, last1h, preflight] = await Promise.all([
     fetchWindowStats(env, 24, fetcher),
     fetchWindowStats(env, 7 * 24, fetcher),
+    fetchWindowStats(env, 6, fetcher),
+    fetchWindowStats(env, 1, fetcher),
+    preflightFinding(env, fetcher),
   ]);
-  return summaryFrom(last24h, last7d, now, env);
+  const findings = [...evaluateAlerts(last24h, last6h, last1h, env), ...(preflight ? [preflight] : [])];
+  return summaryFrom(last24h, last7d, now, env, findings);
 }
 
-export function summaryFrom(last24h: WindowStats, last7d: WindowStats, now: Date, env: Env): TelemetrySummary {
+export function summaryFrom(
+  last24h: WindowStats,
+  last7d: WindowStats,
+  now: Date,
+  env: Env,
+  findings: AlertFinding[] = [],
+): TelemetrySummary {
   return {
     generated_at: now.toISOString(),
     window_24h: {
@@ -228,6 +280,7 @@ export function summaryFrom(last24h: WindowStats, last7d: WindowStats, now: Date
       spend_usd: Number(last7d.settledUsd.toFixed(4)),
     },
     daily_budget_usd: Number(env.DAILY_BUDGET_MICRO_USD ?? '40000000') / 1e6,
+    alerts: findings.map(({ rule, message, severity }) => ({ rule, message, severity })),
   };
 }
 
@@ -319,10 +372,19 @@ export async function runScheduled(event: ScheduledController, env: Env, fetcher
     fetchWindowStats(env, 6, fetcher),
     fetchWindowStats(env, 1, fetcher),
   ]);
-  for (const finding of evaluateAlerts(last24h, last6h, last1h, env)) {
-    if (await underCooldown(env, finding.dedupeKey)) continue;
+  const findings = evaluateAlerts(last24h, last6h, last1h, env);
+  const report = async (finding: AlertFinding) => {
+    if (await underCooldown(env, finding.dedupeKey)) return;
     await deliver(env, `:rotating_light: *${finding.rule}* — ${finding.message}`, fetcher);
     await markFired(env, finding.dedupeKey, finding.cooldownSeconds);
+  };
+  for (const finding of findings) await report(finding);
+
+  // After the dataset alerts, so a slow model API cannot delay them.
+  const preflight = await preflightFinding(env, fetcher);
+  if (preflight) {
+    findings.push(preflight);
+    await report(preflight);
   }
 
   if (!env.GITHUB_SNAPSHOT_TOKEN) return;
@@ -330,7 +392,7 @@ export async function runScheduled(event: ScheduledController, env: Env, fetcher
     const snapshotFetcher: typeof fetch = (input, init) =>
       fetcher(input, { ...init, signal: AbortSignal.timeout(10_000) });
     const last7d = await fetchWindowStats(env, 7 * 24, snapshotFetcher);
-    await publishSnapshot(env, summaryFrom(last24h, last7d, new Date(), env), fetcher);
+    await publishSnapshot(env, summaryFrom(last24h, last7d, new Date(), env, findings), fetcher);
   } catch (error) {
     console.log(`[telemetry] snapshot publish failed: ${error instanceof Error ? error.message : String(error)}`);
   }
