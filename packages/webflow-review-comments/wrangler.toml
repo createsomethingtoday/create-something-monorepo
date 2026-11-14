@@ -3,7 +3,7 @@
 # is not stored here (public repo): export CLOUDFLARE_ACCOUNT_ID before any
 # wrangler command, with the Webflow Hosting deploy token as CLOUDFLARE_API_TOKEN.
 #
-# Not deployed yet. One-time setup:
+# Deployed 2026-11-13. The one-time setup was:
 #   1. pnpm --filter=@create-something/webflow-review-comments exec wrangler d1 create webflow-review-comments
 #   2. Put the returned database_id below.
 #   3. pnpm --filter=@create-something/webflow-review-comments exec wrangler d1 migrations apply webflow-review-comments --remote
@@ -22,7 +22,7 @@ enabled = true
 [[d1_databases]]
 binding = "DB"
 database_name = "webflow-review-comments"
-database_id = "00000000-0000-0000-0000-000000000000" # placeholder until step 1
+database_id = "f4d3af14-3826-44b8-ae17-33002960ce3e"
 
 # The "feedback is ready" email needs both ASSET_DASHBOARD_URL (below) and the
 # KNOCK_API_KEY secret. It stays off until the secret is set. The Knock workflow
