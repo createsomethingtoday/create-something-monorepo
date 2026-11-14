@@ -54,18 +54,20 @@
 	onMount(() => {
 		if (duration <= 0) return;
 
-		const startTime = Date.now();
+		let lastTime = Date.now();
 		let elapsed = 0;
 		let rafId: number;
 
 		function tick() {
+			const now = Date.now();
+			const delta = now - lastTime;
+			lastTime = now;
 			if (paused) {
 				rafId = requestAnimationFrame(tick);
 				return;
 			}
 
-			const now = Date.now();
-			elapsed = now - startTime;
+			elapsed += delta;
 			progress = Math.max(0, 100 - (elapsed / duration) * 100);
 
 			if (elapsed >= duration) {
@@ -90,6 +92,8 @@
 		aria-live="polite"
 		onmouseenter={() => (paused = true)}
 		onmouseleave={() => (paused = false)}
+		onfocusin={() => (paused = true)}
+		onfocusout={() => (paused = false)}
 	>
 		<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 			<path d={icons[variant]} />
@@ -121,6 +125,8 @@
 
 <style>
 	.toast {
+		background:var(--color-performance-panel);color:var(--color-performance-ink);border:1px solid var(--color-performance-line);
+		box-sizing:border-box;
 		position: relative;
 		display: flex;
 		align-items: flex-start;
@@ -129,7 +135,8 @@
 		border-radius: var(--radius-performance-scale-md);
 		box-shadow: var(--shadow-performance-scale-lg);
 		overflow: hidden;
-		min-width: 300px;
+		min-width: 0;
+		width:min(420px,100%);
 		max-width: 420px;
 		animation: toastIn var(--duration-performance-standard) var(--ease-performance-standard);
 	}
@@ -193,9 +200,9 @@
 	/* Dismiss button */
 	.toast-dismiss {
 		flex-shrink: 0;
-		width: 20px;
-		height: 20px;
-		padding: 0;
+		width: 44px;
+		height: 44px;
+		padding: 12px;
 		background: none;
 		border: none;
 		color: var(--color-performance-fg-muted);

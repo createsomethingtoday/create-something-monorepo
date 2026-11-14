@@ -190,6 +190,11 @@ ${section ? `**Section**: ${section}\n` : ''}
 		color: var(--color-performance-fg-primary);
 	}
 
+	/* Long package and token names wrap in prose; preformatted examples scroll. */
+	:global(.prose-ltd :not(pre) > code) {
+		overflow-wrap: anywhere;
+	}
+
 	:global(.prose-ltd pre) {
 		background: var(--color-performance-bg-subtle);
 		padding: var(--space-performance-md);

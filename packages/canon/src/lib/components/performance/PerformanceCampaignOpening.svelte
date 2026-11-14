@@ -1,5 +1,8 @@
 <script lang="ts">
+ import SceneLead from "../background/SceneLead.svelte";
   import { onMount, type Snippet } from 'svelte';
+  import BackgroundScene from '../background/BackgroundScene.svelte';
+  import { imageAspectRatio, type CanonBackgroundScene } from '../background/scene.js';
   import PerformancePaperStudioCanvas from './PerformancePaperStudioCanvas.svelte';
   import type { PerformanceMediaVideo } from './media/types';
   import type { PerformancePaperProperty } from './media/paper-studio';
@@ -17,6 +20,9 @@
     material?: 'paper' | 'water';
     width?: number;
     height?: number;
+    /** Dimensions of the authored mobile image, when it differs. */
+    mobileWidth?: number;
+    mobileHeight?: number;
     objectPosition?: string;
     colorMode?: 'monochrome' | 'natural';
     video?: PerformanceCampaignVideo;
@@ -30,6 +36,7 @@
   }
 
   interface Props {
+    background?: CanonBackgroundScene;
     eyebrow: string;
     title: string;
     lede?: string;
@@ -56,6 +63,7 @@
   }
 
   let {
+    background,
     eyebrow,
     title,
     lede,
@@ -75,6 +83,7 @@
     mediaMobilePlacement = 'flow'
   }: Props = $props();
 
+  let scene = $derived(background ?? (media ? {src:media.src,mobileSrc:media.mobileSrc,description:artifactOwnsMedia ? undefined : media.alt,position:media.objectPosition,aspectRatio:imageAspectRatio(media.width,media.height),mobileAspectRatio:imageAspectRatio(media.mobileWidth,media.mobileHeight)} : undefined));
   let motionAllowed = $state(false);
   let studioReady = $state(false);
   let titleParts = $derived(
@@ -102,51 +111,114 @@
   });
 </script>
 
+<svelte:head>
+ {#if priority && scene && !artifactOwnsMedia}
+  <link rel="preload" as="image" href={scene.src} media={scene.mobileSrc?'(min-width: 48rem)':undefined}/>
+  {#if scene.mobileSrc}<link rel="preload" as="image" href={scene.mobileSrc} media="(max-width: 47.99rem)"/>{/if}
+ {/if}
+</svelte:head>
+
 <section
   class="performance-campaign-opening"
   class:performance-campaign-opening--paper-studio={mode === 'paper' && Boolean(media?.studioShot)}
+  data-background={scene && !artifactOwnsMedia ? "scene" : undefined}
   data-mode={mode}
   data-density={density}
   data-expression={expression}
   data-has-artifact={artifact ? 'true' : 'false'}
   data-artifact-owns-media={artifactOwnsMedia ? 'true' : undefined}
   data-artifact-mobile-placement={artifact ? artifactMobilePlacement : undefined}
-  data-media-mobile-placement={media ? mediaMobilePlacement : undefined}
+  data-media-mobile-placement={scene ? "background" : media ? mediaMobilePlacement : undefined}
   data-mobile-search-boundary={mobileSearchBoundary ? 'true' : undefined}
   aria-label={eyebrow}
 >
-  {#if media}
+ {#if scene && !artifactOwnsMedia}
+ <SceneLead {scene} colorMode={media?.colorMode ?? (background ? "natural" : "monochrome")}>
+      <header>
+      <div class="performance-campaign-opening__identity">
+        <span class="performance-campaign-opening__eyebrow">{eyebrow}</span>
+        {#if propertyRole}
+          <span class="performance-campaign-opening__property-role">{propertyRole}</span>
+        {/if}
+      </div>
+      <h1>
+        {#each titleParts as part, index}{part.prefix}{#if part.word}<span
+              class="performance-campaign-opening__punctuated-word"
+              >{part.word}{#if index < titleParts.length - 1}<span
+                  class="performance-campaign-opening__period">.</span
+                >{/if}</span
+            >{:else if index < titleParts.length - 1}<span
+              class="performance-campaign-opening__period">.</span
+            >{/if}{/each}
+      </h1>
+      {#if lede}
+        <p class="performance-campaign-opening__lede">{lede}</p>
+      {/if}
+      {#if actions}
+        <div class="performance-campaign-opening__actions">
+          {@render actions()}
+        </div>
+      {/if}
+    </header>
+  {#snippet enhancement()}      {#if media?.studioShot && !artifact}
+        <PerformancePaperStudioCanvas
+          shot={media?.studioShot}
+          onStateChange={(state) => (studioReady = state === 'ready')}
+        />
+      {/if}
+      {#if media?.video && motionAllowed}
+        <video
+          autoplay
+          muted
+          loop
+          playsinline
+          preload="metadata"
+          poster={media.video.poster ?? media.src}
+          aria-hidden="true"
+          style:object-position={media.objectPosition ?? 'center'}
+        >
+          {#if media.video.webm}
+            <source src={media.video.webm} type="video/webm" />
+          {/if}
+          <source src={media.video.mp4} type="video/mp4" />
+        </video>
+      {/if}
+{/snippet}
+ </SceneLead>
+ {#if proof.length || artifact || ornament}<div class="canon-scene-details">
+     {#if proof.length > 0}
+      <ul class="performance-campaign-opening__proof" aria-label="Campaign proof">
+        {#each proof as item}
+          <li>
+            <span>{item.label}</span>
+            <strong>{item.value}</strong>
+          </li>
+        {/each}
+      </ul>
+    {/if}
+ {#if artifact}<div class="performance-campaign-opening__scene-artifact">{@render artifact()}</div>{/if}
+ {#if ornament}<div class="performance-campaign-opening__scene-ornament">{@render ornament()}</div>{/if}
+ </div>{/if}
+ {:else}
+  {#if media || scene}
     <figure
       class="performance-campaign-opening__media"
       class:performance-campaign-opening__media--studio-ready={studioReady}
       class:performance-campaign-opening__media--paper-object-visible={studioReady ||
         artifactOwnsMedia ||
-        media.paperObjectVisible}
-      data-color-mode={media.colorMode ?? 'monochrome'}
-      data-material={media.material ?? 'unspecified'}
+        media?.paperObjectVisible}
+      data-scene={scene ? 'true' : undefined}
+      data-color-mode={media?.colorMode ?? (background ? 'natural' : 'monochrome')}
+      data-material={media?.material ?? 'unspecified'}
     >
-      <picture class:performance-campaign-opening__fallback-suppressed={artifactOwnsMedia}>
-        {#if media.mobileSrc}
-          <source media="(max-width: 47.99rem)" srcset={media.mobileSrc} />
-        {/if}
-        <img
-          src={media.src}
-          alt={artifactOwnsMedia ? '' : media.alt}
-          width={media.width}
-          height={media.height}
-          loading={priority ? 'eager' : 'lazy'}
-          fetchpriority={priority ? 'high' : 'auto'}
-          decoding="async"
-          style:object-position={media.objectPosition ?? 'center'}
-        />
-      </picture>
-      {#if media.studioShot && !artifact}
+      {#if scene && !artifactOwnsMedia}<BackgroundScene {scene}/>{/if}
+      {#if media?.studioShot && !artifact}
         <PerformancePaperStudioCanvas
-          shot={media.studioShot}
+          shot={media?.studioShot}
           onStateChange={(state) => (studioReady = state === 'ready')}
         />
       {/if}
-      {#if media.video && motionAllowed}
+      {#if media?.video && motionAllowed}
         <video
           autoplay
           muted
@@ -218,21 +290,22 @@
       {@render ornament()}
     </div>
   {/if}
+{/if}
 </section>
 
 <style>
   .performance-campaign-opening {
-    --performance-campaign-scrim-copy: rgba(9, 9, 9, 0.94);
-    --performance-campaign-scrim-mid: rgba(9, 9, 9, 0.24);
-    --performance-campaign-scrim-edge: rgba(9, 9, 9, 0);
-    --performance-campaign-scrim-bottom: rgba(9, 9, 9, 0.48);
+    --performance-campaign-scrim-copy: color-mix(in srgb, var(--color-performance-paper) 94%, transparent);
+    --performance-campaign-scrim-mid: color-mix(in srgb, var(--color-performance-paper) 24%, transparent);
+    --performance-campaign-scrim-edge: color-mix(in srgb, var(--color-performance-paper) 0%, transparent);
+    --performance-campaign-scrim-bottom: color-mix(in srgb, var(--color-performance-paper) 48%, transparent);
     position: relative;
     display: grid;
     min-height: clamp(38rem, 82svh, 58rem);
     padding: 0;
     overflow: hidden;
-    background: var(--color-performance-ink, #090909);
-    color: var(--color-performance-panel, #fff);
+    background: var(--color-performance-paper, #000);
+    color: var(--color-performance-ink, #f2f2f2);
     isolation: isolate;
   }
 
@@ -246,8 +319,6 @@
   }
 
   .performance-campaign-opening__media,
-  .performance-campaign-opening__media picture,
-  .performance-campaign-opening__media img,
   .performance-campaign-opening__media video {
     position: absolute;
     inset: 0;
@@ -257,32 +328,29 @@
     margin: 0;
   }
 
-  .performance-campaign-opening__media img,
   .performance-campaign-opening__media video {
     object-fit: cover;
   }
 
-  .performance-campaign-opening__media picture {
+  .performance-campaign-opening__media :global(.canon-background-scene) {
     z-index: 0;
     opacity: 1;
     transition: opacity var(--duration-performance-standard, 400ms)
       var(--ease-performance-standard, ease);
   }
 
-  .performance-campaign-opening__media--studio-ready picture {
+  .performance-campaign-opening__media--studio-ready :global(.canon-background-scene) {
     opacity: 0;
   }
 
-  .performance-campaign-opening__media .performance-campaign-opening__fallback-suppressed {
-    opacity: 0;
-  }
 
-  .performance-campaign-opening__media[data-color-mode='monochrome'] img,
+
+  .performance-campaign-opening__media[data-color-mode='monochrome'] :global(.canon-background-scene),
   .performance-campaign-opening__media[data-color-mode='monochrome'] video {
     filter: grayscale(1) contrast(1.08);
   }
 
-  .performance-campaign-opening__media[data-color-mode='natural'] img,
+  .performance-campaign-opening__media[data-color-mode='natural'] :global(.canon-background-scene),
   .performance-campaign-opening__media[data-color-mode='natural'] video {
     filter: contrast(1.08);
   }
@@ -294,17 +362,17 @@
     background:
       linear-gradient(
         90deg,
-        rgba(9, 9, 9, 0.99) 0%,
+        color-mix(in srgb, var(--color-performance-paper) 99%, transparent) 0%,
         var(--performance-campaign-scrim-copy) 36%,
         var(--performance-campaign-scrim-mid) 58%,
-        rgba(9, 9, 9, 0.04) 76%,
+        color-mix(in srgb, var(--color-performance-paper) 4%, transparent) 76%,
         var(--performance-campaign-scrim-edge) 100%
       ),
       linear-gradient(
         0deg,
         var(--performance-campaign-scrim-bottom) 0%,
-        rgba(9, 9, 9, 0.08) 48%,
-        rgba(9, 9, 9, 0) 100%
+        color-mix(in srgb, var(--color-performance-paper) 8%, transparent) 48%,
+        color-mix(in srgb, var(--color-performance-paper) 0%, transparent) 100%
       );
     z-index: 1;
   }
@@ -318,12 +386,12 @@
       linear-gradient(
         90deg,
         var(--color-performance-paper, #f3f3f0) 0%,
-        rgba(243, 243, 240, 0.98) 38%,
-        rgba(243, 243, 240, 0.72) 53%,
-        rgba(243, 243, 240, 0.14) 72%,
-        rgba(243, 243, 240, 0) 100%
+        color-mix(in srgb, var(--color-performance-paper) 98%, transparent) 38%,
+        color-mix(in srgb, var(--color-performance-paper) 72%, transparent) 53%,
+        color-mix(in srgb, var(--color-performance-paper) 14%, transparent) 72%,
+        color-mix(in srgb, var(--color-performance-paper) 0%, transparent) 100%
       ),
-      linear-gradient(0deg, rgba(243, 243, 240, 0.82) 0%, rgba(243, 243, 240, 0) 32%);
+      linear-gradient(0deg, color-mix(in srgb, var(--color-performance-paper) 82%, transparent) 0%, color-mix(in srgb, var(--color-performance-paper) 0%, transparent) 32%);
   }
 
   .performance-campaign-opening[data-mode='paper']
@@ -332,23 +400,23 @@
       linear-gradient(
         90deg,
         var(--color-performance-paper, #f3f3f0) 0%,
-        rgba(243, 243, 240, 0.98) 34%,
-        rgba(243, 243, 240, 0.38) 46%,
-        rgba(243, 243, 240, 0.04) 58%,
-        rgba(243, 243, 240, 0) 68%
+        color-mix(in srgb, var(--color-performance-paper) 98%, transparent) 34%,
+        color-mix(in srgb, var(--color-performance-paper) 38%, transparent) 46%,
+        color-mix(in srgb, var(--color-performance-paper) 4%, transparent) 58%,
+        color-mix(in srgb, var(--color-performance-paper) 0%, transparent) 68%
       ),
-      linear-gradient(0deg, rgba(243, 243, 240, 0.34) 0%, rgba(243, 243, 240, 0) 30%);
+      linear-gradient(0deg, color-mix(in srgb, var(--color-performance-paper) 34%, transparent) 0%, color-mix(in srgb, var(--color-performance-paper) 0%, transparent) 30%);
   }
 
   .performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__grid {
     background:
       linear-gradient(
           90deg,
-          var(--color-performance-grid, rgba(9, 9, 9, 0.045)) 1px,
+          var(--color-performance-grid, color-mix(in srgb, var(--color-performance-paper) 4.5%, transparent)) 1px,
           transparent 1px
         )
         0 0 / 25% 100%,
-      linear-gradient(var(--color-performance-grid, rgba(9, 9, 9, 0.045)) 1px, transparent 1px) 0
+      linear-gradient(var(--color-performance-grid, color-mix(in srgb, var(--color-performance-paper) 4.5%, transparent)) 1px, transparent 1px) 0
         0 / 100% 25%;
   }
 
@@ -470,7 +538,7 @@
   .performance-campaign-opening__lede {
     max-width: 40rem;
     margin: 0;
-    color: rgba(255, 255, 255, 0.88);
+    color: var(--color-performance-fg-secondary);
     font-size: clamp(1rem, 1.7vw, 1.3rem);
     line-height: 1.45;
   }
@@ -486,53 +554,25 @@
     margin-top: 0.5rem;
   }
 
-  /* prettier-ignore */
-  .performance-campaign-opening:not([data-mode='paper']) .performance-campaign-opening__actions :global(.btn-primary) {
-		border-color: var(--color-performance-panel, #fff);
-		background: var(--color-performance-panel, #fff);
-		color: var(--color-performance-ink, #090909);
-	}
-
-  .performance-campaign-opening:not([data-mode='paper'])
-    .performance-campaign-opening__actions
-    :global(.btn-primary:hover) {
-    border-color: var(--color-performance-paper, #f3f3f0);
-    background: var(--color-performance-paper, #f3f3f0);
-    color: var(--color-performance-ink, #090909);
+  .performance-campaign-opening .performance-campaign-opening__actions :global(.btn-primary) {
+    border-color: var(--color-performance-brand-primary);
+    background: var(--color-performance-brand-primary);
+    color: var(--color-performance-panel);
   }
-
-  /* prettier-ignore */
-  .performance-campaign-opening:not([data-mode='paper']) .performance-campaign-opening__actions :global(.btn-secondary) {
-		border-color: rgba(255, 255, 255, 0.72);
-		background: rgba(9, 9, 9, 0.44);
-		color: var(--color-performance-panel, #fff);
-		backdrop-filter: blur(8px);
-	}
-
-  .performance-campaign-opening:not([data-mode='paper'])
-    .performance-campaign-opening__actions
-    :global(.btn-secondary:hover) {
-    border-color: var(--color-performance-panel, #fff);
-    background: rgba(255, 255, 255, 0.12);
-    color: var(--color-performance-panel, #fff);
+  .performance-campaign-opening .performance-campaign-opening__actions :global(.btn-primary:hover) {
+    filter: brightness(.94);
   }
-
-  /* prettier-ignore */
-  .performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__actions :global(.btn-primary) {
-		border-color: var(--color-performance-ink, #090909);
-		background: var(--color-performance-ink, #090909);
-		color: var(--color-performance-panel, #fff);
-	}
-
-  /* prettier-ignore */
-  .performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__actions :global(.btn-secondary) {
-		border-color: var(--color-performance-line, #c6c8cc);
-		background: rgba(255, 255, 255, 0.62);
-		color: var(--color-performance-ink, #090909);
-	}
-
+  .performance-campaign-opening .performance-campaign-opening__actions :global(.btn-secondary) {
+    border-color: var(--color-performance-border-emphasis);
+    background: var(--color-performance-panel);
+    color: var(--color-performance-ink);
+    backdrop-filter: none;
+  }
+  .performance-campaign-opening .performance-campaign-opening__actions :global(.btn-secondary:hover) {
+    background: var(--color-performance-bg-surface-hover);
+  }
   .performance-campaign-opening__actions :global(.btn:focus-visible) {
-    outline: 3px solid var(--color-performance-signal-soft, #a7b8ff);
+    outline: 2px solid var(--color-performance-focus);
     outline-offset: 3px;
   }
 
@@ -563,9 +603,9 @@
 
   @media (max-width: 47.99rem) {
     .performance-campaign-opening {
-      --performance-campaign-scrim-copy: rgba(9, 9, 9, 0.97);
-      --performance-campaign-scrim-mid: rgba(9, 9, 9, 0.88);
-      --performance-campaign-scrim-edge: rgba(9, 9, 9, 0.32);
+      --performance-campaign-scrim-copy: color-mix(in srgb, var(--color-performance-paper) 97%, transparent);
+      --performance-campaign-scrim-mid: color-mix(in srgb, var(--color-performance-paper) 88%, transparent);
+      --performance-campaign-scrim-edge: color-mix(in srgb, var(--color-performance-paper) 32%, transparent);
       min-height: 44rem;
     }
 
@@ -576,9 +616,9 @@
           var(--performance-campaign-scrim-copy) 0%,
           var(--performance-campaign-scrim-mid) 62%,
           var(--performance-campaign-scrim-edge) 86%,
-          rgba(9, 9, 9, 0.14) 100%
+          color-mix(in srgb, var(--color-performance-paper) 14%, transparent) 100%
         ),
-        linear-gradient(90deg, rgba(9, 9, 9, 0.72), rgba(9, 9, 9, 0.28));
+        linear-gradient(90deg, color-mix(in srgb, var(--color-performance-paper) 72%, transparent), color-mix(in srgb, var(--color-performance-paper) 28%, transparent));
     }
 
     .performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__media::after {
@@ -586,11 +626,11 @@
         linear-gradient(
           180deg,
           var(--color-performance-paper, #f3f3f0) 0%,
-          rgba(243, 243, 240, 0.98) 48%,
-          rgba(243, 243, 240, 0.56) 68%,
-          rgba(243, 243, 240, 0.76) 100%
+          color-mix(in srgb, var(--color-performance-paper) 98%, transparent) 48%,
+          color-mix(in srgb, var(--color-performance-paper) 56%, transparent) 68%,
+          color-mix(in srgb, var(--color-performance-paper) 76%, transparent) 100%
         ),
-        linear-gradient(90deg, rgba(243, 243, 240, 0.9), rgba(243, 243, 240, 0.28));
+        linear-gradient(90deg, color-mix(in srgb, var(--color-performance-paper) 90%, transparent), color-mix(in srgb, var(--color-performance-paper) 28%, transparent));
     }
 
     .performance-campaign-opening[data-mode='paper']
@@ -599,12 +639,12 @@
         linear-gradient(
           180deg,
           var(--color-performance-paper, #f3f3f0) 0%,
-          rgba(243, 243, 240, 0.98) 46%,
-          rgba(243, 243, 240, 0.72) 53%,
-          rgba(243, 243, 240, 0.14) 62%,
-          rgba(243, 243, 240, 0) 72%
+          color-mix(in srgb, var(--color-performance-paper) 98%, transparent) 46%,
+          color-mix(in srgb, var(--color-performance-paper) 72%, transparent) 53%,
+          color-mix(in srgb, var(--color-performance-paper) 14%, transparent) 62%,
+          color-mix(in srgb, var(--color-performance-paper) 0%, transparent) 72%
         ),
-        linear-gradient(90deg, rgba(243, 243, 240, 0.36), rgba(243, 243, 240, 0));
+        linear-gradient(90deg, color-mix(in srgb, var(--color-performance-paper) 36%, transparent), color-mix(in srgb, var(--color-performance-paper) 0%, transparent));
     }
 
     .performance-campaign-opening__content {
@@ -723,8 +763,8 @@
     margin: 0;
     padding: 0;
     overflow: hidden;
-    background: var(--color-performance-editorial-dark, #181312);
-    color: var(--color-performance-editorial-light, #f3ebe4);
+    background: var(--color-performance-paper, #181312);
+    color: var(--color-performance-fg-primary, #f3ebe4);
   }
 
   .performance-campaign-opening[data-expression='editorial']::before {
@@ -735,12 +775,12 @@
     background:
       linear-gradient(
         90deg,
-        rgba(24, 19, 18, 0.99) 0%,
-        rgba(24, 19, 18, 0.9) 43%,
-        rgba(24, 19, 18, 0.24) 74%,
-        rgba(24, 19, 18, 0.08) 100%
+        color-mix(in srgb, var(--color-performance-paper) 99%, transparent) 0%,
+        color-mix(in srgb, var(--color-performance-paper) 90%, transparent) 43%,
+        color-mix(in srgb, var(--color-performance-paper) 24%, transparent) 74%,
+        color-mix(in srgb, var(--color-performance-paper) 8%, transparent) 100%
       ),
-      linear-gradient(0deg, rgba(24, 19, 18, 0.74), transparent 46%);
+      linear-gradient(0deg, color-mix(in srgb, var(--color-performance-paper) 74%, transparent), transparent 46%);
     pointer-events: none;
   }
 
@@ -758,7 +798,7 @@
     border: 0;
     border-radius: 0;
     background: transparent;
-    color: var(--color-performance-editorial-light, #f3ebe4);
+    color: var(--color-performance-fg-primary, #f3ebe4);
   }
 
   .performance-campaign-opening[data-expression='editorial']
@@ -799,34 +839,34 @@
 
   .performance-campaign-opening[data-expression='editorial'] .performance-campaign-opening__lede {
     max-width: 38rem;
-    color: color-mix(in srgb, var(--color-performance-editorial-light) 84%, transparent);
+    color: var(--color-performance-fg-secondary);
     font-size: clamp(1rem, 1.35vw, 1.2rem);
   }
 
   .performance-campaign-opening[data-expression='editorial'] .performance-campaign-opening__proof {
-    border-color: color-mix(in srgb, var(--color-performance-editorial-light) 46%, transparent);
+    border-color: color-mix(in srgb, var(--color-performance-fg-primary) 46%, transparent);
   }
 
   .performance-campaign-opening[data-expression='editorial']
     .performance-campaign-opening__proof
     li {
-    border-color: color-mix(in srgb, var(--color-performance-editorial-light) 34%, transparent);
+    border-color: color-mix(in srgb, var(--color-performance-fg-primary) 34%, transparent);
   }
 
   .performance-campaign-opening[data-expression='editorial']
     .performance-campaign-opening__actions
     :global(.btn-primary) {
-    border-color: var(--color-performance-editorial-brand, #fcaa2d);
-    background: var(--color-performance-editorial-brand, #fcaa2d);
-    color: var(--color-performance-editorial-dark, #181312);
+    border-color: var(--color-performance-brand-primary, #fcaa2d);
+    background: var(--color-performance-brand-primary, #fcaa2d);
+    color: var(--color-performance-paper, #181312);
   }
 
   .performance-campaign-opening[data-expression='editorial']
     .performance-campaign-opening__actions
     :global(.btn-secondary) {
-    border-color: color-mix(in srgb, var(--color-performance-editorial-light) 66%, transparent);
-    background: color-mix(in srgb, var(--color-performance-editorial-dark) 58%, transparent);
-    color: var(--color-performance-editorial-light, #f3ebe4);
+    border-color: color-mix(in srgb, var(--color-performance-fg-primary) 66%, transparent);
+    background: var(--color-performance-panel);
+    color: var(--color-performance-fg-primary, #f3ebe4);
     backdrop-filter: none;
   }
 
@@ -847,12 +887,12 @@
     overflow: hidden;
     border: 0;
     border-radius: 0;
-    background: var(--color-performance-editorial-dark, #181312);
+    background: var(--color-performance-paper, #181312);
   }
 
   .performance-campaign-opening[data-expression='editorial']
     .performance-campaign-opening__media::after {
-    background: linear-gradient(180deg, transparent 58%, rgba(24, 19, 18, 0.32));
+    background: linear-gradient(180deg, transparent 58%, color-mix(in srgb, var(--color-performance-paper) 32%, transparent));
   }
 
   .performance-campaign-opening[data-expression='editorial'] .performance-campaign-opening__grid {
@@ -871,10 +911,10 @@
     .performance-campaign-opening[data-expression='editorial']::before {
       background: linear-gradient(
         180deg,
-        rgba(24, 19, 18, 0.94) 0%,
-        rgba(24, 19, 18, 0.82) 48%,
-        rgba(24, 19, 18, 0.22) 72%,
-        rgba(24, 19, 18, 0.72) 100%
+        color-mix(in srgb, var(--color-performance-paper) 94%, transparent) 0%,
+        color-mix(in srgb, var(--color-performance-paper) 82%, transparent) 48%,
+        color-mix(in srgb, var(--color-performance-paper) 22%, transparent) 72%,
+        color-mix(in srgb, var(--color-performance-paper) 72%, transparent) 100%
       );
     }
 
@@ -941,7 +981,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .performance-campaign-opening__media picture {
+    .performance-campaign-opening__media :global(.canon-background-scene) {
       transition: none;
     }
   }
@@ -955,4 +995,16 @@
       scroll-behavior: auto !important;
     }
   }
+
+  /* Only semantic artifacts may flow; scenes stay behind HTML at every width. */
+  .performance-campaign-opening .performance-campaign-opening__media{position:absolute;inset:0;width:100%;height:100%;min-height:100%;}
+  .performance-campaign-opening__media :global(.canon-background-scene){z-index:0;}
+  .performance-campaign-opening__content header{background:color-mix(in srgb,var(--color-performance-paper) 96%,transparent);padding:1rem;border-radius:var(--radius-performance-lg);box-sizing:border-box;}
+  @media(max-width:47.99rem){.performance-campaign-opening[data-expression='editorial'] .performance-campaign-opening__content{padding-top:15rem;}}
+  .performance-campaign-opening__media[data-scene='true']::after{background:none;}
+  .performance-campaign-opening[data-background='scene']::before{background:none;}
+
+ /* Authored scene lead and dense records are separate layout regions. */
+ .performance-campaign-opening[data-background="scene"]{display:block;grid-template-columns:none;grid-template-rows:none;min-height:0;width:100%;padding:0;background:var(--color-performance-paper);}
+ .canon-scene-details{position:relative;display:grid;gap:1.5rem;padding:clamp(1.25rem,4vw,3rem);background:var(--color-performance-paper);color:var(--color-performance-ink);border-top:1px solid var(--color-performance-line);}
 </style>

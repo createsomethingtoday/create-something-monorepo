@@ -156,7 +156,7 @@
 							data-motion-cue={chapter.motionCue}
 							data-state={chapter.state}
 						>
-							<button type="button" onclick={() => (selectedChapterId = chapter.id)}>
+							<button type="button" aria-pressed={chapter.id === selectedStoryChapter.id} onclick={() => (selectedChapterId = chapter.id)}>
 								<span class="atlas-story__ledger-index">{chapter.sequence}</span>
 								<div class="atlas-story__ledger-copy">
 									<span>{ledger.label}</span>
@@ -182,7 +182,7 @@
 						data-motion-cue={chapter.motionCue}
 						data-state={chapter.state}
 					>
-						<button type="button" onclick={() => (selectedChapterId = chapter.id)}>
+						<button type="button" aria-pressed={chapter.id === selectedStoryChapter.id} onclick={() => (selectedChapterId = chapter.id)}>
 							<span>{chapter.sequence}. {projectSurfaceLabel(chapter.eyebrow)}</span>
 							<h4>{chapter.title}</h4>
 							<p>{chapter.body}</p>
@@ -249,12 +249,12 @@
 		border: 1px solid var(--color-performance-line, #d7d7d2);
 		border-radius: 8px;
 		background:
-			linear-gradient(#eeeeea 1px, transparent 1px),
-			linear-gradient(90deg, #eeeeea 1px, transparent 1px),
+			linear-gradient(var(--color-performance-border-default) 1px, transparent 1px),
+			linear-gradient(90deg, var(--color-performance-border-default) 1px, transparent 1px),
 			var(--color-performance-paper, #f3f3f0);
 		background-size: 32px 32px;
-		box-shadow: 0 18px 44px rgba(10, 14, 25, 0.045);
-		scrollbar-color: #cfcfca transparent;
+		box-shadow: none;
+		scrollbar-color: var(--color-performance-border-emphasis) transparent;
 		scrollbar-width: thin;
 	}
 
@@ -270,7 +270,7 @@
 	.atlas-story__map::-webkit-scrollbar-thumb {
 		border: 2px solid transparent;
 		border-radius: 999px;
-		background: #cfcfca;
+		background: var(--color-performance-border-emphasis);
 		background-clip: padding-box;
 	}
 
@@ -282,20 +282,11 @@
 		line-height: 1.16;
 	}
 
-	.atlas-story__chapter.state-run {
-		border-color: #cfe3d6;
-		background: #f8fcf9;
-	}
+	.atlas-story__chapter.state-run { border-color: var(--color-performance-success-border); background: var(--color-performance-success-muted); }
 
-	.atlas-story__chapter.state-wait {
-		border-color: #d9ddf5;
-		background: #f8f7ff;
-	}
+	.atlas-story__chapter.state-wait { border-color: var(--color-performance-warning-border); background: var(--color-performance-warning-muted); }
 
-	.atlas-story__chapter.state-stop {
-		border-color: #f4cdd3;
-		background: #fff7f8;
-	}
+	.atlas-story__chapter.state-stop { border-color: var(--color-performance-error-border); background: var(--color-performance-error-muted); }
 
 	.atlas-story__chapters {
 		display: grid;
@@ -339,6 +330,7 @@
 	.atlas-story__ledger-row button {
 		display: grid;
 		width: 100%;
+		min-height: 44px;
 		border: 0;
 		background: transparent;
 		color: inherit;
@@ -353,13 +345,13 @@
 
 	.atlas-story__chapter.selected,
 	.atlas-story__ledger-row.selected {
-		border-color: rgba(10, 14, 25, 0.34);
-		box-shadow: inset 0 0 0 1px rgba(10, 14, 25, 0.08);
+		border-color: var(--color-performance-border-emphasis);
+		box-shadow: none;
 	}
 
 	.atlas-story__chapter button:focus-visible,
 	.atlas-story__ledger-row button:focus-visible {
-		outline: 2px solid rgba(10, 14, 25, 0.62);
+		outline: 2px solid var(--color-performance-border-emphasis);
 		outline-offset: 2px;
 	}
 
@@ -399,7 +391,7 @@
 		overflow: hidden;
 		border: 1px solid var(--color-performance-line, #d7d7d2);
 		border-radius: 8px;
-		background: #fdfdfc;
+		background: var(--color-performance-bg-surface);
 	}
 
 	.atlas-story__ledger-summary {
@@ -407,7 +399,7 @@
 		align-content: center;
 		gap: 0.2rem;
 		border-right: 1px solid var(--color-performance-line, #d7d7d2);
-		background: #ffffff;
+		background: var(--color-performance-bg-surface);
 		padding: 1rem;
 	}
 
@@ -439,7 +431,7 @@
 		min-height: 5.15rem;
 		border-left: 1px solid var(--color-performance-line, #d7d7d2);
 		border-top: 1px solid var(--color-performance-line, #d7d7d2);
-		background: #ffffff;
+		background: var(--color-performance-bg-surface);
 	}
 
 	.atlas-story__ledger-row button {
@@ -459,20 +451,20 @@
 		bottom: 0;
 		left: 0;
 		width: 2px;
-		background: #d7d7d2;
+		background: var(--color-performance-border-default);
 		content: '';
 	}
 
 	.atlas-story__ledger-row.state-run::before {
-		background: #92b89f;
+		background: var(--color-performance-success);
 	}
 
 	.atlas-story__ledger-row.state-wait::before {
-		background: #aab0dc;
+		background: var(--color-performance-warning);
 	}
 
 	.atlas-story__ledger-row.state-stop::before {
-		background: #e7a6af;
+		background: var(--color-performance-error);
 	}
 
 	.atlas-story__ledger-index {
@@ -483,8 +475,8 @@
 		justify-items: center;
 		border: 1px solid var(--color-performance-line, #d7d7d2);
 		border-radius: 999px;
-		background: #fafafa;
-		color: #5f5f59;
+		background: var(--color-performance-bg-subtle);
+		color: var(--color-performance-fg-secondary);
 		font-family: var(--font-performance-record, var(--font-performance-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace));
 		font-size: var(--text-performance-record-meta, 0.833rem);
 		font-variant-numeric: tabular-nums;
@@ -507,7 +499,7 @@
 
 	.atlas-story__ledger-row small {
 		grid-column: 2;
-		color: #777770;
+		color: var(--color-performance-fg-secondary);
 		font-size: var(--text-performance-record-meta, 0.833rem);
 		font-weight: 700;
 		line-height: 1.18;

@@ -1,14 +1,14 @@
 /* The approved instrument and workshop composition, adapted to actual page
    chapters. No runtime readings or subject annotations are invented. */
 .agency-page-wayfinding {
-  --font-mono: var(--font-performance-mono);
+  --measured-page-font-mono: var(--font-performance-mono);
   --foreground: #fff;
   --muted: var(--color-performance-measured-muted);
   --border: var(--color-performance-measured-rule);
   max-width: 1760px;
   margin: 0 auto 36px;
   padding-inline: 3vw;
-  font: 11px/1.5 var(--font-mono);
+  font: 11px/1.5 var(--measured-page-font-mono);
   text-transform: uppercase;
   letter-spacing: .045em;
 }

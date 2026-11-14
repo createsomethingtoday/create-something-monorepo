@@ -5,6 +5,8 @@
 		href?: string;
 		type?: 'button' | 'submit' | 'reset';
 		disabled?: boolean;
+		/** Prevent activation while an action is pending. */
+		loading?: boolean;
 		fullWidth?: boolean;
 		children?: import('svelte').Snippet;
 		onclick?: (event: MouseEvent) => void;
@@ -16,6 +18,7 @@
 		href,
 		type = 'button',
 		disabled = false,
+		loading = false,
 		fullWidth = false,
 		children,
 		onclick
@@ -33,14 +36,14 @@
 	);
 </script>
 
-{#if href && !disabled}
-	<a {href} class={baseClasses} {onclick}>
+{#if href && !disabled && !loading}
+	<a {href} class={baseClasses} style:width={fullWidth ? '100%' : undefined} {onclick}>
 		{#if children}
 			{@render children()}
 		{/if}
 	</a>
 {:else}
-	<button {type} {disabled} class={baseClasses} {onclick}>
+	<button {type} disabled={disabled || loading} aria-busy={loading || undefined} class={baseClasses} style:width={fullWidth ? '100%' : undefined} {onclick}>
 		{#if children}
 			{@render children()}
 		{/if}
@@ -57,7 +60,10 @@
 		padding: var(--space-performance-sm, 0.75rem) var(--space-performance-md, 1.25rem);
 		border-radius: var(--radius-performance-sm);
 		border: 1px solid transparent;
-		font-weight: var(--font-performance-semibold);
+		font-family:var(--font-performance-interface,inherit);
+		font-weight: var(--font-performance-medium);
+		text-decoration:none;
+		box-sizing:border-box;
 		letter-spacing: 0;
 		transition:
 			background var(--duration-performance-micro) var(--ease-performance-standard),
@@ -73,14 +79,17 @@
 
 	/* Size Variants */
 	.btn-sm {
+		padding:10px 16px;
 		font-size: var(--text-performance-body-sm);
 	}
 
 	.btn-md {
+		padding:12px 24px;
 		font-size: var(--text-performance-body);
 	}
 
 	.btn-lg {
+		padding:16px 32px;
 		font-size: var(--text-performance-body-lg);
 	}
 
@@ -119,7 +128,11 @@
 
 	a:focus-visible,
 	button:focus-visible {
-		outline: 2px solid var(--color-performance-signal);
+		outline: 2px solid var(--color-performance-focus);
 		outline-offset: 2px;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.btn { transition:none; }
 	}
 </style>

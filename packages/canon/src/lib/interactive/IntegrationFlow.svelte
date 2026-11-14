@@ -2,8 +2,8 @@
 	/**
 	 * IntegrationFlow - Visual representation of workflow integrations
 	 *
-	 * Displays a row of integration icons on liquid glass with a description.
-	 * Uses double-blur nested glass technique for high-quality rendering.
+	 * Displays named integration steps on a solid owning surface by default.
+	 * Smooth and refraction modes retain explicit decorative glass compatibility.
 	 *
 	 * Philosophy: Shows "the parts, assembled" - how services connect
 	 * through the automation layer. The cockpit of the automation vehicle.
@@ -43,7 +43,7 @@
 		integrations: Integration[];
 		/** Description text below the icons */
 		description: string;
-		/** Glass mode: 'solid' (clean dark bg), 'smooth' (blur), or 'refraction' (warping) */
+		/** Glass mode: 'solid' (owning palette), 'smooth' (blur), or 'refraction' (warping) */
 		glassMode?: GlassMode;
 		/** Glass refraction intensity - only applies when glassMode='refraction' */
 		intensity?: Intensity;
@@ -74,16 +74,21 @@
 		class: className = ''
 	}: Props = $props();
 
-	// Generate unique ID for SVG definitions
-	const connectorId = Math.random().toString(36).substring(2, 9);
+	const connectorId = $props.id();
 </script>
 
-<LiquidGlass mode={glassMode} {intensity} {tint} {showGrid} aspectRatio="video" class={className}>
+{#snippet content()}
 	<div class="flow-content">
 		<!-- Integration icons row -->
-		<div class="icons-row" class:with-connectors={showConnectors} role="list" aria-label="Integration flow">
+		<div class="icons-row" class:with-connectors={showConnectors} role="list" aria-label="Integration flow, in order">
 			{#each integrations as integration, index}
-				<div class="integration-item">
+				<div class="integration-item" role="listitem">
+                    <div class="service">
+                      {#if glassMode === 'solid'}
+                        <div class="solid-icon" aria-hidden="true">
+                          {#if integration.icon}{@render integration.icon()}{:else}{integration.label}{/if}
+                        </div>
+                      {:else}
 					<LiquidGlassIcon size="md" variant={iconVariant}>
 						{#if integration.icon}
 							{@render integration.icon()}
@@ -93,6 +98,9 @@
 							</span>
 						{/if}
 					</LiquidGlassIcon>
+                      {/if}
+ <span class="service-name">{integration.name || integration.label}</span>
+                    </div>
 				</div>
 
 				{#if index < integrations.length - 1}
@@ -100,12 +108,12 @@
 						<!-- SVG connector with optional animation -->
 						<svg class="connector" width="40" height="24" viewBox="0 0 40 24" aria-hidden="true">
 							<defs>
-								<linearGradient id="connector-gradient-{connectorId}-{index}" x1="0%" y1="0%" x2="100%" y2="0%">
-									<stop offset="0%" stop-color="rgba(255, 255, 255, 0.1)" />
-									<stop offset="50%" stop-color="rgba(255, 255, 255, 0.5)" />
-									<stop offset="100%" stop-color="rgba(255, 255, 255, 0.1)" />
+								<linearGradient id="connector-gradient-{connectorId}-{index}" gradientUnits="userSpaceOnUse" x1="0" y1="12" x2="40" y2="12">
+									<stop offset="0%" stop-color="var(--color-performance-border-default)" />
+									<stop offset="50%" stop-color="var(--color-performance-fg-secondary)" />
+									<stop offset="100%" stop-color="var(--color-performance-border-default)" />
 								</linearGradient>
-								<filter id="connector-glow-{connectorId}-{index}" x="-50%" y="-50%" width="200%" height="200%">
+								<filter id="connector-glow-{connectorId}-{index}" filterUnits="userSpaceOnUse" x="-8" y="4" width="56" height="16">
 									<feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur" />
 									<feMerge>
 										<feMergeNode in="blur" />
@@ -121,12 +129,12 @@
 								stroke="url(#connector-gradient-{connectorId}-{index})"
 								stroke-width="1.5"
 								stroke-linecap="round"
-								filter="url(#connector-glow-{connectorId}-{index})"
+								filter={glassMode === 'solid' ? undefined : `url(#connector-glow-${connectorId}-${index})`}
 							/>
 
 							<!-- Animated particle -->
 							{#if animateFlow}
-								<circle r="2" fill="white" opacity="0.8">
+								<circle r="2" fill="currentColor" opacity="0.8">
 									<animateMotion
 										dur="{1.5 + index * 0.2}s"
 										repeatCount="indefinite"
@@ -154,57 +162,24 @@
 			{description}
 		</p>
 	</div>
-</LiquidGlass>
+{/snippet}
+{#if glassMode === 'solid'}
+ <div class="solid-flow {className}">{@render content()}</div>
+{:else}
+ <LiquidGlass mode={glassMode} {intensity} {tint} {showGrid} aspectRatio="auto" class={className}>{@render content()}</LiquidGlass>
+{/if}
 
 <style>
-	.flow-content {
-		text-align: center;
-		width: 100%;
-	}
-
-	.icons-row {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		gap: 0.75rem;
-		margin-bottom: 1rem;
-	}
-
-	.icons-row.with-connectors {
-		gap: 0.25rem;
-	}
-
-	.integration-item {
-		display: flex;
-		align-items: center;
-	}
-
-	.connector {
-		flex-shrink: 0;
-		overflow: visible;
-	}
-
-	.arrow {
-		color: rgba(255, 255, 255, 0.3);
-		font-size: 0.875rem;
-	}
-
-	.description {
-		color: rgba(255, 255, 255, 0.5);
-		font-size: var(--text-performance-body-sm, 0.875rem);
-		margin: 0;
-		line-height: 1.5;
-	}
-
-	/* Reduced motion - disable animation */
-	@media (prefers-reduced-motion: reduce) {
-		.connector circle {
-			animation: none;
-		}
-
-		.connector circle animateMotion,
-		.connector circle animate {
-			display: none;
-		}
-	}
+ .solid-flow{background:var(--color-performance-bg-subtle);color:var(--color-performance-fg-primary);border:1px solid var(--color-performance-border-default);border-radius:var(--radius-performance-scale-md);padding:clamp(1rem,3vw,2rem);box-sizing:border-box;min-width:0}
+ .flow-content{width:100%;text-align:center;color:var(--color-performance-fg-primary)}
+ .icons-row{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:1rem;margin-bottom:1.5rem}
+ .integration-item{display:flex;align-items:center;gap:1rem;min-width:0;max-width:100%} .icons-row.with-connectors{gap:.25rem} .icons-row.with-connectors .integration-item{flex-direction:column}
+ .service{display:flex;flex-direction:column;align-items:center;gap:.5rem;min-width:0;max-width:10rem}
+ .solid-icon{display:grid;place-items:center;width:64px;height:64px;border:1px solid var(--color-performance-border-emphasis);border-radius:var(--radius-performance-scale-md);background:var(--color-performance-bg-surface);font-weight:600;color:var(--color-performance-fg-primary)}
+ .service-name{font-size:var(--text-performance-body-sm);overflow-wrap:anywhere;color:var(--color-performance-fg-primary)}
+ .arrow{align-self:flex-start;margin-top:1rem;line-height:2rem;color:var(--color-performance-fg-secondary);font-size:1.25rem}
+ .description{color:var(--color-performance-fg-secondary);font-size:var(--text-performance-body-sm);margin:0;line-height:1.5;overflow-wrap:anywhere}
+ .connector{flex-shrink:0;margin-top:20px;color:var(--color-performance-fg-secondary)}
+ @media(prefers-reduced-motion:reduce){.connector circle{display:none}}
+ @media(max-width:440px){.icons-row{flex-direction:column;align-items:center}.integration-item{flex-direction:column;gap:.75rem}.arrow{align-self:center;margin-top:0;line-height:1.5rem;transform:rotate(90deg)}.connector{margin-block:8px;transform:rotate(90deg)}}
 </style>

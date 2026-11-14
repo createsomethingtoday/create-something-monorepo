@@ -1,0 +1,60 @@
+// @vitest-environment jsdom
+import { flushSync, mount, unmount } from 'svelte';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import TimelineEditor from './TimelineEditor.svelte';
+let instance: ReturnType<typeof mount> | undefined;
+let target: HTMLElement;
+beforeEach(()=>vi.stubGlobal('ResizeObserver',class {observe(){} unobserve(){} disconnect(){}}));
+afterEach(async () => { if (instance) await unmount(instance); instance=undefined;target?.remove(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+it('resolves owning colors, batches ancestor-only updates and releases observers', async () => {
+ const callbacks: MutationCallback[]=[];
+ const observers: { observe: ReturnType<typeof vi.fn>; disconnect: ReturnType<typeof vi.fn> }[]=[];
+ vi.stubGlobal('MutationObserver',class {observe=vi.fn();disconnect=vi.fn();constructor(cb:MutationCallback){callbacks.push(cb);observers.push(this);}});
+ const preference={addEventListener:vi.fn(),removeEventListener:vi.fn()};vi.stubGlobal('matchMedia',()=>preference);
+ const pending:FrameRequestCallback[]=[];
+ vi.stubGlobal('requestAnimationFrame',vi.fn((cb:FrameRequestCallback)=>{pending.push(cb);return pending.length;}));vi.stubGlobal('cancelAnimationFrame',vi.fn());
+ const actual=window.getComputedStyle;
+ vi.spyOn(window,'getComputedStyle').mockImplementation(e=>e.tagName==='SPAN'?{color:e.closest('[data-theme]')?.getAttribute('data-theme')==='light'?'rgb(247, 248, 246)':'rgb(0, 0, 0)'} as CSSStyleDeclaration:actual(e));
+ const fills:string[]=[];let fill='';
+ const context=new Proxy({},{get:(_,key)=>key==='fillStyle'?fill:key==='fillRect'?()=>fills.push(fill):()=>{},set:(_,key,value)=>{if(key==='fillStyle')fill=value;return true;}});
+ vi.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue(context as never);
+ target=document.createElement('section');target.dataset.theme='light';document.body.append(target);
+ instance=mount(TimelineEditor,{target,props:{tracks:[],totalFrames:60}});flushSync();
+ expect(fills).toContain('rgb(247, 248, 246)');expect(observers).toHaveLength(1);
+ expect(observers[0].observe.mock.calls.every(([,o])=>o.attributes&&!o.subtree)).toBe(true);
+ expect(observers[0].observe.mock.calls.map(([node])=>node)).toContain(target);
+ target.dataset.theme='dark';callbacks[0]([],{} as MutationObserver);callbacks[0]([],{} as MutationObserver);
+ expect(pending).toHaveLength(1);pending[0](0);flushSync();expect(fills).toContain('rgb(0, 0, 0)');
+ await unmount(instance);instance=undefined;expect(observers[0].disconnect).toHaveBeenCalledOnce();expect(preference.removeEventListener).toHaveBeenCalledWith('change',expect.any(Function));
+});
+it('preserves frame callbacks and zoom actions',()=>{
+ vi.stubGlobal('matchMedia',()=>({addEventListener(){},removeEventListener(){}}));vi.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue(null);
+ target=document.createElement('div');document.body.append(target);const onFrameChange=vi.fn();
+ instance=mount(TimelineEditor,{target,props:{tracks:[],currentFrame:12,totalFrames:60,onFrameChange}});flushSync();
+ target.querySelector('[role="application"]')!.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));expect(onFrameChange).toHaveBeenCalledWith(13);
+ (target.querySelector('[title="Zoom in"]') as HTMLButtonElement).click();flushSync();expect(target.querySelector('.zoom-level')?.textContent).toBe('125%');
+ (target.querySelector('[title="Zoom out"]') as HTMLButtonElement).click();flushSync();expect(target.querySelector('.zoom-level')?.textContent).toBe('100%');
+});
+it('keeps zoom local when the editor is embedded in a form',()=>{
+ vi.stubGlobal('matchMedia',()=>({addEventListener(){},removeEventListener(){}}));vi.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue(null);
+ target=document.createElement('form');document.body.append(target);const submitted=vi.fn((event:Event)=>event.preventDefault());target.addEventListener('submit',submitted);
+ instance=mount(TimelineEditor,{target,props:{tracks:[],totalFrames:60}});flushSync();
+ (target.querySelector('[title="Zoom in"]') as HTMLButtonElement).click();flushSync();
+ expect(target.querySelector('.zoom-level')?.textContent).toBe('125%');
+ (target.querySelector('[title="Zoom out"]') as HTMLButtonElement).click();flushSync();
+ expect(target.querySelector('.zoom-level')?.textContent).toBe('100%');
+ expect(submitted).not.toHaveBeenCalled();
+});
+it('keeps newly added keyframes within the duration after zooming out',()=>{
+ vi.stubGlobal('matchMedia',()=>({addEventListener(){},removeEventListener(){}}));
+ vi.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue(null);
+ target=document.createElement('div');document.body.append(target);
+ const onKeyframeAdd=vi.fn();
+ instance=mount(TimelineEditor,{target,props:{tracks:[{id:'paper',name:'Paper',type:'position',keyframes:[]}],totalFrames:60,onKeyframeAdd}});flushSync();
+ (target.querySelector('[title="Zoom out"]') as HTMLButtonElement).click();flushSync();
+ expect(target.querySelector('.zoom-level')?.textContent).toBe('80%');
+ const canvas=target.querySelector('canvas')!;
+ const width=Number.parseFloat(canvas.style.width);
+ canvas.dispatchEvent(new MouseEvent('mousedown',{clientX:width-4,clientY:46,detail:2,bubbles:true}));
+ expect(onKeyframeAdd).toHaveBeenCalledExactlyOnceWith('paper',60);
+});

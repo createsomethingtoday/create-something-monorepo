@@ -294,6 +294,15 @@ describe('Canon registry manifest', () => {
 		expect(componentCandidateTags).toEqual([]);
 	});
 
+  it('keeps the generated public-export policy synchronized with current classifications',()=>{
+    const path=mcpCanonRegistrySnapshotPath.replace('canon-registry.ts','canon-public-export-classification.ts');
+    const source=readFileSync(path,'utf8');
+    const assignment='export const CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES: CanonPublicExportClassificationRule[] = ';
+    const start=source.indexOf(assignment);const end=source.lastIndexOf('\n];');
+    expect(start).toBeGreaterThanOrEqual(0);expect(end).toBeGreaterThan(start);
+    expect(JSON.parse(source.slice(start+assignment.length,end+2))).toEqual(CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES);
+  });
+
 	it('keeps the MCP Canon registry snapshot synchronized', () => {
 		expect(readMcpCanonRegistrySnapshot()).toEqual(CANON_REGISTRY_MANIFEST);
 	});
@@ -1460,7 +1469,9 @@ describe('Canon registry manifest', () => {
   });
 
   it('keeps the bounded journey pilot explicitly experimental until promotion evidence exists', () => {
-    for (const exportPath of ['.', './patterns']) {
+    expect(publicSvelteComponentExports().some(item=>item.exportPath==='.'&&item.exportName==='InspectableJourney')).toBe(false);
+    // The pilot is exported only by ./patterns; root has no such public symbol.
+    for (const exportPath of ['./patterns']) {
       expect(getCanonPublicExportClassification(exportPath, 'InspectableJourney')).toMatchObject({
         classification: 'experiment', registryPolicy: 'classified-out'
       });

@@ -8,6 +8,12 @@ import type { CanonPublicExportClassificationRule } from '../types.js';
 
 export const CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES: CanonPublicExportClassificationRule[] = [
   {
+    "exportPath": "./isometric",
+    "classification": "brand-surface",
+    "registryPolicy": "classified-out",
+    "rationale": "Original conceptual illustration support, not a promoted foundation UI primitive; see isometric/README.md."
+  },
+  {
     "exportPath": "./components",
     "exportName": "SEO",
     "classification": "platform-surface",
@@ -182,6 +188,12 @@ export const CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES: CanonPublicExportClassifi
     "rationale": "Authoring modal surface; not a foundation primitive until editor patterns are formalized."
   },
   {
+    "exportPath": "./newsletter/attribution",
+    "classification": "content-utility",
+    "registryPolicy": "classified-out",
+    "rationale": "Newsletter attribution parsing is a narrow content utility, not a visual foundation primitive."
+  },
+  {
     "exportPath": ".",
     "classification": "supporting-api",
     "registryPolicy": "candidate-review",
@@ -195,6 +207,30 @@ export const CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES: CanonPublicExportClassifi
       "token.performance-core"
     ],
     "rationale": "Canonical CSS token source is covered by token.performance-core."
+  },
+  {
+    "exportPath": "./styles/workspace.css",
+    "classification": "style-artifact",
+    "registryPolicy": "classified-out",
+    "rationale": "Opt-in workspace chrome is a stylesheet consumption artifact governed by Canon tokens."
+  },
+  {
+    "exportPath": "./styles/operator.css",
+    "classification": "token-artifact",
+    "registryPolicy": "classified-out",
+    "rationale": "Opt-in operator palette is governed by its CSS/JSON parity and contrast contract."
+  },
+  {
+    "exportPath": "./styles/operator.tokens.json",
+    "classification": "token-artifact",
+    "registryPolicy": "classified-out",
+    "rationale": "Machine-readable operator tokens mirror the canonical operator stylesheet."
+  },
+  {
+    "exportPath": "./styles/operator-document",
+    "classification": "style-artifact",
+    "registryPolicy": "classified-out",
+    "rationale": "Inline operator document CSS is a consumption artifact derived from canonical operator tokens."
   },
   {
     "exportPath": "./styles/canon.css",
@@ -584,6 +620,12 @@ export const CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES: CanonPublicExportClassifi
     "classification": "platform-surface",
     "registryPolicy": "classified-out",
     "rationale": "Newsletter helpers are product integration support, not foundation UI primitives."
+  },
+  {
+    "exportPath": "./newsletter/subscribe",
+    "classification": "platform-surface",
+    "registryPolicy": "classified-out",
+    "rationale": "Server-side subscription processing is product integration support, not a UI primitive."
   },
   {
     "exportPath": "./newsletter/audience",
@@ -1004,6 +1046,13 @@ export const CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES: CanonPublicExportClassifi
     "classification": "composition-pattern",
     "registryPolicy": "candidate-review",
     "rationale": "Conversion components need proof/receipt and property-policy contracts before promotion."
+  },
+  {
+    "exportPath": "./patterns",
+    "exportName": "InspectableJourney",
+    "classification": "experiment",
+    "registryPolicy": "classified-out",
+    "rationale": "Bounded Agency interaction pilot (CRE-2259); provisional controlled composition. Promotion requires accepted journey evidence and a second consumer. See patterns/InspectableJourney.md."
   },
   {
     "exportPath": "./patterns",

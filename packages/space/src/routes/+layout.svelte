@@ -175,7 +175,7 @@
   <Analytics property="space" />
 
   <!-- Unified Search - Cmd/Ctrl+K to open -->
-  <div class:space-header-search={workshopShell} data-canon-palette={workshopShell ? 'operator' : undefined}>
+  <div class:space-header-search={workshopShell} data-theme={workshopShell ? 'dark' : undefined}>
   <UnifiedSearch
     currentProperty="space"
     searchApiUrl="/api/workshop"
@@ -190,7 +190,7 @@
   <div
     class="layout property-performance"
     class:workshop-shell={workshopShell}
-    data-canon-palette="operator"
+    data-theme="dark"
   >
     <SkipToContent />
     <Navigation
@@ -242,7 +242,7 @@
 <style>
   .layout {
     min-height: 100vh;
-    background: var(--color-operator-background);
+    background: var(--color-performance-paper);
   }
 
   .content {

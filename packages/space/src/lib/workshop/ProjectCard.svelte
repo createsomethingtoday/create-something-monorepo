@@ -30,7 +30,7 @@
     min-height: 10rem;
     padding: 1rem;
     border: 1px solid var(--color-performance-line);
-    border-radius: var(--radius-operator-panel);
+    border-radius: var(--radius-performance-scale-lg);
     background: var(--color-performance-panel);
     color: inherit;
     text-decoration: none;

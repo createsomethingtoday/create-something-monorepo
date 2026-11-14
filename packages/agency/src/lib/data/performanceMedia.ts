@@ -44,6 +44,8 @@ export const paperAttachedReceiptMedia = {
   material: 'paper',
   width: 1536,
   height: 1024,
+  mobileWidth: 853,
+  mobileHeight: 1844,
   objectPosition: 'center',
   colorMode: 'natural'
 } as const satisfies PerformanceMediaStudy;

@@ -11,7 +11,7 @@ import {
 test('a release cache key cannot reuse previously cached public HTML', async () => {
   const request = new Request('https://createsomething.agency/');
   const previousRelease = new URL(request.url);
-  previousRelease.searchParams.set('__agency_html_revision', 'chapter-navigation-20261105');
+  previousRelease.searchParams.set('__agency_html_revision', 'agency-paper-dashboard-20261110');
   const legacyCache = new Map([
     [request.url, '<link href="/styles/agency/home.css">'],
     [previousRelease.href, '<p>Previous release copy</p>']

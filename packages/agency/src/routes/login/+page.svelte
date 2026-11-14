@@ -174,7 +174,7 @@
 		padding: clamp(1.25rem, 3vw, 2.5rem);
 		background: var(--color-performance-panel);
 		border: 1px solid var(--color-performance-line);
-		border-radius: var(--radius-operator-panel);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	/* Agency owns this presentation; shared auth behavior stays in Canon. */
@@ -186,23 +186,23 @@
 
 	.auth-form-panel :global(.form-header) { text-align: left; }
 	.auth-form-panel :global(.input) {
-		background: var(--color-operator-secondary);
-		border: 1px solid var(--color-operator-focus-ring-accessible);
-		border-radius: var(--radius-operator-control);
+		background: var(--color-performance-bg-elevated);
+		border: 1px solid var(--color-performance-focus);
+		border-radius: var(--radius-performance-sm);
 		min-height: 48px;
 	}
-	.auth-form-panel :global(.input::placeholder) { color: var(--color-operator-muted); }
-	.auth-form-panel :global(.submit-button) { border-radius: var(--radius-operator-control); }
+	.auth-form-panel :global(.input::placeholder) { color: var(--color-performance-muted); }
+	.auth-form-panel :global(.submit-button) { border-radius: var(--radius-performance-sm); }
 	.auth-form-panel :global(.link-button) { min-height: 44px; }
 	.auth-form-panel :global(.error-message) {
-		background: var(--color-operator-secondary);
-		border-color: var(--color-operator-status-blocked-text);
-		color: var(--color-operator-status-blocked-text);
-		border-radius: var(--radius-operator-control);
+		background: var(--color-performance-bg-elevated);
+		border-color: var(--color-performance-error);
+		color: var(--color-performance-error);
+		border-radius: var(--radius-performance-sm);
 		overflow-wrap: anywhere;
 	}
 	.auth-form-panel :global(:is(input, button):focus-visible) {
-		outline: 2px solid var(--color-operator-focus-ring-accessible);
+		outline: 2px solid var(--color-performance-focus);
 		outline-offset: 3px;
 	}
 

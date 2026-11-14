@@ -33,7 +33,7 @@
   .lede { max-width: 48ch; font-size: var(--text-performance-body-sm); line-height: 1.6; }
   .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-performance-md); margin-block: var(--space-performance-md); }
   .hero-actions a { display: inline-flex; align-items: center; gap: var(--space-performance-xs); min-height: 44px; }
-  .hero-actions .primary { padding: var(--space-performance-xs) var(--space-performance-md); background: var(--color-performance-fg-primary); color: var(--color-performance-shell-surface); border: 1px solid var(--color-performance-fg-primary); border-radius: var(--radius-operator-control); text-decoration: none; }
+  .hero-actions .primary { padding: var(--space-performance-xs) var(--space-performance-md); background: var(--color-performance-fg-primary); color: var(--color-performance-shell-surface); border: 1px solid var(--color-performance-fg-primary); border-radius: var(--radius-performance-sm); text-decoration: none; }
   .hero-actions .primary:hover { background: var(--color-performance-shell-surface-hover); color: var(--color-performance-fg-primary); }
   .hero-terms { max-width: 52ch; font-size: var(--text-performance-caption); line-height: 1.6; color: var(--color-performance-fg-secondary); }
   .hero-bottom { display: flex; flex-wrap: wrap; gap: var(--space-performance-sm); justify-content: space-between; align-items: center; padding: var(--space-performance-sm) 7vw; border-top: 1px solid var(--color-performance-shell-border-default); }

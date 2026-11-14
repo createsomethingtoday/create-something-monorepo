@@ -1,4 +1,7 @@
 <script lang="ts">
+ import SceneLead from "../background/SceneLead.svelte";
+  import BackgroundScene from "../background/BackgroundScene.svelte";
+  import type { CanonBackgroundScene } from "../background/scene.js";
 	import type { Snippet } from 'svelte';
 
 	export interface ClearPlatformHeroProof {
@@ -12,6 +15,8 @@
 	}
 
 	interface Props {
+    /** Optional full-section scene. Essential copy stays in HTML. */
+    background?: CanonBackgroundScene;
 		id?: string;
 		eyebrow?: string;
 		title: string;
@@ -25,7 +30,7 @@
 	}
 
 	let {
-		id,
+    background,		id,
 		eyebrow,
 		title,
 		description,
@@ -38,7 +43,41 @@
 	}: Props = $props();
 </script>
 
-<section {id} class="clear-platform-hero" aria-label={ariaLabel}>
+<section data-background={background ? "scene" : undefined} {id} class="clear-platform-hero" aria-label={ariaLabel}>
+ {#if background}
+ <SceneLead scene={background}>
+  {#if eyebrow}<span data-scene-eyebrow>{eyebrow}</span>{/if}<h1>{title}</h1>
+  {#if description}<p>{description}</p>{/if}
+  {#if actions}<div data-scene-actions>{@render actions()}</div>{/if}
+ </SceneLead>
+ <div class="canon-scene-details">				{#if metaItems.length}
+					<div class="clear-platform-hero__meta" aria-label="Platform metadata">
+						{#each metaItems as item}
+							<span>
+								<small>{item.label}</small>
+								<strong>{item.value}</strong>
+							</span>
+						{/each}
+					</div>
+				{/if}			{#if aside}
+				<div
+					class="clear-platform-hero__aside"
+					class:clear-platform-hero__aside--hide-mobile={hideAsideOnMobile}
+				>
+					{@render aside()}
+				</div>
+			{/if}		{#if proofItems.length}
+			<div class="clear-platform-hero__proof" aria-label="Platform proof">
+				{#each proofItems as item}
+					<article>
+						<strong>{item.value}</strong>
+						<span>{item.label}</span>
+					</article>
+				{/each}
+			</div>
+		{/if}</div>
+ {:else}
+  {#if background}<BackgroundScene scene={background}/>{/if}
 	<div class="clear-platform-hero__inner">
 		<div class="clear-platform-hero__layout">
 			<div class="clear-platform-hero__copy">
@@ -91,6 +130,7 @@
 			</div>
 		{/if}
 	</div>
+{/if}
 </section>
 
 <style>
@@ -100,10 +140,7 @@
 		overflow: clip;
 		padding-block: 2.5rem 1.25rem;
 		border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
-		background:
-			linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 4.25rem
-				4.25rem,
-			linear-gradient(180deg, var(--color-performance-panel, #ffffff) 0%, #fbfbfb 100%);
+		background:var(--color-performance-paper);
 		color: var(--color-performance-ink, #090909);
 	}
 
@@ -136,11 +173,11 @@
 		background: var(--color-performance-panel, #ffffff);
 		color: var(--color-performance-muted, #5e6268);
 		font-family: var(--font-performance-mono);
-		font-size: 0.76rem;
+		font-size: 0.875rem;
 		font-weight: var(--font-performance-semibold);
 		letter-spacing: 0;
 		line-height: 1.15;
-		text-transform: uppercase;
+		text-transform: none;
 	}
 
 	.clear-platform-hero h1 {
@@ -192,11 +229,11 @@
 	.clear-platform-hero__meta small {
 		color: var(--color-performance-muted, #5e6268);
 		font-family: var(--font-performance-mono);
-		font-size: 0.68rem;
+		font-size: 0.875rem;
 		font-weight: var(--font-performance-medium);
 		letter-spacing: 0;
 		line-height: 1.12;
-		text-transform: uppercase;
+		text-transform: none;
 	}
 
 	.clear-platform-hero__meta strong {
@@ -261,7 +298,7 @@
 
 	.clear-platform-hero__proof span {
 		color: var(--color-performance-muted, #5e6268);
-		font-size: 0.86rem;
+		font-size: 0.875rem;
 		line-height: 1.35;
 	}
 
@@ -274,12 +311,13 @@
 	.clear-platform-hero :global(.btn-primary) {
 		background: var(--color-performance-ink, #090909);
 		border-color: var(--color-performance-ink, #090909);
-		color: #ffffff;
+		color: var(--color-performance-panel);
 	}
 
 	.clear-platform-hero :global(.btn-primary:hover) {
-		background: #1a2030;
-		border-color: #1a2030;
+		background: var(--color-performance-ink);
+    filter: brightness(.94);
+		border-color: var(--color-performance-ink);
 		box-shadow: none;
 	}
 
@@ -292,7 +330,7 @@
 	.clear-platform-hero :global(.btn-secondary:hover) {
 		background: var(--color-performance-ink, #090909);
 		border-color: var(--color-performance-ink, #090909);
-		color: #ffffff;
+		color: var(--color-performance-panel);
 	}
 
 	@media (max-width: 980px) {
@@ -343,4 +381,15 @@
 			margin-top: 2rem;
 		}
 	}
+
+  .clear-platform-hero {position:relative;isolation:isolate;}
+  .clear-platform-hero > :global(.canon-background-scene) {z-index:-1;}
+  .clear-platform-hero[data-background="scene"]{background:var(--color-performance-paper);min-height:36rem;padding-block:4rem;}
+  .clear-platform-hero__meta span{background:var(--color-performance-panel);}
+  @media(max-width:47.99rem){.clear-platform-hero[data-background="scene"]{padding-top:15rem;}.clear-platform-hero h1{overflow-wrap:anywhere;}}
+
+ /* Authored scene lead and dense records are separate layout regions. */
+ .clear-platform-hero[data-background="scene"]{display:block;grid-template-columns:none;grid-template-rows:none;min-height:0;width:100%;padding:0;background:var(--color-performance-paper);}
+ .canon-scene-details{position:relative;display:grid;gap:1.5rem;padding:clamp(1.25rem,4vw,3rem);background:var(--color-performance-paper);color:var(--color-performance-ink);border-top:1px solid var(--color-performance-line);}
+ .canon-scene-details .clear-platform-hero__proof{margin:0;}
 </style>

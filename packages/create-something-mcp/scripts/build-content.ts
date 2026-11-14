@@ -602,6 +602,21 @@ async function main() {
   // Ensure output directory exists
   await mkdir(OUT_DIR, { recursive: true });
 
+  // Bounded Canon-only regeneration avoids rewriting unrelated property/graph content.
+  if (process.argv.includes('--canon-only')) {
+    const snapshot = await buildCanonMcpSnapshot();
+    const outputs = [
+      ['canon-registry.ts', 'CanonRegistryManifest', 'CANON_REGISTRY_MANIFEST', snapshot.registryManifest],
+      ['canon-public-export-classification.ts', 'CanonPublicExportClassificationRule', 'CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES', snapshot.publicExportClassificationRules]
+    ] as const;
+    for (const [file, typeName, constName, value] of outputs) {
+      const source = renderCanonSnapshotModule({description: 'Generated Canon '+(file==='canon-registry.ts'?'registry':'public export classification')+' content', source:'packages/canon/src/lib/mcp-snapshot/',typeName,typeAnnotation:file==='canon-registry.ts'?undefined:'CanonPublicExportClassificationRule[]',constName,value});
+      await writeFile(join(OUT_DIR,file),source,'utf-8');
+    }
+    console.log('Regenerated Canon registry and export classification only.');
+    return;
+  }
+
   // Build all content in parallel
   const [
     papers,

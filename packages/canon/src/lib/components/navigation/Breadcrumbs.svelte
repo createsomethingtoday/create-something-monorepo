@@ -88,6 +88,7 @@
 	}
 
 	.breadcrumbs-link {
+		min-width:44px;min-height:44px;
 		color: var(--color-performance-fg-muted);
 		text-decoration: none;
 		transition: color var(--duration-performance-micro) var(--ease-performance-standard);
@@ -132,5 +133,9 @@
 		clip: rect(0, 0, 0, 0);
 		white-space: nowrap;
 		border: 0;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.breadcrumbs-link { transition:none; }
 	}
 </style>

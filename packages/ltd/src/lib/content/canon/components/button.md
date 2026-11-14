@@ -34,6 +34,10 @@ published: true
 2. Use `secondary` when the choice matters but should not dominate the screen.
 3. Use `ghost` for supporting actions, dense toolbars, or low-emphasis UI.
 
+## Native behavior
+
+A nonempty `href` renders a native link for navigation. Without `href`, Button renders a native button; set `type="submit"` for form submission. A disabled destination renders a disabled button and cannot navigate or activate its handler. Preserve visible focus and a descriptive accessible name. Standard controls use soft-square geometry and own sizing/padding without requiring Tailwind utilities.
+
 ## Related
 
 - [Clear Components](/canon/components/clear)

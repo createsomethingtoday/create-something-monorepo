@@ -129,6 +129,7 @@
 </section>
 
 <style>
+  .property-funnel, .property-funnel * { box-sizing: border-box; }
   .property-funnel {
     padding-block: 4.5rem;
     background: var(--color-performance-panel, #ffffff);
@@ -161,11 +162,11 @@
   .property-funnel__step-label {
     color: var(--color-performance-muted, #5e6268);
     font-family: var(--font-performance-mono);
-    font-size: 0.76rem;
+    font-size: 0.875rem;
     font-weight: var(--font-performance-medium);
     letter-spacing: 0;
     line-height: 1.2;
-    text-transform: uppercase;
+    text-transform: none;
   }
 
   .property-funnel__copy h2 {
@@ -223,8 +224,8 @@
   .property-funnel__handoff dt {
     color: var(--color-performance-muted, #5e6268);
     font-family: var(--font-performance-mono);
-    font-size: 0.68rem;
-    text-transform: uppercase;
+    font-size: 0.875rem;
+    text-transform: none;
   }
 
   .property-funnel__handoff dd {
@@ -358,12 +359,13 @@
   .property-funnel__button--primary {
     border-color: var(--color-performance-ink, #090909);
     background: var(--color-performance-ink, #090909);
-    color: #ffffff;
+    color: var(--color-performance-panel);
   }
 
   .property-funnel__button--primary:hover {
-    background: #1a2030;
-    border-color: #1a2030;
+    background: var(--color-performance-ink);
+    filter: brightness(.94);
+    border-color: var(--color-performance-ink);
     opacity: 1;
   }
 
@@ -376,7 +378,7 @@
   .property-funnel__button--secondary:hover {
     border-color: var(--color-performance-ink, #090909);
     background: var(--color-performance-ink, #090909);
-    color: #ffffff;
+    color: var(--color-performance-panel);
     opacity: 1;
   }
 

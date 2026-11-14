@@ -35,9 +35,9 @@
   color: var(--color-performance-pressure);
   font-family: var(--font-performance-mono, var(--font-performance-mono));
   font-size: 0.76rem;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .performance-panel {
@@ -57,7 +57,7 @@
   padding: 0 18px;
   color: var(--color-performance-ink);
   font-size: 0.88rem;
-  font-weight: 800;
+  font-weight: 600;
   text-decoration: none;
 }
 
@@ -155,56 +155,21 @@
   font-weight: 700;
   letter-spacing: 0;
   line-height: 1;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .property-performance {
-  --color-performance-paper: var(--color-performance-editorial-light);
-  --color-performance-panel: color-mix(
-    in srgb,
-    var(--color-performance-editorial-light) 88%,
-    white
-  );
-  --color-performance-ink: var(--color-performance-editorial-dark);
-  --color-performance-ink-soft: var(--color-performance-editorial-dark-secondary);
-  --color-performance-muted: color-mix(
-    in srgb,
-    var(--color-performance-editorial-dark) 66%,
-    transparent
-  );
-  --color-performance-line: color-mix(
-    in srgb,
-    var(--color-performance-editorial-dark) 18%,
-    transparent
-  );
-  --color-performance-line-strong: color-mix(
-    in srgb,
-    var(--color-performance-editorial-dark) 38%,
-    transparent
-  );
-  --color-performance-court: var(--color-performance-editorial-light-secondary);
-  --color-performance-paper-fiber: color-mix(
-    in srgb,
-    var(--color-performance-editorial-dark) 3.5%,
-    transparent
-  );
+  /* Consume the owning canonical palette; never reset nested dark contexts. */
   --property-performance-panel-shadow: var(--shadow-performance-panel);
-  background:
-    repeating-linear-gradient(
-      7deg,
-      transparent 0 22px,
-      var(--color-performance-paper-fiber) 22px 23px,
-      transparent 23px 49px
-    ),
-    var(--color-performance-paper);
+  background: var(--color-performance-paper);
   color: var(--color-performance-ink);
-  font-family: var(--font-performance-display, var(--font-performance-sans));
+  font-family: var(--font-performance-sans);
   font-synthesis: none;
 }
 
 .property-performance :where(h1, h2) {
-  font-family: var(--font-performance-editorial);
-  font-weight: var(--font-performance-editorial-weight, 400);
+  font-family: var(--font-performance-heading);
+  font-weight: var(--font-performance-display-weight, 500);
 }
 
 [data-performance-mode] {
@@ -244,7 +209,7 @@
   border-color: var(--color-performance-line);
   background: var(--color-performance-panel);
   color: var(--color-performance-pressure);
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .property-performance
@@ -287,9 +252,9 @@
 }
 
 .property-performance :where(.clear-page-section .btn-primary, .btn-primary) {
-  background: var(--color-performance-editorial-brand);
-  border-color: var(--color-performance-editorial-brand);
-  color: var(--color-performance-editorial-dark);
+  background: var(--color-performance-ink);
+  border-color: var(--color-performance-ink);
+  color: var(--color-performance-panel);
 }
 
 @media (max-width: 640px) {

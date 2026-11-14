@@ -86,7 +86,7 @@ A 12-column grid for flexible layouts.
 .auto-grid {
   display: grid;
   gap: var(--space-performance-lg);
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
 }
 ```
 

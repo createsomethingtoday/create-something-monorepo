@@ -154,7 +154,7 @@
 		<div class="panel-header">
 			<h3 class="panel-title">Filter By</h3>
 			{#if collapsible}
-				<button type="button" class="toggle-btn" on:click={() => (isExpanded = !isExpanded)}>
+				<button type="button" class="toggle-btn" aria-expanded={isExpanded} on:click={() => (isExpanded = !isExpanded)}>
 					{isExpanded ? 'Hide' : 'Show'}
 				</button>
 			{/if}
@@ -167,17 +167,17 @@
 			<h4 class="group-title">Materials</h4>
 			<div class="toggle-list">
 				{#each config.materials as material}
-					<div class="toggle-row">
+					<label class="toggle-row">
 						<span class="toggle-label">{material}</span>
-						<label class="toggle-switch">
+						<span class="toggle-switch">
 							<input
 								type="checkbox"
 								checked={uiFilters.materials[material]}
 								on:change={() => toggleMaterial(material)}
 							/>
 							<span class="toggle-slider"></span>
-						</label>
-					</div>
+						</span>
+					</label>
 				{/each}
 			</div>
 		</div>
@@ -195,6 +195,7 @@
 				></div>
 				<input
 					type="range"
+					aria-label="Minimum price"
 					min={config.priceRange.min}
 					max={config.priceRange.max}
 					step={config.priceRange.step}
@@ -204,6 +205,7 @@
 				/>
 				<input
 					type="range"
+					aria-label="Maximum price"
 					min={config.priceRange.min}
 					max={config.priceRange.max}
 					step={config.priceRange.step}
@@ -223,17 +225,17 @@
 			<h4 class="group-title">Category</h4>
 			<div class="toggle-list">
 				{#each config.categories as { key, label }}
-					<div class="toggle-row">
+					<label class="toggle-row">
 						<span class="toggle-label">{label}</span>
-						<label class="toggle-switch">
+						<span class="toggle-switch">
 							<input
 								type="checkbox"
 								checked={uiFilters.categories[key]}
 								on:change={() => toggleCategory(key)}
 							/>
 							<span class="toggle-slider"></span>
-						</label>
-					</div>
+						</span>
+					</label>
 				{/each}
 			</div>
 		</div>
@@ -243,17 +245,17 @@
 			<h4 class="group-title">Status</h4>
 			<div class="toggle-list">
 				{#each config.statuses as { key, label }}
-					<div class="toggle-row">
+					<label class="toggle-row">
 						<span class="toggle-label">{label}</span>
-						<label class="toggle-switch">
+						<span class="toggle-switch">
 							<input
 								type="checkbox"
 								checked={uiFilters.statuses[key]}
 								on:change={() => toggleStatus(key)}
 							/>
 							<span class="toggle-slider"></span>
-						</label>
-					</div>
+						</span>
+					</label>
 				{/each}
 			</div>
 		</div>
@@ -266,6 +268,9 @@
 
 <style>
 	.filter-panel {
+		box-sizing: border-box;
+		color: var(--color-performance-fg-primary);
+		width: 100%;
 		background: var(--color-performance-bg-subtle);
 		padding: var(--space-performance-sm) var(--space-performance-md);
 		border-radius: var(--radius-performance-scale-sm);
@@ -289,10 +294,15 @@
 	}
 
 	.toggle-btn {
+		box-sizing: border-box;
+		border: 1px solid var(--color-performance-line-strong);
+		font-family: var(--font-performance-interface, inherit);
+		min-height: 44px;
+		min-width: 44px;
 		font-size: var(--text-performance-caption);
 		padding: 2px var(--space-performance-xs);
 		background: transparent;
-		border-radius: var(--radius-xs);
+		border-radius: var(--radius-performance-scale-sm);
 		cursor: pointer;
 		color: var(--color-performance-fg-muted);
 		transition: all var(--duration-performance-fast) var(--ease-out);
@@ -329,6 +339,8 @@
 	}
 
 	.toggle-row {
+		min-height: 44px;
+		cursor: pointer;
 		display: inline-flex;
 		align-items: center;
 		gap: var(--space-performance-xs);
@@ -343,20 +355,26 @@
 	.toggle-switch {
 		position: relative;
 		display: inline-block;
-		width: 28px;
-		height: 14px;
+		width: 44px;
+		height: 44px;
+		flex-shrink: 0;
 		cursor: pointer;
 	}
 
 	.toggle-switch input {
+		position: absolute;
+		inset: 0;
 		opacity: 0;
-		width: 0;
-		height: 0;
+		width: 100%;
+		height: 100%;
+		margin: 0;
+		cursor: pointer;
 	}
 
 	.toggle-slider {
 		position: absolute;
-		inset: 0;
+		inset: 11px 4px;
+		pointer-events: none;
 		background-color: var(--color-performance-bg-surface);
 		border-radius: 14px;
 		transition: background-color var(--duration-performance-fast) var(--ease-out);
@@ -365,8 +383,8 @@
 	.toggle-slider::before {
 		content: '';
 		position: absolute;
-		height: 10px;
-		width: 10px;
+		height: 18px;
+		width: 18px;
 		left: 2px;
 		bottom: 2px;
 		background-color: var(--color-performance-fg-muted);
@@ -419,12 +437,14 @@
 
 	.range-track {
 		position: relative;
-		height: 20px;
+		flex-direction: column;
+		min-height: 88px;
 		display: flex;
 		align-items: center;
 	}
 
 	.range-track::before {
+		display: none;
 		content: '';
 		position: absolute;
 		left: 0;
@@ -435,6 +455,7 @@
 	}
 
 	.range-fill {
+		display: none;
 		position: absolute;
 		height: 2px;
 		background: var(--color-performance-fg-primary);
@@ -443,13 +464,13 @@
 	}
 
 	.range-input {
-		position: absolute;
+		position: relative;
 		width: 100%;
-		height: 20px;
+		height: 44px;
 		-webkit-appearance: none;
 		appearance: none;
-		background: transparent;
-		pointer-events: none;
+		background: linear-gradient(var(--color-performance-border-emphasis), var(--color-performance-border-emphasis)) center / 100% 2px no-repeat;
+		pointer-events: auto;
 		margin: 0;
 	}
 
@@ -498,11 +519,15 @@
 	}
 
 	.clear-btn {
+		box-sizing: border-box;
+		border: 1px solid var(--color-performance-line-strong);
+		font-family: var(--font-performance-interface, inherit);
+		min-height: 44px;
 		width: 100%;
 		padding: var(--space-performance-xs) var(--space-performance-sm);
 		margin-top: var(--space-performance-sm);
 		background: transparent;
-		border-radius: var(--radius-xs);
+		border-radius: var(--radius-performance-scale-sm);
 		font-size: var(--text-performance-caption);
 		color: var(--color-performance-fg-muted);
 		cursor: pointer;
@@ -522,4 +547,18 @@
 		transform: translateY(0);
 		transition-duration: var(--duration-performance-micro);
 	}
+	.toggle-switch input:focus-visible + .toggle-slider,
+	.range-input:focus-visible,
+	button:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 3px; }
+	@media (prefers-reduced-motion: reduce) {
+		*, *::before { transition: none !important; }
+	}
+
+ /* Let labels own their required space rather than shrinking their controls. */
+ .filter-panel { min-width: 0; overflow-wrap: anywhere; }
+ .panel-header, .price-header, .range-labels { flex-wrap: wrap; gap: .5rem; }
+ .toggle-btn { flex: 0 0 auto; max-width: 100%; }
+ .toggle-row { max-width: 100%; }
+ .toggle-label { min-width: 0; }
+
 </style>
