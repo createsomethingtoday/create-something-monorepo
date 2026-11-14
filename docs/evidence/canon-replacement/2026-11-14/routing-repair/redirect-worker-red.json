@@ -1,0 +1,97 @@
+{
+  "at": "2026-11-14T06:26:10.456304+00:00",
+  "source": "f41ed1c1e0685b63f6f6a183502aa84a09953686",
+  "builtArtifactRed": [
+    {
+      "property": "io",
+      "aliases": 18,
+      "notExcludedFromWorker": [
+        "/images/research/about-careful-working-notes-1440.webp",
+        "/images/research/about-careful-working-notes-640.webp",
+        "/images/research/about-careful-working-notes-960.webp",
+        "/images/research/brief-evidence-and-unknowns-1440.webp",
+        "/images/research/brief-evidence-and-unknowns-640.webp",
+        "/images/research/brief-evidence-and-unknowns-960.webp",
+        "/images/research/editorial-experiments-isolated-sandbox-1440.webp",
+        "/images/research/editorial-experiments-isolated-sandbox-640.webp",
+        "/images/research/editorial-experiments-isolated-sandbox-960.webp",
+        "/images/research/editorial-field-reports-load-rig-1440.webp",
+        "/images/research/editorial-field-reports-load-rig-640.webp",
+        "/images/research/editorial-field-reports-load-rig-960.webp",
+        "/images/research/editorial-mcp-modular-port-1440.webp",
+        "/images/research/editorial-mcp-modular-port-640.webp",
+        "/images/research/editorial-mcp-modular-port-960.webp",
+        "/images/research/ground-compare-before-claim-1440.webp",
+        "/images/research/ground-compare-before-claim-640.webp",
+        "/images/research/ground-compare-before-claim-960.webp"
+      ]
+    },
+    {
+      "property": "ltd",
+      "aliases": 12,
+      "notExcludedFromWorker": [
+        "/images/library/about-careful-working-notes-1536.webp",
+        "/images/library/about-careful-working-notes-768.webp",
+        "/images/library/editorial-workflow-library-tool-drawers-continuity-v2-1536.webp",
+        "/images/library/editorial-workflow-library-tool-drawers-continuity-v2-768.webp",
+        "/images/library/permission-two-separate-gates-1536.webp",
+        "/images/library/permission-two-separate-gates-768.webp",
+        "/images/library/proof-preserve-the-sequence-1536.webp",
+        "/images/library/proof-preserve-the-sequence-768.webp",
+        "/images/library/subtract-the-extra-route-1536.webp",
+        "/images/library/subtract-the-extra-route-768.webp",
+        "/images/library/tool-fit-without-forcing-1536.webp",
+        "/images/library/tool-fit-without-forcing-768.webp"
+      ]
+    },
+    {
+      "property": "space",
+      "aliases": 24,
+      "notExcludedFromWorker": [
+        "/images/workshop/stories/about-careful-working-notes-640.webp",
+        "/images/workshop/stories/about-careful-working-notes-960.webp",
+        "/images/workshop/stories/about-careful-working-notes.webp",
+        "/images/workshop/stories/compiler-from-plan-to-tested-jig-640.webp",
+        "/images/workshop/stories/compiler-from-plan-to-tested-jig-960.webp",
+        "/images/workshop/stories/compiler-from-plan-to-tested-jig.webp",
+        "/images/workshop/stories/editorial-experiments-isolated-sandbox-640.webp",
+        "/images/workshop/stories/editorial-experiments-isolated-sandbox-960.webp",
+        "/images/workshop/stories/editorial-experiments-isolated-sandbox.webp",
+        "/images/workshop/stories/editorial-upstream-shared-tool-repair-640.webp",
+        "/images/workshop/stories/editorial-upstream-shared-tool-repair-960.webp",
+        "/images/workshop/stories/editorial-upstream-shared-tool-repair.webp",
+        "/images/workshop/stories/ground-compare-before-claim-640.webp",
+        "/images/workshop/stories/ground-compare-before-claim-960.webp",
+        "/images/workshop/stories/ground-compare-before-claim.webp",
+        "/images/workshop/stories/products-workbench-paths-continuity-v2-640.webp",
+        "/images/workshop/stories/products-workbench-paths-continuity-v2-960.webp",
+        "/images/workshop/stories/products-workbench-paths-continuity-v2.webp",
+        "/images/workshop/stories/subtract-the-extra-route-640.webp",
+        "/images/workshop/stories/subtract-the-extra-route-960.webp",
+        "/images/workshop/stories/subtract-the-extra-route.webp",
+        "/images/workshop/stories/tool-fit-without-forcing-640.webp",
+        "/images/workshop/stories/tool-fit-without-forcing-960.webp",
+        "/images/workshop/stories/tool-fit-without-forcing.webp"
+      ]
+    },
+    {
+      "property": "lms",
+      "aliases": 1,
+      "notExcludedFromWorker": [
+        "/workshop/canon.png"
+      ]
+    }
+  ],
+  "liveRed": [
+    {
+      "url": "https://createsomething.ltd/images/library/proof-preserve-the-sequence-1536.webp",
+      "status": 404,
+      "location": null
+    },
+    {
+      "url": "https://learn.createsomething.space/workshop/canon.png",
+      "status": 404,
+      "location": null
+    }
+  ]
+}

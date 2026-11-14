@@ -103,6 +103,12 @@ jobs:
       - name: Verify Canon character release artifact
         run: node scripts/check-canon-character-retirement.mjs --artifact "packages/$PROPERTY/.svelte-kit/cloudflare"
 
+      - name: Verify Canon image redirects bypass the application worker
+        if: inputs.property != 'clearway'
+        run: |
+          node --test scripts/test/canon-image-redirects.test.mjs
+          node scripts/check-canon-image-redirects.mjs --property "$PROPERTY" --artifact "packages/$PROPERTY/.svelte-kit/cloudflare"
+
       - name: Include CLEARWAY embed in Pages output
         if: inputs.property == 'clearway'
         shell: bash

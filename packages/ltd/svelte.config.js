@@ -15,7 +15,8 @@ const config = {
 			},
 			routes: {
 				include: ['/*'],
-				exclude: ['<all>']
+				// Legacy image aliases must reach Pages static redirects before the app worker.
+				exclude: ['/images/library/*', '<all>']
 			}
 		})
 	}
