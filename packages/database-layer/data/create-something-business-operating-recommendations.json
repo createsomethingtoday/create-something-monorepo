@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:business-operating-recommendations:internal",
-  "generatedAt": "2026-11-14T01:59:17.943Z",
+  "generatedAt": "2026-11-14T15:14:22.790Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceOrganizationReviewId": "substrate:create-something:organization-review:internal",
@@ -10,9 +10,9 @@
   "summary": {
     "recommendedMoves": 4,
     "operationalizedLanes": 4,
-    "topologyNodes": 574,
-    "topologyEdges": 1198,
-    "managementResources": 644,
+    "topologyNodes": 575,
+    "topologyEdges": 1201,
+    "managementResources": 645,
     "managementOperations": 29,
     "operatingSlices": 23,
     "workerSlices": 4,
@@ -86,7 +86,7 @@
       "metrics": {
         "databaseRecords": 29,
         "automationRecords": 293,
-        "resourceCount": 644,
+        "resourceCount": 645,
         "operationCount": 29,
         "readOperations": 26
       },
@@ -144,7 +144,7 @@
         "workerSlices": 4,
         "primaryWorkerSliceRecords": 153,
         "runtimeConfigRecords": 125,
-        "bindingRefs": 683,
+        "bindingRefs": 682,
         "routeRefs": 27,
         "bindingKinds": {
           "assets": 10,
@@ -154,7 +154,7 @@
           "queue": 16,
           "r2": 24,
           "route": 54,
-          "var": 414,
+          "var": 413,
           "vectorize": 2
         },
         "secretValuesCaptured": false
@@ -276,7 +276,7 @@
       "summary": "Policy is already present; the improvement is to make every critical workflow show its policy, guide, approval boundary, and receipt path in context.",
       "evidence": [
         "Policy records=64",
-        "Guide records=86",
+        "Guide records=87",
         "23 operating slices are review-ready"
       ],
       "sourceArtifacts": [
@@ -373,7 +373,7 @@
         "operatingSlices": 23,
         "attachedSlices": 23,
         "policyRecords": 64,
-        "guideRecords": 86,
+        "guideRecords": 87,
         "docRecords": 6
       },
       "relatedSliceIds": [
@@ -507,7 +507,7 @@
     "runtime": {
       "runtime": "cloudflare",
       "runtimeConfigRecords": 125,
-      "bindingRefs": 683,
+      "bindingRefs": 682,
       "routeRefs": 27,
       "bindingKinds": {
         "assets": 10,
@@ -517,7 +517,7 @@
         "queue": 16,
         "r2": 24,
         "route": 54,
-        "var": 414,
+        "var": 413,
         "vectorize": 2
       },
       "secretHandling": "Runtime recommendation uses binding names, route refs, and environment variable keys from repo config. It does not capture secret values."
@@ -1962,32 +1962,32 @@
       "recordId": "business:promote_database_layer_as_product_surface",
       "type": "proof",
       "summary": "Promote Substrate as the CREATE SOMETHING database layer is represented as a CREATE SOMETHING business operating lane.",
-      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-11-14T01:59:17.943Z.",
-      "createdAt": "2026-11-14T01:59:17.943Z"
+      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-11-14T15:14:22.790Z.",
+      "createdAt": "2026-11-14T15:14:22.790Z"
     },
     {
       "id": "receipt:business:review_worker_runtime_slice_first",
       "recordId": "business:review_worker_runtime_slice_first",
       "type": "proof",
       "summary": "Review worker runtime slices before production claims is represented as a CREATE SOMETHING business operating lane.",
-      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-11-14T01:59:17.943Z.",
-      "createdAt": "2026-11-14T01:59:17.943Z"
+      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-11-14T15:14:22.790Z.",
+      "createdAt": "2026-11-14T15:14:22.790Z"
     },
     {
       "id": "receipt:business:turn_client_overlays_into_repeatable_delivery",
       "recordId": "business:turn_client_overlays_into_repeatable_delivery",
       "type": "proof",
       "summary": "Turn client overlays into repeatable delivery is represented as a CREATE SOMETHING business operating lane.",
-      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-11-14T01:59:17.943Z.",
-      "createdAt": "2026-11-14T01:59:17.943Z"
+      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-11-14T15:14:22.790Z.",
+      "createdAt": "2026-11-14T15:14:22.790Z"
     },
     {
       "id": "receipt:business:attach_policy_to_slices",
       "recordId": "business:attach_policy_to_slices",
       "type": "proof",
       "summary": "Attach policy and guides to operating slices is represented as a CREATE SOMETHING business operating lane.",
-      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-11-14T01:59:17.943Z.",
-      "createdAt": "2026-11-14T01:59:17.943Z"
+      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-11-14T15:14:22.790Z.",
+      "createdAt": "2026-11-14T15:14:22.790Z"
     }
   ],
   "approvalBoundary": "This artifact completes local business operating recommendations only. Production, third-party, client, Cloudflare, Dify, Slack, Airtable, Webflow, and external writes remain approval-gated."

@@ -2,11 +2,11 @@
   "id": "substrate:create-something:topology:completion-report:internal",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-11-14T01:59:16.833Z",
+  "generatedAt": "2026-11-14T15:14:21.658Z",
   "totals": {
-    "nodes": 574,
-    "edges": 1198,
-    "mapped": 574,
+    "nodes": 575,
+    "edges": 1201,
+    "mapped": 575,
     "gaps": 0,
     "gapCounts": {
       "needs_atlas": 0,
@@ -42,7 +42,7 @@
     {
       "status": "mapped",
       "surface": "guide",
-      "count": 86
+      "count": 87
     },
     {
       "status": "mapped",
@@ -89,7 +89,7 @@
     {
       "tier": "Mixed",
       "status": "mapped",
-      "count": 143
+      "count": 144
     }
   ],
   "clientOverlays": [

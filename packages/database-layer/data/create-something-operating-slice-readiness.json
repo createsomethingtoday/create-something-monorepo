@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-readiness:internal",
-  "generatedAt": "2026-11-14T01:59:17.122Z",
+  "generatedAt": "2026-11-14T15:14:21.956Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceReviewId": "substrate:create-something:operating-slice-review:internal",
@@ -71,7 +71,7 @@
         "runtime": "cloudflare",
         "runtimeConfigRecords": 123,
         "workerPackageRecords": 30,
-        "bindingRefs": 672,
+        "bindingRefs": 671,
         "routeRefs": 26,
         "bindingKinds": {
           "assets": 10,
@@ -81,7 +81,7 @@
           "queue": 16,
           "r2": 23,
           "route": 26,
-          "var": 408,
+          "var": 407,
           "vectorize": 2
         },
         "workersWithD1": 82,
@@ -99,20 +99,20 @@
       "tier": "Mixed",
       "surface": "guide",
       "owner": "CREATE SOMETHING",
-      "recordCount": 86,
-      "mappedRecordCount": 86,
+      "recordCount": 87,
+      "mappedRecordCount": 87,
       "missingRecordIds": [],
       "gates": [
         {
           "id": "topology_records_exist",
           "status": "pass",
-          "summary": "86/86 slice records exist in the internal topology.",
+          "summary": "87/87 slice records exist in the internal topology.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
           "id": "topology_records_mapped",
           "status": "pass",
-          "summary": "86/86 slice records are mapped.",
+          "summary": "87/87 slice records are mapped.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {

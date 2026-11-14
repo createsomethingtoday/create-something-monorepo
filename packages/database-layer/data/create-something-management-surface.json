@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:management-surface:internal",
-  "generatedAt": "2026-11-14T01:59:17.991Z",
+  "generatedAt": "2026-11-14T15:14:22.841Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceReadinessId": "substrate:create-something:operating-slice-readiness:internal",
@@ -6747,6 +6747,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-browser-proof-and-closeout-runbook-md",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-browser-proof-and-closeout-runbook-md",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-guide-docs-guides-canon-character-migration-md",
+      "kind": "topology_record",
+      "title": "CANON_CHARACTER_MIGRATION.md",
+      "recordId": "substrate:create-something:guide:docs-guides-canon-character-migration-md",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-canon-character-migration-md",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-canon-character-migration-md",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"
