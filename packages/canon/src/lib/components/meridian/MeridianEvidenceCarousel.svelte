@@ -111,11 +111,12 @@
 </section>
 
 <style>
+  .meridian-evidence__card a { display: inline-flex; align-items: center; min-height: 44px; box-sizing: border-box; }
   .meridian-evidence {
     overflow: hidden;
     padding: clamp(3.5rem, 9vw, 8rem) 0;
-    background: var(--color-performance-editorial-dark, #181312);
-    color: var(--color-performance-editorial-light, #f3ebe4);
+    background: var(--color-performance-paper, #181312);
+    color: var(--color-performance-fg-primary, #f3ebe4);
   }
   .meridian-evidence__inner {
     display: grid;
@@ -131,10 +132,10 @@
   footer {
     margin: 0;
     font-family: var(--font-performance-mono);
-    font-size: 0.7rem;
+    font-size: 0.875rem;
     font-weight: var(--font-performance-semibold);
     letter-spacing: 0.075em;
-    text-transform: uppercase;
+    text-transform: none;
   }
   h2 {
     max-width: 13ch;
@@ -148,7 +149,7 @@
   .meridian-evidence__description {
     max-width: 42rem;
     margin: 1.2rem 0 0;
-    color: color-mix(in srgb, var(--color-performance-editorial-light, #f3ebe4) 73%, transparent);
+    color: color-mix(in srgb, var(--color-performance-fg-primary, #f3ebe4) 73%, transparent);
     font-size: 1.05rem;
     line-height: 1.5;
   }
@@ -159,7 +160,7 @@
   }
   .meridian-evidence__controls span {
     min-width: 4rem;
-    color: color-mix(in srgb, var(--color-performance-editorial-light, #f3ebe4) 65%, transparent);
+    color: color-mix(in srgb, var(--color-performance-fg-primary, #f3ebe4) 65%, transparent);
   }
   button {
     display: grid;
@@ -167,7 +168,7 @@
     height: 2.8rem;
     place-items: center;
     border: 1px solid
-      color-mix(in srgb, var(--color-performance-editorial-light, #f3ebe4) 32%, transparent);
+      color-mix(in srgb, var(--color-performance-fg-primary, #f3ebe4) 32%, transparent);
     background: transparent;
     color: inherit;
     font-size: 1.25rem;
@@ -178,9 +179,9 @@
     opacity: 0.42;
   }
   button:enabled:hover {
-    background: var(--color-performance-editorial-brand, #fcaa2d);
-    border-color: var(--color-performance-editorial-brand, #fcaa2d);
-    color: var(--color-performance-editorial-dark, #181312);
+    background: var(--color-performance-brand-primary, #fcaa2d);
+    border-color: var(--color-performance-brand-primary, #fcaa2d);
+    color: var(--color-performance-paper, #181312);
   }
   button:focus-visible {
     outline: 3px solid var(--color-performance-focus, #a7b8ff);
@@ -214,8 +215,8 @@
     min-height: 25rem;
     padding: clamp(1.35rem, 3vw, 2.5rem);
     border: 1px solid
-      color-mix(in srgb, var(--color-performance-editorial-light, #f3ebe4) 25%, transparent);
-    background: var(--color-performance-editorial-dark-secondary, #2e2927);
+      color-mix(in srgb, var(--color-performance-fg-primary, #f3ebe4) 25%, transparent);
+    background: var(--color-performance-panel, #2e2927);
     scroll-snap-align: start;
   }
   blockquote {
@@ -229,17 +230,17 @@
   .meridian-evidence__card > p:not(.meridian-evidence__eyebrow) {
     max-width: 33rem;
     margin: auto 0 0;
-    color: color-mix(in srgb, var(--color-performance-editorial-light, #f3ebe4) 74%, transparent);
+    color: color-mix(in srgb, var(--color-performance-fg-primary, #f3ebe4) 74%, transparent);
     line-height: 1.52;
   }
   footer {
     padding-top: 1rem;
     border-top: 1px solid
-      color-mix(in srgb, var(--color-performance-editorial-light, #f3ebe4) 22%, transparent);
+      color-mix(in srgb, var(--color-performance-fg-primary, #f3ebe4) 22%, transparent);
   }
   footer a,
   footer span {
-    color: var(--color-performance-editorial-brand, #fcaa2d);
+    color: var(--color-performance-brand-primary, #fcaa2d);
     text-decoration: none;
   }
   footer a:hover {

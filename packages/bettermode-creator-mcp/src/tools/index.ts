@@ -8,8 +8,11 @@
 //   list_response_queue        (D1 → threads where a creator is waiting)
 //   save_draft                 (D1 write → agent draft for admin review)
 //   dismiss_queue_item         (D1 write → close an item that needs no reply)
+//   get_queue_health           (D1 → sweep, webhook, counts, send problems)
+//   list_queue_history         (D1 → closed items, newest first)
 //
-// No tool posts to Bettermode. An admin sends the draft from the post page.
+// No tool posts to Bettermode. An admin sends the draft from the post page
+// or from the dashboard (QueueApi in worker/index.ts).
 //
 // Each tool returns a single text content block with JSON. The Dify agent
 // (or any MCP client) parses JSON for downstream use.
@@ -29,6 +32,8 @@ import {
 import {
   dismissQueueItem,
   getDraftStatusByPostId,
+  getQueueHealth,
+  listQueueHistory,
   listRecentApprovedDrafts,
   listResponseQueue,
   saveAgentDraft,
@@ -48,7 +53,76 @@ export type McpEnv = {
   AIRTABLE_ASSETS_TABLE?: string;
   AIRTABLE_CREATORS_EMAIL_FIELD?: string;
   AIRTABLE_CREATORS_ASSETS_LINK_FIELD?: string;
+  // Who counts as staff in a thread view. Keep both equal to the agent
+  // Worker's vars of the same names: member IDs and email domains, comma-separated.
+  BETTERMODE_ADMIN_USER_IDS?: string;
+  BETTERMODE_STAFF_AUTHOR_DOMAINS?: string;
 };
+
+export type QueueThreadMessage = {
+  id: string;
+  at: string | null;
+  author: string | null;
+  staff: boolean;
+  is_root: boolean;
+  text: string;
+};
+
+export type QueueThread =
+  | { found: false }
+  | { found: true; post_id: string; title: string | null; url: string | null; messages: QueueThreadMessage[] };
+
+// The thread as the dashboard shows it: who said what, oldest first. No
+// emails or member IDs leave this function.
+export async function loadQueueThread(env: McpEnv, postId: string): Promise<QueueThread> {
+  const auth = bettermodeAuth(env);
+  const networkId = env.BETTERMODE_DEFAULT_NETWORK_ID;
+  if (!networkId) throw new Error('BETTERMODE_DEFAULT_NETWORK_ID not configured');
+  const token = await appAccessToken(networkId, auth);
+  const post = await fetchPostThread(postId, token, auth);
+  if (!post) return { found: false };
+
+  const list = (value: string | undefined) =>
+    (value || '')
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+  const adminIds = list(env.BETTERMODE_ADMIN_USER_IDS);
+  const domains = list(env.BETTERMODE_STAFF_AUTHOR_DOMAINS).map((domain) => domain.toLowerCase());
+  // Same rule as the agent Worker's isStaff, so the thread view and the
+  // queue agree on who answered.
+  const isStaff = (member: BettermodePost['owner']): boolean => {
+    if (!member) return false;
+    // A reply sent through the queue is owned by the app identity.
+    if (member.id.startsWith('APP::') || adminIds.includes(member.id)) return true;
+    const email = member.email?.trim().toLowerCase() || '';
+    return domains.some((domain) => email.endsWith(`@${domain}`));
+  };
+  const message = (item: BettermodePost, isRoot: boolean): QueueThreadMessage => {
+    const member = item.owner || item.createdBy || null;
+    return {
+      id: item.id,
+      at: item.createdAt || item.publishedAt || null,
+      author: member?.name ?? null,
+      staff: isStaff(member),
+      is_root: isRoot,
+      text: bodyText(item),
+    };
+  };
+
+  return {
+    found: true,
+    post_id: post.id,
+    title: post.title ?? null,
+    url: post.url ?? null,
+    messages: [
+      message(post, true),
+      ...flattenReplies(post)
+        .filter((reply) => !reply.status || reply.status === 'PUBLISHED')
+        .map((reply) => message(reply, false)),
+    ],
+  };
+}
 
 export function registerCreatorTools(server: McpServer, env: McpEnv): void {
   server.tool(
@@ -229,6 +303,39 @@ export function registerCreatorTools(server: McpServer, env: McpEnv): void {
       const result = await dismissQueueItem(env.DB, post_id, reason);
       return {
         content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }],
+      };
+    },
+  );
+
+  server.tool(
+    'get_queue_health',
+    [
+      'Health of the response queue: when the sweep last ran and what it found,',
+      'when the last Bettermode webhook arrived, item counts by state, open',
+      'drafts, the longest wait, sends in the last 7 days, and items with an error.',
+    ].join(' '),
+    {},
+    async () => {
+      const health = await getQueueHealth(env.DB);
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify(health, null, 2) }],
+      };
+    },
+  );
+
+  server.tool(
+    'list_queue_history',
+    [
+      'Closed queue items, newest first: a reply sent through the queue, a thread',
+      'staff answered in Bettermode, a dismissal with its reason, or a removed post.',
+    ].join(' '),
+    {
+      limit: z.number().int().min(1).max(100).optional().describe('How many items to return. Default 30.'),
+    },
+    async ({ limit }) => {
+      const items = await listQueueHistory(env.DB, limit ?? 30);
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify({ count: items.length, items }, null, 2) }],
       };
     },
   );

@@ -307,6 +307,25 @@ export async function recordReconcileRun(
     .run();
 }
 
+// One row holds the latest content webhook and a running count, so webhooks
+// that stop arriving are visible beside the sweep.
+export async function recordWebhookEvent(db: D1Database, eventName: string): Promise<void> {
+  const now = nowIso();
+  await db
+    .prepare(
+      `INSERT INTO community_monitor_runs
+        (id, monitor_type, started_at, completed_at, signals_found, status, error, metadata)
+       VALUES ('bettermode-webhook', ?1, ?2, ?2, 1, 'completed', NULL, ?3)
+       ON CONFLICT(id) DO UPDATE SET
+         started_at = excluded.started_at,
+         completed_at = excluded.completed_at,
+         signals_found = community_monitor_runs.signals_found + 1,
+         metadata = excluded.metadata`,
+    )
+    .bind(PLATFORM, now, JSON.stringify({ last_event: eventName }))
+    .run();
+}
+
 // A send holds its claim for a few seconds. An older claim is a dead row (the
 // Worker stopped mid-send) and must not block the thread forever.
 const SEND_CLAIM_MS = 2 * 60_000;
@@ -455,13 +474,17 @@ export async function markSent(
   approvedContent: string,
   bettermodeReplyId: string | null,
   sentBy: string | null = null,
+  requestedBy: string | null = null,
 ): Promise<void> {
   const now = nowIso();
   // The reply ID and sender let the sweep re-run a lost verify step.
+  // `sent_by` is the Bettermode admin the reply posts as. `requested_by` is
+  // the signed-in person when the send came from the dashboard.
   const result = JSON.stringify({
     ok: true,
     ...(bettermodeReplyId ? { bettermode_reply_id: bettermodeReplyId } : {}),
     ...(sentBy ? { sent_by: sentBy } : {}),
+    ...(requestedBy ? { requested_by: requestedBy } : {}),
   });
   await db
     .prepare(

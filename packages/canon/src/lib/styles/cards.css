@@ -133,3 +133,10 @@
     animation: none;
   }
 }
+
+/* Historical shine class names remain compatible; default material is solid. */
+.shine-card,.shine-card-featured,.shine-card:hover,.shine-card-featured:hover {
+ background:var(--color-performance-panel);border:1px solid var(--color-performance-line);
+ box-shadow:none;transform:none;animation:none;
+}
+.shine-card::before,.shine-card::after,.shine-card-featured::before,.shine-card-featured::after {display:none}

@@ -41,6 +41,10 @@ Agents work the queue through `packages/bettermode-creator-mcp` (`list_response_
 - `POST /webhook` — Bettermode lifecycle and content events (signature required)
 - `POST /webhook/interaction` — dynamic block render + button callbacks (signature required)
 
+`QueueAdmin` is a named Worker entrypoint with one method, `sendDraft`. It has no public URL. The creator MCP calls it through a service binding when an admin presses Send in the dashboard. Both paths use `sendApprovedDraft` in `src/send.ts`.
+
+Each post or reply webhook also updates the `bettermode-webhook` row in `community_monitor_runs` (last event, time, running count), so webhooks that stop arriving show up in the queue health.
+
 ## Storage
 
 Reuses the `create-something-agency` D1 database (`a74e70ae-…-b90719c8dfd2`) and the existing `community_signals` + `community_queue` tables:

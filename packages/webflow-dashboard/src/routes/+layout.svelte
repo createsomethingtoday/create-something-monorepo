@@ -6,6 +6,7 @@
 	import { onMount } from 'svelte';
 	import { FeedbackButton, Toast } from '$lib/components';
 	import { getPageName, getRouteGroup, trackPageView } from '$lib/utils/analytics';
+	import { ScrollTrigger, bootMotion } from '$lib/motion/core';
 
 	let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
@@ -25,9 +26,12 @@
 	}
 
 	onMount(() => {
+		bootMotion();
 		trackCurrentPage(window.location.pathname, window.location.search);
 
 		afterNavigate(({ to }) => {
+			// A new page has a new height: re-measure scroll-driven motion.
+			ScrollTrigger.refresh();
 			if (!to?.url) return;
 			trackCurrentPage(to.url.pathname, to.url.search);
 		});

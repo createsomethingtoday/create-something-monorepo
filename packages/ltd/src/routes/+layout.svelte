@@ -88,7 +88,7 @@
 <Analytics property="ltd" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
-<div class:ltd-header-search={isPublicLibraryRoute && !isCanonRoute} data-canon-palette={isPublicLibraryRoute && !isCanonRoute ? 'operator' : undefined}>
+<div class:ltd-header-search={isPublicLibraryRoute && !isCanonRoute} data-theme={isPublicLibraryRoute && !isCanonRoute ? 'dark' : undefined}>
 <UnifiedSearch
 	currentProperty="ltd"
 	localItems={quickAccessItems}
@@ -98,15 +98,15 @@
 
 </div>
 
-<div class="min-h-screen flex flex-col ltd-clear-shell property-performance" class:ltd-public-library={isPublicLibraryRoute} class:ltd-operator-public={isPublicLibraryRoute} data-canon-palette={isPublicLibraryRoute ? 'operator' : undefined}>
+<div class="min-h-screen flex flex-col ltd-clear-shell property-performance" class:ltd-public-library={isPublicLibraryRoute} class:ltd-operator-public={isPublicLibraryRoute} data-theme={isPublicLibraryRoute ? 'dark' : undefined}>
 	<SkipToContent />
 	{#if !isCanonRoute}
 		<Navigation
 			logo="CREATE SOMETHING"
 			logoSuffix=".ltd"
 			logoAsset={{
-				src: isPublicLibraryRoute ? '/brand/create-something-horizontal-white.svg' : '/brand/create-something-horizontal-black.svg',
-				mobileSrc: isPublicLibraryRoute ? '/brand/create-something-mark-white.svg' : '/brand/create-something-mark-black.svg',
+				src: '/brand/create-something-horizontal-white.svg',
+				mobileSrc: '/brand/create-something-mark-white.svg',
 				label: 'CREATE SOMETHING .ltd'
 			}}
 			links={navLinks}
@@ -135,7 +135,7 @@
 			isAuthenticated={!!data.user}
 			visualStyle="performance"
 			brandAsset={{
-				src: isPublicLibraryRoute ? '/brand/create-something-horizontal-white.svg' : '/brand/create-something-horizontal-black.svg',
+				src: '/brand/create-something-horizontal-white.svg',
 				label: 'CREATE SOMETHING .ltd'
 			}}
 		/>

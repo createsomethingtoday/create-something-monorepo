@@ -8,7 +8,8 @@
 	 * Canon: The group disappears; only the selection remains.
 	 */
 
-	import type { Snippet } from 'svelte';
+	import {setContext, type Snippet} from 'svelte';
+	import {RADIO_GROUP,type RadioGroupContext} from './radio-context.js';
 
 	interface Props {
 		/** Currently selected value (bindable) */
@@ -49,7 +50,9 @@
 		onchange
 	}: Props = $props();
 
-	const groupId = `radiogroup-${crypto.randomUUID().slice(0, 8)}`;
+	setContext<RadioGroupContext>(RADIO_GROUP,{get value(){return value},get name(){return name},get disabled(){return disabled},get size(){return size}});
+
+	const groupId = $props.id();
 	const descriptionId = `${groupId}-description`;
 	const errorId = `${groupId}-error`;
 

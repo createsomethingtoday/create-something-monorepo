@@ -125,6 +125,7 @@ async function route(request: Request, env: Env, method: string, path: string): 
     const query = new URL(request.url).searchParams;
     const page = accountPage(path, {
       gigiSignupEnabled: env.GIGI_ENROLLMENT_ENABLED === 'true',
+      a2aSignupEnabled: env.A2A_ENROLLMENT_ENABLED === 'true',
       app: query.get('app') ?? undefined,
       verificationMode: query.get('mode') ?? undefined,
     });
@@ -149,6 +150,11 @@ async function route(request: Request, env: Env, method: string, path: string): 
         signup_uri: 'https://id.createsomething.space/signup?app=gigi',
         mailbox_proof_required: true,
         application_access_separate: true,
+      }, a2a: {
+        enrollment_enabled: env.A2A_ENROLLMENT_ENABLED === 'true' && !!env.RESEND_API_KEY,
+        signup_uri: 'https://id.createsomething.space/signup?app=a2a',
+        return_uri: 'https://a2a.createsomething.agency/inboxes',
+        mailbox_proof_required: true, application_access_separate: true,
       } },
       recovery: { enabled: !!env.RESEND_API_KEY && (env.VERIFIED_RECOVERY_ENABLED === 'true' || enrollmentOpen(env)), mode: env.VERIFIED_RECOVERY_ENABLED === 'true' ? 'verified-existing-accounts' : 'legacy-enrollment' } }, 200, {
 			'Cache-Control': 'public, max-age=300',
@@ -709,6 +715,7 @@ interface OAuthRefreshTokenClaims extends JWTPayload {
 }
 
 interface OAuthAccessTokenClaims extends JWTPayload {
+	connection_id?: string;
 	kind: 'oauth_access_token';
 	client_id: string;
 	scope: string;
@@ -1561,6 +1568,10 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 				'OAuth resource is not configured for managed or application access.'
 			);
 		}
+		// A renewable A2A connection is the existing grant family, never a caller-selected ID.
+		const refreshFamilyId = scopeIncludes(claims.scope, 'offline_access')
+			? ('family_id' in claims && typeof claims.family_id === 'string' ? claims.family_id : generateUUID())
+			: undefined;
 		let accessToken: string;
 		let expiresIn: number;
 		if (accessMode.type === 'application') {
@@ -1597,6 +1608,7 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 				client_id: claims.client_id,
 				resource: applicationPolicy.resource,
 				scope: claims.scope,
+				...(applicationPolicy.resource === 'https://a2a.createsomething.agency/mcp' && refreshFamilyId ? { connection_id: refreshFamilyId } : {}),
 				...(controlClaims ?? {}),
 			} satisfies OAuthAccessTokenClaims);
 			await createMcpAuthEvent(env.DB, {
@@ -1664,12 +1676,10 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 		}
 		if (scopeIncludes(claims.scope, 'offline_access')) {
 			const now = Math.floor(Date.now() / 1000);
-			const refreshFamilyId = 'family_id' in claims && typeof claims.family_id === 'string'
-				? claims.family_id
-				: generateUUID();
+			const familyId = refreshFamilyId!;
 			if (!('family_id' in claims)) {
 				const created = await createOAuthRefreshFamily(env.DB, {
-					familyId: refreshFamilyId,
+					familyId,
 					clientId: claims.client_id,
 					userId: user.id,
 				});
@@ -1685,7 +1695,7 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 				exp: now + OAUTH_REFRESH_TOKEN_TTL_SECONDS,
 				kind: 'oauth_refresh_token',
 				jti: generateUUID(),
-				family_id: refreshFamilyId,
+				family_id: familyId,
 				email: user.email,
 				tier: user.tier,
 				source: user.source,
@@ -1765,8 +1775,14 @@ async function handleOAuthUserInfo(request: Request, env: Env): Promise<Response
 		if (!isOAuthUserInfoIdentityActive(user)) {
 			return oauthErrorResponse('invalid_token', 401, 'OAuth identity is no longer available.');
 		}
+		if (oauthToken.resource === 'https://a2a.createsomething.agency/mcp' && oauthToken.connection_id !== undefined &&
+			(typeof oauthToken.connection_id !== 'string' || !oauthToken.connection_id ||
+			 !(await isOAuthRefreshFamilyActive(env.DB, oauthToken.connection_id, oauthToken.client_id, oauthToken.sub)))) {
+			return oauthErrorResponse('invalid_token', 401, 'OAuth connection is no longer active.');
+		}
 		const renewal = oauthToken.resource === 'https://a2a.createsomething.agency/mcp' ? await env.DB.prepare('SELECT MAX(committed_at) AS lastCommittedAt,MAX(last_recovered_at) AS lastRecoveredAt,COALESCE(SUM(replay_count),0) AS recoveryResponsesPrepared FROM connection_renewal_audit WHERE owner_subject=? AND client_id=? AND resource=?').bind(user.id,oauthToken.client_id,oauthToken.resource).first() : null;
 		return json({
+			...(oauthToken.resource === 'https://a2a.createsomething.agency/mcp' && oauthToken.connection_id ? { connection_id: oauthToken.connection_id } : {}),
 			...(renewal ? { renewal } : {}),
 			sub: user.id,
 			email: user.email,
@@ -4699,6 +4715,8 @@ function renderOAuthAuthorizePage(params: URLSearchParams, env: Env, errorMessag
 		env.CONTROL_RUNTIME_RESOURCES
 	);
 	const gigiResource = requestedResource === 'https://gigi-connector.createsomething.workers.dev';
+	const a2aResource = requestedResource === 'https://a2a.createsomething.agency/mcp';
+	const a2aSignupEnabled = a2aResource && env.A2A_ENROLLMENT_ENABLED === 'true';
 	const gigiSignupEnabled = gigiResource && env.GIGI_ENROLLMENT_ENABLED === 'true';
 	const requestedScopes = normalizeScope(params.get('scope') ?? 'openid mcp');
 	const accessEyebrow = applicationPolicy ? 'Application MCP Access' : 'Managed MCP Access';
@@ -4796,6 +4814,7 @@ function renderOAuthAuthorizePage(params: URLSearchParams, env: Env, errorMessag
           <label>Password<input type="password" name="password" autocomplete="current-password" required /></label>
           <button type="submit">Sign in and authorize</button>
         </form>
+        ${a2aResource ? `<nav class="account-help" aria-label="Account help">${a2aSignupEnabled ? '<a href="/signup?app=a2a" target="_blank" rel="noopener noreferrer">Create account ↗</a>' : ''}<a href="/recover?app=a2a" target="_blank" rel="noopener noreferrer">Forgot your password? ↗</a></nav>${a2aSignupEnabled ? '<p class="signup-note">Verify your email and create your account in a separate tab, then return here to sign in. Open your inboxes after signing in.</p>' : ''}` : ''}
         ${gigiResource ? `<nav class="account-help" aria-label="Account help">${gigiSignupEnabled ? '<a href="/signup?app=gigi" target="_blank" rel="noopener noreferrer">Create account ↗</a>' : ''}<a href="/recover?app=gigi" target="_blank" rel="noopener noreferrer">Forgot your password? ↗</a></nav>${gigiSignupEnabled ? '<p class="signup-note">New to GiGi? Create your account in a separate tab, then return here to sign in. If this request expires, start source sign-in again in GiGi on your Mac.</p>' : ''}` : ''}
       </section>
     </main>

@@ -422,7 +422,7 @@
 	]}
 />
 
-<div class="arena-experiment">
+<div class="arena-experiment" data-theme="dark">
 	<!-- Header -->
 	<header class="experiment-header">
 		<div class="header-content">

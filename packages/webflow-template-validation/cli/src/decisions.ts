@@ -4,6 +4,7 @@
  * code. Kept apart from cli.ts (which runs on import) so they can be tested.
  */
 
+export { pageSlugsFromDesigner } from '../../shared/page-slugs.ts';
 import { DEFAULT_WORKER_BASE, PUBLISHED_SITE_CHECKS, type ValidationIssue } from './worker-client.ts';
 
 export type Bucket = 'blocker' | 'warning' | 'info';
@@ -44,9 +45,11 @@ export function recordSkipReason(params: {
 	collectionIncomplete: string[];
 	workerBase: string;
 	trustWorker: boolean;
+	resultIncomplete?: string[];
 }): string | null {
-	const { mode, collectionIncomplete, workerBase, trustWorker } = params;
+	const { mode, collectionIncomplete, workerBase, trustWorker, resultIncomplete = [] } = params;
 	if (mode !== 'async') return 'the /validate fallback does not run the Designer checks, so this result was not recorded';
+	if (resultIncomplete.length > 0) return `the worker result was incomplete, so it was not recorded (${resultIncomplete.join('; ')})`;
 	if (collectionIncomplete.length > 0) {
 		return `the Designer data collection was incomplete, so this result was not recorded (${collectionIncomplete.join('; ')})`;
 	}
@@ -67,14 +70,39 @@ export function incompleteReasons(params: {
 	mode: 'async' | 'legacy';
 	collectionIncomplete: string[];
 	recordFailed: boolean;
+	resultIncomplete?: string[];
 }): string[] {
-	const { gsap, designerCollected, mode, collectionIncomplete, recordFailed } = params;
+	const { gsap, designerCollected, mode, collectionIncomplete, recordFailed, resultIncomplete = [] } = params;
 	return [
+		...resultIncomplete,
 		...(gsap.status !== 'complete' ? [`GSAP crawl ${gsap.status}${gsap.reason ? `: ${gsap.reason}` : ''}`] : []),
 		...(designerCollected && mode !== 'async' ? ['Designer checks did not run: the worker fell back to /validate'] : []),
 		...collectionIncomplete,
 		...(recordFailed ? ['recording failed'] : [])
 	];
+}
+
+/**
+ * Categories the worker marked as failed although none of their issues is a
+ * blocker (the canvas checks fail on warnings). The submission form needs
+ * every category to pass, so these block too.
+ */
+export function failedWithoutBlocker(categories: { category: string; passed: boolean; issues?: ValidationIssue[] }[]): string[] {
+	return categories
+		.filter((cat) => cat.passed === false && !(cat.issues ?? []).some((issue) => bucketOf(issue) === 'blocker'))
+		.map((cat) => cat.category);
+}
+
+/** Why a worker result cannot be trusted as complete: no categories at all, or none for a requested check. */
+export function missingResults(checks: string[], categories: { category: string }[]): string[] {
+	if (categories.length === 0) return ['the worker returned no check results'];
+	const present = new Set(categories.map((cat) => cat.category));
+	const expected: [string, string][] = [
+		['assets', 'Assets & Images'],
+		['content', 'Content & Accessibility']
+	];
+	const missing = expected.filter(([check, name]) => checks.includes(check) && !present.has(name)).map(([, name]) => name);
+	return missing.length > 0 ? [`the worker result has no ${missing.join(' or ')} category`] : [];
 }
 
 /** 2 when the run is incomplete, 1 when every step ran and blockers were found, else 0. */

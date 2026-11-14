@@ -8,7 +8,7 @@ main = "src/worker.js"
 compatibility_date = "2025-02-27"
 
 [vars]
-ALLOWED_ORIGINS = "https://wf-form-validation-with-airtable-databa.webflow.io,https://webflow.com,https://www.webflow.com,https://wf.createsomething.io"
+ALLOWED_ORIGINS = "https://wf-form-validation-with-airtable-databa.webflow.io,https://webflow.com,https://www.webflow.com"
 
 # Workflow binding for async validation
 [[workflows]]

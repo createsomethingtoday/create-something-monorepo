@@ -58,7 +58,7 @@ published: true
 <div class="manifestation">
 <h3>Motion</h3>
 <p>
-				Animation reveals state changes, never decorates. 200ms for micro-interactions.
+				Animation reveals state changes, never decorates. 150ms for micro-interactions.
 				One easing curve. Movement that guides attention, not demands it.
 			</p>
 </div>

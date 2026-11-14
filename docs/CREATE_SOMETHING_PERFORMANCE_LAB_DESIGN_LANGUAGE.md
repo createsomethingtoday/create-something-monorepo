@@ -3,6 +3,10 @@
 > Date: July 9, 2026
 > Scope: Cross-surface CREATE SOMETHING UI, UX, image, and experience direction
 
+Current implementation: the [Canon approachable system](../packages/canon/APPROACHABLE-SYSTEM.md)
+retains this evidence and authority model on a black website foundation, with
+Geist typography, solid controls and original tactile workshop imagery.
+
 ## Decision
 
 CREATE SOMETHING should use **Performance Lab** as the house design language.
@@ -126,10 +130,13 @@ Translate the private performance reference into owned workflow meaning:
 
 Use the Canon-owned local/system typography stack:
 
-- `--font-performance-sans` and `--font-performance-display` use Arial/Helvetica/system fallbacks for
-  product and public-page type.
-- `--font-performance-mono` carries workflow state, IDs, files, policies, receipts, and
-  timestamps through the platform mono stack.
+- `--font-performance-sans` and `--font-performance-display` use locally loaded
+  Geist for product and public-page type, with Arial/Helvetica/system fallbacks.
+  The complete `canon.css` import loads the font assets; `tokens.css` only
+  defines tokens, so token-only consumers own their font loading and base resets.
+- `--font-performance-mono` carries actual records, code, IDs, timestamps and
+  measured chapter labels through the platform mono stack. Human navigation,
+  state explanations and form labels use sentence-case interface type.
 - `--font-performance-serif` uses Georgia/Times fallbacks when an editorial voice is useful.
 - Display scale should feel decisive and campaign-capable on public editorial
   surfaces, while product and operator surfaces stay readable under pressure.
@@ -137,8 +144,10 @@ Use the Canon-owned local/system typography stack:
   without explicit licensing and implementation approval.
 
 The July 9 system review removed the former third-party font hotlinks. The
-stable token API remains the identity contract; a future licensed family can
-replace the fallback values without rewriting consuming components.
+current local Geist implementation preserves the stable token API. OpenAI
+design-language alignment is useful partner context, but Geist is not OpenAI
+Sans and this direction grants no rights to third-party font assets. Embedded
+ChatGPT experiences follow their host's typography contract.
 
 ## Color Direction
 

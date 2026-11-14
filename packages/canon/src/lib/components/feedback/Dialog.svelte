@@ -44,7 +44,7 @@
 		footer
 	}: Props = $props();
 
-	const dialogId = `dialog-${crypto.randomUUID().slice(0, 8)}`;
+	const dialogId = $props.id();
 	const titleId = `${dialogId}-title`;
 	const descriptionId = `${dialogId}-description`;
 
@@ -72,6 +72,7 @@
 			class="dialog dialog-{size}"
 			role="dialog"
 			aria-modal="true"
+			aria-label={title ? undefined : 'Dialog'}
 			aria-labelledby={title ? titleId : undefined}
 			aria-describedby={description ? descriptionId : undefined}
 			use:focusTrap={{ active: open, onEscape: handleEscape }}
@@ -147,11 +148,12 @@
 		flex-direction: column;
 		max-height: calc(100vh - var(--space-performance-lg) * 2);
 		/* Glass Design System - "The Automation Layer" */
-		background-color: var(--glass-performance-bg-medium);
-		backdrop-filter: blur(var(--glass-performance-blur-xl)) var(--glass-performance-saturate-xl);
-		border: 1px solid var(--glass-performance-border-medium);
+		background-color: var(--color-performance-panel);
+		color:var(--color-performance-ink);
+		backdrop-filter:none;
+		border: 1px solid var(--color-performance-line);
 		border-radius: var(--radius-performance-scale-lg);
-		box-shadow: var(--glass-performance-shadow-lg);
+		box-shadow: var(--shadow-performance-scale-lg);
 		animation: dialogIn var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
@@ -194,11 +196,11 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: var(--space-performance-sm);
-		padding: var(--space-performance-md) var(--space-performance-lg);
+		padding:var(--space-performance-md);
 	}
 
 	.dialog-title {
-		font-size: var(--text-performance-h3);
+		font-size:var(--text-performance-body-lg);
 		font-weight: var(--font-performance-semibold);
 		color: var(--color-performance-fg-primary);
 		margin: 0;
@@ -207,9 +209,9 @@
 	/* Close button */
 	.dialog-close {
 		flex-shrink: 0;
-		width: 32px;
-		height: 32px;
-		padding: 6px;
+		width: 44px;
+		height: 44px;
+		padding: 12px;
 		background: none;
 		border: none;
 		color: var(--color-performance-fg-muted);
@@ -243,7 +245,7 @@
 	.dialog-body {
 		flex: 1;
 		overflow-y: auto;
-		padding: var(--space-performance-lg);
+		padding:var(--space-performance-md);
 	}
 
 	.dialog-description {
@@ -259,7 +261,11 @@
 		align-items: center;
 		justify-content: flex-end;
 		gap: var(--space-performance-sm);
-		padding: var(--space-performance-md) var(--space-performance-lg);
+		padding:var(--space-performance-md);
+	}
+
+	@media (max-width:480px) {
+		.dialog-footer {flex-direction:column;align-items:stretch;}
 	}
 
 	/* Reduced motion */

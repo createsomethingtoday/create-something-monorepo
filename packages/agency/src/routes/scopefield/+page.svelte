@@ -85,7 +85,7 @@
   .hero-aside { max-width: 29rem; padding-bottom: 0.25rem; }
   .lede { font-size: clamp(1.3rem, 1.85vw, 1.85rem); line-height: 1.4; letter-spacing: -0.025em; }
   .support { color: var(--color-performance-muted); line-height: 1.6; margin-top: 1.5rem; }
-  .primary { display: flex; justify-content: space-between; align-items: center; gap: 2rem; padding: 1rem 1.25rem; background: var(--color-performance-ink); color: var(--color-performance-paper); border: 1px solid var(--color-performance-ink); border-radius: var(--radius-operator-control); font-weight: 600; text-decoration: none; margin-top: 2rem; min-height: 3.5rem; }
+  .primary { display: flex; justify-content: space-between; align-items: center; gap: 2rem; padding: 1rem 1.25rem; background: var(--color-performance-ink); color: var(--color-performance-paper); border: 1px solid var(--color-performance-ink); border-radius: var(--radius-performance-sm); font-weight: 600; text-decoration: none; margin-top: 2rem; min-height: 3.5rem; }
   .primary:hover { background: var(--color-performance-paper); color: var(--color-performance-ink); }
   .primary span { font-size: 1.5rem; line-height: 1; }
   .compatibility { margin-top: 1rem; color: var(--color-performance-muted); }
@@ -104,7 +104,7 @@
   dl > div { padding-block: 1.5rem; border-top: 1px solid var(--color-performance-line); }
   dt { font-weight: 600; margin-bottom: 0.65rem; font-size: 1.1rem; }
   dd { margin: 0; color: var(--color-performance-muted); line-height: 1.65; }
-  .release-proof { margin-top: 1.5rem; border-left: 2px solid var(--color-operator-status-done-text); padding-left: 1.5rem; }
+  .release-proof { margin-top: 1.5rem; border-left: 2px solid var(--color-performance-success); padding-left: 1.5rem; }
   .proof-label { color: var(--color-performance-muted); text-transform: uppercase; letter-spacing: 0.08em; }
   .release-proof p { margin-block: 0.7rem 1rem; line-height: 1.6; }
   .release-proof a, .text-link { font-size: 0.875rem; }

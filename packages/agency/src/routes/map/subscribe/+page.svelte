@@ -25,7 +25,7 @@
 
 <SEO title="Map Subscription | CREATE SOMETHING AGENCY" description="Choose monthly or yearly billing for a Map workspace." propertyName="agency" noindex={true} />
 
-<main>
+<main data-theme="dark">
 	<header><p>CREATE SOMETHING Map</p><h1>Keep your workflow plan up to date.</h1><span>A saved workspace with version history, reviews, sharing, export, and handover for Build</span></header>
 	{#if data.checkoutEnabled}
 		<section class="plans">
@@ -45,9 +45,9 @@
 </main>
 
 <style>
-	main { max-width: 1040px; margin: 0 auto; padding: 7rem 1.5rem 5rem; color: #f5f5f5; }
-	header { max-width: 800px; margin-bottom: 3rem; } header p, .gate > p, article > p { color: #a1a1aa; text-transform: uppercase; letter-spacing: .12em; font-size: .7rem; } h1 { margin: .6rem 0 1rem; font-size: clamp(2.6rem, 7vw, 5.5rem); line-height: .98; letter-spacing: -.06em; } header span, article span, .gate span, footer { color: #a1a1aa; line-height: 1.6; }
-	.plans { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; } article, .gate { display: grid; gap: 1rem; padding: 2rem; border: 1px solid #27272a; border-radius: 1rem; background: #0c0c0d; } h2 { margin: 0; font-size: 1.5rem; } button, .gate a { justify-self: start; border: 0; border-radius: 999px; padding: .8rem 1.1rem; background: #fff; color: #000; font-weight: 700; text-decoration: none; cursor: pointer; } button:disabled { opacity: .5; cursor: wait; }
-	.gate { border-color: #713f12; } .gate > p { color: #fbbf24; } .error { color: #fca5a5; margin-top: 1rem; } footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #27272a; font-size: .75rem; }
+	main { max-width: 1040px; margin: 0 auto; padding: 7rem 1.5rem 5rem; color: var(--color-performance-ink); background: var(--color-performance-paper); }
+	header { max-width: 800px; margin-bottom: 3rem; } header p, .gate > p, article > p { color: var(--color-performance-muted); text-transform: uppercase; letter-spacing: .12em; font-size: .7rem; } h1 { margin: .6rem 0 1rem; font-size: clamp(2.6rem, 7vw, 5.5rem); line-height: .98; letter-spacing: -.06em; } header span, article span, .gate span, footer { color: var(--color-performance-muted); line-height: 1.6; }
+	.plans { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; } article, .gate { display: grid; gap: 1rem; padding: 2rem; border: 1px solid var(--color-performance-line); border-radius: 1rem; background: var(--color-performance-panel); } h2 { margin: 0; font-size: 1.5rem; } button, .gate a { justify-self: start; border: 0; border-radius: 999px; padding: .8rem 1.1rem; background: var(--color-performance-ink); color: var(--color-performance-paper); font-weight: 700; text-decoration: none; cursor: pointer; } button:disabled { opacity: .5; cursor: wait; }
+	.gate { border-color: var(--color-performance-warning-border); } .gate > p { color: var(--color-performance-warning); } .error { color: var(--color-performance-error); margin-top: 1rem; } footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--color-performance-line); font-size: .75rem; }
 	@media (max-width: 700px) { .plans { grid-template-columns: 1fr; } article, .gate { padding: 1.25rem; } }
 </style>

@@ -72,23 +72,19 @@ describe('Performance composition cross-property rollout', () => {
   });
 
   it('keeps the Agency support journey and proof in a single ordered composition', () => {
-    const source = routeMarkup(routeSource('packages/agency/src/routes/+page.svelte'));
-    const sequence = [
-      'AgencyHero',
-      'WorkflowSignalBand',
-      'ServiceJourney',
-      'BuiltWork',
-      'FilmCollection',
-      'SelectedClientWork',
-      'MembershipOffer',
-      'MeridianAccordion'
-    ];
-    let previous = -1;
-    for (const name of sequence) {
-      expect(source.split(`<${name}`).length - 1, name).toBe(1);
-      expect(source.indexOf(`<${name}`), name).toBeGreaterThan(previous);
-      previous = source.indexOf(`<${name}`);
-    }
+    const route=routeSource('packages/agency/src/routes/+page.svelte');
+    expect(route).toContain('<AgencySalesHome');
+    const runtime=routeSource('packages/agency/src/lib/components/AgencySalesHome.svelte');
+    expect(runtime).toContain("$lib/content/agency-story-home.html?raw");
+    const source=routeSource('packages/agency/src/lib/content/agency-story-home.html');
+    const ids=['opening','example','work','together','next'];
+    let previous=-1;
+    for(const id of ids){const marker=`id="${id}"`;expect(source.split(marker).length-1,id).toBe(1);expect(source.indexOf(marker),id).toBeGreaterThan(previous);previous=source.indexOf(marker);}
+    expect(runtime).toContain('enhanceStoryHome(root)');
+    expect(runtime).toContain('enhanceEvidenceDisclosure');
+    expect(runtime).toContain('<BuiltWork');
+    expect(runtime).toContain('<SelectedClientWork');
+
   });
 
   it('keeps .ltd as a court and Playbook operator library instead of restoring the editorial shell', () => {
@@ -157,17 +153,9 @@ describe('Performance composition cross-property rollout', () => {
 
   it('preserves every primary homepage destination inside the sharper compositions', () => {
     const destinationsByRoute = {
-      'packages/agency/src/lib/components/films/AgencyHero.svelte': [
-        'agencyCoreMessaging.workflowMappingSessionHref',
-        '/services#membership',
-        '/agent-foundation',
-        '/stack#openai-qualifications'
-      ],
-      'packages/agency/src/lib/components/BuiltWork.svelte': ['/services', '/products'],
-      'packages/agency/src/lib/components/MembershipOffer.svelte': [
-        'agencyCoreMessaging.membershipInquiryHref',
-        'agencyCoreMessaging.teamMembershipInquiryHref',
-        '/stack'
+      'packages/agency/src/lib/content/agency-story-home.html': [
+        '/book?source=agency&intent=workflow-mapping&lane=workflow_infrastructure',
+        '/technical-review', '/services', '/case-studies/webflow-marketplace', '#next', '#example', '#work', '#together'
       ],
       'packages/ltd/src/routes/+page.svelte': [
         '/playbooks',

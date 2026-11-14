@@ -1,0 +1,271 @@
+@import '@fontsource-variable/geist/wght.css';
+
+@import '../styles/tokens.css';
+
+/* Local layout aliases resolve Canon's owning palette in each theme boundary. */
+[data-canon-next] {
+  color-scheme: light;
+  --cn-bg: var(--color-performance-paper);
+  --cn-panel: var(--color-performance-panel);
+  --cn-ink: var(--color-performance-fg-primary);
+  --cn-muted: var(--color-performance-fg-secondary);
+  --cn-line: var(--color-performance-line);
+  --cn-control-line: var(--color-performance-border-emphasis);
+  --cn-action: var(--color-performance-brand-primary);
+  --cn-on-action: var(--color-performance-panel);
+  --cn-focus: var(--color-performance-focus);
+  --cn-error: var(--color-performance-error);
+  --cn-success: var(--color-performance-success);
+  --cn-warning: var(--color-performance-warning);
+  --cn-radius: var(--radius-performance-sm);
+  --cn-font: var(--font-performance-sans);
+  background: var(--cn-bg);
+  color: var(--cn-ink);
+  font: 17px/1.6 var(--cn-font);
+}
+[data-canon-next][data-theme='dark'] {
+  color-scheme: dark;
+}
+[data-canon-next] * {
+  box-sizing: border-box;
+}
+[data-canon-next] h1,
+[data-canon-next] h2 {
+  font-weight: 540;
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+}
+[data-canon-next] h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  margin: 20px 0;
+}
+[data-canon-next] h2 {
+  font-size: 2rem;
+}
+[data-canon-next] p {
+  max-width: 60ch;
+}
+[data-canon-next] :focus-visible {
+  outline: 3px solid var(--cn-focus);
+  outline-offset: 4px;
+}
+[data-canon-next] .muted {
+  color: var(--cn-muted);
+}
+[data-canon-next] .actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+[data-canon-next] .cn-notice {
+  border-left: 3px solid var(--cn-focus);
+  background: var(--cn-bg);
+  padding: 18px 22px;
+  border-radius: 0 12px 12px 0;
+  font-size: 15px;
+}
+[data-canon-next] .cn-workbench {
+  padding: clamp(24px, 4vw, 48px);
+  border: 1px solid var(--cn-line);
+  border-radius: 4px;
+  background: var(--cn-panel);
+  box-shadow: none;
+}
+[data-canon-next] .cn-workbench h2 {
+  max-width: 20ch;
+  font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+  outline: none;
+}
+[data-canon-next] .cn-workbench--welcome h2 {
+  font-size: clamp(2rem, 4vw, 3.3rem);
+  max-width: 15ch;
+}
+[data-canon-next] .cn-journey-meta {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font-size: 14px;
+  color: var(--cn-muted);
+}
+[data-canon-next] .cn-introduction--welcome {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px;
+  gap: 32px;
+  align-items: center;
+  padding-top: 24px;
+}
+[data-canon-next] .cn-welcome-character {
+  display: block;
+  width: 96px;
+  max-width: 100%;
+  height: auto;
+}
+[data-canon-next] .cn-lede {
+  font-size: 19px;
+  line-height: 1.6;
+  max-width: 43ch;
+}
+[data-canon-next] .cn-small {
+  font-size: 14px;
+}
+[data-canon-next] .cn-leave {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--cn-line);
+  flex-wrap: wrap;
+}
+[data-canon-next] fieldset {
+  padding: 0;
+  border: 0;
+}
+[data-canon-next] legend {
+  margin-bottom: 8px;
+  color: var(--cn-muted);
+}
+[data-canon-next] .cn-task {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--cn-line);
+  cursor: pointer;
+}
+[data-canon-next] .cn-task input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--cn-action);
+  flex-shrink: 0;
+}
+[data-canon-next] .cn-task span span {
+  display: block;
+  font-size: 14px;
+  margin-top: 3px;
+}
+[data-canon-next] .cn-facts {
+  margin: 24px 0;
+}
+[data-canon-next] .cn-facts div {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--cn-line);
+}
+[data-canon-next] dt {
+  color: var(--cn-muted);
+}
+[data-canon-next] dd {
+  margin: 0;
+}
+[data-canon-next] .cn-plan {
+  padding-left: 24px;
+}
+[data-canon-next] .cn-plan li {
+  padding: 8px 0;
+}
+[data-canon-next] blockquote {
+  white-space: pre-wrap;
+  margin: 24px 0;
+  padding: 24px;
+  background: var(--cn-bg);
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+[data-canon-next] .cn-draft {
+  background: var(--cn-bg);
+  border-radius: 12px;
+  margin: 24px 0;
+  padding: 20px 24px;
+}
+[data-canon-next] .cn-draft-label {
+  font-size: 14px;
+  color: var(--cn-muted);
+  border-bottom: 1px solid var(--cn-line);
+  margin: 0;
+  padding-bottom: 12px;
+}
+[data-canon-next] .cn-draft blockquote {
+  margin: 0;
+  padding: 16px 0 0;
+}
+[data-canon-next] .cn-progress {
+  display: flex;
+  list-style: none;
+  gap: 24px;
+  padding: 0;
+  margin: 28px 0;
+  font-size: 14px;
+  color: var(--cn-muted);
+}
+[data-canon-next] .cn-progress li[aria-current] {
+  color: var(--cn-ink);
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 6px;
+}
+[data-canon-next] .cn-progress li.complete::after {
+  content: ' ✓';
+}
+@media (max-width: 600px) {
+  [data-canon-next] .cn-introduction--welcome {
+    grid-template-columns: minmax(0, 1fr) 96px;
+    grid-template-areas: 'title character' 'lede lede' 'action action' 'note note';
+    gap: 0 12px;
+    padding-top: 20px;
+  }
+  [data-canon-next] .cn-welcome-character {
+    grid-area: character;
+    width: 96px;
+    margin: 0;
+    align-self: center;
+  }
+  [data-canon-next] .cn-workbench--welcome h2 {
+    grid-area: title;
+    font-size: 30px;
+    margin: 0;
+  }
+  [data-canon-next] .cn-introduction--welcome .cn-intro-copy {
+    display: contents;
+  }
+  [data-canon-next] .cn-introduction--welcome .cn-lede {
+    grid-area: lede;
+    margin: 20px 0 0;
+  }
+  [data-canon-next] .cn-introduction--welcome .actions {
+    grid-area: action;
+    margin-top: 24px;
+  }
+  [data-canon-next] .cn-introduction--welcome .cn-small {
+    grid-area: note;
+    margin: 12px 0 0;
+  }
+  [data-canon-next] .cn-lede {
+    font-size: 17px;
+  }
+  [data-canon-next] .cn-journey-meta span:last-child {
+    display: none;
+  }
+  [data-canon-next] .cn-leave {
+    gap: 4px 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-canon-next] * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+[data-canon-next] input[type='range'] {
+  accent-color: var(--cn-action);
+  padding: 0;
+  min-height: 44px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}

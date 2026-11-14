@@ -1,4 +1,7 @@
 <script lang="ts">
+	import {getContext} from 'svelte';
+	import {RADIO_GROUP,type RadioGroupContext} from './radio-context.js';
+	const group=getContext<RadioGroupContext|undefined>(RADIO_GROUP);
 	/**
 	 * Radio Component
 	 *
@@ -35,27 +38,29 @@
 		description,
 		disabled = false,
 		name,
-		checked = false,
+		checked,
 		id,
-		size = 'md',
+		size,
 		onchange
 	}: Props = $props();
 
+	const activeSize=$derived(size ?? group?.size ?? 'md');
+	const isDisabled=$derived(disabled || group?.disabled || false);
 	// Generate unique ID if not provided
-	const fallbackFieldId = `radio-${crypto.randomUUID().slice(0, 8)}`;
+	const fallbackFieldId = $props.id();
 	const fieldId = $derived(id || fallbackFieldId);
 	const descriptionId = $derived(`${fieldId}-description`);
 </script>
 
-<div class="radio" class:radio-sm={size === 'sm'} class:radio-lg={size === 'lg'} class:disabled>
+<div class="radio" class:radio-sm={activeSize === 'sm'} class:radio-lg={activeSize === 'lg'} class:disabled={isDisabled}>
 	<div class="radio-control">
 		<input
 			type="radio"
 			id={fieldId}
-			{name}
+			name={name ?? group?.name}
 			{value}
-			{checked}
-			{disabled}
+			checked={checked ?? (group ? group.value === value : false)}
+			disabled={isDisabled}
 			class="radio-input"
 			aria-describedby={description ? descriptionId : undefined}
 			{onchange}
@@ -90,6 +95,10 @@
 
 	/* Control wrapper */
 	.radio-control {
+		width:44px;
+		height:44px;
+		display:grid;
+		place-items:center;
 		position: relative;
 		flex-shrink: 0;
 	}
@@ -115,7 +124,7 @@
 		justify-content: center;
 		width: 20px;
 		height: 20px;
-		border: 2px solid var(--color-performance-border-default);
+		border: 2px solid var(--color-performance-border-emphasis);
 		border-radius: var(--radius-performance-scale-full);
 		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
@@ -159,6 +168,7 @@
 
 	/* Content area */
 	.radio-content {
+		padding-top:8px;
 		display: flex;
 		flex-direction: column;
 		gap: 2px;
@@ -212,5 +222,31 @@
 
 	.radio-lg .radio-label {
 		font-size: var(--text-performance-body-lg);
+	}
+
+	/* A border remains painted when forced colors replace filled backgrounds. */
+	@media (forced-colors: active) {
+		.radio-circle,
+		.radio-input:checked + .radio-circle {
+			background: Canvas;
+			border-color: CanvasText;
+		}
+		.radio-dot {
+			box-sizing: border-box;
+			border: 4px solid CanvasText;
+		}
+		.radio-sm .radio-dot { border-width: 3px; }
+		.radio-lg .radio-dot { border-width: 5px; }
+		.radio-input:focus-visible + .radio-circle { outline-color: Highlight; }
+		.radio-input:disabled + .radio-circle {
+			opacity: 1;
+			background: Canvas;
+			border-color: GrayText;
+		}
+		.radio-input:disabled + .radio-circle .radio-dot { border-color: GrayText; }
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.radio-circle, .radio-dot { transition:none; }
 	}
 </style>

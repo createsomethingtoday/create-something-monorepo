@@ -1,5 +1,5 @@
 /** Identity has already verified this subject. Names and supplied agent IDs are never authority. */
-export interface Principal { renewal?: {lastCommittedAt:number|null;lastRecoveredAt:number|null;recoveryResponsesPrepared:number}; subject: string; email?: string; scopes: string[]; admin?: boolean; displayName?: string; authentication?: 'owner_session'|'bearer' }
+export interface Principal { accessExpiresAt?: number; connectionId?: string; clientId?: string; renewal?: {lastCommittedAt:number|null;lastRecoveredAt:number|null;recoveryResponsesPrepared:number}; subject: string; email?: string; scopes: string[]; admin?: boolean; displayName?: string; authentication?: 'owner_session'|'bearer' }
 export interface Agent { id: string; name: string; ownerSubject: string; paused: boolean; createdAt: number }
 export interface Grant { id: string; agentId: string; senderAgentId: string; createdAt: number; revokedAt?: number }
 export type MessageState = 'posted' | 'pending' | 'claimed' | 'completed' | 'rejected' | 'approval_required';

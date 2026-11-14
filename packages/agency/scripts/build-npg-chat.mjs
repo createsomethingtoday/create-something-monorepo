@@ -44,6 +44,14 @@ for (const name of [
       ))
   );
 }
+// GSAP publishes its license notice in source rather than a LICENSE file.
+const gsapSource = await readFile(
+  new URL('../node_modules/gsap/gsap-core.js', import.meta.url),
+  'utf8'
+);
+const gsapNotice = gsapSource.match(/\/\*![\s\S]*?\*\//)?.[0];
+if (!gsapNotice?.includes('@license')) throw new Error('GSAP license notice missing.');
+notices.push('gsap\n' + gsapNotice);
 await writeFile(
   new URL('../static/npg-chat/LICENSES.txt', import.meta.url),
   notices.join('\n\n--------------------\n\n')

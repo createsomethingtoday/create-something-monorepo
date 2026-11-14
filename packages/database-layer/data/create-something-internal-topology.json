@@ -4,11 +4,11 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-11-10T15:39:04.857Z",
+    "generatedAt": "2026-11-14T01:59:16.833Z",
     "rootPath": ".",
-    "packageCount": 252,
+    "packageCount": 254,
     "appCount": 15,
-    "workerCount": 121,
+    "workerCount": 123,
     "clientOverlayCount": 8,
     "policyCount": 64,
     "guideCount": 86,
@@ -1174,7 +1174,7 @@
       "surface": "package",
       "owner": "CREATE SOMETHING <hello@createsomething.io>",
       "status": "mapped",
-      "summary": "Canon Design Tokens - Framework-agnostic CSS custom properties for dark-mode interfaces. Golden ratio spacing, WCAG-compliant colors, glass effects.",
+      "summary": "Canon design tokens: approachable neutral light and explicit dark foundations, semantic states, typography and portable CSS/SCSS/JSON.",
       "tags": [
         "package",
         "package",
@@ -2225,6 +2225,23 @@
       "runtime": "cloudflare, node"
     },
     {
+      "id": "substrate:create-something:package:create-something-halfdozen-transcript-monitor-packages-halfdozen-transcript-monitor",
+      "atlasNodeId": "atlas_create-something_package_create-something-halfdozen-transcript-monitor-packages-halfdozen-transcript-monitor",
+      "title": "@create-something/halfdozen-transcript-monitor",
+      "path": "packages/halfdozen-transcript-monitor",
+      "tier": "Mixed",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at packages/halfdozen-transcript-monitor.",
+      "tags": [
+        "package",
+        "worker"
+      ],
+      "packageName": "@create-something/halfdozen-transcript-monitor",
+      "runtime": "cloudflare, node"
+    },
+    {
       "id": "substrate:create-something:package:create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
       "atlasNodeId": "atlas_create-something_package_create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
       "title": "@create-something/halfdozen-zoom-sync",
@@ -2734,6 +2751,23 @@
         "worker"
       ],
       "packageName": "@create-something/marketplace-featured-notifier",
+      "runtime": "cloudflare, node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-marketplace-insights-cron-packages-marketplace-insights-cron",
+      "atlasNodeId": "atlas_create-something_package_create-something-marketplace-insights-cron-packages-marketplace-insights-cron",
+      "title": "@create-something/marketplace-insights-cron",
+      "path": "packages/marketplace-insights-cron",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare Worker cron that publishes the weekly Marketplace Insights snapshot through the webflow-dashboard /api/cron/insights endpoint",
+      "tags": [
+        "package",
+        "worker"
+      ],
+      "packageName": "@create-something/marketplace-insights-cron",
       "runtime": "cloudflare, node"
     },
     {
@@ -5738,6 +5772,23 @@
       "runtime": "cloudflare"
     },
     {
+      "id": "substrate:create-something:worker:packages-halfdozen-transcript-monitor-wrangler-jsonc",
+      "atlasNodeId": "atlas_create-something_worker_packages-halfdozen-transcript-monitor-wrangler-jsonc",
+      "title": "packages/halfdozen-transcript-monitor/wrangler.jsonc",
+      "path": "packages/halfdozen-transcript-monitor/wrangler.jsonc",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/halfdozen-transcript-monitor/wrangler.jsonc.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
       "id": "substrate:create-something:worker:packages-halfdozen-zoom-sync-worker-wrangler-toml",
       "atlasNodeId": "atlas_create-something_worker_packages-halfdozen-zoom-sync-worker-wrangler-toml",
       "title": "halfdozen-zoom-sync worker",
@@ -6019,6 +6070,23 @@
       "owner": "CREATE SOMETHING",
       "status": "mapped",
       "summary": "Cloudflare runtime configuration at packages/marketplace-featured-notifier/wrangler.jsonc.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
+      "id": "substrate:create-something:worker:packages-marketplace-insights-cron-wrangler-jsonc",
+      "atlasNodeId": "atlas_create-something_worker_packages-marketplace-insights-cron-wrangler-jsonc",
+      "title": "packages/marketplace-insights-cron/wrangler.jsonc",
+      "path": "packages/marketplace-insights-cron/wrangler.jsonc",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/marketplace-insights-cron/wrangler.jsonc.",
       "tags": [
         "worker",
         "cloudflare",
@@ -10705,6 +10773,13 @@
       "evidence": "packages/halfdozen-telemetry-mcp/worker is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-halfdozen-transcript-monitor-packages-halfdozen-transcript-monitor",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-halfdozen-transcript-monitor-packages-halfdozen-transcript-monitor",
+      "relation": "contains",
+      "evidence": "packages/halfdozen-transcript-monitor is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
@@ -10885,6 +10960,13 @@
       "target": "substrate:create-something:package:create-something-marketplace-featured-notifier-packages-marketplace-featured-notifier",
       "relation": "contains",
       "evidence": "packages/marketplace-featured-notifier is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-marketplace-insights-cron-packages-marketplace-insights-cron",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-marketplace-insights-cron-packages-marketplace-insights-cron",
+      "relation": "contains",
+      "evidence": "packages/marketplace-insights-cron is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-maverick-admin-packages-maverick-admin",
@@ -12021,6 +12103,13 @@
       "evidence": "packages/halfdozen-telemetry-mcp/worker/wrangler.toml is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-halfdozen-transcript-monitor-wrangler-jsonc",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-halfdozen-transcript-monitor-wrangler-jsonc",
+      "relation": "contains",
+      "evidence": "packages/halfdozen-transcript-monitor/wrangler.jsonc is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-halfdozen-zoom-sync-worker-wrangler-toml",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:worker:packages-halfdozen-zoom-sync-worker-wrangler-toml",
@@ -12138,6 +12227,13 @@
       "target": "substrate:create-something:worker:packages-marketplace-featured-notifier-wrangler-jsonc",
       "relation": "contains",
       "evidence": "packages/marketplace-featured-notifier/wrangler.jsonc is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-marketplace-insights-cron-wrangler-jsonc",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-marketplace-insights-cron-wrangler-jsonc",
+      "relation": "contains",
+      "evidence": "packages/marketplace-insights-cron/wrangler.jsonc is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-maverick-admin-wrangler-toml",
@@ -14849,6 +14945,13 @@
       "evidence": "wrangler.toml configures runtime for packages/halfdozen-telemetry-mcp/worker."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-halfdozen-transcript-monitor-packages-halfdozen-transcript-monitor-runs-substrate-create-something-worker-packages-halfdozen-transcript-monitor-wrangler-jsonc",
+      "source": "substrate:create-something:package:create-something-halfdozen-transcript-monitor-packages-halfdozen-transcript-monitor",
+      "target": "substrate:create-something:worker:packages-halfdozen-transcript-monitor-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/halfdozen-transcript-monitor."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync-depends-on-substrate-create-something-package-create-something-composio-bridge-packages-composio-bridge",
       "source": "substrate:create-something:package:create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
       "target": "substrate:create-something:package:create-something-composio-bridge-packages-composio-bridge",
@@ -15246,6 +15349,13 @@
       "target": "substrate:create-something:worker:packages-marketplace-featured-notifier-wrangler-jsonc",
       "relation": "runs",
       "evidence": "wrangler.jsonc configures runtime for packages/marketplace-featured-notifier."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-marketplace-insights-cron-packages-marketplace-insights-cron-runs-substrate-create-something-worker-packages-marketplace-insights-cron-wrangler-jsonc",
+      "source": "substrate:create-something:package:create-something-marketplace-insights-cron-packages-marketplace-insights-cron",
+      "target": "substrate:create-something:worker:packages-marketplace-insights-cron-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/marketplace-insights-cron."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-maverick-admin-packages-maverick-admin-runs-substrate-create-something-worker-packages-maverick-admin-wrangler-toml",

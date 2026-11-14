@@ -19,7 +19,9 @@ const server = createServer(async (req, res) => {
           ? 'text/javascript'
           : url.pathname.endsWith('.css')
             ? 'text/css'
-            : 'font/woff2'
+            : url.pathname.endsWith('.png')
+              ? 'image/png'
+              : 'font/woff2'
       );
       res.end(await readFile(file));
       return;

@@ -123,9 +123,7 @@
 
 	.clear-page-section--hero {
 		padding-block: 5.35rem 4rem;
-		background:
-			linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 4.25rem 4.25rem,
-			linear-gradient(180deg, var(--color-performance-panel, #ffffff) 0%, #fbfbfb 100%);
+		background: var(--color-performance-panel);
 	}
 
 	.clear-page-section--white {
@@ -173,12 +171,12 @@
 		border-radius: var(--radius-performance-sm, 4px);
 		background: var(--color-performance-panel, #ffffff);
 		color: var(--color-performance-muted, #5e6268);
-		font-family: var(--font-performance-mono);
-		font-size: 0.76rem;
+		font-family: var(--font-performance-interface);
+		font-size:0.875rem;
 		font-weight: var(--font-performance-semibold);
 		letter-spacing: 0;
 		line-height: 1.15;
-		text-transform: uppercase;
+		text-transform:none;
 	}
 
 	.clear-page-section__title {
@@ -260,12 +258,12 @@
 	.clear-page-section :global(.btn-primary) {
 		background: var(--color-performance-ink, #090909);
 		border-color: var(--color-performance-ink, #090909);
-		color: #ffffff;
+		color:var(--color-performance-panel);
 	}
 
 	.clear-page-section :global(.btn-primary:hover) {
-		background: #1a2030;
-		border-color: #1a2030;
+		background:var(--color-performance-ink-soft);
+		border-color:var(--color-performance-ink-soft);
 		box-shadow: none;
 	}
 
@@ -282,7 +280,7 @@
 	.clear-page-section :global(.btn-secondary:hover) {
 		background: var(--color-performance-ink, #090909);
 		border-color: var(--color-performance-ink, #090909);
-		color: #ffffff;
+		color:var(--color-performance-panel);
 	}
 
 	@media (max-width: 980px) {
@@ -343,4 +341,8 @@
 			width: 100%;
 		}
 	}
+
+ .clear-page-section { overflow-wrap: anywhere; }
+ .clear-page-section :global(*) { min-width: 0; }
+
 </style>

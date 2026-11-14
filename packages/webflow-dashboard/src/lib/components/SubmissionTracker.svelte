@@ -9,6 +9,8 @@
   } from '$lib/stores/submission';
   import { formatLongDate } from '$lib/utils/format';
   import { untrack } from 'svelte';
+  import { grow } from '$lib/motion/actions';
+  import { gsap, motionOK } from '$lib/motion/core';
   import { toast } from '$lib/stores/toast';
   import {
     CheckCircle2,
@@ -155,12 +157,42 @@
     }
   }
 
+  let refreshIconEl = $state<HTMLElement | null>(null);
+
   async function handleRefresh() {
     if (userEmail) {
-      await submissionStore.forceRefresh(userEmail);
-      toast.info('Refreshed submission status');
+      // The icon turns while the request runs, then settles.
+      const spin =
+        refreshIconEl && motionOK()
+          ? gsap.to(refreshIconEl, { rotation: '+=360', duration: 0.7, ease: 'none', repeat: -1 })
+          : null;
+      try {
+        await submissionStore.forceRefresh(userEmail);
+        toast.info('Refreshed submission status');
+      } finally {
+        if (spin && refreshIconEl) {
+          spin.kill();
+          gsap.to(refreshIconEl, {
+            rotation: '+=180',
+            duration: 0.5,
+            ease: 'power3.out',
+            clearProps: 'transform'
+          });
+        }
+      }
     }
   }
+
+  const ROLLING_WINDOW_DAYS = 30;
+
+  /** How far a submission is through its 30-day window, 0 to 1. */
+  function windowProgress(daysUntilExpiry: number): number {
+    return Math.min(1, Math.max(0, (ROLLING_WINDOW_DAYS - daysUntilExpiry) / ROLLING_WINDOW_DAYS));
+  }
+
+  const quotaSlots = $derived(
+    Array.from({ length: SUBMISSION_LIMIT }, (_, index) => index < submissionData.assetsSubmitted30)
+  );
 
   function getBadgeVariant(): 'success' | 'warning' | 'error' | 'default' {
     const data = submissionData;
@@ -336,29 +368,17 @@
     class:warning-card={submissionData.warningLevel === 'caution'}
     class:critical-card={submissionData.isAtLimit && !submissionData.isWhitelisted}
   >
-    <Card>
+    <Card interactive>
       <CardHeader>
         <div class="card-header-content">
-          <div class="submission-heading">
-            <CardTitle>Submission Status</CardTitle>
-            <div class="submission-meta-row">
-              <p class="submission-summary">
-                <strong>{submissionData.publishedCount}</strong> published
-                <span aria-hidden="true">·</span>
-                <strong>{submissionData.assetsSubmitted30}/{SUBMISSION_LIMIT}</strong> used in last 30 days
-                <span aria-hidden="true">·</span>
-                <strong>{submissionData.isWhitelisted ? '∞' : submissionData.remainingSubmissions}</strong>
-                remaining
-              </p>
-              <div class="header-badges">
-                {#if submissionData.isDevMode}
-                  <Badge variant="default">DEV</Badge>
-                {/if}
-                <Badge variant={getBadgeVariant()}>
-                  {getStatusText()}
-                </Badge>
-              </div>
-            </div>
+          <CardTitle>Submission Status</CardTitle>
+          <div class="header-badges">
+            {#if submissionData.isDevMode}
+              <Badge variant="default">DEV</Badge>
+            {/if}
+            <Badge variant={getBadgeVariant()}>
+              {getStatusText()}
+            </Badge>
           </div>
         </div>
       </CardHeader>
@@ -399,63 +419,55 @@
             </div>
           {/if}
 
-          <div class="status-grid">
-            <div class="status-item">
-              <span class="status-label">Published Templates</span>
-              <span class="status-value">{submissionData.publishedCount}</span>
+          <div
+            class="quota"
+            class:warning={submissionData.warningLevel === 'caution'}
+            class:critical={submissionData.isAtLimit && !submissionData.isWhitelisted}
+          >
+            <div class="quota-line">
+              <p class="quota-figure">
+                <span class="quota-used">{submissionData.assetsSubmitted30}</span>
+                <span class="quota-limit">of {SUBMISSION_LIMIT}</span>
+                <span class="quota-caption">submissions used in the last 30 days</span>
+              </p>
+              <p class="quota-remaining">
+                <strong>{submissionData.isWhitelisted ? '∞' : submissionData.remainingSubmissions}</strong>
+                remaining
+              </p>
             </div>
-            <div class="status-item">
-              <span class="status-label">Rolling 30 Days</span>
-              <span
-                class="status-value"
-                class:warning={submissionData.warningLevel === 'caution'}
-                class:critical={submissionData.isAtLimit}
+            {#if !submissionData.isWhitelisted}
+              <div
+                class="quota-meter"
+                role="img"
+                aria-label={`${submissionData.assetsSubmitted30} of ${SUBMISSION_LIMIT} submissions used`}
+                use:grow={{ children: '.quota-slot-fill' }}
               >
-                {submissionData.assetsSubmitted30}/{SUBMISSION_LIMIT}
-              </span>
-            </div>
-            <div class="status-item">
-              <span class="status-label">Total Submitted</span>
-              <span class="status-value">{submissionData.totalSubmitted}</span>
-            </div>
-            <div class="status-item">
-              <span class="status-label">Remaining</span>
-              <span
-                class="status-value"
-                class:warning={submissionData.warningLevel === 'caution'}
-                class:critical={submissionData.isAtLimit}
-              >
-                {submissionData.isWhitelisted ? '∞' : submissionData.remainingSubmissions}
-              </span>
-            </div>
+                {#each quotaSlots as used}
+                  <span class="quota-slot">
+                    {#if used}<span class="quota-slot-fill"></span>{/if}
+                  </span>
+                {/each}
+              </div>
+            {/if}
           </div>
 
           {#if submissionData.submissions.length > 0}
             <div class="active-submissions">
-              <h4>Active Submissions (30-day window)</h4>
+              <h4>Active submissions, by time left in the 30-day window</h4>
               <div class="submissions-full-list">
                 {#each submissionData.submissions as submission}
-                  <div class="submission-row">
-                    <div class="submission-name-full">
-                      <div
-                        class="submission-dot"
-                        style="background: {submission.daysUntilExpiry <= 7
-                          ? 'var(--color-warning)'
-                          : 'var(--color-data-1)'}"
-                      ></div>
-                      <span>{submission.name}</span>
-                    </div>
-                    <div class="submission-meta">
-                      <span
-                        class="submission-expiry-full"
-                        class:soon={submission.daysUntilExpiry <= 7}
-                      >
-                        {submission.daysUntilExpiry}d until expiry
-                      </span>
-                      <span class="submission-date">
-                        exp. {formatLongDate(submission.expiryDate)}
-                      </span>
-                    </div>
+                  <div class="submission-row" class:soon={submission.daysUntilExpiry <= 7}>
+                    <span class="submission-name-full">{submission.name}</span>
+                    <span class="submission-expiry-full">
+                      {submission.daysUntilExpiry}d until expiry
+                    </span>
+                    <span class="submission-date">
+                      exp. {formatLongDate(submission.expiryDate)}
+                    </span>
+                    <!-- Decorative: the text beside it already states the days left. -->
+                    <span class="submission-track" aria-hidden="true" use:grow={{ children: 'span' }}>
+                      <span style="width: {windowProgress(submission.daysUntilExpiry) * 100}%"></span>
+                    </span>
                   </div>
                 {/each}
               </div>
@@ -478,15 +490,22 @@
 
           <div class="card-footer">
             <span class="data-source-full">
-              {submissionData.dataSource === 'external'
-                ? 'Synced with server'
-                : 'Local calculation'}
-              {#if submissionData.isDevMode}
-                (Dev mode)
-              {/if}
+              <span class="status-facts">
+                <strong>{submissionData.publishedCount}</strong> published templates
+                <span aria-hidden="true">·</span>
+                <strong>{submissionData.totalSubmitted}</strong> total submitted
+              </span>
+              <span>
+                {submissionData.dataSource === 'external'
+                  ? 'Synced with server'
+                  : 'Local calculation'}
+                {#if submissionData.isDevMode}
+                  (Dev mode)
+                {/if}
+              </span>
             </span>
             <button type="button" class="refresh-button" onclick={handleRefresh}>
-              <RefreshCw size={14} />
+              <span class="refresh-icon" bind:this={refreshIconEl}><RefreshCw size={14} /></span>
               Refresh
             </button>
           </div>
@@ -773,40 +792,15 @@
   /* Full variant styles */
   .card-header-content {
     display: flex;
-    align-items: flex-start;
-    width: 100%;
-  }
-
-  .submission-heading {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-    width: 100%;
-  }
-
-  .submission-meta-row {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-  }
-
-  .submission-summary {
-    margin: 0;
-    display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    gap: 0.35rem 0.5rem;
-    font-size: 0.98rem;
-    color: var(--color-fg-tertiary);
-    line-height: 1.45;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    width: 100%;
   }
 
-  .submission-summary strong {
-    color: var(--color-fg-primary);
-    font-weight: var(--font-semibold);
-    font-variant-numeric: tabular-nums;
+  .card-header-content :global(.card-title) {
+    white-space: nowrap;
   }
 
   .header-badges {
@@ -882,97 +876,182 @@
     flex-shrink: 0;
   }
 
-  .status-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.9rem 1rem;
-    margin-bottom: 1rem;
-  }
-
-  .status-item {
+  /* Quota: the 30-day submission allowance as a meter, one segment per slot. */
+  .quota {
+    --quota-color: var(--color-info);
     display: flex;
     flex-direction: column;
-    gap: 0.15rem;
+    gap: 0.8rem;
   }
 
-  .status-label {
-    font-size: var(--text-caption);
-    color: var(--color-fg-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+  .quota.warning {
+    --quota-color: var(--color-warning);
   }
 
-  .status-value {
-    font-size: clamp(1.45rem, 1vw + 1rem, 1.85rem);
+  .quota.critical {
+    --quota-color: var(--color-error);
+  }
+
+  .quota-line {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .quota-figure,
+  .quota-remaining {
+    margin: 0;
+  }
+
+  .quota-figure {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.1rem 0.45rem;
+  }
+
+  .quota-used {
+    font-family: var(--font-heading);
+    font-size: 2.5rem;
     font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
+    line-height: 0.95;
+    letter-spacing: 0.01em;
     font-variant-numeric: tabular-nums;
-    line-height: 1.05;
+    color: var(--color-fg-primary);
   }
 
-  .status-value.warning {
-    color: var(--color-warning-ink);
+  .quota-limit {
+    font-size: 1.15rem;
+    font-weight: var(--font-medium);
+    color: var(--color-fg-tertiary);
+    font-variant-numeric: tabular-nums;
   }
 
-  .status-value.critical {
-    color: var(--color-error-ink);
+  .quota-caption {
+    flex-basis: 100%;
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .quota-remaining {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-muted);
+    white-space: nowrap;
+  }
+
+  .quota-remaining strong {
+    margin-right: 0.15rem;
+    color: var(--color-fg-primary);
+    font-size: 1.15rem;
+    font-weight: var(--font-semibold);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .quota-meter {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 0.3rem;
+  }
+
+  .quota-slot {
+    height: 0.5rem;
+    border-radius: 999px;
+    background: var(--color-bg-subtle);
+    overflow: hidden;
+  }
+
+  .quota-slot-fill {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--quota-color);
+  }
+
+  .status-facts {
+    color: var(--color-fg-tertiary);
+    font-size: var(--text-body-sm);
+  }
+
+  .status-facts strong {
+    color: var(--color-fg-primary);
+    font-weight: var(--font-semibold);
+    font-variant-numeric: tabular-nums;
   }
 
   .active-submissions {
-    margin-bottom: var(--space-md);
-    padding-top: var(--space-md);
-    border-top: 1px solid var(--color-border-default);
+    margin: 1.25rem 0 0;
   }
 
   .active-submissions h4 {
-    font-size: var(--text-body-sm);
+    font-size: var(--text-caption);
     font-weight: var(--font-medium);
-    color: var(--color-fg-secondary);
-    margin: 0 0 var(--space-sm);
+    color: var(--color-fg-muted);
+    margin: 0 0 0.6rem;
   }
 
   .submissions-full-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs);
+    gap: 0.7rem;
   }
 
+  /* Name, days left and date on one line; the window track runs underneath. */
   .submission-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    --track-color: var(--color-data-1);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: baseline;
+    gap: 0.35rem 0.9rem;
+  }
+
+  .submission-row.soon {
+    --track-color: var(--color-warning);
   }
 
   .submission-name-full {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-  }
-
-  .submission-name-full span {
     font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
-  }
-
-  .submission-meta {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
+    font-weight: var(--font-medium);
+    color: var(--color-fg-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .submission-expiry-full {
     font-size: var(--text-body-sm);
-    color: var(--color-fg-muted);
+    color: var(--color-fg-tertiary);
+    font-variant-numeric: tabular-nums;
   }
 
-  .submission-expiry-full.soon {
+  .submission-row.soon .submission-expiry-full {
     color: var(--color-warning-ink);
     font-weight: var(--font-medium);
   }
 
   .submission-date {
+    min-width: 7.2rem;
+    text-align: right;
     font-size: var(--text-caption);
     color: var(--color-fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .submission-track {
+    grid-column: 1 / -1;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--color-bg-subtle);
+    overflow: hidden;
+  }
+
+  .submission-track span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--track-color);
   }
 
   .next-slot-full {
@@ -1011,11 +1090,15 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    /* Its own top margin: with no active submission it follows the meter directly. */
+    margin-top: 1.25rem;
     padding-top: 0.85rem;
     border-top: 1px solid var(--color-border-default);
   }
 
   .data-source-full {
+    display: grid;
+    gap: 0.15rem;
     font-size: var(--text-caption);
     color: var(--color-fg-muted);
     letter-spacing: 0.01em;
@@ -1038,6 +1121,20 @@
   .refresh-button:hover {
     border-color: var(--color-border-emphasis);
     color: var(--color-fg-primary);
+  }
+
+  .refresh-icon {
+    display: inline-flex;
+  }
+
+  @media (max-width: 30rem) {
+    .submission-row {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .submission-date {
+      display: none;
+    }
   }
 
   .tracker-button:focus-visible,

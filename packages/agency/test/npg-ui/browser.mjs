@@ -31,6 +31,7 @@ async function scenario(name, fn, viewport = { width: 1440, height: 900 }, optio
     assert.deepEqual(external, []);
     report.push({ name, passed: true });
   } catch (error) {
+    console.error('Scenario failed:', name);
     await page.screenshot({ path: `${evidence}/failed.png` });
     throw error;
   } finally {
@@ -70,6 +71,29 @@ async function disclosureHasClearBody(page, button) {
     .toBeGreaterThanOrEqual(0);
 }
 try {
+  await scenario(
+    'reading position survives evidence round trip and rapid reversal',
+    async (page) => {
+      await gotoState(page, 'canonical');
+      const toggle = page.getByRole('button', { name: /Results & evidence/ });
+      await toggle.click();
+      const panel = page.locator('.npg-inline-results');
+      await panel.evaluate((element) => {
+        element.scrollTop = 650;
+      });
+      await expect.poll(() => panel.evaluate((element) => element.scrollTop)).toBe(650);
+      await page.getByRole('button', { name: 'Back to conversation', exact: true }).click();
+      await toggle.click();
+      await expect.poll(() => panel.evaluate((element) => element.scrollTop)).toBe(650);
+      await page.getByRole('button', { name: 'Back to conversation', exact: true }).click();
+      await toggle.click();
+      await page.getByRole('button', { name: 'Back to conversation', exact: true }).click();
+      await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+      await expect(page.getByRole('textbox', { name: 'Your question' })).toBeVisible();
+    },
+    { width: 390, height: 844 }
+  );
+
   for (const [width, height] of [
     [320, 568],
     [390, 844],
@@ -234,7 +258,7 @@ try {
 
       await page.getByRole('button', { name: /Results & evidence/ }).click();
       await expect(
-        page.getByRole('heading', { name: 'Results & evidence', exact: true })
+        page.getByRole('heading', { name: /^Results & evidence(?: for .+)?$/ })
       ).toBeFocused();
       await expect(page.getByText('231 records', { exact: true })).toBeVisible();
       await expect(page.getByRole('textbox', { name: 'Your question' })).toHaveCount(0);
@@ -474,7 +498,7 @@ try {
         await gotoState(page, 'review');
         const brand = page
           .getByRole('navigation', { name: 'NPG workspace', exact: true })
-          .getByText('Healthcare analyst', { exact: true });
+          .getByText(/^(Healthcare analyst|Analyst)$/);
         const fits = await brand.evaluate(
           (element) => element.scrollWidth <= element.clientWidth + 1
         );
@@ -531,7 +555,7 @@ try {
           '/delivery/abundance/sourcing.csv?run_id=abnationalrun_fixture&taxonomy_code=363LF0000X%2C363LA2200X'
         );
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
-        if (width <= 1024)
+        if (width < 1280)
           await page.getByRole('button', { name: 'Back to conversation', exact: true }).click();
         else {
           await page.getByRole('button', { name: /Results & evidence/ }).click();
@@ -707,6 +731,7 @@ try {
   );
   await scenario('expiry disables only approval', async (page) => {
     await gotoState(page, 'expired');
+    await expect(page.locator('.npg-state')).toHaveText('Review expired');
     await expect(page.getByRole('button', { name: 'Approve this action' })).toBeDisabled();
     await expect(page.getByRole('button', { name: 'Reject action', exact: true })).toBeEnabled();
     await expect(page.getByText('This review has expired. Approval is unavailable.')).toBeVisible();

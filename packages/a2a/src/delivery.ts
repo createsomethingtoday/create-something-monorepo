@@ -10,7 +10,7 @@ import { limitAdmission } from './auth';
 interface SubscriptionRow {id:string;owner_subject:string;agent_id:string;event_name:string;callback_url:string;secret_ciphertext:string;previous_secret_ciphertext:string|null;previous_secret_until:number|null;verified_at:number;replay_floor_at:number;status:string;created_at:number;expires_at:number;cursor:number;}
 interface DeliveryRow {id:string;event_id:string;subscription_id:string;state:string;attempts:number;next_attempt_at:number;lease_until:number|null;}
 interface EventRow {id:string;message_id:string;recipient_agent_id:string;created_at:number;cursor:number;thread_id:string;expires_at:number;content_deleted_at:number|null;}
-export type DeliveryJob={eventId:string}|{deliveryId:string};
+export type DeliveryJob={eventId:string}|{deliveryId:string}|{sharedEventId:string}|{sharedDeliveryId:string};
 const day=86400000;
 const verificationCacheMs=5*60*1000;
 const rotationWindowMs=30000;
@@ -24,7 +24,7 @@ function argAgent(args:unknown):string{
   if(!args||typeof args!=='object'||Array.isArray(args)||Object.keys(args).some(k=>k!=='agent_id')||typeof (args as Record<string,unknown>).agent_id!=='string')throw new HttpError('invalid_arguments',400,'Specify only your agent_id inbox filter.');
   return (args as {agent_id:string}).agent_id;
 }
-function callbackDetails(value:unknown,needSecret:boolean):{url:string;secret:string}{
+export function callbackDetails(value:unknown,needSecret:boolean):{url:string;secret:string}{
   if(!value||typeof value!=='object')throw new HttpError('invalid_callback',400,'Webhook delivery is required.');
   const delivery=value as Record<string,unknown>;
   if(delivery.mode!=='webhook'||typeof delivery.url!=='string')throw new HttpError('invalid_callback',400,'Webhook delivery is required.');
@@ -35,12 +35,12 @@ function callbackDetails(value:unknown,needSecret:boolean):{url:string;secret:st
   }
   return {url,secret};
 }
-function sameChallenge(actual:unknown,expected:string):boolean{
+export function sameChallenge(actual:unknown,expected:string):boolean{
   if(typeof actual!=='string')return false;
   const a=new TextEncoder().encode(actual),b=new TextEncoder().encode(expected);
   return a.length===b.length&&timingSafeEqual(a,b);
 }
-async function signedPost(env:RuntimeEnv,url:string,secret:string,subscriptionId:string,id:string,body:string,previousSecret?:string){
+export async function signedPost(env:RuntimeEnv,url:string,secret:string,subscriptionId:string,id:string,body:string,previousSecret?:string){
   const now=new Date();
   const signatures=[new Webhook(secret).sign(id,now,body)];
   if(previousSecret&&previousSecret!==secret)signatures.push(new Webhook(previousSecret).sign(id,now,body));

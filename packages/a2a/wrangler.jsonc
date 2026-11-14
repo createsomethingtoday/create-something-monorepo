@@ -15,6 +15,8 @@
     "AUTH_RESOURCE":"https://a2a.createsomething.agency/mcp",
     "AUTH_CLIENT_ID":"oauth_create-something-a2a-owner-console-and-cli_c64d074ca02f",
     "ALLOWED_EMAILS":"micah@createsomething.io,dm@halfdozen.co",
+    "SELF_SERVICE_ENABLED":"false",
+    "SHARED_INBOXES_ENABLED":"false",
     "BUILD_REVISION":"development"
   },
   "d1_databases":[{"binding":"DB","database_name":"cs-a2a","database_id":"8724401c-8526-4a3a-a799-c721ad468aaf","migrations_dir":"migrations"}],

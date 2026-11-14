@@ -7,7 +7,6 @@ import { AppShell } from '@astryxdesign/core/AppShell';
 import { TopNav, TopNavHeading } from '@astryxdesign/core/TopNav';
 import { SideNav, SideNavHeading, SideNavItem } from '@astryxdesign/core/SideNav';
 import {
-  ChatLayout,
   ChatMessageList,
   ChatMessage,
   ChatMessageBubble,
@@ -21,6 +20,7 @@ import { Text } from '@astryxdesign/core/Text';
 import { HStack } from '@astryxdesign/core/HStack';
 import { VStack } from '@astryxdesign/core/VStack';
 import { Divider } from '@astryxdesign/core/Divider';
+import { Grid } from '@astryxdesign/core/Grid';
 import { Section } from '@astryxdesign/core/Section';
 import { Button } from '@astryxdesign/core/Button';
 import { Banner } from '@astryxdesign/core/Banner';
@@ -46,7 +46,8 @@ import {
   FileCheck2
 } from 'lucide-react';
 import { MetadataList, MetadataListItem } from '@astryxdesign/core/MetadataList';
-import { Collapsible } from '@astryxdesign/core/Collapsible';
+import { Disclosure as Collapsible } from './Disclosure';
+import { gsap, installWorkspaceMotion, moveScroll, reducedMotion, stopScroll } from './motion';
 import {
   actionLabel,
   conversationStatus,
@@ -56,8 +57,9 @@ import {
   sourceArtifact,
   type NpgView
 } from '../display';
-import { decisionSummary } from './presentation';
+import { decisionSummary, evidenceFieldLabel, evidenceGroups } from './presentation';
 import type { HistoryItem, NpgBootstrap } from './types';
+import npgLogo from './assets/npg-logo.png';
 
 const endpoint = '/delivery/abundance/healthcare-analyst/api';
 const examples = [
@@ -299,12 +301,14 @@ function Fields({
   fields,
   compact = false,
   review = false,
-  evidence = false
+  evidence = false,
+  wideLabels = false
 }: {
   fields: Array<{ label: string; value: string }>;
   compact?: boolean;
   review?: boolean;
   evidence?: boolean;
+  wideLabels?: boolean;
 }) {
   const currency = fields.find((field) => field.label === 'Currency')?.value;
   const rows = fields.flatMap((field) =>
@@ -315,14 +319,22 @@ function Fields({
     <MetadataList
       label={{
         position: compact ? 'start' : 'top',
-        width: compact ? 'calc(var(--spacing-10) * 3)' : undefined
+        width: compact
+          ? evidence && wideLabels
+            ? 'calc(var(--spacing-10) * 3 + var(--spacing-5))'
+            : 'calc(var(--spacing-10) * 3)'
+          : undefined
       }}
       columns="single"
     >
       {rows.map((field, index) => (
         <MetadataListItem
           key={index}
-          label={field.label.charAt(0).toUpperCase() + field.label.slice(1)}
+          label={
+            evidence
+              ? evidenceFieldLabel(field.label)
+              : field.label.charAt(0).toUpperCase() + field.label.slice(1)
+          }
         >
           {review && ['Limits', 'Run limits', 'Access and sharing'].includes(field.label) ? (
             <ReviewLimits
@@ -332,7 +344,6 @@ function Fields({
             />
           ) : (
             <Text
-              size={evidence ? 'lg' : undefined}
               wordBreak="break-word"
               className="whitespace-pre-wrap"
             >
@@ -344,23 +355,48 @@ function Fields({
     </MetadataList>
   );
 }
-function Evidence({ sources }: { sources: NpgView['sources'] }) {
+function Evidence({
+  sources,
+  conversationTitle
+}: {
+  sources: NpgView['sources'];
+  conversationTitle: string;
+}) {
+  const wideEvidence = useMediaQuery('(min-width: 640px) and (max-width: 1279px)');
+  const shortPhone = useMediaQuery('(max-width: 479px) and (max-height: 700px)');
   return (
-    <VStack gap={6} className="npg-evidence-content min-w-0">
-      <VStack gap={2}>
+    <VStack gap={3} className="npg-evidence-content max-w-reading mx-auto w-full min-w-0">
+      <VStack gap={1}>
         <HStack gap={2}>
           <Icon icon={FileCheck2} />
-          <Heading id="npg-evidence-title" level={2} tabIndex={-1}>
+          <Heading
+            id="npg-evidence-title"
+            level={2}
+            tabIndex={-1}
+            className="min-w-0 flex-1"
+          >
             Results &amp; evidence
           </Heading>
         </HStack>
-        <Text color="secondary">
-          Saved with this conversation. CSV downloads require NPG sign-in.
-        </Text>
+        {shortPhone ? (
+          <Text
+            type="supporting"
+            color="secondary"
+            maxLines={1}
+            className="npg-evidence-context"
+          >
+            {conversationTitle}
+          </Text>
+        ) : (
+          <Text type="supporting" color="secondary">
+            Saved with this conversation.
+          </Text>
+        )}
       </VStack>
       {sources.length ? (
         sources.map((source, index) => {
           const artifact = sourceArtifact(source.data);
+          const groups = evidenceGroups(artifact.fields);
           const incomplete = artifact.fields.some(
             (field) => field.value === 'incomplete_geocoding'
           );
@@ -374,26 +410,31 @@ function Evidence({ sources }: { sources: NpgView['sources'] }) {
               {index > 0 && <Divider />}
               <VStack
                 as="section"
-                gap={4}
+                gap={2}
                 className="npg-source min-w-0"
                 aria-labelledby={'source-' + index}
               >
-                <VStack gap={1}>
-                  <Text type="supporting" color="secondary">
-                    Source {index + 1}
-                  </Text>
+                <HStack gap={3} align="start" justify="between">
                   <Heading id={'source-' + index} level={3}>
                     {actionLabel(source.tool)}
                   </Heading>
-                </VStack>
+                  <Text type="supporting" color="secondary" className="shrink-0">
+                    Source {index + 1}
+                  </Text>
+                </HStack>
                 {(artifact.total !== null || artifact.shown !== null) && (
                   <VStack gap={1}>
-                    <Text type="large" size="2xl" weight="semibold" hasTabularNumbers>
-                      {artifact.total === null
-                        ? 'Total not supplied'
-                        : artifact.total.toLocaleString() +
-                          (source.tool === 'search_registry_sourcing' ? ' records' : ' total')}
-                    </Text>
+                    <HStack gap={2} align="center">
+                      <Text type="large" size="2xl" weight="semibold" hasTabularNumbers>
+                        {artifact.total === null
+                          ? 'Total not supplied'
+                          : artifact.total.toLocaleString() +
+                            (source.tool === 'search_registry_sourcing' ? ' records' : ' total')}
+                      </Text>
+                      <Text type="supporting" color="secondary">
+                        in this source
+                      </Text>
+                    </HStack>
                     <Text type="supporting" size="base" color="secondary">
                       {artifact.shown === null
                         ? 'Shown count not supplied'
@@ -404,6 +445,17 @@ function Evidence({ sources }: { sources: NpgView['sources'] }) {
                             : ' shown in response')}
                     </Text>
                   </VStack>
+                )}
+                {groups.warnings.length > 0 && (
+                  <Banner
+                    status="warning"
+                    title={
+                      'Source flags · ' +
+                      groups.warnings
+                        .map((warning) => warning.replace('Source reports ', ''))
+                        .join(' · ')
+                    }
+                  />
                 )}
                 {incomplete && (
                   <Banner
@@ -433,6 +485,11 @@ function Evidence({ sources }: { sources: NpgView['sources'] }) {
                         href.startsWith('/delivery/') ? 'Download complete CSV' : 'Open source'
                       }
                     />
+                    {href.startsWith('/delivery/') && (
+                      <Text type="supporting" color="secondary">
+                        NPG sign-in required.
+                      </Text>
+                    )}
                   </VStack>
                 ))}
                 {artifact.records.length > 0 && (
@@ -460,74 +517,61 @@ function Evidence({ sources }: { sources: NpgView['sources'] }) {
                 {(artifact.fields.length > 0 || artifact.links.length > 0) && (
                   <VStack gap={4}>
                     {artifact.records.length > 0 && <Divider />}
-                    {[
-                      {
-                        title: 'Source facts',
-                        fields: artifact.fields.filter((field) =>
-                          [
-                            'Source published',
-                            'Source fetched',
-                            'Taxonomy scope',
-                            'source',
-                            'retrieved at',
-                            'Snapshot',
-                            'Snapshot ID',
-                            'Snapshot taxonomy scope',
-                            'Snapshot published'
-                          ].includes(field.label)
-                        )
-                      },
-                      {
-                        title: 'Coverage & limitations',
-                        fields: artifact.fields.filter(
-                          (field) =>
-                            ![
-                              'Source run',
-                              'limit',
-                              'offset',
-                              'Source published',
-                              'Source fetched',
-                              'Taxonomy scope',
-                              'source',
-                              'retrieved at',
-                              'Snapshot',
-                              'Snapshot ID',
-                              'Snapshot taxonomy scope',
-                              'Snapshot published'
-                            ].includes(field.label)
-                        )
-                      }
-                    ]
-                      .filter((group) => group.fields.length)
-                      .map((group) => (
-                        <VStack gap={3} key={group.title}>
-                          <Heading level={4}>{group.title}</Heading>
-                          <Fields evidence fields={group.fields} />
-                        </VStack>
-                      ))}
-                    {(artifact.links.length > 0 ||
-                      artifact.fields.some((field) =>
-                        ['Source run', 'limit', 'offset'].includes(field.label)
-                      )) && (
-                      <Collapsible trigger="Source details & provenance" defaultIsOpen={false}>
-                        <VStack paddingBlock={3} gap={3}>
-                          {artifact.links.map((href) => (
-                            <VStack key={href} gap={1}>
-                              <Text type="supporting">Download address</Text>
-                              <Text size="sm" wordBreak="break-all">
-                                {href}
-                              </Text>
-                            </VStack>
-                          ))}
-                          <Fields
-                            evidence
-                            fields={artifact.fields.filter((field) =>
-                              ['Source run', 'limit', 'offset'].includes(field.label)
+                    {(() => {
+                      const { summary: coverage, dates, details } = groups;
+                      return (
+                        <>
+                          <Grid
+                            columns={
+                              wideEvidence && coverage.length > 0 && dates.length > 0 ? 2 : 1
+                            }
+                            gap={3}
+                            className="min-w-0"
+                          >
+                            {coverage.length > 0 && (
+                              <VStack gap={2}>
+                                <Heading level={4}>Coverage &amp; limitations</Heading>
+                                <Fields
+                                  evidence
+                                  compact
+                                  wideLabels={wideEvidence}
+                                  fields={coverage}
+                                />
+                              </VStack>
                             )}
-                          />
-                        </VStack>
-                      </Collapsible>
-                    )}
+                            {dates.length > 0 && (
+                              <VStack gap={2}>
+                                <Heading level={4}>Source freshness</Heading>
+                                <Fields evidence compact wideLabels={wideEvidence} fields={dates} />
+                              </VStack>
+                            )}
+                          </Grid>
+                          {(details.length > 0 || artifact.links.length > 0) && (
+                            <Collapsible
+                              trigger="Source details & provenance"
+                              defaultIsOpen={false}
+                            >
+                              <VStack paddingBlock={3} gap={3}>
+                                <Fields
+                                  evidence
+                                  compact
+                                  wideLabels={wideEvidence}
+                                  fields={details}
+                                />
+                                {artifact.links.map((href) => (
+                                  <VStack key={href} gap={1}>
+                                    <Text type="supporting">Download address</Text>
+                                    <Text size="sm" wordBreak="break-all">
+                                      {href}
+                                    </Text>
+                                  </VStack>
+                                ))}
+                              </VStack>
+                            </Collapsible>
+                          )}
+                        </>
+                      );
+                    })()}
                   </VStack>
                 )}
                 {artifact.sections.map((section, i) => (
@@ -564,53 +608,48 @@ function Evidence({ sources }: { sources: NpgView['sources'] }) {
     </VStack>
   );
 }
-// A welcome is a form with examples, not an existing transcript to follow.
-// ChatLayout intentionally follows the newest message, so keep its automatic
-// scrolling for conversations and use ordinary scrolling for the first task.
+// The application owns transcript navigation; no library spring auto-follow.
 function ThreadSurface({
   welcome,
   reviewing,
   thread,
   composer,
-  children
+  children,
+  onScroll
 }: {
   welcome: boolean;
   reviewing: boolean;
   thread: React.RefObject<HTMLDivElement | null>;
   composer: React.ReactNode;
   children: React.ReactNode;
+  onScroll: React.UIEventHandler<HTMLDivElement>;
 }) {
-  const scrollable = (
+  return (
     <VStack
-      ref={thread}
       gap={0}
       minHeight={0}
-      className="npg-thread min-w-0 flex-1 overflow-y-auto overflow-x-hidden"
+      className={(reviewing ? 'npg-review-surface ' : '') + 'npg-thread-surface flex-1 min-w-0'}
     >
-      {children}
-    </VStack>
-  );
-  if (reviewing)
-    return (
-      <VStack gap={0} minHeight={0} className="npg-review-surface flex-1 min-w-0">
-        {scrollable}
-        <VStack gap={0} paddingInline={2} paddingBlockEnd={2} className="shrink-0">
+      <VStack
+        ref={thread}
+        onScroll={onScroll}
+        gap={0}
+        minHeight={0}
+        className="npg-thread min-w-0 flex-1 overflow-y-auto overflow-x-hidden"
+      >
+        {children}
+      </VStack>
+      {!welcome && (
+        <VStack
+          gap={0}
+          paddingInline={reviewing ? 2 : 4}
+          paddingBlockEnd={reviewing ? 2 : 4}
+          className="shrink-0"
+        >
           {composer}
         </VStack>
-      </VStack>
-    );
-  return welcome ? (
-    scrollable
-  ) : (
-    <ChatLayout
-      ref={thread}
-      className="npg-thread min-w-0 min-h-0"
-      density="compact"
-      scrollButton={null}
-      composer={composer}
-    >
-      {children}
-    </ChatLayout>
+      )}
+    </VStack>
   );
 }
 export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
@@ -630,9 +669,22 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
   const [submitted, setSubmitted] = useState('');
   const [navOpen, setNavOpen] = useState(false);
   const [resultsOpen, setResultsOpen] = useState(false);
+  const resultsPreference = useRef<boolean | null>(
+    readStorage('npg-evidence:' + bootstrap.owner) === 'open'
+      ? true
+      : readStorage('npg-evidence:' + bootstrap.owner) === 'closed'
+        ? false
+        : null
+  );
+  const positions = useRef(new Map<string, { thread: number; evidence: number }>());
+  const navigation = useRef<'restore' | 'latest' | 'review'>('restore');
+  const [atLatest, setAtLatest] = useState(true);
+  const [evidenceAtTop, setEvidenceAtTop] = useState(true);
   const [clock, setClock] = useState(Date.now());
   const [reveal, setReveal] = useState(0);
-  const narrow = useMediaQuery('(max-width: 1024px)');
+  const narrow = useMediaQuery('(max-width: 1279px)');
+  const tabletToolbar = useMediaQuery('(min-width: 640px) and (max-width: 1279px)');
+  const smallPhone = useMediaQuery('(max-width: 479px)');
   const shortViewport = useMediaQuery('(max-height: 700px)');
   const input = useRef<ChatComposerInputHandle | null>(null);
   const [inputRoot, setInputRoot] = useState<HTMLDivElement | null>(null);
@@ -643,7 +695,78 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
   const inlineResults = useRef<HTMLElement | null>(null);
   const didRestore = useRef(false);
   const focusIntent = useRef<'review' | 'composer' | null>(null);
+  const priorFeedback = useRef({ id: '', count: 0, submitted: '', notice: '', pending: '' });
+  const pendingFocusCleanup = useRef<(() => void) | null>(null);
+  const paneReturnFocus = useRef(false);
+  useEffect(() => () => pendingFocusCleanup.current?.(), []);
+  const evidenceToggleRef = useRef<HTMLButtonElement | null>(null);
+  function rememberPosition() {
+    const id = conversationRef.current?.id;
+    if (!id) return;
+    const saved = positions.current.get(id) ?? { thread: 0, evidence: 0 };
+    if (thread.current && !(narrow && resultsOpen)) saved.thread = thread.current.scrollTop;
+    if (inlineResults.current) saved.evidence = inlineResults.current.scrollTop;
+    positions.current.set(id, saved);
+  }
+  function recordScroll(pane: 'thread' | 'evidence', element: HTMLElement) {
+    const id = conversationRef.current?.id;
+    if (id) {
+      const saved = positions.current.get(id) ?? { thread: 0, evidence: 0 };
+      saved[pane] = element.scrollTop;
+      positions.current.set(id, saved);
+    }
+    if (pane === 'thread')
+      setAtLatest(element.scrollHeight - element.clientHeight - element.scrollTop <= 8);
+    else setEvidenceAtTop(element.scrollTop <= 8);
+  }
+  useLayoutEffect(() => {
+    const context = gsap.context(() => {
+      const latest = document.querySelectorAll('.npg-latest-affordance');
+      const evidence = document.querySelectorAll('.npg-evidence-scroll-affordance');
+      if (latest.length)
+        gsap.to(latest, {
+          opacity: atLatest ? 0.6 : 1,
+          duration: reducedMotion() ? 0 : 0.12,
+          overwrite: true
+        });
+      if (evidence.length)
+        gsap.to(evidence, {
+          opacity: evidenceAtTop ? 0.6 : 1,
+          duration: reducedMotion() ? 0 : 0.12,
+          overwrite: true
+        });
+    });
+    return () => context.revert();
+  }, [atLatest, evidenceAtTop, resultsOpen]);
+  function toggleResults() {
+    rememberPosition();
+    const next = !resultsOpen;
+    resultsPreference.current = next;
+    writeStorage('npg-evidence:' + bootstrap.owner, next ? 'open' : 'closed');
+    setResultsOpen(next);
+    if (!next) paneReturnFocus.current = true;
+  }
+  useLayoutEffect(() => installWorkspaceMotion(document.body), []);
+  useLayoutEffect(() => {
+    const region = thread.current;
+    if (!region) return;
+    const context = gsap.context(() => {
+      gsap.fromTo(
+        region,
+        { opacity: reducedMotion() ? 1 : 0, y: reducedMotion() ? 0 : 6 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: reducedMotion() ? 0 : 0.2,
+          clearProps: 'opacity,transform',
+          overwrite: true
+        }
+      );
+    });
+    return () => context.revert();
+  }, [conversation?.id]);
   function setView(view: NpgView | null) {
+    if (conversationRef.current?.id !== view?.id) rememberPosition();
     conversationRef.current = view;
     setConversation(view);
   }
@@ -673,30 +796,49 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
   function rememberCurrent(id: string) {
     writeStorage(currentKey, id);
   }
-  function focusAfterNavigation(hasReview = false) {
-    const focus = () =>
-      requestAnimationFrame(() => {
-        // A frame can precede React's commit for substantial saved evidence.
-        // Consume the intent in the layout effect once the returned view exists.
-        focusIntent.current = hasReview ? 'review' : 'composer';
-        setReveal((n) => n + 1);
-      });
+  function focusAfterNavigation(
+    hasReview = false,
+    intent: 'restore' | 'latest' | 'review' = hasReview ? 'review' : 'latest'
+  ) {
+    pendingFocusCleanup.current?.();
+    const focus = () => {
+      pendingFocusCleanup.current = null;
+      focusIntent.current = hasReview ? 'review' : 'composer';
+      navigation.current = intent;
+      setReveal((n) => n + 1);
+    };
+    // Native modal focus cannot leave the drawer until its close event. Wait
+    // for that semantic event, then consume intent after React commits content.
     const dialog = document.querySelector<HTMLDialogElement>('dialog[open]');
-    if (dialog) dialog.addEventListener('close', focus, { once: true });
-    else focus();
+    if (dialog) {
+      dialog.addEventListener('close', focus, { once: true });
+      pendingFocusCleanup.current = () => dialog.removeEventListener('close', focus);
+    } else focus();
   }
   async function open(id: string, moveFocus = false) {
     if (!begin('Loading conversation')) return;
+    rememberPosition();
     try {
       const view = await api<NpgView>(undefined, id);
       setView(view);
       changeDraft(drafts.current[id] ?? '');
       setNeedsRefresh(view.status === 'running');
-      if (moveFocus) setResultsOpen(false);
-      if (moveFocus) focusAfterNavigation(Boolean(view.pending));
+      setResultsOpen(
+        !narrow && (resultsPreference.current ?? !view.pending) && Boolean(view.sources.length)
+      );
+      if (moveFocus)
+        focusAfterNavigation(
+          Boolean(view.pending),
+          positions.current.has(id) ? 'restore' : view.pending ? 'review' : 'latest'
+        );
       setNavOpen(false);
       rememberCurrent(id);
-      if (!moveFocus) setReveal((n) => n + 1);
+      if (!moveFocus) {
+        const saved = positions.current.has(id);
+        navigation.current = saved ? 'restore' : view.pending ? 'review' : 'latest';
+        if (view.pending && !saved) focusIntent.current = 'review';
+        setReveal((n) => n + 1);
+      }
     } catch (error) {
       setNotice((error as Error).message);
     } finally {
@@ -711,10 +853,10 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
       changeDraft(drafts.current[view.id] ?? '');
       setNeedsRefresh(false);
       setResultsOpen(false);
-      focusAfterNavigation();
       setNavOpen(false);
       rememberCurrent(view.id);
       await refreshList();
+      focusAfterNavigation();
     } catch (error) {
       setNotice((error as Error).message);
       setNeedsRefresh(true);
@@ -743,6 +885,8 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
     )
       return;
     setSubmitted(value);
+    navigation.current = 'latest';
+    setReveal((n) => n + 1);
     changeDraft('');
     try {
       let view = conversationRef.current;
@@ -762,10 +906,21 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
         version: view.version,
         text: value
       });
+      const region = thread.current;
+      const followReply =
+        !region || region.scrollHeight - region.clientHeight - region.scrollTop <= 8;
+      rememberPosition();
       setView(result);
-      await refreshList();
+      if (!narrow)
+        setResultsOpen(
+          (resultsPreference.current ?? !result.pending) && Boolean(result.sources.length)
+        );
       if (result.pending) focusAfterNavigation(true);
-      else setReveal((n) => n + 1);
+      else {
+        navigation.current = followReply ? 'latest' : 'restore';
+        setReveal((n) => n + 1);
+      }
+      await refreshList();
     } catch (error) {
       if (!draftRef.current) changeDraft(value);
       setNotice((error as Error).message);
@@ -792,9 +947,16 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
         actionId: view.pending.id
       });
       setView(result);
+      if (!narrow)
+        setResultsOpen(
+          (resultsPreference.current ?? !result.pending) && Boolean(result.sources.length)
+        );
       await refreshList();
       if (result.pending) focusAfterNavigation(true);
-      else setReveal((n) => n + 1);
+      else {
+        navigation.current = 'latest';
+        setReveal((n) => n + 1);
+      }
     } catch (error) {
       setNotice((error as Error).message);
       setNeedsRefresh(true);
@@ -834,53 +996,69 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
   }, [inputRoot, draft, narrow]);
   useLayoutEffect(() => {
     if (!reveal || !thread.current) return;
+    const region = thread.current;
     if (focusIntent.current === 'review') {
       const heading = document.getElementById('npg-review-title');
       if (!heading) return;
       heading.focus({ preventScroll: true });
-      focusIntent.current = null;
-    } else if (focusIntent.current === 'composer' && input.current) {
-      input.current.focus();
-      focusIntent.current = null;
-    }
-    let settle = 0;
-    const frame = requestAnimationFrame(() => {
-      settle = requestAnimationFrame(() => {
-        const region = thread.current;
-        if (!region) return;
-        if (review.current)
-          region.scrollTo({
-            top:
-              review.current.getBoundingClientRect().top -
-              region.getBoundingClientRect().top +
-              region.scrollTop,
-            behavior: 'instant'
-          });
-        else {
-          const isWelcome =
-            !conversationRef.current?.messages.length &&
-            !submitted &&
-            !conversationRef.current?.pending;
-          region.scrollTo({ top: isWelcome ? 0 : region.scrollHeight, behavior: 'instant' });
-        }
-      });
-    });
-    return () => {
-      cancelAnimationFrame(frame);
-      cancelAnimationFrame(settle);
-    };
+    } else if (focusIntent.current === 'composer') input.current?.focus();
+    focusIntent.current = null;
+    const saved = positions.current.get(conversationRef.current?.id ?? '');
+    const isWelcome =
+      !conversationRef.current?.messages.length && !submitted && !conversationRef.current?.pending;
+    const top =
+      navigation.current === 'restore' && saved
+        ? saved.thread
+        : navigation.current === 'review' && review.current
+          ? review.current.getBoundingClientRect().top -
+            region.getBoundingClientRect().top +
+            region.scrollTop
+          : isWelcome
+            ? 0
+            : region.scrollHeight;
+    return moveScroll(region, top, navigation.current === 'restore');
   }, [reveal, conversation?.pending?.id]);
   useLayoutEffect(() => {
-    if (resultsOpen && narrow) {
-      document.getElementById('npg-evidence-title')?.focus({ preventScroll: true });
-      inlineResults.current?.scrollTo({ top: 0, behavior: 'instant' });
+    const region = inlineResults.current;
+    if (!resultsOpen) {
+      if (paneReturnFocus.current) {
+        paneReturnFocus.current = false;
+        if (conversationRef.current?.pending)
+          document.getElementById('npg-review-title')?.focus({ preventScroll: true });
+        else evidenceToggleRef.current?.focus({ preventScroll: true });
+      }
+      return;
     }
-  }, [resultsOpen, narrow]);
+    if (!region) return;
+    moveScroll(region, positions.current.get(conversation?.id ?? '')?.evidence ?? 0, true);
+    if (narrow) document.getElementById('npg-evidence-title')?.focus({ preventScroll: true });
+    const context = gsap.context(() => {
+      gsap.fromTo(
+        region,
+        { opacity: reducedMotion() ? 1 : 0, x: reducedMotion() ? 0 : 6 },
+        {
+          opacity: 1,
+          x: 0,
+          duration: reducedMotion() ? 0 : 0.2,
+          clearProps: 'opacity,transform',
+          overwrite: true
+        }
+      );
+    });
+    return () => {
+      stopScroll(region);
+      context.revert();
+    };
+  }, [resultsOpen, narrow, conversation?.id]);
   function closeResults() {
+    rememberPosition();
+    resultsPreference.current = false;
+    writeStorage('npg-evidence:' + bootstrap.owner, 'closed');
     setResultsOpen(false);
-    focusAfterNavigation(Boolean(conversationRef.current?.pending));
+    paneReturnFocus.current = true;
   }
   const expired = Boolean(conversation?.pending && conversation.pending.expiresAt <= clock);
+  const navigating = busy && (operation === 'Creating conversation' || operation === 'Loading conversation');
   const canSend =
     !busy &&
     !needsRefresh &&
@@ -892,9 +1070,11 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
     ? operation
     : needsRefresh
       ? 'Check saved conversation'
-      : conversation
-        ? conversationStatus(conversation.status)
-        : 'Ready';
+      : expired
+        ? 'Review expired'
+        : conversation
+          ? conversationStatus(conversation.status)
+          : 'Ready';
   const blocked =
     needsRefresh ||
     conversation?.status === 'running' ||
@@ -909,10 +1089,12 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
     <Heading
       level={3}
       accessibilityLevel={1}
-      maxLines={narrow ? 1 : 2}
+      maxLines={1}
       wordBreak="break-word"
       className={
-        narrow && conversation?.pending ? 'npg-thread-title sr-only' : 'npg-thread-title min-w-0'
+        narrow && (conversation?.pending || (resultsOpen && smallPhone && shortViewport))
+          ? 'npg-thread-title sr-only'
+          : 'npg-thread-title flex-1 min-w-0'
       }
     >
       {title}
@@ -929,7 +1111,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
             ? 'text-state-review'
             : blocked
               ? 'text-state-error'
-              : 'text-state-ready')
+              : 'text-state-neutral')
       }
       role="status"
     >
@@ -950,6 +1132,21 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
       </Text>
     </HStack>
   );
+  useLayoutEffect(() => {
+    const context = gsap.context(() => {
+      gsap.fromTo(
+        '.npg-state',
+        { opacity: reducedMotion() ? 1 : 0.45 },
+        {
+          opacity: 1,
+          duration: reducedMotion() ? 0 : 0.16,
+          overwrite: true,
+          clearProps: 'opacity'
+        }
+      );
+    }, document.getElementById('npg-app')!);
+    return () => context.revert();
+  }, [status, notice]);
   const evidenceToggle = (
     <Button
       label={
@@ -958,15 +1155,47 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
         ((conversation?.sources.length ?? 0) === 1 ? ' source' : ' sources')
       }
       variant="secondary"
-      size="sm"
-      className="npg-results-toggle"
+      ref={evidenceToggleRef}
+      className="npg-results-toggle min-h-control"
       aria-expanded={resultsOpen}
       aria-controls={narrow ? 'npg-inline-results' : 'npg-desktop-results'}
-      onClick={() => (resultsOpen ? closeResults() : setResultsOpen(true))}
+      onClick={toggleResults}
     >
       Evidence · {conversation?.sources.length ?? 0}{' '}
       {(conversation?.sources.length ?? 0) === 1 ? 'source' : 'sources'}
     </Button>
+  );
+  const latestToggle = !conversation?.pending && !(narrow && resultsOpen) && (
+    <VStack gap={0} className="npg-latest-affordance">
+      <Button
+        label="Latest message"
+        variant="ghost"
+        className="min-h-control"
+        isDisabled={atLatest}
+        onClick={() => {
+          navigation.current = 'latest';
+          setReveal((n) => n + 1);
+        }}
+      >
+        Latest
+      </Button>
+    </VStack>
+  );
+  const evidenceTop = (
+    <VStack gap={0} className="npg-evidence-scroll-affordance">
+      <Button
+        label="Top of evidence"
+        variant="ghost"
+        className="min-h-control"
+        isDisabled={evidenceAtTop}
+        icon={<Icon icon={ArrowUp} size="sm" />}
+        onClick={() => {
+          if (inlineResults.current) moveScroll(inlineResults.current, 0);
+        }}
+      >
+        Top
+      </Button>
+    </VStack>
   );
   const empty = !conversation?.messages.length && !submitted && !conversation?.pending;
   const summary = conversation?.pending
@@ -1024,7 +1253,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
         </VStack>
         <HStack gap={2} wrap="wrap">
           <Button
-            variant="primary"
+            variant={expired ? 'secondary' : 'primary'}
             icon={narrow ? undefined : <Icon icon={ClipboardCheck} />}
             label="Approve this action"
             className="min-h-control"
@@ -1067,6 +1296,8 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
         </Text>
         <Theme theme={npgComposerTheme} mode="light">
           <ChatComposer
+            isDisabled={navigating}
+            aria-busy={navigating}
             value={draft}
             onChange={changeDraft}
             onSubmit={(value) => void send(value)}
@@ -1143,8 +1374,45 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
       </VStack>
     </Section>
   );
+  useLayoutEffect(() => {
+    const region = thread.current;
+    if (!region) return;
+    const prior = priorFeedback.current;
+    const id = conversation?.id ?? '';
+    const count = conversation?.messages.length ?? 0;
+    const pending = conversation?.pending?.id ?? '';
+    const targets: Element[] = [];
+    if (prior.id === id && count > prior.count)
+      targets.push(...Array.from(region.querySelectorAll('.npg-saved-message')).slice(prior.count));
+    if (submitted && submitted !== prior.submitted)
+      targets.push(...region.querySelectorAll('.npg-submitted-message,.npg-working-feedback'));
+    if (notice && notice !== prior.notice)
+      targets.push(...region.querySelectorAll('.npg-error-feedback'));
+    if (pending && pending !== prior.pending)
+      targets.push(...region.querySelectorAll('.npg-review'));
+    priorFeedback.current = { id, count, submitted, notice, pending };
+    if (!targets.length) return;
+    const context = gsap.context(() => {
+      gsap.fromTo(
+        targets,
+        { opacity: reducedMotion() ? 1 : 0.65 },
+        {
+          opacity: 1,
+          duration: reducedMotion() ? 0 : 0.16,
+          clearProps: 'opacity'
+        }
+      );
+    });
+    return () => context.revert();
+  }, [
+    conversation?.id,
+    conversation?.messages.length,
+    conversation?.pending?.id,
+    submitted,
+    notice
+  ]);
   const savedMessages = conversation?.messages.map((message, index) => (
-    <ChatMessage key={index} sender={message.role}>
+    <ChatMessage key={index} sender={message.role} className="npg-saved-message">
       <ChatMessageBubble
         name={message.role === 'user' ? 'You' : 'NPG analyst'}
         variant={message.role === 'user' ? 'filled' : 'ghost'}
@@ -1159,19 +1427,36 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
       className="npg-shell"
       variant="section"
       contentPadding={0}
-      mobileNav={{ isOpen: navOpen, onOpenChange: setNavOpen, breakpoint: 'md' }}
+      mobileNav={{ isOpen: navOpen, onOpenChange: setNavOpen, breakpoint: 'xl' }}
       topNav={
         <TopNav
           label="NPG workspace"
           heading={
-            <TopNavHeading heading="Healthcare analyst" superheading="NPG · Private workspace" />
+            <TopNavHeading
+              logo={
+                <img
+                  src={npgLogo}
+                  alt="The Nurse Practitioner Group"
+                  width={441}
+                  height={288}
+                  className="w-12 lg:w-20 h-auto object-contain"
+                />
+              }
+              heading={smallPhone ? 'Analyst' : 'Healthcare analyst'}
+              superheading={smallPhone ? 'NPG · Private' : 'NPG · Private workspace'}
+            />
           }
           endContent={
             <HStack gap={3} wrap="wrap">
-              <Link href="/account" hasUnderline>
+              <Link
+                href="/account"
+                aria-label="Account"
+                className="min-h-control min-w-control inline-flex items-center justify-center"
+                hasUnderline
+              >
                 <HStack as="span" gap={2}>
                   <Icon icon={UserRound} size="sm" />
-                  Account
+                  {!smallPhone && 'Account'}
                 </HStack>
               </Link>
             </HStack>
@@ -1204,6 +1489,36 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                 key={item.id}
                 className="history-item"
                 label={item.title}
+                aria-label={
+                  item.title +
+                  ' · ' +
+                  conversationStatus(item.status) +
+                  ' · ' +
+                  new Date(item.updated_at).toLocaleDateString([], {
+                    month: 'short',
+                    day: 'numeric'
+                  })
+                }
+                endContent={
+                  <VStack as="span" gap={0} align="end">
+                    <Text type="supporting" color="secondary">
+                      {new Date(item.updated_at).toLocaleDateString([], {
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </Text>
+                    {item.status !== 'idle' && (
+                      <Text
+                        type="supporting"
+                        color={
+                          ['running', 'review'].includes(item.status) ? 'primary' : 'secondary'
+                        }
+                      >
+                        {conversationStatus(item.status)}
+                      </Text>
+                    )}
+                  </VStack>
+                }
                 isSelected={item.id === conversation?.id}
                 isDisabled={busy}
                 onClick={() => void open(item.id, true)}
@@ -1222,27 +1537,33 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
       <HStack gap={0} height="100%" minHeight={0} className="npg-workspace min-w-0" align="stretch">
         <VStack gap={0} minHeight={0} className="npg-chat-column flex-1 min-w-0">
           <Section padding={narrow ? 2 : 4} dividers={['bottom']}>
-            {narrow ? (
+            {narrow && (!tabletToolbar || empty) ? (
               empty ? (
                 <HStack gap={2} justify="between">
                   {titleHeading}
                   {statusContent}
                 </HStack>
               ) : (
-                <VStack gap={conversation?.pending ? 0 : 1}>
+                <VStack
+                  gap={
+                    conversation?.pending || (resultsOpen && smallPhone && shortViewport) ? 0 : 1
+                  }
+                >
                   {titleHeading}
                   <HStack gap={3} justify="between" wrap="wrap">
                     {statusContent}
+                    {latestToggle}
                     {evidenceToggle}
                   </HStack>
                 </VStack>
               )
             ) : (
-              <HStack gap={3} justify="between" wrap="wrap">
+              <HStack gap={3} justify="between" align={tabletToolbar ? 'center' : undefined}>
                 {titleHeading}
-                <HStack gap={3}>
+                <HStack gap={3} align={tabletToolbar ? 'center' : undefined} className="shrink-0">
                   {statusContent}
-                  {conversation?.pending && evidenceToggle}
+                  {!empty && latestToggle}
+                  {evidenceToggle}
                 </HStack>
               </HStack>
             )}
@@ -1256,6 +1577,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
               welcome={empty}
               reviewing={Boolean(conversation?.pending)}
               thread={thread}
+              onScroll={(event) => recordScroll('thread', event.currentTarget)}
               composer={composer}
             >
               <ChatMessageList
@@ -1310,7 +1632,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                     )}
                     {!conversation?.pending && savedMessages}
                     {submitted && (
-                      <ChatMessage sender="user">
+                      <ChatMessage sender="user" className="npg-submitted-message">
                         <ChatMessageBubble name="You" width="100%">
                           <Prose text={submitted} />
                         </ChatMessageBubble>
@@ -1318,6 +1640,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                     )}
                     {busy && submitted && (
                       <Banner
+                        className="npg-working-feedback"
                         status="info"
                         title="Working on your question"
                         description="Your answer will appear here when it is ready."
@@ -1348,16 +1671,22 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                           </VStack>
                           <Fields
                             compact={!narrow}
-                            fields={terms.filter((field) => field.label === 'Scope')}
+                            fields={terms.filter((field) => field.label === 'Provider')}
                           />
                           <Text>
                             Approve only this request. Contact consent remains unverified.
                           </Text>
+                          <Fields
+                            compact={!narrow}
+                            fields={terms.filter((field) => field.label === 'Scope')}
+                          />
                           <Divider />
                           <Fields
                             review
                             compact={!narrow}
-                            fields={terms.filter((field) => field.label !== 'Scope')}
+                            fields={terms.filter(
+                              (field) => !['Provider', 'Scope'].includes(field.label)
+                            )}
                           />
                           {!duplicateTargetOnly && (
                             <>
@@ -1395,6 +1724,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                     )}
                     {notice && (
                       <Banner
+                        className="npg-error-feedback"
                         status="error"
                         title="Could not complete the request"
                         description={notice}
@@ -1420,38 +1750,61 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
             <VStack gap={0} minHeight={0} className="flex-1 min-w-0">
               <VStack
                 ref={inlineResults}
+                onScroll={(event) => recordScroll('evidence', event.currentTarget)}
                 id="npg-inline-results"
                 isScrollable
                 minHeight={0}
                 padding={4}
                 className="npg-inline-results flex-1 min-w-0"
               >
-                <Evidence sources={conversation?.sources ?? []} />
+                <Evidence
+                  key={conversation?.id ?? 'new'}
+                  sources={conversation?.sources ?? []}
+                  conversationTitle={title}
+                />
               </VStack>
               <Section padding={2} dividers={['top']} variant="section">
-                <Button
-                  icon={<Icon icon={ArrowLeft} />}
-                  label="Back to conversation"
-                  className="min-h-control"
-                  onClick={closeResults}
-                />
+                <HStack gap={2} justify="between">
+                  <Button
+                    icon={<Icon icon={ArrowLeft} />}
+                    label="Back to conversation"
+                    className="min-h-control"
+                    onClick={closeResults}
+                  />
+                  {evidenceTop}
+                </HStack>
               </Section>
             </VStack>
           )}
         </VStack>
-        {!narrow &&
-          (conversation?.pending ? resultsOpen : Boolean(conversation?.sources.length)) && (
-            <Section
-              id="npg-desktop-results"
-              className="npg-evidence w-80 xl:w-evidence shrink-0 overflow-auto min-w-0"
-              height="100%"
-              padding={6}
-              dividers={['start']}
-              aria-label="Results and evidence"
-            >
-              <Evidence sources={conversation?.sources ?? []} />
-            </Section>
-          )}
+        {!narrow && resultsOpen && (
+          <Section
+            height="100%"
+            padding={0}
+            dividers={['start']}
+            className="w-evidence shrink-0 min-w-0"
+          >
+            <VStack gap={0} height="100%" minHeight={0}>
+              <Section
+                ref={inlineResults}
+                onScroll={(event) => recordScroll('evidence', event.currentTarget)}
+                id="npg-desktop-results"
+                className="npg-evidence flex-1 overflow-auto min-w-0 min-h-0"
+                padding={6}
+                aria-label="Results and evidence"
+              >
+                <Evidence
+                  key={conversation?.id ?? 'new'}
+                  sources={conversation?.sources ?? []}
+                  conversationTitle={title}
+                />
+              </Section>
+              <Section padding={2} dividers={['top']} variant="section">
+                {evidenceTop}
+              </Section>
+            </VStack>
+          </Section>
+        )}
       </HStack>
     </AppShell>
   );

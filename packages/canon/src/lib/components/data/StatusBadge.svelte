@@ -50,8 +50,8 @@
 		width: fit-content;
 		font-size: var(--text-performance-caption);
 		font-weight: var(--font-performance-medium);
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
+		letter-spacing:0;
+		text-transform:none;
 		white-space: nowrap;
 		transition:
 			color var(--duration-performance-micro) var(--ease-performance-standard),
@@ -93,7 +93,7 @@
 	/* Pill variant: bordered muted-fill capsule */
 	.badge-pill {
 		padding: 0.125rem 0.5rem;
-		border-radius: var(--radius-performance-scale-full);
+		border-radius:var(--radius-performance-scale-sm);
 		color: var(--badge-fg);
 		background: var(--badge-bg);
 		border: 1px solid var(--badge-border);

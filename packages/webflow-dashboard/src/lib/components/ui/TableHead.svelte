@@ -65,7 +65,7 @@
 		color: var(--color-fg-secondary);
 	}
 
-	.table-head:focus-within .table-head-inner {
+	.table-head:has(:focus-visible) .table-head-inner {
 		background: transparent;
 		color: var(--color-fg-primary);
 		outline: 1px solid var(--color-focus);

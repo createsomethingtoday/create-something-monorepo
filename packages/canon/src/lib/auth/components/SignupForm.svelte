@@ -203,6 +203,7 @@
 
 <style>
 	.auth-form {
+		min-width: 0;
 		width: 100%;
 		max-width: 440px;
 	}
@@ -260,6 +261,11 @@
 	}
 
 	.input {
+		min-height: 44px;
+		background: var(--color-performance-bg-surface);
+		border: 1px solid var(--color-performance-border-default);
+		box-sizing: border-box;
+		min-width: 0;
 		width: 100%;
 		padding: var(--space-performance-sm) var(--space-performance-md);
 		border-radius: var(--radius-performance-scale-md);
@@ -273,7 +279,8 @@
 	}
 
 	.input:focus {
-		outline: none;
+		outline: 2px solid var(--color-performance-focus);
+		outline-offset: 2px;
 		border-color: var(--color-performance-border-emphasis);
 	}
 
@@ -283,12 +290,13 @@
 	}
 
 	.submit-button {
+		box-sizing: border-box;
 		width: 100%;
 		padding: var(--space-performance-sm) var(--space-performance-md);
 		background: var(--color-performance-fg-primary);
 		color: var(--color-performance-bg-pure);
 		border: none;
-		border-radius: var(--radius-performance-scale-full);
+		border-radius: var(--radius-performance-scale-md);
 		font-size: var(--text-performance-body);
 		font-weight: 600;
 		cursor: pointer;
@@ -347,11 +355,13 @@
 	}
 
 	.magic-link-button {
+		box-sizing: border-box;
+		border: 1px solid var(--color-performance-border-default);
 		width: 100%;
 		padding: var(--space-performance-sm) var(--space-performance-md);
 		background: transparent;
 		color: var(--color-performance-fg-primary);
-		border-radius: var(--radius-performance-scale-full);
+		border-radius: var(--radius-performance-scale-md);
 		font-size: var(--text-performance-body);
 		font-weight: 500;
 		cursor: pointer;
@@ -399,12 +409,16 @@
 	}
 
 	.link-button {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 		background: none;
 		border: none;
 		color: var(--color-performance-fg-secondary);
 		font-size: inherit;
 		cursor: pointer;
-		padding: 0;
+		padding: 0.5rem;
 		text-decoration: underline;
 		transition: color var(--duration-performance-micro) var(--ease-performance-standard);
 	}

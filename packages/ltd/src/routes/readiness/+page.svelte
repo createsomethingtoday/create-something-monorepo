@@ -243,18 +243,18 @@
 
 	.readiness-page__result {
 		border-top: 1px solid var(--color-performance-line, #d7d7d2);
-		border-left: 4px solid var(--color-operator-status-review-text);
-		background: var(--color-operator-secondary);
+		border-left: 4px solid var(--color-performance-review);
+		background: var(--color-performance-bg-elevated);
 	}
 
 	.readiness-page__result[data-state='ready'] {
-		border-left-color: var(--color-operator-status-done-text);
-		background: var(--color-operator-secondary);
+		border-left-color: var(--color-performance-success);
+		background: var(--color-performance-bg-elevated);
 	}
 
 	.readiness-page__result[data-state='blocked'] {
-		border-left-color: var(--color-operator-status-blocked-text);
-		background: var(--color-operator-secondary);
+		border-left-color: var(--color-performance-error);
+		background: var(--color-performance-bg-elevated);
 	}
 
 	.readiness-page__result > p:first-child {

@@ -22,7 +22,7 @@ Canon is the package boundary where visual primitives, governance UI language, A
 
 | Consumer | What This Package Clarifies |
 |----------|----------------------------|
-| `.ltd`, `.agency`, `.space`, `.io` | Which components, tokens, Atlas contracts, and Clear primitives should be reused instead of recreated |
+| `.ltd`, `.agency`, `.space`, `.io` | Which canonical components, palette scopes, Atlas contracts and Performance patterns should be reused instead of recreated |
 | `@create-something/mcp` | Which Canon artifacts can be exposed to agents as resources and tools |
 | project overlays | How local client patterns mature into Canon candidates or stable primitives |
 
@@ -30,8 +30,8 @@ Canon is the package boundary where visual primitives, governance UI language, A
 
 ```text
 src/lib/
-├── components/       -> shared Svelte UI primitives, including Clear communication surfaces
-├── styles/           -> Canon CSS, token, glass, performance, and generated token artifacts
+├── components/       -> shared Svelte UI primitives, Performance compositions and Clear compatibility exports
+├── styles/           -> canonical light/dark CSS, tokens and portable generated artifacts
 ├── atlas/            -> renderer-independent Atlas graph/story contracts plus Svelte renderers
 ├── governance/       -> Signal, Decision, Proof product contract
 ├── registry/         -> machine-readable Canon manifest, search helpers, and modality contracts
@@ -65,7 +65,7 @@ src/lib/
 |---------|------------|---------------|
 | Canon registry | Agent-readable manifest of components, tokens, templates, adapters, policies, modalities, and extension lifecycle | `src/lib/registry/` |
 | Opt-in dark neutrals | Scoped `--color-operator-*` roles and a separate parity artifact; no global Performance retheme | `src/lib/styles/operator.md` |
-| Clear primitives | Canon-owned communication components for governed, proof-bearing work | `src/lib/components/clear/` |
+| Performance / Clear compatibility | Canon-owned communication components preserve authority, evidence and receipt semantics | `src/lib/components/clear/` |
 | Atlas artifact | Renderer-independent graph/story contract for workflow maps | `src/lib/atlas/headless.ts` |
 | Signal Decision Proof | Governance loop attached to Atlas nodes and UI templates | `src/lib/governance/products.ts` |
 
@@ -86,4 +86,10 @@ src/lib/
 
 ---
 
-*Last validated: 2026-07-03*
+*Source and local Canon validation updated: 2026-11-13. Consumer deployment and independent final design acceptance are separate gates.*
+
+## Current visual and implementation boundary
+
+The website default is true black with neutral gray surfaces, clear white actions and locally loaded Geist. Explicit light work surfaces rebind derived state aliases; workspace remains dark and specialist operator roles remain namespaced. Existing public names and entrypoints carry the foundation. Solid controls, 44px targets, visible focus and readable error descriptions are standard; glass/shine is not the default material. Heroes and CTA sections use CSS background imagery with readable HTML; subsequent editorial sections may use inline images. Measured rules, useful chapter labels and square artwork frames balance the original tactile character and workshop whimsy.
+
+Read `APPROACHABLE-SYSTEM.md` for the current direction and boundaries. `/next/components`, `/next/patterns` and `/next/compositions` exercise actual canonical components; `/next/character` and `/next/world` separate provisional character studies from approved scene originals. Migration and independent-review reports record tested scope and remaining findings. A package build, static concept or local browser fixture does not establish production acceptance.

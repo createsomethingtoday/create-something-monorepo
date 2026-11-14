@@ -13,6 +13,6 @@
 
 <style>
   .library-scene { margin: clamp(1.75rem, 4vw, 3rem) 0 0; width: 100%; text-align: left; }
-  img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: contain; background: var(--color-operator-secondary, #17191c); }
-  figcaption { margin-top: .65rem; color: var(--color-operator-muted, #a8abb2); font-family: var(--font-mono, monospace); font-size: .75rem; line-height: 1.6; }
+  img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: contain; background: var(--color-performance-bg-elevated); }
+  figcaption { margin-top: .65rem; color: var(--color-performance-muted); font-family: var(--font-performance-mono, monospace); font-size: .75rem; line-height: 1.6; }
 </style>

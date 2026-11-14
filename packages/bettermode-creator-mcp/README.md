@@ -21,10 +21,16 @@ MCP server exposing Bettermode + Airtable + response-queue helpers to an agent (
 | `list_response_queue(limit)` | Threads where a creator spoke last, longest wait first, each with its draft and any drafting error | See what needs a reply |
 | `save_draft(post_id, draft, reasoning?)` | `{ ok, queue_id }` | Store a draft for the admin to review and send. Replaces the current draft. |
 | `dismiss_queue_item(post_id, reason)` | `{ ok }` | Close an item that needs no reply. A creator message after the dismissal reopens it. |
+| `get_queue_health()` | Sweep and webhook times, item counts, open drafts, longest wait, sends in 7 days, items with an error | Check that the queue is working |
+| `list_queue_history(limit?)` | Closed items, newest first: sent, answered in Bettermode, dismissed (with reason), removed | See what was handled |
 
 A typical agent pass: `list_response_queue` → `fetch_post_thread` and `get_creator_context` for each item → `save_draft` or `dismiss_queue_item`. The admin then sends from the post page in Bettermode.
 
 All tools return one `text` content block whose body is JSON.
+
+### Dashboard API (`QueueApi`)
+
+`worker/index.ts` also exports `QueueApi`, a named Worker entrypoint with no public URL: `listQueue`, `getThread`, `health`, `history`, `saveDraft`, `dismiss`, `sendDraft`. The Template Review MCP calls it through a service binding for its `template_review_community_*` tools, and that MCP decides who may write. `sendDraft` posts the reply through the agent Worker's `QueueAdmin` entrypoint (`CREATOR_AGENT` binding). No MCP tool here sends.
 
 ## Architecture
 

@@ -53,8 +53,8 @@ published: true
 `performance`; `clear` remains an input alias for downstream compatibility.
 
 Use `performance` when the page must serve a buyer or operator who needs immediate orientation before
-brand atmosphere. The style follows the Performance Lab layer: a light shell,
-compact readable links, crisp dividers, restrained active states, direct dark CTA, and no decorative
+brand atmosphere. The style follows the Performance Lab layer: the owning neutral palette,
+compact readable links, crisp dividers, restrained active states, clear neutral CTA, and no decorative
 navigation complexity.
 
 Performance navigation should route people into proof-bearing work, not generic brand exploration. Prefer

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { createHash } from 'node:crypto';
 
 import type { AirtableClient, AppReviewVersion, CollaboratorRef } from './airtable.js';
-import { AirtableClientError, assertReviewerAssignmentReadOnly } from './airtable.js';
+import { AirtableClientError, assertReviewerAssignmentReadOnly, compareExceptionItems } from './airtable.js';
 import type { ZendeskClient } from './zendesk.js';
 import { ZENDESK_WRITABLE_STATUSES, ZendeskClientError, renderCreatorFacingHtml } from './zendesk.js';
 import {
@@ -760,7 +760,7 @@ export function registerTools(
 
   server.tool(
     'app_review_get_review_context',
-    'Read-only starting point to prepare, start, or kick off a new MCP review cycle, including asset updates. Reads the existing reviewer and status without changing either. Wait for the bundle if it has not been uploaded. Never assign a reviewer or set In Review merely to prepare a review. Returns separate reviewFeedback and rejectionFeedback at both context and context.version. Check both fields for findings; reviewFeedback may be absent or empty even when rejectionFeedback contains rejection findings.',
+    'Read-only starting point to prepare, start, or kick off a new MCP review cycle, including asset updates. Reads the existing reviewer and status without changing either. Wait for the bundle if it has not been uploaded. Never assign a reviewer or set In Review merely to prepare a review. Returns separate reviewFeedback and rejectionFeedback at both context and context.version. Check both fields for findings; reviewFeedback may be absent or empty even when rejectionFeedback contains rejection findings. context.assetExceptions lists the app\'s ⚖️Exceptions rows from every version with their decision notes. Read them before the review: a ✅Approved row can set conditions that apply to every later version, so check this version against each one and report any condition it does not meet. When context.assetExceptionNotesOmitted is true, the notes were too long to include: call app_review_list_asset_exceptions with the same version_id for them before the review.',
     {
       version_id: z.string().min(1),
     },
@@ -1612,17 +1612,7 @@ export function registerTools(
           ? allItems.filter((item) => item.exceptionStatus === params.status)
           : allItems;
 
-        const statusOrder = new Map<string, number>(
-          (EXCEPTION_STATUS_OPTIONS as readonly string[]).map((s, i) => [s, i]),
-        );
-        const sortKey = (item: (typeof items)[number]) =>
-          item.decisionDatetime ?? item.requestedDatetime ?? item.createdTime ?? '';
-        items.sort((a, b) => {
-          const orderA = statusOrder.get(a.exceptionStatus ?? '') ?? 99;
-          const orderB = statusOrder.get(b.exceptionStatus ?? '') ?? 99;
-          if (orderA !== orderB) return orderA - orderB;
-          return sortKey(a).localeCompare(sortKey(b));
-        });
+        items.sort(compareExceptionItems);
 
         const counts: Record<string, number> = {};
         for (const item of allItems) {
@@ -1707,14 +1697,16 @@ export function registerTools(
 
   server.tool(
     'app_review_update_exception_item',
-    'Update a per-item exception row (⚖️Exceptions table). Setting exception_status triggers the #app-review-exceptions automation and auto-stamps the request/decision datetime — fill text fields before or together with the status flip. Decisions (✅Approved / ❌Denied) belong to the decision-maker; include decision_notes with any decision.',
+    'Update a per-item exception row (⚖️Exceptions table). Setting exception_status triggers the #app-review-exceptions automation and auto-stamps the request/decision datetime — fill text fields before or together with the status flip. The app review team decides exceptions (✅Approved / ❌Denied); include notes with any decision. decision_notes REPLACES the whole field, so new text alone deletes the earlier decision and its conditions. To add to a row (a check against a condition, a build hash, a follow-up), use append_decision_note: it adds a dated line and keeps the earlier notes.',
     {
       exception_item_id: z.string().min(1),
       item: z.string().optional(),
       exception_status: z.enum(EXCEPTION_STATUS_OPTIONS).optional(),
       exception_type: z.enum(EXCEPTION_TYPE_OPTIONS).optional(),
       rationale: z.string().optional(),
-      decision_notes: z.string().optional(),
+      decision_notes: z.string().optional().describe('REPLACES the whole decision-notes field. Do not send it with append_decision_note.'),
+      append_decision_note: z.string().min(1).optional().describe('Adds a line with the UTC date after the existing decision notes. The earlier notes stay.'),
+      noted_by: z.string().optional().describe('Your display name for the appended line (e.g. "Shea Sisco")'),
     },
     async (params) => {
       try {
@@ -1725,6 +1717,8 @@ export function registerTools(
           exception_type: params.exception_type,
           rationale: params.rationale,
           decision_notes: params.decision_notes,
+          append_decision_note: params.append_decision_note,
+          noted_by: params.noted_by,
         }));
         return asSuccess({ exception_item: updated });
       } catch (error) {

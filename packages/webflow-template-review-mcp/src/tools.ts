@@ -43,6 +43,11 @@ import {
 } from './review-comments.js';
 import { observeTemplateHandoff, templateHandoffRequestSchema } from './handoff-observation.js';
 import { CHECKLIST_KIND_VALUES, parseChecklist } from './checklist.js';
+import {
+  COMMUNITY_QUEUE_WRITE_TOOL_NAMES,
+  registerCommunityQueueTools,
+  type CommunityQueueConfig,
+} from './community-queue.js';
 import { COMPREHENSIVE_REVIEW_LANE_IDS, EVIDENCE_LABELS, formatComprehensiveAgentReviewFeedback } from './comprehensive-review-feedback.js';
 import { COMPREHENSIVE_REVIEW_CONTRACT } from './comprehensive-review-contract.js';
 import { RUBRIC_DIMENSIONS } from './comprehensive-review-contract.js';
@@ -403,6 +408,12 @@ export interface ToolRuntimeConfig extends ValidationToolConfig {
   marketplaceCms?: MarketplaceCmsConfig;
   /** Submission guidelines endpoint (template-search Worker); defaults to production. */
   guidelinesUrl?: string;
+  /**
+   * Marketplace Creators community response queue (service binding to the
+   * creator MCP). The tools fail closed with COMMUNITY_QUEUE_NOT_CONFIGURED
+   * when the binding is absent.
+   */
+  communityQueue?: CommunityQueueConfig;
 }
 
 /**
@@ -455,6 +466,9 @@ export const WRITE_TOOL_NAMES: ReadonlySet<string> = new Set([
   // Templates CMS (including other templates' related-assets).
   'template_review_delist_template',
   'template_review_relist_template',
+  // Community response queue: draft and dismissal are internal; send posts a
+  // public reply in the Marketplace Creators space.
+  ...COMMUNITY_QUEUE_WRITE_TOOL_NAMES,
 ]);
 
 /**
@@ -694,6 +708,8 @@ export function registerTools(
       },
     );
   }
+
+  registerCommunityQueueTools(server, getReviewer, runtimeConfig.communityQueue ?? {});
 
   server.tool('template_review_workflow', 'Reviewer onboarding guide — call this FIRST to learn the complete review workflow, tool sequence, analyzer interpretation, and decision criteria. No parameters needed.', {}, async () => ({
     content: [{ type: 'text' as const, text: REVIEW_WORKFLOW }],

@@ -2,12 +2,12 @@
   "id": "substrate:create-something:topology-diagnostics:internal",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-11-10T15:39:04.857Z",
+  "generatedAt": "2026-11-14T01:59:16.833Z",
   "summary": {
     "valueState": "connected_map_with_review_signals",
-    "nodes": 570,
-    "edges": 1192,
-    "mapped": 570,
+    "nodes": 574,
+    "edges": 1198,
+    "mapped": 574,
     "hardGapCount": 0,
     "reviewSignalCount": 6,
     "exactDuplicatePathCount": 0,
@@ -17,7 +17,7 @@
       "package": 73,
       "app": 15,
       "agent": 36,
-      "worker": 180,
+      "worker": 184,
       "mcp": 77,
       "client": 8,
       "doc": 6,
@@ -26,9 +26,9 @@
       "config": 24
     },
     "tierCounts": {
-      "Mixed": 142,
+      "Mixed": 143,
       "Judgment": 109,
-      "Automation": 290,
+      "Automation": 293,
       "Database": 29
     }
   },
@@ -60,11 +60,11 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Automation and Database balance",
-      "summary": "Automation has 290 record(s); Database has 29 record(s). This is a business-shape review signal, not a hard gap.",
+      "summary": "Automation has 293 record(s); Database has 29 record(s). This is a business-shape review signal, not a hard gap.",
       "evidence": [
-        "Automation=290",
+        "Automation=293",
         "Database=29",
-        "Total nodes=570"
+        "Total nodes=574"
       ],
       "nodeIds": [],
       "paths": [],
@@ -75,7 +75,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Worker surface concentration",
-      "summary": "180 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.",
+      "summary": "184 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.",
       "evidence": [
         "worker: packages/a2a",
         "worker: packages/agency",
@@ -107,10 +107,10 @@
         "substrate:create-something:package:create-something-gsap-validation-worker-packages-gsap-validation-worker",
         "substrate:create-something:package:halfdozen-youtube-sync-worker-packages-half-dozen-youtube-sync-worker",
         "substrate:create-something:package:halfdozen-gmail-sync-worker-packages-halfdozen-gmail-sync-worker",
+        "substrate:create-something:package:create-something-halfdozen-transcript-monitor-packages-halfdozen-transcript-monitor",
         "substrate:create-something:package:halfdozen-zoom-sync-worker-packages-halfdozen-zoom-sync-worker",
         "substrate:create-something:package:create-something-halfdozen-zoom-transcript-sync-packages-halfdozen-zoom-transcript-sync",
-        "substrate:create-something:package:create-something-identity-worker-packages-identity-worker",
-        "substrate:create-something:package:create-something-bundle-scanner-api-packages-io-workers-bundle-scanner-api"
+        "substrate:create-something:package:create-something-identity-worker-packages-identity-worker"
       ],
       "paths": [
         "packages/a2a",
@@ -133,10 +133,10 @@
         "packages/gsap-validation-worker",
         "packages/half-dozen-youtube-sync/worker",
         "packages/halfdozen-gmail-sync/worker",
+        "packages/halfdozen-transcript-monitor",
         "packages/halfdozen-zoom-sync/worker",
         "packages/halfdozen-zoom-transcript-sync",
-        "packages/identity-worker",
-        "packages/io/workers/bundle-scanner-api"
+        "packages/identity-worker"
       ],
       "nextAction": "Review worker records through runtime binding coverage before promoting execution claims."
     },
@@ -145,7 +145,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "worker surface review",
-      "summary": "180 record(s) are classified as worker.",
+      "summary": "184 record(s) are classified as worker.",
       "evidence": [
         "@create-something/a2a: packages/a2a",
         "@create-something/agency: packages/agency",

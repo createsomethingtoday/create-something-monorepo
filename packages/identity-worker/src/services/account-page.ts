@@ -1,32 +1,36 @@
 /** Shared Identity UI. Credentials and proof stay in memory; app access remains separate. */
 export interface AccountPageOptions {
   gigiSignupEnabled?: boolean;
+  a2aSignupEnabled?: boolean;
   app?: string;
   verificationMode?: string;
 }
 
 export function accountPage(path: string, options: AccountPageOptions = {}): Response | null {
   const gigiSignup = options.gigiSignupEnabled === true && options.app === 'gigi';
+  const a2aSignup = options.a2aSignupEnabled === true && options.app === 'a2a';
+  const appSignup = gigiSignup || a2aSignup;
+  const appName = options.app === 'a2a' ? 'A2A' : 'GiGi';
   if (!['/login', '/recover', '/verify', '/signup'].includes(path)) return null;
-  if (path === '/signup' && !gigiSignup) return null;
+  if (path === '/signup' && !appSignup) return null;
   const mode = path === '/signup' ? 'signup' : path === '/recover' ? 'recovery' : path === '/verify' ? 'verify' : 'entry';
   // Presentation only: the completion endpoint derives purpose/application from stored proof.
-  const signupVerification = mode === 'verify' && options.app === 'gigi' && options.verificationMode === 'signup';
-  const title = mode === 'signup' ? 'Create your GiGi account' : mode === 'recovery' ? 'Recover your account' : mode === 'verify' ? signupVerification ? 'Set your GiGi password' : 'Choose a new password' : 'Your account';
+  const signupVerification = mode === 'verify' && ['gigi','a2a'].includes(options.app ?? '') && options.verificationMode === 'signup';
+  const title = mode === 'signup' ? `Create your ${appName} account` : mode === 'recovery' ? 'Recover your account' : mode === 'verify' ? signupVerification ? `Set your ${appName} password` : 'Choose a new password' : 'Your account';
   const script = `
 const params = new URLSearchParams(location.search);
-const app = params.get('app') === 'gigi' ? 'gigi' : '';
+const app = ['gigi','a2a'].includes(params.get('app')) ? params.get('app') : '';
 const mode = ${JSON.stringify(mode)};
 const signupVerification = ${JSON.stringify(signupVerification)};
 const recovery = document.querySelector('#recovery');
 const login = document.querySelector('#login');
-if (recovery) recovery.href = '/recover' + (app ? '?app=gigi' : '');
+if (recovery) recovery.href = '/recover' + (app ? '?app=' + app : '');
 if (mode === 'recovery' && recovery) recovery.hidden = true;
 const signup = document.querySelector('#signup');
-if (signup) signup.href = '/signup?app=gigi';
-if (login) login.href = '/login' + (app ? '?app=gigi' : '');
+if (signup) signup.href = '/signup?app=' + app;
+if (login) login.href = '/login' + (app ? '?app=' + app : '');
 const returnLink = document.querySelector('#return');
-if (app) { returnLink.hidden = false; returnLink.href = 'https://createsomething.agency/gigi/beta'; }
+if (app) { returnLink.hidden = false; returnLink.href = app === 'a2a' ? 'https://a2a.createsomething.agency/inboxes' : 'https://createsomething.agency/gigi/beta'; returnLink.textContent = app === 'a2a' ? 'Open your inboxes' : 'Return to GiGi'; }
 `;
   const formScript = mode === 'entry' ? '' : `
 const form = document.querySelector('form');
@@ -63,7 +67,7 @@ form.addEventListener('submit', async event => {
       : mode === 'recovery'
         ? 'If your address can receive account verification, a link will arrive shortly. It expires in 15 minutes. Check your spam folder too.'
         : signupVerification
-          ? 'Your GiGi account is ready. Return to the GiGi sign-in tab and enter your email and password. If that request expired, return to GiGi on your Mac and choose Sign in to GiGi sources again. Google consent is a separate next step.'
+          ? app === 'a2a' ? 'Your account is ready. Open your inboxes and sign in with your verified email and password. Agent connections and memberships need separate approval.' : 'Your GiGi account is ready. Return to the GiGi sign-in tab and enter your email and password. If that request expired, return to GiGi on your Mac and choose Sign in to GiGi sources again. Google consent is a separate next step.'
           : 'Your password has been updated. Sign in again in the app you want to use.';
     status.focus();
   } catch { error.textContent = 'We could not connect. Check your connection and try again.'; }
@@ -71,7 +75,7 @@ form.addEventListener('submit', async event => {
 });`;
   const step = mode === 'signup' ? '1 / Verify your email' : mode === 'recovery' ? 'Password recovery' : mode === 'verify' ? signupVerification ? '2 / Choose your password' : 'Password update' : 'Account access';
   const description = mode === 'signup'
-    ? 'Use your email to create a free GiGi account. Verify your address, choose a password, then return to GiGi on your Mac.'
+    ? options.app === 'a2a' ? 'Verify your email, choose a password, then open your shared inboxes. Agent access requires your separate approval.' : 'Use your email to create a free GiGi account. Verify your address, choose a password, then return to GiGi on your Mac.'
     : mode === 'recovery'
     ? 'Verify your email to choose a new password for your CREATE SOMETHING account.'
     : mode === 'verify'
@@ -162,8 +166,8 @@ footer{border-top:1px solid var(--color-performance-line)}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
 </style></head><body>
 <header><div class="header-inner"><a class="brand" href="/login">CREATE SOMETHING</a><span class="product-label">Identity</span></div></header>
-<main><section aria-labelledby="account-title"><p class="eyebrow">One account. Your choice of apps.</p><h1 id="account-title">${title}.</h1><p>${description}</p><div class="boundary"><span class="record-label">Your access stays separate</span><p>${mode === 'signup' || signupVerification || gigiSignup ? 'Local GiGi records need no account. Connecting Google sources requires separate consent. Other applications keep their own access rules.' : 'Account access does not connect tools or grant app access. Beta account creation is by invitation.'}</p></div></section>
-<section class="workspace" aria-label="Account access"><p class="record-label">${step}</p>${mode === 'entry' ? '<h2>Choose your next step</h2><nav class="applications" aria-label="Applications"><a href="https://createsomething.agency/gigi/beta">GiGi for Mac<span class="application-arrow" aria-hidden="true">↗</span></a><a href="https://private.createsomething.agency/login">Private networks<span class="application-arrow" aria-hidden="true">↗</span></a></nav><p class="workspace-note">For GiGi, return to the app on your Mac.</p>' : `<form>${mode !== 'verify' ? '<label>Email<input name="email" type="email" autocomplete="username" maxlength="254" required></label>' : ''}${mode === 'verify' ? `<label>Password<input name="password" type="password" autocomplete="${mode === 'verify' ? 'new-password' : 'current-password'}" ${mode === 'verify' ? 'minlength="12" maxlength="256"' : ''} required></label>` : ''}${mode === 'verify' ? '<label>Confirm password<input name="confirmation" type="password" autocomplete="new-password" minlength="12" maxlength="256" required></label>' : ''}<button>${mode === 'signup' ? 'Email verification link' : mode === 'recovery' ? 'Email recovery link' : signupVerification ? 'Create account' : 'Save password'}</button></form>`}<p role="alert"></p><p role="status" tabindex="-1"></p><nav class="account-links">${(gigiSignup && mode !== 'signup') || signupVerification ? `<a id="signup" href="/signup?app=gigi">${signupVerification ? 'Request a new verification link' : 'Create a GiGi account'}</a>` : ''}<a id="recovery" href="/recover">Forgot your password?</a>${mode === 'entry' ? '' : '<a id="login" href="/login">Back to your account</a>'}<a id="return" hidden href="https://createsomething.agency/gigi/beta">Return to GiGi</a></nav><noscript><p class="workspace-note">Enable JavaScript to use this account form.</p></noscript></section></main>
+<main><section aria-labelledby="account-title"><p class="eyebrow">One account. Your choice of apps.</p><h1 id="account-title">${title}.</h1><p>${description}</p><div class="boundary"><span class="record-label">Your access stays separate</span><p>${options.app === 'a2a' ? 'Account verification does not grant inbox membership or let an agent act for you. Approve each connection and membership separately.' : mode === 'signup' || signupVerification || gigiSignup ? 'Local GiGi records need no account. Connecting Google sources requires separate consent. Other applications keep their own access rules.' : 'Account access does not connect tools or grant app access. Beta account creation is by invitation.'}</p></div></section>
+<section class="workspace" aria-label="Account access"><p class="record-label">${step}</p>${mode === 'entry' ? '<h2>Choose your next step</h2><nav class="applications" aria-label="Applications"><a href="https://createsomething.agency/gigi/beta">GiGi for Mac<span class="application-arrow" aria-hidden="true">↗</span></a><a href="https://private.createsomething.agency/login">Private networks<span class="application-arrow" aria-hidden="true">↗</span></a></nav><p class="workspace-note">For GiGi, return to the app on your Mac.</p>' : `<form>${mode !== 'verify' ? '<label>Email<input name="email" type="email" autocomplete="username" maxlength="254" required></label>' : ''}${mode === 'verify' ? `<label>Password<input name="password" type="password" autocomplete="${mode === 'verify' ? 'new-password' : 'current-password'}" ${mode === 'verify' ? 'minlength="12" maxlength="256"' : ''} required></label>` : ''}${mode === 'verify' ? '<label>Confirm password<input name="confirmation" type="password" autocomplete="new-password" minlength="12" maxlength="256" required></label>' : ''}<button>${mode === 'signup' ? 'Email verification link' : mode === 'recovery' ? 'Email recovery link' : signupVerification ? 'Create account' : 'Save password'}</button></form>`}<p role="alert"></p><p role="status" tabindex="-1"></p><nav class="account-links">${(appSignup && mode !== 'signup') || signupVerification ? `<a id="signup" href="/signup?app=${options.app === 'a2a' ? 'a2a' : 'gigi'}">${signupVerification ? 'Request a new verification link' : options.app === 'a2a' ? 'Create an A2A account' : 'Create a GiGi account'}</a>` : ''}<a id="recovery" href="/recover">Forgot your password?</a>${mode === 'entry' ? '' : '<a id="login" href="/login">Back to your account</a>'}<a id="return" hidden href="https://createsomething.agency/gigi/beta">Return to GiGi</a></nav><noscript><p class="workspace-note">Enable JavaScript to use this account form.</p></noscript></section></main>
 <footer><div class="footer-inner"><span>CREATE SOMETHING / Identity</span><div class="footer-links"><a href="https://createsomething.agency/privacy">Privacy</a><a href="https://createsomething.agency/terms">Terms</a></div></div></footer><script nonce="${nonce}">${script}${formScript}</script></body></html>`, {headers: {
     'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer',
     'X-Content-Type-Options': 'nosniff', 'X-Robots-Tag': 'noindex, nofollow',

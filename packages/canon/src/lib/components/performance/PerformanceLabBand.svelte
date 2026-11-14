@@ -100,7 +100,7 @@
     font-weight: var(--font-performance-semibold, 600);
     letter-spacing: 0;
     line-height: 1.25;
-    text-transform: uppercase;
+    text-transform:none;
   }
 
   .performance-lab-band__identity span {
@@ -108,13 +108,13 @@
   }
 
   .performance-lab-band__identity small {
-    color: rgba(255, 255, 255, 0.58);
+    color:var(--color-performance-panel);
   }
 
   .performance-lab-band__statement {
     align-content: center;
     background:
-      linear-gradient(90deg, rgba(9, 9, 9, 0.045) 1px, transparent 1px) 0 0 / 2.75rem 2.75rem,
+      linear-gradient(90deg, var(--color-performance-grid) 1px, transparent 1px) 0 0 / 2.75rem 2.75rem,
       var(--color-performance-panel, #ffffff);
   }
 

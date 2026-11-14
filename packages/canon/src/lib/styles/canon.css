@@ -56,46 +56,46 @@
   }
 
   h1 {
-    font-size: var(--text-performance-display-xl);
-    font-weight: var(--font-performance-semibold);
+    font-size: var(--text-performance-display);
+    font-weight: var(--font-performance-medium);
     line-height: 1.05;
     letter-spacing: var(--tracking-performance-tighter);
   }
 
   h2 {
     font-size: var(--text-performance-h1);
-    font-weight: var(--font-performance-semibold);
+    font-weight: var(--font-performance-medium);
     line-height: var(--leading-performance-tight);
     letter-spacing: var(--tracking-performance-tighter);
   }
 
   h3 {
     font-size: var(--text-performance-h2);
-    font-weight: var(--font-performance-semibold);
+    font-weight: var(--font-performance-medium);
     line-height: var(--leading-performance-snug);
-    letter-spacing: var(--tracking-performance-tight);
+    letter-spacing: var(--tracking-performance-normal);
   }
 
   h4 {
     font-size: var(--text-performance-h3);
-    font-weight: var(--font-performance-semibold);
+    font-weight: var(--font-performance-medium);
     line-height: var(--leading-performance-snug);
   }
 
   h5 {
     font-size: var(--text-performance-h4);
-    font-weight: var(--font-performance-semibold);
+    font-weight: var(--font-performance-medium);
   }
 
   h6 {
     font-size: var(--text-performance-h5);
-    font-weight: var(--font-performance-semibold);
+    font-weight: var(--font-performance-medium);
   }
 
   p {
     font-size: var(--text-performance-body);
     line-height: var(--leading-performance-relaxed);
-    letter-spacing: var(--tracking-performance-tight);
+    letter-spacing: var(--tracking-performance-normal);
   }
 
   /* Code and monospace elements */
@@ -161,7 +161,8 @@ a {
 }
 
 a:hover {
-  opacity: 0.7;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
 }
 
 .card {
@@ -170,7 +171,7 @@ a:hover {
 
 .card:hover {
   border-color: var(--color-performance-border-strong);
-  transform: translateX(2px);
+  transform: none;
 }
 
 /* ==========================================================================
@@ -309,56 +310,9 @@ body.transitioning-in {
    ========================================================================== */
 
 @media (prefers-contrast: more) {
-  :root {
-    /* Background colors - darker, more separation */
-    --color-performance-bg-pure: #000000;
-    --color-performance-bg-elevated: #050505;
-    --color-performance-bg-surface: #0a0a0a;
-    --color-performance-bg-subtle: #121212;
-
-    /* Foreground colors - brighter, higher contrast
-       All achieve WCAG AAA (7:1+) on pure black */
-    --color-performance-fg-primary: #ffffff;
-    --color-performance-fg-secondary: rgba(255, 255, 255, 0.95);
-    --color-performance-fg-tertiary: rgba(255, 255, 255, 0.85);
-    --color-performance-fg-muted: rgba(255, 255, 255, 0.75); /* Increased from 0.46 */
-    --color-performance-fg-subtle: rgba(255, 255, 255, 0.5); /* Increased from 0.2 */
-
-    /* Border colors - more visible */
-    --color-performance-border-default: rgba(255, 255, 255, 0.3); /* Increased from 0.1 */
-    --color-performance-border-emphasis: rgba(255, 255, 255, 0.5); /* Increased from 0.2 */
-    --color-performance-border-strong: rgba(255, 255, 255, 0.7); /* Increased from 0.3 */
-
-    /* Interactive states - more prominent */
-    --color-performance-hover: rgba(255, 255, 255, 0.15); /* Increased from 0.05 */
-    --color-performance-active: rgba(255, 255, 255, 0.25); /* Increased from 0.1 */
-    --color-performance-focus: rgba(255, 255, 255, 0.9); /* Increased from 0.5 */
-
-    /* Semantic colors - brighter for high contrast
-       All achieve WCAG AAA (7:1+) on pure black */
-    --color-performance-success: #5ddb5d; /* Brighter green: 10.8:1 */
-    --color-performance-success-muted: rgba(93, 219, 93, 0.3);
-    --color-performance-success-border: rgba(93, 219, 93, 0.5);
-
-    --color-performance-error: #ff6b6b; /* Brighter red: 6.77:1 */
-    --color-performance-error-muted: rgba(255, 107, 107, 0.3);
-    --color-performance-error-border: rgba(255, 107, 107, 0.5);
-
-    --color-performance-warning: #ffc857; /* Brighter amber: 12.4:1 */
-    --color-performance-warning-muted: rgba(255, 200, 87, 0.3);
-    --color-performance-warning-border: rgba(255, 200, 87, 0.5);
-
-    --color-performance-info: #7eb8ff; /* Brighter blue: 9.17:1 */
-    --color-performance-info-muted: rgba(126, 184, 255, 0.3);
-    --color-performance-info-border: rgba(126, 184, 255, 0.5);
-
-    /* Data visualization - brighter palette */
-    --color-performance-data-1: #93c5fd; /* Brighter blue */
-    --color-performance-data-2: #4ade80; /* Brighter green */
-    --color-performance-data-3: #d8b4fe; /* Brighter purple */
-    --color-performance-data-4: #fcd34d; /* Brighter amber */
-    --color-performance-data-5: #f9a8d4; /* Brighter pink */
-    --color-performance-data-6: #fde047; /* Brighter yellow */
+  :root, [data-theme], .theme-light, .theme-dark {
+    --color-performance-border-default: currentColor;
+    --color-performance-line: currentColor;
   }
 
   /* Enhanced focus visible state for high contrast */
@@ -863,7 +817,8 @@ pre code.hljs {
 
   /* Subtle variant: 0.7 opacity (gentler dimming) */
   .highlight-subtle:hover .highlight-item:not(:hover) {
-    opacity: 0.7;
+    text-decoration: underline;
+  text-underline-offset: 0.2em;
   }
 
   /* Strong variant: 0.3 opacity (dramatic focus) */
@@ -1526,3 +1481,9 @@ pre code.hljs {
     }
   }
 }
+
+/* Palette boundaries also inform native controls. Token-only consumers may set
+   color-scheme themselves when they intentionally omit Canon base styles. */
+:root { color-scheme: dark; }
+[data-theme='light'], .theme-light { color-scheme: light; }
+[data-theme='dark'], .theme-dark, .cs-workspace { color-scheme: dark; }
