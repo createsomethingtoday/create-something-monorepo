@@ -66,7 +66,7 @@ interface Env {
   MARKETPLACE_ZENDESK_GROUP_ID?: string;
   /** Kill switch for developer-facing hold notices + 7-day reminders ("1" disables). */
   HOLD_NOTICES_DISABLED?: string;
-  /** webflow-review-comments Worker. Both unset = the comment tools are not registered. */
+  /** Review comments service (repo webflow/marketplace-review-comments). Both unset = the comment tools are not registered. */
   REVIEW_COMMENTS_URL?: string;
   /** This MCP's reviewer key for that Worker, scope "app" (secret via `wrangler secret put`). */
   REVIEW_COMMENTS_API_KEY?: string;
