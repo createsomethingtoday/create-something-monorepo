@@ -191,14 +191,15 @@
               box(group, 1.35, 0.08, 0.9, 0, 0.04, 0.12, stone);
             }
           });
-          const texture = new T.TextureLoader().load('/workshop/canon.png', () => {
+          const texture = new T.TextureLoader().load('/workshop/canon-body-felt-r15.webp', () => {
             rendered = false;
           });
           texture.colorSpace = T.SRGBColorSpace;
           const sprite = new T.Sprite(
             new T.SpriteMaterial({ map: texture, transparent: true, depthTest: false })
           );
-          sprite.scale.set(1.5, 1.5, 1);
+          // Preserve the full-body silhouette at the delivered alpha image aspect (512 × 561).
+          sprite.scale.set(1.5 * (512 / 561), 1.5, 1);
           sprite.renderOrder = 10;
           scene.add(sprite);
           const shadow = new T.Mesh(

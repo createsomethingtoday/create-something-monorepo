@@ -121,7 +121,7 @@ test('the Map chapter keeps a distinct overhead desktop and mobile study', () =>
   assert.equal(sha256(mobile), 'f40147ee8592f979e9d13c1b654805e6637612bf5c02bf4e862e4a485b8f922a');
 });
 
-test('Ground uses its current story image and preserves the historical instrument provenance', () => {
+test('Ground uses the felt comparison scene and preserves the historical instrument provenance', () => {
   const route = readFileSync(`${agencyRoot}/src/routes/products/ground/+page.svelte`, 'utf8');
   const metadata = readFileSync(
     `${agencyRoot}/content/assets/brand/agency-ground-verification-instrument.v20260825/metadata.md`,
@@ -134,8 +134,8 @@ test('Ground uses its current story image and preserves the historical instrumen
   const desktop = publicAsset('/images/performance-lab/ground-verification-instrument.webp');
   const mobile = publicAsset('/images/performance-lab/ground-verification-instrument-mobile.webp');
 
-  assert.match(route, /ground-compare-before-claim\.webp/);
-  assert.match(route, /Concept illustration: teammates compare/);
+  assert.match(route, /evidence-comparison-r19\.webp/);
+  assert.match(route, /Concept illustration: felt Canon checks/);
   assert.doesNotMatch(route, /filter:\s*(grayscale|sepia)/);
   assert.doesNotMatch(route, /pressure-boundary-natural/);
   assert.match(metadata, /compare code inputs, stop the unverified claim/i);

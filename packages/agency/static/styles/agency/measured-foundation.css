@@ -220,7 +220,11 @@ html:has(.measured-foundation),body:has(.measured-foundation),
 }
 
 /* The approved head remains legible at its reviewed 96px display size. */
-.measured-foundation .waypoint-guide{width:96px;height:96px;}
+.measured-foundation .waypoint-guide{width:96px;height:96px;overflow:hidden;}
+.agency-home.measured-foundation .waypoint-guide [data-guide-pose]{
+  inset:auto;top:-13.789474px;left:-17.526316px;
+  width:132px;height:132px;max-width:none;
+}
 
 @media(max-width:600px){
   .agency-home.measured-foundation{padding-top:83px;}

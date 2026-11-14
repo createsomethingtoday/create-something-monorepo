@@ -1,6 +1,6 @@
 <script lang="ts">
+  import TaskOpening from '$lib/components/TaskOpening.svelte';
   import ResearchTrace from '$lib/components/ResearchTrace.svelte';
-  import ResearchScene from '$lib/components/ResearchScene.svelte';
   import type { PageData } from './$types';
   import { PropertyFunnel, SEO, type PerformanceDecisionItem } from '@create-something/canon';
   import type { Paper } from '@create-something/canon/types';
@@ -104,7 +104,8 @@
 />
 
 <div class="io-research-home">
-  <section class="research-opening" aria-labelledby="research-title">
+  <TaskOpening scene="evidence-comparison" caption="Canon checks a material against its reference before accepting the fit.">
+<div class="research-opening" aria-labelledby="research-title">
     <div class="research-opening-copy">
     <p class="research-eyebrow">CREATE SOMETHING .io / Research + field evidence</p>
     <h1 id="research-title">Research for automation you can defend.</h1>
@@ -118,8 +119,11 @@
       <a class="research-action" href="/experiments">Browse Experiments</a>
     </div>
     </div>
-    <ResearchScene sizes="(min-width: 1200px) 600px, (min-width: 960px) 52vw, 94vw" scene="ground-compare-before-claim" caption="Two agents compare a material against its reference before accepting the fit." />
-    <dl class="research-metrics">
+  </div>
+</TaskOpening>
+
+<div class="opening-proof">
+<dl class="research-metrics">
       {#each proofMetrics as metric}
         <div>
           <dt>{metric.label}</dt>
@@ -127,7 +131,7 @@
         </div>
       {/each}
     </dl>
-  </section>
+</div>
 
   <ResearchTrace />
 
@@ -214,3 +218,7 @@
     }}
   />
 </div>
+
+<style>
+  .opening-proof { width: min(80rem, 100%); margin: 1.5rem auto 2rem; }
+</style>

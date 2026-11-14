@@ -1,22 +1,23 @@
 // @vitest-environment jsdom
 import { flushSync, mount, unmount } from 'svelte';
 import { expect, it } from 'vitest';
-import CanonFace from './CanonFace.svelte';
-import CanonCompanion from './CanonCompanion.svelte';
+import { CanonCompanion } from './index';
 import CharacterPage from '../../routes/next/character/+page.svelte';
 import { samplePreparationText } from './expressions';
-it('hides decoration and gives explicit labels independent instance IDs', async () => {
+it('uses the caller-owned image and keeps identity when it cannot load', async () => {
   const root = document.createElement('div');
-  const a = mount(CanonFace, { target: root });
-  const b = mount(CanonFace, { target: root, props: { label: 'Canon listening' } });
-  const c = mount(CanonFace, { target: root, props: { label: 'Canon ready for review' } });
+  const companion = mount(CanonCompanion, {
+    target: root,
+    props: { size: 96, headSrc: '/owned-art/head-r42.webp' }
+  });
   flushSync();
-  const faces = root.querySelectorAll('svg');
-  expect(faces[0].getAttribute('aria-hidden')).toBe('true');
-  const ids = [faces[1], faces[2]].map(face => face.getAttribute('aria-labelledby'));
-  expect(ids[0]).not.toBe(ids[1]);
-  for (const id of ids) expect(root.querySelector(`[id="${id}"]`)?.textContent).toContain('Canon');
-  await unmount(a); await unmount(b); await unmount(c);
+  const head = root.querySelector('img');
+  expect(head?.getAttribute('src')).toBe('/owned-art/head-r42.webp');
+  head?.dispatchEvent(new Event('error'));
+  flushSync();
+  expect(root.querySelector('img')).toBeNull();
+  expect(root.textContent).toBe('Canon');
+  await unmount(companion);
 });
 it('prepares and resets only a local sample with truthful adjacent text', async () => {
   const root = document.createElement('div');
@@ -36,13 +37,29 @@ it('prepares and resets only a local sample with truthful adjacent text', async 
 
 it('uses plain identity text below the material-preserving minimum', async () => {
   const root = document.createElement('div');
-  const small = mount(CanonCompanion, { target:root, props:{size:64} }); flushSync();
-  expect(root.textContent).toBe('Canon'); expect(root.querySelector('img')).toBeNull();
-  await unmount(small);
-  const supported = mount(CanonCompanion, { target:root, props:{size:96} }); flushSync();
+  for (const size of [24, 32, 48, 64] as const) {
+    const small = mount(CanonCompanion, { target:root, props:{size,headSrc:'/owned-art/head-r42.webp'} }); flushSync();
+    expect(root.textContent).toBe('Canon'); expect(root.querySelector('img')).toBeNull();
+    await unmount(small);
+  }
+  const supported = mount(CanonCompanion, { target:root, props:{size:96,headSrc:'/owned-art/head-r42.webp'} }); flushSync();
   expect(root.querySelector('img')?.getAttribute('alt')).toBe('');
   expect(root.querySelector('.art-frame')?.getAttribute('aria-hidden')).toBe('true');
-  expect(root.querySelector('img')?.getAttribute('width')).toBe('1254');
-  expect(root.querySelector('img')?.getAttribute('src')).toContain('approved-v1/head-r42.webp');
+  expect(root.querySelector('img')?.getAttribute('width')).toBe('264');
   await unmount(supported);
+});
+
+it('keeps identity without an installed image and isolates a failed image to its instance', async () => {
+  const root = document.createElement('div');
+  const missing = mount(CanonCompanion, { target: root }); flushSync();
+  expect(root.textContent).toBe('Canon');
+  expect(root.querySelector('img')).toBeNull();
+  await unmount(missing);
+  const a = mount(CanonCompanion, { target: root, props: { headSrc: '/art/head-r42.webp' } });
+  const b = mount(CanonCompanion, { target: root, props: { headSrc: '/art/head-r42.webp' } });
+  flushSync();
+  root.querySelector('img')?.dispatchEvent(new Event('error')); flushSync();
+  expect(root.querySelectorAll('img')).toHaveLength(1);
+  expect(root.textContent).toBe('Canon');
+  await unmount(a); await unmount(b);
 });

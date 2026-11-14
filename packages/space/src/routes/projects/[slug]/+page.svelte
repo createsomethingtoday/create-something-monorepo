@@ -1,7 +1,7 @@
 <script lang="ts">
-  import WorkshopScene from '$lib/workshop/WorkshopScene.svelte';
+  import TaskOpening from '$lib/components/TaskOpening.svelte';
   import WorkshopTrace from '$lib/workshop/WorkshopTrace.svelte';
-  import { projectScene } from '$lib/workshop/scenes';
+  import { projectTaskScene } from '$lib/workshop/scenes';
   import { SEO } from '@create-something/canon';
   import type { PageData } from './$types';
   import '$lib/workshop/workshop.css';
@@ -15,7 +15,8 @@
   ogImage={data.project.image}
 />
 <article class="workshop">
-  <header class="wrap section story-opening">
+  <TaskOpening scene={projectTaskScene(data.project.slug)} caption="Inspect the task, its boundary, and its evidence.">
+<div class="wrap section story-opening">
     <div>
       <a class="text-link" href="/projects">← All projects</a>
       <p class="eyebrow category">
@@ -24,8 +25,9 @@
       <h1>{data.project.name}</h1>
       <p class="lead summary">{data.project.summary}</p>
     </div>
-    <WorkshopScene scene={projectScene(data.project.slug)} eager />
-  </header>
+
+  </div>
+</TaskOpening>
   <section class="wrap detail" aria-label="Project overview">
     <div class="instructions">
       <div>

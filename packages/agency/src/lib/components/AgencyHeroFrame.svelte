@@ -2,18 +2,16 @@
   import type { Snippet } from 'svelte';
   import { page } from '$app/stores';
   import { getAgencyPageFoundation } from '$lib/data/agencyPageFoundations';
-  import { getAgencyHeroTreatment } from '$lib/data/agencyHeroTreatment';
   import { usesAgencyMeasuredPublicSurface } from '$lib/data/publicSurfacePolicy';
   import { agencyWelcomeScene, agencyQuietScene } from '$lib/data/canonAgencyScenes';
   import AgencyHeroPlate from './AgencyHeroPlate.svelte';
   type Scene = { src: string; mobileSrc?: string; aspectRatio?: number; mobileAspectRatio?: number; description?: string };
   let { children, after, compact = false, showPlate = true, scene, sceneInChild = false }: {children: Snippet; after?: Snippet; compact?: boolean; showPlate?: boolean; scene?: Scene; sceneInChild?: boolean} = $props();
   const foundation = $derived(getAgencyPageFoundation($page.url.pathname, $page.url.pathname === '/book' ? $page.url.searchParams.get('intent') : null));
-  const treatment = $derived(getAgencyHeroTreatment($page.url.pathname) as {image?:string|null;caption?:string;focus?:string;width?:number;height?:number}|undefined);
   // Scopefield owns its released product identity and download framing.
   const productOwnsOpening = $derived($page.url.pathname.replace(/\/+$/, '') === '/scopefield');
-  const usesScene = $derived(Boolean(foundation && showPlate && !compact && !productOwnsOpening && usesAgencyMeasuredPublicSurface($page.url.pathname)));
-  const background = $derived(scene ?? (/^\/(?:field-reports|proof|security|stack|methodology)(?:\/|$)/.test($page.url.pathname) ? agencyQuietScene : agencyWelcomeScene));
+  const usesScene = $derived(Boolean(foundation && showPlate && !productOwnsOpening && usesAgencyMeasuredPublicSurface($page.url.pathname)));
+  const background = $derived(scene ?? (/^\/(?:field-reports|proof|security|stack|methodology|privacy|terms|support-brief)(?:\/|$)/.test($page.url.pathname) ? agencyQuietScene : agencyWelcomeScene));
   const image = (src: string) => `url(${JSON.stringify(src)})`;
 </script>
 
@@ -36,7 +34,7 @@
       <div class="agency-hero-frame__copy">{@render children()}</div>
     {/if}
     {#if showPlate}
-      <AgencyHeroPlate {foundation} {compact} showImage={!usesScene} image={treatment?.image ?? 'macro'} caption={treatment?.caption ?? 'Concept illustration · make the work and its boundaries clear.'} focus={treatment?.focus} width={treatment?.width} height={treatment?.height} />
+      <AgencyHeroPlate {foundation} {compact} />
     {/if}
     {#if after}<div class="agency-hero-frame__artifact performance-campaign-opening__artifact">{@render after()}</div>{/if}
   </div>

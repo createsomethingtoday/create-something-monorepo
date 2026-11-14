@@ -1,6 +1,7 @@
 <script lang="ts">
+  import { canonTaskScenes } from '$lib/canon-task-scenes';
+  import TaskOpening from '$lib/components/TaskOpening.svelte';
   import { SEO } from '@create-something/canon';
-  import WorkshopScene from '$lib/workshop/WorkshopScene.svelte';
   import WorkshopTrace from '$lib/workshop/WorkshopTrace.svelte';
   import ProjectCard from '$lib/workshop/ProjectCard.svelte';
   import { projects, workbenchTools } from '$lib/workshop/catalog';
@@ -10,11 +11,12 @@
 <SEO
   title="The Public Workshop | CREATE SOMETHING .space"
   description="Tools, workflows, skills, and building blocks from CREATE SOMETHING. Find something useful, inspect the source, and make it your own."
-  ogImage="/images/workshop/stories/products-workbench-paths-continuity-v2.webp"
+  ogImage={canonTaskScenes['welcome-bench'].src}
   propertyName="space"
 />
 <div class="workshop">
-  <section data-mobile-search-boundary class="opening" aria-labelledby="workshop-title">
+  <TaskOpening scene="welcome-bench" caption="Choose a tool and inspect how it works.">
+<div data-mobile-search-boundary class="opening" aria-labelledby="workshop-title">
     <div class="opening__copy">
       <p class="eyebrow">CREATE SOMETHING / The public workshop</p>
       <h1 id="workshop-title">Useful tools.<br />Shared openly.</h1>
@@ -29,8 +31,9 @@
         >
       </div>
     </div>
-    <WorkshopScene scene="workshop" eager />
-  </section>
+
+  </div>
+</TaskOpening>
   <section class="section wrap" aria-labelledby="selected-title">
     <div class="section-head">
       <div>

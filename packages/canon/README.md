@@ -97,6 +97,27 @@ first-party Identity credentials because its call shape has no required
 application audience. First-party server consumers must use
 `verifyIdentityToken` and supply one exact audience.
 
+### Canon character
+
+Use the narrow `@create-something/canon/character` entrypoint for the approved
+static felt companion. Consumers serve the approved r42 head and pass its URL;
+the package does not install image assets into a consuming application.
+
+```svelte
+<script lang="ts">
+  import { CanonCompanion } from '@create-something/canon/character';
+</script>
+
+<CanonCompanion size={96} headSrc="/images/canon-agency-v1/head-r42.webp" />
+<p>Canon / choose a next step.</p>
+```
+
+Only 96px renders the decorative head. Smaller sizes, a missing URL or an image
+load failure render plain Canon text. Adjacent words and controls carry actual
+state and authority. The same entrypoint exports approved asset metadata;
+see [the character contract](src/lib/character/README.md) for framing,
+background and gesture limits.
+
 ### Domain-Specific Components
 
 ```typescript

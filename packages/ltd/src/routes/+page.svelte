@@ -1,5 +1,5 @@
 <script lang="ts">
-	import LibraryScene from '$lib/components/LibraryScene.svelte';
+  import TaskOpening from '$lib/components/TaskOpening.svelte';
 	import {
 		Button,
 		PerformanceCardGrid,
@@ -52,7 +52,8 @@
 	propertyName="ltd"
 />
 
-<header class="ltd-operator-hero" aria-labelledby="library-title">
+<TaskOpening scene="operating-library" caption="Keep a useful operating rule close to the work.">
+<div class="ltd-operator-hero" aria-labelledby="library-title">
 	<div class="ltd-operator-hero__intro">
 		<p class="ltd-operator-hero__eyebrow">CREATE SOMETHING .ltd / The operating library</p>
 		<h1 id="library-title">Run AI work people can trust.</h1>
@@ -62,15 +63,17 @@
 			<Button href="/readiness" variant="secondary">Assess a workflow</Button>
 		</div>
 	</div>
-	<LibraryScene paired scene="editorial-workflow-library-tool-drawers-continuity-v2" caption="Keep a useful operating rule close to the work." />
+</div>
+</TaskOpening>
 
-	<ul class="ltd-operator-hero__proof" aria-label="The operating sequence">
+<div class="opening-proof">
+<ul class="ltd-operator-hero__proof" aria-label="The operating sequence">
 		<li><span>01 / Start</span><strong>One workflow</strong></li>
 		<li><span>02 / Name</span><strong>One owner</strong></li>
 		<li><span>03 / Set</span><strong>One boundary</strong></li>
 		<li><span>04 / Keep</span><strong>One receipt</strong></li>
 	</ul>
-</header>
+</div>
 
 <section class="operator-library" aria-labelledby="start-title">
 	<div class="operator-library__heading">
@@ -142,6 +145,8 @@
 </section>
 
 <style>
+  .opening-proof { width: min(80rem, calc(100% - 3rem)); margin: 1.5rem auto 2rem; }
+
 	.operator-library,
 	.opposition,
 	.library-loop {

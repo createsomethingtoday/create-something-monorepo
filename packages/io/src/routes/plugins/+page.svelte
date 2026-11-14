@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ResearchScene from '$lib/components/ResearchScene.svelte';
+  import TaskOpening from '$lib/components/TaskOpening.svelte';
 	import { PluginCard } from '@create-something/canon/domains/io';
 	import type { PageData } from './$types';
 
@@ -130,7 +130,8 @@
 </svelte:head>
 
 <!-- Hero Section -->
-<section class="pt-24 pb-16 px-6">
+<TaskOpening scene="modular-port" caption="An agent checks the connection between a tool and its modular port.">
+<div class="pt-24 pb-16 px-6">
 	<div class="max-w-6xl mx-auto">
 		<div class="space-y-6 animate-reveal">
 			<div>
@@ -197,8 +198,9 @@
 		</div>
 	</div>
 
-<div class="research-scene-index"><ResearchScene scene="editorial-mcp-modular-port" caption="An agent checks the connection between a tool and its modular port." /></div>
-</section>
+
+</div>
+</TaskOpening>
 
 <!-- Category Filter -->
 <section class="py-12 px-6 border-b border-border-default">
@@ -259,6 +261,7 @@
 	}
 
 	.quick-start {
+		min-width: 0;
 		background: var(--color-performance-bg-surface);
 		border-radius: var(--radius-performance-scale-lg);
 		padding: var(--space-performance-md);
@@ -273,12 +276,14 @@
 
 	.quick-start-steps {
 		display: flex;
+		min-width: 0;
 		flex-direction: column;
 		gap: var(--space-performance-sm);
 	}
 
 	.quick-start-step {
 		display: flex;
+		min-width: 0;
 		flex-direction: column;
 		gap: var(--space-performance-xs);
 	}
@@ -291,20 +296,24 @@
 
 	.install-all .command-text {
 		font-size: var(--text-performance-caption);
-		word-break: break-all;
 	}
 
 	.command-box {
 		display: flex;
-		align-items: center;
-		gap: var(--space-performance-sm);
+		min-width: 0;
+		max-width: 100%;
+		align-items: flex-start;
+		gap: var(--space-performance-xs);
 		background: var(--color-performance-bg-subtle);
 		border-radius: var(--radius-performance-scale-md);
-		padding: var(--space-performance-sm) var(--space-performance-md);
+		padding: var(--space-performance-sm);
 	}
 
 	.command-text {
 		flex: 1;
+		min-width: 0;
+		overflow-wrap: anywhere;
+		white-space: normal;
 		font-family: 'Monaco', 'Menlo', monospace;
 		font-size: var(--text-performance-body-sm);
 		color: var(--color-performance-fg-primary);
@@ -313,11 +322,14 @@
 	}
 
 	.copy-button {
+		flex: 0 0 44px;
+		min-width: 44px;
+		min-height: 44px;
 		background: none;
 		border: none;
 		color: var(--color-performance-fg-secondary);
 		cursor: pointer;
-		padding: 4px;
+		padding: 0;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -386,5 +398,9 @@
 			opacity: 1;
 			transform: none;
 		}
+	}
+
+	@media (max-width: 23.75rem) {
+		.quick-start { padding: var(--space-performance-sm); }
 	}
 </style>

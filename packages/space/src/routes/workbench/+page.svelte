@@ -1,6 +1,6 @@
 <script lang="ts">
+  import TaskOpening from '$lib/components/TaskOpening.svelte';
   import WorkshopTrace from '$lib/workshop/WorkshopTrace.svelte';
-  import WorkshopScene from '$lib/workshop/WorkshopScene.svelte';
   import '$lib/workshop/workshop.css';
   import {
     Button,
@@ -122,7 +122,8 @@
 />
 
 <div class="space-workbench">
-  <header data-mobile-search-boundary class="workshop section">
+  <TaskOpening scene="bounded-sandbox" caption="Try an idea inside a clear boundary.">
+<div data-mobile-search-boundary class="workshop section">
     <div class="wrap story-opening">
       <div>
         <p class="eyebrow">CREATE SOMETHING .space / The Workbench</p>
@@ -137,9 +138,10 @@
           >
         </div>
       </div>
-      <WorkshopScene scene="practice" eager />
+
     </div>
-  </header>
+  </div>
+</TaskOpening>
 
   <PerformancePageSection
     variant="white"
@@ -185,9 +187,6 @@
 </div>
 
 <style>
-  .space-workbench > header {
-    padding-block: clamp(3rem, 6vw, 6rem);
-  }
   .runtime-explanation {
     margin-top: 2rem;
     border: 1px solid var(--color-performance-line);

@@ -10,6 +10,7 @@ function routeSource(relativePath: string): string {
 }
 
 const HOMEPAGE_SECTION_COMPONENTS = [
+  'TaskOpening',
   'PerformanceCampaignOpening',
   'PerformanceThesisConditions',
   'PerformanceFieldSequence',

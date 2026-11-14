@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
+  import CanonCompanion from './CanonCompanion.svelte';
 
   type Intent = 'system-support' | 'membership' | 'governance-checklist' | 'workflow-teardown' | 'workflow-mapping';
   type Lane = 'not_sure' | 'workflow_infrastructure' | 'reliability_and_control' | 'enterprise_extension' | 'system_development_referral';
@@ -46,10 +47,10 @@
     { value: 'system_development_referral', label: 'Refer a development project' }
   ];
   const scenes = [
-    { src: 'canon-build-v1.webp', alt: 'Concept illustration: Canon and two agents assemble a graphite mechanism on a workbench.', caption: 'Begin with one useful change.' },
-    { src: 'canon-test-v1.webp', alt: 'Concept illustration: Canon and two agents inspect a mechanism with measuring tools.', caption: 'Give the work a little context.' },
-    { src: 'canon-build-v1.webp', alt: 'Concept illustration: Canon and two agents work together at a workshop bench.', caption: 'Put a person beside the work.' },
-    { src: 'canon-validate-v1.webp', alt: 'Concept illustration: Canon and two agents compare a mechanism with an illustrated guide.', caption: 'Check the brief together.' }
+    { src: 'welcome-bench.webp', alt: 'Concept illustration: felt Canon makes room for a paper task at a warm workbench.', caption: 'A task to discuss.' },
+    { src: 'connection-loom.webp', alt: 'Concept illustration: felt Canon guides two paper paths into one loom.', caption: 'Context for the connection.' },
+    { src: 'welcome-bench.webp', alt: 'Concept illustration: felt Canon welcomes a task at the workbench.', caption: 'A person beside the work.' },
+    { src: 'cta-wide-v1.webp', alt: 'Concept illustration: felt Canon offers an open notebook beside a paper task.', caption: 'A brief to review.' }
   ];
   let step = $state(0);
   let enhanced = $state(false);
@@ -138,10 +139,10 @@
   <aside class="guide" aria-label="Your inquiry journey">
     <div class="guide-top"><span class="operator">A brief, together</span><span class="operator">{submitSuccess ? 'Received' : `${String(step + 1).padStart(2, '0')} / 04`}</span></div>
     <figure>
-      <img class="scene" src={`/images/agency-sales/${scenes[submitSuccess ? 3 : step].src}`} alt={scenes[submitSuccess ? 3 : step].alt} width="1536" height="1024" fetchpriority="high" />
+      <img class="scene" src={`/images/canon-agency-v1/${scenes[submitSuccess ? 3 : step].src}`} alt={scenes[submitSuccess ? 3 : step].alt} width="1672" height="941" fetchpriority="high" />
       <figcaption><span>Concept illustration</span><span>{scenes[submitSuccess ? 3 : step].caption}</span></figcaption>
     </figure>
-    <div class="canon-note"><img src="/images/agency-sales/canon-guide-cutout-v1.webp" alt="" width="160" height="200" /><div><p class="operator">Canon / your guide</p><p>{submitSuccess ? 'Your brief is ready for our team to review.' : guides[step]}</p></div></div>
+    <div class="canon-note"><CanonCompanion /><div><p class="operator">Canon / your guide</p><p>{submitSuccess ? 'Your brief is ready for our team to review.' : guides[step]}</p></div></div>
     <ol class="journey" aria-label="Inquiry progress">
       {#each steps as label, index}
         <li class:current={step === index && !submitSuccess} class:done={step > index || submitSuccess} aria-current={step === index && !submitSuccess ? 'step' : undefined}><span aria-hidden="true">{step > index || submitSuccess ? '✓' : String(index + 1).padStart(2, '0')}</span>{label}</li>
@@ -226,11 +227,11 @@
   .guide-top { display:flex; justify-content:space-between; gap:1rem; margin-bottom:1.25rem; }
   .operator { margin:0; font:var(--text-performance-operator-label)/1.5 var(--font-performance-mono); text-transform:uppercase; letter-spacing:.02em; color:var(--color-performance-muted); }
   figure { margin:0; }
-  .scene { display:block; width:100%; height:auto; aspect-ratio:3/2; object-fit:cover; border:1px solid var(--color-performance-line); border-radius:var(--radius-performance-sm); }
+  .scene { display:block; width:100%; height:auto; aspect-ratio:1672/941; object-fit:contain; border:1px solid var(--color-performance-line); border-radius:var(--radius-performance-sm); }
   figcaption { display:grid; gap:.25rem; padding-top:.7rem; font-size:.75rem; color:var(--color-performance-muted); }
   figcaption span:first-child { font-family:var(--font-performance-mono); font-size:.65rem; text-transform:uppercase; }
   .canon-note { display:flex; align-items:center; gap:1rem; margin:1.5rem 0; }
-  .canon-note img { width:4.25rem; height:5.5rem; object-fit:contain; flex:none; }
+  .canon-note :global(.canon) { flex:none; }
   .canon-note p:last-child { margin:.3rem 0 0; font-size:.9rem; line-height:1.55; max-width:32ch; }
   .journey { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem .5rem; list-style:none; padding:1.25rem 0; margin:0; border-block:1px solid var(--color-performance-line); }
   .journey li { display:flex; align-items:center; gap:.65rem; color:var(--color-performance-muted); font-size:.8rem; }
@@ -295,7 +296,7 @@
     .guide-top { grid-column:1/-1; margin:0; }
     .guide figure { grid-column:1; grid-row:2; align-self:center; }
     .canon-note { grid-column:2; grid-row:2; margin:0; display:block; }
-    .canon-note img { width:2.75rem; height:3.5rem; float:right; margin:0 0 .25rem .5rem; }
+    .canon-note :global(.canon) { display:none; }
     .canon-note p:last-child { font-size:.78rem; }
     .canon-note .operator { font-size:.6rem; }
     figcaption span:last-child,.journey,.guide-foot { display:none; }

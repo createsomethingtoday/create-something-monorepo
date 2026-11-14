@@ -76,6 +76,9 @@ jobs:
       - name: Install frozen dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Reject retired Canon character assets
+        run: node scripts/check-canon-character-retirement.mjs
+
       - name: Build Canon package
         run: |
           pnpm --filter @create-something/auth-platform build
@@ -96,6 +99,9 @@ jobs:
 
       - name: Build Property
         run: pnpm --filter "@create-something/$PROPERTY" build
+
+      - name: Verify Canon character release artifact
+        run: node scripts/check-canon-character-retirement.mjs --artifact "packages/$PROPERTY/.svelte-kit/cloudflare"
 
       - name: Include CLEARWAY embed in Pages output
         if: inputs.property == 'clearway'

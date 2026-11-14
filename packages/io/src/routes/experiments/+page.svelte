@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ResearchScene from '$lib/components/ResearchScene.svelte';
+  import TaskOpening from '$lib/components/TaskOpening.svelte';
 	import type { PageData } from './$types';
 	import { PapersGrid, SEO } from '@create-something/canon';
 	import type { Paper } from '@create-something/canon/types';
@@ -115,7 +115,8 @@
 />
 
 <!-- Hero Section -->
-<section class="hero-section research-index-header">
+<TaskOpening scene="bounded-sandbox" caption="An agent tests a mechanism inside a contained sandbox.">
+<div class="hero-section research-index-header">
 	<div class="research-index-inner">
 		<div class="research-index-heading">
 			<h1 class="hero-title">All Experiments</h1>
@@ -128,7 +129,7 @@
 			</p>
 		</div>
 
-		<ResearchScene sizes="(min-width: 1200px) 600px, (min-width: 960px) 52vw, 94vw" scene="editorial-experiments-isolated-sandbox" caption="An agent tests a mechanism inside a contained sandbox." />
+
 
 		<!-- Search & Filter Controls -->
 		<div class="controls-container">
@@ -172,15 +173,17 @@
 
 			<!-- Filter by Design Methodology -->
 			<div class="research-control-row">
-				<div class="research-filters">
+				<div class="research-filters" role="group" aria-label="Filter experiments by design method">
 					<button
 						onclick={() => masterFilter = 'all'}
+						aria-pressed={masterFilter === 'all'}
 						class="filter-chip {masterFilter === 'all' ? 'active' : ''}"
 					>
 						All
 					</button>
 					<button
 						onclick={() => masterFilter = 'rams'}
+						aria-pressed={masterFilter === 'rams'}
 						class="filter-chip {masterFilter === 'rams' ? 'active' : ''}"
 						title="Dieter Rams - Less, but better"
 					>
@@ -188,6 +191,7 @@
 					</button>
 					<button
 						onclick={() => masterFilter = 'heidegger'}
+						aria-pressed={masterFilter === 'heidegger'}
 						class="filter-chip {masterFilter === 'heidegger' ? 'active' : ''}"
 						title="Tool transparency - when tools recede into use"
 					>
@@ -195,6 +199,7 @@
 					</button>
 					<button
 						onclick={() => masterFilter = 'tufte'}
+						aria-pressed={masterFilter === 'tufte'}
 						class="filter-chip {masterFilter === 'tufte' ? 'active' : ''}"
 						title="Edward Tufte - Data visualization"
 					>
@@ -202,6 +207,7 @@
 					</button>
 					<button
 						onclick={() => masterFilter = 'ive'}
+						aria-pressed={masterFilter === 'ive'}
 						class="filter-chip {masterFilter === 'ive' ? 'active' : ''}"
 						title="Jony Ive - Purposeful motion, physics-based feedback"
 					>
@@ -209,6 +215,7 @@
 					</button>
 					<button
 						onclick={() => masterFilter = 'canon'}
+						aria-pressed={masterFilter === 'canon'}
 						class="filter-chip {masterFilter === 'canon' ? 'active' : ''}"
 						title="CREATE SOMETHING canonical patterns"
 					>
@@ -219,21 +226,24 @@
 
 			<!-- Sort Control -->
 			<div class="research-control-row">
-				<div class="sort-control">
+				<div class="sort-control" role="group" aria-label="Sort experiments">
 					<button
 						onclick={() => sortBy = 'newest'}
+						aria-pressed={sortBy === 'newest'}
 						class="sort-button {sortBy === 'newest' ? 'active' : ''}"
 					>
 						Newest
 					</button>
 					<button
 						onclick={() => sortBy = 'oldest'}
+						aria-pressed={sortBy === 'oldest'}
 						class="sort-button {sortBy === 'oldest' ? 'active' : ''}"
 					>
 						Oldest
 					</button>
 					<button
 						onclick={() => sortBy = 'featured'}
+						aria-pressed={sortBy === 'featured'}
 						class="sort-button {sortBy === 'featured' ? 'active' : ''}"
 					>
 						Featured
@@ -242,7 +252,8 @@
 			</div>
 		</div>
 	</div>
-</section>
+</div>
+</TaskOpening>
 
 <!-- Experiments Grid -->
 {#if resultCount > 0}
@@ -260,6 +271,7 @@
 {/if}
 
 <style>
+  .filter-chip, .sort-button { min-height: 44px; }
 	/* Hero Section */
 	.hero-section {
 		position: relative;

@@ -172,7 +172,7 @@
         <h3>Surfaces and empty states</h3>
         <div class="stack">
           <Card padding="md"
-            ><div class="empty-companion"><CanonCompanion size={96} /><div><h3>A useful place to begin</h3>
+            ><div class="empty-companion"><CanonCompanion size={96} headSrc="/canon-next/approved-v1/head-r42.webp" /><div><h3>A useful place to begin</h3>
             <p>Choose one small task and make the next step visible.</p></div></div></Card
           ><Card padding="md"
             ><h3>Nothing waiting for review</h3>

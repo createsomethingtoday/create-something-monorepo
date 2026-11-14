@@ -12,6 +12,15 @@ This extends [Performance Lab](CREATE_SOMETHING_PERFORMANCE_LAB_DESIGN_LANGUAGE.
 and its [visual grammar](PERFORMANCE_LAB_VISUAL_GRAMMAR.md). It does not change
 service positioning, commercial terms, evidence requirements, or other properties.
 
+The November 13 character approval supersedes the earlier graphite character
+material direction below. New work uses the squat charcoal felt Canon with a
+soft cuboid head, oval woven digital eyes, gentle hands and a cream notebook.
+The website retains its black foundation, Geist typography, useful measured
+rules and square artwork frames. Heroes and CTAs use background images with
+real HTML copy and actions; inline images belong in sections beneath them.
+See [the current character contract](guides/CANON_CHARACTER_MIGRATION.md).
+The first-release descriptions and evidence below remain historical records.
+
 ## Give the structure a job
 
 - Use `#000` for the Agency shell and `#fff` for primary type and marks. Use
