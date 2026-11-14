@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { SYSTEM_PROMPT, pageGridNote, surfaceNote } from './prompt.js';
-import { toolsForBrief, TemplateToolExecutor, type PageActionInput, type SearchToolInput } from './tools.js';
+import { AGENT_TOOLS, toolsForBrief, TemplateToolExecutor, type PageActionInput, type SearchToolInput } from './tools.js';
 import type { AgentSseEvent, AgentUsage, ChatContext, ChatRequestMessage, Env } from './types.js';
 
 const MAX_LOOP_ITERATIONS = 6;
@@ -17,6 +17,57 @@ function toAnthropicMessages(history: ChatRequestMessage[]): Anthropic.Messages.
     }));
 }
 
+const DEFAULT_MODEL = 'claude-opus-4-8';
+
+// A failed turn, with what the turn used before it failed. `status` is set only
+// when the model API answered with an HTTP error. That means it rejected the
+// request before any output, so that call cost nothing. A stream that breaks
+// midway has no status, and its real cost is unknown.
+export class AgentTurnError extends Error {
+  readonly status?: number;
+  readonly usage: AgentUsage;
+
+  constructor(cause: unknown, usage: AgentUsage) {
+    super(cause instanceof Error ? cause.message : String(cause), { cause });
+    this.name = cause instanceof Error ? cause.name : 'AgentTurnError';
+    this.status = cause instanceof Anthropic.APIError && typeof cause.status === 'number' ? cause.status : undefined;
+    this.usage = { ...usage };
+  }
+}
+
+export interface ModelPreflight {
+  /** `unknown` = the check could not run (timeout, rate limit, server error). */
+  state: 'accepted' | 'rejected' | 'unknown';
+  status?: number;
+  /** The API's own reason. For logs only: keep it out of public output. */
+  detail?: string;
+}
+
+// Sends the Worker's real request shape to the free token-count endpoint. The
+// API checks the key, the model and every tool schema there, so a request it
+// would reject is found before a visitor sends one.
+export async function preflightModelRequest(env: Env, fetcher: typeof fetch = fetch): Promise<ModelPreflight> {
+  try {
+    const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY, maxRetries: 0, timeout: 10_000, fetch: fetcher });
+    await client.messages.countTokens({
+      model: env.ANTHROPIC_MODEL || DEFAULT_MODEL,
+      thinking: { type: 'adaptive' },
+      system: [{ type: 'text', text: SYSTEM_PROMPT }],
+      tools: AGENT_TOOLS,
+      messages: [{ role: 'user', content: 'preflight' }],
+    });
+    return { state: 'accepted' };
+  } catch (error) {
+    const status = error instanceof Anthropic.APIError ? error.status : undefined;
+    // Only a client error proves the request is wrong. A timeout, a rate limit
+    // or a server error says nothing about the request.
+    if (typeof status !== 'number' || status < 400 || status >= 500 || status === 408 || status === 429) {
+      return { state: 'unknown', status };
+    }
+    return { state: 'rejected', status, detail: (error instanceof Error ? error.message : String(error)).slice(0, 300) };
+  }
+}
+
 // Runs the streaming tool loop for one user turn, emitting SSE events via
 // `emit`. Text streams as it generates; display_results tool calls become
 // `display` events with server-enriched items.
@@ -29,7 +80,7 @@ export async function runAgentTurn(
   const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
   const executor = new TemplateToolExecutor(env);
   executor.seedFromContext(context);
-  const model = env.ANTHROPIC_MODEL || 'claude-opus-4-8';
+  const model = env.ANTHROPIC_MODEL || DEFAULT_MODEL;
 
   const messages: Anthropic.Messages.MessageParam[] = toAnthropicMessages(history);
   const usage: AgentUsage = {
@@ -72,61 +123,65 @@ export async function runAgentTurn(
   // that surround tool calls so sentences don't run together.
   let hasStreamedText = false;
 
-  for (let iteration = 0; iteration < MAX_LOOP_ITERATIONS; iteration += 1) {
-    emit({ type: 'status', label: 'thinking' });
-    let separatorPending = hasStreamedText;
-    const stream = client.messages.stream({
-      model,
-      max_tokens: 4096,
-      thinking: { type: 'adaptive' },
-      output_config: { effort: 'low' },
-      system,
-      tools: toolsForBrief(Boolean(context?.project_brief)),
-      messages,
-    });
-
-    stream.on('text', (delta) => {
-      if (separatorPending) {
-        emit({ type: 'text_delta', text: '\n\n' });
-        separatorPending = false;
-      }
-      hasStreamedText = true;
-      emit({ type: 'text_delta', text: delta });
-    });
-
-    const message = await stream.finalMessage();
-    usage.inputTokens += message.usage.input_tokens;
-    usage.outputTokens += message.usage.output_tokens;
-    usage.cacheCreationInputTokens += message.usage.cache_creation_input_tokens ?? 0;
-    usage.cacheReadInputTokens += message.usage.cache_read_input_tokens ?? 0;
-
-    if (message.stop_reason === 'pause_turn') {
-      messages.push({ role: 'assistant', content: message.content });
-      continue;
-    }
-
-    const toolUses = message.content.filter(
-      (block): block is Anthropic.Messages.ToolUseBlock => block.type === 'tool_use',
-    );
-
-    if (message.stop_reason !== 'tool_use' || toolUses.length === 0) {
-      emit({ type: 'context', payload: executor.snapshotContext() });
-      emit({ type: 'done' });
-      return usage;
-    }
-
-    messages.push({ role: 'assistant', content: message.content });
-
-    const toolResults: Anthropic.Messages.ToolResultBlockParam[] = [];
-    for (const toolUse of toolUses) {
-      toolResults.push({
-        type: 'tool_result',
-        tool_use_id: toolUse.id,
-        content: await executeTool(executor, toolUse, emit),
+  try {
+    for (let iteration = 0; iteration < MAX_LOOP_ITERATIONS; iteration += 1) {
+      emit({ type: 'status', label: 'thinking' });
+      let separatorPending = hasStreamedText;
+      const stream = client.messages.stream({
+        model,
+        max_tokens: 4096,
+        thinking: { type: 'adaptive' },
+        output_config: { effort: 'low' },
+        system,
+        tools: toolsForBrief(Boolean(context?.project_brief)),
+        messages,
       });
-    }
 
-    messages.push({ role: 'user', content: toolResults });
+      stream.on('text', (delta) => {
+        if (separatorPending) {
+          emit({ type: 'text_delta', text: '\n\n' });
+          separatorPending = false;
+        }
+        hasStreamedText = true;
+        emit({ type: 'text_delta', text: delta });
+      });
+
+      const message = await stream.finalMessage();
+      usage.inputTokens += message.usage.input_tokens;
+      usage.outputTokens += message.usage.output_tokens;
+      usage.cacheCreationInputTokens += message.usage.cache_creation_input_tokens ?? 0;
+      usage.cacheReadInputTokens += message.usage.cache_read_input_tokens ?? 0;
+
+      if (message.stop_reason === 'pause_turn') {
+        messages.push({ role: 'assistant', content: message.content });
+        continue;
+      }
+
+      const toolUses = message.content.filter(
+        (block): block is Anthropic.Messages.ToolUseBlock => block.type === 'tool_use',
+      );
+
+      if (message.stop_reason !== 'tool_use' || toolUses.length === 0) {
+        emit({ type: 'context', payload: executor.snapshotContext() });
+        emit({ type: 'done' });
+        return usage;
+      }
+
+      messages.push({ role: 'assistant', content: message.content });
+
+      const toolResults: Anthropic.Messages.ToolResultBlockParam[] = [];
+      for (const toolUse of toolUses) {
+        toolResults.push({
+          type: 'tool_result',
+          tool_use_id: toolUse.id,
+          content: await executeTool(executor, toolUse, emit),
+        });
+      }
+
+      messages.push({ role: 'user', content: toolResults });
+    }
+  } catch (error) {
+    throw new AgentTurnError(error, usage);
   }
 
   emit({ type: 'context', payload: executor.snapshotContext() });
