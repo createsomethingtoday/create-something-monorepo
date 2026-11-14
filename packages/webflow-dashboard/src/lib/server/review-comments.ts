@@ -1,6 +1,6 @@
 /**
- * Client for the review comments Worker (packages/webflow-review-comments,
- * Webflow Hosting account). The Worker holds the data; this dashboard verifies
+ * Client for the review comments service (repo webflow/marketplace-review-comments,
+ * a Webflow Cloud app). The service holds the data; this dashboard verifies
  * the creator's session and asset ownership, then calls it as that creator.
  * Its key carries the creator role, so it never sees drafts or internal notes.
  *
