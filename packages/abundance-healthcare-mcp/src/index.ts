@@ -13,7 +13,7 @@ class KnownEnrichmentChargeError extends Error{
 }
 
 export const SERVER_NAME = 'abundance-healthcare-mcp';
-export const SERVER_VERSION = '1.8.0';
+export const SERVER_VERSION = '1.8.1';
 export const DEFAULT_AGENCY_BASE_URL = 'https://createsomething.agency';
 export const DEFAULT_EXA_AGENT_BASE_URL = 'https://api.exa.ai';
 
@@ -733,7 +733,7 @@ export async function callClayEnrichment(input: {npi:string;confirm_paid_enrichm
   const isRead='id' in input;
   if(isRead)url.searchParams.set('id',input.id);
   const response=await (options.fetchFn??fetch)(url,{method:isRead?'GET':'POST',redirect:'manual',headers:{Authorization:`Bearer ${options.agencyApiKey}`,'Content-Type':'application/json'},...(isRead?{}:{body:JSON.stringify(options.budgetGrant && !('id' in input)?{...input,budget_grant:options.budgetGrant}:input)}),signal:AbortSignal.timeout(25000)});
-  if(!response.ok)throw new Error(response.status===429?'Enrichment allowance exhausted.':'Enrichment request unavailable; check an existing job before retrying.');
+  if(!response.ok)throw new Error(response.status===429?'Enrichment request was rate-limited. No automatic retry was made.':'Enrichment request unavailable; check an existing job before retrying.');
   const result=await response.json() as {success:boolean;data:Record<string,unknown>};
   if(!result.success||!result.data)throw new Error('Invalid enrichment response.');
   return result.data;
@@ -867,7 +867,7 @@ export function registerAbundanceHealthcareTools(server: McpServer, options: Hea
     inputSchema: candidateProfileSchema,
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
   }, async input => structuredJson(await enrichCandidateProfile(input, options)));
-  server.registerTool('request_professional_contact_enrichment',{description:'Request one asynchronous Clay lookup of contacts explicitly published for professional use for one exact registry NPI. Requires explicit paid confirmation. Never seek private personal contacts. Returns a cached or pending job; at most five new requests per rolling day. Results require source and identity review; never overwrite registry contacts.',inputSchema:z.object({npi:z.string().regex(/^\d{10}$/),confirm_paid_enrichment:z.literal(true)}).strict(),annotations:{readOnlyHint:false,destructiveHint:false,idempotentHint:false,openWorldHint:true}},async(input)=>structuredJson(await callClayEnrichment(input,options)));
+  server.registerTool('request_professional_contact_enrichment',{description:'Request one asynchronous Clay lookup of contacts explicitly published for professional use for one exact registry NPI. Requires explicit paid confirmation. Never seek private personal contacts. Returns a cached or pending job with spend tracking and no application spending cap. Results require source and identity review; never overwrite registry contacts.',inputSchema:z.object({npi:z.string().regex(/^\d{10}$/),confirm_paid_enrichment:z.literal(true)}).strict(),annotations:{readOnlyHint:false,destructiveHint:false,idempotentHint:false,openWorldHint:true}},async(input)=>structuredJson(await callClayEnrichment(input,options)));
   server.registerTool('get_professional_contact_enrichment',{description:'Read a Clay enrichment job by its returned ID without starting another paid lookup. Preserve pending, delivery_unknown, no_match, ambiguous or review_required states. Contacts are unverified public professional candidates, not personal ownership or outreach permission.',inputSchema:z.object({id:z.string().regex(/^npgclay_[a-f0-9-]{36}$/)}).strict(),annotations:readOnlyAnnotations()},async(input)=>structuredJson(await callClayEnrichment(input,options)));
 
   server.resource('abundance-healthcare-status', 'abundance-healthcare://status', { description: 'Healthcare MCP status and approved NPG market IDs. Contains no secret values.', mimeType: 'application/json' }, async () => ({ contents: [{ uri: 'abundance-healthcare://status', mimeType: 'application/json', text: JSON.stringify({ name: SERVER_NAME, version: SERVER_VERSION, tools: ['get_enrichment_readiness', 'enrich_candidate_complete_profile', 'enrich_candidate_skip_trace', 'enrich_candidate_profile', 'request_professional_contact_enrichment', 'get_professional_contact_enrichment', 'estimate_registry_travel', 'search_registry_sourcing', 'list_healthcare_markets', 'get_healthcare_coverage', 'search_coverage_candidates', 'get_healthcare_practitioner', 'get_provider_contact_information', 'enrich_provider_professional_contact'], market_ids: NPG_HEALTHCARE_MARKETS.map((market) => market.id), coverage_model: 'monthly_full_plus_weekly_incremental', refresh_policy: 'weekly_default_daily_locale_opt_in', contact_enrichment_policy: 'registry_first_explicit_paid_public_professional_enrichment_operator_review' }, null, 2) }] }));
