@@ -313,6 +313,42 @@ export function fixture(mode: string | null) {
           reason: 'Known existing run; no new dispatch for reconciliation.'
         };
       }
+      if (mode === 'complete-contacts') {
+        providers.exa = {
+          match_status: 'verified_match',
+          identity_reason: 'Exact NPI is associated with the clinic profile.',
+          professional_contact: {
+            email: 'synthetic-exa@example.com',
+            phone: '+15125550101',
+            profile_url: 'https://clinic.example.com/team'
+          },
+          source_citations: [{ url: 'https://clinic.example.com/team' }],
+          contact_route_status: 'unverified_enrichment_candidate',
+          identity_verification_status: 'source_grounded',
+          outreach_authority_status: 'not_established',
+          actual_cost_usd: 0.007
+        };
+        providers.clay = {
+          status: 'review_required',
+          contact_status: 'public_professional_candidate_unverified',
+          outreach_authority: 'not_established',
+          cache_hit: true,
+          result: {
+            outcome: 'candidate',
+            identity_evidence: 'Exact NPI is linked to this public professional clinic record.',
+            contacts: [
+              {
+                type: 'email',
+                value: 'synthetic-clay@example.com',
+                source_url: 'https://clinic.example.com/contact',
+                publication_context: 'professional_contact',
+                evidence_quote:
+                  'The clinic lists this email as the practitioner professional contact.'
+              }
+            ]
+          }
+        };
+      }
       view.sources.push({
         tool: 'enrich_candidate_complete_profile',
         data: {

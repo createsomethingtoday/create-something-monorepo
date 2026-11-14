@@ -360,3 +360,35 @@ test('explicit original cache status controls per-operation confirmed spend afte
     );
   }
 });
+
+const realExaContactShape={
+  match_status:'verified_match',identity_reason:'Sources associate this practitioner.',
+  professional_contact:{profile_url:'https://clinic.example.com/team',email:'synthetic-exa@example.com',phone:'+15125550101'},
+  source_citations:[{url:'https://clinic.example.com/team'}],
+  identity_verification_status:'source_grounded',contact_route_status:'unverified_enrichment_candidate',outreach_authority_status:'not_established'
+};
+const realClayContactShape={
+  status:'review_required',contact_status:'public_professional_candidate_unverified',outreach_authority:'not_established',
+  result:{outcome:'candidate',identity_evidence:'Exact NPI is linked to the professional clinic source.',contacts:[{type:'email',value:'synthetic-clay@example.com',source_url:'https://clinic.example.com/contact',publication_context:'professional_contact',evidence_quote:'This clinic lists this professional contact for the practitioner.'}]}
+};
+test('combined evidence projects actual accepted Exa and Clay contacts with source and review labels',()=>{
+  const artifact=display.sourceArtifact({providers:{exa:realExaContactShape,clay:realClayContactShape}});
+  for(const [provider,email] of [['Exa','synthetic-exa@example.com'],['Clay','synthetic-clay@example.com']]){
+    const sections=artifact.sections.filter(s=>s.title.startsWith(provider)&&/professional contact/i.test(s.title));
+    assert.ok(sections.some(s=>s.fields.some(f=>f.value===email)),provider);
+    assert.match(sections.map(s=>s.title).join(' '),/unverified|review required/i);
+    assert.ok(sections.some(s=>s.fields.some(f=>f.value.startsWith('https://clinic.example.com/'))),provider+' provenance');
+  }
+});
+test('unaccepted Exa or Clay identity states do not project professional contacts',()=>{
+  for(const match_status of ['ambiguous','no_match','unknown']){
+    const a=display.sourceArtifact({...realExaContactShape,match_status});
+    assert.equal(a.sections.some(s=>s.fields.some(f=>f.value==='synthetic-exa@example.com')),false);
+  }
+  for(const outcome of ['ambiguous','no_match','unknown']){
+    const a=display.sourceArtifact({...realClayContactShape,result:{...realClayContactShape.result,outcome}});
+    assert.equal(a.sections.some(s=>s.fields.some(f=>f.value==='synthetic-clay@example.com')),false);
+  }
+  assert.equal(display.sourceArtifact({...realExaContactShape,source_citations:[]}).sections.some(s=>s.fields.some(f=>f.value==='synthetic-exa@example.com')),false);
+  assert.equal(display.sourceArtifact({...realClayContactShape,status:'pending'}).sections.some(s=>s.fields.some(f=>f.value==='synthetic-clay@example.com')),false);
+});

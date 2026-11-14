@@ -2036,3 +2036,86 @@ for (const status of ['association_failure', 'privacy_blocked_review', 'billing_
       assert.equal(next.calls.some(c=>c.name==='enrich_candidate_complete_profile'),false);
     }));
 }
+
+test('unrelated combined candidates preserve and sequentially recover both pending Skip receipts', () =>
+  database(async store => {
+    const {f:first, pending:firstPending, proposed:firstProposal} = await completePending(store);
+    const secondNpi='1234567891';
+    const secondReceipt={...nestedSkipReceipt,npi:secondNpi,id:'c'.repeat(64),run_id:'SecondSkipRun'};
+    const second=completeFixture({status:'partial',npi:secondNpi,uncertain_dispatch:false,providers:{pdl:{status:'matched'},clay:{status:'pending'},exa:{status:'matched'},apify:secondReceipt},profile:{provider_results:{apify:secondReceipt}}});
+    const respond=second.p.respond;
+    second.p.respond=async(...args)=>{const r=await respond(...args);if(r.call)r.call.arguments=JSON.stringify({npi:secondNpi,confirm_paid_enrichment:true});return r;};
+    const proposed=await executeCommand(store,'alice',{type:'message',id:firstPending.id,version:firstPending.version,text:`Enrich the other candidate NPI ${secondNpi} with all four providers.`},()=>second.p);
+    assert.equal(proposed.status,'review');
+    const out=await executeCommand(store,'alice',approve(proposed),()=>second.p);
+    const state=JSON.parse((await store.read('alice',out.id)).state_json);
+    assert.equal(state.skipTracePending.actionId,firstProposal.pending!.id);
+    assert.equal(state.skipTraceQueue[0].actionId,proposed.pending!.id);
+    assert.throws(()=>checkPaidScope('enrich_candidate_complete_profile',{npi:secondNpi},state),{status:409});
+    const legacy = structuredClone(state);
+    delete legacy.skipTracePending.npi;
+    assert.throws(()=>checkPaidScope('enrich_candidate_complete_profile',{npi:completeArgs.npi},legacy),{status:409});
+    legacy.messages.push({role:'user',text:'Also select NPI 1234567892.'});
+    assert.doesNotThrow(()=>checkPaidScope('enrich_candidate_complete_profile',{npi:'1234567892'},legacy));
+    const calls:any[]=[];
+    const tools=second.p.tools;
+    second.p.tools=async()=>[...(await tools()),{name:'enrich_candidate_skip_trace',inputSchema:{type:'object',properties:{}}}];
+    const call=second.p.call;
+    second.p.call=async(name,args)=>{
+      if(name!=='enrich_candidate_skip_trace')return call(name,args);
+      calls.push(args);
+      const receipt=args.npi===secondNpi?secondReceipt:nestedSkipReceipt;
+      return {...receipt,status:'no_contact',charge_reconciled:true};
+    };
+    const refreshed=await executeCommand(store,'alice',refreshCommand(out),()=>second.p);
+    assert.equal(JSON.parse((await store.read('alice',out.id)).state_json).skipTracePending.actionId,proposed.pending!.id);
+    await executeCommand(store,'alice',refreshCommand(refreshed),()=>second.p);
+    assert.deepEqual(calls.map(c=>[c.npi,c.reconcile_receipt.run_id]),[[completeArgs.npi,nestedSkipReceipt.run_id],[secondNpi,secondReceipt.run_id]]);
+    const finalState=JSON.parse((await store.read('alice',out.id)).state_json);
+    assert.equal(finalState.skipTracePending,undefined);
+    assert.equal(finalState.skipTraceQueue,undefined);
+    assert.equal(first.calls.filter(c=>c.name==='enrich_candidate_complete_profile').length,1);
+    assert.equal(second.calls.filter(c=>c.name==='enrich_candidate_complete_profile').length,1);
+  }));
+
+test('pending receipt queue survives context compaction without losing recovery anchors', () =>
+ database(async (store, advance) => {
+  const first = await completePending(store);
+  const row = await store.read('alice', first.pending.id);
+  const state = JSON.parse(row.state_json);
+  state.sources[0].data.providers.exa.padding = 'x'.repeat(90000);
+  await store.db.prepare('UPDATE npg_analyst_conversations SET state_json=? WHERE id=?').bind(JSON.stringify(state),row.id).run();
+  let current=first.pending;
+  for(let index=1;index<=2;index++){
+   const npi='123456789'+index;
+   const receipt={...nestedSkipReceipt,npi,id:String(index).repeat(64),run_id:'Run'+index};
+   const f=completeFixture({status:'partial',npi,uncertain_dispatch:false,providers:{pdl:{status:'matched'},clay:{status:'pending'},exa:{status:'matched',padding:'x'.repeat(90000)},apify:receipt},profile:{provider_results:{apify:receipt}}});
+   const respond=f.p.respond;
+   f.p.respond=async(...args)=>{const r=await respond(...args);if(r.call)r.call.arguments=JSON.stringify({npi,confirm_paid_enrichment:true});return r;};
+   const proposal=await executeCommand(store,'alice',{type:'message',id:current.id,version:current.version,text:'Enrich NPI '+npi+' with all four providers.'},()=>f.p);
+   assert.equal(proposal.status,'review');
+   current=await executeCommand(store,'alice',approve(proposal),()=>f.p);
+   assert.equal(current.status,'idle');
+  }
+  const f=first.f;
+  const tools=f.p.tools;
+  f.p.tools=async()=>[...(await tools()),{name:'enrich_candidate_skip_trace',inputSchema:{type:'object',properties:{}}}];
+  let refreshes=0;
+  f.p.call=async()=>{refreshes++;return {...nestedSkipReceipt,status:'pending',charge_reconciled:false};};
+  const once=await executeCommand(store,'alice',refreshCommand(current),()=>f.p);
+  assert.equal(once.status,'idle');
+  const twice=await executeCommand(store,'alice',refreshCommand(once),()=>f.p);
+  assert.equal(twice.status,'idle');
+  assert.equal(refreshes,2);
+  const preserved=JSON.parse((await store.read('alice',twice.id)).state_json);
+  const queue=[preserved.skipTracePending,...preserved.skipTraceQueue];
+  for(const pending of queue) assert.ok(preserved.sources.some((source:any)=>source.actionId===pending.actionId));
+  const exact=preserved.sources.filter((source:any)=>source.tool==='enrich_candidate_complete_profile').map((source:any)=>source.data.providers.apify);
+  const terminalNpis:string[]=[];
+  f.p.call=async(_name,args)=>{terminalNpis.push(String(args.npi));return {...exact.find((r:any)=>r.npi===args.npi),status:'no_contact',charge_reconciled:true,charge_usd:0};};
+  advance(61000); // Separate recovery reads from the normal request-rate window.
+  current=twice;
+  for(let index=0;index<3;index++) current=await executeCommand(store,'alice',refreshCommand(current),()=>f.p);
+  assert.deepEqual(terminalNpis,[completeArgs.npi,'1234567891','1234567892']);
+  assert.equal(JSON.parse((await store.read('alice',current.id)).state_json).skipTracePending,undefined);
+ }));

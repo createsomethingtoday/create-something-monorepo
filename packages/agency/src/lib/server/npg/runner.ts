@@ -1,6 +1,13 @@
 import { NPG_TOOL_NAMES, PAID_TOOLS } from './policy';
 import { validateArguments, type Providers, type Tool } from './providers';
-import { NpgError, NpgStore, type Action, type Conversation, type State } from './store';
+import {
+  NpgError,
+  NpgStore,
+  type Action,
+  type Conversation,
+  type State,
+  type PendingSkipReceipt
+} from './store';
 export type Command =
   | { type: 'create' }
   | { type: 'message'; id: string; version: number; text: string }
@@ -104,15 +111,91 @@ function skipReceipt(
     r.npi === npi
   );
 }
+// Keep a small, explicitly incomplete source when bounded conversation context
+// cannot retain a full profile. Exact action/NPI/run anchors must survive trimming.
+function compactRecoverySource(source: State['sources'][number]): State['sources'][number] {
+  const pick = (value: any, keys: string[]) =>
+    Object.fromEntries(
+      keys.flatMap((key) => {
+        const item = value?.[key];
+        return item === null ||
+          typeof item === 'boolean' ||
+          (typeof item === 'number' && Number.isFinite(item)) ||
+          (typeof item === 'string' && item.length <= 1000)
+          ? [[key, item]]
+          : [];
+      })
+    );
+  const receiptKeys = [
+    'id',
+    'npi',
+    'run_id',
+    'status',
+    'charge_usd',
+    'charge_reconciled',
+    'revision',
+    'cached',
+    'operation_cache_hit',
+    'operation_charge_usd',
+    'actual_cost_usd'
+  ];
+  const reason =
+    'Older profile detail was omitted to preserve exact receipt recovery. Do not infer missing contacts or success.';
+  const data = source.data as any;
+  if (source.tool !== 'enrich_candidate_complete_profile')
+    return { ...source, data: { ...pick(data, receiptKeys), evidence_omitted: true, reason } };
+  const providers = Object.fromEntries(
+    Object.entries(data?.providers ?? {}).map(([name, value]) => [
+      name,
+      {
+        ...pick(value, receiptKeys),
+        evidence_omitted: true,
+        reason
+      }
+    ])
+  );
+  return {
+    ...source,
+    data: {
+      ...pick(data, ['npi', 'status', 'uncertain_dispatch', 'billing_reconciliation_required']),
+      spend_tracking: pick(data?.spend_tracking, [
+        'operation_id',
+        'receipt_id',
+        'actual_usd',
+        'estimated_usd',
+        'pending_receipts',
+        'historical_status',
+        'scope'
+      ]),
+      providers,
+      profile: { provider_results: providers, verification: 'unverified' },
+      evidence_omitted: true,
+      reason
+    }
+  };
+}
 // Refresh replaces this receipt's status rather than growing history on every poll.
 function boundSkipRefresh(state: State, receiptId: string) {
   const latest = state.messages.pop()!;
   state.messages = state.messages.filter((m) => m.skipTraceReceipt !== receiptId);
   state.messages.push({ ...latest, skipTraceReceipt: receiptId });
   let compacted = state.messages.length > 60;
+  const protectedSource = (source: State['sources'][number]) => {
+    const data = source.data as any;
+    return (
+      pendingSkipReceipts(state).some(
+        (pending) =>
+          source.actionId === pending.actionId ||
+          (data?.id === pending.id && data?.run_id === pending.run_id)
+      ) ||
+      data?.id === receiptId ||
+      data?.providers?.apify?.id === receiptId
+    );
+  };
   state.sources = state.sources.map((source) => {
     if (JSON.stringify(source).length <= 120000) return source;
     compacted = true;
+    if (protectedSource(source)) return compactRecoverySource(source);
     return {
       tool: source.tool.slice(0, 200),
       data: {
@@ -131,27 +214,69 @@ function boundSkipRefresh(state: State, receiptId: string) {
   });
   while (state.messages.length > 60) state.messages.shift();
   // Recovery remains available even when normal chat has filled its context budget.
-  // Retain the newest receipt and its status; historical action records remain in D1.
+  // Retain every pending action anchor; historical action identities remain in D1.
   while (JSON.stringify(state).length > 259000 && state.messages.length > 1) {
     state.messages.shift();
     compacted = true;
   }
   while (JSON.stringify(state).length > 259000 && state.sources.length > 1) {
-    state.sources.shift();
+    const removable = state.sources.findIndex((source) => !protectedSource(source));
+    if (removable >= 0) state.sources.splice(removable, 1);
+    else {
+      const reducible = state.sources.findIndex((source) => JSON.stringify(source).length > 5000);
+      if (reducible < 0) break;
+      const original = state.sources[reducible];
+      const reduced = compactRecoverySource(original);
+      if (JSON.stringify(reduced).length >= JSON.stringify(original).length) break;
+      state.sources[reducible] = reduced;
+    }
     compacted = true;
   }
   if (compacted)
     state.messages[state.messages.length - 1].text +=
       ' Older conversation context was trimmed to keep receipt recovery available.';
 }
+function pendingSkipReceipts(state: State): PendingSkipReceipt[] {
+  return [
+    ...(state.skipTracePending ? [state.skipTracePending] : []),
+    ...(state.skipTraceQueue ?? [])
+  ];
+}
+function pendingCandidate(state: State, pending: PendingSkipReceipt): string | undefined {
+  if (pending.npi && /^\d{10}$/.test(pending.npi)) return pending.npi;
+  // Recover the candidate association for conversations saved before the queue existed.
+  for (const source of state.sources) {
+    const data = source.data as any;
+    if (
+      source.actionId === pending.actionId ||
+      (data?.id === pending.id && data?.run_id === pending.run_id)
+    ) {
+      if (typeof data?.npi === 'string' && /^\d{10}$/.test(data.npi)) return data.npi;
+    }
+  }
+}
+function rememberSkipReceipt(state: State, pending: PendingSkipReceipt) {
+  if (pendingSkipReceipts(state).some((item) => item.actionId === pending.actionId)) return;
+  if (!state.skipTracePending) state.skipTracePending = pending;
+  else (state.skipTraceQueue ??= []).push(pending);
+}
+function advanceSkipReceipt(state: State) {
+  const next = state.skipTraceQueue?.shift();
+  if (next) state.skipTracePending = next;
+  else delete state.skipTracePending;
+  if (!state.skipTraceQueue?.length) delete state.skipTraceQueue;
+}
 export function checkPaidScope(name: string, args: Record<string, unknown>, state: State) {
   if (
     ['enrich_candidate_skip_trace', 'enrich_candidate_complete_profile'].includes(name) &&
-    state.skipTracePending
+    pendingSkipReceipts(state).some((pending) => {
+      const npi = pendingCandidate(state, pending);
+      return !npi || npi === args.npi;
+    })
   )
     throw new NpgError(
       409,
-      'Send Refresh Skip Trace to reconcile the existing run before another Skip Trace request.'
+      'Send Refresh Skip Trace to reconcile this candidate’s existing run before another Skip Trace request for the same candidate.'
     );
   const userText = state.messages
     .filter((m) => m.role === 'user')
@@ -507,7 +632,7 @@ export async function executeCommand(
           )
           .bind(approved.id, owner)
           .run();
-        delete state.skipTracePending;
+        advanceSkipReceipt(state);
         state.messages.push({
           role: 'assistant',
           text: 'This receipt could not be safely reconciled. Ask your operator to review it before repeating this operation.'
@@ -527,7 +652,7 @@ export async function executeCommand(
               : 'The run returned a result, but billing is not yet reconciled. Review the source below; contacts and consent remain unverified. Wait at least 60 seconds, then send “Refresh Skip Trace” to reconcile this same receipt without another paid dispatch.'
         });
       else {
-        delete state.skipTracePending;
+        advanceSkipReceipt(state);
         state.messages.push({
           role: 'assistant',
           text: 'The existing Skip Trace run was refreshed. Review its source result below; identity, contact ownership and consent remain unverified. No new paid dispatch was authorized.'
@@ -536,6 +661,9 @@ export async function executeCommand(
       if (composite)
         state.messages[state.messages.length - 1].text +=
           ' Other provider billing still requires its own receipt reconciliation; refreshing Skip Trace does not settle those receipts.';
+      if (state.skipTracePending && state.skipTracePending.actionId !== pending.actionId)
+        state.messages[state.messages.length - 1].text +=
+          ' Another candidate receipt is pending. Send Refresh Skip Trace to recover that existing run next.';
       boundSkipRefresh(state, pending.id);
       await store.finish(
         row,
@@ -608,7 +736,12 @@ export async function executeCommand(
             ].includes(skip.status) &&
               skip.charge_reconciled !== true))
         )
-          state.skipTracePending = { actionId: action.id, id: skip.id, run_id: skip.run_id };
+          rememberSkipReceipt(state, {
+            actionId: action.id,
+            id: skip.id,
+            run_id: skip.run_id,
+            npi: String(args.npi)
+          });
         if (
           receipt?.npi !== args.npi ||
           !['complete', 'partial', 'blocked'].includes(receipt?.status) ||
@@ -634,7 +767,7 @@ export async function executeCommand(
         });
         if (state.skipTracePending)
           state.messages[state.messages.length - 1].text +=
-            ' Send Refresh Skip Trace to reconcile only this existing nested run, without repeating the combined lookup.';
+            ` Send Refresh Skip Trace to reconcile saved runs in approval order, starting with candidate NPI ${pendingCandidate(state, state.skipTracePending) ?? 'shown in the existing receipt'}. No combined lookup is repeated.`;
         await store.finish(row, state, 'idle', toolCount, action.id);
         return store.view(owner, row.id);
       }
@@ -652,7 +785,12 @@ export async function executeCommand(
           ].includes(result.status) &&
             result.charge_reconciled !== true))
       ) {
-        state.skipTracePending = { actionId: action.id, id: result.id, run_id: result.run_id };
+        rememberSkipReceipt(state, {
+          actionId: action.id,
+          id: result.id,
+          run_id: result.run_id,
+          npi: String(args.npi)
+        });
         state.sources.push({ tool: tool.name, data: result });
         delete state.responseId;
         state.messages.push({
@@ -662,6 +800,9 @@ export async function executeCommand(
               ? 'Skip Trace has a known pending run. Send “Refresh Skip Trace” to read this same receipt without another paid dispatch or approval. Other paid tools remain subject to their normal approval.'
               : 'Skip Trace returned a result with unsettled billing. Review the source below; contacts and consent remain unverified. Wait at least 60 seconds, then send “Refresh Skip Trace” to reconcile the same receipt. No new paid dispatch or approval is needed.'
         });
+        if (state.skipTraceQueue?.length)
+          state.messages[state.messages.length - 1].text +=
+            ` Saved receipts are recovered in approval order, starting with candidate NPI ${pendingCandidate(state, state.skipTracePending!)}.`;
         await store.finish(row, state, 'idle', toolCount, action.id);
         return store.view(owner, row.id);
       }

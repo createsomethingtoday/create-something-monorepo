@@ -9,12 +9,14 @@ export class NpgError extends Error {
 }
 export type Message = { role: 'user' | 'assistant'; text: string; skipTraceReceipt?: string };
 export type Source = { tool: string; data: unknown; actionId?: string };
+export type PendingSkipReceipt = { actionId: string; id: string; run_id: string; npi?: string };
 export type State = {
   messages: Message[];
   sources: Source[];
   responseId?: string;
   pendingId?: string;
-  skipTracePending?: { actionId: string; id: string; run_id: string };
+  skipTracePending?: PendingSkipReceipt;
+  skipTraceQueue?: PendingSkipReceipt[];
 };
 export type Conversation = {
   id: string;

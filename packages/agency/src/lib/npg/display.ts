@@ -242,10 +242,72 @@ export function sourceArtifact(data: unknown) {
     'limitations'
   ])
     fields.push(...evidenceFields(report[key], 'Coverage · ' + key.replaceAll('_', ' ')));
+  const professional =
+    record.professional_contact && typeof record.professional_contact === 'object'
+      ? (record.professional_contact as Record<string, unknown>)
+      : {};
+  const citations = Array.isArray(record.source_citations)
+    ? record.source_citations.filter(
+        (item: any) => typeof item?.url === 'string' && safeLink(item.url)
+      )
+    : [];
+  const exaAccepted =
+    ['verified_match', 'plausible_match'].includes(String(record.match_status)) &&
+    record.contact_route_status === 'unverified_enrichment_candidate' &&
+    citations.length > 0;
+  const clay =
+    record.result && typeof record.result === 'object'
+      ? (record.result as Record<string, unknown>)
+      : {};
+  const clayContacts =
+    record.status === 'review_required' &&
+    record.contact_status === 'public_professional_candidate_unverified' &&
+    clay.outcome === 'candidate' &&
+    Array.isArray(clay.contacts)
+      ? clay.contacts.filter(
+          (item: any) =>
+            ['email', 'phone'].includes(item?.type) &&
+            typeof item?.value === 'string' &&
+            item.publication_context === 'professional_contact' &&
+            typeof item.source_url === 'string' &&
+            safeLink(item.source_url) &&
+            typeof item.evidence_quote === 'string'
+        )
+      : [];
   const sections = [
     { title: 'Public registry record · unverified', value: record.provider ?? record.registry },
     { title: 'Registry contact · outreach authority not established', value: record.contact },
     { title: 'Recruiting readiness and unknowns', value: record.readiness },
+    {
+      title:
+        'Exa public professional contact candidates · identity review required; ownership and consent unverified',
+      value: exaAccepted
+        ? {
+            review_status: 'Identity review required; ownership and consent unverified.',
+            email: professional.email,
+            phone: professional.phone,
+            profile_url: professional.profile_url,
+            match_status: record.match_status,
+            identity_reason: record.identity_reason,
+            source_citations: citations,
+            outreach_authority: record.outreach_authority_status
+          }
+        : undefined
+    },
+    {
+      title:
+        'Clay public professional contact candidates · identity review required; ownership and consent unverified',
+      value: clayContacts.length
+        ? {
+            review_status: 'Identity review required; ownership and consent unverified.',
+            identity_evidence: clay.identity_evidence,
+            ...Object.fromEntries(
+              clayContacts.map((contact: any, index: number) => ['contact_' + (index + 1), contact])
+            ),
+            outreach_authority: record.outreach_authority
+          }
+        : undefined
+    },
     // An ambiguous vendor match must not be presented as this candidate's profile.
     {
       title: 'Vendor-reported professional profile · unverified',
