@@ -86,6 +86,8 @@ interface Env {
   REVIEW_COMMENTS_URL?: string;
   /** This MCP's reviewer-scoped key from the comments Worker's CALLER_KEYS (secret). */
   REVIEW_COMMENTS_API_KEY?: string;
+  /** "airtable" when the Airtable automation sends decision feedback for templates; unset = this MCP sends it. */
+  REVIEW_COMMENTS_DECISIONS?: string;
   /** cms:write site token for the Marketplace site (secret) — enables delist/relist. Infisical dev /webflow/template-marketplace TEMPLATE_MARKETPLACE. */
   MARKETPLACE_CMS_TOKEN?: string;
 }
@@ -168,6 +170,7 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
         },
         getZendeskClient: () => zendesk,
         getReviewCommentsClient: () => reviewComments,
+        decisionFeedbackByAutomation: this.env.REVIEW_COMMENTS_DECISIONS === 'airtable',
         marketplaceCms: { siteToken: this.env.MARKETPLACE_CMS_TOKEN },
         communityQueue: { getBinding: () => this.env.COMMUNITY_QUEUE ?? null },
         ...(this.env.BROWSER

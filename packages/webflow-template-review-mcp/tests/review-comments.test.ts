@@ -218,6 +218,21 @@ test('request_changes writes Airtable first, then posts the feedback and release
   assert.deepEqual(result.data.review_comments, { ok: true, feedback_comment_added: true, released: 2, creator_email_sent: false });
 });
 
+test('with the Airtable automation as sender, a decision writes Airtable and leaves the comments alone', async () => {
+  const { client, calls } = fakeComments();
+  const airtable = fakeAirtable();
+  const { server, handlers } = harness();
+  registerTools(server, () => airtable.client, () => reviewer, { getReviewCommentsClient: () => client, decisionFeedbackByAutomation: true });
+
+  const result = payload(
+    await handlers.get('template_review_request_changes')?.({ version_id: VERSION_ID, review_feedback: 'Fix the 404 page' }),
+  );
+  assert.equal(result.ok, true);
+  assert.equal(airtable.writes.length, 1);
+  assert.deepEqual(calls, []);
+  assert.equal(result.data.review_comments.handled_by, 'airtable_automation');
+});
+
 test('a retried decision does not post the same feedback twice', async () => {
   const { client, calls } = fakeComments({
     existing: [comment({ body: 'Fix the 404 page', visibility: 'released', authorEmail: 'reviewer@example.com' })],
