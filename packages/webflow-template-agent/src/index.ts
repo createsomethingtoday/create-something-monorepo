@@ -131,7 +131,13 @@ function sseResponse(
               cacheInputTokens: (usage?.cacheCreationInputTokens ?? 0) + (usage?.cacheReadInputTokens ?? 0),
             });
           })
-          .catch(async () => {
+          .catch(async (error: unknown) => {
+            // Name, HTTP status and a short message: enough to tell a rejected
+            // request from an outage. No request content is logged.
+            const status = (error as { status?: unknown } | null)?.status;
+            console.error(
+              `[agent] turn failed: ${error instanceof Error ? error.name : 'unknown'} ${typeof status === 'number' ? status : '-'} ${(error instanceof Error ? error.message : String(error)).slice(0, 300)}`,
+            );
             emit({
               type: 'error',
               message: 'The assistant hit an unexpected error. Please try again.',
