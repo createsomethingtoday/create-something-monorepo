@@ -7,7 +7,7 @@ CRE-2452 brings the approved Canon identity into the actual Agency homepage and 
 - Homepage opening, measured workshop plate, three handoff scenes/wayfinder and closing invitation. Existing headings, conversion URLs, recorded work, payment/ownership boundaries, plans and pricing are preserved.
 - AgencyHeroFrame and AgencyMeasuredOpening adopt scenes only for registered measured public owners. Real figures and dense proof stay below artwork. Map/Ground media-owning entries, Scopefield downloads, compact/utility/private/client owners and study variants retain their owners.
 - Shared handoff and public footer use the notebook invitation background with unchanged actual actions/readback/claims. Route-owned endings remain with their owners.
-- Technical Review retains its original inspection concept model in the explanatory process section, following the new warm opening and fit content. The model is no longer a second competing hero.
+- Technical Review retains its original inspection concept model in the explanatory process section, following the new warm opening and fit content. The model is no longer a second competing hero. Its short introduction drops a duplicated scope/price assurance; the fuller authored scope, price and timing note remains below the action, including without JavaScript.
 - No auth, consent, analytics dispatch, pricing or external integration behavior changes.
 
 New stills and prompts: [ARTWORK.md](static/images/canon-agency-v1/ARTWORK.md). Prior approved originals are unchanged. New stills remain review candidates pending specific chat acceptance under Cook.
