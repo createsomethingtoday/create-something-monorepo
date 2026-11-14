@@ -994,6 +994,15 @@ export function registerTools(
         try {
           const actorEmail = requireReviewerEmail(getReviewer);
           const { version, asset } = await requireAppVersionWithAsset(getClient(), version_id);
+          // The dashboard hides a round in a "(No Notification)" status, so a release would email a link to feedback the developer cannot read.
+          if ((version.reviewStatus ?? '').endsWith('(No Notification)')) {
+            throw new AirtableClientError(
+              'NO_NOTIFICATION_STATUS',
+              'This version is in a "(No Notification)" status, so the developer cannot read feedback on it. Change the review status first, then release.',
+              409,
+              { version_id },
+            );
+          }
           const notice = appReleaseNotice(asset, version);
           const expected = expected_drafts.map((draft) => ({ id: draft.id, editedAt: draft.edited_at }));
           const { released, notification } = await reviewComments.release(version_id, actorEmail, notice, expected);

@@ -372,6 +372,13 @@ describe('feedback email', () => {
     });
   });
 
+  it('refuses an explicit release on a "(No Notification)" round, which the developer cannot read', async () => {
+    const { run, comments } = setup({ airtable: createAirtable({ reviewStatus: '📤Changes Requested (No Notification)' }) });
+    const result = await run('app_review_release_feedback', { version_id: VERSION, expected_drafts: [] });
+    expect(result.error.code).toBe('NO_NOTIFICATION_STATUS');
+    expect(comments!.release).not.toHaveBeenCalled();
+  });
+
   it('releases with no email when the asset record has no usable address', async () => {
     for (const creatorEmail of [undefined, '', 'n/a', 'not-an-address; also not']) {
       const airtable = createAirtable();
