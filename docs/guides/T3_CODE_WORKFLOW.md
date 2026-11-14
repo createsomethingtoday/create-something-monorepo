@@ -1,13 +1,20 @@
 # T3 Code project workflow
 
-The repo's [`t3.json`](../../t3.json) shares four actions. Import them in T3 Code
+The repo's [`t3.json`](../../t3.json) shares five actions. Import them in T3 Code
 under **Settings → Projects → Actions**, with this project selected. Importing
 copies the list into that environment's project settings; import updated actions
 again when the repo definitions change. Save the previous project list before
 replacing it.
 
+To add just **Check workspace**, open the thread's action menu and select it
+under **From t3.json → Import**. Importing saves the action; select the imported
+action again to run it in the thread's checkout. Read back the effective action
+list in the selected project's environment before and after adoption. The repo
+file alone does not describe inherited or environment-specific settings.
+
 | Action | Behavior |
 | --- | --- |
+| Check workspace | Summarizes Git identity, change entries and local upstream state; offers a read-only next command. Full unexecuted validation inventory is available with `--json`. Requires Node and Git, with no dependency bootstrap. |
 | Bootstrap worktree | Runs the repo-pinned Node/pnpm bootstrap after T3 creates a worktree. `async: false` holds the agent until setup exits. |
 | Agency dev | Builds the shared libraries used by Agency and starts its development server. Stop its terminal when finished. |
 | Developer workflow checks | Runs the focused checkout-registration tests. Package-specific checks still belong to the task's acceptance criteria. |
@@ -39,8 +46,12 @@ explicit.
 
 ## Choose a workflow entry point
 
-Each entry point composes the existing repository policies and specialist skills.
-Use the one that fits the task, and load another only when the work reaches it.
+For repository implementation and review, state the request normally. The repo's
+agent instructions route it through [`canon-work`](../../.agents/skills/canon-work/SKILL.md),
+which selects the relevant specialists; no manual skill sequence is needed.
+The skill can also be selected explicitly. These tracked files are local source, not evidence that a
+running T3 session has discovered the skill or imported the action. Native action
+imports remain scoped to the selected project and environment.
 
 | Skill | Use it for |
 | --- | --- |
@@ -49,9 +60,12 @@ Use the one that fits the task, and load another only when the work reaches it.
 | [`$cs-design`](../../.agents/skills/cs-design/SKILL.md) | Applying Canon research and reviewing a rendered UI against its baseline. |
 | [`$cs-release`](../../.agents/skills/cs-release/SKILL.md) | Completing authorized promotion or handoff with durable evidence and rollback. |
 
-Canonical instructions live under `.agents/skills/`, with shared Claude skill
-links. After installing or changing skills, use T3's
-**Restart agent session** command so the next turn discovers the updated setup.
+Canonical instructions live under `.agents/skills/`. The four `cs-*` specialists
+have shared Claude skill links. The new `canon-work` route is configured through
+`AGENTS.md`; discovery and use were exercised in Codex. Other providers need
+their own discovery and routing verification before adoption. After installing
+or changing skills, use T3's **Restart agent session** command so the next turn
+discovers the updated setup.
 History can locate evidence; current source and the owning service establish
 current state. Partial CTX coverage is reported rather than repaired on every task.
 
@@ -82,10 +96,26 @@ do not assume offline machines received them.
 
 ## Validation and rollback
 
+Run `node --test scripts/test/canon-work-*.test.mjs` for the local entry point.
+The read-only workspace command also accepts a directory, including from a
+subdirectory when invoked using its actual script path.
+`node .agents/skills/canon-work/scripts/plan-actions.mjs path/to/t3.json` prints
+a proposed configuration to stdout without writing or importing it; it preserves
+existing fields, rejects name conflicts and limits the proposal to 50 actions.
+It validates action fields only, not the entire T3 schema.
+
 Run **Developer workflow checks**, validate `t3.json` against its declared schema,
 and confirm the imported project actions by reading them back. A new-worktree
 smoke should confirm bootstrap finishes before the agent begins dependency-based
 work. Config readback alone does not establish that runtime ordering.
+
+For source-only rollback, remove the canon-work routing paragraph, skill folder,
+Check workspace action and accompanying documentation/tests, preserving unrelated
+changes and the four pre-existing actions. No global skill installation is needed.
+
+If adoption added only **Check workspace**, delete that added action in the same
+project and environment, then read back the remaining list. Preserve subsequent
+edits and do not reset the whole list merely to remove one action.
 
 To roll back a local activation, restore the saved project action list. If the
 prior list inherited its environment's actions, choose **Reset Actions to default**.
