@@ -1,5 +1,5 @@
 /**
- * Client for the webflow-review-comments Worker: per-version review threads
+ * Client for the review comments service (repo webflow/marketplace-review-comments, a Webflow Cloud app): per-version review threads
  * that replace Zendesk tickets for Marketplace reviews.
  *
  * Each review MCP calls it with its own reviewer key. The Worker takes the

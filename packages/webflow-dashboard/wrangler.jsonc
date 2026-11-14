@@ -56,6 +56,6 @@
 	// - KNOCK_API_KEY (production Knock secret key; enables Knock delivery of login codes)
 	// - KNOCK_LOGIN_ENABLED ("true" to send login codes via Knock instead of the Airtable Gmail automation)
 	// - KNOCK_LOGIN_WORKFLOW_KEY (defaults to asset-dashboard-login-validation)
-	// - REVIEW_COMMENTS_URL + REVIEW_COMMENTS_API_KEY (packages/webflow-review-comments, creator-role key; either unset = review progress and comments hidden)
+	// - REVIEW_COMMENTS_URL + REVIEW_COMMENTS_API_KEY (repo webflow/marketplace-review-comments, creator-role key; either unset = review progress and comments hidden)
 	// - REVIEW_COMMENTS_ASSET_TYPES (comma-separated asset types that use review comments, for example "App"; unset = every type)
 }
