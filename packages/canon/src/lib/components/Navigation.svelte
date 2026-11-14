@@ -496,7 +496,11 @@
       </div>
     {/if}
   </div>
-  <noscript><div class="nav-static-links">{#each links as link}<a href={link.href}>{link.label}</a>{#each link.children ?? [] as child}<a href={child.href}>{child.label}</a>{/each}{/each}</div></noscript>
+  <noscript><div class="nav-static-links">
+    {#each links as link}<a href={link.href}>{link.label}</a>{#each link.children ?? [] as child}<a href={child.href}>{child.label}</a>{/each}{/each}
+    {#if ctaLabel && ctaHref}<a href={ctaHref}>{ctaLabel}</a>{/if}
+    {#if user}<a href={accountHref}>Account</a>{:else if showLogin}<a href={loginHref}>Sign in</a>{/if}
+  </div></noscript>
 </nav>
 
 <style>
@@ -1262,8 +1266,11 @@
   .nav-container .nav-dropdown__item small {font-size:14px;color:var(--color-performance-muted);}
   .nav-container .nav-mobile-menu {display:flex;flex-direction:column;gap:8px;background:var(--color-performance-panel);border:1px solid var(--color-performance-line);backdrop-filter:none;-webkit-backdrop-filter:none;}
   .nav-container:has(.nav-static-links) .nav-menu-button {display:none;}
+  /* Native fallback links stay in document flow, including desktop submenu destinations. */
+  .nav-container.nav-fixed:has(.nav-static-links) {position:relative!important;inset:auto!important;transform:none!important;width:100%!important;}
+  .nav-container:has(.nav-static-links) .nav-desktop {display:none;}
   .nav-static-links {display:flex;flex-wrap:wrap;gap:8px;padding:16px;background:var(--color-performance-panel);}
   .nav-static-links a {display:inline-flex;align-items:center;min-height:44px;color:var(--color-performance-ink);}
-  @media(min-width:1280px){.nav-container .nav-desktop {display:flex;align-items:center;gap:12px;background:transparent;border:0;box-shadow:none;}.nav-container .nav-menu-button {display:none;}.nav-static-links {display:none;}}
+  @media(min-width:1280px){.nav-container .nav-desktop {display:flex;align-items:center;gap:12px;background:transparent;border:0;box-shadow:none;}.nav-container .nav-menu-button {display:none;}}
 
 </style>

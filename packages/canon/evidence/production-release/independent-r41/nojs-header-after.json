@@ -1,0 +1,660 @@
+[
+  {
+    "site": "agency",
+    "url": "http://127.0.0.1:5192/",
+    "width": 320,
+    "height": 900,
+    "dpr": 1,
+    "scrollY": 0,
+    "docWidth": 310,
+    "nav": {
+      "position": "relative",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 310,
+        "height": 401.796875,
+        "top": 0,
+        "right": 310,
+        "bottom": 401.796875,
+        "left": 0
+      }
+    },
+    "chapter": {
+      "x": 19.1953125,
+      "y": 545.796875,
+      "width": 271.609375,
+      "height": 100,
+      "top": 545.796875,
+      "right": 290.8046875,
+      "bottom": 645.796875,
+      "left": 19.1953125
+    },
+    "h1": {
+      "text": "Your tools should\nwork together.",
+      "rect": {
+        "x": 19.1953125,
+        "y": 743.796875,
+        "width": 271.609375,
+        "height": 116.2734375,
+        "top": 743.796875,
+        "right": 290.8046875,
+        "bottom": 860.0703125,
+        "left": 19.1953125
+      }
+    },
+    "links": [
+      {
+        "text": "The work",
+        "href": "/#built-work",
+        "visible": true,
+        "rect": {
+          "x": 16,
+          "y": 80.796875,
+          "width": 67.15625,
+          "height": 44,
+          "top": 80.796875,
+          "right": 83.15625,
+          "bottom": 124.796875,
+          "left": 16
+        }
+      },
+      {
+        "text": "Technical support",
+        "href": "/services",
+        "visible": true,
+        "rect": {
+          "x": 91.15625,
+          "y": 80.796875,
+          "width": 129.21875,
+          "height": 44,
+          "top": 80.796875,
+          "right": 220.375,
+          "bottom": 124.796875,
+          "left": 91.15625
+        }
+      },
+      {
+        "text": "From $900/mo",
+        "href": "/services#membership",
+        "visible": true,
+        "rect": {
+          "x": 16,
+          "y": 132.796875,
+          "width": 112.7265625,
+          "height": 44,
+          "top": 132.796875,
+          "right": 128.7265625,
+          "bottom": 176.796875,
+          "left": 16
+        }
+      },
+      {
+        "text": "Explore",
+        "href": "/products",
+        "visible": true,
+        "rect": {
+          "x": 136.7265625,
+          "y": 132.796875,
+          "width": 54.8828125,
+          "height": 44,
+          "top": 132.796875,
+          "right": 191.609375,
+          "bottom": 176.796875,
+          "left": 136.7265625
+        }
+      },
+      {
+        "text": "Services & tools",
+        "href": "/products",
+        "visible": true,
+        "rect": {
+          "x": 16,
+          "y": 184.796875,
+          "width": 117.3515625,
+          "height": 44,
+          "top": 184.796875,
+          "right": 133.3515625,
+          "bottom": 228.796875,
+          "left": 16
+        }
+      },
+      {
+        "text": "Proof",
+        "href": "/field-reports",
+        "visible": true,
+        "rect": {
+          "x": 141.3515625,
+          "y": 184.796875,
+          "width": 39.6875,
+          "height": 44,
+          "top": 184.796875,
+          "right": 181.0390625,
+          "bottom": 228.796875,
+          "left": 141.3515625
+        }
+      },
+      {
+        "text": "Try a workflow",
+        "href": "/practice",
+        "visible": true,
+        "rect": {
+          "x": 16,
+          "y": 236.796875,
+          "width": 106.9140625,
+          "height": 44,
+          "top": 236.796875,
+          "right": 122.9140625,
+          "bottom": 280.796875,
+          "left": 16
+        }
+      },
+      {
+        "text": "What you keep",
+        "href": "/stack",
+        "visible": true,
+        "rect": {
+          "x": 130.9140625,
+          "y": 236.796875,
+          "width": 108.375,
+          "height": 44,
+          "top": 236.796875,
+          "right": 239.2890625,
+          "bottom": 280.796875,
+          "left": 130.9140625
+        }
+      },
+      {
+        "text": "Research on .io",
+        "href": "https://createsomething.io/experiments",
+        "visible": true,
+        "rect": {
+          "x": 16,
+          "y": 288.796875,
+          "width": 111.0625,
+          "height": 44,
+          "top": 288.796875,
+          "right": 127.0625,
+          "bottom": 332.796875,
+          "left": 16
+        }
+      },
+      {
+        "text": "Book a mapping session",
+        "href": "/book?source=agency&intent=workflow-mapping&lane=workflow_infrastructure",
+        "visible": true,
+        "rect": {
+          "x": 16,
+          "y": 340.796875,
+          "width": 178.421875,
+          "height": 44,
+          "top": 340.796875,
+          "right": 194.421875,
+          "bottom": 384.796875,
+          "left": 16
+        }
+      }
+    ],
+    "duplicateDesktopVisible": false,
+    "failures": []
+  },
+  {
+    "site": "agency",
+    "url": "http://127.0.0.1:5192/",
+    "width": 1440,
+    "height": 900,
+    "dpr": 1,
+    "scrollY": 0,
+    "docWidth": 1430,
+    "nav": {
+      "position": "relative",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 1430,
+        "height": 141.796875,
+        "top": 0,
+        "right": 1430,
+        "bottom": 141.796875,
+        "left": 0
+      }
+    },
+    "chapter": {
+      "x": 43.1953125,
+      "y": 303.796875,
+      "width": 1343.609375,
+      "height": 90,
+      "top": 303.796875,
+      "right": 1386.8046875,
+      "bottom": 393.796875,
+      "left": 43.1953125
+    },
+    "h1": {
+      "text": "Your tools should\nwork together.",
+      "rect": {
+        "x": 43.1953125,
+        "y": 519.296875,
+        "width": 773.6640625,
+        "height": 191.921875,
+        "top": 519.296875,
+        "right": 816.859375,
+        "bottom": 711.21875,
+        "left": 43.1953125
+      }
+    },
+    "links": [
+      {
+        "text": "The work",
+        "href": "/#built-work",
+        "visible": true,
+        "rect": {
+          "x": 16,
+          "y": 80.796875,
+          "width": 67.15625,
+          "height": 44,
+          "top": 80.796875,
+          "right": 83.15625,
+          "bottom": 124.796875,
+          "left": 16
+        }
+      },
+      {
+        "text": "Technical support",
+        "href": "/services",
+        "visible": true,
+        "rect": {
+          "x": 91.15625,
+          "y": 80.796875,
+          "width": 129.21875,
+          "height": 44,
+          "top": 80.796875,
+          "right": 220.375,
+          "bottom": 124.796875,
+          "left": 91.15625
+        }
+      },
+      {
+        "text": "From $900/mo",
+        "href": "/services#membership",
+        "visible": true,
+        "rect": {
+          "x": 228.375,
+          "y": 80.796875,
+          "width": 112.7265625,
+          "height": 44,
+          "top": 80.796875,
+          "right": 341.1015625,
+          "bottom": 124.796875,
+          "left": 228.375
+        }
+      },
+      {
+        "text": "Explore",
+        "href": "/products",
+        "visible": true,
+        "rect": {
+          "x": 349.1015625,
+          "y": 80.796875,
+          "width": 54.8828125,
+          "height": 44,
+          "top": 80.796875,
+          "right": 403.984375,
+          "bottom": 124.796875,
+          "left": 349.1015625
+        }
+      },
+      {
+        "text": "Services & tools",
+        "href": "/products",
+        "visible": true,
+        "rect": {
+          "x": 411.984375,
+          "y": 80.796875,
+          "width": 117.3515625,
+          "height": 44,
+          "top": 80.796875,
+          "right": 529.3359375,
+          "bottom": 124.796875,
+          "left": 411.984375
+        }
+      },
+      {
+        "text": "Proof",
+        "href": "/field-reports",
+        "visible": true,
+        "rect": {
+          "x": 537.3359375,
+          "y": 80.796875,
+          "width": 39.6875,
+          "height": 44,
+          "top": 80.796875,
+          "right": 577.0234375,
+          "bottom": 124.796875,
+          "left": 537.3359375
+        }
+      },
+      {
+        "text": "Try a workflow",
+        "href": "/practice",
+        "visible": true,
+        "rect": {
+          "x": 585.0234375,
+          "y": 80.796875,
+          "width": 106.9140625,
+          "height": 44,
+          "top": 80.796875,
+          "right": 691.9375,
+          "bottom": 124.796875,
+          "left": 585.0234375
+        }
+      },
+      {
+        "text": "What you keep",
+        "href": "/stack",
+        "visible": true,
+        "rect": {
+          "x": 699.9375,
+          "y": 80.796875,
+          "width": 108.375,
+          "height": 44,
+          "top": 80.796875,
+          "right": 808.3125,
+          "bottom": 124.796875,
+          "left": 699.9375
+        }
+      },
+      {
+        "text": "Research on .io",
+        "href": "https://createsomething.io/experiments",
+        "visible": true,
+        "rect": {
+          "x": 816.3125,
+          "y": 80.796875,
+          "width": 111.0625,
+          "height": 44,
+          "top": 80.796875,
+          "right": 927.375,
+          "bottom": 124.796875,
+          "left": 816.3125
+        }
+      },
+      {
+        "text": "Book a mapping session",
+        "href": "/book?source=agency&intent=workflow-mapping&lane=workflow_infrastructure",
+        "visible": true,
+        "rect": {
+          "x": 935.375,
+          "y": 80.796875,
+          "width": 178.421875,
+          "height": 44,
+          "top": 80.796875,
+          "right": 1113.796875,
+          "bottom": 124.796875,
+          "left": 935.375
+        }
+      }
+    ],
+    "duplicateDesktopVisible": false,
+    "failures": []
+  },
+  {
+    "site": "io",
+    "url": "http://127.0.0.1:5193/",
+    "width": 320,
+    "height": 900,
+    "dpr": 1,
+    "scrollY": 0,
+    "docWidth": 310,
+    "nav": {
+      "position": "relative",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 310,
+        "height": 193,
+        "top": 0,
+        "right": 310,
+        "bottom": 193,
+        "left": 0
+      }
+    },
+    "chapter": null,
+    "h1": {
+      "text": "Research for automation you can defend.",
+      "rect": {
+        "x": 16,
+        "y": 263.828125,
+        "width": 278,
+        "height": 127.1953125,
+        "top": 263.828125,
+        "right": 294,
+        "bottom": 391.0234375,
+        "left": 16
+      }
+    },
+    "links": [
+      {
+        "text": "Experiments",
+        "href": "/experiments",
+        "visible": true,
+        "rect": {
+          "x": 16,
+          "y": 80,
+          "width": 91.265625,
+          "height": 44,
+          "top": 80,
+          "right": 107.265625,
+          "bottom": 124,
+          "left": 16
+        }
+      },
+      {
+        "text": "Papers",
+        "href": "/papers",
+        "visible": true,
+        "rect": {
+          "x": 115.265625,
+          "y": 80,
+          "width": 50.7265625,
+          "height": 44,
+          "top": 80,
+          "right": 165.9921875,
+          "bottom": 124,
+          "left": 115.265625
+        }
+      },
+      {
+        "text": "Methodology",
+        "href": "/methodology",
+        "visible": true,
+        "rect": {
+          "x": 173.9921875,
+          "y": 80,
+          "width": 95.90625,
+          "height": 44,
+          "top": 80,
+          "right": 269.8984375,
+          "bottom": 124,
+          "left": 173.9921875
+        }
+      },
+      {
+        "text": "About",
+        "href": "/about",
+        "visible": true,
+        "rect": {
+          "x": 16,
+          "y": 132,
+          "width": 43.765625,
+          "height": 44,
+          "top": 132,
+          "right": 59.765625,
+          "bottom": 176,
+          "left": 16
+        }
+      },
+      {
+        "text": "Contact",
+        "href": "/contact",
+        "visible": true,
+        "rect": {
+          "x": 67.765625,
+          "y": 132,
+          "width": 58.1484375,
+          "height": 44,
+          "top": 132,
+          "right": 125.9140625,
+          "bottom": 176,
+          "left": 67.765625
+        }
+      },
+      {
+        "text": "Sign in",
+        "href": "/login",
+        "visible": true,
+        "rect": {
+          "x": 133.9140625,
+          "y": 132,
+          "width": 50.2734375,
+          "height": 44,
+          "top": 132,
+          "right": 184.1875,
+          "bottom": 176,
+          "left": 133.9140625
+        }
+      }
+    ],
+    "duplicateDesktopVisible": false,
+    "failures": []
+  },
+  {
+    "site": "io",
+    "url": "http://127.0.0.1:5193/",
+    "width": 1440,
+    "height": 900,
+    "dpr": 1,
+    "scrollY": 0,
+    "docWidth": 1430,
+    "nav": {
+      "position": "relative",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 1430,
+        "height": 141,
+        "top": 0,
+        "right": 1430,
+        "bottom": 141,
+        "left": 0
+      }
+    },
+    "chapter": null,
+    "h1": {
+      "text": "Research for automation you can defend.",
+      "rect": {
+        "x": 155,
+        "y": 310.3671875,
+        "width": 478.078125,
+        "height": 183.1640625,
+        "top": 310.3671875,
+        "right": 633.078125,
+        "bottom": 493.53125,
+        "left": 155
+      }
+    },
+    "links": [
+      {
+        "text": "Experiments",
+        "href": "/experiments",
+        "visible": true,
+        "rect": {
+          "x": 16,
+          "y": 80,
+          "width": 91.265625,
+          "height": 44,
+          "top": 80,
+          "right": 107.265625,
+          "bottom": 124,
+          "left": 16
+        }
+      },
+      {
+        "text": "Papers",
+        "href": "/papers",
+        "visible": true,
+        "rect": {
+          "x": 115.265625,
+          "y": 80,
+          "width": 50.7265625,
+          "height": 44,
+          "top": 80,
+          "right": 165.9921875,
+          "bottom": 124,
+          "left": 115.265625
+        }
+      },
+      {
+        "text": "Methodology",
+        "href": "/methodology",
+        "visible": true,
+        "rect": {
+          "x": 173.9921875,
+          "y": 80,
+          "width": 95.90625,
+          "height": 44,
+          "top": 80,
+          "right": 269.8984375,
+          "bottom": 124,
+          "left": 173.9921875
+        }
+      },
+      {
+        "text": "About",
+        "href": "/about",
+        "visible": true,
+        "rect": {
+          "x": 277.8984375,
+          "y": 80,
+          "width": 43.765625,
+          "height": 44,
+          "top": 80,
+          "right": 321.6640625,
+          "bottom": 124,
+          "left": 277.8984375
+        }
+      },
+      {
+        "text": "Contact",
+        "href": "/contact",
+        "visible": true,
+        "rect": {
+          "x": 329.6640625,
+          "y": 80,
+          "width": 58.1484375,
+          "height": 44,
+          "top": 80,
+          "right": 387.8125,
+          "bottom": 124,
+          "left": 329.6640625
+        }
+      },
+      {
+        "text": "Sign in",
+        "href": "/login",
+        "visible": true,
+        "rect": {
+          "x": 395.8125,
+          "y": 80,
+          "width": 50.2734375,
+          "height": 44,
+          "top": 80,
+          "right": 446.0859375,
+          "bottom": 124,
+          "left": 395.8125
+        }
+      }
+    ],
+    "duplicateDesktopVisible": false,
+    "failures": []
+  }
+]
