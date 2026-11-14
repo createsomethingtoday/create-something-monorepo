@@ -30,7 +30,7 @@ PDL data establishes a probable contact route, not permission. The `limitation` 
 
 ## Credits and reliability
 
-A singleton SQLite Durable Object (`PdlProfiles`) reserves attempts across all MCP sessions: at most `PDL_DAILY_LIMIT` new lookups per rolling 24 hours (default 25). Each distinct request is cached so repeats never spend a second credit: `matched`, `no_match` and `ambiguous` for seven days, `unavailable` (vendor error, timeout, credential problem) for one hour so a corrected configuration can be retried. Failed or uncertain requests keep their reservation and are not retried automatically. Request timeout is 15 seconds, redirects are rejected, and vendor error bodies are never surfaced. PDL charges per match; `require_contact` narrows what counts as a match.
+A singleton SQLite Durable Object (`PdlProfiles`) deduplicates attempts across MCP sessions. The custom implementation has no daily spending cap. Provider credit headers are recorded separately from USD; missing conversion evidence stays unknown. See [spend tracking](ENRICHMENT_BUDGET.md). Each distinct request is cached so repeats never spend a second credit: `matched`, `no_match` and `ambiguous` for seven days, `unavailable` (vendor error, timeout, credential problem) for one hour so a corrected configuration can be retried. Failed or uncertain requests keep their reservation and are not retried automatically. Request timeout is 15 seconds, redirects are rejected, and vendor error bodies are never surfaced. PDL charges per match; `require_contact` narrows what counts as a match.
 
 ## Deployment
 

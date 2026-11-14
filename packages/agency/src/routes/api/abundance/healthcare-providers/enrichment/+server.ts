@@ -22,10 +22,12 @@ const handle: RequestHandler = async ({ request, url, platform, fetch: fetchFn }
         return json({ success: false, error: 'Clay integration unavailable' }, { status: 503 });
       const raw = await request.text();
       if (raw.length > 2000) throw new TypeError();
+      const payload=JSON.parse(raw);
+      const {budget_grant,...input}=payload;
       data = await requestClayJob(
         env.DB,
-        JSON.parse(raw),
-        { webhookUrl: env.CLAY_NPG_WEBHOOK_URL, webhookToken: env.CLAY_NPG_WEBHOOK_AUTH_TOKEN },
+        input,
+        { webhookUrl: env.CLAY_NPG_WEBHOOK_URL, webhookToken: env.CLAY_NPG_WEBHOOK_AUTH_TOKEN, budgetGrant:budget_grant },
         fetchFn
       );
     }

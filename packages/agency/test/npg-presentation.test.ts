@@ -37,32 +37,15 @@ test('registry identity requires the exact selected NPI and excludes vendor or c
     null
   );
 });
-test('summary uses supplied maximum and currency, preserving fractional amounts', () => {
-  const summary = decisionSummary(pending({ maximumCost: 0.007, currency: 'USD' }), []);
-  assert.equal(summary.price, '$0.007 USD');
-  assert.equal(summary.priceLabel, 'Maximum');
-  assert.equal(decisionSummary(pending({ maximumCost: 0.1 }), []).price, 'See terms');
+test('summary shows estimates without a maximum cost claim', () => {
+  const summary = decisionSummary(pending({ estimatedUsd: 0.2, currency: 'USD' }), []);
+  assert.equal(summary.price, '$0.20 USD');
+  assert.equal(summary.priceLabel, 'Estimate');
   assert.equal(
-    decisionSummary(pending({ maximumCost: Infinity, currency: 'USD' }), []).price,
-    'See terms'
+    decisionSummary(pending({ maximumCost: 100, currency: 'USD' }), []).price,
+    'Unknown'
   );
-});
-test('Skip Trace cost cap comes from exact supplied prose, never the tool name', () => {
-  assert.equal(
-    decisionSummary(pending({ cost: 'Up to $0.10 reserved. Contacts remain unverified.' }), [])
-      .price,
-    '$0.10'
-  );
-  assert.equal(
-    decisionSummary(pending({ cost: 'Up to $0.20 reserved. Conditions apply.' }), []).price,
-    '$0.20'
-  );
-  assert.equal(decisionSummary(pending({}), []).price, 'See terms');
-  assert.equal(
-    decisionSummary(pending({ cost: 'Exact cost unavailable. May spend routing credits.' }), [])
-      .price,
-    'Not quoted'
-  );
+  assert.equal(decisionSummary(pending({ estimatedUsd: null }), []).price, 'Unknown');
 });
 test('multi-target review stays bounded and never presents one record as the whole request', () => {
   const summary = decisionSummary(pending({}, { npis: ['1234567890', '9999999999'] }), [

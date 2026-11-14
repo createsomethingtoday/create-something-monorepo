@@ -51,7 +51,7 @@
     "test:control-activation": "node --import ./test/register-sveltekit-test-loader.mjs --import tsx --test test/control-activation-d1.test.ts test/control-activation-migration.test.ts test/control-activation.test.ts",
     "check:watch": "pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs svelte-check svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
     "test:inspection": "node --import tsx --test test/inspection-scene.test.ts",
-    "test:npg-analyst": "pnpm npg:build && node --import ./test/register-sveltekit-test-loader.mjs --import tsx --test test/npg-analyst.test.ts test/abundance-delivery-context.test.ts test/npg-display.test.ts test/npg-document.test.ts test/npg-presentation.test.ts",
+    "test:npg-analyst": "pnpm npg:build && node --import ./test/register-sveltekit-test-loader.mjs --import tsx --test test/npg-analyst.test.ts test/abundance-delivery-context.test.ts test/npg-display.test.ts test/npg-document.test.ts test/npg-presentation.test.ts test/npg-policy.test.ts && pnpm test:npg-spend",
     "test:abundance": "node --import tsx --test test/abundance-*.test.ts",
     "smoke:mobile": "pnpm --filter @create-something/canon package && pnpm --filter @create-something/tufte package && pnpm build && playwright test --config playwright.mobile-smoke.config.ts",
     "smoke:field-report-geometry": "pnpm --filter @create-something/canon package && pnpm --filter @create-something/tufte package && pnpm build && playwright test --config playwright.field-report-geometry.config.ts",
@@ -94,7 +94,8 @@
     "astryx": "node node_modules/@astryxdesign/cli/clients/cli/bin/astryx.mjs",
     "npg:build": "node scripts/build-npg-chat.mjs",
     "npg:preview": "pnpm npg:build && node --import tsx test/npg-ui/serve.mjs",
-    "npg:typecheck": "node scripts/build-npg-themes.mjs && tsc --project tsconfig.npg.json"
+    "npg:typecheck": "node scripts/build-npg-themes.mjs && tsc --project tsconfig.npg.json",
+    "test:npg-spend": "node --import ./test/register-sveltekit-test-loader.mjs --import tsx --test test/enrichment-budget.test.ts test/enrichment-budget-runtime.test.ts test/enrichment-spend-api.test.ts test/abundance-clay-jobs.test.ts"
   },
   "dependencies": {
     "@astryxdesign/core": "0.7.14",

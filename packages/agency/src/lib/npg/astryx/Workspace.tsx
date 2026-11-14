@@ -51,6 +51,8 @@ import { gsap, installWorkspaceMotion, moveScroll, reducedMotion, stopScroll } f
 import {
   actionLabel,
   conversationStatus,
+  canRefreshSkipTrace,
+  canSendNpgMessage,
   linkParts,
   readDrafts,
   reviewFields,
@@ -343,10 +345,7 @@ function Fields({
               explanation={'explanation' in field ? String(field.explanation) : undefined}
             />
           ) : (
-            <Text
-              wordBreak="break-word"
-              className="whitespace-pre-wrap"
-            >
+            <Text wordBreak="break-word" className="whitespace-pre-wrap">
               {readableFieldValue(field, currency)}
             </Text>
           )}
@@ -369,22 +368,12 @@ function Evidence({
       <VStack gap={1}>
         <HStack gap={2}>
           <Icon icon={FileCheck2} />
-          <Heading
-            id="npg-evidence-title"
-            level={2}
-            tabIndex={-1}
-            className="min-w-0 flex-1"
-          >
+          <Heading id="npg-evidence-title" level={2} tabIndex={-1} className="min-w-0 flex-1">
             Results &amp; evidence
           </Heading>
         </HStack>
         {shortPhone ? (
-          <Text
-            type="supporting"
-            color="secondary"
-            maxLines={1}
-            className="npg-evidence-context"
-          >
+          <Text type="supporting" color="secondary" maxLines={1} className="npg-evidence-context">
             {conversationTitle}
           </Text>
         ) : (
@@ -880,7 +869,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
     if (
       !value.trim() ||
       needsRefresh ||
-      (conversationRef.current && conversationRef.current.status !== 'idle') ||
+      !canSendNpgMessage(conversationRef.current, value) ||
       !begin('Working on your question')
     )
       return;
@@ -1058,12 +1047,10 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
     paneReturnFocus.current = true;
   }
   const expired = Boolean(conversation?.pending && conversation.pending.expiresAt <= clock);
-  const navigating = busy && (operation === 'Creating conversation' || operation === 'Loading conversation');
+  const navigating =
+    busy && (operation === 'Creating conversation' || operation === 'Loading conversation');
   const canSend =
-    !busy &&
-    !needsRefresh &&
-    Boolean(draft.trim()) &&
-    (!conversation || conversation.status === 'idle');
+    !busy && !needsRefresh && Boolean(draft.trim()) && canSendNpgMessage(conversation, draft);
   const title =
     conversations.find((item) => item.id === conversation?.id)?.title ?? 'Candidate research';
   const status = busy
@@ -1074,7 +1061,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
         ? 'Review expired'
         : conversation
           ? conversationStatus(conversation.status)
-          : 'Ready';
+          : 'Chat ready';
   const blocked =
     needsRefresh ||
     conversation?.status === 'running' ||
@@ -1294,6 +1281,32 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
         <Text color={empty ? 'primary' : 'secondary'} weight={empty ? 'medium' : 'normal'}>
           {empty ? 'Your question' : instruction}
         </Text>
+        {canRefreshSkipTrace(conversation) && (
+          <Button
+            label="Refresh Skip Trace"
+            icon={<Icon icon={RefreshCw} />}
+            variant="secondary"
+            className="min-h-control"
+            isDisabled={busy || needsRefresh}
+            onClick={() => void send('Refresh Skip Trace')}
+          >
+            Refresh Skip Trace
+          </Button>
+        )}
+        <Collapsible trigger="Enrichment availability" defaultIsOpen={false}>
+          <Text color="secondary">
+            Chat ready means you can ask a question. Complete enrichment attempts PDL, Clay, Exa and
+            Skip Trace independently for one selected NPI, with one exact paid review. Provider
+            failures remain visible alongside available results.
+          </Text>
+          <Text color="secondary">
+            Spend tracking shows confirmed USD from receipts, separate estimates and pending
+            receipts. Historical spend is unknown. There are no application spending limits; an
+            unknown estimate does not block your review. Identity, ownership, privacy and consent
+            still require review. Do not repeat an uncertain operation; refresh its exact existing
+            receipt. You can also request a single-provider Skip Trace review.
+          </Text>
+        </Collapsible>
         <Theme theme={npgComposerTheme} mode="light">
           <ChatComposer
             isDisabled={navigating}

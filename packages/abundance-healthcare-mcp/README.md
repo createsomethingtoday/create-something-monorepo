@@ -1,6 +1,6 @@
 # Abundance Healthcare MCP
 
-Read-only NPG coverage and practitioner discovery over the nationwide NPPES Family Nurse Practitioner snapshot owned by the Agency database.
+NPG coverage, practitioner discovery and explicitly approved enrichment over the nationwide NPPES Family Nurse Practitioner snapshot owned by the Agency database.
 
 ## Data contract
 
@@ -11,11 +11,14 @@ Read-only NPG coverage and practitioner discovery over the nationwide NPPES Fami
 - NPPES records remain `coverage_candidate` unless all seven current evidence gates pass.
 - Bulk search includes available practice phone and full practice address, explicitly labeled unverified registry data. This does not establish personal ownership, employment or permission to contact.
 - NPPES is the no-cost first lookup. NPIProfile is not queried because it republishes the same public NPPES source already stored in the owned nationwide mirror.
-- Exa Agent is an optional one-person fallback. It requires explicit paid-call confirmation, uses fixed `minimal` effort, and requests at most one professional email and one professional phone (maximum estimated charge: $0.102 at the documented 2026-09-02 rates).
+- Complete-profile enrichment attempts PDL, Clay, Exa and Skip Trace independently for one approved candidate. Exa uses fixed `minimal` effort; its confirmed run cost is recorded separately from any estimate. Missing prices do not impose a spending gate. See [spend tracking](ENRICHMENT_BUDGET.md).
 - Registry and enrichment contacts remain unverified. Neither tool establishes employment, availability, consent, advertising eligibility, or recruiting readiness.
 - Daily locale monitoring is disabled unless NPG explicitly opts a locale in later.
 
 ## Tools
+
+- `enrich_candidate_complete_profile` — one approved operation across all four providers with separate evidence and spend tracking
+- `get_enrichment_readiness` — tracking availability and recorded spending; unknown history is informational
 
 - `list_healthcare_markets`
 - `get_healthcare_coverage`
@@ -69,4 +72,4 @@ Review hardening: identical cache misses use a five-minute leased claim before r
 
 ### PDL candidate profiles
 
-Healthcare MCP 1.7.0 adds `enrich_candidate_profile`, a People Data Labs lookup that returns a candidate's professional profile (LinkedIn, title, employer, work email) and personal contact details (mobile phone, personal emails, home city/state). It accepts a registry NPI, an exact LinkedIn URL, or a name plus location/employer, requires explicit paid confirmation, and applies a shared rolling daily cap with seven-day caching. Every contact value carries source, retrieval date and an unverified/no-consent-recorded provenance record. See [PDL_INTEGRATION.md](PDL_INTEGRATION.md) for the contract, deployment and rollback.
+Healthcare MCP 1.7.0 adds `enrich_candidate_profile`, a People Data Labs lookup that returns a candidate's professional profile (LinkedIn, title, employer, work email) and personal contact details (mobile phone, personal emails, home city/state). It accepts a registry NPI, an exact LinkedIn URL, or a name plus location/employer, requires explicit paid confirmation, and records provider credit usage with seven-day caching and no application spending cap. Every contact value carries source, retrieval date and an unverified/no-consent-recorded provenance record. See [PDL_INTEGRATION.md](PDL_INTEGRATION.md) for the contract, deployment and rollback.
