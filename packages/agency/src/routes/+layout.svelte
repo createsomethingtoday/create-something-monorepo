@@ -328,6 +328,7 @@
 
 {#snippet canonFooterBrand()}<CanonBrandSignature />{/snippet}
 {#snippet agencyFooter()}
+  <div data-theme="dark" class="agency-footer-scope">
   <Footer
     mode="agency"
     brandContent={usesPublicNavigation ? canonFooterBrand : undefined}
@@ -351,6 +352,7 @@
       label: 'CREATE SOMETHING .agency'
     }}
   />
+  </div>
 {/snippet}
 
 <LayoutSEO property="agency" />
@@ -411,13 +413,11 @@
     <AgencyPerformanceHandoff />
   {/if}
 
-  <div data-theme="dark" class="agency-footer-scope">
   {#if pageFoundation}
     <div id="agency-directory" tabindex="-1" aria-label="Agency directory">{@render agencyFooter()}</div>
   {:else}
     {@render agencyFooter()}
   {/if}
-  </div>
 
   {#if !usesMeasuredAccountSurface && !routeOwnsPerformanceEnding && $page.url.pathname !== '/basketball-systems-lab' && !isDifyArticleRoute}
     <ModeIndicator current="agency" />
