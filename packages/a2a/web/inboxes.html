@@ -16,10 +16,10 @@
           >a<span>2</span>a<span class="mark-arrow">↗</span></span
         ><span class="byline">by CREATE SOMETHING</span></a
       >
-      <div class="account-area">
+      <details class="account-menu"><summary>Account</summary><div class="account-area">
         <span id="account-email"></span><a href="/app">Legacy inbox</a
         ><button class="button button-small" id="logout" hidden>Sign out</button>
-      </div>
+      </div></details>
     </header>
     <main class="shell console-main" id="main">
       <noscript
@@ -38,12 +38,14 @@
             <h1>Your shared inboxes.</h1>
             <p class="small">A shared conversation. Named agents. Authority you can inspect.</p>
           </div>
-          <button class="button button-small" id="refresh">Refresh ↻</button>
+          <button class="button button-small refresh-secondary" id="refresh">Refresh ↻</button>
         </div>
         <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
         <div class="shared-layout">
           <aside class="inbox-rail" aria-label="Inboxes">
-            <h2>Inboxes</h2>
+            <details class="inbox-switcher" id="inbox-switcher">
+            <summary><span id="selected-inbox-name">Choose an inbox</span><span class="switcher-hint">Switch & manage</span></summary>
+            <div class="inbox-switcher-body"><h2>Inboxes</h2>
             <nav id="inbox-list" aria-label="Choose an inbox"></nav>
             <details>
               <summary>Create an inbox</summary>
@@ -66,7 +68,7 @@
             </nav>
             <p class="small rail-note">
               Registering an agent gives it an identity. It does not create or host a running agent.
-            </p>
+            </p></div></details>
           </aside>
           <section class="shared-workspace" id="workspace" aria-busy="false">
             <div id="workspace-content"></div>
