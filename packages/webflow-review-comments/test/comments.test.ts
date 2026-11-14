@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import worker from '../src/index';
 import type { Env } from '../src/index';
+import { expectedDraftsGuard } from '../src/comments';
 import { createTestDb } from './d1-sqlite';
 
 const REVIEWER_KEY = 'test-reviewer-key-0123456789abcdef';
@@ -381,6 +382,18 @@ describe('release with the drafts the reviewer read', () => {
 		expect((await release(afterEdit)).status).toBe(409);
 		expect(await drafts()).toHaveLength(1);
 		expect((await release(await drafts())).json.data.released).toBe(1);
+	});
+
+	it('keeps the statement small for a round with many drafts', async () => {
+		for (let index = 0; index < 60; index += 1) await post(REVIEWER, { body: `Draft ${index}` });
+		const read = await drafts();
+		expect(read).toHaveLength(60);
+		const guard = expectedDraftsGuard(VERSION, { email: REVIEWER.email, role: 'reviewer', scope: 'template' }, read);
+		// D1 allows 100 bound parameters in one statement; the release and the email queue add a few of their own.
+		expect(guard.params.length).toBeLessThanOrEqual(8);
+		await call('PATCH', `/v1/comments/${read[59].id}`, REVIEWER, { body: 'Draft 59, edited' });
+		expect((await release(read)).status).toBe(409);
+		expect((await release(await drafts())).json.data.released).toBe(60);
 	});
 
 	it('accepts an empty list only when no draft waits', async () => {

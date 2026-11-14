@@ -406,17 +406,19 @@ export function expectedDraftsGuard(
 	const scopeParams = actor.scope ? [actor.scope] : [];
 	const all = `(SELECT COUNT(*) FROM review_comments d WHERE d.version_ref = ? AND d.visibility = 'draft'${scope}) = ?`;
 	if (!expected.length) return { sql: ` AND ${all}`, params: [versionRef, ...scopeParams, 0] };
-	const each = expected.map(() => '(d.id = ? AND d.edited_at IS ?)').join(' OR ');
-	const same = `(SELECT COUNT(*) FROM review_comments d WHERE d.version_ref = ? AND d.visibility = 'draft'${scope} AND (${each})) = ?`;
+	// The list goes in as one JSON value: D1 allows 100 bound parameters in a statement, and a round can hold more drafts than that.
+	const same = `(SELECT COUNT(*) FROM review_comments d
+		JOIN json_each(?) e ON d.id = json_extract(e.value, '$.id') AND d.edited_at IS json_extract(e.value, '$.editedAt')
+		WHERE d.version_ref = ? AND d.visibility = 'draft'${scope}) = ?`;
 	return {
 		sql: ` AND ${all} AND ${same}`,
 		params: [
 			versionRef,
 			...scopeParams,
 			expected.length,
+			JSON.stringify(expected.map((draft) => ({ id: draft.id, editedAt: draft.editedAt }))),
 			versionRef,
 			...scopeParams,
-			...expected.flatMap((draft) => [draft.id, draft.editedAt]),
 			expected.length
 		]
 	};
