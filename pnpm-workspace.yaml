@@ -2,6 +2,8 @@ packages:
   - 'apps/*'
   - '!apps/princess-pet-palace'
   - 'packages/*'
+  # Webflow Cloud deploys this standalone app with its own npm lockfile.
+  - '!packages/webflow-app-review-portal'
   - '!packages/loom'
   - '!packages/loom/npm'
   - '!packages/loom-mcp-remote'

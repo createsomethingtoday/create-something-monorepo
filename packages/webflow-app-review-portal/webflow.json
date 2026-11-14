@@ -1,0 +1,13 @@
+{
+  "cloud": {
+    "contract_version": "1",
+    "framework": "nextjs",
+    "framework_version": "16.4.6",
+    "entrypoint_path": "./worker.js",
+    "deployment_type": "ssr",
+    "skip_no_bundle": false,
+    "app_id": "702c05e5-8aae-4ff9-8180-db6a72388c9b",
+    "environment_id": "69a45eff-e059-4104-8802-83bcc66bb3cd"
+  },
+  "siteId": "6af89f15c00222e1032ba286"
+}
