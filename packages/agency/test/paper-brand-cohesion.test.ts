@@ -114,7 +114,7 @@ test('the homepage retains a readable listing independent of scene motion', () =
   assert.match(content, /We connect your tools and AI/);
   assert.match(content, /Focused/);
   assert.match(content, /Team/);
-  assert.match(content, /one-manual-gap-warm-v2\.webp/);
+  assert.match(content, /canon-agency-v1\/connection-loom\.webp/);
   assert.match(content, /Illustrative example/);
   assert.doesNotMatch(content, /<canvas|autoplay/);
   assert.match(salesHome, /<details id="work-library" class="work-library" bind:open=\{libraryOpen\}>/);
@@ -187,7 +187,7 @@ test('shared campaign titles keep every period optically separated and attached 
   );
 });
 
-test('the Agency footer handoff uses its own macro-real decision-gate image without replacing live CTA copy', () => {
+test('the Agency footer adopts the approved public scene while retaining utility media and live CTA copy', () => {
   const layout = read('src/routes/+layout.svelte');
   const footer = read('../canon/src/lib/components/Footer.svelte');
   const offerPanel = read('../canon/src/lib/components/meridian/MeridianOfferPanel.svelte');
@@ -201,7 +201,12 @@ test('the Agency footer handoff uses its own macro-real decision-gate image with
     'content/assets/brand/agency-footer-playbook-decision-gate-macro.v20260810/metadata.md'
   );
 
-  assert.match(layout, /media: agencyFooterMacroMedia/);
+  assert.match(layout, /media: usesMeasuredPublicSurface \? agencyFooterSceneMedia : agencyFooterMacroMedia/);
+  assert.match(layout, /src: agencyInvitationScene\.src/);
+  assert.match(layout, /alt: agencyInvitationScene\.description/);
+  assert.match(layout, /title: 'Ready to put AI to work on a useful task\?'/);
+  assert.match(layout, /href: primaryCtaHref/);
+  assert.match(layout, /description: 'Bring an idea or a project and one task you want help with\.'/);
   assert.match(layout, /playbook-footer-decision-gate-macro\.webp/);
   assert.match(footer, /media\?: \{[\s\S]*?src: string;[\s\S]*?alt: string;/);
   assert.match(footer, /media=\{footerCta\.media\}/);

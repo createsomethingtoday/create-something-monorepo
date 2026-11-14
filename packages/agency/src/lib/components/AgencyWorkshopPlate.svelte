@@ -1,9 +1,9 @@
 <div class="workshop-plate" data-workshop-plate>
-  <div class="plate-register"><span>CS—01 / THE WORKSHOP</span><span>People + agents + a shared task</span></div>
+  <div class="plate-register"><span>CS—01 / THE WORKSHOP</span><span>A shared task, a clear next step</span></div>
   <div class="plate-composition">
     <div class="plate-spine" aria-hidden="true"><span>WORK TOGETHER.</span><small>CREATE SOMETHING / FIELD NOTES</small></div>
     <figure class="plate-image">
-      <img src="/images/agency-sales/hero.webp" alt="Concept illustration: Canon and two small graphite agents work together to align blocks on a workshop bench." width="1536" height="1024" fetchpriority="high" />
+      <img src="/images/canon-agency-v1/connection-loom.webp" alt="Concept illustration: the felt Canon guides two paper paths into one workshop loom." width="1672" height="941" loading="lazy" decoding="async" />
       <div class="plate-annotations" aria-label="Explore the workshop">
         <a class="plate-annotation annotation-one" href="#example" aria-label="01 / See the connection"><span class="annotation-number">01</span><span class="annotation-label">The connection</span></a>
         <a class="plate-annotation annotation-two" href="#work" aria-label="02 / Inspect the evidence"><span class="annotation-number">02</span><span class="annotation-label">The checks</span></a>
