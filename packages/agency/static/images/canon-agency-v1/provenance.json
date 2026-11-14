@@ -1,5 +1,5 @@
 {
-  "scope": "Unchanged user-approved Canon PNG-derived WebPs. New artwork is recorded separately. No third-party reference media.",
+  "scope": "User-approved owned Canon illustrations for Agency. PNG masters remain unchanged; no third-party research media.",
   "assets": [
     {
       "file": "body-r41.webp",
@@ -73,7 +73,7 @@
       "height": 941,
       "bytes": 96350,
       "tool": "built-in image_gen; cwebp q88 m6 format optimization",
-      "status": "candidate; shown in chat"
+      "status": "approved by user in chat; 2026-11-14"
     },
     {
       "file": "hero-portrait-v1.webp",
@@ -84,7 +84,7 @@
       "height": 1402,
       "bytes": 161188,
       "tool": "built-in image_gen; cwebp q88 m6 format optimization",
-      "status": "candidate; shown in chat"
+      "status": "approved by user in chat; 2026-11-14"
     },
     {
       "file": "cta-wide-v1.webp",
@@ -95,7 +95,7 @@
       "height": 941,
       "bytes": 95636,
       "tool": "built-in image_gen; cwebp q88 m6 format optimization",
-      "status": "candidate; shown in chat"
+      "status": "approved by user in chat; 2026-11-14"
     },
     {
       "file": "cta-portrait-v1.webp",
@@ -106,8 +106,18 @@
       "height": 1402,
       "bytes": 160718,
       "tool": "built-in image_gen; cwebp q88 m6 format optimization",
-      "status": "candidate; shown in chat"
+      "status": "approved by user in chat; 2026-11-14"
     }
   ],
-  "newArtReview": "Four new stills shown in chat; user artwork acceptance pending. Local format-optimized candidates; no long/costly final render performed."
+  "newArtReview": "Approved by the user in chat: \"Approved.\" Observed 2026-11-14T03:14:27Z. The four original PNGs and reviewed WebP bytes are unchanged.",
+  "approval": {
+    "quote": "Approved.",
+    "observedAt": "2026-11-14T03:14:27Z",
+    "scope": [
+      "hero-wide-v1.webp",
+      "hero-portrait-v1.webp",
+      "cta-wide-v1.webp",
+      "cta-portrait-v1.webp"
+    ]
+  }
 }

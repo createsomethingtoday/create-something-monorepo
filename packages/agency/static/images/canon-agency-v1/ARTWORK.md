@@ -1,12 +1,12 @@
-# Canon Agency artwork candidates
+# Approved Canon Agency artwork
 
-CRE-2452. Four original stills generated with the built-in image_gen tool using owned Canon character/scene references. No Mobbin pixels, copy or layouts were retained. PNG masters remain unchanged in the worktree Cook stills folders; web candidates use cwebp q88/m6 format optimization. New artwork has been shown in chat; specific Cook acceptance remains pending. These are concept illustrations, never customer or product evidence.
+CRE-2452. Four original stills generated with the built-in image_gen tool using owned Canon character/scene references. No Mobbin pixels, copy or layouts were retained. PNG masters remain unchanged in the worktree Cook stills folders; web assets use cwebp q88/m6 format optimization. The user approved all four stills in chat ("Approved."), observed2026-11-14T03:14:27Z. Reviewed PNG and WebP bytes are unchanged. These are concept illustrations, never customer or product evidence.
 
 The website retains black, local Geist typography, measured navigation and square frames. The approved r41 character supplies the squat felt silhouette, oval woven digital face, gentle hands and notebook. OpenAI design-language alignment is beneficial in the Select Partner context; no partner logo, proprietary font or endorsement claim is added.
 
 ## Candidates
 
-| Role | Web candidate | Master dimensions | Master provenance |
+| Role | Web asset | Master dimensions | Master provenance |
 |---|---|---|---|
 | hero-wide | [hero-wide-v1.webp](hero-wide-v1.webp) | 1672 × 941 | cook/stills/r01/hero-wide-study.png |
 | hero-portrait | [hero-portrait-v1.webp](hero-portrait-v1.webp) | 1122 × 1402 | cook/stills/r01/hero-portrait-study.png |

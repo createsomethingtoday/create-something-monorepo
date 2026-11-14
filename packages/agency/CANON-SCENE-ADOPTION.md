@@ -10,7 +10,7 @@ CRE-2452 brings the approved Canon identity into the actual Agency homepage and 
 - Technical Review uses the notebook review scene and retains its original inspection concept model in the explanatory process section, following the new warm opening and fit content. The model is no longer a second competing hero. Its short introduction drops a duplicated scope/price assurance; the fuller authored scope, price and timing note remains below the action, including without JavaScript.
 - No auth, consent, analytics dispatch, pricing or external integration behavior changes.
 
-New stills and prompts: [ARTWORK.md](static/images/canon-agency-v1/ARTWORK.md). Prior approved originals are unchanged. New stills remain review candidates pending specific chat acceptance under Cook.
+New stills and prompts: [ARTWORK.md](static/images/canon-agency-v1/ARTWORK.md). Prior approved originals are unchanged. The user accepted all four new stills in chat ("Approved."), observed2026-11-14T03:14:27Z; reviewed image bytes are unchanged.
 
 ## Validation checkpoint
 
@@ -20,8 +20,8 @@ A real legacy mobile campaign-spacing regression failed before the Agency-only f
 
 ## Release
 
-Production destination is createsomething.agency through its protected GitHub PR/main/Cloudflare Pages workflow. Existing production permission is recorded; new-still acceptance is still pending. PUBLIC_HTML_CACHE_REVISION and homepage static stylesheet query revisions advance to canon-agency-20261114. No current document claim of a new production deployment.
+Production destination is createsomething.agency through its protected GitHub PR/main/Cloudflare Pages workflow. Production permission and specific acceptance of all four new stills are recorded. PUBLIC_HTML_CACHE_REVISION and homepage static stylesheet query revisions advance to canon-agency-20261114. No current document claim of a new production deployment.
 
-Rollback: before promotion, prior Agency deployment5cd51f6d-5720-4a58-8697-ef4d6b75fcc4 (commit715cb8935) is the known verified visual baseline; confirm current deployment before using it. Revert the scoped source PR or roll Agency Pages to the prior verified deployment, then verify canonical content/cache/assets. No data migration.
+Rollback: before promotion, the current verified Agency deployment14a87e81-c401-4d64-9c47-cd49192a9b3a (commit1aab0970d6e867aa829b022804813726295a8c4c) is the rollback target, captured immediately before this promotion; confirm the deployment before using it. Revert the scoped source PR or roll Agency Pages to the prior verified deployment, then verify canonical content/cache/assets. No data migration.
 
-Worktree disposition: preserved at t3-a01044d6-2f560e0ec9e58190 / t3/canon-agency-adoption for artwork acceptance and production promotion.
+Worktree disposition: preserved at t3-a01044d6-2f560e0ec9e58190 / t3/canon-agency-adoption until production promotion and canonical verification.
