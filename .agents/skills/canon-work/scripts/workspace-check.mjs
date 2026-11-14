@@ -38,7 +38,7 @@ try{
  if(branch.status===0&&!branch.signal)out.branch=branch.stdout.trim();
  else if(branch.status===1&&!branch.signal&&!branch.stderr.trim())out.branch=null;
  else throw failed(branch);
- const status=required('status',['status','--porcelain=v1','-z']);
+ const status=required('status',['status','--porcelain=v1','--untracked-files=normal','-z']);
  const records=status.split('\0');out.changes=[];
  for(let i=0;i<records.length;i++){const s=records[i];if(!s)continue;const entry={status:s.slice(0,2),path:s.slice(3)};if(/[RC]/.test(entry.status))entry.from=records[++i];out.changes.push(entry);}
  out.trackedChanges=out.changes.filter(x=>x.status!=='??').length;out.untracked=out.changes.filter(x=>x.status==='??').length;
@@ -57,7 +57,7 @@ try{
  out.finding=flags.join('; ')||'Clean checkout';
  const cwd=realpathSync(process.cwd()), atRoot=cwd===out.root;
  const prefix=atRoot?'git':`git -C ${quote(out.root)}`;
- const nextArgs=out.changes.length?'status --short':!out.branch?'log -1 --decorate --oneline':out.divergence?.ahead||out.divergence?.behind?'log --oneline --left-right HEAD...@{upstream}':'log -1 --oneline';
+ const nextArgs=out.changes.length?'status --short --untracked-files=normal':!out.branch?'log -1 --decorate --oneline':out.divergence?.ahead||out.divergence?.behind?'log --oneline --left-right HEAD...@{upstream}':'log -1 --oneline';
  const reason=out.changes.length?'Inspect changed paths before choosing owned edits.':!out.branch?'Inspect the detached commit before choosing owned edits.':out.divergence?.ahead||out.divergence?.behind?'Inspect differences against the local upstream ref.':'Inspect the latest commit for task context.';
  out.nextCommand=`${prefix} ${nextArgs}`;
  out.nextStep=reason;
@@ -69,7 +69,7 @@ try{
   if(out.head&&!out.changes){out.trackedChanges=null;out.untracked=null;}
   out.unknowns.push(`Git ${stage.label} unavailable`);
   out.nextStep=`Git ${stage.label} failed. Retry the read-only diagnostic and inspect its output; no recovery mutation was attempted.`;
-  const diagnostic=stage.label==='status'?['status','--short']:stage.args;
+  const diagnostic=stage.label==='status'?['status','--short','--untracked-files=normal']:stage.args;
   out.nextCommand=`git -C ${quote(out.root??out.directory)} ${diagnostic.join(' ')}`;
  }}
 

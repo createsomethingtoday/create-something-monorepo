@@ -116,7 +116,7 @@ test('large real status fails bounded capture with accurate stage and usable rec
  assert.equal(data.trackedChanges,null);assert.equal(data.untracked,null);assert.equal(Object.hasOwn(data,'changes'),false);
  assert.match(data.finding,/Git status failed.*ENOBUFS/);assert.match(data.finding,/capture|buffer|limit/i);
  assert.doesNotMatch(human.stdout,/Git unavailable|Tracked changes: 0|0 candidates/);
- assert.match(data.nextCommand,/status --short$/);
+ assert.match(data.nextCommand,/status --short --untracked-files=normal$/);
  const retry=observed('/bin/sh',['-c',data.nextCommand],{maxBuffer:2*1024*1024});assert.equal(retry.status,0,retry.stderr);assert.equal(retry.stdout.split('\n').filter(Boolean).length,6500);
  const after=observed(realGit,['-C',directory,'status','--porcelain=v1','-z'],{maxBuffer:2*1024*1024});assert.equal(after.status,0);assert.equal(after.stdout,direct.stdout);
  assert.equal(existsSync(path.join(directory,'EXECUTED')),false);
@@ -156,7 +156,7 @@ test('failed status preserves known identity and reports unavailable observation
  assert.match(human.stdout,/Checks: not run; candidate inventory unavailable/);
  assert.match(human.stdout,/Upstream: not checked/);
  assert.match(data.nextStep,/status.*failed/i);
- assert.match(data.nextCommand,/status --short$/);
+ assert.match(data.nextCommand,/status --short --untracked-files=normal$/);
  const retry=spawnSync('/bin/sh',['-c',data.nextCommand],{encoding:'utf8'});
  assert.equal(retry.status,0,retry.stderr); assert.match(retry.stdout,/preserve/);
  assert.equal(existsSync(path.join(dir,'EXECUTED')),false);

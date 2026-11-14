@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync, writeFileSync, rmSync} from 'node:fs';
+import {mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
@@ -80,13 +80,67 @@ test('missing target exits one with an actionable error and JSON compatibility',
   assert.match(data.nextStep, /existing Git directory/);
 });
 
+test('hidden untracked work remains visible in the inventory and suggested command', t => {
+  const {directory, git, check} = fixture(t);
+  git('config', 'status.showUntrackedFiles', 'no');
+  writeFileSync(path.join(directory, 'operator-work.txt'), 'preserve this work');
+  const config = readFileSync(path.join(directory, '.git/config'), 'utf8');
+  const before = git('status', '--porcelain=v1', '--untracked-files=normal');
+  assert.equal(git('status', '--porcelain=v1'), '');
+
+  const result = check('--json');
+  assert.equal(result.status, 0, result.stderr);
+  const data = JSON.parse(result.stdout);
+  assert.equal(data.finding, 'dirty checkout');
+  assert.equal(data.untracked, 1);
+  assert.deepEqual(data.changes, [{status: '??', path: 'operator-work.txt'}]);
+  assert.match(check().stdout, /Tracked changes: 0; untracked entries: 1/);
+  const next = spawnSync('/bin/sh', ['-c', data.nextCommand], {encoding: 'utf8'});
+  assert.equal(next.status, 0, next.stderr);
+  assert.match(next.stdout, /\?\? operator-work\.txt/);
+  assert.equal(readFileSync(path.join(directory, '.git/config'), 'utf8'), config);
+  assert.equal(readFileSync(path.join(directory, 'operator-work.txt'), 'utf8'), 'preserve this work');
+  assert.equal(git('status', '--porcelain=v1', '--untracked-files=normal'), before);
+});
+
+for (const mode of ['no', 'all']) {
+  test(`global untracked display mode ${mode} does not change normal entry inventory`, t => {
+    const {directory, git} = fixture(t);
+    const globalConfig = path.join(directory, '.git', 'fixture-global-config');
+    const config = `[status]\nshowUntrackedFiles = ${mode}\n`;
+    writeFileSync(globalConfig, config);
+    const env = {...process.env, GIT_CONFIG_GLOBAL: globalConfig};
+    mkdirSync(path.join(directory, 'operator-drafts'));
+    writeFileSync(path.join(directory, 'operator-drafts', 'one.txt'), 'one');
+    writeFileSync(path.join(directory, 'operator-drafts', 'two.txt'), 'two');
+    writeFileSync(path.join(directory, 'operator-work.txt'), 'preserve');
+    const before = git('status', '--porcelain=v1', '--untracked-files=normal');
+    const run = (...args) => spawnSync(process.execPath, [script, ...args], {cwd: directory, env, encoding: 'utf8'});
+    const result = run('--json');
+    assert.equal(result.status, 0, result.stderr);
+    const data = JSON.parse(result.stdout);
+    assert.equal(data.finding, 'dirty checkout');
+    assert.equal(data.untracked, 2);
+    assert.deepEqual(data.changes, [
+      {status: '??', path: 'operator-drafts/'},
+      {status: '??', path: 'operator-work.txt'},
+    ]);
+    assert.match(run().stdout, /Tracked changes: 0; untracked entries: 2/);
+    const next = spawnSync('/bin/sh', ['-c', data.nextCommand], {cwd: directory, env, encoding: 'utf8'});
+    assert.equal(next.status, 0, next.stderr);
+    assert.equal(next.stdout.trim(), before);
+    assert.equal(readFileSync(globalConfig, 'utf8'), config);
+    assert.equal(git('status', '--porcelain=v1', '--untracked-files=normal'), before);
+  });
+}
+
 test('default checkout puts a directly usable next action before the long identity receipt', t => {
   const {directory} = fixture(t);
   writeFileSync(path.join(directory, 'untracked'), 'preserve');
   const run = (...args) => spawnSync(process.execPath, [script, ...args], {cwd: directory, encoding: 'utf8'});
   const data = JSON.parse(run('--json').stdout);
   const human = run().stdout;
-  assert.equal(data.nextCommand, 'git status --short');
+  assert.equal(data.nextCommand, 'git status --short --untracked-files=normal');
   assert.ok(human.indexOf(data.nextCommand) < human.indexOf(data.root));
   assert.ok(data.detailsCommand.endsWith(' --json'));
   const detail = spawnSync('/bin/sh', ['-c', data.detailsCommand], {cwd: directory, encoding: 'utf8'});
