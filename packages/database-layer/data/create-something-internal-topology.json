@@ -4,11 +4,11 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-11-14T15:04:48.602Z",
+    "generatedAt": "2026-11-14T15:14:21.658Z",
     "rootPath": ".",
-    "packageCount": 255,
+    "packageCount": 254,
     "appCount": 15,
-    "workerCount": 124,
+    "workerCount": 123,
     "clientOverlayCount": 8,
     "policyCount": 64,
     "guideCount": 87,
@@ -4279,23 +4279,6 @@
       "runtime": "cloudflare, node"
     },
     {
-      "id": "substrate:create-something:package:create-something-webflow-review-comments-packages-webflow-review-comments",
-      "atlasNodeId": "atlas_create-something_package_create-something-webflow-review-comments-packages-webflow-review-comments",
-      "title": "@create-something/webflow-review-comments",
-      "path": "packages/webflow-review-comments",
-      "tier": "Automation",
-      "surface": "worker",
-      "owner": "CREATE SOMETHING",
-      "status": "mapped",
-      "summary": "Review feedback threads per Marketplace asset version (replaces Zendesk tickets for asset reviews)",
-      "tags": [
-        "package",
-        "worker"
-      ],
-      "packageName": "@create-something/webflow-review-comments",
-      "runtime": "cloudflare, node"
-    },
-    {
       "id": "substrate:create-something:package:create-something-webflow-review-extension-packages-webflow-review-extension",
       "atlasNodeId": "atlas_create-something_package_create-something-webflow-review-extension-packages-webflow-review-extension",
       "title": "@create-something/webflow-review-extension",
@@ -6733,23 +6716,6 @@
       "owner": "CREATE SOMETHING",
       "status": "mapped",
       "summary": "Cloudflare runtime configuration at packages/webflow-mcp/worker/wrangler.toml.",
-      "tags": [
-        "worker",
-        "cloudflare",
-        "runtime"
-      ],
-      "runtime": "cloudflare"
-    },
-    {
-      "id": "substrate:create-something:worker:packages-webflow-review-comments-wrangler-toml",
-      "atlasNodeId": "atlas_create-something_worker_packages-webflow-review-comments-wrangler-toml",
-      "title": "packages/webflow-review-comments/wrangler.toml",
-      "path": "packages/webflow-review-comments/wrangler.toml",
-      "tier": "Automation",
-      "surface": "worker",
-      "owner": "CREATE SOMETHING",
-      "status": "mapped",
-      "summary": "Cloudflare runtime configuration at packages/webflow-review-comments/wrangler.toml.",
       "tags": [
         "worker",
         "cloudflare",
@@ -11557,13 +11523,6 @@
       "evidence": "packages/webflow-mcp/worker is present in the repo scan."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-review-comments-packages-webflow-review-comments",
-      "source": "substrate:create-something:root",
-      "target": "substrate:create-something:package:create-something-webflow-review-comments-packages-webflow-review-comments",
-      "relation": "contains",
-      "evidence": "packages/webflow-review-comments is present in the repo scan."
-    },
-    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-review-extension-packages-webflow-review-extension",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-webflow-review-extension-packages-webflow-review-extension",
@@ -12549,13 +12508,6 @@
       "target": "substrate:create-something:worker:packages-webflow-mcp-worker-wrangler-toml",
       "relation": "contains",
       "evidence": "packages/webflow-mcp/worker/wrangler.toml is present in the repo scan."
-    },
-    {
-      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-webflow-review-comments-wrangler-toml",
-      "source": "substrate:create-something:root",
-      "target": "substrate:create-something:worker:packages-webflow-review-comments-wrangler-toml",
-      "relation": "contains",
-      "evidence": "packages/webflow-review-comments/wrangler.toml is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-webflow-review-workers-orchestrator-wrangler-toml",
@@ -16063,13 +16015,6 @@
       "target": "substrate:create-something:worker:packages-webflow-mcp-worker-wrangler-toml",
       "relation": "runs",
       "evidence": "wrangler.toml configures runtime for packages/webflow-mcp/worker."
-    },
-    {
-      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-review-comments-packages-webflow-review-comments-runs-substrate-create-something-worker-packages-webflow-review-comments-wrangler-toml",
-      "source": "substrate:create-something:package:create-something-webflow-review-comments-packages-webflow-review-comments",
-      "target": "substrate:create-something:worker:packages-webflow-review-comments-wrangler-toml",
-      "relation": "runs",
-      "evidence": "wrangler.toml configures runtime for packages/webflow-review-comments."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-review-orchestrator-packages-webflow-review-workers-orchestrator-runs-substrate-create-something-worker-packages-webflow-review-workers-orchestrator-wrangler-toml",

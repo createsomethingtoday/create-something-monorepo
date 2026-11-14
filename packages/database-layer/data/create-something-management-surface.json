@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:management-surface:internal",
-  "generatedAt": "2026-11-14T15:04:49.748Z",
+  "generatedAt": "2026-11-14T15:14:22.841Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceReadinessId": "substrate:create-something:operating-slice-readiness:internal",
@@ -3380,20 +3380,6 @@
       "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
     },
     {
-      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-webflow-review-comments-packages-webflow-review-comments",
-      "kind": "topology_record",
-      "title": "@create-something/webflow-review-comments",
-      "recordId": "substrate:create-something:package:create-something-webflow-review-comments-packages-webflow-review-comments",
-      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
-      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-webflow-review-comments-packages-webflow-review-comments",
-      "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-webflow-review-comments-packages-webflow-review-comments",
-      "agentCommand": "databaseLayer.topology.records.get",
-      "access": [
-        "read"
-      ],
-      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
-    },
-    {
       "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-webflow-review-extension-packages-webflow-review-extension",
       "kind": "topology_record",
       "title": "@create-something/webflow-review-extension",
@@ -5361,20 +5347,6 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-worker-packages-webflow-mcp-worker-wrangler-toml",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-worker-packages-webflow-mcp-worker-wrangler-toml",
-      "agentCommand": "databaseLayer.topology.records.get",
-      "access": [
-        "read"
-      ],
-      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
-    },
-    {
-      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-worker-packages-webflow-review-comments-wrangler-toml",
-      "kind": "topology_record",
-      "title": "packages/webflow-review-comments/wrangler.toml",
-      "recordId": "substrate:create-something:worker:packages-webflow-review-comments-wrangler-toml",
-      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
-      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-worker-packages-webflow-review-comments-wrangler-toml",
-      "mcpUri": "substrate://topology/internal/records/substrate-create-something-worker-packages-webflow-review-comments-wrangler-toml",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"

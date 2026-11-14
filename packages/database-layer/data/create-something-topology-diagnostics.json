@@ -2,12 +2,12 @@
   "id": "substrate:create-something:topology-diagnostics:internal",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-11-14T15:04:48.602Z",
+  "generatedAt": "2026-11-14T15:14:21.658Z",
   "summary": {
     "valueState": "connected_map_with_review_signals",
-    "nodes": 577,
-    "edges": 1204,
-    "mapped": 577,
+    "nodes": 575,
+    "edges": 1201,
+    "mapped": 575,
     "hardGapCount": 0,
     "reviewSignalCount": 6,
     "exactDuplicatePathCount": 0,
@@ -17,7 +17,7 @@
       "package": 73,
       "app": 15,
       "agent": 36,
-      "worker": 186,
+      "worker": 184,
       "mcp": 77,
       "client": 8,
       "doc": 6,
@@ -28,7 +28,7 @@
     "tierCounts": {
       "Mixed": 144,
       "Judgment": 109,
-      "Automation": 295,
+      "Automation": 293,
       "Database": 29
     }
   },
@@ -60,11 +60,11 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Automation and Database balance",
-      "summary": "Automation has 295 record(s); Database has 29 record(s). This is a business-shape review signal, not a hard gap.",
+      "summary": "Automation has 293 record(s); Database has 29 record(s). This is a business-shape review signal, not a hard gap.",
       "evidence": [
-        "Automation=295",
+        "Automation=293",
         "Database=29",
-        "Total nodes=577"
+        "Total nodes=575"
       ],
       "nodeIds": [],
       "paths": [],
@@ -75,7 +75,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Worker surface concentration",
-      "summary": "186 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.",
+      "summary": "184 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.",
       "evidence": [
         "worker: packages/a2a",
         "worker: packages/agency",
@@ -145,7 +145,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "worker surface review",
-      "summary": "186 record(s) are classified as worker.",
+      "summary": "184 record(s) are classified as worker.",
       "evidence": [
         "@create-something/a2a: packages/a2a",
         "@create-something/agency: packages/agency",

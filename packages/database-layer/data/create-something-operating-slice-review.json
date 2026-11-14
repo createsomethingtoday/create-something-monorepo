@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-review:internal",
-  "generatedAt": "2026-11-14T15:04:48.864Z",
+  "generatedAt": "2026-11-14T15:14:21.908Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceCoverageId": "substrate:create-something:atlas-coverage:internal",
@@ -149,8 +149,6 @@
         "substrate:create-something:package:create-something-webflow-marketplace-sync-packages-webflow-marketplace-sync",
         "substrate:create-something:worker:packages-webflow-marketplace-sync-wrangler-toml",
         "substrate:create-something:worker:packages-webflow-mcp-worker-wrangler-toml",
-        "substrate:create-something:package:create-something-webflow-review-comments-packages-webflow-review-comments",
-        "substrate:create-something:worker:packages-webflow-review-comments-wrangler-toml",
         "substrate:create-something:package:create-something-webflow-review-orchestrator-packages-webflow-review-workers-orchestrator",
         "substrate:create-something:worker:packages-webflow-review-workers-orchestrator-wrangler-toml",
         "substrate:create-something:package:create-something-webflow-review-queue-consumer-packages-webflow-review-workers-queue-consumer",
@@ -172,7 +170,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Automation",
       "surface": "worker",
-      "nodeCount": 155,
+      "nodeCount": 153,
       "evidence": [
         "apps/agency-meta-maintenance/wrangler.jsonc",
         "apps/bettermode-marketplace-creator-agent/wrangler.jsonc",
