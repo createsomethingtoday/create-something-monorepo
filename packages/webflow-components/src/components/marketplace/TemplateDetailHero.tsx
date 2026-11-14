@@ -6,9 +6,9 @@ import type { MarketplaceAnalyticsData } from './analytics';
 import { MarketplaceComponentErrorBoundary, useMarketplaceComponentErrorTracking } from './MarketplaceComponentErrorBoundary';
 import { templateAnnotationContainerProps, templateAnnotationProps } from './templateAnnotations';
 import {
-  TemplateDetailImage,
-  TemplateDetailLink,
-  TemplateDetailOfferMode,
+  type TemplateDetailImage,
+  type TemplateDetailLink,
+  type TemplateDetailOfferMode,
   inferTemplateSlug,
   isExternalUrl,
   normalizeTemplateDetailImage,
@@ -19,6 +19,7 @@ import {
 import { TEMPLATE_DETAIL_STYLES } from './templateDetailStyles';
 
 export interface TemplateDetailHeroProps {
+  compactLayout?: boolean;
   templateName?: string;
   templateSlug?: string;
   categoryName?: string;
@@ -53,6 +54,8 @@ export interface TemplateDetailHeroProps {
   previewDefaultDevice?: TemplateDetailPreviewDevice;
   showOfferBadge?: boolean;
   enableAnalytics?: boolean;
+  /** Register the page's WebMCP tools here. Set false when the host page registers them. */
+  registerAgentTools?: boolean;
 }
 
 type TemplateDetailPreviewDevice = 'desktop' | 'mobile';
@@ -334,6 +337,7 @@ function actionClick(
 }
 
 const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
+  compactLayout = false,
   templateName = 'Template name',
   templateSlug = '',
   categoryName = 'Templates',
@@ -368,6 +372,7 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
   previewDefaultDevice = 'desktop',
   showOfferBadge = true,
   enableAnalytics = true,
+  registerAgentTools = true,
 }) => {
   useMarketplaceComponentErrorTracking('TemplateDetailHero', enableAnalytics);
   const [previewIframeRequested, setPreviewIframeRequested] = useState(false);
@@ -405,6 +410,9 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
   const previewIframeHref = previewIframe.href || '';
   const hasPreviewIframe = Boolean(showPreviewIframe && previewIframeHref);
   const previewDimensions = PREVIEW_DEVICE_DIMENSIONS[previewDevice];
+  useEffect(() => {
+    if (compactLayout && !readStoredPreviewDevice() && window.matchMedia('(max-width: 767px)').matches) setPreviewDevice('mobile');
+  }, [compactLayout]);
   const previewScale = previewStageWidth ? Math.min(1, previewStageWidth / previewDimensions.width) : 1;
   const previewStageStyle: CSSProperties = {
     minHeight: `${Math.round(previewDimensions.height * previewScale)}px`,
@@ -444,8 +452,8 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
     [categoryName, categoryNames, legacyTitleCategoryNames, titleCategory],
   );
   const titleLabel = useMemo(
-    () => formatTemplateTitle(templateName, titleCategory, titleCategoryCandidates),
-    [templateName, titleCategory, titleCategoryCandidates],
+    () => compactLayout ? stripGeneratedTemplateTitleSuffix(templateName) : formatTemplateTitle(templateName, titleCategory, titleCategoryCandidates),
+    [compactLayout, templateName, titleCategory, titleCategoryCandidates],
   );
   const offer = useMemo(
     () =>
@@ -683,8 +691,8 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
 
   return (
     <div className="wfdt" data-template-detail-hero="" ref={heroRootRef}>
-      <MarketplaceAgentTools />
-      <style>{TEMPLATE_DETAIL_STYLES}</style>
+      {registerAgentTools && <MarketplaceAgentTools />}
+      <style dangerouslySetInnerHTML={{ __html: TEMPLATE_DETAIL_STYLES }} />
       <section className="wfdt-hero" {...templateAnnotationContainerProps()}>
         <div className="wfdt-hero-copy">
           <nav className="wfdt-breadcrumb" aria-label="Template breadcrumb">
@@ -801,7 +809,7 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
               </div>
             </div>
             <div className="wfdt-actions">
-              {browserPreview.href ? (
+              {!compactLayout && browserPreview.href ? (
                 <a
                   className="wfdt-button wfdt-button-secondary"
                   href={browserPreview.href}
@@ -819,7 +827,7 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
                   Preview in browser
                 </a>
               ) : null}
-              {designerPreview.href ? (
+              {!compactLayout && designerPreview.href ? (
                 <a
                   className="wfdt-button wfdt-button-secondary"
                   href={designerPreview.href}
@@ -862,6 +870,7 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
       {hasPreviewIframe ? (
         <section className="wfdt-preview-section" aria-label={`${titleLabel} preview`}>
           <div className="wfdt-preview-card">
+            {compactLayout && <div className="rd-preview-links"><a href={browserPreview.href} target="_blank" rel="noopener noreferrer">Open live demo ↗</a><a href={designerPreview.href} target="_blank" rel="noopener noreferrer" title="Inspect the template in Webflow before buying">Inspect in Webflow ↗</a></div>}
             {showPreviewDeviceControls ? (
               <div className="wfdt-preview-controls" aria-label="Preview viewport">
                 {(['desktop', 'mobile'] as const).map((device) => (
