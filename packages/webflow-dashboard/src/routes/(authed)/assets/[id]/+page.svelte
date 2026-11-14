@@ -750,7 +750,10 @@
             {#if data.reviewCommentsEnabled}
               <!-- Keyed: client-side navigation reuses this page, and the card must not keep another asset's thread or draft. -->
               {#key asset.id}
-                <ReviewThreadCard assetId={asset.id} />
+                <!-- A new card for each asset: the page is reused when the reader moves between assets. -->
+                {#key asset.id}
+                  <ReviewThreadCard assetId={asset.id} />
+                {/key}
               {/key}
             {/if}
             {#if data.requiredFixes && data.requiredFixes.length > 0}

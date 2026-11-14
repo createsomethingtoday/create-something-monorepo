@@ -109,6 +109,28 @@ export function buildReleaseNotice(input: {
   };
 }
 
+/** The comment service's limit for one comment. */
+export const MAX_COMMENT_CHARS = 20_000;
+
+/**
+ * Text that is longer than one comment may be, cut into comments in order. A
+ * cut falls on a paragraph break when one exists, then a line break, then a
+ * space, so no part is over the limit and no word is cut when a space exists.
+ */
+export function splitCommentBody(text: string, max: number = MAX_COMMENT_CHARS): string[] {
+  const parts: string[] = [];
+  let rest = text.trim();
+  while (rest.length > max) {
+    const window = rest.slice(0, max);
+    const at = [window.lastIndexOf('\n\n'), window.lastIndexOf('\n'), window.lastIndexOf(' ')].find((index) => index > max / 2);
+    const cut = at ?? max;
+    parts.push(rest.slice(0, cut).trim());
+    rest = rest.slice(cut).trim();
+  }
+  if (rest) parts.push(rest);
+  return parts.filter(Boolean);
+}
+
 export interface ReviewCommentsConfig {
   baseUrl: string;
   apiKey: string;

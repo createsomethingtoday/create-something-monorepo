@@ -473,3 +473,24 @@ test('release_feedback passes the drafts the reviewer read, and add_comment pass
   await handlers.get('template_review_add_comment')?.({ version_id: VERSION_ID, body: 'Fix the 404 page', visibility: 'draft', request_key: 'save-0123456789' });
   assert.equal((calls.at(-1)?.[3] as { requestKey?: string }).requestKey, 'save-0123456789');
 });
+
+test('decision feedback over the comment limit goes out as several comments, and a repeat adds nothing', async () => {
+  const long = `${'First part. '.repeat(1500)}\n\n${'Second part. '.repeat(1500)}`.trim();
+  assert.ok(long.length > 20_000);
+  const first = fakeComments();
+  const { server, handlers } = harness();
+  registerTools(server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => first.client });
+  const result = payload(await handlers.get('template_review_request_changes')?.({ version_id: VERSION_ID, review_feedback: long }));
+  assert.equal(result.data.review_comments.ok, true);
+  const added = first.calls.filter(([name]) => name === 'add').map((call) => (call[3] as { body: string }).body);
+  assert.equal(added.length, 2);
+  assert.ok(added.every((body) => body.length <= 20_000));
+  assert.equal(added.join(' ').replace(/\s+/g, ' '), long.replace(/\s+/g, ' '));
+  assert.equal(first.calls.at(-1)?.[0], 'release');
+
+  const again = fakeComments({ existing: added.map((body) => comment({ body, visibility: 'released', authorEmail: 'reviewer@example.com' })) });
+  const second = harness();
+  registerTools(second.server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => again.client });
+  await second.handlers.get('template_review_request_changes')?.({ version_id: VERSION_ID, review_feedback: long });
+  assert.equal(again.calls.filter(([name]) => name === 'add').length, 0);
+});

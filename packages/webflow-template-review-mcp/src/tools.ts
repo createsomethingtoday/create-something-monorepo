@@ -40,6 +40,7 @@ import {
   type ReviewComment,
   type ReviewCommentsClient,
   type ReviewOutcome,
+  splitCommentBody,
 } from './review-comments.js';
 import { observeTemplateHandoff, templateHandoffRequestSchema } from './handoff-observation.js';
 import { CHECKLIST_KIND_VALUES, parseChecklist } from './checklist.js';
@@ -244,11 +245,13 @@ async function releaseFeedbackAfterDecision(
       const existing = await comments.listVersion(versionId, actorEmail);
       const author = actorEmail.toLowerCase();
       // An internal note with the same words is not feedback: it never reaches the creator.
-      const alreadyPosted = existing.some(
-        (comment) => comment.visibility !== 'internal' && comment.authorEmail === author && comment.body === body,
-      );
-      if (!alreadyPosted) {
-        await comments.add(versionId, actorEmail, { assetRef: assetId, body, visibility: 'draft' });
+      // Feedback over the service limit goes out as several comments, in order. A repeat adds only the missing parts.
+      for (const part of splitCommentBody(body)) {
+        const alreadyPosted = existing.some(
+          (comment) => comment.visibility !== 'internal' && comment.authorEmail === author && comment.body === part,
+        );
+        if (alreadyPosted) continue;
+        await comments.add(versionId, actorEmail, { assetRef: assetId, body: part, visibility: 'draft' });
         added = true;
       }
     }
