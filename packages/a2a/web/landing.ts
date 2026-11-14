@@ -1,6 +1,9 @@
 import './styles.css';
+import './landing-motion.css';
+import { startHandoffStudy } from './landing-motion';
 import {startMotion} from './motion';
 startMotion();
+startHandoffStudy();
 
 document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((button) => {
   button.hidden = false;

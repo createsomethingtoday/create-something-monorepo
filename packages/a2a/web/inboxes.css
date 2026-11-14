@@ -154,6 +154,7 @@
 }
 .shared-status {
   display: flex;
+  align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
   margin-block: 1rem;
@@ -162,6 +163,14 @@
   font-family: var(--font-performance-sans);
   text-transform: none;
   font-size: 0.72rem;
+}
+.shared-console .shared-status > .compose-shortcut {
+  margin-left: auto;
+  min-height: 44px;
+  border-color: transparent;
+  padding-block: .35rem;
+  text-decoration: underline;
+  text-underline-offset: .25em;
 }
 .message-stream {
   margin-top: 1.5rem;
@@ -270,27 +279,38 @@
   letter-spacing: 0;
 }
 .shared-console dialog {
-  max-width: min(620px, calc(100% - 2rem));
+  width: min(620px, calc(100% - 24px));
+  max-width: none;
+  max-height: calc(100vh - 24px);
+  max-height: calc(100dvh - 24px);
   border: 1px solid var(--color-performance-line-strong);
-  padding: 2rem;
+  padding: clamp(12px, 4vw, var(--space-performance-md));
   background: var(--color-performance-panel);
   color: var(--color-performance-ink);
+  overflow-y: auto;
 }
 .shared-console dialog::backdrop {
   background: var(--color-performance-overlay, rgba(0, 0, 0, 0.45));
 }
 .shared-console dialog h2 {
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   font-weight: 500;
   margin-bottom: 1rem;
+  overflow-wrap: anywhere;
 }
+.shared-console dialog h2:focus-visible,
+.shared-console #session h1:focus-visible { outline: 2px solid var(--color-performance-ink); outline-offset: 4px; }
 .shared-console dialog p {
   font-size: 0.87rem;
   overflow-wrap: anywhere;
 }
 .shared-console dialog .form-actions {
   margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
 }
+.shared-console dialog .button { min-width: 0; max-width: 100%; min-height: 44px; white-space: normal; overflow-wrap: anywhere; }
 .shared-console .fixture-label {
   background: var(--color-performance-review-soft);
   border: 1px solid var(--color-performance-review);
@@ -458,4 +478,439 @@ html:has(body.shared-console) {
     overflow-wrap: anywhere;
     font-size: 0.65rem;
   }
+}
+
+/* Cook r01: prioritize the shared conversation while retaining audience evidence. */
+.shared-console .console-heading h1 { font-size: clamp(1.45rem, 2vw, 1.9rem); }
+.shared-console .shared-workspace { padding: 1.25rem; }
+.shared-console .workspace-title { font-size: 1.35rem; }
+.shared-console .shared-tabs { gap: 1.1rem; margin-block: 1rem; }
+.shared-console .boundary {
+  background: var(--color-performance-paper);
+  border-left-color: var(--color-performance-ink);
+  padding: .75rem 1rem;
+}
+.shared-console .boundary p { max-width: 80ch; }
+.shared-console .inbox-option[aria-current='page'] {
+  border-left: 3px solid var(--color-performance-ink);
+}
+.shared-console :is(button,a,summary,input,textarea,select):focus-visible {
+  outline: 2px solid var(--color-performance-ink); outline-offset: 3px;
+}
+.shared-console .account-nav { margin-top: .5rem; padding-top: 0; }
+@media (max-width: 767px) {
+  .shared-console .shared-workspace { padding: .85rem; }
+  .shared-console .shared-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: .25rem .75rem; }
+  .shared-console .shared-tabs button { text-align: left; }
+  .shared-console .inbox-rail { padding: .85rem; }
+  .shared-console .inbox-rail nav#inbox-list { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .shared-console .rail-note { margin-top: .75rem; }
+}
+@media (max-width: 767px) {
+  .shared-console .inbox-rail nav#inbox-list { display: grid; overflow: visible; }
+  .shared-console .inbox-option { min-width: 0; width: 100%; }
+  .shared-console .console-heading h1 { font-size: 1.35rem; }
+  .shared-console .account-nav .button { min-height: 44px; }
+}
+
+/* Round 2: navigation becomes a compact, native disclosure on narrow screens. */
+.shared-console .inbox-switcher { margin: 0; padding: 0; border: 0; }
+.shared-console .inbox-switcher > summary { display: none; }
+.shared-console .inbox-switcher:not([open]) > .inbox-switcher-body { display: block; }
+.shared-console .switcher-hint { font-size: .72rem; color: var(--color-performance-muted); font-weight: 400; }
+.shared-console .reading-details { margin-top: .65rem; border-bottom: 1px solid var(--color-performance-line); }
+.shared-console .reading-details > summary { font-size: .76rem; font-weight: 400; color: var(--color-performance-muted); }
+.shared-console .reading-details .field { max-width: 34rem; }
+.shared-console .inbox-identity { overflow-wrap: anywhere; }
+.shared-console .audience-details { margin: .75rem 0 0; padding: .2rem .8rem; }
+.shared-console .audience-details > summary { font-size: .76rem; }
+.shared-console .audience-details > p { margin-bottom: .7rem; }
+.shared-console .shared-status { margin-block: .65rem; }
+.shared-console .shared-message { padding: .85rem 0; }
+.shared-console .message-stream { margin-top: .75rem; max-width: 760px; }
+.shared-console .shared-compose { max-width: 760px; }
+.shared-console .message-meta { display: flex; justify-content: space-between; flex-wrap: wrap; }
+.shared-console .message-meta time { color: var(--color-performance-muted); }
+.shared-console .shared-tabs { position: relative; }
+.shared-console .shared-tabs::after { content: ''; position: absolute; bottom: -1px; height: 2px; width: var(--tab-width, 0px); left: var(--tab-left, 0px); background: var(--color-performance-ink); pointer-events: none; }
+.shared-console .shared-tabs button:hover { color: var(--color-performance-muted); }
+.shared-console .inbox-option:hover:not([aria-current]) { background: var(--color-performance-panel); }
+@media (min-width: 768px) {
+  .shared-console .inbox-rail { align-self: start; position: sticky; top: 1rem; }
+}
+@media (max-width: 767px) {
+  .shared-console .console-heading { margin-bottom: .75rem; }
+  .shared-console .console-heading .small { display: none; }
+  .shared-console .inbox-rail { padding: 0; }
+  .shared-console .inbox-switcher > summary { display: flex; justify-content: space-between; gap: .75rem; padding: .65rem .85rem; min-height: 48px; }
+  .shared-console .inbox-switcher > summary::after { content: '+'; }
+  .shared-console .inbox-switcher[open] > summary::after { content: '−'; }
+  .shared-console .inbox-switcher:not([open]) > .inbox-switcher-body { display: none; }
+  .shared-console .inbox-switcher-body { padding: .85rem; border-top: 1px solid var(--color-performance-line); }
+  .shared-console .inbox-switcher-body h2 { display: none; }
+  .shared-console .inbox-switcher-body .rail-note { display: block; }
+  .shared-console .workspace-subtitle { margin-top: .25rem; font-size: .72rem; }
+  .shared-console .shared-tabs { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 1.1rem; margin-block: .55rem; }
+  .shared-console .shared-tabs button { flex-shrink: 0; font-size: .74rem; }
+  .shared-console .shared-tabs::after { display: none; }
+  .shared-console .shared-workspace { padding: 1rem .85rem; }
+  .shared-console .reading-details > summary { min-height: 36px; }
+  .shared-console .boundary { padding-inline: .65rem; }
+}
+.shared-console #workspace-content { max-width: 840px; }
+.shared-console .message-stream,
+.shared-console .shared-compose { max-width: none; }
+
+/* Round 3: keep audience and destination visible without overstating runtime health. */
+.shared-console .console-main { max-width: 1060px; }
+.shared-console .shared-layout { grid-template-columns: 210px minmax(0, 1fr); }
+.shared-console #workspace-content { max-width: none; }
+.shared-console .audience { margin-block: .75rem; padding: .7rem .8rem; background: var(--color-performance-paper); border-left: 2px solid var(--color-performance-ink); }
+.shared-console .audience-summary { font-size: .77rem; line-height: 1.6; overflow-wrap: anywhere; }
+.shared-console .audience-details { padding: 0; margin: .2rem 0 0; border: 0; background: transparent; }
+.shared-console .audience-details > summary { min-height: 36px; color: var(--color-performance-muted); font-weight: 400; }
+.shared-console .lifecycle-state { font-size: .73rem; color: var(--color-performance-muted); }
+.shared-console .connectivity-summary { background: transparent; border: 0; padding: .4rem 0; min-height: 44px; color: inherit; text-decoration: underline; text-underline-offset: .22em; font-size: .73rem; text-align: left; }
+.shared-console .message-receipt { font-size: .7rem; color: var(--color-performance-muted); }
+.shared-console .routine-status:empty { display: none; }
+.shared-console .message-meta { justify-content: flex-start; }
+.shared-console .message-meta time { margin-left: auto; }
+@media (max-width: 1024px) and (min-width: 768px) {
+  .shared-console .shared-layout { grid-template-columns: 190px minmax(0,1fr); }
+}
+@media (max-width: 767px) {
+  .shared-console .shared-layout { grid-template-columns: 1fr; }
+  .shared-console .shared-tabs { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0 .8rem; overflow: visible; }
+  .shared-console .shared-tabs button { min-width: 0; white-space: normal; }
+  .shared-console .shared-tabs button[aria-current='page'] { background: var(--color-performance-paper); }
+  .shared-console .inbox-switcher > summary::after { content: '⌄'; font-size: 1.1rem; }
+  .shared-console .inbox-switcher[open] > summary::after { content: '⌃'; }
+  .shared-console .switcher-hint { margin-left: auto; }
+  .shared-console .shared-status > .compose-shortcut { margin-left: 0; }
+  .shared-console .shared-status { gap: .15rem .8rem; }
+}
+
+/* Round 4: the conversation owns the hierarchy; inspection remains within reach. */
+.shared-console #refresh.refresh-secondary,
+.shared-console #refresh {
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-performance-muted);
+  padding-inline: .5rem;
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
+.shared-console .shared-status > .compose-shortcut {
+  background: var(--color-performance-ink);
+  color: var(--color-performance-panel);
+  border: 1px solid var(--color-performance-ink);
+  padding: .55rem .8rem;
+  text-decoration: none;
+}
+.shared-console .shared-status > .compose-shortcut:hover {
+  background: var(--color-performance-panel);
+  color: var(--color-performance-ink);
+}
+.shared-console .audience { padding-block: .5rem; }
+.shared-console .audience-summary { line-height: 1.5; }
+.shared-console .audience-details > summary { min-height: 44px; }
+.shared-console .reading-details > summary { min-height: 44px; }
+@media (max-width: 767px) {
+  .shared-console .console-heading { align-items: center; margin-bottom: .4rem; }
+  .shared-console .console-heading h1 { font-size: 1rem; letter-spacing: -.025em; }
+  .shared-console .console-heading > div { flex: 1 1 0; }
+  .shared-console .console-main { padding-top: .4rem; }
+  .shared-console .shared-workspace { padding-block: .6rem; }
+  .shared-console #workspace-content:has(> .reading-details) > :first-child {
+    display: flex;
+    align-items: baseline;
+    gap: .5rem;
+  }
+  .shared-console #workspace-content:has(> .reading-details) > :first-child .workspace-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .shared-console #workspace-content > :first-child .workspace-subtitle { margin: 0; }
+  .shared-console .reading-details { margin-top: 0; }
+  .shared-console .shared-tabs { margin-block: .35rem; }
+  .shared-console .shared-status {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) auto;
+    gap: 0 .5rem;
+    margin-block: .4rem;
+  }
+  .shared-console .shared-status > .lifecycle-state { align-self: end; }
+  .shared-console .shared-status > .connectivity-summary {
+    grid-column: 1;
+    font-size: .69rem;
+    line-height: 1.4;
+    padding-block: .25rem;
+  }
+  .shared-console .shared-status > .compose-shortcut {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    max-width: 7rem;
+    font-size: .74rem;
+    line-height: 1.4;
+  }
+  .shared-console .audience { margin-block: .5rem; }
+  .shared-console .shared-message { padding-block: .7rem; }
+  .shared-console .shared-compose { padding-top: 1rem; margin-top: 1rem; }
+}
+
+/* Round 5: compact access disclosure and predictable narrow compose action. */
+.shared-console .message-timing { white-space: nowrap; font-size: .72rem; color: var(--color-performance-muted); }
+.shared-console .message-meta { align-items: baseline; gap: .35rem .75rem; }
+@media (max-width: 767px) {
+ .shared-console .shared-status > .compose-shortcut { min-width: 72px; min-height: 44px; max-width: none; align-self: center; }
+ .shared-console .shared-status > .lifecycle-state { align-self: center; }
+ .shared-console .reading-details > summary { font-size: .74rem; }
+ .shared-console .audience-summary { margin-block: 0; }
+ .shared-console .audience { padding-block: .35rem; }
+}
+
+/* Round 6: one destination row, one inspection row, named audience disclosure. */
+.shared-console .destination-compact { display: none; }
+.shared-console .account-menu { position: relative; margin-left: auto; }
+.shared-console .account-menu > summary { display: none; }
+.shared-console .account-menu:not([open]) > .account-area { display: flex; }
+.shared-console .workspace-tools { display: flex; align-items: start; justify-content: space-between; gap: 1rem; }
+.shared-console .workspace-tools .reading-details { flex: 1; min-width: 0; margin: 0; border: 0; }
+.shared-console .workspace-tools .shared-status { margin: 0; }
+.shared-console .audience { padding-block: 0; }
+.shared-console .audience-details { margin: 0; }
+.shared-console .audience-details > summary { color: var(--color-performance-ink); line-height: 1.5; overflow-wrap: anywhere; }
+@media (max-width: 767px) {
+ .shared-console .account-menu > summary { display: list-item; min-height: 44px; font-size: .8rem; }
+ .shared-console .account-menu:not([open]) > .account-area { display: none; }
+ .shared-console .account-menu > .account-area { position: absolute; top: 100%; right: 0; z-index: 5; width: min(270px,calc(100vw - 24px)); padding: .75rem; background: var(--color-performance-panel); border: 1px solid var(--color-performance-line-strong); box-shadow: 0 6px 16px #0001; }
+ .shared-console .account-area #account-email { flex-basis: 100%; overflow-wrap: anywhere; }
+ .shared-console .destination-full { display: none; }
+ .shared-console .destination-compact { display: inline; }
+ .shared-console .shared-tabs { grid-template-columns: minmax(0,1.25fr) repeat(3,minmax(0,1fr)); gap: 0; margin-top: 0; }
+ .shared-console .shared-tabs button { min-height: 44px; padding-inline: .2rem; font-size: .78rem; white-space: nowrap; }
+ .shared-console #workspace-content:has(> .workspace-tools) > :first-child { height: 0; margin: 0; }
+ .shared-console #workspace-content:has(> .workspace-tools) > :first-child .workspace-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+ .shared-console .workspace-tools { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) 72px; gap: .4rem; align-items: start; }
+ .shared-console .workspace-tools .reading-details { grid-column: 1; }
+ .shared-console .workspace-tools .reading-details > summary { min-height: 44px; font-size: .75rem; }
+ .shared-console .workspace-tools:has(.reading-details[open]) { grid-template-columns: minmax(0,1fr) 72px; }
+ .shared-console .workspace-tools .reading-details[open] { grid-column: 1 / -1; }
+ .shared-console .workspace-tools .shared-status { display: contents; }
+ .shared-console .workspace-tools .lifecycle-state { display: none; }
+ .shared-console .workspace-tools .connectivity-summary { grid-column: auto; min-height: 44px; font-size: .72rem; padding: .2rem 0; line-height: 1.4; }
+ .shared-console .workspace-tools .compose-shortcut { grid-column: auto; grid-row: auto; margin: 0; }
+ .shared-console .workspace-tools .tag { grid-column: 1 / -1; }
+ .shared-console .audience { margin-block: .4rem; }
+}
+
+/* Compact mobile inspection and compose layout. */
+@media (max-width: 767px) {
+  .shared-console .workspace-tools { grid-template-columns: minmax(0,1fr) 72px; }
+  .shared-console .workspace-tools .reading-details > summary { display: list-item; line-height: 1.35; padding-block: .15rem; }
+  .shared-console .workspace-tools .connectivity-summary { display: none; }
+  .shared-console .workspace-tools .compose-shortcut { grid-column: 2; align-self: center; }
+  .shared-console .workspace-tools:has(.reading-details[open]) .compose-shortcut { grid-row: 2; }
+}
+
+/* Retain complete authorless activity content and receipt. */
+.shared-console .shared-message.system-activity { padding-block: .6rem; }
+.shared-console .system-activity .message-text { font-size: .82rem; margin-block: .35rem 0; }
+.shared-console .system-activity .message-meta strong { font-size: .75rem; font-weight: 500; }
+
+/* With scripting disabled, noscript contains real elements; the session cannot load. */
+.shared-console:has(noscript > .session-screen) #session,
+.shared-console:has(noscript > .session-screen) .account-menu { display: none; }
+
+/* Count only consecutive authorless notices; keep the native disclosure marker. */
+.shared-console .notice-group {
+  border-top: 1px solid var(--color-performance-line);
+}
+.shared-console .notice-group > summary {
+  display: list-item;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding-block: .65rem;
+  font-size: .78rem;
+  line-height: 1.5;
+  color: var(--color-performance-muted);
+  overflow-wrap: anywhere;
+}
+
+/* Keep long messages comfortable to follow without narrowing shared separators. */
+.shared-console .shared-message .message-text { max-width: 60ch; }
+
+/* Text resizing can wrap destinations instead of painting labels over each other. */
+@media (max-width: 767px) {
+  .shared-console .shared-workspace { padding-inline: clamp(12px, 4vw, 16px); }
+  .shared-console .shared-tabs { display: flex; flex-wrap: wrap; }
+  .shared-console .shared-tabs button { flex: 1 0 auto; min-width: min-content; }
+  .shared-console .inbox-switcher > summary > span { min-width: 0; overflow-wrap: anywhere; }
+  .shared-console #selected-inbox-name { flex: 1 1 0; }
+  .shared-console .switcher-hint { flex: 0 1 7.5rem; }
+  .shared-console .shared-compose .button { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+}
+@media (max-width: 767px) {
+  .shared-console .inbox-switcher > summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: .1rem .5rem;
+  }
+  .shared-console #selected-inbox-name { grid-column: 1; }
+  .shared-console .switcher-hint { grid-column: 1; }
+  .shared-console .inbox-switcher > summary::after { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+}
+
+/* Keep the mobile switcher intrinsic when a short pane fills the card. */
+@media (max-width: 767px) {
+  .shared-console .shared-layout { grid-template-rows: auto minmax(0, 1fr); }
+}
+
+/* Keep identity, technical details and actions predictable in secondary panes. */
+.shared-console .record-heading { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem .75rem; }
+.shared-console .record-heading h3 { margin: 0; }
+.shared-console .record-details { margin-top: .4rem; }
+.shared-console .record-details > summary { min-height: 44px; font-size: .82rem; color: var(--color-performance-muted); }
+.shared-console .record-details > code { display: block; margin-block: .35rem .5rem; }
+.shared-console .record-actions { display: flex; flex-direction: row; justify-content: flex-start; align-items: center; flex-wrap: wrap; gap: .5rem; }
+.shared-console .record-actions .button { width: auto; flex: 0 1 auto; max-width: 100%; margin: 0; white-space: normal; overflow-wrap: anywhere; }
+.shared-console .button-quiet { background: transparent; border-color: transparent; padding-inline: .25rem; text-decoration: underline; text-underline-offset: .2em; }
+.shared-console .membership-add-section,
+.shared-console .membership-invite-form { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--color-performance-line); }
+.shared-console .membership-add-section { max-width: 620px; }
+.shared-console .membership-add-section > h3 { font-size: 1.05rem; font-weight: 500; margin-bottom: .65rem; }
+.shared-console .muted-empty .button { margin-top: .8rem; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+
+/* Keep each member's utility controls together and prioritize observed monitoring state. */
+.shared-console .member-record { padding-block: .85rem; }
+.shared-console .tag:is([data-tone='success'], [data-tone='warning']) { color: var(--color-performance-ink); }
+.shared-console .member-utilities { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 0 1.25rem; }
+.shared-console .member-utilities > .record-details { flex: 0 1 auto; min-width: 0; margin: 0; }
+.shared-console .member-utilities > .record-actions { flex: 0 1 auto; margin: 0; }
+.shared-console .member-utilities:has(.record-details[open]) > .record-details { flex-basis: 100%; }
+.shared-console .context-dates { display: flex; flex-wrap: wrap; gap: .25rem 1rem; margin-block: .4rem; }
+.shared-console .status-explanation { max-width: 55ch; font-size: .85rem; margin-top: 1.25rem; padding-top: .5rem; border-top: 1px solid var(--color-performance-line); }
+.shared-console .status-explanation > summary { min-height: 44px; font-size: .82rem; color: var(--color-performance-muted); }
+.shared-console .status-explanation > p { font-size: .85rem; }
+.shared-console .status-loading { font-size: .85rem; color: var(--color-performance-muted); }
+@media (max-width: 767px) {
+  .shared-console .context-dates { flex-direction: column; }
+}
+
+/* Keep each receipt label beside its value in the reading order at narrow measures. */
+@media (max-width: 40rem) {
+  .shared-console .status-facts { grid-template-columns: minmax(0, 1fr); gap: .15rem; }
+  .shared-console .status-facts dt { margin-top: .75rem; overflow-wrap: normal; }
+  .shared-console .status-facts dt:first-child { margin-top: 0; }
+}
+.shared-console .request-guide { margin-block: .5rem 1rem; padding-block: .25rem .75rem; border-block: 1px solid var(--color-performance-line); max-width: 60ch; }
+.shared-console .request-guide > summary { min-height: 44px; font-size: .82rem; }
+.shared-console .request-guide > p { max-width: 55ch; margin-block: .5rem; }
+.shared-console .request-guide .button { margin-block: .25rem; }
+.shared-console .compose-help { margin-block: .5rem; max-width: 60ch; }
+.shared-console .compose-help > summary { min-height: 44px; font-size: .78rem; color: var(--color-performance-muted); }
+.shared-console .compose-help > p { margin-block: .5rem; }
+.shared-console .subscription-identity > summary { font-size: inherit; font-weight: 400; }
+.shared-console .subscription-identity > code { display: block; padding-block: .25rem; overflow-wrap: anywhere; }
+
+/* Work badges wrap as independent facts; the workspace tool grid must not narrow them. */
+.shared-console .shared-message .shared-status { display: flex; flex-wrap: wrap; align-items: flex-start; }
+.shared-console .shared-message .shared-status > .tag { max-width: 100%; min-width: 0; }
+
+/* Literal previews reduce traversal; native disclosure retains the complete body. */
+.shared-console .message-reading { max-width: 60ch; margin-top: .65rem; }
+.shared-console .message-excerpt { white-space: pre-wrap; font-size: .95rem; line-height: 1.65; margin-block: .5rem 0; }
+.shared-console .message-reading:has(> .message-body[open]) > .message-excerpt { display: none; }
+.shared-console .message-body > summary { min-height: 44px; display: list-item; padding-block: .5rem; font-size: .82rem; text-decoration: underline; text-underline-offset: .2em; }
+.shared-console .message-body > .message-text { margin-top: .5rem; }
+.shared-console .message-text a { text-decoration: underline; text-underline-offset: .16em; overflow-wrap: anywhere; }
+.shared-console .request-qualification { max-width: 60ch; margin-block: .6rem; }
+.shared-console .message-reading-tools { display: flex; align-items: center; flex-wrap: wrap; gap: .25rem 1rem; margin-top: .75rem; }
+.shared-console .message-reading-tools .button { max-width: 100%; white-space: normal; }
+.shared-console .message-reading-tools p { margin: 0; }
+.shared-console .message-reading-tools + .message-stream { margin-top: .75rem; }
+.shared-console .message-body:not([open]) .when-expanded,
+.shared-console .message-body[open] .when-collapsed { display: none; }
+.shared-console .message-body[open] > .message-text { padding: .65rem .75rem; border: 1px solid var(--color-performance-line); background: var(--color-performance-paper); font-size: .9rem; }
+.shared-console .shared-message .message-actions > .field { margin: 0; flex: 0 1 240px; min-width: 0; max-width: 100%; }
+.shared-console .shared-message .message-timing { white-space: normal; min-width: 0; max-width: 100%; }
+.shared-console .message-assignee { font-size: .75rem; line-height: 1.6; color: var(--color-performance-muted); align-self: center; max-width: 100%; }
+.shared-console .request-qualification,
+.shared-console .message-assignee { color: var(--color-performance-ink-soft); }
+.shared-console .message-length { font-size: .72rem; font-weight: 400; text-decoration: none; }
+.shared-console .message-actions .selected-assignee { flex-basis: 100%; margin: .1rem 0 0; font-size: .72rem; line-height: 1.5; overflow-wrap: anywhere; }
+@media (max-width: 40rem) {
+  .shared-console .message-body[open] > .message-text { padding-inline: 0; border-inline: 0; }
+}
+
+/* Full-text navigation stays outside literal content and follows the loaded order. */
+.shared-console .message-body-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0 .75rem; padding-block: 0; }
+.shared-console .message-body > .message-text { margin-bottom: 0; }
+.shared-console .message-body-tools .button { min-height: 44px; border-color: transparent; background: transparent; padding-inline: .15rem; font-size: .78rem; text-decoration: underline; text-underline-offset: .2em; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.shared-console .message-body > summary { text-decoration: none; }
+.shared-console .message-body > summary > :is(.when-collapsed,.when-expanded) { text-decoration: underline; text-underline-offset: .2em; }
+.shared-console .shared-message .message-actions { display: grid; grid-template-columns: minmax(0,240px) max-content max-content; align-items: end; gap: .35rem .6rem; }
+.shared-console .message-actions > .field { grid-column: 1; grid-row: 1; }
+.shared-console .message-actions > .button { grid-row: 1; }
+.shared-console .message-actions .selected-assignee { grid-column: 1 / -1; grid-row: 2; font-size: .78rem; line-height: 1.6; color: var(--color-performance-ink-soft); }
+/* Keep short reading rows and the writing surface on a deliberate measure. */
+.shared-console .shared-message .message-meta { color: var(--color-performance-ink-soft); margin-bottom: .25rem; }
+.shared-console .message-reading { margin-top: .25rem; }
+.shared-console .message-excerpt { margin-top: .25rem; }
+.shared-console .shared-message:has(> .routine-status) { padding-block: .65rem; }
+.shared-console .shared-message:has(> .routine-status) .message-reading { max-width: 48ch; }
+.shared-console .shared-compose { max-width: 60ch; padding-top: 1rem; margin-top: 1rem; }
+.shared-console .message-stream { max-width: 60ch; }
+.shared-console .shared-compose > .field { margin-block: .75rem; }
+.shared-console .shared-compose .compose-options { gap: .75rem; }
+.shared-console .shared-compose .compose-options > .field { margin: 0; }
+.shared-console .shared-compose > .small { margin-block: .65rem; }
+
+/* Operational qualifications remain visible without implying an error or live verification. */
+.shared-console .connectivity-summary {
+  font-size: .8rem;
+  font-weight: 500;
+  padding-inline: .65rem;
+  border: 1px solid var(--color-performance-line);
+  background: var(--color-performance-paper);
+}
+.shared-console .shared-layout:has(.monitoring-results) { min-height: 0; }
+.shared-console .monitoring-intro { max-width: 55ch; margin-block: .75rem 0; }
+
+/* Access inspection and runtime uncertainty are separate controls on touch screens. */
+@media (max-width: 767px) {
+  .shared-console .workspace-tools {
+    grid-template-columns: minmax(0,1fr) minmax(0,1.2fr);
+    align-items: center;
+  }
+  .shared-console .workspace-tools .connectivity-summary {
+    display: block;
+    grid-column: 2;
+    font-size: .75rem;
+    padding: .25rem .4rem;
+  }
+  .shared-console .workspace-tools:has(.compose-shortcut) {
+    grid-template-columns: minmax(0,1fr) 72px;
+  }
+  .shared-console .workspace-tools:has(.compose-shortcut) .reading-details {
+    grid-column: 1 / -1;
+  }
+  .shared-console .workspace-tools:has(.compose-shortcut) .connectivity-summary {
+    grid-column: 1;
+  }
+  .shared-console .workspace-tools:has(.reading-details[open]):not(:has(.compose-shortcut)) .connectivity-summary {
+    grid-column: 1 / -1;
+  }
+}
+.shared-console .compose-help > summary { color: var(--color-performance-ink-soft); }
+@media (max-width: 40rem) {
+  .shared-console .shared-message .message-actions { grid-template-columns: repeat(auto-fit,minmax(min(100%,max(6rem,calc((100% - .6rem) / 2))),1fr)); }
+  .shared-console .message-actions > .field { grid-column: 1 / -1; }
+  .shared-console .message-actions > .button { grid-row: auto; width: 100%; white-space: normal; overflow-wrap: anywhere; }
 }
