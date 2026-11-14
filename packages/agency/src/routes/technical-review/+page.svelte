@@ -20,7 +20,6 @@
       <Button href={bookingHref}>Discuss your existing project</Button>
       <p>Review scope, price, and timing are agreed before paid work starts.</p>
     </div>
-    <TechnicalReviewVisual portraitOnMobile priority />
   </section>
 </AgencyHeroFrame>
 
@@ -37,6 +36,7 @@
     <h2 id="process-title">One workflow. A clear set of priorities.</h2>
     <InspectionScrollStory />
     <p>You keep the report and any tests or instructions created for your project. Fixes, additional reviews, and launch work require a separate agreed scope.</p>
+    <div class="process-visual"><TechnicalReviewVisual /></div>
   </section>
 
   <section class="review-section" aria-labelledby="sample-title">
@@ -121,14 +121,14 @@
   p { margin: 0 0 1.25rem; }
   .opening :global(.btn), .review-section:last-child :global(.btn) { margin-bottom: 1rem; }
   .lede { font-size: var(--text-performance-body-lg); }
-  .opening { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: clamp(2rem, 4vw, 4rem); align-items: center; }
-  .opening h1 { font-size: clamp(2.75rem, 4.5vw, 4.5rem); }
+  .opening { display:block; padding:0; }
+  .process-visual { max-width:44rem; margin-top:2rem; }
+  .opening h1 { font-size: clamp(2.75rem, 4.5vw, 4.5rem); margin-bottom:1rem!important; }
   .report-layout { display: grid; grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr); gap: clamp(2rem, 4vw, 4rem); align-items: start; margin-top: 2.5rem; }
   .findings-visual { min-width: 0; }
   a { color: inherit; text-decoration: underline; text-underline-offset: .2em; }
   .findings { display: grid; gap: 1.5rem; }
   .findings article { border-top: 1px solid var(--color-performance-line); padding-top: 1.5rem; }
-  @media (max-width: 1000px) { .opening { grid-template-columns: 1fr; } }
   .scope-strip { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; list-style: none; padding: 0; margin: 0 0 1.5rem; font-size: .875rem; }
   .scope-strip li { border-bottom: 1px solid var(--color-performance-line); padding-bottom: .5rem; }
   .fit-layout, .scope-layout, .closing { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(2rem, 5vw, 5rem); }

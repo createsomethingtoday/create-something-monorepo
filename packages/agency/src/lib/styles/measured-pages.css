@@ -47,16 +47,16 @@
 .agency-hero-plate__destinations small { display:block; margin-top:8px; font-size:12px; color:var(--color-performance-muted); line-height:1.6; }
 .agency-hero-plate__destinations a>span:last-child { margin-left:auto; }
 /* Normalize only the opening owned by this frame; never hide proof/artifacts. */
-.agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening { display:block !important; min-height:0 !important; padding:0 !important; overflow:visible; background:#000; }
-.agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening::before,.agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening__media { display:none; }
-.agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening__content { width:100% !important; max-width:none; min-height:0; padding:0 !important; }
-.agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening__content>header { display:grid !important; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:22px 5vw; width:100% !important; max-width:none !important; padding:0 !important; align-items:end; }
-.agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening__identity { grid-column:1/-1; }
-.agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening h1 { grid-column:1; grid-row:2/4; max-width:none !important; font:500 clamp(42px,5.6vw,88px)/1.02 var(--font-performance-sans); font-size:clamp(42px,5.6vw,88px) !important; line-height:1.02 !important; letter-spacing:-.06em; margin:0; }
-.agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening__lede { grid-column:2; margin:0; max-width:40ch; }
-.agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening__actions { grid-column:2; margin:0; }
-.agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening__proof { position:relative; width:100%; margin-top:32px; }
-.agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening__artifact { position:relative !important; inset:auto !important; width:100% !important; height:auto !important; min-height:0; margin-top:32px; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame:not([data-agency-scene="true"]) .performance-campaign-opening { display:block !important; min-height:0 !important; padding:0 !important; overflow:visible; background:#000; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame:not([data-agency-scene="true"]) .performance-campaign-opening::before,.agency-surface[data-agency-brand=measured] .agency-hero-frame:not([data-agency-scene="true"]) .performance-campaign-opening__media { display:none; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame:not([data-agency-scene="true"]) .performance-campaign-opening__content { width:100% !important; max-width:none; min-height:0; padding:0 !important; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame:not([data-agency-scene="true"]) .performance-campaign-opening__content>header { display:grid !important; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:22px 5vw; width:100% !important; max-width:none !important; padding:0 !important; align-items:end; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame:not([data-agency-scene="true"]) .performance-campaign-opening__identity { grid-column:1/-1; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame:not([data-agency-scene="true"]) .performance-campaign-opening h1 { grid-column:1; grid-row:2/4; max-width:none !important; font:500 clamp(42px,5.6vw,88px)/1.02 var(--font-performance-sans); font-size:clamp(42px,5.6vw,88px) !important; line-height:1.02 !important; letter-spacing:-.06em; margin:0; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame:not([data-agency-scene="true"]) .performance-campaign-opening__lede { grid-column:2; margin:0; max-width:40ch; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame:not([data-agency-scene="true"]) .performance-campaign-opening__actions { grid-column:2; margin:0; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame:not([data-agency-scene="true"]) .performance-campaign-opening__proof { position:relative; width:100%; margin-top:32px; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame:not([data-agency-scene="true"]) .performance-campaign-opening__artifact { position:relative !important; inset:auto !important; width:100% !important; height:auto !important; min-height:0; margin-top:32px; }
 .agency-surface[data-agency-brand=measured] .agency-hero-frame .clear-page-section--hero { padding:0; min-height:0; }
 .agency-surface[data-agency-brand=measured] .agency-hero-frame .clear-page-section__inner { width:100%; max-width:none; }
 .agency-surface[data-agency-brand=measured] .agency-hero-frame--compact { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,.6fr); gap:36px; align-items:center; }
@@ -67,9 +67,9 @@
 .agency-hero-plate--compact .agency-hero-plate__register>span:last-child { display:none; }
 @media(min-width:1920px){.agency-surface[data-agency-brand=measured] .agency-hero-frame { padding-inline:0; }.agency-page-wayfinding { padding-inline:0; }}
 @media(max-width:1000px){
-  .agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening__content>header { display:block !important; }
-  .agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening__lede { margin-top:24px; }
-  .agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening__actions { margin-top:24px; }
+  .agency-surface[data-agency-brand=measured] .agency-hero-frame:not([data-agency-scene="true"]) .performance-campaign-opening__content>header { display:block !important; }
+  .agency-surface[data-agency-brand=measured] .agency-hero-frame:not([data-agency-scene="true"]) .performance-campaign-opening__lede { margin-top:24px; }
+  .agency-surface[data-agency-brand=measured] .agency-hero-frame:not([data-agency-scene="true"]) .performance-campaign-opening__actions { margin-top:24px; }
   .agency-surface[data-agency-brand=measured] .agency-hero-frame--compact { grid-template-columns:minmax(0,1fr); gap:24px; }
 }
 @media(max-width:700px){
@@ -84,7 +84,7 @@
   .agency-page-wayfinding .instrument-reading { font-size:9px; }
   .agency-page-wayfinding .instrument-reading>span:last-child { display:none; }
   .agency-surface[data-agency-brand=measured] .agency-hero-frame { padding-inline:6vw; padding-bottom:32px; }
-  .agency-surface[data-agency-brand=measured] .agency-hero-frame .performance-campaign-opening h1 { font-size:clamp(34px,9.5vw,64px) !important; }
+  .agency-surface[data-agency-brand=measured] .agency-hero-frame:not([data-agency-scene="true"]) .performance-campaign-opening h1 { font-size:clamp(34px,9.5vw,64px) !important; }
   .agency-hero-plate { margin-top:24px; }
   .agency-hero-plate__register { font-size:9px; }
   .agency-hero-plate__register>span:last-child { display:none; }
@@ -124,3 +124,115 @@
   .booking-page .agency-hero-plate img { width:80px; height:80px; object-fit:cover; }
   .booking-page .agency-hero-plate figcaption { border-top:0; border-left:1px solid var(--color-performance-line); padding:10px; font-size:9px; }
 }
+
+/* Scene owners use the shared background composition, not the old text-plus-inline plate. */
+.agency-surface[data-agency-brand=measured] .agency-hero-frame[data-agency-scene=true] .performance-campaign-opening[data-background=scene] { min-height:0; padding:0!important; background:var(--color-performance-paper); color:var(--color-performance-ink); }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame[data-agency-scene=true] .agency-hero-scene__copy :is(h1,h2) { margin:0; font:500 clamp(1.75rem,4.4cqw,4.5rem)/1.1 var(--font-performance-sans); font-size:clamp(1.75rem,4.4cqw,4.5rem)!important; letter-spacing:-.035em; max-width:none; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame[data-agency-scene=true] .agency-hero-scene__copy p { max-width:40ch; color:var(--color-performance-muted); }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame[data-agency-scene=true] .agency-hero-scene__copy :is(a,button) { max-width:100%; white-space:normal; }
+.agency-surface[data-agency-brand=measured] .agency-hero-frame[data-agency-scene=true] .canon-scene-details { position:relative; margin-top:2rem; }
+.agency-surface[data-agency-brand=measured] .agency-footer-scope .meridian-offer-panel__legacy { color:var(--color-performance-ink); }
+.agency-surface[data-agency-brand=measured] .agency-footer-scope .meridian-offer-panel__legacy .meridian-offer-panel__eyebrow,
+.agency-surface[data-agency-brand=measured] .agency-footer-scope .meridian-offer-panel__legacy .meridian-offer-panel__description { color:var(--color-performance-muted); }
+.agency-surface[data-agency-brand=measured] .agency-footer-scope .meridian-offer-panel__legacy .meridian-offer-panel__action { background:var(--color-performance-ink); color:var(--color-performance-paper); border-color:var(--color-performance-ink); }
+@media(max-width:47.99rem){.agency-surface[data-agency-brand=measured] .agency-hero-frame[data-agency-scene=true] .agency-hero-scene__copy :is(h1,h2) { font-size:clamp(1.6rem,7cqw,2.1rem)!important; }}
+/* Agency's portrait keeps the whole character below essential mobile copy. */
+@media(max-width:47.99rem){
+  .agency-surface[data-agency-brand=measured] .agency-hero-frame[data-agency-scene=true] .canon-scene-lead__copy { min-height:0; }
+  .agency-surface[data-agency-brand=measured] .agency-hero-frame[data-agency-scene=true] .canon-scene-lead__art { grid-area:2 / 1; }
+  .agency-surface[data-agency-brand=measured] .agency-hero-frame[data-agency-scene=true] .canon-scene-lead__art::after { display:none; }
+  .agency-surface[data-agency-brand=measured] .agency-hero-frame[data-agency-scene=true] .canon-scene-lead__reserved { height:calc(100cqw / var(--scene-mobile-ratio)); }
+}
+
+/* Route-authored split openings retain their real figures and proof below the
+   scene. Only layout wrappers dissolve; content, links and semantics remain. */
+.agency-hero-scene:has(.clear-page-section) > .agency-hero-scene__copy,
+.agency-hero-scene__copy > .clear-page-section,
+.agency-hero-scene__copy .clear-page-section__inner,
+.agency-hero-scene__copy .clear-page-section__layout,
+.agency-hero-scene:has(.opening > :nth-child(2)):not(:has(.hero-grid)) > .agency-hero-scene__copy,
+.agency-hero-scene__copy > .opening:has(> :nth-child(2)):not(:has(.hero-grid)),
+.agency-hero-scene:has(header > div + dl) > .agency-hero-scene__copy,
+.agency-hero-scene__copy > header:has(> div + dl) { display:contents !important; }
+.agency-hero-scene__copy .clear-page-section__copy,
+.agency-hero-scene__copy > .opening:has(> :nth-child(2)):not(:has(.hero-grid)) > :first-child,
+.agency-hero-scene__copy > header:has(> div + dl) > div:first-child { grid-area:1 / 1; box-sizing:border-box; width:44%; min-width:0; max-width:none; padding:clamp(1.25rem,3cqw,3rem); }
+.agency-hero-scene__copy .clear-page-section__aside,
+.agency-hero-scene__copy > .opening:has(> :nth-child(2)):not(:has(.hero-grid)) > :nth-child(2),
+.agency-hero-scene__copy > header:has(> div + dl) > dl { grid-area:3 / 1; min-width:0; width:100%; box-sizing:border-box; margin:2rem 0 0; }
+.agency-hero-scene__copy .clear-page-section__after { grid-area:4 / 1; margin-top:2rem; min-width:0; }
+.agency-hero-scene__copy .hero-content { text-align:left; }
+.agency-hero-scene__copy > .guide-opening { display:block; }
+.agency-hero-scene__copy > .guide-opening :is(.guide-route,.guide-decision) { position:relative; inset:auto; margin-top:2rem; }
+@media(max-width:47.99rem){
+  .agency-hero-scene__copy .clear-page-section__copy,
+  .agency-hero-scene__copy > .opening:has(> :nth-child(2)):not(:has(.hero-grid)) > :first-child,
+  .agency-hero-scene__copy > header:has(> div + dl) > div:first-child { width:100%; padding:1.25rem; }
+}
+/* Guide copy has no wrapper of its own: preserve its authored sequence, then
+   place route instructions and fit decisions in rows after the complete art. */
+.agency-hero-scene:has(.guide-opening) { grid-template-rows:repeat(5,auto) auto auto auto; }
+.agency-hero-scene:has(.guide-opening) > .agency-hero-scene__copy,
+.agency-hero-scene__copy > .guide-opening { display:contents !important; }
+.agency-hero-scene:has(.guide-opening) > .agency-hero-scene__art { grid-area:1 / 1 / 7 / 2; }
+.agency-hero-scene:has(.guide-opening) > .agency-hero-scene__reserve { grid-area:6 / 1; }
+.agency-hero-scene__copy > .guide-opening > :is(.guide-back,.guide-eyebrow,h1,.guide-answer,.guide-actions) { box-sizing:border-box; width:44%; min-width:0; max-width:none; margin:0; padding-inline:clamp(1.25rem,3cqw,3rem); }
+.agency-hero-scene__copy > .guide-opening > .guide-back { grid-area:1 / 1; padding-top:2rem; }
+.agency-hero-scene__copy > .guide-opening > .guide-eyebrow { grid-area:2 / 1; padding-block:1rem; }
+.agency-hero-scene__copy > .guide-opening > h1 { grid-area:3 / 1; }
+.agency-hero-scene__copy > .guide-opening > .guide-answer { grid-area:4 / 1; padding-block:1rem; }
+.agency-hero-scene__copy > .guide-opening > .guide-actions { grid-area:5 / 1; padding-bottom:1rem; }
+.agency-hero-scene__copy > .guide-opening > .guide-route { grid-area:7 / 1; }
+.agency-hero-scene__copy > .guide-opening > .guide-decision { grid-area:8 / 1; }
+.agency-hero-scene__copy > .guide-opening > :is(.guide-route,.guide-decision) { width:100%; min-width:0; box-sizing:border-box; }
+@media(max-width:47.99rem){
+  .agency-hero-scene__copy > .guide-opening > :is(.guide-back,.guide-eyebrow,h1,.guide-answer,.guide-actions) { width:100%; padding-inline:1.25rem; }
+  .agency-hero-scene:has(.guide-opening) > .agency-hero-scene__art { grid-area:6 / 1; }
+}
+/* An editorial letter can embed the frame in a narrow desktop column. */
+@container(max-width:47.99rem){
+  .agency-hero-scene > .agency-hero-scene__copy,
+  .agency-hero-scene__copy .clear-page-section__copy,
+  .agency-hero-scene__copy > .opening:has(> :nth-child(2)):not(:has(.hero-grid)) > :first-child,
+  .agency-hero-scene__copy > header:has(> div + dl) > div:first-child { width:100%; padding:1.25rem; }
+  .agency-hero-scene > .agency-hero-scene__art { grid-area:2 / 1; height:calc(100cqw / var(--agency-scene-mobile-ratio)); background-image:var(--agency-scene-mobile); }
+  .agency-hero-scene > .agency-hero-scene__art::after { display:none; }
+  .agency-hero-scene > .agency-hero-scene__reserve { height:calc(100cqw / var(--agency-scene-mobile-ratio)); }
+  .agency-hero-scene__copy > .guide-opening > :is(.guide-back,.guide-eyebrow,h1,.guide-answer,.guide-actions) { width:100%; padding-inline:1.25rem; }
+  .agency-hero-scene:has(.guide-opening) > .agency-hero-scene__art { grid-area:6 / 1; }
+}
+/* The footer media API remains compatible, while Agency composes that media
+   as the CTA background rather than a small image beside its text. */
+.agency-surface[data-agency-brand=measured] .agency-footer-scope .meridian-offer-panel { padding:clamp(2rem,4vw,3rem) 1rem; }
+.agency-surface[data-agency-brand=measured] .agency-footer-scope .meridian-offer-panel__legacy { container-type:inline-size; position:relative; isolation:isolate; grid-template-columns:minmax(0,1fr); grid-template-rows:auto auto; gap:0; padding:0; background:var(--color-performance-paper); }
+.agency-surface[data-agency-brand=measured] .agency-footer-scope .meridian-offer-panel__legacy-copy { grid-area:1 / 1; align-self:start; box-sizing:border-box; width:44%; padding:clamp(1.25rem,3cqw,3rem); gap:1rem; }
+.agency-surface[data-agency-brand=measured] .agency-footer-scope .meridian-offer-panel__legacy-art { grid-area:1 / 1 / 3 / 2; align-self:end; width:100%; max-width:none; height:calc(100cqw / var(--offer-media-ratio)); aspect-ratio:auto; z-index:-1; }
+.agency-surface[data-agency-brand=measured] .agency-footer-scope .meridian-offer-panel__legacy::after { content:''; grid-area:2 / 1; height:calc(25cqw / var(--offer-media-ratio)); }
+.agency-surface[data-agency-brand=measured] .agency-footer-scope .meridian-offer-panel__legacy-art::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg,var(--color-performance-paper),color-mix(in srgb,var(--color-performance-paper) 94%,transparent) 40%,transparent 54%); mask-image:linear-gradient(#000 0 55%,transparent 78%); }
+.agency-surface[data-agency-brand=measured] .agency-footer-scope .meridian-offer-panel__legacy h2 { font-size:clamp(1.75rem,4.4cqw,4rem); }
+@media(max-width:47.99rem){
+  .agency-surface[data-agency-brand=measured] .agency-footer-scope .meridian-offer-panel__legacy-copy { width:100%; }
+  .agency-surface[data-agency-brand=measured] .agency-footer-scope .meridian-offer-panel__legacy-art { grid-area:2 / 1; }
+  .agency-surface[data-agency-brand=measured] .agency-footer-scope .meridian-offer-panel__legacy-art::after { display:none; }
+  .agency-surface[data-agency-brand=measured] .agency-footer-scope .meridian-offer-panel__legacy::after { height:calc(100cqw / var(--offer-media-ratio)); }
+}
+
+/* Agency owns the portrait companion; Canon's compatible footer media API is unchanged. */
+@media(max-width:47.99rem){
+  .agency-surface[data-agency-brand=measured] .agency-footer-scope .meridian-offer-panel__legacy-art,
+  .agency-surface[data-agency-brand=measured] .agency-footer-scope .meridian-offer-panel__legacy::after {height:calc(100cqw / (1122 / 1402));}
+  .agency-surface[data-agency-brand=measured] .agency-footer-scope .meridian-offer-panel__legacy-art .canon-background-scene {background-image:url('/images/canon-agency-v1/cta-portrait-v1.webp');}
+}
+/* Scene campaign promises retain headline authority beside the character. */
+.agency-surface[data-agency-brand=measured] .agency-hero-frame[data-agency-scene=true] .canon-scene-lead__copy h1{font-size:clamp(2rem,5.1cqw,5rem)!important;}
+@media(max-width:47.99rem){.agency-surface[data-agency-brand=measured] .agency-hero-frame[data-agency-scene=true] .canon-scene-lead__copy h1{font-size:clamp(2rem,8cqw,2.5rem)!important;}}
+
+/* The scene owns spacing; legacy campaign margins must not reopen the old gap. */
+.agency-surface[data-agency-brand=measured] .agency-hero-frame[data-agency-scene=true] .performance-campaign-opening__actions {margin:0!important;}
+@media(max-width:600px){
+ .agency-surface[data-agency-brand=measured] .agency-hero-frame[data-agency-scene=true] .performance-campaign-opening__actions {width:100%;gap:.75rem;}
+ .agency-surface[data-agency-brand=measured] .agency-hero-frame[data-agency-scene=true] .performance-campaign-opening__actions .btn {width:100%!important;min-height:48px;padding:.75rem 1rem!important;font-size:clamp(.875rem,3.85vw,1rem)!important;}
+}
+
+/* The filled action leads; the secondary action keeps the lighter house treatment. */
+.agency-surface[data-agency-brand=measured] .agency-hero-frame[data-agency-scene=true] .performance-campaign-opening__actions .btn-secondary{background:transparent!important;border-color:transparent!important;font-weight:500;text-decoration:underline;text-underline-offset:.25em;}
