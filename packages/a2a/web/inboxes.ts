@@ -1005,7 +1005,11 @@ function renderConversation(root: HTMLElement) {
       idempotencyKey: attempt.key,
       ...(state.viewAgentId ? { viewAgentId: state.viewAgentId } : {})
     });
-    if (authGeneration !== authSessionGeneration || subject !== state.me?.subject) return;
+    if (
+      authGeneration !== authSessionGeneration ||
+      subject !== state.me?.subject ||
+      sendAttempts.get(draftKey) !== attempt
+    ) return;
     const currentDraft = drafts.get(draftKey);
     if (
       !currentDraft ||

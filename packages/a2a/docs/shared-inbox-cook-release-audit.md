@@ -64,5 +64,8 @@ The browser regression is retained in
 evaluation on the owned GET-only `http://127.0.0.1:4201` fixture. It adds an inbox
 in GET responses and intercepts every POST with a held/fake acknowledgment;
 it never sends correspondence or bypasses the production feature gate. Require
-`pass: true` for both conversation and request cases. Red and green receipts
+`pass: true` for conversation, request and reversed acknowledgment-order cases.
+The acknowledgment-order case also protects a newer identical draft after a
+restored retry has already completed; stale replies must still own their attempt
+before changing the draft cache. Red and green receipts
 are retained with the independent release evidence in the Cook worktree.

@@ -40,9 +40,40 @@
       const restoredDraft=restored.querySelector('textarea').value,restoredEnabled=!restored.querySelector('button[type=submit]').disabled;
       release();await wait(()=>!oldSubmit.disabled);
       restored.requestSubmit();await wait(()=>calls.length===2&&!!document.getElementById('message-'+postedId));
-      results.push({kind,restoredDraft,restoredEnabled,pass:calls[0].idempotencyKey===calls[1].idempotencyKey,keys:calls.map(c=>c.idempotencyKey),postedRows:document.querySelectorAll('#message-'+postedId).length,draftAfterAcknowledgment:document.querySelector('.shared-compose textarea').value});
+      const postedRows=document.querySelectorAll('#message-'+postedId).length;
+      const draftAfterAcknowledgment=document.querySelector('.shared-compose textarea').value;
+      results.push({kind,restoredDraft,restoredEnabled,pass:calls[0].idempotencyKey===calls[1].idempotencyKey&&postedRows===1&&draftAfterAcknowledgment==='',keys:calls.map(c=>c.idempotencyKey),postedRows,draftAfterAcknowledgment});
       window.fetch=original;await refresh();
     }
-    return {pass:results.every(r=>r.pass&&r.postedRows===1&&r.draftAfterAcknowledgment===''),scope:'Tab-local fake acknowledgments; no persisted sends',results};
+    // A retry can acknowledge first. The older reply must not erase a new identical draft.
+    const held=[],postedId=crypto.randomUUID(),text='Synthetic repeated draft after acknowledgment';
+    window.fetch=(input,init)=>{
+      const url=String(input),method=init?.method??'GET';
+      if(method==='POST'&&/\/messages$/.test(url)) {
+        const body=JSON.parse(init.body);
+        return new Promise(resolve=>held.push(()=>resolve(json({...page.items[0],id:postedId,cursor:99999,text:body.text,kind:'conversation',state:'posted',author_kind:'owner',author_agent_id:null}))));
+      }
+      if(!['GET','HEAD'].includes(method))throw Error('Unexpected mutation blocked');
+      if(url.endsWith('/inboxes'))return Promise.resolve(json(Array.isArray(listData)?[...list,secondary]:{...listData,inboxes:[...list,secondary]}));
+      return original(url.replace(secondary.id,primary.id),init);
+    };
+    await refresh();
+    const first=document.querySelector('.shared-compose'),input=first.querySelector('textarea');
+    input.value=text;input.dispatchEvent(new Event('input',{bubbles:true}));
+    const oldSubmit=first.querySelector('button[type=submit]');first.requestSubmit();await wait(()=>held.length===1);
+    [...document.querySelectorAll('.inbox-option')].find(e=>e.textContent.includes(secondary.name)).click();
+    await wait(()=>document.querySelector('.workspace-title')?.textContent===secondary.name&&document.querySelector('.shared-compose'));
+    [...document.querySelectorAll('.inbox-option')].find(e=>e.textContent.includes(primary.name)).click();
+    await wait(()=>document.querySelector('.workspace-title')?.textContent===primary.name&&document.querySelector('.shared-compose'));
+    document.querySelector('.shared-compose').requestSubmit();await wait(()=>held.length===2);
+    held[1]();await wait(()=>!!document.getElementById('message-'+postedId));
+    const fresh=document.querySelector('.shared-compose textarea');fresh.value=text;fresh.dispatchEvent(new Event('input',{bubbles:true}));
+    held[0]();await wait(()=>!oldSubmit.disabled);
+    document.querySelector('button[aria-label="Members & access"]').click();
+    document.querySelector('button[aria-label="Messages · conversation"]').click();
+    const actualDraft=document.querySelector('.shared-compose textarea').value;
+    results.push({kind:'acknowledgment-order',pass:actualDraft===text,expectedDraft:text,actualDraft});
+    window.fetch=original;await refresh();
+    return {pass:results.every(r=>r.pass),scope:'Tab-local fake acknowledgments; no persisted sends',results};
   } finally { window.fetch=original; }
 })()
