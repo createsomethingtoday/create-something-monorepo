@@ -32,7 +32,7 @@ Runtime variables, provisioned through Webflow's secret/environment tooling:
 | `PORTAL_ALLOWED_EMAILS` | Exact comma-separated admitted reviewer emails |
 | `OPENAI_API_KEY` | Secret: funded project credential for bundle analysis |
 
-Missing configuration fails closed with a named error. No secret values or quiet deployment placeholders are included in the source. Set secrets through stdin, never command-line arguments or committed files. The current work-session API probe failed with `credit_balance_exhausted`; model discovery alone does not prove inference works.
+Missing configuration fails closed with a named error. No secret values or quiet deployment placeholders are included in the source. Set secrets through stdin, never command-line arguments or committed files. The default shell credential failed with `credit_balance_exhausted`. A separate funded credential was then located in Infisical and verified with real GPT-6 Astra inference and isolated fixture execution. It remains outside the staged portal runtime pending activation. Model discovery alone does not prove inference works.
 
 ## Verification
 
@@ -55,8 +55,8 @@ Preserve the previous Webflow deployment for rollback; additive database migrati
 
 ## Initial release status
 
-The Webflow Cloud preview is deployed with D1 and R2. Anonymous session and queue requests return 401. Sign-in is intentionally unavailable until Webflow Access allows the exact portal callback and a public OAuth client is registered. Bundle analysis also needs a funded project credential; the live inference probe returned `credit_balance_exhausted`.
+The Webflow Cloud preview is deployed with D1 and R2. Anonymous session and queue requests return 401. Sign-in is intentionally unavailable until Webflow Access allows the exact portal callback and a public OAuth client is registered. A funded credential and the isolated analysis runner have been verified, but the credential is not provisioned into the staged portal. The owner requested that activation remain deferred.
 
-The new read-only `app_review_session` MCP tool must be promoted with the portal release before reviewer sign-in acceptance. No production decision, developer message, or successful model execution is claimed. See `VERIFICATION.md` for the tested boundaries and remaining rollout checks.
+The new read-only `app_review_session` MCP tool must be promoted with the portal release before reviewer sign-in acceptance. No production decision, developer message, or signed-in hosted-portal acceptance is claimed. The successful model execution used synthetic files and local storage adapters. See `VERIFICATION.md` for the tested boundaries and remaining rollout checks.
 
 Dependency audit: zero high/critical findings after upgrading Next, Zod, Wrangler and OpenNext; three moderate findings remain in OpenNext's glob/minimatch dependency chain with no reported direct fix. The adapter traverses the trusted build checkout. Uploaded review archives do not enter that build pipeline.

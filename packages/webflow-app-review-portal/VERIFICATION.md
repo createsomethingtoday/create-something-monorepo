@@ -12,15 +12,17 @@
 
 Webflow Cloud accepted deployment and provisioned D1/R2. Browser requests to `/api/status` return `signInReady:false`; `/api/session` and `/api/queue` return 401. The page explains that reviewer sign-in is being configured. No bypass identity or shared token is installed.
 
-The real OpenAI probe created a network-disabled container but inference failed with `insufficient_quota` / `credit_balance_exhausted`. The container was explicitly deleted. No runtime test success is claimed.
+The first probe using the default credential failed with `insufficient_quota` / `credit_balance_exhausted`. On 2026-11-15 a funded Infisical credential completed real GPT-6 Astra inference and a synthetic ZIP review using the actual `uploadBundle`, `startAnalysis`, and `pollAnalysis` implementation. Storage used local SQLite and an in-memory R2 adapter; OpenAI calls were real. The exact archive hash was verified in the isolated, network-disabled container. Two supplied Node tests and eight supplemental assertions passed. The portal saved the provider report and ten shell call/output records before deletion; DELETE returned 200 and a subsequent container GET returned 404. This proves the provider execution component, not hosted OAuth or live Webflow integration.
+
+The fixture report exposed temporary sandbox links, so the prompt now requires complete inline evidence and forbids links to files deleted during cleanup. No secret value was logged, committed, or provisioned into the staged portal.
 
 ## Remaining acceptance
 
 1. Webflow Access administrator allows `https://app-review-portal.webflow.io/api/auth/callback`; register the public OAuth client and provision its client ID.
 2. Promote the read-only MCP session identity tool through the normal release gate, then complete real reviewer OAuth and verify the provider audience/resource contract.
-3. Provision a funded OpenAI project credential. Run a harmless bundle through upload, provider execution, report persistence and container cleanup.
+3. When activation is authorized, provision the verified Infisical credential through the runtime secret tooling and repeat the harmless bundle flow through the signed-in hosted portal. The local-storage / real-provider component flow has passed.
 4. Verify two separate reviewer identities and denied cross-user bundle access before team rollout. Invitations remain a separate authorized step.
 
 The broad MCP `vitest run` also discovers five Claude mod suites whose ignored generated `.claude-plugin/types/tsconfig.json` files are absent in a clean clone. Those suites require the owning `claude plugin test` workflow described in `mods/README.md`. They were not counted as passing. The portal and changed MCP source tests pass independently.
 
-No production approvals, rejections or developer messages were used as test data. The preview is staged, not an accepted end-to-end release. Deployment IDs and exact source SHA belong in the owning Linear receipt.
+No production approvals, rejections or developer messages were used as test data. The preview is staged, not an accepted end-to-end release. The owner explicitly requested that the portal remain staged on 2026-11-15. Deployment IDs and exact source SHA belong in the owning Linear receipt.
