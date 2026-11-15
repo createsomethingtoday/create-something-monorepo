@@ -32,7 +32,7 @@
 
   const proofMetrics = $derived.by(() => [
     { value: `${papers.length}`, label: 'published experiments + papers' },
-    { value: `${categories.length || 1}`, label: 'research categories' },
+    { value: `${categories.length}`, label: 'research categories' },
     { value: `${featuredExperiments.length}`, label: 'featured artifacts to inspect first' },
     { value: '3', label: 'database / automation / judgment layers' }
   ]);
@@ -104,7 +104,7 @@
 />
 
 <div class="io-research-home">
-  <TaskOpening scene="evidence-comparison" caption="Canon checks a material against its reference before accepting the fit.">
+  <TaskOpening scene="review-nook" caption="Soft felt Canon beside a curled paper sheet in a warmly lit wooden reading nook.">
 <div class="research-opening" aria-labelledby="research-title">
     <div class="research-opening-copy">
     <p class="research-eyebrow">CREATE SOMETHING .io / Research + field evidence</p>
@@ -122,18 +122,6 @@
   </div>
 </TaskOpening>
 
-<div class="opening-proof">
-<dl class="research-metrics">
-      {#each proofMetrics as metric}
-        <div>
-          <dt>{metric.label}</dt>
-          <dd>{metric.value}</dd>
-        </div>
-      {/each}
-    </dl>
-</div>
-
-  <ResearchTrace />
 
   <section class="research-collection" aria-labelledby="featured-title">
     <div class="research-section-heading">
@@ -169,6 +157,20 @@
       {/each}
     </div>
   </section>
+
+<div class="opening-proof">
+<dl class="research-metrics">
+      {#each proofMetrics as metric}
+        <div>
+          <dt>{metric.label}</dt>
+          <dd>{metric.value}</dd>
+        </div>
+
+      {/each}
+    </dl>
+</div>
+
+  <ResearchTrace />
 
   <section class="research-method" aria-labelledby="method-title">
     <div class="research-section-heading">
