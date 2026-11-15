@@ -1,4 +1,4 @@
-import { decodeJwt, createLocalJWKSet, createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose';
+import { customFetch, decodeJwt, createLocalJWKSet, createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose';
 import type { Principal } from './domain-types';
 import type { RuntimeEnv } from './env';
 import { ADMIN_SCOPE, READ_SCOPE, WRITE_SCOPE } from './env';
@@ -6,7 +6,28 @@ import { hash, randomToken, refreshRequestId, seal, unseal } from './crypto';
 import { HttpError, json } from './http';
 
 const productionIssuer='https://id.createsomething.space';
-const publicKeys=createRemoteJWKSet(new URL(`${productionIssuer}/.well-known/jwks.json`),{timeoutDuration:5000});
+function hasKeyStructure(value:unknown):boolean {
+  if(!value||typeof value!=='object'||Array.isArray(value))return false;
+  const key=value as Record<string,unknown>;
+  if(typeof key.kty!=='string'||!key.kty)return false;
+  const required=key.kty==='EC'?['crv','x','y']:key.kty==='RSA'?['n','e']:key.kty==='OKP'?['crv','x']:key.kty==='oct'?['k']:[];
+  return required.every(field=>typeof key[field]==='string'&&key[field].length>0);
+}
+const createPublicKeys=()=>createRemoteJWKSet(new URL(`${productionIssuer}/.well-known/jwks.json`),{
+  timeoutDuration:5000,
+  [customFetch]:async(url,options)=>{
+    try{
+      const response=await fetch(url,{...options,redirect:'manual'});
+      if(!response.ok)throw new Error('Key provider unavailable');
+      const keyset=await response.clone().json() as {keys?:unknown};
+      // Malformed records must not be cached as a valid set with no matching key.
+      // A well-formed set that lacks the token's kid remains an invalid token.
+      if(!keyset||!Array.isArray(keyset.keys)||!keyset.keys.every(hasKeyStructure))throw new Error('Invalid provider keyset');
+      return response;
+    }catch{throw new HttpError('identity_unavailable',503,'Identity verification is temporarily unavailable.');}
+  }
+});
+let publicKeys=createPublicKeys();
 const sessionCookie='__Host-a2a_session';
 const stateCookie='__Host-a2a_oauth';
 const sessionTtl=7*86400000;
@@ -32,9 +53,21 @@ export async function verifyIdentityToken(env:RuntimeEnv,token:string):Promise<P
   let payload:JWTPayload;
   try {
     const resolver=env.ENVIRONMENT==='test'&&env.LOCAL_TEST_JWKS
-      ?createLocalJWKSet(JSON.parse(env.LOCAL_TEST_JWKS)):publicKeys;
+      ?createLocalJWKSet(JSON.parse(env.LOCAL_TEST_JWKS)):async(...args:Parameters<typeof publicKeys>)=>{
+        try{return await publicKeys(...args);}catch(error){
+          // No matching signing key is a token rejection; failed provider key
+          // retrieval/import is an availability failure, never a bypass.
+          if((error as {code?:string})?.code==='ERR_JWKS_NO_MATCHING_KEY')throw error;
+          publicKeys=createPublicKeys(); // Do not retain a malformed provider keyset.
+          throw new HttpError('identity_unavailable',503,'Identity verification is temporarily unavailable.');
+        }
+      };
     ({payload}=await jwtVerify(token,resolver,{issuer:env.IDENTITY_ISSUER,audience:env.AUTH_RESOURCE,algorithms:['ES256'],requiredClaims:['sub','exp','iat']}));
-  } catch {throw new HttpError('invalid_token',401,'Sign in with CREATE SOMETHING Identity.');}
+  } catch(error) {
+    if(error instanceof HttpError&&error.status===503)throw error;
+    // Signature, claims, expiry and missing matching key errors remain terminal.
+    throw new HttpError('invalid_token',401,'Sign in with CREATE SOMETHING Identity.');
+  }
   if(payload.kind!=='oauth_access_token'||payload.resource!==env.AUTH_RESOURCE||typeof payload.scope!=='string')throw new HttpError('invalid_token',401,'An access token for this service is required.');
   const connectionId=payload.connection_id;
   if(connectionId!==undefined&&(typeof connectionId!=='string'||!connectionId||typeof payload.client_id!=='string'||!payload.client_id))throw new HttpError('invalid_token',401,'Verified connection binding required.');

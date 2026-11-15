@@ -105,3 +105,29 @@ Provider receipts or local fixtures do not establish these live outcomes.
 No deployment, merge, installed-App changes or issue closeout occurred in this
 implementation pass. Worktree disposition: preserved on
 `fix/cre-2428-renewable-auth` for parent review and authorized promotion.
+
+
+## Six auth hardening follow-up (2026-11-15)
+
+Every MCP tool descriptor now includes `offline_access` in both top-level
+`securitySchemes` and the compatibility `_meta.securitySchemes` mirror. Read
+tools still request only `a2a:read` plus lifecycle consent; write tools add
+`a2a:write`. This follows the [tool auth contract](https://developers.openai.com/plugins/build/auth).
+Runtime permission checks continue to accept existing access-only grants;
+metadata never elevates granted scopes or creates refresh credentials.
+
+An existing installed App must refresh its host metadata and the owner must
+explicitly reconsent to renewable access. Source deployment alone does not
+change its saved scope or consent. Authenticated status reports `renewableGrant`
+from the verified token's `offline_access` scope, plus verified client ID and
+access expiry (Unix milliseconds). This is consent evidence, not proof that a
+host received or persisted a refresh token. Binding, host refresh and consent
+persistence remain unknown; missing scope produces an actionable warning.
+Anonymous diagnostics still contain no principal or renewal facts.
+
+Remote JWKS network/timeout, non-success response and malformed keyset failures
+return retryable 503 with bounded recovery advice and no terminal OAuth
+challenge. The same valid bearer can recover when Identity becomes available.
+Invalid signatures, expiration and exact-resource/audience violations remain
+401. Local bearer endpoint fixtures verify this distinction; they do not prove
+that Six's ChatGPT host will retain or refresh credentials after idle/expiry.

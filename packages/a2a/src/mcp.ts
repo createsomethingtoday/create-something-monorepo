@@ -66,7 +66,7 @@ export async function mcpRoute(request:Request,env:RuntimeEnv,p:Principal,reques
     }
     else if(method==='tools/list'){
       requireScope(p,READ_SCOPE);
-      result={tools:tools.filter(t=>t.read||p.scopes.includes(WRITE_SCOPE)).map(({read,...tool})=>({...tool,annotations:{readOnlyHint:read,destructiveHint:false,idempotentHint:read||tool.name==='a2a_send_message',openWorldHint:!read},securitySchemes:[{type:'oauth2',scopes:read?[READ_SCOPE]:[READ_SCOPE,WRITE_SCOPE]}]}))};
+      result={tools:tools.filter(t=>t.read||p.scopes.includes(WRITE_SCOPE)).map(({read,...tool})=>{const securitySchemes=[{type:'oauth2',scopes:read?[READ_SCOPE,'offline_access']:[READ_SCOPE,WRITE_SCOPE,'offline_access']}];return({...tool,annotations:{readOnlyHint:read,destructiveHint:false,idempotentHint:read||tool.name==='a2a_send_message',openWorldHint:!read},securitySchemes,_meta:{securitySchemes}});})};
     }else if(method==='tools/call'){
       const tool=tools.find(t=>t.name===params.name);if(!tool)throw new HttpError('tool_not_found',404,'Tool unavailable.');
       requireScope(p,READ_SCOPE);if(!tool.read)requireScope(p,WRITE_SCOPE);
