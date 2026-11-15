@@ -1,0 +1,133 @@
+{
+  "version": 1,
+  "issue": "CRE-2467",
+  "request": "https://linear.app/createsomething/issue/CRE-2467",
+  "repository": "https://github.com/createsomethingtoday/create-something-monorepo",
+  "owner": "CREATE SOMETHING engineering",
+  "builder": "root implementation session a7ce61a0-5a59-4c69-95fd-03ff59836776",
+  "scope": "Change evidence CLI, internal maintenance sample and Goldin pilot preparation",
+  "changeType": "maintenance",
+  "acceptance": [
+    "Initialize and validate descriptive change records",
+    "Reject unsupported promotion and malformed metrics",
+    "Preserve complete report evidence",
+    "Provide client-owned onboarding and Goldin plan"
+  ],
+  "policy": [
+    "docs/policies/v1/policy.git-light-agent-delivery.v1.md",
+    "docs/AGENT_RUN_RECEIPT_CHARTER.md"
+  ],
+  "allowedActions": [
+    "Local implementation, tests, repository review and integration under owning workflow; no client external writes"
+  ],
+  "sourceRevision": "811a493df3c9143b8819b0d51c956c3921aaf453",
+  "stage": "local",
+  "gates": {
+    "functional": {
+      "status": "passed",
+      "evidence": [
+        "docs/evidence/CRE-2467/local-tests.txt"
+      ],
+      "limits": "11 local tests and CLI subprocess checks; no client runtime, provider or production behavior established"
+    },
+    "product": {
+      "status": "passed",
+      "evidence": [
+        "docs/evidence/CRE-2467/independent-review.md"
+      ],
+      "limits": "Direct CLI/report/docs inspection only; no application UI changed"
+    },
+    "release": {
+      "status": "untested",
+      "evidence": [],
+      "limits": "Pending"
+    }
+  },
+  "independentReview": {
+    "status": "passed",
+    "reviewer": "sdlc_final_retest gpt-6.1-sol",
+    "sourceRevision": "811a493df3c9143b8819b0d51c956c3921aaf453",
+    "evidence": [
+      "docs/evidence/CRE-2467/independent-review.md"
+    ]
+  },
+  "merge": {
+    "receipt": "",
+    "revision": ""
+  },
+  "release": {
+    "authorization": "",
+    "artifact": "",
+    "sourceRevision": "",
+    "liveVerification": [],
+    "rollback": ""
+  },
+  "businessAcceptance": "",
+  "followUp": [
+    "Integrate foundation through PR",
+    "Install Goldin local development pilot",
+    "Collect actual baseline and feature/bug/maintenance observations over four weeks"
+  ],
+  "metrics": [
+    {
+      "name": "human-review-minutes",
+      "period": "baseline",
+      "unit": "minutes",
+      "sampleSize": 0,
+      "value": null,
+      "source": "CRE-2467 pilot setup",
+      "reason": "No comparable baseline collected",
+      "limits": "No outcome or improvement claim",
+      "cohort": "internal tooling maintenance",
+      "window": "pre-pilot baseline pending"
+    },
+    {
+      "name": "rework-minutes",
+      "period": "baseline",
+      "unit": "minutes",
+      "sampleSize": 0,
+      "value": null,
+      "source": "CRE-2467 pilot setup",
+      "reason": "No comparable baseline collected",
+      "limits": "No outcome or improvement claim",
+      "cohort": "internal tooling maintenance",
+      "window": "pre-pilot baseline pending"
+    },
+    {
+      "name": "escaped-defects",
+      "period": "baseline",
+      "unit": "count",
+      "sampleSize": 0,
+      "value": null,
+      "source": "CRE-2467 pilot setup",
+      "reason": "No comparable baseline collected",
+      "limits": "No outcome or improvement claim",
+      "cohort": "internal tooling maintenance",
+      "window": "pre-pilot baseline pending"
+    },
+    {
+      "name": "request-to-verified-release-hours",
+      "period": "baseline",
+      "unit": "hours",
+      "sampleSize": 0,
+      "value": null,
+      "source": "CRE-2467 pilot setup",
+      "reason": "No comparable baseline collected",
+      "limits": "No outcome or improvement claim",
+      "cohort": "internal tooling maintenance",
+      "window": "pre-pilot baseline pending"
+    },
+    {
+      "name": "total-delivery-cost",
+      "period": "baseline",
+      "unit": "USD",
+      "sampleSize": 0,
+      "value": null,
+      "source": "CRE-2467 pilot setup",
+      "reason": "No comparable baseline collected",
+      "limits": "No outcome or improvement claim",
+      "cohort": "internal tooling maintenance",
+      "window": "pre-pilot baseline pending"
+    }
+  ]
+}

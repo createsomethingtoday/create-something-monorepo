@@ -1,0 +1,80 @@
+
+> @create-something/monorepo@1.0.0 change:evidence:test /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7a80ef20-f5b1007f3f17574d
+> node --test scripts/change-evidence/cli.test.mjs
+
+TAP version 13
+# Subtest: local and released fixtures satisfy distinct contracts
+ok 1 - local and released fixtures satisfy distinct contracts
+  ---
+  duration_ms: 0.801083
+  type: 'test'
+  ...
+# Subtest: malformed shapes return errors without throwing
+ok 2 - malformed shapes return errors without throwing
+  ---
+  duration_ms: 0.442459
+  type: 'test'
+  ...
+# Subtest: every required release receipt is enforced
+ok 3 - every required release receipt is enforced
+  ---
+  duration_ms: 0.092375
+  type: 'test'
+  ...
+# Subtest: failed or untested product cannot claim release
+ok 4 - failed or untested product cannot claim release
+  ---
+  duration_ms: 0.05825
+  type: 'test'
+  ...
+# Subtest: review must be separate and bound to evaluated source
+ok 5 - review must be separate and bound to evaluated source
+  ---
+  duration_ms: 0.096542
+  type: 'test'
+  ...
+# Subtest: merged and accepted claims need their own proof
+ok 6 - merged and accepted claims need their own proof
+  ---
+  duration_ms: 0.05525
+  type: 'test'
+  ...
+# Subtest: passed gate needs evidence
+ok 7 - passed gate needs evidence
+  ---
+  duration_ms: 0.0745
+  type: 'test'
+  ...
+# Subtest: unavailable, measured zero and empty metrics retain meaning
+ok 8 - unavailable, measured zero and empty metrics retain meaning
+  ---
+  duration_ms: 0.089541
+  type: 'test'
+  ...
+# Subtest: metrics reject missing context and duplicate observations
+ok 9 - metrics reject missing context and duplicate observations
+  ---
+  duration_ms: 0.530208
+  type: 'test'
+  ...
+# Subtest: report preserves all evidence and does not infer uplift
+ok 10 - report preserves all evidence and does not infer uplift
+  ---
+  duration_ms: 0.314167
+  type: 'test'
+  ...
+# Subtest: CLI init refuses overwrite; validate and report exercise real files
+ok 11 - CLI init refuses overwrite; validate and report exercise real files
+  ---
+  duration_ms: 340.180375
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 396.613625
