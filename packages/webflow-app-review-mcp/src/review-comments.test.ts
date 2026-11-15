@@ -196,6 +196,51 @@ describe('comment tools', () => {
 });
 
 describe('decisions release feedback', () => {
+  it('refuses changed drafts before any official decision write', async () => {
+    for (const tool of [
+      'app_review_approve_version',
+      'app_review_reject_version',
+      'app_review_request_changes'
+    ]) {
+      const { run, comments, airtable } = setup();
+      comments!.listVersion.mockResolvedValue([comment({ body: 'Unconfirmed new draft' })]);
+      const result = await run(tool, {
+        version_id: VERSION,
+        review_feedback: 'Confirmed feedback',
+        rejection_reason: 'App issue',
+        expected_drafts: []
+      });
+      expect(result.error?.code).toBe('REVIEW_DRAFTS_CHANGED');
+      expect(airtable.updateVersionReview).not.toHaveBeenCalled();
+      expect(comments!.release).not.toHaveBeenCalled();
+    }
+  });
+
+  it('guards the release with confirmed drafts and only the feedback created by this decision', async () => {
+    const { run, comments, airtable } = setup();
+    comments!.listVersion
+      .mockResolvedValueOnce([comment()])
+      .mockResolvedValueOnce([comment(), comment({ id: 'racing-draft', body: 'Not confirmed' })]);
+    comments!.add.mockResolvedValue(comment({ id: 'new-feedback', body: 'Confirmed feedback' }));
+    comments!.release.mockRejectedValue(
+      new ReviewCommentsClientError('REVIEW_COMMENTS_REQUEST_FAILED', 'Drafts changed', 409)
+    );
+    const result = await run('app_review_approve_version', {
+      version_id: VERSION,
+      review_feedback: 'Confirmed feedback',
+      expected_drafts: [{ id: 'comment-1', edited_at: null }]
+    });
+    expect(airtable.updateVersionReview).toHaveBeenCalledTimes(1);
+    expect(comments!.release).toHaveBeenCalledWith(VERSION, REVIEWER_EMAIL, undefined, [
+      { id: 'comment-1', editedAt: null },
+      { id: 'new-feedback', editedAt: null }
+    ]);
+    expect(result.data.review_comments).toMatchObject({
+      ok: false,
+      next_step: expect.stringContaining('Do not repeat the decision')
+    });
+  });
+
   it('request_changes saves the status, then posts the feedback once and releases', async () => {
     const { run, comments, airtable } = setup();
     const result = await run('app_review_request_changes', { version_id: VERSION, review_feedback: 'Fix the install URL' });
@@ -302,7 +347,7 @@ describe('decisions release feedback', () => {
     expect(result.data.review_comments).toMatchObject({
       ok: false,
       error: { code: 'REVIEW_COMMENTS_UNREACHABLE', status: 503 },
-      next_step: expect.stringContaining('re-run app_review_request_changes'),
+      next_step: expect.stringContaining('Do not repeat the decision'),
     });
   });
 

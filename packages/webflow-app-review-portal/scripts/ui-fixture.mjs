@@ -1,13 +1,14 @@
 // Local visual/interaction harness. No credentials, provider calls, or persistent writes.
 // Run the production Next server on :3174 first. Bind only the loopback interface.
 import http from 'node:http';
+const commentsFixture = process.env.REVIEW_COMMENTS_FIXTURE === '1';
 const version = {
   versionId: 'rec12345678901234',
   versionNumber: 2,
   reviewStatus: '👀In Review',
   submissionDatetime: '2026-11-13T14:30:00Z',
   reviewer: { name: 'QA Reviewer' },
-  zendeskTicketId: '123',
+  zendeskTicketId: commentsFixture ? null : '123',
   reviewFeedback: 'Verify the offline bundle and the requested permissions.',
   rejectionFeedback: ''
 };
@@ -50,6 +51,45 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(400);
       return res.end('{}');
     }
+    if (path.startsWith('/api/decision-preview/'))
+      return res.end(
+        JSON.stringify({
+          enabled: commentsFixture,
+          fingerprint: commentsFixture ? 'q'.repeat(43) : null,
+          drafts: commentsFixture
+            ? [
+                {
+                  id: 'qa-draft',
+                  authorEmail: 'qa-reviewer@example.test',
+                  body: 'QA draft: verify install permissions before publishing.',
+                  editedAt: null
+                }
+              ]
+            : []
+        })
+      );
+    if (commentsFixture && path.startsWith('/api/thread/'))
+      return res.end(
+        JSON.stringify({
+          thread: null,
+          thread_note: 'This version has no linked Zendesk ticket.',
+          review_comments: [
+            {
+              id: 'qa-feedback',
+              body: 'QA released feedback: the install URL failed.',
+              authorEmail: 'qa-reviewer@example.test',
+              authorRole: 'reviewer'
+            },
+            {
+              id: 'qa-reply',
+              body: 'QA developer reply: the URL is now fixed.',
+              authorEmail: 'developer@example.test',
+              authorRole: 'creator',
+              parentId: 'qa-feedback'
+            }
+          ]
+        })
+      );
     if (path === '/api/auth/logout') {
       signedIn = false;
       res.writeHead(204);
@@ -123,15 +163,29 @@ const server = http.createServer(async (req, res) => {
         id: data.id,
         action: data.action,
         target_id: data.versionId,
-        status: 'completed',
+        status: commentsFixture ? 'completed_with_warning' : 'completed',
         created_at: new Date().toISOString(),
-        result_json: JSON.stringify({ simulated: true, developerMessageSent: false })
+        result_json: JSON.stringify({
+          simulated: true,
+          developerMessageSent: false,
+          ...(commentsFixture
+            ? {
+                deliveryWarning: {
+                  versionId: version.versionId,
+                  message: 'QA fixture: decision saved, but email delivery failed.',
+                  submittedFeedback: data.text,
+                  recovery:
+                    'Do not repeat the decision. Inspect app_review_list_comments, then explicitly confirm app_review_release_feedback with the exact current expected_drafts.'
+                }
+              }
+            : {})
+        })
       };
       receipts.unshift(r);
       if (data.action === 'approve') version.reviewStatus = '✅Approved';
       if (data.action === 'reject') version.reviewStatus = '❌Rejected';
       if (data.action === 'changes') version.reviewStatus = '📤Changes Requested';
-      return res.end(JSON.stringify(r));
+      return res.end(JSON.stringify({ ...r, result: JSON.parse(r.result_json) }));
     }
     if (result !== null) return res.end(JSON.stringify(result));
     res.writeHead(404);

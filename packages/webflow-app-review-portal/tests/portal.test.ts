@@ -1,10 +1,13 @@
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { ReviewConversation, PendingFeedback, DeliveryWarning } from '../app/review-evidence';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
 import { seal, unseal, session, digest, assertAllowed, finishLogin } from '../lib/auth';
 import { decodeRpc, withMcp, toolData } from '../lib/mcp';
-import { performAction, capabilities, reconcileAction } from '../lib/reviews';
+import { performAction, capabilities, reconcileAction, decisionDrafts } from '../lib/reviews';
 import { analysisRequest, pollAnalysis, startAnalysis, recoverAnalysis } from '../lib/analysis';
 import { providerFetch, ProviderFailure } from '../lib/provider';
 import type { Platform } from '../lib/platform';
@@ -184,7 +187,7 @@ const action = {
   expectedTicketId: '123',
   text: 'Reviewed.'
 };
-function reviewerRpc(options: { granted?: boolean; status?: string; fail?: boolean } = {}) {
+function reviewerRpc(options: { granted?: boolean; status?: string; fail?: boolean; drafts?: any[]; delivery?: any } = {}) {
   let writes = 0;
   return {
     writes: () => writes,
@@ -193,7 +196,8 @@ function reviewerRpc(options: { granted?: boolean; status?: string; fail?: boole
         return {
           tools: [
             { name: 'app_review_get_version' },
-            ...(options.granted === false ? [] : [{ name: 'app_review_approve_version' }])
+            ...(options.drafts ? [{ name: 'app_review_list_comments' }] : []),
+            ...(options.granted === false ? [] : [{ name: 'app_review_approve_version', inputSchema: { properties: { expected_drafts: {} } } }])
           ]
         };
       if (params.name === 'app_review_get_version')
@@ -210,6 +214,7 @@ function reviewerRpc(options: { granted?: boolean; status?: string; fail?: boole
             }
           ]
         };
+      if (params.name === 'app_review_list_comments') return { content: [{ type: 'text', text: JSON.stringify({ ok: true, data: { comments: options.drafts } }) }] };
       writes++;
       if (options.fail) throw new ProviderFailure({ provider: 'MCP', status: 0, uncertain: true });
       return {
@@ -218,7 +223,7 @@ function reviewerRpc(options: { granted?: boolean; status?: string; fail?: boole
             type: 'text',
             text: JSON.stringify({
               ok: true,
-              data: { updated_version: { reviewStatus: 'Approved' } }
+              data: { updated_version: { reviewStatus: 'Approved' }, ...(options.delivery ? {review_comments: options.delivery} : {}) }
             })
           }
         ]
@@ -349,4 +354,131 @@ test('action reconciliation is explicit, owner-scoped, and records fresh evidenc
   await assert.rejects(reconcileAction(DB,'alice',action.id,{...input,confirmed:false},mock.rpc));
   assert.equal((await reconcileAction(DB,'alice',action.id,input,mock.rpc)).status,'reconciled');assert.equal(mock.writes(),1);
   assert.equal((await performAction(DB,'alice',action,mock.rpc)).duplicate,true);assert.equal(mock.writes(),1);
+});
+
+test('a decision cannot publish drafts absent from its confirmation', async () => {
+  const { DB } = database();
+  const mock = reviewerRpc({
+    drafts: [
+      {
+        id: 'draft-1',
+        body: 'Unfinished feedback',
+        visibility: 'draft',
+        editedAt: null,
+        authorEmail: 'alice@webflow.com'
+      }
+    ]
+  });
+  await assert.rejects(performAction(DB, 'alice', action, mock.rpc), /Pending feedback changed/);
+  assert.equal(mock.writes(), 0);
+});
+
+test('confirmed drafts can proceed but edited drafts require new confirmation', async () => {
+  const { DB } = database();
+  const drafts = [
+    {
+      id: 'draft-1',
+      body: 'Confirmed content',
+      visibility: 'draft',
+      editedAt: null,
+      authorEmail: 'alice@webflow.com'
+    }
+  ];
+  const mock = reviewerRpc({ drafts });
+  const tools = (await mock.rpc('tools/list')).tools! as any;
+  const preview = await decisionDrafts(tools, action.versionId, mock.rpc);
+  drafts[0].body = 'Changed after preview';
+  await assert.rejects(
+    performAction(DB, 'alice', { ...action, expectedDraftsHash: preview.fingerprint }, mock.rpc),
+    /Pending feedback changed/
+  );
+  assert.equal(mock.writes(), 0);
+  const fresh = await decisionDrafts(tools, action.versionId, mock.rpc);
+  assert.equal(
+    (
+      await performAction(
+        DB,
+        'alice',
+        { ...action, expectedDraftsHash: fresh.fingerprint },
+        mock.rpc
+      )
+    ).status,
+    'completed'
+  );
+});
+test('a saved decision with failed feedback or email remains a warning and is never repeated', async () => {
+  for (const delivery of [
+    { ok: false, error: { message: 'Comments unavailable' } },
+    { ok: true, notification: { status: 'failed' } }
+  ]) {
+    const { DB } = database(),
+      mock = reviewerRpc({ delivery });
+    const result = await performAction(DB, 'alice', action, mock.rpc);
+    assert.equal(result.status, 'completed_with_warning');
+    assert.match(result.result.deliveryWarning.recovery, /Do not repeat the decision/);
+    const again = await performAction(DB, 'alice', action, mock.rpc);
+    assert.equal(again.receipt.status, 'completed_with_warning');
+    assert.equal(mock.writes(), 1);
+  }
+});
+
+test('review-service feedback and developer replies render without a Zendesk ticket', () => {
+  const html = renderToStaticMarkup(
+    React.createElement(ReviewConversation, {
+      thread: {
+        thread: null,
+        review_comments: [
+          {
+            id: 'review',
+            body: 'Fix the install URL',
+            authorEmail: 'reviewer@webflow.com',
+            authorRole: 'reviewer'
+          },
+          {
+            id: 'reply',
+            body: 'The URL is fixed',
+            authorEmail: 'developer@example.test',
+            authorRole: 'creator',
+            parentId: 'review'
+          }
+        ]
+      }
+    })
+  );
+  assert.match(html, /Fix the install URL/);
+  assert.match(html, /The URL is fixed/);
+  assert.match(html, /Developer reply/);
+  const unavailable = renderToStaticMarkup(
+    React.createElement(ReviewConversation, {
+      thread: { review_comments_error: { message: 'Service unavailable' } }
+    })
+  );
+  assert.match(unavailable, /Service unavailable/);
+});
+test('confirmation shows all draft text and delivery recovery remains visible', () => {
+  const html = renderToStaticMarkup(
+    React.createElement(PendingFeedback, {
+      preview: {
+        enabled: true,
+        drafts: [
+          { id: '1', body: 'First pending finding', authorEmail: 'a@webflow.com' },
+          { id: '2', body: 'Second pending finding', authorEmail: 'b@webflow.com' }
+        ]
+      }
+    })
+  );
+  assert.match(html, /First pending finding/);
+  assert.match(html, /Second pending finding/);
+  assert.match(
+    renderToStaticMarkup(
+      React.createElement(DeliveryWarning, {
+        warning: {
+          message: 'Email failed',
+          recovery: 'Do not repeat the decision',
+          submittedFeedback: 'Saved findings'
+        }
+      })
+    ),
+    /Do not repeat the decision/
+  );
 });

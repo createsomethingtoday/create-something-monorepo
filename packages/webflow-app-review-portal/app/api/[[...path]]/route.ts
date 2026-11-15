@@ -6,7 +6,8 @@ import {
   performAction,
   requireTool,
   reconciliationContext,
-  reconcileAction
+  reconcileAction,
+  decisionDrafts
 } from '@/lib/reviews';
 import { BundleError, MAX_UPLOAD_BYTES, readBoundedBody } from '@/lib/bundle-contract';
 import { providerError } from '@/lib/provider';
@@ -82,6 +83,17 @@ async function handle(request: Request) {
             include_internal_notes: false,
             limit: 50
           })
+        );
+      if (method === 'GET' && path[0] === 'decision-preview' && path[1])
+        return json(
+          await decisionDrafts(
+            tools,
+            z
+              .string()
+              .regex(/^rec[a-zA-Z0-9]{14}$/)
+              .parse(path[1]),
+            rpc
+          )
         );
       if (method === 'GET' && path[0] === 'actions' && path[1])
         return json(await reconciliationContext(env.DB, owner, path[1], rpc));

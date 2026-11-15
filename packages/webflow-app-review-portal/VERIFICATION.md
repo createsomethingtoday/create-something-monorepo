@@ -2,9 +2,9 @@
 
 ## Passed locally
 
-- Portal clean npm install, TypeScript, 24 backend tests and production build.
-- Independent reviewer reran 24 tests and TypeScript, examined session isolation, ambiguous write recovery, live-grant checks, public readiness endpoint, and modal focus handling.
-- MCP owning source: 186 tests in `src/` and TypeScript passed on the current-upstream release checkout, including the two new verified-session tests.
+- Portal clean npm install, TypeScript, 29 backend/render tests and production build.
+- Independent reviewer reran the portal tests and TypeScript, examined session isolation, ambiguous write recovery, live-grant checks, public readiness endpoint, and modal focus handling.
+- MCP owning source: 188 tests in `src/` and TypeScript passed on the current-upstream release checkout, including the two new verified-session tests.
 - Immutable GitHub Actions pins; retired identity-provider check is included in release validation.
 - Browser fixture: search and navigation, disabled unconfirmed approval/analysis, keyboard Escape and focus isolation, confirmed simulated developer message with a simulated receipt, desktop and mobile rendering. Mobile queue/detail document width equals the 390px viewport.
 
@@ -26,3 +26,11 @@ The fixture report exposed temporary sandbox links, so the prompt now requires c
 The broad MCP `vitest run` also discovers five Claude mod suites whose ignored generated `.claude-plugin/types/tsconfig.json` files are absent in a clean clone. Those suites require the owning `claude plugin test` workflow described in `mods/README.md`. They were not counted as passing. The portal and changed MCP source tests pass independently.
 
 No production approvals, rejections or developer messages were used as test data. The preview is staged, not an accepted end-to-end release. The owner subsequently authorized deployment on 2026-11-15. OAuth registration was retried and still rejected the callback under the Webflow Access account configuration. Deployment IDs and exact source SHA belong in the owning Linear receipt.
+
+## Review findings addressed before promotion
+
+The portal now previews every pending review-service draft before a decision. Its confirmation includes a content fingerprint; changed drafts require a new confirmation. The MCP decision handlers accept the confirmed draft IDs/edit times, check them before writing the decision, and send that exact set plus newly created decision feedback to the comments service's atomic release guard. A race after the Airtable write preserves the decision and reports the failed publication without publishing unconfirmed drafts.
+
+Nested feedback-publication or email failures become durable `completed_with_warning` receipts. The immediate result and Activity display recovery instructions and the originally submitted feedback. Recovery explicitly uses comment inspection, missing-draft repair when needed, and `app_review_release_feedback`, without repeating the decision.
+
+The conversation displays released review-service feedback and developer replies even when there is no linked Zendesk ticket. A comments-service error is visible alongside any available Zendesk thread. The local UI fixture supports these cases with `REVIEW_COMMENTS_FIXTURE=1`.

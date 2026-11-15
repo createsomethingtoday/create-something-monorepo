@@ -50,6 +50,33 @@ const statusChangeSchema = z.object({
   expected_status: z.string().nullable().describe('Exact current reviewStatus from a fresh app_review_get_review_context read; null only when unset.'),
 });
 
+const expectedDecisionDraftsSchema = z
+  .array(z.object({ id: z.string().min(1).max(64), edited_at: z.string().max(40).nullable() }))
+  .max(200)
+  .describe(
+    'Drafts the reviewer saw and confirmed. Changed drafts refuse the status write; release atomically checks these plus newly added feedback.'
+  );
+type DecisionDrafts = z.infer<typeof expectedDecisionDraftsSchema>;
+async function checkDecisionDrafts(
+  comments: ReviewCommentsClient | null,
+  versionId: string,
+  actor: string | null,
+  expected?: DecisionDrafts
+) {
+  if (!comments || !actor || expected === undefined) return;
+  const actual = (await comments.listVersion(versionId, actor))
+    .filter((c) => c.visibility === 'draft')
+    .map((c) => ({ id: c.id, edited_at: c.editedAt }));
+  const canonical = (drafts: DecisionDrafts) =>
+    JSON.stringify([...drafts].sort((a, b) => a.id.localeCompare(b.id)));
+  if (canonical(actual) !== canonical(expected))
+    throw new AirtableClientError(
+      'REVIEW_DRAFTS_CHANGED',
+      'Pending feedback changed. Read every draft and reconfirm the decision.',
+      409
+    );
+}
+
 type StatusChange = z.infer<typeof statusChangeSchema>;
 
 function ensureStatusChangeConfirmed(version: AppReviewVersion, confirmation?: StatusChange): void {
@@ -212,9 +239,11 @@ async function releaseFeedbackAfterDecision(
   actorEmail: string,
   feedback?: string,
   notice?: ReleaseNotice,
+  expectedDrafts?: DecisionDrafts
 ): Promise<Record<string, unknown>> {
   try {
     let added = false;
+    const expected = expectedDrafts?.map((d) => ({ id: d.id, editedAt: d.edited_at }));
     const body = feedback?.trim();
     if (body) {
       const existing = await comments.listVersion(versionId, actorEmail);
@@ -223,25 +252,43 @@ async function releaseFeedbackAfterDecision(
       // Feedback over the service limit goes out as several comments, in order. A repeat adds only the missing parts.
       for (const part of splitCommentBody(body)) {
         const alreadyPosted = existing.some(
-          (comment) => comment.visibility !== 'internal' && comment.authorEmail === author && comment.body === part,
+          (comment) =>
+            comment.visibility !== 'internal' &&
+            comment.authorEmail === author &&
+            comment.body === part
         );
         if (alreadyPosted) continue;
-        await comments.add(versionId, actorEmail, { assetRef: assetId, body: part, visibility: 'draft' });
+        const created = await comments.add(versionId, actorEmail, {
+          assetRef: assetId,
+          body: part,
+          visibility: 'draft'
+        });
+        if (
+          expected &&
+          created.visibility === 'draft' &&
+          !expected.some((d) => d.id === created.id)
+        )
+          expected.push({ id: created.id, editedAt: created.editedAt });
         added = true;
       }
     }
-    const { released, notification } = await comments.release(versionId, actorEmail, ...(notice ? [notice] : []));
+    const { released, notification } = expected
+      ? await comments.release(versionId, actorEmail, notice, expected)
+      : await comments.release(versionId, actorEmail, ...(notice ? [notice] : []));
     return { ok: true, feedback_comment_added: added, released, ...emailResult(notification) };
   } catch (error) {
-    const known = error instanceof ReviewCommentsClientError || error instanceof AirtableClientError;
+    const known =
+      error instanceof ReviewCommentsClientError || error instanceof AirtableClientError;
     return {
       ok: false,
       error: {
         code: known ? error.code : 'UNEXPECTED_ERROR',
         message: error instanceof Error ? error.message : String(error),
-        status: known ? (error.status ?? 500) : 500,
+        status: known ? (error.status ?? 500) : 500
       },
-      next_step: `The review status is saved. To retry, re-run ${decisionTool} with the same input; the feedback is posted only once.`,
+      next_step:
+        'The review status is saved. Do not repeat the decision. Inspect app_review_list_comments, add any missing feedback as a draft, then explicitly confirm app_review_release_feedback with the exact current expected_drafts.',
+      decision_tool: decisionTool
     };
   }
 }
@@ -825,11 +872,12 @@ export function registerTools(
     'Set an app version to changes-requested and attach feedback without reviewer-session scoping.',
     {
       version_id: z.string().min(1),
+      expected_drafts: expectedDecisionDraftsSchema.optional(),
       review_feedback: z.string().min(1),
       rejection_reason: z.enum(REJECTION_REASON_OPTIONS).optional(),
       review_status: z.enum(REQUEST_CHANGES_STATUS_OPTIONS).optional(),
     },
-    async ({ version_id, review_feedback, rejection_reason, review_status }) => {
+    async ({ expected_drafts, version_id, review_feedback, rejection_reason, review_status }) => {
       try {
         ensureRequestChangesStatus(review_status);
         const status = review_status ?? '📤Changes Requested';
@@ -838,6 +886,7 @@ export function registerTools(
         const actorEmail = reviewComments && !silent ? requireReviewerEmail(getReviewer) : null;
         const { version, asset } = await requireAppVersionWithAsset(getClient(), version_id);
         const assetId = requireVersionAssetId(version);
+        await checkDecisionDrafts(reviewComments, version_id, actorEmail, expected_drafts);
         const updated = await getClient().updateVersionReview(version_id, {
           review_status: status,
           rejection_reason,
@@ -848,7 +897,7 @@ export function registerTools(
           ...(reviewComments
             ? {
                 review_comments: actorEmail
-                  ? await releaseFeedbackAfterDecision('app_review_request_changes', reviewComments, version_id, assetId, actorEmail, review_feedback, appReleaseNotice(asset, version, 'changes_requested'))
+                  ? await releaseFeedbackAfterDecision('app_review_request_changes', reviewComments, version_id, assetId, actorEmail, review_feedback, appReleaseNotice(asset, version, 'changes_requested'), expected_drafts)
                   : SILENT_DECISION_RESULT,
               }
             : {}),
@@ -1326,14 +1375,16 @@ export function registerTools(
     'Approve an app version without reviewer-session scoping. Undecided ⚖️exceptions no longer block approval (gate retired 11/4/2026); the Airtable automation posts a soft warning in #app-review-exceptions instead.',
     {
       version_id: z.string().min(1),
+      expected_drafts: expectedDecisionDraftsSchema.optional(),
       review_feedback: z.string().optional(),
       review_type: z.enum(REVIEW_TYPE_OPTIONS).optional(),
     },
-    async ({ version_id, review_feedback, review_type }) => {
+    async ({ expected_drafts, version_id, review_feedback, review_type }) => {
       try {
         const actorEmail = reviewComments ? requireReviewerEmail(getReviewer) : null;
         const { version, asset } = await requireAppVersionWithAsset(getClient(), version_id);
         const assetId = requireVersionAssetId(version);
+        await checkDecisionDrafts(reviewComments, version_id, actorEmail, expected_drafts);
         const updated = await getClient().updateVersionReview(version_id, {
           review_status: '✅Approved',
           review_type,
@@ -1342,7 +1393,7 @@ export function registerTools(
         return asSuccess({
           updated_version: updated,
           ...(reviewComments && actorEmail
-            ? { review_comments: await releaseFeedbackAfterDecision('app_review_approve_version', reviewComments, version_id, assetId, actorEmail, review_feedback, appReleaseNotice(asset, version, 'approved')) }
+            ? { review_comments: await releaseFeedbackAfterDecision('app_review_approve_version', reviewComments, version_id, assetId, actorEmail, review_feedback, appReleaseNotice(asset, version, 'approved'), expected_drafts) }
             : {}),
         });
       } catch (error) {
@@ -1356,15 +1407,17 @@ export function registerTools(
     'Reject an app version with reason and feedback without reviewer-session scoping. The feedback is written to 🚩Rejection Feedback, the field the developer-facing rejection email reads; 📝Review Feedback is left unchanged.',
     {
       version_id: z.string().min(1),
+      expected_drafts: expectedDecisionDraftsSchema.optional(),
       rejection_reason: z.enum(REJECTION_REASON_OPTIONS),
       review_feedback: z.string().min(1).describe('Developer-facing rejection findings. Stored in 🚩Rejection Feedback and sent in the rejection email.'),
       review_type: z.enum(REVIEW_TYPE_OPTIONS).optional(),
     },
-    async ({ version_id, rejection_reason, review_feedback, review_type }) => {
+    async ({ expected_drafts, version_id, rejection_reason, review_feedback, review_type }) => {
       try {
         const actorEmail = reviewComments ? requireReviewerEmail(getReviewer) : null;
         const { version, asset } = await requireAppVersionWithAsset(getClient(), version_id);
         const assetId = requireVersionAssetId(version);
+        await checkDecisionDrafts(reviewComments, version_id, actorEmail, expected_drafts);
         const updated = await getClient().updateVersionReview(version_id, {
           review_status: '❌Rejected',
           review_type,
@@ -1374,7 +1427,7 @@ export function registerTools(
         return asSuccess({
           updated_version: updated,
           ...(reviewComments && actorEmail
-            ? { review_comments: await releaseFeedbackAfterDecision('app_review_reject_version', reviewComments, version_id, assetId, actorEmail, review_feedback, appReleaseNotice(asset, version, 'rejected')) }
+            ? { review_comments: await releaseFeedbackAfterDecision('app_review_reject_version', reviewComments, version_id, assetId, actorEmail, review_feedback, appReleaseNotice(asset, version, 'rejected'), expected_drafts) }
             : {}),
         });
       } catch (error) {

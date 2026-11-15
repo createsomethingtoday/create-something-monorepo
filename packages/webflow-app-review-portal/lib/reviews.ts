@@ -20,6 +20,7 @@ const preMutationRefusals = new Set([
   'INVALID_TICKET_ID',
   'REVIEW_STATUS_CONFIRMATION_REQUIRED',
   'REVIEW_STATUS_CONFLICT',
+  'REVIEW_DRAFTS_CHANGED',
   'INVALID_REQUEST_CHANGES_STATUS'
 ]);
 import { rejectionReasons } from './review-contract';
@@ -31,6 +32,11 @@ export const actionSchema = z
     confirmed: z.literal(true),
     expectedStatus: z.string().nullable(),
     expectedTicketId: z.string().nullable(),
+    expectedDraftsHash: z
+      .string()
+      .regex(/^[\w-]{43}$/)
+      .nullable()
+      .default(null),
     text: z.string().trim().max(20000),
     reason: z.enum(rejectionReasons).optional()
   })
@@ -61,6 +67,40 @@ export function requireTool(tools: Tool[], name: string) {
       'Your MCP connection does not grant this action.',
       403
     );
+}
+export async function decisionDrafts(
+  tools: Tool[],
+  versionId: string,
+  rpc: (method: string, params?: unknown) => Promise<any>
+) {
+  if (!tools.some((t) => t.name === 'app_review_list_comments'))
+    return { enabled: false, drafts: [], fingerprint: null };
+  const data = toolData(
+    await rpc('tools/call', {
+      name: 'app_review_list_comments',
+      arguments: { version_id: versionId }
+    })
+  );
+  const drafts = z
+    .array(
+      z.object({
+        id: z.string().min(1).max(64),
+        body: z.string(),
+        visibility: z.string(),
+        editedAt: z.string().nullable(),
+        authorEmail: z.string()
+      })
+    )
+    .parse(data.comments)
+    .filter((c) => c.visibility === 'draft')
+    .sort((a, b) => a.id.localeCompare(b.id));
+  if (drafts.length > 200)
+    throw new BundleError(
+      'TOO_MANY_DRAFTS',
+      'Too many pending drafts to confirm in the portal. Review them in App Review first.',
+      409
+    );
+  return { enabled: true, drafts, fingerprint: await digest(JSON.stringify(drafts)) };
 }
 export async function performAction(
   db: D1Database,
@@ -107,6 +147,24 @@ export async function performAction(
       'This submission has no linked developer conversation.',
       409
     );
+  const preview =
+    data.action === 'message' ? null : await decisionDrafts(tools, data.versionId, rpc);
+  if (preview && preview.fingerprint !== data.expectedDraftsHash)
+    throw new BundleError(
+      'REVIEW_DRAFTS_CHANGED',
+      'Pending feedback changed. Close this confirmation and review every draft again.',
+      409
+    );
+  if (
+    preview?.enabled &&
+    !(tools.find((t) => t.name === actions[data.action])?.inputSchema?.properties as any)
+      ?.expected_drafts
+  )
+    throw new BundleError(
+      'GUARDED_DECISION_REQUIRED',
+      'The App Review connection must support confirmed draft publication before this decision can be sent.',
+      409
+    );
   const inserted = await db
     .prepare(
       "INSERT OR IGNORE INTO portal_actions (id,owner_id,action,target_id,arguments_hash,status,created_at) VALUES (?,?,?,?,?,'pending',?)"
@@ -125,19 +183,34 @@ export async function performAction(
       : {
           version_id: data.versionId,
           review_feedback: data.text,
+          ...(preview?.enabled
+            ? { expected_drafts: preview.drafts.map((c) => ({ id: c.id, edited_at: c.editedAt })) }
+            : {}),
           ...(data.action === 'reject' ? { rejection_reason: data.reason } : {})
         };
   try {
     const result = toolData(
       await rpc('tools/call', { name: actions[data.action], arguments: args })
     );
+    const delivery = result.review_comments;
+    const warning = delivery?.ok === false || delivery?.notification?.status === 'failed';
+    const status = warning ? 'completed_with_warning' : 'completed';
+    if (warning)
+      result.deliveryWarning = {
+        message:
+          delivery.ok === false
+            ? 'The decision was saved, but feedback publication failed or is uncertain.'
+            : 'The decision and feedback were saved, but the developer email failed.',
+        submittedFeedback: data.text,
+        recovery:
+          'Do not repeat the decision. Read the current conversation and app_review_list_comments. If feedback is missing, save it as a draft with app_review_add_comment. Review every current draft, then explicitly confirm app_review_release_feedback with their exact IDs and edit times. For an email-only retry with no pending drafts, use expected_drafts: [].',
+        versionId: data.versionId
+      };
     await db
-      .prepare(
-        "UPDATE portal_actions SET status='completed', result_json=? WHERE id=? AND owner_id=?"
-      )
-      .bind(JSON.stringify(result), data.id, owner)
+      .prepare('UPDATE portal_actions SET status=?, result_json=? WHERE id=? AND owner_id=?')
+      .bind(status, JSON.stringify(result), data.id, owner)
       .run();
-    return { id: data.id, status: 'completed', result };
+    return { id: data.id, status, result };
   } catch (error) {
     const status =
       (error instanceof ProviderFailure && !error.uncertain) ||

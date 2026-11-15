@@ -19,6 +19,7 @@ import {
   Search
 } from 'lucide-react';
 import { rejectionReasons } from '@/lib/review-contract';
+import { PendingFeedback, DeliveryWarning, ReviewConversation } from './review-evidence';
 
 type View = 'queue' | 'bundles' | 'activity' | 'settings';
 type Session = {
@@ -112,6 +113,8 @@ export default function Workspace() {
     [resolutionConfirmed, setResolutionConfirmed] = useState(false);
   const [recoveryResponseId, setRecoveryResponseId] = useState('');
   const [signInReady, setSignInReady] = useState(false);
+  const [confirmation, setConfirmation] = useState<any>(null);
+  const [deliveryWarning, setDeliveryWarning] = useState<any>(null);
   useEffect(() => {
     if (!dialog && !reconciliation) return;
     const modal = document.querySelector<HTMLElement>('.portal-modal');
@@ -257,14 +260,23 @@ export default function Workspace() {
       setDialog(null);
     });
   }
-  function openDialog(action: Action) {
-    setDialog(action);
-    setText('');
-    setConfirmed(false);
-    setRequestId(crypto.randomUUID());
+  async function openDialog(action: Action) {
+    const selectedVersion = version,
+      appName = asset?.appName;
+    if (!selectedVersion) return;
+    await run(async () => {
+      const preview =
+        action === 'message' ? null : await api(`decision-preview/${selectedVersion.versionId}`);
+      setConfirmation({ version: selectedVersion, appName, preview });
+      setDialog(action);
+      setText('');
+      setConfirmed(false);
+      setRequestId(crypto.randomUUID());
+    });
   }
   async function submitAction(e: FormEvent) {
     e.preventDefault();
+    const version = confirmation?.version;
     if (!dialog || !version) return;
     await run(async () => {
       const receipt = await api(
@@ -276,12 +288,22 @@ export default function Workspace() {
           confirmed,
           expectedStatus: version.reviewStatus ?? null,
           expectedTicketId: version.zendeskTicketId ?? null,
+          expectedDraftsHash: confirmation.preview?.fingerprint ?? null,
           text,
           ...(dialog === 'reject' ? { reason } : {})
         })
       );
-      if (receipt.status === 'completed' || receipt.receipt?.status === 'completed') {
-        setNotice('Action recorded. Reload the submission to see its current state.');
+      const result =
+        receipt.result ??
+        (receipt.receipt?.result_json ? JSON.parse(receipt.receipt.result_json) : {});
+      const status = receipt.status || receipt.receipt?.status;
+      setDeliveryWarning(result.deliveryWarning ?? null);
+      if (['completed', 'completed_with_warning'].includes(status)) {
+        setNotice(
+          status === 'completed_with_warning'
+            ? 'Decision saved. Feedback delivery needs attention; see the recovery instructions below and in Activity.'
+            : 'Action recorded. Reload the submission to see its current state.'
+        );
         setDialog(null);
       } else {
         setNotice(
@@ -491,6 +513,7 @@ export default function Workspace() {
             </section>
           ) : (
             <>
+              <DeliveryWarning warning={deliveryWarning} />
               {view === 'queue' && !asset && (
                 <section className="panel">
                   <div className="panel-heading">
@@ -660,7 +683,7 @@ export default function Workspace() {
                         <div className="panel-body portal-stack">
                           <button
                             className="button"
-                            disabled={busy || !version?.zendeskTicketId}
+                            disabled={busy || !version}
                             onClick={() =>
                               void run(async () =>
                                 setThread(await api(`thread/${version.versionId}`))
@@ -682,27 +705,7 @@ export default function Workspace() {
                             Sent through the Zendesk support integration. Your reviewer identity is
                             recorded in this portal’s activity.
                           </small>
-                          {thread && (
-                            <div className="portal-stack">
-                              <strong>{thread.thread?.subject || 'Developer conversation'}</strong>
-                              {(thread.thread?.comments || []).map((comment: any) => (
-                                <article className="portal-activity" key={comment.id}>
-                                  <strong>{comment.author?.name || 'Participant'}</strong>
-                                  <small>{comment.createdAt ? date(comment.createdAt) : ''}</small>
-                                  <p className="portal-pre">{comment.body}</p>
-                                  {comment.attachments?.length > 0 && (
-                                    <small>
-                                      {comment.attachments.length} attachments · Open the ticket to
-                                      view them.
-                                    </small>
-                                  )}
-                                </article>
-                              ))}
-                              {thread.thread?.hasOlderComments && (
-                                <small>Older comments are available in Zendesk.</small>
-                              )}
-                            </div>
-                          )}
+                          {thread && <ReviewConversation thread={thread} />}
                         </div>
                       </section>
                     </div>
@@ -953,6 +956,11 @@ export default function Workspace() {
                           <p>
                             {a.target_id} · {date(a.created_at)}
                           </p>
+                          <DeliveryWarning
+                            warning={
+                              a.result_json ? JSON.parse(a.result_json).deliveryWarning : null
+                            }
+                          />
                           <details>
                             <summary>Receipt {a.id}</summary>
                             <pre>
@@ -1144,7 +1152,7 @@ export default function Workspace() {
           </section>
         </div>
       )}
-      {dialog && version && (
+      {dialog && confirmation && (
         <div className="portal-modal-backdrop">
           <section
             className="portal-modal"
@@ -1165,14 +1173,14 @@ export default function Workspace() {
               </div>
               <div className="panel-body portal-stack">
                 <p>
-                  <strong>{asset?.appName}</strong> · Version{' '}
-                  {version.versionNumber ?? version.versionId}
+                  <strong>{confirmation.appName}</strong> · Version{' '}
+                  {confirmation.version.versionNumber ?? confirmation.version.versionId}
                 </p>
-                <p>Current status: {version.reviewStatus || 'Not set'}</p>
+                <p>Current status: {confirmation.version.reviewStatus || 'Not set'}</p>
                 {dialog === 'message' ? (
                   <p>
                     This sends the text below to the developer on linked Zendesk ticket{' '}
-                    {version.zendeskTicketId}.
+                    {confirmation.version.zendeskTicketId}.
                   </p>
                 ) : (
                   <p>
@@ -1180,10 +1188,17 @@ export default function Workspace() {
                     automation.
                   </p>
                 )}
+                <PendingFeedback preview={confirmation.preview} />
                 {dialog === 'reject' && (
                   <label>
                     Rejection reason
-                    <select value={reason} onChange={(e) => setReason(e.target.value)}>
+                    <select
+                      value={reason}
+                      onChange={(e) => {
+                        setReason(e.target.value);
+                        setConfirmed(false);
+                      }}
+                    >
                       {rejectionReasons.map((r) => (
                         <option key={r}>{r}</option>
                       ))}
@@ -1197,7 +1212,10 @@ export default function Workspace() {
                     required={dialog !== 'approve'}
                     maxLength={20000}
                     value={text}
-                    onChange={(e) => setText(e.target.value)}
+                    onChange={(e) => {
+                      setText(e.target.value);
+                      setConfirmed(false);
+                    }}
                     placeholder={
                       dialog === 'message'
                         ? 'Include a greeting and sign-off.'
