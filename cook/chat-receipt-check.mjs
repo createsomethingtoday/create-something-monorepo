@@ -23,7 +23,7 @@ try{
  for(const messages of [[],[{id:'verified-message',role:'assistant',text:'The rehearsal task was saved and read back. Open the linked task to inspect it.'}]]){
  await set({...base,messages,state:'idle',decisionReceipt:{outcome:'verified'},recordLinks:[{entity:'tasks',id:'task-1',title:'Confirm the rehearsal time'}]});
  const receipt=page.getByText('Changes saved and verified in GiGi.',{exact:true});await receipt.waitFor();
- const link=page.getByRole('button',{name:'Confirm the rehearsal time ↗',exact:true});await link.waitFor();
+ const link=page.getByRole('button',{name:'Open record: Confirm the rehearsal time ↗',exact:true});await link.waitFor();
  assert.equal(await page.locator('.chat-suggestions').count(),0,'Verified receipt must not show starters');
  await aboveComposer(receipt);await aboveComposer(link);
  }

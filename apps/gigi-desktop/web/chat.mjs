@@ -44,7 +44,7 @@ export function chatState(chat) {
   if(chat.current?.state==='running')return {label:chat.current?.cancelPending?'Stopping response':'Responding',detail:'You can leave this drawer and return to your work.'};
   if(chat.current?.state==='failed' || chat.error)return {label:'Needs another look',detail:'Check status for the latest result.'};
   if(chat.current?.decisionReceipt?.outcome==='verified')return {label:'Result checked',detail:'GiGi verified the reviewed action. See its receipt below.'};
-  if(chat.current?.state==='interrupted')return {label:'Response interrupted',detail:'Review the latest messages before continuing.'};
+  if(chat.current?.state==='interrupted')return {label:'Response interrupted',detail:chat.current.messages?.length ? 'Review the latest messages before continuing.' : chat.current.sendReceipt?.accepted ? 'Your request was accepted, but its messages are unavailable. Acceptance alone does not confirm any saved changes.' : 'Saved messages are unavailable for this response. Inspect your records before repeating a request.'};
   if(chat.current?.messages?.some(message=>message.role==='assistant'))return {label:'Response ready',detail:'Review the response and its source records.'};
   return {label:'Ready to help',detail:'Ask a question or choose a starting point.'};
 }

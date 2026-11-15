@@ -31,3 +31,11 @@ test('conversation list reflects the latest observed terminal state',async()=>{
 test('separated numbered steps preserve their original starting number',()=>{
  assert.match(renderAnswer('2. Review the second source'),/<ol start="2">/);
 });
+
+ test('interrupted empty transcript describes missing messages and accepted send honestly',()=>{
+ const empty={current:{state:'interrupted',messages:[]}};
+ assert.match(chatState(empty).detail,/messages are unavailable/);
+ assert.doesNotMatch(chatState(empty).detail,/Review the latest messages/);
+ assert.match(chatState({current:{...empty.current,sendReceipt:{accepted:true}}}).detail,/request was accepted/);
+ assert.match(chatState({current:{...empty.current,messages:[{role:'user',text:'Inspect'}]}}).detail,/Review the latest messages/);
+ });

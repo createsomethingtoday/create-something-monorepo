@@ -28,7 +28,7 @@ const uncertainOutcomes = new Set([
   'turn_outcome_unknown'
 ]);
 const unresolvedSave =
-  'This save has an unknown outcome. Check status before making another change. You can use New chat to inspect records, but do not repeat this request.';
+  'The last requested save has an unknown outcome. Check status before making another change. You can use New chat to inspect records, but do not repeat this request.';
 const explanations = {
   codex_unavailable:
     'Codex is unavailable on this Mac. Open chat setup to check the Codex CLI installation, then choose Check status.',
@@ -348,6 +348,7 @@ function ChatDrawer({ ctx }) {
             }
           >
             {receiptText}
+            {current.decisionReceipt.outcome === 'unknown' && !messages.length && !current.recordLinks?.length && ' The affected record and request details are not available in this conversation.'}
           </Message>
         )}
         {(current?.recordLinks || []).map((item) => (
@@ -357,7 +358,7 @@ function ChatDrawer({ ctx }) {
             className="chat-record-link"
             data-chat-link-entity={item.entity}
             data-chat-link-id={item.id}
-          >{`${item.title || item.id} ↗`}</B>
+          >{`Open record: ${item.title || item.id} ↗`}</B>
         ))}
         {current?.recoveryPending ? (
           <Text as="p" role="status">
