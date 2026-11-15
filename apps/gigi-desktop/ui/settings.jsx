@@ -434,6 +434,7 @@ function SourceImport({ provider, account, draft = {}, run, busy, ctx }) {
                   ? 'More source pages remain; preview the next page when needed.'
                   : 'No next page recorded for this import.'
           )}
+          {muted(`Source fetch: ${receipt.fetchedAt ? new Date(receipt.fetchedAt * 1000).toLocaleString() : 'Not recorded'} · Import finished: ${receipt.finishedAt ? new Date(receipt.finishedAt * 1000).toLocaleString() : running ? 'Still running' : 'Not recorded'}. Coverage: ${receipt.coverage || 'Not recorded'}.`)}
           {receipt.guidance && muted(receipt.guidance)}
           {receipt.recoveredAfterInterruption &&
             muted(
