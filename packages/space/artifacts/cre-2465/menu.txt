@@ -1,0 +1,119 @@
+Skip to main content
+Projects
+Workbench
+About
+GitHub
+
+CREATE SOMETHING / THE PUBLIC WORKSHOP
+
+Useful tools.
+Shared openly.
+
+Workflows, systems, skills, and plugins shaped by the work we do. Find something useful. Make it your own.
+
+Explore projects ↗
+Open the Workbench
+CONCEPT ILLUSTRATION · An open workshop. Choose a tool and inspect how it works.
+
+01 / SELECTED WORK
+
+A few good places
+to begin.
+All 22 projects and building blocks ↗
+01 / SYSTEM
+PACKAGE ↗
+Ground
+
+Check the code before trusting the claim.
+
+Explore Ground ↗
+CONCEPT ILLUSTRATION · Compare the evidence before accepting the claim.
+02 / WORKFLOW
+PACKAGE ↗
+Workflow Compiler
+
+Turn one workflow definition into plans you can inspect and verify.
+
+Explore Workflow Compiler ↗
+CONCEPT ILLUSTRATION · A definition becomes something you can check.
+03 / SKILL
+PACKAGE ↗
+Three-Tier Framework
+
+Understand what stores state, what acts, and who decides.
+
+Explore Three-Tier Framework ↗
+CONCEPT ILLUSTRATION · Find the fit before making the connection.
+04 / SKILL
+PACKAGE ↗
+Policy OS starter
+
+Give agent work a clear scope, feedback loop, and finish line.
+
+Explore Policy OS starter ↗
+CONCEPT ILLUSTRATION · Keep the notes that make the next attempt useful.
+
+02 / THE WORKBENCH
+
+Try it.
+See what happens.
+
+The playground, labs, and data tools are still here. Open a familiar tool or follow your curiosity somewhere new.
+
+Open the Workbench ↗
+Code Playground
+Run JavaScript and inspect the output.
+↗
+Praxis
+Practice integration patterns through guided challenges.
+↗
+Motion Lab
+Inspect animation timing and motion patterns.
+↗
+Data Studio
+Explore datasets and basketball analysis.
+↗
+Discover
+Follow connections between concepts.
+↗
+
+Find a tool → Inspect the source → Make it useful
+
+Pause motion
+
+03 / IN GOOD COMPANY
+
+Use the work.
+Help it get better.
+
+Read the source, report what breaks, or share what you build. The project repositories are where the work continues.
+
+Find us on GitHub ↗
+About the workshop
+
+The public workshop. Tools, workflows, skills, and building blocks from CREATE SOMETHING.
+
+Quick Links
+Projects
+Skills
+Building blocks
+Workbench
+CREATE SOMETHING
+.space — Explore
+Experiments, practice, learning by doing
+.learn — Study
+Structured courses and educational content
+.io — Research
+Papers, tools, documented discoveries
+.agency — Build
+Client services, commercial work
+.ltd — Canon
+Philosophy, patterns, the source of truth
+GitHub — Source
+Open development, version control
+
+© 2026 Create Something. The canon for "less, but better."
+
+Privacy
+·
+Terms
