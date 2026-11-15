@@ -12,7 +12,7 @@ for (const [label, href, arrow] of [
   ['Inspect actual work', '#work', '↘'],
   ['See what you keep', '#together', '↘'],
   ['Fix what keeps breaking.', '/services', '↗'],
-  ["Check what you've built.", '/technical-review', '↗'],
+  ["Check your software.", '/technical-review', '↗'],
   ['Connect your tools.', '/book?source=agency&intent=workflow-mapping&lane=workflow_infrastructure', '↗']
 ]) {
   test(`homepage routes "${label}" to its intended destination`, () => {

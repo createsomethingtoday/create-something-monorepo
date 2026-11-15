@@ -13,8 +13,8 @@
     </figure>
   </div>
   <div class="plate-destinations">
-    <a href="#example"><span class="destination-index">01 / THE CONNECTION</span><h2>Close the gap.</h2><p>See how a request gets from one tool to the next.</p><span class="destination-arrow" aria-hidden="true">↘</span></a>
-    <a href="#work"><span class="destination-index">02 / THE EVIDENCE</span><h2>Look a little closer.</h2><p>Inspect actual work, recordings and the checks behind it.</p><span class="destination-arrow" aria-hidden="true">↘</span></a>
-    <a href="#together"><span class="destination-index">03 / YOUR TEAM</span><h2>Make it yours.</h2><p>Keep the agreed code, tests and guidance to use the result.</p><span class="destination-arrow" aria-hidden="true">↘</span></a>
+    <a href="#example"><span class="destination-index">01 / THE CONNECTION</span><h2>Connect your tools.</h2><p>See how a request moves between tools.</p><span class="destination-arrow" aria-hidden="true">↘</span></a>
+    <a href="#work"><span class="destination-index">02 / THE EVIDENCE</span><h2>Review the evidence.</h2><p>Inspect the work, recordings and test results.</p><span class="destination-arrow" aria-hidden="true">↘</span></a>
+    <a href="#together"><span class="destination-index">03 / YOUR TEAM</span><h2>Keep the agreed work.</h2><p>Keep the agreed code, tests and guidance to use the result.</p><span class="destination-arrow" aria-hidden="true">↘</span></a>
   </div>
 </div>

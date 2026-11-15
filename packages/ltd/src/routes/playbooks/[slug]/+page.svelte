@@ -11,6 +11,7 @@
 	description={playbook.summary}
 	keywords="AI workflow playbook, runbook, owned automation, AI operations"
 	propertyName="ltd"
+	ogImage={playbook.slug === 'inbound-triage' ? '/brand/open-shelf-inbound-triage.png' : '/og-image.png'}
 	breadcrumbs={[
 		{ name: 'Home', url: 'https://createsomething.ltd' },
 		{ name: 'Playbooks', url: 'https://createsomething.ltd/playbooks' },

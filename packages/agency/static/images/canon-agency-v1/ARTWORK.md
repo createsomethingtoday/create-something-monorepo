@@ -38,3 +38,9 @@ Create a matching portrait 4:5 composition of the provided CREATE SOMETHING Cano
 The user reported that Canon's paper-holding left hand looked disconnected in the wide homepage hero. `hero-wide-v2.webp` replaces that active desktop scene with a visible felt forearm, sleeve and stitched cuff. The portrait sibling already had a connected sleeve and remains unchanged. The original four approved masters and v1 delivery bytes remain intact as historical references; their original approval record is not rewritten.
 
 This is a requested correction under the existing production scope, not a new character concept or campaign. [Repair provenance](hand-repair-provenance.json) records the exact prompt, original/replacement paths, PNG/WebP hashes and format-only process. Generated with the built-in image tool; no Python compositing or creative edits.
+
+## Prepared reply — AI-first release (CRE-2469)
+
+The user selected the recommended Prepared reply v3 concept with “Deploy” after the local comparison and disclosure of remaining cosmetic critique. `prepared-reply-v3.webp` is a 74,104-byte, 1670 × 941 format-only export of the owned built-in image_gen output. See `prepared-reply-provenance.json` for source/export hashes and final refinement prompt.
+
+The semantic HTML image uses a proportional right-aligned crop on smaller screens so the review gesture remains visible. The scene is labelled as an example and must not be described as actual software or customer evidence. Prior strict 9/10 art scores are not retroactively passed by selection. Existing original hero assets remain for rollback.

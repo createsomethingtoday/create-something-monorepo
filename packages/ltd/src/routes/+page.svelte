@@ -1,7 +1,8 @@
 <script lang="ts">
-  import TaskOpening from '$lib/components/TaskOpening.svelte';
+  import '$lib/open-shelf.css';
+  import { canonTaskScenes } from '$lib/canon-task-scenes';
+  const libraryArt = canonTaskScenes['operating-library'];
 	import {
-		Button,
 		PerformanceCardGrid,
 		SEO,
 		NewsletterSignup,
@@ -9,18 +10,6 @@
 		type PerformanceCardItem
 	} from '@create-something/canon';
 	import { playbooks } from '$lib/operator-library/playbooks';
-
-	const playbookCards: PerformanceCardItem[] = playbooks.map((playbook) => ({
-		eyebrow: playbook.label,
-		icon: 'check',
-		title: playbook.title,
-		detail: playbook.summary,
-		points: [
-			`Approved work: ${playbook.approvedWork}`,
-			`Receipt: ${playbook.proof}`
-		],
-		href: `/playbooks/${playbook.slug}`
-	}));
 
 	const oppositionCards: PerformanceCardItem[] = [
 		{
@@ -52,19 +41,24 @@
 	propertyName="ltd"
 />
 
-<TaskOpening scene="operating-library" caption="Keep a useful operating rule close to the work.">
+<div class="open-shelf" data-ltd-revision="open-shelf-a-cre-2463-v1">
+<section class="open-shelf-hero" aria-labelledby="library-title">
 <div class="ltd-operator-hero" aria-labelledby="library-title">
 	<div class="ltd-operator-hero__intro">
 		<p class="ltd-operator-hero__eyebrow">CREATE SOMETHING .ltd / The operating library</p>
 		<h1 id="library-title">Run AI work people can trust.</h1>
 		<p>Start with one recurring workflow. Leave with a playbook that tells your team and its AI what can run, what waits for a person, and what proves the work happened.</p>
 		<div class="ltd-operator-hero__actions">
-			<Button href="/playbooks">Find your playbook</Button>
-			<Button href="/readiness" variant="secondary">Assess a workflow</Button>
+			<a class="open-shelf-primary" href="/playbooks">Find your playbook <span aria-hidden="true">↗</span></a>
+			<a class="open-shelf-secondary" href="/readiness">Assess a workflow <span aria-hidden="true">→</span></a>
 		</div>
 	</div>
 </div>
-</TaskOpening>
+<figure class="open-shelf-scene">
+  <img src={libraryArt.src} srcset={libraryArt.srcset} sizes="(min-width: 1051px) 43vw, (min-width: 900px) 44vw, (min-width: 768px) 540px, 88vw" width={libraryArt.width} height={libraryArt.height} alt="Soft felt Canon holds an operating-rule folder beside a warm wooden library cabinet." loading="eager" fetchpriority="high" decoding="async" />
+  <figcaption>Concept illustration</figcaption>
+</figure>
+</section>
 
 <div class="opening-proof">
 <ul class="ltd-operator-hero__proof" aria-label="The operating sequence">
@@ -85,7 +79,20 @@
 		</p>
 	</div>
 
-	<PerformanceCardGrid items={playbookCards} columns={2} ariaLabel="Start with a playbook" />
+	<div class="open-shelf-cards" aria-label="Start with a playbook">
+    {#each playbooks as playbook}
+      <a class="open-shelf-card" href={`/playbooks/${playbook.slug}`}>
+        <span class="open-shelf-card__label">{playbook.label}</span>
+        <h3>{playbook.title}</h3>
+        <p>{playbook.summary}</p>
+        <dl>
+          <div><dt>Approved work</dt><dd>{playbook.approvedWork}</dd></div>
+          <div><dt>Receipt</dt><dd>{playbook.proof}</dd></div>
+        </dl>
+        <span class="open-shelf-card__arrow" aria-hidden="true">↗</span>
+      </a>
+    {/each}
+  </div>
 </section>
 
 <section class="opposition" aria-labelledby="opposition-title">
@@ -144,57 +151,9 @@
 	/>
 </section>
 
+</div>
+
 <style>
-  .opening-proof { width: min(80rem, calc(100% - 3rem)); margin: 1.5rem auto 2rem; }
-
-	.operator-library,
-	.opposition,
-	.library-loop {
-		padding: clamp(3.5rem, 8vw, 7rem) clamp(1rem, 5vw, 5rem);
-	}
-
-	.operator-library {
-		background: var(--color-performance-panel, #fff);
-	}
-
-	.operator-library__heading,
-	.opposition__heading {
-		max-width: 48rem;
-		margin-bottom: clamp(1.8rem, 4vw, 3.5rem);
-	}
-
-	.operator-library__eyebrow,
-	.opposition__eyebrow,
-	.library-loop__eyebrow {
-		margin: 0 0 0.8rem;
-		color: var(--color-performance-muted, #5e6268);
-		font-family: var(--font-performance-mono);
-		font-size: 0.75rem;
-		font-weight: var(--font-performance-semibold);
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-	}
-
-	.operator-library h2,
-	.opposition h2,
-	.library-loop h2 {
-		margin: 0;
-		font-size: clamp(2rem, 4.1vw, 4rem);
-		font-weight: var(--font-performance-medium);
-		letter-spacing: -0.055em;
-		line-height: 0.98;
-		text-wrap: balance;
-	}
-
-	.operator-library__heading > p:last-child,
-	.opposition__heading > p:not(.opposition__eyebrow) {
-		max-width: 41rem;
-		margin: 1.2rem 0 0;
-		color: var(--color-performance-muted, #5e6268);
-		font-size: clamp(1rem, 1.65vw, 1.2rem);
-		line-height: 1.55;
-	}
-
 	.opposition {
 		border-top: 1px solid var(--color-performance-line, #d7d7d2);
 		background: var(--color-performance-ink, #090909);

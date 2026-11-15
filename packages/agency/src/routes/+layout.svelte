@@ -4,6 +4,7 @@
   import { publicPageEntrances } from '$lib/motion/publicPageEntrances';
   import { IO_EXPERIMENTS_URL, IO_PAPERS_URL } from '$lib/data/ioResearchLinks';
   import AgencyPageTreatment from '$lib/components/AgencyPageTreatment.svelte';
+  import AgencyHeroBackground from '$lib/components/AgencyHeroBackground.svelte';
   import CanonBrandSignature from '$lib/components/CanonBrandSignature.svelte';
   import '$lib/styles/operator-palette.css';
   import '$lib/styles/measured-public.css';
@@ -363,6 +364,7 @@
 {/snippet}
 
 <LayoutSEO property="agency" />
+<AgencyHeroBackground />
 <PageAnnotations pathname={$page.url.pathname} />
 
 <div class="agency-surface" data-theme={usesOperatorPalette ? "dark" : "light"} data-canon-palette={usesOperatorPalette ? "operator" : undefined} data-agency-brand={usesMeasuredPublicSurface || usesMeasuredAccountSurface ? "measured" : undefined} data-agency-account={usesMeasuredAccountSurface ? "true" : undefined}>
@@ -438,7 +440,8 @@
   .film-shell.webflow-portfolio-shell :global(main#main-content) { padding-top:0; }
   .film-shell.webflow-portfolio-shell :global(.nav-editorial.nav-fixed) { top:0; left:0; right:0; border:0; border-radius:0; background:var(--color-performance-mode-campaign-surface); }
   .webflow-portfolio-shell :global(.nav-editorial :is(a,button)) { color:var(--color-performance-mode-campaign-ink); }
-  .webflow-portfolio-shell :global(.nav-editorial .nav-logo-asset) { filter:invert(1); }
+  .webflow-portfolio-shell :global(.nav-editorial .nav-logo-asset) { filter:none; }
+  .webflow-portfolio-shell :global(.nav-editorial .nav-menu-button) { background:transparent; color:var(--color-performance-mode-campaign-ink); border-color:currentColor; }
   .webflow-portfolio-shell :global(.nav-editorial .nav-cta) { background:var(--color-performance-fg-primary); color:var(--color-performance-bg-pure); }
   .webflow-portfolio-shell :global(.nav-editorial :is(.nav-mobile-menu,.nav-dropdown__menu)) { background:var(--color-performance-bg-elevated); color:var(--color-performance-fg-primary); }
 

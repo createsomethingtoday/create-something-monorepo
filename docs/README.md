@@ -308,3 +308,5 @@ docs/
 - **Understanding why a decision exists**:
   first the canonical doc in `docs/`,
   then the related memo in `docs/internal/`
+
+AI-native delivery evidence: [operating guide](guides/AI_NATIVE_SDLC.md).

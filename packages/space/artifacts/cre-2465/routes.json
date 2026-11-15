@@ -1,0 +1,47 @@
+[
+  {
+    "route": "/projects",
+    "status": 200,
+    "text": "THE COLLECTION\n\nFind your\nnext useful thing.\n\nComplete tools and small parts worth reusing. Each entry links to its source, instructions, and boundaries.\n\nConcept illustration · Check the fit before m"
+  },
+  {
+    "route": "/projects?q=zzzzunmatched",
+    "status": 200,
+    "text": "THE COLLECTION\n\nFind your\nnext useful thing.\n\nComplete tools and small parts worth reusing. Each entry links to its source, instructions, and boundaries.\n\nConcept illustration · Check the fit before m"
+  },
+  {
+    "route": "/projects/ground",
+    "status": 200,
+    "text": "← All projects\n\nSYSTEM / PACKAGE\n\nGround\n\nCheck the code before trusting the claim.\n\nConcept illustration · Inspect the task, its boundary, and its evidence.\n\nPUT IT TO WORK\n\nStart here.\n\nUse code ver"
+  },
+  {
+    "route": "/workbench",
+    "status": 200,
+    "text": "CREATE SOMETHING .SPACE / THE WORKBENCH\n\nTry it.\nInspect what happens.\n\nCode, motion, data, and guided practice. Pick a tool and work with its actual output.\n\nOpen The Playground\nStart Praxis\n\nConcept"
+  },
+  {
+    "route": "/playground",
+    "status": 200,
+    "text": "    +-------------------------------------------------+\n    |   CODE MODE: THE ZUHANDENHEIT EXPERIMENT        |\n    |                                                 |\n    |   Tool Calling          Co"
+  },
+  {
+    "route": "/praxis",
+    "status": 200,
+    "text": "Integration Praxis\n\nLearn by doing. Each exercise reveals a pattern you'll use in real projects.\n\n1/5\nCODE\nThe Error Structure\nRun\nReset\n←\n→\nWHAT TO TRY\nStructured Errors\n\nThe situation: You're buildi"
+  },
+  {
+    "route": "/motion",
+    "status": 200,
+    "text": "    +-------------------------------------------------+\n    |   MOTION ONTOLOGY                               |\n    |                                                 |\n    |   Zuhandenheit        Vorh"
+  },
+  {
+    "route": "/data",
+    "status": 200,
+    "text": "Live data\nInspect the runtime data before you trust the pattern.\n\nData Studio is the workbench surface for dashboards, historical snapshots, and derived metrics that need to stay useful under refresh "
+  },
+  {
+    "route": "/discover",
+    "status": 200,
+    "text": "CONCEPT MAP\n\nDiscover\n\nPick a concept to trace how it appears across the CREATE SOMETHING ecosystem.\n\nCreation Moat\n\nWhy creating MCPs is defensible while consuming them is commoditized.\n\nThree-Tier F"
+  }
+]
