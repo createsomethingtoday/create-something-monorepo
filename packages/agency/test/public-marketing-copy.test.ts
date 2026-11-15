@@ -188,8 +188,8 @@ test('the builder-facing homepage retains commercial terms, film evidence and di
   assert.match(home, /<AgencySalesHome/);
   assert.match(salesHome, /import rawContent from '\$lib\/content\/agency-story-home\.html\?raw'/);
   assert.match(salesHome, /\{@html content\}/);
-  assert.match(content, /We connect your tools and AI/);
-  assert.match(content, /Your tools should<br>work together\./);
+  assert.match(content, /We connect your tools and make AI systems for your team/);
+  assert.match(content, /Connect AI to<br>your tools\./);
   assert.match(content, /under your agreement/);
   assert.match(content, /One workstream\. One milestone per month/);
   assert.match(content, /production incident response need separate agreements/);
@@ -222,7 +222,7 @@ test('commercial decision routes explain the task, delivery, ownership, and proo
   assert.match(layout, /label: 'Technical Support', href: '\/services'/);
   assert.match(layout, /label: 'What You Keep', href: '\/stack'/);
   const homeContent = readFileSync(new URL('../src/lib/content/agency-story-home.html', import.meta.url), 'utf8');
-  assert.match(homeContent, /We connect your tools and AI/);
+  assert.match(homeContent, /We connect your tools and make AI systems for your team/);
   assert.match(homeContent, /We connect the form<br>to your team/);
   assert.match(homeContent, /You approve the change/);
   assert.match(read('services/+page.svelte'), /Bring a workflow, software problem or existing product/);
