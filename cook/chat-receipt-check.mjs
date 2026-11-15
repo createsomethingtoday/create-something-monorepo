@@ -11,6 +11,13 @@ try{
  await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/?fixture=overview&recovery=1`);await page.waitForFunction(()=>globalThis.gigiTest);
  const set=async current=>page.evaluate(current=>gigiTest.setChat({visible:true,status:{available:true,authenticated:true},pending:false,reading:false,error:null,current}),current);
  const base={sessionId:'receipt-regression',messages:[],approvals:[],recordLinks:[]};
+ await page.evaluate(()=>gigiTest.setChat({visible:true,status:{available:true,authenticated:true},pending:false,reading:false,error:null,current:null,refreshRequired:true}));
+ assert.equal(await page.locator('.chat-empty').count(),1,'Initial open has no saved transcript to refresh and retains welcome');
+ assert.equal(await page.locator('[data-chat-prompt]').count(),3,'Initial open retains all three unsent starters');
+ await set({...base,state:'idle'});
+ assert.equal(await page.locator('.chat-empty').count(),0,'A selected conversation still awaiting readback must not show welcome');
+ assert.equal(await page.locator('[data-chat-prompt]').count(),0,'A selected stale conversation must not show starters');
+ await page.evaluate(()=>gigiTest.setChat({refreshRequired:false}));
  await set({...base,state:'interrupted',sendReceipt:{requestId:'accepted-request',turnId:'accepted-turn',accepted:true}});
  assert.equal(await page.locator('.chat-suggestions').count(),0,'Accepted interruption must not show new-chat starters');
  assert.equal(await page.locator('.chat-empty').count(),0,'Accepted interruption must not show empty-chat welcome');

@@ -99,7 +99,8 @@ function MessageBody({ item }) {
 }
 function isFreshConversation(chat) {
   const current = chat.current;
-  return !chat.pending && !chat.reading && !chat.refreshRequired && !chat.error &&
+  // With no selected conversation there is no saved transcript to refresh.
+  return !chat.pending && !chat.reading && (!current || !chat.refreshRequired) && !chat.error &&
     (!current || current.state === 'idle') &&
     !(current?.messages?.length || current?.approvals?.length || current?.recordLinks?.length) &&
     !current?.sendReceipt && !current?.decisionReceipt && !current?.recoveryPending &&
