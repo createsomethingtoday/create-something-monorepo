@@ -5,6 +5,7 @@
   import { page } from '$app/stores';
   import { agencyPageComposition } from '$lib/data/agencyPageComposition';
   import { getAgencyHeroTreatment } from '$lib/data/agencyHeroTreatment';
+  import { getAgencyHero } from '$lib/data/agencyHeroCoverage';
   type CopyEdit = { selector: string; text: string };
   type PreviewCopy = { title?: string; lede?: string; titleSelector?: string; ledeSelector?: string; copyEdits?: readonly CopyEdit[] };
   const utilityPaths = ['/book','/contact','/support-brief','/privacy','/terms','/security','/bearer-token-policy','/prospects'];
@@ -36,7 +37,9 @@
       const candidates=Array.from(document.querySelectorAll<HTMLElement>('.performance-conversion-handoff,.route-handoff,.closing,.handoff,.next-step,.closing-section,.email-section,.letter-signoff,.membership .next-steps,.scopefield-page .download,.booking-content,.map-preview' )).filter(e=>(!e.closest('footer')||e.classList.contains('letter-signoff'))&&e.querySelector('a,button'));
       const finalCTA=candidates.at(-1);
       if(finalCTA && !['/book','/contact'].includes(route)){closing=document.createElement('section');closing.className='agency-closing-trace';closing.setAttribute('aria-label','Illustrative workflow trace');closing.innerHTML='<pre aria-hidden="true">. : + / = #     . : + / = #     . : + / = #</pre><canvas aria-hidden="true"></canvas><button type="button" hidden>Pause motion</button>';finalCTA.insertAdjacentElement('beforebegin',closing);stopTrace=mountPreviewTrace(closing);}
-      if(!item)return;
+      // Coverage-owned backgrounds have their own SSR composition; retain the
+      // current route-owned copy and closing enhancements without a second grid.
+      if(!item || getAgencyHero(route))return;
       const target=resolve(item.heroSelector) as HTMLElement | null;if(!target)return;
       if(target.closest('[data-measured-opening]'))return;
       compositionTarget=target;priorComposition=target.dataset.agencyComposition;
