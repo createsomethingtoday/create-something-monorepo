@@ -30,6 +30,7 @@ import { registerPrompts } from '../src/prompts.js';
 import { attachRequestProps } from '../src/request-context.js';
 import { registerResources } from '../src/resources.js';
 import { registerTools } from '../src/tools.js';
+import { reviewerSession } from '../src/session-identity.js';
 import { buildReviewCommentsClient } from '../src/review-comments.js';
 import { parseZendeskGroupId, ZendeskClient } from '../src/zendesk.js';
 
@@ -93,6 +94,9 @@ export class WebflowAppReviewMCP extends McpAgent<Env, unknown, RequestProps> {
   });
 
   async init() {
+    this.server.tool('app_review_session', 'Return the current reviewer identity verified by Cloudflare Access. Legacy shared-token sessions cannot identify a user.', {}, async () => ({
+      content: [{ type: 'text' as const, text: JSON.stringify(reviewerSession(this.props)) }],
+    }));
     if (this.env.TELEMETRY_DB) {
       enableTelemetry(
         this.server,
