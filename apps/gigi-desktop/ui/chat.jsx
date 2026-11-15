@@ -28,7 +28,7 @@ const uncertainOutcomes = new Set([
   'turn_outcome_unknown'
 ]);
 const unresolvedSave =
-  'GiGi cannot yet confirm whether this save completed. Do not recreate the record or submit another change. Choose Check status to check again. If this message remains, ask for help resolving the saved request.';
+  'This save has an unknown outcome. Check status before making another change. You can use New chat to inspect records, but do not repeat this request.';
 const explanations = {
   codex_unavailable:
     'Codex is unavailable on this Mac. Open chat setup to check the Codex CLI installation, then choose Check status.',
@@ -255,17 +255,18 @@ function ChatDrawer({ ctx }) {
           data-state={current?.state || 'idle'}
         >
           <Text weight="semibold">{observed.label}</Text>
-          <Text type="supporting">{observed.detail}</Text>
+          {!uncertain && <Text type="supporting">{observed.detail}</Text>}
         </VStack> : null}
-        {chat.error && (ready || uncertain) && (
-          <Message error>{explain(chat.error, Boolean(current))}</Message>
-        )}
         <HStack gap={3} className="chat-conversation-controls gigi-wrap">
           <B variant="ghost" data-chat-new="1" disabled={!ready || chat.pending || chat.reading}>
             New chat
           </B>
           <B variant="ghost" data-chat-history="1">Saved chats</B>
         </HStack>
+        {chat.error && current?.decisionReceipt?.outcome !== 'unknown' && (ready || uncertain) && (
+          <Message error>{explain(chat.error, Boolean(current))}</Message>
+        )}
+
       </VStack>
       <ChatMessageList
         ref={transcript}
@@ -301,9 +302,9 @@ function ChatDrawer({ ctx }) {
               </ChatMessageBubble>
             </ChatMessage>
           ))
-        ) : (
-          <VStack gap={2} className="chat-empty"><Heading level={2}>How can I help?</Heading><Text color="secondary">Choose a starting point, or ask in your own words.</Text></VStack>
-        )}
+        ) : !uncertain ? (
+          <VStack gap={2} className="chat-empty"><Heading level={2}>{uncertain ? "Review the saved request" : "How can I help?"}</Heading><Text color="secondary">{uncertain ? "Your saved conversation will appear here when status is available." : "Choose a starting point, or ask in your own words."}</Text></VStack>
+        ) : null}
         <Suggestions chat={chat} ready={ready} uncertain={uncertain} />
         {current?.state === 'approval' &&
           (current.approvals || []).map((item) => (
@@ -361,14 +362,14 @@ function ChatDrawer({ ctx }) {
             {current.cancelPending ? 'Stopping response…' : 'GiGi is responding…'}
           </Text>
         ) : null}
-        {current?.state === 'interrupted' && !current.recoveryPending && (
+        {current?.state === 'interrupted' && !current.recoveryPending && !uncertain && (
           <Text as="p" role="status">
             {uncertain
               ? 'This response was interrupted. Resolve the pending outcome before sending another message.'
               : 'This response was interrupted. You can send another message.'}
           </Text>
         )}
-        {current?.state === 'failed' && (
+        {current?.state === 'failed' && !uncertain && (
           <Message error>
             {uncertain
               ? current?.decisionReceipt?.outcome === 'unknown' ||

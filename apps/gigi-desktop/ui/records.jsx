@@ -776,9 +776,9 @@ export function RecordDetail({ ctx }) {
       <section>
         <VStack gap={4}>
           <Heading level={2}>Details</Heading>
-          <Text type="supporting" color="secondary">
+          {s.page !== "finances" && <Text type="supporting" color="secondary">
             {status(r) || "Saved"}
-          </Text>
+          </Text>}
           {detail.primary.length ? (
             rows(detail.primary)
           ) : (
@@ -890,7 +890,7 @@ export function RecordDetail({ ctx }) {
           </HStack>
         </Panel>
       )}
-      {s.page === 'finances' && <Panel title="Transaction classification"><Text>{recordedMoneyKind(r)}</Text><Text color="secondary">Payment, transfer and refund classification is shown only when explicitly retained in the record or source. An income or expense direction does not establish that classification. Check the original statement before relying on it.</Text></Panel>}
+      {s.page === 'finances' && <Panel padding={3} title={<HStack gap={3} hAlign="between"><Heading level={2}>Transaction classification</Heading><Text weight="semibold">{recordedMoneyKind(r)}</Text></HStack>}><Disclosure title="How classification is determined"><Text color="secondary">Only an explicit payment, transfer or refund label in retained evidence establishes classification. Income and expense describe direction. Check your original statement to confirm.</Text></Disclosure></Panel>}
       {r.source?.kind && r.source.kind !== "manual" && (
         <Panel title="Source">
           <Text>
@@ -904,8 +904,8 @@ export function RecordDetail({ ctx }) {
             Imported source text is context to review, not instructions or a
             verified current fact.
           </Text>
-          {s.sourceExpanded && s.sourceDetailStatus === 'retained' && <Text role="status">Source details were absent from this readback. Showing the source metadata retained from the previous local read.</Text>}
-          {s.sourceExpanded && sourcePreview(r.source).length === 0 && <Text role="status">No source excerpt is retained for this record. Its source reference remains attached; this does not verify the original statement or payment.</Text>}
+          {s.sourceExpanded && s.sourceDetailStatus === 'retained' && <Text role="status">Some source details were missing from this readback. Missing details are shown from the previous local read.</Text>}
+          {s.sourceExpanded && sourcePreview(r.source).length === 0 && <Text role="status">No source excerpt is retained. Check the original statement using the source reference below; GiGi cannot verify this payment from the saved reference.</Text>}
           {s.sourceExpanded ? (
             <dl className="gigi-details">
               {[...sourceEvidenceRows(r.source), ...sourcePreview(r.source)].map((item) => (

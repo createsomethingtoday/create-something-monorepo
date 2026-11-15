@@ -966,6 +966,7 @@ export function startController({ renderUI, invoke, initialize } = {}) {
         );
         if (!currentRoute(route) || state.sources[provider]?.connectedAccountId !== accountId)
           return;
+        if (state.toast?.sourceKey === `${workspace}:${provider}`) state.toast = null;
         state.imports[provider] = {
           accountId,
           preview,
@@ -1001,7 +1002,10 @@ export function startController({ renderUI, invoke, initialize } = {}) {
         }
       }
     } catch (error) {
-      if (currentRoute(route)) notice(explain(error), true);
+      if (currentRoute(route)) {
+        notice(explain(error), true);
+        state.toast.sourceKey = `${workspace}:${provider}`;
+      }
     } finally {
       if (state.sourceBusy[provider] === action) delete state.sourceBusy[provider];
       render();

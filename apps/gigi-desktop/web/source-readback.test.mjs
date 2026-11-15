@@ -15,3 +15,24 @@ test('money classification requires explicit retained metadata, never title or a
  for(const value of ['Payment','Transfer','Refund'])assert.equal(recordedMoneyKind({source:{preview:{transactionKind:value}}}),value);
  assert.equal(recordedMoneyKind({source:{preview:{transactionKind:'income'}}}),'Unknown');
 });
+
+test('partial matching source retains omitted excerpt as historical evidence',()=>{
+ const source={kind:'import',provider:'gmail',connectedAccountId:'acct',externalId:'row',preview:{snippet:'Saved excerpt'}};
+ const result=reconcileSourceReadback({id:'money',entity:'finances',source},{id:'money',entity:'finances',source:{kind:'import',provider:'gmail',connectedAccountId:'acct',externalId:'row'}});
+ assert.deepEqual(result.record.source.preview,source.preview);assert.equal(result.status,'retained');
+});
+test('changed source identity never receives old metadata',()=>{
+ const source={kind:'import',provider:'gmail',connectedAccountId:'acct',externalId:'row',preview:{snippet:'Old'}};
+ for(const changed of [{provider:'statement'},{connectedAccountId:'new-account'},{externalId:'new-row'}]){
+ const current={...changed};const result=reconcileSourceReadback({id:'money',source},{id:'money',source:current});
+ assert.deepEqual(result.record.source,current);assert.notEqual(result.status,'retained');
+ }
+ assert.throws(()=>reconcileSourceReadback({id:'same',entity:'notes',source},{id:'same',entity:'finances'}));
+});
+
+test('explicit source clearing does not resurrect historical evidence',()=>{
+ const previous={id:'money',source:{kind:'import',externalId:'old',preview:{snippet:'old'}}};
+ assert.equal(reconcileSourceReadback(previous,{id:'money',source:null}).record.source,null);
+ const result=reconcileSourceReadback(previous,{id:'money',source:{...previous.source,preview:null}});
+ assert.equal(result.record.source.preview,null);assert.equal(result.status,'read');
+});

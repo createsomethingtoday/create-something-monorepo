@@ -391,12 +391,20 @@ pub fn dispatch(root:&Path,op:&str,input:Value)->Result<Value,String> {
     }
 
     #[test]fn recovery_unchanged_reference_reconnect_survives_restart_and_preview_read(){
-        let(root,wid,file)=fixture();let mut db=open(&root,&wid).unwrap();
+        let(root,wid,_)=fixture();
+        // Valid mono PCM WAV: 100 ms at 8 kHz. The other path/identity tests
+        // deliberately use arbitrary bytes; this recovery case must be decodable.
+        let file=root.join("recovery.wav");
+        let bytes=include_bytes!("../tests/fixtures/recovery-tone.wav");
+        fs::write(&file,bytes).unwrap();
+        let mut db=open(&root,&wid).unwrap();
         import_paths(&mut db,&wid,vec![file.clone()],false,&AtomicBool::new(false)).unwrap();
         let listed=dispatch(&root,"music.list",json!({"workspaceId":wid})).unwrap();let id=listed["items"][0]["id"].as_str().unwrap().to_string();
         assert_eq!(reconnect_path(&db,&wid,&id,&file).unwrap()["reconnected"],true);drop(db);
         assert_eq!(dispatch(&root,"music.list",json!({"workspaceId":wid})).unwrap()["items"][0]["availability"],"available");
-        assert_eq!(dispatch(&root,"music.preview",json!({"workspaceId":wid,"id":id})).unwrap()["path"],file.to_str().unwrap());
+        let preview=dispatch(&root,"music.preview",json!({"workspaceId":wid,"id":id})).unwrap();
+        assert_eq!(preview["path"],file.to_str().unwrap());
+        assert_eq!(fs::read(preview["path"].as_str().unwrap()).unwrap(),bytes,"reconnect and database reopen preserve the original playable bytes");
         fs::remove_dir_all(root).unwrap();
     }
 

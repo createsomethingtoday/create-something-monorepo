@@ -677,10 +677,9 @@ export function Music({ ctx }) {
         }
       }}
     >
-      <VStack gap={5}>
+      <VStack gap={3} className="music-library">
         <PageHeading
           title="Your music"
-          description="Tracks, projects and music videos."
           actions={
             <>
               <B
@@ -699,8 +698,7 @@ export function Music({ ctx }) {
             </>
           }
         />
-        <Text color="secondary">Local files. Nothing uploaded.</Text>
-        <Disclosure title="Storage & backups"><Text color="secondary">Originals stay in place; moved files need reconnection. Backups include the index and artwork, not original audio, video or project files.</Text></Disclosure>
+        <Disclosure title="Local files · nothing uploaded · storage & backups"><Text color="secondary">Originals stay in place; moved files need reconnection. Backups include the index and artwork, not original audio, video or project files.</Text></Disclosure>
         {state.preview && (
           <Panel
             title={state.preview.title}
@@ -848,7 +846,7 @@ export function Music({ ctx }) {
             })();
           })}
         >
-          <HStack gap={3} wrap="wrap">
+          <HStack gap={3} wrap="wrap" className="music-search-controls" vAlign="end">
             <Field
               id="music-query"
               name="query"
@@ -916,10 +914,11 @@ export function Music({ ctx }) {
                 disabled = state.busy || Boolean(state.editing);
               return (
                 <ListItem key={item.id}>
-                  <article>
-                    <VStack gap={3}>
-                      <HStack gap={4} vAlign="center"><VStack className="creator-thumbnail">{item.cover?<ArtworkImage asset={item.cover}/>:<Text color="secondary">{item.kind==='video'?'Video':'Audio'}</Text>}</VStack><Heading level={3}>{item.title}</Heading></HStack>
-                      <Text>
+                  <article className="music-library-row">
+                    <HStack gap={4} wrap="wrap" hAlign="between" vAlign="start">
+                    <VStack gap={0} className="music-record-summary">
+                      <HStack gap={4} vAlign="center"><VStack className="creator-thumbnail">{item.cover?<ArtworkImage asset={item.cover}/>:<Text color="secondary">{item.kind==='video'?'▶':'♫'}</Text>}</VStack><Heading level={3}>{item.title}</Heading></HStack>
+                      <Text type="supporting">
                         {[
                           kinds[item.kind] || kinds.other,
                           item.artist,
@@ -934,15 +933,17 @@ export function Music({ ctx }) {
                         {item.filename} · {item.bytes===0?'0 bytes recorded · original availability needs checking':fileSize(item.bytes)}
                         {item.tags ? ` · ${item.tags}` : ''}
                       </Text>
-                      <Text type="supporting">
+                      <Text weight="semibold" type="supporting">
                         {available
                           ? playable
                             ? 'Available on this Mac'
                             : 'Indexed · no in-app preview'
                           : item.availability === 'changed'
                             ? 'File reference needs checking · reconnect to verify'
-                            : 'Original unavailable · moved, offline or inaccessible; reconnect'}
+                            : item.availability === 'missing' ? 'Original unavailable · moved, offline or inaccessible; reconnect' : 'Reference not verified · reconnect to check'}
                       </Text>
+                      </VStack>
+                      <VStack gap={1} className="music-record-actions">
                       <HStack gap={2} wrap="wrap">
                         {available && playable && (
                           <B
@@ -980,6 +981,7 @@ export function Music({ ctx }) {
                         >
                           {available ? 'Reconnect original' : 'Reconnect'}
                         </B>
+                        <Disclosure title="More actions">
                         <B
                           danger
                           disabled={disabled}
@@ -1004,7 +1006,6 @@ export function Music({ ctx }) {
                         >
                           Remove entry
                         </B>
-                      </HStack>
                       <Disclosure title="Artwork" data-view-key={`music-artwork-${item.id}`}>
                         <ArtworkManager
                           ctx={ctx}
@@ -1014,7 +1015,11 @@ export function Music({ ctx }) {
                           onChanged={() => load()}
                         />
                       </Disclosure>
+                        </Disclosure>
+                      </HStack>
+
                     </VStack>
+                    </HStack>
                   </article>
                 </ListItem>
               );

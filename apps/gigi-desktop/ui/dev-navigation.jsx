@@ -58,7 +58,7 @@ export function DevNavigation({ ctx }) {
       const selected = entries.some(([id]) => s.page === id);
       return <details key={name} className="reference-dropdown" name="workspace-navigation" data-nav-menu={name} data-view-key={`reference-${name.toLowerCase()}`}>
         <HStack as="summary" gap={narrow ? 1 : 2} height="var(--size-element-md)" paddingBlock={2} paddingInline={narrow ? 1 : compact ? 2 : 3} vAlign="center" data-nav-overflow={name} className={selected ? 'selected' : undefined}>
-          <Text type="label" size={narrow ? 'xsm' : undefined} color="inherit">{name}</Text>{!tiny && <AstryxIcon icon="chevronDown" size="xsm" />}
+          <Text type="label" size={undefined} color="inherit">{name}</Text>{!narrow && !tiny && <AstryxIcon icon="chevronDown" size="xsm" />}
         </HStack>
         <VStack as="nav" gap={1} padding={2} hAlign="stretch" isScrollable className="reference-menu reference-menu-group" aria-label={name}>
           {entries.map(([id, label, target]) => <B key={`${id}:${target || ''}`} width="100%" style={{justifyContent: 'start',textAlign: 'start'}} size="md" variant="ghost" data-page={id} data-nav-target={target} aria-current={s.page === id && !target ? 'page' : undefined} icon={<Icon name={target === 'workspace-safety' ? 'shield-check' : icons[id]} />} endContent={s.page === id && !target ? <Text color="inherit" className="reference-menu-current" aria-hidden="true">✓</Text> : null}>{label}</B>)}

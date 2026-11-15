@@ -188,6 +188,7 @@ export function startFixture({ startController, renderUI }) {
       return { linked: true, ...structuredClone(input) };
     }
     if (operation === 'history.list') return { items: [] };
+    if(operation === 'sources.preview' && new URLSearchParams(location.search).get('recovery') === '1')return {previewId:'synthetic-retry-preview',coverage:'complete',scannedCount:1,selectedCount:1,newCount:1,existingCount:0,records:[{id:'synthetic-retry-record',title:'Recovered synthetic rehearsal',fields:{Date:'2026-11-12'}}]};
     if (operation.startsWith('sources.'))
       return {
         provider: input.provider,
@@ -255,6 +256,7 @@ export function startFixture({ startController, renderUI }) {
           : [];
       return { items, total: items.length, hasMore: false };
     }
+    if(operation === 'music.preview' && query.get('recovery') === '1') return {kind:'audio',title:'Synthetic recovery tone'};
     if (operation === 'music.edit' && query.get('review') === '1')
       return { ...input, organizationRevision: input.expectedRevision + 1 };
     if (operation === 'social.list') {
@@ -298,6 +300,7 @@ export function startFixture({ startController, renderUI }) {
     failNext(operation, message) {
       faults.set(operation, message);
     },
+    setChat(patch) { Object.assign(ctx.chat, patch); ctx.actions.render(); },
     snapshot: () => ctx.actions.snapshot(),
     open: (page) => ctx.actions.openPage(page),
     render: () => ctx.actions.render(),

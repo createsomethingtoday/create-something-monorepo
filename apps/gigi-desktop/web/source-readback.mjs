@@ -1,10 +1,17 @@
 /** A detail read can omit an attached source. Retain it as prior evidence, explicitly. */
 export function reconcileSourceReadback(previous, readback) {
-  if (!readback || readback.id !== previous?.id) throw new Error('The record readback did not match.');
-  if (previous.source?.kind && previous.source.kind !== 'manual' && !readback.source?.kind) {
-    return {record:{...readback,source:previous.source},status:'retained'};
+  if (!readback || readback.id !== previous?.id || (previous.entity && readback.entity && previous.entity !== readback.entity)) throw new Error('The record readback did not match.');
+  const prior = previous.source;
+  const current = readback.source;
+  const identity = ['kind', 'provider', 'connectedAccountId', 'externalId'];
+  const changed = current && identity.some(key => Object.hasOwn(current, key) && current[key] !== prior?.[key]);
+  if (current !== null && prior?.kind && prior.kind !== 'manual' && !changed) {
+    // Omission is historical evidence, never a claim that it was freshly fetched.
+    // Explicit null values and any changed source identity supersede old evidence.
+    const omitted = Object.keys(prior).filter(key => !current || !Object.hasOwn(current, key));
+    if (omitted.length) return {record:{...readback,source:{...prior,...current}},status:'retained'};
   }
-  return {record:readback,status:readback.source?.kind ? 'read' : 'unavailable'};
+  return {record:readback,status:current?.kind ? 'read' : 'unavailable'};
 }
 
 export function sourceEvidenceRows(source) {

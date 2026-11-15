@@ -517,3 +517,83 @@ details[open]:not(.reference-dropdown) > summary {
 
 .place-map-image{display:block;inline-size:100%;block-size:auto;max-block-size:none;object-fit:contain;border-radius:var(--radius-inner)}
 .directory-list .gigi-record-row{justify-content:start;text-align:start}
+
+/* Recovery review: preserve readable evidence at narrow widths. */
+.music-search-controls > :first-child { flex: 1; min-inline-size: 12rem; }
+.music-search-controls > :nth-child(2) { flex: 0 1 12rem; }
+.music-library-row { padding-block: var(--spacing-4); }
+.music-library-row .creator-thumbnail { inline-size: 3rem; min-inline-size: 3rem; block-size: 3rem; }
+.dev-work-detail p { max-inline-size: 65ch; }
+@media (max-width: 64rem) {
+ .dev-calendar-scroll { max-block-size: none; }
+ .dev-calendar-day { border-inline-end: 0; border-block-end: var(--border-width) solid var(--color-border); }
+ .dev-calendar-day:last-child { border-block-end: 0; }
+ .dev-calendar-day-heading { position: static; border-block-end: 0; }
+ .dev-calendar-day-events:has(.dev-calendar-entry) { padding-block-start: 0; }
+ .gigi-dev-topbar .reference-nav { justify-content: space-between; }
+ .gigi-dev-topbar .reference-nav button, .gigi-dev-topbar .reference-nav summary { min-block-size: 2.75rem; }
+ .gigi-dev-topbar .reference-today { padding-inline: var(--spacing-2); }
+ .gigi-dev-topbar .reference-date { display: none; }
+ .music-search-controls > :first-child { flex-basis: 100%; }
+ .music-search-controls > :nth-child(2) { flex: 1; }
+}
+
+@media (max-width: 64rem) {
+ .dev-calendar-day.is-empty { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; }
+ .dev-calendar-day.is-empty .dev-calendar-day-heading { background: transparent; }
+ .gigi-dev-topbar .reference-today { min-inline-size: 4rem; flex-shrink: 0; }
+ .gigi-dev-topbar .reference-dropdown { flex-shrink: 0; }
+}
+
+.music-record-summary { flex: 1; min-inline-size: min(100%, 20rem); }
+.music-record-actions { max-inline-size: 30rem; }
+
+/* Recovery messages keep their content height inside bounded scroll areas. */
+.chat-intro > *, .chat-transcript > * { flex-shrink: 0; }
+/* Keep the composer reachable while conversation evidence scrolls. */
+.chat-intro { max-block-size: 34%; padding-block: var(--spacing-2); }
+.chat-composer { padding-block: var(--spacing-2); }
+.music-library-row { padding-block: var(--spacing-2); }
+@media (max-width: 64rem) {
+ .dev-calendar-day.is-empty .dev-calendar-day-heading { padding-block: 2px; }
+ .dev-calendar-day.is-empty { min-block-size: 0; }
+ .music-search-controls { gap: var(--spacing-2); }
+}
+
+/* Compact recovery surfaces keep saved work in the first viewport. */
+.dev-empty-days summary { cursor: pointer; padding: var(--spacing-2); color: var(--color-text-secondary); }
+.dev-empty-days { border-block-start: var(--border-width) solid var(--color-border); }
+.source-coverage { border-inline-start: 3px solid var(--color-border); padding-inline-start: var(--spacing-3); }
+.source-preview-review ul { margin-block: 0; padding-inline-start: var(--spacing-5); }
+.source-preview-review li p { margin-block: var(--spacing-1); }
+.music-library .music-record-summary { min-inline-size: 0; }
+@media (min-width: 48rem) {
+ .music-library .music-search-controls > :first-child { flex: 1; flex-basis: 12rem; }
+ .music-library .music-search-controls > :nth-child(2) { flex: 0 1 10rem; }
+ .music-library-row > div { flex-wrap: nowrap; gap: var(--spacing-3); }
+ .music-record-actions { flex: 0 0 21rem; }
+ .music-library-row .creator-thumbnail { inline-size: 2rem; min-inline-size: 2rem; block-size: 2rem; }
+}
+@media (max-width: 47rem) {
+ .music-library-row > div { gap: var(--spacing-2); }
+ .music-record-summary, .music-record-actions { inline-size: 100%; }
+}
+.music-library details > summary { padding-block: var(--spacing-1); }
+.music-library .music-record-actions details { display: inline-block; }
+.music-library .music-record-actions > details { align-self: start; }
+.music-library .music-library-row { padding-block: var(--spacing-2); }
+.music-library .creator-thumbnail { font-size: .65rem; }
+.music-library li:has(> .music-library-row) { padding-block: 0; }
+@media (max-width: 64rem) {
+ .dev-today-calendar .dev-calendar-day-events { gap: var(--spacing-1); }
+ .dev-today-calendar .dev-calendar-event { padding-block: var(--spacing-1); }
+ .dev-today-calendar .dev-calendar-event > div { gap: 0; }
+}
+@media (min-width: 48rem) {
+ .music-library-row .creator-thumbnail { inline-size: 1.5rem; min-inline-size: 1.5rem; block-size: 1.5rem; }
+ .music-library .music-record-summary > div { gap: var(--spacing-2); }
+}
+@media (max-width: 64rem) {
+ .dev-today-calendar .dev-calendar-day-heading { padding-block: 0; }
+ .dev-today-calendar .dev-calendar-day-heading time { min-block-size: 1.5rem; }
+}
