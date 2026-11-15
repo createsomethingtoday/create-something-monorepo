@@ -1,3 +1,4 @@
+import { COMPANION_RESOURCE } from './deployment.ts';
 import { existsSync } from 'node:fs';
 import { dirname, isAbsolute, join } from 'node:path';
 
@@ -7,7 +8,7 @@ import { getSessionAccessToken, login, logout, LoginError } from './auth.ts';
 import { mapSourcePage } from './import-adapter.ts';
 import { requireSourceSelection, selectSourceRecords, SourceSelectionError } from './source-selection.ts';
 
-const BROKER_RESOURCE = 'https://gigi-connector.createsomething.workers.dev';
+const BROKER_RESOURCE = COMPANION_RESOURCE;
 
 export type RunnerRequest = { operation: string; input: Record<string, unknown> };
 export type RunnerResult = { ok: true; value: unknown } | { ok: false; error: { operation: string; reason: string; detail?: CtxError['detail'] } };
