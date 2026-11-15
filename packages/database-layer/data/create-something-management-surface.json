@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:management-surface:internal",
-  "generatedAt": "2026-11-14T15:14:22.841Z",
+  "generatedAt": "2026-11-15T15:06:52.212Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceReadinessId": "substrate:create-something:operating-slice-readiness:internal",
@@ -6663,6 +6663,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-agent-legibility-contract-md",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-agent-legibility-contract-md",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-guide-docs-guides-ai-native-sdlc-md",
+      "kind": "topology_record",
+      "title": "AI_NATIVE_SDLC.md",
+      "recordId": "substrate:create-something:guide:docs-guides-ai-native-sdlc-md",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-ai-native-sdlc-md",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-ai-native-sdlc-md",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"

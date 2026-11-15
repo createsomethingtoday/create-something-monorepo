@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-review:internal",
-  "generatedAt": "2026-11-14T15:14:21.908Z",
+  "generatedAt": "2026-11-15T15:06:51.232Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceCoverageId": "substrate:create-something:atlas-coverage:internal",
@@ -210,6 +210,7 @@
         "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
         "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md",
         "substrate:create-something:guide:docs-guides-agent-legibility-contract-md",
+        "substrate:create-something:guide:docs-guides-ai-native-sdlc-md",
         "substrate:create-something:guide:docs-guides-antigravity-mcp-enablement-md",
         "substrate:create-something:guide:docs-guides-arena-taste-integration-md",
         "substrate:create-something:guide:docs-guides-atlas-linear-integration-md",
@@ -292,7 +293,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Mixed",
       "surface": "guide",
-      "nodeCount": 87,
+      "nodeCount": 88,
       "evidence": [
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
@@ -303,9 +304,9 @@
         "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
         "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md",
         "docs/guides/AGENT_LEGIBILITY_CONTRACT.md",
+        "docs/guides/AI_NATIVE_SDLC.md",
         "docs/guides/ANTIGRAVITY_MCP_ENABLEMENT.md",
-        "docs/guides/ARENA_TASTE_INTEGRATION.md",
-        "docs/guides/ATLAS_LINEAR_INTEGRATION.md"
+        "docs/guides/ARENA_TASTE_INTEGRATION.md"
       ],
       "validationCommands": [
         "pnpm --filter @create-something/database-layer atlas-coverage:generate",
