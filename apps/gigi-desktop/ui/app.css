@@ -555,7 +555,7 @@ details[open]:not(.reference-dropdown) > summary {
 .chat-composer { padding-block: var(--spacing-2); }
 .music-library-row { padding-block: var(--spacing-2); }
 @media (max-width: 64rem) {
- .dev-calendar-day.is-empty .dev-calendar-day-heading { padding-block: 2px; }
+ .dev-calendar-day.is-empty .dev-calendar-day-heading { padding-block: var(--spacing-0-5); }
  .dev-calendar-day.is-empty { min-block-size: 0; }
  .music-search-controls { gap: var(--spacing-2); }
 }
@@ -563,7 +563,7 @@ details[open]:not(.reference-dropdown) > summary {
 /* Compact recovery surfaces keep saved work in the first viewport. */
 .dev-empty-days summary { cursor: pointer; padding: var(--spacing-2); color: var(--color-text-secondary); }
 .dev-empty-days { border-block-start: var(--border-width) solid var(--color-border); }
-.source-coverage { border-inline-start: 3px solid var(--color-border); padding-inline-start: var(--spacing-3); }
+.source-coverage { border-inline-start: calc(var(--border-width) * 3) solid var(--color-border); padding-inline-start: var(--spacing-3); }
 .source-preview-review ul { margin-block: 0; padding-inline-start: var(--spacing-5); }
 .source-preview-review li p { margin-block: var(--spacing-1); }
 .music-library .music-record-summary { min-inline-size: 0; }
