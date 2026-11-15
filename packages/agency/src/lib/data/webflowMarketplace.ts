@@ -10,13 +10,13 @@ export const webflowStudies = [
     "focus": "Product development, workflow design, integration engineering, and reusable review guidance",
     "problem": "A Marketplace experience extends far beyond a listing page. A creator needs to understand the requirements, prepare an asset, submit it, respond to feedback, and maintain the listing. Reviewers need the right version, reliable evidence, and clear authority to act. When those steps live in separate tools, people have to reconstruct the workflow themselves.",
     "approach": [
-      "I worked across that lifecycle: the Asset Dashboard, the Webflow Way Validator, App Review Preflight, template and app submission flows, review tools using the Model Context Protocol (MCP), developer skills, the public Apps Marketplace, and the Marketplace listings experience inside the creator workspace. Each project addressed a different handoff.",
+      "I worked on the Asset Dashboard, Webflow Way Validator, App Review Preflight, and template and app submission flows. I also worked on review tools using the Model Context Protocol (MCP), developer skills, the public Apps Marketplace, and Marketplace listings inside the creator workspace. Each project addressed a different handoff.",
       "The creator tools bring the next action closer to the work. The Validator checks template requirements in Designer. App Review Preflight examines app artifacts and records evidence about runtime behavior. Submission forms connect those results to intake. The Asset Dashboard makes assets, review progress, editing, and Marketplace insights available in one workspace.",
       "The review tools address the other side of the handoff. MCP gives a reviewer’s AI assistant structured access to queue and version context. Skills turn recurring review problems into preparation and remediation guidance. Both preserve the distinction between collecting evidence and making a Marketplace decision.",
-      "The public Marketplace and creator workspace required a different kind of care: accessible controls, controlled category rollouts, curation tools, understandable labels, and navigation that returns a creator to the correct listing and workspace. These details determine whether the surrounding system feels coherent."
+      "The public Marketplace and creator workspace required accessible controls, controlled category rollouts, curation tools, and understandable labels. Navigation also needed to return creators to the correct listing and workspace. These details determine whether the surrounding system feels coherent."
     ],
     "decision": "The central design decision was to keep evidence states explicit. A request accepted by a server is different from a confirmed review record. A passing validation run is different from approval. A feature merged behind a flag is different from a broadly released experience.",
-    "result": "The documented result is a set of connected product surfaces and operational tools, with current implementation evidence and historical examples of deployment and workflow verification. The portfolio demonstrates the breadth of the work and the decisions connecting it. It does not establish a measured increase in revenue, adoption, approval rate, or review speed.",
+    "result": "The documented result is a set of connected interfaces and operational tools. Evidence includes current implementation sources and historical examples of deployment and workflow verification. The portfolio demonstrates the breadth of the work and the decisions connecting it. It does not establish a measured increase in revenue, adoption, approval rate, or review speed.",
     "limit": "This is a retrospective portfolio draft. Historical CTX reports support the narrative; they are not a fresh audit of every production surface. Exact dates, role titles, collaborators, and the division of ownership still need a final factual read.",
     "captures": [
       {
@@ -165,15 +165,15 @@ export const webflowStudies = [
     "label": "Template/App Review MCP",
     "title": "Bring review context to the reviewer’s tools",
     "deck": "Model Context Protocol · Review operations",
-    "summary": "I built review tooling that gives an AI assistant structured access to Marketplace queues, asset versions, prior feedback, and submission evidence, with explicit limits on changes.",
+    "summary": "I built review tools that give an AI assistant structured access to Marketplace queues, asset versions, prior feedback, and submission evidence. The tools explicitly limit changes.",
     "focus": "Template and app review integrations, evidence retrieval, and write boundaries",
-    "problem": "A reviewer needs to understand the current version and prior decisions before deciding what to do next. Reconstructing that context across operational systems adds work, and an assistant with broad write access can introduce a second problem: acting on incomplete or stale information.",
+    "problem": "A reviewer needs to understand the current version and prior decisions before deciding what to do next. Reviewers must reconstruct that context across operational systems. An assistant with broad write access can also act on incomplete or stale information.",
     "approach": [
       "The Template and App Review MCPs expose domain-specific review tools. They bring record context into the reviewer’s agent workflow while retaining important differences between template and app operations.",
       "Template self-assignment uses runtime reviewer identity. Supplemental agent notes have their own feedback field. Confirmed app status changes require an expected current status, so stale state or missing confirmation can fail explicitly. App reviewer assignment remains read-only through this interface. Preflight evidence is available as review context rather than an approval shortcut."
     ],
     "decision": "Make the authority to act as explicit as the evidence. Tool access, reviewer ownership, confirmation, and the freshness of the underlying record all affect which action is valid.",
-    "result": "The new offline evidence replay shows eight actual production-handler calls with synthetic in-memory clients: queue and context reads, confirmation and stale-state refusals, reviewer self-assignment, the review contract, and supplemental-only notes. Assertions passed with zero network attempts or external writes.",
+    "result": "The new offline evidence replay shows eight actual production-handler calls with synthetic in-memory clients. These cover queue and context reads, confirmation and stale-state refusals, reviewer self-assignment, the review contract, and supplemental-only notes. Assertions passed with zero network attempts or external writes.",
     "limit": "The recording is an offline replay of real handler output. It does not demonstrate live MCP transport, reviewer authentication, Airtable retrieval, or production review operations.",
     "captures": [
       {
@@ -223,7 +223,7 @@ export const webflowStudies = [
       "The editor return-path work preserves the originating listings address, including the workspace and tab. It also handles unsaved changes: cancelling the leave action keeps the creator in the editor, while confirming returns them to the listings context. Historical live verification recorded that path without saving an edit."
     ],
     "decision": "Preserve the creator’s location across application boundaries. Naming, navigation, and unsaved-change behavior are part of the same task, even when the editor and workspace live in different applications.",
-    "result": "The new authenticated capture shows Marketplace listings in the owned Create Something workspace, its three app listings, and the search filter narrowing and restoring the list. Historical CTX separately records the template-editor return-path test and the staged migration.",
+    "result": "The new authenticated capture shows Marketplace listings in the owned Create Something workspace and its three app listings. The search filter narrows and restores the list. Historical CTX separately records the template-editor return-path test and the staged migration.",
     "limit": "The new recording demonstrates owned app listing discovery and search. It does not exercise a template editor, the unsaved-change prompt, or the bookmark/email fallback. Historical editor evidence must not be presented as newly recorded behavior.",
     "captures": [
       {
@@ -243,7 +243,7 @@ export const webflowStages = [
     "end": 59.5,
     "title": "Prepare before review.",
     "prompt": "Inspect app setup and source guidance.",
-    "evidence": "Validator shows setup; Preflight shows connected input paths. Skills is an offline source/static-evaluation replay. No app analysis runs here."
+    "evidence": "Validator shows setup. Preflight shows connected input paths. Skills uses an offline source and static-evaluation replay. This recording does not run app analysis."
   },
   {
     "label": "Submit",
@@ -257,17 +257,17 @@ export const webflowStages = [
     "label": "Review",
     "start": 84.2,
     "end": 117.23333333333333,
-    "title": "Keep evidence and authority separate.",
+    "title": "Check evidence before a review decision.",
     "prompt": "Inspect actual saved handler results.",
-    "evidence": "Offline replay with synthetic clients; no live reviewer authentication or Airtable operation."
+    "evidence": "This offline replay uses synthetic clients. It does not authenticate a live reviewer or perform an Airtable operation."
   },
   {
     "label": "Manage",
     "start": 117.23333333333333,
     "end": 151.13333333333333,
-    "title": "Keep the asset in context.",
+    "title": "Manage the asset and its listing.",
     "prompt": "Inspect the test Dashboard and owned app listings.",
-    "evidence": "Dashboard footage is historical. Listings shows search; no edit or save."
+    "evidence": "The Dashboard recording is historical. Listings shows search. The recording does not edit or save a listing."
   },
   {
     "label": "Discover",
@@ -275,6 +275,6 @@ export const webflowStages = [
     "end": 168.26666666666668,
     "title": "Find the category.",
     "prompt": "Inspect current public Campaigns navigation and results.",
-    "evidence": "Public browsing only. No install or admin curation."
+    "evidence": "The recording shows public browsing. It does not install apps or change Marketplace content."
   }
 ];

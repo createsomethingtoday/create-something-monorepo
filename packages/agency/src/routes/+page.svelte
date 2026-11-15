@@ -8,7 +8,7 @@
     {
       name: 'Map',
       description:
-        'A plan showing how work moves between people and tools, and where AI could help.',
+        'A workflow plan that identifies tasks, people, tools, and possible uses for AI.',
       type: 'First workflow map',
       price: 0,
       priceDescription: `${PUBLIC_PRICING.map.publicStarterLabel}; ${PUBLIC_PRICING.map.workspaceLabel}`
@@ -16,7 +16,7 @@
     {
       name: 'Agent Foundation',
       description:
-        'An AI agent that does one agreed job, with code, instructions, tests, and a handover.',
+        'Software that uses AI to perform one agreed task. Includes code, instructions, tests, and a handover.',
       type: 'Fixed-scope Build',
       priceDescription: 'Quoted after fit; production promoted separately'
     },
@@ -45,26 +45,26 @@
     },
     {
       "question": "What costs extra?",
-      "answer": "Project-specific AI development, testing and production usage, hosting and third-party services are budgeted separately. You approve the budget first. Our everyday coding tools are our expense. More API credit does not add delivery capacity."
+      "answer": "We budget project-specific AI development, testing, production usage, hosting and third-party services separately. You approve the budget first. Our everyday coding tools are our expense. More API credit does not add delivery capacity."
     },
     {
       "question": "Who delivers the service?",
-      "answer": "Micah Johnson and Huzaifa Tofeeq, our forward-deployed engineer, deliver the service as a small team, with agents assisting the work. The dedicated member portal is in development. We confirm resource access, session times and response times before payment."
+      "answer": "Micah Johnson and Huzaifa Tofeeq deliver the service. Huzaifa is our forward-deployed engineer. AI agents assist the team with software tasks. The dedicated member portal is in development. We confirm resource access, session times and response times before payment."
     },
     {
       "question": "What does our team keep?",
-      "answer": "After full payment, you own commissioned deliverables under your agreement, except reusable provider tools, which are licensed for continued use. You keep the agreed code, tests, instructions and project history."
+      "answer": "After full payment, you own commissioned deliverables under your agreement. Reusable provider tools remain licensed for continued use. You keep the agreed code, tests, instructions and project history."
     },
     {
       "question": "Can we cancel?",
-      "answer": "Cancel before your next renewal by emailing support@createsomething.io to stop future membership charges. Support continues through your paid period while we hand over your code and documentation, document open work, and plan the transition. If you need more help afterward, we’ll agree on the scope and price before extending support. Separately scoped projects follow their agreed terms."
+      "answer": "Cancel before your next renewal by emailing support@createsomething.io to stop future membership charges. Support continues through your paid period. We hand over your code and documentation. We document open work and plan the transition. If you need more help afterward, we agree on the scope and price before we extend support. Separately scoped projects follow their agreed terms."
     }
   ];
 </script>
 
 <SEO
   title="Your tools should work together | CREATE SOMETHING .agency"
-  description="We connect your tools and AI, fix what breaks, and leave your team in control. Technical support from $900/month."
+  description="We connect your tools and AI. We repair software problems. Your team approves the work. Technical support from $900/month."
   keywords="AI-native technical support, workflow support, software engineering, client-owned AI agent, agent foundation"
   ogImage="/og-image.png"
   propertyName="agency"
