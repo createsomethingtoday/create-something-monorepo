@@ -1,6 +1,5 @@
 <script lang="ts">
-  import TaskOpening from '$lib/components/TaskOpening.svelte';
-  import ResearchTrace from '$lib/components/ResearchTrace.svelte';
+  import '$lib/styles/field-index.css';
   import type { PageData } from './$types';
   import { PropertyFunnel, SEO, type PerformanceDecisionItem } from '@create-something/canon';
   import type { Paper } from '@create-something/canon/types';
@@ -8,7 +7,9 @@
   let { data }: { data: PageData } = $props();
 
   const papers = $derived(data.papers);
-  const categories = $derived(data.categories ?? []);
+  const categoryCount = $derived(
+    new Set(papers.map((paper) => paper.category).filter(Boolean)).size
+  );
 
   function isFileBasedPaper(paper: unknown): boolean {
     return (
@@ -32,10 +33,16 @@
 
   const proofMetrics = $derived.by(() => [
     { value: `${papers.length}`, label: 'published experiments + papers' },
-    { value: `${categories.length}`, label: 'research categories' },
+    { value: `${categoryCount}`, label: 'research categories' },
     { value: `${featuredExperiments.length}`, label: 'featured artifacts to inspect first' },
     { value: '3', label: 'database / automation / judgment layers' }
   ]);
+
+  const decisionIntroductions = [
+    'Inspect the workflow, method, and implementation receipts behind each claim.',
+    'Test timing, state, and failure behavior in the workbench.',
+    'Give the delivery handoff explicit controls, recovery, and an owner.'
+  ];
 
   const decisionStates: PerformanceDecisionItem[] = [
     {
@@ -104,24 +111,35 @@
 />
 
 <div class="io-research-home">
-  <TaskOpening scene="review-nook" caption="Soft felt Canon beside a curled paper sheet in a warmly lit wooden reading nook.">
-<div class="research-opening" aria-labelledby="research-title">
-    <div class="research-opening-copy">
-    <p class="research-eyebrow">CREATE SOMETHING .io / Research + field evidence</p>
-    <h1 id="research-title">Research for automation you can defend.</h1>
-    <p class="research-lede">
-      Experiments, papers, and field notes. Inspect the method and evidence before carrying a pattern into your next build.
+  <section class="field-opening" aria-labelledby="research-title">
+    <div class="field-opening-title">
+      <p class="research-eyebrow">CREATE SOMETHING .io / Research + field evidence</p>
+      <h1 id="research-title">Research for automation you can defend.</h1>
+    </div>
+    <figure class="field-opening-art">
+      <img
+        src="/images/field-index/paper-comparison-v1-960.webp"
+        srcset="/images/field-index/paper-comparison-v1-640.webp 640w, /images/field-index/paper-comparison-v1-960.webp 960w, /images/field-index/paper-comparison-v1-1536.webp 1536w"
+        sizes="(min-width: 1200px) 480px, (min-width: 768px) 42vw, calc(100vw - 32px)"
+        width="1536"
+        height="1024"
+        alt="Felt Canon lifts a curved paper model above its flat reference, comparing the two on a workshop mat."
+        fetchpriority="high"
+        decoding="async"
+      />
+      <figcaption>Concept illustration</figcaption>
+    </figure>
+    <p class="research-lede field-opening-lede">
+      Experiments, papers, and field notes. Inspect the method and evidence before carrying a
+      pattern into your next build.
     </p>
-    <div class="research-actions">
+    <div class="research-actions field-opening-actions">
       <a class="research-action research-action-primary" href="/papers"
-        >Read The Papers <span aria-hidden="true">↗</span></a
+        >Read the papers <span aria-hidden="true">↗</span></a
       >
-      <a class="research-action" href="/experiments">Browse Experiments</a>
+      <a class="research-action" href="/experiments">Browse experiments</a>
     </div>
-    </div>
-  </div>
-</TaskOpening>
-
+  </section>
 
   <section class="research-collection" aria-labelledby="featured-title">
     <div class="research-section-heading">
@@ -138,7 +156,6 @@
           class="research-artifact"
           href={(paper as Paper & { route?: string }).route || `/experiments/${paper.slug}`}
         >
-          <span class="research-eyebrow">{paper.category || 'Research artifact'}</span>
           <h3>{paper.title}</h3>
           <p>
             {paper.excerpt_short ||
@@ -158,19 +175,16 @@
     </div>
   </section>
 
-<div class="opening-proof">
-<dl class="research-metrics">
+  <div class="opening-proof">
+    <dl class="research-metrics">
       {#each proofMetrics as metric}
         <div>
           <dt>{metric.label}</dt>
           <dd>{metric.value}</dd>
         </div>
-
       {/each}
     </dl>
-</div>
-
-  <ResearchTrace />
+  </div>
 
   <section class="research-method" aria-labelledby="method-title">
     <div class="research-section-heading">
@@ -189,12 +203,13 @@
         <article>
           <p class="research-eyebrow">0{index + 1} / {decision.label} · {decision.summary}</p>
           <h3>{decision.title}</h3>
-          <p>{decision.detail}</p>
+          <p>{decisionIntroductions[index]}</p>
           <details>
             <summary>Evidence to inspect</summary>
-          <ul>
-            {#each decision.evidence ?? [] as item}<li>{item}</li>{/each}
-          </ul>
+            <p>{decision.detail}</p>
+            <ul>
+              {#each decision.evidence ?? [] as item}<li>{item}</li>{/each}
+            </ul>
           </details>
           <p class="research-receipts">{decision.receipts?.join(' / ')}</p>
           <div class="research-actions">
@@ -207,20 +222,26 @@
     </div>
   </section>
 
-  <PropertyFunnel
-    current="io"
-    heading="Move the evidence into its next operating surface."
-    description=".io does the reading so the rest of CREATE SOMETHING can move faster. Start with the methodology, inspect the papers and graph, use .space for runtime validation, .learn for guided practice, .ltd for the thesis, and .agency when a named workflow is ready to map."
-    density="compact"
-    handoff={{
-      owner: 'Research operator',
-      authority: 'Evidence before promotion',
-      proof: 'Paper + graph + method',
-      state: 'ready'
-    }}
-  />
+  <details class="field-next">
+    <summary>Where this research goes next</summary>
+    <PropertyFunnel
+      current="io"
+      heading="Move the evidence into its next operating surface."
+      description=".io does the reading so the rest of CREATE SOMETHING can move faster. Start with the methodology, inspect the papers and graph, use .space for runtime validation, .learn for guided practice, .ltd for the thesis, and .agency when a named workflow is ready to map."
+      density="compact"
+      handoff={{
+        owner: 'Research operator',
+        authority: 'Evidence before promotion',
+        proof: 'Paper + graph + method',
+        state: 'ready'
+      }}
+    />
+  </details>
 </div>
 
 <style>
-  .opening-proof { width: min(80rem, 100%); margin: 1.5rem auto 2rem; }
+  .opening-proof {
+    width: min(80rem, 100%);
+    margin: 1.5rem auto 2rem;
+  }
 </style>
