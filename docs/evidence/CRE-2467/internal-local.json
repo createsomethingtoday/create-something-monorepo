@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "issue": "CRE-2467",
+  "owner": "CREATE SOMETHING engineering",
+  "scope": "Local change evidence foundation",
+  "acceptance": [
+    "CLI validation and reporting",
+    "Goldin onboarding plan"
+  ],
+  "policy": [
+    "docs/policies/v1/policy.git-light-agent-delivery.v1.md"
+  ],
+  "allowedActions": [
+    "Scoped local implementation and commit; no merge/deploy"
+  ],
+  "sourceRevision": "5f9bfab3f6a9069332d650f42a09f5bd18d806a7",
+  "stage": "local",
+  "gates": {
+    "functional": {
+      "status": "passed",
+      "evidence": [
+        "node --test scripts/change-evidence/cli.test.mjs: 6 passed"
+      ],
+      "limits": "Local tests only; receipts not authenticated; source SHA is pre-change base with scoped diff"
+    },
+    "product": {
+      "status": "not-applicable",
+      "evidence": [],
+      "limits": "No UI"
+    },
+    "release": {
+      "status": "untested",
+      "evidence": [],
+      "limits": "Pending"
+    }
+  },
+  "independentReview": {
+    "status": "pending",
+    "reviewer": "",
+    "evidence": []
+  },
+  "release": {
+    "authorization": "",
+    "artifact": "",
+    "liveVerification": [],
+    "rollback": ""
+  },
+  "followUp": [
+    "Independent parent review",
+    "Goldin selected; baseline and activation pending",
+    "Resolve missing pnpm and ownership registration"
+  ],
+  "metrics": []
+}
