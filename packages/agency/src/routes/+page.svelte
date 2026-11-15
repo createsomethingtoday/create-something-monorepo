@@ -63,8 +63,8 @@
 </script>
 
 <SEO
-  title="Your tools should work together | CREATE SOMETHING .agency"
-  description="We connect your tools and AI. We repair software problems. Your team approves the work. Technical support from $900/month."
+  title="Connect AI to your tools | CREATE SOMETHING .agency"
+  description="We connect your tools and make AI systems for your team. You select the tasks and give approval for system changes. We do system tests and show the results. Technical support from $900/month."
   keywords="AI-native technical support, workflow support, software engineering, client-owned AI agent, agent foundation"
   ogImage="/og-image.png"
   propertyName="agency"
