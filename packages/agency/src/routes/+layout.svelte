@@ -440,7 +440,8 @@
   .film-shell.webflow-portfolio-shell :global(main#main-content) { padding-top:0; }
   .film-shell.webflow-portfolio-shell :global(.nav-editorial.nav-fixed) { top:0; left:0; right:0; border:0; border-radius:0; background:var(--color-performance-mode-campaign-surface); }
   .webflow-portfolio-shell :global(.nav-editorial :is(a,button)) { color:var(--color-performance-mode-campaign-ink); }
-  .webflow-portfolio-shell :global(.nav-editorial .nav-logo-asset) { filter:invert(1); }
+  .webflow-portfolio-shell :global(.nav-editorial .nav-logo-asset) { filter:none; }
+  .webflow-portfolio-shell :global(.nav-editorial .nav-menu-button) { background:transparent; color:var(--color-performance-mode-campaign-ink); border-color:currentColor; }
   .webflow-portfolio-shell :global(.nav-editorial .nav-cta) { background:var(--color-performance-fg-primary); color:var(--color-performance-bg-pure); }
   .webflow-portfolio-shell :global(.nav-editorial :is(.nav-mobile-menu,.nav-dropdown__menu)) { background:var(--color-performance-bg-elevated); color:var(--color-performance-fg-primary); }
 

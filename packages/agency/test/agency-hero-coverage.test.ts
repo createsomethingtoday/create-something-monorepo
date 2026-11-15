@@ -49,6 +49,26 @@ test('coverage selectors retain their source markup contracts', () => {
   assert.ok(component.includes('(max-width: 800px)'));
 });
 
+test('Agency scenes use explicit non-negative art and elevated copy layers', () => {
+  const frame = readFileSync(new URL('../src/lib/components/AgencyHeroFrame.svelte', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('../src/lib/styles/measured-pages.css', import.meta.url), 'utf8');
+  assert.match(frame, /\.agency-hero-scene__art\s*\{[^}]*z-index:0/);
+  assert.match(frame, /\.agency-hero-scene__copy\s*\{[^}]*position:relative;[^}]*z-index:1/);
+  assert.match(css, /\.agency-surface \.canon-scene-lead > \.canon-scene-lead__art\s*\{[^}]*z-index:0/);
+  assert.ok(css.includes("#main-content .performance-campaign-opening[data-background='scene']::before { display:none; }"));
+  assert.match(css, /\.agency-surface \.canon-scene-lead > \.canon-scene-lead__copy\s*\{[^}]*position:relative;[^}]*z-index:1/);
+  // display:contents wrappers cannot own a stacking level: lift the actual
+  // grid children too, without altering their sizing or semantic order.
+  assert.match(css, /header:has\(> div \+ dl\) > div:first-child\s*\{[^}]*z-index:1/);
+  assert.match(css, /:is\(\.guide-back,\.guide-eyebrow,h1,\.guide-answer,\.guide-actions\)\s*\{[^}]*z-index:1/);
+});
+
+test('light portfolio navigation preserves its black outlined logo', () => {
+  const layout = readFileSync(new URL('../src/routes/+layout.svelte', import.meta.url), 'utf8');
+  assert.ok(layout.includes('.webflow-portfolio-shell :global(.nav-editorial .nav-logo-asset) { filter:none; }'));
+  assert.match(layout, /\.webflow-portfolio-shell :global\(\.nav-editorial \.nav-menu-button\)\s*\{ background:transparent; color:var\(--color-performance-mode-campaign-ink\); border-color:currentColor;/);
+});
+
 test('decorative backgrounds retain accessibility and copy/proof separation', () => {
   const css = readFileSync(new URL('../src/lib/styles/hero-background.css', import.meta.url), 'utf8');
   assert.match(css, /pointer-events: none/);

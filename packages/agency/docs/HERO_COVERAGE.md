@@ -39,6 +39,18 @@ The integrated browser sweep covers all 51 non-home templates at 320, 390, 768, 
 
 The operator accepted the original local work and subsequently requested deployment. Original independent visual critiques did **not** meet the strict nine-per-dimension target, primarily because of mobile pacing and repeated imagery. Human acceptance does not change those results. Production integration requires fresh correctness/release review, not a fictional passing critic score. Booking execution and external scheduler availability are outside this visual release.
 
+## Mobile paint reliability (CRE-2473)
+
+An iPhone `/products` screenshot showed a blank reserved-art area despite a valid CSS image URL. CSS presence and overflow checks alone therefore do not establish visual success.
+
+Agency now gives its active container-query scene artwork a non-negative paint layer and places copy above it. Flattened `display: contents` openings lift their actual grid children, not only the boxless wrapper. The Canon scene override is Agency-scoped and more specific than the component's scoped CSS, avoiding stylesheet-order dependence. Other properties' Canon behavior is unchanged.
+
+A separate reproducible defect was found during the full mobile audit: the legacy operator-palette `::before` mask could cover an entire scene—including copy—with 90% black on mobile. Scene-backed campaign openings now suppress that outer mask; their own artwork contrast treatment remains. Light Webflow portfolio headers also keep their black logo and a visible outlined menu control. Dormant legacy footer-art rules are unchanged.
+
+Regression tests guard layering, specificity, scene-only mask removal and light-header contrast. Browser review must decode the selected image, inspect actual captured artwork pixels, and visually inspect the resulting scene—not merely look for `background-image`. Review all public templates, viewport overflow, controls and no-JS output. Await hydration and the layout's 50ms enter-navigation scroll reset before positioning screenshots; early captures and incorrectly offset crops are not valid paint evidence.
+
+The available browser is Chromium with mobile/touch emulation, not physical iPhone Safari. A passing emulated sweep must not be represented as confirmation that the reported WebKit/device symptom is resolved. Keep that verification limit in the release receipt.
+
 ## Rollback
 
 Revert the scoped CRE-2472 promotion commit through the normal Agency Pages workflow, then verify the live surface. If immediate recovery is necessary, use the previously verified Cloudflare Pages deployment recorded in the Linear release receipt. Do not deploy or reset the operator's unrelated dirty checkout.
