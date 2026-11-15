@@ -2,12 +2,12 @@
   "id": "substrate:create-something:topology-diagnostics:internal",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-11-14T01:59:16.833Z",
+  "generatedAt": "2026-11-15T15:06:50.955Z",
   "summary": {
     "valueState": "connected_map_with_review_signals",
-    "nodes": 574,
-    "edges": 1198,
-    "mapped": 574,
+    "nodes": 576,
+    "edges": 1204,
+    "mapped": 576,
     "hardGapCount": 0,
     "reviewSignalCount": 6,
     "exactDuplicatePathCount": 0,
@@ -22,11 +22,11 @@
       "client": 8,
       "doc": 6,
       "policy": 64,
-      "guide": 86,
+      "guide": 88,
       "config": 24
     },
     "tierCounts": {
-      "Mixed": 143,
+      "Mixed": 145,
       "Judgment": 109,
       "Automation": 293,
       "Database": 29
@@ -64,7 +64,7 @@
       "evidence": [
         "Automation=293",
         "Database=29",
-        "Total nodes=574"
+        "Total nodes=576"
       ],
       "nodeIds": [],
       "paths": [],
@@ -188,7 +188,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "guide surface review",
-      "summary": "86 record(s) are classified as guide.",
+      "summary": "88 record(s) are classified as guide.",
       "evidence": [
         "AGENCY_ARTICLE_IMAGE_WORKFLOW.md: docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md: docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
@@ -206,9 +206,9 @@
         "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
         "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md",
         "substrate:create-something:guide:docs-guides-agent-legibility-contract-md",
+        "substrate:create-something:guide:docs-guides-ai-native-sdlc-md",
         "substrate:create-something:guide:docs-guides-antigravity-mcp-enablement-md",
-        "substrate:create-something:guide:docs-guides-arena-taste-integration-md",
-        "substrate:create-something:guide:docs-guides-atlas-linear-integration-md"
+        "substrate:create-something:guide:docs-guides-arena-taste-integration-md"
       ],
       "paths": [
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
@@ -220,9 +220,9 @@
         "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
         "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md",
         "docs/guides/AGENT_LEGIBILITY_CONTRACT.md",
+        "docs/guides/AI_NATIVE_SDLC.md",
         "docs/guides/ANTIGRAVITY_MCP_ENABLEMENT.md",
-        "docs/guides/ARENA_TASTE_INTEGRATION.md",
-        "docs/guides/ATLAS_LINEAR_INTEGRATION.md"
+        "docs/guides/ARENA_TASTE_INTEGRATION.md"
       ],
       "nextAction": "Use group explanation before drawing product or business conclusions from this surface."
     },
