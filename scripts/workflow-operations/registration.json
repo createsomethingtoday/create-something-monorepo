@@ -42,7 +42,7 @@
     },
     {
       "path": "packages/database-layer/data/create-something-internal-topology.json",
-      "sha256": "sha256:99836cccab3040035826f175dda49e6033a6851fdbc151407bad0eefd7ba3a19"
+      "sha256": "sha256:1acb442e80634bbf38f8aeec3f5eb4822dfe5de99d8731abe2f6db82fd8a7442"
     }
   ]
 }
