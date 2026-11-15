@@ -56,6 +56,12 @@ test('every chat control uses the Webflow focus treatment and the composer has a
   assert.match(html, /outline: 2px solid var\(--tmchat-accent, #146ef5\); outline-offset: 2px;/);
   assert.match(html, /--tmchat-accent: #146ef5;/, 'the accent is themable, defaulting to Webflow blue');
   assert.match(html, /<textarea[^>]*aria-label="Describe the site you want to build"/);
+  // The field sits inside one bordered composer box, which carries its focus ring.
+  assert.match(
+    html,
+    /\.tmchat-composer:focus-within \{ border-color: var\(--tmchat-accent, #146ef5\); box-shadow: 0 0 0 3px var\(--tmchat-accent-ring\); \}/,
+  );
+  assert.match(html, /<button[^>]*class="tmchat-send"[^>]*aria-label="Send"/);
 });
 
 test('an active conversation compacts first-use guidance behind an explicit disclosure button', () => {
@@ -224,7 +230,7 @@ test('agent progress uses Webflow-neutral surfaces with blue reserved for curren
 
   assert.match(
     html,
-    /\.tmchat-progress\s*\{[^}]*border: 1px solid #ececec; border-radius: 8px;[^}]*background: #fafafa;/s,
+    /\.tmchat-progress\s*\{[^}]*border: 1px solid #e0e0e0; border-radius: 8px;[^}]*background: #fff;/s,
   );
   assert.match(
     html,
@@ -233,11 +239,11 @@ test('agent progress uses Webflow-neutral surfaces with blue reserved for curren
   assert.match(html, /\.tmchat-progress-steps li\s*\{[^}]*color: #6b6b6b;/s);
   assert.match(
     html,
-    /\.tmchat-progress-receipt\s*\{[^}]*border-top: 1px solid #ececec;[^}]*color: #5b5b5b;/s,
+    /\.tmchat-progress-receipt\s*\{[^}]*border-top: 1px solid #e0e0e0;[^}]*color: #5a5a5a;/s,
   );
   assert.match(
     html,
-    /\.tmchat-progress-skeleton-card\s*\{[^}]*#ececec 20%, #f5f5f5 40%, #ececec 60%/s,
+    /\.tmchat-progress-skeleton-card\s*\{[^}]*aspect-ratio: 150 \/ 199;[^}]*#f0f0f0 20%, #f8f8f8 40%, #f0f0f0 60%/s,
   );
   assert.doesNotMatch(html, /\.tmchat-progress\s*\{[^}]*linear-gradient/s);
 });
@@ -445,6 +451,9 @@ test('TemplateChat exposes the worker prompt limit before submission', () => {
   assert.match(html, /maxLength="4000"/);
   assert.match(html, /aria-describedby="tmchat-input-limit-/);
   assert.match(html, /4,000 character limit/);
+  // Quiet until the draft nears the limit, but still in the tree for the description.
+  assert.match(html, /<span id="tmchat-input-limit-[^"]+" class="tmchat-counter quiet">0 \/ 4,000 character limit<\/span>/);
+  assert.match(html, /\.tmchat-counter\.quiet \{ visibility: hidden;/);
 });
 
 test('a stopped turn is acknowledged and can be retried without an empty assistant artifact', () => {
@@ -471,7 +480,7 @@ test('a stopped turn is acknowledged and can be retried without an empty assista
 
     assert.match(html, /class="tmchat-turn-status" data-outcome="stopped">Search stopped</);
     assert.match(html, /class="tmchat-outcome-announcement tmchat-sr-only"[^>]*>Search stopped\.</);
-    assert.match(html, />Try again</);
+    assert.match(html, /<button[^>]*class="tmchat-chip"[^>]*><svg[^>]*data-ui-icon="refresh-cw"[^>]*>.*?<\/svg> Try again<\/button>/);
     assert.equal((html.match(/class="tmchat-msg assistant"/g) ?? []).length, 0);
   } finally {
     if (originalWindow === undefined) delete (globalThis as { window?: Window }).window;

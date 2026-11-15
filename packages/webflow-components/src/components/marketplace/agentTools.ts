@@ -255,6 +255,14 @@ export interface MarketplaceAgentToolsOptions {
   /** Telemetry hook invoked after every tool execution. */
   onToolCall?: (info: { tool: string; ok: boolean; durationMs: number }) => void;
   fetchTimeoutMs?: number;
+  /** Origin for marketplace links in tool results. Default `https://webflow.com`. */
+  marketplaceOrigin?: string;
+  /**
+   * Host-owned tools for the current surface (detail, storefront, brief).
+   * Registered after the catalog tools with the same error and telemetry
+   * contract. A name that repeats a catalog tool is skipped.
+   */
+  additionalTools?: MarketplaceAgentTool[];
 }
 
 const CACHE_TTL_MS = 5 * 60_000;
@@ -571,6 +579,7 @@ export function createMarketplaceAgentTools(
   const apiBase = resolveAgentToolsApiBase(options.apiBase);
   const enablePageActions = options.enablePageActions !== false;
   const fetchTimeoutMs = options.fetchTimeoutMs ?? DEFAULT_FETCH_TIMEOUT_MS;
+  const allTemplatesUrl = `${(options.marketplaceOrigin || 'https://webflow.com').replace(/\/+$/, '')}/templates/all`;
 
   // The production proxy strips the worker's public cache headers, so keep the
   // same in-memory response cache the grid uses: full URL key, 5 min TTL.
@@ -784,7 +793,7 @@ export function createMarketplaceAgentTools(
           ok: false,
           message:
             'This page has no filter-aware grid. Open next_url to show the requested results.',
-          next_url: buildPageActionUrl('https://webflow.com/templates/all', payload),
+          next_url: buildPageActionUrl(allTemplatesUrl, payload),
           status: 'navigation_required',
         };
       }
@@ -836,7 +845,7 @@ export function createMarketplaceAgentTools(
           if (window.location.href !== targetHref) return { ok: false, status: 'superseded', href: window.location.href };
           if (state?.href === targetHref && state.status === 'error') return { ok: false, status: 'error', error: state.error, href: targetHref };
           if (state?.href === targetHref && state.result_href === targetHref && state.status === 'ready') {
-            return { ok: true, status: 'ready', applied: payload, href: targetHref, result_revision: state.result_revision, page: state.page, total_items: state.total_items, preserved_route_filters: routeOwned, note: routeOwned.length ? 'These filters come from the page path or component and remain active. Navigate to https://webflow.com/templates/all for an unfiltered view.' : 'Matching results are rendered.' };
+            return { ok: true, status: 'ready', applied: payload, href: targetHref, result_revision: state.result_revision, page: state.page, total_items: state.total_items, preserved_route_filters: routeOwned, note: routeOwned.length ? `These filters come from the page path or component and remain active. Navigate to ${allTemplatesUrl} for an unfiltered view.` : 'Matching results are rendered.' };
           }
           await new Promise(resolve => setTimeout(resolve, 100));
         }
@@ -849,7 +858,7 @@ export function createMarketplaceAgentTools(
         ...(routeOwned.length > 0
           ? {
               preserved_route_filters: routeOwned,
-              note: 'Query filters were cleared, but these filters come from the page path itself and remain active. Navigate to https://webflow.com/templates/all for a fully unfiltered view.',
+              note: `Query filters were cleared, but these filters come from the page path itself and remain active. Navigate to ${allTemplatesUrl} for a fully unfiltered view.`,
             }
           : {
               note: 'Filters applied to the visible page; the grid refetches and highlights render asynchronously.',
@@ -944,6 +953,9 @@ export function createMarketplaceAgentTools(
 
   const tools = [searchTemplates, listCategoriesAndStyles, getTemplate, getPageState];
   if (enablePageActions) tools.splice(3, 0, updatePageFilters);
+  for (const tool of options.additionalTools ?? []) {
+    if (!tools.some((existing) => existing.name === tool.name)) tools.push({ ...tool });
+  }
 
   // Always instrument: the error-to-result contract (thrown errors become
   // { ok: false, error }) must not depend on whether telemetry is enabled.

@@ -1,4 +1,4 @@
-import React, { FormEvent, useEffect, useMemo, useState } from 'react';
+import React, { type FormEvent, useEffect, useMemo, useState } from 'react';
 
 export type TemplateSearchBoxMode = 'route' | 'filter';
 export type TemplateSearchBoxVariant = 'hero' | 'sidebar' | 'compact';

@@ -6,6 +6,7 @@ import {
   registerMarketplaceAgentTools,
   resolveAgentToolsApiBase,
   type AgentToolsWindowHandle,
+  type MarketplaceAgentTool,
 } from './agentTools';
 import { annotationApiStatus } from './templateAnnotations';
 import { emitTemplateComponentEvent } from './templateTelemetry';
@@ -26,6 +27,10 @@ export interface MarketplaceAgentToolsProps {
   enableAnalytics?: boolean;
   /** Console logging for QA. */
   debug?: boolean;
+  /** Origin for marketplace links in tool results. Defaults to https://webflow.com. */
+  marketplaceOrigin?: string;
+  /** Host-owned tools for the current surface. Code-only; not a Designer prop. */
+  additionalTools?: MarketplaceAgentTool[];
 }
 
 /**
@@ -47,6 +52,8 @@ export const MarketplaceAgentTools: React.FC<MarketplaceAgentToolsProps> = ({
   enablePageActions = true,
   enableAnalytics = true,
   debug = false,
+  marketplaceOrigin,
+  additionalTools,
 }) => {
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return;
@@ -59,6 +66,8 @@ export const MarketplaceAgentTools: React.FC<MarketplaceAgentToolsProps> = ({
     const tools = createMarketplaceAgentTools({
       apiBase: resolveAgentToolsApiBase(apiBase),
       enablePageActions,
+      marketplaceOrigin,
+      additionalTools,
       onToolCall: enableAnalytics
         ? (info) => emitTemplateComponentEvent('agent-tools', 'tool_call', info)
         : undefined,
@@ -88,6 +97,8 @@ export const MarketplaceAgentTools: React.FC<MarketplaceAgentToolsProps> = ({
         `[MarketplaceAgentTools] v${MARKETPLACE_AGENT_TOOLS_VERSION} api=${result.api} tools=${result.registered} annotations=${annotations.available ? annotations.methods.join(',') || 'present' : 'none'}`,
       );
     }
+    // Registration is a page-global singleton; later prop changes are ignored.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiBase, debug, enableAnalytics, enablePageActions]);
 
   return <div hidden data-marketplace-component="agent-tools" />;

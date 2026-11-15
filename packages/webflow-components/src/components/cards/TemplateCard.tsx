@@ -1,4 +1,4 @@
-import React, { CSSProperties, useState, useCallback, memo } from 'react';
+import React, { type CSSProperties, useState, useCallback, memo } from 'react';
 
 export type TemplateCardBadge = 'none' | 'new' | 'featured' | 'reviewed' | 'top-rated';
 

@@ -992,3 +992,43 @@ test('homepage handoff retains the buyer request in a working results URL', asyn
   assert.equal(url.searchParams.get('q'),'studio');
   assert.equal(url.searchParams.get('free_only'),'true');
 });
+
+test('additionalTools register after catalog tools with the same error contract', async () => {
+  const calls: string[] = [];
+  const extra: MarketplaceAgentTool = {
+    name: 'get_surface',
+    description: 'Host tool',
+    inputSchema: { type: 'object', properties: {} },
+    annotations: { readOnlyHint: true },
+    async execute() {
+      throw new Error('surface unavailable');
+    },
+  };
+  const duplicate: MarketplaceAgentTool = { ...extra, name: 'search_templates' };
+  const tools = createMarketplaceAgentTools({
+    fetchImpl: stubFetch({}),
+    additionalTools: [extra, duplicate],
+    onToolCall: (info) => calls.push(`${info.tool}:${info.ok}`),
+  });
+  assert.deepEqual(
+    tools.map((tool) => tool.name),
+    ['search_templates', 'list_categories_and_styles', 'get_template', 'update_page_filters', 'get_page_state', 'get_surface'],
+  );
+  const result = (await runTool(tools, 'get_surface', {})) as { ok: boolean; error: string };
+  assert.deepEqual(result, { ok: false, error: 'surface unavailable' });
+  assert.deepEqual(calls, ['get_surface:false']);
+  // The caller's tool object is not mutated by instrumentation.
+  await assert.rejects(extra.execute({}), /surface unavailable/);
+});
+
+test('update_page_filters links to the configured marketplace origin when no grid exists', async () => {
+  installWindow({ location: { href: 'https://preview.example/templates', origin: 'https://preview.example' } });
+  installDocument({ querySelector: () => null, querySelectorAll: () => [] });
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}), marketplaceOrigin: 'https://preview.example/' });
+  const result = (await runTool(tools, 'update_page_filters', { q: 'portfolio' })) as {
+    status: string;
+    next_url: string;
+  };
+  assert.equal(result.status, 'navigation_required');
+  assert.match(result.next_url, /^https:\/\/preview\.example\/templates\/all\?/);
+});

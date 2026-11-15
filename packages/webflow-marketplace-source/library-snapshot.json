@@ -1,0 +1,14 @@
+{
+  "source": "webflow-library-submission-form",
+  "files": {
+    "components/library-intake.tsx": "26cc1d09227ba3e4b74cd19bdf5f235cd3c700d95f7fa01d53c980f8c7121770",
+    "components/country-picker.tsx": "f66c53352df2d2d4e85da08486fd5ed49db58d422279ce8a3387fcef9443cc29",
+    "lib/intake/constants.ts": "ec92ec73943a01ea6b570017c8d967b67c72a87d8c04ec2498614205c3be8aa8",
+    "app/globals.css": "1c677dded707f81764d367f039f1cc42b626269378d9c9f66d91a7473f7fd835"
+  },
+  "transforms": [
+    "Next Script to portable loader",
+    "API paths to disabled development adapter",
+    "build-time Turnstile unset for dev preview"
+  ]
+}

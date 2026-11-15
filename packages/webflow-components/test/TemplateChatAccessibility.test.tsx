@@ -31,7 +31,7 @@ test('progress steps and the disabled composer meet AA contrast', () => {
   assert.match(html, /li\[data-state="upcoming"\] \{ color: #6e6e6e; \}/);
   // White on #a9c6f7 measured ~1.7:1 and read as broken rather than unavailable.
   assert.doesNotMatch(html, /\.tmchat-send:disabled \{ background: #a9c6f7/);
-  assert.match(html, /\.tmchat-send:disabled \{ background: #ececec; color: #5b5b5b/);
+  assert.match(html, /\.tmchat-send:disabled \{ background: #f0f0f0; color: #5a5a5a/);
 });
 
 test('scrollable result decks show their overflow', () => {
