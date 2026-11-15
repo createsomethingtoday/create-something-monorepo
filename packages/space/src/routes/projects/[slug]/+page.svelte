@@ -12,7 +12,7 @@
   title={`${data.project.name} | CREATE SOMETHING .space`}
   description={data.project.summary}
   propertyName="space"
-  ogImage={data.project.image}
+  ogImage={data.project.slug === 'ground' ? '/images/workshop/ground-share.png' : data.project.image}
 />
 <article class="workshop">
   <TaskOpening scene={projectTaskScene(data.project.slug)} caption="Inspect the task, its boundary, and its evidence.">

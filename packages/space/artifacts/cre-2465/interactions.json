@@ -1,0 +1,28 @@
+{
+  "focus": {
+    "text": "",
+    "outline": "solid"
+  },
+  "buttons": [
+    {
+      "text": "",
+      "label": "Open search"
+    },
+    {
+      "text": "",
+      "label": "Open menu"
+    },
+    {
+      "text": "Pause motion",
+      "label": null
+    }
+  ],
+  "empty": true,
+  "search": [
+    "SystemGround Check the code before trusting the claim.Package ↗",
+    "PluginVoice Validator Make writing clear, specific, and grounded.Plugin ↗"
+  ],
+  "filter": true,
+  "{\"javaScriptEnabled\":false}": "Useful tools.\nShared openly.",
+  "{\"reducedMotion\":\"reduce\"}": "Useful tools.\nShared openly."
+}
