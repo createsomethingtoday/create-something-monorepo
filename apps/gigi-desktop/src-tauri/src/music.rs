@@ -255,7 +255,7 @@ pub fn dispatch(root:&Path,op:&str,input:Value)->Result<Value,String> {
         "music.preview"=>{
             let(path,fp,item)=get(&db,wid,need(&input,"id")?)?;
             if !previewable(Path::new(&path)) {return Err("Project files and unsupported formats have no in-app preview.".into());}
-            if fingerprint(Path::new(&path))?!=fp {return Err("Original changed. Add the changed file as a new version.".into());}
+            if fingerprint(Path::new(&path))?!=fp {return Err("File reference no longer matches its saved metadata. Reconnect to verify; add actual content changes as a new version.".into());}
             fs::File::open(&path).map_err(|_|"The original cannot be read. Reconnect it or check access.")?;
             Ok(json!({"path":path,"kind":item["kind"],"title":item["title"]}))
         },
@@ -388,6 +388,16 @@ pub fn dispatch(root:&Path,op:&str,input:Value)->Result<Value,String> {
     #[test]fn mkv_is_organized_as_video_without_a_broken_preview(){
         let(root,wid,_)=fixture();let file=root.join("Reference.mkv");fs::write(&file,b"fixture").unwrap();let mut db=open(&root,&wid).unwrap();
         import_paths(&mut db,&wid,vec![file],false,&AtomicBool::new(false)).unwrap();let result=dispatch(&root,"music.list",json!({"workspaceId":wid})).unwrap();let item=&result["items"][0];assert_eq!(item["kind"],"video");assert_eq!(item["previewable"],false);assert!(dispatch(&root,"music.preview",json!({"workspaceId":wid,"id":item["id"]})).is_err());fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]fn recovery_unchanged_reference_reconnect_survives_restart_and_preview_read(){
+        let(root,wid,file)=fixture();let mut db=open(&root,&wid).unwrap();
+        import_paths(&mut db,&wid,vec![file.clone()],false,&AtomicBool::new(false)).unwrap();
+        let listed=dispatch(&root,"music.list",json!({"workspaceId":wid})).unwrap();let id=listed["items"][0]["id"].as_str().unwrap().to_string();
+        assert_eq!(reconnect_path(&db,&wid,&id,&file).unwrap()["reconnected"],true);drop(db);
+        assert_eq!(dispatch(&root,"music.list",json!({"workspaceId":wid})).unwrap()["items"][0]["availability"],"available");
+        assert_eq!(dispatch(&root,"music.preview",json!({"workspaceId":wid,"id":id})).unwrap()["path"],file.to_str().unwrap());
+        fs::remove_dir_all(root).unwrap();
     }
 
 }

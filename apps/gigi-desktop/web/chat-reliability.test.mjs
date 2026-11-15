@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ChatController, chatView } from './chat.mjs';
+import { ChatController, chatView, chatState } from './chat.mjs';
 const snapshot = (id = 's1', state = 'idle', extra = {}) => ({ sessionId: id, state, messages: [], approvals: [], recordLinks: [], ...extra });
 const deferred = () => { let resolve, reject; const promise = new Promise((yes, no) => { resolve = yes; reject = no; }); return { promise, resolve, reject }; };
 function fixture(overrides = {}) {
@@ -177,4 +177,22 @@ test('recovery checks poll without claiming an interrupt and restore Stop after 
   assert.equal(chat.current.recoveryPending, undefined);
   assert.doesNotMatch(chatView(chat), /data-chat-stop="1"[^>]*disabled/);
   await chat.cancel(); assert.equal(stops, 1);
+});
+
+test('authoritative matching send receipt clears an empty terminal read without replay',async()=>{
+ let requestId,sends=0;
+ const {chat}=fixture({chatSend:async(_w,_s,_text,id)=>{requestId=id;sends++;throw new Error('transport');}});
+ await chat.open();await chat.read('s1');chat.draft='Synthetic request';await chat.send(chat.draft);
+ assert.ok(requestId);
+ chat.accept(snapshot('s1','interrupted',{sendReceipt:{requestId:'different',accepted:true,turnId:'t1'}}));
+ assert.equal(chat.unconfirmedSends.size,1);
+ chat.accept(snapshot('s1','interrupted',{sendReceipt:{requestId,accepted:true,turnId:'t1'}}));
+ assert.equal(chat.unconfirmedSends.size,0);assert.equal(chat.draft,'');assert.equal(sends,1);
+});
+
+test('accepted send receipt never resolves an unknown workspace mutation',async()=>{
+ let requestId,sends=0;const {chat}=fixture({chatSend:async(_w,_s,_text,id)=>{requestId=id;sends++;throw new Error('transport');}});
+ await chat.open();await chat.read('s1');chat.draft='Synthetic edit';await chat.send(chat.draft);
+ chat.accept(snapshot('s1','interrupted',{sendReceipt:{requestId,accepted:true,turnId:'t1'},decisionReceipt:{approvalId:'a1',outcome:'unknown'}}));
+ await chat.send('Do another edit');assert.equal(sends,1);assert.match(chatState(chat).label,/Outcome needs checking/);
 });

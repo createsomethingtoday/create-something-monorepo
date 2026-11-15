@@ -21,7 +21,7 @@ import { shiftDay, mondayOf } from '../web/today-view.mjs';
 import { finishedTask, taskDateLabel } from '../web/calm-work.mjs';
 import { statusLabel } from '../web/desktop-polish.mjs';
 import { scheduleEntry } from '../web/schedule.mjs';
-import { eventLabel } from '../web/event-identity.mjs';
+import { eventLabel, eventKind } from '../web/event-identity.mjs';
 import { formatMoney, supportedCurrencies } from '../web/model.mjs';
 import { DevQuestResume } from './dev-quest.jsx';
 
@@ -221,7 +221,7 @@ export function WeekCalendar({ data, today, busy }) {
                   (record.date || entry.key) <= day &&
                   (record.endDate || record.date || entry.endKey) >= day
                 );
-              });
+              }).sort((a,b)=>Number(eventKind(b,b.entity)==='performance')-Number(eventKind(a,a.entity)==='performance'));
               return (
                 <Section
                   key={day}
@@ -254,7 +254,7 @@ export function WeekCalendar({ data, today, busy }) {
                     </HStack>
                   </HStack>
                   <VStack gap={2} padding={2} minHeight="9rem" className="dev-calendar-day-events">
-                    {entries.map((record) => {
+                    {entries.map((record,entryIndex) => {
                       const entry = scheduleEntry(record);
                       return (
                         <Section
@@ -263,6 +263,7 @@ export function WeekCalendar({ data, today, busy }) {
                           variant="transparent"
                           className="dev-calendar-entry"
                         >
+                          {(entryIndex===0 || eventKind(entries[entryIndex-1],entries[entryIndex-1].entity)==='performance' && eventKind(record,record.entity)!=='performance') && <Heading level={6} accessibilityLevel={4}>{eventKind(record,record.entity)==='performance'?'Performances':'Other commitments'}</Heading>}
                           <B
                             variant="ghost"
                             size="sm"
@@ -300,13 +301,16 @@ export function WeekCalendar({ data, today, busy }) {
         </ScrollableArea>
       )}
       <Text type="supporting" color="secondary">
-        Gigs and saved calendar entries · Monday–Sunday
+        Performances and other saved commitments · Monday–Sunday
         {known !== null && known > items.length
           ? ` · Showing ${items.length} of ${known}; open Schedule for all records.`
           : ''}
       </Text>
     </WorkSection>
   );
+}
+function TodayTaskContext({data}) {
+ return <WorkSection title={<Heading level={2}>Your working week</Heading>} actions={<B data-page="tasks">View all tasks</B>}><Grid columns={{minWidth:240,max:3}} gap={4}>{[['weeklyTasks','This week'],['undatedTasks','Without a date'],['waitingTasks','Waiting on someone'],['pinnedNotes','Pinned professional notes']].map(([key,title])=><VStack key={key} gap={3}><Heading level={3}>{title}</Heading>{data[key] ? <><Text type="supporting">{data[key].count} saved {key==='pinnedNotes'?(data[key].count===1?'note':'notes'):(data[key].count===1?'task':'tasks')}</Text>{data[key].items.map(record=><B key={record.id} variant="ghost" data-entity={record.entity||'tasks'} data-open={record.id}>{record.title}{record.date ? ` · ${dateText(record.date)}` : ''}</B>)}</> : <Text color="secondary">Not included in this local read.</Text>}</VStack>)}</Grid></WorkSection>;
 }
 function TodayTasks({ data, today }) {
   const value = data.tasks,
@@ -497,6 +501,7 @@ export function DevToday({ ctx, attention }) {
       <DevQuestResume ctx={ctx} />
       <WeekCalendar data={data} today={today} busy={s.busy} />
       <TodayTasks data={data} today={today} />
+      <TodayTaskContext data={data} />
       <WorkSection
         className="dev-today-section"
         title={<Heading level={2}>Financials</Heading>}

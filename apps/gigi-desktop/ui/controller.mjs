@@ -1,3 +1,4 @@
+import { reconcileSourceReadback } from '../web/source-readback.mjs';
 import { createWorkspaceMemory } from '../web/workspace-memory.mjs';
 // Native transaction/navigation controller, extracted from the tested ESM app.
 // This module renders no HTML; React/Astryx owns every shipped surface.
@@ -798,7 +799,9 @@ export function startController({ renderUI, invoke, initialize } = {}) {
     const route = nextRoute();
     const record = await bridge.getRecord(route.workspace, route.page, selected.id, 'full');
     if (!currentRoute(route)) return;
-    state.selected = record;
+    const sourceReadback = reconcileSourceReadback(selected, record);
+    state.selected = sourceReadback.record;
+    state.sourceDetailStatus = sourceReadback.status;
     state.sourceExpanded = sourceExpanded;
   }
 

@@ -931,7 +931,7 @@ export function Music({ ctx }) {
                           .join(' · ')}
                       </Text>
                       <Text type="supporting" color="secondary">
-                        {item.filename} · {fileSize(item.bytes)}
+                        {item.filename} · {item.bytes===0?'0 bytes recorded · original availability needs checking':fileSize(item.bytes)}
                         {item.tags ? ` · ${item.tags}` : ''}
                       </Text>
                       <Text type="supporting">
@@ -940,8 +940,8 @@ export function Music({ ctx }) {
                             ? 'Available on this Mac'
                             : 'Indexed · no in-app preview'
                           : item.availability === 'changed'
-                            ? 'Original changed · add as a new version'
-                            : 'Original unavailable · reconnect'}
+                            ? 'File reference needs checking · reconnect to verify'
+                            : 'Original unavailable · moved, offline or inaccessible; reconnect'}
                       </Text>
                       <HStack gap={2} wrap="wrap">
                         {available && playable && (

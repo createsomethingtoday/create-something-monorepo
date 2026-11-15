@@ -41,10 +41,10 @@ const explanations = {
   provider_turn_rejected:
     'Your provider declined this request. Check its usage or availability, then send again when ready.',
   reconciliation_required:
-    'The last send may have started. Choose Check status and review the latest messages before sending again.',
+    'The last send may have started. Choose Check status. If the outcome remains unknown, open a new chat to inspect your records without repeating this request. Empty messages do not prove that nothing changed.',
   write_outcome_unknown: unresolvedSave,
   turn_outcome_unknown:
-    'The last send may have started. Choose Check status and review the latest messages before sending again.',
+    'The last send may have started. Choose Check status. If the outcome remains unknown, open a new chat to inspect your records without repeating this request. Empty messages do not prove that nothing changed.',
   usage_limit_reached: 'Your Codex usage limit is reached. Try again after it resets.',
   usage_limit: 'Your Codex usage limit is reached. Try again after it resets.',
   quota_exceeded: 'Your Codex usage limit is reached. Try again after it resets.',

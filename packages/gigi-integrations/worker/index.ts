@@ -1,3 +1,4 @@
+import { requireSourceSelection, type SourceSelection } from '../src/source-selection.ts';
 import { handleInstagramRequest, instagramStagedMedia } from './instagram.ts';
 export const GIGI_RESOURCE = 'https://gigi-connector.createsomething.workers.dev';
 const IDENTITY_USERINFO = 'https://id.createsomething.space/oauth/userinfo';
@@ -167,8 +168,10 @@ export async function handleConnectorRequest(
     if (!row || row.connected_account_id !== accountId || row.status !== 'active') return json({ error: 'not_found' }, 404);
     if (!await verifyComposioAccount(env, providerFetch, subject, provider, accountId)) return json({ error: 'provider_readback_invalid' }, 502);
     const cursor = url.searchParams.get('cursor');
-    if (cursor && (cursor.length > 512 || /[\r\n]/u.test(cursor))) return json({ error: 'invalid_cursor' }, 400);
-    try { return json(await readSourcePage(env, providerFetch, provider, accountId, cursor)); }
+    if (cursor && (cursor.length > 2048 || /[\r\n]/u.test(cursor))) return json({ error: 'invalid_cursor' }, 400);
+    try {
+      const selection = requireSourceSelection(Object.fromEntries(['from', 'to', 'calendarId'].filter(key => url.searchParams.has(key)).map(key => [key, url.searchParams.get(key)])), provider);
+      return json(await readSourcePage(env, providerFetch, provider, accountId, cursor, selection)); }
     catch { return json({ error: 'source_unavailable' }, 503); }
   }
   return json({ error: 'not_implemented' }, 501);
@@ -180,7 +183,18 @@ export async function readSourcePage(
   provider: 'gmail' | 'googlecalendar',
   accountId: string,
   cursor: string | null,
+  selection: SourceSelection = {},
 ): Promise<unknown> {
+  selection = requireSourceSelection(selection, provider);
+  const scope = JSON.stringify([provider, accountId, selection.from ?? null, selection.to ?? null, selection.calendarId ?? null]);
+  const scoped = provider === 'googlecalendar' && !!(selection.from || selection.to);
+  if (cursor?.startsWith('g1.') && !scoped) throw new Error('cursor_scope_changed');
+  if (scoped && cursor) {
+    if (!cursor.startsWith('g1.')) throw new Error('cursor_scope_required');
+    const decoded = JSON.parse(atob(cursor.slice(3).replace(/-/g, '+').replace(/_/g, '/')));
+    if (decoded.scope !== scope || typeof decoded.token !== 'string' || decoded.token.length > 512 || /[\r\n]/.test(decoded.token)) throw new Error('cursor_scope_changed');
+    cursor = decoded.token;
+  }
   const observedAt = new Date().toISOString();
   if (provider === 'gmail') {
     const query: Array<{ name: string; value: string; type: 'query' }> = [{ name: 'maxResults', value: '2', type: 'query' }];
@@ -208,6 +222,7 @@ export async function readSourcePage(
       records.push({ externalId: message.id, kind: 'message', observedAt, data: {
         threadId: typeof detail.threadId === 'string' ? detail.threadId.slice(0, 128) : '',
         subject: header('Subject'), from: header('From'), date: header('Date'),
+        mailState: Array.isArray(detail.labelIds) && detail.labelIds.includes('DRAFT') ? 'Draft' : Array.isArray(detail.labelIds) && detail.labelIds.includes('SENT') ? 'Sent' : 'Unknown',
         snippet: typeof detail.snippet === 'string' ? detail.snippet.slice(0, 500) : '',
       } });
     }
@@ -222,6 +237,8 @@ export async function readSourcePage(
     { name: 'maxResults', value: '10', type: 'query' },
     { name: 'singleEvents', value: 'true', type: 'query' },
   ];
+  if (selection.from) params.push({ name: 'timeMin', value: selection.from, type: 'query' });
+  if (selection.to) params.push({ name: 'timeMax', value: selection.to, type: 'query' });
   if (cursor) params.push({ name: 'pageToken', value: cursor, type: 'query' });
   const page = await proxyRead(env, providerFetch, accountId,
     `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`, params);
@@ -231,18 +248,18 @@ export async function readSourcePage(
     if (!isRecord(item) || typeof item.id !== 'string' || !item.id || item.id.length > 256) throw new Error('calendar_event_id_invalid');
     return { externalId: item.id, kind: 'event' as const, observedAt, data: {
       calendarId, summary: typeof item.summary === 'string' ? item.summary.slice(0, 500) : '',
-      start: calendarTimeProjection(item.start), end: calendarTimeProjection(item.end),
+      start: calendarTimeProjection(item.start, primary.timeZone), end: calendarTimeProjection(item.end, primary.timeZone),
       ...(typeof item.htmlLink === 'string' && item.htmlLink.length <= 512 ? { htmlLink: item.htmlLink } : {}),
       location: typeof item.location === 'string' ? item.location.slice(0, 500) : '',
       description: typeof item.description === 'string' ? item.description.slice(0, 1000) : '',
     } };
   });
   return { provider, connectedAccountId: accountId, records,
-    nextCursor: typeof page.nextPageToken === 'string' ? page.nextPageToken : null };
+    nextCursor: typeof page.nextPageToken === 'string' ? (scoped ? 'g1.' + btoa(JSON.stringify({scope, token:page.nextPageToken})).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '') : page.nextPageToken) : null };
 }
 
 // Project only bounded provider time metadata, never arbitrary nested event properties.
-function calendarTimeProjection(value: unknown): Record<string, string> {
+function calendarTimeProjection(value: unknown, calendarZone?: unknown): Record<string, string> {
   if (!isRecord(value)) return {};
   const result: Record<string, string> = {};
   for (const key of ['date', 'dateTime', 'timeZone']) {
@@ -251,6 +268,7 @@ function calendarTimeProjection(value: unknown): Record<string, string> {
       result[key] = value[key];
     }
   }
+  if (result.date && !result.timeZone && typeof calendarZone === 'string' && calendarZone.length <= 128) result.timeZone = calendarZone;
   return result;
 }
 

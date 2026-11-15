@@ -342,7 +342,7 @@ function SourceImport({ provider, account, draft = {}, run, busy, ctx }) {
           `Continuing the saved selection exactly: ${current.selection?.from || 'no lower date bound'} to ${current.selection?.to || 'no upper date bound'}. Editing a date starts a new scan.`
         )}
       {muted(
-        `Dates apply within scanned pages, not a complete source search. ${provider === 'googlecalendar' ? 'Primary calendar only; all-day events without a clear timezone may be excluded.' : 'Sender, subject, date and a short snippet; full email and attachments are not read.'} Each preview scans one bounded page.`
+        `${provider === 'googlecalendar' ? 'The selected dates are sent to Google Calendar on every page. Primary calendar only; date-only events use the calendar timezone when known. This is a manual fetch, not continuous sync.' : 'Dates filter scanned Gmail pages, not a complete mailbox search. Sender, subject, date and a short snippet; full email and attachments are not read.'} Each preview scans one bounded page.`
       )}
       <HStack gap={2} wrap="wrap">
         <B data-source-preview={provider} disabled={Boolean(busy || running)}>
@@ -363,6 +363,7 @@ function SourceImport({ provider, account, draft = {}, run, busy, ctx }) {
       {preview && (
         <VStack gap={3} aria-label="Source preview">
           <Heading level={3}>Review before importing</Heading>
+          {muted(`Last source fetch: ${preview.fetchedAt ? new Date(preview.fetchedAt * 1000).toLocaleString() : 'Not recorded'}. This timestamp is separate from reading local records.`)}
           <Text>
             {preview.scannedCount} scanned · {preview.selectedCount} selected · {preview.newCount}{' '}
             new · {preview.existingCount} existing.
@@ -373,7 +374,7 @@ function SourceImport({ provider, account, draft = {}, run, busy, ctx }) {
             )}
           {muted(
             preview.coverage === 'complete'
-              ? 'Reached the end of this source scan.'
+              ? 'Reached the end of this source scan.' : preview.coverage === 'uncertain' ? 'Reached a page with unknown dates. Date coverage is incomplete; review excluded records before relying on this window.'
               : 'More source pages may remain. This preview does not establish complete date coverage.'
           )}
           {preview.records?.length ? (

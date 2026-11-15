@@ -93,6 +93,10 @@ export function startFixture({ startController, renderUI }) {
         tasks: section(records.tasks.filter(r => r.date && r.date <= shift(today, 1) && !['done','completed','cancelled'].includes(String(r.fields.Status).toLowerCase()))),
         payable: section(records.finances.filter(r => r.fields.Direction === 'Expense' && r.fields['Due Date'] <= shift(monday, 6))),
         receivable: section(records.finances.filter(r => r.fields.Direction === 'Income' && r.fields['Due Date'] <= shift(monday, 6))),
+        weeklyTasks:section(records.tasks.filter(r=>r.date>=monday&&r.date<=shift(monday,6))),
+        undatedTasks:section(records.tasks.filter(r=>!r.date)),
+        waitingTasks:section(records.tasks.filter(r=>String(r.fields.Status).toLowerCase().includes('waiting'))),
+        pinnedNotes:section(records.notes.filter(r=>r.fields.Pinned===true)),
         financialThrough: shift(monday, 6) };
     }
     if (operation === 'workspace.overview')
@@ -235,7 +239,7 @@ export function startFixture({ startController, renderUI }) {
     if (operation === 'ai.connection.status') return { state: 'signed_out', available: true };
     if (operation === 'music.list') {
       const items =
-        query.get('review') === '1'
+        query.get('recovery') === '1' ? ['available','changed','missing','reconnect_required'].map((availability,index)=>({id:`recovery-music-${index}`,title:['Unchanged original','Moved or updated reference','Offline or missing original','Reference needs reconnecting'][index],artist:'Synthetic fixture',kind:'audio',filename:`synthetic-${index}.wav`,bytes:index===3?0:1200,availability,organizationRevision:1})) : query.get('review') === '1'
           ? [
               {
                 id: 'music-review-1',

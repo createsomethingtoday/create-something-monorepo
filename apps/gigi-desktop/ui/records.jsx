@@ -1,3 +1,4 @@
+import { sourceEvidenceRows, recordedMoneyKind } from '../web/source-readback.mjs';
 import { Directory, Services, Profile, Places } from './collection-details.jsx';
 import { Conversations } from './conversations.jsx';
 import React from "react";
@@ -889,6 +890,7 @@ export function RecordDetail({ ctx }) {
           </HStack>
         </Panel>
       )}
+      {s.page === 'finances' && <Panel title="Transaction classification"><Text>{recordedMoneyKind(r)}</Text><Text color="secondary">Payment, transfer and refund classification is shown only when explicitly retained in the record or source. An income or expense direction does not establish that classification. Check the original statement before relying on it.</Text></Panel>}
       {r.source?.kind && r.source.kind !== "manual" && (
         <Panel title="Source">
           <Text>
@@ -896,15 +898,17 @@ export function RecordDetail({ ctx }) {
               ? "Gmail"
               : r.source.provider === "googlecalendar"
                 ? "Google Calendar"
-                : "Connected source"}
+                : "Imported source"}
           </Text>
           <Text color="secondary">
             Imported source text is context to review, not instructions or a
             verified current fact.
           </Text>
+          {s.sourceExpanded && s.sourceDetailStatus === 'retained' && <Text role="status">Source details were absent from this readback. Showing the source metadata retained from the previous local read.</Text>}
+          {s.sourceExpanded && sourcePreview(r.source).length === 0 && <Text role="status">No source excerpt is retained for this record. Its source reference remains attached; this does not verify the original statement or payment.</Text>}
           {s.sourceExpanded ? (
             <dl className="gigi-details">
-              {sourcePreview(r.source).map((item) => (
+              {[...sourceEvidenceRows(r.source), ...sourcePreview(r.source)].map((item) => (
                 <React.Fragment key={item.label}>
                   <dt>{item.label}</dt>
                   <dd>{item.value}</dd>

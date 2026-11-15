@@ -52,7 +52,7 @@ test('Gmail header filters survive a proxy that normalizes additional query para
   assert.equal(page.records[0].data.date, 'Mon, 12 Oct 2026 00:00:00 +0000');
   assert.deepEqual(calls[1].searchParams.getAll('metadataHeaders'), ['Subject', 'From', 'Date']);
   assert.equal(calls.length, 2);
-  assert.deepEqual(Object.keys(page.records[0].data).sort(), ['date', 'from', 'snippet', 'subject', 'threadId']);
+  assert.deepEqual(Object.keys(page.records[0].data).sort(), ['date', 'from', 'mailState', 'snippet', 'subject', 'threadId']);
 });
 
 test('Gmail malformed message aborts page before exposing next cursor', async () => {
