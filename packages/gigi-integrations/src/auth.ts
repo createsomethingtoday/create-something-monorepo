@@ -1,3 +1,4 @@
+import { COMPANION_RESOURCE } from './deployment.ts';
 import { createHash, randomBytes } from 'node:crypto';
 import { execFile, spawn } from 'node:child_process';
 import { AsyncLocalStorage } from 'node:async_hooks';
@@ -10,7 +11,7 @@ import { Effect } from 'effect';
 
 const execFileAsync=promisify(execFile);
 const ISSUER='https://id.createsomething.space';
-const RESOURCE='https://gigi-connector.createsomething.workers.dev';
+const RESOURCE=COMPANION_RESOURCE;
 const SCOPE='openid profile email mcp offline_access';
 const MAX_RESPONSE=16_384;
 const SESSION_LOCK_MARKER='gigi-session-advisory-v1\n';

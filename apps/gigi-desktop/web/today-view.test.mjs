@@ -25,8 +25,8 @@ test('Financials splits Payable and Receivable with saved amount status and due 
  assert.match(html,/Overdue or due this week/);assert.doesNotMatch(html,/Unpaid income|Workspace totals|Net balance|\$465/);
 });
 test('empty and unavailable sections stay distinct; records are never inferred from counts',()=>{
- const emptyHtml=view(snapshot());assert.match(emptyHtml,/No gigs/);assert.match(emptyHtml,/No open tasks overdue, today, or tomorrow/);assert.match(emptyHtml,/No payable overdue or due this week/);assert.match(emptyHtml,/No receivable overdue or due this week/);
- const missing=view(null,{checkedAt:null,readError:'Read <failed>'});assert.match(missing,/Read &lt;failed&gt;/);assert.match(missing,/has not been read/);assert.doesNotMatch(missing,/No gigs|No open tasks|No payable|No receivable|Workspace totals/);
+ const emptyHtml=view(snapshot());assert.match(emptyHtml,/No commitments/);assert.match(emptyHtml,/No open tasks overdue, today, or tomorrow/);assert.match(emptyHtml,/No payable overdue or due this week/);assert.match(emptyHtml,/No receivable overdue or due this week/);
+ const missing=view(null,{checkedAt:null,readError:'Read <failed>'});assert.match(missing,/Read &lt;failed&gt;/);assert.match(missing,/has not been read/);assert.doesNotMatch(missing,/No commitments|No open tasks|No payable|No receivable|Workspace totals/);
 });
 test('failed week refresh preserves the previous successful week and marks its read time',()=>{
  const html=view(snapshot({calendar:{weekStart:'2026-11-02',weekEnd:'2026-11-08',count:1,items:[{id:'g',entity:'gigs',title:'Saved gig',date:'2026-11-06',endDate:'2026-11-06',fields:{Date:'2026-11-06'}}]}}),{readError:'Try again',busy:true});

@@ -1,0 +1,114 @@
+[
+  {
+    "state": "overview-1280",
+    "delta": {
+      "YAVG": 0.04529999999999745,
+      "SATAVG": 0.0
+    },
+    "units": "ffmpeg signalstats native units, whole-image content-sensitive"
+  },
+  {
+    "state": "overview-detail-390",
+    "delta": {
+      "YAVG": 0.7322999999999951,
+      "SATAVG": -0.012154999999999971
+    },
+    "units": "ffmpeg signalstats native units, whole-image content-sensitive"
+  },
+  {
+    "state": "overview-detail-1280",
+    "delta": {
+      "YAVG": 0.7920000000000016,
+      "SATAVG": 0.0
+    },
+    "units": "ffmpeg signalstats native units, whole-image content-sensitive"
+  },
+  {
+    "state": "music-390",
+    "delta": {
+      "YAVG": 0.0,
+      "SATAVG": 0.0
+    },
+    "units": "ffmpeg signalstats native units, whole-image content-sensitive"
+  },
+  {
+    "state": "music-1280",
+    "delta": {
+      "YAVG": 0.0,
+      "SATAVG": 0.0
+    },
+    "units": "ffmpeg signalstats native units, whole-image content-sensitive"
+  },
+  {
+    "state": "finances-detail-390",
+    "delta": {
+      "YAVG": 1.3004000000000033,
+      "SATAVG": -0.36547599999999997
+    },
+    "units": "ffmpeg signalstats native units, whole-image content-sensitive"
+  },
+  {
+    "state": "finances-1280",
+    "delta": {
+      "YAVG": 0.6204999999999998,
+      "SATAVG": 1.4999999999987246e-05
+    },
+    "units": "ffmpeg signalstats native units, whole-image content-sensitive"
+  },
+  {
+    "state": "finances-390",
+    "delta": {
+      "YAVG": 0.38340000000000174,
+      "SATAVG": 0.0
+    },
+    "units": "ffmpeg signalstats native units, whole-image content-sensitive"
+  },
+  {
+    "state": "settings-390",
+    "delta": {
+      "YAVG": 0.0,
+      "SATAVG": 0.0
+    },
+    "units": "ffmpeg signalstats native units, whole-image content-sensitive"
+  },
+  {
+    "state": "music-detail-390",
+    "delta": {
+      "YAVG": 0.41740000000000066,
+      "SATAVG": -0.012729999999999908
+    },
+    "units": "ffmpeg signalstats native units, whole-image content-sensitive"
+  },
+  {
+    "state": "settings-1280",
+    "delta": {
+      "YAVG": 0.0,
+      "SATAVG": 0.0
+    },
+    "units": "ffmpeg signalstats native units, whole-image content-sensitive"
+  },
+  {
+    "state": "overview-390",
+    "delta": {
+      "YAVG": 0.05059999999999576,
+      "SATAVG": 0.0
+    },
+    "units": "ffmpeg signalstats native units, whole-image content-sensitive"
+  },
+  {
+    "state": "music-detail-1280",
+    "delta": {
+      "YAVG": 0.1495999999999995,
+      "SATAVG": 0.0
+    },
+    "units": "ffmpeg signalstats native units, whole-image content-sensitive"
+  },
+  {
+    "state": "finances-detail-1280",
+    "delta": {
+      "YAVG": 0.6278000000000006,
+      "SATAVG": -0.110072
+    },
+    "units": "ffmpeg signalstats native units, whole-image content-sensitive"
+  }
+]

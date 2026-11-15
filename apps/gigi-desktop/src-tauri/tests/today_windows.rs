@@ -63,3 +63,32 @@ fn read_is_workspace_scoped_validates_inputs_and_does_not_mutate_records_or_hist
  let other=uuid::Uuid::new_v4().to_string();rusqlite::Connection::open(f.root.join("gigi.sqlite")).unwrap().execute("INSERT INTO workspaces(id,name) VALUES(?1,'Other synthetic')",[&other]).unwrap();assert_eq!(domain::dispatch(&f.root,"today.read",json!({"workspaceId":other,"today":"2026-11-06","timeZone":"UTC"})).unwrap()["tasks"]["count"],0);
  for input in [json!({"workspaceId":f.w,"today":"2026-02-30","timeZone":"UTC"}),json!({"workspaceId":f.w,"today":"2026-11-06","timeZone":"Made/Up"}),json!({"workspaceId":f.w,"today":"2026-11-06","timeZone":"UTC","weekStart":"2026-11-03"}),json!({"workspaceId":f.w,"today":"2026-11-06","timeZone":"UTC","weekStart":42}),json!({"workspaceId":"absent","today":"2026-11-06","timeZone":"UTC"})]{assert!(domain::dispatch(&f.root,"today.read",input).is_err());}
 }
+
+#[test]
+fn recovery_today_keeps_undated_and_waiting_tasks_visible(){
+ let f=Fixture::new();
+ f.save("tasks","Undated recovery task",json!({"Status":"Waiting"}));
+ f.save("tasks","Weekly recovery task",json!({"Due Date":"2026-11-08"}));
+ f.save("notes","Professional reference",json!({"Pinned":true}));
+ let result=f.read("2026-11-06",None,"UTC");
+ assert_eq!(result["weeklyTasks"]["count"],1);
+ assert_eq!(result["pinnedNotes"]["count"],1);
+ assert_eq!(result["undatedTasks"]["count"],1);
+ assert_eq!(result["waitingTasks"]["count"],1);
+}
+
+#[test]
+fn recovery_note_dates_link_to_schedule_with_typed_relation(){
+ let f=Fixture::new();
+ let note=f.save("notes","Synthetic travel note",json!({}));
+ let entry=f.save("schedule","Synthetic travel date",json!({"Date":"2026-11-08"}));
+ domain::dispatch(&f.root,"relations.link",json!({"workspaceId":f.w,"fromEntity":"notes","fromId":note["id"],"role":"Schedule","toEntity":"schedule","toId":entry["id"]})).unwrap();
+ let read=domain::dispatch(&f.root,"records.get",json!({"workspaceId":f.w,"entity":"notes","id":note["id"]})).unwrap();
+ assert_eq!(read["relations"][0]["role"],"Schedule");
+}
+
+#[test]
+fn recovery_superseded_gig_does_not_appear_as_upcoming(){
+ let f=Fixture::new();f.save("gigs","Superseded synthetic booking",json!({"Date":"2026-11-06","Status":"Superseded","Work kind":"Performance"}));
+ let read=f.read("2026-11-06",None,"UTC");assert_eq!(read["calendar"]["count"],0);
+}

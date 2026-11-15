@@ -1,4 +1,5 @@
 import { Data, Effect, Either } from 'effect';
+import { requireSourceSelection, type SourceSelection } from './source-selection.ts';
 import { LoginError } from './auth.ts';
 
 export type SourceProvider = 'gmail' | 'googlecalendar';
@@ -63,7 +64,7 @@ export interface BrokerClient {
   connectionStatus(provider: ConnectionProvider, signal?: AbortSignal): Promise<ConnectionStatus>;
   beginConnection(provider: ConnectionProvider, requestId: string, signal?: AbortSignal): Promise<BeginConnectionResult>;
   reconcileConnection(provider: ConnectionProvider, connectedAccountId: string, signal?: AbortSignal): Promise<ConnectionStatus>;
-  readSourcePage(provider: SourceProvider, connectedAccountId: string, cursor?: string, signal?: AbortSignal): Promise<SourcePage>;
+  readSourcePage(provider: SourceProvider, connectedAccountId: string, cursor?: string, signal?: AbortSignal, selection?: SourceSelection): Promise<SourcePage>;
 }
 
 export function createBrokerClient(options: BrokerOptions): BrokerClient {
@@ -167,11 +168,17 @@ export function createBrokerClient(options: BrokerOptions): BrokerClient {
       if (result.connectedAccountId !== connectedAccountId) throw invalidReadback('reconcile_connection');
       return result;
     },
-    async readSourcePage(provider, connectedAccountId, cursor, signal) {
+    async readSourcePage(provider, connectedAccountId, cursor, signal, selection) {
       requireProvider(provider);
       requireId(connectedAccountId);
-      if (cursor !== undefined && (cursor.length > 512 || !/^[A-Za-z0-9._:=-]+$/u.test(cursor))) throw new IntegrationError({ operation: 'read_source_page', reason: 'invalid_configuration' });
-      const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
+      if (cursor !== undefined && (cursor.length > 2048 || !/^[A-Za-z0-9._:=-]+$/u.test(cursor))) throw new IntegrationError({ operation: 'read_source_page', reason: 'invalid_configuration' });
+      selection = requireSourceSelection(selection, provider);
+      const params = new URLSearchParams();
+      if (cursor) params.set('cursor', cursor);
+      if (selection?.from) params.set('from', selection.from);
+      if (selection?.to) params.set('to', selection.to);
+      if (selection?.calendarId) params.set('calendarId', selection.calendarId);
+      const query = params.size ? `?${params}` : '';
       const wire = await call(`/v1/gigi/sources/${provider}/${encodeURIComponent(connectedAccountId)}/page${query}`, 'read_source_page', 'GET', undefined, signal);
       return decodeSourcePage(wire, provider, connectedAccountId);
     },
@@ -236,7 +243,7 @@ function decodeSourcePage(value: unknown, provider: SourceProvider, connectedAcc
   if (!value || typeof value !== 'object') throw invalidReadback('read_source_page');
   const data = value as Record<string, unknown>;
   if (data.provider !== provider || data.connectedAccountId !== connectedAccountId || !Array.isArray(data.records) || data.records.length > 25 ||
-    !(data.nextCursor === null || (typeof data.nextCursor === 'string' && data.nextCursor.length <= 512))) throw invalidReadback('read_source_page');
+    !(data.nextCursor === null || (typeof data.nextCursor === 'string' && data.nextCursor.length <= 2048))) throw invalidReadback('read_source_page');
   for (const item of data.records) {
     if (!item || typeof item !== 'object') throw invalidReadback('read_source_page');
     const record = item as Record<string, unknown>;

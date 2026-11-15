@@ -1,0 +1,41 @@
+import {createServer} from '../apps/gigi-desktop/node_modules/vite/dist/node/index.js';
+import {createRequire} from 'node:module';
+import {resolve} from 'node:path';
+import assert from 'node:assert/strict';
+const {chromium}=createRequire(new URL('../packages/agency/package.json',import.meta.url))('@playwright/test');
+const root=resolve(process.argv[2]||'apps/gigi-desktop');
+const server=await createServer({root,configFile:resolve(root,'vite.config.mjs'),server:{port:0,host:'127.0.0.1'}});await server.listen();
+const browser=await chromium.launch({headless:true,channel:'chrome'});
+try {
+ const page=await browser.newPage({viewport:{width:390,height:840},reducedMotion:'reduce'});
+ await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/?fixture=overview&recovery=1`);await page.waitForFunction(()=>globalThis.gigiTest);
+ const geometry=await page.locator('.dev-week-calendar').evaluate(node=>({scroll:node.scrollWidth,width:node.clientWidth}));
+ assert.ok(geometry.scroll<=geometry.width,'Mobile calendar must expose all days without sideways scrolling');
+ const emptyDays=page.locator('.dev-empty-days summary');if(await emptyDays.count()){await emptyDays.focus();await page.keyboard.press('Enter');}
+ const boxes=await page.locator('.dev-calendar-day').evaluateAll(nodes=>nodes.map(n=>({left:n.getBoundingClientRect().left,width:n.getBoundingClientRect().width})));
+ assert.equal(boxes.length,7);assert.ok(boxes.every(b=>b.left===boxes[0].left),'All seven mobile days use the agenda column');
+ assert.equal(await page.locator('.dev-calendar-entry h4').count(),0,'Event category must not be duplicated');
+ await page.locator('[data-nav-menu="Admin"] summary').focus();await page.keyboard.press('Enter');
+ assert.equal(await page.locator('[data-nav-menu="Admin"]').getAttribute('open'),'');
+ await page.locator('[data-nav-menu="Admin"] [data-page="tasks"]').click();await page.waitForFunction(()=>gigiTest.snapshot().state.page==='tasks');
+ await page.evaluate(()=>gigiTest.open('settings'));await page.getByRole('button',{name:'Studio',exact:false}).first().waitFor();
+ const choices=page.locator('[data-preferences-theme]');const themeBoxes=await choices.evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect().left));
+ assert.equal(new Set(themeBoxes).size,1,'Mobile themes must stack');
+ await page.evaluate(()=>gigiTest.open('music'));await page.getByText('Unchanged original',{exact:true}).waitFor();
+ assert.equal(await page.getByRole('button',{name:'Remove entry',exact:true}).first().isVisible(),false,'Destructive music controls stay in disclosure');
+ assert.ok(await page.getByText('Reference not verified · reconnect to check',{exact:true}).count());
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+ await page.evaluate(async()=>{await gigiTest.open("finances");gigiTest.set({selected:{id:"source-money",entity:"finances",title:"Synthetic payment",fields:{Amount:12500,Direction:"Income",Status:"Paid"},source:{kind:"import",provider:"statement",externalId:"synthetic-row"}},sourceExpanded:true});});
+ assert.equal(await page.getByText("Paid",{exact:true}).count(),1,"Financial status must be stated once");
+ await page.setViewportSize({width:880,height:620});
+ await page.evaluate(()=>gigiTest.setChat({visible:true,status:{available:true,authenticated:true},error:'turn_outcome_unknown',current:{sessionId:'recovery-layout',state:'interrupted',messages:[],approvals:[],recordLinks:[],decisionReceipt:{outcome:'unknown'}}}));
+ const regions=await page.evaluate(()=>{const intro=document.querySelector('.chat-intro').getBoundingClientRect(),transcript=document.querySelector('.chat-transcript').getBoundingClientRect();return {introBottom:intro.bottom,transcriptTop:transcript.top,overflows:document.querySelector('.chat-intro').scrollHeight>document.querySelector('.chat-intro').clientHeight};});
+ assert.ok(regions.introBottom<=regions.transcriptTop+1,'Short-window recovery sections must not overlap');assert.equal(regions.overflows,false,'Recovery instructions must keep their full height');
+ assert.equal(await page.locator('.chat-panel button[type="submit"]').isDisabled(),true);
+ await page.locator('[data-chat-new]').focus();await page.keyboard.press('Enter');
+ await page.waitForFunction(()=>gigiTest.calls.some(c=>c.operation==='agent.chat.start'));
+ await page.locator('#chat-message').fill('Inspect local records without repeating the previous request');
+ await page.locator('.chat-panel button[type="submit"]').focus();
+ assert.equal(await page.locator('.chat-panel button[type="submit"]').isVisible(),true);
+ console.log('PASS: mobile agenda, seven day labels, event hierarchy, keyboard menu/navigation, theme stack, concealed destructive actions, unknown reference distinction, no overflow, short-window nonoverlap, uncertain-send fence and keyboard new-chat recovery. Synthetic Chromium only.');
+}finally{await browser.close();await server.close();}

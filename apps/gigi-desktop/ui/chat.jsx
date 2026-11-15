@@ -28,7 +28,7 @@ const uncertainOutcomes = new Set([
   'turn_outcome_unknown'
 ]);
 const unresolvedSave =
-  'GiGi cannot yet confirm whether this save completed. Do not recreate the record or submit another change. Choose Check status to check again. If this message remains, ask for help resolving the saved request.';
+  'The last requested save has an unknown outcome. Check status before making another change. You can use New chat to inspect records, but do not repeat this request.';
 const explanations = {
   codex_unavailable:
     'Codex is unavailable on this Mac. Open chat setup to check the Codex CLI installation, then choose Check status.',
@@ -41,10 +41,10 @@ const explanations = {
   provider_turn_rejected:
     'Your provider declined this request. Check its usage or availability, then send again when ready.',
   reconciliation_required:
-    'The last send may have started. Choose Check status and review the latest messages before sending again.',
+    'The last send may have started. Choose Check status. If the outcome remains unknown, open a new chat to inspect your records without repeating this request. Empty messages do not prove that nothing changed.',
   write_outcome_unknown: unresolvedSave,
   turn_outcome_unknown:
-    'The last send may have started. Choose Check status and review the latest messages before sending again.',
+    'The last send may have started. Choose Check status. If the outcome remains unknown, open a new chat to inspect your records without repeating this request. Empty messages do not prove that nothing changed.',
   usage_limit_reached: 'Your Codex usage limit is reached. Try again after it resets.',
   usage_limit: 'Your Codex usage limit is reached. Try again after it resets.',
   quota_exceeded: 'Your Codex usage limit is reached. Try again after it resets.',
@@ -97,12 +97,19 @@ function MessageBody({ item }) {
     </VStack>
   );
 }
+function isFreshConversation(chat) {
+  const current = chat.current;
+  // With no selected conversation there is no saved transcript to refresh.
+  return !chat.pending && !chat.reading && (!current || !chat.refreshRequired) && !chat.error &&
+    (!current || current.state === 'idle') &&
+    !(current?.messages?.length || current?.approvals?.length || current?.recordLinks?.length) &&
+    !current?.sendReceipt && !current?.decisionReceipt && !current?.recoveryPending &&
+    !current?.error && !current?.cancelPending;
+}
 function Suggestions({ chat, ready, uncertain }) {
   if (
-    chat.pending ||
-    chat.reading ||
-    uncertain ||
-    ['running', 'approval'].includes(chat.current?.state)
+    !isFreshConversation(chat) ||
+    uncertain
   )
     return null;
   const options = chat.record
@@ -255,17 +262,18 @@ function ChatDrawer({ ctx }) {
           data-state={current?.state || 'idle'}
         >
           <Text weight="semibold">{observed.label}</Text>
-          <Text type="supporting">{observed.detail}</Text>
+          {!uncertain && <Text type="supporting">{observed.detail}</Text>}
         </VStack> : null}
-        {chat.error && (ready || uncertain) && (
-          <Message error>{explain(chat.error, Boolean(current))}</Message>
-        )}
         <HStack gap={3} className="chat-conversation-controls gigi-wrap">
           <B variant="ghost" data-chat-new="1" disabled={!ready || chat.pending || chat.reading}>
             New chat
           </B>
           <B variant="ghost" data-chat-history="1">Saved chats</B>
         </HStack>
+        {chat.error && current?.decisionReceipt?.outcome !== 'unknown' && (ready || uncertain) && (
+          <Message error>{explain(chat.error, Boolean(current))}</Message>
+        )}
+
       </VStack>
       <ChatMessageList
         ref={transcript}
@@ -301,9 +309,9 @@ function ChatDrawer({ ctx }) {
               </ChatMessageBubble>
             </ChatMessage>
           ))
-        ) : (
+        ) : !uncertain && isFreshConversation(chat) ? (
           <VStack gap={2} className="chat-empty"><Heading level={2}>How can I help?</Heading><Text color="secondary">Choose a starting point, or ask in your own words.</Text></VStack>
-        )}
+        ) : null}
         <Suggestions chat={chat} ready={ready} uncertain={uncertain} />
         {current?.state === 'approval' &&
           (current.approvals || []).map((item) => (
@@ -340,7 +348,8 @@ function ChatDrawer({ ctx }) {
                   : 'info'
             }
           >
-            {receiptText}
+            <Text as="span" className="chat-receipt-copy">{receiptText}
+            {current.decisionReceipt.outcome === 'unknown' && !messages.length && !current.recordLinks?.length && ' The affected record and request details are not available in this conversation.'}</Text>
           </Message>
         )}
         {(current?.recordLinks || []).map((item) => (
@@ -350,7 +359,7 @@ function ChatDrawer({ ctx }) {
             className="chat-record-link"
             data-chat-link-entity={item.entity}
             data-chat-link-id={item.id}
-          >{`${item.title || item.id} ↗`}</B>
+          >{`Open record: ${item.title || item.id} ↗`}</B>
         ))}
         {current?.recoveryPending ? (
           <Text as="p" role="status">
@@ -361,14 +370,14 @@ function ChatDrawer({ ctx }) {
             {current.cancelPending ? 'Stopping response…' : 'GiGi is responding…'}
           </Text>
         ) : null}
-        {current?.state === 'interrupted' && !current.recoveryPending && (
+        {current?.state === 'interrupted' && !current.recoveryPending && !uncertain && (
           <Text as="p" role="status">
             {uncertain
               ? 'This response was interrupted. Resolve the pending outcome before sending another message.'
               : 'This response was interrupted. You can send another message.'}
           </Text>
         )}
-        {current?.state === 'failed' && (
+        {current?.state === 'failed' && !uncertain && (
           <Message error>
             {uncertain
               ? current?.decisionReceipt?.outcome === 'unknown' ||

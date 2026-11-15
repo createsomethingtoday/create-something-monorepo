@@ -21,7 +21,7 @@ pub(crate) fn read(db:&Connection,wid:&str,today:&str,time_zone:&str,week_start:
     let end=start.checked_add_signed(Duration::days(6)).ok_or("Week is out of range")?;
     let tomorrow=today.checked_add_signed(Duration::days(1)).ok_or("Today is out of range")?;
     let financial_end=current_monday.checked_add_signed(Duration::days(6)).ok_or("Today is out of range")?;
-    let mut tasks=Vec::new();let mut payable=Vec::new();let mut receivable=Vec::new();
+    let mut weekly_tasks=Vec::new();let mut undated_tasks=Vec::new();let mut waiting_tasks=Vec::new();let mut tasks=Vec::new();let mut payable=Vec::new();let mut receivable=Vec::new();
     for entity in ["tasks","finances"]{
         let mut stmt=db.prepare(&format!("SELECT id,title,status,money_cents,fields_json FROM {entity} WHERE workspace_id=?1 ORDER BY id")).map_err(|e|e.to_string())?;
         let rows=stmt.query_map([wid],|r|Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?,r.get::<_,Option<String>>(2)?,r.get::<_,Option<i64>>(3)?,r.get::<_,String>(4)?))).map_err(|e|e.to_string())?;
@@ -31,6 +31,13 @@ pub(crate) fn read(db:&Connection,wid:&str,today:&str,time_zone:&str,week_start:
             let state=status.as_deref().unwrap_or("").trim().to_lowercase();
             let due=calendar_day(&fields["Due Date"],zone);
             let date=if entity=="tasks"{due.or_else(||calendar_day(&fields["Do Date"],zone))}else{due};
+            if entity=="tasks" && !crate::task_list::finished(&state){
+                let context=json!({"id":id,"entity":"tasks","title":title.chars().take(240).collect::<String>(),"date":date.map(|d|d.to_string()),"status":status,"fields":{"Priority":fields["Priority"]}});
+                if date.is_none(){undated_tasks.push(context.clone());}
+                if date.is_some_and(|d|d>=current_monday && d<=financial_end){weekly_tasks.push(context.clone());}
+                let waiting:i64=db.query_row("SELECT count(*) FROM relations WHERE workspace_id=?1 AND from_entity='tasks' AND from_id=?2 AND role='Waiting On'",rusqlite::params![wid,id],|r|r.get(0)).map_err(|e|e.to_string())?;
+                if state.contains("waiting") || waiting>0{waiting_tasks.push(context);}
+            }
             let Some(date)=date else{continue};
             if entity=="tasks"{
                 if date>tomorrow || crate::task_list::finished(&state){continue}
@@ -42,6 +49,10 @@ pub(crate) fn read(db:&Connection,wid:&str,today:&str,time_zone:&str,week_start:
             if entity=="tasks"{tasks.push(item)}else if direction=="expense"{payable.push(item)}else{receivable.push(item)}
         }
     }
+    let mut pinned_notes=Vec::new();
+    let mut notes=db.prepare("SELECT id,title,fields_json FROM notes WHERE workspace_id=?1 ORDER BY updated_at DESC,id").map_err(|e|e.to_string())?;
+    let rows=notes.query_map([wid],|r|Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?,r.get::<_,String>(2)?))).map_err(|e|e.to_string())?;
+    for row in rows{let(id,title,raw)=row.map_err(|e|e.to_string())?;let fields:Value=serde_json::from_str(&raw).map_err(|e|e.to_string())?;if fields["Pinned"]==true{pinned_notes.push(json!({"id":id,"entity":"notes","title":title.chars().take(240).collect::<String>()}));}}
     let calendar=crate::agenda::week(db,wid,&start.to_string(),end,time_zone)?;
-    Ok(json!({"today":today.to_string(),"calendar":{"weekStart":start.to_string(),"weekEnd":end.to_string(),"items":calendar["items"],"count":calendar["count"],"undatedCount":calendar["undatedCount"]},"tasks":section(tasks),"payable":section(payable),"receivable":section(receivable),"financialThrough":financial_end.to_string()}))
+    Ok(json!({"today":today.to_string(),"calendar":{"weekStart":start.to_string(),"weekEnd":end.to_string(),"items":calendar["items"],"count":calendar["count"],"undatedCount":calendar["undatedCount"]},"tasks":section(tasks),"pinnedNotes":section(pinned_notes),"weeklyTasks":section(weekly_tasks),"undatedTasks":section(undated_tasks),"waitingTasks":section(waiting_tasks),"payable":section(payable),"receivable":section(receivable),"financialThrough":financial_end.to_string()}))
 }

@@ -93,6 +93,10 @@ export function startFixture({ startController, renderUI }) {
         tasks: section(records.tasks.filter(r => r.date && r.date <= shift(today, 1) && !['done','completed','cancelled'].includes(String(r.fields.Status).toLowerCase()))),
         payable: section(records.finances.filter(r => r.fields.Direction === 'Expense' && r.fields['Due Date'] <= shift(monday, 6))),
         receivable: section(records.finances.filter(r => r.fields.Direction === 'Income' && r.fields['Due Date'] <= shift(monday, 6))),
+        weeklyTasks:section(records.tasks.filter(r=>r.date>=monday&&r.date<=shift(monday,6))),
+        undatedTasks:section(records.tasks.filter(r=>!r.date)),
+        waitingTasks:section(records.tasks.filter(r=>String(r.fields.Status).toLowerCase().includes('waiting'))),
+        pinnedNotes:section(records.notes.filter(r=>r.fields.Pinned===true)),
         financialThrough: shift(monday, 6) };
     }
     if (operation === 'workspace.overview')
@@ -184,6 +188,7 @@ export function startFixture({ startController, renderUI }) {
       return { linked: true, ...structuredClone(input) };
     }
     if (operation === 'history.list') return { items: [] };
+    if(operation === 'sources.preview' && new URLSearchParams(location.search).get('recovery') === '1')return {previewId:'synthetic-retry-preview',coverage:'complete',scannedCount:1,selectedCount:1,newCount:1,existingCount:0,records:[{id:'synthetic-retry-record',title:'Recovered synthetic rehearsal',fields:{Date:'2026-11-12'}}]};
     if (operation.startsWith('sources.'))
       return {
         provider: input.provider,
@@ -235,7 +240,7 @@ export function startFixture({ startController, renderUI }) {
     if (operation === 'ai.connection.status') return { state: 'signed_out', available: true };
     if (operation === 'music.list') {
       const items =
-        query.get('review') === '1'
+        query.get('recovery') === '1' ? ['available','changed','missing','reconnect_required'].map((availability,index)=>({id:`recovery-music-${index}`,title:['Unchanged original','Moved or updated reference','Offline or missing original','Reference needs reconnecting'][index],artist:'Synthetic fixture',kind:'audio',filename:`synthetic-${index}.wav`,bytes:index===3?0:1200,availability,organizationRevision:1})) : query.get('review') === '1'
           ? [
               {
                 id: 'music-review-1',
@@ -251,6 +256,7 @@ export function startFixture({ startController, renderUI }) {
           : [];
       return { items, total: items.length, hasMore: false };
     }
+    if(operation === 'music.preview' && query.get('recovery') === '1') return {kind:'audio',title:'Synthetic recovery tone'};
     if (operation === 'music.edit' && query.get('review') === '1')
       return { ...input, organizationRevision: input.expectedRevision + 1 };
     if (operation === 'social.list') {
@@ -294,6 +300,7 @@ export function startFixture({ startController, renderUI }) {
     failNext(operation, message) {
       faults.set(operation, message);
     },
+    setChat(patch) { Object.assign(ctx.chat, patch); ctx.actions.render(); },
     snapshot: () => ctx.actions.snapshot(),
     open: (page) => ctx.actions.openPage(page),
     render: () => ctx.actions.render(),

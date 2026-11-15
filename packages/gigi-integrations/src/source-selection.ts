@@ -45,8 +45,8 @@ export function selectSourceRecords(records: CanonicalImportInput[], selection: 
     }
     const timing = record.source.calendarTiming;
     // An all-day calendar date has no unique UTC instant. Do not invent a zone.
-    const start = timing?.start.dateTime ? Date.parse(timing.start.dateTime) : NaN;
-    const end = timing?.end.dateTime ? Date.parse(timing.end.dateTime) : NaN;
+    const start = calendarInstant(timing?.start);
+    const end = calendarInstant(timing?.end);
     if (!Number.isFinite(start) || !Number.isFinite(end)) { unknownDateCount += 1; return false; }
     return start < upper && end > lower;
   });
@@ -54,4 +54,24 @@ export function selectSourceRecords(records: CanonicalImportInput[], selection: 
     scannedCount: records.length, selectedCount: selected.length, excludedCount: records.length - selected.length,
     unknownDateCount, dateFiltering: 'page-local' as const, dateWindow: 'message-date-or-event-overlap' as const,
   } };
+}
+
+/** Resolve date-only midnight only with an authoritative IANA zone. */
+function calendarInstant(value?: {dateTime?:string;date?:string;timeZone?:string}):number {
+  if (value?.dateTime) return Date.parse(value.dateTime);
+  if (!value?.date || !value.timeZone || !/^\d{4}-\d{2}-\d{2}$/.test(value.date)) return NaN;
+  const target = Date.parse(`${value.date}T00:00:00Z`);
+  if (!Number.isFinite(target) || new Date(target).toISOString().slice(0,10) !== value.date) return NaN;
+  try {
+    const format = new Intl.DateTimeFormat('en-CA',{timeZone:value.timeZone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
+    let instant=target;
+    for(let i=0;i<4;i++) {
+      const parts=Object.fromEntries(format.formatToParts(new Date(instant)).map(p=>[p.type,p.value]));
+      const local=Date.parse(`${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}Z`);
+      const delta=target-local;
+      if(delta===0)return instant;
+      instant+=delta;
+    }
+  } catch { /* Unknown zone/date stays explicitly unknown. */ }
+  return NaN;
 }
