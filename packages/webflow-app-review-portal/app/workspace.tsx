@@ -513,7 +513,7 @@ export default function Workspace() {
             </section>
           ) : (
             <>
-              <DeliveryWarning warning={deliveryWarning} />
+              {view !== 'activity' && <DeliveryWarning warning={deliveryWarning} />}
               {view === 'queue' && !asset && (
                 <section className="panel">
                   <div className="panel-heading">
@@ -951,7 +951,7 @@ export default function Workspace() {
                         <article className="portal-activity" key={a.id}>
                           <div>
                             <strong>{labels[a.action as Action] || a.action}</strong>
-                            <Status>{a.status}</Status>
+                            <Status>{a.status.replaceAll('_', ' ')}</Status>
                           </div>
                           <p>
                             {a.target_id} · {date(a.created_at)}

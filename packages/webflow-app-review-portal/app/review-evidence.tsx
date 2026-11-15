@@ -25,6 +25,7 @@ export function DeliveryWarning({ warning }: { warning: any }) {
   return (
     <aside className="portal-activity portal-stack" role="alert">
       <strong>Delivery needs attention</strong>
+      {warning.versionId && <small>Version {warning.versionId}</small>}
       <p>{warning.message}</p>
       <p>{warning.recovery}</p>
       {warning.submittedFeedback && (

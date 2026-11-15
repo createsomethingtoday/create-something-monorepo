@@ -2,7 +2,7 @@
 
 ## Passed locally
 
-- Portal clean npm install, TypeScript, 29 backend/render tests and production build.
+- Portal clean npm install, TypeScript, 30 backend/render tests and production build.
 - Independent reviewer reran the portal tests and TypeScript, examined session isolation, ambiguous write recovery, live-grant checks, public readiness endpoint, and modal focus handling.
 - MCP owning source: 188 tests in `src/` and TypeScript passed on the current-upstream release checkout, including the two new verified-session tests.
 - Immutable GitHub Actions pins; retired identity-provider check is included in release validation.
@@ -31,6 +31,6 @@ No production approvals, rejections or developer messages were used as test data
 
 The portal now previews every pending review-service draft before a decision. Its confirmation includes a content fingerprint; changed drafts require a new confirmation. The MCP decision handlers accept the confirmed draft IDs/edit times, check them before writing the decision, and send that exact set plus newly created decision feedback to the comments service's atomic release guard. A race after the Airtable write preserves the decision and reports the failed publication without publishing unconfirmed drafts.
 
-Nested feedback-publication or email failures become durable `completed_with_warning` receipts. The immediate result and Activity display recovery instructions and the originally submitted feedback. Recovery explicitly uses comment inspection, missing-draft repair when needed, and `app_review_release_feedback`, without repeating the decision.
+Nested feedback-publication failures, failed/pending emails, and missing email configuration or recipient become durable `completed_with_warning` receipts. The immediate result and Activity display recovery instructions and the originally submitted feedback. Recovery explicitly uses comment inspection, missing-draft repair when needed, and `app_review_release_feedback`, without repeating the decision.
 
 The conversation displays released review-service feedback and developer replies even when there is no linked Zendesk ticket. A comments-service error is visible alongside any available Zendesk thread. The local UI fixture supports these cases with `REVIEW_COMMENTS_FIXTURE=1`.

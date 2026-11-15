@@ -482,3 +482,17 @@ test('confirmation shows all draft text and delivery recovery remains visible', 
     /Do not repeat the decision/
   );
 });
+
+test('pending or unconfigured notifications remain visible without an unsafe retry instruction', async () => {
+  for (const notification of [{status:'none',reason:'send_in_progress'}, {status:'sent',pending:1}, {status:'none',reason:'no_recipient'}, {status:'none',reason:'not_configured'}]) {
+    const { DB } = database(), mock = reviewerRpc({ delivery: {ok:true,notification} });
+    const result = await performAction(DB, 'alice', action, mock.rpc);
+    assert.equal(result.status,'completed_with_warning');
+    if (notification.reason === 'send_in_progress' || notification.pending) {
+      assert.match(result.result.deliveryWarning.message,/pending/);
+      assert.match(result.result.deliveryWarning.recovery,/Wait/);
+    }
+  }
+  const { DB } = database(), mock = reviewerRpc({delivery:{ok:true,notification:{status:'none',reason:'nothing_released'}}});
+  assert.equal((await performAction(DB,'alice',action,mock.rpc)).status,'completed');
+});

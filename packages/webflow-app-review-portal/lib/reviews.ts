@@ -193,17 +193,37 @@ export async function performAction(
       await rpc('tools/call', { name: actions[data.action], arguments: args })
     );
     const delivery = result.review_comments;
-    const warning = delivery?.ok === false || delivery?.notification?.status === 'failed';
+    const notification = delivery?.notification;
+    const pending = notification?.reason === 'send_in_progress' || notification?.pending > 0;
+    const missingRecipient = notification?.reason === 'no_recipient';
+    const notConfigured = notification?.reason === 'not_configured';
+    const warning =
+      delivery?.ok === false ||
+      notification?.status === 'failed' ||
+      pending ||
+      missingRecipient ||
+      notConfigured;
     const status = warning ? 'completed_with_warning' : 'completed';
     if (warning)
       result.deliveryWarning = {
         message:
           delivery.ok === false
             ? 'The decision was saved, but feedback publication failed or is uncertain.'
-            : 'The decision and feedback were saved, but the developer email failed.',
+            : pending
+              ? 'The decision and feedback were saved. Developer email delivery is still pending.'
+              : missingRecipient
+                ? 'The decision and feedback were saved, but no developer email address is configured.'
+                : notConfigured
+                  ? 'The decision and feedback were saved, but email delivery is not configured.'
+                  : 'The decision and feedback were saved, but the developer email failed.',
         submittedFeedback: data.text,
-        recovery:
-          'Do not repeat the decision. Read the current conversation and app_review_list_comments. If feedback is missing, save it as a draft with app_review_add_comment. Review every current draft, then explicitly confirm app_review_release_feedback with their exact IDs and edit times. For an email-only retry with no pending drafts, use expected_drafts: [].',
+        recovery: pending
+          ? 'Do not repeat the decision or start another email send. Wait for the pending delivery to settle, then inspect the notification receipt with the App Review operator. Retry feedback delivery only after a failed outcome is confirmed.'
+          : missingRecipient
+            ? 'Do not repeat the decision. Correct the developer contact on the asset, inspect app_review_list_comments, then explicitly confirm app_review_release_feedback with the current drafts (or [] for email only).'
+            : notConfigured
+              ? 'Do not repeat the decision. Ask the App Review operator to configure email delivery, inspect app_review_list_comments, then explicitly confirm app_review_release_feedback with the current drafts (or [] for email only).'
+              : 'Do not repeat the decision. Read the current conversation and app_review_list_comments. If feedback is missing, save it as a draft with app_review_add_comment. Review every current draft, then explicitly confirm app_review_release_feedback with their exact IDs and edit times. For an email-only retry with no pending drafts, use expected_drafts: [].',
         versionId: data.versionId
       };
     await db
