@@ -4,6 +4,7 @@
   import { publicPageEntrances } from '$lib/motion/publicPageEntrances';
   import { IO_EXPERIMENTS_URL, IO_PAPERS_URL } from '$lib/data/ioResearchLinks';
   import AgencyPageTreatment from '$lib/components/AgencyPageTreatment.svelte';
+  import AgencyHeroBackground from '$lib/components/AgencyHeroBackground.svelte';
   import CanonBrandSignature from '$lib/components/CanonBrandSignature.svelte';
   import '$lib/styles/operator-palette.css';
   import '$lib/styles/measured-public.css';
@@ -363,6 +364,7 @@
 {/snippet}
 
 <LayoutSEO property="agency" />
+<AgencyHeroBackground />
 <PageAnnotations pathname={$page.url.pathname} />
 
 <div class="agency-surface" data-theme={usesOperatorPalette ? "dark" : "light"} data-canon-palette={usesOperatorPalette ? "operator" : undefined} data-agency-brand={usesMeasuredPublicSurface || usesMeasuredAccountSurface ? "measured" : undefined} data-agency-account={usesMeasuredAccountSurface ? "true" : undefined}>
