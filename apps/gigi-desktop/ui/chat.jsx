@@ -97,12 +97,18 @@ function MessageBody({ item }) {
     </VStack>
   );
 }
+function isFreshConversation(chat) {
+  const current = chat.current;
+  return !chat.pending && !chat.reading && !chat.refreshRequired && !chat.error &&
+    (!current || current.state === 'idle') &&
+    !(current?.messages?.length || current?.approvals?.length || current?.recordLinks?.length) &&
+    !current?.sendReceipt && !current?.decisionReceipt && !current?.recoveryPending &&
+    !current?.error && !current?.cancelPending;
+}
 function Suggestions({ chat, ready, uncertain }) {
   if (
-    chat.pending ||
-    chat.reading ||
-    uncertain ||
-    ['running', 'approval'].includes(chat.current?.state)
+    !isFreshConversation(chat) ||
+    uncertain
   )
     return null;
   const options = chat.record
@@ -302,8 +308,8 @@ function ChatDrawer({ ctx }) {
               </ChatMessageBubble>
             </ChatMessage>
           ))
-        ) : !uncertain ? (
-          <VStack gap={2} className="chat-empty"><Heading level={2}>{uncertain ? "Review the saved request" : "How can I help?"}</Heading><Text color="secondary">{uncertain ? "Your saved conversation will appear here when status is available." : "Choose a starting point, or ask in your own words."}</Text></VStack>
+        ) : !uncertain && isFreshConversation(chat) ? (
+          <VStack gap={2} className="chat-empty"><Heading level={2}>How can I help?</Heading><Text color="secondary">Choose a starting point, or ask in your own words.</Text></VStack>
         ) : null}
         <Suggestions chat={chat} ready={ready} uncertain={uncertain} />
         {current?.state === 'approval' &&
