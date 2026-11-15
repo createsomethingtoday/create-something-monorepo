@@ -1,6 +1,6 @@
 <script lang="ts">
   import { canonTaskScenes } from '$lib/canon-task-scenes';
-  import TaskOpening from '$lib/components/TaskOpening.svelte';
+  import WorkshopScene from '$lib/workshop/WorkshopScene.svelte';
   import { SEO } from '@create-something/canon';
   import WorkshopTrace from '$lib/workshop/WorkshopTrace.svelte';
   import ProjectCard from '$lib/workshop/ProjectCard.svelte';
@@ -15,7 +15,7 @@
   propertyName="space"
 />
 <div class="workshop">
-  <TaskOpening scene="welcome-bench" caption="Choose a tool and inspect how it works.">
+
 <div data-mobile-search-boundary class="opening" aria-labelledby="workshop-title">
     <div class="opening__copy">
       <p class="eyebrow">CREATE SOMETHING / The public workshop</p>
@@ -32,8 +32,8 @@
       </div>
     </div>
 
+    <WorkshopScene scene="workshop" eager />
   </div>
-</TaskOpening>
   <section class="section wrap" aria-labelledby="selected-title">
     <div class="section-head">
       <div>
@@ -89,17 +89,18 @@
 </div>
 
 <style>
+  .workshop :global(.project-grid) { gap: 2.5rem; }
   .opening {
     width: min(1440px, calc(100% - 2 * var(--space-performance-lg)));
     margin-inline: auto;
     display: grid;
-    grid-template-columns: 0.8fr 1.2fr;
+    grid-template-columns: 1fr 1.08fr;
     align-items: center;
     gap: clamp(2rem, 5vw, 6rem);
-    padding-block: clamp(2.5rem, 6vw, 6rem);
+    padding-block: 4rem 3rem;
   }
   .opening__copy {
-    padding-block: 1rem;
+    padding-block: 0;
   }
   .opening .eyebrow {
     margin-bottom: 1.5rem;
@@ -111,7 +112,7 @@
     max-width: 30rem;
   }
   .opening :global(h1) {
-    font-size: clamp(3rem, 5.7vw, 5.7rem);
+    font-size: clamp(3rem, 6.4vw, 5.75rem);
   }
   .workbench {
     background: var(--color-performance-panel);
@@ -153,15 +154,19 @@
   .closing {
     max-width: 1280px;
   }
-  @media (max-width: 900px) {
+  @media (max-width: 800px) {
     .opening {
       width: calc(100% - 2 * var(--space-performance-sm));
       grid-template-columns: 1fr;
-      gap: 2rem;
+      gap: 1.5rem;
+      padding-block: 2rem;
     }
     .workbench__grid {
       grid-template-columns: 1fr;
       gap: 2rem;
     }
+  }
+  @media (max-width: 400px) {
+    #selected-title { font-size: 30px; line-height: 1.1; }
   }
 </style>

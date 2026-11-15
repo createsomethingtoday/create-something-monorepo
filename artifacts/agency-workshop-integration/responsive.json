@@ -1,0 +1,128 @@
+[
+  {
+    "width": 320,
+    "scrollWidth": 310,
+    "headline": "Connect AI to\nyour tools.",
+    "image": {
+      "complete": true,
+      "naturalWidth": 1670,
+      "rect": {
+        "x": 19.1953125,
+        "y": 748.75,
+        "width": 271.609375,
+        "height": 226.3359375,
+        "top": 748.75,
+        "right": 290.8046875,
+        "bottom": 975.0859375,
+        "left": 19.1953125
+      },
+      "fit": "cover"
+    },
+    "missingAnchors": []
+  },
+  {
+    "width": 390,
+    "scrollWidth": 380,
+    "headline": "Connect AI to\nyour tools.",
+    "image": {
+      "complete": true,
+      "naturalWidth": 1670,
+      "rect": {
+        "x": 23.3984375,
+        "y": 663.75,
+        "width": 333.203125,
+        "height": 277.6640625,
+        "top": 663.75,
+        "right": 356.6015625,
+        "bottom": 941.4140625,
+        "left": 23.3984375
+      },
+      "fit": "cover"
+    },
+    "missingAnchors": []
+  },
+  {
+    "width": 768,
+    "scrollWidth": 758,
+    "headline": "Connect AI to\nyour tools.",
+    "image": {
+      "complete": true,
+      "naturalWidth": 1670,
+      "rect": {
+        "x": 23.0390625,
+        "y": 646.25,
+        "width": 711.921875,
+        "height": 593.265625,
+        "top": 646.25,
+        "right": 734.9609375,
+        "bottom": 1239.515625,
+        "left": 23.0390625
+      },
+      "fit": "cover"
+    },
+    "missingAnchors": []
+  },
+  {
+    "width": 1024,
+    "scrollWidth": 1014,
+    "headline": "Connect AI to\nyour tools.",
+    "image": {
+      "complete": true,
+      "naturalWidth": 1670,
+      "rect": {
+        "x": 486.6015625,
+        "y": 387.5,
+        "width": 496.671875,
+        "height": 354.765625,
+        "top": 387.5,
+        "right": 983.2734375,
+        "bottom": 742.265625,
+        "left": 486.6015625
+      },
+      "fit": "cover"
+    },
+    "missingAnchors": []
+  },
+  {
+    "width": 1025,
+    "scrollWidth": 1015,
+    "headline": "Connect AI to\nyour tools.",
+    "image": {
+      "complete": true,
+      "naturalWidth": 1670,
+      "rect": {
+        "x": 487.0703125,
+        "y": 387.5,
+        "width": 497.171875,
+        "height": 355.1171875,
+        "top": 387.5,
+        "right": 984.2421875,
+        "bottom": 742.6171875,
+        "left": 487.0703125
+      },
+      "fit": "cover"
+    },
+    "missingAnchors": []
+  },
+  {
+    "width": 1440,
+    "scrollWidth": 1430,
+    "headline": "Connect AI to\nyour tools.",
+    "image": {
+      "complete": true,
+      "naturalWidth": 1670,
+      "rect": {
+        "x": 680.9609375,
+        "y": 387.5,
+        "width": 705.8359375,
+        "height": 504.1640625,
+        "top": 387.5,
+        "right": 1386.796875,
+        "bottom": 891.6640625,
+        "left": 680.9609375
+      },
+      "fit": "cover"
+    },
+    "missingAnchors": []
+  }
+]

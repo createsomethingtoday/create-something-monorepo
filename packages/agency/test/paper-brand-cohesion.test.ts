@@ -110,11 +110,12 @@ test('the homepage retains a readable listing independent of scene motion', () =
   assert.match(home, /<AgencySalesHome \/>/);
   assert.match(salesHome, /import rawContent from '\$lib\/content\/agency-story-home\.html\?raw'/);
   assert.match(salesHome, /\{@html content\}/);
-  assert.match(content, /Your tools should<br>work together/);
-  assert.match(content, /We connect your tools and AI/);
+  assert.match(content, /Connect AI to<br>your tools/);
+  assert.match(content, /We connect your tools and make AI systems for your team/);
   assert.match(content, /Focused/);
   assert.match(content, /Team/);
-  assert.match(content, /canon-agency-v1\/connection-loom\.webp/);
+  assert.match(content, /canon-agency-v1\/request-transfer-v1\.webp/);
+  assert.ok(existsSync(resolve(agencyRoot, 'static/images/canon-agency-v1/request-transfer-v1.webp')));
   assert.match(content, /Illustrative example/);
   assert.doesNotMatch(content, /<canvas|autoplay/);
   assert.match(salesHome, /<details id="work-library" class="work-library" bind:open=\{libraryOpen\}>/);

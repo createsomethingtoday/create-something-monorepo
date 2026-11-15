@@ -245,3 +245,27 @@ html:has(.measured-foundation),body:has(.measured-foundation),
     background-image:url('/images/canon-agency-v1/cta-wide-v1.webp');
   }
 }
+
+/* Selected Workshop direction: keep the review gesture and copy legible. */
+.agency-home.measured-foundation .hero.canon-scene-hero {
+  background:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);
+  gap:24px;min-height:0;padding:56px 0;align-items:center;
+}
+.measured-foundation .canon-scene-hero .label-row {
+  grid-column:1/-1;max-width:none;margin:0;order:0;
+}
+.measured-foundation .canon-scene-hero .hero-copy {width:100%;max-width:none;order:1;}
+.measured-foundation .canon-scene-hero .hero-copy h1 {font-size:clamp(44px,5.5vw,78px);}
+.measured-foundation .prepared-reply {min-width:0;margin:0;order:2;}
+.measured-foundation .prepared-reply img {
+  display:block;width:100%;height:auto;aspect-ratio:1.4;object-fit:cover;object-position:right center;
+}
+.measured-foundation .prepared-reply figcaption {
+  font-size:14px;line-height:1.5;color:var(--muted);margin-top:16px;
+}
+@media(max-width:900px) {
+  .agency-home.measured-foundation .hero.canon-scene-hero {display:flex;gap:24px;padding:24px 0 40px;}
+  .measured-foundation .canon-scene-hero .hero-copy>p {max-width:42ch;}
+  .measured-foundation .prepared-reply {width:100%;}
+  .measured-foundation .prepared-reply img {aspect-ratio:1.2;}
+}

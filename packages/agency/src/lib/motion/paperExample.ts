@@ -21,32 +21,32 @@ export function enhancePaperExample(root: HTMLElement) {
     .catch(() => {});
   const stages = {
     plan: {
-      title: 'Make the idea tangible.',
-      copy: 'A paper dashboard makes the workflow specific: what needs attention, who owns it, and what someone needs to decide.',
-      deliverable: 'A shared view of the work, before connecting any tools.',
+      title: 'Plan the dashboard.',
+      copy: 'The dashboard plan shows tasks, owners, and required decisions.',
+      deliverable: 'A dashboard plan for review before we connect any tools.',
       number: '01',
       bench: 'Paper mockup / agree on the essentials',
-      agent: 'Turns your goals and constraints into a first dashboard wireframe.',
-      team: 'Sets the goal, names the owners, and reviews the plan.'
+      agent: 'An AI agent uses your goals and constraints to draft a dashboard layout.',
+      team: 'Your team sets the goal, names the owners, and reviews the plan.'
     },
     test: {
-      title: 'Context changes the design.',
-      copy: 'Review reveals what matters: put urgent work first, name its owner, and show where the agent waits for a person.',
-      deliverable: 'A revised dashboard, with priority, ownership and review built into the flow.',
+      title: 'Review the dashboard plan.',
+      copy: 'Your team reviews task priorities, task owners and actions that need human approval.',
+      deliverable: 'A revised dashboard plan with task priorities, task owners and human review steps.',
       number: '02',
       bench: 'Revised mockup / make the decision clear',
-      agent: 'Incorporates review notes and tests the decision flow with your team.',
-      team: 'Adds real operating context and agrees where human review belongs.'
+      agent: 'An AI agent applies review notes and tests the review steps with your team.',
+      team: 'Your team explains the workflow and identifies actions that need human review.'
     },
     run: {
-      title: 'Now, move the work forward.',
-      copy: 'Search the queue, inspect a request, and approve a sample review. Watch the counts and activity update together.',
+      title: 'Try the dashboard.',
+      copy: 'Search the queue. Inspect a request. Approve a sample review. The dashboard updates the task counts and activity list.',
       deliverable:
         'Working software, with checks, release guidance and a clear owner for each decision.',
       number: '03',
       bench: 'Working dashboard / try the local demo',
-      agent: 'Builds the dashboard, checks behavior, and helps deploy the approved release.',
-      team: 'Reviews the working result and approves deployment.'
+      agent: 'An AI agent builds the dashboard, checks its behavior, and assists with deployment after your team approves release.',
+      team: 'Your team reviews the software and approves deployment.'
     }
   };
   type Stage = keyof typeof stages;

@@ -171,7 +171,7 @@ test('public agency surfaces explain ownership and provider roles', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
   const stack = readFileSync(new URL('../src/routes/stack/+page.svelte', import.meta.url), 'utf8');
   const partners = readFileSync(new URL('../src/routes/partners/+page.svelte', import.meta.url), 'utf8');
-  assert.match(home, /you own commissioned deliverables under your agreement, except reusable provider tools/);
+  assert.match(home, /you own commissioned deliverables under your agreement\. Reusable provider tools remain licensed/);
   assert.match(home, /You keep the agreed code, tests, instructions and project history/);
   assert.match(stack, /Your project keeps its data, code, tool definitions, instructions, tests, and recovery guide/);
   assert.match(stack, /A different model must pass the relevant checks before you switch/);
@@ -188,8 +188,8 @@ test('the builder-facing homepage retains commercial terms, film evidence and di
   assert.match(home, /<AgencySalesHome/);
   assert.match(salesHome, /import rawContent from '\$lib\/content\/agency-story-home\.html\?raw'/);
   assert.match(salesHome, /\{@html content\}/);
-  assert.match(content, /We connect your tools and AI/);
-  assert.match(content, /Your tools should<br>work together\./);
+  assert.match(content, /We connect your tools and make AI systems for your team/);
+  assert.match(content, /Connect AI to<br>your tools\./);
   assert.match(content, /under your agreement/);
   assert.match(content, /One workstream\. One milestone per month/);
   assert.match(content, /production incident response need separate agreements/);
@@ -222,8 +222,8 @@ test('commercial decision routes explain the task, delivery, ownership, and proo
   assert.match(layout, /label: 'Technical Support', href: '\/services'/);
   assert.match(layout, /label: 'What You Keep', href: '\/stack'/);
   const homeContent = readFileSync(new URL('../src/lib/content/agency-story-home.html', import.meta.url), 'utf8');
-  assert.match(homeContent, /We connect your tools and AI/);
-  assert.match(homeContent, /We make the<br>handoff reliable/);
+  assert.match(homeContent, /We connect your tools and make AI systems for your team/);
+  assert.match(homeContent, /We connect the form<br>to your team/);
   assert.match(homeContent, /You approve the change/);
   assert.match(read('services/+page.svelte'), /Bring a workflow, software problem or existing product/);
   assert.match(read('services/+page.svelte'), /Your team keeps approval authority/);
@@ -470,7 +470,7 @@ test('the compact homepage preserves buying boundaries and detailed destinations
   const content = readFileSync(new URL('../src/lib/content/agency-story-home.html', import.meta.url), 'utf8');
   assert.match(content, /You approve the change/);
   assert.match(home, /production incident response need separate agreements/);
-  assert.match(home, /AI development, testing and production usage, hosting and third-party services are budgeted separately/);
+  assert.match(home, /We budget project-specific AI development, testing, production usage, hosting and third-party services separately/);
   assert.match(home, /You approve the budget first/);
   assert.match(content, /Managed Control is a separate service/);
   assert.match(home, /Cancel before your next renewal/);

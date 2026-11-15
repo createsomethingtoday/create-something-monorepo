@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import Anthropic from '@anthropic-ai/sdk';
+
+import { AgentTurnError } from '../src/agent.js';
 import { createTemplateAgentWorker } from '../src/index.js';
 import type { Env } from '../src/types.js';
 
@@ -306,6 +309,58 @@ describe('webflow-template-agent worker abuse boundaries', () => {
       leaseId: 'failed-lease',
       actualCostMicroUsd: 2_000_000,
     });
+  });
+
+  it('charges only earlier usage when the model API rejects the request before any output', async () => {
+    // The 2026-10-30 outage: the API answered every request with a 400, each
+    // failure took the full reservation, and 40 failures locked out the day.
+    const usedBeforeRejection = { inputTokens: 100, outputTokens: 10, cacheCreationInputTokens: 20, cacheReadInputTokens: 50 };
+    const runTurn = vi.fn(async () => {
+      throw new AgentTurnError(new Anthropic.APIError(400, undefined, 'schema rejected', new Headers()), usedBeforeRejection);
+    });
+    const dependencies = securityDependencies(runTurn);
+    dependencies.reserveTurn.mockResolvedValue({
+      allowed: true as const,
+      leaseId: 'rejected-lease',
+      reservedMicroUsd: 2_000_000,
+    });
+    const worker = createTemplateAgentWorker(dependencies);
+    const ctx = trackedContext();
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const response = await worker.fetch(
+      new Request('https://agent.test/api/templates/agent/chat', {
+        method: 'POST',
+        headers: {
+          authorization: 'Bearer signed-session',
+          'content-type': 'application/json',
+          origin: 'https://webflow.com',
+        },
+        body: JSON.stringify({ messages: [{ role: 'user', content: 'Find a template' }] }),
+      }),
+      testEnv(),
+      ctx,
+    );
+    expect(await response.text()).toContain('unexpected error');
+    await Promise.all(ctx.pending);
+    error.mockRestore();
+
+    expect(dependencies.settleTurn).toHaveBeenCalledWith(testEnv(), {
+      leaseId: 'rejected-lease',
+      actualCostMicroUsd: 2_700,
+    });
+    expect(dependencies.recordEvent).toHaveBeenCalledWith(testEnv(), {
+      type: 'turn_failed',
+      reason: 'api_rejected',
+      actualCostMicroUsd: 2_700,
+    });
+  });
+
+  it('treats a stream that breaks midway as unknown cost, not as a rejection', () => {
+    const usage = { inputTokens: 0, outputTokens: 0, cacheCreationInputTokens: 0, cacheReadInputTokens: 0 };
+    // The SDK reports a mid-stream error event without an HTTP status.
+    expect(new AgentTurnError(new Anthropic.APIError(undefined, undefined, 'overloaded', new Headers()), usage).status).toBeUndefined();
+    expect(new AgentTurnError(new Error('client went away'), usage).status).toBeUndefined();
+    expect(new AgentTurnError(new Anthropic.APIError(529, undefined, 'overloaded', new Headers()), usage).status).toBe(529);
   });
 
   it('bounds the editable brief and does not accept client-asserted template evidence', async () => {

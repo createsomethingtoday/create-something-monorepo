@@ -80,6 +80,10 @@ Scanned hourly. Each rule posts at most once per cooldown window (state in `ALER
 | A4 | Spend | daily spend > 80% of `DAILY_BUDGET_MICRO_USD` ($25/day) | — | 24h | Budget pressure before hard denials start |
 | A5 | Session rejections | `session_rejected > 50` in 1h | — | 6h | Bot pressure or Turnstile misconfiguration |
 | A6 | Latency (Phase 2) | p95 `ttft_ms > 8000` in 6h | ≥ 10 turns | 6h | Requires Phase 2 fields |
+| A7 | No completed turns | `turn_settled = 0` and `turn_failed + turn_denied ≥ 3` in 24h | ≥ 3 attempts | 6h | The finder is down for visitors (the 2026-10-30 outage, CRE-2460). Severity: outage |
+| A8 | Request preflight | The model API rejects the Worker's request shape (free token-count call, 4xx except 408/429) | — | 6h | No turn can start: bad tool schema, retired model or invalid key. Severity: outage |
+
+A1, A7 and A8 have severity `outage`; the others are `warning`. `/telemetry/summary` lists the active findings in `alerts` (rule, message, severity), so snapshot readers do not copy the thresholds.
 
 Alert message shape (Block Kit): rule name, window, observed vs threshold, and one AE query link/snippet for follow-up. No raw user content ever (none exists in the dataset).
 

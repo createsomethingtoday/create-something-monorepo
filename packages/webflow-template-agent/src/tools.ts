@@ -117,7 +117,9 @@ export const AGENT_TOOLS: Anthropic.Messages.ToolUnion[] = [
         },
         has_ecommerce: { type: ['boolean', 'null'], description: 'Require a full online-store setup.' },
         has_membership: { type: ['boolean', 'null'], description: 'Require member login / gated content support.' },
-        max_price: { type: ['number', 'null'], minimum: 0, maximum: 100000, description: 'Maximum template price in USD. Enforced across the catalog; unknown prices excluded.' },
+        // No minimum/maximum here: strict schemas reject numeric constraints and
+        // the API then fails every turn. buildSearchUrl enforces the range.
+        max_price: { type: ['number', 'null'], description: 'Maximum template price in USD, 0-100000. Enforced across the catalog; unknown prices excluded.' },
         has_cms: { type: ['boolean', 'null'], description: 'Require CMS collections (blog, listings, dynamic content).' },
         free_only: { type: ['boolean', 'null'], description: 'Only free templates.' },
         sort: {

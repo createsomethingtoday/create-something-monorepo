@@ -38,6 +38,10 @@ The target reader is the least-tenured credible practitioner in the document's a
 
 ## Reader Contract
 
+The operator approved ASD-STE100 as the shared writing foundation for all CREATE SOMETHING writing on 2026-11-14. The canonical application rules are in `packages/dotfiles/codex/skills/writing-for-humans/references/create-something-voice.md`. They apply across properties, including marketing, research, messages, instructions, and interface text. They supersede conflicting style advice about contractions, figurative language, and sentence variety.
+
+Writers MUST review changed text against the standard's rules, dictionary, and applicable technical vocabulary before claiming ASD-STE100 conformance. Record the reviewed scope, standard issue, and unresolved terms or exceptions. Existing prose checks do not verify full STE conformance. This approval changes the writing target; it does not add automated enforcement or establish conformance for existing content.
+
 Readable prose should create useful momentum: concrete stakes, visible progress or discovery, coherent information flow, varied rhythm, and respect for the reader. It does not require jokes, slang, fake anecdotes, or forced informality.
 
 Light writing means low cognitive load, not merely short sentences. The reader should be able to find the point, the recommended path, and the next action without reconstructing the author's organization. Present one default before alternatives, introduce the concrete task before optional architecture, and place expected results and recovery beside the actions they qualify.

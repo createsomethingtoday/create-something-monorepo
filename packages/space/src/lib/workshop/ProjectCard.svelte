@@ -6,14 +6,6 @@
 </script>
 
 <a class="project-card" href={`/projects/${project.slug}`}>
-  <div class="project-card__image">
-    <WorkshopScene
-      scene={projectScene(project.slug)}
-      caption={false}
-      compact
-      sizes="(max-width: 640px) calc(100vw - 64px), 40vw"
-    />
-  </div>
   <div class="project-card__meta">
     <span>{String(index + 1).padStart(2, '0')} / {project.kind}</span><span
       >{project.distribution} ↗</span
@@ -21,17 +13,27 @@
   </div>
   <h3>{project.name}</h3>
   <p>{project.summary}</p>
+  <span class="project-card__action">Explore {project.name} ↗</span>
+  <div class="project-card__image">
+    <WorkshopScene
+      scene={projectScene(project.slug)}
+      caption
+      compact
+      sizes="(max-width: 640px) calc(100vw - 64px), 40vw"
+    />
+  </div>
 </a>
 
 <style>
   .project-card {
-    display: block;
+    display: flex;
+    flex-direction: column;
     min-width: 0;
     min-height: 10rem;
-    padding: 1rem;
-    border: 1px solid var(--color-performance-line);
-    border-radius: var(--radius-performance-scale-lg);
-    background: var(--color-performance-panel);
+    padding: 1rem 0;
+    border-top: 1px solid var(--color-performance-line);
+    border-radius: 0;
+    background: transparent;
     color: inherit;
     text-decoration: none;
   }
@@ -40,7 +42,9 @@
   }
   .project-card__image {
     display: block;
-    margin: -1rem -1rem 1.5rem;
+    margin: 1.5rem 0 0;
+    margin-top: auto;
+    padding-top: 1.5rem;
   }
   .project-card__meta {
     display: flex;
@@ -53,7 +57,7 @@
     letter-spacing: 0.08em;
   }
   h3 {
-    font-size: clamp(1.1rem, 1.6vw, 1.35rem);
+    font-size: clamp(2rem, 2.5vw, 2.25rem);
     letter-spacing: -0.04em;
     line-height: 1.1;
     margin: 0.65rem 0;
@@ -61,9 +65,10 @@
   p {
     max-width: 36rem;
     color: var(--color-performance-fg-secondary);
-    font-size: 0.9rem;
+    font-size: 1.125rem;
     line-height: 1.6;
   }
+  .project-card__action { display: inline-flex; min-height: 44px; align-items: center; text-decoration: underline; margin-top: 1rem; font-size: 0.9rem; }
   a:focus-visible {
     outline: 3px solid var(--color-performance-signal);
     outline-offset: 8px;
