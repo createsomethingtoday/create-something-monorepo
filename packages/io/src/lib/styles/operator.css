@@ -550,3 +550,8 @@
  .io-research-home .canon-task-opening__reserve,
  .io-research-home .canon-task-opening__caption { display: none; }
 }
+/* Shared opening presets use background shorthand; keep IO's reading field clear. */
+@media (max-width: 1024px) {
+ .io-research-home .canon-task-opening { background: #000 !important; min-height: 0 !important; }
+ .io-research-home .canon-task-opening__reserve { display: none !important; }
+}
