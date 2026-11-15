@@ -45,11 +45,10 @@ test('shared legal defaults use the public-only contact constant', () => {
 test('both membership FAQs retain the full cancellation promise with the corrected contact', () => {
   const answer =
     'Cancel before your next renewal by emailing support@createsomething.io to stop future membership charges. Support continues through your paid period while we hand over your code and documentation, document open work, and plan the transition. If you need more help afterward, we’ll agree on the scope and price before extending support. Separately scoped projects follow their agreed terms.';
-  for (const file of [
-    'packages/agency/src/routes/+page.svelte',
-    'packages/agency/src/lib/components/MembershipOffer.svelte'
-  ])
-    assert.ok(read(file).includes(answer), file);
+  const homeAnswer =
+    'Cancel before your next renewal by emailing support@createsomething.io to stop future membership charges. Support continues through your paid period. We hand over your code and documentation. We document open work and plan the transition. If you need more help afterward, we agree on the scope and price before we extend support. Separately scoped projects follow their agreed terms.';
+  assert.ok(read('packages/agency/src/routes/+page.svelte').includes(homeAnswer));
+  assert.ok(read('packages/agency/src/lib/components/MembershipOffer.svelte').includes(answer));
 });
 
 test('public trust cards change contact presentation without mutating source routing', async () => {
