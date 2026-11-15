@@ -597,3 +597,6 @@ details[open]:not(.reference-dropdown) > summary {
  .dev-today-calendar .dev-calendar-day-heading { padding-block: 0; }
  .dev-today-calendar .dev-calendar-day-heading time { min-block-size: 1.5rem; }
 }
+
+/* Recovery instructions carry the same reading weight as conversation text. */
+.chat-receipt-copy { font-size: var(--text-body-size); line-height: var(--text-body-line-height, 1.5); }

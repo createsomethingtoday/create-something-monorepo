@@ -347,8 +347,8 @@ function ChatDrawer({ ctx }) {
                   : 'info'
             }
           >
-            {receiptText}
-            {current.decisionReceipt.outcome === 'unknown' && !messages.length && !current.recordLinks?.length && ' The affected record and request details are not available in this conversation.'}
+            <span className="chat-receipt-copy">{receiptText}
+            {current.decisionReceipt.outcome === 'unknown' && !messages.length && !current.recordLinks?.length && ' The affected record and request details are not available in this conversation.'}</span>
           </Message>
         )}
         {(current?.recordLinks || []).map((item) => (
