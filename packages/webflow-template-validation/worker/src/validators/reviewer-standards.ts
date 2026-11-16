@@ -136,7 +136,7 @@ export function auditReviewerStandards(html: string, pageUrl: string): ReviewerP
 	if (path === '/') record('default-favicon', faviconDetail(elements, url));
 	if (path === '/') record('powered-by-webflow', poweredByWebflowDetail(elements, url));
 	if (path !== LICENSES_PATH) record('trademark-symbols', trademarksDetail(elements, root));
-	record('self-promotion', selfPromotionDetail(elements, url));
+	record('self-promotion', selfPromotionDetail(elements, url, path === LICENSES_PATH));
 	if (path === LICENSES_PATH) record('licenses-boilerplate', licensesBoilerplateDetail(elements, root));
 
 	return {
@@ -273,8 +273,12 @@ function faviconDetail(elements: Node[], pageUrl: URL): string | null {
 	return problems.length ? problems.join(' and ') : null;
 }
 
-/** Guideline layout-and-content-18: promotional links that leave the site, and links to template stores. */
-function selfPromotionDetail(elements: Node[], pageUrl: URL): string | null {
+/**
+ * Guideline layout-and-content-18: promotional links that leave the site, and links to template stores.
+ * The Licenses page must link each asset to its source, and those sources include the same stores
+ * (icon sets and mockups from UI8, Envato and others), so store links are allowed there.
+ */
+function selfPromotionDetail(elements: Node[], pageUrl: URL, isLicensesPage = false): string | null {
 	const found = new Set<string>();
 	for (const link of elements.filter((el) => el.name === 'a')) {
 		let target: URL;
@@ -285,7 +289,7 @@ function selfPromotionDetail(elements: Node[], pageUrl: URL): string | null {
 		}
 		if (!/^https?:$/.test(target.protocol) || target.origin === pageUrl.origin) continue;
 		const label = normalize(text(link));
-		if (PROMO_LINK_TEXT.test(label) || TEMPLATE_STORE_HOST.test(target.hostname)) found.add(`"${label.slice(0, 40)}" → ${target.hostname}`);
+		if (PROMO_LINK_TEXT.test(label) || (!isLicensesPage && TEMPLATE_STORE_HOST.test(target.hostname))) found.add(`"${label.slice(0, 40)}" → ${target.hostname}`);
 	}
 	return found.size ? [...found].slice(0, 3).join('; ') : null;
 }
