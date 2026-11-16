@@ -628,7 +628,7 @@ export function registerTools(
 
     server.tool(
       'template_review_add_comment',
-      'Reviewer write: add a review comment to a template version. "draft" (default) is feedback for the creator; it stays hidden until template_review_release_feedback, request_changes, approve, or reject releases it, and needs you to be the assigned reviewer. "internal" is a reviewer-only note any mapped reviewer may leave; it is never shown to the creator. The asset comes from the version record, not from input.',
+      'Reviewer write: add a review comment to a template version\'s comment thread. Use this tool when the reviewer asks for a draft, a draft comment, or a note on a version; template_review_save_draft_feedback writes a different place (the Airtable Review Feedback field). "draft" (default) is feedback for the creator; it stays hidden until template_review_release_feedback, request_changes, approve, or reject releases it, and needs you to be the assigned reviewer. "internal" is a reviewer-only note any mapped reviewer may leave; it is never shown to the creator. The asset comes from the version record, not from input.',
       {
         version_id: z.string().min(1),
         body: z.string().min(1).max(20_000),
@@ -2122,7 +2122,7 @@ export function registerTools(
 
   server.tool(
     'template_review_save_draft_feedback',
-    'Reviewer-safe write: save draft reviewer feedback for a template version without changing the official decision state.',
+    'Reviewer-safe write: save text to the Airtable Review Feedback field and Improvement Areas of a template version without changing the review status. Review Feedback is the decision message that request_changes, approve, or reject sends; it is NOT a review comment and does not show in the version\'s comment thread. When the reviewer asks for a draft, a draft comment, or a note for the creator and template_review_add_comment is present, use template_review_add_comment instead.',
     {
       version_id: z.string().min(1),
       review_feedback: z.string().min(1).optional(),
