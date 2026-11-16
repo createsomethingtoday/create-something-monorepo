@@ -186,6 +186,15 @@ const afterClose = sandbox.describeUnapprovedGsapScript(`/* note
    continues */ setTimeout(run, 100);`);
 assert.deepEqual(Array.from(afterClose, (entry) => [entry.id, entry.line]), [['timer', 'setTimeout(run, 100);']]);
 
+// A trailing line comment is not code, and "//" inside a string is not a comment.
+const trailing = sandbox.describeUnapprovedGsapScript(`const tween = gsap.to(box, { x: 100 }); // was: setTimeout(run, 100)
+const docs = 'https://example.com/docs'; // el.innerHTML = '<b>x</b>'
+box.classList.add('is-ready'); // fetch('/old')`);
+assert.deepEqual(Array.from(trailing, (entry) => [entry.id, entry.line]), [['class-change', "box.classList.add('is-ready');"]]);
+const inString = sandbox.describeUnapprovedGsapScript(`const note = "/* not a comment */ // still a string";
+el.textContent = note;`);
+assert.deepEqual(Array.from(inString, (entry) => [entry.id, entry.line]), [['text-write', 'el.textContent = note;']]);
+
 // Scripts that pass carry no guidance.
 const valid = run(`gsap.to('.hero', { opacity: 1, duration: 1 });`);
 assert.equal(valid.passed, true);

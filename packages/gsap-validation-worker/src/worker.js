@@ -1119,29 +1119,59 @@ var GSAP_GUIDANCE_NOT_STATIC_PATTERN = /\bgsap\.(?:to|from|fromTo|timeline|ticke
 var GSAP_GUIDANCE_LINE_MAX = 140;
 var GSAP_GUIDANCE_MAX = 4;
 // The lines of a script without its comments, so a commented-out example is
-// never quoted as the offending line. Used for guidance only (never for the
-// pass or fail decision), so comment markers inside strings are not handled.
+// never quoted as the offending line and never produces guidance. Comment
+// markers inside string and template literals are kept ("https://..." is not a
+// comment). Used for guidance only, never for the pass or fail decision; a
+// regex literal that contains a quote or a comment marker can be misread.
 function executableLines(script) {
-  const lines = [];
-  let inBlockComment = false;
-  for (const rawLine of String(script || "").split(/\r?\n/)) {
-    let line = rawLine;
-    if (inBlockComment) {
-      const close = line.indexOf("*/");
-      if (close === -1) continue;
-      line = line.slice(close + 2);
-      inBlockComment = false;
+  const source = String(script || "");
+  let code = "";
+  let state = "code";
+  for (let index = 0; index < source.length; index++) {
+    const char = source[index];
+    const next = source[index + 1];
+    if (state === "line-comment") {
+      if (char === "\n") {
+        state = "code";
+        code += char;
+      }
+      continue;
     }
-    line = line.replace(/\/\*.*?\*\//g, " ");
-    const open = line.indexOf("/*");
-    if (open !== -1) {
-      line = line.slice(0, open);
-      inBlockComment = true;
+    if (state === "block-comment") {
+      if (char === "*" && next === "/") {
+        state = "code";
+        code += " ";
+        index++;
+      } else if (char === "\n") {
+        code += char;
+      }
+      continue;
     }
-    line = line.trim();
-    if (line && !line.startsWith("//")) lines.push(line);
+    if (state === "code") {
+      if (char === "/" && next === "/") {
+        state = "line-comment";
+        index++;
+        continue;
+      }
+      if (char === "/" && next === "*") {
+        state = "block-comment";
+        index++;
+        continue;
+      }
+      if (char === "'" || char === '"' || char === "`") state = char;
+      code += char;
+      continue;
+    }
+    // Inside a string or template literal: keep everything up to its closing quote.
+    code += char;
+    if (char === "\\" && next !== undefined) {
+      code += next;
+      index++;
+    } else if (char === state || (char === "\n" && state !== "`")) {
+      state = "code";
+    }
   }
-  return lines;
+  return code.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
 }
 __name(executableLines, "executableLines");
 function describeUnapprovedGsapScript(script) {
