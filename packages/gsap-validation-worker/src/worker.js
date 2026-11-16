@@ -1062,7 +1062,7 @@ var NON_GSAP_BEHAVIOR_PATTERN = new RegExp([
 var GSAP_GUIDANCE_RULES = [
   {
     id: "markup",
-    pattern: /createElement\s*\(|innerHTML|outerHTML|insertAdjacent(?:HTML|Element|Text)|document\.write/,
+    pattern: /createElement\s*\(|\.(?:innerHTML|outerHTML)\s*\+?=(?!=)|insertAdjacent(?:HTML|Element|Text)\s*\(|document\.write(?:ln)?\s*\(/,
     reason: "It creates or writes HTML.",
     fix: "Build the elements in the Designer and animate them with GSAP."
   },

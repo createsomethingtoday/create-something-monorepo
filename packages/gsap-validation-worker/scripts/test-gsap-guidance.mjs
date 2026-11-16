@@ -212,6 +212,15 @@ assert.deepEqual(Array.from(interpolation, (entry) => entry.id), ['class-change'
 const styleAttribute = sandbox.describeUnapprovedGsapScript("el.setAttribute('style', saved);\nel.setAttribute('aria-expanded', 'true');");
 assert.deepEqual(Array.from(styleAttribute, (entry) => entry.id), ['style-write', 'attribute-write']);
 
+// Reading a property is not writing it: only an assignment or a call counts.
+const reads = sandbox.describeUnapprovedGsapScript(`const saved = el.innerHTML;
+if (el.outerHTML === saved) return;
+const label = el.textContent.trim();
+const same = el.className === 'x' || el.style.color == 'red' || link.href !== '';`);
+assert.deepEqual(Array.from(reads, (entry) => entry.id), ['unrecognized']);
+const writes = sandbox.describeUnapprovedGsapScript("el.innerHTML += '<b>x</b>';");
+assert.deepEqual(Array.from(writes, (entry) => entry.id), ['markup']);
+
 // Scripts that pass carry no guidance.
 const valid = run(`gsap.to('.hero', { opacity: 1, duration: 1 });`);
 assert.equal(valid.passed, true);
