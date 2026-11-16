@@ -52,7 +52,7 @@ import {
 import { normalizePublishedHost, verifyOauthSiteAccess } from './utils/oauth-site-evidence';
 
 const REVIEW_SNIPPET_VERSION = '0.3.0';
-const WORKER_VERSION = '2.13.1';
+const WORKER_VERSION = '2.13.2';
 
 /**
  * Oldest Template CLI that may record a result. Part of the rules run inside
@@ -1116,6 +1116,8 @@ async function handleValidationSubmit(
 			? body.siteUrl.trim()
 			: undefined;
 	const sanitizedResults = sanitizeValidationResults(body.validationResults);
+	// Kept out of sanitizedResults so the payload hash still identifies the findings, not the run speed.
+	const clientTimings = sanitizeRunTimings(body.validationResults.timings);
 	const payloadHash =
 		(await hashTelemetryValue(JSON.stringify(sanitizedResults))) || `inline_${siteId}`;
 	const clientHash = await getRequestClientHash(request);
@@ -1273,6 +1275,7 @@ async function handleValidationSubmit(
 		correlationId,
 		payloadHash,
 		evidence,
+		clientTimings,
 		validationResults: resultsToRecord
 	});
 	const latestResult: ValidationResultRecord = {
@@ -1355,6 +1358,8 @@ async function handleValidationSubmit(
 				artifactReason: artifactResult.reason,
 				evidenceType: evidence?.type,
 				evidenceVerified: evidence ? true : undefined,
+				clientTimings,
+				pageSlugsCount: resultsToRecord.scope?.pageSlugsCount,
 				remaining,
 				anomalyReasons
 			}
@@ -3154,6 +3159,34 @@ function sanitizeValidationIssue(value: unknown): ValidationCategoryIssueDetail 
 	};
 }
 
+interface ClientRunTimings {
+	steps: Record<string, number>;
+	counts: Record<string, number>;
+}
+
+const RUN_TIMING_KEY = /^[A-Za-z][A-Za-z0-9]{0,31}$/;
+const RUN_TIMING_KEY_LIMIT = 20;
+const RUN_TIMING_MAX_MS = 60 * 60 * 1000;
+const RUN_TIMING_MAX_COUNT = 1_000_000;
+
+function sanitizeNumberMap(value: unknown, max: number): Record<string, number> {
+	if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+	const entries = Object.entries(value as Record<string, unknown>)
+		.filter((entry): entry is [string, number] => RUN_TIMING_KEY.test(entry[0]) && typeof entry[1] === 'number' && Number.isFinite(entry[1]))
+		.slice(0, RUN_TIMING_KEY_LIMIT)
+		.map(([key, number]) => [key, Math.min(max, Math.max(0, Math.round(number)))] as const);
+	return Object.fromEntries(entries);
+}
+
+/** Designer-side run times sent by the extension. Numbers only, bounded, never used for a decision. */
+function sanitizeRunTimings(value: unknown): ClientRunTimings | undefined {
+	if (!value || typeof value !== 'object') return undefined;
+	const { steps, counts } = value as { steps?: unknown; counts?: unknown };
+	const cleanSteps = sanitizeNumberMap(steps, RUN_TIMING_MAX_MS);
+	if (Object.keys(cleanSteps).length === 0) return undefined;
+	return { steps: cleanSteps, counts: sanitizeNumberMap(counts, RUN_TIMING_MAX_COUNT) };
+}
+
 function sanitizeValidationScope(
 	scope: ValidationSubmitRequest['validationResults']['scope']
 ): ValidationRunScope | undefined {
@@ -3522,6 +3555,7 @@ async function persistValidationResultArtifact(
 		correlationId: string;
 		payloadHash: string;
 		evidence: OauthSiteAccessEvidence | null;
+		clientTimings?: ClientRunTimings;
 		validationResults: ValidationSubmitRequest['validationResults'];
 	}
 ): Promise<ValidationResultArtifactPersistResult> {
@@ -3539,6 +3573,7 @@ async function persistValidationResultArtifact(
 		payload_hash: input.payloadHash,
 		raw_bridge_token_stored: false,
 		evidence: input.evidence,
+		...(input.clientTimings ? { client_timings: input.clientTimings } : {}),
 		validation_results: input.validationResults
 	};
 	const body = JSON.stringify(artifact, null, 2);

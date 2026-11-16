@@ -1,7 +1,7 @@
 "use strict";
 (() => {
   // src/utils.ts
-  var EXTENSION_VERSION = "1.3.10";
+  var EXTENSION_VERSION = "1.3.11";
   function filterRetiredAccessibilityIssues(issues) {
     return issues.filter((issue) => issue.id !== "color-contrast-violations");
   }
@@ -141,6 +141,40 @@
     ].join("");
   }
 
+  // src/run-timings.ts
+  function createRunTimer(now = () => performance.now()) {
+    const startedAt = now();
+    let lastLap = startedAt;
+    const steps = {};
+    const counts = {};
+    return {
+      lap(step) {
+        const current = now();
+        steps[step] = (steps[step] || 0) + Math.max(0, Math.round(current - lastLap));
+        lastLap = current;
+      },
+      count(name, items) {
+        if (typeof items === "number" && Number.isFinite(items)) counts[name] = Math.max(0, Math.floor(items));
+      },
+      result() {
+        return { steps: { ...steps, total: Math.max(0, Math.round(now() - startedAt)) }, counts: { ...counts } };
+      }
+    };
+  }
+  function formatSeconds(ms) {
+    return ms >= 1e4 ? `${Math.round(ms / 1e3)} s` : `${(ms / 1e3).toFixed(1)} s`;
+  }
+  function formatRunTimings(timings) {
+    if (!timings || typeof timings.steps !== "object") return null;
+    const { total, ...steps } = timings.steps;
+    const parts = Object.entries(steps).filter(([, ms]) => typeof ms === "number" && Number.isFinite(ms)).sort(([, a], [, b]) => b - a).map(([step, ms]) => {
+      const items = timings.counts?.[step];
+      return `${step} ${formatSeconds(ms)}${typeof items === "number" ? ` (${items} items)` : ""}`;
+    });
+    if (typeof total !== "number" && parts.length === 0) return null;
+    return [typeof total === "number" ? `total ${formatSeconds(total)}` : null, ...parts].filter(Boolean).join(" \xB7 ");
+  }
+
   // src/report.ts
   function buildReportMarkdown(input) {
     const lines = [
@@ -153,6 +187,7 @@
       input.extensionVersion ? `- Validator: extension v${input.extensionVersion}${input.workerVersion ? ` \xB7 worker v${input.workerVersion}` : ""}` : null,
       input.outcomeBadge ? `- Outcome: ${input.outcomeBadge}${input.outcomeTitle ? ` \u2014 ${input.outcomeTitle}` : ""}` : null,
       `- Errors: ${input.errors} \xB7 Warnings: ${input.warnings} \xB7 Info: ${input.infos}`,
+      formatRunTimings(input.timings) ? `- Run time: ${formatRunTimings(input.timings)}` : null,
       ""
     ];
     for (const category of input.categories) {
@@ -1026,10 +1061,12 @@
       if (!webflow) {
         throw new Error("Webflow Designer API not available. Please ensure this extension is running in Webflow Designer.");
       }
-      const projectData = await collectProjectData(webflow);
+      const timer = createRunTimer();
+      const projectData = await collectProjectData(webflow, timer);
       const designerContext = await collectDesignerContext(webflow);
       projectData.designerContext = designerContext;
       projectData.canvasChecks = await collectCanvasAccessibility(webflow, designerContext.canAccessCanvas);
+      timer.lap("canvas");
       if (designerContext.message) {
         setToolbarStatus(designerContext.message, designerContext.canAccessCanvas === false ? "warning" : "neutral");
       }
@@ -1082,7 +1119,10 @@
         );
         setBridgeSetupStep("install");
         setToolbarStatus("Validator script required for submission checks", "warning");
+        timer.lap("setup");
         const designerResults = await runDesignerValidation(projectData, siteUrl, correlationId);
+        timer.lap("worker");
+        designerResults.timings = timer.result();
         designerResults.collectedData = [projectData];
         enhanceValidationResults(designerResults, projectData, projectData.canvasChecks);
         if (!designerResults.categories) designerResults.categories = [];
@@ -1131,12 +1171,15 @@
       hideBridgeDrawer();
       setBridgeSetupStep("run");
       setToolbarStatus("Running full Validator checks...", "active");
+      timer.lap("setup");
       const validationResults = await runUnifiedValidation({
         siteUrl,
         projectData,
         pageSlugs: pageSlugScope.pageSlugs,
         correlationId
       });
+      timer.lap("worker");
+      validationResults.timings = timer.result();
       validationResults.collectedData = [projectData];
       enhanceValidationResults(validationResults, projectData, projectData.canvasChecks);
       registerValidationReport(validationResults, correlationId);
@@ -1374,6 +1417,7 @@
     return {
       url: validationResults.url,
       summary: validationResults.summary,
+      timings: validationResults.timings,
       categories: Array.isArray(validationResults.categories) ? validationResults.categories.map((category) => ({
         category: category.category,
         passed: category.passed,
@@ -2260,7 +2304,7 @@
       return unavailable(error instanceof Error ? error.message : "Canvas analysis failed");
     }
   }
-  async function collectProjectData(webflow) {
+  async function collectProjectData(webflow, timer) {
     const data = {
       variables: void 0,
       components: [],
@@ -2370,6 +2414,7 @@
         error: error instanceof Error ? error.message : String(error)
       });
     }
+    timer?.lap("variables");
     try {
       if (webflow.getAllComponents) {
         const components = await webflow.getAllComponents() || [];
@@ -2416,6 +2461,7 @@
         error: error instanceof Error ? error.message : String(error)
       });
     }
+    timer?.lap("components");
     try {
       if (webflow.getAllStyles) {
         const styles = await webflow.getAllStyles() || [];
@@ -2492,6 +2538,7 @@
         error: error instanceof Error ? error.message : String(error)
       });
     }
+    timer?.lap("styles");
     try {
       if (webflow.getAllPagesAndFolders) {
         const pagesAndFolders = await webflow.getAllPagesAndFolders() || [];
@@ -2598,6 +2645,7 @@
         error: error instanceof Error ? error.message : String(error)
       });
     }
+    timer?.lap("pages");
     try {
       console.log("Collecting current page SEO data...");
       const currentPageData = await collectCurrentPageSEOData(webflow);
@@ -2624,6 +2672,11 @@
         error: error instanceof Error ? error.message : String(error)
       });
     }
+    timer?.lap("siteInfo");
+    timer?.count("variables", data.variables?.collections?.reduce((sum, collection) => sum + (collection.variables?.length || 0), 0));
+    timer?.count("components", data.components?.length);
+    timer?.count("styles", data.styles?.length);
+    timer?.count("pages", data.pages?.length);
     data.collectionMetadata = deriveCollectionMetadata(data);
     data.enhancedValidation = deriveEnhancedValidation(data);
     console.log("Project data collection complete:", data.collectionMetadata);
@@ -2881,7 +2934,8 @@
       categories: data.categories,
       domainLastPublished: scope?.domainLastPublished || null,
       extensionVersion: EXTENSION_VERSION,
-      workerVersion: knownWorkerVersion
+      workerVersion: knownWorkerVersion,
+      timings: data.timings
     };
     return buildReportMarkdown(input);
   }
