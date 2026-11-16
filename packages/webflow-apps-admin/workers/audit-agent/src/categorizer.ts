@@ -1,5 +1,5 @@
 /**
- * App Categorizer using Cloudflare Workers AI (Llama 3.1)
+ * App Categorizer using Cloudflare Workers AI (Llama 3.3)
  * 
  * Demonstrates how Workers AI handles classification tasks at scale.
  * Canon: The infrastructure recedes; decisions emerge.
@@ -92,7 +92,7 @@ Name: ${app.name}
 Slug: ${app.slug}`;
 
   try {
-    const response = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+    const response = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
@@ -101,7 +101,10 @@ Slug: ${app.slug}`;
       temperature: 0.1 // Low temperature for consistent categorization
     });
 
-    const text = response.response || '';
+    // Workers AI can return structured JSON as well as a JSON string.
+    const value = typeof response === 'object' && response !== null && 'response' in response
+      ? response.response : response;
+    const text = typeof value === 'string' ? value : JSON.stringify(value ?? null);
     
     // Parse JSON from response
     const jsonMatch = text.match(/\{[\s\S]*\}/);

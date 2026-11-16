@@ -2,7 +2,7 @@
  * Webflow Apps Audit Agent
  * 
  * Demonstrates Cloudflare Workers AI for categorization and triage tasks.
- * Uses Llama 3.1 8B for app classification and pattern matching for issue detection.
+ * Uses Llama 3.3 70B for app classification and pattern matching for issue detection.
  * 
  * Endpoints:
  * - POST /analyze - Full audit analysis (categorize + detect issues)
@@ -164,7 +164,7 @@ function handleHealth(): Response {
       'issue-detection',
       'duplicate-client-id-analysis'
     ],
-    model: '@cf/meta/llama-3.1-8b-instruct'
+    model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast'
   });
 }
 
