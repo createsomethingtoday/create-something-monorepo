@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-review:internal",
-  "generatedAt": "2026-11-15T15:06:51.232Z",
+  "generatedAt": "2026-11-16T21:22:33.813Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceCoverageId": "substrate:create-something:atlas-coverage:internal",
@@ -141,6 +141,8 @@
         "substrate:create-something:package:create-something-walkthrough-system-packages-walkthrough-system",
         "substrate:create-something:worker:packages-walkthrough-system-wrangler-jsonc",
         "substrate:create-something:worker:packages-webflow-app-review-mcp-worker-wrangler-toml",
+        "substrate:create-something:package:create-something-webflow-app-review-portal-packages-webflow-app-review-portal",
+        "substrate:create-something:worker:packages-webflow-app-review-portal-wrangler-json",
         "substrate:create-something:worker:packages-webflow-apps-admin-dashboard-wrangler-toml",
         "substrate:create-something:worker:packages-webflow-apps-admin-workers-audit-agent-wrangler-toml",
         "substrate:create-something:package:webflow-onboarding-sync-worker-packages-webflow-automation-worker",
@@ -170,7 +172,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Automation",
       "surface": "worker",
-      "nodeCount": 153,
+      "nodeCount": 155,
       "evidence": [
         "apps/agency-meta-maintenance/wrangler.jsonc",
         "apps/bettermode-marketplace-creator-agent/wrangler.jsonc",
