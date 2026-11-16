@@ -1117,8 +1117,34 @@ var GSAP_GUIDANCE_RULES = [
 ];
 var GSAP_GUIDANCE_LINE_MAX = 140;
 var GSAP_GUIDANCE_MAX = 4;
+// The lines of a script without its comments, so a commented-out example is
+// never quoted as the offending line. Used for guidance only (never for the
+// pass or fail decision), so comment markers inside strings are not handled.
+function executableLines(script) {
+  const lines = [];
+  let inBlockComment = false;
+  for (const rawLine of String(script || "").split(/\r?\n/)) {
+    let line = rawLine;
+    if (inBlockComment) {
+      const close = line.indexOf("*/");
+      if (close === -1) continue;
+      line = line.slice(close + 2);
+      inBlockComment = false;
+    }
+    line = line.replace(/\/\*.*?\*\//g, " ");
+    const open = line.indexOf("/*");
+    if (open !== -1) {
+      line = line.slice(0, open);
+      inBlockComment = true;
+    }
+    line = line.trim();
+    if (line && !line.startsWith("//")) lines.push(line);
+  }
+  return lines;
+}
+__name(executableLines, "executableLines");
 function describeUnapprovedGsapScript(script) {
-  const lines = String(script || "").split(/\r?\n/).map((line) => line.trim()).filter((line) => line && !/^(?:\/\/|\/\*|\*)/.test(line));
+  const lines = executableLines(script);
   const guidance = [];
   for (const rule of GSAP_GUIDANCE_RULES) {
     const line = lines.find((candidate) => rule.pattern.test(candidate));

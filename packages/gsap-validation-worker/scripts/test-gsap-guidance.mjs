@@ -141,6 +141,22 @@ const direct = sandbox.describeUnapprovedGsapScript('const x = somethingUnusual(
 assert.deepEqual(Array.from(direct, (entry) => entry.id), ['unrecognized']);
 assert.equal(direct[0].line, undefined);
 
+// Comments are not code: a block comment whose lines do not start with "*",
+// an inline block comment, and a line comment never produce guidance or a quote.
+const commented = sandbox.describeUnapprovedGsapScript(`/*
+  The old version called fetch('/old-endpoint') and used setTimeout(run, 100).
+  el.innerHTML = '<b>removed</b>';
+*/
+// localStorage.setItem('seen', '1');
+const el = document.querySelector('.counter'); /* el.style.color = 'red'; */
+el.textContent = 'done';`);
+assert.deepEqual(Array.from(commented, (entry) => entry.id), ['text-write']);
+assert.equal(commented[0].line, "el.textContent = 'done';");
+// Code after a comment that closes mid-line is still read.
+const afterClose = sandbox.describeUnapprovedGsapScript(`/* note
+   continues */ setTimeout(run, 100);`);
+assert.deepEqual(Array.from(afterClose, (entry) => [entry.id, entry.line]), [['timer', 'setTimeout(run, 100);']]);
+
 // Scripts that pass carry no guidance.
 const valid = run(`gsap.to('.hero', { opacity: 1, duration: 1 });`);
 assert.equal(valid.passed, true);
