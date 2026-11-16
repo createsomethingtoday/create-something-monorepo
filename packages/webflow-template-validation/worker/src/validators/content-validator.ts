@@ -685,18 +685,18 @@ function decodeBasicHtmlEntities(value: string): string {
 		.replace(/&#39;/g, "'");
 }
 
-function extractSEOData(parsedHTML: ParsedHTML): PageSEOData {
+export function extractSEOData(parsedHTML: ParsedHTML): PageSEOData {
 	const document = parsedHTML.document;
 
 	// Title extraction and validation
 	const titleElement = document.querySelector('title');
-	const title = titleElement?.textContent?.trim() || null;
+	const title = decodeCommonHtmlEntities(titleElement?.textContent ?? '').trim() || null;
 	const titleLength = title?.length || 0;
 	const hasValidTitle = title !== null && titleLength >= 30 && titleLength <= 60;
 
 	// Meta description extraction and validation
 	const metaDescElement = document.querySelector('meta[name="description"]');
-	const metaDescription = metaDescElement?.getAttribute('content')?.trim() || null;
+	const metaDescription = decodeCommonHtmlEntities(metaDescElement?.getAttribute('content') ?? '').trim() || null;
 	const metaDescriptionLength = metaDescription?.length || 0;
 	const hasValidDescription = metaDescription !== null && metaDescriptionLength >= 150 && metaDescriptionLength <= 160;
 
@@ -1080,15 +1080,15 @@ function normalizeHeadingText(text: string): string {
 	return normalized.length > 80 ? `${normalized.slice(0, 77)}...` : normalized;
 }
 
+const NAMED_HTML_ENTITIES: Record<string, string> = { nbsp: ' ', amp: '&', quot: '"', apos: "'", lt: '<', gt: '>' };
+
+/** Decodes numeric entities (&#39; &#x27;) and the common named ones, so text is measured as the reader sees it. */
 function decodeCommonHtmlEntities(value: string): string {
-	return value
-		.replace(/&nbsp;/gi, ' ')
-		.replace(/&amp;/gi, '&')
-		.replace(/&quot;/gi, '"')
-		.replace(/&#39;/gi, "'")
-		.replace(/&#x27;/gi, "'")
-		.replace(/&lt;/gi, '<')
-		.replace(/&gt;/gi, '>');
+	return value.replace(/&(?:#(\d+)|#x([0-9a-f]+)|([a-z]+));/gi, (entity, decimal, hex, name) => {
+		if (name) return NAMED_HTML_ENTITIES[name.toLowerCase()] ?? entity;
+		const codePoint = decimal ? Number.parseInt(decimal, 10) : Number.parseInt(hex, 16);
+		return codePoint > 0 && codePoint <= 0x10ffff ? String.fromCodePoint(codePoint) : entity;
+	});
 }
 
 function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {

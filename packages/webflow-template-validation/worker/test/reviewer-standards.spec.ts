@@ -162,6 +162,11 @@ describe('Reviewer standards', () => {
 			'"More templates" → webflow.com'
 		);
 		expect(audit('/', NAV + '<a href="https://studio.example.com">Designed by Studio</a>' + FOOTER).findings['self-promotion']).toBeUndefined();
+		// The Licenses page credits asset sources, and those include stores. Promotional wording is still caught there.
+		expect(audit('/licenses', NAV + '<a href="https://ui8.net/pack/icons">Source</a>' + FOOTER).findings['self-promotion']).toBeUndefined();
+		expect(audit('/licenses', NAV + '<a href="https://ui8.net/studio">More templates</a>' + FOOTER).findings['self-promotion']).toBe(
+			'"More templates" → ui8.net'
+		);
 	});
 
 	it('requires the exact Licenses opening text on /licenses only, ignoring case, spacing and quote style', () => {

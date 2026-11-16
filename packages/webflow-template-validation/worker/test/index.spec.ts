@@ -2952,7 +2952,7 @@ describe('Validation Submission Endpoint', () => {
 									howToFix: 'Set a unique SEO title in the page settings.',
 									location: 'Designer pages panel',
 									details: {
-										pages: ['Log In (/log-in)'],
+										pages: ['Log In (/log-in)', { url: 'https://x.webflow.io/404', detail: '"More templates" → store.example' }, { other: 1 }],
 										duplicates: [['About (/about)', 'Contact (/contact)']],
 										samples: ['About us (/about)', { name: 'not a label' }],
 										locations: ['/about — 375px: scrolls 40px sideways (widest: div.hero)'],
@@ -3000,7 +3000,7 @@ describe('Validation Submission Endpoint', () => {
 			howToFix: 'Set a unique SEO title in the page settings.',
 			location: 'Designer pages panel',
 			details: {
-				pages: ['Log In (/log-in)'],
+				pages: ['Log In (/log-in)', 'https://x.webflow.io/404 — "More templates" → store.example'],
 				duplicates: [['About (/about)', 'Contact (/contact)']],
 				samples: ['About us (/about)'],
 				locations: ['/about — 375px: scrolls 40px sideways (widest: div.hero)']
