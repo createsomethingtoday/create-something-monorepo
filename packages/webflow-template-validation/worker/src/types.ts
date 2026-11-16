@@ -148,6 +148,8 @@ export interface ValidationSubmitRequest {
 			}>;
 		}>;
 		scope?: Partial<ValidationRunScope>;
+		/** Designer-side run times in milliseconds and item counts per step. Diagnostic only. */
+		timings?: unknown;
 	};
 }
 
