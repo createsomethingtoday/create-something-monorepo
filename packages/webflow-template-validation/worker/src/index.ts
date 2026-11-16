@@ -52,7 +52,7 @@ import {
 import { normalizePublishedHost, verifyOauthSiteAccess } from './utils/oauth-site-evidence';
 
 const REVIEW_SNIPPET_VERSION = '0.3.0';
-const WORKER_VERSION = '2.13.0';
+const WORKER_VERSION = '2.13.1';
 
 /**
  * Oldest Template CLI that may record a result. Part of the rules run inside
@@ -3086,10 +3086,17 @@ function sanitizeBoundedString(value: unknown, maxLength: number): string | unde
 	return trimmed.slice(0, maxLength);
 }
 
+/** Reviewer-standard issues list pages as { url, detail }; keep both as one label. */
+function labelText(value: unknown): unknown {
+	if (!value || typeof value !== 'object') return value;
+	const { url, detail } = value as { url?: unknown; detail?: unknown };
+	return [url, detail].filter((part) => typeof part === 'string' && part.trim() !== '').join(' — ');
+}
+
 function sanitizeLabelList(value: unknown): string[] {
 	return Array.isArray(value)
 		? value
-				.map((label) => sanitizeBoundedString(label, ISSUE_DETAIL_LABEL_MAX_LENGTH))
+				.map((label) => sanitizeBoundedString(labelText(label), ISSUE_DETAIL_LABEL_MAX_LENGTH))
 				.filter((label): label is string => Boolean(label))
 				.slice(0, ISSUE_DETAIL_PAGE_LIMIT)
 		: [];

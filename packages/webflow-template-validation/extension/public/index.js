@@ -1,7 +1,7 @@
 "use strict";
 (() => {
   // src/utils.ts
-  var EXTENSION_VERSION = "1.3.9";
+  var EXTENSION_VERSION = "1.3.10";
   function filterRetiredAccessibilityIssues(issues) {
     return issues.filter((issue) => issue.id !== "color-contrast-violations");
   }
@@ -109,6 +109,38 @@
     return { url: null, source: "no published domain found" };
   }
 
+  // src/page-metadata-details.ts
+  function renderDetails(label, items) {
+    if (items.length === 0) return "";
+    return `
+    <details class="issue-subitems-details">
+      <summary class="issue-subitems-summary">
+        <strong>${label} (${items.length})</strong>
+      </summary>
+      <div class="issue-subitems-list">
+        ${items.map((item) => `<div class="subitem">\u2022 ${escapeHtml(item)}</div>`).join("")}
+      </div>
+    </details>
+  `;
+  }
+  function formatPageDetail(page) {
+    if (typeof page === "string") return page.replace(/\s+/g, " ").trim();
+    if (!page || typeof page !== "object") return "";
+    const { url, detail } = page;
+    return [url, detail].filter((part) => typeof part === "string" && part.trim() !== "").map((part) => part.replace(/\s+/g, " ").trim()).join(" \u2014 ");
+  }
+  function createPageMetadataDetailsHTML(details) {
+    if (!details) return "";
+    const pages = Array.isArray(details.pages) ? details.pages.map(formatPageDetail).filter((page) => page !== "") : [];
+    const duplicates = Array.isArray(details.duplicates) ? details.duplicates.filter((group) => Array.isArray(group)).map(
+      (group) => group.filter((page) => typeof page === "string" && page.trim() !== "").join(" \xB7 ")
+    ).filter(Boolean) : [];
+    return [
+      renderDetails(`View affected page${pages.length === 1 ? "" : "s"}`, pages),
+      renderDetails(`View duplicate group${duplicates.length === 1 ? "" : "s"}`, duplicates)
+    ].join("");
+  }
+
   // src/report.ts
   function buildReportMarkdown(input) {
     const lines = [
@@ -133,19 +165,17 @@
         const howToFix = issue.howToFix || issue.details?.howToFix;
         if (howToFix) lines.push(`  - Fix: ${howToFix}`);
         for (const page of issue.details?.pages || []) {
-          lines.push(`  - Affected page: ${formatDetailLabel(page)}`);
+          const label = formatPageDetail(page);
+          if (label) lines.push(`  - Affected page: ${label}`);
         }
         for (const group of issue.details?.duplicates || []) {
-          const labels = group.map(formatDetailLabel).filter(Boolean);
+          const labels = group.map(formatPageDetail).filter(Boolean);
           if (labels.length > 0) lines.push(`  - Duplicate group: ${labels.join(" \xB7 ")}`);
         }
       }
       lines.push("");
     }
     return lines.filter((line) => line !== null).join("\n");
-  }
-  function formatDetailLabel(value) {
-    return String(value).replace(/\s+/g, " ").trim();
   }
 
   // src/page-seo.ts
@@ -173,32 +203,6 @@
       hasCustomOpenGraphTitle: !usesTitleAsOG && !!openGraphTitle,
       hasCustomOpenGraphDescription: !usesDescAsOG && !!openGraphDescription
     };
-  }
-
-  // src/page-metadata-details.ts
-  function renderDetails(label, items) {
-    if (items.length === 0) return "";
-    return `
-    <details class="issue-subitems-details">
-      <summary class="issue-subitems-summary">
-        <strong>${label} (${items.length})</strong>
-      </summary>
-      <div class="issue-subitems-list">
-        ${items.map((item) => `<div class="subitem">\u2022 ${escapeHtml(item)}</div>`).join("")}
-      </div>
-    </details>
-  `;
-  }
-  function createPageMetadataDetailsHTML(details) {
-    if (!details) return "";
-    const pages = Array.isArray(details.pages) ? details.pages.filter((page) => typeof page === "string" && page.trim() !== "") : [];
-    const duplicates = Array.isArray(details.duplicates) ? details.duplicates.filter((group) => Array.isArray(group)).map(
-      (group) => group.filter((page) => typeof page === "string" && page.trim() !== "").join(" \xB7 ")
-    ).filter(Boolean) : [];
-    return [
-      renderDetails(`View affected page${pages.length === 1 ? "" : "s"}`, pages),
-      renderDetails(`View duplicate group${duplicates.length === 1 ? "" : "s"}`, duplicates)
-    ].join("");
   }
 
   // src/validation-submit-payload.ts

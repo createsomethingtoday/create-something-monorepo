@@ -1,3 +1,4 @@
+import { formatPageDetail } from './page-metadata-details';
 // Markdown report builder — pure so it can be unit-tested. The panel's
 // "Copy report" action feeds it the last run; the output is what creators
 // paste into support tickets.
@@ -10,7 +11,7 @@ export interface ReportIssueLike {
   details?: {
     location?: string;
     howToFix?: string;
-    pages?: string[];
+    pages?: unknown[];
     duplicates?: string[][];
     [key: string]: any;
   };
@@ -62,10 +63,11 @@ export function buildReportMarkdown(input: ReportInput): string {
       const howToFix = issue.howToFix || issue.details?.howToFix;
       if (howToFix) lines.push(`  - Fix: ${howToFix}`);
       for (const page of issue.details?.pages || []) {
-        lines.push(`  - Affected page: ${formatDetailLabel(page)}`);
+        const label = formatPageDetail(page);
+        if (label) lines.push(`  - Affected page: ${label}`);
       }
       for (const group of issue.details?.duplicates || []) {
-        const labels = group.map(formatDetailLabel).filter(Boolean);
+        const labels = group.map(formatPageDetail).filter(Boolean);
         if (labels.length > 0) lines.push(`  - Duplicate group: ${labels.join(' · ')}`);
       }
     }
@@ -75,6 +77,3 @@ export function buildReportMarkdown(input: ReportInput): string {
   return lines.filter((line): line is string => line !== null).join('\n');
 }
 
-function formatDetailLabel(value: string): string {
-  return String(value).replace(/\s+/g, ' ').trim();
-}
