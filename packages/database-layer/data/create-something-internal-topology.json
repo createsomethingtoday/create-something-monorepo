@@ -4,11 +4,11 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-11-15T15:06:50.955Z",
+    "generatedAt": "2026-11-16T21:22:33.530Z",
     "rootPath": ".",
-    "packageCount": 254,
+    "packageCount": 255,
     "appCount": 15,
-    "workerCount": 123,
+    "workerCount": 124,
     "clientOverlayCount": 8,
     "policyCount": 64,
     "guideCount": 88,
@@ -4047,6 +4047,23 @@
       "runtime": "cloudflare, node"
     },
     {
+      "id": "substrate:create-something:package:create-something-webflow-app-review-portal-packages-webflow-app-review-portal",
+      "atlasNodeId": "atlas_create-something_package_create-something-webflow-app-review-portal-packages-webflow-app-review-portal",
+      "title": "@create-something/webflow-app-review-portal",
+      "path": "packages/webflow-app-review-portal",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at packages/webflow-app-review-portal.",
+      "tags": [
+        "package",
+        "worker"
+      ],
+      "packageName": "@create-something/webflow-app-review-portal",
+      "runtime": "cloudflare, node"
+    },
+    {
       "id": "substrate:create-something:package:create-something-webflow-apps-audit-dashboard-packages-webflow-apps-admin-dashboard",
       "atlasNodeId": "atlas_create-something_package_create-something-webflow-apps-audit-dashboard-packages-webflow-apps-admin-dashboard",
       "title": "@create-something/webflow-apps-audit-dashboard",
@@ -6614,6 +6631,23 @@
       "owner": "CREATE SOMETHING",
       "status": "mapped",
       "summary": "Cloudflare runtime configuration at packages/webflow-app-review-mcp/worker/wrangler.toml.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
+      "id": "substrate:create-something:worker:packages-webflow-app-review-portal-wrangler-json",
+      "atlasNodeId": "atlas_create-something_worker_packages-webflow-app-review-portal-wrangler-json",
+      "title": "packages/webflow-app-review-portal/wrangler.json",
+      "path": "packages/webflow-app-review-portal/wrangler.json",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/webflow-app-review-portal/wrangler.json.",
       "tags": [
         "worker",
         "cloudflare",
@@ -11447,6 +11481,13 @@
       "evidence": "packages/webflow-app-review-mcp/worker is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-app-review-portal-packages-webflow-app-review-portal",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-webflow-app-review-portal-packages-webflow-app-review-portal",
+      "relation": "contains",
+      "evidence": "packages/webflow-app-review-portal is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-apps-audit-dashboard-packages-webflow-apps-admin-dashboard",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-webflow-apps-audit-dashboard-packages-webflow-apps-admin-dashboard",
@@ -12481,6 +12522,13 @@
       "target": "substrate:create-something:worker:packages-webflow-app-review-mcp-worker-wrangler-toml",
       "relation": "contains",
       "evidence": "packages/webflow-app-review-mcp/worker/wrangler.toml is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-webflow-app-review-portal-wrangler-json",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-webflow-app-review-portal-wrangler-json",
+      "relation": "contains",
+      "evidence": "packages/webflow-app-review-portal/wrangler.json is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-webflow-apps-admin-dashboard-wrangler-toml",
@@ -15932,6 +15980,13 @@
       "target": "substrate:create-something:worker:packages-webflow-app-review-mcp-worker-wrangler-toml",
       "relation": "runs",
       "evidence": "wrangler.toml configures runtime for packages/webflow-app-review-mcp/worker."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-app-review-portal-packages-webflow-app-review-portal-runs-substrate-create-something-worker-packages-webflow-app-review-portal-wrangler-json",
+      "source": "substrate:create-something:package:create-something-webflow-app-review-portal-packages-webflow-app-review-portal",
+      "target": "substrate:create-something:worker:packages-webflow-app-review-portal-wrangler-json",
+      "relation": "runs",
+      "evidence": "wrangler.json configures runtime for packages/webflow-app-review-portal."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-apps-audit-dashboard-packages-webflow-apps-admin-dashboard-depends-on-substrate-create-something-package-create-something-canon-packages-canon",

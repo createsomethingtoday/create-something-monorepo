@@ -5,17 +5,17 @@
       "candidateId": "discovered.contract-reconciliation.02415a6b0fde887ef8ed",
       "sourceSha256": "sha256:1a55af1a1a1ba33e0254ae0cb272d1f8ee14273de09d2b31bd44501cbdb1f693",
       "definitionSha256": "sha256:0c1911c6da4554d65b14f75a96e2424be49166e1ce213a817ce1f910bb5e12ba",
-      "policySha256": "sha256:f7a422bfbbfff3f2f193ac58ba1483840b9ce2a1f810f8860501e02da965a9dd",
+      "policySha256": "sha256:3c22310b7c480751683d6c7bd2a325af318809b7de6cdafb15c422669a8b2ffc",
       "decision": "approved",
       "reviewedBy": "create-something-engineering",
-      "reviewedAt": "2026-11-15T15:07:04.940Z"
+      "reviewedAt": "2026-11-16T21:22:48.964Z"
     }
   ],
   "registration": {
     "candidateId": "discovered.contract-reconciliation.02415a6b0fde887ef8ed",
     "sourceSha256": "sha256:1a55af1a1a1ba33e0254ae0cb272d1f8ee14273de09d2b31bd44501cbdb1f693",
     "definitionSha256": "sha256:0c1911c6da4554d65b14f75a96e2424be49166e1ce213a817ce1f910bb5e12ba",
-    "policySha256": "sha256:f7a422bfbbfff3f2f193ac58ba1483840b9ce2a1f810f8860501e02da965a9dd",
+    "policySha256": "sha256:3c22310b7c480751683d6c7bd2a325af318809b7de6cdafb15c422669a8b2ffc",
     "registrationId": "internal.database-layer.contract-validation@1"
   }
 }
