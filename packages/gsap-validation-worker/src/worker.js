@@ -781,7 +781,8 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
         results.flaggedCode.push({
           scriptIndex: index,
           message: "Mixed GSAP usage with unapproved code",
-          flaggedCode: unacceptedCode
+          flaggedCode: unacceptedCode,
+          guidance: describeUnapprovedGsapScript(script)
         });
       }
     } else {
@@ -1054,6 +1055,97 @@ var NON_GSAP_BEHAVIOR_PATTERN = new RegExp([
   String.raw`\.(?:animate|getAnimations)\s*\(|\bnew\s+(?:Animation|KeyframeEffect)\b`,
   String.raw`\.content\b`
 ].join("|"));
+// Why a script with GSAP in it was still flagged, in words a creator can act
+// on: what the script does besides GSAP, the first line that does it, and the
+// Designer or GSAP way to get the same result. Advisory only: it never changes
+// whether a script passes.
+var GSAP_GUIDANCE_RULES = [
+  {
+    id: "markup",
+    pattern: /createElement\s*\(|innerHTML|outerHTML|insertAdjacent(?:HTML|Element|Text)|document\.write/,
+    reason: "It creates or writes HTML.",
+    fix: "Build the elements in the Designer and animate them with GSAP."
+  },
+  {
+    id: "network-or-storage",
+    pattern: /\bfetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource|localStorage|sessionStorage|indexedDB|document\.cookie/,
+    reason: "It uses the network or browser storage.",
+    fix: "Remove it. Custom code in a template can only animate with GSAP."
+  },
+  {
+    id: "timer",
+    pattern: /\bset(?:Interval|Timeout)\s*\(|requestAnimationFrame/,
+    reason: "It uses a timer.",
+    fix: "Use a GSAP timeline, a tween delay, or gsap.delayedCall."
+  },
+  {
+    id: "text-write",
+    pattern: /\.(?:textContent|innerText)\s*\+?=(?!=)/,
+    reason: "It writes text into the page.",
+    fix: "Let GSAP write the value. For a counter, tween textContent and round it with snap: gsap.from(el, { textContent: 0, snap: { textContent: 1 } })."
+  },
+  {
+    id: "style-write",
+    pattern: /\.style\.[\w$]+\s*\+?=(?!=)|\.style\[|\.style\.(?:setProperty|cssText)|setAttribute\s*\(\s*['"]style['"]|removeAttribute\s*\(\s*['"]style['"]/,
+    reason: "It sets styles directly.",
+    fix: "Set the style in the Designer (Style panel, or Custom properties for CSS that has no control), or use gsap.set and clearProps."
+  },
+  {
+    id: "class-change",
+    pattern: /classList\.(?:add|remove|toggle|replace)\s*\(|\.className\s*\+?=(?!=)/,
+    reason: "It changes classes.",
+    fix: "Animate the change with a GSAP tween, or use a Set action in Interactions with GSAP."
+  },
+  {
+    id: "attribute-write",
+    pattern: /(?:set|remove|toggle)Attribute\s*\(\s*(?!['"]style['"])|\.dataset\.[\w$]+\s*=(?!=)|\.dataset\[/,
+    reason: "It sets attributes.",
+    fix: "Use a native Webflow element for this state, or Interactions with GSAP."
+  },
+  {
+    id: "url-write",
+    pattern: /\.(?:src|href|srcdoc|action)\s*\+?=(?!=)|\blocation\b/,
+    reason: "It changes a link, a source, or the page address.",
+    fix: "Set links and sources in the Designer."
+  },
+  {
+    id: "non-gsap-animation",
+    pattern: /\.(?:animate|getAnimations)\s*\(|\bnew\s+(?:Animation|KeyframeEffect)\b/,
+    reason: "It animates without GSAP.",
+    fix: "Use a GSAP tween or Interactions with GSAP."
+  }
+];
+var GSAP_GUIDANCE_LINE_MAX = 140;
+var GSAP_GUIDANCE_MAX = 4;
+function describeUnapprovedGsapScript(script) {
+  const lines = String(script || "").split(/\r?\n/).map((line) => line.trim()).filter((line) => line && !/^(?:\/\/|\/\*|\*)/.test(line));
+  const guidance = [];
+  for (const rule of GSAP_GUIDANCE_RULES) {
+    const line = lines.find((candidate) => rule.pattern.test(candidate));
+    if (!line) continue;
+    guidance.push({ id: rule.id, reason: rule.reason, fix: rule.fix, line: truncateScript(line, GSAP_GUIDANCE_LINE_MAX) });
+    if (guidance.length >= GSAP_GUIDANCE_MAX) return guidance;
+  }
+  // A lone gsap.set has no motion, so the Designer can hold the same style.
+  const staticLine = lines.find((candidate) => /\bgsap\.set\s*\(/.test(candidate));
+  if (staticLine && !lines.some((candidate) => /\bgsap\.(?:to|from|fromTo|timeline)\s*\(|ScrollTrigger/.test(candidate))) {
+    guidance.push({
+      id: "static-style",
+      reason: "It sets a style one time, with no motion.",
+      fix: "Set the style in the Designer (Style panel, or Custom properties for CSS that has no control). No script is needed.",
+      line: truncateScript(staticLine, GSAP_GUIDANCE_LINE_MAX)
+    });
+  }
+  if (guidance.length === 0) {
+    guidance.push({
+      id: "unrecognized",
+      reason: "It contains code that the check does not recognize as GSAP.",
+      fix: "Keep only GSAP calls and the element lookups they need, and use fixed values in tweens. Or build the effect with Interactions with GSAP."
+    });
+  }
+  return guidance;
+}
+__name(describeUnapprovedGsapScript, "describeUnapprovedGsapScript");
 var GSAP_WIRING_LISTENER_EVENTS = "DOMContentLoaded|load|click|resize|mouseenter|mouseleave|pointerenter|pointerleave";
 var GSAP_WIRING_CALLBACK = String.raw`(?:\(?[\w$\s,]*\)?\s*=>|function\s*[\w$]*\s*\([\w$\s,]*\))`;
 // Tween vars GSAP treats as data. A key outside this list could name a
