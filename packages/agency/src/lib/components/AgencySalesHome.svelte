@@ -124,7 +124,7 @@
   });
 </script>
 
-<svelte:head><link rel="stylesheet" href="/styles/agency/paper-example.css?v=canon-replacement-20261114" /><link rel="stylesheet" href="/styles/agency/story-home.css?v=canon-agency-20261114" /><link rel="stylesheet" href="/styles/agency/image-treatment.css?v=graphite-frames-20261105" /><link rel="stylesheet" href="/styles/agency/measured-foundation.css?v=workshop-reply-20261114" /></svelte:head>
+<svelte:head><link rel="stylesheet" href="/styles/agency/paper-example.css?v=canon-replacement-20261114" /><link rel="stylesheet" href="/styles/agency/story-home.css?v=canon-agency-20261114" /><link rel="stylesheet" href="/styles/agency/image-treatment.css?v=graphite-frames-20261105" /><link rel="stylesheet" href="/styles/agency/measured-foundation.css?v=approved-image-set-20261116" /></svelte:head>
 <div class="agency-home measured-foundation" bind:this={root}>
   <div class="page-progress" aria-hidden="true"></div>
   <AgencyChapterDial />
