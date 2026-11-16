@@ -1118,32 +1118,50 @@ var GSAP_GUIDANCE_RULES = [
 var GSAP_GUIDANCE_NOT_STATIC_PATTERN = /\bgsap\.(?:to|from|fromTo|timeline|ticker|matchMedia|context|delayedCall|quickTo|quickSetter)\b|ScrollTrigger|Observer\b|matchMedia|addEventListener\s*\(\s*['"](?!DOMContentLoaded['"]|load['"])|\.on[a-z]+\s*=(?!=)/;
 var GSAP_GUIDANCE_LINE_MAX = 140;
 var GSAP_GUIDANCE_MAX = 4;
-// The lines of a script without its comments, so a commented-out example is
-// never quoted as the offending line and never produces guidance. Comment
-// markers inside string and template literals are kept ("https://..." is not a
-// comment). Used for guidance only, never for the pass or fail decision; a
-// regex literal that contains a quote or a comment marker can be misread.
+// The lines of a script without its comments, each as { text, match }:
+// `text` is the line as written (quoted back to the creator) and `match` is
+// the same line with the contents of string and template literals blanked, so
+// a rule never fires on words inside a message or a code example. Short
+// identifier-like literals ('style', 'resize', 'aria-expanded') are kept in
+// `match` because rules read them as arguments. Used for guidance only, never
+// for the pass or fail decision; a regex literal that contains a quote or a
+// comment marker can be misread.
 function executableLines(script) {
   const source = String(script || "");
-  let code = "";
+  let text = "";
+  let match = "";
+  let literal = "";
   let state = "code";
+  // Open template interpolations: the brace depth inside each \`${ ... }\`.
+  const interpolations = [];
+  const flushLiteral = () => {
+    match += /^[\w-]*$/.test(literal) ? literal : literal.replace(/[^\n]/g, " ");
+    literal = "";
+  };
+  const closeLiteral = () => {
+    flushLiteral();
+    state = "code";
+  };
   for (let index = 0; index < source.length; index++) {
     const char = source[index];
     const next = source[index + 1];
     if (state === "line-comment") {
       if (char === "\n") {
         state = "code";
-        code += char;
+        text += char;
+        match += char;
       }
       continue;
     }
     if (state === "block-comment") {
       if (char === "*" && next === "/") {
         state = "code";
-        code += " ";
+        text += " ";
+        match += " ";
         index++;
       } else if (char === "\n") {
-        code += char;
+        text += char;
+        match += char;
       }
       continue;
     }
@@ -1158,41 +1176,74 @@ function executableLines(script) {
         index++;
         continue;
       }
+      if (interpolations.length > 0) {
+        if (char === "{") interpolations[interpolations.length - 1]++;
+        if (char === "}") {
+          if (interpolations[interpolations.length - 1] === 0) {
+            // End of the interpolation: back to the template's text.
+            interpolations.pop();
+            state = "`";
+            text += char;
+            match += char;
+            continue;
+          }
+          interpolations[interpolations.length - 1]--;
+        }
+      }
       if (char === "'" || char === '"' || char === "`") state = char;
-      code += char;
+      text += char;
+      match += char;
       continue;
     }
-    // Inside a string or template literal: keep everything up to its closing quote.
-    code += char;
+    // Inside a string or template literal, up to its closing quote.
+    text += char;
     if (char === "\\" && next !== undefined) {
-      code += next;
+      text += next;
+      literal += "  ";
       index++;
-    } else if (char === state || (char === "\n" && state !== "`")) {
+    } else if (state === "`" && char === "$" && next === "{") {
+      // Code inside a template interpolation is executable: read it as code.
+      flushLiteral();
+      text += next;
+      match += "${";
+      index++;
+      interpolations.push(0);
       state = "code";
+    } else if (char === state) {
+      closeLiteral();
+      match += char;
+    } else if (char === "\n" && state !== "`") {
+      closeLiteral();
+      match += char;
+    } else {
+      literal += char;
     }
   }
-  return code.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  if (literal) closeLiteral();
+  const textLines = text.split("\n");
+  const matchLines = match.split("\n");
+  return textLines.map((line, index) => ({ text: line.trim(), match: (matchLines[index] || "").trim() })).filter((line) => line.match);
 }
 __name(executableLines, "executableLines");
 function describeUnapprovedGsapScript(script) {
   const lines = executableLines(script);
   const guidance = [];
   for (const rule of GSAP_GUIDANCE_RULES) {
-    const line = lines.find((candidate) => rule.pattern.test(candidate));
+    const line = lines.find((candidate) => rule.pattern.test(candidate.match));
     if (!line) continue;
-    guidance.push({ id: rule.id, reason: rule.reason, fix: rule.fix, line: truncateScript(line, GSAP_GUIDANCE_LINE_MAX) });
+    guidance.push({ id: rule.id, reason: rule.reason, fix: rule.fix, line: truncateScript(line.text, GSAP_GUIDANCE_LINE_MAX) });
     if (guidance.length >= GSAP_GUIDANCE_MAX) return guidance;
   }
   // A lone gsap.set that runs once at load has no motion, so the Designer can
   // hold the same style. A set that can run again (on resize, pointer events,
   // the ticker, an observer or a media query) is behavior, not a static style.
-  const staticLine = lines.find((candidate) => /\bgsap\.set\s*\(/.test(candidate));
-  if (staticLine && !lines.some((candidate) => GSAP_GUIDANCE_NOT_STATIC_PATTERN.test(candidate))) {
+  const staticLine = lines.find((candidate) => /\bgsap\.set\s*\(/.test(candidate.match));
+  if (staticLine && !lines.some((candidate) => GSAP_GUIDANCE_NOT_STATIC_PATTERN.test(candidate.match))) {
     guidance.push({
       id: "static-style",
       reason: "It sets a style one time, with no motion.",
       fix: "Set the style in the Designer (Style panel, or Custom properties for CSS that has no control). No script is needed.",
-      line: truncateScript(staticLine, GSAP_GUIDANCE_LINE_MAX)
+      line: truncateScript(staticLine.text, GSAP_GUIDANCE_LINE_MAX)
     });
   }
   if (guidance.length === 0) {

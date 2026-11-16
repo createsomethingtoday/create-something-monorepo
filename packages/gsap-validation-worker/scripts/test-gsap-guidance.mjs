@@ -195,6 +195,23 @@ const inString = sandbox.describeUnapprovedGsapScript(`const note = "/* not a co
 el.textContent = note;`);
 assert.deepEqual(Array.from(inString, (entry) => [entry.id, entry.line]), [['text-write', 'el.textContent = note;']]);
 
+// Words inside a string or template literal are text, not code: they never
+// produce guidance. The line is still quoted as written when real code on it matches.
+const literalText = sandbox.describeUnapprovedGsapScript(`const help = "Call fetch('/api') or setTimeout(run, 100) to refresh";
+const example = \`el.innerHTML = '<b>x</b>'; localStorage.clear()\`;
+label.textContent = "uses classList.add('x') and location";`);
+assert.deepEqual(Array.from(literalText, (entry) => [entry.id, entry.line]), [
+  ['text-write', 'label.textContent = "uses classList.add(\'x\') and location";']
+]);
+// Code inside a template interpolation runs, so it is still read as code; the
+// text around it is not.
+const interpolation = sandbox.describeUnapprovedGsapScript("const label = `fetch is not called here ${box.classList.add('on')} nor setTimeout`;\nconst nested = `${items.map((item) => `${item.name}`).join(', ')} localStorage`;");
+assert.deepEqual(Array.from(interpolation, (entry) => entry.id), ['class-change']);
+
+// Short identifier-like arguments are still read: the style attribute is a style write.
+const styleAttribute = sandbox.describeUnapprovedGsapScript("el.setAttribute('style', saved);\nel.setAttribute('aria-expanded', 'true');");
+assert.deepEqual(Array.from(styleAttribute, (entry) => entry.id), ['style-write', 'attribute-write']);
+
 // Scripts that pass carry no guidance.
 const valid = run(`gsap.to('.hero', { opacity: 1, duration: 1 });`);
 assert.equal(valid.passed, true);
