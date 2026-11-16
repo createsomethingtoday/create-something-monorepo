@@ -1,7 +1,7 @@
 "use strict";
 (() => {
   // src/utils.ts
-  var EXTENSION_VERSION = "1.3.11";
+  var EXTENSION_VERSION = "1.3.12";
   function filterRetiredAccessibilityIssues(issues) {
     return issues.filter((issue) => issue.id !== "color-contrast-violations");
   }
@@ -238,6 +238,24 @@
       hasCustomOpenGraphTitle: !usesTitleAsOG && !!openGraphTitle,
       hasCustomOpenGraphDescription: !usesDescAsOG && !!openGraphDescription
     };
+  }
+
+  // src/concurrency.ts
+  async function mapWithConcurrency(items, limit, fn, onProgress) {
+    const results = new Array(items.length);
+    const workers = Math.max(1, Math.min(Math.floor(limit) || 1, items.length));
+    let next = 0;
+    let done = 0;
+    async function work() {
+      while (next < items.length) {
+        const index = next++;
+        results[index] = await fn(items[index], index);
+        done += 1;
+        onProgress?.(done, items.length);
+      }
+    }
+    await Promise.all(Array.from({ length: workers }, work));
+    return results;
   }
 
   // src/validation-submit-payload.ts
@@ -1062,7 +1080,15 @@
         throw new Error("Webflow Designer API not available. Please ensure this extension is running in Webflow Designer.");
       }
       const timer = createRunTimer();
-      const projectData = await collectProjectData(webflow, timer);
+      const projectData = await collectProjectData(webflow, timer, (step, done, total) => {
+        const { base, label } = COLLECT_PROGRESS[step];
+        if (done !== total && done % 10 !== 0) return;
+        setValidationProgress({
+          status: "running",
+          progress: Math.round(base + (total > 0 ? done / total * 4 : 4)),
+          message: `Reading ${label} (${done} of ${total})...`
+        });
+      });
       const designerContext = await collectDesignerContext(webflow);
       projectData.designerContext = designerContext;
       projectData.canvasChecks = await collectCanvasAccessibility(webflow, designerContext.canAccessCanvas);
@@ -2304,7 +2330,15 @@
       return unavailable(error instanceof Error ? error.message : "Canvas analysis failed");
     }
   }
-  async function collectProjectData(webflow, timer) {
+  var COLLECT_CONCURRENCY = 8;
+  var COLLECT_PROGRESS = {
+    variables: { base: 2, label: "variables" },
+    components: { base: 6, label: "components" },
+    styles: { base: 10, label: "styles" },
+    pages: { base: 14, label: "pages" }
+  };
+  async function collectProjectData(webflow, timer, onProgress) {
+    const report = (step) => (done, total) => onProgress?.(step, done, total);
     const data = {
       variables: void 0,
       components: [],
@@ -2327,7 +2361,7 @@
             const variableList = [];
             const modeList = [];
             let modeDataAvailable = false;
-            for (const variable of variables) {
+            const variableResults = await mapWithConcurrency(variables, COLLECT_CONCURRENCY, async (variable) => {
               try {
                 const variableName = await variable.getName() || null;
                 const variableType = variable.type || null;
@@ -2337,24 +2371,26 @@
                 } catch {
                   variableValue = null;
                 }
-                variableList.push({
+                return {
                   id: variable.id,
                   name: variableName,
                   type: variableType,
                   value: variableValue ?? null
-                });
+                };
               } catch (variableError) {
                 console.warn("Error processing variable:", variableError);
                 if (variable.id) {
-                  variableList.push({
+                  return {
                     id: variable.id,
                     name: null,
                     type: variable.type || null,
                     value: null
-                  });
+                  };
                 }
+                return null;
               }
-            }
+            }, report("variables"));
+            variableList.push(...variableResults.filter((variable) => variable !== null));
             try {
               const modes = typeof collection.getAllVariableModes === "function" ? await collection.getAllVariableModes() : void 0;
               if (Array.isArray(modes)) {
@@ -2419,7 +2455,7 @@
       if (webflow.getAllComponents) {
         const components = await webflow.getAllComponents() || [];
         const componentData = [];
-        for (const component of components) {
+        const componentResults = await mapWithConcurrency(components, COLLECT_CONCURRENCY, async (component) => {
           try {
             const name = await component.getName() || null;
             const id = component.id;
@@ -2435,7 +2471,7 @@
               } catch (nestedError) {
                 console.warn("Error analyzing component nesting:", nestedError);
               }
-              componentData.push({
+              return {
                 id,
                 name,
                 type: "component",
@@ -2444,12 +2480,14 @@
                 readOnly: metadata.readOnly,
                 codeComponent: metadata.codeComponent,
                 library: metadata.library
-              });
+              };
             }
           } catch (compError) {
             console.warn("Error processing component:", compError);
           }
-        }
+          return null;
+        }, report("components"));
+        componentData.push(...componentResults.filter((component) => component !== null));
         data.components = componentData;
         console.log(`Components collected: ${componentData.length}`);
       }
@@ -2480,7 +2518,7 @@
           });
         }
         const breakpointReadFailures = [];
-        for (const style of styles) {
+        const styleResults = await mapWithConcurrency(styles, COLLECT_CONCURRENCY, async (style) => {
           try {
             const id = style.id;
             const meta = readStyleMetadata(style);
@@ -2499,13 +2537,14 @@
                   hasVariables = true;
                 }
               });
+              let breakpointError;
               if (breakpoints) {
                 breakpointProperties = breakpoints.properties;
                 if (breakpoints.errors.length > 0) {
-                  breakpointReadFailures.push(breakpoints.errors[0]);
+                  breakpointError = breakpoints.errors[0];
                 }
               }
-              styleData.push({
+              return { breakpointError, style: {
                 id,
                 // Element-scoped styles may have no usable name; the worker
                 // falls back to `style.name || style.id`.
@@ -2516,11 +2555,17 @@
                 hasVariables,
                 ...meta.source ? { source: meta.source } : {},
                 ...breakpointProperties ? { breakpointProperties } : {}
-              });
+              } };
             }
           } catch (styleError) {
             console.warn("Error processing style:", styleError);
           }
+          return null;
+        }, report("styles"));
+        for (const result of styleResults) {
+          if (!result) continue;
+          styleData.push(result.style);
+          if (result.breakpointError) breakpointReadFailures.push(result.breakpointError);
         }
         const breakpointWarning = summarizeBreakpointReadFailures(breakpointReadFailures);
         if (breakpointWarning) {
@@ -2544,7 +2589,7 @@
         const pagesAndFolders = await webflow.getAllPagesAndFolders() || [];
         const pageData = [];
         const items = Array.isArray(pagesAndFolders) ? pagesAndFolders : [];
-        for (const item of items) {
+        const pageResults = await mapWithConcurrency(items, COLLECT_CONCURRENCY, async (item) => {
           try {
             if (item.type === "Page") {
               const name = await item.getName() || "Unnamed";
@@ -2613,7 +2658,7 @@
               } catch (seoError) {
                 console.warn(`SEO data collection failed for page ${name}:`, seoError);
               }
-              pageData.push({
+              return {
                 id: item.id,
                 name,
                 slug,
@@ -2628,12 +2673,14 @@
                 isHomePage,
                 hasValidNaming,
                 seo: seoData
-              });
+              };
             }
           } catch (pageError) {
             console.warn("Error processing page:", pageError);
           }
-        }
+          return null;
+        }, report("pages"));
+        pageData.push(...pageResults.filter((page) => page !== null));
         data.pages = pageData;
         console.log(`Pages collected: ${pageData.length}`);
       }

@@ -1,10 +1,11 @@
-# Webflow Way Validator v1.3.11
+# Webflow Way Validator v1.3.12
 
 ## Changes/Fixes
 
-- The copied report has a new "Run time" line: the total time of the run and the time of each step (reading styles, components, variables and pages, the canvas checks, the published-site checks), slowest first.
+- Faster runs on large sites: the Validator reads variables, components, styles and pages eight at a time, not one at a time.
+- The progress bar moves during the read and says what is being read ("Reading components (120 of 377)...").
 - No change to checks or findings.
 
 ## Worker pairing
 
-Works with Worker 2.13.2, which stores the run times with the submitted result. Older Workers ignore them.
+No Worker change required. Works with Worker 2.13.2.

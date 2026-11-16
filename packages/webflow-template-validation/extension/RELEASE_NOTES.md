@@ -1,5 +1,13 @@
 # Webflow Way Validator - Release Notes
 
+## Version 1.3.12 - Faster runs on large sites
+
+- The Validator reads variables, components, styles and pages from the Designer eight at a time. Earlier builds read one item at a time, so a site with many components or styles spent most of the run on this step.
+- The progress bar now moves during the read and says what is being read, for example "Reading components (120 of 377)...". Earlier builds stayed at 2% ("Preparing validation run...") until the read finished.
+- The collected data and its order are unchanged, so checks and findings are the same.
+
+---
+
 ## Version 1.3.11 - Run time in the report
 
 - The Validator now measures how long each part of a run takes in the Designer (reading variables, components, styles and pages, the canvas checks, and the wait for the Worker) and how many items each step read.
