@@ -71,7 +71,7 @@ const STANDARDS: Record<ReviewerStandardId, Standard> = {
 	'self-promotion': {
 		message: (n) => `Links promote the creator or other templates on ${n} page(s)`,
 		description: 'Buyers publish the template as their own site, so "Buy template", "Get template" and "More templates" links ship to their visitors. One "Designed by" credit in the footer is allowed.',
-		howToFix: 'Remove buy, get and more-templates links and links to template stores. Keep at most one "Designed by" credit in the footer.'
+		howToFix: 'Remove buy, get and more-templates links and links to template stores, on every page including Licenses: an asset that comes from a paid store cannot ship in a template. Keep at most one "Designed by" credit in the footer.'
 	},
 	'licenses-boilerplate': {
 		message: () => 'The Licenses page is missing the required opening text',
@@ -136,7 +136,7 @@ export function auditReviewerStandards(html: string, pageUrl: string): ReviewerP
 	if (path === '/') record('default-favicon', faviconDetail(elements, url));
 	if (path === '/') record('powered-by-webflow', poweredByWebflowDetail(elements, url));
 	if (path !== LICENSES_PATH) record('trademark-symbols', trademarksDetail(elements, root));
-	record('self-promotion', selfPromotionDetail(elements, url, path === LICENSES_PATH));
+	record('self-promotion', selfPromotionDetail(elements, url));
 	if (path === LICENSES_PATH) record('licenses-boilerplate', licensesBoilerplateDetail(elements, root));
 
 	return {
@@ -275,10 +275,10 @@ function faviconDetail(elements: Node[], pageUrl: URL): string | null {
 
 /**
  * Guideline layout-and-content-18: promotional links that leave the site, and links to template stores.
- * The Licenses page must link each asset to its source, and those sources include the same stores
- * (icon sets and mockups from UI8, Envato and others), so store links are allowed there.
+ * This includes the Licenses page: a store link there is a premium asset or the creator's own product,
+ * and reviewers request changes for both. (2.13.1 allowed store links on /licenses; 2.13.3 restored the check.)
  */
-function selfPromotionDetail(elements: Node[], pageUrl: URL, isLicensesPage = false): string | null {
+function selfPromotionDetail(elements: Node[], pageUrl: URL): string | null {
 	const found = new Set<string>();
 	for (const link of elements.filter((el) => el.name === 'a')) {
 		let target: URL;
@@ -289,7 +289,7 @@ function selfPromotionDetail(elements: Node[], pageUrl: URL, isLicensesPage = fa
 		}
 		if (!/^https?:$/.test(target.protocol) || target.origin === pageUrl.origin) continue;
 		const label = normalize(text(link));
-		if (PROMO_LINK_TEXT.test(label) || (!isLicensesPage && TEMPLATE_STORE_HOST.test(target.hostname))) found.add(`"${label.slice(0, 40)}" → ${target.hostname}`);
+		if (PROMO_LINK_TEXT.test(label) || TEMPLATE_STORE_HOST.test(target.hostname)) found.add(`"${label.slice(0, 40)}" → ${target.hostname}`);
 	}
 	return found.size ? [...found].slice(0, 3).join('; ') : null;
 }
