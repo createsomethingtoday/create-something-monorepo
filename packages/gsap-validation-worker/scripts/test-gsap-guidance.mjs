@@ -109,6 +109,35 @@ assert.match(mixed(staticResult)[0].guidance[0].fix, /Custom properties/);
 // Comment lines are never quoted back as the offending line.
 assert.equal(mixed(staticResult)[0].guidance[0].line, 'gsap.set(fill, {');
 
+// The same set inside a resize listener can run again, so it is not a static
+// style and must not get the "no script is needed" advice.
+const responsiveMask = `function applyMask() {
+  document.querySelectorAll('[progress-track]').forEach(track => {
+    const fill = track.querySelector('[progress-fill]');
+    const bg = getComputedStyle(track);
+    gsap.set(fill, {
+      maskImage: bg.backgroundImage,
+      maskSize: bg.backgroundSize,
+      maskRepeat: 'repeat-x'
+    });
+  });
+}
+applyMask();
+window.addEventListener('resize', applyMask);`;
+const responsiveResult = run(responsiveMask);
+assert.equal(responsiveResult.passed, false);
+assert.deepEqual(ids(responsiveResult), ['unrecognized']);
+// A set that waits for the page to load still runs once.
+const onLoad = sandbox.describeUnapprovedGsapScript(`document.addEventListener('DOMContentLoaded', () => {
+  const bg = getComputedStyle(track);
+  gsap.set(fill, { maskImage: bg.backgroundImage });
+});`);
+assert.deepEqual(Array.from(onLoad, (entry) => entry.id), ['static-style']);
+for (const rerun of ["gsap.ticker.add(update);", "new ResizeObserver(update).observe(el);", "window.matchMedia('(min-width: 992px)').addEventListener('change', update);", "el.onpointermove = update;"]) {
+  const result = sandbox.describeUnapprovedGsapScript(`gsap.set(fill, { maskImage: bg.backgroundImage });\n${rerun}`);
+  assert.deepEqual(Array.from(result, (entry) => entry.id), ['unrecognized'], rerun);
+}
+
 // Several kinds of non-GSAP work: one entry per kind, in a fixed order, capped.
 const menu = `document.addEventListener('DOMContentLoaded', () => {
   const panel = document.querySelector('[data-panel]');

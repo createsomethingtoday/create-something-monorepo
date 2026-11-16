@@ -1115,6 +1115,7 @@ var GSAP_GUIDANCE_RULES = [
     fix: "Use a GSAP tween or Interactions with GSAP."
   }
 ];
+var GSAP_GUIDANCE_NOT_STATIC_PATTERN = /\bgsap\.(?:to|from|fromTo|timeline|ticker|matchMedia|context|delayedCall|quickTo|quickSetter)\b|ScrollTrigger|Observer\b|matchMedia|addEventListener\s*\(\s*['"](?!DOMContentLoaded['"]|load['"])|\.on[a-z]+\s*=(?!=)/;
 var GSAP_GUIDANCE_LINE_MAX = 140;
 var GSAP_GUIDANCE_MAX = 4;
 // The lines of a script without its comments, so a commented-out example is
@@ -1152,9 +1153,11 @@ function describeUnapprovedGsapScript(script) {
     guidance.push({ id: rule.id, reason: rule.reason, fix: rule.fix, line: truncateScript(line, GSAP_GUIDANCE_LINE_MAX) });
     if (guidance.length >= GSAP_GUIDANCE_MAX) return guidance;
   }
-  // A lone gsap.set has no motion, so the Designer can hold the same style.
+  // A lone gsap.set that runs once at load has no motion, so the Designer can
+  // hold the same style. A set that can run again (on resize, pointer events,
+  // the ticker, an observer or a media query) is behavior, not a static style.
   const staticLine = lines.find((candidate) => /\bgsap\.set\s*\(/.test(candidate));
-  if (staticLine && !lines.some((candidate) => /\bgsap\.(?:to|from|fromTo|timeline)\s*\(|ScrollTrigger/.test(candidate))) {
+  if (staticLine && !lines.some((candidate) => GSAP_GUIDANCE_NOT_STATIC_PATTERN.test(candidate))) {
     guidance.push({
       id: "static-style",
       reason: "It sets a style one time, with no motion.",
