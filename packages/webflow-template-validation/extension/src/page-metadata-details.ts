@@ -21,11 +21,22 @@ function renderDetails(label: string, items: string[]): string {
   `;
 }
 
+/** A page entry is a label, or { url, detail } from the reviewer-standard checks. */
+export function formatPageDetail(page: unknown): string {
+  if (typeof page === 'string') return page.replace(/\s+/g, ' ').trim();
+  if (!page || typeof page !== 'object') return '';
+  const { url, detail } = page as { url?: unknown; detail?: unknown };
+  return [url, detail]
+    .filter((part): part is string => typeof part === 'string' && part.trim() !== '')
+    .map((part) => part.replace(/\s+/g, ' ').trim())
+    .join(' — ');
+}
+
 export function createPageMetadataDetailsHTML(details?: PageMetadataIssueDetails): string {
   if (!details) return '';
 
   const pages = Array.isArray(details.pages)
-    ? details.pages.filter((page): page is string => typeof page === 'string' && page.trim() !== '')
+    ? details.pages.map(formatPageDetail).filter((page) => page !== '')
     : [];
   const duplicates = Array.isArray(details.duplicates)
     ? details.duplicates

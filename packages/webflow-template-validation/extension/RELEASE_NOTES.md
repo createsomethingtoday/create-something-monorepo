@@ -1,5 +1,13 @@
 # Webflow Way Validator - Release Notes
 
+## Version 1.3.10 - Page names on every blocking finding
+
+- Findings such as "Links promote the creator or other templates on 1 page(s)" now list the page and what was found on it (for example the link text and its destination) under "View affected page". Earlier builds dropped that detail for these checks, so the finding did not say where to look.
+- The copied report lists the same pages.
+- Pairs with Worker 2.13.1, which counts title and meta description lengths after decoding HTML entities (`&amp;`, `&#x27;`), so a 60-character title with an ampersand is no longer reported as 64.
+
+---
+
 ## Version 1.3.9 - Shared client-side checks
 
 - No change to checks, results, or the panel.
