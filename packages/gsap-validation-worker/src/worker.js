@@ -781,7 +781,8 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
         results.flaggedCode.push({
           scriptIndex: index,
           message: "Mixed GSAP usage with unapproved code",
-          flaggedCode: unacceptedCode
+          flaggedCode: unacceptedCode,
+          guidance: describeUnapprovedGsapScript(script)
         });
       }
     } else {
@@ -1054,6 +1055,207 @@ var NON_GSAP_BEHAVIOR_PATTERN = new RegExp([
   String.raw`\.(?:animate|getAnimations)\s*\(|\bnew\s+(?:Animation|KeyframeEffect)\b`,
   String.raw`\.content\b`
 ].join("|"));
+// Why a script with GSAP in it was still flagged, in words a creator can act
+// on: what the script does besides GSAP, the first line that does it, and the
+// Designer or GSAP way to get the same result. Advisory only: it never changes
+// whether a script passes.
+var GSAP_GUIDANCE_RULES = [
+  {
+    id: "markup",
+    pattern: /createElement\s*\(|\.(?:innerHTML|outerHTML)\s*\+?=(?!=)|insertAdjacent(?:HTML|Element|Text)\s*\(|document\.write(?:ln)?\s*\(/,
+    reason: "It creates or writes HTML.",
+    fix: "Build the elements in the Designer and animate them with GSAP."
+  },
+  {
+    id: "network-or-storage",
+    pattern: /\bfetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource|localStorage|sessionStorage|indexedDB|document\.cookie/,
+    reason: "It uses the network or browser storage.",
+    fix: "Remove it. Custom code in a template can only animate with GSAP."
+  },
+  {
+    id: "timer",
+    pattern: /\bset(?:Interval|Timeout)\s*\(|requestAnimationFrame/,
+    reason: "It uses a timer.",
+    fix: "Use a GSAP timeline, a tween delay, or gsap.delayedCall."
+  },
+  {
+    id: "text-write",
+    pattern: /\.(?:textContent|innerText)\s*\+?=(?!=)/,
+    reason: "It writes text into the page.",
+    fix: "Let GSAP write the value. For a counter, tween textContent and round it with snap: gsap.from(el, { textContent: 0, snap: { textContent: 1 } })."
+  },
+  {
+    id: "style-write",
+    pattern: /\.style\.[\w$]+\s*\+?=(?!=)|\.style\[|\.style\.(?:setProperty|cssText)|setAttribute\s*\(\s*['"]style['"]|removeAttribute\s*\(\s*['"]style['"]/,
+    reason: "It sets styles directly.",
+    fix: "Set the style in the Designer (Style panel, or Custom properties for CSS that has no control), or use gsap.set and clearProps."
+  },
+  {
+    id: "class-change",
+    pattern: /classList\.(?:add|remove|toggle|replace)\s*\(|\.className\s*\+?=(?!=)/,
+    reason: "It changes classes.",
+    fix: "Animate the change with a GSAP tween, or use a Set action in Interactions with GSAP."
+  },
+  {
+    id: "attribute-write",
+    pattern: /(?:set|remove|toggle)Attribute\s*\(\s*(?!['"]style['"])|\.dataset\.[\w$]+\s*=(?!=)|\.dataset\[/,
+    reason: "It sets attributes.",
+    fix: "Use a native Webflow element for this state, or Interactions with GSAP."
+  },
+  {
+    id: "url-write",
+    pattern: /\.(?:src|href|srcdoc|action)\s*\+?=(?!=)|\blocation\b/,
+    reason: "It changes a link, a source, or the page address.",
+    fix: "Set links and sources in the Designer."
+  },
+  {
+    id: "non-gsap-animation",
+    pattern: /\.(?:animate|getAnimations)\s*\(|\bnew\s+(?:Animation|KeyframeEffect)\b/,
+    reason: "It animates without GSAP.",
+    fix: "Use a GSAP tween or Interactions with GSAP."
+  }
+];
+var GSAP_GUIDANCE_NOT_STATIC_PATTERN = /\bgsap\.(?:to|from|fromTo|timeline|ticker|matchMedia|context|delayedCall|quickTo|quickSetter)\b|ScrollTrigger|Observer\b|matchMedia|addEventListener\s*\(\s*['"](?!DOMContentLoaded['"]|load['"])|\.on[a-z]+\s*=(?!=)/;
+var GSAP_GUIDANCE_LINE_MAX = 140;
+var GSAP_GUIDANCE_MAX = 4;
+// The lines of a script without its comments, each as { text, match }:
+// `text` is the line as written (quoted back to the creator) and `match` is
+// the same line with the contents of string and template literals blanked, so
+// a rule never fires on words inside a message or a code example. Short
+// identifier-like literals ('style', 'resize', 'aria-expanded') are kept in
+// `match` because rules read them as arguments. Used for guidance only, never
+// for the pass or fail decision; a regex literal that contains a quote or a
+// comment marker can be misread.
+function executableLines(script) {
+  const source = String(script || "");
+  let text = "";
+  let match = "";
+  let literal = "";
+  let state = "code";
+  // Open template interpolations: the brace depth inside each \`${ ... }\`.
+  const interpolations = [];
+  const flushLiteral = () => {
+    match += /^[\w-]*$/.test(literal) ? literal : literal.replace(/[^\n]/g, " ");
+    literal = "";
+  };
+  const closeLiteral = () => {
+    flushLiteral();
+    state = "code";
+  };
+  for (let index = 0; index < source.length; index++) {
+    const char = source[index];
+    const next = source[index + 1];
+    if (state === "line-comment") {
+      if (char === "\n") {
+        state = "code";
+        text += char;
+        match += char;
+      }
+      continue;
+    }
+    if (state === "block-comment") {
+      if (char === "*" && next === "/") {
+        state = "code";
+        text += " ";
+        match += " ";
+        index++;
+      } else if (char === "\n") {
+        text += char;
+        match += char;
+      }
+      continue;
+    }
+    if (state === "code") {
+      if (char === "/" && next === "/") {
+        state = "line-comment";
+        index++;
+        continue;
+      }
+      if (char === "/" && next === "*") {
+        state = "block-comment";
+        index++;
+        continue;
+      }
+      if (interpolations.length > 0) {
+        if (char === "{") interpolations[interpolations.length - 1]++;
+        if (char === "}") {
+          if (interpolations[interpolations.length - 1] === 0) {
+            // End of the interpolation: back to the template's text.
+            interpolations.pop();
+            state = "`";
+            text += char;
+            match += char;
+            continue;
+          }
+          interpolations[interpolations.length - 1]--;
+        }
+      }
+      if (char === "'" || char === '"' || char === "`") state = char;
+      text += char;
+      match += char;
+      continue;
+    }
+    // Inside a string or template literal, up to its closing quote.
+    text += char;
+    if (char === "\\" && next !== undefined) {
+      text += next;
+      literal += "  ";
+      index++;
+    } else if (state === "`" && char === "$" && next === "{") {
+      // Code inside a template interpolation is executable: read it as code.
+      flushLiteral();
+      text += next;
+      match += "${";
+      index++;
+      interpolations.push(0);
+      state = "code";
+    } else if (char === state) {
+      closeLiteral();
+      match += char;
+    } else if (char === "\n" && state !== "`") {
+      closeLiteral();
+      match += char;
+    } else {
+      literal += char;
+    }
+  }
+  if (literal) closeLiteral();
+  const textLines = text.split("\n");
+  const matchLines = match.split("\n");
+  return textLines.map((line, index) => ({ text: line.trim(), match: (matchLines[index] || "").trim() })).filter((line) => line.match);
+}
+__name(executableLines, "executableLines");
+function describeUnapprovedGsapScript(script) {
+  const lines = executableLines(script);
+  const guidance = [];
+  for (const rule of GSAP_GUIDANCE_RULES) {
+    const line = lines.find((candidate) => rule.pattern.test(candidate.match));
+    if (!line) continue;
+    guidance.push({ id: rule.id, reason: rule.reason, fix: rule.fix, line: truncateScript(line.text, GSAP_GUIDANCE_LINE_MAX) });
+    if (guidance.length >= GSAP_GUIDANCE_MAX) return guidance;
+  }
+  // A lone gsap.set that runs once at load has no motion, so the Designer can
+  // hold the same style. A set that can run again (on resize, pointer events,
+  // the ticker, an observer or a media query) is behavior, not a static style.
+  const staticLine = lines.find((candidate) => /\bgsap\.set\s*\(/.test(candidate.match));
+  if (staticLine && !lines.some((candidate) => GSAP_GUIDANCE_NOT_STATIC_PATTERN.test(candidate.match))) {
+    guidance.push({
+      id: "static-style",
+      reason: "It sets a style one time, with no motion.",
+      fix: "Set the style in the Designer (Style panel, or Custom properties for CSS that has no control). No script is needed.",
+      line: truncateScript(staticLine.text, GSAP_GUIDANCE_LINE_MAX)
+    });
+  }
+  if (guidance.length === 0) {
+    guidance.push({
+      id: "unrecognized",
+      reason: "It contains code that the check does not recognize as GSAP.",
+      fix: "Keep only GSAP calls and the element lookups they need, and use fixed values in tweens. Or build the effect with Interactions with GSAP."
+    });
+  }
+  return guidance;
+}
+__name(describeUnapprovedGsapScript, "describeUnapprovedGsapScript");
 var GSAP_WIRING_LISTENER_EVENTS = "DOMContentLoaded|load|click|resize|mouseenter|mouseleave|pointerenter|pointerleave";
 var GSAP_WIRING_CALLBACK = String.raw`(?:\(?[\w$\s,]*\)?\s*=>|function\s*[\w$]*\s*\([\w$\s,]*\))`;
 // Tween vars GSAP treats as data. A key outside this list could name a
