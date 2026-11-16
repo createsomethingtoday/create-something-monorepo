@@ -1,5 +1,14 @@
 # Webflow Way Validator - Release Notes
 
+## Version 1.3.11 - Run time in the report
+
+- The Validator now measures how long each part of a run takes in the Designer (reading variables, components, styles and pages, the canvas checks, and the wait for the Worker) and how many items each step read.
+- "Copy report" adds one "Run time" line with the total and each step, slowest first, so a slow run says where the time went.
+- The same numbers go to the Worker with the submitted result (Worker 2.13.2 stores them). They are diagnostic only and do not affect the result.
+- No change to checks or findings.
+
+---
+
 ## Version 1.3.10 - Page names on every blocking finding
 
 - Findings such as "Links promote the creator or other templates on 1 page(s)" now list the page and what was found on it (for example the link text and its destination) under "View affected page". Earlier builds dropped that detail for these checks, so the finding did not say where to look.

@@ -2933,6 +2933,10 @@ describe('Validation Submission Endpoint', () => {
 					validationResults: {
 						url: 'https://artifact.example.com',
 						summary: { totalErrors: 1, totalWarnings: 0, passedCategories: 1, failedCategories: 1 },
+						timings: {
+							steps: { styles: 60000.4, total: 61000, 'bad key': 5, nested: { no: 1 }, huge: 1e12 },
+							counts: { styles: 3912, label: 'text' }
+						},
 						categories: [
 							{
 								category: 'Assets & Images',
@@ -2988,6 +2992,8 @@ describe('Validation Submission Endpoint', () => {
 		expect(body).not.toContain('wfbt_should_not_persist');
 		expect(body).toContain('"raw_bridge_token_stored": false');
 		const artifact = JSON.parse(body);
+		expect(artifact.client_timings).toEqual({ steps: { styles: 60000, total: 61000, huge: 3600000 }, counts: { styles: 3912 } });
+		expect(artifact.validation_results.timings).toBeUndefined();
 		expect(artifact.validation_results.categories[0].stats).toEqual({
 			totalModes: 3,
 			hasResponsiveModes: false,

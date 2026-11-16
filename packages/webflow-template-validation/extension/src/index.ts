@@ -17,6 +17,7 @@ import {
 import { buildReportMarkdown as buildReportMarkdownPure, type ReportInput } from './report';
 import { collectPageSeoData } from './page-seo';
 import { createPageMetadataDetailsHTML } from './page-metadata-details';
+import { createRunTimer, type RunTimer, type RunTimings } from './run-timings';
 import { buildValidationSubmitIssue } from './validation-submit-payload';
 import {
   isTagStyle,
@@ -98,6 +99,7 @@ interface ValidationResponse {
     totalInfo?: number;
   };
   collectedData?: any[];
+  timings?: RunTimings;
 }
 
 interface ReviewStartResponse {
@@ -360,10 +362,12 @@ async function validateProject(): Promise<void> {
     }
 
     // Collect project data via Designer API
-    const projectData = await collectProjectData(webflow);
+    const timer = createRunTimer();
+    const projectData = await collectProjectData(webflow, timer);
     const designerContext = await collectDesignerContext(webflow);
     projectData.designerContext = designerContext;
     projectData.canvasChecks = await collectCanvasAccessibility(webflow, designerContext.canAccessCanvas);
+    timer.lap('canvas');
     if (designerContext.message) {
       setToolbarStatus(designerContext.message, designerContext.canAccessCanvas === false ? 'warning' : 'neutral');
     }
@@ -425,7 +429,10 @@ async function validateProject(): Promise<void> {
       setBridgeSetupStep('install');
       setToolbarStatus('Validator script required for submission checks', 'warning');
 
+      timer.lap('setup');
       const designerResults = await runDesignerValidation(projectData, siteUrl, correlationId);
+      timer.lap('worker');
+      designerResults.timings = timer.result();
       designerResults.collectedData = [projectData];
       enhanceValidationResults(designerResults, projectData, projectData.canvasChecks);
 
@@ -478,12 +485,15 @@ async function validateProject(): Promise<void> {
     hideBridgeDrawer();
     setBridgeSetupStep('run');
     setToolbarStatus('Running full Validator checks...', 'active');
+    timer.lap('setup');
     const validationResults = await runUnifiedValidation({
       siteUrl,
       projectData,
       pageSlugs: pageSlugScope.pageSlugs,
       correlationId,
     });
+    timer.lap('worker');
+    validationResults.timings = timer.result();
 
     // Add collected data for detailed display
     validationResults.collectedData = [projectData];
@@ -833,6 +843,7 @@ function buildValidationSubmitPayload(validationResults: ValidationResponse): Re
   return {
     url: validationResults.url,
     summary: validationResults.summary,
+    timings: validationResults.timings,
     categories: Array.isArray(validationResults.categories)
       ? validationResults.categories.map((category) => ({
           category: category.category,
@@ -1910,7 +1921,7 @@ async function collectCanvasAccessibility(
 // "All Links", "Body (All Pages)"
 
 
-async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
+async function collectProjectData(webflow: WebflowApi, timer?: RunTimer): Promise<ProjectData> {
   const data: ProjectData = {
     variables: undefined,
     components: [],
@@ -2043,6 +2054,8 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
     });
   }
 
+  timer?.lap('variables');
+
   // Components Collection
   try {
     if (webflow.getAllComponents) {
@@ -2099,6 +2112,8 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
       error: error instanceof Error ? error.message : String(error)
     });
   }
+
+  timer?.lap('components');
 
   // Styles Collection
   try {
@@ -2200,6 +2215,8 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
       error: error instanceof Error ? error.message : String(error)
     });
   }
+
+  timer?.lap('styles');
 
   // Pages Collection
   try {
@@ -2342,6 +2359,8 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
     });
   }
 
+  timer?.lap('pages');
+
   // Current Page SEO Analysis
   try {
     console.log('Collecting current page SEO data...');
@@ -2372,6 +2391,12 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
       error: error instanceof Error ? error.message : String(error)
     });
   }
+
+  timer?.lap('siteInfo');
+  timer?.count('variables', data.variables?.collections?.reduce((sum, collection) => sum + (collection.variables?.length || 0), 0));
+  timer?.count('components', data.components?.length);
+  timer?.count('styles', data.styles?.length);
+  timer?.count('pages', data.pages?.length);
 
   // Flags and totals derived from the collected data (shared with the
   // headless collector)
@@ -2691,6 +2716,7 @@ function buildReportMarkdown(): string {
     domainLastPublished: scope?.domainLastPublished || null,
     extensionVersion: EXTENSION_VERSION,
     workerVersion: knownWorkerVersion,
+    timings: data.timings,
   };
 
   return buildReportMarkdownPure(input);

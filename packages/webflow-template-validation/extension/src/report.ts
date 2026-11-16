@@ -1,4 +1,5 @@
 import { formatPageDetail } from './page-metadata-details';
+import { formatRunTimings, type RunTimings } from './run-timings';
 // Markdown report builder — pure so it can be unit-tested. The panel's
 // "Copy report" action feeds it the last run; the output is what creators
 // paste into support tickets.
@@ -35,6 +36,7 @@ export interface ReportInput {
   domainLastPublished?: string | null;
   extensionVersion?: string;
   workerVersion?: string | null;
+  timings?: RunTimings | null;
 }
 
 export function buildReportMarkdown(input: ReportInput): string {
@@ -50,6 +52,7 @@ export function buildReportMarkdown(input: ReportInput): string {
       : null,
     input.outcomeBadge ? `- Outcome: ${input.outcomeBadge}${input.outcomeTitle ? ` — ${input.outcomeTitle}` : ''}` : null,
     `- Errors: ${input.errors} · Warnings: ${input.warnings} · Info: ${input.infos}`,
+    formatRunTimings(input.timings) ? `- Run time: ${formatRunTimings(input.timings)}` : null,
     '',
   ];
 
