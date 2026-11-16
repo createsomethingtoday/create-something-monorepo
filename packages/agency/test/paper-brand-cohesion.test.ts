@@ -226,10 +226,14 @@ test('the Agency footer adopts the approved public scene while retaining utility
   assert.match(metadata, /text, logos, people/i);
 });
 
-test('Field Reports uses the original isometric evidence route in place of campaign media', () => {
+test('Field Reports keeps concept illustration separate from report evidence', () => {
   const reports = read('src/routes/field-reports/+page.svelte');
 
-  assert.match(reports, /<AgencyWayfindingHero route="fieldReports"/);
+  assert.match(reports, /background=\{openingScene\}/);
+  assert.match(reports, /field-reports-hero-20261116\.webp/);
+  assert.match(reports, /description: "Concept illustration:/);
+  assert.match(reports, /href: '\/field-reports\/template-review'/);
+  assert.match(reports, /upstreamContributionFieldReport/);
   assert.match(reports, /artifactMobilePlacement="flow"/);
   assert.doesNotMatch(reports, /media=\{playbookHeroMedia\.fieldReports\}/);
   assert.match(reports, /Read the results, including the limits\./);
