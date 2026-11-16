@@ -52,7 +52,7 @@ import {
 import { normalizePublishedHost, verifyOauthSiteAccess } from './utils/oauth-site-evidence';
 
 const REVIEW_SNIPPET_VERSION = '0.3.0';
-const WORKER_VERSION = '2.13.2';
+const WORKER_VERSION = '2.13.3';
 
 /**
  * Oldest Template CLI that may record a result. Part of the rules run inside
