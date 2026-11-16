@@ -1,0 +1,61 @@
+[
+  {
+    "faq": [
+      true,
+      false,
+      false,
+      false,
+      false
+    ],
+    "support": true
+  },
+  {
+    "active": "0",
+    "open": [
+      "handoff-build-detail",
+      "handoff-test-detail",
+      "handoff-validate-detail"
+    ]
+  },
+  {
+    "active": "1",
+    "open": [
+      "handoff-build-detail",
+      "handoff-test-detail",
+      "handoff-validate-detail"
+    ]
+  },
+  {
+    "active": "2",
+    "open": [
+      "handoff-build-detail",
+      "handoff-test-detail",
+      "handoff-validate-detail"
+    ]
+  },
+  {
+    "dialog": true,
+    "focus": "Close walkthrough"
+  },
+  {
+    "dialog": false,
+    "focusReturned": true
+  },
+  {
+    "reduced": true,
+    "hash": "#next",
+    "targetTop": 112.0546875,
+    "hero": "url(\"http://127.0.0.1:4188/images/agency-approved-20261116/04-hero.webp\")"
+  },
+  {
+    "noJS": true,
+    "hash": "#next",
+    "scenes": [
+      "block",
+      "block",
+      "block"
+    ],
+    "fallback": true,
+    "hero": "url(\"http://127.0.0.1:4188/images/agency-approved-20261116/04-hero.webp\")"
+  }
+]

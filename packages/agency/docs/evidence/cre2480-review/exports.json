@@ -1,0 +1,62 @@
+[
+  {
+    "source": "01-integrated-tools.png",
+    "approvedHashMatches": true,
+    "dimensionsMatch": true,
+    "meanAbsoluteChannelError": [
+      1.0267854872908289,
+      0.9724721486355247,
+      1.0505557561181478
+    ]
+  },
+  {
+    "source": "02-inspect-connection.png",
+    "approvedHashMatches": true,
+    "dimensionsMatch": true,
+    "meanAbsoluteChannelError": [
+      1.1364850332284193,
+      0.9812527647977058,
+      1.1700299742206448
+    ]
+  },
+  {
+    "source": "03-operator-guidance.png",
+    "approvedHashMatches": true,
+    "dimensionsMatch": true,
+    "meanAbsoluteChannelError": [
+      1.0580344451927646,
+      0.9824015476869598,
+      1.1463733082508327
+    ]
+  },
+  {
+    "source": "04-hero.png",
+    "approvedHashMatches": true,
+    "dimensionsMatch": true,
+    "meanAbsoluteChannelError": [
+      0.5512598169308152,
+      0.4959574818542989,
+      0.5163401934990279
+    ]
+  },
+  {
+    "source": "05-connected-workflow.png",
+    "approvedHashMatches": true,
+    "dimensionsMatch": true,
+    "meanAbsoluteChannelError": [
+      0.8407762535020771,
+      0.7593151437186338,
+      0.8836700242539496
+    ]
+  },
+  {
+    "source": "06-delivered-system.png",
+    "approvedHashMatches": true,
+    "dimensionsMatch": true,
+    "meanAbsoluteChannelError": [
+      1.3827121966349551,
+      1.3125556137469556,
+      1.4814593301435406
+    ]
+  }
+]
