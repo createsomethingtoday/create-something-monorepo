@@ -142,6 +142,8 @@ Report \`rubricCoverage\` as \`partial_published_site_validation\` unless a sepa
 | \`template_review_get_ticket_thread\` | Read the creator's Zendesk thread for this version (what they said, what we sent) |
 | \`template_review_send_ticket_followup\` | Reply on the linked Zendesk ticket — creator-facing, only on explicit request |
 | \`template_review_list_comments\` | Read the review comments on a version: sent comments, creator replies, private notes, drafts (when the comment tools are present) |
+| \`template_review_comment_metrics\` | Count the comments a reviewer wrote and sent ("how many comments have I sent"), for one reviewer or all, in any date window |
+| \`template_review_search_comments\` | Read comments across versions, newest first: by reviewer, asset, kind (sent, draft, internal, creator reply) or date |
 | \`template_review_add_comment\` | Save a draft for the creator or a private note; the creator cannot read either |
 | \`template_review_release_feedback\` | Send every draft on the version to the creator — creator-facing, cannot be undone, only on explicit request, with \`expected_drafts\` from the list you showed the reviewer |
 | \`template_review_approve_version\` | Approve |

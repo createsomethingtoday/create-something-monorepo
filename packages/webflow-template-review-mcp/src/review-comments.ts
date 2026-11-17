@@ -109,6 +109,57 @@ export function buildReleaseNotice(input: {
   };
 }
 
+/** A time window as two ISO timestamps: `from` is included, `to` is not. Without them the window is all time. */
+export interface CommentWindow {
+  from?: string;
+  to?: string;
+}
+
+export interface CommentSearchQuery extends CommentWindow {
+  author?: string;
+  assetRef?: string;
+  visibility?: CommentVisibility;
+  authorRole?: 'creator' | 'reviewer';
+  limit?: number;
+  cursor?: string;
+}
+
+export interface CommentSearchPage {
+  /** Newest first. */
+  comments: ReviewComment[];
+  nextCursor: string | null;
+}
+
+/** "Written" goes by the time a comment was created; "sent" goes by the time it was released to the creator. */
+export interface CommentCounts {
+  written: number;
+  sent: number;
+  draft: number;
+  internal: number;
+  versions: number;
+  assets: number;
+  lastAt: string | null;
+}
+
+export interface CommentMetrics {
+  from: string;
+  to: string;
+  author: string | null;
+  totals: CommentCounts;
+  reviewers: Array<CommentCounts & { email: string }>;
+  /** Null when the counts are for one reviewer. */
+  creatorReplies: number | null;
+}
+
+function queryString(query: object): string {
+  const params = new URLSearchParams();
+  for (const [name, value] of Object.entries(query)) {
+    if (value !== undefined && value !== null && value !== '') params.set(name, String(value));
+  }
+  const text = params.toString();
+  return text ? `?${text}` : '';
+}
+
 /** The comment service's limit for one comment. */
 export const MAX_COMMENT_CHARS = 20_000;
 
@@ -164,6 +215,16 @@ export class ReviewCommentsClient {
 
   listVersion(versionRef: string, actorEmail: string): Promise<ReviewComment[]> {
     return this.request('GET', `/v1/versions/${encodeURIComponent(versionRef)}/comments`, actorEmail);
+  }
+
+  /** Comments across versions in this review program, newest first, one page at a time. */
+  search(actorEmail: string, query: CommentSearchQuery = {}): Promise<CommentSearchPage> {
+    return this.request('GET', `/v1/search/comments${queryString(query)}`, actorEmail);
+  }
+
+  /** Written and sent counts for this review program: in total and per reviewer, or for one author. */
+  metrics(actorEmail: string, query: CommentWindow & { author?: string } = {}): Promise<CommentMetrics> {
+    return this.request('GET', `/v1/metrics/comments${queryString(query)}`, actorEmail);
   }
 
   add(versionRef: string, actorEmail: string, input: NewReviewComment): Promise<ReviewComment> {
