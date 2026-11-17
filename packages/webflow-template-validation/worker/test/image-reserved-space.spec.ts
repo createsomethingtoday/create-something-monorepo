@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { parseDocument } from 'htmlparser2';
 import {
 	clearStylesheetCache,
@@ -278,6 +278,53 @@ describe('image space reserved by CSS', () => {
 		const body = '<div class="gallery"><img class="pic"></div><img class="late"><img class="imp">';
 		// components beats base; unlayered beats layered; for !important the layer wins.
 		expect(await verdicts(body, css)).toEqual([true, false, true]);
+	});
+
+	it('does not resolve a percentage height against an inline parent', async () => {
+		const css = `.tall { height: 200px; } .pic { width: 300px; height: 100%; } .block { display: block; }`;
+		const body = `
+			<span class="tall"><img class="pic"></span>
+			<span class="tall block"><img class="pic"></span>
+			<div class="tall"><img class="pic"></div>
+		`;
+		expect(await verdicts(body, css)).toEqual([false, true, true]);
+	});
+
+	it('does not trust a variable with two different global values', async () => {
+		const css = `
+			body { --h: auto; --same: 10rem; }
+			:root { --h: 200px; --same: 10rem; }
+			.a { width: 300px; height: var(--h); }
+			.b { width: var(--same); height: var(--same); }
+		`;
+		expect(await verdicts('<img class="a"><img class="b">', css)).toEqual([false, true]);
+	});
+
+	it('reads a stylesheet again after the cache time', async () => {
+		vi.useFakeTimers();
+		try {
+			const html = page('<img class="a">', '');
+			let css = '.a { width: 300px; height: 200px; }';
+			let reads = 0;
+			const fetcher = async () => {
+				reads += 1;
+				return css;
+			};
+			const first = await loadPageStyles(html, PAGE, fetcher);
+			expect(imageSpaceReserved(findImages(html)[0], first!)).toBe(true);
+
+			css = '.a { width: 300px; height: auto; }';
+			vi.advanceTimersByTime(30_000);
+			await loadPageStyles(html, PAGE, fetcher);
+			expect(reads).toBe(1);
+
+			vi.advanceTimersByTime(31_000);
+			const later = await loadPageStyles(html, PAGE, fetcher);
+			expect(reads).toBe(2);
+			expect(imageSpaceReserved(findImages(html)[0], later!)).toBe(false);
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 
 	it('returns null when a site stylesheet cannot be read, and skips other hosts', async () => {

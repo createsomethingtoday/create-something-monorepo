@@ -119,7 +119,9 @@ interface ParsedSheet {
 	layers: string[];
 }
 const MAX_VARIABLE_DEPTH = 8;
-const sheetCache = new Map<string, Promise<ParsedSheet | null>>();
+/** Matches the edge cache on the fetch: a republished stylesheet is read again within a minute. */
+const SHEET_CACHE_TTL_MS = 60_000;
+const sheetCache = new Map<string, { sheet: Promise<ParsedSheet | null>; at: number }>();
 
 export type StylesheetFetcher = (url: string) => Promise<string | null>;
 
@@ -160,7 +162,7 @@ export async function loadPageStyles(
 		for (const name of sheet.layers) {
 			if (!layerOrder.has(name)) layerOrder.set(name, layerOrder.size);
 		}
-		Object.assign(variables, sheet.variables);
+		mergeGlobalVariables(variables, sheet.variables, overridden);
 		for (const name of sheet.overriddenVariables) overridden.add(name);
 		for (const rule of sheet.rules) {
 			rules.push({ ...rule, order: order++ });
@@ -202,6 +204,9 @@ function heightIsDefinite(
 	const parent = node.parent;
 	if (!parent || parent.type !== 'tag' || depth >= MAX_PERCENT_HEIGHT_DEPTH) return false;
 	const parentStyle = cascade(parent, styles, active, false);
+	// Height and aspect-ratio do not apply to an inline box, so it settles nothing.
+	const parentDisplay = boxDisplay(parent, parentStyle);
+	if (parentDisplay === 'inline' || parentDisplay === 'contents' || parentDisplay === 'none') return false;
 	// A box that is not an image has no ratio of its own, so "auto 16 / 9" is 16 / 9.
 	if (isRatio(parentStyle['aspect-ratio'], true)) return true;
 	return heightIsDefinite(parent, parentStyle.height, styles, active, depth + 1);
@@ -237,7 +242,7 @@ function containerWidthIsDefinite(
 	if (position === 'absolute' || position === 'fixed') return false;
 	const float = keyword(style.float);
 	if (float === 'left' || float === 'right') return false;
-	const display = keyword(style.display) || (INLINE_TAGS.has(node.name ?? '') ? 'inline' : 'block');
+	const display = boxDisplay(node, style);
 	if (display.startsWith('inline') || display === 'contents' || display === 'none') return false;
 	if (display.startsWith('table')) return false;
 
@@ -251,6 +256,11 @@ function containerWidthIsDefinite(
 		if (rowAxis && kind !== 'percent' && !flexGrows(style)) return false;
 	}
 	return containerWidthIsDefinite(parent, styles, active, depth + 1);
+}
+
+/** The display value, or the element's default when no rule sets one. */
+function boxDisplay(node: StyledNode, style: Partial<Record<Property, string>>): string {
+	return keyword(style.display) || (INLINE_TAGS.has(node.name ?? '') ? 'inline' : 'block');
 }
 
 function keyword(value: string | undefined): string {
@@ -525,14 +535,15 @@ function resolveSiteStylesheet(href: string, pageUrl: string): string | null {
 function cachedSheet(url: string, media: string | null, fetcher: StylesheetFetcher): Promise<ParsedSheet | null> {
 	const key = `${media ?? ''}\n${url}`;
 	const cached = sheetCache.get(key);
-	if (cached) return cached;
+	if (cached && Date.now() - cached.at < SHEET_CACHE_TTL_MS) return cached.sheet;
+	sheetCache.delete(key);
 	const pending = fetcher(url)
 		.then((css) => (css === null ? null : parseStylesheet(css, media)))
 		.catch(() => null);
-	sheetCache.set(key, pending);
+	sheetCache.set(key, { sheet: pending, at: Date.now() });
 	// A failed read must not stick: the next run tries again.
 	void pending.then((sheet) => {
-		if (!sheet && sheetCache.get(key) === pending) sheetCache.delete(key);
+		if (!sheet && sheetCache.get(key)?.sheet === pending) sheetCache.delete(key);
 	});
 	if (sheetCache.size > SHEET_CACHE_LIMIT) {
 		const oldest = sheetCache.keys().next().value;
@@ -622,7 +633,7 @@ function readRules(css: string, condition: string | null, layer: string | null, 
 		if (body.includes('--')) {
 			const custom = parseCustomProperties(body);
 			const global = condition === null && selectors.every((selector) => /^(:root|html|body)$/i.test(selector));
-			if (global) Object.assign(out.variables, custom);
+			if (global) mergeGlobalVariables(out.variables, custom, out.overriddenVariables);
 			else Object.keys(custom).forEach((name) => out.overriddenVariables.add(name));
 		}
 		const declarations = parseDeclarations(body);
@@ -701,6 +712,18 @@ function parseDeclarations(body: string): Partial<Record<Property, Declaration>>
 		if (!current || important || !current.important) out[property as Property] = { value, important };
 	}
 	return out;
+}
+
+/**
+ * :root, html and body are different elements: a value on body wins for the
+ * page content whatever the source order. The read does not model that; a
+ * variable given two different global values is treated as overridden.
+ */
+function mergeGlobalVariables(target: Record<string, string>, source: Record<string, string>, overridden: Set<string>): void {
+	for (const [name, value] of Object.entries(source)) {
+		if (name in target && target[name] !== value) overridden.add(name);
+		target[name] = value;
+	}
 }
 
 function parseCustomProperties(body: string): Record<string, string> {
