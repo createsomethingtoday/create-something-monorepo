@@ -384,6 +384,39 @@ describe('image space reserved by CSS', () => {
 		expect(await verdicts(body, css)).toEqual([false, false, false, true, true]);
 	});
 
+	it('reads logical sizes as width and height', async () => {
+		const css = `
+			.a { width: 300px; height: 200px; block-size: auto; }
+			.b { inline-size: 300px; block-size: 200px; }
+			.c { width: 300px; height: 200px; inline-size: auto; aspect-ratio: 3 / 2; }
+		`;
+		expect(await verdicts('<img class="a"><img class="b"><img class="c">', css)).toEqual([false, true, true]);
+	});
+
+	it('accepts only values a browser would take as a size', async () => {
+		const css = `
+			:root { --bad: red; --unitless: 300; --ok: 12.5rem; }
+			.bad { width: var(--bad); height: var(--bad); }
+			.unitless { width: var(--unitless); height: 200px; }
+			.ok { width: var(--ok); height: 50vh; }
+			.zero { width: 0; height: 0; }
+			.math { width: min(100%, 30rem); height: max(10rem, 20vh); }
+		`;
+		const body = '<img class="bad"><img class="unitless"><img class="ok"><img class="zero"><img class="math">';
+		expect(await verdicts(body, css)).toEqual([false, false, true, true, true]);
+	});
+
+	it('returns null when a stylesheet imports another site stylesheet', async () => {
+		const html = page('<img class="a">', '');
+		const sized = '.a { width: 300px; height: 200px; }';
+		expect(await loadPageStyles(html, PAGE, async () => `@import url('/overrides.css'); ${sized}`)).toBeNull();
+		clearStylesheetCache();
+		// A font import from another host cannot size a template image.
+		const fonts = await loadPageStyles(html, PAGE, async () => `@import url("https://fonts.googleapis.com/css2?family=Inter"); ${sized}`);
+		expect(fonts).not.toBeNull();
+		expect(imageSpaceReserved(findImages(html)[0], fonts!)).toBe(true);
+	});
+
 	it('returns null when a site stylesheet cannot be read, and skips other hosts', async () => {
 		const html = page('<img class="x">', '', '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter">');
 		const requested: string[] = [];

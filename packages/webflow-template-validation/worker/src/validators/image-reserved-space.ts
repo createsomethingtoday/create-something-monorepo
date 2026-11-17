@@ -107,6 +107,9 @@ export interface PageStyles {
 const STATE_PSEUDOS = new Set(['hover', 'focus', 'active', 'visited', 'focus-within', 'focus-visible', 'target', 'checked']);
 const COMBINATORS = new Set(['descendant', 'child', 'sibling', 'adjacent', 'parent', 'column-combinator']);
 const NOT_DEFINITE = /^(auto|initial|inherit|unset|revert|revert-layer|none|normal|stretch|min-content|max-content|fit-content|-webkit-fill-available|-moz-available)$/;
+const SIZE_VALUE = /^(?:[+-]?\d*\.?\d+(?:px|r?em|v[wh]|vmin|vmax|[sld]v[wh]|ch|ex|cm|mm|in|pt|pc|%)|[+-]?0+(?:\.0+)?|(?:calc|min|max|clamp)\(.*\))$/;
+/** Logical sizes, read as their physical side: templates are horizontal. */
+const PROPERTY_ALIASES: Record<string, string> = { 'inline-size': 'width', 'block-size': 'height' };
 const MAX_STYLESHEETS_PER_PAGE = 6;
 const MAX_STYLESHEET_BYTES = 4 * 1024 * 1024;
 const MAX_PERCENT_HEIGHT_DEPTH = 4;
@@ -120,6 +123,8 @@ interface ParsedSheet {
 	overriddenVariables: Set<string>;
 	/** Cascade layers in the order the stylesheet first names them. */
 	layers: string[];
+	/** URLs of @import rules, as written. */
+	imports: string[];
 }
 const MAX_VARIABLE_DEPTH = 8;
 /** Matches the edge cache on the fetch: a republished stylesheet is read again within a minute. */
@@ -144,14 +149,18 @@ export async function loadPageStyles(
 	let linked = 0;
 
 	for (const source of sources) {
+		let sheet: ParsedSheet | null;
 		if (source.kind === 'inline') {
-			sheets.push(parseStylesheet(source.css, source.media));
-			continue;
+			sheet = parseStylesheet(source.css, source.media);
+		} else {
+			if (linked >= MAX_STYLESHEETS_PER_PAGE) return null;
+			linked += 1;
+			sheet = await cachedSheet(source.url, source.media, fetcher);
+			if (!sheet) return null;
 		}
-		if (linked >= MAX_STYLESHEETS_PER_PAGE) return null;
-		linked += 1;
-		const sheet = await cachedSheet(source.url, source.media, fetcher);
-		if (!sheet) return null;
+		// An imported site stylesheet is not read; without it the cascade is incomplete.
+		const base = source.kind === 'link' ? source.url : pageUrl;
+		if (sheet.imports.some((href) => resolveSiteStylesheet(href, base) !== null)) return null;
 		sheets.push(sheet);
 	}
 
@@ -285,6 +294,8 @@ function flexGrows(style: Partial<Record<Property, string>>): boolean {
 function sizeKind(value: string | undefined): 'none' | 'length' | 'percent' {
 	const text = value?.trim().toLowerCase();
 	if (!text || NOT_DEFINITE.test(text) || text.startsWith('fit-content(')) return 'none';
+	// Only a value the browser would accept as a size counts: a number with a unit, zero, or a math function.
+	if (!SIZE_VALUE.test(text)) return 'none';
 	return text.includes('%') ? 'percent' : 'length';
 }
 
@@ -591,7 +602,7 @@ export function clearStylesheetCache(): void {
 
 /** Rules that set width, height, aspect-ratio or position, with the @media or @container conditions around them. */
 export function parseStylesheet(css: string, condition: string | null = null): ParsedSheet {
-	const sheet: ParsedSheet = { rules: [], variables: {}, overriddenVariables: new Set(), layers: [] };
+	const sheet: ParsedSheet = { rules: [], variables: {}, overriddenVariables: new Set(), layers: [], imports: [] };
 	readRules(css.replace(/\/\*[\s\S]*?\*\//g, ''), condition, null, sheet);
 	return sheet;
 }
@@ -611,6 +622,8 @@ function readRules(css: string, condition: string | null, layer: string | null, 
 			if (order) {
 				for (const name of order[1].split(',')) registerLayer([layer, name.trim()].filter(Boolean).join('.'));
 			}
+			const imported = /^@import\s+(?:url\(\s*)?["']?([^"')\s]+)/i.exec(prelude);
+			if (imported) out.imports.push(imported[1]);
 			index = open + 1;
 			continue;
 		}
@@ -750,7 +763,8 @@ function parseDeclarations(body: string): Partial<Record<Property, Declaration>>
 		index = stop + 1;
 		const colon = piece.indexOf(':');
 		if (colon === -1) continue;
-		const property = piece.slice(0, colon).trim().toLowerCase();
+		const named = piece.slice(0, colon).trim().toLowerCase();
+		const property = PROPERTY_ALIASES[named] ?? named;
 		if (!PROPERTIES.has(property)) continue;
 		const raw = piece.slice(colon + 1).trim();
 		const important = /!\s*important\s*$/i.test(raw);
