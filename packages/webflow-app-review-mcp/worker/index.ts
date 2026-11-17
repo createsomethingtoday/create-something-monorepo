@@ -71,6 +71,8 @@ interface Env {
   REVIEW_COMMENTS_URL?: string;
   /** This MCP's reviewer key for that Worker, scope "app" (secret via `wrangler secret put`). */
   REVIEW_COMMENTS_API_KEY?: string;
+  /** Marketplace admin key for the live listing route (secret via `wrangler secret put`). Unset = the live listing tools are off. */
+  MARKETPLACE_ADMIN_API_KEY?: string;
 }
 
 type RequestProps = {
@@ -126,7 +128,9 @@ export class WebflowAppReviewMCP extends McpAgent<Env, unknown, RequestProps> {
     // Read per call: props belong to the session, and only Cloudflare Access sets an email.
     const getReviewer = () => (this.props?.email ? { email: this.props.email } : null);
 
-    registerTools(this.server, getClient, getReviewer, getZendesk, () => reviewComments);
+    registerTools(this.server, getClient, getReviewer, getZendesk, () => reviewComments, () => ({
+      apiKey: this.env.MARKETPLACE_ADMIN_API_KEY,
+    }));
     registerPrompts(this.server);
   }
 }
