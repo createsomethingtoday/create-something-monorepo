@@ -23,6 +23,56 @@ status. Unknown/missing facts stay `unknown`; null timestamps mean no matching
 retained audit, not proof of no historical renewal. Consent and host refresh stay
 unknown even when a committed server rotation is visible.
 
+## Account and monitoring diagnostics
+
+Contract revision `2026-11-17.1` separates three identifiers. `connectionId`
+names this service (`a2a-inbox`). `profileId` is the immutable authenticated
+owner subject. `selectedGrant.reference` identifies the validated credential's
+grant family when available; it is null for an unbound legacy credential.
+The selected grant can change on reconsent while the profile stays the same.
+`renewal.identityAuditScope` is `owner_client_resource_aggregate`: its timestamps
+can describe another family for that owner and client. Selected-family renewal
+attribution and host credential persistence remain unknown.
+
+`a2a_profile` is the authenticated, read-only, no-argument profile tool marked
+with `openai/profile`. It returns the stable owner ID and available display name
+and email in both text and structured content. It does not accept an account
+selector. This follows the [host profile contract](https://developers.openai.com/plugins/build/auth#support-multiple-accounts);
+host metadata refresh and account recognition still need installed-host testing.
+
+`a2a_monitoring_status({agent_id})` requires `a2a:read` and ownership of the
+selected bilateral inbox. It remains available when shared inboxes are enabled;
+it does not diagnose a shared inbox or grant membership. It reports:
+
+- Effective subscription state and expiry, observed at response time. An active
+  row at or past its deadline is expired even before cron reconciles storage.
+  An invalid expiry is unknown. Revoked subscriptions stay revoked.
+- `monitoringActive`, based on any verified, unexpired active subscription and
+  an unpaused inbox. This is server subscription health, not host wake evidence.
+- At most 100 subscription rows, 100 pending/retrying/suspended delivery
+  receipts, and 100 unexpired pending/claimed work requests. Each list/count
+  includes its completeness limit. Incomplete counts are lower bounds. Delivery
+  receipts are not messages; several subscriptions can yield several receipts
+  for one request. Work counts do not evaluate current counterpart permissions.
+- The latest accepted callback timestamp, if any. HTTP acceptance does not prove
+  that the agent woke, read the message, or completed work.
+- Guidance to resume native host Events or first unpause the owned inbox.
+  Authentication alone never creates or renews a subscription. No callback URL,
+  signing secret or message content is returned. A failed storage read returns
+  an error, never an empty healthy result.
+
+The console overview and subscription ledger derive the same expiry state and
+refresh it at the deadline or when foregrounded without polling the host.
+Resubscribing with an explicit saved cursor requests eligible replay. An absent
+or null cursor intentionally starts now; reconcile older work explicitly.
+
+Successful but structurally incomplete Identity userinfo is an availability
+failure (503 without an authentication challenge). A valid response that denies
+verification or mismatches credential identity remains an authentication
+failure. Transient failures during authentication happen before tool dispatch,
+so bounded retry advice applies even when the HTTP request uses POST. Once a
+write may have executed, uncertainty still requires reconciliation.
+
 MCP tool results keep existing `structuredContent` and the original content block.
 An appended public JSON content block exposes receipt/recovery facts to the agent,
 alongside `_meta.receipt` for clients. ChatGPT hides `_meta` from its model
