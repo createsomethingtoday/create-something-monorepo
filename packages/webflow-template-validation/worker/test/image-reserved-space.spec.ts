@@ -126,9 +126,8 @@ describe('image space reserved by CSS', () => {
 			.pic::after { width: 100px; height: 100px; }
 			@keyframes grow { from { width: 10px; height: 10px; } to { width: 20px; height: 20px; } }
 			@font-face { font-family: X; src: url(x.woff2); }
-			@supports (aspect-ratio: 1) { .sup { width: 100%; aspect-ratio: 2 / 1; } }
 		`;
-		expect(await verdicts('<img class="pic"><img class="sup">', css)).toEqual([false, true]);
+		expect(await verdicts('<img class="pic">', css)).toEqual([false]);
 	});
 
 	it('reads inline styles and <style> blocks, and treats one size attribute as a width or height', async () => {
@@ -237,6 +236,48 @@ describe('image space reserved by CSS', () => {
 		`;
 		const body = '<img class="auto-ratio"><img class="ratio"><div class="frame"><img class="cover"></div>';
 		expect(await verdicts(body, css)).toEqual([false, true, true]);
+	});
+
+	it('keeps the media attribute of a <style> or <link> as a condition on its rules', async () => {
+		const css = `.a { width: 300px; height: 200px; } .b { width: 300px; height: 200px; }`;
+		const head = `
+			<style media="(max-width: 767px)">.a { height: auto; }</style>
+			<style media="print">.b { height: auto; }</style>
+		`;
+		expect(await verdicts('<img class="a"><img class="b">', css, head)).toEqual([false, true]);
+
+		clearStylesheetCache();
+		const html = `<!doctype html><html><head>
+			<link rel="stylesheet" href="${SHEET}">
+			<link rel="stylesheet" media="(max-width: 479px)" href="https://cdn.prod.website-files.com/abc/css/mobile.css">
+		</head><body><img class="a"></body></html>`;
+		const styles = await loadPageStyles(html, PAGE, async (url) => (url.endsWith('mobile.css') ? '.a { width: auto; height: auto; }' : css));
+		expect(findImages(html).map((img) => imageSpaceReserved(img, styles!))).toEqual([false]);
+	});
+
+	it('treats @supports rules as conditional', async () => {
+		const css = `
+			.a { width: 300px; height: 200px; }
+			.b { width: 100%; }
+			@supports (aspect-ratio: 1) { .a { height: auto; } .b { aspect-ratio: 2 / 1; } }
+		`;
+		// .a loses its height where the feature exists; .b has no height where it does not.
+		expect(await verdicts('<img class="a"><img class="b">', css)).toEqual([false, false]);
+	});
+
+	it('ranks cascade layers before specificity', async () => {
+		const css = `
+			@layer base, components;
+			@layer components { .pic { width: 300px; height: 200px; } }
+			@layer base { .gallery .pic.pic { height: auto; } }
+			@layer components { .late { width: 300px; height: 200px; } }
+			.late { height: auto; }
+			@layer base { .imp { height: 200px !important; width: 300px; } }
+			.imp { height: auto !important; }
+		`;
+		const body = '<div class="gallery"><img class="pic"></div><img class="late"><img class="imp">';
+		// components beats base; unlayered beats layered; for !important the layer wins.
+		expect(await verdicts(body, css)).toEqual([true, false, true]);
 	});
 
 	it('returns null when a site stylesheet cannot be read, and skips other hosts', async () => {

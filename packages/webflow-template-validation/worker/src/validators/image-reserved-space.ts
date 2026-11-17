@@ -82,6 +82,8 @@ interface StyleRule {
 	declarations: Partial<Record<Property, Declaration>>;
 	/** The enclosing @media or @container conditions, or null for rules that always apply. */
 	condition: string | null;
+	/** The cascade layer the rule is in, or null for unlayered rules. */
+	layer: string | null;
 	order: number;
 }
 
@@ -94,6 +96,8 @@ export interface PageStyles {
 	/** Sets of @media and @container conditions that can be active at the same time; the image must pass in each. */
 	scenarios: Array<ReadonlySet<string>>;
 	matched: WeakMap<StyledNode, StyleRule[]>;
+	/** Position of each cascade layer; later layers win over earlier ones. */
+	layerOrder: Map<string, number>;
 }
 
 /** Selectors that depend on visitor interaction; their declarations are not the resting layout. */
@@ -111,6 +115,8 @@ interface ParsedSheet {
 	variables: Record<string, string>;
 	/** Custom properties set anywhere else. */
 	overriddenVariables: Set<string>;
+	/** Cascade layers in the order the stylesheet first names them. */
+	layers: string[];
 }
 const MAX_VARIABLE_DEPTH = 8;
 const sheetCache = new Map<string, Promise<ParsedSheet | null>>();
@@ -134,12 +140,12 @@ export async function loadPageStyles(
 
 	for (const source of sources) {
 		if (source.kind === 'inline') {
-			sheets.push(parseStylesheet(source.css));
+			sheets.push(parseStylesheet(source.css, source.media));
 			continue;
 		}
 		if (linked >= MAX_STYLESHEETS_PER_PAGE) return null;
 		linked += 1;
-		const sheet = await cachedSheet(source.url, fetcher);
+		const sheet = await cachedSheet(source.url, source.media, fetcher);
 		if (!sheet) return null;
 		sheets.push(sheet);
 	}
@@ -148,8 +154,12 @@ export async function loadPageStyles(
 	const variables: Record<string, string> = {};
 	const overridden = new Set<string>();
 	const conditions = new Set<string>();
+	const layerOrder = new Map<string, number>();
 	let order = 0;
 	for (const sheet of sheets) {
+		for (const name of sheet.layers) {
+			if (!layerOrder.has(name)) layerOrder.set(name, layerOrder.size);
+		}
 		Object.assign(variables, sheet.variables);
 		for (const name of sheet.overriddenVariables) overridden.add(name);
 		for (const rule of sheet.rules) {
@@ -158,7 +168,7 @@ export async function loadPageStyles(
 		}
 	}
 	for (const name of inlineCustomProperties(document)) overridden.add(name);
-	return { rules, variables, overriddenVariables: overridden, scenarios: buildScenarios([...conditions]), matched: new WeakMap() };
+	return { rules, variables, overriddenVariables: overridden, scenarios: buildScenarios([...conditions]), matched: new WeakMap(), layerOrder };
 }
 
 /** True when the cascade reserves the image's space at every viewport width the stylesheets distinguish. */
@@ -286,7 +296,7 @@ function cascade(
 	if (useSizeAttributes) {
 		for (const property of ['width', 'height'] as const) {
 			const attribute = (node.attribs?.[property] ?? '').trim();
-			if (/^[1-9]\d*$/.test(attribute)) offer(property, `${attribute}px`, [0, -1, 0]);
+			if (/^[1-9]\d*$/.test(attribute)) offer(property, `${attribute}px`, [0, -1, -1, 0]);
 		}
 	}
 
@@ -303,12 +313,17 @@ function cascade(
 	for (const rule of matched) {
 		if (rule.condition !== null && !active.has(rule.condition)) continue;
 		for (const [property, declaration] of Object.entries(rule.declarations) as Array<[Property, Declaration]>) {
-			offer(property, declaration.value, [declaration.important ? 1 : 0, rule.specificity, rule.order]);
+			offer(property, declaration.value, [
+				declaration.important ? 1 : 0,
+				layerRank(rule.layer, declaration.important, styles.layerOrder),
+				rule.specificity,
+				rule.order
+			]);
 		}
 	}
 
 	for (const [property, declaration] of Object.entries(parseDeclarations(node.attribs?.style ?? '')) as Array<[Property, Declaration]>) {
-		offer(property, declaration.value, [declaration.important ? 1 : 0, Number.MAX_SAFE_INTEGER, 0]);
+		offer(property, declaration.value, [declaration.important ? 1 : 0, Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER, 0]);
 	}
 
 	const out: Partial<Record<Property, string>> = {};
@@ -408,7 +423,7 @@ function buildScenarios(conditions: string[]): Array<ReadonlySet<string>> {
 
 /** The viewport widths a condition covers, when it is made only of screen and min/max-width parts. */
 function widthRange(condition: string): { min: number; max: number } | 'never' | 'unknown' {
-	if (condition.includes('@container') || condition.includes(',')) return 'unknown';
+	if (condition.includes('@container') || condition.includes('@supports') || condition.includes(',')) return 'unknown';
 	let min = -Infinity;
 	let max = Infinity;
 	const parts = condition
@@ -442,6 +457,16 @@ function inlineCustomProperties(root: StyledNode): string[] {
 	return names;
 }
 
+/**
+ * Unlayered rules win over layered ones, and later layers over earlier ones,
+ * whatever the specificity. For !important declarations the order is reversed.
+ */
+function layerRank(layer: string | null, important: boolean, layerOrder: Map<string, number>): number {
+	const index = layer === null ? null : (layerOrder.get(layer) ?? 0);
+	if (important) return index === null ? -1 : 1_000_000 - index;
+	return index === null ? 1_000_000 : index;
+}
+
 function compareRank(a: number[], b: number[]): number {
 	for (let i = 0; i < a.length; i += 1) {
 		if (a[i] !== b[i]) return a[i] - b[i];
@@ -453,7 +478,13 @@ function compareRank(a: number[], b: number[]): number {
 // Stylesheet sources
 // ---------------------------------------------------------------------------
 
-type StyleSource = { kind: 'inline'; css: string } | { kind: 'link'; url: string };
+type StyleSource = { kind: 'inline'; css: string; media: string | null } | { kind: 'link'; url: string; media: string | null };
+
+/** A media attribute as a condition on every rule in the stylesheet, or null when it always applies. */
+function mediaCondition(media: string | undefined): string | null {
+	const text = (media ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+	return !text || text === 'all' || text === 'screen' ? null : `@media ${text}`;
+}
 
 function collectStyleSources(root: StyledNode, pageUrl: string): StyleSource[] {
 	const sources: StyleSource[] = [];
@@ -461,15 +492,13 @@ function collectStyleSources(root: StyledNode, pageUrl: string): StyleSource[] {
 		for (const child of parent.children ?? []) {
 			if (child.name === 'template' || child.name === 'noscript') continue;
 			if (child.name === 'style') {
-				const media = (child.attribs?.media ?? '').trim().toLowerCase();
-				if (media && media !== 'all' && media !== 'screen') continue;
-				sources.push({ kind: 'inline', css: (child.children ?? []).map((node) => node.data ?? '').join('') });
+				const css = (child.children ?? []).map((node) => node.data ?? '').join('');
+				sources.push({ kind: 'inline', css, media: mediaCondition(child.attribs?.media) });
 				continue;
 			}
 			if (child.name === 'link' && /\bstylesheet\b/i.test(child.attribs?.rel ?? '') && child.attribs?.href) {
-				const media = (child.attribs.media ?? '').trim().toLowerCase();
 				const url = resolveSiteStylesheet(child.attribs.href, pageUrl);
-				if (url && (!media || media === 'all' || media === 'screen')) sources.push({ kind: 'link', url });
+				if (url) sources.push({ kind: 'link', url, media: mediaCondition(child.attribs.media) });
 				continue;
 			}
 			walk(child);
@@ -493,16 +522,17 @@ function resolveSiteStylesheet(href: string, pageUrl: string): string | null {
 	}
 }
 
-function cachedSheet(url: string, fetcher: StylesheetFetcher): Promise<ParsedSheet | null> {
-	const cached = sheetCache.get(url);
+function cachedSheet(url: string, media: string | null, fetcher: StylesheetFetcher): Promise<ParsedSheet | null> {
+	const key = `${media ?? ''}\n${url}`;
+	const cached = sheetCache.get(key);
 	if (cached) return cached;
 	const pending = fetcher(url)
-		.then((css) => (css === null ? null : parseStylesheet(css)))
+		.then((css) => (css === null ? null : parseStylesheet(css, media)))
 		.catch(() => null);
-	sheetCache.set(url, pending);
+	sheetCache.set(key, pending);
 	// A failed read must not stick: the next run tries again.
 	void pending.then((sheet) => {
-		if (!sheet && sheetCache.get(url) === pending) sheetCache.delete(url);
+		if (!sheet && sheetCache.get(key) === pending) sheetCache.delete(key);
 	});
 	if (sheetCache.size > SHEET_CACHE_LIMIT) {
 		const oldest = sheetCache.keys().next().value;
@@ -540,19 +570,27 @@ export function clearStylesheetCache(): void {
 // ---------------------------------------------------------------------------
 
 /** Rules that set width, height, aspect-ratio or position, with the @media or @container conditions around them. */
-export function parseStylesheet(css: string): ParsedSheet {
-	const sheet: ParsedSheet = { rules: [], variables: {}, overriddenVariables: new Set() };
-	readRules(css.replace(/\/\*[\s\S]*?\*\//g, ''), null, sheet);
+export function parseStylesheet(css: string, condition: string | null = null): ParsedSheet {
+	const sheet: ParsedSheet = { rules: [], variables: {}, overriddenVariables: new Set(), layers: [] };
+	readRules(css.replace(/\/\*[\s\S]*?\*\//g, ''), condition, null, sheet);
 	return sheet;
 }
 
-function readRules(css: string, condition: string | null, out: ParsedSheet): void {
+function readRules(css: string, condition: string | null, layer: string | null, out: ParsedSheet): void {
+	const registerLayer = (name: string) => {
+		if (!out.layers.includes(name)) out.layers.push(name);
+	};
 	let index = 0;
 	while (index < css.length) {
 		const open = scanTo(css, index, '{', ';');
 		if (open === -1) return;
 		const prelude = css.slice(index, open).trim();
 		if (css[open] === ';') {
+			// "@layer base, components;" fixes the order of the layers it names.
+			const order = /^@layer\s+(.+)$/i.exec(prelude);
+			if (order) {
+				for (const name of order[1].split(',')) registerLayer([layer, name.trim()].filter(Boolean).join('.'));
+			}
 			index = open + 1;
 			continue;
 		}
@@ -567,9 +605,14 @@ function readRules(css: string, condition: string | null, out: ParsedSheet): voi
 			if (name === 'media' || name === 'container') {
 				// "all" and "screen" always apply to the pages the validator reads.
 				const always = name === 'media' && /^(all|screen)$/i.test(params);
-				readRules(body, always ? condition : [condition, `@${name} ${params}`].filter(Boolean).join(' and '), out);
-			} else if (name === 'supports' || name === 'layer') {
-				readRules(body, condition, out);
+				readRules(body, always ? condition : [condition, `@${name} ${params}`].filter(Boolean).join(' and '), layer, out);
+			} else if (name === 'supports') {
+				// The read does not know which features the visitor's browser has.
+				readRules(body, [condition, `@supports ${params}`].filter(Boolean).join(' and '), layer, out);
+			} else if (name === 'layer') {
+				const inner = [layer, params || `(anonymous ${out.layers.length})`].filter(Boolean).join('.');
+				registerLayer(inner);
+				readRules(body, condition, inner, out);
 			}
 			// @font-face, @keyframes, @page and the rest cannot size an image.
 			continue;
@@ -586,7 +629,7 @@ function readRules(css: string, condition: string | null, out: ParsedSheet): voi
 		if (Object.keys(declarations).length === 0) continue;
 		for (const selector of selectors) {
 			const compiled = compileSelector(selector);
-			if (compiled) out.rules.push({ ...compiled, declarations, condition });
+			if (compiled) out.rules.push({ ...compiled, declarations, condition, layer });
 		}
 	}
 }
