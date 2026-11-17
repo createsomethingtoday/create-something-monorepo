@@ -327,6 +327,34 @@ describe('image space reserved by CSS', () => {
 		}
 	});
 
+	it('does not accept a box that uses the "all" reset', async () => {
+		const css = `.reset { all: unset; } .frame { height: 200px; } .pic { width: 300px; height: 100%; }`;
+		const body = `
+			<img style="width:300px;height:200px;all:unset">
+			<div class="frame reset"><img class="pic"></div>
+			<div class="frame"><img class="pic"></div>
+		`;
+		expect(await verdicts(body, css)).toEqual([false, false, true]);
+	});
+
+	it('reads nested rules', async () => {
+		const css = `
+			.pic { width: 300px; height: 200px; & { height: auto; } }
+			.card { .thumb { width: 80px; height: 80px; } }
+			.wide { width: 300px; height: 200px; @media (max-width: 767px) { height: auto; } }
+			.keep { width: 300px; height: 200px; &.is-fluid { height: auto; } }
+		`;
+		const body = `
+			<img class="pic">
+			<div class="card"><img class="thumb"></div>
+			<img class="thumb">
+			<img class="wide">
+			<img class="keep">
+			<img class="keep is-fluid">
+		`;
+		expect(await verdicts(body, css)).toEqual([false, true, false, false, true, false]);
+	});
+
 	it('returns null when a site stylesheet cannot be read, and skips other hosts', async () => {
 		const html = page('<img class="x">', '', '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter">');
 		const requested: string[] = [];

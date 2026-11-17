@@ -51,7 +51,8 @@ type Property =
 	| 'flex'
 	| 'flex-grow'
 	| 'flex-direction'
-	| 'flex-flow';
+	| 'flex-flow'
+	| 'all';
 const PROPERTIES: ReadonlySet<string> = new Set([
 	'width',
 	'height',
@@ -62,7 +63,9 @@ const PROPERTIES: ReadonlySet<string> = new Set([
 	'flex',
 	'flex-grow',
 	'flex-direction',
-	'flex-flow'
+	'flex-flow',
+	// "all" resets every other property; the read does not model it, so a box that uses it settles nothing.
+	'all'
 ]);
 /** Elements that are inline unless a rule says otherwise; an inline box shrinks to its content. */
 const INLINE_TAGS = new Set(['a', 'span', 'picture', 'label', 'em', 'strong', 'b', 'i', 'small', 'button', 'u', 's', 'sub', 'sup', 'abbr', 'cite', 'code', 'mark', 'q', 'time']);
@@ -180,6 +183,7 @@ export function imageSpaceReserved(img: StyledNode, styles: PageStyles): boolean
 
 function reservedIn(img: StyledNode, styles: PageStyles, active: ReadonlySet<string>): boolean {
 	const style = cascade(img, styles, active, true);
+	if (style.all) return false;
 	const position = style.position?.trim().toLowerCase();
 	if (position === 'absolute' || position === 'fixed') return true;
 
@@ -204,6 +208,7 @@ function heightIsDefinite(
 	const parent = node.parent;
 	if (!parent || parent.type !== 'tag' || depth >= MAX_PERCENT_HEIGHT_DEPTH) return false;
 	const parentStyle = cascade(parent, styles, active, false);
+	if (parentStyle.all) return false;
 	// Height and aspect-ratio do not apply to an inline box, so it settles nothing.
 	const parentDisplay = boxDisplay(parent, parentStyle);
 	if (parentDisplay === 'inline' || parentDisplay === 'contents' || parentDisplay === 'none') return false;
@@ -235,6 +240,7 @@ function containerWidthIsDefinite(
 	if (!node || node.type !== 'tag' || node.name === 'body' || node.name === 'html') return true;
 	if (depth >= MAX_PERCENT_WIDTH_DEPTH) return false;
 	const style = cascade(node, styles, active, false);
+	if (style.all) return false;
 	const kind = sizeKind(style.width);
 	if (kind === 'length') return true;
 
@@ -637,10 +643,24 @@ function readRules(css: string, condition: string | null, layer: string | null, 
 			else Object.keys(custom).forEach((name) => out.overriddenVariables.add(name));
 		}
 		const declarations = parseDeclarations(body);
-		if (Object.keys(declarations).length === 0) continue;
-		for (const selector of selectors) {
-			const compiled = compileSelector(selector);
-			if (compiled) out.rules.push({ ...compiled, declarations, condition, layer });
+		if (Object.keys(declarations).length > 0) {
+			for (const selector of selectors) {
+				const compiled = compileSelector(selector);
+				if (compiled) out.rules.push({ ...compiled, declarations, condition, layer });
+			}
+		}
+		// Nested rules: read each as a top-level rule on the combined selector.
+		for (const nested of selectors.length > 0 ? nestedBlocks(body) : []) {
+			if (/^@(media|container|supports)\b/i.test(nested.prelude)) {
+				readRules(`${nested.prelude}{${selectors.join(',')}{${nested.body}}}`, condition, layer, out);
+			} else if (!nested.prelude.startsWith('@')) {
+				const combined = selectors.flatMap((parent) =>
+					splitSelectors(nested.prelude).map((inner) =>
+						inner.includes('&') ? inner.split('&').join(`:is(${parent})`) : `:is(${parent}) ${inner}`
+					)
+				);
+				readRules(`${combined.join(',')}{${nested.body}}`, condition, layer, out);
+			}
 		}
 	}
 }
@@ -684,6 +704,25 @@ function matchingBrace(css: string, open: number): number {
 		}
 	}
 	return -1;
+}
+
+/** Blocks nested directly inside a rule body, each with the text before its brace. */
+function nestedBlocks(body: string): Array<{ prelude: string; body: string }> {
+	const blocks: Array<{ prelude: string; body: string }> = [];
+	let index = 0;
+	while (index < body.length) {
+		const end = scanTo(body, index, ';', '{');
+		if (end === -1) break;
+		if (body[end] === ';') {
+			index = end + 1;
+			continue;
+		}
+		const close = matchingBrace(body, end);
+		if (close === -1) break;
+		blocks.push({ prelude: body.slice(index, end).trim(), body: body.slice(end + 1, close) });
+		index = close + 1;
+	}
+	return blocks;
 }
 
 function parseDeclarations(body: string): Partial<Record<Property, Declaration>> {
