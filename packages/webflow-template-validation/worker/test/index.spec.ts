@@ -1621,7 +1621,7 @@ describe('Content Validator', () => {
 
 		const issue = generateContentIssues(pages as any, allTogglesOff as any).find(i => i.id === 'images-missing-dimensions');
 		expect(issue).toEqual(expect.objectContaining({ severity: 'error', category: 'Content & Accessibility' }));
-		expect(issue!.message).toBe('2 image(s) on 1 page(s) have no width and height attributes');
+		expect(issue!.message).toBe('2 image(s) on 1 page(s) have no reserved width and height');
 		expect(issue!.details!.pagesWithIssues).toEqual([
 			expect.objectContaining({ url: 'https://example.com', imagesMissingDimensions: 2 })
 		]);
