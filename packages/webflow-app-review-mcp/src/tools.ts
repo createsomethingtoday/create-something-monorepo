@@ -4,6 +4,8 @@ import { createHash } from 'node:crypto';
 
 import type { AirtableClient, AppReviewVersion, CollaboratorRef } from './airtable.js';
 import { AirtableClientError, assertReviewerAssignmentReadOnly, compareExceptionItems } from './airtable.js';
+import type { LiveListing, LiveListingConfig } from './live-listing.js';
+import { LIVE_LISTING_STATUSES, LIVE_LISTING_VISIBILITIES, readLiveListing, writeLiveListing } from './live-listing.js';
 import type { ZendeskClient } from './zendesk.js';
 import { ZENDESK_WRITABLE_STATUSES, ZendeskClientError, renderCreatorFacingHtml } from './zendesk.js';
 import {
@@ -40,6 +42,8 @@ type ClientFactory = () => AirtableClient;
 type ReviewerFactory = () => { email?: string | null } | null;
 type ZendeskFactory = () => ZendeskClient | null;
 type ReviewCommentsFactory = () => ReviewCommentsClient | null;
+/** Config for the live Marketplace listing route. No apiKey = the live listing tools refuse to run. */
+type LiveListingFactory = () => LiveListingConfig;
 
 const collaboratorRefSchema = z.object({
   id: z.string().min(1),
@@ -472,12 +476,101 @@ function requireZendesk(getZendesk: ZendeskFactory, verb: 'reads' | 'writes'): Z
   return zendesk;
 }
 
+const APP_LISTING_RESOURCE_TYPE = 'INTEGRATION';
+
+type ListingAsset = { assetId?: string; listingProfileIds?: string[] };
+
+/**
+ * The Airtable `App ID` values of the asset. Checked against Snowflake 2026-11-17: the value is the listing
+ * profile (MRP) ID when the app has a listing, and the Webflow app ID when it has none yet.
+ */
+function assetListingIds(asset: ListingAsset): string[] {
+  return (asset.listingProfileIds ?? []).map((id) => id.trim().toLowerCase()).filter(Boolean);
+}
+
+/**
+ * Picks the listing profile ID to call the route with. Without mrp_id, the asset must hold exactly one ID.
+ * With mrp_id, a read may target any listing; a write needs the asset to hold at least one ID, because
+ * ownership is proved against those IDs after the read.
+ */
+function resolveListingId(asset: ListingAsset, requested: string | undefined, isWrite: boolean): { mrpId: string; fromAsset: boolean } {
+  const linked = assetListingIds(asset);
+  const wanted = requested?.trim().toLowerCase();
+  if (wanted) {
+    if (isWrite && linked.length === 0) {
+      throw new AirtableClientError(
+        'LIVE_LISTING_ASSET_MISMATCH',
+        'The asset has no App ID in Airtable, so this listing cannot be matched to it. A write needs that match.',
+        409,
+        { assetId: asset.assetId ?? null, mrpId: wanted },
+      );
+    }
+    return { mrpId: wanted, fromAsset: linked.includes(wanted) };
+  }
+  if (linked.length === 1) return { mrpId: linked[0]!, fromAsset: true };
+  throw new AirtableClientError(
+    linked.length === 0 ? 'LIVE_LISTING_ID_UNAVAILABLE' : 'LIVE_LISTING_ID_AMBIGUOUS',
+    linked.length === 0
+      ? 'The asset has no App ID in Airtable, so no listing is linked. Supply mrp_id to read a listing.'
+      : 'The asset holds more than one App ID. Supply mrp_id to pick one.',
+    409,
+    { assetId: asset.assetId ?? null, assetAppIds: linked },
+  );
+}
+
+/** Reads the listing. A 404 on an ID taken from the asset means that ID is the Webflow app ID, not a listing. */
+async function readListingForAsset(config: LiveListingConfig, target: { mrpId: string; fromAsset: boolean }, asset: ListingAsset): Promise<LiveListing> {
+  try {
+    return await readLiveListing(config, target.mrpId);
+  } catch (error) {
+    if (target.fromAsset && error instanceof AirtableClientError && error.code === 'LIVE_LISTING_NOT_FOUND') {
+      throw new AirtableClientError(
+        'LIVE_LISTING_NOT_FOUND',
+        'No listing profile has the App ID on this asset. Airtable holds the Webflow app ID until the listing sync links the listing, so the app has no listing yet or the sync has not run. Supply mrp_id if the listing exists.',
+        404,
+        { assetId: asset.assetId ?? null, assetAppId: target.mrpId },
+      );
+    }
+    throw error;
+  }
+}
+
+/**
+ * An app listing belongs to the asset when the asset's App ID is the listing profile ID, or is the Webflow
+ * app ID that the listing is for (a listing the daily sync has not linked yet).
+ */
+function listingMatchesAsset(listing: LiveListing, asset: ListingAsset): boolean {
+  const ids = assetListingIds(asset);
+  if (listing.resourceType !== APP_LISTING_RESOURCE_TYPE) return false;
+  const resourceId = listing.resourceId?.toLowerCase();
+  return ids.includes(listing.mrpId.toLowerCase()) || (resourceId !== undefined && ids.includes(resourceId));
+}
+
+/** A listing write must target the app listing of the asset under review, not a template, library, or other app. */
+function assertListingBelongsToAsset(listing: LiveListing, asset: ListingAsset): void {
+  if (!listingMatchesAsset(listing, asset)) {
+    throw new AirtableClientError(
+      'LIVE_LISTING_ASSET_MISMATCH',
+      'This listing does not belong to the asset. It must be an app listing (INTEGRATION) whose profile ID or app ID is the App ID on the Airtable asset.',
+      409,
+      {
+        assetId: asset.assetId ?? null,
+        assetAppIds: assetListingIds(asset),
+        listingMrpId: listing.mrpId,
+        listingResourceType: listing.resourceType,
+        listingResourceId: listing.resourceId,
+      },
+    );
+  }
+}
+
 export function registerTools(
   server: McpServer,
   getClient: ClientFactory,
   getReviewer: ReviewerFactory = () => null,
   getZendesk: ZendeskFactory = () => null,
   getReviewComments: ReviewCommentsFactory = () => null,
+  getLiveListing: LiveListingFactory = () => ({}),
 ): void {
   // Null until the comments Worker URL and key are set; every comment behaviour below is then off.
   const reviewComments = getReviewComments();
@@ -1990,6 +2083,80 @@ export function registerTools(
         await requireAppAsset(client, params.asset_id);
         const updated = await client.setMarketplaceStatus(params.asset_id, params.marketplace_status);
         return asSuccess({ updated_asset: updated });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_get_live_listing',
+    'Read-only: return the live Webflow Marketplace listing profile (MRP) for an app asset: status, visibility, and whether it shows in the Marketplace (APPROVED and PUBLIC). This is the Webflow record, not the Airtable Marketplace Status. The listing profile ID comes from the asset (the Airtable App ID field, filled by the daily listing sync). Pass mrp_id only when that fails: the asset has no ID, more than one, or a listing the sync has not linked yet. The result says whether the listing belongs to the asset.',
+    {
+      asset_id: z.string().min(1),
+      mrp_id: z.string().min(1).optional(),
+    },
+    async (params) => {
+      try {
+        const asset = await requireAppAsset(getClient(), params.asset_id);
+        const listing = await readListingForAsset(getLiveListing(), resolveListingId(asset, params.mrp_id, false), asset);
+        return asSuccess({
+          listing,
+          belongs_to_asset: listingMatchesAsset(listing, asset),
+          asset: { assetId: asset.assetId, appIds: assetListingIds(asset), marketplaceStatus: asset.marketplaceStatus ?? null },
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_set_live_listing',
+    'PRODUCTION WRITE to Webflow: set the status, visibility, or both on the live Marketplace listing profile (MRP) of an app. APPROVED + PUBLIC makes the app show in the Marketplace; any other pair removes it. Use only when the reviewer explicitly asks for this exact change. Read first with app_review_get_live_listing and pass the values you read as expected. Does not change Airtable: update Marketplace Status there separately. Needs a signed-in reviewer.',
+    {
+      asset_id: z.string().min(1),
+      mrp_id: z.string().min(1).optional(),
+      status: z.enum(LIVE_LISTING_STATUSES).optional(),
+      visibility: z.enum(LIVE_LISTING_VISIBILITIES).optional(),
+      expected: z.object({
+        status: z.string().nullable(),
+        visibility: z.string().nullable(),
+      }),
+      confirm_live_listing_write: z.literal(true),
+    },
+    async (params) => {
+      try {
+        const actor = requireReviewerEmail(getReviewer);
+        if (params.confirm_live_listing_write !== true) {
+          throw new AirtableClientError(
+            'LIVE_LISTING_CONFIRMATION_REQUIRED',
+            'Set confirm_live_listing_write to true only after the reviewer approves this exact change.',
+            400,
+          );
+        }
+        if (params.status === undefined && params.visibility === undefined) {
+          throw new AirtableClientError('NO_MUTATION_FIELDS', 'Supply status, visibility, or both.', 400);
+        }
+        const asset = await requireAppAsset(getClient(), params.asset_id);
+        const config = getLiveListing();
+        const target = resolveListingId(asset, params.mrp_id, true);
+        const before = await readListingForAsset(config, target, asset);
+        const mrpId = before.mrpId;
+        assertListingBelongsToAsset(before, asset);
+        if (before.status !== params.expected.status || before.visibility !== params.expected.visibility) {
+          throw new AirtableClientError(
+            'LIVE_LISTING_CONFLICT',
+            'The live listing differs from the expected starting state. Read it again and reconfirm before you write.',
+            409,
+            { expected: params.expected, current: { status: before.status, visibility: before.visibility } },
+          );
+        }
+        const after = await writeLiveListing(config, mrpId, {
+          status: params.status,
+          visibility: params.visibility,
+        });
+        return asSuccess({ before, after, changed_by: actor, airtable_updated: false });
       } catch (error) {
         return asError(error);
       }

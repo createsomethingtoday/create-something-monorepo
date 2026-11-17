@@ -170,6 +170,7 @@ export function registerResources(server: McpServer, getClient: ClientFactory): 
             'app_review_update_version_review',
             'app_review_set_marketplace_status',
             'app_review_update_asset_metadata',
+            'app_review_set_live_listing',
           ],
           hostGuidance: [
             'Do not require a reviewer session or reviewer account mapping.',

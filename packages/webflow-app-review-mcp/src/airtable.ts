@@ -227,6 +227,11 @@ export interface AppReviewQueueItem {
   appCapabilities?: string;
   clientId?: string;
   appId?: string;
+  /**
+   * Every value of the Airtable `App ID` lookup (same field as appId). Checked against Snowflake 2026-11-17:
+   * the value is the live listing profile (MRP) ID when the app has a listing, else the Webflow app ID.
+   */
+  listingProfileIds?: string[];
   visibilityStatus?: string;
   assignableVersionId?: string;
   reviewer?: CollaboratorRef | null;
@@ -768,6 +773,7 @@ function mapQueueRecord(record: AirtableRecord): AppReviewQueueItem {
     appCapabilities: firstString(fields[FIELD_IDS.assets.capabilities]),
     clientId: firstString(fields[FIELD_IDS.assets.clientId]),
     appId: firstString(fields[FIELD_IDS.assets.appId]),
+    listingProfileIds: toStringArray(fields[FIELD_IDS.assets.appId]),
     visibilityStatus: firstString(fields[FIELD_IDS.assets.visibility]),
   };
 }
