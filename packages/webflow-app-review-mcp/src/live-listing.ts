@@ -127,10 +127,11 @@ async function callListingRoute(config: LiveListingConfig, body: { mrpId: string
           : response.status === 429
             ? 'LIVE_LISTING_RATE_LIMITED'
             : 'LIVE_LISTING_REQUEST_FAILED';
-    // Raw text only, capped and with the key removed, so an upstream echo cannot reach tool output.
+    // Raw text only, with the key removed and then capped, so an upstream echo cannot reach tool output.
     throw new AirtableClientError(code, `The listing route failed with status ${response.status}.`, response.status, {
       mrpId: body.mrpId,
-      response: rawText.slice(0, 500).split(config.apiKey).join('[redacted]'),
+      // Redact first: a key that crosses the cut would otherwise leave a partial key behind.
+      response: rawText.split(config.apiKey).join('[redacted]').slice(0, 500),
     });
   }
 

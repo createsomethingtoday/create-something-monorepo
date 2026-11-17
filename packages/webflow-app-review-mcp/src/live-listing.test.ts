@@ -137,6 +137,16 @@ describe('live listing client', () => {
     });
   });
 
+  it('leaves no part of the key when an echoed key crosses the 500-character cut', async () => {
+    const key = 'super-secret-key-0123456789';
+    const fetchFn = vi.fn(async () => new Response('x'.repeat(490) + key + 'tail', { status: 500 })) as unknown as typeof fetch;
+
+    const error = (await readLiveListing({ apiKey: key, fetchFn }, MRP_ID).catch((e: unknown) => e)) as AirtableClientError;
+
+    expect(JSON.stringify(error.details)).not.toContain('super-secr');
+    expect((error.details as { response: string }).response.length).toBeLessThanOrEqual(500);
+  });
+
   it('does not put the key in an error', async () => {
     const fetchFn = vi.fn(async () => new Response('{"echo":"Bearer super-secret-key"}', { status: 403 })) as unknown as typeof fetch;
 
