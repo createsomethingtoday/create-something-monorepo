@@ -1,0 +1,36 @@
+[
+  {
+    "source": "stack-hero.png",
+    "master": "7a923ca2cb2642eb7c02af3cd7e47f7facb85a274d3924ebf52b9f11031a55dc",
+    "repoMaster": "7a923ca2cb2642eb7c02af3cd7e47f7facb85a274d3924ebf52b9f11031a55dc",
+    "export": "e7fc39fea7b34149dd3acb4f7362a41eb8f8c3320c880a75fc1b6e8ece0856d7",
+    "reproducedExport": "e7fc39fea7b34149dd3acb4f7362a41eb8f8c3320c880a75fc1b6e8ece0856d7",
+    "manifestMatches": true
+  },
+  {
+    "source": "practice-hero.png",
+    "master": "a1e2734a250c8a18f3cbbe58f80141efd9b3cfab3d34d57cab9965e4511df4e6",
+    "repoMaster": "a1e2734a250c8a18f3cbbe58f80141efd9b3cfab3d34d57cab9965e4511df4e6",
+    "export": "3b6294b4455657e53608ce181bd9b3a39494da1b3079b026aedbe7500aa6f95b",
+    "reproducedExport": "3b6294b4455657e53608ce181bd9b3a39494da1b3079b026aedbe7500aa6f95b",
+    "manifestMatches": true
+  },
+  {
+    "source": "field-reports-hero.png",
+    "master": "3cb549e86d2b5c59985798c9ca84fcd1c89e71ef6832ff2be6f1508932fdbf12",
+    "repoMaster": "3cb549e86d2b5c59985798c9ca84fcd1c89e71ef6832ff2be6f1508932fdbf12",
+    "export": "cbfd67bd2e71d6f7d585fcc915ee3047928457d27f17c92f36303485d4266aef",
+    "reproducedExport": "cbfd67bd2e71d6f7d585fcc915ee3047928457d27f17c92f36303485d4266aef",
+    "manifestMatches": true
+  },
+  {
+    "appFiles": {
+      "packages/agency/src/lib/server/public-html-cache.ts": "870bb27f54ba33862e7134998551f18d5955f0d4ee6aa83259af664b720cceab",
+      "packages/agency/src/routes/field-reports/+page.svelte": "f184d7edcdff752e8590a88438453a8bac50597acf45bc1cd06ea268286363c1",
+      "packages/agency/src/routes/practice/+page.svelte": "e2bfbf31f9275c8f73379d89261d0d77107b9c4439f2bab58d3d10faa6d23696",
+      "packages/agency/src/routes/stack/+page.svelte": "b477255be4731411fdbc7a9c00374f3bce16320d3ab308e398283720a25c050c",
+      "packages/agency/test/paper-brand-cohesion.test.ts": "1e4a92963c274c585b11b0f371c364e3c8a03858210a10b16e4a4f41eeeb4d4b",
+      "packages/agency/src/lib/components/AgencyIllustratedOpening.svelte": "ed3d35bd5f2438914e86a5c0e14471a749d11b18a4028e43cdf53e39f300e8f6"
+    }
+  }
+]
