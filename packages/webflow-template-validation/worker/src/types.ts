@@ -479,6 +479,8 @@ export interface AnalyzedPage {
 	}>;
 	/** Images without a positive width and height attribute (layout shift; reviewers ask for both). */
 	imagesMissingDimensions?: number;
+	/** Images with no width and height attributes whose space the published CSS reserves. */
+	imagesSizedByCss?: number;
 	imagesMissingDimensionsDetails?: Array<{
 		src: string;
 		selector: string;

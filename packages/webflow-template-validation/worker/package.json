@@ -23,6 +23,8 @@
 	"dependencies": {
 		"@cloudflare/puppeteer": "^1.3.0",
 		"@create-something/gsap-validation-worker": "workspace:*",
+		"css-select": "^5.2.2",
+		"css-what": "^6.2.2",
 		"htmlparser2": "^10.1.0"
 	},
 	"devDependencies": {
