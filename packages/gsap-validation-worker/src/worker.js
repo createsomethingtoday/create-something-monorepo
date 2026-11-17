@@ -516,8 +516,12 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
     /documentElement[\s\S]*w-mod-|w-mod-[\s\S]*documentElement/i,
     // Simple w-mod signature — this string only appears in Webflow's default script
     /w-mod-/,
-    /var Webflow = Webflow \|\| \[\];/,
-    // Common legitimate scripts
+    // A creator script that only calls Webflow.push( or Webflow.require( is not a
+    // platform script. Those strings used to sit in this list, so any script that
+    // wrapped itself in Webflow.push skipped every check below (a template, 2026-11-16:
+    // a 39KB site script passed with 0 findings). localStorage calls and a
+    // document.createElement("script") loader were in the list too. All of them now
+    // go through the GSAP and security checks like any other script.
     /WebFont\.load\(/,
     // WebFont loading
     /window\.__WEBFLOW_CURRENCY_SETTINGS =/,
@@ -526,17 +530,6 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
     // URL-encoded HTML (often in Webflow commerce)
     /\(function\(e\)\{var s=\{r:\[\]\};e\.wf=\{r:s\.r,ready:/,
     // Webflow ready function pattern
-    /Webflow\.require\(/,
-    // Webflow require calls
-    /Webflow\.push\(/,
-    // Webflow push calls
-    // Third-party integrations
-    /localStorage\.removeItem\(/,
-    // Local storage operations
-    /localStorage\.getItem\(/,
-    // Local storage read
-    /localStorage\.setItem\(/,
-    // Local storage write
     /intellimize/,
     // Intellimize integration
     /\.anti-flicker/,
@@ -570,11 +563,8 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
     // Webflow password page handlers
     /_handlePasswordPageOnload/,
     // Password page handler function
-    /w-password-page/,
+    /w-password-page/
     // Password page class
-    // Common script patterns
-    /document\.createElement\("script"\)/
-    // Script loading pattern
   ];
   const results = {
     url: pageUrl,
@@ -674,7 +664,8 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
       return;
     }
     const hasCustomAnimation = customAnimationPatterns.some((pattern) => testPattern(pattern, script));
-    const hasAnyGsap = /gsap|ScrollTrigger|SplitText|timeline|TweenMax|TweenLite/i.test(script);
+    // The bare word "timeline" is not GSAP: a ".timeline" class name used to switch this check off.
+    const hasAnyGsap = /gsap|ScrollTrigger|SplitText|TweenMax|TweenLite/i.test(script);
     if (hasCustomAnimation && !hasAnyGsap) {
       const matchedPatterns = customAnimationPatterns.filter((pattern) => testPattern(pattern, script)).map((pattern) => pattern.source.substring(0, 50) + "...");
       results.flaggedCode.push({
@@ -1507,15 +1498,36 @@ function isCommonStylingCSS(css) {
     /color\s*:\s*inherit\s*[;!]/i
   ];
   const cleanCSS = css.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\s+/g, " ").trim();
-  const onlyHarmlessPatterns = harmlessPatterns.some((pattern) => pattern.test(cleanCSS));
-  if (onlyHarmlessPatterns) return true;
-  if (cleanCSS.length < 200) {
-    const fontSmoothingOnly = /^[^{}]*\{[^{}]*(-webkit-font-smoothing|-moz-osx-font-smoothing)[^{}]*\}[^{}]*$/i.test(cleanCSS);
-    if (fontSmoothingOnly) return true;
-  }
-  return false;
+  // Every rule must be one of the allowed kinds. One allowed line used to pass the
+  // whole block, so a full custom stylesheet passed when it held a font-smoothing rule.
+  const rules = splitTopLevelCssRules(cleanCSS);
+  return rules.length > 0 && rules.every((rule) => harmlessPatterns.some((pattern) => pattern.test(rule)));
 }
 __name(isCommonStylingCSS, "isCommonStylingCSS");
+// Top-level rules of a stylesheet. An at-rule with a block (@media) is one rule.
+function splitTopLevelCssRules(css) {
+  const rules = [];
+  let depth = 0;
+  let start = 0;
+  for (let index = 0; index < css.length; index += 1) {
+    const char = css[index];
+    if (char === "{") depth += 1;
+    else if (char === "}") {
+      depth = Math.max(0, depth - 1);
+      if (depth === 0) {
+        rules.push(css.slice(start, index + 1).trim());
+        start = index + 1;
+      }
+    } else if (char === ";" && depth === 0) {
+      rules.push(css.slice(start, index + 1).trim());
+      start = index + 1;
+    }
+  }
+  const rest = css.slice(start).trim();
+  if (rest) rules.push(rest);
+  return rules.filter(Boolean);
+}
+__name(splitTopLevelCssRules, "splitTopLevelCssRules");
 // Keyboard listeners are listed under "Keylogging" in securityRiskPatterns, but a
 // keylogger reads whatever key was pressed and stores or transmits it. Handlers
 // that only dispatch on specific navigation keys (Escape closes a menu, Enter or
