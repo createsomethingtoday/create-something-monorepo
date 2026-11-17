@@ -11,7 +11,7 @@ import {
   type ReviewComment,
 } from '../src/review-comments.js';
 import type { ReviewerProfile } from '../src/reviewer-directory.js';
-import { registerTools, WRITE_TOOL_NAMES } from '../src/tools.js';
+import { commentWindow, registerTools, WRITE_TOOL_NAMES } from '../src/tools.js';
 import type { ZendeskClient } from '../src/zendesk.js';
 
 type ToolResult = { content: Array<{ type?: string; text?: string }>; isError?: boolean };
@@ -24,6 +24,8 @@ const COMMENT_WRITE_TOOLS = [
   'template_review_release_feedback',
   'template_review_resolve_comment',
 ];
+
+const COMMENT_READ_TOOLS = ['template_review_list_comments', 'template_review_comment_metrics', 'template_review_search_comments'];
 
 const VERSION_ID = 'recTEST_VERSION_1';
 const ASSET_ID = 'recTEST_ASSET_1';
@@ -85,7 +87,9 @@ function comment(overrides: Partial<ReviewComment>): ReviewComment {
 }
 
 /** Records every call; `existing` seeds listVersion, `failWith` makes every call throw. */
-function fakeComments(options: { existing?: ReviewComment[]; failWith?: Error } = {}) {
+const counts = { written: 4, sent: 2, draft: 1, internal: 1, versions: 2, assets: 2, lastAt: '2026-11-11T09:30:00.000Z' };
+
+function fakeComments(options: { existing?: ReviewComment[]; failWith?: Error; nextCursor?: string } = {}) {
   const calls: Array<[string, ...unknown[]]> = [];
   const record = <T>(name: string, args: unknown[], value: T): Promise<T> => {
     calls.push([name, ...args]);
@@ -93,6 +97,18 @@ function fakeComments(options: { existing?: ReviewComment[]; failWith?: Error } 
   };
   const client = {
     listVersion: (...args: unknown[]) => record('listVersion', args, options.existing ?? []),
+    search: (...args: unknown[]) => record('search', args, { comments: options.existing ?? [], nextCursor: options.nextCursor ?? null }),
+    metrics: (...args: unknown[]) => {
+      const author = (args[1] as { author?: string }).author ?? null;
+      return record('metrics', args, {
+        from: (args[1] as { from?: string }).from ?? '1970-01-01T00:00:00.000Z',
+        to: '2026-11-17T16:00:00.000Z',
+        author,
+        totals: counts,
+        reviewers: [{ email: 'reviewer@example.com', ...counts }],
+        creatorReplies: author ? null : 3,
+      });
+    },
     add: (...args: unknown[]) => record('add', args, comment({ body: (args[2] as { body: string }).body })),
     edit: (...args: unknown[]) => record('edit', args, comment({ body: args[2] as string, editedAt: 'now' })),
     remove: (...args: unknown[]) => record('remove', args, { deleted: args[0] }),
@@ -119,7 +135,7 @@ function fakeAirtable(overrides: Record<string, unknown> = {}) {
 test('comment tools stay unregistered until the comments service is configured', () => {
   const { server, names } = harness();
   registerTools(server, () => fakeAirtable().client, () => reviewer);
-  for (const name of [...COMMENT_WRITE_TOOLS, 'template_review_list_comments']) {
+  for (const name of [...COMMENT_WRITE_TOOLS, ...COMMENT_READ_TOOLS]) {
     assert.equal(names.includes(name), false, `${name} should not register without the service`);
   }
   assert.equal(buildReviewCommentsClient(undefined, 'key'), null);
@@ -128,16 +144,16 @@ test('comment tools stay unregistered until the comments service is configured',
 
 test('comment writes are hidden from read-only sessions; listing stays available', () => {
   for (const name of COMMENT_WRITE_TOOLS) assert.ok(WRITE_TOOL_NAMES.has(name), `${name} must be a write tool`);
-  assert.equal(WRITE_TOOL_NAMES.has('template_review_list_comments'), false);
+  for (const name of COMMENT_READ_TOOLS) assert.equal(WRITE_TOOL_NAMES.has(name), false, name);
 
   const { client } = fakeComments();
   const full = harness();
   registerTools(full.server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => client });
-  for (const name of [...COMMENT_WRITE_TOOLS, 'template_review_list_comments']) assert.ok(full.names.includes(name), name);
+  for (const name of [...COMMENT_WRITE_TOOLS, ...COMMENT_READ_TOOLS]) assert.ok(full.names.includes(name), name);
 
   const readOnly = harness();
   registerTools(readOnly.server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => client }, { allowWrites: false });
-  assert.ok(readOnly.names.includes('template_review_list_comments'));
+  for (const name of COMMENT_READ_TOOLS) assert.ok(readOnly.names.includes(name), name);
   for (const name of COMMENT_WRITE_TOOLS) assert.equal(readOnly.names.includes(name), false, name);
 });
 
@@ -508,4 +524,116 @@ test('decision feedback over the comment limit goes out as several comments, and
   registerTools(second.server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => again.client });
   await second.handlers.get('template_review_request_changes')?.({ version_id: VERSION_ID, review_feedback: long });
   assert.equal(again.calls.filter(([name]) => name === 'add').length, 0);
+});
+
+test('comment_metrics counts the signed-in reviewer by default, over all time', async () => {
+  const { client, calls } = fakeComments();
+  const { server, handlers } = harness();
+  registerTools(server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => client });
+
+  const mine = payload(await handlers.get('template_review_comment_metrics')?.({ reviewer: 'me' }));
+  assert.deepEqual(calls[0], ['metrics', 'Reviewer@Example.com', { author: 'reviewer@example.com' }]);
+  assert.deepEqual(mine.data, { reviewer: 'reviewer@example.com', from: null, to: '2026-11-17T16:00:00.000Z', ...counts });
+});
+
+test('comment_metrics lists every reviewer for "all" and takes a window and an email', async () => {
+  const { client, calls } = fakeComments();
+  const { server, handlers } = harness();
+  registerTools(server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => client });
+
+  const team = payload(
+    await handlers.get('template_review_comment_metrics')?.({ reviewer: 'all', start_date: '2026-11-01', end_date: '2026-11-15' }),
+  );
+  assert.deepEqual(calls[0], ['metrics', 'Reviewer@Example.com', { from: '2026-11-01T00:00:00.000Z', to: '2026-11-16T00:00:00.000Z' }]);
+  assert.equal(team.data.reviewer, 'all');
+  assert.equal(team.data.from, '2026-11-01T00:00:00.000Z');
+  assert.equal(team.data.creator_replies, 3);
+  assert.deepEqual(team.data.reviewers, [{ reviewer: 'reviewer@example.com', ...counts }]);
+
+  await handlers.get('template_review_comment_metrics')?.({ reviewer: ' Other@Example.com ' });
+  assert.deepEqual(calls[1]?.[2], { author: 'other@example.com' });
+
+  const bad = payload(await handlers.get('template_review_comment_metrics')?.({ reviewer: 'everyone' }));
+  assert.equal(bad.error.code, 'INVALID_REVIEWER');
+  assert.equal(calls.length, 2);
+});
+
+test('commentWindow turns days and dates into a window, end date included', () => {
+  const now = new Date('2026-11-17T12:00:00.000Z');
+  assert.deepEqual(commentWindow({}, now), {});
+  assert.deepEqual(commentWindow({ days: 7 }, now), { from: '2026-11-10T12:00:00.000Z' });
+  assert.deepEqual(commentWindow({ days: 7, end_date: '2026-11-15' }, now), { from: '2026-11-09T00:00:00.000Z', to: '2026-11-16T00:00:00.000Z' });
+  assert.deepEqual(commentWindow({ days: 7, start_date: '2026-11-01' }, now), { from: '2026-11-01T00:00:00.000Z' });
+  assert.deepEqual(commentWindow({ end_date: '2026-11-15' }, now), { to: '2026-11-16T00:00:00.000Z' });
+});
+
+test('search_comments maps kind to the service filters and returns compact rows', async () => {
+  const long = 'x'.repeat(500);
+  const { client, calls } = fakeComments({
+    nextCursor: '2026-11-09T00:00:00.000Z~c-1',
+    existing: [
+      comment({ id: 'c-2', visibility: 'released', releasedAt: '2026-11-10T00:00:00.000Z', body: long, resolution: 'resolved' }),
+      comment({ id: 'c-1', authorRole: 'creator', authorEmail: 'creator@example.com', visibility: 'released', releasedAt: '2026-11-09T00:00:00.000Z', parentId: 'c-0' }),
+    ],
+  });
+  const { server, handlers } = harness();
+  registerTools(server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => client });
+  const search = handlers.get('template_review_search_comments');
+
+  const sent = payload(await search?.({ reviewer: 'me', kind: 'sent', days: undefined, limit: 20, body_chars: 300 }));
+  assert.deepEqual(calls[0], ['search', 'Reviewer@Example.com', { author: 'reviewer@example.com', authorRole: 'reviewer', visibility: 'released', limit: 20 }]);
+  assert.equal(sent.data.count, 2);
+  assert.equal(sent.data.next_cursor, '2026-11-09T00:00:00.000Z~c-1');
+  assert.deepEqual(sent.data.comments[0], {
+    id: 'c-2',
+    version_id: VERSION_ID,
+    asset_id: ASSET_ID,
+    author: 'reviewer@example.com',
+    kind: 'sent',
+    created_at: '2026-11-09T00:00:00.000Z',
+    sent_at: '2026-11-10T00:00:00.000Z',
+    resolution: 'resolved',
+    body: `${'x'.repeat(300)}…`,
+    body_chars: 500,
+  });
+  assert.deepEqual(sent.data.comments[1], {
+    id: 'c-1',
+    version_id: VERSION_ID,
+    asset_id: ASSET_ID,
+    author: 'creator@example.com',
+    kind: 'creator_reply',
+    created_at: '2026-11-09T00:00:00.000Z',
+    parent_id: 'c-0',
+    body: 'Fix the 404 page',
+  });
+
+  // Creator replies have no reviewer author, so "me" does not narrow them.
+  await search?.({ reviewer: 'me', kind: 'creator_reply', asset_id: ASSET_ID, limit: 5, cursor: 'abc', body_chars: 300 });
+  assert.deepEqual(calls[1]?.[2], { assetRef: ASSET_ID, authorRole: 'creator', limit: 5, cursor: 'abc' });
+
+  await search?.({ reviewer: 'all', kind: 'internal', limit: 20, body_chars: 300 });
+  assert.deepEqual(calls[2]?.[2], { authorRole: 'reviewer', visibility: 'internal', limit: 20 });
+
+  await search?.({ reviewer: 'all', asset_id: ASSET_ID, limit: 20, body_chars: 300 });
+  assert.deepEqual(calls[3]?.[2], { assetRef: ASSET_ID, limit: 20 });
+});
+
+test('the comments client sends search and metrics filters as a query string', async () => {
+  const urls: string[] = [];
+  const client = new ReviewCommentsClient({
+    baseUrl: 'https://comments.test/',
+    apiKey: 'k',
+    fetch: (async (input: unknown) => {
+      urls.push(String(input));
+      return new Response(JSON.stringify({ success: true, data: {} }));
+    }) as typeof fetch,
+  });
+  await client.metrics('r@example.com', { author: 'a+b@example.com', from: '2026-11-01T00:00:00.000Z' });
+  await client.metrics('r@example.com');
+  await client.search('r@example.com', { visibility: 'released', limit: 5, cursor: '2026-11-09T00:00:00.000Z~c-1' });
+  assert.deepEqual(urls, [
+    'https://comments.test/v1/metrics/comments?author=a%2Bb%40example.com&from=2026-11-01T00%3A00%3A00.000Z',
+    'https://comments.test/v1/metrics/comments',
+    'https://comments.test/v1/search/comments?visibility=released&limit=5&cursor=2026-11-09T00%3A00%3A00.000Z%7Ec-1',
+  ]);
 });

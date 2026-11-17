@@ -187,6 +187,71 @@ function requireReviewerEmail(getReviewer: ReviewerFactory): string {
   return reviewer.email;
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const commentWindowShape = {
+  days: z.number().int().min(1).max(366).optional().describe('The last N days, ending now or at end_date. Ignored when start_date is set.'),
+  start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('First day, UTC (YYYY-MM-DD).'),
+  end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('Last day, UTC, included (YYYY-MM-DD).'),
+};
+
+const commentReviewerSchema = z
+  .string()
+  .min(1)
+  .max(254)
+  .default('me')
+  .describe('"me" (default) for the signed-in reviewer, "all" for every reviewer, or one reviewer\'s email.');
+
+/** The window for the comment service. With no input it is all time. */
+export function commentWindow(
+  input: { days?: number; start_date?: string; end_date?: string },
+  now: Date = new Date(),
+): { from?: string; to?: string } {
+  const end = input.end_date ? Date.parse(`${input.end_date}T00:00:00Z`) + DAY_MS : undefined;
+  const to = end === undefined ? undefined : new Date(end).toISOString();
+  if (input.start_date) return { from: `${input.start_date}T00:00:00.000Z`, ...(to ? { to } : {}) };
+  if (input.days) return { from: new Date((end ?? now.getTime()) - input.days * DAY_MS).toISOString(), ...(to ? { to } : {}) };
+  return to ? { to } : {};
+}
+
+/** The author to filter on: undefined for every reviewer. */
+function commentAuthor(reviewer: string, actorEmail: string): string | undefined {
+  const value = reviewer.trim().toLowerCase();
+  if (value === 'me') return actorEmail.toLowerCase();
+  if (value === 'all') return undefined;
+  if (!EMAIL_SHAPE.test(value)) {
+    throw new AirtableClientError('INVALID_REVIEWER', 'reviewer must be "me", "all", or an email address.', 400);
+  }
+  return value;
+}
+
+type CommentKind = 'sent' | 'draft' | 'internal' | 'creator_reply';
+
+function commentKind(comment: ReviewComment): CommentKind {
+  if (comment.authorRole === 'creator') return 'creator_reply';
+  return comment.visibility === 'released' ? 'sent' : comment.visibility;
+}
+
+/** One comment for a list: short keys, no nulls, the body cut to `bodyChars`. */
+function compactComment(comment: ReviewComment, bodyChars: number): Record<string, unknown> {
+  const cut = comment.body.length > bodyChars;
+  return {
+    id: comment.id,
+    version_id: comment.versionRef,
+    asset_id: comment.assetRef,
+    author: comment.authorEmail,
+    kind: commentKind(comment),
+    created_at: comment.createdAt,
+    ...(comment.releasedAt && comment.releasedAt !== comment.createdAt ? { sent_at: comment.releasedAt } : {}),
+    ...(comment.resolution !== 'open' ? { resolution: comment.resolution } : {}),
+    ...(comment.parentId ? { parent_id: comment.parentId } : {}),
+    ...(comment.rubricRef ? { rubric_ref: comment.rubricRef } : {}),
+    body: cut ? `${comment.body.slice(0, bodyChars).trimEnd()}…` : comment.body,
+    ...(cut ? { body_chars: comment.body.length } : {}),
+  };
+}
+
 /**
  * The creator address is the one review tickets go to today: the override on
  * the asset when set, else the creator's. No usable address means no email.
@@ -619,6 +684,73 @@ export function registerTools(
             version_id,
             asset_id: version.assetId,
             comments: await reviewComments.listVersion(version_id, actorEmail),
+          });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+
+    server.tool(
+      'template_review_comment_metrics',
+      'Read-only: how many review comments a reviewer wrote and sent to creators, in one call. Use this for "how many comments have I sent"; do not tally template_review_list_comments results. Returns written (created in the window), sent (released to the creator in the window), draft and internal (written in the window, still in that state), and the versions and assets the comments are on. reviewer "all" adds one row per reviewer and the count of creator replies. With no dates the window is all time. Counts cover the review comment threads only: feedback that went through a Zendesk ticket or the Airtable Review Feedback field is not counted. Requires a mapped reviewer identity.',
+      { reviewer: commentReviewerSchema, ...commentWindowShape },
+      async ({ reviewer, days, start_date, end_date }) => {
+        try {
+          const actorEmail = requireReviewerEmail(getReviewer);
+          const author = commentAuthor(reviewer, actorEmail);
+          const metrics = await reviewComments.metrics(actorEmail, { ...commentWindow({ days, start_date, end_date }), ...(author ? { author } : {}) });
+          return asSuccess({
+            reviewer: author ?? 'all',
+            from: metrics.from.startsWith('1970-') ? null : metrics.from,
+            to: metrics.to,
+            ...metrics.totals,
+            ...(author
+              ? {}
+              : {
+                  creator_replies: metrics.creatorReplies,
+                  reviewers: metrics.reviewers.map(({ email, ...counts }) => ({ reviewer: email, ...counts })),
+                }),
+          });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+
+    server.tool(
+      'template_review_search_comments',
+      'Read-only: review comments across template versions, newest first. Use it to read what a reviewer wrote or sent ("show my last comments"), every comment on one asset across its versions (asset_id with reviewer "all"), or creator replies (kind "creator_reply"). Bodies are cut to body_chars; raise it, or call template_review_list_comments with the version_id, to read a comment in full. For counts use template_review_comment_metrics. Pass next_cursor back as cursor for the next page. Requires a mapped reviewer identity.',
+      {
+        reviewer: commentReviewerSchema,
+        kind: z
+          .enum(['sent', 'draft', 'internal', 'creator_reply'])
+          .optional()
+          .describe('sent = released to the creator; draft = waiting for release; internal = reviewer-only note; creator_reply = written by the creator (the reviewer filter then applies only when it is an email).'),
+        asset_id: z.string().min(1).max(64).optional().describe('Only comments on this template asset, across its versions.'),
+        ...commentWindowShape,
+        limit: z.number().int().min(1).max(100).default(20),
+        cursor: z.string().min(1).max(120).optional(),
+        body_chars: z.number().int().min(40).max(20_000).default(300),
+      },
+      async ({ reviewer, kind, asset_id, days, start_date, end_date, limit, cursor, body_chars }) => {
+        try {
+          const actorEmail = requireReviewerEmail(getReviewer);
+          const creatorReplies = kind === 'creator_reply';
+          const author = creatorReplies && reviewer.trim().toLowerCase() === 'me' ? undefined : commentAuthor(reviewer, actorEmail);
+          const page = await reviewComments.search(actorEmail, {
+            ...commentWindow({ days, start_date, end_date }),
+            ...(author ? { author } : {}),
+            ...(asset_id ? { assetRef: asset_id } : {}),
+            ...(kind ? { authorRole: creatorReplies ? 'creator' : 'reviewer' } : {}),
+            ...(kind && !creatorReplies ? { visibility: kind === 'sent' ? 'released' : kind } : {}),
+            limit,
+            ...(cursor ? { cursor } : {}),
+          });
+          return asSuccess({
+            count: page.comments.length,
+            next_cursor: page.nextCursor,
+            comments: page.comments.map((comment) => compactComment(comment, body_chars)),
           });
         } catch (error) {
           return asError(error);
@@ -2680,7 +2812,7 @@ export function registerTools(
 
   server.tool(
     'template_review_get_metrics',
-    'Return compact marketplace template review metrics for a recent date window.',
+    'Return compact marketplace template review metrics for a recent date window: submissions and decisions for the whole team. It has no comment counts and no per-reviewer comment figures; for those use template_review_comment_metrics.',
     {
       days: z.number().int().min(1).max(90).optional(),
       end_date: z
