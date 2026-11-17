@@ -291,7 +291,10 @@ function sizeKind(value: string | undefined): 'none' | 'length' | 'percent' {
 function isRatio(value: string | undefined, allowAuto: boolean): boolean {
 	const text = value?.trim().toLowerCase();
 	if (!text || NOT_DEFINITE.test(text)) return false;
-	return allowAuto || !/\bauto\b/.test(text);
+	// Only a plain positive ratio counts; "0", "1 / 0" and values the read cannot evaluate do not.
+	const ratio = /^(auto\s+)?(\d*\.?\d+)(?:\s*\/\s*(\d*\.?\d+))?(\s+auto)?$/.exec(text);
+	if (!ratio || parseFloat(ratio[2]) <= 0 || (ratio[3] !== undefined && parseFloat(ratio[3]) <= 0)) return false;
+	return allowAuto || !(ratio[1] || ratio[4]);
 }
 
 /** The winning value of each property for one element, with rules in `condition` layered over the unconditional ones. */
@@ -642,15 +645,20 @@ function readRules(css: string, condition: string | null, layer: string | null, 
 			if (global) mergeGlobalVariables(out.variables, custom, out.overriddenVariables);
 			else Object.keys(custom).forEach((name) => out.overriddenVariables.add(name));
 		}
-		const declarations = parseDeclarations(body);
-		if (Object.keys(declarations).length > 0) {
+		// Declarations after a nested rule come later in the cascade than that rule.
+		const nestedRules = selectors.length > 0 ? nestedBlocks(body) : [];
+		const split = nestedRules.length > 0 ? nestedRules[0].start : body.length;
+		const pushDeclarations = (text: string) => {
+			const declarations = parseDeclarations(text);
+			if (Object.keys(declarations).length === 0) return;
 			for (const selector of selectors) {
 				const compiled = compileSelector(selector);
 				if (compiled) out.rules.push({ ...compiled, declarations, condition, layer });
 			}
-		}
+		};
+		pushDeclarations(body.slice(0, split));
 		// Nested rules: read each as a top-level rule on the combined selector.
-		for (const nested of selectors.length > 0 ? nestedBlocks(body) : []) {
+		for (const nested of nestedRules) {
 			if (/^@(media|container|supports)\b/i.test(nested.prelude)) {
 				readRules(`${nested.prelude}{${selectors.join(',')}{${nested.body}}}`, condition, layer, out);
 			} else if (!nested.prelude.startsWith('@')) {
@@ -662,6 +670,7 @@ function readRules(css: string, condition: string | null, layer: string | null, 
 				readRules(`${combined.join(',')}{${nested.body}}`, condition, layer, out);
 			}
 		}
+		if (nestedRules.length > 0) pushDeclarations(body.slice(split));
 	}
 }
 
@@ -707,8 +716,8 @@ function matchingBrace(css: string, open: number): number {
 }
 
 /** Blocks nested directly inside a rule body, each with the text before its brace. */
-function nestedBlocks(body: string): Array<{ prelude: string; body: string }> {
-	const blocks: Array<{ prelude: string; body: string }> = [];
+function nestedBlocks(body: string): Array<{ prelude: string; body: string; start: number }> {
+	const blocks: Array<{ prelude: string; body: string; start: number }> = [];
 	let index = 0;
 	while (index < body.length) {
 		const end = scanTo(body, index, ';', '{');
@@ -719,7 +728,7 @@ function nestedBlocks(body: string): Array<{ prelude: string; body: string }> {
 		}
 		const close = matchingBrace(body, end);
 		if (close === -1) break;
-		blocks.push({ prelude: body.slice(index, end).trim(), body: body.slice(end + 1, close) });
+		blocks.push({ prelude: body.slice(index, end).trim(), body: body.slice(end + 1, close), start: index });
 		index = close + 1;
 	}
 	return blocks;
@@ -767,6 +776,7 @@ function mergeGlobalVariables(target: Record<string, string>, source: Record<str
 
 function parseCustomProperties(body: string): Record<string, string> {
 	const out: Record<string, string> = {};
+	const important = new Set<string>();
 	let index = 0;
 	while (index < body.length) {
 		const end = scanTo(body, index, ';', '{');
@@ -781,7 +791,13 @@ function parseCustomProperties(body: string): Record<string, string> {
 		const colon = piece.indexOf(':');
 		if (colon === -1) continue;
 		const name = piece.slice(0, colon).trim();
-		if (name.startsWith('--')) out[name] = piece.slice(colon + 1).trim();
+		if (!name.startsWith('--')) continue;
+		const raw = piece.slice(colon + 1).trim();
+		const isImportant = /!\s*important\s*$/i.test(raw);
+		// An !important value wins over a later normal one in the same block.
+		if (important.has(name) && !isImportant) continue;
+		if (isImportant) important.add(name);
+		out[name] = raw.replace(/!\s*important\s*$/i, '').trim();
 	}
 	return out;
 }

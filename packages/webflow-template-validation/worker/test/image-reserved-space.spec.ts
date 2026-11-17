@@ -355,6 +355,35 @@ describe('image space reserved by CSS', () => {
 		expect(await verdicts(body, css)).toEqual([false, true, false, false, true, false]);
 	});
 
+	it('keeps declarations after a nested rule later in the cascade', async () => {
+		const css = `
+			.pic { width: 300px; height: auto; & { height: 200px; } height: auto; }
+			.ok { width: 300px; height: auto; & { height: auto; } height: 200px; }
+		`;
+		expect(await verdicts('<img class="pic"><img class="ok">', css)).toEqual([false, true]);
+	});
+
+	it('honors !important on a global variable', async () => {
+		const css = `
+			:root { --h: auto !important; --h: 200px; --w: 300px !important; }
+			.pic { width: var(--w); height: var(--h); }
+			.wide { width: var(--w); height: 100px; }
+		`;
+		expect(await verdicts('<img class="pic"><img class="wide">', css)).toEqual([false, true]);
+	});
+
+	it('accepts only a positive ratio', async () => {
+		const css = `
+			.zero { width: 300px; aspect-ratio: 0; }
+			.div0 { width: 300px; aspect-ratio: 1 / 0; }
+			.calc { width: 300px; aspect-ratio: calc(16 / 9); }
+			.dec { width: 300px; aspect-ratio: 1.5; }
+			.frac { width: 300px; aspect-ratio: 16/9; }
+		`;
+		const body = '<img class="zero"><img class="div0"><img class="calc"><img class="dec"><img class="frac">';
+		expect(await verdicts(body, css)).toEqual([false, false, false, true, true]);
+	});
+
 	it('returns null when a site stylesheet cannot be read, and skips other hosts', async () => {
 		const html = page('<img class="x">', '', '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter">');
 		const requested: string[] = [];
