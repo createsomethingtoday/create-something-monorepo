@@ -24,7 +24,7 @@
  *
  * Checked against Chrome with image downloads held pending (4 templates, 6
  * pages, 376 images, 1440px and 375px): no image passed here that changed
- * size on load; 15 that kept their size were not passed.
+ * size on load; 16 that kept their size were not passed.
  */
 
 import { parseDocument } from 'htmlparser2';
@@ -89,8 +89,11 @@ export interface PageStyles {
 	rules: StyleRule[];
 	/** Custom properties set on :root, html or body. */
 	variables: Record<string, string>;
-	/** null (no condition) first, then each distinct @media or @container condition. */
-	conditions: Array<string | null>;
+	/** Custom properties also set somewhere else (another selector, a media query, an inline style); their global value may not apply. */
+	overriddenVariables: ReadonlySet<string>;
+	/** Sets of @media and @container conditions that can be active at the same time; the image must pass in each. */
+	scenarios: Array<ReadonlySet<string>>;
+	matched: WeakMap<StyledNode, StyleRule[]>;
 }
 
 /** Selectors that depend on visitor interaction; their declarations are not the resting layout. */
@@ -104,7 +107,10 @@ const SHEET_CACHE_LIMIT = 16;
 
 interface ParsedSheet {
 	rules: Array<Omit<StyleRule, 'order'>>;
+	/** Custom properties set on :root, html or body outside any condition. */
 	variables: Record<string, string>;
+	/** Custom properties set anywhere else. */
+	overriddenVariables: Set<string>;
 }
 const MAX_VARIABLE_DEPTH = 8;
 const sheetCache = new Map<string, Promise<ParsedSheet | null>>();
@@ -121,7 +127,8 @@ export async function loadPageStyles(
 	pageUrl: string,
 	fetcher: StylesheetFetcher = fetchStylesheet
 ): Promise<PageStyles | null> {
-	const sources = collectStyleSources(parseDocument(rawHtml) as unknown as StyledNode, pageUrl);
+	const document = parseDocument(rawHtml) as unknown as StyledNode;
+	const sources = collectStyleSources(document, pageUrl);
 	const sheets: ParsedSheet[] = [];
 	let linked = 0;
 
@@ -139,39 +146,43 @@ export async function loadPageStyles(
 
 	const rules: StyleRule[] = [];
 	const variables: Record<string, string> = {};
+	const overridden = new Set<string>();
 	const conditions = new Set<string>();
 	let order = 0;
 	for (const sheet of sheets) {
 		Object.assign(variables, sheet.variables);
+		for (const name of sheet.overriddenVariables) overridden.add(name);
 		for (const rule of sheet.rules) {
 			rules.push({ ...rule, order: order++ });
 			if (rule.condition) conditions.add(rule.condition);
 		}
 	}
-	return { rules, variables, conditions: [null, ...conditions] };
+	for (const name of inlineCustomProperties(document)) overridden.add(name);
+	return { rules, variables, overriddenVariables: overridden, scenarios: buildScenarios([...conditions]), matched: new WeakMap() };
 }
 
-/** True when the cascade reserves the image's space in every condition the stylesheets define. */
+/** True when the cascade reserves the image's space at every viewport width the stylesheets distinguish. */
 export function imageSpaceReserved(img: StyledNode, styles: PageStyles): boolean {
-	return styles.conditions.every((condition) => reservedIn(img, styles, condition));
+	return styles.scenarios.every((active) => reservedIn(img, styles, active));
 }
 
-function reservedIn(img: StyledNode, styles: PageStyles, condition: string | null): boolean {
-	const style = cascade(img, styles, condition, true);
+function reservedIn(img: StyledNode, styles: PageStyles, active: ReadonlySet<string>): boolean {
+	const style = cascade(img, styles, active, true);
 	const position = style.position?.trim().toLowerCase();
 	if (position === 'absolute' || position === 'fixed') return true;
 
-	const hasWidth = widthIsDefinite(img, style.width, styles, condition);
-	const hasHeight = heightIsDefinite(img, style.height, styles, condition, 0);
+	const hasWidth = widthIsDefinite(img, style.width, styles, active);
+	const hasHeight = heightIsDefinite(img, style.height, styles, active, 0);
 	if (hasWidth && hasHeight) return true;
-	return isRatio(style['aspect-ratio']) && (hasWidth || hasHeight);
+	// "auto 16 / 9" hands over to the image's own ratio once it loads, so it does not fix the missing side.
+	return isRatio(style['aspect-ratio'], false) && (hasWidth || hasHeight);
 }
 
 function heightIsDefinite(
 	node: StyledNode,
 	height: string | undefined,
 	styles: PageStyles,
-	condition: string | null,
+	active: ReadonlySet<string>,
 	depth: number
 ): boolean {
 	const kind = sizeKind(height);
@@ -180,17 +191,18 @@ function heightIsDefinite(
 	// A percentage height resolves only against a parent whose own height is settled.
 	const parent = node.parent;
 	if (!parent || parent.type !== 'tag' || depth >= MAX_PERCENT_HEIGHT_DEPTH) return false;
-	const parentStyle = cascade(parent, styles, condition, false);
-	if (isRatio(parentStyle['aspect-ratio'])) return true;
-	return heightIsDefinite(parent, parentStyle.height, styles, condition, depth + 1);
+	const parentStyle = cascade(parent, styles, active, false);
+	// A box that is not an image has no ratio of its own, so "auto 16 / 9" is 16 / 9.
+	if (isRatio(parentStyle['aspect-ratio'], true)) return true;
+	return heightIsDefinite(parent, parentStyle.height, styles, active, depth + 1);
 }
 
 /** A length is definite. A percentage is definite only when the box it resolves against does not take its width from its content. */
-function widthIsDefinite(img: StyledNode, width: string | undefined, styles: PageStyles, condition: string | null): boolean {
+function widthIsDefinite(img: StyledNode, width: string | undefined, styles: PageStyles, active: ReadonlySet<string>): boolean {
 	const kind = sizeKind(width);
 	if (kind === 'length') return true;
 	if (kind !== 'percent') return false;
-	return containerWidthIsDefinite(img.parent, styles, condition, 0);
+	return containerWidthIsDefinite(img.parent, styles, active, 0);
 }
 
 /**
@@ -202,12 +214,12 @@ function widthIsDefinite(img: StyledNode, width: string | undefined, styles: Pag
 function containerWidthIsDefinite(
 	node: StyledNode | null | undefined,
 	styles: PageStyles,
-	condition: string | null,
+	active: ReadonlySet<string>,
 	depth: number
 ): boolean {
 	if (!node || node.type !== 'tag' || node.name === 'body' || node.name === 'html') return true;
 	if (depth >= MAX_PERCENT_WIDTH_DEPTH) return false;
-	const style = cascade(node, styles, condition, false);
+	const style = cascade(node, styles, active, false);
 	const kind = sizeKind(style.width);
 	if (kind === 'length') return true;
 
@@ -220,7 +232,7 @@ function containerWidthIsDefinite(
 	if (display.startsWith('table')) return false;
 
 	const parent = node.parent;
-	const parentStyle = parent && parent.type === 'tag' ? cascade(parent, styles, condition, false) : {};
+	const parentStyle = parent && parent.type === 'tag' ? cascade(parent, styles, active, false) : {};
 	const parentDisplay = keyword(parentStyle.display);
 	if (parentDisplay === 'flex' || parentDisplay === 'inline-flex') {
 		const direction = `${parentStyle['flex-direction'] ?? ''} ${parentStyle['flex-flow'] ?? ''}`.toLowerCase();
@@ -228,7 +240,7 @@ function containerWidthIsDefinite(
 		// In a row, an item is as wide as its content unless it has a width or grows.
 		if (rowAxis && kind !== 'percent' && !flexGrows(style)) return false;
 	}
-	return containerWidthIsDefinite(parent, styles, condition, depth + 1);
+	return containerWidthIsDefinite(parent, styles, active, depth + 1);
 }
 
 function keyword(value: string | undefined): string {
@@ -250,17 +262,17 @@ function sizeKind(value: string | undefined): 'none' | 'length' | 'percent' {
 	return text.includes('%') ? 'percent' : 'length';
 }
 
-function isRatio(value: string | undefined): boolean {
+function isRatio(value: string | undefined, allowAuto: boolean): boolean {
 	const text = value?.trim().toLowerCase();
-	// "auto 16 / 9" still reserves 16 / 9 until the image loads.
-	return !!text && !NOT_DEFINITE.test(text);
+	if (!text || NOT_DEFINITE.test(text)) return false;
+	return allowAuto || !/\bauto\b/.test(text);
 }
 
 /** The winning value of each property for one element, with rules in `condition` layered over the unconditional ones. */
 function cascade(
 	node: StyledNode,
 	styles: PageStyles,
-	condition: string | null,
+	active: ReadonlySet<string>,
 	useSizeAttributes: boolean
 ): Partial<Record<Property, string>> {
 	const classes = new Set((node.attribs?.class ?? '').split(/\s+/).filter(Boolean));
@@ -278,11 +290,18 @@ function cascade(
 		}
 	}
 
-	for (const rule of styles.rules) {
-		if (rule.condition !== null && rule.condition !== condition) continue;
-		if (rule.subjectTag && rule.subjectTag !== node.name) continue;
-		if (!rule.subjectClasses.every((name) => classes.has(name))) continue;
-		if (!rule.matches(node)) continue;
+	let matched = styles.matched.get(node);
+	if (!matched) {
+		matched = styles.rules.filter(
+			(rule) =>
+				(!rule.subjectTag || rule.subjectTag === node.name) &&
+				rule.subjectClasses.every((name) => classes.has(name)) &&
+				rule.matches(node)
+		);
+		styles.matched.set(node, matched);
+	}
+	for (const rule of matched) {
+		if (rule.condition !== null && !active.has(rule.condition)) continue;
 		for (const [property, declaration] of Object.entries(rule.declarations) as Array<[Property, Declaration]>) {
 			offer(property, declaration.value, [declaration.important ? 1 : 0, rule.specificity, rule.order]);
 		}
@@ -294,17 +313,17 @@ function cascade(
 
 	const out: Partial<Record<Property, string>> = {};
 	for (const [property, winner] of Object.entries(winners)) {
-		out[property as Property] = resolveVariables(winner.value, styles.variables, 0);
+		out[property as Property] = resolveVariables(winner.value, styles, 0);
 	}
 	return out;
 }
 
 /**
- * Replace var() with the value set on :root, html or body. A variable the
- * read cannot resolve (set per element, or per variable mode) leaves the
- * value not definite: "auto".
+ * Replace var() with the value set on :root, html or body. A variable that
+ * is not set there, or that is also set anywhere else (per element, per
+ * variable mode, in a media query), leaves the value not definite: "auto".
  */
-function resolveVariables(value: string, variables: Record<string, string>, depth: number): string {
+function resolveVariables(value: string, styles: Pick<PageStyles, 'variables' | 'overriddenVariables'>, depth: number): string {
 	if (!value.includes('var(')) return value;
 	if (depth >= MAX_VARIABLE_DEPTH) return 'auto';
 	let unresolved = false;
@@ -334,15 +353,93 @@ function resolveVariables(value: string, variables: Record<string, string>, dept
 		const comma = scanToWithBrackets(inner, 0);
 		const name = (comma === -1 ? inner : inner.slice(0, comma)).trim();
 		const fallback = comma === -1 ? null : inner.slice(comma + 1).trim();
-		const found = variables[name] ?? fallback;
+		// A variable that is also set elsewhere may have another value on this element.
+		const found = styles.overriddenVariables.has(name) ? null : (styles.variables[name] ?? fallback);
 		if (found === null || found === undefined || found === '') {
 			unresolved = true;
 			break;
 		}
-		out += resolveVariables(found, variables, depth + 1);
+		out += resolveVariables(found, styles, depth + 1);
 		index = end + 1;
 	}
 	return unresolved ? 'auto' : out.trim();
+}
+
+/**
+ * Conditions that hold at the same time, for every viewport width the
+ * stylesheets distinguish. Width queries are evaluated at each breakpoint and
+ * one pixel either side. A condition the read cannot evaluate (orientation,
+ * hover, container queries, comma lists) is tried both on and off.
+ */
+function buildScenarios(conditions: string[]): Array<ReadonlySet<string>> {
+	const known: Array<{ condition: string; min: number; max: number }> = [];
+	const unknown: string[] = [];
+	const widths = new Set<number>([320, 4000]);
+
+	for (const condition of conditions) {
+		const range = widthRange(condition);
+		if (range === 'never') continue;
+		if (range === 'unknown') {
+			unknown.push(condition);
+			continue;
+		}
+		known.push({ condition, ...range });
+		for (const edge of [range.min, range.max]) {
+			if (Number.isFinite(edge)) [edge - 1, edge, edge + 1].forEach((width) => widths.add(width));
+		}
+	}
+
+	const seen = new Set<string>();
+	const scenarios: Array<ReadonlySet<string>> = [];
+	const add = (active: string[]) => {
+		const key = [...active].sort().join('\n');
+		if (seen.has(key)) return;
+		seen.add(key);
+		scenarios.push(new Set(active));
+	};
+	for (const width of widths) {
+		const active = known.filter((entry) => width >= entry.min && width <= entry.max).map((entry) => entry.condition);
+		add(active);
+		for (const extra of unknown) add([...active, extra]);
+		if (unknown.length > 1) add([...active, ...unknown]);
+	}
+	return scenarios;
+}
+
+/** The viewport widths a condition covers, when it is made only of screen and min/max-width parts. */
+function widthRange(condition: string): { min: number; max: number } | 'never' | 'unknown' {
+	if (condition.includes('@container') || condition.includes(',')) return 'unknown';
+	let min = -Infinity;
+	let max = Infinity;
+	const parts = condition
+		.replace(/@media/g, ' and ')
+		.split(/\band\b/i)
+		.map((part) => part.trim().toLowerCase())
+		.filter(Boolean);
+	for (const part of parts) {
+		if (part === 'screen' || part === 'all' || part === 'only screen') continue;
+		if (part === 'print' || part === 'only print') return 'never';
+		const width = /^\(\s*(min|max)-width\s*:\s*([\d.]+)(px|em|rem)\s*\)$/.exec(part);
+		if (!width) return 'unknown';
+		const px = parseFloat(width[2]) * (width[3] === 'px' ? 1 : 16);
+		if (width[1] === 'min') min = Math.max(min, px);
+		else max = Math.min(max, px);
+	}
+	return min > max ? 'never' : { min, max };
+}
+
+/** Custom properties set in style attributes anywhere on the page. */
+function inlineCustomProperties(root: StyledNode): string[] {
+	const names: string[] = [];
+	const walk = (parent: StyledNode) => {
+		for (const child of parent.children ?? []) {
+			const style = child.attribs?.style;
+			if (style && style.includes('--')) names.push(...Object.keys(parseCustomProperties(style)));
+			walk(child);
+		}
+	};
+	walk(root);
+	return names;
 }
 
 function compareRank(a: number[], b: number[]): number {
@@ -444,7 +541,7 @@ export function clearStylesheetCache(): void {
 
 /** Rules that set width, height, aspect-ratio or position, with the @media or @container conditions around them. */
 export function parseStylesheet(css: string): ParsedSheet {
-	const sheet: ParsedSheet = { rules: [], variables: {} };
+	const sheet: ParsedSheet = { rules: [], variables: {}, overriddenVariables: new Set() };
 	readRules(css.replace(/\/\*[\s\S]*?\*\//g, ''), null, sheet);
 	return sheet;
 }
@@ -479,8 +576,11 @@ function readRules(css: string, condition: string | null, out: ParsedSheet): voi
 		}
 
 		const selectors = prelude ? splitSelectors(prelude) : [];
-		if (condition === null && selectors.some((selector) => /^(:root|html|body)$/i.test(selector))) {
-			Object.assign(out.variables, parseCustomProperties(body));
+		if (body.includes('--')) {
+			const custom = parseCustomProperties(body);
+			const global = condition === null && selectors.every((selector) => /^(:root|html|body)$/i.test(selector));
+			if (global) Object.assign(out.variables, custom);
+			else Object.keys(custom).forEach((name) => out.overriddenVariables.add(name));
 		}
 		const declarations = parseDeclarations(body);
 		if (Object.keys(declarations).length === 0) continue;

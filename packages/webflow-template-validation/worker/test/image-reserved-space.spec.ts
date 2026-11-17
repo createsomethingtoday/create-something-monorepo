@@ -193,6 +193,52 @@ describe('image space reserved by CSS', () => {
 		expect(await verdicts(body, css)).toEqual([true, false, true, true, true, false, false, false, true]);
 	});
 
+	it('applies overlapping media queries together', async () => {
+		const css = `
+			.pic { width: 300px; height: 200px; aspect-ratio: 3 / 2; }
+			.ok { width: 300px; height: 200px; aspect-ratio: 3 / 2; }
+			@media screen and (max-width: 991px) { .pic { width: auto; } .ok { width: auto; } }
+			@media screen and (max-width: 767px) { .pic { height: auto; } }
+			@media screen and (min-width: 1440px) { .ok { height: auto; } }
+			@media print { .ok { width: auto; height: auto; } }
+		`;
+		// .pic loses both sides below 767px; .ok never loses both at one width.
+		expect(await verdicts('<img class="pic"><img class="ok">', css)).toEqual([false, true]);
+	});
+
+	it('tries conditions it cannot evaluate both on and off', async () => {
+		const css = `
+			.a { width: 300px; height: 200px; }
+			.b { width: 300px; height: 200px; }
+			@media (orientation: portrait) { .a { height: auto; } }
+			@media (hover: hover) { .b { width: 20rem; } }
+		`;
+		expect(await verdicts('<img class="a"><img class="b">', css)).toEqual([false, true]);
+	});
+
+	it('does not trust a variable that is also set somewhere else', async () => {
+		const css = `
+			:root { --image-height: 200px; --mode-size: 10rem; --plain: 12rem; }
+			.theme-dark { --mode-size: auto; }
+			.image { width: 300px; height: var(--image-height); }
+			.moded { width: var(--mode-size); height: var(--mode-size); }
+			.plain { width: var(--plain); height: var(--plain); }
+		`;
+		const body = '<img class="image" style="--image-height:auto"><img class="moded"><img class="plain">';
+		expect(await verdicts(body, css)).toEqual([false, false, true]);
+	});
+
+	it('does not accept an "auto" ratio on the image, but does on its frame', async () => {
+		const css = `
+			.auto-ratio { width: 300px; aspect-ratio: auto 1 / 1; }
+			.ratio { width: 300px; aspect-ratio: 1 / 1; }
+			.frame { aspect-ratio: auto 4 / 3; }
+			.cover { width: 100%; height: 100%; }
+		`;
+		const body = '<img class="auto-ratio"><img class="ratio"><div class="frame"><img class="cover"></div>';
+		expect(await verdicts(body, css)).toEqual([false, true, true]);
+	});
+
 	it('returns null when a site stylesheet cannot be read, and skips other hosts', async () => {
 		const html = page('<img class="x">', '', '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter">');
 		const requested: string[] = [];
