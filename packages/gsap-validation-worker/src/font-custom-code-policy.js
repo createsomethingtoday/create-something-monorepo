@@ -417,29 +417,34 @@ export function findProhibitedExternalFiles(html) {
     findings.push({ kind, source, policy, message });
   };
 
-  for (const tag of html.match(/<script\b[^>]*>/gi) || []) {
-    const src = readHtmlAttribute(tag, 'src');
-    if (!src) continue;
-    if (isApprovedScriptSource(src) || matchesSource(src, PLATFORM_SCRIPT_SOURCES)) continue;
-    add('external-script', src, EXTERNAL_SCRIPT_POLICY, EXTERNAL_SCRIPT_MESSAGE);
-  }
+  // Walk the parsed tree: a commented-out tag loads nothing, and only the element's own
+  // src or href attribute decides which file the browser fetches.
+  const stack = [parse(html)];
+  while (stack.length > 0) {
+    const node = stack.pop();
+    const kids = children(node);
+    for (let index = kids.length - 1; index >= 0; index -= 1) stack.push(kids[index]);
 
-  for (const tag of html.match(/<link\b[^>]*>/gi) || []) {
-    if (!isStylesheetLink(tag)) continue;
-    const href = readHtmlAttribute(tag, 'href');
-    if (!href || isKnownFontStylesheetUrl(href) || matchesSource(href, APPROVED_STYLESHEET_SOURCES)) continue;
-    add('external-stylesheet', href, EXTERNAL_STYLESHEET_POLICY, EXTERNAL_STYLESHEET_MESSAGE);
-  }
-
-  const stylePattern = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
-  let styleMatch;
-  while ((styleMatch = stylePattern.exec(html)) !== null) {
-    const importPattern = /@import\s+(?:url\(\s*)?(?:(["'])(.*?)\1|([^\s);]+))/gi;
-    let importMatch;
-    while ((importMatch = importPattern.exec(styleMatch[1])) !== null) {
-      const source = (importMatch[2] || importMatch[3] || '').trim();
-      if (!source || isKnownFontStylesheetUrl(source) || matchesSource(source, APPROVED_STYLESHEET_SOURCES)) continue;
-      add('external-stylesheet', source, EXTERNAL_STYLESHEET_POLICY, EXTERNAL_STYLESHEET_MESSAGE);
+    if (node.tagName === 'script') {
+      const src = (attribute(node, 'src') ?? attribute(node, 'href') ?? attribute(node, 'xlink:href'))?.trim();
+      if (!src) continue;
+      if (isApprovedScriptSource(src) || matchesSource(src, PLATFORM_SCRIPT_SOURCES)) continue;
+      add('external-script', src, EXTERNAL_SCRIPT_POLICY, EXTERNAL_SCRIPT_MESSAGE);
+    } else if (node.tagName === 'link') {
+      const rel = (attribute(node, 'rel') || '').toLowerCase().split(/\s+/);
+      if (!rel.includes('stylesheet')) continue;
+      const href = attribute(node, 'href')?.trim();
+      if (!href || isKnownFontStylesheetUrl(href) || matchesSource(href, APPROVED_STYLESHEET_SOURCES)) continue;
+      add('external-stylesheet', href, EXTERNAL_STYLESHEET_POLICY, EXTERNAL_STYLESHEET_MESSAGE);
+    } else if (node.tagName === 'style') {
+      const css = kids.map((child) => child.value || '').join('').replace(/\/\*[\s\S]*?\*\//g, '');
+      const importPattern = /@import\s+(?:url\(\s*)?(?:(["'])(.*?)\1|([^\s);]+))/gi;
+      let importMatch;
+      while ((importMatch = importPattern.exec(css)) !== null) {
+        const source = (importMatch[2] || importMatch[3] || '').trim();
+        if (!source || isKnownFontStylesheetUrl(source) || matchesSource(source, APPROVED_STYLESHEET_SOURCES)) continue;
+        add('external-stylesheet', source, EXTERNAL_STYLESHEET_POLICY, EXTERNAL_STYLESHEET_MESSAGE);
+      }
     }
   }
 

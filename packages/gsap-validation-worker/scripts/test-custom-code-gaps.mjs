@@ -70,6 +70,16 @@ assert.deepEqual(files('<script src="https://cdn.jsdelivr.net/npm/swiper@11/swip
 // The same file listed twice is one finding.
 assert.equal(files(`<script src="${hostedScript}"></script><script src="${hostedScript}"></script>`).length, 1);
 
+// Commented-out code loads nothing, so it is not a finding.
+assert.deepEqual(files('<!-- <script src="https://example.com/disabled.js"></script> -->'), []);
+assert.deepEqual(files('<!-- <link rel="stylesheet" href="https://example.com/disabled.css"> -->'), []);
+assert.deepEqual(files('<style>/* @import url("https://example.com/disabled.css"); */ body { color: inherit; }</style>'), []);
+// Only the element's own src decides which file is judged.
+assert.deepEqual(
+  files(`<script data-note="src='https://unpkg.com/gsap/dist/gsap.min.js'" src="https://example.com/site.js"></script>`),
+  ['external-script: https://example.com/site.js']
+);
+
 // A stylesheet file uploaded as a site asset, linked or imported.
 const hostedCss = `${CDN}/${SITE}/${ASSET}_site-v14.css`;
 assert.deepEqual(files(`<link rel="stylesheet" href="${hostedCss}">`), [`external-stylesheet: ${hostedCss}`]);
