@@ -1,3 +1,4 @@
+import { effectiveSubscriptionStatus } from './subscription-status';
 import { fanoutSharedEvent, deliverShared, recoverSharedDelivery } from './shared-delivery';
 import { SharedInboxService } from './shared-domain';
 import { sharedHttp } from './shared-http';
@@ -27,7 +28,7 @@ function decorate(response:Response,env:RuntimeEnv,request:Request):Response{
   }
   return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
 }
-async function route(request:Request,env:RuntimeEnv,requestId:string):Promise<Response>{
+async function route(request:Request,env:RuntimeEnv,requestId:string,phase:{authenticating:boolean}):Promise<Response>{
   const url=new URL(request.url);const path=url.pathname;
   if(path==='/.well-known/a2a-connection'&&request.method==='GET')return json(connectionStatus(env),200,{'cache-control':'no-store'});
   if(path==='/health')return json({service:'a2a',version:VERSION,revision:env.BUILD_REVISION,environment:env.ENVIRONMENT});
@@ -38,13 +39,15 @@ async function route(request:Request,env:RuntimeEnv,requestId:string):Promise<Re
   if(path==='/mcp'){
     if(request.method==='OPTIONS')return new Response(null,{status:204});
     if(request.method==='POST'&&!request.headers.has('authorization')&&request.headers.has('cookie'))sameOrigin(request,env.BASE_URL);
-    const principal=await authenticate(request,env);
+    phase.authenticating=true;
+    const principal=await authenticate(request,env);phase.authenticating=false;
     await limitAdmission(env,`mcp:${principal.subject}`,120,60000);
     return mcpRoute(request,env,principal,requestId);
   }
   if(path.startsWith('/api/v2/'))return sharedHttp(request,env);
   if(path.startsWith('/api/v1/')){
-    const p=await authenticate(request,env);requireScope(p,READ_SCOPE);
+    phase.authenticating=true;
+    const p=await authenticate(request,env);phase.authenticating=false;requireScope(p,READ_SCOPE);
     const write=!['GET','HEAD'].includes(request.method);
     if(write){requireScope(p,WRITE_SCOPE);if(!request.headers.has('authorization'))sameOrigin(request,env.BASE_URL);await limitAdmission(env,`write:${p.subject}`,120,60000);}
     const service=new InboxService(env.DB);
@@ -146,7 +149,7 @@ async function route(request:Request,env:RuntimeEnv,requestId:string):Promise<Re
     }
     if(path==='/api/v1/subscriptions'&&request.method==='GET'){
       const id=url.searchParams.get('agentId')??'';await service.requireOwnedAgent(p,id);
-      const rows=await env.DB.prepare('SELECT id,agent_id AS agentId,status,created_at AS createdAt,expires_at AS expiresAt FROM subscriptions WHERE agent_id=? AND owner_subject=? ORDER BY created_at DESC').bind(id,p.subject).all();return json({subscriptions:rows.results});
+      const rows=await env.DB.prepare('SELECT id,agent_id AS agentId,status,created_at AS createdAt,expires_at AS expiresAt FROM subscriptions WHERE agent_id=? AND owner_subject=? ORDER BY created_at DESC').bind(id,p.subject).all();return json({subscriptions:rows.results.map(row=>({...row,status:effectiveSubscriptionStatus({status:row.status as string,expiresAt:row.expiresAt})}))});
     }
     const subMatch=path.match(/^\/api\/v1\/subscriptions\/([^/]+)$/);if(subMatch&&request.method==='DELETE'){requireScope(p,ADMIN_SCOPE);await cancelSubscription(env,p,subMatch[1]);return json({cancelled:true});}
     if(path==='/api/v1/deliveries'&&request.method==='GET'){
@@ -184,13 +187,14 @@ export default {
     const requestId=crypto.randomUUID();
     const path=new URL(request.url).pathname;
     const operation=request.method.toLowerCase()+':'+(path==='/mcp'?'mcp':path.startsWith('/api/v1/')&&['connection','me','agents','grants','messages','owner-messages','context','owned-context','subscriptions','deliveries','status','config'].includes(path.split('/')[3])?path.split('/')[3]:'transport');
-    try{const response=await route(request,env,requestId);const headers=new Headers(response.headers);headers.set('x-a2a-request-id',requestId);if(!headers.has('x-a2a-receipt'))headers.set('x-a2a-receipt',JSON.stringify(executionReceipt(operation,response.status>=500?'unknown':response.status>=400?'denied':'confirmed',requestId)));return decorate(new Response(response.body,{status:response.status,headers}),env,request);}catch(error){
+    const phase={authenticating:false};
+    try{const response=await route(request,env,requestId,phase);const headers=new Headers(response.headers);headers.set('x-a2a-request-id',requestId);if(!headers.has('x-a2a-receipt'))headers.set('x-a2a-receipt',JSON.stringify(executionReceipt(operation,response.status>=500?'unknown':response.status>=400?'denied':'confirmed',requestId)));return decorate(new Response(response.body,{status:response.status,headers}),env,request);}catch(error){
       const known=error instanceof HttpError||error instanceof DomainError;const status=known?error.status:503;const code=known?error.code:'service_unavailable';
       if(status>=500)console.error(JSON.stringify({event:'request_failed',code,path:new URL(request.url).pathname}));
       const receipt=executionReceipt(operation,status<500?'denied':'unknown',requestId);
       const headers:Record<string,string>={'x-a2a-request-id':requestId,'x-a2a-receipt':JSON.stringify(receipt)};if(status===401)headers['www-authenticate']=`Bearer resource_metadata="${env.BASE_URL}/.well-known/oauth-protected-resource/mcp", scope="${READ_SCOPE} ${WRITE_SCOPE} offline_access"`;
       if(status===429||status===503)headers['retry-after']='60';
-      return decorate(json({receipt,recovery:recoveryAction({status,code,write:!['GET','HEAD','OPTIONS'].includes(request.method),uncertain:status>=500,retryAfter:headers['retry-after']}),error:{code,message:known&&status<500?error.message:'This operation is temporarily unavailable.'}},status,headers),env,request);
+      return decorate(json({receipt,recovery:recoveryAction({status,code,write:!phase.authenticating&&!['GET','HEAD','OPTIONS'].includes(request.method),uncertain:!phase.authenticating&&status>=500,retryAfter:headers['retry-after']}),error:{code,message:known&&status<500?error.message:'This operation is temporarily unavailable.'}},status,headers),env,request);
     }
   },
   async queue(batch:MessageBatch<DeliveryJob>,env:RuntimeEnv):Promise<void>{

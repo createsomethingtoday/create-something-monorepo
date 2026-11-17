@@ -1,3 +1,4 @@
+import {effectiveSubscriptionStatus} from '../src/subscription-status';
 import './styles.css';
 import {startMotion,motionEnter} from './motion';
 startMotion();
@@ -5,6 +6,8 @@ import {createSharedContext} from './shared-context';
 import {conversationCount,conversationGroups} from './inbox-view';
 
 document.documentElement.classList.add('js');
+
+let subscriptionDeadline:ReturnType<typeof setTimeout>|undefined;
 
 type Agent = { id: string; name: string; paused: boolean; createdAt: number };
 type Grant = { id: string; agentId: string; senderAgentId: string; revokedAt: number | null };
@@ -72,7 +75,7 @@ function date(value: number | string | null) {
 function timeNode(value: number | string) { const node = el('time', '', date(value)); const d = new Date(value); if (!Number.isNaN(d.valueOf())) node.dateTime = d.toISOString(); return node; }
 function statusTag(value: string, prefix = '') {
   const node = el('span', 'tag', `${prefix}${value.replaceAll('_',' ')}`);
-  const tone = /completed|accepted|active/.test(value) ? 'success' : /failed|rejected|revoked/.test(value) ? 'error' : /approval|required|retrying|verifying|pending|suspended|paused|expired/.test(value) ? 'warning' : /claimed|processing/.test(value) ? 'info' : '';
+  const tone = /completed|accepted|active/.test(value) ? 'success' : /failed|rejected|revoked/.test(value) ? 'error' : /approval|required|retrying|verifying|pending|suspended|paused|expired|unknown/.test(value) ? 'warning' : /claimed|processing/.test(value) ? 'info' : '';
   if (tone) node.dataset.tone = tone; return node;
 }
 function actionButton(text: string, callback: () => void, danger = false) { const node = el('button', `button button-small${danger ? ' button-danger' : ''}`, text); node.type = 'button'; node.addEventListener('click', callback); return node; }
@@ -111,8 +114,9 @@ function renderInbox() {
   const agent = selectedAgent();
   const status = $('#inbox-status'); status.replaceChildren();
   if (agent) {
-    const subscriptionState = state.failedSections.has('subscriptions') ? 'unavailable' : state.subscriptions.some(sub=>sub.status==='active' && !!sub.expiresAt && sub.expiresAt>Date.now()) ? 'active' : 'none';
-    status.append(statusTag(agent.paused ? 'paused' : 'open', 'Inbox: '), statusTag(subscriptionState, 'Event subscriptions: '));
+    const subscriptionState = state.failedSections.has('subscriptions') ? 'unavailable' : agent.paused ? 'paused' : state.subscriptions.some(sub=>effectiveSubscriptionStatus(sub)==='active') ? 'active' : state.subscriptions.some(sub=>effectiveSubscriptionStatus(sub)==='unknown') ? 'unknown' : state.subscriptions.some(sub=>effectiveSubscriptionStatus(sub)==='expired') ? 'expired' : 'none';
+    const subscriptionBadge=statusTag(subscriptionState,'Event subscriptions: ');subscriptionBadge.dataset.subscriptionOverview='true';
+    status.append(statusTag(agent.paused ? 'paused' : 'open', 'Inbox: '), subscriptionBadge);
   }
   $('#inbox-count').textContent = String(conversationCount(state.messages));
   $('#inbox-count').setAttribute('aria-label',`${conversationCount(state.messages)} loaded conversations`);
@@ -234,8 +238,9 @@ function renderConnect() {
   const ledger=table(['Subscription','State','Control']);
   for(const sub of state.subscriptions) {
     const row=el('tr');const identity=el('td'); identity.append(el('span','mono',sub.id),el('span','detail-line',sub.expiresAt?`Expires ${date(sub.expiresAt)}`:'No expiry recorded'));
-    const status=el('td');status.append(statusTag(sub.status));const action=el('td');
-    if(!['revoked','expired'].includes(sub.status)) action.append(actionButton('Cancel',()=>confirmAction(action,'Cancel this event subscription?',async()=>{await api(`/api/v1/subscriptions/${encodeURIComponent(sub.id)}`,{method:'DELETE'});await refreshDetails();notice('Event subscription canceled. Already delivered copies remain with the receiver.');}),true));
+    const effective=effectiveSubscriptionStatus(sub);
+    const status=el('td');const badge=statusTag(effective==='active'&&selectedAgent()?.paused?'paused':effective);badge.dataset.subscriptionId=sub.id;status.append(badge);const action=el('td');
+    if(!['revoked','expired'].includes(effective)) action.append(actionButton('Cancel',()=>confirmAction(action,'Cancel this event subscription?',async()=>{if(['expired','revoked'].includes(effectiveSubscriptionStatus(sub))){notice('This event subscription is no longer active. Refresh to inspect its current state.','warning');return;}await api(`/api/v1/subscriptions/${encodeURIComponent(sub.id)}`,{method:'DELETE'});await refreshDetails();notice('Event subscription canceled. Already delivered copies remain with the receiver.');}),true));
     else action.textContent='—';
     row.append(identity,status,action);ledger.body.append(row);
   }
@@ -317,7 +322,7 @@ async function refreshDetails() {
   state.historyHasMore=messages.status==='fulfilled'&&messages.value.hasMore;state.historyBefore=messages.status==='fulfilled'?messages.value.nextBefore:null;
   state.subscriptions=subscriptions.status==='fulfilled'?subscriptions.value.subscriptions:[];state.deliveries=deliveries.status==='fulfilled'?deliveries.value.deliveries:[];
   state.contextGeneration++;state.conversations.clear();sharedContext.hide();
-  renderInbox();renderConnect();renderGrants();if(state.threadId)void loadConversation(state.threadId);$('#workspace').setAttribute('aria-busy','false');
+  renderInbox();renderConnect();refreshSubscriptionDeadlines();renderGrants();if(state.threadId)void loadConversation(state.threadId);$('#workspace').setAttribute('aria-busy','false');
   const failed=results.find(result=>result.status==='rejected');
   if(failed?.status==='rejected') {
     if(failed.reason instanceof ApiError && (failed.reason.status===401 || (failed.reason.status===403 && /invite|access_denied|not_allowed/i.test(failed.reason.code))))throw failed.reason;
@@ -396,3 +401,21 @@ $('#toggle-pause').addEventListener('click',()=>{const paused=selectedAgent()?.p
 $('#cancel-pause').addEventListener('click',()=>{$('#pause-confirmation').hidden=true;$('#toggle-pause').focus();});
 $('#confirm-pause').addEventListener('click',async()=>{const agent=selectedAgent();if(!agent)return;const button=$<HTMLButtonElement>('#confirm-pause');button.disabled=true;try{await api(`/api/v1/agents/${encodeURIComponent(agent.id)}`,{method:'PATCH',body:JSON.stringify({paused:!agent.paused})});await refreshAgents();notice(agent.paused?'Inbox resumed. Existing sender permissions still apply.':'Inbox paused. Delivered copies remain with their receiver.');$('#toggle-pause').focus();}catch(error){handleError(error);}finally{button.disabled=false;}});
 void start();
+
+// Recompute local deadlines without fetching or changing the host subscription.
+function refreshSubscriptionDeadlines() {
+  if(subscriptionDeadline!==undefined)clearTimeout(subscriptionDeadline);
+  const agent=selectedAgent();
+  const overview=state.failedSections.has('subscriptions')?'unavailable':agent?.paused?'paused':state.subscriptions.some(sub=>effectiveSubscriptionStatus(sub)==='active')?'active':state.subscriptions.some(sub=>effectiveSubscriptionStatus(sub)==='unknown')?'unknown':state.subscriptions.some(sub=>effectiveSubscriptionStatus(sub)==='expired')?'expired':'none';
+  const updateBadge=(badge:HTMLElement,value:string,prefix='')=>{const next=statusTag(value,prefix);badge.textContent=next.textContent;badge.className=next.className;if(next.dataset.tone)badge.dataset.tone=next.dataset.tone;else delete badge.dataset.tone;};
+  const summary=document.querySelector<HTMLElement>('[data-subscription-overview]');if(summary)updateBadge(summary,overview,'Event subscriptions: ');
+  for(const badge of document.querySelectorAll<HTMLElement>('[data-subscription-id]')) {
+    const sub=state.subscriptions.find(sub=>sub.id===badge.dataset.subscriptionId);if(!sub)continue;
+    const effective=effectiveSubscriptionStatus(sub);updateBadge(badge,effective==='active'&&agent?.paused?'paused':effective);
+  }
+  const now=Date.now();
+  const next=state.subscriptions.filter(sub=>sub.status==='active'&&typeof sub.expiresAt==='number'&&Number.isFinite(sub.expiresAt)&&sub.expiresAt>now).reduce((nearest,sub)=>Math.min(nearest,sub.expiresAt!),Infinity);
+  if(Number.isFinite(next))subscriptionDeadline=setTimeout(refreshSubscriptionDeadlines,Math.min(next-now,2147483647));
+}
+window.addEventListener('focus',refreshSubscriptionDeadlines);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshSubscriptionDeadlines();});

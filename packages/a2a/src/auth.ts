@@ -84,7 +84,11 @@ export async function verifyIdentityToken(env:RuntimeEnv,token:string):Promise<P
     if(response.status===429||response.status>=500)throw new HttpError('identity_unavailable',503,'Identity verification is temporarily unavailable.');
     if(!response.ok)throw new HttpError('invalid_token',401,'Your Identity session is no longer available.');
     let info:Record<string,unknown>;
-    try{info=await response.json() as Record<string,unknown>;if(!info||typeof info!=='object')throw new Error();}catch{throw new HttpError('identity_unavailable',503,'Identity verification is temporarily unavailable.');}
+    try{info=await response.json() as Record<string,unknown>;if(!info||typeof info!=='object'||Array.isArray(info))throw new Error();}catch{throw new HttpError('identity_unavailable',503,'Identity verification is temporarily unavailable.');}
+    // A successful provider response must satisfy its identity contract before
+    // any mismatch is treated as evidence that this bearer is no longer valid.
+    const required=['sub','resource',...(payload.client_id!==undefined?['client_id']:[]),...(connectionId!==undefined?['connection_id']:[])];
+    if(required.some(field=>typeof info[field]!=='string'||!(info[field] as string).trim())||typeof info.email_verified!=='boolean')throw new HttpError('identity_unavailable',503,'Identity verification is temporarily unavailable.');
     if(info.sub!==payload.sub||info.resource!==env.AUTH_RESOURCE||info.email_verified!==true)throw new HttpError('invalid_token',401,'Verified resource identity required.');
     if((payload.client_id!==undefined&&info.client_id!==payload.client_id)||(connectionId!==undefined&&info.connection_id!==connectionId))throw new HttpError('invalid_token',401,'Verified connection binding required.');
     email=typeof info.email==='string'?info.email:undefined;
