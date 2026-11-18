@@ -17,6 +17,8 @@ import {
 import { buildReportMarkdown as buildReportMarkdownPure, type ReportInput } from './report';
 import { collectPageSeoData } from './page-seo';
 import { createPageMetadataDetailsHTML } from './page-metadata-details';
+import { createRunTimer, type RunTimer, type RunTimings } from './run-timings';
+import { mapWithConcurrency } from './concurrency';
 import { buildValidationSubmitIssue } from './validation-submit-payload';
 import {
   isTagStyle,
@@ -98,6 +100,7 @@ interface ValidationResponse {
     totalInfo?: number;
   };
   collectedData?: any[];
+  timings?: RunTimings;
 }
 
 interface ReviewStartResponse {
@@ -360,10 +363,21 @@ async function validateProject(): Promise<void> {
     }
 
     // Collect project data via Designer API
-    const projectData = await collectProjectData(webflow);
+    const timer = createRunTimer();
+    const projectData = await collectProjectData(webflow, timer, (step, done, total) => {
+      // Collection is the long part of a run on a large site: show which read is running and how far it is.
+      const { base, label } = COLLECT_PROGRESS[step];
+      if (done !== total && done % 10 !== 0) return;
+      setValidationProgress({
+        status: 'running',
+        progress: Math.round(base + (total > 0 ? (done / total) * 4 : 4)),
+        message: `Reading ${label} (${done} of ${total})...`,
+      });
+    });
     const designerContext = await collectDesignerContext(webflow);
     projectData.designerContext = designerContext;
     projectData.canvasChecks = await collectCanvasAccessibility(webflow, designerContext.canAccessCanvas);
+    timer.lap('canvas');
     if (designerContext.message) {
       setToolbarStatus(designerContext.message, designerContext.canAccessCanvas === false ? 'warning' : 'neutral');
     }
@@ -425,7 +439,10 @@ async function validateProject(): Promise<void> {
       setBridgeSetupStep('install');
       setToolbarStatus('Validator script required for submission checks', 'warning');
 
+      timer.lap('setup');
       const designerResults = await runDesignerValidation(projectData, siteUrl, correlationId);
+      timer.lap('worker');
+      designerResults.timings = timer.result();
       designerResults.collectedData = [projectData];
       enhanceValidationResults(designerResults, projectData, projectData.canvasChecks);
 
@@ -478,12 +495,15 @@ async function validateProject(): Promise<void> {
     hideBridgeDrawer();
     setBridgeSetupStep('run');
     setToolbarStatus('Running full Validator checks...', 'active');
+    timer.lap('setup');
     const validationResults = await runUnifiedValidation({
       siteUrl,
       projectData,
       pageSlugs: pageSlugScope.pageSlugs,
       correlationId,
     });
+    timer.lap('worker');
+    validationResults.timings = timer.result();
 
     // Add collected data for detailed display
     validationResults.collectedData = [projectData];
@@ -833,6 +853,7 @@ function buildValidationSubmitPayload(validationResults: ValidationResponse): Re
   return {
     url: validationResults.url,
     summary: validationResults.summary,
+    timings: validationResults.timings,
     categories: Array.isArray(validationResults.categories)
       ? validationResults.categories.map((category) => ({
           category: category.category,
@@ -1910,7 +1931,23 @@ async function collectCanvasAccessibility(
 // "All Links", "Body (All Pages)"
 
 
-async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
+// Designer API reads in flight at once while collecting. Each read is a round
+// trip to the Designer, so one at a time made large sites take minutes.
+const COLLECT_CONCURRENCY = 8;
+
+type CollectStep = 'variables' | 'components' | 'styles' | 'pages';
+type CollectProgress = (step: CollectStep, done: number, total: number) => void;
+
+const COLLECT_PROGRESS: Record<CollectStep, { base: number; label: string }> = {
+  variables: { base: 2, label: 'variables' },
+  components: { base: 6, label: 'components' },
+  styles: { base: 10, label: 'styles' },
+  pages: { base: 14, label: 'pages' },
+};
+
+async function collectProjectData(webflow: WebflowApi, timer?: RunTimer, onProgress?: CollectProgress): Promise<ProjectData> {
+  const report = (step: CollectStep) => (done: number, total: number) => onProgress?.(step, done, total);
+
   const data: ProjectData = {
     variables: undefined,
     components: [],
@@ -1938,7 +1975,7 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
           const modeList: Array<{ id: string; name: string; breakpointId?: string | null }> = [];
           let modeDataAvailable = false;
 
-          for (const variable of variables) {
+          const variableResults = await mapWithConcurrency(variables as any[], COLLECT_CONCURRENCY, async (variable: any) => {
             try {
               const variableName = (await variable.getName()) || null;
               const variableType = variable.type || null;
@@ -1951,24 +1988,26 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
                 variableValue = null;
               }
 
-              variableList.push({
+              return {
                 id: variable.id,
                 name: variableName,
                 type: variableType,
                 value: variableValue ?? null
-              });
+              };
             } catch (variableError) {
               console.warn('Error processing variable:', variableError);
               if (variable.id) {
-                variableList.push({
+                return {
                   id: variable.id,
                   name: null,
                   type: variable.type || null,
                   value: null
-                });
+                };
               }
+              return null;
             }
-          }
+          }, report('variables'));
+          variableList.push(...variableResults.filter((variable) => variable !== null));
 
           try {
             // getAllVariableModes may be absent on older Designer runtimes
@@ -2043,13 +2082,15 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
     });
   }
 
+  timer?.lap('variables');
+
   // Components Collection
   try {
     if (webflow.getAllComponents) {
       const components = await webflow.getAllComponents() || [];
       const componentData: any[] = [];
 
-      for (const component of components) {
+      const componentResults = await mapWithConcurrency(components as any[], COLLECT_CONCURRENCY, async (component: any) => {
         try {
           const name = (await component.getName()) || null;
           const id = component.id;
@@ -2072,7 +2113,7 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
               console.warn('Error analyzing component nesting:', nestedError);
             }
 
-            componentData.push({
+            return {
               id: id,
               name: name,
               type: 'component',
@@ -2081,12 +2122,14 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
               readOnly: metadata.readOnly,
               codeComponent: metadata.codeComponent,
               library: metadata.library
-            });
+            };
           }
         } catch (compError) {
           console.warn('Error processing component:', compError);
         }
-      }
+        return null;
+      }, report('components'));
+      componentData.push(...componentResults.filter((component) => component !== null));
 
       data.components = componentData;
       console.log(`Components collected: ${componentData.length}`);
@@ -2099,6 +2142,8 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
       error: error instanceof Error ? error.message : String(error)
     });
   }
+
+  timer?.lap('components');
 
   // Styles Collection
   try {
@@ -2122,7 +2167,7 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
       // aggregated into a single warning after the loop.
       const breakpointReadFailures: string[] = [];
 
-      for (const style of styles) {
+      const styleResults = await mapWithConcurrency(styles as any[], COLLECT_CONCURRENCY, async (style: any) => {
         try {
           const id = style.id;
           // Read the sync taxonomy BEFORE any async Style operation: element-
@@ -2158,14 +2203,15 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
               }
             });
 
+            let breakpointError: string | undefined;
             if (breakpoints) {
               breakpointProperties = breakpoints.properties;
               if (breakpoints.errors.length > 0) {
-                breakpointReadFailures.push(breakpoints.errors[0]);
+                breakpointError = breakpoints.errors[0];
               }
             }
 
-            styleData.push({
+            return { breakpointError, style: {
               id: id,
               // Element-scoped styles may have no usable name; the worker
               // falls back to `style.name || style.id`.
@@ -2176,11 +2222,18 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
               hasVariables: hasVariables,
               ...(meta.source ? { source: meta.source } : {}),
               ...(breakpointProperties ? { breakpointProperties } : {})
-            });
+            } };
           }
         } catch (styleError) {
           console.warn('Error processing style:', styleError);
         }
+        return null;
+      }, report('styles'));
+      // Kept in style order, so the reported failure does not depend on which read finished first.
+      for (const result of styleResults) {
+        if (!result) continue;
+        styleData.push(result.style);
+        if (result.breakpointError) breakpointReadFailures.push(result.breakpointError);
       }
 
       const breakpointWarning = summarizeBreakpointReadFailures(breakpointReadFailures);
@@ -2201,6 +2254,8 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
     });
   }
 
+  timer?.lap('styles');
+
   // Pages Collection
   try {
     if (webflow.getAllPagesAndFolders) {
@@ -2208,7 +2263,7 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
       const pageData: any[] = [];
       const items = Array.isArray(pagesAndFolders) ? pagesAndFolders : [];
 
-      for (const item of items) {
+      const pageResults = await mapWithConcurrency(items as any[], COLLECT_CONCURRENCY, async (item: any) => {
         try {
           // Filter out folders, only include pages
           if (item.type === 'Page') {
@@ -2308,7 +2363,7 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
               console.warn(`SEO data collection failed for page ${name}:`, seoError);
             }
 
-            pageData.push({
+            return {
               id: item.id,
               name: name,
               slug: slug,
@@ -2323,12 +2378,14 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
               isHomePage: isHomePage,
               hasValidNaming: hasValidNaming,
               seo: seoData
-            });
+            };
           }
         } catch (pageError) {
           console.warn('Error processing page:', pageError);
         }
-      }
+        return null;
+      }, report('pages'));
+      pageData.push(...pageResults.filter((page) => page !== null));
 
       data.pages = pageData;
       console.log(`Pages collected: ${pageData.length}`);
@@ -2341,6 +2398,8 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
       error: error instanceof Error ? error.message : String(error)
     });
   }
+
+  timer?.lap('pages');
 
   // Current Page SEO Analysis
   try {
@@ -2372,6 +2431,12 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
       error: error instanceof Error ? error.message : String(error)
     });
   }
+
+  timer?.lap('siteInfo');
+  timer?.count('variables', data.variables?.collections?.reduce((sum, collection) => sum + (collection.variables?.length || 0), 0));
+  timer?.count('components', data.components?.length);
+  timer?.count('styles', data.styles?.length);
+  timer?.count('pages', data.pages?.length);
 
   // Flags and totals derived from the collected data (shared with the
   // headless collector)
@@ -2691,6 +2756,7 @@ function buildReportMarkdown(): string {
     domainLastPublished: scope?.domainLastPublished || null,
     extensionVersion: EXTENSION_VERSION,
     workerVersion: knownWorkerVersion,
+    timings: data.timings,
   };
 
   return buildReportMarkdownPure(input);

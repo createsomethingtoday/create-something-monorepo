@@ -22,6 +22,13 @@ published: true
 2. Use advanced candidates when keyboard behavior, validation, and fallback states are understood.
 3. Keep errors and required evidence visible.
 
+Give `Combobox` a descriptive `ariaLabel` that matches its visible field heading,
+such as "Destination". The keyboard highlight identifies the option being
+explored; the checkmark identifies the committed value. Enter commits the
+highlighted option, while Escape closes the menu and preserves the prior value.
+The highlighted option needs a visible cue in both owning palettes and forced
+colors, as well as a valid active-descendant relationship for assistive technology.
+
 ## Related
 
 - [Form Controls](/canon/components/form)

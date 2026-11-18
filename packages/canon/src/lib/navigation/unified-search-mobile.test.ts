@@ -112,3 +112,14 @@ describe('UnifiedSearch mobile campaign controls', () => {
 		expect(target.querySelector('[aria-label="Open search"]')).not.toBeNull();
 	});
 });
+
+it('preserves an existing body scroll policy while closed and restores it after dismissal',()=>{
+ document.body.style.overflow='auto';
+ target=document.createElement('div');document.body.append(target);
+ const content=createRawSnippet(()=>({render:()=>'<input aria-label="Local search"/>'}));
+ instance=mount(UnifiedSearch,{target,props:{content,enableAnalytics:false,showMobileButton:false}}) as Record<string,unknown>;flushSync();
+ expect(document.body.style.overflow).toBe('auto');
+ window.dispatchEvent(new KeyboardEvent('keydown',{key:'k',metaKey:true}));flushSync();expect(document.body.style.overflow).toBe('hidden');
+ window.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));flushSync();expect(document.body.style.overflow).toBe('auto');
+ document.body.style.overflow='';
+});

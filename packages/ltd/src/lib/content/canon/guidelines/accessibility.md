@@ -3,22 +3,14 @@ category: "Canon"
 section: "Guidelines"
 title: "Accessibility"
 description: "WCAG 2.1 AA accessibility guidelines for the Canon Design System"
-lead: "Accessibility is not a feature—it's a foundation. Every component in Canon is built to WCAG 2.1 AA standards, ensuring all users can interact with your interfaces."
+lead: "Accessibility is not a feature—it's a foundation. Use the shared controls and verify WCAG AA requirements in the consuming surface."
 publishedAt: "2026-01-08"
 published: true
 ---
 
 ## Color Contrast
 
-All text in the Canon system meets WCAG AA contrast requirements. The minimum ratio is 4.5:1 for normal text and 3:1 for large text.
-
-| Text Type | Ratio | Token |
-|-----------|-------|-------|
-| Primary Text | 21:1 | `--color-performance-fg-primary` |
-| Secondary Text | 13.7:1 | `--color-performance-fg-secondary` |
-| Muted Text | 4.56:1 | `--color-performance-fg-muted` |
-
-**Note:** `--color-performance-fg-subtle` (0.2 opacity) does not meet AA contrast and should only be used for decorative elements, never for informational content.
+Use a minimum contrast ratio of 4.5:1 for normal text and 3:1 for large text. Verify actual foreground/background pairs in each owning palette and interaction state; a token name alone does not establish conformance. Subtle roles and separator borders are not general-purpose informational text or control boundaries.
 
 ### Clear Proof and Status Surfaces
 
@@ -106,7 +98,7 @@ Use live regions to announce dynamic content changes to screen readers.
 
 ## Reduced Motion
 
-Respect users who prefer reduced motion. All animations in Canon include reduced motion alternatives.
+Respect users who prefer reduced motion. Verify that the consuming surface retains meaning and available actions with reduced motion.
 
 ```css
 @media (prefers-reduced-motion: reduce) {
@@ -124,20 +116,14 @@ Respect users who prefer reduced motion. All animations in Canon include reduced
 
 ## High Contrast Mode
 
-Canon supports `prefers-contrast: more` with enhanced visibility tokens.
-
-| Token | Standard | High Contrast |
-|-------|----------|---------------|
-| `--color-performance-fg-muted` | 0.46 opacity | 0.75 opacity |
-| `--color-performance-border-default` | 0.1 opacity | 0.3 opacity |
-| `--color-performance-focus` | 0.5 opacity | 0.9 opacity |
+Test `prefers-contrast: more` and forced-colors on the consuming surface. Preserve visible focus, control boundaries and textual state labels. Do not infer support from a static token table.
 
 ## Checklist
 
 Use this checklist when building with Canon components.
 
 ### Perceivable
-- All images have descriptive alt text
+- Meaningful images have concise descriptions; decorative images have empty alt text or no redundant accessible name
 - Color is not the only way to convey information
 - Text contrast meets 4.5:1 minimum
 - Content is readable at 200% zoom

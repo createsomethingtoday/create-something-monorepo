@@ -1,10 +1,11 @@
-# Webflow Way Validator v1.3.9
+# Webflow Way Validator v1.3.12
 
 ## Changes/Fixes
 
-- No change to checks, results, or the panel. Creators see the same report as in 1.3.8.
-- The client-side checks (Style System, canvas heading order and image alt text, Page Structure, Variable Modes) now come from one shared module that the template validation command line tool also uses, so both report the same findings.
+- Faster runs on large sites: the Validator reads variables, components, styles and pages eight at a time, not one at a time.
+- The progress bar moves during the read and says what is being read ("Reading components (120 of 377)...").
+- No change to checks or findings.
 
 ## Worker pairing
 
-No Worker change required. Works with Worker 2.7.0.
+No Worker change required. Works with Worker 2.13.2.

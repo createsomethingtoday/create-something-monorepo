@@ -3,14 +3,14 @@ import recoveryPolicy from '../docs/connection-recovery-policy.json';
 import type { Principal } from './domain-types';
 import type { RuntimeEnv } from './env';
 export const CONNECTION = Object.freeze({
- id:'a2a-inbox',revision:'2026-11-13.1',bindingRevision:'renewable-0.1.2',
+ id:'a2a-inbox',revision:'2026-11-17.1',bindingRevision:'renewable-0.1.2',
  expected:Object.freeze({client:'oauth_chatgpt_44e6fb875ebf',app:'asdk_app_6af688c38ffc8191a32e149b35c6c95e',plugin:'plugins_6af2716266c88191bebfb9bd3e74c4e7',release:'pluginrel_6af69941bbd88191b758785434f6559d',resource:'https://a2a.createsomething.agency/mcp'})
 });
 export function connectionStatus(env:RuntimeEnv,p?:Principal){
  return {connectionId:CONNECTION.id,contractRevision:CONNECTION.revision,bindingRevision:CONNECTION.bindingRevision,buildRevision:env.BUILD_REVISION,
   transport:{resource:env.AUTH_RESOURCE,issuer:env.IDENTITY_ISSUER,protocolVersion:'2025-03-26'},
   binding:{expected:CONNECTION.expected,observed:'unknown',expectationApplies:env.AUTH_RESOURCE===CONNECTION.expected.resource},
-  ...(p?{principal:{subject:p.subject},allowedOperations:[...(p.scopes.includes('a2a:read')?['read','connection_status']:[]),...(p.scopes.includes('a2a:read')&&p.scopes.includes('a2a:write')?['send','claim','finish']:[])],renewal:{hostRefresh:'unknown',consent:'unknown',serverAuthentication:'confirmed',identityAudit:p.renewal??'unknown'},nextAction:'none'}:{nextAction:'authenticate_for_owner_status'})};
+  ...(p?{profileId:p.subject,selectedGrant:{reference:p.connectionId&&/^[A-Za-z0-9_-]{1,128}$/.test(p.connectionId)?p.connectionId:null,source:'validated_credentials',renewalAttribution:'unknown'},principal:{subject:p.subject,clientId:p.clientId,accessExpiresAt:p.accessExpiresAt},allowedOperations:[...(p.scopes.includes('a2a:read')?['read','connection_status']:[]),...(p.scopes.includes('a2a:read')&&p.scopes.includes('a2a:write')?['send','claim','finish']:[])],renewal:{renewableGrant:p.scopes.includes('offline_access'),...(!p.scopes.includes('offline_access')?{warning:'This access token lacks offline_access. Refresh the host App metadata and explicitly reconsent to renewable access; host refresh persistence remains unverified.'}:{}),hostRefresh:'unknown',consent:'unknown',serverAuthentication:'confirmed',identityAuditScope:'owner_client_resource_aggregate',selectedGrantRenewal:'unknown',identityAudit:p.renewal??'unknown'},nextAction:p.scopes.includes('offline_access')?'none':'refresh_host_metadata_and_reconsent'}:{nextAction:'authenticate_for_owner_status'})};
 }
 export interface RecoveryInput {status?:number;code?:string;write?:boolean;uncertain?:boolean;attempt?:number;retryAfter?:string|null;now?:number;}
 /** Advice only: never runs retries or changes consent. attempt is zero-based. */

@@ -117,6 +117,8 @@ function walkSourceFiles(root: string): string[] {
 	const files: string[] = [];
 	for (const entry of readdirSync(root)) {
 		const path = `${root}/${entry}`;
+		// Ignored Astryx theme outputs own their internal tokens; inspect the source themes instead.
+		if (/\/agency\/src\/lib\/npg\/astryx\/npg(?:-composer)?\.css$/.test(path)) continue;
 		if (statSync(path).isDirectory()) {
 			files.push(...walkSourceFiles(path));
 		} else if (/\.(?:css|svelte|ts)$/.test(entry)) {

@@ -6,12 +6,12 @@
   --border: var(--color-performance-measured-rule);
   --paper: var(--color-performance-fg-primary);
   --ink: var(--color-performance-bg-pure);
-  --font-sans: var(--font-performance-interface);
-  --font-mono: var(--font-performance-mono);
+  --dots-font-sans: var(--font-performance-interface);
+  --dots-font-mono: var(--font-performance-mono);
   --ease: var(--ease-performance-standard);
   background: var(--background);
   color: var(--foreground);
-  font: 16px/1.5 var(--font-sans);
+  font: 16px/1.5 var(--dots-font-sans);
 }
 /* Canon measured-whimsy palette and the existing, licensed house fonts. */
 /* The six-chapter ruler precedes this route in the shared shell. Its short
@@ -93,7 +93,7 @@
 }
 .openai-dots .mono,
 .openai-dots .eyebrow {
-  font: 11px/1.5 var(--font-mono);
+  font: 11px/1.5 var(--dots-font-mono);
   letter-spacing: 0.035em;
 }
 .openai-dots .sr-only,
@@ -484,7 +484,7 @@
   gap: 12px;
 }
 .openai-dots .paper-mini {
-  font: 8px/1.6 var(--font-mono);
+  font: 8px/1.6 var(--dots-font-mono);
   letter-spacing: 0.04em;
 }
 .openai-dots .paper-title {
@@ -651,7 +651,7 @@
   display: flex;
   gap: 12px;
   align-items: center;
-  font: 10px var(--font-mono);
+  font: 10px var(--dots-font-mono);
   margin: 24px 0;
 }
 .openai-dots .decision-line i {
@@ -1144,4 +1144,15 @@
 }
 .openai-dots .faq {
   margin-top: 64px;
+}
+
+/* The opening owns a background. Character detail belongs with the explanation below. */
+.openai-dots .hero-grid { grid-template-columns:minmax(0,1fr); background:url('/images/canon-agency-v1/hero-wide-v2.webp') center bottom / 100% auto no-repeat; }
+.openai-dots .hero-copy { max-width:44%; }
+.openai-dots .possibilities .canon-portrait { max-width:540px; margin:2rem auto; }
+.openai-dots .canon-desk { width:96px; height:96px; }
+@media(max-width:767px) {
+  .openai-dots .hero-grid { display:block; background:none; }
+  .openai-dots .hero-copy { max-width:none; }
+  .openai-dots .hero-grid::after { content:''; display:block; width:100%; aspect-ratio:1122/1402; margin-top:2rem; background:url('/images/canon-agency-v1/hero-portrait-v1.webp') center / contain no-repeat; }
 }

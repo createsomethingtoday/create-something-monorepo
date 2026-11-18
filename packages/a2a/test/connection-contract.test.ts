@@ -26,7 +26,7 @@ test('descriptors never widen status privileges; receipt IDs are generated per i
  const principal={subject:'owner',scopes:['a2a:read'],admin:false};
  const rpc=async(method:string,params:unknown={})=>(await(await mcpRoute(new Request(env.BASE_URL+'/mcp',{method:'POST',body:JSON.stringify({jsonrpc:'2.0',id:1,method,params})}),env,principal)).json()) as any;
  const list=await rpc('tools/list');const descriptor=list.result.tools.find((t:any)=>t.name==='a2a_connection_status');
- assert.equal(descriptor.annotations.readOnlyHint,true);assert.deepEqual(descriptor.securitySchemes,[{type:'oauth2',scopes:['a2a:read']}]);assert.ok(!list.result.tools.some((t:any)=>t.name==='a2a_send_message'));
+ assert.equal(descriptor.annotations.readOnlyHint,true);assert.deepEqual(descriptor.securitySchemes,[{type:'oauth2',scopes:['a2a:read','offline_access']}]);assert.deepEqual(descriptor._meta.securitySchemes,descriptor.securitySchemes);assert.ok(!list.result.tools.some((t:any)=>t.name==='a2a_send_message'));
  const a=await rpc('tools/call',{name:'a2a_connection_status'}),b=await rpc('tools/call',{name:'a2a_connection_status'});assert.notEqual(a.result._meta.receipt.requestId,b.result._meta.receipt.requestId);
 });
 
@@ -35,4 +35,31 @@ test('HTTP recovery advice honors the returned Retry-After',async()=>{
  const response=await app.fetch(new Request(env.BASE_URL+'/'),{...env,ASSETS:{fetch(){throw new Error('synthetic unavailable');}}} as unknown as RuntimeEnv);
  assert.equal(response.status,503);const body:any=await response.json();
  assert.equal(body.recovery.delayMs,Number(response.headers.get('retry-after'))*1000);
+});
+
+
+test('tool consent metadata requests renewable grants without widening read tools',async()=>{
+ const p={subject:'owner',scopes:['a2a:read','a2a:write'],admin:false};
+ for(const shared of [false,true]){
+  const response=await mcpRoute(new Request(env.BASE_URL+'/mcp',{method:'POST',body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/list'})}),{...env,SHARED_INBOXES_ENABLED:shared?'true':'false'},p);
+  const body:any=await response.json();
+  for(const t of body.result.tools){
+   assert.deepEqual(t.securitySchemes,[{type:'oauth2',scopes:t.annotations.readOnlyHint?['a2a:read','offline_access']:['a2a:read','a2a:write','offline_access']}]);
+   assert.deepEqual(t._meta.securitySchemes,t.securitySchemes);
+  }
+ }
+});
+
+test('authenticated status separates signed renewable consent from unknown host persistence',async()=>{
+ const {connectionStatus}=await import('../src/connection');
+ for(const renewable of [false,true]){
+  const p={subject:'owner',scopes:['a2a:read',...(renewable?['offline_access']:[])],admin:false,clientId:'verified-client',accessExpiresAt:1234567890000};
+  const status=connectionStatus(env,p);
+  assert.ok('renewal' in status&&'principal' in status);
+  assert.equal(status.renewal?.renewableGrant,renewable);
+  assert.equal(status.renewal?.hostRefresh,'unknown');assert.equal(status.binding.observed,'unknown');
+  assert.equal(status.principal?.clientId,'verified-client');assert.equal(status.principal?.accessExpiresAt,1234567890000);
+  assert.equal(status.nextAction,renewable?'none':'refresh_host_metadata_and_reconsent');
+  if(!renewable)assert.match(status.renewal?.warning??'',/offline_access/);
+ }
 });

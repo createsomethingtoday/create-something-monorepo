@@ -8,9 +8,15 @@
  * stored, or included in an error message.
  */
 
+import { pageSlugsFromDataApi, type DataApiPageLike } from '../../../shared/page-slugs';
+
 export const DEFAULT_VALIDATOR_MCP_SERVER_URL = 'https://mcp.webflow.com/mcp';
 const MCP_PROTOCOL_VERSION = '2025-06-18';
-const MCP_TIMEOUT_MS = 15_000;
+const MCP_TIMEOUT_MS = 25_000;
+const PAGES_CONTEXT =
+	"The template validation worker lists this site's pages to confirm that the validation run it records checked every published page of the template.";
+const PAGE_LIST_LIMIT = 100;
+const PAGE_LIST_MAX_CALLS = 30;
 const EVIDENCE_CONTEXT =
 	"The template validation worker reads this site's details to confirm the submitting client has access before recording validation results.";
 
@@ -20,6 +26,11 @@ export interface OauthSiteAccessVerified {
 	workspaceId: string | null;
 	shortName: string | null;
 	publishedHosts: string[];
+	/**
+	 * Paths of the published pages a full run must check, read by the worker
+	 * itself. Null when the page list could not be read.
+	 */
+	pagePaths: string[] | null;
 }
 
 export interface OauthSiteAccessFailed {
@@ -128,12 +139,41 @@ export async function verifyOauthSiteAccess(
 		if (site.id !== siteId) return { ok: false, reason: 'get_site returned a different site id' };
 
 		const shortName = typeof site.shortName === 'string' && site.shortName.trim() !== '' ? site.shortName.trim() : null;
+
+		// Read the page list here, with the same token, so the worker (not the client) decides
+		// which pages a full run must cover. A failed read leaves pagePaths null.
+		let pagePaths: string[] | null = null;
+		try {
+			const mcpSession = /ses_[0-9A-Za-z]{27}/.exec(JSON.stringify(result))?.[0] ?? 'start';
+			const pages: DataApiPageLike[] = [];
+			for (let call = 0; call < PAGE_LIST_MAX_CALLS; call += 1) {
+				const listed = await request(3 + call, 'tools/call', {
+					name: 'data_pages_tool',
+					arguments: {
+						actions: [{ label: 'pages', list_pages: { site_id: siteId, limit: PAGE_LIST_LIMIT, offset: pages.length } }],
+						session_id: mcpSession,
+						agent_id: `validation-worker|evidence|${randomShortId()}`,
+						context: PAGES_CONTEXT
+					}
+				});
+				if (listed.isError) throw new Error('list_pages returned an error result');
+				const batch = findPageList(toolPayload(listed));
+				if (!batch) throw new Error('list_pages result did not include pages');
+				pages.push(...batch.pages);
+				if (batch.pages.length < PAGE_LIST_LIMIT || pages.length >= batch.total) break;
+			}
+			pagePaths = pageSlugsFromDataApi(pages);
+		} catch {
+			pagePaths = null;
+		}
+
 		return {
 			ok: true,
 			siteId: site.id,
 			workspaceId: typeof site.workspaceId === 'string' ? site.workspaceId : null,
 			shortName,
-			publishedHosts: collectPublishedHosts(shortName, site.customDomains)
+			publishedHosts: collectPublishedHosts(shortName, site.customDomains),
+			pagePaths
 		};
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
@@ -226,6 +266,28 @@ function toolPayload(result: Record<string, unknown>): unknown {
 		} catch {
 			// Not JSON; keep looking.
 		}
+	}
+	return null;
+}
+
+// Find the list_pages result: an object with a `pages` array, possibly nested or in an array.
+function findPageList(node: unknown, depth = 0): { pages: DataApiPageLike[]; total: number } | null {
+	if (depth > 6 || !node || typeof node !== 'object') return null;
+	if (Array.isArray(node)) {
+		for (const item of node) {
+			const found = findPageList(item, depth + 1);
+			if (found) return found;
+		}
+		return null;
+	}
+	const record = node as Record<string, unknown>;
+	if (Array.isArray(record.pages)) {
+		const total = (record.pagination as { total?: unknown } | undefined)?.total;
+		return { pages: record.pages as DataApiPageLike[], total: typeof total === 'number' ? total : record.pages.length };
+	}
+	for (const value of Object.values(record)) {
+		const found = findPageList(value, depth + 1);
+		if (found) return found;
 	}
 	return null;
 }

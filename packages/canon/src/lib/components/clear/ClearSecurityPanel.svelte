@@ -71,11 +71,11 @@
 		isolation: isolate;
 		overflow: clip;
 		padding-block: 4.5rem;
-		border-bottom: 1px solid var(--color-performance-ink, #090909);
+		border-bottom: 1px solid var(--color-performance-line);
 		background:
-			linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px) 0 0 / 4rem 4rem,
-			var(--color-performance-ink, #090909);
-		color: #ffffff;
+			linear-gradient(90deg, color-mix(in srgb, var(--color-performance-ink) 7%, transparent) 1px, transparent 1px) 0 0 / 4rem 4rem,
+			var(--color-performance-paper);
+		color: var(--color-performance-ink);
 	}
 
 	.clear-security-panel__inner {
@@ -98,22 +98,22 @@
 		min-height: 1.9rem;
 		align-items: center;
 		padding: 0.36rem 0.62rem;
-		border: 1px solid rgba(255, 255, 255, 0.18);
+		border: 1px solid color-mix(in srgb, var(--color-performance-ink) 18%, transparent);
 		border-radius: var(--radius-performance-sm, 4px);
-		background: rgba(255, 255, 255, 0.08);
-		color: rgba(255, 255, 255, 0.72);
+		background: color-mix(in srgb, var(--color-performance-ink) 8%, transparent);
+		color: var(--color-performance-fg-secondary);
 		font-family: var(--font-performance-mono);
-		font-size: 0.76rem;
+		font-size: 0.875rem;
 		font-weight: var(--font-performance-semibold);
 		letter-spacing: 0;
 		line-height: 1.15;
-		text-transform: uppercase;
+		text-transform: none;
 	}
 
 	.clear-security-panel h2 {
 		margin: 0;
 		max-width: 14ch;
-		color: #ffffff;
+		color: var(--color-performance-ink);
 		font-size: 3.25rem;
 		font-weight: var(--font-performance-medium);
 		letter-spacing: 0;
@@ -124,7 +124,7 @@
 	.clear-security-panel__header p {
 		margin: 0;
 		max-width: 40rem;
-		color: rgba(255, 255, 255, 0.72);
+		color: var(--color-performance-fg-secondary);
 		font-size: 1.08rem;
 		line-height: 1.55;
 		text-wrap: pretty;
@@ -145,9 +145,9 @@
 
 	.clear-security-panel__items article,
 	.clear-security-panel__logs {
-		border: 1px solid rgba(255, 255, 255, 0.16);
+		border: 1px solid color-mix(in srgb, var(--color-performance-ink) 16%, transparent);
 		border-radius: var(--radius-performance-sm, 4px);
-		background: rgba(255, 255, 255, 0.08);
+		background: color-mix(in srgb, var(--color-performance-ink) 8%, transparent);
 	}
 
 	.clear-security-panel__items article {
@@ -160,17 +160,17 @@
 
 	.clear-security-panel__items article span,
 	.clear-security-panel__logs span {
-		color: rgba(255, 255, 255, 0.62);
+		color: var(--color-performance-fg-secondary);
 		font-family: var(--font-performance-mono);
-		font-size: 0.72rem;
+		font-size: 0.875rem;
 		font-weight: var(--font-performance-medium);
 		letter-spacing: 0;
 		line-height: 1.12;
-		text-transform: uppercase;
+		text-transform: none;
 	}
 
 	.clear-security-panel__items article strong {
-		color: #ffffff;
+		color: var(--color-performance-ink);
 		font-size: 1.18rem;
 		font-weight: var(--font-performance-medium);
 		line-height: 1.16;
@@ -179,7 +179,7 @@
 
 	.clear-security-panel__items article p {
 		margin: 0;
-		color: rgba(255, 255, 255, 0.72);
+		color: var(--color-performance-fg-secondary);
 		font-size: 0.94rem;
 		line-height: 1.48;
 		text-wrap: pretty;
@@ -197,15 +197,15 @@
 		align-items: center;
 		min-height: 2.55rem;
 		padding-inline: 1rem;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.16);
-		background: rgba(255, 255, 255, 0.07);
+		border-bottom: 1px solid color-mix(in srgb, var(--color-performance-ink) 16%, transparent);
+		background: color-mix(in srgb, var(--color-performance-ink) 7%, transparent);
 	}
 
 	.clear-security-panel__terminal-bar i {
 		width: 0.48rem;
 		height: 0.48rem;
 		border-radius: 999px;
-		background: rgba(255, 255, 255, 0.35);
+		background: color-mix(in srgb, var(--color-performance-ink) 35%, transparent);
 	}
 
 	.clear-security-panel__terminal-bar i:first-child {
@@ -220,7 +220,7 @@
 		display: grid;
 		gap: 0.25rem;
 		padding: 0.82rem 1rem;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+		border-bottom: 1px solid color-mix(in srgb, var(--color-performance-ink) 12%, transparent);
 	}
 
 	.clear-security-panel__logs div:last-child {
@@ -228,9 +228,9 @@
 	}
 
 	.clear-security-panel__logs strong {
-		color: #ffffff;
+		color: var(--color-performance-ink);
 		font-family: var(--font-performance-mono);
-		font-size: 0.86rem;
+		font-size: 0.875rem;
 		font-weight: var(--font-performance-medium);
 		line-height: 1.35;
 		overflow-wrap: anywhere;

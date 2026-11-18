@@ -1,0 +1,56 @@
+{
+  "timestampUTC": "2026-11-16T19:21:32.709372+00:00",
+  "stillsApproval": "approved",
+  "publicationAuthorization": "enable publication in pass",
+  "approvedAssets": [
+    {
+      "file": "01-integrated-tools.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1694390,
+      "sha256": "2aa69baa7e50b0da9e70474b9f6c2b2267b7c78fcf7b875c59f9e521a148a3f8",
+      "decodePassed": true
+    },
+    {
+      "file": "02-inspect-connection.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1784699,
+      "sha256": "45bcfd767d1d7dbe183c4d210a403bbf3bf4b86652efd7608408e1d6c7adc0ba",
+      "decodePassed": true
+    },
+    {
+      "file": "03-operator-guidance.png",
+      "width": 1671,
+      "height": 941,
+      "bytes": 1664330,
+      "sha256": "c1f9ffc5a1459d7387b5177105fd58f9dbb611cfd042749bbeb73ef7b96167ab",
+      "decodePassed": true
+    },
+    {
+      "file": "04-hero.png",
+      "width": 1671,
+      "height": 941,
+      "bytes": 952470,
+      "sha256": "8a258b932879378ad9242e3364e6e40c4d011d5787634df62d8a38a01dc4f9f4",
+      "decodePassed": true
+    },
+    {
+      "file": "05-connected-workflow.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1342858,
+      "sha256": "91143e96c09d4f261b9f08132e5df9c7ad57e85abbee2bd00ffa82167ff727e8",
+      "decodePassed": true
+    },
+    {
+      "file": "06-delivered-system.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2232158,
+      "sha256": "d7d4a054b06c418649defc3b87fc425d19f8913160c59abe2689106ff079a040",
+      "decodePassed": true
+    }
+  ],
+  "scope": "Approved six images for Agency landing page; implementation, checks and publication authorized. Preserve historical critic judgments; human acceptance is separate."
+}

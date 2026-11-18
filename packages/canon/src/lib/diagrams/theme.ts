@@ -10,11 +10,11 @@ import type { Property } from '../analytics/types.js';
  * Each property has a distinct but Canon-compliant accent
  */
 export const propertyAccents: Record<Property, string> = {
-  io: '#60a5fa', // Blue - research, documentation
-  space: '#22c55e', // Green - practice, experiments
-  agency: '#c084fc', // Purple - services, commercial
-  ltd: '#ffffff', // White - philosophy, pure Canon
-  lms: '#fbbf24', // Amber - learning, education
+  io: 'color-mix(in srgb, var(--color-performance-data-1, #60a5fa) 60%, var(--color-performance-fg-primary, #f2f2f2))', // Blue - research, documentation
+  space: 'color-mix(in srgb, var(--color-performance-data-2, #22c55e) 60%, var(--color-performance-fg-primary, #f2f2f2))', // Green - practice, experiments
+  agency: 'color-mix(in srgb, var(--color-performance-data-3, #c084fc) 60%, var(--color-performance-fg-primary, #f2f2f2))', // Purple - services, commercial
+  ltd: 'var(--color-performance-fg-primary, #f2f2f2)', // White - philosophy, pure Canon
+  lms: 'color-mix(in srgb, var(--color-performance-data-4, #fbbf24) 60%, var(--color-performance-fg-primary, #f2f2f2))', // Amber - learning, education
 };
 
 /**
@@ -41,12 +41,12 @@ export const theme = {
 
     // Data visualization
     data: [
-      'var(--color-performance-data-1, #60a5fa)',
-      'var(--color-performance-data-2, #22c55e)',
-      'var(--color-performance-data-3, #c084fc)',
-      'var(--color-performance-data-4, #fbbf24)',
-      'var(--color-performance-data-5, #f472b6)',
-      'var(--color-performance-data-6, #facc15)',
+      'color-mix(in srgb, var(--color-performance-data-1, #60a5fa) 60%, var(--color-performance-fg-primary, #f2f2f2))',
+      'color-mix(in srgb, var(--color-performance-data-2, #22c55e) 60%, var(--color-performance-fg-primary, #f2f2f2))',
+      'color-mix(in srgb, var(--color-performance-data-3, #c084fc) 60%, var(--color-performance-fg-primary, #f2f2f2))',
+      'color-mix(in srgb, var(--color-performance-data-4, #fbbf24) 60%, var(--color-performance-fg-primary, #f2f2f2))',
+      'color-mix(in srgb, var(--color-performance-data-5, #f472b6) 60%, var(--color-performance-fg-primary, #f2f2f2))',
+      'color-mix(in srgb, var(--color-performance-data-6, #facc15) 60%, var(--color-performance-fg-primary, #f2f2f2))',
     ],
 
     // Semantic

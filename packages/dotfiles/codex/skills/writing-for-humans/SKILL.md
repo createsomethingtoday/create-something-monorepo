@@ -11,6 +11,8 @@ Optimize for use, not a detector score. Light writing has low cognitive load: th
 
 ## Apply the voice
 
+Use ASD-STE100 as the writing foundation for all CREATE SOMETHING writing. Follow the shared voice guide's STE rules, terminology process, and conformance boundary. These rules take precedence over conflicting style advice in supporting references, including advice about contractions, metaphors, or sentence variety. Other brands retain their own authorized standards.
+
 For CREATE SOMETHING work, read [the approved voice guide](references/create-something-voice.md) before drafting or revising. It is the shared voice source for this skill and the repository’s Voice Canon. Apply its property emphasis without forcing internal vocabulary into unrelated work. For another brand, preserve that brand’s approved voice and use this skill’s clarity workflow.
 
 Use this skill automatically for relevant writing work, or invoke it explicitly:
@@ -37,7 +39,7 @@ Keep property voice intact. Explain owned terms in plain language where the read
 4. Group two to four supporting ideas beneath the answer. Put evidence, examples, limits, and qualifications under the idea they support.
 5. Give each paragraph one job. Connect the paragraph's claim, evidence or example, meaning, and next point.
 6. Repair difficult sentences: make the main character the subject, express the main action as a verb, begin with familiar context, and place important new information near the end.
-7. Remove throat-clearing, repeated conclusions, inflated phrasing, hidden verbs, and unnecessary choices.
+7. Remove throat-clearing, repeated conclusions, inflated phrasing, hidden verbs, and unnecessary choices. For CREATE SOMETHING, check STE sentence limits, word meanings, verb forms, and consistent terminology. Record unresolved terms and preserved source text before making any conformance claim.
 8. Read once for factual integrity, once for reader use, and once aloud for voice and rhythm. For CREATE SOMETHING work, apply the Canon test and check all four pillars in the approved voice guide.
 
 ## Draft, edit, and learn

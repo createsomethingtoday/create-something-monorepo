@@ -1,6 +1,6 @@
 /** Local-only UI fixture host. No credentials, backend, or production proxy.
  * Build first, then node packages/a2a/scripts/ui-review-server.mjs.
- * /app?fixture=populated|empty|paused|partial-error|thread-error|denied|signin|error|loading|no-agent
+ * /app?fixture=populated|empty|paused|expired|expires-soon|revoked|unknown-expiry|partial-error|thread-error|denied|signin|error|loading|no-agent
  * All records are synthetic; writes stay in this process and reset on navigation.
  */
 import http from 'node:http';
@@ -42,7 +42,7 @@ http.createServer(async(req,res)=>{
  }
  if(url.pathname.startsWith('/api/v1/conversations/'))return mode==='thread-error'?json({error:{message:'Synthetic thread failure'}},503):json({threadId:url.pathname.split('/').at(-1),participants,messages:messages.filter(m=>m.threadId===url.pathname.split('/').at(-1)),hasMore:false,nextBefore:null});
  if(url.pathname==='/api/v1/grants')return json({grants:[{id:'grant-fixture',agentId:own,senderAgentId:peer,revokedAt:null}]});
- if(url.pathname==='/api/v1/subscriptions')return json({subscriptions:[{id:'subscription-fixture',agentId:own,status:'active',createdAt:now,expiresAt:now+86400000}]});
+ if(url.pathname==='/api/v1/subscriptions')return json({subscriptions:[{id:'subscription-fixture',agentId:own,status:mode==='revoked'?'revoked':'active',createdAt:now,expiresAt:mode==='unknown-expiry'?null:mode==='expired'||mode==='revoked'?Date.now()-1000:mode==='expires-soon'?Date.now()+6000:now+86400000}]});
  if(url.pathname==='/api/v1/deliveries')return json({deliveries:[{id:'delivery-fixture',messageId:'m1',subscriptionId:'subscription-fixture',state:'accepted',attempts:1,lastStatus:202,lastError:null,createdAt:now-3500000,acceptedAt:now-3490000}]});
  if(url.pathname==='/api/v1/context'||url.pathname==='/api/v1/owned-context')return json({resources:[],hasMore:false,nextAfter:null});
  return json({error:{code:'fixture_not_implemented',message:'This action is outside the local UI fixture.'}},400);
@@ -71,4 +71,4 @@ http.createServer(async(req,res)=>{
  }
  res.writeHead(200,{'Content-Type':mime[extname(file)]??'application/octet-stream','Cache-Control':'no-store'});res.end(content);
  }catch{res.writeHead(404);res.end('Local fixture resource unavailable');}
-}).listen(8873,'127.0.0.1',()=>console.log('Synthetic UI only: http://127.0.0.1:8873/app?fixture=populated'));
+}).listen(Number(process.env.PORT??8873),'127.0.0.1',()=>console.log(`Synthetic UI only: http://127.0.0.1:${process.env.PORT??8873}/app?fixture=populated`));

@@ -27,7 +27,7 @@ export const editorialPageTreatments = [
       }
     ],
     family: 'editorial',
-    image: 'macro',
+    image: null,
     shot: 'macro',
     focus: '54% 54%',
     caption: 'Concept illustration · inspection, not a reported test.',
@@ -40,7 +40,7 @@ export const editorialPageTreatments = [
     lede: "Automation completed 49 of 50 selected Webflow template evidence packets. Automated judgment remained blocked. Reviewer time savings were not measured.",
     ledeSelector: '.performance-campaign-opening__lede',
     family: 'editorial',
-    image: 'macro',
+    image: null,
     shot: 'macro',
     focus: '48% 58%',
     caption: 'Concept illustration · checking work. Measured review evidence follows.',
@@ -69,7 +69,7 @@ export const editorialPageTreatments = [
       }
     ],
     family: 'editorial',
-    image: 'hero',
+    image: null,
     shot: 'wide',
     focus: '62% 58%',
     caption: 'Concept illustration · shared work, not a contribution record.',
@@ -102,7 +102,7 @@ export const editorialPageTreatments = [
       }
     ],
     family: 'editorial',
-    image: 'team',
+    image: null,
     shot: 'medium',
     focus: '52% 54%',
     caption: 'Concept illustration · guided practice. Actual steps follow.',
@@ -113,7 +113,7 @@ export const editorialPageTreatments = [
   {
     route: '/workflows/[slug]',
     family: 'editorial',
-    image: 'macro',
+    image: null,
     shot: 'macro',
     focus: '58% 56%',
     caption: 'Concept illustration · inspect the task. Follow the guide for actual steps.',
@@ -160,7 +160,7 @@ export const editorialPageTreatments = [
   {
     route: '/arcs',
     family: 'editorial',
-    image: 'hero',
+    image: null,
     shot: 'wide',
     focus: '60% 62%',
     caption: 'Concept illustration · a working system. Catalog entries remain read-only presentations.',
@@ -171,7 +171,7 @@ export const editorialPageTreatments = [
   {
     route: '/arc/[slug]',
     family: 'editorial',
-    image: 'team',
+    image: null,
     shot: 'medium',
     focus: '50% 54%',
     caption: 'Concept illustration · coordinated work, not an executed workflow.',
@@ -182,7 +182,7 @@ export const editorialPageTreatments = [
   {
     route: '/arc/app-review-governance',
     family: 'editorial',
-    image: 'macro',
+    image: null,
     shot: 'macro',
     focus: '44% 54%',
     caption: 'Concept illustration · inspection. The Arc below is a reference fixture.',
@@ -197,7 +197,7 @@ export const editorialPageTreatments = [
     lede: "Our research lives on .io. Explore the experiments, evidence and limits.",
     ledeSelector: '.performance-campaign-opening__lede',
     family: 'editorial',
-    image: 'hero',
+    image: null,
     shot: 'wide',
     focus: '58% 62%',
     caption: 'Concept illustration · building and testing, not a published experiment.',
@@ -234,7 +234,7 @@ export const editorialPageTreatments = [
       }
     ],
     family: 'editorial',
-    image: 'team',
+    image: null,
     shot: 'medium',
     focus: '48% 52%',
     caption: 'Concept illustration · sharing a method. Publication status follows.',

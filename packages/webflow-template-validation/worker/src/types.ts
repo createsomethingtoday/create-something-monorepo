@@ -148,6 +148,8 @@ export interface ValidationSubmitRequest {
 			}>;
 		}>;
 		scope?: Partial<ValidationRunScope>;
+		/** Designer-side run times in milliseconds and item counts per step. Diagnostic only. */
+		timings?: unknown;
 	};
 }
 
@@ -477,6 +479,8 @@ export interface AnalyzedPage {
 	}>;
 	/** Images without a positive width and height attribute (layout shift; reviewers ask for both). */
 	imagesMissingDimensions?: number;
+	/** Images with no width and height attributes whose space the published CSS reserves. */
+	imagesSizedByCss?: number;
 	imagesMissingDimensionsDetails?: Array<{
 		src: string;
 		selector: string;

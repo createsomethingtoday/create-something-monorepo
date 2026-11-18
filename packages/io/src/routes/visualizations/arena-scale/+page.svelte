@@ -76,7 +76,7 @@
 	/>
 </svelte:head>
 
-<div class="container">
+<div class="container" data-theme="dark">
 	<header>
 		<h1>Arena-Scale Automation</h1>
 		<p class="subtitle">How Pattern Collection Enables AI-Native Systems Across Industries</p>

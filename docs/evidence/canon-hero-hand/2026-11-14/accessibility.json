@@ -1,0 +1,58 @@
+{
+  "heroFocus": {
+    "text": "Talk through your project ↗",
+    "href": "#next",
+    "outline": "rgb(255, 255, 255) solid 2px",
+    "outlineOffset": "3px",
+    "focusVisible": true,
+    "hero": true
+  },
+  "anchor": {
+    "hash": "#next",
+    "scrollY": 9553,
+    "targetTop": 96.40625
+  },
+  "reduced": {
+    "width": 1440,
+    "reduced": true,
+    "background": "url(\"http://127.0.0.1:5192/images/canon-agency-v1/hero-wide-v2.webp\")",
+    "heading": "Your tools shouldwork together.",
+    "animations": []
+  },
+  "nojs": [
+    {
+      "width": 320,
+      "docWidth": 310,
+      "bg": "url(\"http://127.0.0.1:5192/images/canon-agency-v1/hero-portrait-v1.webp\")",
+      "heading": "Your tools shouldwork together.",
+      "cta": [
+        {
+          "text": "Talk through your project ↗",
+          "href": "#next"
+        },
+        {
+          "text": "See the connection ↓",
+          "href": "#example"
+        }
+      ],
+      "scriptHydrated": false
+    },
+    {
+      "width": 1440,
+      "docWidth": 1430,
+      "bg": "url(\"http://127.0.0.1:5192/images/canon-agency-v1/hero-wide-v2.webp\")",
+      "heading": "Your tools shouldwork together.",
+      "cta": [
+        {
+          "text": "Talk through your project ↗",
+          "href": "#next"
+        },
+        {
+          "text": "See the connection ↓",
+          "href": "#example"
+        }
+      ],
+      "scriptHydrated": false
+    }
+  ]
+}

@@ -15,7 +15,12 @@
   import { toast } from '$lib/stores/toast';
   import { trackEvent } from '$lib/utils/analytics';
   import { getPortfolioTitle } from '$lib/utils/portfolio-title';
-  import { getActionableAssetWorkQueue } from '$lib/utils/asset-actions';
+  import {
+    APP_SUBMISSION_FORM_URL,
+    APP_UPDATE_GUIDANCE,
+    getActionableAssetWorkQueue,
+    isAppAssetType
+  } from '$lib/utils/asset-actions';
   import { ArrowDown, ChartNoAxesColumn, LoaderCircle, ShieldCheck } from 'lucide-svelte';
   import { reveal } from '$lib/motion/actions';
 
@@ -132,6 +137,13 @@
       asset_category: selectedAsset?.category,
       asset_subcategory: selectedAsset?.subcategory
     });
+
+    // Apps are updated in the submission form, not here.
+    if (isAppAssetType(selectedAsset?.type)) {
+      window.open(APP_SUBMISSION_FORM_URL, '_blank', 'noopener,noreferrer');
+      toast.info(APP_UPDATE_GUIDANCE);
+      return;
+    }
 
     openingEditAssetId = id;
     currentEditingAsset = null;
@@ -317,7 +329,7 @@
               </div>
             </div>
 
-            <!-- Two columns, each a stack. The last card in each grows, so both end level. -->
+            <!-- Two columns, each a stack at its natural height. -->
             <OverviewStats assets={data.assets || []} panel="performance" />
           </div>
           <div class="submission-column">
@@ -591,7 +603,8 @@
     display: grid;
     grid-template-columns: minmax(0, 1.2fr) minmax(24rem, 0.9fr);
     gap: var(--space-md) var(--space-lg);
-    align-items: stretch;
+    /* No stretching: a short column ends early instead of padding a card with empty space. */
+    align-items: start;
   }
 
   .quick-actions {
@@ -644,12 +657,29 @@
     margin-bottom: var(--space-xl);
   }
 
+  /* Narrower desktop: tighter cells, so six counts still fit on one line. */
+  @media (max-width: 1280px) {
+    .evidence-item {
+      padding-inline: 0.9rem;
+    }
+
+    .evidence-item--total {
+      padding-right: 1.15rem;
+    }
+
+    .evidence-item--total + .evidence-item {
+      padding-left: 1.15rem;
+    }
+  }
+
   /* One column: summary, then submission status (can I submit?), then the
      two stat cards. The column wrappers dissolve so their children can reorder. */
   @media (max-width: 1100px) {
     .overview-top {
       display: flex;
       flex-direction: column;
+      /* In a column the cross axis is horizontal: every block fills the row. */
+      align-items: stretch;
       gap: var(--space-md);
     }
 

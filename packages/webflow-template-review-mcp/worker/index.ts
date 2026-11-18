@@ -28,6 +28,7 @@ import {
 } from '../src/reviewer-directory.js';
 import { registerTools } from '../src/tools.js';
 import { parseZendeskGroupId, ZendeskClient } from '../src/zendesk.js';
+import { buildReviewCommentsClient } from '../src/review-comments.js';
 import { handleThumbnailProxyRequest, THUMBNAIL_PROXY_PATH } from '../src/thumbnail-proxy.js';
 import {
   buildScreenshotViewUrl,
@@ -81,6 +82,12 @@ interface Env {
   ZENDESK_SUBDOMAIN?: string;
   /** Zendesk group that owns Marketplace review tickets; search default + status-write boundary. */
   MARKETPLACE_ZENDESK_GROUP_ID?: string;
+  /** Review comments service origin (repo webflow/marketplace-review-comments, Webflow Cloud). With REVIEW_COMMENTS_API_KEY, enables the review comment tools. */
+  REVIEW_COMMENTS_URL?: string;
+  /** This MCP's reviewer-scoped key from the comments Worker's CALLER_KEYS (secret). */
+  REVIEW_COMMENTS_API_KEY?: string;
+  /** "airtable" when the Airtable automation sends decision feedback for templates; unset = this MCP sends it. */
+  REVIEW_COMMENTS_DECISIONS?: string;
   /** cms:write site token for the Marketplace site (secret) — enables delist/relist. Infisical dev /webflow/template-marketplace TEMPLATE_MARKETPLACE. */
   MARKETPLACE_CMS_TOKEN?: string;
 }
@@ -131,6 +138,7 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
     };
 
     const zendesk = buildZendesk(this.env);
+    const reviewComments = buildReviewCommentsClient(this.env.REVIEW_COMMENTS_URL, this.env.REVIEW_COMMENTS_API_KEY);
 
     const runtimePolicy = resolveRuntimePolicy({
       authMode: this.props?.authMode,
@@ -161,6 +169,8 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
           apiKey: this.env.MARKETPLACE_ADMIN_API_KEY,
         },
         getZendeskClient: () => zendesk,
+        getReviewCommentsClient: () => reviewComments,
+        decisionFeedbackByAutomation: this.env.REVIEW_COMMENTS_DECISIONS === 'airtable',
         marketplaceCms: { siteToken: this.env.MARKETPLACE_CMS_TOKEN },
         communityQueue: { getBinding: () => this.env.COMMUNITY_QUEUE ?? null },
         ...(this.env.BROWSER

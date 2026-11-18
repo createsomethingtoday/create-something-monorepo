@@ -95,9 +95,21 @@ Optional:
 - `app_review_update_exception_item`
 - `app_review_update_asset_metadata`
 - `app_review_set_marketplace_status`
+- `app_review_get_live_listing`
+- `app_review_set_live_listing`
 
 Write posture:
 
+- `app_review_get_live_listing` and `app_review_set_live_listing` read and write the live
+  Webflow listing profile (MRP), not Airtable. Both are off until the worker secret
+  `MARKETPLACE_ADMIN_API_KEY` is set. The write sets only `status` and `visibility`. It needs a
+  signed-in reviewer (`/access/mcp`), `confirm_live_listing_write: true`, the expected current
+  values from a fresh read, and an app listing that matches the asset's Airtable `App ID`.
+  That field holds the listing profile ID when the daily listing sync has linked a listing, and the
+  Webflow app ID when it has not. The tools accept a listing whose profile ID or app ID equals it, so
+  `mrp_id` is optional: pass it when the asset has more than one ID, or when the listing exists but
+  the sync has not linked it yet (the tools then return `LIVE_LISTING_NOT_FOUND`).
+  `APPROVED` + `PUBLIC` shows the app in the Marketplace. The write does not update Airtable.
 - no reviewer session or assigned-reviewer context is required
 - queue filters can inspect assigned, unassigned, or all records without binding to a reviewer
 - reviewer assignment is read-only, including through `app_review_update_version_review`;
@@ -106,6 +118,16 @@ Write posture:
 - “start / kick off a new MCP review cycle” means read `app_review_get_review_context`,
   preserve owner/status, and wait for the bundle if needed. It does not authorize
   setting In Review. Never infer ownership from shared credentials or remembered IDs.
+- `app_review_get_review_context` returns `context.assetExceptions`: the app's
+  ⚖️Exceptions rows from every version with their decision notes. An approved row
+  can set conditions for every later version, so check a new version against them.
+  The rationale is left out; `app_review_list_asset_exceptions` returns it. When the
+  notes together pass 8,000 characters, the rows come without notes and
+  `context.assetExceptionNotesOmitted` is true: call that tool for the full text.
+- Any authenticated reviewer can edit an exception row with
+  `app_review_update_exception_item`. `decision_notes` replaces the whole field.
+  `append_decision_note` adds a dated line and keeps the earlier notes: use it to
+  record a check against a condition, a build hash, or a follow-up.
 - `app_review_set_review_status`, `app_review_update_version_review.review_status`,
   and `app_review_update_asset_metadata.latest_review_status` require
   `status_change: { confirmed: true, expected_status: "<current reviewStatus>" }`.

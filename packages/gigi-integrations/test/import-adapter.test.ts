@@ -15,7 +15,7 @@ test('Gmail metadata maps to a sourced interaction without inferred contacts or 
     workspaceId: 'workspace-1', entity: 'interactions', title: 'Show inquiry',
     fields: { Date: '2026-09-30T12:00:00.000Z', Source: 'Gmail', 'Thread ID': 'thread-1' },
     source: { kind: 'import', provider: 'gmail', connectedAccountId: 'ca_123', collectionId: 'thread-1', externalId: 'msg-1', observedAt: '2026-09-30T12:00:00.000Z',
-      preview: { from: 'Venue <venue@example.test>', snippet: 'Can you play Friday?' } },
+      preview: { from: 'Venue <venue@example.test>', snippet: 'Can you play Friday?', mailState: 'Unknown', scheduledState: 'Unknown' } },
   });
 });
 
@@ -111,4 +111,9 @@ test('new provenance metadata stays within the existing 2000-byte source limit',
   assert.ok(Buffer.byteLength(JSON.stringify(result.source)) <= 2000);
   assert.equal(result.source.calendarTiming?.start.timeZone, 'America/Chicago');
   assert.ok(result.source.htmlLink);
+});
+
+for(const state of ['Draft','Sent','Scheduled','invented'])test(`Gmail ${state} provenance never guesses scheduling`,()=>{
+ const result=mapSourcePage('workspace-1',{provider:'gmail',connectedAccountId:'ca_123',nextCursor:null,records:[{externalId:'msg-1',kind:'message',observedAt:'2026-11-15T00:00:00Z',data:{mailState:state}}]})[0];
+ assert.equal(result.source.preview.mailState,['Draft','Sent'].includes(state)?state:'Unknown');assert.equal(result.source.preview.scheduledState,'Unknown');
 });

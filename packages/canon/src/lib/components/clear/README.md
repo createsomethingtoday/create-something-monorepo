@@ -1,5 +1,12 @@
 # Legacy Clear Compatibility
 
+## Approachable canonical expression
+
+The current website foundation is black, with explicit light work surfaces, locally loaded Geist, readable sentence-case human labels, soft-square panels and solid materials. Owning theme scopes rebind semantic roles. Existing Performance names and Clear compatibility exports retain evidence hierarchy, control authority, receipts and native behavior. Records, code and measured chapter labels may remain monospace; human navigation and explanations use readable interface type. Character art belongs at welcome/help boundaries and is not evidence that a workflow executed. See the [current approachable system](../../../../APPROACHABLE-SYSTEM.md) and [Performance contract](../performance/README.md).
+
+Use `/next/patterns` to inspect actual navigation, controlled records, keyboard decision states, local search and handback examples. These are fictional, local specimens. See the package migration handoffs for current source/runtime evidence and limits; no component appearance grants execution permission.
+
+
 The files and `Clear*` exports in this directory are compatibility identifiers
 for the original Ona-derived implementation. New CREATE SOMETHING surfaces use
 the `Performance*` exports from `components/performance`. Both names resolve to

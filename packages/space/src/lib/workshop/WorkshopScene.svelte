@@ -14,13 +14,12 @@
     sizes?: string;
   } = $props();
   const item = $derived(scenes[scene]);
-  const base = $derived(`/images/workshop/stories/${item.stem}`);
 </script>
 
 <figure class="workshop-scene" class:compact>
   <img
-    src={`${base}.webp`}
-    srcset={`${base}-640.webp 640w, ${base}-960.webp 960w, ${base}.webp ${item.width}w`}
+    src={item.src}
+    srcset={item.srcset}
     {sizes}
     alt={item.alt}
     width={item.width}
@@ -44,7 +43,8 @@
   }
   .compact img {
     aspect-ratio: 3 / 2;
-    object-fit: cover;
+    object-fit: contain;
+    background: #000;
     object-position: 50% 50%;
   }
   figcaption {

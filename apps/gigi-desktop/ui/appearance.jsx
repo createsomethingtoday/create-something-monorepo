@@ -159,7 +159,7 @@ export function Appearance({ ctx, embedded = false }) {
         )}
         <fieldset>
           <legend>Theme</legend>
-          <Grid columns={3} gap={4}>
+          <Grid columns={{ minWidth: 200, max: 3 }} gap={4}>
             {themes.map(([id, title, description, mode]) => (
               <ThemeChoice
                 key={id}

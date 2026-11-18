@@ -74,17 +74,9 @@
 />
 
 <div class="ground-page">
-  <AgencyHeroFrame showPlate={false}>
+  <AgencyHeroFrame>
 <section class="ground-hero" aria-labelledby="ground-title" data-performance-chapter="thesis">
-    <picture>
-      <img
-        src="/images/agency-stories/ground-compare-before-claim.webp"
-        alt="Concept illustration: teammates compare two graphite code-shaped pieces on an inspection table before making a claim."
-        fetchpriority="high"
-        width="1402"
-        height="1122"
-      />
-    </picture>
+
     <div class="hero-copy">
       <p class="ground-eyebrow">Ground {groundVersion} / Free and open source</p>
       <h1 id="ground-title">Give the agent evidence.</h1>
@@ -97,9 +89,12 @@
       >
       <p class="hero-note">An MCP tool for your existing agent client.</p>
     </div>
-    <p class="hero-caption">Concept illustration / Compare before claiming</p>
   </section>
 </AgencyHeroFrame>
+  <figure class="ground-comparison">
+    <img src="/images/canon-agency-v1/evidence-comparison-r19.webp" width="1536" height="1024" loading="lazy" decoding="async" alt="Concept illustration: felt Canon checks a notched paper piece against its drawn reference before making a claim." />
+    <figcaption>Concept illustration / Compare the pieces with the evidence before making a claim.</figcaption>
+  </figure>
   <nav class="ground-rail" aria-label="On this page">
     <a href="#ground-operating-path">01 / Install Ground <span aria-hidden="true">↓</span></a>
     <a href="#ground-guardrail">02 / Inspect the guardrail <span aria-hidden="true">↓</span></a>
@@ -337,7 +332,6 @@ ground compare utils.ts helpers.ts</code
     outline-offset: 5px;
   }
   .ground-eyebrow,
-  .hero-caption,
   .ground-rail,
   .install-card span,
   .case-proof > span,
@@ -346,44 +340,21 @@ ground compare utils.ts helpers.ts</code
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }
-  .ground-eyebrow,
-  .hero-caption {
+  .ground-eyebrow {
     color: var(--ground-muted);
   }
   .ground-hero {
     padding: 0;
     position: relative;
     isolation: isolate;
-    min-height: 650px;
+    min-height: 0;
     display: flex;
     align-items: center;
   }
-  .ground-hero picture {
-    position: absolute;
-    inset: 0;
-    z-index: -2;
-  }
-  .ground-hero img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
-  }
-  .ground-hero::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background: linear-gradient(
-      90deg,
-      var(--ground-bg) 0%,
-      color-mix(in srgb, var(--ground-bg) 94%, transparent) 30%,
-      transparent 78%
-    );
-  }
+
   .hero-copy {
-    width: 56%;
-    padding: 110px 0 100px 6vw;
+    width: 100%;
+    padding: 0;
   }
   h1 {
     max-width: 10ch;
@@ -421,14 +392,7 @@ ground compare utils.ts helpers.ts</code
     margin-top: 16px;
     color: var(--ground-muted);
   }
-  .hero-caption {
-    position: absolute;
-    bottom: 16px;
-    left: 6vw;
-    right: 6vw;
-    margin: 0;
-    font-size: 10px;
-  }
+
   .ground-rail {
     display: flex;
     flex-wrap: wrap;
@@ -705,7 +669,7 @@ ground compare utils.ts helpers.ts</code
   }
   @media (max-width: 900px) {
     .hero-copy {
-      width: 65%;
+      width: 100%;
     }
     .ground-handoff {
       gap: 32px;
@@ -718,33 +682,18 @@ ground compare utils.ts helpers.ts</code
       min-height: 0;
       padding-bottom: 36px;
     }
-    .ground-hero picture {
-      position: relative;
-      display: block;
-      width: 100%;
-      height: 290px;
-      z-index: 0;
-    }
-    .ground-hero img {
-      object-position: center;
-    }
-    .ground-hero::after {
-      display: none;
-    }
+
     .hero-copy {
       order: -1;
       width: 100%;
-      padding: 40px 6vw 28px;
+      padding: 0;
     }
     h1 {
       max-width: 11ch;
       font-size: clamp(2.8rem, 12vw, 4.2rem);
       margin-top: 20px;
     }
-    .hero-caption {
-      bottom: 12px;
-      font-size: 9px;
-    }
+
     .ground-rail {
       gap: 0;
     }
@@ -793,4 +742,7 @@ ground compare utils.ts helpers.ts</code
       width: 100%;
     }
   }
+  .ground-comparison { width:min(88%,960px); margin:2rem auto; }
+  .ground-comparison img { display:block; width:100%; height:auto; }
+  .ground-comparison figcaption { padding-block:.75rem; font:11px/1.6 var(--font-performance-mono); color:var(--ground-muted); }
 </style>

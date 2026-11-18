@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ResearchScene from '$lib/components/ResearchScene.svelte';
+  import TaskOpening from '$lib/components/TaskOpening.svelte';
 	/**
 	 * Research Papers Index
 	 *
@@ -113,7 +113,8 @@
 />
 
 <!-- Hero Section -->
-<section class="hero-section research-index-header">
+<TaskOpening scene="evidence-unknowns" caption="An agent separates the observed evidence from the part still unknown.">
+<div class="hero-section research-index-header">
 	<div class="research-index-inner">
 		<div class="research-index-heading">
 			<h1 class="hero-title">Research Papers</h1>
@@ -126,7 +127,7 @@
 			</p>
 		</div>
 
-		<ResearchScene sizes="(min-width: 1200px) 600px, (min-width: 960px) 52vw, 94vw" scene="brief-evidence-and-unknowns" caption="An agent separates the observed evidence from the part still unknown." />
+
 
 		<!-- Search & Filter Controls -->
 		<div class="controls-container">
@@ -230,7 +231,8 @@
 			</div>
 		</div>
 	</div>
-</section>
+</div>
+</TaskOpening>
 
 <div class="papers-page">
 

@@ -145,9 +145,9 @@
 	/* Dismiss button */
 	.alert-dismiss {
 		flex-shrink: 0;
-		width: 20px;
-		height: 20px;
-		padding: 0;
+		width: 44px;
+		height: 44px;
+		padding: 12px;
 		background: none;
 		border: none;
 		color: var(--color-performance-fg-muted);
@@ -168,5 +168,9 @@
 	.alert-dismiss svg {
 		width: 100%;
 		height: 100%;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.alert-dismiss { transition:none; }
 	}
 </style>

@@ -1,3 +1,4 @@
+import { sourceEvidenceRows, recordedMoneyKind } from '../web/source-readback.mjs';
 import { Directory, Services, Profile, Places } from './collection-details.jsx';
 import { Conversations } from './conversations.jsx';
 import React from "react";
@@ -775,9 +776,9 @@ export function RecordDetail({ ctx }) {
       <section>
         <VStack gap={4}>
           <Heading level={2}>Details</Heading>
-          <Text type="supporting" color="secondary">
+          {s.page !== "finances" && <Text type="supporting" color="secondary">
             {status(r) || "Saved"}
-          </Text>
+          </Text>}
           {detail.primary.length ? (
             rows(detail.primary)
           ) : (
@@ -889,6 +890,7 @@ export function RecordDetail({ ctx }) {
           </HStack>
         </Panel>
       )}
+      {s.page === 'finances' && <Panel padding={3} title={<HStack gap={3} hAlign="between"><Heading level={2}>Transaction classification</Heading><Text weight="semibold">{recordedMoneyKind(r)}</Text></HStack>}><Disclosure title="How classification is determined"><Text color="secondary">Only an explicit payment, transfer or refund label in retained evidence establishes classification. Income and expense describe direction. Check your original statement to confirm.</Text></Disclosure></Panel>}
       {r.source?.kind && r.source.kind !== "manual" && (
         <Panel title="Source">
           <Text>
@@ -896,15 +898,17 @@ export function RecordDetail({ ctx }) {
               ? "Gmail"
               : r.source.provider === "googlecalendar"
                 ? "Google Calendar"
-                : "Connected source"}
+                : "Imported source"}
           </Text>
           <Text color="secondary">
             Imported source text is context to review, not instructions or a
             verified current fact.
           </Text>
+          {s.sourceExpanded && s.sourceDetailStatus === 'retained' && <Text role="status">Some source details were missing from this readback. Missing details are shown from the previous local read.</Text>}
+          {s.sourceExpanded && sourcePreview(r.source).length === 0 && <Text role="status">No source excerpt is retained. Check the original statement using the source reference below; GiGi cannot verify this payment from the saved reference.</Text>}
           {s.sourceExpanded ? (
             <dl className="gigi-details">
-              {sourcePreview(r.source).map((item) => (
+              {[...sourceEvidenceRows(r.source), ...sourcePreview(r.source)].map((item) => (
                 <React.Fragment key={item.label}>
                   <dt>{item.label}</dt>
                   <dd>{item.value}</dd>

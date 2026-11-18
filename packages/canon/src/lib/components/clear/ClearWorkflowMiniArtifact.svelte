@@ -68,11 +68,11 @@
 <style>
 	.clear-workflow-mini-artifact {
 		display: grid;
-		grid-template-columns: 4.3rem 2.15rem 6.86rem;
+		grid-template-columns: 4.3rem 1rem 9rem;
 		gap: 0.5rem;
 		align-items: center;
 		justify-content: center;
-		width: min(100%, 14.36rem);
+		width: min(100%, 15.3rem);
 		min-height: 5.95rem;
 		margin-inline: auto;
 		color: var(--color-performance-ink, #090909);
@@ -106,23 +106,23 @@
 		width: 4.15rem;
 		min-width: 0;
 		height: 1.38rem;
-		border: 1px solid rgba(10, 14, 25, 0.22);
+		border: 1px solid var(--color-performance-border-emphasis);
 		border-radius: var(--radius-performance-sm, 4px);
-		background: #ffffff;
-		box-shadow: 0 1px 0 rgba(10, 14, 25, 0.035);
+		background: var(--color-performance-bg-surface);
+		box-shadow: none;
 	}
 
 	.clear-workflow-mini-artifact__rail {
-		width: 2.15rem;
+		width: 1rem;
 		height: 1px;
-		background: rgba(10, 14, 25, 0.18);
+		background: var(--color-performance-border-emphasis);
 	}
 
 	.clear-workflow-mini-artifact__chip--queue,
 	.clear-workflow-mini-artifact__chip--owner {
 		width: 4.15rem;
 		height: 4.54rem;
-		background: rgba(10, 14, 25, 0.018);
+		background: var(--color-performance-border-emphasis);
 	}
 
 	.clear-workflow-mini-artifact__chip--queue {
@@ -139,7 +139,7 @@
 		display: block;
 		height: 1px;
 		border-radius: 999px;
-		background: rgba(10, 14, 25, 0.5);
+		background: var(--color-performance-border-emphasis);
 	}
 
 	.clear-workflow-mini-artifact__chip--queue i,
@@ -161,27 +161,21 @@
 
 	.clear-workflow-mini-artifact__chip--state {
 		place-items: center;
-		width: 2.02rem;
+		width: 2.8rem;
 		height: 1.6rem;
 		color: var(--color-performance-ink, #090909);
 		font-family: var(--font-performance-mono);
-		font-size: 0.56rem;
+		font-size: 0.75rem;
 		font-weight: var(--font-performance-semibold);
 		line-height: 1;
 		letter-spacing: 0;
 	}
 
-	.clear-workflow-mini-artifact__chip--run {
-		background: rgba(57, 117, 84, 0.055);
-	}
+	.clear-workflow-mini-artifact__chip--run { background: var(--color-performance-success-muted); color: var(--color-performance-success); border-color: var(--color-performance-success-border); }
 
-	.clear-workflow-mini-artifact__chip--wait {
-		background: rgba(49, 92, 255, 0.04);
-	}
+	.clear-workflow-mini-artifact__chip--wait { background: var(--color-performance-warning-muted); color: var(--color-performance-warning); border-color: var(--color-performance-warning-border); }
 
-	.clear-workflow-mini-artifact__chip--stop {
-		background: rgba(196, 30, 58, 0.045);
-	}
+	.clear-workflow-mini-artifact__chip--stop { background: var(--color-performance-error-muted); color: var(--color-performance-error); border-color: var(--color-performance-error-border); }
 
 	.clear-workflow-mini-artifact__chip--receipt {
 		align-content: center;
@@ -189,6 +183,6 @@
 		width: 4.15rem;
 		height: 2.32rem;
 		padding-inline: 0.68rem;
-		background: rgba(10, 14, 25, 0.018);
+		background: var(--color-performance-border-emphasis);
 	}
 </style>

@@ -19,7 +19,6 @@
 @import '@create-something/canon/styles/grid-patterns.css';
 @import '@create-something/canon/styles/interactions.css';
 @import '@create-something/canon/styles/performance.css';
-@import '@create-something/canon/styles/operator.css';
 
 /* Tailwind CSS directives */
 @tailwind base;
@@ -33,46 +32,6 @@
 
 :root {
   --duration-performance-view-transition: 300ms;
-
-  /* Shared clear-shell typography */
-  --font-performance-heading: var(--font-performance-sans);
-  --font-performance-display: var(--font-performance-sans);
-  --font-performance-serif: Georgia, "Times New Roman", serif;
-  --color-performance-focus: rgba(167, 184, 255, 0.72);
-
-  /* Performance Lab readability surface mapping for existing property routes */
-  --color-performance-bg-pure: var(--color-performance-panel, #ffffff);
-  --color-performance-bg-elevated: var(--color-performance-paper, #f3f3f0);
-  --color-performance-bg-surface: var(--color-performance-court, #e6e6e0);
-  --color-performance-bg-subtle: #eeeeee;
-  --color-performance-fg-primary: var(--color-performance-ink, #090909);
-  --color-performance-fg-secondary: rgba(10, 14, 25, 0.8);
-  --color-performance-fg-tertiary: rgba(10, 14, 25, 0.62);
-  --color-performance-fg-muted: var(--color-performance-muted, #5e6268);
-  --color-performance-fg-subtle: rgba(10, 14, 25, 0.22);
-  --color-performance-border-default: var(--color-performance-line, #d7d7d2);
-  --color-performance-border-emphasis: var(--color-performance-line-strong, #9c9c96);
-  --color-performance-border-strong: rgba(10, 14, 25, 0.24);
-  --color-performance-shell-surface: var(--color-performance-panel, #ffffff);
-  --color-performance-shell-surface-secondary: var(--color-performance-paper, #f3f3f0);
-  --color-performance-shell-surface-tertiary: var(--color-performance-court, #e6e6e0);
-  --color-performance-shell-surface-elevated: #eeeeee;
-  --color-performance-shell-surface-hover: var(--color-performance-court, #e6e6e0);
-  --color-performance-shell-border-subtle: rgba(10, 14, 25, 0.06);
-  --color-performance-shell-border-default: var(--color-performance-line, #d7d7d2);
-  --color-performance-shell-border-strong: var(--color-performance-line-strong, #9c9c96);
-  --color-performance-shell-shadow: var(--shadow-performance-panel, none);
-  --color-performance-shell-shadow-strong: 0 16px 44px rgba(0, 0, 0, 0.12);
-  --color-performance-hover: rgba(10, 14, 25, 0.04);
-  --color-performance-active: rgba(10, 14, 25, 0.08);
-  --glass-performance-bg-subtle: rgba(255, 255, 255, 0.65);
-  --glass-performance-bg-light: rgba(255, 255, 255, 0.72);
-  --glass-performance-bg-medium: rgba(255, 255, 255, 0.82);
-  --glass-performance-bg-strong: rgba(255, 255, 255, 0.92);
-  --glass-performance-border-subtle: rgba(10, 14, 25, 0.06);
-  --glass-performance-border-light: rgba(10, 14, 25, 0.1);
-  --glass-performance-border-medium: rgba(10, 14, 25, 0.15);
-  --glass-performance-border-strong: rgba(10, 14, 25, 0.22);
 
   /* ==========================================================================
      Architectural Visualization Tokens
@@ -226,13 +185,13 @@ a:not([class*="button"]):not(.btn) {
 }
 
 a:not([class*="button"]):not(.btn):hover {
-  opacity: 0.7;
+  opacity: 1;
 }
 
 *:focus-visible {
   outline: 2px solid var(--color-performance-focus);
   outline-offset: 2px;
-  border-radius: 0px;
+  border-radius: var(--radius-performance-sm);
 }
 
 html {
@@ -240,119 +199,85 @@ html {
 }
 
 body {
-  background: #171717;
+  background: var(--color-performance-paper);
   letter-spacing: 0;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* The viewport scrollbar belongs to html/body, outside the operator wrapper.
+/* The viewport scrollbar belongs to html/body, outside the dark wrapper.
    Keep the Canon light scrollbar on the excluded WorkWay local preview. */
-html:has(.layout[data-canon-palette='operator']),
-body:has(.layout[data-canon-palette='operator']) {
+html:has(.layout[data-theme='dark']),
+body:has(.layout[data-theme='dark']) {
   color-scheme: dark;
-  scrollbar-color: oklch(32% 0 0) oklch(20.5% 0 0);
+  background: Canvas;
+  scrollbar-color: GrayText Canvas;
 }
 
-html:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar,
-body:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar,
-html:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-track,
-body:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-track {
-  background-color: oklch(20.5% 0 0);
+html:has(.layout[data-theme='dark'])::-webkit-scrollbar,
+body:has(.layout[data-theme='dark'])::-webkit-scrollbar,
+html:has(.layout[data-theme='dark'])::-webkit-scrollbar-track,
+body:has(.layout[data-theme='dark'])::-webkit-scrollbar-track {
+  background-color: Canvas;
 }
 
-html:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-thumb,
-body:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-thumb {
-  background-color: oklch(32% 0 0);
+html:has(.layout[data-theme='dark'])::-webkit-scrollbar-thumb,
+body:has(.layout[data-theme='dark'])::-webkit-scrollbar-thumb {
+  background-color: GrayText;
 }
 
-/* Public workshop and reading routes opt into Canon's operator palette. Tool
+/* Public workshop and product routes use Canon's explicit dark appearance. Tool
    canvases may use their own semantic data colors inside this shell. */
-.layout[data-canon-palette='operator'] {
-  --color-performance-focus: var(--color-operator-focus-ring-accessible);
-  --color-performance-paper: var(--color-operator-background);
-  --color-performance-panel: var(--color-operator-secondary);
-  --color-performance-court: var(--color-operator-raised);
-  /* These aliases resolve at their declaration site, so remap them here too. */
-  --color-performance-bg-pure: var(--color-operator-background);
-  --color-performance-bg-elevated: var(--color-operator-secondary);
-  --color-performance-bg-surface: var(--color-operator-raised);
-  --color-performance-bg-subtle: var(--color-operator-secondary);
-  --color-performance-ink: var(--color-operator-foreground);
-  --color-performance-ink-soft: var(--color-operator-muted);
-  --color-performance-muted: var(--color-operator-muted);
-  --color-performance-line: var(--color-operator-border);
-  --color-performance-line-strong: var(--color-operator-input-border);
-  --color-performance-fg-primary: var(--color-operator-foreground);
-  --color-performance-fg-secondary: var(--color-operator-muted);
-  --color-performance-fg-tertiary: var(--color-operator-muted);
-  --color-performance-fg-muted: var(--color-operator-muted);
-  --color-performance-fg-subtle: var(--color-operator-muted);
-  --color-performance-hover: var(--color-operator-hover);
-  --color-performance-active: var(--color-operator-raised);
-  /* Discover's glass cards need dark fills with the operator foreground. */
-  --glass-performance-bg-light: var(--color-operator-secondary);
-  --glass-performance-bg-medium: var(--color-operator-raised);
-  --glass-performance-border-light: var(--color-operator-border);
-  --glass-performance-border-medium: var(--color-operator-input-border);
-  --color-performance-border-default: var(--color-operator-border);
-  --color-performance-border-emphasis: var(--color-operator-input-border);
-  --color-performance-shell-surface: var(--color-operator-secondary);
-  --color-performance-shell-surface-secondary: var(--color-operator-secondary);
-  --color-performance-shell-surface-tertiary: var(--color-operator-raised);
-  --color-performance-shell-surface-hover: var(--color-operator-raised);
-  --color-performance-shell-border-default: var(--color-operator-border);
-  --color-performance-shell-border-strong: var(--color-operator-input-border);
-  --color-performance-signal: var(--color-operator-focus-ring-accessible);
-  --color-bg-pure: var(--color-operator-background);
-  --color-bg-elevated: var(--color-operator-secondary);
-  --color-bg-surface: var(--color-operator-secondary);
-  --color-fg-primary: var(--color-operator-foreground);
-  --color-fg-secondary: var(--color-operator-muted);
-  --color-fg-muted: var(--color-operator-muted);
-  --color-border-default: var(--color-operator-border);
-  color: var(--color-operator-foreground);
+.layout[data-theme='dark'] {
+  --color-bg-pure: var(--color-performance-paper);
+  --color-bg-elevated: var(--color-performance-bg-elevated);
+  --color-bg-surface: var(--color-performance-bg-elevated);
+  --color-fg-primary: var(--color-performance-ink);
+  --color-fg-secondary: var(--color-performance-muted);
+  --color-fg-muted: var(--color-performance-muted);
+  --color-border-default: var(--color-performance-line);
+  color: var(--color-performance-ink);
   color-scheme: dark;
 }
 
-.layout[data-canon-palette='operator'] :is(h1, h2, h3) {
+.layout[data-theme='dark'] :is(h1, h2, h3) {
   font-family: var(--font-performance-sans);
 }
 
-.layout[data-canon-palette='operator'] :is(input, select, textarea) {
+.layout[data-theme='dark'] :is(input, select, textarea) {
   color-scheme: dark;
 }
 
-.layout[data-canon-palette='operator'] .nav-logo-asset {
+.layout[data-theme='dark'] .nav-logo-asset {
   filter: invert(1);
 }
 
-.layout[data-canon-palette='operator'] .nav-clear,
-.layout[data-canon-palette='operator'] .nav-clear.nav-fixed {
-  background: var(--color-operator-secondary);
-  border-bottom: 1px solid var(--color-operator-border);
-  color: var(--color-operator-foreground);
+.layout[data-theme='dark'] .nav-clear,
+.layout[data-theme='dark'] .nav-clear.nav-fixed {
+  background: var(--color-performance-bg-elevated);
+  border-bottom: 1px solid var(--color-performance-line);
+  color: var(--color-performance-ink);
   backdrop-filter: none;
 }
 
-.layout[data-canon-palette='operator'] .nav-clear .nav-cta {
-  background: var(--color-operator-foreground);
-  color: var(--color-operator-background);
-  border-color: var(--color-operator-foreground);
+.layout[data-theme='dark'] .nav-clear .nav-cta {
+  background: var(--color-performance-ink);
+  color: var(--color-performance-paper);
+  border-color: var(--color-performance-ink);
 }
 
-.layout[data-canon-palette='operator'] .nav-clear .nav-cta:hover {
-  background: var(--color-operator-raised);
-  border-color: var(--color-operator-raised);
-  color: var(--color-operator-foreground);
+.layout[data-theme='dark'] .nav-clear .nav-cta:hover {
+  background: var(--color-performance-court);
+  border-color: var(--color-performance-court);
+  color: var(--color-performance-ink);
 }
 
-.layout[data-canon-palette='operator'] .nav-clear :is(.nav-cta, .nav-menu-button) {
-  border-radius: var(--radius-operator-control);
+.layout[data-theme='dark'] .nav-clear :is(.nav-cta, .nav-menu-button) {
+  border-radius: var(--radius-performance-sm);
 }
 
-/* Keep the current-property marker legible on the operator surface. */
-.layout[data-canon-palette='operator'] .mode-indicator .mode-item.active {
-  background: var(--color-operator-raised);
+/* Keep the current-property marker legible on the dark surface. */
+.layout[data-theme='dark'] .mode-indicator .mode-item.active {
+  background: var(--color-performance-court);
 }

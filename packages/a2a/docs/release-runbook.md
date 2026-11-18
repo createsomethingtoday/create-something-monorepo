@@ -1,5 +1,10 @@
 # A2A pilot release runbook
 
+For the additive shared-inbox product (CRE-2448), also follow
+[shared-inbox promotion and rollback](shared-inboxes.md#promotion-and-rollback)
+and its [validation receipt](shared-inbox-validation.md). Its flags default off;
+legacy pilot acceptance is not proof of group consent or separate agent grants.
+
 Destination: `cs-a2a`, account `9645bd52e640b8a4f40a3a55ff1dd75a`,
 custom domain `a2a.createsomething.agency`. Implementation and receipts: CRE-2380.
 Use the pinned repository toolchain. Never print runtime secrets or provider tokens.

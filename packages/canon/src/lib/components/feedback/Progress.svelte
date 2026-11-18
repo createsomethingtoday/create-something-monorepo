@@ -32,9 +32,10 @@
 		variant = 'default'
 	}: Props = $props();
 
-	// Clamp value between 0 and max
-	const clampedValue = $derived(Math.min(Math.max(0, value), max));
-	const percentage = $derived(Math.round((clampedValue / max) * 100));
+	const safeMax = $derived(Number.isFinite(max) && max > 0 ? max : 100);
+	// Clamp value between 0 and a positive maximum
+	const clampedValue = $derived(Math.min(Math.max(0, Number.isFinite(value) ? value : 0), safeMax));
+	const percentage = $derived(Math.round((clampedValue / safeMax) * 100));
 </script>
 
 <div class="progress progress-{size}">
@@ -54,7 +55,7 @@
 		role="progressbar"
 		aria-valuenow={clampedValue}
 		aria-valuemin={0}
-		aria-valuemax={max}
+		aria-valuemax={safeMax}
 		aria-label={label || 'Progress'}
 	>
 		<div

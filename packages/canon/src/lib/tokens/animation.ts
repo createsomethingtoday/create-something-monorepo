@@ -15,12 +15,12 @@
 
 export const animation = {
 	ease: {
-		standard: 'cubic-bezier(0.4, 0.0, 0.2, 1)' // Material Design curve
+		standard: 'cubic-bezier(0.4, 0, 0.2, 1)' // Material Design curve
 	},
 	duration: {
-		micro: '200ms', // Micro-interactions (hover, focus)
-		standard: '300ms', // Standard transitions (color, opacity)
-		complex: '500ms' // Complex transitions (layout, slide)
+		micro: '150ms', // Micro-interactions (hover, focus)
+		standard: '220ms', // Standard transitions (color, opacity)
+		complex: '350ms' // Complex transitions (layout, slide)
 	}
 } as const;
 

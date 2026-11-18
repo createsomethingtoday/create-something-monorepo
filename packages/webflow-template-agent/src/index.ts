@@ -1,4 +1,4 @@
-import { runAgentTurn } from './agent.js';
+import { AgentTurnError, runAgentTurn } from './agent.js';
 import {
   rateLimitSession,
   reserveTurn,
@@ -131,13 +131,29 @@ function sseResponse(
               cacheInputTokens: (usage?.cacheCreationInputTokens ?? 0) + (usage?.cacheReadInputTokens ?? 0),
             });
           })
-          .catch(async () => {
+          .catch(async (error: unknown) => {
+            // Name, HTTP status and a short message: enough to tell a rejected
+            // request from an outage. No request content is logged.
+            const status = error instanceof AgentTurnError ? error.status : undefined;
+            console.error(
+              `[agent] turn failed: ${error instanceof Error ? error.name : 'unknown'} ${status ?? '-'} ${(error instanceof Error ? error.message : String(error)).slice(0, 300)}`,
+            );
             emit({
               type: 'error',
               message: 'The assistant hit an unexpected error. Please try again.',
             });
-            await settle(env, { leaseId, actualCostMicroUsd: reservedMicroUsd }).catch(() => undefined);
-            recordEvent(env, { type: 'turn_failed', reason: 'model_or_stream_error', actualCostMicroUsd: reservedMicroUsd });
+            // The API rejected the request before any output: charge only what
+            // earlier steps of this turn used, so a broken request cannot use
+            // the whole daily budget. Any other failure (broken stream, client
+            // gone) keeps the full reservation, because its cost is unknown.
+            const rejected = error instanceof AgentTurnError && error.status !== undefined;
+            const actualCostMicroUsd = rejected ? usageCostMicroUsd(env, error.usage) : reservedMicroUsd;
+            await settle(env, { leaseId, actualCostMicroUsd }).catch(() => undefined);
+            recordEvent(env, {
+              type: 'turn_failed',
+              reason: rejected ? 'api_rejected' : 'model_or_stream_error',
+              actualCostMicroUsd,
+            });
           })
           .finally(() => {
             try {

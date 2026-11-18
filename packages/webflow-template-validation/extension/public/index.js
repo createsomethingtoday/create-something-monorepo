@@ -1,7 +1,7 @@
 "use strict";
 (() => {
   // src/utils.ts
-  var EXTENSION_VERSION = "1.3.9";
+  var EXTENSION_VERSION = "1.3.12";
   function filterRetiredAccessibilityIssues(issues) {
     return issues.filter((issue) => issue.id !== "color-contrast-violations");
   }
@@ -109,6 +109,72 @@
     return { url: null, source: "no published domain found" };
   }
 
+  // src/page-metadata-details.ts
+  function renderDetails(label, items) {
+    if (items.length === 0) return "";
+    return `
+    <details class="issue-subitems-details">
+      <summary class="issue-subitems-summary">
+        <strong>${label} (${items.length})</strong>
+      </summary>
+      <div class="issue-subitems-list">
+        ${items.map((item) => `<div class="subitem">\u2022 ${escapeHtml(item)}</div>`).join("")}
+      </div>
+    </details>
+  `;
+  }
+  function formatPageDetail(page) {
+    if (typeof page === "string") return page.replace(/\s+/g, " ").trim();
+    if (!page || typeof page !== "object") return "";
+    const { url, detail } = page;
+    return [url, detail].filter((part) => typeof part === "string" && part.trim() !== "").map((part) => part.replace(/\s+/g, " ").trim()).join(" \u2014 ");
+  }
+  function createPageMetadataDetailsHTML(details) {
+    if (!details) return "";
+    const pages = Array.isArray(details.pages) ? details.pages.map(formatPageDetail).filter((page) => page !== "") : [];
+    const duplicates = Array.isArray(details.duplicates) ? details.duplicates.filter((group) => Array.isArray(group)).map(
+      (group) => group.filter((page) => typeof page === "string" && page.trim() !== "").join(" \xB7 ")
+    ).filter(Boolean) : [];
+    return [
+      renderDetails(`View affected page${pages.length === 1 ? "" : "s"}`, pages),
+      renderDetails(`View duplicate group${duplicates.length === 1 ? "" : "s"}`, duplicates)
+    ].join("");
+  }
+
+  // src/run-timings.ts
+  function createRunTimer(now = () => performance.now()) {
+    const startedAt = now();
+    let lastLap = startedAt;
+    const steps = {};
+    const counts = {};
+    return {
+      lap(step) {
+        const current = now();
+        steps[step] = (steps[step] || 0) + Math.max(0, Math.round(current - lastLap));
+        lastLap = current;
+      },
+      count(name, items) {
+        if (typeof items === "number" && Number.isFinite(items)) counts[name] = Math.max(0, Math.floor(items));
+      },
+      result() {
+        return { steps: { ...steps, total: Math.max(0, Math.round(now() - startedAt)) }, counts: { ...counts } };
+      }
+    };
+  }
+  function formatSeconds(ms) {
+    return ms >= 1e4 ? `${Math.round(ms / 1e3)} s` : `${(ms / 1e3).toFixed(1)} s`;
+  }
+  function formatRunTimings(timings) {
+    if (!timings || typeof timings.steps !== "object") return null;
+    const { total, ...steps } = timings.steps;
+    const parts = Object.entries(steps).filter(([, ms]) => typeof ms === "number" && Number.isFinite(ms)).sort(([, a], [, b]) => b - a).map(([step, ms]) => {
+      const items = timings.counts?.[step];
+      return `${step} ${formatSeconds(ms)}${typeof items === "number" ? ` (${items} items)` : ""}`;
+    });
+    if (typeof total !== "number" && parts.length === 0) return null;
+    return [typeof total === "number" ? `total ${formatSeconds(total)}` : null, ...parts].filter(Boolean).join(" \xB7 ");
+  }
+
   // src/report.ts
   function buildReportMarkdown(input) {
     const lines = [
@@ -121,6 +187,7 @@
       input.extensionVersion ? `- Validator: extension v${input.extensionVersion}${input.workerVersion ? ` \xB7 worker v${input.workerVersion}` : ""}` : null,
       input.outcomeBadge ? `- Outcome: ${input.outcomeBadge}${input.outcomeTitle ? ` \u2014 ${input.outcomeTitle}` : ""}` : null,
       `- Errors: ${input.errors} \xB7 Warnings: ${input.warnings} \xB7 Info: ${input.infos}`,
+      formatRunTimings(input.timings) ? `- Run time: ${formatRunTimings(input.timings)}` : null,
       ""
     ];
     for (const category of input.categories) {
@@ -133,19 +200,17 @@
         const howToFix = issue.howToFix || issue.details?.howToFix;
         if (howToFix) lines.push(`  - Fix: ${howToFix}`);
         for (const page of issue.details?.pages || []) {
-          lines.push(`  - Affected page: ${formatDetailLabel(page)}`);
+          const label = formatPageDetail(page);
+          if (label) lines.push(`  - Affected page: ${label}`);
         }
         for (const group of issue.details?.duplicates || []) {
-          const labels = group.map(formatDetailLabel).filter(Boolean);
+          const labels = group.map(formatPageDetail).filter(Boolean);
           if (labels.length > 0) lines.push(`  - Duplicate group: ${labels.join(" \xB7 ")}`);
         }
       }
       lines.push("");
     }
     return lines.filter((line) => line !== null).join("\n");
-  }
-  function formatDetailLabel(value) {
-    return String(value).replace(/\s+/g, " ").trim();
   }
 
   // src/page-seo.ts
@@ -175,30 +240,22 @@
     };
   }
 
-  // src/page-metadata-details.ts
-  function renderDetails(label, items) {
-    if (items.length === 0) return "";
-    return `
-    <details class="issue-subitems-details">
-      <summary class="issue-subitems-summary">
-        <strong>${label} (${items.length})</strong>
-      </summary>
-      <div class="issue-subitems-list">
-        ${items.map((item) => `<div class="subitem">\u2022 ${escapeHtml(item)}</div>`).join("")}
-      </div>
-    </details>
-  `;
-  }
-  function createPageMetadataDetailsHTML(details) {
-    if (!details) return "";
-    const pages = Array.isArray(details.pages) ? details.pages.filter((page) => typeof page === "string" && page.trim() !== "") : [];
-    const duplicates = Array.isArray(details.duplicates) ? details.duplicates.filter((group) => Array.isArray(group)).map(
-      (group) => group.filter((page) => typeof page === "string" && page.trim() !== "").join(" \xB7 ")
-    ).filter(Boolean) : [];
-    return [
-      renderDetails(`View affected page${pages.length === 1 ? "" : "s"}`, pages),
-      renderDetails(`View duplicate group${duplicates.length === 1 ? "" : "s"}`, duplicates)
-    ].join("");
+  // src/concurrency.ts
+  async function mapWithConcurrency(items, limit, fn, onProgress) {
+    const results = new Array(items.length);
+    const workers = Math.max(1, Math.min(Math.floor(limit) || 1, items.length));
+    let next = 0;
+    let done = 0;
+    async function work() {
+      while (next < items.length) {
+        const index = next++;
+        results[index] = await fn(items[index], index);
+        done += 1;
+        onProgress?.(done, items.length);
+      }
+    }
+    await Promise.all(Array.from({ length: workers }, work));
+    return results;
   }
 
   // src/validation-submit-payload.ts
@@ -1022,10 +1079,20 @@
       if (!webflow) {
         throw new Error("Webflow Designer API not available. Please ensure this extension is running in Webflow Designer.");
       }
-      const projectData = await collectProjectData(webflow);
+      const timer = createRunTimer();
+      const projectData = await collectProjectData(webflow, timer, (step, done, total) => {
+        const { base, label } = COLLECT_PROGRESS[step];
+        if (done !== total && done % 10 !== 0) return;
+        setValidationProgress({
+          status: "running",
+          progress: Math.round(base + (total > 0 ? done / total * 4 : 4)),
+          message: `Reading ${label} (${done} of ${total})...`
+        });
+      });
       const designerContext = await collectDesignerContext(webflow);
       projectData.designerContext = designerContext;
       projectData.canvasChecks = await collectCanvasAccessibility(webflow, designerContext.canAccessCanvas);
+      timer.lap("canvas");
       if (designerContext.message) {
         setToolbarStatus(designerContext.message, designerContext.canAccessCanvas === false ? "warning" : "neutral");
       }
@@ -1078,7 +1145,10 @@
         );
         setBridgeSetupStep("install");
         setToolbarStatus("Validator script required for submission checks", "warning");
+        timer.lap("setup");
         const designerResults = await runDesignerValidation(projectData, siteUrl, correlationId);
+        timer.lap("worker");
+        designerResults.timings = timer.result();
         designerResults.collectedData = [projectData];
         enhanceValidationResults(designerResults, projectData, projectData.canvasChecks);
         if (!designerResults.categories) designerResults.categories = [];
@@ -1127,12 +1197,15 @@
       hideBridgeDrawer();
       setBridgeSetupStep("run");
       setToolbarStatus("Running full Validator checks...", "active");
+      timer.lap("setup");
       const validationResults = await runUnifiedValidation({
         siteUrl,
         projectData,
         pageSlugs: pageSlugScope.pageSlugs,
         correlationId
       });
+      timer.lap("worker");
+      validationResults.timings = timer.result();
       validationResults.collectedData = [projectData];
       enhanceValidationResults(validationResults, projectData, projectData.canvasChecks);
       registerValidationReport(validationResults, correlationId);
@@ -1370,6 +1443,7 @@
     return {
       url: validationResults.url,
       summary: validationResults.summary,
+      timings: validationResults.timings,
       categories: Array.isArray(validationResults.categories) ? validationResults.categories.map((category) => ({
         category: category.category,
         passed: category.passed,
@@ -2256,7 +2330,15 @@
       return unavailable(error instanceof Error ? error.message : "Canvas analysis failed");
     }
   }
-  async function collectProjectData(webflow) {
+  var COLLECT_CONCURRENCY = 8;
+  var COLLECT_PROGRESS = {
+    variables: { base: 2, label: "variables" },
+    components: { base: 6, label: "components" },
+    styles: { base: 10, label: "styles" },
+    pages: { base: 14, label: "pages" }
+  };
+  async function collectProjectData(webflow, timer, onProgress) {
+    const report = (step) => (done, total) => onProgress?.(step, done, total);
     const data = {
       variables: void 0,
       components: [],
@@ -2279,7 +2361,7 @@
             const variableList = [];
             const modeList = [];
             let modeDataAvailable = false;
-            for (const variable of variables) {
+            const variableResults = await mapWithConcurrency(variables, COLLECT_CONCURRENCY, async (variable) => {
               try {
                 const variableName = await variable.getName() || null;
                 const variableType = variable.type || null;
@@ -2289,24 +2371,26 @@
                 } catch {
                   variableValue = null;
                 }
-                variableList.push({
+                return {
                   id: variable.id,
                   name: variableName,
                   type: variableType,
                   value: variableValue ?? null
-                });
+                };
               } catch (variableError) {
                 console.warn("Error processing variable:", variableError);
                 if (variable.id) {
-                  variableList.push({
+                  return {
                     id: variable.id,
                     name: null,
                     type: variable.type || null,
                     value: null
-                  });
+                  };
                 }
+                return null;
               }
-            }
+            }, report("variables"));
+            variableList.push(...variableResults.filter((variable) => variable !== null));
             try {
               const modes = typeof collection.getAllVariableModes === "function" ? await collection.getAllVariableModes() : void 0;
               if (Array.isArray(modes)) {
@@ -2366,11 +2450,12 @@
         error: error instanceof Error ? error.message : String(error)
       });
     }
+    timer?.lap("variables");
     try {
       if (webflow.getAllComponents) {
         const components = await webflow.getAllComponents() || [];
         const componentData = [];
-        for (const component of components) {
+        const componentResults = await mapWithConcurrency(components, COLLECT_CONCURRENCY, async (component) => {
           try {
             const name = await component.getName() || null;
             const id = component.id;
@@ -2386,7 +2471,7 @@
               } catch (nestedError) {
                 console.warn("Error analyzing component nesting:", nestedError);
               }
-              componentData.push({
+              return {
                 id,
                 name,
                 type: "component",
@@ -2395,12 +2480,14 @@
                 readOnly: metadata.readOnly,
                 codeComponent: metadata.codeComponent,
                 library: metadata.library
-              });
+              };
             }
           } catch (compError) {
             console.warn("Error processing component:", compError);
           }
-        }
+          return null;
+        }, report("components"));
+        componentData.push(...componentResults.filter((component) => component !== null));
         data.components = componentData;
         console.log(`Components collected: ${componentData.length}`);
       }
@@ -2412,6 +2499,7 @@
         error: error instanceof Error ? error.message : String(error)
       });
     }
+    timer?.lap("components");
     try {
       if (webflow.getAllStyles) {
         const styles = await webflow.getAllStyles() || [];
@@ -2430,7 +2518,7 @@
           });
         }
         const breakpointReadFailures = [];
-        for (const style of styles) {
+        const styleResults = await mapWithConcurrency(styles, COLLECT_CONCURRENCY, async (style) => {
           try {
             const id = style.id;
             const meta = readStyleMetadata(style);
@@ -2449,13 +2537,14 @@
                   hasVariables = true;
                 }
               });
+              let breakpointError;
               if (breakpoints) {
                 breakpointProperties = breakpoints.properties;
                 if (breakpoints.errors.length > 0) {
-                  breakpointReadFailures.push(breakpoints.errors[0]);
+                  breakpointError = breakpoints.errors[0];
                 }
               }
-              styleData.push({
+              return { breakpointError, style: {
                 id,
                 // Element-scoped styles may have no usable name; the worker
                 // falls back to `style.name || style.id`.
@@ -2466,11 +2555,17 @@
                 hasVariables,
                 ...meta.source ? { source: meta.source } : {},
                 ...breakpointProperties ? { breakpointProperties } : {}
-              });
+              } };
             }
           } catch (styleError) {
             console.warn("Error processing style:", styleError);
           }
+          return null;
+        }, report("styles"));
+        for (const result of styleResults) {
+          if (!result) continue;
+          styleData.push(result.style);
+          if (result.breakpointError) breakpointReadFailures.push(result.breakpointError);
         }
         const breakpointWarning = summarizeBreakpointReadFailures(breakpointReadFailures);
         if (breakpointWarning) {
@@ -2488,12 +2583,13 @@
         error: error instanceof Error ? error.message : String(error)
       });
     }
+    timer?.lap("styles");
     try {
       if (webflow.getAllPagesAndFolders) {
         const pagesAndFolders = await webflow.getAllPagesAndFolders() || [];
         const pageData = [];
         const items = Array.isArray(pagesAndFolders) ? pagesAndFolders : [];
-        for (const item of items) {
+        const pageResults = await mapWithConcurrency(items, COLLECT_CONCURRENCY, async (item) => {
           try {
             if (item.type === "Page") {
               const name = await item.getName() || "Unnamed";
@@ -2562,7 +2658,7 @@
               } catch (seoError) {
                 console.warn(`SEO data collection failed for page ${name}:`, seoError);
               }
-              pageData.push({
+              return {
                 id: item.id,
                 name,
                 slug,
@@ -2577,12 +2673,14 @@
                 isHomePage,
                 hasValidNaming,
                 seo: seoData
-              });
+              };
             }
           } catch (pageError) {
             console.warn("Error processing page:", pageError);
           }
-        }
+          return null;
+        }, report("pages"));
+        pageData.push(...pageResults.filter((page) => page !== null));
         data.pages = pageData;
         console.log(`Pages collected: ${pageData.length}`);
       }
@@ -2594,6 +2692,7 @@
         error: error instanceof Error ? error.message : String(error)
       });
     }
+    timer?.lap("pages");
     try {
       console.log("Collecting current page SEO data...");
       const currentPageData = await collectCurrentPageSEOData(webflow);
@@ -2620,6 +2719,11 @@
         error: error instanceof Error ? error.message : String(error)
       });
     }
+    timer?.lap("siteInfo");
+    timer?.count("variables", data.variables?.collections?.reduce((sum, collection) => sum + (collection.variables?.length || 0), 0));
+    timer?.count("components", data.components?.length);
+    timer?.count("styles", data.styles?.length);
+    timer?.count("pages", data.pages?.length);
     data.collectionMetadata = deriveCollectionMetadata(data);
     data.enhancedValidation = deriveEnhancedValidation(data);
     console.log("Project data collection complete:", data.collectionMetadata);
@@ -2877,7 +2981,8 @@
       categories: data.categories,
       domainLastPublished: scope?.domainLastPublished || null,
       extensionVersion: EXTENSION_VERSION,
-      workerVersion: knownWorkerVersion
+      workerVersion: knownWorkerVersion,
+      timings: data.timings
     };
     return buildReportMarkdown(input);
   }

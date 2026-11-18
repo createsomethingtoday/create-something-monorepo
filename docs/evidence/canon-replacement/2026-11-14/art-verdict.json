@@ -1,0 +1,403 @@
+{
+  "createdAt": "2026-11-14T05:39:22.225633+00:00",
+  "subjective": true,
+  "bar": 9,
+  "calibrationOffset": 0,
+  "dimensions": [
+    "composition",
+    "warmth/material",
+    "Canon identity",
+    "task clarity with caption",
+    "readability at360px"
+  ],
+  "method": "Fresh-context independent critics. First11 unchanged PNGs use r20-a and r21-b. New sequence-r21 uses r21-b, strict sequence critic, and fresh tiebreak. Prior r19 sequence score8.5 is superseded and excluded. A stricter sequence reading scored8; median reaches9. These are subjective assessments, not physical measurements or human acceptance.",
+  "shots": [
+    {
+      "key": "evidence-comparison",
+      "master": "output/canon-replacement-art/property/evidence-comparison-r19.png",
+      "sha256": "499ae17f7c63797d61bab2ea5626f2223a3dd5201b4bb9b93f97c216d9e5c904",
+      "rawScores": [
+        [
+          9,
+          9.5,
+          9.5,
+          9,
+          9
+        ],
+        [
+          9.5,
+          9.5,
+          9.5,
+          9.5,
+          9.5
+        ]
+      ],
+      "median": [
+        9.25,
+        9.5,
+        9.5,
+        9.25,
+        9.25
+      ],
+      "passed": true
+    },
+    {
+      "key": "tool-fit",
+      "master": "output/canon-replacement-art/property/tool-fit-r19.png",
+      "sha256": "1b6098d69fcfd39c4701a9cbd9607157d1e6763f07a645833b805e38c5cc9380",
+      "rawScores": [
+        [
+          9,
+          9.5,
+          9,
+          9.5,
+          9.5
+        ],
+        [
+          9.5,
+          9.5,
+          9,
+          9.5,
+          9.5
+        ]
+      ],
+      "median": [
+        9.25,
+        9.5,
+        9.0,
+        9.5,
+        9.5
+      ],
+      "passed": true
+    },
+    {
+      "key": "bounded-sandbox",
+      "master": "output/canon-replacement-art/property/bounded-sandbox-r19.png",
+      "sha256": "07fb1d5fdb82ee3da4f4d2a16050bfcc046a4720468c4f3a7779c147da588921",
+      "rawScores": [
+        [
+          9.5,
+          9.5,
+          9,
+          9.5,
+          9
+        ],
+        [
+          9.5,
+          9.5,
+          9.5,
+          9.5,
+          9
+        ]
+      ],
+      "median": [
+        9.5,
+        9.5,
+        9.25,
+        9.5,
+        9.0
+      ],
+      "passed": true
+    },
+    {
+      "key": "compiler-jig",
+      "master": "output/canon-replacement-art/property/compiler-jig-r19.png",
+      "sha256": "50785ed86a99a47f6cbfec277ebed691865127e29579e09efb18d9cbe487ac70",
+      "rawScores": [
+        [
+          9,
+          9.5,
+          9,
+          9.5,
+          9
+        ],
+        [
+          9,
+          9.5,
+          9.5,
+          9.5,
+          9
+        ]
+      ],
+      "median": [
+        9.0,
+        9.5,
+        9.25,
+        9.5,
+        9.0
+      ],
+      "passed": true
+    },
+    {
+      "key": "shared-repair",
+      "master": "output/canon-replacement-art/property/shared-repair-r15.png",
+      "sha256": "2886b3c219eae9d7354a0994569211939d8273e8fc17cbd55d64df4c9abbd9b4",
+      "rawScores": [
+        [
+          9,
+          9.5,
+          9,
+          9,
+          9
+        ],
+        [
+          9,
+          9.5,
+          9,
+          9,
+          9
+        ]
+      ],
+      "median": [
+        9.0,
+        9.5,
+        9.0,
+        9.0,
+        9.0
+      ],
+      "passed": true
+    },
+    {
+      "key": "subtract-route",
+      "master": "output/canon-replacement-art/property/subtract-route-r19.png",
+      "sha256": "d7512b310c3bce141b351e219819f50006a5f75c45032d8c103a9b4504396f6d",
+      "rawScores": [
+        [
+          9,
+          9.5,
+          9,
+          9,
+          9
+        ],
+        [
+          9.5,
+          9.5,
+          9.5,
+          9,
+          9.5
+        ]
+      ],
+      "median": [
+        9.25,
+        9.5,
+        9.25,
+        9.0,
+        9.25
+      ],
+      "passed": true
+    },
+    {
+      "key": "evidence-unknowns",
+      "master": "output/canon-replacement-art/property/evidence-unknowns-r19.png",
+      "sha256": "a9d668d82a302ca451057d6390c7288a12447c00ec70b8f6584425b8f207a7e0",
+      "rawScores": [
+        [
+          9.5,
+          9.5,
+          9.5,
+          9.5,
+          9.5
+        ],
+        [
+          9.5,
+          9.5,
+          9.5,
+          9.5,
+          9
+        ]
+      ],
+      "median": [
+        9.5,
+        9.5,
+        9.5,
+        9.5,
+        9.25
+      ],
+      "passed": true
+    },
+    {
+      "key": "controlled-load",
+      "master": "output/canon-replacement-art/property/controlled-load-r20.png",
+      "sha256": "0f8f16f991a964180bfa1399dc61b3d54afecf68c2f451dc195646db77a4cfa0",
+      "rawScores": [
+        [
+          9,
+          9.5,
+          9.5,
+          9.5,
+          9
+        ],
+        [
+          9,
+          9.5,
+          9,
+          9.5,
+          9
+        ]
+      ],
+      "median": [
+        9.0,
+        9.5,
+        9.25,
+        9.5,
+        9.0
+      ],
+      "passed": true
+    },
+    {
+      "key": "modular-port",
+      "master": "output/canon-replacement-art/property/modular-port-r19.png",
+      "sha256": "3d429b8b28a33f60d1fcf5cddeeffd47ecec6e439e7a605d5f89ab17247819dc",
+      "rawScores": [
+        [
+          9,
+          9.5,
+          9,
+          9.5,
+          9
+        ],
+        [
+          9.5,
+          9.5,
+          9.5,
+          9,
+          9
+        ]
+      ],
+      "median": [
+        9.25,
+        9.5,
+        9.25,
+        9.25,
+        9.0
+      ],
+      "passed": true
+    },
+    {
+      "key": "operating-library",
+      "master": "output/canon-replacement-art/property/operating-library-r17.png",
+      "sha256": "44d3007feaf9a7cb803b06453b61d103fabbb3096881dfd6e60c4ecc4d406b7d",
+      "rawScores": [
+        [
+          9,
+          9.5,
+          9,
+          9,
+          9
+        ],
+        [
+          9.5,
+          9.5,
+          9.5,
+          9.5,
+          9
+        ]
+      ],
+      "median": [
+        9.25,
+        9.5,
+        9.25,
+        9.25,
+        9.0
+      ],
+      "passed": true
+    },
+    {
+      "key": "separate-gates",
+      "master": "output/canon-replacement-art/property/separate-gates-r19.png",
+      "sha256": "669888385165a6066c4b66422dfc9084fd1e5dec5c454cb5137b2ceee0c5e7b9",
+      "rawScores": [
+        [
+          9.5,
+          9.5,
+          9.5,
+          9.5,
+          9
+        ],
+        [
+          9,
+          9.5,
+          9,
+          9.5,
+          9
+        ]
+      ],
+      "median": [
+        9.25,
+        9.5,
+        9.25,
+        9.5,
+        9.0
+      ],
+      "passed": true
+    },
+    {
+      "key": "preserve-sequence",
+      "master": "output/canon-replacement-art/property/preserve-sequence-r21.png",
+      "sha256": "77f6e21fc41d420600dbe561baaf802caa4caff5a9069ee404924b976d6c04de",
+      "rawScores": [
+        [
+          9.5,
+          9.5,
+          9.5,
+          9,
+          9.5
+        ],
+        [
+          9,
+          9,
+          9,
+          8,
+          9
+        ],
+        [
+          9,
+          9,
+          9,
+          9,
+          9
+        ]
+      ],
+      "median": [
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "passed": true
+    }
+  ],
+  "transparentBody": {
+    "master": "output/canon-replacement-art/body/canon-body-transparent-r15.png",
+    "rawScores": [
+      [
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      [
+        9,
+        9,
+        9,
+        10,
+        9
+      ]
+    ],
+    "reviewedAt": "actual370px black/gray/light browser composite; actual LMS alpha also independently viewed",
+    "humanAcceptance": {
+      "state": "approved_for_production",
+      "userWords": "Approve the artwork for production",
+      "observedAt": "2026-11-14T05:43:58.353590+00:00",
+      "scope": "The12selectedCanonscenesandtransparentbodyinthe2026-11-14-complete-replacementreviewset; selectedPNGhashesaretheapprovalscope."
+    }
+  },
+  "humanAcceptance": {
+    "state": "approved_for_production",
+    "userWords": "Approve the artwork for production",
+    "observedAt": "2026-11-14T05:43:58.353590+00:00",
+    "scope": "The12selectedCanonscenesandtransparentbodyinthe2026-11-14-complete-replacementreviewset; selectedPNGhashesaretheapprovalscope."
+  }
+}

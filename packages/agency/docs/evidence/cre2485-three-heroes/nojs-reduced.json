@@ -1,0 +1,53 @@
+[
+  {
+    "path": "/stack",
+    "width": 390,
+    "reduced": true,
+    "title": "Your accounts. Your data. Your decisions.",
+    "scene": "Concept illustration: Canon presents a portable connected toolkit and its matching guide.",
+    "links": [
+      [
+        "Map your workflow",
+        "/map"
+      ],
+      [
+        "Book a mapping session",
+        "/book?source=agency&intent=workflow-mapping&lane=workflow_infrastructure"
+      ]
+    ]
+  },
+  {
+    "path": "/practice",
+    "width": 390,
+    "reduced": true,
+    "title": "Try the workflow before connecting your tools.",
+    "scene": "Concept illustration: Canon rehearses a task in a bounded tray with a stop gate and an unplugged connector.",
+    "links": [
+      [
+        "Try a short example",
+        "#short-practice"
+      ],
+      [
+        "Examine the evidence",
+        "#evidence"
+      ]
+    ]
+  },
+  {
+    "path": "/field-reports",
+    "width": 390,
+    "reduced": true,
+    "title": "Read the results, including the limits.",
+    "scene": "Concept illustration: Canon inspects a notebook with two recorded symbols and an empty evidence square.",
+    "links": [
+      [
+        "Read the reports",
+        "#reports"
+      ],
+      [
+        "Map your workflow",
+        "/map"
+      ]
+    ]
+  }
+]

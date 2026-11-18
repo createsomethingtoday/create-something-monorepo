@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ResearchScene from '$lib/components/ResearchScene.svelte';
+  import TaskOpening from '$lib/components/TaskOpening.svelte';
 	const coreTools = [
 		{ name: 'ground_compare', description: 'Compare two files for similarity (0.0-1.0 score)' },
 		{ name: 'ground_count_uses', description: 'Count symbol uses; distinguishes runtime vs type-only usages' },
@@ -50,7 +50,8 @@
 		<a href="/docs">Documentation</a> / <span>Ground</span>
 	</nav>
 
-	<header class="hero io-reference-opening">
+	<TaskOpening scene="evidence-comparison" caption="Canon checks a part against its reference before accepting the claim.">
+<div class="hero io-reference-opening">
 <div class="io-reference-copy">
 		<h1>Ground</h1>
 		<p class="tagline">Grounded claims for code</p>
@@ -60,13 +61,14 @@
 		</p>
 		<code class="npm-package">npm install @createsomething/ground-mcp</code>
 	</div>
-<ResearchScene sizes="(min-width: 960px) 50vw, 94vw" scene="ground-compare-before-claim" caption="Two agents compare a part against its reference before accepting the claim." />
-</header>
+
+</div>
+</TaskOpening>
 
 	<section class="section">
 		<h2>The Problem</h2>
 		<p>
-			AI agents are confident. Too confident. They'll tell you two files are "95% similar" 
+			AI agents are confident. Too confident. They'll tell you two files are "95% similar"
 			without ever comparing them. They'll declare code "dead" without checking who uses it.
 		</p>
 		<p>This is hallucination dressed up as analysis.</p>
@@ -85,7 +87,7 @@
 
 	<section class="section">
 		<h2>Installation</h2>
-		
+
 		<h3>Claude Code (CLI)</h3>
 		<pre><code>claude mcp add --scope user --transport stdio ground -- npx --yes -p @createsomething/ground-mcp ground-mcp</code></pre>
 
@@ -265,6 +267,11 @@
 
 	.npm-package {
 		display: inline-block;
+		min-width: 0;
+		max-width: 100%;
+		box-sizing: border-box;
+		overflow-wrap: anywhere;
+		white-space: normal;
 		background: var(--color-performance-bg-subtle);
 		padding: var(--space-performance-xs) var(--space-performance-sm);
 		border-radius: var(--radius-performance-scale-sm);

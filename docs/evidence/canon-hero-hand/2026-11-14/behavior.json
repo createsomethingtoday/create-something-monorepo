@@ -1,0 +1,192 @@
+{
+  "sharedScenes": [
+    {
+      "url": "/",
+      "width": 390,
+      "scenes": [
+        {
+          "tag": "SECTION",
+          "cls": "chapter hero canon-scene-hero",
+          "pseudo": null,
+          "bg": "url(\"http://127.0.0.1:5192/images/canon-agency-v1/hero-portrait-v1.webp\")",
+          "filter": "none"
+        }
+      ],
+      "imgs": []
+    },
+    {
+      "url": "/",
+      "width": 1440,
+      "scenes": [
+        {
+          "tag": "SECTION",
+          "cls": "chapter hero canon-scene-hero",
+          "pseudo": null,
+          "bg": "url(\"http://127.0.0.1:5192/images/canon-agency-v1/hero-wide-v2.webp\")",
+          "filter": "none"
+        }
+      ],
+      "imgs": []
+    },
+    {
+      "url": "/services",
+      "width": 390,
+      "scenes": [
+        {
+          "tag": "DIV",
+          "cls": "canon-background-scene s-_izbDL5iE55u",
+          "pseudo": null,
+          "bg": "url(\"http://127.0.0.1:5192/images/canon-agency-v1/hero-portrait-v1.webp\")",
+          "filter": "none"
+        }
+      ],
+      "imgs": []
+    },
+    {
+      "url": "/services",
+      "width": 1440,
+      "scenes": [
+        {
+          "tag": "DIV",
+          "cls": "canon-background-scene s-_izbDL5iE55u",
+          "pseudo": null,
+          "bg": "url(\"http://127.0.0.1:5192/images/canon-agency-v1/hero-wide-v2.webp\")",
+          "filter": "none"
+        }
+      ],
+      "imgs": []
+    },
+    {
+      "url": "/openai-dots",
+      "width": 390,
+      "scenes": [
+        {
+          "tag": "DIV",
+          "cls": "hero-grid",
+          "pseudo": "::after",
+          "bg": "url(\"http://127.0.0.1:5192/images/canon-agency-v1/hero-portrait-v1.webp\")",
+          "filter": "none"
+        }
+      ],
+      "imgs": []
+    },
+    {
+      "url": "/openai-dots",
+      "width": 1440,
+      "scenes": [
+        {
+          "tag": "DIV",
+          "cls": "hero-grid",
+          "pseudo": null,
+          "bg": "url(\"http://127.0.0.1:5192/images/canon-agency-v1/hero-wide-v2.webp\")",
+          "filter": "none"
+        }
+      ],
+      "imgs": []
+    }
+  ],
+  "tabs": [
+    {
+      "tag": "A",
+      "text": "",
+      "href": "/",
+      "outline": "rgb(255, 255, 255) solid 2px",
+      "boxShadow": "none",
+      "focused": true
+    },
+    {
+      "tag": "A",
+      "text": "The work",
+      "href": "/#built-work",
+      "outline": "rgb(255, 255, 255) solid 2px",
+      "boxShadow": "none",
+      "focused": true
+    },
+    {
+      "tag": "A",
+      "text": "Technical support",
+      "href": "/services",
+      "outline": "rgb(255, 255, 255) solid 2px",
+      "boxShadow": "none",
+      "focused": true
+    },
+    {
+      "tag": "A",
+      "text": "From $900/mo",
+      "href": "/services#membership",
+      "outline": "rgb(255, 255, 255) solid 2px",
+      "boxShadow": "none",
+      "focused": true
+    },
+    {
+      "tag": "BUTTON",
+      "text": "Explore",
+      "href": null,
+      "outline": "rgb(255, 255, 255) solid 2px",
+      "boxShadow": "none",
+      "focused": true
+    },
+    {
+      "tag": "A",
+      "text": "Book a mapping session",
+      "href": "/book?source=agency&intent=workflow-mapping&lane=workflow_infrastructure",
+      "outline": "rgb(255, 255, 255) solid 2px",
+      "boxShadow": "none",
+      "focused": true
+    },
+    {
+      "tag": "BUTTON",
+      "text": "Motion ● on",
+      "href": null,
+      "outline": "rgb(255, 255, 255) solid 2px",
+      "boxShadow": "none",
+      "focused": true
+    },
+    {
+      "tag": "A",
+      "text": "01 The ideaIdea ↘",
+      "href": "#opening",
+      "outline": "rgb(255, 255, 255) solid 2px",
+      "boxShadow": "none",
+      "focused": true
+    },
+    {
+      "tag": "A",
+      "text": "02 The connectionConnect ↘",
+      "href": "#example",
+      "outline": "rgb(255, 255, 255) solid 2px",
+      "boxShadow": "none",
+      "focused": true
+    },
+    {
+      "tag": "A",
+      "text": "03 The evidenceEvidence ↘",
+      "href": "#work",
+      "outline": "rgb(255, 255, 255) solid 2px",
+      "boxShadow": "none",
+      "focused": true
+    },
+    {
+      "tag": "A",
+      "text": "04 What you keepKeep ↘",
+      "href": "#together",
+      "outline": "rgb(255, 255, 255) solid 2px",
+      "boxShadow": "none",
+      "focused": true
+    },
+    {
+      "tag": "A",
+      "text": "05 Start hereStart ↘",
+      "href": "#next",
+      "outline": "rgb(255, 255, 255) solid 2px",
+      "boxShadow": "none",
+      "focused": true
+    }
+  ],
+  "anchor": {
+    "hash": "#next",
+    "scrollY": 0,
+    "active": "Tracking off Change       The workTechnical supportFrom $900/moExplore    Book a mapping session   <div class=\"nav-static-links s-Rs6tK8b2rZ_-\"><!--[--><a href=\"/#built-work\" class=\"s-Rs6tK8b2rZ_-\">The work</a><!--[--><!--]--><a href=\"/services\" class=\"s-Rs6tK8b2rZ_-\">Technical support</a><!--[--><!--]--><a href=\"/services#membership\" class=\"s-Rs6tK8b2rZ_-\">From $900/mo</a><!--[--><!--]--><a href=\"/products\" class=\"s-Rs6tK8b2rZ_-\">Explore</a><!--[--><a href=\"/products\" class=\"s-Rs6tK8b2rZ_-\">Services &amp; tools</a><a href=\"/field-reports\" class=\"s-Rs6tK8b2rZ_-\">Proof</a><a href=\"/practice\" class=\"s-Rs6tK8b2rZ_-\">Try a workflow</a><a href=\"/stack\" class=\"s-Rs6tK8b2rZ_-\">What you keep</a><a href=\"https://createsomething.io/experiments\" class=\"s-Rs6tK8b2rZ_-\">Research on .io</a><!--]--><!--]--> <!--[0--><a href=\"/book?source=agency&amp;intent=workflow-mapping&amp;lane=workflow_infrastructure\" class=\"s-Rs6tK8b2rZ_-\">Book a mapping session</a><!--]--> <!--[-1--><!--]--></div>     CREATE SOMETHING / .AGENCY A little guidance. A working connection. Motion ● on   01 The ideaIdea ↘02 The connectionConnect ↘03 The evidenceEvidence ↘04 What you keepKeep ↘05 Start hereStart ↘ 01 / Your tools, working togetherSmall team. Thoughtful systems. \n01 / Engineering for small teamsBuilt to work together.Your tools shouldwork together.We connect your tools and AI, fix what breaks, and leave your team in control.Talk through your project ↗See the connection ↓ CS—01 / THE WORKSHOPA shared task, a clear next step WORK TOGETHER.CREATE SOMETHING / FIELD NOTES  01The connection 02The checks 03Your team Concept illustration / a shared taskBuild. Test. Hand over. 01 / THE CONNECTIONClose the gap.See how a request gets from one tool to the next.↘ 02 / THE EVIDENCELook a little closer.Inspect actual work, recordings and the checks behind it.↘ 03 / YOUR TEAMMake it yours.Keep the agreed code, tests and guidance to use the result.↘ \n02 / The handoffIllustrative exampleWork gets lostbetween tools.Concept illustrationRequest handoffWe make thehandoff reliable.Your formRequestYour teamReceivedYou approve the change. We connect and check.Inspect actual work ↘See what you keep ↘Fix what keeps breaking.↗Check what you've built.↗Connect your tools.↗03 / Actual workLook insidethe work.Forms, reviews and handoffs.One marketplace lifecycle.Look inside ↗Play walkthrough · 2:48<p><a class=\"simplelink\" href=\"/case-studies/webflow-marketplace\">Explore the walkthrough in the case study ↗</a></p>Webflow MarketplaceInspect the case study ↗Micah Johnson’s work for Webflow, independently of CREATE SOMETHING.Recorded interfaces and test replays. Explore the work in the case study.\n04 / Your team stays in controlKeep the work.Know how to use it.Agree the scope. Build the change. Check the result together.01The working codeKeep the agreed code and connection details, so your team can inspect and maintain the work.Concept illustration / build 01 / 0302The checksKeep the tests and findings, including known limits and the cases that still need review.Concept illustration / test 02 / 0303The guidanceKeep the instructions and project history, with clear next steps for the people who run the work.Concept illustration / validate 03 / 0301 / Build02 / Test03 / Validate01 / BuildBuild the agreed change.We connect the tools and write the code for the scope we agree.Explore what you keep ↗02 / TestTest what can go wrong.We check the expected result, failures and the moments that need a person.Explore what you keep ↗03 / ValidateWalk through the result.We review the evidence together and show your team how to use what we deliver.Explore what you keep ↗Plan it on paper.Build it to work.Your team and agents turn a workflow into working software. Start with the shape, refine the decisions, then try the dashboard.\n01Sketch02Refine03Use it\nInteractive concept / sample workflowOne dashboard, from paper to practice\nPaper mockup / agree on the essentials\nAcme studio / workflow deskA little more in motion.Good morning, Maya. Here’s where the work stands.Sample data · local demo\nNeeds your review2A decision moves it forwardIn progress2People + agents at workCompleted1In this sample queue\nA steady rhythmWork moving throughSample week4Mon6Tue5Wed8Thu7Fri30 completed6 more than the previous sample week\nPeople + agentsSmall steps, visible progress.↗Agent prepared a welcome updateDraft ready · waiting for Maya’s reviewEli confirmed the routing rulesIntake handoff · development can continueAgent assembled release checksWebsite preview · Noah approves deployment\nThe next useful stepWork queue 5Reset demo ↺All 5Review 2In progress 2Done 1Search sample work⌕Request / projectOwnerStatus\n↑ High priorityRefresh the client welcomeClient experience · #041MCMaya ChenNeeds reviewConnect the intake handoffOperations · #042EBEli BrooksIn progressReview the monthly reportReporting · #043MCMaya ChenNeeds reviewPrepare the release checklistWebsite · #044NPNoah PatelIn progressTidy the project archiveOperations · #045EBEli BrooksCompletedNo matching work. Try another search or choose All.\n← Back to queueA decision, with context#041Refresh the client welcomeMaya Chen · Client experienceWhat we knowThe welcome email still points to the old onboarding guide. Maya owns client communications; the new guide is ready for review.Agent recommendationReplace the outdated link and simplify the first step. Maya reviews the copy before anything reaches a client.◇Your team decides.Maya reviews before any external action.Approve sample review ↗Nothing is sent or saved. Approval only updates this demo.\nAgent supportTurns your goals and constraints into a first dashboard wireframe.Your teamSets the goal, names the owners, and reviews the plan.Start with the shapeA summary, the work, and the context for a decision.Review changes the design“Put urgent work first. Name the owner. Show where the agent waits for us.”\nMake the idea tangible.A paper dashboard makes the workflow specific: what needs attention, who owns it, and what someone needs to decide.What you get / 01A shared view of the work, before connecting any tools.Sketch. Your team and agents lay out the summary, queue, activity and decision context on paper.Refine. Review adds urgent-work priority, named owners and an explicit human review step.Use it. The same layout becomes a working dashboard. With JavaScript, select Use it to search, filter, inspect and approve sample work. Agents support development, checks and deployment; your team approves release. Nothing is sent or saved.Micah Johnson + Huzaifa TofeeqHuzaifa is a forward-deployed engineer.Deliberately small, for the long run.After full payment, commissioned deliverables are yours under your agreement. Reusable provider tools remain licensed. Scope and checks are agreed before work starts.\n05 / Start with one thingWhat needs towork better?Bring the project and the problem.Discuss fit before agreeing paid work.Talk through your project ↗A second set of eyes.One workflow. Written findings and a walkthrough. Review quoted separately; fixes agreed separately.Current technical review offer ↗A defined piece of work.A repair, connection or new capability. Agree on its scope, checks and handoff before work starts.Ongoing support · $900 or $2,500/monthFocused · $900/monthOne workstream. One milestone per month. Two 30-minute check-ins and two 60-minute remote sessions per month.Team · $2,500/monthUp to two workstreams. Two milestones per month. Two 30-minute check-ins and four 60-minute remote sessions per month.One revision round per milestone. Cancel before renewal. Access, session times and response times confirmed before payment. Larger builds, launch, incident response, hosting and usage are separately scoped. Managed Control is a separate service. Current service terms ↗\nA few details.What needs a separate agreement?Larger Builds, managed Control and production incident response need separate agreements. Membership capacity covers the agreed workstreams and milestones above.What costs extra?Project-specific AI development, testing and production usage, hosting and third-party services are budgeted separately. You approve the budget first. Our everyday coding tools are our expense. More API credit does not add delivery capacity.Who delivers the service?Micah Johnson and Huzaifa Tofeeq, our forward-deployed engineer, deliver the service as a small team, with agents assisting the work. The dedicated member portal is in development. We confirm resource access, session times and response times before payment.What does our team keep?After full payment, you own commissioned deliverables under your agreement, except reusable provider tools, which are licensed for continued use. You keep the agreed code, tests, instructions and project history.Can we cancel?Cancel before your next renewal by emailing support@createsomething.io to stop future membership charges. Support continues through your paid period while we hand over your code and documentation, document open work, and plan the transition. If you need more help afterward, we’ll agree on the scope and price before extending support. Separately scoped projects follow their agreed terms.Webflow Marketplace — Connected workClose ×Prepare / Prepare before review.Validator shows setup; Preflight shows connected input paths. Skills is an offline source/static-evaluation replay. No app analysis runs here.Individual work by Micah Johnson for Webflow, not a CREATE SOMETHING commission. Real recordings and labeled offline replays. Silent walkthrough; visual guidance is available in captions. Read the study and evidence limits ↗\n Explore the work library Films, source and field reports +  <a href=\"/products\" class=\"s-uyKKaljqdysy\">Explore the product library</a> · <a href=\"/field-reports\" class=\"s-uyKKaljqdysy\">Read field reports</a>     AI for useful business tasks. Built for your team to keep.   AI-native technical support for your team’s tools and workflows. We diagnose problems, implement improvements, and help your team use what we deliver. Meet Canon +     Work WebsitesForms & intakeAI-native systemsAlgorithmsEducation / PCNVideo developmentWebflow developmentWorking together Support membershipBook a mapping sessionContactTechnical SupportAgent FoundationTechnical ReviewAI Buyer Readiness AuditWhat You KeepUse With ClientsResources ProductsField ReportsDispatchAboutMapBuildControlConnected toolsCloudflareWorkflow GuidesExperiments on .ioResearch papers on .ioGet Workflow ChecklistTrust & access SecurityBearer Token PolicyPrivacyTermsSign in CREATE SOMETHING .space — Explore Experiments, practice, learning by doing .learn — Study Structured courses and educational content .io — Research Papers, tools, documented discoveries .agency — Build Client services, commercial work .ltd — Canon Philosophy, patterns, the source of truth GitHub — Source Open development, version control © 2026 Create Something. The canon for \"less, but better.\" Privacy · Terms   Your tools should work together | CREATE SOMETHING .agency\n\t\t\t\n\t\t\t\n\t\t\t\t{\n\t\t\t\t\t__sveltekit_dev = {\n\t\t\t\t\t\tbase: new URL(\".\", location).pathname.slice(0, -1),\n\t\t\t\t\t\tenv: {}\n\t\t\t\t\t};\n\n\t\t\t\t\tconst element = document.currentScript.parentElement;\n\n\t\t\t\t\tPromise.all([\n\t\t\t\t\t\timport(\"/@fs/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a01044d6-2f560e0ec9e58190/node_modules/.pnpm/@sveltejs+kit@2.70.2_@opentelemetry+api@1.9.0_@sveltejs+vite-plugin-svelte@4.0.4_svelte@5.56._n2ikr7zatpzdx5xydvyomz3rau/node_modules/@sveltejs/kit/src/runtime/client/entry.js\"),\n\t\t\t\t\t\timport(\"/@fs/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a01044d6-2f560e0ec9e58190/packages/agency/.svelte-kit/generated/client/app.js\")\n\t\t\t\t\t]).then(([kit, app]) => {\n\t\t\t\t\t\tkit.start(app, element, {\n\t\t\t\t\t\t\tnode_ids: [0, 3],\n\t\t\t\t\t\t\tdata: [{type:\"data\",data:{pathname:\"/\",user:void 0},uses:{route:1,url:1}},{type:\"data\",data:{papers:[],categories:[]},uses:{}}],\n\t\t\t\t\t\t\tform: null,\n\t\t\t\t\t\t\terror: null\n\t\t\t\t\t\t});\n\t\t\t\t\t});\n\t\t\t\t}",
+    "target": 9649.40625
+  }
+}

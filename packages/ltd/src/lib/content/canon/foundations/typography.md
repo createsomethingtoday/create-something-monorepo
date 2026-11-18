@@ -3,101 +3,54 @@ category: "Canon"
 section: "Foundations"
 title: "Typography"
 description: "Canon typography system: scale, weights, and responsive type built on the golden ratio."
-lead: "Type that works. A modular scale based on φ (1.618) creates natural rhythm. Five weights for hierarchy. Fluid sizing for any screen."
+lead: "Local Geist keeps headings and prose approachable. Mono gives actual records, code and measurements a distinct role."
 publishedAt: "2026-01-08"
 published: true
 ---
 
-## Type Scale
+## Families and responsibilities
 
-Built on the golden ratio (φ = 1.618). Each step multiplies by φ for natural visual rhythm.
+Canon uses locally loaded Geist for headings, prose and controls. The complete `@create-something/canon/styles/canon.css` import owns base styles and local font loading. The framework-neutral `tokens.css` import defines variables only: token-only consumers own font assets and resets. A fallback stack remains necessary.
 
-| Token | Size | Use |
-|-------|------|-----|
-| `--text-xs` | 0.75rem | Fine print, labels |
-| `--text-sm` | 0.875rem | Captions, metadata |
-| `--text-base` | 1rem | Body text |
-| `--text-lg` | 1.125rem | Lead paragraphs |
-| `--text-xl` | 1.25rem | Section intros |
-| `--text-2xl` | 1.5rem | H4 headings |
-| `--text-3xl` | 1.875rem | H3 headings |
-| `--text-4xl` | 2.25rem | H2 headings |
-| `--text-5xl` | 3rem | H1 headings |
-| `--text-performance-display` | 4rem | Hero text |
+| Job | Token |
+| --- | --- |
+| Headings | `--font-performance-heading` |
+| Interface | `--font-performance-interface` |
+| Prose | `--font-performance-prose` |
+| Records, IDs and timestamps | `--font-performance-record` |
+| Code and payloads | `--font-performance-code` |
+| Topology labels | `--font-performance-topology-label` |
 
-## Font Weights
+Use mono where the content is a record, measurement, command or meaningful chapter label. Long explanations remain in the prose family. Machine-shaped values use tabular numerics and restrained tracking.
 
-| Token | Weight | Use |
-|-------|--------|-----|
-| `--font-performance-light` | 300 | Display text |
-| `--font-normal` | 400 | Body text |
-| `--font-performance-medium` | 500 | Emphasis |
-| `--font-performance-semibold` | 600 | Subheadings |
-| `--font-performance-bold` | 700 | Headings |
+CREATE SOMETHING's OpenAI Select Partner context informs clear, approachable presentation. Geist remains Canon's house typeface; that relationship does not authorize OpenAI font assets. Embedded experiences follow the host's typography contract.
 
-## Line Height
+## Scale and rhythm
 
-| Token | Value | Use |
-|-------|-------|-----|
-| `--leading-none` | 1 | Single-line text |
-| `--leading-performance-tight` | 1.25 | Headings |
-| `--leading-performance-normal` | 1.5 | Body text |
-| `--leading-performance-relaxed` | 1.75 | Long-form reading |
+Use `--text-performance-body` for body text and the shared size scale for hierarchy. Display roles such as `--text-performance-display` are fluid; do not copy their current clamp values into a route. The scale includes practical interface steps as well as golden-ratio display relationships.
 
-## Letter Spacing
-
-| Token | Value | Use |
-|-------|-------|-----|
-| `--tracking-performance-tight` | -0.025em | Large headings |
-| `--tracking-performance-normal` | 0 | Body text |
-| `--tracking-performance-wide` | 0.025em | Buttons |
-| `--tracking-performance-widest` | 0.1em | Labels, caps |
-
-## Font Stack
-
-```css
---font-performance-sans: Arial, 'Helvetica Neue', Helvetica, system-ui, sans-serif;
---font-performance-display: var(--font-performance-sans);
---font-performance-mono: ui-monospace, 'SFMono-Regular', 'SF Mono', Menlo, Consolas, monospace;
---font-performance-serif: Georgia, 'Times New Roman', serif;
-```
-
-The Performance Lab layer uses the local/system sans stack for interface and body text, the platform
-mono stack for compact system labels, and Georgia only when an editorial serif voice is useful. No
-CREATE SOMETHING surface should depend on another company's font host.
-CREATE SOMETHING keeps local fallbacks so surfaces remain stable if external font loading fails.
-
-The type rule is operational comprehension first. Headlines name the workflow or offer plainly;
-supporting copy explains the object, action, policy, owner, receipt, or next step. Use mono for
-short state labels and identifiers, not long explanatory paragraphs.
-
-## Fluid Typography
-
-Display text scales with viewport:
-
-```css
---text-performance-display: clamp(2.5rem, 4vw + 1.5rem, 4.5rem);
-```
-
-## Usage Example
+Weights use `--font-performance-regular`, `--font-performance-medium`, `--font-performance-semibold` and `--font-performance-bold`. Headings can use `--leading-performance-tight`; prose can use `--leading-performance-relaxed`. Actual values live in the token reference.
 
 ```css
 .article-title {
-  font-size: var(--text-4xl);
-  font-weight: var(--font-performance-bold);
+  font-family: var(--font-performance-heading);
+  font-size: var(--text-performance-h1);
+  font-weight: var(--font-performance-medium);
   line-height: var(--leading-performance-tight);
   letter-spacing: var(--tracking-performance-tight);
 }
-
 .article-body {
-  font-size: var(--text-base);
-  font-weight: var(--font-normal);
+  font-family: var(--font-performance-prose);
+  font-size: var(--text-performance-body);
   line-height: var(--leading-performance-relaxed);
 }
-
 .article-meta {
-  font-size: var(--text-sm);
-  color: var(--color-performance-fg-muted);
-  letter-spacing: var(--tracking-performance-wide);
+  font-family: var(--font-performance-record);
+  font-size: var(--text-performance-record-meta);
+  font-variant-numeric: tabular-nums;
 }
 ```
+
+Verify wrapping, zoom, font fallback and narrow screens with real content. A large heading must still leave its next action understandable.
+
+See [Token Reference](/canon/resources/tokens).

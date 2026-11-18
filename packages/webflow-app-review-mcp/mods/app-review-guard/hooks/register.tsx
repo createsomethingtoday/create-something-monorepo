@@ -84,6 +84,8 @@ export function describe({ name, args }: Call, known: Record<string, string>): s
       return args.status === 'solved' ? `Solve Zendesk ticket ${str(args.ticket_id) ?? '?'} (sends the solved email)` : null
     case 'set_marketplace_status':
       return `Marketplace Status -> ${str(args.marketplace_status) ?? '?'} on ${v}: changes what customers see`
+    case 'set_live_listing':
+      return `LIVE Webflow listing -> ${[str(args.status), str(args.visibility)].filter(Boolean).join(' + ') || '?'} on ${v}: production write, changes what customers see in the Marketplace`
     case 'create_exception_item':
       return `Request an exception on ${v} ("${str(args.item) ?? ''}"): posts to #app-review-exceptions`
     case 'update_exception_item': {

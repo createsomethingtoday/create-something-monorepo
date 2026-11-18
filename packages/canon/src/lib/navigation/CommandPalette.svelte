@@ -249,11 +249,11 @@
 		width: min(560px, 90vw);
 		max-height: 60vh;
 		/* Glass Design System - "The Automation Layer" */
-		background-color: var(--glass-performance-bg-medium);
-		backdrop-filter: blur(var(--glass-performance-blur-xl)) var(--glass-performance-saturate-xl);
-		border: 1px solid var(--glass-performance-border-medium);
+		background-color:var(--color-performance-panel);
+		backdrop-filter:none;
+		border: 1px solid var(--color-performance-line);
 		border-radius: var(--radius-performance-scale-lg, 12px);
-		box-shadow: var(--glass-performance-shadow-lg);
+		box-shadow: var(--shadow-performance-scale-lg);
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;

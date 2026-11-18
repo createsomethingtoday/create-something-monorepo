@@ -15,6 +15,7 @@ import {
 } from '../src/reviewer-directory.js';
 import { METRICS_ASSET_FIELD_IDS, TABLE_IDS, TEMPLATE_REVIEW_FIELD_MAP } from '../src/schema.js';
 import { registerTools, WRITE_TOOL_NAMES } from '../src/tools.js';
+import type { ReviewCommentsClient } from '../src/review-comments.js';
 
 type ToolResult = {
   content: Array<{ type?: string; text?: string; data?: string; mimeType?: string }>;
@@ -1230,10 +1231,12 @@ test('default access keeps the full write surface', () => {
   const { server, names } = createServerHarness();
   const client = {} as AirtableClient;
 
+  // Review comment tools register only when the comments service is configured.
   registerTools(
     server,
     () => client,
     () => reviewer,
+    { getReviewCommentsClient: () => ({}) as ReviewCommentsClient },
   );
 
   for (const writeTool of WRITE_TOOL_NAMES) {

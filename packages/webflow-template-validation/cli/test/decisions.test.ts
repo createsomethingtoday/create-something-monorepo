@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
 	bucketOf,
 	exitCodeFor,
+	failedWithoutBlocker,
 	howToFix,
 	incompleteReasons,
+	missingResults,
+	pageSlugsFromDesigner,
 	parseChecks,
 	recordSkipReason
 } from '../src/decisions.ts';
@@ -122,5 +125,73 @@ describe('incompleteReasons and exitCodeFor', () => {
 		expect(exitCodeFor(['recording failed'], 3)).toBe(2);
 		expect(exitCodeFor([], 1)).toBe(1);
 		expect(exitCodeFor([], 0)).toBe(0);
+	});
+});
+
+describe('pageSlugsFromDesigner (same page list as the Validator app)', () => {
+	it('keeps every published page except the home page, including pages no other page links to', () => {
+		expect(
+			pageSlugsFromDesigner([
+				{ publishPath: '/', slug: '', isHomePage: true },
+				{ publishPath: '/about', slug: 'about' },
+				{ publishPath: '/utility/hidden-page', slug: 'hidden-page' },
+				{ publishPath: null, slug: 'contact' }
+			])
+		).toEqual(['/about', '/utility/hidden-page', '/contact']);
+	});
+
+	it('leaves out drafts, CMS template pages, and repeats', () => {
+		expect(
+			pageSlugsFromDesigner([
+				{ publishPath: '/about', slug: 'about' },
+				{ publishPath: '/about', slug: 'about' },
+				{ publishPath: '/draft', slug: 'draft', isDraft: true },
+				{ publishPath: '/blog', slug: 'blog', collectionId: 'c1' },
+				{ publishPath: '/detail_post', slug: 'detail_post' },
+				{ publishPath: '/product', slug: 'product' },
+				{ publishPath: null, slug: '' }
+			])
+		).toEqual(['/about']);
+	});
+});
+
+describe('failedWithoutBlocker', () => {
+	it('names a failed category that has warnings only, because the form needs every category to pass', () => {
+		expect(
+			failedWithoutBlocker([
+				{ category: 'Canvas Checks (Current Page)', passed: false, issues: [{ id: 'h', severity: 'warning', message: '' }] },
+				{ category: 'Styles', passed: false, issues: [{ id: 's', severity: 'error', message: '' }] },
+				{ category: 'Assets', passed: true, issues: [{ id: 'a', severity: 'warning', message: '' }] }
+			])
+		).toEqual(['Canvas Checks (Current Page)']);
+	});
+});
+
+describe('missingResults', () => {
+	const full = [{ category: 'Assets & Images' }, { category: 'Content & Accessibility' }];
+
+	it('accepts a result that holds a category for each requested check', () => {
+		expect(missingResults(['assets', 'content', 'accessibility'], full)).toEqual([]);
+		expect(missingResults(['accessibility'], [{ category: 'Interactions and GSAP' }])).toEqual([]);
+	});
+
+	it('reports an empty result, so it cannot read as a pass', () => {
+		expect(missingResults(['assets', 'content'], [])).toEqual(['the worker returned no check results']);
+	});
+
+	it('reports a requested check that has no category', () => {
+		expect(missingResults(['assets', 'content'], [{ category: 'Assets & Images' }])).toEqual([
+			'the worker result has no Content & Accessibility category'
+		]);
+	});
+
+	it('makes the run incomplete and stops the record', () => {
+		const problems = missingResults(['assets'], []);
+		expect(
+			incompleteReasons({ gsap: { status: 'complete' }, designerCollected: true, mode: 'async', collectionIncomplete: [], recordFailed: false, resultIncomplete: problems })
+		).toEqual(problems);
+		expect(
+			recordSkipReason({ mode: 'async', collectionIncomplete: [], workerBase: DEFAULT_WORKER_BASE, trustWorker: false, resultIncomplete: problems })
+		).toContain('was not recorded');
 	});
 });

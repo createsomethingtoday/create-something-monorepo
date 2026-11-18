@@ -1,0 +1,128 @@
+{
+  "issue": "CRE-2455",
+  "humanAcceptance": {
+    "state": "approved_for_production",
+    "userWords": "Approve the artwork for production",
+    "observedAt": "2026-11-14T05:43:58.353590+00:00",
+    "scope": "The12selectedCanonscenesandtransparentbodyinthe2026-11-14-complete-replacementreviewset; selectedPNGhashesaretheapprovalscope."
+  },
+  "assets": [
+    {
+      "key": "evidence-comparison",
+      "file": "png/evidence-comparison-r19.png",
+      "sha256": "499ae17f7c63797d61bab2ea5626f2223a3dd5201b4bb9b93f97c216d9e5c904",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "key": "tool-fit",
+      "file": "png/tool-fit-r19.png",
+      "sha256": "1b6098d69fcfd39c4701a9cbd9607157d1e6763f07a645833b805e38c5cc9380",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "key": "bounded-sandbox",
+      "file": "png/bounded-sandbox-r19.png",
+      "sha256": "07fb1d5fdb82ee3da4f4d2a16050bfcc046a4720468c4f3a7779c147da588921",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "key": "compiler-jig",
+      "file": "png/compiler-jig-r19.png",
+      "sha256": "50785ed86a99a47f6cbfec277ebed691865127e29579e09efb18d9cbe487ac70",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "key": "shared-repair",
+      "file": "png/shared-repair-r15.png",
+      "sha256": "2886b3c219eae9d7354a0994569211939d8273e8fc17cbd55d64df4c9abbd9b4",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "key": "subtract-route",
+      "file": "png/subtract-route-r19.png",
+      "sha256": "d7512b310c3bce141b351e219819f50006a5f75c45032d8c103a9b4504396f6d",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "key": "evidence-unknowns",
+      "file": "png/evidence-unknowns-r19.png",
+      "sha256": "a9d668d82a302ca451057d6390c7288a12447c00ec70b8f6584425b8f207a7e0",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "key": "controlled-load",
+      "file": "png/controlled-load-r20.png",
+      "sha256": "0f8f16f991a964180bfa1399dc61b3d54afecf68c2f451dc195646db77a4cfa0",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "key": "modular-port",
+      "file": "png/modular-port-r19.png",
+      "sha256": "3d429b8b28a33f60d1fcf5cddeeffd47ecec6e439e7a605d5f89ab17247819dc",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "key": "operating-library",
+      "file": "png/operating-library-r17.png",
+      "sha256": "44d3007feaf9a7cb803b06453b61d103fabbb3096881dfd6e60c4ecc4d406b7d",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "key": "separate-gates",
+      "file": "png/separate-gates-r19.png",
+      "sha256": "669888385165a6066c4b66422dfc9084fd1e5dec5c454cb5137b2ceee0c5e7b9",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "key": "preserve-sequence",
+      "file": "png/preserve-sequence-r21.png",
+      "sha256": "77f6e21fc41d420600dbe561baaf802caa4caff5a9069ee404924b976d6c04de",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "key": "transparent-body",
+      "file": "png/canon-body-transparent-r15.png",
+      "sha256": "ccd55117e8512a5e45d703e2b29adda0a1f14d0e59378eec32f2c1ed3b956dc1",
+      "dimensions": [
+        1199,
+        1312
+      ]
+    }
+  ]
+}

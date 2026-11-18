@@ -4,6 +4,7 @@
   import { publicPageEntrances } from '$lib/motion/publicPageEntrances';
   import { IO_EXPERIMENTS_URL, IO_PAPERS_URL } from '$lib/data/ioResearchLinks';
   import AgencyPageTreatment from '$lib/components/AgencyPageTreatment.svelte';
+  import AgencyHeroBackground from '$lib/components/AgencyHeroBackground.svelte';
   import CanonBrandSignature from '$lib/components/CanonBrandSignature.svelte';
   import '$lib/styles/operator-palette.css';
   import '$lib/styles/measured-public.css';
@@ -25,6 +26,7 @@
   import { getAgencyContentAssetAnalyticsMetadata } from '$lib/analytics/content-assets';
   import { getAgencyMarketingExperimentMetadata } from '$lib/analytics/marketing-experiment';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
+  import { agencyInvitationScene } from '$lib/data/canonAgencyScenes';
   import { PUBLIC_PRODUCT_SEQUENCE, getPublicProduct } from '$lib/data/productFamily';
   import { page } from '$app/stores';
   import { onMount } from 'svelte';
@@ -126,7 +128,15 @@
   const primaryCtaHref = agencyCoreMessaging.membershipHref;
   const agencyFooterMacroMedia = {
     src: '/images/performance-lab/playbook-footer-decision-gate-macro.webp',
+    width: 1024,
+    height: 1536,
     alt: 'Macro-real Playbook decision gate: an ivory AI-agent marker held inside a black steel ring as amber and proof-green routes cross a physical court surface.'
+  };
+  const agencyFooterSceneMedia = {
+    src: agencyInvitationScene.src,
+    width: 1672,
+    height: 941,
+    alt: agencyInvitationScene.description
   };
   const globalAnalyticsMetadata = $derived(getAgencyGlobalAnalyticsMetadata($page.url.pathname));
   const isDifyArticleRoute = $derived(isAgencyDifyArticlePath($page.url.pathname));
@@ -326,6 +336,7 @@
 
 {#snippet canonFooterBrand()}<CanonBrandSignature />{/snippet}
 {#snippet agencyFooter()}
+  <div data-theme="dark" class="agency-footer-scope">
   <Footer
     mode="agency"
     brandContent={usesPublicNavigation ? canonFooterBrand : undefined}
@@ -339,7 +350,7 @@
           label: agencyCoreMessaging.membershipLabel,
           href: primaryCtaHref,
           description: 'Bring an idea or a project and one task you want help with.',
-          media: agencyFooterMacroMedia
+          media: usesMeasuredPublicSurface ? agencyFooterSceneMedia : agencyFooterMacroMedia
         }}
     showSocial={true}
     isAuthenticated={!!data.user}
@@ -349,12 +360,14 @@
       label: 'CREATE SOMETHING .agency'
     }}
   />
+  </div>
 {/snippet}
 
 <LayoutSEO property="agency" />
+<AgencyHeroBackground />
 <PageAnnotations pathname={$page.url.pathname} />
 
-<div class="agency-surface" data-canon-palette={usesOperatorPalette ? "operator" : undefined} data-agency-brand={usesMeasuredPublicSurface || usesMeasuredAccountSurface ? "measured" : undefined} data-agency-account={usesMeasuredAccountSurface ? "true" : undefined}>
+<div class="agency-surface" data-theme={usesOperatorPalette ? "dark" : "light"} data-canon-palette={usesOperatorPalette ? "operator" : undefined} data-agency-brand={usesMeasuredPublicSurface || usesMeasuredAccountSurface ? "measured" : undefined} data-agency-account={usesMeasuredAccountSurface ? "true" : undefined}>
 <PrivacyAnalytics
   property="agency"
   userId={data.user?.id}
@@ -427,7 +440,8 @@
   .film-shell.webflow-portfolio-shell :global(main#main-content) { padding-top:0; }
   .film-shell.webflow-portfolio-shell :global(.nav-editorial.nav-fixed) { top:0; left:0; right:0; border:0; border-radius:0; background:var(--color-performance-mode-campaign-surface); }
   .webflow-portfolio-shell :global(.nav-editorial :is(a,button)) { color:var(--color-performance-mode-campaign-ink); }
-  .webflow-portfolio-shell :global(.nav-editorial .nav-logo-asset) { filter:invert(1); }
+  .webflow-portfolio-shell :global(.nav-editorial .nav-logo-asset) { filter:none; }
+  .webflow-portfolio-shell :global(.nav-editorial .nav-menu-button) { background:transparent; color:var(--color-performance-mode-campaign-ink); border-color:currentColor; }
   .webflow-portfolio-shell :global(.nav-editorial .nav-cta) { background:var(--color-performance-fg-primary); color:var(--color-performance-bg-pure); }
   .webflow-portfolio-shell :global(.nav-editorial :is(.nav-mobile-menu,.nav-dropdown__menu)) { background:var(--color-performance-bg-elevated); color:var(--color-performance-fg-primary); }
 
@@ -456,8 +470,7 @@
   }
 
   /* Homepage campaign preview: preserve the shared navigation behavior and logo. */
-  .film-home { --agency-nav-surface-rgb: 8,8,8; }
-  .film-home :global(.nav-editorial.nav-fixed) { top: 0; left: 0; right: 0; border: 0; border-radius: 0; background: rgba(var(--agency-nav-surface-rgb),.88); backdrop-filter: blur(16px); }
+  .film-home :global(.nav-editorial.nav-fixed) { top: 0; left: 0; right: 0; border: 0; border-radius: 0; background: var(--color-performance-paper); backdrop-filter: none; }
   .film-home :global(.nav-editorial .nav-inner) { padding-inline: 3vw; }
   .film-home :global(main#main-content) { padding-top: 0; }
   .film-home :global(.nav-editorial .nav-link-list) { font-size: 12px; }

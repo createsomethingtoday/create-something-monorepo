@@ -86,6 +86,11 @@ test('Agency serves the approved V3 logo files byte-for-byte at its public asset
   }
 });
 
+test('the reversed Agency footer identity owns a black scope on light utility pages', () => {
+  const layout = read('src/routes/+layout.svelte');
+  assert.match(layout, /<div data-theme="dark" class="agency-footer-scope">\s*<Footer[\s\S]*?create-something-agency-white\.svg[\s\S]*?\/>\s*<\/div>/);
+});
+
 test('the Agency footer uses one linked lockup instead of repeating the brand inside its link panel', () => {
   const footer = read('../canon/src/lib/components/Footer.svelte');
 
@@ -105,11 +110,12 @@ test('the homepage retains a readable listing independent of scene motion', () =
   assert.match(home, /<AgencySalesHome \/>/);
   assert.match(salesHome, /import rawContent from '\$lib\/content\/agency-story-home\.html\?raw'/);
   assert.match(salesHome, /\{@html content\}/);
-  assert.match(content, /Your tools should<br>work together/);
-  assert.match(content, /We connect your tools and AI/);
+  assert.match(content, /Connect AI to<br>your tools/);
+  assert.match(content, /We connect your tools and make AI systems for your team/);
   assert.match(content, /Focused/);
   assert.match(content, /Team/);
-  assert.match(content, /one-manual-gap-warm-v2\.webp/);
+  assert.match(content, /agency-approved-20261116\/05-connected-workflow\.webp/);
+  assert.ok(existsSync(resolve(agencyRoot, 'static/images/agency-approved-20261116/05-connected-workflow.webp')));
   assert.match(content, /Illustrative example/);
   assert.doesNotMatch(content, /<canvas|autoplay/);
   assert.match(salesHome, /<details id="work-library" class="work-library" bind:open=\{libraryOpen\}>/);
@@ -182,10 +188,12 @@ test('shared campaign titles keep every period optically separated and attached 
   );
 });
 
-test('the Agency footer handoff uses its own macro-real decision-gate image without replacing live CTA copy', () => {
+test('the Agency footer adopts the approved public scene while retaining utility media and live CTA copy', () => {
   const layout = read('src/routes/+layout.svelte');
   const footer = read('../canon/src/lib/components/Footer.svelte');
   const offerPanel = read('../canon/src/lib/components/meridian/MeridianOfferPanel.svelte');
+  const sceneLead = read('../canon/src/lib/components/background/SceneLead.svelte');
+  const backgroundScene = read('../canon/src/lib/components/background/BackgroundScene.svelte');
   const image = resolve(
     agencyRoot,
     'static/images/performance-lab/playbook-footer-decision-gate-macro.webp'
@@ -194,26 +202,38 @@ test('the Agency footer handoff uses its own macro-real decision-gate image with
     'content/assets/brand/agency-footer-playbook-decision-gate-macro.v20260810/metadata.md'
   );
 
-  assert.match(layout, /media: agencyFooterMacroMedia/);
+  assert.match(layout, /media: usesMeasuredPublicSurface \? agencyFooterSceneMedia : agencyFooterMacroMedia/);
+  assert.match(layout, /src: agencyInvitationScene\.src/);
+  assert.match(layout, /alt: agencyInvitationScene\.description/);
+  assert.match(layout, /title: 'Ready to put AI to work on a useful task\?'/);
+  assert.match(layout, /href: primaryCtaHref/);
+  assert.match(layout, /description: 'Bring an idea or a project and one task you want help with\.'/);
   assert.match(layout, /playbook-footer-decision-gate-macro\.webp/);
   assert.match(footer, /media\?: \{[\s\S]*?src: string;[\s\S]*?alt: string;/);
   assert.match(footer, /media=\{footerCta\.media\}/);
   assert.match(offerPanel, /media\?: MeridianOfferMedia/);
-  assert.match(offerPanel, /\{#if media\}[\s\S]*?<img[\s\S]*?alt=\{media\.alt\}/);
-  assert.match(
-    offerPanel,
-    /@media \(max-width: 760px\)[\s\S]*?\.meridian-offer-panel__visual\.has-media\s*\{[\s\S]*?aspect-ratio:\s*2 \/ 3;/
-  );
+  // CTA artwork is a CSS background; the legacy asset and description still reach
+  // the shared scene. Canon's rendered composition tests cover its semantics.
+  assert.match(offerPanel, /src:\s*media\.src,\s*description:\s*media\.alt/);
+  assert.match(offerPanel, /<SceneLead\s+\{scene\}/);
+  assert.match(sceneLead, /<BackgroundScene\s+\{scene\}/);
+  assert.match(backgroundScene, /background-image:\s*var\(--scene-image\)/);
+  assert.match(backgroundScene, /aria-label=\{scene\.description\|\|undefined\}/);
+  assert.doesNotMatch(offerPanel, /<img\b/);
   assert.ok(existsSync(image));
   assert.ok(statSync(image).size > 100_000, 'footer media must be a substantive raster asset');
   assert.match(metadata, /campaign material only/i);
   assert.match(metadata, /text, logos, people/i);
 });
 
-test('Field Reports uses the original isometric evidence route in place of campaign media', () => {
+test('Field Reports keeps concept illustration separate from report evidence', () => {
   const reports = read('src/routes/field-reports/+page.svelte');
 
-  assert.match(reports, /<AgencyWayfindingHero route="fieldReports"/);
+  assert.match(reports, /background=\{openingScene\}/);
+  assert.match(reports, /field-reports-hero-20261116\.webp/);
+  assert.match(reports, /description: "Concept illustration:/);
+  assert.match(reports, /href: '\/field-reports\/template-review'/);
+  assert.match(reports, /upstreamContributionFieldReport/);
   assert.match(reports, /artifactMobilePlacement="flow"/);
   assert.doesNotMatch(reports, /media=\{playbookHeroMedia\.fieldReports\}/);
   assert.match(reports, /Read the results, including the limits\./);

@@ -1,4 +1,14 @@
-# A2A inbox — invited pilot
+# A2A inbox
+
+The shared-inbox product (CRE-2448) adds many-to-many agent membership, owner
+enrollment, immutable connection approval, invitations, shared context, and
+assigned work at `/inboxes`. Its rollout flags default off. See the
+[shared-inbox guide and rollout gates](docs/shared-inboxes.md),
+[policy](docs/shared-inbox-policy.md), and
+[validation receipt](docs/shared-inbox-validation.md).
+
+The existing `/app`, v1 API and bilateral grants remain the invited pilot
+described below. Existing conversations are not automatically shared with groups.
 
 An owner-authorized correspondence service at `https://a2a.createsomething.agency`.
 It stores text handoffs, publishes `inbox.message.created` after committing them,

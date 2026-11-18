@@ -52,19 +52,27 @@ export const POST: RequestHandler = async ({ locals, platform, request, url }) =
   } catch (cause) {
     return failure(cause instanceof SyntaxError ? new NpgError(400, 'Invalid request.') : cause);
   }
-  const controller = new AbortController(),
-    timer = setTimeout(() => controller.abort(), 110000);
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
+    const store = new NpgStore(env.DB);
+    const action =
+      command.type === 'approve' ? await store.action(owner, command.actionId) : undefined;
+    // The source may use 300s. Include catalog/preflight and persistence headroom
+    // within the combined action's 450s lease. Read the tool from the owned review.
+    const combined =
+      command.type === 'approve' &&
+      action?.conversation_id === command.id &&
+      action.tool === 'enrich_candidate_complete_profile';
+    timer = setTimeout(() => controller.abort(), combined ? 410000 : 110000);
     return json(
-      await executeCommand(new NpgStore(env.DB), owner, command, () =>
-        createProviders(env, controller.signal)
-      ),
+      await executeCommand(store, owner, command, () => createProviders(env, controller.signal)),
       { headers }
     );
   } catch (cause) {
     return failure(cause);
   } finally {
-    clearTimeout(timer);
+    if (timer) clearTimeout(timer);
   }
 };
 function failure(cause: unknown) {

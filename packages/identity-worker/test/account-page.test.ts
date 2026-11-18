@@ -159,3 +159,9 @@ test('existing signup identity conflict offers sign-in or recovery without chang
   assert.equal(result.status.textContent,'');
   assert.deepEqual(result.fields.map(f=>f.value),['','']);
 });
+
+test('A2A signup uses its explicit gate and fixed inbox return',async()=>{
+ assert.equal(accountPage('/signup',{app:'a2a'}),null);
+ const response=accountPage('/signup',{app:'a2a',a2aSignupEnabled:true} as any);assert.ok(response);
+ const html=await response.text();assert.match(html,/Create your A2A account/);assert.match(html,/https:\/\/a2a\.createsomething\.agency\/inboxes/);assert.doesNotMatch(html,/Create your GiGi account/);
+});

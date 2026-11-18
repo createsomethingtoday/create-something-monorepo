@@ -239,7 +239,7 @@
   aria-label="Primary"
 >
   <div class="nav-inner shell-inner">
-    <div class="flex items-center justify-between">
+    <div class="nav-row flex items-center justify-between">
       <!-- Logo / Home -->
       <a
         href={logoHref}
@@ -496,6 +496,11 @@
       </div>
     {/if}
   </div>
+  <noscript><div class="nav-static-links">
+    {#each links as link}<a href={link.href}>{link.label}</a>{#each link.children ?? [] as child}<a href={child.href}>{child.label}</a>{/each}{/each}
+    {#if ctaLabel && ctaHref}<a href={ctaHref}>{ctaLabel}</a>{/if}
+    {#if user}<a href={accountHref}>Account</a>{:else if showLogin}<a href={loginHref}>Sign in</a>{/if}
+  </div></noscript>
 </nav>
 
 <style>
@@ -539,10 +544,10 @@
   }
 
   .nav-logo-suffix {
-    font-family: var(--font-performance-mono);
+    font-family:var(--font-performance-interface);
     font-size: 0.78rem;
     letter-spacing: 0.06em;
-    text-transform: uppercase;
+    text-transform:none;
     color: var(--color-performance-fg-muted);
   }
 
@@ -591,11 +596,11 @@
 
   /* Navigation Links */
   .nav-link {
-    font-family: var(--font-performance-mono);
+    font-family:var(--font-performance-interface);
     font-size: 0.74rem;
     font-weight: var(--font-performance-medium);
     letter-spacing: 0.08em;
-    text-transform: uppercase;
+    text-transform:none;
     color: var(--color-performance-fg-secondary);
     text-decoration: none;
     border-radius: var(--radius-performance-scale-full);
@@ -706,13 +711,13 @@
     align-items: center;
     justify-content: center;
     padding: 0.68rem 1rem;
-    background: linear-gradient(180deg, #ffffff, #eceef7);
-    color: #090909;
-    font-family: var(--font-performance-mono);
+    background:var(--color-performance-ink);
+    color:var(--color-performance-panel);
+    font-family:var(--font-performance-interface);
     font-size: 0.74rem;
     font-weight: var(--font-performance-semibold);
     letter-spacing: 0.08em;
-    text-transform: uppercase;
+    text-transform:none;
     border-radius: var(--radius-performance-scale-full);
     border: 1px solid rgba(255, 255, 255, 0.3);
     text-decoration: none;
@@ -868,7 +873,7 @@
     position: relative;
     z-index: var(--z-performance-fixed, 40);
     background-blend-mode: plus-darker, normal;
-    background: linear-gradient(#9c9c964d 0% 100%), #ffffffd9;
+    background:var(--color-performance-panel);
     color: var(--color-performance-ink, #090909);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -890,7 +895,7 @@
     border-bottom: 0.5px solid #9c9c9638;
     border-radius: 0;
     background-blend-mode: plus-darker, normal;
-    background: linear-gradient(#9c9c964d 0% 100%), #ffffffd9;
+    background:var(--color-performance-panel);
     box-shadow: none;
   }
 
@@ -958,12 +963,12 @@
     .nav-clear.nav-show-desktop-logo-text .nav-logo-text {
       font-size: 0.72rem;
       letter-spacing: 0.03em;
-      text-transform: uppercase;
+      text-transform:none;
     }
 
     .nav-clear.nav-show-desktop-logo-text .nav-logo-suffix {
       color: var(--color-performance-muted, #5e6268);
-      font-family: var(--font-performance-mono);
+      font-family:var(--font-performance-interface);
       font-size: 0.68rem;
     }
   }
@@ -1037,8 +1042,8 @@
   }
 
   .nav-clear .nav-cta:hover {
-    background: #1a2030;
-    border-color: #1a2030;
+    background:var(--color-performance-ink-soft);
+    border-color:var(--color-performance-ink-soft);
     box-shadow: none;
     opacity: 1;
     transform: none;
@@ -1135,7 +1140,7 @@
       white-space: nowrap;
       font-size: 0.72rem;
       letter-spacing: 0.03em;
-      text-transform: uppercase;
+      text-transform:none;
     }
 
     .nav-logo-route-motion--desktop {
@@ -1242,4 +1247,30 @@
   .nav-editorial .nav-mobile-backdrop {
     background: var(--color-performance-editorial-light, #f3ebe4);
   }
+
+  /* Canon shared chrome: style aliases keep layout/behavior, not a second palette. */
+  .nav-container {font-family:var(--font-performance-interface);color:var(--color-performance-ink);background:var(--color-performance-panel);}
+  .nav-container .nav-row {display:flex;align-items:center;justify-content:space-between;gap:16px;}
+  .nav-container .nav-desktop {display:none;}
+  .nav-container .nav-inner {box-sizing:border-box;width:min(100% - 32px,var(--content-width-performance));margin-inline:auto;}
+  .nav-container.nav-fixed {background:var(--color-performance-panel);backdrop-filter:none;-webkit-backdrop-filter:none;border-color:var(--color-performance-line);}
+  .nav-container .nav-link,.nav-container .nav-cta {display:inline-flex;align-items:center;min-height:44px;box-sizing:border-box;font-family:var(--font-performance-interface);font-size:15px;font-weight:500;letter-spacing:0;text-transform:none;border-radius:var(--radius-performance-sm);}
+  .nav-container .nav-link {color:var(--color-performance-muted);}
+  .nav-container .nav-link:hover,.nav-container .nav-link.active {color:var(--color-performance-ink);background:var(--color-performance-court);}
+  .nav-container .nav-cta {background:var(--color-performance-ink);color:var(--color-performance-panel);border-color:var(--color-performance-ink);box-shadow:none;}
+  .nav-container .nav-cta:hover {background:var(--color-performance-ink-soft);border-color:var(--color-performance-ink-soft);transform:none;box-shadow:none;}
+  .nav-container .nav-menu-button {display:flex;width:44px;height:44px;align-items:center;justify-content:center;border:1px solid var(--color-performance-border-emphasis);border-radius:12px;color:var(--color-performance-ink);background:var(--color-performance-panel);}
+  .nav-container .nav-menu-button svg {width:24px;height:24px;}
+  .nav-container .nav-dropdown__menu {background:var(--color-performance-panel);border-color:var(--color-performance-line);border-radius:20px;box-shadow:var(--shadow-performance-scale-lg);}
+  .nav-container .nav-dropdown__item {min-height:44px;color:var(--color-performance-ink);}
+  .nav-container .nav-dropdown__item small {font-size:14px;color:var(--color-performance-muted);}
+  .nav-container .nav-mobile-menu {display:flex;flex-direction:column;gap:8px;background:var(--color-performance-panel);border:1px solid var(--color-performance-line);backdrop-filter:none;-webkit-backdrop-filter:none;}
+  .nav-container:has(.nav-static-links) .nav-menu-button {display:none;}
+  /* Native fallback links stay in document flow, including desktop submenu destinations. */
+  .nav-container.nav-fixed:has(.nav-static-links) {position:relative!important;inset:auto!important;transform:none!important;width:100%!important;}
+  .nav-container:has(.nav-static-links) .nav-desktop {display:none;}
+  .nav-static-links {display:flex;flex-wrap:wrap;gap:8px;padding:16px;background:var(--color-performance-panel);}
+  .nav-static-links a {display:inline-flex;align-items:center;min-height:44px;color:var(--color-performance-ink);}
+  @media(min-width:1280px){.nav-container .nav-desktop {display:flex;align-items:center;gap:12px;background:transparent;border:0;box-shadow:none;}.nav-container .nav-menu-button {display:none;}}
+
 </style>

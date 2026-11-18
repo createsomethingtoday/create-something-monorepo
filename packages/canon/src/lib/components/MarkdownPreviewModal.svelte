@@ -114,15 +114,15 @@
 	}
 
 	.modal {
+		box-sizing: border-box;
 		position: relative;
 		display: flex;
 		flex-direction: column;
 		width: 100%;
 		max-width: 800px;
 		max-height: calc(100vh - var(--space-performance-lg) * 2);
-		/* Glass Design System - "The Automation Layer" */
-		background-color: var(--glass-performance-bg-medium);
-		backdrop-filter: blur(var(--glass-performance-blur-xl)) var(--glass-performance-saturate-xl);
+		/* Solid utility surface follows the owning palette. */
+		background-color: var(--color-performance-bg-elevated);
 		border: 1px solid var(--glass-performance-border-medium);
 		border-radius: var(--radius-performance-scale-lg);
 		box-shadow: var(--glass-performance-shadow-lg);
@@ -162,6 +162,8 @@
 	}
 
 	.copy-button {
+		border: 1px solid var(--color-performance-border-default);
+		min-height: 44px;
 		display: inline-flex;
 		align-items: center;
 		gap: var(--space-performance-xs);
@@ -186,10 +188,12 @@
 	}
 
 	.close-button {
+		box-sizing: border-box;
 		flex-shrink: 0;
-		width: 32px;
-		height: 32px;
-		padding: 6px;
+		flex-shrink: 0;
+		width: 44px;
+		height: 44px;
+		padding: 12px;
 		background: none;
 		border: none;
 		color: var(--color-performance-fg-muted);
@@ -242,7 +246,14 @@
 	@media (prefers-reduced-motion: reduce) {
 		.backdrop,
 		.modal {
+		box-sizing: border-box;
 			animation: none;
 		}
+	}
+	@media(max-width: 600px) {
+		.header {flex-wrap:wrap;padding:1rem;}
+		.title {flex-basis:100%;font-size:1.1rem;}
+		.header-actions {margin-left:auto;}
+		.body {padding:1rem;}
 	}
 </style>

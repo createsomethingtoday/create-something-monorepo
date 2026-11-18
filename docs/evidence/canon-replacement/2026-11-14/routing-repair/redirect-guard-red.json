@@ -1,0 +1,250 @@
+[
+  {
+    "property": "io",
+    "artifact": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a01044d6-2f560e0ec9e58190/packages/io/.svelte-kit/cloudflare",
+    "redirects": 18,
+    "findings": [
+      {
+        "from": "/images/research/about-careful-working-notes-1440.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/research/about-careful-working-notes-640.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/research/about-careful-working-notes-960.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/research/brief-evidence-and-unknowns-1440.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/research/brief-evidence-and-unknowns-640.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/research/brief-evidence-and-unknowns-960.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/research/editorial-experiments-isolated-sandbox-1440.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/research/editorial-experiments-isolated-sandbox-640.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/research/editorial-experiments-isolated-sandbox-960.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/research/editorial-field-reports-load-rig-1440.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/research/editorial-field-reports-load-rig-640.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/research/editorial-field-reports-load-rig-960.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/research/editorial-mcp-modular-port-1440.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/research/editorial-mcp-modular-port-640.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/research/editorial-mcp-modular-port-960.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/research/ground-compare-before-claim-1440.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/research/ground-compare-before-claim-640.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/research/ground-compare-before-claim-960.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      }
+    ]
+  },
+  {
+    "property": "ltd",
+    "artifact": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a01044d6-2f560e0ec9e58190/packages/ltd/.svelte-kit/cloudflare",
+    "redirects": 12,
+    "findings": [
+      {
+        "from": "/images/library/about-careful-working-notes-1536.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/library/about-careful-working-notes-768.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/library/editorial-workflow-library-tool-drawers-continuity-v2-1536.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/library/editorial-workflow-library-tool-drawers-continuity-v2-768.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/library/permission-two-separate-gates-1536.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/library/permission-two-separate-gates-768.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/library/proof-preserve-the-sequence-1536.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/library/proof-preserve-the-sequence-768.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/library/subtract-the-extra-route-1536.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/library/subtract-the-extra-route-768.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/library/tool-fit-without-forcing-1536.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/library/tool-fit-without-forcing-768.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      }
+    ]
+  },
+  {
+    "property": "space",
+    "artifact": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a01044d6-2f560e0ec9e58190/packages/space/.svelte-kit/cloudflare",
+    "redirects": 24,
+    "findings": [
+      {
+        "from": "/images/workshop/stories/about-careful-working-notes-640.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/workshop/stories/about-careful-working-notes-960.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/workshop/stories/about-careful-working-notes.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/workshop/stories/compiler-from-plan-to-tested-jig-640.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/workshop/stories/compiler-from-plan-to-tested-jig-960.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/workshop/stories/compiler-from-plan-to-tested-jig.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/workshop/stories/editorial-experiments-isolated-sandbox-640.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/workshop/stories/editorial-experiments-isolated-sandbox-960.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/workshop/stories/editorial-experiments-isolated-sandbox.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/workshop/stories/editorial-upstream-shared-tool-repair-640.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/workshop/stories/editorial-upstream-shared-tool-repair-960.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/workshop/stories/editorial-upstream-shared-tool-repair.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/workshop/stories/ground-compare-before-claim-640.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/workshop/stories/ground-compare-before-claim-960.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/workshop/stories/ground-compare-before-claim.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/workshop/stories/products-workbench-paths-continuity-v2-640.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/workshop/stories/products-workbench-paths-continuity-v2-960.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/workshop/stories/products-workbench-paths-continuity-v2.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/workshop/stories/subtract-the-extra-route-640.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/workshop/stories/subtract-the-extra-route-960.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/workshop/stories/subtract-the-extra-route.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/workshop/stories/tool-fit-without-forcing-640.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/workshop/stories/tool-fit-without-forcing-960.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      },
+      {
+        "from": "/images/workshop/stories/tool-fit-without-forcing.webp",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      }
+    ]
+  },
+  {
+    "property": "lms",
+    "artifact": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a01044d6-2f560e0ec9e58190/packages/lms/.svelte-kit/cloudflare",
+    "redirects": 1,
+    "findings": [
+      {
+        "from": "/workshop/canon.png",
+        "reason": "application worker intercepts the URL before Pages static redirects"
+      }
+    ]
+  }
+]

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ResearchScene from '$lib/components/ResearchScene.svelte';
+  import TaskOpening from '$lib/components/TaskOpening.svelte';
 	const quickLinks = [
 		{ label: 'Home', href: '/' },
 		{ label: 'All Experiments', href: '/experiments' },
@@ -23,21 +23,28 @@
 </svelte:head>
 
 <!-- Hero Section -->
-	<section class="hero-section">
-		<div class="max-w-4xl mx-auto">
-			<div class="space-y-8 animate-reveal">
-				<h1>
+	<TaskOpening scene="review-nook" caption="Canon keeps a working sheet available for the next review.">
+  <div>
+<h1>
 					Hi, I'm Micah Johnson
 				</h1>
-<ResearchScene scene="about-careful-working-notes" caption="An agent opens the working notebook and keeps the record available." />
+<p class="intro-highlight">
+							10 years building systems. 47 tracked experiments. 155 scripts reduced to 13.
+							I document what works in AI-native development—with real data.
+						</p>
+  </div>
+</TaskOpening>
+
+<section class="hero-section">
+		<div class="max-w-4xl mx-auto">
+			<div class="space-y-8 animate-reveal">
+
+
 
 				<div class="space-y-8">
 					<!-- Lead with outcomes -->
 					<div class="space-y-6 leading-relaxed intro-text">
-						<p class="intro-highlight">
-							10 years building systems. 47 tracked experiments. 155 scripts reduced to 13.
-							I document what works in AI-native development—with real data.
-						</p>
+
 
 					<p>
 						By day, I architect systems on the <a href="https://webflow.com" class="text-link">Webflow</a> Marketplace team, building developer experiences that serve thousands of creators. By night, I'm building <a href="https://workway.co" class="text-link" target="_blank" rel="noopener noreferrer">WORKWAY</a>—the automation layer. An open marketplace for TypeScript workflows, running on Cloudflare's edge. Automation infrastructure is my life's work.
@@ -69,6 +76,7 @@
 			</div>
 		</div>
 	</section>
+
 
 	<!-- Mission Section -->
 	<section class="section-border">

@@ -49,12 +49,13 @@
 
 	// Canvas and state
 	let canvas: HTMLCanvasElement | null = $state(null);
+	let owner: HTMLDivElement;
 	let containerWidth = $state(800);
 	let isDraggingScrubber = $state(false);
 	let isDraggingKeyframe = $state(false);
 	let dragKeyframe: { trackId: string; keyframeId: string } | null = $state(null);
 	let hoveredKeyframe: { trackId: string; keyframeId: string } | null = $state(null);
-	let scrollX = $state(0);
+	let viewport: HTMLDivElement;
 	let zoom = $state(1);
 
 	// Layout constants
@@ -88,44 +89,69 @@
 		error: '#ef4444'
 	});
 
-	// Resolve CSS custom properties
+	// Resolve through an inherited CSS color property: custom properties may be
+	// aliases or modern color expressions which Canvas fillStyle cannot consume.
 	function resolveColors() {
-		if (typeof window === 'undefined') return;
-		const styles = getComputedStyle(document.documentElement);
-		const get = (prop: string, fallback: string) =>
-			styles.getPropertyValue(prop).trim() || fallback;
-
-		colors = {
-			bgPure: get('--color-performance-bg-pure', '#0a0a0a'),
-			bgSurface: get('--color-performance-bg-surface', '#141414'),
+		if (!owner) return;
+		const probe = document.createElement('span');
+		probe.hidden = true;
+		owner.append(probe);
+		const get = (prop: string, fallback: string) => {
+			probe.style.color = `var(${prop}, ${fallback})`;
+			return getComputedStyle(probe).color || fallback;
+		};
+		const next = {
+			bgPure: get('--color-performance-bg-pure', '#000000'),
+			bgSurface: get('--color-performance-bg-surface', '#111111'),
 			bgElevated: get('--color-performance-bg-elevated', '#1a1a1a'),
-			fgPrimary: get('--color-performance-fg-primary', '#ffffff'),
+			fgPrimary: get('--color-performance-fg-primary', '#f2f2f2'),
 			fgSecondary: get('--color-performance-fg-secondary', '#888888'),
 			fgMuted: get('--color-performance-fg-muted', '#666666'),
 			borderDefault: get('--color-performance-border-default', '#333333'),
 			borderEmphasis: get('--color-performance-border-emphasis', '#4f46e5'),
 			error: get('--color-performance-error', '#ef4444')
 		};
+		probe.remove();
+		colors = next;
 	}
 
-	// Calculate visible area
-	const pixelsPerFrame = $derived((containerWidth - layout.trackLabelWidth) / (totalFrames / zoom));
-	const timelineWidth = $derived(totalFrames * pixelsPerFrame);
+	// Keep a usable two-dimensional surface even inside a narrow owning panel.
+	// Native scrolling moves the canvas itself, so pointer coordinates and drawing
+	// share the same origin at every scroll offset and zoom level.
+	const usableWidth = $derived(Math.max(140, containerWidth - layout.trackLabelWidth));
+	const pixelsPerFrame = $derived(usableWidth / (totalFrames / zoom));
+	const canvasWidth = $derived(layout.trackLabelWidth + usableWidth * Math.max(1, zoom));
 	const canvasHeight = $derived(layout.rulerHeight + tracks.length * layout.trackHeight);
 
 	// Frame to X position
 	function frameToX(frame: number): number {
-		return layout.trackLabelWidth + frame * pixelsPerFrame - scrollX;
+		return layout.trackLabelWidth + frame * pixelsPerFrame;
 	}
 
 	// X position to frame
 	function xToFrame(x: number): number {
-		return Math.round((x - layout.trackLabelWidth + scrollX) / pixelsPerFrame);
+		return Math.round((x - layout.trackLabelWidth) / pixelsPerFrame);
 	}
 
-	// Resolve colors on mount (use onMount to avoid effect loops)
+	// Observe only this editor's ancestor attributes, never the document subtree.
+	// Batch theme changes, and release both observer and queued work on teardown.
 	onMount(() => {
 		resolveColors();
+		let queued = 0;
+		const refresh = () => {
+			if (!queued) queued = requestAnimationFrame(() => { queued = 0; resolveColors(); });
+		};
+		const observer = new MutationObserver(refresh);
+		for (let element: Element | null = owner; element; element = element.parentElement) {
+			observer.observe(element, { attributes: true, attributeFilter: ['class', 'style', 'data-theme'] });
+		}
+		const preference = matchMedia('(prefers-color-scheme: light)');
+		preference.addEventListener('change', refresh);
+		return () => {
+			observer.disconnect();
+			preference.removeEventListener('change', refresh);
+			cancelAnimationFrame(queued);
+		};
 	});
 
 	// Draw easing curve preview
@@ -187,13 +213,13 @@
 		if (!ctx) return;
 
 		const dpr = window.devicePixelRatio || 1;
-		canvasEl.width = containerWidth * dpr;
+		canvasEl.width = canvasWidth * dpr;
 		canvasEl.height = canvasHeight * dpr;
 		ctx.scale(dpr, dpr);
 
 		// Clear
 		ctx.fillStyle = colors.bgPure;
-		ctx.fillRect(0, 0, containerWidth, canvasHeight);
+		ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
 		// Draw track labels background
 		ctx.fillStyle = colors.bgSurface;
@@ -201,7 +227,7 @@
 
 		// Draw ruler
 		ctx.fillStyle = colors.bgElevated;
-		ctx.fillRect(layout.trackLabelWidth, 0, containerWidth - layout.trackLabelWidth, layout.rulerHeight);
+		ctx.fillRect(layout.trackLabelWidth, 0, canvasWidth - layout.trackLabelWidth, layout.rulerHeight);
 
 		// Draw ruler ticks and labels
 		const majorTickInterval = Math.max(1, Math.floor(fps / zoom));
@@ -214,7 +240,7 @@
 
 		for (let frame = 0; frame <= totalFrames; frame += minorTickInterval) {
 			const x = frameToX(frame);
-			if (x < layout.trackLabelWidth || x > containerWidth) continue;
+			if (x < layout.trackLabelWidth || x > canvasWidth) continue;
 
 			const isMajor = frame % majorTickInterval === 0;
 
@@ -235,7 +261,7 @@
 
 			// Track background (alternating)
 			ctx.fillStyle = index % 2 === 0 ? colors.bgPure : colors.bgSurface;
-			ctx.fillRect(layout.trackLabelWidth, y, containerWidth - layout.trackLabelWidth, layout.trackHeight);
+			ctx.fillRect(layout.trackLabelWidth, y, canvasWidth - layout.trackLabelWidth, layout.trackHeight);
 
 			// Track label
 			ctx.fillStyle = colors.bgSurface;
@@ -244,7 +270,7 @@
 			ctx.strokeStyle = colors.borderDefault;
 			ctx.beginPath();
 			ctx.moveTo(0, y + layout.trackHeight);
-			ctx.lineTo(containerWidth, y + layout.trackHeight);
+			ctx.lineTo(canvasWidth, y + layout.trackHeight);
 			ctx.stroke();
 
 			// Track name
@@ -264,7 +290,7 @@
 				const nextKf = sortedKeyframes[i + 1];
 				const x1 = frameToX(kf.frame);
 				const x2 = frameToX(nextKf.frame);
-				if (x2 > layout.trackLabelWidth && x1 < containerWidth) {
+				if (x2 > layout.trackLabelWidth && x1 < canvasWidth) {
 					drawEasingCurve(ctx, x1, y, x2, kf.easing ?? 'linear');
 				}
 			}
@@ -272,7 +298,7 @@
 			// Draw keyframes
 			for (const keyframe of track.keyframes) {
 				const x = frameToX(keyframe.frame);
-				if (x < layout.trackLabelWidth - layout.keyframeRadius || x > containerWidth + layout.keyframeRadius) continue;
+				if (x < layout.trackLabelWidth - layout.keyframeRadius || x > canvasWidth + layout.keyframeRadius) continue;
 
 				const isHovered =
 					hoveredKeyframe?.trackId === track.id && hoveredKeyframe?.keyframeId === keyframe.id;
@@ -300,7 +326,7 @@
 
 		// Draw scrubber
 		const scrubberX = frameToX(currentFrame);
-		if (scrubberX >= layout.trackLabelWidth && scrubberX <= containerWidth) {
+		if (scrubberX >= layout.trackLabelWidth && scrubberX <= canvasWidth) {
 			// Scrubber line
 			ctx.strokeStyle = colors.error;
 			ctx.lineWidth = layout.scrubberWidth;
@@ -393,7 +419,7 @@
 		if (e.detail === 2 && x > layout.trackLabelWidth) {
 			const trackIndex = Math.floor((y - layout.rulerHeight) / layout.trackHeight);
 			if (trackIndex >= 0 && trackIndex < tracks.length) {
-				const frame = xToFrame(x);
+				const frame = Math.max(0, Math.min(totalFrames, xToFrame(x)));
 				onKeyframeAdd?.(tracks[trackIndex].id, frame);
 			}
 		}
@@ -406,6 +432,12 @@
 	}
 
 	function handleKeyDown(e: KeyboardEvent) {
+		if (e.shiftKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+			e.preventDefault();
+			viewport.scrollLeft += (e.key === 'ArrowRight' ? 1 : -1) * Math.max(44, usableWidth / 4);
+			return;
+		}
+
 		if (e.key === 'Delete' || e.key === 'Backspace') {
 			if (hoveredKeyframe) {
 				onKeyframeDelete?.(hoveredKeyframe.trackId, hoveredKeyframe.keyframeId);
@@ -415,22 +447,23 @@
 
 		// Arrow keys for frame navigation
 		if (e.key === 'ArrowLeft') {
+			e.preventDefault();
 			onFrameChange?.(Math.max(0, currentFrame - 1));
 		} else if (e.key === 'ArrowRight') {
+			e.preventDefault();
 			onFrameChange?.(Math.min(totalFrames, currentFrame + 1));
 		}
 	}
 
 	function handleWheel(e: WheelEvent) {
-		e.preventDefault();
-
 		if (e.ctrlKey || e.metaKey) {
-			// Zoom
+			e.preventDefault();
 			const zoomDelta = e.deltaY > 0 ? 0.9 : 1.1;
 			zoom = Math.max(0.1, Math.min(10, zoom * zoomDelta));
-		} else {
-			// Scroll
-			scrollX = Math.max(0, Math.min(timelineWidth - containerWidth + layout.trackLabelWidth, scrollX + e.deltaX));
+		} else if (e.shiftKey && !e.deltaX) {
+			// Shift-wheel also reaches the native horizontal surface on mice.
+			e.preventDefault();
+			viewport.scrollLeft += e.deltaY;
 		}
 	}
 
@@ -447,6 +480,7 @@
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
 	class="timeline-editor"
+	bind:this={owner}
 	bind:clientWidth={containerWidth}
 	onkeydown={handleKeyDown}
 	tabindex="0"
@@ -461,15 +495,16 @@
 		</div>
 
 		<div class="zoom-controls">
-			<button onclick={() => (zoom = Math.max(0.1, zoom * 0.8))} title="Zoom out">−</button>
+			<button type="button" onclick={() => (zoom = Math.max(0.1, zoom * 0.8))} aria-label="Zoom out" title="Zoom out">−</button>
 			<span class="zoom-level">{Math.round(zoom * 100)}%</span>
-			<button onclick={() => (zoom = Math.min(10, zoom * 1.25))} title="Zoom in">+</button>
+			<button type="button" onclick={() => (zoom = Math.min(10, zoom * 1.25))} aria-label="Zoom in" title="Zoom in">+</button>
 		</div>
 	</div>
 
+	<div class="canvas-viewport" bind:this={viewport} tabindex="0" role="region" aria-label="Scrollable timeline canvas; Shift and arrow keys scroll horizontally">
 	<canvas
 		bind:this={canvas}
-		style="width: {containerWidth}px; height: {canvasHeight}px;"
+		style="width: {canvasWidth}px; height: {canvasHeight}px;"
 		onmousemove={handleMouseMove}
 		onmousedown={handleMouseDown}
 		onmouseup={handleMouseUp}
@@ -477,19 +512,26 @@
 		onwheel={handleWheel}
 		class:scrubbing={isDraggingScrubber}
 		class:dragging-keyframe={isDraggingKeyframe}
+		aria-label="Animation keyframes; use the focused editor arrow keys to navigate frames"
 	></canvas>
+	</div>
+	<noscript><p>Timeline preview requires JavaScript for scrubbing and zoom.</p></noscript>
+	<details class="track-summary"><summary>Track and keyframe summary</summary>
+		<ul>{#each tracks as track}<li>{track.name}: frames {track.keyframes.map((keyframe) => keyframe.frame).join(', ') || 'none'}</li>{/each}</ul>
+	</details>
 </div>
 
 <style>
 	.timeline-editor {
 		background: var(--color-performance-bg-pure);
 		border-radius: var(--radius-performance-scale-lg);
-		overflow: hidden;
-		outline: none;
+		min-width: 0;
+		max-width: 100%;
 	}
 
-	.timeline-editor:focus {
-		border-color: var(--color-performance-focus);
+	.timeline-editor:focus-visible {
+		outline: 2px solid var(--color-performance-focus);
+		outline-offset: 3px;
 	}
 
 	.toolbar {
@@ -523,8 +565,13 @@
 	}
 
 	.zoom-controls button {
-		width: 24px;
-		height: 24px;
+		box-sizing: border-box;
+		border: 1px solid var(--color-performance-line-strong);
+		background: var(--color-performance-panel);
+		font-family: var(--font-performance-interface, inherit);
+		width: 44px;
+		height: 44px;
+		flex-shrink: 0;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -534,6 +581,11 @@
 		font-size: 14px;
 		font-weight: 600;
 	}
+
+	.zoom-controls button:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: -3px; }
+	.track-summary { padding: .5rem; color: var(--color-performance-fg-secondary); font-size: .875rem; }
+	.track-summary summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; }
+	.toolbar { flex-wrap: wrap; gap: .5rem; }
 
 	.zoom-controls button:hover {
 		background: var(--color-performance-hover);
@@ -547,6 +599,9 @@
 		text-align: center;
 	}
 
+	.canvas-viewport { max-width: 100%; overflow-x: auto; border-radius: var(--radius-performance-scale-sm); }
+	.canvas-viewport:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: -2px; }
+
 	canvas {
 		display: block;
 		cursor: default;
@@ -559,4 +614,14 @@
 	canvas.dragging-keyframe {
 		cursor: grabbing;
 	}
+
+ /* Essential DOM controls reflow independently of the two-dimensional canvas. */
+ .toolbar, .time-display, .zoom-controls, .track-summary { min-width: 0; overflow-wrap: anywhere; }
+ .time-display { display: flex; flex-wrap: wrap; align-items: baseline; max-width: 100%; }
+ .time-display > * { min-width: 0; max-width: 100%; }
+ .toolbar { padding-inline: min(var(--space-performance-sm), 5%); }
+ .zoom-controls { flex-wrap: wrap; max-width: 100%; }
+ .zoom-controls button { min-width: 44px; min-height: 44px; width: auto; height: auto; padding: .4rem; }
+ .track-summary ul { padding-inline-start: 1em; }
+
 </style>

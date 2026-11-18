@@ -59,6 +59,7 @@ function fixture(t: any) {
   db.exec(
     readFileSync(new URL('../migrations/0018_gigi_enrollment.sql', import.meta.url), 'utf8')
   );
+  db.exec(readFileSync(new URL('../migrations/0021_a2a_enrollment.sql', import.meta.url), 'utf8'));
   function statement(sql: string, values: any[] = []): any {
     return {
       bind: (...args: any[]) => statement(sql, args),
@@ -834,4 +835,17 @@ test('verified recovery can remain enabled while all signup admission is closed'
     200
   );
   assert.equal(f.mails.length, 1);
+});
+
+test('A2A scoped enrollment remains pending until mailbox proof and never opens generic/GiGi signup',async t=>{
+ const f=fixture(t);f.env.PUBLIC_ENROLLMENT_ENABLED='false';f.env.A2A_ENROLLMENT_ENABLED='true';
+ assert.equal((await startEnrollment(f.request({email:'a2a-new@example.com',purpose:'signup',app:'a2a',return_url:'https://evil.example'}),f.env)).status,200);
+ assert.equal(f.mails.length,1);assert.match(f.mails[0].text,/verify\?mode=signup&app=a2a#token=/);assert.doesNotMatch(f.mails[0].text,/evil\.example/);
+ assert.equal(f.db.prepare('SELECT COUNT(*) AS n FROM users').get()?.n,0);
+ for(const app of [undefined,'gigi','unknown'])await startEnrollment(f.request({email:'blocked-'+String(app)+'@example.com',purpose:'signup',app}),f.env);
+ assert.equal(f.mails.length,1);
+ const proof=f.token();f.env.A2A_ENROLLMENT_ENABLED='false';f.env.GIGI_ENROLLMENT_ENABLED='true';f.env.PUBLIC_ENROLLMENT_ENABLED='true';
+ assert.equal((await completeEnrollment(f.request({token:proof,password:'A2A verified fixture password',app:'gigi'}),f.env)).status,503);
+ f.env.A2A_ENROLLMENT_ENABLED='true';const completed=await completeEnrollment(f.request({token:proof,password:'A2A verified fixture password',app:'gigi'}),f.env);
+ assert.equal(completed.status,200);assert.equal(completed.headers.has('Set-Cookie'),false);assert.equal(f.db.prepare('SELECT email_verified FROM users').get()?.email_verified,1);
 });

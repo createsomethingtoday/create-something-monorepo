@@ -49,6 +49,7 @@
 
 <style>
 	.performance-thesis-conditions {
+		border-radius:var(--radius-performance-scale-lg);overflow:hidden;
 		--condition-accent: var(--color-performance-ink, #090909);
 		container-type: inline-size;
 		display: grid;
@@ -79,11 +80,11 @@
 
 	.performance-thesis-conditions__thesis > span,
 	.performance-thesis-conditions__condition > span {
-		font-family: var(--font-performance-mono);
-		font-size: 0.72rem;
+		font-family:var(--font-performance-interface);
+		font-size:0.875rem;
 		font-weight: var(--font-performance-semibold, 600);
 		line-height: 1.25;
-		text-transform: uppercase;
+		text-transform:none;
 	}
 
 	.performance-thesis-conditions__title {
@@ -105,7 +106,7 @@
 		line-height: 1.45;
 	}
 
-	.performance-thesis-conditions[data-mode='ink'] p { color: rgba(255, 255, 255, 0.67); }
+	.performance-thesis-conditions[data-mode='ink'] p { color:var(--color-performance-panel); }
 
 	.performance-thesis-conditions__conditions {
 		display: grid;
@@ -164,4 +165,8 @@
 		.performance-thesis-conditions { width: 100%; border-inline: 0; }
 		.performance-thesis-conditions__conditions { grid-template-columns: 1fr; }
 	}
+
+ .performance-thesis-conditions { overflow-wrap: anywhere; }
+ .performance-thesis-conditions :global(*) { min-width: 0; }
+
 </style>

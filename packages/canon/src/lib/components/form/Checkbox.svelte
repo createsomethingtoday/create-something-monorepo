@@ -45,7 +45,7 @@
 	}: Props = $props();
 
 	// Generate unique ID if not provided
-	const fallbackFieldId = `checkbox-${crypto.randomUUID().slice(0, 8)}`;
+	const fallbackFieldId = $props.id();
 	const fieldId = $derived(id || fallbackFieldId);
 	const descriptionId = $derived(`${fieldId}-description`);
 </script>
@@ -102,6 +102,10 @@
 
 	/* Control wrapper */
 	.checkbox-control {
+		width:44px;
+		height:44px;
+		display:grid;
+		place-items:center;
 		position: relative;
 		flex-shrink: 0;
 	}
@@ -127,7 +131,7 @@
 		justify-content: center;
 		width: 20px;
 		height: 20px;
-		border: 2px solid var(--color-performance-border-default);
+		border: 2px solid var(--color-performance-border-emphasis);
 		border-radius: var(--radius-performance-scale-sm);
 		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
@@ -170,6 +174,7 @@
 
 	/* Content area */
 	.checkbox-content {
+		padding-top:8px;
 		display: flex;
 		flex-direction: column;
 		gap: 2px;
@@ -223,5 +228,27 @@
 
 	.checkbox-lg .checkbox-label {
 		font-size: var(--text-performance-body-lg);
+	}
+
+	/* Keep state marks in the user's contrast palette when backgrounds are forced. */
+	@media (forced-colors: active) {
+		.checkbox-box,
+		.checkbox-input:checked + .checkbox-box,
+		.checkbox-input:indeterminate + .checkbox-box {
+			background: Canvas;
+			border-color: CanvasText;
+		}
+		.checkbox-icon { color: CanvasText; }
+		.checkbox-input:focus-visible + .checkbox-box { outline-color: Highlight; }
+		.checkbox-input:disabled + .checkbox-box {
+			opacity: 1;
+			background: Canvas;
+			border-color: GrayText;
+		}
+		.checkbox-input:disabled + .checkbox-box .checkbox-icon { color: GrayText; }
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.checkbox-box { transition:none; }
 	}
 </style>

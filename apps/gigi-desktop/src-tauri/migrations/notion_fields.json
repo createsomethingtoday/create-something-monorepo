@@ -113,7 +113,8 @@
       "Companies": "Relation",
       "Created": "Created time",
       "Last Updated": "Last edited time",
-      "Unique ID": "ID"
+      "Unique ID": "ID",
+      "Schedule": "Relation"
     },
     "relations": [
       "companies",
@@ -121,6 +122,7 @@
       "documents",
       "finances",
       "gigs",
+      "schedule",
       "tags",
       "tasks"
     ],
@@ -131,7 +133,8 @@
       "Gigs": "gigs",
       "Finances": "finances",
       "Contacts": "contacts",
-      "Companies": "companies"
+      "Companies": "companies",
+      "Schedule": "schedule"
     }
   },
   "gigs": {
@@ -473,17 +476,20 @@
       "Locations": "Relation",
       "Created": "Created time",
       "Last Updated": "Last edited time",
-      "Unique ID": "ID"
+      "Unique ID": "ID",
+      "Notes": "Relation"
     },
     "relations": [
       "gigs",
       "locations",
+      "notes",
       "tasks"
     ],
     "relationFields": {
       "Gigs": "gigs",
       "Tasks": "tasks",
-      "Locations": "locations"
+      "Locations": "locations",
+      "Notes": "notes"
     }
   },
   "tags": {

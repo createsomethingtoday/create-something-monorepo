@@ -12,7 +12,15 @@ try{
   for(const name of (await readdir(new URL(path,import.meta.url))).filter(x=>x.endsWith('.sql')).sort()){
    const sql=await readFile(new URL(path+name,import.meta.url),'utf8');
    // D1 exec requires one statement per line; migrations contain multiline SQL.
-   for(const statement of sql.replace(/--[^\n]*/g,'').split(';').filter(x=>x.trim()))await db.prepare(statement).run();
+   // Trigger bodies contain semicolons; keep each CREATE TRIGGER through END.
+   let statement='';
+   for(const part of sql.replace(/--[^\n]*/g,'').split(';')){
+    statement+=part+';';
+    if(/^\s*CREATE\s+TRIGGER\b/i.test(statement)&&!(/\bEND\s*;\s*$/i.test(statement)))continue;
+    if(statement.replace(/;/g,'').trim())await db.prepare(statement).run();
+    statement='';
+   }
+   if(statement.trim())throw new Error('Incomplete migration '+name);
   }
  }
  const denied=await mf.dispatchFetch(base+'/run',{method:'POST'});if(denied.status!==404)throw new Error('Lab authentication guard failed');

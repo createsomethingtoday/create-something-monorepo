@@ -26,10 +26,31 @@ export type HtmlEmbedScriptFinding = {
   message: string;
 };
 
+export type ExternalFileFinding =
+  | {
+      kind: 'external-script';
+      source: string;
+      policy: 'custom-code-external-script-not-allowed';
+      message: string;
+    }
+  | {
+      kind: 'external-stylesheet';
+      source: string;
+      policy: 'custom-code-external-stylesheet-not-allowed';
+      message: string;
+    };
+
 export type MarketplaceCustomCodeFinding =
   | FontCustomCodeFinding
   | SchemaMarkupFinding
-  | HtmlEmbedFinding;
+  | HtmlEmbedFinding
+  | ExternalFileFinding;
+
+export declare const EXTERNAL_SCRIPT_POLICY: 'custom-code-external-script-not-allowed';
+export declare const EXTERNAL_SCRIPT_MESSAGE: string;
+export declare const EXTERNAL_STYLESHEET_POLICY: 'custom-code-external-stylesheet-not-allowed';
+export declare const EXTERNAL_STYLESHEET_MESSAGE: string;
+export declare function findProhibitedExternalFiles(html: string): ExternalFileFinding[];
 
 export declare const FONT_CUSTOM_CODE_POLICY: 'custom-code-font-loading';
 export declare const FONT_CUSTOM_CODE_MESSAGE: string;

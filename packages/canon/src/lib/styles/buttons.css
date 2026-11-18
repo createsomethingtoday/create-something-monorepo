@@ -109,3 +109,14 @@
     transform: none;
   }
 }
+
+/* Canon approachable foundation: existing class APIs, solid materials. */
+.button-primary, .button-secondary, .button-ghost {
+ border-radius: var(--radius-performance-sm); min-height:44px;
+ font-family:var(--font-performance-interface); font-weight:500;
+ backdrop-filter:none; box-shadow:none;
+}
+.button-primary {background:var(--color-performance-ink);color:var(--color-performance-panel);border:1px solid var(--color-performance-ink)}
+.button-secondary {background:var(--color-performance-panel);color:var(--color-performance-ink);border:1px solid var(--color-performance-line-strong)}
+.button-primary:hover,.button-secondary:hover,.button-primary:active,.button-secondary:active {transform:none;box-shadow:none}
+.button-primary:focus-visible,.button-secondary:focus-visible,.button-ghost:focus-visible {outline:3px solid var(--color-performance-focus);outline-offset:3px}

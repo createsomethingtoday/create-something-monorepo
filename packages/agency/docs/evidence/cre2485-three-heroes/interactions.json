@@ -1,0 +1,47 @@
+[
+  {
+    "action": "Stack Map CTA",
+    "url": "http://127.0.0.1:4185/map",
+    "evidence": "Observed keyboard Enter navigation in preceding invocation"
+  },
+  {
+    "action": "Reports CTA",
+    "hash": "#reports",
+    "reports": "Report index02 records Start with the workflow under pressure.See the workflow, measured results, limits, and decisions that stayed with a person. 01 Review operationsAutomation prepared the evidence. Human judgment still decided.Evidence collection completed for 49 of 50 selected cases. Automated judgment remains blocked, and reviewer time savings are not yet measured. verified#FR-2026-01May–June 202602 Infrastructure reliabilityWe improve the infrastructure we rely on.A macOS reliability fix merged into CTX. Credited scoped-inventory security work merged into OpenAI Codex Security and shipped in version 0.1.9. verified#FR-2026-02August 2026",
+    "reportLinks": [
+      "/field-reports/template-review",
+      "/field-reports/upstream-contributions"
+    ]
+  },
+  {
+    "action": "Practice sample",
+    "result": "Draft prepared. A person still decides what may be sent.",
+    "limit": "Illustrative decision feedback only. No model, connected account, email or live invoice is used.",
+    "pressed": [
+      "Prepare a draft"
+    ]
+  },
+  {
+    "action": "Practice sample",
+    "result": "Stop here. This example has no permission to send a reminder.",
+    "limit": "Illustrative decision feedback only. No model, connected account, email or live invoice is used.",
+    "pressed": [
+      "Try sending it"
+    ]
+  },
+  {
+    "action": "Practice sample",
+    "result": "The draft and source record are ready for the named owner to review.",
+    "limit": "Illustrative decision feedback only. No model, connected account, email or live invoice is used.",
+    "pressed": [
+      "Ask for approval"
+    ]
+  },
+  {
+    "action": "Keyboard focus",
+    "text": "Try sending it",
+    "outline": "solid",
+    "outlineWidth": "2px",
+    "boundary": "Internal previewNot certification Browser-local draft. Do not enter secrets, credentials, private client data, or PII."
+  }
+]

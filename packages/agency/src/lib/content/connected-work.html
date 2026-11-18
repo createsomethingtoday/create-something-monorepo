@@ -548,17 +548,14 @@
       }
       .canon-guide {
         display: grid;
-        grid-template-columns: 60px 1fr;
+        grid-template-columns: 96px 1fr;
         gap: 12px;
         align-items: center;
         max-width: 460px;
         margin: 24px 5% 32px auto;
       }
-      .canon-guide img {
-        width: 60px;
-        height: 74px;
-        object-fit: contain;
-      }
+      .canon-head { position:relative;display:block;width:96px;height:96px;overflow:hidden; }
+      .canon-head img { position:absolute;display:block;max-width:none;width:132px;height:132px;top:-14px;left:-18px; }
       .canon-speech {
         font-size: 13px;
         padding: 0 0 0 18px;
@@ -901,13 +898,10 @@
         .canon-guide {
           margin: 14px 20px 28px;
           max-width: none;
-          grid-template-columns: 48px 1fr;
+          grid-template-columns: 1fr;
           gap: 10px;
         }
-        .canon-guide img {
-          width: 48px;
-          height: 60px;
-        }
+        .canon-head { display:none; }
         .canon-speech {
           padding-left: 13px;
         }
@@ -1560,13 +1554,7 @@
           </section>
         </main>
         <aside id="canon-guide" class="canon-guide" aria-label="Canon, your website guide">
-          <img
-            src="/images/labs/connected-work-canon.png"
-            width="60"
-            height="74"
-            loading="lazy"
-            alt="Canon, a friendly graphite workshop companion"
-          />
+          <span class="canon-head" aria-hidden="true"><img src="/images/canon-agency-v1/head-r42.webp" width="264" height="264" loading="lazy" alt="" /></span>
           <div class="canon-speech">
             <div class="canon-heading">
               <strong>Canon <span class="status">· Your guide</span></strong

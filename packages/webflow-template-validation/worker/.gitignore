@@ -170,3 +170,6 @@ dist
 
 .dev.vars
 .wrangler/
+
+# Creator CLI download, built by ../cli/scripts/pack.mjs
+public/cli/

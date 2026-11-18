@@ -160,12 +160,14 @@
 
 <style>
 	.pagination {
+		flex-wrap:wrap;
 		display: flex;
 		align-items: center;
 		gap: 2px;
 	}
 
 	.pagination-pages {
+		flex-wrap:wrap;
 		display: flex;
 		align-items: center;
 		gap: 2px;
@@ -177,8 +179,8 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		min-width: 36px;
-		height: 36px;
+		min-width: 44px;
+		height: 44px;
 		padding: 0 var(--space-performance-xs);
 		background: none;
 		border: 1px solid transparent;
@@ -232,8 +234,8 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		min-width: 36px;
-		height: 36px;
+		min-width: 44px;
+		height: 44px;
 		color: var(--color-performance-fg-muted);
 		font-size: var(--text-performance-body);
 		user-select: none;
@@ -242,8 +244,8 @@
 	/* Size variants */
 	.pagination-sm .pagination-button,
 	.pagination-sm .pagination-page {
-		min-width: 28px;
-		height: 28px;
+		min-width: 44px;
+		height: 44px;
 		font-size: var(--text-performance-body-sm);
 	}
 
@@ -253,8 +255,8 @@
 	}
 
 	.pagination-sm .pagination-ellipsis {
-		min-width: 28px;
-		height: 28px;
+		min-width: 44px;
+		height: 44px;
 		font-size: var(--text-performance-body-sm);
 	}
 
@@ -274,5 +276,9 @@
 		min-width: 44px;
 		height: 44px;
 		font-size: var(--text-performance-body-lg);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.pagination-button, .pagination-page { transition:none; }
 	}
 </style>

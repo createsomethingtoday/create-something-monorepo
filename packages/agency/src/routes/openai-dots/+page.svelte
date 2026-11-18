@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CanonCompanion from '$lib/components/CanonCompanion.svelte';
   import { SEO } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { dotsAnswer, dotsFaqItems as faqItems } from '$lib/data/openaiDots';
@@ -10,7 +11,7 @@
   title="OpenAI dots: A little more room with Canon | CREATE SOMETHING .agency"
   description="What are OpenAI dots? Meet Canon, our personal dot, and follow an illustrative task through context, creation, permissions, and human review."
   canonical="https://createsomething.agency/openai-dots"
-  ogImage="/images/agency-sales/canon-guide-test-v1.webp"
+  ogImage="/images/canon-agency-v1/cta-wide-v1.webp"
   keywords="OpenAI dots, personal AI agent, Canon, dot permissions, workflow mapping"
   propertyName="agency"
   {faqItems}
@@ -52,37 +53,7 @@
             >Spend a day with Canon <span aria-hidden="true">↘</span></a
           >
         </div>
-        <figure class="canon-portrait" aria-labelledby="portrait-caption">
-          <div class="portrait-register mono">
-            <span>Meet your collaborator</span><span aria-hidden="true">[ 01 ]</span>
-          </div>
-          <div class="portrait-field">
-            <svg class="portrait-guides" viewBox="0 0 540 480" fill="none" aria-hidden="true">
-              <circle cx="270" cy="235" r="178" />
-              <path d="M40 235H500M270 25V445" stroke-dasharray="3 8" />
-              <path class="hero-arc" d="M92 235a178 178 0 1 1 356 0" />
-              <path d="M40 36h18M49 27v18M482 427h18M491 418v18" />
-            </svg>
-            <span class="portrait-note mono">A familiar face.<br />A useful pair of hands.</span>
-            <img
-              class="canon-hero"
-              src="/images/agency-sales/canon-guide-cutout-v1.webp"
-              alt="Canon, a small graphite robot, attentively pointing toward the next step."
-              width="307"
-              height="384"
-              fetchpriority="high"
-            />
-            <span class="portrait-name"
-              >canon<span class="name-dot" aria-hidden="true">●</span></span
-            >
-            <span class="portrait-spec mono">Curious by nature.<br />Capable by design.</span>
-          </div>
-          <figcaption id="portrait-caption">
-            <span>Our dot, with a character of its own.</span><span class="mono"
-              >Concept illustration</span
-            >
-          </figcaption>
-        </figure>
+
       </div>
       <a class="reading-rail mono" href="#why"
         ><span>Less starting over. More moving forward.</span><span
@@ -99,6 +70,37 @@
         <h2 id="why-title">Good company.<br />Useful continuity.</h2>
         <p>Some work needs a conversation.<br />Some needs someone to keep the thread.</p>
       </div>
+        <figure class="canon-portrait" aria-labelledby="portrait-caption">
+          <div class="portrait-register mono">
+            <span>Meet your collaborator</span><span aria-hidden="true">[ 01 ]</span>
+          </div>
+          <div class="portrait-field">
+            <svg class="portrait-guides" viewBox="0 0 540 480" fill="none" aria-hidden="true">
+              <circle cx="270" cy="235" r="178" />
+              <path d="M40 235H500M270 25V445" stroke-dasharray="3 8" />
+              <path class="hero-arc" d="M92 235a178 178 0 1 1 356 0" />
+              <path d="M40 36h18M49 27v18M482 427h18M491 418v18" />
+            </svg>
+            <span class="portrait-note mono">A familiar face.<br />A useful pair of hands.</span>
+            <img
+              class="canon-hero"
+              src="/images/canon-agency-v1/body-transparent-r15.webp"
+              alt="Canon, a soft felt companion, offering an open hand beside a notebook."
+              width="1199"
+              height="1312"
+              loading="lazy"
+            />
+            <span class="portrait-name"
+              >canon<span class="name-dot" aria-hidden="true">●</span></span
+            >
+            <span class="portrait-spec mono">Curious by nature.<br />Capable by design.</span>
+          </div>
+          <figcaption id="portrait-caption">
+            <span>Our dot, with a character of its own.</span><span class="mono"
+              >Concept illustration</span
+            >
+          </figcaption>
+        </figure>
       <div class="definition" aria-labelledby="definition-title">
         <h3 id="definition-title">What are OpenAI dots?</h3>
         <p>{dotsAnswer}</p>
@@ -218,14 +220,7 @@
                 ></span
               >
             </div>
-            <img
-              class="canon-desk"
-              src="/images/agency-sales/canon-guide-test-v1.webp"
-              alt=""
-              width="246"
-              height="307"
-              loading="lazy"
-            />
+            <span class="canon-desk"><CanonCompanion /></span>
             <span class="artifact-caption mono"
               ><span class="artifact-step" data-scene="0">01 / Context, brought together</span><span
                 class="artifact-step"

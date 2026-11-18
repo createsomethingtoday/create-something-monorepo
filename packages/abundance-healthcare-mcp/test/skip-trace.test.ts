@@ -1,6 +1,7 @@
+import {withBudgetFixture} from './fixtures/budget.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { skipTrace, type SkipIdentity } from '../src/skip-trace.js';
+import { skipTrace, skipTraceReadiness, type SkipIdentity } from '../src/skip-trace.js';
 import type { PdlStore } from '../src/pdl.js';
 const input: SkipIdentity = {
   npi: '1234567890',
@@ -133,7 +134,7 @@ test('confirmation and missing secret', async () => {
   );
   await assert.rejects(() => skipTrace(input, { store: store() }));
 });
-test('global reservation and concurrent duplicate dispatch', async () => {
+test('per-candidate deduplication permits unrelated candidates without a global spend cap', async () => {
   const p = provider();
   const options = {
     token: 'synthetic',
@@ -144,7 +145,8 @@ test('global reservation and concurrent duplicate dispatch', async () => {
   };
   await Promise.all([skipTrace(input, options), skipTrace(input, options)]);
   assert.equal(p.posts(), 1);
-  await assert.rejects(() => skipTrace({ ...input, npi: '1234567891' }, options), /budget/);
+  await skipTrace({ ...input, npi: '1234567891' }, options);
+  assert.equal(p.posts(),2);
 });
 test('uncertain dispatch never retried', async () => {
   let calls = 0;
@@ -191,7 +193,7 @@ test('documented limited permissions parameter', async () => {
   });
   assert.equal(permission, 'LIMITED_PERMISSIONS');
 });
-test('late billing readback changes receipt without another POST and detects anomaly', async () => {
+test('late billing readback tracks charges above former limit without another POST', async () => {
   const p = provider([row]);
   let charge = 0;
   const s = store();
@@ -220,9 +222,10 @@ test('late billing readback changes receipt without another POST and detects ano
   assert.equal((await skipTrace(input, options())).charge_reconciled, true);
   charge = 0.11;
   now += 61000;
-  assert.equal((await skipTrace(input, options())).status, 'billing_review');
-  assert.equal(p.posts(), 1);
-  await assert.rejects(() => skipTrace({ ...input, npi: '9999999999' }, options()), /billing/);
+  assert.equal((await skipTrace(input, options())).charge_usd,0.11);
+  assert.equal(p.posts(),1);
+  await skipTrace({ ...input,npi:'9999999999'},options());
+  assert.equal(p.posts(),2);
 });
 test('privacy preflight fails before paid dispatch and is recoverable', async () => {
   const p = provider();
@@ -257,7 +260,7 @@ test('public MCP invocation preserves registry middle name and exact pilot conve
   const s = store();
   const server = createAbundanceHealthcareServer({
     agencyApiKey: 'synthetic',
-    fetchFn: async () =>
+    fetchFn: withBudgetFixture(async () =>
       Response.json({
         success: true,
         data: {
@@ -290,7 +293,7 @@ test('public MCP invocation preserves registry middle name and exact pilot conve
           limit: 1,
           offset: 0
         }
-      }),
+      })),
     skipTrace: async (identity) => {
       assert.equal(identity.full_name, 'Synthetic Middle Example');
       return skipTrace(identity, {
@@ -509,7 +512,7 @@ test('review blocker 1: generic anonymous denial must not authorize paid dispatc
     assert.equal(p.posts(), 0);
   }
 });
-test('review blocker 2: delayed charge after zero reservation pruning restores cap', async () => {
+test('delayed charge remains on its receipt without blocking unrelated candidates', async () => {
   const p = reviewedProvider();
   const s = store();
   let now = 1000,
@@ -535,13 +538,12 @@ test('review blocker 2: delayed charge after zero reservation pruning restores c
   await skipTrace(input, options());
   now += 86400001;
   await skipTrace({ ...input, npi: '1234567891' }, options());
-  assert.equal((await s.get<any[]>('skip:budget'))?.length, 1);
+  assert.equal(await s.get('skip:budget'),undefined);
   charge = 0.07;
-  await skipTrace(input, options());
-  const entries = await s.get<any[]>('skip:budget');
-  assert.equal(entries?.length, 2);
-  assert.ok(entries?.some((r) => r.id === original.id && r.cents === 10 && r.reconciled === false));
-  await assert.rejects(() => skipTrace({ ...input, npi: '1234567892' }, options()), /budget/);
+  const revised=await skipTrace(input,options());
+  assert.equal(revised.id,original.id);assert.equal(revised.charge_usd,0.07);
+  await skipTrace({...input,npi:'1234567892'},options());
+  assert.equal(p.posts(),3);
 });
 test('review blocker 3: exact search mode required even with matching identity', async () => {
   for (const mode of [undefined, 'Name Search', 'Phone Search', 'name']) {
@@ -739,7 +741,7 @@ test('cached zero-charge success is invalidated on every reconciliation failure 
     assert.equal(result.status, 'pending');
     assert.equal(result.contacts, undefined);
     assert.equal(result.charge_reconciled, false);
-    assert.equal((await s.get<any[]>('skip:budget'))?.[0].cents, 10, boundary);
+    assert.equal(await s.get('skip:budget'),undefined,boundary);
     assert.equal(p.posts(), 1);
     fail = false;
     now += 1000;
@@ -793,4 +795,12 @@ test('same-receipt reads cannot authorize creation on cache miss or changed iden
       options
     )
   );
+});
+
+test('combined Skip Trace readiness is nonbillable and blocks access/privacy without a financial cap',async()=>{
+ const p=provider();const s=store();const options={token:'fixture',privacyDatasetId:'sentinel',store:s,fetchFn:p.fetchFn};
+ assert.equal((await skipTraceReadiness(options)).ready,true);assert.equal(p.posts(),0);assert.equal(await s.get('skip:budget'),undefined);
+ assert.equal((await skipTraceReadiness({...options,token:undefined})).ready,false);
+ assert.equal((await skipTraceReadiness({...options,fetchFn:async()=>new Response(null,{status:403})})).ready,false);
+ await s.put('skip:budget',[{at:Date.now(),cents:100,reconciled:false}]);assert.equal((await skipTraceReadiness(options)).ready,true);assert.equal(p.posts(),0);
 });

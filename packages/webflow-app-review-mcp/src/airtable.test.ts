@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { AirtableClient, AirtableClientError, assertScopedTable, findRawHtmlTag, type CollaboratorRef } from './airtable.js';
+import { AirtableClient, AirtableClientError, assertScopedTable, compareExceptionItems, findRawHtmlTag, type CollaboratorRef } from './airtable.js';
 import { FIELD_IDS, GOVERNANCE_FINDING_FIELD_NAMES, TABLE_IDS } from './schema.js';
 
 function jsonResponse(body: unknown, status = 200) {
@@ -360,6 +360,79 @@ describe('AirtableClient exception handling', () => {
       code: 'NO_MUTATION_FIELDS',
     });
     expect(fetchFn).not.toHaveBeenCalled();
+  });
+
+  it('appends a dated decision note and keeps the earlier notes', async () => {
+    const E = FIELD_IDS.exceptions;
+    const existing = 'Granted with conditions: scoped allow list.';
+    const writes: Array<Record<string, unknown>> = [];
+    const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = new URL(String(input));
+      if (init?.method === 'PATCH') {
+        const body = JSON.parse(String(init.body)) as { records: Array<{ id: string; fields: Record<string, unknown> }> };
+        writes.push(body.records[0]!.fields);
+        return jsonResponse({ records: [{ id: body.records[0]!.id, fields: body.records[0]!.fields }] });
+      }
+      if (url.pathname.includes(`/${TABLE_IDS.exceptions}/recItem1`)) {
+        return jsonResponse({ id: 'recItem1', fields: { [E.status]: '✅Approved', [E.decisionNotes]: existing } });
+      }
+      if (url.pathname.includes(`/${TABLE_IDS.exceptions}/recItemEmpty`)) {
+        return jsonResponse({ id: 'recItemEmpty', fields: { [E.status]: '🆕Requested' } });
+      }
+      return jsonResponse({ error: { type: 'NOT_FOUND' } }, 404);
+    });
+    const client = new AirtableClient({ apiKey: 'token', fetchFn });
+    const now = new Date('2026-11-13T21:00:00.000Z');
+
+    const updated = await client.updateExceptionItem('recItem1', {
+      append_decision_note: '  New build checked: the allow list is scoped.  ',
+      noted_by: 'Shea Sisco',
+      now,
+    });
+
+    expect(writes[0]).toEqual({
+      [E.decisionNotes]: `${existing}\n\nNote (2026-11-13, Shea Sisco): New build checked: the allow list is scoped.`,
+    });
+    expect(updated.decisionNotes).toContain(existing);
+
+    // A row with no notes gets the line alone, and the note can go with a status change in one write.
+    // A name that is blank or holds a line break cannot add a second line.
+    await client.updateExceptionItem('recItemEmpty', {
+      exception_status: '👀Under Review',
+      append_decision_note: 'First note.',
+      noted_by: ' \n ',
+      now,
+    });
+    expect(writes[1]).toEqual({
+      [E.status]: '👀Under Review',
+      [E.decisionNotes]: 'Note (2026-11-13): First note.',
+    });
+
+    // Refused before any read or write: replace and append together, and an empty note.
+    const callsBefore = fetchFn.mock.calls.length;
+    await expect(
+      client.updateExceptionItem('recItem1', { decision_notes: 'Replace.', append_decision_note: 'Add.' }),
+    ).rejects.toMatchObject({ code: 'DECISION_NOTES_CONFLICT' });
+    await expect(
+      client.updateExceptionItem('recItem1', { append_decision_note: '   ' }),
+    ).rejects.toMatchObject({ code: 'DECISION_NOTE_REQUIRED' });
+    expect(fetchFn.mock.calls).toHaveLength(callsBefore);
+
+    await client.updateExceptionItem('recItemEmpty', { append_decision_note: 'x', noted_by: 'A\n\nNote (2026-01-01, B', now });
+    expect(writes[2]).toEqual({ [E.decisionNotes]: 'Note (2026-11-13, A Note (2026-01-01, B): x' });
+
+    // An invalid status with a note fails before the read.
+    const callsBeforeInvalid = fetchFn.mock.calls.length;
+    await expect(
+      client.updateExceptionItem('recItem1', { exception_status: 'Denied', append_decision_note: 'Add.' }),
+    ).rejects.toMatchObject({ code: 'INVALID_EXCEPTION_STATUS' });
+    expect(fetchFn.mock.calls).toHaveLength(callsBeforeInvalid);
+
+    // An unknown row is reported, and nothing is written.
+    await expect(
+      client.updateExceptionItem('recItemMissing', { append_decision_note: 'Add.' }),
+    ).rejects.toMatchObject({ code: 'EXCEPTION_ITEM_NOT_FOUND' });
+    expect(writes).toHaveLength(3);
   });
 
   describe('resolveExceptionItem (resolved in resubmission)', () => {
@@ -891,6 +964,129 @@ describe('AirtableClient app review context and queue helpers', () => {
     const fromAsset = await pfClient.getReviewContext('rec-version-asset-only');
     expect(fromAsset.version.preflight).toBeNull();
     expect(fromAsset.preflight).toMatchObject({ source: 'asset', receipt: 'wfpre_asset', installUrlStatus: 'pass' });
+  });
+
+  it("lists the app's exception rows from every version in review context", async () => {
+    let approvedNotes = 'Granted. Conditions apply to every later build.';
+    const exceptionRow = (id: string, versionId: string, fields: Record<string, unknown>) => ({
+      id,
+      createdTime: '2026-03-01T00:00:00.000Z',
+      fields: { [FIELD_IDS.exceptions.assetVersionLink]: [versionId], ...fields },
+    });
+    const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      if (url.pathname.endsWith(`/${TABLE_IDS.assetVersions}/rec-version-next`)) {
+        const base = versionRecord('rec-version-next', null);
+        return jsonResponse({
+          ...base,
+          fields: {
+            ...base.fields,
+            [FIELD_IDS.versions.assetExceptionHistory]: ['recItemWithdrawn', 'recItemApproved'],
+            [FIELD_IDS.versions.exceptionItemsLink]: ['recItemNew'],
+          },
+        });
+      }
+      if (url.pathname.endsWith(`/${TABLE_IDS.assetVersions}/rec-version-plain`)) {
+        return jsonResponse(versionRecord('rec-version-plain', null));
+      }
+      if (url.pathname.endsWith(`/${TABLE_IDS.assets}/recAsset`)) {
+        return jsonResponse(assetRecord('recAsset'));
+      }
+      if (url.pathname.endsWith(`/${TABLE_IDS.exceptions}`)) {
+        return jsonResponse({
+          records: [
+            exceptionRow('recItemWithdrawn', 'rec-version-old', {
+              [FIELD_IDS.exceptions.item]: 'Pasted embed',
+              [FIELD_IDS.exceptions.status]: '🔙Withdrawn',
+              [FIELD_IDS.exceptions.resolutionNotes]: 'Fixed.',
+            }),
+            exceptionRow('recItemApproved', 'rec-version-old', {
+              [FIELD_IDS.exceptions.item]: 'Vendor iframe player',
+              [FIELD_IDS.exceptions.status]: '✅Approved',
+              [FIELD_IDS.exceptions.type]: 'Security',
+              [FIELD_IDS.exceptions.rationale]: 'Long finding text.',
+              [FIELD_IDS.exceptions.decisionNotes]: approvedNotes,
+              [FIELD_IDS.exceptions.decisionDatetime]: '2026-03-02T00:00:00.000Z',
+            }),
+            exceptionRow('recItemNew', 'rec-version-next', {
+              [FIELD_IDS.exceptions.item]: 'New finding',
+              [FIELD_IDS.exceptions.status]: '🆕Requested',
+            }),
+          ],
+        });
+      }
+      return new Response('not found', { status: 404 });
+    });
+    const client = new AirtableClient({ apiKey: 'token', fetchFn });
+    const exceptionReads = () =>
+      fetchFn.mock.calls.filter(([input]) => new URL(String(input)).pathname.endsWith(`/${TABLE_IDS.exceptions}`));
+
+    const context = await client.getReviewContext('rec-version-next');
+
+    // Pending rows first, then approved, then withdrawn.
+    expect(context.assetExceptions.map((row) => row.exceptionItemId)).toEqual([
+      'recItemNew',
+      'recItemApproved',
+      'recItemWithdrawn',
+    ]);
+    expect(context.assetExceptions[0]).toMatchObject({ onThisVersion: true });
+    expect(context.assetExceptions[1]).toMatchObject({
+      item: 'Vendor iframe player',
+      exceptionStatus: '✅Approved',
+      exceptionType: 'Security',
+      decisionNotes: 'Granted. Conditions apply to every later build.',
+      assetVersionId: 'rec-version-old',
+      onThisVersion: false,
+    });
+    expect(context.assetExceptions[1]).not.toHaveProperty('rationale');
+    expect(context.assetExceptionNotesOmitted).toBe(false);
+    expect(exceptionReads()).toHaveLength(1);
+
+    const plain = await client.getReviewContext('rec-version-plain');
+    expect(plain.assetExceptions).toEqual([]);
+    expect(exceptionReads()).toHaveLength(1);
+
+    // The budget counts decision and resolution notes together: 7,994 + 'Fixed.' is exactly 8,000.
+    approvedNotes = 'x'.repeat(7994);
+    const atBudget = await client.getReviewContext('rec-version-next');
+    expect(atBudget.assetExceptionNotesOmitted).toBe(false);
+    expect(atBudget.assetExceptions[1]?.decisionNotes).toHaveLength(7994);
+    expect(atBudget.assetExceptions[2]?.resolutionNotes).toBe('Fixed.');
+
+    // One character more: every note is left out and the rows stay.
+    approvedNotes = 'x'.repeat(7995);
+    const overBudget = await client.getReviewContext('rec-version-next');
+    expect(overBudget.assetExceptionNotesOmitted).toBe(true);
+    expect(overBudget.assetExceptions).toHaveLength(3);
+    expect(overBudget.assetExceptions[1]).not.toHaveProperty('decisionNotes');
+    expect(overBudget.assetExceptions[2]).not.toHaveProperty('resolutionNotes');
+  });
+
+  it('orders exception rows by status, then oldest first', () => {
+    const row = (exceptionItemId: string, exceptionStatus?: string, decisionDatetime?: string) => ({
+      exceptionItemId,
+      exceptionStatus,
+      decisionDatetime,
+    });
+    const sorted = [
+      row('noStatus'),
+      row('withdrawn', '🔙Withdrawn'),
+      row('denied', '❌Denied'),
+      row('approvedLate', '✅Approved', '2026-03-05T00:00:00.000Z'),
+      row('approvedEarly', '✅Approved', '2026-03-01T00:00:00.000Z'),
+      row('underReview', '👀Under Review'),
+      row('requested', '🆕Requested'),
+    ].sort(compareExceptionItems);
+
+    expect(sorted.map((item) => item.exceptionItemId)).toEqual([
+      'requested',
+      'underReview',
+      'approvedEarly',
+      'approvedLate',
+      'denied',
+      'withdrawn',
+      'noStatus',
+    ]);
   });
 
   it('finds app_id matches across paginated asset results', async () => {

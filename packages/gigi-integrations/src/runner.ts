@@ -1,3 +1,4 @@
+import { COMPANION_RESOURCE } from './deployment.ts';
 import { existsSync } from 'node:fs';
 import { dirname, isAbsolute, join } from 'node:path';
 
@@ -7,7 +8,7 @@ import { getSessionAccessToken, login, logout, LoginError } from './auth.ts';
 import { mapSourcePage } from './import-adapter.ts';
 import { requireSourceSelection, selectSourceRecords, SourceSelectionError } from './source-selection.ts';
 
-const BROKER_RESOURCE = 'https://gigi-connector.createsomething.workers.dev';
+const BROKER_RESOURCE = COMPANION_RESOURCE;
 
 export type RunnerRequest = { operation: string; input: Record<string, unknown> };
 export type RunnerResult = { ok: true; value: unknown } | { ok: false; error: { operation: string; reason: string; detail?: CtxError['detail'] } };
@@ -45,11 +46,13 @@ export async function runOperation(request: RunnerRequest, options: RunnerOption
           if(provider==='instagram')return failure(operation,'unsupported_operation');
           const workspaceId = requireString(input.workspaceId);
           const selection = requireSourceSelection(input.selection, provider);
-          const page = await broker.readSourcePage(provider, requireString(input.connectedAccountId), optionalString(input.cursor), options.signal);
+          const page = await broker.readSourcePage(provider, requireString(input.connectedAccountId), (input.cursor === undefined ? undefined : requireString(input.cursor, 2048)), options.signal, selection);
           const selected = selectSourceRecords(mapSourcePage(workspaceId, page), selection);
           return success({ provider: page.provider, connectedAccountId: page.connectedAccountId,
             records: selected.records, nextCursor: page.nextCursor,
-            coverage: { ...selected.coverage, complete: page.nextCursor === null } });
+            coverage: { ...selected.coverage, complete: page.nextCursor === null && selected.coverage.unknownDateCount === 0,
+              pageSequenceComplete: page.nextCursor === null, providerDateWindow: provider === 'googlecalendar' && !!(selection.from || selection.to),
+              calendarScope: provider === 'googlecalendar' ? 'primary' : undefined, continuousSync: false } });
         }
         default: return failure(operation, 'unknown_operation');
       }

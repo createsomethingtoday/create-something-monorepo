@@ -277,4 +277,27 @@ test('native local D1 validates additive upgrade, atomic recovery and invitation
       );
     }
   );
+  await t.test('native A2A recovery honors verified recovery with signup off', async () => {
+    for (const file of migrations.filter((file) => file > '0018_gigi_enrollment.sql'))
+      await db.batch(migrationStatements(file).map((sql) => db.prepare(sql)));
+    await db.batch([
+      db.prepare("INSERT INTO users(id,email,password_hash,source,email_verified) VALUES('a2a-recovery','a2a-recovery@example.com','original','io',1)"),
+      db.prepare("INSERT INTO oauth_refresh_families(family_id,client_id,user_id) VALUES('a2a-family','fixture-client','a2a-recovery')")
+    ]);
+    const recoveryEnv = { ...env, A2A_ENROLLMENT_ENABLED: 'false' };
+    const before = mails.length;
+    assert.equal((await startEnrollment(request({ email: 'a2a-recovery@example.com', purpose: 'recovery', app: 'a2a' }), recoveryEnv)).status, 200);
+    assert.equal(mails.length, before + 1);
+    const proof = token();
+    assert.match(mails.at(-1).text, /mode=recovery&app=a2a/);
+    await startEnrollment(request({ email: 'closed-a2a@example.com', purpose: 'signup', app: 'a2a' }), recoveryEnv);
+    assert.equal(mails.length, before + 1);
+    const completed = await completeEnrollment(request({ token: proof, password: 'public A2A recovery fixture password' }), recoveryEnv);
+    assert.equal(completed.status, 200);
+    assert.equal(completed.headers.has('Set-Cookie'), false);
+    assert.ok((await db.prepare("SELECT revoked_at FROM oauth_refresh_families WHERE family_id='a2a-family'").first()).revoked_at);
+    assert.equal(await verifyPassword('public A2A recovery fixture password', (await db.prepare("SELECT password_hash FROM users WHERE id='a2a-recovery'").first()).password_hash), true);
+    assert.equal(await db.prepare("SELECT id FROM users WHERE email='closed-a2a@example.com'").first(), null);
+  });
+
 });

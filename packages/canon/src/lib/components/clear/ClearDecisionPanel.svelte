@@ -47,7 +47,19 @@
 	let userSelected = $state(false);
 
 	const activeItem = $derived(items[activeIndex] ?? items[0]);
-	const panelId = $derived(`${id ?? 'clear-decision-panel'}-active`);
+	const instanceId=$props.id();
+	const panelId = $derived(`${id ?? instanceId}-active`);
+	let tabsRef:HTMLDivElement;
+	function handleTabKey(event:KeyboardEvent){
+		if(!items.length)return;
+		let next=activeIndex;
+		if(['ArrowRight','ArrowDown'].includes(event.key))next=(next+1)%items.length;
+		else if(['ArrowLeft','ArrowUp'].includes(event.key))next=(next+items.length-1)%items.length;
+		else if(event.key==='Home')next=0;
+		else if(event.key==='End')next=items.length-1;
+		else return;
+		event.preventDefault();selectItem(next);tabsRef?.querySelectorAll<HTMLButtonElement>('[role=tab]')[next]?.focus();
+	}
 
 	function selectItem(index: number) {
 		userSelected = true;
@@ -103,13 +115,15 @@
 			</div>
 
 			<div class="clear-decision-panel__body">
-				<div class="clear-decision-panel__tabs" role="tablist" aria-label={ariaLabel}>
+				<div class="clear-decision-panel__tabs" role="tablist" aria-label={ariaLabel} tabindex={-1} bind:this={tabsRef} onkeydown={handleTabKey}>
 					{#each items as item, index}
 						<button
 							type="button"
 							role="tab"
 							class="clear-decision-panel__tab"
 							class:clear-decision-panel__tab--selected={index === activeIndex}
+							id="{id ?? instanceId}-tab-{index}"
+							tabindex={index===activeIndex?0:-1}
 							aria-selected={index === activeIndex}
 							aria-controls={panelId}
 							data-control-state={controlState(item.tone)}
@@ -125,7 +139,7 @@
 					<div
 						id={panelId}
 						class={`clear-decision-panel__active clear-decision-panel__active--${activeItem.tone ?? 'neutral'}`}
-						role="tabpanel"
+						role="tabpanel" aria-labelledby="{id ?? instanceId}-tab-{activeIndex}"
 					>
 						<div class="clear-decision-panel__active-copy">
 							<span>Decision object</span>
@@ -169,6 +183,7 @@
 			</div>
 		</div>
 	</div>
+  <noscript><div class="clear-decision-panel__static"><p>All decision states</p>{#each items as item}<article><h3>{item.label}: {item.title}</h3><p>{item.detail}</p>{#if item.evidence?.length}<ul>{#each item.evidence as evidence}<li>{evidence}</li>{/each}</ul>{/if}{#if item.receipts?.length}<p>Receipts: {item.receipts.join(', ')}</p>{/if}{#each item.actions ?? [] as action}<a href={action.href}>{action.label}</a>{/each}</article>{/each}</div></noscript>
 </section>
 
 <style>
@@ -219,11 +234,11 @@
 	.clear-decision-panel__evidence span {
 		color: var(--color-performance-muted, #5e6268);
 		font-family: var(--font-performance-mono);
-		font-size: 0.72rem;
+		font-size:0.875rem;
 		font-weight: var(--font-performance-semibold);
 		letter-spacing: 0;
 		line-height: 1.2;
-		text-transform: uppercase;
+		text-transform:none;
 	}
 
 	.clear-decision-panel__header > span {
@@ -299,32 +314,36 @@
 		border: 1px solid var(--color-performance-line, #d7d7d2);
 		border-radius: var(--radius-performance-sm, 4px);
 		background: var(--color-performance-ink, #090909);
-		color: #ffffff;
+		color:var(--color-performance-panel);
 		font-family: var(--font-performance-mono);
-		font-size: 0.7rem;
+		font-size:0.875rem;
 		line-height: 1.15;
 		text-align: center;
-		text-transform: uppercase;
+		text-transform:none;
 	}
 
 	.clear-decision-panel__status--allow {
-		background: var(--color-performance-ready, #007a4d);
-		border-color: var(--color-performance-ready, #007a4d);
+		background:var(--color-performance-ready-soft);
+		color:var(--color-performance-ready);
+		border-color:var(--color-performance-ready);
 	}
 
 	.clear-decision-panel__status--review {
-		background: var(--color-performance-review, #8b6b00);
-		border-color: var(--color-performance-review, #8b6b00);
+		background:var(--color-performance-review-soft);
+		color:var(--color-performance-review);
+		border-color:var(--color-performance-review);
 	}
 
 	.clear-decision-panel__status--block {
-		background: var(--color-performance-stop, #c62026);
-		border-color: var(--color-performance-stop, #c62026);
+		background:var(--color-performance-stop-soft);
+		color:var(--color-performance-stop);
+		border-color:var(--color-performance-stop);
 	}
 
 	.clear-decision-panel__status--neutral {
-		background: var(--color-performance-controlled, #0057b8);
-		border-color: var(--color-performance-controlled, #0057b8);
+		background:var(--color-performance-controlled-soft);
+		color:var(--color-performance-controlled);
+		border-color:var(--color-performance-controlled);
 	}
 
 	.clear-decision-panel__body {
@@ -371,7 +390,7 @@
 
 	.clear-decision-panel__tab--selected {
 		border-color: var(--decision-state);
-		background: color-mix(in srgb, var(--decision-state-soft) 42%, white);
+		background:var(--decision-state-soft);
 	}
 
 	.clear-decision-panel__tab--selected::before {
@@ -407,10 +426,10 @@
 	.clear-decision-panel__tab strong {
 		color: var(--color-performance-muted, #5e6268);
 		font-family: var(--font-performance-mono);
-		font-size: 0.65rem;
+		font-size:0.875rem;
 		font-weight: var(--font-performance-medium);
 		line-height: 1.35;
-		text-transform: uppercase;
+		text-transform:none;
 	}
 
 	.clear-decision-panel__active {
@@ -426,7 +445,7 @@
 		border-radius: var(--radius-performance-md, 4px);
 		background:
 			linear-gradient(90deg, rgba(10, 14, 25, 0.04) 1px, transparent 1px) 0 0 / 2.75rem 2.75rem,
-			color-mix(in srgb, var(--decision-accent) 24%, white);
+			var(--color-performance-panel);
 	}
 
 	.clear-decision-panel__active--allow {
@@ -474,7 +493,7 @@
 		padding: 0.75rem;
 		border: 1px solid var(--color-performance-line, #d7d7d2);
 		border-radius: var(--radius-performance-sm, 4px);
-		background: rgba(255, 255, 255, 0.72);
+		background:var(--color-performance-paper);
 	}
 
 	.clear-decision-panel__evidence ul {
@@ -523,7 +542,7 @@
 		background: var(--color-performance-panel, #ffffff);
 		color: var(--color-performance-ink, #090909);
 		font-family: var(--font-performance-mono);
-		font-size: 0.68rem;
+		font-size:0.875rem;
 		font-weight: var(--font-performance-medium);
 		line-height: 1.2;
 		overflow-wrap: anywhere;
@@ -546,13 +565,13 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		min-height: 2.2rem;
+		min-height:44px;
 		padding: 0.48rem 0.68rem;
 		border: 1px solid var(--color-performance-ink, #090909);
 		border-radius: var(--radius-performance-sm, 4px);
 		background: var(--color-performance-panel, #ffffff);
 		color: var(--color-performance-ink, #090909);
-		font-size: 0.86rem;
+		font-size:0.875rem;
 		font-weight: var(--font-performance-medium);
 		line-height: 1.1;
 		text-decoration: none;
@@ -563,7 +582,7 @@
 
 	.clear-decision-panel__actions a:hover {
 		background: var(--color-performance-ink, #090909);
-		color: #ffffff;
+		color:var(--color-performance-panel);
 		opacity: 1;
 	}
 
@@ -619,4 +638,18 @@
 			grid-template-columns: 1fr;
 		}
 	}
+
+ .clear-decision-panel__static {padding:24px;background:var(--color-performance-panel);color:var(--color-performance-ink);}
+ .clear-decision-panel__static article {padding-block:16px;border-top:1px solid var(--color-performance-line);}
+
+ .clear-decision-panel { overflow-wrap: anywhere; }
+ .clear-decision-panel__inner > *, .clear-decision-panel__body > * { min-width: 0; }
+ .clear-decision-panel__bar { flex-wrap: wrap; }
+ .clear-decision-panel__bar > div { flex: 1 1 10rem; }
+ .clear-decision-panel__status { box-sizing: border-box; flex-shrink: 0; max-width: 100%; }
+ .clear-decision-panel__console { container-type: inline-size; }
+ .clear-decision-panel__body { grid-template-columns: minmax(0, 1fr); }
+ @container (min-width: 38rem) { .clear-decision-panel__body { grid-template-columns: minmax(14rem, .38fr) minmax(0, 1fr); } }
+ .clear-decision-panel__tab { min-width: 0; }
+
 </style>

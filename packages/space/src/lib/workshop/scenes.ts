@@ -1,61 +1,15 @@
-/** PR2045 Agency scenes, inspected before reuse. Concept imagery, never runtime proof. */
+import { canonTaskScenes, type CanonTaskSceneKey } from '$lib/canon-task-scenes';
+
+/** Original felt-identity concept stills; see static/images/canon-tasks-v1/manifest.json. */
 export const scenes = {
-  workshop: {
-    stem: 'products-workbench-paths-continuity-v2',
-    width: 1536,
-    height: 1024,
-    alt: 'Small charcoal and ivory agents work at separate metal benches in an open workshop.',
-    caption: 'An open workshop. Choose a tool and inspect how it works.'
-  },
-  fit: {
-    stem: 'tool-fit-without-forcing',
-    width: 1536,
-    height: 1024,
-    alt: 'An agent compares a machined connector with its socket before joining them.',
-    caption: 'Find the fit before making the connection.'
-  },
-  compiler: {
-    stem: 'compiler-from-plan-to-tested-jig',
-    width: 1536,
-    height: 1024,
-    alt: 'Two agents turn a measured metal template into a matching part at a workbench.',
-    caption: 'A definition becomes something you can check.'
-  },
-  ground: {
-    stem: 'ground-compare-before-claim',
-    width: 1402,
-    height: 1122,
-    alt: 'Two agents inspect the fit between metal parts under a small work light.',
-    caption: 'Compare the evidence before accepting the claim.'
-  },
-  notes: {
-    stem: 'about-careful-working-notes',
-    width: 1536,
-    height: 1024,
-    alt: 'A small charcoal agent opens a worn notebook beside a folded paper model.',
-    caption: 'Keep the notes that make the next attempt useful.'
-  },
-  practice: {
-    stem: 'editorial-experiments-isolated-sandbox',
-    width: 1536,
-    height: 1024,
-    alt: 'An agent tries a small digging mechanism inside a transparent bounded sand tray.',
-    caption: 'Try an idea inside a clear boundary.'
-  },
-  repair: {
-    stem: 'editorial-upstream-shared-tool-repair',
-    width: 1536,
-    height: 1024,
-    alt: 'Charcoal and ivory agents repair a shared metal gear assembly together.',
-    caption: 'Improve the shared tool, then return it to use.'
-  },
-  subtract: {
-    stem: 'subtract-the-extra-route',
-    width: 1536,
-    height: 1024,
-    alt: 'An agent removes an unnecessary loop from a machined metal route.',
-    caption: 'Remove the extra path so the useful one is clear.'
-  }
+  workshop: { ...canonTaskScenes['welcome-bench'], task: 'welcome-bench' as CanonTaskSceneKey, alt: "Canon welcomes a paper stair model onto the workbench.", caption: "An open workshop. Choose a tool and inspect how it works." },
+  fit: { ...canonTaskScenes['tool-fit'], task: 'tool-fit' as CanonTaskSceneKey, alt: "Canon compares a wooden connector with its matching socket.", caption: "Find the fit before making the connection." },
+  compiler: { ...canonTaskScenes['compiler-jig'], task: 'compiler-jig' as CanonTaskSceneKey, alt: "Canon compares a paper definition with the wooden part made by its jig.", caption: "A definition becomes something you can check." },
+  ground: { ...canonTaskScenes['evidence-comparison'], task: 'evidence-comparison' as CanonTaskSceneKey, alt: "Canon checks a notched card against its dark paper reference outline.", caption: "Compare the evidence before accepting the claim." },
+  notes: { ...canonTaskScenes['review-nook'], task: 'review-nook' as CanonTaskSceneKey, alt: "Canon keeps a working sheet available in a warm review nook.", caption: "Keep the notes that make the next attempt useful." },
+  practice: { ...canonTaskScenes['bounded-sandbox'], task: 'bounded-sandbox' as CanonTaskSceneKey, alt: "Canon tests a wooden mechanism along a track inside a bounded ceramic sand tray.", caption: "Try an idea inside a clear boundary." },
+  repair: { ...canonTaskScenes['shared-repair'], task: 'shared-repair' as CanonTaskSceneKey, alt: "Canon repairs the axle of a shared wooden gear assembly.", caption: "Improve the shared tool, then return it to use." },
+  subtract: { ...canonTaskScenes['subtract-route'], task: 'subtract-route' as CanonTaskSceneKey, alt: "Canon removes an unnecessary paper loop while the direct path remains connected.", caption: "Remove the extra path so the useful one is clear." },
 } as const;
 export type SceneKey = keyof typeof scenes;
 export const projectScenes: Record<string, SceneKey> = {
@@ -85,6 +39,9 @@ export const projectScenes: Record<string, SceneKey> = {
 export function projectScene(slug: string): SceneKey {
   return projectScenes[slug] ?? 'fit';
 }
+export function projectTaskScene(slug: string): CanonTaskSceneKey {
+  return scenes[projectScene(slug)].task;
+}
 export function sceneImage(key: SceneKey): string {
-  return `/images/workshop/stories/${scenes[key].stem}.webp`;
+  return scenes[key].src;
 }

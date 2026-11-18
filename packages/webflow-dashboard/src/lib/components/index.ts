@@ -15,6 +15,7 @@ export { default as EditAssetModal } from './EditAssetModal.svelte';
 export { default as OverviewStats } from './OverviewStats.svelte';
 export { default as AssetVersionHistory } from './AssetVersionHistory.svelte';
 export { default as RequiredFixesCard } from './RequiredFixesCard.svelte';
+export { default as ReviewThreadCard } from './ReviewThreadCard.svelte';
 export { default as VersionComparisonModal } from './VersionComparisonModal.svelte';
 
 // Profile components
@@ -43,6 +44,7 @@ export { default as DataFreshnessIndicator } from './DataFreshnessIndicator.svel
 // Validation components
 export { default as GsapValidationModal } from './GsapValidationModal.svelte';
 export { default as WebflowWayCard } from './WebflowWayCard.svelte';
+export { default as TemplateCliCard } from './TemplateCliCard.svelte';
 
 // Feedback
 export { default as FeedbackButton } from './FeedbackButton.svelte';
