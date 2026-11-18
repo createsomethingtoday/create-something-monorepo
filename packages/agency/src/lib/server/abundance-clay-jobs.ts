@@ -1,12 +1,7 @@
 import {
-  claimEnrichment,
-  reserveEnrichment,
-  recordEnrichment,
-  recordClayCompletion,
-  type BudgetGrant
+  recordClayCompletion
 } from './enrichment-budget';
-import { clayRequestSchema, clayResultSchema } from './abundance-clay-contract';
-import { latestSuccessfulNationwideRun } from './abundance-healthcare-nationwide';
+import { clayResultSchema } from './abundance-clay-contract';
 export class ClayQuotaError extends Error {}
 export class ClayCallbackError extends Error {}
 interface Job {
@@ -47,132 +42,6 @@ export async function readClayJob(db: D1Database, id: string) {
     .first<Job>();
   if (!job) throw new TypeError('Unknown job');
   return publicJob(job);
-}
-export async function requestClayJob(
-  db: D1Database,
-  input: unknown,
-  config: { webhookUrl: string; webhookToken: string; budgetGrant?: BudgetGrant },
-  fetchFn: typeof fetch = fetch
-) {
-  const parsed = clayRequestSchema.parse(input);
-  const run = await latestSuccessfulNationwideRun(db, 'all_np_taxonomies');
-  if (!run) throw new TypeError('Broad registry snapshot required');
-  const row = await db
-    .prepare(
-      'SELECT provider_snapshot_json FROM abundance_healthcare_nationwide_memberships WHERE run_id=? AND provider_npi=?'
-    )
-    .bind(run.id, parsed.npi)
-    .first<{ provider_snapshot_json: string }>();
-  if (!row) throw new TypeError('NPI not in snapshot');
-  const provider = JSON.parse(row.provider_snapshot_json);
-  if (typeof provider.name !== 'string' || typeof provider.source_payload_hash !== 'string')
-    throw new TypeError('Invalid registry record');
-  const now = new Date().toISOString();
-  // Cache by immutable provider version and calendar week. Unknown delivery is
-  // retained: retries return the original job and cannot duplicate a paid run.
-  const week = Math.floor(Date.now() / (7 * 86400000));
-  const cacheKey = await digest(`${parsed.npi}:${provider.source_payload_hash}:${week}`);
-  const existing = await db
-    .prepare('SELECT * FROM abundance_clay_jobs WHERE cache_key=?')
-    .bind(cacheKey)
-    .first<Job>();
-  if (existing) {
-    if (config.budgetGrant) {
-      if (config.budgetGrant.provider !== 'clay' || config.budgetGrant.npi !== parsed.npi)
-        throw new TypeError('Mismatched Clay tracking grant');
-      await claimEnrichment(db, config.budgetGrant);
-      await recordEnrichment(db, config.budgetGrant, {
-        event_id: 'clay:cached:' + existing.id,
-        status: 'complete',
-        actual_usd: 0,
-        receipt_ref: existing.id
-      });
-    }
-    return { ...publicJob(existing), cache_hit: true };
-  }
-  const url = new URL(config.webhookUrl);
-  if (
-    url.protocol !== 'https:' ||
-    url.hostname !== 'api.clay.com' ||
-    url.username ||
-    url.password ||
-    url.port ||
-    !url.pathname.startsWith('/v3/sources/webhook/')
-  )
-    throw new TypeError('Invalid Clay endpoint');
-  const grant =
-    config.budgetGrant ?? (await reserveEnrichment(db, 'clay', cacheKey, parsed.npi)).grants.clay;
-  if (!grant || grant.npi !== parsed.npi || grant.provider !== 'clay')
-    throw new TypeError('Mismatched Clay tracking grant');
-  await claimEnrichment(db, grant);
-  const id = `npgclay_${crypto.randomUUID()}`;
-  const token = crypto.randomUUID() + crypto.randomUUID();
-  const tokenHash = await digest(token);
-  // Atomic job insertion preserves deduplication without a daily spend quota.
-  const inserted = await db
-    .prepare(
-      `INSERT OR IGNORE INTO abundance_clay_jobs
- (id,cache_key,npi,status,callback_hash,source_run_id,source_payload_hash,created_at)
- VALUES(?,?,?,'pending',?,?,?,?)`
-    )
-    .bind(id, cacheKey, parsed.npi, tokenHash, run.id, provider.source_payload_hash, now)
-    .run();
-  if (!inserted.meta.changes) {
-    const concurrent = await db
-      .prepare('SELECT * FROM abundance_clay_jobs WHERE cache_key=?')
-      .bind(cacheKey)
-      .first<Job>();
-    if (concurrent) {
-      await recordEnrichment(db, grant, {
-        event_id: 'clay:cached:' + concurrent.id,
-        status: 'complete',
-        actual_usd: 0,
-        receipt_ref: concurrent.id
-      });
-      return { ...publicJob(concurrent), cache_hit: true };
-    }
-    throw new ClayQuotaError('Clay dispatch tracking unavailable');
-  }
-  await recordEnrichment(db, grant, {
-    event_id: 'clay:dispatch:' + id,
-    status: 'pending',
-    receipt_ref: id
-  });
-  const payload = {
-    request_id: id,
-    npi: parsed.npi,
-    name: provider.name,
-    city: provider.practice_city ?? null,
-    state: provider.practice_state ?? null,
-    source_payload_hash: provider.source_payload_hash,
-    enrichment_requested: true,
-    scope: 'public_professional_only',
-    callback_url: 'https://createsomething.agency/api/webhooks/npg-clay',
-    callback_token: token
-  };
-  try {
-    const response = await fetchFn(url, {
-      method: 'POST',
-      redirect: 'manual',
-      headers: { 'Content-Type': 'application/json', 'x-clay-webhook-auth': config.webhookToken },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(15000)
-    });
-    if (!response.ok) throw Error('Clay did not acknowledge');
-  } catch {
-    await db
-      .prepare(
-        "UPDATE abundance_clay_jobs SET status='delivery_unknown' WHERE id=? AND status='pending'"
-      )
-      .bind(id)
-      .run();
-    await recordEnrichment(db, grant, {
-      event_id: 'clay:uncertain:' + id,
-      status: 'uncertain',
-      receipt_ref: id
-    });
-  }
-  return { ...(await readClayJob(db, id)), cache_hit: false };
 }
 export async function completeClayJob(db: D1Database, input: unknown) {
   if (!input || typeof input !== 'object') throw new ClayCallbackError();

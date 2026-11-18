@@ -41,13 +41,13 @@ test('tracking admits distinct requests without known prices or historical USD',
     const b = await reserveEnrichment(f.db, 'complete', 'e'.repeat(64), '1234567893');
     assert.ok(a.grants.apify);
     assert.ok(b.grants.pdl);
-    assert.equal((await enrichmentReadiness(f.db, 'pdl')).spend.pending_count, 8);
+    assert.equal((await enrichmentReadiness(f.db, 'pdl')).spend.pending_count, 6);
     await assert.rejects(reserveEnrichment(f.db, 'complete', 'd'.repeat(64), '1234567893'));
   } finally {
     f.sql.close();
   }
 });
-test('four one-use candidate grants retain replay protection without a financial hold', async () => {
+test('three active one-use candidate grants retain replay protection without a financial hold', async () => {
   const f = fixture();
   try {
     const r = await reserveEnrichment(f.db, 'complete', 'c'.repeat(64), '1234567893');
@@ -55,7 +55,7 @@ test('four one-use candidate grants retain replay protection without a financial
     await assert.rejects(claimEnrichment(f.db, { ...grant, npi: '1234567894' }));
     await claimEnrichment(f.db, grant);
     await assert.rejects(claimEnrichment(f.db, grant));
-    for (const p of ['clay', 'exa', 'apify'] as const) await claimEnrichment(f.db, r.grants[p]!);
+    for (const p of ['exa', 'apify'] as const) await claimEnrichment(f.db, r.grants[p]!);
     assert.throws(() => f.sql.exec('DELETE FROM npg_enrichment_requests'));
     assert.throws(() => f.sql.exec('UPDATE npg_enrichment_grants SET consumed=0'));
   } finally {
@@ -93,7 +93,7 @@ test('actual USD, estimates and credit units remain separate and receipts append
       { unit: 'pdl_credit', amount: 1 }
     ]);
     assert.equal(sum.estimated_usd, 0.102);
-    assert.equal(sum.pending_count, 4);
+    assert.equal(sum.pending_count, 3);
     await recordEnrichment(f.db, exa, {
       event_id: 'exa:receipt',
       status: 'complete',
@@ -103,7 +103,7 @@ test('actual USD, estimates and credit units remain separate and receipts append
     sum = (await enrichmentReadiness(f.db, 'exa')).spend;
     assert.equal(sum.confirmed_usd, 0.17);
     assert.equal(sum.estimated_usd, null);
-    assert.equal(sum.pending_count, 3);
+    assert.equal(sum.pending_count, 2);
     assert.equal(sum.historical_usd, null);
     await recordEnrichment(f.db, exa, {
       event_id: 'exa:refresh',

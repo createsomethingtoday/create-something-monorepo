@@ -1,0 +1,5 @@
+# User references contain private candidate data. Comparisons include those references.
+refs/
+compare/
+# Retain rendered evidence locally; publish only the written validation receipt.
+stills/

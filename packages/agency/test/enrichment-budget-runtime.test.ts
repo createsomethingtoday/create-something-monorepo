@@ -32,14 +32,14 @@ test('workerd D1 tracks independent bundles without caps while rejecting request
     assert.equal(results.filter((r) => r.status === 'fulfilled').length, 2);
     const reservation = (results[0] as PromiseFulfilledResult<any>).value;
     await assert.rejects(reserveEnrichment(db, 'complete', 'a'.repeat(64), '1234567893'));
-    assert.equal((await enrichmentReadiness(db, 'clay')).spend.pending_count, 8);
+    assert.equal((await enrichmentReadiness(db, 'clay')).spend.pending_count, 6);
     const claims = await Promise.allSettled([
       claimEnrichment(db, reservation.grants.pdl),
       claimEnrichment(db, reservation.grants.pdl)
     ]);
     assert.equal(claims.filter((r) => r.status === 'fulfilled').length, 1);
-    await assert.rejects(claimEnrichment(db, { ...reservation.grants.clay, npi: '1234567894' }));
-    await claimEnrichment(db, reservation.grants.clay);
+    await assert.rejects(claimEnrichment(db, { ...reservation.grants.apify, npi: '1234567894' }));
+    await claimEnrichment(db, reservation.grants.apify);
     await claimEnrichment(db, reservation.grants.exa);
     await assert.rejects(db.prepare('DELETE FROM npg_enrichment_requests').run());
   } finally {

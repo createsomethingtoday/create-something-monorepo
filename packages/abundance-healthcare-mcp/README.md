@@ -11,7 +11,7 @@ NPG coverage, practitioner discovery and explicitly approved enrichment over the
 - NPPES records remain `coverage_candidate` unless all seven current evidence gates pass.
 - Bulk search includes available practice phone and full practice address, explicitly labeled unverified registry data. This does not establish personal ownership, employment or permission to contact.
 - NPPES is the no-cost first lookup. NPIProfile is not queried because it republishes the same public NPPES source already stored in the owned nationwide mirror.
-- Complete-profile enrichment attempts PDL, Clay, Exa and Skip Trace independently for one approved candidate. Exa uses fixed `minimal` effort; its confirmed run cost is recorded separately from any estimate. Missing prices do not impose a spending gate. See [spend tracking](ENRICHMENT_BUDGET.md).
+- Complete-profile enrichment attempts PDL, Exa and Skip Trace independently for one approved candidate. Exa uses fixed `minimal` effort; its confirmed run cost is recorded separately from any estimate. Missing prices do not impose a spending gate. See [spend tracking](ENRICHMENT_BUDGET.md).
 - Registry and enrichment contacts remain unverified. Neither tool establishes employment, availability, consent, advertising eligibility, or recruiting readiness.
 - Daily locale monitoring is disabled unless NPG explicitly opts a locale in later.
 
@@ -73,3 +73,5 @@ Review hardening: identical cache misses use a five-minute leased claim before r
 ### PDL candidate profiles
 
 Healthcare MCP 1.7.0 adds `enrich_candidate_profile`, a People Data Labs lookup that returns a candidate's professional profile (LinkedIn, title, employer, work email) and personal contact details (mobile phone, personal emails, home city/state). It accepts a registry NPI, an exact LinkedIn URL, or a name plus location/employer, requires explicit paid confirmation, and records provider credit usage with seven-day caching and no application spending cap. Every contact value carries source, retrieval date and an unverified/no-consent-recorded provenance record. See [PDL_INTEGRATION.md](PDL_INTEGRATION.md) for the contract, deployment and rollback.
+
+Clay has been retired from the active catalog, readiness, dispatch and recovery. Historical D1 audit records remain preserved; former authenticated endpoints return HTTP 410.

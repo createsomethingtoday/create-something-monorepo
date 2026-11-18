@@ -107,9 +107,10 @@ export async function enrichmentReadiness(db: D1Database, provider: EnrichmentPr
   const estimates = by_provider.filter((p) => p.estimated_usd !== null);
   return {
     provider,
-    ready: true,
-    reason: 'Spend is tracked without an application spend limit.',
-    blocking_reasons: [],
+    ready: provider !== 'clay',
+    ...(provider === 'clay' ? {availability:'disabled',failure_kind:'plan_unavailable'} : {}),
+    reason: provider === 'clay' ? 'Clay Free does not support the required HTTP/webhook integration; no dispatch was made.' : 'Spend is tracked without an application spend limit.',
+    blocking_reasons: provider === 'clay' ? ['Clay Free does not support the required HTTP/webhook integration.'] : [],
     cost: { estimated_usd: null },
     spend: {
       currency: 'USD',
@@ -130,6 +131,7 @@ export async function reserveEnrichment(
   npi = ''
 ) {
   if (provider !== 'complete') requireEnrichmentProvider(provider);
+  if (provider === 'clay') throw new EnrichmentBudgetError('Clay is configured unavailable; new dispatch is disabled.');
   if (
     typeof npi !== 'string' ||
     !/^[a-f0-9]{64}$/.test(digest) ||
@@ -147,7 +149,7 @@ export async function reserveEnrichment(
       'This enrichment request is already tracked. Read its existing provider receipts; do not repeat dispatch.'
     );
   const grants: Partial<Record<EnrichmentProvider, BudgetGrant>> = {};
-  for (const p of provider === 'complete' ? PROVIDERS : [provider]) {
+  for (const p of provider === 'complete' ? PROVIDERS.filter(p => p !== 'clay') : [provider]) {
     const token = crypto.randomUUID() + crypto.randomUUID();
     await db
       .prepare(

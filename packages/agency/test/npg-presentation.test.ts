@@ -95,3 +95,166 @@ test('evidence summary prioritizes literal limitations and source-declared warni
   );
   assert.equal(JSON.stringify(fields), before, 'Presentation must not mutate source facts');
 });
+
+test('four-provider result is visible and keeps billing separate from results', async () => {
+  const { enrichmentSummary } = await import('../src/lib/npg/astryx/presentation');
+  const result = enrichmentSummary([
+    {
+      tool: 'enrich_candidate_complete_profile',
+      data: {
+        npi: '1234567890',
+        status: 'partial',
+        providers: {
+          pdl: {
+            status: 'matched',
+            professional: { job_title: 'NP' },
+            personal_contact: { emails: ['one@example.invalid'], phones: ['555'] }
+          },
+          clay: { status: 'pending' },
+          exa: {
+            match_status: 'verified_match',
+            professional_contact: { email: 'two@example.invalid', phone: '123' }
+          },
+          apify: { status: 'blocked', reason: 'identity_not_resolved' }
+        },
+        spend_tracking: { actual_usd: 0.2, pending_receipts: 2, historical_status: 'unknown' }
+      }
+    }
+  ])!;
+  assert.equal(result.rows.length, 3);
+  assert.deepEqual(
+    result.rows.map((row) => row.outcome),
+    ['Returned', 'Returned', 'Identity review']
+  );
+  assert.match(result.rows[0].summary, /1 email.*1 phone/);
+  assert.deepEqual(result.rows.map(row => row.key), ['pdl', 'exa', 'apify']);
+  assert.equal(result.complete, false);
+  assert.match(result.rows[1].summary, /1 email.*1 phone/);
+  assert.match(result.rows[2].summary, /identity/i);
+  assert.match(result.billing, /\$0.20 USD.*2.*pending/);
+  assert.match(result.billing, /historical.*unknown/i);
+  assert.equal(enrichmentSummary([]), null);
+});
+
+test('later chat stays visible and blocked outcomes stay explicit', async () => {
+  const { isLegacyEnrichmentMessage, enrichmentSummary } =
+    await import('../src/lib/npg/astryx/presentation');
+  assert.equal(
+    isLegacyEnrichmentMessage({
+      role: 'assistant',
+      text: 'The complete profile is incomplete. Review each provider’s result and any unstarted providers below. Billing and pending results need reconciliation.'
+    }),
+    true
+  );
+  assert.equal(
+    isLegacyEnrichmentMessage({
+      role: 'assistant',
+      text: 'The complete profile is incomplete for a different reason; here is my specific answer.'
+    }),
+    false
+  );
+  assert.equal(
+    isLegacyEnrichmentMessage({ role: 'user', text: 'What email did Exa return?' }),
+    false
+  );
+  assert.equal(
+    isLegacyEnrichmentMessage({ role: 'assistant', text: 'Exa returned one email for review.' }),
+    false
+  );
+  for (const state of [
+    'association_failure',
+    'blocked_review',
+    'privacy_blocked_review',
+    'failed',
+    'unavailable'
+  ]) {
+    const row = enrichmentSummary([
+      {
+        tool: 'enrich_candidate_complete_profile',
+        data: { providers: { apify: { status: state } } }
+      }
+    ])!.rows[2];
+    assert.match(row.summary, /review/);
+    assert.doesNotMatch(row.summary, /0 emails/);
+  }
+});
+
+test('aborted and cancelled provider outcomes never appear returned', async () => {
+  const { enrichmentSummary } = await import('../src/lib/npg/astryx/presentation');
+  for (const status of ['provider_aborted', 'cancelled', 'canceled', 'failed']) {
+    const row = enrichmentSummary([
+      { tool: 'enrich_candidate_complete_profile', data: { providers: { apify: { status } } } }
+    ])!.rows[2];
+    assert.equal(row.outcome, 'Needs review');
+    assert.match(row.summary, /stopped|unavailable/i);
+    assert.doesNotMatch(row.summary, /0 emails/);
+  }
+});
+
+test('lookup completion is distinct from pending results and identity review', async () => {
+  const { enrichmentSummary } = await import('../src/lib/npg/astryx/presentation');
+  const summary = (state: string, uncertain = false) =>
+    enrichmentSummary([
+      {
+        tool: 'enrich_candidate_complete_profile',
+        data: {
+          providers: Object.fromEntries(
+            ['pdl', 'clay', 'exa', 'apify'].map((key) => [key, { status: state }])
+          ),
+          uncertain_dispatch: uncertain,
+          unstarted: []
+        }
+      }
+    ])!;
+  assert.equal(summary('no_match').complete, true);
+  assert.equal(summary('pending').complete, false);
+  assert.equal(summary('association_failure').complete, false);
+  assert.equal(summary('no_match', true).complete, false);
+});
+
+test('unknown, ambiguous, unstarted and partial composites cannot claim lookup complete', async () => {
+  const { enrichmentSummary } = await import('../src/lib/npg/astryx/presentation');
+  const summarize = (state: string, extra = {}) =>
+    enrichmentSummary([
+      {
+        tool: 'enrich_candidate_complete_profile',
+        data: {
+          providers: Object.fromEntries(
+            ['pdl', 'clay', 'exa', 'apify'].map((key) => [key, { status: state }])
+          ),
+          ...extra
+        }
+      }
+    ])!;
+  for (const state of ['ambiguous', 'not_attempted', 'future_state', 'billing_review']) {
+    const result = summarize(state);
+    assert.equal(result.complete, false, state);
+    assert.equal(result.rows[0].outcome, 'Needs review', state);
+  }
+  assert.equal(summarize('no_match', { status: 'partial' }).complete, false);
+  assert.equal(summarize('matched', { status: 'blocked' }).complete, false);
+  assert.equal(summarize('matched', { unstarted: ['clay'] }).complete, false);
+  assert.equal(summarize('matched', { status: 'complete', unstarted: [] }).complete, true);
+  const exa = enrichmentSummary([
+    {
+      tool: 'enrich_candidate_complete_profile',
+      data: { providers: { exa: { match_status: 'verified_match' } } }
+    }
+  ])!;
+  assert.equal(exa.rows[1].outcome, 'Returned');
+  assert.equal(exa.complete, false, 'Missing other providers stay incomplete');
+});
+
+ test('three-provider results omit retired Clay without rewriting historical failures', async () => {
+  const { enrichmentSummary, decisionSummary } = await import('../src/lib/npg/astryx/presentation');
+  const providers = { pdl: {status:'no_match'}, exa: {status:'complete'}, apify: {status:'no_contact'}, clay: {status:'unavailable', availability:'disabled'} };
+  const summarize = (extra = {}, clay = providers.clay) => enrichmentSummary([{tool:'enrich_candidate_complete_profile', data:{status:'complete', active_providers:['pdl','exa','apify'], providers:{...providers,clay}, ...extra}}])!;
+  assert.equal(summarize().complete, true);
+  assert.deepEqual(summarize().rows.map(row => row.key), ['pdl','exa','apify']);
+  assert.equal(summarize({}, {status:'unavailable', availability:'unknown'}).complete, true);
+  assert.equal(summarize({active_providers: undefined}).complete, false);
+  assert.equal(summarize({active_providers:['pdl','future','apify']}).complete, false);
+  const pending = {tool:'enrich_candidate_complete_profile', arguments:{npi:'1234567890'}, review:{providers:['pdl','exa','apify']}} as any;
+  assert.equal(decisionSummary(pending, []).title, 'Complete profile · three providers');
+  assert.equal(decisionSummary({...pending, review:{}}, []).title, 'Complete profile · four providers');
+});

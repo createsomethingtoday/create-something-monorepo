@@ -1,44 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { callClayEnrichment } from '../src/index';
-test('Clay request uses authenticated POST and polling uses GET without another request', async () => {
-  const id = 'npgclay_12345678-1234-1234-1234-123456789012';
-  for (const input of [{ npi: '1000000000', confirm_paid_enrichment: true as const }, { id }]) {
-    const read = 'id' in input;
-    const result = await callClayEnrichment(input, {
-      agencyApiKey: 'secret',
-      fetchFn: async (url, init) => {
-        assert.equal(
-          new URL(String(url)).pathname,
-          '/api/abundance/healthcare-providers/enrichment'
-        );
-        assert.equal(init?.method, read ? 'GET' : 'POST');
-        assert.equal(new Headers(init?.headers).get('Authorization'), 'Bearer secret');
-        if (read) {
-          assert.equal(init?.body, undefined);
-          assert.equal(new URL(String(url)).searchParams.get('id'), id);
-        } else assert.deepEqual(JSON.parse(String(init?.body)), input);
-        return Response.json({ success: true, data: { id, status: 'pending' } });
-      }
-    });
-    assert.equal(result.id, id);
-    assert.equal(JSON.stringify(result).includes('secret'), false);
-  }
-});
-test('Clay upstream failure is sanitized and not retried', async () => {
-  let calls = 0;
-  await assert.rejects(
-    callClayEnrichment(
-      { npi: '1000000000', confirm_paid_enrichment: true },
-      {
-        agencyApiKey: 'secret',
-        fetchFn: async () => {
-          calls++;
-          return new Response('secret callback body', { status: 503 });
-        }
-      }
-    ),
-    (e) => e instanceof Error && !e.message.includes('secret') && e.message.includes('existing job')
-  );
-  assert.equal(calls, 1);
+import {Client} from '@modelcontextprotocol/sdk/client/index.js';
+import {InMemoryTransport} from '@modelcontextprotocol/sdk/inMemory.js';
+import {createAbundanceHealthcareServer} from '../src/index';
+test('retired provider is absent from MCP catalog, resource and readiness schema',async()=>{
+ const server=createAbundanceHealthcareServer({});const client=new Client({name:'test',version:'1'});
+ const [a,b]=InMemoryTransport.createLinkedPair();await server.connect(a);await client.connect(b);
+ try{const list=await client.listTools();assert.equal(JSON.stringify(list).toLowerCase().includes('clay'),false);
+ assert.equal(list.tools.some(t=>t.name==='get_professional_contact_enrichment'||t.name==='request_professional_contact_enrichment'),false);
+ const resource=await client.readResource({uri:'abundance-healthcare://status'});assert.equal(JSON.stringify(resource).toLowerCase().includes('clay'),false);
+ const rejected=await client.callTool({name:'get_enrichment_readiness',arguments:{provider:'clay'}});assert.equal(rejected.isError,true);
+ }finally{await client.close();await server.close();}
 });

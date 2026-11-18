@@ -1,4 +1,5 @@
 import { NPG_PROMPT_SHA256 } from './policy';
+import { recoveryView, type EnrichmentRecovery } from './recovery';
 export class NpgError extends Error {
   constructor(
     public status: number,
@@ -17,6 +18,7 @@ export type State = {
   pendingId?: string;
   skipTracePending?: PendingSkipReceipt;
   skipTraceQueue?: PendingSkipReceipt[];
+  enrichmentRecovery?: EnrichmentRecovery[];
 };
 export type Conversation = {
   id: string;
@@ -163,7 +165,7 @@ export class NpgStore {
       .prepare(
         `UPDATE npg_analyst_conversations SET status='running',version=version+1,
    run_id=?,lease_token=?,lease_until=?,paid_dispatched=0,updated_at=?
-   WHERE id=? AND owner_id=? AND scope='npg' AND version=? AND (status IN ('idle','review') OR (?=1 AND status='ambiguous')) RETURNING *`
+   WHERE id=? AND owner_id=? AND scope='npg' AND version=? AND lease_until<=? AND (status IN ('idle','review') OR (?=1 AND status='ambiguous')) RETURNING *`
       )
       .bind(
         run,
@@ -173,6 +175,7 @@ export class NpgStore {
         id,
         owner,
         version,
+        this.now(),
         recoverAmbiguous ? 1 : 0
       )
       .first<Conversation>();
@@ -261,6 +264,14 @@ export class NpgStore {
           .prepare(
             `SELECT prior.id FROM npg_analyst_actions prior JOIN npg_analyst_actions current ON current.id=?
       WHERE (prior.status='ambiguous' OR (prior.status='dispatching' AND prior.id<>current.id))
+      AND prior.tool<>'request_professional_contact_enrichment'
+      AND NOT EXISTS (SELECT 1 FROM npg_analyst_conversations historical, json_each(historical.state_json,'$.sources') source
+        WHERE json_extract(source.value,'$.actionId')=prior.id
+        AND json_extract(source.value,'$.data.providers.clay.status') IN ('pending','delivery_unknown','unavailable')
+        AND json_extract(source.value,'$.data.providers.pdl.status') IN ('matched','complete','no_match','review_required')
+        AND (json_extract(source.value,'$.data.providers.exa.status') IN ('matched','complete','no_match','review_required') OR json_extract(source.value,'$.data.providers.exa.match_status') IN ('verified_match','plausible_match','no_match'))
+        AND json_extract(source.value,'$.data.providers.apify.status') IN ('no_contact','review_required','provider_failed','provider_aborted','provider_timeout')
+        AND json_extract(source.value,'$.data.providers.apify.charge_reconciled')=1)
       AND (prior.id=current.id OR (json_extract(prior.arguments_json,'$.npi') IS NOT NULL AND json_extract(prior.arguments_json,'$.npi')=json_extract(current.arguments_json,'$.npi'))) LIMIT 1`
           )
           .bind(actionId)
@@ -271,6 +282,29 @@ export class NpgStore {
         409,
         'This candidate has an uncertain operation. Reconcile its existing receipts before another request for the same candidate.'
       );
+    // Pending exact candidate receipts are shared holds across owners/conversations.
+    // Recovery never grants another paid creation, including after scheduler exhaustion.
+    if (actionId) {
+      const pending = await this.db
+        .prepare(
+          `SELECT c.id FROM npg_analyst_conversations c
+        JOIN npg_analyst_actions current ON current.id=?
+        WHERE c.scope='npg' AND EXISTS (
+          SELECT 1 FROM json_each(c.state_json,'$.sources') s
+          WHERE json_extract(s.value,'$.tool')='enrich_candidate_complete_profile'
+          AND json_extract(s.value,'$.data.npi')=json_extract(current.arguments_json,'$.npi')
+          AND (json_extract(s.value,'$.data.providers.apify.status')='pending'
+            OR json_extract(s.value,'$.data.providers.apify.charge_reconciled')=0
+            OR EXISTS (SELECT 1 FROM json_each(s.value,'$.data.providers') p WHERE p.key IN ('pdl','exa','apify') AND json_extract(p.value,'$.status') IN ('blocked_review','privacy_blocked_review','association_failure','ambiguous')))) LIMIT 1`
+        )
+        .bind(actionId)
+        .first();
+      if (pending)
+        throw new NpgError(
+          409,
+          'This candidate has existing provider receipts awaiting reconciliation. No new paid lookup was sent.'
+        );
+    }
     const now = this.now();
     const row = await this.db
       .prepare(
@@ -361,6 +395,7 @@ export class NpgStore {
       status: row.status,
       messages: state.messages,
       sources: state.sources,
+      enrichmentRecovery: recoveryView(state, this.now()),
       pending:
         action && action.status === 'pending'
           ? {

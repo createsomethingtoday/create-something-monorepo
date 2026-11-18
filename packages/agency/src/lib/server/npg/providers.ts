@@ -98,14 +98,15 @@ export function createProviders(
     'NPG_HEALTHCARE_OPENAI_API_KEY' | 'ABUNDANCE_HEALTHCARE_MCP_API_KEY' | 'NPG_HEALTHCARE_MODEL'
   >,
   signal: AbortSignal,
-  fetchFn: typeof fetch = fetch
+  fetchFn: typeof fetch = fetch,
+  receiptOnly = false
 ): Providers {
   const key = env.ABUNDANCE_HEALTHCARE_MCP_API_KEY?.trim(),
     openai = env.NPG_HEALTHCARE_OPENAI_API_KEY?.trim(),
     model = env.NPG_HEALTHCARE_MODEL?.trim();
-  if (!key || !openai || !model)
+  if (!key || (!receiptOnly && (!openai || !model)))
     throw new NpgError(503, 'The analyst is not configured. Please contact your operator.');
-  const secrets = [key, openai];
+  const secrets = [key, openai ?? ''];
   let client: Client | undefined;
   let sourceTimeoutMs = 90000;
   return {
@@ -174,6 +175,13 @@ export function createProviders(
     },
     async call(name, args) {
       signal.throwIfAborted();
+      if (
+        receiptOnly &&
+        !(
+          (name === 'enrich_candidate_skip_trace' && args.reconcile_receipt)
+        )
+      )
+        throw new Error('Receipt-only provider cannot create a paid operation');
       if (!(NPG_TOOL_NAMES as readonly string[]).includes(name) || !client)
         throw new Error('Tool unavailable');
       sourceTimeoutMs = name === 'enrich_candidate_complete_profile' ? 300000 : 90000;
@@ -201,6 +209,7 @@ export function createProviders(
       return cleanResult(data, secrets);
     },
     async respond(input, previousId, tools) {
+      if (receiptOnly) throw new Error('Model unavailable in receipt-only mode');
       signal.throwIfAborted();
       const result = await boundedJson(
         await fetchFn('https://api.openai.com/v1/responses', {

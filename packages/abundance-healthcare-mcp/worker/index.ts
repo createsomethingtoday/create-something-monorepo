@@ -1,4 +1,5 @@
 import { recordSpend, finiteAmount, type BudgetGrant } from '../src/enrichment-budget.js';
+import { triggerEnrichmentRecovery } from './recovery-trigger.js';
 import { skipTrace, skipTraceReadiness, skipIdentity, type SkipResult } from '../src/skip-trace.js';
 import { DurableObject } from 'cloudflare:workers';
 import { enrichPdlProfile, type PdlResult } from '../src/pdl.js';
@@ -127,6 +128,9 @@ export class SkipTraceProfiles extends DurableObject<Env> {
 }
 
 export default {
+  async scheduled(_controller: ScheduledController, env: Env): Promise<void> {
+    await triggerEnrichmentRecovery(env);
+  },
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS_HEADERS });
