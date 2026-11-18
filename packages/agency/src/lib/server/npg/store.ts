@@ -492,6 +492,35 @@ export class NpgStore {
         )
     ]);
   }
+  async sourcesForRead(owner: string, id: string, state: State): Promise<Source[]> {
+    const referenced: Source[] = [];
+    for (const reference of (state.receiptReferences ?? []).slice(-1)) {
+      const approved = await this.db
+        .prepare(
+          'SELECT arguments_json FROM npg_analyst_actions WHERE id=? AND owner_id=? AND conversation_id=?'
+        )
+        .bind(reference.actionId, owner, reference.conversationId)
+        .first<{ arguments_json: string }>();
+      if (!approved) continue;
+      const saved = await this.savedReceipt(
+        owner,
+        JSON.parse(approved.arguments_json).npi,
+        reference
+      );
+      if (saved)
+        referenced.push({
+          ...saved.source,
+          existingReceipt: reference.conversationId !== id,
+          receiptConversationId: reference.conversationId
+        });
+    }
+    return [
+      ...state.sources.filter(
+        (source) => !referenced.some((selected) => selected.actionId === source.actionId)
+      ),
+      ...referenced
+    ];
+  }
   async view(owner: string, id: string) {
     let row = await this.read(owner, id),
       state: State = JSON.parse(row.state_json);
@@ -530,38 +559,12 @@ export class NpgStore {
       }
     }
     const action = state.pendingId ? await this.action(owner, state.pendingId) : undefined;
-    const referenced: Source[] = [];
-    for (const reference of (state.receiptReferences ?? []).slice(-1)) {
-      const approved = await this.db
-        .prepare(
-          'SELECT arguments_json FROM npg_analyst_actions WHERE id=? AND owner_id=? AND conversation_id=?'
-        )
-        .bind(reference.actionId, owner, reference.conversationId)
-        .first<{ arguments_json: string }>();
-      if (!approved) continue;
-      const saved = await this.savedReceipt(
-        owner,
-        JSON.parse(approved.arguments_json).npi,
-        reference
-      );
-      if (saved)
-        referenced.push({
-          ...saved.source,
-          existingReceipt: reference.conversationId !== id,
-          receiptConversationId: reference.conversationId
-        });
-    }
     return {
       id: row.id,
       version: row.version,
       status: row.status,
       messages: state.messages,
-      sources: [
-        ...state.sources.filter(
-          (source) => !referenced.some((selected) => selected.actionId === source.actionId)
-        ),
-        ...referenced
-      ],
+      sources: await this.sourcesForRead(owner, id, state),
       enrichmentRecovery: recoveryView(state, this.now()),
       pending:
         action && action.status === 'pending'

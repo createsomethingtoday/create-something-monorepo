@@ -1147,3 +1147,34 @@ for (const variant of ['paid', 'unapproved', 'wrong_version'])
     const view=await store.view('alice',current.id);
     assert.equal(view.status,'interrupted');assert.equal(view.version,3);assert.equal(view.sources.length,0);
   }));
+
+test('follow-up model input resolves only currently authorized saved evidence without copying it', () =>
+  fixture(async (store) => {
+    const { c, actionId } = await pending(store);
+    for (const owner of ['alice', 'bob']) {
+      const chat = await store.create(owner);
+      const state = {
+        sources: [], messages: [], responseId: 'previous-with-stale-evidence',
+        receiptReferences: [{ conversationId: c.id, actionId }]
+      };
+      await store.db.prepare('UPDATE npg_analyst_conversations SET state_json=? WHERE id=?')
+        .bind(JSON.stringify(state), chat.id).run();
+      let modelInput = '';
+      let previous: string | undefined;
+      const view = await executeCommand(store, owner, {
+        type: 'message', id: chat.id, version: 0, text: 'Summarize the saved evidence.'
+      }, () => ({
+        tools: async () => [], close: async () => {},
+        call: async () => assert.fail('summary requires no provider lookup'),
+        respond: async (input, previousId) => {
+          modelInput = JSON.stringify(input);
+          previous = previousId;
+          return { id: 'summary', text: 'Summary returned.' };
+        }
+      }));
+      assert.equal(view.status, 'idle');
+      assert.equal(modelInput.includes('exactRun'), owner === 'alice');
+      assert.equal(previous, undefined);
+      assert.deepEqual(JSON.parse((await store.read(owner, chat.id)).state_json).sources, []);
+    }
+  }));
