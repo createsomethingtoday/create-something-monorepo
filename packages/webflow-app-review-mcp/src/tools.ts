@@ -2072,7 +2072,7 @@ export function registerTools(
 
   server.tool(
     'app_review_set_marketplace_status',
-    'Set the Marketplace Status on an app asset.',
+    'Set the Marketplace Status on an app asset. This updates the Airtable record only. 6️⃣Suspended⏸️ records a suspension that was set in Webflow Admin; it does not suspend the app.',
     {
       asset_id: z.string().min(1),
       marketplace_status: z.enum(MARKETPLACE_STATUS_OPTIONS),

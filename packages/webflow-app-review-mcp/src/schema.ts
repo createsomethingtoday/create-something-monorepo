@@ -142,6 +142,9 @@ export const MARKETPLACE_STATUS_OPTIONS = [
   '3️⃣Published🚀',
   '4️⃣Delisted☠️',
   '5️⃣Rejected❌',
+  // Record only: the suspension itself is set in Webflow Admin (status
+  // SUSPENDED hides the listing and blocks new installs; installs keep working).
+  '6️⃣Suspended⏸️',
 ] as const;
 
 export const VISIBILITY_OPTIONS = [

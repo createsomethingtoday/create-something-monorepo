@@ -73,6 +73,7 @@ describe('schema helpers', () => {
 
   it('validates known enum options', () => {
     expect(isMarketplaceStatus('3️⃣Published🚀')).toBe(true);
+    expect(isMarketplaceStatus('6️⃣Suspended⏸️')).toBe(true);
     expect(isCapability('Hybrid')).toBe(true);
     expect(isVisibilityStatus('Public')).toBe(true);
     expect(isReviewStatus('✅Approved')).toBe(true);
