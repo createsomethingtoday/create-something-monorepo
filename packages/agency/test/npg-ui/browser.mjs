@@ -79,6 +79,29 @@ async function disclosureHasClearBody(page, button) {
 }
 try {
   for (const width of [390, 1440]) {
+    await scenario(`saved enrichment opens its original conversation at ${width}`, async page => {
+      const originalId = '03c076bf-edee-44f7-afe3-0ec83d95aa07';
+      await page.route('**/healthcare-analyst/api?id=*', async route => {
+        const response = await route.fetch();
+        const view = await response.json();
+        if (new URL(route.request().url()).searchParams.get('id') === originalId) {
+          view.id = originalId;
+        } else {
+          const source = view.sources.find(s => s.tool === 'enrich_candidate_complete_profile');
+          Object.assign(source, { existingReceipt: true, receiptConversationId: originalId });
+        }
+        await route.fulfill({ response, json: view });
+      });
+      await gotoState(page, 'complete-identity-blocked');
+      await expect(page.getByRole('heading', {name: 'Saved enrichment results'})).toBeVisible();
+      const openOriginal = page.getByRole('button', {name: 'Open original conversation'});
+      await openOriginal.focus();
+      await openOriginal.press('Enter');
+      await expect(page.getByRole('heading', {name: 'Enrichment results',exact:true})).toBeVisible();
+      await expect(openOriginal).toHaveCount(0);
+      assert.deepEqual(await commands(page), []);
+    }, {width, height:width === 390 ? 844 : 900});
+
     await scenario(`complete approval retains exact scope and prior-spend distinction at ${width}`, async (page) => {
       await gotoState(page, 'complete-review');
       const bar = page.locator('.npg-review-decision-bar');

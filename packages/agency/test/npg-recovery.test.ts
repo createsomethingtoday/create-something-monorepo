@@ -829,3 +829,321 @@ test('retired-only Clay receipt does not hold a new same-candidate three-provide
  await store.acquirePaid('fresh-three',id);await store.releasePaid('fresh-three');
  assert.equal((await store.view('alice',c.id)).sources[0].data && data.providers.clay.status,'pending');
 }));
+
+test("same-owner receipt hold returns canonical evidence without paid replay or recovery cloning", () =>
+  fixture(async (store) => {
+    const { c, actionId } = await pending(store);
+    const current = await store.create("alice");
+    const id = crypto.randomUUID();
+    await store.db
+      .prepare(
+        `INSERT INTO npg_analyst_actions(id,conversation_id,owner_id,version,tool,arguments_json,call_id,response_id,review_json,expires_at) VALUES(?,?,?,0,?,?,?,?,?,?)`,
+      )
+      .bind(
+        id,
+        current.id,
+        "alice",
+        "enrich_candidate_complete_profile",
+        JSON.stringify({
+          npi: "1234567890",
+          operation_id: id,
+          confirm_paid_enrichment: true,
+        }),
+        "call",
+        "resp",
+        JSON.stringify({ providers: ["pdl", "exa", "apify"] }),
+        store.now() + 600000,
+      )
+      .run();
+    await store.db
+      .prepare(
+        "UPDATE npg_analyst_conversations SET status='review',state_json=? WHERE id=?",
+      )
+      .bind(
+        JSON.stringify({ messages: [], sources: [], pendingId: id }),
+        current.id,
+      )
+      .run();
+    const view = await executeCommand(
+      store,
+      "alice",
+      { type: "approve", id: current.id, version: 0, actionId: id },
+      () =>
+        ({
+          tools: async () => [
+            {
+              name: "enrich_candidate_complete_profile",
+              description: "",
+              inputSchema: { type: "object" },
+            },
+          ],
+          call: async () => assert.fail("paid replay forbidden"),
+          respond: async () => assert.fail("model forbidden"),
+          close: async () => {},
+        }) as Providers,
+    );
+    assert.equal(view.status, "idle");
+    assert.equal(view.sources[0].actionId, actionId);
+    assert.match(view.messages.at(-1)!.text, /existing|saved/i);
+    const saved = JSON.parse(
+      (await store.read("alice", current.id)).state_json,
+    );
+    assert.equal(saved.sources.length, 0);
+    assert.deepEqual(saved.receiptReferences, [
+      { conversationId: c.id, actionId },
+    ]);
+    assert.equal((await store.action("alice", id)).status, "expired");
+    assert.equal(
+      (await store.view("bob", (await store.create("bob")).id)).sources.length,
+      0,
+    );
+  }));
+test("legacy pre-dispatch hold repairs narrowly and resolves current original evidence without scanning a clone", () =>
+  fixture(async (store) => {
+    const { c, actionId } = await pending(store);
+    const current = await store.create("alice");
+    await store.db
+      .prepare(
+        `INSERT INTO npg_analyst_actions(id,conversation_id,owner_id,version,tool,arguments_json,call_id,response_id,review_json,expires_at,status) VALUES('legacy',?,'alice',2,'enrich_candidate_complete_profile',?,'call','resp','{}',0,'expired')`,
+      )
+      .bind(
+        current.id,
+        JSON.stringify({
+          npi: "1234567890",
+          operation_id: "legacy",
+          confirm_paid_enrichment: true,
+        }),
+      )
+      .run();
+    const state = {
+      messages: [
+        {
+          role: "assistant",
+          text: "This candidate has existing provider receipts awaiting reconciliation. No new paid lookup was sent.",
+        },
+      ],
+      sources: [],
+    };
+    await store.db
+      .prepare(
+        "UPDATE npg_analyst_conversations SET status='interrupted',version=3,state_json=? WHERE id=?",
+      )
+      .bind(JSON.stringify(state), current.id)
+      .run();
+    const view = await store.view("alice", current.id);
+    assert.equal(view.status, "idle");
+    assert.equal(view.version, 4);
+    assert.equal(view.sources[0].existingReceipt, true);
+    assert.equal(view.sources[0].receiptConversationId, c.id);
+    assert.equal(view.sources[0].actionId, actionId);
+    const original = JSON.parse((await store.read("alice", c.id)).state_json);
+    original.sources[0].data.providers.apify = {
+      status: "privacy_blocked_review",
+      reason: "withheld",
+      charge_reconciled: false,
+    };
+    await store.db
+      .prepare("UPDATE npg_analyst_conversations SET state_json=? WHERE id=?")
+      .bind(JSON.stringify(original), c.id)
+      .run();
+    assert.equal(
+      ((await store.view("alice", current.id)).sources[0].data as any).providers
+        .apify.status,
+      "privacy_blocked_review",
+    );
+    assert.equal(
+      JSON.parse((await store.read("alice", current.id)).state_json).sources
+        .length,
+      0,
+    );
+    const foreign = await store.create("bob");
+    await store.db
+      .prepare("UPDATE npg_analyst_conversations SET state_json=? WHERE id=?")
+      .bind(
+        JSON.stringify({
+          messages: [],
+          sources: [],
+          receiptReferences: [{ conversationId: c.id, actionId }],
+        }),
+        foreign.id,
+      )
+      .run();
+    assert.equal((await store.view("bob", foreign.id)).sources.length, 0);
+    original.sources[0].data.npi = "9999999999";
+    await store.db
+      .prepare("UPDATE npg_analyst_conversations SET state_json=? WHERE id=?")
+      .bind(JSON.stringify(original), c.id)
+      .run();
+    assert.equal((await store.view("alice", current.id)).sources.length, 0);
+  }));
+test("same-owner saved blocked evidence preflights before another approval or readiness call", () =>
+  fixture(async (store) => {
+    const { c, actionId } = await pending(store);
+    const original = JSON.parse((await store.read("alice", c.id)).state_json);
+    original.sources[0].data.providers.apify = {
+      status: "blocked_review",
+      charge_reconciled: true,
+    };
+    await store.db
+      .prepare("UPDATE npg_analyst_conversations SET state_json=? WHERE id=?")
+      .bind(JSON.stringify(original), c.id)
+      .run();
+    const current = await store.create("alice");
+    const view = await executeCommand(
+      store,
+      "alice",
+      {
+        type: "message",
+        id: current.id,
+        version: 0,
+        text: "Enrich exact NPI 1234567890",
+      },
+      () => ({
+        tools: async () => [
+          {
+            name: "enrich_candidate_complete_profile",
+            inputSchema: { type: "object" },
+          },
+        ],
+        respond: async () => ({
+          id: "response",
+          text: "",
+          call: {
+            name: "enrich_candidate_complete_profile",
+            arguments: JSON.stringify({
+              npi: "1234567890",
+              confirm_paid_enrichment: true,
+            }),
+            call_id: "call",
+          },
+        }),
+        call: async () => assert.fail("no readiness or paid dispatch"),
+        close: async () => {},
+      }),
+    );
+    assert.equal(view.status, "idle");
+    assert.equal(view.pending, null);
+    assert.equal(view.sources[0].actionId, actionId);
+    assert.match(view.messages.at(-1)!.text, /billing is reconciled/);
+    assert.match(
+      view.messages.at(-1)!.text,
+      /Identity or privacy review remains held/,
+    );
+    assert.doesNotMatch(view.messages.at(-1)!.text, /awaiting reconciliation/);
+    assert.equal(
+      (await store.db
+        .prepare(
+          "SELECT count(*) AS n FROM npg_analyst_actions WHERE conversation_id=?",
+        )
+        .bind(current.id)
+        .first<{ n: number }>())!.n,
+      0,
+    );
+  }));
+test("active receipt selection moves canonical same-chat evidence last once", () =>
+  fixture(async (store) => {
+    const { c, actionId } = await pending(store);
+    const original = JSON.parse((await store.read("alice", c.id)).state_json);
+    original.sources.push({
+      tool: "enrich_candidate_complete_profile",
+      actionId: "newer",
+      data: { npi: "9999999999" },
+    });
+    original.receiptReferences = [{ conversationId: c.id, actionId }];
+    await store.db
+      .prepare("UPDATE npg_analyst_conversations SET state_json=? WHERE id=?")
+      .bind(JSON.stringify(original), c.id)
+      .run();
+    const view = await store.view("alice", c.id);
+    assert.equal(view.sources.length, 2);
+    assert.equal(view.sources.at(-1)!.actionId, actionId);
+    assert.equal(view.sources.at(-1)!.existingReceipt, false);
+    assert.equal(
+      JSON.parse((await store.read("alice", c.id)).state_json).sources[0]
+        .actionId,
+      actionId,
+    );
+  }));
+test("new composite result clears the older active receipt selection", () =>
+  fixture(async (store) => {
+    const { c, actionId } = await pending(store);
+    const current = await store.create("alice");
+    const id = crypto.randomUUID();
+    await store.db
+      .prepare(
+        `INSERT INTO npg_analyst_actions(id,conversation_id,owner_id,version,tool,arguments_json,call_id,response_id,review_json,expires_at) VALUES(?,?,?,0,?,?,?,?,?,?)`,
+      )
+      .bind(
+        id,
+        current.id,
+        "alice",
+        "enrich_candidate_complete_profile",
+        JSON.stringify({
+          npi: "9999999999",
+          operation_id: id,
+          confirm_paid_enrichment: true,
+        }),
+        "call",
+        "resp",
+        JSON.stringify({ providers: ["pdl", "exa", "apify"] }),
+        store.now() + 600000,
+      )
+      .run();
+    await store.db
+      .prepare(
+        "UPDATE npg_analyst_conversations SET status='review',state_json=? WHERE id=?",
+      )
+      .bind(
+        JSON.stringify({
+          messages: [{ role: "user", text: "Enrich NPI 9999999999" }],
+          sources: [],
+          pendingId: id,
+          receiptReferences: [{ conversationId: c.id, actionId }],
+        }),
+        current.id,
+      )
+      .run();
+    const view = await executeCommand(
+      store,
+      "alice",
+      { type: "approve", id: current.id, version: 0, actionId: id },
+      () => ({
+        tools: async () => [
+          {
+            name: "enrich_candidate_complete_profile",
+            inputSchema: { type: "object" },
+          },
+        ],
+        call: async () => ({
+          npi: "9999999999",
+          uncertain_dispatch: false,
+          providers: {
+            pdl: { status: "matched" },
+            exa: { status: "complete" },
+            apify: { status: "no_contact", charge_reconciled: true },
+          },
+        }),
+        respond: async () => assert.fail("model forbidden"),
+        close: async () => {},
+      }),
+    );
+    assert.equal(view.status, "idle");
+    assert.equal(view.sources.length, 1);
+    assert.equal(view.sources.at(-1)!.actionId, id);
+    assert.equal(
+      JSON.parse((await store.read("alice", current.id)).state_json)
+        .receiptReferences,
+      undefined,
+    );
+  }));
+for (const variant of ['paid', 'unapproved', 'wrong_version'])
+  test(`legacy hold repair preserves ${variant} interruption`, () => fixture(async (store) => {
+    await pending(store);
+    const current = await store.create('alice');
+    await store.db.prepare(`INSERT INTO npg_analyst_actions(id,conversation_id,owner_id,version,tool,arguments_json,call_id,response_id,review_json,expires_at,status) VALUES('unsafe-legacy',?,'alice',?,'enrich_candidate_complete_profile',?,'call','resp','{}',0,'expired')`)
+      .bind(current.id,variant==='wrong_version'?1:2,JSON.stringify({npi:'1234567890',operation_id:'unsafe-legacy',confirm_paid_enrichment:variant!=='unapproved'})).run();
+    await store.db.prepare("UPDATE npg_analyst_conversations SET status='interrupted',version=3,paid_dispatched=?,state_json=? WHERE id=?")
+      .bind(variant==='paid'?1:0,JSON.stringify({messages:[{role:'assistant',text:'This candidate has existing provider receipts awaiting reconciliation. No new paid lookup was sent.'}],sources:[]}),current.id).run();
+    const view=await store.view('alice',current.id);
+    assert.equal(view.status,'interrupted');assert.equal(view.version,3);assert.equal(view.sources.length,0);
+  }));

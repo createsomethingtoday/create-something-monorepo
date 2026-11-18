@@ -3,6 +3,7 @@ import { NPG_TOOL_NAMES, PAID_TOOLS } from './policy';
 import { validateArguments, type Providers, type Tool } from './providers';
 import {
   NpgError,
+  NpgReceiptHoldError,
   NpgStore,
   type Action,
   type Conversation,
@@ -737,6 +738,7 @@ export async function executeCommand(
       toolCount++;
       if (tool.name === 'enrich_candidate_complete_profile') {
         const receipt = result as any;
+        delete state.receiptReferences;
         state.sources.push({ tool: tool.name, data: result, actionId: action.id });
         state.enrichmentRecovery = recoveryView(state, store.now());
         await store.checkpoint(row, state);
@@ -923,6 +925,14 @@ export async function executeCommand(
         }
         validateArguments(tool, args);
         if (PAID_TOOLS.has(tool.name)) {
+          if (tool.name === 'enrich_candidate_complete_profile' && typeof args.npi === 'string') {
+            const saved = await store.savedReceipt(owner, args.npi);
+            if (saved)
+              throw new NpgReceiptHoldError(
+                store.receiptHoldMessage(saved.source),
+                saved.reference
+              );
+          }
           checkPaidScope(tool.name, args, s);
           // Operation identity comes from the host and is immutable with this one-use approval.
           delete args.maximum_shared_usd;
@@ -980,15 +990,27 @@ export async function executeCommand(
         .bind(row.id, owner)
         .run();
       delete state.pendingId;
+      delete state.responseId;
+      if (cause instanceof NpgReceiptHoldError && cause.reference) {
+        state.receiptReferences = [cause.reference];
+      }
       state.messages.push({
         role: 'assistant',
-        text: ambiguous
-          ? 'This request stopped after a paid action may have been sent. Do not repeat it. Ask your operator to reconcile the source result. Existing returned evidence is below.'
-          : cause instanceof NpgError
+        text:
+          cause instanceof NpgReceiptHoldError
             ? cause.message
-            : 'This request was interrupted. No automatic retry was made. Start a new conversation; check existing source results first.'
+            : ambiguous
+              ? 'This request stopped after a paid action may have been sent. Do not repeat it. Ask your operator to reconcile the source result. Existing returned evidence is below.'
+              : cause instanceof NpgError
+                ? cause.message
+                : 'This request was interrupted. No automatic retry was made. Start a new conversation; check existing source results first.'
       });
-      await store.finish(row, state, ambiguous ? 'ambiguous' : 'interrupted', toolCount);
+      await store.finish(
+        row,
+        state,
+        cause instanceof NpgReceiptHoldError ? 'idle' : ambiguous ? 'ambiguous' : 'interrupted',
+        toolCount
+      );
       return await store.view(owner, row.id);
     }
     throw cause;

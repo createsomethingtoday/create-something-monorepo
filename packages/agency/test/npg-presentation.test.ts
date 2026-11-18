@@ -115,7 +115,7 @@ test('four-provider result is visible and keeps billing separate from results', 
             match_status: 'verified_match',
             professional_contact: { email: 'two@example.invalid', phone: '123' }
           },
-          apify: { status: 'blocked', reason: 'identity_not_resolved' }
+          apify: { status: 'blocked_review', reason: 'Identity, fallback or response association requires review.' }
         },
         spend_tracking: { actual_usd: 0.2, pending_receipts: 2, historical_status: 'unknown' }
       }
