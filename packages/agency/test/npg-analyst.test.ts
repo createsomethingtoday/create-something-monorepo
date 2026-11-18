@@ -2053,7 +2053,11 @@ for (const status of ['association_failure', 'privacy_blocked_review', 'billing_
       const next = completeFixture();
       const candidate = await conversation(store);
       const duplicate = await executeCommand(store, 'alice', message(candidate), () => next.p);
-      await assert.rejects(() => store.acquirePaid('duplicate', duplicate.pending!.id), {
+      assert.equal(duplicate.status, 'idle');
+      assert.equal(duplicate.pending, null);
+      assert.equal(duplicate.sources.at(-1)!.actionId, proposed.pending!.id);
+      // The shared dispatch guard still holds even when the UI avoids another review.
+      await assert.rejects(() => store.acquirePaid('duplicate', proposed.pending!.id), {
         status: 409
       });
       assert.equal(

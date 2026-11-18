@@ -317,6 +317,8 @@ test('only exact known receipt recovery is allowed from an uncertain conversatio
   assert.equal((display as any).canRefreshSkipTrace(view), true);
   assert.equal((display as any).canSendNpgMessage(view, 'Refresh Skip Trace'), true);
   assert.equal((display as any).canSendNpgMessage(view, 'Enrich another person'), false);
+  const linked = { ...view, sources: [{ ...view.sources[0], existingReceipt: true }] };
+  assert.equal(display.canRefreshSkipTrace(linked as any), false);
   view.sources[0].data.providers.apify.npi = '9999999999';
   assert.equal((display as any).canRefreshSkipTrace(view), false);
 });

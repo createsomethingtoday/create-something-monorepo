@@ -8,12 +8,28 @@ export class NpgError extends Error {
     super(message);
   }
 }
+export type ReceiptReference = { conversationId: string; actionId: string };
+export class NpgReceiptHoldError extends NpgError {
+  constructor(
+    message: string,
+    public reference?: ReceiptReference
+  ) {
+    super(409, message);
+  }
+}
 export type Message = { role: 'user' | 'assistant'; text: string; skipTraceReceipt?: string };
-export type Source = { tool: string; data: unknown; actionId?: string };
+export type Source = {
+  tool: string;
+  data: unknown;
+  actionId?: string;
+  existingReceipt?: boolean;
+  receiptConversationId?: string;
+};
 export type PendingSkipReceipt = { actionId: string; id: string; run_id: string; npi?: string };
 export type State = {
   messages: Message[];
   sources: Source[];
+  receiptReferences?: ReceiptReference[];
   responseId?: string;
   pendingId?: string;
   skipTracePending?: PendingSkipReceipt;
@@ -271,6 +287,84 @@ export class NpgStore {
     if (!taken) throw new NpgError(409, 'This review was already used or changed.');
     return status;
   }
+  // Resolve original approved source/action pairs; never clone them into recovery state.
+  async savedReceipt(owner: string, npi: string, reference?: ReceiptReference) {
+    const row = await this.db
+      .prepare(
+        `SELECT c.id AS conversation_id, s.value AS source_json
+      FROM npg_analyst_conversations c, json_each(c.state_json,'$.sources') s
+      JOIN npg_analyst_actions a ON a.id=json_extract(s.value,'$.actionId')
+      WHERE c.owner_id=? AND c.scope='npg' AND a.owner_id=c.owner_id AND a.conversation_id=c.id
+      AND a.tool='enrich_candidate_complete_profile' AND a.status IN ('completed','ambiguous')
+      AND json_extract(s.value,'$.tool')=a.tool
+      AND json_extract(a.arguments_json,'$.npi')=json_extract(s.value,'$.data.npi')
+      AND json_extract(a.arguments_json,'$.operation_id')=a.id
+      AND json_extract(a.arguments_json,'$.confirm_paid_enrichment')=1
+      AND json_extract(s.value,'$.data.npi')=?
+      AND (? IS NULL OR (c.id=? AND a.id=?))
+      AND (? IS NOT NULL OR EXISTS(SELECT 1 FROM json_each(s.value,'$.data.providers') p
+        WHERE p.key IN ('pdl','exa','apify') AND
+        (json_extract(p.value,'$.status') IN ('pending','blocked_review','privacy_blocked_review','association_failure','billing_review','ambiguous')
+          OR (p.key='apify' AND json_extract(p.value,'$.charge_reconciled')=0))))
+      ORDER BY c.updated_at DESC LIMIT 1`
+      )
+      .bind(
+        owner,
+        npi,
+        reference?.actionId ?? null,
+        reference?.conversationId ?? null,
+        reference?.actionId ?? null,
+        reference?.actionId ?? null
+      )
+      .first<{ conversation_id: string; source_json: string }>();
+    if (!row) return;
+    const source = JSON.parse(row.source_json) as Source;
+    return {
+      reference: { conversationId: row.conversation_id, actionId: source.actionId! },
+      source
+    };
+  }
+  receiptHoldMessage(source?: Source) {
+    if (!source)
+      return 'This candidate has an existing receipt hold. Ask your operator to reconcile the original receipt. No new paid lookup was sent.';
+    const providers = (source.data as any)?.providers ?? {};
+    const statuses = ['pdl', 'exa', 'apify']
+      .map(
+        (name) =>
+          `${name === 'apify' ? 'Skip Trace' : name.toUpperCase()}: ${providers[name]?.status ?? providers[name]?.match_status ?? 'unknown'}`
+      )
+      .join('; ');
+    const blocked = ['pdl', 'exa', 'apify'].some((name) =>
+      ['blocked_review', 'privacy_blocked_review', 'association_failure', 'ambiguous'].includes(
+        providers[name]?.status
+      )
+    );
+    return (
+      `Saved approved evidence is shown below. ${statuses}. ` +
+      (blocked
+        ? 'Identity or privacy review remains held; ask your operator to review the provider reasons. '
+        : providers.apify?.status === 'billing_review'
+          ? 'Billing review requires your operator to reconcile the original receipt. '
+          : 'Continue receipt recovery in the original conversation. ') +
+      (providers.apify?.charge_reconciled === true
+        ? 'Skip Trace billing is reconciled; this does not clear identity or privacy review. '
+        : 'Skip Trace billing is not yet confirmed reconciled. ') +
+      'No new paid lookup was sent.'
+    );
+  }
+  async receiptHold(actionId: string, message: string) {
+    const action = await this.db
+      .prepare('SELECT * FROM npg_analyst_actions WHERE id=?')
+      .bind(actionId)
+      .first<Action>();
+    const saved = action
+      ? await this.savedReceipt(action.owner_id, JSON.parse(action.arguments_json).npi)
+      : undefined;
+    return new NpgReceiptHoldError(
+      saved ? this.receiptHoldMessage(saved.source) : message,
+      saved?.reference
+    );
+  }
   async acquirePaid(token: string, actionId = '', leaseMs = 150000) {
     const uncertain = actionId
       ? await this.db
@@ -291,8 +385,8 @@ export class NpgStore {
           .first()
       : undefined;
     if (uncertain)
-      throw new NpgError(
-        409,
+      throw await this.receiptHold(
+        actionId,
         'This candidate has an uncertain operation. Reconcile its existing receipts before another request for the same candidate.'
       );
     // Pending exact candidate receipts are shared holds across owners/conversations.
@@ -308,13 +402,13 @@ export class NpgStore {
           AND json_extract(s.value,'$.data.npi')=json_extract(current.arguments_json,'$.npi')
           AND (json_extract(s.value,'$.data.providers.apify.status')='pending'
             OR json_extract(s.value,'$.data.providers.apify.charge_reconciled')=0
-            OR EXISTS (SELECT 1 FROM json_each(s.value,'$.data.providers') p WHERE p.key IN ('pdl','exa','apify') AND json_extract(p.value,'$.status') IN ('blocked_review','privacy_blocked_review','association_failure','ambiguous')))) LIMIT 1`
+            OR EXISTS (SELECT 1 FROM json_each(s.value,'$.data.providers') p WHERE p.key IN ('pdl','exa','apify') AND json_extract(p.value,'$.status') IN ('blocked_review','privacy_blocked_review','association_failure','billing_review','ambiguous')))) LIMIT 1`
         )
         .bind(actionId)
         .first();
       if (pending)
-        throw new NpgError(
-          409,
+        throw await this.receiptHold(
+          actionId,
           'This candidate has existing provider receipts awaiting reconciliation. No new paid lookup was sent.'
         );
     }
@@ -398,16 +492,79 @@ export class NpgStore {
         )
     ]);
   }
+  async sourcesForRead(owner: string, id: string, state: State): Promise<Source[]> {
+    const referenced: Source[] = [];
+    for (const reference of (state.receiptReferences ?? []).slice(-1)) {
+      const approved = await this.db
+        .prepare(
+          'SELECT arguments_json FROM npg_analyst_actions WHERE id=? AND owner_id=? AND conversation_id=?'
+        )
+        .bind(reference.actionId, owner, reference.conversationId)
+        .first<{ arguments_json: string }>();
+      if (!approved) continue;
+      const saved = await this.savedReceipt(
+        owner,
+        JSON.parse(approved.arguments_json).npi,
+        reference
+      );
+      if (saved)
+        referenced.push({
+          ...saved.source,
+          existingReceipt: reference.conversationId !== id,
+          receiptConversationId: reference.conversationId
+        });
+    }
+    return [
+      ...state.sources.filter(
+        (source) => !referenced.some((selected) => selected.actionId === source.actionId)
+      ),
+      ...referenced
+    ];
+  }
   async view(owner: string, id: string) {
-    const row = await this.read(owner, id),
+    let row = await this.read(owner, id),
       state: State = JSON.parse(row.state_json);
+    // Narrow repair of the pre-dispatch receipt-hold interruption shipped previously.
+    // A compare-and-swap prevents a history read from overwriting active chat/recovery.
+    const last = state.messages.at(-1);
+    if (
+      row.status === 'interrupted' &&
+      row.paid_dispatched === 0 &&
+      last?.role === 'assistant' &&
+      [
+        'This candidate has existing provider receipts awaiting reconciliation. No new paid lookup was sent.',
+        'This candidate has an uncertain operation. Reconcile its existing receipts before another request for the same candidate.'
+      ].includes(last.text)
+    ) {
+      const held = await this.db
+        .prepare(
+          `SELECT * FROM npg_analyst_actions WHERE owner_id=? AND conversation_id=? AND tool='enrich_candidate_complete_profile' AND status='expired' AND json_extract(arguments_json,'$.confirm_paid_enrichment')=1 AND json_extract(arguments_json,'$.operation_id')=id AND version=? LIMIT 1`
+        )
+        .bind(owner, id, row.version - 1)
+        .first<Action>();
+      if (held) {
+        const saved = await this.savedReceipt(owner, JSON.parse(held.arguments_json).npi);
+        if (saved) state.receiptReferences = [saved.reference];
+        delete state.pendingId;
+        delete state.responseId;
+        last.text = this.receiptHoldMessage(saved?.source);
+        await this.db
+          .prepare(
+            `UPDATE npg_analyst_conversations SET state_json=?,status='idle',version=version+1 WHERE id=? AND owner_id=? AND version=? AND status='interrupted' AND paid_dispatched=0 AND state_json=?`
+          )
+          .bind(JSON.stringify(state), id, owner, row.version, row.state_json)
+          .run();
+        row = await this.read(owner, id);
+        state = JSON.parse(row.state_json);
+      }
+    }
     const action = state.pendingId ? await this.action(owner, state.pendingId) : undefined;
     return {
       id: row.id,
       version: row.version,
       status: row.status,
       messages: state.messages,
-      sources: state.sources,
+      sources: await this.sourcesForRead(owner, id, state),
       enrichmentRecovery: recoveryView(state, this.now()),
       pending:
         action && action.status === 'pending'

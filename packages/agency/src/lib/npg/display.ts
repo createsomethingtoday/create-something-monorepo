@@ -555,7 +555,7 @@ export type NpgView = {
   }>;
   status: string;
   messages: Array<{ role: 'user' | 'assistant'; text: string }>;
-  sources: Array<{ tool: string; data: unknown }>;
+  sources: Array<{ tool: string; data: unknown; existingReceipt?: boolean; receiptConversationId?: string }>;
   pending: null | {
     id: string;
     tool: string;
@@ -569,6 +569,7 @@ export type NpgView = {
 export function canRefreshSkipTrace(view: NpgView | null): boolean {
   if (!view || !['idle', 'ambiguous'].includes(view.status) || view.pending) return false;
   return view.sources.some((source) => {
+    if (source.existingReceipt) return false;
     const data = source.data as any;
     const receipt =
       source.tool === 'enrich_candidate_complete_profile'

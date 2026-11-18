@@ -207,7 +207,7 @@ export function enrichmentSummary(sources: NpgView['sources']) {
     const pending = ['pending', 'running', 'submitted', 'queued'].includes(state);
     const blocked =
       /identity|mismatch|association/.test(state) ||
-      (/identity/.test(String(value.reason ?? '')) && !emails && !phones);
+      (/identity/i.test(String(value.reason ?? '')) && !emails && !phones);
     const summary = pending
       ? 'Awaiting existing provider result'
       : blocked

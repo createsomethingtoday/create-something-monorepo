@@ -1226,6 +1226,8 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
     paneReturnFocus.current = true;
   }
   const enrichment = enrichmentSummary(conversation?.sources ?? []);
+  const latestProfile = conversation?.sources.slice().reverse().find(source => source.tool === 'enrich_candidate_complete_profile');
+  const originalConversation = latestProfile?.existingReceipt && latestProfile.receiptConversationId;
   const recovery = conversation?.enrichmentRecovery?.find((entry) => entry.status === 'pending');
   const expired = Boolean(conversation?.pending && conversation.pending.expiresAt <= clock);
   const navigating =
@@ -1862,8 +1864,12 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                         <VStack gap={3}>
                           <VStack gap={1}>
                             <Heading id="npg-enrichment-title" level={2}>
-                              Enrichment results
+                              {originalConversation ? 'Saved enrichment results' : 'Enrichment results'}
                             </Heading>
+                            {originalConversation && originalConversation !== conversation?.id && (
+                              <Button label="Open original conversation" variant="secondary" isDisabled={busy}
+                                onClick={() => void open(originalConversation, true)} />
+                            )}
                             <Text color="secondary">
                               NPI {enrichment.npi} · Contact candidates remain unverified
                               <br />{enrichment.scope}
