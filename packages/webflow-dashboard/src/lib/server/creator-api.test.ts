@@ -159,7 +159,7 @@ describe('API key rows', () => {
 				'API Key Hash': 'a'.repeat(64),
 				Creator: ['recTestCreatorA00'],
 				Status: 'Active',
-				Scopes: ['read:assets', 'read:profile', 'write:assets'],
+				Scopes: ['read:assets', 'read:profile', 'read:analytics'],
 				'Key Name': 'Portfolio site',
 				'Key Prefix': 'wf_live_12345678',
 				'Expiration Date': '2027-11-13',

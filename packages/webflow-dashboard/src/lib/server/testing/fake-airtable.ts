@@ -33,6 +33,7 @@ export interface FakeAirtableCall {
 const HASH_FIELD = 'API Key Hash';
 const CREATOR_RECORD_ID_LOOKUP = '⚙️🎨Creator Record ID';
 const CREATOR_EMAIL_FIELD = '📧WF Account Email';
+const ASSET_LINK_FIELD = 'fldemWilqCQcOCh5s';
 
 function matchesFormula(record: FakeRecord, formula: string | undefined): boolean {
 	if (!formula) return true;
@@ -55,6 +56,24 @@ function matchesFormula(record: FakeRecord, formula: string | undefined): boolea
 	if (formula.includes(`{${CREATOR_EMAIL_FIELD}}`)) {
 		const email = /FIND\(',' & '([^']+)' & ','/.exec(formula)?.[1];
 		return String(record.fields[CREATOR_EMAIL_FIELD] ?? '').toLowerCase() === email;
+	}
+
+	// Name uniqueness: LOWER({Name}) = LOWER('x'), optionally excluding one record.
+	const name = /LOWER\(\{Name\}\) = LOWER\('((?:[^'\\]|\\.)*)'\)/.exec(formula)?.[1];
+	if (name !== undefined) {
+		const excluded = /RECORD_ID\(\) != '(rec[A-Za-z0-9]{14})'/.exec(formula)?.[1];
+		return (
+			record.id !== excluded &&
+			String(record.fields.Name ?? '').toLowerCase() === name.replace(/\\(.)/g, '$1').toLowerCase()
+		);
+	}
+
+	// Versions of one asset: {<asset record id rollup>} = 'rec…'. A version row
+	// links its asset in ASSET_LINK_FIELD.
+	const versionsOf = /^\{fldknoYakli2sqznT\} = '(rec[A-Za-z0-9]{14})'$/.exec(formula)?.[1];
+	if (versionsOf) {
+		const linked = record.fields[ASSET_LINK_FIELD];
+		return Array.isArray(linked) && linked.includes(versionsOf);
 	}
 
 	throw new Error(`Fake Airtable cannot evaluate this formula: ${formula}`);
@@ -95,8 +114,12 @@ export function createFakeAirtable(
 			return structuredClone(record);
 		},
 
-		async create(newRows: { fields: Record<string, unknown> }[]) {
-			return newRows.map(({ fields }) => {
+		// The real client takes a list of { fields } or one bare field set, and
+		// answers in the same shape.
+		async create(input: { fields: Record<string, unknown> }[] | Record<string, unknown>) {
+			const single = !Array.isArray(input);
+			const newRows = single ? [{ fields: input }] : input;
+			const createdRows = newRows.map(({ fields }) => {
 				calls.push({ method: 'create', table: name, detail: fields });
 				created += 1;
 				const record: FakeRecord = {
@@ -124,6 +147,8 @@ export function createFakeAirtable(
 				rows(name).push(record);
 				return record;
 			});
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			return (single ? createdRows[0] : createdRows) as any;
 		},
 
 		async update(updates: { id: string; fields: Record<string, unknown> }[]) {

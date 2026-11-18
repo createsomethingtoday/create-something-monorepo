@@ -8,7 +8,7 @@ import { createHash, randomBytes } from 'node:crypto';
  * Only the hash is stored; the full key is shown to the creator once.
  */
 
-export const API_KEY_SCOPES = ['read:assets', 'read:profile'] as const;
+export const API_KEY_SCOPES = ['read:assets', 'read:profile', 'write:assets'] as const;
 export type ApiKeyScope = (typeof API_KEY_SCOPES)[number];
 
 export const API_KEY_PREFIX = 'wf_live_';

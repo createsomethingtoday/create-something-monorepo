@@ -258,6 +258,14 @@
                 />
                 <span>Read Profile</span>
               </label>
+              <label class="scope-item">
+                <input
+                  type="checkbox"
+                  checked={scopes.includes('write:assets')}
+                  onchange={() => toggleScope('write:assets')}
+                />
+                <span>Update Template Listings</span>
+              </label>
             </div>
           </div>
 

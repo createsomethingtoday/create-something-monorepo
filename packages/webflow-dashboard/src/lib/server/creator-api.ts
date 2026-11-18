@@ -1,5 +1,10 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
-import { getAirtableClient, type Asset, type CreatorPublicProfile } from './airtable';
+import {
+	getAirtableClient,
+	type Asset,
+	type AssetUpdateData,
+	type CreatorPublicProfile
+} from './airtable';
 import {
 	hashApiKey,
 	isApiKeyExpired,
@@ -7,6 +12,8 @@ import {
 	type ApiKeyScope
 } from './api-keys';
 import { applyTemplateViews } from './template-views';
+import { sanitizeLongDescriptionHtml } from '@create-something/webflow-dashboard-core/long-description';
+import { shouldCreateAssetVersionForChanges } from '$lib/utils/asset-version-changes';
 
 /**
  * Creator API (v1): the shared layer behind /api/v1/creator/*.
@@ -76,6 +83,9 @@ export type CreatorApiErrorCode =
 	| 'RATE_LIMIT_EXCEEDED'
 	| 'TOO_MANY_KEY_LOOKUPS'
 	| 'INVALID_PARAMETER'
+	| 'INVALID_BODY'
+	| 'ASSET_NOT_EDITABLE'
+	| 'NAME_TAKEN'
 	| 'ASSET_NOT_FOUND'
 	| 'PROFILE_NOT_FOUND'
 	| 'NOT_FOUND'
@@ -325,6 +335,24 @@ async function readThrough<T>(
 	const value = await load();
 	await writeCache(db, cacheKey, value, CREATOR_API_DATA_TTL_SECONDS);
 	return { value, cached: false };
+}
+
+function creatorAssetsCacheKey(creatorIds: readonly string[]): string {
+	return `assets:${creatorIds.join('+')}`;
+}
+
+/** After a write: the next read loads the list again. Best-effort, like the cache itself. */
+async function forgetCreatorAssets(db: D1Database, creatorIds: readonly string[]): Promise<void> {
+	try {
+		await db
+			.prepare('DELETE FROM api_cache WHERE cache_key = ?1')
+			.bind(creatorAssetsCacheKey(creatorIds))
+			.run();
+	} catch (err) {
+		console.error('[Creator API] Cache delete failed', {
+			error: err instanceof Error ? err.message : String(err)
+		});
+	}
 }
 
 function verifiedKeyCacheKey(keyHash: string): string {
@@ -625,7 +653,7 @@ export async function loadCreatorAssets(
 	creatorIds: readonly string[],
 	waitUntil?: (promise: Promise<unknown>) => void
 ): Promise<{ value: CreatorApiAsset[]; cached: boolean }> {
-	return readThrough(env.DB, `assets:${creatorIds.join('+')}`, async () => {
+	return readThrough(env.DB, creatorAssetsCacheKey(creatorIds), async () => {
 		const assets = await applyTemplateViews(
 			env,
 			await getAirtableClient(env).getAssetsByCreatorIds(creatorIds),
@@ -643,6 +671,177 @@ export async function loadCreatorProfile(
 		const profile = await getAirtableClient(env).getCreatorProfileById(creatorId);
 		return profile ? toCreatorApiProfile(profile) : null;
 	});
+}
+
+// ==================== LISTING UPDATE ====================
+
+/** The listing text a key with `write:assets` can change on a published template. */
+export interface ListingUpdate {
+	name?: string;
+	descriptionShort?: string;
+	descriptionLong?: string;
+	websiteUrl?: string;
+	previewUrl?: string;
+}
+
+export const LISTING_UPDATE_LIMITS = {
+	name: 128,
+	descriptionShort: 2000,
+	descriptionLong: 10000,
+	websiteUrl: 2048,
+	previewUrl: 2048
+} as const satisfies Record<keyof ListingUpdate, number>;
+
+const LISTING_URL_FIELDS: ReadonlySet<keyof ListingUpdate> = new Set(['websiteUrl', 'previewUrl']);
+
+function isHttpsUrl(value: string): boolean {
+	try {
+		return new URL(value).protocol === 'https:';
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * Reads a PATCH body. Unknown fields are refused, not ignored, so a caller
+ * never believes a field was saved when the API does not support it.
+ */
+export function parseListingUpdate(
+	body: unknown
+): { ok: true; update: ListingUpdate } | { ok: false; message: string } {
+	if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+		return { ok: false, message: 'Send a JSON object with the fields to change.' };
+	}
+
+	const update: ListingUpdate = {};
+	for (const [field, value] of Object.entries(body)) {
+		if (!(field in LISTING_UPDATE_LIMITS)) {
+			return {
+				ok: false,
+				message: `"${field}" cannot be changed through the API. Supported fields: ${Object.keys(LISTING_UPDATE_LIMITS).join(', ')}.`
+			};
+		}
+		const key = field as keyof ListingUpdate;
+		if (typeof value !== 'string') return { ok: false, message: `"${key}" must be a string.` };
+
+		const text = key === 'descriptionLong' ? sanitizeLongDescriptionHtml(value) : value.trim();
+		if (!text) return { ok: false, message: `"${key}" cannot be empty.` };
+		if (text.length > LISTING_UPDATE_LIMITS[key]) {
+			return {
+				ok: false,
+				message: `"${key}" is longer than ${LISTING_UPDATE_LIMITS[key]} characters.`
+			};
+		}
+		if (LISTING_URL_FIELDS.has(key) && !isHttpsUrl(text)) {
+			return { ok: false, message: `"${key}" must be an https URL.` };
+		}
+		update[key] = text;
+	}
+
+	if (Object.keys(update).length === 0) {
+		return { ok: false, message: 'Send at least one field to change.' };
+	}
+	return { ok: true, update };
+}
+
+/**
+ * Compares the request with the current listing. The change record uses the
+ * dashboard editor's field names, so reviewers read one format for both paths.
+ */
+export function buildListingChange(
+	asset: Asset,
+	update: ListingUpdate
+): { data: AssetUpdateData; changes: Record<string, { from: string; to: string }> } {
+	const data: AssetUpdateData = {};
+	const changes: Record<string, { from: string; to: string }> = {};
+	const register = (field: string, from: string, to: string | undefined, apply: (to: string) => void) => {
+		if (to === undefined || to === from) return;
+		changes[field] = { from, to };
+		apply(to);
+	};
+
+	register('Name', asset.name, update.name, (to) => (data.name = to));
+	register('ℹ️Description (Short)', asset.descriptionShort || '', update.descriptionShort, (to) => {
+		data.descriptionShort = to;
+	});
+	register(
+		'ℹ️Description (Long).html',
+		asset.descriptionLongHtml || asset.description || '',
+		update.descriptionLong,
+		(to) => (data.descriptionLongHtml = to)
+	);
+	register('🔗Website URL', asset.websiteUrl || '', update.websiteUrl, (to) => (data.websiteUrl = to));
+	register('🔗Preview Site URL', asset.previewUrl || '', update.previewUrl, (to) => (data.previewUrl = to));
+
+	return { data, changes };
+}
+
+export type ListingUpdateResult =
+	| { outcome: 'not_found' }
+	| { outcome: 'not_editable' }
+	| { outcome: 'name_taken' }
+	| { outcome: 'unchanged'; asset: Asset }
+	| { outcome: 'updated'; asset: Asset; changedFields: string[]; reviewRecorded: boolean };
+
+/**
+ * Applies a listing update the way the dashboard editor does: write the asset,
+ * then record a Meta Update version so the review team sees the change.
+ *
+ * Ownership is read fresh from Airtable, not from the response cache: a write
+ * must not act on a list that is up to five minutes old.
+ */
+export async function updateCreatorListing(
+	env: CreatorApiEnv,
+	key: VerifiedKey,
+	assetId: string,
+	update: ListingUpdate
+): Promise<ListingUpdateResult> {
+	const airtable = getAirtableClient(env);
+	const owned = await airtable.getAssetsByCreatorIds(key.creatorIds);
+	if (!owned.some((candidate) => candidate.id === assetId)) return { outcome: 'not_found' };
+
+	const original = await airtable.getAsset(assetId);
+	if (!original) return { outcome: 'not_found' };
+	if (original.type !== 'Template' || original.status !== 'Published') {
+		return { outcome: 'not_editable' };
+	}
+
+	const { data, changes } = buildListingChange(original, update);
+	if (Object.keys(changes).length === 0) return { outcome: 'unchanged', asset: original };
+
+	if (data.name !== undefined) {
+		const nameCheck = await airtable.checkAssetNameUniqueness(data.name, assetId);
+		if (!nameCheck.unique) return { outcome: 'name_taken' };
+	}
+
+	const updated = await airtable.updateAssetWithImages(assetId, data);
+	if (!updated) throw new Error('The listing update was not saved');
+
+	// The review record names the key, never the secret: the key ID is the
+	// Airtable record of the key, which the review team can look up.
+	const version = shouldCreateAssetVersionForChanges(changes)
+		? await airtable.createAssetVersionFromAsset(original, `api-key:${key.keyId}`, changes)
+		: null;
+
+	await forgetCreatorAssets(env.DB, key.creatorIds);
+
+	return {
+		outcome: 'updated',
+		asset: updated,
+		changedFields: Object.keys(changes),
+		reviewRecorded: version !== null
+	};
+}
+
+/** The listing text, returned after a write so the caller sees what is stored. */
+export function toCreatorApiListing(asset: Asset) {
+	return {
+		name: asset.name,
+		descriptionShort: asset.descriptionShort ?? null,
+		descriptionLong: asset.descriptionLongHtml ?? asset.description ?? null,
+		websiteUrl: asset.websiteUrl ?? null,
+		previewUrl: asset.previewUrl ?? null
+	};
 }
 
 // ==================== QUERY PARSING ====================

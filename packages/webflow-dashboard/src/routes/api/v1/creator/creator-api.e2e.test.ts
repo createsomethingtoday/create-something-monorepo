@@ -188,6 +188,9 @@ async function api(
 		ip?: string;
 		authorization?: string;
 		sameSecond?: boolean;
+		method?: string;
+		body?: unknown;
+		rawBody?: string;
 	} = {}
 ): Promise<Response> {
 	if (!options.sameSecond) vi.setSystemTime(Date.now() + 1000);
@@ -197,7 +200,11 @@ async function api(
 
 	const url = new URL(`${ORIGIN}${path}`);
 	const response = await handler({
-		request: new Request(url, { headers }),
+		request: new Request(url, {
+			headers,
+			method: options.method ?? 'GET',
+			body: options.rawBody ?? (options.body === undefined ? undefined : JSON.stringify(options.body))
+		}),
 		url,
 		params: options.params ?? {},
 		platform: platform(),
@@ -252,7 +259,7 @@ describe('API key lifecycle', () => {
 		await expect(
 			sessionPost(generateRoute.POST as never, '/api/keys/generate', EMAIL_A, {
 				keyName: 'CI',
-				scopes: ['read:assets', 'write:assets']
+				scopes: ['read:assets', 'delete:assets']
 			})
 		).rejects.toMatchObject({ status: 400 });
 		await expect(
@@ -445,6 +452,157 @@ describe('GET /api/v1/creator/*', () => {
 		const text = JSON.stringify(body);
 		expect(text).not.toContain('Legal Entity');
 		expect(text).not.toContain(EMAIL_A);
+	});
+
+	describe('listing update', () => {
+		const WRITE = ['read:assets', 'write:assets'];
+		const patch = (id: string, key: string, body: unknown, rawBody?: string) =>
+			api(assetRoute.PATCH as never, `/api/v1/creator/assets/${id}`, {
+				key,
+				params: { id },
+				method: 'PATCH',
+				body,
+				rawBody
+			});
+
+		it('saves the change and records a Meta Update version for review', async () => {
+			const { apiKey, keyId } = await createKey(EMAIL_A, WRITE);
+
+			const response = await patch(ASSET_A1, apiKey, {
+				name: ' Alpha Two ',
+				descriptionShort: 'A new summary.'
+			});
+			const body = await read(response);
+
+			expect(response.status).toBe(200);
+			expect(body).toMatchObject({
+				id: ASSET_A1,
+				name: 'Alpha Two',
+				listing: { name: 'Alpha Two', descriptionShort: 'A new summary.' },
+				update: { changedFields: ['Name', 'ℹ️Description (Short)'], reviewRecorded: true }
+			});
+
+			const [saved] = airtable.callsTo('update', TABLES.ASSETS);
+			expect(saved.detail).toEqual({
+				id: ASSET_A1,
+				fields: { Name: 'Alpha Two', 'ℹ️Description (Short)': 'A new summary.' }
+			});
+
+			const [version] = airtable.callsTo('create', TABLES.ASSET_VERSIONS);
+			const fields = version.detail as Record<string, unknown>;
+			expect(Object.values(fields)).toContain('Meta Update');
+			expect(Object.values(fields)).toContainEqual([ASSET_A1]);
+			const record = Object.values(fields).find(
+				(value) => typeof value === 'string' && value.startsWith('{')
+			) as string;
+			expect(JSON.parse(record)).toEqual({
+				Name: { from: 'Alpha', to: 'Alpha Two' },
+				'ℹ️Description (Short)': { from: '', to: 'A new summary.' }
+			});
+			// The key ID is the Airtable record of the key; the secret is never stored.
+			expect(JSON.stringify(airtable.tables)).not.toContain(apiKey);
+			expect(keyId).toBeTruthy();
+		});
+
+		it('shows the change on the next read, not the cached list', async () => {
+			const { apiKey } = await createKey(EMAIL_A, WRITE);
+			await api(assetsRoute.GET as never, '/api/v1/creator/assets', { key: apiKey });
+
+			await patch(ASSET_A1, apiKey, { name: 'Alpha Two' });
+			const list = await read(
+				await api(assetsRoute.GET as never, '/api/v1/creator/assets', { key: apiKey })
+			);
+
+			expect(list.data.map((item: { name: string }) => item.name)).toContain('Alpha Two');
+		});
+
+		it('refuses a key that has no write permission', async () => {
+			const { apiKey } = await createKey(EMAIL_A);
+
+			const response = await patch(ASSET_A1, apiKey, { name: 'Alpha Two' });
+
+			expect(response.status).toBe(403);
+			expect((await read(response)).code).toBe('INSUFFICIENT_SCOPE');
+			expect(airtable.callsTo('update', TABLES.ASSETS)).toHaveLength(0);
+		});
+
+		it('answers 404 for another creator’s template and writes nothing', async () => {
+			const { apiKey } = await createKey(EMAIL_A, WRITE);
+
+			const response = await patch(ASSET_B1, apiKey, { name: 'Taken Over' });
+
+			expect(response.status).toBe(404);
+			expect((await read(response)).code).toBe('ASSET_NOT_FOUND');
+			expect(airtable.callsTo('update', TABLES.ASSETS)).toHaveLength(0);
+			expect(airtable.callsTo('create', TABLES.ASSET_VERSIONS)).toHaveLength(0);
+		});
+
+		it('changes only a published template', async () => {
+			const { apiKey } = await createKey(EMAIL_A, WRITE);
+
+			const response = await patch(ASSET_A2, apiKey, { name: 'Beta Final' });
+
+			expect(response.status).toBe(409);
+			expect((await read(response)).code).toBe('ASSET_NOT_EDITABLE');
+			expect(airtable.callsTo('update', TABLES.ASSETS)).toHaveLength(0);
+		});
+
+		it('refuses a name another asset has', async () => {
+			const { apiKey } = await createKey(EMAIL_A, WRITE);
+
+			const response = await patch(ASSET_A1, apiKey, { name: 'other studio template' });
+
+			expect(response.status).toBe(409);
+			expect((await read(response)).code).toBe('NAME_TAKEN');
+			expect(airtable.callsTo('update', TABLES.ASSETS)).toHaveLength(0);
+		});
+
+		it('refuses fields it does not support, bad values and bad JSON', async () => {
+			const { apiKey } = await createKey(EMAIL_A, WRITE);
+
+			for (const body of [
+				{ thumbnail: 'https://images.example/new.webp' },
+				{ name: '' },
+				{ name: 7 },
+				{ websiteUrl: 'http://alpha.example' },
+				{ name: 'x'.repeat(129) },
+				{},
+				[]
+			]) {
+				const response = await patch(ASSET_A1, apiKey, body);
+				expect(response.status).toBe(400);
+				expect((await read(response)).code).toBe('INVALID_BODY');
+			}
+			const broken = await patch(ASSET_A1, apiKey, undefined, '{not json');
+			expect(broken.status).toBe(400);
+			expect(airtable.callsTo('update', TABLES.ASSETS)).toHaveLength(0);
+		});
+
+		it('writes nothing when the values are already stored', async () => {
+			const { apiKey } = await createKey(EMAIL_A, WRITE);
+
+			const response = await patch(ASSET_A1, apiKey, { name: 'Alpha' });
+
+			expect(response.status).toBe(200);
+			expect((await read(response)).update).toEqual({ changedFields: [], reviewRecorded: false });
+			expect(airtable.callsTo('update', TABLES.ASSETS)).toHaveLength(0);
+			expect(airtable.callsTo('create', TABLES.ASSET_VERSIONS)).toHaveLength(0);
+		});
+
+		it('saves a long-description-only change without a review version, as the dashboard does', async () => {
+			const { apiKey } = await createKey(EMAIL_A, WRITE);
+
+			const response = await patch(ASSET_A1, apiKey, {
+				descriptionLong: '<p>More detail.</p><script>alert(1)</script>'
+			});
+			const body = await read(response);
+
+			expect(response.status).toBe(200);
+			expect(body.update.reviewRecorded).toBe(false);
+			expect(body.listing.descriptionLong).not.toContain('script');
+			expect(airtable.callsTo('update', TABLES.ASSETS)).toHaveLength(1);
+			expect(airtable.callsTo('create', TABLES.ASSET_VERSIONS)).toHaveLength(0);
+		});
 	});
 
 	it('enforces the key’s permissions', async () => {

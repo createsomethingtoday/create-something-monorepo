@@ -44,7 +44,8 @@ describe('API key format', () => {
 	it('accepts only the scopes the API serves', () => {
 		expect(isApiKeyScope('read:assets')).toBe(true);
 		expect(isApiKeyScope('read:profile')).toBe(true);
-		expect(isApiKeyScope('write:assets')).toBe(false);
+		expect(isApiKeyScope('write:assets')).toBe(true);
+		expect(isApiKeyScope('read:analytics')).toBe(false);
 		expect(isApiKeyScope(undefined)).toBe(false);
 	});
 });

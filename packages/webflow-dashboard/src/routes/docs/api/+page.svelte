@@ -57,7 +57,29 @@
 		2
 	);
 
+	const updateExample = $derived(
+		`curl -X PATCH "${data.apiBase}/assets/recXXXXXXXXXXXXXX" \\\n  -H "Authorization: Bearer YOUR_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{"descriptionShort": "A faster portfolio template."}'`
+	);
+
+	const updateResponse = JSON.stringify(
+		{
+			...asset,
+			listing: {
+				name: 'Template Name',
+				descriptionShort: 'A faster portfolio template.',
+				descriptionLong: '<p>…</p>',
+				websiteUrl: 'https://template-name.webflow.io',
+				previewUrl: 'https://preview.webflow.com/preview/template-name'
+			},
+			update: { changedFields: ['ℹ️Description (Short)'], reviewRecorded: true },
+			meta: { timestamp: '2026-11-13T19:00:00.000Z', version: 'v1', cached: false }
+		},
+		null,
+		2
+	);
+
 	const errors: { status: number; code: string; meaning: string }[] = [
+		{ status: 400, code: 'INVALID_BODY', meaning: 'The request body is not valid JSON, or a field has a value the API does not accept. The message names the field.' },
 		{ status: 400, code: 'INVALID_PARAMETER', meaning: 'A query parameter has a value the API does not accept. The message names the parameter.' },
 		{ status: 401, code: 'MISSING_AUTH_HEADER', meaning: 'The request has no Authorization header.' },
 		{ status: 401, code: 'INVALID_KEY_FORMAT', meaning: 'The header is not “Bearer” followed by a key in the correct format.' },
@@ -68,6 +90,8 @@
 		{ status: 404, code: 'ASSET_NOT_FOUND', meaning: 'No asset with this ID belongs to you.' },
 		{ status: 404, code: 'PROFILE_NOT_FOUND', meaning: 'The key is not linked to a creator profile.' },
 		{ status: 404, code: 'NOT_FOUND', meaning: 'The path is not an API endpoint.' },
+		{ status: 409, code: 'ASSET_NOT_EDITABLE', meaning: 'The asset is not a published template. Only a published template can be changed.' },
+		{ status: 409, code: 'NAME_TAKEN', meaning: 'Another asset already has this name.' },
 		{ status: 429, code: 'RATE_LIMIT_EXCEEDED', meaning: 'You used all requests for this hour. Wait the number of seconds in Retry-After.' },
 		{ status: 429, code: 'TOO_MANY_KEY_LOOKUPS', meaning: 'Your address sent too many keys that the API could not verify. Check the key, then wait.' },
 		{ status: 500, code: 'INTERNAL_ERROR', meaning: 'The API failed. Try again. If it continues, report it with the requestId.' },
@@ -79,7 +103,7 @@
 	<title>Creator API reference · Webflow Asset Dashboard</title>
 	<meta
 		name="description"
-		content="Read your Webflow Marketplace profile and assets from your own tools."
+		content="Read your Webflow Marketplace profile and assets, and update template listings, from your own tools."
 	/>
 </svelte:head>
 
@@ -88,8 +112,8 @@
 		<p class="eyebrow">Webflow Asset Dashboard</p>
 		<h1>Creator API reference</h1>
 		<p class="lede">
-			Read your Marketplace profile and assets from your own tools. The API is read-only, and the
-			version is part of the path.
+			Read your Marketplace profile and assets from your own tools, and update the listing text of
+			a published template. The version is part of the path.
 		</p>
 		<p><a href="/dashboard">Open the dashboard</a></p>
 	</header>
@@ -165,6 +189,38 @@
 			One asset, by the <code>id</code> from the list. Permission: <code>read:assets</code>. The
 			response is the asset object with a <code>meta</code> field.
 		</p>
+
+		<h3><span class="method">PATCH</span> /assets/&#123;id&#125;</h3>
+		<p>
+			Changes the listing text of one published template. Permission: <code>write:assets</code>.
+			A key does not have this permission unless you select it when you create the key.
+		</p>
+		<div class="table-scroll">
+			<table>
+				<thead>
+					<tr><th scope="col">Field</th><th scope="col">Rule</th></tr>
+				</thead>
+				<tbody>
+					<tr><td><code>name</code></td><td>128 characters or fewer. No other asset can have the same name.</td></tr>
+					<tr><td><code>descriptionShort</code></td><td>2,000 characters or fewer.</td></tr>
+					<tr><td><code>descriptionLong</code></td><td>HTML, 10,000 characters or fewer. The API removes markup that a listing does not permit.</td></tr>
+					<tr><td><code>websiteUrl</code></td><td>An https URL.</td></tr>
+					<tr><td><code>previewUrl</code></td><td>An https URL.</td></tr>
+				</tbody>
+			</table>
+		</div>
+		<ul>
+			<li>Send only the fields you want to change. A field cannot be empty.</li>
+			<li>The API refuses a field that is not in the table. Change images in the dashboard.</li>
+			<li>
+				The change is saved immediately. The Marketplace review team then gets a record of it, the
+				same as for a change you make in the dashboard. <code>update.reviewRecorded</code> tells
+				you that the record was made. A change to <code>descriptionLong</code> only makes no record.
+			</li>
+			<li>The response is the asset object with <code>listing</code>, <code>update</code> and <code>meta</code> fields.</li>
+		</ul>
+		<pre><code>{updateExample}</code></pre>
+		<pre><code>{updateResponse}</code></pre>
 
 		<h3>About the data</h3>
 		<ul>
@@ -246,7 +302,10 @@
 			</li>
 			<li>You can have {data.maxActiveKeys} active keys.</li>
 			<li>A revoked key stops working on its next request.</li>
-			<li>A key reads only your own profile and assets. It cannot change data.</li>
+			<li>
+				A key reads only your own profile and assets. It can change a listing only if it has the
+				<code>write:assets</code> permission.
+			</li>
 		</ul>
 	</section>
 
