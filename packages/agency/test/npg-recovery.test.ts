@@ -207,6 +207,152 @@ test('an unrelated chat interruption does not strand approved receipt recovery a
     assert.deepEqual(await runRecoveryBatch(restarted, () => receipts), { processed: 0 });
     assert.equal(reads, 2, 'Completed receipt must not be read again');
   }));
+for (const command of ['approve', 'reject'] as const) {
+  for (const outcome of ['pending', 'no_contact'] as const) {
+    test(`interactive ${command} rejects a snapshot made stale by ${outcome} receipt recovery`, () =>
+      fixture(async (store) => {
+        const { c, skip } = await pending(store);
+        const actionId = crypto.randomUUID();
+        const before = await store.read('alice', c.id);
+        const state: State = JSON.parse(before.state_json);
+        state.pendingId = actionId;
+        await store.db.prepare("UPDATE npg_analyst_conversations SET status='review',state_json=? WHERE id=?")
+          .bind(JSON.stringify(state), c.id).run();
+        await store.db.prepare(`INSERT INTO npg_analyst_actions(id,conversation_id,owner_id,version,tool,arguments_json,call_id,response_id,review_json,expires_at) VALUES(?,?,?,0,?,?,?,?,?,?)`)
+          .bind(actionId, c.id, 'alice', 'enrich_candidate_complete_profile',
+            JSON.stringify({ operation_id: actionId, npi: '9999999999', confirm_paid_enrichment: true }),
+            'call', 'response', JSON.stringify({ providers: ['pdl','exa','apify'] }), store.now() + 600000).run();
+        const approved = await store.action('alice', actionId);
+        let reads = 0;
+        let recoveredState = '';
+        class InterleavedStore extends NpgStore {
+          async start(...args: Parameters<NpgStore['start']>) {
+            // The command already read and validated review state. Finish cron now,
+            // before it acquires its lease; review recovery preserves the version.
+            assert.deepEqual(await runRecoveryBatch(store, () => ({
+              tools: async () => [], close: async () => {},
+              respond: async () => { throw Error('No model call during recovery'); },
+              call: async (name, input) => {
+                assert.equal(name, 'enrich_candidate_skip_trace');
+                assert.deepEqual(input.reconcile_receipt, { id: skip.id, run_id: skip.run_id });
+                reads++;
+                return { ...skip, status: outcome, charge_reconciled: outcome === 'no_contact' };
+              }
+            })), { processed: 1 });
+            recoveredState = (await store.read('alice', c.id)).state_json;
+            return super.start(...args);
+          }
+        }
+        let providerFactories = 0;
+        const forbiddenProviders = () => { providerFactories++; throw Error('No new paid dispatch allowed'); };
+        await assert.rejects(executeCommand(new InterleavedStore(store.db, store.now), 'alice', {
+          type: command, id: c.id, version: before.version, actionId
+        }, forbiddenProviders), /changed or stopped/);
+        const after = await store.read('alice', c.id);
+        assert.equal(after.state_json, recoveredState);
+        assert.equal(after.status, 'review');
+        assert.equal(after.version, before.version);
+        assert.equal(reads, 1);
+        assert.equal(providerFactories, 0);
+        assert.deepEqual(await store.action('alice', actionId), approved);
+        // A refreshed exact review remains consumable; rejection preserves recovery.
+        const view = await executeCommand(store, 'alice', {
+          type: 'reject', id: c.id, version: after.version, actionId
+        }, forbiddenProviders);
+        const recovered: State = JSON.parse(recoveredState);
+        assert.deepEqual(view.enrichmentRecovery, recovered.enrichmentRecovery);
+        assert.deepEqual(view.sources, recovered.sources);
+        assert.equal(providerFactories, 0);
+      }));
+  }
+}
+
+for (const dispatched of [false, true]) {
+  for (const orphanedReview of [false, true]) {
+  test(`cron recovers receipts after abrupt command death with paid_dispatched=${dispatched}, orphanedReview=${orphanedReview}`, () =>
+    fixture(async (store, advance) => {
+      const { c, actionId, skip } = await pending(store);
+      const approved = await store.action('alice', actionId);
+      const running = await store.start('alice', c.id, c.version, 'abandoned-command');
+      const uncertainAction = crypto.randomUUID();
+      await store.db.prepare(`INSERT INTO npg_analyst_actions(id,conversation_id,owner_id,version,tool,arguments_json,call_id,response_id,review_json,expires_at,status) VALUES(?,?,?,?,?,?,?,?,?,?,'dispatching')`)
+        .bind(uncertainAction, c.id, 'alice', running.version, 'enrich_candidate_profile', '{}',
+          'abandoned-call', 'abandoned-response', '{}', store.now() + 600000).run();
+      if (orphanedReview) {
+        // Approval can die after consumption but before the cleared pendingId is
+        // checkpointed. That stale marker must not strand an older approved receipt.
+        const state: State = JSON.parse(running.state_json);
+        state.pendingId = uncertainAction;
+        await store.checkpoint(running, state);
+      }
+      if (dispatched) await store.markPaid(running);
+      let reads = 0;
+      const providers: Providers = {
+        tools: async () => [], close: async () => {},
+        respond: async () => { throw Error('Must not replay a dead command'); },
+        call: async (name, args) => {
+          assert.equal(name, 'enrich_candidate_skip_trace');
+          assert.deepEqual(args.reconcile_receipt, { id: skip.id, run_id: skip.run_id });
+          assert.equal(args.npi, skip.npi);
+          reads++;
+          return { ...skip, status: 'no_contact', charge_reconciled: true };
+        }
+      };
+      const restarted = new NpgStore(store.db, store.now);
+      assert.deepEqual(await runRecoveryBatch(restarted, () => providers), { processed: 0 });
+      assert.equal(reads, 0, 'An unexpired interactive lease must not be touched');
+      advance(145001);
+      // No read()/view() call: the scheduler must normalize the abandoned command.
+      assert.deepEqual(await runRecoveryBatch(restarted, () => providers), { processed: 1 });
+      const after = await store.db.prepare('SELECT * FROM npg_analyst_conversations WHERE id=?').bind(c.id).first<any>();
+      assert.equal(after.status, dispatched ? 'ambiguous' : 'interrupted');
+      assert.equal(after.paid_dispatched, Number(dispatched));
+      assert.equal(JSON.parse(after.state_json).enrichmentRecovery[0].status, 'complete');
+      assert.equal((await store.action('alice', uncertainAction)).status, 'ambiguous');
+      assert.deepEqual(await store.action('alice', actionId), approved);
+      const receipt = await store.db.prepare('SELECT * FROM npg_analyst_receipts WHERE run_id=?').bind(running.run_id).first<any>();
+      assert.equal(receipt.outcome, dispatched ? 'ambiguous' : 'interrupted');
+      assert.equal(receipt.version, running.version);
+      assert.equal(reads, 1);
+      assert.deepEqual(await runRecoveryBatch(restarted, () => providers), { processed: 0 });
+      assert.equal(reads, 1);
+    }));
+  }
+}
+
+test('stale expiry bookkeeping cannot mark a newer command action ambiguous', () =>
+  fixture(async (store, advance) => {
+    const { c } = await pending(store);
+    const abandoned = await store.start('alice', c.id, c.version, 'abandoned');
+    await store.markPaid(abandoned);
+    advance(145001);
+    const actionId = crypto.randomUUID();
+    let freshRun = '';
+    const interleavedDb = new Proxy(store.db, {
+      get(target, property) {
+        if (property === 'batch') return async (statements: D1PreparedStatement[]) => {
+          // Another reader normalizes the old lease and starts a new command first.
+          const normalized = await store.read('alice', c.id);
+          const fresh = await store.start('alice', c.id, normalized.version, 'fresh-command', true);
+          freshRun = fresh.run_id;
+          await store.db.prepare(`INSERT INTO npg_analyst_actions(id,conversation_id,owner_id,version,tool,arguments_json,call_id,response_id,review_json,expires_at,status) VALUES(?,?,?,?,?,?,?,?,?,?,'dispatching')`)
+            .bind(actionId, c.id, 'alice', fresh.version, 'enrich_candidate_profile', '{}',
+              'fresh-call', 'fresh-response', '{}', store.now() + 600000).run();
+          await store.markPaid(fresh);
+          return target.batch(statements);
+        };
+        const value = Reflect.get(target, property);
+        return typeof value === 'function' ? value.bind(target) : value;
+      }
+    });
+    const after = await new NpgStore(interleavedDb, store.now).read('alice', c.id);
+    assert.equal(after.run_id, freshRun);
+    assert.equal(after.status, 'running');
+    assert.equal((await store.action('alice', actionId)).status, 'dispatching');
+    const receipts = await store.db.prepare('SELECT run_id,outcome FROM npg_analyst_receipts WHERE conversation_id=?').bind(c.id).all();
+    assert.deepEqual(receipts.results, [{ run_id: abandoned.run_id, outcome: 'ambiguous' }]);
+  }));
+
 for (const outcome of ['pending', 'no_contact'] as const) {
   test(`stale review snapshot cannot overwrite ${outcome} recovery or bypass its backoff`, () =>
     fixture(async (store) => {

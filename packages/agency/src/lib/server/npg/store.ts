@@ -135,22 +135,26 @@ export class NpgStore {
     if (!row) throw new NpgError(404, 'Conversation not found.');
     if (row.status === 'running' && row.lease_until <= this.now()) {
       const outcome = row.paid_dispatched ? 'ambiguous' : 'interrupted';
+      const now = this.now();
+      // Pin all bookkeeping to this expired command. A concurrent reader may have
+      // already normalized it and started a newer command before this batch runs.
       await this.db.batch([
         this.db
           .prepare(
-            "UPDATE npg_analyst_conversations SET status=?,lease_token=NULL WHERE id=? AND owner_id=? AND status='running' AND lease_until<=?"
+            "UPDATE npg_analyst_conversations SET status=?,lease_token=NULL WHERE id=? AND owner_id=? AND run_id=? AND version=? AND paid_dispatched=? AND status='running' AND lease_until<=?"
           )
-          .bind(outcome, id, owner, this.now()),
+          .bind(outcome, id, owner, row.run_id, row.version, row.paid_dispatched, now),
         this.db
           .prepare(
-            `INSERT OR IGNORE INTO npg_analyst_receipts SELECT run_id,id,owner_id,version,?,0,?,? FROM npg_analyst_conversations WHERE id=? AND owner_id=? AND status=?`
+            `INSERT OR IGNORE INTO npg_analyst_receipts SELECT run_id,id,owner_id,version,?,0,?,? FROM npg_analyst_conversations WHERE id=? AND owner_id=? AND run_id=? AND version=? AND status=? AND lease_until<=?`
           )
-          .bind(outcome, NPG_PROMPT_SHA256, this.now(), id, owner, outcome),
+          .bind(outcome, NPG_PROMPT_SHA256, now, id, owner, row.run_id, row.version, outcome, now),
         this.db
           .prepare(
-            "UPDATE npg_analyst_actions SET status='ambiguous' WHERE conversation_id=? AND owner_id=? AND status='dispatching'"
+            `UPDATE npg_analyst_actions SET status='ambiguous' WHERE conversation_id=? AND owner_id=? AND status='dispatching'
+             AND EXISTS (SELECT 1 FROM npg_analyst_conversations WHERE id=? AND owner_id=? AND run_id=? AND version=? AND status=? AND lease_until<=?)`
           )
-          .bind(id, owner)
+          .bind(id, owner, id, owner, row.run_id, row.version, outcome, now)
       ]);
       row = (await this.db
         .prepare('SELECT * FROM npg_analyst_conversations WHERE id=? AND owner_id=?')
@@ -159,13 +163,21 @@ export class NpgStore {
     }
     return row;
   }
-  async start(owner: string, id: string, version: number, token: string, recoverAmbiguous = false) {
+  async start(
+    owner: string,
+    id: string,
+    version: number,
+    token: string,
+    recoverAmbiguous = false,
+    expectedState?: string
+  ) {
     const run = crypto.randomUUID();
     const row = await this.db
       .prepare(
         `UPDATE npg_analyst_conversations SET status='running',version=version+1,
    run_id=?,lease_token=?,lease_until=?,paid_dispatched=0,updated_at=?
-   WHERE id=? AND owner_id=? AND scope='npg' AND version=? AND lease_until<=? AND (status IN ('idle','review') OR (?=1 AND status='ambiguous')) RETURNING *`
+   WHERE id=? AND owner_id=? AND scope='npg' AND version=? AND lease_until<=? AND (status IN ('idle','review') OR (?=1 AND status='ambiguous'))
+   AND state_json=COALESCE(?,state_json) RETURNING *`
       )
       .bind(
         run,
@@ -176,7 +188,8 @@ export class NpgStore {
         owner,
         version,
         this.now(),
-        recoverAmbiguous ? 1 : 0
+        recoverAmbiguous ? 1 : 0,
+        expectedState ?? null
       )
       .first<Conversation>();
     if (!row)

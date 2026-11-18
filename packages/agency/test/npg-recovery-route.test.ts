@@ -29,5 +29,5 @@ test('recovery fails closed without database and returns only aggregate counts f
   assert.equal(response.status, 200);
   assert.equal(response.headers.get('cache-control'), 'no-store');
   assert.deepEqual(await response.json(), { success: true, processed: 0 });
-  assert.equal(reads, 1);
+  assert.equal(reads, 2);
 });

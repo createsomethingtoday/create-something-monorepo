@@ -273,10 +273,20 @@ export async function reconcileState(
 /** Durable cron, including legacy sources. CAS leases serialize with interactive commands. */
 export async function runRecoveryBatch(store: NpgStore, makeProviders: () => Providers) {
   const now = store.now();
+  // A process can disappear without reaching the command's catch/finally. Reuse
+  // the normal expired-command receipt/action bookkeeping without a browser read.
+  // One normalization per invocation keeps this scan bounded alongside recovery.
+  const expired = await store.db.prepare(
+    `SELECT id,owner_id FROM npg_analyst_conversations WHERE scope='npg' AND status='running' AND lease_until<=?
+     AND EXISTS (SELECT 1 FROM json_each(state_json,'$.sources') WHERE json_extract(value,'$.tool')='enrich_candidate_complete_profile')
+     ORDER BY updated_at ASC LIMIT 1`
+  ).bind(now).all<{ id: string; owner_id: string }>();
+  for (const row of expired.results) await store.read(row.owner_id, row.id);
+  // A stale pendingId from a dead approval must not block an earlier approved
+  // receipt. Exact source/action association is validated independently below.
   const rows = await store.db
     .prepare(
       `SELECT * FROM npg_analyst_conversations WHERE scope='npg' AND status IN ('idle','review','ambiguous','interrupted') AND lease_until<=?
-    AND (status='review' OR json_extract(state_json,'$.pendingId') IS NULL)
     AND EXISTS (SELECT 1 FROM json_each(state_json,'$.sources') WHERE json_extract(value,'$.tool')='enrich_candidate_complete_profile')
     AND (json_extract(state_json,'$.enrichmentRecovery') IS NULL OR EXISTS (SELECT 1 FROM json_each(state_json,'$.enrichmentRecovery') WHERE json_extract(value,'$.status')='pending' AND json_extract(value,'$.nextAttemptAt')<=?))
     ORDER BY updated_at ASC LIMIT 1`

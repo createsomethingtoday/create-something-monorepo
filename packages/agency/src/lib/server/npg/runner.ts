@@ -473,7 +473,8 @@ export async function executeCommand(
       before.id,
       before.version,
       token,
-      refreshing && before.status === 'ambiguous'
+      refreshing && before.status === 'ambiguous',
+      before.state_json
     );
     let input: unknown[];
     if (refreshing) {
