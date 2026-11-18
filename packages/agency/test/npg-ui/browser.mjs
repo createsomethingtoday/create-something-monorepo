@@ -117,10 +117,12 @@ try {
         await page.getByTestId('mobile-nav-toggle').click();
       await page.locator('.history-item').first().click();
       const trigger = page.getByRole('button', { name: 'Inspect PDL evidence', exact: true });
+      await expect(page.getByText('Profile returned · 1 email · 1 phone', { exact: true })).toBeVisible();
       await trigger.focus();
       await trigger.press('Enter');
       const heading = page.getByRole('heading', { name: 'PDL evidence', exact: true });
       await expect(heading).toBeFocused();
+      await expect(page.getByText('synthetic-jamie@example.invalid', { exact: true }).first()).toBeVisible();
       const headingRect = await heading.boundingBox();
       const threadRect = await page.locator('.npg-thread').boundingBox();
       assert.ok(

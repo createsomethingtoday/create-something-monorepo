@@ -161,6 +161,13 @@ export function enrichmentSummary(sources: NpgView['sources']) {
       ['pdl', 'clay', 'exa', 'apify'].every((key) => activeProviders.includes(key)));
   const count = (value: unknown) =>
     Array.isArray(value) ? value.length : typeof value === 'string' && value.trim() ? 1 : 0;
+  const uniqueContactCount = (...values: unknown[]) =>
+    new Set(
+      values
+        .flatMap((value) => Array.isArray(value) ? value : [value])
+        .filter((value): value is string => typeof value === 'string' && Boolean(value.trim()))
+        .map((value) => value.trim().toLowerCase())
+    ).size;
   const rows = (['pdl', 'exa', 'apify'] as const).map((key) => {
     const value = record(providers[key]);
     const state = String(value.status ?? value.match_status ?? 'not_returned');
@@ -170,12 +177,20 @@ export function enrichmentSummary(sources: NpgView['sources']) {
     const result = record(value.result);
     const contacts = Array.isArray(result.contacts) ? result.contacts.map(record) : [];
     const emails =
-      count(personal.emails) +
+      (key === 'pdl'
+        ? uniqueContactCount(
+            personal.personal_emails,
+            personal.recommended_personal_email,
+            record(value.professional).work_email
+          )
+        : count(personal.emails)) +
       count(direct.emails) +
       count(professional.email) +
       contacts.filter((contact) => contact.type === 'email').length;
     const phones =
-      count(personal.phones) +
+      (key === 'pdl'
+        ? uniqueContactCount(personal.phone_numbers, personal.mobile_phone)
+        : count(personal.phones)) +
       count(direct.phones) +
       count(professional.phone) +
       contacts.filter((contact) => contact.type === 'phone').length;

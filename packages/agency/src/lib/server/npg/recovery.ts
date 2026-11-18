@@ -286,11 +286,13 @@ export async function runRecoveryBatch(store: NpgStore, makeProviders: () => Pro
   let processed = 0;
   for (const row of rows.results) {
     const token = crypto.randomUUID();
+    // Recovery preserves review versions so pending approvals remain valid. Compare
+    // the selected state too, or a later lease can revive a stale receipt/backoff.
     const lock = await store.db
       .prepare(
-        `UPDATE npg_analyst_conversations SET lease_token=?,lease_until=? WHERE id=? AND owner_id=? AND version=? AND status=? AND lease_until<=? RETURNING id`
+        `UPDATE npg_analyst_conversations SET lease_token=?,lease_until=? WHERE id=? AND owner_id=? AND version=? AND status=? AND lease_until<=? AND state_json=? RETURNING id`
       )
-      .bind(token, now + 240000, row.id, row.owner_id, row.version, row.status, now)
+      .bind(token, now + 240000, row.id, row.owner_id, row.version, row.status, now, row.state_json)
       .first();
     if (!lock) continue;
     processed++;

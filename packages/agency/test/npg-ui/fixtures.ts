@@ -283,7 +283,12 @@ export function fixture(mode: string | null) {
           retrieved_at: '2026-11-13T12:00:00Z',
           registry,
           professional: { job_title: 'Nurse practitioner' },
-          personal_contact: { emails: ['synthetic-jamie@example.invalid'] },
+          personal_contact: {
+            personal_emails: ['synthetic-jamie@example.invalid'],
+            recommended_personal_email: 'synthetic-jamie@example.invalid',
+            phone_numbers: ['+15555550100'],
+            mobile_phone: '+15555550100'
+          },
           provenance: { verification: 'unverified', consent_basis: 'not_recorded' }
         },
         clay: uncertain

@@ -156,6 +156,79 @@ test('durable cron resumes exact receipts without creation, serializes chat, and
     assert.equal(calls.length, 1);
     await assert.rejects(store.view('bob', c.id), /not found/);
   }));
+for (const outcome of ['pending', 'no_contact'] as const) {
+  test(`stale review snapshot cannot overwrite ${outcome} recovery or bypass its backoff`, () =>
+    fixture(async (store) => {
+      const { c, skip } = await pending(store);
+      const initial = await store.read('alice', c.id);
+      const state: State = JSON.parse(initial.state_json);
+      state.pendingId = 'pending-human-review';
+      await store.db.prepare("UPDATE npg_analyst_conversations SET status='review',state_json=? WHERE id=?")
+        .bind(JSON.stringify(state), c.id).run();
+
+      let selected!: () => void;
+      let release!: () => void;
+      const selectedSnapshot = new Promise<void>((resolve) => { selected = resolve; });
+      const releaseSnapshot = new Promise<void>((resolve) => { release = resolve; });
+      // Freeze one SELECT result until a competing batch has saved its new state and
+      // released the lease. Unlike idle conversations, review keeps its version.
+      const pauseSelection = (statement: D1PreparedStatement): D1PreparedStatement =>
+        new Proxy(statement, {
+          get(target, property) {
+            if (property === 'bind') return (...args: unknown[]) => pauseSelection(target.bind(...args));
+            if (property === 'all') return async () => {
+              const result = await target.all();
+              selected();
+              await releaseSnapshot;
+              return result;
+            };
+            const value = Reflect.get(target, property);
+            return typeof value === 'function' ? value.bind(target) : value;
+          }
+        });
+      const delayedDb = new Proxy(store.db, {
+        get(target, property) {
+          if (property === 'prepare') return (sql: string) => {
+            const statement = target.prepare(sql);
+            return sql.startsWith('SELECT * FROM npg_analyst_conversations WHERE scope=')
+              ? pauseSelection(statement) : statement;
+          };
+          const value = Reflect.get(target, property);
+          return typeof value === 'function' ? value.bind(target) : value;
+        }
+      });
+      let reads = 0;
+      const providers: Providers = {
+        tools: async () => [], close: async () => {},
+        respond: async () => { throw Error('model forbidden'); },
+        call: async (name, args) => {
+          assert.equal(name, 'enrich_candidate_skip_trace');
+          assert.deepEqual(args.reconcile_receipt, { id: skip.id, run_id: skip.run_id });
+          reads++;
+          return { ...skip, status: outcome, charge_reconciled: outcome === 'no_contact' };
+        }
+      };
+      const staleBatch = runRecoveryBatch(new NpgStore(delayedDb, store.now), () => providers);
+      await selectedSnapshot;
+      let saved: Awaited<ReturnType<NpgStore['read']>>;
+      try {
+        assert.deepEqual(await runRecoveryBatch(store, () => providers), { processed: 1 });
+        saved = await store.read('alice', c.id);
+      } finally {
+        release();
+      }
+      assert.deepEqual(await staleBatch, { processed: 0 });
+      assert.equal(reads, 1, 'A stale snapshot must never trigger another receipt read');
+      const after = await store.read('alice', c.id);
+      assert.equal(after.version, initial.version, 'The pending approval version stays valid');
+      assert.equal(after.state_json, saved.state_json, 'Recovered evidence and backoff remain intact');
+      const recovered: State = JSON.parse(after.state_json);
+      assert.equal(recovered.pendingId, 'pending-human-review');
+      assert.equal(recovered.enrichmentRecovery![0].attempts, 1);
+      assert.equal(recovered.enrichmentRecovery![0].status, outcome === 'pending' ? 'pending' : 'complete');
+      if (outcome === 'pending') assert.equal(recovered.enrichmentRecovery![0].nextAttemptAt, store.now() + 60000);
+    }));
+}
 test('catalog failure and restart persist attempts/backoff and reach exhaustion', () =>
   fixture(async (store, advance) => {
     const { c } = await pending(store);

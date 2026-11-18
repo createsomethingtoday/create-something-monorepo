@@ -108,7 +108,7 @@ test('four-provider result is visible and keeps billing separate from results', 
           pdl: {
             status: 'matched',
             professional: { job_title: 'NP' },
-            personal_contact: { emails: ['one@example.invalid'], phones: ['555'] }
+            personal_contact: { personal_emails: ['one@example.invalid'], phone_numbers: ['+15555550100'] }
           },
           clay: { status: 'pending' },
           exa: {
@@ -134,6 +134,31 @@ test('four-provider result is visible and keeps billing separate from results', 
   assert.match(result.billing, /\$0.20 USD.*2.*pending/);
   assert.match(result.billing, /historical.*unknown/i);
   assert.equal(enrichmentSummary([]), null);
+});
+
+test('PDL summary counts real personal-contact fields once and ignores empty or masked values', async () => {
+  const { enrichmentSummary } = await import('../src/lib/npg/astryx/presentation');
+  const summarize = (personal_contact: unknown, work_email?: string) => enrichmentSummary([{
+    tool: 'enrich_candidate_complete_profile',
+    data: { providers: { pdl: { status: 'matched', personal_contact, ...(work_email ? { professional: { work_email } } : {}) } } }
+  }])!.rows[0].summary;
+  assert.equal(summarize({
+    personal_emails: ['one@example.invalid', 'two@example.invalid', 'one@example.invalid'],
+    recommended_personal_email: ' ONE@example.invalid ',
+    phone_numbers: ['+15555550100', '+15555550101', '+15555550100'],
+    mobile_phone: '+15555550100'
+  }), '2 emails · 2 phones');
+  assert.equal(summarize({
+    personal_emails: [], recommended_personal_email: 'one@example.invalid',
+    phone_numbers: [], mobile_phone: '+15555550100'
+  }), '1 email · 1 phone');
+  assert.equal(summarize({
+    personal_emails: [null, false, ''], recommended_personal_email: null,
+    phone_numbers: [true, ' '], mobile_phone: false
+  }), '0 emails · 0 phones');
+  assert.equal(summarize({ personal_emails: ['one@example.invalid'] }, 'ONE@example.invalid'),
+    'Profile returned · 1 email · 0 phones');
+  assert.equal(summarize({}, 'work@example.invalid'), 'Profile returned · 1 email · 0 phones');
 });
 
 test('later chat stays visible and blocked outcomes stay explicit', async () => {
