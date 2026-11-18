@@ -99,9 +99,7 @@
   aria-label="Send feedback"
 >
   <MessageSquarePlus size={18} />
-  <span class="feedback-label" bind:this={labelEl}>
-    Feedback <span class="beta-badge">Beta</span>
-  </span>
+  <span class="feedback-label" bind:this={labelEl}>Feedback</span>
 </button>
 
 <Dialog
@@ -212,17 +210,6 @@
   .feedback-trigger:focus-visible {
     outline: 2px solid var(--color-focus);
     outline-offset: 2px;
-  }
-
-  .beta-badge {
-    font-size: 0.625rem;
-    font-weight: var(--font-semibold);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 0.125rem 0.375rem;
-    background: var(--color-info-muted);
-    color: var(--color-info-ink);
-    border-radius: var(--radius-sm);
   }
 
   form {
