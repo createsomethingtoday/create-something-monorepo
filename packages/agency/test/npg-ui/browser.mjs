@@ -108,6 +108,11 @@ try {
       await expect(bar.getByText('Price unknown. Confirmed receipts are prior spend.', {exact:true})).toBeInViewport();
       await expect(bar.getByText('PDL · Exa · Skip Trace', {exact:true})).toBeInViewport();
       await expect(bar.getByRole('button', {name:'Approve this action'})).toBeInViewport();
+      const contactScope = page.getByRole('heading', { name: 'Contact scope', exact: true }).locator('..');
+      await contactScope.scrollIntoViewIfNeeded();
+      const scopeBox = await contactScope.boundingBox();
+      const barBox = await bar.boundingBox();
+      assert.ok(scopeBox.y + scopeBox.height <= barBox.y + 1, 'Consent terms must clear the fixed decisions');
       const metadata = page.getByRole('button',{name:'Original review metadata',exact:true});
       await metadata.click();
       await expect(page.getByText('Providers in this approval',{exact:true})).toBeVisible();
@@ -131,6 +136,16 @@ try {
       await page.screenshot({path:`${evidence}/three-provider-billing-${width}.png`,animations:'disabled'});
     }, {width, height: width === 390 ? 844 : 900});
   }
+  await scenario('identity hold is the first provider action', async (page) => {
+    await gotoState(page, 'complete-identity-blocked');
+    const action = page.locator('.npg-enrichment-results button').first();
+    await expect(action).toHaveAccessibleName('Review Skip Trace evidence');
+    await action.click();
+    await expect(page.getByRole('heading', { name: 'Skip Trace evidence' })).toBeFocused();
+    await page.getByRole('button', { name: 'Close provider evidence' }).click();
+    await expect(action).toBeFocused();
+    assert.deepEqual(await commands(page), []);
+  });
   await scenario(
     'provider evidence keyboard focus and close restore',
     async (page) => {

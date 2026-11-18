@@ -30,6 +30,7 @@ import { Icon } from '@astryxdesign/core/Icon';
 import {
   Plus,
   MessagesSquare,
+  LockKeyhole,
   UserRound,
   ArrowUp,
   Download,
@@ -319,6 +320,7 @@ function Fields({
   evidence?: boolean;
   wideLabels?: boolean;
 }) {
+  if (!fields.length) return null;
   const currency = fields.find((field) => field.label === 'Currency')?.value;
   const rows = fields.flatMap((field) =>
     review && field.label === 'Limits' ? (knownLimitGroups(field.value) ?? [field]) : [field]
@@ -419,8 +421,8 @@ function Evidence({
                   </Text>
                 </HStack>
                 {(artifact.total !== null || artifact.shown !== null) && (
-                  <VStack gap={1}>
-                    <HStack gap={2} align="center">
+                  <VStack gap={1} className={shortPhone ? undefined : 'rounded-lg bg-workspace-tint px-3 py-2'}>
+                    <HStack gap={2} align="center" wrap="wrap">
                       <Text type="large" size="2xl" weight="semibold" hasTabularNumbers>
                         {artifact.total === null
                           ? 'Total not supplied'
@@ -428,7 +430,7 @@ function Evidence({
                             (source.tool === 'search_registry_sourcing' ? ' records' : ' total')}
                       </Text>
                       <Text type="supporting" color="secondary">
-                        in this source
+                        {source.tool === 'get_healthcare_coverage' ? 'in the coverage report' : 'in this source'}
                       </Text>
                     </HStack>
                     <Text type="supporting" size="base" color="secondary">
@@ -597,9 +599,12 @@ function Evidence({
           );
         })
       ) : (
-        <Text color="secondary">
-          Source evidence and complete exports will appear here after a lookup.
-        </Text>
+        <VStack gap={2}>
+          <Text weight="medium">No sources yet</Text>
+          <Text color="secondary">
+            Source evidence and complete exports will appear here after a lookup.
+          </Text>
+        </VStack>
       )}
     </VStack>
   );
@@ -654,6 +659,11 @@ function ProviderRows({
   enrichment: NonNullable<ReturnType<typeof enrichmentSummary>>;
 }) {
   const [expanded, setExpanded] = useState<string | null>(null);
+  const activeRow = enrichment.rows.find((row) => row.key === expanded);
+  const sections = activeRow ? sourceArtifact(activeRow.data).sections : [];
+  const orderedRows = [...enrichment.rows].sort(
+    (a, b) => Number(b.outcome.includes('review')) - Number(a.outcome.includes('review'))
+  );
   const detailHeading = useRef<HTMLHeadingElement | null>(null);
   const returnFocus = useRef<HTMLButtonElement | null>(null);
   useLayoutEffect(() => {
@@ -673,11 +683,11 @@ function ProviderRows({
   return (
     <VStack gap={0}>
       <List density="compact" hasDividers edge="flush">
-        {enrichment.rows.map((row) => (
+        {orderedRows.map((row) => (
           <ListItem
             key={row.key}
             label={
-              <HStack gap={2} wrap="wrap">
+              <HStack gap={2} wrap="wrap" align="center">
                 <Text weight="semibold">{row.label}</Text>
                 <Text
                   type="supporting"
@@ -726,11 +736,11 @@ function ProviderRows({
           />
         ))}
       </List>
-      {expanded && (
-        <Section id="npg-provider-detail" padding={2} variant="transparent">
-          <VStack gap={1}>
+      {activeRow && (
+        <Section id="npg-provider-detail" padding={3} variant="transparent" className="rounded-lg border border-workspace-tint">
+          <VStack gap={3}>
             <Heading ref={detailHeading} level={3} tabIndex={-1}>
-              {enrichment.rows.find((row) => row.key === expanded)?.label} evidence
+              {activeRow.label} evidence
             </Heading>
             <Button label="Close provider evidence" variant="secondary" onClick={closeEvidence}>
               Close evidence
@@ -739,7 +749,7 @@ function ProviderRows({
               Contact candidates require identity review. Ownership and consent are unverified;
               outreach permission is not established.
             </Text>
-            {sourceArtifact(enrichment.rows.find((row) => row.key === expanded)?.data).sections.map(
+            {sections.map(
               (section, index) => (
                 <VStack key={index} gap={2}>
                   <Heading level={3}>{section.title}</Heading>
@@ -762,8 +772,7 @@ function ProviderRows({
                 </VStack>
               )
             )}
-            {!sourceArtifact(enrichment.rows.find((row) => row.key === expanded)?.data).sections
-              .length && (
+            {!sections.length && (
               <Text color="secondary">
                 No contact or profile evidence returned. Review the provider status.
               </Text>
@@ -776,7 +785,7 @@ function ProviderRows({
                 wordBreak="break-word"
                 className="npg-json whitespace-pre-wrap max-w-full overflow-auto"
               >
-                {JSON.stringify(enrichment.rows.find((row) => row.key === expanded)?.data, null, 2)}
+                {JSON.stringify(activeRow.data, null, 2)}
               </Text>
             </Collapsible>
           </VStack>
@@ -1392,6 +1401,9 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
     argumentFields[0].label === 'Candidate NPI' &&
     summary?.target === 'NPI ' + argumentFields[0].value;
   const completeReview = conversation?.pending?.tool === 'enrich_candidate_complete_profile';
+  const policyTerms = completeReview
+    ? terms.filter((field) => ['Spend tracking', 'Contact scope'].includes(field.label))
+    : [];
   const composer = conversation?.pending ? (
     <Section
       padding={1}
@@ -1404,15 +1416,16 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
         <VStack gap={0.5} className="npg-review-summary" id="npg-decision-context">
           <HStack gap={2} justify="between" wrap="wrap">
             <Text weight="semibold">{completeReview ? 'Complete profile' : summary?.title}</Text>
-            <Text>
-              <Text type="supporting">
+            <Text className={completeReview ? 'rounded-md bg-workspace-tint px-2' : undefined}>
+              <Text type="supporting" color="secondary">
+                {completeReview && 'New charge · '}
                 {summary?.priceLabel === 'Maximum' ? 'Max' : summary?.priceLabel}{' '}
               </Text>
               <Text weight="semibold">{summary?.price}</Text>
             </Text>
           </HStack>
           {summary?.title === 'Complete profile · three providers' && <Text type='supporting'>PDL · Exa · Skip Trace</Text>}
-          {completeReview && <Text type='supporting'>{summary?.price === 'Unknown' ? 'Price unknown. ' : ''}Confirmed receipts are prior spend.</Text>}
+          {completeReview && <Text weight="medium">{summary?.price === 'Unknown' ? 'Price unknown. ' : ''}Confirmed receipts are prior spend.</Text>}
           {summary?.name && (
             <HStack gap={1} className="min-w-0">
               <Text type="supporting" size="base" maxLines={1} className="min-w-0">
@@ -1478,7 +1491,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
       padding={empty ? 0 : 1.5}
     >
       <VStack gap={1}>
-        {empty && <Text weight='medium'>Your question</Text>}
+        {empty && <Text weight="medium">Your question</Text>}
         {canRefreshSkipTrace(conversation) && !recovery && (
           <Button
             label="Refresh Skip Trace"
@@ -1491,19 +1504,6 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
             Refresh Skip Trace
           </Button>
         )}
-        {empty && <Collapsible trigger="Enrichment availability" defaultIsOpen={false}>
-          <Text color="secondary">
-            Complete enrichment attempts PDL, Exa and Skip Trace independently for one selected NPI, with one exact paid review. Provider
-            failures remain visible alongside available results.
-          </Text>
-          <Text color="secondary">
-            Spend tracking shows confirmed USD from receipts, separate estimates and pending
-            receipts. Historical spend is unknown. There are no application spending limits; an
-            unknown estimate does not block your review. Identity, ownership, privacy and consent
-            still require review. Do not repeat an uncertain operation; refresh its exact existing
-            receipt. You can also request a single-provider Skip Trace review.
-          </Text>
-        </Collapsible>}
         <Theme theme={npgComposerTheme} mode="light">
           <ChatComposer
             isDisabled={navigating}
@@ -1581,6 +1581,19 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
             }
           />
         </Theme>
+        {empty && <Collapsible trigger="Enrichment availability" defaultIsOpen={false}>
+          <Text color="secondary">
+            Complete enrichment attempts PDL, Exa and Skip Trace independently for one selected NPI, with one exact paid review. Provider
+            failures remain visible alongside available results.
+          </Text>
+          <Text color="secondary">
+            Spend tracking shows confirmed USD from receipts, separate estimates and pending
+            receipts. Historical spend is unknown. There are no application spending limits; an
+            unknown estimate does not block your review. Identity, ownership, privacy and consent
+            still require review. Do not repeat an uncertain operation; refresh its exact existing
+            receipt. You can also request a single-provider Skip Trace review.
+          </Text>
+        </Collapsible>}
       </VStack>
     </Section>
   );
@@ -1651,7 +1664,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                   alt="The Nurse Practitioner Group"
                   width={441}
                   height={288}
-                  className="w-12 lg:w-20 h-auto object-contain"
+                  className="w-12 lg:w-16 h-auto object-contain"
                 />
               }
               heading={smallPhone ? 'Analyst' : 'Healthcare analyst'}
@@ -1678,7 +1691,12 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
       sideNav={
         <SideNav
           aria-label="Your conversations"
-          header={<SideNavHeading icon={<Icon icon={MessagesSquare} />} heading="Conversations" />}
+          header={
+            <SideNavHeading
+              icon={<Icon icon={MessagesSquare} />}
+              heading="Conversations"
+            />
+          }
           topContent={
             <Button
               icon={<Icon icon={Plus} />}
@@ -1689,9 +1707,10 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
           }
           footer={
             conversations.length ? (
-              <Text type="supporting" color="secondary">
-                Only your account can open these conversations.
-              </Text>
+              <HStack gap={2} align="center">
+                <Icon icon={LockKeyhole} size="sm" />
+                <Text type="supporting" color="secondary">Private to your account</Text>
+              </HStack>
             ) : null
           }
         >
@@ -1699,7 +1718,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
             conversations.map((item) => (
               <SideNavItem
                 key={item.id}
-                className="history-item"
+                className="history-item !flex-col !items-start !gap-1 !py-3 [&>span:first-child]:!whitespace-normal [&>span:first-child]:line-clamp-2"
                 label={item.title}
                 aria-label={
                   item.title +
@@ -1712,7 +1731,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                   })
                 }
                 endContent={
-                  <VStack as="span" gap={0} align="end">
+                  <HStack as="span" gap={2} align="center">
                     <Text type="supporting" color="secondary">
                       {new Date(item.updated_at).toLocaleDateString([], {
                         month: 'short',
@@ -1729,7 +1748,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                         {conversationStatus(item.status)}
                       </Text>
                     )}
-                  </VStack>
+                  </HStack>
                 }
                 isSelected={item.id === conversation?.id}
                 isDisabled={busy}
@@ -1738,9 +1757,13 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
             ))
           ) : (
             <Section padding={4} variant="transparent">
-              <Text type="supporting" color="secondary">
-                Your conversations will stay here. Only your signed-in account can open them.
-              </Text>
+              <VStack gap={2}>
+                <Text weight="semibold">No conversations yet</Text>
+                <Text type="supporting" color="secondary">
+                  Start a chat to save your research here.
+                </Text>
+                <Text type="supporting" color="secondary">Private to your signed-in account.</Text>
+              </VStack>
             </Section>
           )}
         </SideNav>
@@ -1813,18 +1836,18 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                   <VStack gap={6}>
                     {empty && (
                       <VStack
-                        gap={4}
-                        paddingBlock={narrow ? 3 : 6}
+                        gap={5}
+                        paddingBlock={narrow ? 4 : 6}
                         width="100%"
                         className="npg-welcome max-w-screen-sm mx-auto"
                       >
-                        <VStack gap={3}>
-                          <Heading level={1} accessibilityLevel={2}>
+                        <VStack gap={2}>
+                          <Heading level={1} accessibilityLevel={2} className="!text-3xl md:!text-4xl !tracking-tight !leading-tight">
                             Who are you looking for?
                           </Heading>
                           <Text type="body" size="lg" color="secondary">
-                            Start with a specialty and location. Find candidates, keep the complete
-                            sourcing list, and check the evidence behind it.
+                            Find nurse practitioners by specialty and location, check the registry
+                            evidence, and export the full list.
                           </Text>
                         </VStack>
                         {composer}
@@ -1833,15 +1856,16 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                           hasDividers
                           edge="flush"
                           header={
-                            <Text color="secondary">Try a preset, then edit before sending.</Text>
+                            <Text weight="semibold">Start with an editable request</Text>
                           }
                         >
                           {examples.map((example) => (
                             <ListItem
                               key={example.label}
+                              aria-label={example.label + ': ' + example.detail + '. Add to your request'}
                               label={<Text weight="semibold">{example.label}</Text>}
                               description={<Text color="secondary">{example.detail}</Text>}
-                              startContent={<Icon icon={example.icon} />}
+                              startContent={<HStack padding={2} className="rounded-lg bg-workspace-tint text-workspace-accent"><Icon icon={example.icon} /></HStack>}
                               endContent={<Icon icon={ArrowRight} size="sm" />}
                               align="first-line"
                               onClick={() => {
@@ -1862,7 +1886,7 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                         className="npg-enrichment-results min-w-0"
                       >
                         <VStack gap={3}>
-                          <VStack gap={1}>
+                          <VStack gap={1} className="rounded-lg bg-workspace-tint px-3 py-2">
                             <Heading id="npg-enrichment-title" level={2}>
                               {originalConversation ? 'Saved enrichment results' : 'Enrichment results'}
                             </Heading>
@@ -1871,8 +1895,10 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                                 onClick={() => void open(originalConversation, true)} />
                             )}
                             <Text color="secondary">
+                              {enrichment.scope}
+                            </Text>
+                            <Text type="supporting" color="secondary">
                               NPI {enrichment.npi} · Contact candidates remain unverified
-                              <br />{enrichment.scope}
                             </Text>
                           </VStack>
                           <ProviderRows enrichment={enrichment} />
@@ -1934,11 +1960,13 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                         dividers={narrow ? [] : ['top', 'bottom', 'start', 'end']}
                         aria-labelledby="npg-review-title"
                       >
-                        <VStack gap={3}>
-                          <Heading id="npg-review-title" level={2} tabIndex={-1}>
-                            Review: {completeReview ? 'Complete profile' : summary?.title}
-                          </Heading>
+                        <VStack gap={4}>
                           <VStack gap={1}>
+                            <Heading id="npg-review-title" level={2} tabIndex={-1}>
+                              Review: {completeReview ? 'Complete profile' : summary?.title}
+                            </Heading>
+                          </VStack>
+                          <VStack gap={1} className="rounded-lg bg-workspace-tint px-3 py-2">
                             {summary?.name && (
                               <Text weight="semibold" wordBreak="break-word">
                                 {summary.name}{' '}
@@ -1960,18 +1988,22 @@ export function Workspace({ bootstrap }: { bootstrap: NpgBootstrap }) {
                                 : 'This saved approval checks PDL, Clay, Exa and Skip Trace. Its original scope is unchanged. Identity and consent remain unverified.'
                               : 'Approve only this request. Contact consent remains unverified.'}
                           </Text>
-                          <Fields
-                            compact={!narrow}
-                            fields={terms.filter((field) => field.label === 'Scope')}
-                          />
+                          <Fields compact={!narrow} fields={terms.filter((field) => field.label === 'Scope')} />
                           <Divider />
                           <Fields
                             review
                             compact={!narrow}
                             fields={terms.filter(
-                              (field) => !['Provider', 'Scope', ...(completeReview ? ['Providers in this approval'] : [])].includes(field.label)
+                              (field) => !policyTerms.includes(field) &&
+                                !['Provider', 'Scope', ...(completeReview ? ['Providers in this approval'] : [])].includes(field.label)
                             )}
                           />
+                          {policyTerms.map((field) => (
+                            <VStack key={field.label} gap={1}>
+                              <Heading level={3}>{field.label}</Heading>
+                              <Text wordBreak="break-word">{field.value}</Text>
+                            </VStack>
+                          ))}
                           {completeReview && (
                             <Collapsible trigger="Original review metadata" defaultIsOpen={false}>
                               <Fields compact={!narrow} fields={terms.filter(field => ['Provider', 'Providers in this approval'].includes(field.label))} />

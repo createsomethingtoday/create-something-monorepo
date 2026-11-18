@@ -288,7 +288,7 @@ try {
       release();
       await expect(page.locator('.npg-messages')).toContainText('Synthetic delayed answer.');
       await expect(page.getByRole('button', { name: 'Send question', exact: true })).toBeDisabled();
-      await expect(page.locator('.npg-state')).toHaveText('Ready');
+      await expect(page.locator('.npg-state')).toHaveText('Chat ready');
       const positions = await thread.evaluate(async (node) => {
         const samples = [];
         for (let index = 0; index < 20; index++) {
@@ -656,7 +656,7 @@ try {
       assert.ok(labels.indexOf('Provider') < labels.indexOf('Scope'));
       const provider = await page
         .locator('.npg-review')
-        .getByText('Apify one-api/skip-trace', { exact: true })
+        .getByText('Apify Skip Trace', { exact: true })
         .boundingBox();
       const thread = await page.locator('.npg-thread').boundingBox();
       assert.ok(
