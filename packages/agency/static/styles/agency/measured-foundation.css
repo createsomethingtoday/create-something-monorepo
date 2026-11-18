@@ -259,3 +259,31 @@ html:has(.measured-foundation),body:has(.measured-foundation),
   .measured-foundation .hero-scene-caption{width:100%;bottom:0;text-align:left;}
 }
 @media print{.measured-foundation .hero-scene-caption{position:static;width:100%;text-align:left;}}
+
+/* Approved one-shot film shares the poster's geometry; it never owns layout. */
+.measured-foundation .hero-motion{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+.measured-foundation .hero-motion video{position:absolute;right:0;top:0;height:100%;width:auto;max-width:none;}
+.measured-foundation .canon-scene-hero :is(.label-row,.hero-copy,.hero-scene-caption){position:relative;z-index:1;}
+.measured-foundation .canon-scene-hero .hero-scene-caption{position:absolute;}
+.measured-foundation .hero-playback{position:absolute;left:0;bottom:12px;z-index:2;min-height:44px;padding:8px 12px;border:1px solid var(--border);background:var(--background);color:var(--foreground);font:inherit;font-size:12px;cursor:pointer;}
+.measured-foundation .hero-playback:focus-visible{outline:2px solid currentColor;outline-offset:4px;}
+.measured-foundation .hero-motion video[hidden],.measured-foundation .hero-playback[hidden]{display:none;}
+@media(max-width:900px){.measured-foundation .hero-motion video{top:auto;bottom:32px;width:100%;height:auto;}.measured-foundation .hero-playback{bottom:42px;}}
+@media(max-width:600px){.measured-foundation .hero-motion video{width:160%;}}
+@media print{.measured-foundation .hero-motion,.measured-foundation .hero-playback{display:none;}}
+/* Keep the mobile transport beneath the artwork and its caption at every state. */
+@media(max-width:900px){
+  .agency-home.measured-foundation .hero.canon-scene-hero{padding-bottom:calc(56.31% + 98px);background-position:center bottom 88px;}
+  .measured-foundation .hero-motion{inset:auto 0 88px;aspect-ratio:16/9;}
+  .measured-foundation .hero-motion video{bottom:0;}
+  .measured-foundation .canon-scene-hero .hero-scene-caption{bottom:48px;}
+  .measured-foundation .hero-playback{bottom:0;left:0;right:auto;}
+}
+@media(max-width:600px){
+  .agency-home.measured-foundation .hero.canon-scene-hero{padding-bottom:calc(90% + 98px);background-position:right bottom 88px;}
+  .measured-foundation .hero-motion{aspect-ratio:10/9;}
+}
+@media print{
+  .agency-home.measured-foundation .hero.canon-scene-hero{padding:24px 0;}
+  .measured-foundation .canon-scene-hero .hero-scene-caption{position:static;width:100%;text-align:left;}
+}
