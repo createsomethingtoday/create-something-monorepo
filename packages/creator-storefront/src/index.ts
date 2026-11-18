@@ -5,7 +5,7 @@
 import { AirtableAuthoringStore } from './airtable';
 import { handleRequest } from './app';
 import type { AppServices } from './app';
-import { requireAuthoringConfig, requirePublicConfig } from './config';
+import { inventoryFetch, requireAuthoringConfig, requirePublicConfig } from './config';
 import type { Env } from './config';
 import { unwrap } from './dispatch';
 import type { CreatorStorefrontWriter } from './durable-object';
@@ -16,7 +16,7 @@ export { CreatorStorefrontWriter } from './durable-object';
 
 const services: AppServices = {
 	readModel: (env) => new D1ReadModel(requirePublicConfig(env).readModel),
-	publicInventory: (env) => new TemplateSearchInventory(requirePublicConfig(env).templateSearchUrl, undefined, 2500),
+	publicInventory: (env) => new TemplateSearchInventory(requirePublicConfig(env).templateSearchUrl, inventoryFetch(env), 2500),
 	store: (env) => {
 		const config = requireAuthoringConfig(env);
 		return new AirtableAuthoringStore({ apiKey: config.airtableApiKey, apiBaseUrl: config.airtableApiBaseUrl });
