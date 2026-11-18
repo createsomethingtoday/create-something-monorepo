@@ -275,7 +275,7 @@ export async function runRecoveryBatch(store: NpgStore, makeProviders: () => Pro
   const now = store.now();
   const rows = await store.db
     .prepare(
-      `SELECT * FROM npg_analyst_conversations WHERE scope='npg' AND status IN ('idle','review','ambiguous') AND lease_until<=?
+      `SELECT * FROM npg_analyst_conversations WHERE scope='npg' AND status IN ('idle','review','ambiguous','interrupted') AND lease_until<=?
     AND (status='review' OR json_extract(state_json,'$.pendingId') IS NULL)
     AND EXISTS (SELECT 1 FROM json_each(state_json,'$.sources') WHERE json_extract(value,'$.tool')='enrich_candidate_complete_profile')
     AND (json_extract(state_json,'$.enrichmentRecovery') IS NULL OR EXISTS (SELECT 1 FROM json_each(state_json,'$.enrichmentRecovery') WHERE json_extract(value,'$.status')='pending' AND json_extract(value,'$.nextAttemptAt')<=?))

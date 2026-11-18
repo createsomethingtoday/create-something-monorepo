@@ -6,11 +6,11 @@ Historical jobs, receipts and original action scopes remain intact in D1. Unreso
 
 ## Existing receipt recovery
 
-The Healthcare MCP Worker runs once per minute and awaits an authenticated POST to the Agency reconciliation endpoint. The endpoint accepts only the existing internal service bearer; it accepts no caller-selected account, action or candidate. It scans one eligible conversation per invocation and uses a compare-and-set lease shared with interactive chat. Recovery during another pending review preserves the approval version and exact payload.
+The Healthcare MCP Worker runs once per minute and awaits an authenticated POST to the Agency reconciliation endpoint. The endpoint accepts only the existing internal service bearer; it accepts no caller-selected account, action or candidate. It scans one eligible conversation per invocation and uses a compare-and-set lease shared with interactive chat. Recovery during another pending review preserves the approval version and exact payload. Previously approved receipts remain eligible after an unrelated chat interruption; recovery preserves the interrupted chat status and never retries the failed message.
 
 Recovery state is persisted in the conversation before external reads: action/NPI association, attempt count, next attempt, deadline and final state. Existing conversations are discovered from saved complete-profile sources. Each action is limited to 24 attempts and 24 hours with exponential backoff from one minute to one hour. An interruption retains the reserved attempt and the original receipt. The request has a 170-second provider deadline and a 240-second lease.
 
-Only two operations are available in receipt-only mode:
+Only one operation is available in receipt-only mode:
 
 - Reconcile Skip Trace with its original receipt ID, run ID and NPI.
 

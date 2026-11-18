@@ -53,6 +53,7 @@ import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 import { NpgStore, type State } from '../src/lib/server/npg/store.ts';
 import { runRecoveryBatch } from '../src/lib/server/npg/recovery.ts';
+import { executeCommand } from '../src/lib/server/npg/runner.ts';
 import type { Providers } from '../src/lib/server/npg/providers.ts';
 const require = createRequire(import.meta.url);
 const { Miniflare } = createRequire(require.resolve('wrangler/package.json'))('miniflare');
@@ -155,6 +156,56 @@ test('durable cron resumes exact receipts without creation, serializes chat, and
     await runRecoveryBatch(new NpgStore(store.db, store.now), () => p);
     assert.equal(calls.length, 1);
     await assert.rejects(store.view('bob', c.id), /not found/);
+  }));
+test('an unrelated chat interruption does not strand approved receipt recovery after restart', () =>
+  fixture(async (store, advance) => {
+    const { c, actionId, skip } = await pending(store);
+    const approved = await store.action('alice', actionId);
+    let reads = 0;
+    const receipts: Providers = {
+      tools: async () => [], close: async () => {},
+      respond: async () => { throw Error('Recovery must never restart the chat model'); },
+      call: async (name, args) => {
+        assert.equal(name, 'enrich_candidate_skip_trace');
+        assert.deepEqual(args.reconcile_receipt, { id: skip.id, run_id: skip.run_id });
+        assert.equal(args.npi, skip.npi);
+        reads++;
+        return reads === 1 ? skip : { ...skip, status: 'no_contact', charge_reconciled: true };
+      }
+    };
+    await runRecoveryBatch(store, () => receipts);
+    const before = await store.read('alice', c.id);
+    const interrupted = await executeCommand(store, 'alice', {
+      type: 'message', id: c.id, version: before.version, text: 'Explain these existing results.'
+    }, () => ({
+      tools: async () => [], close: async () => {},
+      call: async () => { throw Error('No new provider lookup is allowed'); },
+      respond: async () => { throw Error('Synthetic later model failure'); }
+    }));
+    assert.equal(interrupted.status, 'interrupted');
+    assert.equal(interrupted.enrichmentRecovery[0].status, 'pending');
+    assert.equal(interrupted.enrichmentRecovery[0].attempts, 1);
+    const failedChat = await store.read('alice', c.id);
+    const savedMessages = JSON.parse(failedChat.state_json).messages;
+
+    const restarted = new NpgStore(store.db, store.now);
+    assert.deepEqual(await runRecoveryBatch(restarted, () => receipts), { processed: 0 });
+    assert.equal(reads, 1, 'The original backoff still applies after interruption');
+    advance(60000);
+    assert.deepEqual(await runRecoveryBatch(restarted, () => receipts), { processed: 1 });
+    assert.equal(reads, 2);
+    const after = await restarted.read('alice', c.id);
+    const recovered: State = JSON.parse(after.state_json);
+    assert.equal(after.status, 'interrupted', 'Receipt recovery does not reopen the interrupted chat');
+    assert.equal(after.paid_dispatched, 0);
+    assert.deepEqual(recovered.messages, savedMessages);
+    assert.equal(recovered.enrichmentRecovery![0].status, 'complete');
+    assert.equal(recovered.enrichmentRecovery![0].attempts, 2);
+    assert.equal((recovered.sources[0].data as any).providers.apify.run_id, skip.run_id);
+    assert.equal((recovered.sources[0].data as any).providers.apify.status, 'no_contact');
+    assert.deepEqual(await store.action('alice', actionId), approved);
+    assert.deepEqual(await runRecoveryBatch(restarted, () => receipts), { processed: 0 });
+    assert.equal(reads, 2, 'Completed receipt must not be read again');
   }));
 for (const outcome of ['pending', 'no_contact'] as const) {
   test(`stale review snapshot cannot overwrite ${outcome} recovery or bypass its backoff`, () =>
