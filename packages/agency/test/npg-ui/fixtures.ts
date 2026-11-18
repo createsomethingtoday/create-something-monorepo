@@ -207,7 +207,7 @@ export function fixture(mode: string | null) {
     view.messages = [
       {
         role: 'user',
-        text: 'Enrich Jamie Example with all four providers, including personal-contact candidates. NPI 1234567890.'
+        text: 'Enrich Jamie Example with PDL, Exa and Skip Trace. Include personal-contact candidates. NPI 1234567890.'
       }
     ];
     view.sources = [source];
@@ -227,23 +227,24 @@ export function fixture(mode: string | null) {
           operation_id: '1d0822cf-c2ac-4713-a6ba-fef887b7bccc'
         },
         review: {
-          provider: 'PDL + Clay + Exa + Skip Trace',
+          providers: ['pdl', 'exa', 'apify'],
+          provider: 'PDL + Exa + Skip Trace',
           currency: 'USD',
           confirmedTrackedUsd: 0.2,
           pendingReceipts: 2,
           historicalSpend: 'Unknown; tracked receipts are not a lifetime total.',
           providerEstimates: [
             { provider: 'pdl', estimated_usd: null },
-            { provider: 'clay', estimated_usd: 0.25 },
+
             { provider: 'exa', estimated_usd: null },
             { provider: 'apify', estimated_usd: null }
           ],
           spendPolicy:
             'Spend tracking only. Estimates are separate from confirmed USD; unknown estimates do not block this request. No application spend limit.',
           contactScope:
-            'One selected NPI. Professional and personal-contact candidates from PDL, public professional contacts from Clay and Exa, and broker personal-contact candidates from Skip Trace. Identity, ownership and consent are unverified.',
+            'One selected NPI. Professional and personal-contact candidates from PDL, public professional contacts from Exa, and broker personal-contact candidates from Skip Trace. Identity, ownership and consent are unverified.',
           execution:
-            'All four providers are attempted independently. Failures stay visible. Do not repeat uncertain operations; recover exact existing receipts.'
+            'PDL, Exa and Skip Trace are attempted independently. Failures stay visible. Do not repeat uncertain operations; recover exact existing receipts.'
         },
         expiresAt: Date.now() + 600000
       };
@@ -282,7 +283,12 @@ export function fixture(mode: string | null) {
           retrieved_at: '2026-11-13T12:00:00Z',
           registry,
           professional: { job_title: 'Nurse practitioner' },
-          personal_contact: { emails: ['synthetic-jamie@example.invalid'] },
+          personal_contact: {
+            personal_emails: ['synthetic-jamie@example.invalid'],
+            recommended_personal_email: 'synthetic-jamie@example.invalid',
+            phone_numbers: ['+15555550100'],
+            mobile_phone: '+15555550100'
+          },
           provenance: { verification: 'unverified', consent_basis: 'not_recorded' }
         },
         clay: uncertain
@@ -349,10 +355,18 @@ export function fixture(mode: string | null) {
           }
         };
       }
+      if (mode === 'complete-three') {
+        providers.pdl = {status:'no_match'};
+        providers.exa = {status:'no_match'};
+        providers.apify = {status:'no_contact'};
+        delete providers.clay;
+      }
+      if (['complete-pending','complete-identity-blocked'].includes(mode ?? '')) delete providers.clay;
       view.sources.push({
         tool: 'enrich_candidate_complete_profile',
         data: {
-          status: 'partial',
+          status: mode === 'complete-three' ? 'complete' : 'partial',
+          ...(['complete-three','complete-pending','complete-identity-blocked'].includes(mode ?? '') ? {active_providers:['pdl','exa','apify']} : {}),
           npi,
           profile: {
             registry,
@@ -369,7 +383,7 @@ export function fixture(mode: string | null) {
             operation_id: '1d0822cf-c2ac-4713-a6ba-fef887b7bccc',
             actual_usd: 0.2,
             estimated_usd: null,
-            pending_receipts: 2,
+            pending_receipts: mode === 'complete-three' || mode === 'complete-identity-blocked' ? 0 : mode === 'complete-pending' ? 1 : 2,
             historical_status: 'unknown'
           },
           recovery:
@@ -386,6 +400,48 @@ export function fixture(mode: string | null) {
       });
     }
   }
+  if (
+    ['complete-pending', 'complete-partial', 'complete-done', 'complete-identity-blocked'].includes(
+      mode ?? ''
+    )
+  ) {
+    const data = view.sources.find((entry) => entry.tool === 'enrich_candidate_complete_profile')
+      ?.data as any;
+    if (data) {
+      if (mode === 'complete-done') {
+        data.providers.clay = {
+          status: 'review_required',
+          result: { contacts: [{ type: 'email', value: 'synthetic@example.invalid' }] }
+        };
+        data.providers.apify = { status: 'no_contact', charge_reconciled: true };
+        data.status = 'complete';
+        data.spend_tracking.pending_receipts = 0;
+      }
+      if (mode === 'complete-identity-blocked') {
+        data.providers.apify = { status: 'blocked', reason: 'identity_not_resolved' };
+        delete data.providers.clay;
+      }
+      view.enrichmentRecovery = [
+        {
+          actionId: '1d0822cf-c2ac-4713-a6ba-fef887b7bccc',
+          npi: data.npi,
+          status:
+            mode === 'complete-done'
+              ? 'complete'
+              : mode === 'complete-identity-blocked'
+                ? 'blocked'
+                : 'pending',
+          attempts: 1,
+          nextAttemptAt: Date.now() + 60000,
+          deadlineAt: Date.now() + 86400000
+        }
+      ];
+    }
+  }
+  if (mode === 'complete-later-chat') view.messages.push(
+    { role: 'user', text: 'What did Exa return?' },
+    { role: 'assistant', text: 'Exa returned no confirmed contact match. That does not establish that no contact exists.' }
+  );
   function listing(): HistoryItem[] {
     return created
       ? [

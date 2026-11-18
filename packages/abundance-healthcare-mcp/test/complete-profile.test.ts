@@ -5,7 +5,7 @@ import {
   enrichCandidateProfile,
   enrichProviderProfessionalContact
 } from '../src/index.js';
-function fixture(blocked = false, failPdl = false, cachedClay = false) {
+function fixture(blocked = false, failPdl = false) {
   const events: string[] = [];
   let reserved = false;
   const npi = '1234567893';
@@ -48,19 +48,13 @@ function fixture(blocked = false, failPdl = false, cachedClay = false) {
         data: {
           id: 'f'.repeat(64),
           grants: Object.fromEntries(
-            ['pdl', 'clay', 'exa', 'apify'].map((provider) => [
+            ['pdl', 'exa', 'apify'].map((provider) => [
               provider,
               { id: 'f'.repeat(64), provider, npi, token: 'secret-fixture-grant' }
             ])
           )
         }
       });
-    }
-    if (url.pathname === '/api/abundance/healthcare-providers/enrichment') {
-      const body = JSON.parse(String(init?.body));
-      assert.equal(body.budget_grant.provider, 'clay');
-      events.push('clay');
-      return Response.json({ success: true, data: { id: 'npgclay_fixture', status: 'pending', cache_hit: cachedClay } });
     }
     if (url.hostname === 'api.exa.ai') {
       events.push('exa');
@@ -121,7 +115,7 @@ function fixture(blocked = false, failPdl = false, cachedClay = false) {
   };
   return { options, events, npi };
 }
-test('combined profile reserves before all four calls and retains provenance without grants', async () => {
+test('combined profile reserves before three active calls and retains provenance without grants', async () => {
   const f = fixture();
   const r = await enrichCompleteProfile(
     {
@@ -133,16 +127,17 @@ test('combined profile reserves before all four calls and retains provenance wit
   );
   assert.deepEqual(
     f.events.filter((e) => !e.startsWith('record:')),
-    ['reserve', 'claim:pdl', 'pdl', 'clay', 'claim:exa', 'exa', 'claim:apify', 'apify']
+    ['reserve', 'claim:pdl', 'pdl', 'claim:exa', 'exa', 'claim:apify', 'apify']
   );
-  assert.equal(r.status, 'partial');
+  assert.equal(r.status, 'complete');
+  assert.deepEqual(r.active_providers,['pdl','exa','apify']);
   assert.equal(r.uncertain_dispatch, false);
   assert.deepEqual(r.unstarted, []);
-  assert.deepEqual(Object.keys(r.providers!), ['pdl', 'clay', 'exa', 'apify']);
+  assert.deepEqual(Object.keys(r.providers!), ['pdl', 'exa', 'apify']);
   assert.equal(JSON.stringify(r).includes('secret-fixture-grant'), false);
   assert.equal(r.billing_reconciliation_required, true);
 });
-test('unknown prices and historical billing do not block all four provider attempts', async () => {
+test('unknown prices and historical billing do not block three active provider attempts', async () => {
   const f = fixture(true);
   const r = await enrichCompleteProfile(
     {
@@ -152,9 +147,9 @@ test('unknown prices and historical billing do not block all four provider attem
     },
     f.options
   );
-  assert.deepEqual(Object.keys(r.providers), ['pdl', 'clay', 'exa', 'apify']);
+  assert.deepEqual(Object.keys(r.providers), ['pdl', 'exa', 'apify']);
   assert.equal(r.spend_tracking.historical_status, 'unknown');
-  assert.equal(r.spend_tracking.pending_receipts, 3);
+  assert.equal(r.spend_tracking.pending_receipts, 2);
 });
 test('uncertain first provider retains its receipt and continues every other provider', async () => {
   const f = fixture(false, true);
@@ -169,7 +164,7 @@ test('uncertain first provider retains its receipt and continues every other pro
   assert.equal(r.uncertain_dispatch, true);
   assert.deepEqual(r.unstarted, []);
   assert.ok(f.events.includes('apify'));
-  assert.deepEqual(Object.keys(r.providers), ['pdl', 'clay', 'exa', 'apify']);
+  assert.deepEqual(Object.keys(r.providers), ['pdl', 'exa', 'apify']);
   assert.ok(r.spend_tracking.operation_id);
 });
 test('direct PDL and Exa callers cannot bypass shared budget', async () => {
@@ -192,7 +187,7 @@ test('direct PDL and Exa callers cannot bypass shared budget', async () => {
   }
 });
 
-test('blocked Skip Trace privacy preflight leaves other three available', async () => {
+test('blocked Skip Trace privacy preflight leaves other active providers available', async () => {
   const f = fixture();
   f.options.skipTraceReadiness = async () => ({ ready: false, reason: 'privacy blocked' });
   const r = await enrichCompleteProfile(
@@ -218,9 +213,9 @@ test('a replayed approved operation cannot dispatch again', async () => {
     operation_id: '11111111-1111-4111-8111-111111111111'
   };
   await enrichCompleteProfile(input, f.options);
-  const calls = f.events.filter((e) => ['pdl', 'clay', 'exa', 'apify'].includes(e)).length;
+  const calls = f.events.filter((e) => ['pdl', 'exa', 'apify'].includes(e)).length;
   await assert.rejects(() => enrichCompleteProfile(input, f.options));
-  assert.equal(f.events.filter((e) => ['pdl', 'clay', 'exa', 'apify'].includes(e)).length, calls);
+  assert.equal(f.events.filter((e) => ['pdl', 'exa', 'apify'].includes(e)).length, calls);
 });
 test('missing PDL configuration records known zero and still attempts other providers', async () => {
   const f = fixture();
@@ -291,8 +286,8 @@ test('public Exa MCP output validates nullable estimates and receipt tracking', 
   }
 });
 
-test('cached Clay adds no pending charge to the current operation', async () => {
-  const { options, npi } = fixture(false, false, true);
+test('three active provider operation retains only its own charges and receipts', async () => {
+  const { options, npi } = fixture(false, false);
   const result = await enrichCompleteProfile({npi,confirm_paid_enrichment:true,operation_id:crypto.randomUUID()},options);
   assert.equal(result.spend_tracking.actual_usd, 0.05);
   assert.equal(result.spend_tracking.pending_receipts, 2);
@@ -321,6 +316,6 @@ for (const status of ['association_failure', 'privacy_blocked_review', 'billing_
     assert.equal(result.status, 'partial');
     assert.equal(result.uncertain_dispatch, true);
     assert.equal(result.providers.apify.status,status);
-    assert.deepEqual(Object.keys(result.providers),['pdl','clay','exa','apify']);
+    assert.deepEqual(Object.keys(result.providers),['pdl','exa','apify']);
   });
 }

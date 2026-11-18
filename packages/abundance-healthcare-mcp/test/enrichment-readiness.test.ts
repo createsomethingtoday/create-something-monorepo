@@ -13,7 +13,7 @@ test('tracking is advertised for all four providers and a disconnected ledger le
   try {
     const tools = await client.listTools();
     assert.ok(tools.tools.some(t => t.name === 'get_enrichment_readiness'));
-    for (const provider of ['pdl','clay','exa','apify']) {
+    for (const provider of ['pdl','exa','apify']) {
       const response = await client.callTool({name:'get_enrichment_readiness',arguments:{provider}});
       const result = response.structuredContent as Record<string, any>;
       assert.equal(result.ready, false);
@@ -24,6 +24,6 @@ test('tracking is advertised for all four providers and a disconnected ledger le
       assert.equal(result.cost.estimated_usd,null);
       assert.ok(result.blocking_reasons.length >= 1);
     }
-    assert.equal(requests, 4);
+    assert.equal(requests, 3);
   } finally { await client.close(); await server.close(); }
 });

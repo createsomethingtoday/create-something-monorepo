@@ -1,8 +1,8 @@
-# NPG four-provider enrichment and spend tracking — CRE-2451
+# NPG three-provider enrichment and spend tracking — CRE-2451
 
 The owner explicitly removed inherited Dify spend limits on November 13, 2026. The custom implementation tracks spending; it does not enforce a shared $100 allowance, per-lookup dollar ceilings or daily spending caps. Historical uncertainty and missing USD conversion do not prevent enrichment. The historical Dify prompt is preserved only as provenance and is superseded by the current host policy.
 
-`enrich_candidate_complete_profile` prepares one exact-NPI review covering PDL professional/personal data, Clay public professional contacts, Exa public research, and Apify Skip Trace personal-contact candidates. Approval belongs to the current owner, exact candidate and immutable operation ID. Each provider receives an independent attempt; an unavailable provider produces a partial profile without suppressing other providers. Returned fields remain provider-reported evidence, not verified identity, current employment or permission to contact.
+`enrich_candidate_complete_profile` prepares one exact-NPI review covering PDL professional/personal data, Exa public research, and Apify Skip Trace personal-contact candidates. Approval belongs to the current owner, exact candidate and immutable operation ID. Each provider receives an independent attempt; an unavailable provider produces a partial profile without suppressing other providers. Returned fields remain provider-reported evidence, not verified identity, current employment or permission to contact.
 
 ## Spending records
 
@@ -24,7 +24,7 @@ For invoice reconciliation after a request has finished, an authorized operator 
 
 ## Recovery
 
-A complete profile means all provider outcomes are available, not that every requested field exists. Pending, unavailable, ambiguous identity and conflicting contacts remain visible per provider. Read Clay by its existing job ID. Refresh Skip Trace using the exact original receipt and action, owner, conversation and NPI. Replace both stored copies of the nested provider evidence on refresh so stale contacts cannot survive a failed privacy check. Recovery must not launch another complete-profile request or a second paid run.
+A complete profile means all provider outcomes are available, not that every requested field exists. Pending, unavailable, ambiguous identity and conflicting contacts remain visible per provider. Refresh Skip Trace using the exact original receipt and action, owner, conversation and NPI. Replace both stored copies of the nested provider evidence on refresh so stale contacts cannot survive a failed privacy check. Recovery must not launch another complete-profile request or a second paid run.
 
 ## Validation and release
 
@@ -33,3 +33,5 @@ The acceptance criteria are: all four providers attempted under one explicit app
 Deploy through the reviewed production PR, additive Agency migration, Agency API/UI and Healthcare MCP Worker. Verify authenticated tool inventory, tracking availability and live page behavior without a paid QA lookup. A real candidate pilot uses the application's explicit approval flow.
 
 Rollback the deployed code through the previous Worker/Pages artifact. Preserve all ledger, receipt, grant, audit and Skip Trace Durable Object data. Never delete accounting or retry an uncertain operation as a rollback.
+
+Clay has been retired from the active catalog, readiness, dispatch and recovery. Historical D1 audit records remain preserved; former authenticated endpoints return HTTP 410.

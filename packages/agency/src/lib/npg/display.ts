@@ -113,7 +113,7 @@ const actionLabels: Record<string, string> = {
   estimate_registry_travel: 'Estimate practice-to-clinic driving times',
   enrich_candidate_profile: 'Look up one candidate with People Data Labs',
   enrich_candidate_skip_trace: 'Look up one candidate with Skip Trace',
-  enrich_candidate_complete_profile: 'Enrich one candidate with all four providers',
+  enrich_candidate_complete_profile: 'Enrich one candidate’s complete profile',
   request_professional_contact_enrichment: 'Request public professional contacts from Clay',
   enrich_provider_professional_contact: 'Research public professional contacts with Exa',
   search_registry_sourcing: 'Registry sourcing',
@@ -440,7 +440,7 @@ const fieldLabels: Record<string, string> = {
   cost: 'Credits and cost',
   currency: 'Currency',
   maximumCost: 'Legacy cost ceiling',
-  confirmedTrackedUsd: 'Confirmed tracked subtotal (USD)',
+  confirmedTrackedUsd: 'Confirmed subtotal (USD)',
   estimatedUsd: 'Estimate (USD)',
   pendingReceipts: 'Pending receipts',
   historicalSpend: 'Historical spend',
@@ -452,7 +452,7 @@ const fieldLabels: Record<string, string> = {
   skipTraceMaximumCost: 'Skip Trace maximum',
   maximum_shared_usd: 'Approved shared maximum',
   reserved: 'Reserved allowance',
-  providers: 'Provider maximums',
+  providers: 'Providers in this approval',
   totalAllowance: 'One-time shared allowance',
   recordedSpend: 'Recorded spending',
   remaining: 'Remaining allowance',
@@ -502,6 +502,8 @@ export function reviewFields(value: unknown): Array<{ label: string; value: stri
           Number.isFinite(v)
         )
           text = formatUsd(v);
+        else if (key === 'providers' && Array.isArray(v) && v.every((provider) => typeof provider === 'string'))
+          text = v.map((provider) => ({pdl:'PDL', exa:'Exa', apify:'Skip Trace', clay:'Clay'}[provider] ?? provider)).join(', ');
         else if (key === 'providerEstimates' && Array.isArray(v))
           text = v
             .map((p) => {
@@ -542,6 +544,15 @@ export function reviewFields(value: unknown): Array<{ label: string; value: stri
 export type NpgView = {
   id: string;
   version: number;
+  enrichmentRecovery?: Array<{
+    actionId: string;
+    npi: string;
+    status: 'pending' | 'complete' | 'exhausted' | 'blocked';
+    attempts: number;
+    nextAttemptAt: number;
+    deadlineAt: number;
+    reason?: string;
+  }>;
   status: string;
   messages: Array<{ role: 'user' | 'assistant'; text: string }>;
   sources: Array<{ tool: string; data: unknown }>;

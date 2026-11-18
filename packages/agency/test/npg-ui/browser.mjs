@@ -41,17 +41,24 @@ async function scenario(name, fn, viewport = { width: 1440, height: 900 }, optio
 const commands = (page) =>
   page.evaluate(() => fetch('/__fixture/commands').then((response) => response.json()));
 async function gotoState(page, state) {
-  await page.goto(base + '/?state=' + (state || ''));
-  await page.getByRole('button', { name: 'Send question', exact: true }).waitFor();
+  await page.goto(base + '/?state=' + (state || '') + '&__reset=1');
+  // Reset once for this scenario. A reload must retain the synthetic durable state.
+  await page.evaluate(() => {
+    const url = new URL(location.href);
+    url.searchParams.delete('__reset');
+    history.replaceState(null, '', url);
+  });
+  // A remembered pending approval has no composer. Wait for the mounted app.
+  await page.locator('#npg-app button').first().waitFor();
   if (state && state !== 'new') {
     const history = page.locator('.history-item').first();
     if (!(await history.isVisible())) await page.getByTestId('mobile-nav-toggle').click();
     await history.click();
-    if (['review', 'expired', 'enrichment', 'skip-review'].includes(state))
+    if (['review', 'expired', 'enrichment', 'skip-review', 'complete-review'].includes(state))
       await expect(page.getByRole('heading', { name: /^Review: / })).toBeFocused();
     else await expect(page.getByRole('textbox', { name: 'Your question' })).toBeFocused();
     await expect(page.locator('.npg-thread-title')).toHaveText(
-      'Find NPs near Springfield, MO, and keep the complete CSV.'
+      state === 'complete-review' ? 'Enrich Jamie Example with PDL, Exa and Skip Trace. Include personal-contact candidates. NPI 1234567890.' : state.startsWith('complete-') ? 'Enrichment · NPI 1234567890' : 'Find NPs near Springfield, MO, and keep the complete CSV.'
     );
   }
 }
@@ -71,11 +78,71 @@ async function disclosureHasClearBody(page, button) {
     .toBeGreaterThanOrEqual(0);
 }
 try {
+  for (const width of [390, 1440]) {
+    await scenario(`complete approval retains exact scope and prior-spend distinction at ${width}`, async (page) => {
+      await gotoState(page, 'complete-review');
+      const bar = page.locator('.npg-review-decision-bar');
+      await expect(bar.getByText('Price unknown. Confirmed receipts are prior spend.', {exact:true})).toBeInViewport();
+      await expect(bar.getByText('PDL · Exa · Skip Trace', {exact:true})).toBeInViewport();
+      await expect(bar.getByRole('button', {name:'Approve this action'})).toBeInViewport();
+      const metadata = page.getByRole('button',{name:'Original review metadata',exact:true});
+      await metadata.click();
+      await expect(page.getByText('Providers in this approval',{exact:true})).toBeVisible();
+      await expect(page.getByText('PDL, Exa, Skip Trace',{exact:true})).toBeVisible();
+      assert.deepEqual(await commands(page), []);
+    }, {width, height:width === 390 ? 844 : 900});
+  }
+  for (const width of [390, 1440]) {
+    await scenario(`three-provider scope and compact result composer at ${width}`, async (page) => {
+      await gotoState(page, 'complete-three');
+      await expect(page.locator('.npg-enrichment-results').getByText('PDL, Exa and Skip Trace', {exact:false})).toBeVisible();
+      await expect(page.getByRole('button', {name:'Inspect Clay evidence', exact:true})).toHaveCount(0);
+      await expect(page.getByText('Unavailable · not dispatched', {exact:true})).toHaveCount(0);
+      const composer = await page.locator('.npg-composer-surface').boundingBox();
+      assert.ok(composer.height < 200, 'Idle result composer must leave room for evidence');
+      await page.screenshot({path:`${evidence}/three-provider-${width}.png`,animations:'disabled'});
+      const thread = page.locator('.npg-thread');
+      await thread.evaluate(el => {el.scrollTop = el.scrollHeight});
+      await expect(page.getByText('Billing · this operation', {exact:true})).toBeInViewport();
+      assert.deepEqual(await commands(page), []);
+      await page.screenshot({path:`${evidence}/three-provider-billing-${width}.png`,animations:'disabled'});
+    }, {width, height: width === 390 ? 844 : 900});
+  }
+  await scenario(
+    'provider evidence keyboard focus and close restore',
+    async (page) => {
+      await page.goto(base + '/?state=complete-contacts&__reset=1');
+      await page.getByRole('button', { name: 'Send question', exact: true }).waitFor();
+      if (!(await page.locator('.history-item').first().isVisible()))
+        await page.getByTestId('mobile-nav-toggle').click();
+      await page.locator('.history-item').first().click();
+      const trigger = page.getByRole('button', { name: 'Inspect PDL evidence', exact: true });
+      await expect(page.getByText('Profile returned · 1 email · 1 phone', { exact: true })).toBeVisible();
+      await trigger.focus();
+      await trigger.press('Enter');
+      const heading = page.getByRole('heading', { name: 'PDL evidence', exact: true });
+      await expect(heading).toBeFocused();
+      await expect(page.getByText('synthetic-jamie@example.invalid', { exact: true }).first()).toBeVisible();
+      const headingRect = await heading.boundingBox();
+      const threadRect = await page.locator('.npg-thread').boundingBox();
+      assert.ok(
+        headingRect.y >= threadRect.y &&
+          headingRect.y + headingRect.height <= threadRect.y + threadRect.height
+      );
+      await expect(page.getByRole('button', { name: 'Hide PDL evidence', exact: true })).toHaveText(
+        'Hide evidence'
+      );
+      await page.getByRole('button', { name: 'Close provider evidence', exact: true }).click();
+      await expect(trigger).toBeFocused();
+      await expect(heading).toHaveCount(0);
+    },
+    { width: 390, height: 844 }
+  );
   await scenario(
     'reading position survives evidence round trip and rapid reversal',
     async (page) => {
       await gotoState(page, 'canonical');
-      const toggle = page.getByRole('button', { name: /Results & evidence/ });
+      const toggle = page.getByRole('button', { name: 'All conversation evidence', exact: true });
       await toggle.click();
       const panel = page.locator('.npg-inline-results');
       await panel.evaluate((element) => {
@@ -132,9 +199,12 @@ try {
           );
         }
         const send = page.getByRole('button', { name: 'Send question', exact: true });
+        await expect.poll(async () =>
+          Math.round((await send.boundingBox()).height * 100) / 100
+        ).toBeGreaterThanOrEqual(44);
         const inputBox = await input.boundingBox();
         const sendBox = await send.boundingBox();
-        assert.ok(sendBox.height >= 44, 'The send control must remain comfortably tappable');
+        assert.ok(Math.round(sendBox.height * 100) / 100 >= 44, 'The send control must remain comfortably tappable');
         assert.ok(
           inputBox.y + inputBox.height <= sendBox.y + 1,
           'The send action must not overlap writing'
@@ -256,7 +326,7 @@ try {
       await page.getByRole('button', { name: 'Read terms', exact: true }).click();
       await expect(page.locator('#npg-review-title')).toBeFocused();
 
-      await page.getByRole('button', { name: /Results & evidence/ }).click();
+      await page.getByRole('button', { name: 'All conversation evidence', exact: true }).click();
       await expect(
         page.getByRole('heading', { name: /^Results & evidence(?: for .+)?$/ })
       ).toBeFocused();
@@ -270,7 +340,7 @@ try {
       await expect(summary).toContainText('1234567890');
       await expect(summary).toContainText('Jamie Example');
       await expect(summary).toContainText('(unverified)');
-      await expect(summary).toContainText('$0.10');
+      await expect(summary).toContainText('Estimate Unknown');
       const bounds = await summary.boundingBox();
       const pane = await page.locator('.npg-review-surface').boundingBox();
       assert.ok(pane.y >= 0 && pane.y + pane.height <= page.viewportSize().height + 1);
@@ -404,7 +474,7 @@ try {
         view.pending.review = {
           scope: 'One selected NPI with the supplied clinic and time limit.',
           limits,
-          maximumCost: 0.007,
+          estimatedUsd: 0.007,
           currency: 'USD'
         };
         view.pending.arguments = args;
@@ -422,6 +492,7 @@ try {
       await expect(review.getByText('Run limits', { exact: true })).toHaveCount(0);
       await expect(review).toContainText('100 Example Street, Springfield, Missouri 65801');
       await expect(review).toContainText('35 minutes');
+      await expect(review).toContainText('$0.007 USD');
       await expect(page.locator('.npg-review-summary')).toContainText('$0.007 USD');
       await page.getByRole('button', { name: 'Exact request data', exact: true }).click();
       assert.deepEqual(JSON.parse(await review.locator('.npg-json').innerText()), args);
@@ -543,7 +614,7 @@ try {
         const heading = page.getByRole('heading', { name: /^Review: / });
         await expect(heading).toBeInViewport();
         assert.equal(await page.getByRole('main').count(), 1);
-        await page.getByRole('button', { name: /Results & evidence/ }).click();
+        await page.getByRole('button', { name: 'All conversation evidence', exact: true }).click();
         await expect(page.getByText('231 records', { exact: true })).toBeVisible();
         const csv = page.locator('.source-link');
         assert.ok(
@@ -558,7 +629,7 @@ try {
         if (width < 1280)
           await page.getByRole('button', { name: 'Back to conversation', exact: true }).click();
         else {
-          await page.getByRole('button', { name: /Results & evidence/ }).click();
+          await page.getByRole('button', { name: 'All conversation evidence', exact: true }).click();
           await expect(page.locator('#npg-review-title')).toBeFocused();
         }
         const reject = page.getByRole('button', { name: 'Reject action', exact: true });
@@ -575,7 +646,7 @@ try {
             (await commands(page)).map((command) => command.type),
             ['reject']
           );
-          await page.getByRole('button', { name: /Results & evidence/ }).click();
+          await page.getByRole('button', { name: 'All conversation evidence', exact: true }).click();
           await expect(page.locator('.source-link')).toHaveCount(1);
           await expect(page.locator('.source-link')).toHaveAttribute(
             'href',
@@ -594,7 +665,7 @@ try {
       async (page) => {
         await gotoState(page, 'review');
         await expect(page.getByRole('heading', { name: /^Review: / })).toBeInViewport();
-        await page.getByRole('button', { name: /Results & evidence/ }).click();
+        await page.getByRole('button', { name: 'All conversation evidence', exact: true }).click();
         const csv = page.locator('.source-link');
         await csv.scrollIntoViewIfNeeded();
         await expect(csv).toBeInViewport();
@@ -659,7 +730,7 @@ try {
       await page
         .getByRole('textbox', { name: 'Your question' })
         .fill('Keep this draft with the old conversation');
-      await page.getByRole('button', { name: /Results & evidence/ }).click();
+      await page.getByRole('button', { name: 'All conversation evidence', exact: true }).click();
       await page.getByTestId('mobile-nav-toggle').click();
       await page.getByRole('button', { name: 'New chat', exact: true }).click();
       const input = page.getByRole('textbox', { name: 'Your question' });
@@ -736,14 +807,14 @@ try {
     await expect(page.getByRole('button', { name: 'Reject action', exact: true })).toBeEnabled();
     await expect(page.getByText('This review has expired. Approval is unavailable.')).toBeVisible();
   });
-  await scenario('exact enrichment review retains cost allowance and scope', async (page) => {
+  await scenario('exact enrichment review separates tracked spend, estimates and scope', async (page) => {
     await gotoState(page, 'enrichment');
     const review = page.locator('.npg-review');
     for (const text of [
-      'Maximum cost',
-      '0.15',
-      'One-time shared allowance',
-      '100',
+      'Confirmed subtotal (USD)',
+      '$0.20 USD',
+      'Pending receipts',
+      'No application spending limit.',
       'Professional profile only; personal contacts excluded.',
       'Include personal contact details'
     ])

@@ -85,8 +85,6 @@ declare global {
 				WORKWAY_API_URL?: string;
 				AGENCY_INTERNAL_API_KEY?: string;
                 GEOCODIO_API_KEY?: string;
-                CLAY_NPG_WEBHOOK_URL?: string;
-                CLAY_NPG_WEBHOOK_AUTH_TOKEN?: string;
 				AGENCY_OPERATOR_EMAILS?: string;
 				NPG_HEALTHCARE_ANALYST_URL?: string;
 				NPG_HEALTHCARE_CHAT_ENABLED?: string;

@@ -1,3 +1,4 @@
+import { recomputeProfile, recoveryView } from './recovery';
 import { NPG_TOOL_NAMES, PAID_TOOLS } from './policy';
 import { validateArguments, type Providers, type Tool } from './providers';
 import {
@@ -50,9 +51,7 @@ const providerFor = (tool: string) =>
     ? 'apify'
     : tool === 'enrich_candidate_profile'
       ? 'pdl'
-      : tool === 'request_professional_contact_enrichment'
-        ? 'clay'
-        : tool === 'enrich_provider_professional_contact'
+      : tool === 'enrich_provider_professional_contact'
           ? 'exa'
           : 'geocodio';
 // Spend observations never authorize a different candidate or establish a cost ceiling.
@@ -343,7 +342,7 @@ async function review(
   if (name === 'enrich_candidate_complete_profile') {
     const readiness = tools.find((tool) => tool.name === 'get_enrichment_readiness');
     const observations = [];
-    for (const provider of ['pdl', 'clay', 'exa', 'apify']) {
+    for (const provider of ['pdl', 'exa', 'apify']) {
       let result: unknown;
       try {
         if (readiness) {
@@ -358,7 +357,8 @@ async function review(
     }
     const spend = observations.find((item) => item.confirmedTrackedUsd !== null);
     return {
-      provider: 'PDL + Clay + Exa + Skip Trace',
+      provider: 'PDL + Exa + Skip Trace',
+      providers: ['pdl','exa','apify'],
       currency: 'USD',
       confirmedTrackedUsd: spend?.confirmedTrackedUsd ?? null,
       pendingReceipts: spend?.pendingReceipts ?? null,
@@ -370,9 +370,9 @@ async function review(
       spendPolicy:
         'Spend tracking only. Estimates are separate from confirmed USD; unknown estimates do not block this request. No application spend limit.',
       contactScope:
-        'One exact selected NPI. PDL professional profile and personal contacts; Clay public professional contacts; Exa public professional research; Skip Trace broker personal-contact candidates and home city/state. All contacts, identity associations and consent remain unverified.',
+        'One exact selected NPI. PDL professional profile and personal contacts; Exa public professional research; Skip Trace broker personal-contact candidates and home city/state. All contacts, identity associations and consent remain unverified.',
       execution:
-        'One approval attempts all four providers independently. Missing access or failed providers remain explicit outcomes. No automatic retry of uncertain operations; reconcile exact existing receipts.'
+        'One approval attempts PDL, Exa and Skip Trace independently. Missing access or failed providers remain explicit outcomes. No automatic retry of uncertain operations; reconcile exact existing receipts.'
     };
   }
   if (name === 'enrich_candidate_skip_trace')
@@ -407,9 +407,7 @@ async function review(
         ? args.include_personal_contact
           ? 'Professional profile and personal contacts; vendor-reported and unverified.'
           : 'Professional profile only; personal contacts excluded.'
-        : name === 'request_professional_contact_enrichment'
-          ? 'Clay: public professional contacts only; no personal contacts.'
-          : 'Exa: public professional research, at most one email and one phone; no personal-contact lookup.',
+        : 'Exa: public professional research, at most one email and one phone; no personal-contact lookup.',
     requireContact: name === 'enrich_candidate_profile' ? args.require_contact === true : null
   };
 }
@@ -475,7 +473,8 @@ export async function executeCommand(
       before.id,
       before.version,
       token,
-      refreshing && before.status === 'ambiguous'
+      refreshing && before.status === 'ambiguous',
+      before.state_json
     );
     let input: unknown[];
     if (refreshing) {
@@ -579,7 +578,7 @@ export async function executeCommand(
                     : priorSpend.pending_receipts
               }
             : null;
-        compositeSource!.data = {
+        compositeSource!.data = recomputeProfile({
           ...compositeData,
           ...(changedSpend ? { spend_tracking: changedSpend } : {}),
           providers: { ...compositeData.providers, apify: receipt },
@@ -591,7 +590,7 @@ export async function executeCommand(
                 }
               }
             : {})
-        };
+        });
       }
       delete state.responseId;
       if (
@@ -647,15 +646,20 @@ export async function executeCommand(
         state.messages.push({
           role: 'assistant',
           text:
-            result.status === 'pending'
-              ? 'Skip Trace is still pending or access/billing could not be refreshed. Send “Refresh Skip Trace” to read the same run again. No new paid dispatch is authorized.'
-              : 'The run returned a result, but billing is not yet reconciled. Review the source below; contacts and consent remain unverified. Wait at least 60 seconds, then send “Refresh Skip Trace” to reconcile this same receipt without another paid dispatch.'
+            result.status === 'blocked_review'
+              ? 'Skip Trace remains blocked for identity or privacy review. Contact details are withheld; billing reconciliation does not clear this review.'
+              : result.status === 'pending'
+                ? 'Skip Trace is still pending or access/billing could not be refreshed. Send “Refresh Skip Trace” to read the same run again. No new paid dispatch is authorized.'
+                : 'The run returned a result, but billing is not yet reconciled. Review the source below; contacts and consent remain unverified. Wait at least 60 seconds, then send “Refresh Skip Trace” to reconcile this same receipt without another paid dispatch.'
         });
       else {
         advanceSkipReceipt(state);
         state.messages.push({
           role: 'assistant',
-          text: 'The existing Skip Trace run was refreshed. Review its source result below; identity, contact ownership and consent remain unverified. No new paid dispatch was authorized.'
+          text:
+            result.status === 'blocked_review'
+              ? 'The existing Skip Trace receipt was refreshed, but identity or privacy review remains blocked. Billing completion does not clear that review. No new paid dispatch was authorized.'
+              : 'The existing Skip Trace run was refreshed. Review its source result below; identity, contact ownership and consent remain unverified. No new paid dispatch was authorized.'
         });
       }
       if (composite)
@@ -674,6 +678,15 @@ export async function executeCommand(
       return store.view(owner, row.id);
     }
     if (action) {
+      const outdatedScope = command.type === 'approve' &&
+        ((action.tool === 'enrich_candidate_complete_profile' && JSON.parse(action.review_json).providers?.join(',') !== 'pdl,exa,apify') || action.tool === 'request_professional_contact_enrichment');
+      if (outdatedScope) {
+        await store.consume(row, action, 'reject');
+        delete state.pendingId; delete state.responseId;
+        state.messages.push({role:'assistant',text:'This saved approval has an outdated provider scope. Prepare a fresh three-provider review for PDL, Exa and Skip Trace. No dispatch was made.'});
+        await store.finish(row,state,'idle',0);
+        return store.view(owner,row.id);
+      }
       const status = await store.consume(
         row,
         action,
@@ -716,11 +729,16 @@ export async function executeCommand(
       checkPaidScope(tool.name, args, state);
       await store.markPaid(row);
       dispatchedAction = action.id;
-      const result = await providers.call(tool.name, args);
+      const originalResult = await providers.call(tool.name, args);
+      const result =
+        tool.name === 'enrich_candidate_complete_profile'
+          ? recomputeProfile(originalResult)
+          : originalResult;
       toolCount++;
       if (tool.name === 'enrich_candidate_complete_profile') {
         const receipt = result as any;
         state.sources.push({ tool: tool.name, data: result, actionId: action.id });
+        state.enrichmentRecovery = recoveryView(state, store.now());
         await store.checkpoint(row, state);
         const skip = receipt.providers?.apify;
         if (
@@ -757,13 +775,13 @@ export async function executeCommand(
           role: 'assistant',
           text:
             receipt.status === 'complete'
-              ? 'All four providers returned results. Review each provider’s evidence below; identity, contact ownership and consent remain unverified. ' +
+              ? 'All three providers returned results. Review each provider’s evidence below; identity, contact ownership and consent remain unverified. ' +
                 (receipt.billing_reconciliation_required === true
                   ? 'Billing receipts need reconciliation; unrelated candidate requests remain available.'
                   : 'Preserve each provider receipt.')
               : receipt.status === 'blocked'
                 ? 'The complete profile was blocked by source checks. Review the reported provider reasons below. Do not repeat the request until those blockers are resolved.'
-                : 'The complete profile is incomplete. Review each provider’s result and any unstarted providers below. Billing and pending results need reconciliation. Preserve returned Clay job and Skip Trace run IDs for source reconciliation; do not repeat the complete-profile request to refresh pending results.'
+                : 'The complete profile is incomplete. Review each provider’s result and any unstarted providers below. Billing and pending results need reconciliation. Preserve returned Skip Trace run IDs for source reconciliation; do not repeat the complete-profile request to refresh pending results.'
         });
         if (state.skipTracePending)
           state.messages[state.messages.length - 1].text +=

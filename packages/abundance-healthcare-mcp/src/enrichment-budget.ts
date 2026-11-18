@@ -44,6 +44,7 @@ export async function budgetRequest(
   return data.data;
 }
 export async function readEnrichmentReadiness(provider: Provider, options: BudgetOptions) {
+  if(provider === 'clay') throw new Error('Provider retired.');
   try {
     return await budgetRequest(options, provider);
   } catch {

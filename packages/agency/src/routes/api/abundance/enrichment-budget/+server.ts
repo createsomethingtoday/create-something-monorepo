@@ -19,6 +19,7 @@ const handle: RequestHandler = async ({ request, url, platform }) => {
   )
     return json({ error: 'Unauthorized' }, { status: 401 });
   if (!env?.DB) return json({ error: 'Database unavailable' }, { status: 503 });
+  if(request.method==='GET' && url.searchParams.get('provider')==='clay') return json({success:false,error:'Provider retired.'},{status:410,headers:{'Cache-Control':'private, no-store'}});
   try {
     let data;
     if (request.method === 'GET')
