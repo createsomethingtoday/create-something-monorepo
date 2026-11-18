@@ -1,7 +1,11 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createFakeAirtable, type FakeAirtable } from '$lib/server/testing/fake-airtable';
-import { CREATOR_API_MIGRATION, createSqliteD1 } from '$lib/server/testing/sqlite-d1';
+import {
+	ANALYTICS_EVENTS_MIGRATION,
+	CREATOR_API_MIGRATION,
+	createSqliteD1
+} from '$lib/server/testing/sqlite-d1';
 
 /**
  * End to end through the real route handlers, the real Airtable client code
@@ -126,7 +130,7 @@ beforeEach(() => {
 
 	const kv = new Map<string, string>();
 	env = {
-		DB: createSqliteD1(CREATOR_API_MIGRATION),
+		DB: createSqliteD1(CREATOR_API_MIGRATION, ANALYTICS_EVENTS_MIGRATION),
 		SESSIONS: {
 			get: async (key: string) => kv.get(key) ?? null,
 			put: async (key: string, value: string) => void kv.set(key, value)
@@ -499,9 +503,21 @@ describe('GET /api/v1/creator/*', () => {
 				Name: { from: 'Alpha', to: 'Alpha Two' },
 				'ℹ️Description (Short)': { from: '', to: 'A new summary.' }
 			});
-			// The key ID is the Airtable record of the key; the secret is never stored.
+			// The audit event names the key by its record ID and links the version row.
+			const audit = await (env.DB as D1Database)
+				.prepare('SELECT properties FROM analytics_events WHERE event_name = ?1')
+				.bind('creator_api_listing_update')
+				.first<{ properties: string }>();
+			expect(JSON.parse(audit!.properties)).toMatchObject({
+				asset_id: ASSET_A1,
+				key_id: keyId,
+				request_id: response.headers.get('X-Request-Id'),
+				fields_changed: ['Name', 'ℹ️Description (Short)'],
+				version_id: expect.stringMatching(/^rec/)
+			});
+			// The secret is never stored.
 			expect(JSON.stringify(airtable.tables)).not.toContain(apiKey);
-			expect(keyId).toBeTruthy();
+			expect(audit!.properties).not.toContain(apiKey);
 		});
 
 		it('shows the change on the next read, not the cached list', async () => {

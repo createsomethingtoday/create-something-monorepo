@@ -792,10 +792,11 @@ export type ListingUpdateResult =
  */
 export async function updateCreatorListing(
 	env: CreatorApiEnv,
-	key: VerifiedKey,
+	context: CreatorApiContext,
 	assetId: string,
 	update: ListingUpdate
 ): Promise<ListingUpdateResult> {
+	const { key } = context;
 	const airtable = getAirtableClient(env);
 	const owned = await airtable.getAssetsByCreatorIds(key.creatorIds);
 	if (!owned.some((candidate) => candidate.id === assetId)) return { outcome: 'not_found' };
@@ -817,12 +818,20 @@ export async function updateCreatorListing(
 	const updated = await airtable.updateAssetWithImages(assetId, data);
 	if (!updated) throw new Error('The listing update was not saved');
 
-	// The review record names the key, never the secret: the key ID is the
-	// Airtable record of the key, which the review team can look up.
 	const version = shouldCreateAssetVersionForChanges(changes)
 		? await airtable.createAssetVersionFromAsset(original, `api-key:${key.keyId}`, changes)
 		: null;
 
+	// The version row keeps the editor's change format, which has no place for
+	// who made the change. The audit event does: it names the key (its Airtable
+	// record ID, never the secret), the request and the version row.
+	await recordListingUpdate(env.DB, {
+		asset_id: assetId,
+		key_id: key.keyId,
+		request_id: context.requestId,
+		fields_changed: Object.keys(changes),
+		version_id: version?.id ?? null
+	});
 	await forgetCreatorAssets(env.DB, key.creatorIds);
 
 	return {
@@ -831,6 +840,29 @@ export async function updateCreatorListing(
 		changedFields: Object.keys(changes),
 		reviewRecorded: version !== null
 	};
+}
+
+export const LISTING_UPDATE_EVENT = 'creator_api_listing_update';
+
+/**
+ * Best-effort, after the save: a failed audit write must not report a saved
+ * change as failed. The failure is logged with the same facts.
+ */
+async function recordListingUpdate(db: D1Database, properties: Record<string, unknown>): Promise<void> {
+	try {
+		await db
+			.prepare(
+				`INSERT INTO analytics_events (event_name, user_hash, page_path, properties)
+				 VALUES (?1, NULL, ?2, ?3)`
+			)
+			.bind(LISTING_UPDATE_EVENT, '/api/v1/creator/assets', JSON.stringify(properties))
+			.run();
+	} catch (err) {
+		console.error('[Creator API] Listing update audit write failed', {
+			...properties,
+			error: err instanceof Error ? err.message : String(err)
+		});
+	}
 }
 
 /** The listing text, returned after a write so the caller sees what is stored. */

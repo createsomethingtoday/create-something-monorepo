@@ -34,6 +34,11 @@ export function createSqliteD1(...migrationFiles: URL[]): D1Database {
 	} as unknown as D1Database;
 }
 
+export const ANALYTICS_EVENTS_MIGRATION = new URL(
+	'../../../../migrations/003_analytics_events.sql',
+	import.meta.url
+);
+
 export const CREATOR_API_MIGRATION = new URL(
 	'../../../../migrations/005_creator_api.sql',
 	import.meta.url

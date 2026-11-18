@@ -53,7 +53,7 @@ export const PATCH: RequestHandler = creatorApiRoute('write:assets', async (even
 	const parsed = parseListingUpdate(body);
 	if (!parsed.ok) return creatorApiRequestError(400, 'INVALID_BODY', parsed.message, context);
 
-	const result = await updateCreatorListing(env, context.key, event.params.id, parsed.update);
+	const result = await updateCreatorListing(env, context, event.params.id, parsed.update);
 
 	switch (result.outcome) {
 		case 'not_found':
