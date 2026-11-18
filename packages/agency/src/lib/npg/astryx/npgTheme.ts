@@ -24,8 +24,8 @@ export const npgTheme = defineTheme({
     },
     'top-nav': {
       base: {
-        backgroundColor: '#f0f7fc',
-        borderBottom: 'var(--spacing-1) solid #f47821'
+        backgroundColor: 'var(--color-on-accent)',
+        borderBottom: 'var(--spacing-0-5) solid #f47821'
       }
     },
     'side-nav': { base: { backgroundColor: '#f0f7fc' } },

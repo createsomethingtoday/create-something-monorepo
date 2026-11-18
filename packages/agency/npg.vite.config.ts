@@ -18,6 +18,8 @@ export default defineConfig({
               maxWidth: { reading: 'calc(var(--spacing-10) * 18)' },
               width: { evidence: 'calc(var(--spacing-10) * 9)' },
               colors: {
+                'workspace-tint': 'var(--color-accent-muted)',
+                'workspace-accent': 'var(--color-text-accent)',
                 'state-info': 'var(--color-text-info)',
                 'state-review': 'var(--color-text-warning)',
                 'state-error': 'var(--color-text-error)',
