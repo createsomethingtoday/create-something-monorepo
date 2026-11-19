@@ -170,6 +170,11 @@ or external state reversal is required.
 
 ## Prior art
 
+The [Control graph explanation candidate](../../packages/owned-agent-runtime/docs/control-graph.md)
+adds an authenticated host read boundary and a bounded blocker/owner/evidence
+query. It remains separate from this offline export verifier and has an explicit
+real-run acceptance hold.
+
 The design applies task organization, agent coordination, and runtime state
 management from [Graph Engineering, sections 4–7](https://arxiv.org/html/2608.21156v1).
 It keeps record ownership, execution, and policy decisions separate.

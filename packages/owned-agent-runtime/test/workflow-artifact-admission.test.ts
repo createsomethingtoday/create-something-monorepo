@@ -1,5 +1,7 @@
 import { composeTemplateReviewControl } from '../src/template-review-control-composition.js';
 import { createControlRunWorker } from '../src/control-worker.js';
+import { createD1ControlGraphExplanationReader } from '../src/control-graph-explanation.js';
+import { RegisteredControlGraphBindings } from '../src/control-graph-bindings.js';
 import { D1WorkflowRuntimeWakeReconciler } from '../src/workflow-runtime-wake-reconciler.js';
 import { WorkflowRuntimeQueue, type WorkflowRuntimeWake } from '../src/workflow-runtime-queue.js';
 import { workflowRuntimeIdentity } from '../src/workflow-runtime-identity.js';
@@ -218,6 +220,42 @@ test('admits a real signed compiler release and rejects mismatched registration,
       }));
       const mcpBody=await mcp!.json() as {result:{structuredContent:unknown}};
       assert.deepEqual(mcpBody.result.structuredContent,httpBody);
+      // Synthetic integration: real signed artifact admission + scoped SQLite
+      // readers, with no executor registration or external source access.
+      const issueId = '11111111-1111-4111-8111-111111111111';
+      const nodeId = 'substrate:create-something:package:create-something-owned-agent-runtime-packages-owned-agent-runtime';
+      const graphBinding = {
+        schema:'create-something/control-graph-binding@1' as const,
+        scope:proofScope, workflowId:proof.run.workflow.id, workflowVersion:proof.run.workflow.version,
+        runtimeManifestSha256:proof.run.runtimeManifestSha256, artifactManifestSha256:proof.run.artifactManifestSha256,
+        buildReleaseId:activation.buildReleaseId, contractSha256:('sha256:'+activation.contractSha256) as RuntimeDigest,
+        runtimePolicySha256:('sha256:'+activation.policySha256) as RuntimeDigest,
+        linearIssueId:issueId, linearIdentifier:'CRE-2326', substrateNodeId:nodeId,
+        stepOwners:verifiedRuntime.steps.map(step=>({stepId:step.id,actionId:step.actionId,ownerId:'fixture-owner'}))
+      };
+      const explanationReader = createD1ControlGraphExplanationReader({
+        database:new Proxy(database,{get(target,key){
+          if(key==='prepare') return (sql:string)=>{assert.match(sql,/^\s*SELECT\b/i);return target.prepare(sql);};
+          throw new Error('Graph read attempted a non-read database method');
+        }}),
+        manifests,bindings:new RegisteredControlGraphBindings([graphBinding]),
+        linear:{async find(scope,id){return {scope,id,identifier:'CRE-2326',assigneeId:'fixture-owner',revision:'fixture-v1',observedAt:'2026-09-15T00:00:00.000Z',evidenceRef:'fixture:linear'};}},
+        substrate:{async find(scope,id){return {scope,id,snapshotSha256:('sha256:'+'c'.repeat(64)) as RuntimeDigest,observedAt:'2026-09-15T00:00:00.000Z',evidenceRef:'fixture:substrate'};}},
+        approvalPolicies:{'account-owner':['account_owner']},approvalPolicySha256:('sha256:'+activation.policySha256) as RuntimeDigest,maximumAgeMs:30_000,
+        clock:()=> '2026-09-15T00:00:00.000Z'
+      });
+      const graphTransport = createControlRunWorker({service:control,identity:{async resolve(request){
+        return request.headers.get('authorization')==='Bearer fixture'
+          ? {scope:proofScope,actor:{subject:'fixture-operator',role:'account_owner'},credentialSource:'bearer'} : undefined;
+      }},explanations:explanationReader});
+      const graphResponse = await graphTransport.fetch(new Request(`https://runtime.example/v1/control/runs/${parent.id}/explanation`,{headers}));
+      assert.equal(graphResponse?.status,200);
+      const graphBody = await graphResponse!.json() as {explanation:{authority:string;run:{id:string};nextOwner:{id:string};links:{substrate:{id:string}}}};
+      assert.equal(graphBody.explanation.authority,'read_only');
+      assert.equal(graphBody.explanation.run.id,parent.id);
+      assert.equal(graphBody.explanation.nextOwner.id,'fixture-owner');
+      assert.equal(graphBody.explanation.links.substrate.id,nodeId);
+      assert.equal(await explanationReader.find({scope:{...proofScope,tenantId:'other'},runId:parent.id}),undefined);
       const approvalPlan = await planWorkflowRuntimeStep(verifiedRuntime, admittedRun);
       assert.equal(approvalPlan.type, 'wait');
       const waiting = await reduceWorkflowRuntimeRun(verifiedRuntime, admittedRun, {
