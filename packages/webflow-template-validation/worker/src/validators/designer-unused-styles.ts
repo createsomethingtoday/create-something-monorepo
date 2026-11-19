@@ -85,15 +85,25 @@ export async function fetchPreviewSiteData(link: PreviewLink, pathTemplate: unkn
 	try {
 		const response = await fetch(url, {
 			headers: { 'user-agent': USER_AGENT, accept: 'application/json' },
-			redirect: 'error',
+			// A redirect is not followed, so the request stays on the preview
+			// host. Workers do not have `redirect: 'error'`.
+			redirect: 'manual',
 			signal: AbortSignal.timeout(SITE_DATA_TIMEOUT_MS)
 		});
-		// An expired preview link answers HTTP 404.
-		if (!response.ok) return null;
+		// An expired preview link answers HTTP 404. A redirect is not `ok`.
+		if (!response.ok) {
+			console.warn(`Unused styles: the Designer site data answered HTTP ${response.status}.`);
+			return null;
+		}
 		const text = await response.text();
-		if (text.length > SITE_DATA_MAX_BYTES) return null;
+		if (text.length > SITE_DATA_MAX_BYTES) {
+			console.warn('Unused styles: the Designer site data is too large.');
+			return null;
+		}
 		return JSON.parse(text);
-	} catch {
+	} catch (error) {
+		// The message can hold the request URL, which has the preview token.
+		console.warn(`Unused styles: the Designer site data request failed (${error instanceof Error ? error.name : 'unknown error'}).`);
 		return null;
 	}
 }

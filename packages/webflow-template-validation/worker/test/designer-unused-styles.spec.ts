@@ -131,6 +131,15 @@ describe('fetchPreviewSiteData', () => {
 		expect(fetchMock).not.toHaveBeenCalled();
 	});
 
+	it('uses only fetch options that Cloudflare Workers accept, and does not follow a redirect', async () => {
+		const fetchMock = vi.fn(async () => new Response(null, { status: 302, headers: { location: 'https://example.com/' } }));
+		vi.stubGlobal('fetch', fetchMock);
+		expect(await fetchPreviewSiteData(LINK, PATH)).toBeNull();
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		// Workers throw on `redirect: 'error'`.
+		expect((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].redirect).toBe('manual');
+	});
+
 	it('gives null when the answer is not JSON', async () => {
 		vi.stubGlobal('fetch', vi.fn(async () => new Response('<html></html>', { status: 200 })));
 		expect(await fetchPreviewSiteData(LINK, PATH)).toBeNull();
