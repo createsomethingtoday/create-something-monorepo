@@ -36,6 +36,11 @@ describe('Unused styles', () => {
 		expect([...extractStyleChains(css).keys()].sort()).toEqual(['card', 'card is-dark', 'hero', 'nav-link', 'title']);
 	});
 
+	it('reads a class that starts with a digit, which CSS writes as a hex escape', () => {
+		expect([...extractStyleChains('.\\32 -column{a:b}.card.\\31 0px .title{a:b}').keys()].sort()).toEqual(['10px card', '2-column', 'title']);
+		expect(unusedNames('.\\32 -column{a:b}', [page('<div class="2-column"></div>'), page('')])).toEqual([]);
+	});
+
 	it('reports a class that no page uses, and a combo whose classes never meet on one element', () => {
 		const css = '.card{a:b}.card.is-dark{a:b}.title{a:b}.leftover{a:b}.title.is-dark{a:b}';
 		const pages = [page('<div class="card is-dark"><h2 class="title">x</h2></div>'), page('<div class="card"></div>')];

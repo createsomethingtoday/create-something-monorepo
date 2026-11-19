@@ -121,7 +121,7 @@ export function collectClassUsage(html: string, usage: ClassUsage): void {
 export function extractStyleChains(css: string): Map<string, string[]> {
 	const chains = new Map<string, string[]>();
 	for (const selector of selectorsOf(css)) {
-		for (const match of selector.matchAll(/(?:\.(?:\\.|[\w-]|[^\x00-\x7f])+)+/g)) {
+		for (const match of selector.matchAll(/(?:\.(?:\\[0-9a-fA-F]{1,6}\s?|\\.|[\w-]|[^\x00-\x7f])+)+/g)) {
 			const all = match[0].split(/(?<!\\)\./).filter(Boolean).map(unescapeIdent);
 			// State classes (w--current, w--open) are set by Webflow at runtime.
 			const classes = [...new Set(all.filter((name) => !name.startsWith('w--')))];

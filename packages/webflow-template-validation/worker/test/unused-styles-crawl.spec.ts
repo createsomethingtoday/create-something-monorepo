@@ -11,7 +11,7 @@ import { validateContent } from '../src/validators/content-validator';
 const SITE = 'https://example-template.webflow.io';
 const SHEET = 'https://cdn.prod.website-files.com/0123456789abcdef01234567/css/site.webflow.shared.abc.css';
 const LEFTOVERS = Array.from({ length: 11 }, (_, i) => `.old-${i}{a:b}`).join('');
-const CSS = `.hero{a:b}.guide-swatch{a:b}.post-body{a:b}.contact-map{a:b}${LEFTOVERS}`;
+const CSS = `.hero{a:b}.guide-swatch{a:b}.post-body{a:b}.contact-map{a:b}.author-bio{a:b}${LEFTOVERS}`;
 
 function page(body: string) {
 	return `<!doctype html><html><head><title>Page</title><link href="${SHEET}" rel="stylesheet"/></head><body>${body}</body></html>`;
@@ -21,8 +21,10 @@ const PAGES: Record<string, string> = {
 	'/': page('<div class="hero"></div><a href="/blog/one">One</a><a href="/blog/two">Two</a><a href="/contact">Contact</a>'),
 	'/contact': page('<div class="contact-map"></div>'),
 	'/style-guide': page('<div class="guide-swatch"></div>'),
-	'/blog/one': page('<div class="post-body"></div>'),
-	'/blog/two': page('<div class="post-body"></div>')
+	// The Authors collection is linked from item pages only.
+	'/blog/one': page('<div class="post-body"></div><a href="/authors/ann">Ann</a>'),
+	'/authors/ann': page('<div class="author-bio"></div>'),
+	'/blog/two': page('<div class="post-body"></div><a href="/authors/ann">Ann</a>')
 };
 
 /** Serve PAGES; every other path answers HTTP 404, and `broken` paths time out. */

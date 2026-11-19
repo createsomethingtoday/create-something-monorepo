@@ -431,6 +431,9 @@ async function analyzePage(url: string, parsedHTML: ParsedHTML, classUsage?: Cla
  * or file that does not load ends the check without a finding: a missing
  * script could hide the interaction that adds a class.
  */
+const UNUSED_STYLES_ITEM_PAGE_LIMIT = 30;
+const UNUSED_STYLES_ITEM_ROUNDS = 3;
+
 async function auditUnusedStyles(siteUrl: string, classUsage: ClassUsage, excludedSlugs: Set<string>, crawledUrls: string[]): Promise<ValidationIssue[]> {
 	// Without a Webflow site stylesheet there is nothing to compare, and no
 	// reason to read more pages.
@@ -453,21 +456,30 @@ async function auditUnusedStyles(siteUrl: string, classUsage: ClassUsage, exclud
 		// of the same collection was read. A collection with no page read
 		// ends the check: its template styles would all look unused.
 		const utilityUrls = REVIEWER_UTILITY_PATHS.map(path => new URL(path, siteUrl).href);
-		const items = uncrawledItemPages(classUsage, siteUrl, [...crawledUrls, ...excludedUrls, ...utilityUrls]);
-		// More collections than the sample can hold: some template is unread.
-		if (items.truncated) return [];
-		const itemUrls = items.pages;
 		const parentOf = (url: string) => new URL(url).pathname.replace(/\/+$/, '').replace(/\/[^/]*$/, '');
+		const readUrls = [...crawledUrls, ...excludedUrls, ...utilityUrls];
 		const readParents = new Set(crawledUrls.map(parentOf));
 		const failedParents = new Set<string>();
-		await Promise.all(itemUrls.map(async url => {
-			try {
-				collectClassUsage((await fetchHTML(url)).html, classUsage);
-				readParents.add(parentOf(url));
-			} catch {
-				failedParents.add(parentOf(url));
-			}
-		}));
+		// An item page can link to a collection that no static page links to
+		// (a post links to its author), so the sample repeats on the new links.
+		let budget = UNUSED_STYLES_ITEM_PAGE_LIMIT;
+		for (let round = 0; ; round++) {
+			const items = uncrawledItemPages(classUsage, siteUrl, readUrls, 2, budget);
+			// More item pages than the sample can hold, or links that go on
+			// and on: some template is unread.
+			if (items.truncated || (items.pages.length > 0 && round >= UNUSED_STYLES_ITEM_ROUNDS)) return [];
+			if (items.pages.length === 0) break;
+			budget -= items.pages.length;
+			readUrls.push(...items.pages);
+			await Promise.all(items.pages.map(async url => {
+				try {
+					collectClassUsage((await fetchHTML(url)).html, classUsage);
+					readParents.add(parentOf(url));
+				} catch {
+					failedParents.add(parentOf(url));
+				}
+			}));
+		}
 		if ([...failedParents].some(parent => !readParents.has(parent))) return [];
 		if (classUsage.pageCount < MIN_PAGES_FOR_UNUSED_STYLES) return [];
 		const load = async (url: string): Promise<string> => {
