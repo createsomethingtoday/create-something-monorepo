@@ -20,6 +20,33 @@ export interface PublishedSiteValidationInput {
   checks?: PublishedSiteValidationCheck[];
   max_pages?: number;
   include_raw?: boolean;
+  /**
+   * The template's Webflow preview link, read from the asset record by the
+   * server. A caller never passes it. The validation worker uses it only for
+   * the unused styles check, and accepts only a preview.webflow.com link.
+   */
+  preview_url?: string;
+}
+
+const PREVIEW_LINK = /^https:\/\/preview\.webflow\.com\/preview\/[a-z0-9][a-z0-9-]*\/?\?(?:[^#]*&)?preview=[0-9a-f]{32}(?:[&#]|$)/;
+
+/**
+ * The asset's preview link, when the asset is the template at `publishedUrl`.
+ * An asset record for another site, or a value that is not a Webflow preview
+ * link, gives `undefined`, and the validation runs without it.
+ */
+export function previewLinkForValidation(asset: { websiteUrl?: string; previewSiteUrl?: string } | null | undefined, publishedUrl: string): string | undefined {
+  const host = (value: string | undefined) => {
+    try {
+      return new URL(value ?? '').hostname.toLowerCase().replace(/^www\./, '');
+    } catch {
+      return undefined;
+    }
+  };
+  const preview = asset?.previewSiteUrl?.trim();
+  if (!preview || !PREVIEW_LINK.test(preview)) return undefined;
+  const publishedHost = host(publishedUrl);
+  return publishedHost && host(asset?.websiteUrl) === publishedHost ? preview : undefined;
 }
 
 type JsonRecord = Record<string, unknown>;
@@ -295,6 +322,7 @@ async function runWebflowWayValidation(
   maxPages: number,
   includeRaw: boolean,
   config: Required<Pick<ValidationToolConfig, 'webflowValidationWorkerUrl' | 'timeoutMs' | 'fetcher'>>,
+  previewUrl?: string,
 ) {
   const data = await postJson(
     config.webflowValidationWorkerUrl,
@@ -309,6 +337,7 @@ async function runWebflowWayValidation(
       ...(pageSlugs && pageSlugs.length > 0 ? { pageSlugs } : {}),
       options: {
         maxPages,
+        ...(previewUrl ? { previewUrl } : {}),
       },
     },
     config.timeoutMs,
@@ -359,7 +388,7 @@ export async function runPublishedSiteValidation(input: PublishedSiteValidationI
             webflowValidationWorkerUrl,
             timeoutMs,
             fetcher,
-          });
+          }, input.preview_url);
           return;
         }
         results[check] = await runGsapValidation(publishedUrl, maxPages, includeRaw, {
@@ -384,7 +413,9 @@ export async function runPublishedSiteValidation(input: PublishedSiteValidationI
     evidenceQuality: 'Partial published-site validator evidence. Useful for review triage and concrete feedback, not a final Designer/manual decision.',
     rubricCoverage: 'partial_published_site_validation',
     caveats: [
-      'No Designer API data, Preview URL, or Designer-only checks are used.',
+      input.preview_url
+        ? 'The unused styles finding (id unused-styles) comes from the Designer site data behind the preview link on the asset record. It is the Designer "Clean up" list, and it can be shorter than that list. No other check uses Designer or Preview data. No unused styles finding is not proof of a clean site.'
+        : 'No Designer API data, Preview URL, or Designer-only checks are used. Unused styles are not checked: pass asset_id so the server can read the preview link on the asset record.',
       'No Airtable writes or review status changes are performed.',
       'Accessibility coverage is limited to validator-detectable published-site signals; visual contrast and manual keyboard review still need reviewer judgment.',
       'Lorem/placeholder findings are review evidence, not automatic blockers; request changes only when the evidence points to authored customer-facing placeholder content.',

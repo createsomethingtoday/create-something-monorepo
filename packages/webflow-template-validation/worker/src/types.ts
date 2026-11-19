@@ -220,6 +220,20 @@ export interface ValidationOptions {
 	 */
 	pageListComplete?: boolean;
 	/**
+	 * The template's Webflow preview link
+	 * (`https://preview.webflow.com/preview/<site>?preview=<token>`). With it,
+	 * the unused styles check reads the Designer's own site data and gives
+	 * the list that the Designer's Clean up panel gives. Without it, or when
+	 * the link does not load, the check compares the published pages.
+	 */
+	previewUrl?: string;
+	/**
+	 * Path of the Designer site data on the preview host. The worker sets it
+	 * from its `PREVIEW_SITE_DATA_PATH` secret; a value from the client is
+	 * replaced. Without it, `previewUrl` is not used.
+	 */
+	previewSiteDataPath?: string;
+	/**
 	 * The current page slug from the Designer (e.g., "/about").
 	 * Used when pageScope is 'current'.
 	 */

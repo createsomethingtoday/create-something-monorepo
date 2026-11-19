@@ -617,7 +617,7 @@ creator-facing feedback.
 - `template_review_format_agent_review_feedback` (read-only comprehensive evidence validator/formatter for Agent Review Feedback drafts; does not write Airtable)
 - `template_review_prepare_published_site_sandbox` (read-only E2B sandbox job/runner bundle for first-class published-site evidence; does not execute E2B or write Airtable)
 - `template_review_run_published_site_sandbox` (read-only bounded E2B execution for rendered-page evidence and screenshots; fixed collector only, no caller-provided code or Airtable writes)
-- `template_review_run_published_site_validation` (read-only published-site validation; no Designer/Preview data or Airtable writes)
+- `template_review_run_published_site_validation` (read-only published-site validation; no Airtable writes. With `asset_id`, the server reads the preview link on the asset record and the validator reports the unused styles in the Designer "Clean up" list. A caller never passes a Preview link.)
 - `template_review_list_releases`
 - `template_review_set_checklist_items` (check/uncheck individual checklist items by index; byte-preserving)
 - `template_review_complete_publishing` (attaches a release; bulk checklist marking is opt-in via `mark_all_publishing_items`)

@@ -80,4 +80,57 @@ describe('Unused styles in the content crawl', () => {
 		// A CLI run without Designer data builds its list from the sitemap.
 		expect(await unusedStyles(['contact'], { pageListComplete: false })).toBeUndefined();
 	});
+
+	describe('with a preview link', () => {
+		const PREVIEW = 'https://preview.webflow.com/preview/example-template?preview=0123456789abcdef0123456789abcdef';
+		const SITE_DATA_PATH = '/site-data/{site}?preview={token}';
+		const siteData = {
+			pages: [{ _id: 'home' }],
+			domNodes: [],
+			symbols: [],
+			styles: {
+				blocks: [
+					{ _id: '00000000-0000-4000-8000-000000000001', data: { type: 'class', name: 'hero', sel: '.hero', children: [], affects: { home: 1 } } },
+					{ _id: '00000000-0000-4000-8000-000000000002', data: { type: 'class', name: 'leftover', sel: '.leftover', children: [], affects: {} } }
+				]
+			}
+		};
+
+		/** Serve PAGES and the stylesheet, and answer the preview host with `preview`. */
+		function serveWithPreview(preview: () => Response) {
+			serve();
+			vi.stubGlobal('fetch', vi.fn(async (url: string) => (String(url).startsWith('https://preview.webflow.com/') ? preview() : new Response(CSS, { status: 200 }))));
+		}
+
+		it('reports the Designer list and does not need the page list', async () => {
+			serveWithPreview(() => Response.json(siteData));
+			const issue = await unusedStyles(undefined, { previewUrl: PREVIEW, previewSiteDataPath: SITE_DATA_PATH, pageListComplete: false });
+			expect(issue?.severity).toBe('warning');
+			expect(issue?.details).toMatchObject({ unusedStyles: ['.leftover'], source: 'designer' });
+		});
+
+		it('compares the published pages when the preview link is expired', async () => {
+			serveWithPreview(() => new Response('Not found', { status: 404 }));
+			const issue = await unusedStyles(['contact'], { previewUrl: PREVIEW, previewSiteDataPath: SITE_DATA_PATH });
+			expect(issue?.details).toMatchObject({ source: 'published' });
+			expect(issue?.details?.unusedStyles).toHaveLength(11);
+		});
+
+		it('compares the published pages when the worker has no site data path', async () => {
+			const fetchMock = vi.fn(async () => new Response(CSS, { status: 200 }));
+			serve();
+			vi.stubGlobal('fetch', fetchMock);
+			const issue = await unusedStyles(['contact'], { previewUrl: PREVIEW });
+			expect(issue?.details).toMatchObject({ source: 'published' });
+			expect(fetchMock.mock.calls.some(([url]) => String(url).includes('preview.webflow.com'))).toBe(false);
+		});
+
+		it('does not ask another host for a link that is not a Webflow preview link', async () => {
+			serve();
+			const fetchMock = vi.fn(async () => new Response(CSS, { status: 200 }));
+			vi.stubGlobal('fetch', fetchMock);
+			await unusedStyles(['contact'], { previewUrl: 'https://example.com/preview/example-template?preview=0123456789abcdef0123456789abcdef', previewSiteDataPath: SITE_DATA_PATH });
+			expect(fetchMock.mock.calls.some(([url]) => String(url).includes('example.com'))).toBe(false);
+		});
+	});
 });
