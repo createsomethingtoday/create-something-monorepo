@@ -384,6 +384,8 @@ function parsePriceValue(value: unknown): number | null {
     if (typeof entry !== 'string') continue;
     const normalized = entry.trim().toLowerCase();
     if (!normalized) continue;
+    // An Option or Reference field holds an item ID, not an amount. Its first digits are not a price.
+    if (/^[0-9a-f]{24,32}$/.test(normalized)) continue;
     if (/\bfree\b/.test(normalized) || normalized === '$0' || normalized === '0' || normalized === '0 usd') return 0;
     const match = normalized.replace(/,/g, '').match(/\$?\s*(\d+(?:\.\d+)?)/);
     if (!match?.[1]) continue;

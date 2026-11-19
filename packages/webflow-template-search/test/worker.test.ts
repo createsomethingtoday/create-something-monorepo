@@ -4821,6 +4821,13 @@ describe('webflow-template-search worker', () => {
     expect(extractTemplateOffer({ 'template-price': '$49' })).toEqual({ price: 49, isFree: false });
   });
 
+  it('does not read an option ID in a price field as an amount', () => {
+    // The legacy "template-price" Option field holds an option ID. It comes after the numeric "price" field.
+    expect(extractTemplateOffer({ price: 79, 'template-cost': '$79 USD', 'template-price': 'ab8066c0ffee0123456789abcdef0123' })).toEqual({ price: 79, isFree: false });
+    expect(extractTemplateOffer({ 'template-price': '6abc0ffee0123456789abcdef0123456' })).toBeNull();
+    expect(extractTemplateOffer({ 'template-price': '0123456789abcdef01234567' })).toBeNull();
+  });
+
   it('does not refresh price metadata by ambiguous template name', async () => {
     const duplicateAgentflow = {
       ...PUBLISHED_ASSETS[1],
