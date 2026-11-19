@@ -16,7 +16,7 @@
  * - days >  limit → "overdue": the dashboard calls this "Over SLA"
  *
  * Limits are set in SLA_DAYS_BY_TYPE. The dashboard uses 3 days for every
- * type; the report uses 7 days for apps. A type with no limit is not counted.
+ * type; the report uses 10 days for apps. A type with no limit is not counted.
  *
  * Canon: The tool recedes; only the alert remains.
  */
@@ -63,7 +63,7 @@ const REVIEW_TYPE = 'New Asset';
 /** SLA in days per asset type. The key is the record ID in the Asset Types table. */
 const SLA_DAYS_BY_TYPE: { key: string; label: string; slaDays: number }[] = [
 	{ key: 'recA2YsPEHSuAHOLD', label: 'Templates', slaDays: 3 },
-	{ key: 'rec8UQzOkwrwQr7bf', label: 'Apps', slaDays: 7 },
+	{ key: 'rec8UQzOkwrwQr7bf', label: 'Apps', slaDays: 10 },
 	{ key: 'recU07tAbkf8OjzXO', label: 'Libraries', slaDays: 3 }
 ];
 
