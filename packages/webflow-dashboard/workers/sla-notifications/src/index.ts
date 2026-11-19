@@ -4,9 +4,14 @@
  * Counts open Marketplace reviews against a per-type SLA and posts the
  * counts to a Zapier webhook on weekdays at 14:00 UTC.
  *
- * SLA logic, per asset type:
- * - days in the current review stage <= limit → "on SLA"
- * - days in the current review stage >  limit → "overdue"
+ * SLA logic, per asset type. The day count is whole days, rounded down,
+ * so a count of 2 means 48 to 72 hours.
+ * - days <  limit - 1 → "within SLA": no action, not reported
+ * - days == limit - 1 → "on SLA": in the last 24 hours before the limit
+ * - days >= limit     → "overdue": at or past the limit
+ *
+ * The terms match the Airtable SLA dashboard. The report shows only the two
+ * states that need action: on SLA and overdue.
  *
  * Limits are set in SLA_DAYS_BY_TYPE. A type with no limit is not counted.
  *
@@ -25,6 +30,8 @@ interface Env {
 interface TypeStats {
 	label: string;
 	slaDays: number;
+	/** Not reported. Kept for logs and the dry run. */
+	withinSla: number;
 	onSla: number;
 	overdue: number;
 }
@@ -88,6 +95,7 @@ async function getSlaStats(env: Env): Promise<{ byType: TypeStats[]; skipped: nu
 	const byType: TypeStats[] = SLA_DAYS_BY_TYPE.map(({ label, slaDays }) => ({
 		label,
 		slaDays,
+		withinSla: 0,
 		onSla: 0,
 		overdue: 0
 	}));
@@ -103,10 +111,13 @@ async function getSlaStats(env: Env): Promise<{ byType: TypeStats[]; skipped: nu
 			continue;
 		}
 
-		if (days > byType[index].slaDays) {
+		const { slaDays } = byType[index];
+		if (days >= slaDays) {
 			byType[index].overdue++;
-		} else {
+		} else if (days === slaDays - 1) {
 			byType[index].onSla++;
+		} else {
+			byType[index].withinSla++;
 		}
 	}
 
@@ -163,7 +174,7 @@ export default {
 			console.log(`SLA stats: ${JSON.stringify(byType)}, skipped ${skipped}`);
 
 			if (payload.warningCount === 0 && payload.overdueCount === 0) {
-				console.log('No open reviews - skipping webhook notification');
+				console.log('No review on SLA or overdue - skipping webhook notification');
 				return;
 			}
 
@@ -220,7 +231,7 @@ export default {
 				}
 
 				if (payload.warningCount === 0 && payload.overdueCount === 0) {
-					return json({ success: true, message: 'No open reviews', ...payload, skipped });
+					return json({ success: true, message: 'No review on SLA or overdue', ...payload, skipped });
 				}
 
 				const success = await sendToZapier(env.ZAPIER_SLA_WEBHOOK_URL, payload);
