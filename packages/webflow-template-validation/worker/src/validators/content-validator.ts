@@ -19,6 +19,15 @@ import {
 	ContentQualityAnalysis,
 	ValidationOptions
 } from '../types';
+import {
+	collectClassUsage,
+	createClassUsage,
+	findUnusedStyles,
+	generateUnusedStyleIssues,
+	MIN_PAGES_FOR_UNUSED_STYLES,
+	uncrawledItemPages,
+	type ClassUsage
+} from './unused-styles';
 import { fetchHTML, isPlatformManagedHeading, parseHTML } from '../utils/fetch-utils';
 import { analyzeHeadingSequence, extractDocumentOutline, visibleOutlineHeadings } from '../utils/document-outline';
 import { isWebflowGeneratedVideoPosterSource } from '../utils/asset-utils';
@@ -262,9 +271,10 @@ export async function validateContent(
 		}
 
 		// Default: homepage + additional pages (provided slugs or discovery)
+		const classUsage = createClassUsage();
 		const htmlResult = await fetchHTML(siteUrl);
 		const parsedHTML = parseHTML(htmlResult.html);
-		const pageAnalysis = await analyzePage(siteUrl, parsedHTML);
+		const pageAnalysis = await analyzePage(siteUrl, parsedHTML, classUsage);
 
 		const maxPages = typeof options?.maxPages === 'number' && Number.isFinite(options.maxPages)
 			? Math.max(1, Math.floor(options.maxPages))
@@ -280,7 +290,7 @@ export async function validateContent(
 
 		const additionalPages = maxAdditionalPages === 0
 			? []
-			: await discoverAdditionalPages(parsedHTML, siteUrl, filteredPageSlugs, maxAdditionalPages, excludedSlugs);
+			: await discoverAdditionalPages(parsedHTML, siteUrl, filteredPageSlugs, maxAdditionalPages, excludedSlugs, classUsage);
 
 		const combinedPages = [pageAnalysis, ...additionalPages];
 		const allPages = excludedSlugs.size > 0
@@ -292,13 +302,16 @@ export async function validateContent(
 
 		// Generate content validation issues. The reviewer standards also read
 		// the utility pages, which the crawl does not always reach.
-		const utility = await auditUtilityPages(siteUrl, allPages, excludedSlugs);
+		const utility = await auditUtilityPages(siteUrl, allPages, excludedSlugs, classUsage);
 		const issues = [
 			...generateContentIssues(allPages, resolvedChecks),
 			...generateReviewerStandardIssues(
 				[...allPages.flatMap(page => (page.reviewerAudit ? [page.reviewerAudit] : [])), ...utility.audits],
 				{ missingPaths: utility.missingPaths }
-			)
+			),
+			// A page limit leaves the crawl incomplete, and a style on a page
+			// that was not read is not unused.
+			...(maxPages === undefined ? await auditUnusedStyles(siteUrl, classUsage, excludedSlugs, allPages.map(page => page.url)) : [])
 		];
 
 		// Calculate content statistics
@@ -339,7 +352,8 @@ export async function validateContent(
 	}
 }
 
-async function analyzePage(url: string, parsedHTML: ParsedHTML): Promise<AnalyzedPage> {
+async function analyzePage(url: string, parsedHTML: ParsedHTML, classUsage?: ClassUsage): Promise<AnalyzedPage> {
+	if (classUsage) collectClassUsage(parsedHTML.rawHtml, classUsage);
 	// Extract page title
 	const titleElement = parsedHTML.document.querySelector('title');
 	const title = titleElement?.textContent || 'Untitled Page';
@@ -410,7 +424,50 @@ async function analyzePage(url: string, parsedHTML: ParsedHTML): Promise<Analyze
  * other path that answers HTTP 404 is reported as missing; a page that fails
  * to load for another reason is skipped, so a network error never blocks.
  */
-async function auditUtilityPages(siteUrl: string, pages: AnalyzedPage[], excludedSlugs: Set<string>) {
+/**
+ * Unused styles need the site stylesheet and the site's own JavaScript. A page
+ * or file that does not load ends the check without a finding: a missing
+ * script could hide the interaction that adds a class.
+ */
+async function auditUnusedStyles(siteUrl: string, classUsage: ClassUsage, excludedSlugs: Set<string>, crawledUrls: string[]): Promise<ValidationIssue[]> {
+	// Without a Webflow site stylesheet there is nothing to compare, and no
+	// reason to read more pages.
+	if (classUsage.incomplete || classUsage.stylesheetUrls.size === 0) return [];
+	try {
+		// Pages excluded from the content checks (the Style Guide by default)
+		// still use styles, so their class lists are read here.
+		const excludedUrls = [...excludedSlugs].map(slug => new URL(slug, siteUrl).href);
+		await Promise.all(excludedUrls.map(async url => {
+			collectClassUsage((await fetchHTML(url)).html, classUsage);
+		}));
+		// The page list from the Designer has no CMS item pages. One item
+		// page that fails to load is not a reason to stop: another item of the
+		// same collection shows the template.
+		const utilityUrls = REVIEWER_UTILITY_PATHS.map(path => new URL(path, siteUrl).href);
+		const itemUrls = uncrawledItemPages(classUsage, siteUrl, [...crawledUrls, ...excludedUrls, ...utilityUrls]);
+		await Promise.all(itemUrls.map(async url => {
+			try {
+				collectClassUsage((await fetchHTML(url)).html, classUsage);
+			} catch { /* see above */ }
+		}));
+		if (classUsage.pageCount < MIN_PAGES_FOR_UNUSED_STYLES) return [];
+		const load = async (url: string): Promise<string> => {
+			const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
+			if (!response.ok) throw new Error(`HTTP ${response.status} for ${url}`);
+			return response.text();
+		};
+		const [stylesheets, scripts] = await Promise.all([
+			Promise.all([...classUsage.stylesheetUrls].map(load)),
+			Promise.all([...classUsage.scriptUrls].map(load))
+		]);
+		return generateUnusedStyleIssues(findUnusedStyles(stylesheets.join('\n'), classUsage, scripts), classUsage.pageCount);
+	} catch (error) {
+		console.warn('Unused styles check skipped:', error);
+		return [];
+	}
+}
+
+async function auditUtilityPages(siteUrl: string, pages: AnalyzedPage[], excludedSlugs: Set<string>, classUsage?: ClassUsage) {
 	const crawled = new Set(pages.map(page => page.reviewerAudit?.path).filter(Boolean));
 	const paths = REVIEWER_UTILITY_PATHS.filter(path => !crawled.has(path) && !excludedSlugs.has(normalizeSlugForComparison(path) ?? ''));
 	const missingPaths: string[] = [];
@@ -419,9 +476,11 @@ async function auditUtilityPages(siteUrl: string, pages: AnalyzedPage[], exclude
 			const pageUrl = new URL(path, siteUrl).href;
 			try {
 				const page = await fetchHTML(pageUrl, path === '/404' ? { acceptStatus: [404] } : undefined);
+				if (classUsage) collectClassUsage(page.html, classUsage);
 				return auditReviewerStandards(page.html, pageUrl);
 			} catch (error) {
 				if (error instanceof Error && /^HTTP 404\b/.test(error.message)) missingPaths.push(path);
+				else if (classUsage) classUsage.incomplete = true;
 				return null;
 			}
 		})
@@ -786,7 +845,8 @@ async function discoverAdditionalPages(
 	baseUrl: string,
 	pageSlugs?: string[],
 	maxAdditionalPages?: number,
-	excludedSlugs?: Set<string>
+	excludedSlugs?: Set<string>,
+	classUsage?: ClassUsage
 ): Promise<AnalyzedPage[]> {
 	const additionalPages: AnalyzedPage[] = [];
 	const discoveredUrls = new Set<string>();
@@ -877,9 +937,11 @@ async function discoverAdditionalPages(
 			try {
 				const htmlResult = await fetchHTML(pageUrl);
 				const parsedPageHTML = parseHTML(htmlResult.html);
-				results[index] = await analyzePage(pageUrl, parsedPageHTML);
+				results[index] = await analyzePage(pageUrl, parsedPageHTML, classUsage);
 			} catch (error) {
 				console.warn(`Failed to analyze page ${pageUrl}:`, error);
+				// The styles of a page that did not load look unused.
+				if (classUsage) classUsage.incomplete = true;
 			}
 		}
 	}
