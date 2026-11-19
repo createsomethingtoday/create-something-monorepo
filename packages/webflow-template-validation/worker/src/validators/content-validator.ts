@@ -309,9 +309,10 @@ export async function validateContent(
 				[...allPages.flatMap(page => (page.reviewerAudit ? [page.reviewerAudit] : [])), ...utility.audits],
 				{ missingPaths: utility.missingPaths }
 			),
-			// A page limit leaves the crawl incomplete, and a style on a page
-			// that was not read is not unused.
-			...(maxPages === undefined ? await auditUnusedStyles(siteUrl, classUsage, excludedSlugs, allPages.map(page => page.url)) : [])
+			// The check needs every static page. Only the page list from the
+			// Designer gives that: link discovery reads a few pages, and a page
+			// limit cuts the list. A style on a page that was not read is not unused.
+			...(maxPages === undefined && Array.isArray(pageSlugs) && pageSlugs.length > 0 ? await auditUnusedStyles(siteUrl, classUsage, excludedSlugs, allPages.map(page => page.url)) : [])
 		];
 
 		// Calculate content statistics
@@ -437,19 +438,33 @@ async function auditUnusedStyles(siteUrl: string, classUsage: ClassUsage, exclud
 		// Pages excluded from the content checks (the Style Guide by default)
 		// still use styles, so their class lists are read here.
 		const excludedUrls = [...excludedSlugs].map(slug => new URL(slug, siteUrl).href);
+		// The default exclusion list names both /style-guide and /styleguide,
+		// and a site has one of them. A path that answers 404 is not a page.
 		await Promise.all(excludedUrls.map(async url => {
-			collectClassUsage((await fetchHTML(url)).html, classUsage);
+			try {
+				collectClassUsage((await fetchHTML(url)).html, classUsage);
+			} catch (error) {
+				if (!(error instanceof Error && /^HTTP 404\b/.test(error.message))) throw error;
+			}
 		}));
 		// The page list from the Designer has no CMS item pages. One item
-		// page that fails to load is not a reason to stop: another item of the
-		// same collection shows the template.
+		// page that fails to load is not a reason to stop when another page
+		// of the same collection was read. A collection with no page read
+		// ends the check: its template styles would all look unused.
 		const utilityUrls = REVIEWER_UTILITY_PATHS.map(path => new URL(path, siteUrl).href);
 		const itemUrls = uncrawledItemPages(classUsage, siteUrl, [...crawledUrls, ...excludedUrls, ...utilityUrls]);
+		const parentOf = (url: string) => new URL(url).pathname.replace(/\/+$/, '').replace(/\/[^/]*$/, '');
+		const readParents = new Set(crawledUrls.map(parentOf));
+		const failedParents = new Set<string>();
 		await Promise.all(itemUrls.map(async url => {
 			try {
 				collectClassUsage((await fetchHTML(url)).html, classUsage);
-			} catch { /* see above */ }
+				readParents.add(parentOf(url));
+			} catch {
+				failedParents.add(parentOf(url));
+			}
 		}));
+		if ([...failedParents].some(parent => !readParents.has(parent))) return [];
 		if (classUsage.pageCount < MIN_PAGES_FOR_UNUSED_STYLES) return [];
 		const load = async (url: string): Promise<string> => {
 			const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
