@@ -29,6 +29,8 @@
     "verify:native-ui": "node scripts/verify-native-ui.mjs",
     "deploy": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=create-something-mapping-canvas --branch=main --commit-dirty=true",
     "verify:editing": "node scripts/verify-editing.mjs",
+    "verify:focused-revision": "node scripts/verify-focused-revision.mjs",
+    "verify:focused-revision-focus": "node scripts/verify-focused-revision-focus.mjs",
     "verify:composition": "node scripts/composition/verify-browser.mjs",
     "verify:polish": "node scripts/composition/verify-polish.mjs",
     "verify:hyperframes": "node scripts/composition/verify-hyperframes.mjs",
