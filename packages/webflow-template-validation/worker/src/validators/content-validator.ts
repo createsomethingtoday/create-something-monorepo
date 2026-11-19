@@ -28,6 +28,7 @@ import {
 	uncrawledItemPages,
 	type ClassUsage
 } from './unused-styles';
+import { fetchPreviewSiteData, findUnusedStylesInSiteData, parsePreviewLink } from './designer-unused-styles';
 import { fetchHTML, isPlatformManagedHeading, parseHTML } from '../utils/fetch-utils';
 import { analyzeHeadingSequence, extractDocumentOutline, visibleOutlineHeadings } from '../utils/document-outline';
 import { isWebflowGeneratedVideoPosterSource } from '../utils/asset-utils';
@@ -313,7 +314,10 @@ export async function validateContent(
 			// Designer gives that: a list from a sitemap or from links can be
 			// cut short, and a page limit cuts any list. A style on a page that
 			// was not read is not unused.
-			...(maxPages === undefined && options?.pageListComplete === true && Array.isArray(pageSlugs) && pageSlugs.length > 0 ? await auditUnusedStyles(siteUrl, classUsage, excludedSlugs, allPages.map(page => page.url)) : [])
+			// With a preview link, the Designer's site data gives the Clean
+			// up list and no page list is necessary.
+			...(await auditDesignerUnusedStyles(options?.previewUrl, options?.previewSiteDataPath)
+				?? (maxPages === undefined && options?.pageListComplete === true && Array.isArray(pageSlugs) && pageSlugs.length > 0 ? await auditUnusedStyles(siteUrl, classUsage, excludedSlugs, allPages.map(page => page.url)) : []))
 		];
 
 		// Calculate content statistics
@@ -433,6 +437,29 @@ async function analyzePage(url: string, parsedHTML: ParsedHTML, classUsage?: Cla
  */
 const UNUSED_STYLES_ITEM_PAGE_LIMIT = 30;
 const UNUSED_STYLES_ITEM_ROUNDS = 3;
+
+/**
+ * Unused styles from the Designer's site data, read with the preview link.
+ * `null` means "no answer": no link, a link that is not a Webflow preview
+ * link, no `PREVIEW_SITE_DATA_PATH` secret on the worker, an expired link,
+ * or data in a shape this check does not know. The
+ * caller then compares the published pages.
+ */
+async function auditDesignerUnusedStyles(previewUrl: unknown, siteDataPath: unknown): Promise<ValidationIssue[] | null> {
+	const link = parsePreviewLink(previewUrl);
+	if (!link || !siteDataPath) return null;
+	try {
+		const result = findUnusedStylesInSiteData(await fetchPreviewSiteData(link, siteDataPath));
+		if (!result) {
+			console.warn('Unused styles: no Designer site data for the preview link; the published pages are compared.');
+			return null;
+		}
+		return generateUnusedStyleIssues(result, 0, 'designer');
+	} catch (error) {
+		console.warn('Unused styles: Designer site data check failed:', error);
+		return null;
+	}
+}
 
 async function auditUnusedStyles(siteUrl: string, classUsage: ClassUsage, excludedSlugs: Set<string>, crawledUrls: string[]): Promise<ValidationIssue[]> {
 	// Without a Webflow site stylesheet there is nothing to compare, and no

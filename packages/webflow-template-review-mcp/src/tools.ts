@@ -76,7 +76,7 @@ import {
 import { TEMPLATE_REVIEW_FIELD_MAP } from './schema.js';
 import { REVIEW_WORKFLOW } from './prompts.js';
 import type { ReviewerProfile } from './reviewer-directory.js';
-import { PUBLISHED_SITE_VALIDATION_CHECKS, runPublishedSiteValidation, type ValidationToolConfig } from './validation.js';
+import { PUBLISHED_SITE_VALIDATION_CHECKS, previewLinkForValidation, runPublishedSiteValidation, type ValidationToolConfig } from './validation.js';
 
 type ClientFactory = () => AirtableClient;
 type ReviewerFactory = () => ReviewerProfile | null;
@@ -2089,16 +2089,20 @@ export function registerTools(
 
   server.tool(
     'template_review_run_published_site_validation',
-    'Read-only: run published-site validators for content, assets, accessibility signals, interactions/IX2, GSAP, and custom-code policy evidence. Uses published_url only; does not use Designer/Preview data or write to Airtable.',
+    'Read-only: run published-site validators for content, assets, accessibility signals, interactions/IX2, GSAP, and custom-code policy evidence. Pass published_url, never a Preview link. With asset_id, the server reads the preview link on that asset record and the validator also reports the unused styles in the Designer "Clean up" list. Does not write to Airtable.',
     {
       published_url: z.string().url(),
+      asset_id: z.string().regex(/^rec[A-Za-z0-9]{14}$/).optional().describe('Airtable asset record ID of this template. Turns on the unused styles check.'),
       page_slugs: z.array(z.string().min(1)).max(100).optional(),
       checks: z.array(z.enum(PUBLISHED_SITE_VALIDATION_CHECKS)).min(1).optional(),
       max_pages: z.number().int().min(1).max(100).optional(),
       include_raw: z.boolean().optional(),
     },
-    async ({ published_url, page_slugs, checks, max_pages, include_raw }) => {
+    async ({ published_url, asset_id, page_slugs, checks, max_pages, include_raw }) => {
       try {
+        // A failed asset read does not stop the validation; it runs without
+        // the unused styles check.
+        const asset = asset_id ? await getClient().getAssetById(asset_id).catch(() => null) : null;
         return asSuccess({
           validation: await runPublishedSiteValidation(
             {
@@ -2107,6 +2111,7 @@ export function registerTools(
               checks,
               max_pages,
               include_raw,
+              preview_url: previewLinkForValidation(asset, published_url),
             },
             runtimeConfig,
           ),

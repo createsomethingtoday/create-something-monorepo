@@ -52,7 +52,7 @@ import {
 import { normalizePublishedHost, verifyOauthSiteAccess } from './utils/oauth-site-evidence';
 
 const REVIEW_SNIPPET_VERSION = '0.3.0';
-const WORKER_VERSION = '2.15.0';
+const WORKER_VERSION = '2.16.0';
 
 /**
  * Oldest Template CLI that may record a result. Part of the rules run inside
@@ -589,7 +589,7 @@ export default {
 				case '/validate':
 					if (request.method !== 'POST') return methodNotAllowed(request);
 					if (await validationStartRateLimited(request, env)) return rateLimitedStartResponse(request, correlationId);
-					return await handleEnhancedValidation(request);
+					return await handleEnhancedValidation(request, env);
 
 				case '/validate/assets':
 					if (request.method !== 'POST') return methodNotAllowed(request);
@@ -1673,7 +1673,7 @@ async function runReviewJob(jobId: string, env: unknown): Promise<void> {
 				skipContent: !runContent,
 				skipAccessibility: !runAccessibility
 			}
-		});
+		}, env);
 
 		await advance(65, 'Merging validation result sets');
 		const merged = mergeReviewResults(job.request.siteUrl, designerResult, enhancedResult);
@@ -1839,7 +1839,7 @@ async function handleDesignerValidation(request: Request): Promise<Response> {
 	}
 }
 
-async function handleEnhancedValidation(request: Request): Promise<Response> {
+async function handleEnhancedValidation(request: Request, env?: unknown): Promise<Response> {
 	try {
 		const body = (await request.json()) as ValidationRequest;
 		if (!body.siteUrl || !body.designerData) {
@@ -1850,7 +1850,7 @@ async function handleEnhancedValidation(request: Request): Promise<Response> {
 			);
 		}
 
-		const result = await performEnhancedValidation(body);
+		const result = await performEnhancedValidation(body, env);
 		return jsonResponse(result, 200, request);
 	} catch (error) {
 		return jsonResponse(
@@ -1878,7 +1878,12 @@ async function performDesignerValidation(
 	};
 }
 
-async function performEnhancedValidation(body: ValidationRequest): Promise<ValidationResponse> {
+function previewSiteDataPathFromEnv(env: unknown): string | undefined {
+	const value = (env as { PREVIEW_SITE_DATA_PATH?: unknown } | null | undefined)?.PREVIEW_SITE_DATA_PATH;
+	return typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined;
+}
+
+async function performEnhancedValidation(body: ValidationRequest, env?: unknown): Promise<ValidationResponse> {
 	const options = body.options || {};
 	const cmsTemplateHints = extractCmsTemplateHints(body.designerData);
 
@@ -1891,7 +1896,9 @@ async function performEnhancedValidation(body: ValidationRequest): Promise<Valid
 		: validateContent(body.siteUrl, body.pageSlugs, {
 			...options,
 			// A run without Designer data sends a stub with pages only.
-			pageListComplete: Array.isArray(body.designerData?.styles) && body.designerData.styles.length > 0
+			pageListComplete: Array.isArray(body.designerData?.styles) && body.designerData.styles.length > 0,
+			// Only the worker's own secret names the site data path.
+			previewSiteDataPath: previewSiteDataPathFromEnv(env)
 		});
 
 	const accessibilityPromise = options.skipAccessibility

@@ -171,19 +171,38 @@ export function findUnusedStyles(css: string, usage: ClassUsage, siteScripts: st
 	return { unused: reported, stylesChecked: chains.size };
 }
 
-export function generateUnusedStyleIssues(result: UnusedStylesResult, pageCount: number): ValidationIssue[] {
+/**
+ * @param source `published` (default): the list comes from the published
+ *   pages, and `pageCount` is the number of pages read. `designer`: the list
+ *   comes from the Designer's site data (`designer-unused-styles.ts`), which
+ *   is the list that the Clean up panel shows.
+ */
+export function generateUnusedStyleIssues(result: UnusedStylesResult, pageCount: number, source: 'published' | 'designer' = 'published'): ValidationIssue[] {
 	if (result.unused.length === 0) return [];
 	const names = result.unused.map((style) => style.classes.map((name) => `.${name}`).join(''));
 	const listed = names.slice(0, MAX_LISTED);
 	const more = names.length - listed.length;
-	return [{
+	const list = `${listed.join(', ')}${more > 0 ? `, and ${more} more` : ''}`;
+	const base = {
 		id: 'unused-styles',
 		category: 'Content & Accessibility',
-		severity: names.length > UNUSED_STYLES_BLOCK_THRESHOLD ? 'error' : 'warning',
+		severity: names.length > UNUSED_STYLES_BLOCK_THRESHOLD ? 'error' : 'warning'
+	} as const;
+	if (source === 'designer') {
+		return [{
+			...base,
+			message: `${names.length} style(s) are not used on any element`,
+			description: `The Designer's "Clean up" list has these classes and combo classes. No element on a page or in a component uses them: ${list}.`,
+			howToFix: 'Open the Style selectors panel, select "Clean up", and delete the unused styles. Then run the Validator again.',
+			details: { unusedStyles: names, stylesChecked: result.stylesChecked, source }
+		}];
+	}
+	return [{
+		...base,
 		message: `${names.length} style(s) are not used on any published page`,
-		description: `These classes and combo classes are in the site's stylesheet, but no element on the ${pageCount} published page(s) uses them: ${listed.join(', ')}${more > 0 ? `, and ${more} more` : ''}. A style on an element that shows only in some states (an empty state, a pagination button) can be in this list.`,
+		description: `These classes and combo classes are in the site's stylesheet, but no element on the ${pageCount} published page(s) uses them: ${list}. A style on an element that shows only in some states (an empty state, a pagination button) can be in this list.`,
 		howToFix: 'Open the Style selectors panel, select "Clean up", and delete the unused styles. Then check this list for styles that Clean up kept, and remove the ones the template does not need. Publish the site and run the Validator again.',
-		details: { unusedStyles: names, stylesChecked: result.stylesChecked, pagesChecked: pageCount }
+		details: { unusedStyles: names, stylesChecked: result.stylesChecked, pagesChecked: pageCount, source }
 	}];
 }
 
