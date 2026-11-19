@@ -30,7 +30,8 @@
   },
   "dependencies": {
     "@create-something/canon": "workspace:*",
-    "svelte": "^5.56.9"
+    "svelte": "^5.56.9",
+    "@create-something/goldin-coordinator": "workspace:*"
   },
   "devDependencies": {
     "@sveltejs/adapter-cloudflare": "^7.2.4",

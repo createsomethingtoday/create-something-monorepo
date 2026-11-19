@@ -1,0 +1,33 @@
+{
+  "name": "@create-something/goldin-coordinator",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test.mjs transport.test.mjs operations.test.mjs",
+    "test:runtime": "node build.mjs && node build-pages.mjs && node build-pages.mjs --isolated && node build-pages.mjs --production && node --test runtime.test.mjs",
+    "build": "node build.mjs",
+    "check": "node check.mjs",
+    "lint": "eslint --config eslint.config.mjs .",
+    "production:report": "node production-report.mjs",
+    "build:isolated": "node build-pages.mjs --isolated"
+  },
+  "engines": {
+    "node": "^22.13.0 || >=24.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12",
+    "miniflare": "4.20260708.1",
+    "eslint": "9.39.2",
+    "workerd": "1.20261022.1"
+  },
+  "dependencies": {
+    "@create-something/auth-platform": "workspace:*",
+    "@create-something/canon": "workspace:*"
+  },
+  "exports": {
+    "./browser-invocation": {
+      "types": "./browser-invocation.d.mts",
+      "default": "./browser-invocation.mjs"
+    }
+  }
+}

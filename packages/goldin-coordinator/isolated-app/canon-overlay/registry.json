@@ -1,0 +1,17 @@
+{
+  "id": "overlay.goldin-coordination-test",
+  "sourcePackage": "goldin-coordination-test",
+  "targetModalities": [
+    "web",
+    "chat",
+    "app",
+    "voice",
+    "glasses"
+  ],
+  "registryItemIds": [
+    "token.canon-core",
+    "policy.signal-decision-proof",
+    "template.canon-project-overlay-manifest"
+  ],
+  "overlayRule": "Reuse Canon tokens and identity forms; operator workflow copy and policy are local. No new shared primitive is introduced."
+}

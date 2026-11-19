@@ -1,0 +1,1 @@
+<svelte:head><title>Goldin staff operations</title></svelte:head><main><h1>Goldin staff operations</h1><p>Staff-reviewed coordination. Customer messages, charges and gallery releases are handled separately.</p><a href="/sign-in">Sign in with CREATE SOMETHING</a></main>
