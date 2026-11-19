@@ -214,6 +214,12 @@ export interface ValidationOptions {
 	 */
 	pageScope?: 'all' | 'current';
 	/**
+	 * True when `pageSlugs` is the full static page list from the Designer.
+	 * The worker sets it from the Designer data; a value from the client is
+	 * replaced. A page list from a sitemap or from links can be cut short.
+	 */
+	pageListComplete?: boolean;
+	/**
 	 * The current page slug from the Designer (e.g., "/about").
 	 * Used when pageScope is 'current'.
 	 */

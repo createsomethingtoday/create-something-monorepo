@@ -82,7 +82,9 @@ describe('Unused styles', () => {
 		collectClassUsage(page('<a href="/blog/a">a</a><a href="/blog/b">b</a><a href="/blog/c">c</a><a href="/work/x#top">x</a><a href="/about">About</a><a href="https://other.example/blog/z">z</a><a href="/files/guide.pdf">pdf</a>'), usage);
 		const site = 'https://example-template.webflow.io';
 		// /blog/a is read already, so one more blog item is enough.
-		const pages = uncrawledItemPages(usage, site, [site, `${site}/about`, `${site}/blog/a`]).sort();
+		const result = uncrawledItemPages(usage, site, [site, `${site}/about`, `${site}/blog/a`]);
+		const pages = result.pages.sort();
+		expect(result.truncated).toBe(false);
 		expect(pages).toHaveLength(2);
 		expect(pages[0]).toMatch(/\/blog\/[bc]$/);
 		expect(pages[1]).toBe(`${site}/work/x`);
@@ -96,6 +98,14 @@ describe('Unused styles', () => {
 		const severity = (count: number) => generateUnusedStyleIssues(findUnusedStyles(sheet(count), usage), usage.pageCount)[0].severity;
 		expect(severity(UNUSED_STYLES_BLOCK_THRESHOLD)).toBe('warning');
 		expect(severity(UNUSED_STYLES_BLOCK_THRESHOLD + 1)).toBe('error');
+	});
+
+	it('says when the limit leaves a collection out', () => {
+		const usage = createClassUsage();
+		collectClassUsage(page('<a href="/blog/a">a</a><a href="/work/x">x</a><a href="/team/y">y</a>'), usage);
+		const result = uncrawledItemPages(usage, 'https://example-template.webflow.io', [], 2, 2);
+		expect(result.pages).toHaveLength(2);
+		expect(result.truncated).toBe(true);
 	});
 
 	it('makes one warning that lists the styles, and none when every style is used', () => {

@@ -38,7 +38,7 @@ function serve(broken: string[] = []) {
 }
 
 async function unusedStyles(pageSlugs: string[] | undefined, options: Record<string, unknown> = {}) {
-	const result = await validateContent(SITE, pageSlugs, { excludePageSlugs: ['/style-guide', '/styleguide'], ...options });
+	const result = await validateContent(SITE, pageSlugs, { excludePageSlugs: ['/style-guide', '/styleguide'], pageListComplete: true, ...options });
 	return result.issues.find((issue) => issue.id === 'unused-styles');
 }
 
@@ -75,5 +75,7 @@ describe('Unused styles in the content crawl', () => {
 		expect(await unusedStyles(undefined)).toBeUndefined();
 		expect(await unusedStyles([])).toBeUndefined();
 		expect(await unusedStyles(['contact'], { maxPages: 20 })).toBeUndefined();
+		// A CLI run without Designer data builds its list from the sitemap.
+		expect(await unusedStyles(['contact'], { pageListComplete: false })).toBeUndefined();
 	});
 });

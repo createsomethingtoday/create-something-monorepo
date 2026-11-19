@@ -310,9 +310,10 @@ export async function validateContent(
 				{ missingPaths: utility.missingPaths }
 			),
 			// The check needs every static page. Only the page list from the
-			// Designer gives that: link discovery reads a few pages, and a page
-			// limit cuts the list. A style on a page that was not read is not unused.
-			...(maxPages === undefined && Array.isArray(pageSlugs) && pageSlugs.length > 0 ? await auditUnusedStyles(siteUrl, classUsage, excludedSlugs, allPages.map(page => page.url)) : [])
+			// Designer gives that: a list from a sitemap or from links can be
+			// cut short, and a page limit cuts any list. A style on a page that
+			// was not read is not unused.
+			...(maxPages === undefined && options?.pageListComplete === true && Array.isArray(pageSlugs) && pageSlugs.length > 0 ? await auditUnusedStyles(siteUrl, classUsage, excludedSlugs, allPages.map(page => page.url)) : [])
 		];
 
 		// Calculate content statistics
@@ -452,7 +453,10 @@ async function auditUnusedStyles(siteUrl: string, classUsage: ClassUsage, exclud
 		// of the same collection was read. A collection with no page read
 		// ends the check: its template styles would all look unused.
 		const utilityUrls = REVIEWER_UTILITY_PATHS.map(path => new URL(path, siteUrl).href);
-		const itemUrls = uncrawledItemPages(classUsage, siteUrl, [...crawledUrls, ...excludedUrls, ...utilityUrls]);
+		const items = uncrawledItemPages(classUsage, siteUrl, [...crawledUrls, ...excludedUrls, ...utilityUrls]);
+		// More collections than the sample can hold: some template is unread.
+		if (items.truncated) return [];
+		const itemUrls = items.pages;
 		const parentOf = (url: string) => new URL(url).pathname.replace(/\/+$/, '').replace(/\/[^/]*$/, '');
 		const readParents = new Set(crawledUrls.map(parentOf));
 		const failedParents = new Set<string>();

@@ -192,8 +192,9 @@ export function generateUnusedStyleIssues(result: UnusedStylesResult, pageCount:
  * CMS item pages that the crawl has not read: up to `perCollection` linked
  * pages for each parent path (`/blog/a` and `/blog/b` share `/blog`). A CMS
  * template has its own elements and styles, and only an item page shows them.
+ * `truncated` is true when the limit left a wanted page out.
  */
-export function uncrawledItemPages(usage: ClassUsage, siteUrl: string, crawledUrls: string[], perCollection = 2, limit = 30): string[] {
+export function uncrawledItemPages(usage: ClassUsage, siteUrl: string, crawledUrls: string[], perCollection = 2, limit = 30): { pages: string[]; truncated: boolean } {
 	const site = new URL(siteUrl);
 	const pathOf = (url: URL) => url.pathname.replace(/\/+$/, '') || '/';
 	const crawled = new Set<string>();
@@ -206,8 +207,8 @@ export function uncrawledItemPages(usage: ClassUsage, siteUrl: string, crawledUr
 		if (parent) perParent.set(parent, (perParent.get(parent) || 0) + 1);
 	}
 	const pages: string[] = [];
+	let truncated = false;
 	for (const href of usage.linkHrefs) {
-		if (pages.length >= limit) break;
 		let url: URL;
 		try { url = new URL(href, site); } catch { continue; }
 		const path = pathOf(url);
@@ -215,11 +216,13 @@ export function uncrawledItemPages(usage: ClassUsage, siteUrl: string, crawledUr
 		if (url.origin !== site.origin || !parent || crawled.has(path) || /\.[a-z0-9]{2,5}$/i.test(path)) continue;
 		const count = perParent.get(parent) || 0;
 		if (count >= perCollection) continue;
+		// A page that is wanted but does not fit leaves its collection unread.
+		if (pages.length >= limit) { truncated = true; break; }
 		perParent.set(parent, count + 1);
 		crawled.add(path);
 		pages.push(new URL(path, site).href);
 	}
-	return pages;
+	return { pages, truncated };
 }
 
 function isPlatformClass(name: string): boolean {

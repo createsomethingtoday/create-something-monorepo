@@ -1888,7 +1888,11 @@ async function performEnhancedValidation(body: ValidationRequest): Promise<Valid
 
 	const contentPromise = options.skipContent
 		? Promise.resolve(createEmptyContentAnalysis())
-		: validateContent(body.siteUrl, body.pageSlugs, options);
+		: validateContent(body.siteUrl, body.pageSlugs, {
+			...options,
+			// A run without Designer data sends a stub with pages only.
+			pageListComplete: Array.isArray(body.designerData?.styles) && body.designerData.styles.length > 0
+		});
 
 	const accessibilityPromise = options.skipAccessibility
 		? Promise.resolve(createEmptyAccessibilityAnalysis())
