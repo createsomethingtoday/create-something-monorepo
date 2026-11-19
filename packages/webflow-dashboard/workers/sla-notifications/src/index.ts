@@ -1,19 +1,22 @@
 /**
  * SLA Notifications Worker
  *
- * Counts open Marketplace reviews against a per-type SLA and posts the
- * counts to a Zapier webhook on weekdays at 14:00 UTC.
+ * Counts the reviews that wait on the review team and posts the counts to a
+ * Zapier webhook on weekdays at 14:00 UTC.
  *
- * SLA logic, per asset type. The day count is whole days, rounded down,
- * so a count of 2 means 48 to 72 hours.
- * - days <  limit - 1 → "within SLA": no action, not reported
- * - days == limit - 1 → "on SLA": in the last 24 hours before the limit
- * - days >= limit     → "overdue": at or past the limit
+ * The counts follow the "Pending review team action" tiles on the Airtable
+ * Operational Metrics page, so reviewers see the same numbers in both places:
+ * - one row per asset version
+ * - review type is New Asset
+ * - review status is Ready for Review, In Review, or Response to Review
  *
- * The terms match the Airtable SLA dashboard. The report shows only the two
- * states that need action: on SLA and overdue.
+ * SLA states, per asset type. The day count is whole days, rounded down.
+ * - days <  limit → "within SLA": no action, not reported
+ * - days == limit → "on SLA": at the limit, act now
+ * - days >  limit → "overdue": the dashboard calls this "Over SLA"
  *
- * Limits are set in SLA_DAYS_BY_TYPE. A type with no limit is not counted.
+ * Limits are set in SLA_DAYS_BY_TYPE. The dashboard uses 3 days for every
+ * type; the report uses 7 days for apps. A type with no limit is not counted.
  *
  * Canon: The tool recedes; only the alert remains.
  */
@@ -45,33 +48,28 @@ interface SlaPayload {
 }
 
 // Airtable configuration
-const ASSETS_TABLE = 'tblRwzpWoLgE9MrUm';
-const NAME_FIELD = 'Name';
-const DAYS_FIELD = '⏱️Days in Current Review Stage';
-const STATUS_FIELD = '📝Latest Review Status';
-const TYPE_FIELD = '⚙️🆎Type (Text)';
+const VERSIONS_TABLE = 'tblHxZ2hgSFLZxsZu';
+const DAYS_FIELD = '⏱️Days in Current Stage';
+const STATUS_FIELD = '📝Review Status';
+const REVIEW_TYPE_FIELD = '📝Review Type';
+const TYPE_ID_FIELD = '⚙️🆎Asset Type Record ID';
 
-/** Review statuses that count as an open review. Same set as the "All Assets SLA Over" view. */
-const OPEN_STATUSES = [
-	'In Review',
-	'Ready for Review',
-	'Admin Feedback Review',
-	'Response to Review',
-	'Admin Approval Review',
-	'Admin Rejection Review'
-];
+/** Review statuses that wait on the review team. Same set as the dashboard filter. */
+const OPEN_STATUSES = ['Ready for Review', 'In Review', 'Response to Review'];
 
-/** SLA in days per asset type. The key is matched against the start of the type text. */
+/** The dashboard counts first submissions only. */
+const REVIEW_TYPE = 'New Asset';
+
+/** SLA in days per asset type. The key is the record ID in the Asset Types table. */
 const SLA_DAYS_BY_TYPE: { key: string; label: string; slaDays: number }[] = [
-	{ key: 'Template', label: 'Templates', slaDays: 3 },
-	{ key: 'App', label: 'Apps', slaDays: 7 },
-	{ key: 'Library', label: 'Libraries', slaDays: 3 }
+	{ key: 'recA2YsPEHSuAHOLD', label: 'Templates', slaDays: 3 },
+	{ key: 'rec8UQzOkwrwQr7bf', label: 'Apps', slaDays: 7 },
+	{ key: 'recU07tAbkf8OjzXO', label: 'Libraries', slaDays: 3 }
 ];
 
 function openReviewFormula(): string {
-	const status = `ARRAYJOIN({${STATUS_FIELD}})`;
-	const anyOpen = OPEN_STATUSES.map((name) => `FIND('${name}', ${status})`).join(', ');
-	return `AND({${NAME_FIELD}} != 'Base.', OR(${anyOpen}))`;
+	const anyOpen = OPEN_STATUSES.map((name) => `FIND('${name}', {${STATUS_FIELD}})`).join(', ');
+	return `AND({${REVIEW_TYPE_FIELD}} = '${REVIEW_TYPE}', OR(${anyOpen}))`;
 }
 
 function asText(value: unknown): string {
@@ -80,15 +78,15 @@ function asText(value: unknown): string {
 }
 
 /**
- * Query Airtable for open reviews and count them against each type's SLA.
+ * Query Airtable for pending new-asset reviews and count them against each type's SLA.
  */
 async function getSlaStats(env: Env): Promise<{ byType: TypeStats[]; skipped: number }> {
 	const base = new Airtable({ apiKey: env.AIRTABLE_API_KEY }).base(env.AIRTABLE_BASE_ID);
 
-	const records = await base(ASSETS_TABLE)
+	const records = await base(VERSIONS_TABLE)
 		.select({
 			filterByFormula: openReviewFormula(),
-			fields: [NAME_FIELD, DAYS_FIELD, TYPE_FIELD]
+			fields: [DAYS_FIELD, TYPE_ID_FIELD]
 		})
 		.all();
 
@@ -103,8 +101,8 @@ async function getSlaStats(env: Env): Promise<{ byType: TypeStats[]; skipped: nu
 
 	for (const record of records) {
 		const days = record.fields[DAYS_FIELD];
-		const type = asText(record.fields[TYPE_FIELD]);
-		const index = SLA_DAYS_BY_TYPE.findIndex(({ key }) => type.startsWith(key));
+		const type = asText(record.fields[TYPE_ID_FIELD]);
+		const index = SLA_DAYS_BY_TYPE.findIndex(({ key }) => type.includes(key));
 
 		if (index === -1 || typeof days !== 'number') {
 			skipped++;
@@ -112,9 +110,9 @@ async function getSlaStats(env: Env): Promise<{ byType: TypeStats[]; skipped: nu
 		}
 
 		const { slaDays } = byType[index];
-		if (days >= slaDays) {
+		if (days > slaDays) {
 			byType[index].overdue++;
-		} else if (days === slaDays - 1) {
+		} else if (days === slaDays) {
 			byType[index].onSla++;
 		} else {
 			byType[index].withinSla++;
