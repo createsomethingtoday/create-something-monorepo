@@ -283,7 +283,28 @@ function splitSelectorList(head: string): string[] {
 	}
 	parts.push(current);
 	// Attribute values and strings can hold dots that are not class selectors.
-	return parts.map((part) => part.replace(/\[[^\]]*\]/g, '').replace(/"[^"]*"|'[^']*'/g, '').trim()).filter(Boolean);
+	// A class inside :not() is one the element must not have, so it is not a
+	// style the selector needs.
+	return parts
+		.map((part) => withoutNegations(part.replace(/\[[^\]]*\]/g, '').replace(/"[^"]*"|'[^']*'/g, '')).trim())
+		.filter(Boolean);
+}
+
+/** Remove every `:not(...)`, with nested parentheses. */
+function withoutNegations(selector: string): string {
+	let result = '';
+	for (let i = 0; i < selector.length; i++) {
+		if (selector.startsWith(':not(', i)) {
+			let depth = 0;
+			for (i += 4; i < selector.length; i++) {
+				if (selector[i] === '(') depth++;
+				else if (selector[i] === ')' && --depth === 0) break;
+			}
+			continue;
+		}
+		result += selector[i];
+	}
+	return result;
 }
 
 function unescapeIdent(name: string): string {

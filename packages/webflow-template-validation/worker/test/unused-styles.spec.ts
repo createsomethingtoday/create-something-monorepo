@@ -41,6 +41,11 @@ describe('Unused styles', () => {
 		expect(unusedNames('.\\32 -column{a:b}', [page('<div class="2-column"></div>'), page('')])).toEqual([]);
 	});
 
+	it('does not read a class inside :not() as a style', () => {
+		const css = '.card:not(.disabled, .w--open) .title:not(:has(.badge)){a:b}';
+		expect([...extractStyleChains(css).keys()].sort()).toEqual(['card', 'title']);
+	});
+
 	it('reports a class that no page uses, and a combo whose classes never meet on one element', () => {
 		const css = '.card{a:b}.card.is-dark{a:b}.title{a:b}.leftover{a:b}.title.is-dark{a:b}';
 		const pages = [page('<div class="card is-dark"><h2 class="title">x</h2></div>'), page('<div class="card"></div>')];
