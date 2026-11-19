@@ -85,6 +85,8 @@ export interface DataApiPage {
 		title?: string;
 		description?: string;
 		imageUrl?: string | null;
+		/** Set when the image comes from the Assets panel; `imageUrl` is then null. */
+		imageAssetId?: string | null;
 		titleCopied?: boolean;
 		descriptionCopied?: boolean;
 	};
@@ -196,6 +198,18 @@ export function mapComponents(components: McpComponent[], flags: ComponentFlags)
 	}));
 }
 
+/**
+ * An Open Graph image picked from the Assets panel has no `imageUrl`, only an
+ * asset id. The validator only tests that a value is present, so an asset
+ * reference stands in for the URL.
+ */
+function openGraphImageRef(og: NonNullable<DataApiPage['openGraph']>): string | undefined {
+	const url = og.imageUrl?.trim();
+	if (url) return url;
+	const assetId = og.imageAssetId?.trim();
+	return assetId ? `webflow-asset:${assetId}` : undefined;
+}
+
 export function mapPages(pages: DataApiPage[]): PageData[] {
 	return pages
 		.filter((p) => !p.archived)
@@ -221,7 +235,7 @@ export function mapPages(pages: DataApiPage[]): PageData[] {
 					description: seo.description,
 					openGraphTitle: og.titleCopied ? seo.title : og.title,
 					openGraphDescription: og.descriptionCopied ? seo.description : og.description,
-					openGraphImage: og.imageUrl ?? undefined
+					openGraphImage: openGraphImageRef(og)
 				}
 			};
 		});

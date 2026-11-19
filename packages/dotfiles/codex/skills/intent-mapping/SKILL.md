@@ -43,6 +43,13 @@ asking the user.
 Prefer concrete choices over abstract discussion. Good questions ask for a
 decision that changes the work.
 
+When a term has two meanings that change behavior, try a scenario that gives
+different outcomes under each meaning. For example, does “delivered” include a
+provider acknowledgment when the recipient has yet to accept? Check the owning
+schema or policy first. If a choice remains, ask the domain owner and capture the
+settled meaning in the existing workflow artifact when edits are in scope, or
+in the intent packet during a review.
+
 ## Map Mode
 
 Use map mode when one intent-mapping session reveals more decision work than a

@@ -39,6 +39,13 @@ database_name = "creator-storefront"
 database_id = "96d4e76f-b1c0-437c-a2c1-8b0a3404c5ac"
 migrations_dir = "migrations"
 
+# Inventory checks reach template-search through this binding. The workers.dev
+# URL below returns 404 to a Worker on the same account; it stays as the request
+# URL and as the fallback when the binding is absent (local runs).
+[[services]]
+binding = "TEMPLATE_SEARCH"
+service = "webflow-template-search"
+
 [vars]
 TEMPLATE_SEARCH_URL = "https://webflow-template-search.webflow-inc.workers.dev"
 ALLOWED_COVER_ORIGINS = "https://webflow-dashboard.pages.dev,https://webflowassets.createsomething.io"
