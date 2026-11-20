@@ -23,6 +23,27 @@ export interface ReviewComment {
 	createdAt: string;
 }
 
+/**
+ * The review team's decision summary for one round: rating, fixed intro
+ * sentences, improvement areas and next steps. The Worker builds the text;
+ * the dashboard only renders it.
+ */
+export interface DecisionSummary {
+	versionRef: string;
+	assetRef: string;
+	setAt: string;
+	outcome: 'changes_requested' | 'approved' | 'rejected';
+	qualityRating: string | null;
+	improvementAreas: string[];
+	text: {
+		before: string[];
+		areasLabel: string | null;
+		areas: string[];
+		after: string[];
+		links: Array<{ phrase: string; url: string }>;
+	};
+}
+
 export class ReviewCommentsError extends Error {
 	constructor(
 		readonly status: number,
@@ -77,6 +98,34 @@ function releasedOnly(comments: ReviewComment[]): ReviewComment[] {
 	return comments.filter((comment) => comment.visibility === 'released').map(toCreatorView);
 }
 
+const strings = (value: unknown): string[] =>
+	Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+
+// Only the fields the card shows reach the browser. Trust level and asset type
+// stay on the server.
+function toCreatorSummary(summary: DecisionSummary): DecisionSummary {
+	const text = summary.text ?? ({} as Partial<DecisionSummary['text']>);
+	return {
+		versionRef: summary.versionRef,
+		assetRef: summary.assetRef,
+		setAt: summary.setAt,
+		outcome: summary.outcome,
+		qualityRating: typeof summary.qualityRating === 'string' ? summary.qualityRating : null,
+		improvementAreas: strings(summary.improvementAreas),
+		text: {
+			before: strings(text.before),
+			areasLabel: typeof text.areasLabel === 'string' ? text.areasLabel : null,
+			areas: strings(text.areas),
+			after: strings(text.after),
+			links: Array.isArray(text.links)
+				? text.links.filter(
+						(link) => typeof link?.phrase === 'string' && typeof link?.url === 'string'
+					)
+				: []
+		}
+	};
+}
+
 export function getReviewCommentsClient(env: ReviewCommentsEnv, fetcher: typeof fetch = fetch) {
 	if (!isConfigured(env)) return null;
 	const baseUrl = env.REVIEW_COMMENTS_URL!.replace(/\/+$/, '');
@@ -112,6 +161,27 @@ export function getReviewCommentsClient(env: ReviewCommentsEnv, fetcher: typeof 
 				creatorEmail
 			);
 			return releasedOnly(comments);
+		},
+
+		/**
+		 * Decision summaries of the rounds that have released feedback. A failure
+		 * is not fatal: the thread still shows its comments, so this returns [].
+		 */
+		async listSummariesByAsset(assetId: string, creatorEmail: string): Promise<DecisionSummary[]> {
+			try {
+				const summaries = await call<DecisionSummary[]>(
+					`/v1/assets/${encodeURIComponent(assetId)}/summaries`,
+					creatorEmail
+				);
+				return Array.isArray(summaries) ? summaries.map(toCreatorSummary) : [];
+			} catch (err) {
+				console.error(
+					'[Review comments] Decision summaries unavailable:',
+					err instanceof ReviewCommentsError ? err.status : 'unknown',
+					err instanceof Error ? err.message : ''
+				);
+				return [];
+			}
 		},
 
 		async reply(

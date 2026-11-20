@@ -33,13 +33,16 @@ import type { AirtableClient, TemplateReviewAssetThumbnails, TemplateReviewQueue
 import { AirtableClientError } from './airtable.js';
 import { renderCreatorFacingHtml, ZENDESK_WRITABLE_STATUSES, ZendeskClientError, type ZendeskClient } from './zendesk.js';
 import {
+  buildDecisionSummary,
   buildReleaseNotice,
+  type DecisionSummary,
   ReviewCommentsClientError,
   type ReleaseNotice,
   type ReleaseNotification,
   type ReviewComment,
   type ReviewCommentsClient,
   type ReviewOutcome,
+  type SummaryInput,
   splitCommentBody,
 } from './review-comments.js';
 import { observeTemplateHandoff, templateHandoffRequestSchema } from './handoff-observation.js';
@@ -271,6 +274,35 @@ function templateReleaseNotice(
   });
 }
 
+/** A decision's summary from the version record after the status write: rating, improvement areas, trust level. */
+function templateDecisionSummary(
+  version: Parameters<typeof buildDecisionSummary>[0],
+  outcome: ReviewOutcome,
+): SummaryInput {
+  return buildDecisionSummary(version, { assetType: 'Template' }, outcome);
+}
+
+/** The outcome a decision review status stands for; "(No Notification)" variants count the same. Other statuses: undefined. */
+function outcomeOfReviewStatus(status: string | undefined): ReviewOutcome | undefined {
+  const text = (status ?? '').toLowerCase();
+  if (text.includes('changes requested')) return 'changes_requested';
+  if (text.includes('rejected')) return 'rejected';
+  if (text.includes('approved')) return 'approved';
+  return undefined;
+}
+
+/**
+ * The summary "Send to creator" (release_feedback) sends when no decision is made in the same call:
+ * - the version's review status is a decision status: that outcome, with the version's rating;
+ * - otherwise `changes_requested`, but only when the version has a quality rating;
+ * - otherwise none (no rating means nothing to tell the creator).
+ */
+function releaseFeedbackSummary(version: Parameters<typeof buildDecisionSummary>[0] & { reviewStatus?: string }): SummaryInput | undefined {
+  const outcome = outcomeOfReviewStatus(version.reviewStatus);
+  if (outcome) return templateDecisionSummary(version, outcome);
+  return version.qualityRating?.trim() ? templateDecisionSummary(version, 'changes_requested') : undefined;
+}
+
 /** How the "feedback is ready" email went, in the shape every release result carries. */
 function emailResult(notification: ReleaseNotification | undefined): Record<string, unknown> {
   return {
@@ -299,6 +331,7 @@ async function releaseFeedbackAfterDecision(
   actorEmail: string,
   feedback?: string,
   notice?: ReleaseNotice,
+  summary?: SummaryInput,
 ): Promise<Record<string, unknown>> {
   try {
     let added = false;
@@ -320,7 +353,7 @@ async function releaseFeedbackAfterDecision(
         added = true;
       }
     }
-    const { released, notification } = await comments.release(versionId, actorEmail, ...(notice ? [notice] : []));
+    const { released, notification } = await (summary ? comments.release(versionId, actorEmail, notice, undefined, summary) : comments.release(versionId, actorEmail, ...(notice ? [notice] : [])));
     return { ok: true, feedback_comment_added: added, released, ...emailResult(notification) };
   } catch (error) {
     const known = error instanceof ReviewCommentsClientError || error instanceof AirtableClientError;
@@ -674,16 +707,26 @@ export function registerTools(
 
     server.tool(
       'template_review_list_comments',
-      'Read-only: every review comment on a template version (drafts, internal notes, released feedback, and creator replies), oldest first. Requires a mapped reviewer identity.',
+      'Read-only: every review comment on a template version (drafts, internal notes, released feedback, and creator replies), oldest first, plus decision_summary: the quality rating, improvement areas and next-step text the service sends to the creator with the feedback (null when none is set). Requires a mapped reviewer identity.',
       { version_id: z.string().min(1) },
       async ({ version_id }) => {
         try {
           const actorEmail = requireReviewerEmail(getReviewer);
           const { version } = await getClient().getScopedVersion(version_id);
+          const comments = await reviewComments.listVersion(version_id, actorEmail);
+          let decisionSummary: DecisionSummary | null = null;
+          let decisionSummaryError: string | undefined;
+          try {
+            decisionSummary = await reviewComments.getSummary(version_id, actorEmail);
+          } catch (error) {
+            decisionSummaryError = error instanceof Error ? error.message : String(error);
+          }
           return asSuccess({
             version_id,
             asset_id: version.assetId,
-            comments: await reviewComments.listVersion(version_id, actorEmail),
+            comments,
+            decision_summary: decisionSummary,
+            ...(decisionSummaryError ? { decision_summary_error: decisionSummaryError } : {}),
           });
         } catch (error) {
           return asError(error);
@@ -836,8 +879,9 @@ export function registerTools(
           const version = await getClient().requireAssignedVersion(version_id, currentReviewerAsCollaborator(getReviewer));
           const { asset } = await getClient().getScopedVersion(version_id);
           const notice = templateReleaseNotice(asset, version.versionNumber);
+          const summary = releaseFeedbackSummary(version);
           const expected = expected_drafts.map((draft) => ({ id: draft.id, editedAt: draft.edited_at }));
-          const { released, notification } = await reviewComments.release(version_id, actorEmail, notice, expected);
+          const { released, notification } = await reviewComments.release(version_id, actorEmail, notice, expected, ...(summary ? [summary] : []));
           return asSuccess({ version_id, released, ...emailResult(notification) });
         } catch (error) {
           return asError(error);
@@ -2193,7 +2237,7 @@ export function registerTools(
           acting_reviewer: actingReviewer,
           updated_version: updatedVersion,
           ...(reviewComments && actorEmail
-            ? { review_comments: await sendDecisionFeedback('template_review_request_changes', reviewComments, version_id, assignedVersion.assetId, actorEmail, review_feedback, templateReleaseNotice(noticeAsset, assignedVersion.versionNumber, 'changes_requested')) }
+            ? { review_comments: await sendDecisionFeedback('template_review_request_changes', reviewComments, version_id, assignedVersion.assetId, actorEmail, review_feedback, templateReleaseNotice(noticeAsset, assignedVersion.versionNumber, 'changes_requested'), templateDecisionSummary(updatedVersion, 'changes_requested')) }
             : {}),
         });
       } catch (error) {
@@ -3052,7 +3096,7 @@ export function registerTools(
           warnings: reviewChecklistWarnings(assignedVersion),
           updated_version: updatedVersion,
           ...(reviewComments && actorEmail
-            ? { review_comments: await sendDecisionFeedback('template_review_approve_version', reviewComments, version_id, assignedVersion.assetId, actorEmail, undefined, templateReleaseNotice(noticeAsset, assignedVersion.versionNumber, 'approved')) }
+            ? { review_comments: await sendDecisionFeedback('template_review_approve_version', reviewComments, version_id, assignedVersion.assetId, actorEmail, undefined, templateReleaseNotice(noticeAsset, assignedVersion.versionNumber, 'approved'), templateDecisionSummary(updatedVersion, 'approved')) }
             : {}),
         });
       } catch (error) {
@@ -3088,7 +3132,7 @@ export function registerTools(
           acting_reviewer: actingReviewer,
           updated_version: updatedVersion,
           ...(reviewComments && actorEmail
-            ? { review_comments: await sendDecisionFeedback('template_review_reject_version', reviewComments, version_id, assignedVersion.assetId, actorEmail, rejection_feedback, templateReleaseNotice(noticeAsset, assignedVersion.versionNumber, 'rejected')) }
+            ? { review_comments: await sendDecisionFeedback('template_review_reject_version', reviewComments, version_id, assignedVersion.assetId, actorEmail, rejection_feedback, templateReleaseNotice(noticeAsset, assignedVersion.versionNumber, 'rejected'), templateDecisionSummary(updatedVersion, 'rejected')) }
             : {}),
         });
       } catch (error) {

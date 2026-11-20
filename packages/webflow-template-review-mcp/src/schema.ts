@@ -155,6 +155,8 @@ export const CONFIRMED_VERSION_FIELDS = {
   reviewStatus: '📝Review Status',
   qualityRating: '✨ Quality Rating',
   improvementAreas: '✨Improvement Areas',
+  /** Integer 0 to 100. Read by name; no field id is recorded in this package. */
+  creatorTrustLevel: '🎨Creator Trust Level',
   reviewFeedback: '📝Review Feedback',
   agentReviewFeedback: '📝Agent Review Feedback',
   reviewChecklist: '📝Review Checklist',

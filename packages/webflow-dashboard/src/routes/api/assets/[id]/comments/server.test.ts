@@ -125,6 +125,51 @@ describe('GET /api/assets/[id]/comments', () => {
     expect(markRoundResponded).not.toHaveBeenCalled();
   });
 
+  it('adds the decision summary of each round and hides it for a "(No Notification)" round', async () => {
+    getReviewRounds.mockResolvedValue([
+      { id: 'recVer2', versionNumber: 2, reviewType: 'Meta Update', rawStatus: '📤Changes Requested (No Notification)' },
+      { id: 'recVer1', versionNumber: 1, reviewType: 'New Asset', rawStatus: '📤Changes Requested' }
+    ]);
+    const summary = (versionRef: string) => ({
+      versionRef,
+      assetRef: 'recAsset1',
+      setAt: '2026-11-18T10:00:00.000Z',
+      outcome: 'changes_requested',
+      qualityRating: '🥇Exceptional',
+      improvementAreas: [],
+      creatorTrustLevel: 3,
+      assetType: 'Template',
+      text: { before: ['We have reviewed your Template.'], areasLabel: null, areas: [], after: [], links: [] }
+    });
+    workerFetch.mockImplementation(async (url: string) =>
+      String(url).endsWith('/summaries')
+        ? workerReply([summary('recVer2'), summary('recVer1')])
+        : workerReply([{ id: 'c1', versionRef: 'recVer1', body: 'Fix 404', visibility: 'released' }])
+    );
+
+    const body = (await (await GET(event('GET'))).json()) as { summaries: Array<{ versionRef: string }> };
+    expect(body.summaries.map((entry) => entry.versionRef)).toEqual(['recVer1']);
+    expect(JSON.stringify(body)).not.toMatch(/creatorTrustLevel|assetType/);
+    expect(workerFetch.mock.calls.map(([url]) => url)).toContain(
+      'https://comments.example/v1/assets/recAsset1/summaries'
+    );
+  });
+
+  it('keeps the thread when the summaries call fails', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    workerFetch.mockImplementation(async (url: string) =>
+      String(url).endsWith('/summaries')
+        ? workerReply('internal error', 500)
+        : workerReply([{ id: 'c1', versionRef: 'recVer2', body: 'Fix 404', visibility: 'released' }])
+    );
+    const response = await GET(event('GET'));
+    const body = (await response.json()) as { comments: unknown[]; summaries: unknown[] };
+    expect(response.status).toBe(200);
+    expect(body.comments).toHaveLength(1);
+    expect(body.summaries).toEqual([]);
+    log.mockRestore();
+  });
+
   it('is off when the Worker is not configured', async () => {
     await expect(GET(event('GET', undefined, { SESSIONS: {} }))).rejects.toMatchObject({ status: 404 });
     expect(getAssetForOwner).not.toHaveBeenCalled();

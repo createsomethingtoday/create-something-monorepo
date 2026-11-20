@@ -6,6 +6,7 @@ import {
 	isReviewCommentsEnabled,
 	ReviewCommentsError
 } from '$lib/server/review-comments';
+import { visibleThread } from '$lib/utils/review-decision-summary';
 import { creatorReviewStatusLabel, isSilencedReviewStatus } from '$lib/utils/review-status';
 
 const MAX_BODY_CHARS = 20_000;
@@ -67,19 +68,19 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
 	);
 
 	try {
-		const [thread, rounds] = await Promise.all([
+		const [thread, summaries, rounds] = await Promise.all([
 			comments.listForAsset(params.id, email),
+			comments.listSummariesByAsset(params.id, email),
 			airtable.getReviewRounds(params.id)
 		]);
 		// A round in a "(No Notification)" status is deliberately silent, even if
-		// feedback on it was released before the status changed. Its comments stay
-		// hidden for as long as the round is silent.
-		const silent = new Set(
-			rounds.filter((round) => isSilencedReviewStatus(round.rawStatus)).map((round) => round.id)
-		);
+		// feedback on it was released before the status changed. Its comments and
+		// decision summary stay hidden for as long as the round is silent.
+		const visible = visibleThread(rounds, thread, summaries);
 		// Newest round first.
 		return json({
-			comments: thread.filter((comment) => !silent.has(comment.versionRef)),
+			comments: visible.comments,
+			summaries: visible.summaries,
 			versions: rounds.map((round) => toCreatorRound(round))
 		});
 	} catch (err) {

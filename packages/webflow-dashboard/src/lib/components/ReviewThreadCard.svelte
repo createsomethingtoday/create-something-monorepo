@@ -6,11 +6,13 @@
 	 * round with a creator-safe status. Only released reviewer feedback reaches
 	 * this card (the Worker filters by role). The creator replies on the newest
 	 * round the review team has commented on; the review team opens each thread.
-	 * Bodies render as plain text, never HTML.
+	 * Bodies and decision summaries render as plain text, never HTML; link
+	 * phrases in a summary become anchors by splitting the text, not by markup.
 	 */
 	import { onMount } from 'svelte';
-	import type { ReviewComment } from '$lib/server/review-comments';
+	import type { DecisionSummary, ReviewComment } from '$lib/server/review-comments';
 	import { formatLongDate } from '$lib/utils/format';
+	import { ratingLabel, splitAtFirstReply, splitLinks } from '$lib/utils/review-decision-summary';
 	import { toast } from '$lib/stores/toast';
 	import { Card, CardHeader, CardTitle, CardContent, Button, Textarea } from './ui';
 	import { MessageSquare } from 'lucide-svelte';
@@ -30,6 +32,7 @@
 	let { assetId }: Props = $props();
 
 	let comments = $state<ReviewComment[]>([]);
+	let summaries = $state<DecisionSummary[]>([]);
 	let rounds = $state<ReviewRound[]>([]);
 	let status = $state<'loading' | 'ready' | 'error'>('loading');
 	let draft = $state('');
@@ -37,14 +40,30 @@
 
 	// Newest round first, each with its comments in the order they were sent.
 	const groups = $derived(
-		rounds.map((round) => ({
-			round,
-			comments: comments.filter((comment) => comment.versionRef === round.id)
-		}))
+		rounds.map((round) => {
+			const roundComments = comments.filter((comment) => comment.versionRef === round.id);
+			return {
+				round,
+				comments: roundComments,
+				// The next steps sit after the opening run of review-team comments.
+				...splitAtFirstReply(roundComments),
+				summary: summaries.find((summary) => summary.versionRef === round.id) ?? null
+			};
+		})
 	);
 
 	// The review team opens a thread; until then there is nothing to reply to.
 	const replyRound = $derived(groups.find((group) => group.comments.length > 0)?.round ?? null);
+
+	// Whether the summary shows anything above the comments.
+	function hasSummaryHead(summary: DecisionSummary | null): boolean {
+		if (!summary) return false;
+		return (
+			ratingLabel(summary.qualityRating) !== null ||
+			summary.text.before.length > 0 ||
+			summary.text.areas.length > 0
+		);
+	}
 
 	const STATUS_TONES: Record<string, string> = {
 		'Changes Requested': 'attention',
@@ -57,8 +76,13 @@
 		try {
 			const response = await fetch(`/api/assets/${assetId}/comments`);
 			if (!response.ok) throw new Error(`HTTP ${response.status}`);
-			const data = (await response.json()) as { comments: ReviewComment[]; versions: ReviewRound[] };
+			const data = (await response.json()) as {
+				comments: ReviewComment[];
+				summaries?: DecisionSummary[];
+				versions: ReviewRound[];
+			};
 			comments = data.comments;
+			summaries = data.summaries ?? [];
 			rounds = data.versions;
 			status = 'ready';
 		} catch {
@@ -92,6 +116,37 @@
 
 	onMount(load);
 </script>
+
+{#snippet paragraph(text: string, links: Array<{ phrase: string; url: string }>)}
+	<p class="thread-summary-text">
+		{#each splitLinks(text, links) as part, i (i)}
+			{#if part.url}<a class="thread-link" href={part.url} target="_blank" rel="noopener noreferrer"
+					>{part.text}</a
+				>{:else}{part.text}{/if}
+		{/each}
+	</p>
+{/snippet}
+
+{#snippet commentList(list: ReviewComment[], joined = false)}
+	{#if list.length > 0}
+		<ol class="thread-list" class:thread-list-joined={joined}>
+			{#each list as comment (comment.id)}
+				<li class="thread-item" class:thread-item-creator={comment.authorRole === 'creator'}>
+					<div class="thread-meta">
+						<span class="thread-author">
+							{comment.authorRole === 'creator' ? 'You' : 'Webflow review team'}
+						</span>
+						<span class="thread-date">{formatLongDate(comment.releasedAt ?? comment.createdAt)}</span>
+						{#if comment.resolution === 'resolved'}
+							<span class="thread-badge">Resolved</span>
+						{/if}
+					</div>
+					<p class="thread-body">{comment.body}</p>
+				</li>
+			{/each}
+		</ol>
+	{/if}
+{/snippet}
 
 <Card>
 	<CardHeader>
@@ -131,30 +186,48 @@
 						<p class="thread-submitted">Submitted {formatLongDate(group.round.submittedAt)}</p>
 					{/if}
 
+					{#if group.summary}
+						{@const text = group.summary.text}
+						{#if hasSummaryHead(group.summary)}
+							<div class="thread-summary">
+								{#if ratingLabel(group.summary.qualityRating)}
+									<p class="thread-rating">
+										<span class="thread-rating-label">Quality rating</span>
+										<span class="thread-rating-value">{ratingLabel(group.summary.qualityRating)}</span>
+									</p>
+								{/if}
+								{#each text.before as line, i (i)}
+									{@render paragraph(line, text.links)}
+								{/each}
+								{#if text.areasLabel && text.areas.length > 0}
+									{@render paragraph(text.areasLabel, text.links)}
+									<ul class="thread-areas">
+										{#each text.areas as area, i (i)}
+											<li>{area}</li>
+										{/each}
+									</ul>
+								{/if}
+							</div>
+						{/if}
+					{/if}
+
 					{#if group.comments.length === 0 && index === 0}
 						<p class="thread-note">
 							No feedback on this version yet. The review team's feedback appears here when they send it.
 						</p>
 					{/if}
 
-					{#if group.comments.length > 0}
-						<ol class="thread-list">
-							{#each group.comments as comment (comment.id)}
-								<li class="thread-item" class:thread-item-creator={comment.authorRole === 'creator'}>
-									<div class="thread-meta">
-										<span class="thread-author">
-											{comment.authorRole === 'creator' ? 'You' : 'Webflow review team'}
-										</span>
-										<span class="thread-date">{formatLongDate(comment.releasedAt ?? comment.createdAt)}</span>
-										{#if comment.resolution === 'resolved'}
-											<span class="thread-badge">Resolved</span>
-										{/if}
-									</div>
-									<p class="thread-body">{comment.body}</p>
-								</li>
+					{@render commentList(group.opening, hasSummaryHead(group.summary))}
+
+					{#if group.summary && group.summary.text.after.length > 0}
+						<div class="thread-summary thread-summary-after">
+							{#each group.summary.text.after as line, i (i)}
+								{@render paragraph(line, group.summary.text.links)}
 							{/each}
-						</ol>
+						</div>
 					{/if}
+
+					{@render commentList(group.rest)}
 
 					{#if replyRound?.id === group.round.id}
 						<form
@@ -258,6 +331,54 @@
 		margin-bottom: var(--space-xs);
 	}
 
+	.thread-summary {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
+		margin: var(--space-xs) 0 var(--space-sm);
+	}
+
+	.thread-summary-after {
+		margin: var(--space-sm) 0 0;
+	}
+
+	.thread-summary-text,
+	.thread-areas {
+		margin: 0;
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-primary);
+		line-height: 1.6;
+		overflow-wrap: anywhere;
+	}
+
+	.thread-rating {
+		display: flex;
+		align-items: baseline;
+		flex-wrap: wrap;
+		gap: var(--space-sm);
+		margin: 0;
+		font-size: var(--text-body-sm);
+	}
+
+	.thread-rating-label {
+		color: var(--color-fg-secondary);
+	}
+
+	.thread-rating-value {
+		font-weight: var(--font-medium);
+		color: var(--color-fg-primary);
+	}
+
+	.thread-areas {
+		padding-left: var(--space-md);
+		list-style: disc;
+	}
+
+	.thread-link {
+		color: var(--color-fg-primary);
+		text-decoration: underline;
+	}
+
 	.thread-list {
 		list-style: none;
 		margin: var(--space-xs) 0 0;
@@ -269,6 +390,16 @@
 	.thread-item {
 		padding: var(--space-sm) 0;
 		border-top: 1px solid var(--color-border-default);
+	}
+
+	/* The opening comments continue the review team's message that starts with
+	   the summary, so no divider separates them from it. */
+	.thread-list-joined {
+		margin-top: 0;
+	}
+
+	.thread-list-joined > .thread-item:first-child {
+		border-top: none;
 	}
 
 	.thread-item-creator {
@@ -305,6 +436,7 @@
 	}
 
 	.thread-body {
+		margin: 0;
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-primary);
 		line-height: 1.6;
