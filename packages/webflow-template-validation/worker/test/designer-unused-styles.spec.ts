@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fetchPreviewSiteData, findUnusedStylesInSiteData, parsePreviewLink, previewSiteDataUrl } from '../src/validators/designer-unused-styles';
+import { checkUnusedStylesByPreviewLink, fetchPreviewSiteData, findUnusedStylesInSiteData, parsePreviewLink, previewSiteDataUrl } from '../src/validators/designer-unused-styles';
 import { generateUnusedStyleIssues } from '../src/validators/unused-styles';
 
 const TOKEN = '0123456789abcdef0123456789abcdef';
@@ -148,5 +148,33 @@ describe('fetchPreviewSiteData', () => {
 	it('returns the parsed site data', async () => {
 		vi.stubGlobal('fetch', vi.fn(async () => Response.json({ styles: { blocks: [] } })));
 		expect(await fetchPreviewSiteData(LINK, PATH)).toEqual({ styles: { blocks: [] } });
+	});
+});
+
+describe('checkUnusedStylesByPreviewLink', () => {
+	const PREVIEW = `https://preview.webflow.com/preview/my-template?preview=${TOKEN}`;
+	const serve = (data: unknown, status = 200) => vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(data), { status })));
+
+	it('gives the list and blocks above the threshold', async () => {
+		serve(site([style('.hero', { onPage: true }), ...Array.from({ length: 11 }, (_, index) => style(`.old-${index}`))]));
+		const result = await checkUnusedStylesByPreviewLink(PREVIEW, PATH);
+		expect(result).toMatchObject({ status: 'checked', count: 11, threshold: 10, blocking: true });
+		expect(result.status === 'checked' && result.unusedStyles[0]).toBe('.old-0');
+	});
+
+	it('does not block at the threshold or on a clean site', async () => {
+		serve(site([style('.hero', { onPage: true }), ...Array.from({ length: 10 }, (_, index) => style(`.old-${index}`))]));
+		expect(await checkUnusedStylesByPreviewLink(PREVIEW, PATH)).toMatchObject({ status: 'checked', count: 10, blocking: false });
+		serve(site([style('.hero', { onPage: true })]));
+		expect(await checkUnusedStylesByPreviewLink(PREVIEW, PATH)).toMatchObject({ status: 'checked', count: 0, blocking: false });
+	});
+
+	it('gives no answer for a bad link, a worker with no path, and an expired link', async () => {
+		const fetchMock = vi.fn(async () => new Response('', { status: 404 }));
+		vi.stubGlobal('fetch', fetchMock);
+		expect(await checkUnusedStylesByPreviewLink('https://example.com/preview/x?preview=' + TOKEN, PATH)).toEqual({ status: 'unavailable', reason: 'invalid_preview_link' });
+		expect(await checkUnusedStylesByPreviewLink(PREVIEW, undefined)).toEqual({ status: 'unavailable', reason: 'not_configured' });
+		expect(fetchMock).not.toHaveBeenCalled();
+		expect(await checkUnusedStylesByPreviewLink(PREVIEW, PATH)).toEqual({ status: 'unavailable', reason: 'site_data_unavailable' });
 	});
 });

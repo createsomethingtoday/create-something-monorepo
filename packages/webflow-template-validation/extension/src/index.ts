@@ -9,6 +9,7 @@ import {
   filterRetiredAccessibilityIssues,
   getSlugPathname,
   isInternalCmsTemplateSlug,
+  normalizePreviewLink,
   normalizeSiteInfo,
   selectValidationDomain,
   type SiteDomainInfo,
@@ -1035,8 +1036,13 @@ function getWorkerOptions(projectData: ProjectData): Record<string, any> {
   const pageScopeCurrent = isOptionEnabled('opt-page-scope-current', false);
 
   const excludePageSlugs = includeStyleGuide ? [] : getStyleGuideExclusionSlugs(projectData);
+  const previewInput = document.getElementById('opt-preview-url') as HTMLInputElement | null;
+  const previewUrl = normalizePreviewLink(previewInput?.value);
+  // Text that is not a preview link is not sent, and the field shows it.
+  previewInput?.setAttribute('aria-invalid', String(Boolean(previewInput.value.trim()) && !previewUrl));
 
   return {
+    ...(previewUrl ? { previewUrl } : {}),
     skipAssets: !runAssets,
     skipContent: !runContent,
     skipAccessibility: !runContent,

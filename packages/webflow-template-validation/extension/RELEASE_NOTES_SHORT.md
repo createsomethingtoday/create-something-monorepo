@@ -1,11 +1,11 @@
-# Webflow Way Validator v1.3.12
+# Webflow Way Validator v1.3.13
 
 ## Changes/Fixes
 
-- Faster runs on large sites: the Validator reads variables, components, styles and pages eight at a time, not one at a time.
-- The progress bar moves during the read and says what is being read ("Reading components (120 of 377)...").
-- No change to checks or findings.
+- New option "Preview link (optional)": with the site's preview link, the unused styles check reports the same list as "Clean up" in the Style selectors panel.
+- Without the link, the check compares the published pages, as before.
+- The extension does not save the link.
 
 ## Worker pairing
 
-No Worker change required. Works with Worker 2.13.2.
+Requires Worker 2.16.1 or later for the preview link. Earlier Workers ignore it.

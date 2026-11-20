@@ -1,5 +1,14 @@
 # Webflow Way Validator - Release Notes
 
+## Version 1.3.13 - Unused styles from a preview link
+
+- Options has a new field, "Preview link (optional)". With the site's preview link, the unused styles check reads the same site data as "Clean up" in the Style selectors panel and reports the same list.
+- Without the link, the check is the same as before: it compares the published pages and can find fewer styles.
+- The link is sent with the run only. The extension does not save it.
+- More than 10 unused styles is an error. 10 or fewer is a warning.
+
+---
+
 ## Version 1.3.12 - Faster runs on large sites
 
 - The Validator reads variables, components, styles and pages from the Designer eight at a time. Earlier builds read one item at a time, so a site with many components or styles spent most of the run on this step.
