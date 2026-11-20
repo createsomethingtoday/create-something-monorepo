@@ -67,7 +67,13 @@ const ranges = (type) => {
 const cuts = ranges("cut"), fasts = ranges("fast"), blurs = ranges("blur"), focuses = ranges("focus");
 
 // 3. The film's time for a recording time: cut ranges take no time, fast ranges take 1/rate of theirs.
-const pieces = [...cuts.map((c) => ({ ...c, rate: Infinity })), ...fasts].sort((a, b) => a.from - b.from);
+// The ranges are split at every edge into pieces that do not overlap. Where a cut and a fast range overlap, the cut wins.
+const marked = [...cuts.map((c) => ({ ...c, rate: Infinity })), ...fasts];
+const edges = [...new Set(marked.flatMap((p) => [p.from, p.to]))].sort((a, b) => a - b);
+const pieces = edges.slice(0, -1).flatMap((from, i) => {
+  const over = marked.filter((p) => p.from <= from && p.to >= edges[i + 1]);
+  return over.length ? [{ from, to: edges[i + 1], rate: Math.max(...over.map((p) => p.rate)) }] : [];
+});
 const film = (t) => {
   let lost = 0;
   for (const p of pieces) {
