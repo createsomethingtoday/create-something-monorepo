@@ -345,6 +345,12 @@ function trademarksDetail(elements: Node[], root: Node): string | null {
 	return `${count} symbol(s), for example "…${sample}…"`;
 }
 
+/** Text of a page that a visitor could read, as the checks in this file read it. */
+export function pageText(html: string): string {
+	const root = parseDocument(html) as unknown as Node;
+	return normalize(text(renderedDescendants(root).find((el) => el.name === 'body') ?? root));
+}
+
 /** Elements of an HTML document that a browser renders (template and noscript subtrees are skipped). */
 export function parseRenderedElements(html: string): MarkupNode[] {
 	return renderedDescendants(parseDocument(html) as unknown as Node);

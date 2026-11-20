@@ -395,6 +395,8 @@ export interface ContentAnalysisResult {
 		totalLinks: number;
 		totalBrokenLinks: number;
 		averageLinksPerPage: number;
+		/** CMS item pages read as a sample, in addition to the page list. Absent on a current-page run. */
+		cmsItemPagesChecked?: number;
 	};
 	pages: AnalyzedPage[];
 }
@@ -507,6 +509,8 @@ export interface AnalyzedPage {
 	}>;
 	/** Reviewer standards found on this page (validators/reviewer-standards.ts). */
 	reviewerAudit?: ReviewerPageAudit;
+	/** A CMS item page read as a sample; it is not in the page list of the run. */
+	isCmsItemSample?: boolean;
 	seo: PageSEOData;
 	links: LinkAnalysis;
 	contentQuality: ContentQualityAnalysis;

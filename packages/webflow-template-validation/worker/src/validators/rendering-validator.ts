@@ -55,12 +55,24 @@ export interface LayoutMeasurement {
 	offenders: OverflowOffender[];
 }
 
+/** One link text that shows more than once in the navbar and goes to the same place. */
+export interface DuplicateNavLink {
+	text: string;
+	href: string;
+	count: number;
+}
+
+/** Duplicate navbar links listed per page. */
+export const MAX_DUPLICATE_NAV_LINKS = 5;
+
 export interface ViewportObservation {
 	viewport: RenderViewport['name'];
 	width: number;
 	/** Overflow that was still there after the settle delay; transient load animations do not count. */
 	overflowPx: number;
 	offenders: OverflowOffender[];
+	/** Read at the desktop width only, where the full navbar shows. */
+	duplicateNavLinks?: DuplicateNavLink[];
 }
 
 export interface PageErrorObservation {
@@ -166,6 +178,64 @@ export function measureLayoutInPage(tolerancePx: number, maxOffenders: number): 
 		overflowPx,
 		offenders: outermost.slice(0, maxOffenders).map((entry) => ({ label: entry.label, right: entry.right }))
 	};
+}
+
+/**
+ * Links that a visitor sees more than once in the navbar: the same text and
+ * the same target, both showing at this width. A second copy that shows only
+ * at another width (a button for the mobile menu) is not on screen and does
+ * not count; neither does a link in a closed dropdown. Footer navigation is
+ * left out, because footers repeat links in columns on purpose.
+ * Runs in the page. See the module comment for the constraints.
+ */
+export function findDuplicateNavLinksInPage(maxResults: number): DuplicateNavLink[] {
+	// A page has a few navigation elements; the limit keeps the nested test below small on any page.
+	const navs = Array.from(document.querySelectorAll('nav, [role="navigation"], .w-nav')).slice(0, 50);
+	const found: DuplicateNavLink[] = [];
+	for (let n = 0; n < navs.length; n += 1) {
+		const nav = navs[n];
+		if (nav.closest('footer, [role="contentinfo"]')) continue;
+		// A navigation inside another one is read with its parent.
+		let nested = false;
+		for (let o = 0; o < navs.length; o += 1) {
+			if (navs[o] !== nav && navs[o].contains(nav)) nested = true;
+		}
+		if (nested) continue;
+		const groups = new Map<string, DuplicateNavLink>();
+		const links = nav.querySelectorAll('a[href]');
+		for (let i = 0; i < links.length; i += 1) {
+			const link = links[i];
+			// An SVG link has no string href.
+			if (!(link instanceof HTMLAnchorElement)) continue;
+			const rect = link.getBoundingClientRect();
+			if (rect.width === 0 || rect.height === 0) continue;
+			const visible =
+				typeof link.checkVisibility === 'function'
+					? link.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })
+					: getComputedStyle(link).visibility === 'visible';
+			if (!visible) continue;
+			// The link must be what shows at its own centre. A closed menu that is
+			// moved off the screen, clipped by its parent, or under another layer
+			// has a size but is not there.
+			const x = rect.left + rect.width / 2;
+			const y = rect.top + rect.height / 2;
+			if (x < 0 || y < 0 || x >= window.innerWidth || y >= window.innerHeight) continue;
+			const top = document.elementFromPoint(x, y);
+			if (!top || !(link === top || link.contains(top))) continue;
+			const text = (link.innerText || link.textContent || '').replace(/\s+/g, ' ').trim();
+			if (!text) continue;
+			// The fragment stays: two links to different sections of one page are not a repeat.
+			const href = link.href;
+			const key = text.toLowerCase() + '\n' + href;
+			const group = groups.get(key);
+			if (group) group.count += 1;
+			else groups.set(key, { text: text.slice(0, 60), href, count: 1 });
+		}
+		groups.forEach((group) => {
+			if (group.count > 1 && found.length < maxResults) found.push(group);
+		});
+	}
+	return found;
 }
 
 /**
@@ -349,6 +419,32 @@ export function generateRenderingIssues(
 			howToFix:
 				'Find the element named for each page and keep it inside the screen: remove fixed widths or negative margins, or set overflow to hidden on its section. Elements that start off-screen for a scroll animation need a clipping parent.',
 			details: { locations: lines }
+		});
+	}
+
+	// The navbar is one component on every page, so each duplicate is listed once, with the first page that shows it.
+	const duplicates = new Map<string, string>();
+	for (const page of rendered) {
+		for (const viewport of page.viewports) {
+			for (const link of viewport.duplicateNavLinks ?? []) {
+				const key = `${link.text.toLowerCase()}\n${link.href}`;
+				if (!duplicates.has(key)) {
+					duplicates.set(key, `${pathOf(page.url)} — "${truncate(link.text, 60)}" shows ${link.count} times in the navbar, each to ${pathOf(link.href)}`);
+				}
+			}
+		}
+	}
+	if (duplicates.size > 0) {
+		issues.push({
+			id: 'nav-duplicate-links',
+			category: RENDERING_CATEGORY,
+			severity: 'warning',
+			message: `${plural(duplicates.size, 'navbar link shows', 'navbar links show')} more than once at 1440px.`,
+			description:
+				'The navbar shows the same link text to the same page more than once at the desktop width. Reviewers ask creators to remove the repeat.',
+			howToFix:
+				'Keep one of the links. If the second link is for the mobile menu, hide it at the desktop breakpoint. If the two links must stay, give them different text or different targets.',
+			details: { locations: [...duplicates.values()] }
 		});
 	}
 

@@ -54,6 +54,9 @@ const RECORDED_NOTE =
 	'This run was recorded. The worker stored its own result for the run, and the Marketplace submission form decides whether it satisfies the submission gate.';
 const NO_RECORD_NOTE =
 	'This run was not recorded because --no-record was set, so the Marketplace submission form cannot use it.';
+/** Printed with every result, so a clean run is not read as an approval. */
+const SCOPE_NOTE =
+	'Scope: a pass covers the automated checks only. It is not an approval. A reviewer also checks design quality, originality, the copy, the license of each asset, and that the pages agree with each other (for example the Licenses, Changelog and Instructions pages).';
 const GSAP_CATEGORY = 'Published-site crawl (GSAP worker)';
 
 const USAGE = `Usage: wf-template-validate <command> [options]
@@ -421,7 +424,8 @@ async function runValidate(values: Values, rawUrl: string): Promise<number> {
 		record,
 		exitCode,
 		incomplete,
-		note: recorded ? RECORDED_NOTE : collected && values['no-record'] ? NO_RECORD_NOTE : GATE_NOTE
+		note: recorded ? RECORDED_NOTE : collected && values['no-record'] ? NO_RECORD_NOTE : GATE_NOTE,
+		scopeNote: SCOPE_NOTE
 	};
 
 	if (values.json) {
@@ -480,10 +484,12 @@ function printHuman(ctx: {
 	out.push('');
 	out.push(`Webflow template validation: ${siteUrl}`);
 	out.push(`Job: ${outcome.jobId ?? '(none)'}  mode: ${outcome.mode}${outcome.asyncError ? ` (async failed: ${outcome.asyncError})` : ''}`);
+	const itemPages = Number(categories.find((cat) => cat.category === 'Content & Accessibility')?.stats?.cmsItemPagesChecked) || 0;
+	const itemPagesNote = itemPages > 0 ? `, + ${itemPages} CMS item page(s) read as a sample` : '';
 	out.push(
 		discovery.source === 'designer'
-			? `Pages: homepage + ${discovery.slugs.length} from the Designer page list, the same list the Validator app checks`
-			: `Pages: homepage + ${discovery.slugs.length} from ${discovery.source}${discovery.truncated ? ' (truncated to 50)' : ''}`
+			? `Pages: homepage + ${discovery.slugs.length} from the Designer page list, the same list the Validator app checks${itemPagesNote}`
+			: `Pages: homepage + ${discovery.slugs.length} from ${discovery.source}${discovery.truncated ? ' (truncated to 50)' : ''}${itemPagesNote}`
 	);
 	if (collected) {
 		const c = collected.counts;
@@ -555,6 +561,7 @@ function printHuman(ctx: {
 	out.push('');
 	out.push(`Score: ${score}% of worker categories passed (GSAP crawl not included in the score)`);
 	out.push(note);
+	out.push(SCOPE_NOTE);
 	print(out.join('\n'));
 }
 
