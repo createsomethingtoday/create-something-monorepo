@@ -75,6 +75,58 @@ export interface ReleaseResult {
   notification?: ReleaseNotification;
 }
 
+/**
+ * The decision summary the service stores per version. The service builds the
+ * creator-facing wording (`text`) from these fields; the MCP only sends facts.
+ */
+export interface SummaryInput {
+  outcome: ReviewOutcome;
+  /** The Airtable "✨ Quality Rating" value as is, e.g. "🥇Exceptional". Cut to 80 characters. */
+  qualityRating: string | null;
+  /** The Airtable "✨Improvement Areas" values. At most 20, each cut to 200 characters. */
+  improvementAreas: string[];
+  /** The Airtable "🎨Creator Trust Level" (integer 0 to 100), or null. */
+  creatorTrustLevel: number | null;
+  assetType: string | null;
+}
+
+export interface DecisionSummary extends SummaryInput {
+  versionRef: string;
+  assetRef: string;
+  setAt: string;
+  text: {
+    before: string[];
+    areasLabel: string | null;
+    areas: string[];
+    after: string[];
+    links: Array<{ phrase: string; url: string }>;
+  };
+}
+
+const MAX_SUMMARY_RATING_CHARS = 80;
+const MAX_SUMMARY_AREAS = 20;
+const MAX_SUMMARY_AREA_CHARS = 200;
+
+/**
+ * The summary for a decision, from the version record the MCP already loaded.
+ * Values are cut to the service's limits so a long value cannot fail the send.
+ * A trust level that is not an integer from 0 to 100 becomes null.
+ */
+export function buildDecisionSummary(
+  version: { qualityRating?: string | null; improvementAreas?: readonly string[] | null; creatorTrustLevel?: number | null },
+  asset: { assetType?: string | null } | null | undefined,
+  outcome: ReviewOutcome,
+): SummaryInput {
+  const qualityRating = version.qualityRating?.trim().slice(0, MAX_SUMMARY_RATING_CHARS) || null;
+  const improvementAreas = (version.improvementAreas ?? [])
+    .map((area) => area.trim().slice(0, MAX_SUMMARY_AREA_CHARS))
+    .filter(Boolean)
+    .slice(0, MAX_SUMMARY_AREAS);
+  const trust = version.creatorTrustLevel;
+  const creatorTrustLevel = typeof trust === 'number' && Number.isInteger(trust) && trust >= 0 && trust <= 100 ? trust : null;
+  return { outcome, qualityRating, improvementAreas, creatorTrustLevel, assetType: asset?.assetType?.trim() || null };
+}
+
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
@@ -243,14 +295,33 @@ export class ReviewCommentsClient {
    * Releases the drafts. With a notice, the Worker also emails the creator when it released something new.
    * With `expected`, the Worker releases only when the drafts on the version are exactly those, unchanged;
    * otherwise it releases nothing and answers 409.
+   * With `summary`, the Worker stores the decision summary for the version as part of the release.
    */
-  release(versionRef: string, actorEmail: string, notice?: ReleaseNotice, expected?: ExpectedDraft[]): Promise<ReleaseResult> {
+  release(
+    versionRef: string,
+    actorEmail: string,
+    notice?: ReleaseNotice,
+    expected?: ExpectedDraft[],
+    summary?: SummaryInput,
+  ): Promise<ReleaseResult> {
     return this.request(
       'POST',
       `/v1/versions/${encodeURIComponent(versionRef)}/release`,
       actorEmail,
-      notice || expected ? { ...(notice ? { notify: notice } : {}), ...(expected ? { expected } : {}) } : undefined,
+      notice || expected || summary
+        ? { ...(notice ? { notify: notice } : {}), ...(expected ? { expected } : {}), ...(summary ? { summary } : {}) }
+        : undefined,
     );
+  }
+
+  /** The decision summary of a version, or null when none is set. */
+  getSummary(versionRef: string, actorEmail: string): Promise<DecisionSummary | null> {
+    return this.request('GET', `/v1/versions/${encodeURIComponent(versionRef)}/summary`, actorEmail);
+  }
+
+  /** Sets the decision summary of a version. Fails with 404 when the version has no thread yet. */
+  setSummary(versionRef: string, summary: SummaryInput, actorEmail: string): Promise<DecisionSummary> {
+    return this.request('PUT', `/v1/versions/${encodeURIComponent(versionRef)}/summary`, actorEmail, { summary });
   }
 
   resolve(commentId: string, actorEmail: string, resolution: CommentResolution): Promise<ReviewComment> {
