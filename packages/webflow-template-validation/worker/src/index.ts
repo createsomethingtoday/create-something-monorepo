@@ -18,6 +18,7 @@ import {
 } from '../../shared/designer-enhancements';
 import { normalizePagePath } from '../../shared/page-slugs';
 import { validateContent } from './validators/content-validator';
+import { checkUnusedStylesByPreviewLink } from './validators/designer-unused-styles';
 import { validateAccessibility } from './validators/accessibility-validator';
 import { validateDesignerData } from './validators/designer-validator';
 import { validateInteractions, type CmsTemplateHint } from './validators/interactions-validator';
@@ -52,7 +53,7 @@ import {
 import { normalizePublishedHost, verifyOauthSiteAccess } from './utils/oauth-site-evidence';
 
 const REVIEW_SNIPPET_VERSION = '0.3.0';
-const WORKER_VERSION = '2.16.1';
+const WORKER_VERSION = '2.17.0';
 
 /**
  * Oldest Template CLI that may record a result. Part of the rules run inside
@@ -595,6 +596,11 @@ export default {
 					if (request.method !== 'POST') return methodNotAllowed(request);
 					return await handleBatchedAssetValidation(request);
 
+				case '/unused-styles':
+					if (request.method !== 'POST') return methodNotAllowed(request);
+					if (await validationStartRateLimited(request, env)) return rateLimitedStartResponse(request, correlationId);
+					return await handleUnusedStylesByPreviewLink(request, env);
+
 				case '/health':
 					return jsonResponse(
 						{
@@ -605,6 +611,7 @@ export default {
 								'/api/validate',
 								'/validate',
 								'/validate/assets',
+								'/unused-styles',
 								'/app-validator/review/start',
 								'/app-validator/review/:jobId/status',
 								'/app-validator/review/:jobId/events',
@@ -1876,6 +1883,21 @@ async function performDesignerValidation(
 		categories: result.categories,
 		summary: result.summary
 	};
+}
+
+/**
+ * `POST /unused-styles` with `{ previewUrl }`: the Designer's Clean up list
+ * for a preview link. The answer never echoes the link or its token.
+ */
+async function handleUnusedStylesByPreviewLink(request: Request, env?: unknown): Promise<Response> {
+	let body: { previewUrl?: unknown } | null = null;
+	try {
+		body = (await request.json()) as { previewUrl?: unknown } | null;
+	} catch {
+		// An unreadable body is the same as no link.
+	}
+	const result = await checkUnusedStylesByPreviewLink(body?.previewUrl, previewSiteDataPathFromEnv(env));
+	return jsonResponse(result, result.status === 'unavailable' && result.reason === 'invalid_preview_link' ? 400 : 200, request);
 }
 
 function previewSiteDataPathFromEnv(env: unknown): string | undefined {
