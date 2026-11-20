@@ -6,6 +6,8 @@ import {
 import { operatorDocumentCss } from '@create-something/canon/styles/operator-document';
 import { normalizeSchedulerOfferIntent } from '../offers/intent.js';
 
+export const agencyStagingOrigin = 'https://create-something-agency-staging.webflow.io';
+
 export function renderBookingManagementActions(status: string): string {
   return status === 'cancelled'
     ? ''
@@ -76,6 +78,7 @@ export function schedulerPage(input: {
   nonce: string;
   turnstileSiteKey?: string;
   intent?: string | null;
+  embedded?: boolean;
 }): string {
   const offer = resolveSchedulerPageOffer(input.intent);
   const offerIntent = normalizeSchedulerOfferIntent(input.intent);
@@ -93,7 +96,8 @@ export function schedulerPage(input: {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="${offer.metaDescription}">
   <title>${offer.title}</title>
-  ${performanceDocumentFontLinks}
+  ${input.embedded ? `<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600&amp;display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/stix-two-text@5.3.0/latin-400.css">` : performanceDocumentFontLinks}
   ${turnstileScript}
   <style nonce="${input.nonce}">
     ${performanceDocumentCss}
@@ -164,26 +168,54 @@ export function schedulerPage(input: {
     [hidden] { display:none !important; }
     @media (max-width:760px) { main { padding:20px 16px; } header { margin-bottom:24px; } .layout { grid-template-columns:1fr; gap:24px; } .details { position:static; padding:20px 0 0; border-left:0; border-top:1px solid var(--color-operator-border); } .detail { grid-template-columns:76px minmax(0,1fr); gap:12px; } .panel { padding:16px; } .date-rail { grid-template-columns:repeat(2,minmax(0,1fr)); } }
     @media (max-width:390px) { #status { grid-template-columns:1fr; gap:4px; } }
+    ${input.embedded ? `
+    :root { --font-performance-display:"Switzer",sans-serif; --font-sans:"Switzer",sans-serif; }
+    body,button,input,select { font-family:var(--font-sans); }
+    h2 { font-family:"STIX Two Text",serif; font-weight:400; letter-spacing:-.025em; }
+    html,body { background:#f5f2eb; color:#25241f; }
+    body { min-width:0; --color-operator-background:#f5f2eb; --color-operator-foreground:#25241f; --color-operator-muted:#605d54; --color-operator-border:#d5d0c5; --color-operator-panel:#fffdf7; --color-operator-secondary:#f5f2eb; --color-operator-raised:#e9e4d9; --color-operator-focus-ring-accessible:#504d42; --color-operator-status-running-text:#555044; --color-operator-status-done-text:#245c3b; --color-operator-status-review-text:#775000; --color-operator-status-blocked-text:#9a3027; font-size:15px; }
+    main { width:100%; padding:20px; }
+    .layout { grid-template-columns:minmax(0,1fr); gap:18px; }
+    .panel { padding:0; border:0; background:transparent; }
+    .timezone-options { margin-bottom:14px; }
+    .timezone-options summary { cursor:pointer; padding:6px 0; color:var(--color-operator-muted); font-size:12px; }
+    .timezone-picker { margin-top:8px; margin-bottom:18px; }
+    .timezone-picker label { font-size:12px; }
+    .timezone-picker button { font-size:12px; min-height:36px; padding:6px 10px; }
+    h2 { font-size:1.3rem; }
+    .steps { margin-bottom:20px; }
+    .steps span { font-size:11px; }
+    .duration-picker { max-width:27rem; }
+    .duration-picker legend { color:var(--color-operator-foreground); font-weight:600; }
+    .date-rail { grid-template-columns:repeat(4,minmax(0,1fr)); }
+    .details { position:static; padding:14px 0 0; border-left:0; border-top:1px solid var(--color-operator-border); }
+    .detail { grid-template-columns:70px minmax(0,1fr); gap:12px; padding:9px 0; }
+    .detail-host { display:none; }
+    #status { margin-bottom:20px; }
+    @media (max-width:420px) { main { padding:16px 12px; } .date-rail { grid-template-columns:repeat(2,minmax(0,1fr)); } .duration-picker { gap:6px; } .duration-picker button { padding-inline:6px; } }
+    ` : ''}
     @media (prefers-reduced-motion:no-preference) { button,.button { transition:background-color .14s,color .14s,border-color .14s; } }
   </style>
 </head>
-<body data-performance-surface="booking" data-performance-contract="${PERFORMANCE_DOCUMENT_STYLE_VERSION}">
+<body${input.embedded ? ' data-scheduler-embed="editorial"' : ''} data-performance-surface="booking" data-performance-contract="${PERFORMANCE_DOCUMENT_STYLE_VERSION}">
 <main>
-  <header>
+  ${input.embedded ? '' : `<header>
     <div class="eyebrow">CREATE SOMETHING / Schedule</div>
     <h1>${offer.heading}</h1>
     <p class="lede">${offer.lede}</p>
-  </header>
+  </header>`}
   <div class="layout">
     <section class="panel" aria-labelledby="booking-heading">
+      ${input.embedded ? '<details class="timezone-options"><summary>Timezone options</summary>' : ''}
       <div class="timezone-picker">
         <label for="timezone">Times shown in <select id="timezone" aria-describedby="timezone-note"></select></label>
         <p id="timezone-note">Detecting your timezone…</p>
         <button id="use-device-timezone" type="button">Use device timezone</button>
       </div>
+      ${input.embedded ? '</details>' : ''}
       <div id="scheduler-view">
         <nav class="steps" aria-label="Booking progress"><span data-step="1" aria-current="step">01 · Time</span><span data-step="2">02 · Details</span><span data-step="3">03 · Confirm</span></nav>
-        <h2 id="booking-heading">Choose a time</h2>
+        <h2 id="booking-heading">${input.embedded ? 'Available dates &amp; times' : 'Choose a time'}</h2>
         <fieldset class="duration-picker" aria-label="Meeting duration"><legend>Meeting duration</legend><button type="button" data-duration="30" aria-pressed="true">30 minutes</button><button type="button" data-duration="60" aria-pressed="false">60 minutes</button></fieldset>
         <p id="status" data-kind="controlled" role="status" aria-live="polite"><span id="status-state">Controlled</span><span id="status-message">Checking the calendar…</span></p>
         <div id="days" class="days" aria-label="Available meeting times"></div>
@@ -198,7 +230,7 @@ export function schedulerPage(input: {
       <div id="confirmation" class="confirmation" hidden></div>
     </section>
     <aside class="details" aria-label="Meeting details">
-      <div class="detail"><span>Host</span><strong>Micah Johnson</strong></div>
+      <div class="detail detail-host"><span>Host</span><strong>Micah Johnson</strong></div>
       <div class="detail"><span>Length</span><strong id="duration-summary">30 minutes</strong></div>
       <div class="detail"><span>Where</span><strong>Google Meet</strong></div>
       <div class="detail"><span>Hours</span><strong>Tue + Thu<br>11 AM–5 PM Central</strong></div>
@@ -211,6 +243,10 @@ export function schedulerPage(input: {
   const renderBookingManagementActions=${renderBookingManagementActions.toString()};
   const config = ${configuration};
   const offerIntent=${JSON.stringify(offerIntent)};
+  const agencyOrigin = 'https://createsomething.agency';
+  const stagingOrigin = ${JSON.stringify(agencyStagingOrigin)};
+  const parentOrigin = ${Boolean(input.embedded)} && document.referrer && new URL(document.referrer).origin === stagingOrigin
+    ? stagingOrigin : agencyOrigin;
   const state = { slots: [], selected: null, selectedDay: null, durationMinutes: 30, browserProof: null, booking: null, actionToken: null, mode: 'book', context: null, schedulerSessionId: crypto.randomUUID(), formStarted: false };
   const status = document.querySelector('#status');
   const statusState = document.querySelector('#status-state');
@@ -308,7 +344,7 @@ export function schedulerPage(input: {
   }
 
   function notifyParent(action, details={}) {
-    if (parent === window || !['booking_form_started','booking_initiated','booking_completed'].includes(action)) return;
+    if (parent === window || parentOrigin !== agencyOrigin || !['booking_form_started','booking_initiated','booking_completed'].includes(action)) return;
     parent.postMessage({
       type:'create-something:scheduler-lifecycle',
       action,
@@ -326,7 +362,7 @@ export function schedulerPage(input: {
     const height=Math.ceil(schedulerDocument.getBoundingClientRect().height);
     if (!Number.isFinite(height) || (!force && height === reportedDocumentHeight)) return;
     reportedDocumentHeight=height;
-    parent.postMessage({type:'create-something:scheduler-resize',height},'https://createsomething.agency');
+    parent.postMessage({type:'create-something:scheduler-resize',height},parentOrigin);
   }
   function queueParentHeight() { requestAnimationFrame(()=>notifyParentHeight(true)); }
   const schedulerResizeObserver=new ResizeObserver(()=>requestAnimationFrame(notifyParentHeight));
