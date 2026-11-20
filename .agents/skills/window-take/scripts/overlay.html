@@ -1,0 +1,125 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Take overlay</title>
+<style>
+  /* The overlay layer of a take: captions and title cards, drawn from the timeline for any time t.
+     Two uses. Render: a transparent page, one screenshot per changed frame (render.mjs calls __seek).
+     Review: add ?video=<file> and the page plays the film with the same overlays on top, live. */
+  :root { --ink: #fff; --plate: rgba(14, 14, 16, 0.86); --edge: rgba(255, 255, 255, 0.14); }
+  html, body { margin: 0; background: transparent; overflow: hidden; }
+  body.review { background: #0b0b0c; display: grid; place-items: center; min-height: 100vh; }
+  #stage { position: relative; width: var(--w); height: var(--h); font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif; color: var(--ink); }
+  #stage video { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #caption { position: absolute; left: 0; right: 0; margin: 0 auto; width: fit-content; bottom: 5.2%; max-width: 76%; padding: 0.62em 1.05em; border-radius: 0.7em; background: var(--plate); box-shadow: 0 0 0 1px var(--edge), 0 12px 32px rgba(0, 0, 0, 0.38); font-size: calc(var(--h) * 0.0285); line-height: 1.32; font-weight: 500; letter-spacing: 0.002em; text-align: center; text-wrap: balance; will-change: transform, opacity; }
+  #veil { position: absolute; inset: 0; background: rgba(8, 8, 10, 0.78); }
+  /* A join: frames were removed here. A short dip hides the jump. */
+  #dip { position: absolute; inset: 0; background: #08080a; opacity: 0; }
+  /* A fast range: the film runs at more than real speed, and says so. */
+  #speed { position: absolute; right: 1.4%; top: 0.75%; padding: 0.3em 0.7em; border-radius: 0.55em; background: var(--plate); box-shadow: 0 0 0 1px var(--edge); font-size: calc(var(--h) * 0.0175); font-weight: 600; font-variant-numeric: tabular-nums; opacity: 0; }
+  /* The drawn pointer: about twice the system size, so it reads on a phone. Its tip is the element's top left corner. */
+  #pointer { position: absolute; left: 0; top: 0; width: calc(var(--h) * 0.03); height: calc(var(--h) * 0.03); opacity: 0; transform-origin: 0 0; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45)); will-change: transform; }
+  #title { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 0.5em; }
+  #title h1 { margin: 0; font-size: calc(var(--h) * 0.074); font-weight: 650; letter-spacing: -0.02em; }
+  #title p { margin: 0; font-size: calc(var(--h) * 0.031); font-weight: 400; opacity: 0.82; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="dip"></div>
+  <div id="speed"></div>
+  <div id="veil"></div>
+  <div id="title"><h1></h1><p></p></div>
+  <div id="caption"></div>
+  <svg id="pointer" viewBox="0 0 24 24"><path d="M2 1.5 L2 19.2 L6.9 14.9 L10.2 22.3 L13.3 20.9 L10.1 13.7 L16.6 13.2 Z" fill="#111" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>
+</div>
+<script>
+  // TIMELINE = { width, height, fps, captions: [{ from, to, text }], titles: [{ from, to, text, sub }] }, times in film seconds.
+  const stage = document.getElementById("stage"), caption = document.getElementById("caption"), veil = document.getElementById("veil"), title = document.getElementById("title");
+  let TL = window.TIMELINE || { width: 1920, height: 1216, fps: 30, captions: [], titles: [], joins: [], speeds: [] };
+  const dip = document.getElementById("dip"), speed = document.getElementById("speed");
+  const DIP = 0.2;
+  // 0 away from a join, 1 on it: down and up again in 0.4 seconds.
+  const dipAt = (t) => { let best = 0; for (const j of TL.joins || []) { const d = Math.abs(t - j); if (d < DIP) best = Math.max(best, 1 - d / DIP); } return best * best * (3 - 2 * best); };
+  const pointerEl = document.getElementById("pointer");
+  const smoother = (u) => { u = clamp(u); return u * u * u * (u * (6 * u - 15) + 10); };
+  // The camera at time t: zoom, and the point it looks at as a share of the frame. The same sums as the zoom filter.
+  const cameraAt = (t) => { let z = 1, lx = 0.5, ly = 0.5; for (const k of TL.camera || []) { const w = smoother((t - k.a) / k.ramp) * smoother((k.b - t) / k.ramp); z += (k.zoom - 1) * w; lx += (k.cx - 0.5) * w; ly += (k.cy - 0.5) * w; } return { z, lx, ly }; };
+  // The pointer at time t: its place in the window (0 to 1), and how long ago the button went down.
+  const pointerAt = (t) => {
+    const path = TL.pointer || [];
+    if (!path.length || t < path[0][0]) return null;
+    let lo = 0, hi = path.length - 1;
+    while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (path[mid][0] <= t) lo = mid; else hi = mid - 1; }
+    const a = path[lo], b = path[lo + 1];
+    const u = b && b[0] > a[0] && b[0] - a[0] < 0.2 ? (t - a[0]) / (b[0] - a[0]) : 0;
+    let since = Infinity;
+    for (let i = lo; i >= 0 && t - path[i][0] < 0.4; i--) if (path[i][3]) { since = t - path[i][0]; break; }
+    return { x: a[1] + ((b ? b[1] : a[1]) - a[1]) * u, y: a[2] + ((b ? b[2] : a[2]) - a[2]) * u, since };
+  };
+  const pointerOnScreen = (t) => {
+    const at = pointerAt(t);
+    if (!at) return null;
+    const cam = cameraAt(t), W = TL.width * cam.z, H = TL.height * cam.z;
+    const x0 = Math.min(Math.max(cam.lx * W - TL.width / 2, 0), W - TL.width), y0 = Math.min(Math.max(cam.ly * H - TL.height / 2, 0), H - TL.height);
+    // A press: the pointer dips to 86% and comes back, in a fifth of a second.
+    const press = at.since < 0.2 ? 1 - 0.14 * Math.sin(Math.PI * (at.since / 0.2)) : 1;
+    return { x: Math.round((at.x * W - x0) * 2) / 2, y: Math.round((at.y * H - y0) * 2) / 2, scale: Math.round(press * (1 + 0.2 * (cam.z - 1)) * 1000) / 1000 };
+  };
+  const speedAt = (t) => (TL.speeds || []).find((s) => t >= s.from && t < s.to);
+  const IN = 0.32, OUT = 0.22;
+  const clamp = (v) => Math.min(1, Math.max(0, v));
+  const ease = (u) => 1 - Math.pow(1 - clamp(u), 3);
+  // How far "in" an item is at time t: 0 hidden, 1 shown. It rises on entry and falls on exit.
+  const presence = (item, t) => (t < item.from || t >= item.to ? 0 : Math.min(ease((t - item.from) / IN), ease((item.to - t) / OUT)));
+  function setup(timeline) {
+    TL = timeline;
+    stage.style.setProperty("--w", TL.width + "px");
+    stage.style.setProperty("--h", TL.height + "px");
+  }
+  window.__setup = setup;
+  window.__seek = (t) => {
+    const cap = TL.captions.find((c) => t >= c.from && t < c.to);
+    const p = cap ? presence(cap, t) : 0;
+    if (cap) caption.textContent = cap.text;
+    caption.style.opacity = p;
+    caption.style.transform = `translateY(${(1 - p) * 14}px)`;
+    const card = TL.titles.find((c) => t >= c.from && t < c.to);
+    const q = card ? presence(card, t) : 0;
+    if (card) { title.querySelector("h1").textContent = card.text; title.querySelector("p").textContent = card.sub || ""; }
+    veil.style.opacity = q;
+    dip.style.opacity = dipAt(t) * 0.6;
+    const ptr = pointerOnScreen(t);
+    pointerEl.style.opacity = ptr ? 1 : 0;
+    if (ptr) pointerEl.style.transform = `translate(${ptr.x}px, ${ptr.y}px) scale(${ptr.scale})`;
+    const fast = speedAt(t);
+    if (fast) speed.textContent = fast.rate + "\u00d7 speed";
+    speed.style.opacity = fast ? presence(fast, t) : 0;
+    title.style.opacity = q;
+    title.style.transform = `translateY(${(1 - q) * 10}px)`;
+  };
+  // Two frames with the same key look the same, so the renderer takes one picture for both.
+  window.__key = (t) => {
+    const cap = TL.captions.find((c) => t >= c.from && t < c.to), card = TL.titles.find((c) => t >= c.from && t < c.to);
+    const part = (item, tag) => (item ? `${tag}${TL[tag === "c" ? "captions" : "titles"].indexOf(item)}:${presence(item, t).toFixed(3)}` : `${tag}-`);
+    const fast = speedAt(t), ptr = pointerOnScreen(t);
+    return (ptr ? "p" + ptr.x + "," + ptr.y + "," + ptr.scale + "|" : "") + part(cap, "c") + "|" + part(card, "t") + "|d" + dipAt(t).toFixed(3) + "|s" + (fast ? (TL.speeds.indexOf(fast) + ":" + presence(fast, t).toFixed(3)) : "-");
+  };
+  setup(TL);
+  window.__seek(0);
+  // Review mode: play the film under the overlays.
+  const params = new URLSearchParams(location.search);
+  if (params.get("video")) {
+    document.body.classList.add("review");
+    const video = document.createElement("video");
+    video.src = params.get("video"); video.controls = true; video.playsInline = true;
+    stage.prepend(video);
+    const scale = Math.min(1, (innerWidth - 32) / TL.width, (innerHeight - 32) / TL.height);
+    stage.style.transform = `scale(${scale})`;
+    const tick = () => { window.__seek(video.currentTime); requestAnimationFrame(tick); };
+    tick();
+  }
+</script>
+</body>
+</html>
