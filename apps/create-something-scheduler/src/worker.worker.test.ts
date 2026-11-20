@@ -53,6 +53,14 @@ describe('scheduler Worker transport', () => {
     expect(pageHtml).toContain("notifyParent('booking_completed'");
     expect(pageHtml).not.toContain('must-not-cross@example.com');
 
+    const previewOrigin = 'https://create-something-agency-staging.webflow.io';
+    expect(page.headers.get('content-security-policy')).not.toContain(previewOrigin);
+    const embedded = await SELF.fetch('https://scheduler.local/createsomething/together?embed=editorial');
+    expect(embedded.headers.get('content-security-policy')).toContain(
+      'frame-ancestors https://createsomething.agency ' + previewOrigin
+    );
+    expect(await embedded.text()).toContain('data-scheduler-embed="editorial"');
+
     const integrationPage = await SELF.fetch(
       'https://scheduler.local/createsomething/together?intent=compiler-integration'
     );
