@@ -397,6 +397,8 @@ export interface ContentAnalysisResult {
 		averageLinksPerPage: number;
 		/** CMS item pages read as a sample, in addition to the page list. Absent on a current-page run. */
 		cmsItemPagesChecked?: number;
+		/** Paths of those item pages. The sample is the same on each run while the site's links do not change. */
+		cmsItemPagePaths?: string[];
 	};
 	pages: AnalyzedPage[];
 }
