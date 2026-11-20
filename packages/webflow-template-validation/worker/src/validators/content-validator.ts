@@ -33,6 +33,7 @@ import { fetchHTML, isPlatformManagedHeading, parseHTML } from '../utils/fetch-u
 import { analyzeHeadingSequence, extractDocumentOutline, visibleOutlineHeadings } from '../utils/document-outline';
 import { isWebflowGeneratedVideoPosterSource } from '../utils/asset-utils';
 import { imageSpaceReserved, loadPageStyles, type PageStyles, type StyledNode } from './image-reserved-space';
+import { auditFontLicenses } from './font-licenses';
 import {
 	REVIEWER_UTILITY_PATHS,
 	auditReviewerStandards,
@@ -293,7 +294,15 @@ export async function validateContent(
 			? []
 			: await discoverAdditionalPages(parsedHTML, siteUrl, filteredPageSlugs, maxAdditionalPages, excludedSlugs, classUsage);
 
-		const combinedPages = [pageAnalysis, ...additionalPages];
+		// The page list from the Designer has no CMS item pages, and only an
+		// item page shows what a CMS template renders: its images, its SEO
+		// fields and its Open Graph image. A page limit cuts the run short, so
+		// a limited run reads no item pages.
+		const itemPages = maxPages === undefined
+			? await analyzeItemPageSample(siteUrl, classUsage, [pageAnalysis, ...additionalPages].map(page => page.url), excludedSlugs)
+			: [];
+
+		const combinedPages = [pageAnalysis, ...additionalPages, ...itemPages];
 		const allPages = excludedSlugs.size > 0
 			? combinedPages.filter(p => {
 				const norm = normalizeSlugForComparison(p.url);
@@ -316,12 +325,13 @@ export async function validateContent(
 			// was not read is not unused.
 			// With a preview link, the Designer's site data gives the Clean
 			// up list and no page list is necessary.
+			...(await auditFontLicenses(siteUrl, classUsage.stylesheetUrls)),
 			...(await auditDesignerUnusedStyles(options?.previewUrl, options?.previewSiteDataPath)
 				?? (maxPages === undefined && options?.pageListComplete === true && Array.isArray(pageSlugs) && pageSlugs.length > 0 ? await auditUnusedStyles(siteUrl, classUsage, excludedSlugs, allPages.map(page => page.url)) : []))
 		];
 
 		// Calculate content statistics
-		const stats = calculateContentStats(allPages);
+		const stats = { ...calculateContentStats(allPages), cmsItemPagesChecked: itemPages.length };
 
 		return {
 			issues,
@@ -525,6 +535,58 @@ async function auditUnusedStyles(siteUrl: string, classUsage: ClassUsage, exclud
 	}
 }
 
+/** Item pages read for each collection (pages that share a parent path). */
+const ITEM_PAGES_PER_COLLECTION = 3;
+/** Item pages read in one run. Each one costs a page fetch and its link checks. */
+const ITEM_PAGE_SAMPLE_LIMIT = 15;
+/** An item page can link to a collection that no static page links to (a post links to its author). */
+const ITEM_PAGE_SAMPLE_ROUNDS = 2;
+
+/**
+ * Analyze a sample of CMS item pages: linked pages under a parent path that
+ * the crawl has not read (`/blog/a`, `/blog/b`). They get the same checks as
+ * the static pages. A sample is enough to find a defect in the template page;
+ * a defect in one item's own content can be outside the sample. An item page
+ * that does not load is skipped: the unused styles check, which needs every
+ * template, makes its own decision about that.
+ */
+async function analyzeItemPageSample(
+	siteUrl: string,
+	classUsage: ClassUsage,
+	crawledUrls: string[],
+	excludedSlugs: Set<string>
+): Promise<AnalyzedPage[]> {
+	const sampled: AnalyzedPage[] = [];
+	try {
+		// Excluded pages and the utility pages are not item pages, and other code reads them.
+		const readUrls = [
+			...crawledUrls,
+			...[...excludedSlugs].map(slug => new URL(slug, siteUrl).href),
+			...REVIEWER_UTILITY_PATHS.map(path => new URL(path, siteUrl).href)
+		];
+		let budget = ITEM_PAGE_SAMPLE_LIMIT;
+		for (let round = 0; round < ITEM_PAGE_SAMPLE_ROUNDS && budget > 0; round++) {
+			const items = uncrawledItemPages(classUsage, siteUrl, readUrls, ITEM_PAGES_PER_COLLECTION, budget);
+			if (items.pages.length === 0) break;
+			budget -= items.pages.length;
+			readUrls.push(...items.pages);
+			const analyzed = await Promise.all(items.pages.map(async url => {
+				try {
+					const html = await fetchHTML(url);
+					return { ...(await analyzePage(url, parseHTML(html.html), classUsage)), isCmsItemSample: true };
+				} catch (error) {
+					console.warn(`Item page not analyzed: ${url}`, error);
+					return null;
+				}
+			}));
+			sampled.push(...analyzed.filter((page): page is NonNullable<typeof page> => page !== null));
+		}
+	} catch (error) {
+		console.warn('Item page sample stopped:', error);
+	}
+	return sampled;
+}
+
 async function auditUtilityPages(siteUrl: string, pages: AnalyzedPage[], excludedSlugs: Set<string>, classUsage?: ClassUsage) {
 	const crawled = new Set(pages.map(page => page.reviewerAudit?.path).filter(Boolean));
 	const paths = REVIEWER_UTILITY_PATHS.filter(path => !crawled.has(path) && !excludedSlugs.has(normalizeSlugForComparison(path) ?? ''));
@@ -618,6 +680,8 @@ export function analyzeImageDimensions(parsedHTML: ParsedHTML, styles?: PageStyl
 	renderedImages(parsedHTML).forEach((img, index) => {
 		if (isLikelyPlatformVideoFallbackImage(img)) return;
 		if (isPlatformCartItemImage(img)) return;
+		// An image in a Rich Text element has no size settings in the Designer or in the CMS editor.
+		if (img.closest?.('.w-richtext')) return;
 		if (hasPositiveDimension(img, 'width') && hasPositiveDimension(img, 'height')) return;
 		if (styles && img.node && imageSpaceReserved(img.node as StyledNode, styles)) {
 			sizedByCss++;
@@ -1368,6 +1432,25 @@ function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
 			});
 		}
 
+		// WebP and AVIF Open Graph images do not show on every platform that reads the tag.
+		const ogImageFormat = unsupportedSocialImageFormat(seo.openGraph.image);
+		if (ogImageFormat) {
+			seoIssues.push({
+				id: `og-image-format-${generatePageId(page.url)}`,
+				category: 'Content & Accessibility',
+				severity: 'warning',
+				message: `"${pageName}" has an Open Graph image in ${ogImageFormat} format`,
+				description: 'Some social platforms and chat apps do not show WebP or AVIF link previews. JPEG and PNG show everywhere.',
+				howToFix: 'Use a JPEG or PNG file for the Open Graph image. On a CMS template page, change the file in the image field that the Open Graph image reads.',
+				location: page.url,
+				details: {
+					page: pageName,
+					url: page.url,
+					image: seo.openGraph.image
+				}
+			});
+		}
+
 		// Open Graph validation
 		if (!seo.openGraph.title && !seo.openGraph.description && !seo.openGraph.image) {
 			seoIssues.push({
@@ -1388,6 +1471,20 @@ function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
 	});
 
 	return seoIssues;
+}
+
+/** "WebP" or "AVIF" when the image URL's path ends in that extension; null for every other URL. */
+export function unsupportedSocialImageFormat(imageUrl: string | null): 'WebP' | 'AVIF' | null {
+	if (!imageUrl) return null;
+	let path: string;
+	try {
+		path = new URL(imageUrl, 'https://placeholder.invalid').pathname.toLowerCase();
+	} catch {
+		return null;
+	}
+	if (path.endsWith('.webp')) return 'WebP';
+	if (path.endsWith('.avif')) return 'AVIF';
+	return null;
 }
 
 function isNoindexUtilityPage(url: string): boolean {

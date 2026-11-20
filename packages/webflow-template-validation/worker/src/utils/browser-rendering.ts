@@ -6,15 +6,18 @@
 import puppeteer, { type Browser, type BrowserWorker, type Page } from '@cloudflare/puppeteer';
 
 import {
+	MAX_DUPLICATE_NAV_LINKS,
 	MAX_RENDERED_PAGES,
 	OVERFLOW_TOLERANCE_PX,
 	RENDER_VIEWPORTS,
 	describePageError,
 	emulateVisitorInPage,
+	findDuplicateNavLinksInPage,
 	isIgnoredPageError,
 	measureLayoutInPage,
 	scrollSweepInPage,
 	summarizeRendering,
+	type DuplicateNavLink,
 	type PageErrorObservation,
 	type PageRenderObservation,
 	type RenderViewport,
@@ -134,6 +137,13 @@ async function renderViewport(tab: ViewportTab, url: string, errors: Map<string,
 			if (second.offenders.length > 0) offenders = second.offenders;
 		}
 
+		// Read the navbar before the scroll sweep, while the page is at the top
+		// and a navbar that hides on scroll still shows.
+		let duplicateNavLinks: DuplicateNavLink[] | undefined;
+		if (viewport.name === 'desktop') {
+			duplicateNavLinks = await page.evaluate(findDuplicateNavLinksInPage, MAX_DUPLICATE_NAV_LINKS).catch(() => undefined);
+		}
+
 		// Scroll once so errors thrown by scroll-triggered scripts are caught too.
 		if (viewport.name === 'desktop') {
 			await page
@@ -145,7 +155,8 @@ async function renderViewport(tab: ViewportTab, url: string, errors: Map<string,
 			viewport: viewport.name,
 			width: viewport.width,
 			overflowPx: overflowPx > OVERFLOW_TOLERANCE_PX ? overflowPx : 0,
-			offenders: overflowPx > OVERFLOW_TOLERANCE_PX ? offenders : []
+			offenders: overflowPx > OVERFLOW_TOLERANCE_PX ? offenders : [],
+			...(duplicateNavLinks && duplicateNavLinks.length > 0 ? { duplicateNavLinks } : {})
 		};
 	} finally {
 		tab.errors = null;

@@ -168,3 +168,28 @@ describe('renderTargets', () => {
 		]);
 	});
 });
+
+describe('duplicate navbar links', () => {
+	function withDuplicates(path: string, links: Array<{ text: string; href: string; count: number }>): PageRenderObservation {
+		return page(path, {
+			viewports: viewports().map((viewport) => (viewport.viewport === 'desktop' ? { ...viewport, duplicateNavLinks: links } : viewport))
+		});
+	}
+
+	it('warns once for a link that repeats on every page, and names the first page', () => {
+		const contact = { text: 'Contact', href: `${SITE}/contact`, count: 2 };
+		const issues = generateRenderingIssues([withDuplicates('/', [contact]), withDuplicates('/about', [contact])], { pagesRequested: 2 });
+		expect(issues).toHaveLength(1);
+		expect(issues[0]).toMatchObject({ id: 'nav-duplicate-links', category: RENDERING_CATEGORY, severity: 'warning' });
+		expect(issues[0].details?.locations).toEqual(['/ — "Contact" shows 2 times in the navbar, each to /contact']);
+	});
+
+	it('does not fail the category', () => {
+		const result = summarizeRendering([withDuplicates('/', [{ text: 'Contact', href: `${SITE}/contact`, count: 2 }])], { pagesRequested: 1 });
+		expect(result.issues.every((issue) => issue.severity !== 'error')).toBe(true);
+	});
+
+	it('reports nothing when no page has a duplicate', () => {
+		expect(generateRenderingIssues([withDuplicates('/', [])], { pagesRequested: 1 })).toEqual([]);
+	});
+});
