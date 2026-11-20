@@ -72,6 +72,7 @@
 		<div class="intro">
 			<h1 id="auth-heading">{mode === 'login' ? 'Sign in to your workspace.' : 'Create your account.'}</h1>
 			<p>Use your CREATE SOMETHING Identity to manage your profile and tool access.</p>
+			<img class="doorway" width="1280" height="720" src="/agency/identity/doorway.webp" alt="" />
 		</div>
 		<div class="auth-form-panel" id="identity-form" tabindex="-1">
 			<noscript>Enable JavaScript to sign in or create an account.</noscript>
@@ -150,6 +151,7 @@
 	.auth-shell { display: grid; grid-template-columns: minmax(0,1.15fr) minmax(0,.85fr); gap: clamp(2rem, 7vw, 7rem); align-items: start; padding-block: clamp(4rem,12vh,9rem); }
 	h1 { margin: 0; max-width: 12ch; font: 400 clamp(3rem,5vw,4.75rem)/1.02 "STIX Two Text", Georgia, serif; letter-spacing: -.054em; }
 	.intro p { max-width: 32ch; margin: 1.25rem 0 0; color: var(--subtle); font-size: 1.2rem; }
+	.doorway { display: block; width: 100%; max-width: 27rem; height: auto; margin-top: 2rem; border-radius: .55rem; }
 	.auth-form-panel :global(.form-header) { display: none; }
 	.auth-form-panel :global(.label) { color: var(--ink); font-weight: 500; }
 	.auth-form-panel :global(.input) { min-height: 3rem; background: white; color: var(--ink); border: 1px solid #aaa69e; border-radius: .42rem; font: inherit; }
@@ -158,6 +160,7 @@
 	.auth-form-panel :global(.link-button), .auth-form-panel :global(.terms-link) { color: var(--ink); text-decoration: underline; text-underline-offset: .18em; }
 	.identity :global(:is(input,button,a):focus-visible) { outline: 2px solid var(--ink); outline-offset: 3px; }
 	@media (max-width: 720px) {
+		.doorway { display: none; }
 		.auth-shell { grid-template-columns: 1fr; padding-block: 3.5rem; }
 		.auth-form-panel :global(.auth-form) { max-width: none; }
 	}
