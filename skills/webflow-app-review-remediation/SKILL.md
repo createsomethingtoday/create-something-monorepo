@@ -81,6 +81,15 @@ Common remediation lanes:
 - Dependency reachability and upgrade evidence
 - OAuth, error recovery, accessibility, listing, and demo-flow accuracy
 
+### Backend declaration findings
+
+Every App — Designer Extensions included — answers "Does your app run server-side code?" on the submission form (Yes if any part runs on a server the developer or a provider operates: an API, an OAuth callback, a webhook receiver, a chatbot backend, or a service a Designer Extension calls) and, if Yes, self-declares hosting model, runtime family and version, and hosting provider; Webflow does not verify the infrastructure. Four rulings follow from that:
+
+- A finding that cites an **end-of-life or vulnerable backend runtime** is a Behavior lane item. The remediation is to upgrade to a vendor-supported version and re-declare the runtime and version on the next **App Update** submission; a fixed server with a stale declaration is not resolved.
+- A **mismatch between the declared hosting and the Install URL host** is a reviewer question to answer, not a blocker to fix. Explain the topology (proxy, CDN, separate API domain) in the reviewer response.
+- **Residual EOL-runtime risk** that the developer cannot close before resubmission is a Judgment lane item: route it to the ⚖️ exception flow with type **Security** and record the owner. Do not invent a new rule or threshold for it.
+- An **"observed backend" note from the reviewer** — a backend seen in the bundle, injected script, or install flow that the declaration does not cover (a `.php` endpoint, API calls to a developer domain, a chatbot backend) — is a request to complete or correct the declaration on the next **App Update**, not a finding on its own. The reviewer's note never replaces the declaration; it stays the developer's attestation.
+
 ## Step 3 — Make an evidence-first plan
 
 Use `assets/remediation-plan.md`. For every P1 or unassigned finding define before editing:
