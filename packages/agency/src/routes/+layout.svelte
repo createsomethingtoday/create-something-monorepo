@@ -379,6 +379,9 @@
   mobilePlacement={pageFoundation || ["/", "/services", "/contact", "/book"].includes($page.url.pathname) ? "safe-corner" : "header-edge"}
 />
 
+{#if $page.route.id === "/login"}
+  <main id="main-content">{@render children()}</main>
+{:else}
 <!-- Unified Search - Cmd/Ctrl+K to open -->
 {#if isPublicSearchPage($page.url.pathname)}
   <AgencySearch showMobileButton={$page.url.pathname !== '/'} />
@@ -432,6 +435,7 @@
     <ModeIndicator current="agency" />
   {/if}
 </div>
+{/if}
 
 </div>
 

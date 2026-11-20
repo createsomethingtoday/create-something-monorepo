@@ -62,166 +62,103 @@
 	noindex={true}
 />
 
-<div class="auth-shell property-performance">
-	<section class="auth-context" aria-labelledby="auth-heading">
-		<div class="auth-status">
-			<span class="status-label">Customer workspace</span>
-			<a class="status-value" href="/">Back to Agency ↗</a>
+<div class="identity">
+	<a class="skip" href="#identity-form">Skip to account form</a>
+	<header>
+		<a class="wordmark" href="/" aria-label="CREATE SOMETHING home">CREATE SOMETHING</a>
+		<a href="/">Back to Agency <span aria-hidden="true">↗</span></a>
+	</header>
+	<section class="auth-shell" aria-labelledby="auth-heading">
+		<div class="intro">
+			<h1 id="auth-heading">{mode === 'login' ? 'Sign in to your workspace.' : 'Create your account.'}</h1>
+			<p>Use your CREATE SOMETHING Identity to manage your profile and tool access.</p>
 		</div>
-		<p class="auth-eyebrow">Your account</p>
-		<h1 id="auth-heading">Sign in to your workspace.</h1>
-		<p class="auth-summary">
-			Use your CREATE SOMETHING credentials to manage your profile and tool access.
-		</p>
+		<div class="auth-form-panel" id="identity-form" tabindex="-1">
+			<noscript>Enable JavaScript to sign in or create an account.</noscript>
+			{#if mode === 'login'}
+				<LoginForm
+					onSubmit={signIn}
+					onSwitchToSignup={() => switchMode('signup')}
+					{error}
+					showMagicLinkOption={false}
+					showSignupLink={true}
+				/>
+			{:else}
+				<SignupForm
+					onSubmit={signUp}
+					onSwitchToLogin={() => switchMode('login')}
+					{error}
+					showMagicLinkOption={false}
+					showLoginLink={true}
+					source="space"
+				/>
+			{/if}
+			{#if mode === 'login'}
+				<a class="recover" href="https://id.createsomething.space/recover">Forgot your password?</a>
+			{/if}
+		</div>
 	</section>
-
-	<section
-		class="auth-form-panel"
-		aria-label={mode === 'login' ? 'Sign-in form' : 'Account creation form'}
-	>
-		{#if mode === 'login'}
-			<LoginForm
-				onSubmit={signIn}
-				onSwitchToSignup={() => switchMode('signup')}
-				{error}
-				showMagicLinkOption={false}
-				showSignupLink={true}
-			/>
-		{:else}
-			<SignupForm
-				onSubmit={signUp}
-				onSwitchToLogin={() => switchMode('login')}
-				{error}
-				showMagicLinkOption={false}
-				showLoginLink={true}
-				source="space"
-			/>
-		{/if}
-	</section>
+	<footer><a href="/privacy">Privacy choices</a><a href="/contact">Contact</a></footer>
 </div>
 
 <style>
-	.auth-shell {
-		width: min(1760px, 94%);
-		margin: 0 auto;
-		padding: 0 0 clamp(3rem, 7vw, 6rem);
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) minmax(20rem, 28rem);
-		align-items: start;
-		gap: clamp(2rem, 6vw, 6rem);
+	@font-face {
+		font-family: "STIX Two Text";
+		src: url("/fonts/agency-stix-two-text.woff2") format("woff2");
+		font-weight: 400;
+		font-display: swap;
 	}
-
-	.auth-context {
-		border-top: 1px solid var(--color-performance-line);
-		padding: var(--space-performance-md) 0 0;
+	@font-face {
+		font-family: "Agency Geist";
+		src: url("/fonts/agency-geist-latin.woff2") format("woff2");
+		font-weight: 100 900;
+		font-display: swap;
 	}
-
-	.auth-status {
+	.identity {
+		--paper: #faf8f5;
+		--ink: #262626;
+		--line: #d9d5ce;
+		--subtle: #625e58;
+		--color-performance-fg-primary: var(--ink);
+		--color-performance-fg-secondary: var(--subtle);
+		--color-performance-fg-tertiary: var(--subtle);
+		--color-performance-fg-muted: var(--subtle);
+		--color-performance-bg-pure: white;
+		--color-performance-focus: var(--ink);
+		--color-performance-error: #8b2327;
+		--color-performance-error-muted: #fff2f0;
+		--color-performance-error-border: #ca8785;
+		box-sizing: border-box;
 		display: flex;
-		flex-wrap: wrap;
-		gap: var(--space-performance-sm);
-		font-family: var(--font-performance-mono);
-		font-size: 11px;
-		letter-spacing: 0.045em;
-		text-transform: uppercase;
+		flex-direction: column;
+		min-height: 100svh;
+		padding-inline: max(1.25rem, calc((100% - 69rem) / 2));
+		background: var(--paper);
+		color: var(--ink);
+		color-scheme: light;
+		font: 400 1rem/1.5 "Agency Geist", Arial, sans-serif;
 	}
-
-	.auth-status {
-		justify-content: space-between;
-		align-items: center;
-	}
-
-	.status-label,
-	.auth-eyebrow {
-		color: var(--color-performance-muted);
-	}
-
-	.status-value {
-		color: var(--color-performance-muted);
-		min-height: 44px;
-		display: inline-flex;
-		align-items: center;
-	}
-
-	.auth-eyebrow {
-		margin: clamp(2rem, 4vw, 4rem) 0 var(--space-performance-sm);
-		font-family: var(--font-performance-mono);
-		font-size: var(--text-performance-caption);
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-	}
-
-	h1 {
-		max-width: 12ch;
-		margin: 0;
-		color: var(--color-performance-ink);
-		font-family: var(--font-performance-sans);
-		font-size: clamp(2.5rem, 5vw, 4.5rem);
-		font-weight: 500;
-		letter-spacing: -0.055em;
-		line-height: 1.08;
-	}
-
-	.auth-summary {
-		max-width: 44rem;
-		margin: var(--space-performance-lg) 0;
-		color: var(--color-performance-ink-soft);
-		font-size: var(--text-performance-body);
-		line-height: 1.65;
-	}
-
-	.auth-form-panel {
-		padding: clamp(1.25rem, 3vw, 2.5rem);
-		background: var(--color-performance-panel);
-		border: 1px solid var(--color-performance-line);
-		border-radius: var(--radius-performance-scale-lg);
-	}
-
-	/* Agency owns this presentation; shared auth behavior stays in Canon. */
-	.auth-form-panel :global(.form-title) {
-		font-family: var(--font-performance-sans);
-		font-size: var(--text-performance-h3);
-		letter-spacing: -0.03em;
-	}
-
-	.auth-form-panel :global(.form-header) { text-align: left; }
-	.auth-form-panel :global(.input) {
-		background: var(--color-performance-bg-elevated);
-		border: 1px solid var(--color-performance-focus);
-		border-radius: var(--radius-performance-sm);
-		min-height: 48px;
-	}
-	.auth-form-panel :global(.input::placeholder) { color: var(--color-performance-muted); }
-	.auth-form-panel :global(.submit-button) { border-radius: var(--radius-performance-sm); }
-	.auth-form-panel :global(.link-button) { min-height: 44px; }
-	.auth-form-panel :global(.error-message) {
-		background: var(--color-performance-bg-elevated);
-		border-color: var(--color-performance-error);
-		color: var(--color-performance-error);
-		border-radius: var(--radius-performance-sm);
-		overflow-wrap: anywhere;
-	}
-	.auth-form-panel :global(:is(input, button):focus-visible) {
-		outline: 2px solid var(--color-performance-focus);
-		outline-offset: 3px;
-	}
-
-	@media (max-width: 760px) {
-		.auth-shell {
-			grid-template-columns: 1fr;
-		}
-
-		.auth-summary { margin-block: var(--space-performance-md) 0; }
-
-		.auth-eyebrow {
-			margin-top: var(--space-performance-md);
-		}
-
-		h1 {
-			font-size: clamp(2rem, 9vw, 3rem);
-		}
-	}
-	@media (max-width: 700px) {
-		.auth-shell { width: 88%; }
+	.skip { position: absolute; left: 1rem; top: 1rem; transform: translateY(-200%); }
+	.skip:focus { transform: none; background: var(--paper); padding: .5rem; }
+	header, footer { display: flex; gap: 1.5rem; align-items: center; padding-block: 1.25rem; }
+	header { justify-content: space-between; border-bottom: 1px solid var(--line); }
+	.recover { display: inline-flex; align-items: center; min-height: 44px; font-size: .9rem; }
+	footer { margin-top: auto; border-top: 1px solid var(--line); }
+	a { color: inherit; text-underline-offset: .2em; }
+	header a, footer a { font-size: .9rem; }
+	header .wordmark { font-size: 1.12rem; font-weight: 800; letter-spacing: -.055em; text-decoration: none; }
+	.auth-shell { display: grid; grid-template-columns: minmax(0,1.15fr) minmax(0,.85fr); gap: clamp(2rem, 7vw, 7rem); align-items: start; padding-block: clamp(4rem,12vh,9rem); }
+	h1 { margin: 0; max-width: 12ch; font: 400 clamp(3rem,5vw,4.75rem)/1.02 "STIX Two Text", Georgia, serif; letter-spacing: -.054em; }
+	.intro p { max-width: 32ch; margin: 1.25rem 0 0; color: var(--subtle); font-size: 1.2rem; }
+	.auth-form-panel :global(.form-header) { display: none; }
+	.auth-form-panel :global(.label) { color: var(--ink); font-weight: 500; }
+	.auth-form-panel :global(.input) { min-height: 3rem; background: white; color: var(--ink); border: 1px solid #aaa69e; border-radius: .42rem; font: inherit; }
+	.auth-form-panel :global(.input::placeholder) { color: var(--subtle); }
+	.auth-form-panel :global(.submit-button) { border-radius: .42rem; background: var(--ink); color: white; font-weight: 600; min-height: 3rem; }
+	.auth-form-panel :global(.link-button), .auth-form-panel :global(.terms-link) { color: var(--ink); text-decoration: underline; text-underline-offset: .18em; }
+	.identity :global(:is(input,button,a):focus-visible) { outline: 2px solid var(--ink); outline-offset: 3px; }
+	@media (max-width: 720px) {
+		.auth-shell { grid-template-columns: 1fr; padding-block: 3.5rem; }
+		.auth-form-panel :global(.auth-form) { max-width: none; }
 	}
 </style>
