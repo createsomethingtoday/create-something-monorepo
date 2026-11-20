@@ -102,6 +102,11 @@ describe('scheduler public page', () => {
     expect(html).toContain('\\u003cscript>unsafe()\\u003c/script>');
   });
 
+  it('retains the editorial embed after a confirmed booking', () => {
+    const page = schedulerPage({ nonce: 'test', embedded: true });
+    expect(page).toContain("params.set('embed', 'editorial')");
+  });
+
   it('renders an explicit Workflow Compiler Integration fit call for that intent only', () => {
     const integration = schedulerPage({
       nonce: 'controlled-nonce',

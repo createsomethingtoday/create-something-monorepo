@@ -383,7 +383,12 @@ export function schedulerPage(input: {
   function formatWeekday(value) { return new Intl.DateTimeFormat(undefined,{weekday:'short',timeZone:timezone}).format(new Date(value)); }
   function formatDate(value) { return new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',timeZone:timezone}).format(new Date(value)); }
   function tokenKey(bookingId) { return 'scheduler:action:' + bookingId; }
-  function canonicalBookingUrl(bookingId) { const params=new URLSearchParams({booking:bookingId}); if (offerIntent) params.set('intent',offerIntent); return location.pathname+'?'+params.toString(); }
+  function canonicalBookingUrl(bookingId) {
+    const params = new URLSearchParams({ booking: bookingId });
+    if (offerIntent) params.set('intent', offerIntent);
+    if (document.body.dataset.schedulerEmbed === 'editorial') params.set('embed', 'editorial');
+    return location.pathname + '?' + params.toString();
+  }
   function slotDuration(slot) { return Math.round((new Date(slot.end).getTime()-new Date(slot.start).getTime())/60000); }
   function renderDuration() { durationSummary.textContent=state.durationMinutes+' minutes'; for (const button of durationButtons) { const active=Number(button.dataset.duration)===state.durationMinutes; button.setAttribute('aria-pressed',String(active)); button.disabled=state.mode==='reschedule'&&!active; } }
 
