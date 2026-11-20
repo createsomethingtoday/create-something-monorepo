@@ -7,6 +7,26 @@ import { describe, expect, it } from 'vitest';
 import { renderBookingManagementActions, schedulerPage } from './page.js';
 
 describe('scheduler public page', () => {
+  it('opts into compact editorial presentation while preserving booking controls and nonce', () => {
+    const html = schedulerPage({ nonce: 'editorial-nonce', embedded: true, intent: 'technical-review' });
+    expect(html).toContain('data-scheduler-embed="editorial"');
+    expect(html).toContain('background:#f5f2eb');
+    expect(html).toContain('body { min-width:0;');
+    expect(html).toContain('Available dates &amp; times');
+    expect(html).toContain('<summary>Timezone options</summary>');
+    expect(html).not.toContain('<h1>');
+    expect(html).not.toContain('class="lede"');
+    expect(html).toContain('id="identity"');
+    expect(html).toContain('data-duration="60"');
+    expect(html).toContain('id="selected-summary"');
+    expect(html).toContain('nonce="editorial-nonce"');
+    expect(html).toContain('/api/v1/bookings/prepare');
+    const standalone = schedulerPage({ nonce: 'standalone' });
+    expect(standalone).not.toContain('data-scheduler-embed=');
+    expect(standalone).not.toContain('background:#f5f2eb');
+    expect(standalone).toContain('<h1>Map One Workflow</h1>');
+  });
+
   it('is an API-only client with booking, reschedule, cancel, error, and accessibility states', () => {
     const html = schedulerPage({
       nonce: 'controlled-nonce',
@@ -80,6 +100,11 @@ describe('scheduler public page', () => {
     expect(html).not.toContain('"turnstileSiteKey":"site-key"><script>');
     expect(html).toContain('&quot;&gt;&lt;script&gt;unsafe()&lt;/script&gt;');
     expect(html).toContain('\\u003cscript>unsafe()\\u003c/script>');
+  });
+
+  it('retains the editorial embed after a confirmed booking', () => {
+    const page = schedulerPage({ nonce: 'test', embedded: true });
+    expect(page).toContain("params.set('embed', 'editorial')");
   });
 
   it('renders an explicit Workflow Compiler Integration fit call for that intent only', () => {

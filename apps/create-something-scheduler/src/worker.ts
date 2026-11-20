@@ -43,7 +43,7 @@ import { DurableBookingReportStore } from './storage/durable-booking-reports.js'
 import { DurableAvailabilityOverrideStore } from './storage/durable-availability-overrides.js';
 import { DurableBusyProjectionStore } from './storage/durable-busy-projection.js';
 import { DurableRoomStore } from './storage/durable-room-store.js';
-import { schedulerPage } from './ui/page.js';
+import { agencyStagingOrigin, schedulerPage } from './ui/page.js';
 import { roomPage } from './ui/room-page.js';
 
 export interface Env {
@@ -629,9 +629,11 @@ export default {
       (url.pathname === '/' || url.pathname === '/createsomething/together')
     ) {
       const nonce = crypto.randomUUID().replaceAll('-', '');
+      const embedded = url.searchParams.get('embed') === 'editorial';
       return new Response(schedulerPage({
         nonce,
         intent: url.searchParams.get('intent'),
+        embedded,
         ...(env.TURNSTILE_SITE_KEY ? { turnstileSiteKey: env.TURNSTILE_SITE_KEY } : {})
       }), {
         headers: {
@@ -647,7 +649,7 @@ export default {
             "font-src 'self' data: https://cdn.fontshare.com https://cdn.jsdelivr.net",
             "base-uri 'none'",
             "form-action 'self'",
-            'frame-ancestors https://createsomething.agency'
+            embedded ? `frame-ancestors https://createsomething.agency ${agencyStagingOrigin}` : 'frame-ancestors https://createsomething.agency'
           ].join('; '),
           'referrer-policy': 'no-referrer',
           'x-content-type-options': 'nosniff'
