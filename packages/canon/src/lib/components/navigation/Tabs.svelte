@@ -36,7 +36,7 @@
 
 	let {
 		tabs,
-		activeTab = $bindable(tabs[0]?.id ?? ''),
+		activeTab = $bindable(tabs.find(tab=>!tab.disabled)?.id ?? ''),
 		children,
 		onchange,
 		variant = 'default',
@@ -44,6 +44,7 @@
 	}: Props = $props();
 
 	let tablistRef: HTMLDivElement;
+	const instanceId=$props.id();
 
 	function selectTab(tabId: string) {
 		const tab = tabs.find((t) => t.id === tabId);
@@ -94,7 +95,7 @@
 		<div
 			class="tabs-list"
 			role="tablist"
-			tabindex={0}
+			tabindex={-1}
 			bind:this={tablistRef}
 			onkeydown={handleKeyDown}
 		>
@@ -102,12 +103,12 @@
 			<button
 				type="button"
 				role="tab"
-				id="tab-{tab.id}"
+				id="{instanceId}-tab-{tab.id}"
 				data-tab-id={tab.id}
 				class="tabs-tab"
 				class:active={activeTab === tab.id}
 				aria-selected={activeTab === tab.id}
-				aria-controls="panel-{tab.id}"
+				aria-controls="{instanceId}-panel-{tab.id}"
 				tabindex={activeTab === tab.id ? 0 : -1}
 				disabled={tab.disabled}
 				onclick={() => selectTab(tab.id)}
@@ -119,9 +120,9 @@
 
 	{#each tabs as tab}
 		<div
-			id="panel-{tab.id}"
+			id="{instanceId}-panel-{tab.id}"
 			role="tabpanel"
-			aria-labelledby="tab-{tab.id}"
+			aria-labelledby="{instanceId}-tab-{tab.id}"
 			class="tabs-panel"
 			class:active={activeTab === tab.id}
 			hidden={activeTab !== tab.id}
@@ -142,12 +143,14 @@
 
 	/* Tab list */
 	.tabs-list {
+		flex-wrap:wrap;
 		display: flex;
 		gap: 2px;
 	}
 
 	/* Tab button base */
 	.tabs-tab {
+		min-height:44px;
 		position: relative;
 		padding: var(--space-performance-sm) var(--space-performance-md);
 		background: none;
@@ -211,6 +214,7 @@
 	}
 
 	.tabs-pills .tabs-tab.active {
+		background:var(--color-performance-panel);
 		box-shadow: var(--shadow-performance-scale-sm);
 	}
 
@@ -262,5 +266,31 @@
 
 	.tabs-panel[hidden] {
 		display: none;
+	}
+
+	@media (forced-colors: active) {
+		/* Borders survive OS palette substitution when fills and shadows do not. */
+		.tabs-default .tabs-tab.active::after,
+		.tabs-underline .tabs-tab.active::after {
+			border-bottom: 2px solid CanvasText;
+		}
+
+		.tabs-pills .tabs-tab.active::after {
+			content: '';
+			position: absolute;
+			inset: 3px;
+			border: 1px solid CanvasText;
+			border-radius: var(--radius-performance-scale-sm);
+			pointer-events: none;
+		}
+
+		.tabs-tab:focus-visible,
+		.tabs-panel:focus-visible {
+			outline-color: Highlight;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.tabs-tab, .tabs-tab::after { transition:none; }
 	}
 </style>

@@ -1,0 +1,103 @@
+{
+  "author": "Micah Johnson",
+  "relationship": "Individual professional work for Webflow, not commissioned through CREATE SOMETHING.",
+  "source_package": "artifacts/webflow-portfolio-2026-10-30",
+  "assets": [
+    {
+      "id": "validator",
+      "file": "static/films/webflow-marketplace/validator.mp4",
+      "sha256": "5db4adcc7f40e70271c63c6360c185592da3163e5459fafb7f3ec10f73d060db",
+      "duration": 13.2,
+      "source_sha256": "12706e2b9997c89e4b8bf3ddb6d23470473b343c87f3a0fc67dc3b80e324e398",
+      "scope": "Live Designer inspection on an owned test site. Setup and scope only; no validation run or site changes.",
+      "capture_date": "2026-10-30"
+    },
+    {
+      "id": "apps",
+      "file": "static/films/webflow-marketplace/apps.mp4",
+      "sha256": "5d1df07c27e99d45492c0ba01ae28adfa1113e102dfa705970251ef16f64f312",
+      "duration": 17.3,
+      "source_sha256": "d60ffc335a2c9f87e142a01049617497bba3da763abd06f88a4c44c42f3ce679",
+      "scope": "Live public Campaigns navigation and listings. No installs or admin curation.",
+      "capture_date": "2026-10-30"
+    },
+    {
+      "id": "submission",
+      "file": "static/films/webflow-marketplace/submission.mp4",
+      "sha256": "688b22fe979153eb845405d2cfcb55d5b5478419d16fb7ae143b5f2b81cf69b1",
+      "duration": 18.3,
+      "source_sha256": "6cf6d137c398ecf90542912865feb256bad4f4e75b3ac0cd673865809334e60f",
+      "scope": "Live unsent template-form inspection. No identity check, upload, validation job, or submission.",
+      "capture_date": "2026-10-30"
+    },
+    {
+      "id": "submission-app-gate",
+      "file": "static/films/webflow-marketplace/submission-app-gate.mp4",
+      "sha256": "a5a78f48f0b5075801d125f92b2d4408917d7582c7a4fdf5f8faf43ec8057b0f",
+      "duration": 6.4,
+      "source_sha256": "ffd65854fd491ef35d6da8fb71edf84cd0a7c18d9151254d91be2135b2306bd6",
+      "scope": "Actual App form entry gate. No new Webflow connection or authenticated intake is shown.",
+      "capture_date": "2026-10-30"
+    },
+    {
+      "id": "review-mcp",
+      "file": "static/films/webflow-marketplace/review-mcp.mp4",
+      "sha256": "12268da7c7bdf93f8edf6eff6a8fcba82b6e7591243783ca02ec6399715d216c",
+      "duration": 33.06,
+      "source_sha256": "76a2e4606e190e771b343e1d20f86b7841d0ade48fd868640be44e6d32e9b23d",
+      "scope": "Offline evidence replay with synthetic clients. Actual handler results; no live reviewer or Airtable operation.",
+      "capture_date": "2026-10-30"
+    },
+    {
+      "id": "skills",
+      "file": "static/films/webflow-marketplace/skills.mp4",
+      "sha256": "4fbabcfa7e818a365bcd3bec3d03e5ef9fb4b66c69c45c943f2ebc91aeef3689",
+      "duration": 31.1,
+      "source_sha256": "ce3afda454f0b2b888ed399d3116ee6d933ca0fd31853955c8444dcf4c0ca92e",
+      "scope": "Original source and actual static evaluation output. No live model behavior is demonstrated.",
+      "capture_date": "2026-10-30"
+    },
+    {
+      "id": "listings",
+      "file": "static/films/webflow-marketplace/listings.mp4",
+      "sha256": "9baad77747256b4aab3b782910507445193d47fa60d0d4dd27209863f8dec33f",
+      "duration": 11.5,
+      "source_sha256": "328c492e7a44f597f11ec660370a69e44676b5efe6a218e75491cbefbc71474b",
+      "scope": "Owned workspace listings and search. No template editor, unsaved-change prompt, or listing edit is demonstrated.",
+      "capture_date": "2026-10-30"
+    },
+    {
+      "id": "preflight",
+      "file": "static/films/webflow-marketplace/preflight.mp4",
+      "sha256": "a7fb662ceaa06a4d01affb8c9f7bd8e935919b9a70951369b1511af893d49c7d",
+      "duration": 15.2,
+      "source_sha256": "23a0534454dc620d0a72758ebcae4c26ad2f374a3c040664cbd8c5859e6f10fe",
+      "scope": "Live Designer on the authorized demo site. Bundle/review-ZIP and hosted-script inputs only; no upload, job, receipt, runtime observation, site edit or publication.",
+      "capture_date": "2026-10-30"
+    },
+    {
+      "id": "asset-dashboard",
+      "file": "static/films/webflow-marketplace/asset-dashboard.mp4",
+      "sha256": "85209cca5867ca1277b07040a8e66d55f8c771dbddecea4783e17a056022035c",
+      "duration": 22.4,
+      "source_sha256": "080bdc536e823ad98d5f5f911621eaa47f92e730ad685ce5e2a97054ae8aac3b",
+      "scope": "Historical authenticated test-portfolio recording. Asset context, journey, editor entry and insights; no changes saved.",
+      "capture_date": "2026-10-30"
+    },
+    {
+      "id": "overview",
+      "file": "static/films/webflow-marketplace/overview.mp4",
+      "sha256": "cd1a1f43f06023acc2e382c3f5310e33f905d609892e8dfca88d26a7fd7e1932",
+      "duration": 168.26666666666668,
+      "source_sha256": "ca4b1415dca053a08ffb23e25170febe230b190035d422558e770c571c088e30",
+      "scope": "A compilation of actual captured screens and labeled offline replays. Setup, input and connection prerequisites remain bounded demonstrations, not full production acceptance. Individual portfolio work by Micah Johnson.",
+      "capture_date": "2026-10-30"
+    }
+  ],
+  "poster": {
+    "file": "static/films/webflow-marketplace/feature.jpg",
+    "source": "Historical dashboard screen.mp4 at6seconds, crop1038x580 at202,0; resized1344x752. No product state changed.",
+    "sha256": "fa016dd4702fc84249b6ee71ca3680c1b3d68533c3cf94ac69ed3c3b1f9008dc"
+  },
+  "public_release": "Prepared, not deployed. Production gate remains separate."
+}

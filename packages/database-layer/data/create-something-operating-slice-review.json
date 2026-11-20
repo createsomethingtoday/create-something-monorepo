@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-review:internal",
-  "generatedAt": "2026-10-22T14:00:48.969Z",
+  "generatedAt": "2026-11-16T21:22:33.813Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceCoverageId": "substrate:create-something:atlas-coverage:internal",
@@ -13,12 +13,14 @@
         "substrate:create-something:atlas-coverage-group:automation-surface-automation-worker"
       ],
       "recordIds": [
+        "substrate:create-something:worker:apps-agency-meta-maintenance-wrangler-jsonc",
         "substrate:create-something:worker:apps-bettermode-marketplace-creator-agent-wrangler-jsonc",
         "substrate:create-something:worker:apps-create-something-scheduler-wrangler-jsonc",
         "substrate:create-something:worker:apps-guard-performance-lab-wrangler-toml",
         "substrate:create-something:worker:apps-marketplace-template-submission-cloud-wrangler-json",
         "substrate:create-something:worker:apps-webflow-dashboard-cloud-wrangler-json",
         "substrate:create-something:worker:apps-webflow-marketplace-category-cloud-wrangler-json",
+        "substrate:create-something:worker:packages-a2a-wrangler-jsonc",
         "substrate:create-something:worker:packages-abundance-healthcare-mcp-worker-wrangler-toml",
         "substrate:create-something:worker:packages-abundance-jobs-mcp-worker-wrangler-toml",
         "substrate:create-something:package:create-something-agency-packages-agency",
@@ -52,6 +54,8 @@
         "substrate:create-something:worker:packages-composio-toolkit-mcp-wrangler-toml",
         "substrate:create-something:worker:packages-concierge-chat-wrangler-toml",
         "substrate:create-something:worker:packages-create-something-mcp-worker-wrangler-toml",
+        "substrate:create-something:package:create-something-creator-storefront-packages-creator-storefront",
+        "substrate:create-something:worker:packages-creator-storefront-wrangler-toml",
         "substrate:create-something:worker:packages-cs-mcp-hub-notion-bridge-wrangler-toml",
         "substrate:create-something:worker:packages-cs-mcp-hub-remote-wrangler-toml",
         "substrate:create-something:worker:packages-cs-telemetry-mcp-worker-wrangler-toml",
@@ -73,6 +77,7 @@
         "substrate:create-something:worker:packages-halfdozen-notion-mcp-worker-wrangler-toml",
         "substrate:create-something:worker:packages-halfdozen-operator-notion-mcp-worker-wrangler-toml",
         "substrate:create-something:worker:packages-halfdozen-telemetry-mcp-worker-wrangler-toml",
+        "substrate:create-something:worker:packages-halfdozen-transcript-monitor-wrangler-jsonc",
         "substrate:create-something:package:halfdozen-zoom-sync-worker-packages-halfdozen-zoom-sync-worker",
         "substrate:create-something:worker:packages-halfdozen-zoom-sync-worker-wrangler-toml",
         "substrate:create-something:worker:packages-halfdozen-zoom-transcript-sync-wrangler-toml",
@@ -95,6 +100,8 @@
         "substrate:create-something:worker:packages-mapping-canvas-wrangler-jsonc",
         "substrate:create-something:package:create-something-marketplace-featured-notifier-packages-marketplace-featured-notifier",
         "substrate:create-something:worker:packages-marketplace-featured-notifier-wrangler-jsonc",
+        "substrate:create-something:package:create-something-marketplace-insights-cron-packages-marketplace-insights-cron",
+        "substrate:create-something:worker:packages-marketplace-insights-cron-wrangler-jsonc",
         "substrate:create-something:package:create-something-maverick-admin-packages-maverick-admin",
         "substrate:create-something:worker:packages-maverick-admin-wrangler-toml",
         "substrate:create-something:worker:packages-maverick-wrangler-toml",
@@ -131,7 +138,11 @@
         "substrate:create-something:worker:packages-template-form-uploads-worker-wrangler-toml",
         "substrate:create-something:worker:packages-tend-wrangler-toml",
         "substrate:create-something:worker:packages-three-tier-framework-mcp-worker-wrangler-toml",
+        "substrate:create-something:package:create-something-walkthrough-system-packages-walkthrough-system",
+        "substrate:create-something:worker:packages-walkthrough-system-wrangler-jsonc",
         "substrate:create-something:worker:packages-webflow-app-review-mcp-worker-wrangler-toml",
+        "substrate:create-something:package:create-something-webflow-app-review-portal-packages-webflow-app-review-portal",
+        "substrate:create-something:worker:packages-webflow-app-review-portal-wrangler-json",
         "substrate:create-something:worker:packages-webflow-apps-admin-dashboard-wrangler-toml",
         "substrate:create-something:worker:packages-webflow-apps-admin-workers-audit-agent-wrangler-toml",
         "substrate:create-something:package:webflow-onboarding-sync-worker-packages-webflow-automation-worker",
@@ -153,7 +164,6 @@
         "substrate:create-something:worker:packages-webflow-template-analyzer-cloudflare-wrangler-jsonc",
         "substrate:create-something:worker:packages-webflow-template-review-mcp-worker-wrangler-toml",
         "substrate:create-something:worker:packages-webflow-template-search-wrangler-toml",
-        "substrate:create-something:package:create-something-webflow-template-validation-worker-packages-webflow-template-validation-worker",
         "substrate:create-something:worker:packages-webflow-template-validation-worker-wrangler-jsonc",
         "substrate:create-something:worker:packages-webflow-template-views-wrangler-toml",
         "substrate:create-something:worker:packages-wf-search-category-wrangler-toml",
@@ -162,20 +172,20 @@
       "owner": "CREATE SOMETHING",
       "tier": "Automation",
       "surface": "worker",
-      "nodeCount": 145,
+      "nodeCount": 155,
       "evidence": [
+        "apps/agency-meta-maintenance/wrangler.jsonc",
         "apps/bettermode-marketplace-creator-agent/wrangler.jsonc",
         "apps/create-something-scheduler/wrangler.jsonc",
         "apps/guard-performance-lab/wrangler.toml",
         "apps/marketplace-template-submission-cloud/wrangler.json",
         "apps/webflow-dashboard-cloud/wrangler.json",
         "apps/webflow-marketplace-category-cloud/wrangler.json",
+        "packages/a2a/wrangler.jsonc",
         "packages/abundance-healthcare-mcp/worker/wrangler.toml",
         "packages/abundance-jobs-mcp/worker/wrangler.toml",
         "packages/agency",
-        "packages/agency/clients/cato-supply-insights-cms/wrangler.toml",
-        "packages/agency/clients/cato-supply-insights-review/wrangler.toml",
-        "packages/agency/clients/jandjhomehealth/wrangler.toml"
+        "packages/agency/clients/cato-supply-insights-cms/wrangler.toml"
       ],
       "validationCommands": [
         "pnpm --filter @create-something/database-layer runtime-bindings:generate",
@@ -196,16 +206,20 @@
         "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
         "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
         "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
+        "substrate:create-something:guide:docs-guides-agency-meta-attribution-md",
+        "substrate:create-something:guide:docs-guides-agency-mobbin-motion-research-md",
         "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
         "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
         "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md",
         "substrate:create-something:guide:docs-guides-agent-legibility-contract-md",
+        "substrate:create-something:guide:docs-guides-ai-native-sdlc-md",
         "substrate:create-something:guide:docs-guides-antigravity-mcp-enablement-md",
         "substrate:create-something:guide:docs-guides-arena-taste-integration-md",
         "substrate:create-something:guide:docs-guides-atlas-linear-integration-md",
         "substrate:create-something:guide:docs-guides-atlas-substrate-agent-context-md",
         "substrate:create-something:guide:docs-guides-bounded-research-interrupt-runbook-md",
         "substrate:create-something:guide:docs-guides-browser-proof-and-closeout-runbook-md",
+        "substrate:create-something:guide:docs-guides-canon-character-migration-md",
         "substrate:create-something:guide:docs-guides-chatgpt-mcp-oauth-managed-bearer-md",
         "substrate:create-something:guide:docs-guides-client-agent-codex-pilot-md",
         "substrate:create-something:guide:docs-guides-cloudflare-bot-access-hardening-md",
@@ -245,6 +259,7 @@
         "substrate:create-something:guide:docs-guides-monorepo-delivery-updates-md",
         "substrate:create-something:guide:docs-guides-newsletter-distribution-playbook-md",
         "substrate:create-something:guide:docs-guides-newsletter-engagement-runbook-md",
+        "substrate:create-something:guide:docs-guides-newsletter-workflow-md",
         "substrate:create-something:guide:docs-guides-notion-api-compatibility-audit-2026-md",
         "substrate:create-something:guide:docs-guides-notion-workers-and-cli-2026-md",
         "substrate:create-something:guide:docs-guides-npm-saved-auth-and-release-promotion-runbook-md",
@@ -268,6 +283,7 @@
         "substrate:create-something:guide:docs-guides-solo-operator-control-tower-playbook-md",
         "substrate:create-something:guide:docs-guides-steel-cli-md",
         "substrate:create-something:guide:docs-guides-substrate-topology-operator-contract-md",
+        "substrate:create-something:guide:docs-guides-t3-code-workflow-md",
         "substrate:create-something:guide:docs-guides-ui-preview-system-md",
         "substrate:create-something:guide:docs-guides-understanding-template-md",
         "substrate:create-something:guide:docs-guides-webflow-code-components-control-plane-md",
@@ -279,20 +295,20 @@
       "owner": "CREATE SOMETHING",
       "tier": "Mixed",
       "surface": "guide",
-      "nodeCount": 82,
+      "nodeCount": 88,
       "evidence": [
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
         "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
+        "docs/guides/AGENCY_META_ATTRIBUTION.md",
+        "docs/guides/AGENCY_MOBBIN_MOTION_RESEARCH.md",
         "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
         "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
         "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md",
         "docs/guides/AGENT_LEGIBILITY_CONTRACT.md",
+        "docs/guides/AI_NATIVE_SDLC.md",
         "docs/guides/ANTIGRAVITY_MCP_ENABLEMENT.md",
-        "docs/guides/ARENA_TASTE_INTEGRATION.md",
-        "docs/guides/ATLAS_LINEAR_INTEGRATION.md",
-        "docs/guides/ATLAS_SUBSTRATE_AGENT_CONTEXT.md",
-        "docs/guides/BOUNDED_RESEARCH_INTERRUPT_RUNBOOK.md"
+        "docs/guides/ARENA_TASTE_INTEGRATION.md"
       ],
       "validationCommands": [
         "pnpm --filter @create-something/database-layer atlas-coverage:generate",
@@ -567,6 +583,7 @@
         "substrate:create-something:atlas-coverage-group:package-surface-mixed-package"
       ],
       "recordIds": [
+        "substrate:create-something:package:a2a-private-callback-sender-packages-a2a-sender",
         "substrate:create-something:package:algorithms-packages-agency-static-films-algorithms",
         "substrate:create-something:package:dashboard-packages-agency-static-films-dashboard",
         "substrate:create-something:package:education-packages-agency-static-films-education",
@@ -600,8 +617,9 @@
       "owner": "CREATE SOMETHING",
       "tier": "Mixed",
       "surface": "package",
-      "nodeCount": 29,
+      "nodeCount": 30,
       "evidence": [
+        "packages/a2a/sender",
         "packages/agency/static/films/algorithms",
         "packages/agency/static/films/dashboard",
         "packages/agency/static/films/education",
@@ -612,8 +630,7 @@
         "packages/app-governance-desktop",
         "packages/ascii-renderer",
         "packages/atlas-composition",
-        "packages/bundle-scanner",
-        "packages/bundle-scanner-core"
+        "packages/bundle-scanner"
       ],
       "validationCommands": [
         "pnpm --filter @create-something/database-layer test"
@@ -690,6 +707,7 @@
       ],
       "recordIds": [
         "substrate:create-something:package:create-something-auth-platform-packages-auth-platform",
+        "substrate:create-something:package:create-something-walkthrough-system-packages-dotfiles-codex-skills-create-something-demo-director-assets-director-kit",
         "substrate:create-something:package:create-something-half-dozen-youtube-sync-packages-half-dozen-youtube-sync",
         "substrate:create-something:package:create-something-halfdozen-gmail-sync-packages-halfdozen-gmail-sync",
         "substrate:create-something:package:createsomething-subtractive-triad-space-packages-huggingface-spaces-subtractive-triad-ts",
@@ -700,6 +718,7 @@
         "substrate:create-something:package:create-something-webflow-review-packages-webflow-review",
         "substrate:create-something:package:create-something-webflow-review-extension-packages-webflow-review-extension",
         "substrate:create-something:package:create-something-webflow-template-validation-packages-webflow-template-validation",
+        "substrate:create-something:package:create-something-webflow-template-validation-cli-packages-webflow-template-validation-cli",
         "substrate:create-something:package:createsomething-workflow-compiler-packages-workflow-compiler",
         "substrate:create-something:package:create-something-workflow-evidence-extractor-packages-workflow-evidence-extractor",
         "substrate:create-something:package:create-something-workflow-observation-reconciler-packages-workflow-observation-reconciler",
@@ -710,9 +729,10 @@
       "owner": "CREATE SOMETHING",
       "tier": "Automation",
       "surface": "package",
-      "nodeCount": 17,
+      "nodeCount": 19,
       "evidence": [
         "packages/auth-platform",
+        "packages/dotfiles/codex/skills/create-something-demo-director/assets/director-kit",
         "packages/half-dozen-youtube-sync",
         "packages/halfdozen-gmail-sync",
         "packages/huggingface-spaces/subtractive-triad-ts",
@@ -722,8 +742,7 @@
         "packages/webflow-automation",
         "packages/webflow-review",
         "packages/webflow-review/extension",
-        "packages/webflow-template-validation",
-        "packages/workflow-compiler"
+        "packages/webflow-template-validation"
       ],
       "validationCommands": [
         "pnpm --filter @create-something/database-layer test"
@@ -969,12 +988,13 @@
         "substrate:create-something:package:create-something-search-packages-search",
         "substrate:create-something:package:create-something-webflow-scope-watcher-packages-webflow-scope-watcher",
         "substrate:create-something:package:create-something-webflow-template-search-packages-webflow-template-search",
+        "substrate:create-something:package:create-something-webflow-template-validation-worker-packages-webflow-template-validation-worker",
         "substrate:create-something:package:create-something-wf-search-category-packages-wf-search-category"
       ],
       "owner": "CREATE SOMETHING",
       "tier": "Database",
       "surface": "worker",
-      "nodeCount": 8,
+      "nodeCount": 9,
       "evidence": [
         "packages/app-governance-db/worker",
         "packages/codebase-vector-database",
@@ -983,7 +1003,49 @@
         "packages/search",
         "packages/webflow-scope-watcher",
         "packages/webflow-template-search",
+        "packages/webflow-template-validation/worker",
         "packages/wf-search-category"
+      ],
+      "validationCommands": [
+        "pnpm --filter @create-something/database-layer runtime-bindings:generate",
+        "pnpm --filter @create-something/database-layer test"
+      ],
+      "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
+      "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
+      "nextAction": "Review runtime ownership and bind approved worker slices to production workflow checks before Cloudflare mutation."
+    },
+    {
+      "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-mixed-worker",
+      "title": "Mixed worker Atlas coverage",
+      "status": "review_ready",
+      "atlasCoverageGroupIds": [
+        "substrate:create-something:atlas-coverage-group:automation-surface-mixed-worker"
+      ],
+      "recordIds": [
+        "substrate:create-something:package:create-something-a2a-packages-a2a",
+        "substrate:create-something:package:create-something-calm-operator-ink-bridge-packages-calm-operator-ink-bridge",
+        "substrate:create-something:package:create-something-halfdozen-transcript-monitor-packages-halfdozen-transcript-monitor",
+        "substrate:create-something:package:create-something-landing-page-filter-packages-landing-page-filter",
+        "substrate:create-something:package:pcn-workshop-starter-packages-lms-starter-pcn-workshop",
+        "substrate:create-something:package:create-something-meetings-packages-meetings",
+        "substrate:create-something:package:create-something-relay-packages-relay",
+        "substrate:create-something:package:webflow-template-analyzer-cloudflare-packages-webflow-template-analyzer-cloudflare",
+        "substrate:create-something:package:create-something-webflow-template-views-packages-webflow-template-views"
+      ],
+      "owner": "CREATE SOMETHING",
+      "tier": "Mixed",
+      "surface": "worker",
+      "nodeCount": 9,
+      "evidence": [
+        "packages/a2a",
+        "packages/calm-operator-ink-bridge",
+        "packages/halfdozen-transcript-monitor",
+        "packages/landing-page-filter",
+        "packages/lms/starter/pcn-workshop",
+        "packages/meetings",
+        "packages/relay",
+        "packages/webflow-template-analyzer/cloudflare",
+        "packages/webflow-template-views"
       ],
       "validationCommands": [
         "pnpm --filter @create-something/database-layer runtime-bindings:generate",
@@ -1030,43 +1092,6 @@
       "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
     },
     {
-      "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-mixed-worker",
-      "title": "Mixed worker Atlas coverage",
-      "status": "review_ready",
-      "atlasCoverageGroupIds": [
-        "substrate:create-something:atlas-coverage-group:automation-surface-mixed-worker"
-      ],
-      "recordIds": [
-        "substrate:create-something:package:create-something-calm-operator-ink-bridge-packages-calm-operator-ink-bridge",
-        "substrate:create-something:package:create-something-landing-page-filter-packages-landing-page-filter",
-        "substrate:create-something:package:pcn-workshop-starter-packages-lms-starter-pcn-workshop",
-        "substrate:create-something:package:create-something-meetings-packages-meetings",
-        "substrate:create-something:package:create-something-relay-packages-relay",
-        "substrate:create-something:package:webflow-template-analyzer-cloudflare-packages-webflow-template-analyzer-cloudflare",
-        "substrate:create-something:package:create-something-webflow-template-views-packages-webflow-template-views"
-      ],
-      "owner": "CREATE SOMETHING",
-      "tier": "Mixed",
-      "surface": "worker",
-      "nodeCount": 7,
-      "evidence": [
-        "packages/calm-operator-ink-bridge",
-        "packages/landing-page-filter",
-        "packages/lms/starter/pcn-workshop",
-        "packages/meetings",
-        "packages/relay",
-        "packages/webflow-template-analyzer/cloudflare",
-        "packages/webflow-template-views"
-      ],
-      "validationCommands": [
-        "pnpm --filter @create-something/database-layer runtime-bindings:generate",
-        "pnpm --filter @create-something/database-layer test"
-      ],
-      "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
-      "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
-      "nextAction": "Review runtime ownership and bind approved worker slices to production workflow checks before Cloudflare mutation."
-    },
-    {
       "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-doc",
       "title": "Mixed doc Atlas coverage",
       "status": "review_ready",
@@ -1109,6 +1134,7 @@
         "substrate:create-something:atlas-coverage-group:application-surface-automation-app"
       ],
       "recordIds": [
+        "substrate:create-something:app:create-something-agency-meta-maintenance-apps-agency-meta-maintenance",
         "substrate:create-something:app:create-something-bettermode-marketplace-creator-agent-apps-bettermode-marketplace-creator-agent",
         "substrate:create-something:app:create-something-even-codex-presence-apps-even-codex-presence",
         "substrate:create-something:app:create-something-even-operator-brief-apps-even-operator-brief",
@@ -1117,8 +1143,9 @@
       "owner": "CREATE SOMETHING",
       "tier": "Automation",
       "surface": "app",
-      "nodeCount": 4,
+      "nodeCount": 5,
       "evidence": [
+        "apps/agency-meta-maintenance",
         "apps/bettermode-marketplace-creator-agent",
         "apps/even-codex-presence",
         "apps/even-operator-brief",

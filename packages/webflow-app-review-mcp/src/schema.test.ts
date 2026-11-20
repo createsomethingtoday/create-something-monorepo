@@ -76,6 +76,7 @@ describe('schema helpers', () => {
 
   it('validates known enum options', () => {
     expect(isMarketplaceStatus('3️⃣Published🚀')).toBe(true);
+    expect(isMarketplaceStatus('6️⃣Suspended⏸️')).toBe(true);
     expect(isCapability('Hybrid')).toBe(true);
     expect(isVisibilityStatus('Public')).toBe(true);
     expect(isReviewStatus('✅Approved')).toBe(true);
@@ -148,12 +149,16 @@ describe('schema helpers', () => {
     expect(APP_REVIEW_FIELD_MAP.assets.writable.backend_runtime).toBe('fld2q6KbYhc6HMKdz');
     expect(APP_REVIEW_FIELD_MAP.assets.writable.backend_runtime_version).toBe('fldbAGf4BIDGtgrsu');
     expect(APP_REVIEW_FIELD_MAP.assets.writable.backend_hosting_provider).toBe('fldSFlf75x5CJYzgm');
+    expect(APP_REVIEW_FIELD_MAP.assets.writable.backend_frameworks).toBe('fldzcqyVIsm47w9aT');
+    expect(APP_REVIEW_FIELD_MAP.assets.writable.backend_web_servers).toBe('fldOMvPcWZ8Jkr0BH');
     expect(APP_REVIEW_FIELD_MAP.assets.writable.backend_declared_at).toBe('fldyrLslbwNMTPjJF');
 
     expect(APP_REVIEW_FIELD_MAP.versions.readOnly.backend_hosting_model).toBe('fld4adFIWmqPpxT7I');
     expect(APP_REVIEW_FIELD_MAP.versions.readOnly.backend_runtime).toBe('fld2FauecT0r0zwKJ');
     expect(APP_REVIEW_FIELD_MAP.versions.readOnly.backend_runtime_version).toBe('fld6qkHQbkK12EUvG');
     expect(APP_REVIEW_FIELD_MAP.versions.readOnly.backend_hosting_provider).toBe('fld5eqefnCFivlpfF');
+    expect(APP_REVIEW_FIELD_MAP.versions.readOnly.backend_frameworks).toBe('fldRuYPfAazYFvSji');
+    expect(APP_REVIEW_FIELD_MAP.versions.readOnly.backend_web_servers).toBe('fldGd6MSdsHoJSzpE');
     expect(APP_REVIEW_FIELD_MAP.versions.writable).not.toHaveProperty('backend_hosting_model');
     expect(APP_REVIEW_FIELD_MAP.versions.readOnly).not.toHaveProperty('backend_declared_at');
 

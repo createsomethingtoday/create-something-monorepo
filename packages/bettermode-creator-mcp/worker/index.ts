@@ -1,9 +1,10 @@
 /**
  * Bettermode Marketplace Creator MCP — Cloudflare Worker
  *
- * Read-only MCP exposing Bettermode + Airtable + community_queue helpers
- * to a Dify agent (or any MCP client) drafting admin replies for the
- * Webflow Community Marketplace Creators space.
+ * MCP exposing Bettermode + Airtable + response-queue helpers to an agent
+ * (any MCP client) drafting admin replies for the Webflow Community
+ * Marketplace Creators space. Bettermode and Airtable are read-only. Queue
+ * writes are internal (drafts, dismissals); no tool posts to the community.
  *
  * Endpoints:
  *   /mcp        Streamable HTTP transport (Dify, Claude Code, Codex)
@@ -14,11 +15,28 @@
  *       If MCP_BEARER_TOKEN is unset the server is open (dev only).
  */
 
+import { WorkerEntrypoint } from 'cloudflare:workers';
 import { enableTelemetry } from '@create-something/mcp-core';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 
-import { registerCreatorTools, type McpEnv } from '../src/tools/index.js';
+import {
+  dismissQueueItem,
+  getQueueHealth,
+  listQueueHistory,
+  listResponseQueue,
+  saveAgentDraft,
+} from '../src/lib/store.js';
+import { loadQueueThread, registerCreatorTools, type McpEnv } from '../src/tools/index.js';
+
+// The agent Worker's private send entrypoint (QueueAdmin).
+type CreatorAgentBinding = {
+  sendDraft(input: {
+    postId: string;
+    draftText: string;
+    requestedBy?: string | null;
+  }): Promise<{ ok: true; reply_id: string | null } | { ok: false; error: string }>;
+};
 
 interface Env extends McpEnv {
   MCP_OBJECT: DurableObjectNamespace;
@@ -30,16 +48,22 @@ interface Env extends McpEnv {
   LANGFUSE_SECRET_KEY?: string;
   LANGFUSE_PROJECT_NAME?: string;
   LANGFUSE_HOST?: string;
+  CREATOR_AGENT?: CreatorAgentBinding;
 }
 
 const SERVER_NAME = 'bettermode-marketplace-creator';
-const SERVER_VERSION = '0.1.0';
+const SERVER_VERSION = '0.3.0';
 
 const TOOL_NAMES = [
   'fetch_post_thread',
   'get_creator_context',
   'list_recent_approved_drafts',
   'get_draft_status',
+  'list_response_queue',
+  'save_draft',
+  'dismiss_queue_item',
+  'get_queue_health',
+  'list_queue_history',
 ];
 
 export class BettermodeCreatorMcp extends McpAgent<Env> {
@@ -64,6 +88,53 @@ export class BettermodeCreatorMcp extends McpAgent<Env> {
       );
     }
     registerCreatorTools(this.server, this.env);
+  }
+}
+
+// Private API for the response-queue dashboard. A named entrypoint has no
+// public URL: only a Worker in this account with a service binding to it can
+// call it. The caller (the Template Review MCP) signs the person in and
+// decides who may write. This class does no access check of its own.
+export class QueueApi extends WorkerEntrypoint<Env> {
+  async listQueue(input?: { limit?: number }) {
+    const limit = Math.min(Math.max(Math.trunc(input?.limit ?? 50), 1), 100);
+    const items = await listResponseQueue(this.env.DB, limit);
+    return { count: items.length, items };
+  }
+
+  async getThread(input: { postId: string }) {
+    return loadQueueThread(this.env, String(input?.postId || ''));
+  }
+
+  async health() {
+    return getQueueHealth(this.env.DB);
+  }
+
+  async history(input?: { limit?: number }) {
+    const limit = Math.min(Math.max(Math.trunc(input?.limit ?? 30), 1), 100);
+    const items = await listQueueHistory(this.env.DB, limit);
+    return { count: items.length, items };
+  }
+
+  async saveDraft(input: { postId: string; draft: string; note?: string | null }) {
+    return saveAgentDraft(this.env.DB, String(input?.postId || ''), String(input?.draft || ''), input?.note ?? null);
+  }
+
+  async dismiss(input: { postId: string; reason: string }) {
+    return dismissQueueItem(this.env.DB, String(input?.postId || ''), String(input?.reason || ''));
+  }
+
+  // Posts the reply in the community. The text sent is the text given here,
+  // so the caller passes what the person saw when they pressed Send.
+  async sendDraft(input: { postId: string; draft: string; requestedBy?: string | null }) {
+    if (!this.env.CREATOR_AGENT) {
+      return { ok: false as const, error: 'Send is not connected: the CREATOR_AGENT binding is missing.' };
+    }
+    return this.env.CREATOR_AGENT.sendDraft({
+      postId: String(input?.postId || ''),
+      draftText: String(input?.draft || ''),
+      requestedBy: input?.requestedBy ?? null,
+    });
   }
 }
 
@@ -119,7 +190,7 @@ export default {
           {
             name: SERVER_NAME,
             version: SERVER_VERSION,
-            description: 'Read-only Bettermode + Airtable + community queue helpers for Marketplace Creator drafting',
+            description: 'Bettermode + Airtable reads and response-queue drafting for the Marketplace Creators space',
             tools: TOOL_NAMES,
             endpoints: { mcp: '/mcp', sse: '/sse' },
             environment: env.ENVIRONMENT || 'development',

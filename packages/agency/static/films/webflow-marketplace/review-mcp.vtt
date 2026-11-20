@@ -1,0 +1,21 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:08.330
+Read: Inspect the synthetic queue and current version.
+Actual handler output, replayed offline.
+
+00:00:08.330 --> 00:00:16.630
+Refuse: Inspect unconfirmed and stale-state refusals.
+The App client received no mutation call.
+
+00:00:16.630 --> 00:00:24.930
+Ownership: Inspect the compact queue and self-assignment.
+Template assignment targets an in-memory client only.
+
+00:00:24.930 --> 00:00:29.080
+Evidence: Evidence is assistance for the reviewer.
+No live reviewer authentication is demonstrated.
+
+00:00:29.080 --> 00:00:33.060
+Notes: Inspect the single field sent to the synthetic client.
+Only agent_review_feedback is updated in memory.

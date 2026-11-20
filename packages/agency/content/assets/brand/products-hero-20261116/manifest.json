@@ -1,0 +1,16 @@
+{
+  "issue": "CRE-2483",
+  "approved": "2026-11-16",
+  "scope": "/products opening only",
+  "source": "products-hero.png",
+  "sourceSha256": "c7fead8f2f4336cfd3fdae70a16b3e5d1248917a933eb9afa1913351d7d05037",
+  "width": 1670,
+  "height": 941,
+  "export": "static/images/canon-agency-v1/products-hero-20261116.webp",
+  "exportSha256": "cf45791bce31b1a2a1ad11094e9acd760e393cf7dcdc8b32e8f6f65902d05868",
+  "exportBytes": 55256,
+  "command": "cwebp -q 90 -m 6 products-hero.png -o products-hero-20261116.webp",
+  "proofBoundary": "Approved concept illustration, not recorded product or client evidence. Original source unchanged.",
+  "mobileFraming": "Same master, right aligned with CSS crop; preserve all modules and Canon.",
+  "rollback": "Revert CRE-2483 route scene/CSS and HTML cache revision together; delete new asset and provenance folder."
+}

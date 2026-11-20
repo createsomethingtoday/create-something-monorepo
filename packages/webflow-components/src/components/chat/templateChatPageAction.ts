@@ -74,6 +74,8 @@ export function clearPageActionTimers(timers: PageActionTimers): void {
  * the search worker recognize, so clear_filters actually clears them.
  */
 const FILTER_PARAM_KEYS = [
+  'max_price',
+  'has_cms',
   'q',
   'query',
   'search',
@@ -107,6 +109,7 @@ const FILTER_PARAM_KEYS = [
 /** Does this action change what the grid is showing (rather than just highlight)? */
 export function pageActionChangesFilters(payload: PageActionPayload): boolean {
   return (
+    Object.prototype.hasOwnProperty.call(payload, 'max_price') || Object.prototype.hasOwnProperty.call(payload, 'has_cms') ||
     Boolean(payload.clear_filters) ||
     payload.child_category_slug != null ||
     payload.page != null ||
@@ -131,6 +134,14 @@ export function buildPageActionUrl(currentHref: string, payload: PageActionPaylo
 
   if (payload.clear_filters) {
     for (const key of FILTER_PARAM_KEYS) url.searchParams.delete(key);
+  }
+  if (Object.prototype.hasOwnProperty.call(payload, 'max_price')) {
+    if (payload.max_price === null) url.searchParams.delete('max_price');
+    else if (typeof payload.max_price === 'number' && Number.isFinite(payload.max_price) && payload.max_price >= 0 && payload.max_price <= 100000) url.searchParams.set('max_price', String(payload.max_price));
+  }
+  if (Object.prototype.hasOwnProperty.call(payload, 'has_cms')) {
+    if (payload.has_cms === null) url.searchParams.delete('has_cms');
+    else if (typeof payload.has_cms === 'boolean') url.searchParams.set('has_cms', String(payload.has_cms));
   }
   if (payload.q != null) {
     url.searchParams.delete('query');

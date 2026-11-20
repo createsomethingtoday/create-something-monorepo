@@ -34,11 +34,15 @@ In the monorepo, the source files live under `packages/canon/src/lib/styles/`.
 - shell surfaces and product accent layers
 - semantic status colors
 - spacing, radius, shadows, z-index, and motion scales
-- glass and liquid-glass surface values
+- glass-named compatibility roles, which resolve to solid surfaces and zero blur by default
 
-## Documentation Status
+## Import responsibilities and scopes
 
-The full generated token tables are still being rebuilt. This page is live now so linked documentation resolves, and it points to the stable files that already exist in the package.
+Use `canon.css` for base styles, local Geist loading and shared foundation styles. `tokens.css` contains variables only; token-only consumers own resets and font loading. Do not import both merely to duplicate the foundation.
+
+The default foundation is black. `data-theme="light"` explicitly rebinds semantic roles; nested `data-theme="dark"` restores black. The specialist operator palette remains opt-in and namespaced. Generated artifacts are portable snapshots of the canonical CSS source; do not treat a smaller TypeScript token subset as a full replacement for every mode.
+
+Use semantic roles instead of copying values into route styles. Verify contrast on the actual surface and preserve textual state labels.
 
 ## Related
 

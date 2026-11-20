@@ -1,7 +1,7 @@
 {
   "name": "@createsomething/canon-tokens",
   "version": "0.1.0",
-  "description": "Canon Design Tokens - Framework-agnostic CSS custom properties for dark-mode interfaces. Golden ratio spacing, WCAG-compliant colors, glass effects.",
+  "description": "Canon design tokens: approachable neutral light and explicit dark foundations, semantic states, typography and portable CSS/SCSS/JSON.",
   "type": "module",
   "createSomething": {
     "agentLegibilityContract": true,

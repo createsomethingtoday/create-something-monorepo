@@ -1,0 +1,90 @@
+   Compiling gigi_desktop v0.3.6 (/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6/apps/gigi-desktop/src-tauri)
+warning: unused import: `std::os::unix::net::UnixStream`
+   --> src/chat.rs:502:5
+    |
+502 | use std::os::unix::net::UnixStream;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `gigi_desktop` (lib test) generated 1 warning (run `cargo fix --lib -p gigi_desktop --tests` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.04s
+     Running unittests src/lib.rs (apps/gigi-desktop/src-tauri/target/debug/deps/gigi_desktop_lib-3e8f07dd24e08656)
+
+running 2 tests
+test finance_list::tests::overdue_uses_local_day_explicit_status_and_validated_criteria ... ok
+test finance_list::tests::finance_segments_filter_complete_workspace_before_paging_without_writes ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 161 filtered out; finished in 0.13s
+
+     Running unittests src/main.rs (apps/gigi-desktop/src-tauri/target/debug/deps/gigi-9d42b9a1b103cb74)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/gigi-mcp.rs (apps/gigi-desktop/src-tauri/target/debug/deps/gigi_mcp-40099296d1f1142c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
+     Running tests/artwork_safety.rs (apps/gigi-desktop/src-tauri/target/debug/deps/artwork_safety-9ae19ae5f87f6bd6)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/artwork_stdio.rs (apps/gigi-desktop/src-tauri/target/debug/deps/artwork_stdio-e5660482d6136632)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/artwork_workflow.rs (apps/gigi-desktop/src-tauri/target/debug/deps/artwork_workflow-1b64178d2caa0d45)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/memory_mcp_protocol.rs (apps/gigi-desktop/src-tauri/target/debug/deps/memory_mcp_protocol-a0829da105dc666f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/music_mcp_protocol.rs (apps/gigi-desktop/src-tauri/target/debug/deps/music_mcp_protocol-03c84aef20ee13c6)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/today_agenda.rs (apps/gigi-desktop/src-tauri/target/debug/deps/today_agenda-c72d748a8dcb4d44)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/today_windows.rs (apps/gigi-desktop/src-tauri/target/debug/deps/today_windows-746fc811c225ae42)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/work_collections.rs (apps/gigi-desktop/src-tauri/target/debug/deps/work_collections-57e549e2ab9658cf)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/workspace_memory.rs (apps/gigi-desktop/src-tauri/target/debug/deps/workspace_memory-7dd77b6cefbf26d5)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/workspace_search.rs (apps/gigi-desktop/src-tauri/target/debug/deps/workspace_search-ec1631c731d989fe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s

@@ -1,0 +1,32 @@
+[
+  {
+    "width": 320,
+    "scrollWidth": 320,
+    "broken": []
+  },
+  {
+    "width": 390,
+    "scrollWidth": 380,
+    "broken": []
+  },
+  {
+    "width": 768,
+    "scrollWidth": 758,
+    "broken": []
+  },
+  {
+    "width": 1024,
+    "scrollWidth": 1014,
+    "broken": []
+  },
+  {
+    "width": 1025,
+    "scrollWidth": 1015,
+    "broken": []
+  },
+  {
+    "width": 1440,
+    "scrollWidth": 1430,
+    "broken": []
+  }
+]

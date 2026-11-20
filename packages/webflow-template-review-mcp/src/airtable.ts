@@ -406,6 +406,7 @@ export interface TemplateReviewVersion {
   reviewStatus?: string;
   qualityRating?: string;
   improvementAreas?: string[];
+  creatorTrustLevel?: number;
   reviewFeedback?: string;
   agentReviewFeedback?: string;
   reviewChecklist?: string;
@@ -1225,6 +1226,7 @@ function mapVersion(record: AirtableRecord): TemplateReviewVersion {
     reviewStatus: firstString(record.fields[CONFIRMED_VERSION_FIELDS.reviewStatus]),
     qualityRating: firstString(record.fields[CONFIRMED_VERSION_FIELDS.qualityRating]),
     improvementAreas: stringArray(record.fields[CONFIRMED_VERSION_FIELDS.improvementAreas]),
+    creatorTrustLevel: firstNumber(record.fields[CONFIRMED_VERSION_FIELDS.creatorTrustLevel]),
     reviewFeedback: firstString(record.fields[CONFIRMED_VERSION_FIELDS.reviewFeedback]),
     agentReviewFeedback: firstString(record.fields[CONFIRMED_VERSION_FIELDS.agentReviewFeedback]),
     reviewChecklist: firstString(record.fields[CONFIRMED_VERSION_FIELDS.reviewChecklist]),

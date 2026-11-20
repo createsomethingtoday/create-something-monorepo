@@ -74,11 +74,11 @@ async function serve(server: JsonLineProcess, mcp: JsonLineProcess): Promise<voi
         id = request?.id ?? null;
         if (typeof request?.operation !== 'string' || !request?.input || typeof request.input !== 'object' || Array.isArray(request.input)) throw new Error('invalid_request');
         const op = request.operation.replace(/^agent\.chat\./, '');
-        if (!['status', 'list', 'start', 'read', 'send', 'poll', 'cancel', 'approve'].includes(op)) throw new Error('unknown_operation');
+        if (!['status', 'list', 'start', 'read', 'send', 'poll', 'cancel', 'approve', 'login.start', 'login.read', 'login.cancel', 'login.open'].includes(op)) throw new Error('unknown_operation');
         const value = await adapter[op as keyof typeof adapter](request.input);
         process.stdout.write(JSON.stringify({ id, ok: true, value }) + '\n');
       } catch (error) {
-        const known = new Set(['invalid_request', 'unknown_operation', 'unconfigured', 'chatgpt_auth_required', 'codex_unavailable', 'gigi_tools_unavailable', 'workspace_not_found', 'record_not_found', 'session_not_found', 'session_limit', 'turn_in_progress', 'provider_turn_rejected', 'provider_preflight_rejected', 'provider_preflight_unavailable', 'plugin_inventory_unavailable', 'reconciliation_required', 'approval_not_found', 'interrupted', 'chat_ledger_invalid']);
+        const known = new Set(['invalid_request', 'unknown_operation', 'unconfigured', 'chatgpt_auth_required', 'codex_unavailable', 'gigi_tools_unavailable', 'workspace_not_found', 'record_not_found', 'session_not_found', 'session_limit', 'turn_in_progress', 'provider_turn_rejected', 'provider_preflight_rejected', 'provider_preflight_unavailable', 'plugin_inventory_unavailable', 'reconciliation_required', 'approval_not_found', 'interrupted', 'chat_ledger_invalid', 'login_not_found', 'login_in_progress', 'login_unavailable']);
         const reason = error instanceof Error && known.has(error.message) ? error.message : 'unavailable';
         process.stdout.write(JSON.stringify({ id, ok: false, error: { reason } }) + '\n');
       }

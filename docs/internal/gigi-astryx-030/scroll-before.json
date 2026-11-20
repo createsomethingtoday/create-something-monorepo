@@ -1,0 +1,12 @@
+{
+  "passed": false,
+  "cases": [
+    {
+      "name": "page_scroll",
+      "passed": false,
+      "error": "new page starts at top of actual AppShell scroller\n\n530 !== 0\n"
+    }
+  ],
+  "errors": [],
+  "scope": "Actual React application with synthetic development backend; no native or provider acceptance."
+}

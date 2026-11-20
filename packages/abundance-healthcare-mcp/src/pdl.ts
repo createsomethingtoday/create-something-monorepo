@@ -79,6 +79,7 @@ export type PdlResult = {
   };
   limitation: string;
   cached?: boolean;
+  billing?: {credits_used:number|null;request_id:string|null};
 };
 export interface PdlTransaction {
   get<T>(key: string): Promise<T | undefined>;
@@ -87,7 +88,6 @@ export interface PdlTransaction {
 export interface PdlStore extends PdlTransaction {
   transaction<T>(fn: (store: PdlTransaction) => Promise<T>): Promise<T>;
 }
-export const PDL_DEFAULT_DAILY_LIMIT = 25;
 // PDL guidance: likelihood >= 6 is high accuracy for rich inputs; name + location inputs rarely exceed 4.
 // Name mode therefore floors at 4 and relies on the returned-name identity gate; operators can raise it.
 export const PROFILE_LIKELIHOOD_FLOOR = 8;
@@ -160,11 +160,10 @@ function projectPersonalContact(data: Record<string, unknown>): { contact: PdlPe
 
 // A singleton Durable Object supplies a transactional store across all MCP sessions.
 // Reserve before dispatch. Uncertain outcomes retain their reservation and are never retried automatically.
-export async function enrichPdlProfile(input: PdlInput, options: { apiKey?: string; store: PdlStore; fetchFn?: typeof fetch; now?: number; dailyLimit?: number; baseUrl?: string }): Promise<PdlResult> {
+export async function enrichPdlProfile(input: PdlInput, options: { apiKey?: string; store: PdlStore; fetchFn?: typeof fetch; now?: number; baseUrl?: string }): Promise<PdlResult> {
   const parsed = pdlInputSchema.parse(input);
   if (!options.apiKey?.trim()) throw new Error('PDL integration is not configured.');
   const now = options.now ?? Date.now();
-  const dailyLimit = Math.max(1, Math.floor(options.dailyLimit ?? PDL_DEFAULT_DAILY_LIMIT));
   const requestBody = buildRequest(parsed);
   const cacheKey = 'lookup:' + await sha256(JSON.stringify(requestBody));
   const retrievedAt = new Date(now).toISOString();
@@ -183,7 +182,6 @@ export async function enrichPdlProfile(input: PdlInput, options: { apiKey?: stri
     const storedAt = cached?.stored_at ?? (cached && cached.result.status !== 'unavailable' ? cached.expires - 7 * DAY : Number.NEGATIVE_INFINITY);
     if (cached && now - storedAt < ttl && cached.expires > now) return cached.result;
     const attempts = (await store.get<number[]>('attempts') ?? []).filter(t => t > now - DAY);
-    if (attempts.length >= dailyLimit) throw new Error(`PDL daily limit reached: at most ${dailyLimit} new lookups per rolling 24 hours.`);
     await store.put('attempts', [...attempts, now]);
     await store.put(cacheKey, { expires: now + 7 * DAY, stored_at: now, result: base });
     return undefined;
@@ -220,6 +218,10 @@ export async function enrichPdlProfile(input: PdlInput, options: { apiKey?: stri
         }
       }
     }
+    const rawCredits=response.headers.get('x-call-credits-spent');
+    const credits=rawCredits===null||rawCredits.trim()===''?null:Number(rawCredits);
+    const requestId=response.headers.get('x-request-id');
+    result.billing={credits_used:credits!==null&&Number.isFinite(credits)&&credits>=0?credits:null,request_id:requestId&&/^[A-Za-z0-9_.:-]{1,160}$/.test(requestId)?requestId:null};
   } catch {
     result = { ...base, status: 'unavailable', limitation: `PDL response could not be confirmed. No automatic retry. ${LIMITATION}` };
   }

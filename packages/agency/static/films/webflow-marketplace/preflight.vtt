@@ -1,0 +1,13 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.100
+Bundle: Inspect the app bundle and private review-ZIP inputs.
+The app shows it is connected to the demo site.
+
+00:00:05.100 --> 00:00:11.700
+Scripts: Inspect the URL input and execution-order guidance.
+The fields remain empty; Continue is not used.
+
+00:00:11.700 --> 00:00:15.200
+Return: Cancel the input path and return.
+No artifact, receipt, observation or site change is created.

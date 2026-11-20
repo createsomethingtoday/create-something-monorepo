@@ -11,6 +11,26 @@ import { D1ControlActivationAuthority, D1ControlRunRepository } from './control-
 import { createControlRunWorker } from './control-worker.js';
 import { D1AgentStore } from './store.js';
 import { createOwnedAgentWorker } from './worker.js';
+import { createGuideDecisionObserver } from './guide-decision-observer.js';
+import { D1DecisionRepository } from './decision-d1.js';
+import { createOpenAIHttpDecisionSelector } from './decision-transport.js';
+
+export {
+  createDecisionService, decisionRequestHash, decisionRequestSchema,
+  decisionOutcomeSchema, MemoryDecisionRepository
+} from './decisions.js';
+export type {
+  DecisionRequest, DecisionSelector, DecisionReceipt, DecisionReason,
+  DecisionOutcome, DecisionRepository
+} from './decisions.js';
+export { createJevDecisionSelector, createOpenAIDecisionSelector } from './decision-providers.js';
+export type { JevDecisionEvaluate, OpenAIDecisionClient } from './decision-providers.js';
+export { replayDecisionScenarios, decisionScenarioSchema } from './decision-replay.js';
+export type { DecisionScenario } from './decision-replay.js';
+export { D1DecisionRepository };
+export { createGuideDecisionObserver };
+export { createOpenAIHttpDecisionSelector };
+export { createJevHttpDecisionSelector } from './decision-transport.js';
 
 export type {
   AgentAdmission,
@@ -77,6 +97,7 @@ export type Env = TemplateReviewWorkerBindings & {
   AGENT_RUNTIME_DB: D1Database;
   CONTROL_DB: D1Database;
   OPENAI_API_KEY: string;
+  AGENT_DECISION_MODE?: string;
   CS_IDENTITY_ISSUER: string;
   CS_IDENTITY_JWKS_URL: string;
   CS_IDENTITY_AUDIENCE: string;
@@ -158,7 +179,7 @@ export default {
     const runtime = await templateReviewScheduler(env, controlIdentity(env));
     await runtime.reconcile();
   },
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx?: ExecutionContext): Promise<Response> {
     const pathname = new URL(request.url).pathname;
     if (pathname.startsWith('/v1/control/') || pathname === '/mcp') {
       let mcpRequestId: string | number | null = null;
@@ -208,6 +229,11 @@ export default {
       return Response.json({ error: 'runtime_not_configured' }, { status: 503 });
     return createOwnedAgentWorker({
       store: new D1AgentStore(env.AGENT_RUNTIME_DB),
+      decisionObserver: env.AGENT_DECISION_MODE === 'shadow' ? createGuideDecisionObserver({
+        repository: new D1DecisionRepository(env.AGENT_RUNTIME_DB),
+        selectorForQuery: query => createOpenAIHttpDecisionSelector(env.OPENAI_API_KEY, fetch, query)
+      }) : undefined,
+      background: ctx ? task => ctx.waitUntil(task) : undefined,
       executor: new OpenAIAgentExecutor(env.OPENAI_API_KEY, {
         'create-something': serviceFetch(env.CREATE_SOMETHING_MCP),
         'three-tier-framework': serviceFetch(env.THREE_TIER_FRAMEWORK_MCP),

@@ -13,6 +13,7 @@ import type {
   TurnstileResponse,
   PropertyDomain
 } from './types.js';
+import { recordNewsletterSignupAttribution, type NewsletterAttributionContext } from './attribution.js';
 import { recordServerConversion } from '../analytics/conversions.js';
 import type { Property } from '../analytics/types.js';
 import {
@@ -45,6 +46,7 @@ interface D1PreparedStatement {
 
 interface D1Result<T = unknown> {
   success: boolean;
+  meta?: { changes?: number };
   results?: T[];
 }
 
@@ -103,7 +105,9 @@ export function createNewsletterHandler(options: { property: PropertyDomain }) {
       body,
       platform?.env,
       getClientAddress(),
-      options.property
+      options.property,
+      { doNotTrack: request.headers.get('dnt') === '1' || request.headers.get('sec-gpc') === '1',
+        userAgent: request.headers.get('user-agent') ?? undefined, requestUrl: request.url }
     );
 
     if (result.success) {
@@ -221,7 +225,8 @@ export async function processSubscription(
   body: NewsletterRequest,
   env: NewsletterEnv | undefined,
   clientIP: string,
-  property: PropertyDomain
+  property: PropertyDomain,
+  attributionContext: NewsletterAttributionContext = {}
 ): Promise<{ result: NewsletterResult; status: number }> {
   const { email: rawEmail, website, turnstileToken, source } = body;
   const email = rawEmail?.trim().toLowerCase() ?? '';
@@ -334,7 +339,7 @@ export async function processSubscription(
   }
 
   // If email was previously bounced or complained, reject re-subscription
-  if (existingSubscriber?.status === 'bounced' || existingSubscriber?.status === 'complained') {
+  if (existingSubscriber?.status && ['bounced', 'complained', 'suppressed'].includes(existingSubscriber.status)) {
     return {
       result: { success: false, message: 'This email address cannot receive our newsletters.' },
       status: 400
@@ -353,7 +358,7 @@ export async function processSubscription(
   try {
     if (existingSubscriber) {
       // Update existing subscriber (may have unsubscribed before)
-      await env.DB.prepare(
+      const updated = await env.DB.prepare(
         `UPDATE newsletter_subscribers
 				 SET confirmation_token = ?,
 				     unsubscribe_token = ?,
@@ -363,24 +368,37 @@ export async function processSubscription(
 				     consent_confirmed_at = NULL,
 				     consent_method = 'double_opt_in',
 				     consent_evidence = 'pending_confirmation',
+				     audience_classification = 'confirmed_subscriber',
 				     confirmation_email_id = NULL,
 				     welcome_email_id = NULL,
 				     active = 1,
 				     status = 'active',
 				     subscribed_at = datetime('now'),
 				     source = ?
-				 WHERE email = ?`
+				 WHERE email = ?
+             AND COALESCE(status, 'active') NOT IN ('bounced', 'complained', 'suppressed')
+             AND confirmed_at IS ? AND unsubscribed_at IS ?`
       )
-        .bind(confirmationToken, unsubscribeToken, consentRequestedAt, subscriberSource, email)
+        .bind(
+          confirmationToken, unsubscribeToken, consentRequestedAt, subscriberSource, email,
+          existingSubscriber.confirmed_at, existingSubscriber.unsubscribed_at
+        )
         .run();
+      if (!updated.success) throw new Error('Subscription update failed');
+      if (Number(updated.meta?.changes ?? 0) !== 1) {
+        return {
+          result: { success: false, message: 'Subscription state changed. Please try again.' },
+          status: 409
+        };
+      }
     } else {
       // Insert new subscriber
       await env.DB.prepare(
         `INSERT INTO newsletter_subscribers (
            email, subscribed_at, unsubscribe_token, confirmation_token,
            confirmed_at, source, consent_requested_at, consent_method,
-           consent_evidence, active, status
-         ) VALUES (?, datetime('now'), ?, ?, NULL, ?, ?, 'double_opt_in', 'pending_confirmation', 1, 'active')`
+           consent_evidence, active, status, audience_classification
+         ) VALUES (?, datetime('now'), ?, ?, NULL, ?, ?, 'double_opt_in', 'pending_confirmation', 1, 'active', 'confirmed_subscriber')`
       )
         .bind(email, unsubscribeToken, confirmationToken, subscriberSource, consentRequestedAt)
         .run();
@@ -425,9 +443,9 @@ export async function processSubscription(
       await env.DB.prepare(
         `UPDATE newsletter_subscribers
          SET confirmation_email_id = ?, updated_at = datetime('now')
-         WHERE email = ?`
+         WHERE email = ? AND confirmation_token = ?`
       )
-        .bind(resendData.id, email)
+        .bind(resendData.id, email, confirmationToken)
         .run();
     } catch (receiptError) {
       console.warn('Newsletter confirmation receipt update failed:', receiptError);
@@ -435,7 +453,15 @@ export async function processSubscription(
   }
 
   try {
-    await recordServerConversion(
+    if (resendData.id) await recordNewsletterSignupAttribution(env.DB, {
+      email, confirmationEmailId: resendData.id, confirmationToken, landingUrl: body.landingUrl, analyticsEnabled: body.analyticsEnabled, sessionId: body.sessionId
+    }, attributionContext);
+  } catch (attributionError) {
+    console.warn('Newsletter attribution unavailable; subscription remains valid', attributionError);
+  }
+
+  try {
+    if (body.analyticsEnabled === true && !attributionContext.doNotTrack && !attributionContext.userOptedOut) await recordServerConversion(
       env.DB,
       {
         property,

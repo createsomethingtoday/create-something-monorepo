@@ -1,0 +1,10 @@
+{
+  "sourceSha": "cdc0dd1953ff6bfc1ec517d56c191362a1f554f0",
+  "sourceDirty": false,
+  "compilerOutputs": [
+    "gigi_desktop-f34554ad23c0c8d7",
+    "gigi_desktop-dc72f4c9f4aace8d"
+  ],
+  "sourceShaEmbedded": true,
+  "executableSha256": "9ad3ed30443f3cb92af656e4a4878cd4944688ac9cc74ad11726077a84caef59"
+}

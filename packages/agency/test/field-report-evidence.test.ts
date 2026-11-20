@@ -268,7 +268,9 @@ test('booking carries the Field Report handoff into the owned mapping scheduler'
 
   assert.match(book, /Choose a time to talk through the task/);
   assert.match(book, /30- or 60-minute/);
-  assert.match(book, /Choose a 30- or 60-minute opening/);
+  assert.match(book, /30 or 60 minutes\./);
+  assert.match(book, /<Button href="#first-party-scheduler"[^>]*>Choose a time<\/Button>/);
+  assert.match(book, /href=\{schedulerHref\}[^>]*>Open full page/);
   assert.match(book, /first-party scheduler/);
   assert.match(book, /createBookingHandoffState/);
   assert.doesNotMatch(book, /Review your booking context/);
@@ -295,9 +297,10 @@ test('homepage links to evidence while Services retains the qualified readback',
   assert.match(salesHome, /\{@html content\}/);
   assert.match(salesHome, /<BuiltWork sectionId="engineering-work"/);
   assert.match(salesHome, /<noscript>[\s\S]*?href="\/field-reports"/);
-  assert.match(content, /href="https:\/\/www\.maverickx\.com\/"/);
-  assert.match(content, /href="\/products#cato-tour"/);
-  assert.match(content, /Illustrative example<br>Not a client delivery/);
+  assert.match(content, /href="\/case-studies\/webflow-marketplace"/);
+  assert.match(content, /src="\/films\/webflow-marketplace\/overview\.mp4"/);
+  assert.match(content, /Original conceptual illustration/);
+  assert.match(content, /no measured business outcome/);
   assert.match(content, /not evidence of client adoption of OpenAI tools/);
   assert.match(readback, /import \{ templateReviewFieldReport \} from '\$lib\/data\/fieldReports'/);
   assert.match(readback, /templateReviewFieldReport\.id/);

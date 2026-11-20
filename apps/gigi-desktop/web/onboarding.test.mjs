@@ -13,7 +13,7 @@ test('fresh workspace leads to optional setup without automatically signing in, 
     if (operation === 'workspace.get') return null;
     if (operation === 'workspace.create') return { id: 'w-new', name: input.name };
     if (operation === 'records.save') return { id: 'profile-new', ...input };
-    if ((operation === 'connections.status' || operation === 'sources.status')) return { provider: input.provider, state: 'disconnected' };
+    if ((operation === 'connections.status' || operation === 'sources.status')) return { provider: input.provider, state: 'unavailable', detail: 'session_expired' };
     if (operation === 'agent.status') return { prepared: false, phoneVerified: false };
     return { items: [], count: 0 };
   } } };

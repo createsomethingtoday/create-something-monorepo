@@ -8,7 +8,8 @@ const FETCH_TIMEOUT = 10000; // 10 seconds
 const MAX_HTML_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_ASSET_SIZE = 50 * 1024 * 1024; // 50MB
 
-export async function fetchHTML(url: string): Promise<FetchResult> {
+/** acceptStatus: non-OK statuses whose HTML is still wanted (a site's /404 page can answer with HTTP 404). */
+export async function fetchHTML(url: string, options?: { acceptStatus?: number[] }): Promise<FetchResult> {
 	const startTime = Date.now();
 
 	try {
@@ -27,7 +28,7 @@ export async function fetchHTML(url: string): Promise<FetchResult> {
 
 		clearTimeout(timeoutId);
 
-		if (!response.ok) {
+		if (!response.ok && !options?.acceptStatus?.includes(response.status)) {
 			throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 		}
 

@@ -1,0 +1,73 @@
+{
+  "schema": "workflow-discovery-priority@1",
+  "recordedAt": "2026-11-02T22:50:02.440Z",
+  "authority": "advisory_only",
+  "liveProviderVerified": true,
+  "policySha256": "sha256:b94cdcd89d1bfd5573fc408877ddb5c547a9a17c573d46e4b51eec265a73b023",
+  "candidateEvidenceSha256": "sha256:3ebe7d3f4a462c5f0642350f6b806e11c740718f0114b98c9966e316bd473ae1",
+  "inspectedSources": [
+    {
+      "path": "packages/database-layer/package.json",
+      "sha256": "sha256:1a55af1a1a1ba33e0254ae0cb272d1f8ee14273de09d2b31bd44501cbdb1f693"
+    },
+    {
+      "path": "packages/database-layer/scripts/ontology.mjs",
+      "sha256": "sha256:c1a5f2e1f9d3fa353c43c15f06571ca415360c99468fc79caf92ca5635697978"
+    },
+    {
+      "path": "packages/database-layer/scripts/verify-agent-commercial-contract.mjs",
+      "sha256": "sha256:c3f73ed59a6e3bb89988808d85f4bfd9992a19b85314a7218501db18057b698f"
+    },
+    {
+      "path": "packages/database-layer/scripts/verify-business-digital-thread-contract.mjs",
+      "sha256": "sha256:868141a8b2dbe8b908954b895f5d284387ba377aff9ed52be5f1fae6a6bc3e7e"
+    }
+  ],
+  "requestHash": "eea930388c619d248f3f86b9bb8792fc9937e9981a6bff62d3c32608954edd23",
+  "requestedModel": "jev-1.13.0",
+  "servedModel": "jev-1.13.0",
+  "timeoutMs": 5000,
+  "retries": 0,
+  "downstreamImprovement": "not_established",
+  "receipt": {
+    "schema": "agent-decision/v1",
+    "authority": "advisory_only",
+    "request": {
+      "id": "internal-priority.c2f3d061-b6bc-4871-aa3f-bc733c79b480",
+      "scope": "workflow-discovery-internal-priority",
+      "policyVersion": "internal-workflow-priority.v1",
+      "stateVersion": "3ebe7d3f4a462c5f0642350f6b806e11c740718f0114b98c9966e316bd473ae1",
+      "question": "Which observed internal read-only validator should an operator inspect first for the first registered workflow canary? Prefer bounded local prerequisites and clear verifiable output; consider source evidence only. This recommendation does not authorize execution or activation.",
+      "candidates": [
+        {
+          "id": "ontology-check",
+          "description": "Read-only structural ontology validation of the repository topology; local Node command, no external engine prerequisite. Source: packages/database-layer/scripts/ontology.mjs; sha256:c1a5f2e1f9d3fa353c43c15f06571ca415360c99468fc79caf92ca5635697978."
+        },
+        {
+          "id": "agent-commercial-check",
+          "description": "Read-only schema and invariant validation of the agent-commercial contract and disabled production charging controls. Source: packages/database-layer/scripts/verify-agent-commercial-contract.mjs; sha256:c3f73ed59a6e3bb89988808d85f4bfd9992a19b85314a7218501db18057b698f."
+        },
+        {
+          "id": "business-thread-check",
+          "description": "Read-only business digital-thread contract and example checks in default mode; explicit --write mode is excluded from this shortlist. Source: packages/database-layer/scripts/verify-business-digital-thread-contract.mjs; sha256:868141a8b2dbe8b908954b895f5d284387ba377aff9ed52be5f1fae6a6bc3e7e."
+        },
+        {
+          "id": "defer",
+          "description": "Defer promotion when supplied evidence does not justify prioritizing an offered internal validator. Grants no execution authority."
+        }
+      ],
+      "fallbackId": "defer",
+      "mode": "fresh"
+    },
+    "requestHash": "eea930388c619d248f3f86b9bb8792fc9937e9981a6bff62d3c32608954edd23",
+    "selector": {
+      "provider": "jev",
+      "model": "jev-1.13.0",
+      "version": "finite-choice-v1"
+    },
+    "selectedId": "ontology-check",
+    "reason": "selected",
+    "fallback": false,
+    "elapsedMs": 432
+  }
+}

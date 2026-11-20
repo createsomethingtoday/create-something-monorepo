@@ -1,0 +1,26 @@
+{
+  "runtimeSourceSha": "62f826073e6b8494de45fdffcfdd40c5c287b4c7",
+  "qaBundle": "agency.createsomething.gigi.qa.cre2377",
+  "configuration": "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-native-qa.json",
+  "checks": [
+    "name-only workspace/profile saved without inferred currency",
+    "manual setup fallback",
+    "gig and person saved with verified Contacts link",
+    "date/call/status edited and read back; visible selector selection applied, Escape dismissed sheet and restored selector focus",
+    "Work summary Escape returns focus, ArrowDown opens group, Enter opens Gigs and dismisses overlay",
+    "weekly Today opens saved gig with date/call/status",
+    "due Task saved then Complete task reads Done",
+    "combined Search shows People/Gigs/Tasks",
+    "restart opens saved Today with same gig and completed task absent from open window"
+  ],
+  "viewed": [
+    "native WebKit Today screenshot through CUA",
+    "native record editor and selector sheet through CUA",
+    "native search capture public-search.png"
+  ],
+  "limits": [
+    "GUI exercised same-source QA variant with separate app/data identity; signed original artifact independently verified separately",
+    "No live source consent/import, agent inference, phone, macOS13 floor or human acceptance",
+    "Original installed production app and original DEV data untouched"
+  ]
+}

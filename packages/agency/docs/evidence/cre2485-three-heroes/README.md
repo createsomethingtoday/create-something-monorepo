@@ -1,0 +1,17 @@
+# CRE-2485 local integration evidence
+
+Scope: `/stack`, `/practice`, `/field-reports` openings only. Database tier owns the unchanged PNG masters and export provenance; Automation tier renders the scoped scenes; Judgment boundaries remain in unchanged Practice and report content.
+
+Acceptance: preserve all existing copy, actions, proof and downstream state; replace only opening concept art; keep all essential scene objects visible at 320, 390, 768, 1024, 1025 and 1440; preserve keyboard links, report evidence and Practice synthetic/no-live-access controls. Shared defaults and `/products` are unchanged.
+
+- Functional correctness: **passed locally**. `pnpm --filter @create-something/agency check` and `build` exited 0, `git diff --check` clean. Logs included. Keyboard Enter on Stack Map CTA reached `/map`; Reports CTA reached `#reports` with both real report links and limits intact; Practice short-example buttons returned draft/blocked-send/owner-review responses with exclusive pressed state. Focus outline observed solid 2px. No external writes or live client data used. See `interactions.json`.
+- Perceptual/product quality: **passed local integration review**. Builder directly viewed all 18 six-width captures and the three no-JS/reduced-motion captures. Complete toolkit/book, practice gate/unplugged connector, report notebook/empty square and Canon remain visible; copy remains separate. `responsive.json` records actual innerWidth after each goto/viewport override in the same invocation as its screenshot, with no horizontal overflow. Independent art review is in `art-review.md`; independent final app review is parent-owned and separate. No-JS navigation retains its pre-existing expanded fallback links; hero content/art/actions remain legible.
+- Release readiness: **untested**. No commit, push, PR, merge or deploy performed by builder. Parent owns independent final review and promotion/live verification.
+
+The first full check rejected the old Field Reports source assertion requiring AgencyWayfindingHero. The existing cohesion test now checks the labeled concept illustration plus retained report links/source and limits; full check passed afterward. No behavior bug was introduced or fixed.
+
+Ground advisory: duplicate scan incomplete after 30-second cap; 155 `needs_review` findings, not a clean analysis. New wrapper is reported as an orphan with 56% confidence despite three explicit route imports and successful Svelte compile/runtime. No unsupported auto-fix was applied. See `ground-advisory.json`.
+
+Original PNGs, commands, hashes, exact dimensions, WebP exports, prompts and reference hashes are in `content/assets/brand/three-heroes-20261116/`. Exported with `cwebp -q 90 -m 6`; builder viewed all source/export pairs. Art is independently reviewed concept illustration, not recorded product/client evidence or individually human-accepted artwork.
+
+Worktree disposition: preserved at `/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7eb4bfce-5ad3294500e340dc`, branch `feat/agency-three-coherent-heroes`; existing unrelated untracked `cre2480-review` captures preserved. Local dev runtime remains on `http://127.0.0.1:4185` for parent review. Rollback: revert three route integrations, the new wrapper, cohesion assertion and HTML cache revision together; remove new masters/exports. Component CSS is compiled; no static stylesheet URL was changed.

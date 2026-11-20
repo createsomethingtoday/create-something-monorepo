@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
+	import { newsletterSignupContext } from '@create-something/canon/newsletter';
 	import {
 		Bot,
 		Component,
@@ -24,7 +25,7 @@
 			const response = await fetch('/api/newsletter', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ email })
+				body: JSON.stringify({ email, ...newsletterSignupContext() })
 			});
 
 			if (!response.ok) {

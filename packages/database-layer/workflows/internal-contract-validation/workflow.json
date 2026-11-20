@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "workflow_definition.v0.3",
+  "workflowId": "internal.database-layer.contract-validation",
+  "version": "1.0.0",
+  "title": "Validate internal database-layer contracts",
+  "businessObjective": "Run one fixed read-only ontology validation against exact reviewed repository sources and retain independently verifiable evidence.",
+  "owners": {
+    "workflow": "create-something-engineering",
+    "policy": "create-something-engineering",
+    "technical": "create-something-engineering"
+  },
+  "systems": [
+    {
+      "id": "repository",
+      "title": "CREATE SOMETHING monorepo",
+      "tier": "database",
+      "owningSurface": "packages/database-layer",
+      "sourceOfTruth": true
+    }
+  ],
+  "objects": [],
+  "events": [],
+  "actors": [
+    {
+      "id": "create-something-engineering",
+      "title": "CREATE SOMETHING engineering workflow owner"
+    }
+  ],
+  "states": [
+    {
+      "id": "ready",
+      "title": "Ready"
+    },
+    {
+      "id": "validated",
+      "title": "Validated",
+      "terminal": true
+    }
+  ],
+  "actions": [
+    {
+      "id": "validate_contract",
+      "title": "Validate the registered ontology contract",
+      "kind": "read",
+      "authority": "create-something-engineering",
+      "autonomy": "auto_allow",
+      "systemsTouched": ["repository"],
+      "requiredEvidence": ["registration_digest"],
+      "approval": {
+        "required": false
+      },
+      "receipt": {
+        "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome"]
+      },
+      "recovery": {
+        "mode": "manual_fallback",
+        "owner": "create-something-engineering",
+        "path": "Hold and reconcile nonzero, timed-out, or ambiguous validation. Never alter canonical sources or replay a prepared invocation automatically."
+      },
+      "tool": {
+        "name": "validate_ontology",
+        "targetSystemId": "repository",
+        "parameters": [
+          {
+            "name": "registration_digest",
+            "type": "string",
+            "description": "Exact source and fixed-command registration digest"
+          }
+        ]
+      }
+    }
+  ],
+  "transitions": [
+    {
+      "id": "validate",
+      "from": "ready",
+      "to": "validated",
+      "actionId": "validate_contract"
+    }
+  ],
+  "agents": [],
+  "evaluations": [
+    {
+      "id": "registered-source-required",
+      "title": "Validation requires a registered source identity",
+      "actionId": "validate_contract",
+      "expectedOutcome": "pass",
+      "requiredEvidence": ["registration_digest"]
+    }
+  ]
+}

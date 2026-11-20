@@ -1,0 +1,12 @@
+{
+  "passed": false,
+  "cases": [
+    {
+      "name": "link_entity",
+      "passed": false,
+      "error": "changing the target entity clears its previous record ID\n\n'person-1' !== ''\n"
+    }
+  ],
+  "errors": [],
+  "scope": "Actual React application with synthetic development backend; no native or provider acceptance."
+}

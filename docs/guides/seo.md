@@ -231,6 +231,20 @@ Organization image is `https://createsomething.ltd/brand/create-something-ring-m
 Route-level `SEO.svelte` must not add its own icon or manifest links. It emits
 the page's property-specific `primaryImageOfPage` instead.
 
+### Service offer prices
+
+`services[].price` accepts a finite, nonnegative number, including `0` for a
+free offer. Bare decimal strings remain supported and serialize as numbers.
+Currency symbols, billing periods, "From" labels, and "Custom" are not prices;
+the component omits invalid amounts and their `priceCurrency`.
+
+Use `services[].priceDescription` for minimum-price qualifiers, billing periods,
+and scope. For example, use `price: 900` with
+`priceDescription: 'From $900/month; agreed scope'`. For custom quotes, omit
+`price` and supply the quote terms in `priceDescription`; the Offer retains
+those terms without inventing an amount. The schema must agree with visible
+pricing and its qualifications.
+
 ### Canonical URLs
 - Always use absolute URLs
 - Avoid duplicate content

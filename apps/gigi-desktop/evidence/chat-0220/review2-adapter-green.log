@@ -1,0 +1,64 @@
+TAP version 13
+# Subtest: running snapshots bound history reads before the first delta and after history catches up
+ok 1 - running snapshots bound history reads before the first delta and after history catches up
+  ---
+  duration_ms: 9.4735
+  type: 'test'
+  ...
+# Subtest: approve cannot resurrect a cached approval after transient history failure
+ok 2 - approve cannot resurrect a cached approval after transient history failure
+  ---
+  duration_ms: 5.672583
+  type: 'test'
+  ...
+# Subtest: reject cannot resurrect a cached approval after transient history failure
+ok 3 - reject cannot resurrect a cached approval after transient history failure
+  ---
+  duration_ms: 4.446042
+  type: 'test'
+  ...
+# Subtest: historical session error Provider usage limit reached does not poison the workspace cache fence
+ok 4 - historical session error Provider usage limit reached does not poison the workspace cache fence
+  ---
+  duration_ms: 3.7225
+  type: 'test'
+  ...
+# Subtest: historical session error provider_turn_rejected does not poison the workspace cache fence
+ok 5 - historical session error provider_turn_rejected does not poison the workspace cache fence
+  ---
+  duration_ms: 3.463417
+  type: 'test'
+  ...
+# Subtest: historical session error turn_outcome_unknown retains the workspace cache fence
+ok 6 - historical session error turn_outcome_unknown retains the workspace cache fence
+  ---
+  duration_ms: 4.284166
+  type: 'test'
+  ...
+# Subtest: historical session error write_outcome_unknown retains the workspace cache fence
+ok 7 - historical session error write_outcome_unknown retains the workspace cache fence
+  ---
+  duration_ms: 3.464292
+  type: 'test'
+  ...
+# Subtest: historical session error approval_delivery_unknown retains the workspace cache fence
+ok 8 - historical session error approval_delivery_unknown retains the workspace cache fence
+  ---
+  duration_ms: 3.204584
+  type: 'test'
+  ...
+# Subtest: historical session error reconciliation_required retains the workspace cache fence
+ok 9 - historical session error reconciliation_required retains the workspace cache fence
+  ---
+  duration_ms: 3.71275
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 443.983125

@@ -1,0 +1,37 @@
+Before implementation, 34 existing tests passed and four new checks failed.
+TAP version 13
+# Subtest: history titles project only the owner first question, without exposing full state
+not ok 1 - history titles project only the owner first question, without exposing full state
+  ---
+  duration_ms: 1578.604833
+  type: 'test'
+  location: '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency/test/npg-analyst.test.ts:1:3866'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - 'Find family NPs near Springfield'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'Find family NPs near Springfield'
+  operator: 'strictEqual'
+  stack: |-
+    <anonymous> (/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency/test/npg-analyst.test.ts:169:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async database (/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency/test/npg-analyst.test.ts:150:5)
+    async TestContext.<anonymous> (/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency/test/npg-analyst.test.ts:161:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: captured V8 judgment and 12 names retained exactly; no public runtime definition
+ok 2 - captured V8 judgment and 12 names retained exactly; no public runtime definition
+not ok 1 - history titles project only the owner first question, without exposing full state
+not ok 36 - source artifact distinguishes returned page from matching total without inferring missing counts
+not ok 37 - source artifact reads structured MCP content, preserving safe full export queries
+not ok 38 - NPG app owns its main landmark and root layout renders a scoped product branch
+# tests 38
+# pass 34
+# fail 4

@@ -96,7 +96,8 @@ async function fetchJWKS(
 	jwksNextAttempt.set(cacheKey, now + JWKS_RETRY_INTERVAL_MS);
 	const request = (async (): Promise<JWK[]> => {
 		try {
-			const response = await runtimeFetch(jwksUrl, { signal: AbortSignal.timeout(5_000), redirect: 'error' });
+			// Workers supports manual/follow only; non-2xx below rejects redirects.
+			const response = await runtimeFetch(jwksUrl, { signal: AbortSignal.timeout(5_000), redirect: 'manual' });
 			if (!response.ok) return [];
 			// Bound the document as well as the number of keys before parsing it.
 			const reader = response.body?.getReader();

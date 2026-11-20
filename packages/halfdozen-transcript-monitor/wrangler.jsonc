@@ -1,0 +1,11 @@
+{
+  "name": "halfdozen-transcript-monitor",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-11",
+  "account_id": "5c3e9cf4d55ce171b844fad0931607f9",
+  "workers_dev": true,
+  "observability": {"enabled": true,"logs":{"enabled":true,"head_sampling_rate":1},"traces":{"enabled":true,"head_sampling_rate":1}},
+  "triggers": {"crons":["*/15 * * * *"]},
+  "d1_databases":[{"binding":"DB","database_name":"halfdozen-zoom-transcript-sync","database_id":"685613a0-05da-4d0c-a932-579d51db7fb8"}],
+  "vars":{"MONITOR_NOT_BEFORE":"2026-10-23T17:16:35.564Z","GRACE_SECONDS":"1800"}
+}

@@ -163,10 +163,29 @@ async function sleep(ms: number): Promise<void> {
 }
 
 async function gotoCanonPath(page: Page, baseUrl: string, path: string): Promise<NavSnapshot> {
-  await page.goto(`${baseUrl}${path}`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${baseUrl}${path}`, { waitUntil: 'networkidle0' });
   await page.waitForSelector('.sidebar-nav');
   await page.waitForSelector('.nav-link-active');
-  await sleep(150);
+  // Route hydration scrolls the active item into view. Wait for the actual
+  // geometry to settle instead of sampling a smooth scroll after 150ms.
+  await page.evaluate(`(async () => {
+    await document.fonts.ready;
+    await new Promise((resolve) => {
+      const started = performance.now();
+      let previous = '';
+      let stable = 0;
+      const frame = () => {
+        const active = document.querySelector('.nav-link-active');
+        const rect = active?.getBoundingClientRect();
+        const position = rect ? [rect.top, rect.bottom, document.querySelector('.sidebar-nav')?.scrollTop].join(':') : '';
+        stable = position && position === previous ? stable + 1 : 0;
+        previous = position;
+        if (stable >= 8 || performance.now() - started > 3000) resolve();
+        else requestAnimationFrame(frame);
+      };
+      requestAnimationFrame(frame);
+    });
+  })()`);
   return await collectNavSnapshot(page);
 }
 
@@ -344,7 +363,7 @@ async function runSmoke(baseUrl: string): Promise<NavSnapshot[]> {
     for (const motion of ['no-preference', 'reduce']) {
       await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: motion }]);
       await page.goto(`${baseUrl}/canon/concepts/conviction-without-dependence`, {
-        waitUntil: 'domcontentloaded'
+        waitUntil: 'networkidle0'
       });
       await page.waitForSelector('.menu-toggle');
       await page.click('.menu-toggle');

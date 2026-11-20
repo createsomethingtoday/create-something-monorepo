@@ -301,3 +301,12 @@ test('GiGi connector tokens are bound to the exact broker origin', () => {
  assert.equal(resolveOAuthApplicationAccessPolicy('https://gigi-connector.example.com'), null);
  assert.equal(resolveOAuthTokenAccessMode(resource, undefined).type, 'application');
 });
+
+test('GiGi DEV is a distinct exact OAuth resource, never a production token alias', () => {
+ const resource='https://gigi-connector-dev.createsomething.workers.dev';
+ assert.deepEqual(resolveOAuthApplicationAccessPolicy(resource),{applicationId:'gigi-connector-dev',resource,expiresIn:3600});
+ assert.equal(resolveOAuthApplicationAccessPolicy(resource+'/')?.resource,resource);
+ assert.equal(resolveOAuthApplicationAccessPolicy(resource+'/mcp'),null);
+ assert.equal(resolveOAuthApplicationAccessPolicy('https://gigi-connector-dev.example.com'),null);
+ assert.equal(resolveOAuthTokenAccessMode(resource,undefined).type,'application');
+});

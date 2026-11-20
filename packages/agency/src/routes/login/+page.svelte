@@ -65,24 +65,18 @@
 <div class="auth-shell property-performance">
 	<section class="auth-context" aria-labelledby="auth-heading">
 		<div class="auth-status">
-			<span class="status-label">Identity</span>
-			<span class="status-value">Controlled</span>
+			<span class="status-label">Customer workspace</span>
+			<a class="status-value" href="/">Back to Agency ↗</a>
 		</div>
-		<p class="auth-eyebrow">First-party customer access</p>
-		<h1 id="auth-heading">Sign in to your .agency workspace.</h1>
+		<p class="auth-eyebrow">Your account</p>
+		<h1 id="auth-heading">Sign in to your workspace.</h1>
 		<p class="auth-summary">
-			Credentials are verified by CREATE SOMETHING Identity. Your workspace applies its own account,
-			tenant, and entitlement boundaries after authentication.
+			Use your CREATE SOMETHING credentials to manage your profile and tool access.
 		</p>
-		<div class="auth-proof" aria-label="Authentication controls">
-			<span>Surface / Customer workspace</span>
-			<span>Session / HttpOnly</span>
-			<span>Policy / Fail closed</span>
-		</div>
 	</section>
 
 	<section
-		class="auth-form-panel theme-light"
+		class="auth-form-panel"
 		aria-label={mode === 'login' ? 'Sign-in form' : 'Account creation form'}
 	>
 		{#if mode === 'login'}
@@ -108,10 +102,9 @@
 
 <style>
 	.auth-shell {
-		width: min(var(--content-width-performance), calc(100% - 2rem));
-		min-height: calc(100vh - 8rem);
+		width: min(1760px, 94%);
 		margin: 0 auto;
-		padding: clamp(2rem, 7vw, 6rem) 0;
+		padding: 0 0 clamp(3rem, 7vw, 6rem);
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) minmax(20rem, 28rem);
 		align-items: start;
@@ -120,36 +113,38 @@
 
 	.auth-context {
 		border-top: 1px solid var(--color-performance-line);
-		padding-top: var(--space-performance-md);
+		padding: var(--space-performance-md) 0 0;
 	}
 
-	.auth-status,
-	.auth-proof {
+	.auth-status {
 		display: flex;
 		flex-wrap: wrap;
-		gap: var(--space-performance-sm) var(--space-performance-lg);
+		gap: var(--space-performance-sm);
 		font-family: var(--font-performance-mono);
-		font-size: var(--text-performance-caption);
-		letter-spacing: 0.06em;
+		font-size: 11px;
+		letter-spacing: 0.045em;
 		text-transform: uppercase;
 	}
 
 	.auth-status {
 		justify-content: space-between;
+		align-items: center;
 	}
 
 	.status-label,
-	.auth-eyebrow,
-	.auth-proof {
+	.auth-eyebrow {
 		color: var(--color-performance-muted);
 	}
 
 	.status-value {
-		color: var(--color-performance-ready);
+		color: var(--color-performance-muted);
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
 	}
 
 	.auth-eyebrow {
-		margin: clamp(3rem, 8vw, 7rem) 0 var(--space-performance-sm);
+		margin: clamp(2rem, 4vw, 4rem) 0 var(--space-performance-sm);
 		font-family: var(--font-performance-mono);
 		font-size: var(--text-performance-caption);
 		letter-spacing: 0.08em;
@@ -160,11 +155,11 @@
 		max-width: 12ch;
 		margin: 0;
 		color: var(--color-performance-ink);
-		font-family: var(--font-performance-display);
-		font-size: clamp(2.5rem, 6vw, 5.5rem);
-		font-weight: var(--font-performance-bold);
+		font-family: var(--font-performance-sans);
+		font-size: clamp(2.5rem, 5vw, 4.5rem);
+		font-weight: 500;
 		letter-spacing: -0.055em;
-		line-height: 0.94;
+		line-height: 1.08;
 	}
 
 	.auth-summary {
@@ -175,16 +170,40 @@
 		line-height: 1.65;
 	}
 
-	.auth-proof {
-		padding-top: var(--space-performance-md);
-		border-top: 1px solid var(--color-performance-line);
-	}
-
 	.auth-form-panel {
-		padding: var(--space-performance-lg);
+		padding: clamp(1.25rem, 3vw, 2.5rem);
 		background: var(--color-performance-panel);
 		border: 1px solid var(--color-performance-line);
-		box-shadow: var(--shadow-performance-panel);
+		border-radius: var(--radius-performance-scale-lg);
+	}
+
+	/* Agency owns this presentation; shared auth behavior stays in Canon. */
+	.auth-form-panel :global(.form-title) {
+		font-family: var(--font-performance-sans);
+		font-size: var(--text-performance-h3);
+		letter-spacing: -0.03em;
+	}
+
+	.auth-form-panel :global(.form-header) { text-align: left; }
+	.auth-form-panel :global(.input) {
+		background: var(--color-performance-bg-elevated);
+		border: 1px solid var(--color-performance-focus);
+		border-radius: var(--radius-performance-sm);
+		min-height: 48px;
+	}
+	.auth-form-panel :global(.input::placeholder) { color: var(--color-performance-muted); }
+	.auth-form-panel :global(.submit-button) { border-radius: var(--radius-performance-sm); }
+	.auth-form-panel :global(.link-button) { min-height: 44px; }
+	.auth-form-panel :global(.error-message) {
+		background: var(--color-performance-bg-elevated);
+		border-color: var(--color-performance-error);
+		color: var(--color-performance-error);
+		border-radius: var(--radius-performance-sm);
+		overflow-wrap: anywhere;
+	}
+	.auth-form-panel :global(:is(input, button):focus-visible) {
+		outline: 2px solid var(--color-performance-focus);
+		outline-offset: 3px;
 	}
 
 	@media (max-width: 760px) {
@@ -192,12 +211,17 @@
 			grid-template-columns: 1fr;
 		}
 
+		.auth-summary { margin-block: var(--space-performance-md) 0; }
+
 		.auth-eyebrow {
-			margin-top: var(--space-performance-xl);
+			margin-top: var(--space-performance-md);
 		}
 
 		h1 {
-			font-size: clamp(2.5rem, 13vw, 4rem);
+			font-size: clamp(2rem, 9vw, 3rem);
 		}
+	}
+	@media (max-width: 700px) {
+		.auth-shell { width: 88%; }
 	}
 </style>

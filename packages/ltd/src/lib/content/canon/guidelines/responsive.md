@@ -49,18 +49,18 @@ Font sizes that adapt:
 
 ```css
 .title {
-  font-size: var(--text-2xl);
+  font-size: var(--text-performance-h3);
 }
 
 @media (min-width: 768px) {
   .title {
-    font-size: var(--text-3xl);
+    font-size: var(--text-performance-h2);
   }
 }
 
 @media (min-width: 1024px) {
   .title {
-    font-size: var(--text-4xl);
+    font-size: var(--text-performance-h1);
   }
 }
 ```

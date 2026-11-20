@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "nativeDomain": true,
+  "reopenedEveryCall": true,
+  "widths": [
+    880,
+    1280
+  ],
+  "themes": [
+    "studio",
+    "paper",
+    "midnight"
+  ],
+  "errors": []
+}

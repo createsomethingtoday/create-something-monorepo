@@ -1,5 +1,5 @@
 <script lang="ts">
-	import LibraryScene from '$lib/components/LibraryScene.svelte';
+  import TaskOpening from '$lib/components/TaskOpening.svelte';
 	import { SubtractiveTriadAnimation } from '@create-something/canon/domains/ltd';
 	import {
 		PerformanceNarrativeStage,
@@ -58,16 +58,18 @@
 />
 
 <!-- Header -->
-<section class="header-section px-6">
+<TaskOpening scene="subtract-route" caption="Creation is the discipline of removing what obscures.">
+<div class="header-section px-6">
 	<div class="max-w-4xl mx-auto text-center">
 		<p class="eyebrow mb-4">Our Philosophy</p>
 		<h1 class="mb-6">Remove the noise.</h1>
 		<p class="intro-text leading-relaxed">
 			Keep what helps someone decide, act, or verify. Remove what only explains itself.
 		</p>
-		<LibraryScene scene="subtract-the-extra-route" caption="Creation is the discipline of removing what obscures." />
+
 	</div>
-</section>
+</div>
+</TaskOpening>
 
 <PerformanceNarrativeStage
 	id="ethos-operating-story"

@@ -23,7 +23,7 @@ export type Interaction = {
 export type DraftBlockState = {
   postId: string;
   draftText: string;
-  draftStatus: 'pending' | 'approved' | 'sent' | 'rejected' | 'expired' | 'none';
+  draftStatus: 'pending' | 'approved' | 'sending' | 'sent' | 'rejected' | 'expired' | 'none';
   excerpt?: string;
   notice?: { kind: 'success' | 'error' | 'info'; title: string };
 };

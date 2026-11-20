@@ -5,6 +5,7 @@ export const AGENCY_AGENT_DISCOVERY = {
 	apiDescription: `${AGENCY_ORIGIN}/openapi-agent.yaml`,
 	apiDocumentation: `${AGENCY_ORIGIN}/agent-api.md`,
 	serviceManifest: `${AGENCY_ORIGIN}/api/manifest`,
+	agentInquiry: `${AGENCY_ORIGIN}/api/agent-inquiry`,
 	status: `${AGENCY_ORIGIN}/api/map/health`,
 	auth: `${AGENCY_ORIGIN}/auth.md`,
 	protectedResourceMetadata: `${AGENCY_ORIGIN}/.well-known/oauth-protected-resource`,
@@ -41,6 +42,13 @@ export function withAgentDiscoveryLinks(response: Response): Response {
 
 export const agencyApiCatalog = {
 	linkset: [
+		{
+			anchor: AGENCY_ORIGIN,
+			href: AGENCY_AGENT_DISCOVERY.agentInquiry,
+			rel: ['describedby'],
+			type: 'application/json',
+			title: 'Offers, evidence, inquiry preparation and human-approved contact handoff'
+		},
 		{
 			anchor: AGENCY_ORIGIN,
 			href: AGENCY_AGENT_DISCOVERY.apiDescription,

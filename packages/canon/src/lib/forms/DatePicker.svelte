@@ -16,6 +16,7 @@
 	 */
 
 	import { onMount } from 'svelte';
+	import { focusTrap } from '../actions/a11y.js';
 
 	interface Props {
 		/** Selected date (bindable) */
@@ -232,6 +233,8 @@
 	{#if open}
 		<div
 			class="datepicker-calendar"
+			use:focusTrap={{active: open, onEscape: closeCalendar}}
+			tabindex="-1"
 			role="dialog"
 			aria-modal="true"
 			aria-label="Choose date"
@@ -309,6 +312,7 @@
 	}
 
 	.datepicker-trigger {
+		min-height: 44px;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
@@ -360,8 +364,10 @@
 		border: 1px solid var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
 		border-radius: var(--radius-performance-scale-lg, 12px);
 		box-shadow: var(--shadow-performance-scale-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.3));
-		padding: var(--space-performance-md, 1.618rem);
-		min-width: 280px;
+		box-sizing: border-box;
+		padding: 8px;
+		width: 22rem;
+		max-width: 100vw;
 		animation: calendarIn var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
@@ -382,8 +388,9 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 28px;
-		height: 28px;
+		width: 44px;
+		flex-shrink: 0;
+		height: 44px;
 		background: transparent;
 		border: none;
 		color: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.46));
@@ -405,7 +412,7 @@
 	.calendar-weekdays {
 		display: grid;
 		grid-template-columns: repeat(7, 1fr);
-		gap: 2px;
+		gap: 0;
 		margin-bottom: var(--space-performance-xs, 0.5rem);
 	}
 
@@ -419,10 +426,11 @@
 	.calendar-grid {
 		display: grid;
 		grid-template-columns: repeat(7, 1fr);
-		gap: 2px;
+		gap: 0;
 	}
 
 	.calendar-day {
+		min-height: 44px;
 		aspect-ratio: 1;
 		display: flex;
 		align-items: center;
@@ -473,6 +481,7 @@
 	}
 
 	.today-btn {
+		min-height: 44px;
 		font-size: var(--text-performance-body-sm, 0.875rem);
 		color: var(--color-performance-fg-secondary, rgba(255, 255, 255, 0.8));
 		background: transparent;
@@ -509,5 +518,11 @@
 			transition: none;
 			animation: none;
 		}
+	}
+	.nav-btn:focus-visible,.today-btn:focus-visible {outline:2px solid var(--color-performance-focus);outline-offset:2px;}
+	@media(max-width: 400px) {
+		.datepicker-calendar {position:fixed;top:20vh;left:0;width:100vw;padding:4px;max-height:75vh;overflow-y:auto;}
+		.calendar-header {display:grid;grid-template-columns:44px 44px 1fr 44px 44px;}
+		.calendar-title {text-align:center;font-size:.875rem;}
 	}
 </style>

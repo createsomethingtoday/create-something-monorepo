@@ -10,11 +10,22 @@
  */
 
 import { validateAssets, validateAssetBatch } from './validators/asset-validator';
+import {
+	deriveCollectionMetadata,
+	deriveEnhancedValidation,
+	enhanceValidationResults,
+	type CanvasAccessibilityResult
+} from '../../shared/designer-enhancements';
+import { normalizePagePath } from '../../shared/page-slugs';
 import { validateContent } from './validators/content-validator';
+import { checkUnusedStylesByPreviewLink } from './validators/designer-unused-styles';
 import { validateAccessibility } from './validators/accessibility-validator';
 import { validateDesignerData } from './validators/designer-validator';
 import { validateInteractions, type CmsTemplateHint } from './validators/interactions-validator';
 import { validateCustomCode } from './validators/custom-code-validator';
+import { RENDERING_CATEGORY, summarizeRendering, type RenderingAnalysisResult } from './validators/rendering-validator';
+import { validateRendering } from './utils/browser-rendering';
+import type { BrowserWorker } from '@cloudflare/puppeteer';
 import { fetchHTML } from './utils/fetch-utils';
 import { Langfuse } from 'langfuse';
 import {
@@ -34,13 +45,42 @@ import {
 	SnippetInstallResponse,
 	SnippetStatusResponse,
 	SnippetRotateTokenRequest,
+	OauthSiteAccessEvidence,
 	ValidationRunScope,
 	ValidationSubmitRequest,
 	ValidationSubmitResponse
 } from './types';
+import { normalizePublishedHost, verifyOauthSiteAccess } from './utils/oauth-site-evidence';
 
 const REVIEW_SNIPPET_VERSION = '0.3.0';
-const WORKER_VERSION = '2.7.0';
+const WORKER_VERSION = '2.17.0';
+
+/**
+ * Oldest Template CLI that may record a result. Part of the rules run inside
+ * the CLI, so an old install must update before its result counts. Raise this
+ * when a CLI release changes what a pass means.
+ */
+const MIN_TEMPLATE_CLI_VERSION = '0.3.0';
+const TEMPLATE_CLI_VERSION_HEADER = 'X-Template-Cli-Version';
+const TEMPLATE_CLI_PACKAGE_PATH = '/cli/wf-template-validate.tgz';
+
+/** Validation runs one network address may start in one window. */
+const VALIDATION_START_LIMIT = 10;
+const VALIDATION_START_WINDOW_MS = 60_000;
+
+/** A Template CLI record must name a validation run that finished at most this long ago. */
+const CLI_RECORD_MAX_JOB_AGE_MS = 30 * 60_000;
+const STYLE_GUIDE_EXCLUDED_SLUGS = ['/style-guide', '/styleguide'];
+/**
+ * Webflow utility pages at fixed paths that the main content crawl may not
+ * analyze: the 404 page, the password page, site search, and the ecommerce
+ * flow pages. Measured on published templates: /404 answers 200 on some sites
+ * and 404 on others, and the other pages never load as normal pages. The
+ * worker audits /404 and /401 itself in its utility-page audit, which accepts
+ * their error status. A run must still name these pages, but they need not be
+ * in its list of analyzed pages.
+ */
+const UTILITY_PAGES_WITHOUT_CONTENT = ['/404', '/401', '/search', '/checkout', '/paypal-checkout', '/order-confirmation'];
 const REVIEW_SNIPPET_MARKER = '__wf_review_snippet_v1';
 const REVIEW_SNIPPET_ASSET_PATH = '/app-validator/snippet/review.js';
 const REVIEW_JOB_RETENTION_MS = 30 * 60 * 1000;
@@ -107,6 +147,10 @@ interface ReviewJobState {
 	events: ReviewJobEvent[];
 	seq: number;
 	cancelRequested: boolean;
+	/** Set while the browser check runs in the job's Durable Object alarm (stage 2). */
+	pendingRendering?: { urls: string[]; result: any } | null;
+	/** URLs the content crawl fetched and analyzed. A page that failed to load is not in this list. */
+	analyzedUrls?: string[];
 }
 
 interface SnippetTokenRecord {
@@ -164,6 +208,10 @@ interface ValidationCategoryIssueDetail {
 	details?: {
 		pages?: string[];
 		duplicates?: string[][];
+		/** Names the naming checks flagged (page-naming, page-slug-mismatch), kept so those checks can be audited. */
+		samples?: string[];
+		/** Page and element lines (the browser check), shown by the Validator app as "View N locations". */
+		locations?: string[];
 	};
 }
 
@@ -171,6 +219,12 @@ interface ValidationCategoryDetail {
 	category: string;
 	passed: boolean;
 	issues: ValidationCategoryIssueDetail[];
+}
+
+interface PublishedHostLookupRecord {
+	publishedHostSha256: string;
+	siteId: string;
+	updatedAt: string;
 }
 
 interface ValidationResultRecord {
@@ -186,6 +240,7 @@ interface ValidationResultRecord {
 	failedCategoryDetails?: ValidationCategoryDetail[];
 	warningCategoryDetails?: ValidationCategoryDetail[];
 	scope?: ValidationRunScope;
+	evidence?: OauthSiteAccessEvidence | null;
 	artifact: ValidationResultArtifactPersistResult;
 }
 
@@ -286,21 +341,103 @@ const snippetTokens = new Map<string, SnippetTokenRecord>();
 const snippetTokenLookups = new Map<string, SnippetTokenLookupRecord>();
 const submissionStates = new Map<string, SubmissionRateLimitState>();
 const validationResultRecords = new Map<string, ValidationResultRecord>();
+const publishedHostLookups = new Map<string, PublishedHostLookupRecord>();
 const bridgeUsageRecords = new Map<string, BridgeUsageIndexRecord>();
+
+/**
+ * Each Durable Object stores one JSON record. This class uses key-value
+ * storage, which caps a value at 128 KiB, and a job with Designer data and a
+ * full result can exceed that, so the JSON text is split across keys. 60,000
+ * characters stay under the cap even when every character is non-ASCII.
+ */
+const STATE_CHUNK_CHARS = 60_000;
+const STATE_CHUNK_COUNT_KEY = 'state:chunks';
+
+async function readStoredState(storage: DurableObjectStorage): Promise<unknown | undefined> {
+	const legacy = await storage.get('state');
+	if (legacy !== undefined) return legacy;
+	const count = await storage.get<number>(STATE_CHUNK_COUNT_KEY);
+	if (!count) return undefined;
+	const keys = Array.from({ length: count }, (_, index) => `state:${index}`);
+	const parts = await storage.get<string>(keys);
+	let text = '';
+	for (const key of keys) {
+		const part = parts.get(key);
+		if (typeof part !== 'string') return undefined;
+		text += part;
+	}
+	return JSON.parse(text);
+}
+
+async function writeStoredState(storage: DurableObjectStorage, text: string): Promise<void> {
+	const count = Math.max(1, Math.ceil(text.length / STATE_CHUNK_CHARS));
+	const entries: Record<string, unknown> = { [STATE_CHUNK_COUNT_KEY]: count };
+	for (let index = 0; index < count; index += 1) {
+		entries[`state:${index}`] = text.slice(index * STATE_CHUNK_CHARS, (index + 1) * STATE_CHUNK_CHARS);
+	}
+	const previous = (await storage.get<number>(STATE_CHUNK_COUNT_KEY)) ?? 0;
+	await storage.put(entries);
+	const stale = ['state', ...Array.from({ length: Math.max(0, previous - count) }, (_, index) => `state:${count + index}`)];
+	await storage.delete(stale);
+}
+
+async function deleteStoredState(storage: DurableObjectStorage): Promise<void> {
+	const count = (await storage.get<number>(STATE_CHUNK_COUNT_KEY)) ?? 0;
+	await storage.delete(['state', STATE_CHUNK_COUNT_KEY, ...Array.from({ length: count }, (_, index) => `state:${index}`)]);
+}
 
 export class ReviewJobsDurableObject {
 	private readonly state: DurableObjectState;
+	private readonly env: unknown;
 
-	constructor(state: DurableObjectState) {
+	constructor(state: DurableObjectState, env: unknown) {
 		this.state = state;
+		this.env = env;
+	}
+
+	/**
+	 * Stage 2 of a review job: the browser check. It runs here rather than in
+	 * the Worker's waitUntil, which Cloudflare cancels 30 seconds after the
+	 * start request returns; an alarm may run for 15 minutes.
+	 */
+	async alarm(): Promise<void> {
+		const stored = (await readStoredState(this.state.storage)) as ReviewJobState | undefined;
+		if (!stored || !stored.pendingRendering) return;
+		const finished = await completeRenderingStage(reviveReviewJobState(stored), this.env);
+		// A cancel may have landed while the browser ran; it wins.
+		const latest = (await readStoredState(this.state.storage)) as ReviewJobState | undefined;
+		if (latest && TERMINAL_STATUSES.has(latest.status)) return;
+		await writeStoredState(this.state.storage, JSON.stringify(pruneReviewJobState(finished)));
 	}
 
 	async fetch(request: Request): Promise<Response> {
 		const url = new URL(request.url);
 
+		if (url.pathname === '/render' && request.method === 'POST') {
+			await this.state.storage.setAlarm(Date.now());
+			return new Response(JSON.stringify({ ok: true }), {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' }
+			});
+		}
+
+		if (url.pathname === '/start-limit' && request.method === 'POST') {
+			// Count and decide in one place. This object handles one storage step at a time, so
+			// two starts at the same moment cannot both read the old count.
+			const { limit, windowMs } = (await request.json()) as { limit: number; windowMs: number };
+			const now = Date.now();
+			const starts = ((await this.state.storage.get<number[]>('starts')) ?? []).filter((at) => now - at < windowMs);
+			const limited = starts.length >= limit;
+			if (!limited) starts.push(now);
+			await this.state.storage.put('starts', starts);
+			return new Response(JSON.stringify({ limited }), {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' }
+			});
+		}
+
 		if (url.pathname === '/state' && request.method === 'PUT') {
-			const body = await request.json();
-			await this.state.storage.put('state', body);
+			await writeStoredState(this.state.storage, await request.text());
 			return new Response(JSON.stringify({ ok: true }), {
 				status: 200,
 				headers: { 'Content-Type': 'application/json' }
@@ -308,7 +445,7 @@ export class ReviewJobsDurableObject {
 		}
 
 		if (url.pathname === '/state' && request.method === 'GET') {
-			const stored = await this.state.storage.get('state');
+			const stored = await readStoredState(this.state.storage);
 			if (!stored) {
 				return new Response(JSON.stringify({ error: 'Not found' }), {
 					status: 404,
@@ -322,7 +459,7 @@ export class ReviewJobsDurableObject {
 		}
 
 		if (url.pathname === '/state' && request.method === 'DELETE') {
-			await this.state.storage.delete('state');
+			await deleteStoredState(this.state.storage);
 			return new Response(JSON.stringify({ ok: true }), {
 				status: 200,
 				headers: { 'Content-Type': 'application/json' }
@@ -388,6 +525,9 @@ export default {
 
 			if (url.pathname === '/app-validator/review/start') {
 				if (request.method !== 'POST') return methodNotAllowed(request);
+				const outdatedCli = outdatedCliResponse(request, correlationId, { required: false });
+				if (outdatedCli) return outdatedCli;
+				if (await validationStartRateLimited(request, env)) return rateLimitedStartResponse(request, correlationId);
 				return await handleReviewStart(request, env, ctx, correlationId);
 			}
 
@@ -449,11 +589,17 @@ export default {
 				case '/':
 				case '/validate':
 					if (request.method !== 'POST') return methodNotAllowed(request);
-					return await handleEnhancedValidation(request);
+					if (await validationStartRateLimited(request, env)) return rateLimitedStartResponse(request, correlationId);
+					return await handleEnhancedValidation(request, env);
 
 				case '/validate/assets':
 					if (request.method !== 'POST') return methodNotAllowed(request);
 					return await handleBatchedAssetValidation(request);
+
+				case '/unused-styles':
+					if (request.method !== 'POST') return methodNotAllowed(request);
+					if (await validationStartRateLimited(request, env)) return rateLimitedStartResponse(request, correlationId);
+					return await handleUnusedStylesByPreviewLink(request, env);
 
 				case '/health':
 					return jsonResponse(
@@ -465,6 +611,7 @@ export default {
 								'/api/validate',
 								'/validate',
 								'/validate/assets',
+								'/unused-styles',
 								'/app-validator/review/start',
 								'/app-validator/review/:jobId/status',
 								'/app-validator/review/:jobId/events',
@@ -941,6 +1088,31 @@ async function handleValidationSubmit(
 		);
 	}
 
+	const evidenceInput = body.evidence;
+	if (
+		evidenceInput !== undefined &&
+		(!evidenceInput ||
+			typeof evidenceInput !== 'object' ||
+			evidenceInput.type !== 'oauth_site_access' ||
+			typeof evidenceInput.accessToken !== 'string' ||
+			evidenceInput.accessToken.trim() === '')
+	) {
+		return jsonResponse(
+			{
+				error: "Invalid evidence: expected { type: 'oauth_site_access', accessToken: string }",
+				correlationId
+			},
+			400,
+			request
+		);
+	}
+	const evidenceAccessToken = evidenceInput?.accessToken?.trim();
+	if (evidenceAccessToken) {
+		// Only the Template CLI sends this evidence, so it must name a current version.
+		const outdatedCli = outdatedCliResponse(request, correlationId, { required: true });
+		if (outdatedCli) return outdatedCli;
+	}
+
 	const submittedAt = new Date().toISOString();
 	const siteName =
 		typeof body.siteName === 'string' && body.siteName.trim() !== ''
@@ -951,6 +1123,8 @@ async function handleValidationSubmit(
 			? body.siteUrl.trim()
 			: undefined;
 	const sanitizedResults = sanitizeValidationResults(body.validationResults);
+	// Kept out of sanitizedResults so the payload hash still identifies the findings, not the run speed.
+	const clientTimings = sanitizeRunTimings(body.validationResults.timings);
 	const payloadHash =
 		(await hashTelemetryValue(JSON.stringify(sanitizedResults))) || `inline_${siteId}`;
 	const clientHash = await getRequestClientHash(request);
@@ -1013,6 +1187,52 @@ async function handleValidationSubmit(
 		});
 	}
 
+	let evidence: OauthSiteAccessEvidence | null = null;
+	let verifiedPagePaths: string[] | null = null;
+	if (evidenceAccessToken) {
+		const verification = await verifyOauthSiteAccess(env, siteId, evidenceAccessToken);
+		if (!verification.ok) {
+			ctx.waitUntil(
+				emitTelemetry(env, {
+					event: 'submission.evidence_rejected',
+					correlationId,
+					level: 'error',
+					payload: {
+						siteId,
+						siteUrl,
+						evidenceType: 'oauth_site_access',
+						reason: verification.reason
+					}
+				})
+			);
+			return jsonResponse(
+				{ error: 'oauth_site_access evidence could not be verified', correlationId },
+				403,
+				request
+			);
+		}
+		verifiedPagePaths = verification.pagePaths;
+		evidence = {
+			type: 'oauth_site_access',
+			verified: true,
+			verifiedAt: new Date().toISOString(),
+			workspaceId: verification.workspaceId,
+			accessTokenSha256: await sha256Hex(evidenceAccessToken),
+			rawAccessTokenStored: false,
+			publishedHosts: verification.publishedHosts
+		};
+	}
+
+	// A Template CLI record holds the worker's own result for the named run, not the result the client sent.
+	let resultsToRecord = sanitizedResults;
+	if (evidence) {
+		const bound = await serverResultForCliRecord(env, body as { jobId?: unknown }, evidence.publishedHosts, verifiedPagePaths);
+		if (!bound.ok) {
+			return jsonResponse({ error: bound.error, reason: 'run_not_usable', correlationId }, 409, request);
+		}
+		resultsToRecord = sanitizeValidationResults(bound.results);
+	}
+
 	const nextAttempt: SubmissionAttemptRecord = {
 		at: submittedAt,
 		origin: request.headers.get('Origin'),
@@ -1052,7 +1272,7 @@ async function handleValidationSubmit(
 		siteId,
 		siteName,
 		siteUrl,
-		validationResults: sanitizedResults
+		validationResults: resultsToRecord
 	});
 	const artifactResult = await persistValidationResultArtifact(env, {
 		siteId,
@@ -1061,7 +1281,9 @@ async function handleValidationSubmit(
 		submittedAt,
 		correlationId,
 		payloadHash,
-		validationResults: sanitizedResults
+		evidence,
+		clientTimings,
+		validationResults: resultsToRecord
 	});
 	const latestResult: ValidationResultRecord = {
 		schemaVersion: 'validator_app_submission_latest.v0.1',
@@ -1072,13 +1294,18 @@ async function handleValidationSubmit(
 		correlationId,
 		payloadHash,
 		rawBridgeTokenStored: false,
-		summary: summarizeValidationSubmission(sanitizedResults),
-		failedCategoryDetails: getFailedCategoryDetails(sanitizedResults),
-		warningCategoryDetails: getWarningCategoryDetails(sanitizedResults),
-		scope: sanitizeValidationScope(sanitizedResults.scope),
+		summary: summarizeValidationSubmission(resultsToRecord),
+		failedCategoryDetails: getFailedCategoryDetails(resultsToRecord),
+		warningCategoryDetails: getWarningCategoryDetails(resultsToRecord),
+		scope: sanitizeValidationScope(resultsToRecord.scope),
+		evidence,
 		artifact: artifactResult
 	};
+	const previousResult = await getValidationResultState(env, siteId);
 	await persistValidationResultState(env, latestResult);
+	if (evidence) {
+		await persistPublishedHostLookups(env, siteId, evidence.publishedHosts, submittedAt, previousResult?.evidence?.publishedHosts ?? []);
+	}
 	const knownSnippetState = await getSnippetTokenState(env, siteId);
 	await recordBridgeUsage(env, {
 		event: 'validation_submit',
@@ -1118,7 +1345,8 @@ async function handleValidationSubmit(
 			flagged: anomalyReasons.length > 0,
 			reasons: anomalyReasons
 		},
-		artifact: artifactResult
+		artifact: artifactResult,
+		evidence
 	};
 
 	ctx.waitUntil(
@@ -1135,6 +1363,10 @@ async function handleValidationSubmit(
 				artifactPersisted: artifactResult.persisted,
 				artifactKey: artifactResult.key,
 				artifactReason: artifactResult.reason,
+				evidenceType: evidence?.type,
+				evidenceVerified: evidence ? true : undefined,
+				clientTimings,
+				pageSlugsCount: resultsToRecord.scope?.pageSlugsCount,
 				remaining,
 				anomalyReasons
 			}
@@ -1225,6 +1457,7 @@ async function handleValidationSubmissionLatest(
 	const url = new URL(request.url);
 	const siteIdParam = normalizeSiteId(url.searchParams.get('siteId'));
 	const bridgeTokenSha256 = normalizeSha256(url.searchParams.get('bridgeTokenSha256'));
+	const publishedHost = normalizePublishedHost(url.searchParams.get('publishedUrl'));
 	let siteId = siteIdParam;
 
 	if (!siteId && bridgeTokenSha256) {
@@ -1232,9 +1465,17 @@ async function handleValidationSubmissionLatest(
 		siteId = lookup?.siteId || null;
 	}
 
-	if (!siteId && !bridgeTokenSha256) {
+	if (!siteId && !bridgeTokenSha256 && publishedHost) {
+		const lookup = await getPublishedHostLookupState(env, publishedHost);
+		siteId = lookup?.siteId || null;
+	}
+
+	if (!siteId && !bridgeTokenSha256 && !publishedHost) {
 		return jsonResponse(
-			{ error: 'Missing required query param: siteId or bridgeTokenSha256', correlationId },
+			{
+				error: 'Missing required query param: siteId, bridgeTokenSha256, or publishedUrl',
+				correlationId
+			},
 			400,
 			request
 		);
@@ -1246,7 +1487,9 @@ async function handleValidationSubmissionLatest(
 				status: 'missing',
 				accepted: false,
 				passed: false,
-				message: 'No Validator app site mapping was found for this bridge token.',
+				message: bridgeTokenSha256
+					? 'No Validator app site mapping was found for this bridge token.'
+					: 'No verified Validator site mapping was found for this published URL.',
 				correlationId,
 				rawBridgeTokenStored: false
 			},
@@ -1300,6 +1543,7 @@ async function handleValidationSubmissionLatest(
 			failedCategoryDetails: record.failedCategoryDetails || [],
 			warningCategoryDetails: record.warningCategoryDetails || [],
 			scope: record.scope,
+			evidence: record.evidence ?? null,
 			artifact: record.artifact
 		},
 		200,
@@ -1385,20 +1629,26 @@ async function handleBridgeUsageList(
 }
 
 async function runReviewJob(jobId: string, env: unknown): Promise<void> {
-	const job = await getReviewJobState(env, jobId);
+	// handleReviewStart created the job in this isolate; read storage only as a fallback.
+	const job = reviewJobs.get(jobId) ?? (await getReviewJobState(env, jobId));
 	if (!job) return;
 
 	const startedAtMs = Date.now();
-	try {
-		updateJobProgress(job, 5, 'running', 'Initializing validation pipeline');
+	// Each step first checks storage for a cancel, then saves its progress.
+	// A cancel request saves a separate copy of the job, so checking only this
+	// object would miss it and the next save would overwrite it.
+	const advance = async (progress: number, message: string) => {
+		if (await reviewJobCancelled(env, job)) throw new Error('Job cancelled');
+		updateJobProgress(job, progress, 'running', message);
 		await persistReviewJobState(env, job);
+	};
+	try {
+		await advance(5, 'Initializing validation pipeline');
 		await emitTelemetry(env, {
 			event: 'review.progress',
 			correlationId: job.correlationId,
 			payload: { jobId, progress: 5, message: job.message }
 		});
-
-		if (job.cancelRequested) throw new Error('Job cancelled');
 
 		const checks = normalizeChecks(job.request.checks);
 		const runDesigner = checks.designer;
@@ -1415,15 +1665,11 @@ async function runReviewJob(jobId: string, env: unknown): Promise<void> {
 		let enhancedResult: ValidationResponse | null = null;
 
 		if (runDesigner) {
-			updateJobProgress(job, 20, 'running', 'Running Designer validation');
-			await persistReviewJobState(env, job);
+			await advance(20, 'Running Designer validation');
 			designerResult = await performDesignerValidation(designerData, job.request.siteUrl);
 		}
 
-		if (job.cancelRequested) throw new Error('Job cancelled');
-
-		updateJobProgress(job, 55, 'running', 'Running crawl validation');
-		await persistReviewJobState(env, job);
+		await advance(55, 'Running crawl validation');
 		enhancedResult = await performEnhancedValidation({
 			siteUrl: job.request.siteUrl,
 			designerData,
@@ -1434,38 +1680,36 @@ async function runReviewJob(jobId: string, env: unknown): Promise<void> {
 				skipContent: !runContent,
 				skipAccessibility: !runAccessibility
 			}
-		});
+		}, env);
 
-		if (job.cancelRequested) throw new Error('Job cancelled');
-
-		updateJobProgress(job, 85, 'running', 'Merging validation result sets');
-		await persistReviewJobState(env, job);
+		await advance(65, 'Merging validation result sets');
 		const merged = mergeReviewResults(job.request.siteUrl, designerResult, enhancedResult);
 
-		job.status = 'completed';
-		job.progress = 100;
-		job.message = 'Validation complete';
-		job.updatedAt = new Date().toISOString();
-		job.completedAt = job.updatedAt;
-		job.result = merged;
-		pushJobEvent(job, 'complete', {
-			jobId: job.jobId,
-			status: job.status,
-			progress: job.progress,
-			message: job.message
-		});
-		await persistReviewJobState(env, job);
+		// The browser check renders the pages the content crawl analyzed, so it
+		// runs with the content check and covers the same scope. It takes longer
+		// than waitUntil allows, so the job's Durable Object finishes the job.
+		if (runContent) {
+			const crawledUrls = enhancedResult?.analysis?.content?.pages?.map((page) => page.url) ?? [];
+			job.analyzedUrls = crawledUrls;
+			if (await reviewJobCancelled(env, job)) throw new Error('Job cancelled');
+			job.pendingRendering = { urls: crawledUrls.length > 0 ? crawledUrls : [job.request.siteUrl], result: merged };
+			updateJobProgress(job, 70, 'running', 'Loading pages in a browser');
+			await persistReviewJobState(env, job);
+			if (await scheduleRenderingStage(env, job.jobId)) return;
+			job.pendingRendering = null;
+			await finishReviewJob(
+				env,
+				job,
+				withRenderingCategory(
+					merged,
+					summarizeRendering([], { pagesRequested: crawledUrls.length, unavailableReason: 'The browser check could not be scheduled.' })
+				)
+			);
+			return;
+		}
 
-		await emitTelemetry(env, {
-			event: 'review.complete',
-			correlationId: job.correlationId,
-			payload: {
-				jobId: job.jobId,
-				durationMs: Date.now() - startedAtMs,
-				totalCategories: Array.isArray(merged?.categories) ? merged.categories.length : 0,
-				fallbackUsed: job.fallbackUsed
-			}
-		});
+		if (await reviewJobCancelled(env, job)) throw new Error('Job cancelled');
+		await finishReviewJob(env, job, merged);
 	} catch (error) {
 		job.status = job.cancelRequested ? 'cancelled' : 'failed';
 		job.error = error instanceof Error ? error.message : String(error);
@@ -1494,6 +1738,93 @@ async function runReviewJob(jobId: string, env: unknown): Promise<void> {
 	}
 }
 
+/**
+ * Mark a job complete with its final result. Used by both stages; the
+ * Durable Object alarm stores the job itself, so it passes persist: false.
+ */
+async function finishReviewJob(env: unknown, job: ReviewJobState, result: any, persist = true): Promise<void> {
+	job.status = 'completed';
+	job.progress = 100;
+	job.message = 'Validation complete';
+	job.updatedAt = new Date().toISOString();
+	job.completedAt = job.updatedAt;
+	job.result = result;
+	pushJobEvent(job, 'complete', {
+		jobId: job.jobId,
+		status: job.status,
+		progress: job.progress,
+		message: job.message
+	});
+	if (persist) await persistReviewJobState(env, job);
+
+	await emitTelemetry(env, {
+		event: 'review.complete',
+		correlationId: job.correlationId,
+		payload: {
+			jobId: job.jobId,
+			durationMs: Date.now() - Date.parse(job.startedAt),
+			totalCategories: Array.isArray(result?.categories) ? result.categories.length : 0,
+			fallbackUsed: job.fallbackUsed
+		}
+	});
+}
+
+async function scheduleRenderingStage(env: unknown, jobId: string): Promise<boolean> {
+	const ns = getDurableNamespace(env);
+	if (!ns) return false;
+	try {
+		const stub = ns.get(ns.idFromName(`job:${jobId}`));
+		const response = await stub.fetch('https://internal/render', { method: 'POST' });
+		return response.ok;
+	} catch {
+		return false;
+	}
+}
+
+/** How long stage 2 may spend loading pages before it reports the rest as not rendered. */
+const RENDERING_STAGE_BUDGET_MS = 4 * 60 * 1000;
+
+/**
+ * Stage 2: run the browser check and complete the job. Returns the updated
+ * job; the caller (the Durable Object alarm) stores it. Never throws, because
+ * a throwing alarm is retried.
+ */
+async function completeRenderingStage(job: ReviewJobState, env: unknown): Promise<ReviewJobState> {
+	const pending = job.pendingRendering;
+	if (!pending || TERMINAL_STATUSES.has(job.status)) return job;
+	job.pendingRendering = null;
+	try {
+		const rendering = await validateRendering(
+			(env as { BROWSER?: BrowserWorker } | undefined)?.BROWSER,
+			pending.urls,
+			{ deadline: Date.now() + RENDERING_STAGE_BUDGET_MS }
+		);
+		await finishReviewJob(env, job, withRenderingCategory(pending.result, rendering), false);
+	} catch (error) {
+		job.status = 'failed';
+		job.error = error instanceof Error ? error.message : String(error);
+		job.message = 'Validation failed';
+		job.updatedAt = new Date().toISOString();
+		job.completedAt = job.updatedAt;
+		pushJobEvent(job, 'error', { jobId: job.jobId, status: job.status, progress: job.progress, message: job.message, error: job.error });
+	}
+	return job;
+}
+
+/** Add the Browser Rendering category to a merged result and recount the summary. */
+function withRenderingCategory(result: any, rendering: RenderingAnalysisResult): any {
+	const categories = [
+		...(Array.isArray(result?.categories) ? result.categories : []),
+		{
+			category: RENDERING_CATEGORY,
+			passed: rendering.issues.every((issue) => issue.severity !== 'error'),
+			issues: rendering.issues,
+			stats: rendering.stats
+		}
+	];
+	return { ...result, categories, summary: { ...(result?.summary ?? {}), ...summarizeSummaryFromCategories(categories) } };
+}
+
 async function handleDesignerValidation(request: Request): Promise<Response> {
 	try {
 		const body = (await request.json()) as { designerData: DesignerData; siteUrl?: string };
@@ -1515,7 +1846,7 @@ async function handleDesignerValidation(request: Request): Promise<Response> {
 	}
 }
 
-async function handleEnhancedValidation(request: Request): Promise<Response> {
+async function handleEnhancedValidation(request: Request, env?: unknown): Promise<Response> {
 	try {
 		const body = (await request.json()) as ValidationRequest;
 		if (!body.siteUrl || !body.designerData) {
@@ -1526,7 +1857,7 @@ async function handleEnhancedValidation(request: Request): Promise<Response> {
 			);
 		}
 
-		const result = await performEnhancedValidation(body);
+		const result = await performEnhancedValidation(body, env);
 		return jsonResponse(result, 200, request);
 	} catch (error) {
 		return jsonResponse(
@@ -1554,7 +1885,27 @@ async function performDesignerValidation(
 	};
 }
 
-async function performEnhancedValidation(body: ValidationRequest): Promise<ValidationResponse> {
+/**
+ * `POST /unused-styles` with `{ previewUrl }`: the Designer's Clean up list
+ * for a preview link. The answer never echoes the link or its token.
+ */
+async function handleUnusedStylesByPreviewLink(request: Request, env?: unknown): Promise<Response> {
+	let body: { previewUrl?: unknown } | null = null;
+	try {
+		body = (await request.json()) as { previewUrl?: unknown } | null;
+	} catch {
+		// An unreadable body is the same as no link.
+	}
+	const result = await checkUnusedStylesByPreviewLink(body?.previewUrl, previewSiteDataPathFromEnv(env));
+	return jsonResponse(result, result.status === 'unavailable' && result.reason === 'invalid_preview_link' ? 400 : 200, request);
+}
+
+function previewSiteDataPathFromEnv(env: unknown): string | undefined {
+	const value = (env as { PREVIEW_SITE_DATA_PATH?: unknown } | null | undefined)?.PREVIEW_SITE_DATA_PATH;
+	return typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined;
+}
+
+async function performEnhancedValidation(body: ValidationRequest, env?: unknown): Promise<ValidationResponse> {
 	const options = body.options || {};
 	const cmsTemplateHints = extractCmsTemplateHints(body.designerData);
 
@@ -1564,7 +1915,13 @@ async function performEnhancedValidation(body: ValidationRequest): Promise<Valid
 
 	const contentPromise = options.skipContent
 		? Promise.resolve(createEmptyContentAnalysis())
-		: validateContent(body.siteUrl, body.pageSlugs, options);
+		: validateContent(body.siteUrl, body.pageSlugs, {
+			...options,
+			// A run without Designer data sends a stub with pages only.
+			pageListComplete: Array.isArray(body.designerData?.styles) && body.designerData.styles.length > 0,
+			// Only the worker's own secret names the site data path.
+			previewSiteDataPath: previewSiteDataPathFromEnv(env)
+		});
 
 	const accessibilityPromise = options.skipAccessibility
 		? Promise.resolve(createEmptyAccessibilityAnalysis())
@@ -1948,15 +2305,25 @@ async function getReviewJobState(
 	env: unknown,
 	jobId: string
 ): Promise<ReviewJobState | null> {
+	// A running job may be finished by its Durable Object alarm, which this
+	// isolate's memory never sees, so only a terminal job is served from memory.
 	const inMemory = reviewJobs.get(jobId);
-	if (inMemory) return inMemory;
+	if (inMemory && TERMINAL_STATUSES.has(inMemory.status)) return inMemory;
 
 	const persisted = await readDurableState(env, `job:${jobId}`);
-	if (!persisted) return null;
+	if (!persisted) return inMemory ?? null;
 
 	const restored = reviveReviewJobState(persisted as ReviewJobState);
 	reviewJobs.set(jobId, restored);
 	return restored;
+}
+
+/** True when this job or its stored copy has a cancel request; marks this job too. */
+async function reviewJobCancelled(env: unknown, job: ReviewJobState): Promise<boolean> {
+	if (job.cancelRequested) return true;
+	const stored = (await readDurableState(env, `job:${job.jobId}`)) as Partial<ReviewJobState> | null;
+	if (stored?.cancelRequested || stored?.status === 'cancelled') job.cancelRequested = true;
+	return job.cancelRequested;
 }
 
 async function persistReviewJobState(env: unknown, job: ReviewJobState): Promise<void> {
@@ -2012,6 +2379,51 @@ async function getSnippetTokenLookupState(
 	const record = persisted as SnippetTokenLookupRecord;
 	snippetTokenLookups.set(bridgeTokenSha256, record);
 	return record;
+}
+
+async function getPublishedHostLookupState(
+	env: unknown,
+	publishedHost: string
+): Promise<PublishedHostLookupRecord | null> {
+	const publishedHostSha256 = await sha256Hex(publishedHost);
+	const inMemory = publishedHostLookups.get(publishedHostSha256);
+	if (inMemory) return inMemory;
+
+	const persisted = await readDurableState(env, `published-host:${publishedHostSha256}`);
+	if (!persisted) return null;
+
+	const record = persisted as PublishedHostLookupRecord;
+	publishedHostLookups.set(publishedHostSha256, record);
+	return record;
+}
+
+/**
+ * Write the host → site mappings for the latest verified host set and retire
+ * mappings from the previous verification that are no longer in it, so a
+ * renamed or removed domain cannot keep resolving to this site's record.
+ */
+async function persistPublishedHostLookups(
+	env: unknown,
+	siteId: string,
+	publishedHosts: string[],
+	updatedAt: string,
+	previousHosts: string[] = []
+): Promise<void> {
+	for (const publishedHost of publishedHosts) {
+		const publishedHostSha256 = await sha256Hex(publishedHost);
+		const lookup: PublishedHostLookupRecord = { publishedHostSha256, siteId, updatedAt };
+		publishedHostLookups.set(publishedHostSha256, lookup);
+		await writeDurableState(env, `published-host:${publishedHostSha256}`, lookup);
+	}
+	const current = new Set(publishedHosts);
+	for (const staleHost of previousHosts.filter((host) => !current.has(host))) {
+		const publishedHostSha256 = await sha256Hex(staleHost);
+		const existing = await getPublishedHostLookupState(env, staleHost);
+		// Only retire a mapping this site still owns; another site may have claimed the host since.
+		if (existing && existing.siteId !== siteId) continue;
+		publishedHostLookups.delete(publishedHostSha256);
+		await deleteDurableState(env, `published-host:${publishedHostSha256}`);
+	}
 }
 
 async function getSubmissionState(
@@ -2430,6 +2842,17 @@ async function readDurableState(env: unknown, name: string): Promise<unknown | n
 	}
 }
 
+async function deleteDurableState(env: unknown, name: string): Promise<void> {
+	const ns = getDurableNamespace(env);
+	if (!ns) return;
+	try {
+		const stub = ns.get(ns.idFromName(name));
+		await stub.fetch('https://internal/state', { method: 'DELETE' });
+	} catch {
+		// A failed retire leaves a stale mapping; the next verification retries it.
+	}
+}
+
 async function writeDurableState(
 	env: unknown,
 	name: string,
@@ -2445,13 +2868,26 @@ async function writeDurableState(
 	});
 }
 
+const TELEMETRY_SECRET_KEYS = new Set(['accesstoken', 'access_token', 'authorization', 'bridgetoken']);
+
+function redactTelemetryPayload(value: unknown, depth = 0): unknown {
+	if (depth > 6 || !value || typeof value !== 'object') return value;
+	if (Array.isArray(value)) return value.map((item) => redactTelemetryPayload(item, depth + 1));
+	return Object.fromEntries(
+		Object.entries(value as Record<string, unknown>).map(([key, entry]) => [
+			key,
+			TELEMETRY_SECRET_KEYS.has(key.toLowerCase()) ? '[redacted]' : redactTelemetryPayload(entry, depth + 1)
+		])
+	);
+}
+
 async function emitTelemetry(env: unknown, event: TelemetryEvent): Promise<void> {
 	const payload = {
 		event: event.event,
 		correlationId: event.correlationId,
 		level: event.level || 'info',
 		timestamp: new Date().toISOString(),
-		...event.payload
+		...(redactTelemetryPayload(event.payload) as Record<string, unknown>)
 	};
 	const line = JSON.stringify(payload);
 	if (event.level === 'error') {
@@ -2633,7 +3069,8 @@ function sanitizeValidationResults(
 						? category.issues
 								.map(sanitizeValidationIssue)
 								.filter((issue): issue is ValidationCategoryIssueDetail => issue !== null)
-						: []
+						: [],
+					...sanitizeCategoryStats((category as { stats?: unknown } | undefined)?.stats)
 			  }))
 		: [];
 
@@ -2646,6 +3083,29 @@ function sanitizeValidationResults(
 		categories,
 		scope: sanitizeValidationScope(validationResults?.scope)
 	};
+}
+
+const CATEGORY_STATS_KEY_LIMIT = 40;
+const CATEGORY_STATS_STRING_MAX_LENGTH = 200;
+
+/**
+ * Keep a category's flat stats (numbers, booleans, short strings, short string
+ * lists) so stored runs can answer questions the issue messages cannot, such as
+ * whether any variable mode is bound to a breakpoint. Nested objects are dropped.
+ */
+function sanitizeCategoryStats(value: unknown): { stats?: Record<string, unknown> } {
+	if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+	const stats: Record<string, unknown> = {};
+	for (const [key, raw] of Object.entries(value as Record<string, unknown>)) {
+		if (Object.keys(stats).length >= CATEGORY_STATS_KEY_LIMIT) break;
+		if (key.length > 64) continue;
+		if (typeof raw === 'boolean' || (typeof raw === 'number' && Number.isFinite(raw))) stats[key] = raw;
+		else if (typeof raw === 'string') stats[key] = raw.slice(0, CATEGORY_STATS_STRING_MAX_LENGTH);
+		else if (Array.isArray(raw) && raw.every((item) => typeof item === 'string')) {
+			stats[key] = raw.slice(0, ISSUE_DETAIL_PAGE_LIMIT).map((item) => item.slice(0, CATEGORY_STATS_STRING_MAX_LENGTH));
+		}
+	}
+	return Object.keys(stats).length > 0 ? { stats } : {};
 }
 
 const ISSUE_ID_MAX_LENGTH = 128;
@@ -2664,15 +3124,28 @@ function sanitizeBoundedString(value: unknown, maxLength: number): string | unde
 	return trimmed.slice(0, maxLength);
 }
 
+/** Reviewer-standard issues list pages as { url, detail }; keep both as one label. */
+function labelText(value: unknown): unknown {
+	if (!value || typeof value !== 'object') return value;
+	const { url, detail } = value as { url?: unknown; detail?: unknown };
+	return [url, detail].filter((part) => typeof part === 'string' && part.trim() !== '').join(' — ');
+}
+
+function sanitizeLabelList(value: unknown): string[] {
+	return Array.isArray(value)
+		? value
+				.map((label) => sanitizeBoundedString(labelText(label), ISSUE_DETAIL_LABEL_MAX_LENGTH))
+				.filter((label): label is string => Boolean(label))
+				.slice(0, ISSUE_DETAIL_PAGE_LIMIT)
+		: [];
+}
+
 function sanitizeIssueDetails(value: unknown): ValidationCategoryIssueDetail['details'] | undefined {
 	if (!value || typeof value !== 'object') return undefined;
 	const details = value as Record<string, unknown>;
-	const pages = Array.isArray(details.pages)
-		? details.pages
-				.map((page) => sanitizeBoundedString(page, ISSUE_DETAIL_LABEL_MAX_LENGTH))
-				.filter((page): page is string => Boolean(page))
-				.slice(0, ISSUE_DETAIL_PAGE_LIMIT)
-		: [];
+	const pages = sanitizeLabelList(details.pages);
+	const samples = sanitizeLabelList(details.samples);
+	const locations = sanitizeLabelList(details.locations);
 	const duplicates = Array.isArray(details.duplicates)
 		? details.duplicates
 				.filter((group): group is unknown[] => Array.isArray(group))
@@ -2686,10 +3159,12 @@ function sanitizeIssueDetails(value: unknown): ValidationCategoryIssueDetail['de
 				.slice(0, ISSUE_DETAIL_DUPLICATE_GROUP_LIMIT)
 		: [];
 
-	if (pages.length === 0 && duplicates.length === 0) return undefined;
+	if (pages.length === 0 && duplicates.length === 0 && samples.length === 0 && locations.length === 0) return undefined;
 	return {
 		...(pages.length > 0 ? { pages } : {}),
-		...(duplicates.length > 0 ? { duplicates } : {})
+		...(duplicates.length > 0 ? { duplicates } : {}),
+		...(samples.length > 0 ? { samples } : {}),
+		...(locations.length > 0 ? { locations } : {})
 	};
 }
 
@@ -2715,6 +3190,34 @@ function sanitizeValidationIssue(value: unknown): ValidationCategoryIssueDetail 
 		...(location ? { location } : {}),
 		...(details ? { details } : {})
 	};
+}
+
+interface ClientRunTimings {
+	steps: Record<string, number>;
+	counts: Record<string, number>;
+}
+
+const RUN_TIMING_KEY = /^[A-Za-z][A-Za-z0-9]{0,31}$/;
+const RUN_TIMING_KEY_LIMIT = 20;
+const RUN_TIMING_MAX_MS = 60 * 60 * 1000;
+const RUN_TIMING_MAX_COUNT = 1_000_000;
+
+function sanitizeNumberMap(value: unknown, max: number): Record<string, number> {
+	if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+	const entries = Object.entries(value as Record<string, unknown>)
+		.filter((entry): entry is [string, number] => RUN_TIMING_KEY.test(entry[0]) && typeof entry[1] === 'number' && Number.isFinite(entry[1]))
+		.slice(0, RUN_TIMING_KEY_LIMIT)
+		.map(([key, number]) => [key, Math.min(max, Math.max(0, Math.round(number)))] as const);
+	return Object.fromEntries(entries);
+}
+
+/** Designer-side run times sent by the extension. Numbers only, bounded, never used for a decision. */
+function sanitizeRunTimings(value: unknown): ClientRunTimings | undefined {
+	if (!value || typeof value !== 'object') return undefined;
+	const { steps, counts } = value as { steps?: unknown; counts?: unknown };
+	const cleanSteps = sanitizeNumberMap(steps, RUN_TIMING_MAX_MS);
+	if (Object.keys(cleanSteps).length === 0) return undefined;
+	return { steps: cleanSteps, counts: sanitizeNumberMap(counts, RUN_TIMING_MAX_COUNT) };
 }
 
 function sanitizeValidationScope(
@@ -3084,6 +3587,8 @@ async function persistValidationResultArtifact(
 		submittedAt: string;
 		correlationId: string;
 		payloadHash: string;
+		evidence: OauthSiteAccessEvidence | null;
+		clientTimings?: ClientRunTimings;
 		validationResults: ValidationSubmitRequest['validationResults'];
 	}
 ): Promise<ValidationResultArtifactPersistResult> {
@@ -3091,7 +3596,7 @@ async function persistValidationResultArtifact(
 	if (!bucket) return { persisted: false, reason: 'r2_not_configured' };
 
 	const artifact = {
-		schema_version: 'validator_app_results_submission.v0.1',
+		schema_version: 'validator_app_results_submission.v0.2',
 		source_lane: 'validator_app_supplemental_results',
 		site_id: input.siteId,
 		site_name: input.siteName,
@@ -3100,6 +3605,8 @@ async function persistValidationResultArtifact(
 		correlation_id: input.correlationId,
 		payload_hash: input.payloadHash,
 		raw_bridge_token_stored: false,
+		evidence: input.evidence,
+		...(input.clientTimings ? { client_timings: input.clientTimings } : {}),
 		validation_results: input.validationResults
 	};
 	const body = JSON.stringify(artifact, null, 2);
@@ -3263,6 +3770,240 @@ function jsonResponse(
 		status,
 		headers: getCORSHeaders(request, extraHeaders)
 	});
+}
+
+/** -1, 0 or 1 for two x.y.z versions. Null when either is not x.y.z. */
+function compareVersions(a: string, b: string): number | null {
+	const parse = (value: string) => {
+		const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(value);
+		return match ? match.slice(1).map(Number) : null;
+	};
+	const left = parse(a);
+	const right = parse(b);
+	if (!left || !right) return null;
+	for (let i = 0; i < 3; i += 1) {
+		if (left[i] !== right[i]) return left[i] < right[i] ? -1 : 1;
+	}
+	return 0;
+}
+
+/**
+ * A 426 response when the request names a Template CLI version below the
+ * minimum. With `required`, a request that names no version (or a malformed
+ * one) gets it too. Null when the request may continue.
+ */
+function outdatedCliResponse(request: Request, correlationId: string, options: { required: boolean }): Response | null {
+	const sent = request.headers.get(TEMPLATE_CLI_VERSION_HEADER)?.trim();
+	if (!sent && !options.required) return null;
+	const order = sent ? compareVersions(sent, MIN_TEMPLATE_CLI_VERSION) : null;
+	if (order !== null && order >= 0) return null;
+	const installUrl = `${new URL(request.url).origin}${TEMPLATE_CLI_PACKAGE_PATH}`;
+	return jsonResponse(
+		{
+			error: `This Template CLI version is too old. Update it, then run again: npm install -g ${installUrl}`,
+			reason: 'cli_outdated',
+			minimumVersion: MIN_TEMPLATE_CLI_VERSION,
+			correlationId
+		},
+		426,
+		request
+	);
+}
+
+/**
+ * True when this network address started too many validation runs in the last
+ * minute. Each run can start a browser session, and these routes need no
+ * login. Requests with no client address (a service binding) are not limited,
+ * and a failure of the counter never blocks a run.
+ */
+async function validationStartRateLimited(request: Request, env: unknown): Promise<boolean> {
+	const address = request.headers.get('CF-Connecting-IP');
+	const ns = getDurableNamespace(env);
+	if (!address || !ns) return false;
+	try {
+		// One Durable Object per address counts and decides in a single step, so every isolate
+		// sees the same number and starts at the same moment cannot slip past the limit.
+		// (The Cloudflare rate limit binding let about 45 starts through against a limit of 10.)
+		const stub = ns.get(ns.idFromName(`start-limit:${await sha256Hex(address)}`));
+		const response = await stub.fetch('https://internal/start-limit', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ limit: VALIDATION_START_LIMIT, windowMs: VALIDATION_START_WINDOW_MS })
+		});
+		if (!response.ok) return false;
+		return ((await response.json()) as { limited?: boolean }).limited === true;
+	} catch {
+		return false;
+	}
+}
+
+function rateLimitedStartResponse(request: Request, correlationId: string): Response {
+	return jsonResponse(
+		{
+			error: 'Too many validation runs from this network in one minute. Wait one minute, then run again.',
+			reason: 'rate_limited',
+			correlationId
+		},
+		429,
+		request,
+		{ 'Retry-After': '60' }
+	);
+}
+
+/**
+ * The result to record for a Template CLI submission. The worker does not
+ * trust the result the CLI sends. It takes the result of its own validation
+ * run, applies the Designer enhancements that the clients apply, and records
+ * that. The run must be complete, recent, full in scope, and for a published
+ * address of the site that the token can read.
+ */
+async function serverResultForCliRecord(
+	env: unknown,
+	body: { jobId?: unknown },
+	publishedHosts: string[],
+	pagePaths: string[] | null
+): Promise<{ ok: true; results: ValidationSubmitRequest['validationResults'] } | { ok: false; error: string }> {
+	const again = 'Run `wf-template-validate validate` again.';
+	const jobId = typeof body.jobId === 'string' ? body.jobId.trim() : '';
+	if (!jobId) return { ok: false, error: `This record names no validation run. ${again}` };
+
+	const job = await getReviewJobState(env, jobId);
+	if (!job || job.status !== 'completed' || !job.result) {
+		return { ok: false, error: `The validation run for this record was not found or did not finish. ${again}` };
+	}
+	const completedAt = job.completedAt ? Date.parse(job.completedAt) : Number.NaN;
+	if (!Number.isFinite(completedAt) || Date.now() - completedAt > CLI_RECORD_MAX_JOB_AGE_MS) {
+		return { ok: false, error: `The validation run for this record is too old. ${again}` };
+	}
+
+	let host = '';
+	let startsAtHome = false;
+	try {
+		const runUrl = new URL(job.request.siteUrl);
+		host = runUrl.hostname.toLowerCase();
+		// The run's first page is the site URL. It must be the home page, or the real home page is never checked.
+		startsAtHome = runUrl.protocol === 'https:' && runUrl.pathname === '/' && runUrl.search === '';
+	} catch {
+		// handled below
+	}
+	if (!host || !publishedHosts.includes(host)) {
+		return { ok: false, error: 'The validation run was for a URL that is not a published address of this site. Validate the site at its own address.' };
+	}
+	if (!startsAtHome) {
+		return { ok: false, error: `The validation run did not start at the site's home page. Validate the home URL, for example https://${host}/.` };
+	}
+
+	const checks = Array.isArray(job.request.checks) ? job.request.checks.map(String) : [];
+	const options = (job.request.options ?? {}) as Record<string, unknown>;
+	const contentChecks = (options.contentChecks ?? {}) as Record<string, unknown>;
+	const excluded = Array.isArray(options.excludePageSlugs) ? options.excludePageSlugs : [];
+	// Only these options may be present, each at its full-run value. An option that limits the
+	// run (maxPages today, or one added later) makes the run not recordable.
+	const knownOptions = ['skipAssets', 'skipContent', 'skipAccessibility', 'skipPerformance', 'excludePageSlugs', 'pageScope', 'currentPageSlug', 'contentChecks'];
+	const fullScope =
+		['designer', 'assets', 'content', 'accessibility'].every((check) => checks.includes(check)) &&
+		Object.keys(options).every((key) => knownOptions.includes(key)) &&
+		!options.skipAssets &&
+		!options.skipContent &&
+		!options.skipAccessibility &&
+		!options.skipPerformance &&
+		(options.pageScope ?? 'all') === 'all' &&
+		Object.values(contentChecks).every((value) => value !== false) &&
+		excluded.every((slug) => STYLE_GUIDE_EXCLUDED_SLUGS.includes(String(slug)));
+	if (!fullScope) {
+		return { ok: false, error: `The validation run did not include every check on every page. ${again}` };
+	}
+
+	// The run must have checked every published page. The list comes from the worker's own
+	// read of the site, so a client cannot pass a shorter page list and still get a full record.
+	if (!pagePaths) {
+		return { ok: false, error: `The worker could not read the site's page list from Webflow. ${again}` };
+	}
+	// Resolve each page the way the crawl does (content-validator discoverAdditionalPages), so the
+	// comparison is about the URLs that were fetched. A page on another host makes the run unusable.
+	const siteOrigin = new URL(job.request.siteUrl).origin;
+	const checked = new Set<string>();
+	for (const slug of Array.isArray(job.request.pageSlugs) ? job.request.pageSlugs : []) {
+		const text = String(slug);
+		let resolved: URL;
+		try {
+			resolved = new URL(text.startsWith('/') ? text : `/${text}`, job.request.siteUrl);
+		} catch {
+			continue;
+		}
+		if (resolved.origin !== siteOrigin) {
+			return { ok: false, error: `The validation run named a page that is not on this site. ${again}` };
+		}
+		// A path with a query does not count: only the plain page URL is the page.
+		if (resolved.search === '') checked.add(normalizePagePath(resolved.pathname));
+	}
+	const missing = pagePaths.filter((path) => !checked.has(path));
+	if (missing.length > 0) {
+		return {
+			ok: false,
+			error: `The validation run did not check every published page (${missing.length} missing, for example ${missing[0]}). ${again}`
+		};
+	}
+
+	// Naming a page is not enough: the crawl leaves out a page that fails to load. Every required
+	// page (and the home page) must be in the list of pages the crawl analyzed. The exceptions are
+	// the style guide, which the content crawl may skip, and the utility pages without content.
+	const analyzed = new Set<string>();
+	for (const url of Array.isArray(job.analyzedUrls) ? job.analyzedUrls : []) {
+		try {
+			const parsed = new URL(url);
+			if (parsed.origin === siteOrigin) analyzed.add(normalizePagePath(parsed.pathname));
+		} catch {
+			// not a URL: it does not count
+		}
+	}
+	const skippable = excluded.map((slug) => normalizePagePath(String(slug)));
+	const notAnalyzed = ['/', ...pagePaths].filter(
+		(path) => !skippable.includes(path) && !UTILITY_PAGES_WITHOUT_CONTENT.includes(path) && !analyzed.has(path)
+	);
+	if (notAnalyzed.length > 0) {
+		return {
+			ok: false,
+			error: `The validation run could not load every published page (${notAnalyzed.length} not loaded, for example ${notAnalyzed[0]}). Check that the page loads, then run \`wf-template-validate validate\` again.`
+		};
+	}
+
+	const canvas = (job.request as { canvasResult?: CanvasAccessibilityResult }).canvasResult;
+	if (!canvas || typeof canvas !== 'object' || canvas.available !== true) {
+		return { ok: false, error: `The validation run has no canvas check data. ${again}` };
+	}
+
+	try {
+		const results = structuredClone(job.result);
+		const designerData = job.request.designerData as Parameters<typeof deriveEnhancedValidation>[0] & {
+			enhancedValidation?: unknown;
+		};
+		const data = designerData.enhancedValidation
+			? designerData
+			: {
+					...designerData,
+					collectionMetadata: deriveCollectionMetadata(designerData),
+					enhancedValidation: deriveEnhancedValidation(designerData)
+				};
+		enhanceValidationResults(results, data as Parameters<typeof enhanceValidationResults>[1], canvas);
+		// Some findings keep the fix and the location inside `details`. The stored record reads the
+		// top-level fields, so lift them, as the CLI did when it built the record itself.
+		for (const category of Array.isArray(results.categories) ? results.categories : []) {
+			for (const issue of Array.isArray(category.issues) ? category.issues : []) {
+				issue.howToFix = issue.howToFix || issue.details?.howToFix;
+				issue.location = issue.location || issue.details?.location;
+			}
+		}
+		results.scope = {
+			selectedChecks: checks,
+			pageScope: 'all',
+			publishedChecks: 'full',
+			pageSlugsCount: Array.isArray(job.request.pageSlugs) ? job.request.pageSlugs.length : 0
+		};
+		return { ok: true, results };
+	} catch {
+		return { ok: false, error: `The validation run holds Designer data that could not be checked. ${again}` };
+	}
 }
 
 function methodNotAllowed(request: Request): Response {

@@ -1,0 +1,83 @@
+import assert from 'node:assert/strict';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { chromium } from '@playwright/test';
+const base = process.env.AGENCY_BASE_URL ?? 'http://127.0.0.1:4198';
+const evidence = process.env.AGENCY_EVIDENCE_DIR ?? '/tmp/agency-gsap-evidence';
+await mkdir(evidence, { recursive: true });
+const browser = await chromium.launch({ headless: true });
+const results = [];
+try {
+  for (const width of [320, 390, 768, 1024, 1025, 1440]) {
+    const page = await browser.newPage({ viewport: { width, height: 900 } });
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.goto(base, { waitUntil: 'networkidle' });
+    await page.locator('.steps').scrollIntoViewIfNeeded();
+    await page.waitForFunction(() => !document.querySelector('.journey .scene').style.opacity);
+    await page.locator('[data-home-step="build"]').click();
+    await page.waitForFunction(() => document.querySelector('#journey-image').style.opacity !== '');
+    const moving = await page.locator('#journey-image').evaluate(el => ({ opacity: Number(getComputedStyle(el).opacity), y: new DOMMatrix(getComputedStyle(el).transform).m42 }));
+    assert.ok(moving.opacity >= 0.55 && moving.opacity < 1 && moving.y > 0, 'GSAP reveals selected image');
+    await page.locator('[data-home-step="run"]').click();
+    await page.locator('[data-home-step="learn"]').click();
+    await page.locator('[data-home-step="run"]').click();
+    await page.waitForFunction(() => { const el = document.querySelector('#journey-image'); return el.complete && el.naturalWidth > 0 && !el.style.opacity; });
+    assert.match(await page.locator('#journey-image').getAttribute('src'), /run-reviewed/);
+    assert.match(await page.locator('#journey-caption').textContent(), /^Run/);
+    assert.equal(await page.locator('[data-home-step][aria-pressed="true"]').count(), 1);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    await page.locator('[data-home-step="build"]').click();
+    await page.waitForFunction(() => document.querySelector('#journey-image').complete);
+    assert.equal(await page.locator('#journey-image').evaluate(el => getComputedStyle(el).opacity), '1');
+    assert.equal(await page.locator('#journey-image').evaluate(el => el.style.transform), '');
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.locator('[data-home-step="run"]').focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('[data-home-step="run"]').getAttribute('aria-pressed'), 'true');
+    await page.locator('[data-evidence-reveal] summary').click();
+    await page.waitForFunction(() => document.querySelector('[data-evidence-reveal]').open && !document.querySelector('[data-evidence-reveal]').style.height);
+    await page.locator('[data-evidence-reveal] summary').click();
+    await page.waitForFunction(() => !document.querySelector('[data-evidence-reveal]').open);
+    const watch = page.locator('[data-home-open]');
+    await watch.click();
+    assert.equal(await page.locator('#work-dialog').evaluate(el => el.open), true);
+    await page.keyboard.press('Escape');
+    // Native dialog.close queues its close event; wait for the observable
+    // playback, scroll and focus restoration before checking the settled state.
+    await page.waitForFunction(() => {
+      const dialog = document.querySelector('#work-dialog');
+      return !dialog.open && dialog.querySelector('video').paused && document.body.style.overflow === '' && document.activeElement?.hasAttribute('data-home-open');
+    });
+    assert.equal(await page.locator('#work-dialog').evaluate(el => el.open), false);
+    assert.equal(await watch.evaluate(el => el === document.activeElement), true);
+    assert.equal(await page.evaluate(() => document.body.style.overflow), '');
+    await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
+    const cta = page.locator('.hero .cta');
+    const arrow = cta.locator('[data-motion-arrow]');
+    await cta.hover();
+    await page.waitForFunction(() => new DOMMatrix(getComputedStyle(document.querySelector('.hero [data-motion-arrow]')).transform).m41 > 2.9);
+    await page.mouse.move(width - 2, 2);
+    await page.waitForFunction(() => new DOMMatrix(getComputedStyle(document.querySelector('.hero [data-motion-arrow]')).transform).m41 === 0);
+    await cta.hover();
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    assert.equal(await arrow.evaluate(el => getComputedStyle(el).transform), 'none');
+    await cta.focus();
+    assert.ok(await cta.evaluate(el => getComputedStyle(el).outlineStyle !== 'none'), 'Keyboard focus remains visible');
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    assert.deepEqual(errors, []);
+    await page.screenshot({ path: `${evidence}/home-${width}.png` });
+    results.push({ width, passed: true });
+    await page.close();
+  }
+  const touch = await browser.newPage({ isMobile: true, hasTouch: true, viewport: { width: 390, height: 844 } });
+  await touch.goto(base, { waitUntil: 'networkidle' });
+  await touch.locator('[data-home-step="run"]').tap();
+  assert.equal(await touch.locator('[data-home-step="run"]').getAttribute('aria-pressed'), 'true');
+  assert.equal(await touch.locator('.hero [data-motion-arrow]').evaluate(el => el.style.transform), '');
+  await touch.close();
+  const receipt = { base, passed: true, results, checks: ['selected image GSAP intermediate state', 'rapid latest selection', 'live reduced motion', 'keyboard and touch selection', 'arrow reversible hover', 'focus ring', 'evidence disclosure', 'walkthrough modal and focus return'] };
+  await writeFile(`${evidence}/interactions.json`, JSON.stringify(receipt, null, 2));
+  console.log(JSON.stringify(receipt));
+} finally { await browser.close(); }

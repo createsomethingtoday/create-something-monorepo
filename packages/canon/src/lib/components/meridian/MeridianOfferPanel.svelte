@@ -1,12 +1,18 @@
 <script lang="ts">
+ import SceneLead from "../background/SceneLead.svelte";
+  import BackgroundScene from "../background/BackgroundScene.svelte";
+  import { imageAspectRatio, type CanonBackgroundScene } from "../background/scene.js";
   type PropertyMode = 'ltd' | 'io' | 'space' | 'agency' | 'learn';
 
   interface MeridianOfferMedia {
     src: string;
     alt: string;
+    width?: number;
+    height?: number;
   }
 
   interface Props {
+    background?: CanonBackgroundScene;
     eyebrow: string;
     title: string;
     description?: string;
@@ -27,7 +33,7 @@
   };
 
   let {
-    eyebrow,
+    background,    eyebrow,
     title,
     description,
     actionLabel,
@@ -38,20 +44,32 @@
   }: Props = $props();
 
   let artifact = $derived(artifacts[mode]);
+  let scene = $derived(background);
+  let legacyScene = $derived(media ? {src:media.src,description:media.alt} : undefined);
 </script>
 
-<section class="meridian-offer-panel" aria-labelledby={headingId} data-mode={mode}>
+<section data-background={scene ? "scene" : legacyScene ? "legacy" : undefined} class="meridian-offer-panel" aria-labelledby={headingId} data-mode={mode}>
+ {#if scene}
+ <SceneLead {scene}>
+  <span data-scene-eyebrow>{eyebrow}</span><h2 id={headingId}>{title}</h2>
+  {#if description}<p>{description}</p>{/if}
+  <div data-scene-actions><a class="meridian-offer-panel__action" href={actionHref}><span>{actionLabel}</span><span class="meridian-offer-panel__action-icon" aria-hidden="true">↗</span></a></div>
+ </SceneLead>
+ {:else if legacyScene}
+  <div class="meridian-offer-panel__legacy" style:--offer-media-ratio={imageAspectRatio(media?.width, media?.height) ?? 2 / 3}>
+    <div class="meridian-offer-panel__legacy-copy">
+      <p class="meridian-offer-panel__eyebrow"><span aria-hidden="true"></span>{eyebrow}</p>
+      <h2 id={headingId}>{title}</h2>
+      {#if description}<p class="meridian-offer-panel__description">{description}</p>{/if}
+      <a class="meridian-offer-panel__action" href={actionHref}><span>{actionLabel}</span><span class="meridian-offer-panel__action-icon" aria-hidden="true">↗</span></a>
+    </div>
+    <div class="meridian-offer-panel__legacy-art"><BackgroundScene scene={legacyScene}/></div>
+  </div>
+ {:else}
+  {#if scene}<BackgroundScene scene={scene}/>{/if}
   <div class="meridian-offer-panel__inner">
-    <div class:has-media={media} class="meridian-offer-panel__visual">
-      {#if media}
-        <img
-          class="meridian-offer-panel__media"
-          src={media.src}
-          alt={media.alt}
-          loading="lazy"
-          decoding="async"
-        />
-      {:else}
+    <div class:has-media={scene} class="meridian-offer-panel__visual">
+      {#if !scene}
         <div
           class="meridian-offer-panel__artifact"
           role="img"
@@ -95,13 +113,14 @@
       </a>
     </div>
   </div>
+{/if}
 </section>
 
 <style>
   .meridian-offer-panel {
     padding: clamp(3.5rem, 7vw, 6.5rem) 1rem;
-    background: var(--color-performance-editorial-light-secondary, #d8cdbc);
-    color: var(--color-performance-editorial-light, #f3ebe4);
+    background: var(--color-performance-bg-subtle, #d8cdbc);
+    color: var(--color-performance-fg-primary, #f3ebe4);
   }
 
   .meridian-offer-panel__inner {
@@ -112,7 +131,7 @@
     margin-inline: auto;
     overflow: hidden;
     border-radius: var(--radius-performance-editorial, 0.375rem);
-    background: var(--color-performance-editorial-dark, #181312);
+    background: var(--color-performance-paper, #181312);
   }
 
   .meridian-offer-panel__visual {
@@ -125,12 +144,12 @@
     place-items: center;
     background:
       radial-gradient(circle at 19% 12%, rgb(243 235 228 / 34%), transparent 28%),
-      linear-gradient(145deg, #a96718 0%, var(--color-performance-editorial-brand, #fcaa2d) 48%, #8a4f13 100%);
+      linear-gradient(145deg, #a96718 0%, var(--color-performance-brand-primary, #fcaa2d) 48%, #8a4f13 100%);
   }
 
   .meridian-offer-panel__visual.has-media {
     padding: 0;
-    background: var(--color-performance-editorial-dark, #181312);
+    background: var(--color-performance-paper, #181312);
   }
 
   .meridian-offer-panel__visual.has-media::before,
@@ -138,12 +157,7 @@
     display: none;
   }
 
-  .meridian-offer-panel__media {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: 50% 52%;
-  }
+
 
   .meridian-offer-panel__visual::before,
   .meridian-offer-panel__visual::after {
@@ -175,7 +189,7 @@
     overflow: hidden;
     border: 1px solid rgb(243 235 228 / 40%);
     border-radius: calc(var(--radius-performance-editorial, 0.375rem) * 0.65);
-    background: var(--color-performance-editorial-dark, #181312);
+    background: var(--color-performance-paper, #181312);
     box-shadow: 0 1.25rem 3rem rgb(24 19 18 / 28%);
   }
 
@@ -191,7 +205,7 @@
     font-weight: var(--font-performance-semibold);
     letter-spacing: 0.055em;
     line-height: 1.35;
-    text-transform: uppercase;
+    text-transform: none;
   }
 
   .meridian-offer-panel__artifact-header {
@@ -236,12 +250,12 @@
   svg :global(.owner),
   svg :global(.decision) {
     fill: #dce7f4;
-    stroke: var(--color-performance-editorial-light, #f3ebe4);
+    stroke: var(--color-performance-fg-primary, #f3ebe4);
     stroke-width: 5;
   }
 
   svg :global(.decision) {
-    fill: var(--color-performance-editorial-brand, #fcaa2d);
+    fill: var(--color-performance-brand-primary, #fcaa2d);
     stroke: #b98813;
   }
 
@@ -296,18 +310,18 @@
     align-items: center;
     gap: 0.65rem;
     margin: 0;
-    color: var(--color-performance-editorial-light, #f3ebe4);
+    color: var(--color-performance-fg-primary, #f3ebe4);
     font-family: var(--font-performance-mono);
-    font-size: 0.7rem;
+    font-size: 0.875rem;
     font-weight: var(--font-performance-semibold);
     letter-spacing: 0.075em;
-    text-transform: uppercase;
+    text-transform: none;
   }
 
   .meridian-offer-panel__eyebrow span {
     width: 0.42rem;
     aspect-ratio: 1;
-    background: var(--color-performance-editorial-brand, #fcaa2d);
+    background: var(--color-performance-brand-primary, #fcaa2d);
   }
 
   h2 {
@@ -324,7 +338,7 @@
   .meridian-offer-panel__description {
     max-width: 47rem;
     margin: 0;
-    color: color-mix(in srgb, var(--color-performance-editorial-light, #f3ebe4) 68%, transparent);
+    color: color-mix(in srgb, var(--color-performance-fg-primary, #f3ebe4) 68%, transparent);
     font-size: clamp(1rem, 1.35vw, 1.18rem);
     line-height: 1.55;
   }
@@ -336,10 +350,10 @@
     grid-template-columns: auto 3.25rem;
     align-items: stretch;
     overflow: hidden;
-    border: 1px solid var(--color-performance-editorial-brand, #fcaa2d);
+    border: 1px solid var(--color-performance-brand-primary, #fcaa2d);
     border-radius: calc(var(--radius-performance-editorial, 0.375rem) * 0.75);
-    background: var(--color-performance-editorial-brand, #fcaa2d);
-    color: var(--color-performance-editorial-dark, #181312);
+    background: var(--color-performance-brand-primary, #fcaa2d);
+    color: var(--color-performance-paper, #181312);
     font-family: var(--font-performance-sans);
     font-size: 0.92rem;
     font-weight: var(--font-performance-semibold);
@@ -355,13 +369,13 @@
   .meridian-offer-panel__action-icon {
     display: grid;
     border-left: 1px solid rgb(24 19 18 / 24%);
-    background: var(--color-performance-editorial-light, #f3ebe4);
+    background: var(--color-performance-fg-primary, #f3ebe4);
     font-size: 1.25rem;
     place-items: center;
   }
 
   .meridian-offer-panel__action:hover {
-    background: color-mix(in srgb, var(--color-performance-editorial-brand, #fcaa2d) 88%, white);
+    background: color-mix(in srgb, var(--color-performance-brand-primary, #fcaa2d) 88%, white);
   }
 
   .meridian-offer-panel__action:focus-visible {
@@ -410,4 +424,34 @@
       grid-template-columns: minmax(0, 1fr) 3.25rem;
     }
   }
+
+ .meridian-offer-panel{position:relative;isolation:isolate;}
+ .meridian-offer-panel>:global(.canon-background-scene){z-index:-1;}
+ .meridian-offer-panel[data-background="scene"]{background:var(--color-performance-paper);}
+ .meridian-offer-panel[data-background="scene"] .meridian-offer-panel__visual{background:none;min-height:18rem;}
+ .meridian-offer-panel[data-background="scene"] .meridian-offer-panel__content{background:color-mix(in srgb,var(--color-performance-paper) 96%,transparent);padding:clamp(1.25rem,4vw,3rem);}
+ .meridian-offer-panel[data-background="scene"] .meridian-offer-panel__inner{background:none;grid-template-columns:minmax(0,1fr);}
+ .meridian-offer-panel[data-background="scene"] .meridian-offer-panel__visual{display:none;}
+ .meridian-offer-panel[data-background="scene"] .meridian-offer-panel__content{grid-column:1;width:min(60%,48rem);box-sizing:border-box;}
+ @media(max-width:47.99rem){.meridian-offer-panel[data-background="scene"] .meridian-offer-panel__content{width:100%;margin-top:12rem;}}
+
+ /* Authored scene lead and dense records are separate layout regions. */
+ .meridian-offer-panel[data-background="scene"]{display:block;grid-template-columns:none;grid-template-rows:none;min-height:0;width:100%;padding:0;background:var(--color-performance-paper);}
+
+ /* Older campaign media has no authored quiet copy field. Keep its whole image
+    in a separate CSS-background region; never infer overlay-safe space. */
+ .meridian-offer-panel[data-background="legacy"]{padding:0;background:#000;color:#f3ebe4;}
+ .meridian-offer-panel__legacy{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);align-items:center;gap:clamp(2rem,5vw,5rem);width:min(100%,90rem);margin-inline:auto;padding:clamp(2rem,5vw,5rem);box-sizing:border-box;}
+ .meridian-offer-panel__legacy-copy{display:grid;gap:1.5rem;min-width:0;}
+ .meridian-offer-panel__legacy h2{font-family:var(--font-performance-sans);font-size:clamp(2.25rem,4.5vw,4.8rem);font-weight:500;line-height:1.08;}
+ .meridian-offer-panel__legacy .meridian-offer-panel__eyebrow{color:#f3ebe4;}
+ .meridian-offer-panel__legacy .meridian-offer-panel__description{color:#c8c0ba;}
+ .meridian-offer-panel__legacy .meridian-offer-panel__action{background:#fcaa2d;color:#181312;border-color:#fcaa2d;}
+ .meridian-offer-panel__legacy .meridian-offer-panel__action-icon{background:#f3ebe4;}
+ .meridian-offer-panel__legacy-art{position:relative;width:100%;max-width:24rem;aspect-ratio:var(--offer-media-ratio);justify-self:center;}
+ @media(max-width:47.99rem){
+  .meridian-offer-panel__legacy{grid-template-columns:minmax(0,1fr);padding:2rem 1.5rem;gap:2rem;}
+  .meridian-offer-panel__legacy h2{max-width:16ch;font-size:clamp(2rem,7vw,3.5rem);}
+  .meridian-offer-panel__legacy-art{width:min(100%,16rem);}
+ }
 </style>

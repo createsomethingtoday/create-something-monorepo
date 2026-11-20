@@ -26,6 +26,8 @@ from create_something_agents import (
     RalphStopHook,
 )
 
+from create_something_agents.prompts import CONTENT_SYSTEM_PROMPT
+
 # Import dental agent factories
 from agents.dental_coordinator import create_dental_coordinator
 from agents.dental_scheduler import create_dental_scheduler
@@ -210,14 +212,7 @@ Use the skills loaded for exact patterns. Verify each step before proceeding.
 Output <promise>DEPLOY_COMPLETE</promise> when the site is live and responding."""
 
     elif request.agent_type == "content":
-        agent.system_prompt = """You are a content generation agent for CREATE SOMETHING.
-
-Follow the Voice Canon strictly:
-- Clarity over cleverness
-- Specificity over generality
-- Lead with outcomes, not philosophy
-
-Generate content that can be published to .io papers, .space lessons, or social channels."""
+        agent.system_prompt = CONTENT_SYSTEM_PROMPT
 
     elif request.agent_type == "research":
         agent.system_prompt = """You are a research agent for CREATE SOMETHING.

@@ -1,0 +1,33 @@
+   Compiling gigi_desktop v0.3.6 (/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6/apps/gigi-desktop/src-tauri)
+warning: unused import: `std::os::unix::net::UnixStream`
+   --> src/chat.rs:502:5
+    |
+502 | use std::os::unix::net::UnixStream;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `gigi_desktop` (lib test) generated 1 warning (run `cargo fix --lib -p gigi_desktop --tests` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.38s
+     Running unittests src/lib.rs (apps/gigi-desktop/src-tauri/target/debug/deps/gigi_desktop_lib-3e8f07dd24e08656)
+
+running 1 test
+test social::tests::unicode_search_matches_titles_and_captions_before_paging_for_native_and_mcp ... FAILED
+
+failures:
+
+---- social::tests::unicode_search_matches_titles_and_captions_before_paging_for_native_and_mcp stdout ----
+
+thread 'social::tests::unicode_search_matches_titles_and_captions_before_paging_for_native_and_mcp' (5222629) panicked at src/social.rs:227:13:
+assertion `left == right` failed: Unicode query: été
+  left: Number(0)
+ right: 55
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    social::tests::unicode_search_matches_titles_and_captions_before_paging_for_native_and_mcp
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 164 filtered out; finished in 0.10s
+
+error: test failed, to rerun pass `--lib`

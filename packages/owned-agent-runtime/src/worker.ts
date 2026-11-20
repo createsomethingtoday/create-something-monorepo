@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { getAgentDefinition, listAgentDefinitions } from './definitions.js';
 import type { AgentAdmission, AgentExecutor, AgentRunReceipt, AgentStore } from './types.js';
+import type { GuideDecisionObserver, GuideDecisionTerminal } from './guide-decision-observer.js';
 
 const messageInput = z.object({
   query: z.string().trim().min(1).max(20_000),
@@ -14,6 +15,8 @@ type WorkerDependencies = {
   admission?: AgentAdmission;
   id?: () => string;
   now?: () => Date;
+  decisionObserver?: GuideDecisionObserver;
+  background?: (task: Promise<void>) => void;
 };
 
 const corsHeaders = {
@@ -100,6 +103,15 @@ export function createOwnedAgentWorker(dependencies: WorkerDependencies) {
       const startedAt = now().toISOString();
       const stream = new ReadableStream<Uint8Array>({
         async start(controller) {
+          let terminalStatus: GuideDecisionTerminal['status'] = 'unrecorded';
+          let resolveTerminal: ((value: GuideDecisionTerminal) => void) | undefined;
+          const terminal = new Promise<GuideDecisionTerminal>(resolve => { resolveTerminal = resolve; });
+          const observation = dependencies.decisionObserver && !existing.previousResponseId
+            ? Promise.resolve().then(() => dependencies.decisionObserver!.observe({
+                definition, query: parsed.data.query, conversationId, runId
+              }, terminal)).catch(() => { console.warn('agent_decision_observation_failed'); })
+            : undefined;
+          if (observation && dependencies.background) dependencies.background(observation);
           controller.enqueue(
             sse('run.started', {
               run_id: runId,
@@ -141,6 +153,7 @@ export function createOwnedAgentWorker(dependencies: WorkerDependencies) {
                 runId,
                 receipt
               });
+              terminalStatus = 'completed';
               controller.enqueue(
                 sse('message.completed', {
                   run_id: runId,
@@ -171,6 +184,7 @@ export function createOwnedAgentWorker(dependencies: WorkerDependencies) {
             };
             try {
               await dependencies.store.failRun({ conversationId, runId, receipt });
+              terminalStatus = 'failed';
             } catch {
               controller.enqueue(
                 sse('run.failed', {
@@ -189,6 +203,9 @@ export function createOwnedAgentWorker(dependencies: WorkerDependencies) {
               })
             );
           } finally {
+            resolveTerminal?.({ status: terminalStatus,
+              durationMs: Math.max(0, now().getTime() - new Date(startedAt).getTime()) });
+            if (observation && !dependencies.background) await observation;
             controller.close();
           }
         }

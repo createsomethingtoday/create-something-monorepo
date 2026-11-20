@@ -150,3 +150,41 @@ class TestAgentResponseModel:
         assert response.success is True
         assert response.output == "Task completed"
         assert response.iterations == 3
+
+
+class TestContentAgentRouting:
+    def test_content_api_uses_shared_prompt_and_preserves_request_config(self):
+        from agents.content_agent import SYSTEM_PROMPT
+        from server.main import AgentRequest, create_agent_from_request
+
+        request = AgentRequest(
+            task="Build passed; deployment pending; costs unknown.",
+            agent_type="content", model="offline-request-model", max_turns=7,
+            skills=["voice-canon"]
+        )
+        agent = create_agent_from_request(request)
+        assert agent.system_prompt == SYSTEM_PROMPT
+        assert agent.config.model == request.model
+        assert agent.config.max_turns == 7
+        assert agent.config.skills == ["voice-canon"]
+
+
+    def test_content_run_endpoint_receives_packaged_prompt(self, monkeypatch):
+        from create_something_agents import AgentResult, CreateSomethingAgent
+        from create_something_agents.prompts import CONTENT_SYSTEM_PROMPT
+        from server.main import app
+
+        captured = {}
+        async def offline_run(agent):
+            captured["prompt"] = agent.system_prompt
+            return AgentResult(
+                output="Offline content fixture", model="offline", input_tokens=0,
+                output_tokens=0, cost_usd=0, tool_calls=[], success=True
+            )
+        monkeypatch.setattr(CreateSomethingAgent, "run", offline_run)
+        response = TestClient(app).post("/run", json={
+            "task": "Build passed; deployment pending; costs unknown.", "agent_type": "content"
+        })
+        assert response.status_code == 200
+        assert response.json()["success"] is True
+        assert captured["prompt"] == CONTENT_SYSTEM_PROMPT

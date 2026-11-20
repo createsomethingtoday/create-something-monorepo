@@ -1,0 +1,18 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: success expiry resumes after keyboard focus leaves
+
+1 !== 0
+
+    at file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-50058674/apps/gigi-desktop/scripts/daily-polish-browser.mjs:88:10 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 1,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.4

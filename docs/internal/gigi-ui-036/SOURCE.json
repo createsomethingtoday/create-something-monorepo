@@ -1,0 +1,178 @@
+{
+  "issue": "CRE-2406",
+  "canonicalRepository": "createsomethingtoday/create-something-monorepo",
+  "canonicalBaseline": "574adfee269cecf4a17415dcde53f60a6fe06a88",
+  "sourceRepository": "gigi-team/grantbot",
+  "sourceCommit": "3982c5b63d50fe9d63a1311bee27d893f50a1238",
+  "sourceParent": "ee365ca5c71322ca2a4bd11734abc4866c454f56",
+  "sourceDiffSha256": "1c51aea96c61a609ffd272ee4a3f49090e9fcf3d4ec992d63c5d42d3050521a4",
+  "method": "selective runtime patch with sandbox/gigi-desktop prefix removed; no cherry-pick; two divergent harness/manifest hunks manually reconciled",
+  "scopeUpdate": "User explicitly allowed Money native filtering, Social API/MCP query, and native Maps/Swift helper plus dependent UI/tests",
+  "files": [
+    {
+      "sourcePath": "sandbox/gigi-desktop/README.md",
+      "targetPath": null,
+      "disposition": "excluded: nested setup/documentation; applicable product documentation adapted locally"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/agent/gigi/.codex-plugin/plugin.json",
+      "targetPath": "apps/gigi-desktop/agent/gigi/.codex-plugin/plugin.json",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/package.json",
+      "targetPath": "apps/gigi-desktop/package.json",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/scripts/astryx-refinement-browser.mjs",
+      "targetPath": "apps/gigi-desktop/scripts/astryx-refinement-browser.mjs",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/scripts/astryx-review-regressions.mjs",
+      "targetPath": "apps/gigi-desktop/scripts/astryx-review-regressions.mjs",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/scripts/astryx-rewrite-browser.mjs",
+      "targetPath": "apps/gigi-desktop/scripts/astryx-rewrite-browser.mjs",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/scripts/dev-astryx-quest-browser.mjs",
+      "targetPath": "apps/gigi-desktop/scripts/dev-astryx-quest-browser.mjs",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/scripts/prepare-companions.mjs",
+      "targetPath": "apps/gigi-desktop/scripts/prepare-companions.mjs",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/src-tauri/Cargo.lock",
+      "targetPath": "apps/gigi-desktop/src-tauri/Cargo.lock",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/src-tauri/Cargo.toml",
+      "targetPath": "apps/gigi-desktop/src-tauri/Cargo.toml",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/src-tauri/examples/seed_workspace_refinement.rs",
+      "targetPath": "apps/gigi-desktop/src-tauri/examples/seed_workspace_refinement.rs",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/src-tauri/native/MapPreview.swift",
+      "targetPath": "apps/gigi-desktop/src-tauri/native/MapPreview.swift",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/src-tauri/src/domain.rs",
+      "targetPath": "apps/gigi-desktop/src-tauri/src/domain.rs",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/src-tauri/src/finance_list.rs",
+      "targetPath": "apps/gigi-desktop/src-tauri/src/finance_list.rs",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/src-tauri/src/lib.rs",
+      "targetPath": "apps/gigi-desktop/src-tauri/src/lib.rs",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/src-tauri/src/place_maps.rs",
+      "targetPath": "apps/gigi-desktop/src-tauri/src/place_maps.rs",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/src-tauri/src/social.rs",
+      "targetPath": "apps/gigi-desktop/src-tauri/src/social.rs",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/src-tauri/src/social_mcp.rs",
+      "targetPath": "apps/gigi-desktop/src-tauri/src/social_mcp.rs",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/src-tauri/tauri.conf.json",
+      "targetPath": "apps/gigi-desktop/src-tauri/tauri.conf.json",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/ui/App.jsx",
+      "targetPath": "apps/gigi-desktop/ui/App.jsx",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/ui/app.css",
+      "targetPath": "apps/gigi-desktop/ui/app.css",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/ui/appearance.jsx",
+      "targetPath": "apps/gigi-desktop/ui/appearance.jsx",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/ui/chat.jsx",
+      "targetPath": "apps/gigi-desktop/ui/chat.jsx",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/ui/collection-details.jsx",
+      "targetPath": "apps/gigi-desktop/ui/collection-details.jsx",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/ui/controller.mjs",
+      "targetPath": "apps/gigi-desktop/ui/controller.mjs",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/ui/conversations.jsx",
+      "targetPath": "apps/gigi-desktop/ui/conversations.jsx",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/ui/creators.jsx",
+      "targetPath": "apps/gigi-desktop/ui/creators.jsx",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/ui/dev-navigation.jsx",
+      "targetPath": "apps/gigi-desktop/ui/dev-navigation.jsx",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/ui/dev-work.jsx",
+      "targetPath": "apps/gigi-desktop/ui/dev-work.jsx",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/ui/preview-fixture.mjs",
+      "targetPath": "apps/gigi-desktop/ui/preview-fixture.mjs",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/ui/records.jsx",
+      "targetPath": "apps/gigi-desktop/ui/records.jsx",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/apps/gigi-desktop/ui/settings.jsx",
+      "targetPath": "apps/gigi-desktop/ui/settings.jsx",
+      "disposition": "accepted and reconciled"
+    },
+    {
+      "sourcePath": "sandbox/gigi-desktop/package.json",
+      "targetPath": null,
+      "disposition": "excluded: nested setup/documentation; applicable product documentation adapted locally"
+    }
+  ]
+}

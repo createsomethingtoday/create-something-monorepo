@@ -1,0 +1,18 @@
+✔ late results after query changes or closing cannot replace a newer workspace search (1.076917ms)
+✔ buckets page independently, escape stored titles and clear stale results on a failed new query (0.694792ms)
+(node:22387) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ an unresolved read times out and late completion cannot replace a successful retry (16.303375ms)
+✔ Command-F and Control-F open search and keyboard focus stays within the popover (0.326042ms)
+✔ opening global search does not navigate, and grouped results open the selected record through guarded navigation (114.457834ms)
+✔ pagination retains keyboard focus while loading and restores input when the last More button disappears (0.607625ms)
+✔ refreshing results preserves the active input node and unfinished composition text (0.171459ms)
+✔ finishing a page read clears pointer blocking without replacing the active search input (66.271417ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 316.736042

@@ -18,6 +18,8 @@ binding = "INSTAGRAM_MEDIA"
 bucket_name = "gigi-instagram-publish-media"
 
 [vars]
+# Activate through the reviewed production path. Keep beta subjects for rollback.
+GIGI_PUBLIC_ACCESS_ENABLED = "false"
 # Existing managed auth configuration; no user grant is created by deployment.
 GIGI_INSTAGRAM_AUTH_CONFIG_ID = "ac_9TS_DrtjidYX"
 GIGI_INSTAGRAM_APPROVED_SCOPES = "instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights"

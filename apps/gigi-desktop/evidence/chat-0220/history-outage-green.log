@@ -1,0 +1,22 @@
+TAP version 13
+# Subtest: initial history outage keeps safe running polls bounded (thread/read)
+ok 1 - initial history outage keeps safe running polls bounded (thread/read)
+  ---
+  duration_ms: 7.388667
+  type: 'test'
+  ...
+# Subtest: initial history outage keeps safe running polls bounded (last-history-page)
+ok 2 - initial history outage keeps safe running polls bounded (last-history-page)
+  ---
+  duration_ms: 3.287958
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 370.612667

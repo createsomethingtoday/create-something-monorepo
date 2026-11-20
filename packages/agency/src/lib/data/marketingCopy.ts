@@ -19,6 +19,10 @@ export const agencyCoreMessaging = {
   bookMappingSessionLabel: 'Book a mapping session',
   workflowMappingSessionHref:
     '/book?source=agency&intent=workflow-mapping&lane=workflow_infrastructure',
+  dentalAgentsMappingSessionHref:
+    '/book?source=dental-ai-agents&intent=workflow-mapping&lane=workflow_infrastructure',
+  openaiDotsMappingSessionHref:
+    '/book?source=openai-dots&intent=workflow-mapping&lane=workflow_infrastructure',
   servicesMappingSessionHref:
     '/book?source=services&intent=workflow-mapping&lane=workflow_infrastructure',
   workflowCompilerIntegrationHref: '/workflow-compiler-integration',

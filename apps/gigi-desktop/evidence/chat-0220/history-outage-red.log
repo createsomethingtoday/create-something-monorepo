@@ -1,0 +1,54 @@
+TAP version 13
+# Subtest: initial history outage keeps safe running polls bounded (thread/read)
+not ok 1 - initial history outage keeps safe running polls bounded (thread/read)
+  ---
+  duration_ms: 10.260917
+  type: 'test'
+  location: '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/packages/gigi-integrations/test/codex.test.ts:1:105455'
+  failureType: 'testCodeFailure'
+  error: |-
+    failed initial history must not retry on every UI poll
+    
+    9 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 9
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/packages/gigi-integrations/test/codex.test.ts:1593:12)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: initial history outage keeps safe running polls bounded (last-history-page)
+not ok 2 - initial history outage keeps safe running polls bounded (last-history-page)
+  ---
+  duration_ms: 4.665667
+  type: 'test'
+  location: '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/packages/gigi-integrations/test/codex.test.ts:1:105455'
+  failureType: 'testCodeFailure'
+  error: |-
+    failed initial history must not retry on every UI poll
+    
+    189 !== 21
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 21
+  actual: 189
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/packages/gigi-integrations/test/codex.test.ts:1593:12)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 542.750708

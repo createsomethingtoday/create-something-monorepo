@@ -1,0 +1,106 @@
+[
+  {
+    "name": "mobile identity and opaque review composer at 390×844",
+    "passed": true
+  },
+  {
+    "name": "mobile identity and opaque review composer at 320×568",
+    "passed": true
+  },
+  {
+    "name": "exact review and evidence at 1440",
+    "passed": true
+  },
+  {
+    "name": "exact review and evidence at 1025",
+    "passed": true
+  },
+  {
+    "name": "exact review and evidence at 1024",
+    "passed": true
+  },
+  {
+    "name": "exact review and evidence at 768",
+    "passed": true
+  },
+  {
+    "name": "exact review and evidence at 390",
+    "passed": true
+  },
+  {
+    "name": "exact review and evidence at 320",
+    "passed": true
+  },
+  {
+    "name": "short phone keeps review reachable 390×667",
+    "passed": true
+  },
+  {
+    "name": "short phone keeps review reachable 320×568",
+    "passed": true
+  },
+  {
+    "name": "malformed saved drafts recover null",
+    "passed": true
+  },
+  {
+    "name": "malformed saved drafts recover []",
+    "passed": true
+  },
+  {
+    "name": "malformed saved drafts recover {\"new\":42}",
+    "passed": true
+  },
+  {
+    "name": "new conversation preserves next draft during create and message",
+    "passed": true
+  },
+  {
+    "name": "working state is honest and output is escaped",
+    "passed": true
+  },
+  {
+    "name": "error preserves draft and requires explicit readback",
+    "passed": true
+  },
+  {
+    "name": "expiry disables only approval",
+    "passed": true
+  },
+  {
+    "name": "exact enrichment review retains cost allowance and scope",
+    "passed": true
+  },
+  {
+    "name": "ambiguous readback cannot resend",
+    "passed": true
+  },
+  {
+    "name": "running readback cannot resend",
+    "passed": true
+  },
+  {
+    "name": "interrupted readback cannot resend",
+    "passed": true
+  },
+  {
+    "name": "canonical nested evidence preserves source boundaries",
+    "passed": true
+  },
+  {
+    "name": "Skip Trace evidence is unverified and blocked contacts stay undisclosed",
+    "passed": true
+  },
+  {
+    "name": "skip focus newline IME and local fonts",
+    "passed": true
+  },
+  {
+    "name": "reduced motion keeps an honest empty state",
+    "passed": true
+  },
+  {
+    "name": "no JavaScript retains sole main and truthful instructions",
+    "passed": true
+  }
+]

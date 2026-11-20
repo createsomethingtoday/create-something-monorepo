@@ -79,6 +79,10 @@ Debug in this order:
 
 When coordinating agents, pass **policy artifacts** alongside task artifacts.
 
+For repository implementation and review in T3, use `.agents/skills/canon-work/SKILL.md` as the local
+entry point. It routes to the existing cs-context, cs-build, cs-design and
+cs-release specialists as needed; it does not expand task permissions.
+
 ## Default repo workflow
 
 1. For solo exploratory work where one operator owns the checkout, start with

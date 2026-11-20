@@ -8,7 +8,8 @@ LOCKFILE_PATH="pnpm-lock.yaml"
 LOCKFILE_STAMP_PATH="node_modules/.pnpm-lock.sha256"
 STRICT_OPTIONAL_TOOLS="${ONA_BOOTSTRAP_REQUIRE_OPTIONAL_TOOLS:-0}"
 
-export PATH="/usr/local/bin:/usr/local/sbin:${PATH}"
+# Keep the runtime selected by setup-node or the local toolchain helper first.
+export PATH="${PATH}:/usr/local/bin:/usr/local/sbin"
 export GROUND_MCP_SKIP_BINARY_INSTALL="${GROUND_MCP_SKIP_BINARY_INSTALL:-1}"
 export LOOM_MCP_SKIP_BINARY_INSTALL="${LOOM_MCP_SKIP_BINARY_INSTALL:-1}"
 hash -r

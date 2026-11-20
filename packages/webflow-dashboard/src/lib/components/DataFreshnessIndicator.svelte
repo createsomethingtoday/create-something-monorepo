@@ -1,9 +1,11 @@
 <script lang="ts">
   /**
-   * DataFreshnessIndicator - Shows the expected financial-data sync schedule
+   * DataFreshnessIndicator - Says what per-template Purchases and Revenue count
+   * and how fresh they are.
    *
-   * Use this component wherever cumulative financial data (revenue, purchases) is displayed
-   * to set clear expectations about the expected update schedule.
+   * Use it wherever cumulative purchases or revenue are displayed. Those fields
+   * come from Webflow checkout charges (📋 Cumulative Purchases/Revenue), are
+   * written daily, and exclude fulfillment-link sales (📋 Fulfillment-link Sales).
    *
    * Variants:
    * - 'inline': Compact inline badge for table headers and stat cards
@@ -11,7 +13,6 @@
    * - 'full': Full message with icon (for page headers)
   */
   import { Info, Clock, X } from 'lucide-svelte';
-  import { formatRelativeScheduleDate } from '$lib/utils/format';
 
   interface Props {
     variant?: 'inline' | 'tooltip' | 'full';
@@ -61,70 +62,30 @@
     showTooltip = false;
   }
 
-  // Calculate the expected Monday 4 PM UTC sync schedule.
-  function getNextUpdateInfo(): { lastUpdate: string; nextUpdate: string; daysUntil: number } {
-    const now = new Date();
-    const currentDay = now.getUTCDay();
-    const currentHour = now.getUTCHours();
-
-    // Calculate days until next Monday 4 PM UTC
-    let daysUntilMonday: number;
-    if (currentDay === 1) {
-      daysUntilMonday = currentHour < 16 ? 0 : 7;
-    } else if (currentDay === 0) {
-      daysUntilMonday = 1;
-    } else {
-      daysUntilMonday = 8 - currentDay;
-    }
-
-    // Calculate last Monday
-    let daysSinceLastMonday: number;
-    if (currentDay === 1 && currentHour >= 16) {
-      daysSinceLastMonday = 0;
-    } else if (currentDay === 1) {
-      daysSinceLastMonday = 7;
-    } else if (currentDay === 0) {
-      daysSinceLastMonday = 6;
-    } else {
-      daysSinceLastMonday = currentDay - 1;
-    }
-
-    const lastMonday = new Date(now);
-    lastMonday.setUTCDate(now.getUTCDate() - daysSinceLastMonday);
-    lastMonday.setUTCHours(16, 0, 0, 0);
-
-    const nextMonday = new Date(now);
-    nextMonday.setUTCDate(now.getUTCDate() + daysUntilMonday);
-    nextMonday.setUTCHours(16, 0, 0, 0);
-
-    return {
-      lastUpdate: formatRelativeScheduleDate(lastMonday),
-      nextUpdate: formatRelativeScheduleDate(nextMonday),
-      daysUntil: daysUntilMonday
-    };
-  }
-
-  const updateInfo = $derived(getNextUpdateInfo());
+  // One definition for every surface that shows per-template sales.
+  const DEFINITION = [
+    'Purchases and Revenue count sales through Webflow checkout, before refunds and fees.',
+    'Fulfillment-link sales are counted separately. The buyer paid you on another platform, so they are not in Revenue.',
+    'Updated daily. New sales can take up to 2 days to appear.'
+  ];
 </script>
 
 {#if variant === 'full'}
   <div class="freshness-full">
     <div class="freshness-header">
       <Clock size={14} />
-      <span class="freshness-label">Scheduled Snapshot</span>
+      <span class="freshness-label">About these numbers</span>
     </div>
-    <p class="freshness-detail">
-      Expected latest scheduled snapshot {updateInfo.lastUpdate} • Next scheduled update {updateInfo.nextUpdate}
-    </p>
+    <p class="freshness-detail">{DEFINITION[0]} {DEFINITION[1]}</p>
     {#if showSchedule}
       <p class="freshness-schedule">
         <Info size={12} />
-        Schedule: Mondays at 4 PM UTC. Actual source freshness may vary.
+        {DEFINITION[2]}
       </p>
     {/if}
   </div>
 {:else if variant === 'tooltip'}
-  <button class="freshness-tooltip" onclick={handleClick} aria-label="Show data freshness info">
+  <button class="freshness-tooltip" onclick={handleClick} aria-label="About these numbers">
     <Info size={14} />
   </button>
   {#if showTooltip}
@@ -142,20 +103,17 @@
       <button class="tooltip-close" onclick={closeTooltip}>
         <X size={12} />
       </button>
-      <div class="tooltip-title">Scheduled Snapshot</div>
-      <div class="tooltip-detail">Expected latest scheduled snapshot {updateInfo.lastUpdate}</div>
-      <div class="tooltip-detail">Next scheduled update {updateInfo.nextUpdate}</div>
-      <div class="tooltip-schedule">Schedule: Mondays at 4 PM UTC. Actual source freshness may vary.</div>
+      <div class="tooltip-title">About these numbers</div>
+      <div class="tooltip-detail">{DEFINITION[0]}</div>
+      <div class="tooltip-detail">{DEFINITION[1]}</div>
+      <div class="tooltip-schedule">{DEFINITION[2]}</div>
     </div>
   {/if}
 {:else}
   <!-- inline variant -->
-  <span
-    class="freshness-badge"
-    title="Scheduled Mondays at 4 PM UTC. Actual source freshness may vary."
-  >
+  <span class="freshness-badge" title={DEFINITION.join(' ')}>
     <Clock size={10} />
-    <span>Scheduled Snapshot</span>
+    <span>Updated daily</span>
   </span>
 {/if}
 

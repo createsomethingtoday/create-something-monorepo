@@ -33,7 +33,7 @@ moonshot = [
     "openai>=1.0.0",  # OpenAI-compatible SDK for Moonshot Kimi K2 API
 ]
 modal = [
-    "modal>=0.66.0",  # Modal for sandboxed RLM execution
+    "modal>=1.0.0",  # Modal for sandboxed RLM execution
     "RestrictedPython>=7.0",  # Secure sandbox for RLM code execution
 ]
 server = [

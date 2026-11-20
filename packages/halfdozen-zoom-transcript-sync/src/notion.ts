@@ -1,3 +1,4 @@
+import { isPageFormat } from './page-transcript';
 import { atOrAfter, rolloutCutoff } from './rollout';
 import { writeInlineTranscript } from './inline-transcript';
 import { type TranscriptPlan, type WriteJournal } from './indexed-transcript';
@@ -39,6 +40,7 @@ interface HubToolResult {
 }
 
 export interface NotionTransport {
+  createChildPage?(parent: string, title: string, children: BlockObject[]): Promise<PageObject>;
   queryDatabase(filter: unknown, pageSize: number): Promise<QueryResult>;
   getPage(pageId: string): Promise<PageObject>;
   createPage(properties: Record<string, unknown>): Promise<PageObject>;
@@ -111,6 +113,8 @@ export async function syncTranscriptToNotion(
   // Resolve any uncertain property write before a newer projection can advance.
   await gate?.reconcile();
   const indexBlockId = await writeInlineTranscript(env.DB, {
+    createChildPage: notion.createChildPage?.bind(notion),
+    getPage: id => notion.getPage(id),
     list: (id) => listAllBlocks(notion, id),
     append: (id, blocks, after) => notion.appendBlocks(id, blocks, after),
     get: id => notion.getBlock(id),
@@ -121,7 +125,8 @@ export async function syncTranscriptToNotion(
   const projection = gate ? await env.DB.prepare('SELECT generation FROM transcript_inline_projection WHERE page_id = ? AND version = ? AND phase = ?')
     .bind(pageId, plan.version, 'complete').first<{ generation: number }>() : null;
   if (gate && !projection) throw Error('Missing complete readiness projection');
-  return { pageId, pageUrl, action: existing ? 'updated' : 'created', indexBlockId,
+  const indexPageUrl = isPageFormat(plan.format) ? (await notion.getPage(indexBlockId)).url : undefined;
+  return { pageId, pageUrl, action: existing ? 'updated' : 'created', indexBlockId, indexPageUrl,
     ...(projection ? { gateVersion: gateToken(plan.version, projection.generation) } : {}) };
 }
 
@@ -144,7 +149,7 @@ export async function publishNotionReadiness(env: Env, write: NotionWriteResult,
       .bind(write.pageId, fence.key, fence.selected, fence.owner, write.indexBlockId).first<{ version: string; generation: number }>();
     if (!row || gateToken(row.version, row.generation) !== write.gateVersion) throw Error('Readiness publication fence changed');
   };
-  await new Gate(env.DB, createNotionTransport(env), journal, write.pageId).publish(write.gateVersion, write.indexBlockId, assertReady);
+  await new Gate(env.DB, createNotionTransport(env), journal, write.pageId).publish(write.gateVersion, write.indexBlockId, assertReady, write.indexPageUrl);
 }
 
 async function listAllBlocks(notion: NotionTransport, parent: string): Promise<BlockObject[]> {
@@ -356,6 +361,7 @@ function toPageSummary(page: PageObject): NotionPageSummary {
 }
 
 export const notionTestExports = {
+  createNotionTransport,
   hasOccurrenceFragment,
   isMatchingMeetingPageHint,
   pickSourceUrlMatch,
@@ -462,11 +468,15 @@ class DirectNotionTransport implements NotionTransport {
     return this.request<QueryResult>(`/databases/${this.databaseId}/query`, 'POST', {
       filter,
       page_size: pageSize,
-    });
+    }, true);
   }
 
   getPage(pageId: string): Promise<PageObject> {
     return this.request<PageObject>(`/pages/${pageId}`);
+  }
+
+  async createChildPage(parent: string, title: string, children: BlockObject[]): Promise<PageObject> {
+    return this.request('/pages', 'POST', { parent: { page_id: parent }, properties: { title: { title: [{ type: 'text', text: { content: title } }] } }, children });
   }
 
   async createPage(properties: Record<string, unknown>): Promise<PageObject> {
@@ -507,8 +517,8 @@ class DirectNotionTransport implements NotionTransport {
     return this.requestWithUrl<BlockListResult>(url.toString(), 'GET');
   }
 
-  private async request<T>(path: string, method = 'GET', body?: unknown): Promise<T> {
-    return this.requestWithUrl<T>(`${NOTION_API_BASE}${path}`, method, body);
+  private async request<T>(path: string, method = 'GET', body?: unknown, readOnly = method === 'GET'): Promise<T> {
+    return this.requestWithUrl<T>(`${NOTION_API_BASE}${path}`, method, body, readOnly);
   }
 
   private async requestWithOptionalPropertyFallback<T>(
@@ -542,23 +552,44 @@ class DirectNotionTransport implements NotionTransport {
     }
   }
 
-  private async requestWithUrl<T>(url: string, method = 'GET', body?: unknown): Promise<T> {
-    const response = await fetch(url, {
-      method,
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        'Notion-Version': NOTION_VERSION,
-        'Content-Type': 'application/json',
-      },
-      ...(body ? { body: JSON.stringify(body) } : {}),
-    });
-
-    if (!response.ok) {
+  private async requestWithUrl<T>(url: string, method = 'GET', body?: unknown, readOnly = method === 'GET'): Promise<T> {
+    // This budget belongs to this read, not a connection-wide limiter. Never
+    // replay writes: a rejected readback can follow a committed append.
+    const serializedBody = body === undefined ? undefined : JSON.stringify(body);
+    let waitedMs = 0;
+    for (let attempt = 0; ; attempt++) {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          'Notion-Version': NOTION_VERSION,
+          'Content-Type': 'application/json',
+        },
+        ...(serializedBody === undefined ? {} : { body: serializedBody }),
+      });
+      if (response.ok) return response.json<T>();
+      // Consume the response before waiting so the read does not retain an
+      // open response body throughout Retry-After.
       const payload = await response.text();
+      let details: { code?: string; additional_data?: { rate_limit_reason?: string } } | null = null;
+      try { details = JSON.parse(payload); } catch { /* Unknown response: stop. */ }
+      const transient = response.status === 429 && details?.code === 'rate_limited'
+        && details?.additional_data?.rate_limit_reason !== 'public_api_request_blocked'
+        || response.status === 529 && details?.code === 'service_overload';
+      if (readOnly && transient && attempt < 2) {
+        const retryAfter = response.headers.get('Retry-After');
+        // Notion documents whole seconds. Malformed/missing headers use bounded
+        // exponential backoff; an explicit long cooldown is never shortened.
+        const seconds = retryAfter !== null && /^\d+$/.test(retryAfter) ? Number(retryAfter) : 2 ** attempt;
+        const delayMs = seconds * 1000 + Math.floor(Math.random() * 250);
+        if (Number.isSafeInteger(delayMs) && delayMs >= 0 && waitedMs + delayMs <= 120_000) {
+          waitedMs += delayMs;
+          await new Promise<void>(resolve => setTimeout(resolve, delayMs));
+          continue;
+        }
+      }
       throw new Error(`Notion API error (${response.status}) on ${url}: ${payload}`);
     }
-
-    return response.json<T>();
   }
 }
 

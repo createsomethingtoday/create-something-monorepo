@@ -1,0 +1,224 @@
+import { describe, expect, it } from 'vitest';
+import { auditReviewerStandards, generateReviewerStandardIssues } from '../src/validators/reviewer-standards';
+
+const SITE = 'https://example-template.webflow.io';
+const NAV = '<div class="navbar w-nav"><nav class="w-nav-menu"><a href="/">Home</a></nav></div>';
+const FOOTER =
+	'<footer class="footer"><a href="/licenses">Licenses</a><a href="/changelog">Changelog</a> Powered by <a href="https://webflow.com">Webflow</a></footer>';
+const HEAD = '<link href="https://cdn.example.com/site/icon.png" rel="shortcut icon"/><link href="https://cdn.example.com/site/clip.png" rel="apple-touch-icon"/>';
+
+function html(body: string, head = HEAD) {
+	return `<!DOCTYPE html><html><head><title>t</title>${head}</head><body>${body}</body></html>`;
+}
+
+function audit(path: string, body: string, head = HEAD) {
+	return auditReviewerStandards(html(body, head), new URL(path, SITE).href)!;
+}
+
+function issues(...audits: ReturnType<typeof audit>[]) {
+	return generateReviewerStandardIssues(audits);
+}
+
+function pagesOf(id: string, ...audits: ReturnType<typeof audit>[]) {
+	return issues(...audits).find((issue) => issue.id === id)?.details?.pages;
+}
+
+function webflowForm(dataName: string, done: string, fail: string, fields = '<input name="Email" data-name="Email" type="email"/>') {
+	return `<div class="w-form"><form id="f" name="f" data-name="${dataName}">${fields}<input type="submit" value="Send"/></form>` +
+		`<div class="w-form-done"><div>${done}</div></div><div class="w-form-fail"><div>${fail}</div></div></div>`;
+}
+
+describe('Reviewer standards', () => {
+	it('passes a page that follows every standard', () => {
+		const clean = audit('/', NAV + webflowForm('Contact Form', 'Thanks, we will reply within a day.', 'That did not send. Try again.') + FOOTER);
+		expect(clean.findings).toEqual({});
+		expect(issues(clean)).toEqual([]);
+	});
+
+	it('reports every standard as a blocking Content & Accessibility error, one issue per standard', () => {
+		const home = audit('/', '<h1>Home</h1>' + webflowForm('Email Form', 'Thank you! Your submission has been received!', 'Sent?'), '');
+		const about = audit('/about', '<p>Acme® builds things.</p>' + webflowForm('Email Form', 'Thank you! Your submission has been received!', 'Sent?'));
+		const result = issues(home, about);
+
+		expect(result.map((issue) => issue.id)).toEqual([
+			'form-default-messages',
+			'form-default-names',
+			'licenses-link',
+			'default-favicon',
+			'trademark-symbols',
+			'powered-by-webflow'
+		]);
+		expect(result.every((issue) => issue.severity === 'error' && issue.category === 'Content & Accessibility')).toBe(true);
+		expect(result[0].message).toBe("Forms show Webflow's default success or error message on 2 page(s)");
+		expect(result[0].howToFix).toBeTruthy();
+	});
+
+	it("flags Webflow's default success and error messages, per form", () => {
+		const body = NAV +
+			webflowForm('Contact Form', 'Thank you! Your submission has been received!', 'Oops! Something went wrong while submitting the form.') +
+			webflowForm('Newsletter', 'Subscribed.', 'Oops!  Something went wrong while submitting the form.') +
+			FOOTER;
+		expect(pagesOf('form-default-messages', audit('/contact', body))).toEqual([
+			{ url: `${SITE}/contact`, detail: 'default success message on 1 form(s), default error message on 2 form(s)' }
+		]);
+	});
+
+	it('flags default form and field names, but not descriptive names or the password input', () => {
+		const fields = '<input name="Field-2" data-name="Field 2" type="text"/><input name="Name" data-name="Name" type="text"/><input type="hidden" name="field"/>';
+		const contact = audit('/contact', NAV + webflowForm('Email Form 2', 'Sent.', 'Not sent.', fields) + FOOTER);
+		const password = audit(
+			'/401',
+			'<div class="w-password-page w-form"><form class="w-password-page" name="email-form" data-name="Email Form">' +
+				'<input class="w-password-page w-input" name="pass" data-name="field" type="password" id="pass"/></form></div>'
+		);
+		expect(pagesOf('form-default-names', contact, password)).toEqual([
+			{ url: `${SITE}/contact`, detail: 'form "Email Form 2", field "Field 2"' },
+			{ url: `${SITE}/401`, detail: 'form "Email Form"' }
+		]);
+	});
+
+	it('flags background videos without the play/pause button and autoplay videos without controls', () => {
+		const withButton =
+			'<div class="hero-video w-background-video w-background-video-atom"><video id="v1-video" autoplay="" muted=""></video>' +
+			'<div aria-live="polite"><button type="button" data-w-bg-video-control="true" aria-controls="v1-video" class="w-backgroundvideo-backgroundvideoplaypausebutton w-background-video--control"></button></div></div>';
+		const withoutButton = '<div class="w-background-video w-background-video-atom"><video id="v2-video" autoplay="" muted=""></video></div>';
+		const embedAutoplay = '<video src="/clip.mp4" autoplay muted loop></video>';
+		const embedWithControls = '<video src="/clip.mp4" autoplay controls></video><video src="/still.mp4"></video>';
+
+		expect(audit('/', NAV + withButton + embedWithControls + FOOTER).findings['video-play-pause']).toBeUndefined();
+		expect(audit('/', NAV + withButton + withoutButton + embedAutoplay + FOOTER).findings['video-play-pause']).toBe(
+			'1 background video(s) without a play/pause button, 1 autoplay video(s) without controls'
+		);
+	});
+
+	it('flags a 404 page without the navbar or footer that the home page has', () => {
+		const home = audit('/', NAV + FOOTER);
+		expect(pagesOf('404-navigation', home, audit('/404', '<h1>Page not found</h1><a href="/">Go home</a>'))).toEqual([
+			{ url: `${SITE}/404`, detail: 'no navbar or footer, but the home page has one' }
+		]);
+		expect(pagesOf('404-navigation', home, audit('/404', NAV + '<h1>Page not found</h1>' + FOOTER))).toBeUndefined();
+		expect(pagesOf('404-navigation', audit('/', '<h1>Home</h1>'), audit('/404', '<h1>Page not found</h1>'))).toBeUndefined();
+	});
+
+	it('accepts a Licenses link in the footer or the navigation, and skips utility pages', () => {
+		const inNav = audit('/about', `<div class="w-nav"><a href="/licenses">Licenses</a></div><div class="footer_component"><a href="/">Home</a></div>`);
+		const absoluteInFooter = audit('/team', `<div id="site-footer"><a href="${SITE}/licenses/">Licenses</a></div>`);
+		const noChromeButLink = audit('/blog', '<main><a href="/licenses">Licenses</a></main>');
+		const bodyLinkOnly = audit('/legal', `${NAV}<main><a href="/licenses">Licenses</a></main><footer class="footer"><a href="/">Home</a></footer>`);
+		const nothing = audit('/pricing', '<main><h1>Pricing</h1></main>');
+		const otherSite = audit('/faq', '<footer><a href="https://other.webflow.io/licenses">Licenses</a></footer>');
+		const utility = ['/401', '/404', '/licenses', '/changelog', '/style-guide', '/instructions'].map((path) => audit(path, '<h1>Utility</h1>'));
+
+		expect(pagesOf('licenses-link', inNav, absoluteInFooter, noChromeButLink, bodyLinkOnly, nothing, otherSite, ...utility)).toEqual([
+			{ url: `${SITE}/legal`, detail: 'Licenses is linked, but not from the footer or navigation' },
+			{ url: `${SITE}/pricing`, detail: 'no Licenses link on the page' },
+			{ url: `${SITE}/faq`, detail: 'no Licenses link on the page' }
+		]);
+	});
+
+	it('flags a missing or Webflow-default favicon and webclip on any CDN host, on the home page only', () => {
+		const defaults = '<link href="https://cdn.prod.website-files.com/img/favicon.ico" rel="shortcut icon" type="image/x-icon"/>' +
+			'<link href="https://d1example.cloudfront.net/img/webclip.png" rel="apple-touch-icon"/>';
+		expect(audit('/', NAV + FOOTER, defaults).findings['default-favicon']).toBe('Webflow default favicon and Webflow default webclip');
+		expect(audit('/', NAV + FOOTER, '').findings['default-favicon']).toBe('no favicon and no webclip');
+		expect(audit('/', NAV + FOOTER, '<link href="https://cdn.example.com/site/icon.png" rel="shortcut icon"/>').findings['default-favicon']).toBe('no webclip');
+		expect(audit('/', NAV + FOOTER, '<link href="https://cdn.example.com/site/clip.png" rel="apple-touch-icon"/>').findings['default-favicon']).toBe('no favicon');
+		expect(audit('/about', NAV + FOOTER, '').findings['default-favicon']).toBeUndefined();
+		expect(audit('/', NAV + FOOTER).findings['default-favicon']).toBeUndefined();
+	});
+
+	it('flags ® and ™ in visible copy, decoding entities, but not in scripts or on the Licenses page', () => {
+		const copy = audit('/', `${NAV}<p>Acme&reg; builds things.</p><p>Northwind™ too.</p><script>var x = "®";</script>${FOOTER}`);
+		const licenses = audit('/licenses', `${NAV}<p>Webflow® is a trademark of Webflow, Inc.</p>${FOOTER}`);
+		expect(copy.findings['trademark-symbols']).toMatch(/^2 symbol\(s\), for example ".*Acme®/);
+		expect(licenses.findings['trademark-symbols']).toBeUndefined();
+	});
+
+	it('ignores forms, videos and navigation inside <template> and <noscript>', () => {
+		const inert =
+			'<template><div class="w-nav"><nav>Menu</nav></div><form data-name="Email Form"></form>' +
+			'<video src="/clip.mp4" autoplay></video><div class="w-background-video"><video autoplay></video></div></template>' +
+			'<noscript><form data-name="Email Form 2"></form></noscript>';
+		const page = audit('/about', inert + FOOTER);
+		expect(page.findings['form-default-names']).toBeUndefined();
+		expect(page.findings['video-play-pause']).toBeUndefined();
+		expect(page.hasNav).toBe(false);
+		expect(pagesOf('404-navigation', audit('/', NAV + FOOTER), audit('/404', inert + FOOTER))).toEqual([
+			{ url: `${SITE}/404`, detail: 'no navbar, but the home page has one' }
+		]);
+	});
+
+	it('flags off-site links that sell or promote templates, but not internal links or a footer credit', () => {
+		const page = audit(
+			'/',
+			NAV +
+				'<a href="https://webflow.com/templates/html/example-template" class="button">Get this template</a>' +
+				'<a href="https://example.gumroad.com/l/kit">UI kit</a>' +
+				'<a href="/templates">All templates</a>' +
+				'<footer class="footer"><a href="/licenses">Licenses</a> Designed by <a href="https://studio.example.com">Studio</a></footer>'
+		);
+		expect(page.findings['self-promotion']).toBe('"Get this template" → webflow.com; "UI kit" → example.gumroad.com');
+		expect(audit('/', NAV + '<a href="https://webflow.com/@studio">More templates</a>' + FOOTER).findings['self-promotion']).toBe(
+			'"More templates" → webflow.com'
+		);
+		expect(audit('/', NAV + '<a href="https://studio.example.com">Designed by Studio</a>' + FOOTER).findings['self-promotion']).toBeUndefined();
+		// A store link on the Licenses page is a premium asset or the creator's own product; reviewers request changes for both.
+		expect(audit('/licenses', NAV + '<a href="https://ui8.net/pack/icons">Source</a>' + FOOTER).findings['self-promotion']).toBe('"Source" → ui8.net');
+		expect(audit('/licenses', NAV + '<a href="https://ui8.net/studio">More templates</a>' + FOOTER).findings['self-promotion']).toBe(
+			'"More templates" → ui8.net'
+		);
+	});
+
+	it('requires the exact Licenses opening text on /licenses only, ignoring case, spacing and quote style', () => {
+		const exact = 'All graphical assets in this template are licensed for personal and commercial use. If you\u2019d like to use a specific asset, please check the license below.';
+		expect(audit('/licenses', `${NAV}<h1>Licenses</h1><p>${exact}</p>${FOOTER}`).findings['licenses-boilerplate']).toBeUndefined();
+		expect(audit('/licenses', `${NAV}<h1>Licenses</h1><p>${exact.toUpperCase().replace(/ /g, '  ')}</p>${FOOTER}`).findings['licenses-boilerplate']).toBeUndefined();
+		expect(audit('/licenses', `${NAV}<h1>Licenses</h1><p>All assets are free to use.</p>${FOOTER}`).findings['licenses-boilerplate']).toBe(
+			'the exact opening text was not found'
+		);
+		expect(audit('/about', `${NAV}<p>No boilerplate here.</p>${FOOTER}`).findings['licenses-boilerplate']).toBeUndefined();
+		const formatted =
+			'<p>All graphical assets in this template are licensed for <em>personal and commercial use</em>. If you\'d like to use a specific <strong>asset</strong>, please check the license below.</p>';
+		expect(audit('/licenses', `${NAV}<h1>Licenses</h1>${formatted}${FOOTER}`).findings['licenses-boilerplate']).toBeUndefined();
+	});
+
+	it('requires /instructions only when custom code calls GSAP and the site answered 404 for it', () => {
+		const inert = audit(
+			'/contact',
+			`${NAV}<script>// gsap.to(".hero", { y: 0 });\n/* gsap.from(".card") */\nconst example = "gsap.to('.x')"; const tip = \`ScrollTrigger.create({})\`;</script>${FOOTER}`
+		);
+		expect(inert.usesCustomGsap).toBe(false);
+		const afterComment = audit('/team', `${NAV}<script>// intro\nconst url = "https://example.com//x"; gsap.timeline();</script>${FOOTER}`);
+		expect(afterComment.usesCustomGsap).toBe(true);
+		const custom = audit('/', `${NAV}<script>gsap.registerPlugin(ScrollTrigger); gsap.to('.hero', { y: 0 });</script>${FOOTER}`);
+		const webflowOnly = audit('/about', `${NAV}<script src="https://cdn.prod.website-files.com/gsap/3.14.2/gsap.min.js"></script>${FOOTER}`);
+		expect(custom.usesCustomGsap).toBe(true);
+		expect(webflowOnly.usesCustomGsap).toBe(false);
+
+		const ids = (audits: ReturnType<typeof audit>[], missingPaths?: string[]) =>
+			generateReviewerStandardIssues(audits, { missingPaths }).map((issue) => issue.id);
+		expect(ids([custom, webflowOnly], ['/instructions'])).toContain('gsap-instructions-page');
+		expect(ids([custom], undefined)).not.toContain('gsap-instructions-page');
+		expect(ids([webflowOnly], ['/instructions'])).not.toContain('gsap-instructions-page');
+		expect(ids([custom, audit('/instructions', '<h1>How to Edit GSAP Animations</h1>')], ['/instructions'])).not.toContain('gsap-instructions-page');
+	});
+
+	it('requires a footer link to webflow.com on the home page, whatever the wording or path', () => {
+		const footer = (link: string) => `<footer class="footer"><a href="/licenses">Licenses</a>${link}</footer>`;
+		const detail = (body: string, path = '/') => audit(path, NAV + body).findings['powered-by-webflow'];
+		expect(detail(footer('Powered by <a href="https://webflow.com">Webflow</a>'))).toBeUndefined();
+		expect(detail(footer('<a href="https://www.webflow.com/?utm_source=template">Made with Webflow</a>'))).toBeUndefined();
+		expect(detail(footer(''))).toBe('the footer has no link to webflow.com');
+		expect(detail(footer('Built with <a href="https://webflow.com/templates">Webflow</a>'))).toBeUndefined();
+		expect(detail(footer('<a href="https://webflow.io.example.com">Webflow</a>'))).toBe('the footer has no link to webflow.com');
+		expect(detail(`<div class="w-nav"><a href="https://webflow.com">Webflow</a></div>${footer('')}`)).toBe('webflow.com is linked, but not from the footer');
+		expect(detail('<main><a href="https://webflow.com">Webflow</a></main>')).toBeUndefined();
+		expect(detail('<main><h1>No chrome</h1></main>')).toBe('no footer and no link to webflow.com found');
+		expect(detail(footer(''), '/about')).toBeUndefined();
+	});
+
+	it('skips an empty document and normalizes the page path', () => {
+		expect(auditReviewerStandards('', `${SITE}/about`)).toBeNull();
+		expect(audit('/about/', NAV + FOOTER).path).toBe('/about');
+	});
+});

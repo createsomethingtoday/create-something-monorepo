@@ -23,6 +23,10 @@ Read in this order when you need broad repo context:
 
 ## Navigation by task
 
+### T3 Code
+
+- [T3 Code project workflow](./guides/T3_CODE_WORKFLOW.md) — shared actions, existing-checkout registration, bounded CTX retrieval, and rollback
+
 ### Daily work log
 
 - [Daily Slack work log playbook and runbook](./guides/DAILY_WORK_LOG_RUNBOOK.md) — discovery certification, task-thread deduplication, verified delivery, durable state, and recovery
@@ -44,11 +48,13 @@ Read in this order when you need broad repo context:
 - [PARTNER_STACK_LEAD_PACKET.md](./PARTNER_STACK_LEAD_PACKET.md)
 - [PARTNER_AFFILIATE_SURFACE_REVIEW_2026-05-17.md](./PARTNER_AFFILIATE_SURFACE_REVIEW_2026-05-17.md)
 - [AGENCY_SEO_AEO_REVIEW_2026-05-18.md](./AGENCY_SEO_AEO_REVIEW_2026-05-18.md)
+- [AGENCY_SEO_AEO_IMPACT_2026-11-03.md](./AGENCY_SEO_AEO_IMPACT_2026-11-03.md)
 - [guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md](./guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md)
 - [AGENCY_CONTENT_ASSET_PERFORMANCE_REVIEW_2026-05-25.md](./AGENCY_CONTENT_ASSET_PERFORMANCE_REVIEW_2026-05-25.md)
 - [IMAGE_LANGUAGE_FOUNDATION.md](./IMAGE_LANGUAGE_FOUNDATION.md)
 - [CREATE_SOMETHING_PERFORMANCE_LAB_DESIGN_LANGUAGE.md](./CREATE_SOMETHING_PERFORMANCE_LAB_DESIGN_LANGUAGE.md)
 - [PERFORMANCE_LAB_VISUAL_GRAMMAR.md](./PERFORMANCE_LAB_VISUAL_GRAMMAR.md)
+- [CREATE_SOMETHING_MEASURED_WHIMSY_FOUNDATION.md](./CREATE_SOMETHING_MEASURED_WHIMSY_FOUNDATION.md)
 - [PERFORMANCE_LAB_FOUNDATION_AUDIT.md](./PERFORMANCE_LAB_FOUNDATION_AUDIT.md)
 - [PERFORMANCE_LAB_FONT_COLOR_REVIEW_2026-07-09.md](./PERFORMANCE_LAB_FONT_COLOR_REVIEW_2026-07-09.md)
 - [CLOUDFLARE_PARTNER_LEAD_PACKET.md](./CLOUDFLARE_PARTNER_LEAD_PACKET.md)
@@ -72,6 +78,11 @@ Read in this order when you need broad repo context:
 
 ### Architecture and control planes
 
+- [Internal workflow operations](../scripts/workflow-operations/README.md) — reviewed registration, actual validation runs, durable candidate lifecycle, and bounded evidence recovery
+
+- [Workflow discovery and reconciliation](../scripts/workflow-discovery/README.md) — bounded repository discovery, private session signals, approval-required candidates, and derived-artifact repair
+
+- [Execution evidence graph pilot](../scripts/graph-engineering/README.md) — offline task, coordination, and runtime evidence with explicit trust and ownership boundaries
 - [THREE_TIER_FRAMEWORK.md](./THREE_TIER_FRAMEWORK.md)
 - [internal/BUSINESS_DIGITAL_THREAD_LIFETIME_CONTROL_BASELINE_2026-07-23.md](./internal/BUSINESS_DIGITAL_THREAD_LIFETIME_CONTROL_BASELINE_2026-07-23.md)
 - [internal/ADR_BUSINESS_DIGITAL_THREAD_V1_BOUNDARY_2026-07-23.md](./internal/ADR_BUSINESS_DIGITAL_THREAD_V1_BOUNDARY_2026-07-23.md)
@@ -297,3 +308,5 @@ docs/
 - **Understanding why a decision exists**:
   first the canonical doc in `docs/`,
   then the related memo in `docs/internal/`
+
+AI-native delivery evidence: [operating guide](guides/AI_NATIVE_SDLC.md).

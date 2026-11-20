@@ -4,6 +4,7 @@ const STORAGE_KEY = 'cs.agency.marketing-attribution.v1';
 const SOURCES = new Set([
   'facebook',
   'instagram',
+  'meta',
   'linkedin',
   'medium',
   'substack',
@@ -11,7 +12,13 @@ const SOURCES = new Set([
   'youtube'
 ]);
 const MEDIA = new Set(['email', 'referral', 'social', 'video']);
+const META_SOURCES = new Set(['facebook', 'instagram', 'meta']);
+const META_PAID_MEDIA = new Set(['paid_social', 'cpc']);
 const TOKEN = /^[a-z0-9][a-z0-9_-]{0,79}$/;
+
+function isSupportedMedium(source: string, medium: string): boolean {
+  return MEDIA.has(medium) || (META_SOURCES.has(source) && META_PAID_MEDIA.has(medium));
+}
 
 export interface MarketingAttribution {
   marketingSource: string;
@@ -77,7 +84,7 @@ function parseMarketingAttribution(url: URL): MarketingAttribution | undefined {
   const medium = url.searchParams.get('utm_medium')?.toLowerCase() ?? '';
   const campaign = url.searchParams.get('utm_campaign')?.toLowerCase() ?? '';
   const content = url.searchParams.get('utm_content')?.toLowerCase() ?? '';
-  if (!SOURCES.has(source) || !MEDIA.has(medium) || !TOKEN.test(campaign)) return undefined;
+  if (!SOURCES.has(source) || !isSupportedMedium(source, medium) || !TOKEN.test(campaign)) return undefined;
   if (content && !TOKEN.test(content)) return undefined;
   return {
     marketingSource: source,
@@ -94,7 +101,7 @@ function isMarketingAttribution(value: unknown): value is MarketingAttribution {
   const candidate = value as Partial<MarketingAttribution>;
   return Boolean(
     candidate.marketingSource && SOURCES.has(candidate.marketingSource) &&
-    candidate.marketingMedium && MEDIA.has(candidate.marketingMedium) &&
+    candidate.marketingMedium && isSupportedMedium(candidate.marketingSource, candidate.marketingMedium) &&
     candidate.marketingCampaign && TOKEN.test(candidate.marketingCampaign) &&
     (!candidate.marketingContent || TOKEN.test(candidate.marketingContent)) &&
     candidate.marketingLandingPath?.startsWith('/') &&

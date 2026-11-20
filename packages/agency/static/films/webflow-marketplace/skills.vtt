@@ -1,0 +1,21 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:06.230
+Prepare: Read the original preparation guidance.
+This is source evidence, not a live agent conversation.
+
+00:00:06.230 --> 00:00:12.480
+Route: Use the separate remediation workflow.
+The original source defines the routing boundary.
+
+00:00:12.480 --> 00:00:18.730
+Prove: Inspect the remediation plan template.
+Source, runtime, submission and acceptance stay distinct.
+
+00:00:18.730 --> 00:00:24.980
+Check: Inspect actual preparation harness output.
+158 checks passed; this is not model performance.
+
+00:00:24.980 --> 00:00:31.100
+Check: Inspect the second harness result.
+97 checks passed; no behavioral model evaluation ran.

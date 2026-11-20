@@ -1,0 +1,21 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:59.500
+Prepare: Inspect app setup and source guidance.
+Validator shows setup; Preflight shows connected input paths. Skills is an offline source/static-evaluation replay. No app analysis runs here.
+
+00:00:59.500 --> 00:01:24.200
+Submit: Inspect the template form and App connection prerequisite.
+No upload, validation job, or submission is shown.
+
+00:01:24.200 --> 00:01:57.233
+Review: Inspect actual saved handler results.
+Offline replay with synthetic clients; no live reviewer authentication or Airtable operation.
+
+00:01:57.233 --> 00:02:31.133
+Manage: Inspect the test Dashboard and owned app listings.
+Dashboard footage is historical. Listings shows search; no edit or save.
+
+00:02:31.133 --> 00:02:48.267
+Discover: Inspect current public Campaigns navigation and results.
+Public browsing only. No install or admin curation.

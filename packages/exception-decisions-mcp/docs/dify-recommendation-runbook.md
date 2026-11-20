@@ -5,6 +5,11 @@
 > retired the laptop launchd job. CRE-2040 gates durable human handoff and scheduled migration.
 > The dated rollout observations below describe historical operations, not current acceptance.
 
+> **Decider change (2026-11-04):** Every "Adam" below now means Micah Johnson + the app review
+> team (Shea Sisco, Pablo Miranda), who escalate to Legal or Security at their call.
+> Notifications go to Micah. The Greg lane
+> was retired 9/10/2026 (see `exception-transparency-loop.md`, Direction section).
+
 > **Companion to** `exception-transparency-loop.md` (canonical loop mechanics, currently in the
 > `root-preserve-20260811-1955` tree at `packages/webflow-app-review-mcp/docs/`). This document
 > covers ONE lane: replacing the partner-lead's *technical* recommendation step with a Dify-driven

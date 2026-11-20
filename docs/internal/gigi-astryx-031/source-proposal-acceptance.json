@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "binary": "/tmp/gigi-031-release/GiGi.app/Contents/Resources/gigi-mcp",
+  "binarySha256": "1b1d071ad3438320ef474f56af5cb618842efcd0bb6050aa931d40be9909819a",
+  "calls": 39,
+  "checks": [
+    "four Gmail/Calendar to task/gig creates preserve source and relation",
+    "process restart exact retry, full reopen, read-only created receipt",
+    "duplicate receipt recovery after restart preserves user corrections and original ID without extra records",
+    "missing receipt, wrong account/workspace and stale proposal reject without history mutation",
+    "separate process profile cannot read primary receipt"
+  ],
+  "syntheticProfiles": true,
+  "cleanup": "temporary profiles removed",
+  "providerCalls": 0
+}

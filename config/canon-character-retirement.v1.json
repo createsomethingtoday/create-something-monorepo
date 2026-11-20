@@ -1,0 +1,839 @@
+{
+  "version": 1,
+  "sourceCommit": "868081269796cf945ea1d2520069ab37e88f2660",
+  "scope": "Positively identified legacy character media. Historical Git/evidence retained; these bytes must not ship from website static roots. New versioned task assets replace live consumers.",
+  "retired": [
+    {
+      "path": "packages/agency/static/canon/idle/00.png",
+      "sha256": "c190069466ae0f46e4bff1867736853645b6364d8d1e1e5666579af7ee4d237e"
+    },
+    {
+      "path": "packages/agency/static/canon/idle/01.png",
+      "sha256": "e8ee49fa1b78047543e0fcc494dda28bed23a91f97dca63689b16570807e5c54"
+    },
+    {
+      "path": "packages/agency/static/canon/idle/02.png",
+      "sha256": "b82de1dd452d6dfe14755eae15b3f0b56159067f4b4aaa356c636a6858741852"
+    },
+    {
+      "path": "packages/agency/static/canon/idle/03.png",
+      "sha256": "0c8536fa7a18238bde3e274a502db6837a632d9ee800743620a44527a21fd239"
+    },
+    {
+      "path": "packages/agency/static/canon/idle/04.png",
+      "sha256": "0ee287afb25793ef90747a0b9e2041999a3c8079161b63ad54e8e80e527b267d"
+    },
+    {
+      "path": "packages/agency/static/canon/idle/05.png",
+      "sha256": "8483cda1bb6cae9ae53fdd171dabf1d6b328fae93a9c7ec46775f4ca08d1b722"
+    },
+    {
+      "path": "packages/agency/static/canon/jumping/00.png",
+      "sha256": "9bac0abe79beea7546ca44c7102588116fdcc038aeab840b189a505ffb79942d"
+    },
+    {
+      "path": "packages/agency/static/canon/jumping/01.png",
+      "sha256": "11c5e091ac8cc4c4fcd209b2c95fbad43c657f6a6ddd6f0686f356267d76315a"
+    },
+    {
+      "path": "packages/agency/static/canon/jumping/02.png",
+      "sha256": "17609007b389af11a1f67d599e3acb89ecd70e99c72c8b897e89bc1ee872c949"
+    },
+    {
+      "path": "packages/agency/static/canon/jumping/03.png",
+      "sha256": "74eade06fb5fdfb9b9c1cacaa04420ef724fc4d9e7016c8929c673f958239157"
+    },
+    {
+      "path": "packages/agency/static/canon/jumping/04.png",
+      "sha256": "70a04aa5e8ba84a49152cd76469dc226ebd2137be5cdba9eba9ff62776747bf0"
+    },
+    {
+      "path": "packages/agency/static/canon/review/00.png",
+      "sha256": "1a8f403dc174b8e268bc5a9fdbb79b389a40e38d91150166eb2f74dfd4893bc7"
+    },
+    {
+      "path": "packages/agency/static/canon/review/01.png",
+      "sha256": "45919c68550bb5235783c31cbb9c5fbe793e5a83272f454f76438de2c4418361"
+    },
+    {
+      "path": "packages/agency/static/canon/review/02.png",
+      "sha256": "eabe9c400f9d7c7a276d737304c5b2f3743cc824811e19937d9cb02d73a39916"
+    },
+    {
+      "path": "packages/agency/static/canon/review/03.png",
+      "sha256": "c14cd7af89228f770ef02ff83940252cabfea299425098580491e29b07f99b5d"
+    },
+    {
+      "path": "packages/agency/static/canon/review/04.png",
+      "sha256": "8bec62da2e611c67558923b4453d616eb09f105223679a608b080f4a2a5ff83f"
+    },
+    {
+      "path": "packages/agency/static/canon/review/05.png",
+      "sha256": "c3115877b575f50fcc76d7d34360f139b66a7b2e7b755e9b65ceb38c6429fb4e"
+    },
+    {
+      "path": "packages/agency/static/canon/waving/00.png",
+      "sha256": "74fa7f3ab4bc8f3152a9fa0c7b46827e53406e1d5510917f6be0f26cfe4084f6"
+    },
+    {
+      "path": "packages/agency/static/canon/waving/01.png",
+      "sha256": "b9f3559b0bbb9bab2c67f1b774c17d0180115a5dd6f3416f539f11d86af506fc"
+    },
+    {
+      "path": "packages/agency/static/canon/waving/02.png",
+      "sha256": "b06b7aca7a5cfcbcfa0ab54fefe7a26a251727c6a41adb54c24e049bbde86733"
+    },
+    {
+      "path": "packages/agency/static/canon/waving/03.png",
+      "sha256": "863b25c0092ac5bac80accb680440b5eaf86e0e955fa5ff316d5b0d312630a5f"
+    },
+    {
+      "path": "packages/agency/static/films/agent-enablement/canon-silent.mp4",
+      "sha256": "85a98f4c72f50de323ec2b0b301626cdfba5598b87b60bb70fd1dbf29abf2ffe"
+    },
+    {
+      "path": "packages/agency/static/films/agent-enablement/poster.png",
+      "sha256": "bdd809f66742a64ab4bd09f8dada7956f7209a2e85413dce9750b75dbbd3e7d2"
+    },
+    {
+      "path": "packages/agency/static/images/agency-sales/canon-build-v1.webp",
+      "sha256": "fa7e4c17667fff75d012403145928ba9a432653d044f13b58bd7fa77b6accd97"
+    },
+    {
+      "path": "packages/agency/static/images/agency-sales/canon-guide-cutout-v1.webp",
+      "sha256": "f07c1b61c1977c5ea96e1ed10b834063ad862e88650faa9d6b5df64d5812ff11"
+    },
+    {
+      "path": "packages/agency/static/images/agency-sales/canon-guide-test-v1.webp",
+      "sha256": "19f49692b621237b728a655897ec4961796eb26894c2333f78c8eca9b1785a50"
+    },
+    {
+      "path": "packages/agency/static/images/agency-sales/canon-guide-validate-v1.webp",
+      "sha256": "991ad42d78cde7e514f21b3c49e7f780623a45d7e1a63160617084e139438f91"
+    },
+    {
+      "path": "packages/agency/static/images/agency-sales/canon-test-v1.webp",
+      "sha256": "871a7502b408f515484986ace12bd2d0418ccecd8294e30eb01e3d2981a7bafe"
+    },
+    {
+      "path": "packages/agency/static/images/agency-sales/canon-validate-v1.webp",
+      "sha256": "c25ce54017f1016e34a7f5b1455b20102cae290a0b0cab7cd4353a70143ac484"
+    },
+    {
+      "path": "packages/agency/static/images/agency-sales/hero-desktop-warm-v2.webp",
+      "sha256": "756070343630ce9143a948c3023f5551db82b93e4ba0019ccf0b201b76c1fe0f"
+    },
+    {
+      "path": "packages/agency/static/images/agency-sales/hero-mobile-warm-v2.webp",
+      "sha256": "9fffba1130679998092ccc529ebc6ea2ffaa5822ec09f74eb408b934c19f2472"
+    },
+    {
+      "path": "packages/agency/static/images/agency-sales/hero.webp",
+      "sha256": "27bde137b6c1c008f63678147fc6745d3a54a84d58fb9d6c8a57737d37c41731"
+    },
+    {
+      "path": "packages/agency/static/images/agency-sales/macro.webp",
+      "sha256": "ff053c04f939cdc9ae2325c6cb5b3719d150aaf2c299693c0db68975c907b615"
+    },
+    {
+      "path": "packages/agency/static/images/agency-sales/run-reviewed-v1.webp",
+      "sha256": "01dd7587d8f1b3496a054bdcc9ad981993611335cebc08bc1db5d2041925c677"
+    },
+    {
+      "path": "packages/agency/static/images/agency-sales/team-handoff-v1.webp",
+      "sha256": "13cd5298efa9cb22f8d2ea45c5fede1eedfdf5aa51bcd64d7fc72e4ec03a8259"
+    },
+    {
+      "path": "packages/agency/static/images/agency-sales/team.webp",
+      "sha256": "ca6cd55d0aea01aae6355978c9de19072caafe016012f1e0d7378b95a26e7ace"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/about-careful-working-notes.webp",
+      "sha256": "94076a7d73327481ba59b3f3a213241942877cd3431375335d6398cae053fd19"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/answer-source-check.webp",
+      "sha256": "e6b98c8198c75d811ef6331283cc21d00e4c5cc1d25cc24150566e3d59a9ab8a"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-app-review-governance-hero-v1.webp",
+      "sha256": "2763fc65ca1ff22889dd74fcdb852d68128da50b086b58100a67f85e99c51998"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-arcs-hero-v1.webp",
+      "sha256": "40d4815a4251d3944d4ea3fdb054cb21fe89f44a188f84d11d1ca09867746800"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-host-claude-code-hero-v1.webp",
+      "sha256": "c9b36febba4d0575b62d559dee2ba8633ce83e9fbe03bbeacd6f52275e9a42d1"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-host-claude-desktop-hero-v1.webp",
+      "sha256": "706ce54a4852bc9fd04e7f83937878a9b0b13b68c114fc60d0e3ce7e4f82e000"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-host-codex-hero-v1.webp",
+      "sha256": "9b8af920a590dff52d2c7a26f4ed11b2e9b1cef1e261cb6cc77331a6189973a3"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-host-cursor-hero-v1.webp",
+      "sha256": "e354ef90b869e68db11ae84fb7daa172a2387624bb2903c352ed089744c7c9f3"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-host-vscode-hero-v1.webp",
+      "sha256": "f8f7e75c350d0da7fd0774691a36546f1db3be29755307f7ef3c9787e05d4657"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-host-windsurf-hero-v1.webp",
+      "sha256": "5d2f927c9d65cb924c6b5d7c03026fdea8b6bef2d4041bb2f8cc92af7c3a96fb"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-operator-decision-brief-hero-v1.webp",
+      "sha256": "1c992517ea0ca65f14c7b05b1715b6885dcc9c008c83b2aa3819527e4e28eced"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-operator-exception-handoff-hero-v1.webp",
+      "sha256": "78b63b1b0da3b08877737dfc9ffac3557dcc51e105a1fb56735f3e65d70b515e"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-operator-inbound-triage-hero-v1.webp",
+      "sha256": "3948e1f96ef5642d93e03f2431f5c6c645064c42fbce98f9b4a3438ced180a36"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-operator-solo-control-tower-hero-v1.webp",
+      "sha256": "bfb9fea68ed4462f3a1b294e0c277b964c1fc4273a987bcf2ad7af3ff53b8c20"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-agency-ad-creative-variant-testing-hero-v1.webp",
+      "sha256": "fcd6d1cf6d0ee452e6745720761702bf58f371c824764f217f15e09ce4b71a8f"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-agency-client-call-prep-hero-v1.webp",
+      "sha256": "bdb3640bc9506877acdd1e97e90381c8a2035fb4c568c6fbd3fa285160428f42"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-agency-client-reporting-briefing-hero-v1.webp",
+      "sha256": "2b95b6abb1ecee5e9da6ec22237d4662e241138d51ef3114f7c310f472f02ebe"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-agency-competitive-intel-brief-hero-v1.webp",
+      "sha256": "9354ef6f8106f12284984a165900b688802bc909d500983e21dea94e5fb4ad33"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-agency-content-production-seo-hero-v1.webp",
+      "sha256": "0ea6aa2a0596e12d454a746782072f991308a4c2986c804730a2b57f7deabd57"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-agency-cro-testing-roadmap-hero-v1.webp",
+      "sha256": "b21d04ee5297d2e3896b1ea259f9d4d2d3af54c0b39ce30b7b8268d471481429"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-agency-lead-scoring-routing-hero-v1.webp",
+      "sha256": "e187c6d05a954b223ad9b6bd469723c5c8e8ec686d28cd6ed7f5de75cff58144"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-agency-pm-autopilot-hero-v1.webp",
+      "sha256": "1043a75c67185a726393e4cbd5512bbd3b1ab42266efef1b0578c3733b05ad3b"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-agency-proposal-rfp-drafter-hero-v1.webp",
+      "sha256": "84287dd83908f73249aa72d6df39d6889860060dc57fe0b1432e20bd777b029b"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-agency-social-calendar-localization-hero-v1.webp",
+      "sha256": "64a3e74a329e49895df4ce20b381e5b8a78c7757ac349ec325125c38a1f72986"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-construction-change-order-processing-hero-v1.webp",
+      "sha256": "64ec3831fd696e11257a09b9ad8afc46a463df9bb77ff1d1427560e5d6b58dd2"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-construction-cost-variance-alerts-hero-v1.webp",
+      "sha256": "21b4fa9de0af0e406ed4559f736137c26116d36b55bbbea40bfc0bc2e36f3cd0"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-construction-daily-log-synthesis-hero-v1.webp",
+      "sha256": "bca6162169489e504c9d576dc54ce2351eda62fa375c0f8afca3f3c76ea1cfac"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-construction-pay-app-prep-hero-v1.webp",
+      "sha256": "da699ff3a5193e4a0579845ea6e66e2ef63bc8f6939b0608fe6283d819313347"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-construction-procurement-long-lead-watch-hero-v1.webp",
+      "sha256": "1e59de1c9c57ca3190f3bf9932f4fadf9d7d050f945bfc9fe3c76f30504350b7"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-construction-quality-ncr-tracking-hero-v1-continuity-v2.webp",
+      "sha256": "96e42398aa7275b71460db2e63f9c48fe565a1d36d28ae88e9d0f0e7876ab7cb"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-construction-rfi-management-hero-v1.webp",
+      "sha256": "e2091e0e71484b76463320ebadb2ca29262bcb3e176fa6c6c3998e05005ee8b8"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-construction-safety-compliance-flagging-hero-v1.webp",
+      "sha256": "6c8c2c20929a21d801254a49766fa61be0d8d1af4c940d91620e1ba8a488699d"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-construction-schedule-risk-forecast-hero-v1.webp",
+      "sha256": "2cd08be1f0d2df9b00e3bf3b58d619e36754dd188fe4512883cfd7d909f0f0f2"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-construction-submittal-review-hero-v1.webp",
+      "sha256": "c5b463a64c59701fa10ce5da9e384103645de9018f6889a1504e267bf4b6d6f8"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-ops-ap-invoice-processing-hero-v1.webp",
+      "sha256": "3a930e63baa8e25b693e6cd9b6b14336bc1f6493d84f367bde2c99ebaee19a5c"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-ops-ar-collections-reminders-hero-v1.webp",
+      "sha256": "af521f73db865cccb03c369e58466a0800b94c4e73583b31ec0c730a89b8c768"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-ops-compliance-monitoring-hero-v1.webp",
+      "sha256": "dcab6a8e414936490595318c4b53a1f1abc78dccc50b76c074a51d45e2bf3efd"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-ops-crm-auto-update-hero-v1.webp",
+      "sha256": "c61f2b197cf4a9c4b98d9c098e9bd01bd42278c96dcf6d5c0cab0e426f1db7f0"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-ops-employee-onboarding-hero-v1.webp",
+      "sha256": "3e074247e6659e6a64a8660212318903c02d519e665db2f71541b82324036593"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-ops-expense-reimbursements-hero-v1.webp",
+      "sha256": "b60b71cba4c233778671ace41bc4226b3772a656fd265585ea06318d0023eb7e"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-ops-inbox-triage-hero-v1.webp",
+      "sha256": "8280a9411631ce78570a3efb3ad615a55345fe12562492578191bab142e9fbeb"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-ops-knowledge-base-maintenance-hero-v1.webp",
+      "sha256": "047cb46d5ad60eebbe9d0e6157f87021b136e26675f6b0ce106feb5975008682"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-ops-meeting-notes-actions-hero-v1.webp",
+      "sha256": "f8c301b2649512c5dabbb080c00ad44ee06eb157e5a63db91b084d7e84c46059"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-outcome-ops-support-ticket-autoresolve-hero-v1.webp",
+      "sha256": "f678c4255469cb2877a64fd32d43180fe5d3e968c0337f293c6e5732db07aa4b"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-runbook-claude-code-code-review-hero-v1.webp",
+      "sha256": "66669c2eaa7c09c7e3ad8389382f32a85e07f04a30df8ef4fb9e9248a7850e2d"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-runbook-claude-code-project-bootstrap-hero-v1.webp",
+      "sha256": "0370eedd19e6a847878ed107730dd65fe4e632f8939fcf34a48bd465fc2cf6a9"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-runbook-claude-desktop-document-analysis-hero-v1.webp",
+      "sha256": "8e1c7a3e18db88e8f93a56e382238baf9173cab9e3f809556db6a86b1ff2d32c"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-runbook-claude-desktop-mcp-quick-access-hero-v1.webp",
+      "sha256": "6e6b11ad962c5c7455947dd7f3d685ba458215eb91c66673c2a28e08d0de9345"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-runbook-claude-desktop-project-hub-hero-v1.webp",
+      "sha256": "a09edfe8ffe0ecf512d71e11d6950f44bc25fc9c81b9541d12a8977f4d81fd2d"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-runbook-codex-document-drafter-hero-v1-continuity-v2.webp",
+      "sha256": "f288b3e4620123269e731352ac596ad1b17513bf568840b4912e6fa9e20fefb9"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-runbook-codex-morning-briefing-hero-v1-continuity-v2.webp",
+      "sha256": "0e49a8f304cfb138439f380603a7bc6af8c2c2171fcffa6134f33fac3824b4c7"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-runbook-codex-recurring-analysis-hero-v1-continuity-v2.webp",
+      "sha256": "bd7cf4caf1311453e730814545b01e42e45d5674ecb136ddbc902fedf3c1baa9"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-runbook-cursor-data-dashboard-hero-v1.webp",
+      "sha256": "92ef57e6922f26308398421d48d1a185b38899fcb890af71c50df361b66712c9"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-runbook-cursor-guided-editing-hero-v1.webp",
+      "sha256": "15e6d189b5b48648e8dc34de7cf86210160e214fe195828f83f08a2664987f00"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-runbook-cursor-template-refinement-hero-v1.webp",
+      "sha256": "11096643480b7e6e385aa3e51bddc08259d0c2d59e376f6d512aad72d9a05e70"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-runbook-vscode-copilot-agent-setup-hero-v1.webp",
+      "sha256": "2d0820cbf51a782c769dba8d24880b941fe98727c8716ee10b5c0a9abd8e6c2b"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-runbook-windsurf-manual-server-config-hero-v1.webp",
+      "sha256": "e0635666a77bc3f5f268304108b094dbd25c917db5d9d6bc81a6aa2ebe3f58da"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/arc-runbook-windsurf-marketplace-setup-hero-v1.webp",
+      "sha256": "26d9fb59fb051d1841f589d625aca6e8aac391c4121699cab870cff50c4a465f"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/booking-shared-time.webp",
+      "sha256": "9d17381f06fd2706b6989c7649a4c3b931602ff67a7742e45a5dc9188bf20c70"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/brief-evidence-and-unknowns.webp",
+      "sha256": "83270b82a7f53abf32a813e05448841b6d152c5c10431164bfa5b6deb5f5babd"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/compiler-from-plan-to-tested-jig.webp",
+      "sha256": "5acb6cc5739aa93ab3a5d234f71fad1c2b75b4524f4256a6692ad523cfb4bc50"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/contact-one-clear-request.webp",
+      "sha256": "079bdf4699a48205b0bf2aa290d2c2d3d107b74ca5b8f21c53de781d6e46ae82"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/control-attend-the-running-work.webp",
+      "sha256": "7ae89d16defb36f1506df127a34a7706f20b0cdeefd4b75247cce7513340169e"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/decision-manual-routing-gate.webp",
+      "sha256": "789a135eff8f047ae50bf01e5e65c2f30041f95c182990b6b6955ea32e1be027"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/editorial-app-review-installation-fit.webp",
+      "sha256": "d5d1ea55d38e4ec815d21474e6d349df601ad1c0584f40a291b6300ecb317503"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/editorial-approval-paused-presentation.webp",
+      "sha256": "4ef42919b98a8e49616b0978e5bc13a15cd01e86ffc2a10f28be52015bea9273"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/editorial-automation-single-cycle.webp",
+      "sha256": "bf058a278523959a04f61095cabedc22e83fd682d3e6ba97af2274b1617795e7"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/editorial-connection-adapter-choice.webp",
+      "sha256": "970188bb9e9b818802b2e347f79756411e7a4aa513d70d4fe1b13e7dff7b1f2b"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/editorial-dispatch-contact-print-selection.webp",
+      "sha256": "0911bbbd03df55bd9408abcfe1675cb78d6126addec0243183d3abb3aa84a7fc"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/editorial-evaluation-obstacle-course.webp",
+      "sha256": "525dab57c5a15a80f9264d5eacb2fdb22b1eef4b0ba2be8b2209be9067602fc5"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/editorial-experiments-isolated-sandbox.webp",
+      "sha256": "5c4479b22dc1b7c149fcf6f3955af9c2f87fbf9e3de97e425d361d22e200370d"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/editorial-field-reports-load-rig.webp",
+      "sha256": "1675bf5844dce4dd4b60529fcff1678362642db87921f4ddf5a3a614c5d49e86"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/editorial-governance-hard-stop.webp",
+      "sha256": "5d814a8abe587919bd31235c1011de22997856dd51fa00f71ab17f15df559196"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/editorial-mapping-task-thread.webp",
+      "sha256": "5aa46222f651f77e840b65eb45d5eeec679f460e06830e1ef12bb5d47284df08"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/editorial-marketplace-separated-stations.webp",
+      "sha256": "40362d6fc6d59cae29619bc507b5085bcfefacf4bbb8f37e7763fd518a0b0bcf"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/editorial-mcp-modular-port.webp",
+      "sha256": "30261b4ba0c5db5818a8e5e12f4971853a90534fdc7e294843edb3ac5e7a935f"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/editorial-observability-trace-spool.webp",
+      "sha256": "7ff8e6cfc236dff6b7706d1547535c0cee1695a8a0721704b90a62497b630df5"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/editorial-security-scoped-key.webp",
+      "sha256": "89f3b79b3cc70684cfc4234a237fb329d3e322b13a5fca5fe8e27037a6e9ebad"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/editorial-template-review-evidence-trays.webp",
+      "sha256": "cf91d05b72f6f0f8d1650f394aab18429abd676743d354c5278cafa87adff2b9"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/editorial-template-review-surface-grid.webp",
+      "sha256": "aa0e1bd7ef057f4b73a089e2f6d6bbf0bcc681a61cfb59c154a2dded8ddfb9b5"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/editorial-upstream-shared-tool-repair.webp",
+      "sha256": "36048042f0870339e9941af8fd32da36b61222856b80b40498d6db9a495937f8"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/editorial-workflow-library-tool-drawers-continuity-v2.webp",
+      "sha256": "96d1672a852a23c9dfd38f021dac0c819aedde3a3503a328b43392378bab3509"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/foundation-single-job-warm-v2.webp",
+      "sha256": "31a855ef72073eb0d98a258768f9f8f6298076eadc574c08029e0e724af7c18c"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/foundation-single-job.webp",
+      "sha256": "2436bf875678b22d7cd583b86086219eacf4cba6047907d0da21e5f57c133087"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/ground-compare-before-claim.webp",
+      "sha256": "5f5ce1c69d5a59487da0878a09d1a15bc2cfa9d456bea159340fd98ebb1ebf88"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/league-model-one-policy-move.webp",
+      "sha256": "a0cee025cd879ffebcc3367c8f15f6f3c97526acdb80b91a9e7a3174db43ed35"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/live-flow-review-window.webp",
+      "sha256": "a6a2b160c80dc9dda6c7d97fa10d2e732c81386de5d199f2d0fae31d0819690d"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/loom-archive-the-handoff-lesson.webp",
+      "sha256": "1841d54b83866f36bf800603e51a45ce15344e11863a569e06fc9c8736c1aac3"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/map-draw-the-handoffs.webp",
+      "sha256": "b9f9930981c9aedf7075262b66a02fb483e7787baedd3cfa2f66a1811d5c76c7"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/marketplace-prepare-the-review-packet.webp",
+      "sha256": "78c35e9d3418cf854ae64875d28de0b131d705b58537c058488839169fc898e7"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/marketplace-proof-shadow-rehearsal.webp",
+      "sha256": "1b99a5de2811a437b1187a12ba7ab8fc118fdd28201673a932cf9564d684ab0d"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/one-manual-gap-warm-v2.webp",
+      "sha256": "5fd86d34e2c87881705bdd611b75a79b13121c0a17ea4245a90ffae388c2bd74"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/one-manual-gap.webp",
+      "sha256": "eb02ec00f91f67b4ab50d51972db57eb35752497eec8aed94d43c224593fbe21"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/ownership-removable-toolcase.webp",
+      "sha256": "140ca20e50b8b0e9ea7a3442badd5b07019acf74173fcab75ce506bf341274fd"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/permission-two-separate-gates.webp",
+      "sha256": "2940e0c064b3786adbb905892a41803d439180d81ec734faeca5606b8a0f7b0f"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/practice-disconnected-test-rig.webp",
+      "sha256": "6af8d7b1bc1df3bc4054fa1524ef9a43a824faa68b6acfdb25c6cb3b1392bdca"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/products-workbench-paths-continuity-v2.webp",
+      "sha256": "b4df45a6e5483e116d18d5bd8ba2bae08d3f53c7b16171613976b5691d8ef335"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/proof-preserve-the-sequence.webp",
+      "sha256": "3358d6fef1205de5beb7b26875558b0ec2909cc49c8393d8a3ea4ed158b7df01"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/prospect-controlled-workspace-claim.webp",
+      "sha256": "3d4de5731d305325fa23a146183c259b54c84644494d832b4558b9191e39ad3e"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/records-to-approved-action-continuity-v2.webp",
+      "sha256": "cde0a0f4874e83274f1a306b952e34ccbf6c0af979a0e88502be583b3f55e760"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/recovery-trace-the-stalled-drive.webp",
+      "sha256": "b982e8ad0d2cd2c3628605fa6d4ad6923aefa8b068aa6d3e145c180ff93d9c52"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/remote-software-repair.webp",
+      "sha256": "5971e00fa7271b81d1dfb3021b05515576573c7ecf16f4fe92dab0c941c99c2c"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/runtime-route-recovery.webp",
+      "sha256": "cee287c8a73327d9d11c7bd3cad7cc59223a53622bea42511da7016a03275a60"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/scopefield-room-and-boundary.webp",
+      "sha256": "b0ab7b41e37f973dc742bbded8d05f7d4ea55c3c1150ab8337033455209a7334"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/separate-client-workspaces.webp",
+      "sha256": "6f2c5ec6ab3029c99785a189c71b6a3900d5b54e091b1b83fad8b61bc845a9f5"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/services-diagnosis-warm-v2.webp",
+      "sha256": "5fba31ae83c1878c17835ac00383187b3aeb2dc48bc1539fd18a5d0e5bcfe83f"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/services-diagnosis.webp",
+      "sha256": "202133f401e6173b313d60f0b0ffa057a0b6b38ed38c8097075ae2a127cd96bd"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/signal-one-useful-arrival.webp",
+      "sha256": "5b8d2718d7e3aa7b58905f8ed08777b072f05ed948aeaf133ad1aecfd4d25cae"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/subtract-the-extra-route.webp",
+      "sha256": "1f68c6fb4ba84db2e7933decb88286ab11e96610800bb2685d566c852aa103e1"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/technical-review-find-the-load-point.webp",
+      "sha256": "51ab05cdac687c54e0efcd2d2b8fd5dcbfc0374d88699bd7653575781bd0786c"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/tool-fit-without-forcing.webp",
+      "sha256": "9c45d0f1b96f5039eaac220a031cb53ea5c98d6116f733baa7d6b2b3da8cd7a6"
+    },
+    {
+      "path": "packages/agency/static/images/agency-stories/workflow-control-shared-route-and-stop.webp",
+      "sha256": "daa9015391053e964a40a047556c9c0134cab06d0c73c064f924557d7b5ee3ff"
+    },
+    {
+      "path": "packages/agency/static/images/labs/connected-work-canon.png",
+      "sha256": "74fa7f3ab4bc8f3152a9fa0c7b46827e53406e1d5510917f6be0f26cfe4084f6"
+    },
+    {
+      "path": "packages/canon/static/canon-next/filled-oval-body-framed-prototype.png",
+      "sha256": "9a562e54f6e0d87fdadede5363cb03edc5feaf3d62071d916ea71e139088822b"
+    },
+    {
+      "path": "packages/canon/static/canon-next/tactile-head-filled-oval-prototype.png",
+      "sha256": "f2b859b481f9317b2393e44f2d2b86de9a6edab7fcee539944bbcc3db2187d98"
+    },
+    {
+      "path": "packages/canon/static/canon-next/tactile-head-optical-prototype.png",
+      "sha256": "aa962f8aab481a68f29cbf3af10f6fa2275d5fbb6f167b255f7c9a488bdf2b83"
+    },
+    {
+      "path": "packages/canon/static/canon-next/tactile-head-quiet-oval-prototype.png",
+      "sha256": "388aa384f9a059ae3fd87f47cad55a5b2654a33be4759f37061049bb0c7a2218"
+    },
+    {
+      "path": "packages/io/static/images/research/about-careful-working-notes-1440.webp",
+      "sha256": "299db8b677a13d73f627127b0f16ece2085b8a27a1a43a7a1a4c422cb3bf3922"
+    },
+    {
+      "path": "packages/io/static/images/research/about-careful-working-notes-640.webp",
+      "sha256": "92164134e27dca6a2bd3a9dd8274602a7dc1ed5b06d6f5011b46ae592b3127e1"
+    },
+    {
+      "path": "packages/io/static/images/research/about-careful-working-notes-960.webp",
+      "sha256": "d788902a25b375f649a7dde4865c2d4262f73ffb04216d68404e16fa4557605c"
+    },
+    {
+      "path": "packages/io/static/images/research/brief-evidence-and-unknowns-1440.webp",
+      "sha256": "d663eed2e0c8c747a984735700b466f4470ea0a8435632ee210dfcc5a0bc2998"
+    },
+    {
+      "path": "packages/io/static/images/research/brief-evidence-and-unknowns-640.webp",
+      "sha256": "3538d0a06b9449d08cdd85b8d58e0b7c38c5aa10641469fdcc0737a72b7b8442"
+    },
+    {
+      "path": "packages/io/static/images/research/brief-evidence-and-unknowns-960.webp",
+      "sha256": "4b5a4a26512de4bd99deb0191da1793362150ef381480e4eaf629763b21a908d"
+    },
+    {
+      "path": "packages/io/static/images/research/editorial-experiments-isolated-sandbox-1440.webp",
+      "sha256": "48231ee4a2d65e31f79835578c488c08b2cf37f12324fd7d48442b663a42dd91"
+    },
+    {
+      "path": "packages/io/static/images/research/editorial-experiments-isolated-sandbox-640.webp",
+      "sha256": "6ee6b01c247efd50ac2946ea6bddb4004b029d66263d225bc4ae128d6bc46713"
+    },
+    {
+      "path": "packages/io/static/images/research/editorial-experiments-isolated-sandbox-960.webp",
+      "sha256": "ee4bf1f56ce7f34c89f78ecaab126500c5122508b2e92bbec4a273aa911722ea"
+    },
+    {
+      "path": "packages/io/static/images/research/editorial-field-reports-load-rig-1440.webp",
+      "sha256": "0bc69fcbcb022f1ebde62625b1403e9e2bfd67efcff9ab3b628070f5e0aa5e98"
+    },
+    {
+      "path": "packages/io/static/images/research/editorial-field-reports-load-rig-640.webp",
+      "sha256": "3d2c3d984bc8f701628f64ca1b2d2dcbd3f9b5d2f2e9773ab45933c5ce75c993"
+    },
+    {
+      "path": "packages/io/static/images/research/editorial-field-reports-load-rig-960.webp",
+      "sha256": "7e71dafb1de678298ef0b26324b7f85e6d1638e837a8e356b72f5940be074617"
+    },
+    {
+      "path": "packages/io/static/images/research/editorial-mcp-modular-port-1440.webp",
+      "sha256": "f66ccc1beb48ec9b4b660023025ec2750c86ab7fc910a44ea0c538766f046d19"
+    },
+    {
+      "path": "packages/io/static/images/research/editorial-mcp-modular-port-640.webp",
+      "sha256": "ddb0a173c106a5891bd9d73999a47f1adf1fad09d2eb4958f2f02a96153d5447"
+    },
+    {
+      "path": "packages/io/static/images/research/editorial-mcp-modular-port-960.webp",
+      "sha256": "a3e14d40fb459445a9e6d230c4a3d13ae9a6abb090c4287ed02327dbdaa4a8b6"
+    },
+    {
+      "path": "packages/io/static/images/research/ground-compare-before-claim-1440.webp",
+      "sha256": "9afa0b40e80f7d653150f070ef53b394a9f44ed754b72b096353fb395dc759db"
+    },
+    {
+      "path": "packages/io/static/images/research/ground-compare-before-claim-640.webp",
+      "sha256": "9194be373c3f70294956d26bcdeaae4b80125afe836376a6eeca0b9758b5b22d"
+    },
+    {
+      "path": "packages/io/static/images/research/ground-compare-before-claim-960.webp",
+      "sha256": "305a6cab6e1eda4cd0cf410af3872e3aeaacf8793ae85cd1870bac92de1d20d6"
+    },
+    {
+      "path": "packages/lms/static/workshop/canon.png",
+      "sha256": "c190069466ae0f46e4bff1867736853645b6364d8d1e1e5666579af7ee4d237e"
+    },
+    {
+      "path": "packages/ltd/static/images/library/about-careful-working-notes-1536.webp",
+      "sha256": "c7300edad68df85565c36def6cf41fa0c8d2c2e59f75143b0bc047a133cdfe9f"
+    },
+    {
+      "path": "packages/ltd/static/images/library/about-careful-working-notes-768.webp",
+      "sha256": "3bba4412636c1442dcfd232f366d7d3903c8285b535eaf4ae1439851741e6c75"
+    },
+    {
+      "path": "packages/ltd/static/images/library/editorial-workflow-library-tool-drawers-continuity-v2-1536.webp",
+      "sha256": "5f2a678e3afbfe71066b9653b9dadf72698a18e7c8e960b5591f90ec489386b2"
+    },
+    {
+      "path": "packages/ltd/static/images/library/editorial-workflow-library-tool-drawers-continuity-v2-768.webp",
+      "sha256": "7f63d0992e6b2f99c09a5d35a5454202d377c6d2bdaf70fb528ffbb1b9320d63"
+    },
+    {
+      "path": "packages/ltd/static/images/library/permission-two-separate-gates-1536.webp",
+      "sha256": "f945f6b7bea4087910987e1df5f02937e8f3d5587b19bfdba29353f559f76217"
+    },
+    {
+      "path": "packages/ltd/static/images/library/permission-two-separate-gates-768.webp",
+      "sha256": "7bc14dbcab8e8155e64f1fcca3ed9b76319e2f09fcaf6d673b46ca442f670771"
+    },
+    {
+      "path": "packages/ltd/static/images/library/proof-preserve-the-sequence-1536.webp",
+      "sha256": "704bf6a36c2991f75e43099a67a364b407d1cfef963ac56cb34bc426a24c05ea"
+    },
+    {
+      "path": "packages/ltd/static/images/library/proof-preserve-the-sequence-768.webp",
+      "sha256": "fb55f6d36c9ceef3225a351b2753e8448455f3467e71a032d9507bc00df66546"
+    },
+    {
+      "path": "packages/ltd/static/images/library/subtract-the-extra-route-1536.webp",
+      "sha256": "6a2ba665cc710d7debb6a96057fa2fc3f34b243069f8e37ffac8d27be077619a"
+    },
+    {
+      "path": "packages/ltd/static/images/library/subtract-the-extra-route-768.webp",
+      "sha256": "45a2fa74cacbfc83f019675e18f872b54d940dc08e226048baff01c525833d17"
+    },
+    {
+      "path": "packages/ltd/static/images/library/tool-fit-without-forcing-1536.webp",
+      "sha256": "ae245a822554719aa7f9224b6bfe4b473dd14575463d91c47a6c8c58df399aa6"
+    },
+    {
+      "path": "packages/ltd/static/images/library/tool-fit-without-forcing-768.webp",
+      "sha256": "d187a1e1a6159542d94d13d356944afa1ca739cfd003e481f4860f67c058efa3"
+    },
+    {
+      "path": "packages/space/static/images/workshop/stories/about-careful-working-notes-640.webp",
+      "sha256": "92164134e27dca6a2bd3a9dd8274602a7dc1ed5b06d6f5011b46ae592b3127e1"
+    },
+    {
+      "path": "packages/space/static/images/workshop/stories/about-careful-working-notes-960.webp",
+      "sha256": "d788902a25b375f649a7dde4865c2d4262f73ffb04216d68404e16fa4557605c"
+    },
+    {
+      "path": "packages/space/static/images/workshop/stories/about-careful-working-notes.webp",
+      "sha256": "94076a7d73327481ba59b3f3a213241942877cd3431375335d6398cae053fd19"
+    },
+    {
+      "path": "packages/space/static/images/workshop/stories/compiler-from-plan-to-tested-jig-640.webp",
+      "sha256": "a2285244a6923547e1b831487ef54a36f87b92b2f01bfbc8dc08f1300f2eef84"
+    },
+    {
+      "path": "packages/space/static/images/workshop/stories/compiler-from-plan-to-tested-jig-960.webp",
+      "sha256": "cec47f46b36ea403434fe26a18bd5d87c6b6a1094c5fdd9a0b6fb11b18198b7d"
+    },
+    {
+      "path": "packages/space/static/images/workshop/stories/compiler-from-plan-to-tested-jig.webp",
+      "sha256": "5acb6cc5739aa93ab3a5d234f71fad1c2b75b4524f4256a6692ad523cfb4bc50"
+    },
+    {
+      "path": "packages/space/static/images/workshop/stories/editorial-experiments-isolated-sandbox-640.webp",
+      "sha256": "6ee6b01c247efd50ac2946ea6bddb4004b029d66263d225bc4ae128d6bc46713"
+    },
+    {
+      "path": "packages/space/static/images/workshop/stories/editorial-experiments-isolated-sandbox-960.webp",
+      "sha256": "ee4bf1f56ce7f34c89f78ecaab126500c5122508b2e92bbec4a273aa911722ea"
+    },
+    {
+      "path": "packages/space/static/images/workshop/stories/editorial-experiments-isolated-sandbox.webp",
+      "sha256": "5c4479b22dc1b7c149fcf6f3955af9c2f87fbf9e3de97e425d361d22e200370d"
+    },
+    {
+      "path": "packages/space/static/images/workshop/stories/editorial-upstream-shared-tool-repair-640.webp",
+      "sha256": "c3e7e48dd169985aa7becc04a49aab0fbf7411e9659feef37b3d6949a149f6d4"
+    },
+    {
+      "path": "packages/space/static/images/workshop/stories/editorial-upstream-shared-tool-repair-960.webp",
+      "sha256": "6507bbb59296b61fc0ea773591471c8efe65313634b129604739ccf0abe2fea9"
+    },
+    {
+      "path": "packages/space/static/images/workshop/stories/editorial-upstream-shared-tool-repair.webp",
+      "sha256": "36048042f0870339e9941af8fd32da36b61222856b80b40498d6db9a495937f8"
+    },
+    {
+      "path": "packages/space/static/images/workshop/stories/ground-compare-before-claim-640.webp",
+      "sha256": "9194be373c3f70294956d26bcdeaae4b80125afe836376a6eeca0b9758b5b22d"
+    },
+    {
+      "path": "packages/space/static/images/workshop/stories/ground-compare-before-claim-960.webp",
+      "sha256": "305a6cab6e1eda4cd0cf410af3872e3aeaacf8793ae85cd1870bac92de1d20d6"
+    },
+    {
+      "path": "packages/space/static/images/workshop/stories/ground-compare-before-claim.webp",
+      "sha256": "5f5ce1c69d5a59487da0878a09d1a15bc2cfa9d456bea159340fd98ebb1ebf88"
+    },
+    {
+      "path": "packages/space/static/images/workshop/stories/products-workbench-paths-continuity-v2-640.webp",
+      "sha256": "890b575f8741b16de3c0bfdfc964863b2960317e8d0fdac3db6accd2628f6666"
+    },
+    {
+      "path": "packages/space/static/images/workshop/stories/products-workbench-paths-continuity-v2-960.webp",
+      "sha256": "3a0c043188671020a9652b07833c3ec46d29ac4003f3f67fa2596205dafb15c6"
+    },
+    {
+      "path": "packages/space/static/images/workshop/stories/products-workbench-paths-continuity-v2.webp",
+      "sha256": "b4df45a6e5483e116d18d5bd8ba2bae08d3f53c7b16171613976b5691d8ef335"
+    },
+    {
+      "path": "packages/space/static/images/workshop/stories/subtract-the-extra-route-640.webp",
+      "sha256": "11d47819427ad38ef06a0eb860308d27e948dc1082520bd2220b9c940b29a3cd"
+    },
+    {
+      "path": "packages/space/static/images/workshop/stories/subtract-the-extra-route-960.webp",
+      "sha256": "bfb9e23da715f9c01f59a6df6ef9c54a3074c52bd070001f4ba5aa01bfd36db1"
+    },
+    {
+      "path": "packages/space/static/images/workshop/stories/subtract-the-extra-route.webp",
+      "sha256": "1f68c6fb4ba84db2e7933decb88286ab11e96610800bb2685d566c852aa103e1"
+    },
+    {
+      "path": "packages/space/static/images/workshop/stories/tool-fit-without-forcing-640.webp",
+      "sha256": "ffc6df2c2788373d942510070e29bc81421c9b235d76971782242011436a064a"
+    },
+    {
+      "path": "packages/space/static/images/workshop/stories/tool-fit-without-forcing-960.webp",
+      "sha256": "5c8a7331c4fc001d8dcf46a514cc261306c3809802b6134ea6681ee2b47a2406"
+    },
+    {
+      "path": "packages/space/static/images/workshop/stories/tool-fit-without-forcing.webp",
+      "sha256": "9c45d0f1b96f5039eaac220a031cb53ea5c98d6116f733baa7d6b2b3da8cd7a6"
+    }
+  ]
+}

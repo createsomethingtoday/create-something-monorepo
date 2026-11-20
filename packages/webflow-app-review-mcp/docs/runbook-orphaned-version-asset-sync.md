@@ -83,6 +83,41 @@ Wait ~20s for automations, then re-read the record and confirm:
   Creator/Email chain).
 - The record now appears in the review queue (`app_review_list_queue` or the queue view).
 
+## Root cause of fresh app orphans (found 2026-11-09, PrinterFlo)
+
+Fresh orphans on **app bundle rows** have one cause. The monolith's Designer Extension bundle
+webhook (`🆙🖥️App Version Asset Update`) matches version → asset only
+through the `🔄MRPs` table, by `ℹ️Slug`. `🔄MRPs` is a Census sync that
+lands in daily batches (about 05:30 and 08:40 UTC). A developer who creates the listing and
+uploads the bundle on the same day hits the webhook before the MRP row exists: 0 matches, the
+row is created with no asset, `🖌️Version Creation Trigger` sets `🆕Ready for Review`, the email
+check flips it to `🚨Error: Field Missing`, and Micah gets the DM "Version failed to connect
+to asset". Every such DM from Sep–Nov 2026 (printerflo, vigi-video, anowave, launchlist,
+monoranks, newspass, conditional-render, cms-duplicator, profeed) had an MRP row created
+after the bundle.
+
+The webhook payload carries `appId` (the OAuth app id), `slug`, `workspaceId`, `extensionId`
+and `userId`. It has no `clientId`, and the Assets table's `🔄APP ID (🖥️ only)` lookup is the
+**marketplace profile id**, not the app id (Snowflake: `APPS.APP_ID` vs
+`MARKETPLACE_RESOURCE_PROFILES.MARKETPLACE_RESOURCE_PROFILE_ID`), so the version `❓app id`
+never equals that lookup on a first bundle. Match on history, slug, or client id.
+
+Three layers re-link these rows:
+
+1. A Zapier zap on Micah's Zapier integration, usually within a minute (record history shows
+   "edited via API (using Zapier integration)" writing `👛Asset` + `🆕Ready for Review`).
+2. The orphan-sync Claude routine (13:00/21:00 UTC), sibling-history
+   rule, so a first bundle with no linked siblings is reported as ambiguous and skipped.
+3. `🔄MRP Creation Trigger` step 3, when the MRP row arrives. Until
+   2026-11-09 its filter required `👛Asset hasAnyOf [the MRP record's own id]` (never true) and
+   an empty `📝Review Status` (false after step 2 of the chain above), so it never fired. Fixed
+   2026-11-09: filter = `⚙️TMPUID` = MRP slug, `👛Asset` empty, Review Type = Asset Update,
+   submitted in the last 14 days; runs only when the MRP row linked to exactly one asset; writes
+   link + `🆕Ready for Review` in one update and DMs Micah.
+
+PrinterFlo (bundle 2026-10-16 00:16 UTC, MRP row 08:01 UTC) was missed by
+all three and sat 24 days until the developer asked.
+
 ## Scale finding (2026-08-11) and the recency guard
 
 The first base-wide sweep found the orphan pattern is **not rare**: 275 orphaned versions total —

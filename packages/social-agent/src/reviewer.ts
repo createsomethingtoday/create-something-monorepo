@@ -55,19 +55,19 @@ const FORBIDDEN_PATTERNS = [
 // =============================================================================
 
 const VAGUE_PATTERNS = [
-	{ pattern: /significantly\s+(improved|better|faster|more)/gi, suggestion: 'Use specific numbers' },
-	{ pattern: /many\s+(users|people|companies|teams)/gi, suggestion: 'Use specific count' },
-	{ pattern: /fast(er)?\s+performance/gi, suggestion: 'Quantify the speed improvement' },
-	{ pattern: /substantial\s+savings?/gi, suggestion: 'Specify the amount saved' },
+	{ pattern: /significantly\s+(improved|better|faster|more)/gi, suggestion: 'Support the claim with source evidence or state the limit; do not invent numbers' },
+	{ pattern: /many\s+(users|people|companies|teams)/gi, suggestion: 'Use a supported count or state what is known' },
+	{ pattern: /fast(er)?\s+performance/gi, suggestion: 'Support the speed comparison with measurements or state the limit' },
+	{ pattern: /substantial\s+savings?/gi, suggestion: 'Use a supported savings amount or state the limit' },
 	{ pattern: /enhanced\s+experience/gi, suggestion: 'Describe the specific improvement' },
-	{ pattern: /better\s+outcomes?/gi, suggestion: 'Specify what outcomes and by how much' },
+	{ pattern: /better\s+outcomes?/gi, suggestion: 'Name the supported outcome and evidence, or state the limit' },
 	{ pattern: /various\s+benefits/gi, suggestion: 'List the specific benefits' },
-	{ pattern: /considerable\s+improvements?/gi, suggestion: 'Quantify the improvement' },
-	{ pattern: /greatly\s+(reduced|increased|improved)/gi, suggestion: 'Use specific percentages' },
-	{ pattern: /a\s+lot\s+of/gi, suggestion: 'Use specific numbers' },
-	{ pattern: /very\s+(fast|quick|slow|large|small)/gi, suggestion: 'Quantify the measure' },
+	{ pattern: /considerable\s+improvements?/gi, suggestion: 'Describe the supported improvement or measurement limit' },
+	{ pattern: /greatly\s+(reduced|increased|improved)/gi, suggestion: 'Use a supported comparison or state the limit' },
+	{ pattern: /a\s+lot\s+of/gi, suggestion: 'Support the claim with source evidence or state the limit; do not invent numbers' },
+	{ pattern: /very\s+(fast|quick|slow|large|small)/gi, suggestion: 'Use a supported measure or state the limit' },
 	{ pattern: /extremely\s+\w+/gi, suggestion: 'Use specific comparison' },
-	{ pattern: /much\s+(better|worse|faster|slower)/gi, suggestion: 'Quantify the difference' }
+	{ pattern: /much\s+(better|worse|faster|slower)/gi, suggestion: 'Support the difference with evidence or state the limit' }
 ];
 
 // =============================================================================
@@ -107,14 +107,6 @@ const STRUCTURAL_CHECKS: StructuralCheck[] = [
 		suggestion: 'Start with a hook: question, number, or bold statement'
 	},
 	{
-		name: 'metrics',
-		check: (content) => {
-			// Should contain at least one specific number
-			return /\d+[%x]|\d+\s*(hours?|days?|weeks?|minutes?)|\$\d+|\d+\s*to\s*\d+/.test(content);
-		},
-		suggestion: 'Include specific metrics (numbers, percentages, time savings)'
-	},
-	{
 		name: 'length',
 		check: (content, platform) => {
 			const minLength = platform === 'linkedin' ? 300 : 100;
@@ -150,8 +142,8 @@ export class ContentReviewer {
 					type: 'forbidden',
 					line: this.getLineNumber(content, match.index),
 					found: match[0],
-					suggestion: 'Remove marketing jargon - use specific description instead',
-					severity: 'error'
+					suggestion: 'Review this term in context; preserve technically necessary or source-owned language',
+					severity: 'warning'
 				});
 			}
 		}
@@ -217,6 +209,8 @@ export class ContentReviewer {
 		let score = 100;
 
 		for (const violation of violations) {
+			// Lexical matches require editorial context and do not determine the score.
+			if (violation.type === 'forbidden') continue;
 			if (violation.severity === 'error') {
 				score -= 15; // Heavy penalty for forbidden patterns
 			} else {
@@ -237,13 +231,13 @@ export class ContentReviewer {
 	 */
 	private generateFeedback(violations: VoiceViolation[], score: number): string {
 		if (violations.length === 0) {
-			return 'Content passes all voice checks. Ready for publishing.';
+			return 'Content passes the configured heuristic checks. This does not verify factual evidence or authorize publication; retain the owning approval workflow and human final read.';
 		}
 
 		const errors = violations.filter((v) => v.severity === 'error');
 		const warnings = violations.filter((v) => v.severity === 'warning');
 
-		let feedback = `Score: ${score}/100\n\n`;
+		let feedback = `Score: ${score}/100. This heuristic does not authorize publication; retain the owning approval workflow and human final read.\n\n`;
 
 		if (errors.length > 0) {
 			feedback += `**Critical Issues (${errors.length}):**\n`;
@@ -287,20 +281,16 @@ export class ContentReviewer {
 	quickCheck(content: string): { likely: boolean; issues: string[] } {
 		const issues: string[] = [];
 
-		// Check for obvious forbidden patterns
+		// Surface lexical review signals without treating a word alone as a failure.
 		for (const forbidden of FORBIDDEN_PATTERNS.slice(0, 10)) {
 			if (content.toLowerCase().includes(forbidden.toLowerCase())) {
 				issues.push(`Contains "${forbidden}"`);
 			}
 		}
 
-		// Check for numbers
-		if (!/\d/.test(content)) {
-			issues.push('No metrics or numbers found');
-		}
 
 		return {
-			likely: issues.length === 0,
+			likely: true, // Contextual lexical signals cannot establish a failure by themselves.
 			issues
 		};
 	}

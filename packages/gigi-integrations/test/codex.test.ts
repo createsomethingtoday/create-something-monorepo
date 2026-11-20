@@ -51,6 +51,136 @@ test('rejects API key auth and never starts a thread', async () => {
   assert.equal(server.calls.some(x => x.method === 'thread/start'), false);
 });
 
+test('workspace setup status verifies a bounded exact workspace read without starting a conversation', async () => {
+  const { adapter, server, mcp } = await setup();
+  const calls: any[] = [];
+  mcp.request = async (method, params) => {
+    calls.push({ method, params });
+    return method === 'tools/list' ? { tools: toolCatalog() } : { structuredContent: { id: 'w', name: 'Tour crew', privateExtra: 'excluded' } };
+  };
+  const before = Date.now();
+  const result = await adapter.status({ workspaceId: 'w' });
+  assert.equal(result.toolsAvailable, true);
+  assert.equal(result.workspaceVerified, true);
+  assert.deepEqual(result.workspace, { id: 'w', name: 'Tour crew' });
+  assert.ok(result.checkedAt >= before && result.checkedAt <= Date.now());
+  assert.deepEqual(calls.at(-1), { method: 'tools/call', params: { name: 'gigi_workspace_get', arguments: { workspaceId: 'w' } } });
+  assert.equal(server.calls.some(call => ['thread/start', 'turn/start'].includes(call.method)), false);
+  assert.deepEqual((await adapter.list({ workspaceId: 'w' })).sessions, []);
+});
+
+for (const invalid of [{ id: 'foreign', name: 'Other' }, { id: 'w' }, { id: 'w', name: 42 }, [], null]) test(`workspace setup status rejects invalid workspace readback ${JSON.stringify(invalid)}`, async () => {
+  const { adapter, mcp, server } = await setup();
+  mcp.request = async method => method === 'tools/list' ? { tools: toolCatalog() } : { structuredContent: invalid, content: [{ type: 'text', text: JSON.stringify(invalid) }] };
+  const result = await adapter.status({ workspaceId: 'w' });
+  assert.equal(result.workspaceVerified, false);
+  assert.equal(result.reason, 'workspace_not_found');
+  assert.equal(result.workspace, undefined);
+  assert.equal(server.calls.some(call => ['thread/start', 'turn/start'].includes(call.method)), false);
+});
+
+test('workspace status does not read local data when authentication or tool availability fails', async () => {
+  const { adapter, server, mcp } = await setup();
+  const local: any[] = [];
+  mcp.request = async (method, params) => { local.push({method,params}); return { tools: [] }; };
+  server.account = { account: { type: 'apiKey' } };
+  const signedOut = await adapter.status({ workspaceId: 'w' });
+  assert.equal(signedOut.workspaceVerified, false);
+  assert.equal(signedOut.toolsAvailable, false);
+  assert.equal(local.length, 0);
+  server.account = { account: { type: 'chatgpt' } };
+  const missing = await adapter.status({ workspaceId: 'w' });
+  assert.equal(missing.workspaceVerified, false);
+  assert.equal(missing.toolsAvailable, false);
+  assert.equal(missing.reason, 'gigi_tools_unavailable');
+  assert.equal(local.some(call => call.method === 'tools/call'), false);
+  await assert.rejects(adapter.status({workspaceId:''}), /invalid_request/);
+});
+
+test('managed browser login is explicit, keeps provider URL private and verifies the completion account', async () => {
+  const {adapter,server}=await setup();const original=server.request.bind(server);
+  server.account={account:null};
+  server.request=async(method,params)=>{if(method==='account/login/start'){server.calls.push({method,params});return {type:'chatgpt',loginId:'provider-1',authUrl:'https://auth.openai.com/authorize?state=fixture'};}return original(method,params);};
+  assert.equal(server.calls.length,0);
+  const job=await adapter['login.start']({workspaceId:'w'});
+  assert.equal(job.state,'pending');assert.equal(job.authUrl,undefined);assert.notEqual(job.loginId,'provider-1');
+  assert.equal((await adapter['login.open']({workspaceId:'w',loginId:job.loginId})).authUrl,'https://auth.openai.com/authorize?state=fixture');
+  await assert.rejects(adapter['login.read']({workspaceId:'other',loginId:job.loginId}),/login_not_found/);
+  await assert.rejects(adapter['login.start']({workspaceId:'w'}),/login_in_progress/);
+  for(const emit of server.events)await emit({method:'account/login/completed',params:{loginId:'foreign',success:true}});
+  assert.equal((await adapter['login.read']({workspaceId:'w',loginId:job.loginId})).state,'pending');
+  server.account={account:{type:'chatgpt'}};
+  for(const emit of server.events)await emit({method:'account/login/completed',params:{loginId:'provider-1',success:true}});
+  const completed=await adapter['login.read']({workspaceId:'w',loginId:job.loginId});
+  assert.equal(completed.state,'completed');assert.equal(completed.authenticated,true);
+  for(const emit of server.events)await emit({method:'account/login/completed',params:{loginId:'provider-1',success:false}});
+  assert.equal((await adapter['login.read']({workspaceId:'w',loginId:job.loginId})).state,'completed');
+  assert.equal(server.calls.some(call=>['thread/start','turn/start','account/logout'].includes(call.method)),false);
+});
+
+test('a definitive managed-login rejection permits an explicit retry without hiding unknown delivery',async()=>{
+  const {adapter,server}=await setup();let attempts=0;
+  server.request=async()=>{if(++attempts===1)throw new ProviderResponseError('provider login rejected');return {type:'chatgpt',loginId:'provider-2',authUrl:'https://auth.openai.com/authorize'};};
+  assert.equal((await adapter['login.start']({workspaceId:'w'})).state,'failed');
+  assert.equal((await adapter['login.start']({workspaceId:'w'})).state,'pending');
+});
+
+test('managed login rejects untrusted URLs and preserves an uncertain delivered start', async () => {
+  for(const authUrl of ['http://auth.openai.com/a','https://auth.openai.com.evil.test/a','https://user@auth.openai.com/a','https://auth.openai.com:8443/a','file:///tmp/a']){
+    const {adapter,server}=await setup();server.request=async()=>({type:'chatgpt',loginId:'provider-1',authUrl});
+    const job=await adapter['login.start']({workspaceId:'w'});
+    assert.equal(job.state,'unknown');assert.equal(job.authUrl,undefined);
+    await assert.rejects(adapter['login.open']({workspaceId:'w',loginId:job.loginId}),/login_unavailable/);
+    await assert.rejects(adapter['login.start']({workspaceId:'w'}),/login_in_progress/);
+  }
+});
+
+test('login cancellation never logs out an account and waits for its matched completion', async () => {
+  const {adapter,server}=await setup();const original=server.request.bind(server);
+  server.request=async(method,params)=>{if(method==='account/login/start')return {type:'chatgpt',loginId:'provider-1',authUrl:'https://chatgpt.com/auth'};if(method==='account/login/cancel'){server.calls.push({method,params});return {};}return original(method,params);};
+  const job=await adapter['login.start']({workspaceId:'w'});
+  assert.equal((await adapter['login.cancel']({workspaceId:'w',loginId:job.loginId})).state,'cancelling');
+  for(const emit of server.events)await emit({method:'account/login/completed',params:{loginId:'provider-1',success:false,error:'raw provider data excluded'}});
+  const cancelled=await adapter['login.read']({workspaceId:'w',loginId:job.loginId});
+  assert.equal(cancelled.state,'cancelled');assert.equal(cancelled.authenticated,true);
+  assert.equal(cancelled.error,undefined);
+  assert.deepEqual(server.calls.find(call=>call.method==='account/login/cancel')!.params,{loginId:'provider-1'});
+  assert.equal(server.calls.some(call=>call.method==='account/logout'),false);
+});
+
+for (const outcome of ['canceled','notFound','completed-during-cancel']) test(`native cancellation response resolves accurately: ${outcome}`,async()=>{
+  const {adapter,server}=await setup();const original=server.request.bind(server);
+  server.request=async(method,params)=>{
+    if(method==='account/login/start')return {type:'chatgpt',loginId:'provider-1',authUrl:'https://auth.openai.com/authorize'};
+    if(method==='account/login/cancel'){
+      if(outcome==='completed-during-cancel')for(const emit of server.events)await emit({method:'account/login/completed',params:{loginId:'provider-1',success:true}});
+      return {status:outcome==='notFound'?'notFound':'canceled'};
+    }
+    return original(method,params);
+  };
+  const job=await adapter['login.start']({workspaceId:'w'});
+  const receipt=await adapter['login.cancel']({workspaceId:'w',loginId:job.loginId});
+  assert.equal(receipt.state,outcome==='canceled'?'cancelled':outcome==='notFound'?'cancelling':'completed');
+  if(outcome==='canceled')assert.equal((await adapter['login.start']({workspaceId:'w'})).state,'pending');
+  if(outcome==='notFound')await assert.rejects(adapter['login.start']({workspaceId:'w'}),/login_in_progress/);
+  assert.equal(server.calls.some(c=>['account/logout','thread/start','turn/start'].includes(c.method)),false);
+});
+
+test('browser login expires after ten minutes and fences a new attempt until cancellation is confirmed', async t=>{
+  t.mock.timers.enable({apis:['Date'],now:100_000});
+  const {adapter,server}=await setup();const original=server.request.bind(server);
+  server.request=async(method,params)=>{if(method==='account/login/start')return {type:'chatgpt',loginId:'provider-1',authUrl:'https://auth.openai.com/authorize'};if(method==='account/login/cancel'){server.calls.push({method,params});return {};}return original(method,params);};
+  const job=await adapter['login.start']({workspaceId:'w'});assert.equal(job.expiresAt-job.startedAt,600_000);
+  assert.equal((await adapter['login.read']({workspaceId:'w'})).loginId,job.loginId);
+  t.mock.timers.tick(600_001);
+  assert.equal((await adapter['login.read']({workspaceId:'w',loginId:job.loginId})).state,'cancelling');
+  await assert.rejects(adapter['login.open']({workspaceId:'w',loginId:job.loginId}),/login_unavailable/);
+  await assert.rejects(adapter['login.start']({workspaceId:'w'}),/login_in_progress/);
+  for(const emit of server.events)await emit({method:'account/login/completed',params:{loginId:'provider-1',success:false}});
+  assert.equal((await adapter['login.read']({workspaceId:'w',loginId:job.loginId})).state,'expired');
+  assert.equal(server.calls.filter(call=>call.method==='account/login/cancel').length,1);
+});
+
 test('start without a message persists an idle session without a phantom Codex thread', async () => {
   const { adapter, server, mcp, dataDir } = await setup();
   const { sessionId } = await adapter.start({ workspaceId: 'w', record: { entity: 'tasks', id: 'r', title: 'Task' } });
@@ -299,7 +429,8 @@ test('turn completion keeps a held GiGi approval visible while provider read is 
   assert.equal(poll.approvals.length, 1);
 });
 
-test('completed turn notification does not settle before its transcript is readable', async () => {
+test('completed turn notification does not settle before its transcript is readable', async (t) => {
+  let elapsed = 0; const started = Date.now(); t.mock.method(Date, 'now', () => started + elapsed);
   const { adapter, server } = await setup();
   const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'Read the gig' });
   await Promise.all(server.events.map(fn => fn({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed' } } }) as unknown as Promise<void>));
@@ -309,6 +440,7 @@ test('completed turn notification does not settle before its transcript is reada
   assert.equal((await adapter.poll({ workspaceId: 'w', sessionId })).state, 'running');
   server.request = original;
   server.thread.turns = [{ id: 'turn-1', status: 'completed', items: [{ id: 'a1', type: 'agentMessage', text: 'Fee: $450.00 USD' }] }];
+  elapsed += 3001; // Retry the still-fenced terminal read after the bounded window.
   const settled = await adapter.poll({ workspaceId: 'w', sessionId });
   assert.equal(settled.state, 'idle');
   assert.equal(settled.messages.find(x => x.id === 'a1')?.text, 'Fee: $450.00 USD');
@@ -1424,4 +1556,285 @@ test('relation continuation is offered as a workspace-pinned read with no write 
   assert.equal((await adapter.read({workspaceId:'w',sessionId})).approvals.length,0);
   await notify({workspaceId:'foreign',entity:'contacts',id:'synthetic-contact'},902);assert.equal(requests.length,1);assert.equal(replies.at(-1).result.success,false);
  }finally{await rm(dataDir,{recursive:true,force:true});}
+});
+
+test('active polling uses observed deltas without repeatedly hydrating history; terminal notification forces readback', async (t) => {
+  let elapsed = 0; const started = Date.now(); t.mock.method(Date, 'now', () => started + elapsed);
+  const {adapter,server}=await setup(); const {sessionId}=await adapter.start({workspaceId:'w',message:'Read only'});
+  const input={workspaceId:'w',sessionId};
+  server.thread.turns=[{id:'turn-1',status:'inProgress',items:[{id:'u1',type:'userMessage',content:[{type:'text',text:'Read only'}]}]}];
+  await adapter.read(input);const reads=server.calls.filter(x=>x.method==='thread/read').length;
+  const emit=async(message:any)=>Promise.all(server.events.map(fn=>fn(message)));
+  await emit({method:'item/agentMessage/delta',params:{threadId:'thread-1',turnId:'turn-1',itemId:'a1',delta:'**Partial** '}});
+  const partial=await adapter.poll(input); assert.equal(partial.state,'running');assert.equal(partial.messages.at(-1)?.text,'**Partial** ');assert.equal(partial.messages[0].text,'Read only');
+  await emit({method:'item/agentMessage/delta',params:{threadId:'thread-1',turnId:'other-turn',itemId:'foreign',delta:'Ignore this stale turn'}});
+  const second=await adapter.poll(input);assert.equal(second.messages.some(x=>x.id==='foreign'),false);
+  assert.equal(server.calls.filter(x=>x.method==='thread/read').length,reads,'rapid deltas must not hydrate all history');
+  await emit({method:'turn/completed',params:{threadId:'thread-1',turn:{id:'turn-1',status:'completed'}}});
+  assert.equal((await adapter.poll(input)).state,'running','notification is not terminal transcript proof');
+  const terminalReads = server.calls.filter(x => x.method === 'thread/read').length;
+  assert.equal((await adapter.poll(input)).state, 'running');
+  assert.equal(server.calls.filter(x => x.method === 'thread/read').length, terminalReads, 'successful but lagging terminal history is also bounded');
+  server.thread.turns=[{id:'turn-1',status:'completed',items:[{id:'a1',type:'agentMessage',text:'**Partial** complete.'}]}];
+  await emit({method:'turn/completed',params:{threadId:'thread-1',turn:{id:'turn-1',status:'completed'}}});
+  elapsed += 3001; // Duplicate terminal notifications do not bypass the retry window.
+  assert.equal((await adapter.poll(input)).state,'idle');
+});
+
+test('activity is allowlisted observed local work and never includes tool arguments or reasoning', async () => {
+ const {adapter,server}=await setup(); const {sessionId}=await adapter.start({workspaceId:'w',message:'Read only'});
+ server.thread.turns=[{id:'turn-1',status:'inProgress',items:[]}];
+ await Promise.all(server.events.map(fn=>fn({id:2401,method:'item/tool/call',params:{threadId:'thread-1',tool:'gigi_records_get',arguments:{workspaceId:'w',entity:'tasks',id:'r',privateNote:'synthetic-secret-not-for-UI'}}})));
+ const observed=await adapter.read({workspaceId:'w',sessionId});assert.equal(observed.activity,'reading');assert.doesNotMatch(JSON.stringify(observed),/privateNote|synthetic-secret|arguments|reasoning/);
+ await Promise.all(server.events.map(fn=>fn({method:'item/reasoning/summaryTextDelta',params:{threadId:'thread-1',turnId:'turn-1',delta:'Never expose synthetic reasoning'}})));
+ assert.doesNotMatch(JSON.stringify(await adapter.poll({workspaceId:'w',sessionId})),/Never expose/);
+ server.thread.turns=[{id:'turn-1',status:'completed',items:[]}];assert.equal((await adapter.read({workspaceId:'w',sessionId})).activity,undefined);
+});
+
+test('transient history failure retains previous transcript alongside observed partial output', async () => {
+ const {adapter,server}=await setup(); const {sessionId}=await adapter.start({workspaceId:'w',message:'Read only'});const input={workspaceId:'w',sessionId};
+ server.thread.turns=[{id:'turn-1',status:'inProgress',items:[{id:'u',type:'userMessage',content:[{type:'text',text:'Read only'}]}]}];await adapter.read(input);
+ await Promise.all(server.events.map(fn=>fn({method:'item/agentMessage/delta',params:{threadId:'thread-1',turnId:'turn-1',itemId:'a',delta:'Retained partial'}})));
+ const original=server.request.bind(server);server.request=async(method,params)=>{if(method==='thread/read')throw Error('synthetic unavailable');return original(method,params);};
+ const pending=await adapter.read(input);assert.equal(pending.messages[0].text,'Read only');assert.equal(pending.messages.at(-1)?.text,'Retained partial');assert.equal(pending.state,'running');
+});
+
+test('running snapshots bound history reads before the first delta and after history catches up', async (t) => {
+  const { adapter, server, dataDir } = await setup();
+  let elapsed = 0; const started = Date.now(); t.mock.method(Date, 'now', () => started + elapsed);
+  try {
+    const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'Read only' });
+    const input = { workspaceId: 'w', sessionId };
+    server.thread.turns = [{ id: 'turn-1', status: 'inProgress', items: [] }];
+    await adapter.read(input);
+    const countReads = () => server.calls.filter(x => x.method === 'thread/read').length;
+    const initial = countReads();
+    for (let i = 0; i < 8; i++) { elapsed += 250; assert.equal((await adapter.poll(input)).state, 'running'); }
+    assert.equal(countReads(), initial, 'no first delta must not trigger history hydration on every UI poll');
+    elapsed += 1001; await adapter.poll(input);
+    assert.equal(countReads(), initial + 1, 'authoritative history still refreshes after three seconds');
+    await Promise.all(server.events.map(fn => fn({ method: 'item/agentMessage/delta', params: { threadId: 'thread-1', turnId: 'turn-1', itemId: 'a', delta: 'Observed text' } })));
+    server.thread.turns[0].items = [{ id: 'a', type: 'agentMessage', text: 'Observed text' }];
+    await adapter.read(input); const caughtUp = countReads();
+    elapsed += 250; assert.equal((await adapter.poll(input)).messages.at(-1)?.text, 'Observed text');
+    assert.equal(countReads(), caughtUp, 'authoritative text replacing live deltas must retain the snapshot cadence');
+  } finally { await rm(dataDir, { recursive: true, force: true }); }
+});
+
+for (const decision of ['approve', 'reject'] as const) for (const failureTiming of ['before-approval-snapshot', 'after-approval-snapshot'] as const) test(`${decision} cannot resurrect a cached approval after transient history failure (${failureTiming})`, async (t) => {
+  let elapsed = 0; const started = Date.now(); t.mock.method(Date, 'now', () => started + elapsed);
+  const { adapter, server, mcp, dataDir } = await setup();
+  let record = { id: 'r', title: 'Before', fields: { Status: 'Open' }, source: { kind: 'manual' }, relations: [] };
+  let writes = 0; const originalMcp = mcp.request.bind(mcp);
+  mcp.request = async (method, params) => {
+    if (method === 'tools/call' && params.name === 'gigi_records_get') return { structuredContent: structuredClone(record) };
+    if (method === 'tools/call' && params.name === 'gigi_records_save') { writes++; record = { ...record, title: params.arguments.title }; return { structuredContent: structuredClone(record) }; }
+    return originalMcp(method, params);
+  };
+  try {
+    const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'Propose one task edit' });
+    const input = { workspaceId: 'w', sessionId };
+    server.thread.turns = [{ id: 'turn-1', status: 'inProgress', items: [] }];
+    const emit = async (message: any) => Promise.all(server.events.map(fn => fn(message)));
+    await emit({ method: 'item/agentMessage/delta', params: { threadId: 'thread-1', turnId: 'turn-1', itemId: 'a', delta: 'Preparing the reviewed task edit.' } });
+    await adapter.read(input); // Retain a running snapshot before an approval arrives.
+    await emit({ id: 2701, method: 'item/tool/call', params: { threadId: 'thread-1', tool: 'gigi_records_save', arguments: { workspaceId: 'w', entity: 'tasks', id: 'r', title: 'Reviewed title' } } });
+    const original = server.request.bind(server);
+    const unavailable = async (method: string, params: any) => { if (method === 'thread/read') throw Error('synthetic transient history failure'); return original(method, params); };
+    if (failureTiming === 'before-approval-snapshot') server.request = unavailable;
+    const pending = await adapter.read(input); assert.equal(pending.state, 'approval');
+    server.request = unavailable;
+    const decided = await adapter.approve({ ...input, approvalId: pending.approvals[0].id, decision });
+    assert.equal(decided.state, 'running'); assert.equal(decided.approvals.length, 0);
+    const next = await adapter.poll(input);
+    assert.equal(next.state, 'running', 'resolved approval must never return from an older cached snapshot');
+    assert.equal(next.approvals.length, 0);
+    assert.equal(next.decisionReceipt?.outcome, decision === 'approve' ? 'verified' : 'rejected');
+    assert.equal(writes, decision === 'approve' ? 1 : 0, 'polling cannot repeat a reviewed operation');
+    server.request = original;
+    server.thread.turns = [{ id: 'turn-1', status: 'completed', items: [{ id: 'a', type: 'agentMessage', text: 'Checked result.' }] }];
+    elapsed += 3001; // A safe outage fallback now retains the ordinary reconciliation cadence.
+    assert.equal((await adapter.poll(input)).state, 'idle', 'terminal reconciliation remains available after transient history recovers');
+  } finally { await rm(dataDir, { recursive: true, force: true }); }
+});
+
+for (const [error, unresolved] of [
+  ['Provider usage limit reached', false], ['provider_turn_rejected', false],
+  ['turn_outcome_unknown', true], ['write_outcome_unknown', true],
+  ['approval_delivery_unknown', true], ['reconciliation_required', true],
+] as const) for (const historyUnavailable of [false, true]) test(`historical session error ${error} ${unresolved ? 'retains' : 'does not poison'} the workspace cache fence (history unavailable: ${historyUnavailable})`, async () => {
+  const { adapter, server, dataDir } = await setup();
+  try {
+    const old = await adapter.start({ workspaceId: 'w', message: 'Earlier request' });
+    server.thread.turns = [{ id: 'turn-1', status: 'failed', error: { message: error }, items: [] }];
+    const failed = await adapter.read({ workspaceId: 'w', sessionId: old.sessionId });
+    assert.equal(failed.error, error); assert.equal(failed.state, 'failed');
+    server.thread = { id: 'thread-2', status: { type: 'idle' }, turns: [] };
+    const active = await adapter.start({ workspaceId: 'w', message: 'New read-only conversation' });
+    const input = { workspaceId: 'w', sessionId: active.sessionId };
+    server.thread.turns = [{ id: 'turn-1', status: 'inProgress', items: [] }];
+    if (historyUnavailable) {
+      const original = server.request.bind(server);
+      server.request = async (method, params) => { if (method === 'thread/read') { server.calls.push({ method, params }); throw Error('synthetic history outage'); } return original(method, params); };
+    }
+    await adapter.read(input);
+    const reads = server.calls.filter(x => x.method === 'thread/read').length;
+    for (let i = 0; i < 3; i++) assert.equal((await adapter.poll(input)).state, 'running');
+    assert.equal(server.calls.filter(x => x.method === 'thread/read').length, reads + (unresolved ? 3 : 0),
+      unresolved ? 'unresolved workspace outcomes must still force reconciliation' : 'an ordinary historical failure must not disable healthy active snapshots');
+  } finally { await rm(dataDir, { recursive: true, force: true }); }
+});
+
+for (const historyAhead of [false, true]) test(`streamed prefixes survive active history reconciliation (history ahead: ${historyAhead})`, async () => {
+  const { adapter, server, dataDir } = await setup();
+  try {
+    const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'Read only' });
+    const input = { workspaceId: 'w', sessionId };
+    const emit = async (delta: string) => Promise.all(server.events.map(fn => fn({ method: 'item/agentMessage/delta', params: { threadId: 'thread-1', turnId: 'turn-1', itemId: 'a', delta } })));
+    await emit('Prefix');
+    let expected = historyAhead ? 'Prefix caught up' : 'Prefix';
+    server.thread.turns = [{ id: 'turn-1', status: 'inProgress', items: [{ id: 'a', type: 'agentMessage', text: expected }] }];
+    assert.equal((await adapter.read(input)).messages.at(-1)?.text, expected);
+    const reads = server.calls.filter(x => x.method === 'thread/read').length;
+    for (const suffix of ['!', ' a suffix longer than the original prefix']) {
+      await emit(suffix); expected += suffix;
+      assert.equal((await adapter.poll(input)).messages.at(-1)?.text, expected);
+    }
+    assert.equal(server.calls.filter(x => x.method === 'thread/read').length, reads);
+    server.thread.turns[0].items[0].text = expected;
+    await adapter.read(input); await emit(' after another refresh'); expected += ' after another refresh';
+    const original = server.request.bind(server);
+    server.request = async (method, params) => { if (method === 'thread/read') throw Error('synthetic unavailable'); return original(method, params); };
+    assert.equal((await adapter.read(input)).messages.at(-1)?.text, expected);
+    server.request = original; server.thread.turns[0].status = 'completed'; server.thread.turns[0].items[0].text = expected;
+    assert.equal((await adapter.read(input)).state, 'idle');
+  } finally { await rm(dataDir, { recursive: true, force: true }); }
+});
+
+for (const failure of ['thread/read', 'last-history-page']) test(`initial history outage keeps safe running polls bounded (${failure})`, async (t) => {
+  const { adapter, server, dataDir } = await setup();
+  let elapsed = 0; const started = Date.now(); t.mock.method(Date, 'now', () => started + elapsed);
+  try {
+    const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'Read only' });
+    const input = { workspaceId: 'w', sessionId };
+    server.thread.turns = Array.from({ length: 20 }, (_, i) => ({ id: `turn-${i + 1}`, status: 'inProgress', items: [] }));
+    const original = server.request.bind(server);
+    server.request = async (method, params) => {
+      if ((failure === 'thread/read' && method === 'thread/read') || (failure === 'last-history-page' && method === 'thread/turns/list' && params.cursor === '19')) {
+        server.calls.push({ method, params }); throw Error('synthetic history outage');
+      }
+      return original(method, params);
+    };
+    await adapter.read(input);
+    const count = () => server.calls.filter(x => x.method === 'thread/read' || x.method === 'thread/turns/list').length;
+    const initial = count();
+    await Promise.all(server.events.map(fn => fn({ method: 'item/agentMessage/delta', params: { threadId: 'thread-1', turnId: 'turn-1', itemId: 'a', delta: 'Observed during outage' } })));
+    for (let i = 0; i < 8; i++) {
+      elapsed += 250; const output = await adapter.poll(input);
+      assert.equal(output.state, 'running'); assert.equal(output.messages.at(-1)?.text, 'Observed during outage');
+    }
+    assert.equal(count(), initial, 'failed initial history must not retry on every UI poll');
+    elapsed += 1001; await adapter.poll(input); assert.equal(count(), initial * 2, 'retry after three seconds even when still unavailable');
+    await Promise.all(server.events.map(fn => fn({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed' } } })));
+    assert.equal((await adapter.poll(input)).state, 'running'); assert.equal(count(), initial * 3, 'terminal notification bypasses a safe fallback');
+    for (let i = 0; i < 8; i++) {
+      elapsed += 250;
+      await Promise.all(server.events.map(fn => fn({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed' } } })));
+      assert.equal((await adapter.poll(input)).state, 'running', 'terminal signal alone cannot complete the transcript');
+    }
+    assert.equal(count(), initial * 3, 'terminal retries are bounded even with duplicate notifications');
+    elapsed += 1001; assert.equal((await adapter.poll(input)).state, 'running');
+    assert.equal(count(), initial * 4, 'terminal reconciliation retries after three seconds');
+    server.request = original; server.thread.turns = [{ id: 'turn-1', status: 'completed', items: [{ id: 'a', type: 'agentMessage', text: 'Observed during outage; final answer' }] }];
+    elapsed += 3001;
+    const final = await adapter.poll(input); assert.equal(final.state, 'idle'); assert.equal(final.messages.at(-1)?.text, 'Observed during outage; final answer');
+  } finally { await rm(dataDir, { recursive: true, force: true }); }
+});
+
+test('terminal retry snapshots cannot hide a later approval or its rejected receipt', async () => {
+  const { adapter, server, dataDir } = await setup();
+  try {
+    const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'Review a task' });
+    const input = { workspaceId: 'w', sessionId };
+    const emit = async (message: any) => Promise.all(server.events.map(fn => fn(message)));
+    server.thread.turns = [{ id: 'turn-1', status: 'inProgress', items: [] }];
+    await emit({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed' } } });
+    assert.equal((await adapter.poll(input)).state, 'running');
+    await emit({ id: 2901, method: 'item/tool/call', params: { threadId: 'thread-1', tool: 'gigi_records_save', arguments: { workspaceId: 'w', entity: 'tasks', id: 'r', title: 'Reviewed title' } } });
+    const pending = await adapter.poll(input); assert.equal(pending.state, 'approval');
+    const original = server.request.bind(server);
+    server.request = async (method, params) => { if (method === 'thread/read') throw Error('synthetic history outage'); return original(method, params); };
+    const rejected = await adapter.approve({ ...input, approvalId: pending.approvals[0].id, decision: 'reject' });
+    assert.equal(rejected.decisionReceipt?.outcome, 'rejected');
+    const next = await adapter.poll(input);
+    assert.equal(next.state, 'running'); assert.equal(next.approvals.length, 0); assert.equal(next.decisionReceipt?.outcome, 'rejected');
+  } finally { await rm(dataDir, { recursive: true, force: true }); }
+});
+
+test('a later turn retains authoritative transcript through its first history outage and new deltas', async (t) => {
+  const { adapter, server, dataDir } = await setup();
+  let elapsed = 0; const started = Date.now(); t.mock.method(Date, 'now', () => started + elapsed);
+  try {
+    const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'First question' });
+    const input = { workspaceId: 'w', sessionId };
+    const prior = [{ id: 'u1', type: 'userMessage', content: [{ type: 'text', text: 'First question' }] }, { id: 'a1', type: 'agentMessage', text: 'First answer' }];
+    server.thread.turns = [{ id: 'turn-1', status: 'completed', items: prior }];
+    assert.equal((await adapter.read(input)).state, 'idle');
+    const original = server.request.bind(server);
+    server.request = async (method, params) => {
+      if (method === 'turn/start') { server.calls.push({ method, params }); return { turn: { id: 'turn-2' } }; }
+      if (method === 'thread/read') { server.calls.push({ method, params }); throw Error('synthetic first-read outage'); }
+      return original(method, params);
+    };
+    await adapter.send({ ...input, message: 'Second question' });
+    const emit = async (delta: string) => Promise.all(server.events.map(fn => fn({ method: 'item/agentMessage/delta', params: { threadId: 'thread-1', turnId: 'turn-2', itemId: 'a2', delta } })));
+    await emit('Second partial');
+    const pending = await adapter.poll(input);
+    assert.equal(pending.state, 'running'); assert.equal(pending.approvals.length, 0);
+    assert.deepEqual(pending.messages.map(x => x.text), ['First question', 'First answer', 'Second partial']);
+    const reads = server.calls.filter(x => x.method === 'thread/read').length;
+    await emit(' response'); elapsed += 250;
+    assert.deepEqual((await adapter.poll(input)).messages.map(x => x.text), ['First question', 'First answer', 'Second partial response']);
+    assert.equal(server.calls.filter(x => x.method === 'thread/read').length, reads, 'retaining transcript must not bypass safe outage cadence');
+    server.request = original;
+    server.thread.turns.push({ id: 'turn-2', status: 'completed', items: [{ id: 'u2', type: 'userMessage', content: [{ type: 'text', text: 'Second question' }] }, { id: 'a2', type: 'agentMessage', text: 'Second partial response complete' }] });
+    elapsed += 3001; const recovered = await adapter.poll(input);
+    assert.equal(recovered.state, 'idle');
+    assert.deepEqual(recovered.messages.map(x => x.text), ['First question', 'First answer', 'Second question', 'Second partial response complete']);
+    assert.equal(new Set(recovered.messages.map(x => x.id)).size, recovered.messages.length);
+  } finally { await rm(dataDir, { recursive: true, force: true }); }
+});
+
+test('curated memory tools reach embedded chat with citations and requests stay native-review-only', async () => {
+  const {adapter,server,mcp}=await setup();const calls:any[]=[];const replies:any[]=[];
+  const original=mcp.request.bind(mcp);
+  mcp.request=async(method,params)=>{
+    if(method==='tools/list')return {tools:[...toolCatalog(),...['gigi_memory_search','gigi_memory_get','gigi_memory_request'].map(name=>({name,description:'Workspace memory is advisory; pending requires human review.',inputSchema:{type:'object'}}))]};
+    if(method==='tools/call'&&params.name.startsWith('gigi_memory_')){calls.push(params);return {content:[{type:'text',text:JSON.stringify(params.name==='gigi_memory_request'?{state:'pending_user_approval',requestId:'proposal'}:{items:[{text:'Morning rehearsal',state:'inferred',citation:'gigi-memory://w/m?revision=1'}]})}]};}
+    return original(method,params);
+  };
+  server.reply=(_id,result)=>{replies.push(result);};
+  await adapter.start({workspaceId:'w',message:'Remember rehearsal preferences'});
+  const profile=server.calls.find(x=>x.method==='thread/start')!.params;
+  assert.match(profile.baseInstructions,/Memory is advisory/);
+  assert.ok(profile.dynamicTools[0].tools.some((t:any)=>t.name==='gigi_memory_search'));
+  const emit=(tool:string,args:any)=>Promise.all(server.events.map(fn=>fn({id:2026,method:'item/tool/call',params:{threadId:'thread-1',tool,arguments:args}})));
+  await emit('gigi_memory_search',{query:'rehearsal',limit:1});
+  assert.equal(calls.at(-1).arguments.workspaceId,'w');assert.match(replies.at(-1).contentItems[0].text,/gigi-memory:\/\/w/);
+  await emit('gigi_memory_request',{requestId:'proposal',action:'save',entry:{text:'Morning rehearsal'}});
+  assert.match(replies.at(-1).contentItems[0].text,/pending_user_approval/);
+  const before=calls.length;await emit('gigi_memory_search',{workspaceId:'foreign',query:'rehearsal'});assert.equal(calls.length,before);assert.equal(replies.at(-1).success,false);
+  await emit('gigi_memory_review',{workspaceId:'w',requestId:'proposal',decision:'approve'});assert.equal(calls.length,before);assert.equal(replies.at(-1).success,false);
+});
+
+test('accepted request receipt survives empty interrupted transcript and adapter restart',async()=>{
+ const {adapter,server,mcp,dataDir}=await setup();
+ const {sessionId}=await adapter.start({workspaceId:'w'});
+ const sent=await adapter.send({workspaceId:'w',sessionId,message:'Synthetic request',requestId:'synthetic-request-1'});
+ assert.deepEqual(sent.sendReceipt,{requestId:'synthetic-request-1',accepted:true,turnId:'turn-1'});
+ server.thread.turns=[{id:'turn-1',status:'interrupted',items:[]}];
+ const restarted=createCodexAdapter({dataDir,mcpBinary:'/fixture/gigi-mcp',skillPath:'/fixture/skill/SKILL.md',server,mcp});
+ const result=await restarted.read({workspaceId:'w',sessionId});
+ assert.deepEqual(result.messages,[]);assert.equal(result.state,'interrupted');assert.deepEqual(result.sendReceipt,sent.sendReceipt);
+ assert.equal(server.calls.filter(x=>x.method==='turn/start').length,1);
 });

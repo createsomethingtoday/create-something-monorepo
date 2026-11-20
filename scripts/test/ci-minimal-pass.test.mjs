@@ -15,6 +15,16 @@ const triggered = (name, file, event = 'pull_request') => {
   return paths ? paths.some((path) => matches(path, file)) : Boolean(workflow(name).on[event] === null);
 };
 
+test('Draw adapter reserves bounded checkout time without dropping its contracts', () => {
+  const job = workflow('draw-agent').jobs.adapter;
+  const checkout = job.steps.find(step => step.uses?.startsWith('actions/checkout@'));
+  assert.equal(checkout['timeout-minutes'], 10);
+  assert(job['timeout-minutes'] >= checkout['timeout-minutes'] + 5 && job['timeout-minutes'] <= 15);
+  assert(!job.steps.some(step => step['continue-on-error']));
+  assert(job.steps.some(step => step.run === "python3 -m unittest discover -s packages/mapping-canvas/scripts -p 'test_draw_*.py' -v"));
+  assert(job.steps.some(step => step.run === 'node --test apps/draw-native/scripts/mac-release.test.mjs'));
+});
+
 test('MCP job runs all stages once, retaining active scope and independent hub checks', () => {
   const job = workflow('mcp-quality-gate').jobs['mcp-quality'];
   assert.equal(job.name, 'Typecheck, Lint, Test MCP Packages');

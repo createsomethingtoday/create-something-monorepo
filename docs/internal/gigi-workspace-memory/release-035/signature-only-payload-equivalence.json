@@ -1,0 +1,142 @@
+{
+  "passed": true,
+  "originalUntouched": true,
+  "nonMachOFilesUnchanged": 10,
+  "notarizationTicketAdded": [
+    "Contents/CodeResources"
+  ],
+  "macho": [
+    {
+      "path": "Contents/MacOS/gigi",
+      "signatureOnlyChange": true,
+      "normalizedNonSignatureSha256": "6cc8a9c1d43c0fc0d4cc9269ba10e9e52171ca65d4bc7651b28a0433a7f54236",
+      "signatureOffset": 29487472,
+      "maskedSignatureEnvelopeSizeFields": [
+        [
+          1792,
+          8
+        ],
+        [
+          1808,
+          8
+        ],
+        [
+          3476,
+          4
+        ]
+      ],
+      "modeUnchanged": true
+    },
+    {
+      "path": "Contents/MacOS/gigi-mcp",
+      "signatureOnlyChange": true,
+      "normalizedNonSignatureSha256": "986e6cbfe08da261265ed2a889d1914fca7e55fee824f02999152f66c09fb880",
+      "signatureOffset": 7099984,
+      "maskedSignatureEnvelopeSizeFields": [
+        [
+          1792,
+          8
+        ],
+        [
+          1808,
+          8
+        ],
+        [
+          3476,
+          4
+        ]
+      ],
+      "modeUnchanged": true
+    },
+    {
+      "path": "Contents/Resources/gigi-mcp",
+      "signatureOnlyChange": true,
+      "normalizedNonSignatureSha256": "5d0a9552eebfc2f23473a02d0f19949d38ed4196a9226dfe8b91ae14463c9d45",
+      "signatureOffset": 7115936,
+      "maskedSignatureEnvelopeSizeFields": [
+        [
+          2032,
+          8
+        ],
+        [
+          2048,
+          8
+        ],
+        [
+          3732,
+          4
+        ]
+      ],
+      "modeUnchanged": true
+    },
+    {
+      "path": "Contents/Resources/libgigi_notifications.dylib",
+      "signatureOnlyChange": true,
+      "normalizedNonSignatureSha256": "f56a25dd03efce5597e1b72097c47cbfbc2bef546487d7cb9ab48f3a720dc499",
+      "signatureOffset": 91936,
+      "maskedSignatureEnvelopeSizeFields": [
+        [
+          2520,
+          8
+        ],
+        [
+          2536,
+          8
+        ],
+        [
+          4292,
+          4
+        ]
+      ],
+      "modeUnchanged": true
+    },
+    {
+      "path": "Contents/Resources/gigi-integrations",
+      "signatureOnlyChange": true,
+      "normalizedNonSignatureSha256": "e2aeb885f5b7bd5e339624524a23f54abc72ba3b0e889ca3c35fc51eed76aafe",
+      "signatureOffset": 88796304,
+      "maskedSignatureEnvelopeSizeFields": [
+        [
+          2024,
+          8
+        ],
+        [
+          2040,
+          8
+        ],
+        [
+          2572,
+          4
+        ]
+      ],
+      "modeUnchanged": true
+    },
+    {
+      "path": "Contents/Resources/gigi-codex",
+      "signatureOnlyChange": true,
+      "normalizedNonSignatureSha256": "27ca4f8ee925fde15fd5e532d5e0be4b6430f55edba9a1a77c37afaa54b93db5",
+      "signatureOffset": 88829072,
+      "maskedSignatureEnvelopeSizeFields": [
+        [
+          2024,
+          8
+        ],
+        [
+          2040,
+          8
+        ],
+        [
+          2572,
+          4
+        ]
+      ],
+      "modeUnchanged": true
+    },
+    {
+      "path": "Contents/Resources/ctx",
+      "upstreamSignatureAndBytesUnchanged": true,
+      "sha256": "90807a133453ed6a2a70b6fdfb70a1ce7da9b6d4eb2cf33248020c664d330d99"
+    }
+  ],
+  "method": "Compare all Mach-O bytes before LC_CODE_SIGNATURE payload; normalize only __LINKEDIT vmsize/filesize and LC_CODE_SIGNATURE datasize fields. Signature data offset and all other pre-signature bytes must match. CTX bytes are identical."
+}

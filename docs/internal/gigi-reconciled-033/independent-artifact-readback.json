@@ -1,0 +1,132 @@
+[
+  {
+    "lane": "dev-release-033",
+    "id": "co.halfdozen.gigi.dev",
+    "version": "0.3.3",
+    "bytes": 105175192,
+    "sha": "f288c3d2a5e7e5a6b94e16553983600f83e4a0d4d666c736f6812cf2e0423db6",
+    "mainSha": "738f1f552cafecaede6e03cdcc12edc12c292e8efc73f87ff350a20059939363",
+    "checks": [
+      {
+        "args": [
+          "codesign",
+          "--verify",
+          "--deep",
+          "--strict",
+          "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-033/GiGi Half Dozen Dev.app"
+        ],
+        "exit": 0,
+        "output": ""
+      },
+      {
+        "args": [
+          "xcrun",
+          "stapler",
+          "validate",
+          "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-033/GiGi Half Dozen Dev.app"
+        ],
+        "exit": 0,
+        "output": "Processing: /Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-033/GiGi Half Dozen Dev.app\nThe validate action worked!\n"
+      },
+      {
+        "args": [
+          "xcrun",
+          "stapler",
+          "validate",
+          "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-033/GiGi-HalfDozen-DEV-0.3.3-arm64.dmg"
+        ],
+        "exit": 0,
+        "output": "Processing: /Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-033/GiGi-HalfDozen-DEV-0.3.3-arm64.dmg\nThe validate action worked!\n"
+      },
+      {
+        "args": [
+          "spctl",
+          "--assess",
+          "--type",
+          "execute",
+          "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-033/GiGi Half Dozen Dev.app"
+        ],
+        "exit": 0,
+        "output": ""
+      },
+      {
+        "args": [
+          "spctl",
+          "--assess",
+          "--type",
+          "open",
+          "--context",
+          "context:primary-signature",
+          "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-033/GiGi-HalfDozen-DEV-0.3.3-arm64.dmg"
+        ],
+        "exit": 0,
+        "output": ""
+      }
+    ]
+  },
+  {
+    "lane": "public-release-033",
+    "id": "agency.createsomething.gigi",
+    "version": "0.3.3",
+    "bytes": 91823319,
+    "sha": "71fbca27313345d00db2a2604a50324e074bd0766aacd49768761fa43576547d",
+    "mainSha": "fe1880e5b734e4114e86f0bf82f4e258f4503b7b999c70ad72f54ccd36397851",
+    "checks": [
+      {
+        "args": [
+          "codesign",
+          "--verify",
+          "--deep",
+          "--strict",
+          "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-033/GiGi.app"
+        ],
+        "exit": 0,
+        "output": ""
+      },
+      {
+        "args": [
+          "xcrun",
+          "stapler",
+          "validate",
+          "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-033/GiGi.app"
+        ],
+        "exit": 0,
+        "output": "Processing: /Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-033/GiGi.app\nThe validate action worked!\n"
+      },
+      {
+        "args": [
+          "xcrun",
+          "stapler",
+          "validate",
+          "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-033/GiGi-0.3.3-arm64-private-beta.dmg"
+        ],
+        "exit": 0,
+        "output": "Processing: /Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-033/GiGi-0.3.3-arm64-private-beta.dmg\nThe validate action worked!\n"
+      },
+      {
+        "args": [
+          "spctl",
+          "--assess",
+          "--type",
+          "execute",
+          "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-033/GiGi.app"
+        ],
+        "exit": 0,
+        "output": ""
+      },
+      {
+        "args": [
+          "spctl",
+          "--assess",
+          "--type",
+          "open",
+          "--context",
+          "context:primary-signature",
+          "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/public-release-033/GiGi-0.3.3-arm64-private-beta.dmg"
+        ],
+        "exit": 0,
+        "output": ""
+      }
+    ]
+  }
+]

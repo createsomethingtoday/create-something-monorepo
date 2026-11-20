@@ -93,6 +93,49 @@ describe('SEO public identity graph', () => {
     expect(head).toContain('name="twitter:image:alt"');
   });
 
+  it.each([
+    [0, 0],
+    [900, 900],
+    ['900.50', 900.5]
+  ])('publishes a numeric service price for %s, including free offers', (price, expected) => {
+    const { head } = render(SEO, {
+      props: {
+        title: 'Services', description: 'Agreed workflow support', propertyName: 'agency',
+        services: [{ name: 'Support', price, priceDescription: 'Starting monthly price; scoped separately' }]
+      },
+      context: pageContext('https://createsomething.agency/services')
+    });
+    const service = schemasFromHead(head).find((schema) => schema['@type'] === 'Service');
+    expect(service.offers).toMatchObject({
+      '@type': 'Offer', price: expected, priceCurrency: 'USD',
+      description: 'Starting monthly price; scoped separately'
+    });
+  });
+
+  it.each(['Custom', 'From $900/month', '$0 browser-local starter', '', -1, NaN, Infinity, null, undefined])(
+    'keeps quote terms without emitting an invalid service price for %s', (price) => {
+      const { head } = render(SEO, {
+        props: {
+          title: 'Services', description: 'Agreed workflow support', propertyName: 'agency',
+          services: [{ name: 'Build', price, priceDescription: 'Quoted after fit' }]
+        },
+        context: pageContext('https://createsomething.agency/services')
+      });
+      const service = schemasFromHead(head).find((schema) => schema['@type'] === 'Service');
+      expect(service.offers.description).toBe('Quoted after fit');
+      expect(service.offers).not.toHaveProperty('price');
+      expect(service.offers).not.toHaveProperty('priceCurrency');
+    }
+  );
+
+  it.each([
+    ['ltd', /operating library/i],
+    ['space', /public workshop/i]
+  ] as const)('describes the current %s property role in WebSite schema', (propertyName, role) => {
+    const website = schemasFor(propertyName).find((schema) => schema['@type'] === 'WebSite');
+    expect(website.description).toMatch(role);
+  });
+
   it('makes Article records reuse the page image and canonical Organization', () => {
     const { head } = render(SEO, {
       props: {

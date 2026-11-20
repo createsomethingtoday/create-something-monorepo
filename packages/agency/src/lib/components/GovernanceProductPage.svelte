@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import {
     Button,
     PerformanceCardGrid,
@@ -13,6 +14,7 @@
     type PerformanceProofItem
   } from '@create-something/canon';
   import type { GovernanceProduct } from '@create-something/canon/governance';
+  import SyntheticWorkflowExample from '$lib/components/SyntheticWorkflowExample.svelte';
   import WorkflowSignalIcon from '$lib/components/WorkflowSignalIcon.svelte';
   import AgencyWayfindingGroup from '$lib/components/AgencyWayfindingGroup.svelte';
   import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
@@ -109,6 +111,7 @@
   ]);
 </script>
 
+<AgencyHeroFrame>
 <PerformancePageSection
   variant="hero"
   layout="split"
@@ -124,14 +127,13 @@
   {/snippet}
 
   {#snippet aside()}
-    <PerformanceCardGrid
-      items={heroCards}
-      columns={1}
-      density="compact"
-      ariaLabel={`${product.name} operating cards`}
-    />
+    {@const exampleKind = miniArtifactKind(product.id)}
+    {#if exampleKind}<SyntheticWorkflowExample kind={exampleKind} />{:else}
+      <PerformanceCardGrid items={heroCards} columns={1} density="compact" ariaLabel={`${product.name} operating cards`} />
+    {/if}
   {/snippet}
 </PerformancePageSection>
+</AgencyHeroFrame>
 
 <PerformanceNarrativeStage
   id={`${product.id}-operating-boundary`}

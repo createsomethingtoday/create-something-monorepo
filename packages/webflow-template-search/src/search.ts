@@ -44,6 +44,8 @@ function orderTieBreaker(includeTextRank: boolean): string {
 function sortClause(sort: TemplateSort, options: { textRankTieBreaker?: boolean } = {}): string {
   const tieBreaker = orderTieBreaker(options.textRankTieBreaker === true);
   switch (sort) {
+    case 'recommended':
+      return `CASE WHEN d.is_featured = 1 AND LENGTH(TRIM(COALESCE(d.reviewer_pick_reason, ''))) > 0 THEN 0 ELSE 1 END ASC, COALESCE(d.popularity_score, 0) DESC, COALESCE(d.published_date, '') DESC, ${tieBreaker}`;
     case 'best_selling':
       return `COALESCE(d.cumulative_purchases, 0) DESC, COALESCE(d.unique_viewers, 0) DESC, COALESCE(d.popularity_score, 0) DESC, COALESCE(d.published_date, '') DESC, ${tieBreaker}`;
     case 'newest':
@@ -79,6 +81,13 @@ const FREE_TEMPLATE_CLAUSE = '(d.price = 0 OR (d.price IS NULL AND d.is_free = 1
 const HAS_CATEGORY_MEMBERSHIPS_CLAUSE =
   'EXISTS (SELECT 1 FROM template_category_memberships tcm_existing WHERE tcm_existing.template_document_id = d.id)';
 const HAS_NO_CATEGORY_MEMBERSHIPS_CLAUSE = `NOT ${HAS_CATEGORY_MEMBERSHIPS_CLAUSE}`;
+// A template with no membership rows falls back to its own category list. The list is read
+// through a second lookup by id, not from `d`. The category filter then needs only `d.id`
+// from the outer table, so a count or a facet runs on an index and opens a template's wide
+// row only for the few templates that have no membership rows. Reading the list from `d`
+// forced every category count to scan the whole table.
+const CATEGORY_GROUP_LIST_FALLBACK_CLAUSE =
+  'EXISTS (SELECT 1 FROM template_documents fallback_doc, json_each(fallback_doc.category_group_slugs_json) WHERE fallback_doc.id = d.id AND json_each.value = ?)';
 const PUBLIC_CHILD_SLUGS_CTE = `
   public_child_slugs AS (
     SELECT canonical_slug, MIN(alias_slug) AS alias_slug
@@ -200,6 +209,7 @@ function creatorSearchCandidates(query: string, mode: 'strict' | 'relaxed'): { f
 async function resolveAliases(env: Env, params: SearchParams): Promise<SearchParams> {
   return {
     ...params,
+    intent: params.intent ? {...params.intent, category_slugs: await Promise.all(params.intent.category_slugs.map(async slug => (await resolveAlias(env.DB, 'child_category', slug)) || slug))} : undefined,
     childCategorySlug: await resolveAlias(env.DB, 'child_category', params.childCategorySlug),
   };
 }
@@ -215,6 +225,11 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
     fromClause = candidates.fromClause;
     binds.push(...candidates.binds);
     queryMode = true;
+  }
+
+  if (params.intent) {
+    clauses.push(`EXISTS (SELECT 1 FROM template_child_categories portfolio_category WHERE portfolio_category.template_document_id = d.id AND portfolio_category.child_category_slug IN (${placeholderList(params.intent.category_slugs.length)}))`);
+    binds.push(...params.intent.category_slugs);
   }
 
   if (params.templateSlug) { clauses.push('d.template_slug = ?'); binds.push(params.templateSlug); }
@@ -239,7 +254,7 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
         )
         OR (
           ${HAS_NO_CATEGORY_MEMBERSHIPS_CLAUSE}
-          AND EXISTS (SELECT 1 FROM json_each(d.category_group_slugs_json) WHERE json_each.value = ?)
+          AND ${CATEGORY_GROUP_LIST_FALLBACK_CLAUSE}
           AND EXISTS (
             SELECT 1
             FROM template_child_categories tcc
@@ -261,7 +276,7 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
         )
         OR (
           ${HAS_NO_CATEGORY_MEMBERSHIPS_CLAUSE}
-          AND EXISTS (SELECT 1 FROM json_each(d.category_group_slugs_json) WHERE json_each.value = ?)
+          AND ${CATEGORY_GROUP_LIST_FALLBACK_CLAUSE}
         )
       )
     `);
@@ -334,6 +349,12 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
     binds.push(...params.types);
   }
 
+  if (params.maxPrice != null) {
+    // Unknown price is not proof of affordability. A confirmed free flag is.
+    clauses.push('(CASE WHEN d.price IS NOT NULL THEN d.price WHEN d.is_free = 1 THEN 0 ELSE NULL END) <= ?');
+    binds.push(params.maxPrice);
+  }
+
   if (params.hasCms != null) {
     clauses.push('d.has_cms = ?');
     binds.push(params.hasCms ? 1 : 0);
@@ -350,6 +371,7 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
 function queryOrderClause(params: SearchParams, queryMode: boolean): string {
   if (!queryMode) return sortClause(params.sort);
   const creatorMatchFirst = 'search_candidates.creator_match DESC, ';
+  if (params.sort === 'recommended' && !params.intent) return `${creatorMatchFirst}text_rank ASC, ${sortClause(params.sort)}`;
   if (params.sort === 'popular') return `${creatorMatchFirst}text_rank ASC, ${sortClause(params.sort)}`;
   return `${creatorMatchFirst}${sortClause(params.sort, { textRankTieBreaker: true })}`;
 }
@@ -565,7 +587,7 @@ async function loadSubcategoryPills(
   params: SearchParams,
   relaxedQuery = false,
   cacheVersion?: string,
-): Promise<Array<{ name: string; slug: string; count: number }>> {
+): Promise<Array<{ name: string; slug: string; canonicalSlug: string; count: number }>> {
   const groupSlug =
     params.categoryGroupSlug ?? (params.childCategorySlug ? await resolveCategoryGroupSlugForChild(env, params.childCategorySlug) : null);
   if (!groupSlug) return [];
@@ -598,6 +620,7 @@ async function loadSubcategoryPills(
       SELECT
         MIN(tcm.child_category_name) AS name,
         COALESCE(public_child_slugs.alias_slug, tcm.child_category_slug) AS slug,
+        MIN(tcm.child_category_slug) AS canonical_slug,
         COUNT(DISTINCT tcm.template_document_id) AS count
       FROM filtered
       JOIN template_category_memberships tcm
@@ -614,6 +637,7 @@ async function loadSubcategoryPills(
     return (membershipResult.results ?? []).map((row) => ({
       name: row.name,
       slug: row.slug,
+      canonicalSlug: row.canonical_slug || row.slug,
       count: Number(row.count),
     }));
   }
@@ -629,6 +653,7 @@ async function loadSubcategoryPills(
       SELECT
         MIN(tcc.child_category_name) AS name,
         COALESCE(public_child_slugs.alias_slug, tcc.child_category_slug) AS slug,
+        MIN(tcc.child_category_slug) AS canonical_slug,
         COUNT(DISTINCT tcc.template_document_id) AS count
       FROM filtered
       JOIN template_child_categories tcc ON tcc.template_document_id = filtered.id
@@ -642,6 +667,7 @@ async function loadSubcategoryPills(
   return (result.results ?? []).map((row) => ({
     name: row.name,
     slug: row.slug,
+    canonicalSlug: row.canonical_slug || row.slug,
     count: Number(row.count),
   }));
   });
@@ -667,6 +693,20 @@ function buildTags(names: string[], slugs: string[]): Array<{ name: string; slug
   return names.map((name, index) => ({ name, slug: slugs[index] ?? '' }));
 }
 
+// Live subcategory pages use the Templates CMS slug (`fitness-and-gym-websites`),
+// not the short public API slug. A few legacy CMS slugs don't follow that pattern.
+const SUBCATEGORY_PAGE_SLUG_OVERRIDES: Record<string, string> = {
+  'events-websites': 'events',
+  'music-events-and-festivals-websites': 'music-events-and-festivals--websites',
+  'renewable-energy-websites': 'renewable-energy',
+  'sports-websites': 'sports',
+};
+
+function subcategoryPageUrl(canonicalSlug: string): string {
+  const pageSlug = SUBCATEGORY_PAGE_SLUG_OVERRIDES[canonicalSlug] ?? canonicalSlug;
+  return `https://webflow.com/templates/subcategory/${pageSlug}`;
+}
+
 function buildChildCategories(
   names: string[],
   slugs: string[],
@@ -678,7 +718,7 @@ function buildChildCategories(
     return {
       name,
       slug: publicSlug,
-      url: `https://webflow.com/templates/subcategory/${publicSlug}`,
+      url: subcategoryPageUrl(canonicalSlug),
     };
   });
 }
@@ -840,6 +880,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams, cacheVe
       has_previous_page: params.page > 1,
     },
     sort: params.sort,
+    ...(params.intent ? {interpretation: params.intent} : {}),
     applied_filters: {
       q: params.q,
       scope: params.scope,
@@ -854,6 +895,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams, cacheVe
       types: params.types,
       free_only: params.freeOnly,
       has_cms: params.hasCms,
+      max_price: params.maxPrice ?? null,
       relaxed: relaxedQuery,
     },
     available_facets: {
@@ -872,7 +914,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams, cacheVe
       return {
         name: pill.name,
         slug: publicSlug,
-        url: `https://webflow.com/templates/subcategory/${publicSlug}`,
+        url: subcategoryPageUrl(pill.canonicalSlug ?? pill.slug),
         count: Number(pill.count),
         active: publicSlug === (params.childCategorySlug ? childSlugMap[params.childCategorySlug] ?? params.childCategorySlug : ''),
       };

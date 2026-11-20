@@ -5,6 +5,16 @@ import type {
 } from '../../packages/canon/src/lib/components/performance/page-contract.ts';
 
 export const performancePageRegistry: PerformancePageRegistryGroup[] = [
+  group('agency-dental-ai-agents', 'agency', ['dental-ai-agents'], 'migrated',
+    contract('commercial', 'Decide whether one dental front-desk workflow fits a scoped OpenAI integration.',
+      'A captured working fictional demonstration and an illustrative request sequence show source reads, confirmation, synthetic records and measurement limits.',
+      'Book a mapping session for one front-desk workflow')),
+
+  group('agency-openai-dots', 'agency', ['openai-dots'], 'pending',
+    contract('learning', 'Understand personal dots and choose one useful task to try.',
+      'An explicitly illustrative Gather, Make, and Hand back example explains continuity and human review; official sources establish capability boundaries.',
+      'Book a mapping session or map one useful task')),
+
   group('agency-scopefield', 'agency', ['scopefield'], 'pending',
     contract('landing', 'Decide whether to try the Scopefield Mac public beta.',
       'A labeled conceptual isometric story explains the browser/workspace direction; explicit beta facts and linked release notes establish current capability and limits.',
@@ -73,9 +83,21 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'migrated',
     contract(
       'landing',
-      'Decide whether the $900/month agent engineering membership fits one active workflow.',
-      'A source-backed work index demonstrates engineering breadth; membership terms distinguish guidance from custom builds, runtime costs and production responsibility.',
-      'Discuss membership fit'
+      'Decide whether AI-native technical support can help one task and the team that uses it.',
+      'Micah Johnson’s individual Webflow Marketplace portfolio connects preparation, intake, review, asset management and discovery through recorded interfaces and labeled offline replays, with clear personal-work attribution; labeled conceptual scenes explain learning, connection and reviewed operation, while explicit membership capacity preserves cost and responsibility boundaries.',
+      'Talk through the workflow'
+    )
+  ),
+  group(
+    'agency-webflow-portfolio',
+    'agency',
+    ['case-studies/webflow-marketplace', 'case-studies/webflow-marketplace/[study]'],
+    'migrated',
+    contract(
+      'editorial',
+      'Inspect Micah Johnson’s individual work across the Webflow Marketplace lifecycle.',
+      'Real recorded interfaces and labeled offline replays place the contribution, design decisions and evidence limits beside each study.',
+      'Explore another study or discuss a workflow'
     )
   ),
   group(

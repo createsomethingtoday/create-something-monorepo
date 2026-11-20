@@ -1,4 +1,5 @@
 export const sections = [
+  { id: 'memory', label: 'Memory' },
   { id: 'overview', label: 'Overview' },
   { id: 'music', label: 'Music library' },
   { id: 'social', label: 'Instagram drafts' },
@@ -115,7 +116,7 @@ export function linkInput(values, fromEntity, fromId) {
 
 export function sourcePreview(source) {
   const data = source?.preview || {};
-  const names = source?.provider === 'gmail' ? [['Sender', data.from], ['Excerpt', data.snippet]] : source?.provider === 'googlecalendar' ? [['Location', data.location], ['Description', data.description]] : [];
+  const names = source?.provider === 'gmail' ? [['Sender', data.from], ['Excerpt', data.snippet], ['Mail state when fetched', data.mailState], ['Scheduled state', data.scheduledState]] : source?.provider === 'googlecalendar' ? [['Location', data.location], ['Description', data.description]] : [];
   if (source?.htmlLink) names.push(['Provider reference', source.htmlLink]);
   if (source?.calendarTiming?.start?.timeZone) names.push(['Original time zone', source.calendarTiming.start.timeZone]);
   return names.filter(([, value]) => typeof value === 'string' && value.trim()).map(([label, value]) => ({ label, value: value.trim() }));

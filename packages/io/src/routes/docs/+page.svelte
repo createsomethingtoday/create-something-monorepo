@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ResearchScene from '$lib/components/ResearchScene.svelte';
+  import TaskOpening from '$lib/components/TaskOpening.svelte';
 	const tools = [
 		{
 			name: 'Ground',
@@ -27,7 +27,8 @@
 </svelte:head>
 
 <div class="docs-index">
-	<header class="hero io-reference-opening">
+	<TaskOpening scene="modular-port" caption="An agent checks a modular connection before putting the tool to use.">
+<div class="hero io-reference-opening">
 <div class="io-reference-copy">
 		<h1>Documentation</h1>
 		<p class="tagline">Tools for AI-native development</p>
@@ -35,8 +36,9 @@
 			MCP servers and CLI tools that extend Claude Code, Cursor, Windsurf, VS Code Copilot, and other AI coding assistants.
 		</p>
 	</div>
-<ResearchScene sizes="(min-width: 960px) 50vw, 94vw" scene="editorial-mcp-modular-port" caption="An agent checks a modular connection before putting the tool to use." />
-</header>
+
+</div>
+</TaskOpening>
 
 	<section class="tools-grid">
 		{#each tools as tool}

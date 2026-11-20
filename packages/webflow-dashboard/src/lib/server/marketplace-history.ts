@@ -30,6 +30,8 @@ export interface MarketplaceLeaderboardRecord {
 	avgRevenuePerSale: number;
 	salesRank: number;
 	revenueRank: number;
+	/** Part of totalSales30d through fulfillment links; absent in older snapshots. */
+	fulfillmentSales30d?: number;
 }
 
 export interface MarketplaceCategoryRecord {

@@ -256,7 +256,9 @@ function validateVariableModes(variables: DesignerData['variables']): CategoryRe
         issues.push({
           id: 'modes.none',
           category: 'Variable Modes',
-          severity: 'warning',
+          // Blocks submission. Partial or missing mode data stays informational,
+          // so an old extension payload cannot fail a template.
+          severity: 'error',
           message: 'No variable modes found. Modes enable responsive variable values.',
           howToFix: 'Create modes like "Tablet" and "Mobile" to adjust spacing and typography for smaller screens.'
         });

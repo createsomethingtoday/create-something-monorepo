@@ -15,6 +15,7 @@ import {
 } from '../src/reviewer-directory.js';
 import { METRICS_ASSET_FIELD_IDS, TABLE_IDS, TEMPLATE_REVIEW_FIELD_MAP } from '../src/schema.js';
 import { registerTools, WRITE_TOOL_NAMES } from '../src/tools.js';
+import type { ReviewCommentsClient } from '../src/review-comments.js';
 
 type ToolResult = {
   content: Array<{ type?: string; text?: string; data?: string; mimeType?: string }>;
@@ -351,7 +352,7 @@ function completeComprehensiveFeedbackInput() {
     e2b_urls_fetched: ['https://kairova.webflow.io/', 'https://kairova.webflow.io/utility-pages/licenses'],
     human_follow_up: ['Verify placeholder content, utility-page license text, and Designer/Admin requirements before any official action.'],
     manual_checks_remaining: [
-      'Designer/Admin checks for components, variables, unused styles/classes, interactions cleanup, Designer responsive QA, forms, CMS/dynamic page setup, site settings, custom fonts and licenses, asset thumbnail, template name and categories, pricing/page-count calculation, MRP/admin publishing prerequisites, visual quality, originality, similarity/flooding, and category fit remain manual.',
+      'Designer/Admin checks for components, button components, variables, Variable Modes and linked values, baseline tag styles, connected apps, form success messages, unused styles/classes, interactions cleanup, Designer responsive QA, forms, CMS/dynamic page setup, site settings, custom fonts and licenses, asset thumbnail, template name and categories, pricing/page-count calculation, MRP/admin publishing prerequisites, visual quality, originality, similarity/flooding, and category fit remain manual.',
     ],
     validator_summary: {
       rubric_coverage: 'partial_published_site_validation',
@@ -1230,10 +1231,12 @@ test('default access keeps the full write surface', () => {
   const { server, names } = createServerHarness();
   const client = {} as AirtableClient;
 
+  // Review comment tools register only when the comments service is configured.
   registerTools(
     server,
     () => client,
     () => reviewer,
+    { getReviewCommentsClient: () => ({}) as ReviewCommentsClient },
   );
 
   for (const writeTool of WRITE_TOOL_NAMES) {
@@ -1958,6 +1961,33 @@ test('create_admin_template refuses to duplicate an asset that already has a Tem
   assert.equal(payload.ok, false);
   assert.equal((payload.error as { code?: string })?.code, 'TEMPLATE_ID_ALREADY_RECORDED');
   assert.equal(fetched, false);
+});
+
+test('create_admin_template sends the first valid address when the asset lists several creator emails', async () => {
+  const { server, handlers } = createServerHarness();
+  const calls: Array<{ init: RequestInit }> = [];
+  const fetchStub = (async (_url: string | URL | Request, init?: RequestInit) => {
+    calls.push({ init: init ?? {} });
+    return new Response(JSON.stringify({ _id: '6ac54eddbb8a7def85e05871', slug: 'komanica', status: 'DRAFT' }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  }) as typeof fetch;
+  const client = {
+    requireAssignedVersion: async () => ({}),
+    getReviewContext: async () => adminCreateContext({ creatorEmail: 'hello@komanica.co, studio@komanica.co' }),
+    updateAssetPublishing: async () => ({}),
+  } as unknown as AirtableClient;
+  registerTools(server, () => client, () => reviewer, { marketplaceAdmin: { apiKey: 'k'.repeat(128), fetchFn: fetchStub } });
+
+  const result = await handlers.get('template_review_create_admin_template')?.({ version_id: 'rec_version_komanica' });
+  assert.ok(result);
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true, JSON.stringify(payload.error));
+  const body = JSON.parse(String(calls[0]?.init.body)) as Record<string, any>;
+  assert.deepEqual(body.support, { email: 'hello@komanica.co' });
+  const warnings = (payload.data as { warnings: string[] }).warnings;
+  assert.ok(warnings.some((warning) => warning.includes('2 creator emails')));
 });
 
 test('create_admin_template refuses without a support contact', async () => {

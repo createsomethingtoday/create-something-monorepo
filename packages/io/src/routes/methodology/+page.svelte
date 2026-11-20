@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ResearchScene from '$lib/components/ResearchScene.svelte';
+  import TaskOpening from '$lib/components/TaskOpening.svelte';
   import { SEO } from '@create-something/canon';
 
   const faqItems = [
@@ -45,7 +45,8 @@
 />
 
 <!-- Hero Section -->
-<section class="io-method-opening relative pt-32 pb-16 px-6">
+<TaskOpening scene="controlled-load" caption="An agent applies a controlled load to inspect how a material behaves.">
+<div class="io-method-opening relative pt-32 pb-16 px-6">
   <div class="max-w-4xl mx-auto">
     <div class="space-y-8 animate-reveal">
       <h1 class="mb-8">Research Methodology</h1>
@@ -63,8 +64,9 @@
     </div>
   </div>
 
-<div class="research-scene-index"><ResearchScene scene="editorial-field-reports-load-rig" caption="An agent applies a controlled load to inspect how a material behaves." /></div>
-</section>
+
+</div>
+</TaskOpening>
 
 <!-- The Process Visual -->
 <section class="py-16 px-6">

@@ -1,0 +1,10 @@
+{
+  "qualified": true,
+  "assertedSourceSha": "2d95c8a67f8d1a787ce155e5782dbb57901981eb",
+  "appExecutableSha256": "f26b29e749dc2189a5af548493c0d1903cc93a9db493481f19e86739f6480b29",
+  "dmgSha256": "86581b69b015dce917d80309b9d5581486104b37749ec34298a4f21c92496fa3",
+  "teamIdentifier": "PRP5VQQPPB",
+  "appCodeDirectoryHash": "af32c7cceca554e6a056bd1649548a8d14cfabf9",
+  "appBundleSha256": "4f703279b3f6e36392e249c999cc4c096d89c85515a3954068358001aa567403",
+  "dmgAppBundleSha256": "4f703279b3f6e36392e249c999cc4c096d89c85515a3954068358001aa567403"
+}

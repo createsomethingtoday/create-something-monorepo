@@ -1,0 +1,223 @@
+
+> @create-something/agency@1.0.0 test:gigi-beta /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/packages/agency
+> node scripts/build-gigi-landing-styles.mjs --check && node --import tsx --test test/gigi-beta-page.test.ts test/gigi-landing-page.test.ts
+
+TAP version 13
+# Subtest: standalone page retains the owning Agency Canon operator palette
+ok 1 - standalone page retains the owning Agency Canon operator palette
+  ---
+  duration_ms: 1.139542
+  type: 'test'
+  ...
+# Subtest: download contract pins exact qualified installer, platform and checksum
+not ok 2 - download contract pins exact qualified installer, platform and checksum
+  ---
+  duration_ms: 1.094792
+  type: 'test'
+  location: '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/packages/agency/test/gigi-beta-page.test.ts:1:789'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    '0.2.20' !== '0.2.18'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '0.2.18'
+  actual: '0.2.20'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/packages/agency/test/gigi-beta-page.test.ts:17:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: beta stays unlisted and has no active content or tracking shell
+ok 3 - beta stays unlisted and has no active content or tracking shell
+  ---
+  duration_ms: 8.041042
+  type: 'test'
+  ...
+# Subtest: onboarding and recovery limits are explicit
+ok 4 - onboarding and recovery limits are explicit
+  ---
+  duration_ms: 0.190584
+  type: 'test'
+  ...
+# Subtest: walkthroughs pin reviewed footage and use user-initiated native playback
+ok 5 - walkthroughs pin reviewed footage and use user-initiated native playback
+  ---
+  duration_ms: 0.136667
+  type: 'test'
+  ...
+# Subtest: release acceptance distinguishes this installer from historical workflow evidence
+ok 6 - release acceptance distinguishes this installer from historical workflow evidence
+  ---
+  duration_ms: 0.089459
+  type: 'test'
+  ...
+# Subtest: creative work scope preserves local media and explicit publishing boundaries
+ok 7 - creative work scope preserves local media and explicit publishing boundaries
+  ---
+  duration_ms: 0.102958
+  type: 'test'
+  ...
+# Subtest: release describes bounded agent actions and separates saved tasks from sources
+ok 8 - release describes bounded agent actions and separates saved tasks from sources
+  ---
+  duration_ms: 0.124833
+  type: 'test'
+  ...
+# Subtest: search release explains token matching, bounded waits and synthetic acceptance
+ok 9 - search release explains token matching, bounded waits and synthetic acceptance
+  ---
+  duration_ms: 0.16
+  type: 'test'
+  ...
+# Subtest: Today layout release describes presentation changes without overstating workflow acceptance
+ok 10 - Today layout release describes presentation changes without overstating workflow acceptance
+  ---
+  duration_ms: 0.260667
+  type: 'test'
+  ...
+# Subtest: Sources release explains scoped preview, approval, sign-out and synthetic evidence
+ok 11 - Sources release explains scoped preview, approval, sign-out and synthetic evidence
+  ---
+  duration_ms: 0.150417
+  type: 'test'
+  ...
+# Subtest: Gigs release explains collection-wide ordering and bounded acceptance
+ok 12 - Gigs release explains collection-wide ordering and bounded acceptance
+  ---
+  duration_ms: 0.0665
+  type: 'test'
+  ...
+# Subtest: artwork release preserves local previews and external generation boundaries
+ok 13 - artwork release preserves local previews and external generation boundaries
+  ---
+  duration_ms: 0.105459
+  type: 'test'
+  ...
+# Subtest: setup and classification release keeps session and acceptance boundaries explicit
+not ok 14 - setup and classification release keeps session and acceptance boundaries explicit
+  ---
+  duration_ms: 0.167875
+  type: 'test'
+  location: '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/packages/agency/test/gigi-beta-page.test.ts:1:8617'
+  failureType: 'testCodeFailure'
+  error: '0.2.16/GiGi-0.2.16-arm64-private-beta.dmg'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/packages/agency/test/gigi-beta-page.test.ts:134:340)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: current release clearly defers phone qualification and preserves rollback
+not ok 15 - current release clearly defers phone qualification and preserves rollback
+  ---
+  duration_ms: 2.74875
+  type: 'test'
+  location: '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/packages/agency/test/gigi-beta-page.test.ts:1:9445'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(gigiBetaHtml.includes("Phone workflow unverified for 0.2.18"))
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/packages/agency/test/gigi-beta-page.test.ts:138:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: connection guidance separates admission from Google consent and limits acceptance claims
+ok 16 - connection guidance separates admission from Google consent and limits acceptance claims
+  ---
+  duration_ms: 0.075042
+  type: 'test'
+  ...
+# Subtest: download page offers public signup without claiming Google onboarding qualification
+ok 17 - download page offers public signup without claiming Google onboarding qualification
+  ---
+  duration_ms: 0.070375
+  type: 'test'
+  ...
+# Subtest: customization describes visible controls and portable device-local preferences
+ok 18 - customization describes visible controls and portable device-local preferences
+  ---
+  duration_ms: 0.060083
+  type: 'test'
+  ...
+# Subtest: current release qualification distinguishes native synthetic checks from fresh setup
+ok 19 - current release qualification distinguishes native synthetic checks from fresh setup
+  ---
+  duration_ms: 0.06125
+  type: 'test'
+  ...
+# Subtest: assistance release explains attention, consent and app-running notification limits
+ok 20 - assistance release explains attention, consent and app-running notification limits
+  ---
+  duration_ms: 0.042542
+  type: 'test'
+  ...
+# Subtest: landing downloads use the same immutable release as the detailed beta page
+ok 21 - landing downloads use the same immutable release as the detailed beta page
+  ---
+  duration_ms: 0.419167
+  type: 'test'
+  ...
+# Subtest: landing preserves beta privacy and avoids active content or tracking
+ok 22 - landing preserves beta privacy and avoids active content or tracking
+  ---
+  duration_ms: 0.185959
+  type: 'test'
+  ...
+# Subtest: landing uses current Today structure and clearly labels example records
+ok 23 - landing uses current Today structure and clearly labels example records
+  ---
+  duration_ms: 0.12625
+  type: 'test'
+  ...
+# Subtest: anchors, FAQ and keyboard path remain useful without JavaScript
+ok 24 - anchors, FAQ and keyboard path remain useful without JavaScript
+  ---
+  duration_ms: 0.162
+  type: 'test'
+  ...
+# Subtest: checked-in styles match the CSS-compatible Sass source
+ok 25 - checked-in styles match the CSS-compatible Sass source
+  ---
+  duration_ms: 0.189791
+  type: 'test'
+  ...
+1..25
+# tests 25
+# suites 0
+# pass 22
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 237.751833
+/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/packages/agency:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @create-something/agency@1.0.0 test:gigi-beta: `node scripts/build-gigi-landing-styles.mjs --check && node --import tsx --test test/gigi-beta-page.test.ts test/gigi-landing-page.test.ts`
+Exit status 1

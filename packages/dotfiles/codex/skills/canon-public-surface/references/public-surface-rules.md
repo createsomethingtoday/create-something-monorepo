@@ -31,9 +31,10 @@ Performance Lab is the house identity. `docs/CREATE_SOMETHING_PERFORMANCE_LAB_DE
 
 ## Comparative Research
 
-When hierarchy, proof placement, navigation, pricing, or handoff is genuinely unresolved, invoke `canon-design-review` and follow its Mobbin research protocol.
+For substantial surface work, invoke `canon-design-review` and follow its Mobbin-first protocol. Compare distinct products in Mobbin for hierarchy, proof placement, navigation, disclosure, or handoff. Use TASTE as supporting curation when it helps a visual question. Literal edits and routine token cleanup can use the existing contract.
 
 - Use `search_sections` for section-level precedent and `search_flows` when the public page begins a multi-step journey.
+- Static screens inform states and hierarchy; inspect playable motion before claiming timing or transition quality.
 - Compare distinct products and extract the common behavior rather than a single site's composition.
 - Keep the conclusion as `adopt`, `adapt`, `test`, or `reject` with source URLs.
 - Translate useful behavior into the property's intent, Performance Lab, and the registered Performance page contract.

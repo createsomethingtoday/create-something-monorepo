@@ -1,0 +1,18 @@
+{
+  "master": "output/canon-replacement-art/body/canon-body-transparent-r15.png",
+  "approvedPNG": "ccd55117e8512a5e45d703e2b29adda0a1f14d0e59378eec32f2c1ed3b956dc1",
+  "approval": {
+    "state": "approved_for_production",
+    "userWords": "Approve the artwork for production",
+    "observedAt": "2026-11-14T05:43:58.353590+00:00",
+    "scope": "The 12 selected Canon scenes and transparent body in the 2026-11-14 complete-replacement review set; selected PNG hashes define the approval scope."
+  },
+  "delivery": {
+    "path": "/workshop/canon-body-felt-r15.webp",
+    "width": 512,
+    "height": 561,
+    "alpha": true,
+    "sha256": "f403e80f4dd94b93af075735e5ce694439d818c1be698aa8b9b4005d8881d819"
+  },
+  "process": "Format-only cwebp q92 m6 resize to 512px, preserving alpha; the encoded aspect controls world scale."
+}

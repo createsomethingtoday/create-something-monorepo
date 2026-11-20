@@ -116,6 +116,19 @@ export function createTestD1(): D1Database {
   return new MockD1Database(dbPath) as unknown as D1Database;
 }
 
+/**
+ * Plan lines for a statement, outermost first. The sqlite3 shell prints EXPLAIN QUERY PLAN as
+ * a tree even in JSON mode, so this reads the text and drops the tree drawing.
+ */
+export function explainQueryPlan(db: D1Database, sql: string, values: unknown[] = []): string[] {
+  const output = runSqlite((db as unknown as MockD1Database).dbPath, `EXPLAIN QUERY PLAN ${bindSql(sql, values)}`) as string;
+  return output
+    .split('\n')
+    .filter((line) => line.trim() !== 'QUERY PLAN')
+    .map((line) => line.replace(/^[\s|`-]+/, '').trim())
+    .filter(Boolean);
+}
+
 export function closeTestD1(db: D1Database): void {
   (db as unknown as MockD1Database).close();
 }

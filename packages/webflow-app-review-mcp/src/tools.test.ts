@@ -468,6 +468,31 @@ describe('registerTools', () => {
     });
   });
 
+  it('reject_version sends its feedback as rejection feedback so the rejection email carries the findings', async () => {
+    const { server, handlers } = createServerHarness();
+    const client = {
+      getVersionById: vi.fn().mockResolvedValue({ versionId: 'recVersion', assetId: 'recAsset' }),
+      getAssetById: vi.fn().mockResolvedValue({ assetId: 'recAsset', appName: 'Example App' }),
+      updateVersionReview: vi.fn().mockResolvedValue({ versionId: 'recVersion', reviewStatus: '❌Rejected' }),
+    } as unknown as AirtableClient;
+
+    registerTools(server, () => client);
+
+    const result = await handlers.get('app_review_reject_version')?.({
+      version_id: 'recVersion',
+      rejection_reason: 'Guideline Infringement',
+      review_feedback: 'Consolidate the overlapping Apps.',
+    });
+
+    expect(client.updateVersionReview).toHaveBeenCalledExactlyOnceWith('recVersion', {
+      review_status: '❌Rejected',
+      review_type: undefined,
+      rejection_reason: 'Guideline Infringement',
+      rejection_feedback: 'Consolidate the overlapping Apps.',
+    });
+    expect(parsePayload(result!).ok).toBe(true);
+  });
+
   it('rejects request_changes status overrides outside the changes-requested allowlist', async () => {
     const { server, handlers } = createServerHarness();
     const client = {
@@ -489,71 +514,30 @@ describe('registerTools', () => {
     expect(client.updateVersionReview).not.toHaveBeenCalled();
   });
 
-  it('blocks approve_version while ⚖️Exceptions items on the version are undecided', async () => {
-    const { server, handlers } = createServerHarness();
-    const client = {
-      getVersionById: vi.fn().mockResolvedValue({
-        versionId: 'recVersion',
-        assetId: 'recAsset',
-        undecidedExceptionItems: 2,
-      }),
-      getAssetById: vi.fn().mockResolvedValue({ assetId: 'recAsset', appName: 'Example App' }),
-      updateVersionReview: vi.fn(),
-    } as unknown as AirtableClient;
-
-    registerTools(server, () => client);
-
-    const result = await handlers.get('app_review_approve_version')?.({ version_id: 'recVersion' });
-
-    const payload = JSON.parse(result!.content[0]?.text ?? '{}') as { ok: boolean; error?: { code: string; status: number } };
-    expect(payload.ok).toBe(false);
-    expect(payload.error?.code).toBe('APPROVAL_BLOCKED_UNDECIDED_EXCEPTIONS');
-    expect(payload.error?.status).toBe(409);
-    expect(client.updateVersionReview).not.toHaveBeenCalled();
-  });
-
-  it('blocks approve_version while a prior version carries an undecided exception (asset-level)', async () => {
-    const { server, handlers } = createServerHarness();
-    const client = {
-      getVersionById: vi.fn().mockResolvedValue({
-        versionId: 'recVersion',
-        assetId: 'recAsset',
-        assetUndecidedExceptions: 1,
-      }),
-      getAssetById: vi.fn().mockResolvedValue({ assetId: 'recAsset', appName: 'Example App' }),
-      updateVersionReview: vi.fn(),
-    } as unknown as AirtableClient;
-
-    registerTools(server, () => client);
-
-    const result = await handlers.get('app_review_approve_version')?.({ version_id: 'recVersion' });
-
-    const payload = JSON.parse(result!.content[0]?.text ?? '{}') as { ok: boolean; error?: { code: string } };
-    expect(payload.ok).toBe(false);
-    expect(payload.error?.code).toBe('APPROVAL_BLOCKED_UNDECIDED_EXCEPTIONS');
-    expect(client.updateVersionReview).not.toHaveBeenCalled();
-  });
-
-  it('blocks approve_version while the version-level ⚖️Exception Status is undecided', async () => {
+  it('approves even while ⚖️exceptions are undecided (approval gate retired 11/4/2026)', async () => {
     const { server, handlers } = createServerHarness();
     const client = {
       getVersionById: vi.fn().mockResolvedValue({
         versionId: 'recVersion',
         assetId: 'recAsset',
         exceptionStatus: '🆕Requested',
+        undecidedExceptionItems: 2,
+        assetUndecidedExceptions: 3,
       }),
       getAssetById: vi.fn().mockResolvedValue({ assetId: 'recAsset', appName: 'Example App' }),
-      updateVersionReview: vi.fn(),
+      updateVersionReview: vi.fn().mockResolvedValue({ versionId: 'recVersion', reviewStatus: '✅Approved' }),
     } as unknown as AirtableClient;
 
     registerTools(server, () => client);
 
     const result = await handlers.get('app_review_approve_version')?.({ version_id: 'recVersion' });
 
-    const payload = JSON.parse(result!.content[0]?.text ?? '{}') as { ok: boolean; error?: { code: string } };
-    expect(payload.ok).toBe(false);
-    expect(payload.error?.code).toBe('APPROVAL_BLOCKED_UNDECIDED_EXCEPTIONS');
-    expect(client.updateVersionReview).not.toHaveBeenCalled();
+    expect(parsePayload(result!).ok).toBe(true);
+    expect(client.updateVersionReview).toHaveBeenCalledWith('recVersion', {
+      review_status: '✅Approved',
+      review_type: undefined,
+      review_feedback: undefined,
+    });
   });
 
   it('approves when exception rollups are empty (no ⚖️Exceptions rows anywhere)', async () => {
@@ -580,16 +564,17 @@ describe('registerTools', () => {
     });
   });
 
-  it('blocks update_version_review approved statuses while exceptions are undecided', async () => {
+  it('allows update_version_review approved statuses while exceptions are undecided (gate retired 11/4/2026)', async () => {
     const { server, handlers } = createServerHarness();
     const client = {
       getVersionById: vi.fn().mockResolvedValue({
         versionId: 'recVersion',
         assetId: 'recAsset',
+        reviewStatus: '🏃🏾In Review',
         assetUndecidedExceptions: 3,
       }),
       getAssetById: vi.fn().mockResolvedValue({ assetId: 'recAsset', appName: 'Example App' }),
-      updateVersionReview: vi.fn(),
+      updateVersionReview: vi.fn().mockResolvedValue({ versionId: 'recVersion', reviewStatus: '✅Approved (No Notification)' }),
     } as unknown as AirtableClient;
 
     registerTools(server, () => client);
@@ -597,12 +582,13 @@ describe('registerTools', () => {
     const result = await handlers.get('app_review_update_version_review')?.({
       version_id: 'recVersion',
       review_status: '✅Approved (No Notification)',
+      status_change: { confirmed: true, expected_status: '🏃🏾In Review' },
     });
 
-    const payload = JSON.parse(result!.content[0]?.text ?? '{}') as { ok: boolean; error?: { code: string } };
-    expect(payload.ok).toBe(false);
-    expect(payload.error?.code).toBe('APPROVAL_BLOCKED_UNDECIDED_EXCEPTIONS');
-    expect(client.updateVersionReview).not.toHaveBeenCalled();
+    expect(parsePayload(result!).ok).toBe(true);
+    expect(client.updateVersionReview).toHaveBeenCalledWith('recVersion', {
+      review_status: '✅Approved (No Notification)',
+    });
   });
 
   it('blocks update_version_review exception_status ❌Denied while items are undecided', async () => {
@@ -1130,12 +1116,12 @@ describe('review preparation mutation boundary', () => {
     expect(client.updateVersionReview).toHaveBeenCalledExactlyOnceWith('recVersion', { review_status: '🏃🏾In Review' });
   });
 
-  it('keeps the approval exception gate on the routed asset status path', async () => {
+  it('routes an approved asset status despite undecided exceptions (gate retired 11/4/2026)', async () => {
     const { handlers, client } = setup();
     vi.mocked(client.getVersionById).mockResolvedValue({ versionId: 'recVersion', assetId: 'recAsset', reviewStatus: '🆕Ready for Review', assetUndecidedExceptions: 1 } as never);
     const result = await handlers.get('app_review_update_asset_metadata')!({ asset_id: 'recAsset', latest_review_status: '✅Approved', status_change: { confirmed: true, expected_status: '🆕Ready for Review' } });
-    expect(parsePayload(result).ok).toBe(false);
-    expect(client.updateVersionReview).not.toHaveBeenCalled();
+    expect(parsePayload(result).ok).toBe(true);
+    expect(client.updateVersionReview).toHaveBeenCalledExactlyOnceWith('recVersion', { review_status: '✅Approved' });
   });
 
   it('draft feedback writes only feedback and context reads perform no writes', async () => {
@@ -1146,6 +1132,20 @@ describe('review preparation mutation boundary', () => {
     expect(client.updateVersionReview).not.toHaveBeenCalled();
     await handlers.get('app_review_save_draft_feedback')!({ version_id: 'recVersion', review_feedback: 'Draft review' });
     expect(client.updateVersionReview).toHaveBeenCalledExactlyOnceWith('recVersion', { review_feedback: 'Draft review' });
+  });
+
+  it('passes an appended exception note and its author to the client', async () => {
+    const { handlers, client } = setup();
+    client.updateExceptionItem = vi.fn().mockResolvedValue({ exceptionItemId: 'recItem1' });
+    await handlers.get('app_review_update_exception_item')!({
+      exception_item_id: 'recItem1',
+      append_decision_note: 'New build checked.',
+      noted_by: 'Shea Sisco',
+    });
+    expect(client.updateExceptionItem).toHaveBeenCalledExactlyOnceWith('recItem1', {
+      append_decision_note: 'New build checked.',
+      noted_by: 'Shea Sisco',
+    });
   });
 
   it('rejects a legacy reassignment at the real Airtable boundary and preserves fields in a draft PATCH', async () => {

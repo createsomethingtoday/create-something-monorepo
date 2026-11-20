@@ -184,3 +184,33 @@ test('reports cross-group template tags under the first subcategory group and in
  for (const subcategory of sorted)
    assert.ok(snapshot.categories.some((c) => c.subcategory === subcategory && c.category === groupOf.get(subcategory)));
 });
+test('fulfillment-link sales are split out of the total when the source carries them', () => {
+  const input = fixture();
+  input.sellers[0].fulfillmentSales = 2;
+  input.sellers.push({ templateId: 'c'.repeat(24), mrpId: 'd'.repeat(24), name: 'Other', sales: 1, revenue: 49, fulfillmentSales: 0 });
+  input.assets.push({ templateId: 'c'.repeat(24), creatorEmail: 'two@example.test', categories: ['Agency'] });
+  const snapshot = buildMarketplaceSnapshot(input);
+  assert.equal(snapshot.summary.totalSales, 4);
+  assert.equal(snapshot.summary.fulfillmentSales, 2);
+  assert.deepEqual(snapshot.leaderboard.map((r) => r.fulfillmentSales30d), [2, 0]);
+  assert.deepEqual(snapshotFromFields(snapshotToFields(snapshot)), snapshot);
+});
+test('snapshots without fulfillment-link counts stay valid and carry no split', () => {
+  const snapshot = buildMarketplaceSnapshot(fixture());
+  assert.equal('fulfillmentSales' in snapshot.summary, false);
+  assert.equal('fulfillmentSales30d' in snapshot.leaderboard[0], false);
+});
+test('rejects partial, oversized or mixed fulfillment-link counts', () => {
+  const partial = fixture();
+  partial.sellers.push({ ...partial.sellers[0], templateId: 'c'.repeat(24), fulfillmentSales: 1 });
+  partial.assets.push({ ...partial.assets[0], templateId: 'c'.repeat(24) });
+  assert.throws(() => buildMarketplaceSnapshot(partial), /partial fulfillment/);
+  const oversized = fixture();
+  oversized.sellers[0].fulfillmentSales = 4;
+  assert.throws(() => buildMarketplaceSnapshot(oversized), /exceed/);
+  const withSplit = fixture();
+  withSplit.sellers[0].fulfillmentSales = 1;
+  const fields = snapshotToFields(buildMarketplaceSnapshot(withSplit));
+  const rows = JSON.parse(fields.LEADERBOARD_JSON).map(({ fulfillmentSales30d: _f, ...row }) => row);
+  assert.throws(() => snapshotFromFields({ ...fields, LEADERBOARD_JSON: JSON.stringify(rows) }), /mixed/);
+});

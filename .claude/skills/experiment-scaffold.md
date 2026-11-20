@@ -32,7 +32,7 @@ Every experiment must include these sections:
 ┌─────────────────────────────────────────────────────┐
 │  1. ASCII Art Header                                │
 │     - Experiment name                               │
-│     - Key metric (one number)                       │
+│     - Key evidence (sourced)                        │
 │     - Property (.space/.io)                         │
 ├─────────────────────────────────────────────────────┤
 │  2. Hypothesis                                      │
@@ -74,7 +74,7 @@ Every experiment must include these sections:
 ```
 +------------------------------------------+
 |  EXPERIMENT: [Name]                      |
-|  [Key Metric]: [Value]                   |
+|  [Key Evidence]: [Value]                   |
 |  createsomething.space                   |
 +------------------------------------------+
 ```
@@ -84,22 +84,16 @@ Every experiment must include these sections:
 ```
 ╔══════════════════════════════════════════╗
 ║  EXPERIMENT: [Name]                      ║
-║  [Key Metric]: [Value]                   ║
+║  [Key Evidence]: [Value]                   ║
 ║  createsomething.io                      ║
 ╚══════════════════════════════════════════╝
 ```
 
-### Key Metric Selection
+### Key evidence selection
 
-Choose ONE number that captures the experiment's value:
+Read `packages/dotfiles/codex/skills/writing-for-humans/references/create-something-voice.md`. Choose one source-supported finding that captures the experiment’s value. A finding can be a measurement or a qualitative observation. If no measurement exists, state that limit rather than inventing a number. Prompt examples illustrate presentation; their values are not evidence for another experiment.
 
-| Experiment Type | Key Metric |
-|-----------------|------------|
-| Time savings | "6h vs 20h (70% savings)" |
-| Cost reduction | "$12.50 vs $847 (98% savings)" |
-| Performance | "0.8s load time (75% faster)" |
-| Accuracy | "94.2% accuracy" |
-| Coverage | "47/47 tests passing" |
+When measurements exist, show the value and its source. When evidence is qualitative, state what was observed, the conditions, and what remains unknown. Use metric cards or tables only when they help present supported data; no fixed count is required.
 
 ## Hypothesis Section
 
@@ -150,14 +144,11 @@ Choose ONE number that captures the experiment's value:
 
 ### Time Tracking
 
-Always track:
-- **Estimated time** (before starting)
-- **Actual time** (after completion)
-- **Savings** (percentage)
+Record estimated and actual time when available. Label unknowns honestly. Report a savings percentage only when comparable source-supported baseline and actual measurements exist.
 
 ## Results Section
 
-### Metrics Table Format
+### Metrics table format (when measurements exist)
 
 ```markdown
 ## Results
@@ -279,7 +270,7 @@ Always track:
 
 The experiment [proved/demonstrated] that [restate hypothesis in past tense].
 
-**Evidence**: [Key metric that proves it]
+**Evidence**: [Supported finding and its limits]
 
 **Next**: [What this enables or what should be explored next]
 ```
@@ -317,7 +308,7 @@ For experiments implemented as Svelte components:
   ascii_art: `
 +------------------------------------------+
 |  EXPERIMENT: [Name]                      |
-|  [Key Metric]: [Value]                   |
+|  [Key Evidence]: [Value]                   |
 +------------------------------------------+
   `,
 }

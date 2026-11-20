@@ -1,0 +1,21 @@
+{
+  "sourceSha": "62f826073e6b8494de45fdffcfdd40c5c287b4c7",
+  "bundleId": "agency.createsomething.gigi",
+  "version": "0.3.2",
+  "mainSha256": "50358029e8ac12934a90943612ee90c3f79a9267b84e4c5f2b2300962f6da725",
+  "embeddedExactSource": true,
+  "compilerManifests": [
+    {
+      "manifest": "/Users/createsomething/.t3/worktrees/create-something-monorepo/codex-cre-2377-gigi-reconciled-release/apps/gigi-desktop/src-tauri/target/release/build/gigi_desktop-9155ac1591cfdca1/output",
+      "sourceSha": "62f826073e6b8494de45fdffcfdd40c5c287b4c7",
+      "sourceDirty": false
+    },
+    {
+      "manifest": "/Users/createsomething/.t3/worktrees/create-something-monorepo/codex-cre-2377-gigi-reconciled-release/apps/gigi-desktop/src-tauri/target/release/build/gigi_desktop-6cf410a42607a569/output",
+      "sourceSha": "62f826073e6b8494de45fdffcfdd40c5c287b4c7",
+      "sourceDirty": false
+    }
+  ],
+  "app": "/Users/createsomething/.t3/worktrees/create-something-monorepo/codex-cre-2377-gigi-reconciled-release/apps/gigi-desktop/src-tauri/target/release/bundle/macos/GiGi.app",
+  "cleanBeforeAndAfter": true
+}

@@ -66,7 +66,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 			if (isAdminApiRoute) {
 				return new Response(JSON.stringify({ error: 'Unauthorized' }), {
 					status: 401,
-					headers: { 'Content-Type': 'application/json' }
+					headers: { 'Content-Type': 'application/json', 'Cache-Control': 'private, no-store' }
 				});
 			}
 			throw redirect(303, adminLoginUrl);
@@ -78,7 +78,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 			if (isAdminApiRoute) {
 				return new Response(JSON.stringify({ error: 'Database not available' }), {
 					status: 500,
-					headers: { 'Content-Type': 'application/json' }
+					headers: { 'Content-Type': 'application/json', 'Cache-Control': 'private, no-store' }
 				});
 			}
 			throw redirect(303, adminLoginUrl);
@@ -94,7 +94,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 			if (isAdminApiRoute) {
 				return new Response(JSON.stringify({ error: 'Forbidden' }), {
 					status: 403,
-					headers: { 'Content-Type': 'application/json' }
+					headers: { 'Content-Type': 'application/json', 'Cache-Control': 'private, no-store' }
 				});
 			}
 			throw redirect(303, adminLoginUrl);

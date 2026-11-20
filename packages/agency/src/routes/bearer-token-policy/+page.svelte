@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import {
     Button,
     PerformanceCardGrid,
@@ -70,6 +71,7 @@
   propertyName="agency"
 />
 
+<AgencyHeroFrame>
 <PerformancePageSection
   variant="hero"
   titleLevel="h1"
@@ -85,8 +87,10 @@
     <PerformanceCardGrid items={controls} columns={4} ariaLabel="Bearer token controls" />
   {/snippet}
 </PerformancePageSection>
+</AgencyHeroFrame>
 
 <PerformancePageSection
+  id="token-responsibilities"
   variant="white"
   eyebrow={`Effective ${effectiveDate}`}
   title="Keep your access token private."
@@ -98,6 +102,7 @@
 </PerformancePageSection>
 
 <PerformancePageSection
+  id="token-enforcement"
   variant="soft"
   eyebrow="Enforcement"
   title="Revoked tokens stop working immediately."

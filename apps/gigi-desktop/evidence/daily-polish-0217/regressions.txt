@@ -1,0 +1,9 @@
+RED, before implementation:
+- reliability.test.mjs: save errors remain available until dismissed without losing the unsaved draft
+  FAIL: error recovery must not disappear on a timer
+- attention.test.mjs: an unavailable empty attention read never claims the workspace is caught up
+  FAIL: markup contains You’re caught up
+
+GREEN, focused suite after implementation:
+node --test web/attention.test.mjs web/reliability.test.mjs
+28 passed, 0 failed, 0 skipped.

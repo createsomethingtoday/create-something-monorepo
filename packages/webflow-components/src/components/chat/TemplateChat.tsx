@@ -112,6 +112,8 @@ export {
 export { buildMessageSentAnalytics } from './templateChatAnalytics';
 
 export interface TemplateChatProps {
+  /** Editable user brief sent as user context on each turn, never a trusted instruction. */
+  projectBrief?: string;
   /** Base URL of the template agent (no trailing slash). */
   apiBase?: string;
   /** Public Cloudflare Turnstile site key used to mint a short-lived agent session. */
@@ -211,6 +213,7 @@ function renderMessageText(content: string): React.ReactNode {
 }
 
 const TemplateChatSurface: React.FC<TemplateChatProps> = ({
+  projectBrief,
   apiBase = 'https://templates.webflow.com/templates-api',
   turnstileSiteKey = '0x4AAAAAADzmfUVSu5s1hvW5',
   title = 'Template finder',
@@ -918,6 +921,7 @@ const TemplateChatSurface: React.FC<TemplateChatProps> = ({
             body: JSON.stringify({
               messages: prepareAgentMessages(history),
               context: {
+                project_brief: projectBrief?.slice(0, 2000),
                 context_token: contextTokenRef.current ?? undefined,
                 // Highlight failures from the previous turn (cards not rendered
                 // under the page's current filters) — keeps the agent honest.
@@ -1145,6 +1149,7 @@ const TemplateChatSurface: React.FC<TemplateChatProps> = ({
       }
     },
     [
+      projectBrief,
       apiBase,
       clearSlowTurnTimer,
       getSessionToken,

@@ -1,0 +1,138 @@
+{
+  "passed": true,
+  "metrics": [
+    {
+      "label": "studio-880-comfortable",
+      "primary": 16.718206089986523,
+      "text": 17.224382887077635,
+      "secondary": 8.778692828116572
+    },
+    {
+      "label": "studio-880-compact",
+      "primary": 16.718206089986523,
+      "text": 17.224382887077635,
+      "secondary": 8.778692828116572
+    },
+    {
+      "label": "paper-880-comfortable",
+      "primary": 17.224382887077635,
+      "text": 16.718206089986523,
+      "secondary": 8.226017623861281
+    },
+    {
+      "label": "paper-880-compact",
+      "primary": 17.224382887077635,
+      "text": 16.718206089986523,
+      "secondary": 8.226017623861281
+    },
+    {
+      "label": "midnight-880-comfortable",
+      "primary": 13.69442236065423,
+      "text": 17.185946239649205,
+      "secondary": 9.381383122645165
+    },
+    {
+      "label": "midnight-880-compact",
+      "primary": 13.69442236065423,
+      "text": 17.185946239649205,
+      "secondary": 9.381383122645165
+    },
+    {
+      "label": "studio-1280-comfortable",
+      "primary": 16.718206089986523,
+      "text": 17.224382887077635,
+      "secondary": 8.778692828116572
+    },
+    {
+      "label": "studio-1280-compact",
+      "primary": 16.718206089986523,
+      "text": 17.224382887077635,
+      "secondary": 8.778692828116572
+    },
+    {
+      "label": "paper-1280-comfortable",
+      "primary": 17.224382887077635,
+      "text": 16.718206089986523,
+      "secondary": 8.226017623861281
+    },
+    {
+      "label": "paper-1280-compact",
+      "primary": 17.224382887077635,
+      "text": 16.718206089986523,
+      "secondary": 8.226017623861281
+    },
+    {
+      "label": "midnight-1280-comfortable",
+      "primary": 13.69442236065423,
+      "text": 17.185946239649205,
+      "secondary": 9.381383122645165
+    },
+    {
+      "label": "midnight-1280-compact",
+      "primary": 13.69442236065423,
+      "text": 17.185946239649205,
+      "secondary": 9.381383122645165
+    },
+    {
+      "theme": "studio",
+      "inputBoundary": 5.4650299652512615,
+      "inputFocus": 15.249687718475107
+    },
+    {
+      "theme": "studio",
+      "role": "error",
+      "contrast": 8.55002964026641
+    },
+    {
+      "theme": "studio",
+      "role": "warning",
+      "contrast": 9.098116149371542
+    },
+    {
+      "theme": "studio",
+      "role": "success",
+      "contrast": 7.9536019479968605
+    },
+    {
+      "theme": "paper",
+      "inputBoundary": 4.021480051573304,
+      "inputFocus": 15.249687718475107
+    },
+    {
+      "theme": "paper",
+      "role": "error",
+      "contrast": 11.826859886371434
+    },
+    {
+      "theme": "paper",
+      "role": "warning",
+      "contrast": 11.144000041959295
+    },
+    {
+      "theme": "paper",
+      "role": "success",
+      "contrast": 10.726052500317516
+    },
+    {
+      "theme": "midnight",
+      "inputBoundary": 6.016868496866963,
+      "inputFocus": 14.291712815510188
+    },
+    {
+      "theme": "midnight",
+      "role": "error",
+      "contrast": 9.432780477832305
+    },
+    {
+      "theme": "midnight",
+      "role": "warning",
+      "contrast": 10.037454372634036
+    },
+    {
+      "theme": "midnight",
+      "role": "success",
+      "contrast": 8.774774397293912
+    }
+  ],
+  "scope": "Actual app DOM/CSS in isolated Chromium with synthetic records. No installed app, native WebKit, provider, source-consent, or production acceptance."
+}

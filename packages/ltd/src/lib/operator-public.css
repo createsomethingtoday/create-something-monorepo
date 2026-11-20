@@ -1,100 +1,54 @@
-/* .ltd public reading surfaces opt in to Canon's measured operator palette.
+/* .ltd public reading surfaces use Canon's black website foundation.
    Authentication, presentations and interactive experiments remain independent. */
 html:has(.ltd-operator-public),
 body:has(.ltd-operator-public) {
   color-scheme: dark;
-  /* The Canon opt-in tokens live on the child shell and do not inherit upward. */
-  background: oklch(20.5% 0 0);
-  scrollbar-color: oklch(32% 0 0) oklch(20.5% 0 0);
+  /* Native Canvas follows the explicit dark document chrome. */
+  background: Canvas;
+  scrollbar-color: GrayText Canvas;
 }
 
 .ltd-operator-public {
   color-scheme: dark;
-  --color-performance-paper: var(--color-operator-background);
-  --color-performance-panel: var(--color-operator-secondary);
-  --color-performance-court: var(--color-operator-raised);
-  --color-performance-ink: var(--color-operator-foreground);
-  --color-performance-ink-soft: var(--color-operator-muted);
-  --color-performance-muted: var(--color-operator-muted);
-  --color-performance-line: var(--color-operator-border);
-  --color-performance-line-strong: var(--color-operator-input-border);
-  --color-performance-focus: var(--color-operator-focus-ring-accessible);
-  --color-performance-signal: var(--color-operator-foreground);
-  --color-performance-bg-pure: var(--color-operator-background);
-  --color-performance-bg-elevated: var(--color-operator-secondary);
-  --color-performance-bg-surface: var(--color-operator-secondary);
-  --color-performance-bg-subtle: var(--color-operator-raised);
-  --color-performance-fg-primary: var(--color-operator-foreground);
-  --color-performance-fg-secondary: var(--color-operator-foreground);
-  --color-performance-fg-tertiary: var(--color-operator-muted);
-  --color-performance-fg-muted: var(--color-operator-muted);
-  --color-performance-fg-subtle: var(--color-operator-muted);
-  --color-performance-border-default: var(--color-operator-border);
-  --color-performance-border-emphasis: var(--color-operator-input-border);
-  --color-performance-border-strong: var(--color-operator-input-border);
-  --color-performance-shell-surface: var(--color-operator-background);
-  --color-performance-shell-surface-secondary: var(--color-operator-secondary);
-  --color-performance-shell-surface-tertiary: var(--color-operator-raised);
-  --color-performance-shell-surface-elevated: var(--color-operator-raised);
-  --color-performance-shell-surface-hover: var(--color-operator-hover);
-  --color-performance-shell-border-subtle: var(--color-operator-border);
-  --color-performance-shell-border-default: var(--color-operator-border);
-  --color-performance-shell-border-strong: var(--color-operator-input-border);
-  --color-performance-hover: var(--color-operator-hover);
-  --color-performance-active: var(--color-operator-raised);
-  --glass-performance-bg-subtle: var(--color-operator-background);
-  --glass-performance-bg-light: var(--color-operator-secondary);
-  --glass-performance-bg-medium: var(--color-operator-secondary);
-  --glass-performance-bg-strong: var(--color-operator-raised);
-  --glass-performance-border-subtle: var(--color-operator-border);
-  --glass-performance-border-light: var(--color-operator-border);
-  --glass-performance-border-medium: var(--color-operator-input-border);
-  --glass-performance-border-strong: var(--color-operator-input-border);
-  --font-performance-heading: var(--font-performance-sans);
-  --font-performance-display: var(--font-performance-sans);
-  --font-performance-serif: var(--font-performance-sans);
-  --text-performance-display: clamp(2.25rem, 3.6vw, 3.25rem);
-  --text-performance-h1: clamp(1.75rem, 2.4vw, 2.25rem);
-  --text-performance-h2: clamp(1.45rem, 2vw, 1.8rem);
-  --text-performance-h3: 1.2rem;
-  background: var(--color-operator-background);
-  color: var(--color-operator-foreground);
+
+  background: var(--color-performance-paper);
+  color: var(--color-performance-ink);
   font-family: var(--font-performance-sans);
 }
 
 .ltd-operator-public :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
-  outline: 2px solid var(--color-operator-focus-ring-accessible);
+  outline: 2px solid var(--color-performance-focus);
   outline-offset: 3px;
 }
 
 .ltd-operator-public :is(.nav-clear, .nav-clear.nav-fixed) {
-  background: var(--color-operator-background);
-  border-bottom: 1px solid var(--color-operator-border);
+  background: var(--color-performance-paper);
+  border-bottom: 1px solid var(--color-performance-line);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
 .ltd-operator-public .nav-clear :is(.nav-logo, .nav-link, .nav-menu-button) {
-  color: var(--color-operator-foreground);
+  color: var(--color-performance-ink);
 }
 .ltd-operator-public .nav-clear .nav-link-list,
 .ltd-operator-public .nav-clear .nav-mobile-menu {
-  background: var(--color-operator-secondary);
-  border-color: var(--color-operator-border);
+  background: var(--color-performance-bg-elevated);
+  border-color: var(--color-performance-line);
 }
 .ltd-operator-public .nav-clear .nav-link.active,
 .ltd-operator-public .nav-clear .nav-link:hover,
 .ltd-operator-public .nav-clear .nav-menu-button {
-  background: var(--color-operator-raised);
-  color: var(--color-operator-foreground);
+  background: var(--color-performance-court);
+  color: var(--color-performance-ink);
 }
 .ltd-operator-public .nav-clear .nav-link.active {
-  box-shadow: inset 0 -2px var(--color-operator-foreground);
+  box-shadow: inset 0 -2px var(--color-performance-ink);
 }
 .ltd-operator-public .nav-clear .nav-menu-button {
-  border-color: var(--color-operator-border);
+  border-color: var(--color-performance-line);
 }
 
-.ltd-operator-public main { background: var(--color-operator-background); }
+.ltd-operator-public main { background: var(--color-performance-paper); }
 .ltd-operator-public main :is(h1, h2, h3, h4) {
   font-family: var(--font-performance-sans);
   letter-spacing: -0.035em;
@@ -105,15 +59,15 @@ body:has(.ltd-operator-public) {
 .ltd-operator-public main :is(p, li) { line-height: 1.6; }
 .ltd-operator-public main :is(.operator-library, .opposition, .library-loop, .playbook-index, .playbook-note, .readiness-page__hero, .readiness-page__assessment, .readiness-page__result, .readiness-page__next) {
   padding-block: clamp(1.5rem, 3vw, 2.75rem);
-  background: var(--color-operator-background);
-  color: var(--color-operator-foreground);
-  border-color: var(--color-operator-border);
+  background: var(--color-performance-paper);
+  color: var(--color-performance-ink);
+  border-color: var(--color-performance-line);
 }
 .ltd-operator-public main :is(.opposition, .playbook-note, .library-loop) {
-  background: var(--color-operator-secondary);
+  background: var(--color-performance-bg-elevated);
 }
 .ltd-operator-public main :is(.opposition, .playbook-note) :is(.opposition__eyebrow, .opposition__heading > p, .playbook-note > p) {
-  color: var(--color-operator-muted);
+  color: var(--color-performance-muted);
 }
 .ltd-operator-public main :is(.operator-library, .opposition, .library-loop, .playbook-index, .playbook-note) h2 {
   max-width: 34ch;
@@ -122,51 +76,51 @@ body:has(.ltd-operator-public) {
   line-height: 1.16;
 }
 .ltd-operator-public main :is(.clear-card-grid__card, .product-surface, .readiness-page__questions button) {
-  background: var(--color-operator-secondary);
-  border: 1px solid var(--color-operator-border);
-  border-radius: var(--radius-operator-panel);
+  background: var(--color-performance-bg-elevated);
+  border: 1px solid var(--color-performance-line);
+  border-radius: var(--radius-performance-scale-lg);
   box-shadow: none;
-  color: var(--color-operator-foreground);
+  color: var(--color-performance-ink);
 }
 .ltd-operator-public main :is(.clear-card-grid__card, .product-surface) :is(p, span) {
-  color: var(--color-operator-muted);
+  color: var(--color-performance-muted);
 }
 .property-performance.ltd-operator-public main .opposition .clear-card-grid__card,
 .property-performance.ltd-operator-public main .opposition .clear-card-grid__card :is(strong, .clear-card-grid__icon) {
-  color: var(--color-operator-foreground);
+  color: var(--color-performance-ink);
 }
 .property-performance.ltd-operator-public main .opposition .clear-card-grid__card {
-  border-radius: var(--radius-operator-panel);
+  border-radius: var(--radius-performance-scale-lg);
 }
 .property-performance.ltd-operator-public main .opposition .clear-card-grid__card :is(p, .clear-card-grid__eyebrow) {
-  color: var(--color-operator-muted);
+  color: var(--color-performance-muted);
 }
 .ltd-operator-public main .readiness-page__questions button {
-  border-radius: var(--radius-operator-control);
+  border-radius: var(--radius-performance-sm);
 }
 .ltd-operator-public main .readiness-page__questions button[aria-pressed='true'] {
-  background: var(--color-operator-raised);
-  border-color: var(--color-operator-foreground);
-  color: var(--color-operator-foreground);
+  background: var(--color-performance-court);
+  border-color: var(--color-performance-ink);
+  color: var(--color-performance-ink);
 }
-.ltd-operator-public main .readiness-page__hero > p:last-child { color: var(--color-operator-muted); }
+.ltd-operator-public main .readiness-page__hero > p:last-child { color: var(--color-performance-muted); }
 .ltd-operator-public main .readiness-page h1 { max-width: 24ch; }
 .ltd-operator-public main .readiness-page h2 { max-width: 34ch; }
 
 .ltd-operator-public .footer-clear,
 .ltd-operator-public .footer-clear .footer-links {
-  background: var(--color-operator-background);
-  color: var(--color-operator-foreground);
-  border-color: var(--color-operator-border);
+  background: var(--color-performance-paper);
+  color: var(--color-performance-ink);
+  border-color: var(--color-performance-line);
 }
 .ltd-operator-public .footer-clear .footer-links-grid {
-  background: var(--color-operator-secondary);
-  border-color: var(--color-operator-border);
-  border-radius: var(--radius-operator-panel);
+  background: var(--color-performance-bg-elevated);
+  border-color: var(--color-performance-line);
+  border-radius: var(--radius-performance-scale-lg);
   box-shadow: none;
 }
 .ltd-operator-public .footer-clear :is(.brand-description, .section-description, .footer-link) {
-  color: var(--color-operator-muted);
+  color: var(--color-performance-muted);
 }
 
 .ltd-operator-hero {
@@ -177,12 +131,12 @@ body:has(.ltd-operator-public) {
   width: min(82rem, calc(100% - 3rem));
   margin: 0 auto;
   padding: clamp(2rem, 4vw, 4rem) 0;
-  border-bottom: 1px solid var(--color-operator-border);
+  border-bottom: 1px solid var(--color-performance-line);
 }
 .ltd-operator-hero__intro { max-width: 46rem; }
 .ltd-operator-hero__eyebrow {
   margin: 0 0 1rem;
-  color: var(--color-operator-muted);
+  color: var(--color-performance-muted);
   font-size: .75rem;
   font-weight: 600;
   letter-spacing: .08em;
@@ -192,36 +146,36 @@ body:has(.ltd-operator-public) {
 .ltd-operator-hero__intro > p:not(.ltd-operator-hero__eyebrow) {
   max-width: 63ch;
   margin: 1rem 0 0;
-  color: var(--color-operator-muted);
+  color: var(--color-performance-muted);
   font-size: clamp(.9rem, 1.2vw, 1rem);
 }
 .ltd-operator-hero__actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem; }
 .ltd-operator-hero__actions :is(a, button) { min-height: 2.75rem; }
-.property-performance.ltd-operator-public .btn { border-radius: var(--radius-operator-control); }
+.property-performance.ltd-operator-public .btn { border-radius: var(--radius-performance-sm); }
 .property-performance.ltd-operator-public :is(a.btn-primary, a.property-funnel__button--primary):hover {
   opacity: 1;
 }
 .property-performance.ltd-operator-public :is(.property-funnel__button, .newsletter-section .submit-button, .newsletter-section input[type='email']) {
-  border-radius: var(--radius-operator-control);
+  border-radius: var(--radius-performance-sm);
 }
 .property-performance.ltd-operator-public .property-funnel__step--active .property-funnel__step {
-  background: var(--color-operator-raised);
-  border-color: var(--color-operator-input-border);
+  background: var(--color-performance-court);
+  border-color: var(--color-performance-line-strong);
 }
 .property-performance.ltd-operator-public .property-funnel__button--primary,
 .property-performance.ltd-operator-public .property-funnel__button--secondary:hover {
-  color: var(--color-operator-secondary);
+  color: var(--color-performance-bg-elevated);
 }
 .property-performance.ltd-operator-public .property-funnel__button--primary:hover {
-  background: var(--color-operator-muted);
-  border-color: var(--color-operator-muted);
+  background: var(--color-performance-muted);
+  border-color: var(--color-performance-muted);
 }
 .property-performance.ltd-operator-public .newsletter-section {
-  background: var(--color-operator-background);
-  border-color: var(--color-operator-border);
+  background: var(--color-performance-paper);
+  border-color: var(--color-performance-line);
 }
 .property-performance.ltd-operator-public .newsletter-section :is(input[type='email'], .submit-button) {
-  color: var(--color-operator-secondary);
+  color: var(--color-performance-bg-elevated);
 }
 .ltd-operator-hero__proof {
   display: grid;
@@ -229,20 +183,20 @@ body:has(.ltd-operator-public) {
   margin: 0;
   padding: 0;
   list-style: none;
-  border: 1px solid var(--color-operator-border);
-  border-radius: var(--radius-operator-panel);
-  background: var(--color-operator-secondary);
+  border: 1px solid var(--color-performance-line);
+  border-radius: var(--radius-performance-scale-lg);
+  background: var(--color-performance-bg-elevated);
 }
 .ltd-operator-hero__proof li { display: grid; gap: .2rem; padding: .75rem 1rem; }
-.ltd-operator-hero__proof li + li { border-top: 1px solid var(--color-operator-border); }
-.ltd-operator-hero__proof span { color: var(--color-operator-muted); font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; }
-.ltd-operator-hero__proof strong { color: var(--color-operator-foreground); font-size: .875rem; font-weight: 600; }
+.ltd-operator-hero__proof li + li { border-top: 1px solid var(--color-performance-line); }
+.ltd-operator-hero__proof span { color: var(--color-performance-muted); font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; }
+.ltd-operator-hero__proof strong { color: var(--color-performance-ink); font-size: .875rem; font-weight: 600; }
 
 @media (max-width: 47.99rem) {
   .ltd-operator-hero { grid-template-columns: 1fr; width: calc(100% - 2rem); padding-block: 1.5rem; }
   .ltd-operator-hero__proof { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ltd-operator-hero__proof li:nth-child(2) { border-top: 0; }
-  .ltd-operator-hero__proof li:nth-child(even) { border-left: 1px solid var(--color-operator-border); }
+  .ltd-operator-hero__proof li:nth-child(even) { border-left: 1px solid var(--color-performance-line); }
 }
 @media (prefers-reduced-motion: reduce) {
   .ltd-operator-public :is(a, button, summary) { transition-duration: 0ms; }
@@ -252,14 +206,14 @@ body:has(.ltd-operator-public) {
 .ltd-operator-public main .clear-page-section,
 .ltd-operator-public main .clear-page-section--hero {
   padding-block: clamp(1.5rem, 3vw, 2.75rem);
-  background: var(--color-operator-background);
-  border-color: var(--color-operator-border);
-  color: var(--color-operator-foreground);
+  background: var(--color-performance-paper);
+  border-color: var(--color-performance-line);
+  color: var(--color-performance-ink);
 }
 .ltd-operator-public main .clear-page-section__title,
 .ltd-operator-public main .clear-page-section--hero .clear-page-section__title {
   max-width: 26ch;
-  color: var(--color-operator-foreground);
+  color: var(--color-performance-ink);
   font-family: var(--font-performance-sans);
   font-size: clamp(2.25rem, 3.6vw, 3.25rem);
   font-weight: 500;
@@ -268,20 +222,20 @@ body:has(.ltd-operator-public) {
 }
 .ltd-operator-public main .clear-page-section__description {
   max-width: 65ch;
-  color: var(--color-operator-muted);
+  color: var(--color-performance-muted);
   font-size: clamp(.9rem, 1.2vw, 1rem);
   line-height: 1.6;
 }
 .ltd-operator-public main .clear-kicker {
-  background: var(--color-operator-secondary);
-  border-color: var(--color-operator-border);
-  color: var(--color-operator-muted);
-  border-radius: var(--radius-operator-control);
+  background: var(--color-performance-bg-elevated);
+  border-color: var(--color-performance-line);
+  color: var(--color-performance-muted);
+  border-radius: var(--radius-performance-sm);
 }
 .ltd-operator-public main .performance-narrative-stage {
-  background: var(--color-operator-background);
-  border-color: var(--color-operator-border);
-  color: var(--color-operator-foreground);
+  background: var(--color-performance-paper);
+  border-color: var(--color-performance-line);
+  color: var(--color-performance-ink);
   padding-block: clamp(1.5rem, 3vw, 2.75rem);
 }
 .ltd-operator-public main .performance-narrative-stage__header h2 {
@@ -290,54 +244,54 @@ body:has(.ltd-operator-public) {
   line-height: 1.16;
 }
 .ltd-operator-public main .performance-narrative-stage__header > p {
-  color: var(--color-operator-muted);
+  color: var(--color-performance-muted);
   font-size: clamp(.9rem, 1.2vw, 1rem);
 }
 .ltd-operator-public main :is(.performance-narrative-stage__index, .performance-narrative-stage__panel) {
-  background: var(--color-operator-secondary);
-  border-color: var(--color-operator-border);
-  color: var(--color-operator-foreground);
+  background: var(--color-performance-bg-elevated);
+  border-color: var(--color-performance-line);
+  color: var(--color-performance-ink);
 }
 .ltd-operator-public main .performance-narrative-stage__index button[aria-selected='true'] {
-  background: var(--color-operator-raised);
-  color: var(--color-operator-foreground);
+  background: var(--color-performance-court);
+  color: var(--color-performance-ink);
 }
 
 .ltd-operator-public main .playbook-detail,
 .ltd-operator-public main :is(.playbook-detail__hero, .playbook-detail__instruction, .playbook-detail__board, .playbook-detail__runbook, .playbook-detail__opposition) {
-  background: var(--color-operator-background);
-  border-color: var(--color-operator-border);
-  color: var(--color-operator-foreground);
+  background: var(--color-performance-paper);
+  border-color: var(--color-performance-line);
+  color: var(--color-performance-ink);
 }
 .ltd-operator-public main .playbook-detail__hero {
   min-height: 0;
   display: block;
-  background: var(--color-operator-background);
+  background: var(--color-performance-paper);
 }
 .ltd-operator-public main .playbook-detail__instruction,
-.ltd-operator-public main .playbook-detail__opposition { background: var(--color-operator-secondary); }
+.ltd-operator-public main .playbook-detail__opposition { background: var(--color-performance-bg-elevated); }
 .ltd-operator-public main .playbook-detail__instruction .playbook-detail__eyebrow {
-  color: var(--color-operator-muted);
+  color: var(--color-performance-muted);
 }
 .ltd-operator-public main .playbook-detail__board dl > div,
 .ltd-operator-public main .playbook-detail__opposition article {
-  background: var(--color-operator-secondary);
-  border-color: var(--color-operator-border);
+  background: var(--color-performance-bg-elevated);
+  border-color: var(--color-performance-line);
   min-height: 0;
 }
 .ltd-operator-public main .readiness-page__result {
-  background: var(--color-operator-secondary);
-  border-color: var(--color-operator-border);
-  border-left-color: var(--color-operator-status-review-text);
+  background: var(--color-performance-bg-elevated);
+  border-color: var(--color-performance-line);
+  border-left-color: var(--color-performance-review);
 }
 .ltd-operator-public main .readiness-page__result[data-state='ready'] {
-  border-left-color: var(--color-operator-status-done-text);
+  border-left-color: var(--color-performance-success);
 }
 .ltd-operator-public main .readiness-page__result[data-state='blocked'] {
-  border-left-color: var(--color-operator-status-blocked-text);
+  border-left-color: var(--color-performance-error);
 }
 .ltd-operator-public main .readiness-page__result li {
-  border-color: var(--color-operator-border);
+  border-color: var(--color-performance-line);
 }
 
 .property-performance.ltd-public-library.ltd-operator-public main :is(.playbook-detail, .readiness-page) h1 {
@@ -378,7 +332,7 @@ body:has(.ltd-operator-public) {
   border-radius: 0;
   background: transparent;
 }
-.ltd-operator-public .ltd-operator-hero__proof li + li { border-top: 0; border-left: 1px solid var(--color-operator-border); }
+.ltd-operator-public .ltd-operator-hero__proof li + li { border-top: 0; border-left: 1px solid var(--color-performance-line); }
 .ltd-operator-public .ltd-operator-hero h1 { font-size: clamp(2.3rem, 4.1vw, 4.5rem); line-height: 1.02; letter-spacing: -.055em; }
 .ltd-operator-public .library-standard-scene { width: min(75rem, calc(100% - 3rem)); margin: 0 auto 3rem; }
 .ltd-operator-public .readiness-page__hero .library-scene,
@@ -387,8 +341,8 @@ body:has(.ltd-operator-public) {
   .ltd-operator-public .ltd-operator-hero { grid-template-columns: 1fr; }
   .ltd-operator-public .ltd-operator-hero__intro { max-width: 43rem; }
   .ltd-operator-public .ltd-operator-hero__proof { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .ltd-operator-public .ltd-operator-hero__proof li:nth-child(3) { border-left: 0; border-top: 1px solid var(--color-operator-border); }
-  .ltd-operator-public .ltd-operator-hero__proof li:nth-child(4) { border-top: 1px solid var(--color-operator-border); }
+  .ltd-operator-public .ltd-operator-hero__proof li:nth-child(3) { border-left: 0; border-top: 1px solid var(--color-performance-line); }
+  .ltd-operator-public .ltd-operator-hero__proof li:nth-child(4) { border-top: 1px solid var(--color-performance-line); }
 }
 
 /* Paired openings preserve the whole material scene while bringing the working
@@ -408,7 +362,7 @@ body:has(.ltd-operator-public) {
 .ltd-operator-public main .readiness-page__intro > p:not(:first-child) {
   max-width: 60ch;
   margin-top: 1.25rem;
-  color: var(--color-operator-muted);
+  color: var(--color-performance-muted);
   line-height: 1.65;
 }
 @media (min-width: 64rem) {
@@ -438,7 +392,7 @@ body:has(.ltd-operator-public) {
 
 /* Public reading and assessment text stays clear of a fixed search control. */
 @media (max-width: 768px) {
- body .ltd-header-search .mobile-search-button { top: 10px; bottom: auto; right: 80px; width: 44px; height: 44px; z-index: 51; background: var(--color-operator-secondary); color: var(--color-operator-foreground); border-radius: var(--radius-operator-panel); box-shadow: none; }
+ body .ltd-header-search .mobile-search-button { top: 10px; bottom: auto; right: 80px; width: 44px; height: 44px; z-index: 51; background: var(--color-performance-bg-elevated); color: var(--color-performance-ink); border-radius: var(--radius-performance-scale-lg); box-shadow: none; }
 }
 
 body .ltd-header-search .palette-overlay { z-index: 60; }

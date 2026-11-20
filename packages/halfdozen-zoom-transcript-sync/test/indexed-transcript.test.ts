@@ -179,6 +179,7 @@ test('worker integration verifies readback, resumes failed writes, rechecks edit
   let downloads = 0;
   let created = false;
   const notion = new MemoryNotion();
+  const childPages = new Map<string, Block>();
   const page = { created_time: '2026-10-23T12:00:00.000Z', id: 'parent', url: 'https://www.notion.so/parent', properties: {
     Item: { title: [{ plain_text: candidate.meetingTitle }] },
     Date: { date: { start: candidate.meetingDate } },
@@ -193,7 +194,15 @@ test('worker integration verifies readback, resumes failed writes, rechecks edit
     }
     const body = init?.body ? JSON.parse(String(init.body)) : null;
     if (url.endsWith('/query')) return Response.json({ results: created ? [page] : [] });
-    if (url.endsWith('/pages') && init?.method === 'POST') { created = true; return Response.json(page); }
+    if (url.endsWith('/pages') && init?.method === 'POST') {
+      if (body.parent.page_id) {
+        const id=String(++notion.sequence).padStart(32,'0'),child={object:'page',id,url:`https://www.notion.so/${id}`,parent:body.parent,properties:body.properties};
+        childPages.set(id,child);notion.nodes.set(id,structuredClone(body.children));notion.nodes.get(body.parent.page_id)!.push({id,type:'child_page',child_page:{title:body.properties.title.title[0].text.content}});return Response.json(child);
+      }
+      created = true; return Response.json(page);
+    }
+    const childPageId=new URL(url).pathname.match(/^\/v1\/pages\/([^/]+)$/)?.[1];
+    if(childPageId&&childPages.has(childPageId))return Response.json(childPages.get(childPageId));
     if (url.includes('/pages/parent')) return Response.json(page);
     const blockRoute = new URL(url).pathname.match(/^\/v1\/blocks\/([^/]+)$/);
     if (blockRoute) {

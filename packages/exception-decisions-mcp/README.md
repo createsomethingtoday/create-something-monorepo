@@ -33,8 +33,9 @@ Every write appends a signed attribution line naming the identity. Adding or rem
 is a secret re-upload, no code change: update `.deciders.local.json` (gitignored, the local
 mirror), then `wrangler secret put DECIDERS_JSON < .deciders.local.json`. Verify with `whoami`.
 
-Roles: `final` (Adam), `partner-lead` (Greg), `operator` (Micah), `automation` (the
-recommendation runner).
+Roles: `final`, `partner-lead` (Greg), `operator` (Micah), `automation` (the recommendation
+runner), `viewer` (demo). Since 11/04/2026 exception decisions belong to Micah + the app review
+team.
 
 ## Decision rights (v1.3.0)
 

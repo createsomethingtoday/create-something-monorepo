@@ -274,212 +274,16 @@ async def main():
         model = "gemini-2.5-flash"
         print(f"\n🎯 Using default: {model} (best value: $0.004/paper, 93% Canon)")
 
-    # 6. Build the task prompt - includes structural requirements
-    paper_structure = '''
-## PAPER STRUCTURE REQUIREMENTS (MINIMUM)
+    # 6. Build the same evidence-preserving task as the agent factory.
+    from agents.paper_agent import PaperConfig, SYSTEM_PROMPT, build_paper_task
 
-Your paper MUST include ALL of these elements:
-
-### 1. Header Section
-- Paper ID: PAPER-2026-NNN format (monospace)
-- Title: H1 with --text-h1
-- Subtitle: Brief description
-- Meta line: Type • Read time • Difficulty
-
-### 2. Abstract Section (REQUIRED)
-Border-left styled (4px solid) with 3-5 sentences summarizing problem, methodology, findings.
-
-### 3. Numbered Sections (MINIMUM 5-7) — TELL A STORY
-Use Roman numerals: I, II, III, IV, V, VI, VII
-Required: Introduction, Problem/Context, Methodology, Findings, Results, Discussion, Limitations
-
-**CRITICAL: Each section must tell a story, not just list facts.**
-
-Each section follows this narrative pattern:
-- **Question/Hook** - Frame the problem (use callout box)
-- **Finding** - What was discovered (2-3 paragraphs explaining WHY)
-- **Evidence** - Before/After comparison with SPECIFIC NUMBERS
-- **Action** - "What We Did" list with concrete steps
-- **Outcome** - Measurable result
-
-**Transform vague claims into specific comparisons:**
-- "Significantly reduced" → "1,594 lines → 644 lines (60% reduction)"
-- "Improved performance" → "450ms → 12ms (97% faster)"
-- "Many files removed" → "155 scripts → 13 active (92% reduction)"
-
-**AVOID sparse sections like:**
-"Beads provides several patterns. Here are examples."
-
-**WRITE substantive sections like:**
-"When Claude Code sessions end—whether from context limits, crashes, or
-closing the terminal—work disappears. This is the fundamental challenge.
-We discovered that Beads stores issues in .beads/issues.jsonl (line 42),
-committed to Git. This means work survives session interruption..."
-
-### 4. Visual Elements (MINIMUM 3)
-Include at least 3 of: data tables, comparison cards (success/warning), quote boxes, info card grids, code blocks.
-
-### 5. References Section (MINIMUM 2)
-Numbered list citing actual files examined.
-
-### 6. Footer Section
-Navigation links to related papers.
-
-### SIZING: Minimum 500 lines, 12+ min read, 5+ sections, 3+ visual elements.
-'''
-
-    experiment_structure = '''
-## EXPERIMENT STRUCTURE REQUIREMENTS (MINIMUM)
-
-Your experiment MUST include ALL of these elements:
-
-### 1. Header with Status Banner
-Title + status indicator (healthy/degraded/error)
-
-### 2. Stats Grid (MINIMUM 4 metrics)
-4+ stat cards showing key metrics from live data
-
-### 3. Status Cards for Components
-Individual cards showing each component's status
-
-### 4. Activity Log or Data Table
-Recent activity from the live endpoint
-
-### 5. Architecture Section
-Explanation of how the system works
-
-### 6. +page.server.ts (REQUIRED)
-Fetch live data from real endpoints using Promise.allSettled
-
-### 7. Footer
-Links to endpoints and related experiments
-
-### SIZING: Minimum 400 lines, 4+ stat metrics, 3+ status cards, 1+ live endpoints.
-'''
-
-    close_instruction = (
-        "4. Do not change Linear status automatically. Record generation evidence in Linear after files and validation are complete."
-        if tracking_system == "linear"
-        else f"4. After creating files, close the Beads issue:\n   bd close {ISSUE_ID} --no-db"
+    task = build_paper_task(
+        PaperConfig(
+            issue_id=ISSUE_ID, content_type=content_type, slug=slug,
+            model=model, monorepo_path=MONOREPO,
+        ),
+        issue=issue,
     )
-
-    task = f'''
-Generate a CREATE SOMETHING {content_type} from this {work_item_kind}.
-
-## Work Item Details
-- ID: {ISSUE_ID}
-- Title: {title}
-- Description: {description}
-
-## MANDATORY: Use Tools Before Writing
-
-**You MUST call bash and file_read tools before writing ANY content.**
-
-### Step 1: Search with bash tool (REQUIRED)
-Call the bash tool to search the codebase:
-- Search .claude/rules/ directory for documentation
-- Search packages/ for implementations
-- Run grep commands to find relevant files
-
-### Step 2: Read files with file_read tool (REQUIRED)
-After searching, read the files you found:
-- Read .claude/rules/*.md files for patterns
-- Read CLAUDE.md for architecture
-- Read actual source files
-
-### Step 3: Extract facts from what you read
-From the actual file contents:
-- Quote exact text with line numbers
-- Note real function/class names
-- Count actual metrics from files
-
-### Step 4: Write paper citing your sources
-Every claim must cite a file you read.
-
-**If you write without calling bash or file_read first, your paper will be rejected.**
-
-{paper_structure if content_type == "paper" else experiment_structure}
-
-## Output Requirements
-
-1. Create directory: {output_dir}
-
-2. Create +page.svelte with:
-   - Canon design tokens (var(--color-*), var(--radius-*), var(--text-*))
-   - NO Tailwind design utilities (bg-white, rounded-lg, etc.)
-   - Tailwind ONLY for layout (flex, grid, p-*, m-*, gap-*)
-   - Types DEFINED INLINE (not imported from external files)
-   - Escape curly braces in code: {{`code here`}}
-
-3. {"Create +page.server.ts for live data fetching" if content_type == "experiment" else "No server file needed for static paper"}
-
-{close_instruction}
-
-## Canon Token Reference (USE THESE EXACT NAMES)
-
-### Background Colors
-- --color-bg-pure: #000000 (page background)
-- --color-bg-elevated: #0a0a0a (raised surfaces)
-- --color-bg-surface: #111111 (cards, panels)
-- --color-bg-subtle: #1a1a1a (hover states, callouts)
-
-### Foreground Colors
-- --color-fg-primary: #ffffff (headings, emphasis)
-- --color-fg-secondary: rgba(255,255,255,0.8) (body text)
-- --color-fg-tertiary: rgba(255,255,255,0.6) (secondary info)
-- --color-fg-muted: rgba(255,255,255,0.46) (captions, meta)
-
-### Border Colors
-- --color-border-default: rgba(255,255,255,0.1) (subtle borders)
-- --color-border-emphasis: rgba(255,255,255,0.2) (visible borders)
-
-### Semantic Colors
-- --color-success: #44aa44 (positive, complete)
-- --color-success-muted: rgba(68,170,68,0.2) (success backgrounds)
-- --color-error: #d44d4d (negative, failed)
-- --color-warning: #aa8844 (caution, pending)
-- --color-info: #5082b9 (informational, links)
-
-### Typography
-- --text-h1: clamp(2rem, 3vw + 1rem, 3.5rem)
-- --text-h2: clamp(1.5rem, 2vw + 0.75rem, 2.25rem)
-- --text-h3: clamp(1.25rem, 1.5vw + 0.5rem, 1.75rem)
-- --text-body-lg: 1.125rem
-- --text-body: 1rem
-- --text-body-sm: 0.875rem
-
-### Spacing (Golden Ratio φ = 1.618)
-- --space-xs: 0.5rem
-- --space-sm: 1rem
-- --space-md: 1.618rem
-- --space-lg: 2.618rem
-- --space-xl: 4.236rem
-
-### Border Radius
-- --radius-sm: 6px
-- --radius-md: 8px
-- --radius-lg: 12px
-
-### Animation
-- --duration-micro: 200ms (hover states)
-- --duration-standard: 300ms (transitions)
-- --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1)
-
-CRITICAL: Use these EXACT token names. Do NOT invent new names like --color-text or --color-background.
-
-## Quality Gate Checklist
-
-- [ ] Paper ID present (PAPER-2026-NNN)
-- [ ] Abstract with border-left styling
-- [ ] Minimum 5 numbered sections
-- [ ] Minimum 3 visual elements
-- [ ] References with file paths
-- [ ] Footer with navigation
-- [ ] 500+ lines for papers, 400+ for experiments
-- [ ] All claims cite sources
-
-Generate complete, production-ready content. No placeholders.
-'''
 
     # 7. Configure and run the agent
     is_gemini = model.startswith("gemini")
@@ -503,7 +307,7 @@ Generate complete, production-ready content. No placeholders.
             task=task,
             model=model,
             max_tokens=8192,
-            system_prompt="You are a CREATE SOMETHING research agent. Use bash and file_read tools to examine the codebase before writing. Generate Canon-compliant Svelte papers grounded in actual implementation details.",
+            system_prompt=SYSTEM_PROMPT,
         )
 
         result = await provider.execute(provider_config)
@@ -530,6 +334,7 @@ Generate complete, production-ready content. No placeholders.
         # Use Claude agent for Claude models
         config = AgentConfig(
             task=task,
+            system_prompt=SYSTEM_PROMPT,
             model=model,
             skills=[
                 "css-canon",

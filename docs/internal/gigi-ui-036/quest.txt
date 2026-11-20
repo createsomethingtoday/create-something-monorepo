@@ -1,0 +1,23 @@
+
+> @create-something/gigi-desktop@0.3.6 test:reconciled-quest /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6/apps/gigi-desktop
+> node scripts/dev-astryx-quest-browser.mjs
+
+{
+  "status": "passed",
+  "results": [
+    "Name-only creation saves and reads back one profile, leaves currency unset, and retains the explicit manual fallback.",
+    "A failed local progress readback remains visible before optional connected setup; Check saved progress recovers through reads without another profile save.",
+    "Signed-in Codex with missing workspace tools offers read-only tools recovery, without reinstall, new login, provider turn or record write.",
+    "The verified read-only first-answer action leaves setup, opens a visible chat draft, and sends no agent turn.",
+    "A saved person with an unconfirmed link stays at 2 of 3; pause/resume and retry perform no duplicate save, and 3 of 3 follows an exact relation receipt plus gig readback.",
+    "The optional calendar quest opens the existing consent-controlled Settings surface without connecting, importing, signing in or sending an agent turn.",
+    "Saved progress restores through reads, reduced motion keeps final content visible without horizontal overflow at 390px, and Finish opens the exact saved gig.",
+    "partial receipt exposes an explicit keyboard-operable retry preview using the first page when retryCursor is null, without automatic import, consent or record writes.",
+    "partial receipt exposes an explicit keyboard-operable retry preview using the recovery cursor, without automatic import, consent or record writes.",
+    "cancelled receipt exposes an explicit keyboard-operable retry preview using the first page when retryCursor is null, without automatic import, consent or record writes.",
+    "cancelled receipt exposes an explicit keyboard-operable retry preview using the recovery cursor, without automatic import, consent or record writes.",
+    "An approved import with a lost receipt keeps its exact recovery job, blocks continuation/discard, retries read-first without another commit, and permits a new preview only after receipt reconciliation.",
+    "Actual Astryx Grid/Stack frames retain two desktop columns and one mobile column, keyboard access and no horizontal overflow at 880×620,1440×900,390×844 in Paper and Midnight."
+  ],
+  "limits": "Synthetic browser fixture only. Native WebKit, live provider consent/import, phone access and real profiles are not exercised."
+}

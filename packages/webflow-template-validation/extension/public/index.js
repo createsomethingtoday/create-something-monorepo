@@ -1,7 +1,7 @@
 "use strict";
 (() => {
   // src/utils.ts
-  var EXTENSION_VERSION = "1.3.8";
+  var EXTENSION_VERSION = "1.3.13";
   function filterRetiredAccessibilityIssues(issues) {
     return issues.filter((issue) => issue.id !== "color-contrast-violations");
   }
@@ -108,6 +108,86 @@
     }
     return { url: null, source: "no published domain found" };
   }
+  function normalizePreviewLink(value) {
+    const text = (value || "").trim();
+    if (!text) return void 0;
+    let url;
+    try {
+      url = new URL(text);
+    } catch {
+      return void 0;
+    }
+    if (url.protocol !== "https:" || url.hostname !== "preview.webflow.com") return void 0;
+    if (!/^\/preview\/[a-z0-9][a-z0-9-]*\/?$/.test(url.pathname)) return void 0;
+    if (!/^[0-9a-f]{32}$/.test(url.searchParams.get("preview") || "")) return void 0;
+    return url.href;
+  }
+
+  // src/page-metadata-details.ts
+  function renderDetails(label, items) {
+    if (items.length === 0) return "";
+    return `
+    <details class="issue-subitems-details">
+      <summary class="issue-subitems-summary">
+        <strong>${label} (${items.length})</strong>
+      </summary>
+      <div class="issue-subitems-list">
+        ${items.map((item) => `<div class="subitem">\u2022 ${escapeHtml(item)}</div>`).join("")}
+      </div>
+    </details>
+  `;
+  }
+  function formatPageDetail(page) {
+    if (typeof page === "string") return page.replace(/\s+/g, " ").trim();
+    if (!page || typeof page !== "object") return "";
+    const { url, detail } = page;
+    return [url, detail].filter((part) => typeof part === "string" && part.trim() !== "").map((part) => part.replace(/\s+/g, " ").trim()).join(" \u2014 ");
+  }
+  function createPageMetadataDetailsHTML(details) {
+    if (!details) return "";
+    const pages = Array.isArray(details.pages) ? details.pages.map(formatPageDetail).filter((page) => page !== "") : [];
+    const duplicates = Array.isArray(details.duplicates) ? details.duplicates.filter((group) => Array.isArray(group)).map(
+      (group) => group.filter((page) => typeof page === "string" && page.trim() !== "").join(" \xB7 ")
+    ).filter(Boolean) : [];
+    return [
+      renderDetails(`View affected page${pages.length === 1 ? "" : "s"}`, pages),
+      renderDetails(`View duplicate group${duplicates.length === 1 ? "" : "s"}`, duplicates)
+    ].join("");
+  }
+
+  // src/run-timings.ts
+  function createRunTimer(now = () => performance.now()) {
+    const startedAt = now();
+    let lastLap = startedAt;
+    const steps = {};
+    const counts = {};
+    return {
+      lap(step) {
+        const current = now();
+        steps[step] = (steps[step] || 0) + Math.max(0, Math.round(current - lastLap));
+        lastLap = current;
+      },
+      count(name, items) {
+        if (typeof items === "number" && Number.isFinite(items)) counts[name] = Math.max(0, Math.floor(items));
+      },
+      result() {
+        return { steps: { ...steps, total: Math.max(0, Math.round(now() - startedAt)) }, counts: { ...counts } };
+      }
+    };
+  }
+  function formatSeconds(ms) {
+    return ms >= 1e4 ? `${Math.round(ms / 1e3)} s` : `${(ms / 1e3).toFixed(1)} s`;
+  }
+  function formatRunTimings(timings) {
+    if (!timings || typeof timings.steps !== "object") return null;
+    const { total, ...steps } = timings.steps;
+    const parts = Object.entries(steps).filter(([, ms]) => typeof ms === "number" && Number.isFinite(ms)).sort(([, a], [, b]) => b - a).map(([step, ms]) => {
+      const items = timings.counts?.[step];
+      return `${step} ${formatSeconds(ms)}${typeof items === "number" ? ` (${items} items)` : ""}`;
+    });
+    if (typeof total !== "number" && parts.length === 0) return null;
+    return [typeof total === "number" ? `total ${formatSeconds(total)}` : null, ...parts].filter(Boolean).join(" \xB7 ");
+  }
 
   // src/report.ts
   function buildReportMarkdown(input) {
@@ -121,6 +201,7 @@
       input.extensionVersion ? `- Validator: extension v${input.extensionVersion}${input.workerVersion ? ` \xB7 worker v${input.workerVersion}` : ""}` : null,
       input.outcomeBadge ? `- Outcome: ${input.outcomeBadge}${input.outcomeTitle ? ` \u2014 ${input.outcomeTitle}` : ""}` : null,
       `- Errors: ${input.errors} \xB7 Warnings: ${input.warnings} \xB7 Info: ${input.infos}`,
+      formatRunTimings(input.timings) ? `- Run time: ${formatRunTimings(input.timings)}` : null,
       ""
     ];
     for (const category of input.categories) {
@@ -133,19 +214,17 @@
         const howToFix = issue.howToFix || issue.details?.howToFix;
         if (howToFix) lines.push(`  - Fix: ${howToFix}`);
         for (const page of issue.details?.pages || []) {
-          lines.push(`  - Affected page: ${formatDetailLabel(page)}`);
+          const label = formatPageDetail(page);
+          if (label) lines.push(`  - Affected page: ${label}`);
         }
         for (const group of issue.details?.duplicates || []) {
-          const labels = group.map(formatDetailLabel).filter(Boolean);
+          const labels = group.map(formatPageDetail).filter(Boolean);
           if (labels.length > 0) lines.push(`  - Duplicate group: ${labels.join(" \xB7 ")}`);
         }
       }
       lines.push("");
     }
     return lines.filter((line) => line !== null).join("\n");
-  }
-  function formatDetailLabel(value) {
-    return String(value).replace(/\s+/g, " ").trim();
   }
 
   // src/page-seo.ts
@@ -175,30 +254,22 @@
     };
   }
 
-  // src/page-metadata-details.ts
-  function renderDetails(label, items) {
-    if (items.length === 0) return "";
-    return `
-    <details class="issue-subitems-details">
-      <summary class="issue-subitems-summary">
-        <strong>${label} (${items.length})</strong>
-      </summary>
-      <div class="issue-subitems-list">
-        ${items.map((item) => `<div class="subitem">\u2022 ${escapeHtml(item)}</div>`).join("")}
-      </div>
-    </details>
-  `;
-  }
-  function createPageMetadataDetailsHTML(details) {
-    if (!details) return "";
-    const pages = Array.isArray(details.pages) ? details.pages.filter((page) => typeof page === "string" && page.trim() !== "") : [];
-    const duplicates = Array.isArray(details.duplicates) ? details.duplicates.filter((group) => Array.isArray(group)).map(
-      (group) => group.filter((page) => typeof page === "string" && page.trim() !== "").join(" \xB7 ")
-    ).filter(Boolean) : [];
-    return [
-      renderDetails(`View affected page${pages.length === 1 ? "" : "s"}`, pages),
-      renderDetails(`View duplicate group${duplicates.length === 1 ? "" : "s"}`, duplicates)
-    ].join("");
+  // src/concurrency.ts
+  async function mapWithConcurrency(items, limit, fn, onProgress) {
+    const results = new Array(items.length);
+    const workers = Math.max(1, Math.min(Math.floor(limit) || 1, items.length));
+    let next = 0;
+    let done = 0;
+    async function work() {
+      while (next < items.length) {
+        const index = next++;
+        results[index] = await fn(items[index], index);
+        done += 1;
+        onProgress?.(done, items.length);
+      }
+    }
+    await Promise.all(Array.from({ length: workers }, work));
+    return results;
   }
 
   // src/validation-submit-payload.ts
@@ -460,6 +531,489 @@
     return "unknown error";
   }
 
+  // ../shared/designer-enhancements.ts
+  function deriveCollectionMetadata(data) {
+    const metadata = {
+      variableCollections: 0,
+      totalVariables: 0,
+      totalComponents: data.components?.length ?? 0,
+      totalStyles: data.styles?.length ?? 0,
+      totalPages: data.pages?.length ?? 0,
+      totalAssets: 0,
+      totalFonts: 0,
+      totalCollections: 0
+    };
+    const collections = data.variables?.collections ?? [];
+    if (collections.length > 0) {
+      metadata.variableCollections = collections.length;
+      metadata.totalVariables = collections.reduce((n, c) => n + c.variables.length, 0);
+      metadata.totalVariableModes = collections.reduce((n, c) => n + (Array.isArray(c.modes) ? c.modes.length : 0), 0);
+    }
+    return metadata;
+  }
+  function deriveEnhancedValidation(data) {
+    const result = {
+      variableOrganization: {
+        hasColorVariables: false,
+        hasTypographyVariables: false,
+        hasSpacingVariables: false,
+        hasOrderedCollections: false
+      },
+      componentArchitecture: {
+        hasNavbarComponent: false,
+        hasFooterComponent: false,
+        hasCTAComponents: false,
+        hasNestedComponents: false
+      },
+      styleSystem: {
+        hasHtmlTagStyles: false,
+        hasConsistentNaming: false,
+        usesVariablesInStyles: false,
+        hasPercentageLineHeights: false
+      },
+      pageStructure: {
+        hasStyleGuidePage: false,
+        hasInstructionsPage: false,
+        hasLicensePage: false,
+        hasTitleCaseNaming: false,
+        hasMatchingSlugs: false,
+        pagesNotTitleCase: [],
+        pagesWithMismatchedSlugs: []
+      },
+      seoCompliance: {
+        currentPageHasValidTitle: false,
+        currentPageHasValidDescription: false,
+        hasOpenGraphData: false,
+        titleWithinLimits: false,
+        descriptionWithinLimits: false
+      }
+    };
+    const variableOrganization = result.variableOrganization;
+    for (const collection of data.variables?.collections ?? []) {
+      for (const variable of collection.variables) {
+        if (!variable.name) continue;
+        const lowerName = variable.name.toLowerCase();
+        if (lowerName.includes("color") || lowerName.includes("bg") || lowerName.includes("text") || lowerName.includes("primary") || lowerName.includes("secondary")) {
+          variableOrganization.hasColorVariables = true;
+        }
+        if (lowerName.includes("font") || lowerName.includes("text") || lowerName.includes("heading") || lowerName.includes("body") || lowerName.includes("size")) {
+          variableOrganization.hasTypographyVariables = true;
+        }
+        if (lowerName.includes("space") || lowerName.includes("margin") || lowerName.includes("padding") || lowerName.includes("gap")) {
+          variableOrganization.hasSpacingVariables = true;
+        }
+      }
+    }
+    const componentArchitecture = result.componentArchitecture;
+    for (const component of data.components ?? []) {
+      if (!component.name) continue;
+      const lowerName = component.name.toLowerCase();
+      if (lowerName.includes("nav") || lowerName.includes("header") || lowerName.includes("menu")) {
+        componentArchitecture.hasNavbarComponent = true;
+      }
+      if (lowerName.includes("footer")) {
+        componentArchitecture.hasFooterComponent = true;
+      }
+      if (lowerName.includes("cta") || lowerName.includes("button") || lowerName.includes("call")) {
+        componentArchitecture.hasCTAComponents = true;
+      }
+      if (component.isNested) {
+        componentArchitecture.hasNestedComponents = true;
+      }
+    }
+    const styleSystem = result.styleSystem;
+    for (const style of data.styles ?? []) {
+      if (style.isHtmlTag) styleSystem.hasHtmlTagStyles = true;
+      if (style.hasVariables) styleSystem.usesVariablesInStyles = true;
+      const lineHeightValue = style.properties?.["line-height"];
+      if (lineHeightValue) {
+        const lineHeight = String(lineHeightValue);
+        if (lineHeight.includes("%") || !lineHeight.includes("px") && !lineHeight.includes("rem") && !isNaN(parseFloat(lineHeight))) {
+          styleSystem.hasPercentageLineHeights = true;
+        }
+      }
+    }
+    styleSystem.hasConsistentNaming = hasConsistentNaming(data);
+    const pageStructure = result.pageStructure;
+    const pages = data.pages ?? [];
+    for (const page of pages) {
+      const { name, slug } = page;
+      const lowerName = name.toLowerCase();
+      const lowerSlug = slug.toLowerCase();
+      if (lowerName.includes("style guide") || lowerSlug.includes("style-guide") || lowerSlug.includes("styleguide")) {
+        pageStructure.hasStyleGuidePage = true;
+      }
+      if (lowerName.includes("instructions") || lowerSlug.includes("instructions")) {
+        pageStructure.hasInstructionsPage = true;
+      }
+      if (lowerName.includes("license") || lowerSlug.includes("license") || slug === "/licenses") {
+        pageStructure.hasLicensePage = true;
+      }
+      const isTitleCase = /^[A-Z][a-z]*(?:\s[A-Z][a-z]*)*$/.test(name) || name.split(" ").every((word) => word.charAt(0) === word.charAt(0).toUpperCase());
+      if (!isTitleCase) {
+        pageStructure.pagesNotTitleCase.push(name);
+      }
+      const expectedSlug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+      const actualSlug = slug.replace(/^\//, "").toLowerCase();
+      if (!page.isCmsTemplate && expectedSlug !== actualSlug && !(page.isHomePage && actualSlug === "")) {
+        pageStructure.pagesWithMismatchedSlugs.push(`${name} (/${actualSlug})`);
+      }
+    }
+    pageStructure.hasTitleCaseNaming = pages.length > 0 && pageStructure.pagesNotTitleCase.length === 0;
+    pageStructure.hasMatchingSlugs = pages.length > 0 && pageStructure.pagesWithMismatchedSlugs.length === 0;
+    const seo = data.currentPage?.seo;
+    if (seo) {
+      const seoCompliance = result.seoCompliance;
+      seoCompliance.currentPageHasValidTitle = seo.hasValidTitle || false;
+      seoCompliance.currentPageHasValidDescription = seo.hasValidDescription || false;
+      seoCompliance.titleWithinLimits = (seo.titleLength || 0) <= 60;
+      seoCompliance.descriptionWithinLimits = (seo.descriptionLength || 0) >= 150 && (seo.descriptionLength || 0) <= 160;
+      seoCompliance.hasOpenGraphData = !!(seo.openGraphTitle || seo.openGraphDescription || seo.openGraphImage);
+    }
+    return result;
+  }
+  function hasConsistentNaming(data) {
+    const allNames = [];
+    if (data.components) {
+      allNames.push(...data.components.map((c) => c.name));
+    }
+    if (data.styles) {
+      allNames.push(...data.styles.filter((s) => !s.isHtmlTag).map((s) => s.name));
+    }
+    for (const collection of data.variables?.collections ?? []) {
+      allNames.push(...collection.variables.map((v) => v.name));
+    }
+    if (allNames.length === 0) return false;
+    const namingPatterns = {
+      titleCase: 0,
+      camelCase: 0,
+      pascalCase: 0,
+      snakeCase: 0,
+      kebabCase: 0,
+      bem: 0
+    };
+    for (const name of allNames) {
+      if (!name) continue;
+      if (/^[A-Z][a-z]*(?:\s[A-Z][a-z]*)*$/.test(name)) {
+        namingPatterns.titleCase++;
+      } else if (/^[a-z][a-zA-Z0-9]*$/.test(name)) {
+        namingPatterns.camelCase++;
+      } else if (/^[A-Z][a-zA-Z0-9]*$/.test(name)) {
+        namingPatterns.pascalCase++;
+      } else if (/^[a-z][a-z0-9_]*$/.test(name)) {
+        namingPatterns.snakeCase++;
+      } else if (/^[a-z][a-z0-9-]*$/.test(name)) {
+        namingPatterns.kebabCase++;
+      } else if (/^[a-z][a-z0-9-]*(__[a-z][a-z0-9-]*)?(--[a-z][a-z0-9-]*)?$/.test(name)) {
+        namingPatterns.bem++;
+      }
+    }
+    const totalNames = allNames.length;
+    return Object.values(namingPatterns).some((count) => count / totalNames >= 0.8);
+  }
+  function hasNoErrors(issues) {
+    return issues.filter((i) => i.severity === "error").length === 0;
+  }
+  function upsertCategory(results, category, issues, stats) {
+    const existing = results.categories.find((cat) => cat.category === category);
+    if (!existing) {
+      results.categories.push({ category, passed: hasNoErrors(issues), issues, stats });
+      return;
+    }
+    existing.issues.push(...issues);
+    existing.passed = hasNoErrors(existing.issues);
+    existing.stats = stats;
+  }
+  var REQUIRED_TAGS = ["body", "h1", "h2", "h3", "h4", "h5", "h6", "p", "a"];
+  function addStyleSystemValidation(results, data) {
+    const issues = [];
+    const styles = data.styles;
+    if (Array.isArray(styles)) {
+      const existingTagStyles = [];
+      const tagStylesWithVariables = [];
+      for (const style of styles) {
+        const styleName = style.name?.toLowerCase() || "";
+        for (const tag of REQUIRED_TAGS) {
+          if (styleName === tag || styleName === `all ${tag}`) {
+            existingTagStyles.push(tag);
+            if (style.hasVariables) tagStylesWithVariables.push(tag);
+          }
+        }
+      }
+      const missingTags = REQUIRED_TAGS.filter((tag) => !existingTagStyles.includes(tag));
+      if (missingTags.length > 0) {
+        issues.push({
+          id: "missing-html-tag-styles",
+          category: "Style System",
+          severity: "error",
+          message: `Missing base styles for HTML tags: ${missingTags.join(", ")}`,
+          details: {
+            howToFix: "Create base styles for all HTML tags (body, h1-h6, p, a)",
+            samples: missingTags
+          }
+        });
+      }
+      const tagsWithoutVariables = existingTagStyles.filter((tag) => !tagStylesWithVariables.includes(tag));
+      if (tagsWithoutVariables.length > 0) {
+        issues.push({
+          id: "html-tags-without-variables",
+          category: "Style System",
+          severity: "error",
+          message: `HTML tag styles not using variables: ${tagsWithoutVariables.join(", ")}`,
+          details: {
+            howToFix: "Update HTML tag styles to use variables for colors, typography, and spacing",
+            samples: tagsWithoutVariables
+          }
+        });
+      }
+      const totalStyles2 = styles.length;
+      const stylesWithVariables2 = styles.filter((s) => s.hasVariables).length;
+      const variableUsagePercent = totalStyles2 > 0 ? Math.round(stylesWithVariables2 / totalStyles2 * 100) : 0;
+      if (variableUsagePercent < 50) {
+        issues.push({
+          id: "low-variable-usage",
+          category: "Style System",
+          severity: "warning",
+          message: `Only ${variableUsagePercent}% of styles use variables (${stylesWithVariables2}/${totalStyles2})`,
+          details: {
+            howToFix: "Increase variable usage in styles for better maintainability (aim for 80%+)"
+          }
+        });
+      }
+    }
+    const totalStyles = styles?.length || 0;
+    const stylesWithVariables = styles?.filter((s) => s.hasVariables).length || 0;
+    upsertCategory(results, "Style System", issues, {
+      totalStyles,
+      htmlTagStyles: {
+        found: styles?.filter((s) => s.isHtmlTag).length || 0,
+        required: REQUIRED_TAGS.length
+      },
+      stylesWithVariables,
+      variableUsagePercent: totalStyles > 0 ? Math.round(stylesWithVariables / totalStyles * 100) : 0
+    });
+  }
+  function normalizeVariableModesCategory(results) {
+    const variableModesCategory = results.categories.find((cat) => cat.category === "Variable Modes");
+    if (!variableModesCategory?.stats) return;
+    const totalModes = typeof variableModesCategory.stats.totalModes === "number" ? variableModesCategory.stats.totalModes : 0;
+    if (totalModes <= 0) return;
+    let convertedWarning = false;
+    variableModesCategory.issues = (variableModesCategory.issues || []).map((issue) => {
+      const isNameOnlyModeWarning = issue.id === "modes.no-responsive" || /modes found, but none appear to be for responsive breakpoints/i.test(issue.message || "");
+      if (!isNameOnlyModeWarning) return issue;
+      convertedWarning = true;
+      return {
+        ...issue,
+        id: "modes.good",
+        severity: "info",
+        message: `${totalModes} modes configured across ${variableModesCategory.stats?.collectionsWithModes || 1} collections.`,
+        howToFix: void 0
+      };
+    });
+    if (convertedWarning) {
+      variableModesCategory.passed = true;
+      variableModesCategory.stats.modeDataAvailable = true;
+    }
+  }
+  var CANVAS_CHECKS_CATEGORY = "Canvas Checks (Current Page)";
+  var CANVAS_NOT_COLLECTED_REASON = "Canvas checks did not run for this result, so heading order and image alt text in the Designer were not checked.";
+  function evaluateCanvasAccessibility(input) {
+    const elementRefs = /* @__PURE__ */ new Map();
+    const headingIssues = [];
+    let headingsChecked = 0;
+    let lastLevel = 0;
+    for (const { level, ref } of input.headings) {
+      if (!level) continue;
+      headingsChecked++;
+      let issue;
+      if (headingsChecked === 1 && level !== 1) {
+        issue = `First heading on the canvas is H${level} \u2014 it should be H1`;
+      } else if (headingsChecked > 1 && level > lastLevel + 1) {
+        issue = `H${level} follows H${lastLevel}, skipping H${lastLevel + 1}`;
+      }
+      if (issue) {
+        const elementKey = `canvas-heading-${headingsChecked}`;
+        elementRefs.set(elementKey, ref);
+        headingIssues.push({ issue, position: headingsChecked, level, elementKey });
+      }
+      lastLevel = level;
+    }
+    let imagesMissingAlt = 0;
+    const missingAltElementKeys = [];
+    for (const { altText, ref } of input.images) {
+      if (altText && altText.trim()) continue;
+      imagesMissingAlt++;
+      if (missingAltElementKeys.length < 10) {
+        const elementKey = `canvas-image-${imagesMissingAlt}`;
+        elementRefs.set(elementKey, ref);
+        missingAltElementKeys.push(elementKey);
+      }
+    }
+    return {
+      result: {
+        available: true,
+        pageName: input.pageName,
+        headingsChecked,
+        headingIssues,
+        imagesChecked: input.images.length,
+        imagesMissingAlt,
+        missingAltElementKeys
+      },
+      elementRefs
+    };
+  }
+  function addCanvasChecksCategory(results, canvas) {
+    if (!canvas) {
+      results.categories.push({
+        category: CANVAS_CHECKS_CATEGORY,
+        passed: true,
+        issues: [{
+          id: "canvas-checks-unavailable",
+          category: CANVAS_CHECKS_CATEGORY,
+          severity: "info",
+          message: CANVAS_NOT_COLLECTED_REASON,
+          details: {
+            howToFix: "Run validation again, or run the Validator app in the Designer to check the current page canvas."
+          }
+        }],
+        stats: { available: false, reason: CANVAS_NOT_COLLECTED_REASON }
+      });
+      return;
+    }
+    if (!canvas.available) return;
+    const issues = [];
+    for (const headingIssue of canvas.headingIssues) {
+      issues.push({
+        id: `canvas-heading-${headingIssue.position}`,
+        category: CANVAS_CHECKS_CATEGORY,
+        severity: "warning",
+        message: headingIssue.issue,
+        details: {
+          howToFix: "Adjust the heading level in the element settings so levels increase one step at a time.",
+          location: `${canvas.pageName} \u2014 heading ${headingIssue.position} of ${canvas.headingsChecked}`,
+          canvasElementKeys: headingIssue.elementKey ? [headingIssue.elementKey] : void 0
+        }
+      });
+    }
+    if (canvas.imagesMissingAlt > 0) {
+      issues.push({
+        id: "canvas-images-missing-alt",
+        category: CANVAS_CHECKS_CATEGORY,
+        severity: "info",
+        message: `${canvas.imagesMissingAlt} of ${canvas.imagesChecked} image(s) on this page have no alt text in the Designer.`,
+        details: {
+          howToFix: "Add descriptive alt text in each image's settings, or mark purely decorative images as decorative.",
+          canvasElementKeys: canvas.missingAltElementKeys.length > 0 ? canvas.missingAltElementKeys : void 0
+        }
+      });
+    }
+    results.categories.push({
+      category: CANVAS_CHECKS_CATEGORY,
+      passed: issues.filter((issue) => issue.severity === "error" || issue.severity === "warning").length === 0,
+      issues,
+      stats: {
+        page: canvas.pageName,
+        headingsChecked: canvas.headingsChecked,
+        imagesChecked: canvas.imagesChecked,
+        note: "Reflects current Designer state, including unpublished changes"
+      }
+    });
+  }
+  function addRepublishHints(results, canvas) {
+    if (!canvas || !canvas.available) return;
+    const hint = (dimension) => `The current page's canvas passes the ${dimension} check \u2014 if you've already fixed this in the Designer, republish the site and re-run validation to update this result.`;
+    const headingIssueIds = /* @__PURE__ */ new Set(["heading-hierarchy-errors", "heading-structure-errors"]);
+    const altIssueIds = /* @__PURE__ */ new Set(["missing-alt-text-critical", "missing-alt-text", "images-missing-alt"]);
+    for (const category of results.categories) {
+      for (const issue of category.issues || []) {
+        if (issue.id.startsWith("canvas-")) continue;
+        if (canvas.headingsChecked > 0 && canvas.headingIssues.length === 0 && headingIssueIds.has(issue.id)) {
+          issue.details = { ...issue.details, republishHint: hint("heading hierarchy") };
+        }
+        if (canvas.imagesChecked > 0 && canvas.imagesMissingAlt === 0 && altIssueIds.has(issue.id)) {
+          issue.details = { ...issue.details, republishHint: hint("image alt text") };
+        }
+      }
+    }
+  }
+  function rewritePageStructureCategory(results, data) {
+    const pageStructureCategory = results.categories.find((cat) => cat.category === "Page Structure");
+    const pages = data.pages;
+    if (!pageStructureCategory || !pages || pages.length === 0) return;
+    const hasHomePage = pages.some((p) => p.slug === "/" || p.isHomePage);
+    if (pageStructureCategory.stats) {
+      pageStructureCategory.stats.totalPages = pages.length;
+      pageStructureCategory.stats.totalFolders = 0;
+      pageStructureCategory.stats.hasHomePage = hasHomePage;
+    } else {
+      pageStructureCategory.stats = { totalPages: pages.length, totalFolders: 0, hasHomePage };
+    }
+    const issues = [];
+    const pageStructure = data.enhancedValidation?.pageStructure;
+    if (pageStructure) {
+      const pagesNotTitleCase = pageStructure.pagesNotTitleCase || [];
+      if (pagesNotTitleCase.length > 0) {
+        issues.push({
+          id: "page-naming",
+          category: "Page Structure",
+          severity: "warning",
+          message: `${pagesNotTitleCase.length} page(s) don't use Title Case naming convention.`,
+          details: {
+            howToFix: 'Use Title Case for page names (e.g., "Style Guide", "Contact Us")',
+            samples: pagesNotTitleCase.slice(0, 10)
+          }
+        });
+      }
+      const pagesWithMismatchedSlugs = pageStructure.pagesWithMismatchedSlugs || [];
+      if (pagesWithMismatchedSlugs.length > 0) {
+        issues.push({
+          id: "page-slug-mismatch",
+          category: "Page Structure",
+          severity: "warning",
+          message: `${pagesWithMismatchedSlugs.length} page(s) have slugs that don't match their names.`,
+          details: {
+            howToFix: 'Keep page slugs aligned with page names (e.g., "Style Guide" \u2192 /style-guide)',
+            samples: pagesWithMismatchedSlugs.slice(0, 10)
+          }
+        });
+      }
+    }
+    pageStructureCategory.issues = issues;
+    pageStructureCategory.passed = hasNoErrors(issues);
+  }
+  function sortCategories(results) {
+    results.categories.sort((a, b) => {
+      const aErrors = a.issues?.filter((i) => i.severity === "error").length || 0;
+      const bErrors = b.issues?.filter((i) => i.severity === "error").length || 0;
+      const aWarnings = a.issues?.filter((i) => i.severity === "warning").length || 0;
+      const bWarnings = b.issues?.filter((i) => i.severity === "warning").length || 0;
+      if (aErrors > 0 && bErrors === 0) return -1;
+      if (aErrors === 0 && bErrors > 0) return 1;
+      if (aErrors === 0 && bErrors === 0) {
+        if (aWarnings > 0 && bWarnings === 0) return -1;
+        if (aWarnings === 0 && bWarnings > 0) return 1;
+      }
+      if (!a.passed && b.passed) return -1;
+      if (a.passed && !b.passed) return 1;
+      return 0;
+    });
+  }
+  function enhanceValidationResults(results, data, canvasAccessibility) {
+    addStyleSystemValidation(results, data);
+    normalizeVariableModesCategory(results);
+    addCanvasChecksCategory(results, canvasAccessibility);
+    addRepublishHints(results, canvasAccessibility);
+    rewritePageStructureCategory(results, data);
+    sortCategories(results);
+    const allIssues = results.categories.flatMap((cat) => cat.issues || []);
+    results.summary.totalErrors = allIssues.filter((issue) => issue.severity === "error").length;
+    results.summary.totalWarnings = allIssues.filter((issue) => issue.severity === "warning").length;
+    results.summary.totalInfo = allIssues.filter((issue) => issue.severity === "info").length;
+    results.summary.passedCategories = results.categories.filter((c) => c.passed).length;
+    results.summary.failedCategories = results.categories.filter((c) => !c.passed).length;
+  }
+
   // src/index.ts
   var WORKER_API_BASE = "https://validation-worker.createsomething.workers.dev";
   var APP_VALIDATOR_BASE = "https://validation-worker.createsomething.workers.dev";
@@ -539,10 +1093,20 @@
       if (!webflow) {
         throw new Error("Webflow Designer API not available. Please ensure this extension is running in Webflow Designer.");
       }
-      const projectData = await collectProjectData(webflow);
+      const timer = createRunTimer();
+      const projectData = await collectProjectData(webflow, timer, (step, done, total) => {
+        const { base, label } = COLLECT_PROGRESS[step];
+        if (done !== total && done % 10 !== 0) return;
+        setValidationProgress({
+          status: "running",
+          progress: Math.round(base + (total > 0 ? done / total * 4 : 4)),
+          message: `Reading ${label} (${done} of ${total})...`
+        });
+      });
       const designerContext = await collectDesignerContext(webflow);
       projectData.designerContext = designerContext;
       projectData.canvasChecks = await collectCanvasAccessibility(webflow, designerContext.canAccessCanvas);
+      timer.lap("canvas");
       if (designerContext.message) {
         setToolbarStatus(designerContext.message, designerContext.canAccessCanvas === false ? "warning" : "neutral");
       }
@@ -595,9 +1159,12 @@
         );
         setBridgeSetupStep("install");
         setToolbarStatus("Validator script required for submission checks", "warning");
+        timer.lap("setup");
         const designerResults = await runDesignerValidation(projectData, siteUrl, correlationId);
+        timer.lap("worker");
+        designerResults.timings = timer.result();
         designerResults.collectedData = [projectData];
-        enhanceValidationResults(designerResults, projectData);
+        enhanceValidationResults(designerResults, projectData, projectData.canvasChecks);
         if (!designerResults.categories) designerResults.categories = [];
         designerResults.categories.push({
           category: "Published Site Checks (Requires Validator Script)",
@@ -644,14 +1211,17 @@
       hideBridgeDrawer();
       setBridgeSetupStep("run");
       setToolbarStatus("Running full Validator checks...", "active");
+      timer.lap("setup");
       const validationResults = await runUnifiedValidation({
         siteUrl,
         projectData,
         pageSlugs: pageSlugScope.pageSlugs,
         correlationId
       });
+      timer.lap("worker");
+      validationResults.timings = timer.result();
       validationResults.collectedData = [projectData];
-      enhanceValidationResults(validationResults, projectData);
+      enhanceValidationResults(validationResults, projectData, projectData.canvasChecks);
       registerValidationReport(validationResults, correlationId);
       showResults(validationResults);
       void notifyValidationOutcome(webflow, validationResults);
@@ -887,6 +1457,7 @@
     return {
       url: validationResults.url,
       summary: validationResults.summary,
+      timings: validationResults.timings,
       categories: Array.isArray(validationResults.categories) ? validationResults.categories.map((category) => ({
         category: category.category,
         passed: category.passed,
@@ -1030,7 +1601,11 @@
     const includeStyleGuide = !isOptionEnabled("opt-exclude-style-guide", true);
     const pageScopeCurrent = isOptionEnabled("opt-page-scope-current", false);
     const excludePageSlugs = includeStyleGuide ? [] : getStyleGuideExclusionSlugs(projectData);
+    const previewInput = document.getElementById("opt-preview-url");
+    const previewUrl = normalizePreviewLink(previewInput?.value);
+    previewInput?.setAttribute("aria-invalid", String(Boolean(previewInput.value.trim()) && !previewUrl));
     return {
+      ...previewUrl ? { previewUrl } : {},
       skipAssets: !runAssets,
       skipContent: !runContent,
       skipAccessibility: !runContent,
@@ -1741,9 +2316,7 @@
         webflow.getCurrentPage()
       ]);
       const pageName = await currentPage?.getName?.() || "Current Page";
-      const headingIssues = [];
-      let headingsChecked = 0;
-      let lastLevel = 0;
+      const headings = [];
       for (const element of elements) {
         if (element.type !== "Heading") continue;
         let level = null;
@@ -1757,115 +2330,39 @@
           level = null;
         }
         if (!level) continue;
-        headingsChecked++;
-        if (headingsChecked === 1 && level !== 1) {
-          const elementKey = `canvas-heading-${headingsChecked}`;
-          canvasElementRegistry.set(elementKey, element);
-          headingIssues.push({
-            issue: `First heading on the canvas is H${level} \u2014 it should be H1`,
-            position: headingsChecked,
-            level,
-            elementKey
-          });
-        } else if (headingsChecked > 1 && level > lastLevel + 1) {
-          const elementKey = `canvas-heading-${headingsChecked}`;
-          canvasElementRegistry.set(elementKey, element);
-          headingIssues.push({
-            issue: `H${level} follows H${lastLevel}, skipping H${lastLevel + 1}`,
-            position: headingsChecked,
-            level,
-            elementKey
-          });
-        }
-        lastLevel = level;
+        headings.push({ level, ref: element });
       }
-      let imagesChecked = 0;
-      let imagesMissingAlt = 0;
-      const missingAltElementKeys = [];
+      const images = [];
       for (const element of elements) {
         if (element.type !== "Image") continue;
-        imagesChecked++;
         try {
-          const altText = await element.getAltText();
-          if (!altText || !altText.trim()) {
-            imagesMissingAlt++;
-            if (missingAltElementKeys.length < 10) {
-              const elementKey = `canvas-image-${imagesMissingAlt}`;
-              canvasElementRegistry.set(elementKey, element);
-              missingAltElementKeys.push(elementKey);
-            }
-          }
+          images.push({ altText: await element.getAltText(), ref: element });
         } catch {
-          imagesChecked--;
         }
       }
-      return {
-        available: true,
-        pageName,
-        headingsChecked,
-        headingIssues,
-        imagesChecked,
-        imagesMissingAlt,
-        missingAltElementKeys
-      };
+      const { result, elementRefs } = evaluateCanvasAccessibility({ pageName, headings, images });
+      for (const [elementKey, element] of elementRefs) canvasElementRegistry.set(elementKey, element);
+      return result;
     } catch (error) {
       console.warn("Canvas accessibility collection failed:", error);
       return unavailable(error instanceof Error ? error.message : "Canvas analysis failed");
     }
   }
-  async function collectProjectData(webflow) {
+  var COLLECT_CONCURRENCY = 8;
+  var COLLECT_PROGRESS = {
+    variables: { base: 2, label: "variables" },
+    components: { base: 6, label: "components" },
+    styles: { base: 10, label: "styles" },
+    pages: { base: 14, label: "pages" }
+  };
+  async function collectProjectData(webflow, timer, onProgress) {
+    const report = (step) => (done, total) => onProgress?.(step, done, total);
     const data = {
       variables: void 0,
       components: [],
       styles: [],
       pages: [],
       siteInfo: void 0,
-      collectionMetadata: {
-        variableCollections: 0,
-        totalVariables: 0,
-        totalComponents: 0,
-        totalStyles: 0,
-        totalPages: 0,
-        totalAssets: 0,
-        totalFonts: 0,
-        totalCollections: 0
-      },
-      enhancedValidation: {
-        variableOrganization: {
-          hasColorVariables: false,
-          hasTypographyVariables: false,
-          hasSpacingVariables: false,
-          hasOrderedCollections: false
-        },
-        componentArchitecture: {
-          hasNavbarComponent: false,
-          hasFooterComponent: false,
-          hasCTAComponents: false,
-          hasNestedComponents: false
-        },
-        styleSystem: {
-          hasHtmlTagStyles: false,
-          hasConsistentNaming: false,
-          usesVariablesInStyles: false,
-          hasPercentageLineHeights: false
-        },
-        pageStructure: {
-          hasStyleGuidePage: false,
-          hasInstructionsPage: false,
-          hasLicensePage: false,
-          hasTitleCaseNaming: false,
-          hasMatchingSlugs: false,
-          pagesNotTitleCase: [],
-          pagesWithMismatchedSlugs: []
-        },
-        seoCompliance: {
-          currentPageHasValidTitle: false,
-          currentPageHasValidDescription: false,
-          hasOpenGraphData: false,
-          titleWithinLimits: false,
-          descriptionWithinLimits: false
-        }
-      },
       collectionWarnings: []
     };
     console.log("Starting project data collection...");
@@ -1882,46 +2379,36 @@
             const variableList = [];
             const modeList = [];
             let modeDataAvailable = false;
-            for (const variable of variables) {
+            const variableResults = await mapWithConcurrency(variables, COLLECT_CONCURRENCY, async (variable) => {
               try {
                 const variableName = await variable.getName() || null;
                 const variableType = variable.type || null;
-                if (variableName) {
-                  const lowerName = variableName.toLowerCase();
-                  if (lowerName.includes("color") || lowerName.includes("bg") || lowerName.includes("text") || lowerName.includes("primary") || lowerName.includes("secondary")) {
-                    data.enhancedValidation.variableOrganization.hasColorVariables = true;
-                  }
-                  if (lowerName.includes("font") || lowerName.includes("text") || lowerName.includes("heading") || lowerName.includes("body") || lowerName.includes("size")) {
-                    data.enhancedValidation.variableOrganization.hasTypographyVariables = true;
-                  }
-                  if (lowerName.includes("space") || lowerName.includes("margin") || lowerName.includes("padding") || lowerName.includes("gap")) {
-                    data.enhancedValidation.variableOrganization.hasSpacingVariables = true;
-                  }
-                }
                 let variableValue = null;
                 try {
                   variableValue = await variable.get();
                 } catch {
                   variableValue = null;
                 }
-                variableList.push({
+                return {
                   id: variable.id,
                   name: variableName,
                   type: variableType,
                   value: variableValue ?? null
-                });
+                };
               } catch (variableError) {
                 console.warn("Error processing variable:", variableError);
                 if (variable.id) {
-                  variableList.push({
+                  return {
                     id: variable.id,
                     name: null,
                     type: variable.type || null,
                     value: null
-                  });
+                  };
                 }
+                return null;
               }
-            }
+            }, report("variables"));
+            variableList.push(...variableResults.filter((variable) => variable !== null));
             try {
               const modes = typeof collection.getAllVariableModes === "function" ? await collection.getAllVariableModes() : void 0;
               if (Array.isArray(modes)) {
@@ -1970,9 +2457,6 @@
         }
         if (variableData.length > 0) {
           data.variables = { collections: variableData };
-          data.collectionMetadata.variableCollections = variableData.length;
-          data.collectionMetadata.totalVariables = totalVariables;
-          data.collectionMetadata.totalVariableModes = totalVariableModes;
           console.log(`Variable collections collected: ${variableData.length}, Total variables: ${totalVariables}, Total modes: ${totalVariableModes}`);
         }
       }
@@ -1984,40 +2468,28 @@
         error: error instanceof Error ? error.message : String(error)
       });
     }
+    timer?.lap("variables");
     try {
       if (webflow.getAllComponents) {
         const components = await webflow.getAllComponents() || [];
         const componentData = [];
-        for (const component of components) {
+        const componentResults = await mapWithConcurrency(components, COLLECT_CONCURRENCY, async (component) => {
           try {
             const name = await component.getName() || null;
             const id = component.id;
             if (name) {
-              const lowerName = name.toLowerCase();
               let instances = 0;
               let isNested = false;
               const metadata = readComponentMetadata(component);
-              if (lowerName.includes("nav") || lowerName.includes("header") || lowerName.includes("menu")) {
-                data.enhancedValidation.componentArchitecture.hasNavbarComponent = true;
-              }
-              if (lowerName.includes("footer")) {
-                data.enhancedValidation.componentArchitecture.hasFooterComponent = true;
-              }
-              if (lowerName.includes("cta") || lowerName.includes("button") || lowerName.includes("call")) {
-                data.enhancedValidation.componentArchitecture.hasCTAComponents = true;
-              }
               try {
                 if (typeof component.getInstanceCount === "function") {
                   instances = await component.getInstanceCount();
                 }
                 isNested = await componentContainsComponentInstance(component);
-                if (isNested) {
-                  data.enhancedValidation.componentArchitecture.hasNestedComponents = true;
-                }
               } catch (nestedError) {
                 console.warn("Error analyzing component nesting:", nestedError);
               }
-              componentData.push({
+              return {
                 id,
                 name,
                 type: "component",
@@ -2026,14 +2498,15 @@
                 readOnly: metadata.readOnly,
                 codeComponent: metadata.codeComponent,
                 library: metadata.library
-              });
+              };
             }
           } catch (compError) {
             console.warn("Error processing component:", compError);
           }
-        }
+          return null;
+        }, report("components"));
+        componentData.push(...componentResults.filter((component) => component !== null));
         data.components = componentData;
-        data.collectionMetadata.totalComponents = componentData.length;
         console.log(`Components collected: ${componentData.length}`);
       }
     } catch (error) {
@@ -2044,6 +2517,7 @@
         error: error instanceof Error ? error.message : String(error)
       });
     }
+    timer?.lap("components");
     try {
       if (webflow.getAllStyles) {
         const styles = await webflow.getAllStyles() || [];
@@ -2062,7 +2536,7 @@
           });
         }
         const breakpointReadFailures = [];
-        for (const style of styles) {
+        const styleResults = await mapWithConcurrency(styles, COLLECT_CONCURRENCY, async (style) => {
           try {
             const id = style.id;
             const meta = readStyleMetadata(style);
@@ -2074,28 +2548,21 @@
               let breakpointProperties;
               if (isTagStyle(meta, name ?? "")) {
                 isHtmlTag = true;
-                data.enhancedValidation.styleSystem.hasHtmlTagStyles = true;
               }
               const { properties, breakpoints } = await readStyleProperties(style, meta, mediaQueries);
               Object.values(properties).forEach((value) => {
                 if (typeof value === "object" && value !== null && (value.type === "variable" || value.id)) {
                   hasVariables = true;
-                  data.enhancedValidation.styleSystem.usesVariablesInStyles = true;
                 }
               });
-              if (properties["line-height"]) {
-                const lineHeight = String(properties["line-height"]);
-                if (lineHeight.includes("%") || !lineHeight.includes("px") && !lineHeight.includes("rem") && !isNaN(parseFloat(lineHeight))) {
-                  data.enhancedValidation.styleSystem.hasPercentageLineHeights = true;
-                }
-              }
+              let breakpointError;
               if (breakpoints) {
                 breakpointProperties = breakpoints.properties;
                 if (breakpoints.errors.length > 0) {
-                  breakpointReadFailures.push(breakpoints.errors[0]);
+                  breakpointError = breakpoints.errors[0];
                 }
               }
-              styleData.push({
+              return { breakpointError, style: {
                 id,
                 // Element-scoped styles may have no usable name; the worker
                 // falls back to `style.name || style.id`.
@@ -2106,11 +2573,17 @@
                 hasVariables,
                 ...meta.source ? { source: meta.source } : {},
                 ...breakpointProperties ? { breakpointProperties } : {}
-              });
+              } };
             }
           } catch (styleError) {
             console.warn("Error processing style:", styleError);
           }
+          return null;
+        }, report("styles"));
+        for (const result of styleResults) {
+          if (!result) continue;
+          styleData.push(result.style);
+          if (result.breakpointError) breakpointReadFailures.push(result.breakpointError);
         }
         const breakpointWarning = summarizeBreakpointReadFailures(breakpointReadFailures);
         if (breakpointWarning) {
@@ -2118,7 +2591,6 @@
           data.collectionWarnings.push(breakpointWarning);
         }
         data.styles = styleData;
-        data.collectionMetadata.totalStyles = styleData.length;
         console.log(`Styles collected: ${styleData.length}`);
       }
     } catch (error) {
@@ -2129,12 +2601,13 @@
         error: error instanceof Error ? error.message : String(error)
       });
     }
+    timer?.lap("styles");
     try {
       if (webflow.getAllPagesAndFolders) {
         const pagesAndFolders = await webflow.getAllPagesAndFolders() || [];
         const pageData = [];
         const items = Array.isArray(pagesAndFolders) ? pagesAndFolders : [];
-        for (const item of items) {
+        const pageResults = await mapWithConcurrency(items, COLLECT_CONCURRENCY, async (item) => {
           try {
             if (item.type === "Page") {
               const name = await item.getName() || "Unnamed";
@@ -2175,15 +2648,6 @@
               let hasValidNaming = false;
               const lowerName = name.toLowerCase();
               const lowerSlug = slug.toLowerCase();
-              if (lowerName.includes("style guide") || lowerSlug.includes("style-guide") || lowerSlug.includes("styleguide")) {
-                data.enhancedValidation.pageStructure.hasStyleGuidePage = true;
-              }
-              if (lowerName.includes("instructions") || lowerSlug.includes("instructions")) {
-                data.enhancedValidation.pageStructure.hasInstructionsPage = true;
-              }
-              if (lowerName.includes("license") || lowerSlug.includes("license") || slug === "/licenses") {
-                data.enhancedValidation.pageStructure.hasLicensePage = true;
-              }
               try {
                 if (typeof item.isHomepage === "function") {
                   isHomePage = await item.isHomepage();
@@ -2197,13 +2661,6 @@
               const isTitleCase = /^[A-Z][a-z]*(?:\s[A-Z][a-z]*)*$/.test(name) || name.split(" ").every((word) => word.charAt(0) === word.charAt(0).toUpperCase());
               if (isTitleCase) {
                 hasValidNaming = true;
-              } else {
-                data.enhancedValidation.pageStructure.pagesNotTitleCase.push(name);
-              }
-              const expectedSlug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-              const actualSlug = slug.replace(/^\//, "").toLowerCase();
-              if (!isCmsTemplate && expectedSlug !== actualSlug && !(isHomePage && actualSlug === "")) {
-                data.enhancedValidation.pageStructure.pagesWithMismatchedSlugs.push(`${name} (/${actualSlug})`);
               }
               let seoData = null;
               try {
@@ -2219,7 +2676,7 @@
               } catch (seoError) {
                 console.warn(`SEO data collection failed for page ${name}:`, seoError);
               }
-              pageData.push({
+              return {
                 id: item.id,
                 name,
                 slug,
@@ -2234,16 +2691,15 @@
                 isHomePage,
                 hasValidNaming,
                 seo: seoData
-              });
+              };
             }
           } catch (pageError) {
             console.warn("Error processing page:", pageError);
           }
-        }
-        data.enhancedValidation.pageStructure.hasTitleCaseNaming = pageData.length > 0 && data.enhancedValidation.pageStructure.pagesNotTitleCase.length === 0;
-        data.enhancedValidation.pageStructure.hasMatchingSlugs = pageData.length > 0 && data.enhancedValidation.pageStructure.pagesWithMismatchedSlugs.length === 0;
+          return null;
+        }, report("pages"));
+        pageData.push(...pageResults.filter((page) => page !== null));
         data.pages = pageData;
-        data.collectionMetadata.totalPages = pageData.length;
         console.log(`Pages collected: ${pageData.length}`);
       }
     } catch (error) {
@@ -2254,26 +2710,12 @@
         error: error instanceof Error ? error.message : String(error)
       });
     }
+    timer?.lap("pages");
     try {
       console.log("Collecting current page SEO data...");
       const currentPageData = await collectCurrentPageSEOData(webflow);
       if (currentPageData) {
         data.currentPage = currentPageData;
-        data.enhancedValidation.seoCompliance.currentPageHasValidTitle = currentPageData.seo.hasValidTitle || false;
-        data.enhancedValidation.seoCompliance.currentPageHasValidDescription = currentPageData.seo.hasValidDescription || false;
-        data.enhancedValidation.seoCompliance.titleWithinLimits = (currentPageData.seo.titleLength || 0) <= 60;
-        data.enhancedValidation.seoCompliance.descriptionWithinLimits = (currentPageData.seo.descriptionLength || 0) >= 150 && (currentPageData.seo.descriptionLength || 0) <= 160;
-        const hasOpenGraphData = !!(currentPageData.seo.openGraphTitle || currentPageData.seo.openGraphDescription || currentPageData.seo.openGraphImage);
-        data.enhancedValidation.seoCompliance.hasOpenGraphData = hasOpenGraphData;
-        console.log("SEO compliance analysis:", {
-          hasValidTitle: data.enhancedValidation.seoCompliance.currentPageHasValidTitle,
-          hasValidDescription: data.enhancedValidation.seoCompliance.currentPageHasValidDescription,
-          titleWithinLimits: data.enhancedValidation.seoCompliance.titleWithinLimits,
-          descriptionWithinLimits: data.enhancedValidation.seoCompliance.descriptionWithinLimits,
-          hasOpenGraphData,
-          usesCustomOGTitle: currentPageData.seo.hasCustomOpenGraphTitle,
-          usesCustomOGDescription: currentPageData.seo.hasCustomOpenGraphDescription
-        });
         console.log(`Current page SEO collected: ${currentPageData.name}`);
       }
     } catch (error) {
@@ -2295,281 +2737,16 @@
         error: error instanceof Error ? error.message : String(error)
       });
     }
-    analyzeNamingConsistency(data);
+    timer?.lap("siteInfo");
+    timer?.count("variables", data.variables?.collections?.reduce((sum, collection) => sum + (collection.variables?.length || 0), 0));
+    timer?.count("components", data.components?.length);
+    timer?.count("styles", data.styles?.length);
+    timer?.count("pages", data.pages?.length);
+    data.collectionMetadata = deriveCollectionMetadata(data);
+    data.enhancedValidation = deriveEnhancedValidation(data);
     console.log("Project data collection complete:", data.collectionMetadata);
     console.log("Enhanced validation results:", data.enhancedValidation);
     return data;
-  }
-  function addStyleSystemValidation(results, projectData) {
-    const issues = [];
-    if (projectData.styles && Array.isArray(projectData.styles)) {
-      const requiredTags2 = ["body", "h1", "h2", "h3", "h4", "h5", "h6", "p", "a"];
-      const existingTagStyles = [];
-      const tagStylesWithVariables = [];
-      projectData.styles.forEach((style) => {
-        const styleName = style.name?.toLowerCase() || "";
-        requiredTags2.forEach((tag) => {
-          if (styleName === tag || styleName === `all ${tag}`) {
-            existingTagStyles.push(tag);
-            if (style.hasVariables) {
-              tagStylesWithVariables.push(tag);
-            }
-          }
-        });
-      });
-      const missingTags = requiredTags2.filter((tag) => !existingTagStyles.includes(tag));
-      if (missingTags.length > 0) {
-        issues.push({
-          id: "missing-html-tag-styles",
-          category: "Style System",
-          severity: "error",
-          message: `Missing base styles for HTML tags: ${missingTags.join(", ")}`,
-          details: {
-            howToFix: "Create base styles for all HTML tags (body, h1-h6, p, a)",
-            samples: missingTags
-          }
-        });
-      }
-      const tagsWithoutVariables = existingTagStyles.filter((tag) => !tagStylesWithVariables.includes(tag));
-      if (tagsWithoutVariables.length > 0) {
-        issues.push({
-          id: "html-tags-without-variables",
-          category: "Style System",
-          severity: "error",
-          message: `HTML tag styles not using variables: ${tagsWithoutVariables.join(", ")}`,
-          details: {
-            howToFix: "Update HTML tag styles to use variables for colors, typography, and spacing",
-            samples: tagsWithoutVariables
-          }
-        });
-      }
-      const totalStyles2 = projectData.styles.length;
-      const stylesWithVariables2 = projectData.styles.filter((s) => s.hasVariables).length;
-      const variableUsagePercent2 = totalStyles2 > 0 ? Math.round(stylesWithVariables2 / totalStyles2 * 100) : 0;
-      if (variableUsagePercent2 < 50) {
-        issues.push({
-          id: "low-variable-usage",
-          category: "Style System",
-          severity: "warning",
-          message: `Only ${variableUsagePercent2}% of styles use variables (${stylesWithVariables2}/${totalStyles2})`,
-          details: {
-            howToFix: "Increase variable usage in styles for better maintainability (aim for 80%+)"
-          }
-        });
-      }
-    }
-    const totalStyles = projectData.styles?.length || 0;
-    const stylesWithVariables = projectData.styles?.filter((s) => s.hasVariables).length || 0;
-    const variableUsagePercent = totalStyles > 0 ? Math.round(stylesWithVariables / totalStyles * 100) : 0;
-    const requiredTags = ["body", "h1", "h2", "h3", "h4", "h5", "h6", "p", "a"];
-    const htmlTagStylesFound = projectData.styles?.filter((s) => s.isHtmlTag).length || 0;
-    let styleSystemCategory = results.categories.find((cat) => cat.category === "Style System");
-    if (!styleSystemCategory) {
-      styleSystemCategory = {
-        category: "Style System",
-        passed: issues.filter((i) => i.severity === "error").length === 0,
-        issues,
-        stats: {
-          totalStyles,
-          htmlTagStyles: {
-            found: htmlTagStylesFound,
-            required: requiredTags.length
-          },
-          stylesWithVariables,
-          variableUsagePercent
-        }
-      };
-      results.categories.push(styleSystemCategory);
-    } else {
-      styleSystemCategory.issues.push(...issues);
-      styleSystemCategory.passed = styleSystemCategory.issues.filter((i) => i.severity === "error").length === 0;
-      styleSystemCategory.stats = {
-        totalStyles,
-        htmlTagStyles: {
-          found: htmlTagStylesFound,
-          required: requiredTags.length
-        },
-        stylesWithVariables,
-        variableUsagePercent
-      };
-    }
-  }
-  function normalizeVariableModesCategory(results) {
-    const variableModesCategory = results.categories.find((cat) => cat.category === "Variable Modes");
-    if (!variableModesCategory?.stats) return;
-    const totalModes = typeof variableModesCategory.stats.totalModes === "number" ? variableModesCategory.stats.totalModes : 0;
-    if (totalModes <= 0) return;
-    let convertedWarning = false;
-    variableModesCategory.issues = (variableModesCategory.issues || []).map((issue) => {
-      const isNameOnlyModeWarning = issue.id === "modes.no-responsive" || /modes found, but none appear to be for responsive breakpoints/i.test(issue.message || "");
-      if (!isNameOnlyModeWarning) return issue;
-      convertedWarning = true;
-      return {
-        ...issue,
-        id: "modes.good",
-        severity: "info",
-        message: `${totalModes} modes configured across ${variableModesCategory.stats?.collectionsWithModes || 1} collections.`,
-        howToFix: void 0
-      };
-    });
-    if (convertedWarning) {
-      variableModesCategory.passed = true;
-      variableModesCategory.stats.modeDataAvailable = true;
-    }
-  }
-  function addCanvasChecksCategory(results, projectData) {
-    const canvas = projectData.canvasChecks;
-    if (!canvas || !canvas.available) return;
-    const issues = [];
-    for (const headingIssue of canvas.headingIssues) {
-      issues.push({
-        id: `canvas-heading-${headingIssue.position}`,
-        category: "Canvas Checks (Current Page)",
-        severity: "warning",
-        message: headingIssue.issue,
-        details: {
-          howToFix: "Adjust the heading level in the element settings so levels increase one step at a time.",
-          location: `${canvas.pageName} \u2014 heading ${headingIssue.position} of ${canvas.headingsChecked}`,
-          canvasElementKeys: headingIssue.elementKey ? [headingIssue.elementKey] : void 0
-        }
-      });
-    }
-    if (canvas.imagesMissingAlt > 0) {
-      issues.push({
-        id: "canvas-images-missing-alt",
-        category: "Canvas Checks (Current Page)",
-        severity: "info",
-        message: `${canvas.imagesMissingAlt} of ${canvas.imagesChecked} image(s) on this page have no alt text in the Designer.`,
-        details: {
-          howToFix: "Add descriptive alt text in each image's settings, or mark purely decorative images as decorative.",
-          canvasElementKeys: canvas.missingAltElementKeys.length > 0 ? canvas.missingAltElementKeys : void 0
-        }
-      });
-    }
-    results.categories.push({
-      category: "Canvas Checks (Current Page)",
-      passed: issues.filter((issue) => issue.severity === "error" || issue.severity === "warning").length === 0,
-      issues,
-      stats: {
-        page: canvas.pageName,
-        headingsChecked: canvas.headingsChecked,
-        imagesChecked: canvas.imagesChecked,
-        note: "Reflects current Designer state, including unpublished changes"
-      }
-    });
-  }
-  function addRepublishHints(results, projectData) {
-    const canvas = projectData.canvasChecks;
-    if (!canvas || !canvas.available) return;
-    const hint = (dimension) => `The current page's canvas passes the ${dimension} check \u2014 if you've already fixed this in the Designer, republish the site and re-run validation to update this result.`;
-    const headingIssueIds = /* @__PURE__ */ new Set(["heading-hierarchy-errors", "heading-structure-errors"]);
-    const altIssueIds = /* @__PURE__ */ new Set(["missing-alt-text-critical", "missing-alt-text", "images-missing-alt"]);
-    for (const category of results.categories) {
-      for (const issue of category.issues || []) {
-        if (issue.id.startsWith("canvas-")) continue;
-        if (canvas.headingsChecked > 0 && canvas.headingIssues.length === 0 && headingIssueIds.has(issue.id)) {
-          issue.details = { ...issue.details, republishHint: hint("heading hierarchy") };
-        }
-        if (canvas.imagesChecked > 0 && canvas.imagesMissingAlt === 0 && altIssueIds.has(issue.id)) {
-          issue.details = { ...issue.details, republishHint: hint("image alt text") };
-        }
-      }
-    }
-  }
-  function enhanceValidationResults(results, projectData) {
-    console.log("Enhancing validation results with client-side analysis...");
-    addStyleSystemValidation(results, projectData);
-    normalizeVariableModesCategory(results);
-    addCanvasChecksCategory(results, projectData);
-    addRepublishHints(results, projectData);
-    const pageStructureCategory = results.categories.find((cat) => cat.category === "Page Structure");
-    if (pageStructureCategory && projectData.pages && projectData.pages.length > 0) {
-      console.log(`Found ${projectData.pages.length} pages, updating Page Structure validation...`);
-      pageStructureCategory.issues = [];
-      pageStructureCategory.passed = true;
-      if (pageStructureCategory.stats) {
-        pageStructureCategory.stats.totalPages = projectData.pages.length;
-        pageStructureCategory.stats.totalFolders = 0;
-        pageStructureCategory.stats.hasHomePage = projectData.pages.some((p) => p.slug === "/" || p.isHomePage);
-      } else {
-        pageStructureCategory.stats = {
-          totalPages: projectData.pages.length,
-          totalFolders: 0,
-          hasHomePage: projectData.pages.some((p) => p.slug === "/" || p.isHomePage)
-        };
-      }
-      const issues = [];
-      if (projectData.enhancedValidation) {
-        const pageStructure = projectData.enhancedValidation.pageStructure;
-        const pagesNotTitleCase = pageStructure.pagesNotTitleCase || [];
-        if (pagesNotTitleCase.length > 0) {
-          issues.push({
-            id: "page-naming",
-            category: "Page Structure",
-            severity: "warning",
-            message: `${pagesNotTitleCase.length} page(s) don't use Title Case naming convention.`,
-            details: {
-              howToFix: 'Use Title Case for page names (e.g., "Style Guide", "Contact Us")',
-              samples: pagesNotTitleCase.slice(0, 10)
-            }
-          });
-        }
-        const pagesWithMismatchedSlugs = pageStructure.pagesWithMismatchedSlugs || [];
-        if (pagesWithMismatchedSlugs.length > 0) {
-          issues.push({
-            id: "page-slug-mismatch",
-            category: "Page Structure",
-            severity: "warning",
-            message: `${pagesWithMismatchedSlugs.length} page(s) have slugs that don't match their names.`,
-            details: {
-              howToFix: 'Keep page slugs aligned with page names (e.g., "Style Guide" \u2192 /style-guide)',
-              samples: pagesWithMismatchedSlugs.slice(0, 10)
-            }
-          });
-        }
-      }
-      pageStructureCategory.issues = issues;
-      pageStructureCategory.passed = issues.filter((i) => i.severity === "error").length === 0;
-      const errorCount = issues.filter((i) => i.severity === "error").length;
-      const warningCount = issues.filter((i) => i.severity === "warning").length;
-      if (pageStructureCategory.passed) {
-        results.summary.passedCategories = Math.max(
-          results.summary.passedCategories,
-          results.categories.filter((c) => c.passed).length
-        );
-        results.summary.failedCategories = Math.max(
-          0,
-          results.categories.filter((c) => !c.passed).length
-        );
-      }
-      console.log(`Page Structure validation updated: ${pageStructureCategory.passed ? "PASSED" : "FAILED"}, ${errorCount} errors, ${warningCount} warnings`);
-    }
-    console.log("SEO validation now handled by Cloudflare Worker - accurate validation via published content analysis");
-    results.categories.sort((a, b) => {
-      const aErrors = a.issues?.filter((i) => i.severity === "error").length || 0;
-      const bErrors = b.issues?.filter((i) => i.severity === "error").length || 0;
-      const aWarnings = a.issues?.filter((i) => i.severity === "warning").length || 0;
-      const bWarnings = b.issues?.filter((i) => i.severity === "warning").length || 0;
-      if (aErrors > 0 && bErrors === 0) return -1;
-      if (aErrors === 0 && bErrors > 0) return 1;
-      if (aErrors === 0 && bErrors === 0) {
-        if (aWarnings > 0 && bWarnings === 0) return -1;
-        if (aWarnings === 0 && bWarnings > 0) return 1;
-      }
-      if (!a.passed && b.passed) return -1;
-      if (a.passed && !b.passed) return 1;
-      return 0;
-    });
-    const allIssues = results.categories.flatMap((cat) => cat.issues || []);
-    const totalErrors = allIssues.filter((issue) => issue.severity === "error").length;
-    const totalWarnings = allIssues.filter((issue) => issue.severity === "warning").length;
-    const totalInfo = allIssues.filter((issue) => issue.severity === "info").length;
-    results.summary.totalErrors = totalErrors;
-    results.summary.totalWarnings = totalWarnings;
-    results.summary.totalInfo = totalInfo;
-    results.summary.passedCategories = results.categories.filter((c) => c.passed).length;
-    results.summary.failedCategories = results.categories.filter((c) => !c.passed).length;
-    console.log(`Enhanced validation complete: ${totalErrors} errors, ${totalWarnings} warnings, ${totalInfo} info across ${results.categories.length} categories`);
   }
   async function collectCurrentPageSEOData(webflow) {
     try {
@@ -2672,53 +2849,6 @@
       console.warn("Error collecting current page SEO data:", error);
       return null;
     }
-  }
-  function analyzeNamingConsistency(data) {
-    const allNames = [];
-    if (data.components) {
-      allNames.push(...data.components.map((c) => c.name));
-    }
-    if (data.styles) {
-      allNames.push(...data.styles.filter((s) => !s.isHtmlTag).map((s) => s.name));
-    }
-    if (data.variables?.collections) {
-      data.variables.collections.forEach((collection) => {
-        allNames.push(...collection.variables.map((v) => v.name));
-      });
-    }
-    if (allNames.length === 0) return;
-    const namingPatterns = {
-      titleCase: 0,
-      camelCase: 0,
-      pascalCase: 0,
-      snakeCase: 0,
-      kebabCase: 0,
-      bem: 0
-    };
-    allNames.forEach((name) => {
-      if (!name) return;
-      if (/^[A-Z][a-z]*(?:\s[A-Z][a-z]*)*$/.test(name)) {
-        namingPatterns.titleCase++;
-      } else if (/^[a-z][a-zA-Z0-9]*$/.test(name)) {
-        namingPatterns.camelCase++;
-      } else if (/^[A-Z][a-zA-Z0-9]*$/.test(name)) {
-        namingPatterns.pascalCase++;
-      } else if (/^[a-z][a-z0-9_]*$/.test(name)) {
-        namingPatterns.snakeCase++;
-      } else if (/^[a-z][a-z0-9-]*$/.test(name)) {
-        namingPatterns.kebabCase++;
-      } else if (/^[a-z][a-z0-9-]*(__[a-z][a-z0-9-]*)?(--[a-z][a-z0-9-]*)?$/.test(name)) {
-        namingPatterns.bem++;
-      }
-    });
-    const totalNames = allNames.length;
-    const dominantPattern = Object.entries(namingPatterns).find(
-      ([, count]) => count / totalNames >= 0.8
-    );
-    if (dominantPattern) {
-      data.enhancedValidation.styleSystem.hasConsistentNaming = true;
-    }
-    console.log("Naming pattern analysis:", namingPatterns, `Total names: ${totalNames}`);
   }
   function showLoading() {
     const loadingDisplay = document.getElementById("loading-display");
@@ -2869,7 +2999,8 @@
       categories: data.categories,
       domainLastPublished: scope?.domainLastPublished || null,
       extensionVersion: EXTENSION_VERSION,
-      workerVersion: knownWorkerVersion
+      workerVersion: knownWorkerVersion,
+      timings: data.timings
     };
     return buildReportMarkdown(input);
   }

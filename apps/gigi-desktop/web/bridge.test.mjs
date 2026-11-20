@@ -57,3 +57,22 @@ test('People search sends trimmed local query and cursor without changing other 
   await bridge.listRecords('w1','gigs',null,'secret');
   assert.equal(calls[2].input.query,undefined);
 });
+
+test('Today navigation and filtered Tasks retain workspace ownership and exact paging scope', async () => {
+  const calls=[];
+  const bridge=createBridge(async (_command,args)=>{calls.push(args);return {};});
+  assert.throws(()=>bridge.today('', '2026-11-06'), /workspace/i);
+  assert.throws(()=>bridge.listTasks('', {view:'soon'}), /workspace/i);
+  assert.equal(calls.length,0);
+  await bridge.today('w1','2026-11-06','2026-11-09');
+  assert.deepEqual(calls[0],{operation:'today.read',input:{workspaceId:'w1',today:'2026-11-06',weekStart:'2026-11-09',timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone}});
+  await bridge.listTasks('w1',{view:'done',query:'Café'},'opaque-scoped-cursor');
+  assert.equal(calls[1].operation,'records.list');
+  assert.equal(calls[1].input.entity,'tasks');
+  assert.equal(calls[1].input.workspaceId,'w1');
+  assert.equal(calls[1].input.cursor,'opaque-scoped-cursor');
+  assert.equal(calls[1].input.tasks.view,'done');
+  assert.equal(calls[1].input.tasks.query,'Café');
+  assert.match(calls[1].input.tasks.today,/^\d{4}-\d{2}-\d{2}$/);
+  assert.equal(calls[1].input.tasks.timeZone,Intl.DateTimeFormat().resolvedOptions().timeZone);
+});

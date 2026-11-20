@@ -1,0 +1,26 @@
+✔ a complete signed and stapled pair qualifies only when the mounted app matches (15.923834ms)
+✔ ad-hoc app signature fails closed before Gatekeeper or mount (3.291916ms)
+✔ a valid Developer ID from another team cannot qualify a GiGi release (3.471333ms)
+✔ different app bytes inside the DMG fail and the owned mount is detached (9.275833ms)
+✔ a byte-identical mounted app with a nonexecutable companion is unqualified (6.961125ms)
+✔ wrong bundle identifier and unsigned first-party companion cannot qualify (3.042292ms)
+✔ Gatekeeper and stapler failures remain distinct from signed identity (3.998667ms)
+✔ failed image attach does not detach another mount and removes only an empty owned directory (3.457959ms)
+✔ accepts Gatekeeper notarized output without optional origin and still verifies signatures (8.293708ms)
+✔ wrong Gatekeeper origin and an unsigned chat companion remain unqualified (3.761ms)
+✔ a release missing the native notification companion cannot qualify (3.147334ms)
+✔ an ad-hoc extra MCP executable in MacOS cannot qualify (3.030417ms)
+✔ map helper with ad-hoc cannot qualify (2.99475ms)
+✔ map helper with wrong team cannot qualify (2.971584ms)
+✔ map helper with missing hardened runtime cannot qualify (3.05725ms)
+✔ map helper must be present (4.947666ms)
+✔ map helper must be executable (4.076792ms)
+✔ signed map helper is explicitly inspected (8.978916ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 198.729417

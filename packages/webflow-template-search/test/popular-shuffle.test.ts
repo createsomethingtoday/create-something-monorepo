@@ -32,6 +32,11 @@ describe('popularShuffleFor', () => {
     expect(popularShuffleFor(env, params('sort=newest'))).toBeNull();
     expect(popularShuffleFor(env, params('sort=best_selling'))).toBeNull();
   });
+
+  it('keeps strict popular order on creator profiles', () => {
+    expect(popularShuffleFor(env, params('sort=popular&creator=metrik'))).toBeNull();
+    expect(popularShuffleFor(env, params('sort=popular&creator_record_id=rec123'))).toBeNull();
+  });
 });
 
 describe('popularShuffleWindow', () => {

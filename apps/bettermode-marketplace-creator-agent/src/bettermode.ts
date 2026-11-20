@@ -9,7 +9,7 @@ const DEFAULT_ENDPOINT = 'https://api.bettermode.com';
 
 type GraphQlResponse<T> = {
   data?: T;
-  errors?: Array<{ message?: string }>;
+  errors?: Array<{ message?: string; status?: number }>;
 };
 
 export type BettermodeAuth = {
@@ -22,17 +22,27 @@ export type BettermodePost = {
   id: string;
   slug?: string | null;
   title?: string | null;
+  // description and shortContent are truncated previews (~240 chars).
   description?: string | null;
   shortContent?: string | null;
+  // Full body as plain text.
+  textContent?: string | null;
   url?: string | null;
   publishedAt?: string | null;
   createdAt?: string | null;
+  lastActivityAt?: string | null;
+  // PUBLISHED | BLOCKED | DELETED | DRAFT | ARCHIVED
+  status?: string | null;
   spaceId?: string | null;
   space?: { id: string; name?: string | null; slug?: string | null } | null;
   owner?: BettermodeMember | null;
   createdBy?: BettermodeMember | null;
   parentId?: string | null;
-  // Reply tree (top-level posts) or replies on a reply (rare).
+  // Ancestor post IDs, nearest first. The last entry is the thread root.
+  ancestorIds?: string[];
+  // Count of direct replies to this post.
+  repliesCount?: number | null;
+  // Direct replies. After fetchThread, each one carries its nested replies.
   replies?: { nodes?: BettermodePost[] } | null;
 };
 
@@ -50,12 +60,22 @@ type BettermodeSpaceMember = {
   member?: BettermodeMember | null;
 };
 
-type RawBettermodePost = Omit<BettermodePost, 'owner' | 'createdBy' | 'parentId' | 'replies'> & {
+type RawBettermodePost = Omit<
+  BettermodePost,
+  'owner' | 'createdBy' | 'parentId' | 'ancestorIds' | 'replies'
+> & {
   owner?: BettermodeSpaceMember | null;
   createdBy?: BettermodeSpaceMember | null;
   repliedToId?: string | null;
-  replies?: { nodes?: RawBettermodePost[] } | null;
+  repliedToIds?: string[] | null;
+  replies?: { nodes?: RawBettermodePost[]; pageInfo?: RawPageInfo | null } | null;
 };
+
+type RawPageInfo = { endCursor?: string | null; hasNextPage?: boolean | null };
+
+function nextCursor(pageInfo: RawPageInfo | null | undefined): string | null {
+  return pageInfo?.hasNextPage && pageInfo.endCursor ? pageInfo.endCursor : null;
+}
 
 export class BettermodeError extends Error {
   constructor(message: string, readonly status: number = 502) {
@@ -116,83 +136,209 @@ export async function memberAccessToken(
   return data.limitedToken.accessToken;
 }
 
-export async function fetchPostThread(
+// Bettermode limits query cost to 20,000 per 10 seconds, and nested
+// connections multiply: two levels of replies(limit: 50) cost about 20,500 in
+// one query. Field aliases are not allowed either. So a thread is read as one
+// post with its direct replies (cost about 150), then one small query for each
+// direct reply that has replies of its own. Direct replies are read in pages
+// of 50, newest first, up to 250. `reverse: true` means a longer thread loses
+// its oldest direct replies, not the latest ones that decide the state.
+const POST_FIELDS = `
+  fragment PostFields on Post {
+    id
+    status
+    textContent
+    shortContent
+    url
+    publishedAt
+    createdAt
+    lastActivityAt
+    repliedToId
+    repliedToIds
+    repliesCount
+    owner {
+      member { id name username email role { id name type } }
+    }
+  }`;
+
+const DIRECT_REPLY_PAGE = 50;
+const NESTED_REPLY_PAGE = 30;
+// Direct replies read after the first page: 4 more pages, 250 in total.
+const MAX_EXTRA_REPLY_PAGES = 4;
+
+// One post with its newest direct replies, and the cursor for older ones.
+async function fetchPostThread(
+  postId: string,
+  appToken: string,
+  auth: BettermodeAuth,
+): Promise<{ post: BettermodePost; olderReplies: string | null } | null> {
+  let data: { post: RawBettermodePost | null };
+  try {
+    data = await graphQl<{ post: RawBettermodePost | null }>(
+      auth.endpoint,
+      bearer(appToken),
+      `query Post($id: ID!) {
+        post(id: $id) {
+          slug
+          title
+          spaceId
+          space { id name slug }
+          ...PostFields
+          replies(limit: ${DIRECT_REPLY_PAGE}, reverse: true) {
+            pageInfo { endCursor hasNextPage }
+            nodes { ...PostFields }
+          }
+        }
+      }
+      ${POST_FIELDS}`,
+      { id: postId },
+    );
+  } catch (error) {
+    if (error instanceof BettermodeError && error.status === 404) return null;
+    throw error;
+  }
+  if (!data.post) return null;
+  return {
+    post: normalizePost(data.post),
+    olderReplies: nextCursor(data.post.replies?.pageInfo),
+  };
+}
+
+// One page of replies to a post, newest first.
+async function fetchReplies(
+  postId: string,
+  appToken: string,
+  auth: BettermodeAuth,
+  page: { limit: number; after?: string | null },
+): Promise<{ nodes: BettermodePost[]; older: string | null }> {
+  const data = await graphQl<{
+    replies: { nodes?: RawBettermodePost[]; pageInfo?: RawPageInfo | null };
+  }>(
+    auth.endpoint,
+    bearer(appToken),
+    `query Replies($postId: ID!, $limit: Int!, $after: String) {
+      replies(postId: $postId, limit: $limit, reverse: true, after: $after) {
+        pageInfo { endCursor hasNextPage }
+        nodes { ...PostFields }
+      }
+    }
+    ${POST_FIELDS}`,
+    { postId, limit: page.limit, after: page.after ?? null },
+  );
+  return {
+    nodes: (data.replies.nodes ?? []).map(normalizePost),
+    older: nextCursor(data.replies.pageInfo),
+  };
+}
+
+// Returns the whole thread for any post in it: the root, its direct replies,
+// and the replies nested under them. A reply ID resolves to its root.
+export async function fetchThread(
   postId: string,
   appToken: string,
   auth: BettermodeAuth,
 ): Promise<BettermodePost | null> {
-  const data = await graphQl<{ post: RawBettermodePost | null }>(
-    auth.endpoint,
-    bearer(appToken),
-    `query Post($id: ID!) {
-      post(id: $id) {
-        id
-        slug
-        title
-        description
-        shortContent
-        url
-        publishedAt
-        createdAt
-        spaceId
-        space { id name slug }
-        owner {
-          member { ...MemberFields }
-        }
-        createdBy {
-          member { ...MemberFields }
-        }
-        repliedToId
-        replies(limit: 50) {
-          nodes {
-            id
-            shortContent
-            description
-            url
-            publishedAt
-            createdBy {
-              member { ...MemberFields }
-            }
-          }
-        }
-      }
+  let rootId = postId;
+  try {
+    const ref = await graphQl<{ post: { id: string; repliedToIds?: string[] | null } | null }>(
+      auth.endpoint,
+      bearer(appToken),
+      `query PostRoot($id: ID!) {
+        post(id: $id) { id repliedToIds }
+      }`,
+      { id: postId },
+    );
+    rootId = ref.post?.repliedToIds?.at(-1) || postId;
+  } catch (error) {
+    if (error instanceof BettermodeError && error.status === 404) return null;
+    throw error;
+  }
+
+  const first = await fetchPostThread(rootId, appToken, auth);
+  if (!first) return null;
+  const root = first.post;
+  const direct = root.replies?.nodes ?? [];
+
+  // A long thread has more direct replies than one page. Read the older pages
+  // too: a new nested reply under an old direct reply still decides the state.
+  let older = first.olderReplies;
+  for (let page = 0; older && page < MAX_EXTRA_REPLY_PAGES; page += 1) {
+    const next = await fetchReplies(rootId, appToken, auth, {
+      limit: DIRECT_REPLY_PAGE,
+      after: older,
+    });
+    direct.push(...next.nodes);
+    older = next.older;
+  }
+  if (older) {
+    console.warn('thread is longer than the read limit; oldest direct replies skipped', {
+      rootId,
+      read: direct.length,
+    });
+  }
+  root.replies = { nodes: direct };
+
+  // Sequential on purpose: threads rarely have more than a few reply chains,
+  // and this keeps the request rate flat.
+  for (const reply of direct) {
+    if ((reply.repliesCount ?? 0) > 0) {
+      const nested = await fetchReplies(reply.id, appToken, auth, { limit: NESTED_REPLY_PAGE });
+      reply.replies = { nodes: nested.nodes };
     }
-    fragment MemberFields on Member {
-      id
-      name
-      username
-      email
-      profilePictureId
-      role { id name type }
-    }`,
-    { id: postId },
-  );
-  return data.post ? normalizePost(data.post) : null;
+  }
+  return root;
 }
 
+// Most recently active threads (root posts) in one space.
+export async function listRecentThreads(
+  spaceId: string,
+  limit: number,
+  appToken: string,
+  auth: BettermodeAuth,
+): Promise<Array<{ id: string; lastActivityAt: string | null }>> {
+  const data = await graphQl<{
+    posts: { nodes?: Array<{ id: string; lastActivityAt?: string | null }> };
+  }>(
+    auth.endpoint,
+    bearer(appToken),
+    `query RecentThreads($spaceIds: [ID!], $limit: Int!) {
+      posts(spaceIds: $spaceIds, limit: $limit, orderBy: lastActivityAt, reverse: true) {
+        nodes { id lastActivityAt }
+      }
+    }`,
+    { spaceIds: [spaceId], limit },
+  );
+  return (data.posts.nodes ?? []).map((node) => ({
+    id: node.id,
+    lastActivityAt: node.lastActivityAt ?? null,
+  }));
+}
+
+// CreatePostInput requires postTypeId and rejects spaceId.
 export async function createReply(
   parentPostId: string,
-  spaceId: string | null | undefined,
+  postTypeId: string,
   htmlContent: string,
   memberToken: string,
   auth: BettermodeAuth,
-): Promise<{ id: string; url?: string | null }> {
+): Promise<{ id: string; status?: string | null; url?: string | null }> {
   const data = await graphQl<{
-    createReply: { id: string; url?: string | null };
+    createReply: { id: string; status?: string | null; url?: string | null };
   }>(
     auth.endpoint,
     bearer(memberToken),
     `mutation CreateReply($postId: ID!, $input: CreatePostInput!) {
       createReply(postId: $postId, input: $input) {
         id
+        status
         url
       }
     }`,
     {
       postId: parentPostId,
       input: {
+        postTypeId,
         publish: true,
-        ...(spaceId ? { spaceId } : {}),
         mappingFields: [
           {
             key: 'content',
@@ -204,6 +350,71 @@ export async function createReply(
     },
   );
   return data.createReply;
+}
+
+export async function fetchPostStatus(
+  postId: string,
+  token: string,
+  auth: BettermodeAuth,
+): Promise<string | null> {
+  try {
+    const data = await graphQl<{ post: { status?: string | null } | null }>(
+      auth.endpoint,
+      bearer(token),
+      `query PostStatus($id: ID!) {
+        post(id: $id) { id status }
+      }`,
+      { id: postId },
+    );
+    return data.post?.status ?? null;
+  } catch (error) {
+    if (error instanceof BettermodeError && error.status === 404) return null;
+    throw error;
+  }
+}
+
+// Finds the open moderation item that holds one post, if any.
+export async function findModerationItemId(
+  spaceId: string,
+  postId: string,
+  token: string,
+  auth: BettermodeAuth,
+): Promise<string | null> {
+  const data = await graphQl<{
+    moderationItems: { nodes?: Array<{ id: string; entity?: { id?: string } | null }> };
+  }>(
+    auth.endpoint,
+    bearer(token),
+    `query ModerationItems($spaceId: String!) {
+      moderationItems(spaceId: $spaceId, limit: 50, status: REVIEW) {
+        nodes {
+          id
+          entity { ... on Post { id } }
+        }
+      }
+    }`,
+    { spaceId },
+  );
+  const item = (data.moderationItems.nodes ?? []).find((node) => node.entity?.id === postId);
+  return item?.id ?? null;
+}
+
+// REJECTED rejects the spam report, which publishes the held post.
+export async function releaseModerationItem(
+  itemId: string,
+  token: string,
+  auth: BettermodeAuth,
+): Promise<void> {
+  await graphQl<{ updateModerationItem: { status?: string | null } }>(
+    auth.endpoint,
+    bearer(token),
+    `mutation ReleaseModerationItem($id: ID!) {
+      updateModerationItem(id: $id, input: { status: REJECTED }) {
+        status
+      }
+    }`,
+    { id: itemId },
+  );
 }
 
 async function graphQl<T>(
@@ -226,7 +437,10 @@ async function graphQl<T>(
     const message =
       payload.errors?.map((error) => error.message).filter(Boolean).join('; ') ||
       `Bettermode GraphQL request failed with HTTP ${response.status}`;
-    throw new BettermodeError(message, 502);
+    // GraphQL errors arrive with HTTP 200; the real status is on the error.
+    const status = payload.errors?.find((error) => error.status === 404 || error.status === 429)
+      ?.status;
+    throw new BettermodeError(message, status ?? 502);
   }
   if (!payload.data) {
     throw new BettermodeError('Bettermode GraphQL response did not include data.');
@@ -246,6 +460,7 @@ function normalizePost(post: RawBettermodePost): BettermodePost {
   return {
     ...post,
     parentId: post.repliedToId ?? null,
+    ancestorIds: post.repliedToIds ?? [],
     owner: post.owner?.member ?? null,
     createdBy: post.createdBy?.member ?? null,
     replies: post.replies

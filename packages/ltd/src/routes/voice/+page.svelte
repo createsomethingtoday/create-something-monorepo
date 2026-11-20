@@ -1,5 +1,5 @@
 <script lang="ts">
-	import LibraryScene from '$lib/components/LibraryScene.svelte';
+  import TaskOpening from '$lib/components/TaskOpening.svelte';
   import {
     PerformanceNarrativeStage,
     SEO,
@@ -66,7 +66,8 @@
 />
 
 <!-- Header -->
-<section class="header-section pt-24 pb-16 px-6">
+<TaskOpening scene="review-nook" caption="Keep the instruction clear enough for the next person to act.">
+<div class="header-section pt-24 pb-16 px-6">
   <div class="max-w-4xl mx-auto text-center">
     <p class="eyebrow mb-4">Writing Standards</p>
     <h1 class="mb-6">Write so people can act.</h1>
@@ -74,9 +75,10 @@
       Say what the reader can inspect, decide, approve, or stop. Cut the language that hides the
       work.
     </p>
-    <LibraryScene scene="about-careful-working-notes" caption="Keep the instruction clear enough for the next person to act." />
+
   </div>
-</section>
+</div>
+</TaskOpening>
 
 <PerformanceNarrativeStage
   id="voice-operating-story"

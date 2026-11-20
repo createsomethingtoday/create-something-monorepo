@@ -1,0 +1,26 @@
+name: Change evidence contract
+on:
+  pull_request:
+    paths:
+      - 'scripts/change-evidence/**'
+      - 'docs/evidence/CRE-2467/**'
+      - '.github/workflows/change-evidence.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/change-evidence/**'
+      - 'docs/evidence/CRE-2467/**'
+      - '.github/workflows/change-evidence.yml'
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - run: node --test scripts/change-evidence/cli.test.mjs
+      - run: node scripts/change-evidence/cli.mjs validate docs/evidence/CRE-2467/internal-local.json

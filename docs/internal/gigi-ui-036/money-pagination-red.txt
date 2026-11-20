@@ -1,0 +1,26 @@
+
+> @create-something/gigi-desktop@0.3.6 test:refinement /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6/apps/gigi-desktop
+> node scripts/astryx-refinement-browser.mjs
+
+8:55:22 PM [vite] (client) Re-optimizing dependencies because vite config has changed
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: A failed view change must retain every successfully loaded page
+
+20 !== 25
+
+    at file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6/apps/gigi-desktop/scripts/astryx-refinement-browser.mjs:42:9 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 20,
+  expected: 25,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.4
+/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6/apps/gigi-desktop:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @create-something/gigi-desktop@0.3.6 test:refinement: `node scripts/astryx-refinement-browser.mjs`
+Exit status 1

@@ -1,0 +1,524 @@
+[
+  {
+    "route": "stack",
+    "requestedWidth": 320,
+    "width": 320,
+    "scrollWidth": 310,
+    "title": "Your accounts. Your data. Your decisions.",
+    "art": {
+      "x": 19.1953125,
+      "y": 724.921875,
+      "width": 271.609375,
+      "height": 239.015625,
+      "top": 724.921875,
+      "right": 290.8046875,
+      "bottom": 963.9375,
+      "left": 19.1953125
+    },
+    "copy": {
+      "x": 19.1953125,
+      "y": 305.5,
+      "width": 271.609375,
+      "height": 419.421875,
+      "top": 305.5,
+      "right": 290.8046875,
+      "bottom": 724.921875,
+      "left": 19.1953125
+    },
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/stack-hero-20261116.webp\")",
+    "description": "Concept illustration: Canon presents a portable connected toolkit and its matching guide."
+  },
+  {
+    "route": "stack",
+    "requestedWidth": 390,
+    "width": 390,
+    "scrollWidth": 380,
+    "title": "Your accounts. Your data. Your decisions.",
+    "art": {
+      "x": 23.3984375,
+      "y": 701.96875,
+      "width": 333.203125,
+      "height": 293.21875,
+      "top": 701.96875,
+      "right": 356.6015625,
+      "bottom": 995.1875,
+      "left": 23.3984375
+    },
+    "copy": {
+      "x": 23.3984375,
+      "y": 305.5,
+      "width": 333.203125,
+      "height": 396.46875,
+      "top": 305.5,
+      "right": 356.6015625,
+      "bottom": 701.96875,
+      "left": 23.3984375
+    },
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/stack-hero-20261116.webp\")",
+    "description": "Concept illustration: Canon presents a portable connected toolkit and its matching guide."
+  },
+  {
+    "route": "stack",
+    "requestedWidth": 768,
+    "width": 768,
+    "scrollWidth": 758,
+    "title": "Your accounts. Your data. Your decisions.",
+    "art": {
+      "x": 46.078125,
+      "y": 651.6875,
+      "width": 665.84375,
+      "height": 432.796875,
+      "top": 651.6875,
+      "right": 711.921875,
+      "bottom": 1084.484375,
+      "left": 46.078125
+    },
+    "copy": {
+      "x": 46.078125,
+      "y": 327,
+      "width": 665.84375,
+      "height": 324.6875,
+      "top": 327,
+      "right": 711.921875,
+      "bottom": 651.6875,
+      "left": 46.078125
+    },
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/stack-hero-20261116.webp\")",
+    "description": "Concept illustration: Canon presents a portable connected toolkit and its matching guide."
+  },
+  {
+    "route": "stack",
+    "requestedWidth": 1024,
+    "width": 1024,
+    "scrollWidth": 1014,
+    "title": "Your accounts. Your data. Your decisions.",
+    "art": {
+      "x": 61.4375,
+      "y": 689.5859375,
+      "width": 891.125,
+      "height": 579.2265625,
+      "top": 689.5859375,
+      "right": 952.5625,
+      "bottom": 1268.8125,
+      "left": 61.4375
+    },
+    "copy": {
+      "x": 61.4375,
+      "y": 327,
+      "width": 891.125,
+      "height": 362.5859375,
+      "top": 327,
+      "right": 952.5625,
+      "bottom": 689.5859375,
+      "left": 61.4375
+    },
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/stack-hero-20261116.webp\")",
+    "description": "Concept illustration: Canon presents a portable connected toolkit and its matching guide."
+  },
+  {
+    "route": "stack",
+    "requestedWidth": 1025,
+    "width": 1025,
+    "scrollWidth": 1015,
+    "title": "Your accounts. Your data. Your decisions.",
+    "art": {
+      "x": 61.5,
+      "y": 444.1328125,
+      "width": 892,
+      "height": 502.015625,
+      "top": 444.1328125,
+      "right": 953.5,
+      "bottom": 946.1484375,
+      "left": 61.5
+    },
+    "copy": {
+      "x": 61.5,
+      "y": 327,
+      "width": 356.796875,
+      "height": 496.1484375,
+      "top": 327,
+      "right": 418.296875,
+      "bottom": 823.1484375,
+      "left": 61.5
+    },
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/stack-hero-20261116.webp\")",
+    "description": "Concept illustration: Canon presents a portable connected toolkit and its matching guide."
+  },
+  {
+    "route": "stack",
+    "requestedWidth": 1440,
+    "width": 1440,
+    "scrollWidth": 1430,
+    "title": "Your accounts. Your data. Your decisions.",
+    "art": {
+      "x": 86.3984375,
+      "y": 386.25,
+      "width": 1257.203125,
+      "height": 707.546875,
+      "top": 386.25,
+      "right": 1343.6015625,
+      "bottom": 1093.796875,
+      "left": 86.3984375
+    },
+    "copy": {
+      "x": 86.3984375,
+      "y": 327,
+      "width": 502.875,
+      "height": 594,
+      "top": 327,
+      "right": 589.2734375,
+      "bottom": 921,
+      "left": 86.3984375
+    },
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/stack-hero-20261116.webp\")",
+    "description": "Concept illustration: Canon presents a portable connected toolkit and its matching guide."
+  },
+  {
+    "route": "practice",
+    "requestedWidth": 320,
+    "width": 320,
+    "scrollWidth": 310,
+    "title": "Try the workflow before connecting your tools.",
+    "art": {
+      "x": 19.1953125,
+      "y": 743.3125,
+      "width": 271.609375,
+      "height": 239.015625,
+      "top": 743.3125,
+      "right": 290.8046875,
+      "bottom": 982.328125,
+      "left": 19.1953125
+    },
+    "copy": {
+      "x": 19.1953125,
+      "y": 305.5,
+      "width": 271.609375,
+      "height": 437.8125,
+      "top": 305.5,
+      "right": 290.8046875,
+      "bottom": 743.3125,
+      "left": 19.1953125
+    },
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/practice-hero-20261116.webp\")",
+    "description": "Concept illustration: Canon rehearses a task in a bounded tray with a stop gate and an unplugged connector."
+  },
+  {
+    "route": "practice",
+    "requestedWidth": 390,
+    "width": 390,
+    "scrollWidth": 380,
+    "title": "Try the workflow before connecting your tools.",
+    "art": {
+      "x": 23.3984375,
+      "y": 717.9609375,
+      "width": 333.203125,
+      "height": 293.21875,
+      "top": 717.9609375,
+      "right": 356.6015625,
+      "bottom": 1011.1796875,
+      "left": 23.3984375
+    },
+    "copy": {
+      "x": 23.3984375,
+      "y": 305.5,
+      "width": 333.203125,
+      "height": 412.4609375,
+      "top": 305.5,
+      "right": 356.6015625,
+      "bottom": 717.9609375,
+      "left": 23.3984375
+    },
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/practice-hero-20261116.webp\")",
+    "description": "Concept illustration: Canon rehearses a task in a bounded tray with a stop gate and an unplugged connector."
+  },
+  {
+    "route": "practice",
+    "requestedWidth": 768,
+    "width": 768,
+    "scrollWidth": 758,
+    "title": "Try the workflow before connecting your tools.",
+    "art": {
+      "x": 46.078125,
+      "y": 662.640625,
+      "width": 665.84375,
+      "height": 432.796875,
+      "top": 662.640625,
+      "right": 711.921875,
+      "bottom": 1095.4375,
+      "left": 46.078125
+    },
+    "copy": {
+      "x": 46.078125,
+      "y": 327,
+      "width": 665.84375,
+      "height": 335.640625,
+      "top": 327,
+      "right": 711.921875,
+      "bottom": 662.640625,
+      "left": 46.078125
+    },
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/practice-hero-20261116.webp\")",
+    "description": "Concept illustration: Canon rehearses a task in a bounded tray with a stop gate and an unplugged connector."
+  },
+  {
+    "route": "practice",
+    "requestedWidth": 1024,
+    "width": 1024,
+    "scrollWidth": 1014,
+    "title": "Try the workflow before connecting your tools.",
+    "art": {
+      "x": 61.4375,
+      "y": 713.171875,
+      "width": 891.125,
+      "height": 579.2265625,
+      "top": 713.171875,
+      "right": 952.5625,
+      "bottom": 1292.3984375,
+      "left": 61.4375
+    },
+    "copy": {
+      "x": 61.4375,
+      "y": 327,
+      "width": 891.125,
+      "height": 386.171875,
+      "top": 327,
+      "right": 952.5625,
+      "bottom": 713.171875,
+      "left": 61.4375
+    },
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/practice-hero-20261116.webp\")",
+    "description": "Concept illustration: Canon rehearses a task in a bounded tray with a stop gate and an unplugged connector."
+  },
+  {
+    "route": "practice",
+    "requestedWidth": 1025,
+    "width": 1025,
+    "scrollWidth": 1015,
+    "title": "Try the workflow before connecting your tools.",
+    "art": {
+      "x": 61.5,
+      "y": 517.515625,
+      "width": 892,
+      "height": 502.3125,
+      "top": 517.515625,
+      "right": 953.5,
+      "bottom": 1019.828125,
+      "left": 61.5
+    },
+    "copy": {
+      "x": 61.5,
+      "y": 327,
+      "width": 356.796875,
+      "height": 569.828125,
+      "top": 327,
+      "right": 418.296875,
+      "bottom": 896.828125,
+      "left": 61.5
+    },
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/practice-hero-20261116.webp\")",
+    "description": "Concept illustration: Canon rehearses a task in a bounded tray with a stop gate and an unplugged connector."
+  },
+  {
+    "route": "practice",
+    "requestedWidth": 1440,
+    "width": 1440,
+    "scrollWidth": 1430,
+    "title": "Try the workflow before connecting your tools.",
+    "art": {
+      "x": 86.3984375,
+      "y": 427.875,
+      "width": 1257.203125,
+      "height": 707.96875,
+      "top": 427.875,
+      "right": 1343.6015625,
+      "bottom": 1135.84375,
+      "left": 86.3984375
+    },
+    "copy": {
+      "x": 86.3984375,
+      "y": 327,
+      "width": 502.875,
+      "height": 636.046875,
+      "top": 327,
+      "right": 589.2734375,
+      "bottom": 963.046875,
+      "left": 86.3984375
+    },
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/practice-hero-20261116.webp\")",
+    "description": "Concept illustration: Canon rehearses a task in a bounded tray with a stop gate and an unplugged connector."
+  },
+  {
+    "route": "field-reports",
+    "requestedWidth": 320,
+    "width": 320,
+    "scrollWidth": 310,
+    "title": "Read the results, including the limits.",
+    "art": {
+      "x": 19.1953125,
+      "y": 736.2421875,
+      "width": 271.609375,
+      "height": 239.015625,
+      "top": 736.2421875,
+      "right": 290.8046875,
+      "bottom": 975.2578125,
+      "left": 19.1953125
+    },
+    "copy": {
+      "x": 19.1953125,
+      "y": 305.5,
+      "width": 271.609375,
+      "height": 430.7421875,
+      "top": 305.5,
+      "right": 290.8046875,
+      "bottom": 736.2421875,
+      "left": 19.1953125
+    },
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/field-reports-hero-20261116.webp\")",
+    "description": "Concept illustration: Canon inspects a notebook with two recorded symbols and an empty evidence square."
+  },
+  {
+    "route": "field-reports",
+    "requestedWidth": 390,
+    "width": 390,
+    "scrollWidth": 380,
+    "title": "Read the results, including the limits.",
+    "art": {
+      "x": 23.3984375,
+      "y": 708.3828125,
+      "width": 333.203125,
+      "height": 293.21875,
+      "top": 708.3828125,
+      "right": 356.6015625,
+      "bottom": 1001.6015625,
+      "left": 23.3984375
+    },
+    "copy": {
+      "x": 23.3984375,
+      "y": 305.5,
+      "width": 333.203125,
+      "height": 402.8828125,
+      "top": 305.5,
+      "right": 356.6015625,
+      "bottom": 708.3828125,
+      "left": 23.3984375
+    },
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/field-reports-hero-20261116.webp\")",
+    "description": "Concept illustration: Canon inspects a notebook with two recorded symbols and an empty evidence square."
+  },
+  {
+    "route": "field-reports",
+    "requestedWidth": 768,
+    "width": 768,
+    "scrollWidth": 758,
+    "title": "Read the results, including the limits.",
+    "art": {
+      "x": 46.078125,
+      "y": 622.890625,
+      "width": 665.84375,
+      "height": 432.796875,
+      "top": 622.890625,
+      "right": 711.921875,
+      "bottom": 1055.6875,
+      "left": 46.078125
+    },
+    "copy": {
+      "x": 46.078125,
+      "y": 327,
+      "width": 665.84375,
+      "height": 295.890625,
+      "top": 327,
+      "right": 711.921875,
+      "bottom": 622.890625,
+      "left": 46.078125
+    },
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/field-reports-hero-20261116.webp\")",
+    "description": "Concept illustration: Canon inspects a notebook with two recorded symbols and an empty evidence square."
+  },
+  {
+    "route": "field-reports",
+    "requestedWidth": 1024,
+    "width": 1024,
+    "scrollWidth": 1014,
+    "title": "Read the results, including the limits.",
+    "art": {
+      "x": 61.4375,
+      "y": 668.796875,
+      "width": 891.125,
+      "height": 579.2265625,
+      "top": 668.796875,
+      "right": 952.5625,
+      "bottom": 1248.0234375,
+      "left": 61.4375
+    },
+    "copy": {
+      "x": 61.4375,
+      "y": 327,
+      "width": 891.125,
+      "height": 341.796875,
+      "top": 327,
+      "right": 952.5625,
+      "bottom": 668.796875,
+      "left": 61.4375
+    },
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/field-reports-hero-20261116.webp\")",
+    "description": "Concept illustration: Canon inspects a notebook with two recorded symbols and an empty evidence square."
+  },
+  {
+    "route": "field-reports",
+    "requestedWidth": 1025,
+    "width": 1025,
+    "scrollWidth": 1015,
+    "title": "Read the results, including the limits.",
+    "art": {
+      "x": 61.5,
+      "y": 471.890625,
+      "width": 892,
+      "height": 502.015625,
+      "top": 471.890625,
+      "right": 953.5,
+      "bottom": 973.90625,
+      "left": 61.5
+    },
+    "copy": {
+      "x": 61.5,
+      "y": 327,
+      "width": 356.796875,
+      "height": 523.90625,
+      "top": 327,
+      "right": 418.296875,
+      "bottom": 850.90625,
+      "left": 61.5
+    },
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/field-reports-hero-20261116.webp\")",
+    "description": "Concept illustration: Canon inspects a notebook with two recorded symbols and an empty evidence square."
+  },
+  {
+    "route": "field-reports",
+    "requestedWidth": 1440,
+    "width": 1440,
+    "scrollWidth": 1430,
+    "title": "Read the results, including the limits.",
+    "art": {
+      "x": 86.3984375,
+      "y": 352.6875,
+      "width": 1257.203125,
+      "height": 707.546875,
+      "top": 352.6875,
+      "right": 1343.6015625,
+      "bottom": 1060.234375,
+      "left": 86.3984375
+    },
+    "copy": {
+      "x": 86.3984375,
+      "y": 327,
+      "width": 502.875,
+      "height": 560.4375,
+      "top": 327,
+      "right": 589.2734375,
+      "bottom": 887.4375,
+      "left": 86.3984375
+    },
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/field-reports-hero-20261116.webp\")",
+    "description": "Concept illustration: Canon inspects a notebook with two recorded symbols and an empty evidence square."
+  }
+]

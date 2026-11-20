@@ -230,8 +230,8 @@ published: true
 
 <h2>Color Philosophy</h2>
 <p>
-		Canon's palette is functional, not decorative. Black and white provide structure. Opacity
-		creates hierarchy. Semantic colors serve specific purposes—never ornament.
+		Canon's palette is functional, not decorative. Black and neutral grays provide structure.
+		Solid foreground roles create hierarchy within their owning palette. Semantic colors identify state.
 	</p>
 <div class="color-philosophy">
 <div class="color-principle">
@@ -241,10 +241,10 @@ published: true
 			</p>
 </div>
 <div class="color-principle">
-<h4>Opacity for Hierarchy</h4>
+<h4>Solid Roles for Hierarchy</h4>
 <p>
-				White at varying opacities (100%, 80%, 60%, 46%, 20%) creates text hierarchy without
-				introducing new colors.
+				Primary, secondary and muted foreground roles use solid neutral values. Explicit light
+				work surfaces rebind those roles, so text stays readable within its own palette.
 			</p>
 </div>
 <div class="color-principle">

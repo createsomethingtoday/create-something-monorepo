@@ -49,7 +49,7 @@ vi.mock('../src/utils/fetch-utils', () => {
 });
 
 import { validateDesignerData } from '../src/validators/designer-validator';
-import { generateContentIssues, validateContent } from '../src/validators/content-validator';
+import { analyzeImageDimensions, generateContentIssues, validateContent } from '../src/validators/content-validator';
 import { validateAccessibility } from '../src/validators/accessibility-validator';
 import { validateInteractions } from '../src/validators/interactions-validator';
 import { generateAssetIssues } from '../src/validators/asset-validator';
@@ -1395,9 +1395,81 @@ describe('Content Validator', () => {
 			} as any
 		);
 
-		expect(fetchHTML).toHaveBeenCalledTimes(2);
+		// The reviewer standards also read the utility pages; the excluded slug is never fetched.
+		expect(fetchHTML).toHaveBeenCalledTimes(6);
 		const calledUrls = (fetchHTML as any).mock.calls.map((c: any[]) => c[0]);
-		expect(calledUrls).toEqual(['https://example.com', 'https://example.com/about']);
+		expect(calledUrls).toEqual([
+			'https://example.com',
+			'https://example.com/about',
+			'https://example.com/404',
+			'https://example.com/401',
+			'https://example.com/licenses',
+			'https://example.com/instructions'
+		]);
+	});
+
+	it('audits /404 even when it answers with HTTP 404, and skips excluded utility pages', async () => {
+		(fetchHTML as any).mockClear();
+
+		await validateContent(
+			'https://example.com',
+			['/about'],
+			{
+				excludePageSlugs: ['/401'],
+				contentChecks: { lorem: false, headings: false, altText: false, seo: false, links: false, contentQuality: false }
+			} as any
+		);
+
+		const calls = (fetchHTML as any).mock.calls;
+		expect(calls.map((c: any[]) => c[0])).toEqual([
+			'https://example.com',
+			'https://example.com/about',
+			'https://example.com/404',
+			'https://example.com/licenses',
+			'https://example.com/instructions'
+		]);
+		expect(calls[2][1]).toEqual({ acceptStatus: [404] });
+	});
+
+	it('blocks custom-code GSAP when /instructions answers HTTP 404, and not when it fails for another reason', async () => {
+		const original = (fetchHTML as any).getMockImplementation();
+		const gsapPage = '<!doctype html><html><head><title>T</title></head><body><script>gsap.to(".hero", { y: 0 });</script></body></html>';
+		const run = async (instructionsError: string) => {
+			(fetchHTML as any).mockImplementation(async (url: string) => {
+				if (url.endsWith('/instructions')) throw new Error(instructionsError);
+				return { html: gsapPage, status: 200, headers: {}, size: 0, loadTime: 0 };
+			});
+			const result = await validateContent('https://example.com', [], {
+				contentChecks: { lorem: false, headings: false, altText: false, seo: false, links: false, contentQuality: false }
+			} as any);
+			return result.issues.find(issue => issue.id === 'gsap-instructions-page');
+		};
+		try {
+			expect(await run('HTTP 404: Not Found')).toEqual(expect.objectContaining({ severity: 'error', category: 'Content & Accessibility' }));
+			expect(await run('The operation was aborted')).toBeUndefined();
+		} finally {
+			(fetchHTML as any).mockImplementation(original);
+		}
+	});
+
+	it('fetchHTML keeps the HTML of an accepted non-OK status and rejects any other', async () => {
+		const actual = await vi.importActual<typeof import('../src/utils/fetch-utils')>('../src/utils/fetch-utils');
+		const notFound = () => new Response('<html><body><nav>Site</nav><h1>Not found</h1></body></html>', {
+			status: 404,
+			headers: { 'content-type': 'text/html; charset=utf-8' }
+		});
+		const fetchSpy = vi.spyOn(globalThis, 'fetch');
+		try {
+			fetchSpy.mockResolvedValueOnce(notFound());
+			const page = await actual.fetchHTML('https://example.com/404', { acceptStatus: [404] });
+			expect(page.status).toBe(404);
+			expect(page.html).toContain('Not found');
+
+			fetchSpy.mockResolvedValueOnce(notFound());
+			await expect(actual.fetchHTML('https://example.com/404')).rejects.toThrow('HTTP 404');
+		} finally {
+			fetchSpy.mockRestore();
+		}
 	});
 
 	it('pageScope=current returns warning without fetching when current page is excluded', async () => {
@@ -1477,6 +1549,82 @@ describe('Content Validator', () => {
 			linkOnlyChecks as any
 		);
 		expect(singlePage.some(i => i.id === 'required-pages-not-linked')).toBe(false);
+	});
+
+	it('counts images without a positive width and height, skipping background video fallbacks', async () => {
+		const actual = await vi.importActual<typeof import('../src/utils/fetch-utils')>('../src/utils/fetch-utils');
+		const parsed = actual.parseHTMLWorker(`<!doctype html><html><body>
+			<img src="/sized.webp" width="640" height="480" alt="">
+			<img src="/width-only.webp" width="640" alt="">
+			<img src="/auto.webp" width="auto" height="480" alt="">
+			<img src="/none.webp" class="hero-image" alt="">
+			<img src="/poster.jpg" data-wf-bgvideo-fallback-img="true" alt="">
+		</body></html>`);
+
+		const audit = analyzeImageDimensions(parsed);
+
+		expect(audit.missing).toBe(3);
+		expect(audit.details.map(detail => detail.src)).toEqual(['/width-only.webp', '/auto.webp', '/none.webp']);
+		expect(audit.details[2].selector).toBe('img.hero-image');
+	});
+
+	it('ignores images that never render: comments, scripts, templates and noscript', async () => {
+		const actual = await vi.importActual<typeof import('../src/utils/fetch-utils')>('../src/utils/fetch-utils');
+		const parsed = actual.parseHTMLWorker(`<!doctype html><html><body>
+			<!-- <img src="/old.jpg" alt=""> -->
+			<script>const card = '<img src="/from-script.jpg">';</script>
+			<template><img src="/from-template.jpg" alt=""></template>
+			<noscript><img src="/pixel.gif" alt=""></noscript>
+			<img src="/rendered.webp" alt="">
+		</body></html>`);
+
+		expect(parsed.images.length).toBeGreaterThan(1);
+		const audit = analyzeImageDimensions(parsed);
+		expect(audit.missing).toBe(1);
+		expect(audit.details.map(detail => detail.src)).toEqual(['/rendered.webp']);
+	});
+
+	it('keeps the video-fallback exemption for images identified by their container', async () => {
+		const actual = await vi.importActual<typeof import('../src/utils/fetch-utils')>('../src/utils/fetch-utils');
+		const parsed = actual.parseHTMLWorker(`<!doctype html><html><body>
+			<div class="hero w-background-video w-background-video-atom"><div class="inner"><img src="/hero.webp" alt=""></div></div>
+			<div data-poster-url="/poster.jpg"><img src="/poster-frame.webp" alt=""></div>
+			<div class="w-video"><img src="/embed-thumb.webp" alt=""></div>
+			<div class="w-background-video--control"><img src="/pause-icon.svg" alt=""></div>
+		</body></html>`);
+
+		const audit = analyzeImageDimensions(parsed);
+		expect(audit.details.map(detail => detail.src)).toEqual(['/pause-icon.svg']);
+	});
+
+	it('skips Webflow cart item images, which have no width and height settings', async () => {
+		const actual = await vi.importActual<typeof import('../src/utils/fetch-utils')>('../src/utils/fetch-utils');
+		const parsed = actual.parseHTMLWorker(`<!doctype html><html><body>
+			<div class="w-commerce-commercecartitem"><img src="" alt="" class="w-commerce-commercecartitemimage cart-thumb"></div>
+			<img src="/product.webp" alt="" class="cart-banner">
+		</body></html>`);
+
+		const audit = analyzeImageDimensions(parsed);
+		expect(audit.details.map(detail => detail.src)).toEqual(['/product.webp']);
+	});
+
+	it('reports missing image dimensions as a blocking error, even when every toggled content check is off', () => {
+		const allTogglesOff = { lorem: false, headings: false, altText: false, seo: false, links: false, contentQuality: false };
+		const pages = [
+			{
+				...linkAuditPage('https://example.com', []),
+				imagesMissingDimensions: 2,
+				imagesMissingDimensionsDetails: [{ src: '/a.webp', selector: 'img.a' }, { src: '/b.webp', selector: 'img.b' }]
+			},
+			{ ...linkAuditPage('https://example.com/about', []), imagesMissingDimensions: 0 }
+		];
+
+		const issue = generateContentIssues(pages as any, allTogglesOff as any).find(i => i.id === 'images-missing-dimensions');
+		expect(issue).toEqual(expect.objectContaining({ severity: 'error', category: 'Content & Accessibility' }));
+		expect(issue!.message).toBe('2 image(s) on 1 page(s) have no reserved width and height');
+		expect(issue!.details!.pagesWithIssues).toEqual([
+			expect.objectContaining({ url: 'https://example.com', imagesMissingDimensions: 2 })
+		]);
 	});
 });
 
@@ -2785,10 +2933,21 @@ describe('Validation Submission Endpoint', () => {
 					validationResults: {
 						url: 'https://artifact.example.com',
 						summary: { totalErrors: 1, totalWarnings: 0, passedCategories: 1, failedCategories: 1 },
+						timings: {
+							steps: { styles: 60000.4, total: 61000, 'bad key': 5, nested: { no: 1 }, huge: 1e12 },
+							counts: { styles: 3912, label: 'text' }
+						},
 						categories: [
 							{
 								category: 'Assets & Images',
 								passed: false,
+								stats: {
+									totalModes: 3,
+									hasResponsiveModes: false,
+									modeNames: ['Base', 'Dark'],
+									nested: { dropped: true },
+									mixed: ['ok', 1]
+								},
 							issues: [
 								{
 									id: 'seo.missing-title',
@@ -2797,8 +2956,10 @@ describe('Validation Submission Endpoint', () => {
 									howToFix: 'Set a unique SEO title in the page settings.',
 									location: 'Designer pages panel',
 									details: {
-										pages: ['Log In (/log-in)'],
+										pages: ['Log In (/log-in)', { url: 'https://x.webflow.io/404', detail: '"More templates" → store.example' }, { other: 1 }],
 										duplicates: [['About (/about)', 'Contact (/contact)']],
+										samples: ['About us (/about)', { name: 'not a label' }],
+										locations: ['/about — 375px: scrolls 40px sideways (widest: div.hero)'],
 										bridgeToken: 'wfbt_should_not_persist'
 									}
 								}
@@ -2831,6 +2992,13 @@ describe('Validation Submission Endpoint', () => {
 		expect(body).not.toContain('wfbt_should_not_persist');
 		expect(body).toContain('"raw_bridge_token_stored": false');
 		const artifact = JSON.parse(body);
+		expect(artifact.client_timings).toEqual({ steps: { styles: 60000, total: 61000, huge: 3600000 }, counts: { styles: 3912 } });
+		expect(artifact.validation_results.timings).toBeUndefined();
+		expect(artifact.validation_results.categories[0].stats).toEqual({
+			totalModes: 3,
+			hasResponsiveModes: false,
+			modeNames: ['Base', 'Dark']
+		});
 		expect(artifact.validation_results.categories[0].issues[0]).toEqual({
 			id: 'seo.missing-title',
 			severity: 'error',
@@ -2838,8 +3006,10 @@ describe('Validation Submission Endpoint', () => {
 			howToFix: 'Set a unique SEO title in the page settings.',
 			location: 'Designer pages panel',
 			details: {
-				pages: ['Log In (/log-in)'],
-				duplicates: [['About (/about)', 'Contact (/contact)']]
+				pages: ['Log In (/log-in)', 'https://x.webflow.io/404 — "More templates" → store.example'],
+				duplicates: [['About (/about)', 'Contact (/contact)']],
+				samples: ['About us (/about)'],
+				locations: ['/about — 375px: scrolls 40px sideways (widest: div.hero)']
 			}
 		});
 	});
@@ -3004,5 +3174,544 @@ describe('Issue Feedback Endpoint', () => {
 		);
 
 		expect(response.status).toBe(400);
+	});
+});
+
+describe('OAuth site-access evidence', () => {
+	const MCP_URL = 'https://mcp.test.invalid/mcp';
+	const WORKER_BASE = 'https://validation-worker.createsomething.workers.dev';
+
+	function mockMcpServer(
+		site: Record<string, unknown>,
+		options: { sse?: boolean; protocolVersion?: string; pages?: Array<Record<string, unknown>> | 'error' } = {}
+	) {
+		const calls: Array<{ headers: Headers; body: any }> = [];
+		const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+			const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+			if (url !== MCP_URL) return new Response('unexpected', { status: 500 });
+			const body = JSON.parse(String(init?.body));
+			calls.push({ headers: new Headers(init?.headers), body });
+			if (!('id' in body)) return new Response(null, { status: 202 });
+			const result =
+				body.method === 'initialize'
+					? { protocolVersion: options.protocolVersion ?? '2025-06-18', capabilities: {}, serverInfo: { name: 'mock', version: '0' } }
+					: body.params?.name === 'data_pages_tool'
+						? options.pages === 'error'
+							? { isError: true, content: [{ type: 'text', text: 'pages unavailable' }] }
+							: {
+									content: [
+										{
+											type: 'text',
+											text: JSON.stringify({
+												label: 'pages',
+												action: 'list_pages',
+												result: { pages: options.pages ?? [], pagination: { total: (options.pages ?? []).length } }
+											})
+										}
+									]
+								}
+						: {
+								content: [
+									{
+										type: 'text',
+										text: JSON.stringify({ label: 'site', action: 'get_site', result: site })
+									}
+								]
+							};
+			const message = JSON.stringify({ jsonrpc: '2.0', id: body.id, result });
+			return options.sse
+				? new Response(`event: message\ndata: ${message}\n\n`, {
+						status: 200,
+						headers: { 'Content-Type': 'text/event-stream', 'Mcp-Session-Id': 'mock-session' }
+					})
+				: new Response(message, {
+						status: 200,
+						headers: { 'Content-Type': 'application/json', 'Mcp-Session-Id': 'mock-session' }
+					});
+		});
+		vi.stubGlobal('fetch', fetchMock);
+		return calls;
+	}
+
+	const AVAILABLE_CANVAS = {
+		available: true,
+		pageName: 'Home',
+		headingsChecked: 1,
+		headingIssues: [],
+		imagesChecked: 0,
+		imagesMissingAlt: 0,
+		missingAltElementKeys: []
+	};
+
+	/** Starts a validation run for the host and waits until it is complete. Returns its job id. */
+	async function completedRun(host: string, overrides: Record<string, unknown> = {}) {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => new Response('<html><head><title>Home</title></head><body><h1>Home</h1></body></html>', { headers: { 'content-type': 'text/html' } }))
+		);
+		const ctx = createExecutionContext();
+		const started = await worker.fetch(
+			new Request(`${WORKER_BASE}/app-validator/review/start`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					siteUrl: `https://${host}`,
+					pageSlugs: [],
+					designerData: { variables: { collections: [] }, styles: [], components: [], pages: [], assets: [] },
+					checks: ['designer', 'assets', 'content', 'accessibility'],
+					canvasResult: AVAILABLE_CANVAS,
+					...overrides
+				})
+			}),
+			{} as any,
+			ctx
+		);
+		const { jobId } = (await started.json()) as { jobId: string };
+		await Promise.all((ctx.waitUntil as unknown as { mock: { calls: [Promise<unknown>][] } }).mock.calls.map(([work]) => work));
+		return jobId;
+	}
+
+	function submitRequest(siteId: string, accessToken: string, cliVersion: string | null = '0.3.0', jobId?: string) {
+		return new Request(`${WORKER_BASE}/app-validator/submit`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json', ...(cliVersion ? { 'X-Template-Cli-Version': cliVersion } : {}) },
+			body: JSON.stringify({
+				siteId,
+				siteName: 'Evidence Site',
+				siteUrl: 'https://evidence-site.webflow.io',
+				...(jobId ? { jobId } : {}),
+				evidence: { type: 'oauth_site_access', accessToken },
+				validationResults: {
+					url: 'https://evidence-site.webflow.io',
+					summary: { totalErrors: 0, totalWarnings: 0, passedCategories: 2, failedCategories: 0 },
+					categories: [
+						{ category: 'Designer Structure', passed: true, issues: [] },
+						{ category: 'Assets & Images', passed: true, issues: [] }
+					],
+					scope: {
+						selectedChecks: ['designer', 'assets', 'content', 'accessibility'],
+						pageScope: 'all',
+						publishedChecks: 'full',
+						pageSlugsCount: 4
+					}
+				}
+			})
+		});
+	}
+
+	it('verifies oauth_site_access evidence through the MCP server and records it', async () => {
+		const accessToken = 'mcp-test-token-valid-0001';
+		const jobId = await completedRun('evidence-site.webflow.io');
+		const calls = mockMcpServer(
+			{
+				id: 'site_oauth_evidence',
+				workspaceId: 'ws_evidence',
+				shortName: 'Evidence-Site',
+				customDomains: [{ url: 'www.Evidence.example' }, { url: 'https://evidence.example/' }]
+			},
+			{ sse: true }
+		);
+		const putMock = vi.fn(async () => undefined);
+
+		const response = await worker.fetch(
+			submitRequest('site_oauth_evidence', accessToken, '0.3.0', jobId),
+			{ VALIDATOR_MCP_SERVER_URL: MCP_URL, VALIDATOR_RESULT_ARTIFACTS: { put: putMock } } as any,
+			createExecutionContext()
+		);
+
+		expect(response.status).toBe(200);
+		const responseText = await response.text();
+		expect(responseText).not.toContain(accessToken);
+		const payload = JSON.parse(responseText);
+		expect(payload.accepted).toBe(true);
+		expect(payload.evidence).toEqual({
+			type: 'oauth_site_access',
+			verified: true,
+			verifiedAt: expect.any(String),
+			workspaceId: 'ws_evidence',
+			accessTokenSha256: await sha256ForTest(accessToken),
+			rawAccessTokenStored: false,
+			publishedHosts: ['evidence-site.webflow.io', 'www.evidence.example', 'evidence.example']
+		});
+
+		expect(calls.map((call) => call.body.method)).toEqual([
+			'initialize',
+			'notifications/initialized',
+			'tools/call',
+			'tools/call'
+		]);
+		// The worker reads the page list itself, to check that the run covered every page.
+		expect(calls[3].body.params.name).toBe('data_pages_tool');
+		expect(calls[0].headers.get('Authorization')).toBe(`Bearer ${accessToken}`);
+		expect(calls[0].headers.get('MCP-Protocol-Version')).toBe('2025-06-18');
+		expect(calls[0].headers.get('Accept')).toBe('application/json, text/event-stream');
+		expect(calls[2].headers.get('Mcp-Session-Id')).toBe('mock-session');
+		const toolArgs = calls[2].body.params.arguments;
+		expect(calls[2].body.params.name).toBe('data_sites_tool');
+		expect(toolArgs.actions).toEqual([{ label: 'site', get_site: { site_id: 'site_oauth_evidence' } }]);
+		expect(toolArgs.session_id).toBe('start');
+		expect(toolArgs.agent_id).toMatch(/^validation-worker\|evidence\|[a-f0-9]+$/);
+		const contextWords = String(toolArgs.context).split(/\s+/).length;
+		expect(contextWords).toBeGreaterThanOrEqual(15);
+		expect(contextWords).toBeLessThanOrEqual(25);
+
+		expect(putMock).toHaveBeenCalledTimes(1);
+		const [, body] = putMock.mock.calls[0] as unknown as [string, string];
+		expect(body).not.toContain(accessToken);
+		const artifact = JSON.parse(body);
+		expect(artifact.schema_version).toBe('validator_app_results_submission.v0.2');
+		expect(artifact.evidence.verified).toBe(true);
+		expect(artifact.evidence.rawAccessTokenStored).toBe(false);
+	});
+
+	it('refuses a record from a Template CLI that is too old or names no version, before it reads the token', async () => {
+		const calls = mockMcpServer({ id: 'site_old_cli', workspaceId: 'ws_evidence', shortName: 'old-cli' });
+		const putMock = vi.fn(async () => undefined);
+		for (const version of ['0.1.0', '0.2.0', null, 'latest']) {
+			const response = await worker.fetch(
+				submitRequest('site_old_cli', 'mcp-test-token-valid-0002', version),
+				{ VALIDATOR_MCP_SERVER_URL: MCP_URL, VALIDATOR_RESULT_ARTIFACTS: { put: putMock } } as any,
+				createExecutionContext()
+			);
+			expect(response.status).toBe(426);
+			const payload = (await response.json()) as { reason: string; minimumVersion: string; error: string };
+			expect(payload.reason).toBe('cli_outdated');
+			expect(payload.minimumVersion).toBe('0.3.0');
+			expect(payload.error).toContain(`npm install -g ${WORKER_BASE}/cli/wf-template-validate.tgz`);
+		}
+		expect(calls).toHaveLength(0);
+		expect(putMock).not.toHaveBeenCalled();
+	});
+
+	it('refuses a Template CLI record that is not tied to a complete, full run for this site', async () => {
+		const accessToken = 'mcp-test-token-valid-0006';
+		const site = { id: 'site_run_binding', workspaceId: 'ws_evidence', shortName: 'run-binding', customDomains: [] };
+		const putMock = vi.fn(async () => undefined);
+		const submit = async (jobId?: string) => {
+			mockMcpServer(site);
+			return worker.fetch(
+				submitRequest('site_run_binding', accessToken, '0.3.0', jobId),
+				{ VALIDATOR_MCP_SERVER_URL: MCP_URL, VALIDATOR_RESULT_ARTIFACTS: { put: putMock } } as any,
+				createExecutionContext()
+			);
+		};
+		const refused = [
+			await submit(),
+			await submit('00000000-0000-4000-8000-000000000000'),
+			await submit(await completedRun('some-other-site.webflow.io')),
+			await submit(await completedRun('run-binding.webflow.io', { checks: ['designer', 'assets'] })),
+			await submit(await completedRun('run-binding.webflow.io', { checks: ['designer', 'assets', 'content'] })),
+			await submit(await completedRun('run-binding.webflow.io', { options: { maxPages: 1 } })),
+			await submit(await completedRun('run-binding.webflow.io', { siteUrl: 'https://run-binding.webflow.io/one-clean-page' })),
+			await submit(await completedRun('run-binding.webflow.io', { options: { someFutureLimit: true } })),
+			await submit(await completedRun('run-binding.webflow.io', { options: { skipContent: true } })),
+			await submit(await completedRun('run-binding.webflow.io', { options: { contentChecks: { altText: false } } })),
+			await submit(await completedRun('run-binding.webflow.io', { options: { pageScope: 'current' } })),
+			await submit(await completedRun('run-binding.webflow.io', { canvasResult: undefined })),
+			await submit(await completedRun('run-binding.webflow.io', { canvasResult: { available: false, reason: 'not read' } }))
+		];
+		for (const response of refused) {
+			expect(response.status).toBe(409);
+			expect(((await response.json()) as { reason: string }).reason).toBe('run_not_usable');
+		}
+		expect(putMock).not.toHaveBeenCalled();
+
+		const accepted = await submit(await completedRun('run-binding.webflow.io'));
+		expect(accepted.status).toBe(200);
+	});
+
+	it('records a run only when it checked every published page that the worker reads from the site', async () => {
+		const accessToken = 'mcp-test-token-valid-0007';
+		const site = { id: 'site_page_cover', workspaceId: 'ws_evidence', shortName: 'page-cover', customDomains: [] };
+		const pages = [
+			{ id: 'p1', slug: '', publishedPath: '/' },
+			{ id: 'p2', slug: 'about', publishedPath: '/about' },
+			{ id: 'p3', slug: 'pricing', publishedPath: '/company/pricing' },
+			{ id: 'p4', slug: 'blog', publishedPath: '/blog', collectionId: 'c1' },
+			{ id: 'p5', slug: 'draft-page', publishedPath: '/draft-page', draft: true },
+			{ id: 'p6', slug: 'old', publishedPath: '/old', archived: true },
+			{ id: 'p7', slug: '401', publishedPath: '/401' },
+			{ id: 'p8', slug: '404', publishedPath: '/404' }
+		];
+		const full = ['/about', '/company/pricing', '/401', '/404'];
+		const putMock = vi.fn(async () => undefined);
+		const submit = async (pageSlugs: string[], listed: typeof pages | 'error' = pages) => {
+			const jobId = await completedRun('page-cover.webflow.io', { pageSlugs });
+			mockMcpServer(site, { pages: listed });
+			return worker.fetch(
+				submitRequest('site_page_cover', accessToken, '0.3.0', jobId),
+				{ VALIDATOR_MCP_SERVER_URL: MCP_URL, VALIDATOR_RESULT_ARTIFACTS: { put: putMock } } as any,
+				createExecutionContext()
+			);
+		};
+		// The password page never loads as a normal page, and a 404 page can answer with status 404.
+		// Other pages load unless a case says otherwise.
+		const working = vi.mocked(fetchHTML).getMockImplementation() as (...args: unknown[]) => ReturnType<typeof fetchHTML>;
+		const failFor = (...paths: string[]) =>
+			vi.mocked(fetchHTML).mockImplementation(async (url: string, ...rest: unknown[]) => {
+				if (paths.some((path) => url.endsWith(path))) throw new Error('did not load');
+				return working(url, ...rest);
+			});
+		failFor('/401', '/404');
+
+		try {
+			// A run on the home page only, or with one page left out, is not a full run.
+			for (const response of [await submit([]), await submit(['/']), await submit(['/about', '/401', '/404'])]) {
+				expect(response.status).toBe(409);
+				const payload = (await response.json()) as { reason: string; error: string };
+				expect(payload.reason).toBe('run_not_usable');
+				expect(payload.error).toContain('did not check every published page');
+			}
+			// A path that points at another host does not count as the site's page, alone or next to the real list.
+			for (const slugs of [
+				['//clean.example/about', '/company/pricing', '/401', '/404'],
+				[...full, '//clean.example/extra']
+			]) {
+				const response = await submit(slugs);
+				expect(response.status).toBe(409);
+				expect(((await response.json()) as { error: string }).error).toContain('not on this site');
+			}
+			// A path with a query is not the page itself.
+			expect((await submit(['/about?clean=1', '/company/pricing', '/401', '/404'])).status).toBe(409);
+			// When the worker cannot read the page list, it does not record.
+			expect((await submit(full, 'error')).status).toBe(409);
+
+			// A page that is named but does not load during the run was not checked.
+			failFor('/401', '/404', '/company/pricing');
+			const notLoaded = await submit(full);
+			expect(notLoaded.status).toBe(409);
+			expect(((await notLoaded.json()) as { error: string }).error).toContain('could not load every published page');
+			expect(putMock).not.toHaveBeenCalled();
+
+			// Drafts, archived pages, and CMS template pages are not required, and the 404 and password pages need not load.
+			failFor('/401', '/404');
+			const accepted = await submit(full);
+			expect(accepted.status).toBe(200);
+		} finally {
+			vi.mocked(fetchHTML).mockImplementation(working as never);
+		}
+
+		// The stored record keeps the fix instructions of findings that hold them in `details`.
+		const latest = (await (
+			await worker.fetch(
+				new Request(`${WORKER_BASE}/app-validator/submission/latest?siteId=site_page_cover`, { method: 'GET' }),
+				{} as any,
+				createExecutionContext()
+			)
+		).json()) as { failedCategoryDetails: Array<{ category: string; issues: Array<{ howToFix?: string }> }> };
+		const styleSystem = latest.failedCategoryDetails.find((detail) => detail.category === 'Style System');
+		expect(styleSystem?.issues.some((issue) => typeof issue.howToFix === 'string' && issue.howToFix.length > 0)).toBe(true);
+	});
+
+	it('rejects evidence when the token reads a different site and stores nothing', async () => {
+		const accessToken = 'mcp-test-token-other-site-0002';
+		mockMcpServer({ id: 'site_someone_else', workspaceId: 'ws_other', shortName: 'other-site', customDomains: [] });
+
+		const response = await worker.fetch(
+			submitRequest('site_oauth_mismatch', accessToken),
+			{ VALIDATOR_MCP_SERVER_URL: MCP_URL } as any,
+			createExecutionContext()
+		);
+
+		expect(response.status).toBe(403);
+		const responseText = await response.text();
+		expect(responseText).not.toContain(accessToken);
+		const payload = JSON.parse(responseText);
+		expect(payload.error).toBe('oauth_site_access evidence could not be verified');
+		expect(payload.correlationId).toEqual(expect.any(String));
+
+		const latest = await worker.fetch(
+			new Request(`${WORKER_BASE}/app-validator/submission/latest?siteId=site_oauth_mismatch`, { method: 'GET' }),
+			{} as any,
+			createExecutionContext()
+		);
+		expect(latest.status).toBe(404);
+		expect(((await latest.json()) as any).status).toBe('missing');
+	});
+
+	it('returns the latest result with evidence when looked up by published URL', async () => {
+		const accessToken = 'mcp-test-token-lookup-0003';
+		const jobId = await completedRun('oauth-lookup.webflow.io');
+		mockMcpServer({
+			id: 'site_oauth_lookup',
+			workspaceId: 'ws_lookup',
+			shortName: 'oauth-lookup',
+			customDomains: [{ url: 'lookup.example' }]
+		});
+		const submit = await worker.fetch(
+			submitRequest('site_oauth_lookup', accessToken, '0.3.0', jobId),
+			{ VALIDATOR_MCP_SERVER_URL: MCP_URL } as any,
+			createExecutionContext()
+		);
+		expect(submit.status).toBe(200);
+
+		for (const publishedUrl of ['https://OAuth-Lookup.webflow.io/about?x=1', 'https://lookup.example/']) {
+			const response = await worker.fetch(
+				new Request(
+					`${WORKER_BASE}/app-validator/submission/latest?publishedUrl=${encodeURIComponent(publishedUrl)}`,
+					{ method: 'GET', headers: { Origin: 'https://webflow.com' } }
+				),
+				{} as any,
+				createExecutionContext()
+			);
+			expect(response.status).toBe(200);
+			const responseText = await response.text();
+			expect(responseText).not.toContain(accessToken);
+			const payload = JSON.parse(responseText);
+			expect(payload.status).toBe('available');
+			expect(payload.siteId).toBe('site_oauth_lookup');
+			// The request claimed a 100% pass and 4 pages. The record holds the worker's own result for the run.
+			expect(payload.passed).toBe(false);
+			expect(payload.scope).toEqual({
+				selectedChecks: ['designer', 'assets', 'content', 'accessibility'],
+				pageScope: 'all',
+				publishedChecks: 'full',
+				pageSlugsCount: 0
+			});
+			expect(payload.evidence).toEqual(
+				expect.objectContaining({
+					type: 'oauth_site_access',
+					verified: true,
+					workspaceId: 'ws_lookup',
+					rawAccessTokenStored: false,
+					publishedHosts: ['oauth-lookup.webflow.io', 'lookup.example']
+				})
+			);
+		}
+	});
+
+	it('retires published-host mappings that the latest verification no longer returns', async () => {
+		const accessToken = 'mcp-test-token-retire-0004';
+		const jobId = await completedRun('oauth-retire.webflow.io');
+		mockMcpServer({
+			id: 'site_oauth_retire',
+			workspaceId: 'ws_retire',
+			shortName: 'oauth-retire',
+			customDomains: [{ url: 'old-domain.example' }]
+		});
+		const first = await worker.fetch(
+			submitRequest('site_oauth_retire', accessToken, '0.3.0', jobId),
+			{ VALIDATOR_MCP_SERVER_URL: MCP_URL } as any,
+			createExecutionContext()
+		);
+		expect(first.status).toBe(200);
+
+		// The site drops its custom domain; the next verification returns only the webflow.io host.
+		mockMcpServer({ id: 'site_oauth_retire', workspaceId: 'ws_retire', shortName: 'oauth-retire', customDomains: [] });
+		const second = await worker.fetch(
+			submitRequest('site_oauth_retire', accessToken, '0.3.0', jobId),
+			{ VALIDATOR_MCP_SERVER_URL: MCP_URL } as any,
+			createExecutionContext()
+		);
+		expect(second.status).toBe(200);
+
+		const retired = await worker.fetch(
+			new Request(
+				`${WORKER_BASE}/app-validator/submission/latest?publishedUrl=${encodeURIComponent('https://old-domain.example/')}`,
+				{ method: 'GET' }
+			),
+			{} as any,
+			createExecutionContext()
+		);
+		expect(retired.status).toBe(404);
+		expect(((await retired.json()) as any).status).toBe('missing');
+
+		const kept = await worker.fetch(
+			new Request(
+				`${WORKER_BASE}/app-validator/submission/latest?publishedUrl=${encodeURIComponent('https://oauth-retire.webflow.io/')}`,
+				{ method: 'GET' }
+			),
+			{} as any,
+			createExecutionContext()
+		);
+		expect(kept.status).toBe(200);
+		expect(((await kept.json()) as any).siteId).toBe('site_oauth_retire');
+	});
+
+	it('uses the protocol version the MCP server returns from initialize', async () => {
+		const accessToken = 'mcp-test-token-protocol-0005';
+		const jobId = await completedRun('oauth-protocol.webflow.io');
+		const calls = mockMcpServer(
+			{ id: 'site_oauth_protocol', workspaceId: 'ws_protocol', shortName: 'oauth-protocol', customDomains: [] },
+			{ protocolVersion: '2025-03-26' }
+		);
+		const response = await worker.fetch(
+			submitRequest('site_oauth_protocol', accessToken, '0.3.0', jobId),
+			{ VALIDATOR_MCP_SERVER_URL: MCP_URL } as any,
+			createExecutionContext()
+		);
+		expect(response.status).toBe(200);
+
+		const [initialize, ...afterInitialize] = calls;
+		expect(initialize.body.method).toBe('initialize');
+		expect(afterInitialize.length).toBeGreaterThanOrEqual(2);
+		for (const call of afterInitialize) {
+			expect(call.headers.get('MCP-Protocol-Version')).toBe('2025-03-26');
+		}
+	});
+
+	it('returns missing for an unknown published URL', async () => {
+		const response = await worker.fetch(
+			new Request(
+				`${WORKER_BASE}/app-validator/submission/latest?publishedUrl=${encodeURIComponent('https://never-verified.webflow.io')}`,
+				{ method: 'GET' }
+			),
+			{} as any,
+			createExecutionContext()
+		);
+
+		expect(response.status).toBe(404);
+		const payload = (await response.json()) as any;
+		expect(payload.status).toBe('missing');
+		expect(payload.accepted).toBe(false);
+		expect(payload.passed).toBe(false);
+	});
+
+	it('rejects malformed evidence with 400', async () => {
+		const response = await worker.fetch(
+			new Request(`${WORKER_BASE}/app-validator/submit`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					siteId: 'site_bad_evidence',
+					evidence: { type: 'something_else', accessToken: 'x' },
+					validationResults: { summary: {}, categories: [] }
+				})
+			}),
+			{} as any,
+			createExecutionContext()
+		);
+		expect(response.status).toBe(400);
+	});
+});
+
+describe('validation start: Template CLI version and rate limit', () => {
+	const START_URL = 'https://validation-worker.createsomething.workers.dev/app-validator/review/start';
+	// No designerData: a request that passes the checks stops at 400 and starts no job.
+	const start = (headers: Record<string, string>) =>
+		new Request(START_URL, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json', ...headers },
+			body: JSON.stringify({ siteUrl: 'https://example.webflow.io' })
+		});
+
+	it('tells an old Template CLI to update, and lets a current one and the Validator app through', async () => {
+		for (const version of ['0.1.0', '0.2.0']) {
+			const old = await worker.fetch(start({ 'X-Template-Cli-Version': version }), {} as any, createExecutionContext());
+			expect(old.status).toBe(426);
+			expect(((await old.json()) as { reason: string }).reason).toBe('cli_outdated');
+		}
+
+		const current = await worker.fetch(start({ 'X-Template-Cli-Version': '0.3.0' }), {} as any, createExecutionContext());
+		expect(current.status).toBe(400);
+		const app = await worker.fetch(start({}), {} as any, createExecutionContext());
+		expect(app.status).toBe(400);
+	});
+
+	it('does not limit starts when the counter store is missing, so a storage problem never blocks a run', async () => {
+		for (let i = 0; i < 12; i += 1) {
+			const response = await worker.fetch(start({ 'CF-Connecting-IP': '203.0.113.7' }), {} as any, createExecutionContext());
+			expect(response.status).toBe(400);
+		}
 	});
 });

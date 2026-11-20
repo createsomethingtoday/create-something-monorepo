@@ -1,8 +1,14 @@
+pub mod memory;
 mod gig_list;
+mod task_list;
+mod finance_list;
+mod place_maps;
+mod workspace_search;
 pub mod artwork;
 pub mod artwork_mcp;
 pub mod artwork_protocol;
 mod agenda;
+mod today;
 mod event_identity;
 pub mod media_protocol;
 pub mod music;
@@ -19,6 +25,8 @@ mod navigation;
 pub mod chat;
 mod ai_connection;
 pub mod diagnostics;
+pub mod attention;
+pub mod notifications;
 
 use tauri::Manager;
 
@@ -30,7 +38,11 @@ async fn dispatch(app: tauri::AppHandle, operation: String, input: serde_json::V
         None => app.path().app_data_dir().map_err(|e| e.to_string())?,
     };
     let resources=app.path().resource_dir().map_err(|e|e.to_string())?;
+    if operation.starts_with("notifications.") {
+        return tauri::async_runtime::spawn_blocking(move || notifications::dispatch(&app,&data_dir,&resources,&operation,input)).await.map_err(|_|"Notification operation interrupted".to_string())?;
+    }
     tauri::async_runtime::spawn_blocking(move || {
+        if operation.starts_with("attention.") {return attention::dispatch(&data_dir,&operation,input);}
         if operation.starts_with("media.") {return artwork::dispatch(&data_dir,&operation,input);}
         if operation.starts_with("music.") {return music::dispatch(&data_dir,&operation,input);}
         if operation.starts_with("social.") {return social::dispatch(&resources,&data_dir,&operation,input);}
@@ -40,6 +52,7 @@ async fn dispatch(app: tauri::AppHandle, operation: String, input: serde_json::V
         if operation=="agent.status" {return agent_setup::status(&data_dir);}
         if operation=="agent.prepare" {return agent_setup::prepare(&resources,&data_dir);}
         if operation=="agent.preflight" {return Ok(agent_preflight::check(&resources,&data_dir));}
+        if operation=="places.mapPreview" || operation=="places.openMaps" {return place_maps::dispatch(&resources,&data_dir,&operation,input);}
         if operation=="help.open" {return navigation::open_help(input);}
         if operation=="connections.openConsent" {return navigation::open_consent(input);}
         if operation=="context.sync" {return integrations::sync_history(&resources,&data_dir);}
@@ -61,6 +74,12 @@ async fn dispatch(app: tauri::AppHandle, operation: String, input: serde_json::V
 
 pub fn run() {
     tauri::Builder::default()
+        .setup(|app| {
+            let resources = app.path().resource_dir()?;
+            // Failure leaves local attention usable; status exposes native availability.
+            let _ = notifications::initialize(app.handle(), &resources);
+            Ok(())
+        })
         .register_uri_scheme_protocol("gigi-image", |context, request| {
             let app=context.app_handle();
             let root=std::env::var_os("GIGI_DATA_DIR").map(std::path::PathBuf::from).or_else(||app.path().app_data_dir().ok());

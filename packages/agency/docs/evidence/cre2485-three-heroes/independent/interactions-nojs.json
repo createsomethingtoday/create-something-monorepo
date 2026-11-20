@@ -1,0 +1,61 @@
+{
+  "stack": [
+    [
+      "01 Path Map → pilot → control"
+    ],
+    [
+      "02 Boundary Show what must stop"
+    ],
+    [
+      "03 Ownership Keep the durable assets"
+    ],
+    [
+      "04 Portability Change models after testing. Inspect Substrate products"
+    ]
+  ],
+  "field": [
+    {
+      "href": "/field-reports/template-review",
+      "text": "01 Review operationsAutomation prepared the evidence. Human judgment still decided.Evidence collection completed for 49 of 50 selected cases. Automated judgment remains blocked, and reviewer time savings are not yet measured. verified#FR-2026-01May–June 2026"
+    },
+    {
+      "href": "/field-reports/upstream-contributions",
+      "text": "02 Infrastructure reliabilityWe improve the infrastructure we rely on.A macOS reliability fix merged into CTX. Credited scoped-inventory security work merged into OpenAI Codex Security and shipped in version 0.1.9. verified#FR-2026-02August 2026"
+    },
+    {
+      "href": "/field-reports/template-review",
+      "status": 200
+    },
+    {
+      "href": "/field-reports/upstream-contributions",
+      "status": 200
+    }
+  ],
+  "nojs": [
+    {
+      "path": "/stack",
+      "width": 390,
+      "reduced": true,
+      "title": "Your accounts. Your data. Your decisions.",
+      "scene": "Concept illustration: Canon presents a portable connected toolkit and its matching guide.",
+      "overflow": false
+    },
+    {
+      "path": "/practice",
+      "width": 390,
+      "reduced": true,
+      "title": "Try the workflow before connecting your tools.",
+      "scene": "Concept illustration: Canon rehearses a task in a bounded tray with a stop gate and an unplugged connector.",
+      "overflow": false
+    },
+    {
+      "path": "/field-reports",
+      "width": 390,
+      "reduced": true,
+      "title": "Read the results, including the limits.",
+      "scene": "Concept illustration: Canon inspects a notebook with two recorded symbols and an empty evidence square.",
+      "overflow": false
+    }
+  ],
+  "fieldHash": "#reports"
+}

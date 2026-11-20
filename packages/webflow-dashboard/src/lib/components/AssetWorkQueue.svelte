@@ -3,6 +3,8 @@
   import { Button, Card, CardContent, LinkButton } from './ui';
   import StatusBadge from './StatusBadge.svelte';
   import type { AssetWorkQueueItem } from '$lib/utils/asset-actions';
+  import { normalizeAssetStatus } from '$lib/utils/asset-actions';
+  import { collapseOut, expandIn, reveal } from '$lib/motion/actions';
 
   interface Props {
     items: AssetWorkQueueItem[];
@@ -23,6 +25,16 @@
     return openingEditAssetId !== null;
   }
 
+  // What is waiting, by status, so the closed card already says why to open it.
+  const statusCounts = $derived.by(() => {
+    const counts = new Map<string, number>();
+    for (const item of items) {
+      const status = normalizeAssetStatus(item.asset.status);
+      counts.set(status, (counts.get(status) ?? 0) + 1);
+    }
+    return Array.from(counts, ([status, count]) => ({ status, count }));
+  });
+
   function handleView(event: MouseEvent, id: string) {
     if (isActionDisabled()) {
       event.preventDefault();
@@ -34,8 +46,8 @@
 </script>
 
 {#if items.length > 0}
-  <section class="asset-work-queue" aria-labelledby="asset-work-queue-title">
-    <Card>
+  <section class="asset-work-queue" aria-labelledby="asset-work-queue-title" data-reveal use:reveal>
+    <Card interactive class="queue-card">
       <button
         class="queue-toggle"
         type="button"
@@ -44,19 +56,26 @@
         aria-label={`${isExpanded ? 'Collapse' : 'Expand'} portfolio triage. ${items.length} ${items.length === 1 ? 'asset has' : 'assets have'} a next action.`}
         onclick={() => (isExpanded = !isExpanded)}
       >
+        <span class="queue-count" aria-hidden="true">{items.length}</span>
         <span class="queue-heading">
-          <span class="queue-kicker">Portfolio triage</span>
           <span
             class="queue-title"
             id="asset-work-queue-title"
             role="heading"
             aria-level="2">Needs attention</span
           >
-        </span>
-        <span class="queue-meta">
           <span class="queue-summary">
             {items.length}
             {items.length === 1 ? 'asset has' : 'assets have'} a next action.
+          </span>
+        </span>
+        <span class="queue-meta">
+          <span class="queue-statuses" aria-hidden="true">
+            {#each statusCounts as entry (entry.status)}
+              <span class="queue-status queue-status--{entry.status.toLowerCase()}"
+                >{entry.count} {entry.status.toLowerCase()}</span
+              >
+            {/each}
           </span>
           <span class:queue-chevron-expanded={isExpanded} class="queue-chevron" aria-hidden="true">
             <ChevronDown size={18} strokeWidth={1.75} />
@@ -65,6 +84,11 @@
       </button>
 
       {#if isExpanded}
+        <div
+          class="queue-region"
+          in:expandIn={{ stagger: '.queue-item' }}
+          out:collapseOut
+        >
         <CardContent id="asset-work-queue-content">
           <div class="queue-content">
             <ol class="queue-list">
@@ -113,6 +137,7 @@
             </ol>
           </div>
         </CardContent>
+        </div>
       {/if}
     </Card>
   </section>
@@ -120,16 +145,20 @@
 
 <style>
   .asset-work-queue {
-    margin-top: var(--space-lg);
+    margin: 0;
+  }
+
+  /* Neutral like every other card; the amber count is the only call for attention. */
+  .asset-work-queue :global(.queue-card) {
+    overflow: hidden;
   }
 
   .queue-toggle {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: var(--space-md);
+    gap: 0.85rem;
     width: 100%;
-    padding: var(--space-md);
+    padding: 0.85rem var(--space-md);
     color: inherit;
     font: inherit;
     text-align: left;
@@ -151,28 +180,76 @@
 
   .queue-heading {
     display: grid;
-    gap: 0.2rem;
+    gap: 0.1rem;
+    min-width: 0;
+  }
+
+  .queue-count {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    min-width: 2rem;
+    height: 2rem;
+    padding-inline: 0.5rem;
+    border-radius: 999px;
+    background: var(--color-warning-muted);
+    color: var(--color-warning-ink);
+    font-size: var(--text-body-sm);
+    font-weight: var(--font-semibold);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .queue-statuses {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.25rem 0.9rem;
+  }
+
+  .queue-status {
+    position: relative;
+    padding-left: 0.8rem;
+    font-size: 0.8125rem;
+    color: var(--color-fg-secondary);
+    white-space: nowrap;
+  }
+
+  .queue-status::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 999px;
+    background: var(--queue-status-color, var(--color-fg-subtle));
+    transform: translateY(-50%);
+  }
+
+  .queue-status--rejected {
+    --queue-status-color: var(--color-error);
+  }
+
+  .queue-status--upcoming {
+    --queue-status-color: var(--color-data-3);
+  }
+
+  .queue-status--scheduled {
+    --queue-status-color: var(--color-info);
   }
 
   .queue-meta {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
+    margin-left: auto;
   }
 
-  .queue-kicker,
   .queue-summary,
   .queue-record p {
     margin: 0;
     color: var(--color-fg-muted);
     font-size: var(--text-body-sm);
-  }
-
-  .queue-kicker {
-    font-size: var(--text-caption);
-    font-weight: var(--font-semibold);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
   }
 
   h3 {
@@ -199,7 +276,11 @@
     display: inline-flex;
     flex: 0 0 auto;
     color: var(--color-fg-muted);
-    transition: transform var(--duration-micro) var(--ease-standard);
+    transition: transform var(--duration-standard) var(--ease-standard);
+  }
+
+  .queue-toggle:hover .queue-chevron {
+    color: var(--color-fg-primary);
   }
 
   .queue-chevron-expanded {
@@ -257,15 +338,13 @@
   }
 
   @media (max-width: 42rem) {
-    .queue-toggle,
     .queue-item {
       align-items: flex-start;
       flex-direction: column;
     }
 
-    .queue-meta {
-      justify-content: space-between;
-      width: 100%;
+    .queue-statuses {
+      display: none;
     }
 
     .queue-action {

@@ -11,6 +11,8 @@
     secondaryHref?: string;
   }
 
+  const titleId = $props.id();
+
   let {
     status,
     propertyLabel,
@@ -43,11 +45,11 @@
   const visibleDescription = $derived(description || fallbackDescription);
 </script>
 
-<section class="clear-error-page" aria-labelledby="clear-error-title">
+<section class="clear-error-page" aria-labelledby={titleId}>
   <div class="clear-error-page__inner">
     <div class="clear-error-page__copy">
       <span class="clear-error-page__kicker">{propertyLabel} / {status}</span>
-      <h1 id="clear-error-title">{visibleTitle}</h1>
+      <h1 id={titleId}>{visibleTitle}</h1>
       <p>{visibleDescription}</p>
       <div class="clear-error-page__actions" aria-label="Error recovery actions">
         <a class="clear-error-page__button clear-error-page__button--primary" href={primaryHref}>
@@ -76,9 +78,7 @@
     display: grid;
     align-items: center;
     color: var(--color-performance-ink, #090909);
-    background:
-      linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 4.25rem 4.25rem,
-      linear-gradient(180deg, var(--color-performance-panel, #ffffff) 0%, #fbfbfb 100%);
+    background: var(--color-performance-bg-pure, #000000);
     border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
     padding-block: clamp(4rem, 9vw, 7rem);
   }
@@ -93,6 +93,7 @@
   }
 
   .clear-error-page__copy {
+    min-width: 0;
     display: grid;
     gap: 1rem;
     max-width: 48rem;
@@ -118,10 +119,11 @@
   }
 
   .clear-error-page h1 {
+    overflow-wrap: break-word;
     margin: 0;
     max-width: 12ch;
     color: var(--color-performance-ink, #090909);
-    font-size: clamp(3.2rem, 8vw, 5.45rem);
+    font-size: clamp(2rem, 8vw, 5.45rem);
     font-weight: var(--font-performance-medium);
     line-height: 0.98;
     letter-spacing: 0;
@@ -145,6 +147,7 @@
   }
 
   .clear-error-page__button {
+    box-sizing: border-box;
     display: inline-flex;
     min-height: 2.8rem;
     align-items: center;
@@ -189,6 +192,8 @@
   }
 
   .clear-error-page__panel {
+    min-width: 0;
+    box-sizing: border-box;
     display: grid;
     gap: 0.7rem;
     min-height: 16rem;
@@ -231,12 +236,15 @@
     }
 
     .clear-error-page__panel {
+    min-width: 0;
+    box-sizing: border-box;
       min-height: auto;
       align-content: start;
     }
 
     .clear-error-page__actions,
     .clear-error-page__button {
+    box-sizing: border-box;
       width: 100%;
     }
   }

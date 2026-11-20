@@ -64,6 +64,7 @@
   import type { Snippet } from 'svelte';
   import { tick } from 'svelte';
   import { X } from 'lucide-svelte';
+  import { fadeIn, fadeOut, popIn, popOut } from '$lib/motion/actions';
 
   interface Props {
     isOpen: boolean;
@@ -184,9 +185,17 @@
 {#if isOpen}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="backdrop {placement}" onclick={handleBackdropClick} onkeydown={handleKeydown}>
+  <div
+    class="backdrop {placement}"
+    onclick={handleBackdropClick}
+    onkeydown={handleKeydown}
+    in:fadeIn
+    out:fadeOut
+  >
     <div
       class="dialog {size}"
+      in:popIn={{ y: 18, scale: 0.97, origin: 'center' }}
+      out:popOut={{ y: 10 }}
       role="dialog"
       aria-modal="true"
       aria-labelledby={title ? 'dialog-title' : undefined}
@@ -223,22 +232,12 @@
     justify-content: center;
     padding: var(--space-md);
     z-index: 1000;
-    animation: fadeIn var(--duration-micro) var(--ease-standard);
   }
 
   .backdrop.bottom-right {
     align-items: flex-end;
     justify-content: flex-end;
     padding: var(--space-md) var(--space-lg) 5rem;
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
   }
 
   .dialog {
@@ -249,18 +248,6 @@
     box-shadow: var(--shadow-2xl);
     max-height: calc(100vh - var(--space-xl));
     overflow-y: auto;
-    animation: slideIn var(--duration-standard) var(--ease-standard);
-  }
-
-  @keyframes slideIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
   }
 
   .dialog.sm {

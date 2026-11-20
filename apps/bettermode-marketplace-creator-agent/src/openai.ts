@@ -3,6 +3,7 @@
 
 import type { BettermodePost } from './bettermode';
 import type { CreatorContext } from './airtable';
+import type { ThreadState } from './thread';
 import { REGENERATE_HINT, SYSTEM_PROMPT } from './voice-canon';
 
 const DEFAULT_BASE = 'https://api.openai.com/v1';
@@ -30,8 +31,8 @@ export function openaiConfig(env: {
 }
 
 export type DraftInput = {
-  post: BettermodePost;
-  isTopLevel: boolean;
+  root: BettermodePost;
+  thread: ThreadState;
   creator: CreatorContext | null;
   fewShotApprovedDrafts: Array<{
     post_excerpt: string;
@@ -53,7 +54,8 @@ export async function generateDraft(input: DraftInput, config: OpenAIConfig): Pr
     messages.push({ role: 'user', content: REGENERATE_HINT });
   }
 
-  const model = input.isTopLevel ? config.richModel : config.defaultModel;
+  // First answer in a thread uses the rich model; follow-ups use the default.
+  const model = input.thread.latestCreatorMessage?.isRoot ? config.richModel : config.defaultModel;
   const response = await fetch(`${config.apiBase}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -85,16 +87,31 @@ type ChatCompletionResponse = {
 };
 
 function buildUserPrompt(input: DraftInput): string {
-  const post = input.post;
+  const { root, thread } = input;
+  const target = thread.latestCreatorMessage;
   const lines: string[] = [];
 
-  lines.push('## Post to reply to');
-  if (post.title) lines.push(`Title: ${post.title}`);
-  if (post.url) lines.push(`URL: ${post.url}`);
-  lines.push(`Body:\n${stripHtml(post.shortContent || post.description || '')}`);
+  lines.push('## Thread');
+  if (root.title) lines.push(`Title: ${root.title}`);
+  if (root.url) lines.push(`URL: ${root.url}`);
   lines.push('');
 
-  const author = post.owner || post.createdBy;
+  lines.push('## Messages (oldest first)');
+  for (const message of thread.messages) {
+    const who = message.author?.name || message.author?.username || 'someone';
+    const role = message.isStaff ? 'Webflow staff' : 'creator';
+    lines.push(`- ${who} (${role}): ${clip(message.text, 1500)}`);
+  }
+  lines.push('');
+
+  if (target) {
+    lines.push('## Message to answer');
+    lines.push('This creator message has no staff reply yet:');
+    lines.push(clip(target.text, 3000));
+    lines.push('');
+  }
+
+  const author = target?.author;
   if (author) {
     lines.push('## Author (from Bettermode)');
     if (author.name) lines.push(`Name: ${author.name}`);
@@ -126,36 +143,12 @@ function buildUserPrompt(input: DraftInput): string {
     lines.push('');
   }
 
-  const replies = post.replies?.nodes ?? [];
-  if (replies.length > 0) {
-    lines.push('## Existing thread (oldest first)');
-    for (const reply of replies) {
-      const who = reply.createdBy?.name || reply.createdBy?.username || 'someone';
-      lines.push(`- ${who}: ${stripHtml(reply.shortContent || reply.description || '').slice(0, 600)}`);
-    }
-    lines.push('');
-  }
-
   lines.push('Draft the admin reply now. Output the reply text only.');
   return lines.join('\n');
 }
 
-function stripHtml(html: string): string {
-  if (!html) return '';
-  return html
-    .replace(/<style[\s\S]*?<\/style>/gi, '')
-    .replace(/<script[\s\S]*?<\/script>/gi, '')
-    .replace(/<br\s*\/?>(?!\n)/gi, '\n')
-    .replace(/<\/(p|div|li|h\d)>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
+function clip(value: string, max: number): string {
+  return value.length <= max ? value : `${value.slice(0, max - 1)}…`;
 }
 
 function summarizeAsset(fields: Record<string, unknown>): string {

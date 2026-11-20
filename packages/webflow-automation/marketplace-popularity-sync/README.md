@@ -88,7 +88,9 @@ connection:
   `TEMPLATE_ID` → 👀ℹ️MRP ID (Override), update-only, daily 05:00 UTC. Maps
   `SCORE_EX_VIEWS` → 🖌️Score ex-views, `DEAD_INVENTORY_MULTIPLIER` →
   🖌️Dead Inventory Multiplier, plus 📋 Unique Viewers / Cumulative Purchases /
-  Cumulative Revenue / SYNCED_AT as before. **Never** map anything to
+  Cumulative Revenue / SYNCED_AT as before, and `FULFILLMENT_LINK_SALES` →
+  📋 Fulfillment-link Sales (display only: lifetime fulfillment-link orders,
+  which never reach `report__template_sales`). **Never** map anything to
   🖌️Popularity Score.
 - `SOURCE=airtable` (the `run.sh` default) → `sync.mjs --source airtable` reads those
   fields, adds `100 × dead × 0.10 × percent_rank(beacon 28d sessions)`, and

@@ -26,10 +26,10 @@ SYSTEM_PROMPT = """You are a RESEARCH-FIRST content agent for CREATE SOMETHING.
 
 **This is mandatory, not optional.** Before writing ANY content:
 
-1. USE the bash tool to search: bash(command="grep -r 'topic' .claude/rules/ --include='*.md' | head -20")
-2. USE the bash tool to find files: bash(command="find . -name '*.md' -path './.claude/*' | head -20")
-3. USE the file_read tool to read what you find: file_read(path=".claude/rules/beads-patterns.md")
-4. ONLY THEN write content based on what you actually read
+1. USE bash for the bounded discovery commands supplied in the task.
+2. Select at most 3 existing source files using work-item citations and focused directory listings. Search explicit files only, at most 20 matching lines per file and 60 across selected files in a research pass. Do not use shell pipelines or broad recursive content searches.
+3. USE file_read to read the relevant selected files.
+4. ONLY THEN write from what you actually read. If output is truncated or a query is blocked, narrow the file/query selection and record the limit; do not bypass the tool policy or treat partial results as complete research.
 
 **If you write content without first calling bash or file_read tools, you are doing it wrong.**
 
@@ -51,14 +51,6 @@ You generate papers and experiments based ONLY on verified facts from the codeba
 - Say "Not measured" only AFTER you searched and couldn't find data
 - Document what files you examined in Methodology section
 
-## Mandatory Research Steps
-
-1. **Search first**: bash(command="grep -ri 'topic' . --include='*.md' | head -30")
-2. **Find docs**: bash(command="ls -la .claude/rules/")
-3. **Read files**: file_read(path=".claude/rules/relevant-file.md")
-4. **Extract facts**: Note exact quotes and line numbers
-5. **Write from evidence**: Every claim cites a file you read
-
 ## Canon Design Principles
 
 1. **Tailwind for structure, Canon for aesthetics**
@@ -78,10 +70,9 @@ You generate papers and experiments based ONLY on verified facts from the codeba
 
 ## Voice Canon
 
-1. **Clarity Over Cleverness** — Serve the reader
-2. **Specificity Over Generality** — Measurable claims WITH EVIDENCE
-3. **Honesty Over Polish** — Document failures and unknowns too
-4. **Useful Over Interesting** — Implementation focus with real code
+Use `packages/dotfiles/codex/skills/writing-for-humans/references/create-something-voice.md` as the approved voice authority and apply its research-property emphasis. The core criteria are precise, capable, human, and accountable: lead with supported findings, explain technical terms, use inclusive language, and preserve methodology, limitations, uncertainty, ownership, and verification status.
+
+Support material claims with evidence or an honest limit. Evidence may be qualitative or quantitative; do not invent metrics, stories, citations, or customer outcomes. Prompt examples illustrate presentation only; do not reuse their facts as source evidence. Keep proposed, tested, deployed, and verified states distinct. Draft completion does not grant publishing permission; consequential publication requires a human final read.
 
 ## CRITICAL: Tell A Story (Not Just Fill Sections)
 
@@ -97,7 +88,7 @@ Every paper follows: HOOK → CONTEXT → PROBLEM → APPROACH → FINDINGS → 
 | Context | What the reader needs to understand the topic |
 | Problem | The tension or challenge that drives the paper |
 | Approach | How the problem was addressed |
-| Findings | What was discovered (with specific metrics) |
+| Findings | What was discovered (with source-supported evidence) |
 | Implications | Why it matters, what can be applied elsewhere |
 | Limitations | What wasn't covered, future work needed |
 
@@ -139,7 +130,7 @@ Transform abstract claims into concrete comparisons:
 
 Each section needs SUBSTANCE:
 - Introduction: 2-3 paragraphs explaining context and stakes
-- Findings: Data table + before/after cards + specific metrics + "What We Did" lists
+- Findings: source-supported evidence + useful before/after comparisons + "What We Did" lists
 - Discussion: 2-3 paragraphs interpreting meaning
 - Limitations: 3-5 specific bullet points
 
@@ -157,12 +148,12 @@ When Claude Code sessions end—whether from context limits, crashes, or
 simply closing the terminal—work disappears. This is the fundamental
 challenge Beads solves...
 
-[2-3 more paragraphs with specific examples, metrics, and implications]
+[2-3 more paragraphs with supported examples, available measurements, and implications]
 ```
 
 ## Output Format
 
-Generate complete, production-ready Svelte components:
+Generate complete Svelte components for review. Completion does not establish production readiness:
 - TypeScript with proper types defined inline (not external imports)
 - Semantic HTML
 - Canon tokens in <style> blocks
@@ -319,28 +310,22 @@ def detect_content_type(title: str, labels: list[str]) -> Literal["paper", "expe
     return "paper"
 
 
-def create_paper_agent(
+def build_paper_task(
     config: PaperConfig,
-) -> CreateSomethingAgent:
-    """
-    Create an agent for generating papers/experiments from Linear or Beads issues.
+    issue: dict[str, Any] | None = None,
+) -> str:
+    """Build the shared task for CLI and agent-factory callers.
 
-    Args:
-        config: Paper generation configuration
-
-    Returns:
-        Configured CreateSomethingAgent
-
-    Example:
-        agent = create_paper_agent(PaperConfig(issue_id="CRE-123"))
-        result = await agent.run()
+    Supplied issue data avoids a second remote lookup after a CLI has fetched it.
+    This only builds instructions; it does not create a provider or generate files.
     """
     monorepo = config.monorepo_path or Path.cwd()
     tracking_system = detect_tracking_system(config.issue_id)
     work_item_kind = "Linear issue" if tracking_system == "linear" else "Beads issue"
 
     # Fetch issue details
-    issue = get_issue_details(config.issue_id, monorepo)
+    if issue is None:
+        issue = get_issue_details(config.issue_id, monorepo)
     if not issue:
         raise ValueError(f"Could not fetch issue {config.issue_id}")
 
@@ -366,65 +351,7 @@ def create_paper_agent(
         else f"4. After creating files successfully, close the Beads issue:\n   bd close {config.issue_id} --no-db"
     )
 
-    # Build task prompt
-    task = f'''
-Generate a CREATE SOMETHING {content_type} from this {work_item_kind}.
-
-## Work Item Details
-- ID: {config.issue_id}
-- Title: {title}
-- Description: {description}
-- Labels: {", ".join(labels)}
-
-## MANDATORY: Use Tools Before Writing
-
-**You MUST call bash and file_read tools before writing ANY content.**
-
-### Step 1: Search with bash tool (REQUIRED)
-Call the bash tool with these commands:
-- grep -ri "{title.split()[0].lower()}" .claude/rules/ --include="*.md" | head -30
-- ls -la .claude/rules/
-- grep -ri "{title.split()[0].lower()}" packages/ --include="*.ts" --include="*.py" | head -20
-
-### Step 2: Read files with file_read tool (REQUIRED)
-After searching, read the relevant files you found:
-- file_read(path=".claude/rules/beads-patterns.md") if about Beads
-- file_read(path="CLAUDE.md") for architecture overview
-- Read any files that grep found
-
-### Step 3: Extract facts from what you read
-From the actual file contents:
-- Quote exact text with line numbers
-- Note real function/class names you saw
-- Count actual files, lines, or patterns
-
-### Step 4: Write paper citing your sources
-Every claim must reference a file you read:
-- "In .claude/rules/beads-patterns.md:42, the pattern shows..."
-- "CLAUDE.md documents that..."
-
-**If you skip Steps 1-2 and write without tool calls, your paper will be rejected.**
-
-## Output Requirements
-
-1. Create directory: {output_dir}
-
-2. Create +page.svelte with:
-   - Canon design tokens (var(--color-*), var(--radius-*), var(--text-*))
-   - NO Tailwind design utilities (bg-white, rounded-lg, etc.)
-   - Tailwind ONLY for layout (flex, grid, p-*, m-*, gap-*)
-   - Proper <script lang="ts"> with types DEFINED INLINE (not imported)
-   - Semantic HTML structure
-   - Escape curly braces in code examples: {{`code`}}
-   - Content based ONLY on verified facts
-
-3. {"Create +page.server.ts for data fetching" if content_type == "experiment" else "Static paper - no server file needed"}
-
-{close_instruction}
-
-{"## PAPER STRUCTURE REQUIREMENTS (MINIMUM)" if content_type == "paper" else "## EXPERIMENT STRUCTURE REQUIREMENTS (MINIMUM)"}
-
-{'''Your paper MUST include ALL of these elements:
+    paper_structure = '''Your paper MUST include ALL of these elements:
 
 ### 1. Header Section
 ```html
@@ -463,7 +390,7 @@ Required sections:
 - II. [Problem/Context]
 - III. Methodology/Approach
 - IV. [Findings/Analysis] - with data tables or cards
-- V. [Results/Outcomes] - with metrics
+- V. [Results/Outcomes] - with supported evidence and measurement limits
 - VI. Discussion/Implications
 - VII. Limitations
 
@@ -472,9 +399,9 @@ Required sections:
 Each section follows this narrative pattern:
 1. **Question/Hook** - Frame the problem or question (use callout box)
 2. **Finding** - What was discovered (2-3 paragraphs)
-3. **Evidence** - Before/After comparison with specific numbers
+3. **Evidence** - Source-supported observations or comparisons; use metrics only when supported
 4. **Action** - "What We Did" list with concrete steps
-5. **Outcome** - Measurable result
+5. **Outcome** - Supported result or an honest limit on what is known
 
 **Example of a GOOD section:**
 ```
@@ -585,7 +512,8 @@ Style: centered, italic, `background: var(--color-bg-subtle); border-radius: var
 - Minimum 12 minute read time
 - Minimum 5 numbered sections
 - Minimum 3 visual elements (tables, cards, or code blocks)
-- Minimum 2 references with file paths''' if content_type == "paper" else '''Your experiment MUST include ALL of these elements:
+- Minimum 2 references with file paths'''
+    experiment_structure = '''Your experiment MUST include ALL of these elements:
 
 ### 1. Header with Status Banner
 ```html
@@ -598,14 +526,14 @@ Style: centered, italic, `background: var(--color-bg-subtle); border-radius: var
 </header>
 ```
 
-### 2. Stats Grid (MINIMUM 4 metrics)
+### 2. Evidence Summary (use metrics only when supported; no numeric quota)
 ```html
 <div class="stats-grid">
   <div class="stat-card">
     <span class="stat-value">123</span>
     <span class="stat-label">Metric Name</span>
   </div>
-  <!-- Repeat for 4+ metrics -->
+  <!-- Include only available source-supported metrics; use qualitative evidence when measurements are unavailable -->
 </div>
 ```
 Style: `display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-md);`
@@ -676,9 +604,77 @@ export const load: PageServerLoad = async ({{ fetch }}) => {{
 ### SIZING REQUIREMENTS
 - Minimum 400 lines of code (target 500-800)
 - At least 1-2 real data endpoints
-- Minimum 4 stat metrics
+- Include supported metrics when available, otherwise qualitative evidence and measurement limits
 - Minimum 3 status cards
-- Architecture explanation section'''}
+- Architecture explanation section'''
+    structure_requirements = paper_structure if content_type == "paper" else experiment_structure
+
+    search_match = re.search(r"[A-Za-z0-9_]+", title)
+    search_term = search_match.group(0).lower() if search_match else "evidence"
+
+    # Build task prompt
+    task = f'''
+Generate a CREATE SOMETHING {content_type} from this {work_item_kind}.
+
+## Work Item Details
+- ID: {config.issue_id}
+- Title: {title}
+- Description: {description}
+- Labels: {", ".join(labels)}
+
+## MANDATORY: Use Tools Before Writing
+
+**You MUST call bash and file_read tools before writing ANY content.**
+
+### Step 1: Select files before searching (REQUIRED)
+Start with these pipe-free discovery commands:
+- ls .claude/rules/
+- ls packages/
+- rg --max-count 20 --fixed-strings -- "{search_term}" .claude/rules/voice-canon.md
+
+Use work-item citations and focused directory listings to choose at most 3 source files relevant to the task. Before searching their contents, confirm those files exist. Pass explicit file paths, never a directory tree, to rg. Use at most 20 matching lines per selected file, at most 60 across the selected files in a research pass.
+
+If a query is blocked or output is truncated, narrow the query or file selection, choose an allowed equivalent, and record the limitation. Never treat a truncated search as complete research, bypass the tool policy, or invent evidence.
+
+### Step 2: Read files with file_read tool (REQUIRED)
+After searching, read the relevant files you found:
+- file_read(path=".claude/rules/beads-patterns.md") if about Beads
+- file_read(path="CLAUDE.md") for architecture overview
+- Read the relevant selected files, including when the initial string query has no matches
+
+### Step 3: Extract facts from what you read
+From the actual file contents:
+- Quote exact text with line numbers
+- Note real function/class names you saw
+- Count actual files, lines, or patterns
+
+### Step 4: Write paper citing your sources
+Every claim must reference a file you read:
+- "In .claude/rules/beads-patterns.md:42, the pattern shows..."
+- "CLAUDE.md documents that..."
+
+**If you skip Steps 1-2 and write without tool calls, your paper will be rejected.**
+
+## Output Requirements
+
+1. Create directory: {output_dir}
+
+2. Create +page.svelte with:
+   - Canon design tokens (var(--color-*), var(--radius-*), var(--text-*))
+   - NO Tailwind design utilities (bg-white, rounded-lg, etc.)
+   - Tailwind ONLY for layout (flex, grid, p-*, m-*, gap-*)
+   - Proper <script lang="ts"> with types DEFINED INLINE (not imported)
+   - Semantic HTML structure
+   - Escape curly braces in code examples: {{`code`}}
+   - Content based ONLY on verified facts
+
+3. {"Create +page.server.ts for data fetching" if content_type == "experiment" else "Static paper - no server file needed"}
+
+{close_instruction}
+
+{"## PAPER STRUCTURE REQUIREMENTS (MINIMUM)" if content_type == "paper" else "## EXPERIMENT STRUCTURE REQUIREMENTS (MINIMUM)"}
+
+{structure_requirements}
 
 ## Quality Gate
 
@@ -732,9 +728,16 @@ Before finalizing, verify:
 --radius-lg: 12px;
 ```
 
-Generate complete, production-ready content. No placeholders. No TODOs.
+Generate complete content for review. Do not fill evidence gaps with placeholders or invented facts; flag any blocking gap. No publishing permission follows from draft completion.
 Route will be: {route_path}
 '''
+
+    return task
+
+
+def create_paper_agent(config: PaperConfig) -> CreateSomethingAgent:
+    """Create a paper/experiment agent using the shared evidence-preserving task."""
+    task = build_paper_task(config)
 
     # Select model
     model = config.model or "claude-sonnet-4-20250514"

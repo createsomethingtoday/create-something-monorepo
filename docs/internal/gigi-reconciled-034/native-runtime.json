@@ -1,0 +1,31 @@
+{
+  "passed": true,
+  "version": "0.3.4",
+  "runtimeSourceSha": "9860f06169540aafa0c7b437ce16cb62e49099de",
+  "bundleId": "agency.createsomething.gigi.qa.cre2377",
+  "syntheticProfile": true,
+  "checks": [
+    "Exact0.3.4 QA window opens saved synthetic workspace",
+    "Work Down/Return opensGigs andclosesmenu",
+    "Savedgig exacttitle/date2026-11-09/call16:00/Confirmed readback",
+    "Back restores exactgigrowfocus",
+    "Command-F nativeSearch returns savedPeople/Gigs/Tasks including priorcompletedtask",
+    "Escape returnsSearchtriggerfocus",
+    "Today excludescompletedtasks",
+    "Nextweek changesNov9–15→Nov16–22;financialdeadlineThroughNov15 unchanged",
+    "Currentweekrestored;Quit/reopen resetsnavigationhistory andretains savedworkspace/gig/completedtaskstate"
+  ],
+  "evidence": [
+    "search.png",
+    "search.ax.txt",
+    "today-after-restart.png",
+    "today-after-restart.ax.txt"
+  ],
+  "limits": [
+    "Same-sourceQAvariant, not exactsignedinstallerGUI/freshinstallation",
+    "Importfailure/recoverycases verifiedinactualReactsyntheticbrowser/model suites; no liveGoogle/import/provider/phone",
+    "CurrentMac/WebKit only; minimum880responsivecoverageisindependentbrowser",
+    "No olderOSfloor/OSIME/screenreaderspeech/notification/audible/humanacceptance",
+    "No originalpublic or existingDEVprofile used; no memoryimplementationincluded"
+  ]
+}

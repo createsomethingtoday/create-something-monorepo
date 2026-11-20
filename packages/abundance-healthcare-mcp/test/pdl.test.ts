@@ -1,3 +1,4 @@
+import { withBudgetFixture } from './fixtures/budget.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { enrichPdlProfile, PDL_PERSONAL_CONTACT_FIELDS, PDL_PROFESSIONAL_FIELDS, type PdlStore, type PdlTransaction } from '../src/pdl.js';
@@ -93,19 +94,19 @@ test('PDL rejects wrong identities and insufficient likelihood without returning
   }
 });
 
-test('PDL shares a configurable rolling budget across sessions and caches repeats for seven days', async () => {
+test('PDL deduplicates across sessions without a spend cap and caches repeats for seven days', async () => {
   const store = new Store(); let calls = 0; const now = Date.now();
   const options = { apiKey: 'secret', store, now, dailyLimit: 5, fetchFn: async () => { calls++; return new Response(null, { status: 404 }); } };
   await Promise.all(Array.from({ length: 8 }, () => enrichPdlProfile(profileInput, options)));
   assert.equal(calls, 1);
   const settled = await Promise.allSettled(Array.from({ length: 6 }, (_, i) => enrichPdlProfile({ ...profileInput, profile_url: profileInput.profile_url + i }, options)));
-  assert.equal(settled.filter(r => r.status === 'rejected').length, 2); assert.equal(calls, 5);
+  assert.equal(settled.filter(r => r.status === 'rejected').length, 0); assert.equal(calls, 7);
   const cached = await enrichPdlProfile(profileInput, { ...options, now: now + 2 * 86400000 });
-  assert.equal(cached.cached, true); assert.equal(cached.status, 'no_match'); assert.equal(calls, 5);
-  await enrichPdlProfile(profileInput, { ...options, now: now + 8 * 86400000 }); assert.equal(calls, 6);
+  assert.equal(cached.cached, true); assert.equal(cached.status, 'no_match'); assert.equal(calls, 7);
+  await enrichPdlProfile(profileInput, { ...options, now: now + 8 * 86400000 }); assert.equal(calls, 8);
   const wideStore = new Store();
   const wide = await Promise.allSettled(Array.from({ length: 26 }, (_, i) => enrichPdlProfile({ ...profileInput, profile_url: profileInput.profile_url + 'w' + i }, { ...options, store: wideStore, dailyLimit: undefined })));
-  assert.equal(wide.filter(r => r.status === 'rejected').length, 1);
+  assert.equal(wide.filter(r => r.status === 'rejected').length, 0);
 });
 
 test('PDL preserves uncertain failures and never retries or returns upstream error bodies', async () => {
@@ -126,7 +127,7 @@ test('enrich_candidate_profile resolves an NPI to a name/location match and retu
   const registry = { npi: '1234567893', name: 'TEST, JORDAN', first_name: 'JORDAN', last_name: 'TEST', practice_city: 'ALBANY', practice_state: 'NY', practice_phone: '518-555-0100', source_fetched_at: '2026-09-01T00:00:00Z' };
   const options = {
     agencyApiKey: 'agency', agencyBaseUrl: 'https://agency.test',
-    fetchFn: async () => Response.json({ success: true, data: { report: { evaluated_at: 'now', source: {}, recruiting_pipeline: {}, persona: {}, market_coverage_status: 'x', direct_outreach_status: 'blocked', provider_count: 1 }, providers: [registry], readiness: [], total: 1, limit: 1, offset: 0 } }),
+    fetchFn: withBudgetFixture(async () => Response.json({ success: true, data: { report: { evaluated_at: 'now', source: {}, recruiting_pipeline: {}, persona: {}, market_coverage_status: 'x', direct_outreach_status: 'blocked', provider_count: 1 }, providers: [registry], readiness: [], total: 1, limit: 1, offset: 0 } })),
     pdlEnrich: async (input: unknown) => { seen.push(input); return { status: 'matched' as const, source: 'People Data Labs' as const, scope: 'professional_and_personal_contact' as const, retrieved_at: 'now', subject_npi: '1234567893', personal_contact_access: 'returned' as const, provenance: { source: 'People Data Labs' as const, retrieved_at: 'now', contact_type: 'vendor_reported_personal_contact' as const, verification: 'unverified' as const, consent_basis: 'not_recorded' as const }, limitation: 'x' }; },
   };
   const out = await enrichCandidateProfile({ npi: '1234567893', confirm_paid_enrichment: true }, options) as Record<string, any>;
@@ -136,4 +137,15 @@ test('enrich_candidate_profile resolves an NPI to a name/location match and retu
   await assert.rejects(enrichCandidateProfile({ npi: '1234567893', name: 'x', locality: 'y', confirm_paid_enrichment: true }, options), /exactly one/);
   await assert.rejects(enrichCandidateProfile({ confirm_paid_enrichment: true }, options), /exactly one/);
   assert.equal(seen.length, 1);
+});
+
+test('PDL records billed credit units without inventing a USD conversion',async()=>{
+ const result=await enrichPdlProfile(profileInput,{apiKey:'synthetic',store:new Store(),fetchFn:async()=>new Response(null,{status:404,headers:{'x-call-credits-spent':'1','x-request-id':'fixture-request'}})});
+ assert.deepEqual(result.billing,{credits_used:1,request_id:'fixture-request'});
+ assert.equal((result as any).actual_cost_usd,undefined);
+});
+
+test('blank PDL credit metadata remains unknown',async()=>{
+ const result=await enrichPdlProfile(profileInput,{apiKey:'synthetic',store:new Store(),fetchFn:async()=>new Response(null,{status:404,headers:{'x-call-credits-spent':' '}})});
+ assert.equal(result.billing?.credits_used,null);
 });

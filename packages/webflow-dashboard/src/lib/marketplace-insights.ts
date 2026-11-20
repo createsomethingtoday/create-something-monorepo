@@ -4,6 +4,8 @@ export interface LeaderboardEntry {
 	category: string;
 	totalSales30d: number;
 	totalRevenue30d?: number;
+	/** Part of totalSales30d through fulfillment links; only for the viewer's own templates. */
+	fulfillmentSales30d?: number;
 	salesRank: number;
 	revenueRank: number;
 	isUserTemplate: boolean;
@@ -34,6 +36,8 @@ export interface LeaderboardResponse {
 	userCategories?: string[];
 	summary: {
 		totalMarketplaceSales: number;
+		/** Part of totalMarketplaceSales through fulfillment links; null when the snapshot has no split. */
+		totalFulfillmentSales?: number | null;
     snapshotVersion?: string;
     salesSource?: 'marketplace-snapshot' | 'leaderboard-top-50';
 		userBestRank: number | null;

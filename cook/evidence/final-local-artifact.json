@@ -1,0 +1,9 @@
+{
+  "source": "e06d18fa7a086e572cfa91d0fc52c29e7c1e4cf6",
+  "kind": "ad-hoc diagnostic app; not release installer",
+  "app": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-0cecb8e9-770e2a3a3a0992e5/apps/gigi-desktop/src-tauri/target/debug/bundle/macos/GiGi.app",
+  "binary_sha256": "66e43b9d3154926b0b73e0879fb7e17285c68c86532a44620b0921967cea6c04",
+  "native_ui": "untested: CUA cgWindowNotFound on earlier isolated copy",
+  "live_providers": "untested",
+  "root_checkout": "not modified"
+}

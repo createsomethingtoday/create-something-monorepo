@@ -1,0 +1,60 @@
+TAP version 13
+# Subtest: streamed prefixes survive active history reconciliation (history ahead: false)
+not ok 1 - streamed prefixes survive active history reconciliation (history ahead: false)
+  ---
+  duration_ms: 8.533584
+  type: 'test'
+  location: '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/packages/gigi-integrations/test/codex.test.ts:1:103758'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'Prefix'
+    - 'Prefix!'
+             ^
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'Prefix!'
+  actual: 'Prefix'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/packages/gigi-integrations/test/codex.test.ts:1558:14)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: streamed prefixes survive active history reconciliation (history ahead: true)
+not ok 2 - streamed prefixes survive active history reconciliation (history ahead: true)
+  ---
+  duration_ms: 3.758709
+  type: 'test'
+  location: '/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/packages/gigi-integrations/test/codex.test.ts:1:103758'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'Prefix caught up'
+    - 'Prefix caught up!'
+                       ^
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'Prefix caught up!'
+  actual: 'Prefix caught up'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/packages/gigi-integrations/test/codex.test.ts:1558:14)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 593.503

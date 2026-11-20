@@ -1,3 +1,5 @@
+import { deploymentResource, DEV_RESOURCE } from '../src/deployment.ts';
+import { requireSourceSelection, type SourceSelection } from '../src/source-selection.ts';
 import { handleInstagramRequest, instagramStagedMedia } from './instagram.ts';
 export const GIGI_RESOURCE = 'https://gigi-connector.createsomething.workers.dev';
 const IDENTITY_USERINFO = 'https://id.createsomething.space/oauth/userinfo';
@@ -31,8 +33,11 @@ const SELECTED_CALENDAR_SCOPES = [
 ] as const;
 
 export interface ConnectorEnv {
+  GIGI_DEPLOYMENT_ENV?: string;
   COMPOSIO_API_KEY?: string;
   GIGI_ALLOWED_SUBJECTS?: string;
+  /** Explicit application policy; never changes Identity or provider permissions. */
+  GIGI_PUBLIC_ACCESS_ENABLED?: string;
   INSTAGRAM_MEDIA?: {
     put(key:string,value:Uint8Array,options:{customMetadata:Record<string,string>}):Promise<unknown>;
     get(key:string):Promise<{body:ReadableStream<Uint8Array>;customMetadata?:Record<string,string>}|null>;
@@ -69,12 +74,14 @@ export async function handleConnectorRequest(
   env: ConnectorEnv,
   providerFetch: typeof fetch = fetch,
 ): Promise<Response> {
+  let resource: string;
+  try { resource = deploymentResource(env.GIGI_DEPLOYMENT_ENV); } catch { return json({ error: 'unconfigured' }, 503); }
   const url = new URL(request.url);
-  if (url.origin !== GIGI_RESOURCE) return json({ error: 'invalid_host' }, 400);
+  if (url.origin !== resource) return json({ error: 'invalid_host' }, 400);
   const staged = await instagramStagedMedia(request,env);
   if(staged)return staged;
   if (url.pathname === '/health' && request.method === 'GET') {
-    const configured = Boolean(env.DB && env.COMPOSIO_API_KEY && env.GIGI_ALLOWED_SUBJECTS?.trim() &&
+    const configured = Boolean(env.DB && env.COMPOSIO_API_KEY && (publicAdmission(env) || env.GIGI_ALLOWED_SUBJECTS?.trim()) &&
       env.GIGI_GMAIL_AUTH_CONFIG_ID && env.GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID &&
       approvedScopes('gmail', env.GIGI_GMAIL_AUTH_CONFIG_ID, env.GIGI_GMAIL_APPROVED_SCOPES) &&
       approvedScopes('googlecalendar', env.GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID, env.GIGI_GOOGLECALENDAR_APPROVED_SCOPES));
@@ -165,8 +172,10 @@ export async function handleConnectorRequest(
     if (!row || row.connected_account_id !== accountId || row.status !== 'active') return json({ error: 'not_found' }, 404);
     if (!await verifyComposioAccount(env, providerFetch, subject, provider, accountId)) return json({ error: 'provider_readback_invalid' }, 502);
     const cursor = url.searchParams.get('cursor');
-    if (cursor && (cursor.length > 512 || /[\r\n]/u.test(cursor))) return json({ error: 'invalid_cursor' }, 400);
-    try { return json(await readSourcePage(env, providerFetch, provider, accountId, cursor)); }
+    if (cursor && (cursor.length > 2048 || /[\r\n]/u.test(cursor))) return json({ error: 'invalid_cursor' }, 400);
+    try {
+      const selection = requireSourceSelection(Object.fromEntries(['from', 'to', 'calendarId'].filter(key => url.searchParams.has(key)).map(key => [key, url.searchParams.get(key)])), provider);
+      return json(await readSourcePage(env, providerFetch, provider, accountId, cursor, selection)); }
     catch { return json({ error: 'source_unavailable' }, 503); }
   }
   return json({ error: 'not_implemented' }, 501);
@@ -178,7 +187,18 @@ export async function readSourcePage(
   provider: 'gmail' | 'googlecalendar',
   accountId: string,
   cursor: string | null,
+  selection: SourceSelection = {},
 ): Promise<unknown> {
+  selection = requireSourceSelection(selection, provider);
+  const scope = JSON.stringify([provider, accountId, selection.from ?? null, selection.to ?? null, selection.calendarId ?? null]);
+  const scoped = provider === 'googlecalendar' && !!(selection.from || selection.to);
+  if (cursor?.startsWith('g1.') && !scoped) throw new Error('cursor_scope_changed');
+  if (scoped && cursor) {
+    if (!cursor.startsWith('g1.')) throw new Error('cursor_scope_required');
+    const decoded = JSON.parse(atob(cursor.slice(3).replace(/-/g, '+').replace(/_/g, '/')));
+    if (decoded.scope !== scope || typeof decoded.token !== 'string' || decoded.token.length > 512 || /[\r\n]/.test(decoded.token)) throw new Error('cursor_scope_changed');
+    cursor = decoded.token;
+  }
   const observedAt = new Date().toISOString();
   if (provider === 'gmail') {
     const query: Array<{ name: string; value: string; type: 'query' }> = [{ name: 'maxResults', value: '2', type: 'query' }];
@@ -206,6 +226,7 @@ export async function readSourcePage(
       records.push({ externalId: message.id, kind: 'message', observedAt, data: {
         threadId: typeof detail.threadId === 'string' ? detail.threadId.slice(0, 128) : '',
         subject: header('Subject'), from: header('From'), date: header('Date'),
+        mailState: Array.isArray(detail.labelIds) && detail.labelIds.includes('DRAFT') ? 'Draft' : Array.isArray(detail.labelIds) && detail.labelIds.includes('SENT') ? 'Sent' : 'Unknown',
         snippet: typeof detail.snippet === 'string' ? detail.snippet.slice(0, 500) : '',
       } });
     }
@@ -220,6 +241,8 @@ export async function readSourcePage(
     { name: 'maxResults', value: '10', type: 'query' },
     { name: 'singleEvents', value: 'true', type: 'query' },
   ];
+  if (selection.from) params.push({ name: 'timeMin', value: selection.from, type: 'query' });
+  if (selection.to) params.push({ name: 'timeMax', value: selection.to, type: 'query' });
   if (cursor) params.push({ name: 'pageToken', value: cursor, type: 'query' });
   const page = await proxyRead(env, providerFetch, accountId,
     `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`, params);
@@ -229,18 +252,18 @@ export async function readSourcePage(
     if (!isRecord(item) || typeof item.id !== 'string' || !item.id || item.id.length > 256) throw new Error('calendar_event_id_invalid');
     return { externalId: item.id, kind: 'event' as const, observedAt, data: {
       calendarId, summary: typeof item.summary === 'string' ? item.summary.slice(0, 500) : '',
-      start: calendarTimeProjection(item.start), end: calendarTimeProjection(item.end),
+      start: calendarTimeProjection(item.start, primary.timeZone), end: calendarTimeProjection(item.end, primary.timeZone),
       ...(typeof item.htmlLink === 'string' && item.htmlLink.length <= 512 ? { htmlLink: item.htmlLink } : {}),
       location: typeof item.location === 'string' ? item.location.slice(0, 500) : '',
       description: typeof item.description === 'string' ? item.description.slice(0, 1000) : '',
     } };
   });
   return { provider, connectedAccountId: accountId, records,
-    nextCursor: typeof page.nextPageToken === 'string' ? page.nextPageToken : null };
+    nextCursor: typeof page.nextPageToken === 'string' ? (scoped ? 'g1.' + btoa(JSON.stringify({scope, token:page.nextPageToken})).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '') : page.nextPageToken) : null };
 }
 
 // Project only bounded provider time metadata, never arbitrary nested event properties.
-function calendarTimeProjection(value: unknown): Record<string, string> {
+function calendarTimeProjection(value: unknown, calendarZone?: unknown): Record<string, string> {
   if (!isRecord(value)) return {};
   const result: Record<string, string> = {};
   for (const key of ['date', 'dateTime', 'timeZone']) {
@@ -249,6 +272,7 @@ function calendarTimeProjection(value: unknown): Record<string, string> {
       result[key] = value[key];
     }
   }
+  if (result.date && !result.timeZone && typeof calendarZone === 'string' && calendarZone.length <= 128) result.timeZone = calendarZone;
   return result;
 }
 
@@ -309,7 +333,7 @@ async function readAccountState(
     if (!response.ok) return 'unavailable';
     data = await boundedJson(response);
   } catch { return 'unavailable'; }
-  if (!isRecord(data) || data.id !== accountId || data.user_id !== await composioUserId(subject) ||
+  if (!isRecord(data) || data.id !== accountId || data.user_id !== await composioUserId(subject, env) ||
     !isRecord(data.auth_config) || data.auth_config.id !== authConfigId ||
     !isRecord(data.toolkit) || data.toolkit.slug !== provider ||
     !isRecord(data.experimental) || data.experimental.account_type !== 'PRIVATE' || !Array.isArray(data.requested_scopes)) return 'invalid';
@@ -326,7 +350,7 @@ async function recoverDispatchedAccount(env: ConnectorEnv, providerFetch: typeof
   provider: 'gmail' | 'googlecalendar' | 'instagram', row: { request_id: string; created_at?: string }): Promise<Record<string, unknown> | null> {
   const authConfigId = provider === 'instagram' ? env.GIGI_INSTAGRAM_AUTH_CONFIG_ID : provider === 'gmail' ? env.GIGI_GMAIL_AUTH_CONFIG_ID : env.GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID;
   if (!authConfigId || !row.created_at || !Number.isFinite(Date.parse(row.created_at))) return null;
-  const owner = await composioUserId(subject);
+  const owner = await composioUserId(subject, env);
   const url = new URL('https://backend.composio.dev/api/v3.1/connected_accounts');
   url.searchParams.set('user_ids', owner);
   url.searchParams.set('auth_config_ids', authConfigId);
@@ -367,9 +391,11 @@ async function verifyComposioAccount(env: ConnectorEnv, providerFetch: typeof fe
   return await readAccountState(env, providerFetch, subject, provider, accountId) === 'active';
 }
 
-async function composioUserId(subject: string): Promise<string> {
-  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(subject));
-  return 'gigi_' + [...new Uint8Array(hash)].map((byte) => byte.toString(16).padStart(2, '0')).join('').slice(0, 32);
+export async function composioUserId(subject: string, env: ConnectorEnv): Promise<string> {
+  const resource = deploymentResource(env.GIGI_DEPLOYMENT_ENV);
+  const dev = resource === DEV_RESOURCE;
+  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(dev ? `${resource}\n${subject}` : subject));
+  return (dev ? 'gigi_dev_' : 'gigi_') + [...new Uint8Array(hash)].map((byte) => byte.toString(16).padStart(2, '0')).join('').slice(0, 32);
 }
 
 async function beginLink(
@@ -414,14 +440,14 @@ async function beginLink(
     return json({ provider, status: 'readback_required', attemptId });
   }
   if (insertion.meta?.changes !== 1) return json({ provider, status: 'readback_required', attemptId });
-  const userId = await composioUserId(subject);
+  const userId = await composioUserId(subject, env);
   let data: unknown;
   try {
     const response = await providerFetch(new Request('https://backend.composio.dev/api/v3.1/connected_accounts/link', {
       method: 'POST',
       headers: { 'x-api-key': env.COMPOSIO_API_KEY!, accept: 'application/json', 'content-type': 'application/json' },
       body: JSON.stringify({ auth_config_id: authConfigId, user_id: userId, alias: requestId,
-        callback_url: `${GIGI_RESOURCE}/v1/gigi/connection-callback`, experimental: { account_type: 'PRIVATE' } }),
+        callback_url: `${deploymentResource(env.GIGI_DEPLOYMENT_ENV)}/v1/gigi/connection-callback`, experimental: { account_type: 'PRIVATE' } }),
       redirect: 'manual', signal: AbortSignal.timeout(10_000),
     }));
     if (!response.ok) return json({ provider, status: 'readback_required', attemptId: requestId }, 503);
@@ -467,13 +493,18 @@ function approvedScopes(provider: 'gmail' | 'googlecalendar' | 'instagram', auth
   return false;
 }
 
+function publicAdmission(env: ConnectorEnv): boolean {
+  return deploymentResource(env.GIGI_DEPLOYMENT_ENV) !== DEV_RESOURCE && env.GIGI_PUBLIC_ACCESS_ENABLED === 'true';
+}
+
 type Admission = { subject: string } | { error: 'session_expired' | 'access_denied' | 'provider_unavailable' | 'unconfigured'; status: number };
 
 async function authenticate(request: Request, env: ConnectorEnv, providerFetch: typeof fetch): Promise<Admission> {
   const token = request.headers.get('authorization')?.match(/^Bearer ([^\s]+)$/iu)?.[1];
   if (!token || token.length > 4096) return { error: 'session_expired', status: 401 };
   const allowlist = new Set((env.GIGI_ALLOWED_SUBJECTS ?? '').split(',').map((item) => item.trim()).filter(Boolean));
-  if (allowlist.size === 0) return { error: 'unconfigured', status: 503 };
+  const publicAccess = publicAdmission(env);
+  if (!publicAccess && allowlist.size === 0) return { error: 'unconfigured', status: 503 };
   try {
     const response = await providerFetch(new Request(IDENTITY_USERINFO, {
       method: 'GET',
@@ -489,7 +520,7 @@ async function authenticate(request: Request, env: ConnectorEnv, providerFetch: 
       return { error: 'provider_unavailable', status: 503 };
     }
     // Valid Identity is not admission. Do not expose which policy dimension failed.
-    if (data.resource !== GIGI_RESOURCE || data.email_verified !== true || !allowlist.has(data.sub)) {
+    if (data.resource !== deploymentResource(env.GIGI_DEPLOYMENT_ENV) || data.email_verified !== true || (!publicAccess && !allowlist.has(data.sub))) {
       return { error: 'access_denied', status: 403 };
     }
     return { subject: data.sub };

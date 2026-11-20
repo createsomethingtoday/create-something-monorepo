@@ -1,5 +1,7 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import AgencyLegalContent from '$lib/components/AgencyLegalContent.svelte';
+  import AgencyLegalPage from '$lib/components/AgencyLegalPage.svelte';
   import { PerformancePageSection, SEO, TermsOfServiceContent } from '@create-something/canon';
 </script>
 
@@ -10,6 +12,8 @@
   noindex={true}
 />
 
+<AgencyLegalPage>
+<AgencyHeroFrame compact={true}>
 <PerformancePageSection
   variant="hero"
   expression="editorial"
@@ -17,15 +21,15 @@
   eyebrow="Terms"
   title="Terms for using CREATE SOMETHING .agency."
   description="These terms explain the conditions for using our website and services."
->
-  {#snippet after()}
-    <AgencyLegalContent>
+/>
+</AgencyHeroFrame>
+<AgencyLegalContent sectionNavigation>
       <TermsOfServiceContent
         property="agency"
         domain="createsomething.agency"
         lastUpdated="January 29, 2026"
         contactEmail="support@createsomething.io"
       />
-    </AgencyLegalContent>
-  {/snippet}
-</PerformancePageSection>
+</AgencyLegalContent>
+
+</AgencyLegalPage>

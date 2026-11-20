@@ -16,7 +16,7 @@ vi.mock('$lib/server/assets-cache', () => ({
   invalidateAssetsCache: vi.fn().mockResolvedValue(undefined)
 }));
 
-const { PUT } = await import('./+server');
+const { PUT, PATCH } = await import('./+server');
 
 const ORIGIN = 'https://dashboard.example';
 const AIRTABLE_IMAGE =
@@ -90,6 +90,28 @@ describe('PUT /api/assets/[id] image URL validation', () => {
 
     expect(response.status).toBe(200);
     expect(updateAssetWithImages).toHaveBeenCalled();
+  });
+
+  it('refuses a direct write to an app listing, by PUT or PATCH', async () => {
+    // App updates go through the submission form, where the review checks run.
+    getAssetForOwner.mockResolvedValue({ asset: { id: 'rec123', name: 'Example App', type: 'App' }, isOwner: true });
+
+    await expect(callPut({ descriptionShort: 'New copy' })).rejects.toMatchObject({
+      status: 409,
+      body: { message: expect.stringContaining('submission form') }
+    });
+    const patch = PATCH({
+      params: { id: 'rec123' },
+      request: new Request(`${ORIGIN}/api/assets/rec123`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ descriptionShort: 'New copy' })
+      }),
+      locals: { user: { email: 'creator@example.com' } },
+      platform: { env: { SESSIONS: {} } }
+    } as unknown as Parameters<typeof PATCH>[0]);
+    await expect(patch).rejects.toMatchObject({ status: 409 });
+    expect(updateAssetWithImages).not.toHaveBeenCalled();
   });
 
   it('returns a clean failed-update response when Airtable returns no record', async () => {

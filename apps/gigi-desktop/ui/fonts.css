@@ -1,0 +1,9 @@
+/* Figtree variable, @fontsource-variable/figtree 5.3.0. SIL Open Font License;
+   see third-party/Figtree-OFL.txt. Local assets keep the desktop offline. */
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 300 900;
+  font-display: swap;
+  src: url('./assets/figtree-latin-wght-normal.woff2') format('woff2');
+}

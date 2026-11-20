@@ -11,6 +11,12 @@ export interface ReviewerProfile {
    * may arm the creator-notification path.
    */
   featuredCoordinator?: boolean;
+  /**
+   * Grants writes on the Marketplace Creators community response queue
+   * (save draft, dismiss, send). Send posts a public reply in the community,
+   * so only directory entries with this flag may use it.
+   */
+  communityQueueAdmin?: boolean;
 }
 
 export type ReviewerDirectory = Map<string, ReviewerProfile>;
@@ -112,6 +118,19 @@ export function applyFeaturedCoordinators(directory: ReviewerDirectory, raw?: st
     withCoordinators.set(accountId, { ...profile, featuredCoordinator: true });
   }
   return withCoordinators;
+}
+
+export function applyCommunityQueueAdmins(directory: ReviewerDirectory, raw?: string | null): ReviewerDirectory {
+  const accountIds = (raw ?? '').split(',').map((entry) => entry.trim()).filter(Boolean);
+  if (accountIds.length === 0) return directory;
+
+  const withAdmins = new Map(directory);
+  for (const accountId of accountIds) {
+    const profile = withAdmins.get(accountId);
+    if (!profile) continue;
+    withAdmins.set(accountId, { ...profile, communityQueueAdmin: true });
+  }
+  return withAdmins;
 }
 
 export function getReviewerProfileForAccount(directory: ReviewerDirectory, accountId?: string | null): ReviewerProfile | null {

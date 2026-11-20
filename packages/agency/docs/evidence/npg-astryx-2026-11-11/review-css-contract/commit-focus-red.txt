@@ -1,0 +1,56 @@
+/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/node_modules/.pnpm/playwright@1.58.2/node_modules/playwright/lib/matchers/expect.js:213
+        return matcher.call(target, ...args);
+                       ^
+
+A [Error]: expect(locator).toBeFocused() failed
+
+Locator:  getByRole('heading', { name: 'Review the exact action', exact: true })
+Expected: focused
+Received: inactive
+Timeout:  5000ms
+
+Call log:
+  - Expect "to.be.focused" with timeout 5000ms
+  - waiting for getByRole('heading', { name: 'Review the exact action', exact: true })
+    7 × locator resolved to <h2 tabindex="-1" data-level="2" data-color="primary" id="npg-review-title" class="astryx-heading x1tgivj0 x1xvnhcw x1cpk1wn x12yy4cs x1lliihq xh015us">Review the exact action</h2>
+      - unexpected value "inactive"
+
+    at Proxy.<anonymous> (/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/node_modules/.pnpm/playwright@1.58.2/node_modules/playwright/lib/matchers/expect.js:213:24)
+    at gotoState (file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency/test/npg-ui/browser.mjs:49:9)
+    at runNextTicks (node:internal/process/task_queues:64:5)
+    at process.processImmediate (node:internal/timers:452:9)
+    at process.callbackTrampoline (node:internal/async_hooks:130:17)
+    at async scenario.width.width (file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency/test/npg-ui/browser.mjs:150:9)
+    at async scenario (file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency/test/npg-ui/browser.mjs:29:5)
+    at async file:///Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency/test/npg-ui/browser.mjs:147:5 {
+  matcherResult: {
+    message: 'expect(locator).toBeFocused() failed\n' +
+      '\n' +
+      "Locator:  getByRole('heading', { name: 'Review the exact action', exact: true })\n" +
+      'Expected: focused\n' +
+      'Received: inactive\n' +
+      'Timeout:  5000ms\n' +
+      '\n' +
+      'Call log:\n' +
+      '  - Expect "to.be.focused" with timeout 5000ms\n' +
+      "  - waiting for getByRole('heading', { name: 'Review the exact action', exact: true })\n" +
+      '    7 × locator resolved to <h2 tabindex="-1" data-level="2" data-color="primary" id="npg-review-title" class="astryx-heading x1tgivj0 x1xvnhcw x1cpk1wn x12yy4cs x1lliihq xh015us">Review the exact action</h2>\n' +
+      '      - unexpected value "inactive"\n',
+    pass: false,
+    actual: 'inactive',
+    name: 'toBeFocused',
+    expected: 'focused',
+    log: [
+      '  - Expect "to.be.focused" with timeout 5000ms',
+      "  - waiting for getByRole('heading', { name: 'Review the exact action', exact: true })",
+      '    7 × locator resolved to <h2 tabindex="-1" data-level="2" data-color="primary" id="npg-review-title" class="astryx-heading x1tgivj0 x1xvnhcw x1cpk1wn x12yy4cs x1lliihq xh015us">Review the exact action</h2>',
+      '      - unexpected value "inactive"'
+    ],
+    timeout: 5000
+  }
+}
+
+Node.js v22.23.4
+undefined
+/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7fb0f744-b3a59e76dfb75144/packages/agency:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: node test/npg-ui/browser.mjs

@@ -223,27 +223,19 @@ export class SocialAgent {
 		return `
 # Voice Validator Rules
 
-## The Five Principles
+## Approved voice authority
 
-1. **Clarity Over Cleverness**: Serve the reader. No jargon that excludes.
-2. **Specificity Over Generality**: Every claim must be measurable. Numbers, baselines, evidence.
-3. **Honesty Over Polish**: Document failures alongside successes.
-4. **Useful Over Interesting**: Actionable takeaways, reproducibility.
-5. **Grounded Over Trendy**: Connect to timeless principles.
+Source: packages/dotfiles/codex/skills/writing-for-humans/references/create-something-voice.md
+Use its four pillars in the reader's property context:
 
-## Forbidden Patterns
+- Precise: name the task, action, and supported result.
+- Capable: support material claims with evidence or an honest limit.
+- Human: write directly and respectfully; apply inclusive language.
+- Accountable: preserve uncertainty, ownership, permissions, and verification status.
 
-cutting-edge, revolutionary, game-changing, leverage, synergy,
-solutions, best-in-class, world-class, industry-leading,
-transformative, innovative, seamless, robust, scalable
+Never invent metrics, stories, customer outcomes, or citations. Do not reuse prompt examples as source evidence. Qualitative evidence is valid; use numbers only when the source provides them. Keep proposed, tested, deployed, and verified distinct. Preserve exact labels and source facts.
 
-## Required for Social Posts
-
-- Lead with outcome or hook
-- Specific metrics over vague claims
-- Philosophy as anchor, not lead
-- Active voice
-- Short declarative sentences
+Lead with one supported insight or the reader's task. Prefer active voice and useful detail. Treat jargon and readability signals in context rather than as automatic word bans. These writing criteria do not authorize posting or alter the owning publication approval workflow.
 `;
 	}
 }

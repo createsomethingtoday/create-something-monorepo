@@ -1,0 +1,18 @@
+Full original log SHA-256: ef35edda31c5ce8aaeebb2a9fb161d6330f8d1fe95a3f3744b351e58ba3f5879
+Condensed build receipt; repeated dependency directive warnings omitted.
+Warnings: 353 dependency module-level use-client directives.
+
+
+> @create-something/gigi-desktop@0.3.6 build:web /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6/apps/gigi-desktop
+> vite build
+
+vite v8.3.6 building client environment for production...
+transforming...
+✓ 2848 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                           0.74 kB │ gzip:   0.41 kB
+dist/assets/figtree-latin-wght-normal-D_ZTVpCC.woff2     20.15 kB
+dist/assets/vinyl-cutout-Dxckli8o.png                 2,021.14 kB
+
+✓ built in 382ms

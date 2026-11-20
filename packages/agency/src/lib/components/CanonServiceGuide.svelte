@@ -5,7 +5,7 @@
 
 <div class="canon-guide">
   <div class="guide-introduction">
-    <CanonCompanion action="waving" staticOnly />
+    <CanonCompanion />
     <div><h3>Ask Canon</h3><p>Published answers to help you choose a next step.</p></div>
   </div>
   <p class="guide-disclosure">Scripted service guide. No live AI or message submission.</p>
@@ -30,7 +30,7 @@
 <style>
   .canon-guide { color: var(--color-performance-fg-primary); min-width: 0; }
   .guide-introduction { display: flex; align-items: center; gap: 1rem; }
-  .guide-introduction :global(.canon) { width: 48px; flex-shrink: 0; }
+  .guide-introduction :global(.canon) { width: 96px; flex-shrink: 0; }
   .guide-introduction > div { min-width: 0; }
   .canon-guide h3 { margin: 0; font: var(--font-performance-medium) 1.25rem/1.3 var(--font-performance-interface); }
   .canon-guide p { margin: .5rem 0 0; font-size: .875rem; line-height: 1.6; }

@@ -1,0 +1,17 @@
+{
+  "sourceSha": "2c43119370898042816182522537698a2c279ca0",
+  "markers": [
+    {
+      "file": "compiler-marker-0.txt",
+      "sha256": "bf871156d2a003abbb840923b42f6703867d801309af2be30423e7bbbc1b646f",
+      "sourceSha": "2c43119370898042816182522537698a2c279ca0",
+      "sourceDirty": false
+    },
+    {
+      "file": "compiler-marker-1.txt",
+      "sha256": "69f17c9dbf2e23e7c4a1d89d4ff04e973d0dbfe7ed8e7afedb52f46fbee7bb65",
+      "sourceSha": "2c43119370898042816182522537698a2c279ca0",
+      "sourceDirty": false
+    }
+  ]
+}

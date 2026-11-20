@@ -1,0 +1,10 @@
+Final production build excerpt; full stdout at /tmp/npg-chat-build.log
+.svelte-kit/output/server/chunks/mcp-tools.js                                                                                                            519.17 kB
+.svelte-kit/output/server/chunks/oso-primary.js                                                                                                          532.76 kB
+.svelte-kit/output/server/chunks/partner-auth.js                                                                                                         585.66 kB
+✓ built in 25.14s
+
+Run npm run preview to preview your production build locally.
+
+> Using @sveltejs/adapter-cloudflare
+  ✔ done

@@ -1,0 +1,32 @@
+{
+  "version": "0.2.17",
+  "kind": "local-ad-hoc-debug-candidate",
+  "sourceCommit": "c1af91337ed0d6eb086ea6eb5be8daee4744bf3c",
+  "sourceDirtyAtBuild": false,
+  "appPath": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-50058674/apps/gigi-desktop/src-tauri/target/debug/bundle/macos/GiGi.app",
+  "dmgPath": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-50058674/apps/gigi-desktop/src-tauri/target/debug/bundle/dmg/GiGi_0.2.17_aarch64.dmg",
+  "hashes": {
+    "gigi": "909b8bda4a6203af766c85ebdb2f6a27d5a145b80183992008acdd77a4ec5e62",
+    "gigi-mcp": "efd713bb6d5e0becc3692217c2322d6acb179ba7689ae46a3ac71e8f1a2a1c3e",
+    "dmg": "cd3a669412adc320aba2670f7f725c26ae73d8e296d3e7aeb8b429d480400e1a"
+  },
+  "nativeReview": {
+    "profile": "/var/folders/w0/4zxm9fm16w97m5sz7772jnhc0000gp/T/gigi-daily-polish-native-TkIqRI",
+    "dataDir": "/var/folders/w0/4zxm9fm16w97m5sz7772jnhc0000gp/T/gigi-daily-polish-native-TkIqRI/data",
+    "home": "/var/folders/w0/4zxm9fm16w97m5sz7772jnhc0000gp/T/gigi-daily-polish-native-TkIqRI/home",
+    "workspaceId": "12713025-6643-42cf-8cd4-20f2c1395600",
+    "pid": 67990,
+    "themesViewed": [
+      "Studio",
+      "Paper",
+      "Midnight"
+    ],
+    "newTaskTitleFocus": true,
+    "unsavedDraftEscapeRecovery": true,
+    "syntheticTaskSaveAndIndependentMcpReadback": true,
+    "nativeWindowResize": "untested: controller drags did not resize",
+    "errorPersistence": "offline actual-app fixture only",
+    "providerAcceptance": false
+  },
+  "promotion": "Parent independent Sol retest, release signing/notarization, merge and deployment pending."
+}

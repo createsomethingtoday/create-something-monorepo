@@ -212,7 +212,7 @@ export function findRawHtmlTag(text: string): string | null {
   return match ? match[0] : null;
 }
 
-function assertNoRawHtmlInCreatorFeedback(field: 'review_feedback', value: string | undefined): void {
+function assertNoRawHtmlInCreatorFeedback(field: 'review_feedback' | 'rejection_feedback', value: string | undefined): void {
   if (value === undefined) return;
   const tag = findRawHtmlTag(value);
   if (tag !== null) {
@@ -243,6 +243,11 @@ export interface AppReviewQueueItem {
   appCapabilities?: string;
   clientId?: string;
   appId?: string;
+  /**
+   * Every value of the Airtable `App ID` lookup (same field as appId). Checked against Snowflake 2026-11-17:
+   * the value is the live listing profile (MRP) ID when the app has a listing, else the Webflow app ID.
+   */
+  listingProfileIds?: string[];
   visibilityStatus?: string;
   assignableVersionId?: string;
   reviewer?: CollaboratorRef | null;
@@ -296,6 +301,10 @@ export interface AppReviewBackendDeclaration {
   runtime?: string;
   runtimeVersion?: string;
   hostingProvider?: string;
+  /** Optional stack labels, comma-separated (e.g. "Express, Next.js"). */
+  frameworks?: string;
+  /** Optional web server, proxy, or gateway labels, comma-separated (e.g. "nginx, Cloudflare"). */
+  webServers?: string;
   declaredAt?: string;
   /**
    * Versions only. What the reviewer saw of a backend during bundle, injected-script, or
@@ -449,8 +458,44 @@ export interface AppReviewContext {
   isAssigned: boolean;
   /** Version preflight when present, else the asset's latest preflight; `source` says which. */
   preflight: (AppReviewPreflight & { source: 'version' | 'asset' }) | null;
+  /**
+   * The app's ⚖️Exceptions rows from every version: pending first, then approved,
+   * denied, withdrawn. An approved row can set conditions for every later version.
+   */
+  assetExceptions: AppReviewContextException[];
+  /** True when the rows' notes pass the inline budget; `app_review_list_asset_exceptions` returns them. */
+  assetExceptionNotesOmitted: boolean;
   asset?: AppReviewAsset | null;
   version: AppReviewVersion;
+}
+
+/** Combined length of decision and resolution notes that review context inlines. */
+const CONTEXT_EXCEPTION_NOTES_BUDGET = 8000;
+
+/** One exception row in review-context form. `app_review_list_asset_exceptions` returns the rationale. */
+export interface AppReviewContextException {
+  exceptionItemId: string;
+  item?: string;
+  exceptionStatus?: string;
+  exceptionType?: string;
+  decisionNotes?: string;
+  decisionDatetime?: string;
+  assetVersionId?: string;
+  /** True when the row was filed on the version under review. */
+  onThisVersion: boolean;
+  isResolved?: boolean;
+  resolutionNotes?: string;
+}
+
+/** ⚖️Status order (pending, approved, denied, withdrawn), then oldest first. */
+export function compareExceptionItems(a: AppReviewExceptionItem, b: AppReviewExceptionItem): number {
+  const statusOrder = (item: AppReviewExceptionItem) => {
+    const index = (EXCEPTION_STATUS_OPTIONS as readonly string[]).indexOf(item.exceptionStatus ?? '');
+    return index === -1 ? 99 : index;
+  };
+  const date = (item: AppReviewExceptionItem) =>
+    item.decisionDatetime ?? item.requestedDatetime ?? item.createdTime ?? '';
+  return statusOrder(a) - statusOrder(b) || date(a).localeCompare(date(b));
 }
 
 export interface AppReviewGovernanceFinding {
@@ -519,6 +564,8 @@ export interface VersionReviewUpdateInput {
   reviewer?: CollaboratorRef | null;
   rejection_reason?: string;
   review_feedback?: string;
+  /** 🚩Rejection Feedback: the field the rejection email reads. Written only by the reject verb. */
+  rejection_feedback?: string;
   submission_datetime_override?: string | null;
   exception_status?: string;
   exception_type?: string;
@@ -544,7 +591,14 @@ export interface ExceptionItemUpdateInput {
   exception_status?: string;
   exception_type?: string;
   rationale?: string;
+  /** Replaces the whole decision-notes field. */
   decision_notes?: string;
+  /** Adds a line with the UTC date after the existing decision notes; the earlier notes stay. */
+  append_decision_note?: string;
+  /** Display name for the appended line. */
+  noted_by?: string;
+  /** Injectable clock for the appended line's date (tests). */
+  now?: Date;
 }
 
 export interface ExceptionItemResolveInput {
@@ -760,6 +814,8 @@ function mapBackendDeclaration(
     runtime: firstString(fields[ids.backendRuntime]),
     runtimeVersion: firstString(fields[ids.backendRuntimeVersion]),
     hostingProvider: firstString(fields[ids.backendHostingProvider]),
+    frameworks: firstString(fields[ids.backendFrameworks]),
+    webServers: firstString(fields[ids.backendWebServers]),
     declaredAt: table === 'assets' ? firstString(fields[FIELD_IDS.assets.backendDeclaredAt]) : undefined,
   };
   if (table === 'versions') {
@@ -782,6 +838,7 @@ function mapQueueRecord(record: AirtableRecord): AppReviewQueueItem {
     appCapabilities: firstString(fields[FIELD_IDS.assets.capabilities]),
     clientId: firstString(fields[FIELD_IDS.assets.clientId]),
     appId: firstString(fields[FIELD_IDS.assets.appId]),
+    listingProfileIds: toStringArray(fields[FIELD_IDS.assets.appId]),
     visibilityStatus: firstString(fields[FIELD_IDS.assets.visibility]),
   };
 }
@@ -1828,6 +1885,16 @@ export class AirtableClient {
 
   async getReviewContext(versionId: string): Promise<AppReviewContext> {
     const { version, asset } = await this.getScopedVersion(versionId);
+    // The history lookup covers earlier versions; the direct link covers rows filed on this one.
+    const exceptionItems = await this.listExceptionItemsByIds([
+      ...(version.assetExceptionHistoryIds ?? []),
+      ...(version.exceptionItemIds ?? []),
+    ]);
+    const notesLength = exceptionItems.reduce(
+      (sum, item) => sum + (item.decisionNotes?.length ?? 0) + (item.resolutionNotes?.length ?? 0),
+      0,
+    );
+    const notesOmitted = notesLength > CONTEXT_EXCEPTION_NOTES_BUDGET;
 
     return {
       versionId: version.versionId,
@@ -1845,6 +1912,18 @@ export class AirtableClient {
         : asset?.preflight
           ? { ...asset.preflight, source: 'asset' }
           : null,
+      assetExceptions: exceptionItems.sort(compareExceptionItems).map((item) => ({
+        exceptionItemId: item.exceptionItemId,
+        item: item.item,
+        exceptionStatus: item.exceptionStatus,
+        exceptionType: item.exceptionType,
+        decisionDatetime: item.decisionDatetime,
+        assetVersionId: item.assetVersionId,
+        onThisVersion: item.assetVersionId === version.versionId,
+        isResolved: item.isResolved,
+        ...(notesOmitted ? {} : { decisionNotes: item.decisionNotes, resolutionNotes: item.resolutionNotes }),
+      })),
+      assetExceptionNotesOmitted: notesOmitted,
       asset,
       version,
     };
@@ -1882,6 +1961,7 @@ export class AirtableClient {
   async updateVersionReview(versionId: string, input: VersionReviewUpdateInput): Promise<AppReviewVersion> {
     assertReviewerAssignmentReadOnly(input.reviewer);
     assertNoRawHtmlInCreatorFeedback('review_feedback', input.review_feedback);
+    assertNoRawHtmlInCreatorFeedback('rejection_feedback', input.rejection_feedback);
 
     const fields: Record<string, unknown> = {};
 
@@ -1917,6 +1997,10 @@ export class AirtableClient {
 
     if (input.review_feedback !== undefined) {
       fields[FIELD_IDS.versions.reviewFeedback] = input.review_feedback;
+    }
+
+    if (input.rejection_feedback !== undefined) {
+      fields[FIELD_IDS.versions.rejectionFeedback] = input.rejection_feedback;
     }
 
     if (input.submission_datetime_override !== undefined) {
@@ -2040,6 +2124,20 @@ export class AirtableClient {
 
   async updateExceptionItem(exceptionItemId: string, input: ExceptionItemUpdateInput): Promise<AppReviewExceptionItem> {
     const fields: Record<string, unknown> = {};
+    const appendNote = input.append_decision_note?.trim();
+
+    if (input.append_decision_note !== undefined) {
+      if (input.decision_notes !== undefined) {
+        throw new AirtableClientError(
+          'DECISION_NOTES_CONFLICT',
+          'Send decision_notes (replaces the field) or append_decision_note (adds to it), not both.',
+          400,
+        );
+      }
+      if (!appendNote) {
+        throw new AirtableClientError('DECISION_NOTE_REQUIRED', 'append_decision_note must not be empty.', 400);
+      }
+    }
 
     if (input.item !== undefined) fields[FIELD_IDS.exceptions.item] = input.item;
 
@@ -2065,6 +2163,21 @@ export class AirtableClient {
 
     if (input.rationale !== undefined) fields[FIELD_IDS.exceptions.rationale] = input.rationale;
     if (input.decision_notes !== undefined) fields[FIELD_IDS.exceptions.decisionNotes] = input.decision_notes;
+
+    if (appendNote) {
+      // The field overwrites in Airtable, so read the current notes and resend them with the new line.
+      // Edge whitespace of the old notes is trimmed, as in resolveExceptionItem; the text is unchanged.
+      const record = await this.getRecord(TABLE_IDS.exceptions, exceptionItemId, [...EXCEPTION_ITEM_FIELD_IDS]);
+      if (!record) {
+        throw new AirtableClientError('EXCEPTION_ITEM_NOT_FOUND', `Exception item ${exceptionItemId} was not found.`, 404);
+      }
+      const existing = firstString(record.fields[FIELD_IDS.exceptions.decisionNotes]);
+      const stamp = (input.now ?? new Date()).toISOString().slice(0, 10);
+      // One line only: a name with a line break could pass as a separate note.
+      const notedBy = input.noted_by?.replace(/\s+/g, ' ').trim();
+      const line = `Note (${stamp}${notedBy ? `, ${notedBy}` : ''}): ${appendNote}`;
+      fields[FIELD_IDS.exceptions.decisionNotes] = existing ? `${existing}\n\n${line}` : line;
+    }
 
     if (Object.keys(fields).length === 0) {
       throw new AirtableClientError('NO_MUTATION_FIELDS', 'No exception item fields were provided.', 400);
@@ -2343,6 +2456,8 @@ export class AirtableClient {
         case 'promo_video_url':
         case 'backend_runtime_version':
         case 'backend_hosting_provider':
+        case 'backend_frameworks':
+        case 'backend_web_servers':
         case 'backend_declared_at':
           fields[FIELD_IDS.assets[mapWritableKeyToAssetFieldName(key)]] = value ?? null;
           break;
@@ -2479,6 +2594,8 @@ function mapWritableKeyToAssetFieldName(
     | 'promo_video_url'
     | 'backend_runtime_version'
     | 'backend_hosting_provider'
+    | 'backend_frameworks'
+    | 'backend_web_servers'
     | 'backend_declared_at',
 ):
   | 'name'
@@ -2500,6 +2617,8 @@ function mapWritableKeyToAssetFieldName(
   | 'promoVideoUrl'
   | 'backendRuntimeVersion'
   | 'backendHostingProvider'
+  | 'backendFrameworks'
+  | 'backendWebServers'
   | 'backendDeclaredAt' {
   switch (key) {
     case 'app_name':
@@ -2540,6 +2659,10 @@ function mapWritableKeyToAssetFieldName(
       return 'backendRuntimeVersion';
     case 'backend_hosting_provider':
       return 'backendHostingProvider';
+    case 'backend_frameworks':
+      return 'backendFrameworks';
+    case 'backend_web_servers':
+      return 'backendWebServers';
     case 'backend_declared_at':
       return 'backendDeclaredAt';
   }

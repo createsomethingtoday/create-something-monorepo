@@ -1,10 +1,19 @@
 <script lang="ts">
+  import { isAgencyWebflowPortfolioPath } from '$lib/atlas/surface-policy';
   import '../app.css';
+  import { publicPageEntrances } from '$lib/motion/publicPageEntrances';
   import { IO_EXPERIMENTS_URL, IO_PAPERS_URL } from '$lib/data/ioResearchLinks';
   import AgencyPageTreatment from '$lib/components/AgencyPageTreatment.svelte';
+  import AgencyHeroBackground from '$lib/components/AgencyHeroBackground.svelte';
   import CanonBrandSignature from '$lib/components/CanonBrandSignature.svelte';
   import '$lib/styles/operator-palette.css';
-  import { initializeFilmMotion, filmNavigationOpen } from '$lib/motion/filmPlayback';
+  import '$lib/styles/measured-public.css';
+  import '$lib/styles/measured-pages.css';
+  import AgencyPageWayfinding from '$lib/components/AgencyPageWayfinding.svelte';
+  import { getAgencyPageFoundation } from '$lib/data/agencyPageFoundations';
+  import { initializeFilmMotion, filmNavigationOpen, reducedFilmMotion, filmOverlayOpen } from '$lib/motion/filmPlayback';
+  import { get } from 'svelte/store';
+  import { createRouteEntrance, shouldUseGridTransition } from '$lib/motion/routeEntrance';
   import { filmStories } from '$lib/data/filmStories';
   import { Navigation, Footer, LayoutSEO, ModeIndicator } from '@create-something/canon';
   import PageAnnotations from '$lib/annotations/PageAnnotations.svelte';
@@ -17,6 +26,7 @@
   import { getAgencyContentAssetAnalyticsMetadata } from '$lib/analytics/content-assets';
   import { getAgencyMarketingExperimentMetadata } from '$lib/analytics/marketing-experiment';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
+  import { agencyInvitationScene } from '$lib/data/canonAgencyScenes';
   import { PUBLIC_PRODUCT_SEQUENCE, getPublicProduct } from '$lib/data/productFamily';
   import { page } from '$app/stores';
   import { onMount } from 'svelte';
@@ -28,13 +38,18 @@
   } from '$lib/atlas/surface-policy';
   import { marketingPagePortfolio } from '$lib/data/marketingPages';
 
-  import { usesAgencyOperatorPalette } from '$lib/data/publicSurfacePolicy';
+  import { usesAgencyMeasuredAccountSurface, usesAgencyMeasuredPublicSurface, usesAgencyOperatorPalette } from '$lib/data/publicSurfacePolicy';
 
   let { children, data } = $props();
   const usesOperatorPalette = $derived(
     usesAgencyOperatorPalette($page.url.pathname)
   );
+  const usesMeasuredPublicSurface = $derived(
+    usesAgencyMeasuredPublicSurface($page.url.pathname)
+  );
+  const usesMeasuredAccountSurface = $derived(usesAgencyMeasuredAccountSurface($page.url.pathname));
   let mobileNavigationOpen = $state(false);
+  const pageFoundation = $derived($page.status < 400 ? getAgencyPageFoundation($page.url.pathname, $page.url.pathname === '/book' ? $page.url.searchParams.get('intent') : null) : null);
 
   function scrollToTop() {
     // A booking action may run before the delayed page-entry reset settles.
@@ -44,42 +59,17 @@
     document.body.scrollTop = 0;
   }
 
-  // View Transitions API - Hermeneutic Navigation
-  // .agency: Efficient (200ms)
-  let activeRouteTransition: ViewTransition | undefined;
+  const routeEntrance = createRouteEntrance();
+  const routeMotionEnabled = () => !document.hidden && !get(reducedFilmMotion) && !get(filmNavigationOpen) && !get(filmOverlayOpen);
   onNavigate((navigation) => {
-    activeRouteTransition?.skipTransition();
-    // Keep back/forward restoration, but force top-scroll on normal page links
-    if (navigation.type !== 'popstate' && !navigation.to?.url.hash) {
-      disableScrollHandling();
+    routeEntrance.cancel();
+    if (navigation.type !== 'popstate' && !navigation.to?.url.hash) disableScrollHandling();
+    if (shouldUseGridTransition({ from: navigation.from?.url.pathname, to: navigation.to?.url, type: navigation.type })) {
+      routeEntrance.start(navigation.complete, routeMotionEnabled);
     }
-
-    // Commit pilot route changes without waiting for a visual snapshot.
-    // SvelteKit updates history before awaiting onNavigate; delaying here lets
-    // early Back race an older, still-uncommitted destination.
-    if (navigation.from?.url.pathname === '/' || navigation.to?.url.pathname === '/') return;
-    // Local fragment selection already has bounded component feedback.
-    if (navigation.from?.url.pathname === navigation.to?.url.pathname && navigation.from?.url.search === navigation.to?.url.search) return;
-    if (!document.startViewTransition) return;
-    if (
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    )
-      return;
-
-    return new Promise((resolve) => {
-      const transition = document.startViewTransition(async () => {
-        resolve();
-        // Rapid Back/Forward can abort the older navigation. The newest route
-        // still owns state; skipping its predecessor is an expected outcome.
-        try { await navigation.complete; } catch { /* Superseded navigation. */ }
-      });
-      activeRouteTransition = transition;
-      void transition.ready.catch(() => {});
-      void transition.finished.catch(() => {}).finally(() => {
-        if (activeRouteTransition === transition) activeRouteTransition = undefined;
-      });
-    });
+    // Do not return a promise: SvelteKit commits immediately. The decorative
+    // grid closes and opens around that commit, without a second router or a
+    // competing native View Transition snapshot.
   });
 
   // Primary nav tells a first-time visitor what each destination contains.
@@ -121,8 +111,8 @@
     const product = getPublicProduct(id);
     return { label: product.shortName, href: product.route };
   });
-  // Public pages share one navigation; workspace and identity routes retain their existing shell.
-  const usesPublicNavigation = $derived(!/^\/(account|admin|dashboard|login|logout|auth|mcp-access|delivery)(?:\/|$)/.test($page.url.pathname) && !/^\/map\/(workspace|subscribe|share)(?:\/|$)/.test($page.url.pathname));
+  // Public pages and approved account entries share Agency navigation; other workspaces retain their shell.
+  const usesPublicNavigation = $derived(usesMeasuredAccountSurface || (!/^\/(account|admin|dashboard|login|logout|auth|mcp-access|delivery)(?:\/|$)/.test($page.url.pathname) && !/^\/map\/(workspace|subscribe|share)(?:\/|$)/.test($page.url.pathname)));
   const filmNavLinks = [
     { label: 'The work', href: '/#built-work' },
     { label: 'Technical support', href: '/services' },
@@ -138,7 +128,15 @@
   const primaryCtaHref = agencyCoreMessaging.membershipHref;
   const agencyFooterMacroMedia = {
     src: '/images/performance-lab/playbook-footer-decision-gate-macro.webp',
+    width: 1024,
+    height: 1536,
     alt: 'Macro-real Playbook decision gate: an ivory AI-agent marker held inside a black steel ring as amber and proof-green routes cross a physical court surface.'
+  };
+  const agencyFooterSceneMedia = {
+    src: agencyInvitationScene.src,
+    width: 1672,
+    height: 941,
+    alt: agencyInvitationScene.description
   };
   const globalAnalyticsMetadata = $derived(getAgencyGlobalAnalyticsMetadata($page.url.pathname));
   const isDifyArticleRoute = $derived(isAgencyDifyArticlePath($page.url.pathname));
@@ -222,6 +220,17 @@
     ] }
   ];
   onMount(initializeFilmMotion);
+  onMount(() => {
+    const cancelWhenBlocked = () => {
+      if (document.hidden || get(reducedFilmMotion) || get(filmNavigationOpen) || get(filmOverlayOpen)) routeEntrance.cancel();
+    };
+    const disposers = [reducedFilmMotion, filmNavigationOpen, filmOverlayOpen].map(store => store.subscribe(cancelWhenBlocked));
+    document.addEventListener('visibilitychange', cancelWhenBlocked);
+    window.addEventListener('keydown', routeEntrance.cancel);
+    window.addEventListener('pointerdown', routeEntrance.cancel);
+    window.addEventListener('resize', routeEntrance.cancel);
+    return () => { disposers.forEach(dispose => dispose()); routeEntrance.cancel(); document.removeEventListener('visibilitychange', cancelWhenBlocked); window.removeEventListener('keydown', routeEntrance.cancel); window.removeEventListener('pointerdown', routeEntrance.cancel); window.removeEventListener('resize', routeEntrance.cancel); };
+  });
   function getAgencyGlobalAnalyticsMetadata(pathname: string): Record<string, unknown> | undefined {
     const experimentMetadata = getAgencyMarketingExperimentMetadata(pathname);
     const contentMetadata = getAgencyContentAssetAnalyticsMetadata(pathname);
@@ -250,11 +259,25 @@
     }
     const element = document.getElementById(id);
     if (element) {
+      // Announce the handoff heading without outlining the entire story chapter.
+      // Keep scrolling anchored to the section so its introductory label remains visible.
+      const focusTarget = id === 'together'
+        ? document.getElementById('handoff-title') ?? element
+        : element;
+      if (!focusTarget.hasAttribute('tabindex')) focusTarget.setAttribute('tabindex', '-1');
+      focusTarget.focus({ preventScroll: true });
       const nav = document.querySelector('.nav-fixed');
       const clearance = (nav?.getBoundingClientRect().bottom ?? 72) + 24;
-      window.scrollTo({ top: Math.max(0, window.scrollY + element.getBoundingClientRect().top - clearance), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+      window.scrollTo({ top: Math.max(0, window.scrollY + element.getBoundingClientRect().top - clearance), behavior: get(reducedFilmMotion) || element.dataset.scrollBehavior === 'instant' ? 'instant' : 'smooth' });
     }
   }
+
+  // Native same-document anchors do not always trigger SvelteKit navigation.
+  onMount(() => {
+    const changed = () => scrollToHash(window.location.hash);
+    window.addEventListener('hashchange', changed);
+    return () => window.removeEventListener('hashchange', changed);
+  });
 
   // Scroll to hash on mount (for direct links) + cross-property entry
   onMount(() => {
@@ -312,19 +335,48 @@
 </script>
 
 {#snippet canonFooterBrand()}<CanonBrandSignature />{/snippet}
+{#snippet agencyFooter()}
+  <div data-theme="dark" class="agency-footer-scope">
+  <Footer
+    mode="agency"
+    brandContent={usesPublicNavigation ? canonFooterBrand : undefined}
+    showNewsletter={false}
+    aboutText="AI-native technical support for your tools and workflows. We diagnose problems, engineer improvements, and help your team use what we deliver."
+    quickLinkGroups={usesPublicNavigation ? filmFooterGroups : footerQuickLinkGroups}
+    footerCta={routeOwnsPerformanceEnding || usesMeasuredAccountSurface
+      ? undefined
+      : {
+          title: 'Ready to put AI to work on a useful task?',
+          label: agencyCoreMessaging.membershipLabel,
+          href: primaryCtaHref,
+          description: 'Bring an idea or a project and one task you want help with.',
+          media: usesMeasuredPublicSurface ? agencyFooterSceneMedia : agencyFooterMacroMedia
+        }}
+    showSocial={true}
+    isAuthenticated={!!data.user}
+    visualStyle="editorial"
+    brandAsset={{
+      src: '/brand/create-something-agency-white.svg',
+      label: 'CREATE SOMETHING .agency'
+    }}
+  />
+  </div>
+{/snippet}
 
 <LayoutSEO property="agency" />
+<AgencyHeroBackground />
 <PageAnnotations pathname={$page.url.pathname} />
 
-<div class="agency-surface" data-canon-palette={usesOperatorPalette ? "operator" : undefined}>
+<div class="agency-surface" data-theme={usesOperatorPalette ? "dark" : "light"} data-canon-palette={usesOperatorPalette ? "operator" : undefined} data-agency-brand={usesMeasuredPublicSurface || usesMeasuredAccountSurface ? "measured" : undefined} data-agency-account={usesMeasuredAccountSurface ? "true" : undefined}>
 <PrivacyAnalytics
   property="agency"
   userId={data.user?.id}
   userOptedOut={data.user?.analytics_opt_out ?? false}
+  metaAccountOptedOut={data.user?.analytics_preference_verified === true && data.user.analytics_opt_out === true}
   globalMetadata={globalAnalyticsMetadata}
   compactPrompt={useCompactPrivacyPrompt}
   obscured={mobileNavigationOpen}
-  mobilePlacement={["/", "/services", "/contact", "/book"].includes($page.url.pathname) ? "safe-corner" : "header-edge"}
+  mobilePlacement={pageFoundation || ["/", "/services", "/contact", "/book"].includes($page.url.pathname) ? "safe-corner" : "header-edge"}
 />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
@@ -334,7 +386,7 @@
   <UnifiedSearch currentProperty="agency" localItems={quickAccessItems} showMobileButton={false} />
 {/if}
 
-<div class="layout-root min-h-screen property-performance" class:film-shell={usesPublicNavigation} class:film-home={isPublicMarketingRoute && $page.url.pathname === "/"}>
+<div class="layout-root min-h-screen property-performance" class:webflow-portfolio-shell={isAgencyWebflowPortfolioPath($page.url.pathname)} class:film-shell={usesPublicNavigation} class:film-home={isPublicMarketingRoute && $page.url.pathname === "/"}>
   <Navigation
     logo="CREATE SOMETHING"
     logoSuffix=".agency"
@@ -356,8 +408,11 @@
     onMobileMenuChange={(open) => { mobileNavigationOpen = open; filmNavigationOpen.set(open); }}
   />
 
-  <main id="main-content" class="pt-[72px]">
-    {#if usesPublicNavigation && $page.url.pathname !== '/'}
+  <main id="main-content" class="pt-[72px]" use:publicPageEntrances={$page.url.pathname}>
+    {#if pageFoundation}
+      {#key $page.url.pathname}<AgencyPageWayfinding foundation={pageFoundation} />{/key}
+    {/if}
+    {#if usesPublicNavigation && !usesMeasuredAccountSurface && $page.url.pathname !== '/' && $page.url.pathname !== '/openai-dots' && $page.url.pathname !== '/dental-ai-agents' && !isAgencyWebflowPortfolioPath($page.url.pathname)}
       <AgencyPageTreatment />
     {/if}
     {@render children()}
@@ -367,31 +422,13 @@
     <AgencyPerformanceHandoff />
   {/if}
 
-  <Footer
-    mode="agency"
-    brandContent={usesPublicNavigation ? canonFooterBrand : undefined}
-    showNewsletter={false}
-    aboutText="AI-native technical support for your tools and workflows. We diagnose problems, engineer improvements, and help your team use what we deliver."
-    quickLinkGroups={usesPublicNavigation ? filmFooterGroups : footerQuickLinkGroups}
-    footerCta={routeOwnsPerformanceEnding
-      ? undefined
-      : {
-          title: 'Ready to put AI to work on a useful task?',
-          label: agencyCoreMessaging.membershipLabel,
-          href: primaryCtaHref,
-          description: 'Bring an idea or a project and one task you want help with.',
-          media: agencyFooterMacroMedia
-        }}
-    showSocial={true}
-    isAuthenticated={!!data.user}
-    visualStyle="editorial"
-    brandAsset={{
-      src: '/brand/create-something-agency-white.svg',
-      label: 'CREATE SOMETHING .agency'
-    }}
-  />
+  {#if pageFoundation}
+    <div id="agency-directory" tabindex="-1" aria-label="Agency directory">{@render agencyFooter()}</div>
+  {:else}
+    {@render agencyFooter()}
+  {/if}
 
-  {#if !routeOwnsPerformanceEnding && $page.url.pathname !== '/basketball-systems-lab' && !isDifyArticleRoute}
+  {#if !usesMeasuredAccountSurface && !routeOwnsPerformanceEnding && $page.url.pathname !== '/basketball-systems-lab' && !isDifyArticleRoute}
     <ModeIndicator current="agency" />
   {/if}
 </div>
@@ -399,6 +436,15 @@
 </div>
 
 <style>
+  .layout-root.webflow-portfolio-shell { background:var(--color-performance-mode-campaign-surface); color:var(--color-performance-mode-campaign-ink); }
+  .film-shell.webflow-portfolio-shell :global(main#main-content) { padding-top:0; }
+  .film-shell.webflow-portfolio-shell :global(.nav-editorial.nav-fixed) { top:0; left:0; right:0; border:0; border-radius:0; background:var(--color-performance-mode-campaign-surface); }
+  .webflow-portfolio-shell :global(.nav-editorial :is(a,button)) { color:var(--color-performance-mode-campaign-ink); }
+  .webflow-portfolio-shell :global(.nav-editorial .nav-logo-asset) { filter:none; }
+  .webflow-portfolio-shell :global(.nav-editorial .nav-menu-button) { background:transparent; color:var(--color-performance-mode-campaign-ink); border-color:currentColor; }
+  .webflow-portfolio-shell :global(.nav-editorial .nav-cta) { background:var(--color-performance-fg-primary); color:var(--color-performance-bg-pure); }
+  .webflow-portfolio-shell :global(.nav-editorial :is(.nav-mobile-menu,.nav-dropdown__menu)) { background:var(--color-performance-bg-elevated); color:var(--color-performance-fg-primary); }
+
   .film-shell :global(main#main-content) { padding-top: 112px; }
   .film-home :global(main#main-content),
   .film-shell :global(main#main-content:has(.performance-campaign-opening)),
@@ -424,11 +470,18 @@
   }
 
   /* Homepage campaign preview: preserve the shared navigation behavior and logo. */
-  .film-home :global(.nav-editorial.nav-fixed) { top: 0; left: 0; right: 0; border: 0; border-radius: 0; background: rgba(8,8,8,.88); backdrop-filter: blur(16px); }
+  .film-home :global(.nav-editorial.nav-fixed) { top: 0; left: 0; right: 0; border: 0; border-radius: 0; background: var(--color-performance-paper); backdrop-filter: none; }
   .film-home :global(.nav-editorial .nav-inner) { padding-inline: 3vw; }
   .film-home :global(main#main-content) { padding-top: 0; }
   .film-home :global(.nav-editorial .nav-link-list) { font-size: 12px; }
+  .film-home :global(.nav-editorial .nav-dropdown__menu) { box-shadow: var(--color-performance-shell-shadow); }
   @media(max-width:700px) { .film-home :global(.nav-editorial.nav-fixed) { top: 0; left: 0; right: 0; } .film-home :global(.nav-editorial .nav-inner) { padding-inline: 6vw; } }
+  @media(max-width:700px) {
+    .film-shell :global(.footer-link-groups) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 20px; }
+    .film-shell :global(.footer-link-groups nav) { min-width: 0; }
+    .film-shell :global(.footer-link-groups .footer-link) { min-height: 44px; display: flex; align-items: center; }
+    .film-shell :global(.footer-editorial-identity) { padding-block: 28px; }
+  }
   @media(min-width:1024px) and (max-width:1200px) {
     .film-home :global(.footer-editorial .footer-links-grid) { grid-template-columns: minmax(0,.82fr) minmax(0,1.12fr) minmax(0,.9fr); }
     .film-home :global(.footer-link-groups) { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 32px 24px; }

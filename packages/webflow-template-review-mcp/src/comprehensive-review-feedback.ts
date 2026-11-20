@@ -87,11 +87,16 @@ export interface ComprehensiveAgentFeedbackResult {
 
 const MANUAL_CHECK_TOPICS = [
   { label: 'components', tokens: ['components'] },
+  { label: 'button components', tokens: ['button components', 'button variants'] },
   { label: 'variables', tokens: ['variables'] },
+  { label: 'Variable Modes and linked values', tokens: ['variable modes'] },
+  { label: 'baseline tag styles', tokens: ['baseline tag styles', 'tag styles'] },
+  { label: 'connected apps', tokens: ['connected apps'] },
   { label: 'unused styles/classes', tokens: ['unused styles', 'unused classes', 'styles classes'] },
   { label: 'interactions cleanup', tokens: ['interactions cleanup', 'interaction cleanup', 'interactions'] },
   { label: 'Designer responsive QA', tokens: ['designer responsive', 'responsive qa', 'breakpoints'] },
   { label: 'forms', tokens: ['forms'] },
+  { label: 'form success messages', tokens: ['success messages', 'success and error messages'] },
   { label: 'CMS/dynamic page setup', tokens: ['cms', 'dynamic page'] },
   { label: 'site settings', tokens: ['site settings'] },
   { label: 'custom fonts and licenses', tokens: ['custom fonts', 'font licenses', 'fonts licenses'] },

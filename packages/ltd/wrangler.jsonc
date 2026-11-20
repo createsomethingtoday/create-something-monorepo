@@ -25,6 +25,7 @@
 	],
 
 	"vars": {
-		"ENVIRONMENT": "production"
+		"ENVIRONMENT": "production",
+		"TASTE_DISCOVERY_ALLOWED_EMAILS": "micah@createsomething.io"
 	}
 }

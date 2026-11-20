@@ -1,0 +1,68 @@
+{
+  "sourceSha": "2c43119370898042816182522537698a2c279ca0",
+  "sourceTreeMatches": true,
+  "compilerMarkers": [
+    {
+      "path": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6/apps/gigi-desktop/src-tauri/target/debug/build/gigi_desktop-6aaa54118622197c/output",
+      "hashMatches": true,
+      "sourceDirty": false
+    },
+    {
+      "path": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6/apps/gigi-desktop/src-tauri/target/debug/build/gigi_desktop-e5646bba6da22d4d/output",
+      "hashMatches": true,
+      "sourceDirty": false
+    }
+  ],
+  "originalInventory": [
+    {
+      "path": "Contents/MacOS/gigi",
+      "matches": true
+    },
+    {
+      "path": "Contents/MacOS/gigi-mcp",
+      "matches": true
+    },
+    {
+      "path": "Contents/Resources/gigi-mcp",
+      "matches": true
+    },
+    {
+      "path": "Contents/Resources/gigi-integrations",
+      "matches": true
+    },
+    {
+      "path": "Contents/Resources/gigi-codex",
+      "matches": true
+    },
+    {
+      "path": "Contents/Resources/gigi-map-preview",
+      "matches": true
+    },
+    {
+      "path": "Contents/Resources/ctx",
+      "matches": true
+    },
+    {
+      "path": "Contents/Resources/libgigi_notifications.dylib",
+      "matches": true
+    }
+  ],
+  "embeddedSource": [
+    {
+      "path": "Contents/MacOS/gigi",
+      "originalContainsSource": true,
+      "signedContainsSource": true
+    },
+    {
+      "path": "Contents/MacOS/gigi-mcp",
+      "originalContainsSource": false,
+      "signedContainsSource": false
+    },
+    {
+      "path": "Contents/Resources/gigi-mcp",
+      "originalContainsSource": false,
+      "signedContainsSource": false
+    }
+  ],
+  "mcpProvenanceLimit": "MCP diagnostics::build is unreferenced; MCP identity is corroborated by compiler markers, original inventory and signature-only payload equality, not an embedded SHA assertion."
+}

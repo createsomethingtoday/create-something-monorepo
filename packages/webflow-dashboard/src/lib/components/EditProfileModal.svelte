@@ -12,6 +12,7 @@
   } from './ui';
   import ApiKeysManager from './ApiKeysManager.svelte';
   import ImageUploader from './ImageUploader.svelte';
+  import StorefrontEditor from './StorefrontEditor.svelte';
 
   interface Props {
     onClose: () => void;
@@ -48,10 +49,27 @@
 
   let successMessage = $state<string | null>(null);
 
+  /** Storefront tab is feature-gated server-side; the probe never calls the service. */
+  let storefrontEnabled = $state(false);
+  /** Mounted on first visit and kept mounted, so tab switches never discard storefront edits. */
+  let storefrontVisited = $state(false);
+  let storefrontState = $state({ dirty: false, busy: false });
+
   // Load profile data
   $effect(() => {
     loadProfile();
+    probeStorefront();
   });
+
+  async function probeStorefront() {
+    try {
+      const response = await fetch('/api/storefront?probe=1');
+      const body = (await response.json().catch(() => ({}))) as { enabled?: boolean };
+      storefrontEnabled = response.ok && body.enabled === true;
+    } catch {
+      storefrontEnabled = false;
+    }
+  }
 
   interface ProfileData {
     id: string;
@@ -102,14 +120,16 @@
   }
 
   const hasUnsavedChanges = $derived(
-    !isLoading && !isSaving && !profileFormsEqual(formData, initialFormData)
+    (!isLoading && !isSaving && !profileFormsEqual(formData, initialFormData)) || storefrontState.dirty
   );
 
   function canDismiss(): boolean {
-    if (isSaving) return false;
+    if (isSaving || storefrontState.busy) return false;
     if (!hasUnsavedChanges) return true;
     if (typeof window === 'undefined') return false;
-    return window.confirm('Discard unsaved profile changes?');
+    return window.confirm(
+      storefrontState.dirty ? 'Discard unsaved profile or storefront changes?' : 'Discard unsaved profile changes?'
+    );
   }
 
   function handleDismiss() {
@@ -197,7 +217,7 @@
   isOpen={true}
   {onClose}
   beforeClose={canDismiss}
-  closeOnBackdrop={!hasUnsavedChanges && !isSaving}
+  closeOnBackdrop={!hasUnsavedChanges && !isSaving && !storefrontState.busy}
   title="Settings"
   size="lg"
 >
@@ -217,6 +237,18 @@
         >
           Profile
         </TabsTrigger>
+        {#if storefrontEnabled}
+          <TabsTrigger
+            value="storefront"
+            active={activeTab === 'storefront'}
+            onclick={() => {
+              activeTab = 'storefront';
+              storefrontVisited = true;
+            }}
+          >
+            Storefront
+          </TabsTrigger>
+        {/if}
         <TabsTrigger
           value="api-keys"
           active={activeTab === 'api-keys'}
@@ -295,6 +327,23 @@
         </div>
       </TabsContent>
 
+      <!--
+        Not a TabsContent: TabsContent unmounts inactive panels, which would
+        discard unsaved storefront edits on a tab round trip. Mounted on first
+        visit, then only hidden.
+      -->
+      {#if storefrontEnabled && storefrontVisited}
+        <div
+          class="storefront-panel"
+          role="tabpanel"
+          data-value="storefront"
+          hidden={activeTab !== 'storefront'}
+          data-testid="storefront-panel"
+        >
+          <StorefrontEditor onstatechange={(state) => (storefrontState = state)} />
+        </div>
+      {/if}
+
       <TabsContent value="api-keys" active={activeTab === 'api-keys'}>
         <ApiKeysManager />
       </TabsContent>
@@ -303,6 +352,14 @@
 </Dialog>
 
 <style>
+  .storefront-panel {
+    margin-top: var(--space-md);
+  }
+
+  .storefront-panel[hidden] {
+    display: none;
+  }
+
   .modal-description {
     font-size: var(--text-body-sm);
     color: var(--color-fg-secondary);

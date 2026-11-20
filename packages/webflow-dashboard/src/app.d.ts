@@ -11,6 +11,8 @@ declare global {
 				AIRTABLE_BASE_ID: string;
         MARKETPLACE_INSIGHTS_SNAPSHOT_TABLE_ID?: string;
 				CRON_SECRET?: string;
+				/** Credential of the marketplace-insights-cron Worker for /api/cron/insights and /api/cron/snapshot. */
+				SCHEDULER_CRON_SECRET?: string;
 				ADMIN_EMAILS?: string;
 				CSRF_TRUSTED_ORIGINS?: string;
 				SUBMISSION_STATUS_API_URL?: string;
@@ -23,6 +25,17 @@ declare global {
 				KNOCK_API_KEY?: string;
 				KNOCK_LOGIN_WORKFLOW_KEY?: string;
 				KNOCK_LOGIN_ENABLED?: string;
+				/** Creator storefront (packages/creator-storefront). All four fail closed when absent. */
+				CREATOR_STOREFRONT_ENABLED?: string;
+				CREATOR_STOREFRONT_SERVICE_URL?: string;
+				CREATOR_STOREFRONT_OWNER_KEY?: string;
+				CREATOR_STOREFRONT_ALLOWED_EMAILS?: string;
+				/** Review comments service (repo webflow/marketplace-review-comments). URL or key unset = feature off. */
+				REVIEW_COMMENTS_URL?: string;
+				/** This dashboard's creator-role key for that Worker. */
+				REVIEW_COMMENTS_API_KEY?: string;
+				/** Asset types whose reviews use comments, comma-separated ("App"). Unset = every type. */
+				REVIEW_COMMENTS_ASSET_TYPES?: string;
 			};
 			context: {
 				waitUntil(promise: Promise<unknown>): void;

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import { Button, SEO } from '@create-something/canon';
   import DfwSupportMotion from '$lib/components/DfwSupportMotion.svelte';
   import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
@@ -19,7 +20,8 @@
   canonical="https://createsomething.agency/dfw-tech-support" propertyName="agency" />
 
 <div class="dfw-support property-performance" data-performance-mode="proof">
-  <section class="chapter opening" aria-labelledby="support-title">
+  <AgencyHeroFrame>
+<section class="chapter opening" aria-labelledby="support-title">
     <div>
       <p class="eyebrow">DFW · Remote software support</p>
       <h1 id="support-title">Keep the software your business depends on working.</h1>
@@ -30,6 +32,7 @@
     </div>
     <DfwSupportMotion />
   </section>
+</AgencyHeroFrame>
 
   <section class="chapter fit" aria-labelledby="fit-title">
     <div class="support-signal"><WorkflowSignalBand showContinuation={false} /></div>

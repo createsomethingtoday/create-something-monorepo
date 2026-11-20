@@ -44,6 +44,37 @@ class MemoryStore implements AgentStore {
   }
 }
 
+test('shadow observation runs only for fresh admitted leased requests and leaves executor unchanged', async () => {
+  const store = new MemoryStore();
+  const observed: Array<{ runId: string; status: string }> = [];
+  let selectedCalls = 0;
+  const executor: AgentExecutor = { async *run(input) {
+    selectedCalls++;
+    assert.equal(input.definition.model, 'gpt-4.1-mini');
+    assert.equal(input.definition.mcpServers.length, 3);
+    yield { type: 'completed', output: 'public answer', providerResponseId: 'response-1', toolCalls: [], connectedServers: [] };
+  } };
+  const worker = createOwnedAgentWorker({ store, executor,
+    decisionObserver: { async observe(input, terminal) {
+      observed.push({ runId: input.runId, status: (await terminal).status });
+    } }
+  });
+  const send = (conversation?: string) => new Request('https://runtime/v1/agents/create-something-guide-agent/messages', {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ query: 'Explain the framework', conversation_id: conversation })
+  });
+  const first = parseSse(await (await worker.fetch(send())).text());
+  const conversation = first[0].data.conversation_id as string;
+  await (await worker.fetch(send(conversation))).text();
+  assert.equal(selectedCalls, 2);
+  assert.equal(observed.length, 1);
+  assert.equal(observed[0].status, 'completed');
+  const denied = createOwnedAgentWorker({ store, executor,
+    admission: { async check() { return 'rate_limited'; } },
+    decisionObserver: { async observe() { assert.fail('admission must run first'); } }
+  });
+  assert.equal((await denied.fetch(send())).status, 429);
+});
+
 function parseSse(body: string): Array<{ event: string; data: Record<string, unknown> }> {
   return body
     .trim()

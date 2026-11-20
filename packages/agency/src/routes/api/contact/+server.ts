@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { Effect } from 'effect';
+import { prepareMetaLead, drainMetaLead } from '$lib/server/meta-marketing';
 import { contactIntake, createD1ContactRepository, createResendContactMailer, runContactSecondaryEffects, CONTACT_UNKNOWN_MESSAGE } from '$lib/server/contact-intake';
 import type { RequestHandler } from './$types';
 import { renderContactResponse, renderContactNotification } from './email';
@@ -37,7 +38,7 @@ function resolveLeadStage(intent: string | undefined): ContactLeadStage {
 	}
 }
 
-export const POST: RequestHandler = async ({ request, platform }) => {
+export const POST: RequestHandler = async ({ request, platform, locals }) => {
 	try {
 		// Validate request body with Zod schema
 		const parseResult = await parseBody(request, contactSchema);
@@ -143,13 +144,24 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 		// Once the body is validated, receipt and follow-up work must survive a client disconnect.
 		// Provider calls have their own deadlines; the browser's abort signal must not cancel this Effect.
+		// Consent is snapshotted before the NEW receipt. Replays cannot attach an older inquiry.
+		const marketingAccountSubject = locals?.user?.analytics_preference_verified === true ? locals.user.id : undefined;
+		const metaLead = await prepareMetaLead(request, env, { requestId, email }, Boolean(locals?.user?.analytics_opt_out), undefined, marketingAccountSubject)
+			.catch(() => undefined);
 		const intake = Effect.runPromise(contactIntake(
 			{ ...parseResult.data, source, intent, lane }, requestId,
-			createD1ContactRepository(env.DB),
+			createD1ContactRepository(env.DB, metaLead),
 			createResendContactMailer(env.RESEND_API_KEY, { confirmation, notification }), secondary
 		));
 		platform?.context?.waitUntil(intake.then(() => undefined, () => undefined));
 		const result = await intake;
+		if (result.receipt === 'saved') {
+			// Marketing is optional and cannot change the authoritative inquiry result.
+			// The outbox verifies this saved receipt and the separate consent before queuing.
+			const marketing = drainMetaLead(request, env, Boolean(locals?.user?.analytics_opt_out), undefined, undefined, marketingAccountSubject)
+				.catch(() => undefined);
+			platform?.context?.waitUntil(marketing);
+		}
 		logger.info('Contact intake outcome', { requestId, receipt: result.receipt, secondary: result.secondary });
 		const { status, secondary: _secondary, ...body } = result;
 		return json(body, { status });

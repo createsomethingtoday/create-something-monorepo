@@ -7,6 +7,7 @@
     deliveries: { campaign: string; status: string; registered: number; delivered: number | null; states: Record<string, number> }[];
     engagement: { campaign: string; traffic_class: string; landing_sessions: number; resource_click_sessions: number; copy_sessions: number }[];
     archive: { action: string; traffic_class: string; events: number; sessions: number }[];
+    attribution?: { edition: string; channel: string; campaign: string; traffic_class: string; landing_sessions: number; requested: number; confirmed: number }[];
     limitations: string;
   }
   let report = $state<Report | null>(null);
@@ -30,6 +31,14 @@
   {:else if error}<p role="alert">{error}</p>
   {:else if report}
     <p>Read at {new Date(report.observed_at).toLocaleString()}. Provider delivery means the receiving mail server accepted the message.</p>
+    <p><a href="/admin/newsletter">Open the editorial desk →</a></p>
+    <h2>Edition and channel attribution</h2>
+    <p>Configured campaign paths from consent-enabled visits through signup and direct confirmation. Counts describe observed activity, not causal lift or unique email recipients. Operator and automated traffic remain separate.</p>
+    {#if !report.attribution}<p>Attribution unavailable. Do not substitute zero for missing evidence.</p>
+    {:else if report.attribution.length === 0}<p>No attributed activity recorded in this window. Untagged historical activity cannot be recovered.</p>
+    {:else}<div class="table-wrap"><table><thead><tr><th>Edition</th><th>Channel</th><th>Campaign</th><th>Traffic</th><th>Visit sessions</th><th>Signup requests</th><th>Confirmed signups</th></tr></thead><tbody>
+      {#each report.attribution as row}<tr><td>{row.edition}</td><td>{row.channel}</td><td>{row.campaign}</td><td>{row.traffic_class}</td><td>{row.landing_sessions}</td><td>{row.requested}</td><td>{row.confirmed}</td></tr>{/each}
+    </tbody></table></div>{/if}
     <h2>Delivery</h2>
     <div class="table-wrap"><table><thead><tr><th>Edition</th><th>Registered audience messages</th><th>Delivered</th><th>Evidence</th></tr></thead><tbody>
       {#each report.deliveries as row}<tr><td>{row.campaign}</td><td>{row.registered}</td><td>{row.delivered ?? 'Unavailable'}</td><td>{row.status === 'not-registered' ? 'No audience send registered' : row.status}</td></tr>{/each}
@@ -54,8 +63,8 @@
 <style>
   .report { max-width: 80rem; margin: 0 auto; padding: var(--space-performance-lg); }
   header { display: flex; justify-content: space-between; gap: var(--space-performance-md); align-items: center; }
-  h1 { font-size: var(--text-performance-heading-xl); }
-  h2 { margin-top: var(--space-performance-xl); font-size: var(--text-performance-heading-md); }
+  h1 { font-size: var(--text-performance-h1); }
+  h2 { margin-top: var(--space-performance-xl); font-size: var(--text-performance-h2); }
   p { margin-block: var(--space-performance-md); max-width: 70ch; line-height: 1.6; }
   button { background: var(--color-performance-bg-surface); color: var(--color-performance-fg-primary); border: 1px solid var(--color-performance-border-default); padding: var(--space-performance-sm); cursor: pointer; }
   .table-wrap { overflow-x: auto; }

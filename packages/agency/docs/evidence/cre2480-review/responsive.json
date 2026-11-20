@@ -1,0 +1,44 @@
+[
+  {
+    "width": 320,
+    "scrollWidth": 310,
+    "broken": [],
+    "hero": "url(\"http://127.0.0.1:4188/images/agency-approved-20261116/04-hero.webp\")",
+    "cta": "url(\"http://127.0.0.1:4188/images/agency-approved-20261116/04-hero.webp\")"
+  },
+  {
+    "width": 390,
+    "scrollWidth": 380,
+    "broken": [],
+    "hero": "url(\"http://127.0.0.1:4188/images/agency-approved-20261116/04-hero.webp\")",
+    "cta": "url(\"http://127.0.0.1:4188/images/agency-approved-20261116/04-hero.webp\")"
+  },
+  {
+    "width": 768,
+    "scrollWidth": 758,
+    "broken": [],
+    "hero": "url(\"http://127.0.0.1:4188/images/agency-approved-20261116/04-hero.webp\")",
+    "cta": "url(\"http://127.0.0.1:4188/images/agency-approved-20261116/04-hero.webp\")"
+  },
+  {
+    "width": 1024,
+    "scrollWidth": 1014,
+    "broken": [],
+    "hero": "url(\"http://127.0.0.1:4188/images/agency-approved-20261116/04-hero.webp\")",
+    "cta": "url(\"http://127.0.0.1:4188/images/agency-approved-20261116/04-hero.webp\")"
+  },
+  {
+    "width": 1025,
+    "scrollWidth": 1015,
+    "broken": [],
+    "hero": "url(\"http://127.0.0.1:4188/images/agency-approved-20261116/04-hero.webp\")",
+    "cta": "url(\"http://127.0.0.1:4188/images/agency-approved-20261116/04-hero.webp\")"
+  },
+  {
+    "width": 1440,
+    "scrollWidth": 1430,
+    "broken": [],
+    "hero": "url(\"http://127.0.0.1:4188/images/agency-approved-20261116/04-hero.webp\")",
+    "cta": "url(\"http://127.0.0.1:4188/images/agency-approved-20261116/04-hero.webp\")"
+  }
+]

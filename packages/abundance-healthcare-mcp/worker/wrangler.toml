@@ -5,6 +5,9 @@ compatibility_flags = ["nodejs_compat"]
 account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 workers_dev = true
 
+[triggers]
+crons = ["* * * * *"]
+
 [observability]
 enabled = true
 
@@ -12,7 +15,6 @@ enabled = true
 LANGFUSE_PROJECT_NAME = "CREATE SOMETHING"
 MCP_ACCOUNT_ID = "abundance-healthcare-agent"
 AGENCY_BASE_URL = "https://createsomething.agency"
-PDL_DAILY_LIMIT = "25"
 
 [[durable_objects.bindings]]
 name = "MCP_OBJECT"
@@ -34,3 +36,12 @@ class_name = "PdlProfiles"
 [[migrations]]
 tag = "v2"
 new_sqlite_classes = ["PdlProfiles"]
+
+# APIFY_API_TOKEN is a server secret; provision only after parent release approval.
+[[durable_objects.bindings]]
+name = "SKIP_TRACE"
+class_name = "SkipTraceProfiles"
+
+[[migrations]]
+tag = "v3"
+new_sqlite_classes = ["SkipTraceProfiles"]

@@ -67,6 +67,10 @@ export const FIELD_IDS = {
     backendRuntime: 'fld2q6KbYhc6HMKdz',
     backendRuntimeVersion: 'fldbAGf4BIDGtgrsu',
     backendHostingProvider: 'fldSFlf75x5CJYzgm',
+    // Stack labels (2026-11-19, AppSec ask): optional, comma-separated text. Lets Security
+    // filter apps by framework or web server when an advisory lands (e.g. nginx).
+    backendFrameworks: 'fldzcqyVIsm47w9aT',
+    backendWebServers: 'fldOMvPcWZ8Jkr0BH',
     backendDeclaredAt: 'fldyrLslbwNMTPjJF',
   },
   versions: {
@@ -125,6 +129,8 @@ export const FIELD_IDS = {
     backendRuntime: 'fld2FauecT0r0zwKJ',
     backendRuntimeVersion: 'fld6qkHQbkK12EUvG',
     backendHostingProvider: 'fld5eqefnCFivlpfF',
+    backendFrameworks: 'fldRuYPfAazYFvSji',
+    backendWebServers: 'fldGd6MSdsHoJSzpE',
     // Reviewer-written (2026-11-03): backend seen during bundle, injected-script, or install
     // checks that the developer's declaration does not cover. Never a substitute for the
     // declaration; the developer completes it on the next Update.
@@ -159,6 +165,9 @@ export const MARKETPLACE_STATUS_OPTIONS = [
   '3️⃣Published🚀',
   '4️⃣Delisted☠️',
   '5️⃣Rejected❌',
+  // Record only: the suspension itself is set in Webflow Admin (status
+  // SUSPENDED hides the listing and blocks new installs; installs keep working).
+  '6️⃣Suspended⏸️',
 ] as const;
 
 export const VISIBILITY_OPTIONS = [
@@ -290,13 +299,15 @@ export const LEGACY_BACKEND_HOSTING_MODEL_OPTIONS = ['None (browser-only Designe
 
 /**
  * Backend declaration keys (snake_case, as exposed by the field map) -> FIELD_IDS key.
- * Writable on Assets; the first four are snapshotted read-only onto Asset Versions.
+ * Writable on Assets; all of them are snapshotted read-only onto Asset Versions.
  */
 export const BACKEND_DECLARATION_FIELD_KEYS = {
   backend_hosting_model: 'backendHostingModel',
   backend_runtime: 'backendRuntime',
   backend_runtime_version: 'backendRuntimeVersion',
   backend_hosting_provider: 'backendHostingProvider',
+  backend_frameworks: 'backendFrameworks',
+  backend_web_servers: 'backendWebServers',
 } as const;
 
 export type BackendDeclarationSnapshotKey = keyof typeof BACKEND_DECLARATION_FIELD_KEYS;
@@ -443,6 +454,8 @@ export type AssetWritableKey =
   | 'backend_runtime'
   | 'backend_runtime_version'
   | 'backend_hosting_provider'
+  | 'backend_frameworks'
+  | 'backend_web_servers'
   | 'backend_declared_at'
   | 'marketplace_status';
 
@@ -475,6 +488,8 @@ export const WRITABLE_ASSET_FIELDS: Record<AssetWritableKey, string> = {
   backend_runtime: FIELD_IDS.assets.backendRuntime,
   backend_runtime_version: FIELD_IDS.assets.backendRuntimeVersion,
   backend_hosting_provider: FIELD_IDS.assets.backendHostingProvider,
+  backend_frameworks: FIELD_IDS.assets.backendFrameworks,
+  backend_web_servers: FIELD_IDS.assets.backendWebServers,
   backend_declared_at: FIELD_IDS.assets.backendDeclaredAt,
   marketplace_status: FIELD_IDS.assets.marketplaceStatus,
 };

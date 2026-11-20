@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import { SEO } from '@create-something/canon';
   import ScopefieldStory from '$lib/components/scopefield/ScopefieldStory.svelte';
 
@@ -13,7 +14,8 @@
 />
 
 <div class="scopefield-page">
-  <section class="opening" id="opening" aria-labelledby="scopefield-title">
+  <AgencyHeroFrame>
+<section class="opening" id="opening" aria-labelledby="scopefield-title">
     <div class="edition"><a href="/products">Products</a><span>Mac public beta · 0.1.0-beta.1</span></div>
     <div class="hero-grid">
       <div><p class="eyebrow">Scopefield / A browser by CREATE SOMETHING</p><h1 id="scopefield-title">Your browser.<br /><em>Your call.</em></h1></div>
@@ -26,6 +28,7 @@
     </div>
     <div class="opening-footer"><span class="product-name"><img src="/scopefield/mark.svg" width="52" height="52" alt="" />Scopefield</span><a href="#focused-proof">Understand the boundary <span aria-hidden="true">↓</span></a></div>
   </section>
+</AgencyHeroFrame>
 
   <section class="proof" id="focused-proof" aria-labelledby="story-title">
     <div class="story-heading"><p class="eyebrow">01 / Anatomy of a bounded task</p><h2 id="story-title">What crosses<br /><em>the boundary?</em></h2><p>A conceptual model of context, recipient, approval, interruption, and evidence. The capability record below states what is actually available.</p></div>
@@ -82,7 +85,7 @@
   .hero-aside { max-width: 29rem; padding-bottom: 0.25rem; }
   .lede { font-size: clamp(1.3rem, 1.85vw, 1.85rem); line-height: 1.4; letter-spacing: -0.025em; }
   .support { color: var(--color-performance-muted); line-height: 1.6; margin-top: 1.5rem; }
-  .primary { display: flex; justify-content: space-between; align-items: center; gap: 2rem; padding: 1rem 1.25rem; background: var(--color-performance-ink); color: var(--color-performance-paper); border: 1px solid var(--color-performance-ink); border-radius: var(--radius-operator-control); font-weight: 600; text-decoration: none; margin-top: 2rem; min-height: 3.5rem; }
+  .primary { display: flex; justify-content: space-between; align-items: center; gap: 2rem; padding: 1rem 1.25rem; background: var(--color-performance-ink); color: var(--color-performance-paper); border: 1px solid var(--color-performance-ink); border-radius: var(--radius-performance-sm); font-weight: 600; text-decoration: none; margin-top: 2rem; min-height: 3.5rem; }
   .primary:hover { background: var(--color-performance-paper); color: var(--color-performance-ink); }
   .primary span { font-size: 1.5rem; line-height: 1; }
   .compatibility { margin-top: 1rem; color: var(--color-performance-muted); }
@@ -101,7 +104,7 @@
   dl > div { padding-block: 1.5rem; border-top: 1px solid var(--color-performance-line); }
   dt { font-weight: 600; margin-bottom: 0.65rem; font-size: 1.1rem; }
   dd { margin: 0; color: var(--color-performance-muted); line-height: 1.65; }
-  .release-proof { margin-top: 1.5rem; border-left: 2px solid var(--color-operator-status-done-text); padding-left: 1.5rem; }
+  .release-proof { margin-top: 1.5rem; border-left: 2px solid var(--color-performance-success); padding-left: 1.5rem; }
   .proof-label { color: var(--color-performance-muted); text-transform: uppercase; letter-spacing: 0.08em; }
   .release-proof p { margin-block: 0.7rem 1rem; line-height: 1.6; }
   .release-proof a, .text-link { font-size: 0.875rem; }

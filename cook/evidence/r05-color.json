@@ -1,0 +1,110 @@
+[
+  {
+    "state": "overview",
+    "kind": "baseline",
+    "source": "cook/stills/r00-expanded/overview-880.png",
+    "metrics": {
+      "YAVG": 50.0766,
+      "SATAVG": 0.39072
+    }
+  },
+  {
+    "state": "overview",
+    "kind": "candidate",
+    "source": "cook/stills/r05/overview-880.png",
+    "metrics": {
+      "YAVG": 50.8911,
+      "SATAVG": 0.415931
+    }
+  },
+  {
+    "state": "music",
+    "kind": "baseline",
+    "source": "cook/stills/r00-expanded/music-880.png",
+    "metrics": {
+      "YAVG": 51.1878,
+      "SATAVG": 0.386541
+    }
+  },
+  {
+    "state": "music",
+    "kind": "candidate",
+    "source": "cook/stills/r05/music-880.png",
+    "metrics": {
+      "YAVG": 54.0113,
+      "SATAVG": 0.825482
+    }
+  },
+  {
+    "state": "finances",
+    "kind": "baseline",
+    "source": "cook/stills/r00-expanded/finances-880.png",
+    "metrics": {
+      "YAVG": 52.1609,
+      "SATAVG": 0.421444
+    }
+  },
+  {
+    "state": "finances",
+    "kind": "candidate",
+    "source": "cook/stills/r05/finances-880.png",
+    "metrics": {
+      "YAVG": 52.3408,
+      "SATAVG": 0.429195
+    }
+  },
+  {
+    "state": "calendar-bounded",
+    "kind": "baseline",
+    "source": "cook/stills/r00-expanded/calendar-bounded-880.png",
+    "metrics": {
+      "YAVG": 54.0194,
+      "SATAVG": 0.636129
+    }
+  },
+  {
+    "state": "calendar-bounded",
+    "kind": "candidate",
+    "source": "cook/stills/r05/calendar-bounded-880.png",
+    "metrics": {
+      "YAVG": 53.0651,
+      "SATAVG": 0.648033
+    }
+  },
+  {
+    "state": "ask-matching-receipt",
+    "kind": "baseline",
+    "source": "cook/stills/r00-expanded/ask-matching-receipt-880.png",
+    "metrics": {
+      "YAVG": 56.6876,
+      "SATAVG": 0.989261
+    }
+  },
+  {
+    "state": "ask-matching-receipt",
+    "kind": "candidate",
+    "source": "cook/stills/r05/ask-matching-receipt-880.png",
+    "metrics": {
+      "YAVG": 56.2569,
+      "SATAVG": 1.00424
+    }
+  },
+  {
+    "state": "ask-accepted-send",
+    "kind": "baseline",
+    "source": "cook/stills/r04/ask-accepted-send-880.png",
+    "metrics": {
+      "YAVG": 55.8288,
+      "SATAVG": 0.677416
+    }
+  },
+  {
+    "state": "ask-accepted-send",
+    "kind": "candidate",
+    "source": "cook/stills/r05/ask-accepted-send-880.png",
+    "metrics": {
+      "YAVG": 54.4866,
+      "SATAVG": 0.677416
+    }
+  }
+]

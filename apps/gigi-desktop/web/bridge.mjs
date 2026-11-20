@@ -12,11 +12,13 @@ export function createBridge(invoke, onMutation = () => {}) {
     return name;
   };
   return {
+    today: (workspaceId, today, weekStart) => call('today.read', { workspaceId: owned(workspaceId), today, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, ...(weekStart ? {weekStart} : {}) }),
     overview: (workspaceId, today) => call('workspace.overview', { workspaceId: owned(workspaceId), today, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
     getWorkspace: (workspaceId) => call('workspace.get', workspaceId ? { workspaceId } : {}),
     createWorkspace: (name) => call('workspace.create', { name: name.trim() }),
     listRecords: (workspaceId, name, cursor, query) => call('records.list', { workspaceId: owned(workspaceId), entity: entity(name), ...(cursor ? { cursor } : {}), ...(name === 'contacts' && query?.trim() ? { query: query.trim() } : {}) }),
     listGigs: (workspaceId, gigs, cursor) => call('records.list', { workspaceId: owned(workspaceId), entity: 'gigs', gigs: { ...gigs, today: localToday(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }, ...(cursor ? {cursor} : {}) }),
+    listTasks: (workspaceId, tasks, cursor) => call('records.list', {workspaceId:owned(workspaceId),entity:'tasks',tasks:{...tasks,today:localToday(),timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone},...(cursor?{cursor}:{})}),
     getRecord: (workspaceId, name, id, detail) => call('records.get', { workspaceId: owned(workspaceId), entity: entity(name), id, ...(detail ? { detail } : {}) }),
     saveRecord: (workspaceId, name, record) => call('records.save', { workspaceId: owned(workspaceId), entity: entity(name), ...record }),
     linkRecords: (workspaceId, fromEntity, fromId, toEntity, toId, role) => call('relations.link', { workspaceId: owned(workspaceId), fromEntity: entity(fromEntity), fromId, toEntity: entity(toEntity), toId, ...(role ? { role } : {}) }),
@@ -31,7 +33,7 @@ export function createBridge(invoke, onMutation = () => {}) {
     chatList: (workspaceId) => call('agent.chat.list', { workspaceId: owned(workspaceId) }),
     chatStart: (workspaceId, record) => call('agent.chat.start', { workspaceId: owned(workspaceId), ...(record ? { record } : {}) }),
     chatRead: (workspaceId, sessionId) => call('agent.chat.read', { workspaceId: owned(workspaceId), sessionId }),
-    chatSend: (workspaceId, sessionId, message) => call('agent.chat.send', { workspaceId: owned(workspaceId), sessionId, message }),
+    chatSend: (workspaceId, sessionId, message, requestId) => call('agent.chat.send', { workspaceId: owned(workspaceId), sessionId, message, ...(requestId ? { requestId } : {}) }),
     chatPoll: (workspaceId, sessionId) => call('agent.chat.poll', { workspaceId: owned(workspaceId), sessionId }),
     chatCancel: (workspaceId, sessionId) => call('agent.chat.cancel', { workspaceId: owned(workspaceId), sessionId }),
     chatApprove: (workspaceId, sessionId, approvalId, decision) => call('agent.chat.approve', { workspaceId: owned(workspaceId), sessionId, approvalId, decision }),

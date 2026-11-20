@@ -68,11 +68,12 @@ Rules without frontmatter load every session and count toward Claude Code's 150k
 - **File**: `rules/voice-canon.md`
 - **Priority**: P0
 - **Triggers**: `*.md` files, documentation, any writing
-- **Summary**: Five principles: Clarity over cleverness, Specificity over generality, Honesty over polish, Useful over interesting, Grounded over trendy
+- **Summary**: Route writing through the shared approved guide: precise, capable, human, and accountable.
+- **Voice authority**: `packages/dotfiles/codex/skills/writing-for-humans/references/create-something-voice.md`
 - **Key Rules**:
-  - No marketing jargon (cutting-edge, revolutionary, leverage)
-  - All claims must be measurable
-  - Document failures alongside successes
+  - Read the shared guide and apply the artifact’s property emphasis and inclusive-language criteria.
+  - Support material claims with evidence or an honest limit; do not invent numbers.
+  - Preserve uncertainty, ownership, and the distinction between proposed, tested, deployed, and verified.
 
 #### social-patterns
 - **File**: `rules/social-patterns.md`

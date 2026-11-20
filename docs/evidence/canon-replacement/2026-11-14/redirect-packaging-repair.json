@@ -1,0 +1,30 @@
+{
+  "time": "2026-11-14T06:04:18.095378+00:00",
+  "cause": "Adapter requires package-root _redirects; all four roots previously absent",
+  "files": [
+    {
+      "package": "io",
+      "path": "packages/io/_redirects",
+      "sha256": "52b011209f573eed8af66100d96b05414441f29ab37dad49af9656c978362440",
+      "rules": 18
+    },
+    {
+      "package": "ltd",
+      "path": "packages/ltd/_redirects",
+      "sha256": "0d8e11938e1be0735bf8659a68f5515f6e82dbb3e604e08b803df7f62603552e",
+      "rules": 12
+    },
+    {
+      "package": "space",
+      "path": "packages/space/_redirects",
+      "sha256": "07dbd595412bd999c19d10ba027b6e01f59757b49c77820ae54248dc06349e6a",
+      "rules": 24
+    },
+    {
+      "package": "lms",
+      "path": "packages/lms/_redirects",
+      "sha256": "cecf11ebbbb5f3c6a48d1a5a9c7cf1c4db18c9b26e6324825023dd10726d5068",
+      "rules": 1
+    }
+  ]
+}

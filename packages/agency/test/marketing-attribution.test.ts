@@ -34,6 +34,36 @@ test('persists attribution for the consented session and expires it', () => {
   assert.equal(readMarketingAttribution(storage, capturedAt + MARKETING_ATTRIBUTION_TTL_MS), undefined);
 });
 
+test('retains paid Meta campaign attribution across navigation without storing Meta identifiers', () => {
+  for (const source of ['facebook', 'instagram', 'meta']) {
+    for (const medium of ['paid_social', 'cpc']) {
+      const storage = memoryStorage();
+      const attribution = captureMarketingAttribution(
+        new URL(`https://createsomething.agency/services?utm_source=${source}&utm_medium=${medium}&utm_campaign=workflow-support&utm_content=ad-123&fbclid=private-click&_fbc=private-cookie&_fbp=private-browser`),
+        storage,
+        capturedAt
+      );
+      assert.equal(attribution?.marketingSource, source);
+      assert.equal(attribution?.marketingMedium, medium);
+      assert.equal(attribution?.marketingCampaign, 'workflow-support');
+      assert.equal(attribution?.marketingContent, 'ad-123');
+      assert.deepEqual(captureMarketingAttribution(new URL('https://createsomething.agency/contact'), storage, capturedAt + 1000), attribution);
+      assert.doesNotMatch(JSON.stringify(storage.dump()), /private|fbclid|_fbc|_fbp/);
+      assert.equal(readMarketingAttribution(storage, capturedAt + MARKETING_ATTRIBUTION_TTL_MS), undefined);
+    }
+  }
+});
+
+test('keeps Meta organic posts distinct from paid campaigns', () => {
+  for (const source of ['facebook', 'instagram']) {
+    const organic = captureMarketingAttribution(
+      new URL(`https://createsomething.agency/?utm_source=${source}&utm_medium=social&utm_campaign=workflow-support`),
+      memoryStorage(), capturedAt
+    );
+    assert.equal(organic?.marketingMedium, 'social');
+  }
+});
+
 test('rejects unknown sources, media, missing campaigns, and unsafe values', () => {
   for (const value of [
     'https://createsomething.agency/?utm_source=tiktok&utm_medium=social&utm_campaign=dispatch',

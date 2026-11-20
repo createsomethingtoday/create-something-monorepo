@@ -1,0 +1,30 @@
+{
+  "passed": true,
+  "javaScript": false,
+  "results": [
+    {
+      "width": 320,
+      "passed": true
+    },
+    {
+      "width": 390,
+      "passed": true
+    },
+    {
+      "width": 768,
+      "passed": true
+    },
+    {
+      "width": 1024,
+      "passed": true
+    },
+    {
+      "width": 1025,
+      "passed": true
+    },
+    {
+      "width": 1440,
+      "passed": true
+    }
+  ]
+}

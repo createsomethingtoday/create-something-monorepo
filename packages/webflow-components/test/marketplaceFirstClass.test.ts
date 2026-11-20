@@ -36,3 +36,12 @@ test('globally valid styles allow zero-result category combinations', async () =
   const result = await tools.find(t => t.name === 'search_templates')!.execute({category_group_slug:'portfolio-and-agency-websites',styles:['minimal']}) as {total_items:number};
   assert.equal(result.total_items, 0);
 });
+
+test('brief requirements survive page actions and clear explicitly',()=>{
+ const p=new URL(buildPageActionUrl('https://webflow.com/templates/search?max_price=99&has_cms=true&compare=one,two',{q:'architecture'})).searchParams;
+ assert.equal(p.get('max_price'),'99');assert.equal(p.get('has_cms'),'true');assert.equal(p.get('compare'),'one,two');
+ const cleared=new URL(buildPageActionUrl('https://webflow.com/templates/search?max_price=99&has_cms=true',{max_price:null,has_cms:null})).searchParams;
+ assert.equal(cleared.has('max_price'),false);assert.equal(cleared.has('has_cms'),false);
+ const zero=new URL(buildPageActionUrl('https://webflow.com/templates/search',{max_price:0,has_cms:false})).searchParams;
+ assert.equal(zero.get('max_price'),'0');assert.equal(zero.get('has_cms'),'false');
+});

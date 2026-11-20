@@ -21,7 +21,7 @@
       <div class="record-problem"><span class="record-label">The opportunity</span><p>Sharing an agent opens a conversation. Context makes it useful.</p></div>
       <p class="record-context">Using and sharing our OpenAI dots changed how we thought about helping others put agents to work. The next step is practical: connect the recipient’s tools and context, agree on permissions, and inspect the result.</p>
       <p class="record-context">Sharing an agent does not grant access to someone else’s private context or credentials. Each client setup needs its own approved access.</p>
-      <div class="record-footer"><a href="#agent-enablement">See the workflow and optional canon story ↓</a><a href="#team-enablement">Team setup and governance ↗</a></div>
+      <div class="record-footer"><a href="#agent-enablement">See the workflow ↓</a><a href="#team-enablement">Team setup and governance ↗</a></div>
     </figure>
   </div>
   <div class="hero-bottom"><a href="#built-work">See the work behind the offer <span aria-hidden="true">↓</span></a><a href="/agent-foundation">What a checked handoff includes ↗</a></div>

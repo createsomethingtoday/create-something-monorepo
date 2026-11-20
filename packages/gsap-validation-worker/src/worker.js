@@ -516,8 +516,12 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
     /documentElement[\s\S]*w-mod-|w-mod-[\s\S]*documentElement/i,
     // Simple w-mod signature — this string only appears in Webflow's default script
     /w-mod-/,
-    /var Webflow = Webflow \|\| \[\];/,
-    // Common legitimate scripts
+    // A creator script that only calls Webflow.push( or Webflow.require( is not a
+    // platform script. Those strings used to sit in this list, so any script that
+    // wrapped itself in Webflow.push skipped every check below (a template, 2026-11-16:
+    // a 39KB site script passed with 0 findings). localStorage calls and a
+    // document.createElement("script") loader were in the list too. All of them now
+    // go through the GSAP and security checks like any other script.
     /WebFont\.load\(/,
     // WebFont loading
     /window\.__WEBFLOW_CURRENCY_SETTINGS =/,
@@ -526,17 +530,6 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
     // URL-encoded HTML (often in Webflow commerce)
     /\(function\(e\)\{var s=\{r:\[\]\};e\.wf=\{r:s\.r,ready:/,
     // Webflow ready function pattern
-    /Webflow\.require\(/,
-    // Webflow require calls
-    /Webflow\.push\(/,
-    // Webflow push calls
-    // Third-party integrations
-    /localStorage\.removeItem\(/,
-    // Local storage operations
-    /localStorage\.getItem\(/,
-    // Local storage read
-    /localStorage\.setItem\(/,
-    // Local storage write
     /intellimize/,
     // Intellimize integration
     /\.anti-flicker/,
@@ -570,11 +563,8 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
     // Webflow password page handlers
     /_handlePasswordPageOnload/,
     // Password page handler function
-    /w-password-page/,
+    /w-password-page/
     // Password page class
-    // Common script patterns
-    /document\.createElement\("script"\)/
-    // Script loading pattern
   ];
   const results = {
     url: pageUrl,
@@ -674,7 +664,8 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
       return;
     }
     const hasCustomAnimation = customAnimationPatterns.some((pattern) => testPattern(pattern, script));
-    const hasAnyGsap = /gsap|ScrollTrigger|SplitText|timeline|TweenMax|TweenLite/i.test(script);
+    // The bare word "timeline" is not GSAP: a ".timeline" class name used to switch this check off.
+    const hasAnyGsap = /gsap|ScrollTrigger|SplitText|TweenMax|TweenLite/i.test(script);
     if (hasCustomAnimation && !hasAnyGsap) {
       const matchedPatterns = customAnimationPatterns.filter((pattern) => testPattern(pattern, script)).map((pattern) => pattern.source.substring(0, 50) + "...");
       results.flaggedCode.push({
@@ -781,7 +772,8 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
         results.flaggedCode.push({
           scriptIndex: index,
           message: "Mixed GSAP usage with unapproved code",
-          flaggedCode: unacceptedCode
+          flaggedCode: unacceptedCode,
+          guidance: describeUnapprovedGsapScript(script)
         });
       }
     } else {
@@ -1023,6 +1015,407 @@ function extractExternalScripts(html) {
   }
 }
 __name(extractExternalScripts, "extractExternalScripts");
+// GSAP wiring exemption. A GSAP script needs wiring around its tweens:
+// guards, function and listener headers, flags, tween vars, and reordering of
+// existing nodes for looping sliders. The original count treats that wiring
+// as unapproved code. isGsapWiringOnlyScript passes a script only when EVERY
+// statement has one of the allowed shapes below. It is an allowlist: any
+// statement it does not recognize, including new syntax, keeps the original
+// count.
+// Second layer: the exemption is also off when the script does anything
+// besides GSAP: creates elements, uses the network, timers, or storage,
+// writes markup, text, styles, or URLs, reveals template content, changes UI state another way
+// (classes, data attributes, attributes, form or visibility properties,
+// programmatic clicks or scrolling), or animates without GSAP (Web
+// Animations, jQuery).
+var NON_GSAP_BEHAVIOR_PATTERN = new RegExp([
+  String.raw`createElement\s*\(`,
+  String.raw`\bfetch\s*\(`,
+  String.raw`XMLHttpRequest|sendBeacon|WebSocket|EventSource`,
+  String.raw`\bset(?:Interval|Timeout)\s*\(|requestAnimationFrame`,
+  String.raw`localStorage|sessionStorage|indexedDB|document\.cookie`,
+  String.raw`\b(?:eval|Function)\s*\(|\bimport\s*\(`,
+  String.raw`innerHTML|outerHTML|insertAdjacent(?:HTML|Element|Text)|document\.write`,
+  String.raw`\.(?:textContent|innerText|src|href|srcdoc|action)\s*\+?=(?!=)`,
+  String.raw`\.style\.[\w$]+\s*\+?=(?!=)|\.style\[|\.style\.(?:setProperty|cssText)`,
+  String.raw`setAttribute\s*\(|\blocation\b`,
+  String.raw`classList\.(?:add|remove|toggle|replace)\s*\(|\.className\s*\+?=(?!=)`,
+  String.raw`\.dataset\.[\w$]+\s*=(?!=)|\.dataset\[|(?:toggle|remove)Attribute\s*\(`,
+  String.raw`\.(?:hidden|checked|disabled|open|value|selected)\s*=(?!=)`,
+  String.raw`\.(?:click|scrollIntoView|scrollTo|scrollBy)\s*\(`,
+  String.raw`\.(?:animate|getAnimations)\s*\(|\bnew\s+(?:Animation|KeyframeEffect)\b`,
+  String.raw`\.content\b`
+].join("|"));
+// Why a script with GSAP in it was still flagged, in words a creator can act
+// on: what the script does besides GSAP, the first line that does it, and the
+// Designer or GSAP way to get the same result. Advisory only: it never changes
+// whether a script passes.
+var GSAP_GUIDANCE_RULES = [
+  {
+    id: "markup",
+    pattern: /createElement\s*\(|\.(?:innerHTML|outerHTML)\s*\+?=(?!=)|insertAdjacent(?:HTML|Element|Text)\s*\(|document\.write(?:ln)?\s*\(/,
+    reason: "It creates or writes HTML.",
+    fix: "Build the elements in the Designer and animate them with GSAP."
+  },
+  {
+    id: "network-or-storage",
+    pattern: /\bfetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource|localStorage|sessionStorage|indexedDB|document\.cookie/,
+    reason: "It uses the network or browser storage.",
+    fix: "Remove it. Custom code in a template can only animate with GSAP."
+  },
+  {
+    id: "timer",
+    pattern: /\bset(?:Interval|Timeout)\s*\(|requestAnimationFrame/,
+    reason: "It uses a timer.",
+    fix: "Use a GSAP timeline, a tween delay, or gsap.delayedCall."
+  },
+  {
+    id: "text-write",
+    pattern: /\.(?:textContent|innerText)\s*\+?=(?!=)/,
+    reason: "It writes text into the page.",
+    fix: "Let GSAP write the value. For a counter, tween textContent and round it with snap: gsap.from(el, { textContent: 0, snap: { textContent: 1 } })."
+  },
+  {
+    id: "style-write",
+    pattern: /\.style\.[\w$]+\s*\+?=(?!=)|\.style\[|\.style\.(?:setProperty|cssText)|setAttribute\s*\(\s*['"]style['"]|removeAttribute\s*\(\s*['"]style['"]/,
+    reason: "It sets styles directly.",
+    fix: "Set the style in the Designer (Style panel, or Custom properties for CSS that has no control), or use gsap.set and clearProps."
+  },
+  {
+    id: "class-change",
+    pattern: /classList\.(?:add|remove|toggle|replace)\s*\(|\.className\s*\+?=(?!=)/,
+    reason: "It changes classes.",
+    fix: "Animate the change with a GSAP tween, or use a Set action in Interactions with GSAP."
+  },
+  {
+    id: "attribute-write",
+    pattern: /(?:set|remove|toggle)Attribute\s*\(\s*(?!['"]style['"])|\.dataset\.[\w$]+\s*=(?!=)|\.dataset\[/,
+    reason: "It sets attributes.",
+    fix: "Use a native Webflow element for this state, or Interactions with GSAP."
+  },
+  {
+    id: "url-write",
+    pattern: /\.(?:src|href|srcdoc|action)\s*\+?=(?!=)|\blocation\b/,
+    reason: "It changes a link, a source, or the page address.",
+    fix: "Set links and sources in the Designer."
+  },
+  {
+    id: "non-gsap-animation",
+    pattern: /\.(?:animate|getAnimations)\s*\(|\bnew\s+(?:Animation|KeyframeEffect)\b/,
+    reason: "It animates without GSAP.",
+    fix: "Use a GSAP tween or Interactions with GSAP."
+  }
+];
+var GSAP_GUIDANCE_NOT_STATIC_PATTERN = /\bgsap\.(?:to|from|fromTo|timeline|ticker|matchMedia|context|delayedCall|quickTo|quickSetter)\b|ScrollTrigger|Observer\b|matchMedia|addEventListener\s*\(\s*['"](?!DOMContentLoaded['"]|load['"])|\.on[a-z]+\s*=(?!=)/;
+var GSAP_GUIDANCE_LINE_MAX = 140;
+var GSAP_GUIDANCE_MAX = 4;
+// The lines of a script without its comments, each as { text, match }:
+// `text` is the line as written (quoted back to the creator) and `match` is
+// the same line with the contents of string and template literals blanked, so
+// a rule never fires on words inside a message or a code example. Short
+// identifier-like literals ('style', 'resize', 'aria-expanded') are kept in
+// `match` because rules read them as arguments. Used for guidance only, never
+// for the pass or fail decision; a regex literal that contains a quote or a
+// comment marker can be misread.
+function executableLines(script) {
+  const source = String(script || "");
+  let text = "";
+  let match = "";
+  let literal = "";
+  let state = "code";
+  // Open template interpolations: the brace depth inside each \`${ ... }\`.
+  const interpolations = [];
+  const flushLiteral = () => {
+    match += /^[\w-]*$/.test(literal) ? literal : literal.replace(/[^\n]/g, " ");
+    literal = "";
+  };
+  const closeLiteral = () => {
+    flushLiteral();
+    state = "code";
+  };
+  for (let index = 0; index < source.length; index++) {
+    const char = source[index];
+    const next = source[index + 1];
+    if (state === "line-comment") {
+      if (char === "\n") {
+        state = "code";
+        text += char;
+        match += char;
+      }
+      continue;
+    }
+    if (state === "block-comment") {
+      if (char === "*" && next === "/") {
+        state = "code";
+        text += " ";
+        match += " ";
+        index++;
+      } else if (char === "\n") {
+        text += char;
+        match += char;
+      }
+      continue;
+    }
+    if (state === "code") {
+      if (char === "/" && next === "/") {
+        state = "line-comment";
+        index++;
+        continue;
+      }
+      if (char === "/" && next === "*") {
+        state = "block-comment";
+        index++;
+        continue;
+      }
+      if (interpolations.length > 0) {
+        if (char === "{") interpolations[interpolations.length - 1]++;
+        if (char === "}") {
+          if (interpolations[interpolations.length - 1] === 0) {
+            // End of the interpolation: back to the template's text.
+            interpolations.pop();
+            state = "`";
+            text += char;
+            match += char;
+            continue;
+          }
+          interpolations[interpolations.length - 1]--;
+        }
+      }
+      if (char === "'" || char === '"' || char === "`") state = char;
+      text += char;
+      match += char;
+      continue;
+    }
+    // Inside a string or template literal, up to its closing quote.
+    text += char;
+    if (char === "\\" && next !== undefined) {
+      text += next;
+      literal += "  ";
+      index++;
+    } else if (state === "`" && char === "$" && next === "{") {
+      // Code inside a template interpolation is executable: read it as code.
+      flushLiteral();
+      text += next;
+      match += "${";
+      index++;
+      interpolations.push(0);
+      state = "code";
+    } else if (char === state) {
+      closeLiteral();
+      match += char;
+    } else if (char === "\n" && state !== "`") {
+      closeLiteral();
+      match += char;
+    } else {
+      literal += char;
+    }
+  }
+  if (literal) closeLiteral();
+  const textLines = text.split("\n");
+  const matchLines = match.split("\n");
+  return textLines.map((line, index) => ({ text: line.trim(), match: (matchLines[index] || "").trim() })).filter((line) => line.match);
+}
+__name(executableLines, "executableLines");
+function describeUnapprovedGsapScript(script) {
+  const lines = executableLines(script);
+  const guidance = [];
+  for (const rule of GSAP_GUIDANCE_RULES) {
+    const line = lines.find((candidate) => rule.pattern.test(candidate.match));
+    if (!line) continue;
+    guidance.push({ id: rule.id, reason: rule.reason, fix: rule.fix, line: truncateScript(line.text, GSAP_GUIDANCE_LINE_MAX) });
+    if (guidance.length >= GSAP_GUIDANCE_MAX) return guidance;
+  }
+  // A lone gsap.set that runs once at load has no motion, so the Designer can
+  // hold the same style. A set that can run again (on resize, pointer events,
+  // the ticker, an observer or a media query) is behavior, not a static style.
+  const staticLine = lines.find((candidate) => /\bgsap\.set\s*\(/.test(candidate.match));
+  if (staticLine && !lines.some((candidate) => GSAP_GUIDANCE_NOT_STATIC_PATTERN.test(candidate.match))) {
+    guidance.push({
+      id: "static-style",
+      reason: "It sets a style one time, with no motion.",
+      fix: "Set the style in the Designer (Style panel, or Custom properties for CSS that has no control). No script is needed.",
+      line: truncateScript(staticLine.text, GSAP_GUIDANCE_LINE_MAX)
+    });
+  }
+  if (guidance.length === 0) {
+    guidance.push({
+      id: "unrecognized",
+      reason: "It contains code that the check does not recognize as GSAP.",
+      fix: "Keep only GSAP calls and the element lookups they need, and use fixed values in tweens. Or build the effect with Interactions with GSAP."
+    });
+  }
+  return guidance;
+}
+__name(describeUnapprovedGsapScript, "describeUnapprovedGsapScript");
+var GSAP_WIRING_LISTENER_EVENTS = "DOMContentLoaded|load|click|resize|mouseenter|mouseleave|pointerenter|pointerleave";
+var GSAP_WIRING_CALLBACK = String.raw`(?:\(?[\w$\s,]*\)?\s*=>|function\s*[\w$]*\s*\([\w$\s,]*\))`;
+// Tween vars GSAP treats as data. A key outside this list could name a
+// method GSAP would call as a getter/setter, so it is not wiring.
+var GSAP_WIRING_TWEEN_KEYS = /* @__PURE__ */ new Set([
+  "x", "y", "z", "xPercent", "yPercent", "rotation", "rotate", "rotationX", "rotationY", "rotationZ", "rotateX", "rotateY", "rotateZ",
+  "scale", "scaleX", "scaleY", "skewX", "skewY", "transformOrigin", "transformPerspective", "force3D", "svgOrigin",
+  "opacity", "autoAlpha", "visibility", "display", "zIndex", "width", "height", "top", "left", "right", "bottom",
+  "color", "backgroundColor", "borderRadius", "clipPath", "filter", "willChange", "backfaceVisibility",
+  "duration", "delay", "ease", "stagger", "repeat", "repeatDelay", "yoyo", "overwrite", "paused", "immediateRender"
+]);
+// A literal, or a reference coerced to a number (`-distance`). A bare
+// reference could hold a function, which GSAP would call.
+var GSAP_WIRING_TWEEN_VALUE = String.raw`(?:-?\d+(?:\.\d+)?|true|false|null|"[^"]*"|'[^']*'|[-+][\w$.]+)`;
+// GSAP calls that only animate inline vars or read: `gsap.to(rail,`.
+// One target, then inline vars (checked as separate statements).
+var GSAP_WIRING_TWEEN_CALL_PATTERN = /^gsap\.(?:to|from|fromTo|set)\(\s*(?:[\w$.]+|"[^"]*"|'[^']*')\s*,$/;
+var GSAP_WIRING_TWEEN_PAIR_PATTERN = new RegExp(String.raw`^([\w$]+)\s*:\s*${GSAP_WIRING_TWEEN_VALUE}$`);
+// Inline tween callbacks; the body is checked as separate statements.
+var GSAP_WIRING_TWEEN_CALLBACK_PATTERN = new RegExp(String.raw`^([\w$]+)\s*:\s*${GSAP_WIRING_CALLBACK}$`);
+var GSAP_WIRING_TWEEN_CALLBACK_KEYS = /* @__PURE__ */ new Set(["onComplete", "onStart", "onUpdate", "onRepeat", "onReverseComplete", "onInterrupt"]);
+var GSAP_WIRING_GSAP_READ_CALLS = /* @__PURE__ */ new Set(["gsap.utils.toArray", "gsap.isTweening"]);
+// Guard or branch header with a call-free condition: `if (busy) return`
+var GSAP_WIRING_GUARD_PATTERN = /^(?:else\s+)?if\s*\((.*)\)\s*(?:return)?$/;
+// Flag or counter the script declares, set to a literal: `busy = true`
+var GSAP_WIRING_FLAG_PATTERN = /^([\w$]+)\s*=\s*(?:true|false|null|-?\d+(?:\.\d+)?)$/;
+var GSAP_WIRING_BLOCK_PATTERNS = [
+  // Named function header: `function step(direction)`
+  /^(?:async\s+)?function\s*[\w$]*\s*\([\w$\s,=]*\)$/,
+  // UI listener header; the callback body is checked as separate statements
+  new RegExp(String.raw`^[\w$.]+\.addEventListener\(\s*['"](?:${GSAP_WIRING_LISTENER_EVENTS})['"]\s*,\s*${GSAP_WIRING_CALLBACK}$`),
+  // Event plumbing: `e.preventDefault()`
+  /^[\w$.]+\.(?:preventDefault|stopPropagation)\(\)$/
+];
+// Moving existing nodes: `rail.appendChild(lead)`,
+// `rail.insertBefore(cards[cards.length - 1], lead)`. Only methods that take
+// nodes (a string throws), and only plain names or indexed items as arguments.
+var GSAP_WIRING_REORDER_PATTERN = /^[\w$.]+\.(?:appendChild|insertBefore)\((.*)\)$/;
+// Where an existing node comes from: an item of a list of existing elements,
+// or a lookup with nothing read after it. Anything else (template content,
+// strings, clones) is not a known existing node.
+var GSAP_WIRING_LIST_SOURCE_PATTERN = /^(?:gsap\.utils\.toArray\([^()]*\)|[\w$.]+\.querySelectorAll\([^()]*\)|[\w$.]+\.children)$/;
+var GSAP_WIRING_ELEMENT_SOURCE_PATTERN = /^[\w$.]+\.(?:querySelector|getElementById|closest)\([^()]*\)$/;
+var GSAP_WIRING_LIST_ITEM_PATTERN = /^([\w$]+)\[[\w$.]+(?:\s*-\s*\d+)?\]$/;
+function isExistingNodeArgument(argument, context) {
+  const item = GSAP_WIRING_LIST_ITEM_PATTERN.exec(argument);
+  if (item) return context.lists.has(item[1]);
+  return context.elements.has(argument);
+}
+__name(isExistingNodeArgument, "isExistingNodeArgument");
+// Statements with no behavior: closing punctuation, bare keywords, comments.
+var GSAP_WIRING_INERT_PATTERN = /^(?:[)\],\s]+|else|return|break|continue|\/\/.*|\/\*(?:(?!\*\/)[\s\S])*\*\/)$/;
+// Calls that only read the DOM or compute a value.
+var GSAP_WIRING_READ_ONLY_CALLS = /* @__PURE__ */ new Set([
+  "querySelector", "querySelectorAll", "getElementById", "getElementsByClassName", "getElementsByTagName",
+  "closest", "matches", "contains", "getComputedStyle", "getBoundingClientRect",
+  "parseFloat", "parseInt", "Number", "isNaN", "min", "max", "round", "floor", "ceil", "abs"
+]);
+var GSAP_WIRING_DECLARATION_PATTERN = /^(?:const|let|var)\s+[\w$]+\s*=\s*(.+)$/;
+var GSAP_WIRING_CALLBACK_HEADER_PATTERN = new RegExp(String.raw`^(?:async\s*)?${GSAP_WIRING_CALLBACK}$`);
+function stripStringLiterals(code) {
+  return code.replace(/'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"/g, '""');
+}
+__name(stripStringLiterals, "stripStringLiterals");
+// Any assignment (`=`, `+=`, `>>=`, `??=`), update (`++`, `--`), or delete.
+function hasMutation(code) {
+  const stripped = stripStringLiterals(code);
+  if (/\+\+|--|<<=|>>>?=|\*\*=|\bdelete\b/.test(stripped)) return true;
+  return stripped.replace(/===|!==|==|!=|<=|>=|=>/g, "").includes("=");
+}
+__name(hasMutation, "hasMutation");
+// Paths of the functions an expression calls (`gsap.utils.toArray`,
+// `parseFloat`), or null when any invocation has no plain name: computed
+// (`a['x']()`), optional (`a.x?.()`), on a call result or group (`f()()`,
+// `(a.x)()`), or a template tag. A `(` after an operator or at the start is
+// grouping, not a call. A path that starts with `.` has an unknown receiver.
+function findCallees(expression) {
+  if (expression.includes("`")) return null;
+  const code = stripStringLiterals(expression);
+  const callees = [];
+  for (let index = code.indexOf("("); index !== -1; index = code.indexOf("(", index + 1)) {
+    let end = index - 1;
+    while (end >= 0 && /\s/.test(code[end])) end--;
+    if (end < 0) continue;
+    if (code[end] === "." || code[end] === "]" || code[end] === ")") return null;
+    if (!/[\w$]/.test(code[end])) continue;
+    let start = end;
+    while (start > 0 && /[\w$.]/.test(code[start - 1])) start--;
+    callees.push(code.slice(start, end + 1));
+  }
+  return callees;
+}
+__name(findCallees, "findCallees");
+function isAllowedCallee(path, localFunctions) {
+  const segments = path.split(".");
+  if (GSAP_WIRING_GSAP_READ_CALLS.has(path)) return true;
+  if (GSAP_WIRING_READ_ONLY_CALLS.has(segments[segments.length - 1])) return true;
+  return segments.length === 1 && localFunctions.has(path);
+}
+__name(isAllowedCallee, "isAllowedCallee");
+// Tween vars: `x: -distance, duration: 0.7,` or `onComplete: () =>`.
+function isTweenVarsBlock(block) {
+  const callback = GSAP_WIRING_TWEEN_CALLBACK_PATTERN.exec(block);
+  if (callback) return GSAP_WIRING_TWEEN_KEYS.has(callback[1]) || GSAP_WIRING_TWEEN_CALLBACK_KEYS.has(callback[1]);
+  return block.replace(/,\s*$/, "").split(",").every((pair) => {
+    const match = GSAP_WIRING_TWEEN_PAIR_PATTERN.exec(pair.trim());
+    return Boolean(match) && GSAP_WIRING_TWEEN_KEYS.has(match[1]);
+  });
+}
+__name(isTweenVarsBlock, "isTweenVarsBlock");
+function isGsapWiringBlock(block, context = {}) {
+  if (containsPotentiallyHarmfulCode(block)) return false;
+  const guard = GSAP_WIRING_GUARD_PATTERN.exec(block);
+  if (guard) {
+    const callees = findCallees(guard[1]);
+    return callees !== null && callees.length === 0 && !hasMutation(guard[1]);
+  }
+  const flag = GSAP_WIRING_FLAG_PATTERN.exec(block);
+  if (flag) return Boolean(context.variables && context.variables.has(flag[1]));
+  const reorder = GSAP_WIRING_REORDER_PATTERN.exec(block);
+  if (reorder) return Boolean(context.lists && context.elements) && reorder[1].split(",").every((argument) => isExistingNodeArgument(argument.trim(), context));
+  return isTweenVarsBlock(block) || GSAP_WIRING_BLOCK_PATTERNS.some((pattern) => pattern.test(block));
+}
+__name(isGsapWiringBlock, "isGsapWiringBlock");
+function isReadOnlyDeclaration(block, localFunctions) {
+  const declaration = GSAP_WIRING_DECLARATION_PATTERN.exec(block);
+  if (!declaration) return false;
+  const value = declaration[1].trim();
+  // `const step = (direction) =>`: the body is checked as separate statements.
+  if (GSAP_WIRING_CALLBACK_HEADER_PATTERN.test(value)) return true;
+  // An expression body, an assignment, or a constructor in the value is behavior.
+  if (value.includes("=>") || hasMutation(value) || /\bnew\b/.test(stripStringLiterals(value))) return false;
+  const callees = findCallees(value);
+  return callees !== null && callees.every((path) => isAllowedCallee(path, localFunctions));
+}
+__name(isReadOnlyDeclaration, "isReadOnlyDeclaration");
+// The start of a tween with inline vars: `gsap.to(rail,`.
+function isGsapCallBlock(block) {
+  return GSAP_WIRING_TWEEN_CALL_PATTERN.test(block);
+}
+__name(isGsapCallBlock, "isGsapCallBlock");
+// A call to a function the script declares; its body is checked separately.
+function isLocalCallBlock(block, localFunctions) {
+  const call = /^([\w$]+)\(([^()]*)\)$/.exec(block);
+  if (!call || !localFunctions.has(call[1]) || hasMutation(call[2])) return false;
+  const argumentCallees = findCallees(call[2]);
+  return argumentCallees !== null && argumentCallees.length === 0;
+}
+__name(isLocalCallBlock, "isLocalCallBlock");
+function isGsapWiringOnlyScript(script) {
+  if (script.includes("`") || NON_GSAP_BEHAVIOR_PATTERN.test(script)) return false;
+  const localFunctions = /* @__PURE__ */ new Set();
+  for (const match of script.matchAll(/\bfunction\s+([\w$]+)\s*\(/g)) localFunctions.add(match[1]);
+  for (const match of script.matchAll(new RegExp(String.raw`\b(?:const|let|var)\s+([\w$]+)\s*=\s*(?:async\s*)?${GSAP_WIRING_CALLBACK}`, "g"))) {
+    localFunctions.add(match[1]);
+  }
+  const declarations = Array.from(script.matchAll(/\b(?:const|let|var)\s+([\w$]+)(?:\s*=\s*([^;\n]*))?/g), (match) => [match[1], (match[2] || "").trim()]);
+  const lists = new Set(declarations.filter(([, value]) => GSAP_WIRING_LIST_SOURCE_PATTERN.test(value)).map(([name]) => name));
+  const elements = new Set(declarations.filter(([, value]) => {
+    const item = GSAP_WIRING_LIST_ITEM_PATTERN.exec(value);
+    return item ? lists.has(item[1]) : GSAP_WIRING_ELEMENT_SOURCE_PATTERN.test(value);
+  }).map(([name]) => name));
+  const context = { variables: new Set(declarations.map(([name]) => name)), lists, elements };
+  // Every statement counts, however short; the original count skips blocks of 10 characters or fewer.
+  return script.split(/[;\n\r{}]/).map((block) => block.trim()).filter(Boolean).every(
+    (block) => GSAP_WIRING_INERT_PATTERN.test(block) || isGsapWiringBlock(block, context) || isReadOnlyDeclaration(block, localFunctions) || isGsapCallBlock(block) || isLocalCallBlock(block, localFunctions)
+  );
+}
+__name(isGsapWiringOnlyScript, "isGsapWiringOnlyScript");
 function findUnacceptedCode(script, acceptedPatterns) {
   const totalLength = script.length;
   let acceptedLength = 0;
@@ -1059,6 +1452,9 @@ function findUnacceptedCode(script, acceptedPatterns) {
     return true;
   });
   if (harmlessUnacceptedBlocks.length <= Math.ceil(unacceptedBlocks.length * 0.3)) {
+    return [];
+  }
+  if (isGsapWiringOnlyScript(script)) {
     return [];
   }
   return harmlessUnacceptedBlocks.map((block) => truncateScript(block, 100));
@@ -1102,15 +1498,36 @@ function isCommonStylingCSS(css) {
     /color\s*:\s*inherit\s*[;!]/i
   ];
   const cleanCSS = css.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\s+/g, " ").trim();
-  const onlyHarmlessPatterns = harmlessPatterns.some((pattern) => pattern.test(cleanCSS));
-  if (onlyHarmlessPatterns) return true;
-  if (cleanCSS.length < 200) {
-    const fontSmoothingOnly = /^[^{}]*\{[^{}]*(-webkit-font-smoothing|-moz-osx-font-smoothing)[^{}]*\}[^{}]*$/i.test(cleanCSS);
-    if (fontSmoothingOnly) return true;
-  }
-  return false;
+  // Every rule must be one of the allowed kinds. One allowed line used to pass the
+  // whole block, so a full custom stylesheet passed when it held a font-smoothing rule.
+  const rules = splitTopLevelCssRules(cleanCSS);
+  return rules.length > 0 && rules.every((rule) => harmlessPatterns.some((pattern) => pattern.test(rule)));
 }
 __name(isCommonStylingCSS, "isCommonStylingCSS");
+// Top-level rules of a stylesheet. An at-rule with a block (@media) is one rule.
+function splitTopLevelCssRules(css) {
+  const rules = [];
+  let depth = 0;
+  let start = 0;
+  for (let index = 0; index < css.length; index += 1) {
+    const char = css[index];
+    if (char === "{") depth += 1;
+    else if (char === "}") {
+      depth = Math.max(0, depth - 1);
+      if (depth === 0) {
+        rules.push(css.slice(start, index + 1).trim());
+        start = index + 1;
+      }
+    } else if (char === ";" && depth === 0) {
+      rules.push(css.slice(start, index + 1).trim());
+      start = index + 1;
+    }
+  }
+  const rest = css.slice(start).trim();
+  if (rest) rules.push(rest);
+  return rules.filter(Boolean);
+}
+__name(splitTopLevelCssRules, "splitTopLevelCssRules");
 // Keyboard listeners are listed under "Keylogging" in securityRiskPatterns, but a
 // keylogger reads whatever key was pressed and stores or transmits it. Handlers
 // that only dispatch on specific navigation keys (Escape closes a menu, Enter or
@@ -1714,8 +2131,7 @@ var ALLOWED_ORIGINS = [
   "https://wf-form-validation-with-airtable-databa.webflow.io",
   "https://webflow.com",
   "https://www.webflow.com",
-  "https://gsap-validator.vercel.app",
-  "https://wf.createsomething.io"
+  "https://gsap-validator.vercel.app"
 ];
 var ALLOWED_ORIGIN_PATTERNS = [
   /^https:\/\/([a-z0-9-]+\.)*webflow\.com$/i,

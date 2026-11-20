@@ -121,14 +121,11 @@ describe('PerformanceCampaignOpening', () => {
       'Map signals.'
     );
 
-    const source = opening?.querySelector('picture source');
-    expect(source?.getAttribute('media')).toBe('(max-width: 47.99rem)');
-    expect(source?.getAttribute('srcset')).toBe('/images/pressure-tall.webp');
-
-    const image = opening?.querySelector('picture img');
-    expect(image?.getAttribute('alt')).toBe('Water moving through a controlled spillway');
-    expect(image?.getAttribute('width')).toBe('1920');
-    expect(image?.getAttribute('height')).toBe('1080');
+    const scene = opening?.querySelector('.canon-background-scene');
+    expect(scene?.getAttribute('style')).toContain('/images/pressure-tall.webp');
+    expect(scene?.getAttribute('style')).toContain('/images/pressure-wide.webp');
+    expect(scene?.getAttribute('aria-label')).toBe('Water moving through a controlled spillway');
+    expect(opening?.querySelector('picture, img')).toBeNull();
 
     const proofItems = [
       ...(opening?.querySelectorAll('.performance-campaign-opening__proof li') ?? [])
@@ -186,9 +183,7 @@ describe('PerformanceCampaignOpening', () => {
     expect(video?.querySelector('source[type="video/mp4"]')?.getAttribute('src')).toBe(
       '/video/controlled-flow.mp4'
     );
-    expect(opening?.querySelector('picture img')?.getAttribute('src')).toBe(
-      '/images/controlled-flow.webp'
-    );
+    expect(opening?.querySelector('.canon-background-scene')?.getAttribute('style')).toContain('/images/controlled-flow.webp');
   });
 
   it('keeps campaign video absent when the operator prefers reduced motion', () => {
@@ -220,9 +215,7 @@ describe('PerformanceCampaignOpening', () => {
 
     const opening = target.querySelector('section.performance-campaign-opening');
     expect(opening?.querySelector('video')).toBeNull();
-    expect(opening?.querySelector('picture img')?.getAttribute('src')).toBe(
-      '/images/controlled-flow.webp'
-    );
+    expect(opening?.querySelector('.canon-background-scene')?.getAttribute('style')).toContain('/images/controlled-flow.webp');
   });
 
   it('owns a high-contrast directional scrim for image-backed copy', () => {
@@ -231,9 +224,9 @@ describe('PerformanceCampaignOpening', () => {
       'utf8'
     );
 
-    expect(source).toContain('--performance-campaign-scrim-copy: rgba(9, 9, 9, 0.94)');
-    expect(source).toContain('--performance-campaign-scrim-mid: rgba(9, 9, 9, 0.24)');
-    expect(source).toContain('--performance-campaign-scrim-edge: rgba(9, 9, 9, 0)');
+    expect(source).toContain('--performance-campaign-scrim-copy: color-mix(in srgb, var(--color-performance-paper) 94%, transparent)');
+    expect(source).toContain('--performance-campaign-scrim-mid: color-mix(in srgb, var(--color-performance-paper) 24%, transparent)');
+    expect(source).toContain('--performance-campaign-scrim-edge: color-mix(in srgb, var(--color-performance-paper) 0%, transparent)');
     expect(source).toContain('linear-gradient(90deg,');
     expect(source).toContain('linear-gradient(0deg,');
     expect(source).toContain('@media (max-width: 47.99rem)');
@@ -245,20 +238,13 @@ describe('PerformanceCampaignOpening', () => {
       'utf8'
     );
 
-    expect(source).toContain(
-      ".performance-campaign-opening:not([data-mode='paper']) .performance-campaign-opening__actions :global(.btn-primary)"
-    );
-    expect(source).toContain(
-      ".performance-campaign-opening:not([data-mode='paper']) .performance-campaign-opening__actions :global(.btn-secondary)"
-    );
-    expect(source).toContain(
-      ".performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__actions :global(.btn-primary)"
-    );
-    expect(source).toContain(
-      ".performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__actions :global(.btn-secondary)"
-    );
+    for (const variant of ['primary', 'secondary']) {
+      expect(source).toContain(`.performance-campaign-opening .performance-campaign-opening__actions :global(.btn-${variant})`);
+    }
+    expect(source).toContain('background: var(--color-performance-brand-primary)');
+    expect(source).toContain('color: var(--color-performance-panel)');
     expect(source).toContain('.performance-campaign-opening__actions :global(.btn:focus-visible)');
-    expect(source).toContain('outline: 3px solid var(--color-performance-signal-soft, #a7b8ff)');
+    expect(source).toContain('outline: 2px solid var(--color-performance-focus)');
   });
 
   it('composes the editorial expression as a dark visual hero with an operating artifact', () => {
@@ -270,12 +256,12 @@ describe('PerformanceCampaignOpening', () => {
 
     expect(source).toContain(".performance-campaign-opening[data-expression='editorial'] {");
     expect(source).toContain('grid-template-rows: minmax(max(44rem, 82svh), max-content)');
-    expect(source).toContain('background: var(--color-performance-editorial-dark, #181312)');
+    expect(source).toContain('background: var(--color-performance-paper, #181312)');
     expect(compactSource).toContain(
       ".performance-campaign-opening[data-expression='editorial'] .performance-campaign-opening__content"
     );
     expect(source).toContain('font-family: var(--font-performance-editorial)');
-    expect(source).toContain('background: var(--color-performance-editorial-brand, #fcaa2d)');
+    expect(source).toContain('background: var(--color-performance-brand-primary, #fcaa2d)');
     expect(compactSource).toContain(
       "[data-expression='editorial'] .performance-campaign-opening__artifact"
     );
@@ -287,7 +273,7 @@ describe('PerformanceCampaignOpening', () => {
 });
 
 describe('Performance composition typography', () => {
-  it('defines the licensed editorial face as a local, optional performance token', () => {
+  it('retains the optional licensed asset while editorial headings use the canonical house family', () => {
     const performance = readFileSync(join(process.cwd(), 'src/lib/styles/performance.css'), 'utf8');
     const tokens = readFileSync(join(process.cwd(), 'src/lib/styles/tokens.css'), 'utf8');
     const compactTokens = tokens.replace(/\s+/g, ' ');
@@ -297,7 +283,7 @@ describe('Performance composition typography', () => {
     expect(performance).toContain("url('/fonts/create-something-editorial.woff2')");
     expect(performance).toContain('font-display: swap');
     expect(compactTokens).toContain(
-      "--font-performance-editorial: 'CS Editorial', Georgia, 'Times New Roman', serif"
+      "--font-performance-editorial: var(--font-performance-sans)"
     );
   });
 
@@ -321,7 +307,10 @@ describe('Performance composition typography', () => {
     );
     expect(tokens).toContain('--font-performance-display-weight: 500');
     expect(tokens).toContain('--tracking-performance-display: -0.03em');
-    expect(tokens).toContain('--leading-performance-display: 0.94');
+    const displayLeading=Number(tokens.match(/--leading-performance-display:\s*([\d.]+)/)?.[1]);
+    expect(displayLeading).toBeGreaterThanOrEqual(1.08);
+    expect(displayLeading).toBeLessThanOrEqual(1.2);
+    expect(tokens).toContain("'Geist Variable'");
 
     for (const component of components) {
       const source = readFileSync(

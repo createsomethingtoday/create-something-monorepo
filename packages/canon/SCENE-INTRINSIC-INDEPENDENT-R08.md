@@ -1,0 +1,29 @@
+# Independent intrinsic scene R08 acceptance re-test
+
+Read-only source review of actual localhost:5191/next/compositions in Ego space 27. Scope: SceneLead intrinsic grid repair on t3/canon-design-system-redesign, HEAD 5f9bfab plus intentional shared changes. Only this report and evidence/scene-intrinsic-independent were written. No source fix, package/check/build/sync/full suite, commit, promotion, or external action.
+
+Acceptance: stable first-render scene geometry; complete contained art with visible face and paper stairs; dense proof/authority below art; untruncated long copy and reserved lower quarter; meaningful HTML without JavaScript; CSS background semantics; six widths and two appearances; native keyboard and reduced-motion behavior.
+
+## Result
+
+The prior material hydration-layout finding is repaired in the independently observed output. Three fresh navigations at the actual 1253px browser viewport recorded no-input layout-shift totals 0.0019163804741360907, 0, and 0. In all sampled frames the campaign scene height stayed 699.1875px and artwork top stayed y=192px. The small first-navigation entry affects text/header geometry; the former approximately 353px scene jump did not recur. A single PerformanceObserver was installed by Page.addScriptToEvaluateOnNewDocument, with a new per-document record and explicitly removed after these three navigations. See fresh-navigation.json. Initial instrumentation attempts used an overly strict frame-count wait; those incomplete attempts were discarded and are not part of that evidence file. Browser emulation resets on navigation: these are verified actual1253 fresh loads, not claims of fresh-load measurements at other widths.
+
+SceneLead source now uses CSS grid rows with a reserved second row, intrinsic container-unit art sizing and no ResizeObserver/onMount measurement. BackgroundScene remains an absolute CSS background with contain sizing; descriptive scenes have role=img and an accessible label, decorative scenes aria-hidden=true. Actual fixture has zero inline scene images.
+
+## Independent checks
+
+- Ran `npx --yes pnpm@9.15.4 --dir packages/canon exec vitest run src/lib/components/background/scene-lead-layout.test.ts src/lib/components/background/background-composition.test.ts src/lib/components/performance/performance-composition-system.test.ts`: 3 files, 46 tests passed. These are local DOM/SSR fixture tests, not production evidence.
+- Captured 60 section screenshots: campaign, hero, offer, CTA and handoff at actual innerWidth 320,390,768,1024,1025,1440, dark and explicit light. widths.json records exact widths and no horizontal overflow in all12 cases. Every lead retained a reserved clear region. Programmatic capture scrolling used behavior=instant.
+- Directly viewed dark768hero, light320hero, dark1024offer, light1025cta, dark1440handoff, dark390handoff, light1440campaign. Together they cover all six widths, both appearances and all five families. Face, antenna, full body, task object and paper stairs are clear in character scenes; clean plates preserve the complete staircase. Hero metadata/proof, CTA outcomes, campaign proof and handoff authority are below artwork. Not every captured PNG was individually viewed. Portraits remain prototype studies, and final art approval is outside this local gate.
+- Actual desktop text mutation expanded a hero paragraph to3920 characters: scrollHeight equaled clientHeight1696, copy overflow remained visible, no horizontal overflow, lead grew to2118.039px while art stayed699.188px. The reserved lower region and clearance both measured174.797px, exactly one quarter of artwork height. Directly viewed long-desktop.png and long-bottom.png: text remains readable, ends before reserved lower quarter, and face/task/paper staircase remain clear. This is an artificial stress sample, not recommended editorial copy length.
+- Native Tab exposed the skip link with solid2px outline; focus then native Enter on the #cta anchor changed URL to /next/compositions#cta. No external destination was followed and no form submitted. Reduced-motion emulation returned true; actual fixture has zero videos. Optional video decoding/playback/error recovery remains untested.
+- JavaScript-disabled reload, then verified390px emulation, retained12 headings, five leads,33 links and no horizontal overflow. Directly viewed nojs-390.png: meaningful text, native actions and art remain visible. This establishes actual mobile no-JS rendering; exact desktop no-JS geometry was not separately captured in this pass.
+- Disabled cache and blocked both world and portrait art URLs before fresh navigation. Directly viewed missing-image.png: readable headings/actions on black with no broken inline image. Actual missing-image record verifies CSS contain semantics, two descriptive and three decorative backgrounds. Blocking/cache overrides were restored afterward.
+
+## Quality gates
+
+- Functional correctness: **passed within the scoped local acceptance criteria**, supported by46 focused tests and actual runtime stress/navigation/keyboard/no-JS checks. Production consumer integration and full-suite compatibility were not evaluated.
+- Perceptual/product quality: **passed for this intrinsic scene-layout phase**, based on directly viewed rendered output and repaired hydration geometry. Final art approval and whole-Cook acceptance are outside this assessment.
+- Release readiness: **untested / unapproved**. No production artifact, consumer adoption, final optimization, shipping destination or publication was evaluated. Local prototype acceptance grants no release permission.
+
+Worktree disposition: preserved at /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a01044d6-2f560e0ec9e58190, branch t3/canon-design-system-redesign. Parent owns integration and release. Ego space27 closed with keep=[]; other spaces untouched. Ego reported an available update; no upgrade was performed.

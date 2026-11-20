@@ -123,6 +123,11 @@ export interface ValidationSubmitRequest {
 	siteId: string;
 	siteName?: string;
 	siteUrl?: string;
+	/** Optional site-access proof for clients without the Designer bridge snippet. */
+	evidence?: {
+		type?: string;
+		accessToken?: string;
+	};
 	validationResults: {
 		url?: string;
 		summary?: Record<string, unknown>;
@@ -143,6 +148,8 @@ export interface ValidationSubmitRequest {
 			}>;
 		}>;
 		scope?: Partial<ValidationRunScope>;
+		/** Designer-side run times in milliseconds and item counts per step. Diagnostic only. */
+		timings?: unknown;
 	};
 }
 
@@ -174,6 +181,19 @@ export interface ValidationSubmitResponse {
 		byteSize?: number;
 		reason?: 'r2_not_configured' | 'r2_write_failed';
 	};
+	/** Verified site-access evidence, or null when the submission carried none. */
+	evidence?: OauthSiteAccessEvidence | null;
+}
+
+/** Stored proof that the submitter could read the site through Webflow's MCP server. */
+export interface OauthSiteAccessEvidence {
+	type: 'oauth_site_access';
+	verified: true;
+	verifiedAt: string;
+	workspaceId: string | null;
+	accessTokenSha256: string;
+	rawAccessTokenStored: false;
+	publishedHosts: string[];
 }
 
 export interface ValidationOptions {
@@ -193,6 +213,26 @@ export interface ValidationOptions {
 	 * - 'current': analyze only the current page slug (or homepage fallback)
 	 */
 	pageScope?: 'all' | 'current';
+	/**
+	 * True when `pageSlugs` is the full static page list from the Designer.
+	 * The worker sets it from the Designer data; a value from the client is
+	 * replaced. A page list from a sitemap or from links can be cut short.
+	 */
+	pageListComplete?: boolean;
+	/**
+	 * The template's Webflow preview link
+	 * (`https://preview.webflow.com/preview/<site>?preview=<token>`). With it,
+	 * the unused styles check reads the Designer's own site data and gives
+	 * the list that the Designer's Clean up panel gives. Without it, or when
+	 * the link does not load, the check compares the published pages.
+	 */
+	previewUrl?: string;
+	/**
+	 * Path of the Designer site data on the preview host. The worker sets it
+	 * from its `PREVIEW_SITE_DATA_PATH` secret; a value from the client is
+	 * replaced. Without it, `previewUrl` is not used.
+	 */
+	previewSiteDataPath?: string;
 	/**
 	 * The current page slug from the Designer (e.g., "/about").
 	 * Used when pageScope is 'current'.
@@ -457,9 +497,44 @@ export interface AnalyzedPage {
 		context: string;
 		selector?: string;
 	}>;
+	/** Images without a positive width and height attribute (layout shift; reviewers ask for both). */
+	imagesMissingDimensions?: number;
+	/** Images with no width and height attributes whose space the published CSS reserves. */
+	imagesSizedByCss?: number;
+	imagesMissingDimensionsDetails?: Array<{
+		src: string;
+		selector: string;
+	}>;
+	/** Reviewer standards found on this page (validators/reviewer-standards.ts). */
+	reviewerAudit?: ReviewerPageAudit;
 	seo: PageSEOData;
 	links: LinkAnalysis;
 	contentQuality: ContentQualityAnalysis;
+}
+
+export type ReviewerStandardId =
+	| 'form-default-messages'
+	| 'form-default-names'
+	| 'video-play-pause'
+	| '404-navigation'
+	| 'licenses-link'
+	| 'default-favicon'
+	| 'trademark-symbols'
+	| 'self-promotion'
+	| 'licenses-boilerplate'
+	| 'gsap-instructions-page'
+	| 'powered-by-webflow';
+
+export interface ReviewerPageAudit {
+	url: string;
+	/** Pathname without a trailing slash; "/" for the home page. */
+	path: string;
+	/** One detail line per reviewer standard this page fails. */
+	findings: Partial<Record<ReviewerStandardId, string>>;
+	hasNav: boolean;
+	hasFooter: boolean;
+	/** The page calls GSAP from inline custom code (not only Webflow's own GSAP-powered Interactions). */
+	usesCustomGsap: boolean;
 }
 
 export interface PageSEOData {

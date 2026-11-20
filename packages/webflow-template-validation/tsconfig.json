@@ -39,6 +39,8 @@
     "node_modules",
     "worker",
     "validation-worker",
-    "extension"
+    "extension",
+    "spike",
+    "cli"
   ]
 }

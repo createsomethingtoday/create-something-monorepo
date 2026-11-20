@@ -52,7 +52,7 @@ test('Gmail header filters survive a proxy that normalizes additional query para
   assert.equal(page.records[0].data.date, 'Mon, 12 Oct 2026 00:00:00 +0000');
   assert.deepEqual(calls[1].searchParams.getAll('metadataHeaders'), ['Subject', 'From', 'Date']);
   assert.equal(calls.length, 2);
-  assert.deepEqual(Object.keys(page.records[0].data).sort(), ['date', 'from', 'snippet', 'subject', 'threadId']);
+  assert.deepEqual(Object.keys(page.records[0].data).sort(), ['date', 'from', 'mailState', 'snippet', 'subject', 'threadId']);
 });
 
 test('Gmail malformed message aborts page before exposing next cursor', async () => {
@@ -859,4 +859,44 @@ for (const provider of ['gmail', 'googlecalendar'] as const) test(`${provider} l
     else assert.equal(result.accountLabel, undefined);
     if (mode === 'wrong-owner') { assert.notEqual(result.state, 'connected'); assert.equal(labelReads, before); }
   }
+});
+
+
+test('public GiGi admission accepts verified exact-resource users without a subject allowlist', async () => {
+  const subjects: unknown[][] = [];
+  const db = { prepare() { return { bind(...values: unknown[]) { subjects.push(values); return this; }, async first() { return null; }, async run() { return {}; }, async all() { return {results:[]}; } }; } };
+  for (const sub of ['new-public-user', 'second-public-user']) {
+    const response = await handleConnectorRequest(new Request('https://gigi-connector.createsomething.workers.dev/v1/gigi/connections/gmail', {headers:{authorization:'Bearer public-test-token'}}),
+      {GIGI_PUBLIC_ACCESS_ENABLED:'true', DB:db, COMPOSIO_API_KEY:'synthetic'}, async () => Response.json({sub,resource:'https://gigi-connector.createsomething.workers.dev',email_verified:true}));
+    assert.equal(response.status,200);
+    assert.deepEqual(await response.json(),{provider:'gmail',state:'disconnected'});
+    assert.equal(subjects.at(-1)?.[0],sub);
+  }
+});
+
+test('public GiGi admission still rejects unverified, wrong-resource and invalid Identity responses before D1', async () => {
+  const db = {prepare(){throw new Error('denied identity must not reach D1');}};
+  for (const identity of [
+    {sub:'new-user',resource:'https://gigi-connector.createsomething.workers.dev',email_verified:false},
+    {sub:'new-user',resource:'agency',email_verified:true},
+    {sub:'',resource:'https://gigi-connector.createsomething.workers.dev',email_verified:true},
+  ]) {
+    const response = await handleConnectorRequest(new Request('https://gigi-connector.createsomething.workers.dev/v1/gigi/connections/gmail',{headers:{authorization:'Bearer public-test-token'}}),
+      {GIGI_PUBLIC_ACCESS_ENABLED:'true',DB:db,COMPOSIO_API_KEY:'synthetic'},async()=>Response.json(identity));
+    assert.ok([403,503].includes(response.status));
+  }
+  for (const flag of ['false','TRUE','1',undefined]) {
+    const response = await handleConnectorRequest(new Request('https://gigi-connector.createsomething.workers.dev/v1/gigi/connections/gmail',{headers:{authorization:'Bearer public-test-token'}}),
+      {GIGI_PUBLIC_ACCESS_ENABLED:flag,DB:db,COMPOSIO_API_KEY:'synthetic'},async()=>{throw new Error('disabled policy must not query Identity');});
+    assert.equal(response.status,503);
+  }
+});
+
+test('public GiGi admission health accepts explicit public policy without subject allowlist', async () => {
+  const response = await handleConnectorRequest(new Request('https://gigi-connector.createsomething.workers.dev/health'),{
+    GIGI_PUBLIC_ACCESS_ENABLED:'true',COMPOSIO_API_KEY:'synthetic',DB:{prepare(){throw new Error('health must not query D1');}},
+    GIGI_GMAIL_AUTH_CONFIG_ID:'ac_qXoEQURadG-h',GIGI_GMAIL_APPROVED_SCOPES:selectedGmailScopes.join(','),
+    GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID:'ac_F0JVbnFvV3DQ',GIGI_GOOGLECALENDAR_APPROVED_SCOPES:selectedCalendarScopes.join(','),
+  });
+  assert.equal(response.status,200);
 });

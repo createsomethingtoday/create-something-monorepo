@@ -1,0 +1,72 @@
+{
+  "sourceSha": "2c43119370898042816182522537698a2c279ca0",
+  "sourceTree": "a20484a5ab6404a46b6e27600a64400860c78905",
+  "clean": true,
+  "startedAt": "2026-11-11T03:28:55.525850+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@create-something/gigi-desktop",
+    "build:local"
+  ],
+  "publicIdentity": "agency.createsomething.gigi",
+  "completedAt": "2026-11-11T03:29:52.474950+00:00",
+  "compilerMarkers": [
+    {
+      "path": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6/apps/gigi-desktop/src-tauri/target/debug/build/gigi_desktop-6aaa54118622197c/output",
+      "sha256": "bf871156d2a003abbb840923b42f6703867d801309af2be30423e7bbbc1b646f",
+      "sourceSha": "2c43119370898042816182522537698a2c279ca0",
+      "sourceDirty": false
+    },
+    {
+      "path": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6/apps/gigi-desktop/src-tauri/target/debug/build/gigi_desktop-e5646bba6da22d4d/output",
+      "sha256": "69f17c9dbf2e23e7c4a1d89d4ff04e973d0dbfe7ed8e7afedb52f46fbee7bb65",
+      "sourceSha": "2c43119370898042816182522537698a2c279ca0",
+      "sourceDirty": false
+    }
+  ],
+  "originalApp": "/Users/createsomething/Documents/GiGi 0.3.7/2026-11-10/final/original/GiGi.app",
+  "inventory": [
+    {
+      "path": "Contents/MacOS/gigi",
+      "sha256": "e4b619a710b81a56905a819cb2f3c8bf1cf2c450967aa326323f46142c54024d",
+      "bytes": 69809424
+    },
+    {
+      "path": "Contents/MacOS/gigi-mcp",
+      "sha256": "b59260b8a1aab2301301a064eb2888e7290f233d7a0403da1888a13c4a3b4581",
+      "bytes": 17015984
+    },
+    {
+      "path": "Contents/Resources/gigi-mcp",
+      "sha256": "d08c01df514d350f14bb97e2adb7624e6b7205d9187dde0b04a77999ba734e3f",
+      "bytes": 17122920
+    },
+    {
+      "path": "Contents/Resources/gigi-integrations",
+      "sha256": "f04e1df87c202c0c14b4d791dc8ffd348900683b7f4f3c9860eaf838bcc03a13",
+      "bytes": 61089616
+    },
+    {
+      "path": "Contents/Resources/gigi-codex",
+      "sha256": "e3b902db06484876bd775b2fcc32e54fb9f5af54b5b987dd2d218de6f415442b",
+      "bytes": 61106128
+    },
+    {
+      "path": "Contents/Resources/gigi-map-preview",
+      "sha256": "8de683761f76777dca9394effff48cf3631de8f28d4198ba2fbec5224037c78f",
+      "bytes": 70864
+    },
+    {
+      "path": "Contents/Resources/ctx",
+      "sha256": "90807a133453ed6a2a70b6fdfb70a1ce7da9b6d4eb2cf33248020c664d330d99",
+      "bytes": 45302528
+    },
+    {
+      "path": "Contents/Resources/libgigi_notifications.dylib",
+      "sha256": "ae24f41f6fde46f3d40db6af7bbb81d6024b6e255c85781ed138ebad6d1a3d5e",
+      "bytes": 92808
+    }
+  ],
+  "cleanAfterBuild": true
+}

@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "checks": {
+    "filename": true,
+    "bytes": true,
+    "sha256": true,
+    "version": true,
+    "url": true,
+    "testPinsHash": true,
+    "runtimeReceiptExplicitLimits": true,
+    "sixNoJsWidths": true,
+    "unconfirmedRecoveryExplained": true,
+    "previousInstaller031": true
+  },
+  "directlyViewed": [
+    "native/search.png",
+    "native/today-after-restart.png",
+    "page-checks/top-1440.png",
+    "page-checks/top-390.png",
+    "page-checks/release-390.png",
+    "page-checks/changes-1440.png"
+  ],
+  "metadataFileHashes": {
+    "packages/agency/src/lib/data/gigiBeta.ts": "401f793957fca742797e028943b88dff0aecbc4a6a8b4a800c2e7189e31bdd96",
+    "packages/agency/src/lib/server/gigi-beta-page.ts": "96723ea915bcd2ec91324c3dac8988aef369a109917635b1d2666bf087d7f469",
+    "packages/agency/test/gigi-beta-page.test.ts": "d76f78bb941e5b9e48fd07a6d53974ffdd492f3fe236b72c6a9616a71e4bd974"
+  }
+}

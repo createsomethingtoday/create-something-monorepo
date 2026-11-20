@@ -1,0 +1,21 @@
+{
+  "name": "webflow-app-review-portal",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "app-review-portal",
+      "migrations_dir": "drizzle",
+      "database_id": "dbe8ebc8-1341-4837-b39d-1794d25c595b"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "app-review-portal-bundles"
+    }
+  ]
+}

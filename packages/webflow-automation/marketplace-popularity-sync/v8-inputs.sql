@@ -11,7 +11,8 @@
 --
 -- Fivetran activation: key template_id -> "MRP ID (Override)", update-only.
 -- Fields written: 🖌️Score ex-views, 🖌️Dead Inventory Multiplier,
--- 📋 Unique Viewers, 📋 Cumulative Purchases, 📋 Cumulative Revenue, SYNCED_AT.
+-- 📋 Unique Viewers, 📋 Cumulative Purchases, 📋 Cumulative Revenue, SYNCED_AT,
+-- and FULFILLMENT_LINK_SALES -> 📋 Fulfillment-link Sales.
 -- Do NOT map popularity_score — sync.mjs owns 🖌️Popularity Score.
 --
 -- V7 model notes (unchanged):
@@ -259,6 +260,23 @@ template_popularity as (
         ) as popularity_score_v7_that_day
     from template_scores ts
     cross join params p
+),
+
+-- Sales through creator fulfillment links: the buyer paid the creator on another
+-- platform and Webflow only delivered the template, so these orders never reach
+-- report__template_sales and are absent from cumulative_purchases/revenue.
+-- Display only; not a popularity input.
+fulfillment_metrics as (
+    select
+        p.resource_id as fulfillment_template_id,
+        count(*) as fulfillment_link_sales
+    from analytics.webflow.marketplace_orders o
+    join analytics.webflow.marketplace_products p
+        on o.marketplace_product_id = p.document_id
+    where p.resource_type = 'Template'
+      and o.status = 'delivered'
+      and o.template_fulfillment_code_id is not null
+    group by 1
 )
 
 select
@@ -274,6 +292,7 @@ select
     unique_viewers_365d,
     cumulative_purchases,
     cumulative_revenue,
+    coalesce(fm.fulfillment_link_sales, 0) as fulfillment_link_sales,
     purchases_90d,
     purchases_365d,
     revenue_90d,
@@ -305,4 +324,6 @@ select
         'YYYY-MM-DD"T"HH24:MI:SS"Z"'
     ) as synced_at
 from template_popularity
+left join fulfillment_metrics fm
+    on fm.fulfillment_template_id = template_popularity.template_id
 order by score_ex_views desc, cumulative_purchases desc, unique_viewers desc, template_created_date desc;

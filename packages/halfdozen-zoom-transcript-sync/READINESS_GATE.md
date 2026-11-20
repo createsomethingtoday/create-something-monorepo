@@ -1,6 +1,6 @@
 # Transcript readiness and retrieval
 
-The inline transcript remains the reading experience. These fields let agents distinguish a verified publication from an interrupted upload and retrieve every part of a long transcript. This document defines the developer contract; production activation depends on the isolated acceptance tests below.
+The writer preserves the inline transcript and publishes an exact retrieval index for agents. These fields distinguish a verified publication from an interrupted upload. Use the index layout and hash domain recorded for that publication; the separate native-acceptance requirements below are not established by a writer test.
 
 ## Managed pages
 
@@ -11,7 +11,7 @@ The inline transcript remains the reading experience. These fields let agents di
 | Categorized Transcript Version | Categorization agent | Exact token the agent retrieved and used. |
 | Transcript Retrieval Index | Writer | Direct link to the immutable verification index and its ordered canonical parts. |
 
-The content hash is SHA-256 over the JSON array `["indexed-transcript-v2", original, canonical]`. Generation distinguishes A to B to A corrections. An old completion for A:1 cannot validate A:3. Readiness certifies the verified published body. It is not continuous proof that Zoom has not changed since the verification read. D1 remains the immediate source-selection and lease fence.
+The content hash is SHA-256 over the JSON array `[format, original, canonical]`. The supported hash domains are `indexed-transcript-v2`, `indexed-transcript-pages-v1`, and `indexed-transcript-pages-v2`; select the exact identifier from the captured index, never from the shared artifact marker. Fresh, corrected, and explicitly replayed publications default to pages-v2; unchanged scheduled checks preserve the persisted format. See [format selection and original retrieval](READINESS.md#select-the-index-layout-and-hash-domain). Generation distinguishes A to B to A corrections. An old completion for A:1 cannot validate A:3. Readiness certifies the verified published body. It is not continuous proof that Zoom has not changed since the verification read. D1 remains the immediate source-selection and lease fence.
 
 New managed pages start with a current token and empty readiness in the creation request. Known corrections clear readiness before changing body blocks. Publication sets readiness and the index without rewriting the current token. Durable property intents block successor writes when the outcome of an earlier property request is unknown. A matching readback reconciles a lost response. An unchanged completed run makes no Notion writes.
 
@@ -25,7 +25,7 @@ Preserve the existing manual mention trigger. Restrict the existing page-added t
 
 Add a property-updated trigger for Transcript Ready Version, Type Meeting and unchecked Categorized. The native text-filter UI supports `Contains ":"`; the agent must still validate the full token and exact equality. Clearing readiness does not match this filter.
 
-Before reading managed source content, the agent reloads both tokens and requires a valid exact match. It opens Transcript Retrieval Index directly, reads every numbered canonical part in order and follows supported continuation. Encoded originals are archival evidence, not reading material. A truncated response is not completion.
+Before reading managed source content, the agent reloads both tokens and requires a valid exact match. It opens Transcript Retrieval Index directly, reads every numbered canonical part in order and follows supported continuation. Pages-v2 exposes each canonical part once as a native child page; pages-v1 also has explicit URL metadata, which must not cause double-counting. Both direct page indexes omit original chunks. A verifier computing the content hash must retrieve matching-version originals separately from the meeting's Source archive under the linked contract. Encoded originals are archival evidence, not reading material. A native agent must not claim checksum computation unless it actually performed it. A truncated response is not completion.
 
 Before each write and after analysis, reload both Transcript Version and Transcript Ready Version and require both to equal the captured token. Record Categorized Transcript Version, verify readback, then set Categorized last. Do not reset human review flags or replace existing relations. A correction can leave Categorized checked with an older consumed token; downstream agents must reject that stale combination rather than infer readiness from the checkbox.
 

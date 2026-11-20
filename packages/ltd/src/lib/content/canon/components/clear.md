@@ -39,9 +39,13 @@ Use Performance components when the page needs to show at least one operational 
 3. Which policy, contract, receipt, or validation gate proves the claim?
 4. What should the buyer, operator, reviewer, system, or agent do next?
 
-Do not use Performance components as generic light-themed decoration. If the surface does not carry
+Do not use Performance components as generic decoration. If the surface does not carry
 maps, trust boundaries, approval states, receipts, validation gates, or handoff evidence, use the
 standard Canon components instead.
+
+## Palette and composition
+
+Performance components follow the black foundation and their explicit palette scope. A `Clear*` compatibility name does not select a light theme. Use `data-theme="light"` for an intentional light work surface. Keep evidence and authority records readable outside the subject of a scene. Hero and CTA imagery belongs in CSS backgrounds behind HTML copy; later editorial images may be inline.
 
 ## Example
 

@@ -1,0 +1,13 @@
+{
+  "runtimeSourceUnchanged": true,
+  "mainEmbeddedSource": true,
+  "mainHash": "3bca1d9dc9b031d6d87e8d7f5405e2fb5c7f59c34b1187e4423b3657124e8120",
+  "cleanCompilerManifests": [
+    "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-0597f042/apps/gigi-desktop/src-tauri/target/release/build/gigi_desktop-f0371914955ceb56/output",
+    "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-0597f042/apps/gigi-desktop/src-tauri/target/release/build/gigi_desktop-295538db663063e2/output"
+  ],
+  "agent/gigi/skills/gigi/SKILL.md": "matches frozen source",
+  "agent/gigi/.codex-plugin/plugin.json": "matches frozen source",
+  "ctxHash": "90807a133453ed6a2a70b6fdfb70a1ce7da9b6d4eb2cf33248020c664d330d99",
+  "version": "0.3.5"
+}

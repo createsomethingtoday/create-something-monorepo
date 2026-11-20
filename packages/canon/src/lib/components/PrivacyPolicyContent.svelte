@@ -47,8 +47,13 @@
     <h2 class="section-title">1. What We Collect</h2>
 
     <p class="body-text">
-      We collect only what's necessary to provide our services. No tracking pixels. No advertising
-      networks. No data brokers.
+      {#if property === 'agency'}
+        We collect information to provide our services and, if you choose, measure our campaigns.
+        First-party analytics and Meta marketing have separate privacy choices. We do not use data brokers.
+      {:else}
+        We collect only what's necessary to provide our services. No tracking pixels. No advertising
+        networks. No data brokers.
+      {/if}
     </p>
 
     <h3 class="subsection-title">1.1 Session Data</h3>
@@ -71,8 +76,13 @@
       <li>Browser family (e.g., Chrome, Safari—not fingerprinting)</li>
     </ul>
     <p class="body-text">
-      We do <strong class="emphasis">not</strong> use cookies for analytics. We do
-      <strong class="emphasis">not</strong> track you across sites.
+      {#if property === 'agency'}
+        First-party analytics stay separate from Meta marketing. Allowing analytics does not allow
+        us to share your visits or inquiries with Meta.
+      {:else}
+        We do <strong class="emphasis">not</strong> use cookies for analytics. We do
+        <strong class="emphasis">not</strong> track you across sites.
+      {/if}
     </p>
 
     <h3 class="subsection-title">1.3 User Profile</h3>
@@ -84,6 +94,23 @@
       <li>Account creation date</li>
       <li>Consent preferences (analytics opt-out status)</li>
     </ul>
+
+    {#if property === 'agency'}
+      <h3 class="subsection-title">1.4 Optional Meta marketing</h3>
+      <p class="body-text">
+        Meta marketing is off by default. If you allow it in Privacy choices, we share public page
+        visits and saved inquiry events with Meta to measure Facebook and Instagram campaigns.
+        Event information can include the public page path, event type and time, an event identifier,
+        and IP address and browser information. Saved inquiries can also include a hashed email for
+        matching to a Meta account. Hashing changes the email into a coded value; it does not make
+        the information anonymous.
+      </p>
+      <p class="body-text">
+        We exclude inquiry messages and private page identifiers. We use a first-party cookie and
+        a server consent receipt to remember your separate marketing choice for up to 180 days. You can withdraw it
+        through Privacy choices. Do Not Track and Global Privacy Control keep Meta marketing off.
+      </p>
+    {/if}
   </section>
 
   <!-- Why We Collect -->
@@ -103,7 +130,9 @@
     <h3 class="subsection-title">2.3 Service Improvement</h3>
     <p class="body-text">
       Aggregate page view data helps us understand which content resonates and where to focus our
-      efforts. We never sell this data or use it for advertising.
+      efforts. {#if property === 'agency'}We do not sell this first-party analytics data. Optional
+      Meta marketing measures campaign activity only when you separately allow it.{:else}We never
+      sell this data or use it for advertising.{/if}
     </p>
   </section>
 
@@ -133,6 +162,14 @@
       After retention periods expire, data is permanently deleted—not archived, not anonymized for
       later use. Deleted means deleted.
     </p>
+    {#if property === 'agency'}
+      <p class="body-text">
+        Marketing consent and delivery records are separate from page-view analytics. Withdrawing
+        consent stops future sharing and cancels pending delivery; it does not recall events already
+        sent to Meta. Meta processes received events under its own privacy policy. Contact us below
+        for help with a deletion request.
+      </p>
+    {/if}
   </section>
 
   <!-- Third Parties -->
@@ -140,14 +177,24 @@
     <h2 class="section-title">4. Third Parties</h2>
 
     <p class="body-text">
-      We use <strong class="emphasis">one</strong> third-party provider:
+      {#if property === 'agency'}
+        Cloudflare runs our website and measurement infrastructure. Meta receives marketing events
+        only when you separately allow Meta marketing.
+      {:else}
+        We use <strong class="emphasis">one</strong> third-party provider:
+      {/if}
     </p>
 
     <div class="provider-card">
       <h3 class="provider-name">Cloudflare</h3>
       <p class="provider-purpose">
-        Infrastructure, security, and content delivery. Cloudflare processes requests to serve our
-        websites but does not have access to your user data or analytics.
+        {#if property === 'agency'}
+          Infrastructure, security, content delivery, and processing of our first-party analytics,
+          consent records, and approved marketing events.
+        {:else}
+          Infrastructure, security, and content delivery. Cloudflare processes requests to serve our
+          websites but does not have access to your user data or analytics.
+        {/if}
       </p>
       <a
         href="https://www.cloudflare.com/privacypolicy/"
@@ -159,13 +206,28 @@
       </a>
     </div>
 
+    {#if property === 'agency'}
+      <div class="provider-card">
+        <h3 class="provider-name">Meta</h3>
+        <p class="provider-purpose">
+          Optional campaign measurement for Facebook and Instagram. Meta may match the events we
+          share to your Meta account. Marketing consent is separate from first-party analytics.
+        </p>
+        <a href="https://www.facebook.com/privacy/policy/" class="provider-link" target="_blank" rel="noopener noreferrer">
+          Meta Privacy Policy →
+        </a>
+      </div>
+    {/if}
+
     <p class="body-text emphasis-block">
       We do <strong class="emphasis">not</strong> use:
     </p>
     <ul class="policy-list no-use-list">
       <li>Google Analytics or any Google services</li>
-      <li>Meta/Facebook Pixel or any Meta services</li>
-      <li>Third-party advertising networks</li>
+      {#if property !== 'agency'}
+        <li>Meta/Facebook Pixel or any Meta services</li>
+        <li>Third-party advertising networks</li>
+      {/if}
       <li>Data brokers or data enrichment services</li>
       <li>Social login providers (we use our own identity system)</li>
     </ul>
@@ -207,6 +269,12 @@
       Opt out of analytics collection from the on-site privacy controls or your account settings.
       Your choice is stored and respected across CREATE SOMETHING properties.
     </p>
+    {#if property === 'agency'}
+      <p class="body-text">
+        On Agency, open Privacy choices to change Meta marketing independently of analytics.
+        Choosing Necessary only turns both off. If the marketing service is unavailable, it stays off.
+      </p>
+    {/if}
   </section>
 
   <!-- Contact -->

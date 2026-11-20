@@ -9,15 +9,12 @@ import { getSyncMetadata } from '$lib/utils/sync-schedule';
 /**
  * API endpoint to fetch top templates leaderboard data
  * 
- * DATA UPDATE SCHEDULE:
- * - Source: Webflow's external data pipeline updates Airtable weekly
- * - Schedule: Every Monday at 16:00 UTC (4 PM UTC)
- * - Window: Rolling 30-day sales data (e.g., if updated Jan 13, shows Dec 14 - Jan 13)
- * - Frequency: The sales numbers remain static between weekly updates
- * 
- * IMPORTANT: The totalMarketplaceSales number will NOT change daily. It only updates
- * when Webflow's external system refreshes the Airtable data on Mondays at 4 PM UTC.
- * This is expected behavior - the data represents a weekly snapshot, not real-time data.
+ * DATA UPDATE SCHEDULE (see webflow-dashboard-core/sync-schedule):
+ * - Window: the 30 days ending Monday 16:00 UTC
+ * - Published: Tuesday, after the daily warehouse load covers the whole window
+ * - The numbers stay fixed between weekly snapshots; they are not real-time.
+ * - Sales include orders through creator fulfillment links (paid off-platform),
+ *   valued at list price; fulfillmentSales30d / totalFulfillmentSales split them out.
  */
 export const GET: RequestHandler = async ({ locals, platform }) => {
 	if (!locals.user?.email) {
@@ -68,8 +65,9 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 				// Only show email for user's own templates
 				creatorEmail: isUserTemplate ? creatorEmail : undefined,
 				totalSales30d: record.totalSales30d || 0,
-				// Redact competitor revenue data
+				// Redact competitor revenue data and sales-channel split
 				totalRevenue30d: isUserTemplate ? record.totalRevenue30d || 0 : undefined,
+				fulfillmentSales30d: isUserTemplate ? record.fulfillmentSales30d : undefined,
 				avgRevenuePerSale: isUserTemplate ? record.avgRevenuePerSale || 0 : undefined,
 				salesRank: record.salesRank || 0,
 				revenueRank: record.revenueRank || 0,
@@ -113,6 +111,7 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 								}
 							: null,
 						totalMarketplaceSales,
+						totalFulfillmentSales: leaderboardResult.marketplaceSummary?.fulfillmentSales ?? null,
             snapshotVersion: leaderboardResult.snapshotVersion,
         salesSource: leaderboardResult.marketplaceSummary ? 'marketplace-snapshot' : 'leaderboard-top-50',
 						userTotalRevenue,

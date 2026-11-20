@@ -1,6 +1,6 @@
 {
   "name": "@create-something/gsap-validation-worker",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "description": "GSAP validation worker for Webflow template compliance checking",
@@ -13,11 +13,14 @@
   "scripts": {
     "dev": "node ../../scripts/run-wrangler.mjs dev",
     "deploy": "node ../../scripts/run-wrangler.mjs deploy",
-    "test": "pnpm test:unicorn && pnpm test:keyboard && pnpm test:html-embed",
+    "test": "pnpm test:unicorn && pnpm test:keyboard && pnpm test:html-embed && pnpm test:dom-glue && pnpm test:guidance && pnpm test:custom-code-gaps",
     "test:unicorn": "node scripts/test-unicorn-detection.mjs",
     "test:live": "node scripts/repro-live-worker.mjs",
     "test:keyboard": "node scripts/test-keyboard-accessibility.mjs",
-    "test:html-embed": "node scripts/test-html-embed-policy.mjs"
+    "test:html-embed": "node scripts/test-html-embed-policy.mjs",
+    "test:dom-glue": "node scripts/test-gsap-dom-glue.mjs",
+    "test:guidance": "node scripts/test-gsap-guidance.mjs",
+    "test:custom-code-gaps": "node scripts/test-custom-code-gaps.mjs"
   },
   "dependencies": {
     "parse5": "7.3.0"

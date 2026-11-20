@@ -5,9 +5,11 @@
 	interface Props {
 		status: string;
 		size?: 'sm' | 'default' | 'lg';
+		/** `dot` is the quiet form for dense tables: a colored dot and plain text. */
+		variant?: 'solid' | 'dot';
 	}
 
-	let { status, size = 'default' }: Props = $props();
+	let { status, size = 'default', variant = 'solid' }: Props = $props();
 
 	const cleanedStatus = $derived(normalizeAssetStatus(status));
 
@@ -20,7 +22,11 @@
 	};
 </script>
 
-<span class="badge {sizeClasses[size]}" style="--badge-bg: {config.bg}; --badge-text: {config.text}; --badge-border: {config.border};">
+<span
+	class="badge {sizeClasses[size]}"
+	class:badge-dot={variant === 'dot'}
+	style="--badge-bg: {config.bg}; --badge-text: {config.text}; --badge-border: {config.border}; --badge-accent: {config.accent};"
+>
 	{cleanedStatus}
 </span>
 
@@ -35,7 +41,26 @@
 		border: 1px solid var(--badge-border);
 	}
 
-	.badge-sm {
+	.badge-dot {
+		gap: 0.45rem;
+		padding: 0;
+		background: transparent;
+		border-color: transparent;
+		color: var(--color-fg-secondary);
+		font-weight: var(--font-medium);
+		font-size: 0.84rem;
+	}
+
+	.badge-dot::before {
+		content: '';
+		width: 0.45rem;
+		height: 0.45rem;
+		border-radius: 999px;
+		background: var(--badge-accent);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--badge-accent) 18%, transparent);
+	}
+
+	.badge-sm:not(.badge-dot) {
 		padding: 0.125rem 0.5rem;
 		font-size: var(--text-caption);
 	}

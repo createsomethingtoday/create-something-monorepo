@@ -1,0 +1,6 @@
+{
+  "passed": false,
+  "error": "Clear filters empties the visible search\n+ actual - expected\n\n+ 'No matching track'\n- ''\n",
+  "errors": [],
+  "browserDiagnostics": []
+}

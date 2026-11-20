@@ -1,0 +1,9 @@
+node_modules/
+.next/
+.open-next/
+.wrangler/
+.env*
+*.tsbuildinfo
+clouduser.*
+next.config.webflow.ts
+webflow-loader.ts

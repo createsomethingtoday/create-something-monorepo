@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import { Button, SEO } from '@create-something/canon';
   import { getAnalytics } from '@create-something/canon/analytics';
   const inquiryHref = '/contact?intent=workflow-mapping&lane=enterprise_extension&source=airtable-workflow&campaign=semrush-workflow-pilot';
@@ -16,7 +17,8 @@
   canonical="https://createsomething.agency/airtable-workflow-consulting" propertyName="agency" />
 
 <div class="airtable-workflow property-performance" data-performance-mode="proof">
-  <section class="chapter opening" aria-labelledby="workflow-title">
+  <AgencyHeroFrame>
+<section class="chapter opening" aria-labelledby="workflow-title">
     <div>
       <p class="eyebrow">Airtable workflow consulting</p>
       <h1 id="workflow-title">Make your Airtable workflow reliable enough to run.</h1>
@@ -35,6 +37,7 @@
       <p class="map-note">One request → one decision → an inspectable result</p>
     </figure>
   </section>
+</AgencyHeroFrame>
 
   <section class="chapter fit" aria-labelledby="fit-title">
     <div><p class="eyebrow">When to bring us in</p><h2 id="fit-title">The problem is bigger than one connector.</h2>

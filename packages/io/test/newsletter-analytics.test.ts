@@ -224,3 +224,78 @@ test('campaign identity survives the real event ingestion sanitizer', async () =
   assert.equal(stored.newsletterCampaign, '2026_09_08_test_the_checker');
   assert.equal(stored.trafficClass, 'test');
 });
+
+test('later engagement states count only as delivery evidence', async () => {
+  const entry = NEWSLETTER_DELIVERIES[0];
+  for (const last_event of ['opened', 'clicked']) {
+    const result = await readNewsletterDelivery(entry, 'test', async (url) =>
+      Response.json({ id: String(url).split('/').at(-1), subject: entry.subject, last_event })
+    );
+    assert.equal(result.delivered, 2);
+    assert.deepEqual(result.states, { delivered: 2 });
+  }
+});
+
+test('a prepared edition subject replaces the registry default when reading its actual receipts', async () => {
+  const { mergeNewsletterDeliveryEntries } = await import('../src/lib/server/newsletter-analytics');
+  const campaign = NEWSLETTER_DELIVERIES[2].campaign;
+  const subject = 'A revised subject for the reviewed edition';
+  const entry = mergeNewsletterDeliveryEntries([{campaign,subject,resend_email_id:'actual-audience-receipt'}]).find(e=>e.campaign===campaign)!;
+  assert.equal(entry.subject,subject);
+  const report = await readNewsletterDelivery(entry,'offline',async()=>Response.json({id:'actual-audience-receipt',subject,last_event:'delivered'}));
+  assert.equal(report.status,'verified');
+  assert.equal(report.delivered,1);
+});
+
+test('ledger-sized readback paces requests and recovers a shared provider rate limit', async () => {
+  const entry = { campaign: 'bounded-ledger', subject: 'Reviewed subject', ids: Array.from({length:20},(_,i)=>`receipt-${i}`) };
+  let elapsed = 0;
+  const starts: number[] = [];
+  let throttled = false;
+  const report = await readNewsletterDelivery(entry,'offline',async (url) => {
+    starts.push(elapsed);
+    if (!throttled && starts.length === 11) {
+      throttled = true;
+      return new Response('',{status:429,headers:{'Retry-After':'1'}});
+    }
+    return Response.json({id:String(url).split('/').at(-1),subject:entry.subject,last_event:'delivered'});
+  },async (ms) => { elapsed += ms; });
+  assert.equal(report.status,'verified');
+  assert.equal(report.delivered,20);
+  assert.equal(starts.length,21);
+  for (let i=1;i<starts.length;i++) assert.ok(starts[i]-starts[i-1]>=125);
+  assert.ok(starts[11]-starts[10]>=1000);
+});
+
+test('provider throttling retries are bounded and never reported as zero delivery', async () => {
+  const entry = {campaign:'bounded-ledger',subject:'Reviewed subject',ids:['receipt']};
+  for (const retryAfter of ['1','60']) {
+    let calls=0;
+    const waits:number[]=[];
+    const report=await readNewsletterDelivery(entry,'offline',async()=>{
+      calls++;
+      return new Response('',{status:429,headers:{'Retry-After':retryAfter}});
+    },async(ms)=>{waits.push(ms);});
+    assert.equal(report.status,'unavailable');
+    assert.equal(report.delivered,null);
+    assert.equal(calls,retryAfter==='60'?1:3);
+    assert.ok(waits.every(ms=>ms<=5000));
+  }
+});
+
+test('rate-limit recovery supports missing and HTTP-date retry instructions', async (t) => {
+  const now = Date.parse('2026-11-03T18:00:00Z');
+  t.mock.method(Date, 'now', () => now);
+  const entry = {campaign:'bounded-ledger',subject:'Reviewed subject',ids:['receipt']};
+  for (const retryAfter of [null, new Date(now+2000).toUTCString()]) {
+    let calls=0;
+    const waits:number[]=[];
+    const report=await readNewsletterDelivery(entry,'offline',async (_url, init)=>{
+      assert.equal(new Headers(init?.headers).get('User-Agent'),'create-something-newsletter/1.0');
+      if (++calls===1) return new Response('',{status:429,headers:retryAfter?{'Retry-After':retryAfter}:{}});
+      return Response.json({id:'receipt',subject:entry.subject,last_event:'delivered'});
+    },async(ms)=>{waits.push(ms);});
+    assert.equal(report.delivered,1);
+    assert.deepEqual(waits,[125,retryAfter?2000:1000]);
+  }
+});

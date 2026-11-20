@@ -18,7 +18,7 @@ const TOOLS: [(&str,&str,bool,&str);10]=[
 pub fn handles(name:&str)->bool{TOOLS.iter().any(|tool|tool.0==name)}
 fn fields(name:&str)->(&'static[&'static str],&'static[&'static str]){
     match name{
-        "gigi_instagram_drafts_list"=>(&["workspaceId"],&["offset"]),
+        "gigi_instagram_drafts_list"=>(&["workspaceId"],&["offset","query"]),
         "gigi_instagram_draft_get"|"gigi_instagram_publish_receipt"=>(&["workspaceId","id"],&[]),
         "gigi_instagram_draft_create"=>(&["workspaceId","requestId","title"],&["caption","imageUrl","connectedAccountId","expectedImageSha256","imageAssetId","imageAlt"]),
         "gigi_instagram_draft_update"=>(&["workspaceId","requestId","id","expectedRevision","title","caption","imageUrl","connectedAccountId","expectedImageSha256"],&["imageAssetId","imageAlt"]),
@@ -33,6 +33,7 @@ fn schema(name:&str)->Value{
     let(required,optional)=fields(name);let mut properties=serde_json::Map::new();
     for key in required.iter().chain(optional){
         let value=match *key{
+            "query"=>json!({"type":"string","maxLength":160}),
             "offset"=>json!({"type":"integer","minimum":0,"maximum":100000}),
             "expectedRevision"=>json!({"type":"integer","minimum":1}),
             "requestId"=>json!({"type":"string","format":"uuid","description":"Stable UUID for this exact request. Reuse only for an identical retry."}),
@@ -75,6 +76,18 @@ fn dispatch_with<F>(root:&Path,name:&str,input:Value,broker:F)->Result<Value,Str
         "instagram.publish"=>Ok(json!({"requestId":input["requestId"],"state":"published","mediaId":"synthetic-post","permalink":"https://www.instagram.com/p/synthetic/"})),
         _=>Err("unavailable".into())}}
     fn create(root:&Path,w:&str)->Value{dispatch_with(root,"gigi_instagram_draft_create",json!({"workspaceId":w,"requestId":Uuid::new_v4().to_string(),"title":"Studio release","caption":"A new work","imageUrl":"https://media.createsomething.io/synthetic.jpg","connectedAccountId":"ca_synthetic","expectedImageSha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}),|_,_|panic!("local draft must not contact provider")).unwrap()}
+    #[test]fn search_is_typed_literal_and_workspace_scoped_without_provider_calls(){
+        let(root,w)=setup();let draft=create(&root,&w);
+        let other=Uuid::new_v4().to_string();crate::domain::open(&root).unwrap().execute("INSERT INTO workspaces(id,name) VALUES(?1,'Other')",[&other]).unwrap();
+        let tool=catalog().into_iter().find(|tool|tool["name"]=="gigi_instagram_drafts_list").unwrap();
+        assert_eq!(tool["inputSchema"]["properties"]["query"]["maxLength"],160);
+        let read=|workspace:&str,query:Value|dispatch_with(&root,"gigi_instagram_drafts_list",json!({"workspaceId":workspace,"query":query}),|_,_|panic!("Search is local only"));
+        assert_eq!(read(&w,json!("STUDIO")).unwrap()["items"][0]["id"],draft["id"]);
+        assert_eq!(read(&other,json!("Studio")).unwrap()["total"],0);
+        assert_eq!(read(&w,json!("%")).unwrap()["total"],0);
+        assert!(read(&w,json!(4)).is_err());assert!(read(&w,json!("x".repeat(161))).is_err());
+        std::fs::remove_dir_all(root).unwrap();
+    }
     #[test]fn catalog_is_typed_and_exposes_no_publish_or_consent_bypass(){
         assert_eq!(catalog().len(),10);for tool in catalog(){assert_eq!(tool["inputSchema"]["additionalProperties"],false);assert!(tool["inputSchema"]["required"].as_array().unwrap().contains(&json!("workspaceId")));}
         let(root,w)=setup();assert!(dispatch_with(&root,"social.publish",json!({"workspaceId":w}),|_,_|panic!()).is_err());

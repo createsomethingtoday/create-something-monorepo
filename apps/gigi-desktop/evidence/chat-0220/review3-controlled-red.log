@@ -1,0 +1,28 @@
+   Compiling gigi_desktop v0.2.20 (/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-5b278f6e/apps/gigi-desktop/src-tauri)
+warning: unused import: `std::os::unix::net::UnixStream`
+   --> src/chat.rs:458:5
+    |
+458 | use std::os::unix::net::UnixStream;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `gigi_desktop` (lib test) generated 1 warning (run `cargo fix --lib -p gigi_desktop --tests` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.06s
+     Running unittests src/lib.rs (apps/gigi-desktop/src-tauri/target/debug/deps/gigi_desktop_lib-81a6e070d95755aa)
+
+running 1 test
+
+thread 'agent_preflight::tests::connector_probe_bounds_time_output_and_does_not_run_registration_commands' (6170705) panicked at src/agent_preflight.rs:125:13:
+expected "invalid or oversized", got "Connector input failed"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test agent_preflight::tests::connector_probe_bounds_time_output_and_does_not_run_registration_commands ... FAILED
+
+failures:
+
+failures:
+    agent_preflight::tests::connector_probe_bounds_time_output_and_does_not_run_registration_commands
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 148 filtered out; finished in 1.00s
+
+error: test failed, to rerun pass `--lib`

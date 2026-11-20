@@ -24,13 +24,25 @@ export function getCanonRules(category?: 'css' | 'voice' | 'code' | 'all'): Cano
     claude: '../CLAUDE.md'
   };
 
+  function readRule(key: string, file: string): string {
+    const content = readFileSync(join(rulesDir, file), 'utf-8');
+    if (key !== 'voice') return content;
+    const guide = readFileSync(
+      join(
+        root,
+        'packages/dotfiles/codex/skills/writing-for-humans/references/create-something-voice.md'
+      ),
+      'utf-8'
+    );
+    return `${content}\n\n${guide}`;
+  }
+
   try {
     if (!category || category === 'all') {
       // Return all rules
       for (const [key, file] of Object.entries(ruleFiles)) {
         try {
-          const filePath = join(rulesDir, file);
-          rules[key as keyof CanonRules] = readFileSync(filePath, 'utf-8');
+          rules[key as keyof CanonRules] = readRule(key, file);
         } catch (err) {
           // Skip missing files
         }
@@ -39,8 +51,7 @@ export function getCanonRules(category?: 'css' | 'voice' | 'code' | 'all'): Cano
       // Return specific category
       const file = ruleFiles[category];
       if (file) {
-        const filePath = join(rulesDir, file);
-        rules[category] = readFileSync(filePath, 'utf-8');
+        rules[category] = readRule(category, file);
       }
     }
 
@@ -69,10 +80,12 @@ export function getQuickReference(): string {
 - Motion: \`var(--duration-micro)\` 200ms for most interactions
 
 ## Voice Canon
-- **Clarity over cleverness**
-- Lead with outcomes, not philosophy
-- Every claim must be measurable
-- "155 scripts → 13" not "significant improvements"
+- Approved guide: \`packages/dotfiles/codex/skills/writing-for-humans/references/create-something-voice.md\`
+- Precise, capable, human, and accountable; apply the reader's property emphasis
+- Support material claims with evidence or an honest limit; never invent metrics
+- Preserve uncertainty, ownership, and verification status
+- Use inclusive language and preserve exact labels and source facts
+- Consequential publication requires a human final read; a tool response does not authorize publishing
 
 ## Code Conventions
 - Routes: \`src/routes/[path]/+page.svelte\`

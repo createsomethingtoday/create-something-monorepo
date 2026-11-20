@@ -1,0 +1,297 @@
+   Compiling gigi_desktop v0.3.6 (/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6/apps/gigi-desktop/src-tauri)
+warning: unused import: `std::os::unix::net::UnixStream`
+   --> src/chat.rs:502:5
+    |
+502 | use std::os::unix::net::UnixStream;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `gigi_desktop` (lib test) generated 1 warning (run `cargo fix --lib -p gigi_desktop --tests` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.94s
+     Running unittests src/lib.rs (apps/gigi-desktop/src-tauri/target/debug/deps/gigi_desktop_lib-3e8f07dd24e08656)
+
+running 165 tests
+test ai_connection::tests::browser_urls_are_bounded_without_launching_a_browser ... ok
+test agent_setup::tests::command_arguments_escape_spaces_and_shell_metacharacters ... ok
+test agent_preflight::tests::fresh_catalog_requires_version_and_media_schemas_without_claiming_cached_host ... ok
+test agenda::tests::source_summary_omits_unknown_malformed_or_oversized_observation_data ... ok
+test ai_connection::tests::expected_account_field_is_required_for_models_and_ask ... ok
+test ai_connection::tests::invalid_input_and_unknown_operations_do_not_open_auth_or_inference ... ok
+test agent_setup::tests::invalid_receipt_cannot_claim_agent_readiness ... ok
+test agent_preflight::tests::registration_is_narrow_and_rejects_stale_path_profile_arguments_and_disabled_entries ... ok
+test chat::login_tests::login_opener_only_accepts_reviewed_provider_hosts ... ok
+test agent_setup::tests::prepares_exact_installed_paths_without_editing_provider_configuration ... ok
+test chat::tests::cancel_uses_control_channel_while_protocol_mutex_is_held ... ok
+test chat::tests::buffered_reply_accepts_large_unicode_transcript_and_preserves_next_frame ... ok
+test attention::tests::only_verified_receipts_claim_saved_changes_and_session_state_clears_approval ... ok
+test attention::tests::due_task_is_durable_deduplicated_and_workspace_scoped ... ok
+test attention::tests::read_only_reply_survives_hidden_drawer_and_restart_without_replaying_history ... ok
+test attention::tests::settings_reject_authority_and_invalid_values_atomically ... ok
+test attention::tests::claimed_but_uncertain_delivery_is_never_replayed ... ok
+test attention::tests::malformed_dates_undated_records_and_future_tasks_do_not_invent_urgency ... ok
+test attention::tests::dismiss_snooze_read_and_restart_preserve_operator_state ... ok
+test attention::tests::historical_receipts_discovered_in_batches_stay_in_feed_without_alerts ... ok
+test attention::tests::notification_claim_is_opt_in_quiet_deduplicated_and_token_bound ... ok
+test attention::tests::completed_changed_and_deleted_records_do_not_leave_stale_actions ... ok
+test diagnostics::tests::capture_storage_failure_never_changes_source_result_and_stop_still_disables ... ok
+test agent_preflight::tests::cli_version_uses_argv_with_spaces_and_rejects_unrecognized_output ... ok
+test chat::tests::business_rejection_preserves_companion ... ok
+test chat::tests::codex_discovery_ignores_relative_path_entries ... ok
+test diagnostics::tests::opt_in_stop_restart_and_delete_never_capture_by_default ... ok
+test chat::tests::concurrent_callers_share_one_serial_stream ... ok
+test chat::tests::missing_codex_fails_before_companion_launch ... ok
+test domain::tests::cents_require_supported_currency_and_finance_status ... ok
+test diagnostics::tests::stopped_or_deleted_capture_ignores_in_flight_results_and_unrelated_operations ... ok
+test diagnostics::tests::source_recovery_codes_remain_specific_without_raw_payloads ... ok
+test diagnostics::tests::connection_failure_fixtures_keep_safe_codes_and_consent_transition ... ok
+test domain::tests::contact_search_matches_local_fields_companies_and_paginates_without_private_payloads ... ok
+test chat::tests::npm_symlink_keeps_its_node_prefix_with_finder_path ... ok
+test diagnostics::tests::invalid_stored_data_and_symlinks_are_never_exported_or_overwritten ... ok
+test domain::tests::contact_relations_can_be_read_to_the_end_without_duplicates_or_writes ... ok
+test domain::tests::default_record_detail_is_bounded_and_full_detail_is_explicit ... ok
+test domain::tests::concurrent_disjoint_patches_keep_both_fields ... ok
+test diagnostics::tests::private_export_is_exact_reviewed_allowlist_not_raw_provider_payload ... ok
+test domain::tests::gig_list_exposes_only_agenda_times_without_full_private_fields ... ok
+test domain::tests::duplicate_source_save_records_receipt_for_later_replay ... ok
+test chat::tests::nvm_discovery_selects_numeric_version_and_supplies_its_node_path ... ok
+test domain::tests::gmail_contact_conversion_creates_once_across_source_messages_and_workspaces ... ok
+test domain::tests::gmail_contact_conversion_holds_ambiguous_matches_and_rejects_unsafe_scope_without_writes ... ok
+test domain::tests::gmail_contact_conversion_reuses_exact_email_and_links_without_overwriting ... ok
+test domain::tests::history_export_uses_scoped_ctx_v2_events_and_private_file ... ok
+test domain::tests::import_duplicate_preserves_correction_and_receipt_collision_fails ... ok
+test domain::tests::imported_ids_are_scoped_to_connected_account_and_collection ... ok
+test domain::tests::gmail_contact_relation_failure_rolls_back_new_contact_and_existing_reuse ... ok
+test domain::tests::default_detail_has_byte_ceiling_with_escaping_and_many_links ... ok
+test chat::tests::oversized_reply_discards_child ... ok
+test domain::tests::overview_date_fallback_uses_first_valid_candidate_and_bounds_field_strings ... ok
+test domain::tests::contact_search_above_reported_scale_keeps_full_collection_count ... ok
+test domain::tests::private_database_permissions ... ok
+test domain::tests::replace_fields_clears_omitted_details_but_keeps_source_and_links ... ok
+test domain::tests::overview_validates_today_scopes_workspace_and_does_not_record_mutation ... ok
+test domain::tests::overview_preserves_only_saved_source_summary_without_changing_filters_or_records ... ok
+test domain::tests::contact_search_matches_all_name_tokens_without_cross_contact_leaks ... ok
+test chat::tests::persistent_child_matches_ids_and_profile ... ok
+test chat::tests::rejects_large_requests_before_write ... ok
+test domain::tests::restore_removes_task_created_after_snapshot_and_survives_reopen ... ok
+test domain::tests::source_conversion_relation_failure_rolls_back_creation ... ok
+test domain::tests::source_conversion_separates_matching_external_ids_across_accounts ... ok
+test domain::tests::schema_rejects_cross_workspace_missing_and_ambiguous_links ... ok
+test domain::tests::source_conversion_rejects_stale_wrong_scope_and_override_without_writes ... ok
+test chat::tests::reply_id_mismatch_discards_child ... ok
+test domain::tests::workspace_and_record_survive_reopen ... ok
+test domain::tests::stale_editor_replace_rejects_newer_record_without_losing_it_and_replays_receipt ... ok
+test domain::tests::title_only_save_preserves_gig_details_source_and_links ... ok
+test domain::tests::source_receipt_lookup_recovers_created_and_existing_without_writes ... ok
+test domain::tests::typed_relations_money_and_restore ... ok
+test chat::tests::shutdown_interrupts_a_reader_that_never_observes_pipe_eof ... ok
+test finance_list::tests::overdue_uses_local_day_explicit_status_and_validated_criteria ... ok
+test integrations::tests::context_configuration_guidance_is_allowlisted_and_keeps_code ... ok
+test gig_list::tests::gigs_updated_sort_includes_undated_before_paging_with_stable_ties ... ok
+test gig_list::tests::gigs_dates_use_viewer_days_ranges_exclusive_all_day_and_dst ... ok
+test domain::tests::source_conversion_preserves_provenance_relations_retry_and_duplicate ... ok
+test domain::tests::finances_sort_transaction_dates_before_paging_and_keep_invalid_last ... ok
+test domain::tests::list_is_paginated_and_unknown_fee_stays_unknown ... ok
+test domain::tests::overview_finds_eligible_records_beyond_recent_page_and_sorts_by_real_dates ... ok
+test media_protocol::tests::bounded_ranges_support_seeking_and_reject_invalid ... ok
+test domain::tests::contact_search_realistic_scale_has_linear_work_and_correct_global_pages ... ok
+test gig_list::tests::gigs_filter_full_workspace_before_paging_and_preserve_equal_date_order ... ok
+test gig_list::tests::gigs_filter_values_relations_workspace_boundaries_and_changed_cursor ... ok
+test music::tests::bundle_verification_rejects_links_and_excessive_depth ... ok
+test music::tests::bundle_nested_edits_are_new_versions_and_moved_original_reconnects ... ok
+test music::tests::cancelled_import_does_not_save_entries ... ok
+test music::tests::changed_file_can_be_added_as_an_explicit_new_version ... ok
+test music::tests::changed_files_and_symlinks_are_not_previewed ... ok
+test music::tests::folder_import_skips_hidden_and_symbolic_links ... ok
+test music::tests::failed_import_receipt_is_explicitly_uncertain_and_never_reopens_picker ... ok
+test music::tests::import_is_local_deduplicated_and_workspace_bound ... ok
+test music::tests::import_claim_is_persisted_before_picker_and_survives_restart ... ok
+test music::tests::mkv_is_organized_as_video_without_a_broken_preview ... ok
+test music::tests::import_status_is_read_only_and_distinguishes_receipt_claim_and_absence ... ok
+test music_mcp::tests::discovery_forbids_paths_and_unbounded_lists ... ok
+test finance_list::tests::finance_segments_filter_complete_workspace_before_paging_without_writes ... ok
+test navigation::help_tests::help_topics_can_only_open_reviewed_provider_guides ... ok
+test navigation::tests::consent_browser_failures_are_safe_and_provider_is_required ... ok
+test navigation::tests::consent_navigation_stays_on_owning_https_provider ... ok
+test notifications::tests::model_actions_cannot_become_notifications ... ok
+test notifications::tests::notification_click_waits_for_ready_webview_and_never_approves ... ok
+test notifications::tests::permission_denial_is_preserved ... ok
+test notifications::tests::preview_limits_preserve_unicode_boundaries ... ok
+test notifications::tests::private_preview_never_leaks_record_text ... ok
+test notifications::tests::route_rejects_unknown_fields_wrong_workspace_or_oversize ... ok
+test music::tests::stale_ui_and_agent_organization_cannot_overwrite_newer_metadata ... ok
+test place_maps::tests::saved_address_is_bounded_and_provider_fixed ... ok
+test music::tests::organization_survives_reopen_and_backup_without_media_copy ... ok
+test music_mcp::workflow_tests::picker_import_search_organize_matches_ui_and_rejects_unsafe_selections ... ok
+test place_maps::tests::foreign_saved_place_is_rejected_before_any_helper_operation ... ok
+test social::tests::changed_instagram_identity_cannot_publish ... ok
+test music::tests::organization_receipt_is_atomic_exact_and_survives_later_edit_and_removal ... ok
+test social::tests::confirmation_and_unknown_outcome_block_duplicate_publish ... ok
+test social::tests::continuation_requires_pending_receipt_and_fresh_explicit_action ... ok
+test social::tests::drafts_save_locally_and_reject_stale_revision ... ok
+test social::tests::draft_snapshot_waits_for_writer_before_resolving_image_bytes ... ok
+test social::tests::save_retry_returns_same_draft_and_rejects_changed_payload ... ok
+test social_mcp::tests::catalog_is_typed_and_exposes_no_publish_or_consent_bypass ... ok
+test social_mcp::tests::failed_connection_is_error_not_false_disconnected_success ... ok
+test social_mcp::tests::changed_draft_invalidates_pending_approval_before_provider_write ... ok
+test social_mcp::tests::full_prepare_request_human_approval_result_and_idempotency ... ok
+test social_mcp::tests::save_status_reads_exact_receipt_without_mutation_and_is_workspace_scoped ... ok
+test social_mcp::tests::search_is_typed_literal_and_workspace_scoped_without_provider_calls ... ok
+test social_mcp::tests::unknown_receipt_is_truthful_and_polling_never_continues_publication ... ok
+test source_import::tests::failed_records_return_retry_cursor_without_advancing_page ... ok
+test source_import::tests::imports_are_persisted_deduplicated_and_keep_user_corrections ... ok
+test source_jobs::tests::account_change_and_stale_revision_prevent_local_save ... ok
+test source_jobs::tests::active_commit_cancellation_writes_a_stop_marker_even_with_partial_receipt ... ok
+test social::tests::definitive_publish_rejections_remain_recoverable_without_unfencing_ambiguous_errors ... ok
+test social::tests::search_filters_all_drafts_before_paging_without_provider_calls ... ok
+test source_jobs::tests::cancelled_preview_and_cross_workspace_access_are_rejected ... ok
+test source_jobs::tests::cursor_is_opaque_bound_to_account_selection_and_limits ... ok
+test source_jobs::tests::concurrent_commit_requests_create_one_record_and_one_receipt ... ok
+test source_jobs::tests::changed_local_record_snapshot_requires_a_fresh_preview ... ok
+test social::tests::unicode_search_matches_titles_and_captions_before_paging_for_native_and_mcp ... ok
+test source_jobs::tests::first_preview_omits_null_cursor_at_real_companion_boundary ... ok
+test source_jobs::tests::fractional_date_window_orders_instants_not_original_strings ... ok
+test source_jobs::tests::duplicate_import_preserves_manual_corrections_and_reports_existing ... ok
+test source_jobs::tests::invalid_bounds_and_unknown_fields_fail_before_provider_read ... ok
+test source_jobs::tests::interrupted_commit_reconciles_completed_domain_receipts_without_writing ... ok
+test agent_preflight::tests::connector_probe_bounds_time_output_and_does_not_run_registration_commands ... ok
+test source_jobs::tests::expired_preview_cache_is_pruned_without_removing_final_receipts ... ok
+test source_jobs::tests::oversized_projected_page_is_rejected_without_local_import ... ok
+test source_jobs::tests::idempotency_key_reuse_across_different_previews_is_rejected ... ok
+test source_jobs::tests::repeated_provider_identity_is_one_preview_record_even_if_observation_changes ... ok
+test source_jobs::tests::record_cap_retains_unselected_page_records_in_scoped_cursor ... ok
+test source_jobs::tests::partial_failure_never_exposes_cursor_beyond_unresolved_records ... ok
+test source_jobs::tests::preview_reads_bounded_source_without_creating_local_records_then_commits_once ... ok
+test source_jobs::tests::signout_cancels_frozen_previews_without_deleting_local_records ... ok
+test task_list::tests::complete_workspace_date_filtering_scoped_paging_and_stale_rejection ... ok
+test source_jobs::tests::running_import_can_be_cancelled_from_a_second_caller ... ok
+test diagnostics::tests::bounded_storage_expiry_and_stale_review_fail_closed ... ok
+test integrations::tests::app_exit_cancels_owned_child_and_descendants ... ok
+test integrations::tests::companion_receives_request_and_returns_bounded_json ... ok
+test integrations::tests::only_instagram_preview_accepts_larger_image_receipts ... ok
+test chat::tests::shutdown_interrupts_in_flight_request_and_prevents_relaunch ... ok
+test integrations::tests::provider_credentials_are_not_inherited_by_companion ... ok
+test integrations::tests::sync_stages_owned_history_before_invoking_fixed_import ... ok
+test integrations::tests::timeout_includes_blocked_request_write ... ok
+test chat::tests::timeout_kills_process_group_and_descendants ... ok
+test integrations::tests::timeout_stops_descendants_without_waiting_for_inherited_stdout ... ok
+test integrations::tests::unknown_operations_are_rejected_before_process_launch ... ok
+test domain::tests::contact_search_sqlite_lock_uses_busy_timeout_and_recovers ... ok
+
+test result: ok. 165 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.15s
+
+     Running unittests src/main.rs (apps/gigi-desktop/src-tauri/target/debug/deps/gigi-9d42b9a1b103cb74)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/gigi-mcp.rs (apps/gigi-desktop/src-tauri/target/debug/deps/gigi_mcp-40099296d1f1142c)
+
+running 8 tests
+test tests::oversized_frame_is_discarded_without_losing_next_request ... ok
+test tests::source_conversion_schema_requires_attribution_and_snapshot ... ok
+test tests::exposes_bounded_tools_and_rejects_arbitrary_names ... ok
+test tests::records_tool_use_only_after_successful_call ... ok
+test tests::detail_is_discoverable_and_context_rejects_foreign_workspace ... ok
+test tests::records_save_tool_preserves_details_on_title_only_update ... ok
+test tests::records_save_schema_exposes_replace_and_rejects_missing_fields ... ok
+test tests::external_agents_can_page_all_contact_links_with_a_read_only_scoped_tool ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+     Running tests/artwork_safety.rs (apps/gigi-desktop/src-tauri/target/debug/deps/artwork_safety-9ae19ae5f87f6bd6)
+
+running 6 tests
+test jpeg_orientation_is_applied_to_preview_and_animated_png_is_rejected ... ok
+test duplicate_bytes_cannot_silently_discard_reviewed_provenance ... ok
+test slot_hash_scope_and_expiry_are_enforced ... ok
+test dangerous_inputs_fail_without_assets_or_second_picker ... ok
+test true_legacy_backup_restores_and_recreates_only_empty_image_store ... ok
+test workspace_quotas_reuse_and_unused_removal_are_atomic ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.80s
+
+     Running tests/artwork_stdio.rs (apps/gigi-desktop/src-tauri/target/debug/deps/artwork_stdio-e5660482d6136632)
+
+running 1 test
+test image_import_attach_and_local_draft_roundtrip_use_real_stdio ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.35s
+
+     Running tests/artwork_workflow.rs (apps/gigi-desktop/src-tauri/target/debug/deps/artwork_workflow-1b64178d2caa0d45)
+
+running 2 tests
+test imported_artwork_is_atomic_workspace_owned_and_restored_with_database ... ok
+test larger_artwork_backup_and_restore_preserve_bytes_without_per_page_stalls ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.77s
+
+     Running tests/memory_mcp_protocol.rs (apps/gigi-desktop/src-tauri/target/debug/deps/memory_mcp_protocol-a0829da105dc666f)
+
+running 1 test
+test external_stdio_shares_cited_memory_but_cannot_approve_its_own_requests ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/music_mcp_protocol.rs (apps/gigi-desktop/src-tauri/target/debug/deps/music_mcp_protocol-03c84aef20ee13c6)
+
+running 1 test
+test music_is_discoverable_and_shared_with_desktop_over_real_stdio ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/today_agenda.rs (apps/gigi-desktop/src-tauri/target/debug/deps/today_agenda-c72d748a8dcb4d44)
+
+running 6 tests
+test only_verified_source_derivations_collapse_duplicate_events ... ok
+test identity_summaries_bound_custom_type_without_changing_original_or_source_ids ... ok
+test classification_filters_before_limits_preserves_legacy_and_keeps_calendar_when_representing_gig_is_excluded ... ok
+test exclusive_timed_ends_keep_minute_and_submillisecond_precision ... ok
+test derived_gigs_respect_local_timing_and_keep_filtered_source_artwork ... ok
+test today_orders_both_complete_collections_and_keeps_ongoing_events ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.21s
+
+     Running tests/today_windows.rs (apps/gigi-desktop/src-tauri/target/debug/deps/today_windows-746fc811c225ae42)
+
+running 5 tests
+test local_dates_follow_viewer_timezone_and_daylight_saving_boundaries ... ok
+test read_is_workspace_scoped_validates_inputs_and_does_not_mutate_records_or_history ... ok
+test financials_require_due_date_and_unpaid_status_and_split_saved_direction ... ok
+test week_navigation_includes_weekends_ranges_and_more_than_five_without_shifting_other_windows ... ok
+test tasks_filter_before_limits_and_keep_only_overdue_today_tomorrow_in_date_order ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s
+
+     Running tests/work_collections.rs (apps/gigi-desktop/src-tauri/target/debug/deps/work_collections-57e549e2ab9658cf)
+
+running 2 tests
+test gig_location_summaries_are_bounded_and_cursor_rejects_a_changed_location ... ok
+test task_search_filters_the_complete_workspace_without_changing_saved_records ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running tests/workspace_memory.rs (apps/gigi-desktop/src-tauri/target/debug/deps/workspace_memory-7dd77b6cefbf26d5)
+
+running 4 tests
+test absent_staging_receipt_is_an_explicit_workspace_scoped_result ... ok
+test curated_memory_requires_review_and_survives_reopen_with_citations ... ok
+test unicode_search_matches_stored_case_and_keeps_pagination ... ok
+test corrections_supersession_and_stale_pending_approval_are_atomic ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running tests/workspace_search.rs (apps/gigi-desktop/src-tauri/target/debug/deps/workspace_search-ec1631c731d989fe)
+
+running 1 test
+test search_groups_complete_owned_collections_and_paginates_without_record_payloads ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+   Doc-tests gigi_desktop_lib
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

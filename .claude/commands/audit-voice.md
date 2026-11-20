@@ -3,7 +3,7 @@ description: Review prose for reader use, evidence, clarity, and CREATE SOMETHIN
 allowed-tools: Read, Grep, Glob, Bash
 ---
 
-# Audit Voice Command
+# Audit voice command
 
 Use `/audit-voice [path]` to review a complete rendered component or relevant document section.
 
@@ -12,21 +12,23 @@ Use `/audit-voice [path]` to review a complete rendered component or relevant do
 - Drafting and structure: `packages/dotfiles/codex/skills/writing-for-humans/SKILL.md`
 - Independent reader judgment: `packages/dotfiles/codex/skills/target-reader-review/SKILL.md`
 - Policy and enforcement boundary: `docs/policies/v1/policy.prose-quality.v1.md`
-- Final clarity and revision voice: `.claude/rules/voice-canon.md`
+- Approved personality and writing rules: `packages/dotfiles/codex/skills/writing-for-humans/references/create-something-voice.md`
+- Final clarity and revision routing: `.claude/rules/voice-canon.md`
 
 The Voice Canon is the revision layer. It does not replace artifact structure, operator usability, source truth, or property policy.
 
-## Audit Order
+## Audit order
 
 1. **Reader and purpose:** Name who must understand or act and what the artifact should change for them.
 2. **Answer and structure:** Find the conclusion, recommendation, or default path. Check that supporting sections belong beneath it and paragraphs have one job.
 3. **Operator path:** For instructions, simulate outcome, applicability, prerequisites, first action, expected result, recovery, and completion proof.
 4. **Information flow:** Keep the main character and action visible. Move from familiar context to important new information.
 5. **Evidence and limits:** Keep material claims beside the right proof, uncertainty, and scope boundary. Do not invent missing metrics.
-6. **Revision:** Remove throat-clearing, repeated conclusions, hidden verbs, inflated phrasing, and unexplained owned terms. Restore natural voice after cutting.
-7. **Tool findings:** Run `pnpm prose:check -- <path> --format json` when possible. Report deterministic findings separately from judgment warnings.
+6. **Canon voice:** Read the approved voice guide. Assess precise, capable, human, and accountable writing in context, including property emphasis, sentence case, inclusive language, and honest verification status.
+7. **Revision:** Remove throat-clearing, repeated conclusions, hidden verbs, inflated phrasing, and unexplained owned terms. Restore natural voice after cutting.
+8. **Tool findings:** Run `pnpm prose:check -- <path> --format json` when possible. Report deterministic findings separately from judgment warnings.
 
-## Contextual Signals
+## Contextual signals
 
 Review these in context rather than applying automatic substitutions:
 

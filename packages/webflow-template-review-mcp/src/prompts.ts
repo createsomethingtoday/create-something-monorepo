@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
-import { COMPREHENSIVE_REVIEW_WORKFLOW_GUIDANCE } from './comprehensive-review-contract.js';
+import { COMPREHENSIVE_REVIEW_WORKFLOW_GUIDANCE, CREATOR_FEEDBACK_FORMAT } from './comprehensive-review-contract.js';
 
 /**
  * Server-level instructions surfaced to MCP clients (claude.ai shows these to
@@ -17,7 +17,7 @@ Default review sequence:
 1. Locate the submission (template_review_list_queue, template_review_my_queue, template_review_search_assets, template_review_search_versions).
 2. Load details (template_review_get_asset, template_review_get_version).
 3. Always call template_review_get_review_context before any decision, write, assignment, or official action — it returns capability flags (canAssign, canReview, canPublish).
-4. Run template_review_run_published_site_validation with publishedUrl only. Never pass Preview URLs or Designer data as automated-analysis input.
+4. Run template_review_run_published_site_validation with publishedUrl, and with asset_id so the server can read the preview link on the asset record for the unused styles check. Never pass Preview URLs or Designer data as automated-analysis input yourself.
 5. For visual/screenshot evidence, run template_review_capture_published_site_screenshots with published_url — real-Chromium full-page captures (desktop/tablet/mobile segments; full_page covers the entire page in the gallery). Never screenshot published sites with a code-execution sandbox browser: sandbox egress proxies block cdn.prod.website-files.com, so pages render unstyled and are invalid evidence. The reviewer cannot see inline images: always share the returned gallery_url (one page rendering every captured segment, valid ~1 hour) in your reply, adding per-segment view_url links only when the reviewer wants individual frames. For rendered-DOM, network, or collector evidence, run template_review_run_published_site_sandbox with publishedUrl. It executes a fixed, short-lived collector; it is not a general code sandbox. To read a template's compiled CSS, run template_review_fetch_published_site_stylesheet with published_url — it returns the stylesheet text (pageable, searchable) and a structural summary. Never fetch cdn.prod.website-files.com from a code-execution sandbox; that host is blocked there (host_not_allowed).
 6. For comprehensive reports, call template_review_get_comprehensive_review_contract and include its required sections; validate Agent Review Feedback drafts with template_review_format_agent_review_feedback before any save.
 7. Before drafting any creator-facing message, read what was already sent with template_review_get_ticket_thread (the Zendesk ticket linked to the version). template_review_search_tickets finds review tickets by creator email, subject, or status. Both are read-only.
@@ -36,6 +36,7 @@ Write boundaries:
 - template_review_send_ticket_followup posts on the creator's Zendesk ticket and is CREATOR-FACING when visibility is public; use it only when the reviewer explicitly asks to send that exact message, and pass confirm_public_reply=true to record that approval. template_review_update_ticket_status changes the linked ticket's status/tags for a version the reviewer owns (never a public reply) and requires a fresh-read expected_status confirmation. Internal notes and scope="all" search require a resolved reviewer identity. Decisions (request changes, approve, reject) still go through the Airtable decision tools, which send the composed review email; the follow-up tool is for corrections and replies, not for delivering decisions.
 - template_review_create_ticket opens a NEW ticket to a template creator and emails them; use it only for outreach the reviewer explicitly asked to send (not for submission feedback, which has its own ticket), and pass confirm_send=true to record that approval.
 - After creating a ticket for a version, ask the reviewer whether it should replace the version's linked review ticket; only then call template_review_link_version_ticket (confirm_replace=true). Never relink silently — decision emails follow the linked ticket.
+- Review comments (when the comment tools are present): template_review_add_comment with visibility "draft" or "internal" saves text that the creator cannot read, and an agent may save one when the reviewer asks for it. When the reviewer asks for a draft or a draft comment for the creator, use template_review_add_comment, not template_review_save_draft_feedback (that tool writes the Airtable Review Feedback field, which is not in the comment thread). template_review_release_feedback is CREATOR-FACING: it shows every draft on the version to the creator and emails them, and it cannot be undone. Call it only when the reviewer asked for that exact send in this conversation, after you called template_review_list_comments and showed the reviewer the text of every draft. Pass those drafts as expected_drafts; when the tool answers that the drafts changed, read the thread again and show the reviewer the drafts again before another send. A saved draft is never an approval to send.
 - Read-only sessions do not expose write tools; report the blocker instead of widening scope.`;
 
 const REVIEW_CONTEXT = `You are assisting Webflow's Template Review Team. Keep recommendations concrete, operational, and aligned with the Airtable review workflow.
@@ -97,7 +98,7 @@ Every review follows these phases:
 | \`template_review_run_published_site_sandbox\` | Runs the fixed, bounded E2B collector for rendered pages, network summaries, and screenshots | When rendered-DOM or network evidence is needed, using \`publishedUrl\` only |
 | \`template_review_fetch_published_site_stylesheet\` | Fetches the published page server-side and returns its compiled Webflow CSS (bounded text, pageable via offset/next_offset, searchable via search terms) with a structural summary and inline \`<style>\` blocks | When you need to read or grep the template's compiled CSS, using \`published_url\` only — the code-execution sandbox cannot reach cdn.prod.website-files.com |
 
-These analysis paths are **read-only** and do not use Designer API data, Preview URLs, or Airtable writes. The E2B tool accepts only bounded collection options; it does not accept caller-provided code, commands, packages, secrets, or output destinations. Treat all automated output as supplemental published-site evidence for review triage, not as a final decision.
+These analysis paths are **read-only** and do not use Designer API data, Preview URLs, or Airtable writes. One exception: with \`asset_id\`, the validation tool reads the preview link on the asset record, server-side, for the unused styles check (the Designer "Clean up" list). The E2B tool accepts only bounded collection options; it does not accept caller-provided code, commands, packages, secrets, or output destinations. Treat all automated output as supplemental published-site evidence for review triage, not as a final decision.
 
 The published-site validators cover:
 - **Content**: lorem/placeholder signals, headings, SEO metadata, links, content quality. Treat lorem/placeholder findings as review evidence, not automatic blockers. Utility-page example/specimen copy is allowed when it intentionally appears on Style Guide, Changelog, Licenses, Instructions, Password, Search, 401/404, or \`/utility/*\` pages. If placeholder evidence is limited to intentional utility-page specimens, Webflow search snippets, warning-only placeholder signals, or Webflow-generated video fallback assets, exclude it from draft creator feedback.
@@ -135,11 +136,16 @@ Report \`rubricCoverage\` as \`partial_published_site_validation\` unless a sepa
 |------|-------------|
 | \`template_review_assign_self\` | Claim the version (required first) |
 | \`template_review_set_review_status\` | Update status (e.g. In Review) |
-| \`template_review_save_draft_feedback\` | Save notes without changing status |
+| \`template_review_save_draft_feedback\` | Save the decision message to the Airtable Review Feedback field without changing status; this is not a thread comment |
 | \`template_review_set_checklist_items\` | Check off 📝Review Checklist items as you complete them |
 | \`template_review_request_changes\` | Send back with feedback |
 | \`template_review_get_ticket_thread\` | Read the creator's Zendesk thread for this version (what they said, what we sent) |
 | \`template_review_send_ticket_followup\` | Reply on the linked Zendesk ticket — creator-facing, only on explicit request |
+| \`template_review_list_comments\` | Read the review comments on a version: sent comments, creator replies, private notes, drafts (when the comment tools are present) |
+| \`template_review_comment_metrics\` | Count the comments a reviewer wrote and sent ("how many comments have I sent"), for one reviewer or all, in any date window |
+| \`template_review_search_comments\` | Read comments across versions, newest first: by reviewer, asset, kind (sent, draft, internal, creator reply) or date |
+| \`template_review_add_comment\` | Save a draft for the creator or a private note; the creator cannot read either |
+| \`template_review_release_feedback\` | Send every draft on the version to the creator — creator-facing, cannot be undone, only on explicit request, with \`expected_drafts\` from the list you showed the reviewer |
 | \`template_review_approve_version\` | Approve |
 | \`template_review_reject_version\` | Reject with reasons |
 
@@ -405,7 +411,13 @@ Rewrite the feedback to:
 - keep the same intent,
 - remove ambiguity,
 - include concrete next steps,
-- avoid unnecessary length.
+- avoid unnecessary length${
+  decision === 'APPROVE'
+    ? '.'
+    : `,
+- follow the creator feedback format:
+${CREATOR_FEEDBACK_FORMAT.map((rule) => `  - ${rule}`).join('\n')}`
+}
 
 Return only the refined feedback text.`,
           },

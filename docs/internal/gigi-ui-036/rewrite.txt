@@ -1,0 +1,6 @@
+
+> @create-something/gigi-desktop@0.3.6 test:rewrite /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6/apps/gigi-desktop
+> node scripts/astryx-rewrite-browser.mjs
+
+{"passed":true,"routes":20,"appearanceCombinations":24,"package":"@astryxdesign/core@0.7.11","navigationChecks":["visible bounds","ArrowDown","Home/End","Escape focus restoration","exclusive opening","outside dismissal","Customize focus"],"scope":"Actual React/Astryx in synthetic Chromium. No native WebKit, real records, provider, signing or installer acceptance."}
+8:41:26 PM [vite] (client) page reload ui/preview-fixture.mjs

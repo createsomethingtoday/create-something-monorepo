@@ -4,7 +4,7 @@
 	width: 100%;
 	height: 100%;
 	min-height: 31rem;
-	background-color: #fbfbf8;
+	background-color: var(--color-performance-bg-pure);
 	font-family: var(
 		--font-performance-interface,
 		Arial,
@@ -26,7 +26,7 @@
 }
 
 .public-atlas-flow .svelte-flow {
-	background-color: #fbfbf8;
+	background-color: var(--color-performance-bg-pure);
 }
 
 .public-atlas-flow .svelte-flow__pane {
@@ -45,43 +45,43 @@
 }
 
 .public-atlas-flow .svelte-flow__node:focus-visible {
-	outline: 2px solid rgba(10, 14, 25, 0.62);
+	outline: 2px solid var(--color-performance-border-default);
 	outline-offset: 3px;
 }
 
 .public-atlas-flow .svelte-flow__edge-path {
-	stroke: #9f9b90;
+	stroke: var(--color-performance-fg-muted);
 	stroke-width: 1.35;
 }
 
 .public-atlas-flow .svelte-flow__edge-text {
-	fill: #6f6f67;
+	fill: var(--color-performance-fg-secondary);
 	font-family: var(--font-performance-topology-label, var(--font-performance-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace));
-	font-size: var(--text-performance-topology-label, 0.72rem);
+	font-size: max(0.875rem, var(--text-performance-topology-label, 0.875rem));
 	font-variant-numeric: tabular-nums;
 	font-weight: 600;
 	letter-spacing: var(--tracking-performance-topology-label, 0);
 	line-height: var(--leading-performance-topology-label, 1.2);
 	paint-order: stroke;
-	stroke: #fbfbf8;
+	stroke: var(--color-performance-bg-pure);
 	stroke-linecap: round;
 	stroke-linejoin: round;
 	stroke-width: 7px;
 }
 
 .public-atlas-flow .svelte-flow__controls {
-	border: 1px solid rgba(10, 14, 25, 0.08);
+	border: 1px solid var(--color-performance-border-default);
 	border-radius: 7px;
-	box-shadow: 0 14px 32px rgba(10, 14, 25, 0.06);
+	box-shadow: none;
 	overflow: hidden;
 }
 
 .public-atlas-flow .svelte-flow__controls-button {
 	width: 2.75rem;
 	height: 2.75rem;
-	border-bottom-color: rgba(10, 14, 25, 0.08);
-	background: rgba(255, 255, 255, 0.92);
-	color: #0a0e19;
+	border-bottom-color: var(--color-performance-border-default);
+	background: var(--color-performance-bg-surface);
+	color: var(--color-performance-fg-primary);
 }
 
 .public-atlas-kicker {
@@ -92,20 +92,20 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 0.45rem;
-	border: 1px solid rgba(10, 14, 25, 0.08);
+	border: 1px solid var(--color-performance-border-default);
 	border-radius: 999px;
-	background: rgba(255, 255, 255, 0.86);
-	color: #0a0e19;
+	background: var(--color-performance-bg-surface);
+	color: var(--color-performance-fg-primary);
 	font-size: var(--text-performance-record-meta, 0.833rem);
 	font-weight: 700;
 	letter-spacing: var(--tracking-performance-record, 0);
 	padding: 0.55rem 0.75rem;
-	backdrop-filter: blur(8px);
-	box-shadow: 0 14px 32px rgba(10, 14, 25, 0.06);
+	backdrop-filter: none;
+	box-shadow: none;
 }
 
 .public-atlas-kicker small {
-	color: #74746c;
+	color: var(--color-performance-fg-secondary);
 	font-family: var(--font-performance-record, var(--font-performance-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace));
 	font-size: var(--text-performance-record-meta, 0.833rem);
 	font-variant-numeric: tabular-nums;
@@ -119,19 +119,19 @@
 	z-index: 5;
 	display: inline-flex;
 	gap: 0.45rem;
-	border: 1px solid rgba(10, 14, 25, 0.08);
+	border: 1px solid var(--color-performance-border-default);
 	border-radius: 999px;
-	background: rgba(255, 255, 255, 0.88);
+	background: var(--color-performance-bg-surface);
 	padding: 0.35rem;
-	backdrop-filter: blur(8px);
-	box-shadow: 0 14px 32px rgba(10, 14, 25, 0.06);
+	backdrop-filter: none;
+	box-shadow: none;
 }
 
 .public-atlas-legend span {
 	border: 1px solid transparent;
 	border-radius: 6px;
 	font-family: var(--font-performance-topology-label, var(--font-performance-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace));
-	font-size: var(--text-performance-operator-label, 0.72rem);
+	font-size: max(0.875rem, var(--text-performance-operator-label, 0.875rem));
 	font-weight: 700;
 	letter-spacing: var(--tracking-performance-operator-label, 0);
 	padding: 0.35rem 0.55rem;
@@ -139,21 +139,21 @@
 }
 
 .public-atlas-legend .run {
-	border-color: #b8dfc4;
-	background: #e8f6ec;
-	color: #1e3c2c;
+ border-color: var(--color-performance-success-border);
+ background: var(--color-performance-success-muted);
+ color: var(--color-performance-success);
 }
 
 .public-atlas-legend .wait {
-	border-color: #cbd6ff;
-	background: #eef2ff;
-	color: #0048ff;
+ border-color: var(--color-performance-warning-border);
+ background: var(--color-performance-warning-muted);
+ color: var(--color-performance-warning);
 }
 
 .public-atlas-legend .stop {
-	border-color: #ffc8d0;
-	background: #fff0f2;
-	color: #c41e3a;
+ border-color: var(--color-performance-error-border);
+ background: var(--color-performance-error-muted);
+ color: var(--color-performance-error);
 }
 
 .public-atlas-flow-node {
@@ -162,11 +162,11 @@
 	gap: 0.35rem;
 	width: 100%;
 	min-height: 10rem;
-	border: 1px solid rgba(10, 14, 25, 0.1);
+	border: 1px solid var(--color-performance-border-default);
 	border-radius: 7px;
-	background: #ffffff;
-	box-shadow: 0 14px 28px rgba(10, 14, 25, 0.055);
-	color: #0a0e19;
+	background: var(--color-performance-bg-surface);
+	box-shadow: none;
+	color: var(--color-performance-fg-primary);
 	cursor: grab;
 	padding: 0.72rem;
 	text-align: left;
@@ -178,46 +178,48 @@
 }
 
 .public-atlas-flow-node:hover {
-	border-color: rgba(10, 14, 25, 0.22);
-	box-shadow: 0 20px 38px rgba(10, 14, 25, 0.1);
+	border-color: var(--color-performance-border-default);
+	box-shadow: none;
 	transform: translateY(-1px);
 }
 
 .public-atlas-flow-node.selected {
-	border-color: #0a0e19;
-	box-shadow: 0 0 0 2px rgba(10, 14, 25, 0.08), 0 18px 38px rgba(10, 14, 25, 0.12);
+	border-color: var(--color-performance-fg-primary);
+	box-shadow: none;
 }
 
 .public-atlas-flow-node.focused {
-	border-color: #0a0e19;
-	box-shadow:
-		0 0 0 2px rgba(10, 14, 25, 0.08),
-		0 20px 42px rgba(10, 14, 25, 0.14);
+	border-color: var(--color-performance-fg-primary);
+	box-shadow: none;
 	transform: translateY(-1px);
 }
 
 .public-atlas-flow-node.dimmed {
-	opacity: 0.34;
-	filter: saturate(0.55);
+	opacity: 1;
+	border-style: dashed;
+	filter: none;
 }
 
 .public-atlas-flow-node.status-run {
-	border-color: #cfe3d6;
-	background: #f8fcf9;
+ border-color: var(--color-performance-success-border);
+ background: var(--color-performance-success-muted);
+ color: var(--color-performance-success);
 }
 
 .public-atlas-flow-node.status-wait {
-	border-color: #d9ddf5;
-	background: #f8f7ff;
+ border-color: var(--color-performance-warning-border);
+ background: var(--color-performance-warning-muted);
+ color: var(--color-performance-warning);
 }
 
 .public-atlas-flow-node.status-stop {
-	border-color: #f4cdd3;
-	background: #fff7f8;
+ border-color: var(--color-performance-error-border);
+ background: var(--color-performance-error-muted);
+ color: var(--color-performance-error);
 }
 
 .public-atlas-flow-node.status-unknown {
-	background: #ffffff;
+	background: var(--color-performance-bg-surface);
 }
 
 .public-atlas-flow-node header {
@@ -228,9 +230,9 @@
 }
 
 .public-atlas-flow-node .kind {
-	color: #777770;
+	color: var(--color-performance-fg-secondary);
 	font-family: var(--font-performance-topology-label, var(--font-performance-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace));
-	font-size: var(--text-performance-topology-label, 0.72rem);
+	font-size: max(0.875rem, var(--text-performance-topology-label, 0.875rem));
 	font-weight: 800;
 	letter-spacing: var(--tracking-performance-topology-label, 0);
 	text-transform: uppercase;
@@ -238,10 +240,10 @@
 
 .public-atlas-flow-node .status {
 	border-radius: 999px;
-	background: rgba(10, 14, 25, 0.05);
-	color: #6d6d66;
+	background: var(--color-performance-border-default);
+	color: var(--color-performance-fg-secondary);
 	font-family: var(--font-performance-topology-label, var(--font-performance-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace));
-	font-size: var(--text-performance-topology-label, 0.72rem);
+	font-size: max(0.875rem, var(--text-performance-topology-label, 0.875rem));
 	font-weight: 800;
 	letter-spacing: var(--tracking-performance-topology-label, 0);
 	padding: 0.22rem 0.45rem;
@@ -249,18 +251,21 @@
 }
 
 .public-atlas-flow-node.status-run .status {
-	background: #e2f4e7;
-	color: #1e3c2c;
+ border-color: var(--color-performance-success-border);
+ background: var(--color-performance-success-muted);
+ color: var(--color-performance-success);
 }
 
 .public-atlas-flow-node.status-wait .status {
-	background: #e7ebff;
-	color: #0048ff;
+ border-color: var(--color-performance-warning-border);
+ background: var(--color-performance-warning-muted);
+ color: var(--color-performance-warning);
 }
 
 .public-atlas-flow-node.status-stop .status {
-	background: #ffe1e7;
-	color: #c41e3a;
+ border-color: var(--color-performance-error-border);
+ background: var(--color-performance-error-muted);
+ color: var(--color-performance-error);
 }
 
 .public-atlas-flow-node strong {
@@ -270,14 +275,14 @@
 }
 
 .public-atlas-flow-node .owner {
-	color: #707068;
+	color: var(--color-performance-fg-secondary);
 	font-family: var(--font-performance-record, var(--font-performance-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace));
 	font-size: var(--text-performance-record-meta, 0.833rem);
 	font-weight: 700;
 }
 
 .public-atlas-flow-node small {
-	color: #696963;
+	color: var(--color-performance-fg-secondary);
 	font-size: var(--text-performance-record-meta, 0.833rem);
 	line-height: var(--leading-performance-record, 1.35);
 }
@@ -285,8 +290,8 @@
 .public-atlas-flow-node .public-atlas-flow-handle {
 	width: 7px;
 	height: 7px;
-	border: 1px solid #b8b8af;
-	background: #ffffff;
+	border: 1px solid var(--color-performance-border-emphasis);
+	background: var(--color-performance-bg-surface);
 }
 
 @media (max-width: 520px) {
@@ -300,3 +305,8 @@
 		left: 0.75rem;
 	}
 }
+
+.public-atlas-flow .svelte-flow__edge-textbg { fill: var(--color-performance-bg-pure); }
+.public-atlas-flow .svelte-flow__controls-button:focus-visible { outline: 2px solid var(--color-performance-fg-primary); outline-offset: -4px; }
+.public-atlas-flow-node.selected, .public-atlas-flow-node.focused { outline: 2px solid var(--color-performance-fg-primary); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .public-atlas-flow-node { transition: none; } }

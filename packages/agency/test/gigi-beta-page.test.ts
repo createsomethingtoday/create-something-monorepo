@@ -14,12 +14,12 @@ test('standalone page retains the owning Agency Canon operator palette', () => {
 });
 
 test('download contract pins exact qualified installer, platform and checksum', () => {
-  assert.equal(gigiBeta.version, '0.2.11');
-  assert.equal(gigiBeta.filename, 'GiGi-0.2.11-arm64-private-beta.dmg');
-  assert.equal(gigiBeta.bytes, 122440582);
-  assert.equal(gigiBeta.sha256, 'e62e8f41b1279b3ce11c6815c3d020dee802ecea2edd1962d3a2c5c420ca88e7');
-  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.11/GiGi-0.2.11-arm64-private-beta.dmg`);
-  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '122,440,582', '122.4 MB']) assert.ok(gigiBetaHtml.includes(text), text);
+  assert.equal(gigiBeta.version, '0.3.8');
+  assert.equal(gigiBeta.filename, 'GiGi-0.3.8-arm64-private-beta.dmg');
+  assert.equal(gigiBeta.bytes, 143228745);
+  assert.equal(gigiBeta.sha256, '8c3d97124a732d2afff62cf35eae90e9cab5e1ae4aa5db4a7a38ee3f91379e61');
+  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.3.8/GiGi-0.3.8-arm64-private-beta.dmg`);
+  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '143,228,745', '143.2 MB']) assert.ok(gigiBetaHtml.includes(text), text);
 });
 
 test('beta stays unlisted and has no active content or tracking shell', () => {
@@ -43,11 +43,15 @@ test('walkthroughs pin reviewed footage and use user-initiated native playback',
   for (const video of gigiWalkthroughs) {
     assert.ok(video.url.includes(`/${video.sha256}/`));
     assert.ok(gigiBetaHtml.includes(video.url));
+    assert.ok(gigiBetaHtml.includes(video.description));
   }
   assert.equal((gigiBetaHtml.match(/<video controls playsinline preload="none"/g) || []).length, 2);
   assert.doesNotMatch(gigiBetaHtml, /autoplay|<iframe|<script/i);
   assert.match(gigiBetaHeaders['Content-Security-Policy'], /media-src https:\/\/media\.createsomething\.io/);
   assert.ok(gigiBetaHtml.includes('earlier beta builds'));
+  assert.ok(gigiBetaHtml.includes('Earlier-interface recordings'));
+  assert.ok(gigiBetaHtml.includes('GiGi 0.3.5 has a rebuilt interface'));
+  assert.equal((gigiBetaHtml.match(/seconds · Silent · Earlier interface/g) || []).length, 2);
   assert.ok(gigiBetaHtml.includes('not acceptance of a fresh installation'));
 });
 
@@ -121,7 +125,7 @@ test('Gigs release explains collection-wide ordering and bounded acceptance', ()
 
 test('artwork release preserves local previews and external generation boundaries', () => {
   const changes = gigiBetaHtml.match(/<section aria-labelledby="changes">([\s\S]*?)<\/section>/)?.[1] ?? '';
-  assert.ok(changes.includes(`What changed in ${gigiBeta.version}`));
+  assert.ok(changes.includes('What changed in 0.3.8'));
   for (const text of ['Calendar entries', 'ongoing events', 'fit the whole image', 'AI illustrations', 'no publish control', 'external Codex', 'Embedded Ask GiGi cannot generate images', 'automatic flyer discovery', '8 MiB', '24 megapixels', '8,192 pixels', '128 MiB', 'including previews', 'Unknown rights remain unknown']) assert.ok(changes.includes(text), text);
   assert.ok(gigiBetaHtml.includes('Create a backup in GiGi, then quit the app before installing a new release.'));
   for (const text of ['mocked generation', 'no real image generation was invoked', 'do not establish a fresh Mac installation', 'local draft snapshots', 'provenance conflicts', 'backup restoration']) assert.ok(gigiBetaHtml.includes(text), text);
@@ -131,11 +135,86 @@ test('artwork release preserves local previews and external generation boundarie
 test('setup and classification release keeps session and acceptance boundaries explicit', () => {
   const changes = gigiBetaHtml.match(/<section aria-labelledby="changes">([\s\S]*?)<\/section>/)?.[1] ?? '';
   for (const text of ['Included from 0.2.8', 'Work kind', 'leaves existing records unchanged', 'not automatically a performance', 'Configuration stays unchanged', 'already-open agent session', 'before pagination', 'Original Type values']) assert.ok(changes.includes(text), text);
-  for (const text of ['final compiled app code and data in isolated QA wrappers', 'One real Codex-generated illustration', 'using the installed 0.2.8 MCP', 'Follow-up 0.2.9 checks', 'already-running agent session remain unverified', 'GiGi 0.2.8: Earlier checks', 'Previous installer:', '0.2.10/GiGi-0.2.10-arm64-private-beta.dmg']) assert.ok(gigiBetaHtml.includes(text), text);
+  for (const text of ['final compiled app code and data in isolated QA wrappers', 'One real Codex-generated illustration', 'using the installed 0.2.8 MCP', 'Follow-up 0.2.9 checks', 'already-running agent session remain unverified', 'GiGi 0.2.8: Earlier checks', 'Previous installer:', '0.3.5/GiGi-0.3.5-arm64-private-beta.dmg']) assert.ok(gigiBetaHtml.includes(text), text);
 });
 
-test("0.2.11 clearly defers phone qualification and preserves rollback", () => {
- assert.ok(gigiBetaHtml.includes("Phone workflow unverified for 0.2.11"));
- assert.ok(gigiBetaHtml.includes("physical-phone qualification is deferred"));
- assert.ok(gigiBetaHtml.includes("GiGi 0.2.10 for Apple Silicon"));
+test("current release clearly defers phone qualification and preserves rollback", () => {
+ assert.ok(gigiBetaHtml.includes("Phone workflow unverified for 0.3.8"));
+ assert.ok(gigiBetaHtml.includes("Physical-phone qualification is deferred"));
+ assert.ok(gigiBetaHtml.includes("GiGi 0.3.5 for Apple Silicon"));
+});
+
+
+test('connection guidance separates admission from Google consent and limits acceptance claims', () => {
+ for (const text of ['GiGi sign-in, app access and Google consent', 'Existing connections and pending consent are preserved', 'reconnecting Google does not repair admission', '734 automated tests with no skips', 'no Google provider calls', 'Grant’s specific denial remain unverified', '0.2.12 improvements', '0.2.13 agent continuation']) assert.ok(gigiBetaHtml.includes(text), text);
+});
+
+test('download page offers public signup without claiming Google onboarding qualification', () => {
+ assert.match(gigiBetaHtml, /href="https:\/\/id\.createsomething\.space\/signup\?app=gigi"/);
+ assert.ok(gigiBetaHtml.includes('No invitation is needed'));
+ assert.ok(gigiBetaHtml.includes('No new installer is required'));
+ assert.ok(gigiBetaHtml.includes('verify your email'));
+ assert.ok(gigiBetaHtml.includes('Sign in to GiGi sources'));
+ assert.ok(gigiBetaHtml.includes('Public Google consent and first-import qualification remain unverified'));
+ assert.doesNotMatch(gigiBetaHtml, /use the invited GiGi account|ask the beta operator to review access/);
+});
+
+test('customization describes visible controls and portable device-local preferences', () => {
+  const section = gigiBetaHtml.match(/<section aria-labelledby="customization">([\s\S]*?)<\/section>/)?.[1] ?? '';
+  for (const text of ['Make GiGi yours', 'Studio', 'Paper', 'Midnight', 'spacing', 'list or cards', 'starting page', 'JSON', 'device and workspace', 'Settings', 'Reset', 'Work, Admin, Network and Platform menus keep pages', 'keyboard navigation']) assert.ok(section.includes(text), text);
+  assert.ok(section.includes('do not sync between devices'));
+  assert.ok(section.includes('do not include records, accounts or permissions'));
+  assert.ok(gigiBetaHtml.includes('Earlier release notes'));
+  assert.ok(gigiBetaHtml.includes('Earlier workflow evidence'));
+});
+
+test('prior-version qualification retains native evidence with its original limits', () => {
+  const prior = gigiBetaHtml.match(/<details><summary>Prior-version evidence: GiGi 0.2.24 to 0.2.16<\/summary>([\s\S]*?)<\/details>/)?.[1] ?? '';
+  for (const text of ['GiGi 0.2.24 release evidence', 'GiGi 0.2.24 passed 346 desktop', 'The GiGi 0.2.24 installer passed Developer ID signing', 'GiGi 0.2.22 passed 338 desktop', 'Native minimum-window resizing and native error persistence remain unverified', 'isolated native workspace', 'verified readback', 'notification permission recovery', 'matched the qualified build', 'notification-click routing remains a manual acceptance check']) assert.ok(prior.includes(text), text);
+  assert.ok(!gigiBetaHtml.includes('Release qualification for this customization update is in progress'));
+});
+
+test('full Astryx rewrite describes actual components, local fonts and preserved approval boundaries', () => {
+  const changes = gigiBetaHtml.match(/<section aria-labelledby="changes">([\s\S]*?)<\/section>/)?.[1] ?? '';
+  for (const text of [
+    'What changed in 0.3.8', 'fully rebuilt with Meta’s Astryx components',
+    'Navigation, buttons, form fields, dialogs and chat',
+    'Today, records, search, Settings, Music and Instagram',
+    'Studio and Paper use neutral surfaces with a shared green accent in dark and light modes',
+    'Midnight extends that theme', 'Figtree fonts are bundled with the app and load locally',
+    'saved appearance and view preferences remain compatible',
+    'local records and source connections keep their existing contracts',
+    'GiGi sign-in, Google consent, import review, agent approvals and Instagram publication confirmation remain separate steps',
+    'Review and verified readback', 'Included from 0.2.24'
+  ]) assert.ok(changes.includes(text), text);
+});
+
+test('current qualification separates source evidence from native and installer acceptance', () => {
+  const release = gigiBetaHtml.match(/<section aria-labelledby="release">([\s\S]*?)<\/section>/)?.[1] ?? '';
+  const current = release.split('<details><summary>Prior-version evidence:')[0];
+  for (const text of ['Acceptance status for GiGi 0.3.8', 'Source checks passed', 'both packaged MCP checks passed',
+    'Independent final review', 'source interface at 880 and 390 pixels', 'not fresh native installation or live-provider acceptance',
+    'Developer ID signature, binary identity and source checks', 'Apple notarization', 'full anonymous download',
+    'screen-reader speech', 'audible quality', 'human acceptance', 'does not establish those checks for GiGi 0.3.8']) assert.ok(current.includes(text), text);
+  assert.doesNotMatch(current, /202 native tests|427 desktop|real Apple Maps preview/);
+  assert.ok(gigiBetaHtml.includes('Prior-version evidence: GiGi 0.3.7'));
+  assert.ok(gigiBetaHtml.includes('0.3.7/GiGi-0.3.7-arm64-private-beta.dmg'));
+});
+
+test('0.3.8 notes explain recovery, provenance and bounded source coverage', () => {
+  const current = gigiBetaHtml.split('What changed in 0.3.8</h2>')[1]?.split('<h3>Included from 0.3.7')[0] ?? '';
+  for (const text of ['requested date range', 'pages read', 'Gmail previews', 'unknown result', 'checks its receipt',
+    'does not replay', 'Music references', 'Money keeps source provenance', 'Typed dates', 'compact Today',
+    'do not establish fresh-installation acceptance']) assert.ok(current.includes(text), text);
+});
+
+test('assistance release explains attention, consent and app-running notification limits',()=>{
+ for(const text of ['Needs your attention','quiet hours','opt-in','while GiGi is running','never approves a change','Detailed previews','Snooze']) assert.ok(gigiBetaHtml.includes(text),text);
+});
+
+
+test('workspace memory release preserves provenance, review and honest forgetting limits', () => {
+  const changes = gigiBetaHtml.match(/<section aria-labelledby="changes">([\s\S]*?)<\/section>/)?.[1] ?? '';
+  for (const text of ['Platform → Memory', 'confirmed or inferred', 'pending proposal is not saved memory', 'never permission', 'Nothing is automatically imported', 'Forget excludes future retrieval', 'conversation or backup is not erased', 'recovery does not replay or approve', 'opening a menu no longer shifts the header']) assert.ok(changes.includes(text), text);
+  assert.ok(gigiBetaHtml.includes('proposal acceptance was blocked by that host’s approval policy'));
 });

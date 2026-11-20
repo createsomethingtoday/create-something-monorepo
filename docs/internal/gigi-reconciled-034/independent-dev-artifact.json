@@ -1,0 +1,139 @@
+{
+  "checkedAt": "2026-11-09T23:06:23.641699+00:00",
+  "commands": [
+    {
+      "command": [
+        "git",
+        "-C",
+        "/Users/createsomething/Code/grantbot-gigi-dev-031",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit": 0,
+      "stdout": "5874fbc0ed10ff04e76e46a5f5751fc63b0837c7\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "-C",
+        "/Users/createsomething/Code/grantbot-gigi-dev-031",
+        "status",
+        "--porcelain"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "codesign",
+        "--verify",
+        "--deep",
+        "--strict",
+        "--verbose=2",
+        "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-034/GiGi Half Dozen Dev.app"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "--prepared:/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-034/GiGi Half Dozen Dev.app/Contents/MacOS/gigi-mcp\n--validated:/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-034/GiGi Half Dozen Dev.app/Contents/MacOS/gigi-mcp\n/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-034/GiGi Half Dozen Dev.app: valid on disk\n/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-034/GiGi Half Dozen Dev.app: satisfies its Designated Requirement\n"
+    },
+    {
+      "command": [
+        "xcrun",
+        "stapler",
+        "validate",
+        "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-034/GiGi Half Dozen Dev.app"
+      ],
+      "exit": 0,
+      "stdout": "Processing: /Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-034/GiGi Half Dozen Dev.app\nThe validate action worked!\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "spctl",
+        "-a",
+        "-vv",
+        "-t",
+        "execute",
+        "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-034/GiGi Half Dozen Dev.app"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-034/GiGi Half Dozen Dev.app: accepted\nsource=Notarized Developer ID\norigin=Developer ID Application: Create Something LLC (PRP5VQQPPB)\n"
+    },
+    {
+      "command": [
+        "codesign",
+        "--verify",
+        "--verbose=2",
+        "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-034/GiGi-HalfDozen-DEV-0.3.4-arm64.dmg"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-034/GiGi-HalfDozen-DEV-0.3.4-arm64.dmg: valid on disk\n/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-034/GiGi-HalfDozen-DEV-0.3.4-arm64.dmg: satisfies its Designated Requirement\n"
+    },
+    {
+      "command": [
+        "xcrun",
+        "stapler",
+        "validate",
+        "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-034/GiGi-HalfDozen-DEV-0.3.4-arm64.dmg"
+      ],
+      "exit": 0,
+      "stdout": "Processing: /Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-034/GiGi-HalfDozen-DEV-0.3.4-arm64.dmg\nThe validate action worked!\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "spctl",
+        "-a",
+        "-vv",
+        "-t",
+        "open",
+        "--context",
+        "context:primary-signature",
+        "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-034/GiGi-HalfDozen-DEV-0.3.4-arm64.dmg"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-034/GiGi-HalfDozen-DEV-0.3.4-arm64.dmg: accepted\nsource=Notarized Developer ID\norigin=Developer ID Application: Create Something LLC (PRP5VQQPPB)\n"
+    },
+    {
+      "command": [
+        "hdiutil",
+        "verify",
+        "/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-034/GiGi-HalfDozen-DEV-0.3.4-arm64.dmg"
+      ],
+      "exit": 0,
+      "stdout": "Checksumming Protective Master Boot Record (MBR : 0)\u2026\nProtective Master Boot Record (MBR :: verified   CRC32 $86ACF220\nChecksumming GPT Header (Primary GPT Header : 1)\u2026\n GPT Header (Primary GPT Header : 1): verified   CRC32 $03DA66B1\nChecksumming GPT Partition Data (Primary GPT Table : 2)\u2026\nGPT Partition Data (Primary GPT Tabl: verified   CRC32 $F9964B81\nChecksumming  (Apple_Free : 3)\u2026\n                    (Apple_Free : 3): verified   CRC32 $00000000\nChecksumming disk image (Apple_APFS : 4)\u2026\n         disk image (Apple_APFS : 4): verified   CRC32 $8EABCA1C\nChecksumming  (Apple_Free : 5)\u2026\n                    (Apple_Free : 5): verified   CRC32 $00000000\nChecksumming GPT Partition Data (Backup GPT Table : 6)\u2026\nGPT Partition Data (Backup GPT Table: verified   CRC32 $F9964B81\nChecksumming GPT Header (Backup GPT Header : 7)\u2026\n  GPT Header (Backup GPT Header : 7): verified   CRC32 $A5C27B30\nverified   CRC32 $76C951FF\n",
+      "stderr": "hdiutil: verify: checksum of \"/Users/createsomething/Documents/GiGi Reconciled Release/2026-11-09/dev-release-034/GiGi-HalfDozen-DEV-0.3.4-arm64.dmg\" is VALID\n"
+    }
+  ],
+  "identity": {
+    "runtimeSourceSha": "5874fbc0ed10ff04e76e46a5f5751fc63b0837c7",
+    "tree": "4c41a680737648b6e30ebb3f622c8ebcc1c91f22",
+    "filename": "GiGi-HalfDozen-DEV-0.3.4-arm64.dmg",
+    "bytes": 105805519,
+    "sha256": "86f9cc5f2f137b012e377c2e36e9f5e0b79939a2f6fed8ffb8b4f5b9e1f61322",
+    "appExecutableSha256": "3977849185d70f9f4f675c000cbf09c3992355bbba06fec786afaf3173d4ba64",
+    "bundleId": "co.halfdozen.gigi.dev",
+    "version": "0.3.4",
+    "url": "https://github.com/gigi-team/grantbot/releases/download/gigi-desktop-dev-v0.3.4-20261109/GiGi-HalfDozen-DEV-0.3.4-arm64.dmg"
+  },
+  "actualDmgBytes": 105805519,
+  "actualDmgSha256": "86f9cc5f2f137b012e377c2e36e9f5e0b79939a2f6fed8ffb8b4f5b9e1f61322",
+  "actualSignedMainSha256": "3977849185d70f9f4f675c000cbf09c3992355bbba06fec786afaf3173d4ba64",
+  "independentPayloadComparison": {
+    "exit": 0,
+    "stdout": "{\"passed\": true, \"machoFiles\": 7, \"nonMachOFilesUnchanged\": 10}\n",
+    "stderr": ""
+  },
+  "containedApp": {
+    "passed": true,
+    "filesCompared": 19,
+    "mismatches": [],
+    "extras": []
+  },
+  "passed": true
+}

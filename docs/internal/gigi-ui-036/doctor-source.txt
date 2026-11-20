@@ -1,0 +1,173 @@
+astryx doctor - diagnosing your setup
+
+id:      node-version
+status:  [ok]
+label:   Node.js version
+message: Node v22.23.4 meets the minimum (>=22.13.0).
+
+id:      core-installed
+status:  [ok]
+label:   @astryxdesign/core installed
+message: @astryxdesign/core resolved (v0.7.11).
+
+id:      version-alignment
+status:  [ok]
+label:   @astryxdesign/core <-> @astryxdesign/cli alignment
+message: @astryxdesign/core v0.7.11 is in step with @astryxdesign/cli v0.7.11.
+
+id:      themes
+status:  [warn]
+label:   Theme packages
+message: One theme check needs attention: theme-fonts.
+fix:     Follow the fix on the theme-fonts check.
+
+id:      theme-owners
+status:  [ok]
+label:   Theme owners and built imports
+message: 1 added theme resolve to built modules and stylesheets, and every built module loads.
+
+id:      theme-module
+status:  [ok]
+label:   Generated theme module
+message: astryx-themes.js has the generated marker and exactly matches its record.
+
+id:      theme-module-import
+status:  [ok]
+label:   App imports the theme module
+message: Project source imports astryx-themes.js.
+
+id:      theme-stylesheet-imports
+status:  [ok]
+label:   Built theme stylesheet imports
+message: Every added built module import is paired with its stylesheet import.
+
+id:      theme-local-builds
+status:  [ok]
+label:   Local theme build freshness
+message: No added local themes need a freshness check.
+
+id:      theme-private-variables
+status:  [ok]
+label:   Private theme variables
+message: No added theme input sets a private --_* variable directly.
+
+id:      theme-core-peers
+status:  [ok]
+label:   Theme Core peer compatibility
+message: Every added package theme accepts the installed @astryxdesign/core version.
+
+id:      theme-default
+status:  [ok]
+label:   Default added theme
+message: Default theme "neutral" is added.
+
+id:      theme-fonts
+status:  [warn]
+label:   Theme font loading
+message: External font imports prevent proof for neutral: Figtree.
+fix:     Confirm the font service stylesheet loads each named family.
+
+id:      theme-global-rules
+status:  [ok]
+label:   Cross-theme global CSS rules
+message: No added themes write different rules for the same selector outside their own scope.
+
+id:      config
+status:  [info]
+label:   astryx.config.mjs
+message: No astryx.config.mjs found - using defaults.
+
+id:      implicit-integrations
+status:  [info]
+label:   Implicitly linked integrations
+message: None - no installed dependency ships an astryx.integration.* manifest.
+
+id:      configured-integrations
+status:  [info]
+label:   Configured integrations
+message: No integration is named in astryx.config.
+
+id:      provider-identity
+status:  [info]
+label:   Integration provider identity
+message: None - no loaded integration has a provider identity.
+
+id:      integration-issues
+status:  [info]
+label:   Integration contributions
+message: No integration is loaded, so there are no integration contributions to check.
+
+id:      agent-docs
+status:  [ok]
+label:   AI agent docs
+message: Astryx agent docs section present in AGENTS.md.
+
+id:      peer-deps
+status:  [ok]
+label:   @astryxdesign/core peer dependencies
+message: All peer dependencies satisfied (@stylexjs/stylex, react, react-dom).
+
+id:      package-manager
+status:  [info]
+label:   Package manager
+message: Detected package manager: pnpm (declared in /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6/package.json).
+
+id:      cli-command
+status:  [info]
+label:   CLI command
+message: No loaded integration declares a cliCommand, so printed commands start with `pnpm exec astryx`.
+
+id:      newest-release
+status:  [info]
+label:   Newest release
+message: Update check: not run yet, so the newest release is not known here; it runs in the background once a day, after a command. Last update notice skipped 2026-11-11T02:42:38.651Z (project): no newer release was known.
+
+id:      cli-on-path
+status:  [ok]
+label:   `astryx` on the search path
+message: `astryx` runs node_modules/.bin/astryx (CLI 0.7.11).
+
+id:      computer-integrations
+status:  [info]
+label:   Integrations installed for this computer
+message: No integration installed for this computer is missing from this project.
+
+id:      authoring-docs
+status:  [ok]
+label:   Authoring docs
+message: All 19 authoring schemas are readable in `pnpm exec astryx docs authoring/field-reference`.
+
+id:      cli-docs
+status:  [ok]
+label:   CLI docs
+message: All 101 CLI docs are readable: 82 in the `pnpm exec astryx docs cli` tree and 19 in `pnpm exec astryx docs authoring/field-reference`.
+
+id:      docs-tree
+status:  [ok]
+label:   Docs tree
+message: The docs tree has 201 docs in 32 sections (13 at the top), each at one route.
+
+id:      docs-progressive-disclosure
+status:  [ok]
+label:   Documentation navigation and size
+message: 119 topics: every section index and section fits in one 32 KB read.
+
+id:      built-astryx-usage
+status:  [ok]
+label:   Built output uses Astryx
+message: Read 163 source files and 28 built files: 51 imports from @astryxdesign/core, @astryxdesign/theme-neutral in 16 files; 93 component uses; Astryx styles in ui/gigi-dev-theme.css, ui/gigi-theme.css, dist/assets/index-DHU-DvgB.js and 1 more.
+
+id:      built-astryx-purity
+status:  [warn]
+label:   Source uses Astryx well
+message: 338 findings (Astryx components 62, Styling 274, Icons 2): ui/App.jsx:24 raw `<aside>`: use `LayoutPanel`; ui/App.jsx:24 a `className`: use a component prop or token first; ui/App.jsx:85 a `className`: use a component prop or token first; ui/App.jsx:92 a `className`: use a component prop or token first; ui/appearance.jsx:192 a `className`: use a component prop or token first; and 333 more.
+fix:     Replace each with the Astryx component, icon surface, prop or token it names; `pnpm exec astryx docs is-my-code-good` has the full rubric. Keep a raw element only where its native meaning is needed.
+
+summary
+
+pass: 20
+warn: 3
+fail: 0
+info: 9
+
+No failures - but review the [warn] warnings above when you can.

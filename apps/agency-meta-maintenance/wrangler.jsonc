@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "agency-meta-maintenance",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-05",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "triggers": { "crons": ["17 * * * *"] },
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "invocation_logs": true },
+    "traces": { "enabled": true }
+  },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "create-something-db",
+    "database_id": "a74e70ae-6a94-43da-905e-b90719c8dfd2"
+  }],
+  "vars": { "ENVIRONMENT": "production", "META_MARKETING_ENABLED": "true", "META_DATASET_ID": "1875010363489307", "META_GRAPH_VERSION": "v26.0" }
+}

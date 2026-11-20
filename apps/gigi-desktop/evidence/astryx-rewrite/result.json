@@ -1,0 +1,7 @@
+{
+  "passed": true,
+  "routes": 19,
+  "appearanceCombinations": 12,
+  "package": "@astryxdesign/core@0.7.11",
+  "scope": "Actual React/Astryx in synthetic Chromium. No native WebKit, real records, provider, signing or installer acceptance."
+}

@@ -1,11 +1,10 @@
 <script lang="ts">
+  import PerformanceCampaignOpening from '$lib/components/AgencyMeasuredOpening.svelte';
   import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
-  import AgencyWayfindingHero from '$lib/components/AgencyWayfindingHero.svelte';
-  import AgencyWayfindingOpening from '$lib/components/AgencyWayfindingOpening.svelte';
+  import AgencyIllustratedOpening from '$lib/components/AgencyIllustratedOpening.svelte';
   import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import {
     Button,
-    PerformanceCampaignOpening,
     PerformanceConversionHandoff,
     PerformanceEvidenceIndex,
     SEO,
@@ -35,6 +34,14 @@
       href: '/field-reports/upstream-contributions'
     }
   ];
+
+  // Concept art illustrates the opening; real workflow evidence remains below.
+  const openingScene = {
+    src: '/images/canon-agency-v1/field-reports-hero-20261116.webp',
+    aspectRatio: 1672 / 941,
+    position: 'right bottom',
+    description: "Concept illustration: Canon inspects a notebook with two recorded symbols and an empty evidence square."
+  };
 </script>
 
 <SEO
@@ -44,8 +51,9 @@
   propertyName="agency"
 />
 
-<AgencyWayfindingOpening>
+<AgencyIllustratedOpening>
 <PerformanceCampaignOpening
+  background={openingScene}
   eyebrow="Performance Lab / Public evidence"
   expression="editorial"
   title="Read the results, including the limits."
@@ -64,9 +72,8 @@
       {agencyCoreMessaging.selfMapLabel}
     </Button>
   {/snippet}
-  {#snippet artifact()}<AgencyWayfindingHero route="fieldReports" />{/snippet}
 </PerformanceCampaignOpening>
-</AgencyWayfindingOpening>
+</AgencyIllustratedOpening>
 
 <WorkflowSignalBand motionOnly quiet tall showMotionControl />
 

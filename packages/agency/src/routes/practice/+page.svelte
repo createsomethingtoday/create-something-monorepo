@@ -1,12 +1,11 @@
 <script lang="ts">
+  import PerformanceCampaignOpening from '$lib/components/AgencyMeasuredOpening.svelte';
   import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
   import AgencyWayfindingGroup from '$lib/components/AgencyWayfindingGroup.svelte';
-  import AgencyWayfindingHero from '$lib/components/AgencyWayfindingHero.svelte';
-  import AgencyWayfindingOpening from '$lib/components/AgencyWayfindingOpening.svelte';
+  import AgencyIllustratedOpening from '$lib/components/AgencyIllustratedOpening.svelte';
   import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import {
     Button,
-    PerformanceCampaignOpening,
     PerformanceConversionHandoff,
     PerformanceEvidenceIndex,
     PerformanceNarrativeStage,
@@ -18,6 +17,7 @@
   } from '@create-something/canon';
   import DelegationPracticeWorkbench from '$lib/components/DelegationPracticeWorkbench.svelte';
   import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
+  import AgencyPracticeSample from '$lib/components/AgencyPracticeSample.svelte';
 
   const systemConditions: PerformanceCondition[] = [
     {
@@ -125,6 +125,14 @@
       actions: [{ label: 'Read the test results', href: '/proof/marketplace-workflow' }]
     }
   ];
+
+  // Concept art illustrates the opening; real workflow evidence remains below.
+  const openingScene = {
+    src: '/images/canon-agency-v1/practice-hero-20261116.webp',
+    aspectRatio: 1671 / 941,
+    position: 'right bottom',
+    description: "Concept illustration: Canon rehearses a task in a bounded tray with a stop gate and an unplugged connector."
+  };
 </script>
 
 <SEO
@@ -135,8 +143,9 @@
 />
 
 <main class="delegation-practice-page">
-  <AgencyWayfindingOpening>
+  <AgencyIllustratedOpening>
   <PerformanceCampaignOpening
+  background={openingScene}
     eyebrow="The Delegation Practice"
     title="Try an AI workflow before connecting your tools."
     lede="Use a practice workflow to decide what AI can do, when it needs approval, and how to check its work."
@@ -150,12 +159,13 @@
     ]}
   >
     {#snippet actions()}
-      <Button href="#practice-workbench">Map one workflow</Button>
+      <Button href="#short-practice">Try a short example</Button>
       <Button href="#evidence" variant="secondary">Examine the evidence</Button>
     {/snippet}
-    {#snippet artifact()}<AgencyWayfindingHero route="practice" />{/snippet}
   </PerformanceCampaignOpening>
-  </AgencyWayfindingOpening>
+  </AgencyIllustratedOpening>
+
+  <AgencyPracticeSample />
 
   <WorkflowSignalBand motionOnly quiet tall showMotionControl />
 

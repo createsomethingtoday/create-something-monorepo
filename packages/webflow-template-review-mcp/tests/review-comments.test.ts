@@ -1,0 +1,804 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+
+import type { AirtableClient } from '../src/airtable.js';
+import {
+  buildDecisionSummary,
+  buildReviewCommentsClient,
+  ReviewCommentsClient,
+  ReviewCommentsClientError,
+  type ReviewComment,
+} from '../src/review-comments.js';
+import type { ReviewerProfile } from '../src/reviewer-directory.js';
+import { commentWindow, registerTools, WRITE_TOOL_NAMES } from '../src/tools.js';
+import type { ZendeskClient } from '../src/zendesk.js';
+
+type ToolResult = { content: Array<{ type?: string; text?: string }>; isError?: boolean };
+type ToolHandler = (args: Record<string, unknown>) => Promise<ToolResult>;
+
+const COMMENT_WRITE_TOOLS = [
+  'template_review_add_comment',
+  'template_review_edit_comment',
+  'template_review_delete_comment',
+  'template_review_release_feedback',
+  'template_review_resolve_comment',
+];
+
+const COMMENT_READ_TOOLS = ['template_review_list_comments', 'template_review_comment_metrics', 'template_review_search_comments'];
+
+const VERSION_ID = 'recTEST_VERSION_1';
+const ASSET_ID = 'recTEST_ASSET_1';
+
+const reviewer: ReviewerProfile = {
+  accountId: 'acct_test_reviewer',
+  airtableCollaboratorId: 'usr_test_reviewer',
+  email: 'Reviewer@Example.com',
+  name: 'Test Reviewer',
+};
+
+const version = {
+  versionId: VERSION_ID,
+  assetId: ASSET_ID,
+  versionNumber: 2,
+  reviewOwner: { id: 'usr_test_reviewer' },
+  reviewStatus: '🏃🏾In Review',
+  rawFields: {},
+};
+
+function harness() {
+  const names: string[] = [];
+  const handlers = new Map<string, ToolHandler>();
+  const server = {
+    registerTool(name: string, _config: unknown, handler: ToolHandler) {
+      names.push(name);
+      handlers.set(name, handler);
+    },
+    tool(name: string, ...args: unknown[]) {
+      names.push(name);
+      handlers.set(name, args.at(-1) as ToolHandler);
+    },
+  } as unknown as McpServer;
+  return { server, names, handlers };
+}
+
+function payload(result: ToolResult | undefined) {
+  assert.ok(result, 'tool returned no result');
+  return JSON.parse(result.content[0]?.text ?? '{}') as { ok: boolean; data?: any; error?: any };
+}
+
+function comment(overrides: Partial<ReviewComment>): ReviewComment {
+  return {
+    id: 'c-1',
+    assetRef: ASSET_ID,
+    versionRef: VERSION_ID,
+    parentId: null,
+    authorEmail: 'reviewer@example.com',
+    authorRole: 'reviewer',
+    body: 'Fix the 404 page',
+    visibility: 'draft',
+    releasedAt: null,
+    resolution: 'open',
+    rubricRef: null,
+    createdAt: '2026-11-09T00:00:00.000Z',
+    editedAt: null,
+    ...overrides,
+  };
+}
+
+/** Records every call; `existing` seeds listVersion, `failWith` makes every call throw. */
+const counts = { written: 4, sent: 2, draft: 1, internal: 1, versions: 2, assets: 2, lastAt: '2026-11-11T09:30:00.000Z' };
+
+function fakeComments(options: { existing?: ReviewComment[]; failWith?: Error; nextCursor?: string; summary?: unknown } = {}) {
+  const calls: Array<[string, ...unknown[]]> = [];
+  const record = <T>(name: string, args: unknown[], value: T): Promise<T> => {
+    calls.push([name, ...args]);
+    return options.failWith ? Promise.reject(options.failWith) : Promise.resolve(value);
+  };
+  const client = {
+    listVersion: (...args: unknown[]) => record('listVersion', args, options.existing ?? []),
+    search: (...args: unknown[]) => record('search', args, { comments: options.existing ?? [], nextCursor: options.nextCursor ?? null }),
+    metrics: (...args: unknown[]) => {
+      const author = (args[1] as { author?: string }).author ?? null;
+      return record('metrics', args, {
+        from: (args[1] as { from?: string }).from ?? '1970-01-01T00:00:00.000Z',
+        to: '2026-11-17T16:00:00.000Z',
+        author,
+        totals: counts,
+        reviewers: [{ email: 'reviewer@example.com', ...counts }],
+        creatorReplies: author ? null : 3,
+      });
+    },
+    add: (...args: unknown[]) => record('add', args, comment({ body: (args[2] as { body: string }).body })),
+    edit: (...args: unknown[]) => record('edit', args, comment({ body: args[2] as string, editedAt: 'now' })),
+    remove: (...args: unknown[]) => record('remove', args, { deleted: args[0] }),
+    release: (...args: unknown[]) => record('release', args, { released: 2 }),
+    resolve: (...args: unknown[]) => record('resolve', args, comment({ resolution: args[2] as 'resolved' })),
+    getSummary: (...args: unknown[]) => record('getSummary', args, options.summary ?? null),
+  } as unknown as ReviewCommentsClient;
+  return { client, calls };
+}
+
+function fakeAirtable(overrides: Record<string, unknown> = {}) {
+  const writes: unknown[] = [];
+  const client = {
+    getScopedVersion: async () => ({ version, asset: { assetId: ASSET_ID } }),
+    requireAssignedVersion: async () => version,
+    updateVersionReview: async (id: string, input: unknown) => {
+      writes.push([id, input]);
+      return { ...version, ...(input as object) };
+    },
+    ...overrides,
+  } as unknown as AirtableClient;
+  return { client, writes };
+}
+
+test('comment tools stay unregistered until the comments service is configured', () => {
+  const { server, names } = harness();
+  registerTools(server, () => fakeAirtable().client, () => reviewer);
+  for (const name of [...COMMENT_WRITE_TOOLS, ...COMMENT_READ_TOOLS]) {
+    assert.equal(names.includes(name), false, `${name} should not register without the service`);
+  }
+  assert.equal(buildReviewCommentsClient(undefined, 'key'), null);
+  assert.equal(buildReviewCommentsClient('https://comments.test', ' '), null);
+});
+
+test('comment writes are hidden from read-only sessions; listing stays available', () => {
+  for (const name of COMMENT_WRITE_TOOLS) assert.ok(WRITE_TOOL_NAMES.has(name), `${name} must be a write tool`);
+  for (const name of COMMENT_READ_TOOLS) assert.equal(WRITE_TOOL_NAMES.has(name), false, name);
+
+  const { client } = fakeComments();
+  const full = harness();
+  registerTools(full.server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => client });
+  for (const name of [...COMMENT_WRITE_TOOLS, ...COMMENT_READ_TOOLS]) assert.ok(full.names.includes(name), name);
+
+  const readOnly = harness();
+  registerTools(readOnly.server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => client }, { allowWrites: false });
+  for (const name of COMMENT_READ_TOOLS) assert.ok(readOnly.names.includes(name), name);
+  for (const name of COMMENT_WRITE_TOOLS) assert.equal(readOnly.names.includes(name), false, name);
+});
+
+test('add_comment takes the asset from Airtable and needs assignment for drafts', async () => {
+  const { client, calls } = fakeComments();
+  let assignmentChecks = 0;
+  const airtable = fakeAirtable({
+    requireAssignedVersion: async () => {
+      assignmentChecks += 1;
+      return version;
+    },
+  });
+  const { server, handlers } = harness();
+  registerTools(server, () => airtable.client, () => reviewer, { getReviewCommentsClient: () => client });
+
+  const draft = payload(
+    await handlers.get('template_review_add_comment')?.({ version_id: VERSION_ID, body: ' Fix the 404 page ', visibility: 'draft' }),
+  );
+  assert.equal(draft.ok, true);
+  assert.equal(assignmentChecks, 1);
+  assert.deepEqual(calls[0], ['add', VERSION_ID, 'Reviewer@Example.com', { assetRef: ASSET_ID, body: 'Fix the 404 page', visibility: 'draft' }]);
+
+  // Internal notes never reach the creator, so any mapped reviewer may leave one.
+  const note = payload(
+    await handlers.get('template_review_add_comment')?.({ version_id: VERSION_ID, body: 'Second opinion: fine', visibility: 'internal', parent_id: 'c-1' }),
+  );
+  assert.equal(note.ok, true);
+  assert.equal(assignmentChecks, 1);
+  assert.deepEqual(calls[1], ['add', VERSION_ID, 'Reviewer@Example.com', { assetRef: ASSET_ID, body: 'Second opinion: fine', visibility: 'internal', parentId: 'c-1' }]);
+});
+
+test('comment tools fail closed without a reviewer email', async () => {
+  const { client, calls } = fakeComments();
+  const { server, handlers } = harness();
+  registerTools(server, () => fakeAirtable().client, () => ({ ...reviewer, email: undefined }), { getReviewCommentsClient: () => client });
+  const result = payload(await handlers.get('template_review_list_comments')?.({ version_id: VERSION_ID }));
+  assert.equal(result.ok, false);
+  assert.equal(result.error.code, 'REVIEWER_EMAIL_UNAVAILABLE');
+  assert.equal(calls.length, 0);
+});
+
+test('edit, delete, resolve, and release pass through with the reviewer email', async () => {
+  const { client, calls } = fakeComments();
+  const { server, handlers } = harness();
+  registerTools(server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => client });
+
+  assert.equal(payload(await handlers.get('template_review_edit_comment')?.({ comment_id: 'c-1', body: 'Alt text missing' })).ok, true);
+  assert.equal(payload(await handlers.get('template_review_delete_comment')?.({ comment_id: 'c-2' })).ok, true);
+  assert.equal(payload(await handlers.get('template_review_resolve_comment')?.({ comment_id: 'c-1', resolution: 'resolved' })).ok, true);
+  const released = payload(await handlers.get('template_review_release_feedback')?.({ version_id: VERSION_ID, expected_drafts: [] }));
+  assert.equal(released.data.released, 2);
+  assert.equal(released.data.creator_email_sent, false);
+
+  assert.deepEqual(calls, [
+    ['edit', 'c-1', 'Reviewer@Example.com', 'Alt text missing'],
+    ['remove', 'c-2', 'Reviewer@Example.com'],
+    ['resolve', 'c-1', 'Reviewer@Example.com', 'resolved'],
+    ['release', VERSION_ID, 'Reviewer@Example.com', undefined, []],
+  ]);
+});
+
+test('request_changes writes Airtable first, then posts the feedback and releases drafts', async () => {
+  const { client, calls } = fakeComments();
+  const airtable = fakeAirtable();
+  const { server, handlers } = harness();
+  registerTools(server, () => airtable.client, () => reviewer, { getReviewCommentsClient: () => client });
+
+  const result = payload(
+    await handlers.get('template_review_request_changes')?.({ version_id: VERSION_ID, review_feedback: 'Fix the 404 page' }),
+  );
+  assert.equal(result.ok, true);
+  assert.equal(airtable.writes.length, 1);
+  assert.deepEqual(
+    calls.map(([name]) => name),
+    ['listVersion', 'add', 'release'],
+  );
+  assert.deepEqual(calls[1], ['add', VERSION_ID, 'Reviewer@Example.com', { assetRef: ASSET_ID, body: 'Fix the 404 page', visibility: 'draft' }]);
+  assert.deepEqual(result.data.review_comments, { ok: true, feedback_comment_added: true, released: 2, creator_email_sent: false });
+});
+
+test('with the Airtable automation as sender, a decision writes Airtable and leaves the comments alone', async () => {
+  const { client, calls } = fakeComments();
+  const airtable = fakeAirtable();
+  const { server, handlers } = harness();
+  registerTools(server, () => airtable.client, () => reviewer, { getReviewCommentsClient: () => client, decisionFeedbackByAutomation: true });
+
+  const result = payload(
+    await handlers.get('template_review_request_changes')?.({ version_id: VERSION_ID, review_feedback: 'Fix the 404 page' }),
+  );
+  assert.equal(result.ok, true);
+  assert.equal(airtable.writes.length, 1);
+  assert.deepEqual(calls, []);
+  assert.equal(result.data.review_comments.handled_by, 'airtable_automation');
+});
+
+test('a retried decision does not post the same feedback twice', async () => {
+  const { client, calls } = fakeComments({
+    existing: [comment({ body: 'Fix the 404 page', visibility: 'released', authorEmail: 'reviewer@example.com' })],
+  });
+  const { server, handlers } = harness();
+  registerTools(server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => client });
+
+  const result = payload(
+    await handlers.get('template_review_reject_version')?.({ version_id: VERSION_ID, reject_reason: 'Quality', rejection_feedback: 'Fix the 404 page' }),
+  );
+  assert.equal(result.data.review_comments.feedback_comment_added, false);
+  assert.deepEqual(
+    calls.map(([name]) => name),
+    ['listVersion', 'release'],
+  );
+});
+
+test('an internal note with the same words does not count as posted feedback', async () => {
+  const { client, calls } = fakeComments({
+    existing: [comment({ body: 'Fix the 404 page', visibility: 'internal', authorEmail: 'reviewer@example.com' })],
+  });
+  const { server, handlers } = harness();
+  registerTools(server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => client });
+
+  const result = payload(
+    await handlers.get('template_review_request_changes')?.({ version_id: VERSION_ID, review_feedback: 'Fix the 404 page' }),
+  );
+  assert.equal(result.data.review_comments.feedback_comment_added, true);
+  assert.deepEqual(
+    calls.map(([name]) => name),
+    ['listVersion', 'add', 'release'],
+  );
+});
+
+test('approve releases drafts without adding a comment', async () => {
+  const { client, calls } = fakeComments();
+  const { server, handlers } = harness();
+  registerTools(server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => client });
+
+  const result = payload(await handlers.get('template_review_approve_version')?.({ version_id: VERSION_ID }));
+  assert.equal(result.ok, true);
+  assert.deepEqual(calls, [
+    [
+      'release',
+      VERSION_ID,
+      'Reviewer@Example.com',
+      undefined,
+      undefined,
+      { outcome: 'approved', qualityRating: null, improvementAreas: [], creatorTrustLevel: null, assetType: 'Template' },
+    ],
+  ]);
+  assert.equal(result.data.review_comments.feedback_comment_added, false);
+});
+
+test('decisions and release_feedback name the creator from the asset record for the email', async () => {
+  const calls: unknown[][] = [];
+  const client = {
+    listVersion: async () => [],
+    add: async () => comment({}),
+    release: async (...args: unknown[]) => {
+      calls.push(args);
+      return { released: 1, notification: { status: 'sent', sent: 1 } };
+    },
+  } as unknown as ReviewCommentsClient;
+  const airtable = fakeAirtable({
+    getScopedVersion: async () => ({
+      version,
+      asset: { assetId: ASSET_ID, templateName: 'Example Template', creatorEmail: 'creator@example.com', creatorName: 'Casey' },
+    }),
+  });
+  const { server, handlers } = harness();
+  registerTools(server, () => airtable.client, () => reviewer, { getReviewCommentsClient: () => client });
+
+  const decision = payload(
+    await handlers.get('template_review_request_changes')?.({ version_id: VERSION_ID, review_feedback: 'Fix the 404 page' }),
+  );
+  assert.deepEqual(calls[0], [
+    VERSION_ID,
+    'Reviewer@Example.com',
+    {
+      recipientEmail: 'creator@example.com',
+      assetName: 'Example Template',
+      assetType: 'Template',
+      recipientName: 'Casey',
+      versionNumber: 2,
+      outcome: 'changes_requested',
+    },
+    undefined,
+    { outcome: 'changes_requested', qualityRating: null, improvementAreas: [], creatorTrustLevel: null, assetType: 'Template' },
+  ]);
+  assert.equal(decision.data.review_comments.creator_email_sent, true);
+  assert.deepEqual(decision.data.review_comments.notification, { status: 'sent', sent: 1 });
+
+  const released = payload(await handlers.get('template_review_release_feedback')?.({ version_id: VERSION_ID, expected_drafts: [] }));
+  assert.equal((calls[1][2] as { outcome?: string }).outcome, undefined);
+  assert.equal((calls[1][2] as { recipientEmail: string }).recipientEmail, 'creator@example.com');
+  assert.equal(released.data.creator_email_sent, true);
+});
+
+test('a failed email is reported with the way to retry it', async () => {
+  const client = {
+    release: async () => ({ released: 1, notification: { status: 'failed', sent: 0, pending: 1, error: 'Knock returned HTTP 503' } }),
+  } as unknown as ReviewCommentsClient;
+  const { server, handlers } = harness();
+  registerTools(server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => client });
+
+  const result = payload(await handlers.get('template_review_release_feedback')?.({ version_id: VERSION_ID, expected_drafts: [] }));
+  assert.equal(result.data.creator_email_sent, false);
+  assert.match(result.data.email_next_step, /template_review_release_feedback/);
+});
+
+test('a comments failure after the Airtable write is reported, not thrown', async () => {
+  const { client } = fakeComments({ failWith: new ReviewCommentsClientError('REVIEW_COMMENTS_UNREACHABLE', 'down', 503) });
+  const airtable = fakeAirtable();
+  const { server, handlers } = harness();
+  registerTools(server, () => airtable.client, () => reviewer, { getReviewCommentsClient: () => client });
+
+  const result = payload(await handlers.get('template_review_approve_version')?.({ version_id: VERSION_ID }));
+  assert.equal(result.ok, true);
+  assert.equal(airtable.writes.length, 1);
+  assert.equal(result.data.review_comments.ok, false);
+  assert.equal(result.data.review_comments.error.code, 'REVIEW_COMMENTS_UNREACHABLE');
+  assert.match(result.data.review_comments.next_step, /re-run template_review_approve_version/);
+});
+
+test('decisions are unchanged when the comments service is not configured', async () => {
+  const { server, handlers } = harness();
+  registerTools(server, () => fakeAirtable().client, () => reviewer);
+  const result = payload(await handlers.get('template_review_approve_version')?.({ version_id: VERSION_ID }));
+  assert.equal(result.ok, true);
+  assert.equal('review_comments' in result.data, false);
+});
+
+test('get_ticket_thread returns comments even when the version has no Zendesk ticket', async () => {
+  const { client } = fakeComments({
+    existing: [
+      comment({ id: 'c-1', visibility: 'released', releasedAt: '2026-11-09T01:00:00.000Z' }),
+      comment({ id: 'c-2', visibility: 'draft' }),
+      comment({ id: 'c-3', visibility: 'internal' }),
+    ],
+  });
+  const zendesk = { getTicketThread: async () => assert.fail('no ticket to read') } as unknown as ZendeskClient;
+  const { server, handlers } = harness();
+  registerTools(server, () => fakeAirtable().client, () => reviewer, {
+    getReviewCommentsClient: () => client,
+    getZendeskClient: () => zendesk,
+  });
+
+  const publicView = payload(
+    await handlers.get('template_review_get_ticket_thread')?.({ version_id: VERSION_ID, include_internal_notes: false, limit: 20 }),
+  );
+  assert.equal(publicView.ok, true);
+  assert.equal(publicView.data.thread, null);
+  assert.deepEqual(
+    publicView.data.review_comments.map((c: ReviewComment) => c.id),
+    ['c-1'],
+  );
+
+  const fullView = payload(
+    await handlers.get('template_review_get_ticket_thread')?.({ version_id: VERSION_ID, include_internal_notes: true, limit: 20 }),
+  );
+  assert.deepEqual(
+    fullView.data.review_comments.map((c: ReviewComment) => c.id),
+    ['c-1', 'c-2', 'c-3'],
+  );
+});
+
+test('get_ticket_thread keeps the Zendesk thread when the comments service is down', async () => {
+  const { client } = fakeComments({ failWith: new ReviewCommentsClientError('REVIEW_COMMENTS_UNREACHABLE', 'down', 503) });
+  const zendesk = {
+    agentTicketUrl: (id: string) => `https://zendesk.test/agent/tickets/${id}`,
+    getTicketThread: async (ticketId: string) => ({ ticketId, comments: [{ id: 1, isPublic: true, body: 'Fixed.' }] }),
+  } as unknown as ZendeskClient;
+  const airtable = fakeAirtable({ getScopedVersion: async () => ({ version: { ...version, zendeskTicketId: '100' }, asset: { assetId: ASSET_ID } }) });
+  const { server, handlers } = harness();
+  registerTools(server, () => airtable.client, () => reviewer, { getReviewCommentsClient: () => client, getZendeskClient: () => zendesk });
+
+  const result = payload(
+    await handlers.get('template_review_get_ticket_thread')?.({ version_id: VERSION_ID, include_internal_notes: false, limit: 20 }),
+  );
+  assert.equal(result.ok, true);
+  assert.equal(result.data.thread.ticketId, '100');
+  assert.equal(result.data.review_comments, null);
+  assert.equal(result.data.review_comments_error.code, 'REVIEW_COMMENTS_UNREACHABLE');
+});
+
+test('the HTTP client sends the reviewer key, actor, and JSON body', async () => {
+  const requests: Array<{ url: string; init: RequestInit }> = [];
+  const client = new ReviewCommentsClient({
+    baseUrl: 'https://comments.test/',
+    apiKey: 'test-key',
+    fetch: (async (url: string, init: RequestInit) => {
+      requests.push({ url, init });
+      return Response.json({ success: true, data: { released: 1 } });
+    }) as unknown as typeof fetch,
+  });
+
+  assert.deepEqual(await client.release(VERSION_ID, 'reviewer@example.com'), { released: 1 });
+  await client.edit('c-1', 'reviewer@example.com', 'new text');
+
+  assert.equal(requests[0].url, `https://comments.test/v1/versions/${VERSION_ID}/release`);
+  assert.equal(requests[0].init.method, 'POST');
+  assert.deepEqual(requests[0].init.headers, {
+    Authorization: 'Bearer test-key',
+    'X-Actor-Email': 'reviewer@example.com',
+    'X-Actor-Role': 'reviewer',
+  });
+  assert.equal(requests[1].url, 'https://comments.test/v1/comments/c-1');
+  assert.equal(requests[1].init.method, 'PATCH');
+  assert.equal(requests[1].init.body, JSON.stringify({ body: 'new text' }));
+
+  // With a notice, the release carries the recipient for the Worker to email.
+  const notice = { recipientEmail: 'creator@example.com', assetName: 'Example Template', assetType: 'Template' };
+  await client.release(VERSION_ID, 'reviewer@example.com', notice);
+  assert.equal(requests[2].init.body, JSON.stringify({ notify: notice }));
+  assert.equal((requests[2].init.headers as Record<string, string>)['Content-Type'], 'application/json');
+});
+
+test('the HTTP client maps service and network failures to typed errors', async () => {
+  const refused = new ReviewCommentsClient({
+    baseUrl: 'https://comments.test',
+    apiKey: 'test-key',
+    fetch: (async () => Response.json({ success: false, error: 'version belongs to a different asset' }, { status: 409 })) as unknown as typeof fetch,
+  });
+  await assert.rejects(refused.listVersion(VERSION_ID, 'reviewer@example.com'), (error: unknown) => {
+    assert.ok(error instanceof ReviewCommentsClientError);
+    assert.equal(error.code, 'REVIEW_COMMENTS_REQUEST_FAILED');
+    assert.equal(error.status, 409);
+    assert.equal(error.message, 'version belongs to a different asset');
+    return true;
+  });
+
+  const down = new ReviewCommentsClient({
+    baseUrl: 'https://comments.test',
+    apiKey: 'test-key',
+    fetch: (async () => {
+      throw new TypeError('fetch failed');
+    }) as unknown as typeof fetch,
+  });
+  await assert.rejects(down.listVersion(VERSION_ID, 'reviewer@example.com'), (error: unknown) => {
+    assert.ok(error instanceof ReviewCommentsClientError);
+    assert.equal(error.code, 'REVIEW_COMMENTS_UNREACHABLE');
+    return true;
+  });
+});
+
+test('release_feedback passes the drafts the reviewer read, and add_comment passes the request key', async () => {
+  const { calls, client } = fakeComments();
+  const { server, handlers } = harness();
+  registerTools(server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => client });
+
+  await handlers.get('template_review_release_feedback')?.({
+    version_id: VERSION_ID,
+    expected_drafts: [{ id: 'c-1', edited_at: null }, { id: 'c-2', edited_at: '2026-01-02T03:04:05.000Z' }],
+  });
+  assert.deepEqual(calls.at(-1), [
+    'release',
+    VERSION_ID,
+    'Reviewer@Example.com',
+    undefined,
+    [{ id: 'c-1', editedAt: null }, { id: 'c-2', editedAt: '2026-01-02T03:04:05.000Z' }],
+  ]);
+
+  await handlers.get('template_review_add_comment')?.({ version_id: VERSION_ID, body: 'Fix the 404 page', visibility: 'draft', request_key: 'save-0123456789' });
+  assert.equal((calls.at(-1)?.[3] as { requestKey?: string }).requestKey, 'save-0123456789');
+});
+
+test('decision feedback over the comment limit goes out as several comments, and a repeat adds nothing', async () => {
+  const long = `${'First part. '.repeat(1500)}\n\n${'Second part. '.repeat(1500)}`.trim();
+  assert.ok(long.length > 20_000);
+  const first = fakeComments();
+  const { server, handlers } = harness();
+  registerTools(server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => first.client });
+  const result = payload(await handlers.get('template_review_request_changes')?.({ version_id: VERSION_ID, review_feedback: long }));
+  assert.equal(result.data.review_comments.ok, true);
+  const added = first.calls.filter(([name]) => name === 'add').map((call) => (call[3] as { body: string }).body);
+  assert.equal(added.length, 2);
+  assert.ok(added.every((body) => body.length <= 20_000));
+  assert.equal(added.join(' ').replace(/\s+/g, ' '), long.replace(/\s+/g, ' '));
+  assert.equal(first.calls.at(-1)?.[0], 'release');
+
+  const again = fakeComments({ existing: added.map((body) => comment({ body, visibility: 'released', authorEmail: 'reviewer@example.com' })) });
+  const second = harness();
+  registerTools(second.server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => again.client });
+  await second.handlers.get('template_review_request_changes')?.({ version_id: VERSION_ID, review_feedback: long });
+  assert.equal(again.calls.filter(([name]) => name === 'add').length, 0);
+});
+
+test('comment_metrics counts the signed-in reviewer by default, over all time', async () => {
+  const { client, calls } = fakeComments();
+  const { server, handlers } = harness();
+  registerTools(server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => client });
+
+  const mine = payload(await handlers.get('template_review_comment_metrics')?.({ reviewer: 'me' }));
+  assert.deepEqual(calls[0], ['metrics', 'Reviewer@Example.com', { author: 'reviewer@example.com' }]);
+  assert.deepEqual(mine.data, { reviewer: 'reviewer@example.com', from: null, to: '2026-11-17T16:00:00.000Z', ...counts });
+});
+
+test('comment_metrics lists every reviewer for "all" and takes a window and an email', async () => {
+  const { client, calls } = fakeComments();
+  const { server, handlers } = harness();
+  registerTools(server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => client });
+
+  const team = payload(
+    await handlers.get('template_review_comment_metrics')?.({ reviewer: 'all', start_date: '2026-11-01', end_date: '2026-11-15' }),
+  );
+  assert.deepEqual(calls[0], ['metrics', 'Reviewer@Example.com', { from: '2026-11-01T00:00:00.000Z', to: '2026-11-16T00:00:00.000Z' }]);
+  assert.equal(team.data.reviewer, 'all');
+  assert.equal(team.data.from, '2026-11-01T00:00:00.000Z');
+  assert.equal(team.data.creator_replies, 3);
+  assert.deepEqual(team.data.reviewers, [{ reviewer: 'reviewer@example.com', ...counts }]);
+
+  await handlers.get('template_review_comment_metrics')?.({ reviewer: ' Other@Example.com ' });
+  assert.deepEqual(calls[1]?.[2], { author: 'other@example.com' });
+
+  const bad = payload(await handlers.get('template_review_comment_metrics')?.({ reviewer: 'everyone' }));
+  assert.equal(bad.error.code, 'INVALID_REVIEWER');
+  assert.equal(calls.length, 2);
+});
+
+test('commentWindow turns days and dates into a window, end date included', () => {
+  const now = new Date('2026-11-17T12:00:00.000Z');
+  assert.deepEqual(commentWindow({}, now), {});
+  assert.deepEqual(commentWindow({ days: 7 }, now), { from: '2026-11-10T12:00:00.000Z' });
+  assert.deepEqual(commentWindow({ days: 7, end_date: '2026-11-15' }, now), { from: '2026-11-09T00:00:00.000Z', to: '2026-11-16T00:00:00.000Z' });
+  assert.deepEqual(commentWindow({ days: 7, start_date: '2026-11-01' }, now), { from: '2026-11-01T00:00:00.000Z' });
+  assert.deepEqual(commentWindow({ end_date: '2026-11-15' }, now), { to: '2026-11-16T00:00:00.000Z' });
+});
+
+test('search_comments maps kind to the service filters and returns compact rows', async () => {
+  const long = 'x'.repeat(500);
+  const { client, calls } = fakeComments({
+    nextCursor: '2026-11-09T00:00:00.000Z~c-1',
+    existing: [
+      comment({ id: 'c-2', visibility: 'released', releasedAt: '2026-11-10T00:00:00.000Z', body: long, resolution: 'resolved' }),
+      comment({ id: 'c-1', authorRole: 'creator', authorEmail: 'creator@example.com', visibility: 'released', releasedAt: '2026-11-09T00:00:00.000Z', parentId: 'c-0' }),
+    ],
+  });
+  const { server, handlers } = harness();
+  registerTools(server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => client });
+  const search = handlers.get('template_review_search_comments');
+
+  const sent = payload(await search?.({ reviewer: 'me', kind: 'sent', days: undefined, limit: 20, body_chars: 300 }));
+  assert.deepEqual(calls[0], ['search', 'Reviewer@Example.com', { author: 'reviewer@example.com', authorRole: 'reviewer', visibility: 'released', limit: 20 }]);
+  assert.equal(sent.data.count, 2);
+  assert.equal(sent.data.next_cursor, '2026-11-09T00:00:00.000Z~c-1');
+  assert.deepEqual(sent.data.comments[0], {
+    id: 'c-2',
+    version_id: VERSION_ID,
+    asset_id: ASSET_ID,
+    author: 'reviewer@example.com',
+    kind: 'sent',
+    created_at: '2026-11-09T00:00:00.000Z',
+    sent_at: '2026-11-10T00:00:00.000Z',
+    resolution: 'resolved',
+    body: `${'x'.repeat(300)}…`,
+    body_chars: 500,
+  });
+  assert.deepEqual(sent.data.comments[1], {
+    id: 'c-1',
+    version_id: VERSION_ID,
+    asset_id: ASSET_ID,
+    author: 'creator@example.com',
+    kind: 'creator_reply',
+    created_at: '2026-11-09T00:00:00.000Z',
+    parent_id: 'c-0',
+    body: 'Fix the 404 page',
+  });
+
+  // Creator replies have no reviewer author, so "me" does not narrow them.
+  await search?.({ reviewer: 'me', kind: 'creator_reply', asset_id: ASSET_ID, limit: 5, cursor: 'abc', body_chars: 300 });
+  assert.deepEqual(calls[1]?.[2], { assetRef: ASSET_ID, authorRole: 'creator', limit: 5, cursor: 'abc' });
+
+  await search?.({ reviewer: 'all', kind: 'internal', limit: 20, body_chars: 300 });
+  assert.deepEqual(calls[2]?.[2], { authorRole: 'reviewer', visibility: 'internal', limit: 20 });
+
+  await search?.({ reviewer: 'all', asset_id: ASSET_ID, limit: 20, body_chars: 300 });
+  assert.deepEqual(calls[3]?.[2], { assetRef: ASSET_ID, limit: 20 });
+});
+
+test('the comments client sends search and metrics filters as a query string', async () => {
+  const urls: string[] = [];
+  const client = new ReviewCommentsClient({
+    baseUrl: 'https://comments.test/',
+    apiKey: 'k',
+    fetch: (async (input: unknown) => {
+      urls.push(String(input));
+      return new Response(JSON.stringify({ success: true, data: {} }));
+    }) as typeof fetch,
+  });
+  await client.metrics('r@example.com', { author: 'a+b@example.com', from: '2026-11-01T00:00:00.000Z' });
+  await client.metrics('r@example.com');
+  await client.search('r@example.com', { visibility: 'released', limit: 5, cursor: '2026-11-09T00:00:00.000Z~c-1' });
+  assert.deepEqual(urls, [
+    'https://comments.test/v1/metrics/comments?author=a%2Bb%40example.com&from=2026-11-01T00%3A00%3A00.000Z',
+    'https://comments.test/v1/metrics/comments',
+    'https://comments.test/v1/search/comments?visibility=released&limit=5&cursor=2026-11-09T00%3A00%3A00.000Z%7Ec-1',
+  ]);
+});
+
+const ratedVersion = {
+  ...version,
+  qualityRating: '🥇Exceptional',
+  improvementAreas: ['Template: Accessibility', 'Template: Hierarchy'],
+  creatorTrustLevel: 80,
+};
+const expectedSummary = (outcome: string) => ({
+  outcome,
+  qualityRating: '🥇Exceptional',
+  improvementAreas: ['Template: Accessibility', 'Template: Hierarchy'],
+  creatorTrustLevel: 80,
+  assetType: 'Template',
+});
+
+function summaryHarness(versionRecord: Record<string, unknown>, extra: Record<string, unknown> = {}) {
+  const fake = fakeComments();
+  const airtable = fakeAirtable({
+    getScopedVersion: async () => ({ version: versionRecord, asset: { assetId: ASSET_ID } }),
+    requireAssignedVersion: async () => versionRecord,
+    updateVersionReview: async (_id: string, input: object) => ({ ...versionRecord, ...input, reviewStatus: (input as { review_status?: string }).review_status }),
+  });
+  const { server, handlers } = harness();
+  registerTools(server, () => airtable.client, () => reviewer, { getReviewCommentsClient: () => fake.client, ...extra });
+  return { ...fake, handlers };
+}
+
+test('buildDecisionSummary reads the version record and keeps to the service limits', () => {
+  assert.deepEqual(buildDecisionSummary(ratedVersion, { assetType: 'Template' }, 'approved'), expectedSummary('approved'));
+  const cut = buildDecisionSummary(
+    { qualityRating: ' '.concat('x'.repeat(100)), improvementAreas: Array.from({ length: 25 }, () => 'y'.repeat(300)), creatorTrustLevel: 101 },
+    undefined,
+    'rejected',
+  );
+  assert.equal(cut.qualityRating?.length, 80);
+  assert.equal(cut.improvementAreas.length, 20);
+  assert.equal(cut.improvementAreas[0].length, 200);
+  assert.equal(cut.creatorTrustLevel, null);
+  assert.equal(cut.assetType, null);
+  assert.deepEqual(buildDecisionSummary({}, null, 'approved'), { outcome: 'approved', qualityRating: null, improvementAreas: [], creatorTrustLevel: null, assetType: null });
+});
+
+test('each decision tool sends its summary with the release', async () => {
+  const cases: Array<[string, Record<string, unknown>, string]> = [
+    ['template_review_request_changes', { review_feedback: 'Fix it' }, 'changes_requested'],
+    ['template_review_reject_version', { reject_reason: 'Quality', rejection_feedback: 'No' }, 'rejected'],
+    ['template_review_approve_version', {}, 'approved'],
+  ];
+  for (const [tool, input, outcome] of cases) {
+    const { calls, handlers } = summaryHarness(ratedVersion);
+    const result = payload(await handlers.get(tool)?.({ version_id: VERSION_ID, ...input }));
+    assert.equal(result.ok, true, tool);
+    const release = calls.find(([name]) => name === 'release');
+    assert.ok(release, tool);
+    assert.deepEqual(release.slice(1), [VERSION_ID, 'Reviewer@Example.com', undefined, undefined, expectedSummary(outcome)], tool);
+  }
+});
+
+test('with the Airtable automation as sender, decisions send no summary', async () => {
+  for (const [tool, input] of [
+    ['template_review_request_changes', { review_feedback: 'Fix it' }],
+    ['template_review_reject_version', { reject_reason: 'Quality', rejection_feedback: 'No' }],
+    ['template_review_approve_version', {}],
+  ] as const) {
+    const { calls, handlers } = summaryHarness(ratedVersion, { decisionFeedbackByAutomation: true });
+    await handlers.get(tool)?.({ version_id: VERSION_ID, ...input });
+    assert.deepEqual(calls, [], tool);
+  }
+});
+
+test('release_feedback sends the outcome of a decision status, with its rating', async () => {
+  for (const [status, outcome] of [
+    ['📤Changes Requested', 'changes_requested'],
+    ['📤Changes Requested (No Notification)', 'changes_requested'],
+    ['❌Rejected', 'rejected'],
+    ['❌Rejected (No Notification)', 'rejected'],
+    ['✅Approved', 'approved'],
+    ['✅Approved (No Notification)', 'approved'],
+  ]) {
+    const { calls, handlers } = summaryHarness({ ...ratedVersion, reviewStatus: status });
+    await handlers.get('template_review_release_feedback')?.({ version_id: VERSION_ID, expected_drafts: [] });
+    assert.deepEqual(calls.at(-1)?.slice(1), [VERSION_ID, 'Reviewer@Example.com', undefined, [], expectedSummary(outcome)], status);
+  }
+  // A decision status with no rating still sends the outcome.
+  const bare = summaryHarness({ ...version, reviewStatus: '✅Approved' });
+  await bare.handlers.get('template_review_release_feedback')?.({ version_id: VERSION_ID, expected_drafts: [] });
+  assert.equal((bare.calls.at(-1)?.[5] as { outcome: string }).outcome, 'approved');
+});
+
+test('release_feedback without a decision status defaults to changes_requested only with a rating', async () => {
+  const rated = summaryHarness({ ...ratedVersion, reviewStatus: '🏃🏾In Review' });
+  await rated.handlers.get('template_review_release_feedback')?.({ version_id: VERSION_ID, expected_drafts: [] });
+  assert.deepEqual(rated.calls.at(-1)?.[5], expectedSummary('changes_requested'));
+
+  const unrated = summaryHarness({ ...version, reviewStatus: '🏃🏾In Review', improvementAreas: ['Template: Hierarchy'] });
+  await unrated.handlers.get('template_review_release_feedback')?.({ version_id: VERSION_ID, expected_drafts: [] });
+  assert.deepEqual(unrated.calls.at(-1), ['release', VERSION_ID, 'Reviewer@Example.com', undefined, []]);
+});
+
+test('release_feedback still sends its summary when the Airtable automation sends decisions', async () => {
+  const { calls, handlers } = summaryHarness({ ...ratedVersion, reviewStatus: '❌Rejected' }, { decisionFeedbackByAutomation: true });
+  await handlers.get('template_review_release_feedback')?.({ version_id: VERSION_ID, expected_drafts: [] });
+  assert.deepEqual(calls.at(-1)?.[5], expectedSummary('rejected'));
+});
+
+test('list_comments returns the decision summary, and survives a failed summary read', async () => {
+  const summary = { ...expectedSummary('changes_requested'), versionRef: VERSION_ID, assetRef: ASSET_ID, setAt: '2026-11-19T00:00:00.000Z', text: { before: [], areasLabel: null, areas: [], after: [], links: [] } };
+  const ok = fakeComments({ summary });
+  const first = harness();
+  registerTools(first.server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => ok.client });
+  const result = payload(await first.handlers.get('template_review_list_comments')?.({ version_id: VERSION_ID }));
+  assert.deepEqual(result.data.decision_summary, summary);
+  assert.equal(result.data.decision_summary_error, undefined);
+  assert.deepEqual(ok.calls.at(-1), ['getSummary', VERSION_ID, 'Reviewer@Example.com']);
+
+  const none = harness();
+  registerTools(none.server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => fakeComments().client });
+  assert.equal(payload(await none.handlers.get('template_review_list_comments')?.({ version_id: VERSION_ID })).data.decision_summary, null);
+
+  const broken = {
+    listVersion: async () => [comment({})],
+    getSummary: async () => {
+      throw new ReviewCommentsClientError('REVIEW_COMMENTS_UNREACHABLE', 'Review comments service did not respond: down', 503);
+    },
+  } as unknown as ReviewCommentsClient;
+  const failing = harness();
+  registerTools(failing.server, () => fakeAirtable().client, () => reviewer, { getReviewCommentsClient: () => broken });
+  const failed = payload(await failing.handlers.get('template_review_list_comments')?.({ version_id: VERSION_ID }));
+  assert.equal(failed.ok, true);
+  assert.equal(failed.data.decision_summary, null);
+  assert.match(failed.data.decision_summary_error, /did not respond/);
+  assert.equal(failed.data.comments.length, 1);
+});
+
+test('the client sends summary on release and reads and sets it with GET and PUT', async () => {
+  const seen: Array<{ url: string; method?: string; body?: unknown }> = [];
+  const client = new ReviewCommentsClient({
+    baseUrl: 'https://comments.test',
+    apiKey: 'k',
+    fetch: (async (url: string, init?: RequestInit) => {
+      seen.push({ url, method: init?.method, body: init?.body ? JSON.parse(String(init.body)) : undefined });
+      return new Response(JSON.stringify({ success: true, data: init?.method === 'POST' ? { released: 1 } : null }), { status: 200 });
+    }) as unknown as typeof fetch,
+  });
+  const summary = buildDecisionSummary(ratedVersion, { assetType: 'Template' }, 'approved');
+  await client.release('v1', 'a@example.com', undefined, undefined, summary);
+  assert.deepEqual(seen[0], { url: 'https://comments.test/v1/versions/v1/release', method: 'POST', body: { summary } });
+  await client.getSummary('v1', 'a@example.com');
+  assert.deepEqual(seen[1], { url: 'https://comments.test/v1/versions/v1/summary', method: 'GET', body: undefined });
+  await client.setSummary('v1', summary, 'a@example.com');
+  assert.deepEqual(seen[2], { url: 'https://comments.test/v1/versions/v1/summary', method: 'PUT', body: { summary } });
+});

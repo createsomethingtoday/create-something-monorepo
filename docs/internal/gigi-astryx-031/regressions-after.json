@@ -1,0 +1,51 @@
+{
+  "passed": true,
+  "cases": [
+    {
+      "name": "music",
+      "passed": true
+    },
+    {
+      "name": "social",
+      "passed": true
+    },
+    {
+      "name": "create",
+      "passed": true
+    },
+    {
+      "name": "native_controls",
+      "passed": true
+    },
+    {
+      "name": "record_artwork",
+      "passed": true
+    },
+    {
+      "name": "page_scroll",
+      "passed": true
+    },
+    {
+      "name": "gigs_back",
+      "passed": true
+    },
+    {
+      "name": "link_entity",
+      "passed": true
+    },
+    {
+      "name": "today_direction",
+      "passed": true
+    },
+    {
+      "name": "event_identity",
+      "passed": true
+    },
+    {
+      "name": "profile",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "scope": "Actual React application with synthetic development backend; no native or provider acceptance."
+}

@@ -20,7 +20,9 @@ test('registers the Agency public detail cohort as migrated editorial routes', (
   );
   assert.equal(group?.contract?.archetype, 'editorial');
   assert.equal(group?.status, 'migrated');
-  assert.equal(group?.sources.length, 6);
+  for (const route of ['experiments/[slug]', 'arc/[slug]', 'products/decision', 'products/ground', 'products/loom', 'products/proof', 'products/signal', 'workflows/[slug]']) {
+    assert.ok(group?.sources.includes(`packages/agency/src/routes/${route}/+page.svelte`), `registered editorial coverage must include ${route}`);
+  }
 });
 
 test('reduces every product detail to opening, inspectable operating surface, and handoff', () => {
@@ -29,13 +31,26 @@ test('reduces every product detail to opening, inspectable operating surface, an
   assert.equal(componentCount(shared, 'PerformanceNarrativeStage'), 1);
   assert.equal(componentCount(shared, 'PerformanceConversionHandoff'), 1);
 
-  for (const route of ['products/ground', 'products/loom']) {
+  for (const route of ['products/loom']) {
     const source = readRoute(route);
     assert.equal(componentCount(source, 'PerformanceCampaignOpening'), 1);
     assert.equal(componentCount(source, 'PerformanceNarrativeStage'), 1);
     assert.equal(componentCount(source, 'PerformanceConversionHandoff'), 1);
     assert.doesNotMatch(source, /^\s*<section\b/gm, `${route} reintroduced loose chapters`);
   }
+});
+
+test('Ground uses three native chapters with direct install and evidence anchors', () => {
+  const source = readRoute('products/ground');
+  assert.equal(componentCount(source, 'section'), 3);
+  for (const id of ['thesis', 'evidence-body', 'continuation'])
+    assert.match(source, new RegExp(`data-performance-chapter="${id}"`));
+  for (const id of ['ground-operating-path', 'ground-guardrail', 'ground-proof']) {
+    assert.ok(source.includes(`href="#${id}"`));
+    assert.ok(source.includes(`id="${id}"`));
+  }
+  assert.match(source, /<details class="tool-disclosure">/);
+  assert.match(source, /role="status"/);
 });
 
 test('uses an indexed stage for product decisions without hiding complete no-JavaScript content', () => {
@@ -45,18 +60,16 @@ test('uses an indexed stage for product decisions without hiding complete no-Jav
   assert.match(shared, /Production contract/);
   assert.match(shared, /Connected loop/);
 
-  for (const route of productRoutes) {
+  for (const route of productRoutes.filter((route) => route !== 'products/ground')) {
     assert.match(readRoute(route), /PerformanceNarrativeStage|GovernanceProductPage/);
   }
 });
 
-test('keeps experiment details as direct reading with one related-content handoff', () => {
+test('keeps retired experiment details as an explicit noindex research handoff', () => {
   const source = readRoute('experiments/[slug]');
-  assert.match(source, /<section class="experiment-reading"/);
-  assert.match(source, /<section class="experiment-handoff"/);
-  assert.match(source, /ArticleHeader/);
-  assert.match(source, /ArticleContent/);
-  assert.match(source, /RelatedArticles/);
+  assert.match(source, /IO_EXPERIMENTS_URL/);
+  assert.match(source, /noindex, nofollow/);
+  assert.match(source, /Experiments live on \.io/);
   assert.doesNotMatch(source, /PerformanceNarrativeStage/);
 });
 
@@ -67,9 +80,9 @@ test('preserves the route-owned evidence and destinations', () => {
       'Check first',
       'Then claim',
       'Blocked otherwise',
-      '155 scripts became 13',
+      'Ground 0.4.3 measured performance',
       'ground_find_duplicate_functions',
-      'https://createsomething.io/papers/kickstand-triad-audit'
+      'Inspect the release and five-platform receipts'
     ],
     'products/loom': [
       'Linear as the source of truth',
@@ -80,7 +93,7 @@ test('preserves the route-owned evidence and destinations', () => {
       'loom_checkpoint',
       '/products/ground'
     ],
-    'experiments/[slug]': ['paper.title', 'ArticleContent', 'relatedPapers', '/experiments']
+    'experiments/[slug]': ['IO_EXPERIMENTS_URL', 'noindex, nofollow', 'Browse the experiment archive.']
   };
 
   for (const [route, expected] of Object.entries(inventory)) {

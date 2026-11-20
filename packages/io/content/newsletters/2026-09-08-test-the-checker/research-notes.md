@@ -35,3 +35,8 @@ On Writing Well pass: lead with a useful action; explain the same-name import de
 ## Render verification
 
 Browser review at desktop width and 390px mobile completed September 7. Mobile document width equals viewport width (390px); no horizontal overflow. The render has zero images, so it has no image-loading dependency. Native inbox rendering and the operator test remain unperformed. The review HTML is deliberately labeled as a review artifact rather than an upload-ready send payload.
+
+
+## November 3 revision
+
+`CRE-2337` refreshed this candidate as an evergreen method using a historical September trial. The repository currently declares Ground 0.5.4; the revised copy makes no new test-result claim for it. See `candidate-receipt-2026-11-03.md` for exact source/template hashes and remaining gates. The September browser and source-review receipts above remain historical and do not validate this changed render. No send time is currently approved.

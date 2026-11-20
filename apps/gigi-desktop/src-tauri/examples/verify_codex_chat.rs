@@ -2,6 +2,7 @@
 use gigi_desktop_lib::{chat, domain};
 use serde_json::{json, Value};
 use std::fs;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::{Duration, Instant};
@@ -34,6 +35,14 @@ fn wait_for(
             "agent.chat.poll",
             json!({"workspaceId":workspace_id,"sessionId":session_id}),
         )?;
+        // Record only state/counts for provider streaming qualification. Synthetic
+        // message contents remain in the retained profile, never stdout telemetry.
+        let lengths: Vec<usize> = read["messages"].as_array().into_iter().flatten()
+            .filter(|message| message["role"] == "assistant")
+            .filter_map(|message| message["text"].as_str()).map(str::len).collect();
+        let event = json!({"sessionId":session_id,"state":read["state"],"assistantLengths":lengths,"activity":read["activity"]});
+        let mut trace = fs::OpenOptions::new().create(true).append(true).open(profile.join("stream-observations.jsonl")).map_err(|e| e.to_string())?;
+        writeln!(trace, "{}", event).map_err(|e| e.to_string())?;
         let state = read["state"].as_str().unwrap_or("invalid");
         let approvals = read["approvals"]
             .as_array()
@@ -55,7 +64,7 @@ fn wait_for(
         if Instant::now() >= deadline {
             return Err("Chat did not reach the expected state within 90 seconds".into());
         }
-        thread::sleep(Duration::from_millis(700));
+        thread::sleep(Duration::from_millis(200));
     }
 }
 
@@ -142,7 +151,7 @@ fn run(resources: &Path, profile: &Path) -> Result<Value, String> {
         json!({
             "workspaceId":workspace_id,
             "record":{"entity":"gigs","id":gig["id"],"title":gig["title"]},
-            "message":format!("Read only: for the selected synthetic Friday jazz set, report its fee as a dollar amount with two decimal places, booking contact name, and linked task title. Use GiGi tools. The gig ID is {}. Do not change any record.",gig["id"].as_str().unwrap_or(""))
+            "message":format!("Read only: for the selected synthetic Friday jazz set, report its fee as a dollar amount with two decimal places, booking contact name, and linked task title. Use GiGi tools. The gig ID is {}. Do not change any record. After the factual summary, explain a 16-step generic rehearsal checklist in Markdown with headings, bold, emphasis, an ordered list, a quotation, a code example, and a short table. Label the checklist as generic guidance, never facts about these records.",gig["id"].as_str().unwrap_or(""))
         }),
     )?;
     let session_id = &started["sessionId"];
@@ -150,6 +159,10 @@ fn run(resources: &Path, profile: &Path) -> Result<Value, String> {
         return Err("Chat start returned no session ID".into());
     }
     let first = wait_for(resources, profile, workspace_id, session_id, false)?;
+    let trace = fs::read_to_string(profile.join("stream-observations.jsonl")).map_err(|e| e.to_string())?;
+    let observed_partial = trace.lines().filter_map(|line| serde_json::from_str::<Value>(line).ok()).any(|event|
+        event["state"] == "running" && event["assistantLengths"].as_array().is_some_and(|lengths| lengths.iter().any(|length| length.as_u64().unwrap_or(0) > 0)));
+    if !observed_partial { return Err("No partial assistant response was observed before completion; streaming remains unqualified".into()); }
     let assistant_text = first["messages"]
         .as_array()
         .ok_or("Chat returned no messages")?
@@ -254,7 +267,7 @@ fn run(resources: &Path, profile: &Path) -> Result<Value, String> {
     Ok(json!({
         "passed":true,"profile":profile,"workspaceId":workspace_id,"sessionId":session_id,
         "gigId":gig["id"],"contactId":contact["id"],"taskId":task["id"],
-        "checks":["installed ChatGPT authentication","read selected gig fee/contact/task","approval before exact task rename","retained fields and relations","rejected rename unchanged","conversation retained after companion restart"],
+        "checks":["observed partial assistant output before terminal transcript", "installed ChatGPT authentication","read selected gig fee/contact/task","approval before exact task rename","retained fields and relations","rejected rename unchanged","conversation retained after companion restart"],
         "turns":3,"readAnswer":assistant_text,"resumedMessages":resumed["messages"].as_array().map_or(0,Vec::len)
     }))
 }

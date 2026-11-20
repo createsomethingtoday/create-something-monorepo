@@ -50,16 +50,52 @@ Marketplace form:
 
 - `GET /app-validator/submission/latest?siteId=<site-id>`
 - `GET /app-validator/submission/latest?bridgeTokenSha256=<sha256>`
+- `GET /app-validator/submission/latest?publishedUrl=<url-or-host>`
 
 This endpoint returns whether the latest Validator run reached a 100% pass
 without exposing the raw bridge token. It is submission-contract evidence only;
 it does not emit approval, rejection, final rating, or visual quality judgment.
+The response includes `siteId` and `evidence` (the object below, or `null`).
 
-Persisted artifacts use schema `validator_app_results_submission.v0.1`, store
-only sanitized summary/category/issue fields, and set
-`raw_bridge_token_stored: false`. The review MCP can normalize those artifacts
-with `validator:results:normalize` before importing findings into the review
-ledger.
+#### OAuth site-access evidence
+
+A command-line client has no Designer bridge snippet, so it can prove site
+access with a Webflow MCP OAuth token instead. `POST /app-validator/submit`
+accepts an optional `evidence` object:
+
+```json
+{ "type": "oauth_site_access", "accessToken": "<Webflow MCP OAuth access token>" }
+```
+
+The worker calls Webflow's MCP server (`https://mcp.webflow.com/mcp`, or
+`VALIDATOR_MCP_SERVER_URL` when set) as an MCP client: `initialize`, then
+`data_sites_tool` `get_site` for the submitted `siteId`. Verification passes
+only when the returned site id equals the submitted `siteId`. On failure the
+worker responds `403 { error: "oauth_site_access evidence could not be
+verified", correlationId }` and stores nothing. On success the stored result,
+the submit response, and the R2 artifact carry:
+
+```json
+{
+  "type": "oauth_site_access",
+  "verified": true,
+  "verifiedAt": "<ISO timestamp>",
+  "workspaceId": "<workspace id or null>",
+  "accessTokenSha256": "<sha256 hex of the token>",
+  "rawAccessTokenStored": false,
+  "publishedHosts": ["<shortName>.webflow.io", "<custom domain host>"]
+}
+```
+
+The worker also maps each published host (keyed by its SHA-256) to the site id,
+which is what `publishedUrl` lookups read. The raw token is never logged,
+stored, or returned.
+
+Persisted artifacts use schema `validator_app_results_submission.v0.2`, store
+only sanitized summary/category/issue fields plus `evidence` (`null` without
+evidence), and set `raw_bridge_token_stored: false`. v0.2 adds `evidence` to
+v0.1; nothing else changed. The review MCP can normalize those artifacts with
+`validator:results:normalize` before importing findings into the review ledger.
 
 ## Next steps
 

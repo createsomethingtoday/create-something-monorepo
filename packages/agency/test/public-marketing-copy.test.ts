@@ -171,7 +171,7 @@ test('public agency surfaces explain ownership and provider roles', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
   const stack = readFileSync(new URL('../src/routes/stack/+page.svelte', import.meta.url), 'utf8');
   const partners = readFileSync(new URL('../src/routes/partners/+page.svelte', import.meta.url), 'utf8');
-  assert.match(home, /you own commissioned deliverables under your agreement, except reusable provider tools/);
+  assert.match(home, /you own commissioned deliverables under your agreement\. Reusable provider tools remain licensed/);
   assert.match(home, /You keep the agreed code, tests, instructions and project history/);
   assert.match(stack, /Your project keeps its data, code, tool definitions, instructions, tests, and recovery guide/);
   assert.match(stack, /A different model must pass the relevant checks before you switch/);
@@ -181,29 +181,29 @@ test('public agency surfaces explain ownership and provider roles', () => {
 test('the builder-facing homepage retains commercial terms, film evidence and direct inspection links', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
   const salesHome = readFileSync(new URL('../src/lib/components/AgencySalesHome.svelte', import.meta.url), 'utf8');
-  const content = readFileSync(new URL('../src/lib/content/agency-home.html', import.meta.url), 'utf8');
+  const content = readFileSync(new URL('../src/lib/content/agency-story-home.html', import.meta.url), 'utf8');
   const films = readFileSync(new URL('../src/lib/components/films/FilmCollection.svelte', import.meta.url), 'utf8');
   const registry = readFileSync(new URL('../src/lib/data/filmStories.ts', import.meta.url), 'utf8');
   const services = readFileSync(new URL('../src/routes/services/+page.svelte', import.meta.url), 'utf8');
   assert.match(home, /<AgencySalesHome/);
-  assert.match(salesHome, /import content from '\$lib\/content\/agency-home\.html\?raw'/);
+  assert.match(salesHome, /import rawContent from '\$lib\/content\/agency-story-home\.html\?raw'/);
   assert.match(salesHome, /\{@html content\}/);
-  assert.match(content, /AI-native Technical support/);
-  assert.match(content, /Put AI to work\./);
+  assert.match(content, /We connect your tools and make AI systems for your team/);
+  assert.match(content, /Connect AI to<br>your tools\./);
   assert.match(content, /under your agreement/);
-  assert.match(content, /One agreed workstream/);
+  assert.match(content, /One workstream\. One milestone per month/);
   assert.match(content, /production incident response need separate agreements/);
-  assert.match(content, /\$900<span>\/month/);
-  assert.match(content, /\$2,500<span>\/month/);
-  assert.match(content, /href="#plans"/);
+  assert.match(content, /Focused · \$900\/month/);
+  assert.match(content, /Team · \$2,500\/month/);
+  assert.match(content, /id="plans"/);
   assert.match(content, /href="\/book\?source=agency&intent=workflow-mapping&lane=workflow_infrastructure"/);
   assert.match(content, /You approve the budget first/);
   assert.match(content, /href="\/services"/);
-  assert.match(content, /href="https:\/\/www\.maverickx\.com\/"/);
-  assert.match(content, /href="\/films\/websites\/reference\.png"/);
-  assert.match(content, /href="\/products#cato-tour"/);
-  assert.match(content, /not evidence of client adoption of OpenAI tools/);
-  assert.match(content, /Illustrative example<br>Not a client delivery/);
+  assert.match(content, /href="\/case-studies\/webflow-marketplace"/);
+  assert.match(content, /independently of CREATE SOMETHING/);
+  assert.match(content, /src="\/films\/webflow-marketplace\/overview\.mp4"/);
+  assert.match(content, /Illustrative example/);
+  assert.match(content, /Recorded interfaces and test replays/);
   assert.match(services, /Control starts at \$900\/month/);
   assert.match(registry, /Your next step, already prepared/);
   assert.match(registry, /tools and workflows that help agents do useful work/);
@@ -221,12 +221,15 @@ test('commercial decision routes explain the task, delivery, ownership, and proo
   const layout = read('+layout.svelte');
   assert.match(layout, /label: 'Technical Support', href: '\/services'/);
   assert.match(layout, /label: 'What You Keep', href: '\/stack'/);
-  const homeContent = readFileSync(new URL('../src/lib/content/agency-home.html', import.meta.url), 'utf8');
-  assert.match(homeContent, /Agree the scope, then build and test a useful workflow together/);
-  assert.match(homeContent, /Your team keeps approval authority/);
+  const homeContent = readFileSync(new URL('../src/lib/content/agency-story-home.html', import.meta.url), 'utf8');
+  assert.match(homeContent, /We connect your tools and make AI systems for your team/);
+  assert.match(homeContent, /We connect the form<br>to your team/);
+  assert.match(homeContent, /You approve the change/);
   assert.match(read('services/+page.svelte'), /Bring a workflow, software problem or existing product/);
   assert.match(read('services/+page.svelte'), /Your team keeps approval authority/);
-  assert.match(read('services/+page.svelte'), /one agreed workstream/);
+  // Plan detail is consolidated in the component rendered by Services.
+  assert.match(read('services/+page.svelte'), /<MembershipOffer \/>/);
+  assert.match(readFileSync(new URL('../src/lib/components/MembershipOffer.svelte', import.meta.url), 'utf8'), /Choose Focused for one agreed workstream or Team for up to two/);
   assert.match(read('services/+page.svelte'), /Managed Control starts at \$900\/month/);
   assert.match(read('products/+page.svelte'), /Map and Control are subscriptions/);
   assert.match(read('products/+page.svelte'), /Control includes Map/);
@@ -241,7 +244,6 @@ test('public Agency commercial propositions declare the shared editorial express
     'stack',
     'control',
     'products',
-    'products/ground',
     'products/loom',
     'field-reports',
     'field-reports/template-review',
@@ -352,14 +354,21 @@ test('commercial conversion handoffs use editorial propositions while task surfa
     const openings = conversionHandoffOpenings(source);
 
     if (!route) {
-      const content = readFileSync(new URL('../src/lib/content/agency-home.html', import.meta.url), 'utf8');
+      const content = readFileSync(new URL('../src/lib/content/agency-story-home.html', import.meta.url), 'utf8');
       assert.match(source, /<AgencySalesHome/);
       assert.match(content, /id="plans"/);
-      assert.match(content, /Discuss Focused/);
-      assert.match(content, /Discuss Team/);
-      assert.match(content, /href="\/contact\?source=membership&amp;intent=membership/);
+      assert.match(content, /Focused · \$900/);
+      assert.match(content, /Team · \$2,500/);
+      assert.match(content, /href="\/book\?source=agency&intent=workflow-mapping&lane=workflow_infrastructure"/);
       assert.match(content, /id="next"/);
       assert.equal(openings.length, 0, 'homepage owns its native plan and conversational conversion sections');
+      continue;
+    }
+    if (route === 'products/ground') {
+      assert.match(source, /class="ground-handoff"/);
+      assert.match(source, /data-performance-chapter="continuation"/);
+      assert.match(source, /Install Ground from npm/);
+      assert.match(source, /codebase operator reviews the finding/);
       continue;
     }
     if (route === 'about') {
@@ -407,6 +416,13 @@ test('commercial conversion handoffs use editorial propositions while task surfa
     );
     const openings = conversionHandoffOpenings(source);
 
+    if (route === 'products/ground') {
+      assert.match(source, /class="ground-handoff"/);
+      assert.match(source, /data-performance-chapter="continuation"/);
+      assert.match(source, /Install Ground from npm/);
+      assert.match(source, /codebase operator reviews the finding/);
+      continue;
+    }
     if (route === 'about') {
       assert.match(source, /class="letter-signoff"/);
       assert.match(source, /href="\/book"/);
@@ -451,12 +467,12 @@ test('the Practice argument is editorial while its operating artifacts stay fiel
 test('the compact homepage preserves buying boundaries and detailed destinations', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
   const offer = readFileSync(new URL('../src/lib/components/MembershipOffer.svelte', import.meta.url), 'utf8');
-  const content = readFileSync(new URL('../src/lib/content/agency-home.html', import.meta.url), 'utf8');
-  assert.match(content, /which records can be read, which actions can run, and which need approval/);
+  const content = readFileSync(new URL('../src/lib/content/agency-story-home.html', import.meta.url), 'utf8');
+  assert.match(content, /You approve the change/);
   assert.match(home, /production incident response need separate agreements/);
-  assert.match(home, /AI development, testing and production usage, hosting and third-party services are budgeted separately/);
+  assert.match(home, /We budget project-specific AI development, testing, production usage, hosting and third-party services separately/);
   assert.match(home, /You approve the budget first/);
-  assert.match(content, /If usage cannot be confirmed, pause for review/);
+  assert.match(content, /Managed Control is a separate service/);
   assert.match(home, /Cancel before your next renewal/);
   assert.match(offer, /href="\/services"/);
   assert.match(offer, /href="\/stack"/);
@@ -466,11 +482,10 @@ test('the compact homepage preserves buying boundaries and detailed destinations
 
 test('the homepage has one FAQ and avoids redundant standalone explanations', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
-  const content = readFileSync(new URL('../src/lib/content/agency-home.html', import.meta.url), 'utf8');
+  const content = readFileSync(new URL('../src/lib/content/agency-story-home.html', import.meta.url), 'utf8');
   assert.match(home, /<AgencySalesHome/);
-  assert.equal((content.match(/class="cc-faq"/g) ?? []).length, 1);
-  assert.match(content, /<details class="cc-disclosure"><summary>Before we begin/);
-  const faq = content.match(/<div class="cc-faq">([\s\S]*?)<\/div><\/details>/)?.[1] ?? '';
+  assert.equal((content.match(/class="chapter cc-faq"/g) ?? []).length, 1);
+  const faq = content.match(/<section class="chapter cc-faq"[^>]*>([\s\S]*?)<\/section>/)?.[1] ?? '';
   assert.equal((faq.match(/<details>/g) ?? []).length, 5);
   for (const question of ['What needs a separate agreement?', 'What costs extra?', 'Who delivers the service?', 'What does our team keep?', 'Can we cancel?']) {
     assert.ok(faq.includes(`<summary>${question}</summary>`), `native FAQ must retain ${question}`);
@@ -479,7 +494,7 @@ test('the homepage has one FAQ and avoids redundant standalone explanations', ()
   assert.match(faq, /You approve the budget first/);
   const visibleFaq = [...faq.matchAll(/<details><summary>(.*?)<\/summary>([\s\S]*?)<\/details>/g)].map(([, question, answer]) => ({
     question,
-    answer: [...answer.matchAll(/<p>([\s\S]*?)<\/p>/g)]
+    answer: [...answer.matchAll(/<p(?:\s[^>]*)?>([\s\S]*?)<\/p>/g)]
       .map(([, paragraph]) => paragraph.replace(/<[^>]*>/g, ''))
       .join(' ')
   }));

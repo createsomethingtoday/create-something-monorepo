@@ -5,6 +5,7 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-07-12",
   "compatibility_flags": ["nodejs_compat"],
+  "vars": { "AGENT_DECISION_MODE": "shadow" },
   "d1_databases": [
     {
       "binding": "AGENT_RUNTIME_DB",

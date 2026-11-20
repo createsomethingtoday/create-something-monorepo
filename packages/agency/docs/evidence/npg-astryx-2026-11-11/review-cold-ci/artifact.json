@@ -1,0 +1,20 @@
+{
+  "artifacts": [
+    {
+      "path": "/npg-chat/assets/main-qaMUh4q_.js",
+      "bytes": 847960,
+      "sha256": "e8cc10f082fed30fe64db24bff5d23bc5b8a67af21fab13548cbfc3b1c58062c"
+    },
+    {
+      "path": "/npg-chat/assets/main-Cn_sAb1H.css",
+      "bytes": 296293,
+      "sha256": "ca14eb7b580354f63383d50eadbb4660818819f4cd51b4b4f8185ba79355d263"
+    }
+  ],
+  "unchangedFrom": "../review-css-contract/artifact.json",
+  "coldPrepare": "SvelteKit config absent; dependency outputs otherwise warm",
+  "verifiedOutputs": [
+    "packages/canon/dist/styles/tokens.css",
+    "packages/auth-platform/dist/index.js"
+  ]
+}

@@ -127,7 +127,7 @@ test('the published skills index includes an integrity digest for the public dis
 	assert.equal(skill?.type, 'skill-md');
 	assert.match(skill?.description ?? '', /bounded workflow mapping/i);
 	assert.equal(skill?.url, 'https://createsomething.agency/agent-skills/create-something-public-discovery/SKILL.md');
-	assert.equal(skill?.digest, 'sha256:1d4d71005e1fadb3c5df015e74c041ec1818a7220d2ca65625f1ddabefa7ce7c');
+	assert.equal(skill?.digest, 'sha256:f120272b7667f5aaae1b46db91f2d7b6867d1c47c44f6d9ea742aefbffa64a9e');
 	const artifact = await readFile(
 		new URL('../static/agent-skills/create-something-public-discovery/SKILL.md', import.meta.url)
 	);

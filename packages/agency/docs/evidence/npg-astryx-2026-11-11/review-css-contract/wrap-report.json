@@ -1,0 +1,36 @@
+[
+  {
+    "name": "newlines long link and full JSON at 320",
+    "passed": true,
+    "size": {
+      "width": 264,
+      "client": 264,
+      "scroll": 264,
+      "whiteSpace": "pre-wrap"
+    }
+  },
+  {
+    "name": "newlines long link and full JSON at 390",
+    "passed": true,
+    "size": {
+      "width": 334,
+      "client": 334,
+      "scroll": 334,
+      "whiteSpace": "pre-wrap"
+    }
+  },
+  {
+    "name": "newlines long link and full JSON at 1440",
+    "passed": true,
+    "size": {
+      "width": 271,
+      "client": 271,
+      "scroll": 271,
+      "whiteSpace": "pre-wrap"
+    }
+  },
+  {
+    "name": "noJS directly viewed capture",
+    "passed": true
+  }
+]

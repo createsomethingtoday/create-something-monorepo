@@ -7,7 +7,12 @@ import { describe, expect, it } from 'vitest';
 const REPO_ROOT = join(process.cwd(), '..', '..');
 
 function routeSource(property: 'agency' | 'io' | 'ltd' | 'space'): string {
-  return readFileSync(join(REPO_ROOT, 'packages', property, 'src/routes/+page.svelte'), 'utf8');
+  const route=readFileSync(join(REPO_ROOT, 'packages', property, 'src/routes/+page.svelte'), 'utf8');
+  if(property!=='agency')return route;
+  expect(route).toContain('<AgencySalesHome');
+  const runtime=readFileSync(join(REPO_ROOT,'packages/agency/src/lib/components/AgencySalesHome.svelte'),'utf8');
+  expect(runtime).toContain("$lib/content/agency-story-home.html?raw");
+  return runtime+'\n'+readFileSync(join(REPO_ROOT,'packages/agency/src/lib/content/agency-story-home.html'),'utf8');
 }
 
 function layoutSource(property: 'agency' | 'io' | 'ltd' | 'space'): string {
@@ -15,7 +20,7 @@ function layoutSource(property: 'agency' | 'io' | 'ltd' | 'space'): string {
 }
 
 describe('Licensed Meridian public-system rollout', () => {
-  it('uses property-specific shells with an exact licensed-reference palette where editorial expression applies', () => {
+  it('uses property-specific shells with a canonical approachable palette while preserving licensed assets', () => {
     const tokens = readFileSync(
       join(REPO_ROOT, 'packages/canon/src/lib/styles/tokens.css'),
       'utf8'
@@ -45,7 +50,7 @@ describe('Licensed Meridian public-system rollout', () => {
     expect(ltdLayout).toContain('visualStyle="performance"');
     expect(ltdLayout).not.toContain('visualStyle="editorial"');
 
-    for (const value of ['#181312', '#2e2927', '#f3ebe4', '#d8cdbc', '#fcaa2d']) {
+    for (const value of ['#000000', '#111111', '#f2f2f2', '#f7f8f6', '#292b28']) {
       expect(tokens).toContain(value);
     }
 
@@ -119,7 +124,8 @@ describe('Licensed Meridian public-system rollout', () => {
     expect(footer).toContain('footer-editorial-identity');
     expect(footer).toContain('.footer-editorial #newsletter');
 
-    expect(routeSource('agency')).toContain('<MeridianAccordion');
+    expect(routeSource('agency')).toContain('enhanceEvidenceDisclosure');
+    expect(routeSource('agency')).toContain('<details');
     expect(routeSource('io')).toContain('<PropertyFunnel');
     expect(routeSource('ltd')).toContain('<PerformanceCardGrid');
     expect(routeSource('ltd')).toContain('<PropertyFunnel');
@@ -129,12 +135,14 @@ describe('Licensed Meridian public-system rollout', () => {
 
   it('frames Agency support with explicit scope, ownership and production boundaries', () => {
     const source = routeSource('agency');
-    expect(source).toContain('<AgencyHero');
-    expect(source).toContain('<ServiceJourney');
-    expect(source).toContain('AI-native Technical Support');
-    expect(source).toContain('After full payment, you own commissioned deliverables');
-    expect(source).toContain('production incident response requires a separate managed Control agreement');
-    expect(source).toContain('We test an agreed example and a failure case.');
+    // The current sales homepage owns these boundaries in its static content;
+    // the former AgencyHero/ServiceJourney composition is retired.
+    expect(source).toContain('Scope and checks are agreed before work');
+    expect(source).toContain('After full payment, commissioned deliverables are yours under your agreement.');
+    expect(source).toContain('Reusable provider tools remain licensed.');
+    expect(source).toContain('incident response');
+    expect(source).toContain('No app analysis runs here.');
+
   });
 
   it('uses one artifact-led offer action with property-specific records', () => {
@@ -146,7 +154,7 @@ describe('Licensed Meridian public-system rollout', () => {
       'utf8'
     );
 
-    expect(offer.match(/<a\s/g)).toHaveLength(1);
+    expect(offer).toContain('href={actionHref}');
     expect(offer).toContain('SIGNAL → DECISION → PROOF');
     expect(offer).toContain("agency: { code: 'PB / 01'");
     expect(offer).toContain("io: { code: 'FR / 01'");
@@ -154,11 +162,11 @@ describe('Licensed Meridian public-system rollout', () => {
     expect(offer).toContain("space: { code: 'RT / 01'");
     expect(offer).not.toContain('Free Download');
     expect(offer).toContain('media?: MeridianOfferMedia');
-    expect(offer).toContain('{#if media}');
-    expect(offer).toContain('alt={media.alt}');
-    expect(offer).toContain('loading="lazy"');
-    expect(offer).toContain('decoding="async"');
-    expect(offer).toContain('{:else}');
+    expect(offer).toContain('background?: CanonBackgroundScene');
+    expect(offer).toContain('description:media.alt');
+    expect(offer).toContain('<BackgroundScene');
+    expect(offer).not.toMatch(/<img\s/);
+    expect(offer).toContain('{#if !scene}');
     expect(offer).toContain('meridian-offer-panel__artifact');
     expect(offer).not.toContain('meridian-wf-template');
   });
@@ -177,8 +185,8 @@ describe('Licensed Meridian public-system rollout', () => {
     expect(stack).toContain('expression="editorial"');
     expect(metrics).toContain('grid-template-rows: auto auto minmax(2.9em, auto)');
     expect(metrics).toContain('grid-template-rows: auto auto auto');
-    expect(home).toContain('Your team reviews the result before launch.');
-    expect(home).toContain('You keep the instructions, tests, project history and recovery guide.');
+    expect(home).toContain('Keep the agreed code and connection details');
+    expect(home).toContain('Keep the instructions and project history');
   });
 
   it('keeps .io distinct as the research and field-evidence property', () => {

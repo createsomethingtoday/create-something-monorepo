@@ -310,6 +310,12 @@
   function getMarketplaceSalesSupport(): string {
     if (summary.totalMarketplaceSales === null) return 'source unavailable';
     if (summary.salesSource === 'leaderboard-top-50') return 'across top 50 templates';
+    if (summary.salesSource === 'marketplace-snapshot') {
+      const viaLinks = summary.totalFulfillmentSales;
+      return typeof viaLinks === 'number'
+        ? `all templates · ${viaLinks.toLocaleString()} through fulfillment links`
+        : 'across all templates';
+    }
     return 'across active categories';
   }
 
@@ -795,7 +801,7 @@
     <section class="leaderboard-section">
       <h3 class="section-title">
         Top Performers (30d)
-        <span class="section-subtitle">Rolling 30-day window</span>
+        <span class="section-subtitle">Rolling 30-day window · includes fulfillment-link sales</span>
       </h3>
       <div class="leaderboard-grid">
         {#each leaderboard.slice(0, 5) as template, index (getLeaderboardKey(template, index))}
@@ -824,9 +830,15 @@
                   <span class="metric-label">Sales (30d)</span>
                   <span class="metric-value">{template.totalSales30d.toLocaleString()}</span>
                 </div>
+                {#if template.isUserTemplate && template.fulfillmentSales30d}
+                  <div class="metric-row">
+                    <span class="metric-label">Through fulfillment links</span>
+                    <span class="metric-value">{template.fulfillmentSales30d.toLocaleString()}</span>
+                  </div>
+                {/if}
                 {#if template.isUserTemplate && template.totalRevenue30d}
                   <div class="metric-row">
-                    <span class="metric-label">Revenue</span>
+                    <span class="metric-label" title="Fulfillment-link sales are counted at list price">Revenue (list price)</span>
                     <span class="metric-value revenue"
                       >${template.totalRevenue30d.toLocaleString()}</span
                     >

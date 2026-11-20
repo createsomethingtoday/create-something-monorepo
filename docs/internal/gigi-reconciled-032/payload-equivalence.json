@@ -1,0 +1,46 @@
+{
+  "passed": true,
+  "sourceSha": "62f826073e6b8494de45fdffcfdd40c5c287b4c7",
+  "originalMainSha256": "50358029e8ac12934a90943612ee90c3f79a9267b84e4c5f2b2300962f6da725",
+  "nonMachOFilesUnchanged": 10,
+  "notarizationTicketAdded": [
+    "Contents/CodeResources"
+  ],
+  "macho": [
+    {
+      "path": "Contents/MacOS/gigi",
+      "signatureOnlyChange": true,
+      "normalizedNonSignatureSha256": "469031cf66bc4dd30739956c7160ed8b6bdfc5762111f857e75fd5d1ae666a3d"
+    },
+    {
+      "path": "Contents/MacOS/gigi-mcp",
+      "signatureOnlyChange": true,
+      "normalizedNonSignatureSha256": "c00cde7696c7bbe59dad8c139e00026c18df363211ec93c9a720714d8f9f1142"
+    },
+    {
+      "path": "Contents/Resources/gigi-codex",
+      "signatureOnlyChange": true,
+      "normalizedNonSignatureSha256": "52b6f56b3f289ad29f4b12e009452de857c469d8f43dba9967e8d5c7bc93b739"
+    },
+    {
+      "path": "Contents/Resources/libgigi_notifications.dylib",
+      "signatureOnlyChange": true,
+      "normalizedNonSignatureSha256": "f56a25dd03efce5597e1b72097c47cbfbc2bef546487d7cb9ab48f3a720dc499"
+    },
+    {
+      "path": "Contents/Resources/gigi-mcp",
+      "signatureOnlyChange": true,
+      "normalizedNonSignatureSha256": "0bb73ea54ac95b7e63c09a277eb0cc6af86d16b3836ba0614538ba03400b9012"
+    },
+    {
+      "path": "Contents/Resources/ctx",
+      "upstreamBytesUnchanged": true
+    },
+    {
+      "path": "Contents/Resources/gigi-integrations",
+      "signatureOnlyChange": true,
+      "normalizedNonSignatureSha256": "abdc9c1186f34eeef90b395ccc247e05c0d658062a91d44d1e2b433508f2bf44"
+    }
+  ],
+  "method": "Compare all Mach-O pre-signature bytes; normalize only LINKEDIT vmsize/filesize and LC_CODE_SIGNATURE datasize. Signature offset and all other pre-signature bytes match. Compare all other files except signature resources and allowed stapled ticket."
+}

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import {
     Button,
     PerformanceCardGrid,
@@ -229,6 +230,7 @@
   {faqItems}
 />
 
+<AgencyHeroFrame>
 <PerformancePageSection
   variant="hero"
   layout="split"
@@ -256,6 +258,7 @@
     />
   {/snippet}
 </PerformancePageSection>
+</AgencyHeroFrame>
 
 <PerformanceNarrativeStage
   id="business-pilot-story"

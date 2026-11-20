@@ -491,8 +491,6 @@ model_config:
 
     - template_review_get_review_context
 
-    - template_review_resolve_reference_urls
-
     - template_review_get_metrics
 
     - template_review_get_field_map
@@ -595,12 +593,13 @@ model_config:
     text, or utility links that point to unrelated pages.
 
 
-    For reviewer confirmation, retrieve the Preview URL separately with
-    template_review_resolve_reference_urls using whichever identifier is
-    available from {{version_id}}, {{asset_id}}, {{published_url}}, or
-    {{reference_url}}. Do not use the Preview URL as automated-analysis input
-    during normal reviews. If multiple URL matches are returned, share the
-    selected match and note the duplicate count.
+    For reviewer confirmation, read the Preview URL from the asset record: when
+    only {{version_id}} is known, call template_review_get_version to get its
+    asset ID, then call template_review_get_asset and use previewSiteUrl. When
+    only {{published_url}} or {{reference_url}} is known, locate the asset with
+    template_review_search_assets by template name first. Do not use the Preview
+    URL as automated-analysis input during normal reviews. If more than one
+    asset matches, share the selected match and note the duplicate count.
 
 
     Do not use Designer extraction, extract_designer_metadata,

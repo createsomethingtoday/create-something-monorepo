@@ -61,6 +61,8 @@ The worker presents one inline `📝 FULL TRANSCRIPT` section with timestamp hea
 
 The additive `transcript_inline_projection` D1 table tracks owned IDs and pending writes. Unknown writes without a verified receipt fail closed. Normal deliveries do not convert existing untracked pages. Archived-page replacement requires explicit replay. See [PRESENTATION_REMEDY.md](PRESENTATION_REMEDY.md) for the repair boundary and provider acceptance plan.
 
+Fresh, corrected, and explicitly replayed transcripts use `indexed-transcript-pages-v2`: one compact index page with ordered canonical child pages. Their originals remain in Source archive. Unchanged scheduled checks retain their persisted archive-v2 or pages-v1 format. Verification hashes the exact index format with the original and canonical text; see [the format-aware verifier contract](READINESS.md#verification-contract).
+
 The optional [readiness and retrieval gate](READINESS_GATE.md) adds generation-aware publication tokens for managed pages. Production activation requires isolated native-agent acceptance. It preserves the inline reading experience and existing human-review flags.
 
 ## Select one rendition

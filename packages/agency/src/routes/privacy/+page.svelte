@@ -1,30 +1,34 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import AgencyLegalContent from '$lib/components/AgencyLegalContent.svelte';
+  import AgencyLegalPage from '$lib/components/AgencyLegalPage.svelte';
   import { PerformancePageSection, PrivacyPolicyContent, SEO } from '@create-something/canon';
 </script>
 
 <SEO
   title="Privacy Policy"
-  description="How CREATE SOMETHING collects, uses, and protects your data. We use Cloudflare only—no Google, no Meta. Session data: 7 days. Analytics: 90 days. Full control over your data."
+  description="How CREATE SOMETHING Agency uses first-party analytics and optional Meta marketing. Choose each separately and change your preferences at any time."
   propertyName="agency"
   noindex={true}
 />
 
+<AgencyLegalPage>
+<AgencyHeroFrame compact={true}>
 <PerformancePageSection
   variant="hero"
   expression="editorial"
   titleLevel="h1"
   eyebrow="Privacy"
-  title="First-party analytics, no ad pixels."
-  description="We measure how the site works and how people find our services. We do not sell browsing behavior or install ad-network trackers."
->
-  {#snippet after()}
-    <AgencyLegalContent>
+  title="Your data. Your privacy choices."
+  description="First-party analytics and Meta marketing are separate choices. Meta marketing stays off unless you allow it. You can change either choice at any time."
+/>
+</AgencyHeroFrame>
+<AgencyLegalContent sectionNavigation>
       <PrivacyPolicyContent
         property="agency"
         domain="createsomething.agency"
-        lastUpdated="January 29, 2026"
+        lastUpdated="November 5, 2026"
       />
-    </AgencyLegalContent>
-  {/snippet}
-</PerformancePageSection>
+</AgencyLegalContent>
+
+</AgencyLegalPage>

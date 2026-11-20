@@ -49,6 +49,49 @@ class TestContentAgent:
         assert "Voice Canon" in agent.system_prompt
         assert "voice-canon" in agent.config.skills
 
+    def test_content_prompt_preserves_unknowns_without_invented_metrics(self) -> None:
+        from agents.content_agent import create_content_agent
+
+        agent = create_content_agent(
+            task="Build passed; deployment pending; costs unknown.",
+            content_type="documentation",
+            property="agency",
+        )
+        prompt = agent.system_prompt.lower()
+        assert "every claim must be measurable" not in prompt
+        assert "evidence or an honest limit" in prompt
+        assert "inclusive" in prompt
+        assert "verification" in prompt
+        assert "create-something-voice.md" in prompt
+        assert "human final read" in prompt
+
+    def test_paper_prompt_uses_evidence_without_numeric_quota(self) -> None:
+        from agents.paper_agent import SYSTEM_PROMPT
+
+        voice = SYSTEM_PROMPT.split("## Voice Canon", 1)[1].split("## CRITICAL:", 1)[0]
+        assert "create-something-voice.md" in voice
+        assert "evidence or an honest limit" in voice
+        assert "qualitative or quantitative" in voice
+        assert "verification status" in voice
+        assert "human final read" in voice
+
+    @pytest.mark.parametrize("content_type", ["paper", "experiment"])
+    def test_paper_task_has_no_numeric_quota(self, monkeypatch, tmp_path, content_type) -> None:
+        from agents import paper_agent
+
+        monkeypatch.setattr(paper_agent, "get_issue_details", lambda *_: {
+            "title": "Qualitative findings", "description": "No metrics were measured.", "labels": []
+        })
+        agent = paper_agent.create_paper_agent(paper_agent.PaperConfig(
+            issue_id="CRE-123", content_type=content_type, monorepo_path=tmp_path
+        ))
+        assembled = (agent.system_prompt + agent.config.task).lower()
+        assert "minimum 4 metrics" not in assembled
+        assert "minimum 4 stat metrics" not in assembled
+        assert "comparison with specific numbers" not in assembled
+        assert "outcome** - measurable result" not in assembled
+        assert "use metrics only when supported" in assembled
+
     def test_content_agent_types(self) -> None:
         """Test different content types load different skills."""
         from agents.content_agent import create_content_agent

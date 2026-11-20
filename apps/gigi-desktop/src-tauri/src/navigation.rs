@@ -20,6 +20,7 @@ fn help_url(topic:&str)->Result<&'static str,String>{
  match topic {
   "codex-setup"=>Ok("https://learn.chatgpt.com/docs/codex/cli"),
   "claude-setup"=>Ok("https://code.claude.com/docs/en/quickstart"),
+  "codex-phone"=>Ok("codex://settings/connections/computer"),
   "codex-remote"=>Ok("https://learn.chatgpt.com/docs/remote-connections"),
   "claude-remote"=>Ok("https://code.claude.com/docs/en/remote-control"),
   _=>Err("Unknown setup guide".into())
@@ -38,6 +39,7 @@ mod help_tests {
  fn help_topics_can_only_open_reviewed_provider_guides() {
   assert_eq!(help_url("codex-setup").unwrap(),"https://learn.chatgpt.com/docs/codex/cli");
   assert_eq!(help_url("claude-setup").unwrap(),"https://code.claude.com/docs/en/quickstart");
+  assert_eq!(help_url("codex-phone").unwrap(),"codex://settings/connections/computer");
   assert_eq!(help_url("codex-remote").unwrap(),"https://learn.chatgpt.com/docs/remote-connections");
   assert_eq!(help_url("claude-remote").unwrap(),"https://code.claude.com/docs/en/remote-control");
   for value in ["https://evil.invalid", "file:///tmp/a", "codex-setup?token=x", ""] { assert!(help_url(value).is_err()); }

@@ -1,8 +1,11 @@
+import { defaults } from './preferences.mjs';
 import { approvalCopy, approvalAction, creativeReceipt } from './approval-view.mjs';
 
 const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const sessionItems = (value) => Array.isArray(value) ? value : Array.isArray(value?.sessions) ? value.sessions : [];
-const pollLimit = 120;
+// Preserve eight minutes of scheduled observation as streaming cadence changes.
+const pollInterval = 250;
+const pollLimit = (8 * 60 * 1000) / pollInterval;
 const uncertainOutcomes = new Set(['reconciliation_required', 'write_outcome_unknown', 'turn_outcome_unknown']);
 const unresolvedSave = 'GiGi cannot yet confirm whether this save completed. Do not recreate the record or submit another change. Choose Check status to check again. If this message remains, ask for help resolving the saved request.';
 const explanations = {
@@ -11,9 +14,9 @@ const explanations = {
   provider_preflight_unavailable: 'Your provider could not start this request. No message was sent; try again when it is available.',
   provider_preflight_rejected: 'Your provider declined the request before a response started. Check its availability, then send again when ready.',
   provider_turn_rejected: 'Your provider declined this request. Check its usage or availability, then send again when ready.',
-  reconciliation_required: 'The last send may have started. Choose Check status and review the latest messages before sending again.',
+  reconciliation_required: 'The last send may have started. Choose Check status. If the outcome remains unknown, open a new chat to inspect your records without repeating this request. Empty messages do not prove that nothing changed.',
   write_outcome_unknown: unresolvedSave,
-  turn_outcome_unknown: 'The last send may have started. Choose Check status and review the latest messages before sending again.',
+  turn_outcome_unknown: 'The last send may have started. Choose Check status. If the outcome remains unknown, open a new chat to inspect your records without repeating this request. Empty messages do not prove that nothing changed.',
   usage_limit_reached: 'Your Codex usage limit is reached. Try again after it resets.',
   usage_limit: 'Your Codex usage limit is reached. Try again after it resets.',
   quota_exceeded: 'Your Codex usage limit is reached. Try again after it resets.',
@@ -29,16 +32,44 @@ function explanation(raw, hasConversation = true) {
 }
 function needsReconciliation(chat) { return chat.current?.decisionReceipt?.outcome === 'unknown' || Boolean(chat.current?.cancelPending || chat.current?.recoveryPending) || uncertainOutcomes.has(chat.error) || uncertainOutcomes.has(chat.current?.error); }
 
+export { renderAnswer } from './answer.mjs';
+import { renderAnswer } from './answer.mjs';
+
+export function chatState(chat) {
+  if(needsReconciliation(chat))return {label:'Outcome needs checking',detail:'Check the saved request before another change.'};
+  if(chat.reading)return {label:'Reading conversation',detail:'Checking saved messages and record state.'};
+  if(chat.current?.state==='approval')return {label:'Waiting for your review',detail:'Nothing in this proposal is approved by a notification.'};
+  if(chat.current?.state==='running' && ['reading','preparing','checking'].includes(chat.current?.activity))return {label:{reading:'Reading local records',preparing:'Preparing a proposal',checking:'Checking the result'}[chat.current.activity],detail:'Observed in this response. Changes still require your review.'};
+  if(chat.pending && chat.current?.state!=='running')return {label:chat.current?'Sending request':'Opening conversation',detail:'Waiting for Codex to accept this request.'};
+  if(chat.current?.state==='running')return {label:chat.current?.cancelPending?'Stopping response':'Responding',detail:'You can leave this drawer and return to your work.'};
+  if(chat.current?.state==='failed' || chat.error)return {label:'Needs another look',detail:'Check status for the latest result.'};
+  if(chat.current?.decisionReceipt?.outcome==='verified')return {label:'Result checked',detail:'GiGi verified the reviewed action. See its receipt below.'};
+  if(chat.current?.state==='interrupted')return {label:'Response interrupted',detail:chat.current.messages?.length ? 'Review the latest messages before continuing.' : chat.current.sendReceipt?.accepted ? 'Your request was accepted, but its messages are unavailable. Acceptance alone does not confirm any saved changes.' : 'Saved messages are unavailable for this response. Inspect your records before repeating a request.'};
+  if(chat.current?.messages?.some(message=>message.role==='assistant'))return {label:'Response ready',detail:'Review the response and its source records.'};
+  return {label:'Ready to help',detail:'Ask a question or choose a starting point.'};
+}
+function suggestions(chat,ready) {
+  if(!ready || chat.pending || chat.reading || needsReconciliation(chat) || ['running','approval'].includes(chat.current?.state))return '';
+  const options=chat.record ? [
+    ['Summarize this record','Summarize this record and its linked work. Point out missing information without inventing details.'],
+    ['Find the next step','What is the next useful step for this record? Explain what it is based on and ask before making changes.']
+  ] : [
+    ['Help me plan today','Review my saved tasks and upcoming work. Suggest what needs my attention today, with links to the source records.'],
+    ['Find unfinished work','Find unfinished work in my workspace. Explain what is known, what is missing, and how you can help.']
+  ];
+  return `<section class="chat-suggestions" aria-label="Starting points"><p>Choose a starting point. Nothing is sent until you choose Send.</p><div class="inline-actions">${options.map(([label,prompt])=>`<button type="button" class="btn" data-chat-prompt="${escape(prompt)}">${escape(label)}</button>`).join('')}</div></section>`;
+}
+
 export class ChatController {
   constructor(bridge, workspaceId, changed, completed, schedule = (callback, delay) => globalThis.setTimeout(callback, delay), clear = (timer) => globalThis.clearTimeout(timer)) {
     this.bridge = bridge; this.workspaceId = workspaceId; this.changed = changed; this.completed = completed;
     this.schedule = schedule; this.clear = clear; this.visible = false; this.status = null;
     this.verifiedWorkspaceEdits = new Set(); this.sessions = []; this.current = null; this.record = null; this.startRecord = null; this.draft = ''; this.error = null;
     this.pending = false; this.reading = false; this.refreshRequired = false; this.drafts = new Map(); this.unconfirmedSends = new Map();
-    this.timer = null; this.epoch = 0; this.pollCount = 0; this.opening = false;
+    this.timer = null; this.observationPaused = false; this.epoch = 0; this.pollCount = 0; this.opening = false;
   }
   emit() { this.changed(); }
-  stopPolling() { if (this.timer != null) this.clear(this.timer); this.timer = null; this.epoch++; }
+  stopPolling() { this.observationPaused = false; if (this.timer != null) this.clear(this.timer); this.timer = null; this.epoch++; }
   close() { this.visible = false; this.refreshRequired = true; this.reading = false; this.stopPolling(); this.emit(); }
   selectSession(sessionId) {
     if (this.current?.sessionId === sessionId) return;
@@ -105,10 +136,13 @@ export class ChatController {
     const previousReceipt = this.current.decisionReceipt;
     const verifiedEdit = result.decisionReceipt?.outcome === 'verified' && (previousReceipt?.outcome !== 'verified' || previousReceipt.approvalId !== result.decisionReceipt.approvalId);
     const messages = Array.isArray(result.messages) && result.messages.length ? result.messages : this.current.messages;
+    if(result.state !== 'running' && !result.recoveryPending)this.observationPaused=false;
+    this.sessions=this.sessions.map(session=>session.sessionId===result.sessionId?{...session,state:result.state}:session);
     this.current = { ...result, messages }; this.error = result.error || null;
     const unconfirmed = this.unconfirmedSends.get(result.sessionId);
     if (unconfirmed?.sessionId === result.sessionId) {
-      const confirmed = messages.some((message) => message.role === 'user' && !unconfirmed.messageIds.has(message.id) && String(message.text).trim() === unconfirmed.text);
+      const receiptConfirmed = unconfirmed.requestId && result.sendReceipt?.requestId === unconfirmed.requestId && result.sendReceipt?.accepted === true && typeof result.sendReceipt?.turnId === 'string' && result.sendReceipt.turnId.length > 0;
+      const confirmed = receiptConfirmed || messages.some((message) => message.role === 'user' && !unconfirmed.messageIds.has(message.id) && String(message.text).trim() === unconfirmed.text);
       if (confirmed) { if (this.draft.trim() === unconfirmed.text) this.draft = ''; this.unconfirmedSends.delete(result.sessionId); }
       else this.error = result.error || 'turn_outcome_unknown';
     }
@@ -120,7 +154,7 @@ export class ChatController {
   }
   queuePoll() {
     if (!this.visible || this.timer != null || this.pollCount >= pollLimit) {
-      if (this.pollCount >= pollLimit) { this.error = 'The response is still running. Open this session again to check it.'; this.emit(); }
+      if (this.pollCount >= pollLimit) { this.observationPaused = true; this.error = 'The response is still running. Open this session again to check it.'; this.emit(); }
       return;
     }
     const epoch = this.epoch;
@@ -130,9 +164,9 @@ export class ChatController {
       this.pollCount++;
       try { const result = await this.bridge.chatPoll(this.workspaceId, this.current.sessionId); if (epoch === this.epoch && this.visible) this.accept(result); }
       catch (error) { if (epoch === this.epoch) { this.error = String(error?.message || error); this.emit(); } }
-    }, 1000);
+    }, pollInterval);
   }
-  async mutate(task, submittedText = null) {
+  async mutate(task, submittedText = null, requestId = null) {
     this.stopPolling(); this.pending = true; this.error = null; this.emit();
     const sessionId = this.current.sessionId;
     const messageIds = new Set((this.current.messages || []).map((message) => message.id));
@@ -144,7 +178,7 @@ export class ChatController {
         if (submittedText !== null && result.state === 'idle') void this.completed?.(result);
       } else {
         this.refreshRequired = true;
-        if (submittedText !== null) { this.unconfirmedSends.set(sessionId, { sessionId, text: submittedText, messageIds }); this.error = 'turn_outcome_unknown'; }
+        if (submittedText !== null) { this.unconfirmedSends.set(sessionId, { sessionId, text: submittedText, messageIds, requestId }); this.error = 'turn_outcome_unknown'; }
       }
     } catch (error) {
       this.error = String(error?.message || error);
@@ -152,7 +186,7 @@ export class ChatController {
       // Transport failures remain uncertain and must never permit automatic replay.
       const definitive = submittedText !== null && ['chatgpt_auth_required', 'codex_unavailable', 'provider_turn_rejected', 'provider_preflight_rejected', 'provider_preflight_unavailable', 'session_not_found', 'plugin_inventory_unavailable', 'gigi_tools_unavailable'].includes(this.error);
       this.refreshRequired = !definitive;
-      if (submittedText !== null && !definitive) this.unconfirmedSends.set(sessionId, { sessionId, text: submittedText, messageIds });
+      if (submittedText !== null && !definitive) this.unconfirmedSends.set(sessionId, { sessionId, text: submittedText, messageIds, requestId });
     }
     finally {
       this.pending = false; this.emit();
@@ -162,7 +196,8 @@ export class ChatController {
   async send(message) {
     const text = String(message ?? '').trim();
     if (!text || !this.visible || this.pending || this.reading || this.refreshRequired || !this.current || !this.status?.available || !this.status?.authenticated || needsReconciliation(this) || this.current.state === 'running' || this.current.state === 'approval') return;
-    await this.mutate((sessionId) => this.bridge.chatSend(this.workspaceId, sessionId, text), text);
+    const requestId = globalThis.crypto.randomUUID();
+    await this.mutate((sessionId) => this.bridge.chatSend(this.workspaceId, sessionId, text, requestId), text, requestId);
   }
   async cancel() {
     if (!this.visible || !this.current || this.pending || this.reading || this.refreshRequired || this.current.state !== 'running' || needsReconciliation(this)) return;
@@ -187,13 +222,16 @@ export function chatView(chat, innerOnly = false) {
   const failureNote = uncertain ? (current?.decisionReceipt?.outcome === 'unknown' || current?.error === 'write_outcome_unknown' || chat.error === 'write_outcome_unknown' ? unresolvedSave : 'Check the latest conversation before sending another message.') : 'This response failed. Choose Check status to check its state.';
   const failedMarkup = `<p class="chat-error">${failureNote}</p>`;
   const context = chat.record ? `<span class="chat-context">About ${escape(chat.record.title || `${chat.record.entity} · ${chat.record.id}`)}</span>` : '<span class="chat-context">Workspace</span>';
-  const messages = (current?.messages || []).map((item) => `<div class="chat-message ${item.role === 'user' ? 'from-user' : 'from-agent'}"><span class="chat-message-label">${item.role === 'user' ? 'You' : 'GiGi'}</span><p>${escape(item.text)}</p></div>`).join('');
+  const messages = (current?.messages || []).map((item) => `<div data-chat-message-id="${escape(item.id)}" class="chat-message ${item.role === 'user' ? 'from-user' : 'from-agent'}"><span class="chat-message-label">${item.role === 'user' ? 'You' : 'GiGi'}</span><div class="chat-answer">${item.role === 'user' ? `<p>${escape(item.text)}</p>` : renderAnswer(item.text)}</div></div>`).join('');
   const approvals = current?.state === 'approval' ? (current.approvals || []).map((item) => `<div class="chat-approval">${approvalCopy(item, typeof chat.currency === 'function' ? chat.currency() : chat.currency, typeof chat.currencyKnown === 'function' ? chat.currencyKnown() : chat.currencyKnown !== false)}<div class="inline-actions"><button class="btn primary" data-chat-approval="${escape(item.id)}" data-chat-decision="approve" ${chat.pending || chat.reading || chat.refreshRequired || uncertain || !ready ? 'disabled' : ''}>${escape(approvalAction(item))}</button><button class="btn danger" data-chat-approval="${escape(item.id)}" data-chat-decision="reject" ${chat.pending || chat.reading || chat.refreshRequired || uncertain || !ready ? 'disabled' : ''}>Reject changes</button></div></div>`).join('') : '';
   const receiptText = creativeReceipt(current?.decisionReceipt) || { verified: 'Changes saved and verified in GiGi.', rejected: 'Changes rejected. GiGi did not execute this edit.', failed: 'The requested edit was not saved.', existing: 'A linked record already exists. No new record was created; your existing changes were kept.', unknown: unresolvedSave }[current?.decisionReceipt?.outcome];
   const receipt = receiptText ? `<p class="chat-status" role="status"><strong>Last reviewed action</strong> ${escape(receiptText)}</p>` : '';
   const links = (current?.recordLinks || []).map((item) => `<button type="button" class="btn text chat-record-link" data-chat-link-entity="${escape(item.entity)}" data-chat-link-id="${escape(item.id)}">${escape(item.title || item.id)} ↗</button>`).join('');
   const sessions = chat.sessions.map((item) => `<button type="button" class="chat-session" data-chat-session="${escape(item.sessionId)}" ${chat.pending ? 'disabled' : ''} ${item.sessionId === current?.sessionId ? 'aria-current="true"' : ''}><span>${escape(item.title || item.record?.title || 'Conversation')}</span><small>${escape(item.state || '')}</small></button>`).join('');
+  const observed=chatState(chat);
   const recovery = unavailable || chat.error || chat.refreshRequired || uncertain ? `<section class="chat-recovery" aria-label="Chat status and recovery">${unavailable ? `<p class="chat-status" role="status">${escape(unavailable)}</p>` : ''}<div class="inline-actions"><button type="button" class="btn" data-chat-refresh="1" ${chat.pending || chat.reading ? 'disabled' : ''}>${chat.reading ? 'Checking status…' : 'Check status'}</button>${!ready || chat.error === 'gigi_tools_unavailable' ? '<button type="button" class="btn text" data-chat-setup="1">Open chat setup</button>' : ''}</div></section>` : '';
-  const contents = `<div class="chat-intro"><div class="chat-head"><div><p class="eyebrow">Codex · local session</p><h2>Ask GiGi</h2></div><button type="button" class="btn text" data-chat-close="1" aria-label="Close Ask GiGi">Close</button></div><div class="chat-context-row">${context}<span class="chat-presence">${ready ? 'Codex signed in' : chat.status ? 'Unavailable' : 'Checking'}</span></div><p class="chat-scope">Ask about your local work. GiGi asks you to review changes before saving.</p><details class="chat-capabilities"><summary>What Ask GiGi can do</summary><p>Ask about your local workspace and approve edits to existing records. Select an imported email or calendar event to propose a linked local task or gig; review it before saving. Find and organize Your music, choose files to import, and prepare local Instagram drafts. Publishing requires a separate review in Instagram drafts. Other records and links use GiGi’s record controls. Selected record context is included when starting a chat. Phone access is a separate setup step in Settings.</p></details>${recovery}${chat.error && (ready || uncertain) ? `<p class="chat-error" role="alert">${escape(explanation(chat.error, Boolean(current)))}</p>` : ''}<div class="chat-sessions"><div class="chat-section-head"><strong>Conversations</strong><button type="button" class="btn text" data-chat-new="1" ${!ready || chat.pending || chat.reading ? 'disabled' : ''}>New chat</button></div>${sessions || '<p class="muted">No saved conversations yet.</p>'}</div></div><div class="chat-transcript" role="log" aria-label="Conversation" aria-live="polite">${messages || `<p class="chat-empty">${ready ? 'Choose New chat, or open a saved conversation.' : 'Your local records remain available while chat is disconnected.'}</p>`}${approvals}${receipt}${links}${current?.recoveryPending ? '<p class="chat-status" role="status">Checking the previous response…</p>' : current?.state === 'running' ? `<p class="chat-running" role="status">${current.cancelPending ? 'Stopping response…' : 'GiGi is responding…'}</p>` : ''}${current?.state === 'interrupted' && !current.recoveryPending ? `<p class="chat-status">${uncertain ? 'This response was interrupted. Resolve the pending outcome before sending another message.' : 'This response was interrupted. You can send another message.'}</p>` : ''}${current?.state === 'failed' ? failedMarkup : ''}</div>${current ? `<form id="chat-form" class="chat-composer"><label for="chat-message">Message GiGi</label><textarea id="chat-message" name="message" rows="3" maxlength="12000" placeholder="Ask about this ${chat.record ? 'record' : 'workspace'}…" ${!ready ? 'disabled' : ''}>${escape(chat.draft)}</textarea><div class="chat-actions">${current.state === 'running' ? `<button type="button" class="btn danger" data-chat-stop="1" ${chat.pending || chat.reading || chat.refreshRequired || uncertain || !ready ? 'disabled' : ''}>Stop response</button>` : `<button type="submit" class="btn primary" ${!ready || chat.pending || chat.reading || chat.refreshRequired || uncertain || current.state === 'approval' ? 'disabled' : ''}>Send message</button>`}</div></form>` : `<p class="chat-hint">${ready ? 'Choose New chat to begin.' : 'Chat needs a signed-in Codex CLI on this Mac. Local records need no connection.'}</p>`}`;
+  const viewPreferences = chat.preferences || defaults;
+  const viewOptions = `<details class="chat-view-options" data-view-key="chat-view-options"><summary>Chat view</summary><div class="chat-view-fields">${[['chatWidth','Width',[['standard','Standard'],['wide','Wide']]],['chatTextSize','Text size',[['standard','Standard'],['larger','Larger']]],['chatDensity','Spacing',[['comfortable','Comfortable'],['compact','Compact']]]].map(([key,label,options])=>`<label for="chat-${key}">${label}<select id="chat-${key}" data-preference="${key}">${options.map(([value,title])=>`<option value="${value}" ${viewPreferences[key]===value?'selected':''}>${title}</option>`).join('')}</select></label>`).join('')}</div></details>`;
+  const contents = `<div class="chat-intro"><div class="chat-head"><div><p class="eyebrow">Codex · local session</p><h2>Ask GiGi</h2></div><button type="button" class="btn text" data-chat-close="1" aria-label="Close Ask GiGi">Close</button></div><div class="chat-context-row">${context}<span class="chat-presence">${ready ? 'Codex signed in' : chat.status ? 'Unavailable' : 'Checking'}</span></div><p class="chat-scope">Ask about your local work. GiGi asks you to review changes before saving.</p><details class="chat-capabilities"><summary>What Ask GiGi can do</summary><p>Ask about your local workspace and approve edits to existing records. Select an imported email or calendar event to propose a linked local task or gig; review it before saving. Find and organize Your music, choose files to import, and prepare local Instagram drafts. Publishing requires a separate review in Instagram drafts. Other records and links use GiGi’s record controls. Selected record context is included when starting a chat. Phone access is a separate setup step in Settings.</p></details>${recovery}<div class="chat-observed-state" role="status" aria-live="polite" aria-atomic="true" data-state="${current?.state || 'idle'}"><strong>${escape(observed.label)}</strong><span>${escape(observed.detail)}</span></div>${chat.error && (ready || uncertain) ? `<p class="chat-error" role="alert">${escape(explanation(chat.error, Boolean(current)))}</p>` : ''}<div class="chat-conversation-controls"><button type="button" class="btn text" data-chat-new="1" ${!ready || chat.pending || chat.reading ? 'disabled' : ''}>New chat</button><details class="chat-history" data-view-key="chat-history"><summary>Conversations (${chat.sessions.length})</summary><div class="chat-sessions"><div class="chat-section-head"><strong>Saved on this Mac</strong></div>${sessions || '<p class="muted">No saved conversations yet.</p>'}</div></details>${viewOptions}</div></div><div class="chat-transcript" role="region" aria-label="Conversation" tabindex="0" data-chat-session-id="${escape(current?.sessionId || '')}">${messages || `<p class="chat-empty">${ready ? 'Choose New chat, or open a saved conversation.' : 'Your local records remain available while chat is disconnected.'}</p>`}${suggestions(chat,ready)}${approvals}${receipt}${links}${current?.recoveryPending ? '<p class="chat-status">Checking the previous response…</p>' : current?.state === 'running' ? `<p class="chat-running">${current.cancelPending ? 'Stopping response…' : 'GiGi is responding…'}</p>` : ''}${current?.state === 'interrupted' && !current.recoveryPending ? `<p class="chat-status">${uncertain ? 'This response was interrupted. Resolve the pending outcome before sending another message.' : 'This response was interrupted. You can send another message.'}</p>` : ''}${current?.state === 'failed' ? failedMarkup : ''}</div><button type="button" class="btn chat-latest" data-chat-latest="1" hidden>Latest response ↓</button>${current ? `<form id="chat-form" class="chat-composer"><label for="chat-message">Message GiGi</label><textarea id="chat-message" name="message" rows="3" maxlength="12000" placeholder="Ask about this ${chat.record ? 'record' : 'workspace'}…" ${!ready ? 'disabled' : ''}>${escape(chat.draft)}</textarea><div class="chat-actions">${current.state === 'running' ? `<button type="button" class="btn danger" data-chat-stop="1" ${chat.pending || chat.reading || chat.refreshRequired || uncertain || !ready ? 'disabled' : ''}>Stop response</button>` : `<button type="submit" class="btn primary" ${!ready || chat.pending || chat.reading || chat.refreshRequired || uncertain || current.state === 'approval' ? 'disabled' : ''}>Send message</button>`}</div></form>` : `<p class="chat-hint">${ready ? 'Choose New chat to begin.' : 'Chat needs a signed-in Codex CLI on this Mac. Local records need no connection.'}</p>`}`;
   return innerOnly ? contents : `<aside class="chat-panel ${chat.opening ? 'chat-entering' : ''}" aria-label="Ask GiGi">${contents}</aside>`;
 }

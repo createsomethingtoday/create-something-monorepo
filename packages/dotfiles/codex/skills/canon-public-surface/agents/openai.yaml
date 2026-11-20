@@ -1,7 +1,15 @@
 interface:
   display_name: 'Canon Public Surface'
   short_description: 'Research and sharpen public surfaces'
-  default_prompt: 'Use $canon-public-surface to sharpen this CREATE SOMETHING page through Performance Lab, focused proof, and an earned handoff.'
+  default_prompt: 'Use $canon-public-surface to sharpen this page with Mobbin-first research, Performance Lab, focused proof, and an earned handoff.'
+
+dependencies:
+  tools:
+    - type: 'mcp'
+      value: 'mobbin'
+      description: 'Mobbin interaction research; search is read-only, saved writes require a user request'
+      transport: 'streamable_http'
+      url: 'https://api.mobbin.com/mcp'
 
 policy:
   allow_implicit_invocation: true

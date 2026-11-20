@@ -5,10 +5,12 @@
   import { UnifiedSearch } from '@create-something/canon/navigation';
   import { createSearchController, type SearchState } from './controller';
   import { searchCatalog, type SearchCategory } from './catalog';
+  import { agencySearchOpen } from './presentation';
   import { registerSearchTools, type SiteDocument } from './webmcp';
 
   let { showMobileButton = true }: { showMobileButton?: boolean } = $props();
   let open = $state(false);
+  $effect(() => { agencySearchOpen.set(open); });
   let view = $state<SearchState>({ query: '', category: 'all', results: searchCatalog, selectedId: null, status: 'ready', source: 'human', revision: 0 });
   let query = $state('');
   let category = $state<SearchCategory>('all');
@@ -49,7 +51,14 @@
     if (view.status === 'searching') controller.cancel();
     open = false;
     save();
-    previousFocus?.focus();
+    // UnifiedSearch recreates its mobile launcher after the dialog closes.
+    // Wait for that update before restoring a removed launcher's focus.
+    void tick().then(() => {
+      const target = previousFocus?.isConnected
+        ? previousFocus
+        : document.querySelector<HTMLButtonElement>('.mobile-search-button');
+      target?.focus({ preventScroll: true });
+    });
   }
   async function navigate(id: string) {
     if (!view.results.some((entry) => entry.id === id)) return;
@@ -85,9 +94,13 @@
       node.removeEventListener('keydown', keys);
     } };
   }
-  $effect(() => {
+  // Capture the opener before the shared component removes its launcher.
+  $effect.pre(() => {
     if (!mounted || !open) return;
     previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  });
+  $effect(() => {
+    if (!mounted || !open) return;
     void tick().then(() => input?.focus());
   });
   $effect(() => {
@@ -117,7 +130,7 @@
     const openInlineSearch = () => { open = true; };
     window.addEventListener('agency:open-search', openInlineSearch);
     mounted = true;
-    return () => { window.removeEventListener('agency:open-search', openInlineSearch); historyRevision++; cleanup(); controller.dispose(); };
+    return () => { agencySearchOpen.set(false); window.removeEventListener('agency:open-search', openInlineSearch); historyRevision++; cleanup(); controller.dispose(); };
   });
 </script>
 

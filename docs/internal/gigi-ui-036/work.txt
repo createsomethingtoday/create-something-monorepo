@@ -1,0 +1,5 @@
+
+> @create-something/gigi-desktop@0.3.6 test:reconciled-work /Users/createsomething/.t3/worktrees/create-something-monorepo/t3-11220a1a-8ae08ba6a397f4f6/apps/gigi-desktop
+> node scripts/dev-astryx-work-browser.mjs
+
+PASS: React weekly Today and Calm Tasks/Gigs, native task windows and readback, conflict/draft retention, dirty/back, custom status/range preservation, collapsed supporting/payment/artwork, location readback, explicit first-money currency, narrow layout; synthetic only

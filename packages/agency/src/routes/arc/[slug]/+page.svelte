@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import {
     PerformanceNarrativeStage,
     type PerformanceNarrativeScene
@@ -54,7 +55,8 @@
 </svelte:head>
 
 <main class="registry-arc property-performance">
-  <header class="registry-arc__hero">
+  <AgencyHeroFrame>
+<header class="registry-arc__hero">
     <div>
       <a href="/arcs">Arc catalog</a>
       <p>{data.arc.source.kind.replaceAll('-', ' ')} · read only</p>
@@ -80,7 +82,9 @@
       </div>
     </dl>
   </header>
+</AgencyHeroFrame>
 
+  <div id="arc-presentation">
   <PerformanceNarrativeStage
     id={`arc-${data.arc.slug}`}
     eyebrow="Presentation-native operating route"
@@ -123,6 +127,7 @@
       </section>
     {/snippet}
   </PerformanceNarrativeStage>
+  </div>
 
   <section class="registry-arc__contract" aria-labelledby="registry-arc-contract-title">
     <div>

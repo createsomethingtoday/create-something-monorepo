@@ -12,6 +12,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { createLogger } from '@create-something/canon/utils';
 import { recordNewsletterDeliveryReceipt } from '$lib/server/newsletter-delivery-receipt';
+import { recordEditionDeliveryReceipt } from '$lib/server/newsletter-workflow';
 
 const logger = createLogger('NewsletterWebhook');
 
@@ -24,6 +25,7 @@ type ResendEventType =
 	| 'email.delivery_delayed'
 	| 'email.complained'
 	| 'email.bounced'
+	| 'email.suppressed'
 	| 'email.opened'
 	| 'email.clicked';
 
@@ -174,16 +176,17 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 		const db = platform.env.DB;
 		await recordNewsletterDeliveryReceipt(db, event.data.email_id, event.type);
+		await recordEditionDeliveryReceipt(db, event.data.email_id, event.type);
 
 		// Open and click events are deliberately not retained. Delivery events are
-		// recorded above; only bounces and complaints also suppress subscribers.
-		if (event.type !== 'email.bounced' && event.type !== 'email.complained') {
+		// recorded above; bounces, complaints and provider suppressions also exclude subscribers.
+		if (event.type !== 'email.bounced' && event.type !== 'email.complained' && event.type !== 'email.suppressed') {
 			return json({ success: true, message: `Event ${event.type} acknowledged` });
 		}
 		const recipients = event.data.to;
 
 		// Determine status based on event type
-		const status = event.type === 'email.bounced' ? 'bounced' : 'complained';
+		const status = event.type === 'email.bounced' ? 'bounced' : event.type === 'email.suppressed' ? 'suppressed' : 'complained';
 
 		// Build bounce reason
 		let bounceReason = `${event.type} at ${event.created_at}`;
@@ -194,6 +197,10 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		// Update each recipient's status
 		const updatePromises = recipients.map(async (email) => {
 			try {
+				if (event.type === 'email.suppressed') {
+					await db.prepare("UPDATE newsletter_subscribers SET status = 'suppressed', active = 0, bounce_reason = ? WHERE email = ?").bind(bounceReason, email).run();
+					return { success: true };
+				}
 				// Check if this is a hard bounce (Permanent) that should count toward auto-unsubscribe
 				const isHardBounce = event.data.bounce?.type === 'Permanent';
 

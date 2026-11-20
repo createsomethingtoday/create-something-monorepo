@@ -1,0 +1,41 @@
+{
+  "passed": true,
+  "results": [
+    {
+      "width": 320,
+      "noJS": true,
+      "noOverflow": true,
+      "version": "0.3.5"
+    },
+    {
+      "width": 390,
+      "noJS": true,
+      "noOverflow": true,
+      "version": "0.3.5"
+    },
+    {
+      "width": 768,
+      "noJS": true,
+      "noOverflow": true,
+      "version": "0.3.5"
+    },
+    {
+      "width": 1024,
+      "noJS": true,
+      "noOverflow": true,
+      "version": "0.3.5"
+    },
+    {
+      "width": 1025,
+      "noJS": true,
+      "noOverflow": true,
+      "version": "0.3.5"
+    },
+    {
+      "width": 1440,
+      "noJS": true,
+      "noOverflow": true,
+      "version": "0.3.5"
+    }
+  ]
+}

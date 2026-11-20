@@ -2,6 +2,8 @@ packages:
   - 'apps/*'
   - '!apps/princess-pet-palace'
   - 'packages/*'
+  # Webflow Cloud deploys this standalone app with its own npm lockfile.
+  - '!packages/webflow-app-review-portal'
   - '!packages/loom'
   - '!packages/loom/npm'
   - '!packages/loom-mcp-remote'
@@ -11,7 +13,10 @@ packages:
   - 'packages/*/extension'
   - 'packages/*/npm'
   - 'packages/*/worker'
+  - 'packages/webflow-template-validation/cli'
   - 'packages/*/workers/*'
+  # Standalone Worker with its own lockfile; deployed with wrangler from its directory.
+  - '!packages/webflow-dashboard/workers/sla-notifications'
   - 'packages/huggingface-spaces/*'
   - 'packages/seeing/*'
   - 'packages/tools/*'

@@ -1,3 +1,4 @@
+import { boundedStatusRead } from './optional-status.mjs';
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const TEXT_BYTE_LIMIT = 65536;
 const MESSAGE_TOO_LARGE = 'Message exceeds 64 KiB of UTF-8 text. Shorten it before sending.';
@@ -39,11 +40,18 @@ export function disconnectNotice(outcome) {
   return `${local} ${remote}`;
 }
 export class AiConnection {
-  constructor(bridge, changed = () => {}) { this.bridge=bridge;this.changed=changed;this.status=null;this.models=[];this.model='';this.draft='';this.reply='';this.error='';this.disconnectNotice='';this.busy=false;this.operation='';this.epoch=0;this.operationEpoch=null;this.cancelledConnectEpochs=new Set();this.safetyWarning=''; }
+  constructor(bridge, changed = () => {}) { this.bridge=bridge;this.changed=changed;this.status=null;this.models=[];this.model='';this.draft='';this.reply='';this.error='';this.disconnectNotice='';this.busy=false;this.operation='';this.epoch=0;this.operationEpoch=null;this.refreshVersion=0;this.cancelledConnectEpochs=new Set();this.safetyWarning=''; }
   async refresh() {
+    const epoch=this.epoch, version=++this.refreshVersion;
+    const current=()=>epoch===this.epoch&&version===this.refreshVersion;
     this.disconnectNotice='';
-    try { const previous=this.status?.activeClientId;this.status=await this.bridge.call('ai.connection.status');if(previous!==this.status?.activeClientId||!this.status?.accounts?.some(a=>a.clientId===this.status.activeClientId&&a.connected&&a.planEnabled)){this.models=[];this.model='';this.reply='';} this.error=this.status.error ? connectionError(this.status.error) : ''; }
-    catch(e) {this.status=null;this.models=[];this.model='';this.reply='';this.error=connectionError(e);}
+    try {
+      const status=await boundedStatusRead(() => this.bridge.call('ai.connection.status'));
+      if(!current())return;
+      const previous=this.status?.activeClientId;this.status=status;
+      if(previous!==status?.activeClientId||!status?.accounts?.some(a=>a.clientId===status.activeClientId&&a.connected&&a.planEnabled)){this.models=[];this.model='';this.reply='';}
+      this.error=status?.error ? connectionError(status.error) : '';
+    } catch(e) {if(!current())return;this.status=null;this.models=[];this.model='';this.reply='';this.error=connectionError(e);}
     this.changed();
   }
   async action(action, clientId) {

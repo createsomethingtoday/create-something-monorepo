@@ -1,0 +1,570 @@
+/**
+ * wf-template-validate: creator CLI for the Webflow Way template validator.
+ *
+ *   login     OAuth 2.1 PKCE login to Webflow's remote MCP server; stores a token.
+ *   logout    Deletes the stored token file.
+ *   sites     Lists the sites the token can read (id and name) to find --site.
+ *   validate  Runs the production validation worker's published-site checks and
+ *             the GSAP crawl against a *.webflow.io site. With a stored token and
+ *             --site, it also collects Designer data through the MCP server, runs
+ *             the worker's Designer checks, and records the result with the worker
+ *             (POST /app-validator/submit, oauth_site_access evidence) unless
+ *             --no-record is set. Without Designer data nothing is recorded.
+ */
+
+import { randomBytes } from 'node:crypto';
+import { parseArgs } from 'node:util';
+import pkg from '../package.json' with { type: 'json' };
+import { collectDesignerData, type CollectResult } from '../../spike/headless-collector/collect.ts';
+import { applyDesignerEnhancements } from '../../spike/headless-collector/enhance.ts';
+import { CANVAS_CHECKS_CATEGORY, type EnhanceableResults } from '../../shared/designer-enhancements.ts';
+import { McpClient, findArray } from './mcp/client.ts';
+import { TOKEN_PATH, hasToken, loadToken, login, logout } from './mcp/login.ts';
+import { runGsapCrawl, type GsapOutcome } from './gsap-client.ts';
+import {
+	bucketOf,
+	exitCodeFor,
+	failedWithoutBlocker,
+	howToFix,
+	incompleteReasons,
+	missingResults,
+	pageSlugsFromDesigner,
+	parseChecks,
+	recordSkipReason,
+	type Bucket
+} from './decisions.ts';
+import {
+	DEFAULT_WORKER_BASE,
+	PUBLISHED_SITE_CHECKS,
+	WorkerError,
+	buildSubmitPayload,
+	discoverPageSlugs,
+	normalizePublishedUrl,
+	recordValidationResult,
+	runValidation,
+	type CategoryResult,
+	type PageDiscovery,
+	type RecordOutcome,
+	type ValidationIssue
+} from './worker-client.ts';
+
+const GATE_NOTE =
+	'This run was not recorded, so the Marketplace submission form cannot use it. Run `wf-template-validate login`, then validate with --site <siteId> to record the result, or run the Template Validator app in the Designer.';
+const RECORDED_NOTE =
+	'This run was recorded. The worker stored its own result for the run, and the Marketplace submission form decides whether it satisfies the submission gate.';
+const NO_RECORD_NOTE =
+	'This run was not recorded because --no-record was set, so the Marketplace submission form cannot use it.';
+const GSAP_CATEGORY = 'Published-site crawl (GSAP worker)';
+
+const USAGE = `Usage: wf-template-validate <command> [options]
+
+Commands:
+  login                        Sign in to Webflow through the MCP server (opens a browser consent page).
+                               In the site picker, select only the template site you will submit.
+  logout                       Delete the stored token file (${TOKEN_PATH}).
+  sites [--json]               List the sites the stored token can read (id and name) to find --site.
+  validate <https://<site>.webflow.io> [options]
+                               Run the published-site checks and the GSAP crawl. With --site and a stored
+                               token, also run the Designer checks through MCP and record the result.
+
+Validate options:
+  --site <siteId>              Site to read Designer data from. Turns on --designer-source mcp when a token exists.
+  --page <pageId>              Page for the canvas checks (heading order, image alt text), like the page open in
+                               the Validator app (default: the home page).
+  --designer-source mcp        Explicit form of the default above. Needs --site and a stored token.
+  --no-record                  Collect Designer data and run the checks, but do not record the result.
+  --checks <list>              Published-site checks to run: ${PUBLISHED_SITE_CHECKS.join(',')} (default: all).
+  --worker <base-url>          Validation worker (default ${DEFAULT_WORKER_BASE}).
+  --trust-worker               Allow recording (which sends your Webflow access token as evidence) to a
+                               non-default --worker. Without it, custom workers validate but never record.
+  --timeout <seconds>          Worker job timeout (default 480).
+  --json                       Print machine-readable JSON.
+
+Other options:
+  --version, -v                Print the CLI version.
+  --help, -h                   Print this help.
+
+Exit codes: 0 no blockers, 1 blockers found, 2 incomplete run (network, worker, login, or argument failure,
+            GSAP crawl unavailable, or the recording step failed).`;
+
+type Row = { category: string; issue: ValidationIssue; bucket: Bucket };
+
+const OPTIONS = {
+	json: { type: 'boolean', default: false },
+	checks: { type: 'string' },
+	worker: { type: 'string', default: DEFAULT_WORKER_BASE },
+	'trust-worker': { type: 'boolean', default: false },
+	timeout: { type: 'string', default: '480' },
+	'designer-source': { type: 'string' },
+	site: { type: 'string' },
+	page: { type: 'string' },
+	'no-record': { type: 'boolean', default: false },
+	version: { type: 'boolean', short: 'v', default: false },
+	help: { type: 'boolean', short: 'h', default: false }
+} as const;
+
+type Values = ReturnType<typeof parseArgs<{ args: string[]; allowPositionals: true; options: typeof OPTIONS }>>['values'];
+
+const errorText = (error: unknown) => (error instanceof Error ? error.message : String(error));
+
+/**
+ * Text from the worker, the MCP server, and the scanned site goes to the
+ * terminal. Remove control characters (escape sequences can hide or rewrite
+ * lines); keep tabs and line breaks.
+ */
+const clean = (text: string) => text.replace(/[\u0000-\u0008\u000b-\u001f\u007f-\u009f]/g, '');
+const print = (text: string) => console.log(clean(text));
+const printError = (text: string) => console.error(clean(text));
+
+async function main(argv: string[]): Promise<number> {
+	let parsed;
+	try {
+		parsed = parseArgs({ args: argv, allowPositionals: true, options: OPTIONS });
+	} catch (error) {
+		printError(`${errorText(error)}\n\n${USAGE}`);
+		return 2;
+	}
+	const { values, positionals } = parsed;
+	const [command, ...rest] = positionals;
+	if (values.version) {
+		print(pkg.version);
+		return 0;
+	}
+	if (values.help || !command) {
+		if (values.help) print(USAGE);
+		else printError(USAGE);
+		return values.help ? 0 : 2;
+	}
+	switch (command) {
+		case 'login':
+			return runLogin();
+		case 'logout':
+			return runLogout();
+		case 'sites':
+			return runSites(values.json);
+		case 'validate':
+			if (!rest[0]) {
+				printError(`validate needs a published URL.\n\n${USAGE}`);
+				return 2;
+			}
+			return runValidate(values, rest[0]);
+		default:
+			printError(`Unknown command '${command}'.\n\n${USAGE}`);
+			return 2;
+	}
+}
+
+async function runLogin(): Promise<number> {
+	try {
+		await login();
+		return 0;
+	} catch (error) {
+		printError(`Login failed: ${errorText(error)}`);
+		return 2;
+	}
+}
+
+async function runLogout(): Promise<number> {
+	const removed = await logout();
+	print(removed ? `Deleted ${TOKEN_PATH}.` : `No token at ${TOKEN_PATH}; nothing to delete.`);
+	return 0;
+}
+
+const MISSING_LOGIN = `No Webflow login found at ${TOKEN_PATH}. Run \`wf-template-validate login\` first.`;
+
+async function connect(): Promise<McpClient> {
+	const token = await loadToken();
+	const client = new McpClient(token.server, token.access_token);
+	await client.initialize();
+	return client;
+}
+
+const newAgentId = () => `cli|webflow-template-validate|${randomBytes(3).toString('hex')}`;
+
+async function runSites(json: boolean): Promise<number> {
+	if (!(await hasToken())) {
+		printError(MISSING_LOGIN);
+		return 2;
+	}
+	try {
+		const client = await connect();
+		const result = await client.callTool(
+			'data_sites_tool',
+			{ actions: [{ label: 'sites', list_sites: { detail: 'summary' } }] },
+			{
+				agentId: newAgentId(),
+				context: 'A template validation command line client lists the authorized workspace sites so the creator can choose a template site to validate.'
+			}
+		);
+		const sites = (findArray(result, 'id') ?? []).map((site) => ({
+			id: String(site.id),
+			name: String(site.displayName ?? site.name ?? ''),
+			shortName: typeof site.shortName === 'string' ? site.shortName : undefined
+		}));
+		if (json) {
+			print(JSON.stringify(sites, null, 2));
+			return 0;
+		}
+		if (sites.length === 0) {
+			print('No sites are authorized for this token. Run `wf-template-validate logout`, then `login`, and select your template site.');
+			return 0;
+		}
+		print(`${sites.length} authorized site(s):`);
+		for (const site of sites) print(`  ${site.id}  ${site.name}${site.shortName ? `  (${site.shortName}.webflow.io)` : ''}`);
+		print('\nUse the id with: wf-template-validate validate https://<site>.webflow.io --site <id>');
+		return 0;
+	} catch (error) {
+		printError(`Listing sites failed: ${errorText(error)}`);
+		return 2;
+	}
+}
+
+async function runValidate(values: Values, rawUrl: string): Promise<number> {
+	let siteUrl: string;
+	let checks: string[];
+	const timeoutSeconds = Number(values.timeout);
+	let designerSource = values['designer-source'];
+	try {
+		siteUrl = normalizePublishedUrl(rawUrl);
+		checks = parseChecks(values.checks);
+		if (!Number.isFinite(timeoutSeconds) || timeoutSeconds <= 0 || timeoutSeconds > 3600) {
+			throw new Error('--timeout must be a number of seconds from 1 to 3600.');
+		}
+		if (values.site !== undefined && values.site.trim() === '') {
+			throw new Error('--site needs a site ID. Run `wf-template-validate sites` to find it.');
+		}
+		if (designerSource !== undefined && designerSource !== 'mcp') throw new Error(`--designer-source must be 'mcp' (got '${designerSource}').`);
+		if (designerSource === 'mcp' && !values.site) throw new Error('--designer-source mcp needs --site <siteId>. Run `wf-template-validate sites` to find it.');
+		if (values.site && !(await hasToken())) {
+			throw new Error(`${MISSING_LOGIN} --site needs a login to read Designer data. Omit --site to run the published-site checks only (not recorded).`);
+		}
+		// Default on: a stored token plus --site means Designer data through MCP.
+		if (values.site) designerSource = 'mcp';
+		if (designerSource !== 'mcp' && values.page) throw new Error('--page needs --site.');
+		if (designerSource !== 'mcp' && values['no-record']) throw new Error('--no-record needs --site (nothing is recorded without it).');
+	} catch (error) {
+		printError(`Error: ${errorText(error)}`);
+		return 2;
+	}
+	const workerBase = values.worker!.replace(/\/+$/, '');
+	try {
+		const worker = new URL(workerBase);
+		const local = worker.hostname === 'localhost' || worker.hostname === '127.0.0.1';
+		if (worker.protocol !== 'https:' && !(local && worker.protocol === 'http:')) throw new Error('not https');
+	} catch {
+		printError('Error: --worker must be an https:// URL (http:// is allowed for localhost only).');
+		return 2;
+	}
+	const timeoutMs = timeoutSeconds * 1000;
+	const log = (message: string) => printError(`  ... ${message}`);
+
+	let collected: CollectResult | undefined;
+	if (designerSource === 'mcp') {
+		try {
+			collected = await collectFromMcp(values.site!, values.page, log);
+		} catch (error) {
+			const message = `MCP Designer data collection failed: ${error instanceof Error ? error.message : String(error)}`;
+			if (values.json) print(JSON.stringify({ error: message, siteUrl }, null, 2));
+			else printError(`\n${message}`);
+			return 2;
+		}
+		// Mirrors the extension's getSelectedChecks: 'designer' first, then the published-site checks.
+		checks = ['designer', ...checks];
+	}
+
+	let discovery: PageDiscovery;
+	if (collected) {
+		// Same page list as the Validator app: every published page in the Designer, not only the linked ones.
+		discovery = { source: 'designer', slugs: pageSlugsFromDesigner(collected.designerData.pages ?? []), truncated: false };
+		log(`Using the home page and ${discovery.slugs.length} more page(s) from the Designer page list`);
+	} else {
+		log(`Discovering pages on ${siteUrl}`);
+		discovery = await discoverPageSlugs(siteUrl);
+		log(`Found ${discovery.slugs.length} page(s) via ${discovery.source}${discovery.truncated ? ' (truncated)' : ''}`);
+	}
+
+	const gsapPromise = runGsapCrawl(siteUrl, timeoutMs);
+	let outcome;
+	try {
+		outcome = await runValidation({
+			siteUrl,
+			pageSlugs: discovery.slugs,
+			checks,
+			workerBase,
+			timeoutMs,
+			designerData: collected?.designerData,
+			canvasResult: collected?.canvas?.result,
+			onProgress: log
+		});
+	} catch (error) {
+		const message = error instanceof WorkerError || error instanceof Error ? error.message : String(error);
+		if (values.json) {
+			print(JSON.stringify({ error: message, siteUrl }, null, 2));
+		} else {
+			printError(`\nValidation worker failed: ${message}`);
+		}
+		return 2;
+	}
+	log('Waiting for GSAP crawl');
+	const gsap = await gsapPromise;
+	// Same client-side enhancements the extension applies (Style System, canvas checks, Page Structure, Variable Modes, summary totals).
+	if (collected) applyDesignerEnhancements(outcome.result as unknown as EnhanceableResults, collected.designerData, collected.canvas?.result);
+
+	const categories = outcome.result.categories ?? [];
+	const resultIncomplete = missingResults(checks, categories);
+	const failedNoBlocker = failedWithoutBlocker(categories);
+	const rows: Row[] = categories.flatMap((cat) =>
+		(cat.issues ?? []).map((issue) => ({ category: cat.category, issue, bucket: bucketOf(issue) }))
+	);
+	if (gsap.status === 'complete') {
+		rows.push(...gsap.issues.map((issue) => ({ category: GSAP_CATEGORY, issue, bucket: bucketOf(issue) })));
+	}
+	const passed = categories.filter((c) => c.passed).length;
+	const score = categories.length ? Math.round((passed / categories.length) * 100) : 0;
+	const count = (bucket: Bucket) => rows.filter((r) => r.bucket === bucket).length;
+	const summary = {
+		siteUrl,
+		mode: outcome.mode,
+		jobId: outcome.jobId,
+		correlationId: outcome.correlationId,
+		asyncError: outcome.asyncError,
+		pageDiscovery: discovery,
+		checksRequested: checks,
+		checksNotRun: checks.includes('designer') ? [] : ['designer'],
+		designerSource: collected
+			? {
+					source: 'mcp',
+					siteId: values.site,
+					pageId: collected.pageId,
+					siteInfo: collected.designerData.siteInfo,
+					counts: collected.counts,
+					canvas: collected.canvas
+						? {
+								pageId: collected.canvas.pageId,
+								pageName: collected.canvas.result.pageName,
+								headingsChecked: collected.canvas.result.headingsChecked,
+								headingIssues: collected.canvas.result.headingIssues.length,
+								imagesChecked: collected.canvas.result.imagesChecked,
+								imagesMissingAlt: collected.canvas.result.imagesMissingAlt,
+								elements: collected.canvas.elements
+							}
+						: null,
+					notes: collected.notes
+				}
+			: null,
+		score,
+		passedCategories: passed,
+		failedCategories: categories.length - passed,
+		failedCategoriesWithoutBlocker: failedNoBlocker,
+		blockers: count('blocker'),
+		warnings: count('warning'),
+		info: count('info'),
+		gsapCrawl:
+			gsap.status === 'complete'
+				? {
+						status: 'complete',
+						instanceId: gsap.instanceId,
+						passed: gsap.passed,
+						gsapDetected: gsap.gsapDetected,
+						legacyIx2Detected: gsap.legacyIx2Detected,
+						unicornStudioDetected: gsap.unicornStudioDetected,
+						pageCount: gsap.pageCount,
+						analyzedCount: gsap.analyzedCount
+					}
+				: gsap,
+	};
+
+	let record: RecordOutcome | { skipped: string } | null = null;
+	if (collected && !values['no-record']) {
+		const skipped = recordSkipReason({
+			mode: outcome.mode,
+			collectionIncomplete: collected.incomplete,
+			workerBase,
+			trustWorker: Boolean(values['trust-worker']),
+			resultIncomplete
+		});
+		if (skipped) {
+			record = { skipped };
+		} else {
+			log('Recording the result with the worker (oauth_site_access evidence)');
+			try {
+				const token = await loadToken();
+				record = await recordValidationResult({
+					workerBase,
+					siteId: values.site!,
+					siteName: collected.designerData.siteInfo?.name,
+					siteUrl,
+					jobId: outcome.jobId ?? '',
+					validationResults: buildSubmitPayload({ result: outcome.result, siteUrl, checks, pageSlugsCount: discovery.slugs.length }),
+					accessToken: token.access_token
+				});
+			} catch (error) {
+				record = { ok: false, evidenceVerified: false, error: `could not load the MCP token: ${error instanceof Error ? error.message : String(error)}` };
+			}
+		}
+	}
+	// Recorded means the worker stored the result, verified the site access, and reads it back.
+	// Anything less would fail at the submission form, so it counts as a failed record.
+	const recorded = Boolean(record && 'ok' in record && record.ok && record.evidenceVerified && record.status === 'available');
+	const recordFailed = Boolean(record && 'ok' in record && !recorded);
+	const incomplete = incompleteReasons({
+		gsap: { status: gsap.status, reason: 'reason' in gsap ? gsap.reason : undefined },
+		designerCollected: Boolean(collected),
+		mode: outcome.mode,
+		collectionIncomplete: collected?.incomplete ?? [],
+		recordFailed,
+		resultIncomplete
+	});
+	const exitCode = exitCodeFor(incomplete, summary.blockers + failedNoBlocker.length);
+	const fullSummary = {
+		...summary,
+		record,
+		exitCode,
+		incomplete,
+		note: recorded ? RECORDED_NOTE : collected && values['no-record'] ? NO_RECORD_NOTE : GATE_NOTE
+	};
+
+	if (values.json) {
+		print(JSON.stringify({ result: outcome.raw, gsapCrawl: gsap.status === 'complete' ? gsap.raw : null, summary: fullSummary }, null, 2));
+		return exitCode;
+	}
+
+	printHuman({ siteUrl, outcome, discovery, checks, categories, gsap, rows, score, collected, note: fullSummary.note });
+	if (failedNoBlocker.length > 0) {
+		print(`Failed without an error (exit 1): ${failedNoBlocker.join(', ')}. The submission form needs every category to pass, so fix the warnings there.`);
+	}
+	if (record) print(formatRecordLine(record));
+	if (fullSummary.incomplete.length > 0) print(`Incomplete (exit 2): ${fullSummary.incomplete.join('; ')}`);
+	return exitCode;
+}
+
+function formatRecordLine(record: RecordOutcome | { skipped: string }): string {
+	if ('skipped' in record) return `Record: skipped (${record.skipped})`;
+	if (!record.ok) {
+		return `Record: failed${record.httpStatus ? ` (HTTP ${record.httpStatus})` : ''}: ${record.error ?? 'unknown error'}; correlationId ${record.correlationId ?? '?'}`;
+	}
+	const evidence = record.evidenceVerified
+		? 'evidence verified'
+		: 'evidence NOT recorded (the worker may not support oauth_site_access yet)';
+	const tail = record.error ? `; ${record.error}` : '';
+	return `Record: status ${record.status ?? '?'}, passed ${record.passed ?? '?'}, ${evidence}; correlationId ${record.correlationId}${tail}`;
+}
+
+async function collectFromMcp(siteId: string, pageId: string | undefined, log: (message: string) => void): Promise<CollectResult> {
+	const client = await connect();
+	const agentId = newAgentId();
+	log(`Collecting Designer data via MCP for site ${siteId}`);
+	const collected = await collectDesignerData({ client, siteId, pageId, agentId, onProgress: log });
+	const c = collected.counts;
+	log(`Collected ${c.styles} style(s), ${c.pages} page(s), ${c.variables} variable(s) in ${c.collections} collection(s), ${c.components} component(s)`);
+	for (const note of collected.notes) log(`MCP note: ${note}`);
+	return collected;
+}
+
+function printHuman(ctx: {
+	siteUrl: string;
+	outcome: Awaited<ReturnType<typeof runValidation>>;
+	discovery: Awaited<ReturnType<typeof discoverPageSlugs>>;
+	checks: string[];
+	categories: CategoryResult[];
+	gsap: GsapOutcome;
+	rows: Row[];
+	score: number;
+	collected?: CollectResult;
+	note: string;
+}) {
+	const { siteUrl, outcome, discovery, checks, categories, gsap, rows, score, collected, note } = ctx;
+	const runsDesigner = checks.includes('designer');
+	const publishedChecks = checks.filter((c) => c !== 'designer');
+	const out: string[] = [];
+	out.push('');
+	out.push(`Webflow template validation: ${siteUrl}`);
+	out.push(`Job: ${outcome.jobId ?? '(none)'}  mode: ${outcome.mode}${outcome.asyncError ? ` (async failed: ${outcome.asyncError})` : ''}`);
+	out.push(
+		discovery.source === 'designer'
+			? `Pages: homepage + ${discovery.slugs.length} from the Designer page list, the same list the Validator app checks`
+			: `Pages: homepage + ${discovery.slugs.length} from ${discovery.source}${discovery.truncated ? ' (truncated to 50)' : ''}`
+	);
+	if (collected) {
+		const c = collected.counts;
+		out.push(
+			`Designer data: MCP, site "${collected.designerData.siteInfo?.name ?? '?'}" (${collected.designerData.siteInfo?.id ?? '?'}), page ${collected.pageId}; ${c.styles} styles, ${c.pages} pages, ${c.variables} variables, ${c.components} components`
+		);
+		const canvas = collected.canvas?.result;
+		out.push(
+			canvas
+				? `Canvas checks: page "${canvas.pageName}" (${collected.pageId}), ${canvas.headingsChecked} heading(s), ${canvas.imagesChecked} image(s); component contents not included, as in the Validator app`
+				: 'Canvas checks: not run (see Incomplete)'
+		);
+	}
+	out.push(
+		runsDesigner
+			? `Checks: designer, ${publishedChecks.join(', ')}, interactions, custom code.${outcome.mode === 'legacy' ? ' Designer categories missing: the /validate fallback does not run them.' : ''}`
+			: `Checks: ${checks.join(', ')}, interactions, custom code. Not run: designer (needs Designer data).`
+	);
+	out.push('');
+	out.push('Categories');
+	const skipped = new Map([
+		['Assets & Images', 'assets'],
+		['Content & Accessibility', 'content']
+	]);
+	for (const cat of categories) {
+		const errors = (cat.issues ?? []).filter((i) => i.severity === 'error').length;
+		const warnings = (cat.issues ?? []).filter((i) => i.severity === 'warning').length;
+		const flag = skipped.has(cat.category) && !checks.includes(skipped.get(cat.category)!) ? 'SKIP' : cat.passed ? 'PASS' : 'FAIL';
+		out.push(`  ${flag}  ${cat.category.padEnd(36)} ${errors} error(s), ${warnings} warning(s)`);
+	}
+	if (gsap.status === 'complete') {
+		const errors = gsap.issues.length;
+		out.push(
+			`  ${gsap.passed ? 'PASS' : 'FAIL'}  ${GSAP_CATEGORY.padEnd(36)} ${errors} error(s), 0 warning(s)  [${gsap.analyzedCount}/${gsap.pageCount} pages, GSAP ${gsap.gsapDetected ? 'detected' : 'not detected'}, IX2 ${gsap.legacyIx2Detected ? 'DETECTED' : 'not detected'}]`
+		);
+	} else {
+		out.push(`  ----  ${GSAP_CATEGORY.padEnd(36)} unavailable: ${gsap.reason}`);
+	}
+
+	const sections: Array<[Bucket, string]> = [
+		['blocker', 'Blockers'],
+		['warning', 'Warnings'],
+		['info', 'Info']
+	];
+	for (const [bucket, title] of sections) {
+		const items = rows.filter((r) => r.bucket === bucket);
+		out.push('');
+		out.push(`${title} (${items.length})`);
+		if (items.length === 0) out.push('  none');
+		for (const { category, issue } of items) {
+			const policy = typeof issue.details?.policy === 'string' ? ` [policy: ${issue.details.policy}]` : '';
+			out.push(`  [${category}] ${issue.id}: ${issue.message}${policy}`);
+			const fix = howToFix(issue);
+			if (fix) out.push(`      Fix: ${fix}`);
+			const locations: unknown = issue.details?.locations;
+			if (Array.isArray(locations)) {
+				for (const location of locations.slice(0, 5)) out.push(`      Where: ${String(location)}`);
+				if (locations.length > 5) out.push(`      … and ${locations.length - 5} more`);
+			}
+			if (category === CANVAS_CHECKS_CATEGORY) {
+				if (typeof issue.details?.location === 'string') out.push(`      Where: ${issue.details.location}`);
+				const keys: unknown = issue.details?.canvasElementKeys;
+				const labels = Array.isArray(keys) ? keys.map((key) => collected?.canvas?.elements[String(key)]).filter(Boolean) : [];
+				if (labels.length > 0) out.push(`      Element${labels.length > 1 ? 's' : ''}: ${labels.join('; ')}`);
+			}
+		}
+	}
+
+	out.push('');
+	out.push(`Score: ${score}% of worker categories passed (GSAP crawl not included in the score)`);
+	out.push(note);
+	print(out.join('\n'));
+}
+
+/** Exit after stdout and stderr are flushed. On a pipe, process.exit alone can cut long --json output short. */
+const exitWhenFlushed = (code: number) => {
+	process.exitCode = code; // keeps the code if a closed pipe stops the callbacks below
+	process.stdout.write('', () => process.stderr.write('', () => process.exit(code)));
+};
+
+main(process.argv.slice(2)).then(exitWhenFlushed, (error) => {
+	printError(`Unexpected error: ${error instanceof Error ? error.stack : String(error)}`);
+	exitWhenFlushed(2);
+});

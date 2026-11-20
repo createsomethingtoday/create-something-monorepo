@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import {
     Button,
     PerformanceCardGrid,
@@ -112,6 +113,7 @@
   {faqItems}
 />
 
+<AgencyHeroFrame>
 <PerformancePageSection
   variant="hero"
   layout="stack"
@@ -130,8 +132,10 @@
     </Button>
   {/snippet}
 </PerformancePageSection>
+</AgencyHeroFrame>
 
 <PerformancePageSection
+  id="tool-fit"
   variant="white"
   eyebrow="Tool fit"
   title="What each part of the system does."
@@ -139,12 +143,15 @@
 >
   {#snippet after()}
     <PerformanceCardGrid items={fitCards} columns={3} ariaLabel="Workflow tool fit" />
+    <p class="dots-guide-link">Curious about personal agents? <a href="/openai-dots">Meet Canon in our OpenAI dots guide.</a> Follow a task from first thought to human review.</p>
+    <p class="dots-guide-link">For a practice-specific example, <a href="/dental-ai-agents">see how OpenAI can support a dental front desk.</a> Approved answers, confirmation, and visible records.</p>
     <IntegrationCompatibilityRail surface="partners" />
     <IntegrationCatalog />
   {/snippet}
 </PerformancePageSection>
 
 <PerformancePageSection
+  id="tool-deliverables"
   variant="soft"
   eyebrow="What you keep"
   title="See how the tools work together."
@@ -182,3 +189,8 @@
     <Button href="/for-service-providers" variant="secondary">Use it with clients</Button>
   {/snippet}
 </PerformanceConversionHandoff>
+
+<style>
+  .dots-guide-link {margin-block:24px; max-width:65ch; line-height:1.7; color:var(--color-performance-muted);}
+  .dots-guide-link a {color:var(--color-performance-ink); text-decoration:underline; text-underline-offset:4px;}
+</style>

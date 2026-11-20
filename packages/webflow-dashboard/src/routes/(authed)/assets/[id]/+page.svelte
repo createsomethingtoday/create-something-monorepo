@@ -29,6 +29,7 @@
     StatusBadge,
     TimelineCard,
     RequiredFixesCard,
+    ReviewThreadCard,
     AnalyticsCard,
     TemplateHealthCard,
     DataFreshnessIndicator,
@@ -37,14 +38,19 @@
   } from '$lib/components';
   import EditAssetModal from '$lib/components/EditAssetModal.svelte';
   import { toast } from '$lib/stores/toast';
+  import { pan, reveal } from '$lib/motion/actions';
   import { trackEvent } from '$lib/utils/analytics';
   import { computeTemplateHealth, isTemplateSearchSuppressed } from '$lib/utils/template-health';
   import { isReviewFeedbackReleased } from '$lib/utils/review-status';
   import {
+    APP_SUBMISSION_FORM_URL,
+    APP_UPDATE_GUIDANCE,
+    isAppAssetType
+  } from '$lib/utils/asset-actions';
+  import {
     formatCompactCurrency,
     formatCompactNumber,
     formatLongDate,
-    formatNumericDate,
     formatWholeNumber
   } from '$lib/utils/format';
 
@@ -83,7 +89,9 @@
     return 'overview';
   }
 
-  let activeTab = $state<TabValue>(getDefaultTab(getInitialAsset().status) as TabValue);
+  // A link can name the tab (?tab=timeline, from the review feedback email).
+  const getLinkedTab = () => data.initialTab;
+  let activeTab = $state<TabValue>(getLinkedTab() ?? (getDefaultTab(getInitialAsset().status) as TabValue));
   let showPerformance = $state(false);
   let imageError = $state(false);
   let secondaryImageError = $state(false);
@@ -134,8 +142,11 @@
   const canShowHealth = $derived(asset.type === 'Template');
   const isSearchSuppressed = $derived(isTemplateSearchSuppressed(asset.searchVisibility));
 
+  // Apps are updated in the submission form, so the edit dialog is for other assets only.
+  const isApp = $derived(isAppAssetType(asset.type));
   // Can only edit Published templates
-  const canEdit = $derived(asset.status === 'Published');
+  const canEdit = $derived(!isApp && asset.status === 'Published');
+  const canUpdateApp = $derived(isApp && !asset.status.includes('Delisted'));
 
   // Can archive if not already delisted
   const canArchive = $derived(!asset.status.includes('Delisted'));
@@ -276,7 +287,10 @@
     }
   }
 
-  function openExternalLink(url: string, source: 'preview' | 'live' | 'marketplace'): void {
+  function openExternalLink(
+    url: string,
+    source: 'preview' | 'live' | 'marketplace' | 'app_update_form'
+  ): void {
     trackEvent('asset_external_link_opened', {
       asset_id: asset.id,
       source,
@@ -310,12 +324,11 @@
       <div class="detail-header page-intro">
         <div class="header-info">
           <div class="header-copy">
-            <p class="detail-kicker">Asset detail</p>
-            <div class="title-row">
+            <div class="title-row" data-reveal use:reveal>
               <h1 class="asset-title">{asset.name}</h1>
               <StatusBadge status={asset.status} size="lg" />
             </div>
-            <p class="detail-subtitle">
+            <p class="detail-subtitle" data-reveal use:reveal>
               {asset.type}
               {#if asset.category}
                 · {asset.category}
@@ -324,10 +337,10 @@
                 · {asset.subcategory}
               {/if}
             </p>
-            <div class="detail-evidence" aria-label="Asset summary">
-              <span><strong>{formatNumericDate(asset.submittedDate)}</strong> submitted</span>
+            <div class="detail-evidence" aria-label="Asset summary" data-reveal use:reveal>
+              <span><strong>{formatLongDate(asset.submittedDate)}</strong> submitted</span>
               {#if asset.publishedDate}
-                <span><strong>{formatNumericDate(asset.publishedDate)}</strong> published</span>
+                <span><strong>{formatLongDate(asset.publishedDate)}</strong> published</span>
               {/if}
               {#if asset.priceString}
                 <span><strong>{asset.priceString}</strong> price</span>
@@ -349,6 +362,11 @@
                 <span
                   ><strong>{formatCompactNumber(asset.cumulativePurchases)}</strong> purchases</span
                 >
+                {#if asset.fulfillmentLinkSales}
+                  <span
+                    ><strong>{formatCompactNumber(asset.fulfillmentLinkSales)}</strong> through fulfillment links</span
+                  >
+                {/if}
                 <span
                   ><strong>{formatCompactCurrency(asset.cumulativeRevenue)}</strong> revenue</span
                 >
@@ -356,7 +374,9 @@
             </div>
           </div>
         </div>
-        <div class="header-actions">
+        <div class="header-actions" data-reveal use:reveal>
+          <!-- The three ways to look at the asset read as one control. -->
+          <div class="action-group" role="group" aria-label="Open this asset">
           {#if asset.previewUrl}
             <Button
               variant="outline"
@@ -386,6 +406,18 @@
             >
               <Store size={16} />
               Marketplace
+            </Button>
+          {/if}
+          </div>
+          {#if canUpdateApp}
+            <Button
+              variant="default"
+              size="sm"
+              title={APP_UPDATE_GUIDANCE}
+              onclick={() => openExternalLink(APP_SUBMISSION_FORM_URL, 'app_update_form')}
+            >
+              <ExternalLink size={16} />
+              Update app
             </Button>
           {/if}
           {#if canEdit}
@@ -465,7 +497,7 @@
         >
           <div class="overview-grid">
             <!-- Left Column -->
-            <div class="left-column">
+            <div class="left-column" data-reveal use:reveal>
               <!-- Template Details Card -->
               <Card>
                 <CardHeader>
@@ -532,6 +564,16 @@
                           >{formatWholeNumber(asset.cumulativePurchases)}</span
                         >
                       </div>
+                      {#if asset.fulfillmentLinkSales}
+                        <div class="detail-item">
+                          <span class="detail-label detail-label--with-freshness"
+                            >Fulfillment-link Sales <DataFreshnessIndicator variant="tooltip" /></span
+                          >
+                          <span class="detail-value"
+                            >{formatWholeNumber(asset.fulfillmentLinkSales)}</span
+                          >
+                        </div>
+                      {/if}
                       <div class="detail-item">
                         <span class="detail-label detail-label--with-freshness"
                           >Total Revenue <DataFreshnessIndicator variant="tooltip" /></span
@@ -590,7 +632,7 @@
             </div>
 
             <!-- Right Column -->
-            <div class="right-column">
+            <div class="right-column" data-reveal use:reveal>
               <!-- Thumbnail Card -->
               <Card>
                 <CardHeader>
@@ -602,6 +644,7 @@
                       src={asset.thumbnailUrl}
                       alt={asset.name}
                       class="thumbnail-image"
+                      use:pan
                       decoding="async"
                       onerror={() => (imageError = true)}
                     />
@@ -659,6 +702,11 @@
                           <DataFreshnessIndicator variant="tooltip" />
                         </div>
                         <span class="stat-label">Purchases</span>
+                        {#if asset.fulfillmentLinkSales}
+                          <span class="stat-secondary"
+                            >+{formatWholeNumber(asset.fulfillmentLinkSales)} through fulfillment links</span
+                          >
+                        {/if}
                         {#if conversionRate() !== null}
                           <span class="stat-secondary">{conversionRate()?.toFixed(1)}% conv</span>
                         {/if}
@@ -699,6 +747,15 @@
         >
           <div class="timeline-tab-stack">
             <TimelineCard {asset} releasedFeedback={data.releasedFeedbackSnapshot} />
+            {#if data.reviewCommentsEnabled}
+              <!-- Keyed: client-side navigation reuses this page, and the card must not keep another asset's thread or draft. -->
+              {#key asset.id}
+                <!-- A new card for each asset: the page is reused when the reader moves between assets. -->
+                {#key asset.id}
+                  <ReviewThreadCard assetId={asset.id} />
+                {/key}
+              {/key}
+            {/if}
             {#if data.requiredFixes && data.requiredFixes.length > 0}
               <RequiredFixesCard items={data.requiredFixes} />
             {/if}
@@ -817,13 +874,6 @@
     font-variant-numeric: tabular-nums;
   }
 
-  .detail-kicker {
-    margin: 0;
-    font-size: var(--text-caption);
-    letter-spacing: 0;
-    text-transform: uppercase;
-    color: var(--color-fg-muted);
-  }
 
   .title-row {
     display: flex;
@@ -853,23 +903,55 @@
     justify-content: flex-end;
   }
 
+  .action-group {
+    display: inline-flex;
+  }
+
+  .action-group:empty {
+    display: none;
+  }
+
+  .action-group :global(.btn) {
+    position: relative;
+    margin-left: -1px;
+    border-radius: 0;
+  }
+
+  .action-group :global(.btn:first-child) {
+    margin-left: 0;
+    border-radius: 0.75rem 0 0 0.75rem;
+  }
+
+  .action-group :global(.btn:last-child) {
+    border-radius: 0 0.75rem 0.75rem 0;
+  }
+
+  .action-group :global(.btn:only-child) {
+    border-radius: 0.75rem;
+  }
+
+  .action-group :global(.btn:hover),
+  .action-group :global(.btn:focus-visible) {
+    z-index: 1;
+  }
+
+  /* Archive is rare and cannot be undone here, so it should not be the
+     loudest control in the row. It turns solid only on hover or focus. */
+  .header-actions :global(.btn-destructive) {
+    background: transparent;
+    color: var(--color-error-ink);
+    border-color: var(--color-error-border);
+  }
+
+  .header-actions :global(.btn-destructive:hover:not(:disabled)),
+  .header-actions :global(.btn-destructive:focus-visible) {
+    background: var(--color-error);
+    color: #ffffff;
+    border-color: var(--color-error);
+  }
+
   :global(.tabs-container) {
     margin-bottom: var(--space-lg);
-  }
-
-  :global(.asset-tabs-list) {
-    display: flex;
-    gap: var(--space-xs);
-    background: transparent;
-    border-bottom: 1px solid color-mix(in srgb, var(--color-border-default) 72%, transparent);
-    border-radius: 0;
-    padding: 0 0 0.4rem;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-
-  :global(.asset-tabs-list::-webkit-scrollbar) {
-    display: none;
   }
 
   :global(.asset-tabs-list button) {
@@ -1070,11 +1152,15 @@
     white-space: pre-line;
   }
 
+  /* Cropped to the top of the page; $lib/motion `pan` scrolls it with the pointer. */
   .thumbnail-image {
+    display: block;
     width: 100%;
     aspect-ratio: 7/9;
     object-fit: cover;
+    object-position: 50% 0%;
     border-radius: var(--radius-sm);
+    box-shadow: 0 0 0 1px var(--color-shell-border-default);
   }
 
   .thumbnail-placeholder {

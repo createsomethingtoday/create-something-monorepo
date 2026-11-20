@@ -4,7 +4,8 @@ import type { Env, SearchParams } from './types.js';
 // 25–48, …) so the top of the grid does not look frozen while proven templates
 // stay on top. Bands are absolute ranks, so every page size sees the same band
 // membership and paging never repeats or skips a template. Everything past the
-// last band keeps the strict popularity order.
+// last band keeps the strict popularity order. A creator's profile keeps the
+// strict order too: creators use it as their own storefront.
 
 export interface PopularShuffle {
   seed: string;
@@ -22,6 +23,7 @@ function positiveInt(value: string | undefined, fallback: number): number {
 /** Off unless POPULAR_SHUFFLE_BANDS is a positive integer. */
 export function popularShuffleFor(env: Env, params: SearchParams, now: Date = new Date()): PopularShuffle | null {
   if (params.sort !== 'popular' || params.q || params.templateSlug) return null;
+  if (params.creatorSlug || params.creatorRecordId) return null;
   const bands = positiveInt(env.POPULAR_SHUFFLE_BANDS, 0);
   if (bands === 0) return null;
   const bandSize = positiveInt(env.POPULAR_SHUFFLE_BAND_SIZE, DEFAULT_BAND_SIZE);

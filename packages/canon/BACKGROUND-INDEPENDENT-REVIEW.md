@@ -1,0 +1,28 @@
+# Independent background-composition review
+
+Sol 6.1 independently reviewed the dirty local shared-background phase on 2026-11-13, branch `t3/canon-design-system-redesign`, HEAD `5f9bfab`. Scope: five shared hero/CTA families, internal BackgroundScene/scene helper, and actual `/next/compositions` output at localhost:5191. This does not accept the parent Cook build or authorize publication. Source was read only; only this report and `evidence/background-independent/` were written.
+
+## Findings, ranked
+
+1. **Medium — face/task composition fails in CTA and handoff.** `dark-1440-cta.png` and `light-1024-cta.png` show four near-solid cards placed directly across the robot face and held object. `dark-1440-handoff.png` shows almost the entire face hidden behind the solid authority column, with only its left edge visible. At 320 the handoff heading block covers the face, while the CTA copy block does the same (`dark-320-handoff.png`, `dark-320-cta.png`). These are readable HTML over loaded imagery, but do not satisfy the explicit requirement that face/task composition stay intact. Relevant implementation: ClearCtaBand.svelte:282–286; PerformanceConversionHandoff.svelte:176–180; fixture review-scene framing. Select a scene with a real quiet zone, use a deliberate clean plate, or reserve image space independently of these copy/cards. Do not solve this by reducing copy contrast.
+
+2. **Medium — intermediate widths also need authored framing.** `dark-1024-offer.png` places the solid offer copy edge through the left side of the robot face. `dark-768-hero.png` lets title/description overlap the antenna/head, and the evidence cards cover the task object/body. The 1440 hero and mobile hero/offer look substantially more deliberate. The 48rem background boundary does not itself guarantee a safe foreground/image relationship at 768–1025.
+
+No functional blocker was found in this bounded pass. Repetition of the same two original images across five sections is a fixture limitation, not evidence of five independently authored website compositions.
+
+## Evidence and checks
+
+- Ego space 20, created solely for this review. Captured all five sections at 320, 390, 768, 1024, 1025 and 1440 in dark and explicit light (60 settled viewport screenshots). Actual viewed samples span every requested width, both appearances, and all five families; all 60 were captured, not every captured PNG was individually viewed. Screenshots named `<appearance>-<width>-<section>.png` are settled per-section captures; smooth scrolling was disabled for capture through reduced-motion/instant scrolling.
+- `widths.json`: all twelve combinations have no horizontal document overflow, Geist Variable computed heading font, five CSS background layers, and zero inline img elements inside the five hero/CTA families. Dark foundation is rgb(0,0,0); explicit light is rgb(247,248,246). Lower field retains its semantic inline editorial image.
+- Keyboard Tab reveals the skip link at y=12 with a visible solid 2px outline (`keyboard-focus.png`). Keyboard Enter on the campaign's actual `#cta` action changed the real URL hash and settled CTA top at 24.15px (`keyboard-anchor.png`). Initial script focus alone did not produce focus-visible; the Tab check did.
+- Reduced-motion browser emulation returned `matches=true`, five scenes and zero video nodes. JavaScript-disabled reload at 390 retained actual background image, HTML heading and native actions (`nojs-390.png`, visually inspected). Blocking world-image URLs left readable HTML and actions on black without a broken-image placeholder (`broken-390.png`, visually inspected). This tests missing-image fallback, not every possible invalid position/size input.
+- Independently ran `npx --yes pnpm@9.15.4 --dir packages/canon exec vitest run src/lib/components/background/background-composition.test.ts src/lib/components/performance/performance-composition-system.test.ts`: **2 files / 39 tests passed**. These are local DOM/SSR fixtures, not production runtime evidence. No full suite, build, package or sync was rerun.
+- Read current source for URL quoting/backslash/control-character escaping, independent mobile src/position/size values, meaningful scene role/name versus decorative aria-hidden, preserved action/artifact snippets and compatibility media conversion. The campaign starts motionAllowed=false, enables muted/looping/playsinline video only after mount when motion permits, and leaves CSS static imagery in place. The selected local tests exercise video enhancement/reduced-motion and snippet/href compatibility. `/next/compositions` supplies no video: actual video decode/playback, video error recovery and a live consumer journey remain **untested**.
+
+## Gates
+
+- **Functional correctness: passed within local scope.** 39 independent tests and exercised fixture behavior above; no live consumer/runtime or production acceptance claim.
+- **Perceptual/product quality: failed.** Black foundation, Geist hierarchy, original whimsical scenes and readable HTML are present; face/task preservation fails in CTA/handoff and some intermediate framing. Fix and re-review those actual crops before phase acceptance.
+- **Release readiness: untested / unapproved.** No production consumer adoption, asset optimization, final deployable-artifact check or shipping authorization in this review. No commit, push, merge, deploy or external submission performed.
+
+Worktree disposition: preserved at `/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-a01044d6-2f560e0ec9e58190`, branch `t3/canon-design-system-redesign`. Parent owns fixes, integration and final verification. No shared-source conflict was observed during this pass; parent reported changes restricted to overview/new portrait assets.

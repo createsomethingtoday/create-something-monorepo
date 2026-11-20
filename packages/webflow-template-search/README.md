@@ -108,6 +108,31 @@ Memo entries expire after five minutes for counts and thirty minutes
 for facets. Cache failures fall back to D1. Direct `searchTemplates` callers that
 omit a sync version bypass query memoization.
 
+## Search indexes
+
+Migration `0019` adds three indexes on expressions:
+
+- `idx_template_documents_sort_newest` and `idx_template_documents_sort_popular` repeat
+  the newest and popular `ORDER BY` in `sortClause` (`src/search.ts`) term for term. A
+  sorted page is an index walk that stops at `LIMIT`.
+- `idx_template_documents_creator_profile_url_key` indexes
+  `lower(rtrim(creator_profile_url, '/'))`, the second half of the creator filter. With
+  it, a creator query reads only that creator's rows.
+
+SQLite uses an expression index only when the query repeats the expression exactly. If
+you change `sortClause` or the creator filter, change the index in a new migration too.
+`test/search-indexes.test.ts` checks the query plans and fails when they drift apart.
+
+Before `0019`, every sorted page and every creator page scanned all rows. The other
+sorts (recommended, best selling, price) still do. Add an index for one when its traffic
+justifies one more index write for each synced template.
+
+Counts and facets for a category filter still visit every template once, but on an
+index: the filter needs only the template id (see `CATEGORY_GROUP_LIST_FALLBACK_CLAUSE`
+in `src/search.ts`). Reading about as many rows as the category has needs a data change:
+the fallback for templates with no membership rows forces one check for each template.
+The type facet for a category still reads the table, because it needs `template_type`.
+
 ## CMS capability recovery (not activated)
 
 Production already records migration `0008_template_capabilities.sql` and has
@@ -139,6 +164,12 @@ backfill batches, reconcile counts and IDs, then enable filtering and verify tru
 false and unconstrained results. Do not use a full rebuild to fill this column.
 Rollback: disable CMS_FILTER_ENABLED and restore the prior Worker version, retaining
 the pre-existing database columns and migration history.
+
+`CMS_FILTER_ENABLED = "true"` is set in `wrangler.toml`. Keep it there. A flag passed
+only as a deploy-time `--var` is lost on the next plain deploy, and search then
+ignores `has_cms` without an error. To disable the filter, set the value to `"false"`
+in `wrangler.toml` and deploy. Before a deploy that enables it, confirm zero unknown
+rows with the read-only backfill preview (`{"limit":1}`, `counts.unknown`).
 
 ## Featured creator monthly batch
 
@@ -359,6 +390,47 @@ Before re-running older migrations against production, compare `PRAGMA table_inf
 `SELECT name FROM d1_migrations ORDER BY applied_at` so schema drift is reconciled in the
 ledger instead of replaying an already-applied `ALTER TABLE`.
 
+### Index drift found on 2026-11-10
+
+Production had none of the 17 indexes that migrations `0001`-`0011` define, although
+the ledger records those migrations as applied. The tables, triggers and data were
+intact. The cause is not known. The effect was that queries the tests showed as index
+lookups were full table scans in production.
+
+`0020_restore_creator_indexes.sql` and `0021_restore_filter_indexes.sql` restore the
+seven that a query in the top 70 by database time needed:
+
+- `template_documents`: `_creator_slug`, `_creator_name_nocase`, `_creator_record_id`,
+  `_price`, `_flags`
+- `template_category_memberships`: `_child`, `_group_child`
+
+Two are left out on purpose. Do not restore them without a new measurement:
+
+- `idx_template_documents_type`. With it, SQLite filters a type-filtered page through
+  this index and sorts every match, in place of a sort-index walk that stops at `LIMIT`.
+  On a 12,000-row replica that page went from 0.03 ms to 11 ms.
+- `idx_template_category_memberships_group`. It is a prefix of `_group_child`.
+
+`_popularity` and `_published_date` cannot serve the `COALESCE` sorts; `0019` replaced
+them. Six more are still missing and no measured query needs them: `_lmt`,
+`idx_template_styles_slug`, `idx_template_child_categories_slug`,
+`idx_slug_aliases_canonical`, `idx_sync_jobs_status` and
+`idx_template_image_backfill_attempts_last_attempted`. Restore one with a new migration
+that repeats its `CREATE INDEX IF NOT EXISTS`, and measure first: each index adds one
+write for each synced row, and an index can make a query slower, as `_type` shows.
+
+To check for drift, compare this list with the `CREATE INDEX` statements in
+`migrations/`:
+
+```sql
+SELECT name FROM sqlite_master
+WHERE type = 'index' AND name NOT LIKE 'sqlite_autoindex%' ORDER BY name;
+```
+
+A test database is built from the migrations, so tests cannot see this kind of drift.
+After a migration that adds an index, run `EXPLAIN QUERY PLAN` for the query on
+production too.
+
 ## Webflow webhooks
 
 Register Webflow API v2 `collection_item_created`, `collection_item_changed`, and
@@ -372,3 +444,15 @@ Set `WEBFLOW_WEBHOOK_SECRET` to the comma-separated signing secrets for the acti
 webhook subscriptions. Template collection events update image fields by `sync-record-id`;
 designer collection events update creator avatars by `sync-record-id` first, then exact
 creator name for older rows missing a linked creator record.
+
+### Project brief price ceiling
+
+`GET /api/templates/search?max_price=99&has_cms=true` applies an inclusive USD template-price ceiling before pagination, counts and facets. `max_price=0` includes confirmed free templates. Unknown prices are excluded under a ceiling unless the free flag confirms a zero price. Omit or leave empty for the existing unconstrained behavior. Invalid/negative/non-finite amounts, values above100000, and more than two decimal places return400. Cache entries include the normalized ceiling. This covers the template price, not a Webflow plan or implementation services.
+
+## Opt-in discovery intent
+
+`discovery=true&q=A+portfolio+site&sort=recommended&strict=true` interprets bounded portfolio requests as Design Portfolio or Photography & Video category membership. `portfolio_kind=designer|photographer|developer|studio|all` makes the audience explicit. Developer retains a keyword constraint because no dedicated developer category exists. Residual terms and all explicit budget, CMS, style, category and price filters still apply before pagination. Negated or ambiguous audience requests stay on the legacy keyword path. Exact template and creator searches are never reinterpreted.
+
+The optional `interpretation` response contains original_query, keywords, audience, label and the resolved category_slugs. Clients must show this interpretation so buyers can correct it. No model call, new database field or source mutation is involved.
+
+`sort=recommended` prioritizes matching featured templates with a nonempty Marketplace pick note, then catalog popularity. For unrecognized keyword intent, text relevance still comes first. This is an attributed editorial signal, not a design-quality score or guarantee of suitability. Existing sort defaults and requests without discovery remain unchanged. Discovery bypasses the public HTTP response cache; query memoization includes the intent and all filters.

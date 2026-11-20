@@ -28,9 +28,11 @@ permissions:
 jobs:
   adapter:
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    # Repository fetch can exceed five minutes before these contracts start.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        timeout-minutes: 10
       - run: python3 -m unittest discover -s packages/mapping-canvas/scripts -p 'test_draw_*.py' -v
       - run: node --test apps/draw-native/scripts/mac-release.test.mjs
   composition:

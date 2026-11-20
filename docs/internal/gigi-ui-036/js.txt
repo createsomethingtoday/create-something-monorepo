@@ -1,0 +1,441 @@
+Full original log SHA-256: 7a665347bd820a129537e2e73a5d88aa3647e6871e5bdf74db4eb994daa94ba0
+Condensed TAP: one outcome per test and final totals.
+
+ok 1 - requires an explicit existing profile and packages its exact data root
+ok 2 - packaged MCP opens the selected installed profile, not another local profile # SKIP Set GIGI_INSTALLED_MCP to run the installed-companion verifier.
+ok 3 - only pinned supported CTX distribution assets can enter the bundle
+ok 4 - reconciled surfaces retain the required Astryx component foundation
+ok 5 - reconciled product styles do not recreate ordinary Astryx layout or spacing
+ok 6 - installed MCP roundtrip persists a linked gig and private backup # SKIP
+ok 7 - only the bundled main webview can listen for native review navigation
+ok 8 - builds the saved-place map helper for macOS 13 arm64 and rejects malformed input without a lookup
+ok 9 - offline motion vendor is reproducible from the pinned official package
+ok 10 - stale or missing vendor output fails the packaging check
+ok 11 - packages a macOS 13 arm64 bridge with the complete notification ABI
+ok 12 - a complete signed and stapled pair qualifies only when the mounted app matches
+ok 13 - ad-hoc app signature fails closed before Gatekeeper or mount
+ok 14 - a valid Developer ID from another team cannot qualify a GiGi release
+ok 15 - different app bytes inside the DMG fail and the owned mount is detached
+ok 16 - a byte-identical mounted app with a nonexecutable companion is unqualified
+ok 17 - wrong bundle identifier and unsigned first-party companion cannot qualify
+ok 18 - Gatekeeper and stapler failures remain distinct from signed identity
+ok 19 - failed image attach does not detach another mount and removes only an empty owned directory
+ok 20 - accepts Gatekeeper notarized output without optional origin and still verifies signatures
+ok 21 - wrong Gatekeeper origin and an unsigned chat companion remain unqualified
+ok 22 - a release missing the native notification companion cannot qualify
+ok 23 - an ad-hoc extra MCP executable in MacOS cannot qualify
+ok 24 - map helper with ad-hoc cannot qualify
+ok 25 - map helper with wrong team cannot qualify
+ok 26 - map helper with missing hardened runtime cannot qualify
+ok 27 - map helper must be present
+ok 28 - map helper must be executable
+ok 29 - signed map helper is explicitly inspected
+ok 30 - a mounted map helper without executable permission cannot qualify
+ok 31 - fresh setup evidence never claims cached host or generation readiness
+ok 32 - classification never derives from title, custom Type, money or source
+ok 33 - a late optional status read cannot replace a newer connection result
+ok 34 - unavailable status fails closed, source permissions and Codex remain distinct
+ok 35 - all untrusted account, model, draft and reply content is escaped
+ok 36 - connect/select/disconnect use separate operations without source or Codex changes
+ok 37 - typed text only, model must be catalog member, no implicit source context
+ok 38 - cancel invalidates in-flight output and prevents overlapping action
+ok 39 - unknown provider errors never expose raw values or erase draft
+ok 40 - incomplete sign-in is actionable and plan-disabled account cannot send
+ok 41 - reconnect binds to selected account while ordinary connect stays unbound
+ok 42 - status account change drops prior model and reply while preserving typed draft
+ok 43 - usage settings are a fixed native operation and preserve existing response
+ok 44 - action-returned revocation warning is immediate and never hidden as success
+ok 45 - incomplete sign-in uses reconnect, never attempts unverified disconnect
+ok 46 - native usage opens only the verified fixed usage URL with output suppressed
+ok 47 - disconnect distinguishes local removal and all four remote receipts without claiming invalidation
+ok 48 - missing receipt or failed operation never implies local removal or remote success
+ok 49 - disconnect error and receipt stay visible together, subsequent status cannot recreate receipt
+ok 50 - new action clears old receipt and hostile receipt fields cannot enter UI
+ok 51 - prototype property names are unknown outcomes, not receipt text or error functions
+ok 52 - in-flight disconnect ignores cancel and reentry, hides Cancel, and retains actual outcome
+ok 53 - unknown native busy after remount cannot cancel and read-only status can observe completion
+ok 54 - UTF-8 byte boundaries reject oversized drafts before IPC and preserve their text
+ok 55 - actual draft input helper updates Send, UTF-8 help and accessibility without rerendering
+ok 56 - cleared active selection retains explicit reconnect for an expired existing registration
+ok 57 - late cancelled-connect cleanup warning survives refresh and later actions without stale state
+ok 58 - ordinary late cancelled-connect errors stay ignored and repeated cancel markers are cleaned
+ok 59 - models and ask bind selected account before provider work and refresh on external change
+ok 60 - unselected account cannot request models or ask; usage updates current identity
+ok 61 - desktop exposes durable attention and starts workspace observation outside chat
+ok 62 - Ask GiGi on an attention source creates the correct context after a workspace chat
+ok 63 - Link records reads visible controls when WebView form lookup fails and bubbling never duplicates it
+ok 64 - editing a gig replaces its fields so cleared fee, status, and date are removed
+ok 65 - stale editor save keeps typed values and explains how to reload
+ok 66 - connector sign-in explains provider outages and timeouts without exposing error codes
+ok 67 - source card explains an in-progress session refresh and keeps manual status recovery available
+ok 68 - Overview shows actionable workspace data, opens its records, and keeps library navigation available
+ok 69 - saving with the native submit button focused writes once and clears the busy state
+ok 70 - approval shows only structural changes including title, with exact before/after money and date semantics
+ok 71 - replace shows every removal; merge omission stays unchanged; null is cleared and empty string remains literal
+ok 72 - objects compare structurally, arrays retain order, and more than twenty changed fields are not truncated
+ok 73 - missing or malformed snapshots explicitly lack current values and cannot claim changed-only
+ok 74 - currency codes are explicit, unset is honest, and invalid minor-unit types are never coerced
+ok 75 - offset dates retain their recorded day and precision remains in technical detail; source normalization matches the domain
+ok 76 - all provider-controlled values, field names and technical arguments remain escaped
+ok 77 - primary comparison reveals a timestamp change beyond millisecond precision
+ok 78 - invalid replacement/mode/title cannot invent removals or claim no changes without a comparison
+ok 79 - profile merge/replace money uses authoritative before/after Currency even when app cache differs
+ok 80 - selected-source creation review names local target, source and external-write boundary
+ok 81 - creative approvals name the target and never imply publication
+ok 82 - image URLs have only workspace-owned IDs and thumbnails retain accessible text
+ok 83 - Today event cards preserve cross-dataset identity and image fallback text
+ok 84 - a saved local-artwork draft previews offline without a publish control
+ok 85 - artwork dialog wraps focus through visible storage controls and skips hidden ancestors
+ok 86 - artwork dialog author styles preserve hidden controls despite button display rules
+ok 87 - attention loads persisted source-linked items and revalidates before navigation
+ok 88 - closed drawer observer reads existing sessions without starting or approving work
+ok 89 - observer does not compete with an open drawer and refresh is single flight
+ok 90 - a stale or removed item never navigates and notification delivery is foreground-aware
+ok 91 - settings are explicit and do not request native permission on load
+ok 92 - desktop delivery delegates permission and durable claiming to native code
+ok 93 - unchanged background snapshots do not repaint the workspace
+ok 94 - a save finishing while hidden still enters the workspace attention snapshot
+ok 95 - bounded observation rotates through unseen sessions without invalid approval placeholders
+ok 96 - native stale-alert reconciliation runs when disabled and foreground
+ok 97 - workspace observer resumes a visible conversation after drawer polling pauses
+ok 98 - observer supplies only a real final assistant message identity for reply readiness
+ok 99 - an unavailable empty attention read never claims the workspace is caught up
+ok 100 - desktop bridge passes typed record operations to the single dispatch boundary
+ok 101 - desktop bridge requires a workspace for owned records and uses explicit backup operations
+ok 102 - bounded collection cursor and exact relation role reach the domain unchanged
+ok 103 - source import is workspace owned and context search stays within five snippets
+ok 104 - consent navigation carries the selected provider for diagnostics
+ok 105 - People search sends trimmed local query and cursor without changing other collections
+ok 106 - Today navigation and filtered Tasks retain workspace ownership and exact paging scope
+ok 107 - completion preserves the fresh full fields/source contract and verifies the saved status
+ok 108 - stale tasks and navigation during the full read never save
+ok 109 - failed saves and unconfirmed completion do not fabricate success
+ok 110 - Tasks view preferences are independent of Gigs and map to native filtered paging
+ok 111 - planned dates are labelled accurately and unknown statuses are retained
+ok 112 - Ask GiGi opens once, updates its mounted drawer during status changes, and Escape closes it
+ok 113 - first workspace creation initializes Ask GiGi without requiring an app restart
+ok 114 - Check status restores its control after disabled repaint without stealing a later focus choice
+ok 115 - safe answers have readable paragraphs, lists and emphasis without executable markup
+ok 116 - contextual suggestions are drafts rather than automatic work
+ok 117 - observed state never mistakes model reply for verified work
+ok 118 - answer hierarchy supports bounded headings and numbered steps without exposing HTML
+ok 119 - conversation list reflects the latest observed terminal state
+ok 120 - separated numbered steps preserve their original starting number
+ok 121 - record Ask GiGi opens selected context, resumes a saved conversation, and sends once
+ok 122 - common response blocks render without interpreting code or provider authority
+ok 123 - chat preferences round trip strictly and old v1 documents gain defaults
+ok 124 - transcript is not a live token log and conversations are a disclosure
+ok 125 - close/reopen retains selected conversation, its context and unsent draft; switching restores each draft
+ok 126 - send acknowledgment survives hide/reopen, blocks replay and retains newly typed text
+ok 127 - successful send while hidden clears only the submitted draft and never sends on reopen
+ok 128 - failed refresh retains draft and keeps Send and approval disabled until a successful read
+ok 129 - uncertain send settling while hidden retains its error and draft; failing read cannot clear the fence
+ok 130 - cancel close/reopen remains one explicit operation and cannot act during refresh
+ok 131 - approve close/reopen remains one explicit operation and cannot act during refresh
+ok 132 - reject close/reopen remains one explicit operation and cannot act during refresh
+ok 133 - late session reads cannot replace the newest conversation or its draft
+ok 134 - New chat uses the newly selected page context while reopening retains the old conversation context
+ok 135 - interrupted New chat retains the created session without repeating creation, and failed creation keeps the old draft
+ok 136 - repeated close/reopen cancels obsolete status/read/poll results and maintains one active poll timer
+ok 137 - unconfirmed send receipt null preserves draft and fences replay until matching fresh transcript
+ok 138 - unconfirmed send receipt {"sessionId":"other","state":"idle"} preserves draft and fences replay until matching fresh transcript
+ok 139 - unconfirmed send receipt {"sessionId":"s1","state":"unexpected"} preserves draft and fences replay until matching fresh transcript
+ok 140 - unconfirmed send receipt {} preserves draft and fences replay until matching fresh transcript
+ok 141 - chatgpt_auth_required retains the draft without fencing a later explicit retry
+ok 142 - codex_unavailable retains the draft without fencing a later explicit retry
+ok 143 - provider_turn_rejected retains the draft without fencing a later explicit retry
+ok 144 - provider_preflight_rejected retains the draft without fencing a later explicit retry
+ok 145 - provider_preflight_unavailable retains the draft without fencing a later explicit retry
+ok 146 - plugin_inventory_unavailable retains the draft without fencing a later explicit retry
+ok 147 - gigi_tools_unavailable retains the draft without fencing a later explicit retry
+ok 148 - pending cancellation retains transcript, fences further actions and polls terminal state
+ok 149 - recovery checks poll without claiming an interrupt and restore Stop after exact active-turn read
+ok 150 - chat bridge sends workspace-owned typed operations and explicit decisions
+ok 151 - chat starts with selected context, sends once, resumes running session, and refreshes after completion
+ok 152 - closing tears down polling and ignores stale poll responses
+ok 153 - approval is explicit and provider text is escaped
+ok 154 - record write approval presents actual proposed fields and keeps raw arguments in disclosure
+ok 155 - Codex status and uncertain writes use plain recovery copy and stop another send
+ok 156 - unknown provider errors are not echoed into the chat panel
+ok 157 - resuming a saved conversation displays its own record context and honest capability scope
+ok 158 - missing GiGi tools gives setup guidance without claiming a connected workspace
+ok 159 - empty running snapshots retain confirmed transcript until provider readback replaces it
+ok 160 - default timers keep the Window receiver when scheduling and clearing a poll
+ok 161 - authoritative edit receipt is separate from stale provider prose
+ok 162 - verified edit refreshes records after failed provider turn
+ok 163 - verified edit refreshes records after interrupted provider turn
+ok 164 - successful drawer reopen clears previous status failure without a selected session
+ok 165 - successful drawer reopen clears previous list failure without a selected session
+ok 166 - workspace verification in another conversation refreshes records once
+ok 167 - existing source receipt preserves changes without claiming save failure or new creation
+ok 168 - interrupted uncertain save blocks sending and supplies safe recovery (error: undefined)
+ok 169 - interrupted uncertain save blocks sending and supplies safe recovery (error: write_outcome_unknown)
+ok 170 - unavailable empty chat offers status recovery without telling users to start a disabled chat
+ok 171 - Check status refreshes availability without creating or sending a conversation
+ok 172 - Check status reconciles an uncertain conversation without replay and keeps sending blocked
+ok 173 - streaming observes a running turn for the original eight-minute window and can resume afterward
+ok 174 - HTML confirmation accepts and restores focus/inert state
+ok 175 - HTML confirmation rejects and restores focus/inert state
+ok 176 - HTML confirmation traps Tab in both directions and Escape declines
+ok 177 - connected setup reaches Ready only after explicit source import, reviewed save and independent native record readback
+ok 178 - an uncertain reviewed save pauses and resumes from the exact mutation receipt without a duplicate write
+ok 179 - lost import replies require the original native receipt and restore through reads before any first-win claim
+ok 180 - manual work remains explicit and does not trigger connection or import mutations
+ok 181 - timeout settles UI wait, removes timer, and consumes late native rejection
+ok 182 - superseding and navigation cancel only the wait, preserve latest success, and clear timers
+ok 183 - success and native rejection both clean up the deadline
+ok 184 - People filters locally, clears, preserves search on detail/back, and ignores stale responses
+ok 185 - People exits an unresolved search, ignores late completion, and retries without stale page replacement
+ok 186 - appearance settings save, apply, survive restart, and reset without record writes
+ok 187 - blocked persistence keeps current appearance and explains that saving failed
+ok 188 - configuration import validates before saving and export contains presentation settings only
+ok 189 - import recovery keeps focus and selection when an earlier notification expires
+ok 190 - blocked preference storage retains focus on the setting that needs recovery
+ok 191 - appearance route keeps setup separate and card layout preserves Gigs filtering and workspace navigation
+ok 192 - Schedule selection is saved without changing source connections
+ok 193 - successful configuration import retains keyboard focus on its submit control
+ok 194 - copy configuration defaults to rollback compatibility and explicitly includes chat in the newer format
+ok 195 - known display statuses are readable while custom values and input stay intact
+ok 196 - people shortcut does not hijack unmodified Find on other workspaces or an open chat
+ok 197 - Today uses server totals rather than loaded-card counts and keeps navigation scoped
+ok 198 - built-in readiness never derives from an external-agent preparation receipt
+ok 199 - capture is optional, local, bounded and cannot export before stopped review
+ok 200 - review exposes exact backend-redacted report; export remains deliberate and all values escaped
+ok 201 - desktop support flow checks status without capturing, requires reviewed token and clears local review on delete
+ok 202 - record detail puts actionable fields first and retains every supporting field
+ok 203 - dates retain their calendar day and invalid values remain visible without inventing a date
+ok 204 - empty sections explain their purpose and suggest a first action
+ok 205 - offset-bearing dates show the recorded civil time and offset independent of the viewer timezone
+ok 206 - money help identifies each supported profile currency and keeps an unset currency neutral
+ok 207 - Gigs toolbar searches the current collection and Back restores list position
+ok 208 - pending Gigs criteria do not show old matching or view counts
+ok 209 - Gigs ignores stale search results, retains rows on failure, and restores workspace state
+ok 210 - Gigs uses opaque scoped cursors, resets paging on criteria change and persists preferences
+ok 211 - Gigs rejects reversed date ranges without discarding previous rows
+ok 212 - a cancelled search is reread on return and mutations invalidate the owning workspace cache
+ok 213 - a read begun before a mutation cannot clear invalidation
+ok 214 - reopening revalidates external changes and the current day while restoring loaded depth
+ok 215 - all workspace destinations have decorative offline icons while labels remain text
+ok 216 - bundled icons retain Lucide license and exact Agency-installed SVG geometry
+ok 217 - every editable detail belongs to the reviewed relational field catalog
+ok 218 - record list accepts the domain envelope and preserves linked records
+ok 219 - editor sends canonical catalog fields, integer cents, and excludes blank values
+ok 220 - money is not invented when a summary has no financial facts
+ok 221 - finance editor exposes domain accepted enums and partial gig balance stays unquantified
+ok 222 - linked detail navigates to the other endpoint in either direction
+ok 223 - People to Gigs link captures selected values before UI rerender and rejects incomplete forms explicitly
+ok 224 - import source text has human labels and stays separate from record facts
+ok 225 - only a verified terminal connection receipt permits a fresh consent attempt
+ok 226 - uncertain consent recovery asks for operator review and never offers a new attempt
+ok 227 - source import cursor never crosses connected accounts
+ok 228 - pending consent resumes from exact provider status after restart without exposing other provider attempts
+ok 229 - expired, mismatched, or unsafe consent URLs never show a resume action
+ok 230 - clear music filters aligns visible controls with the next request
+ok 231 - discarding Track A edits then opening Track B does not transfer values
+ok 232 - deferred music results preserve typed search text, focus and selection
+ok 233 - canceling a native import picker restores its triggering button focus
+ok 234 - music workspace escapes private names and presents reconnect without implying upload
+ok 235 - projects have honest preview limits and organization fields survive escaped values
+ok 236 - bounded paging and cancellation are explicit
+ok 237 - unsupported video containers retain music organization without a preview action
+ok 238 - fresh music library offers an import action without false no-results or pagination
+ok 239 - available music keeps recovery secondary while missing music leads with reconnect
+ok 240 - opening and closing a local player moves focus and never overlays the library
+ok 241 - returning from an agent refreshes music without replacing active organization edits
+ok 242 - music save sends the original revision and preserves edits when another writer changed the entry
+ok 243 - music loading and read errors do not pretend the library is empty
+ok 244 - fresh workspace leads to optional setup without automatically signing in, connecting accounts or preparing an agent
+ok 245 - provider choice shows and copies only that exact prepared command; preparing never claims installation or phone access
+ok 246 - profile save failure keeps typed defaults and resumes the existing workspace on retry
+ok 247 - source consent keeps provider context and shows actionable browser and sign-in failures
+ok 248 - an optional status timeout settles without accepting a late result
+ok 249 - existing People, Gig and Task editors return to the originating detail and position without writes
+ok 250 - new record Cancel returns to its collection without creating a record
+ok 251 - editors use verified labels and accessible date and actual-currency help without changing field names
+ok 252 - collections use singular and plural nouns including financial records
+ok 253 - rejected refresh receipts remain checking while genuine outages and retry recovery are distinct
+ok 254 - pending status reads display Checking consistently until a receipt arrives
+ok 255 - new record from Overview Cancel loads the destination collection rather than reusing prior rows
+ok 256 - a complete visual configuration survives export, import and workspace restart
+ok 257 - missing, corrupt and unsupported saved configurations recover to defaults
+ok 258 - imports validate the entire document before applying any setting
+ok 259 - normalization strips unknown data and replaces unsafe values without mutation
+ok 260 - write failures and missing workspace IDs fail explicitly
+ok 261 - applying preferences uses only validated theme and density attributes
+ok 262 - saving chat extensions keeps the rollback reader compatible, including re-upgrade
+ok 263 - chat extension corruption cannot erase core preferences or inject core fields
+ok 264 - combined candidate storage migrates only when explicitly saved and reset keeps rollback compatibility
+ok 265 - failed extension writes restore the previous core and chat entries
+ok 266 - default copied configuration imports in the advertised rollback build
+ok 267 - explicit chat-inclusive configuration uses its own version and roundtrips all choices
+ok 268 - chat-inclusive imports retain strict validation and do not change on-device schema
+ok 269 - a new step moves the wayfinder and illustrative objects without touching controls
+ok 270 - busy and ordinary rerenders do not replay motion or consume the next saved step
+ok 271 - reduced motion stays static and changing the preference reverts a running sequence
+ok 272 - only a verified route is drawn; replay and leaving cannot write records
+ok 273 - an unavailable media or animation engine preserves static onboarding
+ok 274 - first-run markup remains usable under the desktop policy that blocks inline styles
+ok 275 - a verified gig save places its record into the crate before introducing the collaborator
+ok 276 - a newly verified result drops into the crate once within the same step
+ok 277 - an immediate app rerender preserves an unfinished checked-save animation
+ok 278 - the first mission needs only a name and does not guess a money currency
+ok 279 - missions save real records and verify the exact crew relationship
+ok 280 - person drafts and skips never fabricate a contact or completed link
+ok 281 - restart restores record readbacks and pause/resume without replaying mutations
+ok 282 - a saved person survives link failure and retry performs only the link
+ok 283 - an uncertain save reconciles the stable record before retrying, including after restart
+ok 284 - profile save validates currency and avoids duplicates after an uncertain receipt
+ok 285 - missing saved records repair progress without creating replacements
+ok 286 - missing relationship resets only crew progress and a finished tutorial stays closed
+ok 287 - pending original input prevents an uncertain save being overwritten with a changed draft
+ok 288 - unknown readback failure retains references and never silently recreates records
+ok 289 - corrupt, oversized, foreign-workspace and unavailable storage do not block local use
+ok 290 - history presents a readable saved receipt without exposing technical identifiers as its heading
+ok 291 - contact and link values are copied as text without granting an executable URL action
+ok 292 - reference shell retains every destination and labels its real search scope
+ok 293 - workspace history preserves forward destinations and truncates only on new navigation
+ok 294 - Today cards preserve identifiers, escape stored text and never fabricate a decision
+ok 295 - overflow names the active destination and history describes page navigation
+ok 296 - appearance preferences extend the product theme after reference geometry
+ok 297 - More groups supporting pages and workspace controls without duplicating destinations
+ok 298 - navigation dismissal and keyboard movement work independently of data actions
+ok 299 - React navigation groups open by keyboard, dismiss before route handling and remain exclusive
+ok 300 - load more reaches all 205 links, retaining bounded initial links without duplicates
+ok 301 - failed page retains cursor and links; concurrent calls and navigation cannot append stale data
+ok 302 - toast expiry and unrelated rerenders retain an unsaved editor draft, focus, selection and scroll
+ok 303 - obsolete Person editor responses cannot open a Task editor after navigation
+ok 304 - late collection and detail responses cannot replace newer navigation
+ok 305 - repeated editor reads accept only the latest response and ignore obsolete failures
+ok 306 - a save already submitted keeps its original record scope and cannot navigate back over a newer page
+ok 307 - an obsolete completion cannot unlock the latest operation or report its stale error
+ok 308 - save failure retains unsent input and selection; repeated submit while pending cannot duplicate the write
+ok 309 - connector sign-in completion cannot navigate away from a newly opened editor
+ok 310 - gig detail remains inspectable when its financial summary fails, without inventing a balance
+ok 311 - completed chat changes refresh profile currency before subsequent money proposals; read failure never uses cached units
+ok 312 - Cancel during a submitted creation retains the write guard until it settles
+ok 313 - sidebar navigation protects an unfinished record and explicitly discards only after confirmation
+ok 314 - reference history and global search results cannot discard an unfinished task
+ok 315 - Today creation enters workspace history and protects the new draft on Back
+ok 316 - save errors remain available until dismissed without losing the unsaved draft
+ok 317 - restore requires visible in-app confirmation before native mutation
+ok 318 - agenda sorts all pages, groups calendar dates and keeps unknown dates inspectable
+ok 319 - timestamp intervals use local times and span midnight without hiding ongoing events
+ok 320 - pagination aborts stale navigation and rejects repeated cursors
+ok 321 - schedule navigation renders both pages and switches between past and upcoming without writes
+ok 322 - workspace agenda includes dated gigs across all pages and preserves their record identity
+ok 323 - date-only gigs show call and set times instead of claiming all-day availability
+ok 324 - explicit imported all-day gig ranges retain all-day and exclusive end semantics
+ok 325 - assistant setup refresh verifies exact workspace and never starts a provider turn
+ok 326 - assistant setup fails closed on malformed or old readiness and refresh failure clears earlier verification
+ok 327 - assistant setup ignores a late status after workspace change or disposal
+ok 328 - external preparation remains explicit and never claims installation or workspace verification
+ok 329 - managed sign-in is explicit, uses its exact job id and rechecks workspace after completion
+ok 330 - cancel preserves uncertain login outcome and never treats it as signed out
+ok 331 - refresh resumes a pending workspace sign-in through read-only polling without reopening its browser
+ok 332 - missing GiGi tools never sends a signed-in user to reinstall Codex
+ok 333 - setup imports reviewed source separately from a verified contact first win
+ok 334 - an uncertain save survives restart and recovers read-only without a duplicate write
+ok 335 - draft edits persist without rerendering and a missing source relation never counts as a win
+ok 336 - continuation uses the frozen scope and expiry requires an explicit fresh preview
+ok 337 - changed source accounts block old imports and permit only an explicit new preview
+ok 338 - calendar first wins require reviewed Work kind and retain exact dates
+ok 339 - native expired-session rejection becomes a recoverable source status
+ok 340 - an unconfirmed import survives receipt read failures until continuation reconciles its exact job
+ok 341 - an unconfirmed import survives candidate read failures until continuation reconciles its exact job
+ok 342 - a still-preview import blocks continuation but retains the exact approved retry key
+ok 343 - setup navigation resumes without claiming a source or assistant is verified
+ok 344 - connection request identity survives restart but cannot cross workspaces
+ok 345 - corrupt storage and unavailable storage leave manual work usable
+ok 346 - unknown navigation and oversized journals never become active
+ok 347 - source feedback names the verified account state and keeps import separate
+ok 348 - source feedback explains a session refresh without asking for another connection
+ok 349 - source feedback gives sign-in recovery without exposing connector codes
+ok 350 - setup summary gives a next step from receipts without upgrading agent or phone proof
+ok 351 - summary directs uncertain refresh outcomes to status recovery alongside its card
+ok 352 - admission, session expiry and service failures have distinct next steps
+ok 353 - source journey advances only from receipts and preserves pending consent
+ok 354 - journey directs each guarded recovery to its available action
+ok 355 - source recovery card gives a guarded next action for journal_unavailable
+ok 356 - source recovery card gives a guarded next action for link_outcome_unknown
+ok 357 - source recovery card gives a guarded next action for connection_changed
+ok 358 - source recovery card gives a guarded next action for connection_not_found
+ok 359 - source recovery card gives a guarded next action for invalid_readback
+ok 360 - sign-in recovery explains browser_unavailable without exposing technical codes
+ok 361 - sign-in recovery explains loopback_unavailable without exposing technical codes
+ok 362 - sign-in recovery explains identity_contract_mismatch without exposing technical codes
+ok 363 - sign-in recovery explains redirect_registration_mismatch without exposing technical codes
+ok 364 - sign-in recovery explains identity_mismatch without exposing technical codes
+ok 365 - sign-in recovery explains invalid_token_readback without exposing technical codes
+ok 366 - unknown source errors are not interpolated by the fixed recovery map
+ok 367 - source session contention explains the running operation without exposing its lock details
+ok 368 - an unverified source session requires operator review and never suggests a restart or new consent
+ok 369 - drafts can be incomplete but publishing requires account and public image
+ok 370 - unknown and unverified receipts never claim published
+ok 371 - draft content escaped, image does not load until requested, unsafe receipt links omitted
+ok 372 - connection flow preserves pending consent and does not offer a duplicate grant
+ok 373 - only a definitive not-published receipt offers an explicit new draft copy
+ok 374 - social surfaces use the host dark theme tokens and embedded connection setup
+ok 375 - connection setup discloses the full existing grant before consent
+ok 376 - media and account errors explain a concrete recovery without exposing reason codes
+ok 377 - image field explains the approved host and JPEG constraints before preview
+ok 378 - observed signed-out connection error directs the user to embedded sign-in
+ok 379 - current auth and runner failure codes never reach the user as raw identifiers
+ok 380 - pending processing explicitly describes continuation and definitive rejection gives recovery
+ok 381 - publishing issues identify fields without telling an already saved draft to save again
+ok 382 - saved draft review focuses invalid media without calling publishing and CmdS saves locally
+ok 383 - selecting a saved draft captures its event target before awaiting and focuses only after loading
+ok 384 - agent requests are visible and focus refresh preserves edits and confirmation
+ok 385 - a pending local artwork save cannot lose a simultaneous removal
+ok 386 - admitted disconnected status offers Google connection without another GiGi sign-in
+ok 387 - successful Identity sign-in followed by admission denial gives safe guidance, never a consent success prompt
+ok 388 - sign-in preserves verified Google connection and directs to status and preview
+ok 389 - pending consent resumes its existing link after GiGi sign-in without a new connection
+ok 390 - an unavailable admission check asks for status instead of another sign-in or consent
+ok 391 - verified source identity replaces redundant sign-in; admission denial does not imply pending consent
+ok 392 - source preview reads without import, then imports only the reviewed revision and shows durable counts
+ok 393 - reopening Sources restores receipt scope and continues its scoped cursor without importing
+ok 394 - sign out clears local source session and previews while preserving imported records and provider consent
+ok 395 - discarding a source preview cancels that preview and removes its contents without importing
+ok 396 - restored agent import stays visibly in progress and can be stopped from Sources
+ok 397 - an unresolved source session blocks cached connect, verify and import controls while status remains available
+ok 398 - a contact proposal reviews one exact Gmail sender and refuses ambiguous senders
+ok 399 - email proposal never invents a deadline; source text is escaped and a save requires separate review
+ok 400 - calendar proposal retains exact date range and explains exclusive all-day end
+ok 401 - wrong workspace, incomplete account provenance and unsupported sources are rejected
+ok 402 - desktop source flow cancels without writing, reviews before saving and retries identical payload after uncertain delivery
+ok 403 - weekly calendar includes all seven days, real routes, correct dates, and local week navigation
+ok 404 - task list shows name date and priority in server date order
+ok 405 - Financials splits Payable and Receivable with saved amount status and due date
+ok 406 - empty and unavailable sections stay distinct; records are never inferred from counts
+ok 407 - failed week refresh preserves the previous successful week and marks its read time
+ok 408 - stored titles, priorities, statuses and identifiers are escaped
+ok 409 - source observation remains distinct from local reads and trusted setup/attention are retained
+ok 410 - local calendar arithmetic crosses month year and daylight saving boundaries without fixed-hour math
+ok 411 - status rerender retains history query, link choices, open restore draft and text selection
+ok 412 - new logical view does not inherit a previous query or restore confirmation draft
+ok 413 - rerender restores the matching action focus without focusing a disabled control
+ok 414 - chat rerender preserves scrolled conversation list and expanded review details
+ok 415 - removing diagnostic disclosure never transfers its open state to agent setup
+ok 416 - lost approval response holds further writes until read-only receipt and entry readback
+ok 417 - switching workspaces clears private rows immediately even when the new read fails
+ok 418 - pending save freezes the reviewed draft until staging completes
+ok 419 - lost staging response fences edits until a scoped receipt read reconciles the proposal
+ok 420 - confirmed absent staging receipt unlocks the unchanged draft for retry
+ok 421 - durably retired staged proposals clear the frozen draft without approval replay
+ok 422 - late results after query changes or closing cannot replace a newer workspace search
+ok 423 - buckets page independently, escape stored titles and clear stale results on a failed new query
+ok 424 - an unresolved read times out and late completion cannot replace a successful retry
+ok 425 - Command-F and Control-F open search and keyboard focus stays within the popover
+ok 426 - opening global search does not navigate, and grouped results open the selected record through guarded navigation
+ok 427 - pagination retains keyboard focus while loading and restores input when the last More button disappears
+ok 428 - refreshing results preserves the active input node and unfinished composition text
+ok 429 - finishing a page read clears pointer blocking without replacing the active search input
+1..429
+# tests 429
+# suites 0
+# pass 427
+# fail 0
+# cancelled 0
+# skipped 2
+# todo 0
+# duration_ms 5570.344958

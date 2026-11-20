@@ -1,9 +1,9 @@
 <script lang="ts">
+  import PerformanceCampaignOpening from '$lib/components/AgencyMeasuredOpening.svelte';
   import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import { page } from '$app/stores';
   import {
     Button,
-    PerformanceCampaignOpening,
     PerformanceConversionHandoff,
     PerformanceNarrativeStage,
     SEO,

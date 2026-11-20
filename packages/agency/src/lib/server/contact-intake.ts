@@ -1,5 +1,6 @@
 import { Data, Effect, Either } from 'effect';
 import type { ContactInput } from '@create-something/canon/validation';
+import { metaLeadInsertStatement, type PreparedMetaLead } from './meta-marketing';
 
 export const CONTACT_SAVED_MESSAGE = 'Your inquiry is saved, but email confirmation is not complete. Please do not submit it again.';
 export const CONTACT_UNKNOWN_MESSAGE = 'We could not confirm receipt. Please keep this request open and do not start a new submission.';
@@ -95,7 +96,7 @@ export async function runContactSecondaryEffects(steps: readonly (() => Promise<
   if (failed) throw new Error('Contact secondary work incomplete');
 }
 
-export function createD1ContactRepository(db: D1Database): ContactRepository {
+export function createD1ContactRepository(db: D1Database, metaLead?: PreparedMetaLead): ContactRepository {
   const primary = () => db.withSession('first-primary');
   return {
     async read(id) {
@@ -119,7 +120,8 @@ export function createD1ContactRepository(db: D1Database): ContactRepository {
         ...(['confirmation', 'notification'] as const).map(kind => session.prepare('INSERT INTO contact_email_receipts (request_id, kind) VALUES (?, ?)').bind(id, kind)),
         session.prepare(`INSERT INTO contact_request_attribution (request_id, source, campaign, intent, lane)
           VALUES (?, ?, ?, ?, ?)`).bind(id, input.source || 'contact', input.campaign || null,
-            input.intent || 'workflow-teardown', input.lane || 'not_sure')
+            input.intent || 'workflow-teardown', input.lane || 'not_sure'),
+        ...(metaLead ? [metaLeadInsertStatement(session, id, metaLead)] : [])
       ]);
       if (results.some(result => !result.success)) throw new Error('Contact batch not acknowledged');
     },

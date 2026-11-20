@@ -1,0 +1,164 @@
+[
+  {
+    "route": "stack",
+    "width": 320,
+    "scroll": 310,
+    "title": "Your accounts. Your data. Your decisions.",
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/stack-hero-20261116.webp\")",
+    "pngWidth": 320,
+    "path": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7eb4bfce-5ad3294500e340dc/packages/agency/docs/evidence/cre2485-three-heroes/independent/stack-320.png"
+  },
+  {
+    "route": "stack",
+    "width": 390,
+    "scroll": 380,
+    "title": "Your accounts. Your data. Your decisions.",
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/stack-hero-20261116.webp\")",
+    "pngWidth": 390,
+    "path": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7eb4bfce-5ad3294500e340dc/packages/agency/docs/evidence/cre2485-three-heroes/independent/stack-390.png"
+  },
+  {
+    "route": "stack",
+    "width": 768,
+    "scroll": 758,
+    "title": "Your accounts. Your data. Your decisions.",
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/stack-hero-20261116.webp\")",
+    "pngWidth": 768,
+    "path": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7eb4bfce-5ad3294500e340dc/packages/agency/docs/evidence/cre2485-three-heroes/independent/stack-768.png"
+  },
+  {
+    "route": "stack",
+    "width": 1024,
+    "scroll": 1014,
+    "title": "Your accounts. Your data. Your decisions.",
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/stack-hero-20261116.webp\")",
+    "pngWidth": 1024,
+    "path": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7eb4bfce-5ad3294500e340dc/packages/agency/docs/evidence/cre2485-three-heroes/independent/stack-1024.png"
+  },
+  {
+    "route": "stack",
+    "width": 1025,
+    "scroll": 1015,
+    "title": "Your accounts. Your data. Your decisions.",
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/stack-hero-20261116.webp\")",
+    "pngWidth": 1025,
+    "path": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7eb4bfce-5ad3294500e340dc/packages/agency/docs/evidence/cre2485-three-heroes/independent/stack-1025.png"
+  },
+  {
+    "route": "stack",
+    "width": 1440,
+    "scroll": 1430,
+    "title": "Your accounts. Your data. Your decisions.",
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/stack-hero-20261116.webp\")",
+    "pngWidth": 1440,
+    "path": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7eb4bfce-5ad3294500e340dc/packages/agency/docs/evidence/cre2485-three-heroes/independent/stack-1440.png"
+  },
+  {
+    "route": "practice",
+    "width": 320,
+    "scroll": 310,
+    "title": "Try the workflow before connecting your tools.",
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/practice-hero-20261116.webp\")",
+    "pngWidth": 320,
+    "path": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7eb4bfce-5ad3294500e340dc/packages/agency/docs/evidence/cre2485-three-heroes/independent/practice-320.png"
+  },
+  {
+    "route": "practice",
+    "width": 390,
+    "scroll": 380,
+    "title": "Try the workflow before connecting your tools.",
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/practice-hero-20261116.webp\")",
+    "pngWidth": 390,
+    "path": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7eb4bfce-5ad3294500e340dc/packages/agency/docs/evidence/cre2485-three-heroes/independent/practice-390.png"
+  },
+  {
+    "route": "practice",
+    "width": 768,
+    "scroll": 758,
+    "title": "Try the workflow before connecting your tools.",
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/practice-hero-20261116.webp\")",
+    "pngWidth": 768,
+    "path": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7eb4bfce-5ad3294500e340dc/packages/agency/docs/evidence/cre2485-three-heroes/independent/practice-768.png"
+  },
+  {
+    "route": "practice",
+    "width": 1024,
+    "scroll": 1014,
+    "title": "Try the workflow before connecting your tools.",
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/practice-hero-20261116.webp\")",
+    "pngWidth": 1024,
+    "path": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7eb4bfce-5ad3294500e340dc/packages/agency/docs/evidence/cre2485-three-heroes/independent/practice-1024.png"
+  },
+  {
+    "route": "practice",
+    "width": 1025,
+    "scroll": 1015,
+    "title": "Try the workflow before connecting your tools.",
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/practice-hero-20261116.webp\")",
+    "pngWidth": 1025,
+    "path": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7eb4bfce-5ad3294500e340dc/packages/agency/docs/evidence/cre2485-three-heroes/independent/practice-1025.png"
+  },
+  {
+    "route": "practice",
+    "width": 1440,
+    "scroll": 1430,
+    "title": "Try the workflow before connecting your tools.",
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/practice-hero-20261116.webp\")",
+    "pngWidth": 1440,
+    "path": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7eb4bfce-5ad3294500e340dc/packages/agency/docs/evidence/cre2485-three-heroes/independent/practice-1440.png"
+  },
+  {
+    "route": "field-reports",
+    "width": 320,
+    "scroll": 310,
+    "title": "Read the results, including the limits.",
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/field-reports-hero-20261116.webp\")",
+    "pngWidth": 320,
+    "path": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7eb4bfce-5ad3294500e340dc/packages/agency/docs/evidence/cre2485-three-heroes/independent/field-reports-320.png"
+  },
+  {
+    "route": "field-reports",
+    "width": 390,
+    "scroll": 380,
+    "title": "Read the results, including the limits.",
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/field-reports-hero-20261116.webp\")",
+    "pngWidth": 390,
+    "path": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7eb4bfce-5ad3294500e340dc/packages/agency/docs/evidence/cre2485-three-heroes/independent/field-reports-390.png"
+  },
+  {
+    "route": "field-reports",
+    "width": 768,
+    "scroll": 758,
+    "title": "Read the results, including the limits.",
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/field-reports-hero-20261116.webp\")",
+    "pngWidth": 768,
+    "path": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7eb4bfce-5ad3294500e340dc/packages/agency/docs/evidence/cre2485-three-heroes/independent/field-reports-768.png"
+  },
+  {
+    "route": "field-reports",
+    "width": 1024,
+    "scroll": 1014,
+    "title": "Read the results, including the limits.",
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/field-reports-hero-20261116.webp\")",
+    "pngWidth": 1024,
+    "path": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7eb4bfce-5ad3294500e340dc/packages/agency/docs/evidence/cre2485-three-heroes/independent/field-reports-1024.png"
+  },
+  {
+    "route": "field-reports",
+    "width": 1025,
+    "scroll": 1015,
+    "title": "Read the results, including the limits.",
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/field-reports-hero-20261116.webp\")",
+    "pngWidth": 1025,
+    "path": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7eb4bfce-5ad3294500e340dc/packages/agency/docs/evidence/cre2485-three-heroes/independent/field-reports-1025.png"
+  },
+  {
+    "route": "field-reports",
+    "width": 1440,
+    "scroll": 1430,
+    "title": "Read the results, including the limits.",
+    "background": "url(\"http://127.0.0.1:4185/images/canon-agency-v1/field-reports-hero-20261116.webp\")",
+    "pngWidth": 1440,
+    "path": "/Users/createsomething/.t3/worktrees/create-something-monorepo/t3-7eb4bfce-5ad3294500e340dc/packages/agency/docs/evidence/cre2485-three-heroes/independent/field-reports-1440.png"
+  }
+]

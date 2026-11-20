@@ -1,5 +1,41 @@
 # GiGi desktop beta
 
+## React / Astryx application
+
+GiGi's frontend is rewritten with React 19 and actual Meta Astryx components,
+including the shell, record workflows, settings/imports, chat/search, Music,
+artwork and Instagram drafts. Vite builds `dist` for Tauri. Existing native
+transactions, saved theme IDs and preference schemas remain compatible.
+See [the implementation contract](DESIGN_FOUNDATION.md) and
+[rewrite evidence](evidence/astryx-rewrite/REVIEW.md) for checks and native release
+limits. See the [0.3.1 release receipt](../../docs/internal/gigi-astryx-031/REVIEW.md)
+for exact native artifact and distribution status.
+
+## Workspace search (0.2.24)
+
+The header Search control and Command/Control-F open a local workspace search
+without changing the current page. Results group People, Gigs, Finances and
+Tasks; People matches names, email, phone and linked companies, while the other
+groups match saved titles. Each group pages independently. Arrow keys and Enter
+move through results; Escape closes the dialog. Opening a result uses the
+existing unsaved-edit guard.
+
+Imported for CRE-2365 from `gigi-team/grantbot` PR #1426, feature commit
+`b76d3d03c13eb098dff2edc26e809fec0a2e9cf9` only, using the selected-commit
+procedure in that repository's `sandbox/gigi-desktop/UPSTREAM.md`. The import
+excludes its onboarding, navigation PR #1424, and concurrent chat/Today work.
+Conflict resolution retains the regular app's existing setup and navigation.
+No provider connection, migration, import, or financial action is introduced.
+
+For disposable native acceptance, run
+`cargo run --manifest-path apps/gigi-desktop/src-tauri/Cargo.toml --example seed_workspace_search_review -- <new-absolute-profile-path>`
+and use that profile through `GIGI_DATA_DIR`. The fixture contains one match in
+People/Gigs/Finances, nine matching Tasks, and an excluded other-workspace task.
+
+## Daily-use polish (0.2.17 candidate)
+
+Today puts **New task** beside **New gig** and uses the minimum window more efficiently. Attention keeps its decisions and safety boundary with less repeated framing; record cards retain readable titles in two columns where space permits. Errors remain until dismissed, successful feedback respects keyboard focus, and failed attention checks never claim you are caught up. Studio, Paper, Midnight and protected record/approval flows remain established. See [candidate evidence](evidence/daily-polish-0217/REVIEW.md) for synthetic/native checks and remaining release gates.
+
 ## Tauri polish (0.2.10 local candidate)
 
 Restores the slate studio theme after reference layout styles, clarifies active secondary-page navigation, and standardizes system typography, metadata, dates and artwork/media surfaces. Music keeps in-progress controls and focus during reads, distinguishes loading/read failure from an empty library, offers explicit retry/filter reset, and restores focus after a cancelled picker. Artwork saves return focus to the matching action after the detail refresh. Database, integration and MCP contracts are unchanged.
@@ -122,7 +158,7 @@ Agent setup generates exact Codex MCP registration and Claude plugin launch comm
 
 ## Guided onboarding
 
-Source setup now shows six stages: local workspace, GiGi source sign-in, source choice, Google consent, verification, and explicit bounded import. An expired GiGi session asks for sign-in; admission/resource denial asks the operator to check app access; an unavailable identity/connector service asks for a later status check. None of those errors grants access or releases a pending consent attempt.
+Source setup now shows seven stages: local workspace, GiGi source sign-in, GiGi source access, source choice, Google consent, verification, and explicit bounded import. An expired GiGi session asks for sign-in; admission/resource denial asks the operator to check app access; an unavailable identity/connector service asks for a later status check. None of those errors grants access or releases a pending consent attempt.
 
 After ownership and active-connection verification, the connector reads a display label through that same Google connection: Gmail's profile address or Calendar's primary-calendar identifier. The GiGi sign-in email is never used as the Google label. Missing, malformed or slow optional labels stay unavailable without inventing an account identity. Existing approved Google grants are broader than read-only; GiGi's fixed source proxy uses only GET operations. Each explicit import reads at most two Gmail metadata/snippet records or ten primary-calendar events. Open an imported record to review a linked local task or gig.
 
@@ -183,7 +219,7 @@ Organization MCP edits require a stable UUID `requestId`. The metadata edit and 
 
 ## Sources update in 0.2.6
 
-Sources now distinguish verified provider identity, app sign-in recovery and import readiness. Preview a bounded page with an optional UTC date window before importing its reviewed records locally. UI and agents share source status, preview, commit, receipt and cancellation interfaces. Scope-bound cursors and frozen revisions prevent a changed account or date window from silently broadening an import. Date filtering applies to scanned pages; coverage may remain partial, and undated/all-day events without a usable UTC instant are counted as excluded for a date window. Only the primary calendar is supported.
+Sources now distinguish verified provider identity, app sign-in recovery and import readiness. Preview a bounded page with an optional UTC date window before importing its reviewed records locally. UI and agents share source status, preview, commit, receipt and cancellation interfaces. Scope-bound cursors and frozen revisions prevent a changed account or date window from silently broadening an import. Calendar date windows are sent to the provider on every page, and continuation tokens remain bound to the account and window. Local overlap checks also apply. All-day dates use the primary calendar’s authoritative time zone and an exclusive end date; missing or invalid time zones remain unknown. Coverage remains partial while another page or unknown dates remain. Only the primary calendar is supported; these are reviewed snapshots, not continuous sync.
 
 Receipts distinguish new, existing and failed records, preserve manual corrections, and reconcile interrupted writes without blindly replaying them. Stopping prevents future row saves and keeps records already committed. Sign out of GiGi sources clears the local session on this Mac; it does not revoke Google/Composio consent or remove imported records. Live account, Grant-access, phone and provider publication acceptance are separate from synthetic release checks.
 
@@ -200,3 +236,89 @@ GiGi is a free, open-source local desktop app. The optional app-owned connection
 Settings offers system-browser sign-in, cancel, account selection/reconnect/disconnect, a model catalog and a separate text-only message box. Only explicitly typed text is sent; it has no record context or tools. Eligible plan use is limited, with no automatic API billing fallback. Native Rust owns the persistent controller and credential store. Credentials never enter the renderer; cancel invalidates in-flight output and app exit cancels work. Non-macOS builds remain disabled. Account identity and permission for eligible plan inference are distinct.
 
 A separately configured DEV variant built from `e115e337` completed owner-performed browser consent, model discovery, one synthetic typed-text request and persisted local sign-out on 2026-10-24. That test used an incognito WebView, an isolated synthetic database and a disabled installed-Codex probe. It establishes only that earlier condition and selected account; it does not qualify a later installer or the existing Codex workflow. Historical remote revocation remains unverified. Mock tests and prior-build results do not replace exact-artifact native/provider acceptance, signing/notarization and published-download verification.
+
+
+## Appearance and views
+
+Choose **Customize** in the workspace strip, or **Settings → Customize appearance
+& views**. Appearance has its own page; connection setup and first-run guidance
+remain in Setup & safety. Studio follows the landing illustration's neutral
+operator palette. Paper and Midnight offer light and deeper-dark alternatives.
+
+Choose comfortable or compact spacing, a starting page (including Music or
+Instagram drafts), list/card record collections, and the remembered Schedule
+view. Gigs retains its search, filters and pagination in either record layout.
+Today, Music, Instagram and Schedule retain their purpose-built layouts.
+
+Preferences save automatically to this desktop webview's local storage under the
+workspace ID. They survive restarts on this device, but are not included in the
+SQLite backup or synced to another account/device. Saving failures remain visible;
+Schedule can still switch views for the current session if storage is blocked.
+
+Expand **Share or edit a configuration** to show/copy configuration JSON or import
+an edited document. Version 1 accepts only `version`, `theme`, `density`,
+`startPage`, `collectionView`, and `scheduleView`, with a 16 KiB UTF-8 limit. The
+whole document is validated before application; omitted fields use defaults.
+Credentials, records, scripts, arbitrary CSS, and unknown keys are rejected.
+**Reset appearance & views** restores Studio and the default views without
+changing business records or connections. Executable plugins and custom palette
+authoring are outside this release's presentation-configuration scope.
+
+## Assistance and desktop notifications
+
+Today’s **Needs your attention** feed keeps dated unfinished tasks, upcoming gigs,
+pending conversation decisions, checked results and uncertain outcomes available
+outside Ask GiGi. Review a source, ask for help, snooze for one hour or dismiss an
+item. Chat starting points prepare a draft; sending remains explicit. Answers
+support a bounded text format, without provider-authored HTML or action controls.
+
+Attention state and notification policy live in the workspace SQLite database.
+A read-only workspace observer checks existing conversations independently of the
+drawer, with bounded rotating reads. It never starts model turns, approves edits
+or retries uncertain writes. Before opening an item, GiGi rechecks its source and
+revision. Existing approval and verified-readback rules remain in force.
+
+Settings → Assistance & notifications offers opt-in macOS alerts, optional dated
+reminders, quiet hours in this Mac’s local time, and detailed previews (off by
+default). The native UserNotifications companion checks actual macOS permission
+and alert settings. Foreground work stays in the feed. Clicking an alert opens
+current work for review; it never approves a change. Delivery receipts record OS
+submission, not whether someone saw an alert. Backlogs coalesce, and uncertain
+or failed deliveries are not automatically replayed. Snooze returns an item to
+the feed but does not repeat an already-submitted same-revision alert.
+
+Observation runs while the app is running; sleeping hosts may delay checks until
+wake. Quitting stops observation. This release does not add phone delivery,
+teammate messaging, unattended model runs or new mutation authority. Native
+notifications are packaged in a signed macOS 13/Apple Silicon Swift companion;
+release verification requires it alongside the existing companions.
+
+
+### 0.3.6 workspace refinement
+
+Settings now groups Appearance, Customize, record freshness and Safety. The
+attention count opens Needs your attention. Today keeps its last successful
+local-read time below the work; Gigs shows the week calendar above its filters.
+People and Companies use directories; Services and Profile expose saved details.
+History includes saved conversations separately from reviewed Memory. Ask GiGi’s
+three starters prepare unsent drafts.
+
+Money offers Overall, Payable, Receivable and Overdue across the complete active
+workspace before pagination. Payable/Receivable include Expected, Invoiced and
+Overdue, excluding Paid. Overdue also includes unpaid items due before today in
+this Mac’s timezone. Failed reads label the retained previous view. Social searches
+saved draft titles/captions locally, with the existing publication review intact.
+
+Places offers an explicit Load map preview action using only a saved address or
+name. It does not use current location. A search match is unverified; check the
+destination in Maps. Failed saved-detail reads disable lookup. The build compiles
+`src-tauri/native/MapPreview.swift` as `gigi-map-preview`; release verification
+requires its first-party signature, hardened runtime and executable permissions.
+The native source directory participates in compiler provenance invalidation.
+
+Run `pnpm test:refinement` for synthetic active-renderer coverage. Local source
+checks do not qualify signed MapKit execution, WebKit or a released installer.
+
+### 0.3.7 Social search correction
+
+Social draft search uses the same Unicode-aware normalization as workspace search. Accented and Cyrillic title/caption case matches are filtered across the active workspace before pagination; counts and page boundaries use the same match predicate. This corrects the pre-release 0.3.6 SQLite ASCII-only search. No schema or publishing-approval change is introduced.

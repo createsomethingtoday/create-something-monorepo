@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyHeroFrame from '$lib/components/AgencyHeroFrame.svelte';
   import {
     Button,
     PerformanceConversionHandoff,
@@ -129,7 +130,8 @@
 
 <main class="methodology-page">
   <!-- Hero -->
-  <section class="hero">
+  <AgencyHeroFrame>
+<section class="hero">
     <div class="hero-grid"></div>
     <div class="hero-content">
       <BlurFade delay={0}>
@@ -145,6 +147,7 @@
       </BlurFade>
     </div>
   </section>
+</AgencyHeroFrame>
 
   <PerformanceNarrativeStage
     id="methodology-argument"

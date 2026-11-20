@@ -1,9 +1,17 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  buildSearchFallbackAttempts,
   buildPublicJobUpsert,
+  classifyNursingJobTitle,
+  ingestRapidApiJobs,
+  inferNursingRolePlan,
+  listAbundanceJobToolNames,
   normalizeRapidApiJobRecord,
+  normalizeRapidApiIngestInput,
+  normalizeNursingJobsIngestInput,
   normalizePublicJob,
+  queryPublicJobs,
 } from '../src/index.ts';
 
 const rapidApiRecord = {
@@ -104,4 +112,362 @@ test('public job upsert targets provider source external id uniqueness boundary'
   assert.equal(statement.args[1], 'rapidapi');
   assert.equal(statement.args[2], 'paylocity');
   assert.equal(statement.args[4], '2185227032');
+});
+
+test('RapidAPI refresh defaults to the incremental endpoint for cost control', () => {
+  const request = normalizeRapidApiIngestInput({});
+
+  assert.deepEqual(request.endpoints, ['/modified-ats-24h']);
+  assert.equal(request.title_filter, 'nurse');
+  assert.equal(request.location_filter, 'United States');
+  assert.equal(request.include_backfill, false);
+  assert.equal(request.freshness_window_minutes, 60);
+});
+
+test('RapidAPI backfill requires an explicit request', () => {
+  const request = normalizeRapidApiIngestInput({ include_backfill: true });
+
+  assert.deepEqual(request.endpoints, ['/active-ats-7d', '/modified-ats-24h']);
+});
+
+test('nursing jobs refresh contract pins the nursing filter and incremental endpoint', () => {
+  const request = normalizeNursingJobsIngestInput({ location_filter: 'Texas', limit: 25 });
+
+  assert.equal(request.title_filter, 'nurse');
+  assert.equal(request.location_filter, 'Texas');
+  assert.equal(request.limit, 25);
+  assert.deepEqual(request.endpoints, ['/modified-ats-24h']);
+});
+
+test('nursing jobs refresh backfill remains explicit', () => {
+  const request = normalizeNursingJobsIngestInput({ include_backfill: true });
+
+  assert.equal(request.title_filter, 'nurse');
+  assert.equal(request.location_filter, 'United States');
+  assert.deepEqual(request.endpoints, ['/active-ats-7d', '/modified-ats-24h']);
+});
+
+test('nursing title classifier prioritizes core staffing roles over mixed adjacent titles', () => {
+  assert.deepEqual(classifyNursingJobTitle('Registered Nurse (RN) - ER'), {
+    rank: 0,
+    role: 'registered_nurse',
+    reason: 'RN or Registered Nurse title',
+  });
+  assert.deepEqual(classifyNursingJobTitle('Licensed Practical Nurse (LPN) - Full Time'), {
+    rank: 1,
+    role: 'licensed_practical_or_vocational_nurse',
+    reason: 'LPN/LVN title',
+  });
+  assert.deepEqual(classifyNursingJobTitle('Certified Nurse Aide CNA'), {
+    rank: 2,
+    role: 'certified_nursing_assistant',
+    reason: 'CNA title',
+  });
+  assert.equal(classifyNursingJobTitle('Nurse Practitioner/Physician Assistant - Pediatrics').rank, 5);
+  assert.equal(classifyNursingJobTitle('RN - Nurse Intern - Non Paid').rank, 5);
+});
+
+test('ChatGPT public tool list excludes write-capable funnel action', () => {
+  assert.deepEqual(listAbundanceJobToolNames({ includeFunnelTool: false }), [
+    'search',
+    'fetch',
+    'list_public_jobs',
+    'search_public_jobs',
+    'get_job',
+  ]);
+  assert.equal(listAbundanceJobToolNames().includes('send_job_to_funnel'), true);
+});
+
+test('ChatGPT nursing role plans keep specialty searches narrow', () => {
+  assert.deepEqual(inferNursingRolePlan('LPN jobs Arlington Texas'), {
+    queries: ['licensed practical nurse', 'licensed vocational nurse', 'lpn', 'lvn'],
+    allowGenericFallback: false,
+  });
+  assert.deepEqual(inferNursingRolePlan('CNA Arlington TX'), {
+    queries: ['cna', 'certified nursing assistant', 'certified nurse assistant', 'certified nurse aide'],
+    allowGenericFallback: false,
+  });
+  assert.deepEqual(inferNursingRolePlan('registered nurse California'), {
+    queries: ['registered nurse', 'rn'],
+    allowGenericFallback: true,
+  });
+  assert.deepEqual(inferNursingRolePlan('ER nurse Fort Worth Texas'), {
+    queries: ['emergency', 'emergency room', 'emergency department'],
+    allowGenericFallback: false,
+  });
+});
+
+test('ChatGPT search fallbacks preserve specialty and geography constraints', () => {
+  const cnaAttempts = buildSearchFallbackAttempts({ query: 'CNA Arlington TX', status: 'open', limit: 10 }, 'CNA Arlington TX');
+  assert.equal(cnaAttempts.some((attempt) => attempt.fallback?.reason === 'state_fallback'), false);
+  assert.equal(cnaAttempts.some((attempt) => attempt.fallback?.reason === 'role_fallback'), false);
+  assert.equal(cnaAttempts.some((attempt) => attempt.fallback?.reason === 'nurse_role_fallback'), false);
+  assert.ok(cnaAttempts.some((attempt) => attempt.filters.query === 'cna' && attempt.filters.location === 'Arlington' && attempt.filters.state === 'TX'));
+
+  const lpnAttempts = buildSearchFallbackAttempts({ query: 'LPN Arlington Texas', status: 'open', limit: 10 }, 'LPN Arlington Texas');
+  assert.ok(
+    lpnAttempts.some(
+      (attempt) => attempt.fallback?.reason === 'state_role_fallback' && attempt.filters.query === 'licensed vocational nurse' && attempt.filters.state === 'TX',
+    ),
+  );
+
+  const californiaAttempts = buildSearchFallbackAttempts({ query: 'registered nurse California', status: 'open', limit: 10 }, 'registered nurse California');
+  assert.equal(californiaAttempts.some((attempt) => attempt.fallback?.reason === 'role_fallback'), false);
+  assert.ok(
+    californiaAttempts.every((attempt) => !attempt.filters.state || attempt.filters.state === 'CA'),
+    'state-constrained searches should not drop into national results',
+  );
+});
+
+test('ChatGPT search reads full state names before English words that look like codes', () => {
+  const texasAttempts = buildSearchFallbackAttempts({ query: 'RN jobs in Texas', status: 'open', limit: 10 }, 'RN jobs in Texas');
+  assert.ok(texasAttempts.every((attempt) => !attempt.filters.state || attempt.filters.state === 'TX'));
+  assert.ok(texasAttempts.some((attempt) => attempt.filters.state === 'TX'));
+
+  const oregonWordAttempts = buildSearchFallbackAttempts({ query: 'RN or LPN jobs near me', status: 'open', limit: 10 }, 'RN or LPN jobs near me');
+  assert.ok(oregonWordAttempts.every((attempt) => !attempt.filters.state), 'lowercase "or" and "me" are words, not states');
+
+  const westVirginiaAttempts = buildSearchFallbackAttempts({ query: 'CNA West Virginia', status: 'open', limit: 10 }, 'CNA West Virginia');
+  assert.ok(westVirginiaAttempts.some((attempt) => attempt.filters.state === 'WV'));
+
+  const uppercaseCodeAttempts = buildSearchFallbackAttempts({ query: 'ICU nurse IN', status: 'open', limit: 10 }, 'ICU nurse IN');
+  assert.ok(uppercaseCodeAttempts.some((attempt) => attempt.filters.state === 'IN'), 'an uppercase code is still a state');
+});
+
+test('ChatGPT search keeps specialty constraints when RN is also present', () => {
+  assert.deepEqual(inferNursingRolePlan('ER RN in Texas').queries, ['emergency', 'emergency room', 'emergency department']);
+  assert.deepEqual(inferNursingRolePlan('travel RN').queries, ['travel nurse', 'travel']);
+  assert.deepEqual(inferNursingRolePlan('ICU registered nurse').queries, ['icu', 'intensive care']);
+  assert.equal(inferNursingRolePlan('RN Dallas').allowGenericFallback, true);
+});
+
+test('ChatGPT search maps Washington DC to DC, not Washington state', () => {
+  for (const query of ['RN jobs in Washington DC', 'RN jobs in Washington, D.C.', 'ICU nurse District of Columbia']) {
+    const attempts = buildSearchFallbackAttempts({ query, status: 'open', limit: 10 }, query);
+    assert.ok(attempts.some((attempt) => attempt.filters.state === 'DC'), query);
+    assert.ok(attempts.every((attempt) => attempt.filters.state !== 'WA'), query);
+  }
+  const seattle = buildSearchFallbackAttempts({ query: 'RN Seattle Washington', status: 'open', limit: 10 }, 'RN Seattle Washington');
+  assert.ok(seattle.some((attempt) => attempt.filters.state === 'WA'));
+});
+
+test('public job freshness reports the newest listing, not the first ranked one', async () => {
+  const rows = [
+    { id: 'rn-old', title: 'Registered Nurse', provider: 'old-provider', last_seen_at: '2026-10-01T00:00:00Z' },
+    { id: 'cna-new', title: 'CNA', provider: 'new-provider', last_seen_at: '2026-10-30T00:00:00Z' },
+  ];
+  const db = {
+    prepare() {
+      return { bind() { return { async all() { return { results: rows }; } }; } };
+    },
+  } as unknown as D1Database;
+  const result = await queryPublicJobs(db, { status: 'open', limit: 10 });
+  assert.equal(result.jobs[0]?.id, 'rn-old');
+  assert.deepEqual(result.freshness, { newest_last_seen_at: '2026-10-30T00:00:00Z', newest_provider: 'new-provider' });
+});
+
+test('ChatGPT search only infers a location when a place is anchored', () => {
+  const locations = (query: string) => [...new Set(buildSearchFallbackAttempts({ query, status: 'open', limit: 10 }, query).map((attempt) => attempt.filters.location))];
+  assert.deepEqual(locations('pediatric nurse jobs'), [undefined]);
+  assert.deepEqual(locations('oncology RN jobs'), [undefined]);
+  assert.ok(locations('RN jobs in Dallas').includes('Dallas'));
+  assert.ok(locations('ICU jobs near Fort Worth').includes('Fort Worth'));
+  assert.deepEqual(locations('RN jobs at Baylor'), [undefined], 'an employer after "at" is not a place');
+  const nyc = buildSearchFallbackAttempts({ query: 'RN jobs in New York City', status: 'open', limit: 10 }, 'RN jobs in New York City');
+  assert.ok(nyc.some((attempt) => attempt.filters.location === 'New York City' && attempt.filters.state === 'NY'));
+});
+
+test('ChatGPT search reads OR next to a nursing word as the operating room, not Oregon', () => {
+  assert.deepEqual(inferNursingRolePlan('OR RN jobs').queries, ['operating room', 'perioperative', 'surgical']);
+  const orAttempts = buildSearchFallbackAttempts({ query: 'OR RN jobs', status: 'open', limit: 10 }, 'OR RN jobs');
+  assert.ok(orAttempts.every((attempt) => attempt.filters.state !== 'OR'));
+  assert.deepEqual(inferNursingRolePlan('RN OR LPN jobs').queries, ['registered nurse', 'rn'], 'Boolean OR keeps the role plan');
+  assert.deepEqual(inferNursingRolePlan('LPN OR RN Dallas').queries, ['registered nurse', 'rn']);
+  assert.deepEqual(inferNursingRolePlan('RN OR jobs').queries, ['operating room', 'perioperative', 'surgical'], 'role then OR then a non-role word is clinical');
+  assert.deepEqual(inferNursingRolePlan('LPN OR jobs').queries, ['operating room', 'perioperative', 'surgical']);
+  const oregonAttempts = buildSearchFallbackAttempts({ query: 'RN jobs in Oregon', status: 'open', limit: 10 }, 'RN jobs in Oregon');
+  assert.ok(oregonAttempts.some((attempt) => attempt.filters.state === 'OR'));
+});
+
+test('ChatGPT search does not read schedule qualifiers as a location', () => {
+  const attempts = buildSearchFallbackAttempts({ query: 'night shift nursing jobs', status: 'open', limit: 10 }, 'night shift nursing jobs');
+  assert.ok(attempts.every((attempt) => !attempt.filters.location), JSON.stringify(attempts.map((attempt) => attempt.filters.location)));
+});
+
+test('public job state filters do not match arbitrary two-letter substrings', async () => {
+  let boundArgs: unknown[] = [];
+  const db = {
+    prepare(sql: string) {
+      assert.match(sql, /upper\(state\) = \?/);
+      assert.match(sql, /lower\(state\) = lower\(\?\)/);
+      assert.match(sql, /lower\(location_text\) LIKE lower\(\?\)/);
+      return {
+        bind(...args: unknown[]) {
+          boundArgs = args;
+          return {
+            async all() {
+              return { results: [] };
+            },
+          };
+        },
+      };
+    },
+  } as unknown as D1Database;
+
+  await queryPublicJobs(db, { query: 'registered nurse', state: 'CA', limit: 10 });
+
+  assert.equal(boundArgs.includes('%CA%'), false);
+  assert.ok(boundArgs.includes('CA'));
+  assert.ok(boundArgs.includes('california'));
+  assert.ok(boundArgs.includes('%, CA,%'));
+  assert.ok(boundArgs.includes('%, california,%'));
+  assert.ok(boundArgs.includes('%, CA'), 'state at the end of location text');
+  assert.ok(boundArgs.includes('%, california'));
+});
+
+test('fresh Cloudflare D1 ingestion run skips a paid RapidAPI fetch', async () => {
+  const originalFetch = globalThis.fetch;
+  let fetchCalls = 0;
+  globalThis.fetch = (async () => {
+    fetchCalls += 1;
+    throw new Error('RapidAPI should not be called when a fresh D1 run exists.');
+  }) as typeof fetch;
+
+  const requestedFilters = normalizeRapidApiIngestInput({});
+  const writes: Array<{ args: unknown[] }> = [];
+  const db = {
+    prepare(sql: string) {
+      return {
+        bind(...args: unknown[]) {
+          return {
+            async all() {
+              assert.match(sql, /FROM abundance_public_job_ingestion_runs/);
+              return {
+                results: [
+                  {
+                    id: 'abjobrun_recent',
+                    requested_filters_json: JSON.stringify(requestedFilters),
+                    metadata_json: JSON.stringify({ endpoints: [{ endpoint: '/modified-ats-24h' }] }),
+                    finished_at: new Date().toISOString(),
+                  },
+                ],
+              };
+            },
+            async run() {
+              writes.push({ args });
+              return {};
+            },
+          };
+        },
+      };
+    },
+  } as unknown as D1Database;
+
+  try {
+    const result = await ingestRapidApiJobs({
+      db,
+      config: { rapidApiKey: 'test-key' },
+      request: {},
+    });
+
+    assert.equal(fetchCalls, 0);
+    assert.equal(result.skipped, true);
+    assert.equal(result.request_count, 0);
+    assert.equal(result.reused_run_id, 'abjobrun_recent');
+    assert.equal(writes.length, 1);
+    assert.match(String(writes[0]?.args[8]), /fresh_cloudflare_d1_ingestion/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('a dry-run refresh performs the provider request even when a fresh run exists', async () => {
+  const originalFetch = globalThis.fetch;
+  let fetchCalls = 0;
+  globalThis.fetch = (async () => {
+    fetchCalls += 1;
+    return new Response('[]', { status: 200, headers: { 'content-type': 'application/json' } });
+  }) as typeof fetch;
+
+  let reuseLookups = 0;
+  const db = {
+    prepare(sql: string) {
+      return {
+        bind() {
+          return {
+            async all() {
+              if (/FROM abundance_public_job_ingestion_runs/.test(sql)) reuseLookups += 1;
+              return { results: [] };
+            },
+            async run() {
+              return {};
+            },
+            async first() {
+              return null;
+            },
+          };
+        },
+      };
+    },
+  } as unknown as D1Database;
+
+  try {
+    const result = await ingestRapidApiJobs({ db, config: { rapidApiKey: 'test-key' }, request: { dry_run: true } });
+    assert.equal(reuseLookups, 0, 'dry runs must not look for a reusable run');
+    assert.ok(fetchCalls > 0, 'dry runs must call the provider');
+    assert.notEqual(result.skipped, true);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('dry-run ingestion records do not refresh the reusable D1 freshness window', async () => {
+  const originalFetch = globalThis.fetch;
+  let fetchCalls = 0;
+  globalThis.fetch = (async () => {
+    fetchCalls += 1;
+    return new Response('[]', { status: 200, headers: { 'content-type': 'application/json' } });
+  }) as typeof fetch;
+
+  const requestedFilters = normalizeRapidApiIngestInput({});
+  const db = {
+    prepare(sql: string) {
+      return {
+        bind(..._args: unknown[]) {
+          return {
+            async all() {
+              assert.match(sql, /FROM abundance_public_job_ingestion_runs/);
+              return {
+                results: [
+                  {
+                    id: 'abjobrun_dry_run',
+                    requested_filters_json: JSON.stringify(requestedFilters),
+                    metadata_json: JSON.stringify({ dry_run: true, request_count: 1 }),
+                    finished_at: new Date().toISOString(),
+                  },
+                ],
+              };
+            },
+            async run() {
+              return {};
+            },
+          };
+        },
+      };
+    },
+  } as unknown as D1Database;
+
+  try {
+    const result = await ingestRapidApiJobs({
+      db,
+      config: { rapidApiKey: 'test-key' },
+      request: {},
+    });
+
+    assert.equal(fetchCalls, 1);
+    assert.equal(result.skipped, false);
+    assert.equal(result.request_count, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });

@@ -1,0 +1,70 @@
+TAP version 13
+# Subtest: a complete visual configuration survives export, import and workspace restart
+ok 1 - a complete visual configuration survives export, import and workspace restart
+  ---
+  duration_ms: 3.996125
+  type: 'test'
+  ...
+# Subtest: missing, corrupt and unsupported saved configurations recover to defaults
+ok 2 - missing, corrupt and unsupported saved configurations recover to defaults
+  ---
+  duration_ms: 0.55175
+  type: 'test'
+  ...
+# Subtest: imports validate the entire document before applying any setting
+ok 3 - imports validate the entire document before applying any setting
+  ---
+  duration_ms: 0.355416
+  type: 'test'
+  ...
+# Subtest: normalization strips unknown data and replaces unsafe values without mutation
+ok 4 - normalization strips unknown data and replaces unsafe values without mutation
+  ---
+  duration_ms: 0.355541
+  type: 'test'
+  ...
+# Subtest: write failures and missing workspace IDs fail explicitly
+ok 5 - write failures and missing workspace IDs fail explicitly
+  ---
+  duration_ms: 0.324333
+  type: 'test'
+  ...
+# Subtest: applying preferences uses only validated theme and density attributes
+ok 6 - applying preferences uses only validated theme and density attributes
+  ---
+  duration_ms: 0.109791
+  type: 'test'
+  ...
+# Subtest: saving chat extensions keeps the rollback reader compatible, including re-upgrade
+ok 7 - saving chat extensions keeps the rollback reader compatible, including re-upgrade
+  ---
+  duration_ms: 0.229334
+  type: 'test'
+  ...
+# Subtest: chat extension corruption cannot erase core preferences or inject core fields
+ok 8 - chat extension corruption cannot erase core preferences or inject core fields
+  ---
+  duration_ms: 0.155375
+  type: 'test'
+  ...
+# Subtest: combined candidate storage migrates only when explicitly saved and reset keeps rollback compatibility
+ok 9 - combined candidate storage migrates only when explicitly saved and reset keeps rollback compatibility
+  ---
+  duration_ms: 0.264083
+  type: 'test'
+  ...
+# Subtest: failed extension writes restore the previous core and chat entries
+ok 10 - failed extension writes restore the previous core and chat entries
+  ---
+  duration_ms: 0.302583
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 80.788

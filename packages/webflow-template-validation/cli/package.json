@@ -1,0 +1,28 @@
+{
+	"name": "@create-something/webflow-template-validation-cli",
+	"version": "0.3.1",
+	"private": true,
+	"description": "Creator CLI for the Webflow Way template validator: login, sites, validate",
+	"type": "module",
+	"bin": {
+		"wf-template-validate": "./dist/cli.js"
+	},
+	"files": [
+		"dist"
+	],
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"build": "esbuild src/cli.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/cli.js --banner:js=\"#!/usr/bin/env node\"",
+		"pack:download": "node scripts/pack.mjs",
+		"check": "tsc --noEmit",
+		"test": "vitest run"
+	},
+	"devDependencies": {
+		"@types/node": "24.10.9",
+		"esbuild": "^0.28.1",
+		"typescript": "^5.9.3",
+		"vitest": "^4.1.8"
+	}
+}

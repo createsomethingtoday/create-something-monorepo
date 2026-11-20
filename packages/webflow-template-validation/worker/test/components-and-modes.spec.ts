@@ -91,9 +91,10 @@ describe('Variable modes: breakpoint-bound detection', () => {
 		expect(modes.stats?.breakpointBoundModeNames).toEqual([]);
 	});
 
-	it('keeps modes.none severity and id unchanged when collections carry an empty modes list', async () => {
+	it('blocks with modes.none when every collection reports an empty modes list', async () => {
 		const modes = await category(baseDesignerData({ variables: modeData([]) }), 'Variable Modes');
-		expect(modes.issues.map((i) => [i.id, i.severity])).toEqual([['modes.none', 'warning']]);
+		expect(modes.issues.map((i) => [i.id, i.severity])).toEqual([['modes.none', 'error']]);
+		expect(modes.passed).toBe(false);
 	});
 });
 

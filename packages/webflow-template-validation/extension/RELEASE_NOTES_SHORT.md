@@ -1,11 +1,11 @@
-# Webflow Way Validator v1.3.8
+# Webflow Way Validator v1.3.13
 
 ## Changes/Fixes
 
-- Restores the last report only for the site that produced it; earlier builds could show a different site's report and URL when the panel opened on another site.
-- Keeps the Fix List per site and clears the old global entries on first load.
-- Validator script setup and Designer validation errors now say why the request failed (server status, timeout, or blocked network).
+- New option "Preview link (optional)": with the site's preview link, the unused styles check reports the same list as "Clean up" in the Style selectors panel.
+- Without the link, the check compares the published pages, as before.
+- The extension does not save the link.
 
 ## Worker pairing
 
-No Worker change required. Works with Worker 2.5.3.
+Requires Worker 2.16.1 or later for the preview link. Earlier Workers ignore it.

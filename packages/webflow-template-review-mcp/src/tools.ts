@@ -32,8 +32,26 @@ import {
 import type { AirtableClient, TemplateReviewAssetThumbnails, TemplateReviewQueueItem } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
 import { renderCreatorFacingHtml, ZENDESK_WRITABLE_STATUSES, ZendeskClientError, type ZendeskClient } from './zendesk.js';
+import {
+  buildDecisionSummary,
+  buildReleaseNotice,
+  type DecisionSummary,
+  ReviewCommentsClientError,
+  type ReleaseNotice,
+  type ReleaseNotification,
+  type ReviewComment,
+  type ReviewCommentsClient,
+  type ReviewOutcome,
+  type SummaryInput,
+  splitCommentBody,
+} from './review-comments.js';
 import { observeTemplateHandoff, templateHandoffRequestSchema } from './handoff-observation.js';
 import { CHECKLIST_KIND_VALUES, parseChecklist } from './checklist.js';
+import {
+  COMMUNITY_QUEUE_WRITE_TOOL_NAMES,
+  registerCommunityQueueTools,
+  type CommunityQueueConfig,
+} from './community-queue.js';
 import { COMPREHENSIVE_REVIEW_LANE_IDS, EVIDENCE_LABELS, formatComprehensiveAgentReviewFeedback } from './comprehensive-review-feedback.js';
 import { COMPREHENSIVE_REVIEW_CONTRACT } from './comprehensive-review-contract.js';
 import { RUBRIC_DIMENSIONS } from './comprehensive-review-contract.js';
@@ -61,7 +79,7 @@ import {
 import { TEMPLATE_REVIEW_FIELD_MAP } from './schema.js';
 import { REVIEW_WORKFLOW } from './prompts.js';
 import type { ReviewerProfile } from './reviewer-directory.js';
-import { PUBLISHED_SITE_VALIDATION_CHECKS, runPublishedSiteValidation, type ValidationToolConfig } from './validation.js';
+import { PUBLISHED_SITE_VALIDATION_CHECKS, previewLinkForValidation, runPublishedSiteValidation, type ValidationToolConfig } from './validation.js';
 
 type ClientFactory = () => AirtableClient;
 type ReviewerFactory = () => ReviewerProfile | null;
@@ -105,7 +123,7 @@ function asSuccess(data: unknown) {
 }
 
 function asError(error: unknown) {
-  if (error instanceof AirtableClientError || error instanceof ZendeskClientError) {
+  if (error instanceof AirtableClientError || error instanceof ZendeskClientError || error instanceof ReviewCommentsClientError) {
     return jsonContent(
       {
         ok: false,
@@ -161,6 +179,194 @@ function requireResolvedReviewer(getReviewer: ReviewerFactory) {
     throw new AirtableClientError('REVIEWER_IDENTITY_UNAVAILABLE', 'Current reviewer identity is not configured for this MCP runtime.', 503);
   }
   return reviewer;
+}
+
+/** Review comments are attributed by email, so the reviewer directory entry must carry one. */
+function requireReviewerEmail(getReviewer: ReviewerFactory): string {
+  const reviewer = requireResolvedReviewer(getReviewer);
+  if (!reviewer.email) {
+    throw new AirtableClientError('REVIEWER_EMAIL_UNAVAILABLE', 'The reviewer directory has no email for this reviewer; review comments need one.', 503);
+  }
+  return reviewer.email;
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const commentWindowShape = {
+  days: z.number().int().min(1).max(366).optional().describe('The last N days, ending now or at end_date. Ignored when start_date is set.'),
+  start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('First day, UTC (YYYY-MM-DD).'),
+  end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('Last day, UTC, included (YYYY-MM-DD).'),
+};
+
+const commentReviewerSchema = z
+  .string()
+  .min(1)
+  .max(254)
+  .default('me')
+  .describe('"me" (default) for the signed-in reviewer, "all" for every reviewer, or one reviewer\'s email.');
+
+/** The window for the comment service. With no input it is all time. */
+export function commentWindow(
+  input: { days?: number; start_date?: string; end_date?: string },
+  now: Date = new Date(),
+): { from?: string; to?: string } {
+  const end = input.end_date ? Date.parse(`${input.end_date}T00:00:00Z`) + DAY_MS : undefined;
+  const to = end === undefined ? undefined : new Date(end).toISOString();
+  if (input.start_date) return { from: `${input.start_date}T00:00:00.000Z`, ...(to ? { to } : {}) };
+  if (input.days) return { from: new Date((end ?? now.getTime()) - input.days * DAY_MS).toISOString(), ...(to ? { to } : {}) };
+  return to ? { to } : {};
+}
+
+/** The author to filter on: undefined for every reviewer. */
+function commentAuthor(reviewer: string, actorEmail: string): string | undefined {
+  const value = reviewer.trim().toLowerCase();
+  if (value === 'me') return actorEmail.toLowerCase();
+  if (value === 'all') return undefined;
+  if (!EMAIL_SHAPE.test(value)) {
+    throw new AirtableClientError('INVALID_REVIEWER', 'reviewer must be "me", "all", or an email address.', 400);
+  }
+  return value;
+}
+
+type CommentKind = 'sent' | 'draft' | 'internal' | 'creator_reply';
+
+function commentKind(comment: ReviewComment): CommentKind {
+  if (comment.authorRole === 'creator') return 'creator_reply';
+  return comment.visibility === 'released' ? 'sent' : comment.visibility;
+}
+
+/** One comment for a list: short keys, no nulls, the body cut to `bodyChars`. */
+function compactComment(comment: ReviewComment, bodyChars: number): Record<string, unknown> {
+  const cut = comment.body.length > bodyChars;
+  return {
+    id: comment.id,
+    version_id: comment.versionRef,
+    asset_id: comment.assetRef,
+    author: comment.authorEmail,
+    kind: commentKind(comment),
+    created_at: comment.createdAt,
+    ...(comment.releasedAt && comment.releasedAt !== comment.createdAt ? { sent_at: comment.releasedAt } : {}),
+    ...(comment.resolution !== 'open' ? { resolution: comment.resolution } : {}),
+    ...(comment.parentId ? { parent_id: comment.parentId } : {}),
+    ...(comment.rubricRef ? { rubric_ref: comment.rubricRef } : {}),
+    body: cut ? `${comment.body.slice(0, bodyChars).trimEnd()}…` : comment.body,
+    ...(cut ? { body_chars: comment.body.length } : {}),
+  };
+}
+
+/**
+ * The creator address is the one review tickets go to today: the override on
+ * the asset when set, else the creator's. No usable address means no email.
+ */
+function templateReleaseNotice(
+  asset: { templateName?: string; creatorEmail?: string; creatorName?: string } | undefined,
+  versionNumber: number | undefined,
+  outcome?: ReviewOutcome,
+): ReleaseNotice | undefined {
+  return buildReleaseNotice({
+    email: asset?.creatorEmail,
+    name: asset?.creatorName,
+    assetName: asset?.templateName,
+    assetType: 'Template',
+    versionNumber,
+    outcome,
+  });
+}
+
+/** A decision's summary from the version record after the status write: rating, improvement areas, trust level. */
+function templateDecisionSummary(
+  version: Parameters<typeof buildDecisionSummary>[0],
+  outcome: ReviewOutcome,
+): SummaryInput {
+  return buildDecisionSummary(version, { assetType: 'Template' }, outcome);
+}
+
+/** The outcome a decision review status stands for; "(No Notification)" variants count the same. Other statuses: undefined. */
+function outcomeOfReviewStatus(status: string | undefined): ReviewOutcome | undefined {
+  const text = (status ?? '').toLowerCase();
+  if (text.includes('changes requested')) return 'changes_requested';
+  if (text.includes('rejected')) return 'rejected';
+  if (text.includes('approved')) return 'approved';
+  return undefined;
+}
+
+/**
+ * The summary "Send to creator" (release_feedback) sends when no decision is made in the same call:
+ * - the version's review status is a decision status: that outcome, with the version's rating;
+ * - otherwise `changes_requested`, but only when the version has a quality rating;
+ * - otherwise none (no rating means nothing to tell the creator).
+ */
+function releaseFeedbackSummary(version: Parameters<typeof buildDecisionSummary>[0] & { reviewStatus?: string }): SummaryInput | undefined {
+  const outcome = outcomeOfReviewStatus(version.reviewStatus);
+  if (outcome) return templateDecisionSummary(version, outcome);
+  return version.qualityRating?.trim() ? templateDecisionSummary(version, 'changes_requested') : undefined;
+}
+
+/** How the "feedback is ready" email went, in the shape every release result carries. */
+function emailResult(notification: ReleaseNotification | undefined): Record<string, unknown> {
+  return {
+    creator_email_sent: notification?.status === 'sent',
+    ...(notification ? { notification } : {}),
+    ...(notification?.status === 'none' && notification.reason === 'no_recipient'
+      ? { email_note: 'No email was sent: the asset record has no usable creator email address.' }
+      : {}),
+    ...(notification?.status === 'failed'
+      ? { email_next_step: 'The feedback is released, but the email did not send. To retry the email, run template_review_release_feedback for this version with expected_drafts set to [].' }
+      : {}),
+  };
+}
+
+/**
+ * The "send feedback" step after a decision. Posts the decision's feedback as
+ * a reviewer comment (once; a retried decision does not repeat it) and
+ * releases every draft on the version. Airtable is already updated when this
+ * runs, so a comments failure is reported in the result, never thrown.
+ */
+async function releaseFeedbackAfterDecision(
+  decisionTool: string,
+  comments: ReviewCommentsClient,
+  versionId: string,
+  assetId: string | undefined,
+  actorEmail: string,
+  feedback?: string,
+  notice?: ReleaseNotice,
+  summary?: SummaryInput,
+): Promise<Record<string, unknown>> {
+  try {
+    let added = false;
+    const body = feedback?.trim();
+    if (body) {
+      if (!assetId) {
+        throw new AirtableClientError('VERSION_ASSET_ID_MISSING', 'Template version is missing its asset linkage.', 500, { version_id: versionId });
+      }
+      const existing = await comments.listVersion(versionId, actorEmail);
+      const author = actorEmail.toLowerCase();
+      // An internal note with the same words is not feedback: it never reaches the creator.
+      // Feedback over the service limit goes out as several comments, in order. A repeat adds only the missing parts.
+      for (const part of splitCommentBody(body)) {
+        const alreadyPosted = existing.some(
+          (comment) => comment.visibility !== 'internal' && comment.authorEmail === author && comment.body === part,
+        );
+        if (alreadyPosted) continue;
+        await comments.add(versionId, actorEmail, { assetRef: assetId, body: part, visibility: 'draft' });
+        added = true;
+      }
+    }
+    const { released, notification } = await (summary ? comments.release(versionId, actorEmail, notice, undefined, summary) : comments.release(versionId, actorEmail, ...(notice ? [notice] : [])));
+    return { ok: true, feedback_comment_added: added, released, ...emailResult(notification) };
+  } catch (error) {
+    const known = error instanceof ReviewCommentsClientError || error instanceof AirtableClientError;
+    return {
+      ok: false,
+      error: {
+        code: known ? error.code : 'UNEXPECTED_ERROR',
+        message: error instanceof Error ? error.message : String(error),
+        status: known ? (error.status ?? 500) : 500,
+      },
+      next_step: `The review status is saved. To retry, re-run ${decisionTool} with the same input; the feedback is posted only once.`,
+    };
+  }
 }
 
 /**
@@ -293,10 +499,28 @@ export interface ToolRuntimeConfig extends ValidationToolConfig {
    * the tools then fail closed with ZENDESK_NOT_CONFIGURED.
    */
   getZendeskClient?: () => ZendeskClient | null;
+  /**
+   * Review comments service (replaces Zendesk threads for template reviews).
+   * Returns null when REVIEW_COMMENTS_URL / REVIEW_COMMENTS_API_KEY are not
+   * set; the comment tools then stay unregistered and decisions are unchanged.
+   */
+  getReviewCommentsClient?: () => ReviewCommentsClient | null;
+  /**
+   * True when the Airtable automation "Review Status Trigger" posts and
+   * releases decision feedback for templates (REVIEW_COMMENTS_DECISIONS=airtable).
+   * The decision tools then only write Airtable, so the creator gets one email.
+   */
+  decisionFeedbackByAutomation?: boolean;
   /** Marketplace Templates CMS access for delist/relist; fails closed without a site token. */
   marketplaceCms?: MarketplaceCmsConfig;
   /** Submission guidelines endpoint (template-search Worker); defaults to production. */
   guidelinesUrl?: string;
+  /**
+   * Marketplace Creators community response queue (service binding to the
+   * creator MCP). The tools fail closed with COMMUNITY_QUEUE_NOT_CONFIGURED
+   * when the binding is absent.
+   */
+  communityQueue?: CommunityQueueConfig;
 }
 
 /**
@@ -324,6 +548,13 @@ export const WRITE_TOOL_NAMES: ReadonlySet<string> = new Set([
   'template_review_update_ticket_status',
   'template_review_create_ticket',
   'template_review_link_version_ticket',
+  // Review comments: drafts and releases reach the creator; edits, deletes and
+  // resolutions change the review record.
+  'template_review_add_comment',
+  'template_review_edit_comment',
+  'template_review_delete_comment',
+  'template_review_release_feedback',
+  'template_review_resolve_comment',
   // Featured-batch curation writes: pick star + reason, votes, and the batch
   // finalization flag that arms the creator-notification worker.
   'template_review_set_featured_pick',
@@ -342,6 +573,9 @@ export const WRITE_TOOL_NAMES: ReadonlySet<string> = new Set([
   // Templates CMS (including other templates' related-assets).
   'template_review_delist_template',
   'template_review_relist_template',
+  // Community response queue: draft and dismissal are internal; send posts a
+  // public reply in the Marketplace Creators space.
+  ...COMMUNITY_QUEUE_WRITE_TOOL_NAMES,
 ]);
 
 /**
@@ -402,6 +636,16 @@ export function registerTools(
   access: ToolAccess = { allowWrites: true },
 ): void {
   const registerOnServer = mcpServer.tool.bind(mcpServer) as (...args: unknown[]) => unknown;
+  const reviewComments = runtimeConfig.getReviewCommentsClient?.() ?? null;
+  /** One sender per decision: this MCP, or the Airtable automation when it is switched on. */
+  const sendDecisionFeedback: typeof releaseFeedbackAfterDecision = (...args) =>
+    runtimeConfig.decisionFeedbackByAutomation
+      ? Promise.resolve({
+          ok: true,
+          handled_by: 'airtable_automation',
+          note: 'The review status is saved. The Airtable automation posts the feedback to the review thread, releases the drafts, and emails the creator.',
+        })
+      : releaseFeedbackAfterDecision(...args);
   const server = {
     registerTool: ((name: string, ...rest: unknown[]) => {
       if (access.allowedToolNames && !access.allowedToolNames.has(name)) return undefined;
@@ -414,6 +658,252 @@ export function registerTools(
       return registerOnServer(name, ...rest);
     }) as McpServer['tool'],
   };
+
+  /** Zendesk thread (when the version has one) plus the version's review comments. */
+  async function readThreadWithComments(
+    comments: ReviewCommentsClient,
+    versionId: string,
+    includeInternal: boolean,
+    limit: number,
+  ): Promise<Record<string, unknown>> {
+    // Private notes and drafts are reviewer-only.
+    if (includeInternal) requireResolvedReviewer(getReviewer);
+    const { version } = await getClient().getScopedVersion(versionId);
+    const zendesk = runtimeConfig.getZendeskClient?.() ?? null;
+    const ticketId = version.zendeskTicketId;
+    const thread = zendesk && ticketId ? await zendesk.getTicketThread(ticketId, { includeInternalNotes: includeInternal, limit }) : null;
+
+    const reviewerEmail = getReviewer()?.email;
+    let reviewComments: ReviewComment[] | null = null;
+    let reviewCommentsError: Record<string, unknown> | null = null;
+    if (reviewerEmail) {
+      try {
+        const all = await comments.listVersion(versionId, reviewerEmail);
+        reviewComments = includeInternal ? all : all.filter((comment) => comment.visibility === 'released');
+      } catch (error) {
+        // Keep the Zendesk thread already read; report the comments failure beside it.
+        if (!(error instanceof ReviewCommentsClientError)) throw error;
+        reviewCommentsError = { code: error.code, message: error.message, status: error.status ?? 500 };
+      }
+    }
+
+    return {
+      version_id: versionId,
+      asset_id: version.assetId,
+      version_number: version.versionNumber,
+      ticket_url: zendesk && ticketId ? zendesk.agentTicketUrl(ticketId) : null,
+      thread,
+      ...(thread === null
+        ? { thread_note: ticketId ? 'Zendesk reads are not configured on this deployment.' : 'This version has no linked Zendesk ticket (🧘ZD ID is empty).' }
+        : {}),
+      review_comments: reviewComments,
+      ...(reviewCommentsError ? { review_comments_error: reviewCommentsError } : {}),
+      ...(reviewComments === null && !reviewCommentsError ? { review_comments_note: 'Review comments need a mapped reviewer identity with an email.' } : {}),
+    };
+  }
+
+  if (reviewComments) {
+    const commentIdSchema = z.string().min(1).max(64);
+
+    server.tool(
+      'template_review_list_comments',
+      'Read-only: every review comment on a template version (drafts, internal notes, released feedback, and creator replies), oldest first, plus decision_summary: the quality rating, improvement areas and next-step text the service sends to the creator with the feedback (null when none is set). Requires a mapped reviewer identity.',
+      { version_id: z.string().min(1) },
+      async ({ version_id }) => {
+        try {
+          const actorEmail = requireReviewerEmail(getReviewer);
+          const { version } = await getClient().getScopedVersion(version_id);
+          const comments = await reviewComments.listVersion(version_id, actorEmail);
+          let decisionSummary: DecisionSummary | null = null;
+          let decisionSummaryError: string | undefined;
+          try {
+            decisionSummary = await reviewComments.getSummary(version_id, actorEmail);
+          } catch (error) {
+            decisionSummaryError = error instanceof Error ? error.message : String(error);
+          }
+          return asSuccess({
+            version_id,
+            asset_id: version.assetId,
+            comments,
+            decision_summary: decisionSummary,
+            ...(decisionSummaryError ? { decision_summary_error: decisionSummaryError } : {}),
+          });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+
+    server.tool(
+      'template_review_comment_metrics',
+      'Read-only: how many review comments a reviewer wrote and sent to creators, in one call. Use this for "how many comments have I sent"; do not tally template_review_list_comments results. Returns written (created in the window), sent (released to the creator in the window), draft and internal (written in the window, still in that state), and the versions and assets the comments are on. reviewer "all" adds one row per reviewer and the count of creator replies. With no dates the window is all time. Counts cover the review comment threads only: feedback that went through a Zendesk ticket or the Airtable Review Feedback field is not counted. Requires a mapped reviewer identity.',
+      { reviewer: commentReviewerSchema, ...commentWindowShape },
+      async ({ reviewer, days, start_date, end_date }) => {
+        try {
+          const actorEmail = requireReviewerEmail(getReviewer);
+          const author = commentAuthor(reviewer, actorEmail);
+          const metrics = await reviewComments.metrics(actorEmail, { ...commentWindow({ days, start_date, end_date }), ...(author ? { author } : {}) });
+          return asSuccess({
+            reviewer: author ?? 'all',
+            from: metrics.from.startsWith('1970-') ? null : metrics.from,
+            to: metrics.to,
+            ...metrics.totals,
+            ...(author
+              ? {}
+              : {
+                  creator_replies: metrics.creatorReplies,
+                  reviewers: metrics.reviewers.map(({ email, ...counts }) => ({ reviewer: email, ...counts })),
+                }),
+          });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+
+    server.tool(
+      'template_review_search_comments',
+      'Read-only: review comments across template versions, newest first. Use it to read what a reviewer wrote or sent ("show my last comments"), every comment on one asset across its versions (asset_id with reviewer "all"), or creator replies (kind "creator_reply"). Bodies are cut to body_chars; raise it, or call template_review_list_comments with the version_id, to read a comment in full. For counts use template_review_comment_metrics. Pass next_cursor back as cursor for the next page. Requires a mapped reviewer identity.',
+      {
+        reviewer: commentReviewerSchema,
+        kind: z
+          .enum(['sent', 'draft', 'internal', 'creator_reply'])
+          .optional()
+          .describe('sent = released to the creator; draft = waiting for release; internal = reviewer-only note; creator_reply = written by the creator (the reviewer filter then applies only when it is an email).'),
+        asset_id: z.string().min(1).max(64).optional().describe('Only comments on this template asset, across its versions.'),
+        ...commentWindowShape,
+        limit: z.number().int().min(1).max(100).default(20),
+        cursor: z.string().min(1).max(120).optional(),
+        body_chars: z.number().int().min(40).max(20_000).default(300),
+      },
+      async ({ reviewer, kind, asset_id, days, start_date, end_date, limit, cursor, body_chars }) => {
+        try {
+          const actorEmail = requireReviewerEmail(getReviewer);
+          const creatorReplies = kind === 'creator_reply';
+          const author = creatorReplies && reviewer.trim().toLowerCase() === 'me' ? undefined : commentAuthor(reviewer, actorEmail);
+          const page = await reviewComments.search(actorEmail, {
+            ...commentWindow({ days, start_date, end_date }),
+            ...(author ? { author } : {}),
+            ...(asset_id ? { assetRef: asset_id } : {}),
+            ...(kind ? { authorRole: creatorReplies ? 'creator' : 'reviewer' } : {}),
+            ...(kind && !creatorReplies ? { visibility: kind === 'sent' ? 'released' : kind } : {}),
+            limit,
+            ...(cursor ? { cursor } : {}),
+          });
+          return asSuccess({
+            count: page.comments.length,
+            next_cursor: page.nextCursor,
+            comments: page.comments.map((comment) => compactComment(comment, body_chars)),
+          });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+
+    server.tool(
+      'template_review_add_comment',
+      'Reviewer write: add a review comment to a template version\'s comment thread. Use this tool when the reviewer asks for a draft, a draft comment, or a note on a version; template_review_save_draft_feedback writes a different place (the Airtable Review Feedback field). "draft" (default) is feedback for the creator; it stays hidden until template_review_release_feedback, request_changes, approve, or reject releases it, and needs you to be the assigned reviewer. "internal" is a reviewer-only note any mapped reviewer may leave; it is never shown to the creator. The asset comes from the version record, not from input.',
+      {
+        version_id: z.string().min(1),
+        body: z.string().min(1).max(20_000),
+        visibility: z.enum(['draft', 'internal']).default('draft'),
+        parent_id: commentIdSchema.optional().describe('Reply to this comment on the same version.'),
+        rubric_ref: commentIdSchema.optional().describe('Rubric or checklist item this comment is about.'),
+        request_key: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/).optional().describe('One key for one save (8 to 64 letters, digits, hyphens or underscores). Send the same key when you repeat a save whose answer was lost: the first comment comes back and nothing is written twice.'),
+      },
+      async ({ version_id, body, visibility, parent_id, rubric_ref, request_key }) => {
+        try {
+          const actorEmail = requireReviewerEmail(getReviewer);
+          const version =
+            visibility === 'draft'
+              ? await getClient().requireAssignedVersion(version_id, currentReviewerAsCollaborator(getReviewer))
+              : (await getClient().getScopedVersion(version_id)).version;
+          if (!version.assetId) {
+            throw new AirtableClientError('VERSION_ASSET_ID_MISSING', 'Template version is missing its asset linkage.', 500, { version_id });
+          }
+          const comment = await reviewComments.add(version_id, actorEmail, {
+            assetRef: version.assetId,
+            body: body.trim(),
+            visibility,
+            ...(parent_id ? { parentId: parent_id } : {}),
+            ...(rubric_ref ? { rubricRef: rubric_ref } : {}),
+            ...(request_key ? { requestKey: request_key } : {}),
+          });
+          return asSuccess({ comment });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+
+    server.tool(
+      'template_review_edit_comment',
+      'Reviewer write: replace the text of your own draft or internal comment. Released comments cannot be edited.',
+      { comment_id: commentIdSchema, body: z.string().min(1).max(20_000) },
+      async ({ comment_id, body }) => {
+        try {
+          return asSuccess({ comment: await reviewComments.edit(comment_id, requireReviewerEmail(getReviewer), body.trim()) });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+
+    server.tool(
+      'template_review_delete_comment',
+      'Reviewer write: delete your own draft or internal comment. Released comments and comments with replies cannot be deleted.',
+      { comment_id: commentIdSchema },
+      async ({ comment_id }) => {
+        try {
+          return asSuccess(await reviewComments.remove(comment_id, requireReviewerEmail(getReviewer)));
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+
+    server.tool(
+      'template_review_release_feedback',
+      'Reviewer write (creator-facing): release every draft comment on a template version to the creator, and email the creator when the release makes new feedback visible and the email is configured. Needs you to be the assigned reviewer. request_changes, approve, and reject already do this; use this tool to send feedback without a status change, or to retry a failed release or a failed email. Does not change the review status. An agent calls this only when the reviewer asked for this exact send in this conversation, after it showed the reviewer the text of every draft that template_review_list_comments returned. A save of a draft or of an internal note is not an approval to send.',
+      {
+        version_id: z.string().min(1),
+        expected_drafts: z
+          .array(z.object({ id: commentIdSchema, edited_at: z.string().max(40).nullable() }))
+          .max(200)
+          .describe('Every draft on the version, as template_review_list_comments returned it just now: id and editedAt (null when never edited). Nothing is released when the drafts on the version are not exactly these. Send [] only to retry a failed email after a release.'),
+      },
+      async ({ version_id, expected_drafts }) => {
+        try {
+          const actorEmail = requireReviewerEmail(getReviewer);
+          const version = await getClient().requireAssignedVersion(version_id, currentReviewerAsCollaborator(getReviewer));
+          const { asset } = await getClient().getScopedVersion(version_id);
+          const notice = templateReleaseNotice(asset, version.versionNumber);
+          const summary = releaseFeedbackSummary(version);
+          const expected = expected_drafts.map((draft) => ({ id: draft.id, editedAt: draft.edited_at }));
+          const { released, notification } = await reviewComments.release(version_id, actorEmail, notice, expected, ...(summary ? [summary] : []));
+          return asSuccess({ version_id, released, ...emailResult(notification) });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+
+    server.tool(
+      'template_review_resolve_comment',
+      'Reviewer write: mark a review comment open, resolved, or carried_forward (still open on the next version).',
+      { comment_id: commentIdSchema, resolution: z.enum(['open', 'resolved', 'carried_forward']) },
+      async ({ comment_id, resolution }) => {
+        try {
+          return asSuccess({ comment: await reviewComments.resolve(comment_id, requireReviewerEmail(getReviewer), resolution) });
+        } catch (error) {
+          return asError(error);
+        }
+      },
+    );
+  }
+
+  registerCommunityQueueTools(server, getReviewer, runtimeConfig.communityQueue ?? {});
 
   server.tool('template_review_workflow', 'Reviewer onboarding guide — call this FIRST to learn the complete review workflow, tool sequence, analyzer interpretation, and decision criteria. No parameters needed.', {}, async () => ({
     content: [{ type: 'text' as const, text: REVIEW_WORKFLOW }],
@@ -1326,7 +1816,7 @@ export function registerTools(
     'Server-side Webflow write: create the marketplace template (MRP + Admin record) for a version via the key-authenticated POST /admin/api/mrp/airtable route — no browser session, no console script. Uses the same Airtable-derived fields as prepare_admin_template_fill, records the new Template ID in 👀ℹ️MRP ID (Override), and returns the Admin URL with the items still to finish on that page. Requires the marketplace admin key and an explicit reviewer request; refuses when required fields are missing or the asset already has a Template ID.',
     {
       version_id: z.string().min(1),
-      support_email: z.string().email().optional().describe('Support contact; defaults to the creator email on the asset.'),
+      support_email: z.string().email().optional().describe('Support contact; defaults to the first valid creator email on the asset.'),
       support_url: z.string().url().optional(),
       record_mrp_id: z.boolean().optional().describe('Write the new Template ID to 👀ℹ️MRP ID (Override). Defaults to true.'),
     },
@@ -1356,16 +1846,22 @@ export function registerTools(
           );
         }
 
-        const supportEmail = support_email ?? context.asset?.creatorEmail;
+        // Admin's create route rejects a TEMPLATE without support.email or support.url (validateMRPByType),
+        // and rejects a malformed email. Multi-creator assets hold comma-joined addresses, so send the first valid one.
+        const creatorEmails = (context.asset?.creatorEmail ?? '').split(/[,;\s]+/).filter((value) => z.string().email().safeParse(value).success);
+        const supportEmail = support_email ?? creatorEmails[0];
         if (!supportEmail && !support_url) {
           throw new AirtableClientError(
             'SUPPORT_CONTACT_MISSING',
-            'The route requires a support email or URL for templates and the asset has no creator email. Pass support_email or support_url.',
+            'The route requires a support email or URL for templates and the asset has no valid creator email. Pass support_email or support_url.',
             422,
           );
         }
 
         const warnings: string[] = [...(fillBundle.form_data.admin_form_warnings ?? [])];
+        if (!support_email && creatorEmails.length > 1) {
+          warnings.push(`The asset lists ${creatorEmails.length} creator emails; sent ${supportEmail} as the support email. Pass support_email to choose another.`);
+        }
         if (!fillBundle.readiness.can_publish) {
           warnings.push('This version is not currently publish-ready according to MCP capability flags. Confirm approval state before relying on the created template.');
         }
@@ -1637,16 +2133,20 @@ export function registerTools(
 
   server.tool(
     'template_review_run_published_site_validation',
-    'Read-only: run published-site validators for content, assets, accessibility signals, interactions/IX2, GSAP, and custom-code policy evidence. Uses published_url only; does not use Designer/Preview data or write to Airtable.',
+    'Read-only: run published-site validators for content, assets, accessibility signals, interactions/IX2, GSAP, and custom-code policy evidence. Pass published_url, never a Preview link. With asset_id, the server reads the preview link on that asset record and the validator also reports the unused styles in the Designer "Clean up" list. Does not write to Airtable.',
     {
       published_url: z.string().url(),
+      asset_id: z.string().regex(/^rec[A-Za-z0-9]{14}$/).optional().describe('Airtable asset record ID of this template. Turns on the unused styles check.'),
       page_slugs: z.array(z.string().min(1)).max(100).optional(),
       checks: z.array(z.enum(PUBLISHED_SITE_VALIDATION_CHECKS)).min(1).optional(),
       max_pages: z.number().int().min(1).max(100).optional(),
       include_raw: z.boolean().optional(),
     },
-    async ({ published_url, page_slugs, checks, max_pages, include_raw }) => {
+    async ({ published_url, asset_id, page_slugs, checks, max_pages, include_raw }) => {
       try {
+        // A failed asset read does not stop the validation; it runs without
+        // the unused styles check.
+        const asset = asset_id ? await getClient().getAssetById(asset_id).catch(() => null) : null;
         return asSuccess({
           validation: await runPublishedSiteValidation(
             {
@@ -1655,6 +2155,7 @@ export function registerTools(
               checks,
               max_pages,
               include_raw,
+              preview_url: previewLinkForValidation(asset, published_url),
             },
             runtimeConfig,
           ),
@@ -1720,17 +2221,24 @@ export function registerTools(
     async ({ version_id, review_feedback, improvement_areas }) => {
       try {
         const reviewer = requireResolvedReviewer(getReviewer);
+        const actorEmail = reviewComments ? requireReviewerEmail(getReviewer) : null;
         const actingReviewer = currentReviewerAsCollaborator(getReviewer);
-        await getClient().requireAssignedVersion(version_id, actingReviewer);
+        const assignedVersion = await getClient().requireAssignedVersion(version_id, actingReviewer);
+        // Read before the write, so the email recipient never costs a saved status.
+        const noticeAsset = reviewComments ? (await getClient().getScopedVersion(version_id)).asset : undefined;
+        const updatedVersion = await getClient().updateVersionReview(version_id, {
+          review_owner: { id: reviewer.airtableCollaboratorId },
+          review_status: '📤Changes Requested',
+          review_feedback,
+          improvement_areas,
+        });
         return asSuccess({
           reviewer: reviewerPayload(reviewer),
           acting_reviewer: actingReviewer,
-          updated_version: await getClient().updateVersionReview(version_id, {
-            review_owner: { id: reviewer.airtableCollaboratorId },
-            review_status: '📤Changes Requested',
-            review_feedback,
-            improvement_areas,
-          }),
+          updated_version: updatedVersion,
+          ...(reviewComments && actorEmail
+            ? { review_comments: await sendDecisionFeedback('template_review_request_changes', reviewComments, version_id, assignedVersion.assetId, actorEmail, review_feedback, templateReleaseNotice(noticeAsset, assignedVersion.versionNumber, 'changes_requested'), templateDecisionSummary(updatedVersion, 'changes_requested')) }
+            : {}),
         });
       } catch (error) {
         return asError(error);
@@ -1795,7 +2303,7 @@ export function registerTools(
 
   server.tool(
     'template_review_save_draft_feedback',
-    'Reviewer-safe write: save draft reviewer feedback for a template version without changing the official decision state.',
+    'Reviewer-safe write: save text to the Airtable Review Feedback field and Improvement Areas of a template version without changing the review status. Review Feedback is the decision message that request_changes, approve, or reject sends; it is NOT a review comment and does not show in the version\'s comment thread. When the reviewer asks for a draft, a draft comment, or a note for the creator and template_review_add_comment is present, use template_review_add_comment instead.',
     {
       version_id: z.string().min(1),
       review_feedback: z.string().min(1).optional(),
@@ -1826,7 +2334,7 @@ export function registerTools(
 
   server.tool(
     'template_review_get_ticket_thread',
-    'Read-only: the Zendesk ticket linked to a template version — subject, status, requester, and the conversation (creator replies and review-team messages), oldest to newest. Resolves the ticket from the version record (🧘ZD ID), never from an arbitrary ticket ID, and only for versions whose asset is a template. Public comments only by default; set include_internal_notes=true to also return private agent notes (requires a resolved reviewer identity). Call this before drafting any creator-facing message to see what the creator said and what was already sent.',
+    'Read-only: the Zendesk ticket linked to a template version — subject, status, requester, and the conversation (creator replies and review-team messages), oldest to newest — plus the version\'s review comments when the comments service is configured. Resolves the ticket from the version record (🧘ZD ID), never from an arbitrary ticket ID, and only for versions whose asset is a template. A version with no ticket still returns its review comments. Public comments and released review comments only by default; set include_internal_notes=true to also return private agent notes, drafts, and internal review notes (requires a resolved reviewer identity). Call this before drafting any creator-facing message to see what the creator said and what was already sent.',
     {
       version_id: z.string().min(1),
       include_internal_notes: z.boolean().default(false),
@@ -1834,6 +2342,9 @@ export function registerTools(
     },
     async ({ version_id, include_internal_notes, limit }) => {
       try {
+        if (reviewComments) {
+          return asSuccess(await readThreadWithComments(reviewComments, version_id, include_internal_notes, limit));
+        }
         const zendesk = requireZendesk(runtimeConfig, 'reads');
         // Private agent notes are reviewer-only: admitted-but-unmapped read sessions get public comments.
         if (include_internal_notes) requireResolvedReviewer(getReviewer);
@@ -2350,7 +2861,7 @@ export function registerTools(
 
   server.tool(
     'template_review_get_metrics',
-    'Return compact marketplace template review metrics for a recent date window.',
+    'Return compact marketplace template review metrics for a recent date window: submissions and decisions for the whole team. It has no comment counts and no per-reviewer comment figures; for those use template_review_comment_metrics.',
     {
       days: z.number().int().min(1).max(90).optional(),
       end_date: z
@@ -2568,18 +3079,25 @@ export function registerTools(
       try {
         const reviewer = requireResolvedReviewer(getReviewer);
         const actingReviewer = currentReviewerAsCollaborator(getReviewer);
+        const actorEmail = reviewComments ? requireReviewerEmail(getReviewer) : null;
         const assignedVersion = await getClient().requireAssignedVersion(version_id, actingReviewer);
+        // Read before the write, so the email recipient never costs a saved status.
+        const noticeAsset = reviewComments ? (await getClient().getScopedVersion(version_id)).asset : undefined;
+        const updatedVersion = await getClient().updateVersionReview(version_id, {
+          review_owner: { id: reviewer.airtableCollaboratorId },
+          review_status: '✅Approved',
+          release_record_id,
+        });
         return asSuccess({
           reviewer: reviewerPayload(reviewer),
           acting_reviewer: actingReviewer,
           // Advisory only. Express reviews intentionally skip items, so "all checked"
           // is not the correct gate and approval must not be blocked on it.
           warnings: reviewChecklistWarnings(assignedVersion),
-          updated_version: await getClient().updateVersionReview(version_id, {
-            review_owner: { id: reviewer.airtableCollaboratorId },
-            review_status: '✅Approved',
-            release_record_id,
-          }),
+          updated_version: updatedVersion,
+          ...(reviewComments && actorEmail
+            ? { review_comments: await sendDecisionFeedback('template_review_approve_version', reviewComments, version_id, assignedVersion.assetId, actorEmail, undefined, templateReleaseNotice(noticeAsset, assignedVersion.versionNumber, 'approved'), templateDecisionSummary(updatedVersion, 'approved')) }
+            : {}),
         });
       } catch (error) {
         return asError(error);
@@ -2598,17 +3116,24 @@ export function registerTools(
     async ({ version_id, reject_reason, rejection_feedback }) => {
       try {
         const reviewer = requireResolvedReviewer(getReviewer);
+        const actorEmail = reviewComments ? requireReviewerEmail(getReviewer) : null;
         const actingReviewer = currentReviewerAsCollaborator(getReviewer);
-        await getClient().requireAssignedVersion(version_id, actingReviewer);
+        const assignedVersion = await getClient().requireAssignedVersion(version_id, actingReviewer);
+        // Read before the write, so the email recipient never costs a saved status.
+        const noticeAsset = reviewComments ? (await getClient().getScopedVersion(version_id)).asset : undefined;
+        const updatedVersion = await getClient().updateVersionReview(version_id, {
+          review_owner: { id: reviewer.airtableCollaboratorId },
+          review_status: '❌Rejected',
+          reject_reason,
+          rejection_feedback,
+        });
         return asSuccess({
           reviewer: reviewerPayload(reviewer),
           acting_reviewer: actingReviewer,
-          updated_version: await getClient().updateVersionReview(version_id, {
-            review_owner: { id: reviewer.airtableCollaboratorId },
-            review_status: '❌Rejected',
-            reject_reason,
-            rejection_feedback,
-          }),
+          updated_version: updatedVersion,
+          ...(reviewComments && actorEmail
+            ? { review_comments: await sendDecisionFeedback('template_review_reject_version', reviewComments, version_id, assignedVersion.assetId, actorEmail, rejection_feedback, templateReleaseNotice(noticeAsset, assignedVersion.versionNumber, 'rejected'), templateDecisionSummary(updatedVersion, 'rejected')) }
+            : {}),
         });
       } catch (error) {
         return asError(error);
