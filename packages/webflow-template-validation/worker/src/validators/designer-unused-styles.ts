@@ -16,7 +16,7 @@
  * finding is reliable, and an empty result is not proof of a clean site.
  */
 
-import type { UnusedStyle, UnusedStylesResult } from './unused-styles';
+import { UNUSED_STYLES_BLOCK_THRESHOLD, type UnusedStyle, type UnusedStylesResult } from './unused-styles';
 
 const PREVIEW_HOST = 'preview.webflow.com';
 const SITE_DATA_TIMEOUT_MS = 20000;
@@ -171,4 +171,32 @@ export function findUnusedStylesInSiteData(siteData: unknown): UnusedStylesResul
 
 function unescapeClass(name: string): string {
 	return name.replace(/\\(.)/g, '$1');
+}
+
+/** The answer of the preview-link check for a caller with no site crawl. */
+export type PreviewLinkUnusedStyles =
+	| { status: 'checked'; count: number; unusedStyles: string[]; stylesChecked: number; threshold: number; blocking: boolean }
+	| { status: 'unavailable'; reason: 'invalid_preview_link' | 'not_configured' | 'site_data_unavailable' };
+
+/**
+ * The Clean up list for a preview link, with no crawl of the published site.
+ * The submission form has the preview link and no Designer session, so it
+ * asks this. `unavailable` is "no answer", not "clean": the caller must not
+ * block on it.
+ */
+export async function checkUnusedStylesByPreviewLink(previewUrl: unknown, pathTemplate: unknown): Promise<PreviewLinkUnusedStyles> {
+	const link = parsePreviewLink(previewUrl);
+	if (!link) return { status: 'unavailable', reason: 'invalid_preview_link' };
+	if (!pathTemplate) return { status: 'unavailable', reason: 'not_configured' };
+	const result = findUnusedStylesInSiteData(await fetchPreviewSiteData(link, pathTemplate));
+	if (!result) return { status: 'unavailable', reason: 'site_data_unavailable' };
+	const unusedStyles = result.unused.map((style) => style.classes.map((name) => `.${name}`).join(''));
+	return {
+		status: 'checked',
+		count: unusedStyles.length,
+		unusedStyles,
+		stylesChecked: result.stylesChecked,
+		threshold: UNUSED_STYLES_BLOCK_THRESHOLD,
+		blocking: unusedStyles.length > UNUSED_STYLES_BLOCK_THRESHOLD
+	};
 }

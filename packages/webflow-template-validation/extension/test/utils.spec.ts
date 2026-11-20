@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  normalizePreviewLink,
   escapeHtml,
   decodeCommonHtmlEntities,
   ensureHttps,
@@ -109,5 +110,29 @@ describe('selectValidationDomain', () => {
 
   it('returns null with no domains and no shortName', () => {
     expect(selectValidationDomain(normalizeSiteInfo({})).url).toBeNull();
+  });
+});
+
+describe('normalizePreviewLink', () => {
+  const token = '0123456789abcdef0123456789abcdef';
+
+  it('keeps a Webflow preview link', () => {
+    const link = `https://preview.webflow.com/preview/my-template?utm_medium=preview_link&preview=${token}&locale=en`;
+    expect(normalizePreviewLink(`  ${link}  `)).toBe(link);
+  });
+
+  it('gives undefined for other text', () => {
+    for (const value of [
+      '',
+      null,
+      'my-template',
+      'https://my-template.webflow.io/',
+      `http://preview.webflow.com/preview/my-template?preview=${token}`,
+      `https://preview.webflow.com.example.com/preview/my-template?preview=${token}`,
+      'https://preview.webflow.com/preview/my-template',
+      'https://preview.webflow.com/preview/my-template?preview=short',
+    ]) {
+      expect(normalizePreviewLink(value)).toBeUndefined();
+    }
   });
 });

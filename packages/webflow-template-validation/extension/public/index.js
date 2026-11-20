@@ -1,7 +1,7 @@
 "use strict";
 (() => {
   // src/utils.ts
-  var EXTENSION_VERSION = "1.3.12";
+  var EXTENSION_VERSION = "1.3.13";
   function filterRetiredAccessibilityIssues(issues) {
     return issues.filter((issue) => issue.id !== "color-contrast-violations");
   }
@@ -107,6 +107,20 @@
       };
     }
     return { url: null, source: "no published domain found" };
+  }
+  function normalizePreviewLink(value) {
+    const text = (value || "").trim();
+    if (!text) return void 0;
+    let url;
+    try {
+      url = new URL(text);
+    } catch {
+      return void 0;
+    }
+    if (url.protocol !== "https:" || url.hostname !== "preview.webflow.com") return void 0;
+    if (!/^\/preview\/[a-z0-9][a-z0-9-]*\/?$/.test(url.pathname)) return void 0;
+    if (!/^[0-9a-f]{32}$/.test(url.searchParams.get("preview") || "")) return void 0;
+    return url.href;
   }
 
   // src/page-metadata-details.ts
@@ -1587,7 +1601,11 @@
     const includeStyleGuide = !isOptionEnabled("opt-exclude-style-guide", true);
     const pageScopeCurrent = isOptionEnabled("opt-page-scope-current", false);
     const excludePageSlugs = includeStyleGuide ? [] : getStyleGuideExclusionSlugs(projectData);
+    const previewInput = document.getElementById("opt-preview-url");
+    const previewUrl = normalizePreviewLink(previewInput?.value);
+    previewInput?.setAttribute("aria-invalid", String(Boolean(previewInput.value.trim()) && !previewUrl));
     return {
+      ...previewUrl ? { previewUrl } : {},
       skipAssets: !runAssets,
       skipContent: !runContent,
       skipAccessibility: !runContent,
