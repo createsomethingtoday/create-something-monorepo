@@ -331,7 +331,11 @@ export async function validateContent(
 		];
 
 		// Calculate content statistics
-		const stats = { ...calculateContentStats(allPages), cmsItemPagesChecked: itemPages.length };
+		const stats = {
+			...calculateContentStats(allPages),
+			cmsItemPagesChecked: itemPages.length,
+			cmsItemPagePaths: itemPages.map(page => new URL(page.url).pathname)
+		};
 
 		return {
 			issues,
@@ -1403,7 +1407,7 @@ function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
 				severity: 'warning',
 				message: `"${pageName}" meta description is too short (${seo.metaDescriptionLength} characters)`,
 				description: 'Meta descriptions should be 150-160 characters for optimal search result display.',
-				howToFix: 'Expand the meta description to include more compelling details about the page',
+				howToFix: `Write a meta description of 150 to 160 characters. This one has ${seo.metaDescriptionLength}.`,
 				location: page.url,
 				details: {
 					page: pageName,
@@ -1420,7 +1424,7 @@ function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
 				severity: 'warning',
 				message: `"${pageName}" meta description is too long (${seo.metaDescriptionLength} characters)`,
 				description: 'Meta descriptions longer than 160 characters may be truncated in search results.',
-				howToFix: 'Shorten the meta description while maintaining key information',
+				howToFix: `Write a meta description of 150 to 160 characters. This one has ${seo.metaDescriptionLength}.`,
 				location: page.url,
 				details: {
 					page: pageName,
@@ -1441,7 +1445,7 @@ function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
 				severity: 'warning',
 				message: `"${pageName}" has an Open Graph image in ${ogImageFormat} format`,
 				description: 'Some social platforms and chat apps do not show WebP or AVIF link previews. JPEG and PNG show everywhere.',
-				howToFix: 'Use a JPEG or PNG file for the Open Graph image. On a CMS template page, change the file in the image field that the Open Graph image reads.',
+				howToFix: 'Use a JPEG or PNG file for the Open Graph image only. Keep WebP or AVIF for the images that show on the page. On a CMS template page, set one static JPEG or PNG, or add an image field that only the Open Graph image reads.',
 				location: page.url,
 				details: {
 					page: pageName,

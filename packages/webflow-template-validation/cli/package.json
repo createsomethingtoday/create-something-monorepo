@@ -1,6 +1,6 @@
 {
 	"name": "@create-something/webflow-template-validation-cli",
-	"version": "0.3.2",
+	"version": "0.3.3",
 	"private": true,
 	"description": "Creator CLI for the Webflow Way template validator: login, sites, validate",
 	"type": "module",

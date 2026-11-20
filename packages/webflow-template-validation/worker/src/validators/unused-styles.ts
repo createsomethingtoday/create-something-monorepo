@@ -227,7 +227,9 @@ export function uncrawledItemPages(usage: ClassUsage, siteUrl: string, crawledUr
 	}
 	const pages: string[] = [];
 	let truncated = false;
-	for (const href of usage.linkHrefs) {
+	// Pages are read at the same time, so the links arrive in a different order on each run.
+	// A sorted list gives the same sample each time.
+	for (const href of [...usage.linkHrefs].sort()) {
 		let url: URL;
 		try { url = new URL(href, site); } catch { continue; }
 		const path = pathOf(url);

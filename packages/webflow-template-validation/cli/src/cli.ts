@@ -491,6 +491,11 @@ function printHuman(ctx: {
 			? `Pages: homepage + ${discovery.slugs.length} from the Designer page list, the same list the Validator app checks${itemPagesNote}`
 			: `Pages: homepage + ${discovery.slugs.length} from ${discovery.source}${discovery.truncated ? ' (truncated to 50)' : ''}${itemPagesNote}`
 	);
+	const itemPaths: unknown = categories.find((cat) => cat.category === 'Content & Accessibility')?.stats?.cmsItemPagePaths;
+	if (Array.isArray(itemPaths) && itemPaths.length > 0) {
+		out.push(`CMS item pages read: ${itemPaths.map(String).join(', ')}`);
+		out.push('  A finding on one of them usually comes from the CMS template page. Correct every item of that collection, not only the pages named.');
+	}
 	if (collected) {
 		const c = collected.counts;
 		out.push(

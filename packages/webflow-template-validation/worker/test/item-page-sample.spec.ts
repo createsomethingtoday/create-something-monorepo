@@ -139,3 +139,17 @@ describe('unsupportedSocialImageFormat', () => {
 		expect(unsupportedSocialImageFormat(null)).toBeNull();
 	});
 });
+
+describe('item page sample order', () => {
+	it('gives the same sample when the links arrive in a different order', async () => {
+		const { uncrawledItemPages, createClassUsage } = await import('../src/validators/unused-styles');
+		const links = ['/work/e', '/work/b', '/work/d', '/work/a', '/work/c'];
+		const sample = (order: string[]) => {
+			const usage = createClassUsage();
+			for (const href of order) usage.linkHrefs.add(href);
+			return uncrawledItemPages(usage, 'https://example.webflow.io', ['https://example.webflow.io/'], 3, 15).pages;
+		};
+		expect(sample(links)).toEqual(sample([...links].reverse()));
+		expect(sample(links).map((url) => new URL(url).pathname)).toEqual(['/work/a', '/work/b', '/work/c']);
+	});
+});
