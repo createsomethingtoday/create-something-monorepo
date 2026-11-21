@@ -325,7 +325,10 @@
   @media (max-width: 760px) {
     .registry-arc__hero,
     .registry-arc__contract {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .registry-arc h1 {
+      overflow-wrap: anywhere;
     }
     .registry-arc__contract ol {
       grid-template-columns: 1fr;
