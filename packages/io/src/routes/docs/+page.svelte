@@ -89,7 +89,11 @@
 	.docs-index {
 		max-width: 1200px;
 		margin: 0 auto;
-		padding: var(--space-performance-lg);
+		padding: clamp(20px, 4vw, 48px);
+	}
+
+	.docs-index :global(.io-journal-opening) {
+		width: 100%;
 	}
 
 	.hero {
@@ -118,15 +122,16 @@
 
 	.tools-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
 		gap: var(--space-performance-lg);
 		margin-bottom: var(--space-performance-xl);
 	}
 
 	.tool-card {
+		min-width: 0;
 		background: var(--color-performance-bg-surface);
 		border-radius: var(--radius-performance-scale-lg);
-		padding: var(--space-performance-lg);
+		padding: clamp(20px, 3vw, 32px);
 		text-decoration: none;
 		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
@@ -155,6 +160,8 @@
 	}
 
 	.npm-package {
+		max-width: 100%;
+		overflow-wrap: anywhere;
 		display: inline-block;
 		background: var(--color-performance-bg-subtle);
 		padding: var(--space-performance-xs) var(--space-performance-sm);
@@ -187,7 +194,7 @@
 
 	.quick-install {
 		border-radius: var(--radius-performance-scale-lg);
-		padding: var(--space-performance-lg);
+		padding: clamp(0px, 2vw, 24px);
 		margin-bottom: var(--space-performance-xl);
 	}
 
@@ -199,7 +206,7 @@
 
 	.install-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
 		gap: var(--space-performance-md);
 	}
 
@@ -209,7 +216,14 @@
 		margin-bottom: var(--space-performance-xs);
 	}
 
+	.install-option {
+		min-width: 0;
+	}
+
 	.install-option pre {
+		max-width: 100%;
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
 		background: var(--color-performance-bg-pure);
 		padding: var(--space-performance-sm);
 		border-radius: var(--radius-performance-scale-sm);
@@ -217,6 +231,7 @@
 	}
 
 	.install-option code {
+		white-space: inherit;
 		font-size: var(--text-performance-body-sm);
 		color: var(--color-performance-fg-primary);
 	}
