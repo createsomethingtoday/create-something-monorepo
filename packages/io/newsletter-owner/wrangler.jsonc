@@ -1,0 +1,18 @@
+{
+  "name": "cs-newsletter-owner-staging",
+  "main": "./worker.ts",
+  "compatibility_date": "2026-11-20",
+  "compatibility_flags": ["nodejs_compat"],
+  "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
+  "alias": {
+    "@create-something/canon/newsletter/subscribe": "../../canon/src/lib/newsletter/subscribe.ts",
+    "@create-something/canon/newsletter/attribution": "../../canon/src/lib/newsletter/attribution.ts",
+    "@create-something/canon/newsletter/audience": "../../canon/src/lib/newsletter/audience.ts"
+  },
+  "workers_dev": true,
+  "preview_urls": false,
+  "d1_databases": [
+    {"binding": "DB", "database_name": "cs-newsletter-owner-staging", "database_id": "fc0cc9d8-7813-433d-a62a-b8f5c13067cc", "migrations_dir": "./migrations"}
+  ],
+  "kv_namespaces": [{"binding": "CACHE", "id": "037242b24dac464c8f5f912258875377"}]
+}
