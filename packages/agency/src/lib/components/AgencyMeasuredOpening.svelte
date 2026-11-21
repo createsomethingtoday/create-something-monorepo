@@ -1,6 +1,8 @@
 <script lang="ts">
   import type { ComponentProps } from 'svelte';
   import { page } from '$app/stores';
+  import { dev } from '$app/environment';
+  import { agencyEditorialAssetUrl } from '$lib/data/agencyEditorialPresentation';
   import { PerformanceCampaignOpening } from '@create-something/canon';
   import { getAgencyHeroTreatment } from '$lib/data/agencyHeroTreatment';
   import { usesAgentReadinessStudyCopy } from '$lib/data/agentReadinessStudyVariants';
@@ -12,7 +14,8 @@
   // Real product screenshots and recorded media keep their own identity. Legacy
   // conceptual stage art adopts the current Agency site's approved stills.
   const ownsVisual = $derived(Boolean(props.media && !/^\/images\/(?:canon-agency-v1|performance-lab)\//.test(props.media.src)));
-  const image = $derived(ownsVisual && props.media ? props.media.src : $page.url.pathname === '/dispatch' ? '/agency/editorial/field-note-1280.webp' : /^\/(products|workflows|arcs)\/?$/.test($page.url.pathname) ? '/agency/editorial/reference-index-1280.webp' : '/agency/editorial/connected-tools-1280.webp');
+  const imagePath = $derived(ownsVisual && props.media ? props.media.src : $page.url.pathname === '/dispatch' ? '/agency/editorial/field-note-1280.webp' : /^\/(products|workflows|arcs)\/?$/.test($page.url.pathname) ? '/agency/editorial/reference-index-1280.webp' : '/agency/editorial/connected-tools-1280.webp');
+  const image = $derived(agencyEditorialAssetUrl(imagePath, dev));
   const alt = $derived(ownsVisual && props.media ? props.media.alt : $page.url.pathname === '/dispatch' ? 'A felt workshop companion folds a field note into an envelope.' : /^\/(products|workflows|arcs)\/?$/.test($page.url.pathname) ? 'An orderly reference index of workshop cards and objects.' : 'A ceramic paper reel connects two instruments with a shared paper path.');
 </script>
 

@@ -23,3 +23,10 @@ export function agencyNeedsDocumentNavigation(destination: URL, current: URL): b
   if (path === currentPath && destination.search === current.search && destination.hash) return false;
   return agencyWebflowPagePaths.has(path);
 }
+
+/** Production media belongs to the private Webflow owner. Absolute URLs keep
+ * the retained SvelteKit prerender crawler from claiming those resources. */
+export function agencyEditorialAssetUrl(path: string, localDevelopment = false): string {
+  return !localDevelopment && path.startsWith('/agency/editorial/')
+    ? `https://createsomething.agency${path}` : path;
+}

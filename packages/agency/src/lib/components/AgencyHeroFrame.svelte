@@ -1,18 +1,20 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { page } from '$app/stores';
+  import { dev } from '$app/environment';
+  import { agencyEditorialAssetUrl } from '$lib/data/agencyEditorialPresentation';
   import { getAgencyPageFoundation } from '$lib/data/agencyPageFoundations';
   type Scene = { src:string; mobileSrc?:string; aspectRatio?:number; mobileAspectRatio?:number; description?:string };
   let { children, after, compact = false, showPlate = true, scene, sceneInChild = false }: {children:Snippet; after?:Snippet; compact?:boolean; showPlate?:boolean; scene?:Scene; sceneInChild?:boolean} = $props();
   const foundation = $derived(getAgencyPageFoundation($page.url.pathname));
-  const image = $derived('/agency/editorial/connected-tools-1280.webp');
+  const image = $derived(agencyEditorialAssetUrl('/agency/editorial/connected-tools-1280.webp', dev));
 </script>
 {#if foundation}
   <div class="editorial-hero-frame" class:editorial-hero-frame--compact={compact} data-measured-opening data-editorial-frame>
     <div class="editorial-frame-grid">
       <div class="editorial-frame-copy">{@render children()}</div>
       {#if showPlate && !sceneInChild}
-        <figure><img src={image} srcset="/agency/editorial/connected-tools-640.webp 640w, /agency/editorial/connected-tools-1280.webp 1280w" sizes="(min-width: 1024px) 536px, calc(100vw - 32px)" alt="A ceramic paper reel connects two instruments with a shared paper path." width="1280" height="721" fetchpriority="high" /><figcaption>Pause, inspect, and learn. Conceptual illustration.</figcaption></figure>
+        <figure><img src={image} srcset={agencyEditorialAssetUrl('/agency/editorial/connected-tools-640.webp', dev) + ' 640w, ' + image + ' 1280w'} sizes="(min-width: 1024px) 536px, calc(100vw - 32px)" alt="A ceramic paper reel connects two instruments with a shared paper path." width="1280" height="721" fetchpriority="high" /><figcaption>Pause, inspect, and learn. Conceptual illustration.</figcaption></figure>
       {/if}
     </div>
     {#if after}<div class="editorial-frame-artifact">{@render after()}</div>{/if}

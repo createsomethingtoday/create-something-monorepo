@@ -126,7 +126,7 @@
     { label: 'Our approach', href: '/#approach' },
     { label: 'Field reports', href: '/field-reports/' },
     { label: 'Dispatch', href: '/dispatch/' },
-    { label: 'Sign in', href: '/sign-in/' }
+    { label: 'Sign in', href: 'https://createsomething.agency/sign-in/' }
   ];
   const primaryCtaHref = agencyCoreMessaging.membershipHref;
   const agencyFooterMacroMedia = {

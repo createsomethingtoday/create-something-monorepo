@@ -22,3 +22,10 @@ test('Only exact Webflow destinations cross the document boundary, preserving wo
   for (const path of ['/map/workspace/second','/map/workspace/example#details','/admin/security','/field-reports/unknown','https://example.test/about']) assert.equal(agencyNeedsDocumentNavigation(new URL(path,current),current),false,path);
   assert.equal(agencyNeedsDocumentNavigation(new URL('https://createsomething.agency/dispatch#featured-report'),new URL('https://createsomething.agency/dispatch')),false);
 });
+
+test('private-owner editorial art is canonical in production and uses the opt-in local proxy in development', async () => {
+  const { agencyEditorialAssetUrl } = await import('../src/lib/data/agencyEditorialPresentation');
+  assert.equal(agencyEditorialAssetUrl('/agency/editorial/connected-tools-1280.webp'), 'https://createsomething.agency/agency/editorial/connected-tools-1280.webp');
+  assert.equal(agencyEditorialAssetUrl('/agency/editorial/connected-tools-640.webp', true), '/agency/editorial/connected-tools-640.webp');
+  assert.equal(agencyEditorialAssetUrl('/images/product.png'), '/images/product.png');
+});

@@ -54,7 +54,7 @@ test('Agency editorial intros separate responsive artwork from copy and preserve
   const opening = readFileSync(new URL('../src/lib/components/AgencyMeasuredOpening.svelte', import.meta.url), 'utf8');
   assert.match(frame, /data-editorial-frame/);
   assert.match(frame, /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
-  assert.match(frame, /connected-tools-640\.webp 640w/);
+  assert.match(frame, /connected-tools-640\.webp/);
   assert.match(opening, /data-editorial-opening/);
   assert.match(opening, /props\.artifactOwnsMedia && props\.artifact/);
   assert.match(opening, /<video controls playsinline/);
