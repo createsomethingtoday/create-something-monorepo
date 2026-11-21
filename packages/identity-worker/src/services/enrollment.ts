@@ -1,4 +1,5 @@
 import type { Env } from '../types';
+import { pcnAccountEmail } from './pcn-account-email';
 import { generateSecureToken, generateUUID, hashPassword, hashToken } from './crypto';
 
 const reply = (body: unknown, status = 200) =>
@@ -233,8 +234,12 @@ export async function startEnrollment(request: Request, env: Env): Promise<Respo
       body: JSON.stringify({
         from: 'CREATE SOMETHING <noreply@createsomething.io>',
         to: [email],
-        subject: 'Verify your CREATE SOMETHING account',
-        text: `Use this link to ${action}:\n\n${link}\n\nThis link expires in 15 minutes and can be used once. If you did not request it, ignore this email.`
+        ...(!identityExperience
+          ? pcnAccountEmail(purpose as 'signup' | 'recovery', link)
+          : {
+              subject: 'Verify your CREATE SOMETHING account',
+              text: `Use this link to ${action}:\n\n${link}\n\nThis link expires in 15 minutes and can be used once. If you did not request it, ignore this email.`
+            })
       }),
       signal: AbortSignal.timeout(10000)
     });
