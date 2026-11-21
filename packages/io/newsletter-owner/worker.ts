@@ -55,12 +55,11 @@ export default {
           return reply({ success: false, message: 'This signup is restricted to the staging recipient.' }, 403);
         }
         const clientIp = request.headers.get('x-newsletter-client-ip');
-        if (!clientIp) return reply({ success: false, message: 'Missing client address.' }, 400);
         const { result, status } = await processSubscription({
           email: body.email, website: typeof body.website === 'string' ? body.website : undefined,
           turnstileToken: typeof body.turnstileToken === 'string' ? body.turnstileToken : undefined,
           source: 'io-subscribe'
-        }, env, clientIp, 'io', { doNotTrack: true, userOptedOut: true });
+        }, env, clientIp || { rateLimitBucket: 'staging-operator-inbox' }, 'io', { doNotTrack: true, userOptedOut: true });
         return reply(result, status);
       }
       if (typeof body.token !== 'string' || !body.token || body.token.length > 2048) {

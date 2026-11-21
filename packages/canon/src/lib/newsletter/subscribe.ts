@@ -227,7 +227,7 @@ const PLAYBOOK_EMAIL_MEDIA = {
 export async function processSubscription(
   body: NewsletterRequest,
   env: NewsletterEnv | undefined,
-  clientIP: string,
+  client: string | { rateLimitBucket: string },
   property: PropertyDomain,
   attributionContext: NewsletterAttributionContext = {}
 ): Promise<{ result: NewsletterResult; status: number }> {
@@ -284,7 +284,7 @@ export async function processSubscription(
         body: new URLSearchParams({
           secret: env.TURNSTILE_SECRET_KEY,
           response: turnstileToken,
-          remoteip: clientIP
+          ...(typeof client === 'string' && client ? { remoteip: client } : {})
         })
       }
     );
@@ -302,7 +302,8 @@ export async function processSubscription(
 
   // Rate limiting via KV
   if (env.CACHE) {
-    const rateLimitKey = `newsletter_rate:${clientIP}`;
+    const bucket = typeof client === 'string' ? client : client.rateLimitBucket;
+    const rateLimitKey = `newsletter_rate:${bucket}`;
 
     try {
       const currentCount = await env.CACHE.get(rateLimitKey);

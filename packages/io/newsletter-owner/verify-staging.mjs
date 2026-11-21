@@ -30,6 +30,7 @@ try {
       const url = new URL(req.url);
       if (url.hostname === 'challenges.cloudflare.com') {
         const params = new URLSearchParams(await req.text());
+        assert.equal(params.has('remoteip'), false);
         return Response.json({ success: params.get('response') === 'test-challenge' });
       }
       assert.equal(req.url, 'https://api.resend.com/emails');
@@ -43,8 +44,7 @@ try {
     await db.prepare(statement).run();
   }
   const send = (endpoint, body, token = 'fixture-token') => mf.dispatchFetch('https://owner.invalid/api/newsletter' + endpoint, {
-    method: 'POST', headers: { authorization: 'Bearer ' + token, 'content-type': 'application/json',
-      'x-newsletter-client-ip': '192.0.2.1' }, body: JSON.stringify(body)
+    method: 'POST', headers: { authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify(body)
   });
   const signup = { email, turnstileToken: 'test-challenge' };
   assert.equal((await send('', signup, 'wrong-token')).status, 401);
