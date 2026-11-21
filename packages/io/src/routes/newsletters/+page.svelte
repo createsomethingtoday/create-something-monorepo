@@ -12,6 +12,8 @@
   });
 </script>
 
+<svelte:head><link rel="stylesheet" href="/styles/newsletters-v1.css" /></svelte:head>
+
 <SEO
   title="Newsletter Archive"
   description="Field notes on building legible, governed AI systems. Read the archive and get the next operator edition by email."
@@ -23,7 +25,8 @@
   ]}
 />
 
-<TaskOpening scene="review-nook" caption="Canon keeps the working sheet ready for the next review.">
+<div class="newsletter-editorial">
+<TaskOpening illustration="field-note" scene="review-nook" caption="Canon keeps the working sheet ready for the next review.">
 <div class="archive-hero">
   <div class="archive-shell">
     <p class="eyebrow">Newsletter archive / Field notes</p>
@@ -85,6 +88,7 @@
 
   <div id="subscribe" class="signup-anchor">
     <NewsletterSignup
+  turnstileSiteKey={data.turnstileSiteKey}
       eyebrow="Operator edition"
       headline="Get the next field note first."
       description="The concise edition, practical links, and one clear next move—sent when the work is ready. The full argument remains available in the public archive."
@@ -94,6 +98,8 @@
       source="io-newsletter-archive"
     />
   </div>
+</div>
+
 </div>
 
 <style>

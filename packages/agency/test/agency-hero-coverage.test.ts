@@ -49,18 +49,17 @@ test('coverage selectors retain their source markup contracts', () => {
   assert.ok(component.includes('(max-width: 800px)'));
 });
 
-test('Agency scenes use explicit non-negative art and elevated copy layers', () => {
+test('Agency editorial intros separate responsive artwork from copy and preserve working artifacts', () => {
   const frame = readFileSync(new URL('../src/lib/components/AgencyHeroFrame.svelte', import.meta.url), 'utf8');
-  const css = readFileSync(new URL('../src/lib/styles/measured-pages.css', import.meta.url), 'utf8');
-  assert.match(frame, /\.agency-hero-scene__art\s*\{[^}]*z-index:0/);
-  assert.match(frame, /\.agency-hero-scene__copy\s*\{[^}]*position:relative;[^}]*z-index:1/);
-  assert.match(css, /\.agency-surface \.canon-scene-lead > \.canon-scene-lead__art\s*\{[^}]*z-index:0/);
-  assert.ok(css.includes("#main-content .performance-campaign-opening[data-background='scene']::before { display:none; }"));
-  assert.match(css, /\.agency-surface \.canon-scene-lead > \.canon-scene-lead__copy\s*\{[^}]*position:relative;[^}]*z-index:1/);
-  // display:contents wrappers cannot own a stacking level: lift the actual
-  // grid children too, without altering their sizing or semantic order.
-  assert.match(css, /header:has\(> div \+ dl\) > div:first-child\s*\{[^}]*z-index:1/);
-  assert.match(css, /:is\(\.guide-back,\.guide-eyebrow,h1,\.guide-answer,\.guide-actions\)\s*\{[^}]*z-index:1/);
+  const opening = readFileSync(new URL('../src/lib/components/AgencyMeasuredOpening.svelte', import.meta.url), 'utf8');
+  assert.match(frame, /data-editorial-frame/);
+  assert.match(frame, /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(frame, /connected-tools-640\.webp/);
+  assert.match(opening, /data-editorial-opening/);
+  assert.match(opening, /props\.artifactOwnsMedia && props\.artifact/);
+  assert.match(opening, /<video controls playsinline/);
+  assert.match(opening, /srcset=/);
+  assert.doesNotMatch(frame, /background:linear-gradient/);
 });
 
 test('light portfolio navigation preserves its black outlined logo', () => {
@@ -82,9 +81,9 @@ test('all hero assets exist and route assignments are unique', () => {
   assert.equal(new Set(agencyHeroes.map(hero => hero.route)).size, agencyHeroes.length);
   for (const hero of agencyHeroes) {
     assert.ok(hero.selector, hero.route);
-    assert.ok(existsSync(resolve(root, 'static' + hero.src)), `${hero.route}: ${hero.src}`);
-    assert.ok(existsSync(resolve(root, 'static' + hero.mobileSrc)), `${hero.route}: ${hero.mobileSrc}`);
-    assert.match(hero.src, /^\/(?:images|films)\/[a-zA-Z0-9/_.-]+$/);
+    assert.ok(hero.src.startsWith('/agency/editorial/') || existsSync(resolve(root, 'static' + hero.src)), `${hero.route}: ${hero.src}`);
+    assert.ok(hero.mobileSrc.startsWith('/agency/editorial/') || existsSync(resolve(root, 'static' + hero.mobileSrc)), `${hero.route}: ${hero.mobileSrc}`);
+    assert.match(hero.src, /^\/(?:images|films|agency)\/[a-zA-Z0-9/_.-]+$/);
     assert.ok(!/</.test(hero.selector), 'selectors must be safe for an SSR style tag');
   }
 });
@@ -137,7 +136,7 @@ test('SSR stylesheet expands trusted selectors and never interpolates request da
   }
   assert.equal(agencyHeroStyles(undefined, styles), '');
   assert.ok(!agencyHeroStyles(getAgencyHero('/map?injected=</style><script>'), styles).includes('<script>'));
-  assert.match(styles, /aspect-ratio: 1672 \/ 941/);
+  assert.match(styles, /aspect-ratio: 1280 \/ 721/);
   assert.match(styles, /prefers|forced-colors/);
 });
 

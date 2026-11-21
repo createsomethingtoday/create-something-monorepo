@@ -1,0 +1,5 @@
+@font-face { font-family:'Agency Editorial Sans'; src:url('/agency/fonts/switzer-regular.woff2') format('woff2'), url('/fonts/agency-geist-latin.woff2') format('woff2'); font-weight:400; font-style:normal; font-display:swap; }
+@font-face { font-family:'Agency Editorial Sans'; src:url('/agency/fonts/switzer-medium.woff2') format('woff2'), url('/fonts/agency-geist-latin.woff2') format('woff2'); font-weight:500; font-style:normal; font-display:swap; }
+@font-face { font-family:'Agency Editorial Sans'; src:url('/agency/fonts/switzer-semibold.woff2') format('woff2'), url('/fonts/agency-geist-latin.woff2') format('woff2'); font-weight:600; font-style:normal; font-display:swap; }
+@font-face { font-family:'Agency Editorial Serif'; src:url('/agency/fonts/stix-two-text-latin.woff2') format('woff2'); font-weight:400 600; font-style:normal; font-display:swap; }
+@font-face { font-family:'Agency Editorial Mono'; src:url('/agency/fonts/geist-mono-latin.woff2') format('woff2'); font-weight:400 500; font-style:normal; font-display:swap; }

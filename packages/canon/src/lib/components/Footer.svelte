@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { onMount, type Snippet } from 'svelte';
+  import type { Snippet } from 'svelte';
   import { RingMark } from '../brand/marks/index.js';
   import { getAnalytics } from '../analytics/client.js';
+  import TurnstileChallenge from '../newsletter/TurnstileChallenge.svelte';
   import { newsletterSignupContext } from '../newsletter/client.js';
   import MeridianOfferPanel from './meridian/MeridianOfferPanel.svelte';
 
@@ -101,58 +102,7 @@
   let isSubmitting = $state(false);
   let message = $state<{ type: 'success' | 'error'; text: string } | null>(null);
   let turnstileToken = $state('');
-  let turnstileWidgetId: string | null = null;
-  let turnstileContainer = $state<HTMLDivElement>();
-
-  // Load Turnstile script and render widget
-  onMount(() => {
-    if (!showNewsletter || !turnstileSiteKey) return;
-
-    // Check if script already loaded
-    if ((window as any).turnstile) {
-      renderTurnstile();
-      return;
-    }
-
-    // Load Turnstile script
-    const script = document.createElement('script');
-    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad';
-    script.async = true;
-    script.defer = true;
-
-    // Set up callback
-    (window as any).onTurnstileLoad = () => {
-      renderTurnstile();
-    };
-
-    document.head.appendChild(script);
-
-    return () => {
-      // Cleanup
-      if (turnstileWidgetId && (window as any).turnstile) {
-        (window as any).turnstile.remove(turnstileWidgetId);
-      }
-    };
-  });
-
-  function renderTurnstile() {
-    if (!turnstileContainer || !(window as any).turnstile || !turnstileSiteKey) return;
-
-    turnstileWidgetId = (window as any).turnstile.render(turnstileContainer, {
-      sitekey: turnstileSiteKey,
-      callback: (token: string) => {
-        turnstileToken = token;
-      },
-      'expired-callback': () => {
-        turnstileToken = '';
-      },
-      'error-callback': () => {
-        turnstileToken = '';
-      },
-      theme: 'dark',
-      size: 'flexible'
-    });
-  }
+  let verificationVersion = $state(0);
 
   async function handleNewsletterSubmit(e: Event) {
     e.preventDefault();
@@ -199,11 +149,6 @@
           surface: 'footer_newsletter'
         });
         email = '';
-        // Reset Turnstile for next submission
-        if ((window as any).turnstile && turnstileWidgetId) {
-          (window as any).turnstile.reset(turnstileWidgetId);
-          turnstileToken = '';
-        }
       } else {
         message = { type: 'error', text: data.message };
       }
@@ -213,6 +158,8 @@
         text: 'Something went wrong. Please try again.'
       };
     } finally {
+      turnstileToken = '';
+      verificationVersion += 1;
       isSubmitting = false;
     }
   }
@@ -302,9 +249,9 @@
             />
 
             <div class="flex flex-col sm:flex-row gap-3">
-              <label for="newsletter-email" class="sr-only">Email address</label>
+              <label for="footer-newsletter-email" class="sr-only">Email address</label>
               <input
-                id="newsletter-email"
+                id="footer-newsletter-email"
                 type="email"
                 bind:value={email}
                 placeholder="Enter your email address"
@@ -341,7 +288,7 @@
 
             <!-- Turnstile widget container -->
             {#if turnstileSiteKey}
-              <div bind:this={turnstileContainer} class="turnstile-container mt-4"></div>
+              <TurnstileChallenge siteKey={turnstileSiteKey} onToken={(token) => turnstileToken = token} resetVersion={verificationVersion} />
             {/if}
 
             {#if message}
@@ -889,12 +836,6 @@
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
-  }
-
-  /* Turnstile container */
-  .turnstile-container {
-    display: flex;
-    justify-content: center;
   }
 
   @media (min-width: 768px) {

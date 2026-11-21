@@ -25,9 +25,10 @@
 {#if $page.url.pathname === '/admin/login'}
 	<slot />
 {:else}
-	<div class="admin-layout" class:newsletter-desk={$page.url.pathname === '/admin/newsletter'}>
+	<div class="admin-layout" class:newsletter-desk={$page.url.pathname === '/admin/newsletter'}
+		class:newsletter-report={$page.url.pathname.replace(/\/$/, '') === '/admin/newsletter-analytics'}>
 		<!-- Admin Navigation -->
-		<nav class="admin-nav">
+		<nav class="admin-nav" aria-label="Administration">
 			<div class="max-w-7xl mx-auto px-6">
 				<div class="nav-toolbar flex items-center justify-between">
 					<div class="nav-items flex gap-6">
@@ -35,6 +36,7 @@
 							<a
 								href={item.href}
 								class="nav-link {$page.url.pathname === item.href ? 'active' : ''}"
+                aria-current={$page.url.pathname === item.href ? 'page' : undefined}
 							>
 								{item.label}
 							</a>
@@ -87,9 +89,6 @@
     outline-offset: 3px;
   }
 
-	:global(body) {
-		background: var(--color-performance-bg-pure);
-	}
 
 	.admin-layout {
 		min-height: 100vh;
@@ -142,4 +141,13 @@
 		margin: 0 auto;
 		padding: var(--space-performance-lg) var(--space-performance-md);
 	}
+  .newsletter-report {
+    --color-performance-bg-pure: oklch(98% 0.005 80.72);
+    --color-performance-bg-surface: oklch(98% 0.005 80.72);
+    --color-performance-fg-primary: oklch(26.45% 0 89.88);
+    --color-performance-fg-tertiary: #64615a;
+    font-family: "Newsletter Sans", Arial, sans-serif;
+  }
+  .newsletter-report .admin-nav { border-bottom: 1px solid #d9d5ce; }
+  .newsletter-report .admin-content { padding: 0; }
 </style>

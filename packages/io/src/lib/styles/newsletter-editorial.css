@@ -1,0 +1,29 @@
+@font-face {
+  font-family: "Newsletter Serif";
+  src: url("/fonts/stix-two-text.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Newsletter Sans";
+  src: url("/fonts/switzer.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+
+.newsletter-editorial {
+  --newsletter-paper: oklch(98% 0.005 80.72);
+  --newsletter-ink: oklch(26.45% 0 89.88);
+  --newsletter-muted: #64615a;
+  --newsletter-line: #d9d5ce;
+  background: var(--newsletter-paper);
+  color: var(--newsletter-ink);
+  color-scheme: light;
+  font-family: "Newsletter Sans", Arial, sans-serif;
+}
+
+.newsletter-editorial :focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}

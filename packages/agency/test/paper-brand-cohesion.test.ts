@@ -34,7 +34,7 @@ test('Agency uses its property-owned outlined logo assets without changing Canon
     /<img class="footer-editorial-identity__asset" src=\{brandAsset\.src\} alt="" \/>/
   );
   assert.match(layout, /create-something-horizontal-black\.svg/);
-  assert.match(layout, /create-something-mark-black\.svg/);
+  assert.doesNotMatch(layout, /mobileSrc:\s*'\/brand\/create-something-mark-black\.svg'/, 'Editorial navigation keeps the readable full wordmark on mobile');
   assert.match(layout, /create-something-agency-white\.svg/);
   assert.match(layout, /enableRouteLogoMotion=\{true\}/);
   for (const asset of [headerLogo, footerLogo]) {

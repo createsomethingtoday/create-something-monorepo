@@ -1,0 +1,104 @@
+/* Reader and subscription journeys share the current .io journal's paper, ink and typography. */
+.newsletter-reader,.newsletter-subscribe,.newsletter-state,.newsletter-check-in { --reader-orchid:#825782; --reader-wash:oklch(94% 0.008 81.79); min-height:80vh; }
+.newsletter-reader *, .newsletter-subscribe *, .newsletter-state *, .newsletter-check-in * {box-sizing:border-box}
+.newsletter-reader :is(h1,h2,h3),.newsletter-subscribe :is(h1,h2),.newsletter-state h1,.newsletter-check-in :is(h1,h2,legend) {font-family:"Newsletter Serif",Georgia,serif;font-weight:400;letter-spacing:-.035em;color:var(--newsletter-ink)}
+.newsletter-reader a,.newsletter-subscribe a,.newsletter-state a,.newsletter-check-in a {color:inherit;text-underline-offset:5px}
+.newsletter-reader a:hover,.newsletter-subscribe a:hover,.newsletter-state a:hover,.newsletter-check-in a:hover {color:var(--reader-orchid)}
+.reader-masthead,.reader-footer,.newsletter-reader .edition-shell,.newsletter-reader .article-shell,.newsletter-reader .edition-footer {width:min(1184px,calc(100% - 64px));margin-inline:auto}
+.reader-masthead,.reader-footer {display:flex;justify-content:space-between;gap:24px;padding-block:30px;border-bottom:1px solid var(--newsletter-line);font-size:14px}
+.reader-masthead a:first-child {text-decoration:none;letter-spacing:.08em;font-size:12px}
+.reader-eyebrow,.newsletter-reader .edition-meta,.newsletter-reader .article-label {font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--newsletter-muted)}
+.newsletter-reader .edition-hero {padding:40px 0 64px}
+.newsletter-reader .back-link {display:inline-block;margin-bottom:64px;font-size:13px}
+.newsletter-reader .edition-heading {max-width:960px}
+.newsletter-reader h1 {font-size:clamp(3.2rem,5.9vw,5.5rem);line-height:1.01;text-wrap:balance;margin:20px 0 28px}
+.newsletter-reader .dek {max-width:720px;font-size:20px;line-height:1.65;color:var(--newsletter-muted)}
+.newsletter-reader figure {margin:48px 0 0}
+.newsletter-reader figure img {display:block;width:100%;max-height:580px;object-fit:cover}
+.newsletter-reader figcaption {font-size:12px;color:var(--newsletter-muted);margin-top:12px}
+.newsletter-reader .article-shell {display:grid;grid-template-columns:220px minmax(0,740px);gap:48px;border-top:1px solid var(--newsletter-line);padding-block:64px 96px}
+.newsletter-reader .article-label {line-height:1.8}
+.newsletter-reader .prose {font-size:18px;line-height:1.8;min-width:0;overflow-wrap:anywhere}
+.newsletter-reader .prose h2 {font-size:clamp(2.25rem,3.4vw,3.4rem);line-height:1.08;margin:56px 0 24px}
+.newsletter-reader .prose h3 {font-size:29px;line-height:1.2;margin:36px 0 20px}
+.newsletter-reader .prose :is(p,ul,ol) {margin:0 0 24px}
+.newsletter-reader .prose li {margin-bottom:10px}
+.newsletter-reader .prose blockquote {margin:36px 0;padding-left:24px;border-left:2px solid var(--reader-orchid);font-family:"Newsletter Serif",serif;font-size:27px;line-height:1.5}
+.newsletter-reader .prose code {font-size:.85em;background:var(--reader-wash);padding:3px 5px}
+.newsletter-reader .prose pre {overflow:auto;max-width:100%;padding:20px;background:var(--reader-wash)}
+.newsletter-reader .prose :is(img,video) {max-width:100%}
+.newsletter-reader .prose table {display:block;max-width:100%;overflow-x:auto;border-collapse:collapse}
+.newsletter-reader .prose :is(td,th) {padding:12px;border-bottom:1px solid var(--newsletter-line);text-align:left}
+.newsletter-reader .edition-footer {display:flex;justify-content:space-between;gap:24px;padding:28px 0 64px;border-top:1px solid var(--newsletter-line);font-size:13px}
+.newsletter-reader .edition-footer p {margin:0 0 8px}
+.newsletter-reader .edition-footer span {color:var(--newsletter-muted)}
+.newsletter-reader {--color-performance-paper:var(--newsletter-paper);--color-performance-ink:var(--newsletter-ink);--color-performance-muted:var(--newsletter-muted);--font-performance-editorial:"Newsletter Serif",Georgia,serif;--font-performance-interface:"Newsletter Sans",Arial,sans-serif}
+.subscribe-layout {width:min(1184px,calc(100% - 64px));margin:auto;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(300px,.8fr);gap:80px;padding:100px 0 120px;align-items:start}
+.subscribe-copy h1 {font-size:clamp(3.2rem,5.9vw,5.5rem);line-height:1.01;margin:24px 0 32px}
+.subscribe-copy p {max-width:560px;line-height:1.65;color:var(--newsletter-muted)}
+.subscribe-copy .reader-lede {font-size:20px;margin-bottom:24px}
+.subscribe-sheet {background:var(--reader-wash);padding:36px;margin-top:12px}
+.subscribe-sheet form {display:grid;gap:12px;margin:28px 0}
+.subscribe-sheet input {width:100%;padding:15px;background:var(--newsletter-paper);border:1px solid #bbb4aa;color:var(--newsletter-ink);font:inherit;border-radius:0}
+.subscribe-sheet button,.newsletter-state .cta,.newsletter-check-in button {display:inline-block;min-height:48px;padding:14px 20px;border:1px solid var(--newsletter-ink);background:var(--newsletter-ink);color:var(--newsletter-paper);font:inherit;text-decoration:none;cursor:pointer}
+.subscribe-sheet label {font-size:14px}
+.subscribe-sheet .reader-fineprint,.subscribe-sheet>a {font-size:12px;line-height:1.6;color:var(--newsletter-muted)}
+.reader-status h2 {font-size:36px;line-height:1.1}
+.reader-error {color:#8b2323;line-height:1.5}
+.reader-footer {border-top:1px solid var(--newsletter-line);border-bottom:0}
+.newsletter-state {padding:40px 32px 100px;display:grid;align-content:center;justify-items:center;gap:64px}
+.newsletter-state .reader-wordmark {font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+.newsletter-state .confirm-card {max-width:640px;text-align:center;border-block:1px solid var(--newsletter-line);padding:64px 0}
+.newsletter-state .icon {display:flex;justify-content:center;color:var(--reader-orchid);margin-bottom:24px}
+.newsletter-state h1 {font-size:clamp(2.8rem,5vw,4.5rem);line-height:1.04;margin:0 0 24px}
+.newsletter-state :is(.message,.email) {line-height:1.7;color:var(--newsletter-muted);overflow-wrap:anywhere}
+.newsletter-state .cta {margin-top:24px}
+.unsubscribe-reader .page-container {min-height:65vh;background:var(--newsletter-paper);color:var(--newsletter-ink);--color-fg-primary:var(--newsletter-ink);--color-fg-secondary:var(--newsletter-muted);--color-bg-pure:var(--newsletter-paper);--color-performance-bg-pure:var(--newsletter-paper);--color-performance-fg-primary:var(--newsletter-ink);--color-performance-fg-tertiary:var(--newsletter-muted);--color-performance-fg-muted:var(--newsletter-muted)}
+.newsletter-check-in {padding:64px 32px}
+.newsletter-check-in :is(.check-in__opening,.check-in__workspace,.check-in__handoff) {width:min(1184px,100%);margin-inline:auto}
+.newsletter-check-in .check-in__opening {display:grid;grid-template-columns:minmax(0,1.3fr) minmax(260px,.7fr);gap:80px;align-items:center;padding-bottom:64px}
+.newsletter-check-in h1 {font-size:clamp(3.2rem,5.9vw,5.5rem);line-height:1.01;margin:24px 0 32px;max-width:12ch}
+.newsletter-check-in .eyebrow,.newsletter-check-in dt {font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.newsletter-check-in p {line-height:1.65;color:var(--newsletter-muted)}
+.newsletter-check-in .lede {font-size:20px}
+.newsletter-check-in .receipt-strip {display:grid;grid-template-columns:repeat(3,1fr);gap:16px;border-top:1px solid var(--newsletter-line);padding-top:24px;margin-top:32px}
+.newsletter-check-in dd {margin:8px 0;font-size:14px}
+.newsletter-check-in figure {margin:0}
+.newsletter-check-in figure img {width:100%;display:block;max-height:480px;object-fit:cover}
+.newsletter-check-in figcaption {font-size:12px;color:var(--newsletter-muted);line-height:1.5;margin-top:12px}
+.newsletter-check-in .check-in__workspace {border-top:1px solid var(--newsletter-line);padding:48px 0;max-width:800px}
+.newsletter-check-in form {display:grid;gap:32px}
+.newsletter-check-in fieldset {border:0;border-bottom:1px solid var(--newsletter-line);padding:0 0 32px;margin:0;min-width:0}
+.newsletter-check-in legend {font-size:28px;margin-bottom:16px;line-height:1.2}
+.newsletter-check-in textarea {width:100%;padding:16px;background:var(--newsletter-paper);color:var(--newsletter-ink);border:1px solid #bbb4aa;font:inherit;line-height:1.6;resize:vertical}
+.newsletter-check-in .choice-grid {display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.newsletter-check-in .choice-grid label {display:flex;gap:12px;align-items:center;min-height:56px;border:1px solid #bbb4aa;padding:12px;cursor:pointer}
+.newsletter-check-in .choice-grid label:has(:checked) {background:var(--reader-wash);border-color:var(--reader-orchid)}
+.newsletter-check-in input {accent-color:var(--reader-orchid)}
+.newsletter-check-in .form-actions {display:flex;gap:24px;align-items:center;flex-wrap:wrap}
+.newsletter-check-in :disabled {cursor:default;opacity:.55}
+.newsletter-check-in .form-status {padding:16px;border-left:2px solid var(--reader-orchid);background:var(--reader-wash);margin-bottom:24px}
+.newsletter-check-in .state-panel h2 {font-size:clamp(2rem,4vw,3.4rem);line-height:1.08;margin:16px 0 24px}
+.newsletter-check-in .check-in__handoff {max-width:800px;border-top:1px solid var(--newsletter-line);padding-top:24px;font-size:13px}
+@media(max-width:768px){.reader-masthead,.reader-footer,.newsletter-reader .edition-shell,.newsletter-reader .article-shell,.newsletter-reader .edition-footer,.subscribe-layout {width:calc(100% - 40px)}.reader-masthead{align-items:start;font-size:12px;gap:20px}.newsletter-reader .edition-hero{padding-top:32px}.newsletter-reader .back-link{margin-bottom:40px}.newsletter-reader .article-shell{grid-template-columns:1fr;gap:24px;padding-block:40px}.newsletter-reader .article-label{border-bottom:1px solid var(--newsletter-line);padding-bottom:20px}.newsletter-reader .edition-footer,.reader-footer{flex-direction:column}.subscribe-layout{grid-template-columns:1fr;gap:32px;padding:64px 0}.subscribe-sheet{padding:24px}.newsletter-check-in{padding:48px 20px}.newsletter-check-in .check-in__opening{grid-template-columns:1fr;gap:32px}.newsletter-check-in figure img{max-height:360px}.newsletter-check-in .choice-grid{grid-template-columns:1fr}.newsletter-check-in .receipt-strip{grid-template-columns:1fr}.newsletter-state{padding-inline:20px}.newsletter-state .confirm-card{padding-block:40px}}
+/* Keep scoped journal typography above the inherited property shell. */
+.newsletter-editorial.newsletter-subscribe .subscribe-copy h1 {font-family:"Newsletter Serif",Georgia,serif;font-weight:400;font-size:clamp(3.2rem,5.9vw,5.5rem);line-height:1.01;letter-spacing:-.035em}
+.newsletter-reader .newsletter-section {background:var(--reader-wash);color:var(--newsletter-ink);border-top:1px solid var(--newsletter-line)}
+.newsletter-reader .newsletter-panel {background:transparent;border:0;border-radius:0;box-shadow:none}
+.newsletter-reader .newsletter-section :is(.newsletter-headline,.newsletter-description,.newsletter-eyebrow,.newsletter-note,.form-intro,.form-intro p,.form-intro span) {color:var(--newsletter-ink)}
+.newsletter-reader .newsletter-headline {font-family:"Newsletter Serif",Georgia,serif;font-weight:400}
+.newsletter-reader .newsletter-eyebrow {background:transparent;border:0;padding:0;letter-spacing:.1em}
+.newsletter-reader .newsletter-section input:not([name="website"]) {border-radius:0;border:1px solid #bbb4aa;background:var(--newsletter-paper);color:var(--newsletter-ink)}
+.newsletter-reader .newsletter-section .submit-button {border-radius:0;background:var(--newsletter-ink);color:var(--newsletter-paper)}
+/* The standalone subscribe sheet uses the same verified form as every reader. */
+.newsletter-subscribe .subscribe-sheet .newsletter-section {padding:0;background:transparent;border:0;color:var(--newsletter-ink)}
+.newsletter-subscribe .subscribe-sheet .newsletter-content {display:block;width:100%;margin:0}
+.newsletter-subscribe .subscribe-sheet .newsletter-copy {display:none}
+.newsletter-subscribe .subscribe-sheet .newsletter-panel {padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
+.newsletter-subscribe .subscribe-sheet :is(.newsletter-note,.form-intro,.form-intro span,.form-intro strong,.success-message) {color:var(--newsletter-ink)}
+.newsletter-subscribe .subscribe-sheet .form-row {display:grid;grid-template-columns:1fr}
+.newsletter-subscribe .subscribe-sheet .submit-button {background:var(--newsletter-ink);color:var(--newsletter-paper);border-radius:0}
+.newsletter-subscribe .subscribe-sheet input {border-radius:0}
+.newsletter-subscribe .subscribe-art {margin:40px 0 0;max-width:520px}
+.newsletter-subscribe .subscribe-art img {width:100%;height:auto;display:block}
+.newsletter-subscribe .subscribe-art figcaption {font-size:12px;color:var(--newsletter-muted);margin-top:12px;line-height:1.5}

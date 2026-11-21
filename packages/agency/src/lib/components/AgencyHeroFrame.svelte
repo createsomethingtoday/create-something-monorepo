@@ -1,57 +1,37 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { page } from '$app/stores';
+  import { dev } from '$app/environment';
+  import { agencyEditorialAssetUrl } from '$lib/data/agencyEditorialPresentation';
   import { getAgencyPageFoundation } from '$lib/data/agencyPageFoundations';
-  import { usesAgencyMeasuredPublicSurface } from '$lib/data/publicSurfacePolicy';
-  import { agencyWelcomeScene, agencyQuietScene } from '$lib/data/canonAgencyScenes';
-  import AgencyHeroPlate from './AgencyHeroPlate.svelte';
-  type Scene = { src: string; mobileSrc?: string; aspectRatio?: number; mobileAspectRatio?: number; description?: string };
-  let { children, after, compact = false, showPlate = true, scene, sceneInChild = false }: {children: Snippet; after?: Snippet; compact?: boolean; showPlate?: boolean; scene?: Scene; sceneInChild?: boolean} = $props();
-  const foundation = $derived(getAgencyPageFoundation($page.url.pathname, $page.url.pathname === '/book' ? $page.url.searchParams.get('intent') : null));
-  // Scopefield owns its released product identity and download framing.
-  const productOwnsOpening = $derived($page.url.pathname.replace(/\/+$/, '') === '/scopefield');
-  const usesScene = $derived(Boolean(foundation && showPlate && !productOwnsOpening && usesAgencyMeasuredPublicSurface($page.url.pathname)));
-  const background = $derived(scene ?? (/^\/(?:field-reports|proof|security|stack|methodology|privacy|terms|support-brief)(?:\/|$)/.test($page.url.pathname) ? agencyQuietScene : agencyWelcomeScene));
-  const image = (src: string) => `url(${JSON.stringify(src)})`;
+  type Scene = { src:string; mobileSrc?:string; aspectRatio?:number; mobileAspectRatio?:number; description?:string };
+  let { children, after, compact = false, showPlate = true, scene, sceneInChild = false }: {children:Snippet; after?:Snippet; compact?:boolean; showPlate?:boolean; scene?:Scene; sceneInChild?:boolean} = $props();
+  const foundation = $derived(getAgencyPageFoundation($page.url.pathname));
+  const hasSiblingVisual = $derived(showPlate && !sceneInChild);
+  const image = $derived(agencyEditorialAssetUrl('/agency/editorial/connected-tools-1280.webp', dev));
 </script>
-
-<svelte:head>
-  {#if usesScene && !sceneInChild}
-    <link rel="preload" as="image" href={background.src} media={background.mobileSrc ? '(min-width: 48rem)' : undefined} />
-    {#if background.mobileSrc}<link rel="preload" as="image" href={background.mobileSrc} media="(max-width: 47.99rem)" />{/if}
-  {/if}
-</svelte:head>
-
 {#if foundation}
-  <div class="agency-hero-frame" class:agency-hero-frame--compact={compact} data-agency-scene={usesScene ? 'true' : undefined} data-measured-opening data-scroll-entrance-skip>
-    {#if usesScene && !sceneInChild}
-      <div class="agency-hero-scene" style:--agency-scene={image(background.src)} style:--agency-scene-mobile={image(background.mobileSrc ?? background.src)} style:--agency-scene-ratio={background.aspectRatio ?? 16 / 9} style:--agency-scene-mobile-ratio={background.mobileAspectRatio ?? background.aspectRatio ?? 16 / 9}>
-        <div class="agency-hero-scene__art" role={background.description ? 'img' : undefined} aria-label={background.description} aria-hidden={background.description ? undefined : 'true'}></div>
-        <div class="agency-hero-frame__copy agency-hero-scene__copy">{@render children()}</div>
-        <div class="agency-hero-scene__reserve" aria-hidden="true"></div>
-      </div>
-    {:else}
-      <div class="agency-hero-frame__copy">{@render children()}</div>
-    {/if}
-    {#if showPlate}
-      <AgencyHeroPlate {foundation} {compact} />
-    {/if}
-    {#if after}<div class="agency-hero-frame__artifact performance-campaign-opening__artifact">{@render after()}</div>{/if}
+  <div class="editorial-hero-frame" class:editorial-hero-frame--compact={compact} data-measured-opening data-editorial-frame>
+    <div class="editorial-frame-grid" class:editorial-frame-grid--single={!hasSiblingVisual}>
+      <div class="editorial-frame-copy">{@render children()}</div>
+      {#if hasSiblingVisual}
+        <figure><img src={image} srcset={agencyEditorialAssetUrl('/agency/editorial/connected-tools-640.webp', dev) + ' 640w, ' + image + ' 1280w'} sizes="(min-width: 1024px) 536px, calc(100vw - 32px)" alt="A ceramic paper reel connects two instruments with a shared paper path." width="1280" height="721" fetchpriority="high" /><figcaption>Pause, inspect, and learn. Conceptual illustration.</figcaption></figure>
+      {/if}
+    </div>
+    {#if after}<div class="editorial-frame-artifact">{@render after()}</div>{/if}
   </div>
 {:else}
   {@render children()}
 {/if}
-
 <style>
-  .agency-hero-scene { container-type:inline-size; position:relative; isolation:isolate; display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:auto auto; background:var(--color-performance-paper); color:var(--color-performance-ink); }
-  .agency-hero-scene__art { position:relative; grid-area:1 / 1 / 3 / 2; align-self:end; width:100%; height:calc(100cqw / var(--agency-scene-ratio)); z-index:0; pointer-events:none; background:var(--agency-scene) center bottom / 100% auto no-repeat; }
-  .agency-hero-scene__art::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg,var(--color-performance-paper),color-mix(in srgb,var(--color-performance-paper) 92%,transparent) 40%,transparent 54%); mask-image:linear-gradient(#000 0 55%,transparent 78%); }
-  .agency-hero-scene__copy { position:relative; z-index:1; grid-area:1 / 1; box-sizing:border-box; width:44%; min-width:0; padding:clamp(1.25rem,3cqw,3rem); overflow-wrap:anywhere; }
-  .agency-hero-scene__reserve { grid-area:2 / 1; height:calc(25cqw / var(--agency-scene-ratio)); }
-  @media(max-width:47.99rem) {
-    .agency-hero-scene__copy { width:100%; padding:1.25rem; }
-    .agency-hero-scene__art { position:relative; grid-area:2 / 1; height:calc(100cqw / var(--agency-scene-mobile-ratio)); background-image:var(--agency-scene-mobile); }
-    .agency-hero-scene__art::after { display:none; }
-    .agency-hero-scene__reserve { height:calc(100cqw / var(--agency-scene-mobile-ratio)); }
-  }
+  .editorial-hero-frame { box-sizing:border-box; max-width:1152px; margin:auto; padding:6rem 1rem; }
+  .editorial-frame-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:3rem; align-items:center; }
+  .editorial-frame-grid--single { grid-template-columns:minmax(0,1fr); }
+  .editorial-frame-copy { min-width:0; }
+  .editorial-frame-copy :global(section),.editorial-frame-copy :global(.clear-page-section__inner),.editorial-frame-copy :global(.clear-page-section__copy) { padding:0; margin:0; max-width:none; width:100%; min-height:0; }
+  .editorial-frame-copy :global(h1) { font-size:clamp(2.5rem,4.5vw,3.75rem); line-height:1.05; max-width:19ch; }
+  figure { margin:0; min-width:0; } img { display:block; width:100%; height:auto; border-radius:1rem; }
+  figcaption { margin-top:1rem; font-size:.75rem; color:var(--color-performance-muted); }
+  .editorial-frame-artifact { margin-top:3rem; }
+  @media(max-width:767px) { .editorial-frame-grid { grid-template-columns:1fr; } .editorial-hero-frame { padding-block:4rem; } }
 </style>

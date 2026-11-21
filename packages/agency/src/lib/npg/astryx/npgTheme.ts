@@ -39,6 +39,7 @@ export const npgTheme = defineTheme({
     }
   },
   tokens: {
+    '--font-family-heading': '"Agency Reading", Georgia, serif',
     '--color-accent': '#126c9b',
     '--color-accent-muted': '#d9ecf8',
     '--color-text-accent': '#126c9b',

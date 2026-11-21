@@ -1,0 +1,351 @@
+/* Shared .io journal shell. Illustrations, canvas paints and data palettes retain their own semantics. */
+@font-face { font-family: 'IO Switzer'; src: url('/fonts/switzer.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'IO STIX'; src: url('/fonts/stix-two-text.ttf') format('truetype'); font-weight: 400; font-display: swap; }
+:root, .io-journal, .io-journal[data-theme='light'] {
+  --color-performance-bg-pure: oklch(98% 0.005 80.72);
+  --color-performance-bg-elevated: #fffefa;
+  --color-performance-bg-surface: #f5f2eb;
+  --color-performance-bg-subtle: #efede6;
+  --color-performance-bg-surface-hover: #e9e4d9;
+  --color-performance-fg-primary: oklch(26.45% 0 89.88);
+  --color-performance-fg-secondary: #514e47;
+  --color-performance-fg-tertiary: #64615a;
+  --color-performance-fg-muted: #64615a;
+  --color-performance-fg-subtle: #8b9286;
+  --color-performance-border-default: #d7d3c9;
+  --color-performance-border-emphasis: #aaa397;
+  --color-performance-border-strong: #62695e;
+  --color-performance-shell-surface: var(--color-performance-paper);
+  --color-performance-shell-surface-secondary: var(--color-performance-paper);
+  --color-performance-shell-surface-tertiary: var(--color-performance-paper);
+  --color-performance-shell-surface-elevated: var(--color-performance-paper);
+  --color-performance-shell-surface-hover: var(--color-performance-paper);
+  --color-performance-shell-border-subtle: var(--color-performance-line);
+  --color-performance-shell-border-default: var(--color-performance-line);
+  --color-performance-shell-border-strong: var(--color-performance-line);
+  --color-performance-shell-shadow: none;
+  --color-performance-shell-shadow-strong: 0 12px 36px rgb(41 43 40 / 0.12);
+  --color-performance-brand-primary: var(--color-performance-ink);
+  --color-performance-brand-primary-soft: var(--color-performance-court);
+  --color-performance-brand-primary-muted: var(--color-performance-court);
+  --color-performance-brand-primary-border: var(--color-performance-ink);
+  --color-performance-brand-secondary: var(--color-performance-ink);
+  --color-performance-brand-ink: var(--color-performance-ink);
+  --color-performance-success: #216443;
+  --color-performance-success-muted: #e3f1e8;
+  --color-performance-success-border: #81ad91;
+  --color-performance-success-bg: var(--color-performance-growth-soft);
+  --color-performance-success-text: var(--color-performance-growth);
+  --color-performance-error: #a52b32;
+  --color-performance-error-muted: #fce8e8;
+  --color-performance-error-border: #cf8589;
+  --color-performance-warning: #795713;
+  --color-performance-warning-muted: #faf0d5;
+  --color-performance-warning-border: #bda363;
+  --color-performance-warning-background: var(--color-performance-gold-soft);
+  --color-performance-warning-subtle: var(--color-performance-gold-soft);
+  --color-performance-warning-text: var(--color-performance-gold);
+  --color-performance-info: #235e82;
+  --color-performance-info-muted: #e3f1fa;
+  --color-performance-info-border: #80a9c1;
+  --color-performance-info-subtle: var(--color-performance-signal-soft);
+  --color-performance-paper: oklch(98% 0.005 80.72);
+  --color-performance-editorial-dark: oklch(26.45% 0 89.88);
+  --color-performance-editorial-dark-secondary: #42473e;
+  --color-performance-editorial-light: oklch(98% 0.005 80.72);
+  --color-performance-editorial-light-secondary: #eef0ec;
+  --color-performance-editorial-brand: #292b28;
+  --color-performance-paper-fiber: transparent;
+  --color-performance-paper-edge: #cbd0c5;
+  --color-performance-paper-fold: #eef0ec;
+  --color-performance-paper-shadow: rgb(41 43 40 / 0.10);
+  --color-performance-panel: #fffefa;
+  --color-performance-ink: oklch(26.45% 0 89.88);
+  --color-performance-ink-soft: #42473e;
+  --color-performance-muted: #64615a;
+  --color-performance-line: #d7d3c9;
+  --color-performance-line-strong: #aaa397;
+  --color-performance-grid: rgb(41 43 40 / 0.06);
+  --color-performance-court: #efede6;
+  --color-performance-court-line: rgba(255, 255, 255, 0.86);
+  --color-performance-growth: #216443;
+  --color-performance-growth-soft: #e3f1e8;
+  --color-performance-signal: #704770;
+  --color-performance-signal-soft: #f0e8f0;
+  --color-performance-pressure: #8d421b;
+  --color-performance-pressure-soft: #fbeadd;
+  --color-performance-risk: #a52b32;
+  --color-performance-risk-soft: #fce8e8;
+  --color-performance-gold: #795713;
+  --color-performance-gold-soft: #faf0d5;
+  --color-performance-controlled: var(--color-performance-signal);
+  --color-performance-controlled-soft: var(--color-performance-signal-soft);
+  --color-performance-ready: var(--color-performance-growth);
+  --color-performance-ready-soft: var(--color-performance-growth-soft);
+  --color-performance-review: var(--color-performance-gold);
+  --color-performance-review-soft: var(--color-performance-gold-soft);
+  --color-performance-stop: var(--color-performance-risk);
+  --color-performance-stop-soft: var(--color-performance-risk-soft);
+  --color-performance-mode-campaign-surface: var(--color-performance-ink);
+  --color-performance-mode-campaign-ink: var(--color-performance-panel);
+  --color-performance-mode-campaign-accent: var(--color-performance-pressure);
+  --color-performance-mode-proof-surface: var(--color-performance-paper);
+  --color-performance-mode-proof-ink: var(--color-performance-ink);
+  --color-performance-mode-proof-accent: var(--color-performance-signal);
+  --color-performance-mode-operator-surface: var(--color-performance-panel);
+  --color-performance-mode-operator-ink: var(--color-performance-ink);
+  --color-performance-mode-operator-accent: var(--color-performance-growth);
+  --color-performance-work-idle-text: var(--color-performance-muted);
+  --color-performance-work-idle-background: var(--color-performance-paper);
+  --color-performance-work-idle-border: var(--color-performance-line);
+  --color-performance-work-planning-text: var(--color-performance-signal);
+  --color-performance-work-planning-background: var(--color-performance-signal-soft);
+  --color-performance-work-planning-border: var(--color-performance-signal);
+  --color-performance-work-running-text: var(--color-performance-pressure);
+  --color-performance-work-running-background: var(--color-performance-pressure-soft);
+  --color-performance-work-running-border: var(--color-performance-pressure);
+  --color-performance-work-approval-text: var(--color-performance-review);
+  --color-performance-work-approval-background: var(--color-performance-review-soft);
+  --color-performance-work-approval-border: var(--color-performance-review);
+  --color-performance-work-success-text: var(--color-performance-ready);
+  --color-performance-work-success-background: var(--color-performance-ready-soft);
+  --color-performance-work-success-border: var(--color-performance-ready);
+  --color-performance-work-warning-text: var(--color-performance-gold);
+  --color-performance-work-warning-background: var(--color-performance-gold-soft);
+  --color-performance-work-warning-border: var(--color-performance-gold);
+  --color-performance-work-failure-text: var(--color-performance-stop);
+  --color-performance-work-failure-background: var(--color-performance-stop-soft);
+  --color-performance-work-failure-border: var(--color-performance-stop);
+  --color-performance-hover: rgb(41 43 40 / 0.05);
+  --color-performance-active: rgb(41 43 40 / 0.10);
+  --color-performance-focus: #825782;
+  --color-performance-focus-ring: var(--color-performance-focus);
+  --color-performance-overlay: rgba(0, 0, 0, 0.5);
+  --color-performance-overlay-heavy: rgba(0, 0, 0, 0.7);
+  --glass-performance-bg-subtle: var(--color-performance-panel);
+  --glass-performance-bg-light: var(--color-performance-panel);
+  --glass-performance-bg-medium: var(--color-performance-panel);
+  --glass-performance-bg-strong: var(--color-performance-panel);
+  --glass-performance-border-subtle: var(--color-performance-line);
+  --glass-performance-border-light: var(--color-performance-line);
+  --glass-performance-border-medium: var(--color-performance-line);
+  --glass-performance-border-strong: var(--color-performance-line);
+  --color-performance-data-1: #60a5fa;
+  --color-performance-data-1-muted: rgba(96, 165, 250, 0.2);
+  --color-performance-data-2: #22c55e;
+  --color-performance-data-2-muted: rgba(34, 197, 94, 0.2);
+  --color-performance-data-3: #c084fc;
+  --color-performance-data-3-muted: rgba(192, 132, 252, 0.2);
+  --color-performance-data-3-border: rgba(192, 132, 252, 0.3);
+  --color-performance-data-4: #fbbf24;
+  --color-performance-data-4-muted: rgba(251, 191, 36, 0.2);
+  --color-performance-data-5: #f472b6;
+  --color-performance-data-5-muted: rgba(244, 114, 182, 0.2);
+  --color-performance-data-6: #facc15;
+  --color-performance-data-6-muted: rgba(250, 204, 21, 0.2);
+  --color-performance-rank-gold: #ca8a04;
+  --color-performance-rank-gold-muted: rgba(202, 138, 4, 0.2);
+  --color-performance-rank-bronze: #c2410c;
+  --color-performance-rank-bronze-muted: rgba(194, 65, 12, 0.2);
+  --color-shell-surface-secondary: var(--color-performance-shell-surface-secondary);
+  --color-shell-surface-tertiary: var(--color-performance-shell-surface-tertiary);
+  --color-shell-surface-elevated: var(--color-performance-shell-surface-elevated);
+  --color-shell-border-default: var(--color-performance-shell-border-default);
+  --color-brand-primary-border: var(--color-performance-brand-primary-border);
+  --color-clear-porcelain-soft: var(--color-performance-court);
+  --color-shell-surface-hover: var(--color-performance-shell-surface-hover);
+  --color-shell-border-subtle: var(--color-performance-shell-border-subtle);
+  --color-shell-border-strong: var(--color-performance-shell-border-strong);
+  --color-shell-shadow-strong: var(--color-performance-shell-shadow-strong);
+  --color-brand-primary-muted: var(--color-performance-brand-primary-muted);
+  --color-clear-border-strong: var(--color-performance-line-strong);
+  --color-brand-primary-soft: var(--color-performance-brand-primary-soft);
+  --color-clear-frosted-mint: var(--color-performance-growth-soft);
+  --color-clear-candy-purple: var(--color-performance-pressure-soft);
+  --color-clear-pastel-blue: var(--color-performance-signal-soft);
+  --color-clear-pill-active: var(--color-performance-signal-soft);
+  --color-rank-bronze-muted: var(--color-performance-rank-bronze-muted);
+  --color-clear-grey-quiet: var(--color-performance-muted);
+  --color-clear-link-green: var(--color-performance-growth);
+  --color-border-emphasis: var(--color-performance-border-emphasis);
+  --color-brand-secondary: var(--color-performance-brand-secondary);
+  --color-clear-porcelain: var(--color-performance-paper);
+  --color-clear-chocolate: var(--color-performance-pressure);
+  --color-clear-pistachio: var(--color-performance-growth-soft);
+  --color-rank-gold-muted: var(--color-performance-rank-gold-muted);
+  --color-border-default: var(--color-performance-border-default);
+  --color-success-border: var(--color-performance-success-border);
+  --color-warning-border: var(--color-performance-warning-border);
+  --color-border-strong: var(--color-performance-border-strong);
+  --color-shell-surface: var(--color-performance-shell-surface);
+  --color-brand-primary: var(--color-performance-brand-primary);
+  --color-success-muted: var(--color-performance-success-muted);
+  --color-warning-muted: var(--color-performance-warning-muted);
+  --color-overlay-heavy: var(--color-performance-overlay-heavy);
+  --color-data-3-border: var(--color-performance-data-3-border);
+  --color-fg-secondary: var(--color-performance-fg-secondary);
+  --color-shell-shadow: var(--color-performance-shell-shadow);
+  --color-error-border: var(--color-performance-error-border);
+  --color-clear-border: var(--color-performance-line);
+  --color-data-1-muted: var(--color-performance-data-1-muted);
+  --color-data-2-muted: var(--color-performance-data-2-muted);
+  --color-data-3-muted: var(--color-performance-data-3-muted);
+  --color-data-4-muted: var(--color-performance-data-4-muted);
+  --color-data-5-muted: var(--color-performance-data-5-muted);
+  --color-data-6-muted: var(--color-performance-data-6-muted);
+  --color-bg-elevated: var(--color-performance-bg-elevated);
+  --color-fg-tertiary: var(--color-performance-fg-tertiary);
+  --color-error-muted: var(--color-performance-error-muted);
+  --color-info-border: var(--color-performance-info-border);
+  --color-clear-panel: var(--color-performance-panel);
+  --color-clear-ocean: var(--color-performance-signal);
+  --color-rank-bronze: var(--color-performance-rank-bronze);
+  --color-bg-surface: var(--color-performance-bg-surface);
+  --color-fg-primary: var(--color-performance-fg-primary);
+  --color-info-muted: var(--color-performance-info-muted);
+  --color-clear-onyx: var(--color-performance-ink);
+  --color-clear-grey: var(--color-performance-muted);
+  --color-clear-moss: var(--color-performance-growth);
+  --color-clear-fern: var(--color-performance-growth);
+  --color-clear-stop: var(--color-performance-risk);
+  --color-bg-subtle: var(--color-performance-bg-subtle);
+  --color-fg-subtle: var(--color-performance-fg-subtle);
+  --color-brand-ink: var(--color-performance-brand-ink);
+  --color-rank-gold: var(--color-performance-rank-gold);
+  --color-fg-muted: var(--color-performance-fg-muted);
+  --color-bg-pure: var(--color-performance-bg-pure);
+  --color-success: var(--color-performance-success);
+  --color-warning: var(--color-performance-warning);
+  --color-overlay: var(--color-performance-overlay);
+  --color-active: var(--color-performance-active);
+  --color-data-1: var(--color-performance-data-1);
+  --color-data-2: var(--color-performance-data-2);
+  --color-data-3: var(--color-performance-data-3);
+  --color-data-4: var(--color-performance-data-4);
+  --color-data-5: var(--color-performance-data-5);
+  --color-data-6: var(--color-performance-data-6);
+  --color-error: var(--color-performance-error);
+  --color-hover: var(--color-performance-hover);
+  --color-focus: var(--color-performance-focus);
+  --color-info: var(--color-performance-info);
+  --glass-border-subtle: var(--glass-performance-border-subtle);
+  --glass-border-medium: var(--glass-performance-border-medium);
+  --glass-border-strong: var(--glass-performance-border-strong);
+  --glass-border-light: var(--glass-performance-border-light);
+  --glass-saturate-sm: var(--glass-performance-saturate-sm);
+  --glass-saturate-md: var(--glass-performance-saturate-md);
+  --glass-saturate-lg: var(--glass-performance-saturate-lg);
+  --glass-saturate-xl: var(--glass-performance-saturate-xl);
+  --glass-bg-subtle: var(--glass-performance-bg-subtle);
+  --glass-bg-medium: var(--glass-performance-bg-medium);
+  --glass-bg-strong: var(--glass-performance-bg-strong);
+  --glass-shadow-sm: var(--glass-performance-shadow-sm);
+  --glass-shadow-md: var(--glass-performance-shadow-md);
+  --glass-shadow-lg: var(--glass-performance-shadow-lg);
+  --glass-blur-2xl: var(--glass-performance-blur-2xl);
+  --glass-bg-light: var(--glass-performance-bg-light);
+  --glass-blur-sm: var(--glass-performance-blur-sm);
+  --glass-blur-md: var(--glass-performance-blur-md);
+  --glass-blur-lg: var(--glass-performance-blur-lg);
+  --glass-blur-xl: var(--glass-performance-blur-xl);
+  --color-bg: var(--color-performance-paper);
+  --color-bg-base: var(--color-performance-paper);
+  --color-bg-secondary: var(--color-performance-bg-surface);
+  --color-bg-inverse: var(--color-performance-ink);
+  --color-fg-default: var(--color-performance-ink);
+  --color-fg-inverse: var(--color-performance-paper);
+  --color-background-secondary: var(--color-performance-bg-surface);
+  --color-background-tertiary: var(--color-performance-court);
+  --color-background-quaternary: var(--color-performance-bg-surface-hover);
+  --color-text: var(--color-performance-ink);
+  --color-text-primary: var(--color-performance-ink);
+  --color-text-secondary: var(--color-performance-muted);
+  --color-border: var(--color-performance-line);
+  --color-border-subtle: var(--color-performance-line);
+  --color-border-hover: var(--color-performance-line-strong);
+  --font-performance-sans: 'IO Switzer', Arial, sans-serif;
+  --font-performance-interface: 'IO Switzer', Arial, sans-serif;
+  --font-performance-display: 'IO STIX', Georgia, serif;
+  --font-performance-heading: 'IO STIX', Georgia, serif;
+  --font-performance-editorial: 'IO STIX', Georgia, serif;
+  --font-performance-record: 'IO Switzer', Arial, sans-serif;
+  --font-performance-editorial-weight: 400;
+  --font-performance-display-weight: 400;
+  color-scheme: light;
+
+}
+body { background: var(--color-performance-paper); color: var(--color-performance-ink); }
+.io-journal.io-journal.io-journal { min-height: 100vh; background: var(--color-performance-paper); color: var(--color-performance-ink); font-family: 'IO Switzer', Arial, sans-serif; font-size: 16px; line-height: 1.6; }
+.io-journal.io-journal.io-journal :is(h1,h2,h3,h4) { font-family: 'IO STIX', Georgia, serif; font-weight: 400; letter-spacing: -.035em; }
+.io-journal.io-journal.io-journal :is(button,input,select,textarea) { font-family: 'IO Switzer', Arial, sans-serif; }
+.io-journal.io-journal.io-journal :is(a,button,input,select,textarea,summary):focus-visible { outline: 2px solid #825782; outline-offset: 4px; }
+.io-journal.io-journal.io-journal :is(.nav-editorial,.nav-mobile-menu,.nav-mobile-backdrop) { background: var(--color-performance-paper); color: var(--color-performance-ink); backdrop-filter: none; }
+.io-journal.io-journal.io-journal .nav-editorial { border-bottom: 1px solid var(--color-performance-line); }
+.io-journal.io-journal.io-journal .nav-inner { min-height: 72px; }
+.io-journal.io-journal.io-journal .nav-logo-asset { filter: none; }
+.io-journal.io-journal.io-journal .nav-link-list { border: 0; background: transparent; }
+.io-journal.io-journal.io-journal .nav-link { font-size: 13px; font-weight: 400; }
+.io-journal.io-journal.io-journal .nav-link.active { background: transparent; box-shadow: inset 0 -1px var(--color-performance-ink); }
+.io-journal.io-journal.io-journal .nav-cta { border-radius: 2px; font-size: 13px; font-weight: 400; }
+.io-journal.io-journal.io-journal .footer-editorial { background: var(--color-performance-paper); color: var(--color-performance-ink); border-top: 1px solid var(--color-performance-line); }
+.io-journal.io-journal.io-journal .footer-editorial .footer-editorial-identity__asset { filter: invert(1); }
+.io-journal.io-journal.io-journal :is(.auth-card,.login-card) { border: 1px solid var(--color-performance-line); border-radius: 3px; background: var(--color-performance-panel); box-shadow: none; }
+.io-journal.io-journal.io-journal .auth-header { text-align: left; }
+.io-journal.io-journal.io-journal .auth-header h1 { font-family: 'IO STIX', Georgia, serif; font-size: 44px; font-weight: 400; }
+.io-journal.io-journal.io-journal .auth-form .form-title { font-family: 'IO STIX', Georgia, serif; font-weight: 400; }
+.io-journal.io-journal.io-journal .auth-form :is(.input,.submit-button,.magic-link-button,.password-button) { border-radius: 2px; }
+.io-journal.io-journal.io-journal .admin-nav { border-bottom: 1px solid var(--color-performance-line); background: var(--color-performance-paper); }
+.io-journal.io-journal.io-journal .admin-content { max-width: 1184px; padding-block: 48px 72px; }
+.io-journal.io-journal.io-journal .admin-content :is(.page-title,h1) { font-family: 'IO STIX', Georgia, serif; font-size: clamp(32px,4vw,48px); font-weight: 400; }
+.io-journal.io-journal.io-journal .admin-content :is(.stat-card,.chart-card,.table-container,.dashboard-card,.panel) { border: 1px solid var(--color-performance-line); border-radius: 3px; box-shadow: none; }
+.io-journal.io-journal.io-journal .admin-content table { font-variant-numeric: tabular-nums; }
+.io-journal.io-journal.io-journal .admin-content .stat-value { font-family: 'IO STIX', Georgia, serif; font-weight: 400; }
+.io-journal.io-journal.io-journal .clear-error-page__title { font-family: 'IO STIX', Georgia, serif; font-weight: 400; }
+@media(max-width:640px) {
+  .io-journal.io-journal.io-journal :is(.auth-container,.login-container) { padding: 24px 20px; }
+  .io-journal.io-journal.io-journal .auth-card { padding: 28px 20px; }
+  .io-journal.io-journal.io-journal .admin-content { padding: 32px 20px 48px; }
+  .io-journal.io-journal.io-journal .nav-inner { min-height: 64px; }
+  .io-journal.io-journal.io-journal .section-heading { align-items: start; }
+}
+
+/* Canon task art stays intact; its surrounding copy shares the journal paper. */
+.io-journal.io-journal.io-journal .canon-task-opening { background-color: var(--color-performance-paper); color: var(--color-performance-ink); border-color: var(--color-performance-line); }
+.io-journal.io-journal.io-journal .canon-task-opening__copy :is(h1,h2,h3) { color: var(--color-performance-ink); }
+.io-journal.io-journal.io-journal .canon-task-opening__copy p { color: var(--color-performance-muted); }
+.io-journal.io-journal.io-journal .auth-container { padding: 48px 24px; }
+.io-journal.io-journal.io-journal .auth-card { padding: 40px; width: min(100%,480px); border-radius: 3px; }
+.io-journal.io-journal.io-journal .auth-form { width: 100%; min-width: 0; }
+.io-journal.io-journal.io-journal .auth-form .form-header { display: none; }
+@media(max-width:640px) {
+ .io-journal.io-journal.io-journal .auth-container { padding: 32px 20px; }
+ .io-journal.io-journal.io-journal .auth-card { padding: 28px 20px; }
+}
+
+/* Preserve the existing schematic's intentional dark plate and semantic paints. */
+.io-journal.io-journal.io-journal .meridian-offer-panel__artifact {
+ --color-performance-paper: #181312;
+ --color-performance-fg-primary: #f3ebe4;
+ --color-performance-brand-primary: #fcaa2d;
+ background: #181312;
+}
+@media(max-width:768px) {
+ .io-journal.io-journal.io-journal .mobile-search-button { top: 10px; bottom: auto; right: 76px; width: 44px; height: 44px; z-index: 51; border-radius: 2px; box-shadow: none; }
+}
+.io-journal.io-journal.io-journal .io-journal-admin .input-field,
+.io-journal.io-journal.io-journal :is(.input-field,.btn-primary) { border-radius: 3px; }
+/* The sitewide handoff is a quiet journal row; preserve the actual diagram plate. */
+.io-journal.io-journal.io-journal .meridian-offer-panel { background: var(--color-performance-paper); border-block: 1px solid var(--color-performance-line); padding-block: 48px; }
+.io-journal.io-journal.io-journal .meridian-offer-panel__inner { width: min(1184px,calc(100% - 64px)); background: transparent; border-radius: 0; }
+.io-journal.io-journal.io-journal .meridian-offer-panel__visual { background: transparent; }
+.io-journal.io-journal.io-journal .meridian-offer-panel__content { padding-block: 24px; }
+.io-journal.io-journal.io-journal .meridian-offer-panel h2 { font-size: clamp(32px,3.3vw,46px); }
+.io-journal.io-journal.io-journal .footer-editorial :is(.footer-main,.footer-content,.footer-brand-column) { border-radius: 3px; box-shadow: none; }
+@media(max-width:760px) {
+ .io-journal.io-journal.io-journal .meridian-offer-panel__inner { width: calc(100% - 40px); }
+ .io-journal.io-journal.io-journal .meridian-offer-panel__visual { display: none; }
+}
+.io-journal.io-journal.io-journal .meridian-offer-panel__visual::before,
+.io-journal.io-journal.io-journal .meridian-offer-panel__visual::after { display: none; }
+.io-journal.io-journal.io-journal .footer-editorial .footer-links-grid { border-radius: 3px; }
+.io-journal.io-journal.io-journal .tool-card { border: 1px solid var(--color-performance-line); border-radius: 3px; background: transparent; }

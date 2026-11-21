@@ -3,12 +3,13 @@
   import '../app.css';
   import { publicPageEntrances } from '$lib/motion/publicPageEntrances';
   import { IO_EXPERIMENTS_URL, IO_PAPERS_URL } from '$lib/data/ioResearchLinks';
-  import AgencyPageTreatment from '$lib/components/AgencyPageTreatment.svelte';
   import AgencyHeroBackground from '$lib/components/AgencyHeroBackground.svelte';
   import CanonBrandSignature from '$lib/components/CanonBrandSignature.svelte';
   import '$lib/styles/operator-palette.css';
   import '$lib/styles/measured-public.css';
   import '$lib/styles/measured-pages.css';
+  import '$lib/styles/editorial-runtime.css';
+  import { agencyEditorialPageKind, agencyNeedsDocumentNavigation } from '$lib/data/agencyEditorialPresentation';
   import AgencyPageWayfinding from '$lib/components/AgencyPageWayfinding.svelte';
   import { getAgencyPageFoundation } from '$lib/data/agencyPageFoundations';
   import { initializeFilmMotion, filmNavigationOpen, reducedFilmMotion, filmOverlayOpen } from '$lib/motion/filmPlayback';
@@ -48,6 +49,13 @@
     usesAgencyMeasuredPublicSurface($page.url.pathname)
   );
   const usesMeasuredAccountSurface = $derived(usesAgencyMeasuredAccountSurface($page.url.pathname));
+  function markEdgeOwnedLink(event: MouseEvent) {
+    const target = event.target instanceof Element ? event.target.closest('a[href]') : null;
+    if (!(target instanceof HTMLAnchorElement)) return;
+    if (agencyNeedsDocumentNavigation(new URL(target.href), $page.url)) {
+      target.setAttribute('data-sveltekit-reload', '');
+    }
+  }
   let mobileNavigationOpen = $state(false);
   const pageFoundation = $derived($page.status < 400 ? getAgencyPageFoundation($page.url.pathname, $page.url.pathname === '/book' ? $page.url.searchParams.get('intent') : null) : null);
 
@@ -102,6 +110,7 @@
         }
       ]
     },
+    { label: 'Dispatch', href: '/dispatch/' },
     { label: 'What You Keep', href: '/stack' },
     { label: 'Services & Tools', href: '/products' },
     { label: 'Proof', href: '/field-reports' }
@@ -114,16 +123,10 @@
   // Public pages and approved account entries share Agency navigation; other workspaces retain their shell.
   const usesPublicNavigation = $derived(usesMeasuredAccountSurface || (!/^\/(account|admin|dashboard|login|logout|auth|mcp-access|delivery)(?:\/|$)/.test($page.url.pathname) && !/^\/map\/(workspace|subscribe|share)(?:\/|$)/.test($page.url.pathname)));
   const filmNavLinks = [
-    { label: 'The work', href: '/#built-work' },
-    { label: 'Technical support', href: '/services' },
-    { label: 'From $900/mo', href: agencyCoreMessaging.membershipHref },
-    { label: 'Explore', href: '/products', children: [
-      { label: 'Services & tools', href: '/products', description: 'Explore the full catalog.' },
-      { label: 'Proof', href: '/field-reports', description: 'Inspect results and their limits.' },
-      { label: 'Try a workflow', href: '/practice', description: 'Try the method yourself.' },
-      { label: 'What you keep', href: '/stack', description: 'Code, instructions and ownership.' },
-      { label: 'Research on .io', href: IO_EXPERIMENTS_URL, description: 'Experiments, evidence and limits.' }
-    ] }
+    { label: 'Our approach', href: '/#approach' },
+    { label: 'Field reports', href: '/field-reports/' },
+    { label: 'Dispatch', href: '/dispatch/' },
+    { label: 'Sign in', href: 'https://createsomething.agency/sign-in/' }
   ];
   const primaryCtaHref = agencyCoreMessaging.membershipHref;
   const agencyFooterMacroMedia = {
@@ -363,11 +366,12 @@
   </div>
 {/snippet}
 
+<svelte:head><link rel="stylesheet" href="/agency/fonts/fonts.css" /></svelte:head>
 <LayoutSEO property="agency" />
 <AgencyHeroBackground />
 <PageAnnotations pathname={$page.url.pathname} />
 
-<div class="agency-surface" data-theme={usesOperatorPalette ? "dark" : "light"} data-canon-palette={usesOperatorPalette ? "operator" : undefined} data-agency-brand={usesMeasuredPublicSurface || usesMeasuredAccountSurface ? "measured" : undefined} data-agency-account={usesMeasuredAccountSurface ? "true" : undefined}>
+<div class="agency-surface" onclickcapture={markEdgeOwnedLink} data-agency-design="editorial" data-agency-page-kind={agencyEditorialPageKind($page.url.pathname, $page.status)} data-theme="light" data-agency-account={usesMeasuredAccountSurface ? "true" : undefined}>
 <PrivacyAnalytics
   property="agency"
   userId={data.user?.id}
@@ -395,11 +399,10 @@
     logoSuffix=".agency"
     logoAsset={{
       src: '/brand/create-something-horizontal-black.svg',
-      mobileSrc: '/brand/create-something-mark-black.svg',
       label: 'CREATE SOMETHING .agency'
     }}
     enableRouteLogoMotion={true}
-    links={usesPublicNavigation ? filmNavLinks : navLinks}
+    links={filmNavLinks}
     currentPath={$page.url.pathname}
     fixed={true}
     ctaLabel={usesPublicNavigation ? agencyCoreMessaging.bookMappingSessionLabel : agencyCoreMessaging.membershipLabel}
@@ -414,9 +417,6 @@
   <main id="main-content" class="pt-[72px]" use:publicPageEntrances={$page.url.pathname}>
     {#if pageFoundation}
       {#key $page.url.pathname}<AgencyPageWayfinding foundation={pageFoundation} />{/key}
-    {/if}
-    {#if usesPublicNavigation && !usesMeasuredAccountSurface && $page.url.pathname !== '/' && $page.url.pathname !== '/openai-dots' && $page.url.pathname !== '/dental-ai-agents' && !isAgencyWebflowPortfolioPath($page.url.pathname)}
-      <AgencyPageTreatment />
     {/if}
     {@render children()}
   </main>
