@@ -14,7 +14,7 @@
 >
 <main id="main">
   <section class="creator-hero">
-    <p class="eyebrow">PRIVATE / FORWARD DEPLOYED ENGINEERING</p>
+    <p class="eyebrow">Forward deployed engineering</p>
     <div class="creator-hero-grid">
       <div>
         <h1>Show how you work<br /><SerifPhrase text="when it matters." /></h1>
@@ -30,17 +30,17 @@
       </div>
       <aside class="field-dossier">
         <div class="field-caption">
-          <span>FIELD NOTE / EXAMPLE STRUCTURE</span><Icon name="workflow" size={24} />
+          <span>Example field note</span><Icon name="workflow" size={24} />
         </div>
         <h2>From a client problem<br />to a repeatable technique.</h2>
         <dl>
-          <dt>01 / CONTEXT</dt>
+          <dt>01 · Context</dt>
           <dd>Workflow, operator, constraint, baseline.</dd>
-          <dt>02 / IMPLEMENTATION</dt>
+          <dt>02 · Implementation</dt>
           <dd>MCP, skill, permissions, human review.</dd>
-          <dt>03 / EVALUATION</dt>
+          <dt>03 · Evaluation</dt>
           <dd>Test cases, failures, recovery, limits.</dd>
-          <dt>04 / FIELD RESULT</dt>
+          <dt>04 · Field result</dt>
           <dd>Observed change, evidence, attribution.</dd>
         </dl>
         <p class="field-hint">
@@ -50,25 +50,25 @@
     </div>
   </section>
   <section class="builder-workspace">
-    <p class="eyebrow">COURSE IN PROGRESS</p>
+    <p class="eyebrow">Course in progress</p>
     <h2>From Template to System.</h2>
     <p>See the approved outline for an agentic Webflow course with Codex. Recording is next; original preparation worksheets are available now.</p>
     <p><a href="/courses/from-template-to-system">Explore the course preparation</a></p>
   </section>
   <section class="builder-workspace">
-    <p class="eyebrow">TEACH / PACKAGE / PROVE</p>
+    <p class="eyebrow">Field practice</p>
     <h2>Make the reasoning<br /><SerifPhrase text="as useful as the code." /></h2>
     <ol class="practice-steps">
       <li>
-        <span><Icon name="terminal" /> TEACH THE TECHNIQUE</span>Walk through one real engineering
+        <span><Icon name="terminal" /> Teach the technique</span>Walk through one real engineering
         decision, including the failure you designed for.
       </li>
       <li>
-        <span><Icon name="package" /> SHARE THE ARTIFACT</span>Package the MCP, plugin or skill with
+        <span><Icon name="package" /> Share the artifact</span>Package the MCP, plugin or skill with
         permissions, installation, evaluation and recovery guidance.
       </li>
       <li>
-        <span><Icon name="workflow" /> RECORD THE RESULT</span>Keep engagement, successful
+        <span><Icon name="workflow" /> Record the result</span>Keep engagement, successful
         reproduction and customer outcomes separate. Explain how each was measured.
       </li>
     </ol>
@@ -85,7 +85,7 @@
         </p>
       </div>
       <aside class="builder-panel">
-        <p class="eyebrow">COMPANIES / PRIVATE SUPPORT</p>
+        <p class="eyebrow">Company support</p>
         <h2>Work through your<br />agentic project.</h2>
         <p>
           CREATE SOMETHING’s $900/month subscription brings scoped guidance to one agreed workflow.

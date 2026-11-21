@@ -87,9 +87,9 @@
     content="noindex"
   /></svelte:head
 >
-<main id="main" class="form-page">
+<main id="main" class="form-page operator-surface">
   <a href="/dashboard"><Icon name="arrow-left" /> Your networks</a>
-  <p class="eyebrow">PRIVATE / NETWORK SETTINGS</p>
+  <p class="eyebrow">Private / network settings</p>
   <h1>Shape your<br /><SerifPhrase text="network." /></h1>
   <p class="muted">/n/{data.network?.slug} · {data.network?.status}</p>
   {#if data.trial}<p class="availability">
@@ -173,7 +173,7 @@
     </p>
   </section>
   <section class="notice" aria-labelledby="billing-title">
-    <p class="eyebrow">SUBSCRIPTION / PER NETWORK</p>
+    <p class="eyebrow">Subscription / per network</p>
     <h2 id="billing-title">$24.50 <span class="muted">USD / month</span></h2>
     <p>
       One owner · 100 active members · 20 sessions of up to 30 minutes each · 5,000 delivered video

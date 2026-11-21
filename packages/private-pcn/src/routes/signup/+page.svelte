@@ -35,7 +35,7 @@
     >{recovery ? 'Recover your account' : 'Create your account'} | CREATE SOMETHING Private</title
   ><meta name="robots" content="noindex" /></svelte:head
 >
-<main id="main" class="form-page">
+<main id="main" class="form-page operator-surface">
   <p class="eyebrow">
     PRIVATE / {recovery
       ? 'ACCOUNT RECOVERY'

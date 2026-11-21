@@ -4,7 +4,7 @@
 </script>
 
 <svelte:head><title>Impact | Private</title><meta name="robots" content="noindex" /></svelte:head>
-<main id="main" class="builder-workspace">
+<main id="main" class="builder-workspace operator-surface">
   <p class="eyebrow">PRIVATE / IMPACT</p>
   <h1>Separate attention<br /><SerifPhrase text="from outcomes." /></h1>
   <p class="lede">{data.report.note}</p>

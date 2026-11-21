@@ -38,7 +38,7 @@
     content="noindex"
   /></svelte:head
 >
-<main id="main" class="builder-workspace">
+<main id="main" class="builder-workspace operator-surface">
   <a href="/support"><Icon name="arrow-left" /> Company support</a>
   <p class="eyebrow">PRIVATE / {data.workspace.status}</p>
   <h1>{data.workspace.company}</h1>

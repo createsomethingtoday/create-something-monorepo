@@ -1,0 +1,169 @@
+/* Enlightr's flat topic tiles, adapted to the existing account and publishing flows. */
+main.operator-surface.operator-surface {
+  color: var(--enlightr-ink, #0a0a0a);
+  max-width: 1440px;
+  padding: clamp(28px, 5vw, 72px) clamp(20px, 4.5vw, 64px) 96px;
+  margin-inline: auto;
+}
+main.operator-surface.operator-surface h1 {
+  font-family: var(--font-serif, 'Newsreader', Georgia, serif);
+  font-weight: 400;
+  font-size: clamp(48px, 6vw, 88px);
+  letter-spacing: -0.045em;
+  line-height: 1;
+  margin-block: 16px 24px;
+}
+main.operator-surface.operator-surface h2,
+main.operator-surface.operator-surface h3 {
+  font-family: var(--font-serif, 'Newsreader', Georgia, serif);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+}
+main.operator-surface.operator-surface h2 {
+  font-size: clamp(30px, 3.5vw, 44px);
+}
+main.operator-surface.operator-surface h3 {
+  font-size: clamp(26px, 2.8vw, 36px);
+}
+main.operator-surface.operator-surface .eyebrow,
+main.operator-surface.operator-surface .address,
+main.operator-surface.operator-surface .network-tools dt,
+main.operator-surface.operator-surface .section-heading h2 span,
+main.operator-surface.operator-surface .entry-note,
+main.operator-surface.operator-surface .note-index,
+main.operator-surface.operator-surface .step-track span {
+  font-family: var(--font-sans, 'Geist', sans-serif);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+main.operator-surface.operator-surface .workspace-heading,
+main.operator-surface.operator-surface .intake-heading {
+  background: var(--enlightr-ai, #86e0a9);
+  padding: clamp(24px, 4vw, 56px);
+  border: 0;
+  align-items: flex-end;
+}
+main.operator-surface.operator-surface .network-grid,
+main.operator-surface.operator-surface .onboarding-choices,
+main.operator-surface.operator-surface .admin-grid,
+main.operator-surface.operator-surface .builder-split {
+  gap: 0;
+}
+main.operator-surface.operator-surface .network-card,
+main.operator-surface.operator-surface .builder-panel,
+main.operator-surface.operator-surface .admin-grid > section,
+main.operator-surface.operator-surface .onboarding-choices .asset-card {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: clamp(24px, 3vw, 40px);
+  background: var(--enlightr-muted, #f1f1ee);
+  min-width: 0;
+}
+main.operator-surface.operator-surface .network-card:nth-child(4n + 1),
+main.operator-surface.operator-surface .onboarding-choices .asset-card:first-child {
+  background: var(--enlightr-code, #4a78ff);
+}
+main.operator-surface.operator-surface .network-card:nth-child(4n + 2),
+main.operator-surface.operator-surface .onboarding-choices .asset-card:nth-child(2) {
+  background: var(--enlightr-data, #ff8ad8);
+}
+main.operator-surface.operator-surface .network-card:nth-child(4n + 3),
+main.operator-surface.operator-surface .admin-grid > section:nth-child(2) {
+  background: var(--enlightr-ai, #86e0a9);
+}
+main.operator-surface.operator-surface .network-card:nth-child(4n),
+main.operator-surface.operator-surface .review-application:nth-of-type(even) {
+  background: var(--enlightr-data, #ff8ad8);
+}
+main.operator-surface.operator-surface .onboarding-choices .card-foot,
+main.operator-surface.operator-surface .network-card .muted,
+main.operator-surface.operator-surface .network-card .network-description,
+main.operator-surface.operator-surface .network-card .network-tools dt,
+main.operator-surface.operator-surface .network-card .network-tools span,
+main.operator-surface.operator-surface .onboarding-choices .asset-card p {
+  color: #0a0a0a;
+}
+main.operator-surface.operator-surface .setup {
+  background: var(--enlightr-muted, #f1f1ee);
+  border: 0;
+  gap: clamp(24px, 4vw, 64px);
+  padding: clamp(24px, 4vw, 56px);
+}
+main.operator-surface.operator-surface.form-page {
+  max-width: 680px;
+  background: var(--enlightr-muted, #f1f1ee);
+  margin-block: clamp(28px, 5vw, 72px);
+}
+main.operator-surface.operator-surface .intake-layout {
+  border: 0;
+}
+main.operator-surface.operator-surface .field-note {
+  --muted: var(--enlightr-ink);
+  background: var(--enlightr-data, #ff8ad8);
+  padding: clamp(24px, 3vw, 40px);
+}
+main.operator-surface.operator-surface .intake-form {
+  background: var(--enlightr-muted, #f1f1ee);
+  border: 0;
+  padding: clamp(24px, 3vw, 40px);
+}
+main.operator-surface.operator-surface .admin-video,
+main.operator-surface.operator-surface .receipt-list li,
+main.operator-surface.operator-surface .member-list li {
+  border: 0;
+  border-top: 1px solid #0a0a0a;
+  border-radius: 0;
+  padding-block: 24px;
+}
+main.operator-surface.operator-surface .admin-video:hover {
+  background: var(--enlightr-ai, #86e0a9);
+}
+main.operator-surface.operator-surface .ink-empty {
+  max-width: none;
+  padding: 32px;
+  background: var(--enlightr-muted, #f1f1ee);
+}
+main.operator-surface.operator-surface .ink-empty img,
+main.operator-surface.operator-surface .ink-onboarding > img,
+main.operator-surface.operator-surface .art-frame img {
+  mix-blend-mode: multiply;
+}
+.creator-guide.creator-guide,
+.lesson-editor.lesson-editor,
+.path-editor.path-editor {
+  background: var(--enlightr-muted, #f1f1ee);
+  border: 0;
+  padding: clamp(20px, 3vw, 32px);
+  border-radius: 0;
+}
+.creator-guide.creator-guide > summary,
+.lesson-editor.lesson-editor > summary,
+.path-editor.path-editor > summary {
+  font-family: var(--font-sans, 'Geist', sans-serif);
+  font-weight: 500;
+}
+main.operator-surface.operator-surface .review-application,
+main.operator-surface.operator-surface .introduction {
+  margin-block: 0;
+  border-bottom: 1px solid #0a0a0a;
+}
+@media (max-width: 700px) {
+  main.operator-surface.operator-surface .workspace-heading,
+  main.operator-surface.operator-surface .intake-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  main.operator-surface.operator-surface .setup,
+  main.operator-surface.operator-surface .intake-layout {
+    grid-template-columns: 1fr;
+  }
+  main.operator-surface.operator-surface .workspace-actions {
+    flex-wrap: wrap;
+  }
+  main.operator-surface.operator-surface.form-page {
+    margin-block: 0;
+  }
+}

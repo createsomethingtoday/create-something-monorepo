@@ -35,8 +35,8 @@
 <svelte:head
   ><title>Act as a user | Private</title><meta name="robots" content="noindex" /></svelte:head
 >
-<main id="main" class="builder-workspace">
-  <p class="eyebrow">PRIVATE / ADMINISTRATOR SUPPORT</p>
+<main id="main" class="builder-workspace operator-surface">
+  <p class="eyebrow">Private / administrator support</p>
   <h1>Help from their workspace.</h1>
   <p class="lede">
     Use a 15-minute read and write session to troubleshoot onboarding, manage content, or help a

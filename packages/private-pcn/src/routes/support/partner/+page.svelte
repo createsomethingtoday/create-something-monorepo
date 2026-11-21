@@ -108,7 +108,7 @@
         },
         appearance: {
           overlays: 'dialog',
-          variables: { colorPrimary: '#1e4d3b', fontFamily: 'Arial, sans-serif' }
+          variables: { colorPrimary: '#0a0a0a', fontFamily: 'Arial, sans-serif' }
         }
       });
       show();
@@ -133,9 +133,9 @@
     content="noindex"
   /></svelte:head
 >
-<main id="main" class="builder-workspace payout-workspace">
+<main id="main" class="builder-workspace payout-workspace operator-surface">
   <a class="back-link" href="/support"><Icon name="arrow-left" /> Company support</a>
-  <p class="eyebrow">PRIVATE / APPROVED PARTNER</p>
+  <p class="eyebrow">Private / approved partner</p>
   <h1>Support payouts</h1>
   <p class="intro">Set up the account that receives your share of company support subscriptions.</p>
   <section class="builder-panel" aria-labelledby="payout-heading">

@@ -63,8 +63,8 @@
 <svelte:head
   ><title>Creator application | Private</title><meta name="robots" content="noindex" /></svelte:head
 >
-<main id="main" class="builder-workspace">
-  <p class="eyebrow">PRIVATE / CREATOR ADMISSION</p>
+<main id="main" class="builder-workspace operator-surface">
+  <p class="eyebrow">Private / creator admission</p>
   <h1>Show your work.<br /><SerifPhrase text="Teach the technique." /></h1>
   <p class="lede">
     Private is a reviewed network for builders teaching agentic engineering. Share the experience
@@ -77,7 +77,7 @@
   </ol>
   <div class="builder-split">
     <section class="builder-panel">
-      {#if data.application}<p class="eyebrow">APPLICATION</p>
+      {#if data.application}<p class="eyebrow">Application</p>
         <StateBadge
           label={data.application.status === 'approved'
             ? 'Creator approved'
@@ -165,7 +165,7 @@
       {#if message}<StatusNotice tone={failed ? 'error' : 'success'} {message} />{/if}
     </section>
     <aside>
-      <p class="eyebrow">WHAT WE REVIEW</p>
+      <p class="eyebrow">What we review</p>
       <h2>Useful practice.<br />Clear boundaries.</h2>
       <p>
         Explain a real engineering decision. Show what your agent can access, how you evaluate its

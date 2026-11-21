@@ -86,7 +86,7 @@
         },
         appearance: {
           overlays: 'dialog',
-          variables: { colorPrimary: '#1e4d3b', fontFamily: 'Arial, sans-serif' }
+          variables: { colorPrimary: '#0a0a0a', fontFamily: 'Arial, sans-serif' }
         }
       });
       show();
@@ -111,13 +111,13 @@
     content="noindex"
   /></svelte:head
 >
-<main id="main" class="builder-workspace">
+<main id="main" class="builder-workspace operator-surface">
   <div class="workspace-trail">
     <a href={`/n/${data.network!.slug}/settings`}>{data.network!.name} / Setup</a><span
       >/ Seller payments</span
     >
   </div>
-  <p class="eyebrow">YOUR BUSINESS / YOUR PAYMENTS</p>
+  <p class="eyebrow">Your business / your payments</p>
   <h1>Sell your work.<br /><SerifPhrase text="Keep the relationship." /></h1>
   <p class="lede">
     Buyers pay your business directly through Stripe. You set asset prices and handle support,

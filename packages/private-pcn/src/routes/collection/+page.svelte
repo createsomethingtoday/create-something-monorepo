@@ -21,7 +21,7 @@
 <main id="main" class="member-workspace">
   <header class="member-heading">
     <div>
-      <p class="eyebrow">PRIVATE / YOUR COLLECTION</p>
+      <p class="eyebrow">Private / Your collection</p>
       <h1>Your collection.</h1>
       <p class="member-intro">
         The MCP servers, plugins and skills you’ve acquired. Return to the exact release, its
@@ -78,7 +78,7 @@
       </section>{/if}
   {:else}<section class="collection-empty" aria-labelledby="first-asset-title">
       <Icon name="package" size={32} />
-      <p class="eyebrow">YOUR FIRST ASSET</p>
+      <p class="eyebrow">Your first asset</p>
       <h2 id="first-asset-title">Start with a builder you trust.</h2>
       <ol class="collection-steps">
         <li>
@@ -261,5 +261,51 @@
     .member-workspace {
       padding-top: var(--space-performance-md);
     }
+  }
+
+  .member-heading {
+    background: var(--enlightr-data);
+    padding: clamp(24px, 4vw, 48px);
+    border: 0;
+  }
+  h1 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: clamp(48px, 7vw, 88px);
+  }
+  .member-intro {
+    color: #111;
+  }
+  .collection-grid {
+    gap: 0;
+  }
+  .release-card {
+    background: var(--enlightr-ai);
+    border: 0;
+    padding: 32px;
+  }
+  .release-card:nth-child(3n + 2) {
+    background: var(--enlightr-code);
+  }
+  .release-card:nth-child(3n + 3) {
+    background: var(--enlightr-data);
+  }
+  h2 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: 36px;
+  }
+  .release-meta,
+  .release-help,
+  .release-source span {
+    color: #111;
+  }
+  .release-status {
+    color: #111;
+    border-color: currentColor;
+  }
+  .collection-empty {
+    background: var(--enlightr-muted);
+    border: 0;
   }
 </style>

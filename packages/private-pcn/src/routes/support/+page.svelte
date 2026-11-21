@@ -29,8 +29,8 @@
     content="Scoped agentic engineering support for your company, delivered by approved CREATE SOMETHING partners. $900 per month for one agreed workflow."
   /><link rel="canonical" href="https://private.createsomething.agency/support" /></svelte:head
 >
-<main id="main" class="builder-workspace">
-  <p class="eyebrow">PRIVATE / COMPANY SUPPORT</p>
+<main id="main" class="builder-workspace operator-surface">
+  <p class="eyebrow">Private / company support</p>
   <h1>Your project.<br /><SerifPhrase text="A shared working context." /></h1>
   <p class="lede">
     Work through one agentic engineering workflow with an approved CREATE SOMETHING partner. Keep

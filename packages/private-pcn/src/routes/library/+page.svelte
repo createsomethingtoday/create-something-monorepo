@@ -69,7 +69,7 @@
 <main id="main" tabindex="-1" class="workspace member-library">
   <div class="workspace-title">
     <div>
-      <p class="eyebrow">PRIVATE / AGENTIC ENGINEERING</p>
+      <p class="eyebrow">Private / Agentic engineering</p>
       <h1>
         {#if slug}{data.network?.name}{:else}The library.{/if}
       </h1>
@@ -146,7 +146,7 @@
       <p>{error}</p>
       <button class="button secondary" onclick={load}>Try again</button>
     </div>{:else if !videos.length}<div class="empty-state">
-      <p class="eyebrow">THE LIBRARY</p>
+      <p class="eyebrow">The library</p>
       <h2>No sessions available here yet.</h2>
       <p>
         {#if !data.identity}There are no public sessions in this library. If you have an invitation,
@@ -195,7 +195,7 @@
           </div>
           <div class="video-caption">
             <span class="eyebrow"
-              >{video.access === 'public' ? 'PUBLIC PREVIEW' : 'MEMBER SESSION'}{video.duration
+              >{video.access === 'public' ? 'Public preview' : 'Member session'}{video.duration
                 ? ` / ${Math.ceil(video.duration / 60)} MIN`
                 : ''}</span
             >
@@ -279,6 +279,128 @@
     }
     .empty-state {
       padding: var(--pcn-empty-space-compact);
+    }
+  }
+
+  .workspace-title {
+    background: var(--enlightr-ai);
+    padding: clamp(24px, 4vw, 56px);
+    border: 0;
+    margin-bottom: 0;
+    gap: 32px;
+  }
+  .member-library h1 {
+    font-family: var(--font-serif);
+    font-size: clamp(48px, 7vw, 88px);
+    font-weight: 400;
+  }
+  .workspace-title p {
+    color: #111;
+  }
+  .workspace-actions {
+    min-width: 0;
+  }
+  .catalog {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+  }
+  .video-card {
+    min-width: 0;
+    background: var(--enlightr-code);
+    color: #111;
+  }
+  .video-card:nth-child(4n + 2) {
+    background: var(--enlightr-design);
+  }
+  .video-card:nth-child(4n + 3) {
+    background: var(--enlightr-data);
+  }
+  .video-card:nth-child(4n + 4) {
+    background: var(--enlightr-ai);
+  }
+  .video-cover {
+    position: relative;
+    min-height: 190px;
+    padding: 24px;
+    background: transparent;
+    color: #111;
+    overflow: hidden;
+  }
+  .video-cover strong {
+    font-size: 100px;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.08em;
+    font-family: var(--font-serif);
+  }
+  .video-cover::after {
+    content: '';
+    width: 110px;
+    height: 110px;
+    background: currentColor;
+    position: absolute;
+    right: 28px;
+    top: 44px;
+    clip-path: polygon(
+      50% 0%,
+      61% 31%,
+      85% 15%,
+      69% 40%,
+      100% 50%,
+      69% 60%,
+      85% 85%,
+      60% 69%,
+      50% 100%,
+      40% 69%,
+      15% 85%,
+      31% 60%,
+      0% 50%,
+      31% 40%,
+      15% 15%,
+      40% 31%
+    );
+    transition: transform 200ms;
+  }
+  .video-card:hover .video-cover::after {
+    transform: rotate(18deg);
+  }
+  .video-caption {
+    padding: 24px;
+  }
+  .video-caption h2 {
+    font-family: var(--font-serif);
+    font-size: 34px;
+    font-weight: 400;
+  }
+  .video-caption p,
+  .video-caption .eyebrow {
+    color: #111;
+  }
+  .empty-state {
+    background: var(--enlightr-muted);
+    margin-top: 24px;
+    border: 0;
+  }
+  @media (max-width: 900px) {
+    .catalog {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 560px) {
+    .catalog {
+      grid-template-columns: 1fr;
+    }
+    .workspace-title {
+      padding: 24px;
+    }
+    .workspace-actions {
+      flex-wrap: wrap;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .video-cover::after {
+      transition: none;
     }
   }
 </style>

@@ -42,10 +42,10 @@
   />
 </svelte:head>
 
-<main id="main" class="intake-page">
+<main id="main" class="intake-page operator-surface">
   <div class="intake-heading">
     <div>
-      <p class="eyebrow">PRIVATE / A GOOD PLACE TO START</p>
+      <p class="eyebrow">Private / a good place to start</p>
       <h1>Bring your<br /><SerifPhrase text="curiosity." /></h1>
       <p class="lede">
         Something you want to learn. Something you can teach.<br class="desktop-break" /> Tell us what
@@ -61,7 +61,7 @@
     <section class="received" aria-labelledby="received-title">
       <img src="/media/human-ink/exchange.webp" width="1280" height="1280" alt="" />
       <div>
-        <p class="eyebrow">INTRODUCTION RECEIVED</p>
+        <p class="eyebrow">Introduction received</p>
         <h2 id="received-title" tabindex="-1">
           You’ve made<br /><SerifPhrase text="the first move." />
         </h2>
@@ -87,7 +87,7 @@
             alt=""
           />
         </div>
-        <p class="eyebrow">A NOTE FROM PRIVATE</p>
+        <p class="eyebrow">A note from private</p>
         <h2>
           {selected?.value === 'create'
             ? 'Pass something useful along.'
