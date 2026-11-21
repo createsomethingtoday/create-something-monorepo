@@ -1,0 +1,15 @@
+A new look for CREATE SOMETHING’s private networks
+
+We’ve redesigned our private content networks (PCN) around the way creators teach. A creator can use a network to share a tool, teach someone how to use it, and keep the lessons and supporting materials together.
+
+Over the coming weeks, we’ll share a package of PCN skills to help creators build Model Context Protocol (MCP) servers, write reusable agent skills, and turn what they’ve learned into courses. We’ll also share the tools we use and insights from developing and teaching with them.
+
+If you’d like to build or teach in a network, introduce yourself and request an invitation. Know someone who could teach others how they work? Share the invitation link with them.
+
+Request an invitation: https://private.createsomething.agency/join
+
+CREATE SOMETHING
+
+You’re receiving this because you subscribed to CREATE SOMETHING’s newsletter.
+
+Unsubscribe: {{unsubscribe_url}}
