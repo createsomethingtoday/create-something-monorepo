@@ -123,17 +123,17 @@
 {/if}
 
 <style>
-  .generation { border-bottom: 1px solid var(--color-border-default, #333); margin-bottom: 16px; padding-bottom: 12px; }
+  .generation { border-bottom: 1px solid var(--alfred-rule); margin-bottom: 16px; padding-bottom: 12px; }
   h2 { font-size: 14px; margin: 0 0 12px; }
-  h2 span { display: block; font-size: 11px; font-weight: normal; margin-top: 4px; color: var(--color-fg-muted, #aaa); }
+  h2 span { display: block; font-size: 11px; font-weight: normal; margin-top: 4px; color: var(--alfred-gray); }
   label, p { font-size: 12px; line-height: 1.5; }
   textarea { margin-top: 6px; resize: vertical; }
   .scope { display: flex; gap: 8px; align-items: start; margin-top: 10px; }
   .scope input { width: auto; flex: none; margin-top: 3px; }
-  .disclosure, .receipt { color: var(--color-fg-muted, #aaa); }
+  .disclosure, .receipt { color: var(--alfred-gray); }
   .actions, .review-heading, .playback { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
   .actions span { font-size: 12px; }
-  dialog { width: min(1000px, 94vw); max-height: 94dvh; padding: 20px; color: inherit; background: var(--color-bg-surface, #171717); border: 1px solid var(--color-border-default, #444); border-radius: 6px; overflow: auto; }
+  dialog { width: min(1000px, 94vw); max-height: 94dvh; padding: 20px; color: inherit; background: var(--alfred-white); border: 1px solid var(--alfred-rule); border-radius: 6px; overflow: auto; }
   dialog::backdrop { background: rgb(0 0 0 / 75%); }
   .review-heading { justify-content: space-between; }
   .review-heading h2 { margin: 0; }

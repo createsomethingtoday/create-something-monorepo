@@ -1,7 +1,7 @@
 :root {
-  font-family: Arial, Helvetica, sans-serif;
-  color: #eee;
-  background: #111;
+  font-family: var(--alfred-sans);
+  color: var(--alfred-ink);
+  background: var(--alfred-white);
 }
 * {
   box-sizing: border-box;
@@ -24,42 +24,42 @@ textarea {
 }
 button {
   cursor: pointer;
-  border: 1px solid #404040;
-  background: #242424;
-  color: #eee;
+  border: 1px solid var(--alfred-rule);
+  background: var(--alfred-white);
+  color: var(--alfred-ink);
   border-radius: 5px;
   padding: 9px 11px;
   font-size: 12px;
 }
 button:hover {
-  background: #343434;
+  background: var(--alfred-tile);
 }
 button:disabled {
   opacity: 0.4;
   cursor: default;
 }
 button.active {
-  border-color: #e3b56d;
-  background: #413627;
+  border-color: var(--alfred-ink);
+  background: var(--alfred-tile);
 }
 .primary {
-  background: #dfb373;
-  color: #17130e;
-  border-color: #dfb373;
+  background: var(--alfred-ink);
+  color: var(--alfred-white);
+  border-color: var(--alfred-ink);
 }
 .primary:hover {
-  background: #edc88e;
+  background: var(--alfred-gray);
 }
 a {
-  color: #e3c695;
+  color: var(--alfred-ink);
   font-size: 12px;
 }
 input,
 select,
 textarea {
-  background: #171717;
-  color: #eee;
-  border: 1px solid #424242;
+  background: var(--alfred-white);
+  color: var(--alfred-ink);
+  border: 1px solid var(--alfred-rule);
   border-radius: 4px;
   padding: 8px;
   min-width: 0;
@@ -80,7 +80,7 @@ header {
   align-items: center;
   gap: 10px;
   padding: 12px 18px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--alfred-rule);
   flex-wrap: wrap;
 }
 header input {
@@ -94,22 +94,22 @@ header input {
   column-gap: 8px;
   align-items: center;
   font-size: 19px;
-  font-weight: 750;
+  font-weight: 500;
   letter-spacing: 2px;
   text-decoration: none;
-  color: #fff;
+  color: var(--alfred-ink);
 }
 .brand img { grid-row: 1 / 3; }
 .brand span {
   grid-column: 2;
   font-size: 10px;
   font-weight: 400;
-  color: #aaa;
+  color: var(--alfred-gray);
   display: block;
   letter-spacing: 2.5px;
 }
 .help {
-  background: #2b261d;
+  background: var(--alfred-tile);
   padding: 14px 24px;
   line-height: 1.6;
   font-size: 13px;
@@ -127,21 +127,21 @@ header input {
 .inspector {
   padding: 16px;
   overflow: auto;
-  background: #191919;
+  background: var(--alfred-tile);
   display: flex;
   flex-direction: column;
   gap: 9px;
 }
 .layers {
-  border-right: 1px solid #333;
+  border-right: 1px solid var(--alfred-rule);
 }
 .inspector {
-  border-left: 1px solid #333;
+  border-left: 1px solid var(--alfred-rule);
 }
 .section-label {
-  font: 10px monospace;
+  font: 500 11px var(--alfred-sans);
   letter-spacing: 1.5px;
-  color: #aaa;
+  color: var(--alfred-gray);
   margin: 10px 0 3px;
 }
 .tools {
@@ -165,15 +165,15 @@ header input {
 }
 .drawing-list span {
   margin-right: 8px;
-  color: #d6b787;
+  color: var(--alfred-ink);
 }
 .drawing-list small {
   display: block;
-  color: #999;
+  color: var(--alfred-gray);
   margin: 4px 0 0 23px;
 }
 .muted {
-  color: #999;
+  color: var(--alfred-gray);
   font-size: 12px;
   line-height: 1.6;
 }
@@ -185,7 +185,7 @@ header input {
   min-width: 0;
   min-height: 0;
   padding: 24px;
-  background: #111;
+  background: var(--alfred-white);
   overflow: hidden;
 }
 .stage canvas {
@@ -196,15 +196,15 @@ header input {
   height: auto;
   aspect-ratio: 16/9;
   touch-action: none;
-  box-shadow: 0 5px 35px #0008;
+  box-shadow: none;
 }
 .stage-meta {
   width: 100%;
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  font: 10px monospace;
-  color: #929292;
+  font: 500 11px var(--alfred-sans);
+  color: var(--alfred-gray);
   padding: 12px 0;
 }
 .pose-fields {
@@ -217,7 +217,7 @@ label {
   flex-direction: column;
   gap: 5px;
   font-size: 11px;
-  color: #bbb;
+  color: var(--alfred-gray);
 }
 .key-list {
   display: flex;
@@ -229,9 +229,9 @@ label {
   padding: 5px;
 }
 footer {
-  border-top: 1px solid #333;
+  border-top: 1px solid var(--alfred-rule);
   padding: 12px 20px;
-  background: #191919;
+  background: var(--alfred-tile);
 }
 .transport {
   display: flex;
@@ -253,11 +253,11 @@ footer {
 .timeline {
   padding: 0;
   margin: 12px 0 6px;
-  accent-color: #dfb373;
+  accent-color: var(--alfred-ink);
 }
 .status {
-  font: 11px monospace;
-  color: #bbb;
+  font: 12px var(--alfred-sans);
+  color: var(--alfred-gray);
   min-height: 16px;
 }
 .hidden {
@@ -265,7 +265,7 @@ footer {
 }
 small {
   font-size: 10px;
-  color: #aaa;
+  color: var(--alfred-gray);
 }
 progress {
   width: 100%;

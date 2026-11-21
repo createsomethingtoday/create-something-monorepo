@@ -11,8 +11,17 @@ const context = await browser.newContext({ viewport: { width: 1280, height: 800 
 const page = await context.newPage(), writes = [];
 page.on('request', (request) => { if (request.url().includes('/api/shares') && request.method() !== 'GET') writes.push(`${request.method()} ${new URL(request.url()).pathname}`); });
 await page.addInitScript(() => { window.__drawWebMcpTools = {}; Object.defineProperty(document, 'modelContext', { configurable: true, value: { registerTool(tool) { window.__drawWebMcpTools[tool.name] = tool; } } }); });
+const requiredTools = [
+  'draw_get_state', 'draw_compose', 'draw_edit_note', 'draw_apply_operations',
+  'draw_get_share_status', 'draw_publish_snapshot', 'draw_update_snapshot',
+  'draw_revoke_snapshot', 'draw_reset', 'draw_replace_canvas'
+];
+const waitForShareTools = () => page.waitForFunction(
+  (names) => names.every((name) => typeof window.__drawWebMcpTools[name]?.execute === 'function'),
+  requiredTools
+);
 await page.goto(baseUrl, { waitUntil: 'networkidle' });
-await page.waitForFunction(() => Object.keys(window.__drawWebMcpTools).filter((name) => name.startsWith('draw_')).length === 26);
+await waitForShareTools();
 const result = await page.evaluate(async () => {
   const tools = window.__drawWebMcpTools;
   const before = await tools.draw_get_state.execute({});
@@ -64,12 +73,12 @@ const beforeReset = await page.evaluate(() => window.__drawWebMcpTools.draw_get_
 const resetProjectId = await page.evaluate(async () => { await window.__drawWebMcpTools.draw_reset.execute({ confirmation: 'RESET CANVAS' }); return (await window.__drawWebMcpTools.draw_get_state.execute({})).document.id; });
 await page.waitForTimeout(300);
 await page.reload({ waitUntil: 'networkidle' });
-await page.waitForFunction(() => Object.keys(window.__drawWebMcpTools).filter((name) => name.startsWith('draw_')).length === 26);
+await waitForShareTools();
 await page.waitForFunction(async (projectId) => { try { return (await window.__drawWebMcpTools.draw_get_state.execute({})).document.id === projectId; } catch { return false; } }, resetProjectId);
 const resetState = await page.evaluate(async () => ({ state: await window.__drawWebMcpTools.draw_get_state.execute({}), share: await window.__drawWebMcpTools.draw_get_share_status.execute({}), projectParam: new URL(location.href).searchParams.get('project') }));
 if (resetState.share.share || resetState.state.document.id === beforeReset.document.id || resetState.projectParam !== resetState.state.document.id) throw new Error('Reset transferred a retained project capability or left a stale project URL.');
 await page.goto(`${baseUrl}/?project=${encodeURIComponent(beforeReset.document.id)}`, { waitUntil: 'networkidle' });
-await page.waitForFunction(() => Object.keys(window.__drawWebMcpTools).filter((name) => name.startsWith('draw_')).length === 26);
+await waitForShareTools();
 await page.waitForFunction(async (projectId) => { try { return (await window.__drawWebMcpTools.draw_get_state.execute({})).document.id === projectId; } catch { return false; } }, beforeReset.document.id);
 const retainedManagement = await page.evaluate(() => window.__drawWebMcpTools.draw_get_share_status.execute({}));
 if (retainedManagement.share?.shareId !== published.shareId || retainedManagement.share?.revision !== 3) throw new Error('Reset orphaned management of the retained published project.');
@@ -80,4 +89,4 @@ if (revokedApi.status() !== 404 || revokedView.status() !== 404) throw new Error
 const localAfter = await page.evaluate(() => window.__drawWebMcpTools.draw_get_state.execute({}));
 if (!localAfter.document.objects.some(({ id }) => id === result.noteId)) throw new Error('Sharing mutated the local source canvas.');
 await anonymous.close(); await context.close(); await browser.close();
-console.log(JSON.stringify({ baseUrl, runLabel, toolCount: 26, ambientWritesBeforePublish: 0, create: 201, anonymousRead: 200, duplicatePublishDenied, expiryTracked: true, conflictDenied, refreshedRevision: 2, stableRevision: 3, staleDenied, invalidCapability: 404, resetProjectIsolated: true, managementRetainedByOriginalProject: true, revoke: 204, postRevokeApi: 404, postRevokeView: 404, localSourceRetained: true, screenshot: `${output}/anonymous-share.png`, result: 'pass' }, null, 2));
+console.log(JSON.stringify({ baseUrl, runLabel, ambientWritesBeforePublish: 0, create: 201, anonymousRead: 200, duplicatePublishDenied, expiryTracked: true, conflictDenied, refreshedRevision: 2, stableRevision: 3, staleDenied, invalidCapability: 404, resetProjectIsolated: true, managementRetainedByOriginalProject: true, revoke: 204, postRevokeApi: 404, postRevokeView: 404, localSourceRetained: true, screenshot: `${output}/anonymous-share.png`, result: 'pass' }, null, 2));
