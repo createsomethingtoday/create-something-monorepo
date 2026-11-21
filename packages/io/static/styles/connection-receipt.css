@@ -1,0 +1,18 @@
+@font-face {
+  font-family: IO STIX;
+  src: url('/fonts/stix-two-text.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: IO Switzer;
+  src: url('/fonts/switzer.woff2') format('woff2');
+  font-display: swap;
+}
+body { background: #faf9f6; color: #262626; font: 400 1rem/1.65 'IO Switzer', Arial, sans-serif; margin: 0; }
+main { width: min(42rem, calc(100% - 2.5rem)); margin: clamp(3rem, 9vw, 7rem) auto; overflow-wrap: anywhere; }
+h1, h2 { font-family: 'IO STIX', Georgia, serif; font-weight: 400; line-height: 1.1; letter-spacing: -.035em; }
+h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); }
+h2 { padding-top: 1.25rem; border-top: 1px solid #d9d5ce; }
+a { color: inherit; text-underline-offset: .2em; }
+pre { background: #eeeae3; padding: 1rem; overflow-x: auto; }
+:focus-visible { outline: 2px solid #825782; outline-offset: 4px; }

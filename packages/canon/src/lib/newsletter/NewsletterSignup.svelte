@@ -1,4 +1,5 @@
 <script lang="ts">
+  import TurnstileChallenge from './TurnstileChallenge.svelte';
   import { getAnalytics } from '../analytics/client.js';
   import { newsletterSignupContext } from './client.js';
 
@@ -28,6 +29,7 @@
     endpoint?: string;
     /** Optional source tracking (defaults to property) */
     source?: string;
+    turnstileSiteKey?: string;
   }
 
   let {
@@ -38,9 +40,12 @@
     submitLabel = 'Join the list',
     note = 'Occasional notes. Unsubscribe whenever it stops being useful.',
     endpoint = '/api/newsletter',
-    source
+    source,
+    turnstileSiteKey = ''
   }: Props = $props();
 
+  let turnstileToken = $state('');
+  let verificationVersion = $state(0);
   let email = $state('');
   let honeypot = $state(''); // Hidden field to catch bots
   let status: 'idle' | 'loading' | 'success' | 'error' = $state('idle');
@@ -66,6 +71,12 @@
       return;
     }
 
+    if (turnstileSiteKey && !turnstileToken) {
+      status = 'error';
+      message = 'Please complete the verification.';
+      return;
+    }
+
     status = 'loading';
     message = '';
 
@@ -76,6 +87,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: email.trim(),
+          turnstileToken: turnstileToken || undefined,
           website: honeypot, // Honeypot field
           source,
           ...newsletterSignupContext()
@@ -94,11 +106,14 @@
         email = '';
       } else {
         status = 'error';
-        message = data.message || 'Something went wrong. Please try again.';
+        message = data.message || data.error || 'Something went wrong. Please try again.';
       }
     } catch {
       status = 'error';
       message = 'Network error. Please try again.';
+    } finally {
+      turnstileToken = '';
+      verificationVersion += 1;
     }
   }
 
@@ -179,6 +194,10 @@
               {/if}
             </button>
           </div>
+
+          {#if turnstileSiteKey}
+            <TurnstileChallenge siteKey={turnstileSiteKey} onToken={(token) => turnstileToken = token} resetVersion={verificationVersion} />
+          {/if}
 
           <p class="newsletter-note">{note}</p>
 

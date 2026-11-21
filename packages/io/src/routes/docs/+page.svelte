@@ -27,7 +27,7 @@
 </svelte:head>
 
 <div class="docs-index">
-	<TaskOpening scene="modular-port" caption="An agent checks a modular connection before putting the tool to use.">
+	<TaskOpening illustration="reference-index" scene="modular-port" caption="An agent checks a modular connection before putting the tool to use.">
 <div class="hero io-reference-opening">
 <div class="io-reference-copy">
 		<h1>Documentation</h1>

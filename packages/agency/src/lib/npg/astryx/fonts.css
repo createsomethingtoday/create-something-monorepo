@@ -6,3 +6,8 @@
   font-display: swap;
   src: url('@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2') format('woff2');
 }
+@font-face {
+  font-family: "Agency Reading";
+  src: url('../../../../static/fonts/agency-stix-two-text.woff2') format('woff2');
+  font-display: swap;
+}

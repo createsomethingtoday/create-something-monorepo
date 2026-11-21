@@ -75,22 +75,14 @@ describe('newsletter archive publication contract', () => {
     );
   });
 
-  it('uses the Performance and Meridian editorial token contract', () => {
-    const routeSources = [
-      readFileSync(new URL('../src/routes/newsletters/+page.svelte', import.meta.url), 'utf8'),
-      readFileSync(
-        new URL('../src/routes/newsletters/[slug]/+page.svelte', import.meta.url),
-        'utf8'
-      )
-    ];
-
-    for (const source of routeSources) {
-      const styles = source.split('<style>')[1]?.split('</style>')[0] ?? '';
-      expect(styles).toContain('var(--color-performance-editorial-light)');
-      expect(styles).toContain('var(--font-performance-editorial)');
-      expect(styles).toContain('var(--font-performance-interface)');
-      expect(styles).toContain('var(--font-performance-record)');
-      expect(styles).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(/i);
-    }
+  it('connects retained reader pages to the current journal presentation', () => {
+    const archive = readFileSync(new URL('../src/routes/newsletters/+page.svelte', import.meta.url), 'utf8');
+    const reader = readFileSync(new URL('../src/routes/newsletters/[slug]/+page.svelte', import.meta.url), 'utf8');
+    const styles = readFileSync(new URL('../src/lib/styles/newsletter-readers.css', import.meta.url), 'utf8');
+    expect(archive).toContain('/styles/newsletters-v1.css');
+    expect(reader).toContain('$lib/styles/newsletter-readers.css');
+    expect(reader).toContain('newsletter-editorial newsletter-reader');
+    expect(styles).toContain('"Newsletter Serif"');
+    expect(styles).toContain('var(--newsletter-paper)');
   });
 });

@@ -44,8 +44,7 @@ const routeOwnedRoutes = new Set([
   '/privacy', '/terms', '/bearer-token-policy', '/openai-dots'
 ]);
 function artwork(route: string) {
-  const scene = /review|proof|case-studies|dental/.test(route) ? agencyInvitationScene : agencyWelcomeScene;
-  return { src: scene.src, mobileSrc: scene.mobileSrc };
+  return { src: '/agency/editorial/connected-tools-1280.webp', mobileSrc: '/agency/editorial/connected-tools-640.webp' };
 }
 
 const treatments = [...commercialPageTreatments, ...productPageTreatments, ...editorialPageTreatments];

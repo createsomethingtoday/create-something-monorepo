@@ -1,0 +1,9 @@
+/* The published film keeps its authored stage and timeline. Fit that stage to
+   the viewer without cropping the captions or rescaling individual shots. */
+@import url('/agency/fonts/fonts.css');
+
+html, body { overflow: hidden; background: #faf8f5; }
+body { display: grid; place-items: center; }
+#root[data-composition-id] { width: var(--frame-width, 100%); height: var(--frame-height, 100%); }
+#root .head, #root .label { font-family: 'Agency Editorial Sans', Arial, sans-serif; }
+#root h1 { font-family: 'Agency Editorial Serif', Georgia, serif; font-weight: 400; }

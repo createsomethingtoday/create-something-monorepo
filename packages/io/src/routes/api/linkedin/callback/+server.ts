@@ -1,3 +1,4 @@
+import { escapeXml } from '@create-something/canon/utils';
 import { json, redirect } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
@@ -71,6 +72,16 @@ async function fetchAdminOrganizations(accessToken: string): Promise<Organizatio
 	}
 }
 
+// This callback returns a stand-alone document outside the journal layout.
+function receiptPage(title: string, content: string, status: number) {
+	return new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="robots" content="noindex"><title>${title} | CREATE SOMETHING</title>
+		<link rel="stylesheet" href="/styles/connection-receipt.css"></head>
+		<body><main><h1>${title}</h1>${content}<p><a href="/">Return home</a></p></main></body></html>`,
+		{ status, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'private, no-store' } });
+}
+
 export const GET: RequestHandler = async ({ url, platform }) => {
 	const code = url.searchParams.get('code');
 	const state = url.searchParams.get('state');
@@ -80,14 +91,7 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 	// Handle OAuth errors
 	if (error) {
 		console.error('LinkedIn OAuth error:', error, errorDescription);
-		return new Response(
-			`<html><body>
-				<h1>LinkedIn Authorization Failed</h1>
-				<p>${errorDescription || error}</p>
-				<a href="/">Return home</a>
-			</body></html>`,
-			{ status: 400, headers: { 'Content-Type': 'text/html' } }
-		);
+		return receiptPage('LinkedIn Authorization Failed', `<p>${escapeXml(errorDescription || error)}</p>`, 400);
 	}
 
 	if (!code || !state) {
@@ -159,30 +163,24 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 		const orgsHtml = organizations.length > 0
 			? `<h2>Organizations You Can Post As</h2>
 				<ul>
-					${organizations.map(org => `<li><strong>${org.name}</strong> (ID: ${org.id})</li>`).join('')}
+					${organizations.map(org => `<li><strong>${escapeXml(org.name)}</strong> (ID: ${escapeXml(org.id)})</li>`).join('')}
 				</ul>
-				<p>To post as an organization, include <code>"organizationId": "${organizations[0]?.id}"</code> in your request.</p>`
+				<p>To post as an organization, include <code>"organizationId": "${escapeXml(organizations[0].id)}"</code> in your request.</p>`
 			: '<p><em>No organizations found. You can only post as your personal account.</em></p>';
 
 		// Success page
-		return new Response(
-			`<html><body style="font-family: system-ui; max-width: 600px; margin: 50px auto; padding: 20px;">
-				<h1>LinkedIn Connected</h1>
-				<p>Access token stored successfully. Expires in ${Math.floor(tokens.expires_in / 86400)} days.</p>
-				<p>Scope: ${tokens.scope}</p>
+		return receiptPage('LinkedIn Connected',
+			`<p>Access token stored successfully. Expires in ${Math.floor(tokens.expires_in / 86400)} days.</p>
+				<p>Scope: ${escapeXml(tokens.scope)}</p>
 				${orgsHtml}
 				<h2>Test Post (Personal)</h2>
-				<pre style="background: #1a1a1a; color: #fff; padding: 16px; border-radius: 8px; overflow-x: auto;">curl -X POST ${url.origin}/api/linkedin/post \\
+				<pre>curl -X POST ${url.origin}/api/linkedin/post \\
   -H "Content-Type: application/json" \\
   -d '{"text": "Test post"}'</pre>
 				<h2>Test Post (Organization)</h2>
-				<pre style="background: #1a1a1a; color: #fff; padding: 16px; border-radius: 8px; overflow-x: auto;">curl -X POST ${url.origin}/api/linkedin/post \\
+				<pre>curl -X POST ${url.origin}/api/linkedin/post \\
   -H "Content-Type: application/json" \\
-  -d '{"text": "Test post", "organizationId": "ORG_ID"}'</pre>
-				<p><a href="/">Return home</a></p>
-			</body></html>`,
-			{ status: 200, headers: { 'Content-Type': 'text/html' } }
-		);
+  -d '{"text": "Test post", "organizationId": "ORG_ID"}'</pre>`, 200);
 	} catch (err) {
 		console.error('Token exchange error:', err);
 		return new Response(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`, {

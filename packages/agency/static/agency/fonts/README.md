@@ -1,0 +1,1 @@
+The production edge serves the approved Switzer font files from the private Astro owner. Fontshare bytes are not distributed in this public source. Local legacy preview falls back to the existing Agency Geist font. STIX Two Text and Geist Mono are SIL Open Font License fonts served locally.

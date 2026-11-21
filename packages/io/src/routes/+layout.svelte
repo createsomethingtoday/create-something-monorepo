@@ -3,12 +3,14 @@
   import '../app.css';
   import '$lib/styles/research.css';
   import '$lib/styles/operator.css';
+  import '$lib/styles/io-journal.css';
   import { onMount } from 'svelte';
   import { afterNavigate, onNavigate, goto, invalidateAll } from '$app/navigation';
   import { Navigation, Footer, Analytics, ModeIndicator, LayoutSEO } from '@create-something/canon';
   import { UnifiedSearch } from '@create-something/canon/navigation';
   import { getIoFooterHandoff } from '$lib/config/footerHandoff';
   import { isIoResearchSurface } from '$lib/config/researchSurface';
+  import { isWebflowDocument } from '$lib/config/webflowDocuments';
   import { page } from '$app/stores';
   import { newsletterMetadata } from '$lib/newsletter/measurement';
 
@@ -33,6 +35,22 @@
         await navigation.complete;
       });
     });
+  });
+
+  // Let the edge select Webflow-owned documents instead of the retained SPA router.
+  // Capture runs before SvelteKit's document click handler; browser defaults and hashes remain intact.
+  onMount(() => {
+    const markDocumentNavigation = (event: MouseEvent) => {
+      const anchor = event.target instanceof Element ? event.target.closest('a[href]') : null;
+      if (!(anchor instanceof HTMLAnchorElement)) return;
+      const destination = new URL(anchor.href, window.location.href);
+      if (destination.origin === window.location.origin && isWebflowDocument(destination.pathname) &&
+          !(destination.pathname === window.location.pathname && destination.hash)) {
+        anchor.setAttribute('data-sveltekit-reload', '');
+      }
+    };
+    document.addEventListener('click', markDocumentNavigation, true);
+    return () => document.removeEventListener('click', markDocumentNavigation, true);
   });
 
   // Handle cross-property entry animations
@@ -191,12 +209,12 @@
 />
 
 {#if $page.url.pathname.startsWith('/admin')}
-  {@render children()}
+  <div class="io-journal io-journal-admin">{@render children()}</div>
 {:else}
   <div
-    class="layout-root property-performance"
+    class="layout-root property-performance io-journal"
     class:io-research-shell={isResearchSurface}
-    data-theme={isResearchSurface ? 'dark' : undefined}
+    data-theme="light"
   >
     <!-- Unified Search - Cmd/Ctrl+K to open -->
     <UnifiedSearch

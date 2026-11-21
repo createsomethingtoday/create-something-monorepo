@@ -1,4 +1,6 @@
 <script lang="ts">
+  import '$lib/styles/newsletter-editorial.css';
+  import '$lib/styles/newsletter-readers.css';
 	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
 
@@ -12,7 +14,8 @@
 	noindex={true}
 />
 
-<div class="confirm-container">
+<div class="newsletter-editorial newsletter-state confirm-container">
+  <a class="reader-wordmark" href="/newsletters">CREATE SOMETHING / Field notes</a>
 	<div class="confirm-card">
 		{#if data.success}
 			<div class="icon success-icon">
@@ -41,78 +44,3 @@
 		{/if}
 	</div>
 </div>
-
-<style>
-	.confirm-container {
-		min-height: calc(100vh - 200px);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding: var(--space-performance-lg);
-	}
-
-	.confirm-card {
-		max-width: 480px;
-		text-align: center;
-		padding: var(--space-performance-xl);
-		background: var(--color-performance-bg-surface);
-		border-radius: var(--radius-performance-scale-lg);
-	}
-
-	.icon {
-		margin-bottom: var(--space-performance-md);
-	}
-
-	.success-icon {
-		color: var(--color-performance-success);
-	}
-
-	.error-icon {
-		color: var(--color-performance-error);
-	}
-
-	.title {
-		font-size: var(--text-performance-h2);
-		color: var(--color-performance-fg-primary);
-		margin-bottom: var(--space-performance-sm);
-	}
-
-	.message {
-		font-size: var(--text-performance-body);
-		color: var(--color-performance-fg-secondary);
-		margin-bottom: var(--space-performance-sm);
-	}
-
-	.email {
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-muted);
-		font-family: var(--font-performance-mono);
-		margin-bottom: var(--space-performance-md);
-	}
-
-	.cta {
-		display: inline-block;
-		margin-top: var(--space-performance-md);
-		padding: var(--space-performance-sm) var(--space-performance-md);
-		background: var(--color-performance-fg-primary);
-		color: var(--color-performance-bg-pure);
-		text-decoration: none;
-		font-weight: 500;
-		border-radius: var(--radius-performance-scale-md);
-		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
-	}
-
-	.cta:hover {
-		opacity: 0.9;
-		transform: translateY(-1px);
-	}
-
-	.cta.secondary {
-		background: var(--color-performance-bg-subtle);
-		color: var(--color-performance-fg-primary);
-	}
-
-	.cta.secondary:hover {
-		background: var(--color-performance-hover);
-	}
-</style>

@@ -1,101 +1,47 @@
-/* __HERO__ is replaced only with a repo-owned selector. Existing route-owned
-   scenes never receive this stylesheet. No hydration is needed for the art. */
+/* Coverage-owned public intros use the same editorial split as current Agency.
+   __HERO__ is a repository-owned selector, never visitor input. */
 __HERO__ {
   box-sizing: border-box !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap: 1rem 3rem !important;
+  align-items: center;
   position: relative;
-  isolation: isolate;
-  display: block !important;
   width: 100% !important;
-  max-width: none !important;
-  min-width: 0;
-  min-height: 36rem !important;
+  max-width: 1152px !important;
+  min-height: 0 !important;
   height: auto !important;
-  padding: clamp(2rem, 5vw, 5rem) clamp(1.25rem, 5vw, 5rem) !important;
-  color: #f5f5f3 !important;
-  background: #000 !important;
-  border-radius: 0;
+  margin-inline: auto !important;
+  padding: 6rem 1rem !important;
+  background: var(--color-performance-paper) !important;
+  color: var(--color-performance-ink) !important;
 }
+__HERO__ > * { grid-column: 1; min-width: 0; order: 1; }
 __HERO__::before {
   content: '' !important;
   display: block !important;
-  position: absolute !important;
-  z-index: -1 !important;
-  inset: 0 0 auto auto !important;
+  position: relative !important;
+  inset: auto !important;
+  grid-column: 2;
+  grid-row: 1 / span 12;
+  align-self: center;
   width: 100% !important;
   height: auto !important;
-  max-height: 36rem !important;
-  aspect-ratio: 1672 / 941;
-  pointer-events: none;
+  aspect-ratio: 1280 / 721;
+  background: var(--agency-hero-image) center / cover no-repeat !important;
+  border-radius: 1rem;
   opacity: 1 !important;
   transform: none !important;
-  background-image: linear-gradient(90deg, #000 0%, #000 54%, rgba(0,0,0,.65) 58%, transparent 70%), linear-gradient(180deg, transparent 80%, #000), var(--agency-hero-image) !important;
-  background-position: center, center, right top !important;
-  background-size: cover, cover, auto 100% !important;
-  background-repeat: no-repeat !important;
+  mask: none !important;
+  pointer-events: none;
+  z-index: 0 !important;
+  order: 2;
 }
 __HERO__::after { display: none !important; }
-__HERO__ h1 {
-  color: #f5f5f3 !important;
-  font-size: clamp(2.25rem, 4.8vw, 4.75rem) !important;
-  line-height: 1.08 !important;
-  overflow-wrap: anywhere;
+__HERO__ :is(h1,h2) { max-width: 19ch; font-family: var(--font-performance-display) !important; color: var(--color-performance-ink) !important; }
+__HERO__ p { color: var(--color-performance-muted) !important; }
+@media(max-width:767px) {
+  __HERO__ { grid-template-columns: minmax(0,1fr) !important; padding-block: 4rem !important; }
+  __HERO__::before { grid-column:1; grid-row:auto; margin-top:2rem; background-image:var(--agency-hero-mobile-image) !important; }
 }
-__HERO__ > :is(h1, p, a, .hero-layout, .hero-grid, .performance-system-copy),
-__HERO__ > div:first-child,
-__HERO__ .dental-hero-copy {
-  width: min(100%, 42rem);
-  max-width: 55% !important;
-  min-width: 0;
-}
-__HERO__ :is(.hero-layout, .hero-grid, .dental-hero-grid) { display: block; padding: 0; }
-__HERO__ :is(.hero-copy, .dental-hero-copy) { position: relative; inset: auto; padding: 0; text-align: left; margin-inline: 0; }
-__HERO__ :is(.lede, .dental-lede, .dental-direct-answer, .hero-description, .hero-context, .performance-system-lede) { color: #dededb !important; }
-__HERO__ > :is(.hero-layout, .hero-grid, .performance-system-copy),
-__HERO__ .dental-hero-copy { min-height: 30rem; }
-__HERO__ .performance-campaign-opening__content { display: contents !important; }
-__HERO__ .performance-campaign-opening__content > header { display: block !important; width: 55% !important; max-width: none; min-height: 30rem; background: transparent !important; padding: 0 !important; }
-__HERO__ .performance-campaign-opening__content > header > * { margin-block: 0 1.5rem; }
-__HERO__ .performance-campaign-opening__proof { position: relative; background: #101112; padding: 1.25rem; margin-top: 2rem; }
-/* Preserve real evidence and workflow diagrams on independent opaque surfaces. */
-__HERO__ > :is(dl, .case-facts, .hero-bottom, .performance-system-league-panel),
-__HERO__ .dental-front-desk {
-  position: relative;
-  width: 100%;
-  box-sizing: border-box;
-  background: #101112;
-  margin-top: 2rem;
-  padding: 1.25rem;
-}
-#main-content#main-content { padding-top: 100px !important; }
-#main-content .webflow-case { padding-top: 2rem; }
-@media (max-width: 800px) {
-  __HERO__ { display: flex !important; flex-direction: column; min-height: 0 !important; padding: 1.5rem 1.25rem !important; }
-  /* Background before proof: long copy cannot collide with the character. */
-  __HERO__::before {
-    position: relative !important;
-    inset: auto !important;
-    order: 1;
-    flex: none;
-    align-self: center;
-    width: min(calc(100% + 2.5rem), 24rem) !important;
-    margin: 0 -1.25rem;
-    aspect-ratio: 1122 / 1402;
-    transform: none !important;
-    background-image: linear-gradient(180deg, #000 0%, transparent 35%, transparent 88%, #000), var(--agency-hero-mobile-image) !important;
-    background-position: center !important;
-    background-size: cover !important;
-  }
-  __HERO__ > :is(h1, p, a, .hero-layout, .hero-grid, .performance-system-copy),
-  __HERO__ > div:first-child,
-  __HERO__ .dental-hero-copy { width: 100%; max-width: 100% !important; min-height: 0; }
-  __HERO__ .dental-hero-grid { display: contents; }
-  __HERO__ .performance-campaign-opening__content > header { width: 100% !important; min-height: 0; }
-  __HERO__ .performance-campaign-opening__proof { order: 2; }
-  __HERO__ > :is(dl, .case-facts, .hero-bottom, .performance-system-league-panel),
-  __HERO__ .dental-front-desk { order: 2; }
-}
-@media (forced-colors: active) {
-  __HERO__ { color: CanvasText !important; }
-  __HERO__::before { display: none !important; }
-  __HERO__ :is(h1, p) { color: CanvasText !important; }
-}
+@media(forced-colors: active) { __HERO__::before { display:none !important; } }
