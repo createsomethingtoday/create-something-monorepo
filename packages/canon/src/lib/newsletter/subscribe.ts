@@ -30,6 +30,7 @@ interface NewsletterEnv {
   CACHE?: KVNamespace;
   RESEND_API_KEY: string;
   TURNSTILE_SECRET_KEY?: string;
+  NEWSLETTER_LINK_ORIGIN?: string;
 }
 
 interface D1Database {
@@ -163,10 +164,11 @@ If you did not ask for this, ignore the message. Nothing else will be sent.`;
  */
 export function generateWelcomeEmailHtml(
   unsubscribeToken: string,
-  property: PropertyDomain
+  property: PropertyDomain,
+  linkOrigin = 'https://createsomething.io'
 ): string {
   const sourceLabel = property === 'io' ? 'research' : `.${property}`;
-  const unsubscribeUrl = `https://createsomething.io/unsubscribe?token=${encodeURIComponent(unsubscribeToken)}`;
+  const unsubscribeUrl = `${linkOrigin}/unsubscribe?token=${encodeURIComponent(unsubscribeToken)}`;
 
   return renderPerformanceEmail({
     preheader: 'Your CREATE SOMETHING subscription is confirmed.',
@@ -185,10 +187,11 @@ export function generateWelcomeEmailHtml(
 
 export function generateWelcomeEmailText(
   unsubscribeToken: string,
-  property: PropertyDomain
+  property: PropertyDomain,
+  linkOrigin = 'https://createsomething.io'
 ): string {
   const sourceLabel = property === 'io' ? 'research' : `.${property}`;
-  const unsubscribeUrl = `https://createsomething.io/unsubscribe?token=${encodeURIComponent(unsubscribeToken)}`;
+  const unsubscribeUrl = `${linkOrigin}/unsubscribe?token=${encodeURIComponent(unsubscribeToken)}`;
   return `You are on the list.
 
 Your request from ${sourceLabel} is confirmed.
@@ -412,7 +415,7 @@ export async function processSubscription(
   }
 
   // Send confirmation email via Resend (double opt-in)
-  const confirmUrl = `https://createsomething.io/confirm?token=${encodeURIComponent(confirmationToken)}`;
+  const confirmUrl = `${env.NEWSLETTER_LINK_ORIGIN ?? 'https://createsomething.io'}/confirm?token=${encodeURIComponent(confirmationToken)}`;
   const resendResponse = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {

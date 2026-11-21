@@ -1,0 +1,178 @@
+import type { Property } from '@create-something/canon/analytics';
+import { generateWelcomeEmailHtml, generateWelcomeEmailText } from '@create-something/canon/newsletter/subscribe';
+import { confirmNewsletterAttribution } from '@create-something/canon/newsletter/attribution';
+import { markNewsletterConfirmed } from './newsletter-lifecycle';
+
+type Analytics = Pick<typeof import('@create-something/canon/analytics'), 'recordServerConversion' | 'upsertWarmLead'>;
+const validProperties: Property[] = ['space', 'io', 'agency', 'ltd', 'lms'];
+
+function propertyFromSource(source: unknown): Property {
+	if (typeof source !== 'string') return 'io';
+
+	const normalized = source.toLowerCase();
+	if (normalized === 'learn') return 'lms';
+	const exact = validProperties.find((property) => property === normalized);
+	if (exact) return exact;
+
+	return validProperties.find((property) => normalized.startsWith(property)) ?? 'io';
+}
+
+export async function confirmNewsletterSubscription(
+	token: string, request: Request,
+	env: { DB: D1Database; RESEND_API_KEY?: string; NEWSLETTER_LINK_ORIGIN?: string },
+	userOptedOut: () => Promise<boolean>,
+	{ recordServerConversion, upsertWarmLead }: Analytics
+) {
+	const db = env.DB;
+	// Find subscriber by confirmation token
+	const subscriber = await db
+		.prepare(
+			`SELECT id, email, confirmed_at, unsubscribed_at, source FROM newsletter_subscribers
+			 WHERE confirmation_token = ?
+			   AND unsubscribed_at IS NULL
+			   AND active = 1
+			   AND status = 'active'`
+		)
+		.bind(token)
+		.first();
+
+	if (!subscriber) {
+		return {
+			success: false,
+			message: 'Invalid or expired confirmation link',
+			email: null
+		};
+	}
+
+	const subscriberId = subscriber.id as number;
+	const email = subscriber.email as string;
+	const source = subscriber.source as string | null;
+	const property = propertyFromSource(source);
+
+	async function recordAttribution() {
+		try {
+			const optedOut = await userOptedOut();
+			const attribution = await confirmNewsletterAttribution(db, subscriberId, {
+				doNotTrack: request.headers.get('dnt') === '1' || request.headers.get('sec-gpc') === '1',
+				userOptedOut: optedOut
+			});
+			if (attribution)
+				await recordServerConversion(
+					db,
+					{
+						property,
+						action: 'newsletter_confirmed',
+						url: 'https://createsomething.io/confirm',
+						target: '/confirm',
+						metadata: {
+							source: source || property,
+							surface: 'newsletter_confirmation',
+							newsletterEdition: attribution.edition.replaceAll('-', '_'),
+							newsletterCampaign: attribution.campaign.replaceAll('-', '_'),
+							newsletterSource: attribution.channel,
+							trafficClass: attribution.traffic_class
+						}
+					},
+					{
+						userAgent: request.headers.get('user-agent') || undefined,
+						ipCountry: request.headers.get('cf-ipcountry') || undefined
+					}
+				);
+		} catch (conversionError) {
+			console.warn(
+				'Newsletter confirmation attribution failed; matching link can retry:',
+				conversionError
+			);
+		}
+	}
+
+	// A matching confirmed link may still have pending attribution after a transient failure.
+	if (subscriber.confirmed_at) {
+		await recordAttribution();
+		return {
+			success: true,
+			message: 'Your subscription is already confirmed!',
+			email: null,
+			alreadyConfirmed: true
+		};
+	}
+
+	// Confirm the subscription and record direct consent evidence.
+	const confirmed = await markNewsletterConfirmed(db, subscriber.id as number, token);
+	if (!confirmed) {
+		return {
+			success: false,
+			message: 'This confirmation link is no longer valid.',
+			email: null
+		};
+	}
+
+	// Send welcome email now that subscription is confirmed
+
+	// Get unsubscribe token from the subscriber record
+	const subscriberData = await db
+		.prepare(`SELECT unsubscribe_token FROM newsletter_subscribers WHERE id = ?`)
+		.bind(subscriber.id)
+		.first();
+
+	const unsubscribeToken = subscriberData?.unsubscribe_token as string;
+
+	if (env.RESEND_API_KEY && unsubscribeToken) {
+		try {
+			const welcomeResponse = await fetch('https://api.resend.com/emails', {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${env.RESEND_API_KEY}`,
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					from: 'CREATE SOMETHING <hello@createsomething.io>',
+					to: email,
+					subject: 'Welcome to CREATE SOMETHING',
+					html: generateWelcomeEmailHtml(unsubscribeToken, property, env.NEWSLETTER_LINK_ORIGIN),
+					text: generateWelcomeEmailText(unsubscribeToken, property, env.NEWSLETTER_LINK_ORIGIN)
+				})
+			});
+
+			if (welcomeResponse.ok) {
+				const welcomeData = (await welcomeResponse.json()) as { id?: string };
+				if (welcomeData.id) {
+					await db
+						.prepare(
+							`UPDATE newsletter_subscribers
+							 SET welcome_email_id = ?, updated_at = datetime('now')
+							 WHERE id = ?`
+						)
+						.bind(welcomeData.id, subscriber.id)
+						.run();
+				}
+			}
+		} catch (emailError) {
+			console.error('Failed to send welcome email:', emailError);
+		}
+	}
+
+	await recordAttribution();
+
+	try {
+		await upsertWarmLead(db, {
+			name: 'Newsletter subscriber',
+			email,
+			source: 'website',
+			sourceDetail: `newsletter:${source || property}`,
+			stage: 'awareness',
+			serviceInterest: 'newsletter',
+			notes: `Confirmed newsletter subscription from ${source || property}.`,
+			touchedAt: new Date().toISOString()
+		});
+	} catch (conversionError) {
+		console.warn('Newsletter confirmation lead update failed:', conversionError);
+	}
+
+	return {
+		success: true,
+		message: 'Your subscription has been confirmed!',
+		email: null,
+		alreadyConfirmed: false
+	};
+}
