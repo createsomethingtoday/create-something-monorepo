@@ -1,6 +1,7 @@
 packages:
   - 'apps/*'
   - '!apps/princess-pet-palace'
+  - '!apps/draw-landing-webflow'
   - 'packages/*'
   # Webflow Cloud deploys this standalone app with its own npm lockfile.
   - '!packages/webflow-app-review-portal'
