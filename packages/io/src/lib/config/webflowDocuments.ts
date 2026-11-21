@@ -4,6 +4,7 @@ const documents = new Set(
 [
   "/",
   "/papers",
+  "/newsletters",
   "/plugins",
   "/papers/selective-context",
   "/papers/endpoint-construction-product",
