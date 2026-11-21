@@ -58,6 +58,7 @@ apps/*
 apps/client-collaboration-pilot/.local/
 !apps/gigi-desktop/
 !apps/gigi-desktop/**
+!apps/custom-crm/
 !apps/create-something-scheduler/
 !apps/create-something-scheduler/**
 !apps/guard-performance-lab/
