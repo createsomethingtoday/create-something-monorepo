@@ -40,7 +40,7 @@ export default {
     if (!await matchesCredential(request.headers.get('authorization') ?? '', 'Bearer ' + env.NEWSLETTER_OWNER_TOKEN)) {
       return reply({ success: false }, 401);
     }
-    if (!env.STAGING_RECIPIENT || !env.RESEND_API_KEY || !env.TURNSTILE_SECRET_KEY || !env.DB || !env.CACHE) return unavailable();
+    if (!env.STAGING_RECIPIENT || !env.DB || !env.CACHE) return unavailable();
     const origin = URL.canParse(env.NEWSLETTER_LINK_ORIGIN) ? new URL(env.NEWSLETTER_LINK_ORIGIN) : null;
     if (!origin || origin.protocol !== 'https:' || origin.origin !== env.NEWSLETTER_LINK_ORIGIN ||
         ['createsomething.io', 'www.createsomething.io'].includes(origin.hostname)) return unavailable();
@@ -50,6 +50,7 @@ export default {
     const body = input as Record<string, unknown>;
     try {
       if (path === '/api/newsletter') {
+        if (!env.RESEND_API_KEY || !env.TURNSTILE_SECRET_KEY) return unavailable();
         if (typeof body.email !== 'string' || body.email.trim().toLowerCase() !== env.STAGING_RECIPIENT.trim().toLowerCase()) {
           return reply({ success: false, message: 'This signup is restricted to the staging recipient.' }, 403);
         }
