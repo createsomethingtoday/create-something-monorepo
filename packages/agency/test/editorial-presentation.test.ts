@@ -18,7 +18,7 @@ test('Shared shell applies editorial design and forces cross-owner document navi
 
 test('Only exact Webflow destinations cross the document boundary, preserving workspace state and local hashes', () => {
   const current = new URL('https://createsomething.agency/map/workspace/example');
-  for (const path of ['/dispatch/', '/about?source=tool', '/field-reports/template-review#proof']) assert.equal(agencyNeedsDocumentNavigation(new URL(path,current),current),true,path);
+  for (const path of ['/privacy', '/privacy/?preferences=1', '/dispatch/', '/about?source=tool', '/field-reports/template-review#proof']) assert.equal(agencyNeedsDocumentNavigation(new URL(path,current),current),true,path);
   for (const path of ['/map/workspace/second','/map/workspace/example#details','/admin/security','/field-reports/unknown','https://example.test/about']) assert.equal(agencyNeedsDocumentNavigation(new URL(path,current),current),false,path);
   assert.equal(agencyNeedsDocumentNavigation(new URL('https://createsomething.agency/dispatch#featured-report'),new URL('https://createsomething.agency/dispatch')),false);
 });

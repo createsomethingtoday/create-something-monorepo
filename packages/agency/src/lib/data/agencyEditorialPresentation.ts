@@ -13,7 +13,7 @@ export function agencyEditorialPageKind(pathname: string, status = 200): 'public
 export const agencyWebflowPagePaths = new Set([
   '/', '/about', '/bearer-token-policy', '/blog', '/blog/posts/moving-the-agency-site-to-astro',
   '/book', '/contact', '/dispatch', '/field-reports', '/field-reports/template-review',
-  '/field-reports/upstream-contributions', '/qualifications', '/security', '/sign-in',
+  '/field-reports/upstream-contributions', '/privacy', '/qualifications', '/security', '/sign-in',
   '/terms', '/work/cato'
 ]);
 export function agencyNeedsDocumentNavigation(destination: URL, current: URL): boolean {

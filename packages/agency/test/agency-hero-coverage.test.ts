@@ -89,7 +89,7 @@ test('all hero assets exist and route assignments are unique', () => {
 });
 
 test('public utility and product routes retain explicit background ownership', () => {
-  for (const path of ['/contact', '/book', '/privacy', '/terms', '/bearer-token-policy', '/security',
+  for (const path of ['/contact', '/book', '/terms', '/bearer-token-policy', '/security',
     '/products/signal', '/products/decision', '/products/proof', '/case-studies/webflow-marketplace']) {
     assert.ok(getAgencyHeroCoverage(path), path);
     if (!path.startsWith('/case-studies/')) {
@@ -97,7 +97,8 @@ test('public utility and product routes retain explicit background ownership', (
       assert.equal(agencyHeroDisposition(path), 'route-owned');
     }
   }
-  assert.match(getAgencyHeroCoverage('/privacy')!.selector, /__copy$/);
+  assert.equal(agencyHeroDisposition('/privacy'), 'excluded');
+  assert.equal(getAgencyHeroCoverage('/privacy'), undefined);
   assert.match(getAgencyHeroCoverage('/terms')!.selector, /__copy$/);
 });
 
