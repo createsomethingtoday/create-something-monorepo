@@ -52,7 +52,7 @@
   <div class="workspace-trail">
     <a href={`/n/${data.network?.slug}`}>{data.network?.name}</a><span>/</span><span>Assets</span>
   </div>
-  <p class="eyebrow">MCP SERVERS / PLUGINS / SKILLS / WORKFLOWS</p>
+  <p class="eyebrow">MCP servers / Plugins / Skills / Workflows</p>
   <h1>Build on<br /><SerifPhrase text="working practice." /></h1>
   <p class="lede">
     Reusable engineering assets, with the context to understand them. Check the runtime, permissions
@@ -136,7 +136,7 @@
   {/if}
   {#if data.owner}<section class="builder-split">
       <div>
-        <p class="eyebrow">01 / PACKAGE YOUR PRACTICE</p>
+        <p class="eyebrow">01 / Package your practice</p>
         <h2>Make something<br /><SerifPhrase text="others can use." /></h2>
         <p>
           Start with one focused capability. Your draft stays private while you add a ZIP package,
@@ -197,3 +197,16 @@
       </form>
     </section>{/if}
 </main>
+
+<style>
+
+  .builder-workspace > h1 { font-family: var(--font-serif); font-size: clamp(48px, 7vw, 88px); font-weight: 400; }
+  .builder-grid { gap: 0; }
+  .asset-card { background: var(--enlightr-ai); color: #111; padding: 32px; border: 0; min-height: 340px; }
+  .asset-card:nth-child(3n + 2) { background: var(--enlightr-code); }
+  .asset-card:nth-child(3n + 3) { background: var(--enlightr-data); }
+  .asset-card h2 { font-family: var(--font-serif); font-weight: 400; font-size: 38px; }
+  .asset-card p, .asset-card .eyebrow { color: #111; }
+  .card-foot { border-color: #111; color: #111; }
+
+</style>

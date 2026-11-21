@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from '$lib/components/Icon.svelte';
   import '../app.css';
+  import '$lib/styles/enlightr-operator.css';
   import { page } from '$app/state';
   let adminOpen = $state(false);
   let publicOpen = $state(false);
@@ -89,7 +90,7 @@
 <svelte:window onkeydown={dismissMenu} />
 <header class="masthead" class:enhanced>
   <a class="wordmark" href="/" aria-label="CREATE SOMETHING Private home"
-    >CREATE SOMETHING<span>PRIVATE / .AGENCY</span></a
+    ><i aria-hidden="true"></i><span>Create Something<strong>Private networks</strong></span></a
   >
   <button
     class="menu-toggle"
@@ -120,12 +121,16 @@
         <div class="public-links">
           <div role="group" aria-label="Connect">
             <p class="nav-group-label">Connect</p>
-            <a href="/join" aria-current={current('/join') ? 'page' : undefined}>Request invitation</a>
+            <a href="/join" aria-current={current('/join') ? 'page' : undefined}
+              >Request invitation</a
+            >
             <a href="/support" aria-current={current('/support') ? 'page' : undefined}>Support</a>
           </div>
           <div role="group" aria-label="Account">
             <p class="nav-group-label">Account</p>
-            <a href="/signup" aria-current={current('/signup') ? 'page' : undefined}>Create account</a>
+            <a href="/signup" aria-current={current('/signup') ? 'page' : undefined}
+              >Create account</a
+            >
           </div>
           <div role="group" aria-label="Legal">
             <p class="nav-group-label">Legal</p>
@@ -174,6 +179,55 @@
 </footer>
 
 <style>
+  .masthead {
+    background: white;
+    padding-block: 0;
+    min-height: 66px;
+  }
+  .masthead .wordmark {
+    display: inline-flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .wordmark i {
+    width: 20px;
+    height: 20px;
+    background: conic-gradient(
+      var(--enlightr-design) 0 25%,
+      var(--enlightr-ai) 0 50%,
+      var(--enlightr-data) 0 75%,
+      var(--enlightr-code) 0
+    );
+  }
+  .masthead .wordmark span {
+    margin: 0;
+    font: 500 20px/1 var(--font-serif);
+    letter-spacing: -0.035em;
+    color: inherit;
+  }
+  .wordmark strong {
+    display: block;
+    margin-top: 3px;
+    font: 500 11px/1 var(--font-sans);
+    letter-spacing: normal;
+  }
+  .masthead nav > a,
+  .masthead summary {
+    padding-inline: 12px;
+  }
+  .masthead nav a:hover,
+  .masthead summary:hover {
+    background: var(--enlightr-ai);
+    color: var(--enlightr-ink);
+  }
+  @media (min-width: 1101px) {
+    .masthead nav > a[href='/login'] {
+      background: var(--enlightr-ink);
+      color: white;
+      gap: 14px;
+      padding-inline: 20px;
+    }
+  }
   .public-nav {
     position: relative;
   }
@@ -207,9 +261,9 @@
     margin: 0;
     padding: 0 12px;
     color: var(--muted);
-    font: 11px/1.7 monospace;
-    letter-spacing: 1.8px;
-    text-transform: uppercase;
+    font: 500 13px/1.5 var(--font-sans);
+    letter-spacing: normal;
+    text-transform: none;
   }
   .public-links a {
     padding: 12px;
@@ -243,7 +297,8 @@
   .masthead nav a[aria-current='page'],
   .admin-nav summary.active,
   .public-nav summary.active {
-    color: var(--signal);
+    background: var(--enlightr-ai);
+    color: var(--enlightr-ink);
     text-decoration: underline;
     text-underline-offset: 6px;
   }
@@ -254,7 +309,7 @@
     flex-shrink: 0;
   }
   .masthead nav {
-    gap: 20px;
+    gap: 2px;
   }
   .masthead nav a,
   .admin-nav summary {

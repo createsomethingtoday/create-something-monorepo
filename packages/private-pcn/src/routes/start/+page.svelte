@@ -12,11 +12,11 @@
     content="noindex"
   /></svelte:head
 >
-<main id="main" tabindex="-1" class="builder-workspace">
+<main id="main" tabindex="-1" class="builder-workspace operator-surface">
   {#if data.foundation}<FoundationEntry foundation={data.foundation} />{/if}
   <div class="ink-onboarding">
     <div>
-      <p class="eyebrow">PRIVATE / MAKE IT YOURS</p>
+      <p class="eyebrow">Private / make it yours</p>
       <h1>Learn a technique.<br /><SerifPhrase text="Build on it." /></h1>
       <p class="lede">
         One account for learning from other builders and sharing your own practice. Choose where to

@@ -57,8 +57,8 @@
     content="noindex"
   /><meta name="referrer" content="no-referrer" /></svelte:head
 >
-<main id="main" class="form-page">
-  <p class="eyebrow">PRIVATE / VERIFIED ACCESS</p>
+<main id="main" class="form-page operator-surface">
+  <p class="eyebrow">Private / verified access</p>
   <h1>Make it<br /><SerifPhrase text="yours." /></h1>
   {#if !ready}<p>Reading your verification link…</p>
   {:else if verified}<p role="status">{error || 'Account verified. Opening your workspace…'}</p>

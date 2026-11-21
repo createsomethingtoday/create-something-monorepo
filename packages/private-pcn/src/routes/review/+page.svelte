@@ -51,8 +51,8 @@
 <svelte:head
   ><title>Creator review | Private</title><meta name="robots" content="noindex" /></svelte:head
 >
-<main id="main" class="builder-workspace">
-  <p class="eyebrow">PRIVATE / QUALITY REVIEW</p>
+<main id="main" class="builder-workspace operator-surface">
+  <p class="eyebrow">Private / quality review</p>
   <h1>Review the practice.<br /><SerifPhrase text="Protect the standard." /></h1>
   <p class="lede">
     Review credentials and the teaching demonstration. Judge technical accuracy, clear explanation,

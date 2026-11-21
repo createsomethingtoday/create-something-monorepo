@@ -6,7 +6,7 @@
 <svelte:head
   ><title>Network impact | Private</title><meta name="robots" content="noindex" /></svelte:head
 >
-<main id="main" class="builder-workspace">
+<main id="main" class="builder-workspace operator-surface">
   <a href="/dashboard">Your networks</a>
   <p class="eyebrow">PRIVATE / NETWORK IMPACT</p>
   <h1>What people accessed.<br /><SerifPhrase text="What remains to prove." /></h1>

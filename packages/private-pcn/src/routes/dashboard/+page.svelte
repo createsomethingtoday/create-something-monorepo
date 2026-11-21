@@ -50,10 +50,10 @@
     content="noindex"
   /></svelte:head
 >
-<main id="main" tabindex="-1" class="workspace">
+<main id="main" tabindex="-1" class="workspace operator-surface">
   <header class="workspace-heading">
     <div>
-      <p class="eyebrow">PRIVATE / BUILDER WORKSPACE</p>
+      <p class="eyebrow">Private / builder workspace</p>
       <h1>Your networks.</h1>
       <p class="workspace-intro">
         Teach the technique. Share the tools. Build a practice people can use.
@@ -197,7 +197,7 @@
   {#if data.approved && data.remainingNetworks > 0}
     <section class="setup" id="network-setup" aria-labelledby="create-title">
       <div>
-        <p class="eyebrow">CREATE A PRIVATE DRAFT</p>
+        <p class="eyebrow">Create a private draft</p>
         <h2 id="create-title">Name your network.</h2>
         <p>Start with a draft. Creating a network does not charge you or publish any content.</p>
       </div>

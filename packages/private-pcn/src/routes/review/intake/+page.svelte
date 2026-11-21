@@ -12,8 +12,8 @@
 <svelte:head
   ><title>Invitation requests | Private</title><meta name="robots" content="noindex" /></svelte:head
 >
-<main id="main" class="builder-workspace">
-  <p class="eyebrow">PRIVATE / INVITATION REQUESTS</p>
+<main id="main" class="builder-workspace operator-surface">
+  <p class="eyebrow">Private / invitation requests</p>
   <h1>A few new<br /><SerifPhrase text="introductions." /></h1>
   <p class="lede">
     Review learner and creator interest before an invitation. Contact details and work links are
