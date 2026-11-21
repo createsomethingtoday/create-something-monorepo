@@ -237,12 +237,12 @@
 <style>
   details {
     margin: 16px 0;
-    border-top: 1px solid #38342e;
+    border-top: 1px solid var(--alfred-rule);
     padding-top: 12px;
   }
   summary {
     cursor: pointer;
-    color: #d5b881;
+    color: var(--alfred-ink);
     margin-bottom: 12px;
   }
   label {
@@ -261,7 +261,7 @@
   }
   p {
     font-size: 12px;
-    color: #aaa399;
+    color: var(--alfred-gray);
     line-height: 1.5;
   }
 </style>

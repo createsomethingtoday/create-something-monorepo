@@ -1,0 +1,242 @@
+---
+import Field from "../components/Field.astro";
+import Diagram from "../components/Diagram.astro";
+import "../styles/landing.css";
+
+const canvas = "https://draw.createsomething.agency/";
+const canonical = canvas + "download";
+const source =
+  "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/apps/draw-native";
+const request =
+  "mailto:support@createsomething.io?subject=CREATE%20SOMETHING%20Draw%20Mac%20preview&body=I%27d%20like%20the%20individual%20Draw%20for%20Mac%20preview.%20I%20understand%20the%20current%20build%20is%20unsigned%20and%20not%20a%20general-public%20release.";
+const title = "DRAW · A canvas for mapping meetings";
+const description =
+  "Sketch ideas, connect notes and keep an editable drawing. Open DRAW in your browser or request the Mac preview.";
+const steps = [
+  {
+    kind: "sketch",
+    example:
+      "A team is deciding what to launch. Start with a note for the proposed launch date.",
+    name: "Sketch",
+    title: "Start with a mark.",
+    text: "Use a pen, a shape or a short note to put the first idea on the canvas.",
+  },
+  {
+    kind: "connect",
+    example:
+      "Add a note for the design review. Connect it to the launch date so the dependency is visible.",
+    name: "Connect",
+    title: "Show what belongs together.",
+    text: "Group related notes and draw connectors between them. Move the pieces as the conversation changes.",
+  },
+  {
+    kind: "export",
+    example:
+      "Save the map as JSON to revise next week. Take a PNG to include in today’s meeting recap.",
+    name: "Export",
+    title: "Keep a working copy.",
+    text: "Export JSON to edit the drawing again, SVG for vector artwork or PNG to drop into your meeting notes.",
+  },
+] as const;
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Draw for Mac",
+  url: canonical,
+  applicationCategory: "DesignApplication",
+  operatingSystem: "macOS",
+  softwareVersion: "0.1.0 preview",
+  description,
+  codeRepository: source,
+  license: "https://opensource.org/license/mit",
+  publisher: {
+    "@type": "Organization",
+    name: "CREATE SOMETHING",
+    url: "https://createsomething.agency",
+  },
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content={canvas + "og-image.png"} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://api.fontshare.com/v2/css?f[]=switzer@400,500&display=swap"
+    />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif&display=swap"
+    />
+    <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+  </head>
+  <body>
+    <a class="skip" href="#main">
+      Skip to content
+    </a>
+    <header class="wrap nav">
+      <a class="wordmark" href="#main" aria-label="DRAW home">
+        Draw
+        <span class="mark" aria-hidden="true">
+          .
+        </span>
+      </a>
+      <nav aria-label="Main navigation">
+        <a href="#workflow">How it works</a>
+        <a href="#preview">Mac preview</a>
+      </nav>
+      <a class="open" href={canvas}>
+        Open Draw <span aria-hidden="true">↗</span>
+      </a>
+    </header>
+    <main id="main">
+      <section class="hero" aria-labelledby="intro">
+        <Field />
+        <div class="intro">
+          <h1 id="intro">
+            Map the meeting.
+            <br />
+            Keep the drawing.
+          </h1>
+          <p>
+            A free canvas for <strong>sketching ideas</strong>,{" "}
+            <strong>connecting notes</strong> and keeping a drawing you can
+            return to. Open it in your browser. Your work saves on this device.
+          </p>
+          <a class="button" href={canvas}>
+            Open Draw <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+        <div class="toolstrip">
+          <p>Inside the canvas</p>
+          <ul aria-label="Drawing tools">
+            {["Pen", "Shapes", "Notes", "Connectors", "Groups"].map(
+              (name, i) => (
+                <li>
+                  <svg viewBox="0 0 28 28" aria-hidden="true">
+                    <path
+                      d={
+                        [
+                          "m5 23 2-7L20 3l5 5-13 13-7 2zm3-7 4 4m6-15 5 5",
+                          "M3 7h14v14H3z M17 10a7 7 0 1 1-1 13",
+                          "M5 4h18v14l-6 6H5z M17 24v-6h6 M9 10h10m-10 4h7",
+                          "M3 4h6v6H3z M19 19h6v6h-6z M9 7h4q3 0 3 3v9q0 3 3 3",
+                          "M2 6h24v18H2z M6 10h6v8H6z M15 11h7v8h-7z",
+                        ][i]
+                      }
+                    />
+                  </svg>
+                  {name}
+                </li>
+              ),
+            )}
+          </ul>
+        </div>
+      </section>
+      <section id="workflow" class="wrap section">
+        <h2>
+          A thought on the page.<span>A map you can keep.</span>
+        </h2>
+        <ol class="cards">
+          {steps.map((step) => (
+            <li>
+              <h3>{step.name}</h3>
+              <p class="card-lead">{step.title}</p>
+              <div class="art">
+                <Diagram kind={step.kind} />
+              </div>
+              <p class="card-copy">{step.text}</p>
+              <details class="example">
+                <summary>Meeting example</summary>
+                <p>{step.example}</p>
+              </details>
+            </li>
+          ))}
+        </ol>
+      </section>
+      <section id="preview" class="wrap section preview">
+        <h2>
+          Draw on your Mac.<span>Pair an iPhone.</span>
+        </h2>
+        <div class="preview-grid">
+          <div>
+            <h3>The Mac preview</h3>
+            <p>
+              The Mac holds the drawing, its history and its exports. Pair a
+              compatible iPhone on the same trusted Wi-Fi to sketch, pan or undo
+              while the Mac mirrors each change.
+            </p>
+            <p>
+              Version 0.1.0 requires macOS 13 or later. LAN pairing must be
+              enabled in development builds.
+            </p>
+            <p>
+              The preview is unsigned and unnotarized. macOS may block
+              installation. Request a build directly from CREATE SOMETHING and
+              verify its checksum before installing.
+            </p>
+            <a class="button" href={request}>
+              Request Mac preview <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+          <figure>
+            <Diagram kind="pair" />
+            <figcaption>Mac host and iPhone companion</figcaption>
+          </figure>
+        </div>
+        <details>
+          <summary>Preview build and checksum</summary>
+          <dl>
+            <dt>Source revision</dt>
+            <dd>
+              <code>7c74dc1485377e316efa7173796dda883cb21eee</code>
+            </dd>
+            <dt>DMG SHA-256</dt>
+            <dd>
+              <code>
+                0c82b266fa7df6d7078bdc93d7ff2f02186da4168e7b3567f97a376f5843f0bd
+              </code>
+            </dd>
+            <dt>Candidate receipt</dt>
+            <dd>
+              <a href="https://github.com/createsomethingtoday/create-something-monorepo/actions/runs/33711866576">
+                GitHub Actions 33711866576 ↗
+              </a>
+            </dd>
+          </dl>
+        </details>
+      </section>
+      <section class="closing">
+        <div class="wrap">
+          <h2>
+            <span>Have something to map?</span>Start with a blank canvas.
+          </h2>
+          <a class="button" href={canvas}>
+            Open Draw <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <div class="wrap">
+        <a href="https://createsomething.agency">Draw by CREATE SOMETHING</a>
+        <a href={source}>Source</a>
+        <a href="https://opensource.org/license/mit">MIT license</a>
+        <a href="mailto:support@createsomething.io">Support</a>
+      </div>
+    </footer>
+  </body>
+</html>

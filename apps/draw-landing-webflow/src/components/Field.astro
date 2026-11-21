@@ -1,0 +1,70 @@
+---
+/* A deterministic print of Alfred's inward-facing streaks. */
+const lines = Array.from({ length: 116 }, (_, i) => {
+  const x = (((i * 743 + 71) % 1447) / 1447) * 1440;
+  const y = (((i * i * 29 + i * 307 + 31) % 859) / 859) * 850;
+  const dx = x - 720,
+    dy = (y - 370) * 0.4;
+  const length = Math.hypot(dx, dy) || 1;
+  const fade = Math.min(
+    1,
+    Math.max(0, Math.hypot(dx / 430, (y - 370) / 300) - 0.65),
+  );
+  return {
+    x,
+    y,
+    x2: x + (dx / length) * (5 + (i % 11)),
+    y2: y + (dy / length) * (5 + (i % 11)),
+    opacity: fade * (0.2 + (i % 4) * 0.09),
+    shiftX: (-dx / length) * (150 + (i % 160)),
+    shiftY: (-dy / length) * (150 + (i % 160)),
+  };
+});
+---
+
+<svg
+  class="field"
+  aria-hidden="true"
+  viewBox="0 0 1440 850"
+  preserveAspectRatio="xMidYMid slice"
+>
+  {lines.map(({ x, y, x2, y2, opacity, shiftX, shiftY }, i) => (
+    <line
+      x1={x}
+      y1={y}
+      {x2}
+      {y2}
+      stroke="currentColor"
+      {opacity}
+      style={`--delay:-${(i * 0.31) % 8}s;--dx:${shiftX}px;--dy:${shiftY}px;--alpha:${opacity}`}
+    />
+  ))}
+</svg>
+<style>
+  .field {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    color: #77746e;
+    pointer-events: none;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    line {
+      animation: drift 8s linear var(--delay) infinite;
+    }
+    @keyframes drift {
+      from {
+        opacity: 0;
+      }
+      15%,
+      60% {
+        opacity: var(--alpha);
+      }
+      to {
+        opacity: 0;
+        transform: translate(var(--dx), var(--dy));
+      }
+    }
+  }
+</style>

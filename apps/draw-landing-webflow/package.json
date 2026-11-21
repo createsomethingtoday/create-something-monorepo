@@ -1,0 +1,22 @@
+{
+  "name": "@create-something/draw-landing-webflow",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev --host 127.0.0.1",
+    "build": "astro build",
+    "preview": "astro preview --host 127.0.0.1"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "14.4.9",
+    "@astrojs/react": "7.1.9",
+    "@cloudflare/vite-plugin": "^1.70.1",
+    "astro": "7.4.13",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  }
+}

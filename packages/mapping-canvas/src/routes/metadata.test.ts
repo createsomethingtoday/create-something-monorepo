@@ -11,7 +11,7 @@ const serverHooks = readFileSync(new URL('../hooks.server.ts', import.meta.url),
 
 describe('public identity and discovery', () => {
   it('uses the approved Draw identity while retaining publisher metadata', () => {
-    expect(page).toContain('src="/brand/draw-dark.svg"');
+    expect(page).toContain('src="/brand/draw-mono.svg"');
     expect(page).toContain("name: 'CREATE SOMETHING'");
     expect(page).toContain('href="/download" target="_blank" rel="noreferrer">Mac</a>');
   });

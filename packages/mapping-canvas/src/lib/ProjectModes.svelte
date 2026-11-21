@@ -25,7 +25,7 @@
     align-items: center;
     gap: 2px;
     padding: 3px;
-    border: 1px solid var(--color-performance-border-default, #333);
+    border: 1px solid var(--alfred-rule);
     border-radius: 4px;
     flex-shrink: 0;
   }
@@ -34,17 +34,17 @@
     text-decoration: none;
     text-transform: capitalize;
     border-radius: 2px;
-    color: var(--color-performance-fg-muted, #aaa);
-    font: 11px var(--font-performance-sans, Arial, sans-serif);
+    color: var(--alfred-gray);
+    font: 500 12px var(--alfred-sans);
   }
   .project-modes a.active {
-    background: var(--color-performance-shell-raised, #222);
-    color: var(--color-performance-fg-primary, #fff);
+    background: var(--alfred-tile);
+    color: var(--alfred-ink);
   }
   .project-modes a:hover {
-    color: var(--color-performance-fg-primary, #fff);
+    color: var(--alfred-ink);
   }
   .project-modes a:focus-visible {
-    outline: 2px solid var(--color-performance-signal, #fcaa2d);
+    outline: 2px solid var(--alfred-ink);
   }
 </style>
