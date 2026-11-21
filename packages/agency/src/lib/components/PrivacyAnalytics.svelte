@@ -113,8 +113,12 @@
     analyticsAllowed = Boolean(consentState?.analytics) && !userOptedOut;
     analyticsChoice = analyticsAllowed;
     if (analyticsAllowed) syncPaidSearchAttribution(new URL(window.location.href));
-    compactPromptActive = compactPrompt && !consentState && !userOptedOut;
-    showPanel = !consentState && !userOptedOut && !compactPromptActive;
+    const url = new URL(window.location.href);
+    const preferences = url.searchParams.getAll('preferences');
+    const managingChoices = property === 'agency' && /^\/privacy\/?$/.test(url.pathname)
+      && preferences.length === 1 && preferences[0] === '1';
+    compactPromptActive = !managingChoices && compactPrompt && !consentState && !userOptedOut;
+    showPanel = managingChoices || (!consentState && !userOptedOut && !compactPromptActive);
     if (property === 'agency') {
       marketingClient = createMetaMarketingClient({
         sanitizePageUrl: sanitizeMetaPageUrl,
@@ -129,6 +133,7 @@
     };
     document.addEventListener('visibilitychange', refreshWhenVisible);
     mounted = true;
+    if (managingChoices) void tick().then(() => analyticsCheckbox?.focus({ preventScroll: true }));
     return () => document.removeEventListener('visibilitychange', refreshWhenVisible);
   });
 

@@ -415,7 +415,7 @@
   />
 
   <main id="main-content" class="pt-[72px]" use:publicPageEntrances={$page.url.pathname}>
-    {#if pageFoundation}
+    {#if pageFoundation && $page.url.pathname !== "/privacy"}
       {#key $page.url.pathname}<AgencyPageWayfinding foundation={pageFoundation} />{/key}
     {/if}
     {@render children()}

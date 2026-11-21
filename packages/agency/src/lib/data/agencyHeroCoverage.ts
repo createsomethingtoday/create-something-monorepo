@@ -15,6 +15,7 @@ export interface AgencyHero {
 // Coverage is independent of navigation, indexing and palette policy: those
 // policies deliberately exclude some legal and archived public pages.
 export const agencyHeroExclusions = [
+  /^\/privacy$/, // The privacy policy uses a text-only legal opening.
   /^\/(?:account|admin|dashboard|login|logout|auth|mcp-access|delivery|api|prospects)(?:\/|$)/,
   /^\/map\/(?:workspace|subscribe|share)(?:\/|$)/,
   /^\/canon-preview(?:\/|$)/ // Development-only component fixture, never a published page.
@@ -41,7 +42,7 @@ const routeOwnedRoutes = new Set([
   '/field-reports', '/field-reports/template-review', '/field-reports/upstream-contributions',
   '/workflows', '/workflows/[slug]', '/arcs', '/arc/[slug]', '/arc/app-review-governance',
   '/experiments', '/dispatch', '/contact', '/book', '/support-brief', '/security',
-  '/privacy', '/terms', '/bearer-token-policy', '/openai-dots'
+  '/terms', '/bearer-token-policy', '/openai-dots'
 ]);
 function artwork(route: string) {
   return { src: '/agency/editorial/connected-tools-1280.webp', mobileSrc: '/agency/editorial/connected-tools-640.webp' };
@@ -53,7 +54,7 @@ const additional = [
   { route: '/contact', selector: '.inquiry-intro' },
   { route: '/book', selector: '.booking-entry,.agent-booking__intro' },
   { route: '/support-brief', selector: '.brief-workspace > header' },
-  ...['/security', '/privacy', '/terms', '/bearer-token-policy'].map(route => ({
+  ...['/security', '/terms', '/bearer-token-policy'].map(route => ({
     route, selector: '.clear-page-section--hero .clear-page-section__copy'
   })),
   { route: '/dental-ai-agents', selector: '.dental-opening' },

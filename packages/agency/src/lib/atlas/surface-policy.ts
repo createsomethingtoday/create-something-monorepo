@@ -26,6 +26,7 @@ export const AGENCY_ATLAS_PROOF_PATHS = [
 ] as const;
 
 export const AGENCY_COMPACT_PRIVACY_PATHS = [
+  '/privacy',
   ...AGENCY_WEBFLOW_PORTFOLIO_PATHS,
   '/scopefield',
   '/airtable-workflow-consulting',
