@@ -25,7 +25,7 @@
 {#if $page.url.pathname === '/admin/login'}
 	<slot />
 {:else}
-	<div class="admin-layout">
+	<div class="admin-layout" class:newsletter-desk={$page.url.pathname === '/admin/newsletter'}>
 		<!-- Admin Navigation -->
 		<nav class="admin-nav">
 			<div class="max-w-7xl mx-auto px-6">
@@ -61,6 +61,32 @@
 {/if}
 
 <style>
+  .admin-layout.newsletter-desk {
+    background: white;
+    color: #0a0a0a;
+  }
+  .newsletter-desk .admin-nav {
+    background: white;
+    border-bottom: 1px solid #d1d1cb;
+  }
+  .newsletter-desk .nav-link,
+  .newsletter-desk .utility-link {
+    color: #545450;
+  }
+  .newsletter-desk .nav-link.active {
+    color: #0a0a0a;
+    border-bottom-color: #4a78ff;
+  }
+  .newsletter-desk .admin-content {
+    max-width: 88rem;
+    padding: 24px clamp(0px, 2vw, 32px);
+  }
+  .newsletter-desk .nav-link:focus-visible,
+  .newsletter-desk .utility-link:focus-visible {
+    outline: 3px solid #2349ac;
+    outline-offset: 3px;
+  }
+
 	:global(body) {
 		background: var(--color-performance-bg-pure);
 	}
