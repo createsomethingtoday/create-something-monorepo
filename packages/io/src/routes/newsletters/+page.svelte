@@ -1,6 +1,7 @@
 <script lang="ts">
   import TaskOpening from '$lib/components/TaskOpening.svelte';
-  import { NewsletterSignup, SEO } from '@create-something/canon';
+  import ArchiveNewsletterSignup from '$lib/components/ArchiveNewsletterSignup.svelte';
+  import { SEO } from '@create-something/canon';
 
   let { data } = $props();
 
@@ -87,16 +88,7 @@
   </section>
 
   <div id="subscribe" class="signup-anchor">
-    <NewsletterSignup
-  turnstileSiteKey={data.turnstileSiteKey}
-      eyebrow="Operator edition"
-      headline="Get the next field note first."
-      description="The concise edition, practical links, and one clear next move—sent when the work is ready. The full argument remains available in the public archive."
-      actionLabel="Request the next edition"
-      submitLabel="Subscribe"
-      note="Double opt-in. Occasional field notes. Unsubscribe whenever it stops being useful."
-      source="io-newsletter-archive"
-    />
+    <ArchiveNewsletterSignup turnstileSiteKey={data.turnstileSiteKey} />
   </div>
 </div>
 

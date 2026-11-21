@@ -12,11 +12,21 @@ export function newsletterSignupContext() {
   ) {
     return { analyticsEnabled: false };
   }
+  let landingUrl = window.location.href;
+  let referrer = typeof document !== 'undefined' ? document.referrer : undefined;
+  // Only the retained, same-origin form bridge may use its enclosing document.
+  try {
+    if (window.location.pathname === '/newsletters/signup-form' &&
+        window.parent !== window && window.parent.location.origin === window.location.origin) {
+      landingUrl = window.parent.location.href;
+      referrer = window.parent.document.referrer;
+    }
+  } catch { /* Cross-origin embeds keep their own context. */ }
   return {
     analyticsEnabled: true,
     sessionId: analytics.getSessionId(),
     sourceProperty: analytics.getSourceProperty() ?? undefined,
-    landingUrl: window.location.href,
-    referrer: typeof document !== 'undefined' ? document.referrer : undefined
+    landingUrl,
+    referrer
   };
 }

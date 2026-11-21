@@ -208,7 +208,9 @@
   userOptedOut={data.user?.analytics_opt_out ?? false}
 />
 
-{#if $page.url.pathname.startsWith('/admin')}
+{#if $page.url.pathname === '/newsletters/signup-form'}
+  <main class="io-journal newsletter-form-document" id="main-content">{@render children()}</main>
+{:else if $page.url.pathname.startsWith('/admin')}
   <div class="io-journal io-journal-admin">{@render children()}</div>
 {:else}
   <div
