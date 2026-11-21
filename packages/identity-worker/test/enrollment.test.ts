@@ -849,3 +849,42 @@ test('A2A scoped enrollment remains pending until mailbox proof and never opens 
  f.env.A2A_ENROLLMENT_ENABLED='true';const completed=await completeEnrollment(f.request({token:proof,password:'A2A verified fixture password',app:'gigi'}),f.env);
  assert.equal(completed.status,200);assert.equal(completed.headers.has('Set-Cookie'),false);assert.equal(f.db.prepare('SELECT email_verified FROM users').get()?.email_verified,1);
 });
+
+test('PCN signup and recovery mail have branded HTML and text with unchanged private proof links', async (t) => {
+  const f = fixture(t);
+  for (const purpose of ['signup', 'recovery']) {
+    await startEnrollment(f.request({email: `${purpose}@example.com`, purpose, next_path: '/collection'}), f.env);
+    const mail = f.mails.at(-1);
+    assert.match(mail.subject, /CREATE SOMETHING Private/);
+    assert.match(mail.text, /expires in 15 minutes and can be used once/);
+    const link = mail.text.match(/https:\/\/private\.createsomething\.agency\/verify[^\s]+/)[0];
+    assert.match(link, new RegExp(`verify\\?mode=${purpose}&next=%2Fcollection#token=`));
+    assert.ok(mail.html.includes(`href="${link.replaceAll('&', '&amp;')}"`));
+    assert.match(mail.html, /<html lang="en">/);
+    assert.match(mail.html, /Georgia/);
+    assert.match(mail.html, /background:#ffffff/);
+    assert.ok(mail.html.includes(purpose === 'signup' ? '#86e0a9' : '#ff8ad8'));
+    assert.doesNotMatch(mail.html, /<img|<script|@import|url\(/i);
+    assert.equal(mail.from, 'CREATE SOMETHING <noreply@createsomething.io>');
+    assert.deepEqual(mail.to, [`${purpose}@example.com`]);
+  }
+});
+
+test('hosted Identity, GiGi and A2A messages retain their original text-only payloads', async (t) => {
+  const f = fixture(t);
+  f.env.GIGI_ENROLLMENT_ENABLED = 'true';
+  f.env.A2A_ENROLLMENT_ENABLED = 'true';
+  for (const input of [
+    {purpose: 'recovery', experience: 'identity'},
+    {purpose: 'signup', app: 'gigi'},
+    {purpose: 'signup', app: 'a2a'}
+  ]) {
+    await startEnrollment(f.request({email: `hosted-${f.mails.length}@example.com`, ...input}), f.env);
+    const mail = f.mails.at(-1);
+    assert.equal(mail.subject, 'Verify your CREATE SOMETHING account');
+    assert.equal(mail.html, undefined);
+    assert.match(mail.text, /https:\/\/id\.createsomething\.space\/verify/);
+    assert.doesNotMatch(mail.text, /Private|Make it yours|Find your way/);
+    assert.match(mail.text, /expires in 15 minutes and can be used once/);
+  }
+});
